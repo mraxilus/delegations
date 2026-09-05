@@ -1,8 +1,7 @@
-## Enforce branch scope: contributor branch changes only its project folder.
-##   Branch grammar lives in `domains.nim`; this check reads parsed role and prefix.
-##   `main` passes: pushes to main are merges owner already approved.
-##   Curator branches pass every path: rules changes must re-stamp every project (owner's
-##     decision), so no prefix could hold.
+## Enforce branch scope: project branch changes only its project folder.
+##   Branch grammar lives in `domains.nim`; this check reads parsed prefix. Curator root
+##   branch owns empty prefix, so every path passes: rules changes must re-stamp every
+##   project (owner's decision). `main` passes: pushes to main are merges owner approved.
 ##
 ##   Cost: owner may merge red pull request deliberately; check is guard, not gate.
 
@@ -19,10 +18,10 @@ func checkScope*(branch: string, paths: openArray[string]): seq[Finding] =
   if parsed.isNone:
     return @[finding(
       "", 0,
-      "Branch must match `<domain>/<project>/<name>` or `curator/<name>`; got `" & branch & "`.",
+      "Branch must match `contributor/<domain>/<project>/<name>`, `curator/<project>/<name>` " &
+        "or `curator/<name>`; got `" & branch & "`.",
     )]
-  let b = parsed.get
-  if b.role == Role.Curator: return
+  let prefix = parsed.get.prefix
   for p in paths:
-    if not p.startsWith(b.prefix):
-      result.add finding(p, 0, "Path outside branch scope `" & b.prefix & "`.")
+    if not p.startsWith(prefix):
+      result.add finding(p, 0, "Path outside branch scope `" & prefix & "`.")

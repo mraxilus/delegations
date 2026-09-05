@@ -1,7 +1,8 @@
 ## Enforce Conventional Commits (Article XI.1): `type(scope): lowercase imperative summary`.
-##   Types are data in `TYPES`; scope must be project name or `curator`. On contributor
-##   branch scope must equal project, so log replays by project; curator branch accepts any
-##   valid scope, because rules propagation commits carry each project's scope.
+##   Types are data in `TYPES`; scope must be project name or `curator`. On project branch,
+##   contributor or curator, scope must equal project, so log replays by project; curator
+##   root branch accepts any valid scope, because rules propagation commits carry each
+##   project's scope.
 ##   Merge commits are excluded upstream (`git log --no-merges`); reverts use type `revert`.
 ##
 ##   Cost: imperative mood unverified; check sees lowercase first letter and no final period.
@@ -45,10 +46,10 @@ func parseSubject*(subject: string): Option[Subject] =
 
 
 func checkCommits*(branch: string, subjects: openArray[string]): seq[Finding] =
-  ## Report subjects outside grammar and, on contributor branch, scopes not its project.
+  ## Report subjects outside grammar and, on project branch, scopes not its project.
   let parsed_branch = branch.parseBranch
   let expected =
-    if parsed_branch.isSome and parsed_branch.get.role == Role.Contributor:
+    if parsed_branch.isSome and parsed_branch.get.role != Role.Curator:
       some(parsed_branch.get.scope)
     else:
       none(string)
