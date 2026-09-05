@@ -5,8 +5,8 @@
 #   Binary rebuilds whenever curator source changes (Article IX.6).
 
 NIM ?= nim
-AUDIT := curator/bin/audit
-SOURCES := $(wildcard curator/src/*.nim)
+AUDIT := curator/audit/bin/audit
+SOURCES := $(wildcard curator/audit/src/*.nim)
 BASE ?= origin/main
 BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
 
@@ -37,7 +37,7 @@ stamp: $(AUDIT)
 	@$(AUDIT) stamp
 
 $(AUDIT): $(SOURCES)
-	$(NIM) c --hints:off --outdir:curator/bin curator/src/audit.nim
+	$(NIM) c --hints:off --outdir:curator/audit/bin curator/audit/src/audit.nim
 
 clean:
-	rm -rf curator/bin curator/nimcache curator/testresults
+	rm -rf curator/audit/bin curator/audit/nimcache curator/audit/testresults
