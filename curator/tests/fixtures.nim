@@ -25,7 +25,11 @@ const
   GLOSSARY_TEXT* = "# Fixture\n\nFixture glossary.\n\n## Language\n\n**Term**:\nOne thing.\n"
     ## Minimal glossary passing shape check.
   MAKEFILE_TEXT* = "# Drive tests.\n\ncheck:\n\ttrue\n"
-    ## Minimal Makefile with `check` target.
+    ## Minimal project Makefile with `check` target.
+  ROOT_MAKEFILE_TEXT* = "# Drive checks.\n\n" &
+    "check:\n\ttrue\nci:\n\ttrue\ntree:\n\ttrue\nprojects:\n\ttrue\nscope:\n\ttrue\n" &
+    "commits:\n\ttrue\nstamp:\n\ttrue\n"
+    ## Minimal root Makefile declaring every target in `ROOT_TARGETS`.
   RULES_TEXT* = [
     "# Constitution\n\nRules.\n", "# Style\n\nSpelling.\n", "# Contributor\n\nDuties.\n",
   ]
@@ -57,7 +61,7 @@ func goodTree*(): Tree =
     entry("LICENSE.md", "# Licence\n\nText.\n"),
     entry("CLAUDE.md", "# Claude\n\nRead rules.\n"),
     entry("CURATOR.md", "# Curator\n\nDuties.\n"),
-    entry("Makefile", MAKEFILE_TEXT),
+    entry("Makefile", ROOT_MAKEFILE_TEXT),
     entry(".gitignore", "# Build products.\nbin/\n"),
     entry(".gitattributes", "# Endings.\n* text=auto eol=lf\n"),
     entry(".github/workflows/check.yml", "# Run checks.\nname: check\n"),

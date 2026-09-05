@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 0c52eec980425fef |
+| Rules  | 62d39efca9bd8ffb |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -71,11 +71,14 @@ passes, inner tab fails; every ending case.
 from them.** A project is `curator` or `<domain>/<project>` and must hold README.md,
 PROVENANCE.md, GLOSSARY.md, a Makefile with a `check` target, and at least one file under
 `tests/`. Root README.md must carry one table row per domain equal to `DOMAINS`; each
-domain README must open with the domain name and hold the theme line. Rejected: letting
-domain READMEs list projects, which would force a contributor to edit outside their prefix.
+domain README must open with the domain name and hold the theme line. The root Makefile
+must declare every target the documents name (`ROOT_TARGETS`), so `make ci` in
+CONTRIBUTOR.md never points at nothing. Rejected: letting domain READMEs list projects,
+which would force a contributor to edit outside their prefix.
 Cost: empty directories are invisible to git, so `tests/` must hold a file. Verified by
 `tlayout.nim` over a fixture tree the tests build; `taudit.nim` proves that fixture is clean
-under every static check.
+under every static check; `tlayout.nim` removes each root target in turn and expects
+exactly one finding naming it.
 
 ## Provenance stamp
 
@@ -138,6 +141,21 @@ Nim's own tree before either guard existed, and by reproducing locally with a fa
 `.nim_runtime/` file. Verified on pull request 1: `scope` and `commits` jobs green, so
 `nim` reaches PATH. Assumed until the next `audit` job passes: `testament` reaches PATH
 the same way. Required checks are named `audit`, `scope`, `commits` for branch protection.
+
+**`make ci` is the local form of the three jobs.** It fetches `origin/main`, then runs
+`check`, `scope` and `commits` through sub-makes, so command-line `BRANCH` and `BASE`
+overrides reach each verb. Every pull request passes it before it is opened; the runner
+confirms, it never discovers. Cost: a network fetch per run, accepted so the base is the
+one CI will use.
+
+**The merge process is verified, not assumed, on 2026-09-05.** Pull request 2, a workflow
+change: three jobs green (run 3), then the `push` run on `main` after its merge green (run
+4). Pull request 1 as the contributor-path probe: its re-run of the failed job (run 2,
+attempt 2) failed identically because a re-run reuses the original merge commit and
+workflow file; after `main` was merged into its branch, a fresh run passed all three jobs
+(run 5), and the `push` run on `main` after its merge passed (run 6). Trap recorded in
+CURATOR.md duty 2: a fix on `main` reaches an open pull request only through a new head.
+Re-verify after every change to the merge process, per that duty.
 
 ## Figures
 

@@ -47,7 +47,9 @@ request runs three jobs:
 - `scope`: every changed path lies inside the branch's project folder.
 - `commits`: every subject is a Conventional Commit whose scope matches the branch.
 
-Locally, `make check` runs the audit and every project. It needs Nim 2.2.4, make and git.
+Locally, `make ci` runs the same three checks against a fresh `origin/main`; every pull
+request passes it before it is opened. `make check` alone runs the audit and every project.
+Both need Nim 2.2.4, make and git.
 
 ## Licence
 

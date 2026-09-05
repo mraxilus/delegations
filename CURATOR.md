@@ -27,6 +27,8 @@ The owner's brief, which every rule below serves:
 - `main` is protected. Nobody commits to it; the owner merges pull requests.
 - A change to the general rules must propagate to every project, enforced, not hoped for.
 - Regression tests are paramount: every mistake becomes a test so it is never repeated.
+- Every pull request passes the same checks CI runs, locally, before it is opened.
+- A change to the merge process is tested on the merge process itself, not only on its code.
 - Tooling is Nim wherever possible. TypeScript only where JavaScript is forced. No Python.
 
 ## Read first, in this order
@@ -47,7 +49,7 @@ The owner's brief, which every rule below serves:
 | `CURATOR.md` | This file: opening prompt for curator sessions | curator |
 | `CONTRIBUTOR.md` | Opening prompt for project sessions; includes provenance guide | curator |
 | `CLAUDE.md` | Short pointer Claude Code loads on its own | curator |
-| `Makefile` | `make check`; also `stamp`, `scope`, `commits`, `tree`, `projects` | curator |
+| `Makefile` | `make ci`, `make check`, `stamp`, `scope`, `commits`, `tree`, `projects` | curator |
 | `.gitignore`, `.gitattributes` | Build products out, LF endings everywhere | curator |
 | `.github/workflows/check.yml` | CI: jobs `audit`, `scope`, `commits`; pins Nim version | curator |
 | `.github/pull_request_template.md` | Body every pull request follows | curator |
@@ -76,24 +78,51 @@ The owner's brief, which every rule below serves:
    project's `PROVENANCE.md` (affected sections and the `Rules` row from `make stamp`) in
    its own commit, and finish with `make check` green. Nothing merges half-propagated.
    `CURATOR.md` is not stamped; editing it touches no project.
-2. **Regression.** Every mistake that slipped past the audit becomes a fixture-driven test
+2. **Merge-process changes.** Anything a pull request passes through is the merge process:
+   `.github/workflows/check.yml`, the root `Makefile`, `.gitignore`, `.gitattributes`,
+   `curator/src/` (above all `scope`, `commits`, `tree`, `layout`), the branch grammar in
+   `domains.nim`, the stamp. A change to any of them is tested on the process itself, in
+   this order, before the work is called done:
+   - `make ci` on the curator branch, then the curator pull request's three jobs green on a
+     runner. A runner differs from this machine: the first run on `main` is where the
+     toolchain leak surfaced, and nothing local could have shown it.
+   - After the owner merges, the `push` run on `main` green.
+   - A probe through the contributor path: branch `<domain>/<project>/probe-<name>` from
+     the new `main`, one `docs(<project>)` commit touching that project's README, `make ci`,
+     pull request opened, all three jobs green, then closed unmerged and its branch
+     deleted. A real contributor pull request opened the same day and watched to green
+     counts as the probe.
+   - Record run numbers and date under Continuous integration in `curator/PROVENANCE.md`,
+     so "the merge process works" stays verified, never assumed.
+   Known trap: re-running a failed run reuses its original merge commit and workflow file,
+   so a fix on `main` reaches an open pull request only through a new head. Merge `main`
+   into the branch; never re-run and hope.
+3. **Regression.** Every mistake that slipped past the audit becomes a fixture-driven test
    in `curator/tests/` before the fix (Article IX.8). Tests replicate the constitution:
    suites are named after its articles, assertions cite them.
-3. **New file kind.** Register it in `curator/src/kinds.nim` with its comment syntax, extend
+4. **New file kind.** Register it in `curator/src/kinds.nim` with its comment syntax, extend
    `comments.nim` if the syntax is new, update the header table, add fixtures. Until then the
    kind does not exist (Article VI.5) and the audit rejects it.
-4. **New domain.** Owner's decision only. Add it to `DOMAINS` in `curator/src/domains.nim`,
+5. **New domain.** Owner's decision only. Add it to `DOMAINS` in `curator/src/domains.nim`,
    its header table, the root `README.md` table, and create `<domain>/README.md` with the
    name as heading and the theme as a line. The layout check verifies all three agree.
-5. **Toolchain.** Nim is pinned once, in `.github/workflows/check.yml` (`NIM_VERSION`).
+6. **Toolchain.** Nim is pinned once, in `.github/workflows/check.yml` (`NIM_VERSION`).
    Bump it deliberately, with `make check` run on the new version, and update the version
    named in `CONTRIBUTOR.md` and `curator/README.md`.
-6. **Opening prompts.** `CURATOR.md` and `CONTRIBUTOR.md` are pasted into new sessions as
+7. **Opening prompts.** `CURATOR.md` and `CONTRIBUTOR.md` are pasted into new sessions as
    their first message. Keep each self-contained. Remember `CONTRIBUTOR.md` is stamped:
    any edit, even a typo, re-stamps every project (duty 1).
-7. **Never** write project code, create a project, or resolve a contributor's open question
+8. **Never** write project code, create a project, or resolve a contributor's open question
    by editing their project. Answer it by changing a rule, a check, or this file, and let
    the contributor apply it.
+
+## Before opening a pull request
+
+`make ci` at the repository root passes on the exact commit you push. It fetches
+`origin/main`, then runs the three verbs CI's jobs run: `check` (the `audit` job), `scope`
+and `commits`. A pull request opened before it passes is a process violation whatever CI
+later says: the runner confirms, it never discovers. Run it again before every later push
+to the same pull request. Then the template, then the pull request.
 
 ## Repository settings the owner applies
 
@@ -114,6 +143,7 @@ All live under `curator/src/`; `audit.nim` is the umbrella and command line.
 | `make tree` | files git sees | layout, form, comments, provenance header and stamp, glossary |
 | `make projects` | every project dir | `make -C <project> check` exits zero |
 | `make check` | both above | everything static, then every project |
+| `make ci` | fresh `origin/main` | `check`, `scope`, `commits` as CI runs them; before every PR |
 | `make scope BRANCH= BASE=` | changed paths | branch grammar; contributor paths inside prefix |
 | `make commits BRANCH= BASE=` | commit subjects | Conventional Commits; scope equals branch scope |
 | `make stamp` | rules documents | prints the stamp for `PROVENANCE.md` |
