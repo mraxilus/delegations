@@ -1,0 +1,56 @@
+# Run repository audit on every pull request and on main.
+#   Three jobs so owner reads each verdict alone: `audit` (tree and every project's check),
+#   `scope` (branch prefix), `commits` (Conventional Commits). Branch protection on main
+#   requires all three.
+#   Nim version pinned once here; CURATOR.md names this file as its source.
+#   Branch names reach shell through environment, never interpolated into script.
+
+name: check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+env:
+  NIM_VERSION: '2.2.4'
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: ${{ env.NIM_VERSION }}
+      - run: make check
+
+  scope:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      BRANCH: ${{ github.head_ref }}
+      BASE: origin/${{ github.base_ref }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: ${{ env.NIM_VERSION }}
+      - run: make scope BRANCH="$BRANCH" BASE="$BASE"
+
+  commits:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      BRANCH: ${{ github.head_ref }}
+      BASE: origin/${{ github.base_ref }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: ${{ env.NIM_VERSION }}
+      - run: make commits BRANCH="$BRANCH" BASE="$BASE"
