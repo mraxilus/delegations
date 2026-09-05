@@ -23,3 +23,5 @@ Needs Nim 2.2.4, make and git. Tests run as a matrix over `-d:intervals.spelling
 Every operation verified by exhaustive enumeration of all 144 pitch-class and interval
 pairs, in both spellings. Unreviewed by a human. Diatonic spelling and compound intervals
 are out of scope by design; see `PROVENANCE.md`.
+
+Probe of the merge process after the `make ci` change; this branch is never merged.
