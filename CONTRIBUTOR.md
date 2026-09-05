@@ -54,8 +54,9 @@ git checkout -b <domain>/<project>/<name> origin/main
   `PROVENANCE.md` and `GLOSSARY.md` updates travel in their own `docs(<project>)` commit,
   in the same delivery as the change they describe.
 - Never rewrite pushed history. The log is part of the document (Article XI.2).
-- Push with `git push -u origin <branch>` and open a pull request from the template. Do not
-  merge and do not ask for a merge; the owner reads and merges.
+- `make ci` at the repository root passes on the exact commit you are about to push. Only
+  then push with `git push -u origin <branch>` and open a pull request from the template.
+  Do not merge and do not ask for a merge; the owner reads and merges.
 
 ## Starting a project
 
@@ -95,8 +96,8 @@ Every later session:
 
 1. Read `PROVENANCE.md` in full, then `GLOSSARY.md`, then the code in the order the umbrella
    module's bootstrap diagram gives.
-2. Run `make check` at the repository root. It must be green before you start, and green
-   before every push.
+2. Run `make check` at the repository root. It must be green before you start. Before every
+   push, `make ci` must be green (see below).
 3. `Rules stamp stale` on your project means the governing documents changed after the
    project's last audit. Normally the curator re-audits every project in the same pull
    request as a rules change, so this appears only when your branch predates one. Merge
@@ -165,9 +166,13 @@ what was rejected, what it costs. There is no `docs/adr/`.
 
 ## Before opening a pull request
 
-- `make check` at the repository root passes on the exact commit you push.
-- Every changed path starts with `<domain>/<project>/`.
-- Every commit subject parses as `type(<project>): summary`.
+- `make ci` at the repository root passes on the exact commit you push. It fetches
+  `origin/main`, then runs the same three checks CI runs: `check` (the `audit` job: layout,
+  form, comments, provenance, glossary, every project's tests), `scope` (every changed path
+  starts with `<domain>/<project>/`) and `commits` (every subject parses as
+  `type(<project>): summary`). A pull request opened before it passes is a process
+  violation whatever CI later says: the runner confirms, it never discovers. Run it again
+  before every later push to the same pull request.
 - `PROVENANCE.md` describes the design as it now is, with each claim marked verified or
   assumed and each figure carrying its pair; nothing narrates.
 - `GLOSSARY.md` holds every term that resolved.

@@ -1,7 +1,8 @@
 # Run repository audit on every pull request and on main.
 #   Three jobs so owner reads each verdict alone: `audit` (tree and every project's check),
 #   `scope` (branch prefix), `commits` (Conventional Commits). Branch protection on main
-#   requires all three.
+#   requires all three. `make ci` at root runs same three verbs locally, before any pull
+#   request is opened; runner confirms, never discovers.
 #   Nim version pinned once here; CURATOR.md names this file as its source.
 #   Nim installs under runner temp, never into workspace: audit reads untracked files, so
 #   toolchain inside checkout would be audited (first run on main proved it).
