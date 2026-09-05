@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | d632dbdc5a7eee5d |
+| Rules  | d27dcdddede02dbd |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -17,7 +17,10 @@ source.
 ## Build glue
 
 **One compiled driver, `koch.nim` at the root, as Nim's own repository builds.** It holds
-dispatch only; every check is a library module here, tested here. Invoked as
+dispatch only; every check is a library module here, tested here. Koch drives tests and
+nothing else, so a project needing verbs beyond them carries its own compiled driver
+`tools/build.nim`, same pattern one level down; `contributor/síncopa/dance_ontology` is the
+first, and CONTRIBUTOR.md names the convention. Invoked as
 `nim r koch <command>`, which rebuilds when sources changed and runs (Article IX.6), or
 `nim c koch` once and `./koch`. Rejected: make, a second toolchain with recipe tabs and
 untested glue; NimScript `config.nims` tasks, which run in the compiler's VM with a subset
@@ -170,7 +173,9 @@ assumed for CI until the first real dependency lands.
 ## Tests
 
 **Testament over `tests/t*.nim`, each stub carrying the header from STYLE.md §6 without
-`-r`.** Testament runs each binary itself; `-r` in the command would run every test twice
+`-r`.** Three projects carry suites: this one, `curator/probe`, and
+`contributor/síncopa/dance_ontology`, whose eleven stubs dominate every whole-tree run.
+Testament runs each binary itself; `-r` in the command would run every test twice
 and `--outdir` breaks testament's search for the binary, so binaries sit beside sources and
 git ignores them everywhere (`**/tests/t*`). Suites are named after constitution articles
 and every assertion carries a citation. Fixtures are built by `fixtures.nim`: a smallest
@@ -203,10 +208,12 @@ from `curator/probe/probe-<name>`; run numbers are recorded here by the follow-u
 
 ## Figures
 
-`nim r koch tree` over this repository, warm: 0.122 s, 0.113 s, 0.106 s wall.
-`nim r koch audit`, which adds dependency restoration (no locks yet) and testament over both
-projects: 14.885 s, 14.423 s, 14.789 s wall, dominated by sixteen testament compiles.
-Measured with bash `time`, three consecutive runs each, Linux amd64 container with four
-Xeon 2.80 GHz cores, Nim 2.2.4 default build, 2026-09-05. No optimisation is claimed, so no
-before-and-after pair exists. Re-measure when the tree grows past a few hundred files or a
-check gains a second pass; otherwise treat as unmeasured.
+`nim r koch tree` over this repository, warm: 0.245 s, 0.239 s, 0.243 s wall.
+`nim r koch audit`, which adds dependency restoration (no locks yet) and testament over
+three projects: 77.9 s, 62.8 s, 62.7 s wall; first run pays compile of test binaries the
+next two reuse, and `contributor/síncopa/dance_ontology` is nearly all of it (its eleven
+stubs measured 52.7 s alone, `tlaws` 23.0 s of that). Measured with bash `time`, three
+consecutive runs each, Linux amd64 container with four Xeon 2.80 GHz cores, Nim 2.2.4
+default build, 2026-09-05. Before that project arrived the same commands measured 0.11 s and
+14.7 s, which is the growth to watch rather than a before-and-after pair: no optimisation is
+claimed. Re-measure when a project's suites grow; otherwise treat as unmeasured.
