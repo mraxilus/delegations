@@ -1,0 +1,12 @@
+# Nim build products: compiler cache, testament results, built binaries.
+nimcache/
+testresults/
+bin/
+
+# Testament test binaries sit beside their sources.
+curator/tests/t*
+!curator/tests/*.nim
+
+# Node build products, for TypeScript projects.
+node_modules/
+dist/

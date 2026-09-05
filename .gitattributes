@@ -1,0 +1,2 @@
+# Keep LF endings on every platform so rules stamp and form check agree everywhere.
+* text=auto eol=lf
