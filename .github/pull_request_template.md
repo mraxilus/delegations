@@ -4,12 +4,12 @@
 
 ## Scope
 
-- Branch: `<domain>/<project>/<name>` or `curator/<name>`
+- Branch: `contributor/<domain>/<project>/<name>`, `curator/<project>/<name>` or `curator/<name>`
 - Paths outside scope: none
 
 ## Verification
 
-<!-- What ran, on which build: `make check` result, sample counts, figures with their pair. -->
+<!-- What ran, on which build: `nim r koch ci` result, sample counts, figures with their pair. -->
 
 ## Record
 

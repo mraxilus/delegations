@@ -23,33 +23,37 @@ Overarching theme: methods of communication.
 
 ```text
 README.md  LICENSE.md  CONSTITUTION.md  STYLE.md  CURATOR.md  CONTRIBUTOR.md  CLAUDE.md
-Makefile   .gitignore  .gitattributes   .github/
-curator/                 audit tooling, itself a project
-<domain>/README.md       domain theme
-<domain>/<project>/      README.md  PROVENANCE.md  GLOSSARY.md  Makefile  src/  tests/
+koch.nim   koch.nim.cfg  .gitignore  .gitattributes  .github/
+curator/README.md                        curator projects: audit, probe, any other
+curator/<project>/                       README.md  PROVENANCE.md  GLOSSARY.md  <project>.nimble
+                                         src/  tests/  [atlas.config atlas.lock nim.cfg]
+contributor/README.md                    contributor projects, grouped by domain
+contributor/<domain>/README.md           domain theme
+contributor/<domain>/<project>/          same shape as a curator project
 ```
 
 ## Roles
 
-- A **curator** session maintains the rules, the domain folders and the audit tooling, and
-  never writes project code. It starts from [CURATOR.md](CURATOR.md).
+- A **curator** session maintains the rules, the root files and the curator projects, and
+  never writes contributor project code. It starts from [CURATOR.md](CURATOR.md).
 - A **contributor** session builds one project and touches nothing outside its folder. It
   starts from [CONTRIBUTOR.md](CONTRIBUTOR.md).
 
 ## Branches and checks
 
-`main` is protected; the owner merges pull requests by hand. Work happens on
-`<domain>/<project>/<name>` for projects and `curator/<name>` for the tooling. Every pull
-request runs three jobs:
+`main` is protected; the owner merges pull requests by hand. Branches mirror paths:
+`contributor/<domain>/<project>/<name>` and `curator/<project>/<name>` may change only that
+project; `curator/<name>` is rules and root work. Every pull request runs three jobs:
 
 - `audit`: layout, form, telegraphic comments, provenance headers and rules stamps,
-  glossary shape, then every project's own `make check`.
-- `scope`: every changed path lies inside the branch's project folder.
+  glossary shape, dependencies restored from lock files, then every project's tests.
+- `scope`: every changed path lies inside the branch's folder.
 - `commits`: every subject is a Conventional Commit whose scope matches the branch.
 
-Locally, `make ci` runs the same three checks against a fresh `origin/main`; every pull
-request passes it before it is opened. `make check` alone runs the audit and every project.
-Both need Nim 2.2.4, make and git.
+Everything is driven by `koch.nim`, a compiled Nim program as in Nim's own repository:
+`nim r koch ci` runs the same three checks locally against a fresh `origin/main`, and every
+pull request passes it before it is opened. Needs Nim 2.2.4 and git. Dependencies are
+managed per project with Atlas; lock files are committed, checkouts never.
 
 ## Licence
 

@@ -1,10 +1,10 @@
 # Contributor
 
 You are a contributor session in `delegations`, a repository of model-written code under one
-owner's architecture. You are assigned exactly one project, `<domain>/<project>`, named in
-the prompt that carried this file. Everything you write lives there, on a branch named for
-it. The owner merges by hand. You never merge, never touch `main`, never write outside your
-project.
+owner's architecture. You are assigned exactly one project, `contributor/<domain>/<project>`,
+named in the prompt that carried this file. Everything you write lives there, on a branch
+named for it. The owner merges by hand. You never merge, never touch `main`, never write
+outside your project.
 
 ## Read first, in this order
 
@@ -12,29 +12,33 @@ project.
    break one, say so and write down the cost.
 2. `STYLE.md`. How each rule is spelled in Nim.
 3. This file to the end, including the glossary process and the provenance guide.
-4. `<domain>/README.md` for the domain's theme, then your project's `README.md`,
+4. `contributor/<domain>/README.md` for the domain's theme, then your project's `README.md`,
    `PROVENANCE.md` and `GLOSSARY.md` when they exist. `PROVENANCE.md` describes the design
    as it is now; read it before the code, and correct it when the code disagrees.
+5. `curator/probe/` is a complete worked example of the project shape: nimble file, source,
+   matrix tests, provenance, glossary. `curator/audit/tests/` is a larger suite.
 
 ## Boundaries
 
-- **Scope.** Only paths under `<domain>/<project>/`. The CI job `scope` fails on any other
-  path. Root files, `curator/`, domain READMEs and other projects are not yours, even to fix
-  a typo. The owner may merge a red check deliberately; never count on it.
+- **Scope.** Only paths under `contributor/<domain>/<project>/`. The CI job `scope` fails on
+  any other path. Root files, `koch.nim`, `curator/`, the root and domain READMEs and other
+  projects are not yours, even to fix a typo. The owner may merge a red check deliberately;
+  never count on it.
 - **Blocked by a rule or a check.** Do not work around it and do not edit the rule. Record
   the question under an `## Open questions` heading in `PROVENANCE.md` and in the pull
   request body. The curator changes rules; you do not.
 - **Language.** Nim. TypeScript only where JavaScript is unavoidable (a browser or Node
   host), never plain JavaScript, never Python. Each such file justifies itself in its header.
-- **File kinds.** Only kinds registered in `curator/src/kinds.nim` may exist; the `audit` job
-  rejects any other. Need a new kind: record it as an open question and leave the file out
-  until the curator registers it.
+- **File kinds.** Only kinds registered in `curator/audit/src/kinds.nim` may exist; the
+  `audit` job rejects any other. Need a new kind: record it as an open question and leave
+  the file out until the curator registers it.
 - **Dependencies.** Derive what the project exists to understand (Article II.8). External
-  concerns may be dependencies, each justified where imported. Vendored source stays out of
-  the repository (Article XI.3); `PROVENANCE.md` records its origin, commit and licence.
+  concerns may be dependencies, each justified where imported, declared in your nimble file
+  and pinned with Atlas (below). Vendored source stays out of the repository (Article
+  XI.3); `deps/` is ignored and `PROVENANCE.md` records each dependency's origin and licence.
 - **Comments are telegraphic** in every file kind: no `a`, `an`, `the` in any comment. The
-  audit reads comments in Nim, Makefile, YAML, `.gitignore`, `.gitattributes` and
-  TypeScript. Markdown documents are prose and keep their articles.
+  audit reads comments in Nim, NimScript, nimble files, cfg files, YAML, `.gitignore`,
+  `.gitattributes` and TypeScript. Markdown documents are prose and keep their articles.
 
 ## Branch and commits
 
@@ -42,11 +46,11 @@ Branch from `main`:
 
 ```sh
 git fetch origin main
-git checkout -b <domain>/<project>/<name> origin/main
+git checkout -b contributor/<domain>/<project>/<name> origin/main
 ```
 
-- Exactly three segments. `<domain>` is one of `abstand`, `bangu`, `ronri`, `síncopa`,
-  `comma_games`. `<project>` matches `[a-z][a-z0-9_]*`. `<name>` matches
+- Exactly four segments, mirroring the path. `<domain>` is one of `abstand`, `bangu`,
+  `ronri`, `síncopa`, `comma_games`. `<project>` matches `[a-z][a-z0-9_]*`. `<name>` matches
   `[a-z0-9][a-z0-9_-]*`.
 - Conventional Commits with the project folder as scope: `feat(<project>): add parser`.
   Lowercase imperative summary, no final period. Types: `build`, `chore`, `ci`, `docs`,
@@ -54,25 +58,28 @@ git checkout -b <domain>/<project>/<name> origin/main
   `PROVENANCE.md` and `GLOSSARY.md` updates travel in their own `docs(<project>)` commit,
   in the same delivery as the change they describe.
 - Never rewrite pushed history. The log is part of the document (Article XI.2).
-- `make ci` at the repository root passes on the exact commit you are about to push. Only
-  then push with `git push -u origin <branch>` and open a pull request from the template.
-  Do not merge and do not ask for a merge; the owner reads and merges.
+- `nim r koch ci` at the repository root passes on the exact commit you are about to push.
+  Only then push with `git push -u origin <branch>` and open a pull request from the
+  template. Do not merge and do not ask for a merge; the owner reads and merges.
 
 ## Starting a project
 
 Before any code:
 
-1. Create `<domain>/<project>/`.
+1. Create `contributor/<domain>/<project>/`.
 2. Write `PROVENANCE.md` first, opening with the header table below. The `Rules` value is
-   the stamp of the governing documents: run `make stamp` at the repository root (needs Nim
-   2.2.4, make and git) and paste its output.
-3. Write `GLOSSARY.md`: `# <Project>` heading, one sentence on what the project is,
+   the stamp of the governing documents: run `nim r koch stamp` at the repository root
+   (needs Nim 2.2.4 and git) and paste its last line.
+3. Write `GLOSSARY.md`: `# <project>` heading, one sentence on what the project is,
    `## Language`. Terms are added as they resolve, never in advance.
 4. Write `README.md`: purpose, authority replicated if any, build and test command, status.
-5. Write `Makefile` with a `check` target that rebuilds, then drives every test
-   (Article IX.6).
+5. Write `<project>.nimble`: `version`, `author`, `description`, `license`,
+   `srcDir = "src"`, `requires "nim >= 2.2.4"`. Copy `curator/probe/probe.nimble`. Atlas and
+   the audit read requirements from this file; the audit demands exactly one nimble file,
+   named after the project folder.
 6. Create `src/` and `tests/` with at least one test. Use the testament stub shape from
-   `STYLE.md` §6; the curator's own tests under `curator/tests/` are a worked example.
+   `STYLE.md` §6; `curator/probe/tests/tprobe.nim` is a worked example with a matrix.
+   `nim r koch tests contributor/<domain>/<project>` runs your tests alone.
 
 Header table for `PROVENANCE.md`:
 
@@ -83,12 +90,28 @@ Header table for `PROVENANCE.md`:
 | Author | <model> |
 | Date   | <YYYY-MM-DD> |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | <output of `make stamp`> |
+| Rules  | <last line of `nim r koch stamp`> |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 ```
 
-Minimal `Makefile`: copy `curator/Makefile` and keep its `check` target, which runs
-testament over `tests/t*.nim`. Recipe lines begin with a tab, the one place a tab is allowed.
+## Adding a dependency
+
+Dependencies are managed per project with Atlas, Nim's dependency manager (`atlas` ships
+with Nim). Inside your project directory:
+
+1. `atlas init` once; it writes `deps/atlas.config`. Move that file to the project root
+   (`mv deps/atlas.config .`) so it is committed; `deps/` never is.
+2. `atlas use <package>`: clones into `deps/`, appends `requires "<package>"` to your nimble
+   file and writes `--path` lines into `nim.cfg` between marker comments.
+3. `atlas pin`: writes `atlas.lock` with exact commits. The audit demands this file whenever
+   the nimble file requires a package.
+4. Commit `<project>.nimble`, `atlas.config`, `atlas.lock` and `nim.cfg`. Justify the import
+   in the module header that uses it (Article II.8) and record origin, commit and licence
+   in `PROVENANCE.md` (Article XI.3).
+
+`nim r koch deps` restores every project's checkouts from its lock (`atlas --noexec rep`,
+verified by `atlas changed`); the `audit` job runs it before the tests. Atlas needs the
+network for every command, so a project with no packages carries no lock and skips Atlas.
 
 ## Building on a project
 
@@ -96,14 +119,14 @@ Every later session:
 
 1. Read `PROVENANCE.md` in full, then `GLOSSARY.md`, then the code in the order the umbrella
    module's bootstrap diagram gives.
-2. Run `make check` at the repository root. It must be green before you start. Before every
-   push, `make ci` must be green (see below).
+2. Run `nim r koch audit` at the repository root. It must be green before you start. Before
+   every push, `nim r koch ci` must be green (see below).
 3. `Rules stamp stale` on your project means the governing documents changed after the
    project's last audit. Normally the curator re-audits every project in the same pull
    request as a rules change, so this appears only when your branch predates one. Merge
    `origin/main` into your branch, read the diff of `CONSTITUTION.md`, `STYLE.md` and
    `CONTRIBUTOR.md` since the `Date` in your header, re-audit the project against each
-   changed rule, fix, then paste the new `make stamp` value in its own `docs` commit.
+   changed rule, fix, then paste the new stamp in its own `docs` commit.
 4. Work in small commits. Update `PROVENANCE.md` in the same delivery as each design change,
    pruning what the change replaced.
 
@@ -117,8 +140,9 @@ Every later session:
 - Test laws, not examples. Enumerate small domains exhaustively; sample large ones with a
   few hundred seeded random cases, and record the count beside the claim.
 - Test where the mechanism runs: real wiring, output read back, bytes re-read.
-- `make -C <domain>/<project> check` is the one command for your project. The root
-  `make check` runs the audit, then that command for every project; CI runs the same.
+- `koch` runs testament over `tests/t*.nim` in your project directory; there is no
+  per-project build file. `nim r koch audit` runs the static audit, restores dependencies,
+  then every project's tests; CI runs the same.
 
 ## Glossary process
 
@@ -127,7 +151,7 @@ renamed for this repository. It is the project's ubiquitous language: the words 
 the code and every later session share. Format:
 
 ```md
-# <Project>
+# <project>
 
 <One or two sentences on what this project is and why it exists.>
 
@@ -166,18 +190,17 @@ what was rejected, what it costs. There is no `docs/adr/`.
 
 ## Before opening a pull request
 
-- `make ci` at the repository root passes on the exact commit you push. It fetches
-  `origin/main`, then runs the same three checks CI runs: `check` (the `audit` job: layout,
-  form, comments, provenance, glossary, every project's tests), `scope` (every changed path
-  starts with `<domain>/<project>/`) and `commits` (every subject parses as
+- `nim r koch ci` at the repository root passes on the exact commit you push. It fetches
+  `origin/main`, then runs the same three checks CI runs: `audit` (layout, form, comments,
+  provenance, glossary, dependencies, every project's tests), `scope` (every changed path
+  starts with `contributor/<domain>/<project>/`) and `commits` (every subject parses as
   `type(<project>): summary`). A pull request opened before it passes is a process
   violation whatever CI later says: the runner confirms, it never discovers. Run it again
   before every later push to the same pull request.
 - `PROVENANCE.md` describes the design as it now is, with each claim marked verified or
   assumed and each figure carrying its pair; nothing narrates.
 - `GLOSSARY.md` holds every term that resolved.
-- No debug output, trailing whitespace, tabs outside make recipes, or lines over 100
-  characters.
+- No debug output, trailing whitespace, tabs, or lines over 100 characters.
 - Pull request body follows `.github/pull_request_template.md`: intent, scope, verification
   (what ran, on which build), record, notes.
 
@@ -205,7 +228,7 @@ Open the file before writing code. Begin with a table:
 | Author | the model |
 | Date   | today |
 | Style  | which style or constitution documents govern the code, and that they were followed |
-| Rules  | the stamp `make stamp` prints for the governing documents you audited against |
+| Rules  | the stamp `nim r koch stamp` prints for the governing documents you audited against |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 The review line is the point of the file. AI-authored work must carry its own verification
