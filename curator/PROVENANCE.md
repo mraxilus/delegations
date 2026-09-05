@@ -130,9 +130,14 @@ repositories. Verified: 12 test files, all passing on Nim 2.2.4 Linux amd64.
 **Three jobs, so the owner reads each verdict alone.** `audit` runs `make check`; `scope`
 and `commits` run only on pull requests with full history and pass the branch name through
 the environment, never interpolated into the script. Nim is pinned once as
-`NIM_VERSION`. Assumed: `jiro4989/setup-nim-action@v2` places `nim` and `testament` on
-PATH; unverified until the first pull request runs. Required checks are named `audit`,
-`scope`, `commits` for branch protection.
+`NIM_VERSION`. The setup action installs Nim under the runner's temp directory
+(`parent-nim-install-directory`), never into the workspace, and `.gitignore` also lists
+`.nim_runtime/`: the audit reads untracked files, so a toolchain inside the checkout is
+audited as source. Verified by the first run on `main`, which reported 33,367 findings in
+Nim's own tree before either guard existed, and by reproducing locally with a fake
+`.nim_runtime/` file. Verified on pull request 1: `scope` and `commits` jobs green, so
+`nim` reaches PATH. Assumed until the next `audit` job passes: `testament` reaches PATH
+the same way. Required checks are named `audit`, `scope`, `commits` for branch protection.
 
 ## Figures
 

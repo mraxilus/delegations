@@ -3,6 +3,8 @@
 #   `scope` (branch prefix), `commits` (Conventional Commits). Branch protection on main
 #   requires all three.
 #   Nim version pinned once here; CURATOR.md names this file as its source.
+#   Nim installs under runner temp, never into workspace: audit reads untracked files, so
+#   toolchain inside checkout would be audited (first run on main proved it).
 #   Branch names reach shell through environment, never interpolated into script.
 
 name: check
@@ -23,6 +25,7 @@ jobs:
       - uses: jiro4989/setup-nim-action@v2
         with:
           nim-version: ${{ env.NIM_VERSION }}
+          parent-nim-install-directory: ${{ runner.temp }}
       - run: make check
 
   scope:
@@ -38,6 +41,7 @@ jobs:
       - uses: jiro4989/setup-nim-action@v2
         with:
           nim-version: ${{ env.NIM_VERSION }}
+          parent-nim-install-directory: ${{ runner.temp }}
       - run: make scope BRANCH="$BRANCH" BASE="$BASE"
 
   commits:
@@ -53,4 +57,5 @@ jobs:
       - uses: jiro4989/setup-nim-action@v2
         with:
           nim-version: ${{ env.NIM_VERSION }}
+          parent-nim-install-directory: ${{ runner.temp }}
       - run: make commits BRANCH="$BRANCH" BASE="$BASE"
