@@ -6,7 +6,7 @@
 ##     and `taudit` proves they still agree.
 
 import std/[os, osproc, tempfiles]
-import ../src/[domains, kinds, layout, provenance]
+import ../src/[domains, kinds, layout, provenance, dependencies]
 
 
 func entry*(path, content: string): Entry =
@@ -24,16 +24,17 @@ func provenanceText*(stamp: string): string =
 const
   GLOSSARY_TEXT* = "# Fixture\n\nFixture glossary.\n\n## Language\n\n**Term**:\nOne thing.\n"
     ## Minimal glossary passing shape check.
-  MAKEFILE_TEXT* = "# Drive tests.\n\ncheck:\n\ttrue\n"
-    ## Minimal project Makefile with `check` target.
-  ROOT_MAKEFILE_TEXT* = "# Drive checks.\n\n" &
-    "check:\n\ttrue\nci:\n\ttrue\ntree:\n\ttrue\nprojects:\n\ttrue\nscope:\n\ttrue\n" &
-    "commits:\n\ttrue\nstamp:\n\ttrue\n"
-    ## Minimal root Makefile declaring every target in `ROOT_TARGETS`.
+  NIMBLE_TEXT* = "# Package description; requirements live here.\n\nversion = \"0.1.0\"\n" &
+    "srcDir = \"src\"\n\nrequires \"nim >= 2.2.4\"\n"
+    ## Minimal nimble file requiring no package.
   RULES_TEXT* = [
     "# Constitution\n\nRules.\n", "# Style\n\nSpelling.\n", "# Contributor\n\nDuties.\n",
   ]
     ## Contents of rules documents in fixture tree, in `RULES` order.
+  ALPHA_DIR* = CONTRIBUTOR & "/ronri/alpha"
+    ## Contributor project in fixture tree.
+  AUDIT_DIR* = CURATOR & "/audit"
+    ## Curator project in fixture tree.
 
 
 func readmeText*(): string =
@@ -48,29 +49,33 @@ func projectEntries*(dir: string, stamp: string): seq[Entry] =
     entry(dir & "/README.md", "# Project\n\nPurpose.\n"),
     entry(dir & "/PROVENANCE.md", provenanceText(stamp)),
     entry(dir & "/GLOSSARY.md", GLOSSARY_TEXT),
-    entry(dir & "/Makefile", MAKEFILE_TEXT),
+    entry(dir & "/" & dir.projectName & NIMBLE_EXT, NIMBLE_TEXT),
     entry(dir & "/tests/tall.nim", "## Test everything.\n\ndiscard\n"),
   ]
 
 
 func goodTree*(): Tree =
-  ## Build smallest tree passing every static check, with one project `ronri/alpha`.
+  ## Build smallest tree passing every static check, with projects in both roots.
   let stamp_now = stamp(RULES_TEXT)
   result = @[
     entry("README.md", readmeText()),
     entry("LICENSE.md", "# Licence\n\nText.\n"),
     entry("CLAUDE.md", "# Claude\n\nRead rules.\n"),
     entry("CURATOR.md", "# Curator\n\nDuties.\n"),
-    entry("Makefile", ROOT_MAKEFILE_TEXT),
+    entry("koch.nim", "## Drive checks.\n\ndiscard\n"),
+    entry("koch.nim.cfg", "# Flags for koch.\nhints:off\n"),
     entry(".gitignore", "# Build products.\nbin/\n"),
     entry(".gitattributes", "# Endings.\n* text=auto eol=lf\n"),
     entry(".github/workflows/check.yml", "# Run checks.\nname: check\n"),
   ]
   for k, rule in RULES: result.add entry(rule, RULES_TEXT[k])
+  for root in ROOTS: result.add entry(root & "/README.md", "# " & root & "\n\nProjects.\n")
   for d in DOMAINS:
-    result.add entry(d.folder & "/README.md", "# " & d.name & "\n\n" & d.theme & "\n")
-  result.add projectEntries(CURATOR, stamp_now)
-  result.add projectEntries("ronri/alpha", stamp_now)
+    result.add entry(
+      CONTRIBUTOR & "/" & d.folder & "/README.md", "# " & d.name & "\n\n" & d.theme & "\n"
+    )
+  result.add projectEntries(AUDIT_DIR, stamp_now)
+  result.add projectEntries(ALPHA_DIR, stamp_now)
 
 
 func without*(tree: Tree, path: string): Tree =

@@ -22,12 +22,9 @@ suite "Article X":
       @["Line exceeds 100 characters; got `101`."]  # 101 runes fail
     check messages("LICENSE.md", "x".repeat(400) & "\n", Kind.Markdown).len == 0  # exempt
 
-  test "X.1 tabs rejected, recipe tab allowed":
+  test "X.1 tabs rejected in every kind":
     check messages("a.nim", "\tx\n", Kind.Nim) == @["Line holds tab."]  # no tabs
-    check messages("Makefile", "check:\n\ttrue\n", Kind.Makefile).len == 0  # recipe tab
-    check messages("Makefile", "check:\n\ttrue\t# x\n", Kind.Makefile) ==
-      @["Line holds tab."]  # inner tab
-    check messages("Makefile", "x\t= 1\n", Kind.Makefile) == @["Line holds tab."]  # not leading
+    check messages("nim.cfg", "hints:off\t# x\n", Kind.Cfg) == @["Line holds tab."]  # cfg too
 
   test "X.2 banner spacing":
     let good = "x = 1\n\n\n\n#[ Section ]#\n\ny = 2\n"
@@ -38,7 +35,7 @@ suite "Article X":
       @["Banner lacks exactly one blank line after it."]  # none after
     check messages("a.nim", "x = 1\n\n\n#[ Section ]#\n\n\ny = 2\n", Kind.Nim) ==
       @["Banner lacks exactly one blank line after it."]  # two after
-    check messages("Makefile", "#[ Section ]#\n", Kind.Makefile).len == 0  # Nim only
+    check messages("nim.cfg", "#[ Section ]#\n", Kind.Cfg).len == 0  # Nim only
 
 
 suite "Article VIII":

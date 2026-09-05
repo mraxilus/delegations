@@ -43,9 +43,9 @@ suite "Article VI":
       @["one", "two inner tail", "three four"]  # nesting, per line, whitespace collapsed
     check texts("##[ doc block ]##\n", Syntax.Nim) == @["doc block"]  # doc block
 
-  test "VI.5 Makefile hash":
-    check texts("check: # target\n\t@echo '#' # run\n", Syntax.Hash) ==
-      @["target", "' # run"]  # no string literals in make
+  test "VI.5 cfg hash":
+    check texts("hints:off # quiet\npath:\"a#b\" # yes\n", Syntax.Hash) ==
+      @["quiet", "b\" # yes"]  # no string literals in cfg
     check texts("x = \\# literal\n", Syntax.Hash).len == 0  # escaped hash only
 
   test "VI.5 YAML hash after whitespace outside quotes":

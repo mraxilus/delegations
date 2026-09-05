@@ -6,8 +6,8 @@ joinable: true
 """
 ## Replicate umbrella: whole static audit over fixture tree, and stamp derivation.
 
-import std/[sequtils, strutils, unittest]
-import ../src/[audit, layout, provenance]
+import std/[algorithm, sequtils, strutils, unittest]
+import ../src/[audit, provenance]
 import ./fixtures
 
 
@@ -23,11 +23,12 @@ suite "Audit":
   test "one change to any rules document goes stale in every project":
     let changed = goodTree().replaced("CONTRIBUTOR.md", RULES_TEXT[2] & "More.\n")
     let stale = changed.auditTree.filterIt("stale" in it.message)
-    check stale.mapIt(it.path) == @["curator/PROVENANCE.md", "ronri/alpha/PROVENANCE.md"]  # all
+    check stale.mapIt(it.path).sorted ==
+      @[ALPHA_DIR & "/PROVENANCE.md", AUDIT_DIR & "/PROVENANCE.md"]  # every project
     let curator_only = changed.replaced("CURATOR.md", "# Curator\n\nChanged.\n")
     check curator_only.auditTree.len == stale.len  # CURATOR.md is not stamped
 
   test "form and prose findings reach umbrella":
-    let messy = goodTree() & @[entry("ronri/alpha/src/x.nim", "# the trap \n")]
+    let messy = goodTree() & @[entry(ALPHA_DIR & "/src/x.nim", "# the trap \n")]
     check messy.auditTree.mapIt(it.message) ==
       @["Line ends with whitespace.", "Comment holds article; got `the`."]  # both checks ran

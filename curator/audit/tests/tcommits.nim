@@ -27,14 +27,16 @@ suite "Article XI":
     ]:  # 11 cases
       check parseSubject(subject).isNone  # type(scope): lowercase summary, no period
 
-  test "XI.1 scope must match branch when branch parses":
-    check checkCommits("ronri/alpha/work", ["feat(alpha): add", "test(alpha): cover"]).len ==
-      0  # scope equals project
-    let found = checkCommits("ronri/alpha/work", ["feat(beta): add"])
-    check found.mapIt(it.message) ==
+  test "XI.1 scope must match project on contributor and curator project branches":
+    check checkCommits("contributor/ronri/alpha/work", ["feat(alpha): add", "test(alpha): c"])
+      .len == 0  # scope equals project
+    check checkCommits("contributor/ronri/alpha/work", ["feat(beta): add"]).mapIt(it.message) ==
       @["Commit scope must be `alpha`; got `feat(beta): add`."]  # scope named
-    check checkCommits("curator/rules", ["docs(alpha): x", "ci(curator): y"]).len == 0  # any scope
+    check checkCommits("curator/audit/work", ["feat(audit): add"]).len == 0  # curator project
+    check checkCommits("curator/audit/work", ["docs(curator): x"]).mapIt(it.message) ==
+      @["Commit scope must be `audit`; got `docs(curator): x`."]  # not curator
+    check checkCommits("curator/rules", ["docs(alpha): x", "ci(curator): y"]).len == 0  # any
     check checkCommits("claude/setup", ["docs(alpha): x", "feat(curator): y"]).len ==
       0  # unparsed branch checks format only
     check checkCommits("claude/setup", ["Bad subject"]).len == 1  # format still checked
-    check checkCommits("ronri/alpha/work", []).len == 0  # no commits, no findings
+    check checkCommits("contributor/ronri/alpha/work", []).len == 0  # no commits, no findings
