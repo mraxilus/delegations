@@ -13,6 +13,9 @@ bin/
 **/tests/t*
 !**/tests/*.nim
 
+# Pages, pictures and scripts projects build; pattern without slash matches at any depth.
+build/
+
 # Atlas checkouts and caches; nimble file, atlas.config, atlas.lock and nim.cfg are
 # committed, clones never (Article XI.3).
 **/deps/
