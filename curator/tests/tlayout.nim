@@ -43,10 +43,20 @@ suite "Layout":
     check goodTree().replaced("ronri/alpha/Makefile", "all:\n\ttrue\n").paths ==
       @["ronri/alpha/Makefile"]  # `check` target
 
-  test "check target forms":
-    check "check:\n".hasCheckTarget and "check :\n".hasCheckTarget  # both spellings
-    check "check: deps\n".hasCheckTarget and ".PHONY: check\n\ncheck:\n".hasCheckTarget  # deps
-    check not "checks:\n".hasCheckTarget and not ".PHONY: check\n".hasCheckTarget  # near misses
+  test "target forms":
+    check "check:\n".hasTarget("check") and "check :\n".hasTarget("check")  # both spellings
+    check "check: deps\n".hasTarget("check")  # dependencies after colon
+    check ".PHONY: check\n\ncheck:\n".hasTarget("check")  # phony line is not target
+    check not "checks:\n".hasTarget("check") and not ".PHONY: check\n".hasTarget("check")  # near
+
+  test "root Makefile declares every documented target":
+    for target in ROOT_TARGETS:  # 7 targets, exhaustive
+      let stripped = ROOT_MAKEFILE_TEXT.replace(target & ":\n\ttrue\n", "")
+      let found = goodTree().replaced("Makefile", stripped).checkLayout
+      let message = "Root Makefile lacks target; got `" & target & "`."
+      check found.len == 1 and found[0].message == message  # missing target named
+    let superset = goodTree().replaced("ronri/alpha/Makefile", ROOT_MAKEFILE_TEXT)
+    check superset.checkLayout.len == 0  # project may declare more than check
 
   test "README files are derived views of DOMAINS":
     let stripped = readmeText().replace("| ronri | ronri | Computing. |\n", "")

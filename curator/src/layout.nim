@@ -7,6 +7,8 @@
 ##     holding at least one file. Domain folder holds README.md and project folders only.
 ##   Root README.md and each domain README.md are checked as derived views of `DOMAINS`
 ##     (Article I.4): row per domain in root table; name heading and theme line per domain.
+##   Root Makefile must declare every target documents name (`ROOT_TARGETS`), so `make ci`
+##     in CONTRIBUTOR.md never points at nothing.
 ##   Unregistered file kind anywhere is finding (Article VI.5), pointing at `kinds.nim`.
 ##
 ##   Cost: rules read path strings, never disk, so tests feed synthetic trees and git
@@ -39,6 +41,8 @@ const
     ## Directories allowed at root besides domain folders.
   PROJECT_FILES* = ["README.md", "PROVENANCE.md", "GLOSSARY.md", "Makefile"]
     ## Files every project directory must hold.
+  ROOT_TARGETS* = ["check", "ci", "tree", "projects", "scope", "commits", "stamp"]
+    ## Targets root Makefile must declare; CURATOR.md, CONTRIBUTOR.md and README.md name them.
   TESTS_DIR* = "tests"
     ## Directory every project must populate.
 
@@ -55,10 +59,10 @@ func projectDirs*(tree: Tree): seq[string] =
   result.sort
 
 
-func hasCheckTarget*(makefile: string): bool =
-  ## Decide whether Makefile declares `check` target, i.e. line `check:` or `check :`.
+func hasTarget*(makefile, name: string): bool =
+  ## Decide whether Makefile declares target, i.e. line `name:` or `name :`.
   for line in makefile.splitLines:
-    if line.startsWith("check") and line[5 .. ^1].strip(trailing = false).startsWith(":"):
+    if line.startsWith(name) and line[name.len .. ^1].strip(trailing = false).startsWith(":"):
       return true
   false
 
@@ -108,8 +112,16 @@ func checkProject(tree: Tree, paths: Table[string, int], dir: string): seq[Findi
       dir & "/" & TESTS_DIR, 0, "Project tests missing; add at least one file under `tests/`."
     )
   let makefile = dir & "/Makefile"
-  if makefile in paths and not tree[paths[makefile]].content.hasCheckTarget:
+  if makefile in paths and not tree[paths[makefile]].content.hasTarget("check"):
     result.add finding(makefile, 0, "Makefile lacks `check` target.")
+
+
+func checkRootMakefile(tree: Tree, paths: Table[string, int]): seq[Finding] =
+  ## Report root Makefile targets documents name but Makefile lacks.
+  if "Makefile" notin paths: return
+  for target in ROOT_TARGETS:
+    if not tree[paths["Makefile"]].content.hasTarget(target):
+      result.add finding("Makefile", 0, "Root Makefile lacks target; got `" & target & "`.")
 
 
 func checkDomainViews(tree: Tree, paths: Table[string, int]): seq[Finding] =
@@ -139,4 +151,5 @@ func checkLayout*(tree: Tree): seq[Finding] =
   let paths = tree.index
   for e in tree: result.add e.checkEntry
   for dir in tree.projectDirs: result.add checkProject(tree, paths, dir)
+  result.add checkRootMakefile(tree, paths)
   result.add checkDomainViews(tree, paths)
