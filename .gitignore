@@ -3,6 +3,10 @@ nimcache/
 testresults/
 bin/
 
+# Nim toolchain installed into workspace by setup action or by hand; audit reads untracked
+# files, so 33k findings in Nim's own source followed once (first CI run on main).
+.nim_runtime/
+
 # Testament test binaries sit beside their sources.
 curator/tests/t*
 !curator/tests/*.nim
