@@ -1,4 +1,0 @@
-# Build products: every page, picture and script under build/; testament binaries beside tests.
-build/
-tests/t*
-!tests/*.nim

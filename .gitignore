@@ -1,15 +1,27 @@
-# Nim build products: compiler cache, testament results, built binaries.
+# Nim build products: compiler cache, testament results, built binaries, koch itself.
 nimcache/
 testresults/
 bin/
+/koch
 
 # Nim toolchain installed into workspace by setup action or by hand; audit reads untracked
 # files, so 33k findings in Nim's own source followed once (first CI run on main).
 .nim_runtime/
 
-# Testament test binaries sit beside their sources.
-curator/tests/t*
-!curator/tests/*.nim
+# Testament test binaries sit beside their sources, in every project; leading `**/` keeps
+# pattern with inner slash unanchored.
+**/tests/t*
+!**/tests/*.nim
+
+# Pages, pictures and scripts projects build; pattern without slash matches at any depth.
+build/
+
+# Atlas checkouts and caches; nimble file, atlas.config, atlas.lock and nim.cfg are
+# committed, clones never (Article XI.3).
+**/deps/
+*.nimble-link
+deps.dot
+deps.png
 
 # Node build products, for TypeScript projects.
 node_modules/
