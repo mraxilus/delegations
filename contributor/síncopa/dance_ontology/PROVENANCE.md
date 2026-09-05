@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 62d39efca9bd8ffb |
+| Rules  | d27dcdddede02dbd |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's workbook `ontology.partnerwork.xlsx` (sheets `base` and
@@ -172,24 +172,34 @@ distance never under the extents plus 0.10 m); not re-driven since: **assumed**.
 **Verdicts are an instrument run, assumed current.** `sim/verdicts.nim` asks the sim what the
 sheet asks and writes `sim/verdicts.md` in the sheet's words through one visible translation
 table, wrapped at 100 columns; no test compares the committed record with the model, so it
-is current as of 2026-09-05 (`make verdicts`, 45 s wall on this machine) and stale until
-rerun.
+is current as of 2026-09-05 (`tools/build.nim verdicts`, 42.3 s wall on this machine) and
+stale until rerun. Rerun during move reproduced committed file byte for byte.
 
 ## Pages and build
 
 **Every page, picture and script is a build product; the hand-written markup is hosted in
 Nim.** The repository's audit reads only registered file kinds and rejects any other, so
-`.html`, `.svg` and `.js` cannot be committed; `make pages` writes the shells from
+`.html`, `.svg` and `.js` cannot be committed; `tools/build.nim pages` writes the shells from
 `app/shell.nim`, `sim/shell.nim`, `tools/review_prose.nim` and `design/wholecloth_page.nim`,
 compiles the scripts beside them, and folds, renders and splices the rest under `build/`.
 The whole-cloth page's 213 lines of inline JavaScript were ported to Nim's JS backend. Tool
-binaries land in `bin/`, ignored at any depth by the root ignore file; test binaries beside
-their sources are ignored by the project's. Rejected: asking the curator to register an
+binaries land in `bin/`, and pages under `build/`; root ignore file covers both at any
+depth, with test binaries beside their sources. Rejected: asking the curator to register an
 HTML kind, which would still leave generated pages uncommittable (their lines exceed 100
 characters) and inline scripts unwritable. Cost: editing style means editing a string
 literal, and every hosted line must fit 100 columns, so the whole-cloth markup was reflowed
 at whitespace (verified equal under Playwright, see Figures); the embedded CSS and HTML
 comments are telegraphic by hand because the checker cannot see inside a string.
+
+**Project's verbs live in compiled driver, since make is retired.** `tools/build.nim` takes
+one command (`pages`, `verdicts`, `shot`, `clean`) and runs exactly what each Makefile
+recipe ran, same programs and arguments in same order; koch drives tests, and holds no verb
+for pages. Rejected: nimble task, which would put build logic in compiler's virtual machine;
+asking koch for project-specific verb. Cost: driver runs from project directory, since every
+path in it is relative. Verified by running each: `pages` writes every artefact in 58.4 s
+against Makefile's 57.3 s, `verdicts` rewrote `sim/verdicts.md` byte-identical to committed
+file in 42.3 s, `shot` emits `build/design/shot.js`, `clean` leaves source only, unknown
+command exits 2.
 
 ## Tests
 
@@ -197,8 +207,8 @@ comments are telegraphic by hand because the checker cannot see inside a string.
 carries the curator's header; `tlaws.nim` adds `-d:danger` because the sweeps are the slow
 part and `doAssert` survives it. Test binaries inherit testament's working directory, so
 `build/review`, `build/design` and `walkFiles("tests/t*.nim")` resolve only when testament
-runs from the project directory, as `make -C síncopa/dance_ontology check` does; running it
-from the repository root breaks them. Cost: `tlaws` runs on every core and its wall time
+runs from the project directory, as koch's runner does; running it from the repository root
+breaks them. Cost: `tlaws` runs on every core and its wall time
 follows the core count.
 
 ## Figures
@@ -206,10 +216,13 @@ follows the core count.
 - `tlaws` alone, danger build: 22.0 s wall, 59.0 s CPU, four Xeon cores, Linux amd64
   container, Nim 2.2.4, 2026-09-05; compile 2.3 s. Single figure, no pair: unmeasured as an
   optimisation.
-- `make verdicts`: 44.6 s wall, 151 s CPU, same machine and date.
-- `make -C síncopa/dance_ontology check`, eleven testament stubs: 52.7 s wall, 93.3 s CPU, same
-  machine and date; `tlaws` 23.0 s and `tmarks` 11.5 s of it.
-- `make -C síncopa/dance_ontology pages`, every page including the turns sweep: 57.3 s wall.
+- `tools/build.nim verdicts`: 42.3 s wall, same machine, 2026-09-05, after move; 44.6 s wall
+  and 151 s CPU before it, under retired `make verdicts`.
+- Eleven testament stubs, under `make check` before move: 52.7 s wall, 93.3 s CPU, same
+  machine and date; `tlaws` 23.0 s and `tmarks` 11.5 s of it. Not re-measured alone since;
+  whole-repository figure is in `curator/audit/PROVENANCE.md`.
+- `tools/build.nim pages`, every page including the turns sweep: 58.4 s wall, same machine,
+  after move; 57.3 s under retired `make pages`.
 - Whole-cloth port parity, driven under Chromium with fonts stubbed and `requestAnimationFrame`
   replaced by a stepped queue on both pages: 707 states, 0 mismatches. Body outside the turns
   panel with whitespace collapsed, head without title, and the full-body accessibility snapshot
@@ -239,12 +252,10 @@ Declared unmet by this move, so the Style row above stays true (Article VIII.1):
 
 ## Open questions
 
-- Root `.gitignore` ignores testament binaries under `curator/tests/` only, so this project
-  carries its own `.gitignore` for `tests/t*`, as `abstand/intervals` does.
 - Should the curator register Html and Svg kinds (comment scanner, width rule) so hand-drawn
   pages can be committed as HTML? Until then they are hosted as Nim strings.
 - Web fonts: X.8 asks for Noto Sans, Noto Serif and Commit Mono shipped with the page; font
   files are unregistered kinds. Owner's call whether to register a font kind, inline fonts as
   data URIs inside the hosted markup, or accept system stacks.
-- `tlaws` costs 22 s of a four-core runner per `make check`; acceptable now, and the figure
-  above is the one to watch as sweeps grow.
+- `tlaws` costs 22 s of a four-core runner per audit; acceptable now, and the figure above
+  is the one to watch as sweeps grow.

@@ -51,17 +51,18 @@ in one table and nothing is tuned to make them agree.
 ## Build and test
 
 ```sh
-make check                               # from repository root: audit, then every project
-make -C síncopa/dance_ontology check     # this project alone: testament over tests/t*.nim
-make -C síncopa/dance_ontology pages     # every page, picture and script, into build/
-make -C síncopa/dance_ontology verdicts  # rewrite sim/verdicts.md from the model
-make -C síncopa/dance_ontology shot      # screenshot helper, for node and Playwright
+nim r koch ci                                          # repository root: audit, scope, commits
+nim r koch tests contributor/síncopa/dance_ontology    # this project alone, its eleven suites
+nim r tools/build.nim pages                            # every page, picture and script, into build/
+nim r tools/build.nim verdicts                         # rewrite sim/verdicts.md from the model
+nim r tools/build.nim shot                             # screenshot helper, for node and Playwright
 ```
 
-Needs Nim 2.2.4, make and git. Every page is a build product: the repository reads only
-registered file kinds, so the hand-written page shells live in Nim modules (`app/shell.nim`,
-`sim/shell.nim`, `tools/review_prose.nim`, `design/wholecloth_page.nim`) and `make pages`
-writes them out under `build/` beside the scripts compiled for them. Publishing a page is
+The first two run from the repository root, the rest from this directory. Needs Nim 2.2.4
+and git. Every page is a build product: the repository reads only registered file kinds, so
+the hand-written page shells live in Nim modules (`app/shell.nim`, `sim/shell.nim`,
+`tools/review_prose.nim`, `design/wholecloth_page.nim`) and `tools/build.nim pages` writes
+them out under `build/` beside the scripts compiled for them. Publishing a page is
 republishing its built file to the artifact URL listed in `design/README.md` or
 `sim/README.md`.
 
@@ -87,6 +88,7 @@ tools/audit.nim                    the same audit, printed
 tools/review.nim                   writes the review page from the model and the prose
                                    in tools/review_prose.nim; every number is a marker
 tools/pages.nim, tools/bundle.nim  write the shells out; fold a page into one file
+tools/build.nim                    this project's verbs: pages, verdicts, shot, clean
 tests/                             the laws, over every pair of frames; the sim's laws
                                    (tlaws); the workbench's gates (tmarks); the review
                                    page rendered whole (treview)
