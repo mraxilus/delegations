@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 0c52eec980425fef |
+| Rules  | 62d39efca9bd8ffb |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: first contributor project, opened to exercise the repository's process end to end.
