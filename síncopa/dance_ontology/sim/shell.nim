@@ -1,0 +1,135 @@
+## Host body sim page's shell: markup, style and key text `tools/pages` writes beside
+##   `sim.js`.
+##   Lives in Nim because repository reads only registered file kinds; markup holds no
+##     comment.  Plain constant, never format string: style is full of braces.
+##   Cost: editing style means editing string literal; `make pages` writes it out.
+
+const SHELL* = """
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>the body sim</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --page: #fbfaf8; --ink: #1a1a1a; --dim: #6b6660; --faint: #948d85;
+  --rule: #ddd8d0; --rule-strong: #c2bbb0; --panel: #ffffff; --wash: #f1eee9;
+  --short: #b3392a; --spare: #3f7550;
+  --rope-a: #3d7fd0; --rope-b: #d0763d; --rope-c: #3f7550; --rope-d: #8a5cb8;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --page: #14100c; --ink: #ece7e1; --dim: #a49c93; --faint: #6f6860;
+  --rule: #2e2822; --rule-strong: #443c34; --panel: #1c1712; --wash: #221c16;
+  --short: #e8705e; --spare: #6cab80;
+  --rope-a: #8fbdf2; --rope-b: #f0a273; --rope-c: #6cab80; --rope-d: #b795e0;
+} }
+:root[data-theme="dark"] {
+  --page: #14100c; --ink: #ece7e1; --dim: #a49c93; --faint: #6f6860;
+  --rule: #2e2822; --rule-strong: #443c34; --panel: #1c1712; --wash: #221c16;
+  --short: #e8705e; --spare: #6cab80;
+  --rope-a: #8fbdf2; --rope-b: #f0a273; --rope-c: #6cab80; --rope-d: #b795e0;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink);
+  font-family: var(--sans); font-size: 15px; line-height: 1.55; }
+#app { max-width: 74rem; margin: 0 auto; padding: 1.5rem 1.25rem 4rem;
+  display: grid; gap: 1.25rem;
+  grid-template-columns: minmax(0, 1fr) 17rem;
+  grid-template-areas: "stage panel" "says says"; }
+@media (max-width: 60rem) {
+  #app { grid-template-columns: 1fr; grid-template-areas: "stage" "panel" "says"; }
+}
+h1 { font-size: 1.5rem; margin: 0 0 .2rem; letter-spacing: -.01em; }
+.lede { color: var(--dim); max-width: 46rem; margin: 0 0 1rem; }
+.stage { grid-area: stage; display: flex; flex-direction: column; gap: .75rem; }
+.panel { grid-area: panel; }
+.says-wrap { grid-area: says; }
+.view { width: 100%; height: auto; display: block; background: var(--panel);
+  border: 1px solid var(--rule); border-radius: 4px; }
+.view.side { width: auto; height: 15rem; margin: 0 auto; }
+.mark { font-family: var(--mono); fill: var(--faint); }
+.torso { fill: var(--wash); stroke: var(--rule-strong); stroke-width: 2; }
+.head { fill: none; stroke: var(--rule-strong); stroke-width: 1; }
+.face { stroke: var(--rule-strong); stroke-width: 2; stroke-linecap: round; }
+.floor { stroke: var(--rule-strong); stroke-width: 1; }
+.rope { fill: none; stroke-width: 3.4; stroke-linecap: round;
+  stroke-linejoin: round; }
+.rope.bad { stroke-dasharray: 7 5; opacity: .65; }
+.grip { stroke: var(--panel); stroke-width: 1.5; }
+.met { fill: none; stroke-width: 2; }
+.picks { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: 1rem; }
+.pick { font: 600 .85rem/1 var(--mono); padding: .5rem .6rem; cursor: pointer;
+  border: 1px solid var(--rule-strong); border-radius: 3px;
+  background: var(--panel); color: var(--dim); }
+.pick.on { background: var(--wash); color: var(--ink);
+  border-color: var(--ink); box-shadow: inset 0 -3px 0 var(--ink); }
+.dial { display: block; margin-bottom: .9rem; }
+.dial span { display: flex; justify-content: space-between; font-size: .8rem;
+  color: var(--dim); margin-bottom: .15rem; }
+.dial b { font-family: var(--mono); color: var(--ink); font-weight: 500; }
+.dial input { width: 100%; accent-color: var(--ink); }
+.dial.off { display: none; }
+table.says { border-collapse: collapse; font-size: .85rem; width: 100%;
+  font-family: var(--mono); margin-top: .5rem; }
+table.says th { text-align: left; font-family: var(--sans); font-weight: 500;
+  font-size: .75rem; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--faint); border-bottom: 1px solid var(--rule-strong);
+  padding: .3rem .6rem .3rem 0; }
+table.says td { padding: .35rem .6rem .35rem 0;
+  border-bottom: 1px solid var(--rule); }
+.short { color: var(--short); }
+.spare { color: var(--spare); }
+.met { list-style: none; padding: 0; margin: .75rem 0 0; }
+ul.met li { font-size: .88rem; color: var(--dim); padding-left: 1rem;
+  border-left: 2px solid var(--rule-strong); margin-bottom: .35rem; }
+.limit { font-size: .9rem; color: var(--dim); background: var(--wash);
+  border-left: 3px solid var(--rule-strong); padding: .7rem .9rem;
+  margin-top: 1rem; max-width: 48rem; }
+.limit b { color: var(--ink); font-family: var(--mono); }
+.none { color: var(--faint); font-style: italic; }
+.key { font-size: .82rem; color: var(--faint); margin-top: 1.5rem;
+  max-width: 48rem; }
+</style>
+</head>
+<body>
+<header style="max-width: 74rem; margin: 0 auto; padding: 1.5rem 1.25rem 0">
+<h1>The body sim</h1>
+<p class="lede">Two bodies of the average adult's measurements &mdash; a torso
+of its tape round, a neck and a head stacked on it &mdash; and arms of three
+links on a shoulder that swings and twists, an elbow that bends and a wrist
+that bends any way, each joint with the range a dancer tolerates. Pick which
+hands are held and at what level, and turn either dancer a quarter at a time
+&mdash; on their own axis, or in orbit round their partner &mdash; and the
+arms take the most comfortable pose that holds, where the solver puts them,
+not where a drawing would like them. Keep turning and a joint runs out, and
+the page says which. Nothing here stands for anything; it is the model,
+drawn.</p>
+</header>
+<div id="app"></div>
+<p class="key" style="max-width: 74rem; margin: 0 auto; padding: 0 1.25rem 3rem">
+Below the plan is the same pose from the side, looking across the line
+between the two bodies, which is where an elbow's height and which of two
+crossing arms is over can be seen. A quarter is walked in small moves, so an
+arm that has gone round a body stays round it, and where no small move holds
+the whole quarter is refused: the couple are put back where they started it,
+and the page says how far the arms got and what blocked them, so the tallies
+are always whole quarters. The bodies are the average adult's and do not
+change. How far apart the couple stand is not a control either: they stand,
+and go on standing as they turn, wherever the joints are furthest from their
+limits, stepping in or out a centimetre at a time and never closer than ten
+centimetres of clear air between their torsos; the hands prefer to be between the two bodies, on the
+line between their centrelines, at whatever height within their level leaves
+the joints freest. An orbit keeps whatever side of the walker faced the centre
+facing it, so a follow's quarter in orbit lands where the lead's quarter on
+axis lands. Changing the hands or the level settles the pose afresh, face to
+face. The sweep button turns the follow from that rest until a joint runs
+out, at the distance the couple settled to there, and is the authority for
+where a turn blocks.</p>
+<script src="sim.js"></script>
+</body>
+</html>
+"""
