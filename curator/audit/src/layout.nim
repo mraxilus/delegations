@@ -1,14 +1,15 @@
-## Enforce repository layout: root entries, domain folders, project shape, README tables.
+## Enforce repository layout: root entries, two project roots, project shape, README views.
 ##   Layout is data (Article II.1): `ROOT_FILES`, `ROOT_DIRS`, `PROJECT_FILES` here plus
-##   `DOMAINS`; check derives every rule from those lists and paths git reports.
+##   `ROOTS` and `DOMAINS`; check derives every rule from those lists and paths git reports.
 ##
-##   Project is any directory `<domain>/<project>` or `curator`; both keep one shape:
-##     README.md, PROVENANCE.md, GLOSSARY.md, Makefile with `check` target, and `tests/`
-##     holding at least one file. Domain folder holds README.md and project folders only.
-##   Root README.md and each domain README.md are checked as derived views of `DOMAINS`
-##     (Article I.4): row per domain in root table; name heading and theme line per domain.
-##   Root Makefile must declare every target documents name (`ROOT_TARGETS`), so `make ci`
-##     in CONTRIBUTOR.md never points at nothing.
+##   Project is `curator/<project>` or `contributor/<domain>/<project>`; both keep one
+##     shape: README.md, PROVENANCE.md, GLOSSARY.md, `<project>.nimble`, and `tests/` holding
+##     at least one file. Packages required by nimble file demand `atlas.lock`.
+##   Root folders hold README.md and folders only: `curator/` project folders,
+##     `contributor/` domain folders, domain folders project folders. Each is checked at its
+##     depth; unknown root directory or unregistered domain is finding, never skipped.
+##   Root README.md, root folder READMEs and domain READMEs are derived views (Article I.4):
+##     domain row per `DOMAINS`, `# <name>` heading, theme line per domain.
 ##   Unregistered file kind anywhere is finding (Article VI.5), pointing at `kinds.nim`.
 ##
 ##   Cost: rules read path strings, never disk, so tests feed synthetic trees and git
@@ -17,7 +18,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, options, os, sequtils, strutils, tables]
-import ./[findings, domains, kinds, markdown]
+import ./[findings, domains, kinds, markdown, dependencies]
 
 
 type
@@ -34,42 +35,65 @@ type
 const
   ROOT_FILES* = [
     "README.md", "LICENSE.md", "CONSTITUTION.md", "STYLE.md", "CURATOR.md", "CONTRIBUTOR.md",
-    "CLAUDE.md", "Makefile", ".gitignore", ".gitattributes",
+    "CLAUDE.md", "koch.nim", "koch.nim.cfg", ".gitignore", ".gitattributes",
   ]
     ## Files allowed directly at root.
-  ROOT_DIRS* = [".github", CURATOR]
-    ## Directories allowed at root besides domain folders.
-  PROJECT_FILES* = ["README.md", "PROVENANCE.md", "GLOSSARY.md", "Makefile"]
-    ## Files every project directory must hold.
-  ROOT_TARGETS* = ["check", "ci", "tree", "projects", "scope", "commits", "stamp"]
-    ## Targets root Makefile must declare; CURATOR.md, CONTRIBUTOR.md and README.md name them.
+  ROOT_DIRS* = [".github"]
+    ## Root directories unchecked inside; project roots are `ROOTS`.
+  PROJECT_FILES* = ["README.md", "PROVENANCE.md", "GLOSSARY.md"]
+    ## Files every project directory must hold, besides its nimble file.
   TESTS_DIR* = "tests"
     ## Directory every project must populate.
+  KINDS_PATH = "curator/audit/src/kinds.nim"
+    ## Registry named in finding for unregistered kind.
+
+
+func projectName*(dir: string): string =
+  ## Read project folder name, i.e. last segment of project directory.
+  dir.split('/')[^1]
+
+
+func dirOf(path: string): string =
+  ## Read directory part of path, empty at root.
+  let cut = path.rfind('/')
+  if cut < 0: "" else: path[0 ..< cut]
+
+
+func projectDir(parts: seq[string]): string =
+  ## Read project directory of path parts; empty when path lies inside no project.
+  if parts[0] == CURATOR and parts.len >= 3:
+    CURATOR & "/" & parts[1]
+  elif parts[0] == CONTRIBUTOR and parts.len >= 4 and parts[1].findDomain.isSome:
+    CONTRIBUTOR & "/" & parts[1] & "/" & parts[2]
+  else:
+    ""
 
 
 func projectDirs*(tree: Tree): seq[string] =
-  ## Collect project directories present: `curator` and each `<domain>/<project>`.
+  ## Collect project directories present, sorted.
   for e in tree:
-    let parts = e.path.split('/')
-    var dir = ""
-    if parts[0] == CURATOR and parts.len >= 2: dir = CURATOR
-    elif parts[0].findDomain.isSome and parts.len >= 3: dir = parts[0] & "/" & parts[1]
-    else: continue
-    if dir notin result: result.add dir
+    let dir = e.path.split('/').projectDir
+    if dir.len > 0 and dir notin result: result.add dir
   result.sort
-
-
-func hasTarget*(makefile, name: string): bool =
-  ## Decide whether Makefile declares target, i.e. line `name:` or `name :`.
-  for line in makefile.splitLines:
-    if line.startsWith(name) and line[name.len .. ^1].strip(trailing = false).startsWith(":"):
-      return true
-  false
 
 
 func index(tree: Tree): Table[string, int] =
   ## Map path to position in tree.
   for i, e in tree: result[e.path] = i
+
+
+func checkIndexEntry(path, child, holder, member: string): seq[Finding] =
+  ## Report file directly inside folder that holds README.md and member folders only.
+  if child != "README.md":
+    result.add finding(
+      path, 0, holder & " holds README.md and " & member & " folders only; got `" & child & "`."
+    )
+
+
+func checkProjectName(path, name: string): seq[Finding] =
+  ## Report project folder name outside grammar.
+  if not name.isProjectName:
+    result.add finding(path, 0, "Project folder must match `[a-z][a-z0-9_]*`; got `" & name & "`.")
 
 
 func checkEntry(e: Entry): seq[Finding] =
@@ -79,8 +103,8 @@ func checkEntry(e: Entry): seq[Finding] =
     let (_, base, ext) = e.path.splitFile
     result.add finding(
       e.path, 0,
-      "File kind unread by checker; register it in `curator/src/kinds.nim`; got `" &
-        base & ext & "`.",
+      "File kind unread by checker; register it in `" & KINDS_PATH & "`; got `" & base & ext &
+        "`.",
     )
   if parts.len == 1:
     if parts[0] notin ROOT_FILES:
@@ -88,21 +112,25 @@ func checkEntry(e: Entry): seq[Finding] =
     return
   let head = parts[0]
   if head in ROOT_DIRS: return
-  if head.findDomain.isNone:
-    result.add finding(e.path, 0, "Root directory outside layout; got `" & head & "`.")
+  if head == CURATOR:
+    if parts.len == 2: result.add checkIndexEntry(e.path, parts[1], "Curator root", "project")
+    else: result.add checkProjectName(e.path, parts[1])
     return
-  if parts.len == 2 and parts[1] != "README.md":
-    result.add finding(
-      e.path, 0, "Domain folder holds README.md and project folders only; got `" & parts[1] & "`."
-    )
-  if parts.len >= 3 and not parts[1].isProjectName:
-    result.add finding(
-      e.path, 0, "Project folder must match `[a-z][a-z0-9_]*`; got `" & parts[1] & "`."
-    )
+  if head == CONTRIBUTOR:
+    if parts.len == 2:
+      result.add checkIndexEntry(e.path, parts[1], "Contributor root", "domain")
+    elif parts[1].findDomain.isNone:
+      result.add finding(e.path, 0, "Domain folder outside registry; got `" & parts[1] & "`.")
+    elif parts.len == 3:
+      result.add checkIndexEntry(e.path, parts[2], "Domain folder", "project")
+    else:
+      result.add checkProjectName(e.path, parts[2])
+    return
+  result.add finding(e.path, 0, "Root directory outside layout; got `" & head & "`.")
 
 
 func checkProject(tree: Tree, paths: Table[string, int], dir: string): seq[Finding] =
-  ## Report missing project files, missing tests, and Makefile lacking `check`.
+  ## Report missing project files, missing tests, nimble file faults, missing lock.
   for file in PROJECT_FILES:
     let path = dir & "/" & file
     if path notin paths: result.add finding(path, 0, "Project file missing.")
@@ -111,17 +139,35 @@ func checkProject(tree: Tree, paths: Table[string, int], dir: string): seq[Findi
     result.add finding(
       dir & "/" & TESTS_DIR, 0, "Project tests missing; add at least one file under `tests/`."
     )
-  let makefile = dir & "/Makefile"
-  if makefile in paths and not tree[paths[makefile]].content.hasTarget("check"):
-    result.add finding(makefile, 0, "Makefile lacks `check` target.")
+
+  # Demand exactly one nimble file, named after project, and lock when it requires packages.
+  let nimble = dir & "/" & dir.projectName & NIMBLE_EXT
+  if nimble notin paths: result.add finding(nimble, 0, "Project nimble file missing.")
+  for e in tree:
+    if e.path.dirOf == dir and e.path.endsWith(NIMBLE_EXT) and e.path != nimble:
+      result.add finding(
+        e.path, 0, "Nimble file not named after project; expected `" & nimble & "`."
+      )
+  if nimble in paths:
+    let required = tree[paths[nimble]].content.requirements
+    let lock = dir & "/" & LOCK_FILE
+    if required.len > 0 and lock notin paths:
+      result.add finding(
+        lock, 0,
+        "Lock missing for required packages; run `atlas pin`; got `" & required.join(", ") &
+          "`.",
+      )
 
 
-func checkRootMakefile(tree: Tree, paths: Table[string, int]): seq[Finding] =
-  ## Report root Makefile targets documents name but Makefile lacks.
-  if "Makefile" notin paths: return
-  for target in ROOT_TARGETS:
-    if not tree[paths["Makefile"]].content.hasTarget(target):
-      result.add finding("Makefile", 0, "Root Makefile lacks target; got `" & target & "`.")
+func checkRootViews(tree: Tree, paths: Table[string, int]): seq[Finding] =
+  ## Report root folder READMEs missing or not opening with folder name.
+  for root in ROOTS:
+    let path = root & "/README.md"
+    if path notin paths:
+      result.add finding(path, 0, "Root folder README missing.")
+      continue
+    if tree[paths[path]].content.firstNonBlank != "# " & root:
+      result.add finding(path, 1, "Root folder README must open with `# " & root & "`.")
 
 
 func checkDomainViews(tree: Tree, paths: Table[string, int]): seq[Finding] =
@@ -135,7 +181,7 @@ func checkDomainViews(tree: Tree, paths: Table[string, int]): seq[Finding] =
           "Domain table lacks row `| " & d.folder & " | " & d.name & " | " & d.theme & " |`.",
         )
   for d in DOMAINS:
-    let path = d.folder & "/README.md"
+    let path = CONTRIBUTOR & "/" & d.folder & "/README.md"
     if path notin paths:
       result.add finding(path, 0, "Domain README missing.")
       continue
@@ -151,5 +197,5 @@ func checkLayout*(tree: Tree): seq[Finding] =
   let paths = tree.index
   for e in tree: result.add e.checkEntry
   for dir in tree.projectDirs: result.add checkProject(tree, paths, dir)
-  result.add checkRootMakefile(tree, paths)
+  result.add checkRootViews(tree, paths)
   result.add checkDomainViews(tree, paths)
