@@ -1,0 +1,3 @@
+# Testament test binaries sit beside their sources.
+tests/t*
+!tests/*.nim
