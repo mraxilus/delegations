@@ -81,6 +81,14 @@ Before any code:
    `STYLE.md` §6; `curator/probe/tests/tprobe.nim` is a worked example with a matrix.
    `nim r koch tests contributor/<domain>/<project>` runs your tests alone.
 
+Directories inside your project are yours: nest `src/`, `app/`, `design/` or anything else
+the work wants. Koch runs your tests; it holds no verb for anything else. A project needing
+more, pages to build or an instrument to run, carries its own compiled driver
+`tools/build.nim` taking one command argument, never a build file, since make is retired
+and a task in the nimble file would put logic in the compiler's virtual machine.
+`contributor/síncopa/dance_ontology/tools/build.nim` is the worked example; run it with
+`nim r tools/build.nim <command>` from the project directory.
+
 Header table for `PROVENANCE.md`:
 
 ```md
