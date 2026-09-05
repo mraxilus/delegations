@@ -1,6 +1,6 @@
 ## Enforce form of source (Article X.1, VIII.5): width, whitespace, endings, banners.
-##   Per line: no CR; no tab (recipe-leading tab allowed where kind says); no trailing
-##   whitespace; at most `LINE_MAX` characters counted as Unicode runes, not bytes.
+##   Per line: no CR; no tab; no trailing whitespace; at most `LINE_MAX` characters counted
+##   as Unicode runes, not bytes.
 ##   Per file: non-empty; ends with exactly one newline.
 ##   Per Nim banner `#[ Title ]#`: two blank lines before, exactly one after (X.2).
 ##
@@ -52,10 +52,7 @@ func checkForm*(path, source: string, rule: KindRule): seq[Finding] =
     let number = i + 1
     if line.contains('\r'):
       result.add finding(path, number, "Line ends with CR; got CRLF.")
-    if line.contains('\t'):
-      let is_recipe = rule.has_recipe_tab and line[0] == '\t' and
-        not line[1 .. ^1].contains('\t')
-      if not is_recipe: result.add finding(path, number, "Line holds tab.")
+    if line.contains('\t'): result.add finding(path, number, "Line holds tab.")
     if line.len > 0 and line[^1] in {' ', '\t', '\r'}:
       result.add finding(path, number, "Line ends with whitespace.")
     let width = line.runeLen

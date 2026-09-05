@@ -140,7 +140,7 @@ func scanNim(source: string): seq[Comment] =
 #[ Hash Families ]#
 
 func scanHash(source: string): seq[Comment] =
-  ## Scan Makefile: `#` opens comment anywhere unless escaped as `\#`.
+  ## Scan cfg: `#` opens comment anywhere unless escaped as `\#`.
   var scan = Scan(line: 1)
   for line in source.splitLines:
     var i = 0
