@@ -62,6 +62,16 @@ suite "Layout":
       let nimble = dir & "/" & dir.projectName & NIMBLE_EXT
       check goodTree().without(nimble).paths == @[nimble]  # nimble file required
 
+  test "project may nest source directories to any depth":
+    let deep = goodTree() & @[
+      entry(ALPHA_DIR & "/app/app.nim", "## Drive app.\n\ndiscard\n"),
+      entry(ALPHA_DIR & "/design/rules.nim", "## Hold rules.\n\ndiscard\n"),
+      entry(ALPHA_DIR & "/src/alpha/draw/body.nim", "## Draw body.\n\ndiscard\n"),
+      entry(ALPHA_DIR & "/tools/build.nim", "## Build pages.\n\ndiscard\n"),
+    ]
+    check deep.checkLayout.len == 0  # depth inside project is project's own business
+    check deep.projectDirs == @[ALPHA_DIR, AUDIT_DIR]  # nesting adds no project
+
   test "nimble file is named after project and packages demand lock":
     let other = ALPHA_DIR & "/other.nimble"
     check (goodTree() & @[entry(other, NIMBLE_TEXT)]).messages ==
