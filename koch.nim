@@ -9,7 +9,6 @@
 ##   | deps    | `atlas --noexec rep` in every project holding atlas.lock, or in one     |
 ##   | tests   | restore, then testament over tests/t*.nim, every project or one         |
 ##   | plan    | projects one change asks to compile, as JSON for CI matrix              |
-##   | audit   | tree, then deps, then tests, over every project                         |
 ##   | scope   | changed paths against branch prefix           (--branch, --base)        |
 ##   | commits | commit subjects against branch scope          (--branch, --base)        |
 ##   | stamp   | print rules stamp for PROVENANCE.md                                     |
@@ -22,7 +21,9 @@
 ##     directory. Exit: 0 clean, 1 findings, 2 usage error.
 ##
 ##   `ci` compiles only projects whose code changed, since static pass costs tenths of
-##     second and suites cost minutes; `audit` keeps whole-repository form for sweep.
+##     second and suites cost minutes. Whole repository is swept by CI matrix, one job per
+##     project on its own pin, never by one local verb: pins differ, and one machine holds
+##     one compiler on PATH.
 ##   Compiler on PATH must equal changed project's pin, else finding and no compile: wrong
 ##     compiler either fails confusingly or passes without testing what CI will run.
 ##
@@ -41,7 +42,7 @@ import ./curator/audit/src/[
 
 
 const USAGE = """
-Usage: koch <tree|deps|tests|plan|audit|scope|commits|stamp|ci> [project]
+Usage: koch <tree|deps|tests|plan|scope|commits|stamp|ci> [project]
             [--root:<dir>] [--branch:<name>] [--base:<ref>] [--all] [--sweep]
 """
   ## Text printed on usage error.
@@ -118,10 +119,6 @@ proc run(options: Options): int =
       else: tree.jobs(changedPaths(options.root, options.baseOrDefault))
     )
     return 0
-  of "audit":
-    let tree = options.root.readTree
-    found = tree.auditTree
-    found.add runJobs(options.root, tree.allJobs)
   of "scope":
     found = checkScope(options.branchOrDefault, changedPaths(options.root, options.baseOrDefault))
   of "commits":

@@ -206,8 +206,9 @@ Every later session:
 - Test where the mechanism runs: real wiring, output read back, bytes re-read.
 - `koch` runs testament over `tests/t*.nim` in your project directory; there is no
   per-project build file. `nim r koch tree` runs the static audit alone, and
-  `nim r koch audit` adds dependency restore and every project's suites, which needs every
-  project's pinned compiler installed; `nim r koch ci` is the one to run before a push.
+  `nim r koch tests <project>` restores that project's dependencies and runs its suites;
+  `nim r koch ci` is the one to run before a push. Nothing runs every project at once on
+  one machine, because their compilers differ; CI sweeps them, one job each.
 
 ## Glossary process
 
@@ -274,7 +275,7 @@ what was rejected, what it costs. There is no `docs/adr/`.
 - `PROVENANCE.md` describes the design as it now is, with each claim marked verified or
   assumed and each figure carrying its pair; nothing narrates.
 - `GLOSSARY.md` holds every term that resolved.
-- No debug output, trailing whitespace, tabs, or lines over 100 characters.
+- No debug output left behind. Whitespace, tabs and width the audit already checks.
 - Pull request body follows `.github/pull_request_template.md`: intent, scope, verification
   (what ran, on which build), record, notes.
 
