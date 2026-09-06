@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 912082eea75c768d |
+| Rules  | 7d63229e62ed95f9 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: curator test project replacing `abstand/intervals`, which lived in a real domain;
