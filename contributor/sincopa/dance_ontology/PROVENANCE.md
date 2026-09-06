@@ -167,7 +167,8 @@ first, so a renamed frame cannot leave its old picture behind. Rejected: committ
 generated page and holding it fresh by a test, which this repository cannot do because it
 reads only registered file kinds; the page is a build product and cannot be stale, and the
 test drives the build instead (Article IX.6). Cost: nothing in the tree shows the page's
-history; the published copy is the record. Verified by `treview.nim`: every marker filled,
+history, and the published copy is not the record either: it can be deleted, and seven were
+on 2026-09-06. The log is. Verified by `treview.nim`: every marker filled,
 page and pictures written and read back, every frame named and every move and compound
 counted in the matrix, no picture fixing a colour of its own, slugs unique, stale pictures
 removed.

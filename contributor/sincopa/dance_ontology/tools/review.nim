@@ -12,8 +12,9 @@
 ##   Page and pictures are build products under `build/review/`, never committed:
 ##     repository reads only registered file kinds.  `tests/treview.nim` renders page,
 ##     writes it and reads it back, so model change that breaks page fails suite.
-##     Cost of build product: nothing in tree shows page's history; published copy is
-##       record, republished from build driver's `pages`.
+##     Cost of build product: nothing in tree shows page's history, and published copy is
+##       not record either, since it can be deleted -- log is.  Page is republished from
+##       build driver's `pages`.
 ##   Usage: `review <dir>` writes `<dir>/review.html` and `<dir>/frames/<slug>.svg`.
 
 {.experimental: "strictFuncs".}
