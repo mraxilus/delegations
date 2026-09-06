@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 456efbf8fa9801ac |
+| Rules  | 6cef8fc704f7f8f4 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -158,6 +158,38 @@ layout requires at root. Zero terms pass, because the format creates
 entries lazily. Verified by `tglossary.nim`.
 
 ## Scope
+
+**A branch must carry base's rules and checker before it may merge.** `base` reads what the
+base gained since the branch forked (`gainedPaths`, the mirror of `changedPaths`) and reports
+a branch predating a charter document or the checker. Chosen because pull request 11 was
+green against the `main` of its day, merged into a later one, and arrived carrying a stamp
+three rules changes had falsified: run 45 failed and nobody was told. GitHub prevents exactly
+this with "require branches to be up to date before merging", which sits behind paid
+rulesets, so the process catches it instead. It needs no setting change: the `base` job feeds
+the `audit` gate, which branch protection already requires, so a stale branch is refused
+through a check that is already in place.
+
+Only two kinds of path count. A charter document moves the stamp every project claims, so a
+branch predating one carries a claim already false. The checker decides what the audit
+accepts, so a branch predating it was measured by an older ruler. Everything else may differ
+freely — another project's code cannot make this branch's stamp wrong, and demanding currency
+with all of it would be friction for nothing.
+
+Verified by `tbase.nim`, and by replaying the incident itself, 2026-09-06: pull request 11's
+branch checked against today's `main` reports the finding, naming `CONTRIBUTOR.md`, five
+check sources and `koch.nim`; the same branch checked against its own fork point reports
+nothing, which is why its run was green at the time. A branch behind only on another
+project's records and glossary reports nothing, and a branch that merges the base reports
+nothing after.
+
+Cost: merging a rules change reddens every open pull request until each merges the base. That
+is the same cost the paid setting carries, and it fires exactly when staleness is real.
+Cost, and the honest limit: this reads at pull request time, never at merge time. A branch
+green at ten can still merge at five past after another lands. The window shrinks from days
+to minutes and does not close; only a merge queue closes it, and that is the paid feature
+again. It nearly recurred while the role channel was in flight — pull requests 23 and 24
+merged two minutes apart, both re-stamping, and resolved cleanly by luck of which files each
+touched.
 
 **Roles reach each other through issues, and nothing waits on the Architect to relay.** A
 contributor blocked by a rule opens an issue from `.github/ISSUE_TEMPLATE/process-change.md`;
