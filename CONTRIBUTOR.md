@@ -328,6 +328,13 @@ what was rejected, what it costs. There is no `docs/adr/`.
 - No debug output left behind. Whitespace, tabs and width the audit already checks.
 - Pull request body follows `.github/pull_request_template.md`: intent, scope, verification
   (what ran, on which build), record, notes.
+- **Open it as a draft, and mark it ready only when it is.** Ready means CI green on the
+  runner, every review comment answered, and nothing you still intend to change. A draft
+  says "not yet" in the one place the Architect looks; an open pull request says "merge me",
+  and one merged before it was ready cost a second pull request to undo. Local green is not
+  the signal: `koch ci` and the runner disagree whenever the machines differ, which is what
+  the runner is for. Nothing checks this — GitHub is not this repository — so it holds
+  because you do it.
 
 ## Output contract
 

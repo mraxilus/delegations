@@ -213,6 +213,13 @@ pull request opened before it passes is a process violation whatever CI later sa
 runner confirms, it never discovers. Run it again before every later push to the same pull
 request. Then the template, then the pull request.
 
+Open every pull request **as a draft**, and mark it ready only when it is: CI green on the
+runner, every review comment answered, nothing you still intend to change. A draft is how a
+delegate says "not yet" in the one place the Architect looks; an open pull request says
+"merge me", and one merged before it was ready cost a second pull request to undo it.
+Nothing checks this, so it holds by doing it — and a curator who lets it slip has no standing
+to expect it of contributors.
+
 ## Repository settings the owner applies
 
 These cannot be set from inside the repository. Ask the owner to confirm they are in place

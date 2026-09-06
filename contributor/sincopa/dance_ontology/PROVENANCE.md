@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 02b1f374b78fd37a |
+| Rules  | 73a6fa37de648f53 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the Architect's workbook `ontology.partnerwork.xlsx` (sheets `base` and
@@ -383,6 +383,13 @@ nothing needed correcting. The stamp moves because the charter did.
 Audited by a curator against the rules change that added the TypeScript and Node section to
 CONTRIBUTOR.md. This project carries no `.ts` file, so the section binds nothing here and
 nothing needed correcting; the stamp moves because the charter did.
+
+## Re-audit, 2026-09-06, draft pull requests
+
+Audited by a curator against the rules change that asks every pull request to open as a
+draft and be marked ready only when it is. It binds how this project's next pull request is
+opened, not anything in the tree; nothing needed correcting. The stamp moves because the
+charter did.
 
 ## Open questions
 
