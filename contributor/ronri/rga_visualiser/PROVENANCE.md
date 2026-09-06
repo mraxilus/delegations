@@ -50,23 +50,25 @@ Open Questions
 Recorded here and in the pull request body, per CONTRIBUTOR.md: a contributor neither works
 around a rule nor edits it.
 
-**The desktop front-end needs a C++ file kind.** Dear ImGui is a C++ library whose API uses
-default arguments and overloads that Nim's `cpp` backend cannot bind directly, so the
-front-end reaches it through a 649-line shim, `gui_shim.cpp`. `.cpp` is not registered in
-`curator/audit/src/kinds.nim`, and CONTRIBUTOR.md's instruction for that case is to leave
-the file out and record the question. The desktop front-end therefore waits on the curator
-registering the kind. Rejected as workarounds: renaming the file to a registered extension,
-which lies to the checker; and rewriting the shim in Nim, which cannot express what the
-shim exists for.
+**The desktop front-end needs a C++ file kind, and the kind arrives gated.** Dear ImGui is a
+C++ library whose API uses default arguments and overloads that Nim's `cpp` backend cannot
+bind directly, so the front-end reaches it through a 649-line shim, `gui_shim.cpp`. `.cpp` is
+not registered in `curator/audit/src/kinds.nim`, and CONTRIBUTOR.md's instruction for that
+case is to leave the file out and record the question. Asked as issue 26 and ruled: `.cpp`,
+`.hpp`, `.c` and `.h` are to be registered *gated*, so every file of a gated kind carries a
+justification in its own header, and TypeScript is gated the same way rather than
+grandfathered. The front-end therefore waits on that change landing, and `gui_shim.cpp` will
+have to argue in its header that it only flattens overload sets and default arguments — which
+the curator said is what they will read it for. Rejected as workarounds: renaming the file to
+a registered extension, which lies to the checker; and rewriting the shim in Nim, which cannot
+express what the shim exists for.
 
-**Can a project pin its compiler by commit rather than by release?** `toolchain.nim` accepts
-`requires "nim == x.y.z"` and rejects anything not a dotted version, which is right for a
-project on a release and is what this one uses. It cannot express a devel compiler, and this
-project needs one to follow its own dependency: `pga`'s head spells operators in prefix form,
-which no release lexes (see Dependencies / Vendoring). Asked of the curator; until it is
-answered this project stays on the last pga commit a release can build. Rejected as
-workarounds: a `devel` label, which is a moving target and records nothing verified; and
-holding the dependency back silently, which is what the record below exists to prevent.
+**The browser front-end waits on conventions for the repository's first TypeScript.** No `.ts`
+file is committed anywhere, so this project's conversion of the browser glue — some 9,000
+lines — would set the precedent for module system, build step, dependency pinning and how a
+generated file is marked. Conventions were proposed rather than assumed, as issue 27, and are
+unanswered. Rejected as a workaround: choosing them unilaterally and leaving a later ruling to
+invalidate every line written under them.
 Render Paths
 ---
 **The directory a module sits in is which render path may reach it.**
