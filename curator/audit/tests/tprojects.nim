@@ -42,3 +42,7 @@ suite "Article IX":
     check nimOf("/c/2.2.6/bin") == "/c/2.2.6/bin" / "nim"
     check toolOf("/c/2.2.6/bin", "testament") == "/c/2.2.6/bin" / "testament"
     check toolOf("", "atlas") == "atlas"  # bare name, resolved through PATH
+    # Absent tool falls back to PATH rather than raising: `koch tools` set moves between
+    #   versions, and PATH tool still works while announcing its own mismatch.
+    check toolIn("/c/2.2.6/bin", "atlas") == "atlas"  # nothing at that path
+    check toolIn("", "atlas") == "atlas"

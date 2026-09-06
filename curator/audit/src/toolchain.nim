@@ -29,8 +29,8 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, osproc, strutils]
-import ./[findings, dependencies]
+import std/[options, os, osproc, strutils]
+import ./[findings, projects, dependencies]
 
 
 const
@@ -52,6 +52,22 @@ const
     ## Characters commit pin is built from; lowercase hex only.
   COMMIT_LEN* = 40
     ## Length of full git commit, which is what pin carries.
+  CACHE_KEY* = "KOCH_NIM_DIR"
+    ## Environment name overriding where toolchains are cached.
+  CACHE_DIR* = ".cache/koch/nim"
+    ## Default cache, under home and beside Nim's own `~/.cache/nim`. Never inside checkout:
+    ## audit reads untracked files, so toolchain there would be audited.
+  DOWNLOAD* = "https://nim-lang.org/download/nim-"
+    ## Prefix of published release tarball.
+  SOURCE* = "https://github.com/nim-lang/Nim"
+    ## Repository built from when no tarball serves pin.
+  PLATFORMS* = [
+    ("linux", "amd64", "linux_x64"),
+    ("linux", "i386", "linux_x32"),
+    ("macosx", "amd64", "macosx_x64"),
+  ]
+    ## Platforms nim-lang.org publishes tarball for, as `hostOS`, `hostCPU`, tarball name.
+    ## Anything absent here is built from source, which serves every platform Nim serves.
 
 
 func isVersion*(s: string): bool =
@@ -134,10 +150,15 @@ type Compiler* = object
   commit*: string   ## Git hash it reports; empty when it reports none.
 
 
+func serves*(pin: string, compiler: Compiler): bool =
+  ## Decide whether compiler is one pin names, by commit or by version.
+  pin == (if pin.isCommit: compiler.commit else: compiler.version)
+
+
 func checkRunning*(dir, pin: string, running: Compiler): seq[Finding] =
   ## Report compiler on PATH differing from project's pin, by commit or by version.
   let present = if pin.isCommit: running.commit else: running.version
-  if pin != present:
+  if not pin.serves(running):
     result.add finding(
       dir, 0,
       "Compiler differs from project pin `" & pin & "`; install or build it, then run " &
@@ -145,11 +166,11 @@ func checkRunning*(dir, pin: string, running: Compiler): seq[Finding] =
     )
 
 
-proc runningCompiler*(): Compiler =
-  ## Read version and commit of `nim` on PATH, i.e. compiler testament will invoke.
+proc compilerAt*(nim_path: string): Compiler =
+  ## Read version and commit compiler at path reports; empty record when it will not run.
   ##   Commit comes from `git hash:` line, which release tarballs carry as well as builds
   ##   made from source, so commit pin is checkable either way.
-  let (output, code) = execCmdEx("nim --version")
+  let (output, code) = execCmdEx(nim_path.quoteShell & " --version")
   if code != 0: return
   let lines = output.splitLines
   for word in lines[0].splitWhitespace:
@@ -162,3 +183,105 @@ proc runningCompiler*(): Compiler =
     let hash = s[HASH_KEY.len .. ^1].strip
     if hash.isCommit: result.commit = hash
     break
+
+
+proc runningCompiler*(): Compiler =
+  ## Read compiler on PATH, i.e. one koch itself was invoked through.
+  compilerAt("nim")
+
+
+func platformOf*(os_name, cpu: string): string =
+  ## Read tarball name nim-lang.org publishes for platform; empty when it publishes none.
+  for (name, arch, tarball) in PLATFORMS:
+    if name == os_name and arch == cpu: return tarball
+  ""
+
+
+func isBuilt*(pin, platform: string): bool =
+  ## Decide whether pin must be built from source rather than fetched as tarball.
+  ##   Commit is never published, and platform without tarball has nothing to fetch.
+  pin.isCommit or platform.len == 0
+
+
+func releaseUrl*(version, platform: string): string =
+  ## Read address of published tarball for release on platform.
+  DOWNLOAD & version & "-" & platform & ".tar.xz"
+
+
+func cacheRoot*(override: string): string =
+  ## Read cache directory toolchains live under, override winning when set.
+  if override.len > 0: override else: getHomeDir() / CACHE_DIR
+
+
+func binOf*(root, pin: string): string =
+  ## Read directory holding compiler serving pin, once it is cached.
+  root / pin / "bin"
+
+
+func missing*(dir, pin, bin: string): seq[Finding] =
+  ## Report pin no compiler serves, naming cache koch tried, so remedy is visible.
+  @[finding(
+    dir, 0,
+    "No compiler serves project pin, and fetching one failed; install it under `" & bin &
+      "`, or make network reachable, then run again; got `" & pin & "`.",
+  )]
+
+
+proc fetchRelease(version, platform, dir: string): bool =
+  ## Download published tarball and unpack it as `dir`; false when any step fails.
+  ##   Tarball holds one top folder, `nim-<version>`, which becomes `dir` itself so every
+  ##   pin has same shape whether fetched or built.
+  let work = dir & ".fetching"
+  removeDir(work)
+  createDir(work)
+  defer: removeDir(work)
+  let archive = work / "nim.tar.xz"
+  if runIn(work, "curl", ["-sSLf", "-o", archive, releaseUrl(version, platform)]) != 0:
+    return false
+  if runIn(work, "tar", ["xf", archive]) != 0: return false
+  let unpacked = work / ("nim-" & version)
+  if not dirExists(unpacked): return false
+  moveDir(unpacked, dir)
+  true
+
+
+proc buildSource(pin, dir: string): bool =
+  ## Clone Nim, check pin out and build it, then move finished tree to `dir`.
+  ##   Same recipe `check.yml` runs for commit pin, so it is proven rather than new.
+  ##   Version pin arrives here only where no tarball is published, and its tag is `v<x>`.
+  ##   Build happens beside `dir` and moves in once done, as fetch does: half-built tree
+  ##   carries `bin/nim` of bootstrap stage, which answers `--version` with another commit
+  ##   entirely, so second koch reading it mid-build would take it for finished toolchain
+  ##   (measured 2026-09-06, probing bootstrap binary five minutes before boot completed).
+  let work = dir & ".building"
+  removeDir(work)
+  removeDir(dir)
+  let reference = if pin.isCommit: pin else: "v" & pin
+  if runIn(".", "git", ["clone", "--filter=blob:none", "--quiet", SOURCE, work]) != 0:
+    return false
+  if runIn(work, "git", ["checkout", "--quiet", reference]) != 0: return false
+  if runIn(work, "sh", ["build_all.sh"]) != 0: return false
+  moveDir(work, dir)
+  true
+
+
+proc resolve*(pin: string, running: Compiler, root: string): Option[string] =
+  ## Read `bin` of toolchain serving pin, fetching or building it when absent.
+  ##   `none` is failure; `some("")` names compiler on PATH, which CI installs per job and
+  ##   so always takes first branch. Two outcomes stay apart, since empty string means
+  ##   PATH everywhere else here and would otherwise read as success.
+  if pin.serves(running): return some("")
+  let bin = binOf(root, pin)
+  if pin.serves(compilerAt(bin / NIM)): return some(bin)
+  let dir = root / pin
+  createDir(root)
+  echo "== fetching Nim " & pin
+  let platform = platformOf(hostOS, hostCPU)
+  let is_built =
+    if pin.isBuilt(platform): buildSource(pin, dir)
+    else: fetchRelease(pin, platform, dir)
+
+  # Fetched compiler is asked what it is: wrong tarball or half-built tree is not toolchain.
+  if is_built and pin.serves(compilerAt(bin / NIM)): return some(bin)
+  removeDir(dir)
+  none(string)

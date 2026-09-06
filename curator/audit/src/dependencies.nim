@@ -141,19 +141,23 @@ proc checkCheckouts*(root, dir: string): seq[Finding] =
       result.add finding(lock_path, 0, "Checkout absent after restore; got `" & checkout & "`.")
 
 
-proc restoreDependencies*(root, dir: string): seq[Finding] =
+proc restoreDependencies*(root: string, target: Target): seq[Finding] =
   ## Restore project's checkouts from lock through Atlas, judged by presence then `changed`.
-  echo "== " & dir
-  discard runIn(root / dir, "atlas", ["--noexec", "rep"])
-  result = checkCheckouts(root, dir)
-  let code = runIn(root / dir, "atlas", ["changed"])
+  ##   Atlas comes from same toolchain as compiler, since it records compiler it ran under
+  ##   and warns of environment mismatch when lock was written by another.
+  echo "== " & target.dir
+  let atlas = target.bin.toolIn("atlas")
+  discard runIn(root / target.dir, atlas, ["--noexec", "rep"])
+  result = checkCheckouts(root, target.dir)
+  let code = runIn(root / target.dir, atlas, ["changed"])
   if code != 0:
     result.add finding(
-      dir & "/" & LOCK_FILE, 0, "Checkouts differ from lock; got exit `" & $code & "`."
+      target.dir & "/" & LOCK_FILE, 0, "Checkouts differ from lock; got exit `" & $code & "`."
     )
 
 
-proc restoreAll*(root: string, dirs: openArray[string]): seq[Finding] =
+proc restoreAll*(root: string, targets: openArray[Target]): seq[Finding] =
   ## Restore every project holding lock file; projects without one need no network.
-  for dir in dirs:
-    if fileExists(root / dir / LOCK_FILE): result.add restoreDependencies(root, dir)
+  for target in targets:
+    if fileExists(root / target.dir / LOCK_FILE):
+      result.add restoreDependencies(root, target)
