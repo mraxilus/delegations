@@ -318,6 +318,12 @@ means every test binary was already compiled by a preceding full run.
 | `nim r koch tests curator/probe` | one project | 1.776 s, 1.732 s, 1.832 s |
 | `nim r koch audit` | every project | 54.156 s, 53.887 s, 53.570 s |
 
+First measurement on the real path rather than a synthetic one: this file's own
+merge-process commit, whose only changed path is `curator/audit/PROVENANCE.md`, planned `[]`
+and compiled nothing, and `nim r koch ci` finished in 0.721 s wall including its
+`git fetch` (2026-09-06, same machine). Before the change the same commit would have cost
+the third row below.
+
 That is the pair for scoping, taken on one machine at one commit. Before this change a push
 cost the third row whatever it touched; after it, a change to one project costs the second
 and a change to records alone costs the first, since nothing is compiled. Roughly thirty
