@@ -15,7 +15,8 @@ nim r koch ci                 # from repository root: audit, scope, commits
 nim r koch tests curator/probe  # this project alone, both ring sizes
 ```
 
-Needs Nim 2.2.4 and git. Tests run as a matrix over `-d:probe.modulus=4` and
+Needs the compiler this project pins in `probe.nimble`, and git. Tests run as a matrix
+over `-d:probe.modulus=4` and
 `-d:probe.modulus=5`.
 
 ## Status
