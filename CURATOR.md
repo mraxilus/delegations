@@ -172,8 +172,12 @@ Three reads, before any other work.
    `nim r koch ci` run on the new version. Atlas, nimble and testament ship beside `nim`, so
    their versions follow whichever compiler a job installs.
    A curator changing `koch.nim` or `curator/audit/src/` selects every project for
-   compilation, so that change needs every pinned version installed locally. That is the
-   price of independent pins, and it is paid by the one role that can afford it.
+   compilation. You do not install four compilers to do it: `compilers.nim` resolves each
+   pin — the compiler on `PATH` when it already serves, else one cached under
+   `~/.cache/koch/nim/<pin>/`, else one fetched, a release in seconds and a commit built in
+   minutes. `$KOCH_NIM_DIR` moves that cache. Testament and Atlas come from the resolved
+   toolchain with its `bin/` leading `PATH`, since Atlas reads `nim` from `PATH` and would
+   otherwise replay a lock against the wrong compiler.
    The weekly sweep's window is one thing named twice: the cron in
    `.github/workflows/check.yml` and `SWEEP_DAYS` in `curator/audit/src/plan.nim`. Change
    both together, or the sweep looks back over a window it does not run on. The sweep skips
@@ -253,11 +257,30 @@ then `./koch <command>`). Every check is a module under `curator/audit/src/`, te
 | `commits` | commit subjects | Conventional Commits; scope equals branch scope |
 | `base` | paths base gained | branch carries base's rules and checker |
 | `stamp` | rules documents | prints the stamp for `PROVENANCE.md` |
-| `ci` | fresh `origin/main` | tree, changed projects, scope, commits; before every PR |
+| `ci` | fresh `origin/main` | tree, changed projects, scope, commits, base; before every PR |
 
 Findings print as `path:line: message; got \`value\`.` and exit 1. Kinds, domains, root
 entries, project files, commit types and banned words are data at the top of their modules;
 change the data, never a special case.
+
+## What no check can reach
+
+Four rules hold by reading and nothing else. Each is a place where this repository's usual
+answer — put it in a check — does not apply, so they are listed together rather than
+discovered one at a time.
+
+- **A glossary term is the Architect's to select**, proposed and never written on sight.
+  The audit checks a glossary's shape, never whether its words were agreed.
+- **Every issue, pull request and comment opens with its role.** GitHub is not this
+  repository, so no check reads what was posted there.
+- **A pull request opens as a draft, and is marked ready only when it is.** Draft state is
+  GitHub's, not the tree's.
+- **A published page is linked, not described**, in the pull request and in the message
+  both. Which pages a change alters depends on what each project's build reads.
+
+Adding a fifth is a real decision rather than a free one: each dilutes the others, since a
+document whose rules are mostly unenforced trains its readers to skim. Prefer a check
+wherever one can be written, and say plainly in the rule when none can.
 
 ## Output contract
 

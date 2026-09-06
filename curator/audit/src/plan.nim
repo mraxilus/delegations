@@ -4,10 +4,10 @@
 ##   to 62.7 s suites when `dance_ontology` landed, PROVENANCE.md Figures). So test set is
 ##   scoped and static pass is not.
 ##
-##   Project enters test set when changed path under it is code, i.e. anything but its
-##     `PROVENANCE.md` or `GLOSSARY.md`: rules propagation rewrites those two in every
+##   Project enters test set when changed path under it is code, i.e. anything but its three
+##     records, `PROJECT_FILES`: rules propagation rewrites provenance and glossary in every
 ##     project and changes no behaviour, so it compiles nothing while static pass still
-##     verifies every stamp.
+##     verifies every stamp; README describes project and runs nothing, by same reasoning.
 ##   Change to koch or to check sources selects every project, because how each is checked
 ##     changed. Those files are curator's alone and move rarely, so common case stays small.
 ##   Path inside no project selects nothing by itself.
@@ -24,12 +24,10 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, json, options, os, strutils, tables]
-import ./[findings, layout, toolchain, dependencies, projects, tree]
+import ./[findings, layout, toolchain, compilers, dependencies, projects, tree]
 
 
 const
-  DOCS* = ["PROVENANCE.md", "GLOSSARY.md"]
-    ## Project files whose change alters no behaviour, so needs no compile.
   CHECKER_FILES* = ["koch.nim", "koch.nim.cfg"]
     ## Root files driving every project's checks.
   SWEEP_DAYS* = 7
@@ -58,8 +56,10 @@ func isChecker*(path: string): bool =
 
 func isCode*(dir, path: string): bool =
   ## Decide whether changed path is code of project, i.e. inside it and not its record.
+  ##   Records are `PROJECT_FILES`, same three `layout.nim` demands: README, provenance and
+  ##   glossary describe project and run nothing, so changing one compiles nothing.
   if not path.startsWith(dir & "/"): return false
-  path[dir.len + 1 .. ^1] notin DOCS
+  path[dir.len + 1 .. ^1] notin PROJECT_FILES
 
 
 func testSet*(dirs, paths: openArray[string]): seq[string] =
@@ -76,7 +76,7 @@ func testSet*(dirs, paths: openArray[string]): seq[string] =
 
 func nimbleOf*(tree: Tree, dir: string): string =
   ## Read project's nimble text from tree; empty when file is absent.
-  let path = dir & "/" & dir.projectName & NIMBLE_EXT
+  let path = dir.nimblePath
   for e in tree:
     if e.path == path: return e.content
   ""

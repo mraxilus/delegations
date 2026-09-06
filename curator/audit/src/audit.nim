@@ -1,15 +1,9 @@
 ## Audit repository against CONSTITUTION.md, STYLE.md and CONTRIBUTOR.md; library umbrella.
 ##   Command line lives in root `koch.nim`, as Nim's own koch drives its repository; this
 ##   module composes static checks so koch holds dispatch only.
-##
-##   Order of module bootstrapping:
-##     findings -> domains -> kinds -> comments -> [prose, form, justification]
-##     findings -> projects -> dependencies -> toolchain
-##     [domains, kinds, markdown, dependencies, toolchain] -> layout -> [provenance, glossary]
-##     [layout, toolchain] -> plan
-##     domains -> [scope, commits]
-##     [kinds, layout] -> tree
-##     everything -> audit -> koch
+##   Module order is read from each module's own `import` line, never restated here: copy of
+##     graph drifts from graph, and this one had, naming dependencies four modules did not
+##     have and omitting `base` entirely.
 ##
 ##   Cost: tool runs once per check, so no hot path exists and Article VII figures stay
 ##     unmeasured by design; whole-tree audit time is recorded in PROVENANCE.md.
@@ -43,7 +37,7 @@ proc lockFindings(tree: Tree, dirs: openArray[string]): seq[Finding] =
   ##   Tree is read here rather than in `layout.nim` so layout rules stay pure text over
   ##   paths; reading lock needs JSON, which Nim marks effectful.
   for dir in dirs:
-    let nimble_path = dir & "/" & dir.projectName & NIMBLE_EXT
+    let nimble_path = dir.nimblePath
     let lock_path = dir & "/" & LOCK_FILE
     var nimble, lock: string
     var has_lock = false

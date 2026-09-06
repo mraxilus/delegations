@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 86c3d5eef1f837fc |
+| Rules  | d7526c4b4d7fa1d9 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: curator test project replacing `abstand/intervals`, which lived in a real domain;
@@ -87,6 +87,14 @@ Audited by a curator against the rules change requiring a published page to be l
 than described — in the pull request's verification section and in the message to the
 Architect both. Raised by `contributor/sincopa/dance_ontology` as issue 42, after the
 omission it describes happened in pull request 40.
+
+## Re-audit, 2026-09-06, curator pass
+
+Audited by a curator against the pass that corrected six pieces of drift, split compiler
+acquisition out of `toolchain.nim`, and covered the two modules that had no test. One change
+reaches this project: a change touching only its `README.md`, `PROVENANCE.md` or
+`GLOSSARY.md` now compiles nothing, where a README change previously ran the whole suite.
+Nothing here needed correcting.
 
 ## Open questions
 

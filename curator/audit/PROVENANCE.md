@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 86c3d5eef1f837fc |
+| Rules  | d7526c4b4d7fa1d9 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -80,6 +80,42 @@ check as what stops an unused kind becoming a free pass. Verified by `tjustifica
 and `tkinds.nim`, and driven on 2026-09-06 over real files under `curator/probe/src`: an
 unjustified `shim.cpp` and `glue.ts` each yield one finding at line 1, both fall silent once
 the phrase is added, and both languages are held to the identical rule.
+
+**A curator pass found six pieces of drift, all of it introduced the same day.** Seven
+changes merged on 2026-09-06 and three documents kept describing the behaviour they replaced:
+`CURATOR.md` duty 7, `README.md` and `toolchain.nim`'s own header each still told a curator to
+install every pinned compiler by hand, which compiler resolution had removed hours earlier.
+The checks-reference row for `ci` still omitted `base`, which it has run since that check
+landed. And `audit.nim` carried a hand-written copy of the module graph that was wrong in five
+places — it named dependencies four modules do not have and omitted `base` entirely — so it is
+deleted rather than corrected: a copy of a graph drifts from the graph, and each module's
+`import` line is the graph. That is the lesson that retired the run-number ledger, applied to
+the module that composes everything.
+
+**`checkRunning` was dead and is gone.** Resolution replaced it; nothing called it in any
+module or in koch, and only its own test kept it compiling. A rule with no caller enforces
+nothing, and a test covering one measures nothing. What that test was really pinning — a pin
+matches by commit for a commit pin and by version otherwise — is kept as a test of `serves`,
+which resolution does call.
+
+**`toolchain.nim` was doing two jobs and is split.** It grew from 165 to 287 lines in one day
+by absorbing cache paths, a platform table, a downloader and a source build, while its header
+still described only the pin rule. Acquisition moves to `compilers.nim`; stating what a pin is
+and demanding agreement stays. Tests split the same way. Cost: one more module, and a reader
+follows one import to see how a compiler is obtained.
+
+**`DOCS` is retired for `PROJECT_FILES`.** `plan.nim` carried a second list of a project's
+records differing from `layout.nim`'s by one entry, `README.md`, with no reason stated
+anywhere — so a one-word README fix compiled that project's whole suite. All three records
+describe a project and run nothing. Driven on 2026-09-06 against this branch's own history:
+a README-only commit plans `[]`, and a one-line source change in the same project plans that
+project alone. `nimblePath` replaces the same path expression written out in three modules.
+
+**`findings.nim` and `markdown.nim` were the only modules with no test, and now have one.**
+`findings.render` composes every message anyone reads and `<` is what makes a report stable
+under reordering; neither was covered, in the module every other module imports.
+`tmarkdown.nim` also pins the two costs that module's header states, so a later parser is a
+decision rather than a surprise.
 
 ## Comment extraction
 

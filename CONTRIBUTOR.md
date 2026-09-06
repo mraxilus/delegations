@@ -321,7 +321,8 @@ what was rejected, what it costs. There is no `docs/adr/`.
   `type(<project>): summary`). A pull request opened before it passes is a process
   violation whatever CI later says: the runner confirms, it never discovers. Run it again
   before every later push to the same pull request.
-- A change touching only `PROVENANCE.md` and `GLOSSARY.md` compiles nothing, since it alters
+- A change touching only your project's records — `README.md`, `PROVENANCE.md` and
+  `GLOSSARY.md` — compiles nothing, since it alters
   no behaviour; the static pass still checks every stamp.
 - **`base` fails when the rules or the checker moved on `main` after you branched.** Your
   stamp then claims a charter that no longer exists, and merging would redden `main` — which

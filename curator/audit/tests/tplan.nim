@@ -26,6 +26,9 @@ suite "Plan":
   test "record change alone selects nothing, so rules propagation compiles nothing":
     check testSet(DIRS, [ALPHA_DIR & "/PROVENANCE.md"]).len == 0  # stamp only
     check testSet(DIRS, [ALPHA_DIR & "/GLOSSARY.md"]).len == 0  # terms only
+    check testSet(DIRS, [ALPHA_DIR & "/README.md"]).len == 0  # README runs nothing either
+    # Nested README is code: only project's own three records describe project.
+    check testSet(DIRS, [ALPHA_DIR & "/design/README.md"]) == @[ALPHA_DIR]
     for dir in DIRS:
       check testSet(DIRS, [dir & "/PROVENANCE.md", dir & "/GLOSSARY.md"]).len == 0
     # Record beside code still selects, since code changed.
