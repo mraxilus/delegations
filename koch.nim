@@ -12,7 +12,7 @@
 ##   | scope   | changed paths against branch prefix           (--branch, --base)        |
 ##   | commits | commit subjects against branch scope          (--branch, --base)        |
 ##   | stamp   | print rules stamp for PROVENANCE.md                                     |
-##   | ci      | fetch origin/main, then tree, changed projects, scope, commits          |
+##   | ci      | fetch origin/main, then tree, changed projects, scope, commits, base    |
 ##   |---------|-------------------------------------------------------------------------|
 ##   Options: `--root:<dir>` (default `.`); `--branch:<name>` (default env `BRANCH`, else
 ##     current git branch); `--base:<ref>` (default env `BASE`, else `origin/main`); `--all`
@@ -37,12 +37,12 @@
 
 import std/[options, os, parseopt, strutils]
 import ./curator/audit/src/[
-  findings, domains, scope, commits, tree, dependencies, audit, plan,
+  findings, domains, scope, commits, tree, dependencies, audit, plan, base,
 ]
 
 
 const USAGE = """
-Usage: koch <tree|deps|tests|plan|scope|commits|stamp|ci> [project]
+Usage: koch <tree|deps|tests|plan|scope|commits|base|stamp|ci> [project]
             [--root:<dir>] [--branch:<name>] [--base:<ref>] [--all] [--sweep]
 """
   ## Text printed on usage error.
@@ -126,6 +126,8 @@ proc run(options: Options): int =
     )
   of "commits":
     found = checkCommits(options.branchOrDefault, subjects(options.root, options.baseOrDefault))
+  of "base":
+    found = checkBase(gainedPaths(options.root, options.baseOrDefault))
   of "stamp":
     echo options.root.readTree.rulesStamp
     return 0
@@ -137,6 +139,7 @@ proc run(options: Options): int =
     found.add runJobs(options.root, tree.jobs(changedPaths(options.root, base)))
     found.add checkScope(branch, changedPaths(options.root, base), movedPaths(options.root, base))
     found.add checkCommits(branch, subjects(options.root, base))
+    found.add checkBase(gainedPaths(options.root, base))
   else:
     stderr.write USAGE
     return 2
