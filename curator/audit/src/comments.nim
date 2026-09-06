@@ -5,6 +5,8 @@
 ##
 ##   Cost: TypeScript regex literals are unscanned, so `//` inside one opens false comment
 ##     for rest of line. Accepted until real project hits it; fixture then lands.
+##   Cost: markup scanner reads `<!-- -->` only, so comments inside `<script>` and `<style>`
+##     stay unread, same blind spot markup hosted in Nim string already carries.
 ##   Cost: Nim generalized raw strings (`r"..."`, `fmt"..."`) detected by identifier
 ##     character before quote; `"` after operator is plain string, matching lexer.
 ##   Cost: unterminated plain string ends at newline, as lexer would reject it anyway.
@@ -255,6 +257,39 @@ func scanSlash(source: string): seq[Comment] =
 
 
 
+#[ Xml ]#
+
+func scanXml(source: string): seq[Comment] =
+  ## Scan HTML and SVG: `<!-- -->` block, spanning lines, several per line.
+  var scan = Scan(line: 1)
+  var is_comment = false
+  var i = 0
+  let n = source.len
+  template at(k: int): char = (if k < n: source[k] else: '\0')
+  while i < n:
+    let c = source[i]
+    if c == '\n':
+      scan.flush
+      inc i
+      continue
+    if is_comment:
+      if c == '-' and at(i + 1) == '-' and at(i + 2) == '>':
+        is_comment = false
+        scan.text.add ' '
+        i += 3
+      else:
+        scan.text.add c
+        inc i
+    elif c == '<' and at(i + 1) == '!' and at(i + 2) == '-' and at(i + 3) == '-':
+      is_comment = true
+      i += 4
+    else:
+      inc i
+  scan.flush
+  scan.comments
+
+
+
 #[ Dispatch ]#
 
 func comments*(source: string, syntax: Syntax): seq[Comment] =
@@ -266,3 +301,4 @@ func comments*(source: string, syntax: Syntax): seq[Comment] =
   of Syntax.HashSpaced: source.scanHashSpaced
   of Syntax.HashLeading: source.scanHashLeading
   of Syntax.Slash: source.scanSlash
+  of Syntax.Xml: source.scanXml

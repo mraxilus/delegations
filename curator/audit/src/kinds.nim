@@ -2,20 +2,22 @@
 ##   Kind absent from registry is kind checker does not read; layout check rejects such
 ##   file (Article VI.5), so extending registry is curator work done before new kind lands.
 ##
-##   |---------------|----------------------------|-------------|-------|
-##   | Kind          | Match                      | Syntax      | Prose |
-##   |---------------|----------------------------|-------------|-------|
-##   | Nim           | .nim                       | Nim         | yes   |
-##   | NimScript     | .nims                      | Nim         | yes   |
-##   | Nimble        | .nimble                    | Nim         | yes   |
-##   | Cfg           | .cfg                       | Hash        | yes   |
-##   | Markdown      | .md                        | None        | no    |
-##   | Yaml          | .yml .yaml                 | HashSpaced  | yes   |
-##   | GitIgnore     | .gitignore                 | HashLeading | yes   |
-##   | GitAttributes | .gitattributes             | HashLeading | yes   |
-##   | TypeScript    | .ts                        | Slash       | yes   |
-##   | Json          | .json atlas.config atlas.lock | None     | no    |
-##   |---------------|----------------------------|-------------|-------|
+##   |---------------|-------------------------------|-------------|-------|
+##   | Kind          | Match                         | Syntax      | Prose |
+##   |---------------|-------------------------------|-------------|-------|
+##   | Nim           | .nim                          | Nim         | yes   |
+##   | NimScript     | .nims                         | Nim         | yes   |
+##   | Nimble        | .nimble                       | Nim         | yes   |
+##   | Cfg           | .cfg                          | Hash        | yes   |
+##   | Markdown      | .md                           | None        | no    |
+##   | Yaml          | .yml .yaml                    | HashSpaced  | yes   |
+##   | GitIgnore     | .gitignore                    | HashLeading | yes   |
+##   | GitAttributes | .gitattributes                | HashLeading | yes   |
+##   | TypeScript    | .ts                           | Slash       | yes   |
+##   | Html          | .html                         | Xml         | yes   |
+##   | Svg           | .svg                          | Xml         | yes   |
+##   | Json          | .json atlas.config atlas.lock | None        | no    |
+##   |---------------|-------------------------------|-------------|-------|
 ##
 ##   Markdown is prose document, not comment: telegraphic rule (VI.5) covers comments only,
 ##     and CONSTITUTION.md itself uses articles. Form rules still apply to it.
@@ -23,6 +25,9 @@
 ##   TypeScript and Json registered ahead of use: owner allows TypeScript where JavaScript
 ##     is forced, and its tooling needs JSON configuration.
 ##   Retired: Makefile, with make itself; registry admits no second build verb.
+##   Html and Svg carry hand-written pages, which live in project's `pages/` or `mockups/`
+##     (layout check); generated markup is one long line and fails width, so registry admits
+##     what hand writes and rejects what build emits.
 ##
 ##   Cost: match is by basename or extension only, so `nimble.paths` or `.mk` is unread.
 
@@ -40,10 +45,12 @@ type
     HashSpaced   ## `#` at line start or after whitespace, outside quotes (YAML).
     HashLeading  ## `#` as first non-blank character only (.gitignore).
     Slash        ## `//` line and `/* */` block, outside string and template literals.
+    Xml          ## `<!-- -->` block, spanning lines (HTML, SVG).
 
   Kind* {.pure.} = enum
     ## Define file kinds checker reads.
-    Nim, NimScript, Nimble, Cfg, Markdown, Yaml, GitIgnore, GitAttributes, TypeScript, Json
+    Nim, NimScript, Nimble, Cfg, Markdown, Yaml, GitIgnore, GitAttributes, TypeScript, Html,
+    Svg, Json
 
   KindRule* = object
     ## Define how one kind is read.
@@ -61,6 +68,8 @@ const lut_kind_rule*: array[Kind, KindRule] = [
   Kind.GitIgnore: KindRule(syntax: Syntax.HashLeading, is_prose: true),
   Kind.GitAttributes: KindRule(syntax: Syntax.HashLeading, is_prose: true),
   Kind.TypeScript: KindRule(syntax: Syntax.Slash, is_prose: true),
+  Kind.Html: KindRule(syntax: Syntax.Xml, is_prose: true),
+  Kind.Svg: KindRule(syntax: Syntax.Xml, is_prose: true),
   Kind.Json: KindRule(syntax: Syntax.None),
 ]
   ## Map kind to its rule; header table is derived view of this array.
@@ -82,6 +91,8 @@ func kindOf*(path: string): Option[Kind] =
   of ".md": some(Kind.Markdown)
   of ".yml", ".yaml": some(Kind.Yaml)
   of ".ts": some(Kind.TypeScript)
+  of ".html": some(Kind.Html)
+  of ".svg": some(Kind.Svg)
   of ".json": some(Kind.Json)
   else: none(Kind)
 
