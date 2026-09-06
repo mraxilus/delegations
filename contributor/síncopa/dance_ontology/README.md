@@ -40,11 +40,14 @@ in one table and nothing is tuned to make them agree.
 
 ## Authority replicated
 
-- The owner's workbook `ontology.partnerwork.xlsx`, sheets `base` and `vocabulary`, held as
-  data in `src/dance_ontology/workbook.nim` and audited against the derived model by
-  `tests/tworkbook.nim`.
-- The forty drawing rules as given, held as data in `design/rules.nim` and mirrored entry
-  for entry in `design/README.md`; `design/checks.nim` holds the pages to them.
+- The Architect's workbook `ontology.partnerwork.xlsx`, sheets `base` and `vocabulary`, held
+  as data in `src/dance_ontology/workbook.nim` and audited against the derived model by
+  `tests/tworkbook.nim`. **Superseded.** The Architect has replaced it with a newer sheet
+  this project has not been given, so what the audit reports, and the sheet-facing half of the
+  review page, are findings about a document no longer in use. Both stay running until the
+  new sheet arrives and replaces the transcription.
+- The Architect's forty drawing rules as given, held as data in `design/rules.nim` and
+  mirrored entry for entry in `design/README.md`; `design/checks.nim` holds the pages to them.
 - For the body sim, the ANSUR II medians with the AAOS and NASA-STD-3000 joint ranges,
   every one in `sim/rig.nim` with its derivation; `tests/tlaws.nim` holds the sim to them.
 
