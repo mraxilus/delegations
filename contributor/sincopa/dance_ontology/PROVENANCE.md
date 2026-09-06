@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 71732211fc93e1e6 |
+| Rules  | ebf2f4cc3f8262ff |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the Architect's workbook `ontology.partnerwork.xlsx` (sheets `base` and
@@ -320,6 +320,11 @@ The eleven suites pass on 2.2.4, which is what the pin records. Moving it is thi
 own work, and it now moves nothing else.
 
 ## Open questions
+
+- `pages/review/review.html` prints `síncopa/dance_ontology/` as display text, one line
+  inside a `<pre>`. The domain folder is now `sincopa`, so that text is stale. A curator
+  renamed the folder and may move this project's files but not edit them, so the line was
+  left as it is rather than changed without your hand. One line, yours to correct.
 
 - Answered for fonts: binaries are never committed, and a project records each one's origin,
   version, licence and checksum, then fetches it with an `assets` verb in `tools/build.nim`.

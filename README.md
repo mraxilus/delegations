@@ -16,7 +16,7 @@ Overarching theme: methods of communication.
 | abstand | abstand | Music. |
 | bangu | bangu | Language. |
 | ronri | ronri | Computing. |
-| síncopa | síncopa | Dance and movement. |
+| sincopa | síncopa | Dance and movement. |
 | comma_games | comma, games | Game development across every other domain. |
 
 ## Layout

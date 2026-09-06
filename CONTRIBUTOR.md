@@ -53,7 +53,7 @@ git checkout -b contributor/<domain>/<project>/<name> origin/main
 ```
 
 - Exactly four segments, mirroring the path. `<domain>` is one of `abstand`, `bangu`,
-  `ronri`, `síncopa`, `comma_games`. `<project>` matches `[a-z][a-z0-9_]*`. `<name>` matches
+  `ronri`, `sincopa`, `comma_games`. `<project>` matches `[a-z][a-z0-9_]*`. `<name>` matches
   `[a-z0-9][a-z0-9_-]*`.
 - Conventional Commits with the project folder as scope: `feat(<project>): add parser`.
   Lowercase imperative summary, no final period. Types: `build`, `chore`, `ci`, `docs`,
@@ -91,7 +91,7 @@ the work wants. Koch runs your tests; it holds no verb for anything else. A proj
 more, pages to build or an instrument to run, carries its own compiled driver
 `tools/build.nim` taking one command argument, never a build file, since make is retired
 and a task in the nimble file would put logic in the compiler's virtual machine.
-`contributor/síncopa/dance_ontology/tools/build.nim` is the worked example; run it with
+`contributor/sincopa/dance_ontology/tools/build.nim` is the worked example; run it with
 `nim r tools/build.nim <command>` from the project directory.
 
 Header table for `PROVENANCE.md`:
@@ -139,13 +139,6 @@ what was verified, never a range nobody tried.
   version, move the line, and record in `PROVENANCE.md` what moved and why.
 - CI installs your pin for your project alone, in its own job. You are never held to another
   project's compiler, and no other project is held to yours.
-
-Run `git config core.quotepath off` once in your checkout. The `síncopa` domain folder
-carries an accent, and git quotes such paths by default, which breaks any pipeline of the
-shape `git ls-files | xargs ...` — the quoted name is passed on verbatim and the file is not
-found. With the setting off, paths come out as they are. `koch` is unaffected either way,
-since it reads NUL-separated output directly; this is for the shell commands you write
-yourself.
 
 ## Adding a dependency
 

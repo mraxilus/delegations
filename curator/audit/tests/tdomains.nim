@@ -49,6 +49,8 @@ suite "Branch grammar":
       check not name.isProjectName  # [a-z][a-z0-9_]*
 
   test "domain lookup is exact":
-    check "síncopa".findDomain.isSome  # Unicode folder kept
+    check "sincopa".findDomain.isSome  # slug is ASCII; accent lives in display name
+    check "síncopa".findDomain.isNone  # folder that git would quote is gone
+    for d in DOMAINS: check d.folder.isProjectName  # what `static` holds at build time
     check "comma_games".findDomain.get.name == "comma, games"  # slug maps to display name
     check "Abstand".findDomain.isNone  # case-sensitive

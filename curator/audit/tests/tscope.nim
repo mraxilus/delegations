@@ -60,6 +60,11 @@ suite "Scope":
       CONTRIBUTOR & "/ronri/alpha/README.md",
     ]
     check checkScope("curator/rules", records).len == 0  # stamp, terms, invalidated prose
+
+    # Indexes above project are curator's outright, per repository map and duty 5, which
+    #   has curator write domain README whenever domain is added.
+    check checkScope("curator/rules", [CONTRIBUTOR & "/README.md"]).len == 0
+    check checkScope("curator/rules", [CONTRIBUTOR & "/ronri/README.md"]).len == 0
     check checkScope("curator/rules", ["CONTRIBUTOR.md", "koch.nim"]).len == 0  # own files
     check checkScope("curator/rules", [CURATOR & "/audit/src/scope.nim"]).len == 0  # own root
 
@@ -69,7 +74,6 @@ suite "Scope":
       CONTRIBUTOR & "/ronri/alpha/tests/tall.nim",
       CONTRIBUTOR & "/ronri/alpha/alpha.nimble",
       CONTRIBUTOR & "/ronri/alpha/pages/index.html",
-      CONTRIBUTOR & "/ronri/README.md",
     ]:
       let found = checkScope("curator/rules", [path])
       check found.len == 1

@@ -120,7 +120,10 @@ proc run(options: Options): int =
     )
     return 0
   of "scope":
-    found = checkScope(options.branchOrDefault, changedPaths(options.root, options.baseOrDefault))
+    let base = options.baseOrDefault
+    found = checkScope(
+      options.branchOrDefault, changedPaths(options.root, base), movedPaths(options.root, base)
+    )
   of "commits":
     found = checkCommits(options.branchOrDefault, subjects(options.root, options.baseOrDefault))
   of "stamp":
@@ -132,7 +135,7 @@ proc run(options: Options): int =
     let (branch, base) = (options.branchOrDefault, options.baseOrDefault)
     found = tree.auditTree
     found.add runJobs(options.root, tree.jobs(changedPaths(options.root, base)))
-    found.add checkScope(branch, changedPaths(options.root, base))
+    found.add checkScope(branch, changedPaths(options.root, base), movedPaths(options.root, base))
     found.add checkCommits(branch, subjects(options.root, base))
   else:
     stderr.write USAGE

@@ -23,7 +23,7 @@ The owner's brief, which every rule below serves:
   glossary's shape, never its agreement, so this one holds by reading alone.
 - Two mirrored project roots. `contributor/<domain>/<project>/` holds the owner's life
   areas under one theme, methods of communication: `abstand` (music), `bangu` (language),
-  `ronri` (computing), `síncopa` (dance and movement), `comma_games` (game development
+  `ronri` (computing), `sincopa` (dance and movement), `comma_games` (game development
   across every other domain). `curator/<project>/` holds curator projects: `audit`,
   `probe`, and any other the curator needs; names follow the ordinary project grammar,
   nothing more.

@@ -16,12 +16,12 @@ suite "Article IX":
     let root = tempRepo()
     defer: removeDir(root)
     root.writeInto(".gitignore", "bin/\n")
-    root.writeInto("contributor/síncopa/alpha/src/x.nim", "discard\n")
+    root.writeInto("contributor/sincopa/alpha/src/x.nim", "discard\n")
     root.writeInto("bin/audit", "binary")
     root.writeInto("data.csv", "1,2\n")
     discard root.git("add .gitignore")
     check root.listPaths ==
-      @[".gitignore", "contributor/síncopa/alpha/src/x.nim", "data.csv"]  # sorted, unquoted
+      @[".gitignore", "contributor/sincopa/alpha/src/x.nim", "data.csv"]  # sorted, unquoted
     let entries = root.readTree
     check entries.mapIt(it.path) == root.listPaths  # same order
     check entries[1].kind.isSome and entries[1].content == "discard\n"  # registered kind read
