@@ -28,10 +28,14 @@ nim r koch ci                                    # repository root: audit, scope
 nim r koch tests contributor/ronri/rga_visualiser  # this project alone, three configurations
 ```
 
-Needs Nim 2.2.6 and git. The `pga` library is restored by Atlas from `atlas.lock` into
-`deps/` and is never committed; `nim r koch deps contributor/ronri/rga_visualiser` restores
-it alone. The algebra every target builds against — four dimensions, rigid metric — is set
-once in `nim.cfg`, so no entry point repeats it.
+Needs **exactly Nim 2.2.10** on `PATH`, and git. The pin is exact and the audit enforces it:
+running the suites on any other compiler is a finding, not a warning. The `pga` library is
+restored by Atlas from `atlas.lock` into `deps/` and is never committed;
+`nim r koch deps contributor/ronri/rga_visualiser` restores it alone. It is pinned at
+`f8861e0`, which is one commit behind that library's head — see Dependencies / Vendoring in
+`PROVENANCE.md` for which commit, why, and what would move it. The algebra every target
+builds against — four dimensions, rigid metric — is set once in `nim.cfg`, so no entry point
+repeats it.
 
 Tests run as three configurations of one shared suite: `t4d` at shipped capacities on the C
 backend, `t4d_small` at capacities small enough that the suite's tests reach them, and
@@ -63,7 +67,7 @@ and the desktop application — are not here yet: they are arriving in follow-up
 requests, because each carries a file kind this repository does not yet read. Their design
 record travels with them.
 
-Every law under test through testament on Nim 2.2.6, in three configurations. Unreviewed by
+Every law under test through testament on Nim 2.2.10, in three configurations. Unreviewed by
 a human: nothing here has been read line by line, and no human has driven either front-end
 or seen it on real graphics hardware.
 
