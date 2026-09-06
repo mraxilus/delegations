@@ -86,6 +86,56 @@ func momentOf(turn: float; got: Solved; reseeded = false): Moment =
   Moment(turn: turn, state: got.state, verdict: got.verdict, reseeded: reseeded)
 
 
+type
+  Advance* {.pure.} = enum ## What one moment of turn came to.
+    Fresh, ## Pose found afresh, worth moving to.
+    Carried, ## Arms carried on from pose they were already in.
+    Finer, ## Pose found past coarse grid where no small move held.
+    Blocked ## Nothing holds there that arms can reach.
+
+  Moved* = object ## Where one moment got to, and how.
+    case how*: Advance
+    of Advance.Blocked:
+      why*: Verdict ## What refuses, once largest failure is as small as it goes.
+      found*: bool ## Whether pose holds there anyway, out of arms' reach.
+    else:
+      got*: Solved ## Pose arms are in at moment's end.
+
+
+func advanced*(here, stuck: Solved; next, blame: State;
+               carried: Option[Solved]): Moved =
+  ## Decide one moment of turn: take fresh pose, carry arms on, look harder,
+  ## or block.
+  ##   Fresh pose is taken only where arms go round bodies and cross same way
+  ##     as before, and where it is enough more comfortable to be worth move.
+  ##   Carried pose is taken as it stands: arms that reached it reached it, so
+  ##     nothing further is asked of it.  Gating it as well refuses turns that
+  ##     hold, which is what page used to do.
+  ##   Where no small move holds, past coarse grid is looked once before turn
+  ##     is called blocked: grid is coarse and corner is narrow.
+  ##   `blame` is state failure is read in, which is step beyond where arms
+  ##     stuck rather than whole moment, so reason names what stopped them.
+  ##   Written once, for sweep and page both: they drew apart here, and page
+  ##     blocked turns sweep did not (Article II.1).
+  let fresh = settled(next)
+  if fresh.isSome and
+     sameRoute(here.state, here.verdict, fresh.get.state, fresh.get.verdict) and
+     sameCrossings(here.state, here.verdict, fresh.get.state, fresh.get.verdict) and
+     (carried.isNone or fresh.get.verdict.cost <
+        carried.get.verdict.cost - SETTLING -
+          jump(carried.get.verdict, fresh.get.verdict)):
+    return Moved(how: Advance.Fresh, got: fresh.get)
+  if carried.isSome:
+    return Moved(how: Advance.Carried, got: carried.get)
+  let finer = settled(next, fine = true)
+  if finer.isSome and
+     sameRoute(stuck.state, stuck.verdict, finer.get.state, finer.get.verdict) and
+     sameCrossings(stuck.state, stuck.verdict, finer.get.state, finer.get.verdict):
+    return Moved(how: Advance.Finer, got: finer.get)
+  Moved(how: Advance.Blocked, why: reason(blame, stuck.state),
+        found: fresh.isSome or finer.isSome)
+
+
 func sweptWay(rest: Solved; who: Body; sign, most: float;
               moments: var seq[Moment]): Block =
   ## Turn one way from solved rest, adding moments found.
@@ -100,40 +150,22 @@ func sweptWay(rest: Solved; who: Body; sign, most: float;
     let
       tn = t + sign * STEP
       sn = atTurn(rest.state, who, tn)
-      fresh = settled(sn)
       got = crept(rest.state, who, here, t, tn)
       carried = abs(got.turn - tn) < 1e-9
-    if fresh.isSome and
-       sameRoute(here.state, here.verdict, fresh.get.state, fresh.get.verdict) and
-       sameCrossings(here.state, here.verdict, fresh.get.state, fresh.get.verdict) and
-       (not carried or fresh.get.verdict.cost <
-          got.got.verdict.cost - SETTLING - jump(got.got.verdict, fresh.get.verdict)):
-      here = fresh.get
-      t = tn
-      moments.add momentOf(t, here, reseeded = not carried)
-      continue
-    if carried:
-      here = got.got
-      t = tn
-      moments.add momentOf(t, here)
-      continue
-    # No small move holds.  Before calling it block, look harder for
-    # pose arms could take: grid is coarse and corner is narrow.
-    let stuck = got.got
-    let finer = settled(sn, fine = true)
-    if finer.isSome and
-       sameRoute(stuck.state, stuck.verdict, finer.get.state, finer.get.verdict) and
-       sameCrossings(stuck.state, stuck.verdict, finer.get.state, finer.get.verdict):
-      here = finer.get
-      t = tn
-      moments.add momentOf(t, here, reseeded = true)
-      continue
-    if abs(got.turn - t) > 1e-9:
-      moments.add momentOf(got.turn, stuck)
-    return Block(at: abs(got.turn), stopped: true,
-                 why: reason(atTurn(rest.state, who, got.turn + sign * STEP / SUBSTEPS.float),
-                             stuck.state),
-                 foundAnyway: fresh.isSome or finer.isSome)
+      beyond = atTurn(rest.state, who, got.turn + sign * STEP / SUBSTEPS.float)
+      moved = advanced(here, got.got, sn, beyond,
+                       if carried: some(got.got) else: none(Solved))
+    if moved.how == Advance.Blocked:
+      if abs(got.turn - t) > 1e-9:
+        moments.add momentOf(got.turn, got.got)
+      return Block(at: abs(got.turn), stopped: true, why: moved.why,
+                   foundAnyway: moved.found)
+    here = moved.got
+    t = tn
+    # Moment counts as reseeded only where arms could not have carried
+    # themselves there: fresh pose taken over working one is not reseeding.
+    moments.add momentOf(t, here, reseeded = moved.how == Advance.Finer or
+                                            (moved.how == Advance.Fresh and not carried))
   Block(at: most, stopped: false)
 
 
