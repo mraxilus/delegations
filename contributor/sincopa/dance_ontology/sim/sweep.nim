@@ -252,6 +252,9 @@ func sweptWay(rest: Solved; who: Body; sign, most: float;
   ##     round bodies same way as before and it is enough more
   ##     comfortable to be worth move; otherwise arms are carried on
   ##     by small moves, and where no small move holds turn is blocked.
+  ##   Couple step in or out after each moment, wherever that leaves joints
+  ##     freer: dancers adjust their distance as they turn, and sweep that
+  ##     held them still refused turns they could take by shifting their feet.
   var
     here = rest
     t = 0.0
@@ -271,6 +274,11 @@ func sweptWay(rest: Solved; who: Body; sign, most: float;
                    foundAnyway: moved.found)
     here = moved.got
     t = tn
+    # Couple stand where joints are freest and go on doing so as they turn,
+    # stepping in or out centimetre at time, as they do on page.
+    for i in 0 ..< SHIFTS:
+      if not steppedIn(here):
+        break
     # Moment counts as reseeded only where arms could not have carried
     # themselves there: fresh pose taken over working one is not reseeding.
     moments.add momentOf(t, here, reseeded = moved.how == Advance.Finer or
