@@ -259,6 +259,13 @@ then `./koch <command>`). Every check is a module under `curator/audit/src/`, te
 | `stamp` | rules documents | prints the stamp for `PROVENANCE.md` |
 | `ci` | fresh `origin/main` | tree, changed projects, scope, commits, base; before every PR |
 
+The checker is held to three rules of its own, in `checker.nim`, because it checks every
+project and nothing checked it: a routine exported and called nowhere is a finding; a check
+module without `tests/t<module>.nim` is a finding; and the verbs koch dispatches, the verbs
+its usage text prints and the rows of the table above are one set named three times, so any
+two differing is a finding. Each is a fault a curator pass found by reading on 2026-09-06,
+turned into a rule so the next one is caught by the runner instead.
+
 Findings print as `path:line: message; got \`value\`.` and exit 1. Kinds, domains, root
 entries, project files, commit types and banned words are data at the top of their modules;
 change the data, never a special case.
