@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | d27dcdddede02dbd |
+| Rules  | 565809cbc04f227c |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -42,29 +42,33 @@ destination only because the source never reached the base.
 
 ## File kinds
 
-**An allow-list of ten kinds is the registry, and an unregistered kind is a finding.**
-`kinds.nim` maps basename or extension to comment syntax and whether prose is checked.
-Nimble files and NimScript read as Nim; cfg files (`nim.cfg` Atlas writes, `koch.nim.cfg`)
-read as hash comments; `atlas.config` and `atlas.lock` are JSON by basename. Markdown is
-registered as prose, not comment, so articles in documents pass while form rules still
-apply. TypeScript and JSON are registered ahead of use because the owner allows TypeScript
-where JavaScript is forced. Retired: Makefile, with make; the registry admits no second
-build verb, and its recipe-tab exemption went with it, so any tab is a finding. Rejected:
-content sniffing, which would let an unknown kind in silently. Verified by `tkinds.nim`
-over every match and five unregistered names, and by `tlayout.nim`: `data.csv` under
-`curator/audit` yields one finding naming `curator/audit/src/kinds.nim`.
+**An allow-list of twelve kinds is the registry, and an unregistered kind is a finding.**
+`kinds.nim` maps basename or extension to comment syntax and whether prose is checked. Nimble files
+and NimScript read as Nim; cfg files (`nim.cfg` Atlas writes, `koch.nim.cfg`) read as hash comments;
+`atlas.config` and `atlas.lock` are JSON by basename. Markdown is registered as prose, not comment,
+so articles in documents pass while form rules still apply. TypeScript and JSON are registered ahead
+of use because the owner allows TypeScript where JavaScript is forced. Retired: Makefile, with make;
+the registry admits no second build verb, and its recipe-tab exemption went with it, so any tab is a
+finding. Rejected: content sniffing, which would let an unknown kind in silently. Html and Svg carry
+hand-written pages, which the layout check confines to a project's `pages/` or `mockups/`; generated
+markup is one long line and fails width on its own, so the registry admits what hand writes and
+rejects what a build emits. Verified by `tkinds.nim` over every match and five unregistered names,
+and by `tlayout.nim`: `data.csv` under `curator/audit` yields one finding naming
+`curator/audit/src/kinds.nim`.
 
 ## Comment extraction
 
-**Four hand-written scanners, one per-line accumulator.** Nim: line, doc, nesting block
-comments, plain, triple and generalized raw strings, char literals, numeric suffix quotes.
-Cfg: `#` anywhere unless `\#`. YAML: `#` at line start or after whitespace, outside quotes.
-Ignore files: leading `#` only. TypeScript: `//`, `/* */`, three string forms,
-documentation stars stripped. Whitespace runs collapse so texts compare stably. Rejected:
-real parsers, which cost dependencies for a question (where do comments begin) that needs
-no syntax tree. Cost, assumed: TypeScript regex literals containing `//` open a false
-comment until a fixture lands. Verified by `tcomments.nim`, 23 assertions across the
-syntaxes, including the testament header string.
+**Five hand-written scanners, one per-line accumulator.** Nim: line, doc, nesting block comments,
+plain, triple and generalized raw strings, char literals, numeric suffix quotes. Cfg: `#` anywhere
+unless `\#`. YAML: `#` at line start or after whitespace, outside quotes. Ignore files: leading `#`
+only. TypeScript: `//`, `/* */`, three string forms, documentation stars stripped. Markup: `<!--
+-->`, spanning lines, several per line. Whitespace runs collapse so texts compare stably. Rejected:
+real parsers, which cost dependencies for a question (where do comments begin) that needs no syntax
+tree. Cost, assumed: TypeScript regex literals containing `//` open a false comment until a fixture
+lands. Cost: markup scanner reads `<!-- -->` only, so comments inside `<script>` and `<style>` stay
+unread, the same blind spot markup hosted in a Nim string already carried. Verified by
+`tcomments.nim` across the syntaxes, including the testament header string and markup comments that
+span lines.
 
 ## Prose
 
@@ -77,31 +81,43 @@ tripped on its own example and now writes the label in backticks.
 
 ## Form
 
-**Width is counted in runes, any tab is a finding, CR is a finding, and a file ends with
-exactly one newline.** Lines are split on LF only so CR survives; `splitLines` was rejected
-because it swallows CRLF. `LICENSE.md` is width-exempt because third-party text stays
-verbatim. Nim banners `#[ Title ]#` need two blank lines before and one after; tiers are
-unmarked in syntax, so the second-tier minimum is demanded of every banner. Assumed, not
-checked: two-space indent. Verified by `tform.nim`: 100 `é` pass, 101 fail; tab in Nim and
-cfg fails; every ending case.
+**Width is counted in runes, any tab is a finding, CR is a finding, and a file ends with exactly one
+newline.** A line over the limit passes only when breaking cannot fix it: its longest
+whitespace-free token with the line's indent already overruns the limit, that token is within
+`TOKEN_MAX` (400 runes), and the rest of the line fits once it is removed. A font URL has no
+whitespace to break at; prose always does; minified markup is one run far past the bound. Rejected:
+exempting URLs by pattern, which would guess at intent, and exempting any single-token line, which
+admits machine output of any length. Cost: a long identifier gets the same exemption a URL does,
+since neither can be broken at whitespace. Lines are split on LF only so CR survives; `splitLines`
+was rejected because it swallows CRLF. `LICENSE.md` is width-exempt because third-party text stays
+verbatim. Nim banners `#[ Title ]#` need two blank lines before and one after; tiers are unmarked in
+syntax, so the second-tier minimum is demanded of every banner. Assumed, not checked: two-space
+indent. Verified by `tform.nim`: 100 runes pass and 101 breakable runes fail; a 202-character fonts
+link passes while 207 characters of prose and 400 characters of minified markup do not; tab in Nim
+and cfg fails; every ending case. Verified by driven check on the real pages: the validator's 391
+markup lines extracted verbatim to a file and the whole-cloth fonts link, whose longest token is 179
+runes, both audit clean, while a generated single-line drawing of 1,407 characters and a page
+outside `pages/` do not.
 
 ## Layout
 
-**Two project roots, each holding README.md and folders only, and every folder checked at
-its depth.** A project is `curator/<project>` or `contributor/<domain>/<project>` and must
-hold README.md, PROVENANCE.md, GLOSSARY.md, exactly one nimble file named after the folder,
-and at least one file under `tests/`; a nimble file requiring packages demands
-`atlas.lock`. Root README.md carries one table row per domain equal to `DOMAINS`; each root
-README opens with its folder name; each domain README opens with the domain name and holds
-the theme line. An unknown root directory, a stray file inside a root or domain folder, and
-an unregistered domain are findings, never skipped: an earlier form of this check returned
-early for everything under `curator/` and dropped unknown heads silently, so a misplaced
-project vanished from the audit. Rejected: letting domain READMEs list projects, which
-would force a contributor to edit outside their prefix; a theme line for root READMEs,
-which would be a fabricated authority. Cost: empty directories are invisible to git, so
-`tests/` must hold a file. Verified by `tlayout.nim` over a fixture tree the tests build,
-with the project list pinned and the unknown-domain case asserting both the finding and the
-unchanged project list; `taudit.nim` proves the fixture is clean under every static check.
+**Two project roots, each holding README.md and folders only, and every folder checked at its
+depth.** A project is `curator/<project>` or `contributor/<domain>/<project>` and must hold
+README.md, PROVENANCE.md, GLOSSARY.md, exactly one nimble file named after the folder, and at least
+one file under `tests/`; a nimble file requiring packages demands `atlas.lock`. Root README.md
+carries one table row per domain equal to `DOMAINS`; each root README opens with its folder name;
+each domain README opens with the domain name and holds the theme line. An unknown root directory, a
+stray file inside a root or domain folder, and an unregistered domain are findings, never skipped:
+an earlier form of this check returned early for everything under `curator/` and dropped unknown
+heads silently, so a misplaced project vanished from the audit. A committed page, Html or Svg, must
+sit under a project's `pages/`, what the project stands behind, or `mockups/`, a one-off exploration
+kept for reference; the separation is declared by directory, never inferred from content. Rejected:
+letting domain READMEs list projects, which would force a contributor to edit outside their prefix;
+a theme line for root READMEs, which would be a fabricated authority; inferring mock-up from
+generated, which would make the distinction an accident of formatting. Cost: empty directories are
+invisible to git, so `tests/` must hold a file. Verified by `tlayout.nim` over a fixture tree the
+tests build, with the project list pinned and the unknown-domain case asserting both the finding and
+the unchanged project list; `taudit.nim` proves the fixture is clean under every static check.
 
 ## Provenance stamp
 
@@ -201,10 +217,10 @@ is the one CI will use.
 **Merge-process record.** The make-driven process was verified on 2026-09-05 through pull
 requests 1 to 4 (runs 2 to 8, including the re-run trap: a re-run reuses the original merge
 commit and workflow file, so a fix on `main` reaches an open pull request only through a
-new head). The koch-driven process introduced here is verified in the same order once
-merged: its own pull request's three jobs, the `push` run on `main`, a probe pull request
-from `curator/probe/probe-<name>`; run numbers are recorded here by the follow-up on
-`curator/audit/<name>`. Until then: assumed.
+new head). The koch-driven process was verified the same day: pull request 5's three jobs
+green (run 33994664255), then the `push` run on `main` after its merge green (run 14,
+33995270865). Rejected, and removed from the duty: a throwaway probe pull request opened
+only to be closed, which tested nothing those two runs had not.
 
 ## Figures
 
