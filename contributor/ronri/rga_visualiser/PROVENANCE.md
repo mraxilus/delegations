@@ -2024,16 +2024,19 @@ figures: identical code has measured 25.0 and 29.8 ms hours apart on a shared ru
 ±1 ms band failed one frame in a hundred and twenty, and a flaky check gets deleted rather
 than fixed.
 
-*Checked.* Verified: 323 cases pass on the C backend and 302 on the JS backend, on Nim
-2.2.6, through `koch tests`; the JS count is lower because the C-only cases skip themselves.
-Assumed: nothing about the suite itself.
+*Checked.* Verified on Nim 2.2.10 through `koch tests`: 323 cases on the C backend, 302 on
+JS, 310 at reduced capacities; the JS count is lower because the C-only cases skip
+themselves. Verified on the runner as well as locally, which is what settles a question
+local runs cannot: the C suites bind zlib for the PNG encoder, so their passing proves the
+runner carries that library rather than only this machine. Assumed: nothing about the suite
+itself.
 
 
 Measurements
 ---
 **Every figure below is unmeasured on this repository's compiler.** All were taken on a
 2.3.1 devel build of Nim in the tree this project was ported from; this repository builds
-with 2.2.6, and no figure has been re-taken since. Article VII.6 makes them indicative and
+with 2.2.10, and no figure has been re-taken since. Article VII.6 makes them indicative and
 nothing more — they are kept because the constants they justified are still in the code, and
 a reader deserves to know which number picked which constant.
 
