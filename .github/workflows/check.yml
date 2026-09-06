@@ -2,8 +2,10 @@
 #   Six jobs. `plan` names projects one change asks to compile; `static` runs whole-tree
 #   checks, which cost tenths of second and so stay unscoped; `scope` and `commits` read
 #   branch; `project` is one matrix job per named project, each installing that project's
-#   own pin; `audit` reads their verdicts and is gate branch protection requires, so
-#   required check names stay `audit`, `scope`, `commits` while matrix names vary.
+#   own pin; `base` refuses branch predating base's rules or checker; `audit` reads their
+#   verdicts and is gate branch protection requires, so required check names stay `audit`,
+#   `scope`, `commits` while matrix names vary. `base` reaches merge through that gate, which
+#   is why requiring branches up to date needs no paid ruleset here.
 #   Matrix runs in parallel, so wall time is slowest changed project, never sum of all.
 #   `nim r koch ci` at root runs same checks locally, before any pull request is opened;
 #   runner confirms, never discovers.
@@ -142,8 +144,23 @@ jobs:
           parent-nim-install-directory: ${{ runner.temp }}
       - run: nim r koch commits
 
+  base:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      BASE: origin/${{ github.base_ref }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: ${{ env.NIM_VERSION }}
+          parent-nim-install-directory: ${{ runner.temp }}
+      - run: nim r koch base
+
   audit:
-    needs: [plan, static, project]
+    needs: [plan, static, project, base]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -153,6 +170,7 @@ jobs:
             plan=${{ needs.plan.result }}
             static=${{ needs.static.result }}
             project=${{ needs.project.result }}
+            base=${{ needs.base.result }}
         run: |
           echo "$VERDICTS"
           case "$VERDICTS" in

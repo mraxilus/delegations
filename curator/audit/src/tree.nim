@@ -2,8 +2,8 @@
 ##   Git decides what exists: tracked plus untracked-unignored files, so build products
 ##   never reach checks and every file that would commit does. Paths arrive NUL-separated
 ##   (`-z`), so no path is ever quoted, whatever it holds.
-##   Same door serves branch context: changed paths, commit subjects since base, and oldest
-##   commit outside sweep window.
+##   Same door serves branch context: changed paths, paths base gained, commit subjects since
+##   base, and oldest commit outside sweep window.
 ##
 ##   Git runs as direct process with argument list, never through shell: no quoting, and
 ##     `execCmdEx` is rejected because it reads by line and appends newline to NUL output.
@@ -73,6 +73,12 @@ proc movedPaths*(root, base: string): seq[string] =
       i += 3
     else:
       i += 2
+
+
+proc gainedPaths*(root, base: string): seq[string] =
+  ## List paths base holds that branch does not, i.e. what base gained since branch forked.
+  ##   Mirror of `changedPaths`: same three-dot range, other way round.
+  gitFields(root, ["diff", "-z", "--name-only", "--no-renames", "HEAD..." & base])
 
 
 proc subjects*(root, base: string): seq[string] =
