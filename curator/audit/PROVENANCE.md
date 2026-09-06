@@ -296,6 +296,16 @@ green (run 33994664255), then the `push` run on `main` after its merge green (ru
 33995270865). Rejected, and removed from the duty: a throwaway probe pull request opened
 only to be closed, which tested nothing those two runs had not.
 
+The per-project-toolchain arrangement was verified on 2026-09-06: pull request 12's eight
+checks green (run 25, 34035762337), then the `push` run on `main` after its merge green
+(run 26, 34036381241). Beyond passing, that pair showed three things this restructure could
+have broken. Required check names survived it: `audit` became a gate reading `plan`,
+`static` and the matrix, and branch protection needed no edit, which the merge proved by
+merging. `scope` and `commits` skip on a push while the gate still reports, so `main` runs
+are not held by jobs that cannot apply to them. And `plan` reads `github.event.before`
+correctly on a merge commit: run 26 selected all three projects, which is right, since the
+diff against previous `main` is the whole pull request.
+
 ## Figures
 
 Measured with `date +%s.%N` around each run, three consecutive warm runs, Linux amd64
