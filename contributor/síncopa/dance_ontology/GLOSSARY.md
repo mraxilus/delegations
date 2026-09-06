@@ -64,7 +64,7 @@ _Avoid_: route, path, sequence, walk
 
 **Level**:
 The height a connection is carried at: low, high or overhead.
-_Avoid_: height, tier, zone, band
+_Avoid_: height, tier, zone
 
 **Modifier**:
 What a wound arm has ended up doing: a wrap or a lock.
@@ -150,3 +150,21 @@ _Avoid_: validator, app, demo, viewer
 The stacking of every frame hold by how much is held, free at the foot and both hands at the
 head, which fixes every axis the drawings read down.
 _Avoid_: lattice, graph, tree, ladder
+
+
+### Body sim
+
+**Rig**:
+Every measurement the sim stands on: rounds, heights, arm lengths, joint ranges, hand bands,
+each with its source.
+_Avoid_: body model, skeleton, anthropometry
+
+**Pose**:
+Where every joint of a held arm is, found by search as the most comfortable arrangement that
+holds, never drawn by hand.
+_Avoid_: posture, configuration, arm position
+
+**Grip**:
+The point where two held hands meet, anywhere within the range of heights the hands are
+carried in.
+_Avoid_: connection, hand position, contact point

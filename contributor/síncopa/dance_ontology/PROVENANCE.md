@@ -23,20 +23,33 @@ sheet arrives; until then they are stale by construction, not by neglect.
 ## Language
 
 **Every term is agreed with Architect before it is written.** Forty-four terms written
-without agreement were removed on 2026-09-06 and are in history; they are being re-proposed a
-theme at a time, each concept set out with candidate names and their costs, and only selected
-name written. Audit checks glossary's shape and never its words, so this holds by Architect's
-reading alone. Agreed so far, of five themes: dancers, connection and frame's parts. Not yet
-proposed: moves, turns and tower, sources, body sim.
+without agreement were removed on 2026-09-06 and are in history. Thirty-five are now agreed,
+each concept set out with candidate names and their costs, and only selected name written.
+Audit checks glossary's shape and never its words, so this holds by Architect's reading
+alone.
 
-Three disagreements between agreed words and code, recorded rather than acted on. `Frame
-position` covers facing, twist and shorthands such as over and under, so `frame.position`
-means its opposite: it strips `over` and returns frame hold said aloud. Code's `Frame` type is
-frame state carrying hold and `over` but neither facing nor twist, which live in
-`rotation.Posture`, so split between `frame.nim` and `rotation.nim` cuts across agreed concept
-rather than along it. Facing is four-valued and `isFacing` returns parity of twist, which
-cannot tell face-to-back from back-to-face; twist is counted in quarters where `HalfTurns` is
-half turns.
+Agreed: dancers, connection, frame's four parts, free; moves, their two ways, compound moves
+and transitions; levels, modifiers, twist, and four ways of turning; chain and its rungs;
+reference; tower; rig, pose and grip.
+
+Held back by decision, not omission. Workbook, base sheet and vocabulary sheet wait until new
+sheet arrives, since nothing should be written about file this project has not seen. Review
+page waits on same sheet; ledger waits on forty rules being reconciled, several having been
+reversed by later ones. Whether sim keeps its own word for range of heights grip is carried
+in was raised and withdrawn, so it stays open. Rest of sim -- sweep, moment, blocked, strain,
+re-organised, verdict, stance, body -- was not reached.
+
+Words agreed so far disagree with code in eight places, recorded rather than acted on.
+`Frame position` covers facing, twist and shorthands such as over and under, so
+`frame.position` means its opposite: it strips `over` and returns frame hold said aloud.
+Code's `Frame` type is frame state carrying hold and `over` but neither facing nor twist,
+which live in `rotation.Posture`, so split between `frame.nim` and `rotation.nim` cuts across
+agreed concept rather than along it. Facing is four-valued and `isFacing` returns parity of
+twist, which cannot tell face-to-back from back-to-face. Twist is counted in quarters where
+`HalfTurns` is half turns. `Level.Above` is `Overhead`. `Compound` is `Compound move`.
+Drawing chain's `route` and `wind` are `Transition` and `Twist`, which is why neither word is
+claimed by drawing. One `Blocked` fault is already known: sim reports blocks where pose holds
+and is reachable, so that term was held back rather than written false.
 
 ## Model
 
