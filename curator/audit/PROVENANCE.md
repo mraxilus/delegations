@@ -4,7 +4,7 @@
 |--------|-------|
 | Agent  | Claude Code |
 | Author | Claude |
-| Date   | 2026-09-05 |
+| Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
 | Rules  | 6cef8fc704f7f8f4 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
@@ -428,6 +428,31 @@ by deleting `deps/` and re-running: `atlas changed` exited 0 with the checkout a
 Verified by `tdependencies.nim`, which drives `checkCheckouts` over a temporary project with
 and without the directory, and over a lock that is not JSON. Cost: the lock is parsed twice
 per restore, once by Atlas and once here.
+
+**The lock silently reverts an edit to the nimble file.** `atlas.lock` stores a whole copy
+of the nimble under `nimbleFile.content`, and `atlas rep` writes that copy back over the
+file. A requirement edited without regenerating the lock is therefore undone on the next
+`koch tests` or `koch ci`, which run `restoreAll` first. Nothing fails at that moment —
+compilation never reads the nimble — so the loss surfaces later as a `koch tree` finding on
+a reverted line the contributor never wrote. Reported by `contributor/ronri/rga_visualiser`
+as issue 25 after losing an edit to `nim == 2.2.10`, and reproduced here on 2026-09-06:
+editing the pin to `nim == 2.2.4` and running `atlas --noexec rep` restored `nim == 2.2.10`
+and exited 0. `checkLockNimble` now compares the stored copy against the committed file and
+reports the first differing line. The comparison runs in the static pass, over the tree as
+git holds it: run after `restoreAll` it would compare the file against the copy it had just
+been written from, pass always, and cover nothing — the same defect `atlas changed` already
+taught this project. The finding points at the nimble file rather than the lock, because
+that is the file the restore overwrites and its line numbers resolve, while numbers inside
+the stored copy do not. Verified by `tdependencies.nim`, and driven against the real lock:
+with the stored copy holding `nim >= 2.2.6` the check names
+`rga_visualiser.nimble:13`, and with the lock restored it is silent. Costs: a project
+changing any requirement must regenerate the lock or make its stored copy match, and the
+contributor reports that `atlas pin` writes `"items": {}` for a dependency whose repository
+carries no nimble file, so the hand-patch stays necessary until Atlas changes; a lock
+storing no copy is compared against nothing, since one real lock is thin evidence for
+demanding the key and such a lock reverts nothing either way. Because it composes a check
+that reads JSON, which Nim marks effectful, `auditTree` is now a `proc`; every rule it
+composes stays pure and `layout.nim` still reads paths only.
 
 ## Tests
 
