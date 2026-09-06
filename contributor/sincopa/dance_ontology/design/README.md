@@ -30,7 +30,7 @@ orientation is all of it; hold both hands and a whole turn returns every
 orientation, so the wind is all of it instead.
 
 ```
-make pages                                        # checks everything, writes all pages
+nim r tools/build.nim pages                       # checks everything, writes all pages
 nim c -r --hints:off design/marks.nim build/design # the four, by hand, from the project
 ```
 
@@ -51,11 +51,16 @@ have been claimed to be.  The URLs, so they are not hunted for:
 | `turns-hands.html` | https://claude.ai/code/artifact/9c4d89c1-8b72-4574-8051-c41e130148f1 |
 | the app itself | https://claude.ai/code/artifact/a447cf22-a71a-4416-a905-ae4999d7284c |
 | `wholecloth.html` | https://claude.ai/code/artifact/9440ffbc-93be-4634-a3ce-dd17d7b33c6c |
+| the review page | https://claude.ai/code/artifact/61c41287-0a91-4fb9-9b15-622a5fd7db43 |
 
 Live pages only.  Retired ones keep whatever URL they were last published at,
 and are not listed: their published copies are the record of what they claimed.
+The app and the review page are not workbench pages; their URLs are listed here
+because the project points at this table for every page but the sim's, whose URL
+is in `../sim/README.md`.
 
-`wholecloth.html` is the one hand-drawn page, hosted in `wholecloth_page.nim`:
+`wholecloth.html` is the one hand-drawn page, written by hand as
+`../mockups/wholecloth.html`:
 the ontology redrawn from the ground up and reviewed plate by plate.  Its one
 generated part is the turns
 panel, which animates a hold turning by drawing what the body sim found --
@@ -67,7 +72,7 @@ and where the turn runs out and why; the page only draws, through
 where a joint or a body refuses.  Rebuild and splice it with:
 
 ```
-make pages          # sweeps with design/turns.nim; design/wholecloth.nim splices the result
+nim r tools/build.nim pages   # sweeps with design/turns.nim; wholecloth.nim splices it
 ```
 
 `turns.js` and the spliced page are both build products under `build/design/`.
@@ -742,7 +747,7 @@ turns_single_page.nim  the single-hand turns page, generated as a table
 hands_page.nim  the hand-to-hand turns page, the chain and its four walkers
 marks.nim       build: parts, checks, pages, files
 shot.nim        screenshot helper (light and dark, full page), nim js
-wholecloth_page.nim   the hand-drawn page's markup, hosted, with two slots
 wholecloth_turns.nim  its turns panel, ported to nim js
-wholecloth.nim        splices markup, sweeps and panel into build/design/
+wholecloth.nim        splices ../mockups/wholecloth.html, sweeps and panel
+                      into build/design/
 ```
