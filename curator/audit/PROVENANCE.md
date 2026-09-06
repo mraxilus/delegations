@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 7d63229e62ed95f9 |
+| Rules  | 71732211fc93e1e6 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -231,6 +231,35 @@ checker needs every one installed.
 Verified that Atlas accepts an exact compiler pin rather than treating it as a package to
 resolve: with `requires "nim == 2.2.6"` in `rga_visualiser.nimble`, `atlas --noexec rep`
 cloned and set the pinned commit and `atlas changed` exited 0 (Atlas 0.9.0, 2026-09-06).
+
+**A pin may name a commit as well as a version.** Asked for by `rga_visualiser`'s
+contributor, 2026-09-06, and the reasoning was theirs: their dependency `pga` spells its
+operators in prefix form on its head, which needs a lexer change that is on Nim's `devel` and
+in no release — 2.2.10 is the newest, verified here by `git ls-remote --tags`. Without a
+commit pin the project sits a commit behind its dependency until a release lands, possibly
+months. A commit records what was verified exactly as a version does. Rejected: a bare
+`devel` label, a moving target that records nothing; a dated nightly, cheap to install and
+retained only for a window, so an old pin stops installing and the record stops being
+reproducible, which is the property the exactness rule exists to protect.
+
+A pin is forty lowercase hex characters, as `atlas.lock` records commits. `isCommit` is
+tested before `isVersion` because forty digits would satisfy both, and the absurd version
+loses. `nim --version` prints a `git hash:` line — release tarballs carry it too, not only
+builds made from source — so `checkRunning` compares a commit pin against that and a version
+pin against the dotted version on the first line.
+
+Cost, and it falls on whoever builds the project: no action installs a compiler by commit,
+so CI clones `nim-lang/Nim`, checks the commit out and runs `build_all.sh`, cached by commit
+so the bootstrap is paid once rather than per run. A delegate installs it the same way. Cost:
+the driver project may not pin a commit, since the workflow installs it through the setup
+action and every other job waits on that one; `checkDriver` reports it.
+
+Verified by `ttoolchain.nim` and `tplan.nim`, and driven on this repository, 2026-09-06:
+pinning `curator/probe` to `f7145dd2…`, which is the commit the local 2.2.4 reports as its
+own, passes `koch tests` and renders `"kind": "commit"` in the plan; pinning it to forty
+zeros reports one finding naming the compiler actually present; pinning `curator/audit` to a
+commit reports the driver finding. Not verified, and it cannot be until a project needs it:
+that CI's source build succeeds and its cache hits.
 
 **The driver version is derived, never a second pin.** `NIM_VERSION` in
 `.github/workflows/check.yml` builds koch and runs the whole-tree pass, and `checkDriver`
