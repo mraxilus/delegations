@@ -29,7 +29,7 @@ suite "Findings":
     check ordered[1] == finding("a.nim", 2, "Zebra.")
     check ordered[2] == finding("a.nim", 9, "Later line.")  # line breaks path tie
     check ordered[3] == finding("b.nim", 1, "Second file.")
-    # Same input in another order sorts the same, which is what stable output means.
+    # Same input in another order sorts same way, which is what stable output means.
     check scattered.reversed.sorted == ordered
 
   test "whole-file finding sorts before first line of same file":

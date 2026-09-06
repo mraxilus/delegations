@@ -28,7 +28,7 @@ suite "Markdown":
 
   test "cost stated in header holds: cell carrying pipe splits wrongly":
     # Recorded rather than fixed, since no governed table carries one; test pins behaviour
-    #   so a future parser change is a decision rather than a surprise.
+    #   so later parser change is decision rather than surprise.
     check tableRows("| a `x|y` b |\n") == @[@["a `x", "y` b"]]
 
   test "headings are lines opening with hash, at any depth":

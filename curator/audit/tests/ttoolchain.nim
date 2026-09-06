@@ -69,7 +69,7 @@ suite "Toolchain":
 
   test "pin is served by commit for commit, by version otherwise":
     # Replaces `checkRunning`, which resolution retired: nothing called it once each pin got
-    #   its own toolchain, and a rule with no caller is a rule nothing enforces.
+    #   its own toolchain, and rule with no caller enforces nothing.
     let commit = "295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3"
     let running = Compiler(version: PIN, commit: commit)
     check PIN.serves(running)  # version pin reads version

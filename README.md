@@ -57,10 +57,10 @@ project; `curator/<name>` is rules and root work. Every pull request runs:
 
 Everything is driven by `koch.nim`, a compiled Nim program as in Nim's own repository:
 `nim r koch ci` runs the same checks locally against a fresh `origin/main`, and every
-pull request passes it before it is opened. Needs git and the pinned compiler of whichever
-project you are changing, named in that project's nimble file; a weekly run compiles every
-project. Dependencies are managed per project with Atlas; lock files are committed,
-checkouts never.
+pull request passes it before it is opened. Needs git and any Nim that builds koch: each
+project's own pinned compiler is resolved from `PATH`, a cache, or a download, so one machine
+runs every project's suites whatever they pin. A weekly run compiles every project.
+Dependencies are managed per project with Atlas; lock files are committed, checkouts never.
 
 ## Licence
 
