@@ -24,12 +24,26 @@ outside your project.
   any other path. Root files, `koch.nim`, `curator/`, the root and domain READMEs and other
   projects are not yours, even to fix a typo. The owner may merge a red check deliberately;
   never count on it.
-- **Blocked by a rule or a check.** Do not work around it and do not edit the rule. Record
-  the question under an `## Open questions` heading in `PROVENANCE.md` and in the pull
-  request body. The curator changes rules; you do not. Nor do they change your code: a
-  curator branch may write only your `README.md`, `PROVENANCE.md` and `GLOSSARY.md`, and
-  the `scope` job holds them to it. An answer arrives as a changed rule or check for you to
-  apply, never as an edit to your source.
+- **Blocked by a rule or a check.** Do not work around it and do not edit the rule.
+  **Open a GitHub issue** from the process-change template. Say what is blocked, which rule
+  stands in the way, what you tried and rejected, what you propose, and what it costs to
+  decline. A curator reads open issues at the start of every session, judges the request,
+  answers on the issue and reports it to the Architect. You may also tell the Architect, to
+  make it faster; nothing depends on your doing so, and no request is lost by your not.
+  The curator changes rules; you do not. Nor do they change your code: a curator branch may
+  write only your `README.md`, `PROVENANCE.md` and `GLOSSARY.md`, and the `scope` job holds
+  them to it. An answer arrives as a changed rule or check for you to apply, never as an
+  edit to your source.
+- **Which channel.** An `## Open questions` entry in `PROVENANCE.md` is about **your
+  project's own design**: what you left undecided, recorded for whoever picks it up. An
+  **issue** is about **the shared process**: a rule, a check, or a capability the repository
+  does not have. A question that only your project can answer is the first; a question whose
+  answer would change what every project may do is the second. When it is both, write the
+  design half in provenance and open an issue for the rest.
+- **Say which role you are.** Every session here posts to GitHub as the same account, so the
+  account says nothing about who is speaking. Open every issue, pull request and comment
+  with your role: `**Role:** contributor/<domain>/<project>`. Nothing checks this — GitHub
+  is not this repository — so it holds because you write it.
 - **Language.** Nim. TypeScript only where JavaScript is unavoidable (a browser or Node
   host), never plain JavaScript, never Python. Each such file justifies itself in its header.
 - **File kinds.** Only kinds registered in `curator/audit/src/kinds.nim` may exist; the
