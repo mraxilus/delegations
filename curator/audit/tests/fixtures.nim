@@ -24,13 +24,13 @@ func provenanceText*(stamp: string): string =
 const
   GLOSSARY_TEXT* = "# Fixture\n\nFixture glossary.\n\n## Language\n\n**Term**:\nOne thing.\n"
     ## Minimal glossary passing shape check.
+  PIN* = "2.2.4"
+    ## Compiler version fixture projects pin, and driver version fixture workflow states.
   NIMBLE_TEXT* = "# Package description; requirements live here.\n\nversion = \"0.1.0\"\n" &
-    "srcDir = \"src\"\n\nrequires \"nim >= 2.2.4\"\n"
-    ## Minimal nimble file requiring no package.
-  RULES_TEXT* = [
-    "# Constitution\n\nRules.\n", "# Style\n\nSpelling.\n", "# Contributor\n\nDuties.\n",
-  ]
-    ## Contents of rules documents in fixture tree, in `RULES` order.
+    "srcDir = \"src\"\n\nrequires \"nim == " & PIN & "\"\n"
+    ## Minimal nimble file pinning compiler exactly and requiring no package.
+  WORKFLOW_TEXT* = "# Run checks.\nname: check\n\nenv:\n  NIM_VERSION: '" & PIN & "'\n"
+    ## Minimal workflow stating driver version, which must equal `curator/audit` pin.
   LOCK_TEXT* = "{\n  \"items\": {\n    \"replications.example.invalid\": {\n" &
     "      \"dir\": \"$deps/replications.example.invalid\",\n" &
     "      \"commit\": \"0123456789abcdef\"\n    }\n  }\n}\n"
@@ -75,7 +75,7 @@ func goodTree*(): Tree =
     entry("koch.nim.cfg", "# Flags for koch.\nhints:off\n"),
     entry(".gitignore", "# Build products.\nbin/\n"),
     entry(".gitattributes", "# Endings.\n* text=auto eol=lf\n"),
-    entry(".github/workflows/check.yml", "# Run checks.\nname: check\n"),
+    entry(".github/workflows/check.yml", WORKFLOW_TEXT),
   ]
   for k, rule in RULES: result.add entry(rule, RULES_TEXT[k])
   for root in ROOTS: result.add entry(root & "/README.md", "# " & root & "\n\nProjects.\n")
