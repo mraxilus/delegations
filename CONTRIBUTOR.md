@@ -128,6 +128,13 @@ what was verified, never a range nobody tried.
 - CI installs your pin for your project alone, in its own job. You are never held to another
   project's compiler, and no other project is held to yours.
 
+Run `git config core.quotepath off` once in your checkout. The `síncopa` domain folder
+carries an accent, and git quotes such paths by default, which breaks any pipeline of the
+shape `git ls-files | xargs ...` — the quoted name is passed on verbatim and the file is not
+found. With the setting off, paths come out as they are. `koch` is unaffected either way,
+since it reads NUL-separated output directly; this is for the shell commands you write
+yourself.
+
 ## Adding a dependency
 
 Dependencies are managed per project with Atlas, Nim's dependency manager (`atlas` ships
@@ -312,6 +319,17 @@ design document.
 
 - **Verify by running.** A claim about behaviour, cost, or appearance goes in the file
   only after you ran the code, rendered the output, or read the bytes back.
+- **A claim someone else can repeat cites the test that repeats it**, written as
+  ``Verified by `tfoo.nim` ``. The audit resolves that name against your `tests/` directory
+  and fails when it does not exist, so a citation cannot quietly rot when a suite is renamed
+  or removed. It checks only that the file exists; whether that test makes the claim beside
+  it is read, never checked.
+- **A claim verified any other way says so, and names the tool and the date.** Verified by
+  hand, in a browser, or with something that is not in this repository means nobody can
+  re-run it from a checkout, and a later reader is entitled to know that before trusting it.
+  Write "verified by hand in Firefox 141, 2026-09-06" rather than "verified". Prefer turning
+  such a claim into a test; where the thing genuinely cannot be tested here, the sentence
+  carries its own expiry, and that is the honest outcome.
 - **Measurements come in pairs.** A cost is a before and an after, on a named machine and
   scene, with the method. If you did not measure, write "unmeasured" rather than repeat an
   earlier figure.
