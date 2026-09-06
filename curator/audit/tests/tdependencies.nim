@@ -26,6 +26,27 @@ suite "Dependencies":
     check requirements("version = \"1\"\nrequires \"a\"  # note\n") == @["a"]  # comment after
     check requirements("when defined(windows):\n  requires \"winim\"\n") == @["winim"]  # cost
 
+  test "lock names its checkout directories, deps placeholder resolved":
+    check LOCK_TEXT.lockDirs == @["deps/replications.example.invalid"]  # one item
+    check lockDirs("{}").len == 0  # no items table
+    check lockDirs("{\"items\": {}}").len == 0  # empty items
+
+  test "checkout absent after restore is finding":
+    # Regression: `atlas changed` exits 0 while warning `repo missing!`, so restore that
+    #   fetched nothing reported success (Atlas 0.9.0, measured 2026-09-06).
+    let root = createTempDir("delegations_", "_lock")
+    defer: removeDir(root)
+    root.writeInto("curator/probe/atlas.lock", LOCK_TEXT)
+    check checkCheckouts(root, "curator/probe").len == 1  # directory absent
+    createDir(root / "curator/probe/deps/replications.example.invalid")
+    check checkCheckouts(root, "curator/probe").len == 0  # directory present
+
+  test "unreadable lock is finding, never crash":
+    let root = createTempDir("delegations_", "_lock")
+    defer: removeDir(root)
+    root.writeInto("curator/probe/atlas.lock", "not json at all")
+    check checkCheckouts(root, "curator/probe").len == 1
+
   test "projects without lock file need no atlas":
     let root = createTempDir("delegations_", "_deps")
     defer: removeDir(root)

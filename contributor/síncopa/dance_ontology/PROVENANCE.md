@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | ee146313f3986a3e |
+| Rules  | 7e09ec06aaf3db2d |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the Architect's workbook `ontology.partnerwork.xlsx` (sheets `base` and
@@ -299,6 +299,18 @@ Declared unmet by this move, so the Style row above stays true (Article VIII.1):
 - X.8: pages name system font stacks; the whole-cloth page loads Fraunces, Instrument Sans
   and Spline Sans Mono from Google. Font files are unregistered kinds and cannot be shipped
   here; see Open questions.
+
+## Toolchain
+
+**Compiler pinned exactly, at the version this project was verified on.**
+`requires "nim == 2.2.4"` in `dance_ontology.nimble`. CONTRIBUTOR.md now demands an exact
+pin rather than a lower bound, and this project is the reason an upper bound is needed at
+all: 2.2.8 and 2.2.10 crash the compiler itself on six of the eleven suites
+(`field 'floatVal' is not accessible for type 'TFullReg'`), reported by the contributor of
+`rga_visualiser` while checking which release the whole repository could take. Assumed, not
+re-verified here: that report, which was measured on their machine and not on this one.
+The eleven suites pass on 2.2.4, which is what the pin records. Moving it is this project's
+own work, and it now moves nothing else.
 
 ## Open questions
 

@@ -43,17 +43,24 @@ contributor/<domain>/<project>/          same shape as a curator project
 
 `main` is protected; the owner merges pull requests by hand. Branches mirror paths:
 `contributor/<domain>/<project>/<name>` and `curator/<project>/<name>` may change only that
-project; `curator/<name>` is rules and root work. Every pull request runs three jobs:
+project; `curator/<name>` is rules and root work. Every pull request runs:
 
-- `audit`: layout, form, telegraphic comments, provenance headers and rules stamps,
-  glossary shape, dependencies restored from lock files, then every project's tests.
+- `static`: layout, form, telegraphic comments, provenance headers and rules stamps,
+  glossary shape, and each project's compiler pin, over the whole tree.
+- `project`: one job per project whose code changed, each installing that project's own
+  pinned compiler, restoring its dependencies from its lock file and running its tests.
+  These run in parallel, so wall time follows the slowest changed project rather than the
+  number of projects in the repository.
 - `scope`: every changed path lies inside the branch's folder.
 - `commits`: every subject is a Conventional Commit whose scope matches the branch.
+- `audit`: the gate the other jobs report to, and one of the three required checks.
 
 Everything is driven by `koch.nim`, a compiled Nim program as in Nim's own repository:
-`nim r koch ci` runs the same three checks locally against a fresh `origin/main`, and every
-pull request passes it before it is opened. Needs Nim 2.2.4 and git. Dependencies are
-managed per project with Atlas; lock files are committed, checkouts never.
+`nim r koch ci` runs the same checks locally against a fresh `origin/main`, and every
+pull request passes it before it is opened. Needs git and the pinned compiler of whichever
+project you are changing, named in that project's nimble file; a weekly run compiles every
+project. Dependencies are managed per project with Atlas; lock files are committed,
+checkouts never.
 
 ## Licence
 

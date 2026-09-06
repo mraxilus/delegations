@@ -7,17 +7,23 @@
 ##   |---------|-------------------------------------------------------------------------|
 ##   | tree    | layout, form, comments, provenance, glossary over files git sees        |
 ##   | deps    | `atlas --noexec rep` in every project holding atlas.lock, or in one     |
-##   | tests   | testament over tests/t*.nim in every project, or in one                 |
-##   | audit   | tree, then deps, then tests                                             |
+##   | tests   | restore, then testament over tests/t*.nim, every project or one         |
+##   | plan    | projects one change asks to compile, as JSON for CI matrix              |
+##   | audit   | tree, then deps, then tests, over every project                         |
 ##   | scope   | changed paths against branch prefix           (--branch, --base)        |
 ##   | commits | commit subjects against branch scope          (--branch, --base)        |
 ##   | stamp   | print rules stamp for PROVENANCE.md                                     |
-##   | ci      | fetch origin/main, then audit, scope, commits                           |
+##   | ci      | fetch origin/main, then tree, changed projects, scope, commits          |
 ##   |---------|-------------------------------------------------------------------------|
 ##   Options: `--root:<dir>` (default `.`); `--branch:<name>` (default env `BRANCH`, else
-##     current git branch); `--base:<ref>` (default env `BASE`, else `origin/main`). Second
-##     argument of `deps` and `tests` names one project directory. Exit: 0 clean, 1
-##     findings, 2 usage error.
+##     current git branch); `--base:<ref>` (default env `BASE`, else `origin/main`); `--all`
+##     makes `plan` name every project, for scheduled sweep. Second argument of `deps` and
+##     `tests` names one project directory. Exit: 0 clean, 1 findings, 2 usage error.
+##
+##   `ci` compiles only projects whose code changed, since static pass costs tenths of
+##     second and suites cost minutes; `audit` keeps whole-repository form for sweep.
+##   Compiler on PATH must equal changed project's pin, else finding and no compile: wrong
+##     compiler either fails confusingly or passes without testing what CI will run.
 ##
 ##   Rejected: make (second toolchain, recipe tabs, untested glue); NimScript tasks (compiler
 ##     VM subset, script loaded on every compile, task names shadow compiler commands,
@@ -29,13 +35,13 @@
 
 import std/[options, os, parseopt, strutils]
 import ./curator/audit/src/[
-  findings, domains, scope, commits, tree, projects, dependencies, audit,
+  findings, domains, scope, commits, tree, dependencies, audit, plan,
 ]
 
 
 const USAGE = """
-Usage: koch <tree|deps|tests|audit|scope|commits|stamp|ci> [project]
-            [--root:<dir>] [--branch:<name>] [--base:<ref>]
+Usage: koch <tree|deps|tests|plan|audit|scope|commits|stamp|ci> [project]
+            [--root:<dir>] [--branch:<name>] [--base:<ref>] [--all]
 """
   ## Text printed on usage error.
 
@@ -47,6 +53,7 @@ type Options = object
   root: string = "."
   branch: string
   base: string
+  is_all: bool
 
 
 proc parseOptions(): Option[Options] =
@@ -63,6 +70,7 @@ proc parseOptions(): Option[Options] =
       of "root": options.root = value
       of "branch": options.branch = value
       of "base": options.base = value
+      of "all": options.is_all = true
       else: return none(Options)
     of cmdEnd: discard
   if options.command.len == 0: return none(Options)
@@ -94,14 +102,22 @@ proc run(options: Options): int =
   of "tree":
     found = options.root.readTree.auditTree
   of "deps":
-    found = restoreAll(options.root, options.dirsOf(options.root.readTree))
+    let tree = options.root.readTree
+    found = restoreAll(options.root, options.dirsOf(tree))
   of "tests":
-    found = runTests(options.root, options.dirsOf(options.root.readTree))
+    let tree = options.root.readTree
+    found = runJobs(options.root, tree.jobsFor(options.dirsOf(tree)))
+  of "plan":
+    let tree = options.root.readTree
+    echo render(
+      if options.is_all: tree.allJobs
+      else: tree.jobs(changedPaths(options.root, options.baseOrDefault))
+    )
+    return 0
   of "audit":
     let tree = options.root.readTree
     found = tree.auditTree
-    found.add restoreAll(options.root, tree.projectDirs)
-    found.add runTests(options.root, tree.projectDirs)
+    found.add runJobs(options.root, tree.allJobs)
   of "scope":
     found = checkScope(options.branchOrDefault, changedPaths(options.root, options.baseOrDefault))
   of "commits":
@@ -112,10 +128,9 @@ proc run(options: Options): int =
   of "ci":
     discard gitFields(options.root, ["fetch", "-q", "origin", MAIN])
     let tree = options.root.readTree
-    found = tree.auditTree
-    found.add restoreAll(options.root, tree.projectDirs)
-    found.add runTests(options.root, tree.projectDirs)
     let (branch, base) = (options.branchOrDefault, options.baseOrDefault)
+    found = tree.auditTree
+    found.add runJobs(options.root, tree.jobs(changedPaths(options.root, base)))
     found.add checkScope(branch, changedPaths(options.root, base))
     found.add checkCommits(branch, subjects(options.root, base))
   else:

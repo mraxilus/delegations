@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | ee146313f3986a3e |
+| Rules  | 7e09ec06aaf3db2d |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: curator test project replacing `abstand/intervals`, which lived in a real domain;
@@ -43,6 +43,14 @@ subject, since no external authority exists. Verified: 2 matrix rows pass, 4 tes
 ## Figures
 
 Unmeasured. No hot path exists; each operation is one addition and one modulo.
+
+## Toolchain
+
+**Compiler pinned exactly, at the version this project was verified on.**
+`requires "nim == 2.2.4"` in `probe.nimble`. CONTRIBUTOR.md now demands an exact pin rather
+than a lower bound, since no single compiler serves every project here. This project's two
+matrix rows pass on 2.2.4 and nothing asked it to move, so the pin records that rather than
+a range nobody tried. This project's pin is also the one CI installs for it, in its own job.
 
 ## Open questions
 
