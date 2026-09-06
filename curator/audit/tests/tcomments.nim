@@ -65,5 +65,14 @@ suite "Article VI":
     check texts("/**\n * Doc line\n * more\n */\n", Syntax.Slash) == @["Doc line", "more"]  # stars
     check texts("let c = 'it\\'s'; // yes\n", Syntax.Slash) == @["yes"]  # escaped quote
 
+  test "VI.5 markup comments span lines and repeat":
+    check texts("<p>x</p><!-- note -->\n", Syntax.Xml) == @["note"]  # one comment
+    check texts("<!-- one --><p>x</p><!-- two -->\n", Syntax.Xml) ==
+      @["one two"]  # several on line, joined
+    check texts("<!-- one\n  two -->\n<p>x</p>\n", Syntax.Xml) ==
+      @["one", "two"]  # spanning lines, per line
+    check texts("<p>plain</p>\n", Syntax.Xml).len == 0  # markup is not comment
+    check texts("<svg><!--<circle/>--></svg>\n", Syntax.Xml) == @["<circle/>"]  # markup inside
+
   test "VI.5 none yields nothing":
     check texts("# looks like comment\n", Syntax.None).len == 0  # Markdown, JSON
