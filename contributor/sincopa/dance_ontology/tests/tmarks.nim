@@ -10,6 +10,7 @@ joinable: true
 import std/[os, strutils, unittest]
 
 import ../design/marks
+import ../tools/title
 
 
 const OUT = "build/design"
@@ -23,4 +24,8 @@ suite "mark workbench":
       buildPage(i, OUT)
       let written = readFile(OUT / PAGES[i].name)
       check written.len > 0  # written and read back (IX.5)
-      check "<title>" in written  # page carries its head
+      # Every page workbench writes is exploration, so every one carries mockup form and
+      # none carries plain one: reader tells stood-behind page from mock-up before opening
+      # either.  Asserted against constant, so title cannot drift while test still passes.
+      check "<title>" & MOCKUP & " — " in written
+      check "<title>" & WORK & " — " notin written

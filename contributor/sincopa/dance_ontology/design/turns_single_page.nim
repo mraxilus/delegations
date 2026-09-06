@@ -20,7 +20,7 @@ import std/[strformat, tables]
 import ./[page, parts]
 
 
-const TITLE* = "Single-hand turns, so far"
+const TITLE* = "Single-Hand Turns, So Far"
   ## What page calls itself, in its tab and at its head.
 
 

@@ -24,7 +24,7 @@ import std/[strformat, tables]
 import ./[page, parts, rules]
 
 
-const TITLE* = "The frame, so far"
+const TITLE* = "The Frame, So Far"
   ## What page calls itself, in its tab and at its head.
 
 

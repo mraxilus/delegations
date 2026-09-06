@@ -19,6 +19,7 @@
 import std/[options, strformat, strutils]
 
 import ./rules
+import ../tools/title
 import ../src/dance_ontology/draw/[body, geometry, style]
 
 
@@ -142,18 +143,12 @@ code { font: 0.88em var(--mono); background: var(--wash); padding: 0.1em 0.35em;
     ## custom properties, this defines them.
 
 
-const WORK* = "Dance Ontology"
-  ## What this body of work is called where pages are published.
-  ##   Every page carries it in front of its own name, so gallery holding
-  ##     work from several places sorts them together and one of these can
-  ##     be told from somebody else's at one glance.
-
-
 func document*(title, page_body: string): string =
   ## Wrap one page: shared style sheet, then whatever page is about.
   ##   Title is what browser tab and published gallery both show, so
   ##     it carries name of work as well as name of page.
-  &"<meta charset=\"utf-8\">\n<title>{WORK} — {title}</title>\n" &
+  ##   Every page this wraps is exploration, so all four take mockup form.
+  &"<meta charset=\"utf-8\">\n<title>{MOCKUP} — {title}</title>\n" &
     &"{STYLE}{page_body}"
 
 

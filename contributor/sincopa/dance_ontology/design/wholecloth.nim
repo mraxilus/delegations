@@ -25,6 +25,8 @@
 
 import std/[os, strutils, unicode]
 
+import ../tools/title
+
 
 const
   MARKUP_PATH = "mockups" / "wholecloth.html"
@@ -33,6 +35,8 @@ const
     ## Marker line standing where sim's data script goes.
   MARK_SCRIPT = "{{turns_script}}"
     ## Marker line standing where panel program goes.
+  MARK_TITLE = "{{title}}"
+    ## Marker standing where page's title goes, so name of work is spelt once.
 
 
 func spliced(markup, marker, element: string): string =
@@ -52,6 +56,7 @@ proc main() =
     page = readFile(MARKUP_PATH)
       .spliced(MARK_DATA, "<script id=\"turns-sim\">\n" & data & "</script>")
       .spliced(MARK_SCRIPT, "<script>\n" & program & "</script>")
+      .spliced(MARK_TITLE, MOCKUP & " — Whole Cloth")
     path = dir / "wholecloth.html"
   writeFile(path, page)
   echo "wrote ", path, ": ", page.runeLen, " characters"

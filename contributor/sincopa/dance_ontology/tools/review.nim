@@ -21,6 +21,7 @@
 import std/[options, os, strutils]
 
 import ../src/dance_ontology
+import ./title
 
 
 const
@@ -281,6 +282,7 @@ proc renderReview*(): string =
   let free_frame = fromKey("--.").get
   var page = readFile(TEMPLATE_PATH)
   let fills = {
+    "title": MOCKUP & " — The Review Page",
     "stats": renderStats(),
     "gallery": renderGallery(),
     "matrix": renderMatrix(),

@@ -11,9 +11,12 @@
 
 import std/[os, strutils]
 
+import ./title
 
-const TITLE_PREFIX = "Dance Ontology — "
+
+const TITLE_PREFIX = WORK & " — "
   ## Prefix published page's title carries, so gallery sorts body of work together.
+  ##   Bundling is only ever page project stands behind, so plain form, never mockup form.
 
 
 proc bundle(dir, name: string) =
