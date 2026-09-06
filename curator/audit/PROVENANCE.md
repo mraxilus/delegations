@@ -222,9 +222,8 @@ record files, while every stamp is still checked.
 
 Cost: a merged change can leave an unrelated project red until that project next changes.
 The weekly `schedule` sweep, which plans every project, is the guard, and it is a weaker
-guard than compiling everything on every push. Assumed, not yet verified on a runner: that
-the sweep fires and that matrix jobs run in parallel, so wall time follows the slowest
-changed project rather than their sum. Both are runner properties nothing local can show.
+guard than compiling everything on every push. Assumed, not yet verified: that the sweep
+fires, which only a Monday shows. Parallelism is verified, under Figures.
 
 ## Dependencies
 
@@ -320,5 +319,14 @@ The earlier figures on this file, 0.245 s and 62.7 s, were taken in a different 
 on 2026-09-05 and are not the other half of this pair; they are gone rather than compared.
 Re-measure when a project's suites grow; otherwise treat as unmeasured.
 
-Unmeasured, and a runner property nothing local can show: that matrix jobs run in parallel,
-so CI wall time follows the slowest changed project rather than the sum of all.
+**Matrix jobs do run in parallel**, verified on the runner rather than assumed, from the
+first run of this arrangement (run 34016823462, pull request 12, 2026-09-06, all eight
+checks green). The three `project` jobs started within one second of each other and finished
+at 16 s, 52 s and 121 s; the phase took 121 s wall, not the 189 s their sum would be. The
+saving is the sum minus the slowest, so it grows as projects arrive, which is the property
+that was wanted.
+
+Cost measured in the same run: matrix jobs cannot start until `plan` reports, which put
+16 s between the run starting and the first project job. That is a floor on every run,
+paid whatever changed, and it is the price of computing the matrix in tested Nim rather
+than in shell.
