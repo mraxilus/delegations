@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Author | Claude Opus 5 and Claude Sonnet 5 |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 02b1f374b78fd37a |
+| Rules  | 73a6fa37de648f53 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the
@@ -2144,5 +2144,9 @@ other here:
   `strict`, plus a `web` verb in `tools/build.nim`. A generated lockfile was measured against
   the form rules before the rule was written, so it may be committed as generated and must
   not be reformatted to fit.
+- **Draft pull requests.** Binds how your next pull request is opened rather than anything in
+  this record: open it as a draft and mark it ready only when CI is green on the runner,
+  every comment is answered, and you intend no further change. Nothing here needed
+  correcting.
 
 [replications]: https://gitlab.com/mraxilus/replications
