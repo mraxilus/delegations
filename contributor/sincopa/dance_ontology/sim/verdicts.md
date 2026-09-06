@@ -51,8 +51,8 @@ reach).
 |---|---|---|---|---|
 | -2 | blocked | | | |
 | -1 1/2 | blocked | | | |
-| -1 | lock low (led) | open | 0.65 | 1.03 m |
-| -1/2 | open | open | 0.67 | 1.00 m |
+| -1 | lock low | open | 0.63 | 1.04 m |
+| -1/2 | open | open | 0.53 | 1.00 m |
 | 0 | open | wrap low | 0.03 | 1.00 m |
 | +1/2 | blocked | | | |
 | +1 | blocked | | | |
@@ -72,8 +72,8 @@ reach).
 | -1 | blocked | | | |
 | -1/2 | blocked | | | |
 | 0 | wrap high (led) | open | 0.86 (near it) | 1.40 m |
-| +1/2 | lock high (led) | open | 1.05 (at the edge) | 1.40 m |
-| +1 | wrap high (led) | open | 0.90 (near it) | 1.40 m |
+| +1/2 | lock high (led) | open | 0.94 (near it) | 1.40 m |
+| +1 | wrap high (led) | open | 0.81 (near it) | 1.40 m |
 | +1 1/2 | blocked | | | |
 | +2 | blocked | | | |
 
@@ -83,15 +83,15 @@ Blocks: -2.50: no block within 2.50 turns; +2.50: no block within 2.50 turns.
 
 | turn | her arm | his arm | strain | hands at |
 |---|---|---|---|---|
-| -2 | above | above | 0.19 | 1.90 m |
+| -2 | above | above | 0.22 | 1.91 m |
 | -1 1/2 | above | above | 0.00 | 1.92 m |
-| -1 | above | above | 0.20 | 1.90 m |
+| -1 | above | above | 0.21 | 1.90 m |
 | -1/2 | above | above | 0.00 | 1.92 m |
 | 0 | above | above | 0.00 | 1.93 m |
 | +1/2 | above | above | 0.24 | 1.94 m |
-| +1 | above | above | 0.21 | 1.91 m |
-| +1 1/2 | above | above | 0.00 | 1.91 m |
-| +2 | above | above | 0.20 | 1.91 m |
+| +1 | above | above | 0.20 | 1.91 m |
+| +1 1/2 | above | above | 0.00 | 1.90 m |
+| +2 | above | above | 0.21 | 1.91 m |
 
 ### R-r, low
 
@@ -106,8 +106,8 @@ reach).
 | -1 | blocked | | | |
 | -1/2 | blocked | | | |
 | 0 | open | wrap low | 0.03 | 1.00 m |
-| +1/2 | open | open | 0.67 | 1.00 m |
-| +1 | lock low (led) | open | 0.65 | 1.03 m |
+| +1/2 | open | open | 0.53 | 1.00 m |
+| +1 | lock low | open | 0.63 | 1.04 m |
 | +1 1/2 | blocked | | | |
 | +2 | blocked | | | |
 
@@ -121,8 +121,8 @@ reach).
 |---|---|---|---|---|
 | -2 | blocked | | | |
 | -1 1/2 | blocked | | | |
-| -1 | wrap high (led) | open | 0.90 (near it) | 1.40 m |
-| -1/2 | lock high (led) | open | 1.05 (at the edge) | 1.40 m |
+| -1 | wrap high (led) | open | 0.81 (near it) | 1.40 m |
+| -1/2 | lock high (led) | open | 0.94 (near it) | 1.40 m |
 | 0 | wrap high (led) | open | 0.86 (near it) | 1.40 m |
 | +1/2 | blocked | | | |
 | +1 | blocked | | | |
@@ -135,15 +135,15 @@ Blocks: -2.50: no block within 2.50 turns; +2.50: no block within 2.50 turns.
 
 | turn | her arm | his arm | strain | hands at |
 |---|---|---|---|---|
-| -2 | above | above | 0.20 | 1.91 m |
-| -1 1/2 | above | above | 0.00 | 1.91 m |
-| -1 | above | above | 0.21 | 1.91 m |
+| -2 | above | above | 0.21 | 1.91 m |
+| -1 1/2 | above | above | 0.00 | 1.90 m |
+| -1 | above | above | 0.20 | 1.91 m |
 | -1/2 | above | above | 0.24 | 1.94 m |
 | 0 | above | above | 0.00 | 1.93 m |
 | +1/2 | above | above | 0.00 | 1.92 m |
-| +1 | above | above | 0.20 | 1.90 m |
+| +1 | above | above | 0.21 | 1.90 m |
 | +1 1/2 | above | above | 0.00 | 1.92 m |
-| +2 | above | above | 0.19 | 1.90 m |
+| +2 | above | above | 0.22 | 1.91 m |
 
 ### L-r, low
 
@@ -156,16 +156,16 @@ reach).
 | -2 | blocked | | | |
 | -1 1/2 | blocked | | | |
 | -1 | blocked | | | |
-| -1/2 | wrap low (led) | open | 1.10 (at the edge) | 1.21 m |
+| -1/2 | wrap low (led) | open | 1.10 (at the edge) | 1.18 m |
 | 0 | open | open | 0.00 | 1.00 m |
-| +1/2 | lock low (led) | open | 0.60 | 1.01 m |
+| +1/2 | lock low | open | 0.58 | 1.02 m |
 | +1 | blocked | | | |
 | +1 1/2 | blocked | | | |
 | +2 | blocked | | | |
 
 ### L-r, high
 
-Blocks: -0.65: her arm through her torso (a pose holds a step beyond, but not one the arms can
+Blocks: -0.63: her arm through her torso (a pose holds a step beyond, but not one the arms can
 reach); +1.06: his arm through his torso (a pose holds a step beyond, but not one the arms can
 reach).
 
@@ -174,10 +174,10 @@ reach).
 | -2 | blocked | | | |
 | -1 1/2 | blocked | | | |
 | -1 | blocked | | | |
-| -1/2 | wrap high (led) | open | 1.04 (at the edge) | 1.40 m |
+| -1/2 | wrap high (led) | open | 1.09 (at the edge) | 1.40 m |
 | 0 | open | open | 0.89 (near it) | 1.40 m |
-| +1/2 | lock high (led) | open | 0.56 | 1.40 m |
-| +1 | wrap high (led) | wrap high (led) | 1.01 (at the edge) | 1.41 m |
+| +1/2 | lock high (led) | open | 0.48 | 1.40 m |
+| +1 | wrap high (led) | wrap high (led) | 1.05 (at the edge) | 1.41 m |
 | +1 1/2 | blocked | | | |
 | +2 | blocked | | | |
 
@@ -188,13 +188,13 @@ Blocks: -2.50: no block within 2.50 turns; +2.50: no block within 2.50 turns.
 | turn | her arm | his arm | strain | hands at |
 |---|---|---|---|---|
 | -2 | above | above | 0.00 | 1.93 m |
-| -1 1/2 | above | above | 0.10 | 1.89 m |
+| -1 1/2 | above | above | 0.11 | 1.89 m |
 | -1 | above | above | 0.00 | 1.93 m |
-| -1/2 | above | above | 0.00 | 1.94 m |
+| -1/2 | above | above | 0.00 | 1.95 m |
 | 0 | above | above | 0.00 | 1.98 m |
-| +1/2 | above | above | 0.14 | 1.90 m |
+| +1/2 | above | above | 0.13 | 1.90 m |
 | +1 | above | above | 0.00 | 1.92 m |
-| +1 1/2 | above | above | 0.11 | 1.90 m |
+| +1 1/2 | above | above | 0.13 | 1.90 m |
 | +2 | above | above | 0.00 | 1.92 m |
 
 ### R-l, low
@@ -208,9 +208,9 @@ reach).
 | -2 | blocked | | | |
 | -1 1/2 | blocked | | | |
 | -1 | blocked | | | |
-| -1/2 | lock low (led) | open | 0.60 | 1.01 m |
+| -1/2 | lock low | open | 0.58 | 1.02 m |
 | 0 | open | open | 0.00 | 1.00 m |
-| +1/2 | wrap low (led) | open | 1.10 (at the edge) | 1.21 m |
+| +1/2 | wrap low (led) | open | 1.10 (at the edge) | 1.18 m |
 | +1 | blocked | | | |
 | +1 1/2 | blocked | | | |
 | +2 | blocked | | | |
@@ -218,17 +218,17 @@ reach).
 ### R-l, high
 
 Blocks: -1.06: his arm through his torso (a pose holds a step beyond, but not one the arms can
-reach); +0.65: her arm through her torso (a pose holds a step beyond, but not one the arms can
+reach); +0.63: her arm through her torso (a pose holds a step beyond, but not one the arms can
 reach).
 
 | turn | her arm | his arm | strain | hands at |
 |---|---|---|---|---|
 | -2 | blocked | | | |
 | -1 1/2 | blocked | | | |
-| -1 | wrap high (led) | wrap high (led) | 1.01 (at the edge) | 1.41 m |
-| -1/2 | lock high (led) | open | 0.56 | 1.40 m |
+| -1 | wrap high (led) | wrap high (led) | 1.05 (at the edge) | 1.41 m |
+| -1/2 | lock high (led) | open | 0.48 | 1.40 m |
 | 0 | open | open | 0.89 (near it) | 1.40 m |
-| +1/2 | wrap high (led) | open | 1.04 (at the edge) | 1.40 m |
+| +1/2 | wrap high (led) | open | 1.09 (at the edge) | 1.40 m |
 | +1 | blocked | | | |
 | +1 1/2 | blocked | | | |
 | +2 | blocked | | | |
@@ -240,13 +240,13 @@ Blocks: -2.50: no block within 2.50 turns; +2.50: no block within 2.50 turns.
 | turn | her arm | his arm | strain | hands at |
 |---|---|---|---|---|
 | -2 | above | above | 0.00 | 1.92 m |
-| -1 1/2 | above | above | 0.11 | 1.90 m |
+| -1 1/2 | above | above | 0.13 | 1.90 m |
 | -1 | above | above | 0.00 | 1.92 m |
-| -1/2 | above | above | 0.14 | 1.90 m |
+| -1/2 | above | above | 0.13 | 1.90 m |
 | 0 | above | above | 0.00 | 1.98 m |
-| +1/2 | above | above | 0.00 | 1.94 m |
+| +1/2 | above | above | 0.00 | 1.95 m |
 | +1 | above | above | 0.00 | 1.93 m |
-| +1 1/2 | above | above | 0.10 | 1.89 m |
+| +1 1/2 | above | above | 0.11 | 1.89 m |
 | +2 | above | above | 0.00 | 1.93 m |
 
 ## The floor's claim
@@ -266,7 +266,7 @@ positive; for L-r the wrap way is negative and the lock way positive.
 | L-r | low | lock way | a whole turn | blocks at 0.87 | her arm through her torso |
 | L-r | low | wrap way | half a turn | blocks at 0.56 | her arm through her torso |
 | L-r | high | lock way | a whole turn | blocks at 1.06 | his arm through his torso |
-| L-r | high | wrap way | a whole turn | blocks at 0.65 | her arm through her torso |
+| L-r | high | wrap way | a whole turn | blocks at 0.63 | her arm through her torso |
 | L-r | above | lock way | no block | no block |  |
 | L-r | above | wrap way | no block | no block |  |
 
@@ -304,17 +304,17 @@ reach).
 | -2 | blocked | | | |
 | -1 1/2 | blocked | | | |
 | -1 | blocked | | | |
-| -1/2 | wrap high (led) | lock high (led) | none | 1.00 (at the edge) |
+| -1/2 | wrap high (led) | lock high (led) | none | 0.98 (near it) |
 | 0 | open | open | none | 0.89 (near it) |
-| +1/2 | lock high (led) | wrap high (led) | none | 1.00 (at the edge) |
+| +1/2 | lock high (led) | wrap high (led) | none | 0.98 (near it) |
 | +1 | blocked | | | |
 | +1 1/2 | blocked | | | |
 | +2 | blocked | | | |
 
 ### L-r.R-l, above
 
-Blocks: -2.50: no block within 2.50 turns; +1.09: arm through arm (a pose holds a step beyond, but
-not one the arms can reach).
+Blocks: -2.50: no block within 2.50 turns; +1.07: her reach (a pose holds a step beyond, but not one
+the arms can reach).
 
 | turn | her first arm | her second arm | crossings | strain |
 |---|---|---|---|---|
@@ -324,14 +324,14 @@ not one the arms can reach).
 | -1/2 | above | above | second over | 0.19 |
 | 0 | above | above | none | 0.00 |
 | +1/2 | above | above | second over | 0.00 |
-| +1 | above | above | second over, first over | 1.10 (at the edge) |
+| +1 | above | above | second over, first over | 0.87 (near it) |
 | +1 1/2 | blocked | | | |
 | +2 | blocked | | | |
 
 ### L-l.R-r, from her away rest, low
 
-Blocks: -0.59: her arm through her torso (a pose holds a step beyond, but not one the arms can
-reach); +0.59: her arm through her torso (a pose holds a step beyond, but not one the arms can
+Blocks: -0.58: her arm through her torso (a pose holds a step beyond, but not one the arms can
+reach); +0.58: her arm through her torso (a pose holds a step beyond, but not one the arms can
 reach).
 
 | turn | her first arm | her second arm | crossings | strain |
@@ -339,9 +339,9 @@ reach).
 | -2 | blocked | | | |
 | -1 1/2 | blocked | | | |
 | -1 | blocked | | | |
-| -1/2 | lock low | wrap low | none | 0.85 (near it) |
+| -1/2 | lock low (led) | wrap low | none | 0.86 (near it) |
 | 0 | open | open | none | 1.10 (at the edge) |
-| +1/2 | wrap low | lock low | none | 0.85 (near it) |
+| +1/2 | wrap low | lock low (led) | none | 0.86 (near it) |
 | +1 | blocked | | | |
 | +1 1/2 | blocked | | | |
 | +2 | blocked | | | |
@@ -371,13 +371,13 @@ Blocks: -2.50: no block within 2.50 turns; +2.50: no block within 2.50 turns.
 | turn | her first arm | her second arm | crossings | strain |
 |---|---|---|---|---|
 | -2 | above | above | none | 0.12 |
-| -1 1/2 | above | above | first over | 0.47 |
+| -1 1/2 | above | above | first over | 0.22 |
 | -1 | above | above | none | 0.12 |
-| -1/2 | above | above | first over | 0.23 |
+| -1/2 | above | above | first over | 0.59 |
 | 0 | above | above | none | 0.00 |
-| +1/2 | above | above | second over | 0.36 |
+| +1/2 | above | above | second over | 0.57 |
 | +1 | above | above | none | 0.12 |
-| +1 1/2 | above | above | second over | 0.36 |
+| +1 1/2 | above | above | second over | 0.23 |
 | +2 | above | above | none | 0.12 |
 
 ## The chain, asked still
@@ -403,11 +403,11 @@ arms can carry to it, which the sweeps above say.
 |---|---|---|---|---|---|
 | Left to left, open | 0.00 | yes | open | wrap low | 0.03 |
 | Left to right-wrap-low @ 1/2 | -0.50 | yes | wrap low (led) | open | 1.10 (at the edge) |
-| Left to right-wrap-high @ 1/2 | -0.50 | yes | wrap high (led) | open | 1.04 (at the edge) |
-| Left to left-lock-low @ -1 | -1.00 | yes | lock low (led) | open | 0.65 |
+| Left to right-wrap-high @ 1/2 | -0.50 | yes | wrap high (led) | open | 1.09 (at the edge) |
+| Left to left-lock-low @ -1 | -1.00 | yes | lock low | open | 0.63 |
 | Left to left-lock-high @ -1 | -1.00 | blocked before it | | | |
-| Left to left @ above, +1 | 1.00 | yes | above | above | 0.21 |
-| Left-Lock-Low to left, him turned -1 | -1.00 | yes | open | lock low (led) | 0.71 (near it) |
+| Left to left @ above, +1 | 1.00 | yes | above | above | 0.20 |
+| Left-Lock-Low to left, him turned -1 | -1.00 | yes | open | lock low (led) | 0.68 |
 | Left-Lock-Low to left, him turned +1 | 1.00 | blocked before it | | | |
 
 ## Standing closer, and further

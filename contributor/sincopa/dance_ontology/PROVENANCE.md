@@ -41,11 +41,15 @@ rest, re-organised, room and verdict are sim's method rather than dance, and ear
 neither does sim's `(led)` mark, nor its point where hands meet, `Grip` naming manner of
 holding instead.
 
-**One agreed term is ahead of code, deliberately.** `Block` says turn stops "because no small
-move holds and no reachable pose does". That is **assumed, not verified**: sim reports blocks
-where pose does hold and arms could reach it, because `sim/page.nim` gates carried poses
-through `agrees` where `sim/sweep.nim` accepts them. Architect chose wording knowing this, so
-entry is specification for that fix rather than description of today.
+**`Block` now describes code rather than specifying it.** Term says turn stops "because no
+small move holds and no reachable pose does", and that is **verified**: `tests/tcarry.nim`
+walks every one-hand hold over the crown two whole turns each way and holds page to naming
+what refuses wherever it stops. It was assumed until 2026-09-06, when page gated carried
+poses through `agrees` where sweep accepted them, looked no further than coarse grid before
+calling block, and never set `overhead` -- so hands above head were pulled to point between
+two dancers instead of over head of whoever turns. `L-l` and `R-r` stopped after quarter of
+turn where sweep found no block in two and half. Moment's decision is written once now, in
+`sweep.advanced`, and both paths take it (Article II.1).
 
 Agreed words disagree with code in fourteen places, recorded rather than acted on. From
 hand-to-hand half: `frame.position` means opposite of `Frame position`, stripping `over` and
@@ -247,6 +251,24 @@ sheet asks and writes `sim/verdicts.md` in the sheet's words through one visible
 table, wrapped at 100 columns; no test compares the committed record with the model, so it
 is current as of 2026-09-05 (`tools/build.nim verdicts`, 42.3 s wall on this machine) and
 stale until rerun. Rerun during move reproduced committed file byte for byte.
+
+**Couple step as they turn, in sweep as on page.** Stepping in or out a centimetre at a time
+wherever that leaves the joints freer was the page's alone; the sweep held one stance, so it
+refused turns a real couple take by shifting their feet. Both do it now, from one place in
+`sim/sweep`. Cost, measured rather than guessed: three block positions moved, by 0.02 turns
+at most (`-0.65` to `-0.63`, `-0.59` to `-0.58`), and the crossed pair above went from
+`+1.09` on arm through arm to `+1.07` on reach. No floor claim changed side. Three poses that
+were reported *(led)* no longer are, having gained the room. `verdicts.md` was regenerated for
+this and its diff read, since nothing keeps it honest by itself.
+
+**One pressure on the elbow is recorded, not tuned.** Nothing in `comfort` rewards raising or
+flaring an elbow, and two terms weighted 1.0 punish both: `lift` rises with elevation, and
+`across` costs 1.0 at full abduction. `elev` is not a `Dof` at all, so shoulder elevation is
+unbounded and unpenalised except through `lift`. The solver therefore settles the elbow low
+and tucked toward the body's own midline, which is where the neck and head are, and that is
+the likely mechanism behind the high-band blocks reported as *arm through head*. It is a
+pressure, not the crown fault: with `overhead` set, the same rig and the same bias block
+nothing there. Changing it would move every figure again and wants its own evidence.
 
 ## Pages and build
 

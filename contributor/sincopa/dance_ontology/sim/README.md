@@ -107,8 +107,10 @@ answers and nothing is tuned to make them agree.
 The shoulder girdle is rigid: rolling a shoulder forward adds several
 centimetres to a real reach and none here, so a wrap that a dancer gets by
 that is refused a little early. The trunk does not twist or bend. The couple
-never step apart: every question is asked at one stance, and a hammerlock is
-danced closer than it. A free arm is not there at all, so whether a wrap goes
+step in and out a centimetre at a time as they turn, wherever that leaves the
+joints freer, so a stance is found rather than given; what they cannot do is
+step sideways or take a hammerlock's own footwork. A free arm is not there at
+all, so whether a wrap goes
 under or over the *other* arm cannot be read for a one-hand hold. The bodies
 are one stature. The search is local: a block is reported with whether any
 pose exists a step beyond, and a pose that exists but was not found would
