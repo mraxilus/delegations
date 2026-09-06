@@ -31,6 +31,14 @@ const
     "# Constitution\n\nRules.\n", "# Style\n\nSpelling.\n", "# Contributor\n\nDuties.\n",
   ]
     ## Contents of rules documents in fixture tree, in `RULES` order.
+  LOCK_TEXT* = "{\n  \"items\": {\n    \"replications.example.invalid\": {\n" &
+    "      \"dir\": \"$deps/replications.example.invalid\",\n" &
+    "      \"commit\": \"0123456789abcdef\"\n    }\n  }\n}\n"
+    ## Minimal Atlas lock naming one checkout directory.
+  RULES_TEXT* = [
+    "# Constitution\n\nRules.\n", "# Style\n\nSpelling.\n", "# Contributor\n\nDuties.\n",
+  ]
+    ## Contents of rules documents in fixture tree, in `RULES` order.
   ALPHA_DIR* = CONTRIBUTOR & "/ronri/alpha"
     ## Contributor project in fixture tree.
   AUDIT_DIR* = CURATOR & "/audit"
