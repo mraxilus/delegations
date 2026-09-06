@@ -373,6 +373,27 @@ request 13 changed one record file, so `plan` emitted `[]`, `project` was skippe
 gate is written to pass on `skipped` and fail on `failure` or `cancelled`, and until this
 run only the first half had ever been exercised.
 
+Three further merge-process changes were verified the same day, each by its own pull request
+run and then the `push` run on `main` after its merge: the sweep gate, pull request 14
+(runs 30 and 32, both green); the curator reach and regression checks, pull request 15
+(runs 31 and 34, both green); and the citation check, pull request 16, whose pull request
+run 35 was green and whose `push` run 36 had not reported when this was written. Each ran
+against the branch that
+introduced it, which is the cheapest evidence available and was taken deliberately: pull
+request 15's own `scope` run had to permit its write to a contributor `PROVENANCE.md`, and
+its own `commits` run had to accept its own history under the rule it added. Both did.
+
+Known trap, found by pull request 14 merging while 15 and 16 were open: **two stamped
+changes in flight produce a third stamp neither carries.** Each re-stamps every project
+against its own `CONTRIBUTOR.md`; git merges their edits cleanly when they touch different
+sections, but the merged document digests to a value matching neither, so whichever merged
+second would have left `main` red on every project. The stamp is doing exactly what it
+exists for, and the cure is to stack rather than to discover: merge the earlier branch into
+the later one, resolve the `Rules` row of each project — the only place the conflict appears
+— to what `nim r koch stamp` reports for the merged rules, and fix the merge order. Done
+that way here, digest `912082eea75c768d`, with both pull requests green before either
+merged.
+
 ## Figures
 
 Measured with `date +%s.%N` around each run, three consecutive warm runs, Linux amd64
