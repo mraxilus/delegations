@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Author | Claude Opus 5 and Claude Sonnet 5 |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 6cef8fc704f7f8f4 |
+| Rules  | 772783bb2bd70464 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the
@@ -2088,5 +2088,14 @@ other here:
   session that ran them knows when, and this curator does not.
 - **Citations.** The mechanical half passes: `` `--drive-keys` `` and `` `sizeof` `` name a
   flag and an operator, not files, so `checkCitations` leaves both alone.
+- **Gated languages.** Nothing to correct today: this project carries no `.ts`, `.cpp` or
+  `.c` file yet. It binds the next pull request rather than this record. C++ and C are now
+  registered kinds, so the ImGui shim of issue 26 may land; and every file of a gated kind —
+  the TypeScript conversion of issue 27 included — must open with `not Nim because <reason>`,
+  which the audit checks. The reason itself is what a curator reads, and a shim that only
+  flattens overload sets is a different claim from one carrying logic.
+- **The lock's stored nimble.** Already met, and by this project's own hand: `atlas.lock`
+  here stores `requires "nim == 2.2.10"`, matching the committed file, after the hand-patch
+  reported in issue 25. The check added for it passes on this project.
 
 [replications]: https://gitlab.com/mraxilus/replications
