@@ -23,33 +23,58 @@ sheet arrives; until then they are stale by construction, not by neglect.
 ## Language
 
 **Every term is agreed with Architect before it is written.** Forty-four terms written
-without agreement were removed on 2026-09-06 and are in history. Thirty-five are now agreed,
+without agreement were removed on 2026-09-06 and are in history. Thirty-seven are now agreed,
 each concept set out with candidate names and their costs, and only selected name written.
 Audit checks glossary's shape and never its words, so this holds by Architect's reading
 alone.
 
-Agreed: dancers, connection, frame's four parts, free; moves, their two ways, compound moves
-and transitions; levels, modifiers, twist, and four ways of turning; chain and its rungs;
-reference; tower; rig, pose and grip.
+**Sim is isolated in code, not in concepts.** It reuses agreed words wherever one fits and
+coins its own only where none does; four are its own -- rig, pose, strain, block. What keeps
+it witness is that it imports nothing from `src/` and is told no answer, never that it speaks
+other language. Care is needed only where sim *measures* what ontology *asserts*: there
+translation stays visible (`sim/verdicts.nim`), since assumed identity would be echo.
 
 Held back by decision, not omission. Workbook, base sheet and vocabulary sheet wait until new
 sheet arrives, since nothing should be written about file this project has not seen. Review
-page waits on same sheet; ledger waits on forty rules being reconciled, several having been
-reversed by later ones. Whether sim keeps its own word for range of heights grip is carried
-in was raised and withdrawn, so it stays open. Rest of sim -- sweep, moment, blocked, strain,
-re-organised, verdict, stance, body -- was not reached.
+page waits on same sheet; ledger waits on forty rules being reconciled. Sweep, stance, moment,
+rest, re-organised, room and verdict are sim's method rather than dance, and earn no entry;
+neither does sim's `(led)` mark, nor its point where hands meet, `Grip` naming manner of
+holding instead.
 
-Words agreed so far disagree with code in eight places, recorded rather than acted on.
-`Frame position` covers facing, twist and shorthands such as over and under, so
-`frame.position` means its opposite: it strips `over` and returns frame hold said aloud.
-Code's `Frame` type is frame state carrying hold and `over` but neither facing nor twist,
-which live in `rotation.Posture`, so split between `frame.nim` and `rotation.nim` cuts across
-agreed concept rather than along it. Facing is four-valued and `isFacing` returns parity of
-twist, which cannot tell face-to-back from back-to-face. Twist is counted in quarters where
-`HalfTurns` is half turns. `Level.Above` is `Overhead`. `Compound` is `Compound move`.
-Drawing chain's `route` and `wind` are `Transition` and `Twist`, which is why neither word is
-claimed by drawing. One `Blocked` fault is already known: sim reports blocks where pose holds
-and is reachable, so that term was held back rather than written false.
+**One agreed term is ahead of code, deliberately.** `Block` says turn stops "because no small
+move holds and no reachable pose does". That is **assumed, not verified**: sim reports blocks
+where pose does hold and arms could reach it, because `sim/page.nim` gates carried poses
+through `agrees` where `sim/sweep.nim` accepts them. Architect chose wording knowing this, so
+entry is specification for that fix rather than description of today.
+
+Agreed words disagree with code in fourteen places, recorded rather than acted on. From
+hand-to-hand half: `frame.position` means opposite of `Frame position`, stripping `over` and
+returning frame hold said aloud; `Frame` and `rotation.Posture` split across frame state
+rather than along it; `isFacing` returns parity of twist where facing is four-valued; twist is
+counted in quarters where `HalfTurns` is half turns; `Level.Above` is `Overhead`; `Compound`
+is `Compound move`; drawing chain's `route` and `wind` are `Transition` and `Twist`. From sim:
+`Band` is `Level` and its members Low, High and Overhead; `Body.One` and `.Two` are Lead and
+Follow; `Aspect.Fore` and `.Aft` are Wrap and Lock; `Link` is `Connection` and `page.Hold` is
+`Frame hold`, both words already on avoid lines; and `Move`, `Twist`, `Chain`, `Way` and
+`overhead` each name something in sim unrelated to agreed term of same spelling.
+
+**Review page's layout block was stale in five ways, and is corrected.** Curator left one
+line for this project's hand -- domain folder printed as `síncopa` where it is now `sincopa`.
+Four more were false beside it: `transition.nim` was said to hold four primitives where it
+holds two; `app/shell.nim` and `tools/review_prose.nim` were named though this project's own
+earlier delivery moved them to `pages/`; and build was invoked as `make`, retired since. Going
+past one line was deliberate: block named three files that do not exist, two of them removed
+by this project, and page is read by Architect. Its wording still uses `validator` and
+`primitives` where agreed words are `Reference` and `Move`; that is vocabulary sweep of whole
+page, not this fix.
+
+**Three faults live in generated output, not merely pending renames.** `sim/verdicts.md`
+prints `above` and `X`, both on avoid lines, where agreed words are Overhead and Cross. It
+prints `her arm` and `his arm` in every sweep table, avoided for Follow and Lead. Translation
+table stands in three copies -- `sim/verdicts.nim`, `design/turns.nim`, `sim/page.nim` -- and
+has drifted: `turns.nim` dropped `elbow forward` clause `verdicts.nim` adds (Article II.1).
+Two reader surfaces also disagree, `verdicts.nim` translating to wrap and lock where sim
+page's `lies` prints "across the front" untranslated.
 
 ## Model
 
@@ -171,15 +196,17 @@ check, so its tests are a debug build.
 
 ## Body sim
 
-**Two bodies of the average adult and their arms, sharing nothing with the ontology.** The
+**Two bodies of the average adult and their arms, sharing no code with ontology.** The
 rig (`rig.nim`) is mixed-sex midpoints of ANSUR II medians with AAOS and NASA-STD-3000 joint
 ranges, every number with its derivation; a torso is an ellipse three quarters as deep as it
 is broad because a round section of a chest's girth stands three centimetres too far out at
 the front. An arm is three rigid links on a shoulder that swings and twists, an elbow and a
 wrist, and past a range is refused with the joint named; the stretch before an edge is
 reported as strain. No link passes through a body or another arm; an arm may press its own
-body. Rejected: sharing `Arm`, `Body` or any vocabulary with `src/`, because a shorthand
-cannot check itself and the sim is what the shorthand is for.
+body. Rejected: importing anything from `src/`, because shorthand cannot check itself and sim
+is what shorthand is for. Not rejected, and reversed since: sharing vocabulary. Sim reuses
+agreed words where one fits and coins its own only where none does; what keeps it witness is
+that it imports no code and is told no answer, never that it speaks different language.
 
 **A pose is found, not drawn, and turning is a path, not a pose.** Given shoulders and grip
 an arm has three freedoms, searched with the grip by a deterministic pattern search from a
@@ -321,10 +348,6 @@ own work, and it now moves nothing else.
 
 ## Open questions
 
-- `pages/review/review.html` prints `síncopa/dance_ontology/` as display text, one line
-  inside a `<pre>`. The domain folder is now `sincopa`, so that text is stale. A curator
-  renamed the folder and may move this project's files but not edit them, so the line was
-  left as it is rather than changed without your hand. One line, yours to correct.
 
 - Answered for fonts: binaries are never committed, and a project records each one's origin,
   version, licence and checksum, then fetches it with an `assets` verb in `tools/build.nim`.

@@ -1,11 +1,19 @@
 # The body sim
 
-Two bodies and their arms, and nothing else. This directory shares no code and
-no vocabulary with the ontology next door: it has its own `Arm` and `Body`
-enums, its own vector type, and it imports nothing from `../src`. That is the
-point of it. The notation is a shorthand for two people with arms of a length,
-and a shorthand cannot check itself — so this is the thing it is a shorthand
-*for*, kept separate so that what it says is evidence rather than an echo.
+Two bodies and their arms, and nothing else. This directory shares no code with
+the ontology next door: it has its own `Arm` and `Body` enums, its own vector
+type, and it imports nothing from `../src`. That is the point of it. The
+notation is a shorthand for two people with arms of a length, and a shorthand
+cannot check itself — so this is the thing it is a shorthand *for*, kept apart
+so that what it says is evidence rather than an echo.
+
+It is not kept apart in its concepts. It reuses the project's agreed words
+wherever one fits, and coins its own only where none does — the glossary holds
+four that are its: rig, pose, strain and block. What makes it a witness is that
+it imports no code and is told no answer, never that it speaks a different
+language. The care needed is narrow: where the sim *measures* what the ontology
+*asserts*, the translation is evidence, not identity, which is why
+`verdicts.nim` still translates in one visible table rather than assuming.
 
 ## What it models
 
@@ -135,11 +143,14 @@ make pages          # the page, into build/sim/
 make verdicts       # rewrite verdicts.md from the current model
 ```
 
-`verdicts.nim` is the one place the sim's answers meet the ontology's words —
-wrap, lock, low, high, above, led — and the translation happens in its report,
-in one visible table, so the model itself stays vocabulary-free. The laws run
-under `make check`; run it before `make pages`, because a page drawing a model
-that has stopped holding is worse than no page. The floor's claims are a suite of their
+`verdicts.nim` is where the sim's measurements meet the ontology's claims —
+wrap, lock, low, high — and the translation happens in its report, in one
+visible table. Not because the sim speaks a different language: it reuses the
+agreed words. Because here it *measures* what the ontology *asserts*, and a
+translation kept visible is evidence, where an assumed identity would be an
+echo. The laws run under `nim r koch tests`; run them before
+`nim r tools/build.nim pages`, because a page drawing a model that has stopped
+holding is worse than no page. The floor's claims are a suite of their
 own that only asserts they are *decided*; `-d:floorIsLaw` makes them hard.
 
 The solver is built to be asked millions of times a sweep without the answers
