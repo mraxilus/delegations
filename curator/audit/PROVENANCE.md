@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 7e09ec06aaf3db2d |
+| Rules  | 91138fd360605cf6 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -140,6 +140,31 @@ layout requires at root. Zero terms pass, because the format creates
 entries lazily. Verified by `tglossary.nim`.
 
 ## Scope
+
+**Curator reach into contributor projects stops at their records.** `curator/<name>` still
+owns the empty prefix, because a rules change must reach every project, but under
+`contributor/` the only writable paths are a project's `README.md`, `PROVENANCE.md` and
+`GLOSSARY.md` — `PROJECT_FILES`, read from `layout.nim` rather than repeated. Chosen because
+that empty prefix was the one hole in an otherwise mechanical scope system, and it belonged
+to the most-run role: CURATOR.md duty 9 forbade writing contributor code, and nothing but
+reading held it. Rejected: restricting to `PROVENANCE.md` and `GLOSSARY.md` alone, which the
+per-project-toolchain propagation had already disproved — that change removed "Needs Nim
+2.2.4" from three contributor READMEs, prose the rule itself invalidated, and the tighter set
+would have blocked it and left stale text no contributor knew was stale. Cost: the README
+stays writable, so restraint about rewriting a project's prose is still duty 9's to govern by
+reading, never the check's. Verified by driven check on this repository: a curator branch
+touching `dance_ontology/src/dance_ontology.nim` reports one finding naming the path, while
+the same branch touching that project's `PROVENANCE.md` and `README.md` reports none.
+
+**The regression rule is enforced, not hoped for.** `commits` reads subjects newest first and
+demands every `fix` carry an earlier `test` of the same scope on the same branch (Article
+IX.8). Chosen because "every mistake becomes a test" was the Architect's stated priority and
+lived only in prose. Rejected: matching across `main`'s history, which would need the whole
+log and would still pass a fix whose test landed years earlier under a different intent.
+Cost: a fix of a mistake whose test already sits on `main` needs a test here or another type;
+the escape is honest, since a change needing no new test is not a `fix`. Verified by driven
+check: a branch carrying `fix(audit)` alone reports one finding, and the same branch with
+`test(audit)` committed first reports none.
 
 **Branch grammar mirrors paths: two, three or four segments, and the prefix decides.**
 `curator/<name>` owns the empty prefix, so every path passes; `curator/<project>/<name>`
