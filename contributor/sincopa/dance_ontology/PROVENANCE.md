@@ -152,16 +152,17 @@ rewritten region announcing what was danced. Verified by hand in a browser at 39
 1200 px before the move (mark and frame land in the same place either side of the swap) and
 not re-driven since: **assumed**. Which browser, and on what date, was not recorded, so this
 cannot be repeated from a checkout; whoever next touches the shell re-drives it and writes
-down both. The shell (`app/shell.nim`) is hosted as a string and
-written out by `tools/pages`; the bundle (`tools/bundle.nim`) folds `app.js` into it as one
+down both. The shell is the committed file `pages/app/index.html`,
+copied out by `tools/pages`; the bundle (`tools/bundle.nim`) folds `app.js` into it as one
 self-contained file for publishing, titled `Dance Ontology — …` so a gallery sorts the body
 of work together.
 
 ## Review page
 
 **Every number and picture on the page is a marker filled from the model.** The prose lives
-in `tools/review_prose.nim`; `tools/review.nim` fills the markers, inks every term of art in
-the hands it names, and writes the page and one SVG per frame into a directory it clears
+in the committed file `pages/review/review.html`; `tools/review.nim` fills the markers, inks
+every term of art in the hands it names, and writes the page and one SVG per frame into a
+directory it clears
 first, so a renamed frame cannot leave its old picture behind. Rejected: committing the
 generated page and holding it fresh by a test, which this repository cannot do because it
 reads only registered file kinds; the page is a build product and cannot be stale, and the
@@ -179,8 +180,8 @@ removed.
 and writing it, and the build refuses to write a page whose claims fail. Rejected: rules
 that are implemented and not asserted, which quietly stop being true (it happened here more
 than once, recorded beside the rules). The four generated pages and the hand-drawn
-whole-cloth page are build products under `build/design/`; the whole-cloth markup is hosted
-in `wholecloth_page.nim`, its turns panel is `wholecloth_turns.nim` compiled to JavaScript,
+whole-cloth page are build products under `build/design/`; the whole-cloth markup is the committed
+file `mockups/wholecloth.html`, its turns panel is `wholecloth_turns.nim` compiled to JavaScript,
 and `wholecloth.nim` splices markup, the sim's sweeps (`turns.nim`) and the panel into one
 page. Verified by `tmarks.nim`, which drives the build of every page under testament, and
 for the whole-cloth port by a driven comparison under Playwright of the old page against the

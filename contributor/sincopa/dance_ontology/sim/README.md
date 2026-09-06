@@ -134,13 +134,14 @@ page.nim     the browser page, compiled to JS: a hold, a level, and a
 ../tests/tlaws.nim  what the model is held to, all of it about bodies and arms
 verdicts.nim the sim run as an instrument against the ontology's sheet
 verdicts.md  what it said, translated once and generated, not edited
-shell.nim    the page's shell and style, hosted in Nim; written out by `make pages`
+../pages/sim/index.html  the page's shell and style, written by hand;
+             copied into build/ by `nim r tools/build.nim pages`
 ```
 
 ```
-make check          # the laws, with every other suite, from the project directory
-make pages          # the page, into build/sim/
-make verdicts       # rewrite verdicts.md from the current model
+nim r koch tests contributor/sincopa/dance_ontology  # the laws, with every other suite
+nim r tools/build.nim pages       # the page, into build/sim/
+nim r tools/build.nim verdicts    # rewrite verdicts.md from the current model
 ```
 
 `verdicts.nim` is where the sim's measurements meet the ontology's claims —
