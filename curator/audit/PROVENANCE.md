@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | ee146313f3986a3e |
+| Rules  | 7e09ec06aaf3db2d |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -170,6 +170,62 @@ Cost: serial; a project in another language needs its own runner arm. Verified b
 `tprojects.nim` with a passing and a failing fixture project driven through real testament,
 and `runIn` against `true` and `false`.
 
+## Toolchain
+
+**Each project pins its own compiler; there is no repository-wide Nim.** The pin is
+`requires "nim == <version>"` in the project's nimble file, read by `toolchain.nim` through
+the same `requireLiterals` scan `dependencies.nim` uses for packages, so requirements are
+parsed in one place. Chosen because no single version serves every project, which is
+measured rather than feared: `contributor/ronri/rga_visualiser` depends on a library 2.2.4
+cannot compile (assignment through a `var`-returning `[]`), and `dance_ontology` crashes the
+compiler itself on 2.2.8 and 2.2.10 in six of its eleven suites. Rejected: one pin for the
+repository, which cannot hold both; `requires "nim >= x"`, which cannot express the upper
+bound `dance_ontology` needs and cannot say which compiler a suite actually passed on; a
+separate `.nim-version` file, a second place a version lives beside the nimble file already
+naming one. Cost: four projects may sit on four compilers, and a curator changing the
+checker needs every one installed.
+
+Verified that Atlas accepts an exact compiler pin rather than treating it as a package to
+resolve: with `requires "nim == 2.2.6"` in `rga_visualiser.nimble`, `atlas --noexec rep`
+cloned and set the pinned commit and `atlas changed` exited 0 (Atlas 0.9.0, 2026-09-06).
+
+**The driver version is derived, never a second pin.** `NIM_VERSION` in
+`.github/workflows/check.yml` builds koch and runs the whole-tree pass, and `checkDriver`
+fails the audit unless it equals `curator/audit`'s pin, because koch compiles that project's
+modules. This is the same derived-view rule `layout.nim` applies to the domain table in
+`README.md`. Verified by driven check: setting `NIM_VERSION` to `2.2.6` against a `2.2.4`
+pin reports one finding at the workflow, and restoring it clears.
+
+**A run on the wrong compiler is a finding, not a warning.** `checkRunning` compares the
+project's pin against `nim --version` from `findExe("nim")`, i.e. the compiler testament
+will invoke, rather than `NimVersion` koch was built with, since a prebuilt `./koch` and a
+newer `nim` on `PATH` would otherwise disagree silently. The mismatched project is reported
+and not compiled. Rejected: skipping it quietly, which would let the runner discover what
+the local run was supposed to confirm. Cost: a curator touching `koch.nim` or
+`curator/audit/src/` selects every project and so needs every pinned compiler installed.
+Verified by `ttoolchain.nim` for each rule, and by driven check on this repository: a
+nimble file carrying `>=` reports one finding naming what it holds, and a nimble file with
+no compiler requirement reports the same.
+
+## Scoped checks
+
+**The static pass stays whole-tree; only compilation is scoped.** `plan.nim` selects the
+projects one change asks to compile: a project enters when a changed path under it is
+anything but its `PROVENANCE.md` or `GLOSSARY.md`, and a change to `koch.nim`,
+`koch.nim.cfg` or `curator/audit/src/` selects every project, because how each is checked
+changed. A path inside no project selects nothing by itself. Chosen against scoping the
+static pass as well, on the figures below: the static pass is hundredths of a second and
+the suites are tens of seconds, so scoping the static pass would buy nothing measurable and
+cost a second code path plus the whole-tree layout and stamp guarantees on every pull
+request. Rules propagation therefore compiles nothing at all, since it rewrites only the two
+record files, while every stamp is still checked.
+
+Cost: a merged change can leave an unrelated project red until that project next changes.
+The weekly `schedule` sweep, which plans every project, is the guard, and it is a weaker
+guard than compiling everything on every push. Assumed, not yet verified on a runner: that
+the sweep fires and that matrix jobs run in parallel, so wall time follows the slowest
+changed project rather than their sum. Both are runner properties nothing local can show.
+
 ## Dependencies
 
 **Atlas per project: requirements in `<project>.nimble`, checkouts in ignored `deps/`,
@@ -189,6 +245,15 @@ flow (`init`, `use malebolgia`, `pin`, delete checkout, `rep`, compile against t
 dependency) was verified once by hand on a throwaway project on 2026-09-05 and stays
 assumed for CI until the first real dependency lands.
 
+**`atlas changed` alone does not prove a restore happened.** It exits 0 while warning
+`repo missing!`, so a restore that fetched nothing reported success. `checkCheckouts` now
+reads the `dir` of every item in `atlas.lock`, resolves `$deps` to `deps`, and demands the
+directory exists before `atlas changed` is consulted. Measured on Atlas 0.9.0, 2026-09-06,
+by deleting `deps/` and re-running: `atlas changed` exited 0 with the checkout absent.
+Verified by `tdependencies.nim`, which drives `checkCheckouts` over a temporary project with
+and without the directory, and over a lock that is not JSON. Cost: the lock is parsed twice
+per restore, once by Atlas and once here.
+
 ## Tests
 
 **Testament over `tests/t*.nim`, each stub carrying the header from STYLE.md §6 without
@@ -203,19 +268,26 @@ test files, all passing on Nim 2.2.4 Linux amd64.
 
 ## Continuous integration
 
-**Three jobs, so the owner reads each verdict alone.** `audit` runs `nim r koch audit`;
-`scope` and `commits` run only on pull requests with full history and pass the branch name
-through the environment, read by koch as defaults, never interpolated into the script. Nim
-is pinned once as `NIM_VERSION`; the setup action installs Nim under the runner's temp
-directory (`parent-nim-install-directory`), never into the workspace, and `.gitignore`
-also lists `.nim_runtime/`, because the audit reads untracked files and a toolchain inside
-the checkout was audited as source once (33,367 findings on the first run). Required
-checks are named `audit`, `scope`, `commits` for branch protection.
+**Six jobs, and the three required check names did not change.** `plan` emits the matrix,
+`static` runs `nim r koch tree`, `project` is one matrix job per planned project installing
+that project's own pin, `scope` and `commits` run only on pull requests with full history,
+and `audit` is a gate reading the results of `plan`, `static` and `project`. The gate exists
+because matrix job names vary with the change and so can never be required checks, while
+`audit`, `scope` and `commits` must stay required: branch protection needed no edit.
+Rejected: renaming the required checks, which would have made the owner reconfigure `main`;
+computing the matrix in shell, which is untested glue where koch is tested.
+Branch names and event kind reach koch through the environment, never interpolated into the
+script. The setup action installs Nim under the runner's temp directory
+(`parent-nim-install-directory`), never into the workspace, and `.gitignore` also lists
+`.nim_runtime/`, because the audit reads untracked files and a toolchain inside the checkout
+was audited as source once (33,367 findings on the first run).
 
-**`nim r koch ci` is the local form of the three jobs.** It fetches `origin/main`, then runs
-audit, scope and commits in one process. Every pull request passes it before it is opened;
-the runner confirms, it never discovers. Cost: a network fetch per run, accepted so the base
-is the one CI will use.
+**`nim r koch ci` is the local form of the jobs.** It fetches `origin/main`, then runs the
+whole-tree pass, the planned projects' restores and suites, scope and commits in one
+process. Every pull request passes it before it is opened; the runner confirms, it never
+discovers. Cost: a network fetch per run, accepted so the base is the one CI will use.
+Cost: a curator whose change selects every project cannot run it without every pinned
+compiler, which is the price of independent pins.
 
 **Merge-process record.** The make-driven process was verified on 2026-09-05 through pull
 requests 1 to 4 (runs 2 to 8, including the re-run trap: a re-run reuses the original merge
@@ -227,12 +299,26 @@ only to be closed, which tested nothing those two runs had not.
 
 ## Figures
 
-`nim r koch tree` over this repository, warm: 0.245 s, 0.239 s, 0.243 s wall.
-`nim r koch audit`, which adds dependency restoration (no locks yet) and testament over
-three projects: 77.9 s, 62.8 s, 62.7 s wall; first run pays compile of test binaries the
-next two reuse, and `contributor/síncopa/dance_ontology` is nearly all of it (its eleven
-stubs measured 52.7 s alone, `tlaws` 23.0 s of that). Measured with bash `time`, three
-consecutive runs each, Linux amd64 container with four Xeon 2.80 GHz cores, Nim 2.2.4
-default build, 2026-09-05. Before that project arrived the same commands measured 0.11 s and
-14.7 s, which is the growth to watch rather than a before-and-after pair: no optimisation is
-claimed. Re-measure when a project's suites grow; otherwise treat as unmeasured.
+Measured with `date +%s.%N` around each run, three consecutive warm runs, Linux amd64
+container with four Intel Xeon 2.10 GHz cores, Nim 2.2.4 default build, 2026-09-06. Warm
+means every test binary was already compiled by a preceding full run.
+
+| Command | Compiles | Wall |
+|---------|----------|------|
+| `nim r koch tree` | nothing | 0.028 s, 0.023 s, 0.022 s |
+| `nim r koch tests curator/probe` | one project | 1.776 s, 1.732 s, 1.832 s |
+| `nim r koch audit` | every project | 54.156 s, 53.887 s, 53.570 s |
+
+That is the pair for scoping, taken on one machine at one commit. Before this change a push
+cost the third row whatever it touched; after it, a change to one project costs the second
+and a change to records alone costs the first, since nothing is compiled. Roughly thirty
+times less for the common case, and it no longer grows as projects arrive, which was the
+point. `contributor/síncopa/dance_ontology` is nearly all of the third row, as it was
+before.
+
+The earlier figures on this file, 0.245 s and 62.7 s, were taken in a different container
+on 2026-09-05 and are not the other half of this pair; they are gone rather than compared.
+Re-measure when a project's suites grow; otherwise treat as unmeasured.
+
+Unmeasured, and a runner property nothing local can show: that matrix jobs run in parallel,
+so CI wall time follows the slowest changed project rather than the sum of all.
