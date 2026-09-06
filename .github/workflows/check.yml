@@ -1,12 +1,22 @@
-# Run repository audit on every pull request and on main.
-#   Three jobs so owner reads each verdict alone: `audit` (tree, dependencies, every
-#   project's tests), `scope` (branch prefix), `commits` (Conventional Commits). Branch
-#   protection on main requires all three. `nim r koch ci` at root runs same three verbs
-#   locally, before any pull request is opened; runner confirms, never discovers.
-#   Nim version pinned once here; CURATOR.md names this file as its source.
+# Run repository checks on pull requests, on main, and weekly over every project.
+#   Six jobs. `plan` names projects one change asks to compile; `static` runs whole-tree
+#   checks, which cost tenths of second and so stay unscoped; `scope` and `commits` read
+#   branch; `project` is one matrix job per named project, each installing that project's
+#   own pin; `audit` reads their verdicts and is gate branch protection requires, so
+#   required check names stay `audit`, `scope`, `commits` while matrix names vary.
+#   Matrix runs in parallel, so wall time is slowest changed project, never sum of all.
+#   `nim r koch ci` at root runs same checks locally, before any pull request is opened;
+#   runner confirms, never discovers.
+#
+#   Driver version builds koch and runs whole-tree checks; it is `curator/audit`'s pin,
+#   never second pin, and `toolchain.nim` fails audit when this file disagrees with it.
+#   Every project pins its own compiler in its nimble file, since no single version serves
+#   all: `pga` needs 2.2.6 or later, `dance_ontology` crashes compiler on 2.2.8 and later.
 #   Nim installs under runner temp, never into workspace: audit reads untracked files, so
 #   toolchain inside checkout would be audited (first run on main proved it).
-#   Branch names reach koch through environment, never interpolated into script.
+#   Branch names and event kind reach koch through environment, never interpolated into
+#   script. Weekly sweep compiles every project, since scoped runs leave unrelated rot
+#   unseen until that project next changes.
 
 name: check
 
@@ -14,12 +24,35 @@ on:
   pull_request:
   push:
     branches: [main]
+  schedule:
+    - cron: '0 6 * * 1'
 
 env:
   NIM_VERSION: '2.2.4'
 
 jobs:
-  audit:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      projects: ${{ steps.select.outputs.projects }}
+    env:
+      BASE: >-
+        ${{ github.event_name == 'pull_request'
+            && format('origin/{0}', github.base_ref)
+            || github.event.before }}
+      SWEEP: ${{ github.event_name == 'schedule' && '--all' || '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: ${{ env.NIM_VERSION }}
+          parent-nim-install-directory: ${{ runner.temp }}
+      - id: select
+        run: echo "projects=$(nim r koch plan $SWEEP)" >> "$GITHUB_OUTPUT"
+
+  static:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,7 +60,25 @@ jobs:
         with:
           nim-version: ${{ env.NIM_VERSION }}
           parent-nim-install-directory: ${{ runner.temp }}
-      - run: nim r koch audit
+      - run: nim r koch tree
+
+  project:
+    needs: plan
+    if: needs.plan.outputs.projects != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.projects) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: ${{ matrix.nim }}
+          parent-nim-install-directory: ${{ runner.temp }}
+      - env:
+          PROJECT: ${{ matrix.dir }}
+        run: nim r koch tests "$PROJECT"
 
   scope:
     if: github.event_name == 'pull_request'
@@ -60,3 +111,20 @@ jobs:
           nim-version: ${{ env.NIM_VERSION }}
           parent-nim-install-directory: ${{ runner.temp }}
       - run: nim r koch commits
+
+  audit:
+    needs: [plan, static, project]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read verdict of every job this gate stands for
+        env:
+          VERDICTS: >-
+            plan=${{ needs.plan.result }}
+            static=${{ needs.static.result }}
+            project=${{ needs.project.result }}
+        run: |
+          echo "$VERDICTS"
+          case "$VERDICTS" in
+            *failure*|*cancelled*) exit 1 ;;
+          esac
