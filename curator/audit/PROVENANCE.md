@@ -250,6 +250,24 @@ The weekly `schedule` sweep, which plans every project, is the guard, and it is 
 guard than compiling everything on every push. Assumed, not yet verified: that the sweep
 fires, which only a Monday shows. Parallelism is verified, under Figures.
 
+**The sweep skips itself in a quiet week.** `sweepJobs` plans every project when any code
+merged inside `SWEEP_DAYS`, and nothing at all when none did, judging "code" by the same
+record-file exclusion scoped runs use. Chosen because the sweep exists to catch rot that
+scoped runs missed, and rot arrives with merges: a week nobody merged has nothing for it to
+find, and a run that compiles four projects to confirm that is four projects of runner time
+for no information. Rejected: sweeping the projects that changed in the window, which is
+what the push runs already did, and would miss exactly the cross-project rot the sweep is
+for. Cost: rot from outside the repository — a runner image moving under a pinned compiler,
+say — goes unseen through a quiet week and waits for the next sweep that runs. Cost: the
+window is named twice, as the cron here and `SWEEP_DAYS` in `plan.nim`; nothing checks that
+they agree, so CURATOR.md duty 7 says to change them together.
+
+A repository younger than the window has every commit inside it, so `revBefore` finds no
+commit to measure from and the sweep runs whole. That is the case today and will be until
+2026-09-12, so the skip is verified by its suite rather than by a live Monday: `tplan.nim`
+drives the decision over code, record-only and empty changes, and `ttree.nim` drives
+`revBefore` at both ends, returning HEAD for a zero-day window and empty for a ten-year one.
+
 ## Dependencies
 
 **Atlas per project: requirements in `<project>.nimble`, checkouts in ignored `deps/`,
