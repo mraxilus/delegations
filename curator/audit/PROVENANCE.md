@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 7e09ec06aaf3db2d |
+| Rules  | d2b1af43d7093e1a |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -94,7 +94,8 @@ verbatim. Nim banners `#[ Title ]#` need two blank lines before and one after; t
 syntax, so the second-tier minimum is demanded of every banner. Assumed, not checked: two-space
 indent. Verified by `tform.nim`: 100 runes pass and 101 breakable runes fail; a 202-character fonts
 link passes while 207 characters of prose and 400 characters of minified markup do not; tab in Nim
-and cfg fails; every ending case. Verified by driven check on the real pages: the validator's 391
+and cfg fails; every ending case. Verified by driven check on real pages, 2026-09-05: the
+validator's 391
 markup lines extracted verbatim to a file and the whole-cloth fonts link, whose longest token is 179
 runes, both audit clean, while a generated single-line drawing of 1,407 characters and a page
 outside `pages/` do not.
@@ -118,6 +119,23 @@ generated, which would make the distinction an accident of formatting. Cost: emp
 invisible to git, so `tests/` must hold a file. Verified by `tlayout.nim` over a fixture tree the
 tests build, with the project list pinned and the unknown-domain case asserting both the finding and
 the unchanged project list; `taudit.nim` proves the fixture is clean under every static check.
+
+**Only one check reads substance, and it reads a narrow slice of it.** `checkCitations`
+resolves every claim opening `Verified by` and naming a backticked `.nim` file, in a
+project's `PROVENANCE.md`, against that project's
+`tests/`, from the path set the tree already holds, and reports a citation naming no such
+file. Chosen because the record's most valuable property is its verified-versus-assumed
+split, and until now nothing stopped a citation rotting when a suite was renamed: the audit
+checked the file's shape and never a word of its content. Rejected: matching the claim
+against what the named test asserts, which no checker can do; and flagging every backticked
+span, which would catch commands such as ``atlas changed``, so the `.nim` ending is the
+guard. Cost, and it is the honest limit: a delegate can still cite a real test beside a claim
+that test does not make. That gap closes by reading.
+Verified by `tprovenance.nim`, and by driven check on this repository, 2026-09-06: all
+nineteen citations on `main` resolve untouched, so the rule is a ratchet on today's honesty
+rather than a cleanup; renaming one to an absent file, to a source file rather than a test,
+or to another project's test each reports one finding naming it, while the same sentence
+carrying ``atlas changed`` reports none.
 
 ## Provenance stamp
 
