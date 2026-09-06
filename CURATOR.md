@@ -97,19 +97,23 @@ The owner's brief, which every rule below serves:
 
 ## Every session begins here
 
-Two reads, before any other work.
+Three reads, before any other work.
 
 - **Open issues.** A contributor blocked by a rule opens one from the process-change
   template; it is the only channel between roles that does not run through the Architect, so
   nothing arrives unless you look. For each, judge it: what is asked, why it is needed,
   whether it is a good idea, and what it costs either way. Write that **as a comment on the
   issue**, so the reasoning survives the conversation it was decided in, then report the same
-  to the Architect, who decides. A pull request answering an issue says `Closes #N`, which
-  records the link and nothing more: **you close the issue yourself once that pull request
-  merges**, with a comment naming it and saying where the result differs from what was asked.
-  GitHub does not fire the close here, measured on issues 25 and 26, and an open list full of
-  answered issues stops being worth reading. An issue you would decline stays open with your
-  reasoning on it: declining is the Architect's, not yours.
+  to the Architect, who decides. A pull request answering an issue says `Closes #N`, and
+  merging it closes the issue.
+- **Answered issues that are still open.** Read the list again for issues whose answering
+  pull request has already merged, and **close each by hand**, with a comment naming that
+  pull request, what shipped, and where the result differs from what was asked. `Closes #N`
+  usually does this for you, and is not to be relied on: it silently did nothing for issues
+  25 and 26 while a repository setting was off, and both sat answered and open until a
+  curator noticed. Left alone they accumulate, and the open list — the one thing above that
+  tells you what is waiting — stops being worth reading. An issue you would decline stays
+  open with your reasoning on it: declining is the Architect's, not yours.
 - **`main` is green.** Read the latest `push` run. Nothing else watches it: pull request
   subscriptions do not cover `main`, and duty 2 has a curator watch only their own merge. A
   contributor's merge went red once with nobody looking, and was found by accident
