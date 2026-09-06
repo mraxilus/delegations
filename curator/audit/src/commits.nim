@@ -4,8 +4,16 @@
 ##   root branch accepts any valid scope, because rules propagation commits carry each
 ##   project's scope.
 ##   Merge commits are excluded upstream (`git log --no-merges`); reverts use type `revert`.
+##   Regression rule is enforced here, not hoped for (Article IX.8, CONTRIBUTOR.md): every
+##     `fix` carries earlier `test` of same scope on same branch, since mistake earns test
+##     that fails before fix and passes after, committed first. Subjects arrive newest
+##     first, so earlier means later in sequence.
+##   Change needing no new test is not `fix`: it is `refactor`, `chore` or `docs`. That is
+##     escape, and it is honest one, since `fix` claims mistake was found.
 ##
 ##   Cost: imperative mood unverified; check sees lowercase first letter and no final period.
+##   Cost: fix of mistake whose test already sits on `main` still needs test here, or another
+##     type; check reads one branch, never whole history.
 ##   Cost: `!` breaking marker accepted after scope; body and footers pass unchecked.
 
 {.experimental: "strictFuncs".}
@@ -53,6 +61,19 @@ func checkCommits*(branch: string, subjects: openArray[string]): seq[Finding] =
       some(parsed_branch.get.scope)
     else:
       none(string)
+  # Regression rule: `test` of same scope lands before `fix` it covers.
+  var tested: seq[string]
+  for i in countdown(subjects.high, 0):
+    let parsed = subjects[i].parseSubject
+    if parsed.isNone: continue
+    if parsed.get.kind == "test": tested.add parsed.get.scope
+    elif parsed.get.kind == "fix" and parsed.get.scope notin tested:
+      result.add finding(
+        "", 0,
+        "Fix needs earlier `test(" & parsed.get.scope & ")` on branch; mistake earns test " &
+          "that fails before it (Article IX.8); got `" & subjects[i] & "`.",
+      )
+
   for s in subjects:
     let parsed = s.parseSubject
     if parsed.isNone:
