@@ -117,6 +117,33 @@ under reordering; neither was covered, in the module every other module imports.
 `tmarkdown.nim` also pins the two costs that module's header states, so a later parser is a
 decision rather than a surprise.
 
+**The checker now checks itself, in three ways the curator pass had to find by reading.**
+Nothing checked the checker, so faults it would report anywhere else lived in it: a routine
+exported and called nowhere (`checkRunning`, kept compiling by its own test, so coverage
+looked like use), two modules with no suite at all (`findings.nim`, whose `render` and order
+carry every message anyone reads, and `markdown.nim`), and a table naming a verb that had
+been retired. `checker.nim` makes each a rule. Dead export counts identifier runs across
+every check module and koch, so `tree.auditTree` counts as a call exactly as
+`auditTree(tree)` does — the first form is why counting whitespace words was wrong, found by
+the check reporting six live routines as dead on its first run. Verbs are read from the
+command dispatch alone, bounded between `case options.command` and its `else`, since the
+option parser cases over labels a few lines above and contributed `root`, `all`, `branch` and
+`sweep` before that bound existed.
+
+Driven on 2026-09-06 rather than argued: a routine added and never called is one finding
+naming it; a row deleted from the checks table is one finding naming the missing verb; a verb
+dropped from the usage line is one finding naming what usage prints. At rest the tree is
+clean, so none of the three fights the code as it stands.
+
+Rejected: flagging an export only tests use, which is how every pure rule here is covered and
+would need an exemption list — a second place for truth to live; warning rather than finding,
+since every finding fails and a warning nobody must act on is read by nobody; one suite per
+module for contributor projects, which group tests by subject rather than by file. Costs: a
+routine named in a comment is not dead, so prose mentioning a retired routine hides it, paid
+to keep the rule free of false findings; an exported operator is skipped, since it is spelled
+at call sites rather than named; and the table's other columns say what each verb reads and
+enforces, which stays prose no check reads — only the verb set is derived.
+
 ## Comment extraction
 
 **Five hand-written scanners, one per-line accumulator.** Nim: line, doc, nesting block comments,
