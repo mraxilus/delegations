@@ -27,7 +27,11 @@ import ./[findings, domains, layout]
 
 func checkPropagation(path: string): seq[Finding] =
   ## Report curator writing anything but contributor project's records.
+  ##   Indexes above project are curator's outright: `contributor/README.md` and
+  ##   `contributor/<domain>/README.md` are theirs by repository map, and duty 5 has them
+  ##   write second one whenever domain is added. Only inside project does reach narrow.
   let parts = path.split('/')
+  if parts.len <= 3: return
   if parts.len == 4 and parts[3] in PROJECT_FILES: return
   result.add finding(
     path, 0,
