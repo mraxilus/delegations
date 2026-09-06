@@ -40,3 +40,24 @@ _Avoid_: posture, configuration, instance
 **Free**:
 The frame hold with no hands connected.
 _Avoid_: open, empty, neutral, apart
+
+**Move**:
+A change of exactly one connection.
+_Avoid_: primitive, step, change
+
+**Collect**:
+The move that adds a connection.
+_Avoid_: take, grab, catch
+
+**Drop**:
+The move that removes a connection.
+_Avoid_: release, let go, flick
+
+**Compound**:
+Two moves a lead leads as one, changing which hands are held without changing how many.
+_Avoid_: combination, combo, macro, sequence
+
+**Transition**:
+A chain of moves from one frame state to another; where several exist, shortest is one app
+offers.
+_Avoid_: route, path, sequence, walk
