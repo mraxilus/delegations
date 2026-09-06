@@ -17,7 +17,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[os, osproc]
+import std/[os, osproc, strtabs]
 import ./findings
 
 
@@ -46,10 +46,24 @@ proc nimOf*(bin: string): string =
   if bin.len == 0: findExe("nim") else: bin / "nim"
 
 
-proc runIn*(dir, program: string, args: openArray[string]): int =
+proc childEnv(bin: string): StringTableRef =
+  ## Build environment putting toolchain first on PATH; `nil` inherits this process's own.
+  ##   Naming tool by path is not enough: Atlas resolves `nim` through PATH, so toolchain's
+  ##   own Atlas still reads whichever compiler PATH holds and reports environment mismatch
+  ##   against lock (measured 2026-09-06, same Atlas warning appearing under one PATH and
+  ##   silent under other).
+  if bin.len == 0: return nil
+  result = newStringTable(modeCaseSensitive)
+  for key, value in envPairs(): result[key] = value
+  result["PATH"] = bin & PathSep & getEnv("PATH")
+
+
+proc runIn*(dir, program: string, args: openArray[string], bin = ""): int =
   ## Run program with args in directory, output streamed; return exit code.
+  ##   Toolchain `bin` leads child's PATH, so tools it shells out to are its own.
   let process = startProcess(
-    program, args = args, workingDir = dir, options = {poUsePath, poParentStreams}
+    program, args = args, workingDir = dir, env = childEnv(bin),
+    options = {poUsePath, poParentStreams},
   )
   result = process.waitForExit
   process.close
@@ -63,6 +77,7 @@ proc runTests*(root: string, targets: openArray[Target]): seq[Finding] =
       root / target.dir,
       target.bin.toolIn("testament"),
       ["--nim:" & target.bin.nimOf, "pattern", "tests/t*.nim"],
+      target.bin,
     )
     if code != 0:
       result.add finding(

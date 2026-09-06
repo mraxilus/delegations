@@ -147,9 +147,9 @@ proc restoreDependencies*(root: string, target: Target): seq[Finding] =
   ##   and warns of environment mismatch when lock was written by another.
   echo "== " & target.dir
   let atlas = target.bin.toolIn("atlas")
-  discard runIn(root / target.dir, atlas, ["--noexec", "rep"])
+  discard runIn(root / target.dir, atlas, ["--noexec", "rep"], target.bin)
   result = checkCheckouts(root, target.dir)
-  let code = runIn(root / target.dir, atlas, ["changed"])
+  let code = runIn(root / target.dir, atlas, ["changed"], target.bin)
   if code != 0:
     result.add finding(
       target.dir & "/" & LOCK_FILE, 0, "Checkouts differ from lock; got exit `" & $code & "`."
