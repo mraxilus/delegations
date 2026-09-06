@@ -2,28 +2,35 @@
 ##   Kind absent from registry is kind checker does not read; layout check rejects such
 ##   file (Article VI.5), so extending registry is curator work done before new kind lands.
 ##
-##   |---------------|-------------------------------|-------------|-------|
-##   | Kind          | Match                         | Syntax      | Prose |
-##   |---------------|-------------------------------|-------------|-------|
-##   | Nim           | .nim                          | Nim         | yes   |
-##   | NimScript     | .nims                         | Nim         | yes   |
-##   | Nimble        | .nimble                       | Nim         | yes   |
-##   | Cfg           | .cfg                          | Hash        | yes   |
-##   | Markdown      | .md                           | None        | no    |
-##   | Yaml          | .yml .yaml                    | HashSpaced  | yes   |
-##   | GitIgnore     | .gitignore                    | HashLeading | yes   |
-##   | GitAttributes | .gitattributes                | HashLeading | yes   |
-##   | TypeScript    | .ts                           | Slash       | yes   |
-##   | Html          | .html                         | Xml         | yes   |
-##   | Svg           | .svg                          | Xml         | yes   |
-##   | Json          | .json atlas.config atlas.lock | None        | no    |
-##   |---------------|-------------------------------|-------------|-------|
+##   |---------------|-------------------------------|-------------|-------|------|
+##   | Kind          | Match                         | Syntax      | Prose | Gate |
+##   |---------------|-------------------------------|-------------|-------|------|
+##   | Nim           | .nim                          | Nim         | yes   | no   |
+##   | NimScript     | .nims                         | Nim         | yes   | no   |
+##   | Nimble        | .nimble                       | Nim         | yes   | no   |
+##   | Cfg           | .cfg                          | Hash        | yes   | no   |
+##   | Markdown      | .md                           | None        | no    | no   |
+##   | Yaml          | .yml .yaml                    | HashSpaced  | yes   | no   |
+##   | GitIgnore     | .gitignore                    | HashLeading | yes   | no   |
+##   | GitAttributes | .gitattributes                | HashLeading | yes   | no   |
+##   | TypeScript    | .ts                           | Slash       | yes   | yes  |
+##   | Cpp           | .cpp .hpp                     | Slash       | yes   | yes  |
+##   | C             | .c .h                         | Slash       | yes   | yes  |
+##   | Html          | .html                         | Xml         | yes   | no   |
+##   | Svg           | .svg                          | Xml         | yes   | no   |
+##   | Json          | .json atlas.config atlas.lock | None        | no    | no   |
+##   |---------------|-------------------------------|-------------|-------|------|
+##
+##   Gated kind is one owner admits only where Nim cannot serve; `justification.nim` demands
+##     each such file argue for itself in its header, so gate is checked rather than trusted.
 ##
 ##   Markdown is prose document, not comment: telegraphic rule (VI.5) covers comments only,
 ##     and CONSTITUTION.md itself uses articles. Form rules still apply to it.
 ##   Nimble files are NimScript; Cfg covers `nim.cfg` Atlas writes and `koch.nim.cfg`.
 ##   TypeScript and Json registered ahead of use: owner allows TypeScript where JavaScript
 ##     is forced, and its tooling needs JSON configuration.
+##   Cpp and C carry binding shim for library no Nim import expresses; `.hpp` is C++ header
+##     and `.h` is C one, since name alone cannot tell them apart.
 ##   Retired: Makefile, with make itself; registry admits no second build verb.
 ##   Html and Svg carry hand-written pages, which live in project's `pages/` or `mockups/`
 ##     (layout check); generated markup is one long line and fails width, so registry admits
@@ -49,13 +56,14 @@ type
 
   Kind* {.pure.} = enum
     ## Define file kinds checker reads.
-    Nim, NimScript, Nimble, Cfg, Markdown, Yaml, GitIgnore, GitAttributes, TypeScript, Html,
-    Svg, Json
+    Nim, NimScript, Nimble, Cfg, Markdown, Yaml, GitIgnore, GitAttributes, TypeScript, Cpp,
+    C, Html, Svg, Json
 
   KindRule* = object
     ## Define how one kind is read.
     syntax*: Syntax   ## Comment syntax scanner applies.
     is_prose*: bool   ## Telegraphic check applies to comments.
+    is_gated*: bool   ## Language admitted only where Nim cannot serve, so header must argue.
 
 
 const lut_kind_rule*: array[Kind, KindRule] = [
@@ -67,7 +75,9 @@ const lut_kind_rule*: array[Kind, KindRule] = [
   Kind.Yaml: KindRule(syntax: Syntax.HashSpaced, is_prose: true),
   Kind.GitIgnore: KindRule(syntax: Syntax.HashLeading, is_prose: true),
   Kind.GitAttributes: KindRule(syntax: Syntax.HashLeading, is_prose: true),
-  Kind.TypeScript: KindRule(syntax: Syntax.Slash, is_prose: true),
+  Kind.TypeScript: KindRule(syntax: Syntax.Slash, is_prose: true, is_gated: true),
+  Kind.Cpp: KindRule(syntax: Syntax.Slash, is_prose: true, is_gated: true),
+  Kind.C: KindRule(syntax: Syntax.Slash, is_prose: true, is_gated: true),
   Kind.Html: KindRule(syntax: Syntax.Xml, is_prose: true),
   Kind.Svg: KindRule(syntax: Syntax.Xml, is_prose: true),
   Kind.Json: KindRule(syntax: Syntax.None),
@@ -91,6 +101,8 @@ func kindOf*(path: string): Option[Kind] =
   of ".md": some(Kind.Markdown)
   of ".yml", ".yaml": some(Kind.Yaml)
   of ".ts": some(Kind.TypeScript)
+  of ".cpp", ".hpp": some(Kind.Cpp)
+  of ".c", ".h": some(Kind.C)
   of ".html": some(Kind.Html)
   of ".svg": some(Kind.Svg)
   of ".json": some(Kind.Json)

@@ -4,9 +4,9 @@
 |--------|-------|
 | Agent  | Claude Code |
 | Author | Claude |
-| Date   | 2026-09-05 |
+| Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 6cef8fc704f7f8f4 |
+| Rules  | 772783bb2bd70464 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: curator test project replacing `abstand/intervals`, which lived in a real domain;
@@ -52,6 +52,13 @@ Unmeasured. No hot path exists; each operation is one addition and one modulo.
 than a lower bound, since no single compiler serves every project here. This project's two
 matrix rows pass on 2.2.4 and nothing asked it to move, so the pin records that rather than
 a range nobody tried. This project's pin is also the one CI installs for it, in its own job.
+
+## Re-audit, 2026-09-06
+
+Audited by a curator against the rules change that registers C++ and C and puts a check
+behind the gated-language rule. This project carries Nim, Markdown and a nimble file only,
+so the new rule binds nothing here and nothing needed correcting; the stamp moves because
+the charter did, not because this project did.
 
 ## Open questions
 

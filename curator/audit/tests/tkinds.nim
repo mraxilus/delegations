@@ -21,6 +21,10 @@ suite "Article VI":
     check kindOf(".gitignore").get == Kind.GitIgnore  # basename
     check kindOf(".gitattributes").get == Kind.GitAttributes  # basename
     check kindOf("x/app.ts").get == Kind.TypeScript  # .ts
+    check kindOf("x/src/shim.cpp").get == Kind.Cpp  # .cpp
+    check kindOf("x/src/shim.hpp").get == Kind.Cpp  # .hpp, C++ header by extension
+    check kindOf("x/src/glue.c").get == Kind.C  # .c
+    check kindOf("x/src/glue.h").get == Kind.C  # .h reads as C, since name cannot tell
     check kindOf("x/pages/index.html").get == Kind.Html  # .html
     check kindOf("x/pages/frame.svg").get == Kind.Svg  # .svg
     check kindOf("package.json").get == Kind.Json  # .json

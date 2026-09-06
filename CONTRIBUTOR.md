@@ -45,7 +45,10 @@ outside your project.
   with your role: `**Role:** contributor/<domain>/<project>`. Nothing checks this — GitHub
   is not this repository — so it holds because you write it.
 - **Language.** Nim. TypeScript only where JavaScript is unavoidable (a browser or Node
-  host), never plain JavaScript, never Python. Each such file justifies itself in its header.
+  host); C++ or C only where no Nim import expresses the library. Never plain JavaScript,
+  never Python. Each such file argues for itself in its opening comment, on the phrase
+  `not Nim because <reason>` — what follows the phrase is the argument, and a curator weighs
+  it when reading your pull request.
 - **File kinds.** Only kinds registered in `curator/audit/src/kinds.nim` may exist; the
   `audit` job rejects any other. Need a new kind: record it as an open question and leave
   the file out until the curator registers it.
@@ -55,7 +58,8 @@ outside your project.
   XI.3); `deps/` is ignored and `PROVENANCE.md` records each dependency's origin and licence.
 - **Comments are telegraphic** in every file kind: no `a`, `an`, `the` in any comment. The
   audit reads comments in Nim, NimScript, nimble files, cfg files, YAML, `.gitignore`,
-  `.gitattributes` and TypeScript. Markdown documents are prose and keep their articles.
+  `.gitattributes`, TypeScript, C++ and C. Markdown documents are prose and keep their
+  articles.
 
 ## Branch and commits
 
