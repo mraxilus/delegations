@@ -16,7 +16,9 @@
 #   toolchain inside checkout would be audited (first run on main proved it).
 #   Branch names and event kind reach koch through environment, never interpolated into
 #   script. Weekly sweep compiles every project, since scoped runs leave unrelated rot
-#   unseen until that project next changes.
+#   unseen until that project next changes; it skips itself in week nobody merged code,
+#   because rot arrives with merges. Cron here and `SWEEP_DAYS` in `plan.nim` are one
+#   window named twice: change both together.
 
 name: check
 
@@ -40,7 +42,7 @@ jobs:
         ${{ github.event_name == 'pull_request'
             && format('origin/{0}', github.base_ref)
             || github.event.before }}
-      SWEEP: ${{ github.event_name == 'schedule' && '--all' || '' }}
+      SWEEP: ${{ github.event_name == 'schedule' && '--sweep' || '' }}
     steps:
       - uses: actions/checkout@v4
         with:
