@@ -6,7 +6,7 @@
 ##   `visualiser.fillSceneForBenchmark` builds for `--timings` deliberately does not.
 ## Three sizes of one arrangement, so cost reads as slope rather than single number.
 ##   `ScaleOrrery.Nearest` (60), `Neighbourhood` (360, default) and `Catalogue` (5038,
-##   two slots short of pool). Every one is same construction truncated at different depth.
+##   two handles short of pool). Every one is same construction truncated at different depth.
 ## Also claim about world.
 ##   Every system but ours is real star known to carry planets, at real distance in real
 ##   direction, carrying planets it really has at real relative distances.
@@ -377,7 +377,7 @@ func angleRing(spin: float; index, count: int): float =
   ##   Ring of `count` is spread over `count + 1` steps.
   ##     Even spacing puts pair of two diametrically opposite, collinear with parent, and
   ##     plane wedged from three collinear points has no clean grade and draws nothing
-  ##     while holding slot. `addPlane` exists because of it.
+  ##     while holding handle. `addPlane` exists because of it.
   spin + TAU*float(index)/float(count + 1)
 
 
@@ -470,7 +470,7 @@ func addPlane(
 ) =
   ## Add derived plane, refusing anything that is not one.
   ##   Three collinear points wedge to multivector of no clean grade, which `objects.shape`
-  ##   reports as nothing to draw: item takes slot and never appears.
+  ##   reports as nothing to draw: item takes handle and never appears.
   ##   Collinearity comes from layout table and any edit can reintroduce it; `angleRing`
   ##   says what edit to avoid.
   doAssert shape(geometry) == some(Shape.Plane),
@@ -520,7 +520,7 @@ type ScaleOrrery* {.pure.} = enum
   ##   slope.
   Nearest       ## Sol entire, and about dozen of its nearest real neighbours.
   Neighbourhood ## Default everywhere: scene worth looking at, quick to build.
-  Catalogue     ## Load case, two slots short of pool.
+  Catalogue     ## Load case, two handles short of pool.
 
 
 func itemsOf*(scale: ScaleOrrery): int =
@@ -665,7 +665,7 @@ func constructOrrery*(
   doAssert scene.len == 0,
     &"Orrery fills a scene to a stated size, so it must start empty; got `{scene.len}`."
   doAssert ITEMS_MAX >= itemsOf(scale),
-    &"Orrery at `{scale}` needs `{itemsOf(scale)}` item slots; this build was compiled " &
+    &"Orrery at `{scale}` needs `{itemsOf(scale)}` item handles; this build was compiled " &
       &"with `{ITEMS_MAX}`. Raise `--define:visualiser.items_max`, or ask for a smaller size."
 
   # Build Sol first: nearest system, and horizon block takes attitudes of its objects.

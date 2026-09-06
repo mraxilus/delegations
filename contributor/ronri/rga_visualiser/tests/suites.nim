@@ -1781,11 +1781,11 @@ suite "Scene":
     var scene = initScene()
     constructSeeds(scene)
     var inks: seq[Ink]
-    for slot in 0 ..< scene.len:
-      case toText(scene.labelAt(slot))
-      of "ground": check scene.inkAt(slot) == INK_SEED_GROUND
-      of "o": check scene.inkAt(slot) == INK_SEED_ORIGIN
-      else: inks.add(scene.inkAt(slot))
+    for handle in 0 ..< scene.len:
+      case toText(scene.labelAt(handle))
+      of "ground": check scene.inkAt(handle) == INK_SEED_GROUND
+      of "o": check scene.inkAt(handle) == INK_SEED_ORIGIN
+      else: inks.add(scene.inkAt(handle))
     check inks.len == 3
     for i in 0 ..< inks.len:
       check inks[i] notin [INK_SEED_GROUND, INK_SEED_ORIGIN]
@@ -1805,19 +1805,19 @@ suite "Scene":
     check count_seen == 5
 
 
-  test "removeItem drops one slot without moving any other item":
+  test "removeItem drops one handle without moving any other item":
     var scene = initScene()
     for i in 0 ..< 5:
       scene.addItem(POINTS[i], "p" & $i, inkCycled(i))
     scene.removeItem(2)
     check scene.len == 4
     check not scene.isAlive(2)
-    for slot in [0, 1, 3, 4]:
-      check scene.isAlive(slot)
-      check scene[slot].geometry =~ POINTS[slot]
+    for handle in [0, 1, 3, 4]:
+      check scene.isAlive(handle)
+      check scene[handle].geometry =~ POINTS[handle]
 
 
-  test "freed slot is reused by the next addItem, most recently freed first":
+  test "freed handle is reused by the next addItem, most recently freed first":
     var scene = initScene()
     for i in 0 ..< 5:
       scene.addItem(POINTS[i], "p" & $i, inkCycled(i))
@@ -1831,13 +1831,13 @@ suite "Scene":
     var scene = initScene()
     for i in 0 ..< 5:
       scene.addItem(POINTS[i], "p" & $i, inkCycled(i))
-    for slot in [2, 0, 4, 1, 3]:
-      scene.removeItem(slot)
+    for handle in [2, 0, 4, 1, 3]:
+      scene.removeItem(handle)
     check scene.len == 0
     check not scene.isFull
 
 
-  test "isAlive rejects a removed slot and any slot out of range":
+  test "isAlive rejects a removed handle and any handle out of range":
     var scene = initScene()
     discard scene.addItem(POINTS[0], "a", Ink.Rose)
     check scene.isAlive(0)
@@ -2076,8 +2076,8 @@ suite "Scene":
     check shapeText(1.0 + POINTS[0]) == "mixed grade, nothing to draw"
 
 
-  test "slotsCreated walks creation order, whatever order the slots fell in":
-    # Arena reuses most recently freed slot, so slot order stops being creation.
+  test "handlesCreated walks creation order, whatever order the handles fell in":
+    # Arena reuses most recently freed handle, so handle order stops being creation.
     #   order moment anything is removed. This is what save path walks, and what
     #   `born`-sorted list could not answer: two items added in one frame share reading,
     #   and replayed item's own born is stamped into future.
@@ -2086,67 +2086,67 @@ suite "Scene":
       discard scene.addItem(POINTS[i], "p" & $i, inkCycled(i))
     scene.removeItem(4)
     scene.removeItem(1)
-    let slot_first = scene.addItem(POINTS[6], "seventh", Ink.Rose)  # lands in slot 1
-    let slot_second = scene.addItem(POINTS[7], "eighth", Ink.Rose)  # lands in slot 4
-    check slot_first == 1
-    check slot_second == 4
+    let handle_first = scene.addItem(POINTS[6], "seventh", Ink.Rose)  # lands in handle 1
+    let handle_second = scene.addItem(POINTS[7], "eighth", Ink.Rose)  # lands in handle 4
+    check handle_first == 1
+    check handle_second == 4
 
-    var slots: array[ITEMS_MAX, int]
-    let count = scene.slotsCreated(slots)
+    var handles: array[ITEMS_MAX, int]
+    let count = scene.handlesCreated(handles)
     check count == scene.len
     var labels: seq[string]
     for position in 0 ..< count:
-      labels.add(toText(scene.labelAt(slots[position])))
+      labels.add(toText(scene.labelAt(handles[position])))
     check labels == @["p0", "p2", "p3", "p5", "seventh", "eighth"]
     # Which is ordinals in order, and every one of them distinct.
     for position in 1 ..< count:
-      check scene.orderOf(slots[position]) > scene.orderOf(slots[position - 1])
+      check scene.orderOf(handles[position]) > scene.orderOf(handles[position - 1])
 
-    # Empty scene fills nothing rather than reporting slot that is not there.
+    # Empty scene fills nothing rather than reporting handle that is not there.
     let empty = initScene()
-    check empty.slotsCreated(slots) == 0
+    check empty.handlesCreated(handles) == 0
 
 
-  test "slotsCreated orders a scrambled arena of hundreds, not just a handful":
-    # Heapsort has cases insertion sort never exercised: many items, slots freed and.
-    #   refilled throughout, so ordinals sit nowhere near their slots.
+  test "handlesCreated orders a scrambled arena of hundreds, not just a handful":
+    # Heapsort has cases insertion sort never exercised: many items, handles freed and.
+    #   refilled throughout, so ordinals sit nowhere near their handles.
     var scene = initScene()
     let count_wanted = min(ITEMS_MAX, 300)
     for i in 0 ..< count_wanted:
       discard scene.addItem(POINTS[i mod SAMPLES], "p", Ink.Rose)
     var rng = initRand(7)
     for _ in 0 ..< count_wanted div 2:
-      let slot = rng.rand(count_wanted - 1)
-      if scene.isAlive(slot): scene.removeItem(slot)
+      let handle = rng.rand(count_wanted - 1)
+      if scene.isAlive(handle): scene.removeItem(handle)
     for i in 0 ..< count_wanted div 3:
       discard scene.addItem(POINTS[i mod SAMPLES], "r", Ink.Rose)
-    var slots: array[ITEMS_MAX, int]
-    let count = scene.slotsCreated(slots)
+    var handles: array[ITEMS_MAX, int]
+    let count = scene.handlesCreated(handles)
     check count == scene.len
     for position in 1 ..< count:
-      check scene.orderOf(slots[position]) > scene.orderOf(slots[position - 1])
+      check scene.orderOf(handles[position]) > scene.orderOf(handles[position - 1])
 
 
-  test "revisionPlacingAt stamps the slot an edit touched, and every slot after a restore":
-    # Front-end re-places only slots stamped past what it holds, so stamp must move for.
-    #   exactly slots whose placing inputs did.
+  test "revisionPlacingAt stamps the handle an edit touched, and every handle after a restore":
+    # Front-end re-places only handles stamped past what it holds, so stamp must move for.
+    #   exactly handles whose placing inputs did.
     var scene = initScene()
     for i in 0 ..< 4: discard scene.addItem(POINTS[i], "p" & $i, inkCycled(i))
     let revision_built = scene.revision
-    for slot in 0 ..< 4: check scene.revisionPlacingAt(slot) <= revision_built
+    for handle in 0 ..< 4: check scene.revisionPlacingAt(handle) <= revision_built
     scene.setGeometryAt(2, POINTS[5])
     check scene.revisionPlacingAt(2) == scene.revision
-    for slot in [0, 1, 3]: check scene.revisionPlacingAt(slot) < scene.revision
+    for handle in [0, 1, 3]: check scene.revisionPlacingAt(handle) < scene.revision
     # Ink and visibility change nothing about placement.
     scene.setInk(1, Ink.Rose)
     scene.setVisible(3, false)
-    for slot in [0, 1, 3]: check scene.revisionPlacingAt(slot) < scene.revision
-    # Restore may change any slot, so every live one is stamped at new revision.
+    for handle in [0, 1, 3]: check scene.revisionPlacingAt(handle) < scene.revision
+    # Restore may change any handle, so every live one is stamped at new revision.
     var snapshot = initScene()
     for i in 0 ..< 3: discard snapshot.addItem(POINTS[i + 5], "s" & $i, inkCycled(i))
     scene.restoreFrom(snapshot)
     check scene.len == 3
-    for slot in 0 ..< 3: check scene.revisionPlacingAt(slot) == scene.revision
+    for handle in 0 ..< 3: check scene.revisionPlacingAt(handle) == scene.revision
 
 
   test "restoreFrom lands on a revision no earlier state carried":
@@ -2336,30 +2336,30 @@ suite "Scene":
 
   test "replayFrom restamps a whole scene into an arrival, in creation order":
     # What opening scene and demo preset both go through: built all at once, then.
-    #   handed to reader as construction it is. Slot order is scrambled first, so
+    #   handed to reader as construction it is. Handle order is scrambled first, so
     #   this pins that restamp follows creation order rather than arena's layout.
     var scene = initScene()
     for i in 0 ..< 5:
       discard scene.addItem(POINTS[i], "p" & $i, inkCycled(i), 99.0)
     scene.removeItem(1)
-    let slot_late = scene.addItem(POINTS[5], "late", Ink.Rose, 99.0)
-    check slot_late == 1
+    let handle_late = scene.addItem(POINTS[5], "late", Ink.Rose, 99.0)
+    check handle_late == 1
 
     const CLOCK = 7.5
     scene.replayFrom(CLOCK)
-    var slots: array[ITEMS_MAX, int]
-    let count = scene.slotsCreated(slots)
+    var handles: array[ITEMS_MAX, int]
+    let count = scene.handlesCreated(handles)
     check count == 5
-    check scene.bornAt(slots[0]) =~ CLOCK
+    check scene.bornAt(handles[0]) =~ CLOCK
     for position in 1 ..< count:
-      check scene.bornAt(slots[position]) > scene.bornAt(slots[position - 1])
-    check toText(scene.labelAt(slots[count - 1])) == "late"
-    check scene.bornAt(slots[count - 1]) - CLOCK <= SECONDS_REPLAY_WHOLE + TOLERANCE_TEST
+      check scene.bornAt(handles[position]) > scene.bornAt(handles[position - 1])
+    check toText(scene.labelAt(handles[count - 1])) == "late"
+    check scene.bornAt(handles[count - 1]) - CLOCK <= SECONDS_REPLAY_WHOLE + TOLERANCE_TEST
     # Same beat file of this size would arrive on -- one rule, not two.
     for position in 0 ..< count:
-      check scene.bornAt(slots[position]) =~ bornReplaying(position, count, CLOCK)
+      check scene.bornAt(handles[position]) =~ bornReplaying(position, count, CLOCK)
 
-    # Empty scene has nothing to restamp and must not fall over reaching for slot zero.
+    # Empty scene has nothing to restamp and must not fall over reaching for handle zero.
     var empty = initScene()
     empty.replayFrom(CLOCK)
     check empty.len == 0
@@ -2372,15 +2372,15 @@ suite "Scene":
     const CLOCK = 4.0
     var placed = initScene()
     constructSeeds(placed, CLOCK)
-    for slot in 0 ..< placed.len:
-      check placed.bornAt(slot) == CLOCK # Untouched by constructor itself.
+    for handle in 0 ..< placed.len:
+      check placed.bornAt(handle) == CLOCK # Untouched by constructor itself.
 
     var opened = initScene()
     constructSeeds(opened, CLOCK)
     opened.replayFrom(CLOCK)
     check opened.len >= 2
-    for slot in 1 ..< opened.len:
-      check opened.bornAt(slot) > opened.bornAt(slot - 1)
+    for handle in 1 ..< opened.len:
+      check opened.bornAt(handle) > opened.bornAt(handle - 1)
     # Still on screen quickly: opening scene reader waits through is worse opening.
     #   scene than one that simply appeared.
     check opened.bornAt(opened.len - 1) - CLOCK <= SECONDS_REPLAY_WHOLE + TOLERANCE_TEST
@@ -2403,14 +2403,14 @@ suite "Scene":
   #   match. Every other invariant in this suite holds on both backends and is checked
   #   on both.
   when not defined(js):
-    test "save then load reproduces every live item, compacting freed slots":
+    test "save then load reproduces every live item, compacting freed handles":
       var original = initScene()
       discard original.addItem(POINTS[0], "a", Ink.Rose)
       discard original.addItem(POINTS[1], "bb", Ink.Jade, radius = 0.6, shines = true)
-      let slot_doomed = original.addItem(POINTS[2], "doomed", Ink.Olive)
-      original.removeItem(slot_doomed) # leaves hole fresh load must not reproduce
-      let slot_last = original.addItem(POINTS[3], "d", Ink.Cobalt)
-      original.setVisible(slot_last, false)
+      let handle_doomed = original.addItem(POINTS[2], "doomed", Ink.Olive)
+      original.removeItem(handle_doomed) # leaves hole fresh load must not reproduce
+      let handle_last = original.addItem(POINTS[3], "d", Ink.Cobalt)
+      original.setVisible(handle_last, false)
 
       let path = getTempDir() / "visualiser_suite_scene.rgascene"
       check saveScene(original, path).contains("Saved 3")
@@ -2421,7 +2421,7 @@ suite "Scene":
       check loadScene(loaded, path).contains("Loaded 3")
       check loaded.len == 3
 
-      # Freed slot 2 is compacted away: loaded items land at slots 0, 1, 2 in save order.
+      # Freed handle 2 is compacted away: loaded items land at handles 0, 1, 2 in save order.
       check loaded[0].geometry =~ POINTS[0]
       check toText(loaded[0].label) == "a"
       check loaded[0].ink == Ink.Rose
@@ -2563,8 +2563,8 @@ suite "Scene":
       check scene[2].ink == Ink.Cobalt
       check scene[3].ink == inkCycled(13 - ORDINAL_INK_CATEGORICAL_V1)
       # Everything but colour of retired hue comes back exactly.
-      for slot in 0 ..< 4:
-        check scene[slot].geometry =~ POINTS[slot]
+      for handle in 0 ..< 4:
+        check scene[handle].geometry =~ POINTS[handle]
       check toText(scene[1].label) == "was rose"
       check scene[1].isVisible
       check not scene[2].isVisible
@@ -2648,15 +2648,15 @@ suite "Scene":
       check not readsSceneVersion(0'u8) # Version byte of zero was never written either.
 
 
-    test "a saved scene keeps creation order however its slots were reused":
+    test "a saved scene keeps creation order however its handles were reused":
       # What version 3 is for. Removing and re-adding drops new item into freed.
-      #   slot, so slot order and creation order disagree -- and it is creation order
+      #   handle, so handle order and creation order disagree -- and it is creation order
       #   replay has to walk, or file plays back construction that never happened.
       var original = initScene()
       for i in 0 ..< 4:
         discard original.addItem(POINTS[i], "p" & $i, inkCycled(i))
       original.removeItem(1)
-      discard original.addItem(POINTS[4], "late", Ink.Rose) # reuses slot 1
+      discard original.addItem(POINTS[4], "late", Ink.Rose) # reuses handle 1
       check original.len == 4
 
       let path = getTempDir() / "visualiser_suite_scene_order.rgascene"
@@ -2670,12 +2670,12 @@ suite "Scene":
       check toText(loaded[2].label) == "p3"
       check toText(loaded[3].label) == "late"
       # And order survives second trip, since loading rebuilds ordinals from.
-      #   file's own sequence rather than from wherever slots landed.
+      #   file's own sequence rather than from wherever handles landed.
       check saveScene(loaded, path).contains("Saved 4")
       var again = initScene()
       check loadScene(again, path).contains("Loaded 4")
-      for slot in 0 ..< 4:
-        check toText(again[slot].label) == toText(loaded[slot].label)
+      for handle in 0 ..< 4:
+        check toText(again[handle].label) == toText(loaded[handle].label)
 
 
     test "a loaded scene arrives one object at a time, replaying its construction":
@@ -2695,10 +2695,10 @@ suite "Scene":
       var loaded = initScene()
       check loadScene(loaded, path, CLOCK).contains("Loaded 5")
       check loaded[0].born =~ CLOCK
-      for slot in 1 ..< 5:
-        check loaded[slot].born > loaded[slot - 1].born
+      for handle in 1 ..< 5:
+        check loaded[handle].born > loaded[handle - 1].born
         # Still growing in as next one lands, rather than queue of separate pop-ins.
-        check loaded[slot].born - loaded[slot - 1].born < ANIMATION_SECONDS
+        check loaded[handle].born - loaded[handle - 1].born < ANIMATION_SECONDS
       check loaded[4].born - loaded[0].born <= SECONDS_REPLAY_WHOLE
 
       # No clock, no replay: caller with nothing to animate for gets grown scene.
@@ -2741,10 +2741,10 @@ suite "History":
     ##   same comparison, just folded field by field over whole scene rather than one multivector at
     ##   time.
     if a.len != b.len: return false
-    for slot in 0 ..< ITEMS_MAX:
-      if a.isAlive(slot) != b.isAlive(slot): return false
-      if not a.isAlive(slot): continue
-      let (item_a, item_b) = (a[slot], b[slot])
+    for handle in 0 ..< ITEMS_MAX:
+      if a.isAlive(handle) != b.isAlive(handle): return false
+      if not a.isAlive(handle): continue
+      let (item_a, item_b) = (a[handle], b[handle])
       if not (item_a.geometry =~ item_b.geometry): return false
       if item_a.label != item_b.label: return false
       if item_a.ink != item_b.ink: return false
@@ -3089,21 +3089,21 @@ suite "Camera Aim":
     let
       line = GENERAL_FIRST[1]
       point = GENERAL_SECOND[0]
-      slot_line = scene.addItem(line, "L", Ink.Rose)
-      slot_point = scene.addItem(point, "p", Ink.Rose)
-    let previewed = scene.previewApplying(Operation.Wedge, slot_line, slot_point)
+      handle_line = scene.addItem(line, "L", Ink.Rose)
+      handle_point = scene.addItem(point, "p", Ink.Rose)
+    let previewed = scene.previewApplying(Operation.Wedge, handle_line, handle_point)
     check previewed.get.geometry =~ applyOperation(Operation.Wedge, line, point)
-    check previewed.get.operands == some((slot_line, slot_point))
+    check previewed.get.operands == some((handle_line, handle_point))
     check previewed.get.anchor.get =~
       creationAnchor(Operation.Wedge, line, point, previewed.get.geometry).get
     check not (previewed.get.anchor.get =~ positionAnchor(previewed.get.geometry).get)
 
     # Nothing drawable, nothing previewed -- one test that covers pair of wrong.
     #   grades and pair already lying on each other alike.
-    check scene.previewApplying(Operation.WedgeAnti, slot_point, slot_point).isNone
+    check scene.previewApplying(Operation.WedgeAnti, handle_point, handle_point).isNone
     # And nothing at all where picker is left open across delete.
-    scene.removeItem(slot_point)
-    check scene.previewApplying(Operation.Wedge, slot_line, slot_point).isNone
+    scene.removeItem(handle_point)
+    check scene.previewApplying(Operation.Wedge, handle_line, handle_point).isNone
 
     # Edit session's own staged geometry is same type with neither field, which is.
     #   what keeps it out of framing rule below.
@@ -3121,13 +3121,13 @@ suite "Camera Aim":
     #   way -- its staged geometry replaces very object it would be framed against.
     var scene = initScene()
     let
-      slot_first = scene.addItem(
+      handle_first = scene.addItem(
         toMultivector(Position(x: 16.0, y: -13.0, z: 4.0)), "m", Ink.Rose
       )
-      slot_second = scene.addItem(
+      handle_second = scene.addItem(
         toMultivector(Position(x: -12.0, y: 14.0, z: -6.0)), "n", Ink.Rose
       )
-    let staged = scene.previewApplying(Operation.Wedge, slot_first, slot_second)
+    let staged = scene.previewApplying(Operation.Wedge, handle_first, handle_second)
     check staged.isSome
     for azimuth in AZIMUTHS_AIM:
       for elevation in ELEVATIONS_AIM:
@@ -3140,17 +3140,17 @@ suite "Camera Aim":
           scene, Selection(), staged, framed, WIDTH_AIM, HEIGHT_AIM
         )
         # Each operand by name, not merely "everything watched" -- that is property.
-        for slot in [slot_first, slot_second]:
+        for handle in [handle_first, handle_second]:
           check isShownCentrally(
-            scene.geometryOf(slot), framed, WIDTH_AIM, HEIGHT_AIM,
-            scene.anchorOverrideAt(slot),
+            scene.geometryOf(handle), framed, WIDTH_AIM, HEIGHT_AIM,
+            scene.anchorOverrideAt(handle),
           )
         # Two points that far apart cannot both be framed by panning alone.
         check framed.distance > camera.distance
 
     # Edit-session case, over same pair: staging one of those points names no.
     #   operands, so other is left out and no pull-back is owed.
-    let alone = some(previewStaging(scene.geometryOf(slot_first), RADIUS_ITEM_DEFAULT))
+    let alone = some(previewStaging(scene.geometryOf(handle_first), RADIUS_ITEM_DEFAULT))
     let camera = placementAim(0.7, 0.2)
     let aim = aimFor(scene, Selection(), alone, camera.drawExtentFor(HEIGHT_AIM))
     let framed = camera.placed(placementFor(
@@ -3159,7 +3159,7 @@ suite "Camera Aim":
     check isShownAll(scene, Selection(), alone, framed, WIDTH_AIM, HEIGHT_AIM)
     check framed.distance == camera.distance
     check not isShownCentrally(
-      scene.geometryOf(slot_second), framed, WIDTH_AIM, HEIGHT_AIM
+      scene.geometryOf(handle_second), framed, WIDTH_AIM, HEIGHT_AIM
     )
 
 
@@ -3596,7 +3596,7 @@ suite "Camera Aim":
         )
         var
           tween: CameraTween
-          pointer = some(PointerPick(slot: picked.at(0), cursor: pixel))
+          pointer = some(PointerPick(handle: picked.at(0), cursor: pixel))
         tween.offerAim(
           camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM),
           WIDTH_AIM, HEIGHT_AIM, 0.0, DURATION, pointer,
@@ -3672,7 +3672,7 @@ suite "Camera Aim":
       check crossing.isSome
       var
         tween: CameraTween
-        pointer = some(PointerPick(slot: picked.at(0), cursor: cursor))
+        pointer = some(PointerPick(handle: picked.at(0), cursor: cursor))
       tween.offerAim(
         camera, scene, picked, none(Preview), scale, WIDTH_AIM, HEIGHT_AIM, 0.0, DURATION,
         pointer,
@@ -3703,7 +3703,7 @@ suite "Camera Aim":
     var
       tween_two: CameraTween
       pointer = some(PointerPick(
-        slot: picked_two.at(1), cursor: ScreenPosition(x: 700.0, y: 450.0)
+        handle: picked_two.at(1), cursor: ScreenPosition(x: 700.0, y: 450.0)
       ))
     tween_two.offerAim(
       camera, scene_two, picked_two, none(Preview), camera.drawExtentFor(HEIGHT_AIM),
@@ -3745,7 +3745,7 @@ suite "Camera Aim":
       camera.initMatrixViewProjection(float(WIDTH_AIM)/float(HEIGHT_AIM)),
       WIDTH_AIM, HEIGHT_AIM, place,
     )
-    pointer = some(PointerPick(slot: picked.at(0), cursor: pixel))
+    pointer = some(PointerPick(handle: picked.at(0), cursor: pixel))
     tween.offerAim(
       camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM),
       WIDTH_AIM, HEIGHT_AIM, 2.0, DURATION, pointer,
@@ -4012,11 +4012,11 @@ suite "Selection":
     # And clock that ran backwards rewinds nothing.
     check clock.secondsStep(-5.0) == 0.0
 
-  test "each slot keeps its own pulse, and a reused slot starts afresh":
+  test "each handle keeps its own pulse, and a reused handle starts afresh":
     var clock: PulseClock
     clock.tick(0.0)
     # Step is read before tick that consumes it, which is order both frame.
-    #   loops use: one reading, then every slot advanced by it.
+    #   loops use: one reading, then every handle advanced by it.
     let step = clock.secondsStep(1.0)
     clock.tick(1.0)
     clock.advance(3, 600.0, step)
@@ -4100,9 +4100,9 @@ suite "Selection":
     check selection.at(1) == 1 # Operand n.
 
 
-  test "toggling a picked slot drops it and closes the gap, leaving order intact":
+  test "toggling a picked handle drops it and closes the gap, leaving order intact":
     var selection: Selection
-    for slot in [4, 1, 7]: selection.toggle(slot)
+    for handle in [4, 1, 7]: selection.toggle(handle)
     selection.toggle(1)
     check ordered(selection) == @[4, 7]
     check not selection.contains(1)
@@ -4112,7 +4112,7 @@ suite "Selection":
 
   test "selectOnly replaces the whole selection, and clear empties it":
     var selection: Selection
-    for slot in [4, 1, 7]: selection.toggle(slot)
+    for handle in [4, 1, 7]: selection.toggle(handle)
     selection.selectOnly(2)
     check ordered(selection) == @[2]
     selection.clear()
@@ -4129,7 +4129,7 @@ suite "Selection":
     selection.toggle(3)
     check selection.revision > revision_fresh
     var last = selection.revision
-    selection.selectOnly(3) # Already exactly that one slot.
+    selection.selectOnly(3) # Already exactly that one handle.
     check selection.revision == last
     selection.selectOnly(4)
     check selection.revision > last
@@ -4137,7 +4137,7 @@ suite "Selection":
     discard selection.contains(4)
     discard selection.len
     check selection.revision == last
-    selection.pruneDead(scene) # Slot 4 is dead in empty scene.
+    selection.pruneDead(scene) # Handle 4 is dead in empty scene.
     check selection.len == 0
     check selection.revision > last
     last = selection.revision
@@ -4148,21 +4148,21 @@ suite "Selection":
     check selection.revision == last + 2
 
 
-  test "every slot can be picked at once, and picking past that adds nothing":
+  test "every handle can be picked at once, and picking past that adds nothing":
     var selection: Selection
-    for slot in 0 ..< ITEMS_MAX: selection.toggle(slot)
+    for handle in 0 ..< ITEMS_MAX: selection.toggle(handle)
     check selection.len == ITEMS_MAX
     selection.toggle(ITEMS_MAX) # Out of range; capacity is already spent.
     check selection.len == ITEMS_MAX
 
 
-  test "pruneDead drops removed slots and keeps the rest in pick order":
-    # Removed slot goes straight back to free list, so stale pick left behind.
+  test "pruneDead drops removed handles and keeps the rest in pick order":
+    # Removed handle goes straight back to free list, so stale pick left behind.
     #   would silently reattach itself to whatever object is added next.
     var scene = initScene()
     for i in 0 ..< 3: discard scene.addItem(POINTS[i], "p" & $i, inkCycled(i))
     var selection: Selection
-    for slot in [2, 0, 1]: selection.toggle(slot)
+    for handle in [2, 0, 1]: selection.toggle(handle)
     scene.removeItem(0)
     selection.pruneDead(scene)
     check ordered(selection) == @[2, 1]
@@ -4557,30 +4557,30 @@ suite "Picking":
     else:
       var scene = initScene()
       constructOrrery(scene, ScaleOrrery.Nearest)
-      var slot_sol = -1
-      for slot in 0 ..< scene.bound:
-        if scene.isAlive(slot) and toText(scene.labelAt(slot)) == "sol": slot_sol = slot
-      check slot_sol >= 0
+      var handle_sol = -1
+      for handle in 0 ..< scene.bound:
+        if scene.isAlive(handle) and toText(scene.labelAt(handle)) == "sol": handle_sol = handle
+      check handle_sol >= 0
       let camera = initCamera(
         target = Position(x: 0, y: 0, z: 0), distance = 1.2, azimuth = 0.9, elevation = 0.4
       )
       let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
       let scale = camera.drawExtentFor(HEIGHT_PICK)
       let pixels_sol =
-        radiusPixelsAt(scene.radiusAt(slot_sol), Position(x: 0, y: 0, z: 0), scale.scale)
+        radiusPixelsAt(scene.radiusAt(handle_sol), Position(x: 0, y: 0, z: 0), scale.scale)
       check pixels_sol > 300.0
       for offset in [0.0, 100.0, 250.0]:
         let cursor = ScreenPosition(x: CENTRE.x + offset, y: CENTRE.y, depth: 0.0)
         check pickNearest(
           scene, camera, scale, view_projection, WIDTH_PICK, HEIGHT_PICK, cursor
-        ) == some(slot_sol)
+        ) == some(handle_sol)
       # Well past disc, Sol is no longer answer.
       let outside = ScreenPosition(
         x: CENTRE.x + pixels_sol + RADIUS_PICK_POINT + 1.0, y: CENTRE.y, depth: 0.0
       )
       check pickNearest(
         scene, camera, scale, view_projection, WIDTH_PICK, HEIGHT_PICK, outside
-      ) != some(slot_sol)
+      ) != some(handle_sol)
 
   test "a point behind a wider disc is not picked through it, and one in front is":
     # Disc hides what is behind it: star whose centre is nearer cursor than planet's.
@@ -4619,7 +4619,7 @@ suite "Picking":
     let report_hidden = pickAt(
       hidden, camera, scale, view_projection, WIDTH_PICK, HEIGHT_PICK, on_star
     )
-    check report_hidden.slot == some(0)
+    check report_hidden.handle == some(0)
     check report_hidden.count_rivals == 1 # Hidden star is no rival either.
     var shown = initScene()
     shown.addItem(toMultivector(planet), "planet", Ink.Cobalt, radius = 0.3)
@@ -4628,7 +4628,7 @@ suite "Picking":
     let report_shown = pickAt(
       shown, camera, scale, view_projection, WIDTH_PICK, HEIGHT_PICK, on_moon
     )
-    check report_shown.slot == some(1)
+    check report_shown.handle == some(1)
     check report_shown.count_rivals == 2 # Planet under moon is still rival to it.
     # Star straight behind moon, on same ray from eye: moon hides it from pick, and.
     #   being narrower than fingertip, not from crowd.
@@ -4640,7 +4640,7 @@ suite "Picking":
     let report_lunar = pickAt(
       lunar, camera, scale, view_projection, WIDTH_PICK, HEIGHT_PICK, on_moon
     )
-    check report_lunar.slot == some(0)
+    check report_lunar.handle == some(0)
     check report_lunar.count_rivals == 2
     # Cursor on disc near its rim, star's centre past rim within pixel reach: planet.
     #   Star used to win on distance to its own centre. Cursor off disc: star.
@@ -4684,7 +4684,7 @@ suite "Picking":
     let report_alone = pickAt(
       alone, camera, scale, view_projection, WIDTH_PICK, HEIGHT_PICK, CENTRE
     )
-    check report_alone.slot == some(0)
+    check report_alone.handle == some(0)
     check report_alone.count_rivals == 1
     # Second point nearly behind first, their dots overlapping: still two, and one in.
     #   front is what is picked. Dot narrower than fingertip hides other from pick, not
@@ -4698,14 +4698,14 @@ suite "Picking":
     let report_crowd = pickAt(
       crowd, camera, scale, view_projection, WIDTH_PICK, HEIGHT_PICK, CENTRE
     )
-    check report_crowd.slot == some(1) # Nearer eye, cursor inside its dot.
+    check report_crowd.handle == some(1) # Nearer eye, cursor inside its dot.
     check report_crowd.count_rivals == 2
     # Far from both, plane alone answers, as its own single candidate.
     let corner = ScreenPosition(x: CENTRE.x + 300.0, y: CENTRE.y + 200.0, depth: 0.0)
     let report_plane = pickAt(
       crowd, camera, scale, view_projection, WIDTH_PICK, HEIGHT_PICK, corner
     )
-    check report_plane.slot == some(2)
+    check report_plane.handle == some(2)
     check report_plane.count_rivals == 1
     # Crowd reaches past pick.
     #   Second point inside `RADIUS_CROWD_TOUCH` but outside pick reach is rival, one past
@@ -4720,7 +4720,7 @@ suite "Picking":
       let report = pickAt(
         apart, camera, scale, view_projection, WIDTH_PICK, HEIGHT_PICK, CENTRE
       )
-      check report.slot == some(0)
+      check report.handle == some(0)
       check report.count_rivals == rivals
     # Point beside picked line is rival too: finger may have meant it.
     var mixed = initScene()
@@ -4730,11 +4730,11 @@ suite "Picking":
     let report_mixed = pickAt(
       mixed, camera, scale, view_projection, WIDTH_PICK, HEIGHT_PICK, CENTRE
     )
-    if report_mixed.slot == some(0): check report_mixed.count_rivals == 2
-    # `pickNearest` is same walk's slot alone.
+    if report_mixed.handle == some(0): check report_mixed.count_rivals == 2
+    # `pickNearest` is same walk's handle alone.
     check pickNearest(
       crowd, camera, scale, view_projection, WIDTH_PICK, HEIGHT_PICK, CENTRE
-    ) == report_crowd.slot
+    ) == report_crowd.handle
 
   test "point at target is picked at screen centre":
     var scene = initScene()
@@ -5048,42 +5048,42 @@ suite "Lighting":
     check isDark(lightToward(Position(x: 0, y: 3, z: 0), suns, 2)) # Standing on it.
     # Through scene: sun shines on planet, is unlit itself, and hidden sun sheds nothing.
     var scene = initScene()
-    let slot_sun = scene.addItem(toMultivector(Position(x: 0, y: 0, z: 0)), "sun", Ink.Copper,
+    let handle_sun = scene.addItem(toMultivector(Position(x: 0, y: 0, z: 0)), "sun", Ink.Copper,
       shines = true)
-    let slot_planet = scene.addItem(toMultivector(Position(x: 4, y: 0, z: 0)), "p", Ink.Cobalt)
-    let slot_line = scene.addItem(POINTS[0] ∧ POINTS[1], "l", Ink.Rose)
+    let handle_planet = scene.addItem(toMultivector(Position(x: 4, y: 0, z: 0)), "p", Ink.Cobalt)
+    let handle_line = scene.addItem(POINTS[0] ∧ POINTS[1], "l", Ink.Rose)
     var cache: LightCache
     refreshLights(cache, scene, none(int))
-    check abs(cache.lights[slot_planet].x + 1.0) < 1.0e-12
-    check isDark(cache.lights[slot_sun])
-    check isDark(cache.lights[slot_line])
+    check abs(cache.lights[handle_planet].x + 1.0) < 1.0e-12
+    check isDark(cache.lights[handle_sun])
+    check isDark(cache.lights[handle_line])
     # Hidden sun sheds nothing; suns changed, so every light is redone whatever revision.
-    scene.setVisible(slot_sun, false)
+    scene.setVisible(handle_sun, false)
     refreshLights(cache, scene, some(scene.revision - 1))
-    check isDark(cache.lights[slot_planet])
-    scene.setVisible(slot_sun, true)
+    check isDark(cache.lights[handle_planet])
+    scene.setVisible(handle_sun, true)
     refreshLights(cache, scene, some(scene.revision - 1))
-    check abs(cache.lights[slot_planet].x + 1.0) < 1.0e-12
+    check abs(cache.lights[handle_planet].x + 1.0) < 1.0e-12
     # Placed variant answers same as placing one.
     var placed: array[ITEMS_MAX, Placed]
-    for slot in 0 ..< scene.bound:
-      if scene.isAlive(slot):
-        placed[slot] = placeObject(scene.geometryOf(slot), scene.anchorOverrideAt(slot))
+    for handle in 0 ..< scene.bound:
+      if scene.isAlive(handle):
+        placed[handle] = placeObject(scene.geometryOf(handle), scene.anchorOverrideAt(handle))
     var cache_placed: LightCache
     refreshLights(cache_placed, scene, placed, none(int))
-    check cache_placed.lights[slot_planet].x == cache.lights[slot_planet].x
-    check cache_placed.lights[slot_planet].y == cache.lights[slot_planet].y
+    check cache_placed.lights[handle_planet].x == cache.lights[handle_planet].x
+    check cache_placed.lights[handle_planet].y == cache.lights[handle_planet].y
     # Edit that moves planet alone relights that planet and leaves rest untouched.
     let revision_before = scene.revision
-    scene.setGeometryAt(slot_planet, toMultivector(Position(x: 0, y: 5, z: 0)))
+    scene.setGeometryAt(handle_planet, toMultivector(Position(x: 0, y: 5, z: 0)))
     refreshLights(cache, scene, some(revision_before))
-    check abs(cache.lights[slot_planet].y + 1.0) < 1.0e-12
-    check isDark(cache.lights[slot_sun])
+    check abs(cache.lights[handle_planet].y + 1.0) < 1.0e-12
+    check isDark(cache.lights[handle_sun])
     # Moving sun relights everything, revision or not.
     let revision_sun = scene.revision
-    scene.setGeometryAt(slot_sun, toMultivector(Position(x: 0, y: 10, z: 0)))
+    scene.setGeometryAt(handle_sun, toMultivector(Position(x: 0, y: 10, z: 0)))
     refreshLights(cache, scene, some(revision_sun))
-    check abs(cache.lights[slot_planet].y - 1.0) < 1.0e-12
+    check abs(cache.lights[handle_planet].y - 1.0) < 1.0e-12
 
 
 
@@ -5491,7 +5491,7 @@ suite "Interaction":
     interaction.index_hover = some(0)
     discard interaction.beginDrag(arming = MenuArming.OnDwell, now = 0.0) # index_source = 0.
     scene.removeItem(1)
-    interaction.index_hover = some(1) # Still reports now-dead slot as hovered.
+    interaction.index_hover = some(1) # Still reports now-dead handle as hovered.
     let outcome = interaction.endDrag(scene)
     check "no longer exists" in outcome.message
     check outcome.index_created.isNone
@@ -5542,7 +5542,7 @@ suite "Interaction":
   test "an insisted-on wedge that makes nothing refuses rather than adding a blank":
     # Two points at same place join to zero. Menu greys that wedge, so this is.
     #   only reachable by releasing on it anyway -- and what happens then is message and
-    #   no item, never slot holding geometry with no shape.
+    #   no item, never handle holding geometry with no shape.
     var scene = initScene()
     scene.addItem(GENERAL_FIRST[0], "a", Ink.Rose)
     scene.addItem(GENERAL_FIRST[0], "a again", Ink.Rose)
@@ -6001,34 +6001,34 @@ suite "Interaction":
       check armingOf(button) != some(MenuArming.OnDwell)
 
 
-  test "stepping walks live slots in both directions and wraps at both ends":
+  test "stepping walks live handles in both directions and wraps at both ends":
     var scene = initScene()
     for i in 0 ..< 4: scene.addItem(GENERAL_POINTS[i], "p", Ink.Rose)
-    check scene.slotStepped(none(int), 1) == some(0) # Nothing focused starts at first.
-    check scene.slotStepped(none(int), -1) == some(3) # ...and backwards, at last.
-    check scene.slotStepped(some(0), 1) == some(1)
-    check scene.slotStepped(some(3), 1) == some(0) # Wraps rather than stopping dead: key
-    check scene.slotStepped(some(0), -1) == some(3) #   that quietly stops working is worse.
+    check scene.handleStepped(none(int), 1) == some(0) # Nothing focused starts at first.
+    check scene.handleStepped(none(int), -1) == some(3) # ...and backwards, at last.
+    check scene.handleStepped(some(0), 1) == some(1)
+    check scene.handleStepped(some(3), 1) == some(0) # Wraps rather than stopping dead: key
+    check scene.handleStepped(some(0), -1) == some(3) #   that quietly stops working is worse.
 
 
-  test "stepping skips slots whose items have gone":
+  test "stepping skips handles whose items have gone":
     var scene = initScene()
     for i in 0 ..< 4: scene.addItem(GENERAL_POINTS[i], "p", Ink.Rose)
     scene.removeItem(1)
     scene.removeItem(2)
-    # Slots are sparse -- free list reuses holes in any order -- so this cannot be.
-    #   arithmetic on slot number, and hole must not be place keyboard lands.
-    check scene.slotStepped(some(0), 1) == some(3)
-    check scene.slotStepped(some(3), 1) == some(0)
+    # Handles are sparse -- free list reuses holes in any order -- so this cannot be.
+    #   arithmetic on handle number, and hole must not be place keyboard lands.
+    check scene.handleStepped(some(0), 1) == some(3)
+    check scene.handleStepped(some(3), 1) == some(0)
 
 
-  test "stepping an empty scene lands nowhere rather than on a freed slot":
+  test "stepping an empty scene lands nowhere rather than on a freed handle":
     var scene = initScene()
-    check scene.slotStepped(none(int), 1).isNone
-    check scene.slotStepped(some(0), 1).isNone
+    check scene.handleStepped(none(int), 1).isNone
+    check scene.handleStepped(some(0), 1).isNone
     scene.addItem(GENERAL_POINTS[0], "p", Ink.Rose)
     scene.removeItem(0)
-    check scene.slotStepped(none(int), 1).isNone
+    check scene.handleStepped(none(int), 1).isNone
 
 
   test "every key answers the binding table, and answers exactly one half of it":
@@ -6199,13 +6199,13 @@ suite "Interaction":
     check camera.target =~ opening.target
 
 
-  test "enter reports the focused slot for the caller to select, and nothing before then":
+  test "enter reports the focused handle for the caller to select, and nothing before then":
     var scene = initScene()
     scene.addItem(GENERAL_POINTS[0], "a", Ink.Rose)
     scene.addItem(GENERAL_POINTS[1], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     var camera = initCameraDefault()
-    # Pressing enter before stepping anywhere is no-op, not select of slot zero.
+    # Pressing enter before stepping anywhere is no-op, not select of handle zero.
     check interaction.applyAction(camera, scene, KeyAction.SelectFocused).isNone
     discard interaction.applyAction(camera, scene, KeyAction.FocusNext)
     check interaction.index_focus == some(0)
@@ -7497,7 +7497,7 @@ suite "Marker":
 
 
   test "a line's rails pulse from their very first frame, and report a lap to reduce on":
-    # Property browser-side deadlock turned on, kept and inverted. Every slot starts.
+    # Property browser-side deadlock turned on, kept and inverted. Every handle starts.
     #   at travel 0, and while travel was *fraction* that put line's head at very
     #   start of open outline with nothing behind it to light -- no run, and marker
     #   that also reported no length left clock unable to advance, so it never left 0.
@@ -7599,13 +7599,13 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
         if ITEMS_MAX >= itemsOf(scale): held.add(scale)
       held
 
-    test "every size fills its own target exactly, and the largest leaves two slots":
+    test "every size fills its own target exactly, and the largest leaves two handles":
       # **Walk lands on count rather than near it.** It passes over system too.
       #   large for room left instead of stopping on it, which is only reason three
       #   unrelated targets can each come out exact; when it stopped, size hit its target
       #   only where item counts happened to sum to it. Checked at every size, because
       #   one size landing exactly says nothing about another.
-      #   Slots above largest size are deliberate headroom -- reader can still
+      #   Handles above largest size are deliberate headroom -- reader can still
       #   build on top of loaded demo rather than meeting refusal, and two is
       #   shortest construction there is: add point, then join it to something.
       for scale in SCALES_HELD:
@@ -7617,15 +7617,15 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
         if scale == ScaleOrrery.high: check ITEMS_MAX - scene.len == 2
 
     test "every object it builds draws something":
-      # Three collinear points wedge to multivector of no clean grade, which takes slot.
+      # Three collinear points wedge to multivector of no clean grade, which takes handle.
       #   and renders nothing while scene still counts it. Seven objects did that across
       #   two earlier rounds, so this counts *shapes* rather than items.
       var scene = initScene()
       constructOrrery(scene)
       var without: seq[string] = @[]
-      for slot in 0 ..< scene.bound:
-        if not scene.isAlive(slot): continue
-        if shape(scene.geometryOf(slot)).isNone: without.add(toText(scene.labelAt(slot)))
+      for handle in 0 ..< scene.bound:
+        if not scene.isAlive(handle): continue
+        if shape(scene.geometryOf(handle)).isNone: without.add(toText(scene.labelAt(handle)))
       check without == newSeq[string]()
 
     test "every size carries every drawable kind, at horizon as well as in the finite world":
@@ -7640,9 +7640,9 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
         constructOrrery(scene, scale)
         var tally: array[Shape, int]
         var at_horizon: array[Shape, int]
-        for slot in 0 ..< scene.bound:
-          if not scene.isAlive(slot): continue
-          let geometry = scene.geometryOf(slot)
+        for handle in 0 ..< scene.bound:
+          if not scene.isAlive(handle): continue
+          let geometry = scene.geometryOf(handle)
           let kind = shape(geometry)
           if kind.isNone: continue
           inc tally[kind.get]
@@ -7683,9 +7683,9 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
       var scene = initScene()
       constructOrrery(scene, scale)
       var placed: Table[string, Multivector]
-      for slot in 0 ..< scene.bound:
-        if not scene.isAlive(slot): continue
-        placed[toText(scene.labelAt(slot))] = scene.geometryOf(slot)
+      for handle in 0 ..< scene.bound:
+        if not scene.isAlive(handle): continue
+        placed[toText(scene.labelAt(handle))] = scene.geometryOf(handle)
       let sol = placed[SOL[0].name]
       var worst = 0.0
       var worst_name = ""
@@ -7717,7 +7717,7 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
       #   is only reason three unrelated sizes can each land on their count exactly.
       #   price is that right at end nearer multi-item system can give way to further
       #   single star. Slack is bounded and bound is derived: once system needing
-      #   `k` items is passed over there are fewer than `k` slots left, and every star costs
+      #   `k` items is passed over there are fewer than `k` handles left, and every star costs
       #   at least one, so at most `k - 1` stars can follow it in.
       var missing_from = len(STARS)
       for index, star in STARS:
@@ -7762,15 +7762,15 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
       #   like starburst" is not something suite can see.
       #   Gather joiners once instead of re-reading whole pool for every point. Ten
       #   thousand objects of which barely hundred are lines or planes made this hundred
-      #   million slot reads for same answer, and on JS backend each of those reads
+      #   million handle reads for same answer, and on JS backend each of those reads
       #   copies `Multivector` -- case stopped finishing at all.
       var scene = initScene()
       constructOrrery(scene)
       var planes: seq[Multivector]
       var lines: seq[Multivector]
-      for slot in 0 ..< scene.bound:
-        if not scene.isAlive(slot): continue
-        let geometry = scene.geometryOf(slot)
+      for handle in 0 ..< scene.bound:
+        if not scene.isAlive(handle): continue
+        let geometry = scene.geometryOf(handle)
         if isHorizon(geometry): continue
         case shape(geometry).get(Shape.Point)
         of Shape.Plane: planes.add(unitize(geometry))
@@ -7778,9 +7778,9 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
         of Shape.Point: discard
       var worst = 0
       var worst_label = ""
-      for slot in 0 ..< scene.bound:
-        if not scene.isAlive(slot): continue
-        let point = scene.geometryOf(slot)
+      for handle in 0 ..< scene.bound:
+        if not scene.isAlive(handle): continue
+        let point = scene.geometryOf(handle)
         if shape(point) != some(Shape.Point) or isHorizon(point): continue
         let place = unitize(point)
         var through = 0
@@ -7793,7 +7793,7 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
           if apart <= TOLERANCE_SINGLE: inc through
         if through > worst:
           worst = through
-          worst_label = toText(scene.labelAt(slot))
+          worst_label = toText(scene.labelAt(handle))
       checkpoint(&"worst point is `{worst_label}`, carrying {worst} lines and planes")
       check worst <= 6
 
@@ -7805,10 +7805,10 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
       constructOrrery(scene)
       var radii: Table[string, float]
       var places: Table[string, Multivector]
-      for slot in 0 ..< scene.bound:
-        if not scene.isAlive(slot): continue
-        radii[toText(scene.labelAt(slot))] = scene.radiusAt(slot)
-        places[toText(scene.labelAt(slot))] = scene.geometryOf(slot)
+      for handle in 0 ..< scene.bound:
+        if not scene.isAlive(handle): continue
+        radii[toText(scene.labelAt(handle))] = scene.radiusAt(handle)
+        places[toText(scene.labelAt(handle))] = scene.geometryOf(handle)
       check radii["sol"] =~ 0.6
       check radii["sol"] > radii["jupiter"]
       check radii["jupiter"] > radii["saturn"]
@@ -7828,8 +7828,8 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
       check radii[STARS[0].name] =~ radii["sol"]
       # Suns shine and nothing else does; see `lighting`.
       var shining: Table[string, bool]
-      for slot in 0 ..< scene.bound:
-        if scene.isAlive(slot): shining[toText(scene.labelAt(slot))] = scene.shinesAt(slot)
+      for handle in 0 ..< scene.bound:
+        if scene.isAlive(handle): shining[toText(scene.labelAt(handle))] = scene.shinesAt(handle)
       check shining["sol"]
       check shining[STARS[0].name]
       for body in SOL:
@@ -7841,7 +7841,7 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
 
     test "every object wears its own type's colour, and no two types share one":
       # Moon and planet are two identical dots and hue is only thing separating.
-      #   them, so role collapsing onto another's slot is silent loss of their one signal.
+      #   them, so role collapsing onto another's handle is silent loss of their one signal.
       var scene = initScene()
       constructOrrery(scene)
       for role in Role.Sun .. Role.Derived:
@@ -7856,11 +7856,11 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
       for star in STARS: roles[star.name] = Role.Sun
       for planet in PLANETS: roles[planet.name] = Role.Planet
       var bodies: array[Role, int]
-      for slot in 0 ..< scene.bound:
-        if not scene.isAlive(slot): continue
-        let label = toText(scene.labelAt(slot))
+      for handle in 0 ..< scene.bound:
+        if not scene.isAlive(handle): continue
+        let label = toText(scene.labelAt(handle))
         let role = roles.getOrDefault(label, Role.Derived)
-        check scene.inkAt(slot) == lut_role_to_ink[role]
+        check scene.inkAt(handle) == lut_role_to_ink[role]
         inc bodies[role]
       for role in [Role.Sun, Role.Planet, Role.Moon, Role.Derived]:
         check bodies[role] > 0
@@ -7878,11 +7878,11 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
       for planet in PLANETS: roles[planet.name] = Role.Planet
       var suns, planets: seq[Multivector] = @[]
       var lines: seq[string] = @[]
-      for slot in 0 ..< scene.bound:
-        if not scene.isAlive(slot): continue
+      for handle in 0 ..< scene.bound:
+        if not scene.isAlive(handle): continue
         let
-          label = toText(scene.labelAt(slot))
-          geometry = scene.geometryOf(slot)
+          label = toText(scene.labelAt(handle))
+          geometry = scene.geometryOf(handle)
         if isHorizon(geometry): continue
         case shape(geometry).get(Shape.Point)
         of Shape.Line: lines.add(label)
@@ -7899,9 +7899,9 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
           if abs(wedge(line, place)[b]) > TOLERANCE_SINGLE: return false
         true
       var joining = 0
-      for slot in 0 ..< scene.bound:
-        if not scene.isAlive(slot): continue
-        let geometry = scene.geometryOf(slot)
+      for handle in 0 ..< scene.bound:
+        if not scene.isAlive(handle): continue
+        let geometry = scene.geometryOf(handle)
         if isHorizon(geometry) or shape(geometry) != some(Shape.Line): continue
         for sun in suns:
           if not lies(geometry, sun): continue
@@ -7918,10 +7918,10 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
       var scene = initScene()
       constructOrrery(scene)
       var at_horizon: Table[string, Multivector]
-      for slot in 0 ..< scene.bound:
-        if not scene.isAlive(slot): continue
-        let geometry = scene.geometryOf(slot)
-        if isHorizon(geometry): at_horizon[toText(scene.labelAt(slot))] = geometry
+      for handle in 0 ..< scene.bound:
+        if not scene.isAlive(handle): continue
+        let geometry = scene.geometryOf(handle)
+        if isHorizon(geometry): at_horizon[toText(scene.labelAt(handle))] = geometry
       let
         line = at_horizon["att(ecliptic sol)"]
         on_it = at_horizon["att(sol ∧ earth)"]

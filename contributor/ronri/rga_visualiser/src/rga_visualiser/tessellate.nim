@@ -416,7 +416,7 @@ type
     ##     Placing was most of moving frame's scene phase, recomputed per orbit frame for
     ##     objects nobody touched.
     ## Flat rather than variant object.
-    ##   Copied per slot into `array[ITEMS_MAX, Placed]`, and case object's tag would buy
+    ##   Copied per handle into `array[ITEMS_MAX, Placed]`, and case object's tag would buy
     ##   nothing but narrower read. Which fields carry meaning is `kind`'s to say.
     kind*: PlacedKind
     at*: Position ## Where it stands: point's place, line's support, plane's disc centre.

@@ -285,7 +285,7 @@ const lut_help_entries* = block:
     add(HelpPath.Operations, notationSymbolic(operation), notationNamed(operation))
 
   doAssert count == len(lut),
-    &"Every help slot must be filled, adjust the array's size; got `{count}` of `{len(lut)}`."
+    &"Every help handle must be filled, adjust the array's size; got `{count}` of `{len(lut)}`."
   lut
 
 

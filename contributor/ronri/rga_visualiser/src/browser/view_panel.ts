@@ -137,7 +137,7 @@ for (const scale of nimDemoScales()) {
   button.addEventListener('click', () => {
     nimLoadDemo(scale, now(), canvas.width, canvas.height);
     toast(`Loaded the orrery: ${nimSceneCount()} objects, ` +
-      `${nimSceneCapacity() - nimSceneCount()} slots free.`);
+      `${nimSceneCapacity() - nimSceneCount()} handles free.`);
     adoptConstructionSelection();
   });
   elementById('button-demo-scales').appendChild(button);

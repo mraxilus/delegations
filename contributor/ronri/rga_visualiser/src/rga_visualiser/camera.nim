@@ -610,8 +610,8 @@ func `==`*(a, b: CameraAim): bool =
   #   Sum of points is grade 1.
   if a.centroid_sum.isSome:
     let (m, n) = (a.centroid_sum.get, b.centroid_sum.get)
-    for slot in [Basis.E1, Basis.E2, Basis.E3, Basis.E4]:
-      if m[slot] != n[slot]: return false
+    for handle in [Basis.E1, Basis.E2, Basis.E3, Basis.E4]:
+      if m[handle] != n[handle]: return false
   if a.heading.isSome != b.heading.isSome: return false
   if a.heading.isNone: return true
   let (d, e) = (a.heading.get, b.heading.get)

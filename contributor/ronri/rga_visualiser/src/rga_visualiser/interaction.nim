@@ -222,7 +222,7 @@ type
     ViewHome ## Return camera to placement both builds open at.
 
   Hold* = object ## Define press that selects its item once it has lasted long enough.
-    slot*: int ## Item pressed, whose marker fills as press matures.
+    handle*: int ## Item pressed, whose marker fills as press matures.
     started*: float ## When press landed, on clock every caller passes as `now`.
     is_taken*: bool ## Whether this hold's maturity has been acted on.
       ## One-shot lives here because hold outlives its release.
@@ -649,7 +649,7 @@ proc updateHover*(
     let report = pickAt(
       scene, camera, scale, view_projection, width, height, interaction.cursor, placed,
     )
-    interaction.index_hover = report.slot
+    interaction.index_hover = report.handle
     interaction.count_hover_rivals = report.count_rivals
   else:
     interaction.index_hover = none(int)
@@ -822,7 +822,7 @@ func applyAction*(
   ## Carry out one keyboard action, and report which item caller should select.
   ##   Moves camera and focus, both its own state; does not touch selection, which each
   ##   render path owns differently.
-  ##     Reporting slot leaves caller to read shift state and decide between replacing
+  ##     Reporting handle leaves caller to read shift state and decide between replacing
   ##     selection and adding; see `KeyAction.SelectFocused`.
   ##   None for every action but select, and for select with nothing focused.
   ##   `FrameSelection` does nothing here.
@@ -831,10 +831,10 @@ func applyAction*(
   ##     Key only clears goal that offer holds, via `CameraTween.release` on each path's
   ##     tween.
   case action
-  of KeyAction.FocusPrevious: interaction.index_focus = scene.slotStepped(
+  of KeyAction.FocusPrevious: interaction.index_focus = scene.handleStepped(
     interaction.index_focus, -1
   )
-  of KeyAction.FocusNext: interaction.index_focus = scene.slotStepped(
+  of KeyAction.FocusNext: interaction.index_focus = scene.handleStepped(
     interaction.index_focus, 1
   )
   of KeyAction.SelectFocused:
@@ -849,7 +849,7 @@ func applyAction*(
 
 func pruneFocus*(interaction: var Interaction, scene: Scene) =
   ## Drop keyboard focus whose item has gone, same guard selection keeps.
-  ##   Slot carried across frames may be freed by any other input path, and focus left
+  ##   Handle carried across frames may be freed by any other input path, and focus left
   ##   pointing at dead one would have marker drawn off freed storage.
   if interaction.index_focus.isSome and not scene.isAlive(interaction.index_focus.get):
     interaction.index_focus = none(int)
@@ -858,10 +858,10 @@ func pruneFocus*(interaction: var Interaction, scene: Scene) =
 
 #[ Hold Lifecycle ]#
 
-func beginHold*(interaction: var Interaction, slot: int, now: float) =
-  ## Start press on `slot` that selects it once it has lasted long enough.
+func beginHold*(interaction: var Interaction, handle: int, now: float) =
+  ## Start press on `handle` that selects it once it has lasted long enough.
   interaction.hold = some(
-    Hold(slot: slot, started: now, is_taken: false, released: none(float))
+    Hold(handle: handle, started: now, is_taken: false, released: none(float))
   )
 
 
@@ -941,7 +941,7 @@ func isHoldMature*(interaction: Interaction, now: float): bool =
 
 
 func takeHold*(interaction: var Interaction, now: float): Option[int] =
-  ## Report slot matured hold selects, exactly once, and nothing on later calls.
+  ## Report handle matured hold selects, exactly once, and nothing on later calls.
   ##   None while hold is filling, none with no hold.
   ##   Replaces "is it mature" beside caller's "have I acted" flag.
   ##     Those stopped agreeing once hold outlived its release: caller cleared flag on lift
@@ -951,7 +951,7 @@ func takeHold*(interaction: var Interaction, now: float): Option[int] =
   if interaction.hold.isNone or interaction.hold.get.is_taken: return
   if not isHoldMature(interaction, now): return
   interaction.hold.get.is_taken = true
-  some(interaction.hold.get.slot)
+  some(interaction.hold.get.handle)
 
 
 

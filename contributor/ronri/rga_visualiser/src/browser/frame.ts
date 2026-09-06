@@ -18,12 +18,12 @@ let ms_refresh_ui = 0;
 //   `MessageChannel` rather than `setTimeout(0)`: timers are clamped and, under load,
 //   deferred behind rendering, and message is neither.
 //   Message that still loses to next frame's callback says thread was busy until that
-//   frame began, so reading is clamped to slot's whole remainder rather than left to
+//   frame began, so reading is clamped to handle's whole remainder rather than left to
 //   count next frame's work as well -- measured 24 ms on 16.7 ms frame before clamp.
 //   One in flight at time. Gated on reader: message per frame is cheap, and still work
 //   for nobody while panel is shut.
 let is_render_pending = false;
-let at_render = 0; // Slot frame that posted message was recorded in.
+let at_render = 0; // Handle frame that posted message was recorded in.
 let ms_render_posted = 0;
 function markRendered() {
   is_render_pending = false;
@@ -248,14 +248,14 @@ function frame() {
   //   this handler clears its flag on lift while hold is still settling and still mature, so next
   //   frame selected item again and toggled it straight back off.
   //   `nimTakeMaturedHold` answers once and never again.
-  const slot_matured = nimTakeMaturedHold(now_seconds);
-  if (slot_matured >= 0) {
+  const handle_matured = nimTakeMaturedHold(now_seconds);
+  if (handle_matured >= 0) {
     // Selected, but hold is **kept**:
     //   its marker stays swollen clear of finger for as long as that finger is down, and settles
     //   only once `nimReleaseHold` says it may.
     has_long_press_fired = true; // Still needed, to stop release also reading as tap.
-    pickByPointer(slot_matured);
-    toggleSelection(slot_matured, position_touch_down);
+    pickByPointer(handle_matured);
+    toggleSelection(handle_matured, position_touch_down);
   }
   // And retire it once that settle is spent, so finished hold stops being drawn at all.
   if (nimIsHoldSpent(now_seconds)) nimCancelHold();
@@ -267,13 +267,13 @@ function frame() {
   //   Mirrors `visualiser.renderFrame`'s order.
   // Take one dolly and one pick per frame, whatever pointer reported.
   //   Device reporting faster than display would otherwise pay for answers nobody read:
-  //   `picking.pickNearest` walks every live slot.
+  //   `picking.pickNearest` walks every live handle.
   //   Coalesced here, after `nimDriveHeld` so camera is where this frame will draw it,
   //   and before drag update and build so both read answer this frame's cursor
   //   deserves.
   //   Presses do not come through here.
   //     `pointerdown`, touch-down and `handleTap` each need hover reading before their
-  //     own handler returns, since `nimBeginDrag`, `slot_touch_down` and selection are
+  //     own handler returns, since `nimBeginDrag`, `handle_touch_down` and selection are
   //     decided from it, so they pick on spot and are only paths that still do.
   if (deltas_wheel !== 0) {
     nimCameraDollyAt(
@@ -324,8 +324,8 @@ function frame() {
   const ms_now_ui = performance.now();
   // One reading for every kind of UI work this frame did, through `addPhaseTime`:
   //   glide redraw above, tick here and slow pass in idle time after all land in same
-  //   slot. Row build runs every frame while it has rows left; rest runs on its own
-  //   five-a-second cadence; frame doing neither leaves slot unwritten.
+  //   handle. Row build runs every frame while it has rows left; rest runs on its own
+  //   five-a-second cadence; frame doing neither leaves handle unwritten.
   const is_ticking_ui = ms_now_ui - ms_refresh_ui >= MILLISECONDS_WINDOW_READING;
   if (is_ticking_ui || rows_pending !== null) {
     const ms_before_ui = performance.now();

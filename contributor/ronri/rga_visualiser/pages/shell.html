@@ -910,9 +910,9 @@
     border-radius: 3px;
     vertical-align: 0;
   }
-  /* **One square per slot, wrapped to panel's width** -- reading
+  /* **One square per handle, wrapped to panel's width** -- reading
      `gui.poolBar` gives desktop, which this had drifted from. It was flex row of one
-     `<span>` per slot with 1px gap between them, which at capacity of 1,024 asks for
+     `<span>` per handle with 1px gap between them, which at capacity of 1,024 asks for
      1,023px of gap inside 371px strip: flex shrank every cell to zero width and
      whole thing drew as gap. Every cell was there and correctly coloured, and none of them
      was pixel wide. Canvas instead of thousand elements for reason objects
@@ -1200,7 +1200,7 @@
           ><b id="diagnostic-frametime">&mdash;</b></div>
         <!-- Slowest frame ring holds, split between page's own code and browser.
              Rows below are 200 ms means, which dilute one spike past telling whether
-             page authored it; this reads that frame's own slots. -->
+             page authored it; this reads that frame's own handles. -->
         <div class="diagnostic-line"><span>slowest frame</span
           ><b id="diagnostic-slowest">&mdash;</b></div>
         <div class="diagnostic-line diagnostic-cut-row"><span>page &middot; browser</span
@@ -1378,7 +1378,7 @@
           class="pool-grid"
           id="pool-grid"
           role="img"
-          title="One cell per object slot, in the colour of whatever object holds it; dark
+          title="One cell per object handle, in the colour of whatever object holds it; dark
 means it's free and will be handed to the next one you add, most recently freed first."
         ></canvas>
       </div>

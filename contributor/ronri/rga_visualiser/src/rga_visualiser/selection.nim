@@ -1,10 +1,10 @@
-## Hold which objects are picked right now, as ordered fixed-capacity list of slots.
+## Hold which objects are picked right now, as ordered fixed-capacity list of handles.
 ##
 ## Order is whole point, and reason this is list rather than set.
-##   Operation reads operands positionally, so first slot picked is `m` and second is `n`.
+##   Operation reads operands positionally, so first handle picked is `m` and second is `n`.
 ## Selection is deliberately not part of `Scene`: view of scene, not content.
 ##   Never saved to `.rgascene`, never recorded on undo timeline.
-##   Restored snapshot clears it outright, since snapshot's slot numbers need not match
+##   Restored snapshot clears it outright, since snapshot's handle numbers need not match
 ##   what was picked.
 ## Plain fixed-size value type with no refs, like `History` beside it.
 ##   Copying one is value copy, so it can live in GUI's own state struct without allocator.
@@ -23,9 +23,9 @@ import ./[marker, scene]
 
 #[ Type Definitions ]#
 
-type Selection* = object ## Define slots picked, in order they were picked.
-  slots: array[ITEMS_MAX, int] ## Picked slots, oldest pick first; first `count` are live.
-  count: int ## Slots picked so far, <= ITEMS_MAX.
+type Selection* = object ## Define handles picked, in order they were picked.
+  handles: array[ITEMS_MAX, int] ## Picked handles, oldest pick first; first `count` are live.
+  count: int ## Handles picked so far, <= ITEMS_MAX.
   count_changes: int ## How many times membership or order has changed; see `revision`.
 
 
@@ -33,7 +33,7 @@ type Selection* = object ## Define slots picked, in order they were picked.
 #[ Reading Selection ]#
 
 func len*(selection: Selection): int = selection.count
-  ## Count slots picked.
+  ## Count handles picked.
 
 
 func revision*(selection: Selection): int = selection.count_changes
@@ -43,21 +43,21 @@ func revision*(selection: Selection): int = selection.count_changes
   ##     remember it is `ITEMS_MAX` more, per frame, whatever is picked.
 
 
-func at*(selection: Selection, position: int): int = selection.slots[position]
-  ## Read slot picked at position, oldest pick first.
+func at*(selection: Selection, position: int): int = selection.handles[position]
+  ## Read handle picked at position, oldest pick first.
   ##   Position 0 is operand `m`, position 1 is `n`; callers bound themselves against `len`.
 
 
-func contains*(selection: Selection, slot: int): bool =
-  ## Report whether slot is picked.
+func contains*(selection: Selection, handle: int): bool =
+  ## Report whether handle is picked.
   for position in 0 ..< selection.count:
-    if selection.slots[position] == slot: return true
+    if selection.handles[position] == handle: return true
   false
 
 
 func impliedArity*(selection: Selection): Arity =
   ## Read arity selection implies.
-  ##   One slot names unary operation's operand; two or more name binary operation's `m`
+  ##   One handle names unary operation's operand; two or more name binary operation's `m`
   ##   and `n`.
   ##   Two *or more*: picker offering `m` and `n` still acts on first two of longer
   ##   selection, and reverting to unary would silently drop second operand.
@@ -75,7 +75,7 @@ func isAllHidden*(selection: Selection, scene: Scene): bool =
   ##   Empty selection is not hidden: nothing there to show.
   if selection.count == 0: return false
   for position in 0 ..< selection.count:
-    if scene.isVisible(selection.slots[position]): return false
+    if scene.isVisible(selection.handles[position]): return false
   true
 
 
@@ -89,39 +89,39 @@ func clear*(selection: var Selection) =
   inc selection.count_changes
 
 
-func selectOnly*(selection: var Selection, slot: int) =
-  ## Replace whole selection with one slot.
-  if selection.count == 1 and selection.slots[0] == slot: return
-  selection.slots[0] = slot
+func selectOnly*(selection: var Selection, handle: int) =
+  ## Replace whole selection with one handle.
+  if selection.count == 1 and selection.handles[0] == handle: return
+  selection.handles[0] = handle
   selection.count = 1
   inc selection.count_changes
 
 
-func toggle*(selection: var Selection, slot: int) =
-  ## Add slot to end of selection, or drop it where already picked.
+func toggle*(selection: var Selection, handle: int) =
+  ## Add handle to end of selection, or drop it where already picked.
   ##   Appending is what makes order meaningful: two objects picked become `m` and `n` in
   ##   order picked.
   for position in 0 ..< selection.count:
-    if selection.slots[position] != slot: continue
+    if selection.handles[position] != handle: continue
     for shift in position ..< selection.count - 1:
-      selection.slots[shift] = selection.slots[shift + 1]
+      selection.handles[shift] = selection.handles[shift + 1]
     selection.count.dec
     inc selection.count_changes
     return
-  if selection.count >= ITEMS_MAX: return # Every slot already picked; nothing to add.
-  selection.slots[selection.count] = slot
+  if selection.count >= ITEMS_MAX: return # Every handle already picked; nothing to add.
+  selection.handles[selection.count] = handle
   selection.count.inc
   inc selection.count_changes
 
 
 func pruneDead*(selection: var Selection, scene: Scene) =
-  ## Drop every picked slot scene no longer holds, keeping rest in pick order.
-  ##   Call after removing object: freed slot is handed straight to next add, so stale
+  ## Drop every picked handle scene no longer holds, keeping rest in pick order.
+  ##   Call after removing object: freed handle is handed straight to next add, so stale
   ##   pick would silently reattach to unrelated new object.
   var kept = 0
   for position in 0 ..< selection.count:
-    if not scene.isAlive(selection.slots[position]): continue
-    selection.slots[kept] = selection.slots[position]
+    if not scene.isAlive(selection.handles[position]): continue
+    selection.handles[kept] = selection.handles[position]
     kept.inc
   if kept == selection.count: return
   selection.count = kept
@@ -139,7 +139,7 @@ const SECONDS_STEP_PULSE_MAX* = 0.1
 
 
 type PulseClock* = object ## Define each selected object's orientation pulse between frames.
-  ## Travel in screen pixels per slot, integrated and reduced, not position computed from
+  ## Travel in screen pixels per handle, integrated and reduced, not position computed from
   ## clock. Two faults decided this; second is why units are pixels, not fraction.
   ##   Phase read off time meant `frac(now·speed ÷ around)`, and outline's length changes
   ##   whenever camera moves: after few laps one-percent change in length throws answer
@@ -156,20 +156,20 @@ type PulseClock* = object ## Define each selected object's orientation pulse bet
   ##   Reduced each frame amplification is exactly one; only discontinuity left is lap
   ##   arriving up to one frame's shrink early.
   ## Plain fixed array, like `Scene` and `MeshSet`, not arena allocation.
-  ##   One float per slot with compile-time bound and program-long lifetime needs no arena
+  ##   One float per handle with compile-time bound and program-long lifetime needs no arena
   ##   (see `arena.nim` header).
-  ##   Not double buffered either: update reads and writes one slot and consults no
+  ##   Not double buffered either: update reads and writes one handle and consults no
   ##   neighbour. `arena.nim` is desktop-only in any case.
-  ## Here rather than `marker.nim` because indexed by *slot*, over exactly selected set,
+  ## Here rather than `marker.nim` because indexed by *handle*, over exactly selected set,
   ## which is view of scene this module already is.
-  travels: array[ITEMS_MAX, float] ## Each slot's travel along its marker's outline.
+  travels: array[ITEMS_MAX, float] ## Each handle's travel along its marker's outline.
     ## In screen pixels from outline's anchor, always reduced below one lap.
   seconds_last: Option[float] ## Clock reading `tick` last saw, for step between frames.
 
 
 func tick*(clock: var PulseClock, now: float) =
   ## Take frame's clock reading, so `advance` knows how long step was.
-  ##   Call once per frame, before advancing any slot.
+  ##   Call once per frame, before advancing any handle.
   ##   First call establishes reading and advances nothing.
   clock.seconds_last = some(now)
 
@@ -185,24 +185,24 @@ func secondsStep*(clock: PulseClock, now: float): float =
   min(SECONDS_STEP_PULSE_MAX, max(0.0, now - clock.seconds_last.get))
 
 
-func advance*(clock: var PulseClock; slot: int; lap, seconds: float) =
-  ## Carry one slot's pulse forward by pixels `seconds` is worth, reduced into `lap`.
+func advance*(clock: var PulseClock; handle: int; lap, seconds: float) =
+  ## Carry one handle's pulse forward by pixels `seconds` is worth, reduced into `lap`.
   ##   `lap` is what marker just shaped measured (`Marker.lap`) and enters only reduction,
   ##   never step: step is `SPEED_MARKER_PULSE*seconds` whatever camera does.
   ##   Reducing here keeps carried travel below one lap; see type's doc for why that is
   ##   load-bearing.
-  if slot < 0 or slot >= ITEMS_MAX: return
-  clock.travels[slot] = travelAdvanced(clock.travels[slot], lap, seconds)
+  if handle < 0 or handle >= ITEMS_MAX: return
+  clock.travels[handle] = travelAdvanced(clock.travels[handle], lap, seconds)
 
 
-func travelAt*(clock: PulseClock, slot: int): float =
-  ## Read one slot's pulse travel, in screen pixels from outline's anchor.
-  if slot < 0 or slot >= ITEMS_MAX: 0.0 else: clock.travels[slot]
+func travelAt*(clock: PulseClock, handle: int): float =
+  ## Read one handle's pulse travel, in screen pixels from outline's anchor.
+  if handle < 0 or handle >= ITEMS_MAX: 0.0 else: clock.travels[handle]
 
 
-func forget*(clock: var PulseClock, slot: int) =
-  ## Send slot's pulse back to start of its lap.
-  ##   Call where slot is handed to fresh object, so new selection begins comet at head
+func forget*(clock: var PulseClock, handle: int) =
+  ## Send handle's pulse back to start of its lap.
+  ##   Call where handle is handed to fresh object, so new selection begins comet at head
   ##   rather than inheriting wherever since-removed object had got to.
-  if slot < 0 or slot >= ITEMS_MAX: return
-  clock.travels[slot] = 0.0
+  if handle < 0 or handle >= ITEMS_MAX: return
+  clock.travels[handle] = 0.0

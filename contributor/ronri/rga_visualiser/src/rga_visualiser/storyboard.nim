@@ -123,7 +123,7 @@ proc constructSeeds*(scene: var Scene, now: float = 0.0) =
 func applyStep*(scene: var Scene, step: Step, now: float = 0.0): Multivector {.discardable.} =
   ## Apply one step, appending its result exactly as GUI's apply button would.
   ##   Reports derived geometry directly: caller naming what step produced cannot assume
-  ##   it landed in last slot of dense array.
+  ##   it landed in last handle of dense array.
   doAssert scene.isAlive(step.index_first) and scene.isAlive(step.index_second),
     &"Storyboard step must name operands scene has built; got `{step.index_first}` and " &
       &"`{step.index_second}`."

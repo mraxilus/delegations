@@ -28,6 +28,10 @@
 ## Shared by desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render paths.
 
 {.experimental: "strictFuncs".}
+# `handle` names loop variable std's `typedthreads.handle` would win over: template body
+#   reads it, and generic `some` instantiates with symbol captured at its own declaration.
+#   Cost of naming object address `handle`; see `GLOSSARY.md`.
+{.experimental: "openSym".}
 
 import std/[math, options]
 
@@ -112,7 +116,7 @@ func projectToScreen*(
   ## Project world position through clip space onto window pixels.
   ##   Written out rather than looped; hot proc.
   ##     Nested loops allocated two four-element arrays per call on JS backend, once per
-  ##     live slot per pick, and copies dominated pick's profile.
+  ##     live handle per pick, and copies dominated pick's profile.
   ##   Only three rows read are computed: depth is taken from w, which `isInFront` tests.
   let
     x = position.x
@@ -146,7 +150,7 @@ func pixelsFromCursor*(
   ## Report how many pixels `position` projects from `cursor`, or `Inf` behind eye.
   ##   Same projection as `projectToScreen`, answering only question point's hit test asks
   ##   and building nothing.
-  ##     `ScreenPosition` per slot was allocation per slot per hover on full scene.
+  ##     `ScreenPosition` per handle was allocation per handle per hover on full scene.
   ##     Distance is float, and float is free.
   ##   `Inf` rather than `Option[float]` for same reason.
   ##     Option is object too, and no real pixel distance is infinite, so sentinel cannot
@@ -400,7 +404,7 @@ func rayPlaneHit(
 #[ Item Hit Testing ]#
 
 type PickReport* = object ## Define what one pick found under cursor.
-  slot*: Option[int] ## Nearest item of winning rank; none where nothing is in reach.
+  handle*: Option[int] ## Nearest item of winning rank; none where nothing is in reach.
   count_rivals*: int ## How many items of winner's rank or better stood within
     ## `RADIUS_CROWD_TOUCH`, winner included; zero where nothing was picked.
     ## One where pick is unambiguous. Touch has no hover ring to say which of several
@@ -481,7 +485,7 @@ proc pickWalk(
     ray = castRay(camera, eye, frame_camera, width, height, cursor)
 
   var
-    slot_best = none(int)
+    handle_best = none(int)
     priority_best = high(int)
     distance_best = Inf
     depth_best = Inf
@@ -506,33 +510,33 @@ proc pickWalk(
       distance_best = distance
       depth_best = depth
       is_under_best = is_under
-      slot_best = some(slot)
+      handle_best = some(handle)
   # Ask once whether caller brought whole frame's placements; cannot change mid-walk.
   let is_placed_held = placed.len >= ITEMS_MAX
-  var placed_here: Placed # Filled per slot only where caller brought none.
+  var placed_here: Placed # Filled per handle only where caller brought none.
 
-  # Walk by slot to `bound`, not to capacity.
-  #   Runs per pointer move, and pool walked to capacity tests every empty slot to rank
+  # Walk by handle to `bound`, not to capacity.
+  #   Runs per pointer move, and pool walked to capacity tests every empty handle to rank
   #   few live ones.
-  #   `placed` stays indexed by slot and sized to capacity: slot is address.
-  #   By-slot readers, never `pairs`, which copies whole scene per live slot on JS backend.
-  for slot in 0 ..< scene.bound:
-    if not scene.isAlive(slot) or not scene.isVisible(slot): continue
+  #   `placed` stays indexed by handle and sized to capacity: handle is address.
+  #   By-handle readers, never `pairs`, which copies whole scene per live handle on JS backend.
+  for handle in 0 ..< scene.bound:
+    if not scene.isAlive(handle) or not scene.isVisible(handle): continue
     if not is_placed_held:
-      placed_here = placeObject(scene.geometryOf(slot), scene.anchorOverrideAt(slot))
+      placed_here = placeObject(scene.geometryOf(handle), scene.anchorOverrideAt(handle))
     # Read in place, never bound.
     #   `Placed` holds five multivectors, and binding to `let` deep-copies on JS backend.
     #   Both aliases expand to read at each use; confirmed in generated JavaScript that
     #   neither copies.
-    template place: untyped = (if is_placed_held: placed[slot] else: placed_here)
-    template geometry: untyped = scene.geometryOf(slot)
+    template place: untyped = (if is_placed_held: placed[handle] else: placed_here)
+    template geometry: untyped = scene.geometryOf(handle)
 
     case place.kind
     of PlacedKind.Nothing: continue
 
     of PlacedKind.PointAt:
       # Measure through `pixelsFromCursor`, not `projectToScreen`.
-      #   Branch almost every slot takes wants distance, not projected position to
+      #   Branch almost every handle takes wants distance, not projected position to
       #   measure one from.
       # Widen to disc drawn where that is larger than generous default.
       #   Sun hundred pixels across is picked anywhere on it, not only near middle.
@@ -541,7 +545,7 @@ proc pickWalk(
       let depth = depthAlongSight(view_projection, place.at)
       if depth <= 1.0e-6: continue # Behind eye; `isInFront`'s test.
       let distance = pixelsFromCursor(view_projection, width, height, place.at, cursor)
-      let radius_drawn = radiusPixelsAtDepth(scene.radiusAt(slot), depth, scale.scale)
+      let radius_drawn = radiusPixelsAtDepth(scene.radiusAt(handle), depth, scale.scale)
       let radius_pick = max(RADIUS_PICK_POINT, radius_drawn)
       if distance > max(RADIUS_CROWD_TOUCH, radius_pick): continue
       # Project only what is within reach, which is few; see `pixelsFromCursor`.
@@ -642,10 +646,10 @@ proc pickWalk(
 
   # Sum crowd of winner's rank and every better one; nothing picked, nothing counted.
   var count_rivals = 0
-  if slot_best.isSome:
+  if handle_best.isSome:
     for priority in 0 .. priority_best: count_rivals += counts_crowd[priority]
   PickWalk(
-    report: PickReport(slot: slot_best, count_rivals: count_rivals),
+    report: PickReport(handle: handle_best, count_rivals: count_rivals),
     depth_best: depth_best, hiders: hiders,
   )
 
@@ -661,8 +665,8 @@ proc pickAt*(
   ##     front-end holding frame's worth of answers (`browser_bridge.PLACEMENTS`) hands them
   ##     over instead of having walk ask again.
   ##     Pick then ranks *what was drawn*, off one derivation, and stops running placing
-  ##     side per live slot per pointer event.
-  ##   Pass nothing and every slot is placed here instead: desktop path and every suite
+  ##     side per live handle per pointer event.
+  ##   Pass nothing and every handle is placed here instead: desktop path and every suite
   ##   case. Partial array is treated as none: cache is frame's whole answer or not one.
   ##   None where nothing visible falls within its shape's pick radius.
   ##   Every drawn shape is pickable, horizon or not, ranked point, finite line, horizon
@@ -703,8 +707,8 @@ proc pickNearest*(
   width, height: int; cursor: ScreenPosition; placed: openArray[Placed] = []
 ): Option[int] =
   ## Find visible item nearest cursor, preferring points over lines over planes.
-  ##   `pickAt`'s slot alone, for caller with no use for rival count.
-  pickAt(scene, camera, scale, view_projection, width, height, cursor, placed).slot
+  ##   `pickAt`'s handle alone, for caller with no use for rival count.
+  pickAt(scene, camera, scale, view_projection, width, height, cursor, placed).handle
 
 
 func coversView*(
@@ -717,15 +721,15 @@ func coversView*(
 
 
 func isBackdropUnder*(
-  scene: Scene, slot: int, scale: DrawExtent, width, height: int
+  scene: Scene, handle: int, scale: DrawExtent, width, height: int
 ): bool =
   ## Report whether hovered item is backdrop: plane at horizon, or plane filling view.
   ##   Backdrop is click and hold target, never drag handle: press on it falls through to
   ##   camera, or view cannot be moved while plane fills every pixel.
-  let geometry = scene.geometryOf(slot)
+  let geometry = scene.geometryOf(handle)
   if geometry.isHorizonPlane: return true
   if shape(geometry) != some(Shape.Plane): return false
-  let anchor = anchorFor(geometry, scene.anchorOverrideAt(slot), scale)
+  let anchor = anchorFor(geometry, scene.anchorOverrideAt(handle), scale)
   anchor.isSome and coversView(anchor.get, EXTENT_PLANE_F, scale, width, height)
 
 
@@ -746,7 +750,7 @@ type AnchorZoom* = object ## Define what zoom holds still, and whether it stands
 
 
 func positionUnderPointerOn*(
-  scene: Scene; slot: int; camera: Camera; scale: DrawExtent; width, height: int;
+  scene: Scene; handle: int; camera: Camera; scale: DrawExtent; width, height: int;
   cursor: ScreenPosition
 ): Option[Position] =
   ## Solve where one object stands under `cursor`.
@@ -757,7 +761,7 @@ func positionUnderPointerOn*(
   let
     frame_camera = camera.frame(scale.eye)
     ray = castRay(camera, scale.eye, frame_camera, width, height, cursor)
-  positionOnItemUnder(scene.geometryOf(slot), ray, scale.plane_eye)
+  positionOnItemUnder(scene.geometryOf(handle), ray, scale.plane_eye)
 
 
 proc anchorZoomAt*(
@@ -781,13 +785,13 @@ proc anchorZoomAt*(
   # Take caller's extent.
   #   Wheel handler holds overlay cache's extent for exactly this camera, and deriving
   #   fresh one ran `algebraFilled` and joins per wheel notch.
-  let slot = pickNearest(
+  let handle = pickNearest(
     scene, camera, scale, view_projection, width, height, cursor, placed,
   )
-  if slot.isSome:
-    let found = positionUnderPointerOn(scene, slot.get, camera, scale, width, height, cursor)
+  if handle.isSome:
+    let found = positionUnderPointerOn(scene, handle.get, camera, scale, width, height, cursor)
     if found.isSome and isAnchorNear(found.get, camera, scale):
-      let is_standing = shape(scene.geometryOf(slot.get)) != some(Shape.Plane)
+      let is_standing = shape(scene.geometryOf(handle.get)) != some(Shape.Plane)
       return some(AnchorZoom(at: found.get, is_standing: is_standing))
   let ground = positionOnGround(camera, width, height, cursor)
   if ground.isSome and isAnchorNear(ground.get, camera, scale):

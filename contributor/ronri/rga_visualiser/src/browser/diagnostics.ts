@@ -28,7 +28,7 @@ const diagnostic_pool = elementById('diagnostic-pool');
 const grid_pool = elementById<HTMLCanvasElement>('pool-grid');
 const context_pool = grid_pool === null ? null : grid_pool.getContext('2d');
 // Scene revision grid was last drawn at; -1 until it has been drawn once. Grid.
-//   is picture of which slots are occupied and in what ink, so it changes exactly when
+//   is picture of which handles are occupied and in what ink, so it changes exactly when
 //   scene does -- see `scene.revision`, same counter frame hold reads. Its own
 //   geometry joins key because canvas cleared by resize has to be redrawn whatever
 //   scene did, and because section opens onto canvas that had no size at all.
@@ -42,13 +42,13 @@ let is_pool_stale = true;
 //   derivation is thing being checked, so test that repeated it would agree with
 //   itself no matter what reached canvas.
 let geometry_pool_drawn = { cell: 0, gap: 0, columns: 0, rows: 0, height: 0 };
-// **One square per slot, wrapped**, at largest size that keeps whole grid inside.
-//   block rather than page. Cell cannot be constant: at 1,024 slots six pixels with
+// **One square per handle, wrapped**, at largest size that keeps whole grid inside.
+//   block rather than page. Cell cannot be constant: at 1,024 handles six pixels with
 //   gap is 53 columns of 20 rows and 139px tall, and at 10,080 same cell is 191 rows
 //   and over 1,300px -- which is not grid reader scans, it is scroll. So size is
 //   chosen against capacity and measured width, largest first, and gap goes
 //   before cell does: below four pixels one-pixel gap is half strip.
-//   At 10,080 slots in 371px drawer this lands on 2px cells, 185 columns by 55 rows and
+//   At 10,080 handles in 371px drawer this lands on 2px cells, 185 columns by 55 rows and
 //   110px tall -- density map rather than set of squares, which is honest reading at
 //   ten thousand.
 const CELLS_POOL: Array<[number, number]> = [[6, 1], [5, 1], [4, 1], [3, 0], [2, 0], [1, 0]];
@@ -1182,9 +1182,9 @@ function refreshDiagnostics() {
   writeText(diagnostic_pool, nimSceneCount() + ' / ' + nimSceneCapacity());
 }
 
-// Object pool, one square per slot in ink of whatever object holds it.
+// Object pool, one square per handle in ink of whatever object holds it.
 //   `nimPoolCellColors` decides every cell's colour, free ones included, so no palette rule
-//   lives out here -- it returns one [r, g, b] triple per slot, in slot order, and this only
+//   lives out here -- it returns one [r, g, b] triple per handle, in handle order, and this only
 //   arranges them.
 //   **Drawn when scene changes and at no other time.** At capacity of 1,024 walk
 //   that fills that buffer is about millisecond, and this refresh runs five times second
@@ -1237,8 +1237,8 @@ function drawPoolGrid(count: number, capacity: number) {
   context_pool.setTransform(ratio, 0, 0, ratio, 0, 0);
   context_pool.clearRect(0, 0, width, height);
   const cells = nimPoolCellColors();
-  for (let slot = 0; slot < capacity; slot += 1) {
-    const at = slot * 3;
+  for (let handle = 0; handle < capacity; handle += 1) {
+    const at = handle * 3;
     // Keyed on bytes rather than floats, so triple that rounds to same colour.
     //   is same entry; `rgbToCss` rounds to bytes anyway.
     const red = flatAt(cells, at), green = flatAt(cells, at + 1);
@@ -1252,12 +1252,12 @@ function drawPoolGrid(count: number, capacity: number) {
     }
     context_pool.fillStyle = colour;
     context_pool.fillRect(
-      (slot % columns) * pitch, Math.floor(slot / columns) * pitch, cell, cell,
+      (handle % columns) * pitch, Math.floor(handle / columns) * pitch, cell, cell,
     );
   }
   // What picture says, for reader who cannot see it. `title` beside it in.
   //   markup carries legend, which does not change.
   grid_pool.setAttribute(
-    'aria-label', count + ' of ' + capacity + ' object slots in use, one cell each',
+    'aria-label', count + ' of ' + capacity + ' object handles in use, one cell each',
   );
 }

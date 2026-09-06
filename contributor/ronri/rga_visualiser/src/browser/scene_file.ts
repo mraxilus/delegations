@@ -14,11 +14,11 @@
 /* ---------------------------------------------------------------------- */
 
 function saveScene() {
-  // Creation order, not slot order: version-3 file promises its sequence is order.
-  //   scene was built in, and removed-then-re-added object sits in reused slot
+  // Creation order, not handle order: version-3 file promises its sequence is order.
+  //   scene was built in, and removed-then-re-added object sits in reused handle
   //   well before objects that predate it. Loading walks sequence back one object at
-  //   time, so writing slot order here would replay construction that never happened.
-  const slots = nimSceneSlotsCreated();
+  //   time, so writing handle order here would replay construction that never happened.
+  const handles = nimSceneHandlesCreated();
   const count_basis = nimBasisCount();
   // Labels go out as UTF-8 bytes, which is what format holds and what `scene.nim`.
   //   writes: derived label carries operator notation (`a ∧ b`, `a ∨ b`, `a ⊖ b`), and
@@ -28,13 +28,13 @@ function saveScene() {
   //   wrong offset. Measured: `a ⊖ b` came back on desktop as `a` and replacement
   //   glyph.
   const encoder = new TextEncoder();
-  const items = slots.map((slot) => ({
-    ink: nimItemInk(slot),
-    visible: nimItemVisible(slot),
-    label: encoder.encode(nimItemLabel(slot)),
-    coefficients: nimItemCoefficients(slot),
-    radius: nimItemRadius(slot),
-    shines: nimItemShines(slot),
+  const items = handles.map((handle) => ({
+    ink: nimItemInk(handle),
+    visible: nimItemVisible(handle),
+    label: encoder.encode(nimItemLabel(handle)),
+    coefficients: nimItemCoefficients(handle),
+    radius: nimItemRadius(handle),
+    shines: nimItemShines(handle),
   }));
 
   let size = 4 + 1 + 1 + 4;
@@ -183,11 +183,11 @@ function parseAndLoadScene(buffer: ArrayBuffer) {
   //   would creep forward by however long parsing took, which is stagger nobody chose.
   const arrived = now();
   for (const item of parsed) {
-    const slot = nimSceneAddRaw(
+    const handle = nimSceneAddRaw(
       version, item.ink, item.visible, item.label, item.coefficients, item.radius,
       item.shines, count_item, arrived,
     );
-    if (slot < 0) throw new Error('File names an unknown palette slot or radius for an object.');
+    if (handle < 0) throw new Error('File names an unknown palette slot or radius for an object.');
   }
   return 'Loaded ' + count_item + ' object(s) from scene file.';
 }

@@ -75,7 +75,7 @@ func depthAgainst*(plane, point: Multivector): float =
   ## Measure signed distance of unit-weight point from unitized plane.
   ##   Positive on side plane's construction direction points toward, zero on it.
   ##   Meet of plane and point is volume they span, whose one coefficient is point's height
-  ##   over plane: antigrades 1 and 3 close to 4, *scalar* slot, not `scalarAnti`.
+  ##   over plane: antigrades 1 and 3 close to 4, *scalar* handle, not `scalarAnti`.
   ##   Argument order is `plane ∨ point`; other order negates.
   ##     Suite pins point one unit along plane's direction at exactly +1.
   wedgeAnti(plane, point)[Basis.scalar]
@@ -94,7 +94,7 @@ func centroidFolded*(centroid: Multivector, place: Multivector): Multivector =
 
 func distanceBetween*(p, q: Multivector): float =
   ## Measure distance between two unit-weight points.
-  ##   Weight norm of joining line, i.e. `‖p ∧ q‖∘`, read from norm's `scalarAnti` slot.
+  ##   Weight norm of joining line, i.e. `‖p ∧ q‖∘`, read from norm's `scalarAnti` handle.
   ##     For unitized points join's direction lives in weight, whose length is separation.
   normWeight(wedge(p, q))[Basis.scalarAnti]
 

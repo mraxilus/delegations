@@ -60,7 +60,7 @@ const
 type PointerPick* = object ## Define pick made by pointer, awaiting camera's aim.
   ## Front-end records it beside selection change; `offerAim` consumes it next frame.
   ## What pointer picked stays under pointer as camera comes in; see `placementUnderPointer`.
-  slot*: int ## Object clicked or tapped.
+  handle*: int ## Object clicked or tapped.
   cursor*: ScreenPosition ## Where pointer stood, window pixels.
 
 
@@ -80,7 +80,7 @@ iterator watched*(
   ##     objects it was applied to is half picture.
   ##     Open edit session names none, and must not: its staged geometry *replaces* object
   ##     selected beside it.
-  ##   Skips slots gone dead since selection was made.
+  ##   Skips handles gone dead since selection was made.
   ##     Selection outlives removal of what it names, and operand can go same way with
   ##     picker left open across delete.
   if staged.isSome:
@@ -90,14 +90,14 @@ iterator watched*(
       # Yield unary operation's operand once.
       #   Bound cannot be widened by ball it holds, but middle folded twice is pulled
       #   toward, and camera turns about that middle.
-      for slot in (if first == second: @[first] else: @[first, second]):
-        if scene.isAlive(slot):
-          yield (scene.geometryOf(slot), scene.anchorOverrideAt(slot))
+      for handle in (if first == second: @[first] else: @[first, second]):
+        if scene.isAlive(handle):
+          yield (scene.geometryOf(handle), scene.anchorOverrideAt(handle))
   else:
     for position in 0 ..< picked.len:
-      let slot = picked.at(position)
-      if scene.isAlive(slot):
-        yield (scene.geometryOf(slot), scene.anchorOverrideAt(slot))
+      let handle = picked.at(position)
+      if scene.isAlive(handle):
+        yield (scene.geometryOf(handle), scene.anchorOverrideAt(handle))
 
 
 func reachOfPlaced(placed: Placed, radius: float): float =
@@ -119,9 +119,9 @@ func reachOf*(placed: openArray[Placed], scene: Scene): float =
   ##   For `Camera.reach_scene`, from placements caller already holds; browser path.
   ##   Sibling of `reachOf(scene)`, which places for itself.
   result = 0.0
-  for slot in 0 ..< scene.bound:
-    if not scene.isAlive(slot) or not scene.isVisible(slot): continue
-    result = max(result, reachOfPlaced(placed[slot], scene.radiusAt(slot)))
+  for handle in 0 ..< scene.bound:
+    if not scene.isAlive(handle) or not scene.isVisible(handle): continue
+    result = max(result, reachOfPlaced(placed[handle], scene.radiusAt(handle)))
 
 
 proc reachOf*(scene: Scene): float =
@@ -129,7 +129,7 @@ proc reachOf*(scene: Scene): float =
   ##   For `Camera.reach_scene` on path holding no placements; desktop, once per scene
   ##   change. Sibling of `reachOf(placed, scene)`.
   result = 0.0
-  for slot, item in scene.pairs:
+  for handle, item in scene.pairs:
     if not item.isVisible: continue
     result = max(
       result, reachOfPlaced(placeObject(item.geometry, item.anchorOverride), item.radius)
@@ -356,20 +356,20 @@ func offerAim*(
   var
     destination = none(CameraPlacement)
     anchor = none(Position)
-  if pick.isSome and staged.isNone and picked.len == 1 and picked.at(0) == pick.get.slot and
-      scene.isAlive(pick.get.slot):
+  if pick.isSome and staged.isNone and picked.len == 1 and picked.at(0) == pick.get.handle and
+      scene.isAlive(pick.get.handle):
     let
-      m = scene.geometryOf(pick.get.slot)
+      m = scene.geometryOf(pick.get.handle)
       shaped = shape(m)
       # Size plane by disc it is drawn as, about its stored anchor.
-      centre = anchorFor(m, scene.anchorOverrideAt(pick.get.slot), scale)
+      centre = anchorFor(m, scene.anchorOverrideAt(pick.get.handle), scale)
     if shaped.isSome and not isHorizon(m) and centre.isSome:
       anchor = positionUnderPointerOn(
-        scene, pick.get.slot, camera, scale, width, height, pick.get.cursor
+        scene, pick.get.handle, camera, scale, width, height, pick.get.cursor
       )
       if anchor.isSome:
         destination = placementUnderPointer(
-          anchor.get, shaped.get, scene.radiusAt(pick.get.slot), centre.get, camera, scale
+          anchor.get, shaped.get, scene.radiusAt(pick.get.handle), centre.get, camera, scale
         )
   if destination.isNone:
     anchor = none(Position)

@@ -1,14 +1,14 @@
 ## Hold objects visualiser draws, and catalogue of operations that derive new ones.
 ##
 ## Scene is fixed-capacity and owned by caller, so nothing is allocated after setup.
-##   Storage is structure-of-arrays, one array per field, addressed by slot rather than
-##   dense position: slot is assigned once, on `addItem`, and never moves again.
+##   Storage is structure-of-arrays, one array per field, addressed by handle rather than
+##   dense position: handle is assigned once, on `addItem`, and never moves again.
 ##   Label is fixed char storage rather than string, so GUI can edit it in place.
-## Free slots thread onto intrusive singly-linked list, `next_free`.
+## Free handles thread onto intrusive singly-linked list, `next_free`.
 ##   `addItem` and `removeItem` run in constant time however many items scene holds.
-##   Link lives inside slot array itself; dead slot's `next_free` costs nothing beyond what
-##   slot carries while alive.
-##   Stable slot keeps every cross-frame index GUI holds (operands picked, item hovered,
+##   Link lives inside handle array itself; dead handle's `next_free` costs nothing beyond what
+##   handle carries while alive.
+##   Stable handle keeps every cross-frame index GUI holds (operands picked, item hovered,
 ##   item mid-drag) valid, narrowing staleness to removed item's own references, without
 ##   generation counter.
 ## Operation catalogue is what makes scene live rather than scripted.
@@ -81,54 +81,54 @@ type
   Label* = array[LABEL_MAX, char]
     ## Define item's display text, terminated by 0, so GUI may edit it without allocating.
 
-  Item* = object ## Define handle onto one live slot's data.
+  Item* = object ## Define handle onto one live handle's data.
     ## View on native builds, copy under JS backend, where value parameter's address does
     ## not carry across calls.
-    ## Holds pointer into `scene`'s storage plus slot number.
+    ## Holds pointer into `scene`'s storage plus handle number.
     ##   Reading `.geometry`, `.label`, `.ink`, `.isVisible` or `.born` resolves into that
     ##   storage each time.
-    ##   Do not hold one across mutation of its own slot (`removeItem` then `addItem`).
+    ##   Do not hold one across mutation of its own handle (`removeItem` then `addItem`).
     when defined(js):
       scene: Scene
     else:
       scene: ptr Scene
-    slot: int
+    handle: int
 
-  Scene* = object ## Define fixed-capacity arena of items, addressed by stable slot.
-    geometries: array[ITEMS_MAX, Multivector] ## Per-slot geometry.
-    labels: array[ITEMS_MAX, Label] ## Per-slot display label.
-    inks: array[ITEMS_MAX, Ink] ## Per-slot palette entry.
-    radii: array[ITEMS_MAX, float] ## Per-slot drawn radius, in world units; see `radiusAt`.
+  Scene* = object ## Define fixed-capacity arena of items, addressed by stable handle.
+    geometries: array[ITEMS_MAX, Multivector] ## Per-handle geometry.
+    labels: array[ITEMS_MAX, Label] ## Per-handle display label.
+    inks: array[ITEMS_MAX, Ink] ## Per-handle palette entry.
+    radii: array[ITEMS_MAX, float] ## Per-handle drawn radius, in world units; see `radiusAt`.
       ## Read only for point: line and plane take their size from camera and horizon.
-    are_shining: array[ITEMS_MAX, bool] ## Per-slot whether item lights others; see
+    are_shining: array[ITEMS_MAX, bool] ## Per-handle whether item lights others; see
       ## `shinesAt`.
-    are_visible: array[ITEMS_MAX, bool] ## Per-slot visibility.
-    are_alive: array[ITEMS_MAX, bool] ## Per-slot occupancy; false where slot is free.
-    borns: array[ITEMS_MAX, float] ## Per-slot moment item was added, for appear animation.
+    are_visible: array[ITEMS_MAX, bool] ## Per-handle visibility.
+    are_alive: array[ITEMS_MAX, bool] ## Per-handle occupancy; false where handle is free.
+    borns: array[ITEMS_MAX, float] ## Per-handle moment item was added, for appear animation.
       ## Not written to scene file, since clock reading means nothing across runs.
       ## Loaded item is stamped all same, so file replays own construction; see
       ## `bornReplaying`.
-    revisions_placing: array[ITEMS_MAX, int] ## Per-slot revision at which slot's placing
+    revisions_placing: array[ITEMS_MAX, int] ## Per-handle revision at which handle's placing
       ## inputs last changed; see `revisionPlacingAt`.
       ## Placing inputs are geometry and anchor override.
-    orders: array[ITEMS_MAX, uint32] ## Per-slot creation ordinal.
+    orders: array[ITEMS_MAX, uint32] ## Per-handle creation ordinal.
       ## How many items scene had ever been given when this one arrived.
       ## Separate from `borns` because clock reading cannot answer this.
       ##   Two items added in one frame share reading, loaded readings are stamped for
-      ##   replay, and refilled slot keeps old reading until overwritten.
+      ##   replay, and refilled handle keeps old reading until overwritten.
       ## Only ever increases, is never reused, and survives save and load because file's
       ## item sequence is this order.
       ##   Buys `saveScene` writing items in order built, so reload replays construction
-      ##   even after removals scrambled slot order.
+      ##   even after removals scrambled handle order.
     anchor_overrides: array[ITEMS_MAX, Option[Position]] ## Where plane's circle should
       ## centre, for item whose construction fixes that more specifically than its
       ## closest-to-origin support; see `creationAnchor`.
       ## None for anything else.
       ## Not saved or loaded: rendering hint recomputed from how item was built.
-    next_free: array[ITEMS_MAX, Option[int]] ## Link to next free slot; intrusive free list.
-    slot_free_first: Option[int] ## Head of free list; none where scene is full.
-    count_live: int ## Number of occupied slots, so `len` need not rescan `are_alive`.
-    slot_live_last: int ## One past highest slot ever occupied; see `bound`.
+    next_free: array[ITEMS_MAX, Option[int]] ## Link to next free handle; intrusive free list.
+    handle_free_first: Option[int] ## Head of free list; none where scene is full.
+    count_live: int ## Number of occupied handles, so `len` need not rescan `are_alive`.
+    handle_live_last: int ## One past highest handle ever occupied; see `bound`.
     count_created: uint32 ## Ordinals handed out so far, and next one to hand out.
       ## Counts additions over scene's whole life, never removals.
     count_edits: int ## How many times scene's drawn content has changed; see `revision`.
@@ -496,22 +496,22 @@ when not defined(js):
 #[ Scene Editing ]#
 
 func initScene*(): Scene =
-  ## Construct empty scene, threading every slot onto free list ahead of first use.
-  for slot in 0 ..< ITEMS_MAX - 1:
-    result.next_free[slot] = some(slot + 1)
-  result.slot_free_first = some(0)
+  ## Construct empty scene, threading every handle onto free list ahead of first use.
+  for handle in 0 ..< ITEMS_MAX - 1:
+    result.next_free[handle] = some(handle + 1)
+  result.handle_free_first = some(0)
 
 
 func len*(scene: Scene): int = scene.count_live
   ## Count live items held by scene.
 
 
-func bound*(scene: Scene): int = scene.slot_live_last
-  ## Report one past highest slot this scene has ever occupied.
-  ##   What walk over "every slot" runs to.
-  ##     Slots are stable addresses, so by-slot reader sweeps range rather than dense list,
-  ##     and at capacity that means testing every slot per frame to draw few.
-  ##   High-water mark rather than live count, because freed slot in middle leaves ones
+func bound*(scene: Scene): int = scene.handle_live_last
+  ## Report one past highest handle this scene has ever occupied.
+  ##   What walk over "every handle" runs to.
+  ##     Handles are stable addresses, so by-handle reader sweeps range rather than dense list,
+  ##     and at capacity that means testing every handle per frame to draw few.
+  ##   High-water mark rather than live count, because freed handle in middle leaves ones
   ##   above occupied; only ever rises.
   ##   Three walks stay at capacity, each saying so where it stands: free list `initScene`
   ##   threads, and two object-pool strips, whose subject is how much room is left.
@@ -548,96 +548,96 @@ func restoreFrom*(scene: var Scene, snapshot: Scene) =
   ## Replace scene's whole content with snapshot, at revision no earlier state carried.
   ##   Every whole-scene replacement, i.e. undo, redo, clear, load, comes through here.
   ##     Revision only ever rises and no two states front-end has drawn share one.
-  ##   Every live slot is stamped as re-placed, since any of them may differ from what
+  ##   Every live handle is stamped as re-placed, since any of them may differ from what
   ##   cache holds.
   let revision_live = scene.count_edits
   scene = snapshot
   scene.count_edits = max(revision_live, snapshot.count_edits) + 1
-  for slot in 0 ..< scene.bound:
-    if scene.are_alive[slot]: scene.revisions_placing[slot] = scene.count_edits
+  for handle in 0 ..< scene.bound:
+    if scene.are_alive[handle]: scene.revisions_placing[handle] = scene.count_edits
 
 
-func revisionPlacingAt*(scene: Scene, slot: int): int =
-  ## Report revision at which slot's placing inputs last changed.
-  ##   Front-end caching `tessellate.placeObject`'s answer per slot re-places only slots
-  ##   stamped past what it holds: one slot per edit, every slot after `restoreFrom`.
+func revisionPlacingAt*(scene: Scene, handle: int): int =
+  ## Report revision at which handle's placing inputs last changed.
+  ##   Front-end caching `tessellate.placeObject`'s answer per handle re-places only handles
+  ##   stamped past what it holds: one handle per edit, every handle after `restoreFrom`.
   ##   Re-placing whole scene per edit is whole frame at capacity; figures in
   ##   `PROVENANCE.md`.
-  scene.revisions_placing[slot]
+  scene.revisions_placing[handle]
 
 
 func isFull*(scene: Scene): bool = scene.count_live >= ITEMS_MAX
   ## Report whether scene has no room for another item.
 
 
-func isAlive*(scene: Scene, slot: int): bool =
-  ## Report whether slot currently holds live item.
-  ##   For slot read back across frame boundary, e.g. operand picked earlier.
-  ##   Two comparisons, not `slot in 0 ..< ITEMS_MAX`.
-  ##     JS backend builds slice object per call, and every by-slot reader asserts through
-  ##     here, so one moving frame at capacity allocated one per slot.
-  slot >= 0 and slot < ITEMS_MAX and scene.are_alive[slot]
+func isAlive*(scene: Scene, handle: int): bool =
+  ## Report whether handle currently holds live item.
+  ##   For handle read back across frame boundary, e.g. operand picked earlier.
+  ##   Two comparisons, not `handle in 0 ..< ITEMS_MAX`.
+  ##     JS backend builds slice object per call, and every by-handle reader asserts through
+  ##     here, so one moving frame at capacity allocated one per handle.
+  handle >= 0 and handle < ITEMS_MAX and scene.are_alive[handle]
 
 
-func slotStepped*(scene: Scene, slot: Option[int], step: int): Option[int] =
-  ## Walk to next live slot `step` places on from `slot`, wrapping past both ends.
-  ##   None where scene holds nothing; first live slot from start where `slot` is none.
-  ##   Slots are sparse, so this searches rather than computes; `ITEMS_MAX` bounds search.
+func handleStepped*(scene: Scene, handle: Option[int], step: int): Option[int] =
+  ## Walk to next live handle `step` places on from `handle`, wrapping past both ends.
+  ##   None where scene holds nothing; first live handle from start where `handle` is none.
+  ##   Handles are sparse, so this searches rather than computes; `ITEMS_MAX` bounds search.
   ##   Wraps deliberately: drives keyboard traversal, and walk stopping dead leaves reader
   ##   pressing key that silently stopped working.
   if scene.len == 0: return none(int)
   doAssert step != 0, &"Step must be non-zero, or search runs forever; got `{step}`."
-  let start = if slot.isSome: slot.get else: -1
+  let start = if handle.isSome: handle.get else: -1
   for offset in 1 .. ITEMS_MAX:
     let candidate = floorMod(start + step*offset, ITEMS_MAX)
     if scene.isAlive(candidate): return some(candidate)
   none(int)
 
 
-func `[]`*(scene: Scene, slot: int): Item =
-  ## Read item by slot: handle onto `scene`'s storage, not copy of it.
-  doAssert scene.isAlive(slot), &"Item slot must be alive; got `{slot}`."
+func `[]`*(scene: Scene, handle: int): Item =
+  ## Read item by handle: handle onto `scene`'s storage, not copy of it.
+  doAssert scene.isAlive(handle), &"Item handle must be alive; got `{handle}`."
   when defined(js):
-    Item(scene: scene, slot: slot)
+    Item(scene: scene, handle: handle)
   else:
-    Item(scene: unsafeAddr scene, slot: slot)
+    Item(scene: unsafeAddr scene, handle: handle)
 
 
-func geometry*(item: Item): lent Multivector = item.scene.geometries[item.slot]
+func geometry*(item: Item): lent Multivector = item.scene.geometries[item.handle]
   ## Read item's geometry, straight out of scene handle points at.
 
 
-func label*(item: Item): lent Label = item.scene.labels[item.slot]
+func label*(item: Item): lent Label = item.scene.labels[item.handle]
   ## Read item's label, straight out of scene handle points at.
 
 
-func ink*(item: Item): Ink = item.scene.inks[item.slot]
+func ink*(item: Item): Ink = item.scene.inks[item.handle]
   ## Read item's palette slot, straight out of scene handle points at.
 
 
-func isVisible*(item: Item): bool = item.scene.are_visible[item.slot]
+func isVisible*(item: Item): bool = item.scene.are_visible[item.handle]
   ## Read item's visibility, straight out of scene handle points at.
 
 
-func radius*(item: Item): float = item.scene.radii[item.slot]
+func radius*(item: Item): float = item.scene.radii[item.handle]
   ## Read item's drawn radius, straight out of scene handle points at; see `radiusAt`.
 
 
-func shines*(item: Item): bool = item.scene.are_shining[item.slot]
+func shines*(item: Item): bool = item.scene.are_shining[item.handle]
   ## Read whether item lights others, straight out of scene handle points at.
 
 
-func born*(item: Item): float = item.scene.borns[item.slot]
+func born*(item: Item): float = item.scene.borns[item.handle]
   ## Read item's `born` reading, straight out of scene handle points at.
 
 
-func anchorOverride*(item: Item): Option[Position] = item.scene.anchor_overrides[item.slot]
+func anchorOverride*(item: Item): Option[Position] = item.scene.anchor_overrides[item.handle]
   ## Read where item's circle should centre, if construction fixed that.
   ##   See `creationAnchor`.
 
 
-func geometryOf*(scene: Scene, slot: int): lent Multivector =
-  ## Read item's geometry in place, by slot, without mutable scene.
+func geometryOf*(scene: Scene, handle: int): lent Multivector =
+  ## Read item's geometry in place, by handle, without mutable scene.
   ##   `lent`, not `var`: `var`-returning accessor read rather than written miscompiles
   ##   under JS backend; borrow cannot be written through.
   ##   `lent` pays only where result is never bound.
@@ -646,111 +646,111 @@ func geometryOf*(scene: Scene, slot: int): lent Multivector =
   ##     Confirmed in generated JavaScript that `lent` removes copy and binding result to
   ##     `let` puts it back, so caller wanting saving uses call inline.
   ##   Borrow lives only while scene is unchanged; do not hold one across edit.
-  doAssert scene.isAlive(slot), &"Item slot must be alive; got `{slot}`."
-  scene.geometries[slot]
+  doAssert scene.isAlive(handle), &"Item handle must be alive; got `{handle}`."
+  scene.geometries[handle]
 
 
-func setGeometryAt*(scene: var Scene, slot: int, geometry: Multivector) =
-  ## Write item's geometry, by slot, only way live item's geometry changes.
+func setGeometryAt*(scene: var Scene, handle: int, geometry: Multivector) =
+  ## Write item's geometry, by handle, only way live item's geometry changes.
   ##   Setter rather than `var Multivector`, for reason `geometryOf` gives and second.
   ##     Front-end holding last frame's meshes can only know scene changed if every write
   ##     passes one door; see `revision`.
-  doAssert scene.isAlive(slot), &"Item slot must be alive; got `{slot}`."
-  scene.geometries[slot] = geometry
+  doAssert scene.isAlive(handle), &"Item handle must be alive; got `{handle}`."
+  scene.geometries[handle] = geometry
   scene.markEdited()
-  scene.revisions_placing[slot] = scene.count_edits
+  scene.revisions_placing[handle] = scene.count_edits
 
 
-func labelAt*(scene: var Scene, slot: int): var Label =
-  ## Reach item's label for editing, by slot.
-  doAssert scene.isAlive(slot), &"Item slot must be alive; got `{slot}`."
-  scene.labels[slot]
+func labelAt*(scene: var Scene, handle: int): var Label =
+  ## Reach item's label for editing, by handle.
+  doAssert scene.isAlive(handle), &"Item handle must be alive; got `{handle}`."
+  scene.labels[handle]
 
 
-func isVisible*(scene: Scene, slot: int): bool =
-  ## Read item's visibility by value, by slot rather than through `Item`; see `inkAt`.
+func isVisible*(scene: Scene, handle: int): bool =
+  ## Read item's visibility by value, by handle rather than through `Item`; see `inkAt`.
   ##   Read and written through plain accessor pair, never `var bool`-returning one.
   ##     Proc handing back `var bool` over `array[N, bool]` miscompiles under JS backend,
   ##     reading `undefined` and writing to dropped copy; `setVisible` is writer.
-  scene.are_visible[slot]
+  scene.are_visible[handle]
 
 
-func inkAt*(scene: Scene, slot: int): Ink =
-  ## Read item's palette slot, by slot rather than through `Item` handle.
+func inkAt*(scene: Scene, handle: int): Ink =
+  ## Read item's palette slot, by handle rather than through `Item`.
   ##   Beside `Item.ink` for caller reading many items per frame.
   ##     Under JS backend `Item` holds `Scene` by value, so constructing one to read single
   ##     field copies whole scene.
-  doAssert scene.isAlive(slot), &"Item slot must be alive; got `{slot}`."
-  scene.inks[slot]
+  doAssert scene.isAlive(handle), &"Item handle must be alive; got `{handle}`."
+  scene.inks[handle]
 
 
-func radiusAt*(scene: Scene, slot: int): float =
-  ## Read item's drawn radius, in world units, by slot rather than through `Item`.
+func radiusAt*(scene: Scene, handle: int): float =
+  ## Read item's drawn radius, in world units, by handle rather than through `Item`.
   ##   Beside `Item.radius` for same reason `inkAt` sits beside `Item.ink`.
   ##   World units rather than pixels, so item shrinks with distance as everything else
   ##   drawn at position does; front-end holds least on-screen size, not this.
-  doAssert scene.isAlive(slot), &"Item slot must be alive; got `{slot}`."
-  scene.radii[slot]
+  doAssert scene.isAlive(handle), &"Item handle must be alive; got `{handle}`."
+  scene.radii[handle]
 
 
-func shinesAt*(scene: Scene, slot: int): bool =
-  ## Read whether item lights others, by slot rather than through `Item`; see `inkAt`.
+func shinesAt*(scene: Scene, handle: int): bool =
+  ## Read whether item lights others, by handle rather than through `Item`; see `inkAt`.
   ##   Sun: point every other point takes its shading from, and drawn flat itself; see
   ##   `lighting`. Meaningful for point alone.
-  doAssert scene.isAlive(slot), &"Item slot must be alive; got `{slot}`."
-  scene.are_shining[slot]
+  doAssert scene.isAlive(handle), &"Item handle must be alive; got `{handle}`."
+  scene.are_shining[handle]
 
 
-func bornAt*(scene: Scene, slot: int): float =
-  ## Read moment item arrived, by slot rather than through `Item` handle; see `inkAt`.
-  doAssert scene.isAlive(slot), &"Item slot must be alive; got `{slot}`."
-  scene.borns[slot]
+func bornAt*(scene: Scene, handle: int): float =
+  ## Read moment item arrived, by handle rather than through `Item`; see `inkAt`.
+  doAssert scene.isAlive(handle), &"Item handle must be alive; got `{handle}`."
+  scene.borns[handle]
 
 
-func orderOf*(scene: Scene, slot: int): uint32 =
-  ## Read where item stands in order this scene's items were created, by slot.
+func orderOf*(scene: Scene, handle: int): uint32 =
+  ## Read where item stands in order this scene's items were created, by handle.
   ##   Comparable only within one scene: counts additions to this arena, says nothing
   ##   about wall-clock time or another scene's ordinals.
-  doAssert scene.isAlive(slot), &"Item slot must be alive; got `{slot}`."
-  scene.orders[slot]
+  doAssert scene.isAlive(handle), &"Item handle must be alive; got `{handle}`."
+  scene.orders[handle]
 
 
-func siftDown(scene: Scene; slots: var array[ITEMS_MAX, int]; root, count: int) =
-  ## Sift slot at `root` down until neither child carries later ordinal, over first `count`.
+func siftDown(scene: Scene; handles: var array[ITEMS_MAX, int]; root, count: int) =
+  ## Sift handle at `root` down until neither child carries later ordinal, over first `count`.
   var parent = root
   while true:
     var child = 2*parent + 1
     if child >= count: return
-    if child + 1 < count and scene.orders[slots[child + 1]] > scene.orders[slots[child]]:
+    if child + 1 < count and scene.orders[handles[child + 1]] > scene.orders[handles[child]]:
       inc child
-    if scene.orders[slots[parent]] >= scene.orders[slots[child]]: return
-    swap(slots[parent], slots[child])
+    if scene.orders[handles[parent]] >= scene.orders[handles[child]]: return
+    swap(handles[parent], handles[child])
     parent = child
 
 
-func slotsCreated*(scene: Scene, slots: var array[ITEMS_MAX, int]): int =
-  ## Fill `slots` with every live slot, oldest creation first; report how many were filled.
+func handlesCreated*(scene: Scene, handles: var array[ITEMS_MAX, int]): int =
+  ## Fill `handles` with every live handle, oldest creation first; report how many were filled.
   ##   Caller's own array rather than `seq`, so no allocation on either backend.
   ##   Heapsort on `orders`, in place, O(n log n).
   ##     Runs per drawer refresh on browser and per edit on desktop, not once per save;
   ##     quadratic sort here was most of desktop frame at capacity; figures in
   ##     `PROVENANCE.md`.
-  ##   To `bound`, by slot: no slot above watermark has ever held anything.
-  for slot in 0 ..< scene.bound:
-    if not scene.are_alive[slot]: continue
-    slots[result] = slot
+  ##   To `bound`, by handle: no handle above watermark has ever held anything.
+  for handle in 0 ..< scene.bound:
+    if not scene.are_alive[handle]: continue
+    handles[result] = handle
     inc result
-  for root in countdown(result div 2 - 1, 0): siftDown(scene, slots, root, result)
+  for root in countdown(result div 2 - 1, 0): siftDown(scene, handles, root, result)
   for last in countdown(result - 1, 1):
-    swap(slots[0], slots[last])
-    siftDown(scene, slots, 0, last)
+    swap(handles[0], handles[last])
+    siftDown(scene, handles, 0, last)
 
 
-func anchorOverrideAt*(scene: Scene, slot: int): Option[Position] =
-  ## Read where item's circle should centre, by slot rather than through `Item` handle.
+func anchorOverrideAt*(scene: Scene, handle: int): Option[Position] =
+  ## Read where item's circle should centre, by handle rather than through `Item`.
   ##   See `inkAt`.
-  doAssert scene.isAlive(slot), &"Item slot must be alive; got `{slot}`."
-  scene.anchor_overrides[slot]
+  doAssert scene.isAlive(handle), &"Item handle must be alive; got `{handle}`."
+  scene.anchor_overrides[handle]
 
 
 
@@ -763,7 +763,7 @@ type Preview* = object ## Define what applying operation would build, ready to d
   anchor*: Option[Position] ## Where plane's disc should centre, from `creationAnchor`.
     ## None for every other shape.
     ## Carried so ghosted plane is drawn exactly where commit will put it.
-  operands*: Option[(int, int)] ## Slots this was derived from.
+  operands*: Option[(int, int)] ## Handles this was derived from.
     ## For camera framing preview to keep in view beside it.
     ## None where there are none to name: staged edit replaces very object it would be
     ## framed against.
@@ -775,13 +775,13 @@ type Preview* = object ## Define what applying operation would build, ready to d
 func previewApplying*(
   scene: Scene; operation: Operation; first, second: int
 ): Option[Preview] =
-  ## Resolve what applying `operation` to these two slots would build.
+  ## Resolve what applying `operation` to these two handles would build.
   ##   None where it would build nothing worth showing.
-  ##     Either slot dead, since picker left open across delete is ordinary.
+  ##     Either handle dead, since picker left open across delete is ordinary.
   ##     Result with no drawable shape, covering wrong grades and pair already lying on
   ##     each other.
-  ##   Takes slots rather than multivectors so operands travel with answer.
-  ##   Unary operation ignores `second`; pass first slot again, as every commit path does.
+  ##   Takes handles rather than multivectors so operands travel with answer.
+  ##   Unary operation ignores `second`; pass first handle again, as every commit path does.
   if not (scene.isAlive(first) and scene.isAlive(second)): return
   let
     m = scene.geometryOf(first)
@@ -807,52 +807,52 @@ func previewStaging*(geometry: Multivector, radius: float): Preview =
   )
 
 
-func setInk*(scene: var Scene, slot: int, ink: Ink) =
-  ## Rewrite item's palette slot, by slot.
-  doAssert scene.isAlive(slot), &"Item slot must be alive; got `{slot}`."
-  scene.inks[slot] = ink
+func setInk*(scene: var Scene, handle: int, ink: Ink) =
+  ## Rewrite item's palette slot, by handle.
+  doAssert scene.isAlive(handle), &"Item handle must be alive; got `{handle}`."
+  scene.inks[handle] = ink
   scene.markEdited()
 
 
-func setRadius*(scene: var Scene, slot: int, radius: float) =
-  ## Rewrite item's drawn radius, by slot, mirroring `setInk`.
+func setRadius*(scene: var Scene, handle: int, radius: float) =
+  ## Rewrite item's drawn radius, by handle, mirroring `setInk`.
   ##   Bumps `revision` only: radius is not placing input, nothing about where item
   ##   stands changes.
-  doAssert scene.isAlive(slot), &"Item slot must be alive; got `{slot}`."
+  doAssert scene.isAlive(handle), &"Item handle must be alive; got `{handle}`."
   doAssert radius > 0.0, &"Item radius must be positive; got `{radius}`."
-  scene.radii[slot] = radius
+  scene.radii[handle] = radius
   scene.markEdited()
 
 
-func setShining*(scene: var Scene, slot: int, shines: bool) =
-  ## Rewrite whether item lights others, by slot, mirroring `setInk`.
-  doAssert scene.isAlive(slot), &"Item slot must be alive; got `{slot}`."
-  scene.are_shining[slot] = shines
+func setShining*(scene: var Scene, handle: int, shines: bool) =
+  ## Rewrite whether item lights others, by handle, mirroring `setInk`.
+  doAssert scene.isAlive(handle), &"Item handle must be alive; got `{handle}`."
+  scene.are_shining[handle] = shines
   scene.markEdited()
 
 
-func setVisible*(scene: var Scene, slot: int, is_visible: bool) =
-  ## Rewrite item's visibility, by slot, mirroring `setInk`.
+func setVisible*(scene: var Scene, handle: int, is_visible: bool) =
+  ## Rewrite item's visibility, by handle, mirroring `setInk`.
   ##   Only writer: `isVisibleAt(...) = visible` accessor silently lands on copied
   ##   primitive under JS backend; see `isVisible`.
-  doAssert scene.isAlive(slot), &"Item slot must be alive; got `{slot}`."
-  scene.are_visible[slot] = is_visible
+  doAssert scene.isAlive(handle), &"Item handle must be alive; got `{handle}`."
+  scene.are_visible[handle] = is_visible
   scene.markEdited()
 
 
 iterator items*(scene: Scene): Item =
-  ## Yield each live item, in slot order.
+  ## Yield each live item, in handle order.
   ##   Walks to `bound`, as sibling `pairs` does; check both when either changes.
-  for slot in 0 ..< scene.bound:
-    if scene.are_alive[slot]: yield scene[slot]
+  for handle in 0 ..< scene.bound:
+    if scene.are_alive[handle]: yield scene[handle]
 
 
 iterator pairs*(scene: Scene): (int, Item) =
-  ## Yield each live item together with slot it stands at, in slot order.
-  ##   Walks to `bound` rather than capacity, so every consumer stops sweeping empty slots
+  ## Yield each live item together with handle it stands at, in handle order.
+  ##   Walks to `bound` rather than capacity, so every consumer stops sweeping empty handles
   ##   at once; sibling of `items`.
-  for slot in 0 ..< scene.bound:
-    if scene.are_alive[slot]: yield (slot, scene[slot])
+  for handle in 0 ..< scene.bound:
+    if scene.are_alive[handle]: yield (handle, scene[handle])
 
 
 func addItem*(
@@ -860,7 +860,7 @@ func addItem*(
   anchor_override: Option[Position] = none(Position), radius: float = RADIUS_ITEM_DEFAULT,
   shines: bool = false
 ): int {.discardable.} =
-  ## Insert object into scene at first free slot, visible; report slot used.
+  ## Insert object into scene at first free handle, visible; report handle used.
   ##   Silently refuses nothing: caller checks `isFull` first, as scene cannot grow.
   ##   `now` is stamped as item's `born` reading.
   ##     Default reads as "born at dawn of time" and never animates.
@@ -871,8 +871,8 @@ func addItem*(
   doAssert not scene.isFull,
     &"Scene holds at most {ITEMS_MAX} items, raise `--define:visualiser.items_max`; got " &
       &"`{scene.len}`."
-  result = scene.slot_free_first.get
-  scene.slot_free_first = scene.next_free[result]
+  result = scene.handle_free_first.get
+  scene.handle_free_first = scene.next_free[result]
   scene.geometries[result] = geometry
   toChars(label, scene.labels[result])
   scene.inks[result] = ink
@@ -883,22 +883,22 @@ func addItem*(
   scene.are_alive[result] = true
   scene.borns[result] = now
   scene.anchor_overrides[result] = anchor_override
-  # Stamp arrival relative to everything else, which slot cannot say.
-  #   Refilled slot sits wherever free list put it.
+  # Stamp arrival relative to everything else, which handle cannot say.
+  #   Refilled handle sits wherever free list put it.
   scene.orders[result] = scene.count_created
   inc scene.count_created
   inc scene.count_live
-  scene.slot_live_last = max(scene.slot_live_last, result + 1)
+  scene.handle_live_last = max(scene.handle_live_last, result + 1)
   scene.markEdited()
   scene.revisions_placing[result] = scene.count_edits
 
 
-func removeItem*(scene: var Scene, slot: int) =
-  ## Drop item at slot, in constant time: slot returns to free list, nothing moves.
-  doAssert scene.isAlive(slot), &"Item slot must be alive; got `{slot}`."
-  scene.are_alive[slot] = false
-  scene.next_free[slot] = scene.slot_free_first
-  scene.slot_free_first = some(slot)
+func removeItem*(scene: var Scene, handle: int) =
+  ## Drop item at handle, in constant time: handle returns to free list, nothing moves.
+  doAssert scene.isAlive(handle), &"Item handle must be alive; got `{handle}`."
+  scene.are_alive[handle] = false
+  scene.next_free[handle] = scene.handle_free_first
+  scene.handle_free_first = some(handle)
   dec scene.count_live
   scene.markEdited()
 
@@ -930,7 +930,7 @@ func removeItem*(scene: var Scene, slot: int) =
 ##   |----------|--------------------------------------------------------------|
 ##
 ## Only live items are written, in order created, whole of what version 3 added.
-##   Slot numbers mean nothing once reloaded; sequence carries ordering, so no ordinal is
+##   Handle numbers mean nothing once reloaded; sequence carries ordering, so no ordinal is
 ##   written beside each item.
 ##   `born` is not written: clock reading meaningless across runs.
 ##     Loaded item is stamped by `bornReplaying`, so file plays back own construction.
@@ -949,7 +949,7 @@ func removeItem*(scene: var Scene, slot: int) =
 ##   |         |   `upgradedFrom4`.                                                |
 ##   | 3       | Exactly, except every item is drawn at `RADIUS_ITEM_DEFAULT`, size |
 ##   |         |   version 3 drew everything at; see `upgradedFrom3`.              |
-##   | 2       | Exactly, except item sequence is slot order, so scene whose       |
+##   | 2       | Exactly, except item sequence is handle order, so scene whose       |
 ##   |         |   objects were removed and re-added replays out of build order.   |
 ##   |         |   Byte-identical to version 3 but for version itself.             |
 ##   | 1       | Geometry, label and visibility exactly; colours one hue along     |
@@ -971,10 +971,10 @@ const
     ## Stamp format version this build writes.
     ##   Every version down to `VERSION_SCENE_LEAST` is still read; see table above.
     ##   Version 2 moved every stored ink ordinal, when `Ink` gained reserved `Invalid`
-    ##   slot and lost three categorical ones.
+    ##   handle and lost three categorical ones.
     ##   Version 3 began writing items in creation order.
     ##     Bytes are shaped identically, so this number alone says whether sequence is
-    ##     build order or slot order.
+    ##     build order or handle order.
     ##   Version 4 appended one float64 radius to each item, after its geometry.
     ##   Version 5 appended one shines byte to each item, after its radius.
   VERSION_SCENE_RADIUS* = 4'u8
@@ -1055,7 +1055,7 @@ type ItemSaved* = object
 
 const ORDINAL_INK_ALGEBRA_V5 = 7
   ## Record structural slot `Algebra`, debug layer's hue, held in palette up to version 5.
-  ##   Sat after `Outline` and before `Invalid`, so every slot past it is one down today.
+  ##   Sat after `Outline` and before `Invalid`, so every handle past it is one down today.
   ##   Recorded as number because enum entry it indexes no longer exists.
 
 
@@ -1172,10 +1172,10 @@ func replayFrom*(scene: var Scene, now: float) =
   ##   scene and demo preset; scene built by hand never wants this.
   ##   `loadScene` and `nimSceneAddRaw` stamp as they add instead; this is same rule
   ##   applied after fact.
-  var slots: array[ITEMS_MAX, int]
-  let count = scene.slotsCreated(slots)
+  var handles: array[ITEMS_MAX, int]
+  let count = scene.handlesCreated(handles)
   for position in 0 ..< count:
-    scene.borns[slots[position]] = bornReplaying(position, count, now)
+    scene.borns[handles[position]] = bornReplaying(position, count, now)
   scene.markEdited()
 
 
@@ -1226,10 +1226,10 @@ when not defined(js):
     file.writeLittle(uint32(scene.len))
 
     # Write in creation order, whole of what sequence means from version 3 on.
-    var slots: array[ITEMS_MAX, int]
-    let count = scene.slotsCreated(slots)
+    var handles: array[ITEMS_MAX, int]
+    let count = scene.handlesCreated(handles)
     for position in 0 ..< count:
-      let item = scene[slots[position]]
+      let item = scene[handles[position]]
       file.write(char(ord(item.ink)))
       file.write(char(ord(item.isVisible)))
       let
@@ -1330,12 +1330,12 @@ when not defined(js):
         return &"`{path}` names an unknown palette slot or radius for object {index}."
 
       # Add in file order, so staging scene's ordinals come out as file's sequence.
-      let slot = staging.addItem(
+      let handle = staging.addItem(
         carried.get.geometry, carried.get.label, Ink(carried.get.ink_ordinal),
         bornReplaying(index, int(count), now), radius = carried.get.radius,
         shines = carried.get.shines,
       )
-      staging.setVisible(slot, carried.get.is_visible)
+      staging.setVisible(handle, carried.get.is_visible)
 
     # Carry palette on past what was loaded.
     #   Next object built then does not repeat first object's hue.

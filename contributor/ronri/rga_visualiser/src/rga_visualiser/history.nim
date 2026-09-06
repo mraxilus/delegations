@@ -6,7 +6,7 @@
 ##     Entry at cursor always equals live state.
 ##     Undo and redo move cursor and copy entry back out.
 ##     Fresh edit truncates redo-able future before appending.
-##   `slotOf` is only place timeline position becomes array index.
+##   `handleOf` is only place timeline position becomes array index.
 ##   Cost: `CAPACITY_HISTORY` whole scenes of fixed reservation; see that constant.
 ## Camera rides along, never moves timeline by itself.
 ##   Each step records where camera stood when its edit was made, so undoing construction
@@ -64,12 +64,12 @@ type
       ## scene. First entry's is never restored: no edit leads into it.
 
   History* = object ## Define fixed-capacity timeline of steps, with cursor onto live one.
-    ## Array is ring: `count` and `cursor` are timeline positions, `first` says which slot
-    ## holds oldest, and `slotOf` alone relates them.
+    ## Array is ring: `count` and `cursor` are timeline positions, `first` says which handle
+    ## holds oldest, and `handleOf` alone relates them.
     ##   Dropping oldest step moves one integer; see `record`.
     entries: array[CAPACITY_HISTORY, Step] ## Snapshot per committed edit, in ring order.
-      ## Reach one through `slotOf`, never by indexing directly.
-    first: int    ## Array slot holding oldest step, timeline position 0.
+      ## Reach one through `handleOf`, never by indexing directly.
+    first: int    ## Array handle holding oldest step, timeline position 0.
     count: int    ## Valid timeline entries so far, <= CAPACITY_HISTORY.
     cursor: int   ## Timeline position of entry equal to live scene right now.
 
@@ -77,8 +77,8 @@ type
 
 #[ Ring Indexing ]#
 
-func slotOf(history: History, position: int): int =
-  ## Report array slot holding step at `position` along timeline, 0 being oldest retained.
+func handleOf(history: History, position: int): int =
+  ## Report array handle holding step at `position` along timeline, 0 being oldest retained.
   ##   Every read and write of `entries` goes through here.
   ##     Position is not array index, and two must never be spelled same way.
   (history.first + position) mod CAPACITY_HISTORY
@@ -108,14 +108,14 @@ func record*(history: var History, scene: Scene, camera: Camera) =
   ##   `camera` is where view stood as edit was made; it never appends step of own.
   history.cursor.inc
   if history.cursor >= CAPACITY_HISTORY:
-    # Retire oldest entry by advancing `first`, handing its slot to step about to be written.
+    # Retire oldest entry by advancing `first`, handing its handle to step about to be written.
     #   Shifting every entry down instead was one scene copy per retained step per edit.
     history.first = (history.first + 1) mod CAPACITY_HISTORY
     history.cursor = CAPACITY_HISTORY - 1
   # Copy scene once, field by field; see `initHistory`.
-  let slot = history.slotOf(history.cursor)
-  history.entries[slot].scene = scene
-  history.entries[slot].camera = camera
+  let handle = history.handleOf(history.cursor)
+  history.entries[handle].scene = scene
+  history.entries[handle].camera = camera
   history.count = history.cursor + 1
 
 
@@ -138,10 +138,10 @@ func undo*(history: var History, scene: var Scene, camera: var Camera): bool
   ##   Caller holding camera tween abandons it after this, or standing aim carries view
   ##   straight back off restored placement.
   if not history.canUndo: return false
-  camera = history.entries[history.slotOf(history.cursor)].camera
+  camera = history.entries[history.handleOf(history.cursor)].camera
   history.cursor.dec
   # Restore through `restoreFrom`, never assignment: revision must pass every one drawn.
-  scene.restoreFrom(history.entries[history.slotOf(history.cursor)].scene)
+  scene.restoreFrom(history.entries[history.handleOf(history.cursor)].scene)
   true
 
 
@@ -153,6 +153,6 @@ func redo*(history: var History, scene: var Scene, camera: var Camera): bool
   ##   crossing one step either way puts view in same place.
   if not history.canRedo: return false
   history.cursor.inc
-  scene.restoreFrom(history.entries[history.slotOf(history.cursor)].scene)
-  camera = history.entries[history.slotOf(history.cursor)].camera
+  scene.restoreFrom(history.entries[history.handleOf(history.cursor)].scene)
+  camera = history.entries[history.handleOf(history.cursor)].camera
   true

@@ -59,11 +59,11 @@ function ghostDrawerOperation() {
   //   try.
   //   Drawer names its own operands, so it reads them rather than selection.
   if (!isDrawerApplyOpen()) { nimClearPreview(); return; }
-  const slots = nimSceneSlots();
-  const first = slots[parseInt(picker_operand_first.value, 10)];
+  const handles = nimSceneHandles();
+  const first = handles[parseInt(picker_operand_first.value, 10)];
   const second = arity_current === 0
     ? first
-    : slots[parseInt(picker_operand_second.value, 10)];
+    : handles[parseInt(picker_operand_second.value, 10)];
   if (first === undefined || second === undefined) { nimClearPreview(); return; }
   if (!Number.isInteger(first) || !Number.isInteger(second)) { nimClearPreview(); return; }
   nimGhostOperation(parseInt(picker_operation.value, 10), first, second);
@@ -227,9 +227,10 @@ function buildGradedCoefficientGrid(
 
 elementById('button-apply').addEventListener('click', () => {
   if (nimSceneCount() === 0) { toast('Scene is empty; add a point first.'); return; }
-  const slots = nimSceneSlots();
-  const first = slots[Math.min(parseInt(picker_operand_first.value, 10) || 0, slots.length - 1)];
-  const second = slots[Math.min(parseInt(picker_operand_second.value, 10) || 0, slots.length - 1)];
+  const handles = nimSceneHandles();
+  const last = handles.length - 1;
+  const first = handles[Math.min(parseInt(picker_operand_first.value, 10) || 0, last)];
+  const second = handles[Math.min(parseInt(picker_operand_second.value, 10) || 0, last)];
   if (nimSceneCount() >= nimSceneCapacity()) { toast('Scene is full.'); return; }
   if (first === undefined || second === undefined) { toast('Pick two objects.'); return; }
   const result = nimApplyOperation(
@@ -243,20 +244,20 @@ let key_selection_synced_last = ''; // Mirrors panel.nim's index_operand_synced_
   //   re-defaults operand m/n to current selection only moment selection itself changes (not on
   //   every refreshOperandOptions call, which happens far more often than selection changes), so
   //   manual pick of different operand sticks until selection moves again.
-let key_operand_options_last = ''; // Slot list + labels last used to rebuild operand m/n's
+let key_operand_options_last = ''; // Handle list + labels last used to rebuild operand m/n's
   // own <option> elements -- rebuilding <select>'s options while its native picker
   // is open (mobile especially) makes browser re-show/reset that picker, so
   // full rebuild below only actually runs when scene composition or label changed,
   // never on every periodic tick.
 
 function refreshOperandOptions() {
-  const slots = nimSceneSlots();
+  const handles = nimSceneHandles();
   // **Keyed on scene's own revision, not on roll-call of every label.** Key used.
-  //   to be `slot:label` joined over whole scene, which is one FFI call per object and
+  //   to be `handle:label` joined over whole scene, which is one FFI call per object and
   //   string length of list -- 5,038 calls to decide whether two pickers needed
   //   rebuilding, on path every scene change runs through. `scene.revision` moves on
   //   exactly edits that can change label, and count catches nothing else moving.
-  const key = nimSceneRevision() + ':' + slots.length;
+  const key = nimSceneRevision() + ':' + handles.length;
   // Collapsed section has no pickers to fill: rebuilding them is one `<option>` per.
   //   object per picker, ten thousand elements at largest size, for control that is
   //   not on screen. Section header and drawer button both refresh on opening.
@@ -265,19 +266,19 @@ function refreshOperandOptions() {
     for (const selection_target of [picker_operand_first, picker_operand_second]) {
       const prev = selection_target.value;
       selection_target.innerHTML = '';
-      slots.forEach((slot, i) => {
+      handles.forEach((handle, i) => {
         const option = document.createElement('option');
         option.value = String(i);
-        option.textContent = nimItemLabel(slot);
+        option.textContent = nimItemLabel(handle);
         selection_target.appendChild(option);
       });
-      if (prev !== '' && parseInt(prev, 10) < slots.length) selection_target.value = prev;
+      if (prev !== '' && parseInt(prev, 10) < handles.length) selection_target.value = prev;
     }
   }
-  syncOperandsToSelection(slots);
+  syncOperandsToSelection(handles);
 }
 
-function syncOperandsToSelection(slots?: number[]) {
+function syncOperandsToSelection(handles?: number[]) {
   // Everything selection already says is filled in here rather than asked for second time:
   //   how many objects are picked names arity (`nimSelectionArity`, same rule floating menu reads),
   //   and order they were picked names m and n.
@@ -285,11 +286,11 @@ function syncOperandsToSelection(slots?: number[]) {
   //   frame-loop tick, unlike option-list rebuild above, and leaving later manual pick of either
   //   alone until selection next moves.
   //   Mirrors panel.layoutApply exactly.
-  const key = slots_selection.join(',');
+  const key = handles_selection.join(',');
   if (key === key_selection_synced_last) return;
   key_selection_synced_last = key;
-  if (slots_selection.length === 0) return; // Nothing picked names nothing; leave it be.
-  const slots_scene = slots || nimSceneSlots();
+  if (handles_selection.length === 0) return; // Nothing picked names nothing; leave it be.
+  const handles_scene = handles || nimSceneHandles();
 
   const arity = nimSelectionArity();
   if (arity !== arity_current) {
@@ -305,12 +306,12 @@ function syncOperandsToSelection(slots?: number[]) {
     populateOperations();
   }
 
-  const position_first = slots_scene.indexOf(slots_selection[0] ?? -1);
+  const position_first = handles_scene.indexOf(handles_selection[0] ?? -1);
   if (position_first >= 0) picker_operand_first.value = String(position_first);
-  if (slots_selection.length >= 2) {
+  if (handles_selection.length >= 2) {
     // Three or more picked still names binary operation, on first two:
     //   this picker can say which two, unlike floating menu, which hides `apply` rather than guess.
-    const position_second = slots_scene.indexOf(slots_selection[1] ?? -1);
+    const position_second = handles_scene.indexOf(handles_selection[1] ?? -1);
     if (position_second >= 0) picker_operand_second.value = String(position_second);
   }
 }

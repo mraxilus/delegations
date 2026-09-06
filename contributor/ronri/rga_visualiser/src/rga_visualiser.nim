@@ -29,7 +29,7 @@
 ##   | `mesh`           | Records front-end uploads: ribbons, discs, domes, rings      |
 ##   | `tessellate`     | Objects into those records, at drawn extent                  |
 ##   | `camera`         | Orbit, dolly, pan, projection, screen placement              |
-##   | `scene`          | Slots, labels, operations catalogue, save and load           |
+##   | `scene`          | Handles, labels, operations catalogue, save and load           |
 ##   | `history`        | Undo and redo over scene content                             |
 ##   | `lighting`       | Which shining point lights each body                         |
 ##   | `orrery`         | Demo scenes at three sizes                                   |
