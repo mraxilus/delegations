@@ -6,4 +6,4 @@ description = "Domain-neutral probe of every mechanism audit enforces."
 license = "Prosperity-3.0.0"
 srcDir = "src"
 
-requires "nim >= 2.2.4"
+requires "nim == 2.2.4"
