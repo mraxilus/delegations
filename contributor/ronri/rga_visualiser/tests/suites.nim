@@ -19,7 +19,8 @@ import std/[
   math, options, os, random, sets, strformat, strutils, tables, unicode, unittest,
 ]
 
-import pga
+# `pga` arrives through `projections`, which stands in for four it has withdrawn.
+import ../src/rga_visualiser/projections
 # Open `marker` and `picking` with `{.all.}`, so suite checks private helpers directly.
 #   `directionAcross` is whole of why line's rails converge, worth asserting on its own
 #   terms rather than only through markers it ends up shaping.
