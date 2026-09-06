@@ -39,7 +39,7 @@ _Avoid_: posture, configuration, instance
 
 **Free**:
 The frame hold with no hands connected.
-_Avoid_: open, empty, neutral, apart
+_Avoid_: empty, neutral, apart
 
 **Move**:
 A change of exactly one connection.
@@ -73,7 +73,7 @@ _Avoid_: blocker, decoration, variant
 **Twist**:
 Stored rotational tension between the pair, counted in quarter turns clockwise or
 anticlockwise.
-_Avoid_: rotation, tension, turns
+_Avoid_: wind, rotation, tension, turns
 
 **Low**:
 A connection held below shoulder level, about the torso.
@@ -115,3 +115,32 @@ _Avoid_: circle, walk-around, revolution
 Two turns danced as one: an orbit with a counter-turn danced into it, so the walker keeps
 their own bearing.
 _Avoid_: compound, bearing-keeping orbit, locked orbit
+
+**Chain**:
+The seven arrangements two held hands pass through under whole turns, a half turn apart:
+swan, diamond, cross, open, cross, diamond, swan. A chain with ends, never a cycle.
+_Avoid_: cycle, ring, ladder
+
+**Open**:
+The middle of the chain, where the pair is unwound.
+_Avoid_: unwound, neutral, rest
+
+**Cross**:
+Half a turn from open, where the pair crosses once and the partners face the same way.
+_Avoid_: x, half box
+
+**Diamond**:
+A whole turn from open, where the pair crosses twice with a diamond between.
+_Avoid_: box, double cross
+
+**Swan**:
+A turn and a half from open, at either end of the chain: one connection straight and the
+other snaking around it.
+_Avoid_: double box, triple cross, coil
+
+### Drawing
+
+**Tower**:
+The stacking of every frame hold by how much is held, free at the foot and both hands at the
+head, which fixes every axis the drawings read down.
+_Avoid_: lattice, graph, tree, ladder
