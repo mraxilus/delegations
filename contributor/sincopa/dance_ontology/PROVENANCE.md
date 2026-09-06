@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 73a6fa37de648f53 |
+| Rules  | 6d0cc8f175302cba |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the Architect's workbook `ontology.partnerwork.xlsx` (sheets `base` and
@@ -390,6 +390,14 @@ Audited by a curator against the rules change that asks every pull request to op
 draft and be marked ready only when it is. It binds how this project's next pull request is
 opened, not anything in the tree; nothing needed correcting. The stamp moves because the
 charter did.
+
+## Re-audit, 2026-09-06, compiler resolution
+
+Audited by a curator against the rules change that has koch resolve each project's pin to its
+own compiler and fetch one it lacks. Nothing here needed correcting: the pin itself is
+unchanged, and what moved is how koch finds a compiler for it. The practical effect is that
+`nim r koch ci` is green as one command on a machine holding any one Nim, so verifying a
+change that touches every project no longer needs two compilers and two commands.
 
 ## Open questions
 
