@@ -118,6 +118,15 @@ what was verified, never a range nobody tried.
 - `requires "nim == 2.2.6"`. A range is rejected by the audit: `>=` cannot say which
   compiler your suites actually passed on, and cannot express an upper bound when a later
   release breaks you.
+- Where your project must follow a dependency onto `devel`, and no release carries what it
+  needs, pin the compiler's own commit instead: `requires "nim == <forty hex characters>"`.
+  A commit records what you verified exactly as a version does. `devel` on its own is
+  rejected, and rightly: it is a moving target and records nothing. Pin a release whenever
+  one will do — a commit costs everyone who builds your project, including CI.
+- Installing a commit-pinned compiler means building it: clone `nim-lang/Nim`, check out
+  that commit, run `sh build_all.sh`, and put its `bin/` on `PATH`. CI does the same and
+  caches the result per commit, so the bootstrap is paid once rather than every run.
+  `nim --version` prints `git hash:`, which is what the audit compares your pin against.
 - Install that version and put it on `PATH` before running anything. `choosenim 2.2.6`
   switches between installed versions; unpacking a release tarball from
   <https://nim-lang.org/install.html> and prefixing its `bin/` to `PATH` also works, and

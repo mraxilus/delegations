@@ -13,7 +13,8 @@
 ##   Path inside no project selects nothing by itself.
 ##
 ##   Rendered plan drives one CI job per project, each installing that project's own pin, so
-##     wall time is slowest changed project rather than sum of all.
+##     wall time is slowest changed project rather than sum of all. Entry carries `kind`,
+##     since version is installed by setup action and commit is built from source.
 ##   Cost: scoped run leaves unrelated project's rot unseen until it next changes; weekly
 ##     sweep over every project is guard, and it is weaker than running everything always.
 ##   Sweep itself is skipped in week no code merged, since rot arrives with merges. Cost:
@@ -42,7 +43,12 @@ const
 type Job* = object
   ## Define one project to compile, with compiler it pins.
   dir*: string  ## Project directory, repository-relative.
-  pin*: string  ## Exact Nim version from project's nimble file.
+  pin*: string  ## Exact Nim version, or commit, from project's nimble file.
+
+
+func kind*(job: Job): string =
+  ## Name how job's compiler is obtained, which CI branches on.
+  if job.pin.isCommit: "commit" else: "version"
 
 
 func isChecker*(path: string): bool =
@@ -118,7 +124,7 @@ proc sweepFor*(root: string, tree: Tree, days: int): seq[Job] =
 proc render*(jobs: openArray[Job]): string =
   ## Render jobs as JSON array of matrix entries, escaping through `std/json`.
   var node = newJArray()
-  for job in jobs: node.add %*{"dir": job.dir, "nim": job.pin}
+  for job in jobs: node.add %*{"dir": job.dir, "nim": job.pin, "kind": job.kind}
   $node
 
 
@@ -127,7 +133,7 @@ proc runJobs*(root: string, jobs: openArray[Job]): seq[Finding] =
   ##   Mismatched project is reported and skipped rather than compiled: wrong compiler
   ##   either fails confusingly or passes without testing what CI will run.
   if jobs.len == 0: return
-  let running = runningVersion()
+  let running = runningCompiler()
   var dirs: seq[string]
   for job in jobs:
     let mismatch = checkRunning(job.dir, job.pin, running)

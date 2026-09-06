@@ -12,6 +12,12 @@
 #   never second pin, and `toolchain.nim` fails audit when this file disagrees with it.
 #   Every project pins its own compiler in its nimble file, since no single version serves
 #   all: `pga` needs 2.2.6 or later, `dance_ontology` crashes compiler on 2.2.8 and later.
+#   Pin is release version, installed by setup action, or full commit, which no action
+#   installs: those are built from source here and cached by commit, so bootstrap is paid
+#   once. Commit pin exists for project following dependency onto devel; driver pin never
+#   is one, since every job waits on driver job.
+#   Compiler built from commit lives under runner temp, never in workspace, for same reason
+#   installed one does: audit reads untracked files.
 #   Nim installs under runner temp, never into workspace: audit reads untracked files, so
 #   toolchain inside checkout would be audited (first run on main proved it).
 #   Branch names and event kind reach koch through environment, never interpolated into
@@ -74,10 +80,32 @@ jobs:
         include: ${{ fromJSON(needs.plan.outputs.projects) }}
     steps:
       - uses: actions/checkout@v4
-      - uses: jiro4989/setup-nim-action@v2
+
+      # Released compiler: setup action installs it.
+      - if: matrix.kind == 'version'
+        uses: jiro4989/setup-nim-action@v2
         with:
           nim-version: ${{ matrix.nim }}
           parent-nim-install-directory: ${{ runner.temp }}
+
+      # Commit-pinned compiler: no action installs one, so build it, once per commit.
+      - if: matrix.kind == 'commit'
+        id: built
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/nim-commit
+          key: nim-commit-${{ runner.os }}-${{ matrix.nim }}
+      - if: matrix.kind == 'commit' && steps.built.outputs.cache-hit != 'true'
+        env:
+          COMMIT: ${{ matrix.nim }}
+        run: |
+          git clone --filter=blob:none https://github.com/nim-lang/Nim "$RUNNER_TEMP/nim-commit"
+          cd "$RUNNER_TEMP/nim-commit"
+          git checkout "$COMMIT"
+          sh build_all.sh
+      - if: matrix.kind == 'commit'
+        run: echo "$RUNNER_TEMP/nim-commit/bin" >> "$GITHUB_PATH"
+
       - env:
           PROJECT: ${{ matrix.dir }}
         run: nim r koch tests "$PROJECT"
