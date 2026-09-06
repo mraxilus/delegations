@@ -5,7 +5,7 @@
 ## Scope
 
 - Branch: `contributor/<domain>/<project>/<name>`, `curator/<project>/<name>` or `curator/<name>`
-- Paths outside scope: none
+- Anything the `scope` job would allow but a reader would not expect
 
 ## Verification
 
@@ -15,7 +15,7 @@
 
 - [ ] PROVENANCE.md updated in its own commit, design by subsystem, verified or assumed marked
 - [ ] GLOSSARY.md updated for every term resolved
-- [ ] Every fixed mistake landed with its regression test, test commit before fix commit
+- [ ] Every mistake found earned a test that fails without the fix, not one written to pass
 - [ ] Assumptions, trade-offs and open questions listed below
 
 ## Notes

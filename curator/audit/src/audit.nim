@@ -16,7 +16,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/options
+import std/[options, sets]
 import ./[findings, kinds, prose, form, layout, provenance, glossary, toolchain, plan]
 
 export layout.Tree, layout.Entry, layout.projectDirs
@@ -45,6 +45,8 @@ func auditTree*(tree: Tree): seq[Finding] =
 
   let stamp_now = tree.rulesStamp
   let dirs = tree.projectDirs
+  var paths = initHashSet[string]()
+  for e in tree: paths.incl e.path
   for e in tree:
     if e.kind.isNone: continue
     if e.path == "GLOSSARY.md": result.add checkGlossary(e.path, e.content)
@@ -52,5 +54,7 @@ func auditTree*(tree: Tree): seq[Finding] =
     result.add checkForm(e.path, e.content, rule)
     if rule.is_prose: result.add checkProse(e.path, e.content, rule.syntax)
     for dir in dirs:
-      if e.path == dir & "/PROVENANCE.md": result.add checkProvenance(e.path, e.content, stamp_now)
+      if e.path == dir & "/PROVENANCE.md":
+        result.add checkProvenance(e.path, e.content, stamp_now)
+        result.add checkCitations(e.path, e.content, dir & "/" & TESTS_DIR & "/", paths)
       if e.path == dir & "/GLOSSARY.md": result.add checkGlossary(e.path, e.content)

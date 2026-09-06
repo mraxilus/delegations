@@ -13,9 +13,17 @@
 ##     rather than from `NimVersion` koch was built with; prebuilt `./koch` and newer `nim`
 ##     on PATH would otherwise disagree silently.
 ##
+##   Pin is exact version, or exact commit of compiler itself where project follows
+##     dependency onto `devel` and no release carries what it needs. Commit records what was
+##     verified exactly as version does; `devel` label would record nothing, being moving
+##     target. Commit is full forty hex characters, as `atlas.lock` records commits.
+##   Driver project pins version, never commit: workflow installs it through setup action,
+##     which knows releases and `devel` only, and every other job waits on it.
+##
 ##   Rejected: `requires "nim >= x"`, which cannot express upper bound project needs;
 ##     separate `.nim-version` file, second place version lives beside nimble file naming
-##     one already.
+##     one already; dated nightly, cheap to install and retained only for window, so old
+##     pin stops installing and record stops being reproducible.
 ##   Cost: bumping pin is deliberate act per project, so four projects can sit on four
 ##     compilers and curator changing checker needs every one installed.
 
@@ -36,8 +44,14 @@ const
     ## Workflow naming driver version once.
   VERSION_KEY* = "NIM_VERSION:"
     ## Key workflow states driver version under.
+  HASH_KEY = "git hash:"
+    ## Line `nim --version` reports its commit under.
   VERSION_CHARS = Digits + {'.'}
     ## Characters version string is built from.
+  COMMIT_CHARS = {'0'..'9', 'a'..'f'}
+    ## Characters commit pin is built from; lowercase hex only.
+  COMMIT_LEN* = 40
+    ## Length of full git commit, which is what pin carries.
 
 
 func isVersion*(s: string): bool =
@@ -48,14 +62,25 @@ func isVersion*(s: string): bool =
   true
 
 
+func isCommit*(s: string): bool =
+  ## Decide whether `s` is full lowercase git commit.
+  s.len == COMMIT_LEN and s.allCharsInSet(COMMIT_CHARS)
+
+
+func isPin*(s: string): bool =
+  ## Decide whether `s` names compiler exactly, as commit or as version.
+  ##   Commit is tested first: forty digits would satisfy both, and absurd version loses.
+  s.isCommit or s.isVersion
+
+
 func nimPin*(nimble: string): Option[string] =
   ## Read exact Nim version pinned by nimble text; `none` when absent or inexact.
   for requirement in nimble.requireLiterals:
     if requirement.packageName.toLowerAscii != NIM: continue
     let rest = requirement[requirement.packageName.len .. ^1].strip
     if not rest.startsWith(EXACT): return none(string)
-    let version = rest[EXACT.len .. ^1].strip
-    return if version.isVersion: some(version) else: none(string)
+    let pin = rest[EXACT.len .. ^1].strip
+    return if pin.isPin: some(pin) else: none(string)
   none(string)
 
 
@@ -65,7 +90,8 @@ func checkPin*(path, nimble: string): seq[Finding] =
     result.add finding(
       path, 0,
       "Nimble file must pin compiler exactly as `requires \"" & NIM & " " & EXACT &
-        " <version>\"`; ranges cannot record what was verified; got `" &
+        " <version>\"`, or by full commit where project follows compiler onto devel; " &
+        "ranges cannot record what was verified; got `" &
         nimble.requireLiterals.join(", ") & "`.",
     )
 
@@ -81,7 +107,13 @@ func workflowVersion*(workflow: string): Option[string] =
 
 
 func checkDriver*(workflow, pin: string): seq[Finding] =
-  ## Report workflow driver version disagreeing with driver project's pin.
+  ## Report driver pinned by commit, or workflow version disagreeing with driver's pin.
+  if pin.isCommit:
+    return @[finding(
+      DRIVER_DIR & "/" & DRIVER_DIR.split('/')[^1] & ".nimble", 0,
+      "Driver project pins version, never commit: setup action installs releases only, and " &
+        "every job waits on it; got `" & pin & "`.",
+    )]
   let stated = workflow.workflowVersion
   if stated.isNone:
     result.add finding(
@@ -96,20 +128,37 @@ func checkDriver*(workflow, pin: string): seq[Finding] =
     )
 
 
-func checkRunning*(dir, pin, running: string): seq[Finding] =
-  ## Report compiler on PATH differing from project's pin.
-  if pin != running:
+type Compiler* = object
+  ## Define what `nim --version` says about compiler on PATH.
+  version*: string  ## Dotted release version it names.
+  commit*: string   ## Git hash it reports; empty when it reports none.
+
+
+func checkRunning*(dir, pin: string, running: Compiler): seq[Finding] =
+  ## Report compiler on PATH differing from project's pin, by commit or by version.
+  let present = if pin.isCommit: running.commit else: running.version
+  if pin != present:
     result.add finding(
       dir, 0,
-      "Compiler differs from project pin `" & pin & "`; install it, then run again; got `" &
-        running & "`.",
+      "Compiler differs from project pin `" & pin & "`; install or build it, then run " &
+        "again; got `" & (if present.len > 0: present else: "nothing") & "`.",
     )
 
 
-proc runningVersion*(): string =
-  ## Read version of `nim` on PATH, i.e. compiler testament will invoke; empty when absent.
+proc runningCompiler*(): Compiler =
+  ## Read version and commit of `nim` on PATH, i.e. compiler testament will invoke.
+  ##   Commit comes from `git hash:` line, which release tarballs carry as well as builds
+  ##   made from source, so commit pin is checkable either way.
   let (output, code) = execCmdEx("nim --version")
-  if code != 0: return ""
-  for word in output.splitLines[0].splitWhitespace:
-    if word.isVersion: return word
-  ""
+  if code != 0: return
+  let lines = output.splitLines
+  for word in lines[0].splitWhitespace:
+    if word.isVersion:
+      result.version = word
+      break
+  for line in lines:
+    let s = line.strip
+    if not s.startsWith(HASH_KEY): continue
+    let hash = s[HASH_KEY.len .. ^1].strip
+    if hash.isCommit: result.commit = hash
+    break

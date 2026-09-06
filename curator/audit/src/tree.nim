@@ -1,8 +1,9 @@
 ## Enumerate repository through git and read registered files into `Tree`.
 ##   Git decides what exists: tracked plus untracked-unignored files, so build products
 ##   never reach checks and every file that would commit does. Paths arrive NUL-separated
-##   (`-z`), so non-ASCII folders such as `síncopa` stay unquoted.
-##   Same door serves branch context: changed paths and commit subjects since base.
+##   (`-z`), so no path is ever quoted, whatever it holds.
+##   Same door serves branch context: changed paths, commit subjects since base, and oldest
+##   commit outside sweep window.
 ##
 ##   Git runs as direct process with argument list, never through shell: no quoting, and
 ##     `execCmdEx` is rejected because it reads by line and appends newline to NUL output.
@@ -48,6 +49,30 @@ proc readTree*(root: string): Tree =
 proc changedPaths*(root, base: string): seq[string] =
   ## List paths differing between merge base of `base` and HEAD; renames show as two paths.
   gitFields(root, ["diff", "-z", "--name-only", "--no-renames", base & "...HEAD"])
+
+
+proc revBefore*(root: string, days: int): string =
+  ## Read newest commit older than window; empty when no commit is that old.
+  ##   Output is newline-terminated rather than NUL-separated, so field is stripped.
+  let fields = gitFields(root, ["rev-list", "-1", "--before=" & $days & " days ago", "HEAD"])
+  if fields.len == 0: "" else: fields[0].strip
+
+
+proc movedPaths*(root, base: string): seq[string] =
+  ## List paths on both sides of content-preserving rename, i.e. file moved and not edited.
+  ##   `--name-status -M100%` reports `R100`, old path, new path; only exact renames count,
+  ##   so edited file is never mistaken for moved one.
+  let fields = gitFields(
+    root, ["diff", "-z", "--name-status", "--find-renames=100%", base & "...HEAD"]
+  )
+  var i = 0
+  while i + 2 < fields.len:
+    if fields[i].startsWith("R"):
+      result.add fields[i + 1]
+      result.add fields[i + 2]
+      i += 3
+    else:
+      i += 2
 
 
 proc subjects*(root, base: string): seq[string] =

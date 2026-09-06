@@ -26,7 +26,10 @@ outside your project.
   never count on it.
 - **Blocked by a rule or a check.** Do not work around it and do not edit the rule. Record
   the question under an `## Open questions` heading in `PROVENANCE.md` and in the pull
-  request body. The curator changes rules; you do not.
+  request body. The curator changes rules; you do not. Nor do they change your code: a
+  curator branch may write only your `README.md`, `PROVENANCE.md` and `GLOSSARY.md`, and
+  the `scope` job holds them to it. An answer arrives as a changed rule or check for you to
+  apply, never as an edit to your source.
 - **Language.** Nim. TypeScript only where JavaScript is unavoidable (a browser or Node
   host), never plain JavaScript, never Python. Each such file justifies itself in its header.
 - **File kinds.** Only kinds registered in `curator/audit/src/kinds.nim` may exist; the
@@ -50,7 +53,7 @@ git checkout -b contributor/<domain>/<project>/<name> origin/main
 ```
 
 - Exactly four segments, mirroring the path. `<domain>` is one of `abstand`, `bangu`,
-  `ronri`, `síncopa`, `comma_games`. `<project>` matches `[a-z][a-z0-9_]*`. `<name>` matches
+  `ronri`, `sincopa`, `comma_games`. `<project>` matches `[a-z][a-z0-9_]*`. `<name>` matches
   `[a-z0-9][a-z0-9_-]*`.
 - Conventional Commits with the project folder as scope: `feat(<project>): add parser`.
   Lowercase imperative summary, no final period. Types: `build`, `chore`, `ci`, `docs`,
@@ -88,7 +91,7 @@ the work wants. Koch runs your tests; it holds no verb for anything else. A proj
 more, pages to build or an instrument to run, carries its own compiled driver
 `tools/build.nim` taking one command argument, never a build file, since make is retired
 and a task in the nimble file would put logic in the compiler's virtual machine.
-`contributor/síncopa/dance_ontology/tools/build.nim` is the worked example; run it with
+`contributor/sincopa/dance_ontology/tools/build.nim` is the worked example; run it with
 `nim r tools/build.nim <command>` from the project directory.
 
 Header table for `PROVENANCE.md`:
@@ -115,6 +118,15 @@ what was verified, never a range nobody tried.
 - `requires "nim == 2.2.6"`. A range is rejected by the audit: `>=` cannot say which
   compiler your suites actually passed on, and cannot express an upper bound when a later
   release breaks you.
+- Where your project must follow a dependency onto `devel`, and no release carries what it
+  needs, pin the compiler's own commit instead: `requires "nim == <forty hex characters>"`.
+  A commit records what you verified exactly as a version does. `devel` on its own is
+  rejected, and rightly: it is a moving target and records nothing. Pin a release whenever
+  one will do — a commit costs everyone who builds your project, including CI.
+- Installing a commit-pinned compiler means building it: clone `nim-lang/Nim`, check out
+  that commit, run `sh build_all.sh`, and put its `bin/` on `PATH`. CI does the same and
+  caches the result per commit, so the bootstrap is paid once rather than every run.
+  `nim --version` prints `git hash:`, which is what the audit compares your pin against.
 - Install that version and put it on `PATH` before running anything. `choosenim 2.2.6`
   switches between installed versions; unpacking a release tarball from
   <https://nim-lang.org/install.html> and prefixing its `bin/` to `PATH` also works, and
@@ -187,14 +199,18 @@ Every later session:
   and every assertion cites it in a trailing comment.
 - **Regression rule.** Every mistake found, in any session, earns a test that fails before
   the fix and passes after, committed before the fix: `test(<project>): cover <mistake>`,
-  then `fix(<project>): <fix>`. Never delete, weaken or skip a test to get green.
+  then `fix(<project>): <fix>`. Never delete, weaken or skip a test to get green. The
+  `commits` job enforces this: a `fix` with no earlier `test` of the same scope on your
+  branch is a finding. A change that needs no new test is not a `fix` — it is a `refactor`,
+  a `chore` or a `docs`, and saying so is honest rather than evasive.
 - Test laws, not examples. Enumerate small domains exhaustively; sample large ones with a
   few hundred seeded random cases, and record the count beside the claim.
 - Test where the mechanism runs: real wiring, output read back, bytes re-read.
 - `koch` runs testament over `tests/t*.nim` in your project directory; there is no
   per-project build file. `nim r koch tree` runs the static audit alone, and
-  `nim r koch audit` adds dependency restore and every project's suites, which needs every
-  project's pinned compiler installed; `nim r koch ci` is the one to run before a push.
+  `nim r koch tests <project>` restores that project's dependencies and runs its suites;
+  `nim r koch ci` is the one to run before a push. Nothing runs every project at once on
+  one machine, because their compilers differ; CI sweeps them, one job each.
 
 ## Glossary process
 
@@ -261,7 +277,7 @@ what was rejected, what it costs. There is no `docs/adr/`.
 - `PROVENANCE.md` describes the design as it now is, with each claim marked verified or
   assumed and each figure carrying its pair; nothing narrates.
 - `GLOSSARY.md` holds every term that resolved.
-- No debug output, trailing whitespace, tabs, or lines over 100 characters.
+- No debug output left behind. Whitespace, tabs and width the audit already checks.
 - Pull request body follows `.github/pull_request_template.md`: intent, scope, verification
   (what ran, on which build), record, notes.
 
@@ -312,6 +328,17 @@ design document.
 
 - **Verify by running.** A claim about behaviour, cost, or appearance goes in the file
   only after you ran the code, rendered the output, or read the bytes back.
+- **A claim someone else can repeat cites the test that repeats it**, written as
+  ``Verified by `tfoo.nim` ``. The audit resolves that name against your `tests/` directory
+  and fails when it does not exist, so a citation cannot quietly rot when a suite is renamed
+  or removed. It checks only that the file exists; whether that test makes the claim beside
+  it is read, never checked.
+- **A claim verified any other way says so, and names the tool and the date.** Verified by
+  hand, in a browser, or with something that is not in this repository means nobody can
+  re-run it from a checkout, and a later reader is entitled to know that before trusting it.
+  Write "verified by hand in Firefox 141, 2026-09-06" rather than "verified". Prefer turning
+  such a claim into a test; where the thing genuinely cannot be tested here, the sentence
+  carries its own expiry, and that is the honest outcome.
 - **Measurements come in pairs.** A cost is a before and an after, on a named machine and
   scene, with the method. If you did not measure, write "unmeasured" rather than repeat an
   earlier figure.

@@ -6,7 +6,7 @@ joinable: true
 """
 ## Replicate Article IX.5 for git enumeration: real repository, real git, paths read back.
 
-import std/[os, options, sequtils, unittest]
+import std/[os, options, sequtils, strutils, unittest]
 import ../src/tree
 import ./fixtures
 
@@ -16,12 +16,12 @@ suite "Article IX":
     let root = tempRepo()
     defer: removeDir(root)
     root.writeInto(".gitignore", "bin/\n")
-    root.writeInto("contributor/síncopa/alpha/src/x.nim", "discard\n")
+    root.writeInto("contributor/sincopa/alpha/src/x.nim", "discard\n")
     root.writeInto("bin/audit", "binary")
     root.writeInto("data.csv", "1,2\n")
     discard root.git("add .gitignore")
     check root.listPaths ==
-      @[".gitignore", "contributor/síncopa/alpha/src/x.nim", "data.csv"]  # sorted, unquoted
+      @[".gitignore", "contributor/sincopa/alpha/src/x.nim", "data.csv"]  # sorted, unquoted
     let entries = root.readTree
     check entries.mapIt(it.path) == root.listPaths  # same order
     check entries[1].kind.isSome and entries[1].content == "discard\n"  # registered kind read
@@ -44,6 +44,13 @@ suite "Article IX":
       @[ALPHA_DIR & "/README.md", ALPHA_DIR & "/y.nim"]  # net change since base
     check subjects(root, "main") ==
       @["refactor(alpha): rename x", "feat(alpha): add x"]  # newest first, base excluded
+
+  test "IX.5 newest commit outside window, empty when none is that old":
+    let root = tempRepo()
+    defer: removeDir(root)
+    let head = root.git("rev-parse HEAD").strip
+    check root.revBefore(0) == head  # every commit lies before now
+    check root.revBefore(3650) == ""  # nothing ten years old, so window holds whole history
 
   test "IX.5 git failure raises with output":
     expect IOError: discard gitFields("/nonexistent_delegations", ["status"])  # non-zero exit

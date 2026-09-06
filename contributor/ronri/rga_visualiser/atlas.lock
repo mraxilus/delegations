@@ -1,0 +1,54 @@
+{
+  "items": {
+    "replications.mraxilus.gitlab.com": {
+      "dir": "$deps/replications.mraxilus.gitlab.com",
+      "url": "https://gitlab.com/mraxilus/replications",
+      "commit": "f8861e0b5ab6e868382126aa7b109503f2fe16d3",
+      "version": ""
+    }
+  },
+  "nimcfg": [
+    "# Configure every build of this project: where PGA library sits, and which algebra it is.",
+    "#   Library is restored under `deps/` by Atlas and never committed (Article XI.3). It sits",
+    "#   three directories inside replications repository, and Atlas clones whole repositories,",
+    "#   so path names subdirectory rather than checkout root; `atlas.lock` records directory",
+    "#   name, which Atlas derives from clone URL.",
+    "#   Metric is project-wide rather than per entry point: this visualiser is of rigid",
+    "#   geometric algebra in four dimensions, and every target, test and front-end wants that",
+    "#   one algebra (Article II.1). Capacities stay per entry point, since tests vary them.",
+    "",
+    "--path:\"deps/replications.mraxilus.gitlab.com/lengyel/projective_geometric_algebra_illuminated\"",
+    "--define:\"pga.dimensions=4\"",
+    "--define:\"pga.is_conformal=false\"",
+    "",
+    "############# begin Atlas config section ##########",
+    "--noNimblePath",
+    "############# end Atlas config section   ##########",
+    ""
+  ],
+  "nimbleFile": {
+    "filename": "rga_visualiser.nimble",
+    "content": [
+      "# Package description read by Atlas and nimble; requirements live here (Article II.8).",
+      "",
+      "version = \"0.1.0\"",
+      "author = \"Emmanuel M. Smith\"",
+      "description = \"Interactive visualiser of rigid geometric algebra objects and operations.\"",
+      "license = \"Prosperity-3.0.0\"",
+      "srcDir = \"src\"",
+      "",
+      "# PGA library is derived subject this project exists to exercise, so it is dependency",
+      "#   rather than copy (Article II.8). It lives inside replications repository rather than at",
+      "#   its root, and that repository carries no nimble file, so requirement pins commit and",
+      "#   `nim.cfg` names path Atlas restores it to.",
+      "requires \"nim == 2.2.10\"",
+      "requires \"https://gitlab.com/mraxilus/replications#f8861e0b\"",
+      ""
+    ]
+  },
+  "hostOS": "linux",
+  "hostCPU": "amd64",
+  "nimVersion": "2.2.6 ab00c56904e3126ad826bb520d243513a139436a",
+  "gccVersion": "13.3.0",
+  "clangVersion": ""
+}

@@ -57,15 +57,30 @@ suite "Plan":
     )
     check unpinned.jobs([ALPHA_DIR & "/src/alpha.nim"]).len == 0  # nothing to install
 
+  test "sweep runs whole repository, or nothing at all":
+    let tree = goodTree()
+    # Code merged in window: every project, since rot can land anywhere.
+    check tree.sweepJobs([ALPHA_DIR & "/src/alpha.nim"]).len == DIRS.len
+    check tree.sweepJobs([CHECKER_DIR & "/layout.nim"]).len == DIRS.len
+    # Nothing merged, or records only: sweep skips itself entirely.
+    check tree.sweepJobs(newSeq[string]()).len == 0  # quiet week
+    check tree.sweepJobs([ALPHA_DIR & "/PROVENANCE.md"]).len == 0  # stamps only
+    check tree.sweepJobs(["README.md"]).len == 0  # root prose only
+    check SWEEP_DAYS == 7  # window matches weekly cron in check.yml
+
   test "plan renders as matrix entries CI reads":
     let node = parseJson(goodTree().jobs([ALPHA_DIR & "/src/alpha.nim"]).render)
     check node.kind == JArray
     check node.len == 1
     check node[0]["dir"].getStr == ALPHA_DIR
     check node[0]["nim"].getStr == PIN
+    check node[0]["kind"].getStr == "version"  # CI branches on this
     check goodTree().jobs(newSeq[string]()).render == "[]"  # empty plan skips matrix
 
     # Non-ASCII domain folder survives JSON, since matrix reads path back verbatim.
+    let built = @[Job(dir: "p", pin: "295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3")]
+    check parseJson(built.render)[0]["kind"].getStr == "commit"  # built from source
+
     let accented = @[Job(dir: "contributor/síncopa/dance_ontology", pin: "2.2.6")]
     check parseJson(accented.render)[0]["dir"].getStr ==
       "contributor/síncopa/dance_ontology"

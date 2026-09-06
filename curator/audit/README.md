@@ -9,7 +9,7 @@ drives every project's tests through testament.
 ## Build and test
 
 ```sh
-nim r koch ci                  # from repository root: audit, scope, commits
+nim r koch ci                  # from repository root: tree, changed projects, scope, commits
 nim r koch tests curator/audit # this project alone: testament over tests/t*.nim
 ```
 
@@ -18,11 +18,10 @@ with Nim.
 
 ## Reading order
 
-`src/audit.nim` opens with the bootstrap diagram. Modules in that order: `findings`,
-`domains`, `kinds`, `comments`, `prose`, `form`, `markdown`, `projects`, `dependencies`,
-`layout`, `provenance`, `glossary`, `scope`, `commits`, `tree`, `audit`; then `koch.nim` at
-the root. Rules are data at the top of each module; `PROVENANCE.md` records why each is
-shaped as it is.
+`src/audit.nim` opens with the bootstrap diagram; read the modules in the order it gives,
+then `koch.nim` at the root. The order is not repeated here: a second copy drifts, and this
+one had already lost `toolchain` and `plan` within a day of their arrival. Rules are data at
+the top of each module; `PROVENANCE.md` records why each is shaped as it is.
 
 ## Status
 
