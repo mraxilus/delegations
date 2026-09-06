@@ -9,10 +9,16 @@
 | Rules  | ee146313f3986a3e |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
-Origin: built from the owner's workbook `ontology.partnerwork.xlsx` (sheets `base` and
-`vocabulary`, held as data in `src/dance_ontology/workbook.nim`), the owner's forty drawing
-rules as given (held as data in `design/rules.nim`), and, for the body sim, the ANSUR II
-medians with the AAOS and NASA-STD-3000 joint ranges (`sim/rig.nim`). No vendored source.
+Origin: built from the Architect's workbook `ontology.partnerwork.xlsx` (sheets `base` and
+`vocabulary`, held as data in `src/dance_ontology/workbook.nim`), the Architect's forty
+drawing rules as given (held as data in `design/rules.nim`), and, for the body sim, the ANSUR
+II medians with the AAOS and NASA-STD-3000 joint ranges (`sim/rig.nim`). No vendored source.
+
+That workbook is **superseded**: the Architect has replaced it with a newer sheet this project
+has not been given. Nothing is deleted, so nothing goes dark, but every finding the audit
+reports is about a document no longer in use, and so is the sheet-facing half of the review
+page. Transcription, audit, suite and page are replaced together in one delivery when the new
+sheet arrives; until then they are stale by construction, not by neglect.
 
 ## Language
 
