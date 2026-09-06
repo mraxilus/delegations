@@ -376,9 +376,8 @@ run only the first half had ever been exercised.
 Three further merge-process changes were verified the same day, each by its own pull request
 run and then the `push` run on `main` after its merge: the sweep gate, pull request 14
 (runs 30 and 32, both green); the curator reach and regression checks, pull request 15
-(runs 31 and 34, both green); and the citation check, pull request 16, whose pull request
-run 35 was green and whose `push` run 36 had not reported when this was written. Each ran
-against the branch that
+(runs 31 and 34, both green); and the citation check, pull request 16 (runs 35 and 36, both
+green). Each ran against the branch that
 introduced it, which is the cheapest evidence available and was taken deliberately: pull
 request 15's own `scope` run had to permit its write to a contributor `PROVENANCE.md`, and
 its own `commits` run had to accept its own history under the rule it added. Both did.
