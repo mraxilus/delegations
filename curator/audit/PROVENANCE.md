@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 71732211fc93e1e6 |
+| Rules  | ebf2f4cc3f8262ff |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -19,7 +19,7 @@ source.
 **One compiled driver, `koch.nim` at the root, as Nim's own repository builds.** It holds
 dispatch only; every check is a library module here, tested here. Koch drives tests and
 nothing else, so a project needing verbs beyond them carries its own compiled driver
-`tools/build.nim`, same pattern one level down; `contributor/síncopa/dance_ontology` is the
+`tools/build.nim`, same pattern one level down; `contributor/sincopa/dance_ontology` is the
 first, and CONTRIBUTOR.md names the convention. Invoked as
 `nim r koch <command>`, which rebuilds when sources changed and runs (Article IX.6), or
 `nim c koch` once and `./koch`. Rejected: make, a second toolchain with recipe tabs and
@@ -37,7 +37,7 @@ spike; `nim r koch <command> --branch:x` passes options through to the program.
 kinds. Git runs as a direct process with an argument list, never through a shell; rejected
 `execCmdEx`, which reads by line and appends a newline to NUL-separated output. Cost: git
 must be on PATH. Verified by `ttree.nim` on a throwaway repository: ignored `bin/` absent,
-untracked file present, `contributor/síncopa` path unquoted, rename shows as its
+untracked file present, accented path unquoted, rename shows as its
 destination only because the source never reached the base.
 
 ## File kinds
@@ -158,6 +158,34 @@ layout requires at root. Zero terms pass, because the format creates
 entries lazily. Verified by `tglossary.nim`.
 
 ## Scope
+
+**Domain folders are ASCII slugs; the accent lives in the display name.** `síncopa` became
+folder `sincopa`, name `síncopa`, which is the split `comma_games` and `comma, games` already
+used — the registry's own rule, applied to the one row that broke it. Chosen because git
+quotes a non-ASCII path by default, so `git ls-files` piped into any shell tool fails on it,
+which cost two mistakes while writing the structure review and forced a `core.quotepath off`
+instruction on every delegate; that instruction is gone with its cause. This file already
+recorded a second cost nobody had hit: macOS stores such a name as NFD, so the same folder
+has different bytes there. A `static` assertion in `domains.nim` now holds every folder to
+`isProjectName`, so an accented folder fails the build rather than the suite, which is the
+earliest boundary available (Article IV.4). Cost: 72 files moved, and the old branch prefix
+`contributor/síncopa/...` no longer parses.
+
+**A curator may move a contributor's files, never edit them.** The rename was work no role
+could do: `scope` reads a move as a delete plus an add (`--no-renames`, deliberately), so a
+curator branch was refused all 144 paths, while a contributor branch cannot reach the domain
+folder or `DOMAINS` at all. `tree.nim` gained `movedPaths`, which reads
+`--name-status --find-renames=100%`, and `checkScope` exempts exactly those paths on a curator
+branch. Only an exact rename qualifies, so an edit disguised as a move is still caught.
+Chosen because renaming a domain is a registry change and the registry is the curator's;
+moving files is the consequence, never authorship. Rejected: merging this one red, which
+spends a green `main` on a problem that recurs whenever anything is renamed; and splitting it
+across a contributor pull request and a curator one, briefly broken between merges. Cost: a
+curator may reorder a contributor's files without asking — content cannot change and the move
+is visible in review, so the cost is disorder rather than damage. Cost: one line of display
+text inside `dance_ontology`'s review page still names the old path, because a curator may
+move that file and not edit it; it is recorded as that project's open question rather than
+corrected by a hand that has no business there.
 
 **Curator reach into contributor projects stops at their records.** `curator/<name>` still
 owns the empty prefix, because a rules change must reach every project, but under
@@ -347,7 +375,7 @@ per restore, once by Atlas and once here.
 
 **Testament over `tests/t*.nim`, each stub carrying the header from STYLE.md §6 without
 `-r`.** Three projects carry suites: this one, `curator/probe`, and
-`contributor/síncopa/dance_ontology`, whose eleven stubs dominate every whole-tree run.
+`contributor/sincopa/dance_ontology`, whose eleven stubs dominate every whole-tree run.
 Testament runs each binary itself; `-r` in the command would run every test twice
 and `--outdir` breaks testament's search for the binary, so binaries sit beside sources and
 git ignores them everywhere (`**/tests/t*`). Suites are named after constitution articles
@@ -464,7 +492,7 @@ That is the pair for scoping, taken on one machine at one commit. Before this ch
 cost the third row whatever it touched; after it, a change to one project costs the second
 and a change to records alone costs the first, since nothing is compiled. Roughly thirty
 times less for the common case, and it no longer grows as projects arrive, which was the
-point. `contributor/síncopa/dance_ontology` is nearly all of the third row, as it was
+point. `contributor/sincopa/dance_ontology` is nearly all of the third row, as it was
 before.
 
 The earlier figures on this file, 0.245 s and 62.7 s, were taken in a different container
