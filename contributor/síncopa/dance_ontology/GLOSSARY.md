@@ -34,8 +34,14 @@ such as over and under.
 _Avoid_: orientation, manner, posture
 
 **Frame state**:
-One specific unique instance of a frame hold and a frame position.
+One specific unique instance of a frame hold and a frame position, grip aside.
 _Avoid_: posture, configuration, instance
+
+**Grip**:
+The manner in which the Lead holds the Follow's hand, such as a palm grip or a finger grip.
+Part of a frame position, but no frame state depends on it: two frames differing only in grip
+are one frame state. Defined so the word is not overloaded, and used for nothing here.
+_Avoid_: hold, grasp, handhold, contact point
 
 **Free**:
 The frame hold with no hands connected.
@@ -143,17 +149,6 @@ The browser page that offers exactly the moves the ontology derives, so a move i
 derive cannot be danced.
 _Avoid_: validator, app, demo, viewer
 
-
-### Drawing
-
-**Tower**:
-The stacking of every frame hold by how much is held, free at the foot and both hands at the
-head, which fixes every axis the drawings read down.
-_Avoid_: lattice, graph, tree, ladder
-
-
-### Body sim
-
 **Rig**:
 Every measurement the sim stands on: rounds, heights, arm lengths, joint ranges, hand bands,
 each with its source.
@@ -164,7 +159,10 @@ Where every joint of a held arm is, found by search as the most comfortable arra
 holds, never drawn by hand.
 _Avoid_: posture, configuration, arm position
 
-**Grip**:
-The point where two held hands meet, anywhere within the range of heights the hands are
-carried in.
-_Avoid_: connection, hand position, contact point
+
+### Drawing
+
+**Tower**:
+The stacking of every frame hold by how much is held, free at the foot and both hands at the
+head, which fixes every axis the drawings read down.
+_Avoid_: lattice, graph, tree, ladder
