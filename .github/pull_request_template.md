@@ -11,7 +11,8 @@
 
 ## Verification
 
-<!-- What ran, on which build: `nim r koch ci` result, sample counts, figures with their pair. -->
+<!-- What ran, on which build: `nim r koch ci` result, sample counts, figures with their pair.
+     Link every page this change republished; a page is opened, not described. -->
 
 ## Record
 

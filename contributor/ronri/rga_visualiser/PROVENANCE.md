@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Author | Claude Opus 5 and Claude Sonnet 5 |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 6d0cc8f175302cba |
+| Rules  | 86c3d5eef1f837fc |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the
@@ -2144,6 +2144,8 @@ other here:
   `strict`, plus a `web` verb in `tools/build.nim`. A generated lockfile was measured against
   the form rules before the rule was written, so it may be committed as generated and must
   not be reformatted to fit.
+- **Published pages are linked.** This project publishes no page today, so nothing needed
+  correcting; it binds the moment one does. Raised by `dance_ontology` as issue 42.
 - **Compiler resolution.** Directly relevant here, since this project is the one pinning a
   commit: koch now resolves each pin itself, so a session holding only a release compiler can
   still run this project's suites — it builds the pinned commit once into

@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 6d0cc8f175302cba |
+| Rules  | 86c3d5eef1f837fc |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the Architect's workbook `ontology.partnerwork.xlsx` (sheets `base` and
@@ -420,6 +420,13 @@ own compiler and fetch one it lacks. Nothing here needed correcting: the pin its
 unchanged, and what moved is how koch finds a compiler for it. The practical effect is that
 `nim r koch ci` is green as one command on a machine holding any one Nim, so verifying a
 change that touches every project no longer needs two compilers and two commands.
+
+## Re-audit, 2026-09-06, published pages linked
+
+Audited by a curator against the rules change requiring a published page to be linked rather
+than described — in the pull request's verification section and in the message to the
+Architect both. Raised by `contributor/sincopa/dance_ontology` as issue 42, after the
+omission it describes happened in pull request 40.
 
 ## Open questions
 
