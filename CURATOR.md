@@ -33,6 +33,10 @@ The owner's brief, which every rule below serves:
   allowed. The owner may merge red deliberately in rare cases; the check still runs.
 - `main` is protected. Nobody commits to it; the owner merges pull requests.
 - A change to the general rules must propagate to every project, enforced, not hoped for.
+- Roles reach each other without the Architect standing between them. A contributor blocked
+  by a rule opens an issue; a curator reads open issues at the start of every session,
+  answers on the issue and reports to the Architect, who decides. Telling the Architect
+  makes it faster and is never what makes it work.
 - Regression tests are paramount: every mistake becomes a test so it is never repeated.
 - Every pull request passes the same checks CI runs, locally, before it is opened.
 - A change to the merge process is tested on the merge process itself, not only on its code.
@@ -66,6 +70,7 @@ The owner's brief, which every rule below serves:
 | `.gitignore`, `.gitattributes` | Build products and Atlas checkouts out, LF endings | curator |
 | `.github/workflows/check.yml` | CI: `plan`, `static`, matrix, `scope`, `commits`, gate | curator |
 | `.github/pull_request_template.md` | Body every pull request follows | curator |
+| `.github/ISSUE_TEMPLATE/process-change.md` | Body every process request follows | curator |
 | `curator/README.md` | Curator root index | curator |
 | `curator/audit/` | Audit library: every check, tested against its own fixtures | curator |
 | `curator/probe/` | Domain-neutral test project and merge-process probe target | curator |
@@ -89,6 +94,23 @@ The owner's brief, which every rule below serves:
 - The `commits` job enforces the regression rule (Article IX.8): every `fix` carries an
   earlier `test` of the same scope on the same branch. A change that needs no new test is
   not a `fix` — it is a `refactor`, a `chore` or a `docs`.
+
+## Every session begins here
+
+Two reads, before any other work.
+
+- **Open issues.** A contributor blocked by a rule opens one from the process-change
+  template; it is the only channel between roles that does not run through the Architect, so
+  nothing arrives unless you look. For each, judge it: what is asked, why it is needed,
+  whether it is a good idea, and what it costs either way. Write that **as a comment on the
+  issue**, so the reasoning survives the conversation it was decided in, then report the same
+  to the Architect, who decides. A pull request answering an issue says `Closes #N`. An issue
+  you would decline stays open with your reasoning on it: declining is the Architect's, not
+  yours.
+- **`main` is green.** Read the latest `push` run. Nothing else watches it: pull request
+  subscriptions do not cover `main`, and duty 2 has a curator watch only their own merge. A
+  contributor's merge went red once with nobody looking, and was found by accident
+  twenty-four minutes later. A red `main` is the first work of the session.
 
 ## Duties
 
@@ -164,6 +186,17 @@ The owner's brief, which every rule below serves:
    What remains yours to govern by reading: the README is writable, so restraint about
    rewriting a project's prose is still restraint, not enforcement.
 
+## Saying which role you are
+
+Every session here posts to GitHub as the same account, so the account says nothing about who
+is speaking, and a contributor cannot tell your answer from another contributor's. Open every
+issue, pull request and comment with `**Role:** curator`. Nothing checks it — GitHub is not
+this repository — so it holds because you write it.
+
+Commenting on a contributor's pull request to give context or answer a question is a second
+channel and a welcome one. It is not where process requests live: a pull request closes and
+takes its thread with it, while an issue outlives the branch that prompted it.
+
 ## Before opening a pull request
 
 `nim r koch ci` at the repository root passes on the exact commit you push. It fetches
@@ -179,6 +212,9 @@ These cannot be set from inside the repository. Ask the owner to confirm they ar
 on `main` under Settings, Branches, branch protection (or a ruleset):
 
 - Require a pull request before merging; no direct pushes.
+- Requiring branches to be up to date before merging is **not available** without paid
+  rulesets, and its absence is what let a stale pull request redden `main`. Nothing here asks
+  you to buy it; the process catches staleness instead.
 - Require status checks to pass: `audit`, `scope`, `commits`. `audit` is the gate job that
   stands for `plan`, `static` and the per-project matrix, whose job names vary with the
   change and so can never be required checks themselves. These three names did not change

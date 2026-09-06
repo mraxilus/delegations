@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | ebf2f4cc3f8262ff |
+| Rules  | 456efbf8fa9801ac |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -158,6 +158,32 @@ layout requires at root. Zero terms pass, because the format creates
 entries lazily. Verified by `tglossary.nim`.
 
 ## Scope
+
+**Roles reach each other through issues, and nothing waits on the Architect to relay.** A
+contributor blocked by a rule opens an issue from `.github/ISSUE_TEMPLATE/process-change.md`;
+a curator reads open issues at the start of every session, answers on the issue and reports
+to the Architect, who decides. Chosen against routing the request through the Architect,
+which was the shape first proposed: that keeps one person as the link that makes it work, and
+a request is then lost by their not relaying it rather than merely delayed. Telling them
+still helps and is still invited; it is no longer load-bearing. The template mirrors the pull
+request template's discipline — what is blocked, which rule stands in the way, what was tried
+and rejected, what is proposed, what declining costs — so requests arrive comparable and the
+evaluation is nearly mechanical. The evaluation is written on the issue rather than only to
+the Architect, so the reasoning outlives the conversation that decided it.
+
+Cost: nothing checks any of this. GitHub is not repository state, so the role line, the
+template's use, and which channel a contributor picks are all held by reading — the same
+class of gap as glossary agreement, and recorded beside it rather than implied away.
+Cost: a curator who never starts a session is a channel nobody is reading; the sweep is
+weekly, sessions are not scheduled at all.
+
+**A session starts by reading `main`, not only issues.** The second half of the session-start
+duty exists because a contributor's merge reddened `main` on 2026-09-06 and nothing said so:
+pull request subscriptions do not cover `main` pushes, and the merge-process duty has a
+curator watch only their own merge. It was found by accident twenty-four minutes later.
+Rejected: requiring branches to be up to date before merging, which would have prevented the
+cause outright and is behind paid rulesets. The process now catches what the setting would
+have.
 
 **Domain folders are ASCII slugs; the accent lives in the display name.** `síncopa` became
 folder `sincopa`, name `síncopa`, which is the split `comma_games` and `comma, games` already
