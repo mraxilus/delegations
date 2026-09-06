@@ -69,6 +69,63 @@ lines — would set the precedent for module system, build step, dependency pinn
 generated file is marked. Conventions were proposed rather than assumed, as issue 27, and are
 unanswered. Rejected as a workaround: choosing them unilaterally and leaving a later ruling to
 invalidate every line written under them.
+Browser Front-End
+---
+**Page is one self-contained file.** It opens from `file://` or from an artefact host that
+reaches no font host and no script host, which is why every face is inlined as base64 and
+why every script is concatenated into `pages/shell.html` at its `@SCRIPT@` token.
+`tools/build.nim web` does that assembly; `pages/shell.html` stays whole markup rather than
+ending mid-`<script>` as prototype's did, since committed page that cannot parse alone is
+page no checker can read.
+
+**Scripts share one global scope rather than importing each other.** TypeScript 7 removed
+`outFile`, so compiler no longer bundles, and page cannot resolve ES imports without server.
+Files therefore carry no top-level `import` or `export`; compiler checks them as one program,
+each emits its own script, and `SCRIPTS` in `tools/build.nim` is order they concatenate in.
+That order is load-bearing, since `const` is not hoisted.
+  Rejected: bundler, which is second toolchain for one concatenation this build already does;
+  one file of five thousand lines, which loses every boundary sections already had.
+
+**Article II.9 is boundary that matters.** Every join, meet, pick, drag and camera move is
+computed by `src/browser/bridge.nim`, compiled from same modules desktop draws through;
+TypeScript owns WebGL, DOM and pointer events alone. Each script argues for itself in its
+header on phrase `not Nim because`, which `justification.nim` demands of gated kind.
+
+**Bridge's declarations are derived, never kept beside it.** `tools/build.nim declare` reads
+bridge's own `{.exportc.}` signatures and its three boundary records, and writes
+`build/bridge.d.ts`. Hand-written copy of 157 signatures would be second home for each, free
+to drift; this has one. Cost: type-checking needs `declare` run first, which `web` does.
+
+**Type-checking runs under `strict`, `noUncheckedIndexedAccess` and
+`exactOptionalPropertyTypes`**, which repository issue 27 ratified. Indexing therefore reports
+absence, and bridge's flat buffers are read through `flatAt` and `pointAt` rather than guarded
+at each of hundred sites: buffers arrive carrying their own count and every walk is bounded by
+it, so absence there is impossible and zero is what unwritten slot would mean.
+  Element lookup splits in two for same reason: `elementById` fails loudly for markup this
+  build ships, `elementIfPresent` reports absence for control that is genuinely optional.
+  Losing that split would turn absent optional control into thrown error mid-frame.
+
+**Node dependencies are pinned and their checkout is not committed**, as Atlas already does
+for packages: `package.json` and `package-lock.json` are committed, `node_modules/` is
+ignored, and `nim r tools/build.nim assets` fetches faces. Pins are `typescript` 7.0.2 and
+`@playwright/test` 1.63.0, both from npm, both MIT.
+  Six faces from `@fontsource` on jsdelivr, all SIL Open Font License 1.1: Commit Mono,
+  Noto Sans at 400 and 600, Noto Sans Math, Noto Sans Symbols 2, Noto Serif. Never committed,
+  since audit cannot read them; licence notice travels with copies.
+
+*Checked.* Verified by running: page was built and opened in Chromium, and looked at. Grid,
+three world axes, plane's disc and rim, three points, chrome and scale ruler all draw; scene
+reports five objects, canvas sizes to viewport, and console reports no error. Verified by
+type-checker: every script clean under three flags above, with no `any` and no non-null
+assertion used to silence them. Verified by running: three suites pass on pinned commit
+through `koch tests`, unchanged at 323, 302 and 310 cases, which says conversion moved no rule
+out of Nim.
+  **Unverified**: no human has driven this page, and nothing here has been driven by check.
+  Pointer, touch and wheel paths, drag construction, undo, scene save and load, and every
+  diagnostics reading are **untested** in this repository; prototype's own harness arrives
+  next, and until it does every claim about behaviour beyond first frame is assumption.
+  **Unmeasured**: no frame time was taken here. Figures under Measurements are prototype's.
+
 Render Paths
 ---
 **The directory a module sits in is which render path may reach it.**
