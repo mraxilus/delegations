@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 912082eea75c768d |
+| Rules  | 7d63229e62ed95f9 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -342,6 +342,26 @@ script. The setup action installs Nim under the runner's temp directory
 `.nim_runtime/`, because the audit reads untracked files and a toolchain inside the checkout
 was audited as source once (33,367 findings on the first run).
 
+**Ceremony removed, 2026-09-06.** Four places said twice what was said once, or asked a
+person to restate what a check proves. Duty 2 no longer records run numbers: branch
+protection refuses a red pull request, so "its jobs were green" is guaranteed by the merge
+itself, and the numbers expire with the runner's log retention. The pull request template no
+longer asks for "paths outside scope: none", which the `scope` job decides and which could
+only ever say none, nor for the commit ordering the `commits` job now enforces; both were
+replaced by the judgement neither check can make. CONTRIBUTOR.md no longer lists whitespace,
+tabs and width among what to check before pushing, since `form` checks all three one bullet
+earlier. This project's README no longer copies the bootstrap diagram out of `audit.nim`:
+that copy had already lost `toolchain` and `plan` within a day of their arrival, which is
+the argument against copies made by a copy.
+
+**`koch audit` removed.** It ran the static pass and then every project's suites. Per-project
+pins made it a verb that cannot succeed: one machine holds one compiler on `PATH`, pins
+differ, so at least one project reports a mismatch and the verb always exits 1. Chosen
+against teaching it to find each pinned compiler, which needs a version-to-path map nobody
+asked for. `ci` covers a change, `tests <project>` covers one project, and the CI matrix
+sweeps the repository one job per project. Cost: no single local command checks everything,
+which is the honest consequence of independent pins rather than a regression.
+
 **`nim r koch ci` is the local form of the jobs.** It fetches `origin/main`, then runs the
 whole-tree pass, the planned projects' restores and suites, scope and commits in one
 process. Every pull request passes it before it is opened; the runner confirms, it never
@@ -403,7 +423,7 @@ means every test binary was already compiled by a preceding full run.
 |---------|----------|------|
 | `nim r koch tree` | nothing | 0.028 s, 0.023 s, 0.022 s |
 | `nim r koch tests curator/probe` | one project | 1.776 s, 1.732 s, 1.832 s |
-| `nim r koch audit` | every project | 54.156 s, 53.887 s, 53.570 s |
+| `nim r koch audit` (since removed) | every project | 54.156 s, 53.887 s, 53.570 s |
 
 First measurement on the real path rather than a synthetic one: this file's own
 merge-process commit, whose only changed path is `curator/audit/PROVENANCE.md`, planned `[]`
