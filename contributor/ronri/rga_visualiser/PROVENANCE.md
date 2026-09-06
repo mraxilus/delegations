@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Author | Claude Opus 5 and Claude Sonnet 5 |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | ee146313f3986a3e |
+| Rules  | 912082eea75c768d |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the
@@ -59,15 +59,14 @@ registering the kind. Rejected as workarounds: renaming the file to a registered
 which lies to the checker; and rewriting the shim in Nim, which cannot express what the
 shim exists for.
 
-**The pinned Nim version cannot build this project.** The repository pins 2.2.4, which
-rejects assignment through a `var`-returning `[]` — the form the `pga` library uses
-throughout, e.g. `result[b] = m[b] + n[b]` at `pga/multivectors.nim:156`. Verified with a
-ten-line reproduction: 2.2.4 fails, 2.2.6 and later compile it. Verified further that 2.2.6
-is the *latest* release the whole repository can move to: on 2.2.8 and 2.2.10 six of
-`dance_ontology`'s eleven suites crash the compiler itself with
-`field 'floatVal' is not accessible for type 'TFullReg'`, while on 2.2.6 every project
-passes and `koch audit` reports no findings. This project's nimble file therefore requires
-`nim >= 2.2.6`, and the workflow's pin is the curator's to move.
+**Can a project pin its compiler by commit rather than by release?** `toolchain.nim` accepts
+`requires "nim == x.y.z"` and rejects anything not a dotted version, which is right for a
+project on a release and is what this one uses. It cannot express a devel compiler, and this
+project needs one to follow its own dependency: `pga`'s head spells operators in prefix form,
+which no release lexes (see Dependencies / Vendoring). Asked of the curator; until it is
+answered this project stays on the last pga commit a release can build. Rejected as
+workarounds: a `devel` label, which is a moving target and records nothing verified; and
+holding the dependency back silently, which is what the record below exists to prevent.
 Render Paths
 ---
 **The directory a module sits in is which render path may reach it.**
@@ -1957,18 +1956,36 @@ Rejected: copying the library in, which Article XI.3 forbids and which would rep
 another repository's tree; and a project verb that clones it, which cannot work because CI
 runs `tree`, `deps` and `tests` and never a project's own build driver.
 
-The pin is at a commit, not at the branch head, and deliberately: the library's current head
-spells its operators in prefix form (`☆m`, `■m`, `□m`), which needs the seven Unicode
-operator characters added by Nim pull request 26074. That change is on `devel` and in no
-release, so a released compiler cannot build it. The pinned commit spells the same operators
-as calls (`☆(m)`, `m.⟑ n`), which any Nim lexes as identifiers. Move the pin when a release
-carries 26074.
+**This project tracks pga's head, and says so when it cannot.** Standing instruction from
+the Architect: take the latest pga; when the latest does not work, pin the most recent commit
+that does, record which and why, and move forward when it works again. Every pull request
+states which pga commit it builds against and whether that is head, so a reader never has to
+infer it.
+
+Where that stands now: head is `295bafc` (2026-09-02, *"update nim to devel for new operator
+symbols"*), exactly one commit ahead of the pin. It spells its operators in prefix form
+(`☆m`, `■m`, `□m`), which needs the seven Unicode operator characters added by Nim pull
+request 26074 — merged to `devel`, carried by no release, and 2.2.10 is the newest release
+there is. The pinned `f8861e0` spells the same operators as calls (`☆(m)`, `m.⟑ n`), which
+any Nim lexes as identifiers.
+
+**What moves the pin**, so a later session needs no archaeology: a Nim release carrying
+26074, or a pga commit that drops the prefix forms, or the curator admitting a commit pin for
+the compiler (Open Questions). Any of those, and the next delivery takes head. Nothing else
+does: waiting on `devel` unpinned would trade a recorded compiler for a moving one.
+
+**The compiler pin is 2.2.10**, the newest release this project's suites pass on. Per-project
+pins mean another project's ceiling no longer bounds this one, and the pin is exact because
+that is what records the version actually verified rather than a range nobody tried.
 
 *Checked.* Verified: `deps/` was deleted, `atlas --noexec rep` restored the pinned commit,
 `atlas changed` exited 0, and the suite compiled against the restored tree — the sequence CI
-runs. Verified: a released Nim 2.2.10 rejects the library's current head at
-`operators.nim:465` with `undeclared identifier: '☆m'`, and so does a 2.3.1 devel build
-without 26074, identically.
+runs. Verified: a released Nim 2.2.10 rejects the library's head at `operators.nim:465` with
+`undeclared identifier: '☆m'`, and so does a 2.3.1 devel build without 26074, identically.
+Verified: `295bafc` is the only pga commit ahead of the pin, read from that repository's
+history rather than assumed. Verified on 2.2.10: 323 cases on the C backend, 302 on JS, 310
+at reduced capacities. Assumed: that no release after 2.2.10 exists — checked once by asking
+for 2.2.12, 2.4.0 and 2.6.0 and getting nothing, which dates rather than proves it.
 
 
 Testing
