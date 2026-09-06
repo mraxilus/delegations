@@ -1,12 +1,3 @@
-## Host review page's prose: every number and picture is marker `{{name}}` that
-##   `tools/review` fills from model, so nothing here is transcribed.
-##   Lives in Nim because repository reads only registered file kinds; comments inside
-##     markup are telegraphic by hand, since checker cannot see inside string.
-##   Plain constant, never format string: style and prose are full of braces.
-##   Cost of template with markers: marker is text compiler never sees, so misspelt or
-##     unfilled one is caught by assertion in `renderReview` rather than by compile error.
-
-const TEMPLATE* = """
 <title>Partner Work — reading the ontology back</title>
 
 <style>
@@ -723,4 +714,3 @@ make pages     # rebuild the validator, this page and the frame pictures</pre>
 </footer>
 
 </div>
-"""

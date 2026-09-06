@@ -3,13 +3,17 @@
 ##   Page used to carry its own copy of frames and transitions, transcribed by hand from
 ##     audit.  Nothing kept that copy honest, which made it one part of work that could
 ##     quietly go wrong.
-##   Now prose lives in `review_prose.nim` with marker wherever number or picture belongs,
-##     and everything marker stands for is derived here.
+##   Now prose lives in `pages/review/review.html` with marker wherever number or picture
+##     belongs, and everything marker stands for is derived here.
+##     Prose was Nim string constant while repository read no markup kind; `Html` is
+##       registered now, so page is committed file read at run time.
+##       Cost: template path is relative to project directory, so renderer runs from there,
+##         as testament and build driver both do.
 ##   Page and pictures are build products under `build/review/`, never committed:
 ##     repository reads only registered file kinds.  `tests/treview.nim` renders page,
 ##     writes it and reads it back, so model change that breaks page fails suite.
 ##     Cost of build product: nothing in tree shows page's history; published copy is
-##       record, republished from `make pages`.
+##       record, republished from build driver's `pages`.
 ##   Usage: `review <dir>` writes `<dir>/review.html` and `<dir>/frames/<slug>.svg`.
 
 {.experimental: "strictFuncs".}
@@ -17,10 +21,11 @@
 import std/[options, os, strutils]
 
 import ../src/dance_ontology
-import ./review_prose
 
 
 const
+  TEMPLATE_PATH = "pages" / "review" / "review.html"
+    ## Committed page holding prose and one marker per derived number or picture.
   PAGE_NAME* = "review.html"
     ## File page is written as, under output directory.
   FRAMES_DIR* = "frames"
@@ -274,7 +279,7 @@ func inkTerms(page: string): string =
 proc renderReview*(): string =
   ## Fill prose of review with what model says; every marker must be filled.
   let free_frame = fromKey("--.").get
-  var page = TEMPLATE
+  var page = readFile(TEMPLATE_PATH)
   let fills = {
     "stats": renderStats(),
     "gallery": renderGallery(),
