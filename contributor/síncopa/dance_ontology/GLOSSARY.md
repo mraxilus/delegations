@@ -138,6 +138,12 @@ A turn and a half from open, at either end of the chain: one connection straight
 other snaking around it.
 _Avoid_: double box, triple cross, coil
 
+**Reference**:
+The browser page that offers exactly the moves the ontology derives, so a move it does not
+derive cannot be danced.
+_Avoid_: validator, app, demo, viewer
+
+
 ### Drawing
 
 **Tower**:
