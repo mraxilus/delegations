@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 565809cbc04f227c |
+| Rules  | ee146313f3986a3e |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -133,7 +133,10 @@ stale in every project, one byte in CURATOR.md in none.
 ## Glossary
 
 **Shape only: heading, `## Language`, and a definition line after every `**Term**:`.**
-Content is the contributor's and owner's. Zero terms pass, because the format creates
+Content is the contributor's and Architect's, and a term enters only when the Architect
+selects it. The check cannot know what was agreed, so it reads shape alone; agreement holds
+by the Architect's reading. The same check now runs on the top-level `GLOSSARY.md`, which
+layout requires at root. Zero terms pass, because the format creates
 entries lazily. Verified by `tglossary.nim`.
 
 ## Scope

@@ -82,6 +82,10 @@ suite "Layout":
     check requiring.messages[0].endsWith("got `malebolgia`.")  # package named
     check (requiring & @[entry(ALPHA_DIR & "/atlas.lock", "{}\n")]).checkLayout.len == 0  # ok
 
+  test "top-level glossary is required and its shape checked":
+    check goodTree().without("GLOSSARY.md").paths == @["GLOSSARY.md"]  # required at root
+    check goodTree().without("GLOSSARY.md").messages == @["Top-level glossary missing."]  # named
+
   test "committed pages live in page directories only":
     for page_dir in PAGE_DIRS:  # 2 directories, exhaustive
       let inside = goodTree() & @[

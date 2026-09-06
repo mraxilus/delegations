@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 565809cbc04f227c |
+| Rules  | ee146313f3986a3e |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's workbook `ontology.partnerwork.xlsx` (sheets `base` and

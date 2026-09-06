@@ -10,6 +10,9 @@
 ##     depth; unknown root directory or unregistered domain is finding, never skipped.
 ##   Root README.md, root folder READMEs and domain READMEs are derived views (Article I.4):
 ##     domain row per `DOMAINS`, `# <name>` heading, theme line per domain.
+##   Top-level GLOSSARY.md carries repository's agreed words, and every project carries its
+##     own; shape is checked here, agreement never is, since checker cannot know what
+##     Architect selected.
 ##   Unregistered file kind anywhere is finding (Article VI.5), pointing at `kinds.nim`.
 ##   Committed page (Html, Svg) lives in project's `pages/`, what project stands behind, or
 ##     `mockups/`, one-off exploration kept for reference; generated markup stays under
@@ -38,7 +41,7 @@ type
 const
   ROOT_FILES* = [
     "README.md", "LICENSE.md", "CONSTITUTION.md", "STYLE.md", "CURATOR.md", "CONTRIBUTOR.md",
-    "CLAUDE.md", "koch.nim", "koch.nim.cfg", ".gitignore", ".gitattributes",
+    "CLAUDE.md", "GLOSSARY.md", "koch.nim", "koch.nim.cfg", ".gitignore", ".gitattributes",
   ]
     ## Files allowed directly at root.
   ROOT_DIRS* = [".github"]
@@ -179,7 +182,9 @@ func checkProject(tree: Tree, paths: Table[string, int], dir: string): seq[Findi
 
 
 func checkRootViews(tree: Tree, paths: Table[string, int]): seq[Finding] =
-  ## Report root folder READMEs missing or not opening with folder name.
+  ## Report top-level glossary missing, and root folder READMEs missing or misnamed.
+  if "GLOSSARY.md" notin paths:
+    result.add finding("GLOSSARY.md", 0, "Top-level glossary missing.")
   for root in ROOTS:
     let path = root & "/README.md"
     if path notin paths:

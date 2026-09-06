@@ -61,6 +61,7 @@ func goodTree*(): Tree =
     entry("README.md", readmeText()),
     entry("LICENSE.md", "# Licence\n\nText.\n"),
     entry("CLAUDE.md", "# Claude\n\nRead rules.\n"),
+    entry("GLOSSARY.md", "# Fixture\n\nWords.\n\n## Language\n\n**Term**:\nOne thing.\n"),
     entry("CURATOR.md", "# Curator\n\nDuties.\n"),
     entry("koch.nim", "## Drive checks.\n\ndiscard\n"),
     entry("koch.nim.cfg", "# Flags for koch.\nhints:off\n"),

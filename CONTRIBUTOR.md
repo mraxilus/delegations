@@ -172,8 +172,10 @@ Every later session:
 ## Glossary process
 
 `GLOSSARY.md` follows Matt Pocock's `CONTEXT.md` format and his domain-modeling discipline,
-renamed for this repository. It is the project's ubiquitous language: the words the owner,
-the code and every later session share. Format:
+renamed for this repository. It is the project's ubiquitous language: the words the
+Architect, the code and every later delegate share. The repository's own words are in the
+top-level `GLOSSARY.md`; use those, and define here only what is specific to this project.
+Format:
 
 ```md
 # <project>
@@ -207,7 +209,11 @@ Five moves during every session, not at its end:
    edge cases until boundaries are exact.
 4. **Cross-reference with code.** When a statement about behaviour disagrees with the code,
    surface the contradiction instead of choosing silently.
-5. **Update `GLOSSARY.md` inline.** The moment a term resolves, write it. Never batch.
+5. **Propose the term; never write it on sight.** Set out the concept, offer candidate
+   names with what each would displace, and stop. Only the name the Architect selects is
+   written, and only then. A term invented in passing is a term nobody agreed to, and the
+   audit cannot catch it: it checks a glossary's shape, never whether its words were
+   chosen. This rule holds by the Architect's reading, and by nothing else.
 
 Where Pocock's process would write an architecture decision record, this repository writes
 the decision into `PROVENANCE.md` under its subsystem (Article VIII.6): what was chosen,

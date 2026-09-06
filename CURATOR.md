@@ -18,6 +18,9 @@ The owner's brief, which every rule below serves:
 - Every line follows `CONSTITUTION.md` and `STYLE.md` strictly. Every project records what
   was decided, what was rejected and what it costs in `PROVENANCE.md`, and its ubiquitous
   language in `GLOSSARY.md`.
+- A term enters a glossary only when the Architect selects it. Propose the concept with
+  candidate names and stop; never write a word nobody agreed to. The audit checks a
+  glossary's shape, never its agreement, so this one holds by reading alone.
 - Two mirrored project roots. `contributor/<domain>/<project>/` holds the owner's life
   areas under one theme, methods of communication: `abstand` (music), `bangu` (language),
   `ronri` (computing), `síncopa` (dance and movement), `comma_games` (game development
