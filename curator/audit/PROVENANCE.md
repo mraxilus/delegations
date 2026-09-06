@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 6cef8fc704f7f8f4 |
+| Rules  | 772783bb2bd70464 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -42,7 +42,7 @@ destination only because the source never reached the base.
 
 ## File kinds
 
-**An allow-list of twelve kinds is the registry, and an unregistered kind is a finding.**
+**An allow-list of fourteen kinds is the registry, and an unregistered kind is a finding.**
 `kinds.nim` maps basename or extension to comment syntax and whether prose is checked. Nimble files
 and NimScript read as Nim; cfg files (`nim.cfg` Atlas writes, `koch.nim.cfg`) read as hash comments;
 `atlas.config` and `atlas.lock` are JSON by basename. Markdown is registered as prose, not comment,
@@ -55,6 +55,31 @@ markup is one long line and fails width on its own, so the registry admits what 
 rejects what a build emits. Verified by `tkinds.nim` over every match and five unregistered names,
 and by `tlayout.nim`: `data.csv` under `curator/audit` yields one finding naming
 `curator/audit/src/kinds.nim`.
+
+**A gated kind must argue for itself in its header, and the gate is now checked rather than
+trusted.** `Cpp` (`.cpp`, `.hpp`) and `C` (`.c`, `.h`) join TypeScript as languages the owner
+admits only where Nim cannot serve; `.hpp` reads as a C++ header and `.h` as a C one, since
+the name alone cannot tell them apart. `KindRule` carries `is_gated`, and
+`justification.nim` demands the phrase `not Nim because <reason>` in the file's opening
+comment run. Until this landed the gate existed only as a sentence in CONTRIBUTOR.md:
+`kinds.nim` admitted `.ts` on its extension and asked nothing, so registering a second
+language "under the same gate as TypeScript" would have registered it under no gate at all.
+Spotted by `contributor/ronri/rga_visualiser` as an aside inside issue 26, and the aside was
+sharper than the request. The header is the first run of comments, gaps of one line allowed,
+so an include guard above the block and a blank line inside it both keep the run whole; a
+marker below the header does not satisfy the gate, because an argument the reader never
+meets is no argument. Rejected: the marker anywhere in the file, which admits an argument
+buried at line 900; the marker on line 1 exactly, which forbids `#pragma once`; a separate
+register of justified files, a second place for the truth to live and drift from. Costs: the
+check proves a justification exists and sits where a reader looks, never that it is true, so
+a curator still weighs the claim; the one-line gap can reach a comment on the first line of
+code, a deliberate laxity whose alternative is a finding on a correct header; and C is
+registered ahead of use, which is what produced issue 27 for TypeScript — the curator
+recommended holding `.c` and `.h` back and the Architect ruled to take them now, with this
+check as what stops an unused kind becoming a free pass. Verified by `tjustification.nim`
+and `tkinds.nim`, and driven on 2026-09-06 over real files under `curator/probe/src`: an
+unjustified `shim.cpp` and `glue.ts` each yield one finding at line 1, both fall silent once
+the phrase is added, and both languages are held to the identical rule.
 
 ## Comment extraction
 
