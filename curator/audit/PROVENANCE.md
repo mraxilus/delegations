@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 772783bb2bd70464 |
+| Rules  | 73a6fa37de648f53 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -124,6 +124,18 @@ validator's 391
 markup lines extracted verbatim to a file and the whole-cloth fonts link, whose longest token is 179
 runes, both audit clean, while a generated single-line drawing of 1,407 characters and a page
 outside `pages/` do not.
+
+**A generated npm lockfile passes the width rule, measured rather than assumed.** Before
+CONTRIBUTOR.md was allowed to demand a committed `package-lock.json`, one was generated
+(`typescript` 5.6.3 and `@playwright/test` 1.48.2, npm 12, 2026-09-06), placed under
+`curator/probe`, and put through `nim r koch tree`: 93 lines, longest 117 runes, **0
+findings**. `package.json` and a `tsconfig.json` carrying `strict`,
+`noUncheckedIndexedAccess` and `exactOptionalPropertyTypes` passed with it. The exemption
+that saves it is the unbreakable-token rule: the long lines carry one `sha512-` digest of 95
+runes, and the rest of the line fits without it. The shape holds at any lockfile size, since
+the longest token in such a file is always a digest or a registry URL, both far inside
+`TOKEN_MAX`. Arithmetic had predicted this; the figure above is what was run, and it is the
+reason the rule could be written without an exemption beside `LICENSE.md`.
 
 ## Layout
 

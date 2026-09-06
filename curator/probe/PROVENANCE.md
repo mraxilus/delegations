@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 772783bb2bd70464 |
+| Rules  | 73a6fa37de648f53 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: curator test project replacing `abstand/intervals`, which lived in a real domain;
@@ -59,6 +59,19 @@ Audited by a curator against the rules change that registers C++ and C and puts 
 behind the gated-language rule. This project carries Nim, Markdown and a nimble file only,
 so the new rule binds nothing here and nothing needed correcting; the stamp moves because
 the charter did, not because this project did.
+
+## Re-audit, 2026-09-06, TypeScript conventions
+
+Audited by a curator against the rules change that added the TypeScript and Node section to
+CONTRIBUTOR.md. This project carries no `.ts` file, so the section binds nothing here and
+nothing needed correcting; the stamp moves because the charter did.
+
+## Re-audit, 2026-09-06, draft pull requests
+
+Audited by a curator against the rules change that asks every pull request to open as a
+draft and be marked ready only when it is. It binds how this project's next pull request is
+opened, not anything in the tree; nothing needed correcting. The stamp moves because the
+charter did.
 
 ## Open questions
 

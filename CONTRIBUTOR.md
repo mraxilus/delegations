@@ -177,6 +177,31 @@ with Nim). Inside your project directory:
 verified by `atlas changed`); the `audit` job runs it before the tests. Atlas needs the
 network for every command, so a project with no packages carries no lock and skips Atlas.
 
+## TypeScript and Node
+
+TypeScript is admitted where JavaScript is forced — a browser or a Node host — and nowhere
+else. Every such file argues for itself in its opening comment, as any gated language does.
+Whatever a derived value depends on stays in Nim behind an export (Article II.9); what
+remains in TypeScript is what the target alone can do, such as the DOM, WebGL, pointer
+events, or a test driver's host API.
+
+- **`tsconfig.json` at the project root**, with `strict`, `noUncheckedIndexedAccess` and
+  `exactOptionalPropertyTypes`. `strict` alone still hands you a value the type says is
+  present when it is not; those two make indexing and optionality behave the way Nim's do,
+  which is what Article IV.1 asks of any target.
+- **Sources are committed and everything `tsc` emits lives under `build/`**, never committed,
+  like any other build product.
+- **Node packages are pinned the way Atlas pins Nim ones**: `package.json` and its lockfile
+  are committed, `node_modules/` never is, and `PROVENANCE.md` records each dependency's
+  origin, version and licence (Article XI.3). The lock is committed, the checkout is not, and
+  one verb restores it.
+- **One command builds it**: a `web` verb in your project's `tools/build.nim`, so a driven
+  check is evidence for a build anyone can repeat rather than for one invocation nobody saw.
+
+A generated lockfile passes the form rules unchanged. That is measured rather than assumed:
+its long lines are single unbreakable tokens — an `integrity` digest or a registry URL — and
+the width rule already exempts a line that breaking cannot fix. Never reformat one to fit.
+
 ## Pages and assets
 
 A page the project stands behind lives in `pages/`; a one-off exploration kept for reference
@@ -303,6 +328,13 @@ what was rejected, what it costs. There is no `docs/adr/`.
 - No debug output left behind. Whitespace, tabs and width the audit already checks.
 - Pull request body follows `.github/pull_request_template.md`: intent, scope, verification
   (what ran, on which build), record, notes.
+- **Open it as a draft, and mark it ready only when it is.** Ready means CI green on the
+  runner, every review comment answered, and nothing you still intend to change. A draft
+  says "not yet" in the one place the Architect looks; an open pull request says "merge me",
+  and one merged before it was ready cost a second pull request to undo. Local green is not
+  the signal: `koch ci` and the runner disagree whenever the machines differ, which is what
+  the runner is for. Nothing checks this — GitHub is not this repository — so it holds
+  because you do it.
 
 ## Output contract
 
