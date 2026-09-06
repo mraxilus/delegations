@@ -39,6 +39,7 @@ func auditTree*(tree: Tree): seq[Finding] =
   let dirs = tree.projectDirs
   for e in tree:
     if e.kind.isNone: continue
+    if e.path == "GLOSSARY.md": result.add checkGlossary(e.path, e.content)
     let rule = e.kind.get.rule
     result.add checkForm(e.path, e.content, rule)
     if rule.is_prose: result.add checkProse(e.path, e.content, rule.syntax)
