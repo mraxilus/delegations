@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Author | Claude Opus 5 and Claude Sonnet 5 |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 912082eea75c768d |
+| Rules  | 71732211fc93e1e6 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the
@@ -2071,5 +2071,22 @@ Known Limitations
 - Conformal metric (`IS_CONFORMAL`) is unfinished in the library; this build is rigid 4D.
 - `.rgascene` is little-endian by rule, but only a little-endian host has ever written or
   read one; the byte-swapping path is unexercised.
+
+## Re-audit, 2026-09-06
+
+Merged carrying a stamp that three rules changes had moved under it, which reddened `main`
+until re-stamped. Audited against each change, by a curator, who may write this file and no
+other here:
+
+- **Per-project compiler pin.** Already met: `requires "nim == 2.2.10"` is exact.
+- **Curator reach and the regression rule.** No effect on this project's own work.
+- **Repeatable verification.** Partly met, and the rest is yours. The *Checked* blocks already
+  name how each claim was reached, which is more than most of this repository does. The rule
+  now also asks that a claim nobody can repeat from a checkout name its **tool and its date**
+  — "Verified by looking", "Verified by rendering", "Verified by driven check" and the
+  unmeasured device figures each need one. Nothing was invented to fill those in: only the
+  session that ran them knows when, and this curator does not.
+- **Citations.** The mechanical half passes: `` `--drive-keys` `` and `` `sizeof` `` name a
+  flag and an operator, not files, so `checkCitations` leaves both alone.
 
 [replications]: https://gitlab.com/mraxilus/replications
