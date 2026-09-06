@@ -14,6 +14,24 @@ Origin: built from the owner's workbook `ontology.partnerwork.xlsx` (sheets `bas
 rules as given (held as data in `design/rules.nim`), and, for the body sim, the ANSUR II
 medians with the AAOS and NASA-STD-3000 joint ranges (`sim/rig.nim`). No vendored source.
 
+## Language
+
+**Every term is agreed with Architect before it is written.** Forty-four terms written
+without agreement were removed on 2026-09-06 and are in history; they are being re-proposed a
+theme at a time, each concept set out with candidate names and their costs, and only selected
+name written. Audit checks glossary's shape and never its words, so this holds by Architect's
+reading alone. Agreed so far, of five themes: dancers, connection and frame's parts. Not yet
+proposed: moves, turns and tower, sources, body sim.
+
+Three disagreements between agreed words and code, recorded rather than acted on. `Frame
+position` covers facing, twist and shorthands such as over and under, so `frame.position`
+means its opposite: it strips `over` and returns frame hold said aloud. Code's `Frame` type is
+frame state carrying hold and `over` but neither facing nor twist, which live in
+`rotation.Posture`, so split between `frame.nim` and `rotation.nim` cuts across agreed concept
+rather than along it. Facing is four-valued and `isFacing` returns parity of twist, which
+cannot tell face-to-back from back-to-face; twist is counted in quarters where `HalfTurns` is
+half turns.
+
 ## Model
 
 **One state and one relation, everything else derived.** A `Frame` is what each of the
