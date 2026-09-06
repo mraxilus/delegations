@@ -690,20 +690,21 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
       and every cell of your sheet checked against the model.</p>
     </div>
   </div>
-  <pre>síncopa/dance_ontology/
+  <pre>sincopa/dance_ontology/
   src/dance_ontology/frame.nim       frames, their laws, their names, reflection
-  src/dance_ontology/transition.nim  the four primitives and the routes between frames
+  src/dance_ontology/transition.nim  the two primitives and the routes between frames
   src/dance_ontology/diagram.nim     one drawing of a frame, for everything that shows one
   src/dance_ontology/workbook.nim    your base sheet as data, and the audit against it
   src/dance_ontology/rotation.nim    twist, capacity, wraps and locks &mdash; provisional
-  app/app.nim, app/shell.nim         the validator: its script and its page shell
+  app/app.nim                        the validator's script
+  pages/app/index.html               its page shell
+  pages/review/review.html           the prose of this page; every number is a marker
   tools/review.nim                   writes this page from the model
-  tools/review_prose.nim             the prose of this page; every number is a marker
-  build/review/review.html           this page, rebuilt by <code>make pages</code>
+  build/review/review.html           this page, rebuilt by the build driver
   build/review/frames/*.svg          one picture per frame, for anything that is not HTML
 
-make check     # the laws, including that this page renders whole
-make pages     # rebuild the validator, this page and the frame pictures</pre>
+nim r koch tests contributor/sincopa/dance_ontology   # the laws, this page among them
+nim r tools/build.nim pages                           # rebuild this page and the pictures</pre>
   <p class="dim" style="font-size: .88rem">Nim throughout, compiled to JavaScript
   for the browser.</p>
 </section>

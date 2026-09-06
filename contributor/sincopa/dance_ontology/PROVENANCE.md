@@ -58,6 +58,16 @@ Follow; `Aspect.Fore` and `.Aft` are Wrap and Lock; `Link` is `Connection` and `
 `Frame hold`, both words already on avoid lines; and `Move`, `Twist`, `Chain`, `Way` and
 `overhead` each name something in sim unrelated to agreed term of same spelling.
 
+**Review page's layout block was stale in five ways, and is corrected.** Curator left one
+line for this project's hand -- domain folder printed as `síncopa` where it is now `sincopa`.
+Four more were false beside it: `transition.nim` was said to hold four primitives where it
+holds two; `app/shell.nim` and `tools/review_prose.nim` were named though this project's own
+earlier delivery moved them to `pages/`; and build was invoked as `make`, retired since. Going
+past one line was deliberate: block named three files that do not exist, two of them removed
+by this project, and page is read by Architect. Its wording still uses `validator` and
+`primitives` where agreed words are `Reference` and `Move`; that is vocabulary sweep of whole
+page, not this fix.
+
 **Three faults live in generated output, not merely pending renames.** `sim/verdicts.md`
 prints `above` and `X`, both on avoid lines, where agreed words are Overhead and Cross. It
 prints `her arm` and `his arm` in every sweep table, avoided for Follow and Lead. Translation
@@ -338,10 +348,6 @@ own work, and it now moves nothing else.
 
 ## Open questions
 
-- `pages/review/review.html` prints `síncopa/dance_ontology/` as display text, one line
-  inside a `<pre>`. The domain folder is now `sincopa`, so that text is stale. A curator
-  renamed the folder and may move this project's files but not edit them, so the line was
-  left as it is rather than changed without your hand. One line, yours to correct.
 
 - Answered for fonts: binaries are never committed, and a project records each one's origin,
   version, licence and checksum, then fetches it with an `assets` verb in `tools/build.nim`.
