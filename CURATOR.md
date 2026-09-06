@@ -104,9 +104,12 @@ Two reads, before any other work.
   nothing arrives unless you look. For each, judge it: what is asked, why it is needed,
   whether it is a good idea, and what it costs either way. Write that **as a comment on the
   issue**, so the reasoning survives the conversation it was decided in, then report the same
-  to the Architect, who decides. A pull request answering an issue says `Closes #N`. An issue
-  you would decline stays open with your reasoning on it: declining is the Architect's, not
-  yours.
+  to the Architect, who decides. A pull request answering an issue says `Closes #N`, which
+  records the link and nothing more: **you close the issue yourself once that pull request
+  merges**, with a comment naming it and saying where the result differs from what was asked.
+  GitHub does not fire the close here, measured on issues 25 and 26, and an open list full of
+  answered issues stops being worth reading. An issue you would decline stays open with your
+  reasoning on it: declining is the Architect's, not yours.
 - **`main` is green.** Read the latest `push` run. Nothing else watches it: pull request
   subscriptions do not cover `main`, and duty 2 has a curator watch only their own merge. A
   contributor's merge went red once with nobody looking, and was found by accident
