@@ -306,6 +306,12 @@ are not held by jobs that cannot apply to them. And `plan` reads `github.event.b
 correctly on a merge commit: run 26 selected all three projects, which is right, since the
 diff against previous `main` is the whole pull request.
 
+Empty matrix verified separately, since neither run took that path: this record's own pull
+request 13 changed one record file, so `plan` emitted `[]`, `project` was skipped, and gate
+`audit` passed on a skipped dependency (run 34038741080, 2026-09-06). Whole run 22 s. That
+gate is written to pass on `skipped` and fail on `failure` or `cancelled`, and until this
+run only the first half had ever been exercised.
+
 ## Figures
 
 Measured with `date +%s.%N` around each run, three consecutive warm runs, Linux amd64
