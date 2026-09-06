@@ -108,10 +108,13 @@ The owner's brief, which every rule below serves:
    - `nim r koch ci` on the curator branch, then the curator pull request's three jobs
      green on a runner. A runner differs from this machine: the first run on `main` is
      where the toolchain leak surfaced, and nothing local could have shown it.
-   - After the owner merges, the `push` run on `main` green.
-   - Record run numbers and date under Continuous integration in
-     `curator/audit/PROVENANCE.md`, on a `curator/audit/<name>` branch, so "the merge
-     process works" stays verified, never assumed.
+   - After the owner merges, the `push` run on `main` green. Branch protection already
+     refuses a red pull request, so the first of these is guaranteed; the second is not,
+     and is the one worth watching.
+   Anything learnt on the way that a later curator would otherwise rediscover goes in the
+   trap list below, in the same pull request as the change that found it. Run numbers are
+   not recorded: they prove only that somebody looked, they expire with the runner's log
+   retention, and a merged change is already evidence its checks were green.
    Known trap: re-running a failed run reuses its original merge commit and workflow file,
    so a fix on `main` reaches an open pull request only through a new head. Merge `main`
    into the branch; never re-run and hope.
@@ -195,7 +198,6 @@ then `./koch <command>`). Every check is a module under `curator/audit/src/`, te
 | `deps` | every project's `atlas.lock` | checkouts restored and matching the lock |
 | `tests` | every project, or one | restore, then testament, on that project's pin |
 | `plan` | changed paths, nimble pins | projects to compile, as JSON; `--sweep` for weekly |
-| `audit` | all of the above | tree, then every project restored and tested |
 | `scope` | changed paths | branch grammar; project paths inside prefix |
 | `commits` | commit subjects | Conventional Commits; scope equals branch scope |
 | `stamp` | rules documents | prints the stamp for `PROVENANCE.md` |
