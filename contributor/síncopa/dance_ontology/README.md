@@ -59,12 +59,12 @@ nim r tools/build.nim shot                             # screenshot helper, for 
 ```
 
 The first two run from the repository root, the rest from this directory. Needs Nim 2.2.4
-and git. Every page is a build product: the repository reads only registered file kinds, so
-the hand-written page shells live in Nim modules (`app/shell.nim`, `sim/shell.nim`,
-`tools/review_prose.nim`, `design/wholecloth_page.nim`) and `tools/build.nim pages` writes
-them out under `build/` beside the scripts compiled for them. Publishing a page is
-republishing its built file to the artifact URL listed in `design/README.md` or
-`sim/README.md`.
+and git. Hand-written pages are committed files: the shells and the review page's prose live
+under `pages/`, the one hand-drawn proposal under `mockups/`, and `tools/build.nim pages`
+copies, fills and splices them under `build/` beside the scripts compiled for them. What a
+build emits is never committed, its lines running far past any width a file may have.
+Publishing a page is republishing its built file to the artifact URL listed in
+`design/README.md` or `sim/README.md`.
 
 ## Layout
 
@@ -81,13 +81,15 @@ src/dance_ontology/rotation.nim    the unfinished rotation axis: twist, body, wr
 src/dance_ontology/axle.nim        the rotation axis drawn as an axle of postures
 src/dance_ontology/draw/           the shared drawing chain: geometry, style, pose,
                                    body, figure, route, scene, and its own terms
-app/                               the browser validator: app.nim and its shell
+app/app.nim                        the browser validator's script
 design/                            the mock-up workbench: rules first, pages after
 sim/                               the body sim, standalone on purpose
 tools/audit.nim                    the same audit, printed
-tools/review.nim                   writes the review page from the model and the prose
-                                   in tools/review_prose.nim; every number is a marker
-tools/pages.nim, tools/bundle.nim  write the shells out; fold a page into one file
+pages/                             hand-written pages this project stands behind:
+                                   app and sim shells, review page's prose
+mockups/                           wholecloth.html, hand-drawn proposal to react to
+tools/review.nim                   fills the review page's markers from the model
+tools/pages.nim, tools/bundle.nim  copy the shells in; fold a page into one file
 tools/build.nim                    this project's verbs: pages, verdicts, shot, clean
 tests/                             the laws, over every pair of frames; the sim's laws
                                    (tlaws); the workbench's gates (tmarks); the review

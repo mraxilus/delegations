@@ -177,20 +177,32 @@ stale until rerun. Rerun during move reproduced committed file byte for byte.
 
 ## Pages and build
 
-**Every page, picture and script is a build product; the hand-written markup is hosted in Nim.** The
-repository's audit reads only registered file kinds and rejects any other, so `.html`, `.svg` and
-`.js` cannot be committed; `tools/build.nim pages` writes the shells from `app/shell.nim`,
-`sim/shell.nim`, `tools/review_prose.nim` and `design/wholecloth_page.nim`, compiles the scripts
-beside them, and folds, renders and splices the rest under `build/`. The whole-cloth page's 213
-lines of inline JavaScript were ported to Nim's JS backend. Tool binaries land in `bin/`, and pages
-under `build/`; root ignore file covers both at any depth, with test binaries beside their sources.
-The curator has since registered Html and Svg kinds, so a hand-written page may now live in `pages/`
-or `mockups/` as a file, and a line holding one unbreakable token, which is what the fonts URL is,
-passes the width rule; nothing here has moved yet, and generated pages stay uncommittable, their
-lines running to thousands of characters. Cost: editing style means editing a string literal, and
-every hosted line must fit 100 columns, so the whole-cloth markup was reflowed at whitespace
-(verified equal under Playwright, see Figures); the embedded CSS and HTML comments are telegraphic
-by hand because the checker cannot see inside a string.
+**Hand-written pages are committed files; everything a build emits is not.** The validator's and
+body sim's shells are `pages/app/index.html` and `pages/sim/index.html`, the review page's prose
+with one marker per derived figure is `pages/review/review.html`, and the hand-drawn proposal is
+`mockups/wholecloth.html`. `tools/build.nim pages` copies both shells into `build/`, compiles each
+page's script beside it, folds each into one file with `tools/bundle.nim`, fills review's markers
+with `tools/review.nim`, and splices mock-up's two scripts with `design/wholecloth.nim`. Generated
+pages stay uncommittable: their lines run to thousands of characters. Tool binaries land in `bin/`,
+pages under `build/`; root ignore file covers both at any depth, with test binaries beside their
+sources. The whole-cloth page's 213 lines of inline JavaScript were ported to Nim's JS backend.
+Rejected: hosting markup in Nim string constants, which was forced while repository read no markup
+kind, and cost one string-literal edit for every change of style. Cost: `design/wholecloth.nim`
+checked its two markers at compile time while markup was constant (Article IV.4); markup read at
+run time carries only run-time check, which echoes marker and refuses to write page without its
+data. Verified: `pages` run either side of move writes same 22 files with equal SHA-256 sums.
+
+**Whole-cloth markup is held within width by audit now, not by script.** Every line fits 100 runes
+except one, the Google Fonts request, which is one whitespace-free token of 179 runes on a line of
+202 and passes on the unbreakable-token exemption. Breaks fall only at whitespace rendering
+ignores -- between tags, between attributes, inside CSS, inside list-valued attributes (`d`,
+`points`, `class`, `style`), and inside `aria-label` prose, whose whitespace accessible-name
+computation collapses -- and one line of turn ticks holds no such whitespace, so its character
+references are decoded to characters, which parser does anyway. `reflow_wholecloth.py`, which
+applied those breaks while markup was a Nim literal, was migration tool and is not in tree; Python
+is not registered kind and it is not wanted back, since form check now enforces directly what it
+enforced by hand. Cost: an edit that lengthens a line past 100 runes is caught by audit rather than
+repaired by script.
 
 **Project's verbs live in compiled driver, since make is retired.** `tools/build.nim` takes
 one command (`pages`, `verdicts`, `shot`, `clean`) and runs exactly what each Makefile
@@ -253,15 +265,9 @@ Declared unmet by this move, so the Style row above stays true (Article VIII.1):
 
 ## Open questions
 
-- Answered, not yet acted on: Html and Svg are registered kinds, so the four hosted pages
-  could become files under `pages/`, and the whole-cloth page under `mockups/`. Moving them
-  rewires `tools/pages.nim`, `tools/bundle.nim` and the tests that drive the build, so it
-  waits for a session with that scope.
 - Answered for fonts: binaries are never committed, and a project records each one's origin,
   version, licence and checksum, then fetches it with an `assets` verb in `tools/build.nim`.
   Satisfying X.8 means fetching Noto Sans, Noto Serif and Commit Mono that way and dropping
   the Google request; until then the page keeps its remote fonts and system stacks.
-- `reflow_wholecloth.py` is not in the tree and Python is not a registered kind, so the
-  whole-cloth page's formatting cannot be reproduced from the repository.
 - `tlaws` costs 22 s of a four-core runner per audit; acceptable now, and the figure above
   is the one to watch as sweeps grow.
