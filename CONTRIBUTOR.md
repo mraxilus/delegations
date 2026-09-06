@@ -69,14 +69,16 @@ Before any code:
 1. Create `contributor/<domain>/<project>/`.
 2. Write `PROVENANCE.md` first, opening with the header table below. The `Rules` value is
    the stamp of the governing documents: run `nim r koch stamp` at the repository root
-   (needs Nim 2.2.4 and git) and paste its last line.
+   (needs git and any Nim that builds koch, which is `curator/audit`'s pin) and paste its
+   last line.
 3. Write `GLOSSARY.md`: `# <project>` heading, one sentence on what the project is,
    `## Language`. Terms are added as they resolve, never in advance.
 4. Write `README.md`: purpose, authority replicated if any, build and test command, status.
 5. Write `<project>.nimble`: `version`, `author`, `description`, `license`,
-   `srcDir = "src"`, `requires "nim >= 2.2.4"`. Copy `curator/probe/probe.nimble`. Atlas and
-   the audit read requirements from this file; the audit demands exactly one nimble file,
-   named after the project folder.
+   `srcDir = "src"`, and `requires "nim == <version>"` naming the compiler you verified the
+   project on. Copy `curator/probe/probe.nimble`. Atlas and the audit read requirements from
+   this file; the audit demands exactly one nimble file, named after the project folder, and
+   an exact pin rather than a range (see Toolchain).
 6. Create `src/` and `tests/` with at least one test. Use the testament stub shape from
    `STYLE.md` §6; `curator/probe/tests/tprobe.nim` is a worked example with a matrix.
    `nim r koch tests contributor/<domain>/<project>` runs your tests alone.
@@ -101,6 +103,30 @@ Header table for `PROVENANCE.md`:
 | Rules  | <last line of `nim r koch stamp`> |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 ```
+
+## Toolchain
+
+Your project pins its own compiler. No single version serves every project here, and that is
+a fact rather than a preference: one project's dependency needs 2.2.6 or later, and another
+crashes the compiler on 2.2.8 and later. So the version lives in your nimble file, beside the
+packages Atlas pins, and it is exact for the same reason `atlas.lock` is exact — it records
+what was verified, never a range nobody tried.
+
+- `requires "nim == 2.2.6"`. A range is rejected by the audit: `>=` cannot say which
+  compiler your suites actually passed on, and cannot express an upper bound when a later
+  release breaks you.
+- Install that version and put it on `PATH` before running anything. `choosenim 2.2.6`
+  switches between installed versions; unpacking a release tarball from
+  <https://nim-lang.org/install.html> and prefixing its `bin/` to `PATH` also works, and
+  needs no installer. `atlas`, `nimble` and `testament` ship beside `nim`, so they follow the
+  version you choose.
+- Running checks on any other compiler is a finding, not a warning: `koch` reports the
+  mismatch and refuses to compile the project, because the wrong compiler either fails
+  confusingly or passes without testing what CI will run.
+- Bumping the pin is your work, and it is a change like any other: run the suites on the new
+  version, move the line, and record in `PROVENANCE.md` what moved and why.
+- CI installs your pin for your project alone, in its own job. You are never held to another
+  project's compiler, and no other project is held to yours.
 
 ## Adding a dependency
 
@@ -144,8 +170,8 @@ Every later session:
 
 1. Read `PROVENANCE.md` in full, then `GLOSSARY.md`, then the code in the order the umbrella
    module's bootstrap diagram gives.
-2. Run `nim r koch audit` at the repository root. It must be green before you start. Before
-   every push, `nim r koch ci` must be green (see below).
+2. Run `nim r koch tests contributor/<domain>/<project>` for your project. It must be green
+   before you start. Before every push, `nim r koch ci` must be green (see below).
 3. `Rules stamp stale` on your project means the governing documents changed after the
    project's last audit. Normally the curator re-audits every project in the same pull
    request as a rules change, so this appears only when your branch predates one. Merge
@@ -166,8 +192,9 @@ Every later session:
   few hundred seeded random cases, and record the count beside the claim.
 - Test where the mechanism runs: real wiring, output read back, bytes re-read.
 - `koch` runs testament over `tests/t*.nim` in your project directory; there is no
-  per-project build file. `nim r koch audit` runs the static audit, restores dependencies,
-  then every project's tests; CI runs the same.
+  per-project build file. `nim r koch tree` runs the static audit alone, and
+  `nim r koch audit` adds dependency restore and every project's suites, which needs every
+  project's pinned compiler installed; `nim r koch ci` is the one to run before a push.
 
 ## Glossary process
 
@@ -222,12 +249,15 @@ what was rejected, what it costs. There is no `docs/adr/`.
 ## Before opening a pull request
 
 - `nim r koch ci` at the repository root passes on the exact commit you push. It fetches
-  `origin/main`, then runs the same three checks CI runs: `audit` (layout, form, comments,
-  provenance, glossary, dependencies, every project's tests), `scope` (every changed path
-  starts with `contributor/<domain>/<project>/`) and `commits` (every subject parses as
+  `origin/main`, then runs what CI runs: the whole-tree static pass (layout, form, comments,
+  provenance stamps, glossary shape, compiler pins), then dependency restore and the suites
+  of every project whose code changed — normally yours alone — then `scope` (every changed
+  path starts with `contributor/<domain>/<project>/`) and `commits` (every subject parses as
   `type(<project>): summary`). A pull request opened before it passes is a process
   violation whatever CI later says: the runner confirms, it never discovers. Run it again
   before every later push to the same pull request.
+- A change touching only `PROVENANCE.md` and `GLOSSARY.md` compiles nothing, since it alters
+  no behaviour; the static pass still checks every stamp.
 - `PROVENANCE.md` describes the design as it now is, with each claim marked verified or
   assumed and each figure carrying its pair; nothing narrates.
 - `GLOSSARY.md` holds every term that resolved.
