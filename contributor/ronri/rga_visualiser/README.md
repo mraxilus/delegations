@@ -28,12 +28,18 @@ nim r koch ci                                    # repository root: audit, scope
 nim r koch tests contributor/ronri/rga_visualiser  # this project alone, three configurations
 ```
 
-Needs **exactly Nim 2.2.10** on `PATH`, and git. The pin is exact and the audit enforces it:
-running the suites on any other compiler is a finding, not a warning. The `pga` library is
-restored by Atlas from `atlas.lock` into `deps/` and is never committed;
+Needs **Nim built from commit `27763495b`** on `PATH`, and git. No release will do: the
+`pga` library spells its operators with seven characters Nim learned to lex in that commit,
+and no release carries it yet. Build it with `git clone https://github.com/nim-lang/Nim &&
+git checkout 27763495b && sh build_all.sh`; CI does the same and caches the result per
+commit. The pin is exact and the audit enforces it: running the suites on any other compiler
+is a finding, not a warning.
+
+The `pga` library is restored by Atlas from `atlas.lock` into `deps/` and is never committed;
 `nim r koch deps contributor/ronri/rga_visualiser` restores it alone. It is pinned at
-`f8861e0`, which is one commit behind that library's head — see Dependencies / Vendoring in
-`PROVENANCE.md` for which commit, why, and what would move it. The algebra every target
+`295bafc`, which is that library's head. Four projection operations are withdrawn at head
+while the library rebuilds them, and `src/rga_visualiser/projections.nim` stands in for them
+until they return — see Dependencies / Vendoring in `PROVENANCE.md`. The algebra every target
 builds against — four dimensions, rigid metric — is set once in `nim.cfg`, so no entry point
 repeats it.
 
@@ -51,6 +57,7 @@ src/rga_visualiser/           geometry and model, reachable from either front-en
                               scene, selection, picking, marker, framing, interaction,
                               storyboard, orrery, neighbourhood, starfield, history,
                               format, help, timings, ramp, lighting
+src/…/projections.nim         projections pga withdrew; deleted when they return
 desktop/arena.nim             scratch arena the exporters write through
 desktop/image.nim gif.nim     PNG and GIF encoders, for storyboard frames
 tests/suites.nim              every law, over one seeded pool of objects
@@ -67,8 +74,8 @@ and the desktop application — are not here yet: they are arriving in follow-up
 requests, because each carries a file kind this repository does not yet read. Their design
 record travels with them.
 
-Every law under test through testament on Nim 2.2.10, in three configurations. Unreviewed by
-a human: nothing here has been read line by line, and no human has driven either front-end
-or seen it on real graphics hardware.
+Every law under test through testament on the pinned commit, in three configurations.
+Unreviewed by a human: nothing here has been read line by line, and no human has driven
+either front-end or seen it on real graphics hardware.
 
 [replications]: https://gitlab.com/mraxilus/replications

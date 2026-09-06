@@ -10,5 +10,8 @@ srcDir = "src"
 #   rather than copy (Article II.8). It lives inside replications repository rather than at
 #   its root, and that repository carries no nimble file, so requirement pins commit and
 #   `nim.cfg` names path Atlas restores it to.
-requires "nim == 2.2.10"
-requires "https://gitlab.com/mraxilus/replications#f8861e0b"
+# Compiler is pinned by commit rather than release: library's head spells its operators
+#   with characters no release lexes, and commit is where Nim added them. CI builds it from
+#   source and caches per commit; see PROVENANCE.md, Dependencies / Vendoring.
+requires "nim == 27763495bcfe265507ca98aedc1c7064bf1e0e4d"
+requires "https://gitlab.com/mraxilus/replications#295bafc"

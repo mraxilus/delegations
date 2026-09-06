@@ -22,7 +22,8 @@
 
 import std/[math, options]
 
-import pga
+# `pga` arrives through `projections`, which stands in for four it has withdrawn.
+import ./projections
 import ./[boundary, mesh, timings]
 
 export mesh

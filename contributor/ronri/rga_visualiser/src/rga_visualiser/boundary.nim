@@ -104,7 +104,7 @@ func directionNormal*(m: Multivector): Option[Direction] =
   ## Read unit direction perpendicular to plane.
   ##   Antidual is negated so normal runs along plane's own weight gˣ, gʸ, gᶻ.
   ##   None where plane lies at horizon, as horizon has no normal in Euclidean space.
-  let normal = -☆(m)
+  let normal = -(☆m)
   normalize(Direction(x: normal[Basis.E1], y: normal[Basis.E2], z: normal[Basis.E3]))
 
 

@@ -1964,53 +1964,66 @@ that does, record which and why, and move forward when it works again. Every pul
 states which pga commit it builds against and whether that is head, so a reader never has to
 infer it.
 
-Where that stands now: head is `295bafc` (2026-09-02, *"update nim to devel for new operator
-symbols"*), exactly one commit ahead of the pin and **two independent blockers away**.
+Where that stands now: pinned at head, `295bafc5e97e8ee94943c6f4c7a92f215a74e5e7`. Head
+costs two things, and the Architect's instruction is to pay both rather than trail behind.
 
-The decisive blocker is that head withdraws operations this project calls. `pga.nim:336-346`
-declares `projectCentral`, `projectCentralAnti`, `projectOrthogonal` and
-`projectOrthogonalAnti` as `{.error: "TODO: …".}` while their compound operator forms
-(`∨∧★`, `∧∨★`, `∨∧☆`, `∧∨☆`) are built. A call to one is a compile error by language rule,
-and this project has eight: `scene.nim:320` and `:321` in the operations catalogue,
-`scene.nim:341`, `tessellate.nim:218`, `interaction.nim:748`, and `suites.nim:1936`, `:5633`
-and `:5663`. No compiler makes that build.
+**The compiler is pinned by commit, not by release.** Head spells its operators in prefix and
+compound form (`☆m`, `m ∧☆ n`), needing seven Unicode operator characters Nim gained in pull
+request 26074 — merged to `devel`, carried by no release. The pin is therefore
+`requires "nim == 27763495bcfe265507ca98aedc1c7064bf1e0e4d"`, that commit, which
+`toolchain.nim` accepts beside dotted versions and which CI builds from source and caches per
+commit. Rejected: a `devel` label, a moving target recording nothing verified; and waiting for
+a release, which is months of standing behind the library this project exists to exercise.
 
-The second is the lexer. Head spells its operators in prefix form (`☆m`, `■m`, `□m`), which
-needs the seven Unicode operator characters added by Nim pull request 26074. The pinned
-`f8861e0` spells the same operators as calls (`☆(m)`, `m.⟑ n`), which any Nim lexes as
-identifiers.
+**Four projections are withdrawn at head, and `projections.nim` stands in until they return.**
+`projectCentral`, `projectCentralAnti`, `projectOrthogonal` and `projectOrthogonalAnti` are
+declared `{.error.}` while the library rebuilds them as compound operators (`∨∧★`, `∧∨★`,
+`∨∧☆`, `∧∨☆`); this project calls two of them at eight sites, so head alone does not compile
+here. Each stand-in is a template carrying the definition the library's own operator table
+gives, in that table's notation — copied, never derived, so nothing about the algebra is
+invented here (Article II.8).
+  The module is a seam. `scene`, `tessellate`, `interaction` and the suite import it instead
+  of `pga` and reach both; `export pga except` those four keeps the names from colliding; and
+  importing both raises an ambiguous call rather than quietly answering from the wrong one.
+  **The guard is what makes this transitional rather than a fork.** A `compiles` probe through
+  a qualified call reads the library's own declaration, and an `{.error.}` refuses the build
+  the day it gains a body, naming the module to delete and the imports to restore. The stand-in
+  cannot outlive its cause, and cannot silently shadow the real thing.
+  Rejected: holding the pin one commit back, which was the previous course and leaves the
+  project trailing its own dependency; and reshaping the call sites around the missing
+  operations, which would let the library's build state decide what the visualiser offers.
 
-**What moves the pin**, so a later session needs no archaeology: a pga commit giving those
-four operations bodies again, by finishing the compound operators or by restoring the named
-functions. That alone. Spelling them out here instead is not an option — the library is what
-this project exists to exercise (Article II.8).
+**The lexer change reached this project's own source too.** `boundary.directionNormal` wrote
+`-☆(m)`, which lexed as unary minus applied to a call while `☆` was an identifier character
+and lexes as the single operator `-☆` now. Spelled `-(☆m)`. Found by compiling, not by
+reading — nothing in the library's own diff pointed at it.
 
-**The compiler half is answered, and answering it did not move the pin.** This record used to
-name a commit pin for the compiler as a trigger; the curator granted it and it fired without
-effect. 26074 is `27763495bcfe265507ca98aedc1c7064bf1e0e4d` on `devel`, and `toolchain.nim`
-now accepts a forty-hex pin CI builds from source and caches per commit. So when pga's side
-clears, head can be taken on a commit-pinned compiler rather than waiting for a release.
-Waiting on `devel` unpinned stays rejected: it trades a recorded compiler for a moving one.
+**What moves the pin**: nothing pending. The pin follows head, so the next pga commit is taken
+when it builds. The compiler pin moves to a release once one carries 26074, which costs CI its
+bootstrap and nothing else.
 
-**The compiler pin is 2.2.10**, the newest release this project's suites pass on. Per-project
-pins mean another project's ceiling no longer bounds this one, and the pin is exact because
-that is what records the version actually verified rather than a range nobody tried.
+*Checked.* Verified by running, on the pinned commit through `koch tests`: 323 cases on the C
+backend, 302 on JS, 310 at reduced capacities, none failed — the same three counts the
+previous pin produced, which is what says the stand-ins behave as the library's own did.
+Verified: `deps/` was deleted, `atlas --noexec rep` cloned and checked out `295bafc`, `atlas
+changed` exited 0, and the nimble file was byte-identical afterwards — the replay no longer
+reverts the pin, because the lock's stored copy matches the committed file.
+Verified by running that the guard fires: the restored `pga.nim` was patched to give
+`projectOrthogonal` a body, and the build refused at `projections.nim(40, 10)` with the error
+naming the module to delete and the four imports to restore; the tree was then restored clean.
+Verified: the pinned compiler reports `git hash:
+27763495bcfe265507ca98aedc1c7064bf1e0e4d`, which is what `toolchain.runningCompiler` reads,
+and that commit fetches directly from `github.com/nim-lang/Nim`, which is where CI clones it.
+Assumed: that no release carries 26074 — checked by asking for 2.2.12, 2.4.0 and 2.6.0 and
+getting nothing, which dates rather than proves it.
 
-*Checked.* Verified: `deps/` was deleted, `atlas --noexec rep` restored the pinned commit,
-`atlas changed` exited 0, and the suite compiled against the restored tree — the sequence CI
-runs. Verified by reading head: the four `project*` declarations are `error` pragmas, and by
-grep that this project calls two of them at the eight sites named above. Verified by running
-on 2.2.10: a call to an `{.error.}` func is refused, `Error: TODO: m ∨∧☆n; usage of
-'projectOrthogonal' is an {.error.}`. Verified: a released Nim 2.2.10 rejects the library's
-head at `operators.nim:465` with `undeclared identifier: '☆m'`, and so does a 2.3.1 devel
-build without 26074, identically. Verified: 26074 sits at
-`27763495bcfe265507ca98aedc1c7064bf1e0e4d` on the Nim fork's `devel`, read from its log.
-Verified: `295bafc` is the only pga commit ahead of the pin, read from that repository's
-history rather than assumed. **Not verified by running**: that head fails to compile here on a
-compiler carrying 26074. None was built; one blocker holds the pin, and the second is read
-rather than run. Verified on 2.2.10: 323 cases on the C backend, 302 on JS, 310 at reduced
-capacities. Assumed: that no release after 2.2.10 exists — checked once by asking for 2.2.12,
-2.4.0 and 2.6.0 and getting nothing, which dates rather than proves it.
+**Two Atlas defects stand, and the workaround is manual.** `atlas pin` writes `"items": {}`
+for a repository carrying no nimble file, so the resolved commit is patched into `atlas.lock`
+by hand; and `atlas` calls the nimble file "broken" because it cannot parse a commit where it
+expects a version, which is cosmetic here since it resolves the dependency regardless. Both
+were reproduced on the pinned toolchain, not recalled. The lock's stored nimble must equal the
+committed one exactly or `rep` reverts the pin silently; reported as repository issue 25, and
+the static pass now refuses the difference, so the hand-patch is checked rather than trusted.
 
 
 Testing
@@ -2049,8 +2062,8 @@ figures: identical code has measured 25.0 and 29.8 ms hours apart on a shared ru
 ±1 ms band failed one frame in a hundred and twenty, and a flaky check gets deleted rather
 than fixed.
 
-*Checked.* Verified on Nim 2.2.10 through `koch tests`: 323 cases on the C backend, 302 on
-JS, 310 at reduced capacities; the JS count is lower because the C-only cases skip
+*Checked.* Verified on the pinned commit through `koch tests`: 323 cases on the C backend,
+302 on JS, 310 at reduced capacities; the JS count is lower because the C-only cases skip
 themselves. Verified on the runner as well as locally, which is what settles a question
 local runs cannot: the C suites bind zlib for the PNG encoder, so their passing proves the
 runner carries that library rather than only this machine. Assumed: nothing about the suite
@@ -2060,10 +2073,11 @@ itself.
 Measurements
 ---
 **Every figure below is unmeasured on this repository's compiler.** All were taken on a
-2.3.1 devel build of Nim in the tree this project was ported from; this repository builds
-with 2.2.10, and no figure has been re-taken since. Article VII.6 makes them indicative and
-nothing more — they are kept because the constants they justified are still in the code, and
-a reader deserves to know which number picked which constant.
+2.3.1 devel build of Nim in the tree this project was ported from; this repository builds on a
+2.3.1 devel build too, but at a different commit, and no figure has been re-taken since.
+Article VII.6 makes them indicative and nothing more — they are kept because the constants
+they justified are still in the code, and a reader deserves to know which number picked which
+constant.
 
 Desktop, release build, 4 cores at 2.8 GHz, 1440×900, headless Xvfb + Mesa `llvmpipe`, at 64
 objects:
