@@ -4,8 +4,9 @@
 ##
 ##   Order of module bootstrapping:
 ##     findings -> domains -> kinds -> comments -> [prose, form]
-##     findings -> projects -> dependencies
-##     [domains, kinds, markdown, dependencies] -> layout -> [provenance, glossary]
+##     findings -> projects -> dependencies -> toolchain
+##     [domains, kinds, markdown, dependencies, toolchain] -> layout -> [provenance, glossary]
+##     [layout, toolchain] -> plan
 ##     domains -> [scope, commits]
 ##     [kinds, layout] -> tree
 ##     everything -> audit -> koch
@@ -16,7 +17,7 @@
 {.experimental: "strictFuncs".}
 
 import std/options
-import ./[findings, kinds, prose, form, layout, provenance, glossary]
+import ./[findings, kinds, prose, form, layout, provenance, glossary, toolchain, plan]
 
 export layout.Tree, layout.Entry, layout.projectDirs
 
@@ -35,6 +36,13 @@ func rulesStamp*(tree: Tree): string =
 func auditTree*(tree: Tree): seq[Finding] =
   ## Run every static check over tree.
   result = tree.checkLayout
+
+  # Driver version is derived from driver project's pin, so it is never stated twice.
+  let driver = tree.pinOf(DRIVER_DIR)
+  if driver.isSome:
+    for e in tree:
+      if e.path == WORKFLOW_PATH: result.add checkDriver(e.content, driver.get)
+
   let stamp_now = tree.rulesStamp
   let dirs = tree.projectDirs
   for e in tree:

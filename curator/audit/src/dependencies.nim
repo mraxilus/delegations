@@ -1,7 +1,8 @@
 ## Read nimble requirements and drive Atlas per project (Articles II.8, XI.3).
 ##   Requirements live in `<project>.nimble` as `requires "..."` lines; `nim` itself is not
-##   package. Project requiring packages carries `atlas.lock` (`atlas pin`); `deps/` stays
-##   out of repository and `atlas rep` restores it from lock.
+##   package, and its pin is read by `toolchain.nim` from same literals. Project requiring
+##   packages carries `atlas.lock` (`atlas pin`); `deps/` stays out of repository and
+##   `atlas rep` restores it from lock.
 ##   Pure part parses text; effect part runs Atlas in project directory with `--noexec`.
 ##   Atlas 0.9.0 `rep` exits 1 after restoring checkout (its submodule step fails), so
 ##     success is judged by `atlas changed` exiting 0 afterwards, i.e. checkouts match lock.
@@ -36,8 +37,8 @@ func packageName*(requirement: string): string =
   requirement
 
 
-func requirements*(nimble: string): seq[string] =
-  ## Collect required packages from nimble text, `nim` excluded.
+func requireLiterals*(nimble: string): seq[string] =
+  ## Collect every string literal on `requires` lines, compiler pin included.
   for line in nimble.splitLines:
     let s = line.strip
     if not s.startsWith("requires"): continue
@@ -51,9 +52,14 @@ func requirements*(nimble: string): seq[string] =
         continue
       let close = rest.find('"', i + 1)
       if close < 0: break
-      let requirement = rest[i + 1 ..< close]
-      if requirement.packageName.toLowerAscii != "nim": result.add requirement
+      result.add rest[i + 1 ..< close]
       i = close + 1
+
+
+func requirements*(nimble: string): seq[string] =
+  ## Collect required packages from nimble text, `nim` excluded.
+  for requirement in nimble.requireLiterals:
+    if requirement.packageName.toLowerAscii != "nim": result.add requirement
 
 
 proc lockDirs*(lock: string): seq[string] =
