@@ -159,6 +159,14 @@ Where every joint of a held arm is, found by search as the most comfortable arra
 holds, never drawn by hand.
 _Avoid_: posture, configuration, arm position
 
+**Strain**:
+How close the worst joint of a pose is to its limit: nought comfortable, one at the edge.
+_Avoid_: stress, effort, discomfort
+
+**Block**:
+Where a turn stops because no small move holds and no reachable pose does.
+_Avoid_: stuck, limit, failure
+
 
 ### Drawing
 
