@@ -3,7 +3,7 @@
 ##   module composes static checks so koch holds dispatch only.
 ##
 ##   Order of module bootstrapping:
-##     findings -> domains -> kinds -> comments -> [prose, form]
+##     findings -> domains -> kinds -> comments -> [prose, form, justification]
 ##     findings -> projects -> dependencies -> toolchain
 ##     [domains, kinds, markdown, dependencies, toolchain] -> layout -> [provenance, glossary]
 ##     [layout, toolchain] -> plan
@@ -20,7 +20,8 @@
 
 import std/[options, sets]
 import ./[
-  findings, kinds, prose, form, layout, provenance, glossary, dependencies, toolchain, plan,
+  findings, kinds, prose, form, justification, layout, provenance, glossary, dependencies,
+  toolchain, plan,
 ]
 
 export layout.Tree, layout.Entry, layout.projectDirs
@@ -75,6 +76,7 @@ proc auditTree*(tree: Tree): seq[Finding] =
     let rule = e.kind.get.rule
     result.add checkForm(e.path, e.content, rule)
     if rule.is_prose: result.add checkProse(e.path, e.content, rule.syntax)
+    result.add checkJustification(e.path, e.content, rule)
     for dir in dirs:
       if e.path == dir & "/PROVENANCE.md":
         result.add checkProvenance(e.path, e.content, stamp_now)
