@@ -15,6 +15,7 @@ import std/[options, os, strutils, unittest]
 
 import ../src/dance_ontology
 import ../tools/review
+import ../tools/title
 
 
 const OUT = "build/review"
@@ -26,6 +27,9 @@ suite "the review page":
     let page = renderReview()
     check page.len > 0
     check "{{" notin page  # `renderReview` asserts it too; said here as law
+    # Review page is exploration, not page project stands behind, and title says so.
+    check "<title>" & MOCKUP & " — " in page
+    check "<title>" & WORK & " — " notin page
 
   test "the page and every picture are written and read back":
     createDir(OUT)

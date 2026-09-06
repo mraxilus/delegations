@@ -5,10 +5,11 @@
 ##     Cost of refusing whole build: one broken rule stops every page, not just its own.
 ##       Accepted -- workbench that publishes half-checked pages is worse than one that stops.
 ##   Pages are build products under `build/design/`, never committed: repository reads only
-##     registered file kinds.  Each is published as Claude artifact at fixed URL, listed in
-##     `README.md`; republishing rebuilt files to those URLs is whole release step.
+##     registered file kinds.  Each is published at fixed URL listed in `../README.md`;
+##     republishing rebuilt files to those URLs is whole release step.
+##     Every one is mock-up rather than page project stands behind, and its title says so.
 ##   `tests/tmarks.nim` drives `buildPage` for every page, so every gate runs under
-##     `make check` (Article IX.6).
+##     `nim r koch tests` (Article IX.6).
 
 {.experimental: "strictFuncs".}
 
