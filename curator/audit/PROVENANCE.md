@@ -296,6 +296,22 @@ green (run 33994664255), then the `push` run on `main` after its merge green (ru
 33995270865). Rejected, and removed from the duty: a throwaway probe pull request opened
 only to be closed, which tested nothing those two runs had not.
 
+The per-project-toolchain arrangement was verified on 2026-09-06: pull request 12's eight
+checks green (run 25, 34035762337), then the `push` run on `main` after its merge green
+(run 26, 34036381241). Beyond passing, that pair showed three things this restructure could
+have broken. Required check names survived it: `audit` became a gate reading `plan`,
+`static` and the matrix, and branch protection needed no edit, which the merge proved by
+merging. `scope` and `commits` skip on a push while the gate still reports, so `main` runs
+are not held by jobs that cannot apply to them. And `plan` reads `github.event.before`
+correctly on a merge commit: run 26 selected all three projects, which is right, since the
+diff against previous `main` is the whole pull request.
+
+Empty matrix verified separately, since neither run took that path: this record's own pull
+request 13 changed one record file, so `plan` emitted `[]`, `project` was skipped, and gate
+`audit` passed on a skipped dependency (run 34038741080, 2026-09-06). Whole run 22 s. That
+gate is written to pass on `skipped` and fail on `failure` or `cancelled`, and until this
+run only the first half had ever been exercised.
+
 ## Figures
 
 Measured with `date +%s.%N` around each run, three consecutive warm runs, Linux amd64
@@ -307,6 +323,12 @@ means every test binary was already compiled by a preceding full run.
 | `nim r koch tree` | nothing | 0.028 s, 0.023 s, 0.022 s |
 | `nim r koch tests curator/probe` | one project | 1.776 s, 1.732 s, 1.832 s |
 | `nim r koch audit` | every project | 54.156 s, 53.887 s, 53.570 s |
+
+First measurement on the real path rather than a synthetic one: this file's own
+merge-process commit, whose only changed path is `curator/audit/PROVENANCE.md`, planned `[]`
+and compiled nothing, and `nim r koch ci` finished in 0.721 s wall including its
+`git fetch` (2026-09-06, same machine). Before the change the same commit would have cost
+the third row below.
 
 That is the pair for scoping, taken on one machine at one commit. Before this change a push
 cost the third row whatever it touched; after it, a change to one project costs the second
