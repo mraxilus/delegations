@@ -13,11 +13,15 @@
 ##
 ##   Cost: tool runs once per check, so no hot path exists and Article VII figures stay
 ##     unmeasured by design; whole-tree audit time is recorded in PROVENANCE.md.
+##   Cost: composition is `proc`, never `func`, since lock is read as JSON and Nim marks
+##     `parseJson` effectful; every rule it composes stays pure.
 
 {.experimental: "strictFuncs".}
 
 import std/[options, sets]
-import ./[findings, kinds, prose, form, layout, provenance, glossary, toolchain, plan]
+import ./[
+  findings, kinds, prose, form, layout, provenance, glossary, dependencies, toolchain, plan,
+]
 
 export layout.Tree, layout.Entry, layout.projectDirs
 
@@ -33,7 +37,24 @@ func rulesStamp*(tree: Tree): string =
   contents.stamp
 
 
-func auditTree*(tree: Tree): seq[Finding] =
+proc lockFindings(tree: Tree, dirs: openArray[string]): seq[Finding] =
+  ## Compare each project's stored nimble copy against committed one.
+  ##   Tree is read here rather than in `layout.nim` so layout rules stay pure text over
+  ##   paths; reading lock needs JSON, which Nim marks effectful.
+  for dir in dirs:
+    let nimble_path = dir & "/" & dir.projectName & NIMBLE_EXT
+    let lock_path = dir & "/" & LOCK_FILE
+    var nimble, lock: string
+    var has_lock = false
+    for e in tree:
+      if e.path == nimble_path: nimble = e.content
+      elif e.path == lock_path:
+        lock = e.content
+        has_lock = true
+    if has_lock: result.add checkLockNimble(nimble_path, lock_path, lock, nimble)
+
+
+proc auditTree*(tree: Tree): seq[Finding] =
   ## Run every static check over tree.
   result = tree.checkLayout
 
@@ -45,6 +66,7 @@ func auditTree*(tree: Tree): seq[Finding] =
 
   let stamp_now = tree.rulesStamp
   let dirs = tree.projectDirs
+  result.add tree.lockFindings(dirs)
   var paths = initHashSet[string]()
   for e in tree: paths.incl e.path
   for e in tree:
