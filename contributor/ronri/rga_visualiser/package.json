@@ -1,0 +1,10 @@
+{
+  "name": "rga_visualiser",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Prosperity-3.0.0",
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "typescript": "7.0.2"
+  }
+}

@@ -26,6 +26,8 @@ replicates no published source and derives no algebra of its own.
 ```sh
 nim r koch ci                                    # repository root: audit, scope, commits
 nim r koch tests contributor/ronri/rga_visualiser  # this project alone, three configurations
+nim r tools/build.nim assets                     # this project: fetch the six faces, once
+nim r tools/build.nim web                        # this project: build/rga_visualiser.html
 ```
 
 Needs **Nim built from commit `27763495b`** on `PATH`, and git. No release will do: the
@@ -42,6 +44,13 @@ while the library rebuilds them, and `src/rga_visualiser/projections.nim` stands
 until they return — see Dependencies / Vendoring in `PROVENANCE.md`. The algebra every target
 builds against — four dimensions, rigid metric — is set once in `nim.cfg`, so no entry point
 repeats it.
+
+The browser page is assembled by `tools/build.nim`, which compiles the bridge through the
+JS backend, type-checks and emits the TypeScript glue, inlines the six font faces, and folds
+all of it into one self-contained `build/rga_visualiser.html` that opens from `file://`.
+That needs Node and npm alongside Nim: `npm ci` restores the two pinned dev dependencies
+into `node_modules/`, which is never committed. `assets` fetches the faces the page embeds,
+and needs the network once.
 
 Tests run as three configurations of one shared suite: `t4d` at shipped capacities on the C
 backend, `t4d_small` at capacities small enough that the suite's tests reach them, and
@@ -60,6 +69,10 @@ src/rga_visualiser/           geometry and model, reachable from either front-en
 src/…/projections.nim         projections pga withdrew; deleted when they return
 desktop/arena.nim             scratch arena the exporters write through
 desktop/image.nim gif.nim     PNG and GIF encoders, for storyboard frames
+src/browser/bridge.nim        every value the page draws, compiled through the JS backend
+src/browser/*.ts              DOM, WebGL and event wiring alone; gated file kind
+pages/shell.html              committed markup, with tokens the build fills
+tools/build.nim               the page's build driver: declare, web, assets, clean
 tests/suites.nim              every law, over one seeded pool of objects
 tests/t4d.nim t4d_small.nim   C backend, shipped and small capacities
 tests/t4d_browser.nim         JS backend, same suite
@@ -69,13 +82,15 @@ deps/                         PGA library, restored by Atlas; never committed
 ## Status
 
 Ported from a working prototype; see `PROVENANCE.md` for what is verified and what is
-assumed, and for the open questions this port raised. The two front-ends — the browser page
-and the desktop application — are not here yet: they are arriving in follow-up pull
-requests, because each carries a file kind this repository does not yet read. Their design
-record travels with them.
+assumed, and for the open questions this port raised. The browser page is here and builds;
+the desktop application is not, and arrives in a follow-up pull request. Its design record
+travels with it.
 
-Every law under test through testament on the pinned commit, in three configurations.
-Unreviewed by a human: nothing here has been read line by line, and no human has driven
-either front-end or seen it on real graphics hardware.
+Every law under test through testament on the pinned commit, in three configurations. The
+page has been built and looked at, and its type surface is checked; nothing on it has been
+driven yet, so pointer input, drag, undo, save and load are untested and frame times are
+unmeasured until the Playwright harness lands. Unreviewed by a human: nothing here has been
+read line by line, and no human has driven either front-end or seen it on real graphics
+hardware.
 
 [replications]: https://gitlab.com/mraxilus/replications

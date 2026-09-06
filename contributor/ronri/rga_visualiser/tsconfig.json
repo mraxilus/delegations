@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "target": "es2020",
+    "lib": ["es2020", "dom", "dom.iterable"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "rootDir": "src/browser",
+    "outDir": "build/browser",
+    "removeComments": true,
+    "newLine": "lf"
+  },
+  "include": ["src/browser/**/*.ts", "build/bridge.d.ts"]
+}
