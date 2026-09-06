@@ -4,8 +4,9 @@
 ##
 ##   Order of module bootstrapping:
 ##     findings -> domains -> kinds -> comments -> [prose, form]
-##     findings -> projects -> dependencies
-##     [domains, kinds, markdown, dependencies] -> layout -> [provenance, glossary]
+##     findings -> projects -> dependencies -> toolchain
+##     [domains, kinds, markdown, dependencies, toolchain] -> layout -> [provenance, glossary]
+##     [layout, toolchain] -> plan
 ##     domains -> [scope, commits]
 ##     [kinds, layout] -> tree
 ##     everything -> audit -> koch
@@ -15,8 +16,8 @@
 
 {.experimental: "strictFuncs".}
 
-import std/options
-import ./[findings, kinds, prose, form, layout, provenance, glossary]
+import std/[options, sets]
+import ./[findings, kinds, prose, form, layout, provenance, glossary, toolchain, plan]
 
 export layout.Tree, layout.Entry, layout.projectDirs
 
@@ -35,8 +36,17 @@ func rulesStamp*(tree: Tree): string =
 func auditTree*(tree: Tree): seq[Finding] =
   ## Run every static check over tree.
   result = tree.checkLayout
+
+  # Driver version is derived from driver project's pin, so it is never stated twice.
+  let driver = tree.pinOf(DRIVER_DIR)
+  if driver.isSome:
+    for e in tree:
+      if e.path == WORKFLOW_PATH: result.add checkDriver(e.content, driver.get)
+
   let stamp_now = tree.rulesStamp
   let dirs = tree.projectDirs
+  var paths = initHashSet[string]()
+  for e in tree: paths.incl e.path
   for e in tree:
     if e.kind.isNone: continue
     if e.path == "GLOSSARY.md": result.add checkGlossary(e.path, e.content)
@@ -44,5 +54,7 @@ func auditTree*(tree: Tree): seq[Finding] =
     result.add checkForm(e.path, e.content, rule)
     if rule.is_prose: result.add checkProse(e.path, e.content, rule.syntax)
     for dir in dirs:
-      if e.path == dir & "/PROVENANCE.md": result.add checkProvenance(e.path, e.content, stamp_now)
+      if e.path == dir & "/PROVENANCE.md":
+        result.add checkProvenance(e.path, e.content, stamp_now)
+        result.add checkCitations(e.path, e.content, dir & "/" & TESTS_DIR & "/", paths)
       if e.path == dir & "/GLOSSARY.md": result.add checkGlossary(e.path, e.content)

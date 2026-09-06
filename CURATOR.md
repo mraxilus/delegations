@@ -39,6 +39,9 @@ The owner's brief, which every rule below serves:
 - Tooling is Nim wherever possible, in the shape Nim's own repository uses: `koch`, one
   compiled driver, and Atlas for dependencies. TypeScript only where JavaScript is forced.
   No Python, no make.
+- Each project pins its own compiler, since no single version serves them all. Checks run
+  for the projects a change touches, in parallel, so the runner's cost does not grow as
+  projects arrive.
 
 ## Read first, in this order
 
@@ -61,7 +64,7 @@ The owner's brief, which every rule below serves:
 | `CLAUDE.md` | Short pointer Claude Code loads on its own | curator |
 | `koch.nim`, `koch.nim.cfg` | Driver of every check; `nim r koch <command>` | curator |
 | `.gitignore`, `.gitattributes` | Build products and Atlas checkouts out, LF endings | curator |
-| `.github/workflows/check.yml` | CI: jobs `audit`, `scope`, `commits`; pins Nim version | curator |
+| `.github/workflows/check.yml` | CI: `plan`, `static`, matrix, `scope`, `commits`, gate | curator |
 | `.github/pull_request_template.md` | Body every pull request follows | curator |
 | `curator/README.md` | Curator root index | curator |
 | `curator/audit/` | Audit library: every check, tested against its own fixtures | curator |
@@ -83,6 +86,9 @@ The owner's brief, which every rule below serves:
 - Conventional Commits throughout: `feat(audit): register json kind`. That exemption for
   `curator/<name>` is why curators are trusted with restraint: touch a contributor project
   only to propagate a rule, never to improve it.
+- The `commits` job enforces the regression rule (Article IX.8): every `fix` carries an
+  earlier `test` of the same scope on the same branch. A change that needs no new test is
+  not a `fix` — it is a `refactor`, a `chore` or a `docs`.
 
 ## Duties
 
@@ -96,7 +102,8 @@ The owner's brief, which every rule below serves:
 2. **Merge-process changes.** Anything a pull request passes through is the merge process:
    `.github/workflows/check.yml`, `koch.nim`, `.gitignore`, `.gitattributes`,
    `curator/audit/src/` (above all `scope`, `commits`, `tree`, `layout`, `projects`,
-   `dependencies`), the branch grammar in `domains.nim`, the stamp. A change to any of
+   `dependencies`, `toolchain`, `plan`), the branch grammar in `domains.nim`, the stamp,
+   and the matrix `plan` emits. A change to any of
    them is tested on the process itself, in this order, before the work is called done:
    - `nim r koch ci` on the curator branch, then the curator pull request's three jobs
      green on a runner. A runner differs from this machine: the first run on `main` is
@@ -122,21 +129,43 @@ The owner's brief, which every rule below serves:
    `curator/<project>/<name>`, with the full project shape from `CONTRIBUTOR.md` (the
    curator follows the contributor process inside `curator/`). `curator/probe` is the
    worked example.
-7. **Toolchain.** Nim is pinned once, in `.github/workflows/check.yml` (`NIM_VERSION`).
-   Bump it deliberately, with `nim r koch ci` run on the new version, and update the version
-   named in `CONTRIBUTOR.md`, `README.md` and `curator/audit/README.md`. Atlas ships with
-   Nim; its version follows.
+7. **Toolchain.** Nim is not pinned once. Each project pins the compiler it was verified on
+   in its own nimble file, `requires "nim == <version>"`, and bumping that is the project's
+   own work, not yours: no single version serves every project, and forcing one is what this
+   arrangement replaced. `NIM_VERSION` in `.github/workflows/check.yml` is the **driver**
+   version, which builds koch and runs the whole-tree pass. It is not a second pin: it must
+   equal `curator/audit`'s pin, because koch compiles that project's modules, and
+   `toolchain.nim` fails the audit when the two disagree. So bumping the driver means
+   bumping `curator/audit`'s pin and the workflow's `NIM_VERSION` together, with
+   `nim r koch ci` run on the new version. Atlas, nimble and testament ship beside `nim`, so
+   their versions follow whichever compiler a job installs.
+   A curator changing `koch.nim` or `curator/audit/src/` selects every project for
+   compilation, so that change needs every pinned version installed locally. That is the
+   price of independent pins, and it is paid by the one role that can afford it.
+   The weekly sweep's window is one thing named twice: the cron in
+   `.github/workflows/check.yml` and `SWEEP_DAYS` in `curator/audit/src/plan.nim`. Change
+   both together, or the sweep looks back over a window it does not run on. The sweep skips
+   itself in a week nobody merged code, since rot arrives with merges; rot from outside the
+   repository, a runner image moving under a pinned compiler, waits for the next sweep that
+   does run.
 8. **Opening prompts.** `CURATOR.md` and `CONTRIBUTOR.md` are pasted into new sessions as
    their first message. Keep each self-contained. Remember `CONTRIBUTOR.md` is stamped:
    any edit, even a typo, re-stamps every project (duty 1).
 9. **Never** write contributor project code, create a contributor project, or resolve a
    contributor's open question by editing their project. Answer it by changing a rule, a
-   check, or this file, and let the contributor apply it.
+   check, or this file, and let the contributor apply it. The `scope` job now holds this
+   duty rather than trusting it: on `curator/<name>` the only writable paths inside a
+   contributor project are its `README.md`, `PROVENANCE.md` and `GLOSSARY.md` — the stamp
+   row, the agreed terms, and prose a rule change invalidated, which is what propagation
+   is. Source, tests, nimble file and pages are the contributor's, and the check says so.
+   What remains yours to govern by reading: the README is writable, so restraint about
+   rewriting a project's prose is still restraint, not enforcement.
 
 ## Before opening a pull request
 
 `nim r koch ci` at the repository root passes on the exact commit you push. It fetches
-`origin/main`, then runs the three verbs CI's jobs run: `audit`, `scope` and `commits`. A
+`origin/main`, then runs what CI runs: the whole-tree static pass, the suites of every
+project whose code changed, `scope` and `commits`. A
 pull request opened before it passes is a process violation whatever CI later says: the
 runner confirms, it never discovers. Run it again before every later push to the same pull
 request. Then the template, then the pull request.
@@ -147,7 +176,10 @@ These cannot be set from inside the repository. Ask the owner to confirm they ar
 on `main` under Settings, Branches, branch protection (or a ruleset):
 
 - Require a pull request before merging; no direct pushes.
-- Require status checks to pass: `audit`, `scope`, `commits`.
+- Require status checks to pass: `audit`, `scope`, `commits`. `audit` is the gate job that
+  stands for `plan`, `static` and the per-project matrix, whose job names vary with the
+  change and so can never be required checks themselves. These three names did not change
+  when the matrix arrived, so branch protection needs no edit.
 - Block force pushes and deletions.
 - Optionally include administrators, so the owner's own merges see the same red.
 
@@ -161,12 +193,13 @@ then `./koch <command>`). Every check is a module under `curator/audit/src/`, te
 |---------|-------|----------|
 | `tree` | files git sees | layout, form, comments, provenance header and stamp, glossary |
 | `deps` | every project's `atlas.lock` | checkouts restored and matching the lock |
-| `tests` | every project, or one | testament over `tests/t*.nim` exits zero |
-| `audit` | all of the above | tree, then deps, then tests |
+| `tests` | every project, or one | restore, then testament, on that project's pin |
+| `plan` | changed paths, nimble pins | projects to compile, as JSON; `--sweep` for weekly |
+| `audit` | all of the above | tree, then every project restored and tested |
 | `scope` | changed paths | branch grammar; project paths inside prefix |
 | `commits` | commit subjects | Conventional Commits; scope equals branch scope |
 | `stamp` | rules documents | prints the stamp for `PROVENANCE.md` |
-| `ci` | fresh `origin/main` | audit, scope, commits as CI runs them; before every PR |
+| `ci` | fresh `origin/main` | tree, changed projects, scope, commits; before every PR |
 
 Findings print as `path:line: message; got \`value\`.` and exit 1. Kinds, domains, root
 entries, project files, commit types and banned words are data at the top of their modules;

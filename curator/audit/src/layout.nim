@@ -4,7 +4,9 @@
 ##
 ##   Project is `curator/<project>` or `contributor/<domain>/<project>`; both keep one
 ##     shape: README.md, PROVENANCE.md, GLOSSARY.md, `<project>.nimble`, and `tests/` holding
-##     at least one file. Packages required by nimble file demand `atlas.lock`.
+##     at least one file. Packages required by nimble file demand `atlas.lock`, and nimble
+##     file pins its own compiler exactly (`toolchain.nim`), since no version serves every
+##     project.
 ##   Root folders hold README.md and folders only: `curator/` project folders,
 ##     `contributor/` domain folders, domain folders project folders. Each is checked at its
 ##     depth; unknown root directory or unregistered domain is finding, never skipped.
@@ -24,7 +26,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, options, os, sequtils, strutils, tables]
-import ./[findings, domains, kinds, markdown, dependencies]
+import ./[findings, domains, kinds, markdown, dependencies, toolchain]
 
 
 type
@@ -171,6 +173,7 @@ func checkProject(tree: Tree, paths: Table[string, int], dir: string): seq[Findi
         e.path, 0, "Nimble file not named after project; expected `" & nimble & "`."
       )
   if nimble in paths:
+    result.add checkPin(nimble, tree[paths[nimble]].content)
     let required = tree[paths[nimble]].content.requirements
     let lock = dir & "/" & LOCK_FILE
     if required.len > 0 and lock notin paths:

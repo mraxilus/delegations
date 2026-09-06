@@ -7,4 +7,4 @@ description = "Audit of delegations repository against its constitution and styl
 license = "Prosperity-3.0.0"
 srcDir = "src"
 
-requires "nim >= 2.2.4"
+requires "nim == 2.2.4"

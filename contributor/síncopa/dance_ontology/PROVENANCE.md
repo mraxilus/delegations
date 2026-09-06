@@ -6,13 +6,50 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | ee146313f3986a3e |
+| Rules  | 912082eea75c768d |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
-Origin: built from the owner's workbook `ontology.partnerwork.xlsx` (sheets `base` and
-`vocabulary`, held as data in `src/dance_ontology/workbook.nim`), the owner's forty drawing
-rules as given (held as data in `design/rules.nim`), and, for the body sim, the ANSUR II
-medians with the AAOS and NASA-STD-3000 joint ranges (`sim/rig.nim`). No vendored source.
+Origin: built from the Architect's workbook `ontology.partnerwork.xlsx` (sheets `base` and
+`vocabulary`, held as data in `src/dance_ontology/workbook.nim`), the Architect's forty
+drawing rules as given (held as data in `design/rules.nim`), and, for the body sim, the ANSUR
+II medians with the AAOS and NASA-STD-3000 joint ranges (`sim/rig.nim`). No vendored source.
+
+That workbook is **superseded**: the Architect has replaced it with a newer sheet this project
+has not been given. Nothing is deleted, so nothing goes dark, but every finding the audit
+reports is about a document no longer in use, and so is the sheet-facing half of the review
+page. Transcription, audit, suite and page are replaced together in one delivery when the new
+sheet arrives; until then they are stale by construction, not by neglect.
+
+## Language
+
+**Every term is agreed with Architect before it is written.** Forty-four terms written
+without agreement were removed on 2026-09-06 and are in history. Thirty-five are now agreed,
+each concept set out with candidate names and their costs, and only selected name written.
+Audit checks glossary's shape and never its words, so this holds by Architect's reading
+alone.
+
+Agreed: dancers, connection, frame's four parts, free; moves, their two ways, compound moves
+and transitions; levels, modifiers, twist, and four ways of turning; chain and its rungs;
+reference; tower; rig, pose and grip.
+
+Held back by decision, not omission. Workbook, base sheet and vocabulary sheet wait until new
+sheet arrives, since nothing should be written about file this project has not seen. Review
+page waits on same sheet; ledger waits on forty rules being reconciled, several having been
+reversed by later ones. Whether sim keeps its own word for range of heights grip is carried
+in was raised and withdrawn, so it stays open. Rest of sim -- sweep, moment, blocked, strain,
+re-organised, verdict, stance, body -- was not reached.
+
+Words agreed so far disagree with code in eight places, recorded rather than acted on.
+`Frame position` covers facing, twist and shorthands such as over and under, so
+`frame.position` means its opposite: it strips `over` and returns frame hold said aloud.
+Code's `Frame` type is frame state carrying hold and `over` but neither facing nor twist,
+which live in `rotation.Posture`, so split between `frame.nim` and `rotation.nim` cuts across
+agreed concept rather than along it. Facing is four-valued and `isFacing` returns parity of
+twist, which cannot tell face-to-back from back-to-face. Twist is counted in quarters where
+`HalfTurns` is half turns. `Level.Above` is `Overhead`. `Compound` is `Compound move`.
+Drawing chain's `route` and `wind` are `Transition` and `Twist`, which is why neither word is
+claimed by drawing. One `Blocked` fault is already known: sim reports blocks where pose holds
+and is reachable, so that term was held back rather than written false.
 
 ## Model
 
@@ -88,7 +125,9 @@ which the map is worth opening on, is written once in the stylesheet and read by
 Keyboard: every control reachable, focus returned after each move, a live region outside the
 rewritten region announcing what was danced. Verified by hand in a browser at 390, 600 and
 1200 px before the move (mark and frame land in the same place either side of the swap) and
-not re-driven since: **assumed**. The shell (`app/shell.nim`) is hosted as a string and
+not re-driven since: **assumed**. Which browser, and on what date, was not recorded, so this
+cannot be repeated from a checkout; whoever next touches the shell re-drives it and writes
+down both. The shell (`app/shell.nim`) is hosted as a string and
 written out by `tools/pages`; the bundle (`tools/bundle.nim`) folds `app.js` into it as one
 self-contained file for publishing, titled `Dance Ontology — …` so a gallery sorts the body
 of work together.
@@ -120,7 +159,11 @@ in `wholecloth_page.nim`, its turns panel is `wholecloth_turns.nim` compiled to 
 and `wholecloth.nim` splices markup, the sim's sweeps (`turns.nim`) and the panel into one
 page. Verified by `tmarks.nim`, which drives the build of every page under testament, and
 for the whole-cloth port by a driven comparison under Playwright of the old page against the
-new: 707 states equal (see Figures for what was compared). Reflow deviations the page module
+new: 707 states equal (see Figures for what was compared). **That comparison cannot be
+repeated here**: Playwright, TypeScript and any package manifest are absent from this
+repository, and the date it ran was not recorded, so the 707 figure rests on a session
+nobody can re-enter. Restoring it means bringing the harness in as a project of its own.
+Reflow deviations the page module
 records: 37 breaks inside `aria-label` values (accessible names verified equal), one
 whitespace-free row with its character references decoded, and the fonts URL held as its own
 constant joined at compile time. Cost: the workbench's `doAssert` gates are the
@@ -167,7 +210,8 @@ page steps the couple in or out to the stance with the most joint room, never cl
 ten centimetres of air between the torsos, read off the torso ellipses along the line
 between the axes. Body sizes are static. Verified before the move by driven check in a
 browser (four quarters of the follow refused at the fourth with the tally holding at 0.75;
-distance never under the extents plus 0.10 m); not re-driven since: **assumed**.
+distance never under the extents plus 0.10 m); not re-driven since: **assumed**. Browser and
+date unrecorded, so this too cannot be repeated from a checkout.
 
 **Verdicts are an instrument run, assumed current.** `sim/verdicts.nim` asks the sim what the
 sheet asks and writes `sim/verdicts.md` in the sheet's words through one visible translation
@@ -262,6 +306,18 @@ Declared unmet by this move, so the Style row above stays true (Article VIII.1):
 - X.8: pages name system font stacks; the whole-cloth page loads Fraunces, Instrument Sans
   and Spline Sans Mono from Google. Font files are unregistered kinds and cannot be shipped
   here; see Open questions.
+
+## Toolchain
+
+**Compiler pinned exactly, at the version this project was verified on.**
+`requires "nim == 2.2.4"` in `dance_ontology.nimble`. CONTRIBUTOR.md now demands an exact
+pin rather than a lower bound, and this project is the reason an upper bound is needed at
+all: 2.2.8 and 2.2.10 crash the compiler itself on six of the eleven suites
+(`field 'floatVal' is not accessible for type 'TFullReg'`), reported by the contributor of
+`rga_visualiser` while checking which release the whole repository could take. Assumed, not
+re-verified here: that report, which was measured on their machine and not on this one.
+The eleven suites pass on 2.2.4, which is what the pin records. Moving it is this project's
+own work, and it now moves nothing else.
 
 ## Open questions
 

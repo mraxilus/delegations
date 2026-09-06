@@ -13,7 +13,7 @@ nim r koch ci                  # from repository root: audit, scope, commits
 nim r koch tests curator/audit # this project alone: testament over tests/t*.nim
 ```
 
-Needs Nim 2.2.4 (pinned in `.github/workflows/check.yml`) and git; Atlas and testament ship
+Needs the compiler this project pins in `audit.nimble`, and git; Atlas and testament ship
 with Nim.
 
 ## Reading order
@@ -26,5 +26,6 @@ shaped as it is.
 
 ## Status
 
-Every check verified by its suite under `tests/`, run through testament on Nim 2.2.4.
+Every check verified by its suite under `tests/`, run through testament on this
+project's pinned compiler.
 Unreviewed by a human.

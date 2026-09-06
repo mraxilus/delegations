@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | ee146313f3986a3e |
+| Rules  | 912082eea75c768d |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -94,7 +94,8 @@ verbatim. Nim banners `#[ Title ]#` need two blank lines before and one after; t
 syntax, so the second-tier minimum is demanded of every banner. Assumed, not checked: two-space
 indent. Verified by `tform.nim`: 100 runes pass and 101 breakable runes fail; a 202-character fonts
 link passes while 207 characters of prose and 400 characters of minified markup do not; tab in Nim
-and cfg fails; every ending case. Verified by driven check on the real pages: the validator's 391
+and cfg fails; every ending case. Verified by driven check on real pages, 2026-09-05: the
+validator's 391
 markup lines extracted verbatim to a file and the whole-cloth fonts link, whose longest token is 179
 runes, both audit clean, while a generated single-line drawing of 1,407 characters and a page
 outside `pages/` do not.
@@ -119,6 +120,23 @@ invisible to git, so `tests/` must hold a file. Verified by `tlayout.nim` over a
 tests build, with the project list pinned and the unknown-domain case asserting both the finding and
 the unchanged project list; `taudit.nim` proves the fixture is clean under every static check.
 
+**Only one check reads substance, and it reads a narrow slice of it.** `checkCitations`
+resolves every claim opening `Verified by` and naming a backticked `.nim` file, in a
+project's `PROVENANCE.md`, against that project's
+`tests/`, from the path set the tree already holds, and reports a citation naming no such
+file. Chosen because the record's most valuable property is its verified-versus-assumed
+split, and until now nothing stopped a citation rotting when a suite was renamed: the audit
+checked the file's shape and never a word of its content. Rejected: matching the claim
+against what the named test asserts, which no checker can do; and flagging every backticked
+span, which would catch commands such as ``atlas changed``, so the `.nim` ending is the
+guard. Cost, and it is the honest limit: a delegate can still cite a real test beside a claim
+that test does not make. That gap closes by reading.
+Verified by `tprovenance.nim`, and by driven check on this repository, 2026-09-06: all
+nineteen citations on `main` resolve untouched, so the rule is a ratchet on today's honesty
+rather than a cleanup; renaming one to an absent file, to a source file rather than a test,
+or to another project's test each reports one finding naming it, while the same sentence
+carrying ``atlas changed`` reports none.
+
 ## Provenance stamp
 
 **FNV-1a 64-bit over CONSTITUTION.md, STYLE.md and CONTRIBUTOR.md, CR stripped, NUL
@@ -140,6 +158,31 @@ layout requires at root. Zero terms pass, because the format creates
 entries lazily. Verified by `tglossary.nim`.
 
 ## Scope
+
+**Curator reach into contributor projects stops at their records.** `curator/<name>` still
+owns the empty prefix, because a rules change must reach every project, but under
+`contributor/` the only writable paths are a project's `README.md`, `PROVENANCE.md` and
+`GLOSSARY.md` — `PROJECT_FILES`, read from `layout.nim` rather than repeated. Chosen because
+that empty prefix was the one hole in an otherwise mechanical scope system, and it belonged
+to the most-run role: CURATOR.md duty 9 forbade writing contributor code, and nothing but
+reading held it. Rejected: restricting to `PROVENANCE.md` and `GLOSSARY.md` alone, which the
+per-project-toolchain propagation had already disproved — that change removed "Needs Nim
+2.2.4" from three contributor READMEs, prose the rule itself invalidated, and the tighter set
+would have blocked it and left stale text no contributor knew was stale. Cost: the README
+stays writable, so restraint about rewriting a project's prose is still duty 9's to govern by
+reading, never the check's. Verified by driven check on this repository: a curator branch
+touching `dance_ontology/src/dance_ontology.nim` reports one finding naming the path, while
+the same branch touching that project's `PROVENANCE.md` and `README.md` reports none.
+
+**The regression rule is enforced, not hoped for.** `commits` reads subjects newest first and
+demands every `fix` carry an earlier `test` of the same scope on the same branch (Article
+IX.8). Chosen because "every mistake becomes a test" was the Architect's stated priority and
+lived only in prose. Rejected: matching across `main`'s history, which would need the whole
+log and would still pass a fix whose test landed years earlier under a different intent.
+Cost: a fix of a mistake whose test already sits on `main` needs a test here or another type;
+the escape is honest, since a change needing no new test is not a `fix`. Verified by driven
+check: a branch carrying `fix(audit)` alone reports one finding, and the same branch with
+`test(audit)` committed first reports none.
 
 **Branch grammar mirrors paths: two, three or four segments, and the prefix decides.**
 `curator/<name>` owns the empty prefix, so every path passes; `curator/<project>/<name>`
@@ -170,6 +213,79 @@ Cost: serial; a project in another language needs its own runner arm. Verified b
 `tprojects.nim` with a passing and a failing fixture project driven through real testament,
 and `runIn` against `true` and `false`.
 
+## Toolchain
+
+**Each project pins its own compiler; there is no repository-wide Nim.** The pin is
+`requires "nim == <version>"` in the project's nimble file, read by `toolchain.nim` through
+the same `requireLiterals` scan `dependencies.nim` uses for packages, so requirements are
+parsed in one place. Chosen because no single version serves every project, which is
+measured rather than feared: `contributor/ronri/rga_visualiser` depends on a library 2.2.4
+cannot compile (assignment through a `var`-returning `[]`), and `dance_ontology` crashes the
+compiler itself on 2.2.8 and 2.2.10 in six of its eleven suites. Rejected: one pin for the
+repository, which cannot hold both; `requires "nim >= x"`, which cannot express the upper
+bound `dance_ontology` needs and cannot say which compiler a suite actually passed on; a
+separate `.nim-version` file, a second place a version lives beside the nimble file already
+naming one. Cost: four projects may sit on four compilers, and a curator changing the
+checker needs every one installed.
+
+Verified that Atlas accepts an exact compiler pin rather than treating it as a package to
+resolve: with `requires "nim == 2.2.6"` in `rga_visualiser.nimble`, `atlas --noexec rep`
+cloned and set the pinned commit and `atlas changed` exited 0 (Atlas 0.9.0, 2026-09-06).
+
+**The driver version is derived, never a second pin.** `NIM_VERSION` in
+`.github/workflows/check.yml` builds koch and runs the whole-tree pass, and `checkDriver`
+fails the audit unless it equals `curator/audit`'s pin, because koch compiles that project's
+modules. This is the same derived-view rule `layout.nim` applies to the domain table in
+`README.md`. Verified by driven check: setting `NIM_VERSION` to `2.2.6` against a `2.2.4`
+pin reports one finding at the workflow, and restoring it clears.
+
+**A run on the wrong compiler is a finding, not a warning.** `checkRunning` compares the
+project's pin against `nim --version` from `findExe("nim")`, i.e. the compiler testament
+will invoke, rather than `NimVersion` koch was built with, since a prebuilt `./koch` and a
+newer `nim` on `PATH` would otherwise disagree silently. The mismatched project is reported
+and not compiled. Rejected: skipping it quietly, which would let the runner discover what
+the local run was supposed to confirm. Cost: a curator touching `koch.nim` or
+`curator/audit/src/` selects every project and so needs every pinned compiler installed.
+Verified by `ttoolchain.nim` for each rule, and by driven check on this repository: a
+nimble file carrying `>=` reports one finding naming what it holds, and a nimble file with
+no compiler requirement reports the same.
+
+## Scoped checks
+
+**The static pass stays whole-tree; only compilation is scoped.** `plan.nim` selects the
+projects one change asks to compile: a project enters when a changed path under it is
+anything but its `PROVENANCE.md` or `GLOSSARY.md`, and a change to `koch.nim`,
+`koch.nim.cfg` or `curator/audit/src/` selects every project, because how each is checked
+changed. A path inside no project selects nothing by itself. Chosen against scoping the
+static pass as well, on the figures below: the static pass is hundredths of a second and
+the suites are tens of seconds, so scoping the static pass would buy nothing measurable and
+cost a second code path plus the whole-tree layout and stamp guarantees on every pull
+request. Rules propagation therefore compiles nothing at all, since it rewrites only the two
+record files, while every stamp is still checked.
+
+Cost: a merged change can leave an unrelated project red until that project next changes.
+The weekly `schedule` sweep, which plans every project, is the guard, and it is a weaker
+guard than compiling everything on every push. Assumed, not yet verified: that the sweep
+fires, which only a Monday shows. Parallelism is verified, under Figures.
+
+**The sweep skips itself in a quiet week.** `sweepJobs` plans every project when any code
+merged inside `SWEEP_DAYS`, and nothing at all when none did, judging "code" by the same
+record-file exclusion scoped runs use. Chosen because the sweep exists to catch rot that
+scoped runs missed, and rot arrives with merges: a week nobody merged has nothing for it to
+find, and a run that compiles four projects to confirm that is four projects of runner time
+for no information. Rejected: sweeping the projects that changed in the window, which is
+what the push runs already did, and would miss exactly the cross-project rot the sweep is
+for. Cost: rot from outside the repository — a runner image moving under a pinned compiler,
+say — goes unseen through a quiet week and waits for the next sweep that runs. Cost: the
+window is named twice, as the cron here and `SWEEP_DAYS` in `plan.nim`; nothing checks that
+they agree, so CURATOR.md duty 7 says to change them together.
+
+A repository younger than the window has every commit inside it, so `revBefore` finds no
+commit to measure from and the sweep runs whole. That is the case today and will be until
+2026-09-12, so the skip is verified by its suite rather than by a live Monday: `tplan.nim`
+drives the decision over code, record-only and empty changes, and `ttree.nim` drives
+`revBefore` at both ends, returning HEAD for a zero-day window and empty for a ten-year one.
+
 ## Dependencies
 
 **Atlas per project: requirements in `<project>.nimble`, checkouts in ignored `deps/`,
@@ -189,6 +305,15 @@ flow (`init`, `use malebolgia`, `pin`, delete checkout, `rep`, compile against t
 dependency) was verified once by hand on a throwaway project on 2026-09-05 and stays
 assumed for CI until the first real dependency lands.
 
+**`atlas changed` alone does not prove a restore happened.** It exits 0 while warning
+`repo missing!`, so a restore that fetched nothing reported success. `checkCheckouts` now
+reads the `dir` of every item in `atlas.lock`, resolves `$deps` to `deps`, and demands the
+directory exists before `atlas changed` is consulted. Measured on Atlas 0.9.0, 2026-09-06,
+by deleting `deps/` and re-running: `atlas changed` exited 0 with the checkout absent.
+Verified by `tdependencies.nim`, which drives `checkCheckouts` over a temporary project with
+and without the directory, and over a lock that is not JSON. Cost: the lock is parsed twice
+per restore, once by Atlas and once here.
+
 ## Tests
 
 **Testament over `tests/t*.nim`, each stub carrying the header from STYLE.md §6 without
@@ -203,19 +328,26 @@ test files, all passing on Nim 2.2.4 Linux amd64.
 
 ## Continuous integration
 
-**Three jobs, so the owner reads each verdict alone.** `audit` runs `nim r koch audit`;
-`scope` and `commits` run only on pull requests with full history and pass the branch name
-through the environment, read by koch as defaults, never interpolated into the script. Nim
-is pinned once as `NIM_VERSION`; the setup action installs Nim under the runner's temp
-directory (`parent-nim-install-directory`), never into the workspace, and `.gitignore`
-also lists `.nim_runtime/`, because the audit reads untracked files and a toolchain inside
-the checkout was audited as source once (33,367 findings on the first run). Required
-checks are named `audit`, `scope`, `commits` for branch protection.
+**Six jobs, and the three required check names did not change.** `plan` emits the matrix,
+`static` runs `nim r koch tree`, `project` is one matrix job per planned project installing
+that project's own pin, `scope` and `commits` run only on pull requests with full history,
+and `audit` is a gate reading the results of `plan`, `static` and `project`. The gate exists
+because matrix job names vary with the change and so can never be required checks, while
+`audit`, `scope` and `commits` must stay required: branch protection needed no edit.
+Rejected: renaming the required checks, which would have made the owner reconfigure `main`;
+computing the matrix in shell, which is untested glue where koch is tested.
+Branch names and event kind reach koch through the environment, never interpolated into the
+script. The setup action installs Nim under the runner's temp directory
+(`parent-nim-install-directory`), never into the workspace, and `.gitignore` also lists
+`.nim_runtime/`, because the audit reads untracked files and a toolchain inside the checkout
+was audited as source once (33,367 findings on the first run).
 
-**`nim r koch ci` is the local form of the three jobs.** It fetches `origin/main`, then runs
-audit, scope and commits in one process. Every pull request passes it before it is opened;
-the runner confirms, it never discovers. Cost: a network fetch per run, accepted so the base
-is the one CI will use.
+**`nim r koch ci` is the local form of the jobs.** It fetches `origin/main`, then runs the
+whole-tree pass, the planned projects' restores and suites, scope and commits in one
+process. Every pull request passes it before it is opened; the runner confirms, it never
+discovers. Cost: a network fetch per run, accepted so the base is the one CI will use.
+Cost: a curator whose change selects every project cannot run it without every pinned
+compiler, which is the price of independent pins.
 
 **Merge-process record.** The make-driven process was verified on 2026-09-05 through pull
 requests 1 to 4 (runs 2 to 8, including the re-run trap: a re-run reuses the original merge
@@ -225,14 +357,59 @@ green (run 33994664255), then the `push` run on `main` after its merge green (ru
 33995270865). Rejected, and removed from the duty: a throwaway probe pull request opened
 only to be closed, which tested nothing those two runs had not.
 
+The per-project-toolchain arrangement was verified on 2026-09-06: pull request 12's eight
+checks green (run 25, 34035762337), then the `push` run on `main` after its merge green
+(run 26, 34036381241). Beyond passing, that pair showed three things this restructure could
+have broken. Required check names survived it: `audit` became a gate reading `plan`,
+`static` and the matrix, and branch protection needed no edit, which the merge proved by
+merging. `scope` and `commits` skip on a push while the gate still reports, so `main` runs
+are not held by jobs that cannot apply to them. And `plan` reads `github.event.before`
+correctly on a merge commit: run 26 selected all three projects, which is right, since the
+diff against previous `main` is the whole pull request.
+
+Empty matrix verified separately, since neither run took that path: this record's own pull
+request 13 changed one record file, so `plan` emitted `[]`, `project` was skipped, and gate
+`audit` passed on a skipped dependency (run 34038741080, 2026-09-06). Whole run 22 s. That
+gate is written to pass on `skipped` and fail on `failure` or `cancelled`, and until this
+run only the first half had ever been exercised.
+
 ## Figures
 
-`nim r koch tree` over this repository, warm: 0.245 s, 0.239 s, 0.243 s wall.
-`nim r koch audit`, which adds dependency restoration (no locks yet) and testament over
-three projects: 77.9 s, 62.8 s, 62.7 s wall; first run pays compile of test binaries the
-next two reuse, and `contributor/síncopa/dance_ontology` is nearly all of it (its eleven
-stubs measured 52.7 s alone, `tlaws` 23.0 s of that). Measured with bash `time`, three
-consecutive runs each, Linux amd64 container with four Xeon 2.80 GHz cores, Nim 2.2.4
-default build, 2026-09-05. Before that project arrived the same commands measured 0.11 s and
-14.7 s, which is the growth to watch rather than a before-and-after pair: no optimisation is
-claimed. Re-measure when a project's suites grow; otherwise treat as unmeasured.
+Measured with `date +%s.%N` around each run, three consecutive warm runs, Linux amd64
+container with four Intel Xeon 2.10 GHz cores, Nim 2.2.4 default build, 2026-09-06. Warm
+means every test binary was already compiled by a preceding full run.
+
+| Command | Compiles | Wall |
+|---------|----------|------|
+| `nim r koch tree` | nothing | 0.028 s, 0.023 s, 0.022 s |
+| `nim r koch tests curator/probe` | one project | 1.776 s, 1.732 s, 1.832 s |
+| `nim r koch audit` | every project | 54.156 s, 53.887 s, 53.570 s |
+
+First measurement on the real path rather than a synthetic one: this file's own
+merge-process commit, whose only changed path is `curator/audit/PROVENANCE.md`, planned `[]`
+and compiled nothing, and `nim r koch ci` finished in 0.721 s wall including its
+`git fetch` (2026-09-06, same machine). Before the change the same commit would have cost
+the third row below.
+
+That is the pair for scoping, taken on one machine at one commit. Before this change a push
+cost the third row whatever it touched; after it, a change to one project costs the second
+and a change to records alone costs the first, since nothing is compiled. Roughly thirty
+times less for the common case, and it no longer grows as projects arrive, which was the
+point. `contributor/síncopa/dance_ontology` is nearly all of the third row, as it was
+before.
+
+The earlier figures on this file, 0.245 s and 62.7 s, were taken in a different container
+on 2026-09-05 and are not the other half of this pair; they are gone rather than compared.
+Re-measure when a project's suites grow; otherwise treat as unmeasured.
+
+**Matrix jobs do run in parallel**, verified on the runner rather than assumed, from the
+first run of this arrangement (run 34016823462, pull request 12, 2026-09-06, all eight
+checks green). The three `project` jobs started within one second of each other and finished
+at 16 s, 52 s and 121 s; the phase took 121 s wall, not the 189 s their sum would be. The
+saving is the sum minus the slowest, so it grows as projects arrive, which is the property
+that was wanted.
+
+Cost measured in the same run: matrix jobs cannot start until `plan` reports, which put
+16 s between the run starting and the first project job. That is a floor on every run,
+paid whatever changed, and it is the price of computing the matrix in tested Nim rather
+than in shell.

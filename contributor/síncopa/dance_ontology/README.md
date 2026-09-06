@@ -40,11 +40,14 @@ in one table and nothing is tuned to make them agree.
 
 ## Authority replicated
 
-- The owner's workbook `ontology.partnerwork.xlsx`, sheets `base` and `vocabulary`, held as
-  data in `src/dance_ontology/workbook.nim` and audited against the derived model by
-  `tests/tworkbook.nim`.
-- The forty drawing rules as given, held as data in `design/rules.nim` and mirrored entry
-  for entry in `design/README.md`; `design/checks.nim` holds the pages to them.
+- The Architect's workbook `ontology.partnerwork.xlsx`, sheets `base` and `vocabulary`, held
+  as data in `src/dance_ontology/workbook.nim` and audited against the derived model by
+  `tests/tworkbook.nim`. **Superseded.** The Architect has replaced it with a newer sheet
+  this project has not been given, so what the audit reports, and the sheet-facing half of the
+  review page, are findings about a document no longer in use. Both stay running until the
+  new sheet arrives and replaces the transcription.
+- The Architect's forty drawing rules as given, held as data in `design/rules.nim` and
+  mirrored entry for entry in `design/README.md`; `design/checks.nim` holds the pages to them.
 - For the body sim, the ANSUR II medians with the AAOS and NASA-STD-3000 joint ranges,
   every one in `sim/rig.nim` with its derivation; `tests/tlaws.nim` holds the sim to them.
 
@@ -58,8 +61,9 @@ nim r tools/build.nim verdicts                         # rewrite sim/verdicts.md
 nim r tools/build.nim shot                             # screenshot helper, for node and Playwright
 ```
 
-The first two run from the repository root, the rest from this directory. Needs Nim 2.2.4
-and git. Hand-written pages are committed files: the shells and the review page's prose live
+The first two run from the repository root, the rest from this directory. Needs git and the
+compiler this project pins in `dance_ontology.nimble`. Hand-written pages are committed
+files: the shells and the review page's prose live
 under `pages/`, the one hand-drawn proposal under `mockups/`, and `tools/build.nim pages`
 copies, fills and splices them under `build/` beside the scripts compiled for them. What a
 build emits is never committed, its lines running far past any width a file may have.
@@ -132,7 +136,8 @@ to settle the rest.
 
 ## Status
 
-Every law under test through testament on Nim 2.2.4: the frame and transition laws over
+Every law under test through testament on this project's pinned compiler: the frame and
+transition laws over
 every pair of frames, the workbook audit cell by cell, the drawings against the model, the
 sim's laws over every moment of every sweep, and the workbench's gates on every page.
 Unreviewed by a human. Design decisions, what was rejected and what each costs are in

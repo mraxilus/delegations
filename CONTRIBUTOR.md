@@ -26,7 +26,10 @@ outside your project.
   never count on it.
 - **Blocked by a rule or a check.** Do not work around it and do not edit the rule. Record
   the question under an `## Open questions` heading in `PROVENANCE.md` and in the pull
-  request body. The curator changes rules; you do not.
+  request body. The curator changes rules; you do not. Nor do they change your code: a
+  curator branch may write only your `README.md`, `PROVENANCE.md` and `GLOSSARY.md`, and
+  the `scope` job holds them to it. An answer arrives as a changed rule or check for you to
+  apply, never as an edit to your source.
 - **Language.** Nim. TypeScript only where JavaScript is unavoidable (a browser or Node
   host), never plain JavaScript, never Python. Each such file justifies itself in its header.
 - **File kinds.** Only kinds registered in `curator/audit/src/kinds.nim` may exist; the
@@ -69,14 +72,16 @@ Before any code:
 1. Create `contributor/<domain>/<project>/`.
 2. Write `PROVENANCE.md` first, opening with the header table below. The `Rules` value is
    the stamp of the governing documents: run `nim r koch stamp` at the repository root
-   (needs Nim 2.2.4 and git) and paste its last line.
+   (needs git and any Nim that builds koch, which is `curator/audit`'s pin) and paste its
+   last line.
 3. Write `GLOSSARY.md`: `# <project>` heading, one sentence on what the project is,
    `## Language`. Terms are added as they resolve, never in advance.
 4. Write `README.md`: purpose, authority replicated if any, build and test command, status.
 5. Write `<project>.nimble`: `version`, `author`, `description`, `license`,
-   `srcDir = "src"`, `requires "nim >= 2.2.4"`. Copy `curator/probe/probe.nimble`. Atlas and
-   the audit read requirements from this file; the audit demands exactly one nimble file,
-   named after the project folder.
+   `srcDir = "src"`, and `requires "nim == <version>"` naming the compiler you verified the
+   project on. Copy `curator/probe/probe.nimble`. Atlas and the audit read requirements from
+   this file; the audit demands exactly one nimble file, named after the project folder, and
+   an exact pin rather than a range (see Toolchain).
 6. Create `src/` and `tests/` with at least one test. Use the testament stub shape from
    `STYLE.md` §6; `curator/probe/tests/tprobe.nim` is a worked example with a matrix.
    `nim r koch tests contributor/<domain>/<project>` runs your tests alone.
@@ -101,6 +106,37 @@ Header table for `PROVENANCE.md`:
 | Rules  | <last line of `nim r koch stamp`> |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 ```
+
+## Toolchain
+
+Your project pins its own compiler. No single version serves every project here, and that is
+a fact rather than a preference: one project's dependency needs 2.2.6 or later, and another
+crashes the compiler on 2.2.8 and later. So the version lives in your nimble file, beside the
+packages Atlas pins, and it is exact for the same reason `atlas.lock` is exact — it records
+what was verified, never a range nobody tried.
+
+- `requires "nim == 2.2.6"`. A range is rejected by the audit: `>=` cannot say which
+  compiler your suites actually passed on, and cannot express an upper bound when a later
+  release breaks you.
+- Install that version and put it on `PATH` before running anything. `choosenim 2.2.6`
+  switches between installed versions; unpacking a release tarball from
+  <https://nim-lang.org/install.html> and prefixing its `bin/` to `PATH` also works, and
+  needs no installer. `atlas`, `nimble` and `testament` ship beside `nim`, so they follow the
+  version you choose.
+- Running checks on any other compiler is a finding, not a warning: `koch` reports the
+  mismatch and refuses to compile the project, because the wrong compiler either fails
+  confusingly or passes without testing what CI will run.
+- Bumping the pin is your work, and it is a change like any other: run the suites on the new
+  version, move the line, and record in `PROVENANCE.md` what moved and why.
+- CI installs your pin for your project alone, in its own job. You are never held to another
+  project's compiler, and no other project is held to yours.
+
+Run `git config core.quotepath off` once in your checkout. The `síncopa` domain folder
+carries an accent, and git quotes such paths by default, which breaks any pipeline of the
+shape `git ls-files | xargs ...` — the quoted name is passed on verbatim and the file is not
+found. With the setting off, paths come out as they are. `koch` is unaffected either way,
+since it reads NUL-separated output directly; this is for the shell commands you write
+yourself.
 
 ## Adding a dependency
 
@@ -144,8 +180,8 @@ Every later session:
 
 1. Read `PROVENANCE.md` in full, then `GLOSSARY.md`, then the code in the order the umbrella
    module's bootstrap diagram gives.
-2. Run `nim r koch audit` at the repository root. It must be green before you start. Before
-   every push, `nim r koch ci` must be green (see below).
+2. Run `nim r koch tests contributor/<domain>/<project>` for your project. It must be green
+   before you start. Before every push, `nim r koch ci` must be green (see below).
 3. `Rules stamp stale` on your project means the governing documents changed after the
    project's last audit. Normally the curator re-audits every project in the same pull
    request as a rules change, so this appears only when your branch predates one. Merge
@@ -161,13 +197,17 @@ Every later session:
   and every assertion cites it in a trailing comment.
 - **Regression rule.** Every mistake found, in any session, earns a test that fails before
   the fix and passes after, committed before the fix: `test(<project>): cover <mistake>`,
-  then `fix(<project>): <fix>`. Never delete, weaken or skip a test to get green.
+  then `fix(<project>): <fix>`. Never delete, weaken or skip a test to get green. The
+  `commits` job enforces this: a `fix` with no earlier `test` of the same scope on your
+  branch is a finding. A change that needs no new test is not a `fix` — it is a `refactor`,
+  a `chore` or a `docs`, and saying so is honest rather than evasive.
 - Test laws, not examples. Enumerate small domains exhaustively; sample large ones with a
   few hundred seeded random cases, and record the count beside the claim.
 - Test where the mechanism runs: real wiring, output read back, bytes re-read.
 - `koch` runs testament over `tests/t*.nim` in your project directory; there is no
-  per-project build file. `nim r koch audit` runs the static audit, restores dependencies,
-  then every project's tests; CI runs the same.
+  per-project build file. `nim r koch tree` runs the static audit alone, and
+  `nim r koch audit` adds dependency restore and every project's suites, which needs every
+  project's pinned compiler installed; `nim r koch ci` is the one to run before a push.
 
 ## Glossary process
 
@@ -222,12 +262,15 @@ what was rejected, what it costs. There is no `docs/adr/`.
 ## Before opening a pull request
 
 - `nim r koch ci` at the repository root passes on the exact commit you push. It fetches
-  `origin/main`, then runs the same three checks CI runs: `audit` (layout, form, comments,
-  provenance, glossary, dependencies, every project's tests), `scope` (every changed path
-  starts with `contributor/<domain>/<project>/`) and `commits` (every subject parses as
+  `origin/main`, then runs what CI runs: the whole-tree static pass (layout, form, comments,
+  provenance stamps, glossary shape, compiler pins), then dependency restore and the suites
+  of every project whose code changed — normally yours alone — then `scope` (every changed
+  path starts with `contributor/<domain>/<project>/`) and `commits` (every subject parses as
   `type(<project>): summary`). A pull request opened before it passes is a process
   violation whatever CI later says: the runner confirms, it never discovers. Run it again
   before every later push to the same pull request.
+- A change touching only `PROVENANCE.md` and `GLOSSARY.md` compiles nothing, since it alters
+  no behaviour; the static pass still checks every stamp.
 - `PROVENANCE.md` describes the design as it now is, with each claim marked verified or
   assumed and each figure carrying its pair; nothing narrates.
 - `GLOSSARY.md` holds every term that resolved.
@@ -282,6 +325,17 @@ design document.
 
 - **Verify by running.** A claim about behaviour, cost, or appearance goes in the file
   only after you ran the code, rendered the output, or read the bytes back.
+- **A claim someone else can repeat cites the test that repeats it**, written as
+  ``Verified by `tfoo.nim` ``. The audit resolves that name against your `tests/` directory
+  and fails when it does not exist, so a citation cannot quietly rot when a suite is renamed
+  or removed. It checks only that the file exists; whether that test makes the claim beside
+  it is read, never checked.
+- **A claim verified any other way says so, and names the tool and the date.** Verified by
+  hand, in a browser, or with something that is not in this repository means nobody can
+  re-run it from a checkout, and a later reader is entitled to know that before trusting it.
+  Write "verified by hand in Firefox 141, 2026-09-06" rather than "verified". Prefer turning
+  such a claim into a test; where the thing genuinely cannot be tested here, the sentence
+  carries its own expiry, and that is the honest outcome.
 - **Measurements come in pairs.** A cost is a before and an after, on a named machine and
   scene, with the method. If you did not measure, write "unmeasured" rather than repeat an
   earlier figure.

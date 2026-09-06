@@ -12,10 +12,19 @@
 ##
 ##   Review row is only human-written line: check demands presence, never content, because
 ##     checker cannot know whether human read anything.
+##
+##   Claim citing test is checked to cite real one: `Verified by \`x.nim\`` must name file
+##     under project's `tests/`. That is only substance check in audit, and it is narrow one:
+##     it proves citation resolves, never that named test makes claim beside it. Rest holds
+##     by Architect's reading.
+##   Citation not ending `.nim` is left alone, so backticked command such as
+##     `atlas changed` passes.
+##   Cost: claim verified by hand, in browser, or by tool absent from repository cannot be
+##     checked at all; CONTRIBUTOR.md asks such claim to name its tool and date instead.
 
 {.experimental: "strictFuncs".}
 
-import std/[strutils, tables]
+import std/[sets, strutils, tables]
 import ./[findings, markdown]
 
 
@@ -24,6 +33,10 @@ const
     ## Documents stamp covers, in digest order; CURATOR.md is excluded as curator-only.
   FIELDS* = ["Agent", "Author", "Date", "Style", "Rules", "Review"]
     ## Header rows every PROVENANCE.md carries.
+  CITATION* = "verified by `"
+    ## Opening of claim naming test that repeats it; matched without case.
+  NIM_EXT* = ".nim"
+    ## Extension citation must carry to be read as file rather than command.
   FNV_OFFSET = 0xcbf29ce484222325'u64
   FNV_PRIME = 0x100000001b3'u64
 
@@ -55,6 +68,32 @@ func isIsoDate*(s: string): bool =
   ## Decide whether `s` is `YYYY-MM-DD`.
   s.len == 10 and s[4] == '-' and s[7] == '-' and
     (s[0 .. 3] & s[5 .. 6] & s[8 .. 9]).allCharsInSet(Digits)
+
+
+func citations*(source: string): seq[string] =
+  ## Collect test files claims cite, in order of appearance.
+  let lower = source.toLowerAscii
+  var i = 0
+  while true:
+    let at = lower.find(CITATION, i)
+    if at < 0: break
+    let open = at + CITATION.len
+    let close = source.find('`', open)
+    if close < 0: break
+    let name = source[open ..< close]
+    if name.endsWith(NIM_EXT): result.add name
+    i = close + 1
+
+
+func checkCitations*(path, source, tests_prefix: string, paths: HashSet[string]): seq[Finding] =
+  ## Report cited test absent from project's tests directory.
+  for name in source.citations:
+    if tests_prefix & name notin paths:
+      result.add finding(
+        path, 0,
+        "Claim cites test that is absent; write verification that can be repeated, or name " &
+          "tool and date instead; got `" & name & "`.",
+      )
 
 
 func checkProvenance*(path, source, stamp_expected: string): seq[Finding] =
