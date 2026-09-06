@@ -20,6 +20,15 @@ suite "Toolchain":
     check not isVersion("2..4")  # empty part
     check not isVersion(".2.4")  # leading dot
 
+  test "commit is forty lowercase hex, and nothing else":
+    check isCommit("295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3")  # forty hex
+    check not isCommit("295bafc")  # short
+    check not isCommit("295BAFC0D7E9A0C9A3BA0D9B39B5B0B6A4C1D2E3")  # uppercase
+    check not isCommit("295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2eg")  # not hex
+    check not isCommit("2.2.4")  # version
+    check isPin("2.2.4") and isPin("295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3")
+    check not isPin("devel")  # moving target records nothing
+
   test "pin is read only when exact":
     check NIMBLE_TEXT.nimPin == some(PIN)  # fixture pins exactly
     check nimPin("requires \"nim == 2.2.6\"\n") == some("2.2.6")  # spaced
@@ -28,6 +37,9 @@ suite "Toolchain":
     check nimPin("requires \"nim >= 2.2.4\"\n").isNone  # lower bound is not pin
     check nimPin("requires \"nim\"\n").isNone  # bare name names no version
     check nimPin("requires \"malebolgia\"\n").isNone  # no compiler requirement
+    check nimPin("requires \"nim == 295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3\"\n") ==
+      some("295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3")  # commit, for devel dependency
+    check nimPin("requires \"nim == devel\"\n").isNone  # label, not pin
 
   test "project without exact pin is finding, naming what it holds":
     check checkPin("p/p.nimble", NIMBLE_TEXT).len == 0  # exact pin passes
@@ -42,15 +54,28 @@ suite "Toolchain":
     check workflowVersion("  NIM_VERSION: 2.2.6\n") == some("2.2.6")  # bare
     check workflowVersion("name: check\n").isNone  # absent
 
+  test "driver pins version, never commit":
+    let commit = "295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3"
+    let found = checkDriver(WORKFLOW_TEXT, commit)
+    check found.len == 1  # setup action installs releases; every job waits on driver
+    check found[0].message.endsWith("got `" & commit & "`.")
+
   test "driver version must equal driver project pin":
     check checkDriver(WORKFLOW_TEXT, PIN).len == 0  # agreement
     check checkDriver(WORKFLOW_TEXT, "2.2.6").len == 1  # drift
     check checkDriver("name: check\n", PIN).len == 1  # unstated
     check checkDriver(WORKFLOW_TEXT, "2.2.6")[0].path == WORKFLOW_PATH  # points at workflow
 
-  test "compiler on path must equal project pin":
-    check checkRunning("curator/probe", PIN, PIN).len == 0  # match
-    let found = checkRunning("curator/probe", "2.2.6", PIN)
+  test "compiler on path must equal project pin, by version or by commit":
+    let commit = "295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3"
+    let running = Compiler(version: PIN, commit: commit)
+    check checkRunning("curator/probe", PIN, running).len == 0  # version matches
+    check checkRunning("curator/probe", commit, running).len == 0  # commit matches
+    let found = checkRunning("curator/probe", "2.2.6", running)
     check found.len == 1
     check found[0].path == "curator/probe"
     check found[0].message.endsWith("got `" & PIN & "`.")  # names compiler actually present
+
+    # Commit pin against compiler reporting no hash names what is missing.
+    let bare = Compiler(version: PIN, commit: "")
+    check checkRunning("curator/probe", commit, bare)[0].message.endsWith("got `nothing`.")
