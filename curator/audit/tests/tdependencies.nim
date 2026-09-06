@@ -7,7 +7,7 @@ joinable: true
 ## Replicate nimble requirement reading of `dependencies.nim` header and CONTRIBUTOR.md.
 
 import std/[options, os, strutils, tempfiles, unittest]
-import ../src/dependencies
+import ../src/[projects, dependencies]
 import ./fixtures
 
 
@@ -51,7 +51,8 @@ suite "Dependencies":
     let root = createTempDir("delegations_", "_deps")
     defer: removeDir(root)
     root.writeInto("curator/probe/probe.nimble", NIMBLE_TEXT)
-    check restoreAll(root, ["curator/probe"]).len == 0  # nothing run, nothing found
+    # Empty `bin` names PATH; project without lock runs no atlas either way.
+    check restoreAll(root, [Target(dir: "curator/probe")]).len == 0
 
   test "lock stores copy of nimble, read back whole":
     check lockNimble(lockWith(NIMBLE_TEXT)) == some(NIMBLE_TEXT)  # round trip

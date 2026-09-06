@@ -23,7 +23,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, json, options, strutils]
+import std/[algorithm, json, options, os, strutils, tables]
 import ./[findings, layout, toolchain, dependencies, projects, tree]
 
 
@@ -128,16 +128,35 @@ proc render*(jobs: openArray[Job]): string =
   $node
 
 
-proc runJobs*(root: string, jobs: openArray[Job]): seq[Finding] =
-  ## Restore and test each planned project, refusing any pin compiler on PATH cannot serve.
-  ##   Mismatched project is reported and skipped rather than compiled: wrong compiler
-  ##   either fails confusingly or passes without testing what CI will run.
+proc targetsFor*(jobs: openArray[Job]): (seq[Target], seq[Finding]) =
+  ## Resolve each job's pin to toolchain serving it, reporting pins nothing serves.
+  ##   Pins differ between projects and one machine has one compiler on PATH, so each pin
+  ##   is resolved rather than assumed: PATH when it already serves, else cache, else
+  ##   fetched. Pin nothing serves is finding naming cache, and its project is dropped
+  ##   rather than run by wrong compiler, which either fails confusingly or passes without
+  ##   testing what CI will run.
+  ##   Resolution happens once per distinct pin, since projects commonly share one.
   if jobs.len == 0: return
   let running = runningCompiler()
-  var dirs: seq[string]
+  let cache = cacheRoot(getEnv(CACHE_KEY))
+  var bins = initTable[string, Option[string]]()
   for job in jobs:
-    let mismatch = checkRunning(job.dir, job.pin, running)
-    if mismatch.len > 0: result.add mismatch
-    else: dirs.add job.dir
-  result.add restoreAll(root, dirs)
-  result.add runTests(root, dirs)
+    if job.pin notin bins: bins[job.pin] = resolve(job.pin, running, cache)
+    let bin = bins[job.pin]
+    if bin.isNone: result[1].add missing(job.dir, job.pin, binOf(cache, job.pin))
+    else: result[0].add Target(dir: job.dir, bin: bin.get)
+
+
+proc restoreJobs*(root: string, jobs: openArray[Job]): seq[Finding] =
+  ## Restore each planned project's checkouts, Atlas coming from that project's toolchain.
+  let (targets, found) = jobs.targetsFor
+  result = found
+  result.add restoreAll(root, targets)
+
+
+proc runJobs*(root: string, jobs: openArray[Job]): seq[Finding] =
+  ## Restore and test each planned project, each on toolchain its own pin names.
+  let (targets, found) = jobs.targetsFor
+  result = found
+  result.add restoreAll(root, targets)
+  result.add runTests(root, targets)

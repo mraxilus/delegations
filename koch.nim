@@ -37,7 +37,7 @@
 
 import std/[options, os, parseopt, strutils]
 import ./curator/audit/src/[
-  findings, domains, scope, commits, tree, dependencies, audit, plan, base,
+  findings, domains, scope, commits, tree, audit, plan, base,
 ]
 
 
@@ -107,7 +107,7 @@ proc run(options: Options): int =
     found = options.root.readTree.auditTree
   of "deps":
     let tree = options.root.readTree
-    found = restoreAll(options.root, options.dirsOf(tree))
+    found = restoreJobs(options.root, tree.jobsFor(options.dirsOf(tree)))
   of "tests":
     let tree = options.root.readTree
     found = runJobs(options.root, tree.jobsFor(options.dirsOf(tree)))

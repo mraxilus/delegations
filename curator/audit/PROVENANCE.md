@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 73a6fa37de648f53 |
+| Rules  | 6d0cc8f175302cba |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -401,6 +401,52 @@ the local run was supposed to confirm. Cost: a curator touching `koch.nim` or
 Verified by `ttoolchain.nim` for each rule, and by driven check on this repository: a
 nimble file carrying `>=` reports one finding naming what it holds, and a nimble file with
 no compiler requirement reports the same.
+
+**Koch resolves each pin to its own compiler, and fetches one it lacks.** Until this landed
+`runJobs` read the single compiler on `PATH` and reported a finding for every project whose
+pin differed, so `nim r koch ci` — the command CONTRIBUTOR.md requires to pass before a pull
+request is opened — could not be green as one command whenever the changed set spanned two
+pins. Any change under `curator/audit/src/` selects every project, so that was the ordinary
+case, not an edge: it shaped four pull requests on 2026-09-06, each verified by running two
+compilers under two commands and stitching the halves together in prose. Resolution now goes
+`PATH` when it already serves the pin, then `~/.cache/koch/nim/<pin>/bin`, then a fetch:
+a published release as a tarball from nim-lang.org, and a commit — or any platform
+nim-lang.org publishes no build for — by cloning `nim-lang/Nim` and running `sh build_all.sh`,
+the same recipe `check.yml` already used, so it was proven rather than invented. The cache
+sits outside the checkout because the audit reads untracked files, the lesson the first run
+on `main` taught. `$KOCH_NIM_DIR` moves it. Rejected: a directory the developer populates by
+hand, which leaves the defect in place for anyone who has not; `choosenim`'s layout, a second
+convention to maintain that cannot serve a commit pin at all.
+
+Two things were learned by driving it rather than reasoning about it, and both changed the
+code. **A half-built toolchain lies.** Probing `bin/nim` five minutes before `koch boot`
+finished returned the csources bootstrap binary, which answered `--version` with an unrelated
+commit — so a source build now completes beside its destination and moves in only when done,
+as the tarball path already did. **Naming a tool by path is not enough.** Atlas resolves `nim`
+through `PATH`, so the toolchain's own Atlas still read whichever compiler `PATH` held and
+warned `environment mismatch: versions differ`; measured on 2026-09-06 with one Atlas binary,
+warning under one `PATH` and silent under the other. Children therefore run with the
+toolchain's `bin` leading `PATH`, and that warning is gone from a full run. A tool absent from
+a toolchain falls back to `PATH` rather than raising, since what `koch tools` produces moves
+between Nim versions.
+
+Verified by `ttoolchain.nim` and `tprojects.nim`, and driven end to end on 2026-09-06.
+`curator/probe` pinned to 2.2.6 with nothing local serving it: koch fetched the tarball and
+ran the suite in **7.6 s** cold, 3.0 s warm, testament reporting
+`/root/.cache/koch/nim/2.2.6/bin/nim`. Then the real case, one command with only 2.2.4 on
+`PATH` and four projects across two pins: **0 findings in 3 m 37 s**, `rga_visualiser` on the
+commit-pinned compiler and the other three on `PATH`, with no Atlas mismatch warning anywhere
+in the log. A pin nothing can serve — 9.9.9, empty cache — is one finding naming the pin and
+the cache it tried, not a crash.
+
+Costs. A checker now reaches the network and may build a compiler: seconds for a release,
+minutes for a commit, once per pin. Each cached toolchain is a few hundred megabytes and
+nothing prunes them. Downloads are trusted on TLS alone, with no checksum or signature
+verified, because Nim publishes none in a form worth parsing — the one place this repository
+takes something on trust that it pins everywhere else, and worth revisiting if a digest
+appears. CI is untouched: every `project` job's installed compiler already satisfies its
+`matrix.nim`, so resolution stops at `PATH` and never fetches, and `check.yml` keeps its own
+commit build, which caches per commit through `actions/cache` and so beats koch's own.
 
 ## Scoped checks
 

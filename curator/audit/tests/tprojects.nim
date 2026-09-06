@@ -27,7 +27,34 @@ suite "Article IX":
     defer: removeDir(root)
     root.writeInto("contributor/ronri/pass/tests/tok.nim", HEADER & "doAssert 1 == 1\n")
     root.writeInto("contributor/ronri/fail/tests/tbad.nim", HEADER & "doAssert 1 == 2\n")
-    check runTests(root, ["contributor/ronri/pass"]).len == 0  # passing project is clean
-    let found = runTests(root, ["contributor/ronri/pass", "contributor/ronri/fail"])
+    # Empty `bin` names compiler on PATH, which is what CI already installs per job.
+    let pass = Target(dir: "contributor/ronri/pass")
+    let fail = Target(dir: "contributor/ronri/fail")
+    check runTests(root, [pass]).len == 0  # passing project is clean
+    let found = runTests(root, [pass, fail])
     check found.len == 1 and found[0].path == "contributor/ronri/fail/tests"  # failing named
     check found[0].message.endsWith("got exit `1`.")  # testament exits 1 on failure
+
+  test "IX.6 named toolchain is what runs, never whatever PATH holds":
+    # Pin resolution hands each project its own compiler; runner must use it rather than
+    #   falling back, or two projects on two pins would silently share one.
+    check nimOf("") == findExe("nim")  # empty names PATH, as CI installs per job
+    check nimOf("/c/2.2.6/bin") == "/c/2.2.6/bin" / "nim"
+    check toolOf("/c/2.2.6/bin", "testament") == "/c/2.2.6/bin" / "testament"
+    check toolOf("", "atlas") == "atlas"  # bare name, resolved through PATH
+    # Absent tool falls back to PATH rather than raising: `koch tools` set moves between
+    #   versions, and PATH tool still works while announcing its own mismatch.
+    check toolIn("/c/2.2.6/bin", "atlas") == "atlas"  # nothing at that path
+    check toolIn("", "atlas") == "atlas"
+
+  test "IX.6 toolchain leads child's PATH, since tools resolve each other through it":
+    let root = createTempDir("delegations_", "_env")
+    defer: removeDir(root)
+    # Atlas reads `nim` from PATH rather than from beside itself, so naming binary alone
+    #   leaves it reading whatever machine happens to hold.
+    let bin = root / "bin"
+    createDir(bin)
+    writeFile(bin / "sh", "")  # any entry; PATH is read, not this file
+    check runIn(root, "sh", ["-c", "case \"$PATH\" in " & bin & ":*) exit 0;; esac; exit 1"],
+      bin) == 0  # toolchain leads
+    check runIn(root, "sh", ["-c", "test -n \"$PATH\""]) == 0  # empty bin inherits
