@@ -13,7 +13,7 @@
 ##
 ## *In view* is `picking.isShownCentrally`: point's dot and finite plane's whole disc
 ## inside centred box, line merely crossing it.
-## *Framed* means camera's target moves to middle of everything finite picked, and orbit
+## *Framed* means camera's pivot moves to middle of everything finite picked, and orbit
 ## distance grows until every one satisfies that test.
 ##   Grows only if it must, never shrinks.
 ## Lives above `picking` because folding selection needs `Selection`, and `picking` cannot
@@ -168,7 +168,7 @@ func placementFor*(
   ## Resolve `aim` against camera as it stands into placement ease should end at.
   ##   Least movement, pan, zoom and orbit together, putting every picked object in view;
   ##   none at all where they all already are.
-  ##   Full move it is cut back from: target to middle of everything finite picked, angles
+  ##   Full move it is cut back from: pivot to middle of everything finite picked, angles
   ##   facing horizon objects only where nothing finite was, distance pulled back only as
   ##   far as fitting demands and never in.
   ##     Orbit is preferred *against* by construction: finite selection's full move
@@ -181,13 +181,13 @@ func placementFor*(
   # Charge nothing for fitting where everything is already in view, judged where camera is.
   #   Judging at centred placement pulled view about on every pick of something plainly
   #   visible.
-  #   Target still comes to middle of what was picked: reader who picks object and turns
+  #   Pivot still comes to middle of what was picked: reader who picks object and turns
   #   means to turn about *it*.
   #   Aim compares equal from next frame on, so ease runs once per pick; see `CameraAim`
   #   and `CameraTween.abandon`.
   if isShownAll(scene, picked, staged, camera, width, height):
     var held = camera.placementOf
-    if aim.centroid.isSome: held.target = aim.centroid.get
+    if aim.centroid.isSome: held.pivot = aim.centroid.get
     return held
 
   let angles =
@@ -196,7 +196,7 @@ func placementFor*(
   var settled = CameraPlacement(
     # Aim at middle of what was picked, not middle of bound holding it.
     #   Bound still decides *distance*.
-    target: if aim.centroid.isSome: aim.centroid.get else: camera.target,
+    pivot: if aim.centroid.isSome: aim.centroid.get else: camera.pivot,
     distance: camera.distance,
     azimuth: angles[0],
     # Clamp as orbit drag is.
@@ -240,7 +240,7 @@ func placementFor*(
   #   Re-centring is not concession to fitting, and in path search would find fraction of
   #   nothing shows everything.
   var start = camera.placementOf
-  start.target = settled.target
+  start.pivot = settled.pivot
   var (lower, upper) = (0.0, 1.0)
   for step in 1 .. STEPS_PLACEMENT_LEAST:
     let fraction = float(step)/float(STEPS_PLACEMENT_LEAST)
@@ -265,8 +265,8 @@ func placementUnderPointer*(
   scale: DrawExtent
 ): Option[CameraPlacement] =
   ## Resolve where camera ends after pointer pick, `anchor` kept on its pixel.
-  ##   Wheel's own move (`camera.dollyToward` then `retargetToDepth`): eye comes in along
-  ##   its line to anchor, angles untouched, target set on sight line at anchor's depth.
+  ##   Wheel's own move (`camera.dollyToward` then `repivotToDepth`): eye comes in along
+  ##   its line to anchor, angles untouched, pivot set on sight line at anchor's depth.
   ##   How far in depends on shape and on what reader could see.
   ##     Point drawn at floor dot (`DIAMETER_POINT_LEAST`) is only place, so camera comes
   ##     in until its disc spans `FRACTION_HEIGHT_APPROACH_POINT` of frame's height: moon
@@ -274,13 +274,13 @@ func placementUnderPointer*(
   ##     Point seen at its size, and line, come in no further than orbit distance: reader
   ##     at working scale picking operands keeps that scale, as ever.
   ##     Neither moves eye further off than anchor already stands: pick of object already
-  ##     close leaves picture as it is, target alone moving to its depth.
+  ##     close leaves picture as it is, pivot alone moving to its depth.
   ##     Plane is framed both ways, disc's `centre` brought to depth where its diameter
   ##     spans `FRACTION_HEIGHT_APPROACH_PLANE`, crossing under pointer held meanwhile.
   ##       Eye moving along its line to anchor by factor `s` puts centre at depth
   ##       `d_c - d_a + s*d_a`, so anchor ends at `D - d_c + d_a`.
   ##   Written out rather than through `dollyToward`, whose near floor scales eye's move
-  ##   by less than factor asked and would leave target short of anchor's depth.
+  ##   by less than factor asked and would leave pivot short of anchor's depth.
   ##   None where anchor is not ahead of eye, or plane's centre stands further behind
   ##   crossing than its depth to be, leaving caller `placementFor`.
   let
@@ -311,7 +311,7 @@ func placementUnderPointer*(
   ))
   if eye_settled.isNone: return
   some(CameraPlacement(
-    target: Position(
+    pivot: Position(
       x: eye_settled.get.x + depth_end*forward.x,
       y: eye_settled.get.y + depth_end*forward.y,
       z: eye_settled.get.z + depth_end*forward.z,

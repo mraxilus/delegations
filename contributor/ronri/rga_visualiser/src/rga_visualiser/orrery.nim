@@ -677,7 +677,7 @@ func constructOrrery*(
   #   are single point.
   #   Walk outward until scene holds what size asks for, less horizon block added after.
   #   System too large for room left is passed over, not stopped on: `break` reached
-  #   target only where counts summed exactly.
+  #   pivot only where counts summed exactly.
   #     Cost is that last few systems in are not strictly nearest left, invisible in
   #     field of thousands.
   for star in STARS:
@@ -754,7 +754,7 @@ func showOrrery*(
   scene.restoreFrom(initScene())
   constructOrrery(scene, scale, now)
   scene.replayFrom(now)
-  camera.target = POSITION_ORRERY
+  camera.pivot = POSITION_ORRERY
   camera.elevation = ELEVATION_ORRERY_SHOWN
   camera.distance =
     distanceFitting(RADIUS_ORRERY, camera, width, height, INSET_ORRERY_SHOWN)

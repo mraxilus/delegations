@@ -491,7 +491,7 @@ placed and placing variants agreeing.
 `FRACTION_GRID_FADE_START` = 0.06 × extent, gone by `FRACTION_GRID_FADE_END` = 0.20 ×
 extent. Those are 1.14 and 3.8 orbit distances, so what the camera looks at sits inside the
 solid core and the fog's edge is still a fifth of the far clip. Both came from rendering the
-alternatives: at 0.03/0.12 the ground at the target read as absent, and a reach of 300
+alternatives: at 0.03/0.12 the ground at the pivot read as absent, and a reach of 300
 faded out at 36 units, inside the eye's own height above ground. Fog rather than a halo
 because a halo makes the origin a place the reader may not leave — pan a hundred units away
 and the ground was gone. The fade runs in the fragment shader against the fragment's own
@@ -552,12 +552,12 @@ occlusion error is assumed to be tolerable, not measured.
 
 Camera
 ---
-`camera.nim` holds an orbit camera: target, distance, azimuth, elevation. `ELEVATION_LIMIT`
+`camera.nim` holds an orbit camera: pivot, distance, azimuth, elevation. `ELEVATION_LIMIT`
 = π/2 − 0.02. The opening placement is `initCameraDefault`, read by both entry points and
 by `home`.
 
 **An orbit distance has a floor and no ceiling.** `DISTANCE_LIMIT_NEAR` = 0.05 is geometry:
-at zero the eye coincides with its target and every direction `camera.frame` derives
+at zero the eye coincides with its pivot and every direction `camera.frame` derives
 collapses. `distanceHeld` is the one statement of it; construction, the dolly, both numeric
 fields and `distanceFitting` pass through it. The 500-unit ceiling that stood beside it read
 as the camera being bounded to a region — dolly out to look at something a kilometre across
@@ -585,18 +585,18 @@ was 1.8 million, and a 24-bit depth buffer then resolves 3 units at a depth of 3
 1,000 — on the device the points near the horizon striped against the discs seen edge-on and
 distant stars faded behind the washes drawn over them, which read as the sky vanishing on a
 pinch. `distanceNear` is now raised to hold the ratio at `RATIO_CLIP_MAX` = 100,000 (0.17
-units resolved at 300), and never past half the orbit distance, so the target cannot clip
+units resolved at 300), and never past half the orbit distance, so the pivot cannot clip
 however far the scene reaches. A 16-bit depth buffer cannot hold this ratio; nothing here
 detects one.
 
 **The wheel zooms toward what the pointer is over** — the map reading of a zoom.
 `picking.anchorZoomAt` solves the anchor in three answers, in order: the finite object under
-the pointer, else the ground at `z = 0`, else the horizontal plane through the target; where
+the pointer, else the ground at `z = 0`, else the horizontal plane through the pivot; where
 none answers (empty sky above the horizon) the wheel falls back to a centred dolly. **The
 object or ground is taken only where its depth is within `FACTOR_ANCHOR_DEPTH` = 2 of the
-orbit distance, either way**; otherwise the level through the target answers. The starfield
+orbit distance, either way**; otherwise the level through the pivot answers. The starfield
 put some star under every pixel, and anchoring on one a thousand units off slid the eye 38%
-of the way toward it per notch: six notches with the pointer off-centre carried the target
+of the way toward it per notch: six notches with the pointer off-centre carried the pivot
 1,737 units, three opening distances, and the far plane then clipped the field away behind.
 With the window the same six notches carry it 5 units here. Zooming onto a star being
 framed still works, since it stands at the depth being looked at. A cursor toward the horizon
@@ -608,8 +608,8 @@ it, a line at the point nearest the ray. Horizon objects are refused — drawn a
 `radius_horizon` about the eye, they are not *at* any place, and a horizon plane matches
 every ray. The price is the jump: two notches taken either side of an object's edge converge
 on different depths. `camera.dollyToward` then moves the eye along its own line to the
-anchor, leaving the angles alone, and scales the target toward the anchor by the same factor
-(`target' = anchor + s·(target − anchor)`), so the orbit centre settles onto what is being
+anchor, leaving the angles alone, and scales the pivot toward the anchor by the same factor
+(`pivot' = anchor + s·(pivot − anchor)`), so the orbit centre settles onto what is being
 zoomed into. The scale applied is read back from `distanceHeld`, so a zoom stopped by the
 floor moves the eye by exactly what it was allowed.
 
@@ -619,10 +619,10 @@ gesture; measured, the midpoint-aimed pinch dragged the view 11.4 units where th
 one holds it.
 
 **A drag pan grabs the level under the pointer and carries it.** `interaction.panAcross`
-meets both ends of the pointer's step with the horizontal plane through the target and
+meets both ends of the pointer's step with the horizontal plane through the pivot and
 translates by the difference. It replaces a rate of `FRACTION_PAN_PIXEL` = 0.0016 of the
 distance per pixel, which carried the scene 288 px for a 200 px drag and, sliding within the
-plane *facing the eye*, took the target from z 1.00 to 6.40 one way and −2.24 the other, so
+plane *facing the eye*, took the pivot from z 1.00 to 6.40 one way and −2.24 the other, so
 every later orbit swung about a point in mid-air. Both hold points lie on one level, so the
 height cannot move: 1.000 to 1.000 driven, mouse and two-finger alike, through one rule. The
 rate survives only where a ray misses the level — a drag on sky. **The hold point is
@@ -641,11 +641,11 @@ reason: `visualiser.SPEED_ORBIT` (0.008) is radians per pixel and `glue.js` work
 fractions of canvas width.
 
 *Checked.* Verified by driven wheel events: an object under the pointer drifts 0.000 px
-across a 3.2× zoom against 1.957 px with the target-level anchor, and wheeling back out
-returns to distance 19.000 and target (0, 0, 1); eight notches over the ground carry the
-target from z 1.00 to 0.32. Verified by driven drags: the pan figures above. Verified by
-suite: `norm(eye − target)` equals the held distance after a floored dolly; the pan's height
-invariance; the clamp's continuity. Verified by driven keys: 500 ms of `w` moved the target
+across a 3.2× zoom against 1.957 px with the pivot-level anchor, and wheeling back out
+returns to distance 19.000 and pivot (0, 0, 1); eight notches over the ground carry the
+pivot from z 1.00 to 0.32. Verified by driven drags: the pan figures above. Verified by
+suite: `norm(eye − pivot)` equals the held distance after a floored dolly; the pan's height
+invariance; the clamp's continuity. Verified by driven keys: 500 ms of `w` moved the pivot
 12.8 units with z unchanged to four decimals, shift 49.3. Assumed: that no ceiling is wanted
 by any reader, argued from the map reading rather than measured.
 
@@ -680,7 +680,7 @@ has no orientation, so the record carries none; a 14-float `RingRecord` is a dis
 plus a width, one instance drawing the whole circle over `mesh.ringCorners`. The static
 corner tables come from one generator each in `mesh` (`discCorners`, `domeCorners`,
 `ringCorners`), read by the desktop directly and by the browser through `nim*Corners`, so
-neither target holds a table that could drift from the references (`expandDiscVertex`,
+neither pivot holds a table that could drift from the references (`expandDiscVertex`,
 `expandDomeVertex`, `expandRingVertex`), which the suite pins to the multivector sums they
 replaced. `ribbonOfRing` derives the very `RibbonRecord` a rim segment would have been and
 `expandRingVertex` is `expandRibbon` of it, so a rim is widened by the one rule every line
@@ -882,7 +882,7 @@ but the first overlaps at vertical, the second follows the viewport rather than 
 the line, and the third flips its text. Verified by suite (a full orbit at two elevations
 in 0.002 rad steps, the second carrying the line through vertical twice: no isolated step,
 push direction turning under 0.05 per step, anchor always in view; the support twelve units
-off the target lands the anchor on the line, in view, a margin from the edge; the clearance
+off the pivot lands the anchor on the line, in view, a margin from the edge; the clearance
 pinned flat and vertical) and by driven check on the browser (402 frames over the same two
 turns: 0 hops, 0 out of view, largest step 9.4 px). Both front-ends rendered and looked at.
 
@@ -1167,7 +1167,7 @@ delta.
 (not `PIXELS_TAP_SLOP`'s 12 — a mouse does not roll, and a finger's allowance would swallow
 the short deliberate drags between two overlapping objects). A 0.35 s deadline once lost
 every click held 600 ms. The stillness reading is latched and false until a press raises it.
-A right press that never moved is a click too: the wheel only opens over a target *other*
+A right press that never moved is a click too: the wheel only opens over a pivot *other*
 than the source, so such a press never asked for one.
 
 **The press target chooses the scheme; the button chooses whether you are asked.** Press an
@@ -1213,47 +1213,47 @@ by a driven check that drags a finger from a point with a twin 0.05 units away a
 the camera orbited and nothing built; the plane-pick check had to drop the four coincident
 `b ∧ c` lines earlier gestures left, which are exactly the crowd the rule refuses.
 
-**The turntable's target follows what the zoom lands on.** Every rate but orbit is scaled
+**The turntable's pivot follows what the zoom lands on.** Every rate but orbit is scaled
 by the orbit distance on purpose — pan grabs the ground, the slide keys move a fraction of
 the distance per second, dolly is multiplicative — so a drag or a key hold moves the view by
-the same fraction of what is seen at any zoom. What broke that was the target: a pinch
-zoomed straight in with the target left on Sol, so a reader arriving at a planet had the
+the same fraction of what is seen at any zoom. What broke that was the pivot: a pinch
+zoomed straight in with the pivot left on Sol, so a reader arriving at a planet had the
 turntable still revolving about a point far behind it, and every orbit or pan swung the near
 planet across the frame — the "speed changes when zooming" report. `picking.anchorZoomAt`
 now says whether its anchor is where a point or line *stands* or a crossing of the sight ray
 with a plane, the ground or the level (`AnchorZoom.is_standing`); `interaction.dollyAt`
-re-targets along the sight line to a standing anchor's depth after the zoom
-(`camera.retargetToDepth`, which leaves the picture unchanged since eye and direction stay),
+re-pivots along the sight line to a standing anchor's depth after the zoom
+(`camera.repivotToDepth`, which leaves the picture unchanged since eye and direction stay),
 and the pinch goes through the same rule aimed at the middle of the frame (`dollyAtCentre`,
 `nimCameraDollyCentred`) rather than a plain dolly. Crossings are followed by the map rule
-alone, the target sliding toward the anchor as `dollyToward` always did. Rejected: following
+alone, the pivot sliding toward the anchor as `dollyToward` always did. Rejected: following
 the ground crossing too, which a reader zooming onto empty floor might expect. It moved the
-target off its level with every notch, and five driven pins fell at once — the wheel round
-trip, the pinch that must not slide, the two-finger pan, the target's height under pan, and
+pivot off its level with every notch, and five driven pins fell at once — the wheel round
+trip, the pinch that must not slide, the two-finger pan, the pivot's height under pan, and
 the zoom over ground — every one a rule pan, slide and the level anchor rely on. Rejected
 second: following a plane. Its depth under the pointer is not its depth at the middle of
-the frame, and the target lifted to it stood well off the plane being zoomed onto (the
-opening scene's ground *is* a plane item, and the target rose from 1.0 to 2.6 units on the
+the frame, and the pivot lifted to it stood well off the plane being zoomed onto (the
+opening scene's ground *is* a plane item, and the pivot rose from 1.0 to 2.6 units on the
 first notch). Verified: the driven pins now state the rule that holds — the eye and the
-pixel round-trip under a wheel notch each way, the target does not and is not meant to, and
+pixel round-trip under a wheel notch each way, the pivot does not and is not meant to, and
 a pinch that does not slide is one whose eye moves along its own sight line (`nimCameraEye`
 exists for that reading and for nothing on the page). Measured on the demo: eight wheel
-notches over Jupiter from 30 units hold its pixel exactly and bring the target from Sol to
+notches over Jupiter from 30 units hold its pixel exactly and bring the pivot from Sol to
 0.09 units off Jupiter's plane at 1.5 units' distance; a centred pinch onto a planet lands
-the target on it, a zoom over sky leaves the target's height alone, and one over ground
-slides the target toward it by the map rule only, all pinned by suite.
+the pivot on it, a zoom over sky leaves the pivot's height alone, and one over ground
+slides the pivot toward it by the map rule only, all pinned by suite.
 
 **Two fingers are read once per frame, and zoom only past the tap slop.** Each finger's
 move arrives as its own `pointermove`, so between the two events the separation and the
 midpoint are one finger new and the other old; read there, every step of a pan carried
 together was a zoom in by one finger's step and out again by the other's (ratios of 1.24
 and 0.81 alternating on the driven pan), harmless while a dolly was a pure scale and a
-target-moving re-target on every one of them once it was not. `glue.settleTwoFingers` reads
+pivot-moving re-pivot on every one of them once it was not. `glue.settleTwoFingers` reads
 both fingers once per frame from the frame loop instead, after both have reported. On top
 of that, two fingers carried together never hold their separation to the pixel, so a pinch
 zooms only once the separation has changed by more than `interaction.PIXELS_TAP_SLOP`
 since both came down, and the slop itself is not zoomed: the zoom starts from the separation
-where the slop was crossed, without a jump. Verified by the driven two-finger pan: the target
+where the slop was crossed, without a jump. Verified by the driven two-finger pan: the pivot
 moves across its level and the distance and height do not change at all.
 
 **The edit ghost is drawn at the session's own radius.** `Preview` carries a radius
@@ -1749,11 +1749,11 @@ moves calls `abandon`, which keeps the goal and marks it done (`release` clears 
 offer is re-made next frame and the camera taken straight back — panning was dead while
 anything stayed selected, on both builds); `release` belongs to the offer's own side. `goal`
 and `destination` are separate fields: the goal depends on geometry alone, the destination is
-a `CameraPlacement` resolved once against the camera as it stood. `advance` eases target and
+a `CameraPlacement` resolved once against the camera as it stood. `advance` eases pivot and
 angles linearly and **distance geometrically**. `runStoryboard` goes through the same rule and
 calls `settle`.
 
-**Framing** (`framing.nim`): on a new pick, **the orbit target comes to the middle of what
+**Framing** (`framing.nim`): on a new pick, **the orbit pivot comes to the middle of what
 was picked** — `objects.centroidFolded`, a sum of unit-weight points read back through
 `position`, over the same objects the bound is over, each yielded **once** by `watched` (a
 middle is a tally where a bound is a set) — and the camera moves by the **least zoom and
@@ -1781,12 +1781,12 @@ clipping. A plane is judged where its disc is drawn (the stored anchor), not at 
 
 **The cut.** `placementFor` first asks whether everything is already in view *where the
 camera stands* — judged at the centred placement instead, every pick of something plainly
-visible pulled the view about. Otherwise it builds the full placement (middle as target,
+visible pulled the view about. Otherwise it builds the full placement (middle as pivot,
 facing angles for horizon-only, bisected least distance: `ROUNDS_DISTANCE_FIT` = 8, the
 closed form `radius / sin θ` as the upper bracket only) and searches the least fraction of
 `camera.toward` satisfying `isShownAll`: `STEPS_PLACEMENT_LEAST` = 12 even steps then
 `ROUNDS_PLACEMENT_LEAST` = 5 halvings, each candidate verified at its own placement. The
-target is not part of the cut; distance grows, never shrinks; a finite pick never changes
+pivot is not part of the cut; distance grows, never shrinks; a finite pick never changes
 azimuth or elevation, and a star is turned toward only when nothing finite was picked.
 
 **A pointer pick keeps its object under the pointer and comes in to it.** The centring
@@ -1797,7 +1797,7 @@ click or tap on a point or a line records a `framing.PointerPick` (handle and cu
 the next frame. The destination is the wheel's own move (`placementUnderPointer`): the eye
 comes in along its line to where the object stands under the pointer
 (`picking.positionUnderPointerOn`, shared with the zoom anchor and without its nearness
-filter), the angles never change, and the target lands on the sight line at the object's
+filter), the angles never change, and the pivot lands on the sight line at the object's
 depth — so the object's pixel does not move and the turntable revolves at its depth, as
 after a wheel zoom onto it. **How far in depends on the shape and on what the reader could
 see**, sized on the frame's height by one formula, `camera.depthSpanning(diameter,
@@ -1825,19 +1825,19 @@ be looked at. A group keeps the centring rule, since it has to fit, which holdin
 cannot promise. **The ease holds the
 pixel too**: `CameraTween.anchor_held` switches `advance` from `toward` to
 `towardHoldingAnchor`, where the eye's depth to the anchor moves geometrically along the
-eye–anchor line; `toward`'s linear target and geometric distance take the eye off that
+eye–anchor line; `toward`'s linear pivot and geometric distance take the eye off that
 line mid-ease (from 168 to 10 the halfway eye sits at 41 by one curve and 89 by the
 other), and the object swung off the pointer before swinging back. **A pick renews a held
 goal**: the standing offer ignores a goal it already holds, so the same object picked
 again after the wheel had taken the reader out went nowhere — the "sometimes it doesn't
 zoom in" report, reproduced on the demo: from 30 units a pick of Jupiter flew to it, but
-after a wheel out to 168 a pick of a moon moved the target onto it and left the distance
+after a wheel out to 168 a pick of a moon moved the pivot onto it and left the distance
 at 168. `aimAt`'s `is_renewed` re-arms the ease for a pointer pick whatever the tween
 holds. Verified by suite (the pixel stays within 0.01 px through five steps of the ease
 and the arrival distance equals the fit; a near point and a line keep the orbit distance;
 a pair holds no anchor; a re-pick after `abandon` and a dolly re-arms) and by driven check
 on the browser (from 45 units a right-click brings the eye to 19.3 with the anchor
-drifting 0.00 px in flight and settled and the target at the object's depth; a second pick
+drifting 0.00 px in flight and settled and the pivot at the object's depth; a second pick
 after wheeling out past 100 comes in to 19.3 again; a right-click on the opening scene's
 ground plane from Home settles its centre at 48.28, exactly the depth wanted for 0.40).
 The suite pins the plane's arrival from 12 units and from 1, the crossing's pixel held
@@ -1927,7 +1927,7 @@ liveness and drawn with the hover marker; the browser adds an inset `:focus-visi
 
 *Checked.* Verified by `--drive-keys`: focus walked, enter selected, azimuth/elevation/distance
 each moved by exactly their own constant. Verified by browser drive: real key events; Tab from
-the canvas moving to the next control and back; a blur mid-hold moving the target 0.0000
+the canvas moving to the next control and back; a blur mid-hold moving the pivot 0.0000
 further; the help table's per-tab overflow at 320×568; `[]-+` typed into a label reaching the
 label. **Not demonstrated**: Tab landing on a Dear ImGui widget — a window that never takes
 focus under `xvfb` gives ImGui nothing to move; `gui.isNavEnabled` reports the configuration,
@@ -1950,7 +1950,7 @@ no figures (which moved here). `tools/check_prose` holds the whole of that mecha
 article rule, summary form, stage form — in every authored language, and runs in `verify.sh`.
 
 **The code was then refactored against both documents in seven passes**, each its own
-commit, each verified by every build target, both suites and the driven checks before the
+commit, each verified by every build pivot, both suites and the driven checks before the
 next began:
 
 - **Separators** (STYLE §5): commas between parameters until one type repeats, across 256
@@ -1983,7 +1983,7 @@ applied: the binding names in `opengl.nim` and `sdl3.nim` keep the foreign API's
 (`getError`, `getString`, `getUniformLocation`), since a reader greps the SDL and GL
 references by those names and V.3's bare-noun rule is for this project's own properties;
 lookup tables at module scope stay lowercase `lut_…` per V.5, the one family V.1's
-screaming case does not cover; `nimCameraTarget`, `nimOverlayMetrics`, `nimInkColor` and the
+screaming case does not cover; `nimCameraPivot`, `nimOverlayMetrics`, `nimInkColor` and the
 scene-listing exports still return sequences, being asked on the UI tick, on a redraw or once
 rather than per frame; `visualiser.main`, `format.formatMagnitude` and the two tool `main`s
 stay over sixty lines with the comment X.4 asks for, as one derivation or one report each.
@@ -1997,7 +1997,7 @@ mechanical, plus one substantive: `pga.nim:28` asserts its own module doc is the
 truth for names, which is what makes the notation trap easy to fall into.
 
 *Checked.* Verified: `check_prose` and `check_columns` report zero complaints; every build
-target, the three suites and both drives pass on the refactored tree; the demotion and the
+pivot, the three suites and both drives pass on the refactored tree; the demotion and the
 revert were decided by the compiler, not by reading. Verified by reading the emitted JS: the
 six per-frame exports allocate nothing (`nimDragTint` binds the ink, not the colour, since
 `lent` bound to `let` copies; an array literal handed to an `openArray` parameter is a
@@ -2034,7 +2034,7 @@ compound form (`☆m`, `m ∧☆ n`), needing seven Unicode operator characters 
 request 26074 — merged to `devel`, carried by no release. The pin is therefore
 `requires "nim == 27763495bcfe265507ca98aedc1c7064bf1e0e4d"`, that commit, which
 `toolchain.nim` accepts beside dotted versions and which CI builds from source and caches per
-commit. Rejected: a `devel` label, a moving target recording nothing verified; and waiting for
+commit. Rejected: a `devel` label, a moving pivot recording nothing verified; and waiting for
 a release, which is months of standing behind the library this project exists to exercise.
 
 **Four projections are withdrawn at head, and `projections.nim` stands in until they return.**
@@ -2109,7 +2109,7 @@ it gathers the joiners once now.
 The JS entry point declares `targets: "js"` rather than overriding testament's command. In
 the tree this was ported from, its header named a command testament never ran — the JS suite
 was compiled by a shell script instead — so the header was a claim nothing checked. Under
-`targets` testament compiles with the JS backend and runs the result through node, which is
+`pivots` testament compiles with the JS backend and runs the result through node, which is
 what makes the row real.
 
 **The suites test rules; a second layer drives events.** A rule bug earns a suite case; a
@@ -2151,7 +2151,7 @@ objects:
 
 Browser, SwiftShader: opening-scene frame build 21.9 ms released; demo at 5,038 orbiting,
 scene walk 9.2 ms with the tally off; one hover pick 3.5 ms at 5,038. **No figure here has
-been taken on real GPU hardware**, and a ">500 fps" target cannot be assessed in a software
+been taken on real GPU hardware**, and a ">500 fps" pivot cannot be assessed in a software
 rasteriser, where rasterisation dominates the frame entirely and none of it is this
 project's code.
 

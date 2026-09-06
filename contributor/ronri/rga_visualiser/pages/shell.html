@@ -264,7 +264,7 @@
      Only statement of controls in this build, and reachable at any time. Pill
      naming few of them used to greet every load and leave after four seconds; panel
      outgrew it, and page that explains itself on demand needs no greeter.
-     44px minimum, which is touch-target size Apple's guidelines ask for and comfortably
+     44px minimum, which is touch-pivot size Apple's guidelines ask for and comfortably
      over 24px WCAG 2.5.8 requires -- control reader reaches for when they are
      already lost is last one to make them aim. */
   /* ---- Scale bar: what one cell of ground grid measures ----     */
@@ -396,7 +396,7 @@
     background: none;
     border: 1px solid transparent;
     border-radius: 999px;
-    /* Past WCAG 2.5.8's 24px target on both axes once padding is counted.     */
+    /* Past WCAG 2.5.8's 24px pivot on both axes once padding is counted.     */
     padding: 6px 11px;
     cursor: pointer;
   }
@@ -509,7 +509,7 @@
     border-radius: 8px;
     padding: 9px 14px;
     text-decoration: none;
-    /* Real touch target, not text link: this is last route to saved file when
+    /* Real touch pivot, not text link: this is last route to saved file when
        every automatic one is blocked, and it is reached with thumb. */
     min-height: 38px;
     line-height: 20px;
@@ -830,7 +830,7 @@
   /* Sized and inked to be *recognisable as triangle* on phone. At 9px in faintest
      ink it was four pixels of grey -- speck beside label, which is not invitation
      to press anything; reader has to be able to tell at glance which rows open. Its
-     own row is hit target, which is full drawer width, so glyph only has to
+     own row is hit pivot, which is full drawer width, so glyph only has to
      be legible rather than large enough to hit. */
   .diagnostic-parent .chev {
     display: inline-block;
@@ -1426,11 +1426,11 @@ means it's free and will be handed to the next one you add, most recently freed 
           </div>
         </div>
         <div class="field">
-          <label>target</label>
+          <label>pivot</label>
           <div class="field-row">
-            <input type="number" id="cam-target-x" step="0.1">
-            <input type="number" id="cam-target-y" step="0.1">
-            <input type="number" id="cam-target-z" step="0.1">
+            <input type="number" id="cam-pivot-x" step="0.1">
+            <input type="number" id="cam-pivot-y" step="0.1">
+            <input type="number" id="cam-pivot-z" step="0.1">
           </div>
         </div>
       </div>

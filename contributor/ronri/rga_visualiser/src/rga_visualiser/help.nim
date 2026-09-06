@@ -155,7 +155,7 @@ const lut_help_entries* = block:
       HelpPath.Drag, nameOf(button) & "-drag one object onto another",
       case arming.get
       of MenuArming.Never: "build the one object those two define, without ever asking"
-      of MenuArming.OnDwell: "build that object, or pause on the target to be asked"
+      of MenuArming.OnDwell: "build that object, or pause on the pivot to be asked"
       of MenuArming.Always: "open the wheel, whatever the pair would have made on its own",
     )
   # Say "on its own": finger over crowd moves view instead; see `interaction.canConstructByTouch`.
@@ -165,7 +165,7 @@ const lut_help_entries* = block:
   )
   # Touch alone, now that mouse decides by button; see `MenuArming`.
   add(
-    HelpPath.Drag, "pause on the target mid-drag",
+    HelpPath.Drag, "pause on the pivot mid-drag",
     "open the wheel without needing a second button", is_touch = true,
   )
   add(

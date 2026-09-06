@@ -353,30 +353,30 @@ suite "Camera":
     let scale = camera.drawExtentFor(900)
     let bounds = camera.viewBoundsFor(scale, 16.0/9.0)
     const RADIUS = RADIUS_ITEM_DEFAULT
-    check isPointInView(placeObject(toMultivector(camera.target)), RADIUS, bounds)
+    check isPointInView(placeObject(toMultivector(camera.pivot)), RADIUS, bounds)
     check not isPointInView(
       placeObject(toMultivector(bounds.eye - 1.0*bounds.forward)), RADIUS, bounds
     )
-    # Sideways at target's depth: just inside half-width stays, just outside goes.
+    # Sideways at pivot's depth: just inside half-width stays, just outside goes.
     let reach_across = camera.distance*bounds.bound_width
     let reach_above = camera.distance*bounds.bound_height
     check isPointInView(
-      placeObject(toMultivector(camera.target + (0.9*reach_across)*bounds.right)), RADIUS,
+      placeObject(toMultivector(camera.pivot + (0.9*reach_across)*bounds.right)), RADIUS,
       bounds,
     )
     check not isPointInView(
-      placeObject(toMultivector(camera.target + (1.1*reach_across)*bounds.right)), RADIUS,
+      placeObject(toMultivector(camera.pivot + (1.1*reach_across)*bounds.right)), RADIUS,
       bounds,
     )
     check isPointInView(
-      placeObject(toMultivector(camera.target + (0.9*reach_above)*bounds.up)), RADIUS, bounds
+      placeObject(toMultivector(camera.pivot + (0.9*reach_above)*bounds.up)), RADIUS, bounds
     )
     check not isPointInView(
-      placeObject(toMultivector(camera.target + (1.1*reach_above)*bounds.up)), RADIUS, bounds
+      placeObject(toMultivector(camera.pivot + (1.1*reach_above)*bounds.up)), RADIUS, bounds
     )
     # Point's own radius widens margin: same centre just past edge stays once its disc.
     #   reaches back in, exactly as far as radius says.
-    let just_out = placeObject(toMultivector(camera.target + (1.1*reach_across)*bounds.right))
+    let just_out = placeObject(toMultivector(camera.pivot + (1.1*reach_across)*bounds.right))
     check isPointInView(just_out, 0.2*reach_across, bounds)
     check not isPointInView(just_out, 0.05*reach_across, bounds)
     # Horizon point is tested by direction alone; every other kind passes untested.
@@ -397,13 +397,13 @@ suite "Camera":
       seed - 20.5
     for trial in 0 ..< 100:
       let
-        target = Position(x: pseudo(), y: pseudo(), z: pseudo())
+        pivot = Position(x: pseudo(), y: pseudo(), z: pseudo())
         distance = 1.0 + abs(pseudo())
         azimuth = pseudo()/7.0
         elevation = pseudo()/20.0
-        camera = initCamera(target, distance, azimuth, elevation)
+        camera = initCamera(pivot, distance, azimuth, elevation)
         radius = distance*cos(camera.elevation)
-        classical = target + Direction(
+        classical = pivot + Direction(
           x: radius*cos(camera.azimuth),
           y: radius*sin(camera.azimuth),
           z: distance*sin(camera.elevation),
@@ -414,7 +414,7 @@ suite "Camera":
   test "frame is orthonormal and perpendicular to sight axis":
     for i in 0 ..< SAMPLES:
       let camera = initCamera(
-        target = PLACES[i],
+        pivot = PLACES[i],
         distance = 2.0 + rand(20.0),
         azimuth = rand(2.0*PI),
         elevation = rand(-1.4 .. 1.4),
@@ -429,28 +429,28 @@ suite "Camera":
       check dot(axes.axis_up, UP_WORLD) > 0
 
 
-  test "eye stands at orbit distance from target, and looks back at it":
+  test "eye stands at orbit distance from pivot, and looks back at it":
     for i in 0 ..< SAMPLES:
       let camera = initCamera(
-        target = PLACES[i], distance = 7.0, azimuth = rand(2.0*PI), elevation = rand(-1.4 .. 1.4)
+        pivot = PLACES[i], distance = 7.0, azimuth = rand(2.0*PI), elevation = rand(-1.4 .. 1.4)
       )
-      check norm(camera.eye - camera.target) =~ camera.distance
-      let heading = normalize(camera.target - camera.eye)
+      check norm(camera.eye - camera.pivot) =~ camera.distance
+      let heading = normalize(camera.pivot - camera.eye)
       check heading.isSome
       check dot(heading.get, camera.frame(camera.eye).forward) =~ 1.0
 
 
-  test "view transform carries eye to origin and target down its own negative z":
+  test "view transform carries eye to origin and pivot down its own negative z":
     let camera = initCamera(
-      target = Position(x: 1, y: -2, z: 0.5), distance = 9.0, azimuth = 0.7, elevation = 0.3
+      pivot = Position(x: 1, y: -2, z: 0.5), distance = 9.0, azimuth = 0.7, elevation = 0.3
     )
     let view = initMatrixView(camera.eye, camera.frame(camera.eye))
-    let (at_eye, at_target) = (
-      transform(view, camera.eye, 1.0), transform(view, camera.target, 1.0)
+    let (at_eye, at_pivot) = (
+      transform(view, camera.eye, 1.0), transform(view, camera.pivot, 1.0)
     )
     check isNear(at_eye[0], 0) and isNear(at_eye[1], 0) and isNear(at_eye[2], 0)
-    check isNear(at_target[0], 0) and isNear(at_target[1], 0)
-    check isNear(at_target[2], -camera.distance)
+    check isNear(at_pivot[0], 0) and isNear(at_pivot[1], 0)
+    check isNear(at_pivot[2], -camera.distance)
 
 
   test "projection carries clip planes to depth bounds":
@@ -462,12 +462,12 @@ suite "Camera":
       check isNear(clipped[2]/clipped[3], expected)
 
 
-  test "whole transform carries target to centre of view":
+  test "whole transform carries pivot to centre of view":
     for i in 0 ..< SAMPLES:
       let camera = initCamera(
-        target = PLACES[i], distance = 11.0, azimuth = rand(2.0*PI), elevation = rand(-1.2 .. 1.2)
+        pivot = PLACES[i], distance = 11.0, azimuth = rand(2.0*PI), elevation = rand(-1.2 .. 1.2)
       )
-      let clipped = transform(camera.initMatrixViewProjection(1.6), camera.target, 1.0)
+      let clipped = transform(camera.initMatrixViewProjection(1.6), camera.pivot, 1.0)
       check clipped[3] > 0
       check isNear(clipped[0]/clipped[3], 0)
       check isNear(clipped[1]/clipped[3], 0)
@@ -490,7 +490,7 @@ suite "Camera":
 
 
   test "an orbit distance has a floor and no ceiling":
-    # Floor is geometry: at zero eye coincides with its target and every direction.
+    # Floor is geometry: at zero eye coincides with its pivot and every direction.
     #   derived from line joining them collapses. Ceiling was round number, and
     #   reader who dollied out to look at something kilometre across simply stopped.
     check distanceHeld(0.0) =~ DISTANCE_LIMIT_NEAR
@@ -508,7 +508,7 @@ suite "Camera":
   test "the camera still derives a frame and a transform a thousand kilometres out":
     # Nothing downstream of distance has ceiling of its own: both clip planes are.
     #   fractions of it, so frustum keeps its shape however far eye stands.
-    let camera = initCamera(target = ORIGIN, distance = 1.0e6, azimuth = 0.9, elevation = 0.4)
+    let camera = initCamera(pivot = ORIGIN, distance = 1.0e6, azimuth = 0.9, elevation = 0.4)
     check camera.distance =~ 1.0e6
     let axes = camera.frame(camera.eye)
     check isNear(norm(axes.axis_right), 1.0)
@@ -516,7 +516,7 @@ suite "Camera":
     check isNear(norm(axes.forward), 1.0)
     check camera.distanceNear > 0.0
     check camera.distanceFar > camera.distanceNear
-    let clipped = transform(camera.initMatrixViewProjection(1.6), camera.target, 1.0)
+    let clipped = transform(camera.initMatrixViewProjection(1.6), camera.pivot, 1.0)
     check clipped[3] > 0
     check isNear(clipped[0]/clipped[3], 0)
     check isNear(clipped[1]/clipped[3], 0)
@@ -555,16 +555,16 @@ suite "Camera":
 
   test "zooming in and back out returns the camera exactly where it stood":
     # Wheel notch each way has to be round trip, or reader who overshoots and corrects.
-    #   ends up somewhere they never chose -- and aimed zoom moves target as well as
+    #   ends up somewhere they never chose -- and aimed zoom moves pivot as well as
     #   distance, so there is more to come back to than there used to be.
     var camera = initCameraDefault()
     let opening = camera
     let anchor = positionUnderCursor(camera, 1440, 900, ScreenPosition(x: 300.0, y: 640.0))
     check anchor.isSome
     camera.dollyToward(0.5, anchor.get)
-    check not (camera.target =~ opening.target) # It really did move view, not just in.
+    check not (camera.pivot =~ opening.pivot) # It really did move view, not just in.
     camera.dollyToward(2.0, anchor.get)
-    check camera.target =~ opening.target
+    check camera.pivot =~ opening.pivot
     check camera.distance =~ opening.distance
 
 
@@ -574,11 +574,11 @@ suite "Camera":
     #   not refusal to zoom.
     var
       interaction = Interaction(is_enabled: true)
-      camera = initCamera(target = ORIGIN, distance = 12.0, azimuth = 0.5, elevation = 0.05)
+      camera = initCamera(pivot = ORIGIN, distance = 12.0, azimuth = 0.5, elevation = 0.05)
       scene = initScene()
     let cursor = ScreenPosition(x: 720.0, y: 60.0) # High in frame, from camera barely
       # above level it is looking at:
-      #   that ray tilts up into sky and comes back down to neither ground nor target's own level.
+      #   that ray tilts up into sky and comes back down to neither ground nor pivot's own level.
     check positionUnderCursor(camera, 1440, 900, cursor).isNone
     check positionOnGround(camera, 1440, 900, cursor).isNone
     interaction.updateCursor(cursor.x, cursor.y)
@@ -587,33 +587,33 @@ suite "Camera":
       camera.initMatrixViewProjection(1440.0/900.0), 1440, 900,
     )
     check camera.distance =~ 24.0
-    check camera.target =~ ORIGIN
+    check camera.pivot =~ ORIGIN
 
 
-  test "a zoom onto a point brings the target to its depth, and onto ground or level does not":
-    # Turntable follows what reader looks at: eye carried up to planet while target.
+  test "a zoom onto a point brings the pivot to its depth, and onto ground or level does not":
+    # Turntable follows what reader looks at: eye carried up to planet while pivot.
     #   stayed far behind left every orbit swinging planet across frame. Ground and
-    #   level are fallbacks, and following either drifted target's height with every
+    #   level are fallbacks, and following either drifted pivot's height with every
     #   notch and moved it where pan and slide expect it held.
     const (WIDE, TALL) = (1440, 900)
     let planet = Position(x: 3.0, y: 1.0, z: 0.0)
     var scene = initScene()
     scene.addItem(toMultivector(planet), "planet", Ink.Cobalt)
     # Middle of frame over planet, camera aimed at it from afar: pinch's case.
-    var camera = initCamera(target = planet, distance = 20.0, azimuth = 0.4, elevation = 0.5)
-    camera.target = Position(x: 3.0, y: 1.0, z: 0.0) + 10.0*camera.frame(camera.eye).forward
-    camera.distance = 30.0 # Eye where it was, target ten units past planet.
+    var camera = initCamera(pivot = planet, distance = 20.0, azimuth = 0.4, elevation = 0.5)
+    camera.pivot = Position(x: 3.0, y: 1.0, z: 0.0) + 10.0*camera.frame(camera.eye).forward
+    camera.distance = 30.0 # Eye where it was, pivot ten units past planet.
     let eye_before = camera.eye
     dollyAtCentre(
       camera, scene, 0.5, camera.drawExtentFor(TALL),
       camera.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL,
     )
-    # Eye moved halfway to planet, and target now stands on it.
-    check camera.target =~ planet
+    # Eye moved halfway to planet, and pivot now stands on it.
+    check camera.pivot =~ planet
     check abs(camera.distance - 10.0) < 1.0e-6
     check camera.eye =~ (planet + 0.5*(eye_before - planet))
-    # Over empty sky, level answers and target keeps its height: distance scales alone.
-    var level = initCamera(target = ORIGIN, distance = 12.0, azimuth = 0.5, elevation = 0.05)
+    # Over empty sky, level answers and pivot keeps its height: distance scales alone.
+    var level = initCamera(pivot = ORIGIN, distance = 12.0, azimuth = 0.5, elevation = 0.05)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(720.0, 200.0)
     dollyAt(
@@ -622,11 +622,11 @@ suite "Camera":
       ScreenPosition(x: 720.0, y: 200.0),
     )
     check abs(level.distance - 6.0) < 1.0e-6
-    check abs(level.target.z) < 1.0e-6
-    # Over ground below raised target, ground answers and target slides halfway toward.
+    check abs(level.pivot.z) < 1.0e-6
+    # Over ground below raised pivot, ground answers and pivot slides halfway toward.
     #   it by map rule alone, not to ground's depth along sight line.
     var over_ground = initCamera(
-      target = Position(x: 0.0, y: 0.0, z: 1.0), distance = 12.0, azimuth = 0.5,
+      pivot = Position(x: 0.0, y: 0.0, z: 1.0), distance = 12.0, azimuth = 0.5,
       elevation = 0.5,
     )
     let under = ScreenPosition(x: 720.0, y: 700.0)
@@ -636,16 +636,16 @@ suite "Camera":
       over_ground.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL, under,
     )
     check abs(over_ground.distance - 6.0) < 1.0e-6
-    check abs(over_ground.target.z - 0.5) < 1.0e-6
+    check abs(over_ground.pivot.z - 0.5) < 1.0e-6
 
 
   test "a zoom aims at the object under the cursor, then the ground, then the level":
     # Order is rule: reader pointing at object means that object, at depth.
-    #   it actually stands at. Anchored on plane through target instead, zoom crept
+    #   it actually stands at. Anchored on plane through pivot instead, zoom crept
     #   past or short of it and what was under cursor slid away as wheel turned.
     const (WIDE, TALL) = (1440, 900)
     let
-      camera = initCamera(target = ORIGIN, distance = 20.0, azimuth = 0.4, elevation = 0.5)
+      camera = initCamera(pivot = ORIGIN, distance = 20.0, azimuth = 0.4, elevation = 0.5)
       view_projection = camera.initMatrixViewProjection(float(WIDE)/float(TALL))
       # Point standing well above ground, so aiming at *it* and aiming at ground.
       #   under cursor are different answers and test can tell them apart.
@@ -654,7 +654,7 @@ suite "Camera":
     var scene = initScene()
     scene.addItem(toMultivector(raised), "raised", inkCycled(0))
 
-    # Over point: its own place, not ground below it nor target's level.
+    # Over point: its own place, not ground below it nor pivot's level.
     let at_object = anchorZoomAt(
       scene, camera, camera.drawExtentFor(TALL), view_projection, WIDE, TALL,
       ScreenPosition(x: on_screen.x, y: on_screen.y),
@@ -664,10 +664,10 @@ suite "Camera":
     check at_object.get.is_standing
 
     # Cursor little off it falls through to ground, which is `z = 0` itself rather.
-    #   than level target happens to sit on. Lower in frame, where ground stands within
+    #   than level pivot happens to sit on. Lower in frame, where ground stands within
     #   `FACTOR_ANCHOR_DEPTH` of orbit distance.
     var camera_raised = camera
-    camera_raised.target = Position(x: 0.0, y: 0.0, z: 5.0)
+    camera_raised.pivot = Position(x: 0.0, y: 0.0, z: 5.0)
     let
       elsewhere = ScreenPosition(x: on_screen.x + 200.0, y: on_screen.y + 400.0)
       at_ground = anchorZoomAt(
@@ -679,7 +679,7 @@ suite "Camera":
     check abs(at_ground.get.at.z) <= 1.0e-6
     check not at_ground.get.is_standing
     # Cursor toward horizon finds ground too far to zoom toward, and takes level.
-    #   through target instead: zoom aimed there flew camera off across ground.
+    #   through pivot instead: zoom aimed there flew camera off across ground.
     let
       toward_horizon = ScreenPosition(x: on_screen.x + 200.0, y: on_screen.y + 60.0)
       at_level = anchorZoomAt(
@@ -693,10 +693,10 @@ suite "Camera":
     # And it is ground *cursor* is over, not ground below eye.
     check at_ground.get.at =~ positionOnGround(camera_raised, WIDE, TALL, elsewhere).get
 
-    # Cursor whose ray reaches no ground still meets level through target, which.
+    # Cursor whose ray reaches no ground still meets level through pivot, which.
     #   is last answer rather than first.
     let
-      level = initCamera(target = ORIGIN, distance = 12.0, azimuth = 0.5, elevation = -0.4)
+      level = initCamera(pivot = ORIGIN, distance = 12.0, azimuth = 0.5, elevation = -0.4)
       upward = ScreenPosition(x: 720.0, y: 40.0)
     if positionOnGround(level, WIDE, TALL, upward).isNone:
       let at_level = anchorZoomAt(
@@ -704,9 +704,9 @@ suite "Camera":
         level.initMatrixViewProjection(float(WIDE)/float(TALL)),
         WIDE, TALL, upward,
       )
-      let at_target = positionUnderCursor(level, WIDE, TALL, upward)
-      check at_level.isSome == at_target.isSome
-      if at_level.isSome: check at_level.get.at =~ at_target.get
+      let at_pivot = positionUnderCursor(level, WIDE, TALL, upward)
+      check at_level.isSome == at_pivot.isSome
+      if at_level.isSome: check at_level.get.at =~ at_pivot.get
 
     # Plane under cursor is crossing, not place: anchored where ray meets it, but not.
     #   followed to depth, which is not plane's depth at middle of frame.
@@ -823,18 +823,18 @@ suite "Camera":
   test "a pan grabs the level under the pointer and carries it to the cursor":
     # Fault: pan of so many hundredths of orbit distance per pixel is right at.
     #   one depth and one tilt and wrong everywhere else -- driven, 200-pixel drag
-    #   carried scene 288 -- and it slid target within plane *facing eye*,
-    #   which is tilted, so same drag lifted target from z 1.00 to 6.40.
+    #   carried scene 288 -- and it slid pivot within plane *facing eye*,
+    #   which is tilted, so same drag lifted pivot from z 1.00 to 6.40.
     const (WIDE, TALL) = (1440, 900)
     var camera = initCamera(
-      target = Position(x: 0, y: 0, z: 1), distance = 19.0, azimuth = 1.05,
+      pivot = Position(x: 0, y: 0, z: 1), distance = 19.0, azimuth = 1.05,
       elevation = 0.42,
     )
     let
       before = ScreenPosition(x: 700.0, y: 560.0)
       after = ScreenPosition(x: 940.0, y: 660.0)
       grabbed = positionUnderCursor(camera, WIDE, TALL, before)
-      height_opening = camera.target.z
+      height_opening = camera.pivot.z
     check grabbed.isSome
     camera.panAcross(before, after, WIDE, TALL)
     # Very point that was under pointer is now under where pointer went.
@@ -843,14 +843,14 @@ suite "Camera":
     )
     check hypot(landed.x - after.x, landed.y - after.y) < 0.5
     # And orbit centre keeps its height exactly, whatever direction drag went.
-    check camera.target.z =~ height_opening
+    check camera.pivot.z =~ height_opening
     for step in [
       (ScreenPosition(x: 700.0, y: 560.0), ScreenPosition(x: 700.0, y: 260.0)),
       (ScreenPosition(x: 200.0, y: 800.0), ScreenPosition(x: 1300.0, y: 300.0)),
     ]:
       var camera_step = camera
       camera_step.panAcross(step[0], step[1], WIDE, TALL)
-      check camera_step.target.z =~ camera.target.z
+      check camera_step.pivot.z =~ camera.pivot.z
 
 
   test "a pan takes hold no further out than its own bound":
@@ -859,7 +859,7 @@ suite "Camera":
     #   drag high in frame is governed rather than thrown across scene.
     const (WIDE, TALL) = (1440, 900)
     var camera = initCamera(
-      target = ORIGIN, distance = 19.0, azimuth = 0.0, elevation = 0.06
+      pivot = ORIGIN, distance = 19.0, azimuth = 0.0, elevation = 0.06
     )
     # Walk up middle of frame for first row whose ray grazes level far.
     #   enough out to be governed, rather than naming pixel that change in field of
@@ -883,53 +883,53 @@ suite "Camera":
         positionUnderCursor(camera, WIDE, TALL, lower).get
       )
     camera.panAcross(grazing.get, lower, WIDE, TALL)
-    let moved = norm(camera.target - opening.target)
+    let moved = norm(camera.pivot - opening.pivot)
     # It moves -- governed pan is still pan -- but by fraction of what ungoverned.
     #   grab would have thrown view, and never past what two bounded holds can span.
     check moved > 0.0
     check moved < 0.5*unbounded
     check moved <= 2.0*FACTOR_PAN_REACH_MAX*opening.distance
-    check camera.target.z =~ opening.target.z
+    check camera.pivot.z =~ opening.pivot.z
 
 
-  test "an aimed zoom draws the target toward what it aimed at":
-    # `dollyToward` scales target toward anchor by exactly factor distance.
+  test "an aimed zoom draws the pivot toward what it aimed at":
+    # `dollyToward` scales pivot toward anchor by exactly factor distance.
     #   took, which is whole of why aimed zoom settles orbit centre onto what
-    #   reader is zooming into. Aimed at ground, target comes down onto it
+    #   reader is zooming into. Aimed at ground, pivot comes down onto it
     #   rather than staying stranded on level it started at -- driven in shipped
     #   browser, eight notches over ground carried it from z 1.00 to 0.32, where before
     #   this it held at 1.00 however far in reader went.
     var camera = initCamera(
-      target = Position(x: 0, y: 0, z: 4), distance = 20.0, azimuth = 0.3, elevation = 0.5
+      pivot = Position(x: 0, y: 0, z: 4), distance = 20.0, azimuth = 0.3, elevation = 0.5
     )
     let
       opening = camera
       anchor = Position(x: 3.0, y: -2.0, z: 0.0)
     camera.dollyToward(0.5, anchor)
     let scale = camera.distance/opening.distance
-    check camera.target =~ anchor + scale*(opening.target - anchor)
-    check camera.target.z < opening.target.z
+    check camera.pivot =~ anchor + scale*(opening.pivot - anchor)
+    check camera.pivot.z < opening.pivot.z
     # And back out along same line, so reader who overshoots loses nothing.
     camera.dollyToward(1.0/scale, anchor)
-    check camera.target =~ opening.target
+    check camera.pivot =~ opening.pivot
     check camera.distance =~ opening.distance
 
 
   test "an aimed zoom is held off the near floor, and stays a placement while it is":
     # `dollyToward` reads back what `distanceHeld` allowed rather than assuming its own.
     #   factor took, so zoom stopped by floor still describes where eye is.
-    var camera = initCamera(target = ORIGIN, distance = 0.1, azimuth = 0.4, elevation = 0.5)
+    var camera = initCamera(pivot = ORIGIN, distance = 0.1, azimuth = 0.4, elevation = 0.5)
     let anchor = positionUnderCursor(camera, 1440, 900, ScreenPosition(x: 400.0, y: 600.0))
     check anchor.isSome
     camera.dollyToward(0.001, anchor.get)
     check camera.distance =~ DISTANCE_LIMIT_NEAR
-    check norm(camera.eye - camera.target) =~ camera.distance
+    check norm(camera.eye - camera.pivot) =~ camera.distance
 
 
   test "framing a selection wider than the old ceiling pulls back past it":
     # `distanceFitting` used to be clamped to same 500, so anything larger than.
     #   frame could hold at that distance was framed by giving up rather than by moving.
-    let camera = initCamera(target = ORIGIN, distance = 19.0, azimuth = 1.0, elevation = 0.4)
+    let camera = initCamera(pivot = ORIGIN, distance = 19.0, azimuth = 1.0, elevation = 0.4)
     check distanceFitting(4_000.0, camera, 1440, 900, 0.0) > 500.0
 
 
@@ -2950,7 +2950,7 @@ suite "Camera Aim":
 
   proc placementAim(azimuth, elevation: float): Camera =
     ## Build camera orbiting origin at given angles, for sweeps below.
-    initCamera(target = ORIGIN, distance = 12.0, azimuth = azimuth, elevation = elevation)
+    initCamera(pivot = ORIGIN, distance = 12.0, azimuth = azimuth, elevation = elevation)
 
   proc sceneOf(objects: varargs[Multivector]): (Scene, Selection) =
     ## Build scene holding exactly these objects, with every one of them picked.
@@ -2993,13 +2993,13 @@ suite "Camera Aim":
     check not isShownCentrally(point, camera, WIDTH_AIM, HEIGHT_AIM)
 
 
-  proc offsetFromTarget(camera: Camera; across, down: float): Multivector =
-    ## Build point standing off camera's own target, sideways and downward.
+  proc offsetFromPivot(camera: Camera; across, down: float): Multivector =
+    ## Build point standing off camera's own pivot, sideways and downward.
     ##   By these fractions of its orbit distance, i.e. by those tangents from sight axis,
     ##   since offsets are square to it and so leave depth alone.
     let axes = camera.frame(camera.eye)
     toMultivector(
-      camera.target + (across*camera.distance)*axes.axis_right -
+      camera.pivot + (across*camera.distance)*axes.axis_right -
         (down*camera.distance)*axes.axis_up
     )
 
@@ -3015,7 +3015,7 @@ suite "Camera Aim":
       for elevation in ELEVATIONS_AIM:
         let camera = placementAim(azimuth, elevation)
         for step in 1 .. 12:
-          let place = offsetFromTarget(camera, 0.06*float(step), 0.0)
+          let place = offsetFromPivot(camera, 0.06*float(step), 0.0)
           let verdict = isShownCentrally(place, camera, HEIGHT_AIM, HEIGHT_AIM)
           for width in [HEIGHT_AIM, 1200, WIDTH_AIM, 2*HEIGHT_AIM]:
             check isShownCentrally(place, camera, width, HEIGHT_AIM) == verdict
@@ -3030,9 +3030,9 @@ suite "Camera Aim":
         let camera = placementAim(azimuth, 0.2)
         for step in 1 .. 14:
           let reach = 0.06*float(step)
-          if isShownCentrally(offsetFromTarget(camera, reach, 0.0), camera, width, height):
+          if isShownCentrally(offsetFromPivot(camera, reach, 0.0), camera, width, height):
             check isShownCentrally(
-              offsetFromTarget(camera, 0.0, reach), camera, width, height
+              offsetFromPivot(camera, 0.0, reach), camera, width, height
             )
 
 
@@ -3049,7 +3049,7 @@ suite "Camera Aim":
     for step in 1 .. 2000:
       let reach = 0.001*float(step)
       if not isShownCentrally(
-        offsetFromTarget(camera, reach, 0.0), camera, WIDTH_AIM, HEIGHT_AIM
+        offsetFromPivot(camera, reach, 0.0), camera, WIDTH_AIM, HEIGHT_AIM
       ): break
       reach_last = reach
     # Back out of tangent sweep stopped at into pixels it stands for.
@@ -3301,7 +3301,7 @@ suite "Camera Aim":
     ))
     let framed = framedFor(scene_drawn, picked_drawn, camera)
     check not (framed == camera.placementOf)
-    check framed.target.x > camera.target.x # Panned toward circle actually drawn.
+    check framed.pivot.x > camera.pivot.x # Panned toward circle actually drawn.
     check isShownAll(
       scene_drawn, picked_drawn, none(Preview), camera.placed(framed),
       WIDTH_AIM, HEIGHT_AIM,
@@ -3365,7 +3365,7 @@ suite "Camera Aim":
     # Least-movement rule, judged where camera *is*: judging it at centred.
     #   placement instead was bug that pulled view about on every pick of
     #   something already plainly visible. What survives of that is reader's own
-    #   framing -- **distance and orbit do not move at all** -- while target
+    #   framing -- **distance and orbit do not move at all** -- while pivot
     #   comes to middle of what was picked, since turning about point is what
     #   orbit is and reader who picks objects means to turn about those.
     let (scene, picked) = sceneOf(
@@ -3381,24 +3381,24 @@ suite "Camera Aim":
         var camera = placementAim(azimuth, elevation)
         check isShownAll(scene, picked, none(Preview), camera, WIDTH_AIM, HEIGHT_AIM)
         let framed = framedFor(scene, picked, camera)
-        check framed.target =~ middle
+        check framed.pivot =~ middle
         check framed.distance == camera.distance
         check framed.azimuth == camera.azimuth
         check framed.elevation == camera.elevation
-        # End to end: ease carries target there and leaves everything else alone.
+        # End to end: ease carries pivot there and leaves everything else alone.
         var tween: CameraTween
         tween.offerAim(
           camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM),
       WIDTH_AIM, HEIGHT_AIM, 0.0, 0.35
         )
         tween.settle(camera)
-        check camera.target =~ middle
+        check camera.pivot =~ middle
         check camera.distance == placementAim(azimuth, elevation).distance
         check camera.azimuth == placementAim(azimuth, elevation).azimuth
 
 
   test "an object picked on its own is carried to the middle, and nothing else moves":
-    # Single pick has one middle and it is object itself, so target lands on it.
+    # Single pick has one middle and it is object itself, so pivot lands on it.
     #   exactly -- and once it is centred there is nothing left for zoom or turn to
     #   fix, which is least-movement rule holding over everything reader set.
     let place = Position(x: 9.0, y: -7.0, z: 4.0)
@@ -3410,7 +3410,7 @@ suite "Camera Aim":
         check isShownAll(
           scene, picked, none(Preview), camera.placed(framed), WIDTH_AIM, HEIGHT_AIM
         )
-        check framed.target =~ place
+        check framed.pivot =~ place
         check framed.distance == camera.distance
         check framed.azimuth == camera.azimuth
         check framed.elevation == camera.elevation
@@ -3506,7 +3506,7 @@ suite "Camera Aim":
       let camera = placementAim(azimuth, 0.3)
       let framed = framedFor(scene_star, picked_star, camera)
       check isShownCentrally(star, camera.placed(framed), WIDTH_AIM, HEIGHT_AIM)
-      check framed.target =~ camera.target # Orbit turned; what it turns about did not.
+      check framed.pivot =~ camera.pivot # Orbit turned; what it turns about did not.
       check framed.distance =~ camera.distance
       if isShownCentrally(star, camera, WIDTH_AIM, HEIGHT_AIM): continue
       let short = camera.placementOf.toward(framed, 0.9)
@@ -3615,13 +3615,13 @@ suite "Camera Aim":
         check camera.elevation == placementAim(azimuth, elevation).elevation
         let fit = depthSpanning(2.0*RADIUS, FRACTION_HEIGHT_APPROACH_POINT, camera)
         check abs(camera.distance - fit) < 1.0e-9
-        # Target at anchor's depth: point and target equally far along sight.
+        # Pivot at anchor's depth: point and pivot equally far along sight.
         let eye_settled = camera.eye
         check abs(dot(place - eye_settled, camera.frame(eye_settled).forward) - fit) < 1.0e-6
 
 
   test "a pointer pick never moves the eye further off than the object stands":
-    # Object already nearer than its fit leaves picture as it is: target alone comes to.
+    # Object already nearer than its fit leaves picture as it is: pivot alone comes to.
     #   its depth. Point seen at its size, and line, come in to orbit distance and no
     #   further; only floor dot comes in to its fit.
     let camera = placementAim(0.7, 0.2)
@@ -3663,7 +3663,7 @@ suite "Camera Aim":
       ASPECT = float(WIDTH_AIM)/float(HEIGHT_AIM)
     let ground = planeThrough(toMultivector(ORIGIN), toMultivector(UP_WORLD))
     for distance in [12.0, 1.0]:
-      var camera = initCamera(target = ORIGIN, distance = distance, azimuth = 0.7, elevation = 0.5)
+      var camera = initCamera(pivot = ORIGIN, distance = distance, azimuth = 0.7, elevation = 0.5)
       var (scene, picked) = sceneOf(ground)
       let cursor = ScreenPosition(x: 0.62*float(WIDTH_AIM), y: 0.58*float(HEIGHT_AIM))
       let scale = camera.drawExtentFor(HEIGHT_AIM)
@@ -3794,10 +3794,10 @@ suite "Camera Aim":
     ##   Cases are about ease rather than about what any particular geometry asks for.
     CameraAim(sphere: some(SphereWorld(centre: centre, radius: radius)))
 
-  proc placeOn(camera: Camera, target: Position): CameraPlacement =
-    ## Move camera's placement onto target, leaving its orbit exactly as it stands.
+  proc placeOn(camera: Camera, pivot: Position): CameraPlacement =
+    ## Move camera's placement onto pivot, leaving its orbit exactly as it stands.
     result = camera.placementOf
-    result.target = target
+    result.pivot = pivot
 
 
   test "a tween eases toward its destination and lands on it exactly at the duration":
@@ -3812,12 +3812,12 @@ suite "Camera Aim":
     for step in 1 .. 4:
       let now = DURATION*float(step)/5.0
       tween.advance(camera, now, easeOutCubic)
-      check camera.target.x > previous
-      check camera.target.x < arrival.x
-      previous = camera.target.x
+      check camera.pivot.x > previous
+      check camera.pivot.x < arrival.x
+      previous = camera.pivot.x
 
     tween.advance(camera, DURATION, easeOutCubic)
-    check camera.target.x =~ arrival.x
+    check camera.pivot.x =~ arrival.x
     # Arrived, so nothing left to carry -- but goal is kept, not dropped, so.
     #   caller still offering it every frame is recognised rather than re-armed.
     check tween.is_arrived
@@ -3840,22 +3840,22 @@ suite "Camera Aim":
     check camera.distance =~ 40.0
 
 
-  test "retargeting mid-flight continues from where the camera reached":
+  test "repivoting mid-flight continues from where the camera reached":
     const DURATION = 0.35
     var camera = initCamera(ORIGIN, 12.0, 0.0, 0.4)
     var tween: CameraTween
     let first = Position(x: 10.0, y: 0, z: 0)
     tween.aimAt(camera, aimOn(first), camera.placeOn(first), 0.0, DURATION)
     tween.advance(camera, DURATION*0.5, easeOutCubic)
-    let reached = camera.target.x
+    let reached = camera.pivot.x
     check reached > 0.0 and reached < 10.0
 
     # Goal that moves must not snap camera back to where last ease began.
     let second = Position(x: 20.0, y: 0, z: 0)
     tween.aimAt(camera, aimOn(second), camera.placeOn(second), DURATION*0.5, DURATION)
-    check tween.placement_from.target.x =~ reached
+    check tween.placement_from.pivot.x =~ reached
     tween.advance(camera, DURATION*0.5 + 0.001, easeOutCubic)
-    check camera.target.x >= reached # Continues forward, never jumps backward.
+    check camera.pivot.x >= reached # Continues forward, never jumps backward.
 
 
   test "offering the goal it already holds does not restart the ease":
@@ -3910,16 +3910,16 @@ suite "Camera Aim":
     tween.aimAt(camera, goal, camera.placeOn(arrival), 0.0, 0.35)
     tween.advance(camera, 0.35, easeOutCubic)
     check tween.is_arrived
-    check camera.target =~ arrival
+    check camera.pivot =~ arrival
 
     # User pans, and same goal keeps being offered every frame after.
     camera.pan(3.0, 2.0)
-    let target_panned = camera.target
+    let pivot_panned = camera.pivot
     for frame in 1 .. 10:
       let now = 0.35 + 0.016*float(frame)
       tween.aimAt(camera, goal, camera.placeOn(arrival), now, 0.35)
       tween.advance(camera, now, easeOutCubic)
-    check camera.target =~ target_panned
+    check camera.pivot =~ pivot_panned
 
 
   test "abandon hands the camera to the user without re-arming the standing offer":
@@ -3937,12 +3937,12 @@ suite "Camera Aim":
 
     camera.pan(3.0, 2.0)
     tween.abandon()
-    let target_panned = camera.target
+    let pivot_panned = camera.pivot
     for frame in 1 .. 40:
       let now = 0.10 + 0.016*float(frame)
       tween.aimAt(camera, goal, camera.placeOn(arrival), now, 0.35)
       tween.advance(camera, now, easeOutCubic)
-    check camera.target =~ target_panned
+    check camera.pivot =~ pivot_panned
 
 
   test "release lets the same goal aim the camera again":
@@ -3955,7 +3955,7 @@ suite "Camera Aim":
     tween.aimAt(camera, goal, camera.placeOn(arrival), 0.0, 0.35)
     tween.advance(camera, 0.35, easeOutCubic)
     camera.pan(3.0, 2.0)
-    let target_panned = camera.target
+    let pivot_panned = camera.pivot
 
     tween.release()
     check tween.goal.isNone
@@ -3963,8 +3963,8 @@ suite "Camera Aim":
     check tween.goal.isSome
     check not tween.is_arrived
     tween.advance(camera, 1.0 + 0.35, easeOutCubic)
-    check camera.target =~ arrival
-    check not (camera.target =~ target_panned)
+    check camera.pivot =~ arrival
+    check not (camera.pivot =~ pivot_panned)
 
 
 
@@ -4518,9 +4518,9 @@ suite "Picking":
   let CENTRE = ScreenPosition(x: float(WIDTH_PICK)/2.0, y: float(HEIGHT_PICK)/2.0, depth: 0.0)
 
   proc cameraFacingOrigin(distance = 10.0): Camera =
-    ## Build camera looking at world origin, so target is known to project to screen centre.
+    ## Build camera looking at world origin, so pivot is known to project to screen centre.
     initCamera(
-      target = Position(x: 0, y: 0, z: 0), distance = distance, azimuth = 0.0, elevation = 0.0
+      pivot = Position(x: 0, y: 0, z: 0), distance = distance, azimuth = 0.0, elevation = 0.0
     )
 
   test "a zoom anchors on what is under the cursor only near the depth being looked at":
@@ -4528,7 +4528,7 @@ suite "Picking":
     #   Point on sight line below ground at one and half orbit distances is anchor; point
     #   eight off is passed over, and ground under cursor -- origin itself -- answers instead.
     let camera = initCamera(
-      target = Position(x: 0, y: 0, z: 0), distance = 10.0, azimuth = 0.0, elevation = 0.3
+      pivot = Position(x: 0, y: 0, z: 0), distance = 10.0, azimuth = 0.0, elevation = 0.3
     )
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     let scale = camera.drawExtentFor(HEIGHT_PICK)
@@ -4562,7 +4562,7 @@ suite "Picking":
         if scene.isAlive(handle) and toText(scene.labelAt(handle)) == "sol": handle_sol = handle
       check handle_sol >= 0
       let camera = initCamera(
-        target = Position(x: 0, y: 0, z: 0), distance = 1.2, azimuth = 0.9, elevation = 0.4
+        pivot = Position(x: 0, y: 0, z: 0), distance = 1.2, azimuth = 0.9, elevation = 0.4
       )
       let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
       let scale = camera.drawExtentFor(HEIGHT_PICK)
@@ -4587,7 +4587,7 @@ suite "Picking":
     #   won on distance although planet's disc covered it, and tap meant for planet
     #   selected star through it. Moon in front of same disc is still picked.
     let camera = initCamera(
-      target = Position(x: 0, y: 0, z: 0), distance = 2.0, azimuth = 0.0, elevation = 0.5
+      pivot = Position(x: 0, y: 0, z: 0), distance = 2.0, azimuth = 0.0, elevation = 0.5
     )
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     let scale = camera.drawExtentFor(HEIGHT_PICK)
@@ -4674,7 +4674,7 @@ suite "Picking":
     #   Rank decides first, so plane under point is no rival to it.
     #   Tilted, so ground plane is seen face on rather than edge on.
     let camera = initCamera(
-      target = Position(x: 0, y: 0, z: 0), distance = 10.0, azimuth = 0.0, elevation = 0.5
+      pivot = Position(x: 0, y: 0, z: 0), distance = 10.0, azimuth = 0.0, elevation = 0.5
     )
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     let scale = camera.drawExtentFor(HEIGHT_PICK)
@@ -4736,7 +4736,7 @@ suite "Picking":
       crowd, camera, scale, view_projection, WIDTH_PICK, HEIGHT_PICK, CENTRE
     ) == report_crowd.handle
 
-  test "point at target is picked at screen centre":
+  test "point at pivot is picked at screen centre":
     var scene = initScene()
     scene.addItem(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
     let camera = cameraFacingOrigin()
@@ -4771,7 +4771,7 @@ suite "Picking":
     ).isNone
 
 
-  test "line through target is picked at screen centre":
+  test "line through pivot is picked at screen centre":
     var scene = initScene()
     let axis_z =
       toMultivector(Position(x: 0, y: 0, z: -1)) ∧ toMultivector(Position(x: 0, y: 0, z: 1))
@@ -4955,7 +4955,7 @@ suite "Picking":
     let centre = Position(x: 1.5, y: -2.0, z: 0.5)
     for (azimuth, elevation) in [(0.0, 0.0), (0.9, 0.4), (2.4, -0.7)]:
       let camera = initCamera(
-        target = Position(x: 0, y: 0, z: 0), distance = 30.0, azimuth = azimuth,
+        pivot = Position(x: 0, y: 0, z: 0), distance = 30.0, azimuth = azimuth,
         elevation = elevation,
       )
       let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
@@ -5173,7 +5173,7 @@ suite "Interaction":
     var floor = initScene()
     floor.addItem(groundPlane(), "ground", Ink.Grid)
     for (distance, is_backdrop) in [(0.5, true), (40.0, false)]:
-      let close = initCamera(target = ORIGIN, distance = distance, azimuth = 0.9, elevation = 0.9)
+      let close = initCamera(pivot = ORIGIN, distance = distance, azimuth = 0.9, elevation = 0.9)
       var over = Interaction(is_enabled: true)
       over.updateCursor(400.0, 300.0)
       over.updateHover(
@@ -5184,7 +5184,7 @@ suite "Interaction":
       check over.is_hover_backdrop == is_backdrop
       check over.beginDrag(arming = MenuArming.Never, now = 0.0) == not is_backdrop
 
-    # Horizon *line* is ordinary drag target both ways: it is curve, not backdrop.
+    # Horizon *line* is ordinary drag pivot both ways: it is curve, not backdrop.
     interaction.is_hover_backdrop = false
     check interaction.beginDrag(arming = MenuArming.OnDwell, now = 0.0)
 
@@ -5248,7 +5248,7 @@ suite "Interaction":
 
   test "a right press that never opened a wheel reports a click":
     # It could not once: any drag armed `Always` was refused click outright, on.
-    #   reasoning that it had asked for menu. But wheel only opens over target
+    #   reasoning that it had asked for menu. But wheel only opens over pivot
     #   *other* than source, so press that never left its own object never asked for
     #   anything -- and refusing it left right button doing nothing on plain click.
     var scene = initScene()
@@ -5677,7 +5677,7 @@ suite "Interaction":
 
 
   test "what a release would do has three answers, and the band's tint has three":
-    # Reach all three effects over one pair with wheel open, without cursor leaving target.
+    # Reach all three effects over one pair with wheel open, without cursor leaving pivot.
     #   Two-way test could not carry it: centre and greyed wedge both have no answer, and
     #   they want opposite feedback.
     var scene = initScene()
@@ -5821,7 +5821,7 @@ suite "Interaction":
     check forced.menu.isSome
 
     # And left button, which is one mouse spends nearly every drag on, never.
-    #   reaches menu at all -- however long it is held still over its target. Dwell
+    #   reaches menu at all -- however long it is held still over its pivot. Dwell
     #   opening under hand that paused mid-gesture is exactly what it is for.
     var never = Interaction(is_enabled: true)
     never.index_hover = some(0)
@@ -5834,7 +5834,7 @@ suite "Interaction":
 
 
   test "a dwell wheel nobody entered does not veto the release":
-    # Touch gesture as finger actually does it: drag onto target, pause there.
+    # Touch gesture as finger actually does it: drag onto pivot, pause there.
     #   to aim -- wheel opens under finger, hidden by it -- and lift. Measured on
     #   phone before this rule: that release built nothing every time, which read as
     #   drag itself being broken.
@@ -6056,16 +6056,16 @@ suite "Interaction":
     #   where slide along raw sight direction would plainly lose height.
     var
       interaction = Interaction(is_enabled: true)
-      camera = initCamera(target = ORIGIN, distance = 20.0, azimuth = 0.4, elevation = 0.9)
+      camera = initCamera(pivot = ORIGIN, distance = 20.0, azimuth = 0.4, elevation = 0.9)
     let opening = camera
     interaction.holdKey(Key.W)
     interaction.driveHeld(camera, 1.0)
-    check camera.target.z =~ opening.target.z
+    check camera.pivot.z =~ opening.pivot.z
     check camera.distance =~ opening.distance
     check camera.azimuth =~ opening.azimuth
     check camera.elevation =~ opening.elevation
     # Forward is way camera faces, flattened: move lies along it exactly.
-    let moved = camera.target - opening.target
+    let moved = camera.pivot - opening.pivot
     check norm(moved) =~ SLIDE_SECOND*opening.distance
     check dot(moved, opening.headingGround) =~ norm(moved)
 
@@ -6074,34 +6074,34 @@ suite "Interaction":
     interaction.holdKey(Key.D)
     var sideways = initCamera(ORIGIN, 20.0, 0.4, 0.9)
     interaction.driveHeld(sideways, 1.0)
-    check sideways.target.z =~ 0.0
-    check abs(dot(sideways.target - ORIGIN, sideways.headingGround)) <= TOLERANCE_TEST
+    check sideways.pivot.z =~ 0.0
+    check abs(dot(sideways.pivot - ORIGIN, sideways.headingGround)) <= TOLERANCE_TEST
 
     # Up and down are world up, and nothing else.
     interaction.releaseKey(Key.D)
     interaction.holdKey(Key.E)
     var lifted = initCamera(ORIGIN, 20.0, 0.4, 0.9)
     interaction.driveHeld(lifted, 1.0)
-    check lifted.target.x =~ 0.0
-    check lifted.target.y =~ 0.0
-    check lifted.target.z =~ SLIDE_SECOND*lifted.distance
+    check lifted.pivot.x =~ 0.0
+    check lifted.pivot.y =~ 0.0
+    check lifted.pivot.z =~ SLIDE_SECOND*lifted.distance
 
 
   test "held keys compose, and letting one go leaves the other running":
     var
       interaction = Interaction(is_enabled: true)
-      camera = initCamera(target = ORIGIN, distance = 20.0, azimuth = 0.4, elevation = 0.3)
+      camera = initCamera(pivot = ORIGIN, distance = 20.0, azimuth = 0.4, elevation = 0.3)
     interaction.holdKey(Key.W)
     interaction.holdKey(Key.E)
     interaction.driveHeld(camera, 1.0)
-    let both = camera.target
+    let both = camera.pivot
     check both.z > 0.0
     check norm(Direction(x: both.x, y: both.y, z: 0)) > 0.0
 
     interaction.releaseKey(Key.E)
     interaction.driveHeld(camera, 1.0)
-    check camera.target.z =~ both.z # Lift stopped exactly when its key was let go of.
-    check norm(camera.target - both) > 0.0 # Slide did not.
+    check camera.pivot.z =~ both.z # Lift stopped exactly when its key was let go of.
+    check norm(camera.pivot - both) > 0.0 # Slide did not.
 
 
   test "how far a hold travels depends on how long it was held":
@@ -6114,7 +6114,7 @@ suite "Interaction":
       twice = initCamera(ORIGIN, 20.0, 0.0, 0.3)
     interaction.driveHeld(once, 0.5)
     interaction.driveHeld(twice, 1.0)
-    check norm(twice.target - ORIGIN) =~ 2.0*norm(once.target - ORIGIN)
+    check norm(twice.pivot - ORIGIN) =~ 2.0*norm(once.pivot - ORIGIN)
 
     # Dolly is one that compounds rather than adding, so it takes rate to.
     #   power of elapsed seconds: two half-seconds must equal one whole one.
@@ -6139,9 +6139,9 @@ suite "Interaction":
     interaction.driveHeld(plain, 0.25)
     interaction.holdKey(Key.Shift)
     interaction.driveHeld(hastened, 0.25)
-    check norm(hastened.target - ORIGIN) =~ FACTOR_HASTE*norm(plain.target - ORIGIN)
+    check norm(hastened.pivot - ORIGIN) =~ FACTOR_HASTE*norm(plain.pivot - ORIGIN)
     # Same direction, not different binding -- which is what shift+arrow used to mean.
-    check dot(hastened.target - ORIGIN, plain.headingGround) > 0.0
+    check dot(hastened.pivot - ORIGIN, plain.headingGround) > 0.0
 
     var
       turned = initCamera(ORIGIN, 20.0, 0.4, 0.3)
@@ -6159,15 +6159,15 @@ suite "Interaction":
     #   forever with no press able to stop it.
     var
       interaction = Interaction(is_enabled: true)
-      camera = initCamera(target = ORIGIN, distance = 20.0, azimuth = 0.4, elevation = 0.3)
+      camera = initCamera(pivot = ORIGIN, distance = 20.0, azimuth = 0.4, elevation = 0.3)
     interaction.holdKey(Key.W)
     interaction.holdKey(Key.Shift)
     check interaction.keys_held.len == 2
     interaction.releaseKeysAll()
     check interaction.keys_held.len == 0
-    let standing = camera.target
+    let standing = camera.pivot
     interaction.driveHeld(camera, 1.0)
-    check camera.target =~ standing
+    check camera.pivot =~ standing
 
 
   test "each key that acts at a press does its own thing, and moves nothing while held":
@@ -6182,7 +6182,7 @@ suite "Interaction":
     camera.slideGround(3.0, 2.0, 1.0)
     camera.orbit(0.5, 0.2)
     discard interaction.applyAction(camera, scene, KeyAction.ViewHome)
-    check camera.target =~ opening.target
+    check camera.pivot =~ opening.pivot
     check camera.distance =~ opening.distance
     check camera.azimuth =~ opening.azimuth
     check camera.elevation =~ opening.elevation
@@ -6190,13 +6190,13 @@ suite "Interaction":
     # Framing is standing offer's own job, so key itself moves nothing: each front.
     #   end releases its tween's goal and `framing.offerAim` aims afresh next frame.
     check interaction.applyAction(camera, scene, KeyAction.FrameSelection).isNone
-    check camera.target =~ opening.target
+    check camera.pivot =~ opening.pivot
     check camera.distance =~ opening.distance
 
     # And key held down is not action at all, however long it is held.
     interaction.holdKey(Key.F)
     interaction.driveHeld(camera, 1.0)
-    check camera.target =~ opening.target
+    check camera.pivot =~ opening.pivot
 
 
   test "enter reports the focused handle for the caller to select, and nothing before then":
@@ -6229,11 +6229,11 @@ suite "Interaction":
     #   object it sweeps and held W lights up whatever slides under cursor standing
     #   still. Neither gesture is pointing at anything.
     var scene = initScene()
-    let target = Position(x: 0, y: 0, z: 0)
-    scene.addItem(toMultivector(target), "p", Ink.Rose)
+    let pivot = Position(x: 0, y: 0, z: 0)
+    scene.addItem(toMultivector(pivot), "p", Ink.Rose)
     var
       interaction = Interaction(is_enabled: true)
-      camera = initCamera(target = target, distance = 10.0, azimuth = 0.0, elevation = 0.0)
+      camera = initCamera(pivot = pivot, distance = 10.0, azimuth = 0.0, elevation = 0.0)
     let view_projection = camera.initMatrixViewProjection(800.0/600.0)
     proc hovering(interaction: var Interaction): Option[int] =
       interaction.updateHover(
@@ -6267,11 +6267,11 @@ suite "Interaction":
     # Whole reason `index_focus` is its own field: `updateHover` recomputes hover from.
     #   cursor every frame, so focus stored there would be gone before it was drawn.
     var scene = initScene()
-    let target = Position(x: 0, y: 0, z: 0)
-    scene.addItem(toMultivector(target), "p", Ink.Rose)
+    let pivot = Position(x: 0, y: 0, z: 0)
+    scene.addItem(toMultivector(pivot), "p", Ink.Rose)
     scene.addItem(GENERAL_POINTS[5], "far", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
-    var camera = initCamera(target = target, distance = 10.0, azimuth = 0.0, elevation = 0.0)
+    var camera = initCamera(pivot = pivot, distance = 10.0, azimuth = 0.0, elevation = 0.0)
     discard interaction.applyAction(camera, scene, KeyAction.FocusNext)
     check interaction.index_focus == some(0)
     interaction.updateCursor(799.0, 1.0) # Corner, away from everything.
@@ -6283,7 +6283,7 @@ suite "Interaction":
     check interaction.index_focus == some(0)
 
 
-  test "a drag that keeps moving never opens its menu, however long it stays on target":
+  test "a drag that keeps moving never opens its menu, however long it stays on pivot":
     # Dwell measures being *still*, not being over something. While it ran on presence.
     #   alone, slow finger crossing one large object -- plane's disc spans most of
     #   phone screen -- had menu open on it mid-gesture, and construction it was in
@@ -6330,7 +6330,7 @@ suite "Interaction":
     check interaction.menu.isSome
 
 
-  test "leaving the target restarts the dwell, so pausing on the way across never opens":
+  test "leaving the pivot restarts the dwell, so pausing on the way across never opens":
     var scene = initScene()
     scene.addItem(GENERAL_FIRST[0], "a", Ink.Rose)
     scene.addItem(GENERAL_SECOND[0], "b", Ink.Rose)
@@ -6340,7 +6340,7 @@ suite "Interaction":
     interaction.index_hover = some(1)
     interaction.updateDrag(scene, 1000.0 + 0.9*SECONDS_DWELL_MENU)
     check interaction.menu.isNone
-    interaction.index_hover = none(int) # Slipped off target.
+    interaction.index_hover = none(int) # Slipped off pivot.
     interaction.updateDrag(scene, 1000.0 + 0.95*SECONDS_DWELL_MENU)
     check interaction.preview.isNone
     interaction.index_hover = some(1) # And back on, with dwell owed in full again.
@@ -6371,7 +6371,7 @@ suite "Interaction":
     var scene = initScene()
     scene.addItem(POINTS[0], "a", Ink.Rose)
     var interaction = Interaction(is_enabled: false)
-    let camera = initCamera(target = PLACES[0], distance = 10.0, azimuth = 0.0, elevation = 0.0)
+    let camera = initCamera(pivot = PLACES[0], distance = 10.0, azimuth = 0.0, elevation = 0.0)
     interaction.updateCursor(400.0, 300.0)
     interaction.updateHover(
       scene, camera, camera.drawExtentFor(600),
@@ -6382,10 +6382,10 @@ suite "Interaction":
 
   test "enabled interaction hovers the item under the cursor":
     var scene = initScene()
-    let target = Position(x: 0, y: 0, z: 0)
-    scene.addItem(toMultivector(target), "p", Ink.Rose)
+    let pivot = Position(x: 0, y: 0, z: 0)
+    scene.addItem(toMultivector(pivot), "p", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
-    let camera = initCamera(target = target, distance = 10.0, azimuth = 0.0, elevation = 0.0)
+    let camera = initCamera(pivot = pivot, distance = 10.0, azimuth = 0.0, elevation = 0.0)
     interaction.updateCursor(400.0, 300.0)
     interaction.updateHover(
       scene, camera, camera.drawExtentFor(600),
@@ -6525,7 +6525,7 @@ suite "Marker":
     ##   line's rails flared threefold at one azimuth while reading true at another, and
     ##   round that shipped that swept distance alone.
     let placement = initCamera(
-      target = Position(x: 0, y: 0, z: 0), distance = distance, azimuth = azimuth,
+      pivot = Position(x: 0, y: 0, z: 0), distance = distance, azimuth = azimuth,
       elevation = elevation,
     )
     let scale = placement.drawExtentFor(HEIGHT_MARK)
@@ -7016,7 +7016,7 @@ suite "Marker":
     # Reason swell exists: fingertip covers what it presses, so marker filling.
     #   underneath one says nothing to person filling it. How far out it stands is now
     #   plain scaling of swell, whose *shape* is `interaction.swellHold`'s to decide.
-    const RADIUS_FINGER = 22.0 # Half 44-pixel minimum touch target.
+    const RADIUS_FINGER = 22.0 # Half 44-pixel minimum touch pivot.
     check clearanceTouch(0.0, is_touch = true) =~ 0.0
     check 0.5*float(DIAMETER_POINT_LEAST) + GAP_MARKER + clearanceTouch(1.0, is_touch = true) >
       RADIUS_FINGER
@@ -7030,7 +7030,7 @@ suite "Marker":
     #   "nothing to draw" every other unmarkable case does.
     proc ringAt(azimuth: float): Option[Marker] =
       let placement = initCamera(
-        target = Position(x: 0, y: 0, z: 0), distance = 19.0, azimuth = azimuth,
+        pivot = Position(x: 0, y: 0, z: 0), distance = 19.0, azimuth = azimuth,
         elevation = 0.4,
       )
       let scale = placement.drawExtentFor(HEIGHT_MARK)
@@ -7164,7 +7164,7 @@ suite "Marker":
     for sign in [1.0, -1.0]:
       # Eye square to line, so support stands twelve units aside at eight of depth.
       let placement = initCamera(
-        target = support + (sign*12.0)*axis, distance = 8.0,
+        pivot = support + (sign*12.0)*axis, distance = 8.0,
         azimuth = arctan2(axis.y, axis.x) + 0.5*PI, elevation = 0.35,
       )
       let scale = placement.drawExtentFor(HEIGHT_MARK)
@@ -7602,7 +7602,7 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
     test "every size fills its own target exactly, and the largest leaves two handles":
       # **Walk lands on count rather than near it.** It passes over system too.
       #   large for room left instead of stopping on it, which is only reason three
-      #   unrelated targets can each come out exact; when it stopped, size hit its target
+      #   unrelated pivots can each come out exact; when it stopped, size hit its pivot
       #   only where item counts happened to sum to it. Checked at every size, because
       #   one size landing exactly says nothing about another.
       #   Handles above largest size are deliberate headroom -- reader can still
@@ -7963,7 +7963,7 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
       camera.azimuth = 1.25 # Left alone by preset, so it has to survive it.
       showOrrery(scene, camera, 1440, 900)
       check scene.len == itemsOf(SCALE_ORRERY_DEFAULT)
-      check camera.target =~ POSITION_ORRERY
+      check camera.pivot =~ POSITION_ORRERY
       check camera.elevation =~ ELEVATION_ORRERY_SHOWN
       check camera.azimuth =~ 1.25
       # Standing back far enough to hold arrangement is point of solve, and.

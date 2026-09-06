@@ -23,7 +23,7 @@
 ##   |------------|-------------------------------------------------------------------|
 ##
 ## Point wins tie over line, and line over plane.
-##   Smaller target should not be swallowed by larger one drawn behind or through it.
+##   Smaller pivot should not be swallowed by larger one drawn behind or through it.
 ##
 ## Shared by desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render paths.
 
@@ -45,7 +45,7 @@ import ./[boundary, camera, euclid, tessellate, scene]
 const
   FACTOR_ANCHOR_DEPTH* = 2.0
     ## Take object or ground as zoom anchor only within this factor of orbit distance.
-    ##   Depth either way; otherwise level through target answers.
+    ##   Depth either way; otherwise level through pivot answers.
     ##   Anchor at depth of what reader looks at is what map zoom means. Star field put
     ##   some star under every pixel, and anchoring on one thousand units off carried
     ##   eye across field in few notches and clipped scene away behind it.
@@ -242,11 +242,11 @@ func castRay*(
 func positionUnderCursor*(
   camera: Camera; width, height: int; cursor: ScreenPosition
 ): Option[Position] =
-  ## Solve world point cursor is over: where its sight ray meets level plane through target.
+  ## Solve world point cursor is over: where its sight ray meets level plane through pivot.
   ##   None where ray never meets it: looking along it, or away at sky.
   ##   That plane rather than ground at `z = 0`.
   ##     It sits at height reader works at, what they mean by "there", and keeps hit at
-  ##     sane distance where ground far below raised target puts it wildly far off.
+  ##     sane distance where ground far below raised pivot puts it wildly far off.
   ##   For zoom keeping what is under cursor under cursor (`camera.dollyToward`).
   ##     Here rather than `camera` because it needs sight ray, and `camera` is what this
   ##     imports.
@@ -254,9 +254,9 @@ func positionUnderCursor*(
     eye = camera.eye
     frame_camera = camera.frame(eye)
     ray = castRay(camera, eye, frame_camera, width, height, cursor)
-    # Meet horizontal plane through target: `objects.levelPlaneThrough`.
+    # Meet horizontal plane through pivot: `objects.levelPlaneThrough`.
     #   One spelling of what level means to algebra.
-    hit = position(ray ∨ levelPlaneThrough(toMultivector(camera.target)))
+    hit = position(ray ∨ levelPlaneThrough(toMultivector(camera.pivot)))
   if hit.isNone: return
   # Refuse hit behind eye.
   #   Ray aimed at sky meets plane on far side of reader, and zoom toward it would fly
@@ -724,7 +724,7 @@ func isBackdropUnder*(
   scene: Scene, handle: int, scale: DrawExtent, width, height: int
 ): bool =
   ## Report whether hovered item is backdrop: plane at horizon, or plane filling view.
-  ##   Backdrop is click and hold target, never drag handle: press on it falls through to
+  ##   Backdrop is click and hold pivot, never drag handle: press on it falls through to
   ##   camera, or view cannot be moved while plane fills every pixel.
   let geometry = scene.geometryOf(handle)
   if geometry.isHorizonPlane: return true
@@ -742,11 +742,11 @@ func isAnchorNear(anchor: Position, camera: Camera, scale: DrawExtent): bool =
 type AnchorZoom* = object ## Define what zoom holds still, and whether it stands somewhere.
   at*: Position ## World point that keeps its pixel through zoom.
   is_standing*: bool ## Whether `at` is where point or line stands, not crossing of ray.
-    ## What stands somewhere is what reader looks at, so turntable's target follows its
-    ## depth (`camera.retargetToDepth`). Plane, ground and level are crossings, met where
+    ## What stands somewhere is what reader looks at, so turntable's pivot follows its
+    ## depth (`camera.repivotToDepth`). Plane, ground and level are crossings, met where
     ## ray happens to fall: their depth under cursor is not their depth at middle of
-    ## frame, and target lifted to it stood off plane being zoomed onto. Those three
-    ## are followed by map rule alone, target sliding toward `at`; see `camera.dollyToward`.
+    ## frame, and pivot lifted to it stood off plane being zoomed onto. Those three
+    ## are followed by map rule alone, pivot sliding toward `at`; see `camera.dollyToward`.
 
 
 func positionUnderPointerOn*(
@@ -769,15 +769,15 @@ proc anchorZoomAt*(
   width, height: int; cursor: ScreenPosition; placed: openArray[Placed] = []
 ): Option[AnchorZoom] =
   ## Solve world point zoom aimed at `cursor` should hold still.
-  ##   Whatever finite object cursor is over, else ground under it, else level target
+  ##   Whatever finite object cursor is over, else ground under it, else level pivot
   ##   sits on. In that order, and order is rule.
   ##     Reader pointing at object means that object at depth it stands at; zoom
-  ##     anchored on plane through target crept past or short of it.
+  ##     anchored on plane through pivot crept past or short of it.
   ##     Failing object, ground is what reader means by there, what every map zooms
   ##     against.
-  ##     Level through target survives as last answer, for cursor on empty sky.
+  ##     Level through pivot survives as last answer, for cursor on empty sky.
   ##   Object or ground far from what reader looks at is passed over for level through
-  ##   target; see `FACTOR_ANCHOR_DEPTH`.
+  ##   pivot; see `FACTOR_ANCHOR_DEPTH`.
   ##   `pickNearest` ranks horizon plane last and matches it everywhere, so sky is under
   ##   cursor almost always; `positionOnItemUnder` refuses horizon shapes for exactly
   ##   that reason, and fall-through does work.

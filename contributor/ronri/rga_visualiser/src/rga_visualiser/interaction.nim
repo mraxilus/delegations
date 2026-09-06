@@ -1,6 +1,6 @@
 ## Track drag gesture from one scene item to another, and apply operation it makes.
 ##
-## Press target chooses scheme; button chooses whether reader is asked.
+## Press pivot chooses scheme; button chooses whether reader is asked.
 ##   Drag begins only when press lands on pickable item.
 ##   Press on empty space is left for camera orbit or pan, so two schemes never compete
 ##   for one click.
@@ -44,7 +44,7 @@ import ./[boundary, camera, format, tessellate, picking, scene]
 
 const
   SECONDS_DWELL_MENU* = 0.75
-    ## Hold drag still over target this long and choice menu opens.
+    ## Hold drag still over pivot this long and choice menu opens.
     ##   On pointer armed `MenuArming.OnDwell`, which means touch alone.
     ##   Still, not merely present: clock restarts whenever cursor moves further than
     ##   `PIXELS_TAP_SLOP` from where it last settled.
@@ -87,7 +87,7 @@ const
     ##   past two distances, ordinary place to start drag from; figures in `PROVENANCE.md`.
 
   FRACTION_PAN_PIXEL* = 0.0016
-    ## Slide target this fraction of orbit distance per dragged pixel, with nothing to grab.
+    ## Slide pivot this fraction of orbit distance per dragged pixel, with nothing to grab.
     ##   Fallback only, for drag whose sight ray never meets level it would grab; see
     ##   `panAcross`.
 
@@ -112,7 +112,7 @@ const
   PIXELS_MENU_REACH* = 76.0
     ## Reach from menu's centre to centre of each of its four wedges.
     ##   Wide enough that wedge clears cursor and object under it, and each is past WCAG
-    ##   2.5.8's 24-pixel target once `PIXELS_MENU_DEADZONE` is subtracted.
+    ##   2.5.8's 24-pixel pivot once `PIXELS_MENU_DEADZONE` is subtracted.
     ##   Short enough to stay one wrist movement, since menu opens mid-drag.
 
   PIXELS_MENU_DEADZONE* = 26.0
@@ -142,7 +142,7 @@ const
 const
   HEIGHT_MENU_WEDGE* = 30.0
     ## Size one wedge's short axis, in pixels.
-    ##   Past WCAG 2.5.8's 24-pixel target on short axis, which binds.
+    ##   Past WCAG 2.5.8's 24-pixel pivot on short axis, which binds.
     ##   Long axis comes from label, measured by render path drawing it.
   PADDING_MENU_WEDGE* = 22.0
     ## Pad wedge's label, so short name still reads as button.
@@ -186,10 +186,10 @@ type
     ##   and is never interrupted by menu, right button asks; only finger, with no second
     ##   button, waits.
     Never, ## Take proposal on release; no menu, however long drag stands still.
-    OnDwell, ## Open after `SECONDS_DWELL_MENU` of standing still over target.
+    OnDwell, ## Open after `SECONDS_DWELL_MENU` of standing still over pivot.
       ## Wheel invites itself under finger pausing to aim, which also covers it.
       ##   Until first entered it may not veto release; see `endDrag`.
-    Always ## Open moment drag arrives over target.
+    Always ## Open moment drag arrives over pivot.
 
   Compass* {.pure.} = enum ## Define where choice sits in menu, always.
     ## Fixed position per choice; unoffered ones are gaps, never packed out.
@@ -273,7 +273,7 @@ type
     proposal*: Option[DragChoice] ## What release right now would commit.
       ## Wedge cursor stands in while menu is open, `proposalFor`'s answer where none is.
       ##   Resolved in order `endDrag` resolves it, so preview and commit cannot come apart.
-      ## None where release commits nothing: over no target, or at centre of menu that may
+      ## None where release commits nothing: over no pivot, or at centre of menu that may
       ## veto.
       ##   Unentered dwell wheel may not, so pair's answer stands; see `endDrag`.
     preview*: Option[Preview] ## What proposal would make, for each render path to ghost.
@@ -281,7 +281,7 @@ type
       ## None over nothing, over own source, over pair making nothing (only warning before
       ## refused release), and over `More`, which builds nothing itself.
     arming*: MenuArming ## How this drag may open its menu, as pointer chose at press.
-    entered*: float ## When cursor last settled over target, for dwell to run from.
+    entered*: float ## When cursor last settled over pivot, for dwell to run from.
       ## Restarted when hovered item changes and when cursor moves away from `settled`.
     settled*: ScreenPosition ## Where cursor was when `entered` was last restarted.
     menu*: Option[ScreenPosition] ## Where choice menu is open, if it is.
@@ -300,10 +300,10 @@ type
       ## Set so two keys held together compose without enumerating pairs.
       ## Emptied by `releaseKeysAll` whenever view stops receiving key releases.
       ##   Key left here moves camera forever.
-    index_disengaged*: Option[int] ## Target menu was let go of, while cursor is still over
+    index_disengaged*: Option[int] ## Pivot menu was let go of, while cursor is still over
       ## it.
       ## Without it wheel re-opens on same object next frame, since `MenuArming.Always` is
-      ## due every frame over target.
+      ## due every frame over pivot.
       ## Cleared moment hover reports anything else.
 
 
@@ -414,7 +414,7 @@ func revealsWithoutPicking*(has_selection, is_menu_shown: bool): bool =
   ##   Selection standing with menu dismissed is reader who wants menu back, so click
   ##   reveals and picks nothing.
   ##   With menu already up, same click picks what it landed on.
-  ##     Right-click once for menu, again to retarget.
+  ##     Right-click once for menu, again to repivot.
   ##   Shift never comes here: shifted click always adds or drops, then reveals.
   ##     Caller applies that, knowing modifier.
   has_selection and not is_menu_shown
@@ -599,7 +599,7 @@ func inkOfDrag*(interaction: Interaction, ink_next: Ink): Ink =
   ##   and hue new object will actually be for build.
   ##     Warning arrives before release, and never by colour alone, since ghost
   ##     simultaneously fails to appear.
-  ##   With wheel open all three are reachable without leaving target.
+  ##   With wheel open all three are reachable without leaving pivot.
   ##     Centre is neutral where wheel may veto; unentered dwell wheel's centre keeps build
   ##     hue, since lifting there builds; see `endDrag`.
   ##     Greyed wedge magenta, offered wedge new object's hue.
@@ -684,7 +684,7 @@ proc dollyAt*(
     # Depth from eye where it now stands, along sight direction zoom left unchanged.
     let eye = camera.eye
     let depth = dot(anchor.get.at - eye, camera.frame(eye).forward)
-    if depth > 0.0: camera.retargetToDepth(depth)
+    if depth > 0.0: camera.repivotToDepth(depth)
 
 
 proc dollyAtCentre*(
@@ -694,7 +694,7 @@ proc dollyAtCentre*(
   ## Zoom camera by `factor` toward whatever middle of frame is over; pinch's zoom.
   ##   Pinch has two fingers and no pointer, and zooming at their midpoint translated
   ##   view twice beside pan that carries same midpoint; middle of frame it is, aimed
-  ##   through `dollyAt` so target still lands on point or line there.
+  ##   through `dollyAt` so pivot still lands on point or line there.
   dollyAt(
     camera, scene, factor, scale, view_projection, width, height,
     ScreenPosition(x: float(width)/2.0, y: float(height)/2.0), placed,
@@ -709,10 +709,10 @@ proc dollyAtCursor*(
   ## Zoom camera by `factor`, toward whatever cursor is over.
   ##   One statement of what wheel notch does, so both front-ends and pinch zoom same way.
   ##   `picking.anchorZoomAt` decides what "over" means: object under cursor, ground under
-  ##   it, or level target sits on, in that order.
+  ##   it, or level pivot sits on, in that order.
   ##   Falls back to plain `dolly` where none answers, cursor on empty sky above horizon.
-  ##   Where anchor is point or line, target then follows its depth along sight line; see
-  ##   `camera.retargetToDepth` and `picking.AnchorZoom`.
+  ##   Where anchor is point or line, pivot then follows its depth along sight line; see
+  ##   `camera.repivotToDepth` and `picking.AnchorZoom`.
   dollyAt(camera, scene, factor, scale, view_projection, width, height, interaction.cursor,
     placed)
 
@@ -723,10 +723,10 @@ func panAcross*(
   ## Slide view so world point under `before` comes to lie under `after`.
   ##   Grab, not rate.
   ##     Rate per dragged pixel is right at one depth and tilt and wrong everywhere else.
-  ##     `camera.pan` slides target within plane facing eye, which is tilted, so vertical
-  ##     drag lifted target off ground, every later orbit swung about point on nothing, and
+  ##     `camera.pan` slides pivot within plane facing eye, which is tilted, so vertical
+  ##     drag lifted pivot off ground, every later orbit swung about point on nothing, and
   ##     later zoom scaled by distance to nowhere.
-  ##   Both rays meet horizontal plane through target, `positionUnderCursor`'s surface, so
+  ##   Both rays meet horizontal plane through pivot, `positionUnderCursor`'s surface, so
   ##   translation between hits is horizontal by construction.
   ##     Plane rather than object under pointer because drag needs one surface for its
   ##     whole length.
@@ -734,8 +734,8 @@ func panAcross*(
   ##   sky above horizon.
   let
     eye_point = toMultivector(camera.eye)
-    target_point = toMultivector(camera.target)
-    level = levelPlaneThrough(target_point)
+    pivot_point = toMultivector(camera.pivot)
+    level = levelPlaneThrough(pivot_point)
     reach_max = FACTOR_PAN_REACH_MAX*camera.distance
   func heldFoot(hit: Option[Position]): Option[Multivector] =
     ## Draw hold point no further out than bound along its ray, then take its foot on level.
@@ -752,10 +752,10 @@ func panAcross*(
     at_after = heldFoot(positionUnderCursor(camera, width, height, after))
   if at_before.isSome and at_after.isSome:
     let carried = position(add(
-      target_point, subtract(at_before.get, at_after.get)
+      pivot_point, subtract(at_before.get, at_after.get)
     ))
     if carried.isSome:
-      camera.target = carried.get
+      camera.pivot = carried.get
       return
   camera.pan(
     -FRACTION_PAN_PIXEL*(after.x - before.x), FRACTION_PAN_PIXEL*(after.y - before.y)
@@ -1012,7 +1012,7 @@ func beginDrag*(interaction: var Interaction, arming: MenuArming, now: float): b
   ##   Reports whether one started, so caller knows whether to fall back to camera.
   ##   `arming` is what pointer chose; see `MenuArming` and `armingOf`.
   ##   Expects `beginPress` to have run for same press.
-  ##   Backdrop is click and hold target, never drag handle; see `is_hover_backdrop`.
+  ##   Backdrop is click and hold pivot, never drag handle; see `is_hover_backdrop`.
   ##     Plane at horizon is drawn as dome over every direction, hovered wherever nothing
   ##     else is; press on it starting drag would stop press on empty space falling
   ##     through to camera. Plane filling view leaves no empty space at all, so press on
@@ -1081,7 +1081,7 @@ func updateDrag*(
   # Latch what drag points at while no menu is open, so one that opens acts on it.
   if interaction.menu.isNone: interaction.index_destination = interaction.index_hover
 
-  # Stop holding target at arm's length once drag has left it.
+  # Stop holding pivot at arm's length once drag has left it.
   if interaction.index_disengaged.isSome and
       interaction.index_hover != interaction.index_disengaged:
     interaction.index_disengaged = none(int)
@@ -1091,7 +1091,7 @@ func updateDrag*(
     over.isSome and over.get != interaction.index_source and
     scene.isAlive(over.get) and scene.isAlive(interaction.index_source)
   if not interaction.is_over_target:
-    # Restart dwell wherever drag next arrives, having left target.
+    # Restart dwell wherever drag next arrives, having left pivot.
     interaction.proposal = none(DragChoice)
     interaction.preview = none(Preview)
     interaction.entered = now
@@ -1172,7 +1172,7 @@ func commitChoice*(
   ##     Menu greys wedges this would refuse.
   let over = destinationOf(interaction)
   # Stay silent as `endDrag` is.
-  #   Reachable only through menu whose target went away under it.
+  #   Reachable only through menu whose pivot went away under it.
   if over.isNone: return DragOutcome()
   if over.get == interaction.index_source:
     return DragOutcome(message: "Released on its own source; nothing done.")
@@ -1257,7 +1257,7 @@ func endDrag*(
   # Treat press that never moved as click, which selects what it came down on.
   #   Answered here because drag it abandons was begun here: press over object starts drag
   #   eagerly, and whether it was one is knowable only at release.
-  #   Open menu excludes click, not arming: wheel opens only over target other than source,
+  #   Open menu excludes click, not arming: wheel opens only over pivot other than source,
   #   so right press that never left its object opened none, and refusing it would leave
   #   right button doing nothing on plain click.
   if interaction.menu.isNone and interaction.isClick(now):

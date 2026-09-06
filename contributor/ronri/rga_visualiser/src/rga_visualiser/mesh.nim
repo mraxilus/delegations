@@ -39,7 +39,7 @@
 ##   Each record type's doc states expansion, and `expand*` reference proc beside it is
 ##   what suite pins and shaders are checked against.
 ## Line is drawn as ribbon, quad sized to width in screen pixels, never `GL_LINES`.
-##   Line width is hint target may ignore: most WebGL implementations clamp it to one
+##   Line width is hint pivot may ignore: most WebGL implementations clamp it to one
 ##   pixel. See `addSegment`.
 ##   Ribbons draw apart from washes because state differs: ribbon writes depth,
 ##   translucent wash does not.
@@ -77,13 +77,13 @@ const
     ##   Rest fades toward `FRACTION_GRID_FADE_END`: past that, cells crowd into few
     ##   pixels under perspective and read as aliasing noise.
     ##   Measured by rendering: fog is about eye, which stands whole orbit distance from
-    ##   content, and smaller fraction left ground under target already fading.
-    ##     0.06 of reach is 1.14 orbit distances, target inside solid core.
+    ##   content, and smaller fraction left ground under pivot already fading.
+    ##     0.06 of reach is 1.14 orbit distances, pivot inside solid core.
   FRACTION_GRID_FADE_END* = 0.20
     ## Cut ground grid lines off entirely at this fraction of reach.
     ##   Faint line still aliases, so fix is to stop drawing it, not dim it further.
     ##   0.20 of reach is 3.8 orbit distances, fog's edge about 2.8 distances beyond
-    ##   target.
+    ##   pivot.
   RIBBONS_MAX* {.define: "visualiser.ribbons_max".} = 20161
     ## Bound how many ribbon segments one frame holds.
     ##   Binding case is scene filled to `scene.ITEMS_MAX` with *lines*, each two
@@ -816,7 +816,7 @@ func expandRibbon*(record: RibbonRecord, scale: DrawScale): array[6, Vertex] =
   ##     checked.
   ##     Suite holds this against algebra (near clip equal to `clipToEyeSide`, across
   ##     equal to join through `directionAcross`), so chain runs shader ≡ this ≡ algebra.
-  ##   Quad rather than `GL_LINES` because line width is *hint* both targets may ignore.
+  ##   Quad rather than `GL_LINES` because line width is *hint* both pivots may ignore.
   ##   Each end is offset by half width of *its own* world-per-pixel, so ribbon narrows
   ##   with distance as line does, and two parallel lines keep shared vanishing point.
   ##   Clipped to near plane first.

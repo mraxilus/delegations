@@ -141,7 +141,7 @@ template fill6(flat: var FlatFloats, a, b, c, d, e, f: float32): FlatBuffer =
 type SettingsOverlay = tuple
   ## Define everything overlay's shared draw extent and view-projection depend on.
   ##   Camera's whole placement and viewport asked about.
-  target_x, target_y, target_z: float
+  pivot_x, pivot_y, pivot_z: float
   distance, azimuth, elevation, degrees_field_of_view, reach_scene: float
   width, height: int
 
@@ -982,7 +982,7 @@ proc ensureViewOverlay(width, height: int) =
   ##   full of multivectors per call on JS backend, cache hit or not.
   CAMERA.reach_scene = REACH_SCENE # Stamped as frame build does; see `ensurePlaced`.
   let settings: SettingsOverlay = (
-    CAMERA.target.x, CAMERA.target.y, CAMERA.target.z, CAMERA.distance,
+    CAMERA.pivot.x, CAMERA.pivot.y, CAMERA.pivot.z, CAMERA.distance,
     CAMERA.azimuth, CAMERA.elevation, CAMERA.degrees_field_of_view, CAMERA.reach_scene,
     width, height,
   )
@@ -996,19 +996,19 @@ proc ensureViewOverlay(width, height: int) =
 #[ Camera ]#
 
 proc nimCameraOrbit(turn, rise: cfloat) {.exportc.} =
-  ## Rotate camera about its target by turn (azimuth) and rise (elevation), radians.
+  ## Rotate camera about its pivot by turn (azimuth) and rise (elevation), radians.
   TWEEN_CAMERA.abandon()
   camera.orbit(CAMERA, float(turn), float(rise))
 
 
 proc nimCameraDolly(factor: cfloat) {.exportc.} =
-  ## Scale camera's distance from target by factor.
+  ## Scale camera's distance from pivot by factor.
   TWEEN_CAMERA.abandon()
   camera.dolly(CAMERA, float(factor))
 
 
 proc nimCameraDollyCentred(factor: cfloat; width, height: cint) {.exportc.} =
-  ## Scale camera's distance from target by factor, toward whatever frame's middle is over.
+  ## Scale camera's distance from pivot by factor, toward whatever frame's middle is over.
   ##   Pinch's zoom; see `interaction.dollyAtCentre`. Reads caches as `nimCameraDollyAt`.
   TWEEN_CAMERA.abandon()
   ensureViewOverlay(int(width), int(height))
@@ -1020,7 +1020,7 @@ proc nimCameraDollyCentred(factor: cfloat; width, height: cint) {.exportc.} =
 
 
 proc nimCameraDollyAt(factor: cfloat; width, height: cint) {.exportc.} =
-  ## Scale camera's distance from target by factor, toward whatever cursor is over.
+  ## Scale camera's distance from pivot by factor, toward whatever cursor is over.
   ##   See `interaction.dollyAtCursor`.
   ##   Reads cursor this build tracks (`nimUpdateCursor`), so caller aiming zoom (wheel at
   ##   pointer, pinch at midpoint) says where by moving cursor there first, as picking
@@ -1040,7 +1040,7 @@ proc nimCameraDollyAt(factor: cfloat; width, height: cint) {.exportc.} =
 
 
 proc nimCameraPan(across, up: cfloat) {.exportc.} =
-  ## Slide camera's target sideways and vertically in its view plane.
+  ## Slide camera's pivot sideways and vertically in its view plane.
   ##   Rate reading of pan, for caller with only step to give; `nimCameraPanAt` is what
   ##   drag uses.
   TWEEN_CAMERA.abandon()
@@ -1067,21 +1067,21 @@ proc nimCameraElevation(): cfloat {.exportc.} = cfloat(CAMERA.elevation)
   ## Report angle above horizontal plane, in radians.
 
 proc nimCameraDistance(): cfloat {.exportc.} = cfloat(CAMERA.distance)
-  ## Report distance from target, in world units.
+  ## Report distance from pivot, in world units.
 
 proc nimCameraFov(): cfloat {.exportc.} = cfloat(CAMERA.degrees_field_of_view)
   ## Report vertical field of view, in degrees.
 
-proc nimCameraTarget(): FlatBuffer {.exportc.} =
+proc nimCameraPivot(): FlatBuffer {.exportc.} =
   ## Report point camera orbits around, as `[x, y, z]` view over `FLAT_TARGET`.
   ##   Refilled per call; camera fields' tick asks five times second and compares before
   ##   writing, so fresh sequence here was allocation per tick.
-  FLAT_TARGET.fill3(cfloat(CAMERA.target.x), cfloat(CAMERA.target.y), cfloat(CAMERA.target.z))
+  FLAT_TARGET.fill3(cfloat(CAMERA.pivot.x), cfloat(CAMERA.pivot.y), cfloat(CAMERA.pivot.z))
 
 
 proc nimCameraEye(): FlatBuffer {.exportc.} =
   ## Report where eye stands, as `[x, y, z]` view over `FLAT_EYE`.
-  ##   Driven checks read sight line off eye and target, to tell zoom along it from
+  ##   Driven checks read sight line off eye and pivot, to tell zoom along it from
   ##   slide across it; nothing on page asks.
   let eye = CAMERA.eye
   FLAT_EYE.fill3(cfloat(eye.x), cfloat(eye.y), cfloat(eye.z))
@@ -1101,7 +1101,7 @@ proc nimSetCameraElevation(v: cfloat) {.exportc.} =
 
 
 proc nimSetCameraDistance(v: cfloat) {.exportc.} =
-  ## Rewrite distance from target, in world units.
+  ## Rewrite distance from pivot, in world units.
   ##   Held off one bound orbit distance has; see `camera.distanceHeld`.
   TWEEN_CAMERA.abandon()
   CAMERA.distance = distanceHeld(float(v))
@@ -1110,10 +1110,10 @@ proc nimSetCameraDistance(v: cfloat) {.exportc.} =
 proc nimSetCameraFov(v: cfloat) {.exportc.} = CAMERA.degrees_field_of_view = float(v)
   ## Rewrite vertical field of view, in degrees.
 
-proc nimSetCameraTarget(x, y, z: cfloat) {.exportc.} =
+proc nimSetCameraPivot(x, y, z: cfloat) {.exportc.} =
   ## Rewrite point camera orbits around.
   TWEEN_CAMERA.abandon()
-  CAMERA.target = Position(x: float(x), y: float(y), z: float(z))
+  CAMERA.pivot = Position(x: float(x), y: float(y), z: float(z))
 
 
 proc nimCameraLimits(): seq[float32] {.exportc.} =

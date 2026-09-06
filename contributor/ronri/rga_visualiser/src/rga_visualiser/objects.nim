@@ -101,7 +101,7 @@ func distanceBetween*(p, q: Multivector): float =
 
 func levelPlaneThrough*(point: Multivector): Multivector =
   ## Build horizontal plane through `point`, oriented so `depthAgainst` reads up as positive.
-  ##   Level reader works at when camera targets `point`.
+  ##   Level reader works at when camera pivots `point`.
   ##   Joined y-then-x: x∧y join reads point one unit above at -1, y∧x at +1, and height
   ##   is what every caller means. Unitized for `depthAgainst`'s contract.
   ##   Axes written as algebra's own weightless points, `e2` then `e1`, not lifted from
