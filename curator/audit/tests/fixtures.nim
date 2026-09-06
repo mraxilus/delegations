@@ -5,7 +5,7 @@
 ##   Cost: `goodTree` repeats layout rules as data; when layout grows, fixture grows with it,
 ##     and `taudit` proves they still agree.
 
-import std/[os, osproc, tempfiles]
+import std/[json, os, osproc, strutils, tempfiles]
 import ../src/[domains, kinds, layout, provenance, dependencies]
 
 
@@ -119,3 +119,15 @@ proc tempRepo*(): string =
   result = createTempDir("delegations_", "_fixture")
   discard result.git("init -q -b main")
   discard result.git("commit -q --allow-empty -m 'chore(curator): init'")
+
+
+proc lockWith*(nimble: string): string =
+  ## Render lock storing copy of nimble text, as Atlas writes one on `atlas pin`.
+  ##   Lines are split on newline rather than by `splitLines`, so joining them reproduces
+  ##   original text exactly, trailing newline included.
+  var lines = newJArray()
+  for line in nimble.split('\n'): lines.add %line
+  pretty(%*{
+    "items": newJObject(),
+    "nimbleFile": {"filename": "probe" & NIMBLE_EXT, "content": lines},
+  }) & "\n"

@@ -6,7 +6,7 @@ joinable: true
 """
 ## Replicate nimble requirement reading of `dependencies.nim` header and CONTRIBUTOR.md.
 
-import std/[os, tempfiles, unittest]
+import std/[options, os, strutils, tempfiles, unittest]
 import ../src/dependencies
 import ./fixtures
 
@@ -52,3 +52,31 @@ suite "Dependencies":
     defer: removeDir(root)
     root.writeInto("curator/probe/probe.nimble", NIMBLE_TEXT)
     check restoreAll(root, ["curator/probe"]).len == 0  # nothing run, nothing found
+
+  test "lock stores copy of nimble, read back whole":
+    check lockNimble(lockWith(NIMBLE_TEXT)) == some(NIMBLE_TEXT)  # round trip
+    check lockNimble(LOCK_TEXT).isNone  # lock storing no copy names none
+
+  test "stored nimble differing from committed one is finding, naming line about to be lost":
+    # Regression: `atlas rep` writes lock's copy back over nimble file, so pin edited without
+    #   regenerating lock is reverted silently; failure then surfaces as later finding on file
+    #   contributor never touched (reported by contributor/ronri/rga_visualiser, issue 25).
+    let stale = NIMBLE_TEXT.replace("nim == " & PIN, "nim >= " & PIN)
+    let found = checkLockNimble("p/p.nimble", "p/atlas.lock", lockWith(stale), NIMBLE_TEXT)
+    check found.len == 1
+    check found[0].path == "p/p.nimble"  # file about to be overwritten, never lock
+    check found[0].line == 6  # `requires` line of fixture
+    check found[0].message.endsWith("got `requires \"nim == " & PIN & "\"`.")
+
+  test "stored nimble matching committed one is clean, and absent copy compares nothing":
+    let (nimble_path, lock_path) = ("p/p.nimble", "p/atlas.lock")
+    check checkLockNimble(nimble_path, lock_path, lockWith(NIMBLE_TEXT), NIMBLE_TEXT).len == 0
+    check checkLockNimble(nimble_path, lock_path, LOCK_TEXT, NIMBLE_TEXT).len == 0  # cost
+    # Drift beyond pin is caught too, since lock stores whole file.
+    let extra = NIMBLE_TEXT & "requires \"malebolgia\"\n"
+    check checkLockNimble(nimble_path, lock_path, lockWith(NIMBLE_TEXT), extra).len == 1
+
+  test "unreadable lock is finding in static pass, not only at restore":
+    let found = checkLockNimble("p/p.nimble", "p/atlas.lock", "not json at all", NIMBLE_TEXT)
+    check found.len == 1
+    check found[0].path == "p/atlas.lock"  # fault is lock's, so finding points there
