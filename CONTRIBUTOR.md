@@ -334,6 +334,11 @@ what was rejected, what it costs. There is no `docs/adr/`.
 - No debug output left behind. Whitespace, tabs and width the audit already checks.
 - Pull request body follows `.github/pull_request_template.md`: intent, scope, verification
   (what ran, on which build), record, notes.
+- **A published page is linked, not described.** Where your change alters what a page shows,
+  republish it and put the URL in the verification section, so the Architect can open it
+  rather than rebuild it to see the change. Naming a page is not evidence about a page. Where
+  a page cannot be republished before review, say which pages would change and why they are
+  not up.
 - **Open it as a draft, and mark it ready only when it is.** Ready means CI green on the
   runner, every review comment answered, and nothing you still intend to change. A draft
   says "not yet" in the one place the Architect looks; an open pull request says "merge me",
@@ -348,6 +353,12 @@ From the constitution: return the implementation first. Report only material ass
 representation and staging choices, non-obvious trade-offs, unresolved questions, and
 verification performed, i.e. what ran, on which build. Before answering, silently review the
 result against Articles I to XI and the precedence clause.
+
+**Put a published page's URL in the message itself, not only in the pull request.** When you
+tell the Architect the work is ready, every page your change republished is linked right
+there, so opening one costs a click rather than a trip through the pull request to find it.
+The same URL belongs in both places; the pull request is the record, the message is what gets
+read first.
 
 ## Provenance guide
 
