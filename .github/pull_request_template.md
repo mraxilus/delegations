@@ -1,3 +1,5 @@
+**Role:** <!-- curator, or contributor/<domain>/<project> -->
+
 ## Intent
 
 <!-- One paragraph: what changes and why. Title follows `type(scope): summary`. -->
