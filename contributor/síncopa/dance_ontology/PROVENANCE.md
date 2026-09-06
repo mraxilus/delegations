@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | d27dcdddede02dbd |
+| Rules  | 565809cbc04f227c |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's workbook `ontology.partnerwork.xlsx` (sheets `base` and
@@ -177,19 +177,20 @@ stale until rerun. Rerun during move reproduced committed file byte for byte.
 
 ## Pages and build
 
-**Every page, picture and script is a build product; the hand-written markup is hosted in
-Nim.** The repository's audit reads only registered file kinds and rejects any other, so
-`.html`, `.svg` and `.js` cannot be committed; `tools/build.nim pages` writes the shells from
-`app/shell.nim`, `sim/shell.nim`, `tools/review_prose.nim` and `design/wholecloth_page.nim`,
-compiles the scripts beside them, and folds, renders and splices the rest under `build/`.
-The whole-cloth page's 213 lines of inline JavaScript were ported to Nim's JS backend. Tool
-binaries land in `bin/`, and pages under `build/`; root ignore file covers both at any
-depth, with test binaries beside their sources. Rejected: asking the curator to register an
-HTML kind, which would still leave generated pages uncommittable (their lines exceed 100
-characters) and inline scripts unwritable. Cost: editing style means editing a string
-literal, and every hosted line must fit 100 columns, so the whole-cloth markup was reflowed
-at whitespace (verified equal under Playwright, see Figures); the embedded CSS and HTML
-comments are telegraphic by hand because the checker cannot see inside a string.
+**Every page, picture and script is a build product; the hand-written markup is hosted in Nim.** The
+repository's audit reads only registered file kinds and rejects any other, so `.html`, `.svg` and
+`.js` cannot be committed; `tools/build.nim pages` writes the shells from `app/shell.nim`,
+`sim/shell.nim`, `tools/review_prose.nim` and `design/wholecloth_page.nim`, compiles the scripts
+beside them, and folds, renders and splices the rest under `build/`. The whole-cloth page's 213
+lines of inline JavaScript were ported to Nim's JS backend. Tool binaries land in `bin/`, and pages
+under `build/`; root ignore file covers both at any depth, with test binaries beside their sources.
+The curator has since registered Html and Svg kinds, so a hand-written page may now live in `pages/`
+or `mockups/` as a file, and a line holding one unbreakable token, which is what the fonts URL is,
+passes the width rule; nothing here has moved yet, and generated pages stay uncommittable, their
+lines running to thousands of characters. Cost: editing style means editing a string literal, and
+every hosted line must fit 100 columns, so the whole-cloth markup was reflowed at whitespace
+(verified equal under Playwright, see Figures); the embedded CSS and HTML comments are telegraphic
+by hand because the checker cannot see inside a string.
 
 **Project's verbs live in compiled driver, since make is retired.** `tools/build.nim` takes
 one command (`pages`, `verdicts`, `shot`, `clean`) and runs exactly what each Makefile
@@ -252,10 +253,15 @@ Declared unmet by this move, so the Style row above stays true (Article VIII.1):
 
 ## Open questions
 
-- Should the curator register Html and Svg kinds (comment scanner, width rule) so hand-drawn
-  pages can be committed as HTML? Until then they are hosted as Nim strings.
-- Web fonts: X.8 asks for Noto Sans, Noto Serif and Commit Mono shipped with the page; font
-  files are unregistered kinds. Owner's call whether to register a font kind, inline fonts as
-  data URIs inside the hosted markup, or accept system stacks.
+- Answered, not yet acted on: Html and Svg are registered kinds, so the four hosted pages
+  could become files under `pages/`, and the whole-cloth page under `mockups/`. Moving them
+  rewires `tools/pages.nim`, `tools/bundle.nim` and the tests that drive the build, so it
+  waits for a session with that scope.
+- Answered for fonts: binaries are never committed, and a project records each one's origin,
+  version, licence and checksum, then fetches it with an `assets` verb in `tools/build.nim`.
+  Satisfying X.8 means fetching Noto Sans, Noto Serif and Commit Mono that way and dropping
+  the Google request; until then the page keeps its remote fonts and system stacks.
+- `reflow_wholecloth.py` is not in the tree and Python is not a registered kind, so the
+  whole-cloth page's formatting cannot be reproduced from the repository.
 - `tlaws` costs 22 s of a four-core runner per audit; acceptable now, and the figure above
   is the one to watch as sweeps grow.
