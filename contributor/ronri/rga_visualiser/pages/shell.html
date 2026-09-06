@@ -1,0 +1,1441 @@
+<title>RGA visualiser — browser</title>
+<style>
+  :root {
+    --bg: #101318;
+    --surface: rgba(22, 27, 34, 0.82);
+    --surface-solid: #161b22;
+    --surface-raised: #1b212b;
+    --border: #2a323d;
+    --ink: #e7ecf1;
+    --ink-muted: #8b96a3;
+    --ink-faint: #5b6673;
+    --accent: #00a7a5;
+    --accent-ink: #bdf3f0;
+    --danger: #e0577a;
+    /* Four frame-rate bands exceedance curve is drawn in, worst last. **status**
+       ramp, deliberately not object palette: object's colour says which object, and
+       reusing one here would have curve impersonate series.
+         Screened through dataviz skill's own validator against this drawer's surface,
+       exactly as `mesh.nim`'s object palette was: all four sit inside dark lightness
+       band, clear 3:1 contrast, and hold normal-vision floor (worst adjacent pair at
+       16.3). Green is **jade** rather than pure green because pure green against
+       amber measures deltaE 1.2 under protanopia -- indistinguishable -- where jade
+       measures 7.9. Amber/red pair sits at 7.7 under deuteranopia, inside 6-8 band
+       validator allows only with secondary encoding: here every band is bounded by its
+       own *labelled* dashed line, so which band stretch of curve is in is read from
+       120/60/30 beside it and never from hue alone. */
+    --speed-fast: #3d8ee0;
+    --speed-good: #14a06e;
+    --speed-fair: #bb8215;
+    --speed-poor: #d03b3b;
+    /* "Noto Sans UI" sits in mono and serif stacks as well as being sans face:
+       maths and symbol faces are declared under that family by unicode-range, and
+       neither Commit Mono nor Noto Serif carries single one of those codepoints. Without
+       it bold operand or wedge in mono text falls through to whatever viewer's
+       system happens to have, which is one outcome embedding faces exists to rule
+       out -- and it renders fine on machine that has DejaVu, so it does not show up
+       locally. Listing family costs nothing: CSS falls back per character, and
+       range-restricted faces only ever match characters they are declared for. */
+    --mono: "Commit Mono UI", "Noto Sans UI", ui-monospace, "SF Mono", Consolas, monospace;
+    --sans: "Noto Sans UI", -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --serif: "Noto Serif UI", "Noto Sans UI", Georgia, "Times New Roman", serif;
+    /* Both written by `glue.js` from `nimAnimationMilliseconds`, so every transition below
+       runs to same constant freshly added object grows in over rather than to
+       second number written down separately. Curve is easeOutCubic, matching
+       `mesh.easeOutCubic` exactly. These literals are pre-script fallback only. */
+    --anim: 350ms;
+    --ease: cubic-bezier(0.215, 0.61, 0.355, 1);
+  }
+
+  /* Embedded rather than linked: artifact page cannot reach external font
+     host, and naming face viewer may not have installed would leave two
+     builds looking different. Faces and weights are exactly what UI uses.
+     Noto Sans has no mathematical operators or bold operands and Noto Sans Math
+     has no stars or crosses, so all three are declared under one family and
+     separated by unicode-range -- same split `gui_shim.cpp` merges into one
+     atlas for desktop.
+       Each `@EMBED:<file>@` names WOFF2 in `fonts/` that `build_browser.sh`
+     replaces with that file's own base64 data URL. Payload stays out of this
+     file so tracked source is 26 KB rather than the ~940 KB it assembles to,
+     and so fonts stay vendored -- kept locally, never committed -- way
+     `dependencies.list` already prescribes. Family, weight and unicode-range are
+     tracked here beside codepoints they cover; only bytes are injected. */
+  @font-face { font-family: "Noto Sans UI"; font-style: normal; font-weight: 400;
+    font-display: block;
+    src: url(@EMBED:noto-sans-latin-400-normal.woff2@) format("woff2"); }
+  @font-face { font-family: "Noto Sans UI"; font-style: normal; font-weight: 600;
+    font-display: block;
+    src: url(@EMBED:noto-sans-latin-600-normal.woff2@) format("woff2"); }
+  @font-face { font-family: "Noto Sans UI"; font-style: normal; font-weight: 400;
+    font-display: block;
+    unicode-range: U+2190-21FF, U+2200-22FF, U+2300-23FF, U+27C0-27EF, U+2A00-2AFF, U+1D400-1D7FF;
+    src: url(@EMBED:noto-sans-math-math-400-normal.woff2@) format("woff2"); }
+  @font-face { font-family: "Noto Sans UI"; font-style: normal; font-weight: 400;
+    font-display: block;
+    unicode-range: U+25A0-25FF, U+2600-26FF, U+2700-27BF;
+    src: url(@EMBED:noto-sans-symbols-2-symbols-400-normal.woff2@) format("woff2"); }
+  @font-face { font-family: "Noto Serif UI"; font-style: normal; font-weight: 400;
+    font-display: block;
+    src: url(@EMBED:noto-serif-latin-400-normal.woff2@) format("woff2"); }
+  @font-face { font-family: "Commit Mono UI"; font-style: normal; font-weight: 400;
+    font-display: block;
+    src: url(@EMBED:commit-mono-latin-400-normal.woff2@) format("woff2"); }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    overflow: hidden;
+    overscroll-behavior: none;
+    font-family: var(--sans);
+    color: var(--ink);
+  }
+
+  canvas#gl {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    display: block;
+  }
+
+  /* View is one ordinary tab stop, reached and left with Tab like every other
+     control -- see `interaction.actionFor` on why Tab is deliberately not rebound.
+     ring is inset rather than outset because canvas fills viewport, so
+     outside ring would fall off every edge of screen and show nothing. */
+  canvas#gl:focus { outline: none; }
+  canvas#gl:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: -3px;
+  }
+
+  svg#overlay {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  /* Selected object's name above its marker; placed by glue.js's appendLabel.
+     Size is set there from marker.HEIGHT_MARKER_LABEL, box label is centred in. */
+  svg#overlay text {
+    font-family: var(--sans);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    user-select: none;
+  }
+
+  /* One wedge of drag choice menu, styled to match `.selection-menu button` below:
+     wheel and that menu are same control in two postures -- one reached by
+     dragging, one by picking -- so reader should not have to learn two appearances for
+     it. Label is sized here rather than in script so rect behind it can be
+     measured from what browser actually laid it out as; see `appendChoiceMenu`.
+     label keeps choice's own hue, set inline per wedge from `nimDragMenuLayout`, so
+     join/meet/project still carry colours drawer's intro line gives them. */
+  .menu-wedge-label {
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 600;
+    fill: var(--ink);
+  }
+  .menu-wedge {
+    fill: var(--surface-raised);
+    stroke: var(--border);
+  }
+  /* Wedge cursor stands in, in same accent every other "this one is in force"
+     control on page wears (`.button.on`, `.help-tab.on`), on both border and
+     label -- so highlight survives reader who cannot tell one hue from another. */
+  .menu-wedge.on { stroke: var(--accent); }
+  .menu-wedge-label.on { fill: var(--accent-ink); }
+  /* Menu's own centre, where nothing is chosen. Its border rather than white, so
+     wheel is drawn entirely out of tones selection menu uses. */
+  .menu-centre { stroke: var(--border); }
+
+  .veil {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5; /* Above .drawer (4) -- position:fixed always opens its own stacking
+      context, so z-index set on .chip-row itself (mere descendant) couldn't reach
+      past .veil's own level to outrank .drawer; it has to be set here. Keeps undo/redo/
+      axes/grid/menu reachable while wide-viewport drawer (full-height right panel)
+      is open, rather than letting it cover that same top-right corner. */
+  }
+
+  .chip-row {
+    position: fixed;
+    top: max(14px, env(safe-area-inset-top));
+    left: max(14px, env(safe-area-inset-left));
+    right: max(14px, env(safe-area-inset-right));
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    pointer-events: none;
+  }
+
+  .brand {
+    appearance: none;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 7px 14px 7px 10px;
+  }
+  .brand .mark {
+    width: 9px; height: 9px;
+    border-radius: 2px;
+    background: var(--accent);
+    transform: rotate(45deg);
+    flex: none;
+  }
+  .brand .name {
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+
+  .toggles {
+    pointer-events: auto;
+    display: flex;
+    gap: 6px;
+    background: var(--surface);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 5px;
+  }
+  /* `.diagnostic-toggle` wears same pill as header chips at caption row's own scale:
+     control that changes what chart above it means should be recognisably same
+     kind of thing as controls that change what scene shows. Shared rather than
+     copied, so change to chip is change to both. */
+  .toggles button, .diagnostic-toggle {
+    appearance: none;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--ink-muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    padding: 7px 11px;
+    border-radius: 999px;
+    line-height: 1;
+  }
+  .toggles button.on, .diagnostic-toggle.on {
+    background: rgba(0, 167, 165, 0.16);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+  .toggles button:focus-visible, .diagnostic-toggle:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  /* Lone chip has to carry its own affordance. Header's chips read as controls
+     because `.toggles` draws bordered pill around group; there is no group here, and
+     without resting border and surface of its own this one renders as word "log" in
+     caption's own ink, indistinguishable from caption it sits in. */
+  .diagnostic-toggle {
+    font-size: 9.5px;
+    padding: 2px 7px;
+    color: var(--ink-muted);
+    border-color: var(--border);
+    background: var(--surface-raised);
+  }
+
+
+  /* ---- Message toast: outcome of last action, transient ----     */
+  /* ---- Help: where controls are stated, bottom right ----
+     Only statement of controls in this build, and reachable at any time. Pill
+     naming few of them used to greet every load and leave after four seconds; panel
+     outgrew it, and page that explains itself on demand needs no greeter.
+     44px minimum, which is touch-target size Apple's guidelines ask for and comfortably
+     over 24px WCAG 2.5.8 requires -- control reader reaches for when they are
+     already lost is last one to make them aim. */
+  /* ---- Scale bar: what one cell of ground grid measures ----     */
+  .ruler {
+    position: fixed;
+    left: max(14px, env(safe-area-inset-left));
+    bottom: max(14px, env(safe-area-inset-bottom));
+    pointer-events: none;
+    /* **Below drawer, not beside it and never hidden.** Bar belongs to view it
+       measures, so it stays where that view is and drawer simply covers it -- same
+       thing map's scale bar does when panel opens over it. It stepped aside to
+       drawer's far edge before, which on phone (full-width sheet) put it off-screen
+       altogether: reading that vanishes is worse than one panel is sitting on. */
+    z-index: 3;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-muted);
+    text-shadow: 0 1px 2px var(--bg); /* Legible over pale grid line as over dark sky.   */
+  }
+  /* Drawn as span with two end ticks rather than filled block: ticks are where
+     measurement actually starts and stops, and block leaves that to eye. */
+  .ruler-bar {
+    height: 5px;
+    border: 1px solid var(--ink-faint);
+    border-top: none;
+    box-sizing: border-box;
+  }
+  .ruler-label {
+    margin-top: 3px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .help-open {
+    position: fixed;
+    right: max(14px, env(safe-area-inset-right));
+    bottom: max(14px, env(safe-area-inset-bottom));
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+    cursor: pointer;
+    font-family: var(--sans);
+    font-size: 19px;
+    color: var(--ink-muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(9px);
+    transition: color var(--anim) var(--ease), border-color var(--anim) var(--ease);
+    z-index: 6;
+  }
+  .help-open:hover, .help-open:focus-visible {
+    color: var(--accent-ink);
+    border-color: var(--accent);
+  }
+
+  .help-panel {
+    position: fixed;
+    right: max(14px, env(safe-area-inset-right));
+    bottom: calc(max(14px, env(safe-area-inset-bottom)) + 52px);
+    /* Wide enough for two columns wherever there is room, and whole viewport
+       less its margins where there is not -- old flat 360px kept 1400px window
+       reading phone-width column. */
+    width: min(560px, calc(100vw - 28px));
+    max-height: min(82vh, 620px);
+    /* Column, so rows box can be given whatever is left rather than height worked
+       out by hand. It used to subtract flat 82px for tab strip, which was wrong
+       moment anything else joined it above rows -- strip wraps to two lines on
+       phone, and there is now description as well. Nothing here is measured off
+       constant any more, so panel cannot outgrow screen. */
+    display: flex;
+    flex-direction: column;
+    padding: 12px 14px 14px;
+    border-radius: 14px;
+    background: var(--surface-solid);
+    border: 1px solid var(--border);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 12.5px;
+    line-height: 1.45;
+    opacity: 0;
+    transform: translateY(6px);
+    pointer-events: none;
+    transition: opacity var(--anim) var(--ease), transform var(--anim) var(--ease);
+    z-index: 6;
+  }
+  .help-panel.show { opacity: 1; transform: none; pointer-events: auto; }
+  /* Panel's own way out. It stays open until reader closes it -- tap outside no
+     longer dismisses it -- so on phone, which has no escape key and where `?` that
+     opened it may sit under panel itself, this is only way out. Pinned to
+     corner rather than placed in tab strip, which wraps to two lines there. */
+  .help-close {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    padding: 4px 8px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink-muted);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .help-close:hover { color: var(--ink); background: var(--surface-raised); }
+  /* Tabs wrap rather than scroll sideways: five short words fit one line on desktop and
+     two on phone, and horizontally scrolling strip hides tabs past its edge. */
+  .help-tabs {
+    flex: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    /* Clear of close button pinned in corner above, so wrapped strip never runs
+       under it. */
+    padding-right: 26px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+  }
+  .help-tab {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    /* Past WCAG 2.5.8's 24px target on both axes once padding is counted.     */
+    padding: 6px 11px;
+    cursor: pointer;
+  }
+  .help-tab:hover, .help-tab:focus-visible { color: var(--ink); border-color: var(--border); }
+  .help-tab.on { color: var(--accent-ink); border-color: var(--accent-ink); }
+  /* What open tab is about, above its rows. Outside `.help-rows` so it stays put while
+     they scroll: sentence that scrolls away is one reader loses exactly when they need
+     it. Its text comes from `help.descriptionOf` through `nimHelpDescriptions`, so this and
+     desktop's own line are same sentence by construction. */
+  .help-description {
+    flex: none;
+    margin: 0 0 10px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--ink-muted);
+  }
+  /* Only rows scroll, so tab strip stays reachable however long tab grows.
+     `help.ENTRIES_MAX_PATH` is what keeps this from ever being how panel is read. */
+  /* One grid over every row, not flex box per row: column has to be one width down
+     whole table, and only shared grid container can size it from widest action
+     in it. `max-content` is that rule -- same one desktop panel follows, where
+     `panel.layoutHelp` measures `offset_outcome` off widest action rather than
+     guessing fraction. Flat `44%` was guess, and on 558px panel it handed
+     actions 245px they did not want while outcomes beside them wrapped.
+     Both tracks carry same 122px floor, and pair of them is measured rather than
+     picked: action floor keeps tab of short actions from starting its outcomes hard
+     left of where every other tab starts them, and outcome floor is what stops
+     `max-content` being greedy on 262px-wide rows 320px phone leaves -- without it
+     actions took 208 of those 262 and three tabs grew scrollbar. 122 + 122 +
+     10px gap is 254, which fits. Rows are one grid but hidden row contributes no
+     track sizing, so each column is measured per tab, from what is actually on screen. */
+  .help-rows {
+    overflow-y: auto;
+    /* Takes whatever column has left; `min-height: 0` because flex item defaults to
+       its content's minimum and would refuse to shrink, pushing panel off screen. */
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(122px, max-content) minmax(122px, 1fr);
+    column-gap: 10px;
+    align-content: start;
+  }
+  /* `display: contents` so each row's two cells become items of grid above rather
+     than of box of their own. Safe for `touch` marker, which hangs off action
+     cell and so keeps box to hang from. */
+  .help-row { display: contents; }
+  /* Author `display` beats UA stylesheet's own `[hidden] { display: none }`, so
+     row hidden by attribute would keep its box and every tab would report whole table's
+     height. Measured: without this line all five tabs scrolled, including two-row one. */
+  .help-row[hidden] { display: none; }
+  .help-action {
+    padding: 2px 0;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--accent-ink);
+  }
+  .help-outcome { padding: 2px 0; color: var(--ink-muted); }
+  /* Touch rows carry word rather than only colour, so which input line describes
+     survives reader who cannot tell two tints apart. */
+  .help-touch::after {
+    content: "touch";
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0 5px;
+    margin-left: 6px;
+    white-space: nowrap;
+  }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    top: max(60px, env(safe-area-inset-top));
+    transform: translateX(-50%);
+    pointer-events: none;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--ink);
+    background: var(--surface-solid);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 13px;
+    max-width: min(420px, calc(100vw - 28px));
+    text-align: center;
+    opacity: 0;
+    transition: opacity var(--anim) var(--ease);
+    z-index: 5;
+  }
+  .toast.show { opacity: 1; }
+  /* Toast carrying something to tap has to be reachable, so it takes pointer events back
+     from rule above -- and it stays until dismissed rather than expiring, since link
+     that vanishes after 3.2 s is link nobody on phone gets to in time. */
+  .toast.actionable {
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    align-items: stretch;
+  }
+  .toast-action {
+    display: inline-block;
+    font-family: var(--sans);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--accent-ink);
+    background: var(--accent);
+    border-radius: 8px;
+    padding: 9px 14px;
+    text-decoration: none;
+    /* Real touch target, not text link: this is last route to saved file when
+       every automatic one is blocked, and it is reached with thumb. */
+    min-height: 38px;
+    line-height: 20px;
+  }
+  /* Saved image itself, offered to press and hold where frame refuses everything
+     else. Capped by viewport height as well as width so tall phone screenshot still
+     leaves link above it and dismiss below it on screen. */
+  .toast-preview {
+    display: block;
+    width: 100%;
+    max-height: 42vh;
+    object-fit: contain;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-solid);
+  }
+  .toast-hint {
+    font-family: var(--sans);
+    font-size: 11px;
+    color: var(--ink-dim);
+  }
+  /* What each delivery route answered. Recessive and monospaced: it is evidence to read
+     when something did not work, never message itself. */
+  .toast-detail {
+    font-family: var(--mono);
+    font-size: 10px;
+    line-height: 15px;
+    color: var(--ink-dim);
+    word-break: break-word;
+  }
+  .toast-dismiss {
+    font-family: var(--sans);
+    font-size: 11px;
+    color: var(--ink-dim);
+    background: none;
+    border: none;
+    padding: 2px;
+    cursor: pointer;
+  }
+
+  /* ---- Drawer toggle (panel open/close) -- merged onto .brand itself, so this
+     ---- rule now only supplies its own open-state accent on top of .brand's base look. */
+  .drawer-toggle.on, #button-menu.on { border-color: var(--accent); color: var(--accent-ink); }
+
+  /* ---- Drawer: whole panel stack ----
+     On **left**, and slid in from left, because that is side desktop
+     build's own panel occupies (`panel.nim`): two builds are one application reached
+     two ways, and workbench that changes sides between them is thing to relearn. */
+  .drawer {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: min(400px, 100vw);
+    background: var(--surface);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    transform: translateX(-100%);
+    transition: transform var(--anim) var(--ease);
+    z-index: 4;
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: max(14px, env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom)) 14px;
+  }
+
+  @media (max-width: 519px) {
+    /* Narrow phones: five chip-row controls (undo, redo, axes, grid, menu) plus
+       brand chip's full "RGA visualiser" label don't fit on one line -- drop label,
+       keeping just mark, rather than letting row wrap or overflow.
+       519, measured rather than guessed: row is swept pixel at time and 520 is
+       narrowest viewport where it stops overflowing. This was 480 and wrong by 39
+       pixels, so every width from 481 to 519 overflowed -- with old label, by 50. */
+    .brand .name { display: none; }
+    .brand { padding: 7px 10px; }
+  }
+
+  @media (max-width: 640px) {
+    .drawer {
+      right: 0; left: 0; top: auto;
+      width: auto;
+      height: min(78vh, 640px);
+      border-right: none;
+      border-top: 1px solid var(--border);
+      border-radius: 18px 18px 0 0;
+      transform: translateY(100%);
+    }
+    .drawer.open { transform: translateY(0); }
+  }
+
+  @media (min-width: 641px) {
+    /* Above bottom-sheet breakpoint, drawer is full-height side panel whose
+       own top edge sits directly under chip-row's always-visible controls -- give
+       its content enough top clearance that first section header starts below them
+       instead of running underneath. */
+    .drawer-scroll { padding-top: 62px; }
+  }
+
+  /* ---- Sections (collapsing headers, matching panel.nim's own structure) ---- */
+  .section { border-bottom: 1px solid var(--border); padding: 10px 0; }
+  .section:last-child { border-bottom: none; }
+  .section-header {
+    appearance: none;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: transparent;
+    border: none;
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 4px 2px;
+    cursor: pointer;
+  }
+  /* Solid triangle, not U+25B8's small one: at sizes these rows are read at
+     small glyph is speck that reads as punctuation rather than as control. Shared with
+     tree rows below, which match these deliberately -- both answer "there is more
+     under here", and reader should not have to learn two marks for one idea. */
+  .section-header .chev {
+    color: var(--ink-muted);
+    transition: transform var(--anim) var(--ease);
+    font-size: 10px;
+  }
+  .section.open .section-header .chev { transform: rotate(90deg); }
+  .section-body { display: none; padding-top: 10px; }
+  .section.open .section-body { display: block; }
+
+  /* ---- Generic field controls ---- */
+  .field { margin-bottom: 9px; }
+  .field-check { display: flex; align-items: center; gap: 6px; font-size: 12px;
+    color: var(--ink-muted); cursor: pointer; }
+  .field label {
+    display: block;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-faint);
+    margin-bottom: 4px;
+  }
+  .field-row { display: flex; gap: 7px; }
+  .field-row .field { flex: 1; margin-bottom: 0; }
+  input[type="text"], input[type="number"], select {
+    width: 100%;
+    background: var(--surface-solid);
+    border: 1px solid var(--border);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 12.5px;
+    border-radius: 8px;
+    padding: 7px 8px;
+  }
+  input[type="text"]:focus, input[type="number"]:focus, select:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+  }
+  input[type="number"] { font-variant-numeric: tabular-nums; }
+  select { appearance: none; }
+
+  .button {
+    appearance: none;
+    background: var(--surface-solid);
+    border: 1px solid var(--border);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 12.5px;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  .button:active { background: #222a35; }
+  .button:disabled { opacity: 0.4; cursor: default; }
+  .button.primary {
+    background: rgba(0, 167, 165, 0.18);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+  #button-apply { margin-top: 10px; } /* hr.rule elsewhere in this drawer uses same
+    10px margin; operand field-row directly above has no <hr> of its own now that
+    "operate" no longer shares section with "add". */
+  .button.danger { color: var(--danger); }
+
+  .check-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12.5px;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .check-row input { accent-color: var(--accent); width: 15px; height: 15px; }
+
+  hr.rule { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+
+  .help-text { font-size: 11px; color: var(--ink-faint); line-height: 1.4; margin: -4px 0 10px; }
+
+  .message-line {
+    font-size: 11.5px;
+    color: var(--ink-muted);
+    font-family: var(--mono);
+    padding-top: 8px;
+    word-break: break-word;
+  }
+
+  /* ---- Objects list ---- */
+  .objects-header { display: flex; align-items: baseline; justify-content: space-between; }
+  .objects-count { font-size: 11px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .item-row {
+    border-top: 1px solid var(--border);
+    padding: 9px 0;
+    /* **Row nobody can see is not laid out.** At capacity of 1,024 list holds about
+       eleven thousand of page's twelve and half thousand elements, and although
+       diagnostics tick never writes into any of them, every write it makes elsewhere in
+       drawer sent browser back over all of them. Measured on demo, still, drawer
+       open: frame after tick cost 5.2 ms more than plain frame, and 2.8 ms of that
+       was these rows -- deleting list outright reached same 2.4 ms floor this rule
+       does, so it buys what virtualising list would buy without virtualised list.
+       `auto` on intrinsic size, not bare length: browser then remembers each
+       row's real height once it has laid it out, and only row never yet scrolled past
+       uses fallback. **Fallback is content-box height**, so it excludes this
+       rule's own 18px of padding and 1px of border -- border-box figure here makes every
+       skipped row 19px too tall, which measured as list 27% longer than it is. Modal
+       collapsed row is 61px overall (930 of demo's 1,024; 93 wrap their coefficients to
+       second line at 76px, and open row is taller still), so 42px is content
+       inside it and fresh list's extent starts within couple of percent. */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 42px;
+  }
+  /* One row reader is editing is exempt: it is several times taller than collapsed
+     one, and `scrollRowIntoView` has to scroll its whole form into view rather than
+     placeholder standing in for it. One row of thousand, so saving is untouched. */
+  .item-row.editing-item { content-visibility: visible; contain-intrinsic-size: none; }
+  .item-row:first-of-type { border-top: none; }
+  .item-row.selected {
+    background: rgba(0, 167, 165, 0.10);
+    border-radius: 8px;
+    margin: 0 -10px;
+    padding: 9px 10px;
+  }
+  .item-row.hidden-item { opacity: 0.45; } /* Dimmed but still legible -- mirrors
+    .item-row.selected's own role as lightweight whole-row state cue, just for
+    "hidden" instead of "selected"; two are independent and may combine. */
+  .item-top { display: flex; align-items: center; gap: 8px; }
+  .item-top input[type="checkbox"] {
+    accent-color: var(--accent);
+    width: 15px;
+    height: 15px;
+    flex: none;
+  }
+  .item-label {
+    flex: 1;
+    font-size: 12.5px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .item-remove, .item-visibility, .item-edit-toggle, .item-edit-cancel {
+    font-size: 10.5px; padding: 4px 8px;
+  }
+  /* Row being composed has no object behind it yet -- mark it so unsaved row is
+     never mistaken for one that already exists. */
+  .item-row.pending-item { border-left: 2px solid var(--accent); padding-left: 8px; }
+  .item-coefficient {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    margin: 3px 0 0 23px;
+    word-break: break-word;
+  }
+  .item-edit { display: none; margin: 8px 0 0 23px; }
+  .item-edit.open { display: block; }
+  /* Coefficient grid: stacked one row per grade (0 to n), each row itself wrapping --
+     grade 2 in this build's own 4D rigid PGA has 6 members, more than comfortably fits
+     one line at drawer's own width, so grade's own row wraps onto second line
+     rather than letting fixed column count cut across grade boundaries instead. */
+  .coefficient-grid { display: flex; flex-direction: column; gap: 6px; }
+  .coefficient-grid .field { margin-bottom: 0; }
+  .coefficient-grid label { font-size: 8.5px; }
+  .coefficient-grid input { padding: 5px 5px; font-size: 10.5px; }
+  .coefficient-grade-row { display: flex; flex-wrap: wrap; gap: 5px; }
+  .coefficient-grade-row .field { flex: 1 1 56px; min-width: 56px; }
+  .swatch { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+
+  /* ---- Diagnostics ---- */
+  .diagnostic-line {
+    font-size: 11.5px;
+    color: var(--ink-muted);
+    margin: 6px 0;
+    display: flex;
+    justify-content: space-between;
+  }
+  .diagnostic-line b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  /* Parent row is button so it is reachable by keyboard and announced as one, and is
+     otherwise same row: chevron and its rotation match section headers above,
+     since both answer "there is more under here". */
+  .diagnostic-parent {
+    appearance: none;
+    background: none;
+    border: none;
+    padding: 0;
+    width: 100%;
+    /* Family and weight only, never `font` shorthand: that resets `font-size` too,
+       and `.diagnostic-line`'s own 11.5px is size every sibling row is read at. */
+    font-family: inherit;
+    font-weight: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  /* Sized and inked to be *recognisable as triangle* on phone. At 9px in faintest
+     ink it was four pixels of grey -- speck beside label, which is not invitation
+     to press anything; reader has to be able to tell at glance which rows open. Its
+     own row is hit target, which is full drawer width, so glyph only has to
+     be legible rather than large enough to hit. */
+  .diagnostic-parent .chev {
+    display: inline-block;
+    width: 14px;
+    /* Inherited so chevron joins its own row's cost tint. Untinted that is row's
+       `--ink-muted` exactly as before; tinted it is band's own colour, so parent row
+       reads as one thing rather than coloured label beside grey arrow. */
+    color: inherit;
+    font-size: 10px;
+    transition: transform var(--anim) var(--ease);
+  }
+  .diagnostic-parent:hover .chev, .diagnostic-parent:focus-visible .chev { color: var(--accent); }
+  .diagnostic-parent:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* **`>`, not descendant combinator.** These nodes nest, and descendant selector
+     matched every `.diagnostic-children` and every `.chev` *below* open node -- so opening
+     `build` revealed whole tree at once and rotated all three chevrons, while
+     `isPhaseShown` went on correctly reporting inner nodes closed and never wrote
+     their rows. Result read as tree whose deeper rows were permanently broken: every
+     one of them on screen, expanded, and showing em dash. Node's own class must reach
+     its own children and stop there. */
+  .diagnostic-node.open > .diagnostic-parent .chev { transform: rotate(90deg); }
+  /* Which module to open when row is expensive one. Dim and small: it answers
+     question reader only asks once they have found row, so it must not compete with
+     row's own name for first glance. `currentColor` so it takes cost tint with
+     rest of row rather than staying grey against red label. */
+  .diagnostic-where {
+    margin-left: 6px;
+    font-size: 9.5px;
+    font-family: var(--mono);
+    opacity: 0.55;
+  }
+  /* Second cut through same milliseconds. Rule and word rather than nested
+     node, because these are not children of anything above them -- indenting them under
+     `build` would read as double counting very time they are re-dividing. */
+  .diagnostic-cut {
+    margin: 10px 0 2px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .diagnostic-cut-row { padding-left: 12px; }
+  .diagnostic-experiments { display: flex; gap: 6px; }
+  /* Experiment: every backdrop blur off at once, so its cost can be read on device. */
+  body.without-blur * {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .diagnostic-children { display: none; padding-left: 12px; }
+  .diagnostic-node.open > .diagnostic-children { display: block; }
+  .sparkline { width: 100%; height: 40px; display: block; }
+  .exceedance { width: 100%; height: 74px; display: block; }
+  /* Curve's own caption, in row idiom numbers below it use, so legend and
+     readings read as one column rather than as chart with label stuck on. */
+  .diagnostic-legend {
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    margin: 2px 0 8px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2px 8px;
+    justify-content: space-between;
+  }
+  .diagnostic-legend-axis { display: flex; align-items: center; gap: 6px; }
+  .diagnostic-legend b { color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+  /* Row ramp's own key: ramp itself, as bar. Its gradient is set by glue.js
+     from very table rows are tinted out of, so key cannot come to show ramp
+     tree no longer uses -- reason four band swatches it replaced were built
+     from row tokens rather than restated here. */
+  .key-ramp {
+    display: inline-block;
+    width: 84px;
+    height: 6px;
+    border-radius: 3px;
+    vertical-align: 0;
+  }
+  /* **One square per slot, wrapped to panel's width** -- reading
+     `gui.poolBar` gives desktop, which this had drifted from. It was flex row of one
+     `<span>` per slot with 1px gap between them, which at capacity of 1,024 asks for
+     1,023px of gap inside 371px strip: flex shrank every cell to zero width and
+     whole thing drew as gap. Every cell was there and correctly coloured, and none of them
+     was pixel wide. Canvas instead of thousand elements for reason objects
+     list already demonstrates -- thousand boxes in this drawer cost layout pass every
+     time anything else in it is written -- and wrap means grid grows rows as
+     drawer narrows rather than starving its cells. Height is set from JavaScript, since it
+     is row count that decides it; see `drawPoolGrid`. */
+  .pool-grid {
+    display: block;
+    width: 100%;
+    margin: 6px 0;
+    border-radius: 3px;
+    background: var(--surface-solid);
+  }
+
+  /* ---- Selection menu (touch long-press/tap + mouse click/shift-click) ---- */
+  .selection-menu {
+    position: fixed;
+    z-index: 6;
+    background: var(--surface-solid);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 6px;
+    display: none;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .selection-menu.show { display: flex; }
+  .selection-menu-reveal {
+    /* Animated accordion: "apply" itself never moves (stays popover's own leftmost,
+       first-in-DOM element); this group alone opens to its right when apply is first
+       pressed, and closes (back to width 0) on "back" or on any fresh selection change.
+       max-width, not width, since a <select> sized to its own content (below) has no
+       fixed width of its own to animate toward -- max-width can animate to fixed
+       upper bound and clip via overflow while doing so, "width: auto" cannot animate at
+       all. */
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 0;
+    overflow: hidden;
+    transition: max-width var(--anim) var(--ease);
+  }
+  .selection-menu-reveal.open { max-width: 260px; }
+  .selection-menu-reveal select {
+    width: auto; /* Override generic select's own width:100%, which fought this
+      popover's own content-sized (not fixed-width) container -- auto lets control
+      size to its own text, same as native <select> does absent explicit width. */
+    max-width: none; /* Wrapping .selection-menu-reveal above is what actually
+      bounds/animates visible width; second cap here (previously 132px, truncating
+      every notation past couple of characters) was redundant and fought it. */
+  }
+  .selection-menu button {
+    appearance: none;
+    border: 1px solid var(--border);
+    background: var(--surface-raised);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 9px 12px;
+    white-space: nowrap;
+  }
+  .selection-menu-delete { border-color: #c0304a; color: #ff8fa3; }
+  .selection-menu-close { padding: 9px 11px; }
+
+  /* ---- Top menu -- rare, file-management-flavored actions only (save/load scene,
+     save PNG/load demo): popover under #button-menu, same fixed/blurred/bordered look as
+     .selection-menu. Undo/redo and axes/grid stay live in chip-row instead --
+     two things reached for constantly during editing shouldn't cost extra click. ---- */
+  .top-menu {
+    position: fixed;
+    z-index: 6;
+    top: max(60px, calc(env(safe-area-inset-top) + 46px));
+    right: max(14px, env(safe-area-inset-right));
+    background: var(--surface-solid);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px;
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .top-menu.show { display: flex; }
+  .top-menu-group { display: flex; gap: 6px; }
+  .top-menu .button { flex: 1; white-space: nowrap; }
+  .top-menu-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    padding: 0 2px;
+  }
+  .top-menu-title:not(:first-child) {
+    margin-top: 2px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ---- Chip-row action buttons (undo/redo) -- plain bordered .button look, deliberately
+     distinct from .toggles' pill/segmented look below: bordered rectangle reads as
+     "press this, something happens once"; pill reads as "this shows current state." ---- */
+  .action-group { display: flex; gap: 6px; }
+
+  @media (min-width: 720px) {
+  }
+</style>
+
+<canvas id="gl" tabindex="0" aria-label="3D view of the scene"></canvas>
+<svg id="overlay"></svg>
+
+<div class="veil">
+  <div class="chip-row">
+    <button class="brand drawer-toggle" id="button-drawer" type="button">
+      <span class="mark" aria-hidden="true"></span>
+      <span class="name">RGA visualiser</span>
+    </button>
+    <div style="display:flex; gap:8px; pointer-events:auto;">
+      <div class="action-group">
+        <button class="button" id="button-add" type="button" aria-label="add object">add</button>
+        <button class="button" id="button-undo" type="button" aria-label="undo">undo</button>
+        <button class="button" id="button-redo" type="button" aria-label="redo">redo</button>
+      </div>
+      <div class="toggles">
+        <button id="toggle-axes" class="on" type="button">axes</button>
+        <button id="toggle-grid" class="on" type="button">grid</button>
+      </div>
+      <button class="brand" id="button-menu" type="button" aria-label="menu">
+        <span aria-hidden="true">&#9776;</span>
+      </button>
+    </div>
+    <input type="file" id="file-load-scene" accept=".rgascene" style="display:none;">
+  </div>
+</div>
+
+<!-- Scale bar, bottom left, way map carries one: span of ground drawn at
+     its true screen length with distance it covers written under it. What it spans is
+     **one cell of ground grid**, so ruled ground stops being decoration and
+     becomes something reader can measure against -- and where cell would run more
+     than third of way across view, it falls back to tenth of one and says so.
+     Both numbers come from `nimGridMetrics`, which reads same `mesh.sizeCellGridAt`
+     grid itself is laid with. Hidden outright when there is no ground drawn at all. -->
+<div class="ruler" id="ruler" hidden>
+  <div class="ruler-bar" id="ruler-bar"></div>
+  <div class="ruler-label" id="ruler-label">&mdash;</div>
+</div>
+
+<button class="help-open" id="button-help" type="button" aria-label="help" aria-expanded="false">
+  <span aria-hidden="true">?</span>
+</button>
+<div class="help-panel" id="help-panel" role="dialog" aria-label="help">
+  <button class="help-close" id="help-close" type="button" aria-label="close help">×</button>
+  <div class="help-tabs" id="help-tabs" role="tablist" aria-label="help sections"></div>
+  <p class="help-description" id="help-description"></p>
+  <div class="help-rows" id="help-rows"></div>
+</div>
+
+<div class="top-menu" id="top-menu">
+  <div class="top-menu-title">save</div>
+  <div class="top-menu-group">
+    <button
+      class="button"
+      id="button-save-scene"
+      type="button"
+      title="Save this scene as a .rgascene file."
+    >scene</button>
+    <button
+      class="button"
+      id="button-export-png"
+      type="button"
+      title="Save the current view as a PNG image."
+    >image</button>
+  </div>
+  <div class="top-menu-title">load</div>
+  <div class="top-menu-group">
+    <button
+      class="button"
+      id="button-load-scene"
+      type="button"
+      title="Load a .rgascene file, replacing this scene."
+    >scene</button>
+  </div>
+  <!-- One button per size arrangement comes in, filled from `nimDemoScales` rather than
+       written out here: sizes are `orrery.ScaleOrrery`'s business, and second copy of
+       them in markup is second thing to keep true. -->
+  <div class="top-menu-title">demo</div>
+  <div
+    class="top-menu-group"
+    id="button-demo-scales"
+    role="group"
+    aria-label="load the orrery, at one of three sizes"
+  ></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="selection-menu" id="selection-menu">
+  <button id="selection-menu-apply" type="button">apply</button>
+  <button id="selection-menu-edit" type="button">edit</button>
+  <div class="selection-menu-reveal" id="selection-menu-reveal">
+    <select id="selection-menu-select"></select>
+    <button id="selection-menu-back" type="button" aria-label="cancel operation">back</button>
+  </div>
+  <button id="selection-menu-hide" type="button">hide</button>
+  <button id="selection-menu-delete" type="button" class="selection-menu-delete">delete</button>
+  <button
+    id="selection-menu-close"
+    type="button"
+    class="selection-menu-close"
+    aria-label="cancel"
+  >✕</button>
+</div>
+
+<div class="drawer" id="drawer">
+  <div class="drawer-scroll">
+    <!-- Apply -->
+    <div class="section" data-section="apply">
+      <button
+        class="section-header"
+        type="button"
+      ><span>apply</span><span class="chev">&#9654;</span></button>
+      <div class="section-body">
+        <div class="field">
+          <label>arity</label>
+          <div class="toggles" id="op-arity" style="width:100%; justify-content:stretch;">
+            <button class="on" data-arity="0" type="button" style="flex:1;">unary</button>
+            <button data-arity="1" type="button" style="flex:1;">binary</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>operation</label>
+          <select id="op-select"></select>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>operand m</label><select id="op-first"></select></div>
+          <div
+            class="field"
+            id="op-second-field"
+          ><label>operand n</label><select id="op-second"></select></div>
+        </div>
+        <button class="button primary" id="button-apply" type="button" style="width:100%;"
+          >apply</button>
+      </div>
+    </div>
+
+    <!-- Diagnostics -->
+    <div class="section" data-section="diagnostics">
+      <button
+        class="section-header"
+        type="button"
+      ><span>diagnostics</span><span class="chev">&#9654;</span></button>
+      <div class="section-body">
+        <!-- What session's frame times actually look like, rather than last four
+             seconds of them: for each duration, share of recent frames that came in
+             under it. Sparkline shows *when* spike happened and forgets it few
+             seconds later; this shows *how much* of session runs at each speed.
+             curve leaves 0% at fastest frame window holds and reaches 100% at
+             slowest, so both ends are read straight off it. Axis waits before it
+             follows change and then glides to it, so lone spike ageing out of
+             window does not send it travelling out and back. -->
+        <canvas class="exceedance" id="exceedance"></canvas>
+        <div class="diagnostic-legend">
+          <!-- Axis and its switch travel together, so control sits beside
+               words it changes rather than adrift between them. Vertical axis is
+               switchable because linear reads proportion as proportion while log
+               reads slowest one percent, which linear squeezes flat against
+               ceiling. Off by default -- linear is what chart is for, and log is
+               question reader goes looking for. -->
+          <span class="diagnostic-legend-axis"
+            ><span id="diagnostic-exceedance-axis">frames under</span
+            ><button
+              id="toggle-exceedance-log"
+              class="diagnostic-toggle"
+              type="button"
+              aria-label="log probability axis"
+            >log</button
+          ></span
+            ><b id="diagnostic-exceedance">&mdash;</b>
+        </div>
+        <canvas class="sparkline" id="sparkline"></canvas>
+        <div class="diagnostic-line"><span>frame time</span
+          ><b id="diagnostic-frametime">&mdash;</b></div>
+        <!-- Slowest frame ring holds, split between page's own code and browser.
+             Rows below are 200 ms means, which dilute one spike past telling whether
+             page authored it; this reads that frame's own slots. -->
+        <div class="diagnostic-line"><span>slowest frame</span
+          ><b id="diagnostic-slowest">&mdash;</b></div>
+        <div class="diagnostic-line diagnostic-cut-row"><span>page &middot; browser</span
+          ><b id="diagnostic-slowest-split">&mdash;</b></div>
+        <!-- Experiments, each switching one suspect off at runtime so its cost can be
+             read on device from rows below: every backdrop blur, canvas at full pixel
+             ratio, and SVG overlay. All on by default; none is saved. -->
+        <div class="diagnostic-line"><span>experiments</span
+          ><span class="diagnostic-experiments"
+            ><button id="toggle-blur" class="diagnostic-toggle on" type="button"
+              aria-label="backdrop blur">blur</button
+            ><button id="toggle-full-ratio" class="diagnostic-toggle on" type="button"
+              aria-label="full pixel ratio">hi-dpi</button
+            ><button id="toggle-overlay" class="diagnostic-toggle on" type="button"
+              aria-label="SVG overlay">overlay</button
+          ></span></div>
+        <!-- Each step of drawing process, as `mean over last 200 ms (median over
+             whole ring)` in ms, so reader can see where frame went rather than one
+             opaque total. Short mean is what to watch while changing something and
+             long median settled figure to act on; neither is single frame, which
+             changes faster than anyone can read it. Rows that have children
+             carry chevron and open on click, and every one of them starts closed:
+             reader opens this panel to see whether frame is slow, and goes looking for
+             *which step* only once it is. `refreshDiagnostics` skips whatever is closed,
+             so subtotal nobody is reading costs nothing to keep offering.
+             Timings come from bridge's own clocks inside nimBuildFrame where step
+             is Nim's, and from glue.js around its own calls where it is not. GL rows are
+             command submission only - GPU's own work runs asynchronously and no CPU
+             clock here can see it. -->
+        <!-- What colours mean, said once. Each row is tinted by its own share of
+             frame on continuous ramp, so without this line warm row reads as verdict
+             on milliseconds beside it rather than on their share. Bar runs from no
+             share to whole frame and is painted by glue.js **through tinting function
+             itself**, so crowding reader sees in it is crowding tree has --
+             row's colour can be laid against bar and its share read off position.
+             `log` is word graph above already uses for scale of this shape, so it
+             is word used here. Hue is never sole encoding in this drawer; every
+             row's own figure stands beside it, and this names what hue measures. -->
+        <div class="diagnostic-legend"><span>share of the frame &#183; log</span
+          ><span class="diagnostic-legend-axis"><b>0</b
+            ><span class="key-ramp" id="diagnostic-legend-ramp"></span><b>1</b></span></div>
+        <div class="diagnostic-node" data-node="build">
+          <button class="diagnostic-line diagnostic-parent" type="button"
+            ><span><span class="chev">&#9654;</span>build (bridge)</span
+            ><b id="diagnostic-build">&mdash;</b></button>
+          <div class="diagnostic-children">
+            <!-- Frame's prologue: pruning focus, advancing camera tween, deriving
+                 this frame's own DrawExtent, and framing.offerAim walking everything
+                 watched. Real work that belonged to no row until now, and worth its own:
+                 offerAim builds *second* DrawExtent rather than taking one made
+                 moment earlier, which is kind of thing breakdown exists to show. -->
+            <div class="diagnostic-line"><span>camera + framing<span
+              class="diagnostic-where">camera, framing</span></span
+              ><b id="diagnostic-camera">&mdash;</b></div>
+            <div class="diagnostic-node" data-node="furniture">
+              <button class="diagnostic-line diagnostic-parent" type="button"
+                ><span><span class="chev">&#9654;</span>scenery</span
+                ><b id="diagnostic-furniture">&mdash;</b></button>
+              <!-- Two halves are not same size of thing: axes are three lines
+                   however far camera stands, while grid is however many ground
+                   reach asks for -- so scenery figure that rose could not say which of
+                   them rose. Grid carries its record count -- one per lattice line
+                   -- since its cost *is* that count, bounded by `LINES_GRID_MAX`. -->
+              <div class="diagnostic-children">
+                <div class="diagnostic-line"><span>ground grid<span
+                  class="diagnostic-tally"></span></span
+                  ><b id="diagnostic-grid">&mdash;</b></div>
+                <div class="diagnostic-line"><span>world axes</span
+                  ><b id="diagnostic-axes">&mdash;</b></div>
+              </div>
+            </div>
+            <div class="diagnostic-node" data-node="scene">
+              <button class="diagnostic-line diagnostic-parent" type="button"
+                ><span><span class="chev">&#9654;</span>scene objects</span
+                ><b id="diagnostic-scene">&mdash;</b></button>
+              <!-- Each kind with its own count beside its name, because kinds differ
+                   by two orders of magnitude: point is one vertex, plane is rim of
+                   ribbons each carrying join, sky is whole dome. Time without its
+                   count cannot tell "one of these is expensive" from "there are many".
+                   Beside *name* and not after time: count is property of
+                   thing, not of its duration, and trailing it after unit pushed
+                   `ms` inward on exactly rows that had one, so times down tree
+                   stopped ending in single column. -->
+              <div class="diagnostic-children">
+                <div class="diagnostic-line"><span>points<span
+                  class="diagnostic-tally"></span></span
+                  ><b id="diagnostic-points">&mdash;</b></div>
+                <div class="diagnostic-line"><span>lines<span class="diagnostic-tally"></span></span
+                  ><b id="diagnostic-lines">&mdash;</b></div>
+                <div class="diagnostic-line"><span>planes<span
+                  class="diagnostic-tally"></span></span
+                  ><b id="diagnostic-planes">&mdash;</b></div>
+                <div class="diagnostic-line"><span>sky, horizon planes<span
+                  class="diagnostic-tally"></span></span
+                  ><b id="diagnostic-sky">&mdash;</b></div>
+                <div class="diagnostic-line"><span>ghost + preview<span
+                  class="diagnostic-tally"></span></span
+                  ><b id="diagnostic-ghost">&mdash;</b></div>
+                <div class="diagnostic-line"><span>selected, drawn again<span
+                  class="diagnostic-tally"></span></span
+                  ><b id="diagnostic-selected">&mdash;</b></div>
+              </div>
+            </div>
+            <div class="diagnostic-line"><span>view matrix<span
+              class="diagnostic-where">camera</span></span
+              ><b id="diagnostic-matrix">&mdash;</b></div>
+            <div class="diagnostic-line"><span>flatten + pack<span
+              class="diagnostic-where">mesh</span></span
+              ><b id="diagnostic-flatten">&mdash;</b></div>
+            <!-- Whatever rows above still fail to cover. Shown rather than left to be
+                 inferred: breakdown whose parts quietly do not sum is worse than
+                 coarser one that does, and this one did not sum for long time without
+                 ever saying so. -->
+            <div class="diagnostic-line"><span>unaccounted</span
+              ><b id="diagnostic-unaccounted">&mdash;</b></div>
+          </div>
+        </div>
+        <!-- Second cut through very same milliseconds, not two more stages. Every
+             step above is either working out where geometry goes or turning those places
+             into vertices, and this is how frame divided between them -- question
+             this project exists to ask, which no arrangement of stages could answer.
+             Emitting is pure by construction: it is reached through mesh, which imports
+             euclid alone and so cannot name multivector. Placing is dominated by
+             algebra but carries little Euclidean arithmetic inside its loops; see
+             core/timings.nim for exactly what. -->
+        <div class="diagnostic-cut">of which</div>
+        <div class="diagnostic-line diagnostic-cut-row"><span>placing<span
+          class="diagnostic-where">pga, objects, boundary</span></span
+          ><b id="diagnostic-placing">&mdash;</b></div>
+        <div class="diagnostic-line diagnostic-cut-row"><span>emitting<span
+          class="diagnostic-where">mesh, euclid</span></span
+          ><b id="diagnostic-emitting">&mdash;</b></div>
+        <!-- Picking under cursor, which on this build runs from event handlers rather
+             than frame loop -- so it is measured where it happens and reported by
+             frame after, and until now was landing unnamed in leftover below. -->
+        <div class="diagnostic-line"><span>hover picking<span
+          class="diagnostic-where">picking, interaction</span></span
+          ><b id="diagnostic-hover">&mdash;</b></div>
+        <div class="diagnostic-line"><span>upload + draw calls<span
+          class="diagnostic-where">glue.js, WebGL</span></span
+          ><b id="diagnostic-upload">&mdash;</b></div>
+        <!-- Selection menu's own placement folded in here: it was one early-returning
+             call reading 0.00 in every state but one, and overlay's own recording sat
+             inside its bracket, so it had been charging this row's bookkeeping to itself. -->
+        <div class="diagnostic-line"><span>overlay + menu<span
+          class="diagnostic-where">marker, browser_bridge</span></span
+          ><b id="diagnostic-overlay">&mdash;</b></div>
+        <div class="diagnostic-line"><span>ui refresh<span
+          class="diagnostic-where">glue.js</span></span
+          ><b id="diagnostic-ui">&mdash;</b></div>
+        <!-- Remainder of frame, so rows above account for all of it rather
+             than fraction: time spent waiting on display plus whatever browser
+             did for itself -- style, layout, paint, compositing, collection. On page
+             keeping pace with display most of frame is this, and that is healthy
+             reading. It earns its row when frame runs long: spike here is not
+             page's own code, and reader chasing one needs to know that before looking
+             any further into tree above. -->
+        <div class="diagnostic-line"><span>display wait + browser</span
+          ><b id="diagnostic-idle">&mdash;</b></div>
+        <!-- Browser's main-thread share of that remainder: style, layout, paint and
+             commit after frame's callback returned, measured by message posted at
+             callback's end, whose task runs once those steps are done. Rest of remainder
+             is display and GPU wait. Cut of row above, not stage; kept out of sums. -->
+        <div class="diagnostic-line diagnostic-cut-row"><span>style + layout + paint<span
+          class="diagnostic-where">browser</span></span
+          ><b id="diagnostic-render">&mdash;</b></div>
+        <div class="diagnostic-line"><span>JS heap</span
+          ><b id="diagnostic-heap">unavailable</b></div>
+        <hr class="rule">
+        <div class="diagnostic-line"><span>object pool</span
+          ><b id="diagnostic-pool">&mdash;</b></div>
+        <!-- Legend rides canvas as its own tooltip rather than taking line of
+             drawer for itself, and says what desktop's own tooltip says. -->
+        <canvas
+          class="pool-grid"
+          id="pool-grid"
+          role="img"
+          title="One cell per object slot, in the colour of whatever object holds it; dark
+means it's free and will be handed to the next one you add, most recently freed first."
+        ></canvas>
+      </div>
+    </div>
+
+    <!-- Objects -->
+    <div class="section open" data-section="objects">
+      <button class="section-header" type="button">
+        <span
+          class="objects-header"
+          style="width:100%;"
+        ><span>objects</span> <span class="objects-count" id="objects-count">&mdash;</span></span>
+        <span class="chev">&#9654;</span>
+      </button>
+      <div class="section-body">
+        <div id="objects-list"></div>
+      </div>
+    </div>
+
+    <!-- View -->
+    <div class="section" data-section="view">
+      <button
+        class="section-header"
+        type="button"
+      ><span>view</span><span class="chev">&#9654;</span></button>
+      <div class="section-body">
+        <div class="field-row">
+          <div class="field">
+            <label>azimuth</label>
+            <input type="number" id="cam-azimuth" step="0.05">
+          </div>
+          <div class="field">
+            <label>elevation</label>
+            <input type="number" id="cam-elevation" step="0.05">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>distance</label>
+            <input type="number" id="cam-distance" step="0.1">
+          </div>
+          <div class="field">
+            <label>field of view</label>
+            <input type="number" id="cam-fov" step="1">
+          </div>
+        </div>
+        <div class="field">
+          <label>target</label>
+          <div class="field-row">
+            <input type="number" id="cam-target-x" step="0.1">
+            <input type="number" id="cam-target-y" step="0.1">
+            <input type="number" id="cam-target-z" step="0.1">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>@SCRIPT@</script>
