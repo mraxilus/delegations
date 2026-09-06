@@ -86,6 +86,9 @@ The owner's brief, which every rule below serves:
 - Conventional Commits throughout: `feat(audit): register json kind`. That exemption for
   `curator/<name>` is why curators are trusted with restraint: touch a contributor project
   only to propagate a rule, never to improve it.
+- The `commits` job enforces the regression rule (Article IX.8): every `fix` carries an
+  earlier `test` of the same scope on the same branch. A change that needs no new test is
+  not a `fix` — it is a `refactor`, a `chore` or a `docs`.
 
 ## Duties
 
@@ -139,12 +142,24 @@ The owner's brief, which every rule below serves:
    A curator changing `koch.nim` or `curator/audit/src/` selects every project for
    compilation, so that change needs every pinned version installed locally. That is the
    price of independent pins, and it is paid by the one role that can afford it.
+   The weekly sweep's window is one thing named twice: the cron in
+   `.github/workflows/check.yml` and `SWEEP_DAYS` in `curator/audit/src/plan.nim`. Change
+   both together, or the sweep looks back over a window it does not run on. The sweep skips
+   itself in a week nobody merged code, since rot arrives with merges; rot from outside the
+   repository, a runner image moving under a pinned compiler, waits for the next sweep that
+   does run.
 8. **Opening prompts.** `CURATOR.md` and `CONTRIBUTOR.md` are pasted into new sessions as
    their first message. Keep each self-contained. Remember `CONTRIBUTOR.md` is stamped:
    any edit, even a typo, re-stamps every project (duty 1).
 9. **Never** write contributor project code, create a contributor project, or resolve a
    contributor's open question by editing their project. Answer it by changing a rule, a
-   check, or this file, and let the contributor apply it.
+   check, or this file, and let the contributor apply it. The `scope` job now holds this
+   duty rather than trusting it: on `curator/<name>` the only writable paths inside a
+   contributor project are its `README.md`, `PROVENANCE.md` and `GLOSSARY.md` — the stamp
+   row, the agreed terms, and prose a rule change invalidated, which is what propagation
+   is. Source, tests, nimble file and pages are the contributor's, and the check says so.
+   What remains yours to govern by reading: the README is writable, so restraint about
+   rewriting a project's prose is still restraint, not enforcement.
 
 ## Before opening a pull request
 
@@ -179,7 +194,7 @@ then `./koch <command>`). Every check is a module under `curator/audit/src/`, te
 | `tree` | files git sees | layout, form, comments, provenance header and stamp, glossary |
 | `deps` | every project's `atlas.lock` | checkouts restored and matching the lock |
 | `tests` | every project, or one | restore, then testament, on that project's pin |
-| `plan` | changed paths, nimble pins | projects to compile, as JSON for CI matrix |
+| `plan` | changed paths, nimble pins | projects to compile, as JSON; `--sweep` for weekly |
 | `audit` | all of the above | tree, then every project restored and tested |
 | `scope` | changed paths | branch grammar; project paths inside prefix |
 | `commits` | commit subjects | Conventional Commits; scope equals branch scope |

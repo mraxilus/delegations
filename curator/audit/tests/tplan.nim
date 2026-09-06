@@ -57,6 +57,17 @@ suite "Plan":
     )
     check unpinned.jobs([ALPHA_DIR & "/src/alpha.nim"]).len == 0  # nothing to install
 
+  test "sweep runs whole repository, or nothing at all":
+    let tree = goodTree()
+    # Code merged in window: every project, since rot can land anywhere.
+    check tree.sweepJobs([ALPHA_DIR & "/src/alpha.nim"]).len == DIRS.len
+    check tree.sweepJobs([CHECKER_DIR & "/layout.nim"]).len == DIRS.len
+    # Nothing merged, or records only: sweep skips itself entirely.
+    check tree.sweepJobs(newSeq[string]()).len == 0  # quiet week
+    check tree.sweepJobs([ALPHA_DIR & "/PROVENANCE.md"]).len == 0  # stamps only
+    check tree.sweepJobs(["README.md"]).len == 0  # root prose only
+    check SWEEP_DAYS == 7  # window matches weekly cron in check.yml
+
   test "plan renders as matrix entries CI reads":
     let node = parseJson(goodTree().jobs([ALPHA_DIR & "/src/alpha.nim"]).render)
     check node.kind == JArray

@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | d2b1af43d7093e1a |
+| Rules  | 912082eea75c768d |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -159,6 +159,31 @@ entries lazily. Verified by `tglossary.nim`.
 
 ## Scope
 
+**Curator reach into contributor projects stops at their records.** `curator/<name>` still
+owns the empty prefix, because a rules change must reach every project, but under
+`contributor/` the only writable paths are a project's `README.md`, `PROVENANCE.md` and
+`GLOSSARY.md` — `PROJECT_FILES`, read from `layout.nim` rather than repeated. Chosen because
+that empty prefix was the one hole in an otherwise mechanical scope system, and it belonged
+to the most-run role: CURATOR.md duty 9 forbade writing contributor code, and nothing but
+reading held it. Rejected: restricting to `PROVENANCE.md` and `GLOSSARY.md` alone, which the
+per-project-toolchain propagation had already disproved — that change removed "Needs Nim
+2.2.4" from three contributor READMEs, prose the rule itself invalidated, and the tighter set
+would have blocked it and left stale text no contributor knew was stale. Cost: the README
+stays writable, so restraint about rewriting a project's prose is still duty 9's to govern by
+reading, never the check's. Verified by driven check on this repository: a curator branch
+touching `dance_ontology/src/dance_ontology.nim` reports one finding naming the path, while
+the same branch touching that project's `PROVENANCE.md` and `README.md` reports none.
+
+**The regression rule is enforced, not hoped for.** `commits` reads subjects newest first and
+demands every `fix` carry an earlier `test` of the same scope on the same branch (Article
+IX.8). Chosen because "every mistake becomes a test" was the Architect's stated priority and
+lived only in prose. Rejected: matching across `main`'s history, which would need the whole
+log and would still pass a fix whose test landed years earlier under a different intent.
+Cost: a fix of a mistake whose test already sits on `main` needs a test here or another type;
+the escape is honest, since a change needing no new test is not a `fix`. Verified by driven
+check: a branch carrying `fix(audit)` alone reports one finding, and the same branch with
+`test(audit)` committed first reports none.
+
 **Branch grammar mirrors paths: two, three or four segments, and the prefix decides.**
 `curator/<name>` owns the empty prefix, so every path passes; `curator/<project>/<name>`
 and `contributor/<domain>/<project>/<name>` own their folder. `main` passes because pushes
@@ -242,6 +267,24 @@ Cost: a merged change can leave an unrelated project red until that project next
 The weekly `schedule` sweep, which plans every project, is the guard, and it is a weaker
 guard than compiling everything on every push. Assumed, not yet verified: that the sweep
 fires, which only a Monday shows. Parallelism is verified, under Figures.
+
+**The sweep skips itself in a quiet week.** `sweepJobs` plans every project when any code
+merged inside `SWEEP_DAYS`, and nothing at all when none did, judging "code" by the same
+record-file exclusion scoped runs use. Chosen because the sweep exists to catch rot that
+scoped runs missed, and rot arrives with merges: a week nobody merged has nothing for it to
+find, and a run that compiles four projects to confirm that is four projects of runner time
+for no information. Rejected: sweeping the projects that changed in the window, which is
+what the push runs already did, and would miss exactly the cross-project rot the sweep is
+for. Cost: rot from outside the repository — a runner image moving under a pinned compiler,
+say — goes unseen through a quiet week and waits for the next sweep that runs. Cost: the
+window is named twice, as the cron here and `SWEEP_DAYS` in `plan.nim`; nothing checks that
+they agree, so CURATOR.md duty 7 says to change them together.
+
+A repository younger than the window has every commit inside it, so `revBefore` finds no
+commit to measure from and the sweep runs whole. That is the case today and will be until
+2026-09-12, so the skip is verified by its suite rather than by a live Monday: `tplan.nim`
+drives the decision over code, record-only and empty changes, and `ttree.nim` drives
+`revBefore` at both ends, returning HEAD for a zero-day window and empty for a ten-year one.
 
 ## Dependencies
 

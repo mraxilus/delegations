@@ -17,8 +17,9 @@
 ##   |---------|-------------------------------------------------------------------------|
 ##   Options: `--root:<dir>` (default `.`); `--branch:<name>` (default env `BRANCH`, else
 ##     current git branch); `--base:<ref>` (default env `BASE`, else `origin/main`); `--all`
-##     makes `plan` name every project, for scheduled sweep. Second argument of `deps` and
-##     `tests` names one project directory. Exit: 0 clean, 1 findings, 2 usage error.
+##     makes `plan` name every project; `--sweep` names every project only when code merged
+##     within window, else none. Second argument of `deps` and `tests` names one project
+##     directory. Exit: 0 clean, 1 findings, 2 usage error.
 ##
 ##   `ci` compiles only projects whose code changed, since static pass costs tenths of
 ##     second and suites cost minutes; `audit` keeps whole-repository form for sweep.
@@ -41,7 +42,7 @@ import ./curator/audit/src/[
 
 const USAGE = """
 Usage: koch <tree|deps|tests|plan|audit|scope|commits|stamp|ci> [project]
-            [--root:<dir>] [--branch:<name>] [--base:<ref>] [--all]
+            [--root:<dir>] [--branch:<name>] [--base:<ref>] [--all] [--sweep]
 """
   ## Text printed on usage error.
 
@@ -54,6 +55,7 @@ type Options = object
   branch: string
   base: string
   is_all: bool
+  is_sweep: bool
 
 
 proc parseOptions(): Option[Options] =
@@ -71,6 +73,7 @@ proc parseOptions(): Option[Options] =
       of "branch": options.branch = value
       of "base": options.base = value
       of "all": options.is_all = true
+      of "sweep": options.is_sweep = true
       else: return none(Options)
     of cmdEnd: discard
   if options.command.len == 0: return none(Options)
@@ -110,7 +113,8 @@ proc run(options: Options): int =
   of "plan":
     let tree = options.root.readTree
     echo render(
-      if options.is_all: tree.allJobs
+      if options.is_sweep: sweepFor(options.root, tree, SWEEP_DAYS)
+      elif options.is_all: tree.allJobs
       else: tree.jobs(changedPaths(options.root, options.baseOrDefault))
     )
     return 0
