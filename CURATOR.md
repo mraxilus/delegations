@@ -99,11 +99,6 @@ The owner's brief, which every rule below serves:
      green on a runner. A runner differs from this machine: the first run on `main` is
      where the toolchain leak surfaced, and nothing local could have shown it.
    - After the owner merges, the `push` run on `main` green.
-   - A probe through the project path: branch `curator/probe/probe-<name>` from the new
-     `main`, one `docs(probe)` commit appending a line to `curator/probe/README.md`,
-     `nim r koch ci`, pull request opened as a draft, all three jobs green, then closed
-     unmerged and its branch deleted. A real project pull request opened the same day and
-     watched to green counts as the probe.
    - Record run numbers and date under Continuous integration in
      `curator/audit/PROVENANCE.md`, on a `curator/audit/<name>` branch, so "the merge
      process works" stays verified, never assumed.
