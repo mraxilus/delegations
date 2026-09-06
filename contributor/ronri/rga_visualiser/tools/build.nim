@@ -45,8 +45,9 @@ const
     ## Bridge compiled through JS backend, and source `declare` reads.
   PATH_BRIDGE_JS = BUILD_BROWSER / "bridge.js"
     ## Compiled bridge, first script on page.
-  PATH_DECLARATIONS = BUILD_BROWSER / "bridge.d.ts"
+  PATH_DECLARATIONS = BUILD / "bridge.d.ts"
     ## Derived declarations of bridge's exports, read by type-checker alone.
+    ##   Outside `outDir`, which TypeScript excludes from its own inputs by default.
   PATH_SHELL = "pages" / "shell.html"
     ## Committed markup, carrying `@EMBED:<face>@` and `@SCRIPT@` tokens.
   PATH_PAGE = BUILD / "rga_visualiser.html"
@@ -58,14 +59,17 @@ const
   MARKER_GATE = "// Not Nim because generated from Nim: declarations of bridge's exports,\n" &
     "//   derived so no second copy of signature can drift from it (Article II.9).\n"
     ## Header derived declarations carry, since `.ts` is gated kind.
+  RECORDS = ["OperationResult", "DragResult", "FrameData"]
+    ## Object types crossing boundary, whose fields page reads by name.
   SCRIPTS = [
-    "gl", "state", "download", "drawer", "keyboard", "view_panel", "construct_panel",
+    "dom", "gl", "state", "download", "drawer", "keyboard", "view_panel", "construct_panel",
     "objects_panel", "scene_file", "sizes", "diagnostics", "overlay", "pointer", "resize",
     "frame",
   ]
     ## Order scripts concatenate in, i.e. order they must run in.
-    ##   Each names what it holds; `gl` first because every later script draws through it,
-    ##   `frame` last because it starts loop everything else has to be ready for.
+    ##   Each names what it holds; `dom` first because every later script looks elements
+    ##   up through it, `gl` next because every later script draws through it, and `frame`
+    ##   last because it starts loop everything else has to be ready for.
   FACES = [
     "commit-mono-latin-400-normal.woff2",
     "noto-sans-latin-400-normal.woff2",
@@ -129,33 +133,66 @@ func declarationOf(signature: string): string =
   let closed = signature.rfind(')')
   if closed < opened: return ""
 
-  var rendered: seq[string]
+  # Nim lets one group carry several types (`a, b: int, c: float`) and lets several names
+  #   share one (`a, b: int`), so names accumulate until fragment states type, and that
+  #   type covers every name waiting.
+  var rendered, waiting: seq[string]
   for group in signature[opened + 1 ..< closed].split(';'):
-    if group.strip.len == 0: continue
-    let split_at = group.rfind(':')
-    if split_at < 0: continue
-    # Default value belongs to declaration, never to type; parameter carrying one is
-    #   optional on page, which is what `?` says.
-    let stated = group[split_at + 1 .. ^1]
-    let defaulted = stated.find('=')
-    let is_optional = defaulted >= 0
-    let rendered_type =
-      (if is_optional: stated[0 ..< defaulted] else: stated).typeScriptOf
-    for parameter in group[0 ..< split_at].split(','):
-      if parameter.strip.len == 0: continue
-      rendered.add parameter.strip & (if is_optional: "?: " else: ": ") & rendered_type
+    for fragment in group.split(','):
+      let stated_at = fragment.find(':')
+      if stated_at < 0:
+        if fragment.strip.len > 0: waiting.add fragment.strip
+        continue
+      waiting.add fragment[0 ..< stated_at].strip
+      # Default value belongs to declaration, never to type; parameter carrying one is
+      #   optional on page, which is what `?` says.
+      let stated = fragment[stated_at + 1 .. ^1]
+      let defaulted = stated.find('=')
+      let is_optional = defaulted >= 0
+      let rendered_type =
+        (if is_optional: stated[0 ..< defaulted] else: stated).typeScriptOf
+      for name in waiting:
+        rendered.add name & (if is_optional: "?: " else: ": ") & rendered_type
+      waiting.setLen 0
 
   let tail = signature[closed + 1 .. ^1].strip
   let returned = if tail.startsWith(":"): tail[1 .. ^1].typeScriptOf else: "void"
   "declare function " & name & "(" & rendered.join(", ") & "): " & returned & ";"
 
 
+func recordOf(lines: openArray[string], name: string): string =
+  ## Render TypeScript interface from Nim object type of `name`; empty where absent.
+  ##   Read from bridge rather than kept beside it, so record crossing boundary has one
+  ##   home and no second copy can drift from it (Article I.4).
+  var start = -1
+  for i, line in lines:
+    if line.startsWith("type " & name & " = object") or
+        line.startsWith("type " & name & "* = object"):
+      start = i
+      break
+  if start < 0: return ""
+
+  var fields: seq[string]
+  for i in start + 1 ..< lines.len:
+    let line = lines[i]
+    if line.len > 0 and line[0] notin {' ', '\t'}: break
+    let bare = line.strip
+    if bare.len == 0 or bare.startsWith("##"): continue
+    let stated = bare.split("##")[0].strip
+    let split_at = stated.find(':')
+    if split_at < 0: continue
+    let rendered_type = stated[split_at + 1 .. ^1].typeScriptOf
+    for field in stated[0 ..< split_at].split(','):
+      if field.strip.len == 0: continue
+      fields.add "  " & field.strip & ": " & rendered_type & ";"
+  if fields.len == 0: return ""
+  "interface " & name & " {\n" & fields.join("\n") & "\n}\n"
+
+
 proc declare() =
   ## Write derived declarations of every bridge export type-checker needs.
   ##   Read from bridge itself rather than kept beside it, so signature has one home and
   ##   stale copy cannot pass check (Article I.4).
-  ##   Record types crossing boundary are spelled here, since their fields are read by name
-  ##   on page; each names field order bridge gives it.
   let lines = readFile(PATH_BRIDGE_NIM).splitLines
   var declarations: seq[string]
   for i, line in lines:
@@ -163,28 +200,19 @@ proc declare() =
     let rendered = lines.signatureAt(i).declarationOf
     if rendered.len > 0: declarations.add rendered
 
-  createDir BUILD_BROWSER
+  var records: seq[string]
+  for name in RECORDS:
+    let rendered = lines.recordOf(name)
+    if rendered.len == 0:
+      raise newException(OSError, "Bridge carries no record `" & name & "`.")
+    records.add rendered
+
+  createDir BUILD
   writeFile(
     PATH_DECLARATIONS,
     MARKER_GATE &
       "//   Regenerate with `nim r tools/build.nim declare`; never edit by hand.\n\n" &
-      "interface OperationResult {\n" &
-      "  created_slot: number;\n  message: string;\n  shape_word: string;\n}\n\n" &
-      "interface DragResult {\n" &
-      "  created_slot: number;\n  message: string;\n  is_more: boolean;\n" &
-      "  clicked_slot: number;\n}\n\n" &
-      "interface FrameData {\n" &
-      "  ribbon_verts: Float32Array;\n  point_verts: Float32Array;\n" &
-      "  ring_records: Float32Array;\n  disc_records: Float32Array;\n" &
-      "  dome_records: Float32Array;\n  wash_runs: Float32Array;\n" &
-      "  view_projection: number[];\n  furn_ribbon_verts: Float32Array;\n" &
-      "  is_scene_held: boolean;\n  is_furniture_held: boolean;\n" &
-      "  ms_build: number;\n  ms_furniture: number;\n  ms_scene: number;\n" &
-      "  ms_flatten: number;\n" &
-      "  camera_eye_x: number;\n  camera_eye_y: number;\n  camera_eye_z: number;\n" &
-      "  camera_forward_x: number;\n  camera_forward_y: number;\n" &
-      "  camera_forward_z: number;\n}\n\n" &
-      declarations.join("\n") & "\n",
+      records.join("\n") & "\n" & declarations.join("\n") & "\n",
   )
   echo "Wrote ", PATH_DECLARATIONS, " (", declarations.len, " declarations)."
 
@@ -198,7 +226,8 @@ proc assets() =
   ##   is how contributor gets them (CONTRIBUTOR.md, "Pages and assets").
   createDir DIR_FONTS
   for face in FACES:
-    let family = face.rsplit('-', 4)[0]
+    # Family is name less its last three parts, i.e. subset, weight and style.
+    let family = face.rsplit('-', 3)[0]
     run("curl", ["-sSLf", "-o", DIR_FONTS / face, HOST_FACES & "/" & family & "/files/" & face])
     echo "Fetched ", face
   echo "Wrote ", DIR_FONTS, " (", FACES.len, " faces)."
