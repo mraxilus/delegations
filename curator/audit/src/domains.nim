@@ -6,12 +6,15 @@
 ##   | abstand     | abstand      | Music.                                      |
 ##   | bangu       | bangu        | Language.                                   |
 ##   | ronri       | ronri        | Computing.                                  |
-##   | síncopa     | síncopa      | Dance and movement.                         |
+##   | sincopa     | síncopa      | Dance and movement.                         |
 ##   | comma_games | comma, games | Game development across every other domain. |
 ##   |-------------|--------------|---------------------------------------------|
 ##
 ##   Folder is slug, name is display form: git refs reject spaces, so `comma, games` needs
-##     slug for branch prefix; keeping name preserves owner's spelling.
+##     slug for branch prefix; keeping name preserves owner's spelling. Slug is ASCII by
+##     same rule project name is, and `static` assertion below holds every folder to it:
+##     git quotes non-ASCII path by default, so `git ls-files` piped into shell tool fails
+##     on it, and macOS stores such name as NFD, which is different bytes for same folder.
 ##   Domain folders live under `contributor/`; curator projects live under `curator/`.
 ##     Root README.md repeats domain table by hand; layout check verifies copy against data.
 ##
@@ -22,8 +25,6 @@
 ##     <project> ::= [a-z][a-z0-9_]*     <name> ::= [a-z0-9][a-z0-9_-]*
 ##   Commit scope is `curator` for root work, else <project>.
 ##
-##   Cost of Unicode folder `síncopa`: macOS stores name as NFD; contributors there need
-##     `git config core.precomposeunicode true`, else git reports phantom renames.
 ##   Cost of fixed segment counts: `curator/audit/feature/x` is rejected; flat names only.
 ##   Cost: grammar never checks project exists; scope check then flags every path.
 
@@ -58,7 +59,7 @@ const
     Domain(folder: "abstand", name: "abstand", theme: "Music."),
     Domain(folder: "bangu", name: "bangu", theme: "Language."),
     Domain(folder: "ronri", name: "ronri", theme: "Computing."),
-    Domain(folder: "síncopa", name: "síncopa", theme: "Dance and movement."),
+    Domain(folder: "sincopa", name: "síncopa", theme: "Dance and movement."),
     Domain(
       folder: "comma_games",
       name: "comma, games",
@@ -81,6 +82,13 @@ func findDomain*(folder: string): Option[Domain] =
 func isProjectName*(s: string): bool =
   ## Decide whether `s` is valid project folder, i.e. `[a-z][a-z0-9_]*`.
   s.len > 0 and s[0] in {'a'..'z'} and s.allCharsInSet({'a'..'z', '0'..'9', '_'})
+
+
+static:
+  # Slug is ASCII, checked at earliest boundary (Article IV.4): accented folder fails build
+  #   rather than suite, and never reaches path git must quote.
+  for d in DOMAINS:
+    doAssert d.folder.isProjectName, "Domain folder must be slug; got `" & d.folder & "`."
 
 
 func isBranchTail*(s: string): bool =
