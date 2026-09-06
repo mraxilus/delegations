@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-05 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 7e09ec06aaf3db2d |
+| Rules  | d2b1af43d7093e1a |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the Architect's workbook `ontology.partnerwork.xlsx` (sheets `base` and
@@ -125,7 +125,9 @@ which the map is worth opening on, is written once in the stylesheet and read by
 Keyboard: every control reachable, focus returned after each move, a live region outside the
 rewritten region announcing what was danced. Verified by hand in a browser at 390, 600 and
 1200 px before the move (mark and frame land in the same place either side of the swap) and
-not re-driven since: **assumed**. The shell (`app/shell.nim`) is hosted as a string and
+not re-driven since: **assumed**. Which browser, and on what date, was not recorded, so this
+cannot be repeated from a checkout; whoever next touches the shell re-drives it and writes
+down both. The shell (`app/shell.nim`) is hosted as a string and
 written out by `tools/pages`; the bundle (`tools/bundle.nim`) folds `app.js` into it as one
 self-contained file for publishing, titled `Dance Ontology — …` so a gallery sorts the body
 of work together.
@@ -157,7 +159,11 @@ in `wholecloth_page.nim`, its turns panel is `wholecloth_turns.nim` compiled to 
 and `wholecloth.nim` splices markup, the sim's sweeps (`turns.nim`) and the panel into one
 page. Verified by `tmarks.nim`, which drives the build of every page under testament, and
 for the whole-cloth port by a driven comparison under Playwright of the old page against the
-new: 707 states equal (see Figures for what was compared). Reflow deviations the page module
+new: 707 states equal (see Figures for what was compared). **That comparison cannot be
+repeated here**: Playwright, TypeScript and any package manifest are absent from this
+repository, and the date it ran was not recorded, so the 707 figure rests on a session
+nobody can re-enter. Restoring it means bringing the harness in as a project of its own.
+Reflow deviations the page module
 records: 37 breaks inside `aria-label` values (accessible names verified equal), one
 whitespace-free row with its character references decoded, and the fonts URL held as its own
 constant joined at compile time. Cost: the workbench's `doAssert` gates are the
@@ -204,7 +210,8 @@ page steps the couple in or out to the stance with the most joint room, never cl
 ten centimetres of air between the torsos, read off the torso ellipses along the line
 between the axes. Body sizes are static. Verified before the move by driven check in a
 browser (four quarters of the follow refused at the fourth with the tally holding at 0.75;
-distance never under the extents plus 0.10 m); not re-driven since: **assumed**.
+distance never under the extents plus 0.10 m); not re-driven since: **assumed**. Browser and
+date unrecorded, so this too cannot be repeated from a checkout.
 
 **Verdicts are an instrument run, assumed current.** `sim/verdicts.nim` asks the sim what the
 sheet asks and writes `sim/verdicts.md` in the sheet's words through one visible translation
