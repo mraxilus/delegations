@@ -23,9 +23,9 @@
 
 {.experimental: "strictFuncs".}
 
-import std/options
+import std/[math, options]
 
-import ./[body, read, solve]
+import ./[body, limb, read, rig, solve]
 
 
 type
@@ -61,7 +61,116 @@ const
                   ## carried one, plus one unit per metre any joint would jump:
                   ## arms do not flip over for nothing.
   MOST* = 2.5 ## Turns swept each way looking for block.
+  APART_STEP* = 0.01 ## How far couple step in or out each time.
+  APART_MOST* = 0.90 ## Further than this no hold reaches anyway.
+  GAP* = 0.10 ## Least clear air between torsos, metres.
+  SHIFTS* = 3 ## Steps in or out tried after each moment of turn.
 
+
+#[ Standing ]#
+
+func apartOf*(st: array[Body, Stance]): float =
+  let
+    dx = st[Body.Two].centre.x - st[Body.One].centre.x
+    dy = st[Body.Two].centre.y - st[Body.One].centre.y
+  sqrt(dx * dx + dy * dy)
+
+func withStance*(s: State; st: array[Body, Stance]): State =
+  result = s
+  result.stance = st
+
+func shifted*(st: array[Body, Stance]; by: float): array[Body, Stance] =
+  ## Follow moved `by` metres away from lead along line between
+  ## their axes, lead standing still.
+  let
+    apart = apartOf(st)
+    ux = (st[Body.Two].centre.x - st[Body.One].centre.x) / apart
+    uy = (st[Body.Two].centre.y - st[Body.One].centre.y) / apart
+  result = st
+  result[Body.Two].centre = (st[Body.Two].centre.x + ux * by,
+                             st[Body.Two].centre.y + uy * by)
+
+
+func leastApart*(rig: Rig; st: array[Body, Stance]): float =
+  ## Closest two may stand, axis to axis, with `GAP` of clear air
+  ## between their torsos along line between them, whichever way each
+  ## faces: each torso's half-extent along that line, and gap.
+  let
+    apart = apartOf(st)
+    dx = (st[Body.Two].centre.x - st[Body.One].centre.x) / apart
+    dy = (st[Body.Two].centre.y - st[Body.One].centre.y) / apart
+    a = halfBreadth(rig, Part.Torso)
+    b = halfDepth(rig, Part.Torso)
+  result = GAP
+  for who in Body:
+    let
+      dr = dx * sin(st[who].facing) - dy * cos(st[who].facing)
+      df = dx * cos(st[who].facing) + dy * sin(st[who].facing)
+    result += sqrt((a * dr) * (a * dr) + (b * df) * (b * df))
+
+
+func roomOf*(rig: Rig; v: Verdict): float =
+  ## Least room any held arm's joints have, either way.
+  result = Inf
+  for i in 0 ..< v.n:
+    for k in 0 .. 1:
+      result = min(result, room(rig, v.fits[i].joints[k]))
+
+func freer*(rig: Rig; a, b: Verdict): bool =
+  ## Whether `a` leaves joints freer than `b`: nearest joint further
+  ## from either end of its range first, and more comfortable where that
+  ## is equal.
+  ##   Freedom, not comfort, is what stance is chosen for: couple who
+  ##     stood where arms hang easiest would stand at arm's length with
+  ##     elbows straight, and straight elbow is joint with nowhere
+  ##     to go.
+  let
+    ra = roomOf(rig, a)
+    rb = roomOf(rig, b)
+  if abs(ra - rb) > 1e-9: ra > rb
+  else: a.cost < b.cost - 1e-9
+
+
+func agrees*(here: Solved; there: Option[Solved]): bool =
+  ## Whether pose is one arms can be carried to from here: it holds, goes
+  ## round bodies same way, and crosses same way.
+  ##   Guards stepping in or out only, which couple choose to do and can
+  ##     decline.  Carrying turn on is not choice, and gating it here is what
+  ##     made page block turns sweep holds; `advanced` decides those.
+  there.isSome and
+    sameRoute(here.state, here.verdict, there.get.state, there.get.verdict) and
+    sameCrossings(here.state, here.verdict, there.get.state, there.get.verdict)
+
+
+func steppedIn*(here: var Solved): bool =
+  ## Step couple in or out by one step where that leaves arms
+  ## freer; whether they did.
+  ##   Each way is first judged cheaply -- pose as it is, with
+  ##     bodies moved -- and only way that promises is followed for
+  ##     real, and taken only if it delivers.
+  let
+    apart = apartOf(here.state.stance)
+    least = leastApart(here.state.rig, here.state.stance)
+  var
+    best = here.verdict
+    by = 0.0
+  for step in [-APART_STEP, APART_STEP]:
+    if apart + step < least or apart + step > APART_MOST:
+      continue
+    let guess = evaluate(withStance(here.state, shifted(here.state.stance, step)))
+    if freer(here.state.rig, guess, best):
+      best = guess
+      by = step
+  if by == 0.0:
+    return false
+  let got = followed(withStance(here.state, shifted(here.state.stance, by)), here.state)
+  if agrees(here, got) and freer(here.state.rig, got.get.verdict, here.verdict):
+    here = got.get
+    return true
+  false
+
+
+#[ Turning ]#
 
 func atTurn(rest: State; who: Body; turn: float): State =
   result = rest
