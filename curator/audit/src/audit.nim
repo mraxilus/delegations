@@ -12,10 +12,10 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, sets]
+import std/[options, sequtils, sets, strutils]
 import ./[
-  findings, kinds, prose, form, justification, layout, provenance, glossary, dependencies,
-  toolchain, plan,
+  findings, kinds, prose, form, justification, checker, layout, provenance, glossary,
+  dependencies, toolchain, plan,
 ]
 
 export layout.Tree, layout.Entry, layout.projectDirs
@@ -58,6 +58,19 @@ proc auditTree*(tree: Tree): seq[Finding] =
   if driver.isSome:
     for e in tree:
       if e.path == WORKFLOW_PATH: result.add checkDriver(e.content, driver.get)
+
+  # Checker holds itself to rules it holds everything else to, from tree as git shows it.
+  var check_paths, check_sources: seq[string]
+  var koch_source, curator_source: string
+  for e in tree:
+    if e.path.startsWith(CHECK_DIR) or e.path == KOCH_PATH:
+      check_paths.add e.path
+      check_sources.add e.content
+    if e.path == KOCH_PATH: koch_source = e.content
+    if e.path == CURATOR_PATH: curator_source = e.content
+  result.add checkDeadExports(check_paths, check_sources)
+  result.add checkSuites(tree.mapIt(it.path))
+  result.add checkVerbs(koch_source, curator_source)
 
   let stamp_now = tree.rulesStamp
   let dirs = tree.projectDirs
