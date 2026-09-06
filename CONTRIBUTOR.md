@@ -26,7 +26,10 @@ outside your project.
   never count on it.
 - **Blocked by a rule or a check.** Do not work around it and do not edit the rule. Record
   the question under an `## Open questions` heading in `PROVENANCE.md` and in the pull
-  request body. The curator changes rules; you do not.
+  request body. The curator changes rules; you do not. Nor do they change your code: a
+  curator branch may write only your `README.md`, `PROVENANCE.md` and `GLOSSARY.md`, and
+  the `scope` job holds them to it. An answer arrives as a changed rule or check for you to
+  apply, never as an edit to your source.
 - **Language.** Nim. TypeScript only where JavaScript is unavoidable (a browser or Node
   host), never plain JavaScript, never Python. Each such file justifies itself in its header.
 - **File kinds.** Only kinds registered in `curator/audit/src/kinds.nim` may exist; the
@@ -187,7 +190,10 @@ Every later session:
   and every assertion cites it in a trailing comment.
 - **Regression rule.** Every mistake found, in any session, earns a test that fails before
   the fix and passes after, committed before the fix: `test(<project>): cover <mistake>`,
-  then `fix(<project>): <fix>`. Never delete, weaken or skip a test to get green.
+  then `fix(<project>): <fix>`. Never delete, weaken or skip a test to get green. The
+  `commits` job enforces this: a `fix` with no earlier `test` of the same scope on your
+  branch is a finding. A change that needs no new test is not a `fix` — it is a `refactor`,
+  a `chore` or a `docs`, and saying so is honest rather than evasive.
 - Test laws, not examples. Enumerate small domains exhaustively; sample large ones with a
   few hundred seeded random cases, and record the count beside the claim.
 - Test where the mechanism runs: real wiring, output read back, bytes re-read.

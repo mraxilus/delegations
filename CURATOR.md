@@ -86,6 +86,9 @@ The owner's brief, which every rule below serves:
 - Conventional Commits throughout: `feat(audit): register json kind`. That exemption for
   `curator/<name>` is why curators are trusted with restraint: touch a contributor project
   only to propagate a rule, never to improve it.
+- The `commits` job enforces the regression rule (Article IX.8): every `fix` carries an
+  earlier `test` of the same scope on the same branch. A change that needs no new test is
+  not a `fix` — it is a `refactor`, a `chore` or a `docs`.
 
 ## Duties
 
@@ -150,7 +153,13 @@ The owner's brief, which every rule below serves:
    any edit, even a typo, re-stamps every project (duty 1).
 9. **Never** write contributor project code, create a contributor project, or resolve a
    contributor's open question by editing their project. Answer it by changing a rule, a
-   check, or this file, and let the contributor apply it.
+   check, or this file, and let the contributor apply it. The `scope` job now holds this
+   duty rather than trusting it: on `curator/<name>` the only writable paths inside a
+   contributor project are its `README.md`, `PROVENANCE.md` and `GLOSSARY.md` — the stamp
+   row, the agreed terms, and prose a rule change invalidated, which is what propagation
+   is. Source, tests, nimble file and pages are the contributor's, and the check says so.
+   What remains yours to govern by reading: the README is writable, so restraint about
+   rewriting a project's prose is still restraint, not enforcement.
 
 ## Before opening a pull request
 
