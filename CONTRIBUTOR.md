@@ -121,6 +121,23 @@ with Nim). Inside your project directory:
 verified by `atlas changed`); the `audit` job runs it before the tests. Atlas needs the
 network for every command, so a project with no packages carries no lock and skips Atlas.
 
+## Pages and assets
+
+A page the project stands behind lives in `pages/`; a one-off exploration kept for reference
+lives in `mockups/`. Both hold hand-written HTML and SVG, committed as files and obeying
+every rule any other file obeys: 100 columns, no tabs, telegraphic comments inside
+`<!-- -->`. A line may pass the width rule only when breaking cannot fix it, which covers a
+long URL and nothing else.
+
+Everything a build emits is a build product under `build/`, never committed, whatever it
+looks like: generated markup is one long line and fails width on its own.
+
+Binaries are never committed, and neither are fonts, images or any file the audit cannot
+read. Record each one in `PROVENANCE.md` with its origin, version, licence and checksum,
+and add an `assets` verb to `tools/build.nim` that fetches it into `build/`. This is the
+rule Atlas already follows for packages: the lock is committed, the checkout is not, and one
+verb restores it. A contributor who can run that verb needs nothing else from you.
+
 ## Building on a project
 
 Every later session:

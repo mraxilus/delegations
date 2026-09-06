@@ -11,6 +11,9 @@
 ##   Root README.md, root folder READMEs and domain READMEs are derived views (Article I.4):
 ##     domain row per `DOMAINS`, `# <name>` heading, theme line per domain.
 ##   Unregistered file kind anywhere is finding (Article VI.5), pointing at `kinds.nim`.
+##   Committed page (Html, Svg) lives in project's `pages/`, what project stands behind, or
+##     `mockups/`, one-off exploration kept for reference; generated markup stays under
+##     ignored `build/`. Separation is declared by directory, never inferred from content.
 ##
 ##   Cost: rules read path strings, never disk, so tests feed synthetic trees and git
 ##     enumeration lives in `tree.nim`. Empty directories are invisible to git and so here.
@@ -44,6 +47,8 @@ const
     ## Files every project directory must hold, besides its nimble file.
   TESTS_DIR* = "tests"
     ## Directory every project must populate.
+  PAGE_DIRS* = ["pages", "mockups"]
+    ## Directories committed pages live in: kept pages, then one-off mock-ups.
   KINDS_PATH = "curator/audit/src/kinds.nim"
     ## Registry named in finding for unregistered kind.
 
@@ -96,9 +101,23 @@ func checkProjectName(path, name: string): seq[Finding] =
     result.add finding(path, 0, "Project folder must match `[a-z][a-z0-9_]*`; got `" & name & "`.")
 
 
+func checkPage(path: string, parts: seq[string]): seq[Finding] =
+  ## Report page outside project's page directories.
+  let dir = parts.projectDir
+  for page_dir in PAGE_DIRS:
+    if dir.len > 0 and path.startsWith(dir & "/" & page_dir & "/"): return
+  result.add finding(
+    path, 0,
+    "Page outside `" & PAGE_DIRS.join("/` or `") & "/`; generated markup belongs under " &
+      "`build/`; got `" & path & "`.",
+  )
+
+
 func checkEntry(e: Entry): seq[Finding] =
   ## Report entry outside layout or of unregistered kind.
   let parts = e.path.split('/')
+  if e.kind.isSome and e.kind.get in {Kind.Html, Kind.Svg}:
+    result.add checkPage(e.path, parts)
   if e.kind.isNone:
     let (_, base, ext) = e.path.splitFile
     result.add finding(

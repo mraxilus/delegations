@@ -21,6 +21,8 @@ suite "Article VI":
     check kindOf(".gitignore").get == Kind.GitIgnore  # basename
     check kindOf(".gitattributes").get == Kind.GitAttributes  # basename
     check kindOf("x/app.ts").get == Kind.TypeScript  # .ts
+    check kindOf("x/pages/index.html").get == Kind.Html  # .html
+    check kindOf("x/pages/frame.svg").get == Kind.Svg  # .svg
     check kindOf("package.json").get == Kind.Json  # .json
     check kindOf("x/atlas.config").get == Kind.Json  # atlas basename
     check kindOf("atlas.lock").get == Kind.Json  # atlas basename

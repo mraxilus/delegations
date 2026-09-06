@@ -82,6 +82,19 @@ suite "Layout":
     check requiring.messages[0].endsWith("got `malebolgia`.")  # package named
     check (requiring & @[entry(ALPHA_DIR & "/atlas.lock", "{}\n")]).checkLayout.len == 0  # ok
 
+  test "committed pages live in page directories only":
+    for page_dir in PAGE_DIRS:  # 2 directories, exhaustive
+      let inside = goodTree() & @[
+        entry(ALPHA_DIR & "/" & page_dir & "/index.html", "<!doctype html>\n<p>x</p>\n"),
+        entry(AUDIT_DIR & "/" & page_dir & "/deep/frame.svg", "<svg></svg>\n"),
+      ]
+      check inside.checkLayout.len == 0  # page in its place, at any depth
+    let stray = goodTree() & @[entry(ALPHA_DIR & "/design/stray.html", "<p>x</p>\n")]
+    check stray.checkLayout.len == 1  # page elsewhere inside project
+    check "`pages/` or `mockups/`" in stray.checkLayout[0].message  # names both
+    let orphan = goodTree() & @[entry(CONTRIBUTOR & "/ronri/README.html", "<p>x</p>\n")]
+    check orphan.checkLayout.anyIt("Page outside" in it.message)  # page outside any project
+
   test "README files are derived views":
     let stripped = readmeText().replace("| ronri | ronri | Computing. |\n", "")
     check goodTree().replaced("README.md", stripped).paths == @["README.md"]  # row missing
