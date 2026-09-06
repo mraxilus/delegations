@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Author | Claude Opus 5 and Claude Sonnet 5 |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 772783bb2bd70464 |
+| Rules  | 02b1f374b78fd37a |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the
@@ -2122,5 +2122,13 @@ other here:
 - **The lock's stored nimble.** Already met, and by this project's own hand: `atlas.lock`
   here stores `requires "nim == 2.2.10"`, matching the committed file, after the hand-patch
   reported in issue 25. The check added for it passes on this project.
+- **TypeScript and Node.** Nothing to correct today, and everything to read before the
+  conversion: CONTRIBUTOR.md now carries the section answering issue 27. Four of the six
+  points proposed there were already rules and are confirmed as such; the new rule is npm
+  pinning by committed `package.json` and lockfile with each dependency recorded here; and
+  the amendments are `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes` beside
+  `strict`, plus a `web` verb in `tools/build.nim`. A generated lockfile was measured against
+  the form rules before the rule was written, so it may be committed as generated and must
+  not be reformatted to fit.
 
 [replications]: https://gitlab.com/mraxilus/replications
