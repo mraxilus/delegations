@@ -1963,16 +1963,32 @@ states which pga commit it builds against and whether that is head, so a reader 
 infer it.
 
 Where that stands now: head is `295bafc` (2026-09-02, *"update nim to devel for new operator
-symbols"*), exactly one commit ahead of the pin. It spells its operators in prefix form
-(`☆m`, `■m`, `□m`), which needs the seven Unicode operator characters added by Nim pull
-request 26074 — merged to `devel`, carried by no release, and 2.2.10 is the newest release
-there is. The pinned `f8861e0` spells the same operators as calls (`☆(m)`, `m.⟑ n`), which
-any Nim lexes as identifiers.
+symbols"*), exactly one commit ahead of the pin and **two independent blockers away**.
 
-**What moves the pin**, so a later session needs no archaeology: a Nim release carrying
-26074, or a pga commit that drops the prefix forms, or the curator admitting a commit pin for
-the compiler (Open Questions). Any of those, and the next delivery takes head. Nothing else
-does: waiting on `devel` unpinned would trade a recorded compiler for a moving one.
+The decisive blocker is that head withdraws operations this project calls. `pga.nim:336-346`
+declares `projectCentral`, `projectCentralAnti`, `projectOrthogonal` and
+`projectOrthogonalAnti` as `{.error: "TODO: …".}` while their compound operator forms
+(`∨∧★`, `∧∨★`, `∨∧☆`, `∧∨☆`) are built. A call to one is a compile error by language rule,
+and this project has eight: `scene.nim:320` and `:321` in the operations catalogue,
+`scene.nim:341`, `tessellate.nim:218`, `interaction.nim:748`, and `suites.nim:1936`, `:5633`
+and `:5663`. No compiler makes that build.
+
+The second is the lexer. Head spells its operators in prefix form (`☆m`, `■m`, `□m`), which
+needs the seven Unicode operator characters added by Nim pull request 26074. The pinned
+`f8861e0` spells the same operators as calls (`☆(m)`, `m.⟑ n`), which any Nim lexes as
+identifiers.
+
+**What moves the pin**, so a later session needs no archaeology: a pga commit giving those
+four operations bodies again, by finishing the compound operators or by restoring the named
+functions. That alone. Spelling them out here instead is not an option — the library is what
+this project exists to exercise (Article II.8).
+
+**The compiler half is answered, and answering it did not move the pin.** This record used to
+name a commit pin for the compiler as a trigger; the curator granted it and it fired without
+effect. 26074 is `27763495bcfe265507ca98aedc1c7064bf1e0e4d` on `devel`, and `toolchain.nim`
+now accepts a forty-hex pin CI builds from source and caches per commit. So when pga's side
+clears, head can be taken on a commit-pinned compiler rather than waiting for a release.
+Waiting on `devel` unpinned stays rejected: it trades a recorded compiler for a moving one.
 
 **The compiler pin is 2.2.10**, the newest release this project's suites pass on. Per-project
 pins mean another project's ceiling no longer bounds this one, and the pin is exact because
@@ -1980,12 +1996,19 @@ that is what records the version actually verified rather than a range nobody tr
 
 *Checked.* Verified: `deps/` was deleted, `atlas --noexec rep` restored the pinned commit,
 `atlas changed` exited 0, and the suite compiled against the restored tree — the sequence CI
-runs. Verified: a released Nim 2.2.10 rejects the library's head at `operators.nim:465` with
-`undeclared identifier: '☆m'`, and so does a 2.3.1 devel build without 26074, identically.
+runs. Verified by reading head: the four `project*` declarations are `error` pragmas, and by
+grep that this project calls two of them at the eight sites named above. Verified by running
+on 2.2.10: a call to an `{.error.}` func is refused, `Error: TODO: m ∨∧☆n; usage of
+'projectOrthogonal' is an {.error.}`. Verified: a released Nim 2.2.10 rejects the library's
+head at `operators.nim:465` with `undeclared identifier: '☆m'`, and so does a 2.3.1 devel
+build without 26074, identically. Verified: 26074 sits at
+`27763495bcfe265507ca98aedc1c7064bf1e0e4d` on the Nim fork's `devel`, read from its log.
 Verified: `295bafc` is the only pga commit ahead of the pin, read from that repository's
-history rather than assumed. Verified on 2.2.10: 323 cases on the C backend, 302 on JS, 310
-at reduced capacities. Assumed: that no release after 2.2.10 exists — checked once by asking
-for 2.2.12, 2.4.0 and 2.6.0 and getting nothing, which dates rather than proves it.
+history rather than assumed. **Not verified by running**: that head fails to compile here on a
+compiler carrying 26074. None was built; one blocker holds the pin, and the second is read
+rather than run. Verified on 2.2.10: 323 cases on the C backend, 302 on JS, 310 at reduced
+capacities. Assumed: that no release after 2.2.10 exists — checked once by asking for 2.2.12,
+2.4.0 and 2.6.0 and getting nothing, which dates rather than proves it.
 
 
 Testing
