@@ -31,12 +31,14 @@ frame, it takes a turn away, and it is where a wound arm lands, so it belongs wi
 rather than here.
 
 Beside the ontology stands a body simulator (`sim/`): two bodies of the average adult's
-measurements with jointed arms, sharing no code and no vocabulary with the ontology on
-purpose. The notation is a shorthand for two people with arms of a length, and a shorthand
-cannot check itself, so the sim is the thing it is a shorthand *for*, kept separate so that
-what it says is evidence rather than an echo. The sim is a witness, never an authority:
-where its answers meet the ontology's words (`sim/verdicts.md`) the translation is printed
-in one table and nothing is tuned to make them agree.
+measurements with jointed arms, sharing no code with the ontology on purpose. The notation is
+a shorthand for two people with arms of a length, and a shorthand cannot check itself, so the
+sim is the thing it is a shorthand *for*, kept apart in code so that what it says is evidence
+rather than an echo. It is not kept apart in concepts: it reuses this project's agreed words
+wherever one fits and coins its own only where none does, because sharing a word costs the
+witness nothing where sharing an assumption would cost it everything. The sim is a witness,
+never an authority: where its answers meet the ontology's words (`sim/verdicts.md`) the
+translation is printed in one table and nothing is tuned to make them agree.
 
 ## Authority replicated
 

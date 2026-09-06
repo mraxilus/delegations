@@ -9,8 +9,10 @@
 ##     joint is, which way arm lies, and where turn runs out are all
 ##     read from here.
 ##   Design directory may import sim; sim imports nothing back.
-##     Words (wrap, lock, low, high, led) are put on here, as
-##     `sim/verdicts` does, so model itself stays vocabulary-free.
+##     Words (wrap, lock, low, high) are put on here, as `sim/verdicts`
+##     does.  Not because sim speaks other language -- it reuses agreed
+##     words -- but because here it measures what ontology asserts, and
+##     translation kept visible is evidence where assumed identity is echo.
 ##   Two rests, both page's own choice: cross-name holds rest face to
 ##     face, and same-name holds are also built face to face so
 ##     turns count as sheet counts (away rest is half turn along).
