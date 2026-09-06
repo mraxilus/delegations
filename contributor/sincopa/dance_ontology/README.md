@@ -69,8 +69,36 @@ files: the shells and the review page's prose live
 under `pages/`, the one hand-drawn proposal under `mockups/`, and `tools/build.nim pages`
 copies, fills and splices them under `build/` beside the scripts compiled for them. What a
 build emits is never committed, its lines running far past any width a file may have.
-Publishing a page is republishing its built file to the artifact URL listed in
-`design/README.md` or `sim/README.md`.
+Publishing a page is republishing its built file to the URL it already has, listed below.
+
+## Published pages
+
+Two of these the project stands behind; the other six are mock-ups, one-off explorations
+kept for reference. `CONTRIBUTOR.md` draws the same line between `pages/` and `mockups/`,
+and every published title carries it, so a gallery holding both says which is which before
+either is opened.
+
+What the project stands behind:
+
+| built file, under `build/` | published at |
+| --- | --- |
+| app/artifact.html | https://claude.ai/code/artifact/a447cf22-a71a-4416-a905-ae4999d7284c |
+| sim/artifact.html | https://claude.ai/code/artifact/2944bc6a-551e-4b86-a258-7df1bfa83629 |
+
+Mock-ups:
+
+| built file, under `build/` | published at |
+| --- | --- |
+| design/frames.html | https://claude.ai/code/artifact/8420edce-fff2-4cd9-b56c-3dcf5029922b |
+| design/signs.html | https://claude.ai/code/artifact/153dee12-0829-4c04-ad01-72fe96f7607e |
+| design/turns-single.html | https://claude.ai/code/artifact/a2dce7eb-7a87-4575-a1c8-ce8d488a6530 |
+| design/turns-hands.html | https://claude.ai/code/artifact/9c4d89c1-8b72-4574-8051-c41e130148f1 |
+| design/wholecloth.html | https://claude.ai/code/artifact/9440ffbc-93be-4634-a3ce-dd17d7b33c6c |
+| review/review.html | https://claude.ai/code/artifact/61c41287-0a91-4fb9-9b15-622a5fd7db43 |
+
+A page taken out of use keeps whatever URL it was last published at and is not listed here.
+The repository does not rely on a published copy as its record: what a retired page claimed
+is in the log, and in `PROVENANCE.md` where it still bears on the design.
 
 ## Layout
 

@@ -154,7 +154,7 @@ not re-driven since: **assumed**. Which browser, and on what date, was not recor
 cannot be repeated from a checkout; whoever next touches the shell re-drives it and writes
 down both. The shell is the committed file `pages/app/index.html`,
 copied out by `tools/pages`; the bundle (`tools/bundle.nim`) folds `app.js` into it as one
-self-contained file for publishing, titled `Dance Ontology — …` so a gallery sorts the body
+self-contained file for publishing, titled from `tools/title.nim` so a gallery sorts the body
 of work together.
 
 ## Review page
@@ -248,6 +248,29 @@ is current as of 2026-09-05 (`tools/build.nim verdicts`, 42.3 s wall on this mac
 stale until rerun. Rerun during move reproduced committed file byte for byte.
 
 ## Pages and build
+
+**Published titles say which pages the project stands behind.** Two do — the reference and the
+body sim — and the other six are mock-ups, which is the line `CONTRIBUTOR.md` already draws
+between `pages/` and `mockups/`. The first two are titled `Dance Ontology — …`, the rest
+`Dance Ontology Mockup — …`, in title case throughout, so a gallery holding both says which is
+which before either is opened. The name is spelt once, in `tools/title.nim`, and the mock-up
+form is derived from it (Article II.1); `design/page.nim`, `tools/bundle.nim`,
+`tools/review.nim` and `design/wholecloth.nim` all read it, and before this it was written
+twice and drifting. `tests/tmarks.nim` and `tests/treview.nim` assert the built pages carry the
+mock-up form and never the plain one, against the constant rather than against a repeated
+literal: **verified**, by breaking the constant and watching both suites fail.
+Rejected: agreeing a project term for the two categories, which would have overloaded the
+charter's `Artifact` (a file a build writes, under `build/`) or coined a word for what
+`CONTRIBUTOR.md` already says in plain English. Cost: the review page and the whole-cloth
+mock-up now hold a `{{title}}` marker instead of their own names, so opening either committed
+file no longer shows what the page is called; the name is one file away, and the alternative
+was spelling it in four places.
+
+**URLs are listed once.** Every published page's URL is in this project's `README.md`, in two
+tables that carry the same split; `design/README.md` and `sim/README.md` point at it rather
+than repeating it, as they used to (Article II.1). A page taken out of use keeps its URL and is
+not listed, and the repository does not treat a published copy as its record: the log does that.
+Cost: a URL is no longer beside the subsystem that builds the page.
 
 **Hand-written pages are committed files; everything a build emits is not.** The validator's and
 body sim's shells are `pages/app/index.html` and `pages/sim/index.html`, the review page's prose

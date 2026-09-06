@@ -21,8 +21,9 @@ The turn mock-ups are being drawn one kind at a time and combined only once
 each is right: single hands first, then hand to hand, then the crossed
 pair.  An earlier `rotations.html` tried all three at once and is retired --
 it was built on a ceiling rule 16 has since removed.  Its page module went
-with it, and so has the drawing machinery only it used; what is published
-under its old name is left where it is, as the record of what was claimed.
+with it, and so has the drawing machinery only it used.  What was published
+under its old name is not the record of what it claimed: the log is, and the
+rules below, which say for each what replaced it.
 
 The first two turn pages are duals, which is the shape of the whole scope: a
 single hand above turns for ever, so its wind is not part of its state and its
@@ -38,26 +39,11 @@ The build refuses to write a page whose claims fail: the checks in
 `checks.nim` run between building a page's parts and writing it, and several
 figures are asserted during their own construction.
 Every page is a build product under `build/design/`, never committed: the
-repository reads only registered file kinds.  Each is published as a Claude
-artifact at a fixed URL; republishing the rebuilt files to those URLs is the
-whole release step, and the published copies are the record of what the marks
-have been claimed to be.  The URLs, so they are not hunted for:
-
-| page | artifact |
-| --- | --- |
-| `frames.html` | https://claude.ai/code/artifact/8420edce-fff2-4cd9-b56c-3dcf5029922b |
-| `signs.html` | https://claude.ai/code/artifact/153dee12-0829-4c04-ad01-72fe96f7607e |
-| `turns-single.html` | https://claude.ai/code/artifact/a2dce7eb-7a87-4575-a1c8-ce8d488a6530 |
-| `turns-hands.html` | https://claude.ai/code/artifact/9c4d89c1-8b72-4574-8051-c41e130148f1 |
-| the app itself | https://claude.ai/code/artifact/a447cf22-a71a-4416-a905-ae4999d7284c |
-| `wholecloth.html` | https://claude.ai/code/artifact/9440ffbc-93be-4634-a3ce-dd17d7b33c6c |
-| the review page | https://claude.ai/code/artifact/61c41287-0a91-4fb9-9b15-622a5fd7db43 |
-
-Live pages only.  Retired ones keep whatever URL they were last published at,
-and are not listed: their published copies are the record of what they claimed.
-The app and the review page are not workbench pages; their URLs are listed here
-because the project points at this table for every page but the sim's, whose URL
-is in `../sim/README.md`.
+repository reads only registered file kinds.  Each is published at a fixed
+URL, and republishing the rebuilt file to that URL is the whole release step.
+Every one of them is a mock-up rather than a page the project stands behind,
+and its published title says so.  The URLs are listed once, with every other
+page this project publishes, in `../README.md`.
 
 `wholecloth.html` is the one hand-drawn page, written by hand as
 `../mockups/wholecloth.html`:

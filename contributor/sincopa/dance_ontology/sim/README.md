@@ -168,5 +168,6 @@ None of it moves a number: the laws, `verdicts.md` and the whole-cloth page's
 `turns.js` come out byte for byte as they did when all of it was done the
 plain way, and that is the test of any change here.
 
-Published at <https://claude.ai/code/artifact/2944bc6a-551e-4b86-a258-7df1bfa83629>;
-republishing `build/sim/artifact.html` to that URL is the whole release step.
+This is one of two pages the project stands behind, rather than a mock-up.  Its
+URL is listed with every other published page in `../README.md`; republishing
+`build/sim/artifact.html` to that URL is the whole release step.
