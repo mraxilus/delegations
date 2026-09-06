@@ -67,8 +67,8 @@ const
   APART_STEP = 0.01 ## How far they step in or out each time.
   APART_MOST = 0.90 ## Further than this no hold reaches anyway.
   GAP = 0.10 ## Least clear air between torsos, metres.
-  PER_FRAME = 8 ## Small moves made per frame before page is redrawn.
-  SHIFTS = 3 ## Steps in or out tried after each small move of turn.
+  PER_FRAME = 2 ## Moments walked per frame before page is redrawn.
+  SHIFTS = 3 ## Steps in or out tried after each moment of turn.
   SETTLING_SHIFTS = 40 ## And from fresh rest, before first turn.
 
 
@@ -100,7 +100,8 @@ proc world*(apart = REST_APART): State =
   ## Hold at rest, face to face -- or follow away, where hold
   ## rests so -- with nothing solved yet.
   let h = HOLDS[hold]
-  result = State(rig: HUMAN, stance: facing(HUMAN, apart), band: LEVELS[level][1])
+  result = State(rig: HUMAN, stance: facing(HUMAN, apart), band: LEVELS[level][1],
+                 overhead: true, turning: Body.Two)
   if h.away:
     result.stance[Body.Two].facing = result.stance[Body.Two].facing - PI
   for (a, b) in h.links:
@@ -135,6 +136,13 @@ func orbited(st: array[Body, Stance]; who: Body; by: float): array[Body, Stance]
   result = st
   result[who].centre = (pivot.x + dx * c - dy * s, pivot.y + dx * s + dy * c)
   result[who].facing = st[who].facing + by
+
+func walker*(way: Way): Body =
+  ## Dancer whose turn this is: one who spins, or one who walks round other.
+  case way
+  of Way.LeadAxis, Way.LeadOrbit: Body.One
+  of Way.FollowAxis, Way.FollowOrbit: Body.Two
+
 
 func stanceAfter(st: array[Body, Stance]; m: Move; frac: float): array[Body, Stance] =
   ## Bodies after `frac` of quarter move's way.
@@ -178,9 +186,11 @@ func leastApart(rig: Rig; st: array[Body, Stance]): float =
 #[ Carrying ]#
 
 func agrees(here: Solved; there: Option[Solved]): bool =
-  ## Whether pose found at next stance is one arms can be carried
-  ## to from here: it holds, goes round bodies same way, and
-  ## crosses same way.
+  ## Whether pose is one arms can be carried to from here: it holds, goes
+  ## round bodies same way, and crosses same way.
+  ##   Guards stepping in or out only, which couple choose to do and can
+  ##     decline.  Carrying turn on is not choice, and gating it here is what
+  ##     made page block turns sweep holds; `advanced` decides those.
   there.isSome and
     sameRoute(here.state, here.verdict, there.get.state, there.get.verdict) and
     sameCrossings(here.state, here.verdict, there.get.state, there.get.verdict)
@@ -259,14 +269,34 @@ proc settleFresh*() =
     restApart = apartOf(here.state.stance)
 
 
+proc crept(here: Solved; m: Move; fromFrac, toFrac: float):
+    tuple[got: Solved, frac: float] =
+  ## Follow arms from `here` towards `toFrac` of quarter in small moves; where
+  ## they got to, which is `toFrac` unless small move failed.
+  ##   Same small move sweep creeps by, so arm sliding round flank gets flank
+  ##     moved bit by bit rather than all at once.
+  result = (here, fromFrac)
+  for i in 1 .. SUBSTEPS:
+    let f = fromFrac + (toFrac - fromFrac) * i.float / SUBSTEPS.float
+    var next = withStance(result.got.state,
+                          stanceAfter(result.got.state.stance, m, f - result.frac))
+    next.turning = walker(m.way)
+    let step = followed(next, result.got.state)
+    if step.isNone:
+      return
+    result = (step.get, f)
+
+
 proc walked*(): bool =
   ## Walk quarter in flight on by several small moves; whether it has
   ## arrived or stopped.
-  ##   Small move that no small motion reaches is tried once more as
-  ##     sweep tries it, by fresh search held to same way round
-  ##     bodies; failing that whole quarter is refused: couple go
-  ##     back to where they set off from, and how far arms got and what
-  ##     refused them is kept for page to say.
+  ##   Every small move is decided by `advanced`, which sweep decides its
+  ##     moments by, so page and sweep cannot disagree about where turn
+  ##     blocks; failing that whole quarter is refused: couple go back to
+  ##     where they set off from, and how far arms got and what refused them
+  ##     is kept for page to say.
+  ##   Grip is centred over dancer whose turn it is, as it is in sweep: hand
+  ##     held over head is held over their head, not between two.
   if inFlight.isNone or carried.isNone:
     return true
   let m = inFlight.get
@@ -277,23 +307,32 @@ proc walked*(): bool =
       return true
     let
       here = carried.get
-      frac = min(1.0, done + CREEP / QUARTER)
+      frac = min(1.0, done + STEP / QUARTER)
+      slid = crept(here, m, done, frac)
+      whole = abs(slid.frac - frac) < 1e-9
+    var
       next = withStance(here.state, stanceAfter(here.state.stance, m, frac - done))
-    var got = followed(next, here.state)
-    if not agrees(here, got):
-      got = settled(next)
-      if agrees(here, got):
-        inc reseeds
-      else:
-        blocked = some(reason(next, here.state))
-        blockedWay = m.way
-        blockedAfter = done * QUARTER
-        carried = moveStart
-        tally = tallyStart
-        reseeds = reseedsStart
-        inFlight = none(Move)
-        return true
-    var now = got.get
+      # Failure is read one small move past where arms stuck, not at whole
+      # moment: pose holds there, so blaming it names nothing (`Reason.None`)
+      # and page would print block as though it held.
+      blame = withStance(slid.got.state,
+                         stanceAfter(slid.got.state.stance, m, (frac - done) / SUBSTEPS))
+    next.turning = walker(m.way)
+    blame.turning = walker(m.way)
+    let moved = advanced(here, slid.got, next, blame,
+                         if whole: some(slid.got) else: none(Solved))
+    if moved.how == Advance.Blocked:
+      blocked = some(moved.why)
+      blockedWay = m.way
+      blockedAfter = done * QUARTER
+      carried = moveStart
+      tally = tallyStart
+      reseeds = reseedsStart
+      inFlight = none(Move)
+      return true
+    if moved.how == Advance.Finer or (moved.how == Advance.Fresh and not whole):
+      inc reseeds
+    var now = moved.got
     tally[m.way] += m.sign * (frac - done) * QUARTER
     done = frac
     for i in 0 ..< SHIFTS:
@@ -324,7 +363,7 @@ func dofName(dof: Dof): string =
 func says*(s: State; v: Verdict): string =
   ## Say what refuses, in words rather than name.
   case v.reason
-  of Reason.None: "holds"
+  of Reason.None: "nothing the sim can name"
   of Reason.Reach: whoseName(s, v.link, v.arm) & "'s reach"
   of Reason.Shoulder, Reason.Twist, Reason.Elbow, Reason.Wrist:
     whoseName(s, v.link, v.arm) & "'s " & dofName(v.dof)

@@ -52,7 +52,7 @@ type
 
 const
   STEP* = 0.02 ## Turns per moment of sweep.
-  SUBSTEPS = 4 ## Small moves per moment: arm sliding round flank needs
+  SUBSTEPS* = 4 ## Small moves per moment: arm sliding round flank needs
                ## flank to move bit by bit.
   CREEP* = STEP / SUBSTEPS.float ## Turns per small move: most any body is
                ## turned before arms are asked to follow, here and on

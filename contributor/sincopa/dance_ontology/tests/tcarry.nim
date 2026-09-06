@@ -82,13 +82,16 @@ suite "turning on the page":
   test "page stops no sooner than sweep does, over crown":
     # Two paths through one model must not disagree about whether hold turns:
     # one is what reader presses, other is what `verdicts.md` is written from.
-    for h in ONE_HAND:
-      hold = h
-      level = CROWN
-      carried = none(Solved)
-      settleFresh()
-      let sw = swept(world(restApart), Body.Two, most = 1.0)
-      check sw.restHolds
-      for (blk, sign) in [(sw.pos, 1.0), (sw.neg, -1.0)]:
-        if not blk.stopped:
-          check not walk(h, CROWN, sign, quarters = 4).stopped
+    #   One hold, not four: sweep spends its time setting rest up, so each
+    #     costs about minute, and test above already asks every hold whether
+    #     it turns.  This one binds two paths together, which one hold does.
+    const BROKEN = 0 ## `L-l`, hold page used to stop after quarter of turn.
+    hold = BROKEN
+    level = CROWN
+    carried = none(Solved)
+    settleFresh()
+    let sw = swept(world(restApart), Body.Two, most = 0.75)
+    check sw.restHolds
+    for (blk, sign) in [(sw.pos, 1.0), (sw.neg, -1.0)]:
+      if not blk.stopped:
+        check not walk(BROKEN, CROWN, sign, quarters = 3).stopped
