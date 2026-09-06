@@ -4,9 +4,9 @@
 |--------|-------|
 | Agent  | Claude Code |
 | Author | Claude |
-| Date   | 2026-09-05 |
+| Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 6cef8fc704f7f8f4 |
+| Rules  | 772783bb2bd70464 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the Architect's workbook `ontology.partnerwork.xlsx` (sheets `base` and
@@ -346,6 +346,13 @@ all: 2.2.8 and 2.2.10 crash the compiler itself on six of the eleven suites
 re-verified here: that report, which was measured on their machine and not on this one.
 The eleven suites pass on 2.2.4, which is what the pin records. Moving it is this project's
 own work, and it now moves nothing else.
+
+## Re-audit, 2026-09-06
+
+Audited by a curator against the rules change that registers C++ and C and puts a check
+behind the gated-language rule. This project carries Nim, Markdown, a nimble file and
+hand-written HTML; none of those is a gated kind, so the new rule binds nothing here and
+nothing needed correcting. The stamp moves because the charter did.
 
 ## Open questions
 
