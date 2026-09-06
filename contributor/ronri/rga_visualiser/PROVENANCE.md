@@ -97,7 +97,9 @@ bridge's own `{.exportc.}` signatures and its three boundary records, and writes
 to drift; this has one. Cost: type-checking needs `declare` run first, which `web` does.
 
 **Type-checking runs under `strict`, `noUncheckedIndexedAccess` and
-`exactOptionalPropertyTypes`**, which repository issue 27 ratified. Indexing therefore reports
+`exactOptionalPropertyTypes`**, which CONTRIBUTOR.md now requires of any TypeScript. Neither
+extra flag proved unworkable against `lib.dom`, which is what issue 27 asked to be told about.
+Indexing therefore reports
 absence, and bridge's flat buffers are read through `flatAt` and `pointAt` rather than guarded
 at each of hundred sites: buffers arrive carrying their own count and every walk is bounded by
 it, so absence there is impossible and zero is what unwritten slot would mean.
@@ -108,7 +110,10 @@ it, so absence there is impossible and zero is what unwritten slot would mean.
 **Node dependencies are pinned and their checkout is not committed**, as Atlas already does
 for packages: `package.json` and `package-lock.json` are committed, `node_modules/` is
 ignored, and `nim r tools/build.nim assets` fetches faces. Pins are `typescript` 7.0.2 and
-`@playwright/test` 1.63.0, both from npm, both MIT.
+`@playwright/test` 1.63.0, both from npm, both MIT. Lockfile npm generated for those two
+passes form rules as generated: 437 lines, longest 123 runes, **0 findings** through
+`koch tree`. Widest line carries one registry URL of 105 runes, which
+unbreakable-token exemption covers, as curator's own measurement predicted. Committed unreformatted.
   Six faces from `@fontsource` on jsdelivr, all SIL Open Font License 1.1: Commit Mono,
   Noto Sans at 400 and 600, Noto Sans Math, Noto Sans Symbols 2, Noto Serif. Never committed,
   since audit cannot read them; licence notice travels with copies.
