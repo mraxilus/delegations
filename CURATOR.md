@@ -214,7 +214,8 @@ on `main` under Settings, Branches, branch protection (or a ruleset):
 - Require a pull request before merging; no direct pushes.
 - Requiring branches to be up to date before merging is **not available** without paid
   rulesets, and its absence is what let a stale pull request redden `main`. Nothing here asks
-  you to buy it; the process catches staleness instead.
+  you to buy it: the `base` check does the same job, and reaches the merge through the
+  `audit` gate you already require, so no setting changes.
 - Require status checks to pass: `audit`, `scope`, `commits`. `audit` is the gate job that
   stands for `plan`, `static` and the per-project matrix, whose job names vary with the
   change and so can never be required checks themselves. These three names did not change
@@ -236,6 +237,7 @@ then `./koch <command>`). Every check is a module under `curator/audit/src/`, te
 | `plan` | changed paths, nimble pins | projects to compile, as JSON; `--sweep` for weekly |
 | `scope` | changed paths | branch grammar; project paths inside prefix |
 | `commits` | commit subjects | Conventional Commits; scope equals branch scope |
+| `base` | paths base gained | branch carries base's rules and checker |
 | `stamp` | rules documents | prints the stamp for `PROVENANCE.md` |
 | `ci` | fresh `origin/main` | tree, changed projects, scope, commits; before every PR |
 

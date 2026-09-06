@@ -288,6 +288,11 @@ what was rejected, what it costs. There is no `docs/adr/`.
   before every later push to the same pull request.
 - A change touching only `PROVENANCE.md` and `GLOSSARY.md` compiles nothing, since it alters
   no behaviour; the static pass still checks every stamp.
+- **`base` fails when the rules or the checker moved on `main` after you branched.** Your
+  stamp then claims a charter that no longer exists, and merging would redden `main` — which
+  has happened. Merge `origin/main`, read the diff of the rules documents, re-audit your
+  project against each change, re-stamp, and push. Only the charter and the checker count:
+  another project's code moving underneath you is not your problem and will not stop you.
 - `PROVENANCE.md` describes the design as it now is, with each claim marked verified or
   assumed and each figure carrying its pair; nothing narrates.
 - `GLOSSARY.md` holds every term that resolved.
