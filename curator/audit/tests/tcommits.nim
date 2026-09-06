@@ -40,3 +40,21 @@ suite "Article XI":
       0  # unparsed branch checks format only
     check checkCommits("claude/setup", ["Bad subject"]).len == 1  # format still checked
     check checkCommits("contributor/ronri/alpha/work", []).len == 0  # no commits, no findings
+
+  test "IX.8 fix needs earlier test of same scope on branch":
+    # Subjects arrive newest first, so test commit is later element.
+    check checkCommits(
+      "curator/work", ["fix(audit): stop it", "test(audit): cover it"]
+    ).len == 0  # test landed first
+    let found = checkCommits("curator/work", ["fix(audit): stop it"])
+    check found.len == 1
+    check found[0].message.endsWith("got `fix(audit): stop it`.")
+    check checkCommits(
+      "curator/work", ["test(audit): cover it", "fix(audit): stop it"]
+    ).len == 1  # test after fix does not count
+    check checkCommits(
+      "curator/work", ["fix(audit): stop it", "test(probe): cover other"]
+    ).len == 1  # other project's test does not count
+    check checkCommits(
+      "curator/work", ["refactor(audit): tidy it"]
+    ).len == 0  # change needing no test is not fix
