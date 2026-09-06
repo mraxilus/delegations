@@ -141,18 +141,24 @@ what was verified, never a range nobody tried.
   A commit records what you verified exactly as a version does. `devel` on its own is
   rejected, and rightly: it is a moving target and records nothing. Pin a release whenever
   one will do — a commit costs everyone who builds your project, including CI.
-- Installing a commit-pinned compiler means building it: clone `nim-lang/Nim`, check out
-  that commit, run `sh build_all.sh`, and put its `bin/` on `PATH`. CI does the same and
-  caches the result per commit, so the bootstrap is paid once rather than every run.
-  `nim --version` prints `git hash:`, which is what the audit compares your pin against.
-- Install that version and put it on `PATH` before running anything. `choosenim 2.2.6`
-  switches between installed versions; unpacking a release tarball from
-  <https://nim-lang.org/install.html> and prefixing its `bin/` to `PATH` also works, and
-  needs no installer. `atlas`, `nimble` and `testament` ship beside `nim`, so they follow the
-  version you choose.
-- Running checks on any other compiler is a finding, not a warning: `koch` reports the
-  mismatch and refuses to compile the project, because the wrong compiler either fails
-  confusingly or passes without testing what CI will run.
+- **You do not have to install it.** `koch` resolves each project's pin on its own: the
+  compiler on `PATH` when it already serves the pin, otherwise one cached under
+  `~/.cache/koch/nim/<pin>/`, otherwise it fetches one — a published release as a tarball,
+  and a commit (or a platform nim-lang.org publishes no build for) by cloning `nim-lang/Nim`
+  and running `sh build_all.sh`. That is paid once per pin and cached; a release takes
+  seconds, a commit build takes minutes. `$KOCH_NIM_DIR` moves the cache. This is why
+  `koch ci` is green as one command even when your project and the next pin different
+  compilers, which is the ordinary case whenever a rules change touches every project.
+- Each project's suites run on its own compiler, and `testament` and `atlas` come from that
+  same toolchain with its `bin/` leading `PATH` — Atlas reads `nim` from `PATH`, so without
+  that it would replay your lock against whichever compiler happened to be there.
+- A pin nothing can serve, because the network is unreachable or the version does not exist,
+  is a finding naming the pin and the cache it tried. It is never a silent fallback to
+  another compiler: the wrong one either fails confusingly or passes without testing what CI
+  will run.
+- Installing it yourself still works and skips the fetch: put a matching `bin/` on `PATH`,
+  or drop a toolchain at `~/.cache/koch/nim/<pin>/`. `nim --version` prints `git hash:`,
+  which is what a commit pin is compared against.
 - Bumping the pin is your work, and it is a change like any other: run the suites on the new
   version, move the line, and record in `PROVENANCE.md` what moved and why.
 - CI installs your pin for your project alone, in its own job. You are never held to another
