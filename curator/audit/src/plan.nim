@@ -16,11 +16,14 @@
 ##     wall time is slowest changed project rather than sum of all.
 ##   Cost: scoped run leaves unrelated project's rot unseen until it next changes; weekly
 ##     sweep over every project is guard, and it is weaker than running everything always.
+##   Sweep itself is skipped in week no code merged, since rot arrives with merges. Cost:
+##     rot from outside repository, such as runner image moving under pinned compiler, goes
+##     unseen through quiet week; it surfaces on next sweep that runs.
 
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, json, options, strutils]
-import ./[findings, layout, toolchain, dependencies, projects]
+import ./[findings, layout, toolchain, dependencies, projects, tree]
 
 
 const
@@ -28,6 +31,9 @@ const
     ## Project files whose change alters no behaviour, so needs no compile.
   CHECKER_FILES* = ["koch.nim", "koch.nim.cfg"]
     ## Root files driving every project's checks.
+  SWEEP_DAYS* = 7
+    ## Window sweep looks back over, matching weekly cron in `check.yml`. Both are named
+    ## once; changing one means changing other, which CURATOR.md duty 7 says.
   CHECKER_DIR* = DRIVER_DIR & "/src"
     ## Check sources driving every project; same folder as driver project, by coincidence
     ## of koch compiling exactly what it drives.
@@ -91,6 +97,22 @@ func jobs*(tree: Tree, paths: openArray[string]): seq[Job] =
 func allJobs*(tree: Tree): seq[Job] =
   ## Build jobs for every project, for scheduled sweep rather than for one change.
   tree.jobsFor(tree.projectDirs)
+
+
+func sweepJobs*(tree: Tree, paths: openArray[string]): seq[Job] =
+  ## Build sweep: every project when any code changed in window, none when nothing did.
+  ##   Sweep exists to catch rot scoped runs missed, and rot arrives with merges, so week
+  ##   nobody merged code has nothing to find. Record-only weeks count as nothing, by same
+  ##   rule scoped runs use.
+  if testSet(tree.projectDirs, paths).len == 0: return
+  tree.allJobs
+
+
+proc sweepFor*(root: string, tree: Tree, days: int): seq[Job] =
+  ## Build sweep against window ending now; repository younger than window sweeps whole.
+  let base = revBefore(root, days)
+  if base.len == 0: return tree.allJobs
+  tree.sweepJobs(changedPaths(root, base))
 
 
 proc render*(jobs: openArray[Job]): string =

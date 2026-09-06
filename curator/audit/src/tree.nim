@@ -2,7 +2,8 @@
 ##   Git decides what exists: tracked plus untracked-unignored files, so build products
 ##   never reach checks and every file that would commit does. Paths arrive NUL-separated
 ##   (`-z`), so non-ASCII folders such as `síncopa` stay unquoted.
-##   Same door serves branch context: changed paths and commit subjects since base.
+##   Same door serves branch context: changed paths, commit subjects since base, and oldest
+##   commit outside sweep window.
 ##
 ##   Git runs as direct process with argument list, never through shell: no quoting, and
 ##     `execCmdEx` is rejected because it reads by line and appends newline to NUL output.
@@ -48,6 +49,13 @@ proc readTree*(root: string): Tree =
 proc changedPaths*(root, base: string): seq[string] =
   ## List paths differing between merge base of `base` and HEAD; renames show as two paths.
   gitFields(root, ["diff", "-z", "--name-only", "--no-renames", base & "...HEAD"])
+
+
+proc revBefore*(root: string, days: int): string =
+  ## Read newest commit older than window; empty when no commit is that old.
+  ##   Output is newline-terminated rather than NUL-separated, so field is stripped.
+  let fields = gitFields(root, ["rev-list", "-1", "--before=" & $days & " days ago", "HEAD"])
+  if fields.len == 0: "" else: fields[0].strip
 
 
 proc subjects*(root, base: string): seq[string] =
