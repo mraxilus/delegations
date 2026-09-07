@@ -62,9 +62,9 @@ const
   RECORDS = ["OperationResult", "DragResult", "FrameData"]
     ## Object types crossing boundary, whose fields page reads by name.
   SCRIPTS = [
-    "dom", "gl", "state", "download", "drawer", "keyboard", "view_panel", "construct_panel",
-    "objects_panel", "scene_file", "sizes", "diagnostics", "overlay", "pointer", "resize",
-    "frame",
+    "dom", "gl", "state", "download", "drawer", "keyboard", "view_section",
+    "construct_section", "objects_section", "scene_file", "sizes", "diagnostics", "overlay",
+    "pointer", "resize", "frame",
   ]
     ## Order scripts concatenate in, i.e. order they must run in.
     ##   Each names what it holds; `dom` first because every later script looks elements

@@ -1,4 +1,4 @@
-// Diagnostics panel, its canvases and curves; not Nim because these reach browser APIs Nim's JS
+// Diagnostics section, its canvases and curves; not Nim because these reach browser APIs Nim's JS
 //   backend does not express.
 //   Presentation alone: every join, meet, pick, drag and camera move is computed by
 //   bridge, compiled from same modules desktop draws through (Article II.9).
@@ -6,9 +6,9 @@
 
 /* ---------------------------------------------------------------------- */
 /* Diagnostics: browser-appropriate stand-ins for desktop build's own     */
-/* arena/frame-time panel -- see `browser_bridge.nim`'s own doc comment   */
+/* arena/frame-time section -- see `browser_bridge.nim`'s own doc comment   */
 /* for why numbers differ in kind. Drawer states none of this:            */
-/* reader opening diagnostics panel wants numbers, not essay.             */
+/* reader opening diagnostics section wants numbers, not essay.             */
 /* ---------------------------------------------------------------------- */
 
 const FRAMES_HISTORY = 240;
@@ -59,7 +59,7 @@ const css_pool = new Map();
 // Width last draw laid grid out for; `NaN` before first, equal to nothing.
 let width_pool_drawn = NaN;
 // Watched in its own box rather than window's:
-//   drawer is fixed-width panel on wide screen and full-width sheet on narrow one, and
+//   drawer is fixed-width column on wide screen and full-width sheet on narrow one, and
 //   either can change without window doing so. Width alone: draw sets canvas's own
 //   height, and observer answering that with second identical draw was 4 ms for nobody.
 const size_pool = sizeObserved(grid_pool, () => {
@@ -263,7 +263,7 @@ function recomputeMedians() {
 }
 
 // Rows that have children, and whether each is open. **Every one starts closed**:
-//   reader opens diagnostics panel to see whether frame is slow, and goes looking for
+//   reader opens diagnostics section to see whether frame is slow, and goes looking for
 //   which step only once it is. Closed node's rows are skipped by `refreshDiagnostics`
 //   entirely, so subtotal nobody is reading costs nothing to keep offering.
 //   Nesting is read off markup itself rather than declared here second time:
@@ -309,7 +309,7 @@ function isPhaseShown(name: string) {
 //   together: frame entering increments its bucket, frame it evicts decrements
 //   one it was in. That keeps per-frame cost couple of array writes -- this runs on
 //   every frame, including ones being measured -- and leaves curve single
-//   suffix scan over buckets, done only when panel is actually open.
+//   suffix scan over buckets, done only when section is actually open.
 const FRAMES_EXCEEDANCE = 1024;
 const MILLISECONDS_BUCKET = 0.5; // Fine enough to separate 16.7 ms frame from 17.2.
 // **Slowest chart marks**, in frames per second, and reach of.
@@ -343,7 +343,7 @@ if (toggle_exceedance_log !== null) {
   toggle_exceedance_log.addEventListener('click', (e) => {
     is_exceedance_log = !is_exceedance_log;
     (e.currentTarget as HTMLElement).classList.toggle('on', is_exceedance_log);
-    // Redrawn on spot rather than at diagnostics panel's own six-frame cadence:
+    // Redrawn on spot rather than at diagnostics section's own six-frame cadence:
     //   switch that answers sixth of second late reads as one that did not work.
     drawExceedance();
   });
@@ -593,7 +593,7 @@ let milliseconds_axis = 0; // What is drawn; zero until first extent arrives.
 let ms_axis_restless = 0; // When extent first differed from it; zero while settled.
 let ms_axis_eased = 0; // Last ease, for elapsed time glide is scaled by.
 // True while axis is still travelling, so frame loop can redraw curve at its.
-//   own rate instead of panel's five-a-second, which would show glide as steps.
+//   own rate instead of section's five-a-second, which would show glide as steps.
 let is_axis_gliding = false;
 function axisEased(milliseconds_wanted: number) {
   const now = performance.now();
@@ -925,7 +925,7 @@ function isDiagnosticsShown() {
   return drawer.classList.contains('open') && section_diagnostics.classList.contains('open');
 }
 
-// **Figures are redrawn on cadence of window they are averaged over, not on panel's.**
+// **Figures are redrawn on cadence of window they are averaged over, not on section's.**
 //   Rows are 200 ms readings and belong at 200 ms. Sparkline holds four seconds, ring
 //   medians four, exceedance curve seventeen, and pool grid changes with scene: none
 //   can visibly change in fifth of second, and redrawing them at that rate was single
@@ -936,7 +936,7 @@ function isDiagnosticsShown() {
 //   cost three to four times its neighbours, spike reader saw once second on
 //   `ui refresh`. Jobs run off frame besides -- see `askSlowPass` -- and each is
 //   still kept short for idle window it runs in.
-//   Every job runs on first tick after section is shown, so panel never opens half
+//   Every job runs on first tick after section is shown, so section never opens half
 //   drawn.
 const TICKS_DISTRIBUTION = 5; // Five 200 ms ticks is window's own second.
 const TICK_CURVE = 0;
@@ -949,7 +949,7 @@ let is_diagnostics_shown_last = false; // Whether last tick found section open.
 //   Curve, sparkline, medians and pool grid are drawn in `requestIdleCallback`, between
 //   one frame's callback and next, where page was waiting on display anyway. Its
 //   clock reads go into same frame's `ui` reading through `addPhaseTime`, so row
-//   still states everything panel cost -- on frame's path or off it -- and frame-time
+//   still states everything section cost -- on frame's path or off it -- and frame-time
 //   row above it is what says whether frame stalled.
 //   Timeout is one reading window: browser finding no idle time still draws figure
 //   within 200 ms rather than never.
