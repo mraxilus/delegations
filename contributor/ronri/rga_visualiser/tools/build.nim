@@ -49,6 +49,8 @@ const
   PATH_DECLARATIONS = BUILD / "bridge.d.ts"
     ## Derived declarations of bridge's exports, read by type-checker alone.
     ##   Outside `outDir`, which TypeScript excludes from its own inputs by default.
+  PATH_TSCONFIG = "tsconfig.json"
+    ## Page's own type-checker configuration, targeting browser.
   PATH_TSCONFIG_DRIVE = "tsconfig.drive.json"
     ## Harness's own type-checker configuration, targeting node not browser.
   PATH_SHELL = "pages" / "shell.html"
@@ -84,7 +86,7 @@ const
     ## Faces page embeds, all SIL Open Font License 1.1; origins in PROVENANCE.md.
   HOST_FACES = "https://cdn.jsdelivr.net/npm/@fontsource"
     ## Host `assets` fetches faces from.
-  USAGE = "Usage: nim r tools/build.nim <declare|web|drive|assets|clean>\n"
+  USAGE = "Usage: nim r tools/build.nim <declare|types|web|drive|assets|clean>\n"
     ## Text printed on usage error.
 
 
@@ -223,6 +225,19 @@ proc declare() =
 
 #[ Commands ]#
 
+proc types() =
+  ## Derive bridge's declarations, then type-check every script against them.
+  ##   Whole of what checker reaches without browser: `declare` is Nim alone, and both
+  ##   configurations check against derived `build/bridge.d.ts`, so export renamed without
+  ##   re-deriving fails here rather than at run time (repository issue 47).
+  ##   Two configurations rather than one: page's scripts target browser and harness targets
+  ##   node, and neither's lib set admits other's.
+  ##   `web` and `drive` both call this, so no step is written twice.
+  declare()
+  run("npx", ["tsc", "--project", PATH_TSCONFIG])
+  run("npx", ["tsc", "--project", PATH_TSCONFIG_DRIVE])
+
+
 proc assets() =
   ## Fetch every face page embeds into `build/fonts`.
   ##   Faces are binary, which audit cannot read, so they are never committed and this verb
@@ -237,10 +252,12 @@ proc assets() =
 
 
 proc web() =
-  ## Assemble whole page: declarations, bridge, scripts, faces, markup.
+  ## Assemble whole page: declarations, type-check, bridge, scripts, faces, markup.
   ##   Fails with reason rather than emitting broken page: absent face renders as box and
   ##   absent script as blank canvas, neither reporting itself.
-  declare()
+  ##   `types` runs first, and emits every script this reads, under flags curator ratified
+  ##   (repository issue 27).
+  types()
   createDir BUILD_BROWSER
 
   # Compile every shared module desktop runs, through JS backend.
@@ -249,9 +266,6 @@ proc web() =
   #   `-d:danger` rejected: buys tenth of frame by removing every bounds, range and field
   #   check from one build reader runs.
   run("nim", ["js", "--hints:off", "-d:release", "-o:" & PATH_BRIDGE_JS, PATH_BRIDGE_NIM])
-
-  # Type-check and emit every script, under flags curator ratified (repository issue 27).
-  run("npx", ["tsc", "--project", "tsconfig.json"])
 
   var scripts = readFile(PATH_BRIDGE_JS)
   for name in SCRIPTS:
@@ -281,12 +295,10 @@ proc web() =
 
 proc drive() =
   ## Drive assembled page through real events, and report every check it runs.
-  ##   Builds page first: harness against stale page checks build nobody has.
-  ##   Type-checks harness under its own configuration, which targets node rather than
-  ##   browser and so cannot share `tsconfig.json`'s.
+  ##   Builds page first: harness against stale page checks build nobody has, and `web`
+  ##   runs `types`, which type-checks this harness too.
   ##   Exit follows harness: non-zero where any check failed, so one command is whole answer.
   web()
-  run("npx", ["tsc", "--project", PATH_TSCONFIG_DRIVE])
   run("node", [BUILD / "drive" / "main.js"])
 
 
@@ -307,6 +319,7 @@ when isMainModule:
   try:
     case paramStr(1)
     of "declare": declare()
+    of "types": types()
     of "web": web()
     of "drive": drive()
     of "assets": assets()
