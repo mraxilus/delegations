@@ -6,9 +6,10 @@
 //   and never tells page, so overlay would carry no label at all to read.
 
 import type { Page } from '@playwright/test';
+import { settleCamera } from './camera';
 import { clearTheGlass } from './gestures';
 import { report } from './report';
-import { settleCamera } from './touch';
+
 
 /** How many steps each orbit is walked in, and how many of those two together make. */
 const STEPS_ORBIT = 200, FRAMES_WANTED = 400;

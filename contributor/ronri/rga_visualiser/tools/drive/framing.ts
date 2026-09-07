@@ -6,10 +6,12 @@
 //   picked was already on screen, which swung picked object around view instead.
 
 import type { CDPSession, Page } from '@playwright/test';
-import { depthOf, readCamera, spanOf, spanPivot, type Stance } from './camera';
+import {
+  depthOf, readCamera, settleCamera, spanOf, spanPivot, type Stance,
+} from './camera';
 import { clearTheGlass } from './gestures';
 import { report } from './report';
-import { pinch, settleCamera } from './touch';
+import { pinch } from './touch';
 
 /** Plane's drawn diameter, from `mesh.EXTENT_PLANE_F`, and share of frame it is brought to,
  *  from `framing.FRACTION_HEIGHT_APPROACH_PLANE`. */

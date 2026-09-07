@@ -4,11 +4,11 @@
 //   Suites reach `applyOperation`, never gesture that calls it.
 
 import type { CDPSession, Page } from '@playwright/test';
-import { readCamera, spanPivot } from './camera';
+import { readCamera, settleCamera, spanPivot } from './camera';
 import { report } from './report';
 import { clearTheGlass } from './gestures';
 import { pixelOf } from './wheel';
-import { dragFinger, settleCamera, tapAt, pinch } from './touch';
+import { dragFinger, tapAt, pinch } from './touch';
 
 /** Put camera back where it opened and drop selection, so each check starts alike. */
 async function fromHome(page: Page): Promise<void> {

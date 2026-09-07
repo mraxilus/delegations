@@ -4,7 +4,7 @@
 //   Touch is where pinch regression lived, and no suite has finger at all.
 
 import type { CDPSession, Page } from '@playwright/test';
-import { readCamera } from './camera';
+import { readCamera, settleCamera } from './camera';
 import { report } from './report';
 import { pixelOf } from './wheel';
 
@@ -97,11 +97,6 @@ export async function dragFinger(
     await touchAt(cdp, 'touchEnd', []);
     await page.waitForTimeout(400);
   }
-}
-
-/** Wait until camera's own ease has settled, so readings are not mid-flight. */
-export async function settleCamera(page: Page): Promise<void> {
-  await page.waitForTimeout(900);
 }
 
 /** Drive pinch zoom, which is what finger has instead of wheel. */

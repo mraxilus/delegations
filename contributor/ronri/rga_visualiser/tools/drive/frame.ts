@@ -122,6 +122,24 @@ export async function countFrames(page: Page): Promise<number> {
   return page.evaluate(() => (window.__work_frame ?? []).length);
 }
 
+/** Wait until page has drawn this many more frames.
+ *
+ *  Gesture paced by clock assumes frame rate; paced by frames it asks for exactly what it
+ *  needs, and slow machine takes longer rather than dropping steps. Reads `requestAnimationFrame`
+ *  rather than harness's own counter, so it works before `watchFrames` is installed.
+ */
+export async function waitFrames(page: Page, frames: number): Promise<void> {
+  await page.evaluate((given) => new Promise<void>((done) => {
+    let seen = 0;
+    const step = (): void => {
+      seen += 1;
+      if (seen >= given) done(); else requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }), frames);
+}
+
+
 /** Drive still scene for few seconds, and assert its frames fit inside their own budget. */
 export async function driveFrameWork(page: Page): Promise<void> {
   await page.evaluate(() => {
