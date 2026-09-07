@@ -134,10 +134,10 @@ const BODY = """
     a row read across is that dancer's orientation and the four facings are
     distinct without a new mark.</p>
     <div class="row">
-      <figure>{or_free_0}<figcaption>face to face</figcaption></figure>
-      <figure>{or_free_1}<figcaption>the follow<br>faces away</figcaption></figure>
-      <figure>{or_free_2}<figcaption>the lead<br>faces away</figcaption></figure>
-      <figure>{or_free_3}<figcaption>back to back</figcaption></figure>
+      <figure>{or_free_0}<figcaption>face-to-face</figcaption></figure>
+      <figure>{or_free_1}<figcaption>pillion<br>lead</figcaption></figure>
+      <figure>{or_free_2}<figcaption>pillion<br>follow</figcaption></figure>
+      <figure>{or_free_3}<figcaption>back-to-back</figcaption></figure>
     </div>
     <div class="row">
       <figure>{or_held_0}<figcaption>holding <em>Left to left</em></figcaption></figure>
@@ -402,7 +402,7 @@ const BODY = """
     tracking it: what it draws is the couple, not the room.</p>
     <p><b>Two dancers turning half a turn each still collides.</b> The four
     orientations are two bits and <code>twist</code> is one, its parity, so
-    <code>isFacing(twist)</code> cannot tell face to face from back to back. The
+    <code>isFacing(twist)</code> cannot tell face-to-face from back-to-back. The
     two relative facings this picture is now built on are exactly the pair
     <code>rotation.nim</code> would need.</p>
     <p><b>Knock-on, flagged not acted on.</b> Static frames keep a square
@@ -438,8 +438,8 @@ func render*(P: Parts): string =
 
   # Which locks and wraps exist in which orientation: cells left empty
   # by wrap rule are states that cannot be danced.
-  let turned = ["face to face", "the follow<br>a quarter turned",
-                "the follow<br>turned away", "the follow<br>three quarters"]
+  let turned = ["face-to-face", "the follow<br>a quarter turned",
+                "pillion lead", "the follow<br>three quarters"]
   var grid = """<table class="grid"><tr><th></th>"""
   for s in GRID_STATES:
     grid.add &"<th><em>{word(s.level)}</em> {word(s.way)}</th>"

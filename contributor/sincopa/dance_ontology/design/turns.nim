@@ -13,11 +13,11 @@
 ##     does.  Not because sim speaks other language -- it reuses agreed
 ##     words -- but because here it measures what ontology asserts, and
 ##     translation kept visible is evidence where assumed identity is echo.
-##   Two rests, both page's own choice: cross-name holds rest face to
-##     face, and same-name holds are also built face to face so
-##     turns count as sheet counts (away rest is half turn along).
-##     Same-name *pair* is exception: face to face its two
-##     connections lie through each other, so it is built at away rest
+##   Two rests, both page's own choice: cross-name holds rest
+##     face-to-face, and same-name holds are also built face-to-face so
+##     turns count as sheet counts (pillion lead rest is half turn along).
+##     Same-name *pair* is exception: face-to-face its two
+##     connections lie through each other, so it is built pillion lead
 ##     -- collected there, as couple would -- and its turns count from it.
 
 {.experimental: "strictFuncs".}

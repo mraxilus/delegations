@@ -37,7 +37,7 @@ to what a dancer will do without pain.
 
 ## One hand held, the follow turned
 
-Counted from face to face, in turns, anticlockwise seen from above positive.  Each row is the pose
+Counted from face-to-face, in turns, anticlockwise seen from above positive.  Each row is the pose
 the arms carry to that turn; *strain* is how far into the last stretch before a joint's edge the
 worst joint is (1 is the edge).
 
@@ -252,7 +252,7 @@ Blocks: -2.50: no block within 2.50 turns; +2.50: no block within 2.50 turns.
 ## The floor's claim
 
 The floor: *everything gets a full turn before it blocks, except a low wrap, which gets half.*  L-l
-and L-r, turning her, from face to face.  For L-l the lock way is negative and the wrap way
+and L-r, turning her, from face-to-face.  For L-l the lock way is negative and the wrap way
 positive; for L-r the wrap way is negative and the lock way positive.
 
 | hold | level | way | floor says | sim says | the sim names |
@@ -272,8 +272,8 @@ positive; for L-r the wrap way is negative and the lock way positive.
 
 ## Both hands held
 
-L-r.R-l rests face to face; L-l.R-r rests with her turned away (face to face its two connections lie
-through each other), and its turns count from there.
+L-r.R-l rests face-to-face; L-l.R-r rests pillion lead (face-to-face its two connections lie through
+each other), and its turns count from there.
 
 ### L-r.R-l, low
 
@@ -328,7 +328,7 @@ the arms can reach).
 | +1 1/2 | blocked | | | |
 | +2 | blocked | | | |
 
-### L-l.R-r, from her away rest, low
+### L-l.R-r, from pillion lead, low
 
 Blocks: -0.58: her arm through her torso (a pose holds a step beyond, but not one the arms can
 reach); +0.58: her arm through her torso (a pose holds a step beyond, but not one the arms can
@@ -346,7 +346,7 @@ reach).
 | +1 1/2 | blocked | | | |
 | +2 | blocked | | | |
 
-### L-l.R-r, from her away rest, high
+### L-l.R-r, from pillion lead, high
 
 Blocks: -0.04: her arm through her torso (a pose holds a step beyond, but not one the arms can
 reach); +0.21: his arm through his head (a pose holds a step beyond, but not one the arms can
@@ -364,7 +364,7 @@ reach).
 | +1 1/2 | blocked | | | |
 | +2 | blocked | | | |
 
-### L-l.R-r, from her away rest, above
+### L-l.R-r, from pillion lead, above
 
 Blocks: -2.50: no block within 2.50 turns; +2.50: no block within 2.50 turns.
 

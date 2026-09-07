@@ -106,14 +106,15 @@ const BODY = """
   half turn from there winds the pair one step further, and the chain runs
   out at a turn and a half each way.</p>
   <p><b>Which way the partners face follows from the wind</b>, so the
-  captions leave it out and it is said once here: <b>face to face</b> at a
-  whole number of turns — the frame and the diamonds — and <b>both facing
-  one way</b> at a half — the crosses and the swans.</p>
-  <p><b>A half turn makes a cross.</b> The partners end up facing the same
-  way, and the two connections cross once overhead — the plain crossing the app
-  already uses for a crossed pair, with the over-and-under break saying
-  which arm is on top. <b>A whole turn makes a diamond</b>: the pair crosses
-  <em>twice</em>, once by the lead and once by the follow, and what the two
+  captions leave it out and it is said once here: <b>face-to-face</b> at a
+  whole number of turns — the frame and the diamonds — and <b>pillion
+  lead</b> at a half — the crosses and the swans.</p>
+  <p><b>A half turn makes a cross.</b> The partners end up pillion lead, both
+  facing one way with the lead behind, and the two connections cross once
+  overhead — the plain crossing the app already uses for a crossed pair, with
+  the over-and-under break saying which arm is on top. <b>A whole turn makes a
+  diamond</b>: the pair crosses <em>twice</em>, once by the lead and once by
+  the follow, and what the two
   crossings enclose is the shape rule 27 named. <b>The two crossings say
   opposite things</b> — whichever connection is over at the lead's end is
   under at the follow's, because that is what being wound together means.</p>
@@ -159,9 +160,9 @@ const BODY = """
   <p><b>Hand to hand and the crossed pair are the same chain.</b> A hold has
   one position where its two connections run parallel and cross nothing —
   and that position sits at a different <em>facing</em> for each of them.
-  Hand to hand is parallel with the partners <b>face to face</b>; hold left
-  to left and right to right instead and it is parallel with one of them
-  <b>facing away</b>, which on this page's chain is half a turn along. Every
+  Hand to hand is parallel with the partners <b>face-to-face</b>; hold left
+  to left and right to right instead and it is parallel <b>pillion lead</b>,
+  which on this page's chain is half a turn along. Every
   step after that is the same step: cross, diamond, swan, out to a turn and
   a half each way.</p>
   <p><b>So the phase is measured, not written down.</b> The build turns the

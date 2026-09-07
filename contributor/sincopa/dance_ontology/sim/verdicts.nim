@@ -206,7 +206,7 @@ proc rigTable(): string =
 proc singleHolds(): string =
   ## Tabulate every one-hand hold at every band, follow turned.
   result.add "## One hand held, the follow turned\n\n"
-  result.add prose("Counted from face to face, in turns, anticlockwise seen from above " &
+  result.add prose("Counted from face-to-face, in turns, anticlockwise seen from above " &
     "positive.  Each row is the pose the arms carry to that turn; *strain* is how far " &
     "into the last stretch before a joint's edge the worst joint is (1 is the edge).")
   for (a, b, name) in [(Arm.Left, Arm.Left, "L-l"), (Arm.Right, Arm.Right, "R-r"),
@@ -238,7 +238,7 @@ proc floorClaim(): string =
   ## Tabulate floor's claim beside sim's answer.
   result.add "## The floor's claim\n\n"
   result.add prose("The floor: *everything gets a full turn before it blocks, except a low " &
-    "wrap, which gets half.*  L-l and L-r, turning her, from face to face.  For L-l the " &
+    "wrap, which gets half.*  L-l and L-r, turning her, from face-to-face.  For L-l the " &
     "lock way is negative and the wrap way positive; for L-r the wrap way is negative and " &
     "the lock way positive.")
   result.add "| hold | level | way | floor says | sim says | the sim names |\n" &
@@ -261,12 +261,13 @@ proc floorClaim(): string =
 proc pairHolds(): string =
   ## Tabulate both two-hand holds at every band, follow turned.
   result.add "## Both hands held\n\n"
-  result.add prose("L-r.R-l rests face to face; L-l.R-r rests with her turned away (face " &
-    "to face its two connections lie through each other), and its turns count from there.")
+  result.add prose("L-r.R-l rests face-to-face; L-l.R-r rests pillion lead " &
+    "(face-to-face its two connections lie through each other), and its turns count " &
+    "from there.")
   for (links, name) in [
       (twoLinks(Arm.Left, Arm.Right, Arm.Right, Arm.Left, Band.Torso), "L-r.R-l"),
       (twoLinks(Arm.Left, Arm.Left, Arm.Right, Arm.Right, Band.Torso, away = true),
-       "L-l.R-r, from her away rest")]:
+       "L-l.R-r, from pillion lead")]:
     for (word, band) in BANDS:
       var s = links
       s.band = band

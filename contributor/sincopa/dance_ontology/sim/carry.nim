@@ -39,7 +39,7 @@ type
   Hold* = object ## One way of holding hands: which of his to which of hers.
     name*: string
     links: seq[tuple[a, b: Arm]] ## Lead's hand, follow's hand.
-    away: bool ## Rests with follow turned away: its connections lie
+    away: bool ## Rests pillion lead: its connections lie
                ## through each other face to face.
 
   Way* {.pure.} = enum ## Four ways quarter can be turned.
@@ -316,7 +316,7 @@ proc readout*(s: State; v: Verdict): string =
     if abs(tally[w]) > 1e-9:
       made.add (if made.len > 0: ", " else: "") & &"{WAYS[w]} <b>{turns(tally[w])}</b>"
   if made.len == 0:
-    made = if HOLDS[hold].away: "at rest, the follow turned away" else: "at rest, face to face"
+    made = if HOLDS[hold].away: "at rest, pillion lead" else: "at rest, face-to-face"
   &"""<table class="says"><tr><th>arm</th><th>behind / across</th><th>twist</th>""" &
     "<th>elbow</th><th>wrist</th><th>strain</th><th>lies</th></tr>" & rows &
     "</table>" &
