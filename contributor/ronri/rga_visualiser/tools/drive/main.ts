@@ -31,12 +31,17 @@ import {
   driveCulling, driveDemo, driveOccluded, driveZoomLoaded, loadDemo, objectsDefault,
   objectsLargest,
 } from './demo';
+import {
+  driveLoadedAccounting, drivePinPickLoaded, drivePlacingCost, driveTimelineCost,
+  driveUndoDrawn,
+} from './loaded';
 import { driveComet } from './comet';
 import { drivePhaseSums, driveTree } from './diagnostics';
 import { driveAxis, driveAxisGlide, driveCurve, driveScaleSwitch } from './exceedance';
 import { driveSums, driveTint } from './ramp';
 import {
   drivePinAnchor, drivePinGrid, drivePinMarker, drivePinPick, drivePinPool,
+  MILLISECONDS_PICK_HOVER,
 } from './pins';
 import { driveRings } from './rings';
 import { driveHold, driveKinds, driveMoving, driveSceneryBound } from './scenery';
@@ -146,6 +151,11 @@ async function main(): Promise<void> {
   await driveCulling(page);
   await driveOccluded(page);
   await driveZoomLoaded(page);
+  await driveTimelineCost(page, objects_largest);
+  await drivePlacingCost(page, objects_largest);
+  await driveUndoDrawn(page);
+  await drivePinPickLoaded(page, MILLISECONDS_PICK_HOVER);
+  await driveLoadedAccounting(page, errors_page);
 
   // Page erroring at all is failure, whatever every check above said.
   report('the page raised no error', errors_page.length === 0, errors_page.join(' | '));

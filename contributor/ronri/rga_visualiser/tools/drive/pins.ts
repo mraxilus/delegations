@@ -13,7 +13,7 @@ import { report, reportWithin } from './report';
 import { pixelOf } from './wheel';
 
 /** Ceiling each repaired fault is pinned under, with cost it was repaired to. */
-const MILLISECONDS_PICK_HOVER = 5; // Repaired 1.5 ms; scene-copy-per-handle fault was 7.1.
+export const MILLISECONDS_PICK_HOVER = 5; // Repaired 1.5 ms; scene-copy-per-handle fault was 7.1.
 const MICROSECONDS_ANCHOR = 100; // Repaired 8 us; extent-tuple and object-copy fault was 280.
 const MILLISECONDS_MARKER_PAIR = 4; // Worst live kind; repaired ~1.2 ms, per-sample sums ~3.2.
 const MILLISECONDS_GRID_MOVING = 20; // Repaired 8.7 ms; per-boundary fade sampling was 26.1.
