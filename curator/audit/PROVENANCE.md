@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | a011df991e1e6032 |
+| Rules  | 286e748543eaf97f |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -611,6 +611,48 @@ git ignores them everywhere (`**/tests/t*`). Suites are named after constitution
 and every assertion carries a citation. Fixtures are built by `fixtures.nim`: a smallest
 clean tree with a project under each root, and throwaway git repositories. Verified: 14
 test files, all passing on Nim 2.2.4 Linux amd64.
+
+## Type checking
+
+**Runner reaches every project's TypeScript, and reaches it through that project's own
+verb.** `koch types` restores node tools from the project's lock and runs
+`tools/build.nim types` in it; the verb derives whatever those scripts read and type-checks
+every configuration, stopping before anything needing browser. koch names verb and nothing
+else, since what checking needs differs per project while the name need not.
+
+**Which projects it reaches is derived, never listed.** `nodeDirs` selects projects whose
+tree holds `package.json` beside `package-lock.json`. Nothing in `check.yml` names a project,
+exactly as nothing names one for the compiler matrix, so a project enrols by carrying those
+two files and no second list can drift. Lock is demanded beside manifest because `npm ci`
+needs one, and unpinned tools would be the one thing here that nothing pins.
+
+**No pin is resolved and no toolchain is fetched.** `tools/build.nim` compiles no project
+code — it derives declarations by reading source as text — so a project's own pin buys
+nothing here, and building `rga_visualiser`'s commit-pinned compiler to run a build script
+would cost minutes of runner for no checking. The driver's compiler runs it, as it runs the
+whole-tree pass, so this is one plain job rather than a second matrix.
+  Cost, and the condition it rests on: this holds only while a `types` verb compiles no
+  project code. One that did would need its pin, and this would become a matrix job like
+  `project`.
+
+**Scoped, unlike `tests`.** `koch tests` runs every project or one named; scoping for
+compiling lives in the matrix `plan` renders. The type check has no matrix, so scoping lives
+in the verb: it takes the projects one change asks for, by the same `testSet` rule, and
+`--all` drops that for the weekly sweep, which has no base commit to compare against.
+
+**Absent npm is a finding naming it, never a skip.** koch resolves a Nim compiler it lacks
+and will not fetch node. A check that quietly does nothing is worse than one that fails,
+because it reports green for work it never did.
+
+*Checked.* Driven against the regression it exists for, on 2026-09-07: renaming
+`nimSceneHandles` to `nimSceneSlots` in `bridge.nim` without touching anything else makes
+`koch types` report one finding, over `TS2304: Cannot find name 'nimSceneHandles'` at four
+sites in `construct_section.ts`. Reverted, it returns 0 findings. That is exactly the drift
+the vocabulary pass of issue 46 would have caused, caught at build rather than one run-time
+failure at a time. Whole verb costs 11 s cold on this machine, `npm ci` included.
+  Scoping driven the same way: a change touching only records selects no project, and a
+  change to `koch.nim` or a check source selects every one, since how each is checked
+  changed.
 
 ## Continuous integration
 
