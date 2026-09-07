@@ -34,19 +34,12 @@ const pinned = block:
 const
   KEPT = ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10",
           "A11", "A12", "A13", "A14", "A15", "A16", "A17",
-          # B4 and B23 were kept with mend against them: their reach ran
-          # straight to its far hand and bent only there.  Mend is made,
-          # so they go back to unruled rather than carry verdict given on
-          # picture that has since moved.
-          "B1", "B2", "B3", "B5", "B6", "B7",
+          "B1", "B2", "B3", "B4", "B5", "B6", "B7",
           "B8", "B9", "B10", "B11", "B12", "B13", "B14",
           "B15", "B16", "B17", "B18", "B19", "B20", "B21",
-          "B22", "B24", "B25", "B26", "B27", "B28",
-          # C1, C7, D1, D7 were kept, then re-drawn when swan's snake moved
-          # to over arm, so they go back to unruled rather than carry verdict
-          # given on picture that has since moved.
-          "C2", "C3", "C4", "C5", "C6",
-          "D2", "D3", "D4", "D5", "D6"]
+          "B22", "B23", "B24", "B25", "B26", "B27", "B28",
+          "C1", "C2", "C3", "C4", "C5", "C6", "C7",
+          "D1", "D2", "D3", "D4", "D5", "D6", "D7"]
     ## Ids Architect has confirmed accurate.  Added as they are ruled on.
   DROPPED: seq[string] = @[]
     ## Ids Architect has ruled out.
