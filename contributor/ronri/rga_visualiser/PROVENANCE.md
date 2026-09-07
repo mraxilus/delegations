@@ -69,6 +69,50 @@ lines — would set the precedent for module system, build step, dependency pinn
 generated file is marked. Conventions were proposed rather than assumed, as issue 27, and are
 unanswered. Rejected as a workaround: choosing them unilaterally and leaving a later ruling to
 invalidate every line written under them.
+Vocabulary
+---
+**Twenty-eight terms were selected by the Architect, in session, and are in `GLOSSARY.md`.**
+None was written on sight: CONTRIBUTOR.md's glossary process says propose the term and let
+the Architect choose, so each was put with its candidates and what each would displace. The
+code was then made to say them, one commit per term or tight group.
+
+**Every word turned out to name more than one thing, and only one sense moved.** This is the
+finding worth carrying: a rename here is never a substitution, and what is spared is spared
+by an explicit list rather than by a rule.
+  `slot` meant three things — an object's address, a position in the `Ink` palette, and a
+  per-phase timing array position in the diagnostics. Only the first became `handle`;
+  `mesh` was left whole, holding no address sense at all.
+  `target` meant five — the camera's orbit centre, the object a press points at, the DOM
+  event target, a render target, and a plain goal figure. Only the first became `pivot`.
+  `budget` meant two: the frame-rate lines, which are `mark`s because nothing is held to
+  them, and real allowances of time, pixels and segments, which keep the word.
+
+**Three names could not be taken, and each says why in place.** `object` is reserved in Nim,
+so code-position `item` took a role instead — `one` where an object is reached through the
+accessor, `saved` where a record is read out of a file. `handle` collides with std's
+`typedthreads.handle`, which wins over an injected local inside a template, so `picking`
+turns on `openSym`. `iterator items` keeps its name because it is Nim's own protocol:
+renaming it would break every `for` loop with no word from the compiler.
+
+**Two spec keys were nearly renamed, and neither would have failed loudly.** `targets: "js"`
+is a testament key; renaming it would have run the browser suite on the wrong backend.
+`visualiser.items_max` is a compile-time define named in the small suite's `matrix`; the
+constant and the define moved together, and that they still meet was checked by compiling
+against it rather than by reading both lines.
+
+**`horizon` stays `pga`'s word** and has no entry here: the algebra's vocabulary belongs to
+that library. What was corrected is this project's phrasing of it. An ideal object does not
+sit *at* the horizon, it lies *in* it, so the kind words a reader sees are `horizon point`,
+`horizon line` and `horizon plane`. The finite half — a plane meets the horizon in a line,
+which is its direction — has no site here, since this project describes ideal objects alone.
+
+*Checked.* Verified by running, after every rename: three suites pass unchanged at 323, 302
+and 310 cases, which is what says no behaviour moved; `tsc` clean under its three flags after
+`bridge.d.ts` is re-derived; `koch tree` at 0 findings; and the page built, loaded and driven
+— object list, a pick, an orbit, undo, and the camera fields the pivot rename touched.
+  **Unverified**: the desktop front-end is not in this repository yet, so no rename here has
+  been compiled against it. Whatever it carries of this vocabulary arrives with it.
+
 Browser Front-End
 ---
 **Page is one self-contained file.** It opens from `file://` or from an artefact host that
