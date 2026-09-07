@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Author | Claude Opus 5 and Claude Sonnet 5 |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | d7526c4b4d7fa1d9 |
+| Rules  | 514fbc63c53dd18e |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the
@@ -2314,3 +2314,15 @@ other here:
   correcting.
 
 [replications]: https://gitlab.com/mraxilus/replications
+
+## Re-audit, 2026-09-07, issue routing
+
+Audited by a curator against the change that made the issue channel run both ways. A session
+now reads the open issues labelled with its own role before any other work; a curator who reads
+this project raises what they find as an issue rather than editing it, since they may not; and
+an issue's label is the role string exactly, copied and never composed, because applying a
+label creates it and a misspelling makes a second label nobody filters on.
+
+Nothing in this tree changes: the rule binds how the next session here starts. Two issues stand
+open against this project today, 47 and 48, both now carrying its label, so that session finds
+them by the filter rather than by being told.
