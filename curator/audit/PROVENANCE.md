@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | bdde915970b9ce25 |
+| Rules  | 1931060895ce28b1 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -950,3 +950,34 @@ any Nim that builds koch". That understated it: koch shells out to `curl` when i
 compiler, and to `npm` since `types` verb landed hours earlier -- drift this curator introduced
 and did not notice at time. Corrected to name git, curl, and npm where project carries node
 manifest.
+
+## Re-audit, 2026-09-07, ready is not a one-way door
+
+Audited by curator against rule that pull request already marked ready goes back to draft
+before author adds another commit to it. Rule was asked for by Architect after this curator
+lost commit to it, and both `CURATOR.md` and `CONTRIBUTOR.md` gained direction they lacked:
+each already said open as draft and mark ready only when ready, neither said what to do when
+readiness stops being true.
+
+**Rule is written from measurement, and measurement is this curator's own mistake.** Pull
+request 70 was green and ready at 21:55. Record entry for its own figures was committed
+locally at 22:06:30 and never pushed, held behind nine-minute local `koch ci`; merge landed
+sixteen seconds later. Architect merged what was green and ready, which is correct and is what
+protected branch exists to allow. State of pull request was what lied: it said merge me while
+its author intended another commit. Cost was second pull request, and record on `main` that
+said 135 checks, called runner figure unmeasured, and described gap already fixed.
+  What makes this rule rather than one session's lesson: signal has to live where other party
+  looks. Architect reads pull request state; they cannot read working copy, and commit that is
+  not pushed does not exist to them. Same reasoning issue routing already rests on -- session
+  ends and takes its intentions with it, so intention goes somewhere durable.
+
+**Rejected: asking Architect to wait.** Merging green ready pull request promptly is what
+keeps chain moving, and rule that asks reader to hesitate over every green one costs more than
+it saves. Draft is one click for author and needs nothing of anybody else.
+
+**Rejected: check enforcing it.** Nothing here can see intent. Check could compare pull request
+state against later pushes and would only ever report after fact, which is when it is already
+lost. This holds by being done, as rest of that section does.
+
+**Cost: rule this curator broke on same day it was written.** That is worth stating plainly
+rather than smoothing over -- it is evidence rule is needed, not evidence it is understood.
