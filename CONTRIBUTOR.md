@@ -231,6 +231,49 @@ with Nim). Inside your project directory:
 verified by `atlas changed`); the `audit` job runs it before the tests. Atlas needs the
 network for every command, so a project with no packages carries no lock and skips Atlas.
 
+## System dependencies
+
+Some things must be on the machine before your build runs at all: a library the compiler links
+against, a tool the build shells out to, a browser a driven check drives, a source clone no
+package manager carries. Atlas pins Nim packages and a lockfile pins node ones; these have
+neither, so they are declared instead.
+
+**Declare them as data in your `tools/build.nim`, reached by a verb**, the way node packages are
+declared in `package.json` and reached by `types`. Each entry carries what it is and why it is
+needed, because Article II.8 admits an external concern only where it is justified — and a
+reason in a field outlives a reason in a comment.
+
+```nim
+const SYSTEM = [
+  ("libsdl3-dev", "windowing and input; no Nim import expresses it"),
+  ("xvfb", "headless display driven checks need"),
+]
+```
+
+It goes in the driver you already have rather than in a file of its own: `.nim` is a kind the
+audit already reads, the declaration is machine-readable so CI can install from it, and the
+registry admits no second build verb — the same reason `make` was retired.
+
+**Say what is pinned and what is not, rather than implying a guarantee.**
+
+- **A source clone carries its commit.** Clone at that commit and never vendor the source
+  (Article XI.3), exactly as Atlas clones into `deps/`.
+- **A system package carries no pin that survives across distributions.** Do not invent one.
+  Name the package and let the record say plainly that its version is whatever the machine has —
+  the same honest limit the toolchain record already states about compilers trusted on TLS alone.
+- **Anything fetched at build time carries a checksum the build verifies**, and fails on a
+  mismatch rather than using what arrived. That is what keeps an unpinned download out of the
+  merge process, and it is also what lets CI cache the file instead of refetching it.
+
+**Never name one machine's paths in committed source.** A constant like
+`/opt/pw-browsers/chromium-1194/chrome-linux/chrome` pins a version in the least durable place
+there is, and builds only where that layout exists. Take the location from the environment, fall
+back to what the declaration names, and fail with a finding that says what to install — not with
+a missing file.
+
+`README.md` may point at the declaration; it is not the declaration. Prose nothing reads decays
+exactly the way an unrun check does.
+
 ## TypeScript and Node
 
 TypeScript is admitted where JavaScript is forced — a browser or a Node host — and nowhere

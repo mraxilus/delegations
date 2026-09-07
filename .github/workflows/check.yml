@@ -27,6 +27,13 @@
 #   installed one does: audit reads untracked files.
 #   Nim installs under runner temp, never into workspace: audit reads untracked files, so
 #   toolchain inside checkout would be audited (first run on main proved it).
+#   What runner fetches or builds is cached on thing that pins it, never on run: commit for
+#   compiler built from source, `atlas.lock` for that project's checkouts, every
+#   `package-lock.json` for npm's own store. Key is pin itself, so cache cannot serve tree
+#   lock would not have fetched; changing lock changes key, and stale entry is unreachable
+#   rather than wrong. Rejected: caching `nimcache`, which would be largest saving and whose
+#   staleness is exactly failure repository refuses elsewhere -- check passing without
+#   compiling what it claims. It needs driving against deliberately stale cache first.
 #   Branch names and event kind reach koch through environment, never interpolated into
 #   script. Weekly sweep compiles every project, since scoped runs leave unrelated rot
 #   unseen until that project next changes; it skips itself in week nobody merged code,
@@ -113,6 +120,23 @@ jobs:
       - if: matrix.kind == 'commit'
         run: echo "$RUNNER_TEMP/nim-commit/bin" >> "$GITHUB_PATH"
 
+      # Atlas checkouts: `koch tests` restores them from lock on every run, and lock names
+      #   exact commit each time, so cache keyed on that lock returns same tree it would
+      #   have fetched. Key carries no project name: two projects sharing lock share tree it
+      #   names, so entry either restores what that lock says or misses. Projects holding no
+      #   lock skip step; `actions/cache` warns on absent path, and warning nobody acts on
+      #   is noise.
+      - id: locked
+        env:
+          PROJECT: ${{ matrix.dir }}
+        run: |
+          if [ -f "$PROJECT/atlas.lock" ]; then echo "is_locked=true" >> "$GITHUB_OUTPUT"; fi
+      - if: steps.locked.outputs.is_locked == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ${{ matrix.dir }}/deps
+          key: atlas-${{ runner.os }}-${{ hashFiles(format('{0}/atlas.lock', matrix.dir)) }}
+
       - env:
           PROJECT: ${{ matrix.dir }}
         run: nim r koch tests "$PROJECT"
@@ -133,6 +157,18 @@ jobs:
         with:
           nim-version: ${{ env.NIM_VERSION }}
           parent-nim-install-directory: ${{ runner.temp }}
+      # Node packages: `npm ci` refetches every run. Cache npm's own store rather than
+      #   `node_modules`, which `npm ci` deletes before installing; lock names exact version
+      #   of each, so hash of every lock is key that cannot serve wrong tree.
+      #   Store is made before caching it, since run selecting no node project never invokes
+      #   npm and leaves path absent, and `actions/cache` warns on absent path. Most runs
+      #   select none, so warning would be on most runs and would mean nothing on any of
+      #   them. Empty store saved under same key is harmless: first run using npm fills it.
+      - run: mkdir -p ~/.npm
+      - uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
       - run: nim r koch types $ALL
 
   scope:

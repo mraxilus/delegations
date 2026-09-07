@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 286e748543eaf97f |
+| Rules  | 8779977bf49991d4 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: curator test project replacing `abstand/intervals`, which lived in a real domain;
@@ -133,3 +133,15 @@ tools and drives that verb, scoped to projects one change asks for.
 
 This project carries no node manifest, so nothing here is type-checked and the rule binds
 nothing today. It binds the moment this project grows scripts of its own.
+
+## Re-audit, 2026-09-07, system dependencies
+
+Audited by a curator against rule that system dependencies -- library compiler links against,
+tool build shells out to, browser driven check drives, source clone no package manager carries
+-- are declared as data in project's own `tools/build.nim`, each entry carrying its reason, and
+reached by verb. Source clone carries its commit; system package carries no pin surviving across
+distributions and record says so rather than implying one; anything fetched at build time
+carries checksum build verifies. No machine's paths in committed source.
+
+This project needs nothing beyond Nim itself, so rule binds nothing here and nothing needed
+correcting. It binds moment this project shells out to anything.

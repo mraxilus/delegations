@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 286e748543eaf97f |
+| Rules  | 8779977bf49991d4 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -526,8 +526,21 @@ record files, while every stamp is still checked.
 
 Cost: a merged change can leave an unrelated project red until that project next changes.
 The weekly `schedule` sweep, which plans every project, is the guard, and it is a weaker
-guard than compiling everything on every push. Assumed, not yet verified: that the sweep
-fires, which only a Monday shows. Parallelism is verified, under Figures.
+guard than compiling everything on every push.
+
+**The sweep fires. Observed 2026-09-07**, first Monday after cron landed: run 34120324032,
+event `schedule`, success. It planned all four projects and ran each on its own pin —
+`rga_visualiser` on its commit, other three on 2.2.4 — and did not skip itself, code having
+merged that week. Parallelism holds on real sweep rather than only on pull request's matrix:
+four jobs started within one second and phase finished in about four minutes against about
+nine minutes summed.
+
+**It fired 6 h 09 m after its 06:00 slot**, which is what GitHub does with `schedule` under
+load rather than fault here. So sweep promises *some time on Monday*, never 06:00, and curator
+reading cron and returning at 06:05 will find nothing and conclude guard is broken. That is
+recorded because it happened: this claim was first written as "sweep did not fire", on
+observation taken five and half hours in, and retracted when run arrived forty-four minutes
+later. Waiting is part of reading this signal.
 
 **The sweep skips itself in a quiet week.** `sweepJobs` plans every project when any code
 merged inside `SWEEP_DAYS`, and nothing at all when none did, judging "code" by the same
@@ -809,3 +822,24 @@ would add to a hot path — with the file's opening comment saying which.
 
 This project holds no target-language file, so the rule binds nothing here today. It binds the
 moment one arrives, and the `not Nim because` gate already refuses one that argues nothing.
+
+## Re-audit, 2026-09-07, system dependencies
+
+Audited by a curator against rule that system dependencies -- library compiler links against,
+tool build shells out to, browser driven check drives, source clone no package manager carries
+-- are declared as data in project's own `tools/build.nim`, each entry carrying its reason, and
+reached by verb. Source clone carries its commit; system package carries no pin surviving across
+distributions and record says so rather than implying one; anything fetched at build time
+carries checksum build verifies. No machine's paths in committed source.
+
+**Rule reaches this project only partly, and gap is worth naming.** It speaks of project's own
+`tools/build.nim`; curator projects carry none, since koch drives them. koch's own system needs
+are stated in `README.md` instead, which same rule calls pointer rather than declaration. Making
+koch declare its own needs as data is separate change with its own cost, filed here rather than
+done quietly.
+
+**One correction found while auditing, and it was mine.** `README.md` said koch "Needs git and
+any Nim that builds koch". That understated it: koch shells out to `curl` when it fetches
+compiler, and to `npm` since `types` verb landed hours earlier -- drift this curator introduced
+and did not notice at time. Corrected to name git, curl, and npm where project carries node
+manifest.
