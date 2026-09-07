@@ -81,8 +81,11 @@ cult.
 9. Duplicate only what a real constraint forces: a target that cannot share the original's
    dependencies, a boundary that cannot be crossed. Each copy names its siblings, and a fix
    to one is finished only when every sibling is checked. When one language compiles to
-   another, write the source language; hand-written target code only for what the target
-   alone can do, with every derived value behind an export.
+   another, write the source language and keep the crossing narrow. Reach for the target
+   language only where the source cannot reach at all, or where crossing would forfeit what
+   the target gives for free — a check its own compiler makes over the bulk of a file, a cost
+   the glue would add to a hot path. Say which in the file's opening comment, and keep every
+   derived value behind an export.
 
 ```nim
 type
