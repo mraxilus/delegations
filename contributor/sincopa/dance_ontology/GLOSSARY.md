@@ -28,10 +28,34 @@ Which hands are connected.
 _Avoid_: hold, grip, connections
 
 **Frame position**:
-The manner and orientation in which hands are connected: facing (face-to-face, face-to-back,
-back-to-face, back-to-back), twist (quarter turns, clockwise or anticlockwise), and shorthands
-such as over and under.
+The manner and orientation in which hands are connected: facing (face-to-face, back-to-back,
+pillion lead, pillion follow), twist (quarter turns, clockwise or anticlockwise), and
+shorthands such as over and under.
 _Avoid_: orientation, manner, posture
+
+**Facing**:
+Which way the two dancers are turned with respect to one another, being one of face-to-face,
+back-to-back, pillion lead and pillion follow. Four states, so two bits: a twist parity alone
+cannot say which of them a frame is in.
+_Avoid_: orientation, direction, front
+
+**Face-to-face**:
+The facing where each dancer looks at the other.
+_Avoid_: facing, front-to-front, opposed, closed
+
+**Back-to-back**:
+The facing where each dancer has their back to the other.
+_Avoid_: reversed, apart, turned away, back to front
+
+**Pillion lead**:
+The facing where both dancers face one way with the Lead behind, so the Lead looks at the
+Follow's back.
+_Avoid_: face-to-back, same way, lead behind
+
+**Pillion follow**:
+The facing where both dancers face one way with the Follow behind, so the Follow looks at the
+Lead's back.
+_Avoid_: back-to-face, same way, follow behind
 
 **Frame state**:
 One specific unique instance of a frame hold and a frame position, grip aside.
