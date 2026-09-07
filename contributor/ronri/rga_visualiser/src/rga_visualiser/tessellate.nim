@@ -607,7 +607,7 @@ proc emitObject*(
     timed(Side.Emitting):
       meshes.addDisc(
         placed.at, placed.axes.axis_first, placed.axes.axis_second, extent,
-        tint.fade(ALPHA_WASH*progress),
+        tint.fade(ALPHA_VEIL*progress),
       )
       meshes.addRing(
         placed.at, placed.axes.axis_first, placed.axes.axis_second, extent, tint_progress,
@@ -619,7 +619,7 @@ proc emitObject*(
     # Emit one dome record vertex shader widens over static unit sphere; see `mesh.addDome`.
     timed(Side.Emitting):
       meshes.addDome(
-        scale.eye, progress*scale.radiusHorizon, tint.fade(ALPHA_WASH_SKY*progress),
+        scale.eye, progress*scale.radiusHorizon, tint.fade(ALPHA_VEIL_SKY*progress),
       )
     Outcome.Horizon
 

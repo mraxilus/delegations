@@ -62,7 +62,7 @@ const
     ##   Opening editor must not resize window, so this holds whether or not one is open.
   SPEED_DRAG* = 0.01'f32
     ## Set how fast coefficient moves per pixel dragged.
-  WIDTH_OBJECT_LINE = WIDTH_SHAPE_WORD + WIDTH_MULTIVECTOR
+  WIDTH_OBJECT_LINE = WIDTH_KIND_WORD + WIDTH_MULTIVECTOR
     ## Bound one item's shape-and-coefficient line in bytes, redrawn every frame.
     ##   Sized from what two printers filling it declare: shape word then whole
     ##   multivector, and mixed-grade object prints every basis term.

@@ -415,7 +415,7 @@ func formatMultivector*(m: Multivector, storage: var openArray[char], cursor: va
     appendChars(storage, cursor, lut_basis_to_name[Basis.scalar])
 
 
-const WIDTH_SHAPE_WORD* = 32
+const WIDTH_KIND_WORD* = 32
   ## Bound kind word alone, longest being "mixed grade, nothing to draw".
 
 
@@ -451,7 +451,7 @@ func kindText*(m: Multivector): string =
   ##   Allocating is affordable here: called on user action, not per visible object per
   ##   frame.
   var
-    storage: array[WIDTH_SHAPE_WORD, char]
+    storage: array[WIDTH_KIND_WORD, char]
     cursor = 0
   describeKind(m, storage, cursor)
   finishChars(storage, cursor)
