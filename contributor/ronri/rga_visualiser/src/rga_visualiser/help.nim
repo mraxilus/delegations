@@ -22,7 +22,7 @@
 ##   phone without scrolling, checked at compile time.
 ##     Cost: table that outgrows tab fails build until path is split or bound is raised.
 ##
-## Shared between desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render
+## Shared between desktop (`visualiser.nim`) and browser (`bridge.nim`) render
 ## paths; see `visualiser.nim`'s "Render Paths" table.
 
 {.experimental: "strictFuncs".}
@@ -155,7 +155,7 @@ const lut_help_entries* = block:
       HelpPath.Drag, nameOf(button) & "-drag one object onto another",
       case arming.get
       of MenuArming.Never: "build the one object those two define, without ever asking"
-      of MenuArming.OnDwell: "build that object, or pause on the target to be asked"
+      of MenuArming.OnDwell: "build that object, or pause on the pivot to be asked"
       of MenuArming.Always: "open the wheel, whatever the pair would have made on its own",
     )
   # Say "on its own": finger over crowd moves view instead; see `interaction.canConstructByTouch`.
@@ -165,7 +165,7 @@ const lut_help_entries* = block:
   )
   # Touch alone, now that mouse decides by button; see `MenuArming`.
   add(
-    HelpPath.Drag, "pause on the target mid-drag",
+    HelpPath.Drag, "pause on the pivot mid-drag",
     "open the wheel without needing a second button", is_touch = true,
   )
   add(
@@ -285,7 +285,7 @@ const lut_help_entries* = block:
     add(HelpPath.Operations, notationSymbolic(operation), notationNamed(operation))
 
   doAssert count == len(lut),
-    &"Every help slot must be filled, adjust the array's size; got `{count}` of `{len(lut)}`."
+    &"Every help handle must be filled, adjust the array's size; got `{count}` of `{len(lut)}`."
   lut
 
 

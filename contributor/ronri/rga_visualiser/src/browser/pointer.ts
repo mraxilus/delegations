@@ -27,14 +27,14 @@ let separation_pinch_start: number | null = null;
 // Whether two fingers have parted or closed further than tap slop since both came down.
 //   Until they have, gesture is pan and only pan: two fingers carried together never
 //   hold their separation to pixel, and every notch of that jitter went through zoom,
-//   which re-targets turntable onto whatever middle of frame crossed. Slop itself is not
+//   which re-pivots turntable onto whatever middle of frame crossed. Slop itself is not
 //   zoomed once crossed; zoom starts from separation where it was crossed, without jump.
 let is_pinch_zooming = false;
 // Whether two fingers have moved since frame loop last read them.
 //   Each finger's move arrives as its own `pointermove`, so between two of them
 //   separation and midpoint are one finger new and other old: read there, every step of
 //   pan carried together was zoom in by one finger's step and out again by other's,
-//   and each of those went through re-target. Read once per frame instead, in
+//   and each of those went through re-pivot. Read once per frame instead, in
 //   `settleTwoFingers`, after both have reported.
 let is_two_fingers_pending = false;
 let pan_last: PointLocal | null = null;
@@ -53,10 +53,10 @@ let touch_down_at: number | null = null;
 let position_touch_down: PointLocal | null = null;
 let has_touch_moved = false;
 let has_long_press_fired = false;
-// Item finger came down on, and whether that press has become construction drag.
-//   `slot_touch_down` is read once at pointerdown, while hover still holds it -- picking
+// Object finger came down on, and whether that press has become construction drag.
+//   `handle_touch_down` is read once at pointerdown, while hover still holds it -- picking
 //   again later would report whatever finger has since moved over.
-let slot_touch_down = -1, is_touch_dragging = false;
+let handle_touch_down = -1, is_touch_dragging = false;
 // Whether press landed on something drag may be built from, decided at press and.
 //   held for gesture. **Press that can construct never moves camera, not even
 //   over pixels before slop is crossed** -- that is press-target rule mouse
@@ -64,7 +64,7 @@ let slot_touch_down = -1, is_touch_dragging = false;
 //   different road and got it wrong: finger that eased into its drag orbited for frame
 //   or two before slop, which latched `nimSetCameraDragging`, and hover is suppressed
 //   while camera moves -- so construction drag that armed moment later ran blind
-//   for rest of gesture, ghosting nothing and building nothing. Flick that cleared
+//   for rest of gesture, previewing nothing and building nothing. Flick that cleared
 //   slop in one event armed before any of that and worked, which is what made fault
 //   read as intermittent.
 let is_touch_press_constructing = false;
@@ -134,17 +134,17 @@ canvas.addEventListener('pointerdown', (e) => {
     position_touch_down = local;
     has_touch_moved = false;
     has_long_press_fired = false;
-    // Pick item under finger now and hand press to Nim, which owns how long.
+    // Pick object under finger now and hand press to Nim, which owns how long.
     //   hold takes and whether one is due. Frame loop asks it both, which is also what
-    //   fills item's own marker -- timer firing on its own could not draw anything.
-    //   Slot is kept as well: it is what decides, on first movement, whether this
+    //   fills object's own marker -- timer firing on its own could not draw anything.
+    //   Handle is kept as well: it is what decides, on first movement, whether this
     //   press was construction drag or camera orbit.
     nimUpdateCursor(local.x, local.y);
     nimUpdateHover(canvas.clientWidth, canvas.clientHeight);
     // Noted like any other press, so that finger's own construction drag is measured.
     //   against where finger landed rather than against last mouse press.
     nimBeginPress(now());
-    slot_touch_down = nimHoverSlot();
+    handle_touch_down = nimHoverHandle();
     // Whether this press *can* become construction drag, decided here at press and.
     //   not re-asked -- same question `interaction.beginDrag` answers when slop is
     //   finally crossed, asked early because moves before that have to know which
@@ -153,14 +153,14 @@ canvas.addEventListener('pointerdown', (e) => {
     //   objects in reach of one finger, which moves view instead; see
     //   `interaction.canConstructByTouch`.
     is_touch_press_constructing = nimCanTouchConstruct();
-    if (slot_touch_down >= 0) nimBeginHold(slot_touch_down, now());
+    if (handle_touch_down >= 0) nimBeginHold(handle_touch_down, now());
   } else {
     touch_down_at = null; // Second finger landed; this is pinch/pan gesture, not tap.
     nimCancelHold();
     // ...and not construction either. Drag reader has visibly abandoned must not.
     //   commit on whichever finger happens to lift first.
     if (is_touch_dragging) { nimCancelDrag(); is_touch_dragging = false; }
-    slot_touch_down = -1;
+    handle_touch_down = -1;
     is_touch_press_constructing = false;
   }
   if (pointers.size === 2) {
@@ -218,12 +218,12 @@ canvas.addEventListener('pointermove', (e) => {
     // One moment this press stops being press. Decided once, here, and never.
     //   revisited: press target chooses scheme, so finger that came down on
     //   object constructs and one that came down on empty space moves camera.
-    //   `nimBeginDrag` reads hover reading, which still holds touch-down slot
+    //   `nimBeginDrag` reads hover reading, which still holds touch-down handle
     //   because touch pointermove has not updated cursor yet -- so it must run before
     //   two lines below start following finger.
     has_touch_moved = true;
     nimCancelHold(); // Moved, so this press will never mature into selection.
-    if (slot_touch_down >= 0 && pointers.size === 1) {
+    if (handle_touch_down >= 0 && pointers.size === 1) {
       // Finger has no second button to ask wheel for, so it is one pointer that.
       //   still reaches wheel by standing still; see `interaction.MenuArming`.
       is_touch_dragging = nimBeginDrag(ARMING_DRAG_TOUCH, now());
@@ -273,9 +273,9 @@ function settleTwoFingers() {
   //   there too translates view twice for one gesture, and pinch anywhere but dead
   //   centre slides scene while it scales it.
   //   Wheel has no pan beside it, which is why aiming at pointer is right there.
-  //   Through anchor at middle rather than plain dolly, so target lands on planet
+  //   Through anchor at middle rather than plain dolly, so pivot lands on planet
   //   pinch arrives at and orbit turns about it; plane, ground and level under middle
-  //   leave target on its level. See `interaction.dollyAtCentre`.
+  //   leave pivot on its level. See `interaction.dollyAtCentre`.
   if (separation_pinch_start !== null && !is_pinch_zooming &&
       Math.abs(separation - separation_pinch_start) > TAP_MAX_MOVE) {
     is_pinch_zooming = true;
@@ -304,26 +304,26 @@ function settleTwoFingers() {
 function endMouseDrag(e: PointerEvent) {
   if (typeof button_mouse_drag === 'number') {
     // `nimEndDrag` resolves press itself: click over object comes back as.
-    //   `clicked_slot` with eagerly-begun drag already abandoned, actual drag as
+    //   `clicked_handle` with eagerly-begun drag already abandoned, actual drag as
     //   whatever it built. Which of two it was is `interaction.endDrag`'s answer, so
     //   this build and desktop cannot come to disagree about where line is.
     const result = nimEndDrag(now());
-    if (result.clicked_slot >= 0) {
-      pickOnClick(result.clicked_slot, button_mouse_drag, e.shiftKey);
+    if (result.clicked_handle >= 0) {
+      pickOnClick(result.clicked_handle, button_mouse_drag, e.shiftKey);
     } else {
       toast(result.message);
-      if (result.created_slot >= 0) adoptConstructionSelection();
+      if (result.created_handle >= 0) adoptConstructionSelection();
       else if (result.is_more) openApplyPickerOnOperands(cursor_last);
     }
   } else if (button_mouse_down !== null && nimIsClick(now())) {
     // Plain click that began no drag to end -- so it landed on empty space, or on one.
-    //   thing that *is* empty space: plane at horizon, which nimBeginDrag refuses so this
+    //   thing that *is* empty space: horizon plane, which nimBeginDrag refuses so this
     //   press could still have become orbit or pan. Clicking it selects it, which is
     //   only way pointer can, since it can never be dragged from. **Either button**,
     //   on same rule as above: right click on sky behaving unlike right click on
     //   anything else would be rule with hole in it.
-    if (nimIsHoverBackdrop() && nimHoverSlot() >= 0) {
-      pickOnClick(nimHoverSlot(), button_mouse_down, e.shiftKey);
+    if (nimIsHoverBackdrop() && nimHoverHandle() >= 0) {
+      pickOnClick(nimHoverHandle(), button_mouse_down, e.shiftKey);
     } else if (button_mouse_down === 0 && !e.shiftKey) {
       // Mirrors touch's own "tapping empty space always cancels" rule. Shift+click over.
       //   empty space is left no-op, not clear -- shift means "preserve what I have" --
@@ -348,7 +348,7 @@ function releasePointer(e: PointerEvent) {
   //   tap is same-finger down+up within time/distance bounds, with no second finger ever joining
   //   and no long-press already having fired -- resolves into selection toggle (see `handleTap`).
   //   Released, whether or not hold had matured; frame that matured it has already
-  //   selected item. Hold itself lives on for one settle, which is what shrinks
+  //   selected object. Hold itself lives on for one settle, which is what shrinks
   //   marker back -- `nimIsHoldSpent` retires it in draw loop.
   nimReleaseHold(now());
   if (is_touch_dragging) {
@@ -362,7 +362,7 @@ function releasePointer(e: PointerEvent) {
     } else {
       const result = nimEndDrag(now());
       toast(result.message);
-      if (result.created_slot >= 0) adoptConstructionSelection();
+      if (result.created_handle >= 0) adoptConstructionSelection();
       else if (result.is_more) openApplyPickerOnOperands(cursor_last);
     }
     is_touch_dragging = false;
@@ -372,7 +372,7 @@ function releasePointer(e: PointerEvent) {
   }
   touch_down_at = null;
   has_long_press_fired = false;
-  slot_touch_down = -1;
+  handle_touch_down = -1;
   pointers.delete(e.pointerId);
   if (pointers.size < 2) {
     separation_pinch_start = null; is_pinch_zooming = false; pan_last = null;
@@ -396,7 +396,7 @@ canvas.addEventListener('wheel', (e) => {
   nimUpdateCursor(e.clientX - rect.left, e.clientY - rect.top);
   // **Summed here, applied once by frame loop.** Trackpad reports several notches.
   //   between two frames, and each dolly runs `picking.anchorZoomAt` to find what
-  //   cursor is over -- full pick over every live slot, 11.4 ms on 1,024-object demo.
+  //   cursor is over -- full pick over every live handle, 11.4 ms on 1,024-object demo.
   //   Six notches frame measured 83.8 ms of picking on frame, for 136 ms gap, and
   //   every answer but last was thrown away. Factor is `exp(k*delta)`, so summing
   //   deltas and exponentiating once is same zoom, not approximation of it.
@@ -409,14 +409,14 @@ canvas.addEventListener('wheel', (e) => {
 /*   selection menu's own content depends purely on how many objects are selected --     */
 /*   see `refreshSelectionMenu` -- 1 or 2 offer apply (revealing unary/binary catalogue   */
 /*   dropdown) plus hide/delete; 3+ offer only hide/delete, bulk-acting on every          */
-/*   selected slot at once. Tapping/clicking empty space, or menu's own close            */
+/*   selected handle at once. Tapping/clicking empty space, or menu's own close            */
 /*   button, always clears whole selection.                                              */
 
 function handleTap(position_local: PointLocal) {
   const rect = canvas.getBoundingClientRect();
   nimUpdateCursor(position_local.x, position_local.y);
   nimUpdateHover(canvas.clientWidth, canvas.clientHeight);
-  const hovered = nimHoverSlot();
+  const hovered = nimHoverHandle();
 
   // Sky counts as empty space to *tap*, deliberately, though mouse click selects.
   //   it: tapping empty space is only way finger has to dismiss selection, and
@@ -426,7 +426,7 @@ function handleTap(position_local: PointLocal) {
     clearSelection(); // Tapping empty space always cancels.
     return;
   }
-  if (slots_selection.length === 0) return; // Not in select mode yet -- only long-press
+  if (handles_selection.length === 0) return; // Not in select mode yet -- only long-press
     // starts one; plain tap before that is no-op, same as before this feature.
   pickByPointer(hovered);
   toggleSelection(hovered, position_local);
@@ -467,23 +467,23 @@ function openSelectionMenuOp() {
   //   (its second row never carried them either) -- ✕ stays, as it always did.
   const arity = nimSelectionArity();
   populateSelectionMenuOptions(arity);
-  // Open on whatever was last applied at this arity, and ghost it straight away.
+  // Open on whatever was last applied at this arity, and preview it straight away.
   //   Rather than on head of list; picker's answer is worth seeing while choosing, not
   //   only once apply is pressed.
   menu_selection_select.value = String(nimOperationRemembered(arity));
-  ghostSelectionMenuOperation();
+  previewSelectionMenuOperation();
   menu_selection_reveal.classList.add('open');
   menu_selection_edit.style.display = 'none';
   menu_selection_hide.style.display = 'none';
   menu_selection_delete.style.display = 'none';
 }
 
-function ghostSelectionMenuOperation() {
+function previewSelectionMenuOperation() {
   // Both operands come from selection in pick order, exactly as apply reads them.
-  const first = slots_selection[0];
-  const second = slots_selection.length > 1 ? slots_selection[1] : slots_selection[0];
+  const first = handles_selection[0];
+  const second = handles_selection.length > 1 ? handles_selection[1] : handles_selection[0];
   if (first === undefined || second === undefined) return;
-  nimGhostOperation(parseInt(menu_selection_select.value, 10), first, second);
+  nimPreviewOperation(parseInt(menu_selection_select.value, 10), first, second);
 }
 
 function closeSelectionMenuOp() {
@@ -491,17 +491,17 @@ function closeSelectionMenuOp() {
   //   Drawer's own section may still be open behind this menu, so ask it to speak up again rather
   //   than leaving view blank while control that has something to say is on screen.
   nimClearPreview();
-  ghostDrawerOperation();
+  previewDrawerOperation();
   menu_selection_reveal.classList.remove('open');
-  menu_selection_edit.style.display = slots_selection.length === 1 ? '' : 'none';
+  menu_selection_edit.style.display = handles_selection.length === 1 ? '' : 'none';
   menu_selection_hide.style.display = '';
   menu_selection_delete.style.display = '';
 }
 
-menu_selection_select.addEventListener('change', ghostSelectionMenuOperation);
+menu_selection_select.addEventListener('change', previewSelectionMenuOperation);
 
 function refreshSelectionMenu(position_local: PointLocal | null) {
-  const n = slots_selection.length;
+  const n = handles_selection.length;
   if (n === 0) { hideSelectionMenu(); return; }
   menu_selection_apply.style.display = (n === 1 || n === 2) ? '' : 'none'; // 3+: no apply --
     // this menu has no operand pickers, so it cannot say which two of three it would use.
@@ -544,10 +544,10 @@ const LIFT_MENU_ANCHOR = 60;
 
 // Read where last-picked object stands on canvas, or null off screen or behind eye.
 function anchorOfSelectionMenu() {
-  if (slots_selection.length === 0) return null;
-  const slot_anchor = slots_selection[slots_selection.length - 1];
-  if (slot_anchor === undefined) return null;
-  const anchor = nimAnchorScreen(slot_anchor, canvas.clientWidth, canvas.clientHeight);
+  if (handles_selection.length === 0) return null;
+  const handle_anchor = handles_selection[handles_selection.length - 1];
+  if (handle_anchor === undefined) return null;
+  const anchor = nimAnchorScreen(handle_anchor, canvas.clientWidth, canvas.clientHeight);
   return (anchor[2] ?? 0) > 0.5
     ? { x: anchor[0] ?? 0, y: anchor[1] ?? 0 }
     : null;
@@ -576,10 +576,10 @@ function positionSelectionMenuAt(position_local: PointLocal) {
 }
 
 function updateSelectionMenuPosition() {
-  // Keep menu with most-recently-selected slot every frame it's open: at offset pointer.
+  // Keep menu with most-recently-selected handle every frame it's open: at offset pointer.
   //   left it, or above object where no pointer opened it. Most recent rather than
   //   average across all selected, which would jump around as membership changes.
-  if (!menu_selection.classList.contains('show') || slots_selection.length === 0) return;
+  if (!menu_selection.classList.contains('show') || handles_selection.length === 0) return;
   const anchor = anchorOfSelectionMenu();
   if (anchor === null) return; // Off-screen -- leave menu at its last valid spot.
   if (offset_menu_selection !== null) {
@@ -601,11 +601,11 @@ menu_selection_apply.addEventListener('click', () => {
     openSelectionMenuOp();
     return;
   }
-  const n = slots_selection.length;
+  const n = handles_selection.length;
   if (n !== 1 && n !== 2) return; // Guard only -- apply is hidden for 0/3+ anyway.
   if (nimSceneCount() >= nimSceneCapacity()) { toast('Scene is full.'); return; }
-  const first = slots_selection[0];
-  const second = n === 2 ? slots_selection[1] : first; // Unary ignores second operand.
+  const first = handles_selection[0];
+  const second = n === 2 ? handles_selection[1] : first; // Unary ignores second operand.
   if (first === undefined || second === undefined) return;
   const result = nimApplyOperation(
     parseInt(menu_selection_select.value, 10), first, second, now());
@@ -615,8 +615,8 @@ menu_selection_apply.addEventListener('click', () => {
 menu_selection_edit.addEventListener('click', () => {
   // Offer edit here, since reaching object's editor otherwise means hunting its row.
   //   Even with that object already picked and its own menu on screen.
-  if (slots_selection.length !== 1) return; // Guard only -- hidden for 0 and 2+ anyway.
-  openPanelTo(slots_selection[0] ?? null);
+  if (handles_selection.length !== 1) return; // Guard only -- hidden for 0 and 2+ anyway.
+  openPanelTo(handles_selection[0] ?? null);
   hideSelectionMenu(); // Panel owns interaction now; pick itself stays.
 });
 
@@ -625,17 +625,17 @@ menu_selection_back.addEventListener('click', closeSelectionMenuOp);
 menu_selection_hide.addEventListener('click', () => {
   // Whichever way button reads is what it does, so objects it hid can be brought.
   //   back from same place -- `nimSelectionAllHidden` owns what "hidden" means for
-  //   whole selection, way row button reads `nimItemVisible` for one object.
+  //   whole selection, way row button reads `nimObjectVisible` for one object.
   const show = nimSelectionAllHidden();
-  for (const slot of slots_selection) nimSetVisible(slot, show);
-  toast((show ? 'Showed ' : 'Hid ') + slots_selection.length + ' object(s).');
+  for (const handle of handles_selection) nimSetVisible(handle, show);
+  toast((show ? 'Showed ' : 'Hid ') + handles_selection.length + ' object(s).');
   refreshSelectionMenu(null); // Relabels button for what it would now do.
-  refreshObjectsUI(); // Selection itself is kept -- hiding doesn't invalidate slot.
+  refreshObjectsUI(); // Selection itself is kept -- hiding doesn't invalidate handle.
 });
 
 menu_selection_delete.addEventListener('click', () => {
-  const n = slots_selection.length;
-  for (const slot of slots_selection) nimRemoveItem(slot);
+  const n = handles_selection.length;
+  for (const handle of handles_selection) nimRemoveObject(handle);
   toast('Deleted ' + n + ' object(s).');
   clearSelection();
   refreshObjectsUI();

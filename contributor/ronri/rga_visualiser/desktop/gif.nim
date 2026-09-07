@@ -52,7 +52,7 @@ const
   CODE_MAX = 4096
     ## Bound LZW dictionary size to what 12-bit code can name, as GIF's spec fixes.
   CAPACITY_DICT = 8192
-    ## Set fixed hash table's slot count.
+    ## Set fixed hash table's handle count.
     ##   Power of two, comfortably above `CODE_MAX`, so linear probing stays cheap at load
     ##   factor that ever occurs.
 
@@ -128,7 +128,7 @@ func hashKey(prefix: int, value: uint8): int =
 
 
 func clear(dict: var LzwDict) =
-  ## Empty every slot, in place; table itself is never reallocated.
+  ## Empty every handle, in place; table itself is never reallocated.
   for i in 0 ..< CAPACITY_DICT: dict.are_used[i] = false
 
 

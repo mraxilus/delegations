@@ -23,7 +23,7 @@ const WIDTH_LABEL_HALO = flatAt(METRICS_OVERLAY, 4);
 const ALPHA_LABEL_HALO = flatAt(METRICS_OVERLAY, 5);
 // Every ink's colour as CSS string, read once: name label wears its object's ink, and.
 //   `nimInkColor` builds sequence per call, which per selected object per frame was
-//   allocation per frame. Indexed by ink ordinal, `nimItemInk`'s answer.
+//   allocation per frame. Indexed by ink ordinal, `nimObjectInk`'s answer.
 const COLOUR_INK_CSS: string[] = [];
 for (let ink = 0; ink < nimInkCount(); ink += 1) {
   const rgb = nimInkColor(ink);
@@ -116,9 +116,9 @@ function recycleOverlay() {
 // marker.ribbonAlong shapes that outline, this only fills what it is handed. Only caller
 // passing time gets one -- hover and focus wear same marker standing still.
 function appendMarkerPulse(
-  slot: number, alpha: number, progress: number, is_touch: boolean,
+  handle: number, alpha: number, progress: number, is_touch: boolean,
 ) {
-  const flat = nimSelectionPulse(slot, canvas.clientWidth, canvas.clientHeight, progress,
+  const flat = nimSelectionPulse(handle, canvas.clientWidth, canvas.clientHeight, progress,
     is_touch === true);
   if (flat.length === 0) return;
   const fill = 'rgba(255,255,255,' + alpha + ')';
@@ -145,16 +145,16 @@ function appendMarkerPulse(
 //   Line's label comes as anchor on line plus direction to push it: text is measured
 //   here, where its face is, and pushed by `nimLabelClearance` so its own box clears
 //   line at any angle; see `marker.Marker.is_label_beside`.
-function appendLabel(slot: number) {
-  const at = nimSelectionLabelAt(slot, canvas.clientWidth, canvas.clientHeight);
+function appendLabel(handle: number) {
+  const at = nimSelectionLabelAt(handle, canvas.clientWidth, canvas.clientHeight);
   if (flatAt(at, 2) < 0.5) return;
   const element = stageEl('text', {
     x: flatAt(at, 0), y: flatAt(at, 1), 'text-anchor': 'middle', 'dominant-baseline': 'central',
-    fill: COLOUR_INK_CSS[nimItemInk(slot)] ?? '',
+    fill: COLOUR_INK_CSS[nimObjectInk(handle)] ?? '',
     stroke: COLOUR_LABEL_HALO, 'stroke-width': WIDTH_LABEL_HALO,
     'stroke-linejoin': 'round', 'paint-order': 'stroke',
   });
-  element.textContent = nimItemLabel(slot);
+  element.textContent = nimObjectLabel(handle);
   if (flatAt(at, 3) > 0.5) {
     const half = (element as SVGTextElement).getComputedTextLength() / 2;
     const clearance = nimLabelClearance(flatAt(at, 4), flatAt(at, 5), half);
@@ -164,11 +164,11 @@ function appendLabel(slot: number) {
 }
 
 function appendMarker(
-  slot: number, alpha: number, w: number, h: number, progress: number,
+  handle: number, alpha: number, w: number, h: number, progress: number,
   is_touch?: boolean, swell?: number,
 ) {
   const marker =
-    nimSelectionMarker(slot, canvas.clientWidth, canvas.clientHeight, progress,
+    nimSelectionMarker(handle, canvas.clientWidth, canvas.clientHeight, progress,
       is_touch === true, swell || 0);
   if (marker.length === 0) return;
   const kind = flatAt(marker, 0), is_closed = flatAt(marker, 1) > 0.5;
@@ -250,44 +250,44 @@ function refreshOverlay(cursor: PointLocal | null) {
   //   Ring about point, rails flanking line, loop lying on plane.
   //   Hover draws very same marker at lower opacity, so both read as one family and
   //   hovering line previews exactly what selecting it will draw.
-  for (const slot of slots_selection) {
-    if (slot === nimHoldSlot()) continue; // Its own swollen marker is drawn below.
-    appendMarker(slot, ALPHA_MARKER_SELECTED, w, h, 1);
-    appendMarkerPulse(slot, ALPHA_MARKER_SELECTED, 1, false);
-    appendLabel(slot);
+  for (const handle of handles_selection) {
+    if (handle === nimHoldHandle()) continue; // Its own swollen marker is drawn below.
+    appendMarker(handle, ALPHA_MARKER_SELECTED, w, h, 1);
+    appendMarkerPulse(handle, ALPHA_MARKER_SELECTED, 1, false);
+    appendLabel(handle);
   }
 
-  // Fill pressed item's own marker as press matures into selection.
+  // Fill pressed object's own marker as press matures into selection.
   //   Wait then reads as filling rather than as nothing happening.
-  //   Drawn at selected weight it is about to become, and skipped for item already
+  //   Drawn at selected weight it is about to become, and skipped for object already
   //   selected, whose finished marker is on screen already.
   // Swell filled marker clear of finger doing filling.
   //   `nimBeginHold` is called from touch branch of `pointerdown` and from nowhere
   //   else, so hold in progress on this build is finger's by construction.
   //   Flag is passed rather than inferred inside marker.nim, which cannot see what kind
   //   of pointer is on glass.
-  // Draw even once slot is selected, unlike every other overlay rule here.
+  // Draw even once handle is selected, unlike every other overlay rule here.
   //   Matured hold keeps its swollen marker until finger lifts and it settles, and
   //   plain selected marker underneath it is very size this is animating away from.
-  const slot_hold = nimHoldSlot();
-  if (slot_hold >= 0) {
-    appendMarker(slot_hold, ALPHA_MARKER_SELECTED, w, h, nimHoldProgress(now()), true,
+  const handle_hold = nimHoldHandle();
+  if (handle_hold >= 0) {
+    appendMarker(handle_hold, ALPHA_MARKER_SELECTED, w, h, nimHoldProgress(now()), true,
       nimSwellHold(now()));
     // Name rides up with swollen marker, once hold has selected it.
-    if (slots_selection.includes(slot_hold)) appendLabel(slot_hold);
+    if (handles_selection.includes(handle_hold)) appendLabel(handle_hold);
   }
 
   // Hover and keyboard focus wear same marker at same weight:
   //   reader driving by key sees exactly what reader driving by pointer sees, and focus indicator
   //   WCAG 2.4.7 asks for is machinery already built rather than second one invented beside it.
-  for (const slot of [nimHoverSlot(), nimFocusSlot()]) {
-    if (slot >= 0 && slot !== slot_hold && !slots_selection.includes(slot)) {
-      appendMarker(slot, ALPHA_MARKER_HOVER, w, h, 1);
+  for (const handle of [nimHoverHandle(), nimFocusHandle()]) {
+    if (handle >= 0 && handle !== handle_hold && !handles_selection.includes(handle)) {
+      appendMarker(handle, ALPHA_MARKER_HOVER, w, h, 1);
     }
   }
 
   if (nimDragActive()) {
-    const src = nimAnchorScreen(nimDragSourceSlot(), canvas.clientWidth, canvas.clientHeight);
+    const src = nimAnchorScreen(nimDragSourceHandle(), canvas.clientWidth, canvas.clientHeight);
     if (flatAt(src, 2) > 0.5 && cursor) {
       const sx = flatAt(src, 0), sy = flatAt(src, 1);
       // Tinted by what releasing would do, not by which button started drag:

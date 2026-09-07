@@ -15,11 +15,11 @@
 ##   | positionAnchor  | derived      | Point to build drawing of object around.     |
 ##   | direction       | att(𝐦) = ⊖𝐦  | Unit direction line extends along.           |
 ##   | directionNormal | -𝐦☆          | Unit direction perpendicular to plane.       |
-##   | directionHorizon| 𝐩 at pʷ = 0  | Unit direction point at horizon stands for.  |
+##   | directionHorizon| 𝐩 at pʷ = 0  | Unit direction horizon point stands for.  |
 ##   | frame           | derived      | Orthonormal pair of directions inside plane. |
 ##   |-----------------|--------------|----------------------------------------------|
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render paths.
+## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "strictFuncs".}
 
@@ -42,7 +42,7 @@ func toMultivector*(p: Position): Multivector =
 
 
 func toMultivector*(d: Direction): Multivector =
-  ## Convert Euclidean direction to grade-1 point at horizon.
+  ## Convert Euclidean direction to grade-1 horizon point.
   ##   Weight is 0, so point stands for direction rather than place.
   d.x.e1 + d.y.e2 + d.z.e3
 
@@ -52,7 +52,7 @@ func toMultivector*(d: Direction): Multivector =
 
 func position*(m: Multivector): Option[Position] =
   ## Read Euclidean position of point.
-  ##   None where point lies at horizon, as direction has no place.
+  ##   None where point lies in horizon, as direction has no place.
   ##   Divides by signed weight rather than weight norm, so antipodal points stay distinct.
   let weight = m[Basis.E4]
   if abs(weight) <= TOLERANCE_ABS: return
@@ -68,7 +68,7 @@ func positionSupport*(m: Multivector): Option[Position] =
 func positionAnchor*(m: Multivector): Option[Position] =
   ## Choose point of object to build its drawing around.
   ##   Support point where object misses origin, origin itself where it does not.
-  ##   None where object lies at horizon, as it then has no finite point at all.
+  ##   None where object lies in horizon, as it then has no finite point at all.
   let support = positionSupport(m)
   if support.isSome: return support
   if m.isHorizon: return
@@ -77,13 +77,13 @@ func positionAnchor*(m: Multivector): Option[Position] =
 
 func direction*(m: Multivector): Option[Direction] =
   ## Read unit direction line extends along.
-  ##   None where line lies at horizon, as its attitude then vanishes.
+  ##   None where line lies in horizon, as its attitude then vanishes.
   let attitude = ⊖ m
   normalize(Direction(x: attitude[Basis.E1], y: attitude[Basis.E2], z: attitude[Basis.E3]))
 
 
 func directionHorizon*(m: Multivector): Option[Direction] =
-  ## Read unit direction point at horizon stands for.
+  ## Read unit direction horizon point stands for.
   ##   None where point has weight, as it then names place rather than direction.
   if not m.isHorizon: return
   normalize(Direction(x: m[Basis.E1], y: m[Basis.E2], z: m[Basis.E3]))
@@ -91,7 +91,7 @@ func directionHorizon*(m: Multivector): Option[Direction] =
 
 func directionNormalHorizon*(m: Multivector): Option[Direction] =
   ## Read unit direction normal to pencil of directions horizon line stands for.
-  ##   Line's weight lives in `E41`/`E42`/`E43`; `E23`/`E31`/`E12` survive at horizon and
+  ##   Line's weight lives in `E41`/`E42`/`E43`; `E23`/`E31`/`E12` survive in horizon and
   ##   carry same normal finite plane's attitude would leave there, unnormalized.
   ##     Confirmed component for component against `(⊖ plane)[E23], [E31], [E12]`.
   ##   None where line has weight, as it then runs along direction, not perpendicular to
@@ -103,7 +103,7 @@ func directionNormalHorizon*(m: Multivector): Option[Direction] =
 func directionNormal*(m: Multivector): Option[Direction] =
   ## Read unit direction perpendicular to plane.
   ##   Antidual is negated so normal runs along plane's own weight gˣ, gʸ, gᶻ.
-  ##   None where plane lies at horizon, as horizon has no normal in Euclidean space.
+  ##   None where plane lies in horizon, as horizon has no normal in Euclidean space.
   let normal = -(☆m)
   normalize(Direction(x: normal[Basis.E1], y: normal[Basis.E2], z: normal[Basis.E3]))
 
@@ -152,7 +152,7 @@ func spanPerpendicular*(anchor: Position, normal: Direction): Option[(Direction,
 func frame*(m: Multivector): Option[FramePlane] =
   ## Derive orthonormal pair of directions lying inside plane.
   ##   Pair is arbitrary up to rotation about normal; only plane it spans is meaningful.
-  ##   None where plane lies at horizon, as it then spans no Euclidean directions.
+  ##   None where plane lies in horizon, as it then spans no Euclidean directions.
   let
     normal = directionNormal(m)
     anchor = positionAnchor(m)

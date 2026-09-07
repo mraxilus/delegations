@@ -25,16 +25,16 @@ function now() { return performance.now() / 1000; }
 /* construction path already writes selection itself, so there is no       */
 /* two-way sync to keep -- only read.                                      */
 /*                                                                          */
-/* `slots_selection` below is render snapshot of that answer, not copy      */
+/* `handles_selection` below is render snapshot of that answer, not copy      */
 /* with rules of its own: frame loop's overlay reads it dozens of           */
 /* times second and must not cross JS/Nim boundary to do it.                */
 /* ---------------------------------------------------------------------- */
 
 // Ordered: first-picked first (-> operand m), second (-> n).
-let slots_selection: number[] = [];
+let handles_selection: number[] = [];
 
 function refreshSelectionSnapshot() {
-  slots_selection = nimSelectionSlots();
+  handles_selection = nimSelectionHandles();
 }
 
 function onSelectionChanged(position_local: PointLocal | null) {
@@ -44,19 +44,19 @@ function onSelectionChanged(position_local: PointLocal | null) {
 }
 
 // Note pick made by pointer, so camera keeps that object under it as view comes in.
-//   Cursor is already Nim's (`nimUpdateCursor` on every move and tap), so slot is all
+//   Cursor is already Nim's (`nimUpdateCursor` on every move and tap), so handle is all
 //   bridge needs. Every pointer pick, whichever button: menu is button's business.
-function pickByPointer(slot: number) {
-  nimPickByPointer(slot);
+function pickByPointer(handle: number) {
+  nimPickByPointer(handle);
 }
 
-function selectOnly(slot: number, position_local: PointLocal | null) {
-  nimSelectOnly(slot);
+function selectOnly(handle: number, position_local: PointLocal | null) {
+  nimSelectOnly(handle);
   onSelectionChanged(position_local);
 }
 
-function toggleSelection(slot: number, position_local: PointLocal | null) {
-  nimSelectToggle(slot);
+function toggleSelection(handle: number, position_local: PointLocal | null) {
+  nimSelectToggle(handle);
   onSelectionChanged(position_local);
 }
 
@@ -77,7 +77,7 @@ function clearSelection() {
 //   menu it was supposed to have given up.
 //   Both branches live here rather than at two call sites, which used to hold copy
 //   each of shift test.
-function pickOnClick(slot: number, button: number, is_shifted: boolean) {
+function pickOnClick(handle: number, button: number, is_shifted: boolean) {
   const reveals = nimRevealsMenuOnButton(button);
   // Selection already standing with its menu dismissed is reader who wants that menu.
   //   back, not one who wants to throw selection away -- so reveal it and pick nothing.
@@ -87,15 +87,15 @@ function pickOnClick(slot: number, button: number, is_shifted: boolean) {
     refreshSelectionMenu(cursor_last);
     return;
   }
-  pickByPointer(slot);
-  if (is_shifted) toggleSelection(slot, reveals ? cursor_last : null);
-  else selectOnly(slot, reveals ? cursor_last : null);
+  pickByPointer(handle);
+  if (is_shifted) toggleSelection(handle, reveals ? cursor_last : null);
+  else selectOnly(handle, reveals ? cursor_last : null);
   if (!reveals) hideSelectionMenu();
 }
 
 function adoptConstructionSelection() {
   // Pick up outcome every construction path already decided.
-  //   Each picked its own new object (see nimAddItem/nimApplyOperation/nimEndDrag's own
+  //   Each picked its own new object (see nimAddObject/nimApplyOperation/nimEndDrag's own
   //   doc comments), or cleared selection (nimLoadDemo/nimUndo/nimRedo on success).
   refreshSelectionSnapshot();
   hideSelectionMenu(); // Construction action never itself opens selection menu --

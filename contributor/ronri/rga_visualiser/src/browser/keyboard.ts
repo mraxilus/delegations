@@ -45,15 +45,15 @@ document.addEventListener('keydown', (e) => {
   //   of keys is translated across, exactly as SDL scancodes are on desktop side.
   if (document.activeElement === canvas && !(e.ctrlKey || e.metaKey || e.altKey)) {
     // `e.code`, physical key, which is what desktop's scancodes name -- see.
-    //   `browser_bridge.keyFor`. Key that moves view is held from here until its
+    //   `bridge.keyFor`. Key that moves view is held from here until its
     //   `keyup` below; key that acts does so on this press.
     if (nimKeyBound(e.code)) {
       e.preventDefault(); // Arrows would otherwise scroll page under canvas.
-      const slot = nimKeyDown(e.code);
-      if (slot >= 0) {
+      const handle = nimKeyDown(e.code);
+      if (handle >= 0) {
         // Shift adds rather than replaces, exactly as shift-click does -- one thing.
         //   shift state means that shared binding table cannot answer alone.
-        if (e.shiftKey) toggleSelection(slot, null); else selectOnly(slot, null);
+        if (e.shiftKey) toggleSelection(handle, null); else selectOnly(handle, null);
       }
       return;
     }

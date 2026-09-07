@@ -9,7 +9,7 @@
 ## Every sign and argument order is pinned by suite case against classical closed form.
 ##   Classical form lives in test, algebra lives here.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render paths.
+## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "strictFuncs".}
 
@@ -29,35 +29,35 @@ static:
 #[ Type Definitions ]#
 
 type
-  Shape* {.pure.} = enum ## Define geometry k-vector stands for in 4D RGA.
+  Kind* {.pure.} = enum ## Define geometry k-vector stands for in 4D RGA.
     Point, ## Grade 1.
     Line, ## Grade 2.
     Plane, ## Grade 3.
 
 
 
-#[ Shape Classification ]#
+#[ Kind Classification ]#
 
-func shape*(m: Multivector): Option[Shape] =
+func kindOf*(m: Multivector): Option[Kind] =
   ## Name geometry multivector stands for.
   ##   None for mixed grade, and for scalar and antiscalar, which draw nothing.
   let grade = m.grade
   if grade.isNone: return
   case int(grade.get)
-  of 1: some(Shape.Point)
-  of 2: some(Shape.Line)
-  of 3: some(Shape.Plane)
-  else: none[Shape]()
+  of 1: some(Kind.Point)
+  of 2: some(Kind.Line)
+  of 3: some(Kind.Plane)
+  else: none[Kind]()
 
 
 func isHorizon*(m: Multivector): bool = abs(( |∘ m)[Basis.scalarAnti]) <= TOLERANCE_ABS
-  ## Report whether object lies wholly at horizon, i.e. whether its weight vanishes.
+  ## Report whether object lies wholly in horizon, i.e. whether its weight vanishes.
 
 
-func isHorizonPlane*(m: Multivector): bool = shape(m) == some(Shape.Plane) and isHorizon(m)
-  ## Report whether object is plane at horizon.
+func isHorizonPlane*(m: Multivector): bool = kindOf(m) == some(Kind.Plane) and isHorizon(m)
+  ## Report whether object is horizon plane.
   ##   One shape drawn as sky dome (`mesh.addDome`), which frame assembly inserts before
-  ##   anything else sharing translucent wash pass. See `visualiser.assembleMeshes`.
+  ##   anything else sharing translucent veil pass. See `visualiser.assembleMeshes`.
 
 
 
@@ -75,7 +75,7 @@ func depthAgainst*(plane, point: Multivector): float =
   ## Measure signed distance of unit-weight point from unitized plane.
   ##   Positive on side plane's construction direction points toward, zero on it.
   ##   Meet of plane and point is volume they span, whose one coefficient is point's height
-  ##   over plane: antigrades 1 and 3 close to 4, *scalar* slot, not `scalarAnti`.
+  ##   over plane: antigrades 1 and 3 close to 4, *scalar* handle, not `scalarAnti`.
   ##   Argument order is `plane ∨ point`; other order negates.
   ##     Suite pins point one unit along plane's direction at exactly +1.
   wedgeAnti(plane, point)[Basis.scalar]
@@ -94,14 +94,14 @@ func centroidFolded*(centroid: Multivector, place: Multivector): Multivector =
 
 func distanceBetween*(p, q: Multivector): float =
   ## Measure distance between two unit-weight points.
-  ##   Weight norm of joining line, i.e. `‖p ∧ q‖∘`, read from norm's `scalarAnti` slot.
+  ##   Weight norm of joining line, i.e. `‖p ∧ q‖∘`, read from norm's `scalarAnti` handle.
   ##     For unitized points join's direction lives in weight, whose length is separation.
   normWeight(wedge(p, q))[Basis.scalarAnti]
 
 
 func levelPlaneThrough*(point: Multivector): Multivector =
   ## Build horizontal plane through `point`, oriented so `depthAgainst` reads up as positive.
-  ##   Level reader works at when camera targets `point`.
+  ##   Level reader works at when camera pivots `point`.
   ##   Joined y-then-x: x∧y join reads point one unit above at -1, y∧x at +1, and height
   ##   is what every caller means. Unitized for `depthAgainst`'s contract.
   ##   Axes written as algebra's own weightless points, `e2` then `e1`, not lifted from
