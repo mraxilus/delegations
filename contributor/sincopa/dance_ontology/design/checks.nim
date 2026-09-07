@@ -64,7 +64,7 @@ proc checkFrame*() =
 
   # And whole cycle comes back to exactly where it started.
   for m in MOVES:
-    let poses = cycle(m.apply)
+    let poses = cycle(m.apply).poses
     doAssert relative(poses[^1]) == relative(rest()),
       &"A cycle does not close; got `{relative(poses[^1])}` for {m.name}."
 
@@ -129,7 +129,7 @@ proc checkFrame*() =
     "Continuity breaks at the wrap."
   var biggest = 0.0
   for m in MOVES:
-    let poses = cycle(m.apply)
+    let poses = cycle(m.apply).poses
     for who in Dancer:
       let steps = facings(poses, who)
       for i in 0 ..< steps.high:
@@ -206,7 +206,7 @@ proc checkRules*() =
   var swept = Inf
   for m in MOVES:
     let
-      poses = cycle(m.apply).mapIt(
+      poses = cycle(m.apply).poses.mapIt(
         settled(it, HOLD, default(Levels), default(Ways)))
       hands = poses.mapIt(handsOf(it))
     var frames: seq[route.Ends]
@@ -843,9 +843,25 @@ proc checkSingleTurns*() =
       &"A move's reset does not read as quicker than its turn; got " &
         &"`{decimal(coming, 3)}` against `{decimal(going, 3)}` for {way}."
     laziest = max(laziest, coming / going)
+  # Same law over other builder.  It draws its own animations and carried
+  # no clock at all until now, so its move, its settle and its reset all
+  # ran at one speed however rule 26 was worded.
+  for m in MOVES:
+    let walk = cycle(m.apply)
+    doAssert walk.poses.len == walk.times.len and walk.poses.len mod 2 == 0,
+      &"A cycle's clock does not match its poses; got `{walk.poses.len}` " &
+        &"poses against `{walk.times.len}` times for {m.name}."
+    let
+      half = walk.poses.len div 2
+      going = walk.times[half - 1]
+      coming = 1.0 - walk.times[half]
+    doAssert coming < going * RESET_READS,
+      &"A cycle's reset does not read as quicker than its move; got " &
+        &"`{decimal(coming, 3)}` against `{decimal(going, 3)}` for {m.name}."
+    laziest = max(laziest, coming / going)
   told.add &"and coming back is a reset rather than a second move: it takes " &
     &"at most {decimal(100 * laziest, 0)} per cent of the clock going out " &
-    "takes, in every way of turning"
+    "takes, in every animation either builder draws"
 
   let ways = TurnWay.toSeq.len
   told.add &"the lead is the still point: they stand on the same spot in " &

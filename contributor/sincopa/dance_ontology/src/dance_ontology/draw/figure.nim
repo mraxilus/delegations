@@ -689,4 +689,6 @@ func animated*(classes: string; holds: Holds; move: MoveApply;
     half = none(float); levels: Levels = default(Levels);
     ways: Ways = default(Ways); dur = 9.6; samples = 14): string =
   ## Draw same picture, moving: stage one travels, stage two comes home.
-  animatedPoses(classes, holds, cycle(move, samples), half, levels, ways, dur)
+  let walk = cycle(move, samples)
+  animatedPoses(classes, holds, walk.poses, half, levels, ways, dur,
+                times = walk.times)

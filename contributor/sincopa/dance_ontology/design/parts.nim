@@ -270,7 +270,7 @@ func frameParts*(): Parts =
   for m in MOVES:
     let
       tag = m.name.replace(" ", "_").replace(",", "")
-      half = cycle(m.apply).mapIt(extent(it, captions = false)).max
+      half = cycle(m.apply).poses.mapIt(extent(it, captions = false)).max
       style = &"""class="mv" style="width: {n(2 * half * MOVE_PX)}px;""" &
         &""" height: {n(2 * half * MOVE_PX)}px""""
     result[&"mv_{tag}"] = animated("mv", HOLD, m.apply, some half)

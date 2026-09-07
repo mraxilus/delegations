@@ -188,18 +188,38 @@ func timed(paces: seq[float]): seq[float] =
     result.add (if total > 0: run / total else: 0.0)
 
 
-func cycle*(move: MoveApply; samples = 14): seq[Pose] =
+func cycle*(move: MoveApply; samples = 14): Walk =
   ## Sample move, come home, move back, come home -- returning to start.
+  ##   Stages are ranked exactly as `turnWalk` ranks them, and for same
+  ##     reasons (rule 26): move is what figure is of, coming home is
+  ##     picture catching up with it, and second leg only undoes first,
+  ##     so whole of it runs at `RESET_PACE`.
+  ##   Cycle drawn on one flat clock reads as four moves of equal weight,
+  ##     which is what this had before times were carried.
   for sign in [1.0, -1.0]:
-    let base = if result.len > 0: result[^1] else: rest()
+    let
+      first = result.poses.len == 0
+      base = if first: rest() else: result.poses[^1]
+      pace = if first: 1.0 else: RESET_PACE
     for i in 0 .. samples:
-      result.add move(base, sign * ease(i / samples))
-    let landed = result[^1]
+      result.poses.add move(base, sign * ease(i / samples))
+      # Clock starts at first pose of all; first pose of second leg stands
+      # on first leg's landing, so beat is held there as it is at every
+      # other landing.
+      result.times.add (
+        if i > 0: pace / float(samples)
+        elif first: 0.0
+        else: ARRIVAL_HOLD)
+    let landed = result.poses[^1]
     for i in 0 .. samples:
       # Nothing travels in second stage, so ring goes out with it.
       var home = canonicalise(landed, ease(i / samples))
       home.ring = none(Ring)
-      result.add home
+      result.poses.add home
+      result.times.add (
+        if i == 0: ARRIVAL_HOLD * pace
+        else: pace * RE_FRAME_PACE / float(samples))
+  result.times = timed(result.times)
 
 
 
