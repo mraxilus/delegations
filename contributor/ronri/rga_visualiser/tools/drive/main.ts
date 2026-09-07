@@ -15,7 +15,7 @@ import { driveAim, drivePan } from './pan';
 import { driveWheel } from './wheel';
 import { driveTouchSelect, drivePinch, openTouch } from './touch';
 import {
-  driveCrowd, driveEmptyRelease, drivePausedDrag, driveTouchConstruct,
+  driveBackdropPlane, driveCrowd, driveEmptyRelease, drivePausedDrag, driveTouchConstruct,
   driveTwoFingerPan,
 } from './construct';
 import { driveApply, driveReachable, driveUndo } from './apply';
@@ -86,6 +86,7 @@ async function main(): Promise<void> {
   await drivePlanePick(page);
   await driveLabelGlide(page);
   await driveLabelWorn(page);
+  await driveBackdropPlane(page, SIZE_VIEW.width, SIZE_VIEW.height);
   await drivePanWhileSelected(page, cdp);
   await driveUndo(page);
   await driveReachable(page);

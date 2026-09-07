@@ -6,6 +6,7 @@
 import type { CDPSession, Page } from '@playwright/test';
 import { readCamera, spanPivot } from './camera';
 import { report } from './report';
+import { clearTheGlass } from './gestures';
 import { pixelOf } from './wheel';
 import { dragFinger, settleCamera, tapAt, pinch } from './touch';
 
@@ -204,5 +205,58 @@ export async function driveEmptyRelease(page: Page, width: number, height: numbe
     'a drag released over empty space says nothing at all',
     !said.shown && said.text === '',
     `shown ${said.shown}, text ${JSON.stringify(said.text)}`,
+  );
+}
+
+/** Drive left-drag over plane that fills view, which orbits rather than building.
+ *
+ *  Press on such plane used to start construction drag, and with every pixel under plane
+ *  there was no empty glass left to orbit from. Camera is dropped onto ground plane so its
+ *  disc spans frame; hover must read backdrop throughout, and drag must build nothing.
+ */
+export async function driveBackdropPlane(
+  page: Page, width: number, height: number,
+): Promise<void> {
+  await clearTheGlass(page);
+  const filled = await page.evaluate(async () => {
+    const wait = (milliseconds: number): Promise<void> =>
+      new Promise((done) => setTimeout(done, milliseconds));
+    const ground = nimSceneHandles().find((one) => nimObjectLabel(one) === 'ground') ?? -1;
+    nimSetCameraPivot(0, 0, 0);
+    nimSetCameraDistance(1.5);
+    nimSetCameraAzimuth(0.9);
+    nimSetCameraElevation(0.9);
+    await wait(300);
+    // Off middle, where opening scene's origin point stands; disc spans whole frame.
+    const canvas = document.getElementById('gl') as HTMLCanvasElement;
+    nimUpdateCursor(canvas.clientWidth / 2 + 180, canvas.clientHeight / 2 + 140);
+    nimUpdateHover(canvas.clientWidth, canvas.clientHeight);
+    return {
+      ground, hovered: nimHoverHandle(), is_backdrop: nimIsHoverBackdrop(),
+      azimuth: nimCameraAzimuth(), objects: nimSceneCount(),
+    };
+  });
+
+  await page.mouse.move(width / 2 + 180, height / 2 + 140);
+  await page.mouse.down();
+  for (let step = 1; step <= 6; step += 1) {
+    await page.mouse.move(width / 2 + 180 + 30 * step, height / 2 + 140);
+    await page.waitForTimeout(40);
+  }
+  const is_drag_mid = await page.evaluate(() => nimDragActive());
+  await page.mouse.up();
+  await page.waitForTimeout(300);
+  const after = await page.evaluate(
+    () => ({ azimuth: nimCameraAzimuth(), objects: nimSceneCount() }),
+  );
+
+  report(
+    'a plane filling the view is backdrop: a drag on it orbits instead of building',
+    filled.hovered === filled.ground && filled.is_backdrop && !is_drag_mid &&
+      Math.abs(after.azimuth - filled.azimuth) > 0.05 && after.objects === filled.objects,
+    `hovered ${filled.hovered === filled.ground ? 'ground' : 'handle ' + filled.hovered}, ` +
+      `backdrop ${filled.is_backdrop}, drag ${is_drag_mid ? 'active' : 'refused'}, azimuth ` +
+      `${filled.azimuth.toFixed(3)} -> ${after.azimuth.toFixed(3)}, objects ` +
+      `${filled.objects} -> ${after.objects}`,
   );
 }
