@@ -85,7 +85,9 @@ func straightArm*(turns: float): Arm =
   ## Get which connection runs straight through middle of swan while
   ## other snakes round it (rule 31).
   ##   Snake is arm that is **over** at first crossing, so straight one
-  ##     is other: Architect's reading, 2026-09-07.
+  ##     is other: Architect's reading, 2026-09-07.  Position is named for
+  ##     that same arm, so `Right over Left swan` has Right going round
+  ##     and Right on top at lead's own crossover.
   ##   This file argued opposite until then -- that one on top dives only
   ##     once and so stays visibly straight, while one diving twice has
   ##     no centre left to be surrounded by anything.  Both draw, and
@@ -97,20 +99,6 @@ func swanning*(turns: float): float =
   ## Measure how far pair is through hand-over to swan: none up to
   ## whole turn, all of it at one and one-half turns (rule 31).
   pow(clamp((abs(turns) - SWAN_FROM) / 0.5, 0.0, 1.0), SWAN_EASE)
-
-
-func topArm*(turns: float): Arm =
-  ## Get which of lead's arms is on top at first crossing, from which
-  ## drawing alternates through rest (rules 27, 29).
-  ##   Short of swan that is `overArm`, and neither strand wraps other.
-  ##   At swan it is straight one, because that is what wrapping is:
-  ##     strand going round another passes under it, over it, and under it
-  ##     again, so it takes crossings either side of middle and leaves
-  ##     middle one to strand it wraps.
-  ##   Which is also what keeps straight one readable.  Cut at both outer
-  ##     crossings instead, it is three stubs of short chord with two gaps
-  ##     between them, and reads as dashes rather than as line.
-  if swanning(turns) > 0: straightArm(turns) else: overArm(turns)
 
 
 func windShare*(turns: float; arm: Arm): float =

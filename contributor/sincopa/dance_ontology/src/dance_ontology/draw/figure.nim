@@ -194,11 +194,9 @@ func divesOf*(one, other: seq[Point]; turns: float): array[Arm, seq[Point]] =
   ##   Arm on top at first crossing stays on top there, so it is other one
   ##     that dives, and they swap at every crossing after -- which is what
   ##     makes diamond into twist and not overlap (rule 27).
-  ##   Which arm starts on top is `topArm`'s answer, not `overArm`'s: at
-  ##     swan strand that wraps goes under first.
   ##   Drawing and checks both ask here, so neither can hold its own idea
   ##     of which arm goes under where.
-  let on_top = topArm(turns)
+  let on_top = overArm(turns)
   for i, meeting in crossingsOf(one, other):
     let under = if (i mod 2 == 0) == (on_top == Arm.L): Arm.R else: Arm.L
     result[under].add meeting
@@ -611,7 +609,7 @@ func animatedPoses*(classes: string; holds: Holds; walk: seq[Pose];
 
   # Where pair crosses, one of them dives, and it is same one
   # still figure breaks: crossings in order along reach, diving
-  # arm alternating from first, and first named by `topArm` -- same
+  # arm alternating from first, and first named by `overArm` -- same
   # answer still figure alternates from (rule 29).  Moving reach cannot be
   # cut into runs -- number of them would change from frame to frame and
   # path that changes shape
@@ -627,9 +625,9 @@ func animatedPoses*(classes: string; holds: Holds; walk: seq[Pose];
       let
         turned_by = if winds[Arm.L].len == poses.len: winds[Arm.L][i]
                     else: 0.0
-        # In turns, because `topArm` reads how far pair has wound and not
-        # only which way; `winds` counts degrees.
-        on_top = topArm(turned_by / 360)
+        # In turns, since every other reader of wind counts them; `winds`
+        # counts degrees.
+        on_top = overArm(turned_by / 360)
       for k, meeting in crossingsOf(routes[Arm.L][i], routes[Arm.R][i]):
         let under = if (k mod 2 == 0) == (on_top == Arm.L): Arm.R else: Arm.L
         mine[under].add divePlace(routes[under][i], meeting)
