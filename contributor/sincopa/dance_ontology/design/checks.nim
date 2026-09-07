@@ -816,6 +816,37 @@ proc checkSingleTurns*() =
     "landing, so it reads as the frame catching up rather than as a second " &
     "move"
 
+  # RULE 26 carried to whole move.  Going out is what figure is of and
+  # coming back only undoes it, so reset takes less clock than turn it
+  # undoes; at same pace two legs read as two moves and neither is
+  # subject.  Legs are built alike, so join sits at half of poses and
+  # that is asserted rather than assumed.
+  #   Margin, not bare `<`: two legs paced alike come out equal to within
+  #     rounding, and one float hair either way is not difference anybody
+  #     sees.  `RESET_READS` is how much quicker return has to be before
+  #     eye takes it for reset rather than for repeat.
+  const RESET_READS = 0.9
+  var laziest = 0.0
+  for way in TurnWay:
+    let
+      w = WAYS_OF_TURNING[way]
+      walk = turnWalk(quarterPose(way, 0), w.who, w.about, QUARTER,
+                      on = Anchor.Lead)
+    doAssert walk.poses.len mod 2 == 0,
+      &"A move's two legs are not the same length; got `{walk.poses.len}` " &
+        &"for {way}."
+    let
+      half = walk.poses.len div 2
+      going = walk.times[half - 1]
+      coming = 1.0 - walk.times[half]
+    doAssert coming < going * RESET_READS,
+      &"A move's reset does not read as quicker than its turn; got " &
+        &"`{decimal(coming, 3)}` against `{decimal(going, 3)}` for {way}."
+    laziest = max(laziest, coming / going)
+  told.add &"and coming back is a reset rather than a second move: it takes " &
+    &"at most {decimal(100 * laziest, 0)} per cent of the clock going out " &
+    "takes, in every way of turning"
+
   let ways = TurnWay.toSeq.len
   told.add &"the lead is the still point: they stand on the same spot in " &
     &"every position of every round, and never move through " &
