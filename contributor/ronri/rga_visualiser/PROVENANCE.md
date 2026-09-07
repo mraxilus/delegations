@@ -525,6 +525,11 @@ through C and JS.
   1440x900 PNG, and that frame was opened and read. It carries grid, axes, ground plane's disc,
   four points, and panel with objects list, coefficients and every section header -- so both
   front-ends now draw same scene from same core.
+  That look found defect reading never would: top bar carried `sameLine` and tooltip left by
+  control neither front-end has, and they drew `scene file` label under its own path field.
+  Removed; second frame confirms row.
+  Screenshot needs frames enough for entrance animation to finish -- 60 under software GL is
+  not, and scene looks empty at that count. 300 is.
   Vocabulary shows in that frame rather than only in source: panel says *objects (5 of 5040)*
   and *hold still over the pivot*.
   **Unverified**: no `--drive-*` run has been exercised here, so nothing has driven this binary
