@@ -132,6 +132,12 @@ _Avoid_: pin, twist, hammerlock
 A dancer rotating: about their own axis, or round their partner.
 _Avoid_: rotation, spin, revolution
 
+**Manner of turn**:
+Which of the four ways the couple can turn: the Follow on their own axis, the Lead on theirs,
+the Follow orbiting the Lead, or the Lead orbiting the Follow. Each is a dancer paired with an
+axis turn or an orbit; "way" is kept for clockwise against anticlockwise.
+_Avoid_: way of turning, way, mode, style
+
 **Clockwise**:
 The way round a turn goes when it goes the way a clock's hands do, seen from above. Named
 from above rather than from either dancer, so it means one thing whichever of them turns.

@@ -23,7 +23,7 @@ sheet arrives; until then they are stale by construction, not by neglect.
 ## Language
 
 **Every term is agreed with Architect before it is written.** Forty-four terms written
-without agreement were removed on 2026-09-06 and are in history. Thirty-seven are now agreed,
+without agreement were removed on 2026-09-06 and are in history. Forty-six are now agreed,
 each concept set out with candidate names and their costs, and only selected name written.
 Audit checks glossary's shape and never its words, so this holds by Architect's reading
 alone.
@@ -33,6 +33,14 @@ coins its own only where none does; four are its own -- rig, pose, strain, block
 it witness is that it imports nothing from `src/` and is told no answer, never that it speaks
 other language. Care is needed only where sim *measures* what ontology *asserts*: there
 translation stays visible (`sim/verdicts.nim`), since assumed identity would be echo.
+
+**`wind` is `twist`, and the workbench still says `wind`.** `GLOSSARY.md` has listed `wind`
+under Twist's _Avoid_ all along, and the workbench uses it in about fourteen identifiers and
+across page prose, for the quantity the model calls twist. Architect confirmed the two are one
+on 2026-09-07 and put the rename after the frame-position review, so captions do not move
+while they are being ruled on. A unit differs where the word does not: the model counts twist
+in half turns (`HalfTurns`), this glossary says quarter turns, and the workbench counts turns
+as a real number. Which of the three the term means is the second thing that pass settles.
 
 Held back by decision, not omission. Workbook, base sheet and vocabulary sheet wait until new
 sheet arrives, since nothing should be written about file this project has not seen. Review
