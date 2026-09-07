@@ -82,7 +82,7 @@ const PHASES_DIAGNOSTIC: Array<[string, string]> = [
   ['furniture', 'diagnostic-furniture'],
   ['grid', 'diagnostic-grid'], ['axes', 'diagnostic-axes'], ['scene', 'diagnostic-scene'],
   ['points', 'diagnostic-points'], ['lines', 'diagnostic-lines'], ['planes', 'diagnostic-planes'],
-  ['sky', 'diagnostic-sky'], ['ghost', 'diagnostic-ghost'], ['selected', 'diagnostic-selected'],
+  ['sky', 'diagnostic-sky'], ['preview', 'diagnostic-preview'], ['selected', 'diagnostic-selected'],
   ['matrix', 'diagnostic-matrix'],
   ['flatten', 'diagnostic-flatten'],
   ['unaccounted', 'diagnostic-unaccounted'],
@@ -109,7 +109,7 @@ const PHASES_TOP_DIAGNOSTIC = ['build', 'hover', 'upload', 'overlay', 'ui'];
 const COUNTS_DIAGNOSTIC: Record<string, keyof FrameData> = {
   grid: 'count_grid_segments',
   points: 'count_points', lines: 'count_lines', planes: 'count_planes',
-  sky: 'count_sky', ghost: 'count_ghost', selected: 'count_selected',
+  sky: 'count_sky', preview: 'count_preview', selected: 'count_selected',
 };
 // Every phase ring and element is keyed by phase name, which `PHASES_DIAGNOSTIC`
 //   and `COUNTS_DIAGNOSTIC` supply; maps are open rather than fixed shapes, since
@@ -312,17 +312,17 @@ function isPhaseShown(name: string) {
 //   suffix scan over buckets, done only when panel is actually open.
 const FRAMES_EXCEEDANCE = 1024;
 const MILLISECONDS_BUCKET = 0.5; // Fine enough to separate 16.7 ms frame from 17.2.
-// **Slowest budget chart marks**, in frames per second, and reach of.
+// **Slowest chart marks**, in frames per second, and reach of.
 //   histogram folded from it. Two have to agree or mark is unreachable: axis
 //   only ever runs as far as slowest bucket holding frame, so mark past last
 //   bucket is skipped by `drawExceedance` on every draw and simply never appears. Adding
-//   1 fps line to `BUDGETS_EXCEEDANCE` alone did exactly that, silently, against
+//   1 fps line to `MARKS_EXCEEDANCE` alone did exactly that, silently, against
 //   histogram that stopped at 128 ms. Folded here so next mark cannot repeat it.
 //   Extra bucket is what puts mark *inside* reachable range rather than exactly
 //   at its edge.
-const RATE_BUDGET_SLOWEST = 1;
+const RATE_MARK_SLOWEST = 1;
 const BUCKETS_EXCEEDANCE =
-  Math.ceil((1000 / RATE_BUDGET_SLOWEST) / MILLISECONDS_BUCKET) + 1;
+  Math.ceil((1000 / RATE_MARK_SLOWEST) / MILLISECONDS_BUCKET) + 1;
 const history_exceedance = new Float32Array(FRAMES_EXCEEDANCE);
 const buckets_exceedance = new Int32Array(BUCKETS_EXCEEDANCE);
 let index_exceedance = 0;
@@ -411,13 +411,13 @@ function recordFrameTime(delta_milliseconds: number) {
 // How far log axis runs, when reader switches to it: decades from every frame down.
 //   to one in thousand, which is as fine as window of thousand frames can resolve.
 const DECADES_EXCEEDANCE = 3;
-// **Axis follows window, but never closes below slowest budget plus room to.
+// **Axis follows window, but never closes below slowest mark plus room to.
 //   name it.** Fitting it to slowest frame is what makes max readable -- curve
 //   reaches 100% exactly there -- and floor is what stops fast session zooming into
-//   its own noise: at 30 fps and better axis stands still and budget lines keep
+//   its own noise: at 30 fps and better axis stands still and mark lines keep
 //   their places, so two readings of healthy session compare directly. It is bands
 //   that made this affordable: axis that moves is legible when colours and
-//   labelled lines say where budgets are regardless of how far it runs.
+//   labelled lines say where marks stand regardless of how far it runs.
 //   Stated as share of axis slowest labelled mark stands at, not as that
 //   mark's own duration. At exactly `1000 / 30` 30 fps line landed on right edge:
 //   half pixel outside canvas, and its label flipped to cramped inside-left
@@ -432,7 +432,7 @@ const DECADES_EXCEEDANCE = 3;
 const HALO_LABEL_EXCEEDANCE = 'rgba(22, 27, 34, 0.85)';
 const SHARE_MARK_LEAST = 0.86;
 const MILLISECONDS_AXIS_LEAST = (1000 / 30) / SHARE_MARK_LEAST;
-// Frame budgets reader actually aims at, each named by rate it is: duration.
+// Frame marks reader actually aims at, each named by rate it is: duration.
 //   means nothing to most people and "60" means something to everyone.
 //   This list is both marks and colour bands: `bandOfExceedance` indexes it and
 //   `colours_exceedance` maps over it. 15 fps entry therefore carries *poor band's
@@ -450,17 +450,17 @@ const MILLISECONDS_AXIS_LEAST = (1000 / 30) / SHARE_MARK_LEAST;
 //   10 and 5 fps marks fill stretch between 15 and 1, which is where labouring
 //   frame actually lands and where axis otherwise ran decade unlabelled. They need no
 //   room histogram does not already have: at 100 ms and 200 ms they sit well inside
-//   reach `RATE_BUDGET_SLOWEST` folds. **Kept in ascending order of duration** --
+//   reach `RATE_MARK_SLOWEST` folds. **Kept in ascending order of duration** --
 //   `bandOfExceedance` returns first entry reading falls under, so entry out of
 //   order would silently mis-band every frame past it.
-const BUDGETS_EXCEEDANCE = [
+const MARKS_EXCEEDANCE = [
   { milliseconds: 1000 / 120, label: '120', token: '--speed-fast' },
   { milliseconds: 1000 / 60, label: '60', token: '--speed-good' },
   { milliseconds: 1000 / 30, label: '30', token: '--speed-fair' },
   { milliseconds: 1000 / 15, label: '15', token: '--speed-poor' },
   { milliseconds: 1000 / 10, label: '10', token: '--speed-poor' },
   { milliseconds: 1000 / 5, label: '5', token: '--speed-poor' },
-  { milliseconds: 1000 / RATE_BUDGET_SLOWEST, label: String(RATE_BUDGET_SLOWEST),
+  { milliseconds: 1000 / RATE_MARK_SLOWEST, label: String(RATE_MARK_SLOWEST),
     token: '--speed-poor' },
   { milliseconds: Infinity, label: '', token: '--speed-poor' },
 ];
@@ -471,8 +471,8 @@ const BUDGETS_EXCEEDANCE = [
 const FONT_EXCEEDANCE = '9px ' +
   (getComputedStyle(document.documentElement).getPropertyValue('--mono').trim() ||
     'monospace');
-const colours_exceedance = BUDGETS_EXCEEDANCE.map((budget) =>
-  getComputedStyle(document.documentElement).getPropertyValue(budget.token).trim() ||
+const colours_exceedance = MARKS_EXCEEDANCE.map((mark) =>
+  getComputedStyle(document.documentElement).getPropertyValue(mark.token).trim() ||
     '#00a7a5');
 // **Which timing rows are expensive, said in colour.** Twenty-odd numbers down drawer,
 //   and nothing in them says which one to look at. Each row's colour answers one question
@@ -637,11 +637,11 @@ function spanExceedance() {
 }
 
 function bandOfExceedance(milliseconds: number) {
-  for (let i = 0; i < BUDGETS_EXCEEDANCE.length; i += 1) {
-    const budget = BUDGETS_EXCEEDANCE[i];
-    if (budget !== undefined && milliseconds < budget.milliseconds) return i;
+  for (let i = 0; i < MARKS_EXCEEDANCE.length; i += 1) {
+    const mark = MARKS_EXCEEDANCE[i];
+    if (mark !== undefined && milliseconds < mark.milliseconds) return i;
   }
-  return BUDGETS_EXCEEDANCE.length - 1;
+  return MARKS_EXCEEDANCE.length - 1;
 }
 // Axis layer of exceedance curve: rules, marks and their labels, cached between draws.
 //   Same size as curve's canvas; `drawExceedance` composites it under curve.
@@ -703,10 +703,10 @@ function drawAxisExceedance(
   //   axis is guaranteed to reach -- 30 fps -- stands clear of right edge with room
   //   for its own labels; see `SHARE_MARK_LEAST`.
   context.setLineDash([2, 3]);
-  for (const budget of BUDGETS_EXCEEDANCE) {
-    if (!Number.isFinite(budget.milliseconds)) continue;
-    if (budget.milliseconds > milliseconds_full) continue;
-    const x = Math.round(xOf(budget.milliseconds)) + 0.5;
+  for (const mark of MARKS_EXCEEDANCE) {
+    if (!Number.isFinite(mark.milliseconds)) continue;
+    if (mark.milliseconds > milliseconds_full) continue;
+    const x = Math.round(xOf(mark.milliseconds)) + 0.5;
     context.strokeStyle = 'rgba(139, 150, 163, 0.30)';
     context.beginPath();
     context.moveTo(x, 0);
@@ -732,8 +732,8 @@ function drawAxisExceedance(
       context.lineWidth = 1;
       context.setLineDash([2, 3]);
     };
-    write(budget.label, 1, 'top');
-    write(budget.milliseconds.toFixed(1), h - 1, 'bottom');
+    write(mark.label, 1, 'top');
+    write(mark.milliseconds.toFixed(1), h - 1, 'bottom');
   }
   context.setLineDash([]);
   context.textAlign = 'left';
