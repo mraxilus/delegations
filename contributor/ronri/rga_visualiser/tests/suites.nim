@@ -2446,7 +2446,7 @@ suite "Scene":
     test "every multi-byte field is written little-endian, whatever the host":
       # Bytes themselves, not round trip: round trip passes on any byte order as.
       #   long as one build writes and reads it, and second implementation of this
-      #   format is `glue.js`, which hands `DataView` explicit `true` at every call and
+      #   format is browser scripts, which hands `DataView` explicit `true` at every call and
       #   cannot be asked what desktop felt like doing. Pinning layout here is what
       #   keeps two from drifting apart on host that is not little-endian.
       var scene = initScene()

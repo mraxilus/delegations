@@ -7,11 +7,11 @@
 /* ---------------------------------------------------------------------- */
 /* Everything above this script is `pga`, `objects`, `mesh`, `camera`,    */
 /* `scene`, `picking`, `interaction` and `storyboard`, compiled to JS by  */
-/* `nim js` from `visualiser/browser_bridge.nim`: every join, meet, pick, */
+/* `nim js` from `visualiser/bridge.nim`: every join, meet, pick, */
 /* drag and camera move below runs that compiled code, never JS rewrite.  */
 /* This script is presentation only: WebGL, DOM and pointer input, role   */
 /* OpenGL/SDL/Dear ImGui play over desktop app's identical geometry. See  */
-/* `browser_bridge.nim` doc for what deliberately does NOT carry over.    */
+/* `bridge.nim` doc for what deliberately does NOT carry over.    */
 /* ---------------------------------------------------------------------- */
 
 const canvas = elementById<HTMLCanvasElement>('gl');
@@ -480,7 +480,7 @@ let count_point_held = 0;
 //   Bridge fills `Float32Array`s page owns and hands back views on them, so there is
 //   nothing to convert here and nothing to stage: driver reads very memory
 //   flatten wrote. Staging array used to sit here, refilled element by element from
-//   boxed `Array` `seq[float32]` is on JS backend -- see `browser_bridge.FlatBuffer`
+//   boxed `Array` `seq[float32]` is on JS backend -- see `bridge.FlatBuffer`
 //   for what that cost and why it is gone. Anything else reaching this is mistake worth
 //   hearing about rather than silently copying around.
 // Read attribute layout literal as triples of location, float count and byte offset.

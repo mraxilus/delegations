@@ -19,7 +19,7 @@
 ##   | frame           | derived      | Orthonormal pair of directions inside plane. |
 ##   |-----------------|--------------|----------------------------------------------|
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render paths.
+## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "strictFuncs".}
 

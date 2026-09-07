@@ -6,7 +6,7 @@
 
 /* ---------------------------------------------------------------------- */
 /* Diagnostics: browser-appropriate stand-ins for desktop build's own     */
-/* arena/frame-time section -- see `browser_bridge.nim`'s own doc comment   */
+/* arena/frame-time section -- see `bridge.nim`'s own doc comment   */
 /* for why numbers differ in kind. Drawer states none of this:            */
 /* reader opening diagnostics section wants numbers, not essay.             */
 /* ---------------------------------------------------------------------- */

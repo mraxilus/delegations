@@ -10,7 +10,7 @@
 ##   What magnitude should *read* as is project's own rule, so `formatMagnitude` states it
 ##   in plain Nim for that build, and `magnitudesAgree` in suite holds two to same answer.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render paths,
+## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths,
 ## transitively through `interaction`.
 
 {.experimental: "strictFuncs".}

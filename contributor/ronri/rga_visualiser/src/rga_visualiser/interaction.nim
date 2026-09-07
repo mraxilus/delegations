@@ -22,7 +22,7 @@
 ##   takes and whether one is due are rules about gesture.
 ##   Both drive object's marker drawn part-built, which is what makes wait bearable.
 ##
-## Shared between desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render
+## Shared between desktop (`visualiser.nim`) and browser (`bridge.nim`) render
 ## paths; see `visualiser.nim`'s "Render Paths" table.
 
 {.experimental: "strictFuncs".}
@@ -1002,7 +1002,7 @@ func canConstructByTouch*(interaction: Interaction): bool =
   ##   several it is dragging; where gesture is ambiguous, movement wins, and reader zooms
   ##   in until it is not. Mouse keeps its drag: ring showed it which one.
   ##   Asked by `beginDrag` at slop and by browser at press, so both agree; see
-  ##   `glue.js`'s `is_touch_press_constructing`.
+  ##   browser scripts's `is_touch_press_constructing`.
   interaction.index_hover.isSome and not interaction.is_hover_backdrop and
     interaction.count_hover_rivals <= 1
 

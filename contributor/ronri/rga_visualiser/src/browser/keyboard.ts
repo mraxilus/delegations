@@ -45,7 +45,7 @@ document.addEventListener('keydown', (e) => {
   //   of keys is translated across, exactly as SDL scancodes are on desktop side.
   if (document.activeElement === canvas && !(e.ctrlKey || e.metaKey || e.altKey)) {
     // `e.code`, physical key, which is what desktop's scancodes name -- see.
-    //   `browser_bridge.keyFor`. Key that moves view is held from here until its
+    //   `bridge.keyFor`. Key that moves view is held from here until its
     //   `keyup` below; key that acts does so on this press.
     if (nimKeyBound(e.code)) {
       e.preventDefault(); // Arrows would otherwise scroll page under canvas.

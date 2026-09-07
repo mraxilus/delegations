@@ -7,9 +7,9 @@
 ##   star is nearest to its planets by hundred to one.
 ## Lights depend on positions alone, never on camera, so both front-ends refresh them only
 ## where scene's revision moved, beside placements, and only as far as edit reached; see
-## `LightCache`, `browser_bridge.ensurePlacement` and `visualiser.renderFrame`.
+## `LightCache`, `bridge.ensurePlacement` and `visualiser.renderFrame`.
 ##
-## Shared between desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render
+## Shared between desktop (`visualiser.nim`) and browser (`bridge.nim`) render
 ## paths; see `visualiser.nim`'s "Render Paths" table.
 
 {.experimental: "strictFuncs".}
@@ -87,7 +87,7 @@ func refreshLights*(
   ## Bring `cache.lights` up to scene, from frame's own placements.
   ##   `revision_since` is placing revision cache was last refreshed at; none relights
   ##   everything, as does any change among suns. Otherwise only handles placed since are
-  ##   relit, same rule `browser_bridge.ensurePlacement` re-places by.
+  ##   relit, same rule `bridge.ensurePlacement` re-places by.
   ##   Sibling of `refreshLights(cache, scene, revision_since)`, which places for itself.
   var suns: array[OBJECTS_MAX, Position]
   let count_suns = gatherSuns(scene, placed, suns)

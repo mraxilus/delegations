@@ -21,7 +21,7 @@
 ##   | Two     | + - ∧ ∨ ⟑ ⟇ ∙ ∘ ∧★ ∧☆ ∨★ ∨☆    | Join, meet, geometric products.      |
 ##   |---------|--------------------------------|--------------------------------------|
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render paths.
+## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
 ##   `saveScene`/`loadScene` are native-only (`when not defined(js)`); browser saves and
 ##   loads via download/upload.
 
@@ -908,7 +908,7 @@ func removeObject*(scene: var Scene, handle: int) =
 
 ## Define binary format project invents for itself.
 ##   Every multi-byte field is little-endian, rule rather than habit.
-##     `glue.js` writes and reads same file through `DataView`, which demands explicit
+##     browser scripts writes and reads same file through `DataView`, which demands explicit
 ##     order and is given `true`.
 ##     Host-native layout leaves two agreeing only while every machine is little-endian;
 ##     on big-endian one desktop would write file its own browser build could not read.
@@ -1156,7 +1156,7 @@ const
 func bornReplaying*(index, count: int; now: float): float =
   ## Stamp `index`-th of `count` objects arriving together, one after another from `now`.
   ##   One rule both loaders use, i.e. desktop's `loadScene` and browser's
-  ##   `browser_bridge.nimSceneAddRaw`, because beat computed twice drifts.
+  ##   `bridge.nimSceneAddRaw`, because beat computed twice drifts.
   ##   `count` is whole arrival, so beat can be shortened to fit cap.
   ##     Caller not knowing whole passes own index plus one and gets unbounded beat.
   let step =
@@ -1181,7 +1181,7 @@ func replayFrom*(scene: var Scene, now: float) =
 
 ## Keep constants above outside desktop-only guard below, exported.
 ##   They describe format rather than file handling: browser build gets them via
-##   `browser_bridge.nimSceneMagic`/`nimSceneVersion` rather than literals of own.
+##   `bridge.nimSceneMagic`/`nimSceneVersion` rather than literals of own.
 ##   Derived value behind export cannot drift; literal in other language did, stamping
 ##   version 1 on version-2 content and refusing every desktop file.
 

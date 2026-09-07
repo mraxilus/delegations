@@ -19,7 +19,7 @@
 ## Lives above `picking` because folding selection needs `Selection`, and `picking` cannot
 ## import it: `selection` imports `marker`, which imports `picking`.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render paths.
+## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
 ##   Rule was once written out in each, duplication that drifted.
 
 {.experimental: "strictFuncs".}

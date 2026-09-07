@@ -82,7 +82,7 @@ proc `[]=`(buffer: FlatBuffer, index: int, value: float32) {.importjs: "#[#] = #
 
 proc prefix(buffer: FlatBuffer, count: int): FlatBuffer {.importjs: "#.subarray(0, #)", sideEffect.}
   ## Report first `count` entries as view.
-  ##   No copy, and `instanceof Float32Array` still holds, so `glue.js` uploads it with
+  ##   No copy, and `instanceof Float32Array` still holds, so browser scripts uploads it with
   ##   nothing in between.
 
 proc initFlatFloats(capacity: int): FlatFloats =
@@ -324,7 +324,7 @@ var
 proc flattenRibbonsInto(ribbons: RibbonMesh, dest: var FlatFloats) =
   ## Interleave one frame's ribbon records for instanced upload, sixteen floats each.
   ##   Tail xyz, head xyz, width, fog, tail rgba, head rgba: `RibbonRecord`'s field order,
-  ##   which attribute setup in `glue.js` reads back apart.
+  ##   which attribute setup in browser scripts reads back apart.
   dest.used = ribbons.count * 16
   for i in 0 ..< ribbons.count:
     template r: untyped = ribbons.records[i]
@@ -370,7 +370,7 @@ proc flattenDiscsInto(discs: DiscMesh, dest: var FlatFloats) =
 proc flattenRingsInto(rings: RingMesh, dest: var FlatFloats) =
   ## Interleave one frame's ring records for instanced upload, fourteen floats each.
   ##   `DiscRecord`'s thirteen in same order, then width, so ring and disc attribute
-  ##   setups in `glue.js` differ by one trailing attribute.
+  ##   setups in browser scripts differ by one trailing attribute.
   dest.used = rings.count * 14
   for i in 0 ..< rings.count:
     template r: untyped = rings.records[i]
@@ -530,7 +530,7 @@ proc nimSceneHandles(): seq[cint] {.exportc.} =
 
 
 proc nimSceneHandlesCreated(): seq[cint] {.exportc.} =
-  ## Report every live handle, oldest creation first, for `glue.js`'s scene writer.
+  ## Report every live handle, oldest creation first, for browser scripts's scene writer.
   ##   Handle order and creation order part company once anything is removed; version-3
   ##   file promises latter.
   ##   Own export rather than reordering `nimSceneHandles`, whose callers want dense
@@ -1413,7 +1413,7 @@ proc nimKeyBound(code: cstring): bool {.exportc.} =
 proc nimKeyDown(code: cstring): cint {.exportc.} =
   ## Take one key press; report handle caller should select, or `SLOT_NONE`.
   ##   Holds it for `nimDriveHeld`, and carries out whatever it does at press.
-  ##   One entry point for both kinds of binding, so `glue.js` carries no opinion about
+  ##   One entry point for both kinds of binding, so browser scripts carries no opinion about
   ##   which keys move view.
   ##   Idempotent on key already down, which is what auto-repeat sends; re-run action is
   ##   harmless for all four.
@@ -1679,7 +1679,7 @@ proc nimGridMetrics(width, height: cint): FlatBuffer {.exportc.} =
   ##   Exported as `nimRenderLineWidths` is: number reader is shown has to be number grid
   ##   was built with; both from `mesh.sizeCellGridAt`, which `addGrid` reads.
   ##   Through `ensureViewOverlay`, so extent is overlay's own, built at CSS height.
-  ##     Scale bar is drawn in pixels pointer works in; see `glue.js`.
+  ##     Scale bar is drawn in pixels pointer works in; see browser scripts.
   ensureViewOverlay(int(width), int(height))
   template scale: DrawExtent = SCALE_OVERLAY
   let size_cell = sizeCellGridAt(scale.extentFurniture, scale)
@@ -1929,7 +1929,7 @@ proc nimSelectionPulse(
 #[ Scene Save/Load Primitives ]#
 
 proc nimSceneMagic(): cstring {.exportc.} = cstring(MAGIC_SCENE)
-  ## Report four bytes `.rgascene` file opens with, for packer in `glue.js`.
+  ## Report four bytes `.rgascene` file opens with, for packer in browser scripts.
 
 proc nimSceneVersion(): cint {.exportc.} = cint(VERSION_SCENE)
   ## Report format version this build writes, for that packer.
@@ -2036,7 +2036,7 @@ type FrameData = object
     ## Record what this frame's assembly cost, in milliseconds.
     ##   Whole of `nimBuildFrame`, and its three phases: furniture, scene's objects (preview
     ##   and preview included), and flatten of every mesh into arrays above.
-    ##   Phases bridge cannot see (GL upload, SVG overlay) are timed by `glue.js`.
+    ##   Phases bridge cannot see (GL upload, SVG overlay) are timed by browser scripts.
     ##   Held furniture frame reports near-zero furniture.
   camera_eye_x, camera_eye_y, camera_eye_z: float32
   camera_forward_x, camera_forward_y, camera_forward_z: float32
@@ -2383,7 +2383,7 @@ proc nimBuildFrame(
   let ms_before_flatten = ms_after_matrix
   # Hold flatten with tessellation.
   #   Records did not change, so flat buffers already hold exactly what rerun would
-  #   write; `glue.js` skips uploads on same flag.
+  #   write; browser scripts skips uploads on same flag.
   if not is_scene_held:
     flattenDiscsInto(MESHES.discs, FLAT_DISC)
     flattenRingsInto(MESHES.rings, FLAT_RING)

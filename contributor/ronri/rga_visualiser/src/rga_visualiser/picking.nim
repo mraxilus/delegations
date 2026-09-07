@@ -25,7 +25,7 @@
 ## Point wins tie over line, and line over plane.
 ##   Smaller pivot should not be swallowed by larger one drawn behind or through it.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render paths.
+## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "strictFuncs".}
 # `handle` names loop variable std's `typedthreads.handle` would win over: template body
@@ -662,7 +662,7 @@ proc pickAt*(
   ##   Prefers points over lines over planes; see `PickReport`.
   ##   `placed` is frame's own placements, where caller kept them.
   ##     `tessellate.placeObject` already answers what object is and where, and
-  ##     front-end holding frame's worth of answers (`browser_bridge.PLACEMENTS`) hands them
+  ##     front-end holding frame's worth of answers (`bridge.PLACEMENTS`) hands them
   ##     over instead of having walk ask again.
   ##     Pick then ranks *what was drawn*, off one derivation, and stops running placing
   ##     side per live handle per pointer event.

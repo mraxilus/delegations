@@ -10,7 +10,7 @@
 /* object-count/per-object ink+visible+label+16 float64+radius+shines), so    */
 /* build saves loads on desktop build and vice versa. Packing lives       */
 /* here rather than in Nim, since `DataView` already does exactly this     */
-/* natively -- see `browser_bridge.nim`'s own doc comment.                */
+/* natively -- see `bridge.nim`'s own doc comment.                */
 /* ---------------------------------------------------------------------- */
 
 function saveScene() {

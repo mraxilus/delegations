@@ -39,7 +39,7 @@
     --mono: "Commit Mono UI", "Noto Sans UI", ui-monospace, "SF Mono", Consolas, monospace;
     --sans: "Noto Sans UI", -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
     --serif: "Noto Serif UI", "Noto Sans UI", Georgia, "Times New Roman", serif;
-    /* Both written by `glue.js` from `nimAnimationMilliseconds`, so every transition below
+    /* Both written by browser scripts from `nimAnimationMilliseconds`, so every transition below
        runs to same constant freshly added object grows in over rather than to
        second number written down separately. Curve is easeOutCubic, matching
        `mesh.easeOutCubic` exactly. These literals are pre-script fallback only. */
@@ -121,7 +121,7 @@
     height: 100%;
     pointer-events: none;
   }
-  /* Selected object's name above its marker; placed by glue.js's appendLabel.
+  /* Selected object's name above its marker; placed by `overlay`'s appendLabel.
      Size is set there from marker.HEIGHT_MARKER_LABEL, box label is centred in. */
   svg#overlay text {
     font-family: var(--sans);
@@ -899,7 +899,7 @@
   }
   .diagnostic-legend-axis { display: flex; align-objects: center; gap: 6px; }
   .diagnostic-legend b { color: var(--ink-muted); font-variant-numeric: tabular-nums; }
-  /* Row ramp's own key: ramp itself, as bar. Its gradient is set by glue.js
+  /* Row ramp's own key: ramp itself, as bar. Its gradient is set by `diagnostics`
      from very table rows are tinted out of, so key cannot come to show ramp
      tree no longer uses -- reason four band swatches it replaced were built
      from row tokens rather than restated here. */
@@ -1227,13 +1227,13 @@
              *which step* only once it is. `refreshDiagnostics` skips whatever is closed,
              so subtotal nobody is reading costs nothing to keep offering.
              Timings come from bridge's own clocks inside nimBuildFrame where step
-             is Nim's, and from glue.js around its own calls where it is not. GL rows are
+             is Nim's, and from browser scripts around their own calls where it is not. GL rows are
              command submission only - GPU's own work runs asynchronously and no CPU
              clock here can see it. -->
         <!-- What colours mean, said once. Each row is tinted by its own share of
              frame on continuous ramp, so without this line warm row reads as verdict
              on milliseconds beside it rather than on their share. Bar runs from no
-             share to whole frame and is painted by glue.js **through tinting function
+             share to whole frame and is painted by `diagnostics` **through tinting function
              itself**, so crowding reader sees in it is crowding tree has --
              row's colour can be laid against bar and its share read off position.
              `log` is word graph above already uses for scale of this shape, so it
@@ -1340,16 +1340,16 @@
           class="diagnostic-where">picking, interaction</span></span
           ><b id="diagnostic-hover">&mdash;</b></div>
         <div class="diagnostic-line"><span>upload + draw calls<span
-          class="diagnostic-where">glue.js, WebGL</span></span
+          class="diagnostic-where">gl, WebGL</span></span
           ><b id="diagnostic-upload">&mdash;</b></div>
         <!-- Selection menu's own placement folded in here: it was one early-returning
              call reading 0.00 in every state but one, and overlay's own recording sat
              inside its bracket, so it had been charging this row's bookkeeping to itself. -->
         <div class="diagnostic-line"><span>overlay + menu<span
-          class="diagnostic-where">marker, browser_bridge</span></span
+          class="diagnostic-where">marker, bridge</span></span
           ><b id="diagnostic-overlay">&mdash;</b></div>
         <div class="diagnostic-line"><span>ui refresh<span
-          class="diagnostic-where">glue.js</span></span
+          class="diagnostic-where">sections</span></span
           ><b id="diagnostic-ui">&mdash;</b></div>
         <!-- Remainder of frame, so rows above account for all of it rather
              than fraction: time spent waiting on display plus whatever browser

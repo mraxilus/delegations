@@ -9,7 +9,7 @@
 ## Every sign and argument order is pinned by suite case against classical closed form.
 ##   Classical form lives in test, algebra lives here.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render paths.
+## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "strictFuncs".}
 

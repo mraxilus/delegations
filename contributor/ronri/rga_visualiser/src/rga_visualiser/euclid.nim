@@ -16,7 +16,7 @@
 ##   Grade-1 multivector's weight coefficient decides which it holds, so confusing them
 ##   silently drops perspective divide; type makes that uncompilable.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render paths.
+## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "strictFuncs".}
 

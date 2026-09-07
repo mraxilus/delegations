@@ -18,7 +18,7 @@
 ##   Elevation is clamped short of poles, where up direction would run along sight axis
 ##   and joins above would collapse.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render paths.
+## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
 
 # Reorder so stance reads before frame derived from it, though `pan` calls `frame`.
 #   Constants below stay in dependency order regardless, as reordering does not cover them.
@@ -92,7 +92,7 @@ const
 const
   ## Fix rates held key moves camera at, per second of holding.
   ##   Shared by both front-ends, unlike per-pixel drag rates: `visualiser.SPEED_ORBIT` is
-  ##   radians per pixel and `glue.js` works in fractions of canvas width. Held key has no
+  ##   radians per pixel and browser scripts works in fractions of canvas width. Held key has no
   ##   pixels in it.
   ##   Per second, not per press.
   ##     Per-press steps leaned on operating system's auto-repeat: movement began after

@@ -24,7 +24,7 @@
 ##   Not covered: live label editing and coefficient drags, continuous inputs with no
 ##   clean commit boundary; recording every keystroke would flood timeline.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render paths.
+## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "strictFuncs".}
 

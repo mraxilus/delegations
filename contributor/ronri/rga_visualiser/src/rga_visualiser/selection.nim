@@ -9,8 +9,8 @@
 ## Plain fixed-size value type with no refs, like `History` beside it.
 ##   Copying one is value copy, so it can live in GUI's own state struct without allocator.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render paths.
-##   Browser drives it through `browser_bridge`'s `nimSelect*` exports rather than parallel
+## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
+##   Browser drives it through `bridge`'s `nimSelect*` exports rather than parallel
 ##   list in JavaScript, so every rule about membership, order and arity is written once.
 
 {.experimental: "strictFuncs".}

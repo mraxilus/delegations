@@ -15,7 +15,7 @@
 ##   Objects at horizon are drawn fixed to `DrawExtent.eye` at `DrawExtent.radiusHorizon`,
 ##   so orbiting or dollying leaves each in same apparent direction, as real star would.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render paths.
+## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "codeReordering".}
 {.experimental: "strictFuncs".}
@@ -412,7 +412,7 @@ type
     ##   `frame`, `spanPerpendicular`) is pure function of multivector, so this stays true
     ##   while camera orbits.
     ##   Caller that can say when object last changed places it once and emits every
-    ##   frame; `browser_bridge` is that caller.
+    ##   frame; `bridge` is that caller.
     ##     Placing was most of moving frame's scene phase, recomputed per orbit frame for
     ##     objects nobody touched.
     ## Flat rather than variant object.

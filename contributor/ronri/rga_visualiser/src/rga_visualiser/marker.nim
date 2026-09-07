@@ -28,11 +28,11 @@
 ##   What marker surrounds is *whatever is drawn*, and both are drawn: great circle and
 ##   whole sky.
 ## Markers are described here and drawn by each render path's foreground layer
-## (`visualiser.drawSelectionMarker`, `glue.js`'s SVG overlay), never as scene geometry.
+## (`visualiser.drawSelectionMarker`, browser scripts's SVG overlay), never as scene geometry.
 ##   Loop lying exactly on plane would z-fight with its fill, and marker occluded by
 ##   object it marks is not marker.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render paths.
+## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "strictFuncs".}
 
@@ -123,7 +123,7 @@ const
     ##   Fingertip covers what it presses, so marker filling underneath says nothing to
     ##   person filling it.
     ##   Sized from far end: point's ring reaches about twice thumb's contact patch at
-    ##   peak, in framebuffer pixels and CSS pixels alike; see `glue.js` on two layers.
+    ##   peak, in framebuffer pixels and CSS pixels alike; see browser scripts on two layers.
     ##   Added in pixels rather than multiplied, so it means one thing on point's ring
     ##   and on rim hundreds of pixels across. Mouse never sees it: cursor hides nothing.
   SEGMENTS_MARKER_BANDS* = 48

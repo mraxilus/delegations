@@ -385,7 +385,7 @@ is one-dimensional in this algebra, so every horizon plane is the same universal
 
 **Draw-order invariant.** Translucent veils blend in scene order with depth writes off, so
 whichever is appended last wins. Both `visualiser.assembleMeshes` and
-`browser_bridge.nimBuildFrame` insert any visible horizon plane's dome **first** (via
+`bridge.nimBuildFrame` insert any visible horizon plane's dome **first** (via
 `objects.isHorizonPlane`), so an ordinary plane's fill blends over the sky whatever handles
 they occupy. Two ordinary veils crossing still look order-dependent; accepted.
 
@@ -408,10 +408,10 @@ editors carry a `size` field (`EditSession.radius`, `session_edit.radius`), boun
 with it; `RADIUS_OBJECT_MOST` 1e6 exists because ImGui's drag widget reads *no upper bound* as
 *no bounds*. A point crosses the wire as one eight-float record (`Vertex`: centre, radius,
 colour) and is drawn as an **instanced camera-facing quad**, four corners in strip order from
-`mesh.pointCorners`, on both targets: the vertex shader takes `depth = (centre − eye) · forward`,
+`mesh.pointCorners`, on both front-ends: the vertex shader takes `depth = (centre − eye) · forward`,
 `world_per_pixel = 2·depth·tan(fov/2)/height`, `radius = max(own, ½·DIAMETER_POINT_LEAST·
 world_per_pixel)` and steps the corner along the camera's `axis_right`/`axis_up` (new fields of
-`DrawScale`, carried to `glue.js` as `camera_right_*`/`camera_up_*`); the fragment stage
+`DrawScale`, carried to browser scripts as `camera_right_*`/`camera_up_*`); the fragment stage
 discards outside the unit circle and fades the last pixel of rim. The rule is stated once in
 Nim as `radiusDrawnAt` and its pixel reading `radiusPixelsAt`, and the two shaders are its
 sibling copies, named as such. So the size is *fixed in the world* and shrinks with distance
@@ -423,7 +423,7 @@ pixels across is picked anywhere on it (verified: clicking 150 px off Sol's cent
 units selects Sol on this build and the ecliptic behind it on the previous one); the marker
 ring sits `GAP_MARKER` outside the drawn pixels; `isPointInView` widens its side bounds by the
 point's own radius; `reachOf` adds the radius so the far clip holds the whole disc. The
-`gl.POINTS`/`gl_PointSize` path is gone from both targets, and with it `uRound`/`as_point`.
+`gl.POINTS`/`gl_PointSize` path is gone from both front-ends, and with it `uRound`/`as_point`.
   **What is under the pointer is what is picked.** The pick ranked points by pixel
 distance to their centres within a reach of `RADIUS_PICK_POINT` or the drawn radius, so a
 tap inside a planet's disc but nearer a background star's centre than the planet's selected
@@ -637,7 +637,7 @@ already reaches 2.7 distances.
 `SLIDE_SECOND` 1.2, `FACTOR_DOLLY_SECOND` 4.0, `FACTOR_HASTE` 4.0 under shift — applied
 each frame scaled by elapsed time, so a hold covers the same ground at 60 Hz and 144 Hz; the
 dolly compounds as `pow(factor, seconds)`. Drag rates differ per front-end for a real
-reason: `visualiser.SPEED_ORBIT` (0.008) is radians per pixel and `glue.js` works in
+reason: `visualiser.SPEED_ORBIT` (0.008) is radians per pixel and browser scripts works in
 fractions of canvas width.
 
 *Checked.* Verified by driven wheel events: an object under the pointer drifts 0.000 px
@@ -662,7 +662,7 @@ the proportionality, and the first frame after the change drew a world axis twen
 wide near the origin. An end behind the near plane moves up to it along the segment with its
 tint blended by the same fraction; a segment entirely behind is dropped.
 
-**The widening runs in the vertex shader on both targets.** One fifteen-float
+**The widening runs in the vertex shader on both front-ends.** One fifteen-float
 `RibbonRecord` per segment (sixteen with the `fog` flag) crosses the wire against the
 forty-two floats six CPU vertices cost, expanded by an instanced draw — GL 3.3 core on the
 desktop, `ANGLE_instanced_arrays` on WebGL1. The across is derived per vertex as
@@ -727,7 +727,7 @@ that is not a `Float32Array`. Measured at 0.1 ms a frame once the ring record ha
 input from 204,352 floats to about 9,000; the win is the class, since the conversion scaled
 with the scene.
 
-Draw order in `glue.js` mirrors `renderer.nim` and is kept in step by hand: furniture
+Draw order in browser scripts mirrors `renderer.nim` and is kept in step by hand: furniture
 ribbons, then scene ribbons and points, then rings, then veils with `depthMask(false)`.
 
 *Checked.* Verified by suite: the widening reference against the algebra; every stepped disc,
@@ -852,7 +852,7 @@ projected point, a plane's circle and a line's own left as below —
 and, for the sky's frame, just inside the top edge, since above a frame that is the
 viewport is off screen. Placement with the marker rather than by each front-end so the two
 agree by construction; each centres its own text on the point and keeps its own face (the
-page's sans at the shared height, set by `glue.js` from `nimOverlayMetrics`; on the desktop
+page's sans at the shared height, set by browser scripts from `nimOverlayMetrics`; on the desktop
 a face of its own, below).
 
 **A line's label keeps to the line's own left, beside its support clamped into view.**
@@ -865,7 +865,7 @@ label on the line and pushes it to that left: `Marker.is_label_beside` with `lab
 anchor and `label_away_x/y` the unit push, and each front-end, which alone measures its
 text, sets the centre `clearanceBeside` along it — rail, gap, and the label's own box's
 half-extent in that direction (`|away_x|·half_width + |away_y|·half_height`), so a wide name
-beside a steep line still clears it where a fixed lift put letters across it (`glue.js`
+beside a steep line still clears it where a fixed lift put letters across it (browser scripts
 `appendLabel` measures with `getComputedTextLength`, the desktop with `guiLabelWidth` in
 the label face). The anchor is the support's projection while it is in view, held
 `MARGIN_LABEL_VIEW` = 40 px inside the edge along the line; past that it slides along the
@@ -1141,7 +1141,7 @@ brings the floating selection menu (right yes, left and middle no); `armingOf` s
 a drag opens the choice wheel. Both render paths and `help.nim` read them.
 
 **The selection menu opens on the click, beside the pointer.** A click or tap that reveals
-the menu puts its top-left corner `INSET_MENU_POINTER` = 8 px from the pointer (`glue.js`
+the menu puts its top-left corner `INSET_MENU_POINTER` = 8 px from the pointer (browser scripts
 `positionSelectionMenuAt`, `panel.showSelectionMenuAt`), and from then on the menu remembers
 its offset from the object's anchor (`offset_menu_selection`; `corner_menu_pointer` turned
 into it on the desktop's first layout) so orbiting carries it with the object rather than
@@ -1187,7 +1187,7 @@ lack.
 
 **A press that can construct never moves the camera, not even before its slop is crossed.**
 A finger easing into its drag spent its first frames under the slop, fell through to the
-orbit, latched the camera-dragging flag that suppresses hover, and then ran blind. `glue.js`
+orbit, latched the camera-dragging flag that suppresses hover, and then ran blind. browser scripts
 decides at the press, in `is_touch_press_constructing`, the same question `beginDrag`
 answers when the slop is crossed, refusal over the sky included.
 
@@ -1201,7 +1201,7 @@ purpose: the question is not what the finger hit but whether it could have meant
 else, and at the pick reach alone the star field still turned orbits into drags. What is
 *picked* stays at the pick reach. `updateHover` keeps the count as `count_hover_rivals`, and
 `interaction.canConstructByTouch` is true only for a hovered, non-sky object with no rival.
-`beginDrag` refuses `MenuArming.OnDwell` — touch alone — where that is false, and `glue.js`
+`beginDrag` refuses `MenuArming.OnDwell` — touch alone — where that is false, and browser scripts
 asks the same export (`nimCanTouchConstruct`) at the press so the pre-slop frames agree. The
 rule is the reader's: where a gesture is ambiguous, movement wins, because the reader can
 zoom in until it is not, whereas an unwanted object has to be undone. The mouse keeps its
@@ -1276,7 +1276,7 @@ now lands in view after 15 frames rather than never. Pinned by a driven check th
 the list, edits a deep handle and finds its form in view.
 
 **The gesture clock is seconds**, on whichever monotonic clock the caller owns, and the
-same reading `addObject` stamps a birth with. `glue.js` divides once in its own `now()`. The
+same reading `addObject` stamps a birth with. browser scripts divides once in its own `now()`. The
 desktop's dwell once needed 450 *seconds* because the durations were named in milliseconds.
 
 **What a drag builds is read off the operands, not the button.** `∧` adds grades and is
@@ -1363,7 +1363,7 @@ a selection exists a tap (`TAP_MAX_MS` 350, in JS because a tap timeout is local
 another in or out; a tap on empty space clears. `pointercancel` cancels. `nimClearHover` runs
 once the last finger lifts, or the last reading sits stale forever. Accepted cost: a finger
 starting on the ground plane's disc constructs rather than orbiting — the same trade the
-mouse makes. `SELECTION` (Nim) is the sole source of truth; `glue.js` keeps only a render
+mouse makes. `SELECTION` (Nim) is the sole source of truth; browser scripts keeps only a render
 snapshot refreshed when the selection changes.
 
 **A picker offers symbols alone** (`notationSymbolic`), not the whole catalogue entry, and
@@ -1485,7 +1485,7 @@ wants one; none has been asked for.
 Save/Load Format (`.rgascene`)
 ---
 Compact binary matching `Scene`'s layout, **little-endian throughout** — a free choice that
-had to be *a* choice, because `glue.js` reaches it through `DataView`, and little-endian
+had to be *a* choice, because browser scripts reaches it through `DataView`, and little-endian
 because every file already written contained it. The desktop converts through
 `std/endians`.
 
@@ -1498,7 +1498,7 @@ because every file already written contained it. The desktop converts through
 | per object | Ink (1), visibility (1), label length in bytes (1) + UTF-8, one |
 |  | little-endian `float` per basis term, the radius as one more `float`, then shines (1) |
 
-`MAGIC_SCENE` and `VERSION_SCENE` are exported and reach `glue.js` through
+`MAGIC_SCENE` and `VERSION_SCENE` are exported and reach browser scripts through
 `nimSceneMagic`/`nimSceneVersion`, so there is no literal to drift; labels go through
 `TextEncoder`/`TextDecoder`. Three defects of the same shape — a value derived in Nim and
 copied by hand into JavaScript — once left the two builds unable to open each other's files
@@ -1723,7 +1723,7 @@ Animation
 object grows in over them, the camera tween eases over them, and the browser reads them across
 the bridge into `--anim`/`--ease` on `:root` (the CSS curve `cubic-bezier(0.215, 0.61, 0.355,
 1)` is easeOutCubic exactly). One exception, marked as one: the opening hint is a timed
-disclosure whose delay lives in `glue.js` alone — a stylesheet `transition-delay` ran from the
+disclosure whose delay lives in browser scripts alone — a stylesheet `transition-delay` ran from the
 class being added rather than from load, so the two stacked.
 
 *Checked.* Assumed: that one duration suits every transition; nobody has asked otherwise.
@@ -1793,7 +1793,7 @@ azimuth or elevation, and a star is turned toward only when nothing finite was p
 rule above is for picks with no pointer (objects list, keyboard, a shift-added group). A
 click or tap on a point or a line records a `framing.PointerPick` (handle and cursor;
 `Panel.pointer_pick`, `POINTER_PICK` in the bridge, written by `nimPickByPointer` from
-`glue.js`'s `pickByPointer` on click, tap and matured hold), which `offerAim` consumes on
+browser scripts's `pickByPointer` on click, tap and matured hold), which `offerAim` consumes on
 the next frame. The destination is the wheel's own move (`stanceUnderPointer`): the eye
 comes in along its line to where the object stands under the pointer
 (`picking.positionUnderPointerOn`, shared with the zoom anchor and without its nearness
@@ -1989,7 +1989,7 @@ rather than per frame; `visualiser.main`, `format.formatMagnitude` and the two t
 stay over sixty lines with the comment X.4 asks for, as one derivation or one report each.
 Kept from earlier audits: the bridge's FFI-boundary cases translate through one `SLOT_NONE`
 at each proc's return; the `when defined(js)` seams in `scene.nim` are backend necessities;
-`glue.js` and `shell.html` use snake_case for data bindings and camelCase for callables,
+browser scripts and `shell.html` use snake_case for data bindings and camelCase for callables,
 shader attribute strings untouched.
 
 The vendored `pga` library was reviewed and left unmodified by request. Known deviations are

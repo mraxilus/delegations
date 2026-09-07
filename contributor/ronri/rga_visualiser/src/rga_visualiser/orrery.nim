@@ -37,7 +37,7 @@
 ##   real stars fit.
 ## Colour says what thing is, not which system it belongs to; see `lut_role_to_ink`.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render paths.
+## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "strictFuncs".}
 
