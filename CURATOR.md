@@ -74,6 +74,7 @@ The owner's brief, which every rule below serves:
 | `.github/pull_request_template.md` | Body every pull request follows | curator |
 | `.github/ISSUE_TEMPLATE/process-change.md` | Body every process request follows | curator |
 | `.github/ISSUE_TEMPLATE/review-finding.md` | Body every curator finding follows | curator |
+| `.github/ISSUE_TEMPLATE/queued-work.md` | Body every session's own queued work follows | curator |
 | `curator/README.md` | Curator root index | curator |
 | `curator/audit/` | Audit library: every check, tested against its own fixtures | curator |
 | `curator/probe/` | Domain-neutral test project and merge-process probe target | curator |
@@ -102,16 +103,25 @@ The owner's brief, which every rule below serves:
 
 Three reads, before any other work.
 
-- **Open issues labelled `curator`.** A contributor blocked by a rule opens one from the
-  process-change template, which labels it for you; it is the only channel between roles that
-  does not run through the Architect, so nothing arrives unless you look. For each, judge it:
-  what is asked, why it is needed, whether it is a good idea, and what it costs either way.
-  Write that **as a comment on the issue**, so the reasoning survives the conversation it was
-  decided in, then report the same to the Architect, who decides. Where your answer hands work
-  to a project — a verb they must write, a rule they must apply — add that project's label
-  beside `curator` before you report, so it reaches them through the filter they already read.
-  Labels are added and never removed. A pull request answering an issue says `Closes #N`, and
-  merging it closes the issue.
+- **Open issues labelled `curator`.** Two kinds, separated by the issue's own `**Role:**`
+  line: where it differs from the label somebody is **asking**, and where it reads `curator`
+  the work is **your own queue**, left by an earlier curator session.
+  A contributor blocked by a rule opens a request from the process-change template, which
+  labels it for you; it is the only channel between roles that does not run through the
+  Architect, so nothing arrives unless you look. For each request, judge it: what is asked, why
+  it is needed, whether it is a good idea, and what it costs either way. Write that **as a
+  comment on the issue**, so the reasoning survives the conversation it was decided in, then
+  report the same to the Architect, who decides. Where your answer hands work to a project — a
+  verb they must write, a rule they must apply — add that project's label beside `curator`
+  before you report, so it reaches them through the filter they already read. Labels are added
+  and never removed. A pull request answering an issue says `Closes #N`, and merging it closes
+  the issue.
+  Your own queue needs no judging; it was decided already. Take the requests first, since those
+  are somebody waiting, then pick from it. Curator work spans sessions more than a project's
+  does — a change blocked behind a contributor's, a re-measurement deferred until its baseline
+  moves — and a session ends and takes its intentions with it, so anything you mean to come
+  back to is an issue labelled `curator` or it is gone. Close what you no longer intend to do:
+  this queue is meant to grow, and only closing keeps the list worth reading.
 - **Answered issues that are still open.** Read the list again for issues whose answering
   pull request has already merged, and **close each by hand**, with a comment naming that
   pull request, what shipped, and where the result differs from what was asked. `Closes #N`

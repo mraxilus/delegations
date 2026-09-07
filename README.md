@@ -47,6 +47,11 @@ to change. A curator who reads a project and finds something opens one saying wh
 because they may not edit a contributor's source: an issue is the only route that reaches its
 author. Either way the answer is written on the issue, and the owner decides.
 
+They also carry each session's own queue. Work a session decides on but does not do goes on an
+issue labelled with that session's own role, since a session ends and takes its intentions with
+it. The record still says what **is**; an issue says what is **queued**, and links the record
+rather than restating it.
+
 Every session posts to GitHub as the same account, so each issue carries a label saying whose it
 is, spelled exactly as the branch prefix: `curator` for the rules, the checks, the merge process
 and the root files; `curator/<project>` or `contributor/<domain>/<project>` for one project. A

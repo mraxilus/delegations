@@ -23,13 +23,21 @@ outside your project.
 Two reads, before any other work.
 
 - **Issues labelled with your role.** Filter the open issues on
-  `contributor/<domain>/<project>`, spelled exactly as your `**Role:**` line. A curator who
-  reads your project raises what they find there, because they may not edit your source; the
-  Architect may put a question there too. Each is a proposal, never an instruction. Judge it:
-  what is asked, whether it is right, what it costs to do and to decline. Write that **as a
-  comment on the issue**, so the reasoning survives the conversation it was decided in, and the
-  owner decides. Disagreeing, with your reasons on the issue, is a complete answer; silence is
-  not.
+  `contributor/<domain>/<project>`, spelled exactly as your `**Role:**` line. Two kinds come
+  back, and the issue's own `**Role:**` line separates them: where it differs from the label
+  somebody is **asking**, and where it matches, the work is **your own queue**, left by an
+  earlier session here.
+  - **A request** — a curator who read your project raises what they found there, because they
+    may not edit your source; the Architect may put a question there too. Each is a proposal,
+    never an instruction. Judge it: what is asked, whether it is right, what it costs to do and
+    to decline. Write that **as a comment on the issue**, so the reasoning survives the
+    conversation it was decided in, and the owner decides. Disagreeing, with your reasons on
+    the issue, is a complete answer; silence is not.
+  - **Your own queue** needs no judging; it was decided already. Pick from it, or leave it and
+    say why on the issue if what you learnt this session changed the answer.
+
+  Take the requests first: they are somebody waiting. Every queue grows, and this one is meant
+  to, so it is closing what you no longer intend to do that keeps the list worth reading.
 - **Answered issues that are still open.** Read the list again for issues whose answering pull
   request has already merged, and **close each by hand**, with a comment naming that pull
   request and what shipped. `Closes #N` usually does this for you and is not to be relied on:
@@ -61,12 +69,23 @@ Two reads, before any other work.
   reasons, or proposing something else. You and the Architect settle it; the curator does not,
   and nothing obliges you to implement a finding you have argued against. What you do take on,
   you implement in your own pull request, saying `Closes #N`.
-- **Which channel.** An `## Open questions` entry in `PROVENANCE.md` is about **your
-  project's own design**: what you left undecided, recorded for whoever picks it up. An
-  **issue** is about **the shared process**: a rule, a check, or a capability the repository
-  does not have. A question that only your project can answer is the first; a question whose
-  answer would change what every project may do is the second. When it is both, write the
-  design half in provenance and open an issue for the rest.
+- **Which channel.** Three places, and the label says which:
+  - An `## Open questions` entry in `PROVENANCE.md` is a **design question you left
+    undecided**, recorded for whoever picks it up.
+  - An issue labelled with **your own** role is **work you mean to do and are not doing
+    now**. Open one: a session ends and takes its intentions with it, so anything not written
+    to this repository or to an issue is lost. Say what the work is, why it is not being done
+    now, and what done looks like — the middle one is what keeps a queue from becoming a wish
+    list. Close it when it ships, or when you no longer mean to do it.
+  - An issue labelled with **another** role is **something only that role can change**: a
+    rule, a check, or a capability the repository does not have.
+
+  A question only your project can answer is the first; one whose answer would change what
+  every project may do is the third. When it is both, write the design half in provenance and
+  open an issue for the rest. Your record and your queue must not become two backlogs: the
+  record says what **is** — what is here, what is unverified, what is not ported — and an
+  issue says what is **queued**. Where both apply, link the record's section from the issue
+  rather than restating it, so one can never contradict the other.
 - **Say which role you are.** Every session here posts to GitHub as the same account, so the
   account says nothing about who is speaking. Open every issue, pull request and comment
   with your role: `**Role:** contributor/<domain>/<project>`. Nothing checks this — GitHub
