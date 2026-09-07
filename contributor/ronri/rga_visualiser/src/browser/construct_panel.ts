@@ -38,7 +38,7 @@ function populateOperations() {
     picker_operation.value = String(nimOperationRemembered(arity_current));
   }
   updateOperandEnablement();
-  ghostDrawerOperation();
+  previewDrawerOperation();
 }
 
 picker_arity.querySelectorAll('button[data-arity]').forEach((button) => {
@@ -51,7 +51,7 @@ picker_arity.querySelectorAll('button[data-arity]').forEach((button) => {
   });
 });
 
-function ghostDrawerOperation() {
+function previewDrawerOperation() {
   // Preview what `apply` would build, live while this section is open.
   //   Follows operation and both operands, since preview that ignored half its own
   //   inputs would be showing something button beside it would not build.
@@ -66,7 +66,7 @@ function ghostDrawerOperation() {
     : handles[parseInt(picker_operand_second.value, 10)];
   if (first === undefined || second === undefined) { nimClearPreview(); return; }
   if (!Number.isInteger(first) || !Number.isInteger(second)) { nimClearPreview(); return; }
-  nimGhostOperation(parseInt(picker_operation.value, 10), first, second);
+  nimPreviewOperation(parseInt(picker_operation.value, 10), first, second);
 }
 
 // How long one slice of row building may take before it yields frame. Under third of.
@@ -166,7 +166,7 @@ function isDrawerObjectsOpen() {
 
 function isDrawerApplyOpen() {
   // Collapsed section previews nothing:
-  //   ghost belongs to control on screen, and one left standing after its section closed names
+  //   preview belongs to control on screen, and one left standing after its section closed names
   //   nothing reader can see.
   const section = document.querySelector('.section[data-section="apply"]');
   return section !== null && section.classList.contains('open');
@@ -174,10 +174,10 @@ function isDrawerApplyOpen() {
 
 picker_operation.addEventListener('change', () => {
   updateOperandEnablement();
-  ghostDrawerOperation();
+  previewDrawerOperation();
 });
 for (const operand of [picker_operand_first, picker_operand_second]) {
-  operand.addEventListener('change', ghostDrawerOperation);
+  operand.addEventListener('change', previewDrawerOperation);
 }
 function updateOperandEnablement() {
   const arity = nimOperationArity(parseInt(picker_operation.value, 10) || 0);

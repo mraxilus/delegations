@@ -93,7 +93,7 @@ function renderFrame(now_seconds: number) {
   recordPhaseTime('lines', data.ms_lines);
   recordPhaseTime('planes', data.ms_planes);
   recordPhaseTime('sky', data.ms_sky);
-  recordPhaseTime('ghost', data.ms_ghost);
+  recordPhaseTime('preview', data.ms_preview);
   recordPhaseTime('selected', data.ms_selected);
   for (const name in COUNTS_DIAGNOSTIC) {
     const field = COUNTS_DIAGNOSTIC[name];
@@ -135,8 +135,8 @@ function renderFrame(now_seconds: number) {
   }
   drawRibbons(vbo.ribbon_furniture, count_furniture_held, 0, false);
 
-  // Draw scene objects last, opaque kinds before translucent washes.
-  //   Depth writes off for washes, so translucent plane never occludes line or point
+  // Draw scene objects last, opaque kinds before translucent veils.
+  //   Depth writes off for veils, so translucent plane never occludes line or point
   //   that happens to sit behind it; it only tints over whatever was already drawn
   //   there.
   //   Mirrors renderer.nim's own drawMeshes(MESHES, ...) call exactly.
@@ -179,7 +179,7 @@ function renderFrame(now_seconds: number) {
   if (!data.is_scene_held) count_point_held = uploadBuffer(data.point_verts, vbo.point, 11);
   const count_point = count_point_held;
   drawPoints(count_point, data.point_over, false);
-  // Washes:
+  // Veils:
   //   one record disc or dome, fanned out by their own vertex shaders and walked in scene order
   //   through run list.
   //   Both programs get this frame's matrix before walk, which switches between them per run.
@@ -192,7 +192,7 @@ function renderFrame(now_seconds: number) {
     uploadBuffer(data.dome_records, vbo.dome, 8);
   }
   gl.depthMask(false);
-  drawWashRuns(data.wash_runs, data.wash_run_over, false);
+  drawVeilRuns(data.veil_runs, data.veil_run_over, false);
   gl.depthMask(true);
 
   // Draw overlay over all of it, against depth buffer cleared first.
@@ -202,10 +202,10 @@ function renderFrame(now_seconds: number) {
   //   emission order decided among them, and selected planet drawn after its moon
   //   buried moon standing in front of it.
   //   Second pass over every kind rather than tail on each: selected line drawn only
-  //   after other lines is still tinted by plane's wash, which is later kind.
-  //   Washes write no depth here either, as in main pass.
+  //   after other lines is still tinted by plane's veil, which is later kind.
+  //   Veils write no depth here either, as in main pass.
   //   Mirrors `renderer.drawMeshes`.
-  if (data.ribbon_over + data.ring_over + data.point_over + data.wash_run_over > 0) {
+  if (data.ribbon_over + data.ring_over + data.point_over + data.veil_run_over > 0) {
     gl.clear(gl.DEPTH_BUFFER_BIT);
     gl.useProgram(program_ribbon);
     drawRibbons(vbo.ribbon, count_ribbon, data.ribbon_over, true);
@@ -214,7 +214,7 @@ function renderFrame(now_seconds: number) {
     gl.useProgram(program);
     drawPoints(count_point, data.point_over, true);
     gl.depthMask(false);
-    drawWashRuns(data.wash_runs, data.wash_run_over, true);
+    drawVeilRuns(data.veil_runs, data.veil_run_over, true);
     gl.depthMask(true);
   }
   // Command submission only:
@@ -261,7 +261,7 @@ function frame() {
   if (nimIsHoldSpent(now_seconds)) nimCancelHold();
 
   // Recompute what drag in progress would build, and whether its dwell has come due.
-  //   Before frame that ghosts answer is assembled.
+  //   Before frame that previews answer is assembled.
   //   Runs every frame rather than on pointermove alone: dwell is time passing over
   //   cursor that is deliberately still, so there is no move event to hang it off.
   //   Mirrors `visualiser.renderFrame`'s order.

@@ -50,7 +50,7 @@ document.querySelectorAll('.section-header').forEach((header) => {
     //   Asked of every section rather than only that one: check reads section's own
     //   class either way, and handler that knew which section it was would be second
     //   place to keep in step.
-    ghostDrawerOperation();
+    previewDrawerOperation();
     // Let objects list catch up on whatever it skipped while it was closed.
     //   See `refreshObjectsUI`; same shape, same reason, and asked of every section for
     //   same reason as above, since call is no-op unless it is objects section that
@@ -228,7 +228,7 @@ function openPanelTo(handle: number | null) {
 button_add.addEventListener('click', () => {
   // Compose new object as row in Objects list rather than in section of its.
   //   own: adding and editing stage same four things through same interface, so
-  //   there is one grid and one ghost instead of two of each.
+  //   there is one grid and one preview instead of two of each.
   openPanelTo(null);
 });
 

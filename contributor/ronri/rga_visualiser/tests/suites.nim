@@ -1043,7 +1043,7 @@ suite "Mesh":
     check MESHES.ribbons.count == 0
     check MESHES.discs.count == 0
     check MESHES.domes.count == 0
-    check MESHES.washes.count == 0
+    check MESHES.veils.count == 0
 
 
   test "point becomes one marker where it stands":
@@ -1155,10 +1155,10 @@ suite "Mesh":
       MESHES.clearMeshes
       check MESHES.addObject(SCRATCH, plane, Ink.Olive.colour, SCALE_TEST) == Outcome.Finite
       const SEGMENTS_RING = SEGMENTS_CIRCLE_HORIZON
-      # One disc record in one wash run: fan itself is shader's now, and.
+      # One disc record in one veil run: fan itself is shader's now, and.
       #   `expandDiscVertex` -- its reference -- is what its corners are read through.
       check MESHES.discs.count == 1
-      check MESHES.washes.count == 1
+      check MESHES.veils.count == 1
       # Rim and nothing else, and rim is **one record**: ring, not.
       #   `SEGMENTS_CIRCLE_HORIZON` ribbons. Plane used to add one ribbon more for
       #   normal shaft out of its anchor; orientation now rides on selection marker's
@@ -1368,11 +1368,11 @@ suite "Mesh":
 
     check MESHES.addObject(SCRATCH, attitude_first, Ink.Cobalt.colour, SCALE_TEST) ==
       Outcome.Horizon
-    # One dome record in one wash run: sphere itself is static geometry shader.
+    # One dome record in one veil run: sphere itself is static geometry shader.
     #   widens, and `expandDomeVertex` -- its reference -- is what its corners are read
     #   through.
     check MESHES.domes.count == 1
-    check MESHES.washes.count == 1
+    check MESHES.veils.count == 1
     let
       record_first = MESHES.domes.records[0]
       corners_dome = domeCorners()
@@ -1425,7 +1425,7 @@ suite "Mesh":
     check built == OBJECTS_MAX
     check MESHES.ribbons.count <= RIBBONS_MAX
     check MESHES.discs.count <= DISCS_MAX
-    check MESHES.washes.count <= len(MESHES.washes.runs)
+    check MESHES.veils.count <= len(MESHES.veils.runs)
 
 
   func scaleFurnitureAt(eye: Position, extent: float): DrawExtent =
@@ -3109,7 +3109,7 @@ suite "Camera Aim":
     #   what keeps it out of framing rule below.
     check previewStaging(line, RADIUS_OBJECT_DEFAULT).anchor.isNone
     check previewStaging(line, RADIUS_OBJECT_DEFAULT).operands.isNone
-    # Ghost of point under edit is drawn at session's own radius, not default.
+    # Preview of point under edit is drawn at session's own radius, not default.
     check previewStaging(line, 0.03).radius == 0.03
     discard picked
 
@@ -5389,7 +5389,7 @@ suite "Interaction":
 
 
   test "a built object wears exactly the hue its drag was drawn in":
-    # Band, comet and ghost all read `inkOfDrag`, so what reader watched is.
+    # Band, comet and preview all read `inkOfDrag`, so what reader watched is.
     #   what they get. It used to be operation's own colour, which said nothing about
     #   object about to exist.
     var scene = initScene()
@@ -5618,7 +5618,7 @@ suite "Interaction":
     interaction.index_hover = some(1)
     interaction.updateDrag(scene, 0.0)
     check interaction.menu.isSome
-    # Wheel opened under cursor, so nothing is chosen yet and nothing is ghosted.
+    # Wheel opened under cursor, so nothing is chosen yet and nothing is previewed.
     check interaction.proposal.isNone
     check interaction.preview.isNone
     # Reaching for wedge takes cursor off object; destination must survive it.
@@ -5634,10 +5634,10 @@ suite "Interaction":
     check scene[2].geometry =~ projectOrthogonal(GENERAL_FIRST[0], GENERAL_SECOND[0])
 
 
-  test "the ghost is the wedge being aimed at, not what a plain release would make":
-    # Complaint this answers: with wheel open, ghost was `proposalFor`'s own.
+  test "the preview is the wedge being aimed at, not what a plain release would make":
+    # Complaint this answers: with wheel open, preview was `proposalFor`'s own.
     #   answer whatever wedge cursor was in, so reader reaching for `project` watched
-    #   ghost of `join` and only found out what they had asked for after letting go.
+    #   preview of `join` and only found out what they had asked for after letting go.
     var scene = initScene()
     scene.addObject(GENERAL_FIRST[0], "a", Ink.Rose)
     scene.addObject(GENERAL_SECOND[0], "b", Ink.Rose)
@@ -5649,7 +5649,7 @@ suite "Interaction":
     interaction.updateDrag(scene, 0.0)
     let centre = interaction.menu.get
     # Take two points: `join` and `project` both make something, and different things.
-    #   What lets ghost be told apart from plain-release answer at all.
+    #   What lets preview be told apart from plain-release answer at all.
     check proposalFor(GENERAL_FIRST[0], GENERAL_SECOND[0]) == some(DragChoice.Join)
     check isOffered(DragChoice.Project, GENERAL_FIRST[0], GENERAL_SECOND[0])
 
@@ -5670,10 +5670,10 @@ suite "Interaction":
       var trial = interaction
       var scene_trial = scene
       trial.aimAt(scene_trial, choice)
-      let ghosted = trial.preview.get.geometry
+      let previewed = trial.preview.get.geometry
       let outcome = trial.endDrag(scene_trial)
       check outcome.index_created.isSome
-      check scene_trial[outcome.index_created.get].geometry =~ ghosted
+      check scene_trial[outcome.index_created.get].geometry =~ previewed
 
 
   test "what a release would do has three answers, and the band's tint has three":
@@ -5714,13 +5714,13 @@ suite "Interaction":
          of ReleaseEffect.Nothing: Ink.Guide
          of ReleaseEffect.Refused: Ink.Invalid
          of ReleaseEffect.Builds: scene.inkNext)
-      # `More` builds nothing itself, so it ghosts nothing while still promising its hue.
+      # `More` builds nothing itself, so it previews nothing while still promising its hue.
       check interaction.preview.isSome ==
         (effect == ReleaseEffect.Builds and choice != DragChoice.More)
 
 
-  test "with no wheel open the ghost is still the plain-release answer":
-    # Left button's own path, unchanged: it never opens wheel, so what it ghosts is.
+  test "with no wheel open the preview is still the plain-release answer":
+    # Left button's own path, unchanged: it never opens wheel, so what it previews is.
     #   `proposalFor`'s answer exactly as before.
     var scene = initScene()
     scene.addObject(GENERAL_FIRST[0], "a", Ink.Rose)
@@ -5737,8 +5737,8 @@ suite "Interaction":
     check interaction.effectOf == ReleaseEffect.Builds
 
 
-  test "a ghosted plane is centred where the committed one will be":
-    # `mesh.addPlane` centres disc on object's own creation anchor, so ghost drawn.
+  test "a previewed plane is centred where the committed one will be":
+    # `mesh.addPlane` centres disc on object's own creation anchor, so preview drawn.
     #   without one sits somewhere object is about to leave -- measured at 2.1 units
     #   here, against disc of radius 8, and jump lands at moment reader is
     #   watching hardest.
@@ -5755,12 +5755,12 @@ suite "Interaction":
     check kindOf(interaction.preview.get.geometry) == some(Kind.Plane)
     check interaction.preview.get.anchor.isSome
     # Read before releasing: `endDrag` clears drag's whole state on its way out.
-    let ghosted = interaction.preview.get.anchor.get
+    let previewed = interaction.preview.get.anchor.get
     # Not support, or there would have been nothing to fix.
-    check not (ghosted =~ positionAnchor(interaction.preview.get.geometry).get)
+    check not (previewed =~ positionAnchor(interaction.preview.get.geometry).get)
     let outcome = interaction.endDrag(scene)
     check outcome.index_created.isSome
-    check scene[outcome.index_created.get].anchorOverride.get =~ ghosted
+    check scene[outcome.index_created.get].anchorOverride.get =~ previewed
 
 
   test "a menu release back at the centre commits nothing":
@@ -5851,7 +5851,7 @@ suite "Interaction":
     interaction.updateDrag(scene, now = 0.0)
     interaction.updateDrag(scene, now = SECONDS_DWELL_MENU + 0.1)
     check interaction.menu.isSome
-    # Pair's own answer keeps standing under unentered wheel, ghost included, so.
+    # Pair's own answer keeps standing under unentered wheel, preview included, so.
     #   what band promises and what lift commits stay one thing.
     check interaction.proposal == some(DragChoice.Join)
     check interaction.preview.isSome
@@ -5881,7 +5881,7 @@ suite "Interaction":
     interaction.updateDrag(scene, now = SECONDS_DWELL_MENU + 0.2)
     interaction.updateCursor(400.0, 200.0) # ...and back to centre.
     interaction.updateDrag(scene, now = SECONDS_DWELL_MENU + 0.3)
-    check interaction.proposal.isNone # No ghost: band already says this lift cancels.
+    check interaction.proposal.isNone # No preview: band already says this lift cancels.
     let outcome = interaction.endDrag(scene, SECONDS_DWELL_MENU + 0.4)
     check outcome.index_created.isNone
     check scene.len == 2
@@ -5926,7 +5926,7 @@ suite "Interaction":
     check meshes.points.index_overlay.isNone
     check meshes.ribbons.index_overlay.isNone
     check meshes.rings.index_overlay.isNone
-    check meshes.washes.index_overlay.isNone
+    check meshes.veils.index_overlay.isNone
     discard meshes.addObject(SCRATCH, GENERAL_POINTS[0], Ink.Rose.colour, scale)
     let count_under = meshes.points.count_vertices
     check count_under > 0
@@ -5943,16 +5943,16 @@ suite "Interaction":
     check meshes.ribbons.count == 0
     check meshes.rings.index_overlay == some(0)
     check meshes.rings.count == 0
-    check meshes.washes.index_overlay == some(0)
-    check meshes.washes.count == 0
+    check meshes.veils.index_overlay == some(0)
+    check meshes.veils.count == 0
 
-    # Wash run never straddles mark: disc laid on each side of it lands in two.
+    # Veil run never straddles mark: disc laid on each side of it lands in two.
     #   runs of one record, and only second is overlay's.
     meshes.addDisc(
       ORIGIN, Direction(x: 1.0, y: 0.0, z: 0.0), Direction(x: 0.0, y: 1.0, z: 0.0),
       1.0, Ink.Olive.colour,
     )
-    check meshes.washes.count == 1
+    check meshes.veils.count == 1
     clearMeshes(meshes)
     meshes.addDisc(
       ORIGIN, Direction(x: 1.0, y: 0.0, z: 0.0), Direction(x: 0.0, y: 1.0, z: 0.0),
@@ -5963,9 +5963,9 @@ suite "Interaction":
       ORIGIN, Direction(x: 1.0, y: 0.0, z: 0.0), Direction(x: 0.0, y: 1.0, z: 0.0),
       1.0, Ink.Jade.colour,
     )
-    check meshes.washes.count == 2
-    check meshes.washes.index_overlay == some(1)
-    check meshes.washes.runs[0].count == 1 and meshes.washes.runs[1].count == 1
+    check meshes.veils.count == 2
+    check meshes.veils.index_overlay == some(1)
+    check meshes.veils.runs[0].count == 1 and meshes.veils.runs[1].count == 1
 
     # **Plane's rim needs its own mark.** Its fill and its rim are two streams now, and.
     #   selected plane is tessellated second time after mark; without this split
@@ -5986,7 +5986,7 @@ suite "Interaction":
     check meshes.points.index_overlay.isNone
     check meshes.ribbons.index_overlay.isNone
     check meshes.rings.index_overlay.isNone
-    check meshes.washes.index_overlay.isNone
+    check meshes.veils.index_overlay.isNone
 
 
   test "a mouse never waits: left decides, right asks, middle starts nothing":
@@ -6360,7 +6360,7 @@ suite "Interaction":
     interaction.updateDrag(scene, 0.0)
     check interaction.inkOfDrag(scene.inkNext) == Ink.Guide
     # Standing over pair that makes nothing wears reserved magenta, and shows no.
-    #   ghost -- two signals, so warning is never colour alone.
+    #   preview -- two signals, so warning is never colour alone.
     interaction.index_hover = some(1)
     interaction.updateDrag(scene, 0.0)
     check interaction.inkOfDrag(scene.inkNext) == Ink.Invalid

@@ -64,7 +64,7 @@ let handle_touch_down = -1, is_touch_dragging = false;
 //   different road and got it wrong: finger that eased into its drag orbited for frame
 //   or two before slop, which latched `nimSetCameraDragging`, and hover is suppressed
 //   while camera moves -- so construction drag that armed moment later ran blind
-//   for rest of gesture, ghosting nothing and building nothing. Flick that cleared
+//   for rest of gesture, previewing nothing and building nothing. Flick that cleared
 //   slop in one event armed before any of that and worked, which is what made fault
 //   read as intermittent.
 let is_touch_press_constructing = false;
@@ -467,23 +467,23 @@ function openSelectionMenuOp() {
   //   (its second row never carried them either) -- ✕ stays, as it always did.
   const arity = nimSelectionArity();
   populateSelectionMenuOptions(arity);
-  // Open on whatever was last applied at this arity, and ghost it straight away.
+  // Open on whatever was last applied at this arity, and preview it straight away.
   //   Rather than on head of list; picker's answer is worth seeing while choosing, not
   //   only once apply is pressed.
   menu_selection_select.value = String(nimOperationRemembered(arity));
-  ghostSelectionMenuOperation();
+  previewSelectionMenuOperation();
   menu_selection_reveal.classList.add('open');
   menu_selection_edit.style.display = 'none';
   menu_selection_hide.style.display = 'none';
   menu_selection_delete.style.display = 'none';
 }
 
-function ghostSelectionMenuOperation() {
+function previewSelectionMenuOperation() {
   // Both operands come from selection in pick order, exactly as apply reads them.
   const first = handles_selection[0];
   const second = handles_selection.length > 1 ? handles_selection[1] : handles_selection[0];
   if (first === undefined || second === undefined) return;
-  nimGhostOperation(parseInt(menu_selection_select.value, 10), first, second);
+  nimPreviewOperation(parseInt(menu_selection_select.value, 10), first, second);
 }
 
 function closeSelectionMenuOp() {
@@ -491,14 +491,14 @@ function closeSelectionMenuOp() {
   //   Drawer's own section may still be open behind this menu, so ask it to speak up again rather
   //   than leaving view blank while control that has something to say is on screen.
   nimClearPreview();
-  ghostDrawerOperation();
+  previewDrawerOperation();
   menu_selection_reveal.classList.remove('open');
   menu_selection_edit.style.display = handles_selection.length === 1 ? '' : 'none';
   menu_selection_hide.style.display = '';
   menu_selection_delete.style.display = '';
 }
 
-menu_selection_select.addEventListener('change', ghostSelectionMenuOperation);
+menu_selection_select.addEventListener('change', previewSelectionMenuOperation);
 
 function refreshSelectionMenu(position_local: PointLocal | null) {
   const n = handles_selection.length;

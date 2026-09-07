@@ -172,7 +172,7 @@ type SettingsScene = tuple
   ##   `aspect` is here because view-projection matrix reads it and furniture does not.
   ##   `revision` is scene's own; see `scene.revision`.
   ##   Two things are guards instead; see `nimBuildFrame`.
-  ##     Ghost or drag preview standing (moves with pointer), appear animation running.
+  ##     Preview or drag preview standing (moves with pointer), appear animation running.
   furniture: SettingsFurniture
   aspect: float
   revision: int
@@ -229,7 +229,7 @@ var
     ##   Nothing in `tessellate.Placement` reads camera, so placement stays true while view
     ##   orbits; recomputing every orbit frame is most of moving frame; figures in
     ##   `PROVENANCE.md`.
-    ## Held for scene's handles only: ghost and drag preview move with pointer, so both are
+    ## Held for scene's handles only: preview and drag preview move with pointer, so both are
     ## placed where drawn.
     ## Dead handles hold whatever last occupant left; every walk skips them.
   LIGHTS: LightCache ## Per-handle direction toward its sun; see `lighting.LightCache`.
@@ -272,12 +272,12 @@ var
     ## Serves both session modes, composing and editing.
     ## None where no session is open, or last committed or was abandoned.
   PREVIEW_APPLY = none(Preview) ## What open apply control would build.
-    ## Ghosted while reader is choosing, as drag's rubber-band does.
+    ## Previewed while reader is choosing, as drag's rubber-band does.
     ## Own handle rather than `GHOST`'s, so which shows is decided by `staged` in Nim.
-    ## Written by `nimGhostOperation`, dropped by `nimClearPreview`.
+    ## Written by `nimPreviewOperation`, dropped by `nimClearPreview`.
 
-const INK_GHOST = Ink.Guide
-  ## Tint ghost in this palette slot, muted, reusing `Ink.Guide`'s "construction helper" role.
+const INK_PREVIEW = Ink.Guide
+  ## Tint preview in this palette slot, muted, reusing `Ink.Guide`'s "construction helper" role.
 
 
 func toRgbSeq(c: Rgba): seq[float32] = @[c.red, c.green, c.blue]
@@ -406,13 +406,13 @@ proc flattenDomesInto(domes: DomeMesh, dest: var FlatFloats) =
     dest[8*i + 7] = r.alpha
 
 
-proc flattenWashRunsInto(washes: WashRuns, dest: var FlatFloats) =
-  ## Interleave wash draw order, three floats per run: kind ordinal, first, count.
-  dest.used = washes.count * 3
-  for i in 0 ..< washes.count:
-    dest[3*i + 0] = float32(ord(washes.runs[i].kind))
-    dest[3*i + 1] = float32(washes.runs[i].first)
-    dest[3*i + 2] = float32(washes.runs[i].count)
+proc flattenVeilRunsInto(veils: VeilRuns, dest: var FlatFloats) =
+  ## Interleave veil draw order, three floats per run: kind ordinal, first, count.
+  dest.used = veils.count * 3
+  for i in 0 ..< veils.count:
+    dest[3*i + 0] = float32(ord(veils.runs[i].kind))
+    dest[3*i + 1] = float32(veils.runs[i].first)
+    dest[3*i + 2] = float32(veils.runs[i].count)
 
 
 proc stampBorn(handle: int, born: float) =
@@ -693,12 +693,12 @@ proc nimOperationRemembered(arity: cint): cint {.exportc.} =
   cint(ord(OPERATIONS.lastOf(if arity == 0: Arity.One else: Arity.Two)))
 
 
-proc nimGhostOperation(operation_ordinal, handle_first, handle_second: cint): bool
+proc nimPreviewOperation(operation_ordinal, handle_first, handle_second: cint): bool
   {.exportc.} =
-  ## Stage what applying operation to these operands would build, as ghost.
-  ##   Ghost appearance open edit session wears, without touching scene or undo timeline.
+  ## Stage what applying operation to these operands would build, as preview.
+  ##   Preview appearance open edit session wears, without touching scene or undo timeline.
   ##   Picker previews its answer moment one is chosen rather than once apply is pressed.
-  ##   Through `scene.previewApplying`, so ghost carries anchor and operands camera keeps
+  ##   Through `scene.previewApplying`, so preview carries anchor and operands camera keeps
   ##   in view, same construction drag offers.
   ##   False, and no preview, where either operand is gone or pair makes nothing drawable.
   PREVIEW_APPLY = SCENE.previewApplying(
@@ -770,12 +770,12 @@ proc nimRemoveObject(handle: cint) {.exportc.} =
 
 
 
-#[ Ghost Preview ]#
+#[ Preview Preview ]#
 
-proc nimSetGhost(coefficients: seq[float], radius: cfloat) {.exportc.} =
-  ## Rewrite staged ghost multivector wholesale, from open session's JS-side state array.
+proc nimSetPreviewStaged(coefficients: seq[float], radius: cfloat) {.exportc.} =
+  ## Rewrite staged preview multivector wholesale, from open session's JS-side state array.
   ##   On every `input` event, so preview tracks keystroke rather than blur.
-  ##   `nimBuildFrame` reads it next frame and draws it tinted `INK_GHOST`, muted, at
+  ##   `nimBuildFrame` reads it next frame and draws it tinted `INK_PREVIEW`, muted, at
   ##   `radius` where it is point.
   var geometry: Multivector
   for b in Basis: geometry[b] = coefficients[ord(b)]
@@ -791,8 +791,8 @@ proc nimDescribeCoefficients(coefficients: seq[float]): cstring {.exportc.} =
   cstring(kindText(geometry) & ": " & multivectorText(geometry))
 
 
-proc nimClearGhost() {.exportc.} =
-  ## Discard ghost, so `nimBuildFrame` stops drawing it.
+proc nimClearPreviewStaged() {.exportc.} =
+  ## Discard preview, so `nimBuildFrame` stops drawing it.
   ##   Called once session commits or is abandoned.
   GHOST = none(Multivector)
 
@@ -1611,7 +1611,7 @@ proc nimDragMenuLayout(): FlatBuffer {.exportc.} =
 
 proc nimDragMenuHighlighted(): cint {.exportc.} =
   ## Report which wedge cursor stands in as `DragChoice` ordinal, or `SLOT_NONE` at centre.
-  ##   From `interaction.choosing`, same call release resolves through and ghost is shaped
+  ##   From `interaction.choosing`, same call release resolves through and preview is shaped
   ##   from.
   let choice = INTERACTION.choosing
   if choice.isNone: SLOT_NONE else: cint(ord(choice.get))
@@ -2013,10 +2013,10 @@ type FrameData = object
     ## For instanced fan draw.
   dome_records: FlatBuffer ## Eight floats per dome, `mesh.DomeRecord`'s field order.
     ## For instanced sphere draw.
-  wash_runs: FlatBuffer ## Translucent pass's draw order, three floats per run.
-    ## Kind (`mesh.WashKind` ordinal), first record, count.
-    ## Walked in sequence so two washes blend in order scene emitted them; see
-    ## `mesh.WashRuns`.
+  veil_runs: FlatBuffer ## Translucent pass's draw order, three floats per run.
+    ## Kind (`mesh.VeilKind` ordinal), first record, count.
+    ## Walked in sequence so two veils blend in order scene emitted them; see
+    ## `mesh.VeilRuns`.
   view_projection: seq[float32]
   furn_ribbon_verts: FlatBuffer ## Ground grid and world axes alone, drawn first.
     ## Built at own thinner width (`mesh.WIDTH_LINE_FURNITURE`), since ribbon carries
@@ -2034,7 +2034,7 @@ type FrameData = object
     ##   is live figure), so still frame skipping it does most of frame less work.
   ms_build, ms_furniture, ms_scene, ms_flatten: float32
     ## Record what this frame's assembly cost, in milliseconds.
-    ##   Whole of `nimBuildFrame`, and its three phases: furniture, scene's objects (ghost
+    ##   Whole of `nimBuildFrame`, and its three phases: furniture, scene's objects (preview
     ##   and preview included), and flatten of every mesh into arrays above.
     ##   Phases bridge cannot see (GL upload, SVG overlay) are timed by `glue.js`.
     ##   Held furniture frame reports near-zero furniture.
@@ -2076,33 +2076,33 @@ type FrameData = object
     ## Count ribbon records ground grid is drawn from, one per lattice line.
     ##   Bounded per family by `mesh.LINES_GRID_MAX`.
     ##   Axes excluded, so budgeted number matches its budget.
-  ms_points, ms_lines, ms_planes, ms_sky, ms_ghost, ms_selected: float32
+  ms_points, ms_lines, ms_planes, ms_sky, ms_preview, ms_selected: float32
     ## Record what each kind of scene object cost inside `ms_scene`, with counts below.
     ##   Kinds differ by order of magnitude: point is single vertex, plane places rim of
     ##   `mesh.SEGMENTS_CIRCLE_HORIZON` segments.
-    ##   `sky` is horizon planes drawn first; `ghost` is staged edit and drag preview
+    ##   `sky` is horizon planes drawn first; `preview` is staged edit and drag preview
     ##   together; `selected` is overlay tail, drawn again over cleared depth.
     ##   Timed by clock read once per object: mark from end of one is start of next.
     ##     Clock's own overhead lands inside `ms_scene`; figures in `PROVENANCE.md`.
-  count_points, count_lines, count_planes, count_sky, count_ghost, count_selected: int
+  count_points, count_lines, count_planes, count_sky, count_preview, count_selected: int
     ## Count objects of each kind times above are for.
     ##   Reader can divide: "is one expensive, or are there many?".
   count_points_culled: int ## Count points skipped for lying outside view.
     ## Beside `count_points`, so panel can say drawn of standing; see `isPointInView`.
-  ribbon_over, ring_over, point_over, wash_run_over: int ## How much of each stream's end
+  ribbon_over, ring_over, point_over, veil_run_over: int ## How much of each stream's end
     ## is overlay run, drawn after rest over cleared depth.
     ## Count of tail rather than index it starts at, so glue subtracts nothing; see
     ## `mesh.Mesh.index_overlay` and `renderer.drawRun`.
-    ## Vertices for points, records for ribbons and rings, whole runs for washes.
+    ## Vertices for points, records for ribbons and rings, whole runs for veils.
 
 
 type SceneCost = object
   ## Define tally of what each kind of scene object cost this frame, and how many there were.
   ##   One clock read per object: mark closing one object opens next.
-  ##   Ghost and overlay tail are kinds of their own because neither is scene object
+  ##   Preview and overlay tail are kinds of their own because neither is scene object
   ##   reader counted.
-  ms_points, ms_lines, ms_planes, ms_sky, ms_ghost, ms_selected: float
-  count_points, count_lines, count_planes, count_sky, count_ghost, count_selected: int
+  ms_points, ms_lines, ms_planes, ms_sky, ms_preview, ms_selected: float
+  count_points, count_lines, count_planes, count_sky, count_preview, count_selected: int
   count_points_culled: int ## Count points skipped for lying outside view; see `chargeCulled`.
   mark: float ## When object now being drawn started, on `performanceNow`'s clock.
 
@@ -2119,7 +2119,7 @@ proc openTally(cost: var SceneCost) =
   if isTallying(): cost.mark = performanceNow()
 
 
-proc chargeTally(cost: var SceneCost; kind: Case; is_sky, is_ghost, is_selected: bool) =
+proc chargeTally(cost: var SceneCost; kind: Case; is_sky, is_preview, is_selected: bool) =
   ## Charge whatever has been drawn since last mark to kind it belongs to.
   ##   Takes kind placement settled on rather than reading shape again: reading twice is
   ##   second multivector walk per object per frame, on path this tally measures.
@@ -2131,9 +2131,9 @@ proc chargeTally(cost: var SceneCost; kind: Case; is_sky, is_ghost, is_selected:
     let now_mark = performanceNow()
     spent = now_mark - cost.mark
     cost.mark = now_mark
-  if is_ghost:
-    cost.ms_ghost += spent
-    cost.count_ghost += 1
+  if is_preview:
+    cost.ms_preview += spent
+    cost.count_preview += 1
     return
   if is_selected:
     cost.ms_selected += spent
@@ -2177,7 +2177,7 @@ proc nimBuildFrame(
   ##     view-projection plus whole `FrameData`, packaging desktop never needs.
   ##     Splitting packaging out would return partial results across extra boundary for no
   ##     reader benefit.
-  ##   Draws `GHOST` too, tinted `INK_GHOST` and muted; see that var.
+  ##   Draws `GHOST` too, tinted `INK_PREVIEW` and muted; see that var.
   # Read one clock per phase boundary, so diagnostics tab shows each step.
   #   `performanceNow` is timing-only.
   let ms_entered = performanceNow()
@@ -2209,9 +2209,9 @@ proc nimBuildFrame(
   # Derive frustum once, for cull of every point below; see `isPointInView`.
   let bounds = CAMERA.viewBoundsFor(scale, float(aspect))
   # Recover width of centred box from aspect, since this build is handed that.
-  let ghost = staged()
+  let preview = staged()
   TWEEN_CAMERA.offerAim(
-    CAMERA, SCENE, SELECTION, ghost, scale, int(float(aspect)*float(height_pixels)),
+    CAMERA, SCENE, SELECTION, preview, scale, int(float(aspect)*float(height_pixels)),
     int(height_pixels), float(now), ANIMATION_SECONDS, POINTER_PICK,
   )
 
@@ -2247,7 +2247,7 @@ proc nimBuildFrame(
   # Hold scene where settings match last frame's, one layer out from furniture's hold.
   #   Frame whose settings match tessellates same records, so keeps them, flattens and
   #   uploads together: whole scene phase.
-  #   Two states refuse hold outright rather than being encoded: ghost or preview
+  #   Two states refuse hold outright rather than being encoded: preview or preview
   #   follows pointer; object inside appear animation is drawn differently every frame.
   #   Cost of refusing is one rebuilt frame; cost of holding wrongly is frozen picture.
   let settings_scene: SettingsScene = (
@@ -2258,7 +2258,7 @@ proc nimBuildFrame(
     is_culling: IS_CULLING,
   )
   let is_scene_settled =
-    ghost.isNone and INTERACTION.preview.isNone and
+    preview.isNone and INTERACTION.preview.isNone and
       float(now) >= BORN_LAST + ANIMATION_SECONDS
   let is_scene_held =
     is_scene_settled and SETTINGS_SCENE_HELD.isSome and SETTINGS_SCENE_HELD.get == settings_scene
@@ -2274,7 +2274,7 @@ proc nimBuildFrame(
     cost.count_lines = COUNTS_SCENE.count_lines
     cost.count_planes = COUNTS_SCENE.count_planes
     cost.count_sky = COUNTS_SCENE.count_sky
-    cost.count_ghost = COUNTS_SCENE.count_ghost
+    cost.count_preview = COUNTS_SCENE.count_preview
     cost.count_selected = COUNTS_SCENE.count_selected
     cost.count_points_culled = COUNTS_SCENE.count_points_culled
   # Refresh placement cache only where scene moved; see `ensurePlacement`.
@@ -2283,8 +2283,8 @@ proc nimBuildFrame(
   if not is_scene_held:
     clearMeshes(MESHES)
     cost.openTally()
-    # Emit horizon plane's dome first, before anything sharing translucent wash pass.
-    #   Wash runs draw in append order, unsorted by depth, so dome first guarantees every
+    # Emit horizon plane's dome first, before anything sharing translucent veil pass.
+    #   Veil runs draw in append order, unsorted by depth, so dome first guarantees every
     #   ordinary plane's fill blends over it; see `visualiser.assembleMeshes`.
     #   By-handle "At" accessors rather than `pairs`: under JS backend `Object` holds `Scene`
     #   by value, so constructing one per live handle copies entire scene.
@@ -2304,7 +2304,7 @@ proc nimBuildFrame(
             PLACEMENTS[handle], SCENE.inkAt(handle).colour, scale, progress,
           )
           cost.chargeTally(
-            PLACEMENTS[handle].kind, is_sky = true, is_ghost = false, is_selected = false,
+            PLACEMENTS[handle].kind, is_sky = true, is_preview = false, is_selected = false,
           )
 
     for handle in 0 ..< SCENE.bound:
@@ -2321,33 +2321,33 @@ proc nimBuildFrame(
             LIGHTS.lights[handle],
           )
           cost.chargeTally(
-            PLACEMENTS[handle].kind, is_sky = false, is_ghost = false, is_selected = false,
+            PLACEMENTS[handle].kind, is_sky = false, is_preview = false, is_selected = false,
           )
 
     # Emit open session's staged geometry, or apply control's preview where none.
-    #   One ghost for both; `staged` decides order.
-    #   Centred on anchor commit stores, so previewed plane stays where ghosted.
-    #   `ghost` read once in prologue; nothing since has touched session.
-    if ghost.isSome:
-      # Place here rather than cache: ghost is not handle and moves with pointer.
-      var placement_ghost = placeObject(ghost.get.geometry, ghost.get.anchor)
+    #   One preview for both; `staged` decides order.
+    #   Centred on anchor commit stores, so previewed plane stays where previewed.
+    #   `preview` read once in prologue; nothing since has touched session.
+    if preview.isSome:
+      # Place here rather than cache: preview is not handle and moves with pointer.
+      var placement_staged = placeObject(preview.get.geometry, preview.get.anchor)
       discard MESHES.emitObject(
-        placement_ghost, INK_GHOST.colour.muted(), scale, radius = ghost.get.radius
+        placement_staged, INK_PREVIEW.colour.muted(), scale, radius = preview.get.radius
       )
       cost.chargeTally(
-        placement_ghost.kind, is_sky = false, is_ghost = true, is_selected = false
+        placement_staged.kind, is_sky = false, is_preview = true, is_selected = false
       )
 
-    # Emit what drag in progress would build, in same ghost ink.
+    # Emit what drag in progress would build, in same preview ink.
     #   Reader learns one "not committed yet" appearance; mirrors
     #   `visualiser.assembleMeshes`.
     if INTERACTION.preview.isSome:
-      var placement_preview = placeObject(
+      var placement_derived = placeObject(
         INTERACTION.preview.get.geometry, INTERACTION.preview.get.anchor,
       )
-      discard MESHES.emitObject(placement_preview, INK_GHOST.colour.muted(), scale)
+      discard MESHES.emitObject(placement_derived, INK_PREVIEW.colour.muted(), scale)
       cost.chargeTally(
-        placement_preview.kind, is_sky = false, is_ghost = true, is_selected = false
+        placement_derived.kind, is_sky = false, is_preview = true, is_selected = false
       )
 
     # Emit everything selected last, drawn over cleared depth.
@@ -2366,7 +2366,7 @@ proc nimBuildFrame(
         LIGHTS.lights[handle],
       )
       cost.chargeTally(
-        PLACEMENTS[handle].kind, is_sky = false, is_ghost = false, is_selected = true
+        PLACEMENTS[handle].kind, is_sky = false, is_preview = false, is_selected = true
       )
 
     ms_after_scene = performanceNow()
@@ -2388,7 +2388,7 @@ proc nimBuildFrame(
     flattenDiscsInto(MESHES.discs, FLAT_DISC)
     flattenRingsInto(MESHES.rings, FLAT_RING)
     flattenDomesInto(MESHES.domes, FLAT_DOME)
-    flattenWashRunsInto(MESHES.washes, FLAT_RUNS)
+    flattenVeilRunsInto(MESHES.veils, FLAT_RUNS)
     flattenRibbonsInto(MESHES.ribbons, FLAT_RIBBON)
     flattenInto(MESHES.points, FLAT_POINT)
   if is_furniture_held: FLAT_FURNITURE.used = 0
@@ -2399,7 +2399,7 @@ proc nimBuildFrame(
     ring_records: FLAT_RING.view,
     disc_records: FLAT_DISC.view,
     dome_records: FLAT_DOME.view,
-    wash_runs: FLAT_RUNS.view,
+    veil_runs: FLAT_RUNS.view,
     ribbon_verts: FLAT_RIBBON.view,
     point_verts: FLAT_POINT.view,
     view_projection: FLAT_VIEW,
@@ -2426,19 +2426,19 @@ proc nimBuildFrame(
     ms_lines: float32(cost.ms_lines),
     ms_planes: float32(cost.ms_planes),
     ms_sky: float32(cost.ms_sky),
-    ms_ghost: float32(cost.ms_ghost),
+    ms_preview: float32(cost.ms_preview),
     ms_selected: float32(cost.ms_selected),
     count_points: cost.count_points,
     count_points_culled: cost.count_points_culled,
     count_lines: cost.count_lines,
     count_planes: cost.count_planes,
     count_sky: cost.count_sky,
-    count_ghost: cost.count_ghost,
+    count_preview: cost.count_preview,
     count_selected: cost.count_selected,
     ms_build: float32(ms_done - ms_entered),
     ms_furniture: float32(ms_after_furniture - ms_before_furniture),
     # Take scene phase as everything between furniture and flatten.
-    #   Clearing, both passes, ghost and preview, overlay marking.
+    #   Clearing, both passes, preview and preview, overlay marking.
     ms_scene: float32(ms_after_scene - ms_after_furniture),
     ms_flatten: float32(ms_done - ms_before_flatten),
     ms_camera: float32(ms_after_camera - ms_entered),
@@ -2453,15 +2453,15 @@ proc nimBuildFrame(
     ms_placing: float32(spentOn(Side.Placing)),
     ms_emitting: float32(spentOn(Side.Emitting)),
     ms_hover_pick: float32(recordLastFrame().ms_hover_pick),
-    # Split ribbons in records, washes in whole runs.
+    # Split ribbons in records, veils in whole runs.
     #   Instanced draws take ranges of instances.
     ribbon_over: (if MESHES.ribbons.index_overlay.isSome:
       max(0, MESHES.ribbons.count - MESHES.ribbons.index_overlay.get) else: 0),
     ring_over: (if MESHES.rings.index_overlay.isSome:
       max(0, MESHES.rings.count - MESHES.rings.index_overlay.get) else: 0),
     point_over: countOverlay(MESHES.points),
-    wash_run_over: (if MESHES.washes.index_overlay.isSome:
-      max(0, MESHES.washes.count - MESHES.washes.index_overlay.get) else: 0),
+    veil_run_over: (if MESHES.veils.index_overlay.isSome:
+      max(0, MESHES.veils.count - MESHES.veils.index_overlay.get) else: 0),
   )
   # Stamp whole of proc after record is built.
   #   Overlay scans and record's construction fall past `ms_done`, so tail would belong to

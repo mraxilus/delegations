@@ -58,20 +58,20 @@ static:
     &"`mesh.VERTICES_MAX` must hold every point drawn twice, `{2*OBJECTS_MAX}` at this " &
       &"capacity; got `{VERTICES_MAX}`."
   doAssert DISCS_MAX >= 2*OBJECTS_MAX + 1,
-    &"`mesh.DISCS_MAX` must hold every plane drawn twice plus a ghost, " &
+    &"`mesh.DISCS_MAX` must hold every plane drawn twice plus a preview, " &
       &"`{2*OBJECTS_MAX + 1}` at this capacity; got `{DISCS_MAX}`."
   doAssert DOMES_MAX >= 2*OBJECTS_MAX + 1,
-    &"`mesh.DOMES_MAX` must hold every plane at horizon drawn twice plus a ghost, " &
+    &"`mesh.DOMES_MAX` must hold every plane at horizon drawn twice plus a preview, " &
       &"`{2*OBJECTS_MAX + 1}` at this capacity; got `{DOMES_MAX}`."
   doAssert RINGS_MAX >= 2*OBJECTS_MAX + 1,
-    &"`mesh.RINGS_MAX` must hold every plane's rim drawn twice plus a ghost, " &
+    &"`mesh.RINGS_MAX` must hold every plane's rim drawn twice plus a preview, " &
       &"`{2*OBJECTS_MAX + 1}` at this capacity; got `{RINGS_MAX}`."
   # Bind on scene of lines.
   #   Rim is one ring record, so what fills ribbons is two segments `tessellate.addLine`
   #   steps out per anchor, drawn twice.
   doAssert RIBBONS_MAX >= 4*OBJECTS_MAX + 1,
     &"`mesh.RIBBONS_MAX` must hold a scene of lines, each two segments drawn twice, " &
-      &"plus a ghost, `{4*OBJECTS_MAX + 1}` at this capacity; got `{RIBBONS_MAX}`."
+      &"plus a preview, `{4*OBJECTS_MAX + 1}` at this capacity; got `{RIBBONS_MAX}`."
 
 
 
@@ -762,13 +762,13 @@ type Preview* = object ## Define what applying operation would build, ready to d
   geometry*: Multivector ## What operation makes of its operands.
   anchor*: Option[Position] ## Where plane's disc should centre, from `creationAnchor`.
     ## None for every other kind.
-    ## Carried so ghosted plane is drawn exactly where commit will put it.
+    ## Carried so previewed plane is drawn exactly where commit will put it.
   operands*: Option[(int, int)] ## Handles this was derived from.
     ## For camera framing preview to keep in view beside it.
     ## None where there are none to name: staged edit replaces very object it would be
     ## framed against.
-  radius*: float ## Drawn radius ghost takes, where it is point; see `radiusAt`.
-    ## Staged session's own, so editing moon ghosts moon-sized; derived preview takes
+  radius*: float ## Drawn radius preview takes, where it is point; see `radiusAt`.
+    ## Staged session's own, so editing moon previews moon-sized; derived preview takes
     ## `RADIUS_OBJECT_DEFAULT`, what commit gives it.
 
 
@@ -798,9 +798,9 @@ func previewApplying*(
 
 func previewStaging*(geometry: Multivector, radius: float): Preview =
   ## Hold open edit session's staged geometry as preview, at session's own radius.
-  ##   No anchor and no operands: neither front-end draws that ghost about stored point,
+  ##   No anchor and no operands: neither front-end draws that preview about stored point,
   ##   and object it would be framed against is one it replaces; see `Preview`.
-  ##   Radius is staged one, or ghost of moon under edit was drawn at default and read as
+  ##   Radius is staged one, or preview of moon under edit was drawn at default and read as
   ##   grey disc three times its size.
   Preview(
     geometry: geometry, anchor: none(Position), operands: none((int, int)), radius: radius
@@ -994,7 +994,7 @@ func inkCycled*(index: int): Ink = inkCategorical(index mod COUNT_INK_CATEGORICA
 
 func inkNext*(scene: Scene): Ink = inkCycled(scene.index_ink)
   ## Read hue next object built will wear, without taking it.
-  ##   What drag in flight is drawn in, so band, comet and ghost show colour thing being
+  ##   What drag in flight is drawn in, so band, comet and preview show colour thing being
   ##   built will be; see `interaction.inkOfDrag`.
   ##   Peeking and taking are separate because previewing happens every frame.
 

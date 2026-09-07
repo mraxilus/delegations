@@ -278,7 +278,7 @@ Five assignable hues — `Rose, Copper, Olive, Jade, Cobalt` — plus `Backdrop`
 
 **`Invalid` is a reserved magenta**: seeing it means an object is wrong. The drag band wears
 it over a pair that makes nothing (see Interaction Model); nothing else does. It is never
-leaned on alone — magenta reads as *blue* under deuteranopia — and the ghost fails to appear
+leaned on alone — magenta reads as *blue* under deuteranopia — and the preview fails to appear
 beside it. Reserving it cost three hues: `Violet` and `Cerise` measured CVD ΔE 10.2 and 8.3
 from magenta, and `Cobalt`, 88° of hue away, measured **6.6** because blue and magenta
 converge under deuteranopia. `Cobalt` was re-derived lighter and bluer (`#5b90c7`), which
@@ -383,11 +383,11 @@ frame — zero parallax on translation. A full sphere, not a hemisphere: an orbi
 elevated and tilted down, so a dome cut at the horizontal loses sky the camera sees. Grade 4
 is one-dimensional in this algebra, so every horizon plane is the same universal object.
 
-**Draw-order invariant.** Translucent washes blend in scene order with depth writes off, so
+**Draw-order invariant.** Translucent veils blend in scene order with depth writes off, so
 whichever is appended last wins. Both `visualiser.assembleMeshes` and
 `browser_bridge.nimBuildFrame` insert any visible horizon plane's dome **first** (via
 `objects.isHorizonPlane`), so an ordinary plane's fill blends over the sky whatever handles
-they occupy. Two ordinary washes crossing still look order-dependent; accepted.
+they occupy. Two ordinary veils crossing still look order-dependent; accepted.
 
 **Muting.** `mesh.muted()` blends toward the colour's own luminance (`MUTE_DESATURATION`
 0.6) rather than replacing it with `Ink.Grid`, which made a muted object indistinguishable
@@ -479,7 +479,7 @@ floats per point now); the vertex shader turns it into the camera's basis (right
 the eye) and the fragment stage builds the sphere's normal from the disc's unit coordinates
 (`(x, y, √(1−r²))`) and applies Lambert over an ambient floor `FRACTION_AMBIENT_SHADE` =
 0.25 — a quarter, so the night side still reads as a body in its own hue rather than a hole
-in the field. A zero direction draws flat: suns, ghosts, horizon stars, sunless scenes. The
+in the field. A zero direction draws flat: suns, previews, horizon stars, sunless scenes. The
 demo's Sol and every neighbour star shine. Verified by looking: Jupiter's limb faces Sol and
 its moons carry their own terminators at 1.2 units, the desktop draws the same frame, and the
 suite pins nearest-sun choice, the sun's own darkness, a hidden sun shedding nothing, and the
@@ -583,7 +583,7 @@ undo-while-held check caught the drop. Near does not stay scaled: at
 one four-hundredth of a 0.7-unit orbit against a far plane at the scene's reach the ratio
 was 1.8 million, and a 24-bit depth buffer then resolves 3 units at a depth of 300 and 34 at
 1,000 — on the device the points near the horizon striped against the discs seen edge-on and
-distant stars faded behind the washes drawn over them, which read as the sky vanishing on a
+distant stars faded behind the veils drawn over them, which read as the sky vanishing on a
 pinch. `distanceNear` is now raised to hold the ratio at `RATIO_CLIP_MAX` = 100,000 (0.17
 units resolved at 300), and never past half the orbit distance, so the pivot cannot clip
 however far the scene reaches. A 16-bit depth buffer cannot hold this ratio; nothing here
@@ -693,8 +693,8 @@ The rim was the last to move and it was 85% of the demo frame: `SEGMENTS_CIRCLE_
 811 KB walked four times a frame) and 45 ms of a 53 ms frame on 132 planes. As a record the
 demo's median frame went 239 → 84 ms under SwiftShader.
 
-**Wash order is kept, not assumed away**: two translucent washes still blend in scene
-order, so every append extends or opens a `WashRun` and both render paths walk the runs in
+**Veil order is kept, not assumed away**: two translucent veils still blend in scene
+order, so every append extends or opens a `VeilRun` and both render paths walk the runs in
 sequence rather than drawing one whole array after the other. `markOverlay` seals the current
 run. `RingMesh` carries its own `index_overlay`, or a selected plane's second rim would draw
 depth-tested behind the fill it highlights. Rims are drawn straight after object lines
@@ -708,7 +708,7 @@ raising `OBJECTS_MAX` fails to *compile* rather than `doAssert` at draw time (a 
 |---|---|---|
 | `VERTICES_MAX` | 10080 = 2 × `OBJECTS_MAX` | every handle a point, every one selected |
 | `DISCS_MAX`, `DOMES_MAX`, `RINGS_MAX` | 10081 = 2 × `OBJECTS_MAX` + 1 | every handle a plane, |
-|  |  | every one selected, plus a ghost |
+|  |  | every one selected, plus a preview |
 | `RIBBONS_MAX` | 20161 = 4 × `OBJECTS_MAX` + 1 | every handle a line, two segments, drawn twice |
 
 The furniture set's own binding case is `LINES_GRID_MAX` lattice lines per family. The
@@ -728,7 +728,7 @@ input from 204,352 floats to about 9,000; the win is the class, since the conver
 with the scene.
 
 Draw order in `glue.js` mirrors `renderer.nim` and is kept in step by hand: furniture
-ribbons, then scene ribbons and points, then rings, then washes with `depthMask(false)`.
+ribbons, then scene ribbons and points, then rings, then veils with `depthMask(false)`.
 
 *Checked.* Verified by suite: the widening reference against the algebra; every stepped disc,
 dome and ring corner against the sum it replaced; all ninety-six rim segments on the plane
@@ -807,9 +807,9 @@ another by depth exactly as the main pass does. With the test off, emission orde
 among them — `SELECTION` in pick order — and a planet selected after its moon buried the
 moon standing in front of it (verified on the browser: the pixel at Io's centre, Io in
 front of Jupiter at the frame's middle, reads Io's colour with Io alone selected and with
-Jupiter selected too; before, Jupiter's blue). Washes write no depth in this pass either,
+Jupiter selected too; before, Jupiter's blue). Veils write no depth in this pass either,
 as in the main one. A second pass rather than a tail on each kind: the tail left a selected
-line tinted by a later wash. A watermark rather than a third `MeshSet`, because a set
+line tinted by a later veil. A watermark rather than a third `MeshSet`, because a set
 reserves every cap up front for a run that is usually one object. On the desktop marks draw
 on Dear ImGui's **background** list, beneath the panels, exactly as the object is; the drag
 menu alone stays on the foreground list, since it is a control being steered.
@@ -1256,10 +1256,10 @@ since both came down, and the slop itself is not zoomed: the zoom starts from th
 where the slop was crossed, without a jump. Verified by the driven two-finger pan: the pivot
 moves across its level and the distance and height do not change at all.
 
-**The edit ghost is drawn at the session's own radius.** `Preview` carries a radius
-(`previewStaging(geometry, radius)`), fed by `nimSetGhost(coefficients, radius)` on the
+**The edit preview is drawn at the session's own radius.** `Preview` carries a radius
+(`previewStaging(geometry, radius)`), fed by `nimSetPreviewStaged(coefficients, radius)` on the
 browser and the panel's staged session on the desktop; a derived preview takes
-`RADIUS_OBJECT_DEFAULT`, what commit gives it. Before this the ghost took the default, so
+`RADIUS_OBJECT_DEFAULT`, what commit gives it. Before this the preview took the default, so
 editing a moon of 0.03 drew a grey disc nearly three times its size over it.
 
 **Edit from the selection menu waits for its row.** The objects list builds in time-bounded
@@ -1303,9 +1303,9 @@ measurement crossed a point lying *on* its paired line and read zeros from the f
 which is why `GENERAL_FIRST`/`GENERAL_SECOND` are separate from the random operand sets.
 
 **The drag shows its answer before committing it**: `Interaction.preview` holds what a
-release right now would build, drawn as a ghost in `INK_GHOST` (= `Ink.Guide`) through the
-same `addObject` an edit session's ghost uses, at `preview_anchor` from the same
-`creationAnchor` call the commit makes (or a ghosted plane jumps to its anchor the instant
+release right now would build, drawn as a preview in `INK_PREVIEW` (= `Ink.Guide`) through the
+same `addObject` an edit session's preview uses, at `preview_anchor` from the same
+`creationAnchor` call the commit makes (or a previewed plane jumps to its anchor the instant
 the release lands). It answers for the wedge being aimed at: `updateDrag` resolves through
 `choosing()` where a wheel is open and `proposalFor` where none is, and `choosing` is the
 one statement of which wedge the cursor is in, read by the preview, the release and both
@@ -1369,7 +1369,7 @@ snapshot refreshed when the selection changes.
 **A picker offers symbols alone** (`notationSymbolic`), not the whole catalogue entry, and
 **opens on what was last applied at its own arity** (`OperationMemory`, attitude for one
 operand, wedge for two; per arity because the two lists are disjoint). **Every apply control
-ghosts its answer while the reader is still choosing**: `scene.Preview` is the one statement
+previews its answer while the reader is still choosing**: `scene.Preview` is the one statement
 of a construction not yet committed (geometry, anchor, operand handles), built by
 `previewApplying`, and the drag's own preview is the same type by the same call. Where a
 session and a preview both stand, **the session wins** (`staged`, once per front-end). The
@@ -1393,7 +1393,7 @@ before the tap resolves.
 
 *Checked.* Verified by suite: every cell of the drag table and the at-most-one property,
 exhaustively; the click rule; the dwell restarting on movement and surviving a drift under
-the slop; the ghost's anchor equal to the created object's; the ink cycle stepping on release
+the slop; the preview's anchor equal to the created object's; the ink cycle stepping on release
 and not on click. Verified by driven checks: the tint table at each wedge stop
 (`nimDragTint` reading neutral `(0.286, 0.322, 0.400)`, magenta `(0.612, 0, 0.722)`, the
 next hue); shift-clicks held 600 ms selecting; the sub-slop touch drag hovering 2 with the
@@ -1433,7 +1433,7 @@ Both front-ends abandon their camera tween on a successful step, or the standing
 the view straight back off the placement just restored.
 
 Seeded wherever the scene is (re)initialised, so undo never reaches past the moment
-tracking began. A successful step clears the selection and any ghost. Bound to Ctrl/Cmd+Z,
+tracking began. A successful step clears the selection and any preview. Bound to Ctrl/Cmd+Z,
 Ctrl/Cmd+Shift+Z and Ctrl+Y on both builds, through one function per build rather than the
 button — routing through `button_undo.click()` depended on a `disabled` attribute refreshed
 on the low-cadence tick.
@@ -1965,7 +1965,7 @@ next began:
 - **Purity** (STYLE §1, §2): every proc that compiles as `func` demoted, 148 of them;
   `strictFuncs` in every module including the tools.
 - **Form** (VI.1, X.2–X.4): every foreign binding documented; nesting past three deep split
-  (option parsing, help tab, wash runs, renderer setup); multi-line constructors one field per
+  (option parsing, help tab, veil runs, renderer setup); multi-line constructors one field per
   line; banners and definitions spaced by tier.
 - **Cost** (VII, STYLE §4): the six overlay exports asked per frame answer from module flat
   buffers.
@@ -2164,7 +2164,7 @@ Known Limitations
 ---
 - No human has run either build. Every result here is software-rendered and machine-driven.
 - Tab landing on a desktop widget is unverified (see Hold Feedback, Help And Keys).
-- Two crossing translucent washes blend order-dependently.
+- Two crossing translucent veils blend order-dependently.
 - A camera move is not undoable on its own.
 - The comet's residual steps at fast orbit rates are unexplained (see Selection And Markers).
 - Neither catalogue is checked against its archive by any tool.

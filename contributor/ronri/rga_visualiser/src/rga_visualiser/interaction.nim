@@ -7,8 +7,8 @@
 ##   Left button decides, right asks, over same set of choices; neither reaches anything
 ##   other cannot.
 ## What drag applies is decided at release, from operands, not from button that started it.
-##   `proposalFor` reads two grades, and drag shows its answer as ghost before committing.
-## Ghost is always what letting go right now would commit.
+##   `proposalFor` reads two grades, and drag shows its answer as preview before committing.
+## Preview is always what letting go right now would commit.
 ##   Wedge cursor stands in once wheel is open and entered; `proposalFor`'s answer where
 ##   none is, dwell wheel nobody has entered included; see `endDrag`.
 ##   `Interaction.proposal` holds that one answer, `endDrag` obeys it, and `ReleaseEffect`
@@ -276,7 +276,7 @@ type
       ## None where release commits nothing: over no pivot, or at centre of menu that may
       ## veto.
       ##   Unentered dwell wheel may not, so pair's answer stands; see `endDrag`.
-    preview*: Option[Preview] ## What proposal would make, for each render path to ghost.
+    preview*: Option[Preview] ## What proposal would make, for each render path to preview.
       ## `scene.Preview`, same construction both apply pickers offer.
       ## None over nothing, over own source, over pair making nothing (only warning before
       ## refused release), and over `More`, which builds nothing itself.
@@ -556,7 +556,7 @@ func proposalFor*(m, n: Multivector): Option[DragChoice] =
 func choosing*(interaction: Interaction): Option[DragChoice] =
   ## Say which wedge of open menu cursor stands in.
   ##   None where no menu is open and none where cursor has come back to open one's centre.
-  ##   One statement of which wedge, so highlight each front-end draws, ghost `updateDrag`
+  ##   One statement of which wedge, so highlight each front-end draws, preview `updateDrag`
   ##   shapes and object `endDrag` commits are never three opinions.
   if interaction.menu.isNone: return none(DragChoice)
   choiceAt(interaction.menu.get, interaction.cursor)
@@ -597,7 +597,7 @@ func inkOfDrag*(interaction: Interaction, ink_next: Ink): Ink =
   ## Tint rubber-band of drag in progress by what releasing it would do.
   ##   One state per `ReleaseEffect`: neutral, reserved `Ink.Invalid` magenta for refusal,
   ##   and hue new object will actually be for build.
-  ##     Warning arrives before release, and never by colour alone, since ghost
+  ##     Warning arrives before release, and never by colour alone, since preview
   ##     simultaneously fails to appear.
   ##   With wheel open all three are reachable without leaving pivot.
   ##     Centre is neutral where wheel may veto; unentered dwell wheel's centre keeps build
@@ -1054,8 +1054,8 @@ func updateDrag*(
   ##   Called after `updateHover`, which decides where drag points.
   ##   Preview is whatever release would commit: wedge cursor stands in while menu is open,
   ##   `proposalFor`'s answer where none is.
-  ##     One rule, drawn then obeyed; ghosting plain-release answer under open wheel had
-  ##     reader aiming at `meet` watch ghost of `join`.
+  ##     One rule, drawn then obeyed; previewing plain-release answer under open wheel had
+  ##     reader aiming at `meet` watch preview of `join`.
   if not interaction.is_dragging:
     interaction.is_over_target = false
     interaction.proposal = none(DragChoice)
@@ -1109,7 +1109,7 @@ func updateDrag*(
     interaction.settled = interaction.cursor
 
   # Open menu before resolving release, since with one open answer is wedge cursor stands in.
-  #   Resolved after, opening frame ghosted plain-release answer under wheel already
+  #   Resolved after, opening frame previewed plain-release answer under wheel already
   #   standing over centre, which chooses nothing.
   let is_menu_due = case interaction.arming
     of MenuArming.Never: false
@@ -1133,8 +1133,8 @@ func updateDrag*(
         interaction.arming == MenuArming.OnDwell:
       proposalFor(m, n)
     else: interaction.choosing
-  # Ghost through `scene.previewApplying`, same call both apply pickers offer from.
-  #   Gesture's ghost and picker's ghost are one thing, anchor included; `More` previews
+  # Preview through `scene.previewApplying`, same call both apply pickers offer from.
+  #   Gesture's preview and picker's preview are one thing, anchor included; `More` previews
   #   nothing.
   let drag = if interaction.proposal.isSome: toDrag(interaction.proposal.get)
     else: none(DragOperation)
@@ -1236,7 +1236,7 @@ func endDrag*(
   ##     wheel nobody entered, which may not veto: there release takes `proposalFor`'s
   ##     answer as if wheel never opened.
   ##     With no menu, `proposalFor`'s answer.
-  ##     Either way what `interaction.proposal` holds and what preview has ghosted;
+  ##     Either way what `interaction.proposal` holds and what preview has previewed;
   ##     `updateDrag` resolves in same order, off `choosing`.
   ##   Wedge resolved here rather than in each render path, so neither can disagree about
   ##   which wedge release landed in.
@@ -1274,7 +1274,7 @@ func endDrag*(
     #   Right press asked for wheel, so lifting at centre withdraws, as does lifting there
     #   after walking into wedge on any wheel.
     #   Dwell wheel arrives unasked under finger pausing to aim, covered by that finger;
-    #   reading release as "chose nothing" before first entry eats build ghost promised.
+    #   reading release as "chose nothing" before first entry eats build preview promised.
     #   Pausing before lifting is common touch release, and it built nothing every time.
     if interaction.is_menu_entered or interaction.arming != MenuArming.OnDwell:
       return DragOutcome(message: "Released without choosing; nothing done.")

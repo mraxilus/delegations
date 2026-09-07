@@ -15,7 +15,7 @@ const count_objects = elementById('objects-count');
 /* Edit session: one at time, in one of two modes -- composing brand-      */
 /* new object (`handle` null, nothing backing it in scene yet) or            */
 /* editing existing one. Both stage same four things and preview           */
-/* through same ghost; only `save` reaches scene. State lives here         */
+/* through same preview; only `save` reaches scene. State lives here         */
 /* rather than in row's own closures because `refreshObjectsUI`            */
 /* rebuilds every row from scratch, which would otherwise discard it.      */
 /* ---------------------------------------------------------------------- */
@@ -53,7 +53,7 @@ function beginEditSession(handle: number | null) {
         radius: nimObjectRadius(handle),
         shines: nimObjectShines(handle),
       };
-  nimSetGhost(openSession().coefficients, openSession().radius);
+  nimSetPreviewStaged(openSession().coefficients, openSession().radius);
 }
 
 // Read session caller has already established is open.
@@ -69,7 +69,7 @@ function openSession(): EditSession {
 
 function endEditSession() {
   session_edit = null;
-  nimClearGhost();
+  nimClearPreviewStaged();
 }
 
 // Two rows that are not object: note shown to empty list, and row.
@@ -363,7 +363,7 @@ function buildObjectRow(handle: number | null) {
     field_label.className = 'field';
     field_label.innerHTML = '<label>label</label>';
     // Write every field below into session, never scene.
-    //   Row's own swatch, label and coefficient line preview change, ghost previews
+    //   Row's own swatch, label and coefficient line preview change, preview previews
     //   geometry, and only `save` above reaches `SCENE`.
     const input_label = document.createElement('input');
     input_label.type = 'text';
@@ -416,7 +416,8 @@ function buildObjectRow(handle: number | null) {
       const typed = parseFloat(input_radius.value);
       openSession().radius = Number.isFinite(typed) && typed >= nimLeastRadius()
         ? typed : nimDefaultRadius();
-      nimSetGhost(openSession().coefficients, openSession().radius); // Ghost shows size too.
+      // Preview shows staged size too, not just staged place.
+      nimSetPreviewStaged(openSession().coefficients, openSession().radius);
     });
     field_radius.appendChild(input_radius);
     box_edit.appendChild(field_radius);
@@ -456,11 +457,11 @@ function buildObjectRow(handle: number | null) {
           : nimObjectCoefficients(handle)[b] ?? 0),
     );
     inputs_coefficient.forEach((input, b) => {
-      // `input`, not `change`: ghost tracks keystroke rather than waiting for.
+      // `input`, not `change`: preview tracks keystroke rather than waiting for.
       //   field to blur, which is what makes preview feel live.
       input.addEventListener('input', () => {
         openSession().coefficients[b] = parseFloat(input.value) || 0;
-        nimSetGhost(openSession().coefficients, openSession().radius);
+        nimSetPreviewStaged(openSession().coefficients, openSession().radius);
         line_coefficient.textContent = describeStaged();
       });
     });
