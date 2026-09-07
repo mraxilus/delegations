@@ -18,6 +18,25 @@ outside your project.
 5. `curator/probe/` is a complete worked example of the project shape: nimble file, source,
    matrix tests, provenance, glossary. `curator/audit/tests/` is a larger suite.
 
+## Every session begins here
+
+Two reads, before any other work.
+
+- **Issues labelled with your role.** Filter the open issues on
+  `contributor/<domain>/<project>`, spelled exactly as your `**Role:**` line. A curator who
+  reads your project raises what they find there, because they may not edit your source; the
+  Architect may put a question there too. Each is a proposal, never an instruction. Judge it:
+  what is asked, whether it is right, what it costs to do and to decline. Write that **as a
+  comment on the issue**, so the reasoning survives the conversation it was decided in, and the
+  owner decides. Disagreeing, with your reasons on the issue, is a complete answer; silence is
+  not.
+- **Answered issues that are still open.** Read the list again for issues whose answering pull
+  request has already merged, and **close each by hand**, with a comment naming that pull
+  request and what shipped. `Closes #N` usually does this for you and is not to be relied on:
+  it silently did nothing for issues 25 and 26 while a repository setting was off, and both sat
+  answered and open until somebody noticed. Left alone they accumulate, and the list above —
+  the one thing that tells you what is waiting — stops being worth reading.
+
 ## Boundaries
 
 - **Scope.** Only paths under `contributor/<domain>/<project>/`. The CI job `scope` fails on
@@ -25,15 +44,23 @@ outside your project.
   projects are not yours, even to fix a typo. The owner may merge a red check deliberately;
   never count on it.
 - **Blocked by a rule or a check.** Do not work around it and do not edit the rule.
-  **Open a GitHub issue** from the process-change template. Say what is blocked, which rule
-  stands in the way, what you tried and rejected, what you propose, and what it costs to
-  decline. A curator reads open issues at the start of every session, judges the request,
-  answers on the issue and reports it to the Architect. You may also tell the Architect, to
-  make it faster; nothing depends on your doing so, and no request is lost by your not.
+  **Open a GitHub issue** from the process-change template, which labels it `curator` for you.
+  Say what is blocked, which rule stands in the way, what you tried and rejected, what you
+  propose, and what it costs to decline. A curator reads issues labelled `curator` at the start
+  of every session, judges the request, answers on the issue and reports it to the Architect.
+  You may also tell the Architect, to make it faster; nothing depends on your doing so, and no
+  request is lost by your not.
   The curator changes rules; you do not. Nor do they change your code: a curator branch may
   write only your `README.md`, `PROVENANCE.md` and `GLOSSARY.md`, and the `scope` job holds
   them to it. An answer arrives as a changed rule or check for you to apply, never as an
   edit to your source.
+- **When a curator raises something.** A curator may read your project as deeply as they like
+  and may not change a line of it, so what they find arrives as an issue labelled with your
+  role: the finding, its evidence, why it matters, and what it costs to leave. Weigh it as you
+  would your own design question and answer on the issue — agreeing, disagreeing with your
+  reasons, or proposing something else. You and the Architect settle it; the curator does not,
+  and nothing obliges you to implement a finding you have argued against. What you do take on,
+  you implement in your own pull request, saying `Closes #N`.
 - **Which channel.** An `## Open questions` entry in `PROVENANCE.md` is about **your
   project's own design**: what you left undecided, recorded for whoever picks it up. An
   **issue** is about **the shared process**: a rule, a check, or a capability the repository
@@ -43,7 +70,9 @@ outside your project.
 - **Say which role you are.** Every session here posts to GitHub as the same account, so the
   account says nothing about who is speaking. Open every issue, pull request and comment
   with your role: `**Role:** contributor/<domain>/<project>`. Nothing checks this — GitHub
-  is not this repository — so it holds because you write it.
+  is not this repository — so it holds because you write it. Your issue label is that same
+  string. Copy it, never compose it: applying a label creates it, so a misspelling makes a
+  second label nobody filters on rather than an error you would notice.
 - **Language.** Nim. TypeScript only where JavaScript is unavoidable (a browser or Node
   host); C++ or C only where no Nim import expresses the library. Never plain JavaScript,
   never Python. Each such file argues for itself in its opening comment, on the phrase
