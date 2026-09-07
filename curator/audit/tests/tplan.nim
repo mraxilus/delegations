@@ -60,6 +60,50 @@ suite "Plan":
     #   checked changed, and that reaches this check exactly as it reaches compiling.
     check both.nodeDirs(testSet(DIRS, ["koch.nim"])) == @[ALPHA_DIR]
 
+  test "project gains driven checks by carrying that verb, read from its own driver":
+    # Nothing lists which project is driven either: koch reads driver's own dispatch, so
+    #   verb arriving is what selects project, exactly as manifest is for type check.
+    const DRIVER = ALPHA_DIR & "/tools/build.nim"
+    check goodTree().verbDirs(DIRS, "drive").len == 0  # fixture carries no driver
+    let quiet = goodTree().with(entry(DRIVER,
+      "case paramStr(1)\n" &
+      "of \"web\": web()\n" &
+      "else:\n"))
+    check quiet.verbDirs(DIRS, "drive").len == 0  # driver without verb drives nothing
+    check quiet.verbDirs(DIRS, "web") == @[ALPHA_DIR]
+    let driven = goodTree().with(entry(DRIVER,
+      "case paramStr(1)\n" &
+      "of \"web\": web()\n" &
+      "of \"drive\": drive()\n" &
+      "else:\n"))
+    check driven.verbDirs(DIRS, "drive") == @[ALPHA_DIR]
+    # Verb named past dispatch's `else` is another case's, never this project's.
+    let after = goodTree().with(entry(DRIVER,
+      "case paramStr(1)\n" &
+      "of \"web\": web()\n" &
+      "else:\n" &
+      "of \"drive\": drive()\n"))
+    check after.verbDirs(DIRS, "drive").len == 0
+
+  test "driven set filters what plan already selected, so it inherits every scoping":
+    const DRIVER = ALPHA_DIR & "/tools/build.nim"
+    let tree = goodTree().with(entry(DRIVER,
+      "case paramStr(1)\n" & "of \"drive\": drive()\n" & "else:\n"))
+    # Record change selects nothing to compile, so it selects nothing to drive.
+    check tree.drivenOnly(tree.jobs([ALPHA_DIR & "/PROVENANCE.md"])).len == 0
+    let selected = tree.drivenOnly(tree.jobs([ALPHA_DIR & "/src/alpha.nim"]))
+    check selected.len == 1
+    check selected[0].dir == ALPHA_DIR
+    check selected[0].pin == PIN  # driven job installs project's own pin, as `tests` does
+    # Change to project carrying no driven verb selects that project and drives nothing.
+    check tree.drivenOnly(tree.jobs([AUDIT_DIR & "/tests/taudit.nim"])).len == 0
+    # Checker change selects every project, so it drives driven ones: how each is checked
+    #   changed, and that reaches this check exactly as it reaches compiling.
+    check tree.drivenOnly(tree.jobs([CHECKER_DIR & "/plan.nim"])) == selected
+    # Sweep and whole-repository runs narrow to driven ones too, rather than driving all.
+    check tree.drivenOnly(tree.allJobs) == selected
+    check tree.drivenOnly(tree.sweepJobs([ALPHA_DIR & "/src/alpha.nim"])) == selected
+
   test "checker change selects every project, because how each is checked changed":
     check testSet(DIRS, ["koch.nim"]) == @DIRS  # driver
     check testSet(DIRS, ["koch.nim.cfg"]) == @DIRS  # driver flags

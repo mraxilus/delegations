@@ -22,6 +22,18 @@ suite "Article IX":
     check runIn(root, "true", []) == 0  # success
     check runIn(root, "false", []) == 1  # failure
 
+  test "IX.6 declared packages are read as lines, and only bare names count":
+    # `system` verb's contract is one bare name per line. Only other thing reaching that
+    #   stream is compiler complaining, which always spells position before its message, so
+    #   line carrying whitespace is dropped rather than installed.
+    let root = createTempDir("delegations_", "_lines")
+    defer: removeDir(root)
+    check linesIn(root, "printf", ["curl\ncoreutils\n"]) == @["curl", "coreutils"]
+    check linesIn(root, "printf", ["curl\n\n\ncoreutils\n"]) == @["curl", "coreutils"]
+    check linesIn(root, "printf", ["b.nim(3, 5) Warning: x\ncurl\n"]) == @["curl"]
+    check linesIn(root, "printf", [""]).len == 0  # verb printing nothing declares nothing
+    check linesIn(root, "false", []).len == 0  # verb that failed contributes nothing
+
   test "IX.6 testament drives each project and reports failures":
     let root = createTempDir("delegations_", "_projects")
     defer: removeDir(root)
