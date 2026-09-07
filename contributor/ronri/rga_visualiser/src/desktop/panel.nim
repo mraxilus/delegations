@@ -636,11 +636,6 @@ proc layoutTopBar*(panel: var Panel, scene: var Scene, now: float) =
   gui.sameLine()
   discard gui.checkbox("grid", addr panel.is_grid_shown)
   gui.tooltip("Toggle the reference grid at z = 0.")
-  gui.sameLine()
-  gui.tooltip(
-    "Draw every multivector this frame computed, in its true form -- a plane as the " &
-    "infinite lattice it is, not the disc that stands for one."
-  )
 
   widthPushField()
   fieldLabel("scene file")
