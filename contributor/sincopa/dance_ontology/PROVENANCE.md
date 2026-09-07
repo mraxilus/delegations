@@ -160,6 +160,28 @@ keep a flip from passing unseen. Verified: the fix moved exactly two drawings of
 the review page and eight of the 273 on the single-turn page, and nothing on the frame, sign
 or hand-to-hand pages.
 
+**A break that leaves a sliver draws a dot, and a dot says the opposite of a break.** A
+connection is stroked with a round cap, so a painted piece of no length is still drawn -- as a
+disc as wide as the line. Three places left such a piece. `gapFor` dropped a break only where
+the gap would hang off the end of the reach, so a crossing a hair inside that threshold kept a
+full-width gap and left the line joined to its hand by a stub of 0.01; the moving reach's dash
+pattern left a hair of paint at the seam between a reach's two shades, and another where two
+breaks nearly met; and the pattern is measured along the sampled polyline but spent along the
+smoothed curve drawn through it, which is about half a per cent longer, so a gap stopping at
+the polyline's end left the curve's own tail painted. Each drew a dot: at a hand it read as the
+connection detached from it, and inside a break it sat on the crossing the break exists to
+show, so the two connections read as passing through one another. The Architect saw both on the
+hand-to-hand chain, swan to diamond. `SEEN_RUN` now names the least piece that reads as a line;
+`gapFor` narrows a break rather than dropping it, keeping that much line at each hand, and gives
+up only where the gap would be narrower than the line it hides; and the dash pattern gives any
+shorter piece at a seam to the break, running it a stroke past the polyline's end. Rejected:
+widening the suppression threshold, which would have drawn more crossings with no break at all
+-- the opposite of what rule 14 asks. Verified by `tmarks.nim`, which drives the build: every
+piece a break leaves is now nothing at all or at least `SEEN_RUN`, over every frame of every
+edge of every manner. Cost: breaks near a hand are shorter than breaks in the middle, where
+before they were all one length. The fix moved 12 of the 99 cards -- the four swan stills, whose
+straight connection crosses close to a hand, and all eight moving chain cells.
+
 **The map and the spokes are the same picture at two distances.** `map.nim` draws the whole
 ontology with every line laid down before any word, names cut into the line with round caps
 (never painted over, since a hole in a line now means a connection passes underneath), and
@@ -581,3 +603,17 @@ Header states situation honestly, so nothing is hidden; rule now says where thos
 instead. Raised as issue 62, labelled for this project, since source is contributor's and
 `scope` holds curator to that. This project carries `tools/build.nim` already, so declaration
 has home waiting.
+
+## Re-audit, 2026-09-07, system and driven verbs
+
+Audited against the rule as it now stands: system dependencies are declared as data in the
+project's own `tools/build.nim` and reached by a verb **named `system`**, which prints the names
+one per line and nothing else, since `koch system` feeds that output to an installer; and a
+project enrols in the driven check by carrying a verb **named `drive`** in the same driver.
+
+Neither changes this project's standing. It carries no TypeScript and no driven page, so `drive`
+does not apply. It still does not declare its system dependencies at all -- `design/shot.nim`
+names two absolute paths into one machine's layout, recorded above and raised as issue 62 --
+so the rule's new precision about the verb's name and output shape lands on a declaration that
+has yet to be written. The situation is unchanged; only what compliance will have to look like
+is sharper.
