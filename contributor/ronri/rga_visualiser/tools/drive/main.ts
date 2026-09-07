@@ -35,6 +35,10 @@ import {
   driveLoadedAccounting, drivePinPickLoaded, drivePlacingCost, driveTimelineCost,
   driveUndoDrawn,
 } from './loaded';
+import {
+  driveEditFromMenu, driveObjectsList, drivePerFrame, driveReconcile, driveTickCadence,
+  driveTickWrites,
+} from './objects';
 import { driveComet } from './comet';
 import { drivePhaseSums, driveTree } from './diagnostics';
 import { driveAxis, driveAxisGlide, driveCurve, driveScaleSwitch } from './exceedance';
@@ -156,6 +160,12 @@ async function main(): Promise<void> {
   await driveUndoDrawn(page);
   await drivePinPickLoaded(page, MILLISECONDS_PICK_HOVER);
   await driveLoadedAccounting(page, errors_page);
+  await driveObjectsList(page, objects_largest);
+  await driveEditFromMenu(page);
+  await driveReconcile(page);
+  await driveTickWrites(page);
+  await driveTickCadence(page);
+  await drivePerFrame(page);
 
   // Page erroring at all is failure, whatever every check above said.
   report('the page raised no error', errors_page.length === 0, errors_page.join(' | '));
