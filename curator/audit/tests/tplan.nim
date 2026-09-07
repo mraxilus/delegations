@@ -35,6 +35,31 @@ suite "Plan":
     check testSet(DIRS, [ALPHA_DIR & "/PROVENANCE.md", ALPHA_DIR & "/src/a.nim"]) ==
       @[ALPHA_DIR]
 
+  test "project gains type check by carrying node manifest and its lock":
+    # Nothing lists which project is type-checked: `check.yml` names no project, exactly as
+    #   it names none for compiler matrix, so derivation is only place truth lives.
+    check goodTree().nodeDirs(DIRS).len == 0  # fixture carries neither file
+    let manifest = goodTree().with(entry(ALPHA_DIR & "/package.json", "{}\n"))
+    check manifest.nodeDirs(DIRS).len == 0  # manifest without lock pins no tool, so no
+    let both = manifest.with(entry(ALPHA_DIR & "/package-lock.json", "{}\n"))
+    check both.nodeDirs(DIRS) == @[ALPHA_DIR]
+    # Lock alone names no tools to install, so it selects nothing either.
+    check goodTree().with(entry(ALPHA_DIR & "/package-lock.json", "{}\n")).nodeDirs(DIRS).len == 0
+
+  test "type check is scoped as compiling is, so records propagation type-checks nothing":
+    let both = goodTree().with(
+      entry(ALPHA_DIR & "/package.json", "{}\n"),
+      entry(ALPHA_DIR & "/package-lock.json", "{}\n"),
+    )
+    # `ci` narrows to changed projects first, then to node ones; record change narrows away.
+    check both.nodeDirs(testSet(DIRS, [ALPHA_DIR & "/PROVENANCE.md"])).len == 0
+    check both.nodeDirs(testSet(DIRS, [ALPHA_DIR & "/src/alpha.nim"])) == @[ALPHA_DIR]
+    # Change to other project selects that project alone, and it carries no manifest.
+    check both.nodeDirs(testSet(DIRS, [AUDIT_DIR & "/tests/taudit.nim"])).len == 0
+    # Checker change selects every project, so it type-checks node ones too: how each is
+    #   checked changed, and that reaches this check exactly as it reaches compiling.
+    check both.nodeDirs(testSet(DIRS, ["koch.nim"])) == @[ALPHA_DIR]
+
   test "checker change selects every project, because how each is checked changed":
     check testSet(DIRS, ["koch.nim"]) == @DIRS  # driver
     check testSet(DIRS, ["koch.nim.cfg"]) == @DIRS  # driver flags

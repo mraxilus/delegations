@@ -21,6 +21,14 @@ import std/[os, osproc, strtabs]
 import ./findings
 
 
+const
+  DRIVER_FILE* = "tools/build.nim"
+    ## Build driver project carries, holding verbs koch has none of.
+  TYPES_VERB* = "types"
+    ## Verb type-checking project's own scripts, deriving what they read first, and
+    ## stopping before anything needing browser. Named here and in CONTRIBUTOR.md.
+
+
 type Target* = object
   ## Define one project to run, with toolchain serving its pin.
   dir*: string  ## Project directory, repository-relative.
@@ -67,6 +75,25 @@ proc runIn*(dir, program: string, args: openArray[string], bin = ""): int =
   )
   result = process.waitForExit
   process.close
+
+
+proc runTypes*(root: string, targets: openArray[Target]): seq[Finding] =
+  ## Type-check each project's own scripts, through build driver that project carries.
+  ##   Verb is project's, never koch's: what type-checking needs differs per project, and
+  ##   driver already derives its declarations first. koch names verb and nothing else.
+  for target in targets:
+    echo "== " & target.dir
+    let code = runIn(
+      root / target.dir,
+      target.bin.nimOf,
+      ["r", "--hints:off", DRIVER_FILE, TYPES_VERB],
+      target.bin,
+    )
+    if code != 0:
+      result.add finding(
+        target.dir & "/" & DRIVER_FILE, 0,
+        "Type check failed; got exit `" & $code & "`.",
+      )
 
 
 proc runTests*(root: string, targets: openArray[Target]): seq[Finding] =
