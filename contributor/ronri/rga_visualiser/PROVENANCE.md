@@ -140,6 +140,23 @@ pivot 32.5 units at unchanged height; frame is assembled in 0.7 ms median, 0.9 m
 slowest tenth; hover pick over largest demo runs 2.0 ms median; edit past timeline capacity
 costs 2.5 ms over 5,038 objects; closed rows hold 9.1 elements each over 5,040 of them.
 
+**Accounting allows two frames of its sample to miss, as count rather than share.** Share of
+0.995 was written after demanding *every* frame failed, and never took effect: `ceil(0.995n)`
+equals `n` for every `n` under 200. Both call sites define what "enough frames accounted" means,
+and neither can be fixed by growing sample -- misses are per frame, so larger sample brings
+proportionally more chances to straddle collection and proportional allowance never pulls ahead.
+Ruled on repository issue 47; one definition now, exported from `scenery` and imported by
+`loaded`, since two copies are what let one site stay inert.
+  Measured either side, which is what says where it bites: `scenery`'s sample is 485-549 frames,
+  above 200, so share already allowed two there and count reproduces it exactly. `loaded`'s
+  sample is 49-50, capped by its own sampling loop stopping at 25 heavy frames, so share allowed
+  *zero* and count now allows two. Failing check was `loaded`'s, and that is why.
+  Per-frame tolerances are untouched, and deliberately: every bit of detection power is in them,
+  and real accounting fault misses on every frame rather than hiding inside two.
+  Improvement is shape rather than rate. Two frames should put red runs near one in thousand if
+  misses are independent, and materially worse if they cluster -- scheduler pause or collection
+  cycle producing two straddles together is plausible and unmeasured.
+
 **Timing-dependent quantities are asserted as bands, never figures.** How far held key
 travels depends on frames drawn while it was down. Band that will not settle is widened with
 reason recorded, never deleted and never narrowed to fit one lucky run.
