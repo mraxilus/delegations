@@ -50,6 +50,18 @@ Open Questions
 Recorded here and in the pull request body, per CONTRIBUTOR.md: a contributor neither works
 around a rule nor edits it.
 
+**Vocabulary rename left stragglers in constants, and they are still there.** Tasks 175-181
+renamed by word, which uppercase constants and compound identifiers do not match. Surviving in
+already-merged code: `WIDTH_SHAPE_WORD` in `scene.nim`, `ALPHA_WASH` and `ALPHA_WASH_SKY` in
+`mesh.nim` with their uses in `tessellate.nim`, and `GHOST`, `RADIUS_GHOST` and `FLAT_TARGET` in
+`bridge.nim`. Every one names term GLOSSARY.md marks *Avoid*.
+  Found by porting panel, which had to reach `WIDTH_SHAPE_WORD` and could either import retired
+  term into new file or invent name core does not define. Took former, since new code disagreeing
+  with core is worse than new code agreeing with core's own imperfection.
+  Not fixed here: it touches shared core and browser bridge, which is not this port's scope, and
+  bundling it would widen desktop pull request into modules it otherwise never opens. Wants its
+  own pass, over every uppercase name, with compiler as check exactly as it was here.
+
 **System packages have no declared home in this repository.** Nim packages are declared in
 `rga_visualiser.nimble` and pinned by `atlas.lock`; node packages in `package.json`, pinned by
 `package-lock.json`. Desktop front-end links against SDL3, libGL and zlib, drives itself
@@ -388,6 +400,22 @@ stale after reader edits coefficient.
   implementation: one tessellation, two renderers, and disagreement between them is bug in one.
   That check cannot run until entry point drives both; nothing here has drawn yet.
 
+**Panel lays out what reader edits scene and camera through, and holds only what GUI needs
+between frames.** Which operands are picked, what open edit is staging, where to export;
+everything else is read straight off scene and camera, so there is one source of truth and no
+synchronisation step to go stale.
+
+**Vocabulary rename reached these three modules through compiler rather than through reader.**
+Renderer and panel both predate tasks 175-181, so they arrived saying `wash`, `slot`, `target`,
+`Item` and `ghost`. Core says `veil`, `handle`, `pivot`, `Object` and `preview`, so unported file
+does not compile at all -- and it named every miss. Two passes of word-boundary rename missed
+compounds each time (`WashRuns`, `WashKind`, `drawWashRun`; then `ITEMS_MAX`, `describeShape`,
+`shapeText`), and build reported each by name. That is stronger check than review, and it is why
+these were taken before entry point, which imports everything.
+  One `budget` in renderer was left alone deliberately: project renamed *budget* to *mark* for
+  frame-time marks, and that use was ordinary English about cost rather than term of art.
+  Reworded around instead, so retired word is simply absent.
+
 *Checked.* Verified by running: both bindings compile and link against SDL3 3.2.31 and libGL
 through `nim cpp`, and their assertions run against real headers. Shared core compiles and runs
 under that same backend too, which nothing had shown before -- it had only ever been built
@@ -401,8 +429,10 @@ through C and JS.
   Verified by compiling: renderer builds against this core through `nim cpp`, which is what says
   vocabulary rename reached it -- core says `VeilRuns` and `veils`, and module naming them
   otherwise does not compile.
-  **Unverified**: nothing has been drawn but empty frame. Renderer is compiled, never run; what
-  puts geometry on screen arrives with panel and entry point.
+  Verified by compiling: renderer and panel both build against this core through `nim cpp`, which
+  is what says vocabulary rename reached them.
+  **Unverified**: nothing has been drawn but empty frame. Renderer and panel are compiled, never
+  run; what puts geometry on screen arrives with entry point.
 
 Render Paths
 ---
