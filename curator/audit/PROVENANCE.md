@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | d7526c4b4d7fa1d9 |
+| Rules  | 514fbc63c53dd18e |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -739,3 +739,18 @@ Cost measured in the same run: matrix jobs cannot start until `plan` reports, wh
 16 s between the run starting and the first project job. That is a floor on every run,
 paid whatever changed, and it is the price of computing the matrix in tested Nim rather
 than in shell.
+
+## Re-audit, 2026-09-07, issue routing
+
+Audited by a curator against the change that made the issue channel run both ways. A session
+now reads the open issues labelled with its own role before any other work; a curator who reads
+this project raises what they find as an issue rather than editing it, since they may not; and
+an issue's label is the role string exactly, copied and never composed, because applying a
+label creates it and a misspelling makes a second label nobody filters on.
+
+Nothing in this tree changes, and nothing here checks it. koch makes no network call, so the
+label rule reaches no check and holds by reading alone; `CURATOR.md`'s "What no check can
+reach" says so rather than leaving it implied. A check over a written list of labels was
+considered and dropped: it would have held a copy in `README.md` to `projectDirs`, while the
+label on GitHub — the thing that actually routes an issue — stayed invisible to it. Applying a
+label reveals at once whether it exists, so the proxy bought nothing.
