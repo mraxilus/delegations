@@ -762,7 +762,12 @@ func crossingsOf*(one, other: seq[Point]): seq[Point] =
 
 
 const
-  DAYLIGHT = 0.6      ## Space left between cut end and what it passes under.
+  DAYLIGHT = LINK_W / 3 ## Space left between cut end and what it passes under.
+    ## Third of stroke either side.  At none, cut ends sit against thing
+    ##   they pass beneath and break reads as touch rather than as
+    ##   clearance; at half stroke or more, gap opens past what it hides
+    ##   and reads as hole in line again.  Settled by looking (rules 33
+    ##   to 35), against swan and diamond side by side.
   GRAZING = 0.25      ## Least sine of crossing angle break is sized from.
     ## Two reaches meeting almost head on hide unbounded length of one
     ##   another; gap that long is hole in picture, so angle is floored
