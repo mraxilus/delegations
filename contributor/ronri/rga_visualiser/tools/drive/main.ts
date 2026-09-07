@@ -48,7 +48,9 @@ import {
   MILLISECONDS_PICK_HOVER,
 } from './pins';
 import { driveRings } from './rings';
-import { driveHold, driveKinds, driveMoving, driveSceneryBound } from './scenery';
+import {
+  driveAllowance, driveHold, driveKinds, driveMoving, driveSceneryBound,
+} from './scenery';
 import { driveGround } from './ground';
 import { driveFrameWork } from './frame';
 
@@ -134,6 +136,7 @@ async function main(): Promise<void> {
   await driveAxisGlide(page);
   await driveScaleSwitch(page);
   await driveRings(page);
+  driveAllowance();
   await driveKinds(page);
   await driveSceneryBound(page);
   await driveMoving(page, SIZE_VIEW.width);

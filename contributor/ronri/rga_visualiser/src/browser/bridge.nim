@@ -234,7 +234,7 @@ var
     ## Dead handles hold whatever last occupant left; every walk skips them.
   LIGHTS: LightCache ## Per-handle direction toward its sun; see `lighting.LightCache`.
     ## Refreshed with `PLACEMENTS`, since it reads them.
-  REVISION_PLACED = none(int) ## Scene revision `PLACEMENTS` was filled at, or none before
+  REVISION_PLACEMENT = none(int) ## Scene revision `PLACEMENTS` was filled at, or none before
     ## first fill.
   BORN_LAST = 0.0 ## Latest birth stamp `stampBorn` has written.
     ## What says scene has stopped animating.
@@ -265,15 +265,15 @@ var
     ## Scoped as `visualiser.HISTORY` is; see `history.nim`.
     ## Seeded via `initHistory` wherever `SCENE` is replaced (`nimInit`, `nimLoadDemo`,
     ## `nimSceneClear`).
-  GHOST = none(Multivector) ## Multivector open edit session is staging.
-  RADIUS_GHOST = RADIUS_OBJECT_DEFAULT ## Radius that session stages beside it.
+  PREVIEW_EDIT = none(Multivector) ## Multivector open edit session is staging.
+  RADIUS_PREVIEW_EDIT = RADIUS_OBJECT_DEFAULT ## Radius that session stages beside it.
     ## Rendered every frame like live object but never added to `SCENE`:
     ## `nimSceneHandles`, undo, save, picking never see it.
     ## Serves both session modes, composing and editing.
     ## None where no session is open, or last committed or was abandoned.
   PREVIEW_APPLY = none(Preview) ## What open apply control would build.
     ## Previewed while reader is choosing, as drag's rubber-band does.
-    ## Own handle rather than `GHOST`'s, so which shows is decided by `staged` in Nim.
+    ## Own handle rather than `PREVIEW_EDIT`'s, so which shows is decided by `staged` in Nim.
     ## Written by `nimPreviewOperation`, dropped by `nimClearPreview`.
 
 const INK_PREVIEW = Ink.Guide
@@ -309,7 +309,7 @@ var
   FLAT_TINT = initFlatFloats(3)
   FLAT_COMET = initFlatFloats(2*POINTS_MARKER_PULSE)
   FLAT_GRID = initFlatFloats(2)
-  FLAT_TARGET = initFlatFloats(3)
+  FLAT_PIVOT = initFlatFloats(3)
   FLAT_EYE = initFlatFloats(3)
   FLAT_LABEL = initFlatFloats(6)
   FLAT_ANCHOR_WORLD = initFlatFloats(3)
@@ -720,7 +720,7 @@ proc staged(): Option[Preview] =
   ##   Session wins: session is being typed into, preview is passive reading of two
   ##   pickers.
   ##   Sibling is `panel.staged`; fix both or neither.
-  if GHOST.isSome: return some(previewStaging(GHOST.get, RADIUS_GHOST))
+  if PREVIEW_EDIT.isSome: return some(previewStaging(PREVIEW_EDIT.get, RADIUS_PREVIEW_EDIT))
   PREVIEW_APPLY
 
 
@@ -779,8 +779,8 @@ proc nimSetPreviewStaged(coefficients: seq[float], radius: cfloat) {.exportc.} =
   ##   `radius` where it is point.
   var geometry: Multivector
   for b in Basis: geometry[b] = coefficients[ord(b)]
-  GHOST = some(geometry)
-  RADIUS_GHOST = float(radius)
+  PREVIEW_EDIT = some(geometry)
+  RADIUS_PREVIEW_EDIT = float(radius)
 
 
 proc nimDescribeCoefficients(coefficients: seq[float]): cstring {.exportc.} =
@@ -794,7 +794,7 @@ proc nimDescribeCoefficients(coefficients: seq[float]): cstring {.exportc.} =
 proc nimClearPreviewStaged() {.exportc.} =
   ## Discard preview, so `nimBuildFrame` stops drawing it.
   ##   Called once session commits or is abandoned.
-  GHOST = none(Multivector)
+  PREVIEW_EDIT = none(Multivector)
 
 
 
@@ -951,13 +951,13 @@ proc ensurePlacement() =
   ##   Placing side reads no camera, so camera move never reaches this; only edit does.
   ##   Called by frame build and by hover pick, which can run before build on frame where
   ##   scene has just changed, so whichever comes first fills it.
-  if REVISION_PLACED == some(SCENE.revision): return
+  if REVISION_PLACEMENT == some(SCENE.revision): return
   # Re-place only handles stamped since last fill: one per edit, all after restore.
   #   Re-placing every handle per edit is whole frame at capacity; figures in
   #   `PROVENANCE.md`.
   for handle in 0 ..< SCENE.bound:
-    let is_stale = REVISION_PLACED.isNone or
-      SCENE.revisionPlacingAt(handle) > REVISION_PLACED.get
+    let is_stale = REVISION_PLACEMENT.isNone or
+      SCENE.revisionPlacingAt(handle) > REVISION_PLACEMENT.get
     if SCENE.isAlive(handle) and is_stale:
       PLACEMENTS[handle] = placeObject(
         SCENE.geometryOf(handle), SCENE.anchorOverrideAt(handle),
@@ -967,8 +967,8 @@ proc ensurePlacement() =
   #   `home` and every path replacing camera value would drop it.
   REACH_SCENE = reachOf(PLACEMENTS, SCENE)
   # Suns move with same edits, so lights follow, as far as edit reached.
-  refreshLights(LIGHTS, SCENE, PLACEMENTS, REVISION_PLACED)
-  REVISION_PLACED = some(SCENE.revision)
+  refreshLights(LIGHTS, SCENE, PLACEMENTS, REVISION_PLACEMENT)
+  REVISION_PLACEMENT = some(SCENE.revision)
 
 
 proc ensureViewOverlay(width, height: int) =
@@ -1073,10 +1073,10 @@ proc nimCameraFov(): cfloat {.exportc.} = cfloat(CAMERA.degrees_field_of_view)
   ## Report vertical field of view, in degrees.
 
 proc nimCameraPivot(): FlatBuffer {.exportc.} =
-  ## Report point camera orbits around, as `[x, y, z]` view over `FLAT_TARGET`.
+  ## Report point camera orbits around, as `[x, y, z]` view over `FLAT_PIVOT`.
   ##   Refilled per call; camera fields' tick asks five times second and compares before
   ##   writing, so fresh sequence here was allocation per tick.
-  FLAT_TARGET.fill3(cfloat(CAMERA.pivot.x), cfloat(CAMERA.pivot.y), cfloat(CAMERA.pivot.z))
+  FLAT_PIVOT.fill3(cfloat(CAMERA.pivot.x), cfloat(CAMERA.pivot.y), cfloat(CAMERA.pivot.z))
 
 
 proc nimCameraEye(): FlatBuffer {.exportc.} =
@@ -2177,7 +2177,7 @@ proc nimBuildFrame(
   ##     view-projection plus whole `FrameData`, packaging desktop never needs.
   ##     Splitting packaging out would return partial results across extra boundary for no
   ##     reader benefit.
-  ##   Draws `GHOST` too, tinted `INK_PREVIEW` and muted; see that var.
+  ##   Draws `PREVIEW_EDIT` too, tinted `INK_PREVIEW` and muted; see that var.
   # Read one clock per phase boundary, so diagnostics tab shows each step.
   #   `performanceNow` is timing-only.
   let ms_entered = performanceNow()

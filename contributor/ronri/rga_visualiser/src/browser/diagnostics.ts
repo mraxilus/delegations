@@ -688,7 +688,7 @@ function drawAxisExceedance(
     context.fillStyle = 'rgba(139, 150, 163, 0.75)';
     context.fillText(gridline.label, 2, y + 1);
   }
-  // Budgets themselves, **each named twice**: rate at top of line and.
+  // Marks themselves, **each named twice**: rate at top of line and.
   //   duration at its foot, so one dashed mark answers both "how smooth is that" and "how
   //   long is that" and reader never has to convert between them in their head.
   //   Both sit *over* plot rather than in rows of their own. Rows were tried, and they
@@ -845,7 +845,7 @@ function drawExceedance() {
 //   screen length, with distance it covers written under it, and **ground grid's
 //   own cell size beside that** -- which is what makes ruled ground measurable rather
 //   than decorative. Span is chosen 1-2-5 by decade to land near
-//   `PIXELS_RULER_TARGET`, way every map scale is stepped: bar tied rigidly to one
+//   `PIXELS_RULER_WANTED`, way every map scale is stepped: bar tied rigidly to one
 //   cell runs off screen when camera is close and shrinks to nothing when it is
 //   far, because cell steps by decades while projection does not.
 //   Cell comes from `nimGridMetrics`, which reads same `mesh.sizeCellGridAt`
@@ -853,7 +853,7 @@ function drawExceedance() {
 const ruler = elementIfPresent('ruler');
 const ruler_bar = elementById('ruler-bar');
 const ruler_label = elementById('ruler-label');
-const PIXELS_RULER_TARGET = 130;
+const PIXELS_RULER_WANTED = 130;
 const STEPS_RULER = [1, 2, 5];
 // Reading bar was last laid out for, so still ground formats and writes nothing.
 //   Both `NaN` before first tick: equal to nothing, so first comparison always writes.
@@ -869,13 +869,13 @@ function refreshRuler() {
   scale_ruler_written = world_per_pixel;
   // No ground drawn -- eye above fog's own reach -- so there is nothing to measure.
   if (!(size_cell > 0) || !(world_per_pixel > 0)) { ruler.hidden = true; return; }
-  const world_target = PIXELS_RULER_TARGET * world_per_pixel;
-  const decade = Math.pow(10, Math.floor(Math.log10(world_target)));
+  const world_wanted = PIXELS_RULER_WANTED * world_per_pixel;
+  const decade = Math.pow(10, Math.floor(Math.log10(world_wanted)));
   let span = decade;
   for (const step of STEPS_RULER) {
     // Largest 1-2-5 step still at or under target: bar that overshoots crowds.
     //   corner it sits in, while one that undershoots is only harder to read against.
-    if (step * decade <= world_target) span = step * decade;
+    if (step * decade <= world_wanted) span = step * decade;
   }
   ruler.hidden = false;
   ruler_bar.style.width = (span / world_per_pixel).toFixed(1) + 'px';
