@@ -153,7 +153,8 @@ on assembled page, in Chromium, software-rendered.
   workflow, and contributor's scope reaches only own project, so no job drives page. Asked as
   issue 47. Until it is ruled, these checks are contributor's to run, and green here is
   evidence someone ran it rather than something runner confirms.
-  **Not yet ported**: prototype's harness carries 127 checks; seventeen are here. Remaining
+  **Not yet ported**: prototype's harness carries about 140 checks — 125 reported
+  directly and 15 through band reader — of which seventeen are here. Remaining
   cover drag construction, apply pickers, orbit and pick, drawer's own sections, diagnostics
   readings and orrery under load. Nothing about them is known to fail — they are unported,
   which is not same as passing, and record will say so until they run.
