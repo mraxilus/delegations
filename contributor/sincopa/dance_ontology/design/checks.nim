@@ -1021,9 +1021,12 @@ proc checkHandTurns*() =
       doAssert abs(bowed[Arm.L] - bowed[Arm.R]) < 1e-6,
         &"A pair short of a swan drew lopsided; got `{position.name}`."
       continue
+    # Snake is arm that is over at first crossing (Architect, 2026-09-07).
+    # Named from `overArm` rather than from `straightArm`, so this states
+    # rule instead of echoing whichever answer drawing happens to hold.
     let
-      straight = straightArm(position.wind)
-      snake = other(straight)
+      snake = overArm(position.wind)
+      straight = other(snake)
     doAssert bowed[straight] < MARK_STROKE,
       &"A swan's straight connection is not straight; got " &
         &"`{decimal(bowed[straight], 1)}` of bow in `{position.name}`."
