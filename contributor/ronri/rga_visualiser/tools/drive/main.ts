@@ -19,6 +19,9 @@ import {
   driveTwoFingerPan,
 } from './construct';
 import { driveApply, driveReachable, driveUndo } from './apply';
+import {
+  drivePanWhileSelected, drivePickOrbit, drivePlanePick, drivePointerPick,
+} from './framing';
 import { driveHelp, driveHoverDuringGesture } from './chrome';
 import { driveComet } from './comet';
 import { driveGround } from './ground';
@@ -77,6 +80,10 @@ async function main(): Promise<void> {
   await driveEmptyRelease(page, SIZE_VIEW.width, SIZE_VIEW.height);
 
   await driveApply(page);
+  await drivePickOrbit(page);
+  await drivePointerPick(page);
+  await drivePlanePick(page);
+  await drivePanWhileSelected(page, cdp);
   await driveUndo(page);
   await driveReachable(page);
 
