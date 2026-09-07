@@ -10,7 +10,9 @@
 ##   |----------|-----------------------------------------------------------------------|
 ##   | pages    | write shells from Nim hosts, compile browser scripts, fold each into  |
 ##   |          | one self-contained file, render review page and frame pictures, build |
-##   |          | four mark pages, sweep turns natively, splice whole-cloth page        |
+##   |          | five mark pages, sweep turns natively, splice whole-cloth page        |
+##   | pins     | rewrite design/review-pins.json from page just built: run when        |
+##   |          | Architect rules on cards, never to quiet check that says one moved    |
 ##   | verdicts | instrument run, not build: answers land in sim/verdicts.md            |
 ##   | shot     | screenshot helper, for node and Playwright                            |
 ##   | clean    | remove bin, build, nimcache, testresults and testament binaries       |
@@ -24,6 +26,8 @@
 {.experimental: "strictFuncs".}
 
 import std/[os, osproc, strutils]
+
+import ../design/review_page
 
 
 const
@@ -74,6 +78,18 @@ proc pages() =
   compileRun(["design/wholecloth.nim", BUILD / "design"])
 
 
+proc pins() =
+  ## Write what every ruled card is drawn as now into `design/review-pins.json`.
+  ##   Second step on purpose.  Verdict and pin are added together or not at
+  ##     all: running this to quiet check that says ruled card moved would
+  ##     hand approval to picture nobody approved.
+  let page = BUILD / "design" / "review.html"
+  if not fileExists(page):
+    quit("No review page to read; run `pages` first.", 1)
+  writeFile("design/review-pins.json", pinsIn(readFile(page)))
+  echo "wrote design/review-pins.json"
+
+
 proc verdicts() =
   ## Rewrite `sim/verdicts.md` from model; instrument run, not build.
   nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "sim/verdicts.nim"])
@@ -105,6 +121,7 @@ proc main(): int =
   try:
     case paramStr(1)
     of "pages": pages()
+    of "pins": pins()
     of "verdicts": verdicts()
     of "shot": shot()
     of "clean": clean()

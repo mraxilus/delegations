@@ -93,6 +93,7 @@ Mock-ups:
 | design/signs.html | https://claude.ai/code/artifact/153dee12-0829-4c04-ad01-72fe96f7607e |
 | design/turns-single.html | https://claude.ai/code/artifact/a2dce7eb-7a87-4575-a1c8-ce8d488a6530 |
 | design/turns-hands.html | https://claude.ai/code/artifact/9c4d89c1-8b72-4574-8051-c41e130148f1 |
+| design/review.html | https://claude.ai/code/artifact/f02b7b94-3b57-4442-abdd-f544d7911a21 |
 | design/wholecloth.html | https://claude.ai/code/artifact/9440ffbc-93be-4634-a3ce-dd17d7b33c6c |
 | review/review.html | https://claude.ai/code/artifact/61c41287-0a91-4fb9-9b15-622a5fd7db43 |
 
