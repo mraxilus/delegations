@@ -51,6 +51,20 @@ suite "reach breaks":
       check runs.len == 2
       check not runs.anyIt(line[i] in it)
 
+  test "a reach that crosses nothing is not broken":
+    # Break says this line passes under that one.  Where there is no
+    # crossing there is nothing to pass under, so break there states
+    # something no picture means.
+    let beside = line.mapIt((x: it.x, y: 20.0))
+    check cutGap(line, beside) == @[line]
+
+  test "a reach that is crossed is broken where it is crossed":
+    let across = @[(x: 30.0, y: -20.0), (x: 30.0, y: 20.0)]
+    let runs = cutGap(line, across)
+    check runs.len == 2
+    check runs[0][0] == line[0]
+    check runs[^1][^1] == line[^1]
+
   test "an uncrossed reach is drawn whole":
     let runs = cutGapsAt(line, @[])
     check runs.len == 1
