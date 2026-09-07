@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Author | Claude Opus 5 and Claude Sonnet 5 |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 86c3d5eef1f837fc |
+| Rules  | d7526c4b4d7fa1d9 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the
@@ -2250,6 +2250,9 @@ other here:
   `strict`, plus a `web` verb in `tools/build.nim`. A generated lockfile was measured against
   the form rules before the rule was written, so it may be committed as generated and must
   not be reformatted to fit.
+- **Records compile nothing.** A change touching only this project's `README.md`,
+  `PROVENANCE.md` or `GLOSSARY.md` now plans `[]`; a README change previously ran the whole
+  suite, which for this project means its browser tests too. Nothing here needed correcting.
 - **Published pages are linked.** This project publishes no page today, so nothing needed
   correcting; it binds the moment one does. Raised by `dance_ontology` as issue 42.
 - **Compiler resolution.** Directly relevant here, since this project is the one pinning a

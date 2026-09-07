@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 86c3d5eef1f837fc |
+| Rules  | d7526c4b4d7fa1d9 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -80,6 +80,69 @@ check as what stops an unused kind becoming a free pass. Verified by `tjustifica
 and `tkinds.nim`, and driven on 2026-09-06 over real files under `curator/probe/src`: an
 unjustified `shim.cpp` and `glue.ts` each yield one finding at line 1, both fall silent once
 the phrase is added, and both languages are held to the identical rule.
+
+**A curator pass found six pieces of drift, all of it introduced the same day.** Seven
+changes merged on 2026-09-06 and three documents kept describing the behaviour they replaced:
+`CURATOR.md` duty 7, `README.md` and `toolchain.nim`'s own header each still told a curator to
+install every pinned compiler by hand, which compiler resolution had removed hours earlier.
+The checks-reference row for `ci` still omitted `base`, which it has run since that check
+landed. And `audit.nim` carried a hand-written copy of the module graph that was wrong in five
+places — it named dependencies four modules do not have and omitted `base` entirely — so it is
+deleted rather than corrected: a copy of a graph drifts from the graph, and each module's
+`import` line is the graph. That is the lesson that retired the run-number ledger, applied to
+the module that composes everything.
+
+**`checkRunning` was dead and is gone.** Resolution replaced it; nothing called it in any
+module or in koch, and only its own test kept it compiling. A rule with no caller enforces
+nothing, and a test covering one measures nothing. What that test was really pinning — a pin
+matches by commit for a commit pin and by version otherwise — is kept as a test of `serves`,
+which resolution does call.
+
+**`toolchain.nim` was doing two jobs and is split.** It grew from 165 to 287 lines in one day
+by absorbing cache paths, a platform table, a downloader and a source build, while its header
+still described only the pin rule. Acquisition moves to `compilers.nim`; stating what a pin is
+and demanding agreement stays. Tests split the same way. Cost: one more module, and a reader
+follows one import to see how a compiler is obtained.
+
+**`DOCS` is retired for `PROJECT_FILES`.** `plan.nim` carried a second list of a project's
+records differing from `layout.nim`'s by one entry, `README.md`, with no reason stated
+anywhere — so a one-word README fix compiled that project's whole suite. All three records
+describe a project and run nothing. Driven on 2026-09-06 against this branch's own history:
+a README-only commit plans `[]`, and a one-line source change in the same project plans that
+project alone. `nimblePath` replaces the same path expression written out in three modules.
+
+**`findings.nim` and `markdown.nim` were the only modules with no test, and now have one.**
+`findings.render` composes every message anyone reads and `<` is what makes a report stable
+under reordering; neither was covered, in the module every other module imports.
+`tmarkdown.nim` also pins the two costs that module's header states, so a later parser is a
+decision rather than a surprise.
+
+**The checker now checks itself, in three ways the curator pass had to find by reading.**
+Nothing checked the checker, so faults it would report anywhere else lived in it: a routine
+exported and called nowhere (`checkRunning`, kept compiling by its own test, so coverage
+looked like use), two modules with no suite at all (`findings.nim`, whose `render` and order
+carry every message anyone reads, and `markdown.nim`), and a table naming a verb that had
+been retired. `checker.nim` makes each a rule. Dead export counts identifier runs across
+every check module and koch, so `tree.auditTree` counts as a call exactly as
+`auditTree(tree)` does — the first form is why counting whitespace words was wrong, found by
+the check reporting six live routines as dead on its first run. Verbs are read from the
+command dispatch alone, bounded between `case options.command` and its `else`, since the
+option parser cases over labels a few lines above and contributed `root`, `all`, `branch` and
+`sweep` before that bound existed.
+
+Driven on 2026-09-06 rather than argued: a routine added and never called is one finding
+naming it; a row deleted from the checks table is one finding naming the missing verb; a verb
+dropped from the usage line is one finding naming what usage prints. At rest the tree is
+clean, so none of the three fights the code as it stands.
+
+Rejected: flagging an export only tests use, which is how every pure rule here is covered and
+would need an exemption list — a second place for truth to live; warning rather than finding,
+since every finding fails and a warning nobody must act on is read by nobody; one suite per
+module for contributor projects, which group tests by subject rather than by file. Costs: a
+routine named in a comment is not dead, so prose mentioning a retired routine hides it, paid
+to keep the rule free of false findings; an exported operator is skipped, since it is spelled
+at call sites rather than named; and the table's other columns say what each verb reads and
+enforces, which stays prose no check reads — only the verb set is derived.
 
 ## Comment extraction
 

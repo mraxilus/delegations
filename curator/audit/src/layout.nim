@@ -63,6 +63,11 @@ func projectName*(dir: string): string =
   dir.split('/')[^1]
 
 
+func nimblePath*(dir: string): string =
+  ## Read path of project's nimble file, which is named after its folder.
+  dir & "/" & dir.projectName & NIMBLE_EXT
+
+
 func dirOf(path: string): string =
   ## Read directory part of path, empty at root.
   let cut = path.rfind('/')
@@ -165,7 +170,7 @@ func checkProject(tree: Tree, paths: Table[string, int], dir: string): seq[Findi
     )
 
   # Demand exactly one nimble file, named after project, and lock when it requires packages.
-  let nimble = dir & "/" & dir.projectName & NIMBLE_EXT
+  let nimble = dir.nimblePath
   if nimble notin paths: result.add finding(nimble, 0, "Project nimble file missing.")
   for e in tree:
     if e.path.dirOf == dir and e.path.endsWith(NIMBLE_EXT) and e.path != nimble:
