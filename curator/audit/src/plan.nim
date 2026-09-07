@@ -24,7 +24,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, json, options, os, strutils, tables]
-import ./[findings, layout, toolchain, compilers, dependencies, projects, tree]
+import ./[findings, checker, layout, toolchain, compilers, dependencies, projects, tree]
 
 
 const
@@ -89,6 +89,32 @@ func nodeDirs*(tree: Tree, dirs: openArray[string]): seq[string] =
   ##   be only thing here nothing pins.
   for dir in dirs:
     if tree.holds(dir, NODE_MANIFEST) and tree.holds(dir, NODE_LOCK): result.add dir
+
+
+func driverOf*(tree: Tree, dir: string): string =
+  ## Read project's build driver from tree; empty when project carries none.
+  let path = dir & "/" & DRIVER_FILE
+  for e in tree:
+    if e.path == path: return e.content
+  ""
+
+
+func verbDirs*(tree: Tree, dirs: openArray[string], verb: string): seq[string] =
+  ## Select projects whose build driver dispatches that verb.
+  ##   Derived from driver rather than listed anywhere, same reasoning as `nodeDirs`: project
+  ##   gains driven checks by carrying verb, and `check.yml` names no project. Driver is read
+  ##   by same parser `checker.nim` reads koch's own dispatch with, since both hold one shape.
+  for dir in dirs:
+    if verb in tree.driverOf(dir).dispatchVerbs(DRIVER_CASE): result.add dir
+
+
+proc systemPackages*(root: string, tree: Tree, dirs: openArray[string]): seq[string] =
+  ## Read system packages every selected project declares, sorted.
+  ##   Sorted so output is stable between runs: caller pipes it into installer, and list
+  ##   reordering itself would read as change where nothing changed.
+  var targets: seq[Target]
+  for dir in tree.verbDirs(dirs, SYSTEM_VERB): targets.add Target(dir: dir)
+  systemOf(root, targets).sorted
 
 
 proc typeJobs*(root: string, tree: Tree, dirs: openArray[string]): seq[Finding] =
@@ -195,3 +221,34 @@ proc runJobs*(root: string, jobs: openArray[Job]): seq[Finding] =
   result = found
   result.add restoreAll(root, targets)
   result.add runTests(root, targets)
+
+
+func drivenOnly*(tree: Tree, jobs: openArray[Job]): seq[Job] =
+  ## Keep planned jobs of projects carrying driven checks.
+  ##   Filter over what `plan` already selected rather than second selection of its own, so
+  ##   driven set inherits scoping, `--all` and sweep without restating any of it.
+  var dirs: seq[string]
+  for job in jobs: dirs.add job.dir
+  let driven = tree.verbDirs(dirs, DRIVEN_VERB)
+  for job in jobs:
+    if job.dir in driven: result.add job
+
+
+proc drivenJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
+  ## Restore and drive each planned project carrying driven checks, on its own pin.
+  ##   Pin is resolved as `runJobs` resolves it, not skipped as `typeJobs` skips it, because
+  ##   driven verb compiles project code: it builds page through JS backend, so project
+  ##   following its dependency onto compiler commit cannot be driven by driver's own. That
+  ##   is exactly cost `typeJobs` records against itself, arriving.
+  ##   Node restore joins Atlas restore for project carrying manifest, since harness runs
+  ##   under node. Either restore failing short-circuits: driving without installed tools
+  ##   fails again for second reason and reports neither clearly.
+  let driven = tree.drivenOnly(jobs)
+  if driven.len == 0: return
+  let (targets, found) = driven.targetsFor
+  result = found
+  result.add restoreAll(root, targets)
+  for target in targets:
+    if tree.nodeDirs([target.dir]).len > 0: result.add restoreNode(root, target)
+  if result.len > 0: return
+  result.add runDriven(root, targets)

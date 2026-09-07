@@ -53,6 +53,9 @@ const
     ## Line opening driver's command dispatch. Option parser cases over labels too, so scan
     ## starts here and ends at that dispatch's `else`, as `VERSION_KEY` names one line of
     ## workflow rather than reading whole file.
+  DRIVER_CASE* = "case paramStr(1)"
+    ## Line opening project driver's own dispatch. Same shape one level down, and koch reads
+    ## it to learn which verbs that project carries (`plan.nim`, `drivenDirs`).
   CASE_END* = "else:"
     ## Line closing dispatch, after which branches belong to something else.
   TABLE_HEADING* = "## Checks reference"
@@ -139,12 +142,16 @@ func usageVerbs*(koch: string): seq[string] =
   @[]
 
 
-func dispatchVerbs*(koch: string): seq[string] =
+func dispatchVerbs*(source: string, opening = COMMAND_CASE): seq[string] =
   ## Read verbs driver dispatches, i.e. quoted labels of its command branches.
+  ##   Line opening dispatch is given rather than fixed, since koch and project driver hold
+  ##   same shape under different case: koch cases over parsed options, project driver over
+  ##   its first argument. One parser reads both, so koch learns what verbs project carries
+  ##   by reading it (`plan.nim`, `drivenDirs`).
   var is_inside = false
-  for line in koch.splitLines:
+  for line in source.splitLines:
     let s = line.strip
-    if s.startsWith(COMMAND_CASE):
+    if s.startsWith(opening):
       is_inside = true
       continue
     if not is_inside: continue

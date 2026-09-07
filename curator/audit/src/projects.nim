@@ -17,7 +17,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[os, osproc, strtabs]
+import std/[os, osproc, streams, strtabs, strutils]
 import ./findings
 
 
@@ -27,6 +27,12 @@ const
   TYPES_VERB* = "types"
     ## Verb type-checking project's own scripts, deriving what they read first, and
     ## stopping before anything needing browser. Named here and in CONTRIBUTOR.md.
+  DRIVEN_VERB* = "drive"
+    ## Verb building project's page and driving it through real events. Project gains driven
+    ## checks by carrying this verb and nothing else (`plan.nim`, `drivenDirs`).
+  SYSTEM_VERB* = "system"
+    ## Verb printing system packages project needs, one bare name per line, for caller to
+    ## install. Named here and in CONTRIBUTOR.md, "System dependencies".
 
 
 type Target* = object
@@ -77,6 +83,25 @@ proc runIn*(dir, program: string, args: openArray[string], bin = ""): int =
   process.close
 
 
+proc linesIn*(dir, program: string, args: openArray[string], bin = ""): seq[string] =
+  ## Run program with args in directory and read its stdout as lines; empty on non-zero exit.
+  ##   Streaming variant above is for checks, whose product is their verdict; this is for
+  ##   verb whose product is its output.
+  ##   Line carrying whitespace is dropped: contract is one bare name per line, and only
+  ##   thing else reaching this stream is compiler complaining, which always spells position
+  ##   before its message. Compiler that complained still fails, since caller installs what
+  ##   this returns and absent package names itself.
+  let process = startProcess(
+    program, args = args, workingDir = dir, env = childEnv(bin), options = {poUsePath},
+  )
+  defer: process.close
+  let output = process.outputStream.readAll
+  if process.waitForExit != 0: return
+  for line in output.splitLines:
+    let s = line.strip
+    if s.len > 0 and not s.contains({' ', '\t'}): result.add s
+
+
 proc runTypes*(root: string, targets: openArray[Target]): seq[Finding] =
   ## Type-check each project's own scripts, through build driver that project carries.
   ##   Verb is project's, never koch's: what type-checking needs differs per project, and
@@ -94,6 +119,40 @@ proc runTypes*(root: string, targets: openArray[Target]): seq[Finding] =
         target.dir & "/" & DRIVER_FILE, 0,
         "Type check failed; got exit `" & $code & "`.",
       )
+
+
+proc runDriven*(root: string, targets: openArray[Target]): seq[Finding] =
+  ## Drive each project's built page through real events, through driver that project carries.
+  ##   Same shape as `runTypes` one step further along: verb is project's, koch names it and
+  ##   nothing else. What that verb builds first, and what browser it reaches for, is project's
+  ##   own business (CONTRIBUTOR.md, "System dependencies").
+  for target in targets:
+    echo "== " & target.dir
+    let code = runIn(
+      root / target.dir,
+      target.bin.nimOf,
+      ["r", "--hints:off", DRIVER_FILE, DRIVEN_VERB],
+      target.bin,
+    )
+    if code != 0:
+      result.add finding(
+        target.dir & "/" & DRIVER_FILE, 0,
+        "Driven checks failed; got exit `" & $code & "`.",
+      )
+
+
+proc systemOf*(root: string, targets: openArray[Target]): seq[string] =
+  ## Read system packages every project declares, through each project's own verb.
+  ##   Read rather than listed: workflow installing these names no project, exactly as it
+  ##   names none for compiler matrix, so package arrives by being declared.
+  ##   Verb that fails contributes nothing rather than raising: caller is installing, and
+  ##   check that runs afterwards is what reports project whose driver will not run.
+  for target in targets:
+    for package in linesIn(
+      root / target.dir, target.bin.nimOf,
+      ["r", "--hints:off", DRIVER_FILE, SYSTEM_VERB], target.bin,
+    ):
+      if package notin result: result.add package
 
 
 proc runTests*(root: string, targets: openArray[Target]): seq[Finding] =
