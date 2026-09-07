@@ -126,3 +126,13 @@ declare function medianPhase(name: string): number;
 
 /** How many frames reading window spans. */
 declare function framesRecent(): number;
+
+/* Frame loop's own entry, which `src/browser/frame.ts` owns. */
+
+/** Draw one frame, which is where every record page uploaded is issued. */
+declare function renderFrame(now_seconds: number): void;
+
+/** Pool grid's own geometry, as its last draw laid it out. */
+declare const geometry_pool_drawn: {
+  cell: number; gap: number; columns: number; rows: number; height: number;
+};
