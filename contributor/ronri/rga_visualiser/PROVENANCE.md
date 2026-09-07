@@ -456,6 +456,56 @@ these were taken before entry point, which imports everything.
   frame-time marks, and that use was ordinary English about cost rather than term of art.
   Reworded around instead, so retired word is simply absent.
 
+**Entry point owns window, event loop and every headless run.** `src/desktop/main.nim`
+assembles meshes from scene, draws markers and overlays, turns SDL events into camera and
+interaction calls, and quits. Everything it draws is asked of shared core; nothing geometric
+is derived beside it.
+  It also carries run modes that exist so build can be checked without sitting in front of
+  it: `--screenshot`, `--frames`, `--hidden`, `--storyboard`, `--timings`, `--novsync`,
+  `--fill`, and `--drive-drag`, `--drive-keys`, `--drive-select`, `--drive-undo`,
+  `--drive-sky`, `--drive-help`, `--drive-assert`. Each scripted mode pushes real events
+  through SDL's own queue rather than calling handler, so what it exercises is wiring rather
+  than function.
+  These are desktop's answer to `tools/drive/`, and they are why this front-end is checkable
+  headless at all. They are not yet run here; that is next stage's work.
+
+**Desktop's compiler flags live in build driver, not in configuration beside entry point.**
+`tools/build.nim`'s `desktop` verb passes `cpp` backend and output path; project carries no
+`.nim.cfg` anywhere. Reader looking for how something is built reads driver that builds it,
+rather than file they must know to look for beside source. Algebra and library path stay in
+`nim.cfg`, since every target, test and front-end wants same two.
+  Rejected: `main.nim.cfg` mirroring prototype's `visualiser.nim.cfg`. It works, and Nim picks
+  it up automatically, which is exactly its cost -- it applies invisibly to any build of that
+  file, including one run by hand, and it puts second place where flags live.
+  Library flags stay in modules that need them (`-lSDL3`, `-lGL`, `-lz`), so test binary
+  importing one links without repeating anything.
+  No `-d:release`, unlike page: this binary is driven and read rather than shipped, and its
+  `--drive-*` runs report through assertions release would remove.
+
+**Neither SDL3 nor Dear ImGui arrives as package, so both are pinned by version.** That is
+this repository's rule about anything fetched at build time, and here it is forced rather than
+chosen: Ubuntu 24.04 carries `libsdl2-dev` and no SDL3 at all, so `apt-get install libsdl3-dev`
+fails on it outright. SDL3 is therefore built from source and installed, at `3.2.31`, zlib
+licence, and `checkSdl3` reads what `pkg-config` reports before compiling anything.
+  Pinned exactly rather than as floor: 3.2.31 is what this front-end was compiled and drawn
+  against, and floor would claim reach across releases nothing here has tried.
+  Found by checking rather than by assuming: prototype's own `dependencies.list` named
+  `libsdl3-dev`, and this port carried that name into `SYSTEM` -- where it would have failed
+  runner's install step, since that step installs from this declaration. Package does not
+  exist on distribution runner runs.
+
+**Dear ImGui is pinned to commit, and build refuses any other.** `fd13a1e8`, i.e.
+`v1.92.9b-docking-35-gfd13a1e`, MIT licence, docking branch. It is compiled from source into
+binary rather than linked, so it is fetched at build time -- and this repository's rule is that
+anything fetched at build time is pinned. `checkImgui` reads checkout's own `HEAD` and raises
+by name, naming clone command that fixes it.
+  Absent from `SYSTEM` deliberately, as SDL3 is: that list is packages a package manager
+  installs, and neither of these is one of them. What stays there for their sake is `cmake` and
+  `pkg-config`, which build and read SDL3, and `git`, which fetches both.
+  Verified by breaking it both ways: with checkout moved aside, verb names it missing and gives
+  clone command; with checkout one commit back, verb names commit wanted and commit found. Restored
+  after.
+
 *Checked.* Verified by running: both bindings compile and link against SDL3 3.2.31 and libGL
 through `nim cpp`, and their assertions run against real headers. Shared core compiles and runs
 under that same backend too, which nothing had shown before -- it had only ever been built
@@ -471,8 +521,15 @@ through C and JS.
   otherwise does not compile.
   Verified by compiling: renderer and panel both build against this core through `nim cpp`, which
   is what says vocabulary rename reached them.
-  **Unverified**: nothing has been drawn but empty frame. Renderer and panel are compiled, never
-  run; what puts geometry on screen arrives with entry point.
+  Verified by looking: `nim r tools/build.nim desktop` then one headless run under Xvfb writes
+  1440x900 PNG, and that frame was opened and read. It carries grid, axes, ground plane's disc,
+  four points, and panel with objects list, coefficients and every section header -- so both
+  front-ends now draw same scene from same core.
+  Vocabulary shows in that frame rather than only in source: panel says *objects (5 of 5040)*
+  and *hold still over the pivot*.
+  **Unverified**: no `--drive-*` run has been exercised here, so nothing has driven this binary
+  through events; frame times are unmeasured; and no human has seen it on real graphics hardware
+  -- that run was software GL, which reported no multisampled visual, so thin lines alias.
 
 Render Paths
 ---
@@ -484,8 +541,8 @@ Render Paths
 |  |  | `scene`, `selection`, `picking`, `marker`, `framing`, `interaction`, |
 |  |  | `storyboard`, `orrery`, `neighbourhood`, `starfield`, `history`, |
 |  |  | `format`, `help`, `timings`, `ramp`, `lighting` |
-| `src/desktop` | desktop entry alone | `image`, `gif`, `arena` here; `panel`, `renderer`, |
-|  |  | `opengl`, `gui`, `gui_shim.cpp`, `sdl3` arrive with front-end |
+| `src/desktop` | `main.nim` alone | `main`, `panel`, `renderer`, `gui`, `gui_shim.cpp`, |
+|  |  | `opengl`, `sdl3`, `image`, `gif`, `arena` |
 | `src/browser` | `bridge.nim` alone | `bridge.nim` and page's own scripts |
 
 `pga` is dependency above all three and shared. Shared core imports nothing outside itself
@@ -493,6 +550,8 @@ and `pga`; `src/desktop` and `src/browser` each import that core and never each 
 readable from import paths (`../rga_visualiser/`). Both front-ends sit under `src/` beside
 core they draw through, which is what `srcDir` in nimble file already claims; desktop sat at
 repository root until this port and nothing but history put it there.
+  Both are built by same driver: `web` assembles page, `desktop` compiles binary, and neither
+  entry point carries configuration file of its own.
   `arena` sits in `src/desktop` despite being general-purpose: only PNG and GIF encoders and
   desktop draw loop reach it, and JS backend cannot carve typed slices from byte array at
   all.
