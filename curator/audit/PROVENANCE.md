@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 00f4a795ba695350 |
+| Rules  | a011df991e1e6032 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -756,3 +756,14 @@ reach" says so rather than leaving it implied. A check over a written list of la
 considered and dropped: it would have held a copy in `README.md` to `projectDirs`, while the
 label on GitHub — the thing that actually routes an issue — stayed invisible to it. Applying a
 label reveals at once whether it exists, so the proxy bought nothing.
+
+## Re-audit, 2026-09-07, Article II.9 bound
+
+Audited by a curator against the amendment to Article II.9, which bounds when target code may
+be hand-written: the source language by default, the crossing kept narrow, and the target
+language only where the source cannot reach at all or where crossing would forfeit what the
+target gives for free — a check its own compiler makes over the bulk of a file, a cost the glue
+would add to a hot path — with the file's opening comment saying which.
+
+This project holds no target-language file, so the rule binds nothing here today. It binds the
+moment one arrives, and the `not Nim because` gate already refuses one that argues nothing.
