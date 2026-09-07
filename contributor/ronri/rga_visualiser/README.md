@@ -38,6 +38,26 @@ git checkout 27763495b && sh build_all.sh`; CI does the same and caches the resu
 commit. The pin is exact and the audit enforces it: running the suites on any other compiler
 is a finding, not a warning.
 
+The browser front-end needs nothing installed beyond that compiler and Node: it builds through
+`nim js` and opens from `file://`. The **desktop** front-end links against system libraries,
+which this repository has no registered file kind to declare (asked as issue 60), so they are
+named here and in `PROVENANCE.md`:
+
+| Package | For |
+|---|---|
+| `libsdl3-dev` | windowing, input and the OpenGL context — `src/desktop/sdl3.nim` |
+| `libgl-dev` | OpenGL headers and loader — `src/desktop/opengl.nim` |
+| `zlib1g-dev` | deflate and CRC the PNG export writes — `src/desktop/image.nim` |
+| `xvfb` | a display for the headless `--drive-*` runs to push real SDL events at |
+| `libgl1-mesa-dri` | the software GL those runs render through |
+
+Dear ImGui is compiled from source rather than linked, so clone it beside the project — kept
+locally, never committed, as the Atlas checkouts are:
+
+```sh
+git clone --branch docking https://github.com/ocornut/imgui.git deps/imgui
+```
+
 The `pga` library is restored by Atlas from `atlas.lock` into `deps/` and is never committed;
 `nim r koch deps contributor/ronri/rga_visualiser` restores it alone. It is pinned at
 `295bafc`, which is that library's head. Four projection operations are withdrawn at head

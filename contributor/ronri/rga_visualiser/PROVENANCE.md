@@ -63,6 +63,19 @@ the curator said is what they will read it for. Rejected as workarounds: renamin
 a registered extension, which lies to the checker; and rewriting the shim in Nim, which cannot
 express what the shim exists for.
 
+**System packages have no declared home in this repository.** Nim packages are declared in
+`rga_visualiser.nimble` and pinned by `atlas.lock`; node packages in `package.json`, pinned by
+`package-lock.json`. Desktop front-end links against SDL3, libGL and zlib, drives itself
+headless through Xvfb and software GL, and compiles Dear ImGui from clone rather than linking
+it -- and none of those five is expressible in either file. Prototype used
+`dependencies.list`; that extension is not among thirteen kinds
+`curator/audit/src/kinds.nim` registers, so committing one is finding rather than declaration.
+  Named in `README.md`'s build section meanwhile, as table beside compiler pin already there,
+  with ImGui's clone command under it. Honest and reader finds it, but nothing checks it, so it
+  decays as any unrun check does. Asked as issue 60, with three ways out offered and no
+  preference between them. Rejected as workaround: committing `dependencies.list` regardless,
+  which is exactly rule CONTRIBUTOR.md forbids working around.
+
 **The browser front-end waits on conventions for the repository's first TypeScript.** No `.ts`
 file is committed anywhere, so this project's conversion of the browser glue — some 9,000
 lines — would set the precedent for module system, build step, dependency pinning and how a
