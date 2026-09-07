@@ -346,7 +346,7 @@ suite "two hands":
 
   test "the chain is decided, rung by rung":
     for band in Band:
-      for (turn, name) in [(0.5, "X"), (1.0, "diamond"), (1.5, "swan")]:
+      for (turn, name) in [(0.5, "cross"), (1.0, "diamond"), (1.5, "swan")]:
         var s = twoLinks(LEFT, RIGHT, RIGHT, LEFT, band)
         s.stance = turned(s.stance, Body.Two, turn)
         let got = settle(s)

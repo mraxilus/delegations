@@ -108,9 +108,9 @@ const BODY = """
   <p><b>Which way the partners face follows from the wind</b>, so the
   captions leave it out and it is said once here: <b>face to face</b> at a
   whole number of turns — the frame and the diamonds — and <b>both facing
-  one way</b> at a half — the X's and the swans.</p>
-  <p><b>A half turn makes an X.</b> The partners end up facing the same way,
-  and the two connections cross once overhead — the plain crossing the app
+  one way</b> at a half — the crosses and the swans.</p>
+  <p><b>A half turn makes a cross.</b> The partners end up facing the same
+  way, and the two connections cross once overhead — the plain crossing the app
   already uses for a crossed pair, with the over-and-under break saying
   which arm is on top. <b>A whole turn makes a diamond</b>: the pair crosses
   <em>twice</em>, once by the lead and once by the follow, and what the two
@@ -131,7 +131,7 @@ const BODY = """
   is what going round means, and the difference between the two ends is the
   wind. A reach is then just the shadow of a wound arm from above — its
   offset from the axis swinging as far round as the pair has. Straight at
-  none, an X at a half, a diamond at a whole, and every frame in between
+  none, a cross at a half, a diamond at a whole, and every frame in between
   following from the same measure, which is what stops a turn snapping into
   its final shape.</p>
   <p><b>All four ways of turning wind, and by the same half turn.</b> That
@@ -148,8 +148,8 @@ const BODY = """
   the orbit with a counter-turn danced into it — but it is not the orbit.</p>
   <p><b>The names are preliminary and yours.</b> <em>Left over Right</em> is
   the position where the lead's Left connection passes over the Right at the
-  lead's own crossover; <em>Right over Left</em> is its mirror. The X, the
-  diamond and the swan a step apart share a name because they are the same
+  lead's own crossover; <em>Right over Left</em> is its mirror. The cross,
+  the diamond and the swan a step apart share a name because they are the same
   winding, carried further.</p>
 </section>
 
@@ -162,8 +162,8 @@ const BODY = """
   Hand to hand is parallel with the partners <b>face to face</b>; hold left
   to left and right to right instead and it is parallel with one of them
   <b>facing away</b>, which on this page's chain is half a turn along. Every
-  step after that is the same step: X, diamond, swan, out to a turn and a
-  half each way.</p>
+  step after that is the same step: cross, diamond, swan, out to a turn and
+  a half each way.</p>
   <p><b>So the phase is measured, not written down.</b> The build turns the
   follow to each candidate and asks which one leaves the hold unwound, using
   the same measure everything else here uses. This page comes out at nothing;
@@ -210,10 +210,10 @@ const BODY = """
   <p><b>Still not in the app.</b> Same standing as the other pages: the app
   keeps drawing the eight frames and nothing else until the marks are
   settled.</p>
-  <p>Yours to settle on this page: whether <em>box</em> is the word, and
-  whether the two ends should be named for the lead's crossover as they are
-  here or for the whole shape; how wide the box should open; and whether an
-  edge should carry the turn sign, which was built for exactly this job.</p>
+  <p>Yours to settle on this page: whether the two ends should be named for
+  the lead's crossover as they are here or for the whole shape; how wide the
+  diamond should open; and whether an edge should carry the turn sign, which
+  was built for exactly this job.</p>
 </div>
 
 </div>

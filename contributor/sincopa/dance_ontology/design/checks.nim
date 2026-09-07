@@ -899,7 +899,7 @@ proc checkHandTurns*() =
           &"`{decimal(turned_by, 2)}` for `{position.name}`."
     # And facing alternates down chain: partners face one
     # another where wind is whole number of turns and same way
-    # where it is half of one, which is what makes X what it is and is
+    # where it is half of one, which is what makes cross what it is and is
     # half turn of offset at which other pattern is read (rule 31).
     let facing_apart = abs(wrap180(
       put.facing[Dancer.Follow] - put.facing[Dancer.Lead]))
@@ -911,7 +911,7 @@ proc checkHandTurns*() =
     "pair's own axis, not taken on trust"
 
   # RULE 27 and RULE 28.  Crossings are what wind makes: none at
-  # frame, one at half turn -- X -- and two at whole one, one
+  # frame, one at half turn -- cross -- and two at whole one, one
   # by each dancer, with diamond between.
   var
     smallest = Inf
@@ -941,14 +941,14 @@ proc checkHandTurns*() =
     for run in [pair[Arm.L], reversed(pair[Arm.R])]:
       for q in run:
         if dist(q, meetings[0]) + dist(q, meetings[1]) <
-            dist(meetings[0], meetings[1]) + BOX_ROOM:
+            dist(meetings[0], meetings[1]) + DIAMOND_ROOM:
           ring.add q
     var twice = 0.0
     for k in 0 ..< ring.high:
       twice += ring[k].x * ring[k + 1].y - ring[k + 1].x * ring[k].y
     twice += ring[^1].x * ring[0].y - ring[0].x * ring[^1].y
     smallest = min(smallest, abs(twice) / 2)
-  doAssert smallest > 2 * BOX_ROOM,
+  doAssert smallest > 2 * DIAMOND_ROOM,
     &"The diamond pinched shut; got `{decimal(smallest, 0)}` of room in it."
 
   # RULE 31.  `"don't draw it as a double box, draw it as one connection`
@@ -989,7 +989,7 @@ proc checkHandTurns*() =
       put = settled(posedAt(position.wind, HAND_PHASE), HAND_TO_HAND,
                     ABOVE_BOTH, default(Ways))
       apart = dist(put.place[Dancer.Lead], put.place[Dancer.Follow])
-    doAssert bowed[snake] > BOX_ROOM / 2,
+    doAssert bowed[snake] > DIAMOND_ROOM / 2,
       &"A swan's snake does not go round anything; got " &
         &"`{decimal(bowed[snake], 1)}` of bow in `{position.name}`."
     doAssert bowed[snake] < apart,
@@ -1057,8 +1057,8 @@ proc checkHandTurns*() =
           &"missing from {arm} for `{decimal(want_lost, 1)}` of breaking at " &
           &"`{cuts[arm].len}` dives in `{position.name}`."
   told.add &"the wind makes the crossings: none at the frame, one at a " &
-    &"half turn -- the X the partners make facing the same way -- and two " &
-    &"at a whole one, one by each dancer, holding a diamond of " &
+    &"half turn -- the cross the partners make facing the same way -- and " &
+    &"two at a whole one, one by each dancer, holding a diamond of " &
     &"{decimal(smallest, 0)} square units with its points {decimal(apart, 0)} apart"
 
   # RULE 28 again.  `"the animations are very jankey and tied to the final`

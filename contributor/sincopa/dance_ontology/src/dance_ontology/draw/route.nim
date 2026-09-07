@@ -42,8 +42,8 @@ const WAYS*: array[4, WayRound] = [
 const BREAK* = 11.0   ## Length of gap cut in under reach at crossing.
 
 const
-  BOX_ROOM* = 24.0    ## How wide diamond that wound pair holds opens at
-                      ## its middle.
+  DIAMOND_ROOM* = 24.0 ## How wide diamond that wound pair holds opens at
+                       ## its middle.
   WIND_NIP = 0.4     ## How far wound pair draws together between its
                       ## hands.
     ## Two strands wound round each other pull in where they are wound and
@@ -101,7 +101,7 @@ func swanning*(turns: float): float =
 func windShare*(turns: float; arm: Arm): float =
   ## Measure how much of wound pair's swing this connection carries
   ## (rule 31).
-  ##   Evenly to whole turn, so frame, X and diamond are drawn
+  ##   Evenly to whole turn, so frame, cross and diamond are drawn
   ##     exactly as they were.  Past that, pair cannot keep swinging
   ##     symmetrically -- wind two strands far enough and one pulls taut
   ##     through middle while other wraps it -- so share runs
@@ -665,7 +665,7 @@ func wound*(a, b: Point; across: Point; phi_a, sweep: float;
   ##     wound further.
   ##   That is whole of drawing.  At no wind, angle holds still
   ##     and reach is straight.  At half turn it sweeps half way round
-  ##     and offset crosses axis once: pair makes **X**.  At
+  ##     and offset crosses axis once: pair makes **cross**.  At
   ##     whole turn it sweeps whole way and crosses twice, once by
   ##     each dancer, with **diamond** between: rule 27's shape, arrived
   ##     at rather than imposed.
@@ -732,7 +732,7 @@ func crossingsOf*(one, other: seq[Point]): seq[Point] =
   ##   Segment against segment, and where they really cross rather than
   ##     where their sampled points come close.  Two lines crossing steeply
   ##     pass between one another's points without any pair of them being
-  ##     near at all, which is how one X went unbroken.
+  ##     near at all, which is how one cross went unbroken.
   ##   In order along `one`, so arm that dives can be alternated from
   ##     first crossing to last (rules 14, 27, 29).
   for i in 0 ..< one.high:

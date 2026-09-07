@@ -231,7 +231,7 @@ const RULES* = [
   ##   Rule 27 says what twisted ends of two-hand chain look like.
   ##     Parallel pair does not cross; pair wound whole turn crosses
   ##       twice, once by each dancer, and what two crossings enclose
-  ##       is box rule names.
+  ##       is diamond rule names.
   ##     Two answers settle how it is read.  *"three positions, full turn
   ##       required between them"*: step on that page is whole turn,
   ##       which is what makes rule 12's three into chain -- whole turn puts
@@ -247,17 +247,17 @@ const RULES* = [
   ##   Rule 28 adds half turns, and in doing so says where rule 27's
   ##     first drawing went wrong.
   ##     At half turn partners face same way and pair makes
-  ##       **X**, which is crossing geometry itself gives --
+  ##       **cross**, which is crossing geometry itself gives --
   ##       same mark app already uses for crossed pair.  So chain
-  ##       is five: box, X, frame, X, box, half turn apart.
+  ##       is five: diamond, cross, frame, cross, diamond, half turn apart.
   ##     `"tied to the final visual representations"` is fault named:
-  ##       wind was number handed to drawing, and box was swelled
+  ##       wind was number handed to drawing, and diamond was swelled
   ##       by it on top of geometry that was not winding at all.  It is now
   ##       **measured** instead -- angle each held hand makes with
   ##       pair's own axis, and difference between two ends is
   ##       wind.  Reach is then shadow of wound arm: its offset
   ##       from axis swings as far round as pair has wound, which
-  ##       is straight at none, X at half, and diamond at whole,
+  ##       is straight at none, cross at half, and diamond at whole,
   ##       with nothing imposed and nothing to jump.
   ##     Measured that way, orbit that keeps its bearing does not wind
   ##       pair at all: such walker never turns relative to their
@@ -294,7 +294,7 @@ const RULES* = [
   ##       wind opposite ways -- positive turn by lead unwinds what
   ##       positive turn by follow winds.  Chain's winds are
   ##       follow's way round, so lead's edges were walking backwards
-  ##       off end: from box at whole turn out to one and half
+  ##       off end: from diamond at whole turn out to one and half
   ##       turns, which drew third crossing and second diamond.
   ##     So each way's sense is **measured**, as rule 28 measures wind
   ##       itself: turn quarter from frame and see which way pair
@@ -316,7 +316,7 @@ const RULES* = [
   ##       `an extra arm twist, in either direction"`, and that extra twist
   ##       was read as belonging to that pattern alone.  It does not: hand
   ##       to hand has one at each end too, so chain is seven -- swan,
-  ##       diamond, X, frame, X, diamond, swan.
+  ##       diamond, cross, frame, cross, diamond, swan.
   ##     What differs between two holds is only *where chain sits*.
   ##       Hold is unwound where its two connections run parallel, and
   ##       that falls at different facing for each: hand to hand face to

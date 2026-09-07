@@ -535,8 +535,8 @@ const
 const STEPS* = [-1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5]
   ## One chain, in turns of wind from hold's own parallel state (rule 31).
   ##   Seven positions half turn apart: hold's own frame in middle,
-  ##     rule 28's X either side of it, rule 27's diamond beyond each of
-  ##     those, and rule 13's extra arm twist -- **swan** -- at each end.
+  ##     rule 28's cross either side of it, rule 27's diamond beyond each
+  ##     of those, and rule 13's extra arm twist -- **swan** -- at each end.
   ##   Steps are whole of chain; what differs between one hold
   ##     and another is only which facing sits at nothing wound, which is
   ##     half turn of offset rule 31 names, and that is measured rather
@@ -582,8 +582,11 @@ func phaseOf*(holds: Holds): float =
 
 func chainFor*(holds: Holds): seq[Position] =
   ## Lay out chain one hold walks: every step of it, named and noted.
-  ##   Names are preliminary and user's: position is called for
-  ##     whichever of lead's arms passes over other at lead's
+  ##   Shape is glossary's word for that step of chain -- **cross**,
+  ##     **diamond**, **swan** -- which is why neither `x` nor `box`
+  ##     appears here: glossary names both as words to avoid.
+  ##   Which arm is over is preliminary and user's: position is called
+  ##     for whichever of lead's arms passes over other at lead's
   ##     own crossover, and for shape pair makes there.
   # Asked for its refusal alone: hold that runs parallel at neither
   # phase cannot walk chain, and dies here rather than mid-table.
@@ -593,8 +596,8 @@ func chainFor*(holds: Holds): seq[Position] =
       shape = case int(abs(wind) * 2)
               of 0: &"Left-to-{handName(holds[Arm.L].get)} and " &
                     &"Right-to-{handName(holds[Arm.R].get)}"
-              of 1: "X"
-              of 2: "box"
+              of 1: "cross"
+              of 2: "diamond"
               else: "swan"
       far = case int(abs(wind) * 2)
             of 0: "the app's frame"
@@ -665,8 +668,8 @@ func windSense*(way: TurnWay): float =
 func handTurnParts*(): Parts =
   ## Build every SVG hand-to-hand turns page places.
   ##   Rules 28 and 31: seven positions, half turn apart -- frame,
-  ##     X either side of it, diamond beyond each X, and swan beyond
-  ##     each diamond.
+  ##     cross either side of it, diamond beyond each cross, and swan
+  ##     beyond each diamond.
   ##   Rule 15: every position drawn, every edge animated, by every way of
   ##     turning.
   ##   Rule 32: all four of them walk chain, since orbit that keeps

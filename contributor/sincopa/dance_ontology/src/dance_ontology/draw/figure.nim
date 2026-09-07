@@ -27,7 +27,7 @@ const
 
 type Twists* = array[Arm, float]
   ## How far each connection has wound, in turns: what reach swings
-  ## through (rules 27, 28).  Zero draws straight, half draws X,
+  ## through (rules 27, 28).  Zero draws straight, half draws cross,
   ## whole draws diamond, one and one-half draws swan.
   ##   It once carried two more channels -- pigtail at lone reach's
   ##     middle and braid across pair -- which retired rotation page
@@ -214,7 +214,7 @@ func partsOf*(pose: Pose; holds: Holds; levels: Levels = default(Levels);
     bits.add hand(q.x, q.y, who == Dancer.Lead, arm, held = false,
                   free = Free.Grey)
   # Wound pair crosses: once by half turn, twice by whole one, with
-  # X or diamond that makes (rules 27, 28).
+  # cross or diamond that makes (rules 27, 28).
   let winding = holds[Arm.L].isSome and holds[Arm.R].isSome and
     abs(twist[Arm.L]) > 1e-9
   # And wound pair says which way it wound by which arm it keeps on top,
@@ -255,7 +255,7 @@ func partsOf*(pose: Pose; holds: Holds; levels: Levels = default(Levels);
     for i, meeting in meetings:
       # Arm named `over` stays on top at first meeting, so it is
       # other one that dives there, and they swap at each one after --
-      # which is what makes box into twist and not overlap (rule 27).
+      # which is what makes diamond into twist and not overlap (rule 27).
       let under = if (i mod 2 == 0) == (on_top == some(Arm.L)): Arm.R
                   else: Arm.L
       dives[under].add meeting
