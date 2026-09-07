@@ -238,10 +238,12 @@ against, a tool the build shells out to, a browser a driven check drives, a sour
 package manager carries. Atlas pins Nim packages and a lockfile pins node ones; these have
 neither, so they are declared instead.
 
-**Declare them as data in your `tools/build.nim`, reached by a verb**, the way node packages are
-declared in `package.json` and reached by `types`. Each entry carries what it is and why it is
-needed, because Article II.8 admits an external concern only where it is justified — and a
-reason in a field outlives a reason in a comment.
+**Declare them as data in your `tools/build.nim`, reached by a `system` verb**, the way node
+packages are declared in `package.json` and reached by `types`. Each entry carries what it is
+and why it is needed, because Article II.8 admits an external concern only where it is
+justified — and a reason in a field outlives a reason in a comment. The verb prints the names
+one per line and nothing else, reasons included; `koch system` reads that, and the runner
+installs what it prints, so a reason in the output would arrive as a package name.
 
 ```nim
 const SYSTEM = [
@@ -301,6 +303,13 @@ events, or a test driver's host API.
   those two files, so nothing lists your project anywhere and nothing can drift. Your `web`
   and driven verbs should call `types` rather than repeat its steps. Until a project carries
   the verb, CI type-checks none of its TypeScript, which for a front end is most of its code.
+- **One command drives it, and the runner runs that one**: a `drive` verb in the same driver,
+  which builds the page and drives it through real events. Carrying that verb is what enrols
+  your project — `koch driven` reads your driver's own dispatch to find it, so nothing lists
+  your project anywhere and a verb spelled otherwise is a project the runner silently passes
+  by. It runs on your project's own pin, not the driver's, because building the page compiles
+  your code. Make it fetch and build everything it needs itself: a driven check that first
+  wants some other verb run by hand is a check the runner will not run.
 
 A generated lockfile passes the form rules unchanged. That is measured rather than assumed:
 its long lines are single unbreakable tokens — an `integrity` digest or a registry URL — and

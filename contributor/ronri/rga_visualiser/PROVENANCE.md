@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Author | Claude Opus 5 and Claude Sonnet 5 |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 8779977bf49991d4 |
+| Rules  | bdde915970b9ce25 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the
@@ -50,18 +50,18 @@ Open Questions
 Recorded here and in the pull request body, per CONTRIBUTOR.md: a contributor neither works
 around a rule nor edits it.
 
-**The desktop front-end needs a C++ file kind, and the kind arrives gated.** Dear ImGui is a
-C++ library whose API uses default arguments and overloads that Nim's `cpp` backend cannot
-bind directly, so the front-end reaches it through a 649-line shim, `gui_shim.cpp`. `.cpp` is
-not registered in `curator/audit/src/kinds.nim`, and CONTRIBUTOR.md's instruction for that
-case is to leave the file out and record the question. Asked as issue 26 and ruled: `.cpp`,
-`.hpp`, `.c` and `.h` are to be registered *gated*, so every file of a gated kind carries a
-justification in its own header, and TypeScript is gated the same way rather than
-grandfathered. The front-end therefore waits on that change landing, and `gui_shim.cpp` will
-have to argue in its header that it only flattens overload sets and default arguments — which
-the curator said is what they will read it for. Rejected as workarounds: renaming the file to
-a registered extension, which lies to the checker; and rewriting the shim in Nim, which cannot
-express what the shim exists for.
+**System packages have no declared home in this repository.** Nim packages are declared in
+`rga_visualiser.nimble` and pinned by `atlas.lock`; node packages in `package.json`, pinned by
+`package-lock.json`. Desktop front-end links against SDL3, libGL and zlib, drives itself
+headless through Xvfb and software GL, and compiles Dear ImGui from clone rather than linking
+it -- and none of those five is expressible in either file. Prototype used
+`dependencies.list`; that extension is not among thirteen kinds
+`curator/audit/src/kinds.nim` registers, so committing one is finding rather than declaration.
+  Named in `README.md`'s build section meanwhile, as table beside compiler pin already there,
+  with ImGui's clone command under it. Honest and reader finds it, but nothing checks it, so it
+  decays as any unrun check does. Asked as issue 60, with three ways out offered and no
+  preference between them. Rejected as workaround: committing `dependencies.list` regardless,
+  which is exactly rule CONTRIBUTOR.md forbids working around.
 
 **The browser front-end waits on conventions for the repository's first TypeScript.** No `.ts`
 file is committed anywhere, so this project's conversion of the browser glue — some 9,000
@@ -139,6 +139,23 @@ Figures from this environment, software-rendered: eight wheel notches take dista
 pivot 32.5 units at unchanged height; frame is assembled in 0.7 ms median, 0.9 ms at its
 slowest tenth; hover pick over largest demo runs 2.0 ms median; edit past timeline capacity
 costs 2.5 ms over 5,038 objects; closed rows hold 9.1 elements each over 5,040 of them.
+
+**Accounting allows two frames of its sample to miss, as count rather than share.** Share of
+0.995 was written after demanding *every* frame failed, and never took effect: `ceil(0.995n)`
+equals `n` for every `n` under 200. Both call sites define what "enough frames accounted" means,
+and neither can be fixed by growing sample -- misses are per frame, so larger sample brings
+proportionally more chances to straddle collection and proportional allowance never pulls ahead.
+Ruled on repository issue 47; one definition now, exported from `scenery` and imported by
+`loaded`, since two copies are what let one site stay inert.
+  Measured either side, which is what says where it bites: `scenery`'s sample is 485-549 frames,
+  above 200, so share already allowed two there and count reproduces it exactly. `loaded`'s
+  sample is 49-50, capped by its own sampling loop stopping at 25 heavy frames, so share allowed
+  *zero* and count now allows two. Failing check was `loaded`'s, and that is why.
+  Per-frame tolerances are untouched, and deliberately: every bit of detection power is in them,
+  and real accounting fault misses on every frame rather than hiding inside two.
+  Improvement is shape rather than rate. Two frames should put red runs near one in thousand if
+  misses are independent, and materially worse if they cluster -- scheduler pause or collection
+  cycle producing two straddles together is plausible and unmeasured.
 
 **Timing-dependent quantities are asserted as bands, never figures.** How far held key
 travels depends on frames drawn while it was down. Band that will not settle is widened with
@@ -271,6 +288,64 @@ unbreakable-token exemption covers, as curator's own measurement predicted. Comm
   Noto Sans at 400 and 600, Noto Sans Math, Noto Sans Symbols 2, Noto Serif. Never committed,
   since audit cannot read them; licence notice travels with copies.
 
+**System packages are declared as data in build driver, reached by verb.** `SYSTEM` in
+`tools/build.nim` pairs each package with what it is for, and `system` prints those names one
+per line for caller to install (CONTRIBUTOR.md, "System dependencies"). Declaration lives in
+driver rather than in file of its own: `.nim` is kind audit already reads, output is
+machine-readable so CI installs from this rather than from names written into workflow, and
+registry admits no second build verb.
+  Prints rather than installs: which package manager serves them varies by machine, while list
+  is this project's. Reason stays in declaration rather than in output, which is what keeps
+  output pipeable.
+  No version is pinned and none is invented -- package's version is whatever machine carries.
+  What *is* pinned is every byte fetched at build time, below.
+  Asked as issue 60 before writing anything, since three homes I proposed were all wrong;
+  ruling put it here.
+
+**`drive` fetches faces; `web` refuses without them.** Split is deliberate rather than
+inconsistent. `drive` is asked for answer -- run every check and report -- so it satisfies its own
+precondition; `web` is asked to assemble page, and caller reaching for it directly is building
+rather than being given, so absent face is their error to see by name.
+  Cold checkout is what showed it. Runner restored Atlas, installed node packages, derived
+  declarations and compiled bridge, then stopped at embedding with `Missing face ...; run
+  `assets` first` -- every expensive step done and one cheap one missing (repository issue 47).
+  Costs nothing warm, which is what makes it safe to chain: `assets` skips every face already
+  carrying its pinned digest, so warm run fetches none.
+
+**Each face carries digest of bytes expected, and build refuses anything else.** Host serves
+whatever it serves, and `web` embeds these bytes into artefact readers open, so wrong byte
+fetched is wrong byte shipped. Every other external thing here is pinned -- compiler to commit,
+packages to lock file, `pga` to commit -- and this fetch was sole exception (repository issue
+47). Digest sits beside face in `FACES`, so pin and thing pinned cannot drift apart.
+  Checked twice, at both places bytes matter: `assets` verifies what it fetched, and `web`
+  verifies again before embedding, since `assets` may have run long ago and disk is not
+  evidence. Mismatches across six are collected and reported together rather than first raising,
+  since host republishing family moves several at once.
+  `assets` leaves face already carrying its pinned digest alone, so verb is idempotent and
+  second run fetches nothing. That is also cache key CI keys faces on, which is why pinning and
+  caching arrive together.
+  **`sha256sum` rather than anything in Nim, and deliberately.** No digest of that strength is
+  in reach: curator recorded all three routes rejected on `curator/audit/src/provenance.nim` --
+  `std/sha1` deprecated and warning on every build, `checksums` package nimble install in CI for
+  one hash, `std/hashes` unstable across compiler versions. `assets` already shells out for
+  `curl` and `web` for `base64`, so this adds no dependency either lacked. Deriving SHA-256 in
+  Nim rejected outright: crypto primitive is last thing to hand-roll.
+  **What cannot be pinned is said rather than implied.** Clone carries commit and apt package
+  carries none that survives across distributions, so none is manufactured for one; same shape
+  of honest limit `compilers.nim` already records for fetched compilers, trusted on TLS alone.
+
+*Checked.* Verified by running cold: `build/` removed entirely, then `drive` fetches six faces
+and reaches 136 of 136 with no step run by hand -- which is runner's own case. Second run
+immediately after fetches none. `web` alone on same cold tree still refuses by name, which is
+behaviour worth keeping rather than side effect.
+
+*Checked.* Verified by breaking on purpose: one digit changed in one committed digest makes
+`assets` re-fetch and refuse, and `web` refuse to embed, each naming face and both digests;
+restored after. Verified by fetching: all six digests taken from fresh fetch of host, and each
+matches copy already on disk, so pin is live fact rather than whatever was cached here. Verified
+by running: page rebuilds byte for byte at 3,906,930 bytes with verification in place, and
+`assets` run twice fetches six faces then none.
+
 *Checked.* Verified by running: page was built and opened in Chromium, and looked at. Grid,
 three world axes, plane's disc and rim, three points, chrome and scale ruler all draw; scene
 reports five objects, canvas sizes to viewport, and console reports no error. Verified by
@@ -283,6 +358,184 @@ out of Nim.
   repository: nothing drives file picker.
   **Unverified**: no human has driven this page.
 
+Desktop Front-End
+---
+**Two libraries are bound rather than wrapped, and only where they are called.** SDL3 owns
+window, input and OpenGL context; libGL owns driver. Both are external concerns this project
+exists to look past (Article II.8), so `src/desktop/sdl3.nim` and `src/desktop/opengl.nim`
+declare only symbols called, and each declares through library's own header, so C compiler
+owns every struct layout and every prototype.
+  Library flag sits in module needing it -- `{.passL: "-lSDL3".}`, `{.passL: "-lGL".}` -- never
+  in configuration, so any binary importing one links without repeating anything.
+  Cost is that development headers must be present to compile; see README's build section for
+  which packages carry them.
+
+**Mirrored constants are checked against header's own, by generated assertion.** SDL3's event
+kinds, scancodes, modifier masks and window flags are mirrored as Nim constants so `case` can
+bind them, and every mirrored value is paired with header's name for it in one table.
+`CHECKS_MIRROR` walks that table and emits one C++ `static_assert` per pair, so binding that
+went stale fails to compile rather than fails to work. Both sides of each check read from same
+table, so mirror cannot drift from assertion guarding it.
+  Verified by breaking it on purpose: moving `Scancode.Home` from 74 to 75 and changing
+  nothing else fails compilation with `static assertion failed: SDL3 binding is stale:
+  SDL_SCANCODE_HOME was renumbered.` Restored after.
+  OpenGL enumerants are written as literals instead, and deliberately: their values are fixed
+  by OpenGL specification and never renumbered, which is not true of any SDL constant.
+
+**Dear ImGui is reached through C entry points, because there is no symbol to bind.** Its
+interface is C++ with overloads, default arguments and namespaces, and Nim's `cpp` backend
+imports none of those three -- so `src/desktop/gui_shim.cpp` flattens slice this visualiser
+calls into plain C, and `src/desktop/gui.nim` binds that. This is Article II.9's first ground
+in its plainest form, and shim's header says so: no glue reaches these widgets from Nim at any
+price, since there is no symbol for glue to name.
+  Facade rather than generated binding: it declares exactly widgets used, and every default
+  relied on is written once here rather than repeated at every call site. Cost is that adding
+  widget touches two files.
+  Repository's first `.cpp`. Kind is registered *gated* (issue 26), so form rules reach it and
+  `justification.nim` demands its header carry `not Nim because`. Whole 649-line file drew one
+  finding on first check: `Supplemental mathematical operators A`, where checker read Unicode
+  block's suffix as article. Corrected to block's real name, `Miscellaneous Mathematical
+  Symbols-A`, which is what U+27C0..U+27EF is called -- comment was wrong as well as flagged.
+
+**Dear ImGui is compiled into binary rather than linked, and pinned by commit.**
+`fd13a1e8923a0a7077b404fc36fd063b25a0c0b5` of `ocornut/imgui`'s `docking` branch, MIT licence,
+cloned into `deps/imgui` and never committed, as Atlas checkouts are. Four core translation
+units and both of its own backends -- SDL3 and OpenGL 3, unmodified -- compile straight in, so
+no prebuilt library has to be found at link time.
+  `IMGUI_USE_WCHAR32` is set by compiler flag rather than by editing checkout's `imconfig.h`:
+  notation carries Lengyel's bold operands (`𝐦`, U+1D426) and 16-bit `ImWchar` cannot express
+  codepoint past U+FFFF, while edit to checkout would not survive reclone.
+  Path is `--define:visualiser.path_imgui`, resolved against module's own directory, so
+  checkout elsewhere needs no edit either.
+
+**Renderer owns OpenGL names and draws `mesh`'s records through them, one program per record
+kind.** Each record type has vertex shader widening it over static corner geometry, so CPU hands
+over compact records and does no per-frame expansion. Buffers are reuploaded whole each frame
+rather than tracked for changes: upload sits far below any frame's own reach, and nothing can be
+stale after reader edits coefficient.
+  Draw order is opaque first, translucent second, with depth writes off for translucent, so
+  ribbons and points occlude each other correctly while plane veils occlude nothing and objects
+  stay visible through them. Cost is that two veils crossing look order-dependent.
+  Same records WebGL side already draws, which is what makes this cross-check rather than second
+  implementation: one tessellation, two renderers, and disagreement between them is bug in one.
+  That check cannot run until entry point drives both; nothing here has drawn yet.
+
+**Panel lays out what reader edits scene and camera through, and holds only what GUI needs
+between frames.** Which operands are picked, what open edit is staging, where to export;
+everything else is read straight off scene and camera, so there is one source of truth and no
+synchronisation step to go stale.
+
+**Rename now covers uppercase constants, which word-boundary passes had missed.** Tasks 175-181
+renamed by word, and no word boundary sits inside `ALPHA_WASH` or `WIDTH_SHAPE_WORD`, so eight
+names survived in merged code, each spelling term GLOSSARY.md marks *Avoid*. Found by porting
+panel, which had to reach one of them. Now: `ALPHA_VEIL` and `ALPHA_VEIL_SKY` (`mesh`,
+`tessellate`), `WIDTH_KIND_WORD` (`scene`), `PREVIEW_EDIT`, `RADIUS_PREVIEW_EDIT`, `FLAT_PIVOT`
+and `REVISION_PLACEMENT` (`bridge`), `PIXELS_RULER_WANTED` (`diagnostics.ts`).
+  None crosses foreign-function boundary: no renamed name is `exportc` and none appears in any
+  script, so derived `bridge.d.ts` is byte for byte what it was. Verified rather than assumed.
+  **`GHOST` could not simply become `PREVIEW`.** Nim compares identifiers ignoring case after
+  first letter and ignoring underscores, and type `Preview` already exists -- so `none(Preview)`
+  silently resolved to renamed variable and compilation failed. Named `PREVIEW_EDIT` instead,
+  which pairs with `PREVIEW_APPLY` already beside it: one is what open edit stages, other is what
+  open apply control would build. Collision forced better name than intended one.
+  Left alone, since each is different word rather than retired one: `ShapedMarker` and
+  `MARKER_SHAPED` use *shape* as verb, which glossary's own Marker entry does too;
+  `nimInkChoosableSlots` names palette position rather than object's handle; ring buffer's slot
+  is genuinely slot; and Dear ImGui's `BeginTabItem` and DOM's `currentTarget` are foreign.
+  `PIXELS_RULER_TARGET` named width bar aims for, which is neither Pivot nor Mark, so it became
+  `PIXELS_RULER_WANTED` rather than being forced into glossary term it is not.
+
+**Vocabulary rename reached these three modules through compiler rather than through reader.**
+Renderer and panel both predate tasks 175-181, so they arrived saying `wash`, `slot`, `target`,
+`Item` and `ghost`. Core says `veil`, `handle`, `pivot`, `Object` and `preview`, so unported file
+does not compile at all -- and it named every miss. Two passes of word-boundary rename missed
+compounds each time (`WashRuns`, `WashKind`, `drawWashRun`; then `ITEMS_MAX`, `describeShape`,
+`shapeText`), and build reported each by name. That is stronger check than review, and it is why
+these were taken before entry point, which imports everything.
+  One `budget` in renderer was left alone deliberately: project renamed *budget* to *mark* for
+  frame-time marks, and that use was ordinary English about cost rather than term of art.
+  Reworded around instead, so retired word is simply absent.
+
+**Entry point owns window, event loop and every headless run.** `src/desktop/main.nim`
+assembles meshes from scene, draws markers and overlays, turns SDL events into camera and
+interaction calls, and quits. Everything it draws is asked of shared core; nothing geometric
+is derived beside it.
+  It also carries run modes that exist so build can be checked without sitting in front of
+  it: `--screenshot`, `--frames`, `--hidden`, `--storyboard`, `--timings`, `--novsync`,
+  `--fill`, and `--drive-drag`, `--drive-keys`, `--drive-select`, `--drive-undo`,
+  `--drive-sky`, `--drive-help`, `--drive-assert`. Each scripted mode pushes real events
+  through SDL's own queue rather than calling handler, so what it exercises is wiring rather
+  than function.
+  These are desktop's answer to `tools/drive/`, and they are why this front-end is checkable
+  headless at all. They are not yet run here; that is next stage's work.
+
+**Desktop's compiler flags live in build driver, not in configuration beside entry point.**
+`tools/build.nim`'s `desktop` verb passes `cpp` backend and output path; project carries no
+`.nim.cfg` anywhere. Reader looking for how something is built reads driver that builds it,
+rather than file they must know to look for beside source. Algebra and library path stay in
+`nim.cfg`, since every target, test and front-end wants same two.
+  Rejected: `main.nim.cfg` mirroring prototype's `visualiser.nim.cfg`. It works, and Nim picks
+  it up automatically, which is exactly its cost -- it applies invisibly to any build of that
+  file, including one run by hand, and it puts second place where flags live.
+  Library flags stay in modules that need them (`-lSDL3`, `-lGL`, `-lz`), so test binary
+  importing one links without repeating anything.
+  No `-d:release`, unlike page: this binary is driven and read rather than shipped, and its
+  `--drive-*` runs report through assertions release would remove.
+
+**Neither SDL3 nor Dear ImGui arrives as package, so both are pinned by version.** That is
+this repository's rule about anything fetched at build time, and here it is forced rather than
+chosen: Ubuntu 24.04 carries `libsdl2-dev` and no SDL3 at all, so `apt-get install libsdl3-dev`
+fails on it outright. SDL3 is therefore built from source and installed, at `3.2.31`, zlib
+licence, and `checkSdl3` reads what `pkg-config` reports before compiling anything.
+  Pinned exactly rather than as floor: 3.2.31 is what this front-end was compiled and drawn
+  against, and floor would claim reach across releases nothing here has tried.
+  Found by checking rather than by assuming: prototype's own `dependencies.list` named
+  `libsdl3-dev`, and this port carried that name into `SYSTEM` -- where it would have failed
+  runner's install step, since that step installs from this declaration. Package does not
+  exist on distribution runner runs.
+
+**Dear ImGui is pinned to commit, and build refuses any other.** `fd13a1e8`, i.e.
+`v1.92.9b-docking-35-gfd13a1e`, MIT licence, docking branch. It is compiled from source into
+binary rather than linked, so it is fetched at build time -- and this repository's rule is that
+anything fetched at build time is pinned. `checkImgui` reads checkout's own `HEAD` and raises
+by name, naming clone command that fixes it.
+  Absent from `SYSTEM` deliberately, as SDL3 is: that list is packages a package manager
+  installs, and neither of these is one of them. What stays there for their sake is `cmake` and
+  `pkg-config`, which build and read SDL3, and `git`, which fetches both.
+  Verified by breaking it both ways: with checkout moved aside, verb names it missing and gives
+  clone command; with checkout one commit back, verb names commit wanted and commit found. Restored
+  after.
+
+*Checked.* Verified by running: both bindings compile and link against SDL3 3.2.31 and libGL
+through `nim cpp`, and their assertions run against real headers. Shared core compiles and runs
+under that same backend too, which nothing had shown before -- it had only ever been built
+through C and JS.
+  Verified by running headless: Dear ImGui starts over hidden SDL3 window with real OpenGL 3.3
+  core context under Xvfb, draws one frame through both its backends, reports framerate above
+  zero, and shuts down without error. `isFontLoaded` answered false for that run, correctly:
+  no face was passed, which is exactly what it exists to report.
+  Verified by breaking on purpose: mirrored `Scancode.Home` moved by one fails compilation with
+  binding's own message; restored after.
+  Verified by compiling: renderer builds against this core through `nim cpp`, which is what says
+  vocabulary rename reached it -- core says `VeilRuns` and `veils`, and module naming them
+  otherwise does not compile.
+  Verified by compiling: renderer and panel both build against this core through `nim cpp`, which
+  is what says vocabulary rename reached them.
+  Verified by looking: `nim r tools/build.nim desktop` then one headless run under Xvfb writes
+  1440x900 PNG, and that frame was opened and read. It carries grid, axes, ground plane's disc,
+  four points, and panel with objects list, coefficients and every section header -- so both
+  front-ends now draw same scene from same core.
+  That look found defect reading never would: top bar carried `sameLine` and tooltip left by
+  control neither front-end has, and they drew `scene file` label under its own path field.
+  Removed; second frame confirms row.
+  Screenshot needs frames enough for entrance animation to finish -- 60 under software GL is
+  not, and scene looks empty at that count. 300 is.
+  Vocabulary shows in that frame rather than only in source: panel says *objects (5 of 5040)*
+  and *hold still over the pivot*.
+  **Unverified**: no `--drive-*` run has been exercised here, so nothing has driven this binary
+  through events; frame times are unmeasured; and no human has seen it on real graphics hardware
+  -- that run was software GL, which reported no multisampled visual, so thin lines alias.
+
 Render Paths
 ---
 **The directory a module sits in is which render path may reach it.**
@@ -293,15 +546,20 @@ Render Paths
 |  |  | `scene`, `selection`, `picking`, `marker`, `framing`, `interaction`, |
 |  |  | `storyboard`, `orrery`, `neighbourhood`, `starfield`, `history`, |
 |  |  | `format`, `help`, `timings`, `ramp`, `lighting` |
-| `desktop` | `visualiser.nim` | `image`, `gif`, `arena` here; `panel`, `renderer`, `opengl`, |
-|  |  | `gui`, `gui_shim.cpp`, `sdl3` arrive with front-end |
-| `browser` | `bridge.nim` | arrives with front-end: `bridge.nim`, `glue.ts` |
+| `src/desktop` | `main.nim` alone | `main`, `panel`, `renderer`, `gui`, `gui_shim.cpp`, |
+|  |  | `opengl`, `sdl3`, `image`, `gif`, `arena` |
+| `src/browser` | `bridge.nim` alone | `bridge.nim` and page's own scripts |
 
-`pga` is a dependency above all three and shared. `core` imports nothing outside itself and
-`pga`; `desktop` and `browser` each import `core` and never each other, readable from the
-import paths (`../core/`). `arena` sits in `desktop` despite being general-purpose: only the
-PNG and GIF encoders and the desktop draw loop reach it, and the JS backend cannot carve
-typed slices from a byte array at all.
+`pga` is dependency above all three and shared. Shared core imports nothing outside itself
+and `pga`; `src/desktop` and `src/browser` each import that core and never each other,
+readable from import paths (`../rga_visualiser/`). Both front-ends sit under `src/` beside
+core they draw through, which is what `srcDir` in nimble file already claims; desktop sat at
+repository root until this port and nothing but history put it there.
+  Both are built by same driver: `web` assembles page, `desktop` compiles binary, and neither
+  entry point carries configuration file of its own.
+  `arena` sits in `src/desktop` despite being general-purpose: only PNG and GIF encoders and
+  desktop draw loop reach it, and JS backend cannot carve typed slices from byte array at
+  all.
 
 A shared module reaching for something only one path has is a **compile error, not a
 comment**: `toCstring`, `buildChars`, `appendInt`, `appendFixed`, `saveScene`/`loadScene`

@@ -1,16 +1,26 @@
 # Run repository checks on pull requests, on main, and weekly over every project.
-#   Seven jobs. `plan` names projects one change asks to compile; `static` runs whole-tree
-#   checks, which cost tenths of second and so stay unscoped; `scope` and `commits` read
-#   branch; `project` is one matrix job per named project, each installing that project's
-#   own pin; `types` type-checks scripts of every changed project carrying node manifest,
-#   on driver's own compiler rather than through matrix, since `tools/build.nim` compiles
-#   no project code and building commit-pinned compiler to run build script would cost
-#   minutes for no checking; `base` refuses branch predating base's rules or checker;
-#   `audit` reads their verdicts and is gate branch protection requires, so required names
-#   stay `audit`, `scope`, `commits` while matrix names vary. `base` and `types` reach merge
-#   through that gate, which is why requiring branches up to date needs no paid ruleset here.
+#   Eight jobs. `plan` names projects one change asks to compile, and names again which of
+#   those carry driven checks; `static` runs whole-tree checks, which cost tenths of second
+#   and so stay unscoped; `scope` and `commits` read branch; `project` is one matrix job per
+#   named project, each installing that project's own pin; `driven` is second matrix over
+#   subset of same plan, building each page and driving it through real events; `types`
+#   type-checks scripts of every changed project carrying node manifest, on driver's own
+#   compiler rather than through matrix, since `tools/build.nim` compiles no project code
+#   and building commit-pinned compiler to run build script would cost minutes for no
+#   checking; `base` refuses branch predating base's rules or checker; `audit` reads their
+#   verdicts and is gate branch protection requires, so required names stay `audit`, `scope`,
+#   `commits` while matrix names vary. `base`, `types` and `driven` reach merge through that
+#   gate, which is why requiring branches up to date needs no paid ruleset here.
 #   Weekly sweep has no base commit to scope against, so `types` takes `--all` there, as
-#   `plan` takes `--sweep`.
+#   `plan` takes `--sweep`; `driven` needs neither, since it filters plan's own selection.
+#
+#   `driven` is matrix where `types` is one job, and difference is what each verb compiles.
+#   Type check derives declarations by reading source as text; driven check builds page
+#   through JS backend, which compiles project code, so it needs that project's pin exactly
+#   as `project` does. That is cost `plan.nim` recorded against `typeJobs` when it was
+#   written, arriving as predicted. Its own system packages come from project's declaration
+#   read through `koch system`, never from names written into this file, so project gains
+#   what it needs by declaring it (CONTRIBUTOR.md, "System dependencies").
 #   Matrix runs in parallel, so wall time is slowest changed project, never sum of all.
 #   `nim r koch ci` at root runs same checks locally, before any pull request is opened;
 #   runner confirms, never discovers.
@@ -29,9 +39,12 @@
 #   toolchain inside checkout would be audited (first run on main proved it).
 #   What runner fetches or builds is cached on thing that pins it, never on run: commit for
 #   compiler built from source, `atlas.lock` for that project's checkouts, every
-#   `package-lock.json` for npm's own store. Key is pin itself, so cache cannot serve tree
-#   lock would not have fetched; changing lock changes key, and stale entry is unreachable
-#   rather than wrong. Rejected: caching `nimcache`, which would be largest saving and whose
+#   `package-lock.json` for npm's own store, and driver holding face digests for faces it
+#   pins. Key is pin itself, so cache cannot serve tree lock would not have fetched; changing
+#   lock changes key, and stale entry is unreachable rather than wrong. Faces are stronger
+#   still: build verifies each against its digest on restore and again before embedding, so
+#   stale entry heals rather than ships. Rejected for now: caching apt archives, which saves
+#   download and not install, and `nimcache`, which would be largest saving and whose
 #   staleness is exactly failure repository refuses elsewhere -- check passing without
 #   compiling what it claims. It needs driving against deliberately stale cache first.
 #   Branch names and event kind reach koch through environment, never interpolated into
@@ -57,6 +70,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       projects: ${{ steps.select.outputs.projects }}
+      driven: ${{ steps.select.outputs.driven }}
     env:
       BASE: >-
         ${{ github.event_name == 'pull_request'
@@ -72,7 +86,9 @@ jobs:
           nim-version: ${{ env.NIM_VERSION }}
           parent-nim-install-directory: ${{ runner.temp }}
       - id: select
-        run: echo "projects=$(nim r koch plan $SWEEP)" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "projects=$(nim r koch plan $SWEEP)" >> "$GITHUB_OUTPUT"
+          echo "driven=$(nim r koch plan $SWEEP --driven)" >> "$GITHUB_OUTPUT"
 
   static:
     runs-on: ubuntu-latest
@@ -140,6 +156,98 @@ jobs:
       - env:
           PROJECT: ${{ matrix.dir }}
         run: nim r koch tests "$PROJECT"
+
+  driven:
+    needs: plan
+    if: needs.plan.outputs.driven != '[]'
+    runs-on: ubuntu-latest
+    # Whole suite drives real browser over thousands of objects under software rendering, so
+    #   it is minutes rather than seconds. Ceiling is far above measured run and far below
+    #   hang: job that stopped making progress should say so rather than hold runner.
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.driven) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Same two compiler arms as `project`, and for same reason: driven verb builds page
+      #   through JS backend, which compiles project code, so it needs that project's own pin
+      #   rather than driver's. `types` needs neither, which is why it is one job and this is
+      #   matrix.
+      - if: matrix.kind == 'version'
+        uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: ${{ matrix.nim }}
+          parent-nim-install-directory: ${{ runner.temp }}
+      - if: matrix.kind == 'commit'
+        id: built
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/nim-commit
+          key: nim-commit-${{ runner.os }}-${{ matrix.nim }}
+      - if: matrix.kind == 'commit' && steps.built.outputs.cache-hit != 'true'
+        env:
+          COMMIT: ${{ matrix.nim }}
+        run: |
+          git clone --filter=blob:none https://github.com/nim-lang/Nim "$RUNNER_TEMP/nim-commit"
+          cd "$RUNNER_TEMP/nim-commit"
+          git checkout "$COMMIT"
+          sh build_all.sh
+      - if: matrix.kind == 'commit'
+        run: echo "$RUNNER_TEMP/nim-commit/bin" >> "$GITHUB_PATH"
+
+      # Packages come from project's own declaration, never from names written here: workflow
+      #   knows no project, exactly as it names none for matrix above (CONTRIBUTOR.md, "System
+      #   dependencies"). Project declaring none installs none.
+      - env:
+          PROJECT: ${{ matrix.dir }}
+        run: |
+          PACKAGES="$(nim r koch system "$PROJECT")"
+          if [ -n "$PACKAGES" ]; then
+            sudo apt-get update -qq
+            echo "$PACKAGES" | xargs sudo apt-get install -y --no-install-recommends
+          fi
+
+      # Harness reads browser from environment and otherwise falls through to Playwright's
+      #   own, which nothing installed here; so name what was just installed, found rather
+      #   than written down. Absent browser fails here, naming it, rather than inside harness.
+      - run: |
+          CHROMIUM="$(command -v chromium || command -v chromium-browser)"
+          echo "RGA_CHROMIUM=$CHROMIUM" >> "$GITHUB_ENV"
+
+      - id: locked
+        env:
+          PROJECT: ${{ matrix.dir }}
+        run: |
+          if [ -f "$PROJECT/atlas.lock" ]; then echo "is_locked=true" >> "$GITHUB_OUTPUT"; fi
+      - if: steps.locked.outputs.is_locked == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ${{ matrix.dir }}/deps
+          key: atlas-${{ runner.os }}-${{ hashFiles(format('{0}/atlas.lock', matrix.dir)) }}
+
+      - run: mkdir -p ~/.npm
+      - uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+
+      # Faces are pinned to digests inside driver, and `assets` keeps one already carrying its
+      #   pin, so cache keyed on that file returns what fetch would have written. Stronger
+      #   than other two: `assets` re-fetches and refuses any face whose digest misses, and
+      #   `web` verifies again before embedding, so stale entry heals rather than ships.
+      #   Key is whole driver rather than digests alone, so it misses on edit that moved no
+      #   face; cost is refetch of six files.
+      - uses: actions/cache@v4
+        with:
+          path: ${{ matrix.dir }}/build/fonts
+          key: faces-${{ runner.os }}-${{ hashFiles(format('{0}/tools/build.nim', matrix.dir)) }}
+
+      - env:
+          PROJECT: ${{ matrix.dir }}
+        run: nim r koch driven "$PROJECT"
 
   types:
     runs-on: ubuntu-latest
@@ -219,7 +327,7 @@ jobs:
       - run: nim r koch base
 
   audit:
-    needs: [plan, static, project, types, base]
+    needs: [plan, static, project, driven, types, base]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -229,6 +337,7 @@ jobs:
             plan=${{ needs.plan.result }}
             static=${{ needs.static.result }}
             project=${{ needs.project.result }}
+            driven=${{ needs.driven.result }}
             types=${{ needs.types.result }}
             base=${{ needs.base.result }}
         run: |

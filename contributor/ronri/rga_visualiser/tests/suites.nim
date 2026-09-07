@@ -37,7 +37,7 @@ import ../src/rga_visualiser/[
 #   hand, and they write format's own byte order rather than host's.
 when not defined(js):
   import std/endians
-  import ../desktop/[arena, gif, image]
+  import ../src/desktop/[arena, gif, image]
 
 randomize(0)
 
@@ -1178,7 +1178,7 @@ suite "Mesh":
           float(corners_disc[2*i]), float(corners_disc[2*i + 1]),
         )
         check isNear(dot(vertex.toPosition - anchor.get, normal.get), 0)
-        check isNear(float(vertex.alpha), ALPHA_WASH)
+        check isNear(float(vertex.alpha), ALPHA_VEIL)
         # Every fill vertex is either fan's own centre or out at plane's own.
         #   fixed radius -- flat alpha throughout, so unlike old fading disc there
         #   is no band strictly between two to rule out.

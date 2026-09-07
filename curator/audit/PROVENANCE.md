@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 8779977bf49991d4 |
+| Rules  | bdde915970b9ce25 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -667,12 +667,79 @@ failure at a time. Whole verb costs 11 s cold on this machine, `npm ci` included
   change to `koch.nim` or a check source selects every one, since how each is checked
   changed.
 
+## Driven checks
+
+**Runner drives what the suites cannot reach, through that project's own verb.** `koch driven`
+restores a project's checkouts and its node tools, then runs `tools/build.nim drive` in it: the
+verb builds the page and drives it through held keys, wheels, right-button pans, two-finger
+pinches and long presses. Testament tests rules — what a slide does to the pivot, what a zoom
+does to distance — and nothing in it presses a key, so a rule wired to the wrong event is the
+class of defect no suite here could see. `rga_visualiser` had 135 such checks and the runner
+ran none of them, which made every one of them evidence that its author ran it (issue 47).
+
+**Enrolment is the verb, read from the project's own driver.** `verbDirs` reads the dispatch of
+`tools/build.nim` and selects projects naming `drive` in it, so a project enrols by carrying
+the verb and nothing lists it anywhere — the same derivation `nodeDirs` uses one step earlier,
+and the same reason. The parser is not a second one: `dispatchVerbs` already read koch's own
+dispatch for the rule holding its verbs, usage and CURATOR.md's table to one set, and it now
+takes the line opening that dispatch as an argument, since koch cases over parsed options and a
+project driver over its first argument. One shape, one reader.
+  Cost: a project spelling the verb otherwise is passed by in silence. That is why
+  CONTRIBUTOR.md now names `drive` and `system` outright rather than describing them.
+
+**It is a matrix on each project's own pin, where `types` is one plain job — and that
+difference was measured, not reasoned.** The first cut mirrored `types` exactly, on the
+argument recorded there: `tools/build.nim` compiles no project code, so the driver's own
+compiler serves. Running it refuted that in thirteen seconds. The driven verb calls `web`,
+which runs `nim js` over `bridge.nim`, which compiles project code and everything it imports —
+so `rga_visualiser` on the driver's 2.2.4 fails inside `pga`'s `multivectors.nim`, whose syntax
+only the commit that project pins can lex. The type-check record had written down the exact
+condition it rested on — *"this holds only while that verb compiles no project code. One that
+did would need its pin, and this would become matrix job like `project`"* — and this is that
+condition arriving. So `driven` is planned like `tests`: `plan --driven` filters what `plan`
+already selected, which is what makes it inherit scoping, `--all` and the sweep without
+restating any of them.
+
+**System packages are installed from the project's declaration, never from names in the
+workflow.** `koch system` runs each selected project's `system` verb and prints the union,
+sorted and deduplicated; the job pipes that into `apt-get`. koch prints and never installs,
+because which package manager serves a name is the machine's business while the list is the
+project's. The workflow therefore names no package, exactly as it names no project.
+  Only bare names survive the read. The verb's contract is one name per line, and the one other
+  thing that reaches that stream is the compiler complaining, which always spells a position
+  before its message — so a line carrying whitespace is dropped rather than handed to a package
+  manager. A compiler that complained still fails, since the absent package names itself.
+
+**Faces are cached on the file that pins them, and that cache is the safest of the three.**
+`assets` keeps a face already carrying its pinned digest and refetches any that misses, and
+`web` verifies again before embedding, so a stale entry heals rather than ships — where the
+Atlas and npm caches rest on the key alone. The key is the whole driver rather than the digests
+inside it, so an edit moving no face still misses; the cost is refetching six files, measured
+at 1.5 s.
+  Rejected for now: caching apt archives. It would save the download and not the install, and
+  the archive directory is root-owned and awkward to key. Measure the install first, exactly as
+  `nimcache` waits on being driven against a deliberately stale cache.
+
+*Checked.* Verified by running, 2026-09-07: `koch driven contributor/ronri/rga_visualiser`
+restores through Atlas, installs 7 node packages, builds the page on the commit-pinned
+compiler and reports **135 of 135 checks passed, 0 findings, in 2 m 36 s** warm. Verified by
+breaking: on the driver's own 2.2.4 the same command fails inside `pga` rather than passing,
+which is what sent this to a matrix. Verified by the gap it found: on a clean checkout the run
+stops at `Missing face 'build/fonts/commit-mono-latin-400-normal.woff2'; run 'assets' first`,
+because `drive` chains `web`, `types` and `declare` but not `assets`. That is the project's to
+fix and is raised on issue 47; the figure above was taken with `assets` run once by hand.
+
 ## Continuous integration
 
 **Six jobs, and the three required check names did not change.** `plan` emits the matrix,
 `static` runs `nim r koch tree`, `project` is one matrix job per planned project installing
 that project's own pin, `scope` and `commits` run only on pull requests with full history,
-and `audit` is a gate reading the results of `plan`, `static` and `project`. The gate exists
+and `audit` is a gate reading the results of `plan`, `static` and `project`. Since grown to
+eight: `types` and `driven` joined, and both reach the merge through that same gate, which is
+what has kept the required names unchanged through every job added since.
+  Every job added since is named in `needs` of the gate as well as declared. A job outside it
+  is a red check that cannot block a merge, which is the one mistake this arrangement makes
+  easy to make and impossible to see afterwards. The gate exists
 because matrix job names vary with the change and so can never be required checks, while
 `audit`, `scope` and `commits` must stay required: branch protection needed no edit.
 Rejected: renaming the required checks, which would have made the owner reconfigure `main`;
@@ -794,6 +861,17 @@ Cost measured in the same run: matrix jobs cannot start until `plan` reports, wh
 16 s between the run starting and the first project job. That is a floor on every run,
 paid whatever changed, and it is the price of computing the matrix in tested Nim rather
 than in shell.
+
+**What the driven check costs, measured locally before the runner ran it once**, 2026-09-07,
+same container as the rows above. `koch driven contributor/ronri/rga_visualiser` takes
+**2 m 36 s** warm — Atlas restored, node packages cached, faces present, commit-pinned
+compiler already built — and reports 135 of 135 checks passed. Roughly two thirds of that is
+the harness's own deliberate wall-clock windows and its largest-demo load rather than
+anything a faster machine shortens. `assets` costs 1.5 s for six faces over the network.
+  This is a local figure, not a runner one: the runner additionally installs system packages
+  through apt and must build or restore the commit-pinned compiler, neither of which is
+  measured yet. Record the runner's own figures from the first run of this job, and do not
+  treat this row as predicting them.
 
 ## Re-audit, 2026-09-07, issue routing
 

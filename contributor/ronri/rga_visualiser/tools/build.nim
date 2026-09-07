@@ -10,10 +10,13 @@
 ##   | Command  | Effect                                                                |
 ##   |----------|-----------------------------------------------------------------------|
 ##   | declare  | derive `bridge.d.ts` from bridge's own `exportc` signatures            |
+##   | types    | declare, then type-check page's scripts and harness against it         |
 ##   | web      | declare, compile bridge through JS backend, type-check and emit        |
 ##   |          | TypeScript, inline faces, fold everything into one self-contained page |
-##   | drive    | build page, then drive it through real events and report every check  |
-##   | assets   | fetch vendored faces page embeds                                       |
+##   | drive    | fetch faces, build page, drive it and report every check it runs      |
+##   | desktop  | compile desktop front-end through `cpp` backend, into `bin/`           |
+##   | assets   | fetch vendored faces page embeds, and verify each against its pin      |
+##   | system   | print system packages build needs, one per line, for caller to install |
 ##   | clean    | remove `build`, `bin` and `nimcache`                                   |
 ##   |----------|-----------------------------------------------------------------------|
 ##   Everything lands under `build/`, which root `.gitignore` covers at any depth.
@@ -28,7 +31,11 @@
 ##     hoisted, so that order is load-bearing.
 ##
 ##   Cost: driver runs from project directory, since every path here is relative to it.
-##   Cost: `web` needs node and npm alongside Nim; `assets` needs network once.
+##   Cost: `web` needs node and npm alongside Nim; `assets`, and `drive` through it, need
+##     network on cold tree and none on warm one.
+##   Cost: `assets` and `web` need `sha256sum`, for reason `digestOf` gives.
+##   Cost: `desktop` needs system libraries `SYSTEM` names, and Dear ImGui checkout standing
+##     at `COMMIT_IMGUI`, which it refuses to build without.
 
 {.experimental: "strictFuncs".}
 
@@ -38,6 +45,8 @@ import std/[os, osproc, strutils]
 const
   BUILD = "build"
     ## Directory every product lands in.
+  BIN = "bin"
+    ## Directory compiled binaries land in.
   BUILD_BROWSER = BUILD / "browser"
     ## Directory browser products land in.
   DIR_FONTS = BUILD / "fonts"
@@ -53,6 +62,24 @@ const
     ## Page's own type-checker configuration, targeting browser.
   PATH_TSCONFIG_DRIVE = "tsconfig.drive.json"
     ## Harness's own type-checker configuration, targeting node not browser.
+  PATH_DESKTOP_NIM = "src" / "desktop" / "main.nim"
+    ## Desktop entry point `desktop` compiles.
+  PATH_DESKTOP_BIN = BIN / "rga_visualiser"
+    ## Desktop binary that verb writes; never committed, since `.gitignore` covers `bin/`.
+  DIR_IMGUI = "deps" / "imgui"
+    ## Dear ImGui checkout desktop front-end compiles into itself; see `gui.PATH_IMGUI`.
+  VERSION_SDL3 = "3.2.31"
+    ## Release SDL3 must report through `pkg-config`, zlib licence.
+    ##   Built from source rather than installed: Ubuntu 24.04 packages SDL2 alone, and
+    ##   `apt-get install libsdl3-dev` fails on it outright. Distributions carrying package
+    ##   exist, but build cannot depend on which one runs it.
+    ##   Pinned exactly rather than as floor: this is what desktop front-end was compiled and
+    ##   drawn against, and floor would claim reach across releases nothing here has tried.
+  COMMIT_IMGUI = "fd13a1e8923a0a7077b404fc36fd063b25a0c0b5"
+    ## Commit that checkout must stand at, i.e. `v1.92.9b-docking-35-gfd13a1e`, MIT licence.
+    ##   Pinned for reason `FACES` are: this is fetched at build time and compiled into
+    ##   binary reader runs, so which commit it is has to be stated rather than taken.
+    ##   Docking branch rather than master: `gui` asks for docking, which master lacks.
   PATH_SHELL = "pages" / "shell.html"
     ## Committed markup, carrying `@EMBED:<face>@` and `@SCRIPT@` tokens.
   PATH_PAGE = BUILD / "rga_visualiser.html"
@@ -76,17 +103,54 @@ const
     ##   up through it, `gl` next because every later script draws through it, and `frame`
     ##   last because it starts loop everything else has to be ready for.
   FACES = [
-    "commit-mono-latin-400-normal.woff2",
-    "noto-sans-latin-400-normal.woff2",
-    "noto-sans-latin-600-normal.woff2",
-    "noto-sans-math-math-400-normal.woff2",
-    "noto-sans-symbols-2-symbols-400-normal.woff2",
-    "noto-serif-latin-400-normal.woff2",
+    ("commit-mono-latin-400-normal.woff2",
+      "86132abb57fc615f2ab900cde4cd9d5796e9791daf1f85d79fc933aa50b3b15c"),
+    ("noto-sans-latin-400-normal.woff2",
+      "09aee8065d25508f23a4c3d92cd777ac869c52d93fd868a88f025d888a7937d6"),
+    ("noto-sans-latin-600-normal.woff2",
+      "79e274470d1c5a0118eb325e2ea6f2eb2a449336d7fde1a4f20a2f32fe1119ed"),
+    ("noto-sans-math-math-400-normal.woff2",
+      "90b9ddbed280e379e1af4601eb1d53eee8dd467b4c9174e5fd2d7347fe180d30"),
+    ("noto-sans-symbols-2-symbols-400-normal.woff2",
+      "9c07d511848c274b5430c75bf98d1f2582680ef5f967947bfbdd06b75ca177c2"),
+    ("noto-serif-latin-400-normal.woff2",
+      "4c0cbe3eec50d260754d681c17ee2af49a43d7fd93ce42877f665fcb1a889b87"),
   ]
-    ## Faces page embeds, all SIL Open Font License 1.1; origins in PROVENANCE.md.
+    ## Faces page embeds, each with digest of bytes expected, all SIL Open Font License 1.1;
+    ##   origins in PROVENANCE.md.
+    ##   Digest is pin: host serves whatever it serves, and page embeds these bytes into
+    ##   artefact readers open, so wrong byte here is wrong byte shipped. Repository pins
+    ##   compilers to commits and packages to lock files; this is same pin for one fetch that
+    ##   had none (repository issue 47).
+  SYSTEM = [
+    ("curl", "fetch faces `assets` pins; build shells out to it"),
+    ("coreutils", "`sha256sum` verifying those pins and `base64` inlining them"),
+    ("nodejs", "run type-checker `types` drives and harness `drive` runs"),
+    ("chromium", "browser `drive` drives; harness takes its path from environment"),
+    ("git", "clone Dear ImGui and SDL3 at commits `desktop` pins them to"),
+    ("cmake", "build SDL3 from source, since no package of it exists on Ubuntu 24.04"),
+    ("pkg-config", "read version of that SDL3, which `desktop` checks before compiling"),
+    ("libgl-dev", "OpenGL headers and loader `src/desktop/opengl.nim` binds"),
+    ("zlib1g-dev", "deflate and CRC PNG export in `src/desktop/image.nim` writes"),
+    ("xvfb", "display headless `--drive-*` runs push real SDL events at"),
+    ("libgl1-mesa-dri", "software GL those headless runs render through"),
+  ]
+    ## System packages build needs present before it runs, with what each is for
+    ##   (CONTRIBUTOR.md, "System dependencies"). Nim packages are in nimble file and pinned
+    ##   by `atlas.lock`; node packages in `package.json`, pinned by its lock. These have
+    ##   neither.
+    ##   No version is pinned and none is invented: package's version is whatever machine
+    ##   carries, which is honest limit rather than omission. What *is* pinned is every byte
+    ##   fetched at build time -- see `FACES` and `COMMIT_IMGUI` -- which is what keeps
+    ##   unpinned download out of merge process.
+    ##   Dear ImGui and SDL3 are absent deliberately: neither arrives as package. Dear ImGui
+    ##   is compiled from source into binary, and Ubuntu 24.04 carries no `libsdl3-dev` at all
+    ##   -- only SDL2 -- so SDL3 is built and installed from source too. Both are pinned by
+    ##   version rather than by package manager; see `COMMIT_IMGUI` and `VERSION_SDL3`.
   HOST_FACES = "https://cdn.jsdelivr.net/npm/@fontsource"
     ## Host `assets` fetches faces from.
-  USAGE = "Usage: nim r tools/build.nim <declare|types|web|drive|assets|clean>\n"
+  USAGE = "Usage: nim r tools/build.nim " &
+    "<declare|types|web|drive|desktop|assets|system|clean>\n"
     ## Text printed on usage error.
 
 
@@ -238,17 +302,70 @@ proc types() =
   run("npx", ["tsc", "--project", PATH_TSCONFIG_DRIVE])
 
 
+proc system() =
+  ## Print every system package this build needs, one per line and nothing else.
+  ##   Prints rather than installs: which package manager serves them is machine's business
+  ##   and varies by distribution, while list is this project's. Caller pipes it --
+  ##   `nim r tools/build.nim system | xargs sudo apt-get install -y` -- so CI installs from
+  ##   this declaration rather than from names written into workflow.
+  ##   Reason each carries stays in `SYSTEM` above, where reader looks; keeping it out of this
+  ##   output is what makes output machine-readable.
+  for (package, _) in SYSTEM: echo package
+
+
+proc digestOf(path: string): string =
+  ## Read file's SHA-256, as `sha256sum` writes it.
+  ##   Shelled out rather than computed here, and deliberately: no digest of that strength is
+  ##   in reach from Nim. Curator recorded all three routes as rejected on
+  ##   `curator/audit/src/provenance.nim` -- `std/sha1` deprecated and warning on every build,
+  ##   `checksums` package nimble install in CI for one hash, `std/hashes` unstable across
+  ##   compiler versions. `assets` already shells out for `curl` and `web` for `base64`, so
+  ##   this adds no dependency either lacked.
+  ##   Deriving SHA-256 here rejected outright: crypto primitive is last thing to hand-roll,
+  ##   and Article II.8 asks for dependency rather than copy.
+  let (written, code) = execCmdEx("sha256sum " & quoteShell(path))
+  if code != 0:
+    raise newException(OSError, "Cannot read digest of `" & path & "`; got exit `" & $code & "`.")
+  written.strip.split(' ')[0]
+
+
+proc checkFace(face, wanted: string) =
+  ## Raise unless face on disk carries digest pinned for it.
+  let path = DIR_FONTS / face
+  let got = path.digestOf
+  if got != wanted:
+    raise newException(OSError,
+      "Face `" & face & "` is not what is pinned; wanted `" & wanted & "`, got `" & got & "`.")
+
+
 proc assets() =
-  ## Fetch every face page embeds into `build/fonts`.
+  ## Fetch every face page embeds into `build/fonts`, and verify each against its pin.
   ##   Faces are binary, which audit cannot read, so they are never committed and this verb
   ##   is how contributor gets them (CONTRIBUTOR.md, "Pages and assets").
+  ##   Face already carrying its pinned digest is left alone: verb is then idempotent, second
+  ##   run fetches nothing, and CI keeps faces between runs keyed on that same digest
+  ##   (repository issue 47).
+  ##   Every mismatch is reported together rather than first one raising: host republishing
+  ##   family moves several at once, and one run should name all of them rather than one per
+  ##   run.
   createDir DIR_FONTS
-  for face in FACES:
+  var wrong: seq[string]
+  for (face, digest) in FACES:
+    if fileExists(DIR_FONTS / face) and (DIR_FONTS / face).digestOf == digest:
+      echo "Kept ", face, ", digest already matches"
+      continue
     # Family is name less its last three parts, i.e. subset, weight and style.
     let family = face.rsplit('-', 3)[0]
     run("curl", ["-sSLf", "-o", DIR_FONTS / face, HOST_FACES & "/" & family & "/files/" & face])
-    echo "Fetched ", face
-  echo "Wrote ", DIR_FONTS, " (", FACES.len, " faces)."
+    let got = (DIR_FONTS / face).digestOf
+    if got != digest:
+      wrong.add face & ": wanted `" & digest & "`, got `" & got & "`"
+    else:
+      echo "Fetched ", face, ", digest matches"
+  if wrong.len > 0:
+    raise newException(OSError,
+      "Host served bytes no face is pinned to; got " & $wrong.len & " -- " & wrong.join("; "))
+  echo "Wrote ", DIR_FONTS, " (", FACES.len, " faces, every digest matched)."
 
 
 proc web() =
@@ -275,12 +392,15 @@ proc web() =
     scripts.add "\n" & readFile(path)
 
   var page = readFile(PATH_SHELL)
-  for face in FACES:
+  for (face, digest) in FACES:
     let token = TOKEN_EMBED & face & "@"
     if token notin page: continue
     let path = DIR_FONTS / face
     if not fileExists(path):
       raise newException(OSError, "Missing face `" & path & "`; run `assets` first.")
+    # Verified again here, not only where fetched: `assets` may have run long ago, and what
+    #   this embeds is what every reader downloads. Wrong byte stops build rather than ships.
+    checkFace(face, digest)
     run("bash", ["-c", "base64 -w0 " & quoteShell(path) & " > " & quoteShell(path & ".b64")])
     page = page.replace(token, "data:font/woff2;base64," & readFile(path & ".b64").strip)
 
@@ -298,13 +418,75 @@ proc drive() =
   ##   Builds page first: harness against stale page checks build nobody has, and `web`
   ##   runs `types`, which type-checks this harness too.
   ##   Exit follows harness: non-zero where any check failed, so one command is whole answer.
+  ##   Fetches faces first, so verb satisfies its own precondition rather than assuming someone
+  ##   ran `assets` by hand. Cold checkout is where that assumption showed: runner builds every
+  ##   step and stops at embedding, which is one line to prevent (repository issue 47).
+  ##   `web` keeps refusing absent face by name instead, since caller reaching for it directly
+  ##   is asking to build page rather than to be given one.
+  ##   Costs nothing warm: `assets` skips every face already carrying its pinned digest.
+  assets()
   web()
   run("node", [BUILD / "drive" / "main.js"])
 
 
+proc checkImgui() =
+  ## Raise unless Dear ImGui checkout stands at commit pinned for it.
+  ##   Refuses by name rather than compiling whatever is there, for reason `checkFace` gives:
+  ##   these sources are compiled into binary reader runs, so wrong commit is wrong binary,
+  ##   and C++ differing by one release fails far from here with no word of why.
+  if not dirExists(DIR_IMGUI):
+    raise newException(OSError,
+      "Missing Dear ImGui at `" & DIR_IMGUI & "`; clone it with `git clone --branch docking" &
+      " https://github.com/ocornut/imgui.git " & DIR_IMGUI & " && git -C " & DIR_IMGUI &
+      " checkout " & COMMIT_IMGUI & "`.")
+  let (written, code) = execCmdEx("git -C " & quoteShell(DIR_IMGUI) & " rev-parse HEAD")
+  if code != 0:
+    raise newException(OSError,
+      "Cannot read commit of `" & DIR_IMGUI & "`; got exit `" & $code & "`.")
+  let got = written.strip
+  if got != COMMIT_IMGUI:
+    raise newException(OSError,
+      "Dear ImGui is not at commit pinned for it; wanted `" & COMMIT_IMGUI & "`, got `" &
+      got & "`.")
+
+
+proc checkSdl3() =
+  ## Raise unless SDL3 on this machine reports version pinned for it.
+  ##   `pkg-config` rather than header read: SDL3 installs its own `.pc`, and that is where
+  ##   version it was built as is stated rather than inferred.
+  let (written, code) = execCmdEx("pkg-config --modversion sdl3")
+  if code != 0:
+    raise newException(OSError,
+      "No SDL3 found by `pkg-config`; build " & VERSION_SDL3 & " from source with `git clone" &
+      " --branch release-" & VERSION_SDL3 & " https://github.com/libsdl-org/SDL.git && cmake" &
+      " -S SDL -B SDL/build && cmake --build SDL/build && sudo cmake --install SDL/build`.")
+  let got = written.strip
+  if got != VERSION_SDL3:
+    raise newException(OSError,
+      "SDL3 is not version pinned for it; wanted `" & VERSION_SDL3 & "`, got `" & got & "`.")
+
+
+proc desktop() =
+  ## Compile desktop front-end into `bin/`, through backend Dear ImGui needs.
+  ##   `cpp` rather than `c`: shim over Dear ImGui is C++, for reason its own header gives.
+  ##   Flags live here rather than in `.nim.cfg` beside entry point: this driver owns every
+  ##   compiler invocation, so reader finds them where builds are run rather than in file
+  ##   they must know to look for. Algebra and library path stay in `nim.cfg`, since every
+  ##   target, test and front-end wants same two.
+  ##   Library flags (`-lSDL3`, `-lGL`, `-lz`) stay in modules needing them, so test binary
+  ##   importing one links without repeating anything here.
+  ##   No `-d:release`, unlike `web`: this binary is driven and read rather than shipped, and
+  ##   every check it carries is `--drive-*` run reporting through assertions release removes.
+  checkSdl3()
+  checkImgui()
+  createDir BIN
+  run("nim", ["cpp", "--hints:off", "-o:" & PATH_DESKTOP_BIN, PATH_DESKTOP_NIM])
+  echo "Wrote ", PATH_DESKTOP_BIN, "."
+
+
 proc clean() =
   ## Remove every product, leaving only what git holds.
-  for dir in [BUILD, "bin", "nimcache"]:
+  for dir in [BUILD, BIN, "nimcache"]:
     removeDir dir
     echo "Removed ", dir
 
@@ -322,7 +504,9 @@ when isMainModule:
     of "types": types()
     of "web": web()
     of "drive": drive()
+    of "desktop": desktop()
     of "assets": assets()
+    of "system": system()
     of "clean": clean()
     else:
       stderr.write USAGE
