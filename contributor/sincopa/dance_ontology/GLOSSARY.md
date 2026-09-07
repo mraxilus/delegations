@@ -132,6 +132,15 @@ _Avoid_: pin, twist, hammerlock
 A dancer rotating: about their own axis, or round their partner.
 _Avoid_: rotation, spin, revolution
 
+**Clockwise**:
+The way round a turn goes when it goes the way a clock's hands do, seen from above. Named
+from above rather than from either dancer, so it means one thing whichever of them turns.
+_Avoid_: cw, right, forward, with the clock
+
+**Anticlockwise**:
+The other way round, seen from above.
+_Avoid_: acw, ccw, counterclockwise, left, backward
+
 **Axis turn**:
 A turn about the dancer's own axis, the partner standing still.
 _Avoid_: axis, spin, pivot, solo turn
@@ -172,6 +181,10 @@ _Avoid_: double box, triple cross, coil
 The browser page that offers exactly the moves the ontology derives, so a move it does not
 derive cannot be danced.
 _Avoid_: validator, app, demo, viewer
+
+**Chevron**:
+The mark at a dancer's centre saying which way they face.
+_Avoid_: arrow, nose, pointer, tick
 
 **Rig**:
 Every measurement the sim stands on: rounds, heights, arm lengths, joint ranges, hand bands,
