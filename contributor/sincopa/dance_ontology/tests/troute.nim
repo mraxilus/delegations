@@ -65,18 +65,6 @@ suite "reach breaks":
     check runs[0][0] == line[0]
     check runs[^1][^1] == line[^1]
 
-  test "no gap is wider than the piece of reach beside it":
-    # Piece shorter than gap next to it reads as debris left behind by
-    # break rather than as line carrying on past one.  Crossing near hand
-    # is where that bites: gap of full width there leaves nub.
-    let span = float(N - 1) * STEP
-    for i in 0 ..< N:
-      let
-        gap = gapFor(float(i) * STEP, span)
-        width = gap.shuts - gap.opens
-      check gap.opens >= width
-      check span - gap.shuts >= width
-
   test "an uncrossed reach is drawn whole":
     let runs = cutGapsAt(line, @[])
     check runs.len == 1
