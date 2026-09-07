@@ -22,6 +22,7 @@ import { driveApply, driveReachable, driveUndo } from './apply';
 import {
   drivePanWhileSelected, drivePickOrbit, drivePlanePick, drivePointerPick,
 } from './framing';
+import { driveLabelGlide, driveLabelWorn } from './label';
 import { driveHelp, driveHoverDuringGesture } from './chrome';
 import { driveComet } from './comet';
 import { driveGround } from './ground';
@@ -83,6 +84,8 @@ async function main(): Promise<void> {
   await drivePickOrbit(page);
   await drivePointerPick(page);
   await drivePlanePick(page);
+  await driveLabelGlide(page);
+  await driveLabelWorn(page);
   await drivePanWhileSelected(page, cdp);
   await driveUndo(page);
   await driveReachable(page);
