@@ -680,7 +680,14 @@ proc checkSingleTurns*() =
   # RULE 24.  `"prefer smooth long curves instead of sharp breaks."`  Curve
   # drawn as straight bits turns some degrees at each of them; break
   # turns many at one.  So sharpest single corner on page is what
-  # is measured, over every settled reach.
+  # is measured, over every settled reach -- and, since corner alone
+  # missed it, where each reach that leaves its chord crests off it.
+  #   Reach can turn gently at every corner and still read as kink, by
+  #     putting whole of its offset against one hand and running straight
+  #     to it.  Long curve is one that crests away from both.
+  const
+    CREST_SEEN = 0.1   ## Least offset counted as shape rather than as noise.
+    CREST_IN = 0.25    ## How far in from either hand crest has to stand.
   var
     turns: array[4, int]
     bought = 0.0
@@ -689,6 +696,8 @@ proc checkSingleTurns*() =
     daylight = Inf
     fouled = 0.0
     kept = 0
+    curved = 0
+    crest_in = Inf
   for manner in Manner:
     for single in SINGLES:
       for arm in Arm:
@@ -704,6 +713,14 @@ proc checkSingleTurns*() =
           let settled_reach = clearedReach(a, b, marks)
           turns[min(bendsIn(settled_reach), turns.high)] += 1
           sharpest = max(sharpest, sharpestIn(settled_reach))
+          let crest = crestOf(settled_reach)
+          if crest.off > CREST_SEEN:
+            let stands = min(crest.at, 1 - crest.at)
+            doAssert stands > CREST_IN,
+              &"A reach crests beside a hand rather than across its span; " &
+                &"got `{decimal(crest.at, 2)}` on {manner} of {single.name}."
+            inc curved
+            crest_in = min(crest_in, stands)
           if bendsIn(settled_reach) > 1:
             # It kept second turn, so every plainer way past these marks
             # must have cost more line than turn is worth.
@@ -753,6 +770,10 @@ proc checkSingleTurns*() =
   told.add &"and it bends rather than breaks: the sharpest corner anywhere " &
     &"on the page turns {decimal(sharpest, 1)} degrees, so what turns, turns " &
     "over a run of the line and not at a point in it"
+  told.add &"and what turns, turns across its span rather than beside a " &
+    &"hand: of the {curved} reaches that leave their chord at all, the one " &
+    &"that crests nearest an end still crests " &
+    &"{decimal(100 * crest_in, 0)} per cent of the way along it"
 
   # RULE 25.  `"lead position should remain fixed as much as possible ...`
   # `obviously this can't really be the case when the lead orbits."`

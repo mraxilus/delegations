@@ -444,6 +444,33 @@ func sharpestIn*(pts: seq[Point]): float =
     result = max(result, abs(radToDeg(arctan2(cross, dot))))
 
 
+func crestOf*(pts: seq[Point]): tuple[at, off: float] =
+  ## Say where drawn reach stands furthest off its own chord, and how far
+  ## (rule 24).
+  ##   `at` is fraction of chord that happens at, `off` is how far off it
+  ##     reach has got there.
+  ##   Sharpest corner says how hard reach turns at one place.  This says
+  ##     where turning has put it, which is shape reader sees: same offset
+  ##     crammed against one hand reads as kink beside that hand, and
+  ##     carried whole way reads as curve.
+  ##   Reach that never leaves its chord answers no offset at all, and
+  ##     then `at` says nothing.
+  let
+    a = pts[0]
+    b = pts[^1]
+    span = dist(a, b)
+  if span < 1e-9:
+    return
+  let along = ((b.x - a.x) / span, (b.y - a.y) / span)
+  for p in pts:
+    let
+      dx = p.x - a.x
+      dy = p.y - a.y
+      off = abs(dy * along[0] - dx * along[1])
+    if off > result.off:
+      result = ((dx * along[0] + dy * along[1]) / span, off)
+
+
 func readingCost*(pts: seq[Point]): float =
   ## Measure what drawn reach asks of reader: its length, and its turns.
   ##   Turn is worth `BEND_COST` of line: taking one has to save at least
