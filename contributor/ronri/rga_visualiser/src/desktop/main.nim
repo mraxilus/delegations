@@ -180,6 +180,13 @@ const
     ##   Two blocks: pair's promise is that last frame's bytes are still there to read.
     ##   Sized from loops that carve it: largest is ground grid's, bounded by
     ##   `mesh.LINES_GRID_MAX` chords, well under one half; figures in `PROVENANCE.md`.
+  FRAMES_DRIVEN* {.define: "visualiser.frames_driven".} = 400
+    ## Draw this many frames for scripted run given no `--frames` of its own.
+    ##   Bound for every drive rather than for longest: keys is longest script, and each drive
+    ##   returns on step it does not recognise, so surplus frames cost nothing but let tween
+    ##   and ease settle before verdict reads camera.
+    ##   Measured rather than guessed: every drive reaches its verdict inside this, and whole
+    ##   set of nineteen checks runs in about twenty seconds under software GL.
   FRAMES_TIMING_MAX* {.define: "visualiser.frames_timing_max".} = 20_000
     ## Bound how many per-frame timings `--timings` can record.
     ##   Independent of arenas, since benchmark run is not interactive draw loop.
@@ -276,8 +283,8 @@ type Options = object ## Define what command line asked of this run.
     ## buttons load.
     ## `Option`, not `bool` and size: "no demo" and "demo at default size" differ, and
     ## sentinel size would put absence inside value's range.
-  is_asserted: bool ## Whether driven run ends in verdict rather than report.
-    ## Exits non-zero where it fails; see `verdictDriven`.
+  is_tabs_listed: bool ## Whether to print help's tab names and quit, drawing nothing.
+    ## Build driver reads them, so list of tabs has one home; see `help.HelpPath`.
   is_drag_driven: bool ## Whether to script construction drag through event queue.
     ## Headless run then shows drag mid-gesture; see `driveDrag`.
   is_key_driven: bool ## Whether to script run of view keys through event queue.
@@ -318,7 +325,7 @@ proc applyOption(options: var Options, key, value: string) =
     doAssert options.scale_demo.isSome,
       "Demo size must be one of " & counts.join(", ") &
         &", or `--demo` alone for the default; got `{value}`."
-  of "drive-assert": options.is_asserted = true
+  of "help-tabs": options.is_tabs_listed = true
   of "drive-drag": options.is_drag_driven = true
   of "drive-keys": options.is_key_driven = true
   of "drive-select": options.is_select_driven = true
@@ -332,17 +339,34 @@ proc applyOption(options: var Options, key, value: string) =
   else:
     doAssert false,
       "Option must be one of screenshot, storyboard, load-scene, frames, hidden, " &
-      "timings, novsync, fill, demo[:<objects>], drive-assert, drive-drag, drive-keys, " &
+      "timings, novsync, fill, demo[:<objects>], help-tabs, drive-drag, drive-keys, " &
       &"drive-select, drive-undo, drive-sky or drive-help; got `--{key}`."
+
+
+func isDriven(options: Options): bool =
+  ## Report whether any scripted run was asked for.
+  options.is_drag_driven or options.is_key_driven or options.is_select_driven or
+    options.is_undo_driven or options.is_sky_driven or options.path_help_driven.isSome
 
 
 proc parseOptions(): Options =
   ## Read command line into options, rejecting anything unrecognised.
+  ##   Scripted run gets frame bound whether or not caller gave one: run ends only on that
+  ##   bound, so driven run without it drives its events and then sits in loop for ever.
+  ##   Reader asking for scripted run is asking for answer, not for window, so verb supplies
+  ##   what run needs to reach one.
+  ##   `FRAMES_DRIVEN` is bound for every script, not for longest: one number is what makes
+  ##   this defaulting readable, and drives cost nothing once past their last step, since each
+  ##   returns on step it does not recognise.
+  ##   Rejected: deriving bound per drive from its own step count. It is better number, and
+  ##   it wants every drive's steps lifted out of proc it is local to -- five refactors for
+  ##   run that already ends in under three seconds.
   for kind, key, value in getopt():
     case kind
     of cmdLongOption, cmdShortOption: result.applyOption(key, value)
     of cmdArgument: doAssert false, &"Every input must be a named option; got `{key}`."
     of cmdEnd: discard
+  if result.isDriven and result.count_frames == 0: result.count_frames = FRAMES_DRIVEN
 
 
 
@@ -1700,7 +1724,7 @@ proc runInteractive(
         window, renderer, panel, scene, camera, interaction, now,
         path_help = options.path_help_driven,
       )
-    if options.is_asserted:
+    if options.isDriven:
       if not is_slide_started and interaction.isMovingCamera:
         # Record first frame key that moves camera is held, not merely any bound key.
         #   Taken after this frame's motion and `abandon`, so ease cannot still be
@@ -1745,7 +1769,7 @@ proc runInteractive(
       &"pivot ({camera.pivot.x:.3f}, {camera.pivot.y:.3f}, {camera.pivot.z:.3f}), " &
       &"held {len(interaction.keys_held)}; " &
       &"gui.wantsKeys {gui.wantsKeys()}, nav enabled {gui.isNavEnabled()}."
-  if options.is_asserted:
+  if options.isDriven:
     let count_failed = verdictDriven(
       options, scene, camera, camera_opened, camera_before_slide, interaction, panel,
       count_settled, found_dragging, found_menu_open,
@@ -1919,6 +1943,10 @@ proc main() =
   ##   Kept whole past sixty lines: each `defer` undoes setup above it, and splitting
   ##   would hide that order.
   let options = parseOptions()
+  if options.is_tabs_listed:
+    # Print before SDL starts: caller wants names, not window, and headless machine has none.
+    for path in HelpPath: echo titleOf(path)
+    return
   doAssert sdl3.init(INIT_VIDEO), &"SDL3 must start; got `{sdl3.getError()}`."
   defer: sdl3.quit()
 
