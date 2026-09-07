@@ -60,16 +60,16 @@ async function feedWindow(page: Page, count: number, rolls: number[][]): Promise
   }, { count, rolls });
 }
 
-/** Wait until axis has stopped travelling, since it waits and then glides. */
+/** Wait until axis has stopped travelling, since it waits and then glides.
+ *
+ *  Drawing is what moves axis, so poll draws before it reads: first poll after extent changed
+ *  therefore always answers restless, and no count of rounds is needed to step over wait.
+ */
 async function settleAxis(page: Page): Promise<void> {
-  for (let i = 0; i < 48; i += 1) {
-    await page.waitForTimeout(120);
-    const is_settled = await page.evaluate(() => {
-      drawExceedance();
-      return ms_axis_restless === 0;
-    });
-    if (is_settled && i > 4) break;
-  }
+  await page.waitForFunction(() => {
+    drawExceedance();
+    return ms_axis_restless === 0;
+  }, null, { timeout: 20000, polling: 'raf' });
 }
 
 /** Drive curve as distribution: monotone, accounting for its window, agreeing with samples.
@@ -377,16 +377,11 @@ export async function driveAxisGlide(page: Page): Promise<void> {
   // One frame three times slower than anything else in window, and nothing else changed.
   await page.evaluate(() => window.__record_kept?.(126));
   const at_once = await axisReading(page);
+  // Wall time, deliberately: reading taken is mid-flight one, and check is that second later
+  //   axis is under way but not yet arrived.
   await page.waitForTimeout(1000);
   const midway = await axisReading(page);
-  for (let i = 0; i < 24; i += 1) {
-    await page.waitForTimeout(120);
-    const is_settled = await page.evaluate(() => {
-      drawExceedance();
-      return ms_axis_restless === 0;
-    });
-    if (is_settled) break;
-  }
+  await settleAxis(page);
   const arrived = await axisReading(page);
   await releaseExceedance(page); // Synthetic windows are done with; real frames resume.
 

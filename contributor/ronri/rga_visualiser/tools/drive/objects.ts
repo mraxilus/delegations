@@ -71,7 +71,10 @@ export async function driveObjectsList(page: Page, objects: number): Promise<voi
   await page.evaluate(() => {
     (document.querySelector('#objects-list .object-edit-cancel') as HTMLElement | null)?.click();
   });
-  await page.waitForTimeout(200);
+  await page.waitForFunction(
+    () => document.querySelectorAll('#objects-list .object-edit').length === 0,
+    null, { timeout: 8000, polling: 'raf' },
+  );
 }
 
 /** Assert edit from selection menu reaches its row, list built or not.

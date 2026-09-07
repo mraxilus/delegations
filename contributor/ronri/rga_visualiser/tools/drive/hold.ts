@@ -7,6 +7,7 @@
 //   but drew old records would pass flag check.
 
 import type { Page } from '@playwright/test';
+import { waitFrames } from './frame';
 import { report } from './report';
 
 /** Each edit path checked, named as reader would name it. */
@@ -92,6 +93,7 @@ async function runEdit(page: Page, what: string): Promise<void> {
 /** Drive still scene, then every edit, and assert hold engages and releases. */
 export async function driveHoldScene(page: Page): Promise<void> {
   await watchHold(page);
+  // Wall time, deliberately: figure is share of frames that held over span of real time.
   await page.waitForTimeout(1200);
   const idle = await page.evaluate(() => ({ ...(window.__hold ?? { held: 0, built: 0 }) }));
   report(
@@ -106,6 +108,8 @@ export async function driveHoldScene(page: Page): Promise<void> {
     const before = await page.evaluate(() => window.__drawn);
     await page.evaluate(() => { window.__hold = { held: 0, built: 0 }; });
     await runEdit(page, what);
+    // Wall time, deliberately: check is that edit released hold and reached canvas, and
+    //   waiting on either would assert what is being asked.
     await page.waitForTimeout(500);
     const after = await page.evaluate(() => window.__drawn);
     const seen = await page.evaluate(() => ({ ...(window.__hold ?? { held: 0, built: 0 }) }));
@@ -123,5 +127,5 @@ export async function driveHoldScene(page: Page): Promise<void> {
       (missed.length === 0 ? '' : `; ${missed.join('; ')}`),
   );
   await page.evaluate(() => nimSelectClear());
-  await page.waitForTimeout(200);
+  await waitFrames(page, 2);
 }

@@ -109,6 +109,9 @@ declare const history_frame: number[];
 /** Slot next frame is written into. */
 declare let index_history_frame: number;
 
+/** Clock panel's own reading last ran on; every field, row and ruler is written there. */
+declare let ms_refresh_ui: number;
+
 /** Each row's own readings, over same ring. */
 declare const history_phase: Record<string, Float64Array>;
 

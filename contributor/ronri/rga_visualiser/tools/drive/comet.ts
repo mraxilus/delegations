@@ -7,6 +7,8 @@
 //   Driven rather than reasoned, since what matters is what page strokes.
 
 import type { Page } from '@playwright/test';
+import { settleCamera } from './camera';
+import { waitFrames } from './frame';
 import { report, reportWithin } from './report';
 
 /** Whether every point falls inside canvas, within one pixel of its edge. */
@@ -36,7 +38,7 @@ async function headOf(page: Page, handle: number): Promise<number[] | null> {
 export async function driveComet(page: Page): Promise<void> {
   await page.evaluate(() => showHelp(false));
   await page.keyboard.press('Home');
-  await page.waitForTimeout(150);
+  await settleCamera(page);
 
   const horizon = await page.evaluate(() => {
     const plane = nimSceneHandles().find((one) => nimObjectKindWord(one) === 'plane');
@@ -86,8 +88,10 @@ export async function driveComet(page: Page): Promise<void> {
   let head_first: number[] | null = null;
   for (let waited = 0; waited < 40 && head_first === null; waited += 1) {
     head_first = await headOf(page, horizon);
-    if (head_first === null) await page.waitForTimeout(50);
+    if (head_first === null) await waitFrames(page, 2);
   }
+  // Wall time, deliberately: how far head travels over span of real time is measurement, and
+  //   pace it is checked against is pixels second.
   await page.waitForTimeout(500);
   const head_second = await headOf(page, horizon);
 

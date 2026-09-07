@@ -4,7 +4,7 @@
 //   Suites cannot reach that: nothing in them has pointer.
 
 import type { Page } from '@playwright/test';
-import { depthOf, readCamera, spanOf, type Stance } from './camera';
+import { depthOf, readCamera, settleCamera, spanOf, type Stance } from './camera';
 import { waitFrames } from './frame';
 import { report, reportWithin } from './report';
 
@@ -48,13 +48,13 @@ async function wheelBy(page: Page, notches: number, step: number): Promise<void>
     await page.mouse.wheel(0, step);
     await waitFrames(page, 2);
   }
-  await page.waitForTimeout(300);
+  await settleCamera(page);
 }
 
 /** Return to opening stance through key that means it, and check that key on way. */
 export async function driveHome(page: Page): Promise<Stance> {
   await page.keyboard.press('Home');
-  await page.waitForTimeout(120);
+  await settleCamera(page);
   const homed = await readCamera(page);
   report(
     'home returns the camera to where it opened',

@@ -4,7 +4,7 @@
 //   pointer. Suites reach neither: nothing in them has button or wheel.
 
 import type { Page } from '@playwright/test';
-import { readCamera, spanPivot } from './camera';
+import { readCamera, settleCamera, spanPivot } from './camera';
 import { waitFrames } from './frame';
 import { clearTheGlass } from './gestures';
 import { report } from './report';
@@ -21,7 +21,7 @@ async function settleHome(page: Page): Promise<void> {
     document.getElementById('gl')?.focus();
   });
   await page.keyboard.press('Home');
-  await page.waitForTimeout(900);
+  await settleCamera(page);
 }
 
 /** Drive right-button pan, and assert it keeps pivot on its level. */
@@ -37,7 +37,7 @@ export async function drivePan(page: Page): Promise<void> {
   await page.mouse.down({ button: 'right' });
   await page.mouse.move(360, 470, { steps: 12 });
   await page.mouse.up({ button: 'right' });
-  await page.waitForTimeout(250);
+  await settleCamera(page);
   const after = await readCamera(page);
 
   const height_before = before.pivot[2] ?? 0;
@@ -66,7 +66,7 @@ export async function driveAim(page: Page, width: number, height: number): Promi
     await page.mouse.wheel(0, -120);
     await waitFrames(page, 2);
   }
-  await page.waitForTimeout(200);
+  await settleCamera(page);
   const after = await readCamera(page);
 
   const height_before = before.pivot[2] ?? 0;

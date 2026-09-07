@@ -50,11 +50,11 @@ export async function drivePickOrbit(page: Page): Promise<void> {
 
   const before = await readCamera(page);
   await page.evaluate((one) => nimSelectOnly(one), first);
-  await page.waitForTimeout(700);
+  await settleCamera(page);
   const at_one = await readCamera(page);
   const place_one = await placeOf(page, first);
   await page.evaluate((one) => nimSelectToggle(one), second);
-  await page.waitForTimeout(700);
+  await settleCamera(page);
   const at_two = await readCamera(page);
   const place_two = await placeOf(page, second);
   const middle = place_one.map((v, i) => (v + (place_two[i] ?? 0)) / 2);
@@ -135,16 +135,16 @@ export async function drivePointerPick(page: Page): Promise<void> {
   const place = await placeOf(page, picked);
 
   await page.mouse.move(aimed.x, aimed.y);
-  await page.waitForTimeout(100);
+  await waitFrames(page, 2);
   await page.mouse.click(aimed.x, aimed.y, { button: 'right' });
-  await page.waitForTimeout(120); // Two frames in: ease under way, menu already up.
+  await waitFrames(page, 2); // Ease under way, menu already up.
   const in_flight = await menuAndAnchor(page, picked);
   await settleCamera(page);
-  await page.waitForTimeout(200);
+  await waitFrames(page, 2);
   const opened = await menuAndAnchor(page, picked);
   const near = await readCamera(page);
   await page.evaluate(() => nimCameraPan(0.4, 0.2));
-  await page.waitForTimeout(600);
+  await settleCamera(page);
   const panned = await menuAndAnchor(page, picked);
 
   reportPointerPick(
@@ -238,7 +238,7 @@ async function drivePickAgain(page: Page, picked: number, near: Stance): Promise
   const notched = await readCamera(page);
   const again = await anchorOf();
   await page.mouse.move(again.x + 4, again.y + 3);
-  await page.waitForTimeout(100);
+  await waitFrames(page, 2);
   await page.mouse.click(again.x + 4, again.y + 3, { button: 'right' });
   await settleCamera(page);
   const repicked = await readCamera(page);
@@ -278,7 +278,7 @@ export async function drivePlanePick(page: Page): Promise<void> {
   }, { x: press.x - rect.left, y: press.y - rect.top });
 
   await page.mouse.move(press.x, press.y);
-  await page.waitForTimeout(100);
+  await waitFrames(page, 2);
   await page.mouse.click(press.x, press.y, { button: 'right' });
   await settleCamera(page);
   const camera = await readCamera(page);
@@ -309,12 +309,12 @@ export async function drivePanWhileSelected(page: Page, cdp: CDPSession): Promis
   await page.keyboard.press('Home');
   await settleCamera(page);
   await page.evaluate(() => nimSelectOnly(nimSceneHandles()[0] ?? 0));
-  await page.waitForTimeout(700); // Let framing ease finish before moving by hand.
+  await settleCamera(page); // Let framing ease finish before moving by hand.
 
   const before = await readCamera(page);
   await pinch(page, cdp, { x: 400, y: 400 }, { x: 650, y: 520 }, 80, 80);
   const at = await readCamera(page);
-  await page.waitForTimeout(700);
+  await settleCamera(page);
   const after = await readCamera(page);
   report(
     'a pan while a selection stands is not taken back',

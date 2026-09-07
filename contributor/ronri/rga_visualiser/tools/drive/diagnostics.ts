@@ -8,8 +8,53 @@
 //   transform answers `none` whatever rule says. So these reach panel way reader does.
 
 import type { Page } from '@playwright/test';
-import { readPhases } from './frame';
+import { readPhases, settleReading } from './frame';
 import { report } from './report';
+
+/** Wait until drawer and diagnostics section stand as asked.
+ *
+ *  Both slide, and rows inside them are written on panel's own tick rather than on click, so
+ *  `settleReading` is what "section is showing its numbers" means.
+ */
+async function settleGlass(page: Page, wanted: Glass): Promise<void> {
+  await page.waitForFunction((given) => {
+    const drawer = document.querySelector('.drawer');
+    const section = document.querySelector('.section[data-section="diagnostics"]');
+    return (drawer?.classList.contains('open') ?? false) === given.drawer &&
+      (section?.classList.contains('open') ?? false) === given.section;
+  }, wanted, { timeout: 8000, polling: 'raf' });
+  if (wanted.drawer && wanted.section) await settleReading(page);
+}
+
+
+/** Wait until this branch of tree stands open, and its rows have been written. */
+export async function settleBranch(page: Page, node: string): Promise<void> {
+  await page.waitForFunction(
+    (given) => document.querySelector(`.diagnostic-node[data-node="${given}"]`)
+      ?.classList.contains('open') ?? false,
+    node, { timeout: 8000, polling: 'raf' },
+  );
+  await settleReading(page);
+}
+
+
+/** Wait until this element's own turn has finished, and rows it revealed have been written.
+ *
+ *  Transform asked for in same tick as click still reports one transition is leaving, so turn
+ *  is waited out on browser's own `transitionend` rather than on clock. Bounded fallback
+ *  because chevron already standing where it was asked to stand runs no transition at all.
+ */
+async function settleTurn(page: Page, selector: string): Promise<void> {
+  await page.evaluate((given) => new Promise<void>((done) => {
+    const element = document.querySelector(given);
+    if (element === null) { done(); return; }
+    let is_done = false;
+    const finish = (): void => { if (!is_done) { is_done = true; done(); } };
+    element.addEventListener('transitionend', finish, { once: true });
+    setTimeout(finish, 1000);
+  }), selector);
+  await settleReading(page);
+}
 
 /** Rows every drawing step owns, which must all read live once branch is open. */
 const ROWS_STEP = [
@@ -38,7 +83,7 @@ export async function openDiagnostics(page: Page): Promise<Glass> {
     }
     return standing;
   });
-  await page.waitForTimeout(500);
+  await settleGlass(page, { drawer: true, section: true });
   return was;
 }
 
@@ -54,7 +99,7 @@ export async function closeDiagnostics(page: Page, was: Glass): Promise<void> {
       (section?.querySelector('.section-header') as HTMLElement | null)?.click();
     }
   }, was);
-  await page.waitForTimeout(400);
+  await settleGlass(page, was);
 }
 
 /** Check bridge's own build steps: populated, summing within whole, agreeing with clock.
@@ -103,7 +148,7 @@ export async function driveTree(page: Page): Promise<void> {
     );
     (parent as HTMLElement | null)?.click();
   });
-  await page.waitForTimeout(400);
+  await settleBranch(page, 'build');
   const rows = await page.evaluate((names) => Object.fromEntries(
     names.map((name) => [name, document.getElementById('diagnostic-' + name)?.textContent ?? '']),
   ), ROWS_STEP);
@@ -159,7 +204,7 @@ async function driveBranch(page: Page): Promise<void> {
   });
   // Read after chevron's own turn has finished: asked in same tick as click, transition
   //   that has not started yet still reports its old transform.
-  await page.waitForTimeout(700);
+  await settleTurn(page, '.diagnostic-node[data-node="scene"] > .diagnostic-parent .chev');
 
   const opened = await page.evaluate(() => {
     const isLaid = (id: string): boolean => {

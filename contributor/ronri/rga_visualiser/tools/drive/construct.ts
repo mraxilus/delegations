@@ -14,14 +14,14 @@ import { dragFinger, tapAt, pinch } from './touch';
 /** Put camera back where it opened and drop selection, so each check starts alike. */
 async function fromHome(page: Page): Promise<void> {
   await page.keyboard.press('Home');
-  await page.waitForTimeout(150);
+  await settleCamera(page);
   await page.evaluate(() => nimSelectClear());
 }
 
 /** Drive two fingers moving together, which is pan and only pan. */
 export async function driveTwoFingerPan(page: Page, cdp: CDPSession): Promise<void> {
   await page.keyboard.press('Home');
-  await page.waitForTimeout(150);
+  await settleCamera(page);
   const before = await readCamera(page);
   await pinch(page, cdp, { x: 400, y: 400 }, { x: 700, y: 500 }, 80, 80);
   const after = await readCamera(page);
@@ -76,7 +76,7 @@ export async function driveTouchConstruct(page: Page, cdp: CDPSession): Promise<
  */
 export async function driveCrowd(page: Page, cdp: CDPSession): Promise<void> {
   await page.keyboard.press('Home');
-  await page.waitForTimeout(150);
+  await settleCamera(page);
   const handles = await page.evaluate(() => nimSceneHandles());
   const first = handles[1];
   const second = handles[2];
@@ -89,7 +89,7 @@ export async function driveCrowd(page: Page, cdp: CDPSession): Promise<void> {
     nimSelectClear();
     return added;
   }, first);
-  await page.waitForTimeout(200);
+  await waitFrames(page, 2);
 
   const count_before = await page.evaluate(() => nimSceneCount());
   const azimuth_before = await page.evaluate(() => nimCameraAzimuth());
@@ -128,7 +128,7 @@ export async function driveCrowd(page: Page, cdp: CDPSession): Promise<void> {
     nimRemoveObject(one as number);
     nimSetCameraAzimuth(azimuth as number);
   }, [rival, azimuth_before]);
-  await page.waitForTimeout(150);
+  await settleCamera(page);
 }
 
 /** Drive drag that pauses over its aim, as careful finger really does.
@@ -151,10 +151,12 @@ export async function drivePausedDrag(page: Page, cdp: CDPSession): Promise<void
   if (from === null || onto === null) return;
 
   await dragFinger(page, cdp, from, onto, { lift: false });
-  await page.waitForTimeout(1100); // Past dwell, as finger pausing to aim is.
+  // Wall time, deliberately: how long finger rests is gesture under test, and waiting on
+  //   wheel instead would assert what check below is asking.
+  await page.waitForTimeout(1100);
   const is_wheel_open = await page.evaluate(() => nimDragMenuOpen());
   await dragFinger(page, cdp, onto, onto, { press: false });
-  await page.waitForTimeout(400);
+  await waitFrames(page, 2);
 
   const after = await page.evaluate(() => nimSceneCount());
   report(
@@ -171,7 +173,7 @@ export async function drivePausedDrag(page: Page, cdp: CDPSession): Promise<void
  */
 export async function driveEmptyRelease(page: Page, width: number, height: number): Promise<void> {
   await page.keyboard.press('Home');
-  await page.waitForTimeout(150);
+  await settleCamera(page);
   await page.evaluate(() => {
     nimSelectClear();
     // Require cleared, not merely hidden: check that only asked whether bar is up would
@@ -193,6 +195,8 @@ export async function driveEmptyRelease(page: Page, width: number, height: numbe
   await page.mouse.down();
   await page.mouse.move(width - 30, height - 30, { steps: 8 });
   await page.mouse.up();
+  // Wall time, deliberately: check is that nothing was said, and absence has no condition to
+  //   wait on -- window has to be long enough for bar to have shown had it been going to.
   await page.waitForTimeout(300);
 
   const said = await page.evaluate(() => {
@@ -246,7 +250,7 @@ export async function driveBackdropPlane(
   }
   const is_drag_mid = await page.evaluate(() => nimDragActive());
   await page.mouse.up();
-  await page.waitForTimeout(300);
+  await settleCamera(page);
   const after = await page.evaluate(
     () => ({ azimuth: nimCameraAzimuth(), objects: nimSceneCount() }),
   );

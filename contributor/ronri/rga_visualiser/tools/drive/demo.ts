@@ -9,6 +9,7 @@
 //   band that only ever runs at default cannot see regression that shows under load.
 
 import type { Page } from '@playwright/test';
+import { settleCamera } from './camera';
 import { report } from './report';
 
 /** Kinds preset must carry, each of which draws something. */
@@ -38,7 +39,7 @@ export async function loadDemo(page: Page, objects: number): Promise<void> {
   await page.waitForFunction(
     (given) => nimSceneCount() === given, objects, { timeout: 120000 },
   );
-  await page.waitForTimeout(600);
+  await settleCamera(page);
 }
 
 /** Drive demo button, and assert what it puts on page and where it leaves camera. */
@@ -257,7 +258,7 @@ export async function driveOccluded(page: Page): Promise<void> {
       `${JSON.stringify(occluded.both.slice(0, 3))} with its planet selected too`,
   );
   await page.keyboard.press('Home');
-  await page.waitForTimeout(400);
+  await settleCamera(page);
 }
 
 declare global {
@@ -275,7 +276,7 @@ declare global {
  *  spot sits right of middle, clear of drawer standing open on left.
  */
 export async function driveZoomLoaded(page: Page): Promise<void> {
-  await page.waitForTimeout(400);
+  await settleCamera(page);
   const opened = await page.evaluate(
     () => ({ distance: nimCameraDistance(), pivot: Array.from(nimCameraPivot()) }),
   );
@@ -289,16 +290,16 @@ export async function driveZoomLoaded(page: Page): Promise<void> {
     await page.mouse.move(box.x + across * box.width, box.y + down * box.height);
     for (let i = 0; i < 6; i += 1) {
       await page.mouse.wheel(0, -400);
-      await page.waitForTimeout(250);
+      await settleCamera(page);
     }
-    await page.waitForTimeout(600);
+    await settleCamera(page);
     const after = await page.evaluate(() => ({
       distance: nimCameraDistance(), pivot: Array.from(nimCameraPivot()),
       points: count_phase['points'] ?? 0,
     }));
     await page.evaluate(() => document.getElementById('gl')?.focus());
     await page.keyboard.press('Home');
-    await page.waitForTimeout(1200);
+    await settleCamera(page);
     return after;
   };
 

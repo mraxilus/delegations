@@ -6,7 +6,8 @@
 //   far below fault it catches, so slow container never decides it.
 
 import type { Page } from '@playwright/test';
-import { readPhases } from './frame';
+import { settleCamera } from './camera';
+import { readPhases, waitFrames } from './frame';
 import { report } from './report';
 
 /** Share of frames whose kinds must account, as still-scene check uses. */
@@ -150,7 +151,7 @@ async function fillScene(page: Page): Promise<void> {
     }
     nimSelectClear(); // Each add selects what it added; leave nothing standing behind.
   });
-  await page.waitForTimeout(300);
+  await waitFrames(page, 2);
 }
 
 /** Drive gesture on full scene, then orbit, and assert refusal and accounting under load.
@@ -168,7 +169,12 @@ export async function driveLoadedAccounting(page: Page, errors: string[]): Promi
       (section?.querySelector('.section-header') as HTMLElement | null)?.click();
     }
   });
-  await page.waitForTimeout(300);
+  await page.waitForFunction(() => {
+    const drawer = document.getElementById('drawer');
+    const section = document.querySelector('.section[data-section="diagnostics"]');
+    return (drawer?.classList.contains('open') ?? false) &&
+      (section?.classList.contains('open') ?? false);
+  }, null, { timeout: 8000, polling: 'raf' });
 
   // Window accounting reads starts only now: fill is many committed edits back to back, which
   //   is not ordinary picture this measures.
@@ -178,7 +184,7 @@ export async function driveLoadedAccounting(page: Page, errors: string[]): Promi
   await page.mouse.down();
   for (let i = 0; i < 20; i += 1) await page.mouse.move(720 + 8 * i, 450 + 3 * i);
   await page.mouse.up();
-  await page.waitForTimeout(700);
+  await settleCamera(page);
 
   // Then orbit, because still camera over still scene is now held frame: hold skips
   //   tessellation, flatten and uploads together where nothing has moved, so idle window
@@ -190,11 +196,13 @@ export async function driveLoadedAccounting(page: Page, errors: string[]): Promi
   await page.keyboard.down('ArrowRight');
   let heavy_seen = 0;
   for (let round = 0; round < 40 && heavy_seen < 25; round += 1) {
+    // Wall time, deliberately: each round is sampling window, and loop ends on sample size
+    //   rather than on clock.
     await page.waitForTimeout(400);
     heavy_seen = (await readPhases(page)).filter((one) => one.scene >= 2.0).length;
   }
   await page.keyboard.up('ArrowRight');
-  await page.waitForTimeout(120);
+  await waitFrames(page, 2);
 
   const after_drag = await page.evaluate(() => nimSceneCount());
   report(

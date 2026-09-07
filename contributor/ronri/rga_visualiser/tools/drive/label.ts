@@ -95,7 +95,7 @@ export async function driveLabelGlide(page: Page): Promise<void> {
     return;
   }
   await page.evaluate((one) => selectOnly(one, null), line);
-  await page.waitForTimeout(300);
+  await settleCamera(page);
 
   const walked: Walked = { frames: 0, hops: 0, out_of_view: 0, step_most: 0 };
   for (const elevation of [0.4, 1.25]) await walkOrbit(page, elevation, walked);
@@ -117,7 +117,7 @@ export async function driveLabelWorn(page: Page): Promise<void> {
     selectOnly(given[0] ?? 0, null);
     toggleSelection(given[1] ?? 0, null);
   }, points);
-  await page.waitForTimeout(400); // Overlay is staged by frame loop, not by selection.
+  await waitFrames(page, 2); // Overlay is staged by frame loop, not by selection.
 
   const worn = await page.evaluate((given) => {
     const texts = (): Element[] => Array.from(document.querySelectorAll('#overlay text'));
@@ -157,7 +157,7 @@ export async function driveLabelWorn(page: Page): Promise<void> {
 
   await clearTheGlass(page);
   await page.evaluate(() => clearSelection());
-  await page.waitForTimeout(400);
+  await waitFrames(page, 2);
   const count_cleared = await page.evaluate(
     () => document.querySelectorAll('#overlay text').length,
   );

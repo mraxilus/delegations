@@ -74,6 +74,19 @@ export async function settleCount(page: Page, wanted: number): Promise<void> {
 }
 
 
+/** Wait until drawer stands open, or shut.
+ *
+ *  Drawer slides, so class is set one frame and panel stops taking pointer events later.
+ *  Waiting on class rather than on clock leaves slow machine slow rather than wrong.
+ */
+export async function settleDrawer(page: Page, is_open: boolean): Promise<void> {
+  await page.waitForFunction(
+    (given) => (document.getElementById('drawer')?.classList.contains('open') ?? false) === given,
+    is_open, { timeout: 8000, polling: 'raf' },
+  );
+}
+
+
 /** Wait until this many objects stand selected. */
 export async function settleSelection(page: Page, wanted: number): Promise<void> {
   await page.waitForFunction(

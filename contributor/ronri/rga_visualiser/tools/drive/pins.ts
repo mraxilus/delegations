@@ -10,6 +10,8 @@
 //   this exists for.
 
 import type { Page } from '@playwright/test';
+import { settleCamera } from './camera';
+import { waitFrames } from './frame';
 import { report, reportWithin } from './report';
 import { pixelOf } from './wheel';
 
@@ -135,7 +137,7 @@ export async function drivePinGrid(page: Page): Promise<void> {
 export async function drivePinPool(page: Page): Promise<void> {
   // Earlier checks left camera wherever they orbited it; hover below needs anchor on screen.
   await page.keyboard.press('Home');
-  await page.waitForTimeout(800);
+  await settleCamera(page);
   const handle = await page.evaluate(() => nimSceneHandles()[0] ?? 0);
   const pixel = await pixelOf(page, handle);
   if (pixel === null) {
@@ -143,7 +145,7 @@ export async function drivePinPool(page: Page): Promise<void> {
     return;
   }
   await page.mouse.move(pixel[0] ?? 0, pixel[1] ?? 0);
-  await page.waitForTimeout(250);
+  await waitFrames(page, 2);
 
   const pooled = await page.evaluate(async () => {
     const layer = document.getElementById('overlay');

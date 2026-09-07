@@ -5,6 +5,7 @@
 //   many, and suite that read only final state would miss string of them lighting up.
 
 import type { Page } from '@playwright/test';
+import { settleCamera } from './camera';
 import { clearTheGlass } from './gestures';
 import { waitFrames } from './frame';
 import { report } from './report';
@@ -52,7 +53,7 @@ export async function driveHoverDuringGesture(
     await waitFrames(page, 2);
   }
   await page.mouse.up();
-  await page.waitForTimeout(150);
+  await settleCamera(page);
   report(
     'a camera drag sweeping over objects highlights none of them',
     hovered_moving < 0, `handle hovered mid-gesture: ${hovered_moving}`,
@@ -72,10 +73,22 @@ export async function driveHoverDuringGesture(
   void width;
 }
 
+/** Wait until help panel stands up, or gone. */
+async function settleHelp(page: Page, is_shown: boolean): Promise<void> {
+  await page.waitForFunction(
+    (given) =>
+      (document.getElementById('help-panel')?.classList.contains('show') ?? false) === given,
+    is_shown, { timeout: 8000, polling: 'raf' },
+  );
+}
+
+
 /** Drive help, which stays open while reader uses what it describes. */
 export async function driveHelp(page: Page, width: number, height: number): Promise<void> {
   await page.evaluate(() => showHelp(true));
-  await page.waitForTimeout(200);
+  await settleHelp(page, true);
+  // Wall time either side, deliberately: check is that neither click shut panel, and panel
+  //   staying up has no event to wait on -- window has to be long enough for it to have gone.
   await page.mouse.click(width / 2, height - 80);
   await page.waitForTimeout(200);
   await page.click('#button-drawer');
@@ -104,7 +117,7 @@ export async function driveHelp(page: Page, width: number, height: number): Prom
   );
 
   await page.click('#help-close');
-  await page.waitForTimeout(200);
+  await settleHelp(page, false);
   report(
     'the help closes when the reader closes it',
     !(await page.evaluate(
