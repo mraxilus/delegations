@@ -14,6 +14,10 @@ import { driveKeys } from './keys';
 import { driveAim, drivePan } from './pan';
 import { driveWheel } from './wheel';
 import { driveTouchSelect, drivePinch, openTouch } from './touch';
+import {
+  driveCrowd, driveEmptyRelease, drivePausedDrag, driveTouchConstruct,
+  driveTwoFingerPan,
+} from './construct';
 
 /** Viewport every check below is written against. */
 const SIZE_VIEW = { width: 1200, height: 900 };
@@ -61,6 +65,11 @@ async function main(): Promise<void> {
   const cdp = await openTouch(page);
   await drivePinch(page, cdp);
   await driveTouchSelect(page, cdp);
+  await driveTwoFingerPan(page, cdp);
+  await driveTouchConstruct(page, cdp);
+  await driveCrowd(page, cdp);
+  await drivePausedDrag(page, cdp);
+  await driveEmptyRelease(page, SIZE_VIEW.width, SIZE_VIEW.height);
 
   // Page erroring at all is failure, whatever every check above said.
   report('the page raised no error', errors_page.length === 0, errors_page.join(' | '));

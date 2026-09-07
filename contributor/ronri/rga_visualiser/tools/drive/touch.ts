@@ -66,6 +66,39 @@ export async function tapAt(
   await page.waitForTimeout(250);
 }
 
+/** How much of one finger drag to perform, for gestures checked in two halves. */
+export interface DragParts {
+  press?: boolean;
+  lift?: boolean;
+}
+
+/** Drag one finger from place to place, in steps application can follow.
+ *
+ *  Press and lift are separable, so check can pause mid-drag and read what opened under
+ *  finger before letting go.
+ */
+export async function dragFinger(
+  page: Page, cdp: CDPSession, from: number[], onto: number[], parts: DragParts = {},
+): Promise<void> {
+  const { press = true, lift = true } = parts;
+  const start = { x: from[0] ?? 0, y: from[1] ?? 0 };
+  const end = { x: onto[0] ?? 0, y: onto[1] ?? 0 };
+  if (press) {
+    await touch(cdp, 'touchStart', [start]);
+    for (let step = 1; step <= 10; step += 1) {
+      await touch(cdp, 'touchMove', [{
+        x: start.x + ((end.x - start.x) * step) / 10,
+        y: start.y + ((end.y - start.y) * step) / 10,
+      }]);
+      await page.waitForTimeout(30);
+    }
+  }
+  if (lift) {
+    await touch(cdp, 'touchEnd', []);
+    await page.waitForTimeout(400);
+  }
+}
+
 /** Wait until camera's own ease has settled, so readings are not mid-flight. */
 export async function settleCamera(page: Page): Promise<void> {
   await page.waitForTimeout(900);
