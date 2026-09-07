@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 286e748543eaf97f |
+| Rules  | 8779977bf49991d4 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the Architect's workbook `ontology.partnerwork.xlsx` (sheets `base` and
@@ -487,3 +487,25 @@ tools and drives that verb, scoped to projects one change asks for.
 
 This project carries no node manifest, so nothing here is type-checked and the rule binds
 nothing today. It binds the moment this project grows scripts of its own.
+
+## Re-audit, 2026-09-07, system dependencies
+
+Audited by a curator against rule that system dependencies -- library compiler links against,
+tool build shells out to, browser driven check drives, source clone no package manager carries
+-- are declared as data in project's own `tools/build.nim`, each entry carrying its reason, and
+reached by verb. Source clone carries its commit; system package carries no pin surviving across
+distributions and record says so rather than implying one; anything fetched at build time
+carries checksum build verifies. No machine's paths in committed source.
+
+**This project does not comply yet, and cannot be made to by curator.** `design/shot.nim` names
+two absolute paths into one machine's layout, with browser version among them:
+
+```nim
+PLAYWRIGHT = "/opt/node22/lib/node_modules/playwright"
+CHROMIUM = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
+```
+
+Header states situation honestly, so nothing is hidden; rule now says where those belong
+instead. Raised as issue 62, labelled for this project, since source is contributor's and
+`scope` holds curator to that. This project carries `tools/build.nim` already, so declaration
+has home waiting.
