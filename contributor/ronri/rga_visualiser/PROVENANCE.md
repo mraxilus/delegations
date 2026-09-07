@@ -121,42 +121,69 @@ canvas, so nothing in them catches rule wired to wrong event. `tools/drive/` doe
 Playwright, against page `tools/build.nim web` assembled. One command runs both:
 `nim r tools/build.nim drive`.
 
-**Seventeen checks pass today**, across five groups: held keys, wheel zoom, mouse pan, what
-zoom settles onto, and what finger does. Figures from this environment, software-rendered:
-held `w` for 500 ms slides pivot 11.6 to 12.0 units; eight wheel notches take distance 19.00
-to 5.28 and leave what pointer is over **0.00 px** from where it was; notch each way returns
-eye within 0.0000 units; right-button drag moves pivot 32.5 units at unchanged height; zoom
-over ground brings pivot from 1.00 to 0.32; pinch takes 19.00 to 6.53 leaving azimuth exact;
-long press selects one, tap toggles second in, tap on empty space clears.
+**135 checks pass today**, one module per section of what page does:
+
+| Module | Covers |
+|--------|--------|
+| `keys`, `wheel`, `pan` | held keys, wheel zoom, mouse pan, what zoom settles onto |
+| `touch`, `construct`, `finger` | pinch, long press, drag construction, crowd, paused drag |
+| `apply`, `framing`, `label` | pickers and menu route, what picking does to camera, names |
+| `chrome`, `comet`, `ground` | hover during gesture, help, horizon comet, ground's reach |
+| `frame`, `diagnostics`, `ramp` | frame's own clocks, tree, colour each row wears |
+| `exceedance`, `rings` | distribution curve, its axis, rings each reading is taken over |
+| `scenery`, `pins`, `hold`, `pool` | what scene costs, repaired faults, scene hold, drawer |
+| `demo`, `loaded`, `objects` | preset, culling, occlusion, and what all of it costs loaded |
+
+Figures from this environment, software-rendered: eight wheel notches take distance 19.00 to
+5.28 and leave what pointer is over **0.00 px** from where it was; right-button drag moves
+pivot 32.5 units at unchanged height; frame is assembled in 0.7 ms median, 0.9 ms at its
+slowest tenth; hover pick over largest demo runs 2.0 ms median; edit past timeline capacity
+costs 2.5 ms over 5,038 objects; closed rows hold 9.1 elements each over 5,040 of them.
 
 **Timing-dependent quantities are asserted as bands, never figures.** How far held key
 travels depends on frames drawn while it was down. Band that will not settle is widened with
 reason recorded, never deleted and never narrowed to fit one lucky run.
 
+**Comet's band caught port's own defect rather than needing widening.** First port selected
+horizon line through `nimSelectOnly`, which moves Nim's selection and leaves page's render
+snapshot behind it, so overlay drew no marker and comet advanced only on harness's own two
+reads: 1.35 px against 5-60 px band. Selecting through page's `selectOnly`, as every pick
+path does, gives 33 px. Every check reading what page *drew* goes through page's own entry
+for that reason.
+
+**Aim tween moves what drag is reaching for.** Press starts glide of camera's pivot toward
+drag, so anchor read at press names where object *was*; drags aimed there let go over empty
+glass and build nothing. Two legs chase destination's live pixel each step for that reason,
+and settle on it before releasing.
+
 **TypeScript rather than Nim, and that is argued rather than assumed.** Playwright's surface
 is about fifteen bindings — genuinely one page of glue, as `dance_ontology` found for its own
-driver. What decided it is that 248 of harness's calls are `page.evaluate` bodies naming
-bridge's 157 exports, which `build/bridge.d.ts` types. Through Nim's foreign-function glue
-each becomes unchecked string, and vocabulary pass renamed every one of those exports: string
-version compiles clean and fails one check at time. Put to curator as issue 48, since Article
-II.9 reads both ways here.
+driver. What decided it is that harness's calls are overwhelmingly `page.evaluate` bodies
+naming bridge's 157 exports, which `build/bridge.d.ts` types. Through Nim's foreign-function
+glue each becomes unchecked string, and vocabulary pass renamed every one of those exports:
+string version compiles clean and fails one check at time. Put to curator as issue 48, since
+Article II.9 reads both ways here.
   `@types/node` is pinned for node's own globals. Its declarations clash with DOM lib, which
   `evaluate` bodies need, so lib check is skipped: that skips checking *inside* declaration
   files, never calls against them.
-  Four page-script names harness drives — `clearSelection`, `hideSelectionMenu`,
-  `refreshDiagnostics`, `toast` — are hand-declared in `tools/drive/page.d.ts`, because
-  nothing derives them. Bridge's exports are never hand-written; reach for one first.
+  Page-script names harness drives are hand-declared in `tools/drive/page.d.ts`, in three
+  groups: page's own selection and chrome entries, exceedance window, and tree, rings and
+  objects list. Bridge's exports are never hand-written; reach for one first, then for DOM.
+  **Cost of that file is coupling**: it names page internals no export exposes, so renaming
+  one breaks harness rather than page, and `tsc` is what says so. Accepted because checks it
+  buys — that curve is distribution, that tick writes only rows that moved — cannot be asked
+  any other way.
 
-*Checked.* Verified by running: seventeen of seventeen pass through `tools/build.nim drive`
-on assembled page, in Chromium, software-rendered.
+*Checked.* Verified by running: 135 of 135 pass through `tools/build.nim drive` on assembled
+page, in Chromium, software-rendered. Every section of prototype's own harness is ported;
+two counts are not directly comparable, since each carries guard reports that fire only where
+check cannot be set up.
   **Unverified**: **CI does not reach this layer.** Runner's jobs are fixed in curator-owned
   workflow, and contributor's scope reaches only own project, so no job drives page. Asked as
   issue 47. Until it is ruled, these checks are contributor's to run, and green here is
   evidence someone ran it rather than something runner confirms.
-  **Not yet ported**: prototype's harness carries 127 checks; seventeen are here. Remaining
-  cover drag construction, apply pickers, orbit and pick, drawer's own sections, diagnostics
-  readings and orrery under load. Nothing about them is known to fail — they are unported,
-  which is not same as passing, and record will say so until they run.
+  **Unmeasured**: figures above are this container's, software-rendered, and say more about
+  swiftshader than about any GPU. Bands, not figures, are what checks assert.
 
 Browser Front-End
 ---
@@ -215,10 +242,9 @@ assertion used to silence them. Verified by running: three suites pass on pinned
 through `koch tests`, unchanged at 323, 302 and 310 cases, which says conversion moved no rule
 out of Nim.
   **Partly driven now**: held keys, wheel, mouse pan and touch are checked by harness; see
-  Driven Checks for what it covers and what it does not. Drag construction, undo, scene save
-  and load, and every diagnostics reading remain **untested** in this repository.
+  Driven Checks for what it covers. Scene save and load remain **untested** in this
+  repository: nothing drives file picker.
   **Unverified**: no human has driven this page.
-  **Unmeasured**: no frame time was taken here. Figures under Measurements are prototype's.
 
 Render Paths
 ---
