@@ -84,12 +84,13 @@ func overArm*(turns: float): Arm =
 func straightArm*(turns: float): Arm =
   ## Get which connection runs straight through middle of swan while
   ## other snakes round it (rule 31).
-  ##   One on top at first crossing, which by alternation is
-  ##     one that dives only once -- so it is still visibly straight
-  ##     line, and snake is thing that goes behind it and out
-  ##     again.  Other way round breaks straight one twice and
-  ##     there is no centre left to be surrounded by anything.
-  overArm(turns)
+  ##   Snake is arm that is **over** at first crossing, so straight one
+  ##     is other: Architect's reading, 2026-09-07.
+  ##   This file argued opposite until then -- that one on top dives only
+  ##     once and so stays visibly straight, while one diving twice has
+  ##     no centre left to be surrounded by anything.  Both draw, and
+  ##     drawing cannot tell which is danced, so ruling settles it.
+  other(overArm(turns))
 
 
 func swanning*(turns: float): float =
