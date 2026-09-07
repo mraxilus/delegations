@@ -136,3 +136,32 @@ declare function renderFrame(now_seconds: number): void;
 declare const geometry_pool_drawn: {
   cell: number; gap: number; columns: number; rows: number; height: number;
 };
+
+/** How many objects of each kind last frame drew. */
+declare const count_phase: Record<string, number>;
+
+/** How many points last frame skipped for lying outside view. */
+declare let count_points_culled: number;
+
+/* Drawer and its objects list, which `src/browser/drawer.ts` and `objects_section.ts` own. */
+
+/** Drawer itself, for reading whether it stands open. */
+declare const drawer: HTMLElement;
+
+/** List every live object gets one row in. */
+declare const list_objects: HTMLElement;
+
+/** Signature each standing row was built from, which reconciler diffs against. */
+declare const signatures_row: Map<string, unknown>;
+
+/** Rows still to build this pass, or nothing once list stands complete. */
+declare let rows_pending: unknown;
+
+/** Open drawer onto this object's own row, scrolling to it once it stands. */
+declare function openPanelTo(handle: number | null): void;
+
+/** Close whatever edit session stands, discarding its staged values. */
+declare function endEditSession(): void;
+
+/** Rebuild objects list against scene standing now. */
+declare function refreshObjectsUI(): void;

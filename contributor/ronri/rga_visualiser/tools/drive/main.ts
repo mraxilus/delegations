@@ -27,6 +27,10 @@ import { driveHelp, driveHoverDuringGesture } from './chrome';
 import { driveCreep, drivePlaneBuilt, driveRuler } from './finger';
 import { driveHoldScene } from './hold';
 import { driveDrawerCost, drivePlacementHeld } from './pool';
+import {
+  driveCulling, driveDemo, driveOccluded, driveZoomLoaded, loadDemo, objectsDefault,
+  objectsLargest,
+} from './demo';
 import { driveComet } from './comet';
 import { drivePhaseSums, driveTree } from './diagnostics';
 import { driveAxis, driveAxisGlide, driveCurve, driveScaleSwitch } from './exceedance';
@@ -133,6 +137,15 @@ async function main(): Promise<void> {
   await driveHoldScene(page);
   await driveDrawerCost(page);
   await drivePlacementHeld(page);
+
+  // Demo runs last, and under load: it builds thousands of objects, and every check above is
+  //   written against opening scene's own weight.
+  await driveDemo(page, await objectsDefault(page));
+  const objects_largest = await objectsLargest(page);
+  await loadDemo(page, objects_largest);
+  await driveCulling(page);
+  await driveOccluded(page);
+  await driveZoomLoaded(page);
 
   // Page erroring at all is failure, whatever every check above said.
   report('the page raised no error', errors_page.length === 0, errors_page.join(' | '));
