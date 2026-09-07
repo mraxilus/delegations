@@ -294,6 +294,7 @@ then `./koch <command>`). Every check is a module under `curator/audit/src/`, te
 |---------|-------|----------|
 | `tree` | files git sees | layout, form, comments, provenance header and stamp, glossary |
 | `deps` | every project's `atlas.lock` | checkouts restored and matching the lock |
+| `types` | projects with `package.json` | `npm ci`, then that project's own `types` verb |
 | `tests` | every project, or one | restore, then testament, on that project's pin |
 | `plan` | changed paths, nimble pins | projects to compile, as JSON; `--sweep` for weekly |
 | `scope` | changed paths | branch grammar; project paths inside prefix |

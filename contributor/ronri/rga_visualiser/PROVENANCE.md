@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Author | Claude Opus 5 and Claude Sonnet 5 |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | a011df991e1e6032 |
+| Rules  | 286e748543eaf97f |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the
@@ -2425,3 +2425,27 @@ kind. 454 lines, 15 `evaluate` bodies, browser-side expressions that are not som
 target alone *can* do but something the target *checks* and Nim's glue would not. Before the
 amendment that file leaned on a reading of "what the target alone can do" it did not quite fit.
 It now has a clause of its own.
+
+## Re-audit, 2026-09-07, type check on runner
+
+Audited by a curator against the rule that a project carrying `package.json` beside its lock
+carries a `types` verb in `tools/build.nim`, and that CI runs it: `koch types` restores node
+tools and drives that verb, scoped to projects one change asks for.
+
+**This is the only project the rule reaches today, and it already met it**: issue 47 asked for
+the verb and pull request 56 landed it before this job existed. Nothing here needed correcting.
+
+What changes is who runs it. The record's line under Driven Checks — *"green here is evidence
+someone ran it rather than something runner confirms"* — is now true of `drive` alone. The type
+check is the runner's: 10,676 lines of TypeScript across `src/browser/` and `tools/drive/`, and
+the agreement between `bridge.nim`'s 157 `exportc` signatures and the derived `bridge.d.ts`.
+
+The curator drove that agreement independently rather than taking this project's word for it:
+renaming `nimSceneHandles` to `nimSceneSlots` in `bridge.nim` alone makes `koch types` report
+one finding over `TS2304: Cannot find name 'nimSceneHandles'` at four sites in
+`construct_section.ts`, and reverting returns 0. Same regression pull request 56 recorded,
+reproduced through the runner's path.
+
+**Not reached, and still this project's to run:** `drive` itself. That is held on the harness's
+115 fixed sleeps against 3 waits on a condition the page reports, which is now the deciding
+cost rather than the value — 135 checks made the value case. See issue 47.

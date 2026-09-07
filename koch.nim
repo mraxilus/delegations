@@ -7,18 +7,21 @@
 ##   |---------|-------------------------------------------------------------------------|
 ##   | tree    | layout, form, comments, provenance, glossary over files git sees        |
 ##   | deps    | `atlas --noexec rep` in every project holding atlas.lock, or in one     |
+##   | types   | restore node tools, then type-check scripts, projects one change asks   |
 ##   | tests   | restore, then testament over tests/t*.nim, every project or one         |
 ##   | plan    | projects one change asks to compile, as JSON for CI matrix              |
 ##   | scope   | changed paths against branch prefix           (--branch, --base)        |
 ##   | commits | commit subjects against branch scope          (--branch, --base)        |
+##   | base    | paths branch gained against base's own rules  (--base)                  |
 ##   | stamp   | print rules stamp for PROVENANCE.md                                     |
 ##   | ci      | fetch origin/main, then tree, changed projects, scope, commits, base    |
 ##   |---------|-------------------------------------------------------------------------|
 ##   Options: `--root:<dir>` (default `.`); `--branch:<name>` (default env `BRANCH`, else
 ##     current git branch); `--base:<ref>` (default env `BASE`, else `origin/main`); `--all`
 ##     makes `plan` name every project; `--sweep` names every project only when code merged
-##     within window, else none. Second argument of `deps` and `tests` names one project
-##     directory. Exit: 0 clean, 1 findings, 2 usage error.
+##     within window, else none. Second argument of `deps`, `types` and `tests` names one
+##     project directory, and `types` given one drops its scoping. Exit: 0 clean, 1
+##     findings, 2 usage error.
 ##
 ##   `ci` compiles only projects whose code changed, since static pass costs tenths of
 ##     second and suites cost minutes. Whole repository is swept by CI matrix, one job per
@@ -42,7 +45,7 @@ import ./curator/audit/src/[
 
 
 const USAGE = """
-Usage: koch <tree|deps|tests|plan|scope|commits|base|stamp|ci> [project]
+Usage: koch <tree|deps|types|tests|plan|scope|commits|base|stamp|ci> [project]
             [--root:<dir>] [--branch:<name>] [--base:<ref>] [--all] [--sweep]
 """
   ## Text printed on usage error.
@@ -99,6 +102,17 @@ proc dirsOf(options: Options, tree: Tree): seq[string] =
   if options.project.len > 0: @[options.project.strip(chars = {'/'})] else: tree.projectDirs
 
 
+proc typeDirsOf(options: Options, tree: Tree): seq[string] =
+  ## Read project directories type check drives: named one, else those one change asks for.
+  ##   Scoped where `tests` is not, because CI runs this as one job rather than through
+  ##   matrix `plan` already scoped, and scoping has to live somewhere.
+  ##   `--all` drops scoping, for weekly sweep: schedule has no base commit to compare
+  ##   against, exactly as `plan` takes `--sweep` there.
+  if options.project.len > 0: @[options.project.strip(chars = {'/'})]
+  elif options.is_all: tree.projectDirs
+  else: testSet(tree.projectDirs, changedPaths(options.root, options.baseOrDefault))
+
+
 proc run(options: Options): int =
   ## Execute command, print findings, return exit code.
   var found: seq[Finding]
@@ -108,6 +122,9 @@ proc run(options: Options): int =
   of "deps":
     let tree = options.root.readTree
     found = restoreJobs(options.root, tree.jobsFor(options.dirsOf(tree)))
+  of "types":
+    let tree = options.root.readTree
+    found = typeJobs(options.root, tree, options.typeDirsOf(tree))
   of "tests":
     let tree = options.root.readTree
     found = runJobs(options.root, tree.jobsFor(options.dirsOf(tree)))
@@ -136,6 +153,7 @@ proc run(options: Options): int =
     let tree = options.root.readTree
     let (branch, base) = (options.branchOrDefault, options.baseOrDefault)
     found = tree.auditTree
+    found.add typeJobs(options.root, tree, options.typeDirsOf(tree))
     found.add runJobs(options.root, tree.jobs(changedPaths(options.root, base)))
     found.add checkScope(branch, changedPaths(options.root, base), movedPaths(options.root, base))
     found.add checkCommits(branch, subjects(options.root, base))
