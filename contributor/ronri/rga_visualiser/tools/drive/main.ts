@@ -11,6 +11,8 @@ import { join } from 'node:path';
 import { countFailed, countRun, report } from './report';
 import { focusCanvas } from './gestures';
 import { driveKeys } from './keys';
+import { driveAim, drivePan } from './pan';
+import { driveWheel } from './wheel';
 
 /** Viewport every check below is written against. */
 const SIZE_VIEW = { width: 1200, height: 900 };
@@ -50,6 +52,9 @@ async function main(): Promise<void> {
   await focusCanvas(page);
 
   await driveKeys(page);
+  await driveWheel(page);
+  await drivePan(page);
+  await driveAim(page, SIZE_VIEW.width, SIZE_VIEW.height);
 
   // Page erroring at all is failure, whatever every check above said.
   report('the page raised no error', errors_page.length === 0, errors_page.join(' | '));
