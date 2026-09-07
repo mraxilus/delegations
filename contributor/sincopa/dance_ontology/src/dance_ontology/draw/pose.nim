@@ -165,6 +165,12 @@ const
     ## Turn is subject and re-framing is picture catching
     ##   up with it, so re-framing runs at well under half pace --
     ##   quick enough to read as settle rather than as second move.
+  RESET_PACE* = 0.7 ## Clock coming back gets beside going out.
+    ## Going out is what figure is of and coming back only undoes it, so
+    ##   return runs quicker -- enough to read as reset rather than as
+    ##   second turn, and not so quick that eye cannot follow it.
+    ## Judged by eye, not measured: it is smallest step that reads at
+    ##   glance, and is meant to be tuned that way.
   ARRIVAL_HOLD* = 0.25 ## Beat held on turn's landing before it follows.
     ## Without it two stages run together as one long motion; with it
     ##   turn is seen to finish, and what happens next is plainly
@@ -273,8 +279,12 @@ func turnWalk*(base: Pose; who: Dancer; about: About; degrees: float;
   result = there
   for i, p in back.poses:
     result.poses.add p
-    # Two legs meet on one pose, so join is beat like others.
-    result.times.add (if i == 0: ARRIVAL_HOLD else: back.times[i])
+    # Two legs meet on one pose, so join is beat like others.  Rest of
+    # coming back runs at `RESET_PACE`: emphasis rule 26 takes off
+    # re-framing comes off whole return for same reason, since return is
+    # not what figure is of either.
+    result.times.add (
+      if i == 0: ARRIVAL_HOLD else: back.times[i] * RESET_PACE)
   result.times = timed(result.times)
 
 
