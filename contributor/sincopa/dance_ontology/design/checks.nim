@@ -1046,22 +1046,20 @@ proc checkHandTurns*() =
       &"A swan's snake bows clean out of the figure; got " &
         &"`{decimal(bowed[snake], 1)}` against `{decimal(apart, 1)}` in " &
         &"`{position.name}`."
-    # Snake takes crossings either side of middle and leaves middle one to
-    # strand it wraps, because that is what going round something is:
-    # under it, over it, under it.  So snake is drawn in three pieces and
-    # straight one in two.  Straight one cut at both outer crossings
-    # instead is three stubs of short chord with two gaps between them,
-    # and reads as dashes rather than as line passing beneath.
+    # Snake is arm position is named over, and it is over where name says
+    # -- at lead's own crossover.  Alternation then leaves it over at both
+    # outer crossings and under at middle, so it is drawn in two pieces
+    # and straight one, diving either side of it, in three.
     var pieces: array[Arm, int]
     let dives = divesOf(pair[Arm.L], pair[Arm.R], position.wind)
     for arm in Arm:
       pieces[arm] = cutGapsAt(pair[arm], dives[arm]).len
-    doAssert pieces[straight] == 2,
-      &"A swan's straight connection is not drawn in two pieces; got " &
-        &"`{pieces[straight]}` in `{position.name}`."
-    doAssert pieces[snake] == 3,
-      &"A swan's snake is not drawn in three pieces; got " &
+    doAssert pieces[snake] == 2,
+      &"A swan's snake is not drawn in two pieces; got " &
         &"`{pieces[snake]}` in `{position.name}`."
+    doAssert pieces[straight] == 3,
+      &"A swan's straight connection is not drawn in three pieces; got " &
+        &"`{pieces[straight]}` in `{position.name}`."
     flattest = min(flattest, bowed[straight])
     snakiest = min(snakiest, bowed[snake])
     inc swans
