@@ -655,7 +655,7 @@ proc nimCommitObject(
 type OperationResult = object ## Define what applying catalogue operation produced.
   created_handle: cint ## Handle derived object was added at.
   message: cstring ## Outcome, for display as desktop panel's status line.
-  shape_word: cstring ## What derived object turned out to be.
+  kind_word: cstring ## What derived object turned out to be.
 
 
 proc nimApplyOperation(
@@ -679,11 +679,11 @@ proc nimApplyOperation(
   stampBorn(handle_created, float(now))
   SELECTION.selectOnly(handle_created)
   HISTORY.record(SCENE, CAMERA)
-  let shape_word = kindText(derived)
+  let kind_word = kindText(derived)
   OperationResult(
     created_handle: cint(handle_created),
-    message: cstring(&"{label} gave {shape_word}."),
-    shape_word: cstring(shape_word),
+    message: cstring(&"{label} gave {kind_word}."),
+    kind_word: cstring(kind_word),
   )
 
 
