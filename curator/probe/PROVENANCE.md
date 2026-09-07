@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | a011df991e1e6032 |
+| Rules  | 286e748543eaf97f |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: curator test project replacing `abstand/intervals`, which lived in a real domain;
@@ -124,3 +124,12 @@ moment one arrives, and the `not Nim because` gate already refuses one that argu
 ## Open questions
 
 None.
+
+## Re-audit, 2026-09-07, type check on runner
+
+Audited by a curator against the rule that a project carrying `package.json` beside its lock
+carries a `types` verb in `tools/build.nim`, and that CI runs it: `koch types` restores node
+tools and drives that verb, scoped to projects one change asks for.
+
+This project carries no node manifest, so nothing here is type-checked and the rule binds
+nothing today. It binds the moment this project grows scripts of its own.
