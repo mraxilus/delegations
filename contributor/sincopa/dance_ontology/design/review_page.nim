@@ -58,11 +58,11 @@ func esc(s: string): string =
   s.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"))
 
 const
-  WAY_SAID = {"fa": "follow turns", "la": "lead turns",
+  MANNER_SAID = {"fa": "follow turns", "la": "lead turns",
               "fo": "follow orbits", "lo": "lead orbits"}.toTable
     ## Workbench's tags said in words, since sheet is read by eye.
   QUARTER_SAID = ["none", "a quarter", "a half", "three quarters"]
-    ## How far round that way has gone, counted in quarter turns.
+    ## How far round that manner has gone, counted in quarter turns.
   QUARTER_FROM = ["the start", "a quarter", "a half", "three quarters"]
     ## Same, worded for move that sets off from it.
 
@@ -72,9 +72,9 @@ const QUARTER_WAY = wayName(wayOf(HalfTurns(QUARTER)))
   ##     outlive sign it describes.
 
 func said(tag: string; quarter: int): string =
-  ## Name one way of turning, how far it has gone, and which way round.
-  if quarter == 0: &"{WAY_SAID[tag]} {QUARTER_SAID[quarter]}"
-  else: &"{WAY_SAID[tag]} {QUARTER_SAID[quarter]} {QUARTER_WAY}"
+  ## Name one manner of turn, how far it has gone, and which way round.
+  if quarter == 0: &"{MANNER_SAID[tag]} {QUARTER_SAID[quarter]}"
+  else: &"{MANNER_SAID[tag]} {QUARTER_SAID[quarter]} {QUARTER_WAY}"
 
 func unpinned(svg: string): string =
   ## Take off pixel size workbench pins each figure to for its own rows, so
@@ -234,33 +234,33 @@ func sheetOf(P: Parts): string =
   let st = P
   body.add """<section id="single"><h2>B &middot; Single-hand turn positions</h2>
   <p class="lede">What the single-hand turns page animates between. Sixty-four
-  plates are drawn, but only twenty-eight are distinct pictures: two ways of
-  turning that share a family share all four of their positions, and ways of
+  plates are drawn, but only twenty-eight are distinct pictures: two manners
+  of turn that share a family share all four of their positions, and manners of
   different families share the one they rest at. Duplicates are folded here, and
-  each card says which ways and quarters land on it. The four ways are the
+  each card says which manners and quarters land on it. The four manners are the
   follow turning on the spot, the lead turning on the spot, the follow orbiting
   the lead, and the lead orbiting the follow; the quarter is how far round that
-  way has gone.</p>"""
+  manner has gone.</p>"""
   var n = 0
   for c in 0 ..< SINGLES.len:
     body.add &"""<h3>{esc(SINGLES[c].name)}</h3><div class="grid wide">"""
     var seen = initTable[string, string]()   # svg -> id already given it
     var order: seq[string]
     var whose = initTable[string, seq[string]]()
-    for way in TurnWay:
+    for manner in Manner:
       for q in 0 ..< QUARTERS_ROUND:
-        let key = &"st_{WAYS_OF_TURNING[way].tag}_{c}_{q}"
+        let key = &"st_{MANNERS[manner].tag}_{c}_{q}"
         if key notin st: continue
         let svg = st[key]
         if svg notin seen:
           inc n
           seen[svg] = &"B{n}"
           order.add svg
-        whose.mgetOrPut(svg, @[]).add said(WAYS_OF_TURNING[way].tag, q)
+        whose.mgetOrPut(svg, @[]).add said(MANNERS[manner].tag, q)
     for svg in order:
-      # Where every way lands on one picture, say so once rather than four times.
-      let who = if whose[svg].len == WAYS_OF_TURNING.len and
-                   QUARTER_SAID[0] in whose[svg][0]: "every way, before it starts"
+      # Where every manner lands on one picture, say so once rather than four times.
+      let who = if whose[svg].len == MANNERS.len and
+                   QUARTER_SAID[0] in whose[svg][0]: "every manner, before it starts"
                 else: whose[svg].join(" \u00B7 ")
       body.add card(seen[svg], SINGLES[c].name, who, svg)
     body.add "</div>"
@@ -328,8 +328,8 @@ func sheetOf(P: Parts): string =
 
   # `E`. Every single-hand turn animated, edge by edge.
   body.add """<section id="single-moving"><h2>E &middot; Single-hand turns, moving</h2>
-  <p class="lede">Every edge of section B, walked by every way of turning: four
-  holds, four ways, four quarter-turn edges. Unlike the positions, no two of
+  <p class="lede">Every edge of section B, walked by every manner of turn: four
+  holds, four manners, four quarter-turn edges. Unlike the positions, no two of
   these are the same picture &mdash; the walk differs even where the endpoints
   agree, and the lead's turns are told in the two stages rule 18 asks for.</p>
   <p class="how"><b>Every walk here turns one way.</b> The page turns by
@@ -351,44 +351,44 @@ func sheetOf(P: Parts): string =
   var m = 0
   for c in 0 ..< SINGLES.len:
     body.add &"""<h3>{esc(SINGLES[c].name)}</h3><div class="grid wide">"""
-    for way in TurnWay:
+    for manner in Manner:
       for q in 0 ..< QUARTERS_ROUND:
-        let key = &"tr_{WAYS_OF_TURNING[way].tag}_{c}_{q}_{(q + 1) mod QUARTERS_ROUND}"
+        let key = &"tr_{MANNERS[manner].tag}_{c}_{q}_{(q + 1) mod QUARTERS_ROUND}"
         if key notin st: continue
         inc m
         body.add card(&"E{m}",
-          &"{WAY_SAID[WAYS_OF_TURNING[way].tag]} {QUARTER_WAY}, " &
+          &"{MANNER_SAID[MANNERS[manner].tag]} {QUARTER_WAY}, " &
             &"quarter {q + 1} of 4",
           &"from {QUARTER_FROM[q]} to {QUARTER_FROM[(q + 1) mod QUARTERS_ROUND]}",
           st[key])
     body.add "</div>"
   body.add "</section>"
 
-  func chainWay(way: TurnWay): string =
-    ## Say which way round this way of turning walks chain.
+  func chainWay(manner: Manner): string =
+    ## Say which way round this manner of turn walks chain.
     ##   Not same for all four: positive turn by lead unwinds what positive
-    ##     turn by follow winds (rule 30), so each way turns whichever way
+    ##     turn by follow winds (rule 30), so each manner turns whichever way
     ##     carries pair inward along chain, and that sense is measured.
-    wayName(wayOf(HalfTurns(HALF * windSense(way))))
+    wayName(wayOf(HalfTurns(HALF * windSense(manner))))
 
 
   # `F`. Every chain edge animated.
   body.add """<section id="chain-moving"><h2>F &middot; Hand-to-hand chain, moving</h2>
-  <p class="lede">Every edge of section C, walked by every way of turning: six
-  edges of the seven-position chain, four ways each. All four ways walk the same
+  <p class="lede">Every edge of section C, walked by every manner of turn: six
+  edges of the seven-position chain, four manners each. All four manners walk the same
   chain, since an orbit keeping its side to the centre winds the pair as far as
   it carries the walker. <b>They do not all turn the same way round</b>: a
   positive turn by the lead unwinds what a positive turn by the follow winds, so
-  each way turns whichever way carries the pair along the chain rather than off
+  each manner turns whichever way carries the pair along the chain rather than off
   the end of it. Each caption says which, measured on the build.</p><div class="grid wide">"""
   var k = 0
-  for way in TurnWay:
+  for manner in Manner:
     for i in 0 ..< CHAIN.len - 1:
-      let key = &"hw_{WAYS_OF_TURNING[way].tag}_{i}"
+      let key = &"hw_{MANNERS[manner].tag}_{i}"
       if key notin hh: continue
       inc k
       body.add card(&"F{k}",
-                    &"{WAY_SAID[WAYS_OF_TURNING[way].tag]} {chainWay(way)}",
+                    &"{MANNER_SAID[MANNERS[manner].tag]} {chainWay(manner)}",
                     CHAIN[i].name & " to " & CHAIN[i + 1].name, hh[key])
   body.add "</div></section>"
 

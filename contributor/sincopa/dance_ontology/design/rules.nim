@@ -183,7 +183,7 @@ const RULES* = [
   ##       orbit and axis turn danced together, not orbit.
   ##     Measured with bearing kept: two orbits reach one round of
   ##       positions -- drawing cannot say which dancer walked -- and
-  ##       that round is not either axis round.  Four ways of turning,
+  ##       that round is not either axis round.  Four manners of turn,
   ##       three rounds of positions.
   ##   Rule 21 puts level on moving hand as well as still one; on
   ##     turns pages that is above, only level in scope.
@@ -261,11 +261,11 @@ const RULES* = [
   ##       with nothing imposed and nothing to jump.
   ##     Measured that way, orbit that keeps its bearing does not wind
   ##       pair at all: such walker never turns relative to their
-  ##       partner.  First drawing claimed all four ways wound, which
+  ##       partner.  First drawing claimed all four manners wound, which
   ##       was only true because all four were told to.
   ##     **Rule 32 has since made that finding moot** by changing what
   ##       orbit is.  Walker who keeps their side to centre does turn
-  ##       relative to their partner, so all four ways wind after all --
+  ##       relative to their partner, so all four manners wind after all --
   ##       and this time it is measured rather than claimed.
   ##   Rule 29 gives moving crossing break that still one has.
   ##     Still reach is cut into runs at every crossing it dives under,
@@ -347,7 +347,7 @@ const RULES* = [
   ##       `1/2 turns"`*.  Rule 20's orbit turned walker not at all
   ##       relative to their partner, so -- measured, under rule 28 -- it
   ##       wound pair by nothing.  Half turn of it was half turn of
-  ##       no quantity, and two of four ways of turning did not walk
+  ##       no quantity, and two of four manners of turn did not walk
   ##       chain at all.  Facing centre, orbit winds exactly as far
   ##       as it carries, and every way steps one position per half turn.
   ##     `pose.orbit` has always had this as `locked = true`; rule 20 turned
@@ -356,7 +356,7 @@ const RULES* = [
   ##       from other side, and it is bearing-keeping walk that is
   ##       compound now: orbit with counter-turn danced into it.
   ##     Consequence runs through everything.  Orbit lands where
-  ##       *other* dancer's axis turn lands, so four ways walk **two**
+  ##       *other* dancer's axis turn lands, so four manners walk **two**
   ##       rounds of positions rather than three, each round reached by one
   ##       axis turn and by other dancer's orbit.  All four are still
   ##       drawn: which dancer walked is fact about path, and only
