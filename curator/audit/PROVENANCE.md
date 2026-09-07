@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 514fbc63c53dd18e |
+| Rules  | 00f4a795ba695350 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief for the repository, the constitution, the Nim style
@@ -742,10 +742,12 @@ than in shell.
 
 ## Re-audit, 2026-09-07, issue routing
 
-Audited by a curator against the change that made the issue channel run both ways. A session
-now reads the open issues labelled with its own role before any other work; a curator who reads
-this project raises what they find as an issue rather than editing it, since they may not; and
-an issue's label is the role string exactly, copied and never composed, because applying a
+Audited by a curator against the change that made the issue channel run both ways and gave each
+session a queue. A session now reads the open issues labelled with its own role before any other
+work; a curator who reads this project raises what they find as an issue rather than editing it,
+since they may not; an issue labelled with a session's own role is that session's queue, work
+decided and deferred where the next session here will see it rather than in a conversation that
+ends; and a label is the role string exactly, copied and never composed, because applying a
 label creates it and a misspelling makes a second label nobody filters on.
 
 Nothing in this tree changes, and nothing here checks it. koch makes no network call, so the
