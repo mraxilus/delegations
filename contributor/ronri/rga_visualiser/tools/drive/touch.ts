@@ -20,10 +20,10 @@ export async function openTouch(page: Page): Promise<CDPSession> {
 }
 
 /** Which touch event is dispatched, as Chrome's protocol names them. */
-type TouchKind = 'touchStart' | 'touchMove' | 'touchEnd' | 'touchCancel';
+export type TouchKind = 'touchStart' | 'touchMove' | 'touchEnd' | 'touchCancel';
 
 /** Dispatch one touch event, however many fingers are down. */
-async function touch(
+export async function touchAt(
   cdp: CDPSession, kind: TouchKind, points: Finger[],
 ): Promise<void> {
   await cdp.send('Input.dispatchTouchEvent', {
@@ -37,7 +37,7 @@ export async function pinch(
   page: Page, cdp: CDPSession, mid_from: Finger, mid_to: Finger,
   spread_from: number, spread_to: number,
 ): Promise<void> {
-  await touch(cdp, 'touchStart', [
+  await touchAt(cdp, 'touchStart', [
     { x: mid_from.x - spread_from, y: mid_from.y },
     { x: mid_from.x + spread_from, y: mid_from.y },
   ]);
@@ -47,12 +47,12 @@ export async function pinch(
       x: mid_from.x + ((mid_to.x - mid_from.x) * step) / 8,
       y: mid_from.y + ((mid_to.y - mid_from.y) * step) / 8,
     };
-    await touch(cdp, 'touchMove', [
+    await touchAt(cdp, 'touchMove', [
       { x: mid.x - spread, y: mid.y }, { x: mid.x + spread, y: mid.y },
     ]);
     await page.waitForTimeout(25);
   }
-  await touch(cdp, 'touchEnd', []);
+  await touchAt(cdp, 'touchEnd', []);
   await page.waitForTimeout(200);
 }
 
@@ -60,10 +60,43 @@ export async function pinch(
 export async function tapAt(
   page: Page, cdp: CDPSession, x: number, y: number, milliseconds = 60,
 ): Promise<void> {
-  await touch(cdp, 'touchStart', [{ x, y }]);
+  await touchAt(cdp, 'touchStart', [{ x, y }]);
   await page.waitForTimeout(milliseconds);
-  await touch(cdp, 'touchEnd', []);
+  await touchAt(cdp, 'touchEnd', []);
   await page.waitForTimeout(250);
+}
+
+/** How much of one finger drag to perform, for gestures checked in two halves. */
+export interface DragParts {
+  press?: boolean;
+  lift?: boolean;
+}
+
+/** Drag one finger from place to place, in steps application can follow.
+ *
+ *  Press and lift are separable, so check can pause mid-drag and read what opened under
+ *  finger before letting go.
+ */
+export async function dragFinger(
+  page: Page, cdp: CDPSession, from: number[], onto: number[], parts: DragParts = {},
+): Promise<void> {
+  const { press = true, lift = true } = parts;
+  const start = { x: from[0] ?? 0, y: from[1] ?? 0 };
+  const end = { x: onto[0] ?? 0, y: onto[1] ?? 0 };
+  if (press) {
+    await touchAt(cdp, 'touchStart', [start]);
+    for (let step = 1; step <= 10; step += 1) {
+      await touchAt(cdp, 'touchMove', [{
+        x: start.x + ((end.x - start.x) * step) / 10,
+        y: start.y + ((end.y - start.y) * step) / 10,
+      }]);
+      await page.waitForTimeout(30);
+    }
+  }
+  if (lift) {
+    await touchAt(cdp, 'touchEnd', []);
+    await page.waitForTimeout(400);
+  }
 }
 
 /** Wait until camera's own ease has settled, so readings are not mid-flight. */
