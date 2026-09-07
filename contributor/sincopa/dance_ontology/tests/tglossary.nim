@@ -26,7 +26,7 @@ import ../design/rules
 const
   GLOSSARY = currentSourcePath().parentDir.parentDir / "GLOSSARY.md"
     ## Vocabulary this project agreed, beside its code.
-  SHAPE_AT = {5: "Cross", 10: "Diamond", 15: "Swan"}.toTable
+  SHAPE_AT = {0: "Open", 5: "Cross", 10: "Diamond", 15: "Swan"}.toTable
     ## Glossary's word for each step of chain, by wind in tenths of turn.
     ##   Tenths because wind is float and key must compare exactly.
   CHAIN_TERMS = ["Open", "Cross", "Diamond", "Swan"]
@@ -83,7 +83,7 @@ suite "chain speaks glossary":
           for word in words:
             check not name.says(word)
 
-  test "every wound position carries glossary's own word":
+  test "every position carries glossary's own word":
     for holds in HOLDS:
       for position in chainFor(holds):
         let tenths = int(abs(position.wind) * 10)
