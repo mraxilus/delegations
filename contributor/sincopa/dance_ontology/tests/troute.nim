@@ -65,6 +65,23 @@ suite "reach breaks":
     check runs[0][0] == line[0]
     check runs[^1][^1] == line[^1]
 
+  test "a break leaves as much line as its crossing has room for":
+    # Round caps add half a stroke to each end of a piece and take as much
+    # off the gap beside it, so a piece much shorter than a break reads as
+    # a blob and the gap beside it as a nick.  A crossing near a hand
+    # cannot be given a long piece, but it can be given every bit of the
+    # room it does leave, and that is what is claimed here.
+    let span = float(N - 1) * STEP
+    for i in 0 ..< N:
+      let
+        at = float(i) * STEP
+        gap = gapFor(at, span)
+        wanted = min(at, 2 * BREAK / 3)
+      if gap.shuts <= gap.opens:
+        continue
+      check gap.opens >= wanted - 1e-9
+      check span - gap.shuts >= min(span - at, 2 * BREAK / 3) - 1e-9
+
   test "an uncrossed reach is drawn whole":
     let runs = cutGapsAt(line, @[])
     check runs.len == 1
