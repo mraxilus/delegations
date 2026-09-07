@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | d7526c4b4d7fa1d9 |
+| Rules  | 514fbc63c53dd18e |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the Architect's workbook `ontology.partnerwork.xlsx` (sheets `base` and
@@ -435,6 +435,18 @@ acquisition out of `toolchain.nim`, and covered the two modules that had no test
 reaches this project: a change touching only its `README.md`, `PROVENANCE.md` or
 `GLOSSARY.md` now compiles nothing, where a README change previously ran the whole suite.
 Nothing here needed correcting.
+
+## Re-audit, 2026-09-07, issue routing
+
+Audited by a curator against the change that made the issue channel run both ways. A session
+now reads the open issues labelled with its own role before any other work; a curator who reads
+this project raises what they find as an issue rather than editing it, since they may not; and
+an issue's label is the role string exactly, copied and never composed, because applying a
+label creates it and a misspelling makes a second label nobody filters on.
+
+Nothing in this tree changes: the rule binds how the next session here starts. No issue is open
+against this project today, so its filter starts empty, which is the answer the rule is meant
+to give when there is nothing waiting.
 
 ## Open questions
 
