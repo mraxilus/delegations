@@ -582,9 +582,9 @@ func phaseOf*(holds: Holds): float =
 
 func chainFor*(holds: Holds): seq[Position] =
   ## Lay out chain one hold walks: every step of it, named and noted.
-  ##   Shape is glossary's word for that step of chain -- **cross**,
-  ##     **diamond**, **swan** -- which is why neither `x` nor `box`
-  ##     appears here: glossary names both as words to avoid.
+  ##   Shape is glossary's word for that step of chain -- **open**,
+  ##     **cross**, **diamond**, **swan** -- which is why neither `x` nor
+  ##     `box` appears here: glossary names both as words to avoid.
   ##   Which arm is over is preliminary and user's: position is called
   ##     for whichever of lead's arms passes over other at lead's
   ##     own crossover, and for shape pair makes there.
@@ -610,7 +610,9 @@ func chainFor*(holds: Holds): seq[Position] =
     # turns, both one way at half.  It is also whole of offset
     # between this hold and its dual (rule 31).
     result.add (wind,
-      if abs(wind) < 1e-9: shape
+      # Middle of chain is glossary's **open**, and it alone says which
+      # hands are joined, since every other position inherits that.
+      if abs(wind) < 1e-9: &"{shape} open"
       elif wind > 0: &"Left over Right {shape}"
       else: &"Right over Left {shape}",
       far)
