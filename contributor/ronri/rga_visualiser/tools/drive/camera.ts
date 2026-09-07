@@ -6,6 +6,13 @@
 
 import type { Page } from '@playwright/test';
 
+declare global {
+  interface Window {
+    /** Stance last poll read, so next one can tell whether ease has stopped. */
+    __stance_last?: number[];
+  }
+}
+
 /** Where camera stands, as bridge reports it. */
 export interface Stance {
   distance: number;
@@ -54,4 +61,23 @@ export function slideOf(before: Stance, after: Stance): number {
 /** How far pivot itself travelled between two stances. */
 export function spanPivot(before: Stance, after: Stance): number {
   return spanOf(before.pivot, after.pivot);
+}
+
+
+/** Wait until camera's own ease has stopped, rather than for long enough that it usually has.
+ *
+ *  Polled on page's own frame boundary and compared against previous reading, so it settles in
+ *  frames rather than in wall time: loaded runner draws frames slower, and this waits for them
+ *  instead of racing them. Fixed sleep here was harness's commonest flake (repository issue 47).
+ *  Raises where camera never stops, which is fault worth failing on rather than sleeping past.
+ */
+export async function settleCamera(page: Page): Promise<void> {
+  await page.evaluate(() => { delete window.__stance_last; });
+  await page.waitForFunction(() => {
+    const now_at = [nimCameraDistance(), nimCameraAzimuth(), ...Array.from(nimCameraPivot())];
+    const before = window.__stance_last;
+    window.__stance_last = now_at;
+    return before !== undefined && before.length === now_at.length &&
+      before.every((v, i) => Math.abs(v - (now_at[i] ?? 0)) < 1e-9);
+  }, null, { timeout: 8000, polling: 'raf' });
 }

@@ -1,10 +1,13 @@
 // Checks for path reader takes to build objects without dragging: pickers, menu, timeline;
-//   not Nim because every one of them is DOM control, and only browser holds those.
+//   not Nim because crossing forfeits check compiler makes over bulk of this file: its
+//   `page.evaluate` bodies name bridge's derived exports and page's own pick entries, each of
+//   which glue would leave unchecked string. DOM alone would not decide it.
 //   Pickers name *positions* in list they show; scene names handles. Preview was once built
 //   from picker's position passed straight through as handle, which is right only while
 //   nothing has been deleted, so every check here runs after delete.
 
 import type { Page } from '@playwright/test';
+import { settleCount, settleSelection } from './gestures';
 import { report } from './report';
 
 /** Open or shut one drawer section, by name its markup carries. */
@@ -16,6 +19,10 @@ async function toggleSection(page: Page, name: string, is_open: boolean): Promis
       (section.querySelector('.section-header') as HTMLElement | null)?.click();
     }
   }, { name, is_open });
+  await page.waitForFunction((given) => {
+    const section = document.querySelector(`.section[data-section="${given.name}"]`);
+    return (section?.classList.contains('open') ?? false) === given.is_open;
+  }, { name, is_open }, { timeout: 8000, polling: 'raf' });
 }
 
 /** Handle added between two readings, or nothing where none was.
@@ -38,7 +45,9 @@ export async function driveApply(page: Page): Promise<void> {
     refreshSelectionMenu(null);
     document.getElementById('selection-menu-delete')?.click();
   });
-  await page.waitForTimeout(250);
+  await page.waitForFunction(
+    () => !nimSceneHandles().includes(0), null, { timeout: 8000, polling: 'raf' },
+  );
   const handles_now = await page.evaluate(() => nimSceneHandles());
   report(
     'deleting an object leaves the picker positions offset from the scene handles',
@@ -51,7 +60,10 @@ export async function driveApply(page: Page): Promise<void> {
   //   control nobody could have looked at.
   await page.click('#button-drawer');
   await toggleSection(page, 'apply', true);
-  await page.waitForTimeout(300);
+  await page.waitForFunction(() => {
+    const first = document.getElementById('op-first') as HTMLSelectElement | null;
+    return first !== null && first.options.length === nimSceneCount();
+  }, null, { timeout: 8000, polling: 'raf' });
   const filled = await page.evaluate(() => ({
     options: (document.getElementById('op-first') as HTMLSelectElement | null)?.options.length
       ?? -1,
@@ -66,7 +78,6 @@ export async function driveApply(page: Page): Promise<void> {
   // Shut apply section again: open one keeps preview standing, which is one of three things
   //   frame hold refuses to hold frame over, and later hold checks would break quietly.
   await toggleSection(page, 'apply', false);
-  await page.waitForTimeout(200);
   await driveApplyPair(page);
 }
 
@@ -84,14 +95,14 @@ async function driveApplyPair(page: Page): Promise<void> {
     document.getElementById('button-apply')?.click();
     return { operation, first: handles[0] ?? 0, second: handles[1] ?? 0 };
   });
-  await page.waitForTimeout(300);
+  await settleCount(page, before_picker.length + 1);
 
   const after_picker = await page.evaluate(() => nimSceneHandles());
   const by_picker = addedHandle(before_picker, after_picker);
   await page.evaluate((given) => {
     nimApplyOperation(given.operation, given.first, given.second, performance.now() / 1000);
   }, applied);
-  await page.waitForTimeout(300);
+  await settleCount(page, before_picker.length + 2);
   const by_bridge = addedHandle(after_picker, await page.evaluate(() => nimSceneHandles()));
 
   const name = 'apply builds from the operands its pickers name, not from their positions';
@@ -126,7 +137,7 @@ export async function driveUndo(page: Page): Promise<void> {
   const before = await page.evaluate(() => nimSceneCount());
   await page.evaluate(() => document.getElementById('gl')?.focus());
   await page.keyboard.press('Control+z');
-  await page.waitForTimeout(250);
+  await settleCount(page, before - 1);
   const after = await page.evaluate(() => nimSceneCount());
   report(
     'undo reaches the timeline in the frames right after an edit',
@@ -146,13 +157,16 @@ export async function driveReachable(page: Page): Promise<void> {
     selectOnly(handles[0] ?? 0, null);
     toggleSelection(handles[1] ?? 0, null);
   });
-  await page.waitForTimeout(200);
+  await settleSelection(page, 2);
   const before = await page.evaluate(() => nimSceneCount());
 
   // Press menu's apply twice, by design: first press opens picker beside it, second commits
   //   whatever that picker names.
   await page.evaluate(() => document.getElementById('selection-menu-apply')?.click());
-  await page.waitForTimeout(200);
+  await page.waitForFunction(() => {
+    const chosen = document.getElementById('selection-menu-select') as HTMLSelectElement | null;
+    return chosen !== null && chosen.options.length > 0;
+  }, null, { timeout: 8000, polling: 'raf' });
   await page.evaluate(() => {
     const chosen = document.getElementById('selection-menu-select') as HTMLSelectElement | null;
     if (chosen !== null) {
@@ -161,7 +175,7 @@ export async function driveReachable(page: Page): Promise<void> {
     }
     document.getElementById('selection-menu-apply')?.click();
   });
-  await page.waitForTimeout(300);
+  await settleCount(page, before + 1);
   const after = await page.evaluate(() => nimSceneCount());
   report(
     'every operation is reachable without dragging at all',

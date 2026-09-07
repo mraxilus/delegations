@@ -86,7 +86,12 @@ async function main(): Promise<void> {
   page.on('pageerror', (error) => errors_page.push(error.message));
 
   await page.goto(`file://${PATH_PAGE}`);
-  await page.waitForTimeout(2000);
+  // Page is up when its own scene stands, not after fixed wait: build carries whole compiled
+  //   module inline, and how long that takes to run is machine's business rather than check's.
+  await page.waitForFunction(
+    () => typeof nimSceneCount === 'function' && nimSceneCount() > 0,
+    null, { timeout: 60000, polling: 'raf' },
+  );
   await focusCanvas(page);
 
   await driveKeys(page);

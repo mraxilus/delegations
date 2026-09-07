@@ -1,10 +1,12 @@
-// Check ground reaches camera wherever it has dollied to; not Nim because it reads frame
-//   page would actually upload, which only browser assembles.
+// Check ground reaches camera wherever it has dollied to; not Nim because crossing forfeits
+//   check compiler makes over its `page.evaluate` bodies, which name `nimBuildFrame` and read
+//   `FrameData`'s own fields -- both derived into `build/bridge.d.ts` and checked there.
 //   Camera dollied past fog's cap would have ground stop reaching what it looks at, and
 //   further out meet black void with no reference at all: no grid, no axes.
 //   Driven through page's own frame build, so what is counted is what would be drawn.
 
 import type { Page } from '@playwright/test';
+import { settleCamera } from './camera';
 import { report } from './report';
 
 /** Distances camera is put at, spanning its whole dolly reach. */
@@ -39,7 +41,7 @@ async function groundAt(page: Page, distance: number): Promise<Ground> {
 export async function driveGround(page: Page): Promise<void> {
   await page.evaluate(() => nimSelectClear());
   await page.keyboard.press('Home');
-  await page.waitForTimeout(150);
+  await settleCamera(page);
 
   const grounds: Ground[] = [];
   for (const distance of DISTANCES_REACH) grounds.push(await groundAt(page, distance));
@@ -59,5 +61,5 @@ export async function driveGround(page: Page): Promise<void> {
   );
 
   await page.keyboard.press('Home');
-  await page.waitForTimeout(150);
+  await settleCamera(page);
 }

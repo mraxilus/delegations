@@ -4,7 +4,8 @@
 //   Touch is where pinch regression lived, and no suite has finger at all.
 
 import type { CDPSession, Page } from '@playwright/test';
-import { readCamera } from './camera';
+import { readCamera, settleCamera } from './camera';
+import { waitFrames } from './frame';
 import { report } from './report';
 import { pixelOf } from './wheel';
 
@@ -50,10 +51,10 @@ export async function pinch(
     await touchAt(cdp, 'touchMove', [
       { x: mid.x - spread, y: mid.y }, { x: mid.x + spread, y: mid.y },
     ]);
-    await page.waitForTimeout(25);
+    await waitFrames(page, 2);
   }
   await touchAt(cdp, 'touchEnd', []);
-  await page.waitForTimeout(200);
+  await settleCamera(page);
 }
 
 /** Put one finger down for however long, then lift it. */
@@ -61,9 +62,11 @@ export async function tapAt(
   page: Page, cdp: CDPSession, x: number, y: number, milliseconds = 60,
 ): Promise<void> {
   await touchAt(cdp, 'touchStart', [{ x, y }]);
+  // Wall time, deliberately: how long finger stays down is what caller asked for, and long
+  //   press is decided by that duration rather than by anything page reports.
   await page.waitForTimeout(milliseconds);
   await touchAt(cdp, 'touchEnd', []);
-  await page.waitForTimeout(250);
+  await settleCamera(page);
 }
 
 /** How much of one finger drag to perform, for gestures checked in two halves. */
@@ -90,18 +93,13 @@ export async function dragFinger(
         x: start.x + ((end.x - start.x) * step) / 10,
         y: start.y + ((end.y - start.y) * step) / 10,
       }]);
-      await page.waitForTimeout(30);
+      await waitFrames(page, 2);
     }
   }
   if (lift) {
     await touchAt(cdp, 'touchEnd', []);
-    await page.waitForTimeout(400);
+    await settleCamera(page);
   }
-}
-
-/** Wait until camera's own ease has settled, so readings are not mid-flight. */
-export async function settleCamera(page: Page): Promise<void> {
-  await page.waitForTimeout(900);
 }
 
 /** Drive pinch zoom, which is what finger has instead of wheel. */
@@ -131,7 +129,7 @@ export async function drivePinch(page: Page, cdp: CDPSession): Promise<void> {
 /** Drive long press and tap, which is how finger selects. */
 export async function driveTouchSelect(page: Page, cdp: CDPSession): Promise<void> {
   await page.keyboard.press('Home');
-  await page.waitForTimeout(150);
+  await settleCamera(page);
   await page.evaluate(() => nimSelectClear());
   await settleCamera(page);
 

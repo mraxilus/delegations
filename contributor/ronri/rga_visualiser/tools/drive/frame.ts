@@ -1,12 +1,13 @@
 // Watch what page's own draw loop costs, and check it fits inside frame; not Nim because
-//   only browser has that loop, and only wrapper standing in front of its frame build sees
-//   each frame's work.
+//   crossing forfeits check compiler makes over wrapper standing in front of `nimBuildFrame`,
+//   which reads every field of `FrameData` that `declare` derives.
 //   Measured here is part page owns, not wall clock: browser cannot draw faster than
 //   compositor presents, so "uncapped" is not thing to reach for.
 //   Machine running these checks renders through software GL, so its frame times say more
 //   about swiftshader than about anything in this repository. Hence bands, not figures.
 
 import type { Page } from '@playwright/test';
+import { settleCamera } from './camera';
 import { report, reportWithin } from './report';
 
 /** One frame's clocks and counts, as harness's own wrapper caught them. */
@@ -122,6 +123,38 @@ export async function countFrames(page: Page): Promise<number> {
   return page.evaluate(() => (window.__work_frame ?? []).length);
 }
 
+/** Wait until page has drawn this many more frames.
+ *
+ *  Gesture paced by clock assumes frame rate; paced by frames it asks for exactly what it
+ *  needs, and slow machine takes longer rather than dropping steps. Reads `requestAnimationFrame`
+ *  rather than harness's own counter, so it works before `watchFrames` is installed.
+ */
+export async function waitFrames(page: Page, frames: number): Promise<void> {
+  await page.evaluate((given) => new Promise<void>((done) => {
+    let seen = 0;
+    const step = (): void => {
+      seen += 1;
+      if (seen >= given) done(); else requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }), frames);
+}
+
+
+/** Wait until panel has run one more reading of its own.
+ *
+ *  Ruler, camera fields, diagnostics rows and curves are written on tick five times second
+ *  rather than every frame, so scene standing as check wants it is not yet panel showing
+ *  that. Waits on tick's own clock, so it asserts nothing about any row read afterwards.
+ */
+export async function settleReading(page: Page): Promise<void> {
+  const at = await page.evaluate(() => ms_refresh_ui);
+  await page.waitForFunction(
+    (given) => ms_refresh_ui > given, at, { timeout: 8000, polling: 'raf' },
+  );
+}
+
+
 /** Drive still scene for few seconds, and assert its frames fit inside their own budget. */
 export async function driveFrameWork(page: Page): Promise<void> {
   await page.evaluate(() => {
@@ -129,8 +162,10 @@ export async function driveFrameWork(page: Page): Promise<void> {
     document.getElementById('gl')?.focus();
   });
   await page.keyboard.press('Home');
-  await page.waitForTimeout(600);
+  await settleCamera(page);
   await watchFrames(page);
+  // Wall time, deliberately: window sampled is measurement itself, not race -- figures below
+  //   are about how many frames fit in fixed span of real time.
   await page.waitForTimeout(2500);
 
   const work = await readWork(page);

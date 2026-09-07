@@ -6,6 +6,8 @@
 //   of, frame by frame, and each part must carry count it is time for.
 
 import type { Page } from '@playwright/test';
+import { settleCamera } from './camera';
+import { settleBranch } from './diagnostics';
 import { countFrames, readPhases, type Phase } from './frame';
 import { report, reportWithin } from './report';
 
@@ -30,7 +32,7 @@ async function openBranch(page: Page, node: string): Promise<void> {
     if (branch?.classList.contains('open') ?? false) return;
     (branch?.querySelector(':scope > .diagnostic-parent') as HTMLElement | null)?.click();
   }, node);
-  await page.waitForTimeout(400);
+  await settleBranch(page, node);
 }
 
 /** Read reading and name of each of these rows. */
@@ -198,8 +200,10 @@ function reportSceneryAccounts(phases: Phase[]): void {
 /** Assert still camera holds its ground and axes rather than rebuilding them. */
 export async function driveHold(page: Page): Promise<void> {
   await page.keyboard.press('Home');
-  await page.waitForTimeout(900);
+  await settleCamera(page);
   const from = await countFrames(page);
+  // Wall time, deliberately: share of frames that held over span of real time is measurement
+  //   here, not race waiting to be won.
   await page.waitForTimeout(1500);
   const still = await readPhases(page, from);
   const held = still.filter((one) => one.is_held).length;

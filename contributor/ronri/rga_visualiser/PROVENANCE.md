@@ -144,6 +144,30 @@ costs 2.5 ms over 5,038 objects; closed rows hold 9.1 elements each over 5,040 o
 travels depends on frames drawn while it was down. Band that will not settle is widened with
 reason recorded, never deleted and never narrowed to fit one lucky run.
 
+**Waits are conditions page reports, not spans of clock.** Harness opened with 115 fixed
+waits against 3 conditions; it carries 16 fixed waits against 21 conditions and 33 frame
+waits today. Four kinds of wait, and only two were races. Camera ease and settling after
+click both become `waitForFunction` over what page says: stance standing still
+(`settleCamera`), scene or selection count reached (`settleCount`, `settleSelection`),
+drawer, help panel or tree branch carrying its class (`settleDrawer`, `settleHelp`,
+`settleBranch`), panel's own five-a-second reading having run (`settleReading`). Pacing
+inside drag loops becomes `waitFrames` -- kept rather than deleted, since steps are what
+makes gesture real and frames are what page moves in.
+  Remaining 16 are measurement windows, each saying so in comment at its own site: sampling
+  span of real time is measurement rather than race, and so is check whose claim is that
+  *nothing* happened, which has no event to wait on. Long press and held key stay wall time
+  for same reason -- how long finger or key is down is what caller asked for.
+  `settleReading` waits on `ms_refresh_ui`, tick's own clock, rather than on any row it is
+  waited on for: ruler, camera fields, tree rows and curves are all written by that tick, and
+  waiting on one of them would assert what check goes on to ask.
+
+*Checked.* Verified by running: five runs after conversion pass 135 of 135, against three
+before it, at unchanged sample sizes.
+  **Unverified**: one run in six failed `and under it the same accounting still holds` at 49
+  of 50 frames. `SHARE_KINDS_ACCOUNT` is 0.995, which over sample of 50 rounds up to *every*
+  frame, so slack that constant exists to give straddling frame is not there at this sample
+  size. Pre-existing, and left alone here: waits were not what decided it.
+
 **Comet's band caught port's own defect rather than needing widening.** First port selected
 horizon line through `nimSelectOnly`, which moves Nim's selection and leaves page's render
 snapshot behind it, so overlay drew no marker and comet advanced only on harness's own two
