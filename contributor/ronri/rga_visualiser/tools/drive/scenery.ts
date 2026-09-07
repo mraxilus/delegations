@@ -14,28 +14,42 @@ import { report, reportWithin } from './report';
 /** Bound scenery holds itself to: two families of lattice lines, from `mesh.LINES_GRID_MAX`. */
 const RECORDS_GRID_MAX = 2 * (2 * 120 + 1);
 
-/** Share of frames whose kinds must account, at unchanged per-frame tolerance.
+/** How many frames of sample may miss accounting, at unchanged per-frame tolerance.
  *
  *  Every reading is quantised, so summing six parts against one whole carries rounding before
  *  any real disagreement, and frame whose brackets straddle collection adds more. Demanding
  *  *every* frame account held for ten runs and then failed as container sped up and sample
  *  grew, which is property of sample size, not of accounting. Loosening per-frame tolerance
- *  instead would weaken check on all of them; quantile keeps it exactly as strict per frame,
- *  since real accounting fault misses on every frame and cannot hide inside four.
+ *  instead would weaken check on all of them; allowance keeps it exactly as strict per frame,
+ *  since real accounting fault misses on every frame and cannot hide inside two.
+ *
+ *  **Count rather than share, because sample is small and its size is capped by code.**
+ *  Share of 0.995 was written for that earlier failure and never took effect: `ceil(0.995n)`
+ *  equals `n` for every `n` under 200, so it permitted zero misses at every sample either
+ *  caller can produce -- `loaded`'s sampling loop stops at 25 heavy frames, and reaching 200
+ *  would need frame rates `requestAnimationFrame` forbids. Growing sample does not rescue
+ *  share either: misses are per frame, so larger sample brings proportionally more chances to
+ *  straddle and proportional allowance never pulls ahead.
+ *  Two rather than one: one leaves roughly red run in sixty on same reasoning that puts two
+ *  near one in thousand, and count is honest about sample code caps where share rounds to no
+ *  slack at all. Figure is shape rather than rate -- misses clustering, from scheduler pause
+ *  or collection cycle, would make it worse, and that is unmeasured (repository issue 47).
  */
-const SHARE_KINDS_ACCOUNT = 0.995;
+export const MISSES_ACCOUNT_MAX = 2;
 
 /** Assert accounting allowance actually allows something, at smallest sample its own
  *  checks admit.
  *
  *  Guards this allowance to: `kinds.length > 30` here, `heavy.length > 20` in `loaded`, so
- *  smallest sample either accepts is 21. Allowance leaving no room at that size is allowance
- *  in name only. Reads constant rather than page: what this guards is arithmetic, not
- *  anything browser did (repository issue 47).
+ *  smallest sample either accepts is 21. Allowance that leaves no room at that size is
+ *  allowance in name only -- which is exactly what share of 0.995 was, since `ceil(0.995n)`
+ *  equals `n` for every `n` under 200. Check exists because that went unnoticed through ten
+ *  runs and one repair that never took effect (repository issue 47).
+ *  Reads constant rather than page: what went wrong was arithmetic, not anything browser did.
  */
 export function driveAllowance(): void {
   const smallest = 21;
-  const floor = Math.ceil(SHARE_KINDS_ACCOUNT * smallest);
+  const floor = smallest - MISSES_ACCOUNT_MAX;
   report(
     'the accounting allowance leaves room at the smallest sample its checks admit',
     floor < smallest && floor > 0,
@@ -86,9 +100,9 @@ export async function driveKinds(page: Page): Promise<void> {
   const last = kinds[kinds.length - 1];
   report(
     'the scene phase is accounted for by the kinds it is spent on',
-    kinds.length > 30 && sane.length >= SHARE_KINDS_ACCOUNT * kinds.length,
+    kinds.length > 30 && sane.length >= kinds.length - MISSES_ACCOUNT_MAX,
     `${sane.length} of ${kinds.length} frames account ` +
-      `(floor ${Math.ceil(SHARE_KINDS_ACCOUNT * kinds.length)}), last frame ` +
+      `(floor ${kinds.length - MISSES_ACCOUNT_MAX}), last frame ` +
       `${last === undefined ? '?' : last.parts.toFixed(2)} of ` +
       `${last === undefined ? '?' : last.scene.toFixed(2)} ms over ` +
       `${last === undefined ? '?' : last.counted} objects`,

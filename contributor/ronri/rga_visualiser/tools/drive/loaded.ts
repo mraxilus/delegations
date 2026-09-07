@@ -9,9 +9,7 @@ import type { Page } from '@playwright/test';
 import { settleCamera } from './camera';
 import { readPhases, waitFrames } from './frame';
 import { report } from './report';
-
-/** Share of frames whose kinds must account, as still-scene check uses. */
-const SHARE_KINDS_ACCOUNT = 0.995;
+import { MISSES_ACCOUNT_MAX } from './scenery';
 
 /** Assert edit past timeline capacity copies one scene, not whole timeline.
  *
@@ -223,7 +221,7 @@ export async function driveLoadedAccounting(page: Page, errors: string[]): Promi
     one.parts <= one.scene + 0.6 && one.parts >= one.scene - Math.max(3.0, 0.3 * one.scene));
   report(
     'and under it the same accounting still holds, on a phase big enough to divide',
-    heavy.length > 20 && sane.length >= SHARE_KINDS_ACCOUNT * heavy.length,
+    heavy.length > 20 && sane.length >= heavy.length - MISSES_ACCOUNT_MAX,
     `${sane.length} of ${heavy.length} frames over 2 ms account, worst scene phase ` +
       `${Math.max(0, ...heavy.map((one) => one.scene)).toFixed(2)} ms`,
   );
