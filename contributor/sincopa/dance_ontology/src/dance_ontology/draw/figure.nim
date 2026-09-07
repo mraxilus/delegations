@@ -179,15 +179,26 @@ func windOf*(put: Pose; holds: Holds; arm: Arm): tuple[phi, spread: float] =
   (phi_a, wrap180(phi_b - phi_a))
 
 
+func divePlace*(pts: seq[Point]; meeting: Point): float =
+  ## Say how far along reach its break for this crossing is centred.
+  ##   Slid clear of both ends exactly as still reach's gap is
+  ##     (`gapFor`), so moving figure breaks where its still breaks and
+  ##     crossing near hand is still covered.
+  let gap = gapFor(alongAt(pts, meeting), polylineLen(pts))
+  (gap.opens + gap.shuts) / 2
+
+
 func divesOf*(one, other: seq[Point]; turns: float): array[Arm, seq[Point]] =
   ## Share crossings of two wound reaches out: say which of them dives at
   ## each one.
   ##   Arm on top at first crossing stays on top there, so it is other one
   ##     that dives, and they swap at every crossing after -- which is what
   ##     makes diamond into twist and not overlap (rule 27).
+  ##   Which arm starts on top is `topArm`'s answer, not `overArm`'s: at
+  ##     swan strand that wraps goes under first.
   ##   Drawing and checks both ask here, so neither can hold its own idea
   ##     of which arm goes under where.
-  let on_top = overArm(turns)
+  let on_top = topArm(turns)
   for i, meeting in crossingsOf(one, other):
     let under = if (i mod 2 == 0) == (on_top == Arm.L): Arm.R else: Arm.L
     result[under].add meeting
@@ -600,9 +611,10 @@ func animatedPoses*(classes: string; holds: Holds; walk: seq[Pose];
 
   # Where pair crosses, one of them dives, and it is same one
   # still figure breaks: crossings in order along reach, diving
-  # arm alternating from first, and first named by sign of
-  # wind (rule 29).  Moving reach cannot be cut into runs -- number of
-  # them would change from frame to frame and path that changes shape
+  # arm alternating from first, and first named by `topArm` -- same
+  # answer still figure alternates from (rule 29).  Moving reach cannot be
+  # cut into runs -- number of them would change from frame to frame and
+  # path that changes shape
   # cannot morph -- so it keeps its one piece and wears break as dash.
   # Swan crosses three times, so arm can dive more than once and every
   # crossing is kept rather than only first (rule 31).
@@ -613,11 +625,14 @@ func animatedPoses*(classes: string; holds: Holds; walk: seq[Pose];
     for i in 0 ..< poses.len:
       var mine: array[Arm, seq[float]]
       let
-        turned_by = if winds[Arm.L].len == poses.len: winds[Arm.L][i] else: 0.0
-        on_top = overArm(turned_by)
+        turned_by = if winds[Arm.L].len == poses.len: winds[Arm.L][i]
+                    else: 0.0
+        # In turns, because `topArm` reads how far pair has wound and not
+        # only which way; `winds` counts degrees.
+        on_top = topArm(turned_by / 360)
       for k, meeting in crossingsOf(routes[Arm.L][i], routes[Arm.R][i]):
         let under = if (k mod 2 == 0) == (on_top == Arm.L): Arm.R else: Arm.L
-        mine[under].add alongAt(routes[under][i], meeting)
+        mine[under].add divePlace(routes[under][i], meeting)
       for arm in Arm:
         dives[arm].add mine[arm]
 

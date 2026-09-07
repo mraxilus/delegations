@@ -1099,13 +1099,10 @@ proc checkHandTurns*() =
     let
       figure = built[&"hh_{i}"]
       pair = pairOf(position.wind)
-      on_top = overArm(position.wind)
-    # Alternation that drawing uses, worked out rather than trusted:
-    # with three crossings it is two dives on one arm and one on other.
-    var cuts: array[Arm, seq[Point]]
-    for k, meeting in crossingsOf(pair[Arm.L], pair[Arm.R]):
-      cuts[if (k mod 2 == 0) == (on_top == Arm.L): Arm.R
-           else: Arm.L].add meeting
+      # Alternation drawing uses, asked of drawing rather than repeated
+      # here: with three crossings it is two dives on one arm, one on
+      # other, and which arm takes which is `divesOf`'s to say.
+      cuts = divesOf(pair[Arm.L], pair[Arm.R], position.wind)
     for arm in Arm:
       var ink = 0.0
       for shade in [DEEP[arm], INK[HAND_TO_HAND[arm].get]]:
@@ -1248,11 +1245,10 @@ proc checkHandTurns*() =
                               degToRad(windOf(put[i], HAND_TO_HAND, arm).phi),
                               degToRad(spun[arm]),
                               share = windShare(spun[arm] / 360, arm))
-        let
-          meetings = crossingsOf(routes[Arm.L], routes[Arm.R])
-          # Drawing reads wind off Left connection to name
-          # which is on top, so check has to read it off same one.
-          on_top = overArm(spun[Arm.L])
+        # Drawing reads wind off Left connection to say which arm is on
+        # top, so check reads it off same one and asks `divesOf` for
+        # answer rather than working it out again.
+        let meetings = crossingsOf(routes[Arm.L], routes[Arm.R])
         for arm in Arm:
           let
             middle = routes[arm].len div 2
@@ -1268,11 +1264,12 @@ proc checkHandTurns*() =
           # And where this reach dives, in same measure: crossings
           # in order, diving arm alternating from first.
           var dips: seq[float]
-          for k, meeting in meetings:
-            let under = if (k mod 2 == 0) == (on_top == Arm.L): Arm.R
-                        else: Arm.L
-            if under == arm:
-              dips.add alongAt(routes[arm], meeting)
+          for meeting in divesOf(routes[Arm.L], routes[Arm.R],
+                                 spun[Arm.L] / 360)[arm]:
+            # Where break for that crossing sits, which is crossing itself
+            # unless it lies so near hand that gap would hang off end
+            # (`gapFor`); asked of drawing rather than worked out again.
+            dips.add divePlace(routes[arm], meeting)
           # Each dive wears one break, and no break is worn anywhere else --
           # which together are what crossing being drawn as crossing
           # means, however break happened to fall across two
@@ -1290,11 +1287,8 @@ proc checkHandTurns*() =
                 &"frame {i}."
           gaps += dips.len
           if i == 0:
-            for k, meeting in meetings:
-              let under = if (k mod 2 == 0) == (on_top == Arm.L): Arm.R
-                          else: Arm.L
-              if under == arm:
-                first_cuts[arm].add meeting
+            first_cuts[arm] = divesOf(routes[Arm.L], routes[Arm.R],
+                                      spun[Arm.L] / 360)[arm]
       # And arm it breaks is arm its still breaks, and as many
       # times -- which is disagreement this rule was given for.
       # Measured as length lost, so break that lands where two

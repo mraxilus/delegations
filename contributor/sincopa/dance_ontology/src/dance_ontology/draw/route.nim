@@ -99,6 +99,20 @@ func swanning*(turns: float): float =
   pow(clamp((abs(turns) - SWAN_FROM) / 0.5, 0.0, 1.0), SWAN_EASE)
 
 
+func topArm*(turns: float): Arm =
+  ## Get which of lead's arms is on top at first crossing, from which
+  ## drawing alternates through rest (rules 27, 29).
+  ##   Short of swan that is `overArm`, and neither strand wraps other.
+  ##   At swan it is straight one, because that is what wrapping is:
+  ##     strand going round another passes under it, over it, and under it
+  ##     again, so it takes crossings either side of middle and leaves
+  ##     middle one to strand it wraps.
+  ##   Which is also what keeps straight one readable.  Cut at both outer
+  ##     crossings instead, it is three stubs of short chord with two gaps
+  ##     between them, and reads as dashes rather than as line.
+  if swanning(turns) > 0: straightArm(turns) else: overArm(turns)
+
+
 func windShare*(turns: float; arm: Arm): float =
   ## Measure how much of wound pair's swing this connection carries
   ## (rule 31).
