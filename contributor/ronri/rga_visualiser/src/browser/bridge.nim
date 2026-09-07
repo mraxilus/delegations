@@ -224,9 +224,9 @@ var
     ## No storyboard-capture mode to switch them off for.
   POINTER_PICK: Option[PointerPick] ## Pick made by pointer since camera was last offered.
     ## Consumed by `framing.offerAim` in `nimBuildFrame`; see `nimPickByPointer`.
-  PLACEMENTS: array[OBJECTS_MAX, Placed] ## What algebra says about each live handle.
-    ## Placed once per edit, emitted every frame.
-    ##   Nothing in `tessellate.Placed` reads camera, so placement stays true while view
+  PLACEMENTS: array[OBJECTS_MAX, Placement] ## What algebra says about each live handle.
+    ## Placement once per edit, emitted every frame.
+    ##   Nothing in `tessellate.Placement` reads camera, so placement stays true while view
     ##   orbits; recomputing every orbit frame is most of moving frame; figures in
     ##   `PROVENANCE.md`.
     ## Held for scene's handles only: ghost and drag preview move with pointer, so both are
@@ -318,7 +318,7 @@ var
   FLAT_VIEW: seq[float32] = newSeq[float32](16)
   IS_CULLING = true ## Whether points outside view are skipped before emitting.
     ## Off only through `nimSetCulling`, for check that culling changes no pixel.
-  REACH_SCENE = 0.0 ## Scene's reach from origin, refreshed with placements; see `ensurePlaced`.
+  REACH_SCENE = 0.0 ## Scene's reach from origin, refreshed with placements; see `ensurePlacement`.
 
 
 proc flattenRibbonsInto(ribbons: RibbonMesh, dest: var FlatFloats) =
@@ -946,7 +946,7 @@ proc nimOverlayMetrics(): seq[float32] {.exportc.} =
   ]
 
 
-proc ensurePlaced() =
+proc ensurePlacement() =
   ## Refresh `PLACEMENTS`, whole placing side for every live handle, where scene has moved.
   ##   Placing side reads no camera, so camera move never reaches this; only edit does.
   ##   Called by frame build and by hover pick, which can run before build on frame where
@@ -980,7 +980,7 @@ proc ensureViewOverlay(width, height: int) =
   ##     which is what key holds.
   ##   Callers read globals rather than copies: returning pair deep-copies `DrawExtent`
   ##   full of multivectors per call on JS backend, cache hit or not.
-  CAMERA.reach_scene = REACH_SCENE # Stamped as frame build does; see `ensurePlaced`.
+  CAMERA.reach_scene = REACH_SCENE # Stamped as frame build does; see `ensurePlacement`.
   let settings: SettingsOverlay = (
     CAMERA.pivot.x, CAMERA.pivot.y, CAMERA.pivot.z, CAMERA.distance,
     CAMERA.azimuth, CAMERA.elevation, CAMERA.degrees_field_of_view, CAMERA.reach_scene,
@@ -1012,7 +1012,7 @@ proc nimCameraDollyCentred(factor: cfloat; width, height: cint) {.exportc.} =
   ##   Pinch's zoom; see `interaction.dollyAtCentre`. Reads caches as `nimCameraDollyAt`.
   TWEEN_CAMERA.abandon()
   ensureViewOverlay(int(width), int(height))
-  ensurePlaced()
+  ensurePlacement()
   dollyAtCentre(
     CAMERA, SCENE, float(factor), SCALE_OVERLAY, VIEW_PROJECTION_OVERLAY,
     int(width), int(height), PLACEMENTS,
@@ -1032,7 +1032,7 @@ proc nimCameraDollyAt(factor: cfloat; width, height: cint) {.exportc.} =
   ensureViewOverlay(int(width), int(height))
   # Read through frame's placements.
   #   `dollyAtCursor` asks `anchorZoomAt` what cursor is over, which is full pick.
-  ensurePlaced()
+  ensurePlacement()
   INTERACTION.dollyAtCursor(
     CAMERA, SCENE, float(factor), SCALE_OVERLAY, VIEW_PROJECTION_OVERLAY,
     int(width), int(height), PLACEMENTS,
@@ -1156,8 +1156,8 @@ proc nimUpdateHover(width, height: cint) {.exportc.} =
   #   hover skips while camera moves.
   ensureViewOverlay(int(width), int(height))
   # Read through frame's placements, so pick ranks what was drawn.
-  #   `ensurePlaced` first, since pick can be first of two to run after edit.
-  ensurePlaced()
+  #   `ensurePlacement` first, since pick can be first of two to run after edit.
+  ensurePlacement()
   interaction.updateHover(
     INTERACTION, SCENE, CAMERA, SCALE_OVERLAY, VIEW_PROJECTION_OVERLAY,
     int(width), int(height), PLACEMENTS,
@@ -1735,7 +1735,7 @@ proc nimAnchorWorld(handle: cint): FlatBuffer {.exportc.} =
   ##   horizon, which stands nowhere.
   if not SCENE.isAlive(int(handle)) or SCENE.geometryOf(int(handle)).isHorizonPlane:
     return FLAT_ANCHOR_WORLD.fill3(0.0'f32, 0.0'f32, 0.0'f32)
-  ensurePlaced()
+  ensurePlacement()
   let anchor = anchorFor(
     SCENE.geometryOf(int(handle)), SCENE.anchorOverrideAt(int(handle)), SCALE_OVERLAY
   )
@@ -2119,7 +2119,7 @@ proc openTally(cost: var SceneCost) =
   if isTallying(): cost.mark = performanceNow()
 
 
-proc chargeTally(cost: var SceneCost; kind: PlacedKind; is_sky, is_ghost, is_selected: bool) =
+proc chargeTally(cost: var SceneCost; kind: Case; is_sky, is_ghost, is_selected: bool) =
   ## Charge whatever has been drawn since last mark to kind it belongs to.
   ##   Takes kind placement settled on rather than reading shape again: reading twice is
   ##   second multivector walk per object per frame, on path this tally measures.
@@ -2144,14 +2144,14 @@ proc chargeTally(cost: var SceneCost; kind: PlacedKind; is_sky, is_ghost, is_sel
     cost.count_sky += 1
     return
   case kind
-  of PlacedKind.Nothing: discard # Nothing drawable was drawn, so nothing to charge.
-  of PlacedKind.PointAt, PlacedKind.PointToward:
+  of Case.Nothing: discard # Nothing drawable was drawn, so nothing to charge.
+  of Case.PointAt, Case.PointToward:
     cost.ms_points += spent
     cost.count_points += 1
-  of PlacedKind.LineThrough, PlacedKind.LineAcross:
+  of Case.LineThrough, Case.LineAcross:
     cost.ms_lines += spent
     cost.count_lines += 1
-  of PlacedKind.PlaneOn, PlacedKind.PlaneEverywhere:
+  of Case.PlaneOn, Case.PlaneEverywhere:
     cost.ms_planes += spent
     cost.count_planes += 1
 
@@ -2203,7 +2203,7 @@ proc nimBuildFrame(
   #   Ribbon's width is measured in pixels drawn, and this build renders at
   #   device-pixel-ratio multiple.
   # Place first, so scene's reach is this frame's before extent reads far clip.
-  ensurePlaced()
+  ensurePlacement()
   CAMERA.reach_scene = REACH_SCENE
   let scale = CAMERA.drawExtentFor(int(height_pixels))
   # Derive frustum once, for cull of every point below; see `isPointInView`.
@@ -2277,8 +2277,8 @@ proc nimBuildFrame(
     cost.count_ghost = COUNTS_SCENE.count_ghost
     cost.count_selected = COUNTS_SCENE.count_selected
     cost.count_points_culled = COUNTS_SCENE.count_points_culled
-  # Refresh placement cache only where scene moved; see `ensurePlaced`.
-  ensurePlaced()
+  # Refresh placement cache only where scene moved; see `ensurePlacement`.
+  ensurePlacement()
 
   if not is_scene_held:
     clearMeshes(MESHES)
@@ -2290,7 +2290,7 @@ proc nimBuildFrame(
     #   by value, so constructing one per live handle copies entire scene.
     #   To watermark, not capacity: `scene.bound` is high-water mark, which only rises;
     #   sibling walk below takes same bound.
-    #   Placed once, emitted every frame: placement already answered sky or not, so walks
+    #   Placement once, emitted every frame: placement already answered sky or not, so walks
     #   sort on `PLACEMENTS[handle].kind` rather than reading multivector per handle per walk.
     for handle in 0 ..< SCENE.bound:
       if not SCENE.isAlive(handle) or handle in SELECTION: continue
@@ -2298,7 +2298,7 @@ proc nimBuildFrame(
         # Index in place, never bind to local; see `emitObject`.
         #   `let placed = PLACEMENTS[handle]` is deep copy under JS backend, once per object
         #   per frame.
-        if PLACEMENTS[handle].kind == PlacedKind.PlaneEverywhere:
+        if PLACEMENTS[handle].kind == Case.PlaneEverywhere:
           let progress = animationProgress(float(now), BORNS[handle])
           discard MESHES.emitObject(
             PLACEMENTS[handle], SCENE.inkAt(handle).colour, scale, progress,
@@ -2310,7 +2310,7 @@ proc nimBuildFrame(
     for handle in 0 ..< SCENE.bound:
       if not SCENE.isAlive(handle) or handle in SELECTION: continue
       if SCENE.isVisible(handle):
-        if PLACEMENTS[handle].kind != PlacedKind.PlaneEverywhere:
+        if PLACEMENTS[handle].kind != Case.PlaneEverywhere:
           # Skip point outside view before it costs emitting, flatten and upload.
           if IS_CULLING and not isPointInView(PLACEMENTS[handle], SCENE.radiusAt(handle), bounds):
             cost.chargeCulled()
@@ -2330,24 +2330,24 @@ proc nimBuildFrame(
     #   `ghost` read once in prologue; nothing since has touched session.
     if ghost.isSome:
       # Place here rather than cache: ghost is not handle and moves with pointer.
-      var placed_ghost = placeObject(ghost.get.geometry, ghost.get.anchor)
+      var placement_ghost = placeObject(ghost.get.geometry, ghost.get.anchor)
       discard MESHES.emitObject(
-        placed_ghost, INK_GHOST.colour.muted(), scale, radius = ghost.get.radius
+        placement_ghost, INK_GHOST.colour.muted(), scale, radius = ghost.get.radius
       )
       cost.chargeTally(
-        placed_ghost.kind, is_sky = false, is_ghost = true, is_selected = false
+        placement_ghost.kind, is_sky = false, is_ghost = true, is_selected = false
       )
 
     # Emit what drag in progress would build, in same ghost ink.
     #   Reader learns one "not committed yet" appearance; mirrors
     #   `visualiser.assembleMeshes`.
     if INTERACTION.preview.isSome:
-      var placed_preview = placeObject(
+      var placement_preview = placeObject(
         INTERACTION.preview.get.geometry, INTERACTION.preview.get.anchor,
       )
-      discard MESHES.emitObject(placed_preview, INK_GHOST.colour.muted(), scale)
+      discard MESHES.emitObject(placement_preview, INK_GHOST.colour.muted(), scale)
       cost.chargeTally(
-        placed_preview.kind, is_sky = false, is_ghost = true, is_selected = false
+        placement_preview.kind, is_sky = false, is_ghost = true, is_selected = false
       )
 
     # Emit everything selected last, drawn over cleared depth.

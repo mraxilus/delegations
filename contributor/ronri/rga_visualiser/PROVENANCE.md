@@ -850,7 +850,7 @@ plus half `HEIGHT_MARKER_LABEL` (16 px) above the outline's top at the object's 
 a ring's top (so a held marker's swell lifts the label with it), the bands' highest
 projected point, a plane's circle and a line's own left as below —
 and, for the sky's frame, just inside the top edge, since above a frame that is the
-viewport is off screen. Placed with the marker rather than by each front-end so the two
+viewport is off screen. Placement with the marker rather than by each front-end so the two
 agree by construction; each centres its own text on the point and keeps its own face (the
 page's sans at the shared height, set by `glue.js` from `nimOverlayMetrics`; on the desktop
 a face of its own, below).
@@ -1105,7 +1105,7 @@ inside their handler because they must answer before it returns: `pointerdown`, 
 and `handleTap`.
 
 **The pick ranks what was drawn.** It takes the frame's placements and dispatches on
-`Placed.kind` rather than asking `position`, `direction`, `frame` and `spanPerpendicular`
+`Placement.kind` rather than asking `position`, `direction`, `frame` and `spanPerpendicular`
 again per handle; empty means derive per handle, the desktop path and every suite case. A finite
 plane the algebra can span no frame for shares `PlaneEverywhere` with the sky and is not
 pickable; a direction point is picked at the horizon, where the eye puts it. **The pick
@@ -1384,7 +1384,7 @@ objects section onto a session; `hide`, `delete` on every selected handle; `✕`
 is hidden for 3+ selected, since this menu has no operand pickers. **Shown by the gestures
 that pick and hidden by the ones that build**, not derived from the selection being
 non-empty — every construction leaves its result selected and a menu over each new object
-would sit in the way of the next drag. Placed `OFFSET_MENU_SELECTION` = 46 px **above** its
+would sit in the way of the next drag. Placement `OFFSET_MENU_SELECTION` = 46 px **above** its
 object: a Dear ImGui window makes `wantsMouse()` true wherever it sits, so a menu straddling
 its object would swallow the next drag off it. Its screen position is kept between frames so
 an object passing behind the camera leaves it where it was. The document-level tap-outside
@@ -1749,7 +1749,7 @@ moves calls `abandon`, which keeps the goal and marks it done (`release` clears 
 offer is re-made next frame and the camera taken straight back — panning was dead while
 anything stayed selected, on both builds); `release` belongs to the offer's own side. `goal`
 and `destination` are separate fields: the goal depends on geometry alone, the destination is
-a `CameraPlacement` resolved once against the camera as it stood. `advance` eases pivot and
+a `CameraStance` resolved once against the camera as it stood. `advance` eases pivot and
 angles linearly and **distance geometrically**. `runStoryboard` goes through the same rule and
 calls `settle`.
 
@@ -1779,7 +1779,7 @@ where 19 already showed the whole circle; rim on screen gives 19 → 19 from the
 8 → 15.24 dollied in, 19 → 42.76 on a phone. Screen segments meet the box by Liang–Barsky
 clipping. A plane is judged where its disc is drawn (the stored anchor), not at its support.
 
-**The cut.** `placementFor` first asks whether everything is already in view *where the
+**The cut.** `stanceFor` first asks whether everything is already in view *where the
 camera stands* — judged at the centred placement instead, every pick of something plainly
 visible pulled the view about. Otherwise it builds the full placement (middle as pivot,
 facing angles for horizon-only, bisected least distance: `ROUNDS_DISTANCE_FIT` = 8, the
@@ -1794,7 +1794,7 @@ rule above is for picks with no pointer (objects list, keyboard, a shift-added g
 click or tap on a point or a line records a `framing.PointerPick` (handle and cursor;
 `Panel.pointer_pick`, `POINTER_PICK` in the bridge, written by `nimPickByPointer` from
 `glue.js`'s `pickByPointer` on click, tap and matured hold), which `offerAim` consumes on
-the next frame. The destination is the wheel's own move (`placementUnderPointer`): the eye
+the next frame. The destination is the wheel's own move (`stanceUnderPointer`): the eye
 comes in along its line to where the object stands under the pointer
 (`picking.positionUnderPointerOn`, shared with the zoom anchor and without its nearness
 filter), the angles never change, and the pivot lands on the sight line at the object's
@@ -1819,7 +1819,7 @@ brought to the depth where the disc's diameter `2·EXTENT_PLANE_F` spans
 view, while the crossing under the pointer stays the held anchor — moving the eye along
 its line to the crossing by factor *s* puts the centre at depth d_c − d_a + s·d_a, so the
 crossing ends at D − d_c + d_a, and where that is not positive (the centre further behind
-the crossing than D) the pick falls back to `placementFor`. Rejected: keeping the plane on
+the crossing than D) the pick falls back to `stanceFor`. Rejected: keeping the plane on
 the centring rule, which never pulled in, so a plane picked from far was never brought to
 be looked at. A group keeps the centring rule, since it has to fit, which holding one pixel
 cannot promise. **The ease holds the

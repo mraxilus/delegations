@@ -397,7 +397,7 @@ proc addGrid*(
 #[ Object Tessellation ]#
 
 type
-  PlacedKind* {.pure.} = enum ## Define which drawable algebra found, and its placement.
+  Case* {.pure.} = enum ## Define which drawable algebra found, and its placement.
     Nothing ## No drawable geometry at all; nothing is emitted.
     PointAt ## Point standing somewhere in finite world.
     PointToward ## Point at horizon: direction, drawn as star on sky.
@@ -406,7 +406,7 @@ type
     PlaneOn ## Plane anchored somewhere, disc spanned by two arms.
     PlaneEverywhere ## Plane at horizon: whole sky, carrying no orientation.
 
-  Placed* = object ## Define everything *algebra* says about one object, and nothing else.
+  Placement* = object ## Define everything *algebra* says about one object, and nothing else.
     ## Camera is not in it, and that is whole point.
     ##   Every reader here (`position`, `positionAnchor`, `direction`, `directionHorizon`,
     ##   `frame`, `spanPerpendicular`) is pure function of multivector, so this stays true
@@ -416,9 +416,9 @@ type
     ##     Placing was most of moving frame's scene phase, recomputed per orbit frame for
     ##     objects nobody touched.
     ## Flat rather than variant object.
-    ##   Copied per handle into `array[OBJECTS_MAX, Placed]`, and case object's tag would buy
+    ##   Copied per handle into `array[OBJECTS_MAX, Placement]`, and case object's tag would buy
     ##   nothing but narrower read. Which fields carry meaning is `kind`'s to say.
-    kind*: PlacedKind
+    kind*: Case
     at*: Position ## Where it stands: point's place, line's support, plane's disc centre.
       ## Meaningless for two horizon kinds and `Nothing`.
     toward*: Direction ## Direction it names: horizon point's heading, line's attitude.
@@ -441,29 +441,29 @@ type
 
 proc placeObject*(
   geometry: Multivector, anchor_override: Option[Position] = none(Position)
-): Placed =
+): Placement =
   ## Ask algebra what object is and where: whole placing side of cut, none of emitting.
   ##   Split from `addObject` so caller may keep answer.
-  ##     Nothing here reads camera, so answer changes only when object does. See `Placed`.
+  ##     Nothing here reads camera, so answer changes only when object does. See `Placement`.
   ##   `anchor_override` centres plane's disc there instead of on support; ignored for
   ##   point or line.
   ##   Plane whose support or frame algebra cannot give lands on `PlaneEverywhere`, what
   ##   infinite plane is: sky.
   timed(Side.Placing):
     let kind = kindOf(geometry)
-    if kind.isNone: return Placed(kind: PlacedKind.Nothing)
+    if kind.isNone: return Placement(kind: Case.Nothing)
     case kind.get
     of Kind.Point:
       let place = position(geometry)
-      if place.isSome: return Placed(kind: PlacedKind.PointAt, at: place.get)
+      if place.isSome: return Placement(kind: Case.PointAt, at: place.get)
       let heading = directionHorizon(geometry)
-      if heading.isSome: return Placed(kind: PlacedKind.PointToward, toward: heading.get)
+      if heading.isSome: return Placement(kind: Case.PointToward, toward: heading.get)
     of Kind.Line:
       let
         anchor = positionAnchor(geometry)
         axis = direction(geometry)
       if anchor.isSome and axis.isSome:
-        return Placed(kind: PlacedKind.LineThrough, at: anchor.get, toward: axis.get)
+        return Placement(kind: Case.LineThrough, at: anchor.get, toward: axis.get)
       let normal = directionNormalHorizon(geometry)
       if normal.isSome:
         # Span great circle's plane at origin.
@@ -471,7 +471,7 @@ proc placeObject*(
         #   rather than when placed.
         let spanned = spanPerpendicular(ORIGIN_WORLD, normal.get)
         if spanned.isSome:
-          return Placed(kind: PlacedKind.LineAcross, axes: FramePlane(
+          return Placement(kind: Case.LineAcross, axes: FramePlane(
             axis_first: spanned.get[0],
             axis_second: spanned.get[1],
             normal: normal.get,
@@ -481,12 +481,12 @@ proc placeObject*(
         anchor = if anchor_override.isSome: anchor_override else: positionAnchor(geometry)
         axes = frame(geometry)
       if anchor.isSome and axes.isSome:
-        return Placed(kind: PlacedKind.PlaneOn, at: anchor.get, axes: axes.get)
-      return Placed(kind: PlacedKind.PlaneEverywhere)
-  Placed(kind: PlacedKind.Nothing)
+        return Placement(kind: Case.PlaneOn, at: anchor.get, axes: axes.get)
+      return Placement(kind: Case.PlaneEverywhere)
+  Placement(kind: Case.Nothing)
 
 
-func isPointInView*(placed: Placed, radius: float, bounds: ViewBounds): bool =
+func isPointInView*(placed: Placement, radius: float, bounds: ViewBounds): bool =
   ## Report whether point lands inside frustum, own `radius` and least margin included.
   ##   True for every other kind: line crosses whole frame whatever its support, and disc
   ##   reaches past its centre, so neither is tested.
@@ -499,11 +499,11 @@ func isPointInView*(placed: Placed, radius: float, bounds: ViewBounds): bool =
   ##   backend (Art. VII.1). Parameters are read in place, never bound (read in emitted JS).
   var rx, ry, rz: float
   case placed.kind
-  of PlacedKind.PointAt:
+  of Case.PointAt:
     rx = placed.at.x - bounds.eye.x
     ry = placed.at.y - bounds.eye.y
     rz = placed.at.z - bounds.eye.z
-  of PlacedKind.PointToward:
+  of Case.PointToward:
     rx = placed.toward.x
     ry = placed.toward.y
     rz = placed.toward.z
@@ -511,7 +511,7 @@ func isPointInView*(placed: Placed, radius: float, bounds: ViewBounds): bool =
     return true
   let depth = rx*bounds.forward.x + ry*bounds.forward.y + rz*bounds.forward.z
   if depth <= 0.0: return false
-  if placed.kind == PlacedKind.PointAt and
+  if placed.kind == Case.PointAt and
       (depth < bounds.depth_near or depth > bounds.depth_far):
     return false
   let across = rx*bounds.right.x + ry*bounds.right.y + rz*bounds.right.z
@@ -521,9 +521,9 @@ func isPointInView*(placed: Placed, radius: float, bounds: ViewBounds): bool =
 
 
 proc emitObject*(
-  meshes: var MeshSet, placed: var Placed, tint: Rgba, scale: DrawExtent,
+  meshes: var MeshSet, placed: var Placement, tint: Rgba, scale: DrawExtent,
   progress: float = 1.0, radius: float = RADIUS_OBJECT_DEFAULT, light: Direction = LIGHT_NONE
-): Placement =
+): Outcome =
   ## Turn one placed object into this frame's records, at this frame's camera.
   ##   Other half of `placeObject`: takes no multivector, so what object *is* was settled
   ##   before and cannot be re-decided here.
@@ -546,15 +546,15 @@ proc emitObject*(
   ##     arithmetic about where eye is: placing work that depends on camera and cannot be
   ##     cached. Cut is by *kind of work*, not by which proc it sits in.
   case placed.kind
-  of PlacedKind.Nothing:
-    Placement.Empty
+  of Case.Nothing:
+    Outcome.Empty
 
-  of PlacedKind.PointAt:
+  of Case.PointAt:
     timed(Side.Emitting):
       meshes.addMarker(placed.at, radius, light, tint, tint.alpha*progress)
-    Placement.Finite
+    Outcome.Finite
 
-  of PlacedKind.PointToward:
+  of Case.PointToward:
     # Place star effectively infinitely far.
     #   Keeps apparent direction as camera pans or dollies, moving only as eye does.
     var star = ORIGIN_WORLD
@@ -563,9 +563,9 @@ proc emitObject*(
         wedge(progress*scale.radiusHorizon, toMultivector(placed.toward))))
     timed(Side.Emitting):
       meshes.addMarker(star, radius, LIGHT_NONE, tint, tint.alpha*progress)
-    Placement.Horizon
+    Outcome.Horizon
 
-  of PlacedKind.LineThrough:
+  of Case.LineThrough:
     # Draw two segments meeting at support, each running to one of line's vanishing points.
     #   Vanishing point is `scale.eye` plus or minus `scale.radiusHorizon` along attitude,
     #   exactly where horizon marker draws attitude, so line reaches it with no gap.
@@ -574,7 +574,7 @@ proc emitObject*(
     #   Each segment has one end on true line and one at `eye +- radius*axis`, so both
     #   lie in plane through eye containing line, which projects to one screen line.
     #   Cost is depth: far ends are displaced along view ray, so occlusion there is
-    #   approximate. Rebuilt against current eye every frame, so not part of `Placed`.
+    #   approximate. Rebuilt against current eye every frame, so not part of `Placement`.
     var far_ahead, far_behind = ORIGIN_WORLD
     timed(Side.Placing):
       let
@@ -586,18 +586,18 @@ proc emitObject*(
     timed(Side.Emitting):
       meshes.addSegment(placed.at, far_ahead, tint_progress, WIDTH_LINE_OBJECT)
       meshes.addSegment(placed.at, far_behind, tint_progress, WIDTH_LINE_OBJECT)
-    Placement.Finite
+    Outcome.Finite
 
-  of PlacedKind.LineAcross:
+  of Case.LineAcross:
     # Trace pencil of directions across sky as great circle around eye.
     timed(Side.Emitting):
       meshes.addGreatCircle(
         scale.eye, placed.axes.axis_first, placed.axes.axis_second,
         progress*scale.radiusHorizon, tint.fade(tint.alpha*progress),
       )
-    Placement.Horizon
+    Outcome.Horizon
 
-  of PlacedKind.PlaneOn:
+  of Case.PlaneOn:
     # Fill first, so plane reads as surface; rim drawn over it marks edge.
     #   Fill is one disc record and rim one ring record, both fanned out by own vertex
     #   shaders.
@@ -613,15 +613,15 @@ proc emitObject*(
         placed.at, placed.axes.axis_first, placed.axes.axis_second, extent, tint_progress,
         WIDTH_LINE_OBJECT,
       )
-    Placement.Finite
+    Outcome.Finite
 
-  of PlacedKind.PlaneEverywhere:
+  of Case.PlaneEverywhere:
     # Emit one dome record vertex shader widens over static unit sphere; see `mesh.addDome`.
     timed(Side.Emitting):
       meshes.addDome(
         scale.eye, progress*scale.radiusHorizon, tint.fade(ALPHA_WASH_SKY*progress),
       )
-    Placement.Horizon
+    Outcome.Horizon
 
 
 proc addObject*(
@@ -630,11 +630,11 @@ proc addObject*(
   anchor_override: Option[Position] = none(Position),
   bounds: Option[ViewBounds] = none(ViewBounds), radius: float = RADIUS_OBJECT_DEFAULT,
   light: Direction = LIGHT_NONE
-): Placement =
+): Outcome =
   ## Append object, dispatching on geometry its grade stands for.
   ##   Place then emit in one call, for every caller with nothing to gain by keeping
   ##   placement: desktop path, storyboard, suite.
-  ##     Caller drawing same unchanged object frame after frame holds `Placed` and calls
+  ##     Caller drawing same unchanged object frame after frame holds `Placement` and calls
   ##     `emitObject`; see `placeObject`.
   ##   Empty where multivector carries no drawable geometry.
   ##   `progress` defaults to fully appeared, for caller with nothing to animate against.
@@ -645,5 +645,5 @@ proc addObject*(
   ##   `radius` is point's drawn radius and `light` its sun's direction; see `emitObject`.
   discard scratch
   var placed = placeObject(geometry, anchor_override)
-  if bounds.isSome and not isPointInView(placed, radius, bounds.get): return Placement.Empty
+  if bounds.isSome and not isPointInView(placed, radius, bounds.get): return Outcome.Empty
   meshes.emitObject(placed, tint, scale, progress, radius, light)

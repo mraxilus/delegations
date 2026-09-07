@@ -632,13 +632,13 @@ func constructSol(
   # Ring every moon about planet it really rings, in that plane tipped by `TILT_MOON`.
   #   Phases step by golden angle per moon, so two moons of one planet never stand
   #   together.
-  var placed_moons: array[len(MOONS), Multivector]
+  var placement_moons: array[len(MOONS), Multivector]
   for index, moon in MOONS:
     let place = ringed(places[moon.parent], leaned, across, radiusOfMoon(moon),
       SYSTEM_SOL.spin + 2.4*float(index))
-    placed_moons[index] = toMultivector(place)
+    placement_moons[index] = toMultivector(place)
     scene.addObject(
-      placed_moons[index], moon.name, lut_role_to_ink[Role.Moon], now,
+      placement_moons[index], moon.name, lut_role_to_ink[Role.Moon], now,
       radius = radiusDrawnOf(moon.kilometres_radius),
     )
   # Span ecliptic by Sol and two outermost planets, best conditioned join of eight.
@@ -647,7 +647,7 @@ func constructSol(
   # Join two lines in whole arrangement, which horizon block is built from.
   #   Earth lies *in* ecliptic, Luna's ring is tipped out of it, and that difference
   #   makes plane at horizon constructible.
-  tether = placed[INDEX_SOL_EARTH] ∧ placed_moons[INDEX_MOON_LUNA]
+  tether = placed[INDEX_SOL_EARTH] ∧ placement_moons[INDEX_MOON_LUNA]
   scene.addObject(orbit, "sol ∧ earth", lut_role_to_ink[Role.Derived], now)
   scene.addObject(tether, "earth ∧ luna", lut_role_to_ink[Role.Derived], now)
   addPlane(scene, ecliptic, "ecliptic sol", now, place_sol)

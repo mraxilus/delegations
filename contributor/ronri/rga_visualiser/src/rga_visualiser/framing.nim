@@ -59,7 +59,7 @@ const
 
 type PointerPick* = object ## Define pick made by pointer, awaiting camera's aim.
   ## Front-end records it beside selection change; `offerAim` consumes it next frame.
-  ## What pointer picked stays under pointer as camera comes in; see `placementUnderPointer`.
+  ## What pointer picked stays under pointer as camera comes in; see `stanceUnderPointer`.
   handle*: int ## Object clicked or tapped.
   cursor*: ScreenPosition ## Where pointer stood, window pixels.
 
@@ -100,28 +100,28 @@ iterator watched*(
         yield (scene.geometryOf(handle), scene.anchorOverrideAt(handle))
 
 
-func reachOfPlaced(placed: Placed, radius: float): float =
+func reachOfPlacement(placed: Placement, radius: float): float =
   ## Measure how far one placed object stands from world origin, disc's reach included.
   ##   Zero for horizon kinds and nothing: neither has place to clip.
   ##   `radius` is point's drawn radius, added so far clip holds whole disc.
   case placed.kind
-  of PlacedKind.PointAt:
+  of Case.PointAt:
     norm(placed.at - Position(x: 0, y: 0, z: 0)) + radius
-  of PlacedKind.LineThrough:
+  of Case.LineThrough:
     norm(placed.at - Position(x: 0, y: 0, z: 0))
-  of PlacedKind.PlaneOn:
+  of Case.PlaneOn:
     norm(placed.at - Position(x: 0, y: 0, z: 0)) + EXTENT_PLANE_F
   else: 0.0
 
 
-func reachOf*(placed: openArray[Placed], scene: Scene): float =
+func reachOf*(placed: openArray[Placement], scene: Scene): float =
   ## Measure how far scene's farthest visible finite object stands from origin.
   ##   For `Camera.reach_scene`, from placements caller already holds; browser path.
   ##   Sibling of `reachOf(scene)`, which places for itself.
   result = 0.0
   for handle in 0 ..< scene.bound:
     if not scene.isAlive(handle) or not scene.isVisible(handle): continue
-    result = max(result, reachOfPlaced(placed[handle], scene.radiusAt(handle)))
+    result = max(result, reachOfPlacement(placed[handle], scene.radiusAt(handle)))
 
 
 proc reachOf*(scene: Scene): float =
@@ -132,7 +132,7 @@ proc reachOf*(scene: Scene): float =
   for handle, one in scene.pairs:
     if not one.isVisible: continue
     result = max(
-      result, reachOfPlaced(placeObject(one.geometry, one.anchorOverride), one.radius)
+      result, reachOfPlacement(placeObject(one.geometry, one.anchorOverride), one.radius)
     )
 
 
@@ -161,10 +161,10 @@ func isShownAll*(
 
 #[ Resolving Placement ]#
 
-func placementFor*(
+func stanceFor*(
   aim: CameraAim; scene: Scene; picked: Selection; staged: Option[Preview];
   camera: Camera; width, height: int
-): CameraPlacement =
+): CameraStance =
   ## Resolve `aim` against camera as it stands into placement ease should end at.
   ##   Least movement, pan, zoom and orbit together, putting every picked object in view;
   ##   none at all where they all already are.
@@ -186,14 +186,14 @@ func placementFor*(
   #   Aim compares equal from next frame on, so ease runs once per pick; see `CameraAim`
   #   and `CameraTween.abandon`.
   if isShownAll(scene, picked, staged, camera, width, height):
-    var held = camera.placementOf
+    var held = camera.stanceOf
     if aim.centroid.isSome: held.pivot = aim.centroid.get
     return held
 
   let angles =
     if aim.sphere.isSome or aim.heading.isNone: (camera.azimuth, camera.elevation)
     else: azimuthElevationFor(aim.heading.get)
-  var settled = CameraPlacement(
+  var settled = CameraStance(
     # Aim at middle of what was picked, not middle of bound holding it.
     #   Bound still decides *distance*.
     pivot: if aim.centroid.isSome: aim.centroid.get else: camera.pivot,
@@ -239,7 +239,7 @@ func placementFor*(
   # Start from where camera stands but already centred.
   #   Re-centring is not concession to fitting, and in path search would find fraction of
   #   nothing shows everything.
-  var start = camera.placementOf
+  var start = camera.stanceOf
   start.pivot = settled.pivot
   var (lower, upper) = (0.0, 1.0)
   for step in 1 .. STEPS_PLACEMENT_LEAST:
@@ -260,10 +260,10 @@ func placementFor*(
 
 
 
-func placementUnderPointer*(
+func stanceUnderPointer*(
   anchor: Position; shaped: Kind; radius: float; centre: Position; camera: Camera;
   scale: DrawExtent
-): Option[CameraPlacement] =
+): Option[CameraStance] =
   ## Resolve where camera ends after pointer pick, `anchor` kept on its pixel.
   ##   Wheel's own move (`camera.dollyToward` then `repivotToDepth`): eye comes in along
   ##   its line to anchor, angles untouched, pivot set on sight line at anchor's depth.
@@ -282,7 +282,7 @@ func placementUnderPointer*(
   ##   Written out rather than through `dollyToward`, whose near floor scales eye's move
   ##   by less than factor asked and would leave pivot short of anchor's depth.
   ##   None where anchor is not ahead of eye, or plane's centre stands further behind
-  ##   crossing than its depth to be, leaving caller `placementFor`.
+  ##   crossing than its depth to be, leaving caller `stanceFor`.
   let
     eye = camera.eye
     forward = camera.frame(eye).forward
@@ -310,7 +310,7 @@ func placementUnderPointer*(
     wedge(depth_end/depth_now, subtract(toMultivector(eye), toMultivector(anchor))),
   ))
   if eye_settled.isNone: return
-  some(CameraPlacement(
+  some(CameraStance(
     pivot: Position(
       x: eye_settled.get.x + depth_end*forward.x,
       y: eye_settled.get.y + depth_end*forward.y,
@@ -337,12 +337,12 @@ func offerAim*(
   ##   one continuous chase.
   ##   Anything drawing nothing, empty selection included, aims at nothing and releases,
   ##   which lets picking same object again aim at it afresh.
-  ##   `isGoalHeld` guard keeps `placementFor`'s search off hot path: offer is re-made
+  ##   `isGoalHeld` guard keeps `stanceFor`'s search off hot path: offer is re-made
   ##   every frame selection stands.
   ##   `pointer` is pick made since last offer, consumed here whatever comes of it.
   ##     Guard is skipped for it: object already held, picked again, is taken to again.
   ##     Where selection is exactly that object and nothing is staged, destination keeps
-  ##     it under pointer (`placementUnderPointer`); group and horizon shape frame as
+  ##     it under pointer (`stanceUnderPointer`); group and horizon shape frame as
   ##     ever, since group has to fit, which holding one pixel cannot promise.
   # Take caller's extent, not second derivation.
   #   Building another here ran `algebraFilled` and `camera.frame`'s joins twice per frame.
@@ -354,7 +354,7 @@ func offerAim*(
     return
   if pick.isNone and tween.isGoalHeld(aim.get): return
   var
-    destination = none(CameraPlacement)
+    destination = none(CameraStance)
     anchor = none(Position)
   if pick.isSome and staged.isNone and picked.len == 1 and picked.at(0) == pick.get.handle and
       scene.isAlive(pick.get.handle):
@@ -368,12 +368,12 @@ func offerAim*(
         scene, pick.get.handle, camera, scale, width, height, pick.get.cursor
       )
       if anchor.isSome:
-        destination = placementUnderPointer(
+        destination = stanceUnderPointer(
           anchor.get, shaped.get, scene.radiusAt(pick.get.handle), centre.get, camera, scale
         )
   if destination.isNone:
     anchor = none(Position)
-    destination = some(placementFor(aim.get, scene, picked, staged, camera, width, height))
+    destination = some(stanceFor(aim.get, scene, picked, staged, camera, width, height))
   tween.aimAt(
     camera, aim.get, destination.get, now, duration, anchor_held = anchor,
     is_renewed = pick.isSome,

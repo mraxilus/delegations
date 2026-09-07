@@ -7,7 +7,7 @@
 ##   star is nearest to its planets by hundred to one.
 ## Lights depend on positions alone, never on camera, so both front-ends refresh them only
 ## where scene's revision moved, beside placements, and only as far as edit reached; see
-## `LightCache`, `browser_bridge.ensurePlaced` and `visualiser.renderFrame`.
+## `LightCache`, `browser_bridge.ensurePlacement` and `visualiser.renderFrame`.
 ##
 ## Shared between desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render
 ## paths; see `visualiser.nim`'s "Render Paths" table.
@@ -58,13 +58,13 @@ type LightCache* = object ## Hold every handle's light, and suns it was computed
 
 
 func gatherSuns(
-  scene: Scene, placed: openArray[Placed], suns: var array[OBJECTS_MAX, Position]
+  scene: Scene, placed: openArray[Placement], suns: var array[OBJECTS_MAX, Position]
 ): int =
   ## Fill `suns` with every visible shining point's place; report how many.
   result = 0
   for handle in 0 ..< scene.bound:
     if not scene.isAlive(handle) or not scene.isVisible(handle): continue
-    if scene.shinesAt(handle) and placed[handle].kind == PlacedKind.PointAt:
+    if scene.shinesAt(handle) and placed[handle].kind == Case.PointAt:
       suns[result] = placed[handle].at
       inc result
 
@@ -81,13 +81,13 @@ func areSunsHeld(cache: LightCache, suns: array[OBJECTS_MAX, Position], count: i
 
 
 func refreshLights*(
-  cache: var LightCache, scene: Scene, placed: openArray[Placed],
+  cache: var LightCache, scene: Scene, placed: openArray[Placement],
   revision_since: Option[int]
 ) =
   ## Bring `cache.lights` up to scene, from frame's own placements.
   ##   `revision_since` is placing revision cache was last refreshed at; none relights
   ##   everything, as does any change among suns. Otherwise only handles placed since are
-  ##   relit, same rule `browser_bridge.ensurePlaced` re-places by.
+  ##   relit, same rule `browser_bridge.ensurePlacement` re-places by.
   ##   Sibling of `refreshLights(cache, scene, revision_since)`, which places for itself.
   var suns: array[OBJECTS_MAX, Position]
   let count_suns = gatherSuns(scene, placed, suns)
@@ -98,14 +98,14 @@ func refreshLights*(
     if not scene.isAlive(handle): continue
     if not is_whole and scene.revisionPlacingAt(handle) <= revision_since.get: continue
     cache.lights[handle] =
-      if scene.shinesAt(handle) or placed[handle].kind != PlacedKind.PointAt: LIGHT_NONE
+      if scene.shinesAt(handle) or placed[handle].kind != Case.PointAt: LIGHT_NONE
       else: lightToward(placed[handle].at, suns, count_suns)
 
 
 proc refreshLights*(cache: var LightCache, scene: Scene, revision_since: Option[int]) =
   ## Bring `cache.lights` up to scene, placing every object first; desktop path.
   ##   Sibling of `refreshLights(cache, scene, placed, revision_since)`.
-  var placed: array[OBJECTS_MAX, Placed]
+  var placed: array[OBJECTS_MAX, Placement]
   for handle in 0 ..< scene.bound:
     if scene.isAlive(handle):
       placed[handle] = placeObject(scene.geometryOf(handle), scene.anchorOverrideAt(handle))

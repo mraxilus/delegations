@@ -294,7 +294,7 @@ type
     ##     `lut_ink_to_rgba`.
     Rose, Copper, Olive, Jade, Cobalt,
 
-  Placement* {.pure.} = enum ## Define what became of object once drawn.
+  Outcome* {.pure.} = enum ## Define what became of object once drawn.
     Finite, ## Object had finite extent and was drawn where it stands.
     Horizon, ## Object lay wholly at horizon; only its direction could be drawn.
     Empty, ## Multivector carried no drawable geometry at all.

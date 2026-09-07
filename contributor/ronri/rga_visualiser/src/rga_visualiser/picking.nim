@@ -465,7 +465,7 @@ func add(hiders: var Hiders, hider: Hider) =
 
 proc pickWalk(
   scene: Scene; camera: Camera; scale: DrawExtent; view_projection: Matrix4;
-  width, height: int; cursor: ScreenPosition; placed: openArray[Placed];
+  width, height: int; cursor: ScreenPosition; placed: openArray[Placement];
   hiders_known: Hiders; is_points_only: bool
 ): PickWalk =
   ## Walk every visible object once, ranking what stands within reach of cursor.
@@ -512,8 +512,8 @@ proc pickWalk(
       is_under_best = is_under
       handle_best = some(handle)
   # Ask once whether caller brought whole frame's placements; cannot change mid-walk.
-  let is_placed_held = placed.len >= OBJECTS_MAX
-  var placed_here: Placed # Filled per handle only where caller brought none.
+  let is_placement_held = placed.len >= OBJECTS_MAX
+  var placement_here: Placement # Filled per handle only where caller brought none.
 
   # Walk by handle to `bound`, not to capacity.
   #   Runs per pointer move, and pool walked to capacity tests every empty handle to rank
@@ -522,19 +522,19 @@ proc pickWalk(
   #   By-handle readers, never `pairs`, which copies whole scene per live handle on JS backend.
   for handle in 0 ..< scene.bound:
     if not scene.isAlive(handle) or not scene.isVisible(handle): continue
-    if not is_placed_held:
-      placed_here = placeObject(scene.geometryOf(handle), scene.anchorOverrideAt(handle))
+    if not is_placement_held:
+      placement_here = placeObject(scene.geometryOf(handle), scene.anchorOverrideAt(handle))
     # Read in place, never bound.
-    #   `Placed` holds five multivectors, and binding to `let` deep-copies on JS backend.
+    #   `Placement` holds five multivectors, and binding to `let` deep-copies on JS backend.
     #   Both aliases expand to read at each use; confirmed in generated JavaScript that
     #   neither copies.
-    template place: untyped = (if is_placed_held: placed[handle] else: placed_here)
+    template place: untyped = (if is_placement_held: placed[handle] else: placement_here)
     template geometry: untyped = scene.geometryOf(handle)
 
     case place.kind
-    of PlacedKind.Nothing: continue
+    of Case.Nothing: continue
 
-    of PlacedKind.PointAt:
+    of Case.PointAt:
       # Measure through `pixelsFromCursor`, not `projectToScreen`.
       #   Branch almost every handle takes wants distance, not projected position to
       #   measure one from.
@@ -557,7 +557,7 @@ proc pickWalk(
       if distance <= radius_pick: consider(0, distance, depth, is_under)
       crowd(0)
 
-    of PlacedKind.PointToward:
+    of Case.PointToward:
       # Pick direction point where its star is drawn.
       #   One part of point's anchor depending on eye, so not in placement. Matches
       #   `tessellate.anchorFor`.
@@ -574,7 +574,7 @@ proc pickWalk(
       if distance <= RADIUS_PICK_POINT: consider(0, distance, scale.radiusHorizon, false)
       crowd(0)
 
-    of PlacedKind.LineAcross:
+    of Case.LineAcross:
       if is_points_only: continue
       # Test against great circle it is drawn as, sampled as `tessellate.addGreatCircle` does.
       #   Hit then agrees with what is drawn.
@@ -600,7 +600,7 @@ proc pickWalk(
       if distance_nearest <= RADIUS_PICK_LINE: consider(2, distance_nearest, Inf, false)
       if distance_nearest <= RADIUS_CROWD_TOUCH: crowd(2)
 
-    of PlacedKind.LineThrough:
+    of Case.LineThrough:
       if is_points_only: continue
       # Test both halves `tessellate.addLine` draws, support out to each vanishing point.
       #   Which half is on screen changes as camera orbits.
@@ -621,7 +621,7 @@ proc pickWalk(
       if distance_nearest <= RADIUS_PICK_LINE: consider(1, distance_nearest, Inf, false)
       if distance_nearest <= RADIUS_CROWD_TOUCH: crowd(1)
 
-    of PlacedKind.PlaneOn:
+    of Case.PlaneOn:
       if is_points_only: continue
       # Meet only where disc could reach cursor at all; see `isBeyondDisc`.
       #   Frame guard is kind's to say: `placeObject` reaches `PlaneOn` only with anchor
@@ -635,7 +635,7 @@ proc pickWalk(
         consider(3, hit.get, Inf, false)
         crowd(3)
 
-    of PlacedKind.PlaneEverywhere:
+    of Case.PlaneEverywhere:
       if is_points_only: continue
       # Match whole sky last of all, with no distance to measure, so anything else wins.
       #   Asked of geometry, not kind: finite plane whose frame algebra cannot give lands
@@ -656,7 +656,7 @@ proc pickWalk(
 
 proc pickAt*(
   scene: Scene; camera: Camera; scale: DrawExtent; view_projection: Matrix4;
-  width, height: int; cursor: ScreenPosition; placed: openArray[Placed] = []
+  width, height: int; cursor: ScreenPosition; placed: openArray[Placement] = []
 ): PickReport =
   ## Find visible object nearest cursor and count its rivals.
   ##   Prefers points over lines over planes; see `PickReport`.
@@ -704,7 +704,7 @@ proc pickAt*(
 
 proc pickNearest*(
   scene: Scene; camera: Camera; scale: DrawExtent; view_projection: Matrix4;
-  width, height: int; cursor: ScreenPosition; placed: openArray[Placed] = []
+  width, height: int; cursor: ScreenPosition; placed: openArray[Placement] = []
 ): Option[int] =
   ## Find visible object nearest cursor, preferring points over lines over planes.
   ##   `pickAt`'s handle alone, for caller with no use for rival count.
@@ -766,7 +766,7 @@ func positionUnderPointerOn*(
 
 proc anchorZoomAt*(
   scene: Scene; camera: Camera; scale: DrawExtent; view_projection: Matrix4;
-  width, height: int; cursor: ScreenPosition; placed: openArray[Placed] = []
+  width, height: int; cursor: ScreenPosition; placed: openArray[Placement] = []
 ): Option[AnchorZoom] =
   ## Solve world point zoom aimed at `cursor` should hold still.
   ##   Whatever finite object cursor is over, else ground under it, else level pivot

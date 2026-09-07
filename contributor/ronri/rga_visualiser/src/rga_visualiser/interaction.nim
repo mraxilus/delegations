@@ -638,7 +638,7 @@ func isMovingCamera*(interaction: Interaction): bool =
 
 proc updateHover*(
   interaction: var Interaction; scene: Scene; camera: Camera; scale: DrawExtent;
-  view_projection: Matrix4; width, height: int; placed: openArray[Placed] = []
+  view_projection: Matrix4; width, height: int; placed: openArray[Placement] = []
 ) =
   ## Recompute object nearest cursor, so overlay and drag-start agree on what stands under it.
   ##   Nothing is hovered while camera is moving.
@@ -666,7 +666,7 @@ proc updateHover*(
 proc dollyAt*(
   camera: var Camera; scene: Scene; factor: float; scale: DrawExtent;
   view_projection: Matrix4; width, height: int; cursor: ScreenPosition;
-  placed: openArray[Placed] = []
+  placed: openArray[Placement] = []
 ) =
   ## Zoom camera by `factor` toward whatever `cursor` is over; see `dollyAtCursor`.
   ##   Cursor is parameter so pinch, which has no cursor, aims at frame's middle through
@@ -689,7 +689,7 @@ proc dollyAt*(
 
 proc dollyAtCentre*(
   camera: var Camera; scene: Scene; factor: float; scale: DrawExtent;
-  view_projection: Matrix4; width, height: int; placed: openArray[Placed] = []
+  view_projection: Matrix4; width, height: int; placed: openArray[Placement] = []
 ) =
   ## Zoom camera by `factor` toward whatever middle of frame is over; pinch's zoom.
   ##   Pinch has two fingers and no pointer, and zooming at their midpoint translated
@@ -704,7 +704,7 @@ proc dollyAtCentre*(
 proc dollyAtCursor*(
   interaction: Interaction; camera: var Camera; scene: Scene; factor: float;
   scale: DrawExtent; view_projection: Matrix4; width, height: int;
-  placed: openArray[Placed] = []
+  placed: openArray[Placement] = []
 ) =
   ## Zoom camera by `factor`, toward whatever cursor is over.
   ##   One statement of what wheel notch does, so both front-ends and pinch zoom same way.

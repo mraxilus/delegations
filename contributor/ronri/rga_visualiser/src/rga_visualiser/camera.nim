@@ -14,13 +14,13 @@
 ## Only projection is left to convention.
 ##   Perspective divide, depth range and clip volume belong to graphics pipeline rather
 ##   than to geometry, so they are written out directly.
-## Placement is spherical about pivot, since that is what mouse drag turns.
+## Stance is spherical about pivot, since that is what mouse drag turns.
 ##   Elevation is clamped short of poles, where up direction would run along sight axis
 ##   and joins above would collapse.
 ##
 ## Shared by desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render paths.
 
-# Reorder so placement reads before frame derived from it, though `pan` calls `frame`.
+# Reorder so stance reads before frame derived from it, though `pan` calls `frame`.
 #   Constants below stay in dependency order regardless, as reordering does not cover them.
 {.experimental: "codeReordering".}
 {.experimental: "strictFuncs".}
@@ -122,7 +122,7 @@ type
   Matrix4* = object ## Define 4x4 transform in column-major order, as OpenGL expects.
     elements: array[16, float32]
 
-  Camera* = object ## Define placement of eye about pivot, and lens it looks through.
+  Camera* = object ## Define stance of eye about pivot, and lens it looks through.
     pivot*: Position ## Point orbit turns about.
     distance*: float ## Separation of eye from pivot.
     azimuth*: float ## Angle about world up, in radians.
@@ -179,7 +179,7 @@ func initMatrixProjection*(
 
 func initMatrixView*(eye: Position, frame: FrameCamera): Matrix4 =
   ## Construct transform carrying world into camera's own frame.
-  ##   Rows hold camera axes, so transform is inverse of camera's placement.
+  ##   Rows hold camera axes, so transform is inverse of camera's stance.
   let (right, up, forward) = (frame.axis_right, frame.axis_up, frame.forward)
   let offset = eye - Position(x: 0, y: 0, z: 0)
   result.elements = [
@@ -192,7 +192,7 @@ func initMatrixView*(eye: Position, frame: FrameCamera): Matrix4 =
 
 
 
-#[ Camera Placement ]#
+#[ Camera Stance ]#
 
 func distanceHeld*(distance: float): float = max(distance, DISTANCE_LIMIT_NEAR)
   ## Hold orbit distance off one value it may not take; see `DISTANCE_LIMIT_NEAR`.
@@ -215,7 +215,7 @@ func initCamera*(pivot: Position; distance, azimuth, elevation: float): Camera =
 
 func initCameraDefault*(): Camera =
   ## Place camera where both front-ends open, and where `home` puts it back.
-  ##   One statement: placement written out in each front-end and key returning to it
+  ##   One statement: stance written out in each front-end and key returning to it
   ##   would be three copies.
   ##   Shows seed scene whole, slightly above ground so plane reads as plane rather than
   ##   line.
@@ -356,7 +356,7 @@ func headingGround*(camera: Camera): Direction =
 
 
 func slideGround*(camera: var Camera; ahead, across, rise: float) =
-  ## Slide pivot across world, leaving eye's placement about it alone.
+  ## Slide pivot across world, leaving eye's stance about it alone.
   ##   Forward along `headingGround`, sideways along camera's right, up along world up,
   ##   so whole view travels without turning.
   ##   *Map* reading of movement key rather than *fly* one.
@@ -384,7 +384,7 @@ func slideGround*(camera: var Camera; ahead, across, rise: float) =
 #[ Camera Frame ]#
 
 func frame*(camera: Camera, eye: Position): FrameCamera =
-  ## Derive camera's orthonormal axes from its placement, through joins and antiduals.
+  ## Derive camera's orthonormal axes from its stance, through joins and antiduals.
   ##   Elevation clamp keeps sight axis off world up, so every join below stays defined.
   ##   Takes eye explicitly, so caller already holding it, or calling once per frame
   ##   across many objects, need not pay same trig again.
@@ -513,7 +513,7 @@ type
     radius*: float ## How far furthest object stands from `centre`. Zero for one point.
 
   CameraAim* = object ## Define what camera has been asked to bring into view.
-    ## Not placement: *requirement*, derived from geometry alone and nothing about where
+    ## Not stance: *requirement*, derived from geometry alone and nothing about where
     ## camera stands.
     ##   Lets caller re-offer same selection every frame and have it recognised as same
     ##   request; see `CameraTween.goal`.
@@ -544,7 +544,7 @@ type
       ## Over same objects as `sphere`, for reason `is_bound_by_fitted` gives. None where
       ## no finite objects.
 
-  CameraPlacement* = object ## Define where camera stands: everything ease moves.
+  CameraStance* = object ## Define where camera stands: everything ease moves.
     ## Lens is not here: field of view is reader's setting, and nothing aiming camera may
     ## rewrite it.
     pivot*: Position ## Point orbit turns about.
@@ -559,13 +559,13 @@ type
     ##   as one chase.
     goal*: Option[CameraAim] ## What camera is watching, or has settled on.
       ## None only while nothing is aimed at all.
-      ## *Requirement*, not placement: derived from selected geometry alone, so re-offer
+      ## *Requirement*, not stance: derived from selected geometry alone, so re-offer
       ## compares equal every frame.
       ##   Ignore rule in `aimAt` and standing-offer rule in `abandon` both rest on it;
       ##   where ease ends is kept separately below.
-    destination*: CameraPlacement ## Where ease ends.
+    destination*: CameraStance ## Where ease ends.
       ## Goal resolved against camera as it stood when goal was armed; see
-      ## `framing.placementFor` and `framing.offerAim`.
+      ## `framing.stanceFor` and `framing.offerAim`.
       ## Meaningless while `goal` is none; set beside it and never alone.
     is_arrived*: bool ## Whether `destination` has been reached.
       ## Set once ease runs out, stopping `advance` writing camera from then on.
@@ -575,7 +575,7 @@ type
       ## instead of re-arming ease.
     started*: float ## Clock reading `goal` was last set or repivoted at.
     duration*: float ## Seconds ease takes, end to end.
-    placement_from*: CameraPlacement ## Where current ease began.
+    stance_from*: CameraStance ## Where current ease began.
     anchor_held*: Option[Position] ## World point ease keeps on its pixel, or none.
       ## Set by pointer pick: object clicked stays under pointer while camera comes in.
       ## Ease then runs `towardHoldingAnchor` rather than `toward`; see `advance`.
@@ -775,7 +775,7 @@ func distanceFitting*(radius: float; camera: Camera; width, height: int; inset: 
   ##   or furniture stops working at distance.
   ##   Solves centred box, what point is held to and stricter than plane's rim
   ##   (`picking.isPlaneShownCentrally` holds that to frame).
-  ##     Keeps this valid *upper bracket* for `framing.placementFor`'s bisection, never
+  ##     Keeps this valid *upper bracket* for `framing.stanceFor`'s bisection, never
   ##     answer.
   let sine = sin(halfAngleCentred(camera, width, height, inset))
   distanceHeld(radius/max(sine, 1.0e-6))
@@ -787,7 +787,7 @@ func depthSpanning*(diameter, fraction: float; camera: Camera): float =
   ##   (`mesh.worldPerPixelAt`), and disc's projected major axis is its diameter whatever
   ##   its tilt, so one formula sizes point's ball and plane's disc alike.
   ##   Held off near floor as every depth is.
-  ##   For pointer pick's approach; see `framing.placementUnderPointer`.
+  ##   For pointer pick's approach; see `framing.stanceUnderPointer`.
   let tangent_half = tan(0.5*degToRad(camera.degrees_field_of_view))
   distanceHeld(diameter/(2.0*max(fraction, 1.0e-6)*max(tangent_half, 1.0e-6)))
 
@@ -799,9 +799,9 @@ func isGoalHeld*(tween: CameraTween, goal: CameraAim): bool =
   tween.goal.isSome and tween.goal.get == goal
 
 
-func placementOf*(camera: Camera): CameraPlacement =
-  ## Read where `camera` already stands as placement of its own.
-  CameraPlacement(
+func stanceOf*(camera: Camera): CameraStance =
+  ## Read where `camera` already stands as stance of its own.
+  CameraStance(
     pivot: camera.pivot,
     distance: camera.distance,
     azimuth: camera.azimuth,
@@ -809,90 +809,90 @@ func placementOf*(camera: Camera): CameraPlacement =
   )
 
 
-func placed*(camera: Camera, placement: CameraPlacement): Camera =
-  ## Put copy of `camera` at `placement`, lens untouched.
+func placed*(camera: Camera, stance: CameraStance): Camera =
+  ## Put copy of `camera` at `stance`, lens untouched.
   result = camera
-  result.pivot = placement.pivot
-  result.distance = placement.distance
-  result.azimuth = placement.azimuth
-  result.elevation = placement.elevation
+  result.pivot = stance.pivot
+  result.distance = stance.distance
+  result.azimuth = stance.azimuth
+  result.elevation = stance.elevation
 
 
-func toward*(from_placement, to_placement: CameraPlacement; progress: float): CameraPlacement =
-  ## Step `progress` of way from one placement to another.
+func toward*(from_stance, to_stance: CameraStance; progress: float): CameraStance =
+  ## Step `progress` of way from one stance to another.
   ##   Distance moves geometrically where everything else moves linearly.
   ##     Distance is multiplicative, and linear ease from 12 to 300 covers most visible
   ##     change in first few frames then crawls.
   # Turn short way round: destination just past -pi is next door to camera short of +pi.
-  var delta = to_placement.azimuth - from_placement.azimuth
+  var delta = to_stance.azimuth - from_stance.azimuth
   while delta > PI: delta -= 2.0*PI
   while delta < -PI: delta += 2.0*PI
-  let (near, far) = (max(from_placement.distance, 1.0e-6), max(to_placement.distance, 1.0e-6))
-  let stepped = position(add(toMultivector(from_placement.pivot), wedge(
+  let (near, far) = (max(from_stance.distance, 1.0e-6), max(to_stance.distance, 1.0e-6))
+  let stepped = position(add(toMultivector(from_stance.pivot), wedge(
     progress, subtract(
-      toMultivector(to_placement.pivot), toMultivector(from_placement.pivot)
+      toMultivector(to_stance.pivot), toMultivector(from_stance.pivot)
     )
   )))
-  CameraPlacement(
-    pivot: (if stepped.isSome: stepped.get else: to_placement.pivot),
+  CameraStance(
+    pivot: (if stepped.isSome: stepped.get else: to_stance.pivot),
     distance: near*pow(far/near, progress),
-    azimuth: from_placement.azimuth + progress*delta,
-    elevation: from_placement.elevation +
-      progress*(to_placement.elevation - from_placement.elevation),
+    azimuth: from_stance.azimuth + progress*delta,
+    elevation: from_stance.elevation +
+      progress*(to_stance.elevation - from_stance.elevation),
   )
 
 
 func towardHoldingAnchor*(
-  from_placement, to_placement: CameraPlacement; anchor: Position; camera: Camera;
+  from_stance, to_stance: CameraStance; anchor: Position; camera: Camera;
   progress: float
-): CameraPlacement =
-  ## Step `progress` of way between placements sharing angles, keeping `anchor` on its pixel.
+): CameraStance =
+  ## Step `progress` of way between stances sharing angles, keeping `anchor` on its pixel.
   ##   Eye stays on line from where it began to `anchor`, its depth to anchor moving
   ##   geometrically, so anchor's direction from eye never changes and nor does its pixel.
   ##   `toward` cannot serve: pivot linear and distance geometric take eye off that line
   ##   mid-ease (168 to 10 puts halfway eye at 41 by one curve, 89 by other), and object
   ##   swung off pointer before swinging back.
   ##   Distance still geometric, pivot read back as eye plus distance along sight.
-  ##   `camera` lends its lens and angles: eye of each placement needs them.
+  ##   `camera` lends its lens and angles: eye of each stance needs them.
   let
-    forward = camera.placed(from_placement).frame(camera.placed(from_placement).eye).forward
-    eye_from = camera.placed(from_placement).eye
-    eye_to = camera.placed(to_placement).eye
+    forward = camera.placed(from_stance).frame(camera.placed(from_stance).eye).forward
+    eye_from = camera.placed(from_stance).eye
+    eye_to = camera.placed(to_stance).eye
     depth_from = max(dot(anchor - eye_from, forward), 1.0e-6)
     depth_to = max(dot(anchor - eye_to, forward), 1.0e-6)
     depth = depth_from*pow(depth_to/depth_from, progress)
-    (near, far) = (max(from_placement.distance, 1.0e-6), max(to_placement.distance, 1.0e-6))
+    (near, far) = (max(from_stance.distance, 1.0e-6), max(to_stance.distance, 1.0e-6))
     distance = near*pow(far/near, progress)
     # Assemble eye as anchor plus scaled offset back toward where eye began.
     eye = position(add(
       toMultivector(anchor),
       wedge(depth/depth_from, subtract(toMultivector(eye_from), toMultivector(anchor))),
     ))
-  if eye.isNone: return to_placement
-  CameraPlacement(
+  if eye.isNone: return to_stance
+  CameraStance(
     pivot: Position(
       x: eye.get.x + distance*forward.x,
       y: eye.get.y + distance*forward.y,
       z: eye.get.z + distance*forward.z,
     ),
     distance: distance,
-    azimuth: from_placement.azimuth,
-    elevation: from_placement.elevation,
+    azimuth: from_stance.azimuth,
+    elevation: from_stance.elevation,
   )
 
 
-func `==`*(a, b: CameraPlacement): bool =
-  ## Compare two placements exactly, for caller asking whether camera would move at all.
+func `==`*(a, b: CameraStance): bool =
+  ## Compare two stances exactly, for caller asking whether camera would move at all.
   a.pivot.x == b.pivot.x and a.pivot.y == b.pivot.y and a.pivot.z == b.pivot.z and
     a.distance == b.distance and a.azimuth == b.azimuth and a.elevation == b.elevation
 
 
 func aimAt*(
-  tween: var CameraTween; camera: Camera; goal: CameraAim; destination: CameraPlacement;
+  tween: var CameraTween; camera: Camera; goal: CameraAim; destination: CameraStance;
   now, duration: float; anchor_held = none(Position); is_renewed = false
 ) =
   ## Set camera watching `goal` and ease it to `destination`, from where it stands now.
-  ##   Requirement and placement, not one thing twice: `goal` is what re-offer is
+  ##   Requirement and stance, not one thing twice: `goal` is what re-offer is
   ##   recognised by, `destination` where that puts camera once resolved.
   ##   Start is read off live camera rather than previous goal, so moving goal stays
   ##   smooth: `advance` has already eased partway, and next ease continues motion.
@@ -910,10 +910,10 @@ func aimAt*(
   # Mark arrived outright where camera already stands on destination.
   #   Easing through whole duration would write reading it holds and fight user who
   #   orbits.
-  tween.is_arrived = destination == camera.placementOf
+  tween.is_arrived = destination == camera.stanceOf
   tween.started = now
   tween.duration = duration
-  tween.placement_from = camera.placementOf
+  tween.stance_from = camera.stanceOf
 
 
 func advance*(
@@ -930,9 +930,9 @@ func advance*(
   camera = camera.placed(
     if tween.anchor_held.isSome:
       towardHoldingAnchor(
-        tween.placement_from, tween.destination, tween.anchor_held.get, camera, progress
+        tween.stance_from, tween.destination, tween.anchor_held.get, camera, progress
       )
-    else: tween.placement_from.toward(tween.destination, progress)
+    else: tween.stance_from.toward(tween.destination, progress)
   )
   if now - tween.started >= tween.duration: tween.is_arrived = true
 
