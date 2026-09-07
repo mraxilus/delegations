@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Author | Claude Opus 5 and Claude Sonnet 5 |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 286e748543eaf97f |
+| Rules  | 8779977bf49991d4 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the
@@ -2515,3 +2515,27 @@ reproduced through the runner's path.
 **Not reached, and still this project's to run:** `drive` itself. That is held on the harness's
 115 fixed sleeps against 3 waits on a condition the page reports, which is now the deciding
 cost rather than the value — 135 checks made the value case. See issue 47.
+
+## Re-audit, 2026-09-07, system dependencies
+
+Audited by a curator against rule that system dependencies -- library compiler links against,
+tool build shells out to, browser driven check drives, source clone no package manager carries
+-- are declared as data in project's own `tools/build.nim`, each entry carrying its reason, and
+reached by verb. Source clone carries its commit; system package carries no pin surviving across
+distributions and record says so rather than implying one; anything fetched at build time
+carries checksum build verifies. No machine's paths in committed source.
+
+**This project is what rule was written for, and it does not comply yet.** It needs SDL3, libGL,
+zlib, Xvfb and software GL on machine before it builds, clones Dear ImGui from source, and
+fetches its faces from `cdn.jsdelivr.net` trusting whatever arrives. None of that is declared
+anywhere: `README.md`'s build section names none of it, contrary to what issue 60 reported.
+
+Two asks stand, both this project's own work, neither of which curator may do:
+  Declare those packages and ImGui's commit as data in `tools/build.nim`, each carrying its
+    reason, reached by verb (issue 60, ruled).
+  Commit checksum per face and make `assets` fail on mismatch (issue 47, ruled by Architect).
+    That is what keeps unpinned download out of merge process, and it is also what lets runner
+    cache faces rather than refetch them.
+
+Second ask is what browser job waits on. Once both land, `drive` reaches runner and this
+record's *Unverified: CI does not reach this layer* stops being true.
