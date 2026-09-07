@@ -15,7 +15,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[hashes, json, options, strformat, strutils, tables]
+import std/[hashes, json, options, sequtils, strformat, strutils, tables]
 
 import ./[page, parts]
 import ../src/dance_ontology
@@ -104,8 +104,30 @@ proc reviewParts*(): Parts =
 func sheetOf(P: Parts): string =
   ## Build page, holding every card already ruled on to its own pin.
 
-  func card(id, label, note, svg: string): string =
-    ## Set one picture beside its identifier, carrying whatever has been ruled
+  func stepped(id: string; steps: seq[tuple[pick, note, svg: string]]): string =
+    ## Stack several drawings in one cell, one shown at time, with button
+    ## apiece.
+    ##   Radio button and sibling rule do switching, so cell needs no script:
+    ##     page stays markup browser can draw with nothing running.
+    ##   Every step keeps its own note under its own picture, since note is
+    ##     what tells one step from next.
+    var
+      picks = ""
+      frames = ""
+      buttons = ""
+    for i, step in steps:
+      let at = &"{id}-{i + 1}"
+      picks.add &"""<input type="radio" name="{id}" id="{at}""" &
+        (if i == 0: "\" checked>" else: "\">")
+      frames.add &"""<div>{unpinned(step.svg)}""" &
+        &"""<span class="step">{esc(step.note)}</span></div>"""
+      buttons.add &"""<label for="{at}">{esc(step.pick)}</label>"""
+    &"""{picks}<div class="frames">{frames}</div>""" &
+      &"""<div class="picks">{buttons}</div>"""
+
+  func card(id, label, note, art: string; drawings: seq[string];
+            switching = false): string =
+    ## Set one cell beside its identifier, carrying whatever has been ruled
     ## on it.  Unmarked is unreviewed, not approved.
     let
       flawed = id in FLAWED
@@ -117,19 +139,31 @@ func sheetOf(P: Parts): string =
               elif kept: """<em class="tag keep">kept</em>"""
               elif dropped: """<em class="tag drop">drop</em>"""
               else: ""
-    # Verdict was given on picture, so picture that moved under one carries
+    # Verdict was given on pictures, so picture that moved under one carries
     # approval it was never given.  Card holds itself to what it was drawn
     # as when it was ruled on, and mend reaching further than it meant to
-    # stops here rather than shipping.
+    # stops here rather than shipping.  Cell holding several drawings is
+    # held to all of them, since verdict on it is verdict on all.
     if kept or dropped:
-      doAssert $hash(unpinned(svg)) == pinned.getOrDefault(id),
+      doAssert $hash(drawings.join("")) == pinned.getOrDefault(id),
         &"A card already ruled on has been re-drawn: `{id}`.  Either the " &
           "mend is too wide, or that verdict has to go back."
-    &"""<figure class="pic{mark}"><div class="art">{unpinned(svg)}{badge}</div>""" &
+    &"""<figure class="pic{mark}"><div class="art""" &
+    (if switching: " steps" else: "") & &"""">{art}{badge}</div>""" &
     &"""<figcaption><code>{esc(id)}</code><b>{esc(label)}</b>""" &
     (if note.len > 0: &"""<span>{esc(note)}</span>""" else: "") &
     (if flawed: &"""<span class="fix">{esc(FLAWED[id])}</span>""" else: "") &
     "</figcaption></figure>"
+
+  func card(id, label, note, svg: string): string =
+    ## Set one drawing in cell of its own.
+    card(id, label, note, unpinned(svg), @[unpinned(svg)])
+
+  func card(id, label, note: string;
+            steps: seq[tuple[pick, note, svg: string]]): string =
+    ## Set several drawings in one cell, switched between by button.
+    card(id, label, note, stepped(id, steps),
+         steps.mapIt(unpinned(it.svg)), switching = true)
 
   var body = ""
 
@@ -320,12 +354,15 @@ func sheetOf(P: Parts): string =
 
   # `E`. Every single-hand turn animated, edge by edge.
   body.add """<section id="single-moving"><h2>E &middot; Single-hand turns, moving</h2>
-  <p class="lede">Every edge of section B, walked by every manner of turn: four
-  holds, four manners, four quarter-turn edges. Unlike the positions, no two of
-  these are the same picture &mdash; the walk differs even where the endpoints
-  agree, and the lead's turns are told in the two stages rule 18 asks for.</p>
+  <p class="lede">Every edge of section B, walked by every manner of turn. Each
+  manner of each hold takes <b>two cells</b>: the whole round in one figure, and
+  the same round a quarter at a time with a button per quarter. Both run at one
+  pace, so the round's loop is simply four times an edge's. Unlike the positions,
+  no two of these walks are the same picture &mdash; the walk differs even where
+  the endpoints agree, and the lead's turns are told in the two stages rule 18
+  asks for.</p>
   <p class="how"><b>Every walk here turns one way.</b> The page turns by
-  <code>QUARTER</code>, which is a positive ninety degrees, so all sixty-four are
+  <code>QUARTER</code>, which is a positive ninety degrees, so every walk here is
   clockwise. The four <i>positions</i> in section B are complete either way
   &mdash; four quarters is a whole round &mdash; but <b>the anticlockwise walks
   are not drawn at all</b>, and neither is any edge walked backwards. If this
@@ -344,15 +381,24 @@ func sheetOf(P: Parts): string =
   for c in 0 ..< SINGLES.len:
     body.add &"""<h3>{esc(SINGLES[c].name)}</h3><div class="grid wide">"""
     for manner in Manner:
-      for q in 0 ..< QUARTERS_ROUND:
-        let key = &"tr_{MANNERS[manner].tag}_{c}_{q}_{(q + 1) mod QUARTERS_ROUND}"
-        if key notin st: continue
+      let
+        tag = MANNERS[manner].tag
+        said = &"{MANNER_SAID[tag]} {QUARTER_WAY}"
+      if &"rd_{tag}_{c}" in st:
         inc m
-        body.add card(&"E{m}",
-          &"{MANNER_SAID[MANNERS[manner].tag]} {QUARTER_WAY}, " &
-            &"quarter {q + 1} of 4",
-          &"from {QUARTER_FROM[q]} to {QUARTER_FROM[(q + 1) mod QUARTERS_ROUND]}",
+        body.add card(&"E{m}", said, "the whole round, four quarters in one",
+                      st[&"rd_{tag}_{c}"])
+      var steps: seq[tuple[pick, note, svg: string]]
+      for q in 0 ..< QUARTERS_ROUND:
+        let key = &"tr_{tag}_{c}_{q}_{(q + 1) mod QUARTERS_ROUND}"
+        if key notin st: continue
+        steps.add ($(q + 1),
+          &"quarter {q + 1} of 4: from {QUARTER_FROM[q]} to " &
+            &"{QUARTER_FROM[(q + 1) mod QUARTERS_ROUND]}",
           st[key])
+      if steps.len > 0:
+        inc m
+        body.add card(&"E{m}", said, "one quarter at a time", steps)
     body.add "</div>"
   body.add "</section>"
 
@@ -366,23 +412,52 @@ func sheetOf(P: Parts): string =
 
   # `F`. Every chain edge animated.
   body.add """<section id="chain-moving"><h2>F &middot; Hand-to-hand chain, moving</h2>
-  <p class="lede">Every edge of section C, walked by every manner of turn: six
-  edges of the seven-position chain, four manners each. All four manners walk the same
-  chain, since an orbit keeping its side to the centre winds the pair as far as
-  it carries the walker. <b>They do not all turn the same way round</b>: a
-  positive turn by the lead unwinds what a positive turn by the follow winds, so
-  each manner turns whichever way carries the pair along the chain rather than off
-  the end of it. Each caption says which, measured on the build.</p><div class="grid wide">"""
+  <p class="lede">Every edge of section C, walked by every manner of turn. Each
+  manner takes <b>two cells</b>: the whole chain in one figure &mdash; six half
+  turns out from one swan to the other, and back, since the chain has ends and
+  cannot close on itself &mdash; and the same chain an edge at a time with a
+  button per edge. The whole-chain figure runs at the pace of its own edges,
+  which makes it a long loop; say if it wants to be quicker. All four manners
+  walk the same chain, since an orbit keeping its side to the centre winds the
+  pair as far as it carries the walker. <b>They do not all turn the same way
+  round</b>: a positive turn by the lead unwinds what a positive turn by the
+  follow winds, so each manner turns whichever way carries the pair along the
+  chain rather than off the end of it. Each caption says which, measured on the
+  build.</p><div class="grid wide">"""
   var k = 0
   for manner in Manner:
-    for i in 0 ..< CHAIN.len - 1:
-      let key = &"hw_{MANNERS[manner].tag}_{i}"
-      if key notin hh: continue
+    let
+      tag = MANNERS[manner].tag
+      said = &"{MANNER_SAID[tag]} {chainWay(manner)}"
+    if &"hc_{tag}" in hh:
       inc k
-      body.add card(&"F{k}",
-                    &"{MANNER_SAID[MANNERS[manner].tag]} {chainWay(manner)}",
-                    CHAIN[i].name & " to " & CHAIN[i + 1].name, hh[key])
+      body.add card(&"F{k}", said,
+                    &"the whole chain, {CHAIN.len - 1} halves out and back",
+                    hh[&"hc_{tag}"])
+    var steps: seq[tuple[pick, note, svg: string]]
+    for i in 0 ..< CHAIN.len - 1:
+      let key = &"hw_{tag}_{i}"
+      if key notin hh: continue
+      steps.add ($(i + 1), CHAIN[i].name & " to " & CHAIN[i + 1].name, hh[key])
+    if steps.len > 0:
+      inc k
+      body.add card(&"F{k}", said, "one edge at a time", steps)
   body.add "</div></section>"
+
+  const SWITCHING = block:
+    ## Rules that show one step of switching cell and light its button.
+    ##   Written out per step rather than by script: page is markup browser
+    ##     draws with nothing running, and it stays that way.
+    ##   Count follows longest walk on page, so cell of six steps cannot
+    ##     quietly lose its last one.
+    var css = ""
+    for i in 1 .. max(QUARTERS_ROUND, CHAIN.len - 1):
+      css.add &"  .steps input:nth-of-type({i}):checked ~ .frames > " &
+        &"div:nth-child({i}) {{ display: block; }}\n"
+      css.add &"  .steps input:nth-of-type({i}):checked ~ .picks > " &
+        &"label:nth-child({i}) {{ background: var(--ink);" &
+        " color: var(--card); border-color: var(--ink); }\n"
+    css
 
   const HEAD = """<style>
   :root { --keep: #3f7550; --keep-wash: #eef4f0; --drop: #b3392a;
@@ -437,7 +512,18 @@ func sheetOf(P: Parts): string =
   .pic.flawed { border-color: var(--mend); background: var(--mend-wash); }
   .pic .fix { color: var(--mend-ink); font: .62rem/1.35 var(--sans); }
   .pic { overflow: hidden; }
-  </style>"""
+  .steps > input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .frames > div { display: none; }
+  .frames span.step { display: block; color: var(--dim); margin-top: .25rem;
+    font: .6rem/1.3 var(--mono); }
+  .picks { display: flex; flex-wrap: wrap; gap: .2rem; justify-content: center;
+    margin-top: .35rem; }
+  .picks label { font: .6rem/1 var(--mono); color: var(--dim); cursor: pointer;
+    border: 1px solid var(--rule); border-radius: 2px; padding: .18rem .4rem; }
+  .picks label:hover { border-color: var(--rule-strong); color: var(--ink); }
+  .steps input:focus-visible ~ .picks { outline: 1px dashed var(--rule-strong);
+    outline-offset: 3px; }
+""" & SWITCHING & """  </style>"""
 
   let sheet = HEAD & """<div class="wrap">
   <h1>Frame positions, drawn</h1>
@@ -466,17 +552,29 @@ func render*(P: Parts): string =
 
 
 func drawingOf(html, id: string): string =
-  ## Cut this card's drawing back out of built page.
-  ##   Card is written as picture then its identifier, so drawing is last
-  ##     `svg` before that identifier's own tag.
+  ## Cut this card's drawings back out of built page, joined as card holds
+  ## them.
+  ##   Card opens with its own `figure`, so its slice runs from last of
+  ##     those before its identifier up to identifier itself.
+  ##   Cell that switches between several drawings carries all of them, and
+  ##     verdict on cell is verdict on all, so pin covers all.
+  const CELL = """<figure class="pic"""
   let
     marks = &"<code>{id}</code>"
     names = html.find(marks)
   doAssert names > 0, &"A ruled card is not on the page: got `{id}`."
-  let
-    shuts = html.rfind("</svg>", last = names)
-    opens = html.rfind("<svg", last = shuts)
-  html[opens .. shuts + "</svg>".len - 1]
+  let opens = html.rfind(CELL, last = names)
+  doAssert opens >= 0, &"A ruled card has no cell of its own: got `{id}`."
+  var at = opens
+  while true:
+    let starts = html.find("<svg", at)
+    if starts < 0 or starts > names:
+      break
+    let shuts = html.find("</svg>", starts)
+    if shuts < 0:
+      break
+    result.add html[starts .. shuts + "</svg>".len - 1]
+    at = shuts + 1
 
 
 func pinsIn*(html: string): string =

@@ -249,16 +249,24 @@ func turned*(base: Pose; who: Dancer; about: About; degrees: float): Pose =
 
 
 func turnWalk*(base: Pose; who: Dancer; about: About; degrees: float;
-    samples = 12; on = Anchor.Pair): Walk =
-  ## Sample one turn and its return, in stages dance has.
+    samples = 12; on = Anchor.Pair; steps = 1; back = true): Walk =
+  ## Sample turn and its return, in stages dance has.
   ##   Stage one is turn itself, **with world held still**:
   ##     dancer turns where they are and picture does not follow them.
   ##   Stage two reorients picture, turning it until lead faces up
   ##     again (rule 18).  It is only there when there is something to
   ##     bring back -- turn that leaves framing as it found it is
   ##     drawn in one stage, and what counts as framing is `on`.
-  ##   Then same again in reverse, so going and coming read
-  ##     from one figure.
+  ##   `steps` says how many such turns run one after another, each
+  ##     setting off from where last landed.  One is single turn; four
+  ##     quarters walk whole round, and six halves walk whole chain.
+  ##     Landing between two of them is held for beat, as landing
+  ##       between stages is: without it walk reads as one long slide
+  ##       and its steps cannot be counted by eye.
+  ##   `back` says whether same again in reverse follows, so going and
+  ##     coming read from one figure.  Walk that closes on itself needs
+  ##     no return and takes none: round of four quarters ends where it
+  ##     began.
   ##   Stages do not share clock evenly.  Turn is what
   ##     figure is of; re-framing is picture catching up with it,
   ##     and is paced to read that way (rule 26).
@@ -293,18 +301,23 @@ func turnWalk*(base: Pose; who: Dancer; about: About; degrees: float;
       result.poses.add home
       result.times.add RE_FRAME_PACE / float(samples)
 
-  let
-    there = legs(base, degrees)
-    back = legs(there.poses[^1], -degrees)
-  result = there
-  for i, p in back.poses:
-    result.poses.add p
-    # Two legs meet on one pose, so join is beat like others.  Rest of
-    # coming back runs at `RESET_PACE`: emphasis rule 26 takes off
-    # re-framing comes off whole return for same reason, since return is
-    # not what figure is of either.
-    result.times.add (
-      if i == 0: ARRIVAL_HOLD else: back.times[i] * RESET_PACE)
+  # Two legs meet on one pose, so every join is beat like landing between
+  # stages.  Coming back runs at `RESET_PACE` throughout: emphasis rule 26
+  # takes off re-framing comes off whole return for same reason, since
+  # return is not what figure is of either.
+  var standing = base
+  for (by, pace) in [(degrees, 1.0), (-degrees, RESET_PACE)]:
+    if pace != 1.0 and not back:
+      break
+    for step in 1 .. steps:
+      let one = legs(standing, by)
+      for i, p in one.poses:
+        result.poses.add p
+        result.times.add (
+          if result.poses.len == 1: 0.0
+          elif i == 0: ARRIVAL_HOLD
+          else: one.times[i] * pace)
+      standing = result.poses[^1]
   result.times = timed(result.times)
 
 

@@ -525,22 +525,38 @@ proc checkSingleTurns*() =
   # RULE 16 and RULE 15.  Four orientations per connection, round
   # closing rather than refusing; every one of them drawn and every edge
   # between them animated.
-  var statics, moving = 0
+  var statics, moving, walked_whole = 0
   for key in built.keys:
     if key.startsWith("st_"): inc statics
     if key.startsWith("tr_") and not key.endsWith("_still"): inc moving
-  let want = (Manner.high.int + 1) * SINGLES.len * QUARTERS_ROUND
+    if key.startsWith("rd_") and not key.endsWith("_still"): inc walked_whole
+  let
+    want = (Manner.high.int + 1) * SINGLES.len * QUARTERS_ROUND
+    whole = (Manner.high.int + 1) * SINGLES.len
   doAssert statics == want,
     &"A position went undrawn; got `{statics}` of `{want}`."
   doAssert moving == want,
     &"An edge went unanimated; got `{moving}` of `{want}`."
+  # Round is walked whole as well as edge by edge, and it closes, so its
+  # last pose is its first: walk that ended anywhere else would be round
+  # of four quarters that is not round.
+  doAssert walked_whole == whole,
+    &"A round went unwalked whole; got `{walked_whole}` of `{whole}`."
+  for manner in Manner:
+    let w = MANNERS[manner]
+    let walk = turnWalk(quarterPose(manner, 0), w.who, w.about, QUARTER,
+                        on = Anchor.Lead, steps = QUARTERS_ROUND, back = false)
+    doAssert placeOf(walk.poses[^1]) == placeOf(walk.poses[0]),
+      &"A whole round did not close where it set off; got {manner}."
   for manner in Manner:
     doAssert placeOf(quarterPose(manner, QUARTERS_ROUND)) ==
       placeOf(quarterPose(manner, 0)),
       &"Four quarters do not close the round; got {manner}."
   told.add &"a single hand above turns for ever: {QUARTERS_ROUND} " &
     &"orientations a manner, the round closing rather than refusing, all " &
-    &"{statics} positions drawn and all {moving} transitions animated"
+    &"{statics} positions drawn, all {moving} transitions animated, and " &
+    &"each of the {walked_whole} rounds walked whole as well, closing " &
+    "where it set off"
 
   # RULE 32.  `"orbit should not maintain bearing, but instead keep whatever`
   # `side faces the center, facing the center."`  Measured through every orbit
@@ -606,7 +622,8 @@ proc checkSingleTurns*() =
     moving_hatched = 0
     held_still = 0
   for key, figure in built:
-    if not key.startsWith("tr_") or key.endsWith("_still"):
+    if not (key.startsWith("tr_") or key.startsWith("rd_")) or
+        key.endsWith("_still"):
       continue
     doAssert "url(#h" in figure,
       &"A moving hand lost its level; got no hatch in `{key}`."
@@ -618,8 +635,9 @@ proc checkSingleTurns*() =
           &"got `{key}`."
       inc held_still
     inc moving_hatched
-  doAssert moving_hatched == want,
-    &"A transition went unhatched; got `{moving_hatched}` of `{want}`."
+  doAssert moving_hatched == want + whole,
+    &"A transition went unhatched; got `{moving_hatched}` of " &
+      &"`{want + whole}`."
   told.add &"all {moving_hatched} animations carry the above hatch on " &
     &"their held hands, as the still figures beside them do -- and all " &
     &"{held_still} of those marks are carried by a transform rather than " &
@@ -1411,7 +1429,8 @@ proc checkHandTurns*() =
     hatched = 0
     hatch_still = 0
   for key, figure in built:
-    if not (key.startsWith("hh_") or key.startsWith("hw_")):
+    if not (key.startsWith("hh_") or key.startsWith("hw_") or
+            key.startsWith("hc_")):
       continue
     doAssert "r=\"2.7\"" notin figure,
       &"A high dot appears where above was asked for; got `{key}`."

@@ -288,6 +288,10 @@ func frameParts*(): Parts =
 const
   PX = 1.0        ## Pixels one unit takes in turn page's moving cell.
   STILL_PX = 0.72 ## And in still one, where figures are smaller.
+  WALK_SECONDS = 5.4 ## Clock one edge of state graph takes, out and back.
+    ## Walk of several edges takes multiple of it, so every animation on
+    ##   these pages runs at one pace and length of loop says how far it
+    ##   goes rather than how fast.
 
 
 func sized(svg, cls: string; half, px: float): string =
@@ -456,6 +460,19 @@ func singleTurnParts*(): Parts =
       for put in walks[manner][quarter].poses:
         walk_half[manner] = max(walk_half[manner], extent(put, captions = false))
 
+  # Whole round, walked in one figure.  Four quarters close it (rule 16), so
+  # it needs no return leg: it ends where it set off.
+  #   Its poses are ones four edges already pass through, so it asks box for
+  #     nothing new -- which is measured here rather than assumed.
+  var rounds: array[Manner, Walk]
+  for manner in Manner:
+    let w = MANNERS[manner]
+    rounds[manner] = turnWalk(quarterPose(manner, 0), w.who, w.about, QUARTER,
+                              on = Anchor.Lead, steps = QUARTERS_ROUND,
+                              back = false)
+    for put in rounds[manner].poses:
+      walk_half[manner] = max(walk_half[manner], extent(put, captions = false))
+
   for manner in Manner:
     let w = MANNERS[manner]
     for c, single in SINGLES:
@@ -473,7 +490,7 @@ func singleTurnParts*(): Parts =
         let to = (quarter + 1) mod QUARTERS_ROUND
         result[&"tr_{w.tag}_{c}_{quarter}_{to}"] = sized(animatedPoses("mv",
           single.holds, walks[manner][quarter].poses, some walk_half[manner],
-          levels, dur = 5.4, times = walks[manner][quarter].times),
+          levels, dur = WALK_SECONDS, times = walks[manner][quarter].times),
           "mv", walk_half[manner], PX)
         # Still stands in where motion is turned off, so it is settled
         # picture and bends by rule 22; moving figure it replaces is
@@ -483,6 +500,18 @@ func singleTurnParts*(): Parts =
                 pose = some quarterPose(manner, quarter),
                 half = some walk_half[manner], clear_marks = true),
           "mv still", walk_half[manner], PX)
+
+      # And whole round in one figure, at pace its own quarters run at:
+      # four legs where edge has two, so twice their clock.
+      result[&"rd_{w.tag}_{c}"] = sized(animatedPoses("mv",
+        single.holds, rounds[manner].poses, some walk_half[manner],
+        levels, dur = 2 * WALK_SECONDS, times = rounds[manner].times),
+        "mv", walk_half[manner], PX)
+      result[&"rd_{w.tag}_{c}_still"] = sized(
+        renderFigure("mv still", single.holds, levels, captions = false,
+              pose = some quarterPose(manner, 0),
+              half = some walk_half[manner], clear_marks = true),
+        "mv still", walk_half[manner], PX)
 
   result["g_quarter"] = turnGlyph("&#188; turn")
 
@@ -703,6 +732,18 @@ func handTurnParts*(): Parts =
       for put in walks[manner][i].poses:
         walk_half[manner] = max(walk_half[manner], extent(put, captions = false))
 
+  # Whole chain, walked in one figure: six halves out from one swan to
+  # other, and back.  Chain has ends (rule 30), so unlike round it cannot
+  # close and takes return leg.
+  var chains: array[Manner, Walk]
+  for manner in Manner:
+    let w = MANNERS[manner]
+    chains[manner] = turnWalk(handPose(CHAIN[0].wind), w.who, w.about,
+                              HALF * windSense(manner), on = Anchor.Lead,
+                              steps = CHAIN.len - 1)
+    for put in chains[manner].poses:
+      walk_half[manner] = max(walk_half[manner], extent(put, captions = false))
+
   # Chain, drawn once: all four manners reach these same seven (rule 32), so
   # drawing them per manner would be same picture over again.
   for i, position in CHAIN:
@@ -716,7 +757,8 @@ func handTurnParts*(): Parts =
     let w = MANNERS[manner]
     for i in 0 ..< CHAIN.len - 1:
       result[&"hw_{w.tag}_{i}"] = sized(animatedPoses("mv", HAND_TO_HAND,
-        walks[manner][i].poses, some walk_half[manner], ABOVE_BOTH, dur = 5.4,
+        walks[manner][i].poses, some walk_half[manner], ABOVE_BOTH,
+        dur = WALK_SECONDS,
         times = walks[manner][i].times, wound = CHAIN[i].wind),
         "mv", walk_half[manner], PX)
       # Still stands in where motion is turned off, so it is
@@ -726,6 +768,18 @@ func handTurnParts*(): Parts =
         pose = some handPose(CHAIN[i].wind), half = some walk_half[manner],
         twist = windTwist(CHAIN[i].wind), clear_marks = true),
         "mv still", walk_half[manner], PX)
+
+    # And whole chain in one figure, at pace its own edges run at: six legs
+    # out and six back where edge has one of each.
+    result[&"hc_{w.tag}"] = sized(animatedPoses("mv", HAND_TO_HAND,
+      chains[manner].poses, some walk_half[manner], ABOVE_BOTH,
+      dur = float(CHAIN.len - 1) * WALK_SECONDS, times = chains[manner].times,
+      wound = CHAIN[0].wind), "mv", walk_half[manner], PX)
+    result[&"hc_{w.tag}_still"] = sized(renderFigure("mv still",
+      HAND_TO_HAND, ABOVE_BOTH, captions = false,
+      pose = some handPose(CHAIN[0].wind), half = some walk_half[manner],
+      twist = windTwist(CHAIN[0].wind), clear_marks = true),
+      "mv still", walk_half[manner], PX)
 
   # Narrow, because chain is seven long now and glyph stands
   # between every pair of them (rule 31).
