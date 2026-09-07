@@ -251,6 +251,13 @@ events, or a test driver's host API.
   one verb restores it.
 - **One command builds it**: a `web` verb in your project's `tools/build.nim`, so a driven
   check is evidence for a build anyone can repeat rather than for one invocation nobody saw.
+- **One command type-checks it, and the runner runs that one**: a `types` verb in the same
+  driver, which derives whatever your scripts read and then type-checks every configuration,
+  and stops there — no browser, no fetched asset, nothing needing a display. Carrying
+  `package.json` beside its lockfile is what enrols your project: `koch types` finds it from
+  those two files, so nothing lists your project anywhere and nothing can drift. Your `web`
+  and driven verbs should call `types` rather than repeat its steps. Until a project carries
+  the verb, CI type-checks none of its TypeScript, which for a front end is most of its code.
 
 A generated lockfile passes the form rules unchanged. That is measured rather than assumed:
 its long lines are single unbreakable tokens — an `integrity` digest or a registry URL — and

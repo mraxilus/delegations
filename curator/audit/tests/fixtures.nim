@@ -87,6 +87,12 @@ func goodTree*(): Tree =
   result.add projectEntries(ALPHA_DIR, stamp_now)
 
 
+func with*(tree: Tree, entries: varargs[Entry]): Tree =
+  ## Copy tree plus entries, for fixture holding file good tree has none of.
+  result = tree
+  for e in entries: result.add e
+
+
 func without*(tree: Tree, path: string): Tree =
   ## Copy tree minus entry at path.
   for e in tree:

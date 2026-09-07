@@ -1,11 +1,16 @@
 # Run repository checks on pull requests, on main, and weekly over every project.
-#   Six jobs. `plan` names projects one change asks to compile; `static` runs whole-tree
+#   Seven jobs. `plan` names projects one change asks to compile; `static` runs whole-tree
 #   checks, which cost tenths of second and so stay unscoped; `scope` and `commits` read
 #   branch; `project` is one matrix job per named project, each installing that project's
-#   own pin; `base` refuses branch predating base's rules or checker; `audit` reads their
-#   verdicts and is gate branch protection requires, so required check names stay `audit`,
-#   `scope`, `commits` while matrix names vary. `base` reaches merge through that gate, which
-#   is why requiring branches up to date needs no paid ruleset here.
+#   own pin; `types` type-checks scripts of every changed project carrying node manifest,
+#   on driver's own compiler rather than through matrix, since `tools/build.nim` compiles
+#   no project code and building commit-pinned compiler to run build script would cost
+#   minutes for no checking; `base` refuses branch predating base's rules or checker;
+#   `audit` reads their verdicts and is gate branch protection requires, so required names
+#   stay `audit`, `scope`, `commits` while matrix names vary. `base` and `types` reach merge
+#   through that gate, which is why requiring branches up to date needs no paid ruleset here.
+#   Weekly sweep has no base commit to scope against, so `types` takes `--all` there, as
+#   `plan` takes `--sweep`.
 #   Matrix runs in parallel, so wall time is slowest changed project, never sum of all.
 #   `nim r koch ci` at root runs same checks locally, before any pull request is opened;
 #   runner confirms, never discovers.
@@ -22,6 +27,13 @@
 #   installed one does: audit reads untracked files.
 #   Nim installs under runner temp, never into workspace: audit reads untracked files, so
 #   toolchain inside checkout would be audited (first run on main proved it).
+#   What runner fetches or builds is cached on thing that pins it, never on run: commit for
+#   compiler built from source, `atlas.lock` for that project's checkouts, every
+#   `package-lock.json` for npm's own store. Key is pin itself, so cache cannot serve tree
+#   lock would not have fetched; changing lock changes key, and stale entry is unreachable
+#   rather than wrong. Rejected: caching `nimcache`, which would be largest saving and whose
+#   staleness is exactly failure repository refuses elsewhere -- check passing without
+#   compiling what it claims. It needs driving against deliberately stale cache first.
 #   Branch names and event kind reach koch through environment, never interpolated into
 #   script. Weekly sweep compiles every project, since scoped runs leave unrelated rot
 #   unseen until that project next changes; it skips itself in week nobody merged code,
@@ -108,9 +120,51 @@ jobs:
       - if: matrix.kind == 'commit'
         run: echo "$RUNNER_TEMP/nim-commit/bin" >> "$GITHUB_PATH"
 
+      # Atlas checkouts: `koch tests` restores them from lock on every run, and lock names
+      #   exact commit each time, so cache keyed on that lock returns same tree it would
+      #   have fetched. Key carries no project name: two projects sharing lock share tree it
+      #   names, so entry either restores what that lock says or misses. Projects holding no
+      #   lock skip step; `actions/cache` warns on absent path, and warning nobody acts on
+      #   is noise.
+      - id: locked
+        env:
+          PROJECT: ${{ matrix.dir }}
+        run: |
+          if [ -f "$PROJECT/atlas.lock" ]; then echo "is_locked=true" >> "$GITHUB_OUTPUT"; fi
+      - if: steps.locked.outputs.is_locked == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ${{ matrix.dir }}/deps
+          key: atlas-${{ runner.os }}-${{ hashFiles(format('{0}/atlas.lock', matrix.dir)) }}
+
       - env:
           PROJECT: ${{ matrix.dir }}
         run: nim r koch tests "$PROJECT"
+
+  types:
+    runs-on: ubuntu-latest
+    env:
+      BASE: >-
+        ${{ github.event_name == 'pull_request'
+            && format('origin/{0}', github.base_ref)
+            || github.event.before }}
+      ALL: ${{ github.event_name == 'schedule' && '--all' || '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: ${{ env.NIM_VERSION }}
+          parent-nim-install-directory: ${{ runner.temp }}
+      # Node packages: `npm ci` refetches every run. Cache npm's own store rather than
+      #   `node_modules`, which `npm ci` deletes before installing; lock names exact version
+      #   of each, so hash of every lock is key that cannot serve wrong tree.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+      - run: nim r koch types $ALL
 
   scope:
     if: github.event_name == 'pull_request'
@@ -160,7 +214,7 @@ jobs:
       - run: nim r koch base
 
   audit:
-    needs: [plan, static, project, base]
+    needs: [plan, static, project, types, base]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -170,6 +224,7 @@ jobs:
             plan=${{ needs.plan.result }}
             static=${{ needs.static.result }}
             project=${{ needs.project.result }}
+            types=${{ needs.types.result }}
             base=${{ needs.base.result }}
         run: |
           echo "$VERDICTS"

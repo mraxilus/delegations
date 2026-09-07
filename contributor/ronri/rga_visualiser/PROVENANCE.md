@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Author | Claude Opus 5 and Claude Sonnet 5 |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | a011df991e1e6032 |
+| Rules  | 286e748543eaf97f |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the
@@ -144,6 +144,30 @@ costs 2.5 ms over 5,038 objects; closed rows hold 9.1 elements each over 5,040 o
 travels depends on frames drawn while it was down. Band that will not settle is widened with
 reason recorded, never deleted and never narrowed to fit one lucky run.
 
+**Waits are conditions page reports, not spans of clock.** Harness opened with 115 fixed
+waits against 3 conditions; it carries 16 fixed waits against 21 conditions and 33 frame
+waits today. Four kinds of wait, and only two were races. Camera ease and settling after
+click both become `waitForFunction` over what page says: stance standing still
+(`settleCamera`), scene or selection count reached (`settleCount`, `settleSelection`),
+drawer, help panel or tree branch carrying its class (`settleDrawer`, `settleHelp`,
+`settleBranch`), panel's own five-a-second reading having run (`settleReading`). Pacing
+inside drag loops becomes `waitFrames` -- kept rather than deleted, since steps are what
+makes gesture real and frames are what page moves in.
+  Remaining 16 are measurement windows, each saying so in comment at its own site: sampling
+  span of real time is measurement rather than race, and so is check whose claim is that
+  *nothing* happened, which has no event to wait on. Long press and held key stay wall time
+  for same reason -- how long finger or key is down is what caller asked for.
+  `settleReading` waits on `ms_refresh_ui`, tick's own clock, rather than on any row it is
+  waited on for: ruler, camera fields, tree rows and curves are all written by that tick, and
+  waiting on one of them would assert what check goes on to ask.
+
+*Checked.* Verified by running: five runs after conversion pass 135 of 135, against three
+before it, at unchanged sample sizes.
+  **Unverified**: one run in six failed `and under it the same accounting still holds` at 49
+  of 50 frames. `SHARE_KINDS_ACCOUNT` is 0.995, which over sample of 50 rounds up to *every*
+  frame, so slack that constant exists to give straddling frame is not there at this sample
+  size. Pre-existing, and left alone here: waits were not what decided it.
+
 **Comet's band caught port's own defect rather than needing widening.** First port selected
 horizon line through `nimSelectOnly`, which moves Nim's selection and leaves page's render
 snapshot behind it, so overlay drew no marker and comet advanced only on harness's own two
@@ -211,7 +235,19 @@ header on phrase `not Nim because`, which `justification.nim` demands of gated k
 **Bridge's declarations are derived, never kept beside it.** `tools/build.nim declare` reads
 bridge's own `{.exportc.}` signatures and its three boundary records, and writes
 `build/bridge.d.ts`. Hand-written copy of 157 signatures would be second home for each, free
-to drift; this has one. Cost: type-checking needs `declare` run first, which `web` does.
+to drift; this has one. Cost: type-checking needs `declare` run first, which `types` does.
+
+**One verb holds every check that needs no browser.** `tools/build.nim types` is `declare`
+and both type-checker configurations, and stops there: no `nim js`, no faces, no Chromium.
+`web` and `drive` both call it, so neither writes those steps again.
+  Written for runner to run, at curator's ask (repository issue 47): it reaches 10,676 lines
+  of TypeScript and agreement between bridge's 157 `exportc` signatures and derived
+  declarations, and it needs only Nim and npm, both already pinned.
+  Verified by breaking it on purpose: renaming `nimSceneHandles` in `bridge.nim` without
+  touching anything else fails `types` with `TS2304: Cannot find name 'nimSceneHandles'`,
+  which is drift caught at build rather than at run time.
+  Two configurations rather than one, since page's scripts target browser and harness targets
+  node; `web` running harness's check too costs one `tsc` and keeps one verb honest.
 
 **Type-checking runs under `strict`, `noUncheckedIndexedAccess` and
 `exactOptionalPropertyTypes`**, which CONTRIBUTOR.md now requires of any TypeScript. Neither
@@ -2389,3 +2425,27 @@ kind. 454 lines, 15 `evaluate` bodies, browser-side expressions that are not som
 target alone *can* do but something the target *checks* and Nim's glue would not. Before the
 amendment that file leaned on a reading of "what the target alone can do" it did not quite fit.
 It now has a clause of its own.
+
+## Re-audit, 2026-09-07, type check on runner
+
+Audited by a curator against the rule that a project carrying `package.json` beside its lock
+carries a `types` verb in `tools/build.nim`, and that CI runs it: `koch types` restores node
+tools and drives that verb, scoped to projects one change asks for.
+
+**This is the only project the rule reaches today, and it already met it**: issue 47 asked for
+the verb and pull request 56 landed it before this job existed. Nothing here needed correcting.
+
+What changes is who runs it. The record's line under Driven Checks — *"green here is evidence
+someone ran it rather than something runner confirms"* — is now true of `drive` alone. The type
+check is the runner's: 10,676 lines of TypeScript across `src/browser/` and `tools/drive/`, and
+the agreement between `bridge.nim`'s 157 `exportc` signatures and the derived `bridge.d.ts`.
+
+The curator drove that agreement independently rather than taking this project's word for it:
+renaming `nimSceneHandles` to `nimSceneSlots` in `bridge.nim` alone makes `koch types` report
+one finding over `TS2304: Cannot find name 'nimSceneHandles'` at four sites in
+`construct_section.ts`, and reverting returns 0. Same regression pull request 56 recorded,
+reproduced through the runner's path.
+
+**Not reached, and still this project's to run:** `drive` itself. That is held on the harness's
+115 fixed sleeps against 3 waits on a condition the page reports, which is now the deciding
+cost rather than the value — 135 checks made the value case. See issue 47.

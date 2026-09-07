@@ -1,13 +1,16 @@
-// Checks for name each selected object wears; not Nim because they read overlay's own
-//   `<text>` elements and their computed style, which live only in DOM.
+// Checks for name each selected object wears; not Nim because crossing forfeits check compiler
+//   makes over its `page.evaluate` bodies, which name bridge's derived exports and page's own
+//   `selectOnly`. Overlay's `<text>` is reachable through glue; losing that check is not.
 //   Label is placed by `marker.nim` and drawn in object's ink, haloed in backdrop's colour.
 //   Selected through page's own entry throughout: bare `nimSelect*` moves Nim's selection
 //   and never tells page, so overlay would carry no label at all to read.
 
 import type { Page } from '@playwright/test';
+import { settleCamera } from './camera';
+import { waitFrames } from './frame';
 import { clearTheGlass } from './gestures';
 import { report } from './report';
-import { settleCamera } from './touch';
+
 
 /** How many steps each orbit is walked in, and how many of those two together make. */
 const STEPS_ORBIT = 200, FRAMES_WANTED = 400;
@@ -51,7 +54,7 @@ async function walkOrbit(page: Page, elevation: number, walked: Walked): Promise
       nimSetCameraAzimuth(given.azimuth);
       nimSetCameraElevation(given.elevation);
     }, { azimuth: (i / STEPS_ORBIT) * 2 * Math.PI, elevation });
-    await page.waitForTimeout(25);
+    await waitFrames(page, 2);
 
     const at = await labelStanding(page);
     if (at === null) {
@@ -92,7 +95,7 @@ export async function driveLabelGlide(page: Page): Promise<void> {
     return;
   }
   await page.evaluate((one) => selectOnly(one, null), line);
-  await page.waitForTimeout(300);
+  await settleCamera(page);
 
   const walked: Walked = { frames: 0, hops: 0, out_of_view: 0, step_most: 0 };
   for (const elevation of [0.4, 1.25]) await walkOrbit(page, elevation, walked);
@@ -114,7 +117,7 @@ export async function driveLabelWorn(page: Page): Promise<void> {
     selectOnly(given[0] ?? 0, null);
     toggleSelection(given[1] ?? 0, null);
   }, points);
-  await page.waitForTimeout(400); // Overlay is staged by frame loop, not by selection.
+  await waitFrames(page, 2); // Overlay is staged by frame loop, not by selection.
 
   const worn = await page.evaluate((given) => {
     const texts = (): Element[] => Array.from(document.querySelectorAll('#overlay text'));
@@ -154,7 +157,7 @@ export async function driveLabelWorn(page: Page): Promise<void> {
 
   await clearTheGlass(page);
   await page.evaluate(() => clearSelection());
-  await page.waitForTimeout(400);
+  await waitFrames(page, 2);
   const count_cleared = await page.evaluate(
     () => document.querySelectorAll('#overlay text').length,
   );

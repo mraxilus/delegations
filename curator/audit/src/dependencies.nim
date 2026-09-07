@@ -36,6 +36,8 @@ const
   NIMBLE_EXT* = ".nimble"   ## Extension of package description file.
   LOCK_FILE* = "atlas.lock" ## Atlas lock file name.
   DEPS_DIR* = "deps"        ## Directory Atlas restores checkouts into, never committed.
+  NODE_MANIFEST* = "package.json"    ## Node manifest, naming tools project type-checks with.
+  NODE_LOCK* = "package-lock.json"   ## Node lock, pinning every one of those to exact version.
   UNREADABLE = "Lock unreadable as JSON; got `"
     ## Opening of finding both lock readers report when JSON will not parse.
   NAME_END = {' ', '#', '@', '>', '<', '=', '~', '^'}
@@ -161,3 +163,23 @@ proc restoreAll*(root: string, targets: openArray[Target]): seq[Finding] =
   for target in targets:
     if fileExists(root / target.dir / LOCK_FILE):
       result.add restoreDependencies(root, target)
+
+
+proc restoreNode*(root: string, target: Target): seq[Finding] =
+  ## Restore project's node tools from its lock, as Atlas restores its Nim ones.
+  ##   `npm ci` rather than `install`: it installs exactly what lock names and fails where
+  ##   manifest and lock disagree, which is same contract `atlas changed` holds Nim side to.
+  ##   koch resolves Nim compiler it lacks and will not fetch node, so absent npm is finding
+  ##   naming it rather than skip: check nobody notices doing nothing is worse than none.
+  echo "== " & target.dir
+  if findExe("npm").len == 0:
+    return @[finding(
+      target.dir & "/" & NODE_MANIFEST, 0,
+      "Type check needs npm on `PATH`; install node, or drop this project's manifest; " &
+        "got nothing.",
+    )]
+  let code = runIn(root / target.dir, "npm", ["ci", "--no-audit", "--no-fund"], target.bin)
+  if code != 0:
+    result.add finding(
+      target.dir & "/" & NODE_LOCK, 0, "Node restore failed; got exit `" & $code & "`."
+    )

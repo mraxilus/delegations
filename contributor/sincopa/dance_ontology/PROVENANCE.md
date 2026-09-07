@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | a011df991e1e6032 |
+| Rules  | 286e748543eaf97f |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the Architect's workbook `ontology.partnerwork.xlsx` (sheets `base` and
@@ -478,3 +478,12 @@ moment one arrives, and the `not Nim because` gate already refuses one that argu
   the Google request; until then the page keeps its remote fonts and system stacks.
 - `tlaws` costs 22 s of a four-core runner per audit; acceptable now, and the figure above
   is the one to watch as sweeps grow.
+
+## Re-audit, 2026-09-07, type check on runner
+
+Audited by a curator against the rule that a project carrying `package.json` beside its lock
+carries a `types` verb in `tools/build.nim`, and that CI runs it: `koch types` restores node
+tools and drives that verb, scoped to projects one change asks for.
+
+This project carries no node manifest, so nothing here is type-checked and the rule binds
+nothing today. It binds the moment this project grows scripts of its own.

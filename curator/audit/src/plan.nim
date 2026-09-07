@@ -74,6 +74,41 @@ func testSet*(dirs, paths: openArray[string]): seq[string] =
   result.sort
 
 
+func holds(tree: Tree, dir, name: string): bool =
+  ## Decide whether project directory holds file of that name.
+  let path = dir & "/" & name
+  for e in tree:
+    if e.path == path: return true
+
+
+func nodeDirs*(tree: Tree, dirs: openArray[string]): seq[string] =
+  ## Select projects type-checker reaches, i.e. those carrying node manifest and its lock.
+  ##   Derived from tree rather than listed anywhere: project gains type check by carrying
+  ##   manifest, and `check.yml` names no project, as it names none for compiler matrix.
+  ##   Lock is demanded beside manifest, since `npm ci` needs one and unpinned tools would
+  ##   be only thing here nothing pins.
+  for dir in dirs:
+    if tree.holds(dir, NODE_MANIFEST) and tree.holds(dir, NODE_LOCK): result.add dir
+
+
+proc typeJobs*(root: string, tree: Tree, dirs: openArray[string]): seq[Finding] =
+  ## Restore node tools and type-check every project carrying them.
+  ##   No pin is resolved and no toolchain fetched: `tools/build.nim` compiles no project
+  ##   code, deriving declarations by reading source as text, so project's own pin buys
+  ##   nothing and building commit-pinned compiler to run build script costs minutes for
+  ##   no checking. Driver's compiler runs it, as it runs whole-tree checks.
+  ##   Cost: this holds only while that verb compiles no project code. One that did would
+  ##   need its pin, and this would become matrix job like `project`.
+  ##   Restore failing short-circuits, since type check without installed tools fails again
+  ##   for second reason and reports neither clearly.
+  var targets: seq[Target]
+  for dir in tree.nodeDirs(dirs): targets.add Target(dir: dir)
+  if targets.len == 0: return
+  for target in targets: result.add restoreNode(root, target)
+  if result.len > 0: return
+  result.add runTypes(root, targets)
+
+
 func nimbleOf*(tree: Tree, dir: string): string =
   ## Read project's nimble text from tree; empty when file is absent.
   let path = dir.nimblePath

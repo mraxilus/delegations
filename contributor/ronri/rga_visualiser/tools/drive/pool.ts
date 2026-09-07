@@ -1,11 +1,14 @@
 // Checks for what drawer costs to keep up to date, and for held placements; not Nim because
-//   they count calls page's own controls make and read its canvases back.
+//   crossing forfeits check compiler makes over bodies naming `nimPoolCellColors`,
+//   `geometry_pool_drawn` and `renderFrame` -- derived or stated, never guessed.
 //   Every figure diagnostics refresh writes is inside drawer, and it used to run several
 //   times second regardless: milliseconds landing on one frame in twelve, against frame scene
 //   hold had taken down to about one. That is what stutter is made of.
 
 import type { Page } from '@playwright/test';
-import { holdKeys } from './gestures';
+import { settleCamera } from './camera';
+import { waitFrames } from './frame';
+import { holdKeys, settleDrawer } from './gestures';
 import { report } from './report';
 
 declare global {
@@ -38,6 +41,8 @@ export async function driveDrawerCost(page: Page): Promise<void> {
     }
   });
   await watchCells(page);
+  // Wall time, deliberately: figure reported is rebuilds over span of real time, so span is
+  //   measurement rather than race.
   await page.waitForTimeout(1500);
   const shut = await page.evaluate(() => window.__cells ?? -1);
   report(
@@ -52,7 +57,7 @@ export async function driveDrawerCost(page: Page): Promise<void> {
     document.querySelector('.section[data-section="diagnostics"]')?.classList.add('open');
     window.__cells = 0;
   });
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(1500); // Same window as above, and same reason.
   const open = await page.evaluate(() => window.__cells ?? -1);
   report(
     'and an open one draws the pool grid on a scene change, not on a clock',
@@ -111,7 +116,7 @@ async function drivePoolGrid(page: Page): Promise<void> {
       document.getElementById('button-drawer')?.click();
     }
   });
-  await page.waitForTimeout(200);
+  await settleDrawer(page, false);
 }
 
 /** Assert placement held across camera move draws what fresh one draws.
@@ -143,18 +148,18 @@ export async function drivePlacementHeld(page: Page): Promise<void> {
     canvas.focus();
   });
   await holdKeys(page, ['ArrowRight'], 900);
-  await page.waitForTimeout(400);
+  await settleCamera(page);
   const held = await page.evaluate(() => window.__drawn_placed);
   await page.evaluate(() => {
     // Scene's revision moves; not one pixel of scene does.
     for (const one of nimSceneHandles()) nimSetInk(one, nimObjectInk(one));
   });
-  await page.waitForTimeout(400);
+  await waitFrames(page, 2);
   const fresh = await page.evaluate(() => window.__drawn_placed);
   report(
     'a placement held across a camera move draws what a fresh one draws',
     held !== undefined && held === fresh, `held ${held}, re-placed ${fresh}`,
   );
   await page.keyboard.press('Home');
-  await page.waitForTimeout(400);
+  await settleCamera(page);
 }
