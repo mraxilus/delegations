@@ -38,8 +38,13 @@ const
           "B8", "B9", "B10", "B11", "B12", "B13", "B14",
           "B15", "B16", "B17", "B18", "B19", "B20", "B21",
           "B22", "B23", "B24", "B25", "B26", "B27", "B28",
-          "C1", "C2", "C3", "C4", "C5", "C6", "C7",
-          "D1", "D2", "D3", "D4", "D5", "D6", "D7",
+          # C1, C7, D1, D7 are swans, and their straight connection crosses
+          # close to hand.  Break there was left off, which drew
+          # that connection detached from its hand; it is drawn now, so
+          # they go back to unruled rather than carry verdict given on
+          # picture that has since moved.
+          "C2", "C3", "C4", "C5", "C6",
+          "D2", "D3", "D4", "D5", "D6",
           "E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8",
           "E9", "E10", "E11", "E12", "E13", "E14", "E15", "E16",
           "E17", "E18", "E19", "E20", "E21", "E22", "E23", "E24",

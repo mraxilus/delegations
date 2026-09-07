@@ -1246,6 +1246,7 @@ proc checkHandTurns*() =
           along += run
         result.add here
 
+  const WRITTEN = 0.15 ## Slack markup's own one decimal leaves in sum.
   var gaps = 0
   for manner in Manner:
     let w = MANNERS[manner]
@@ -1334,9 +1335,15 @@ proc checkHandTurns*() =
             let
               stretch = if k == 0: deep else: polylineLen(routes[arm]) - deep
               here = shades[arm][k][i]
-            for mark in here:
-              for piece in [mark.opens, stretch - mark.shuts]:
-                doAssert piece <= 0.01 or piece >= SEEN_RUN,
+            for m, mark in here:
+              let after = if m + 1 < here.len: here[m + 1].opens - mark.shuts
+                          else: stretch - mark.shuts
+              for piece in [mark.opens, after]:
+                # Nothing at all is written as nothing to within precision
+                # markup carries, which is one decimal on each of several
+                # numbers.  Drawing emits no piece between that and
+                # `SEEN_RUN`, so gap between them is where fault shows.
+                doAssert piece <= WRITTEN or piece >= SEEN_RUN - WRITTEN,
                   &"A break leaves a piece too short to read as line; got " &
                     &"`{decimal(piece, 2)}` on {arm} shade {k} in {manner} " &
                     &"edge {edge} frame {i}."

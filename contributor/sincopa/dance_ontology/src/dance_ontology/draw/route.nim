@@ -849,21 +849,29 @@ func gapFor*(at, span, wide: float): tuple[opens, shuts: float] =
   ##     reach stopping short of its hand reads as unfinished line, never
   ##     as one passing beneath something -- which is whole of what break
   ##     is for (rule 14).
-  ##   Sliding rather than shortening, so every gap is same length and
-  ##     one break reads like every other.  Gap still covers its crossing
-  ##     wherever crossing is half break clear of both ends, which is
-  ##     every case that can be drawn whole.
   ##   Centred on its crossing, always.  Break says line passes under
   ##     another one, and it says it where they cross; gap pushed to one
   ##     side leaves crossing drawn whole and puts hole in line where
   ##     nothing happens.
-  ##   Crossing with less than half gap either side of it carries none:
-  ##     there is no room to put break in without hanging it off end, and
-  ##     reach stopping short of its hand reads as unfinished line rather
-  ##     than as one passing beneath (rule 14).
-  if at <= wide / 2 or span - at <= wide / 2:
+  ##   Narrowed, rather than slid, where crossing lies near hand.  Every
+  ##     break was once same length and one that would not fit was left
+  ##     off; threshold for that was exactly gap hanging off end, so
+  ##     crossing hair inside it kept whole gap and left piece of line
+  ##     shorter than line is wide.  Round cap draws such piece as dot,
+  ##     and reach ending in dot reads as detached from its hand.
+  ##     So gap gives way instead: piece left at each hand is never
+  ##       shorter than `SEEN_RUN`, and break shrinks to make room.
+  ##     Cost: breaks near hand are shorter than breaks in middle, where
+  ##       before they were all one length.  Accepted -- break that hides
+  ##       its crossing is what rule 14 asks for, and it still does.
+  ##   Break narrower than line it hides says nothing at all, so crossing
+  ##     with no room for that much carries none.
+  let
+    room = min(at, span - at) - SEEN_RUN
+    half = min(wide / 2, room)
+  if 2 * half < LINK_W:
     return (at, at)
-  (at - wide / 2, at + wide / 2)
+  (at - half, at + half)
 
 
 func alongOf(pts: seq[Point]): seq[float] =

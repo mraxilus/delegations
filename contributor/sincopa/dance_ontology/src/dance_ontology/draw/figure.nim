@@ -452,12 +452,39 @@ func dashedAt*(pts: seq[Point]; dives: seq[tuple[opens, shuts: float]];
   # without flickering; crossing outside this half leaves nothing.
   var breaks: seq[tuple[opens, shuts: float]]
   for dive in dives:
-    let
+    var
       opens = clamp(dive.opens - starts, 0.0, runs[^1])
       shuts = clamp(dive.shuts - starts, 0.0, runs[^1])
+    # Sliver of paint at seam between two halves draws as dot under round
+    # cap, and dot sitting inside break reads as line coming through it.
+    # So piece too short to read as line is given to break there, since
+    # other half carries line on.
+    #   Only at seam.  Other end of half is hand, where `gapFor` has
+    #     already left piece long enough to read, and taking it would draw
+    #     reach stopping short of its own hand.
+    #   Half that starts at nothing is first, so its seam is its end;
+    #     half that starts further along is second, and its seam is its
+    #     start.
     if shuts > opens:
+      if starts > 0 and opens < SEEN_RUN:
+        opens = 0.0
+      if starts <= 0 and runs[^1] - shuts < SEEN_RUN:
+        # Past end rather than to it: pattern is measured along polyline
+        # and spent along smoothed curve drawn through it, which is
+        # slightly longer, so gap stopping at polyline's end leaves
+        # curve's own tail painted -- which is dot again.
+        shuts = runs[^1] + LINK_W
       breaks.add (opens, shuts)
   breaks = breaks.sortedByIt(it.opens)
+  # Two crossings close together leave hair of paint between their breaks,
+  # which draws as dot for same reason.  One break covers both.
+  var joined: seq[tuple[opens, shuts: float]]
+  for gap in breaks:
+    if joined.len > 0 and gap.opens - joined[^1].shuts < SEEN_RUN:
+      joined[^1].shuts = max(joined[^1].shuts, gap.shuts)
+    else:
+      joined.add gap
+  breaks = joined
   # Run, gap, run, gap: one pair per break pattern has room for.
   var
     lens: seq[float]
