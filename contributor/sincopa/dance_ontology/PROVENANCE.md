@@ -139,6 +139,27 @@ markup and none of the routing, at the price of compile time. Verified by `tdiag
 (every picture says what its frame is, at any size) and by the workbench's gates
 (`design/checks.nim`, 102 assertions on the pages).
 
+**Rule 24 was measured at the corner, and a kink walked through it.** A settled reach picks
+its way past the marks it must not touch by weighing three candidates -- the taut band let
+go from the straight line, and a bow over each side -- on length and turns together
+(`readingCost`). Until now the taut band was taken unweighed wherever it turned little and
+turned smoothly, on the grounds that nothing could be plainer. It can be: the band hugs
+whichever mark it meets, and a mark that sits near a hand puts the whole of that hug against
+that hand, so the line runs dead straight to its far end and bends only there. The Architect
+called out exactly that on B4 and B23 of the review sheet. **Measured**: their reach crested
+0.88 of the way along its chord with 8.3 degrees at one corner, where every other bending
+reach on the page crested between 0.40 and 0.60; the bow those two now take crests at 0.53
+and 0.59 with 3.4 degrees, which is the shape of B7 beside them. All three candidates are
+now weighed every time, and `crestOf` measures rule 24 along the reach as well as at its
+sharpest corner -- a reach that leaves its chord must crest away from both hands. Rejected:
+tuning a clearance to move the hug, which would have left the rule measuring half of itself.
+Cost: three band relaxations per settled reach where one sometimes did, which is the mark
+suite going from 20.9 to 23.3 seconds; and the bow beats the hug on those two by a hundredth
+of a unit of line, so the preference is real but thin -- it is the review sheet's pins that
+keep a flip from passing unseen. Verified: the fix moved exactly two drawings of the 148 on
+the review page and eight of the 273 on the single-turn page, and nothing on the frame, sign
+or hand-to-hand pages.
+
 **The map and the spokes are the same picture at two distances.** `map.nim` draws the whole
 ontology with every line laid down before any word, names cut into the line with round caps
 (never painted over, since a hole in a line now means a connection passes underneath), and
