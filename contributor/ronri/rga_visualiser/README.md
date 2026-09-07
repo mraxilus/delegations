@@ -28,6 +28,7 @@ nim r koch ci                                    # repository root: audit, scope
 nim r koch tests contributor/ronri/rga_visualiser  # this project alone, three configurations
 nim r tools/build.nim assets                     # this project: fetch the six faces, once
 nim r tools/build.nim web                        # this project: build/rga_visualiser.html
+nim r tools/build.nim drive                      # this project: build it, then drive it
 ```
 
 Needs **Nim built from commit `27763495b`** on `PATH`, and git. No release will do: the
@@ -87,9 +88,12 @@ the desktop application is not, and arrives in a follow-up pull request. Its des
 travels with it.
 
 Every law under test through testament on the pinned commit, in three configurations. The
-page has been built and looked at, and its type surface is checked; nothing on it has been
-driven yet, so pointer input, drag, undo, save and load are untested and frame times are
-unmeasured until the Playwright harness lands. Unreviewed by a human: nothing here has been
+page has been built and looked at, its type surface is checked, and a Playwright harness
+drives seventeen checks over held keys, the wheel, mouse pan and touch. Drag, undo, save
+and load remain untested and frame times unmeasured; no runner job reaches the harness,
+so those checks are run by hand — see Driven Checks in `PROVENANCE.md`.
+
+Unreviewed by a human: nothing here has been
 read line by line, and no human has driven either front-end or seen it on real graphics
 hardware.
 
