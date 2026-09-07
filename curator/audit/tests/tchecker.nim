@@ -69,6 +69,23 @@ suite "Checker":
     check KOCH.dispatchVerbs == @["ci", "tree"]  # `root` and `all` are options, not verbs
     check dispatchVerbs("proc run() = discard\n").len == 0
 
+  test "one parser reads project driver too, since both drivers hold one shape":
+    # koch learns which verbs project carries by reading its driver (`plan.nim`, `verbDirs`),
+    #   so line opening dispatch is given rather than fixed. Project cases over its first
+    #   argument where koch cases over parsed options.
+    const DRIVER = """
+when isMainModule:
+  case paramStr(1)
+  of "web": web()
+  of "drive": drive()
+  else:
+    stderr.write USAGE
+"""
+    check DRIVER.dispatchVerbs(DRIVER_CASE) == @["drive", "web"]
+    check DRIVER.dispatchVerbs.len == 0  # koch's own opening matches nothing here
+    check KOCH.dispatchVerbs(DRIVER_CASE).len == 0  # and neither way round
+    check dispatchVerbs("", DRIVER_CASE).len == 0  # project carrying no driver at all
+
   test "usage text and checks table must name what dispatch names":
     let usage = "Usage: koch <ci|tree> [project]\n"
     let table = "## Checks reference\n\n| Command | Reads |\n|---|---|\n| `ci` | x |\n" &
