@@ -240,6 +240,27 @@ prose moved. Cost: nothing holds a page's prose to `GLOSSARY.md`; `tglossary.nim
 `_Avoid_` lines but claims only against chain position names, so this rename can drift back
 without a test noticing.
 
+**The moving sections show a walk whole before they show it in pieces.** Sections E and F of
+the review sheet drew one cell per edge -- 64 quarter-turn edges and 24 chain edges, 88 cells
+of animation to scroll past. Each manner of each hold now takes two cells instead: the walk
+entire, and the same walk step by step with a button per step. `turnWalk` gained `steps` and
+`back`, so one builder makes a single rocking edge, a whole round of four quarters that
+closes on itself and needs no return, and a whole chain of six halves out and back, which
+does need one because the chain has ends. The switching is a radio button and a sibling
+rule, so the page stays markup a browser draws with nothing running; rejected: script, which
+these pages have never needed. The pin now covers every drawing in a cell rather than the
+last one, since a verdict on a cell is a verdict on all of it -- and for a cell holding one
+drawing that is the same string, which is why all 59 existing pins still matched. Cost: 99
+cells where there were 147, but 6.9 MB where there were 4.2, since a walk shown whole is
+drawn as well as its pieces, not instead of them. Every animation runs at one pace
+(`WALK_SECONDS`), so the length of a loop says how far it goes rather than how fast: the
+whole chain is six times an edge, which is a long loop and is flagged on the page as
+something to shorten if it reads as slow. Verified by `tmarks.nim`, which drives the build and so
+the gates: the 16 rounds are counted, each asserted to close where it set off, and the
+whole-walk figures are held to the same hatch laws as the edges. Verified again by every
+drawing on all five pages coming out byte-identical when `steps` and `back` took their
+defaults.
+
 **A verdict is given on a picture, so the picture is pinned.** `review_page.nim` lays out
 every position the project draws as 147 cards -- the sixteen standard diagrams and the one
 anticlockwise counterpart, the twenty-eight distinct single-hand turn positions, both
