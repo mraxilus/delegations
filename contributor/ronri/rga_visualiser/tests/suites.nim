@@ -237,7 +237,7 @@ suite "Objects":
       check normal =~ directionNormal(plane).get
 
 
-  test "object at horizon yields no anchor":
+  test "object in horizon yields no anchor":
     for line in LINES:
       let attitude = ⊖ line
       check attitude.isHorizon
@@ -1289,7 +1289,7 @@ suite "Mesh":
         check isNear(expanded.toPosition, assembled)
 
 
-  test "point at horizon becomes a star fixed at eye plus its own direction":
+  test "horizon point becomes a star fixed at eye plus its own direction":
     for line in LINES:
       MESHES.clearMeshes
       let attitude = ⊖ line
@@ -1302,7 +1302,7 @@ suite "Mesh":
       check isNear(star, SCALE_TEST.eye + SCALE_TEST.radiusHorizon*heading.get)
 
 
-  test "line at horizon becomes a great circle around eye, perpendicular to its normal":
+  test "horizon line becomes a great circle around eye, perpendicular to its normal":
     for plane in PLANES:
       MESHES.clearMeshes
       let attitude = ⊖ plane
@@ -1350,13 +1350,13 @@ suite "Mesh":
       check count_drawn in 1 ..< SEGMENTS_RING
 
 
-  test "plane at horizon becomes a dome over the whole sky around eye":
-    # Every plane at horizon is same universal object regardless of source (see.
+  test "horizon plane becomes a dome over the whole sky around eye":
+    # Every horizon plane is same universal object regardless of source (see.
     #   `objects.directionNormalHorizon`'s own doc comment), so two unrelated planes'
     #   own attitudes should both land dome at exactly same distance from eye,
     #   with nothing about either plane's own coefficients read to decide it.
-    #   Attitude of plane (grade 3) gives line at horizon, not plane: reaching
-    #   plane at horizon needs grade-4 volume first, built here from point wedged
+    #   Attitude of plane (grade 3) gives horizon line, not plane: reaching
+    #   horizon plane needs grade-4 volume first, built here from point wedged
     #   with unrelated plane it does not lie on.
     let
       volume_first = POINTS[10] ∧ PLANES[0]
@@ -2071,8 +2071,8 @@ suite "Scene":
       check kindText(POINTS[i]) == "point"
       check kindText(LINES[i]) == "line"
       check kindText(PLANES[i]) == "plane"
-      # Attitude of line is its direction, which is point standing at horizon.
-      check kindText(⊖ LINES[i]) == "point at horizon"
+      # Attitude of line is its direction, which is point lying in horizon.
+      check kindText(⊖ LINES[i]) == "horizon point"
     check kindText(1.0 + POINTS[0]) == "mixed grade, nothing to draw"
 
 
@@ -3777,7 +3777,7 @@ suite "Camera Aim":
     check aim_thrice.get.centroid.get =~ Position(x: 1.0, y: 0.0, z: 0.0)
     check aim_thrice.get.centroid_sum.get[Basis.E4] =~ 3.0
 
-    let horizon = attitude(LINES[0]) # Line's attitude is point at horizon.
+    let horizon = attitude(LINES[0]) # Line's attitude is horizon point.
     check isHorizon(horizon)
     let aim_star = none(CameraAim).aimIncluding(horizon, SCALE_AIM)
     check aim_star.get.heading.isSome
@@ -4785,7 +4785,7 @@ suite "Picking":
 
 
   test "a line's attitude is picked over the line it came from":
-    # Attitude of line is point at horizon, and `tessellate.addLine` runs.
+    # Attitude of line is horizon point, and `tessellate.addLine` runs.
     #   line out to *exactly* where `addPoint` draws that attitude, "with no gap" -- so
     #   two overlap on screen precisely and ranking is what has to separate them.
     #   Points outrank lines, so star must win. It did not: `pickNearest` built its
@@ -5145,7 +5145,7 @@ suite "Interaction":
   test "the sky starts no drag, so a press on empty space still reaches the camera":
     # Regression this rule exists to prevent, held directly. `beginDrag` failing when.
     #   nothing is hovered is *entire* mechanism by which press on empty space
-    #   becomes orbit -- and plane at horizon is hovered wherever nothing else is,
+    #   becomes orbit -- and horizon plane is hovered wherever nothing else is,
     #   because it is drawn as dome over every direction. Were it to start drag, orbit
     #   and pan would stop working outright moment sky joined scene.
     var scene = initScene()
@@ -6603,7 +6603,7 @@ suite "Marker":
     LINE = POINT_A ∧ POINT_B
     PLANE = POINT_A ∧ POINT_B ∧ POINT_C
     LINE_HORIZON = attitude(PLANE)
-      ## Take plane's own attitude: pencil of directions lying in it, at horizon.
+      ## Take plane's own attitude: pencil of directions it spans, lying in horizon.
     PLANE_HORIZON = attitude(
       toMultivector(Position(x: 0.0, y: 0.0, z: 0.0)) ∧ PLANE
     ) ## Whole sky, built way `storyboard`'s own step 11 builds it, as attitude.
@@ -6817,8 +6817,8 @@ suite "Marker":
     check moved > 1.0
 
 
-  test "a line at horizon is flanked by bands, wrapping the sky as its own circle does":
-    # Plane's own attitude is line at horizon -- pencil of directions lying in it.
+  test "a horizon line is flanked by bands, wrapping the sky as its own circle does":
+    # Plane's own attitude is horizon line -- pencil of directions lying in it.
     let marker = markerOf(LINE_HORIZON).get
     check marker.kind == MarkerKind.Bands
     # Both bands survive here: this line crosses view, so each of its two flanking.
@@ -6934,8 +6934,8 @@ suite "Marker":
     check settled =~ OFFSET_MARKER_RAIL*radiansPerPixel(scale)
 
 
-  test "a plane at horizon is framed by the viewport, arriving as the screen's edge":
-    # Attitude of grade-4 object is plane at horizon -- whole sky.
+  test "a horizon plane is framed by the viewport, arriving as the screen's edge":
+    # Attitude of grade-4 object is horizon plane -- whole sky.
     let marker = markerOf(PLANE_HORIZON).get
     check marker.kind == MarkerKind.Frame
 
@@ -7024,7 +7024,7 @@ suite "Marker":
       check clearanceTouch(swell, is_touch = false) =~ 0.0
 
 
-  test "a point at horizon keeps its ring, on the star it is drawn as":
+  test "a horizon point keeps its ring, on the star it is drawn as":
     # Its own star stands one horizon radius along its direction, so it is markable only.
     #   while camera is turned toward it -- behind eye it reports same
     #   "nothing to draw" every other unmarkable case does.
@@ -7342,7 +7342,7 @@ suite "Marker":
       markerOf(geometry, travel = some(travel)).get
 
     # Plane's circle and line's rails both carry one; point has no orientation and.
-    #   plane at horizon carries no normal at all, so neither says anything.
+    #   horizon plane carries no normal at all, so neither says anything.
     check pulsed(PLANE, 0.3).count_run_pulse > 0
     check pulsed(LINE, 0.3).count_run_pulse > 0
     # Horizon line's bands are cut to view at both ends, and their own angle zero.
@@ -7628,10 +7628,10 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
         if kindOf(scene.geometryOf(handle)).isNone: without.add(toText(scene.labelAt(handle)))
       check without == newSeq[string]()
 
-    test "every size carries every drawable kind, at horizon as well as in the finite world":
+    test "every size carries every drawable kind, in horizon as well as in the finite world":
       # **Property that makes smallest size usable check at all.** Quick pass.
       #   over 60 objects is only worth running if it exercises what big one does, and
-      #   block at horizon is fragile part -- it is built from attitudes of Sol's own
+      #   block in horizon is fragile part -- it is built from attitudes of Sol's own
       #   objects and `addHorizon` refuses pair spanning nothing, so size too small to
       #   carry arrangement fails here rather than quietly drawing less.
       var counted: array[ScaleOrrery, tuple[points, planes: int]]
@@ -7651,7 +7651,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
           &"{tally[Kind.Plane]} planes")
         for kind in Kind: check tally[kind] > 0
         # **Ceiling as well as floor, and lines are only kind with one.** They are cut.
-        #   to three that mean something -- two in Sol and one at horizon -- because
+        #   to three that mean something -- two in Sol and one in horizon -- because
         #   line is infinite and crosses whole frame whatever it joins. Floor alone
         #   would let them creep back one edit at time. Same three at every size, since
         #   only Sol carries finite lines.
@@ -7909,9 +7909,9 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
             if lies(geometry, planet): inc joining
       check joining == 1
 
-    test "of the two points at horizon, only the one off the ecliptic makes the plane":
+    test "of the two points in horizon, only the one off the ecliptic makes the plane":
       # **Why there are two.** Earth lies in Sol's ecliptic, so direction Sol-to-Earth.
-      #   lies along that plane and therefore *on* line at horizon it gives -- wedging it
+      #   lies along that plane and therefore *on* horizon line it gives -- wedging it
       #   back with that line adds nothing. Luna's ring is tipped out, so its direction is off
       #   line and spans plane with it. Both halves are checked, because whole
       #   construction turns on difference between them.

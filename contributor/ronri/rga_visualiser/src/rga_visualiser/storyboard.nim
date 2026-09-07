@@ -62,8 +62,8 @@ const STEPS*: array[11, Step] = [
   Step(stem: "08_project", label: "o onto G",
     operation: Operation.ProjectOrthogonal, index_first: 3, index_second: 6, ink: Ink.Rose),
   # Take attitude down grade by grade.
-  #   Line gave point at horizon (06); plane gives line at horizon; grade-4 volume gives
-  #   plane at horizon, one universal object every plane at horizon is.
+  #   Line gave horizon point (06); plane gives horizon line; grade-4 volume gives
+  #   horizon plane, one universal object every horizon plane is.
   #   See `objects.directionNormalHorizon`.
   Step(stem: "09_attitude_line_horizon", label: "Lh = att(G)",
     operation: Operation.Attitude, index_first: 6, index_second: 0, ink: Ink.Jade),
@@ -73,7 +73,7 @@ const STEPS*: array[11, Step] = [
     operation: Operation.Attitude, index_first: 14, index_second: 0, ink: Ink.Cobalt),
 ] ## Script of every step, in order.
   ##   Line from two points, plane from that line, then meet, measure and project.
-  ##   Closes with attitude taken down to line, then plane, at horizon.
+  ##   Closes with attitude taken down to line, then plane, in horizon.
 
 
 const

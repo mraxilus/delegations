@@ -8,7 +8,7 @@
 ##   its edge, spanned by own frame.
 ##     Fixed rather than camera-relative, so plane holds one size in world units as
 ##     camera dollies or orbits.
-## Object at horizon (infinitely far, no support point) is drawn fixed to `DrawExtent.eye`
+## Object in horizon (infinitely far, no support point) is drawn fixed to `DrawExtent.eye`
 ## at `DrawExtent.radiusHorizon`, near far clip plane.
 ##   Point becomes marker standing in fixed direction; line becomes great circle of
 ##   directions its pencil spans; plane, unique universal whole-sky object every plane at
@@ -106,7 +106,7 @@ const
     ##   Plane draws fill and rim together, so two caps move as pair.
   DOMES_MAX* {.define: "visualiser.domes_max".} = 10081
     ## Bound how many dome records one frame holds, by same worst case as `DISCS_MAX`.
-    ##   With every plane at horizon.
+    ##   With every horizon plane.
   ANIMATION_MILLISECONDS* {.define: "visualiser.animation_milliseconds".} = 350
     ## Set how long freshly added object takes to grow and fade fully into view.
     ##   Milliseconds rather than seconds, as `.define` takes integer.
@@ -133,7 +133,7 @@ const
   LIGHT_NONE* = Direction(x: 0.0, y: 0.0, z: 0.0)
     ## Name absence of light: zero vector, which both vertex shaders read as flat.
     ##   Zero rather than option: it crosses wire as three floats per point, and shader
-    ##   has no option to unwrap. Sun, preview, star at horizon and point with no sun all
+    ##   has no option to unwrap. Sun, preview, star in horizon and point with no sun all
     ##   take it.
   RADIUS_OBJECT_MOST* = 1.0e6
     ## Bound largest radius either editor lets reader type.
@@ -296,7 +296,7 @@ type
 
   Outcome* {.pure.} = enum ## Define what became of object once drawn.
     Finite, ## Object had finite extent and was drawn where it stands.
-    Horizon, ## Object lay wholly at horizon; only its direction could be drawn.
+    Horizon, ## Object lay wholly in horizon; only its direction could be drawn.
     Empty, ## Multivector carried no drawable geometry at all.
 
   Rgba* = object ## Define colour channels, in 0 .. 1.
@@ -1213,7 +1213,7 @@ func addDisc*(
 
 func addDome*(meshes: var MeshSet, center: Position, radius: float, tint: Rgba) =
   ## Append whole-sky sphere record around `center`, for dome vertex shader to widen.
-  ##   Plane at horizon is unique universal whole-sky object, same regardless of which
+  ##   Horizon plane is unique universal whole-sky object, same regardless of which
   ##   points produced it (see `directionNormalHorizon`), so only `radius` and `tint`
   ##   decide its shape.
   ##   Every direction camera can see sky in shows it, looking down across ground

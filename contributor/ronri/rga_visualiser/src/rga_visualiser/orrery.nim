@@ -26,14 +26,14 @@
 ## Sol alone also carries moons and only two finite lines in whole scene: `sol ∧ earth`
 ## and `earth ∧ luna`.
 ##   Line is infinite, so each crosses entire frame; more read as line traffic.
-## Four objects at horizon, two of them points because only one can make plane.
-##   Earth lies in Sol's ecliptic, so `att(sol ∧ earth)` sits *on* line at horizon
+## Four objects in horizon, two of them points because only one can make plane.
+##   Earth lies in Sol's ecliptic, so `att(sol ∧ earth)` sits *on* horizon line
 ##   ecliptic gives.
 ##   Luna's ring is tipped out of it, so `att(earth ∧ luna)` sits off that line and spans
-##   plane at horizon with it. See horizon block in `constructOrrery`.
+##   horizon plane with it. See horizon block in `constructOrrery`.
 ## `objectsOf(scale)` objects on nose at every size, asserted.
 ##   Walk passes over system too large for room left rather than stopping on it.
-##   Only Sol's block and four at horizon are fixed; everything between is however many
+##   Only Sol's block and four in horizon are fixed; everything between is however many
 ##   real stars fit.
 ## Colour says what thing is, not which system it belongs to; see `lut_role_to_ink`.
 ##
@@ -176,7 +176,7 @@ const
 
   INDEX_MOON_LUNA = 0
     ## Name which entry of `MOONS` is Luna.
-    ##   Second finite line joins it to Earth, and plane at horizon exists only because
+    ##   Second finite line joins it to Earth, and horizon plane exists only because
     ##   Luna's ring is tipped out of ecliptic; load-bearing as `INDEX_SOL_EARTH` is.
 
   SYSTEM_SOL = System(reach: 0.0, bearing: 0.0, rise: 0.0, radius: 12.0, lean: 0.0,
@@ -186,7 +186,7 @@ const
     ##   measured from, so it is one system not placed at all.
     ##   Lean zero: ecliptic lies flat on ground grid, plane z = 0 grid is ruled on.
     ##     That is why moons have tilt of own (`TILT_MOON`): lean once tipped both
-    ##     system's plane and Luna's ring, and plane at horizon is built from difference.
+    ##     system's plane and Luna's ring, and horizon plane is built from difference.
 
   UNITS_PER_PARSEC* = 100.0
     ## Fix how many world units one parsec stands for.
@@ -256,7 +256,7 @@ const
     ##   Archive carries no radii either; Earth's, same rule as suns take Sol's.
   COUNT_OBJECT_HORIZON = 4
     ## Count objects closing block comes to.
-    ##   Four, not three: two points at horizon, because one cannot make plane. See
+    ##   Four, not three: two points in horizon, because one cannot make plane. See
     ##   horizon block in `constructOrrery`.
 
   RADIUS_MOON_NEAREST = 0.08
@@ -277,7 +277,7 @@ const
     ##   Luna's real inclination to ecliptic, 5.14 degrees.
     ##     One figure for every moon: real inclinations are all small, and one that has
     ##     to be right is Luna's.
-    ##   Plane at horizon exists only because this is not zero.
+    ##   Horizon plane exists only because this is not zero.
     ##     `addHorizon` refuses pair if this ever goes flat.
 
   SHIFT_SOL = 1.0
@@ -433,14 +433,14 @@ func radiusOfNeighbourPlanet(planet: NeighbourPlanet; which, count: int): float 
 static:
   doAssert SOL[INDEX_SOL_EARTH].name == "earth",
     &"`INDEX_SOL_EARTH` must name Earth, whose orbit line joins it to Sol and whose " &
-      &"attitude is the point at horizon; got `{SOL[INDEX_SOL_EARTH].name}`."
+      &"attitude is the horizon point; got `{SOL[INDEX_SOL_EARTH].name}`."
   doAssert SOL[INDEX_SOL_URANUS].name == "uranus" and
       SOL[INDEX_SOL_NEPTUNE].name == "neptune",
     &"`INDEX_SOL_URANUS` and `INDEX_SOL_NEPTUNE` must name the two outermost planets, " &
       &"which span the ecliptic and set the system's scale; got " &
       &"`{SOL[INDEX_SOL_URANUS].name}` and `{SOL[INDEX_SOL_NEPTUNE].name}`."
   doAssert MOONS[INDEX_MOON_LUNA].name == "luna",
-    &"`INDEX_MOON_LUNA` must name Luna, whose line to Earth gives the plane at horizon " &
+    &"`INDEX_MOON_LUNA` must name Luna, whose line to Earth gives the horizon plane " &
       &"its attitude; got `{MOONS[INDEX_MOON_LUNA].name}`."
   doAssert SOL[0].role == Role.Sun, &"`SOL` must open with its star; got `{SOL[0].role}`."
   for moon in MOONS:
@@ -453,14 +453,14 @@ static:
 func addHorizon(
   scene: var Scene, geometry: Multivector, label: string, expected: Kind, now: float
 ) =
-  ## Add one of closing objects at horizon, refusing anything that is not one.
+  ## Add one of closing objects in horizon, refusing anything that is not one.
   ##   Same guard `addPlane` is, against second way of getting it wrong.
-  ##     Attitude of grade-4 volume is plane at horizon only if point and plane wedged to
+  ##     Attitude of grade-4 volume is horizon plane only if point and plane wedged to
   ##     make it are genuinely apart: `planet[0] ∧ ecliptic` gave zero, `ecliptic` being
   ##     plane `planet[0]` built.
   ##     `storyboard`'s seeds carry same warning about `o` and `ground`.
   doAssert kindOf(geometry) == some(expected) and isHorizon(geometry),
-    &"Orrery's `{label}` must be {expected} at horizon, its operands genuinely apart; got " &
+    &"Orrery's `{label}` must be {expected} in horizon, its operands genuinely apart; got " &
       &"`{kindOf(geometry)}`."
   scene.addObject(geometry, label, lut_role_to_ink[Role.Derived], now)
 
@@ -515,7 +515,7 @@ const OBJECTS_SOL* = len(SOL) + len(MOONS) + 3
 type ScaleOrrery* {.pure.} = enum
   ## Name how deep into catalogue one build of arrangement reaches.
   ##   Three sizes of same scene, not three scenes: Sol entire, then real stars outward,
-  ##   then four objects at horizon, truncated at different depth.
+  ##   then four objects in horizon, truncated at different depth.
   ##   They exist to be *benchmarked against each other*, so cost of change reads as
   ##   slope.
   Nearest       ## Sol entire, and about dozen of its nearest real neighbours.
@@ -550,9 +550,9 @@ const
 
   OBJECTS_ORRERY_MIN* = OBJECTS_FIXED_ORRERY + objectsOf(STARS[0])
     ## Count smallest arrangement there is.
-    ##   Sol entire, block at horizon, and one neighbour opening camera is fitted to.
+    ##   Sol entire, block in horizon, and one neighbour opening camera is fitted to.
     ##   Floor rather than preference.
-    ##     Below `OBJECTS_FIXED_ORRERY` scene cannot hold Sol, and block at horizon takes
+    ##     Below `OBJECTS_FIXED_ORRERY` scene cannot hold Sol, and block in horizon takes
     ##     attitudes of Sol's objects. One neighbour beyond is what `RADIUS_ORRERY` needs
     ##     to be true.
     ##   Folded, so it moves when `SOL`, `MOONS` or catalogue's nearest entry does.
@@ -561,7 +561,7 @@ static:
   for scale in ScaleOrrery:
     doAssert objectsOf(scale) >= OBJECTS_ORRERY_MIN,
       &"`ScaleOrrery.{scale}` must ask for at least `{OBJECTS_ORRERY_MIN}` objects, Sol, the " &
-        &"block at horizon and the one neighbour the opening camera is fitted to; got " &
+        &"block in horizon and the one neighbour the opening camera is fitted to; got " &
         &"`{objectsOf(scale)}`."
   doAssert FRAMED_ORRERY == 2,
     &"`OBJECTS_ORRERY_MIN` folds in one neighbour because `FRAMED_ORRERY` is 2, and must " &
@@ -646,7 +646,7 @@ func constructSol(
   orbit = sol ∧ placed[INDEX_SOL_EARTH]
   # Join two lines in whole arrangement, which horizon block is built from.
   #   Earth lies *in* ecliptic, Luna's ring is tipped out of it, and that difference
-  #   makes plane at horizon constructible.
+  #   makes horizon plane constructible.
   tether = placed[INDEX_SOL_EARTH] ∧ placement_moons[INDEX_MOON_LUNA]
   scene.addObject(orbit, "sol ∧ earth", lut_role_to_ink[Role.Derived], now)
   scene.addObject(tether, "earth ∧ luna", lut_role_to_ink[Role.Derived], now)
@@ -656,7 +656,7 @@ func constructSol(
 func constructOrrery*(
   scene: var Scene, scale: ScaleOrrery = SCALE_ORRERY_DEFAULT, now: float = 0.0
 ) =
-  ## Fill scene with every system in turn, then four objects at horizon.
+  ## Fill scene with every system in turn, then four objects in horizon.
   ##   `scale` says how deep into catalogue to reach; see `ScaleOrrery`. Every size runs
   ##   same code.
   ##   `now` is forwarded to `addObject` untouched, so every object animates in as one
@@ -712,11 +712,11 @@ func constructOrrery*(
       addPlane(scene, sun ∧ first_planet ∧ second_planet,
         "ecliptic " & star.name, now, place_sun)
 
-  # Close at horizon, every one attitude of one of Sol's objects.
-  #   Attitude drops one grade and lands at horizon: line gives point there, plane gives
+  # Close in horizon, every one attitude of one of Sol's objects.
+  #   Attitude drops one grade and lands in horizon: line gives point there, plane gives
   #   line.
   #   Two points, and only second can make plane.
-  #     `att(sol ∧ earth)` lies along ecliptic, so sits *on* line at horizon it gives;
+  #     `att(sol ∧ earth)` lies along ecliptic, so sits *on* horizon line it gives;
   #     `att(earth ∧ luna)` points off it, and wedged with that line spans plane at
   #     horizon. `addHorizon` refuses pair spanning nothing.
   let

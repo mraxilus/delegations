@@ -17,11 +17,11 @@
 ##   | Point            | `Ring`: circle in screen space, about drawn point.            |
 ##   | Line             | `Rails`: two screen-space segments flanking its projection.   |
 ##   | Plane            | `Loop`: circle lying *on plane*, outside its own rim.         |
-##   | Line at horizon  | `Bands`: two small circles on sky flanking great circle       |
+##   | Horizon line  | `Bands`: two small circles on sky flanking great circle       |
 ##   |                  |   line itself is drawn as.                                    |
-##   | Plane at horizon | `Frame`: boundary around whole viewport, since object it      |
+##   | Horizon plane | `Frame`: boundary around whole viewport, since object it      |
 ##   |                  |   marks is whole sky.                                         |
-##   | Point at horizon | `Ring`, about star it is drawn as.                            |
+##   | Horizon point | `Ring`, about star it is drawn as.                            |
 ##   |------------------|---------------------------------------------------------------|
 ##
 ## Last two draw fixed to eye rather than around point in scene.
@@ -938,7 +938,7 @@ func markerRails(
   ##     through support to near one, so line wears one comet rather than four.
   ##     Measured from support, lapped against shorter rail, so camera restretching
   ##     rails does not move comet, and pair cannot drift apart. None leaves rails still.
-  ##   None at horizon, and none where line collapses to point on screen.
+  ##   None in horizon, and none where line collapses to point on screen.
   let
     anchor = positionAnchor(geometry)
     axis = direction(geometry)
@@ -1089,7 +1089,7 @@ proc markerLoop(
   ##   normal points at eye.
   ##     Points are generated around plane's frame, and projection answers which way
   ##     that order reads. None leaves circle still.
-  ##   None at horizon, where plane draws as dome fixed to eye.
+  ##   None in horizon, where plane draws as dome fixed to eye.
   let
     anchor = if anchor_override.isSome: anchor_override else: positionAnchor(geometry)
     axes = frame(geometry)
@@ -1311,7 +1311,7 @@ func radiusToEdge(half_width, half_height, angle: float): float =
 func markerFrame(width, height: int; progress, clearance: float; marker: var Marker): bool =
   ## Build horizon plane's frame: boundary around viewport.
   ##   Expands from centre as circle and settles as viewport's rectangle.
-  ##   Plane at horizon is whole sky, drawn as dome filling every direction, so honest
+  ##   Horizon plane is whole sky, drawn as dome filling every direction, so honest
   ##   marker surrounds view. It does not move with camera; what it marks does not either.
   ##   `progress` sets one reach in pixels, and each direction's boundary point stands at
   ##   that reach *or* screen edge, whichever is nearer.
@@ -1320,7 +1320,7 @@ func markerFrame(width, height: int; progress, clearance: float; marker: var Mar
   ##     Full reach is half-diagonal, corners' distance.
   ##   `clearance` pushes it outward past inset: frame is never under finger, and
   ##   shrinking would read as retreating.
-  ##   No pulse: pulse's message is orientation, and plane at horizon has none.
+  ##   No pulse: pulse's message is orientation, and horizon plane has none.
   ##     `frame`, `directionNormal` and `direction` all report nothing, negated or not.
   ##   None only for viewport too small to hold inset.
   let
@@ -1373,7 +1373,7 @@ proc markerFor*(
   marker: var Marker; progress: float = 1.0;
   is_touch: bool = false; travel: Option[float] = none(float); swell: float = 0.0
 ): bool =
-  ## Kind marker for one object, dispatching on its grade and whether it is at horizon.
+  ## Kind marker for one object, dispatching on its grade and whether it lies in horizon.
   ##   Fills caller's `marker` and reports whether one was shaped, not `Option[Marker]`.
   ##     `Marker` reserves every kind's fixed arrays, and on JS backend each return, `get`
   ##     and assignment walked all of it through `nimCopy` (Art. VII.1).
@@ -1390,7 +1390,7 @@ proc markerFor*(
   ##   `travel` places orientation pulse round outline, and is what caller passes to say
   ##   object is selected: hover and keyboard focus pass none.
   ##     Distance in screen pixels from outline's anchor, from `selection.PulseClock`.
-  ##     None where object has no orientation: point, and plane at horizon (see
+  ##     None where object has no orientation: point, and horizon plane (see
   ##     `markerFrame`).
   ##   None only where object has no drawable geometry. Every drawn shape has marker.
   let shape = kindOf(geometry)
@@ -1399,7 +1399,7 @@ proc markerFor*(
     is_horizon = geometry.isHorizon
     clearance = clearanceTouch(swell, is_touch)
   case shape.get
-  # Ring point at horizon about fixed star `anchorFor` places, so it needs no branch.
+  # Ring horizon point about fixed star `anchorFor` places, so it needs no branch.
   #   Two below are drawn as great circle and whole sky with no anchor.
   of Kind.Point:
     markerRing(

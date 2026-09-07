@@ -827,9 +827,9 @@ selected.
 | Point | Circle in screen space about the drawn point. | Sweeps clockwise from twelve. |
 | Line | Two rails flanking its projection, one each side. | Runs out from its support. |
 | Plane | A circle lying *on the plane*, outside its rim. | Opens from the disc's centre. |
-| Line at horizon | Two bands on the sky it circles. | Closes in from a quarter turn. |
-| Plane at horizon | The viewport's edge, inset by the gap. | Expands as a circle from the middle. |
-| Point at horizon | Circle about the fixed star it draws as. | Sweeps. |
+| Horizon line | Two bands on the sky it circles. | Closes in from a quarter turn. |
+| Horizon plane | The viewport's edge, inset by the gap. | Expands as a circle from the middle. |
+| Horizon point | Circle about the fixed star it draws as. | Sweeps. |
 
 All keep `GAP_MARKER` = 6.0 px between the object's drawn edge and the marker, measured out
 from the drawn size: a point's ring radius is `radiusPixelsAt(radius, anchor, scale)` + gap,
@@ -1025,7 +1025,7 @@ measured 96 px along a rail against 334 px round a plane's circle. `FRACTION_MAR
 orientation**: nothing computes the sense, the projection decides a loop's order (+74,393
 from above `ground`, −82,167 from below, as swept angle), a rail is walked as one path from
 far horizon through the support to near, a band takes the great circle's normal. Two shapes
-get none: a point, and a plane at horizon, whose `frame`, `direction` and `directionNormal`
+get none: a point, and a horizon plane, whose `frame`, `direction` and `directionNormal`
 all report nothing and are unchanged by negation. One comet to a line, not one per drawn
 half: the two rails take the phase measured on the first and stay within one comet's length.
 
@@ -1108,7 +1108,7 @@ and `handleTap`.
 `Placement.kind` rather than asking `position`, `direction`, `frame` and `spanPerpendicular`
 again per handle; empty means derive per handle, the desktop path and every suite case. A finite
 plane the algebra can span no frame for shares `PlaneEverywhere` with the sky and is not
-pickable; a direction point is picked at the horizon, where the eye puts it. **The pick
+pickable; a direction point is picked in the horizon, where the eye puts it. **The pick
 rejects a plane before meeting it**: `isBeyondDisc` bounds the disc's screen extent by the
 silhouette of the sphere containing it, conservative in the depth and off-axis terms — 20,000
 random configurations with the centre up to three view-widths off screen and 300 surface
@@ -1562,7 +1562,7 @@ The demo preset is the build's own load case, in three sizes: `ScaleOrrery.Neare
 `Neighbourhood` (360, the default everywhere) and `Catalogue` (5038, two handles short of the
 pool — the smallest margin that still proves the point of leaving one: add a point, then
 join it to something). Every size is the same construction — Sol entire, then real stars
-outward, then four objects at horizon — truncated at a different depth, so a cost can be read
+outward, then four objects in horizon — truncated at a different depth, so a cost can be read
 as a slope. Measured on one page under SwiftShader: 60 / 360 / 5038 objects cost 1.3 / 1.7 /
 3.0 s to build, a frame build 3.1 / 4.6 / 12.8 ms, an edit 9.1 / 8.5 / 8.0 ms — flat, the
 ring timeline doing its job. The working rule: `Nearest` for a quick check, `Neighbourhood`
@@ -1584,7 +1584,7 @@ tail indices are named constants (`INDEX_SOL_EARTH`, `INDEX_SOL_URANUS`,
 `INDEX_SOL_NEPTUNE`, `INDEX_MOON_LUNA`) held to their bodies at compile time; positional
 indices once put the ecliptic's furthest distance on a comet at 17.8 AU rather than Neptune
 at 30.05 while the doc comment said otherwise. `TILT_MOON` = 0.0897 rad carries Luna's real
-5.14° inclination, separate from the system's lean; the plane at horizon is
+5.14° inclination, separate from the system's lean; the horizon plane is
 `att(ecliptic) ∧ att(earth ∧ luna)` and exists only because the two differ. Moons map their
 real semi-major axes (Phobos at 9,376 km to Nereid at 5.5 million, a range of 588) onto
 `RADIUS_MOON_NEAREST` 0.08 to `RADIUS_MOON_FURTHEST` 0.32 by the same logarithm, **measured
@@ -1652,7 +1652,7 @@ roles, four inks.
 
 **Three suite properties a model of a real system has to get right**: the planets run
 strictly outward in the table's order; the squash is real (outermost under ten times the
-innermost, where the truth is 77); the line at horizon is proportional to `attitude` of the
+innermost, where the truth is 77); the horizon line is proportional to `attitude` of the
 scene's own `ecliptic sol`. No point is a hub (lines and planes through any point ≤ 6, worst
 `sun 1` at 4, where a star-centred layout scored 22); the one orbit line is `sol ∧ earth`,
 asked geometrically rather than by label; three collinear points never wedge to nothing

@@ -60,7 +60,7 @@ const
     ##   Scaled alone clipped field away as zoom carried orbit distance down to foreground
     ##   star: twenty of thirty units is six hundred, and field is three thousand across.
     ##   See `distanceFar` and `Camera.reach_scene`.
-    ##   Scaled rather than fixed so everything meant to read at horizon
+    ##   Scaled rather than fixed so everything meant to read in horizon
     ##   (`tessellate.radiusHorizonFor`, `tessellate.extentFurnitureFor`, far end of
     ##   every drawn line) stays past what frame shows at any orbit distance.
     ##   Fixed plane cannot: view's extent grows with distance while plane does not, so
@@ -270,7 +270,7 @@ func azimuthElevationFor*(heading: Direction): (float, float) =
   ## Solve orbit angles camera needs to look along `heading`.
   ##   Regardless of pivot or distance: `eye`'s formula cancels pivot out of `forward`
   ##   entirely, so this is plain spherical-coordinates inverse of same offset.
-  ##   For aiming capture at horizon object's direction: unlike finite one, it is not
+  ##   For aiming capture of horizon object's direction: unlike finite one, it is not
   ##   anchored anywhere fixed demo angle frames.
   let elevation = arcsin(clamp(-heading.z, -1.0, 1.0))
   let azimuth = arctan2(-heading.y, -heading.x)
@@ -653,10 +653,10 @@ func aimIncluding*(
   anchor_override: Option[Position] = none(Position)
 ): Option[CameraAim] =
   ## Fold one more object into aim, or start one where there was none.
-  ##   Unchanged by geometry drawing nothing, and by plane at horizon, in view from every
+  ##   Unchanged by geometry drawing nothing, and by horizon plane, in view from every
   ##   camera.
-  ##   Point at horizon is fixed star, faced along own direction.
-  ##   Line at horizon is whole great circle, so first axis spanning perpendicular to its
+  ##   Horizon point is fixed star, faced along own direction.
+  ##   Horizon line is whole great circle, so first axis spanning perpendicular to its
   ##   normal is picked, putting some of circle in view.
   ##   Everything finite widens sphere about `anchorFor`'s point; finite plane widens it
   ##   by whole disc round that point.

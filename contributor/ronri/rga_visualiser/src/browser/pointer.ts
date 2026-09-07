@@ -317,7 +317,7 @@ function endMouseDrag(e: PointerEvent) {
     }
   } else if (button_mouse_down !== null && nimIsClick(now())) {
     // Plain click that began no drag to end -- so it landed on empty space, or on one.
-    //   thing that *is* empty space: plane at horizon, which nimBeginDrag refuses so this
+    //   thing that *is* empty space: horizon plane, which nimBeginDrag refuses so this
     //   press could still have become orbit or pan. Clicking it selects it, which is
     //   only way pointer can, since it can never be dragged from. **Either button**,
     //   on same rule as above: right click on sky behaving unlike right click on

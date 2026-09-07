@@ -51,11 +51,11 @@ func kindOf*(m: Multivector): Option[Kind] =
 
 
 func isHorizon*(m: Multivector): bool = abs(( |∘ m)[Basis.scalarAnti]) <= TOLERANCE_ABS
-  ## Report whether object lies wholly at horizon, i.e. whether its weight vanishes.
+  ## Report whether object lies wholly in horizon, i.e. whether its weight vanishes.
 
 
 func isHorizonPlane*(m: Multivector): bool = kindOf(m) == some(Kind.Plane) and isHorizon(m)
-  ## Report whether object is plane at horizon.
+  ## Report whether object is horizon plane.
   ##   One shape drawn as sky dome (`mesh.addDome`), which frame assembly inserts before
   ##   anything else sharing translucent veil pass. See `visualiser.assembleMeshes`.
 

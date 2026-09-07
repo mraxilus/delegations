@@ -236,7 +236,7 @@ type
     is_enabled*: bool ## Whether picking and overlay run at all; off during storyboard capture.
     cursor*: ScreenPosition ## Last known cursor position, in window pixels.
     index_hover*: Option[int] ## Object nearest cursor this frame, regardless of dragging.
-    is_hover_backdrop*: bool ## Whether hovered object is backdrop: plane at horizon, or
+    is_hover_backdrop*: bool ## Whether hovered object is backdrop: horizon plane, or
       ## finite plane whose disc fills view; see `picking.isBackdropUnder`.
     count_hover_rivals*: int ## How many objects of hovered object's rank were in reach.
       ## `picking.PickReport.count_rivals`; one where hover is unambiguous, zero where
@@ -1013,7 +1013,7 @@ func beginDrag*(interaction: var Interaction, arming: MenuArming, now: float): b
   ##   `arming` is what pointer chose; see `MenuArming` and `armingOf`.
   ##   Expects `beginPress` to have run for same press.
   ##   Backdrop is click and hold pivot, never drag handle; see `is_hover_backdrop`.
-  ##     Plane at horizon is drawn as dome over every direction, hovered wherever nothing
+  ##     Horizon plane is drawn as dome over every direction, hovered wherever nothing
   ##     else is; press on it starting drag would stop press on empty space falling
   ##     through to camera. Plane filling view leaves no empty space at all, so press on
   ##     it starting drag left view unmovable. Dragging backdrop is moving view.

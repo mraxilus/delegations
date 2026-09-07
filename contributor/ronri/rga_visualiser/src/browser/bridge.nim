@@ -1171,7 +1171,7 @@ proc nimHoverHandle(): cint {.exportc.} =
 
 
 proc nimIsHoverBackdrop(): bool {.exportc.} = INTERACTION.is_hover_backdrop
-  ## Report whether hovered object is plane at horizon.
+  ## Report whether hovered object is horizon plane.
 
 proc nimCanTouchConstruct(): bool {.exportc.} = INTERACTION.canConstructByTouch
   ## Report whether finger's press where it stands may become construction drag.
@@ -1181,7 +1181,7 @@ proc nimHoverRivals(): cint {.exportc.} = cint(INTERACTION.count_hover_rivals)
   ## Report how many objects of hovered object's rank stood in reach; for driven checks.
   ## Report whether finger's press where it stands may become construction drag.
   ##   Same answer `beginDrag` gives touch at slop; see `interaction.canConstructByTouch`.
-  ## Report whether what is hovered is whole sky, plane at horizon.
+  ## Report whether what is hovered is whole sky, horizon plane.
   ##   True wherever nothing else is under pointer and such plane is in scene.
   ##   One hovered thing that must not act like one: starts no drag (see
   ##   `interaction.beginDrag`), and tap on it means "empty space" to touch flow.
@@ -1709,7 +1709,7 @@ proc nimAnchorScreen(handle, width, height: cint): FlatBuffer {.exportc.} =
   ##   `picking.isInFront`.
   ##     Also 0 where handle no longer holds live object, since every caller reads handle
   ##     carried across frames that can go stale when object is removed.
-  ##   Plane at horizon reports middle of view: it has no place in scene, so menu goes to
+  ##   Horizon plane reports middle of view: it has no place in scene, so menu goes to
   ##   centre of frame `marker.markerFrame` draws around it.
   ##   Duplicated by constraint in `visualiser.anchorOfSelection`; fix both or neither.
   if not SCENE.isAlive(int(handle)): return FLAT_ANCHOR.fill3(0.0'f32, 0.0'f32, 0.0'f32)
@@ -1883,7 +1883,7 @@ proc nimSelectionPulse(
   ##     this reuses it wherever every input matches.
   ##   Takes same `progress` and `is_touch` marker was asked for, so pulse lies on outline
   ##   actually drawn; swollen marker's pulse swells with it.
-  ##   Empty for anything with no orientation: point, plane at horizon, dead handle, no
+  ##   Empty for anything with no orientation: point, horizon plane, dead handle, no
   ##   shape; see `marker.markerFor`.
   ##   Clock is advanced whether or not run came out.
   ##     Returning early on empty run deadlocks line: every phase starts at 0,

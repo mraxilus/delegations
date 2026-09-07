@@ -297,7 +297,7 @@ func positionOnObjectUnder(
   ##   Point stands where it stands, plane is met where ray crosses it, line is read at
   ##   nearest point to ray; see `positionOnLineNearest`.
   ##   Finite shapes only.
-  ##     Object at horizon is drawn at `radius_horizon` about eye and is not *at* any
+  ##     Object in horizon is drawn at `radius_horizon` about eye and is not *at* any
   ##     place, so nothing there to fly toward.
   ##   None also for hit behind eye (depth against `plane_eye`) and for ray with no
   ##   direction.
@@ -567,7 +567,7 @@ proc pickWalk(
       if star.isNone: continue
       let distance = pixelsFromCursor(view_projection, width, height, star.get, cursor)
       if distance > RADIUS_CROWD_TOUCH: continue
-      # Star sits at horizon, deeper than any disc, and is dot cursor is never inside.
+      # Star lies in horizon, deeper than any disc, and is dot cursor is never inside.
       if hiders_known.coverOf(
         scale.radiusHorizon, projectToScreen(view_projection, width, height, star.get)
       ) >= RADIUS_PICK_POINT: continue
@@ -723,7 +723,7 @@ func coversView*(
 func isBackdropUnder*(
   scene: Scene, handle: int, scale: DrawExtent, width, height: int
 ): bool =
-  ## Report whether hovered object is backdrop: plane at horizon, or plane filling view.
+  ## Report whether hovered object is backdrop: horizon plane, or plane filling view.
   ##   Backdrop is click and hold pivot, never drag handle: press on it falls through to
   ##   camera, or view cannot be moved while plane fills every pixel.
   let geometry = scene.geometryOf(handle)
@@ -913,7 +913,7 @@ func isRingWithinFrame(
 func isLineShownCentrally(
   m: Multivector; scale: DrawExtent; view_projection: Matrix4; width, height: int
 ): bool =
-  ## Report whether grade-2 object reaches centred box, at horizon or finite.
+  ## Report whether grade-2 object reaches centred box, in horizon or finite.
   if m.isHorizon:
     let normal = directionNormalHorizon(m)
     if normal.isNone: return false
@@ -954,7 +954,7 @@ func isPlaneShownCentrally(
   ##     Rim says only whether reader sees whole circle, so it is held to frame: disc
   ##     made to fit *centred box* had to be pushed half again further away than showing
   ##     whole circle needed.
-  ##   Plane at horizon is whole sky, in view from every camera.
+  ##   Horizon plane is whole sky, in view from every camera.
   ##   `anchor_override` centres disc there instead of support, as `tessellate.addPlane`
   ##   reads it; two can stand units apart against disc's radius.
   if m.isHorizon: return true

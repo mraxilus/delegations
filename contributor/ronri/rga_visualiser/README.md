@@ -3,7 +3,7 @@
 An interactive visualiser of rigid geometric algebra: points, lines and planes in a
 four-dimensional projective algebra with a rigid (degenerate) metric, and the operations
 that join, meet, project and expand them. Pick two objects, apply an operation, and the
-object it derives is drawn where the algebra puts it — including at the horizon, where a
+object it derives is drawn where the algebra puts it — including in the horizon, where a
 line's attitude and a plane's direction live.
 
 It is a testbed rather than a replication. The algebra itself is the `pga` library, derived

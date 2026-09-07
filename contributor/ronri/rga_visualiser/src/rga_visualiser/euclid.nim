@@ -8,7 +8,7 @@
 ##   `objects.nim` and `tessellate.nim`.
 ## Two sides answer different questions.
 ##   *Where object stands* is algebra's: scene object, world-space camera, ray cast from
-##   screen, lattice line, axis, anything at horizon.
+##   screen, lattice line, axis, anything in horizon.
 ##   *How geometry becomes triangles* is not: plane's disc and line's ribbon are stand-ins
 ##   drawn for eye, carrying no geometric meaning, built with quickest arithmetic.
 ## `Position` and `Direction` stay separate types because they do not mix.

@@ -61,7 +61,7 @@ static:
     &"`mesh.DISCS_MAX` must hold every plane drawn twice plus a preview, " &
       &"`{2*OBJECTS_MAX + 1}` at this capacity; got `{DISCS_MAX}`."
   doAssert DOMES_MAX >= 2*OBJECTS_MAX + 1,
-    &"`mesh.DOMES_MAX` must hold every plane at horizon drawn twice plus a preview, " &
+    &"`mesh.DOMES_MAX` must hold every horizon plane drawn twice plus a preview, " &
       &"`{2*OBJECTS_MAX + 1}` at this capacity; got `{DOMES_MAX}`."
   doAssert RINGS_MAX >= 2*OBJECTS_MAX + 1,
     &"`mesh.RINGS_MAX` must hold every plane's rim drawn twice plus a preview, " &
@@ -427,9 +427,9 @@ func describeKind*(m: Multivector, storage: var openArray[char], cursor: var int
     if kind.isNone: "mixed grade, nothing to draw"
     else:
       case kind.get
-      of Kind.Point: (if m.isHorizon: "point at horizon" else: "point")
-      of Kind.Line: (if m.isHorizon: "line at horizon" else: "line")
-      of Kind.Plane: (if m.isHorizon: "plane at horizon" else: "plane")
+      of Kind.Point: (if m.isHorizon: "horizon point" else: "point")
+      of Kind.Line: (if m.isHorizon: "horizon line" else: "line")
+      of Kind.Plane: (if m.isHorizon: "horizon plane" else: "plane")
   )
 
 

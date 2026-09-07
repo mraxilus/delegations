@@ -4,7 +4,7 @@
 ## algebra, and hands places to `mesh` to pack into vertices.
 ## Geometry side of drawing.
 ##   Owns what thing is and where it stands: scene object, lattice line of ground grid,
-##   world axis, and everything at horizon, where point becomes star, line becomes great
+##   world axis, and everything in horizon, where point becomes star, line becomes great
 ##   circle of directions it stands for, and plane becomes whole sky.
 ##   Those are geometric objects placed through library, which project exists to exercise.
 ## Does *not* own picture drawn to stand for them.
@@ -12,7 +12,7 @@
 ##   `mesh` out of ordinary arithmetic.
 ##   See `euclid.nim` header for split, and `boundary.nim` for one place two languages meet.
 ## Finite objects are tessellated about support point, i.e. point nearest origin.
-##   Objects at horizon are drawn fixed to `DrawExtent.eye` at `DrawExtent.radiusHorizon`,
+##   Objects in horizon are drawn fixed to `DrawExtent.eye` at `DrawExtent.radiusHorizon`,
 ##   so orbiting or dollying leaves each in same apparent direction, as real star would.
 ##
 ## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
@@ -41,7 +41,7 @@ type
     ##   `toMultivector(eye)` per segment.
     scale*: DrawScale ## Everything picture is measured against; see `mesh.DrawScale`.
     eye_point*: Multivector ## Eye as unit-weight point.
-    forward_point*: Multivector ## Sight direction as point at horizon.
+    forward_point*: Multivector ## Sight direction as horizon point.
     plane_eye*: Multivector ## Unitized plane through eye perpendicular to sight.
       ## `depthAgainst` it is view depth, sign "in front".
     plane_near*: Multivector ## Same plane pushed `depth_near` forward.
@@ -104,7 +104,7 @@ func algebraFilled*(scale: DrawExtent): DrawExtent =
 
 func anchorFor*(m: Multivector, scale: DrawExtent): Option[Position] =
   ## Resolve one point standing for `m`, for picking point and for cursor feedback.
-  ##   Point uses own place, or own star position at horizon, matching where
+  ##   Point uses own place, or own star position in horizon, matching where
   ##   `mesh.addPoint` draws it.
   ##   Line and plane use support point, what mesh anchors on.
   ##     Neither needs horizon anchor: `pickNearest` tests horizon line against great
@@ -400,11 +400,11 @@ type
   Case* {.pure.} = enum ## Define which drawable algebra found, and its placement.
     Nothing ## No drawable geometry at all; nothing is emitted.
     PointAt ## Point standing somewhere in finite world.
-    PointToward ## Point at horizon: direction, drawn as star on sky.
+    PointToward ## Horizon point: direction, drawn as star on sky.
     LineThrough ## Line through support, running along attitude.
-    LineAcross ## Line at horizon: pencil of directions its two axes span.
+    LineAcross ## Horizon line: pencil of directions its two axes span.
     PlaneOn ## Plane anchored somewhere, disc spanned by two arms.
-    PlaneEverywhere ## Plane at horizon: whole sky, carrying no orientation.
+    PlaneEverywhere ## Horizon plane: whole sky, carrying no orientation.
 
   Placement* = object ## Define everything *algebra* says about one object, and nothing else.
     ## Camera is not in it, and that is whole point.
