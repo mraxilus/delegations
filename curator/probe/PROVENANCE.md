@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 00f4a795ba695350 |
+| Rules  | a011df991e1e6032 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: curator test project replacing `abstand/intervals`, which lived in a real domain;
@@ -109,6 +109,17 @@ label creates it and a misspelling makes a second label nobody filters on.
 Nothing in this tree changes: the rule binds how the next session here starts. No issue is open
 against this project today, so its filter starts empty, which is the answer the rule is meant
 to give when there is nothing waiting.
+
+## Re-audit, 2026-09-07, Article II.9 bound
+
+Audited by a curator against the amendment to Article II.9, which bounds when target code may
+be hand-written: the source language by default, the crossing kept narrow, and the target
+language only where the source cannot reach at all or where crossing would forfeit what the
+target gives for free — a check its own compiler makes over the bulk of a file, a cost the glue
+would add to a hot path — with the file's opening comment saying which.
+
+This project holds no target-language file, so the rule binds nothing here today. It binds the
+moment one arrives, and the `not Nim because` gate already refuses one that argues nothing.
 
 ## Open questions
 
