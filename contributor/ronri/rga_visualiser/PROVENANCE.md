@@ -296,6 +296,37 @@ out of Nim.
   repository: nothing drives file picker.
   **Unverified**: no human has driven this page.
 
+Desktop Front-End
+---
+**Two libraries are bound rather than wrapped, and only where they are called.** SDL3 owns
+window, input and OpenGL context; libGL owns driver. Both are external concerns this project
+exists to look past (Article II.8), so `src/desktop/sdl3.nim` and `src/desktop/opengl.nim`
+declare only symbols called, and each declares through library's own header, so C compiler
+owns every struct layout and every prototype.
+  Library flag sits in module needing it -- `{.passL: "-lSDL3".}`, `{.passL: "-lGL".}` -- never
+  in configuration, so any binary importing one links without repeating anything.
+  Cost is that development headers must be present to compile; see README's build section for
+  which packages carry them.
+
+**Mirrored constants are checked against header's own, by generated assertion.** SDL3's event
+kinds, scancodes, modifier masks and window flags are mirrored as Nim constants so `case` can
+bind them, and every mirrored value is paired with header's name for it in one table.
+`CHECKS_MIRROR` walks that table and emits one C++ `static_assert` per pair, so binding that
+went stale fails to compile rather than fails to work. Both sides of each check read from same
+table, so mirror cannot drift from assertion guarding it.
+  Verified by breaking it on purpose: moving `Scancode.Home` from 74 to 75 and changing
+  nothing else fails compilation with `static assertion failed: SDL3 binding is stale:
+  SDL_SCANCODE_HOME was renumbered.` Restored after.
+  OpenGL enumerants are written as literals instead, and deliberately: their values are fixed
+  by OpenGL specification and never renumbered, which is not true of any SDL constant.
+
+*Checked.* Verified by running: both bindings compile and link against SDL3 3.2.31 and libGL
+through `nim cpp`, and their assertions run against real headers. Shared core compiles and runs
+under that same backend too, which nothing had shown before -- it had only ever been built
+through C and JS.
+  **Unverified**: no window has been opened. These two modules are bound surface alone; what
+  draws through them arrives with renderer and entry point.
+
 Render Paths
 ---
 **The directory a module sits in is which render path may reach it.**
