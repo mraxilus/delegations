@@ -74,11 +74,8 @@ suite "reach breaks":
       let
         gap = gapFor(float(i) * STEP, span)
         width = gap.shuts - gap.opens
-      # Tightest case is exact equality -- gap and piece beside it are one
-      # length by construction -- so it is compared with hair of room,
-      # not with bare `>=` that one rounding either way decides.
-      check gap.opens >= width - 1e-9
-      check span - gap.shuts >= width - 1e-9
+      check gap.opens >= width
+      check span - gap.shuts >= width
 
   test "an uncrossed reach is drawn whole":
     let runs = cutGapsAt(line, @[])
