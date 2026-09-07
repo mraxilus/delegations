@@ -12,6 +12,7 @@
 ##   | declare  | derive `bridge.d.ts` from bridge's own `exportc` signatures            |
 ##   | web      | declare, compile bridge through JS backend, type-check and emit        |
 ##   |          | TypeScript, inline faces, fold everything into one self-contained page |
+##   | drive    | build page, then drive it through real events and report every check  |
 ##   | assets   | fetch vendored faces page embeds                                       |
 ##   | clean    | remove `build`, `bin` and `nimcache`                                   |
 ##   |----------|-----------------------------------------------------------------------|
@@ -48,6 +49,8 @@ const
   PATH_DECLARATIONS = BUILD / "bridge.d.ts"
     ## Derived declarations of bridge's exports, read by type-checker alone.
     ##   Outside `outDir`, which TypeScript excludes from its own inputs by default.
+  PATH_TSCONFIG_DRIVE = "tsconfig.drive.json"
+    ## Harness's own type-checker configuration, targeting node not browser.
   PATH_SHELL = "pages" / "shell.html"
     ## Committed markup, carrying `@EMBED:<face>@` and `@SCRIPT@` tokens.
   PATH_PAGE = BUILD / "rga_visualiser.html"
@@ -81,7 +84,7 @@ const
     ## Faces page embeds, all SIL Open Font License 1.1; origins in PROVENANCE.md.
   HOST_FACES = "https://cdn.jsdelivr.net/npm/@fontsource"
     ## Host `assets` fetches faces from.
-  USAGE = "Usage: nim r tools/build.nim <declare|web|assets|clean>\n"
+  USAGE = "Usage: nim r tools/build.nim <declare|web|drive|assets|clean>\n"
     ## Text printed on usage error.
 
 
@@ -276,6 +279,17 @@ proc web() =
   echo "Wrote ", PATH_PAGE, " (", page.len, " bytes)."
 
 
+proc drive() =
+  ## Drive assembled page through real events, and report every check it runs.
+  ##   Builds page first: harness against stale page checks build nobody has.
+  ##   Type-checks harness under its own configuration, which targets node rather than
+  ##   browser and so cannot share `tsconfig.json`'s.
+  ##   Exit follows harness: non-zero where any check failed, so one command is whole answer.
+  web()
+  run("npx", ["tsc", "--project", PATH_TSCONFIG_DRIVE])
+  run("node", [BUILD / "drive" / "main.js"])
+
+
 proc clean() =
   ## Remove every product, leaving only what git holds.
   for dir in [BUILD, "bin", "nimcache"]:
@@ -294,6 +308,7 @@ when isMainModule:
     case paramStr(1)
     of "declare": declare()
     of "web": web()
+    of "drive": drive()
     of "assets": assets()
     of "clean": clean()
     else:

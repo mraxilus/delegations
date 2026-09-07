@@ -113,6 +113,51 @@ and 310 cases, which is what says no behaviour moved; `tsc` clean under its thre
   **Unverified**: the desktop front-end is not in this repository yet, so no rename here has
   been compiled against it. Whatever it carries of this vocabulary arrives with it.
 
+Driven Checks
+---
+**Suites test rules; this layer tests wiring.** What a slide does to pivot, what zoom does
+to distance, is suite's. Nothing in suites presses key, turns wheel or puts two fingers on
+canvas, so nothing in them catches rule wired to wrong event. `tools/drive/` does, through
+Playwright, against page `tools/build.nim web` assembled. One command runs both:
+`nim r tools/build.nim drive`.
+
+**Seventeen checks pass today**, across five groups: held keys, wheel zoom, mouse pan, what
+zoom settles onto, and what finger does. Figures from this environment, software-rendered:
+held `w` for 500 ms slides pivot 11.6 to 12.0 units; eight wheel notches take distance 19.00
+to 5.28 and leave what pointer is over **0.00 px** from where it was; notch each way returns
+eye within 0.0000 units; right-button drag moves pivot 32.5 units at unchanged height; zoom
+over ground brings pivot from 1.00 to 0.32; pinch takes 19.00 to 6.53 leaving azimuth exact;
+long press selects one, tap toggles second in, tap on empty space clears.
+
+**Timing-dependent quantities are asserted as bands, never figures.** How far held key
+travels depends on frames drawn while it was down. Band that will not settle is widened with
+reason recorded, never deleted and never narrowed to fit one lucky run.
+
+**TypeScript rather than Nim, and that is argued rather than assumed.** Playwright's surface
+is about fifteen bindings — genuinely one page of glue, as `dance_ontology` found for its own
+driver. What decided it is that 248 of harness's calls are `page.evaluate` bodies naming
+bridge's 157 exports, which `build/bridge.d.ts` types. Through Nim's foreign-function glue
+each becomes unchecked string, and vocabulary pass renamed every one of those exports: string
+version compiles clean and fails one check at time. Put to curator as issue 48, since Article
+II.9 reads both ways here.
+  `@types/node` is pinned for node's own globals. Its declarations clash with DOM lib, which
+  `evaluate` bodies need, so lib check is skipped: that skips checking *inside* declaration
+  files, never calls against them.
+  Four page-script names harness drives — `clearSelection`, `hideSelectionMenu`,
+  `refreshDiagnostics`, `toast` — are hand-declared in `tools/drive/page.d.ts`, because
+  nothing derives them. Bridge's exports are never hand-written; reach for one first.
+
+*Checked.* Verified by running: seventeen of seventeen pass through `tools/build.nim drive`
+on assembled page, in Chromium, software-rendered.
+  **Unverified**: **CI does not reach this layer.** Runner's jobs are fixed in curator-owned
+  workflow, and contributor's scope reaches only own project, so no job drives page. Asked as
+  issue 47. Until it is ruled, these checks are contributor's to run, and green here is
+  evidence someone ran it rather than something runner confirms.
+  **Not yet ported**: prototype's harness carries 127 checks; seventeen are here. Remaining
+  cover drag construction, apply pickers, orbit and pick, drawer's own sections, diagnostics
+  readings and orrery under load. Nothing about them is known to fail — they are unported,
+  which is not same as passing, and record will say so until they run.
+
 Browser Front-End
 ---
 **Page is one self-contained file.** It opens from `file://` or from an artefact host that
@@ -169,10 +214,10 @@ type-checker: every script clean under three flags above, with no `any` and no n
 assertion used to silence them. Verified by running: three suites pass on pinned commit
 through `koch tests`, unchanged at 323, 302 and 310 cases, which says conversion moved no rule
 out of Nim.
-  **Unverified**: no human has driven this page, and nothing here has been driven by check.
-  Pointer, touch and wheel paths, drag construction, undo, scene save and load, and every
-  diagnostics reading are **untested** in this repository; prototype's own harness arrives
-  next, and until it does every claim about behaviour beyond first frame is assumption.
+  **Partly driven now**: held keys, wheel, mouse pan and touch are checked by harness; see
+  Driven Checks for what it covers and what it does not. Drag construction, undo, scene save
+  and load, and every diagnostics reading remain **untested** in this repository.
+  **Unverified**: no human has driven this page.
   **Unmeasured**: no frame time was taken here. Figures under Measurements are prototype's.
 
 Render Paths
