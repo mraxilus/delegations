@@ -526,8 +526,21 @@ record files, while every stamp is still checked.
 
 Cost: a merged change can leave an unrelated project red until that project next changes.
 The weekly `schedule` sweep, which plans every project, is the guard, and it is a weaker
-guard than compiling everything on every push. Assumed, not yet verified: that the sweep
-fires, which only a Monday shows. Parallelism is verified, under Figures.
+guard than compiling everything on every push.
+
+**The sweep fires. Observed 2026-09-07**, first Monday after cron landed: run 34120324032,
+event `schedule`, success. It planned all four projects and ran each on its own pin —
+`rga_visualiser` on its commit, other three on 2.2.4 — and did not skip itself, code having
+merged that week. Parallelism holds on real sweep rather than only on pull request's matrix:
+four jobs started within one second and phase finished in about four minutes against about
+nine minutes summed.
+
+**It fired 6 h 09 m after its 06:00 slot**, which is what GitHub does with `schedule` under
+load rather than fault here. So sweep promises *some time on Monday*, never 06:00, and curator
+reading cron and returning at 06:05 will find nothing and conclude guard is broken. That is
+recorded because it happened: this claim was first written as "sweep did not fire", on
+observation taken five and half hours in, and retracted when run arrived forty-four minutes
+later. Waiting is part of reading this signal.
 
 **The sweep skips itself in a quiet week.** `sweepJobs` plans every project when any code
 merged inside `SWEEP_DAYS`, and nothing at all when none did, judging "code" by the same
