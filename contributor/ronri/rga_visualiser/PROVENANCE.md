@@ -271,6 +271,49 @@ unbreakable-token exemption covers, as curator's own measurement predicted. Comm
   Noto Sans at 400 and 600, Noto Sans Math, Noto Sans Symbols 2, Noto Serif. Never committed,
   since audit cannot read them; licence notice travels with copies.
 
+**System packages are declared as data in build driver, reached by verb.** `SYSTEM` in
+`tools/build.nim` pairs each package with what it is for, and `system` prints those names one
+per line for caller to install (CONTRIBUTOR.md, "System dependencies"). Declaration lives in
+driver rather than in file of its own: `.nim` is kind audit already reads, output is
+machine-readable so CI installs from this rather than from names written into workflow, and
+registry admits no second build verb.
+  Prints rather than installs: which package manager serves them varies by machine, while list
+  is this project's. Reason stays in declaration rather than in output, which is what keeps
+  output pipeable.
+  No version is pinned and none is invented -- package's version is whatever machine carries.
+  What *is* pinned is every byte fetched at build time, below.
+  Asked as issue 60 before writing anything, since three homes I proposed were all wrong;
+  ruling put it here.
+
+**Each face carries digest of bytes expected, and build refuses anything else.** Host serves
+whatever it serves, and `web` embeds these bytes into artefact readers open, so wrong byte
+fetched is wrong byte shipped. Every other external thing here is pinned -- compiler to commit,
+packages to lock file, `pga` to commit -- and this fetch was sole exception (repository issue
+47). Digest sits beside face in `FACES`, so pin and thing pinned cannot drift apart.
+  Checked twice, at both places bytes matter: `assets` verifies what it fetched, and `web`
+  verifies again before embedding, since `assets` may have run long ago and disk is not
+  evidence. Mismatches across six are collected and reported together rather than first raising,
+  since host republishing family moves several at once.
+  `assets` leaves face already carrying its pinned digest alone, so verb is idempotent and
+  second run fetches nothing. That is also cache key CI keys faces on, which is why pinning and
+  caching arrive together.
+  **`sha256sum` rather than anything in Nim, and deliberately.** No digest of that strength is
+  in reach: curator recorded all three routes rejected on `curator/audit/src/provenance.nim` --
+  `std/sha1` deprecated and warning on every build, `checksums` package nimble install in CI for
+  one hash, `std/hashes` unstable across compiler versions. `assets` already shells out for
+  `curl` and `web` for `base64`, so this adds no dependency either lacked. Deriving SHA-256 in
+  Nim rejected outright: crypto primitive is last thing to hand-roll.
+  **What cannot be pinned is said rather than implied.** Clone carries commit and apt package
+  carries none that survives across distributions, so none is manufactured for one; same shape
+  of honest limit `compilers.nim` already records for fetched compilers, trusted on TLS alone.
+
+*Checked.* Verified by breaking on purpose: one digit changed in one committed digest makes
+`assets` re-fetch and refuse, and `web` refuse to embed, each naming face and both digests;
+restored after. Verified by fetching: all six digests taken from fresh fetch of host, and each
+matches copy already on disk, so pin is live fact rather than whatever was cached here. Verified
+by running: page rebuilds byte for byte at 3,906,930 bytes with verification in place, and
+`assets` run twice fetches six faces then none.
+
 *Checked.* Verified by running: page was built and opened in Chromium, and looked at. Grid,
 three world axes, plane's disc and rim, three points, chrome and scale ruler all draw; scene
 reports five objects, canvas sizes to viewport, and console reports no error. Verified by
