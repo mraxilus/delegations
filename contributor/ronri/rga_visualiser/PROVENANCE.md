@@ -50,18 +50,18 @@ Open Questions
 Recorded here and in the pull request body, per CONTRIBUTOR.md: a contributor neither works
 around a rule nor edits it.
 
-**The desktop front-end needs a C++ file kind, and the kind arrives gated.** Dear ImGui is a
-C++ library whose API uses default arguments and overloads that Nim's `cpp` backend cannot
-bind directly, so the front-end reaches it through a 649-line shim, `gui_shim.cpp`. `.cpp` is
-not registered in `curator/audit/src/kinds.nim`, and CONTRIBUTOR.md's instruction for that
-case is to leave the file out and record the question. Asked as issue 26 and ruled: `.cpp`,
-`.hpp`, `.c` and `.h` are to be registered *gated*, so every file of a gated kind carries a
-justification in its own header, and TypeScript is gated the same way rather than
-grandfathered. The front-end therefore waits on that change landing, and `gui_shim.cpp` will
-have to argue in its header that it only flattens overload sets and default arguments — which
-the curator said is what they will read it for. Rejected as workarounds: renaming the file to
-a registered extension, which lies to the checker; and rewriting the shim in Nim, which cannot
-express what the shim exists for.
+**System packages have no declared home in this repository.** Nim packages are declared in
+`rga_visualiser.nimble` and pinned by `atlas.lock`; node packages in `package.json`, pinned by
+`package-lock.json`. Desktop front-end links against SDL3, libGL and zlib, drives itself
+headless through Xvfb and software GL, and compiles Dear ImGui from clone rather than linking
+it -- and none of those five is expressible in either file. Prototype used
+`dependencies.list`; that extension is not among thirteen kinds
+`curator/audit/src/kinds.nim` registers, so committing one is finding rather than declaration.
+  Named in `README.md`'s build section meanwhile, as table beside compiler pin already there,
+  with ImGui's clone command under it. Honest and reader finds it, but nothing checks it, so it
+  decays as any unrun check does. Asked as issue 60, with three ways out offered and no
+  preference between them. Rejected as workaround: committing `dependencies.list` regardless,
+  which is exactly rule CONTRIBUTOR.md forbids working around.
 
 **The browser front-end waits on conventions for the repository's first TypeScript.** No `.ts`
 file is committed anywhere, so this project's conversion of the browser glue — some 9,000
@@ -283,6 +283,69 @@ out of Nim.
   repository: nothing drives file picker.
   **Unverified**: no human has driven this page.
 
+Desktop Front-End
+---
+**Two libraries are bound rather than wrapped, and only where they are called.** SDL3 owns
+window, input and OpenGL context; libGL owns driver. Both are external concerns this project
+exists to look past (Article II.8), so `src/desktop/sdl3.nim` and `src/desktop/opengl.nim`
+declare only symbols called, and each declares through library's own header, so C compiler
+owns every struct layout and every prototype.
+  Library flag sits in module needing it -- `{.passL: "-lSDL3".}`, `{.passL: "-lGL".}` -- never
+  in configuration, so any binary importing one links without repeating anything.
+  Cost is that development headers must be present to compile; see README's build section for
+  which packages carry them.
+
+**Mirrored constants are checked against header's own, by generated assertion.** SDL3's event
+kinds, scancodes, modifier masks and window flags are mirrored as Nim constants so `case` can
+bind them, and every mirrored value is paired with header's name for it in one table.
+`CHECKS_MIRROR` walks that table and emits one C++ `static_assert` per pair, so binding that
+went stale fails to compile rather than fails to work. Both sides of each check read from same
+table, so mirror cannot drift from assertion guarding it.
+  Verified by breaking it on purpose: moving `Scancode.Home` from 74 to 75 and changing
+  nothing else fails compilation with `static assertion failed: SDL3 binding is stale:
+  SDL_SCANCODE_HOME was renumbered.` Restored after.
+  OpenGL enumerants are written as literals instead, and deliberately: their values are fixed
+  by OpenGL specification and never renumbered, which is not true of any SDL constant.
+
+**Dear ImGui is reached through C entry points, because there is no symbol to bind.** Its
+interface is C++ with overloads, default arguments and namespaces, and Nim's `cpp` backend
+imports none of those three -- so `src/desktop/gui_shim.cpp` flattens slice this visualiser
+calls into plain C, and `src/desktop/gui.nim` binds that. This is Article II.9's first ground
+in its plainest form, and shim's header says so: no glue reaches these widgets from Nim at any
+price, since there is no symbol for glue to name.
+  Facade rather than generated binding: it declares exactly widgets used, and every default
+  relied on is written once here rather than repeated at every call site. Cost is that adding
+  widget touches two files.
+  Repository's first `.cpp`. Kind is registered *gated* (issue 26), so form rules reach it and
+  `justification.nim` demands its header carry `not Nim because`. Whole 649-line file drew one
+  finding on first check: `Supplemental mathematical operators A`, where checker read Unicode
+  block's suffix as article. Corrected to block's real name, `Miscellaneous Mathematical
+  Symbols-A`, which is what U+27C0..U+27EF is called -- comment was wrong as well as flagged.
+
+**Dear ImGui is compiled into binary rather than linked, and pinned by commit.**
+`fd13a1e8923a0a7077b404fc36fd063b25a0c0b5` of `ocornut/imgui`'s `docking` branch, MIT licence,
+cloned into `deps/imgui` and never committed, as Atlas checkouts are. Four core translation
+units and both of its own backends -- SDL3 and OpenGL 3, unmodified -- compile straight in, so
+no prebuilt library has to be found at link time.
+  `IMGUI_USE_WCHAR32` is set by compiler flag rather than by editing checkout's `imconfig.h`:
+  notation carries Lengyel's bold operands (`𝐦`, U+1D426) and 16-bit `ImWchar` cannot express
+  codepoint past U+FFFF, while edit to checkout would not survive reclone.
+  Path is `--define:visualiser.path_imgui`, resolved against module's own directory, so
+  checkout elsewhere needs no edit either.
+
+*Checked.* Verified by running: both bindings compile and link against SDL3 3.2.31 and libGL
+through `nim cpp`, and their assertions run against real headers. Shared core compiles and runs
+under that same backend too, which nothing had shown before -- it had only ever been built
+through C and JS.
+  Verified by running headless: Dear ImGui starts over hidden SDL3 window with real OpenGL 3.3
+  core context under Xvfb, draws one frame through both its backends, reports framerate above
+  zero, and shuts down without error. `isFontLoaded` answered false for that run, correctly:
+  no face was passed, which is exactly what it exists to report.
+  Verified by breaking on purpose: mirrored `Scancode.Home` moved by one fails compilation with
+  binding's own message; restored after.
+  **Unverified**: nothing has been drawn but empty frame. What puts geometry on screen arrives
+  with renderer, panel and entry point.
+
 Render Paths
 ---
 **The directory a module sits in is which render path may reach it.**
@@ -293,15 +356,18 @@ Render Paths
 |  |  | `scene`, `selection`, `picking`, `marker`, `framing`, `interaction`, |
 |  |  | `storyboard`, `orrery`, `neighbourhood`, `starfield`, `history`, |
 |  |  | `format`, `help`, `timings`, `ramp`, `lighting` |
-| `desktop` | `visualiser.nim` | `image`, `gif`, `arena` here; `panel`, `renderer`, `opengl`, |
-|  |  | `gui`, `gui_shim.cpp`, `sdl3` arrive with front-end |
-| `browser` | `bridge.nim` | arrives with front-end: `bridge.nim`, `glue.ts` |
+| `src/desktop` | desktop entry alone | `image`, `gif`, `arena` here; `panel`, `renderer`, |
+|  |  | `opengl`, `gui`, `gui_shim.cpp`, `sdl3` arrive with front-end |
+| `src/browser` | `bridge.nim` alone | `bridge.nim` and page's own scripts |
 
-`pga` is a dependency above all three and shared. `core` imports nothing outside itself and
-`pga`; `desktop` and `browser` each import `core` and never each other, readable from the
-import paths (`../core/`). `arena` sits in `desktop` despite being general-purpose: only the
-PNG and GIF encoders and the desktop draw loop reach it, and the JS backend cannot carve
-typed slices from a byte array at all.
+`pga` is dependency above all three and shared. Shared core imports nothing outside itself
+and `pga`; `src/desktop` and `src/browser` each import that core and never each other,
+readable from import paths (`../rga_visualiser/`). Both front-ends sit under `src/` beside
+core they draw through, which is what `srcDir` in nimble file already claims; desktop sat at
+repository root until this port and nothing but history put it there.
+  `arena` sits in `src/desktop` despite being general-purpose: only PNG and GIF encoders and
+  desktop draw loop reach it, and JS backend cannot carve typed slices from byte array at
+  all.
 
 A shared module reaching for something only one path has is a **compile error, not a
 comment**: `toCstring`, `buildChars`, `appendInt`, `appendFixed`, `saveScene`/`loadScene`
