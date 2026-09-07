@@ -13,9 +13,9 @@ const fields_camera = {
   elevation: elementById<HTMLInputElement>('cam-elevation'),
   distance: elementById<HTMLInputElement>('cam-distance'),
   fov: elementById<HTMLInputElement>('cam-fov'),
-  tx: elementById<HTMLInputElement>('cam-target-x'),
-  ty: elementById<HTMLInputElement>('cam-target-y'),
-  tz: elementById<HTMLInputElement>('cam-target-z'),
+  tx: elementById<HTMLInputElement>('cam-pivot-x'),
+  ty: elementById<HTMLInputElement>('cam-pivot-y'),
+  tz: elementById<HTMLInputElement>('cam-pivot-z'),
 };
 let are_fields_camera_focused = false;
 Object.values(fields_camera).forEach((element) => {
@@ -35,16 +35,16 @@ commitCameraField(fields_camera.elevation, nimSetCameraElevation, 0);
 commitCameraField(fields_camera.distance, nimSetCameraDistance, 0.1);
 commitCameraField(fields_camera.fov, nimSetCameraFov, 45);
 
-function commitTarget() {
-  nimSetCameraTarget(
+function commitPivot() {
+  nimSetCameraPivot(
     parseFloat(fields_camera.tx.value) || 0,
     parseFloat(fields_camera.ty.value) || 0,
     parseFloat(fields_camera.tz.value) || 0,
   );
 }
-fields_camera.tx.addEventListener('change', commitTarget);
-fields_camera.ty.addEventListener('change', commitTarget);
-fields_camera.tz.addEventListener('change', commitTarget);
+fields_camera.tx.addEventListener('change', commitPivot);
+fields_camera.ty.addEventListener('change', commitPivot);
+fields_camera.tz.addEventListener('change', commitPivot);
 
 // Each field's last written value, so still camera formats and writes nothing.
 //   Seven `nimFormatNumber` calls and seven input writes ran five times second for
@@ -67,10 +67,10 @@ function refreshCameraFields() {
   writeCameraField('elevation', nimCameraElevation());
   writeCameraField('distance', nimCameraDistance());
   writeCameraField('fov', nimCameraFov());
-  const target = nimCameraTarget();
-  writeCameraField('tx', target[0] ?? 0);
-  writeCameraField('ty', target[1] ?? 0);
-  writeCameraField('tz', target[2] ?? 0);
+  const pivot = nimCameraPivot();
+  writeCameraField('tx', pivot[0] ?? 0);
+  writeCameraField('ty', pivot[1] ?? 0);
+  writeCameraField('tz', pivot[2] ?? 0);
 }
 
 // **Asked for here, taken inside frame that draws it.** Context is created without.
@@ -123,21 +123,21 @@ function captureFrameIfAsked() {
 // as button without this file or markup being touched. Button is labelled with
 // count because count is what reader picking between benchmark scenes is choosing.
 for (const scale of nimDemoScales()) {
-  const items = nimDemoItems(scale);
+  const objects = nimDemoObjects(scale);
   const button = document.createElement('button');
   button.className = 'button';
   button.type = 'button';
-  button.id = `button-load-demo-${items}`;
-  button.textContent = String(items);
+  button.id = `button-load-demo-${objects}`;
+  button.textContent = String(objects);
   button.title =
-    `Load the orrery at ${items} objects: the real solar neighbourhood, Sol at the origin, ` +
+    `Load the orrery at ${objects} objects: the real solar neighbourhood, Sol at the origin, ` +
     'every drawable kind present. The same arrangement at every size, reaching further into ' +
     'the star catalogue as it grows.' +
     (scale === nimDemoScaleDefault() ? ' The size everything opens on.' : '');
   button.addEventListener('click', () => {
     nimLoadDemo(scale, now(), canvas.width, canvas.height);
     toast(`Loaded the orrery: ${nimSceneCount()} objects, ` +
-      `${nimSceneCapacity() - nimSceneCount()} slots free.`);
+      `${nimSceneCapacity() - nimSceneCount()} handles free.`);
     adoptConstructionSelection();
   });
   elementById('button-demo-scales').appendChild(button);

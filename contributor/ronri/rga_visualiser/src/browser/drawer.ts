@@ -50,7 +50,7 @@ document.querySelectorAll('.section-header').forEach((header) => {
     //   Asked of every section rather than only that one: check reads section's own
     //   class either way, and handler that knew which section it was would be second
     //   place to keep in step.
-    ghostDrawerOperation();
+    previewDrawerOperation();
     // Let objects list catch up on whatever it skipped while it was closed.
     //   See `refreshObjectsUI`; same shape, same reason, and asked of every section for
     //   same reason as above, since call is no-op unless it is objects section that
@@ -187,10 +187,10 @@ function openApplyPickerOnOperands(position_local: PointLocal | null) {
 }
 
 // **Settled scroll, not single jump.** Row outside viewport is placeholder.
-//   rather than laid-out row -- see `.item-row`'s `content-visibility` in `shell.html` --
+//   rather than laid-out row -- see `.object-row`'s `content-visibility` in `shell.html` --
 //   so offset of row thousand places down list is estimate until rows
 //   above it have actually been measured. One `scrollIntoView` lands on estimate:
-//   measured on slot 900 of demo, row arrived 428px lower than it should have,
+//   measured on handle 900 of demo, row arrived 428px lower than it should have,
 //   leaving edit form it was opening off bottom of screen. Each pass lays out
 //   rows it scrolls past, so estimate is exact where it matters by next one.
 //   Stops as soon as row holds still, which on list short enough to be laid out
@@ -206,11 +206,11 @@ function scrollRowIntoView(row: HTMLElement, passes = PASSES_SCROLL_SETTLE) {
   });
 }
 
-function openPanelTo(slot: number | null) {
-  // Open edit session on `slot` (or composing one where null) and bring drawer.
+function openPanelTo(handle: number | null) {
+  // Open edit session on `handle` (or composing one where null) and bring drawer.
   //   and Objects section far enough open to see it -- shared by top bar's `add`
   //   and selection menu's `edit`, which differ only in what they open onto.
-  beginEditSession(slot);
+  beginEditSession(handle);
   const section_objects = document.querySelector('.section[data-section="objects"]');
   if (section_objects === null) throw new Error('Missing objects section.');
   section_objects.classList.add('open');
@@ -221,14 +221,14 @@ function openPanelTo(slot: number | null) {
   //   Asked at once as well, since list already built ends refresh above without slicing.
   //   Querying row here and giving up where it was not yet built left panel open on
   //   top of list with wanted row thousands of pixels down it.
-  key_reveal_pending = slot === null ? KEY_ROW_PENDING : String(slot);
+  key_reveal_pending = handle === null ? KEY_ROW_PENDING : String(handle);
   revealPendingRow();
 }
 
 button_add.addEventListener('click', () => {
   // Compose new object as row in Objects list rather than in section of its.
   //   own: adding and editing stage same four things through same interface, so
-  //   there is one grid and one ghost instead of two of each.
+  //   there is one grid and one preview instead of two of each.
   openPanelTo(null);
 });
 
@@ -237,7 +237,7 @@ button_add.addEventListener('click', () => {
 //   `disabled` attribute -- refreshed on low-cadence UI tick, so key pressed in
 //   frames after edit did nothing at all while timeline plainly had something on
 //   it. Measured, not suspected. Mirrors `panel.stepHistory` on desktop side.
-//   Restored snapshot's slot numbers need not match, so open session has nothing
+//   Restored snapshot's handle numbers need not match, so open session has nothing
 //   trustworthy left to commit against and is dropped.
 function stepHistory(is_undo: boolean) {
   if (is_undo ? nimUndo() : nimRedo()) {

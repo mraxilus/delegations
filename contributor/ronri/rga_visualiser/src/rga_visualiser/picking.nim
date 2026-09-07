@@ -1,4 +1,4 @@
-## Test scene items against cursor, so mouse action knows which object it touched.
+## Test scene objects against cursor, so mouse action knows which object it touched.
 ##
 ## Every world-space derivation goes through algebra: rays as joins, hits as meets, depths
 ## as `depthAgainst`, nearest points and clips by library's operators.
@@ -14,7 +14,7 @@
 ##   Meet in 3D fails cleanly (ray parallel, hit behind eye) instead of wrongly.
 ##
 ##   |------------|-------------------------------------------------------------------|
-##   | Shape      | Tested against                                                    |
+##   | Kind      | Tested against                                                    |
 ##   |------------|-------------------------------------------------------------------|
 ##   | Point      | Projected marker, by pixel distance.                              |
 ##   | Line       | Projected drawn segment, by distance to its nearest point.        |
@@ -23,11 +23,15 @@
 ##   |------------|-------------------------------------------------------------------|
 ##
 ## Point wins tie over line, and line over plane.
-##   Smaller target should not be swallowed by larger one drawn behind or through it.
+##   Smaller pivot should not be swallowed by larger one drawn behind or through it.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render paths.
+## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "strictFuncs".}
+# `handle` names loop variable std's `typedthreads.handle` would win over: template body
+#   reads it, and generic `some` instantiates with symbol captured at its own declaration.
+#   Cost of naming object address `handle`; see `GLOSSARY.md`.
+{.experimental: "openSym".}
 
 import std/[math, options]
 
@@ -41,20 +45,20 @@ import ./[boundary, camera, euclid, tessellate, scene]
 const
   FACTOR_ANCHOR_DEPTH* = 2.0
     ## Take object or ground as zoom anchor only within this factor of orbit distance.
-    ##   Depth either way; otherwise level through target answers.
+    ##   Depth either way; otherwise level through pivot answers.
     ##   Anchor at depth of what reader looks at is what map zoom means. Star field put
     ##   some star under every pixel, and anchoring on one thousand units off carried
     ##   eye across field in few notches and clipped scene away behind it.
   RADIUS_PICK_POINT* = 34.0
     ## Bound how far, in pixels, cursor may sit from point's marker and still hit it.
     ##   Fingertip's contact patch is roughly this wide at phone density.
-    ##   Shape priority (point beats line beats plane) keeps generous radius from
+    ##   Kind priority (point beats line beats plane) keeps generous radius from
     ##   misfiring where targets overlap.
   RADIUS_PICK_LINE* = 24.0
     ## Bound how far, in pixels, cursor may sit from line's drawn segment and still hit it.
     ##   Widened with `RADIUS_PICK_POINT`, for same reason.
   RADIUS_CROWD_TOUCH* = 72.0
-    ## Bound how far, in pixels, second item may stand from finger and still make crowd.
+    ## Bound how far, in pixels, second object may stand from finger and still make crowd.
     ##   Wider than either pick reach: what is asked is not what finger hit but whether it
     ##   could have meant something else, and finger lands whole fingertip wide of where
     ##   reader aimed. At pick reach alone, star field still turned orbits into drags.
@@ -112,7 +116,7 @@ func projectToScreen*(
   ## Project world position through clip space onto window pixels.
   ##   Written out rather than looped; hot proc.
   ##     Nested loops allocated two four-element arrays per call on JS backend, once per
-  ##     live slot per pick, and copies dominated pick's profile.
+  ##     live handle per pick, and copies dominated pick's profile.
   ##   Only three rows read are computed: depth is taken from w, which `isInFront` tests.
   let
     x = position.x
@@ -146,7 +150,7 @@ func pixelsFromCursor*(
   ## Report how many pixels `position` projects from `cursor`, or `Inf` behind eye.
   ##   Same projection as `projectToScreen`, answering only question point's hit test asks
   ##   and building nothing.
-  ##     `ScreenPosition` per slot was allocation per slot per hover on full scene.
+  ##     `ScreenPosition` per handle was allocation per handle per hover on full scene.
   ##     Distance is float, and float is free.
   ##   `Inf` rather than `Option[float]` for same reason.
   ##     Option is object too, and no real pixel distance is infinite, so sentinel cannot
@@ -223,8 +227,8 @@ func castRay*(
   ##   Undoes `initMatrixProjection`'s construction: cursor becomes NDC again, scaled by
   ##   same field-of-view tangent, composed from camera's right/up/forward.
   ##   Takes eye and frame precomputed.
-  ##     One cursor tests against every item with same ray, and recomputing per item
-  ##     repeats two joins and antiduals up to `ITEMS_MAX` times.
+  ##     One cursor tests against every object with same ray, and recomputing per object
+  ##     repeats two joins and antiduals up to `OBJECTS_MAX` times.
   let
     half_height = tan(0.5 * degToRad(camera.degrees_field_of_view))
     half_width = half_height * (float(width) / float(height))
@@ -238,11 +242,11 @@ func castRay*(
 func positionUnderCursor*(
   camera: Camera; width, height: int; cursor: ScreenPosition
 ): Option[Position] =
-  ## Solve world point cursor is over: where its sight ray meets level plane through target.
+  ## Solve world point cursor is over: where its sight ray meets level plane through pivot.
   ##   None where ray never meets it: looking along it, or away at sky.
   ##   That plane rather than ground at `z = 0`.
   ##     It sits at height reader works at, what they mean by "there", and keeps hit at
-  ##     sane distance where ground far below raised target puts it wildly far off.
+  ##     sane distance where ground far below raised pivot puts it wildly far off.
   ##   For zoom keeping what is under cursor under cursor (`camera.dollyToward`).
   ##     Here rather than `camera` because it needs sight ray, and `camera` is what this
   ##     imports.
@@ -250,9 +254,9 @@ func positionUnderCursor*(
     eye = camera.eye
     frame_camera = camera.frame(eye)
     ray = castRay(camera, eye, frame_camera, width, height, cursor)
-    # Meet horizontal plane through target: `objects.levelPlaneThrough`.
+    # Meet horizontal plane through pivot: `objects.levelPlaneThrough`.
     #   One spelling of what level means to algebra.
-    hit = position(ray ∨ levelPlaneThrough(toMultivector(camera.target)))
+    hit = position(ray ∨ levelPlaneThrough(toMultivector(camera.pivot)))
   if hit.isNone: return
   # Refuse hit behind eye.
   #   Ray aimed at sky meets plane on far side of reader, and zoom toward it would fly
@@ -286,26 +290,26 @@ func positionOnLineNearest*(
   position(wedgeAnti(line, wedge(ray, toMultivector(normal_common.get))))
 
 
-func positionOnItemUnder(
+func positionOnObjectUnder(
   geometry: Multivector, ray: Multivector, plane_eye: Multivector
 ): Option[Position] =
-  ## Solve world point of one item cursor's sight `ray` is over.
+  ## Solve world point of one object cursor's sight `ray` is over.
   ##   Point stands where it stands, plane is met where ray crosses it, line is read at
   ##   nearest point to ray; see `positionOnLineNearest`.
   ##   Finite shapes only.
-  ##     Object at horizon is drawn at `radius_horizon` about eye and is not *at* any
+  ##     Object in horizon is drawn at `radius_horizon` about eye and is not *at* any
   ##     place, so nothing there to fly toward.
   ##   None also for hit behind eye (depth against `plane_eye`) and for ray with no
   ##   direction.
   if geometry.isHorizon: return
   let
-    shaped = shape(geometry)
+    shaped = kindOf(geometry)
     heading = direction(ray)
   if shaped.isNone or heading.isNone: return
   var found = none(Position)
   case shaped.get
-  of Shape.Point: found = positionAnchor(geometry)
-  of Shape.Line:
+  of Kind.Point: found = positionAnchor(geometry)
+  of Kind.Line:
     let (anchor, axis) = (positionAnchor(geometry), direction(geometry))
     if anchor.isSome and axis.isSome:
       # Read ray's two defining elements off ray multivector.
@@ -313,7 +317,7 @@ func positionOnItemUnder(
       let ray_from = positionSupport(ray)
       if ray_from.isSome:
         found = positionOnLineNearest(anchor.get, axis.get, ray_from.get, heading.get)
-  of Shape.Plane: found = position(ray ∨ geometry)
+  of Kind.Plane: found = position(ray ∨ geometry)
   if found.isNone: return
   if depthAgainst(plane_eye, toMultivector(found.get)) <= 1.0e-6: return
   found
@@ -397,11 +401,11 @@ func rayPlaneHit(
 
 
 
-#[ Item Hit Testing ]#
+#[ Object Hit Testing ]#
 
 type PickReport* = object ## Define what one pick found under cursor.
-  slot*: Option[int] ## Nearest item of winning rank; none where nothing is in reach.
-  count_rivals*: int ## How many items of winner's rank or better stood within
+  handle*: Option[int] ## Nearest object of winning rank; none where nothing is in reach.
+  count_rivals*: int ## How many objects of winner's rank or better stood within
     ## `RADIUS_CROWD_TOUCH`, winner included; zero where nothing was picked.
     ## One where pick is unambiguous. Touch has no hover ring to say which of several
     ## finger is over, so its drag refuses to start above one; see
@@ -461,10 +465,10 @@ func add(hiders: var Hiders, hider: Hider) =
 
 proc pickWalk(
   scene: Scene; camera: Camera; scale: DrawExtent; view_projection: Matrix4;
-  width, height: int; cursor: ScreenPosition; placed: openArray[Placed];
+  width, height: int; cursor: ScreenPosition; placed: openArray[Placement];
   hiders_known: Hiders; is_points_only: bool
 ): PickWalk =
-  ## Walk every visible item once, ranking what stands within reach of cursor.
+  ## Walk every visible object once, ranking what stands within reach of cursor.
   ##   `pickAt`'s one pass; see it for rule. Points `hiders_known` hide are passed over,
   ##   as winner and as rival; discs under cursor met on way are gathered for caller.
   ##   `is_points_only` skips every other kind, for second pass whose winner is already
@@ -481,7 +485,7 @@ proc pickWalk(
     ray = castRay(camera, eye, frame_camera, width, height, cursor)
 
   var
-    slot_best = none(int)
+    handle_best = none(int)
     priority_best = high(int)
     distance_best = Inf
     depth_best = Inf
@@ -506,33 +510,33 @@ proc pickWalk(
       distance_best = distance
       depth_best = depth
       is_under_best = is_under
-      slot_best = some(slot)
+      handle_best = some(handle)
   # Ask once whether caller brought whole frame's placements; cannot change mid-walk.
-  let is_placed_held = placed.len >= ITEMS_MAX
-  var placed_here: Placed # Filled per slot only where caller brought none.
+  let is_placement_held = placed.len >= OBJECTS_MAX
+  var placement_here: Placement # Filled per handle only where caller brought none.
 
-  # Walk by slot to `bound`, not to capacity.
-  #   Runs per pointer move, and pool walked to capacity tests every empty slot to rank
+  # Walk by handle to `bound`, not to capacity.
+  #   Runs per pointer move, and pool walked to capacity tests every empty handle to rank
   #   few live ones.
-  #   `placed` stays indexed by slot and sized to capacity: slot is address.
-  #   By-slot readers, never `pairs`, which copies whole scene per live slot on JS backend.
-  for slot in 0 ..< scene.bound:
-    if not scene.isAlive(slot) or not scene.isVisible(slot): continue
-    if not is_placed_held:
-      placed_here = placeObject(scene.geometryOf(slot), scene.anchorOverrideAt(slot))
+  #   `placed` stays indexed by handle and sized to capacity: handle is address.
+  #   By-handle readers, never `pairs`, which copies whole scene per live handle on JS backend.
+  for handle in 0 ..< scene.bound:
+    if not scene.isAlive(handle) or not scene.isVisible(handle): continue
+    if not is_placement_held:
+      placement_here = placeObject(scene.geometryOf(handle), scene.anchorOverrideAt(handle))
     # Read in place, never bound.
-    #   `Placed` holds five multivectors, and binding to `let` deep-copies on JS backend.
+    #   `Placement` holds five multivectors, and binding to `let` deep-copies on JS backend.
     #   Both aliases expand to read at each use; confirmed in generated JavaScript that
     #   neither copies.
-    template place: untyped = (if is_placed_held: placed[slot] else: placed_here)
-    template geometry: untyped = scene.geometryOf(slot)
+    template place: untyped = (if is_placement_held: placed[handle] else: placement_here)
+    template geometry: untyped = scene.geometryOf(handle)
 
     case place.kind
-    of PlacedKind.Nothing: continue
+    of Case.Nothing: continue
 
-    of PlacedKind.PointAt:
+    of Case.PointAt:
       # Measure through `pixelsFromCursor`, not `projectToScreen`.
-      #   Branch almost every slot takes wants distance, not projected position to
+      #   Branch almost every handle takes wants distance, not projected position to
       #   measure one from.
       # Widen to disc drawn where that is larger than generous default.
       #   Sun hundred pixels across is picked anywhere on it, not only near middle.
@@ -541,7 +545,7 @@ proc pickWalk(
       let depth = depthAlongSight(view_projection, place.at)
       if depth <= 1.0e-6: continue # Behind eye; `isInFront`'s test.
       let distance = pixelsFromCursor(view_projection, width, height, place.at, cursor)
-      let radius_drawn = radiusPixelsAtDepth(scene.radiusAt(slot), depth, scale.scale)
+      let radius_drawn = radiusPixelsAtDepth(scene.radiusAt(handle), depth, scale.scale)
       let radius_pick = max(RADIUS_PICK_POINT, radius_drawn)
       if distance > max(RADIUS_CROWD_TOUCH, radius_pick): continue
       # Project only what is within reach, which is few; see `pixelsFromCursor`.
@@ -553,7 +557,7 @@ proc pickWalk(
       if distance <= radius_pick: consider(0, distance, depth, is_under)
       crowd(0)
 
-    of PlacedKind.PointToward:
+    of Case.PointToward:
       # Pick direction point where its star is drawn.
       #   One part of point's anchor depending on eye, so not in placement. Matches
       #   `tessellate.anchorFor`.
@@ -563,14 +567,14 @@ proc pickWalk(
       if star.isNone: continue
       let distance = pixelsFromCursor(view_projection, width, height, star.get, cursor)
       if distance > RADIUS_CROWD_TOUCH: continue
-      # Star sits at horizon, deeper than any disc, and is dot cursor is never inside.
+      # Star lies in horizon, deeper than any disc, and is dot cursor is never inside.
       if hiders_known.coverOf(
         scale.radiusHorizon, projectToScreen(view_projection, width, height, star.get)
       ) >= RADIUS_PICK_POINT: continue
       if distance <= RADIUS_PICK_POINT: consider(0, distance, scale.radiusHorizon, false)
       crowd(0)
 
-    of PlacedKind.LineAcross:
+    of Case.LineAcross:
       if is_points_only: continue
       # Test against great circle it is drawn as, sampled as `tessellate.addGreatCircle` does.
       #   Hit then agrees with what is drawn.
@@ -596,7 +600,7 @@ proc pickWalk(
       if distance_nearest <= RADIUS_PICK_LINE: consider(2, distance_nearest, Inf, false)
       if distance_nearest <= RADIUS_CROWD_TOUCH: crowd(2)
 
-    of PlacedKind.LineThrough:
+    of Case.LineThrough:
       if is_points_only: continue
       # Test both halves `tessellate.addLine` draws, support out to each vanishing point.
       #   Which half is on screen changes as camera orbits.
@@ -617,7 +621,7 @@ proc pickWalk(
       if distance_nearest <= RADIUS_PICK_LINE: consider(1, distance_nearest, Inf, false)
       if distance_nearest <= RADIUS_CROWD_TOUCH: crowd(1)
 
-    of PlacedKind.PlaneOn:
+    of Case.PlaneOn:
       if is_points_only: continue
       # Meet only where disc could reach cursor at all; see `isBeyondDisc`.
       #   Frame guard is kind's to say: `placeObject` reaches `PlaneOn` only with anchor
@@ -631,7 +635,7 @@ proc pickWalk(
         consider(3, hit.get, Inf, false)
         crowd(3)
 
-    of PlacedKind.PlaneEverywhere:
+    of Case.PlaneEverywhere:
       if is_points_only: continue
       # Match whole sky last of all, with no distance to measure, so anything else wins.
       #   Asked of geometry, not kind: finite plane whose frame algebra cannot give lands
@@ -642,27 +646,27 @@ proc pickWalk(
 
   # Sum crowd of winner's rank and every better one; nothing picked, nothing counted.
   var count_rivals = 0
-  if slot_best.isSome:
+  if handle_best.isSome:
     for priority in 0 .. priority_best: count_rivals += counts_crowd[priority]
   PickWalk(
-    report: PickReport(slot: slot_best, count_rivals: count_rivals),
+    report: PickReport(handle: handle_best, count_rivals: count_rivals),
     depth_best: depth_best, hiders: hiders,
   )
 
 
 proc pickAt*(
   scene: Scene; camera: Camera; scale: DrawExtent; view_projection: Matrix4;
-  width, height: int; cursor: ScreenPosition; placed: openArray[Placed] = []
+  width, height: int; cursor: ScreenPosition; placed: openArray[Placement] = []
 ): PickReport =
-  ## Find visible item nearest cursor and count its rivals.
+  ## Find visible object nearest cursor and count its rivals.
   ##   Prefers points over lines over planes; see `PickReport`.
   ##   `placed` is frame's own placements, where caller kept them.
   ##     `tessellate.placeObject` already answers what object is and where, and
-  ##     front-end holding frame's worth of answers (`browser_bridge.PLACEMENTS`) hands them
+  ##     front-end holding frame's worth of answers (`bridge.PLACEMENTS`) hands them
   ##     over instead of having walk ask again.
   ##     Pick then ranks *what was drawn*, off one derivation, and stops running placing
-  ##     side per live slot per pointer event.
-  ##   Pass nothing and every slot is placed here instead: desktop path and every suite
+  ##     side per live handle per pointer event.
+  ##   Pass nothing and every handle is placed here instead: desktop path and every suite
   ##   case. Partial array is treated as none: cache is frame's whole answer or not one.
   ##   None where nothing visible falls within its shape's pick radius.
   ##   Every drawn shape is pickable, horizon or not, ranked point, finite line, horizon
@@ -700,11 +704,11 @@ proc pickAt*(
 
 proc pickNearest*(
   scene: Scene; camera: Camera; scale: DrawExtent; view_projection: Matrix4;
-  width, height: int; cursor: ScreenPosition; placed: openArray[Placed] = []
+  width, height: int; cursor: ScreenPosition; placed: openArray[Placement] = []
 ): Option[int] =
-  ## Find visible item nearest cursor, preferring points over lines over planes.
-  ##   `pickAt`'s slot alone, for caller with no use for rival count.
-  pickAt(scene, camera, scale, view_projection, width, height, cursor, placed).slot
+  ## Find visible object nearest cursor, preferring points over lines over planes.
+  ##   `pickAt`'s handle alone, for caller with no use for rival count.
+  pickAt(scene, camera, scale, view_projection, width, height, cursor, placed).handle
 
 
 func coversView*(
@@ -717,15 +721,15 @@ func coversView*(
 
 
 func isBackdropUnder*(
-  scene: Scene, slot: int, scale: DrawExtent, width, height: int
+  scene: Scene, handle: int, scale: DrawExtent, width, height: int
 ): bool =
-  ## Report whether hovered item is backdrop: plane at horizon, or plane filling view.
-  ##   Backdrop is click and hold target, never drag handle: press on it falls through to
+  ## Report whether hovered object is backdrop: horizon plane, or plane filling view.
+  ##   Backdrop is click and hold pivot, never drag handle: press on it falls through to
   ##   camera, or view cannot be moved while plane fills every pixel.
-  let geometry = scene.geometryOf(slot)
+  let geometry = scene.geometryOf(handle)
   if geometry.isHorizonPlane: return true
-  if shape(geometry) != some(Shape.Plane): return false
-  let anchor = anchorFor(geometry, scene.anchorOverrideAt(slot), scale)
+  if kindOf(geometry) != some(Kind.Plane): return false
+  let anchor = anchorFor(geometry, scene.anchorOverrideAt(handle), scale)
   anchor.isSome and coversView(anchor.get, EXTENT_PLANE_F, scale, width, height)
 
 
@@ -738,56 +742,56 @@ func isAnchorNear(anchor: Position, camera: Camera, scale: DrawExtent): bool =
 type AnchorZoom* = object ## Define what zoom holds still, and whether it stands somewhere.
   at*: Position ## World point that keeps its pixel through zoom.
   is_standing*: bool ## Whether `at` is where point or line stands, not crossing of ray.
-    ## What stands somewhere is what reader looks at, so turntable's target follows its
-    ## depth (`camera.retargetToDepth`). Plane, ground and level are crossings, met where
+    ## What stands somewhere is what reader looks at, so turntable's pivot follows its
+    ## depth (`camera.repivotToDepth`). Plane, ground and level are crossings, met where
     ## ray happens to fall: their depth under cursor is not their depth at middle of
-    ## frame, and target lifted to it stood off plane being zoomed onto. Those three
-    ## are followed by map rule alone, target sliding toward `at`; see `camera.dollyToward`.
+    ## frame, and pivot lifted to it stood off plane being zoomed onto. Those three
+    ## are followed by map rule alone, pivot sliding toward `at`; see `camera.dollyToward`.
 
 
 func positionUnderPointerOn*(
-  scene: Scene; slot: int; camera: Camera; scale: DrawExtent; width, height: int;
+  scene: Scene; handle: int; camera: Camera; scale: DrawExtent; width, height: int;
   cursor: ScreenPosition
 ): Option[Position] =
   ## Solve where one object stands under `cursor`.
   ##   Point at its place, line at its point nearest sight ray, plane where ray crosses it.
   ##   For zoom's anchor and for pointer pick's aim, both holding that place on its pixel.
-  ##   None for horizon shapes and hits behind eye; see `positionOnItemUnder`.
+  ##   None for horizon shapes and hits behind eye; see `positionOnObjectUnder`.
   ##   No nearness filter: caller wanting one applies `isAnchorNear`.
   let
     frame_camera = camera.frame(scale.eye)
     ray = castRay(camera, scale.eye, frame_camera, width, height, cursor)
-  positionOnItemUnder(scene.geometryOf(slot), ray, scale.plane_eye)
+  positionOnObjectUnder(scene.geometryOf(handle), ray, scale.plane_eye)
 
 
 proc anchorZoomAt*(
   scene: Scene; camera: Camera; scale: DrawExtent; view_projection: Matrix4;
-  width, height: int; cursor: ScreenPosition; placed: openArray[Placed] = []
+  width, height: int; cursor: ScreenPosition; placed: openArray[Placement] = []
 ): Option[AnchorZoom] =
   ## Solve world point zoom aimed at `cursor` should hold still.
-  ##   Whatever finite object cursor is over, else ground under it, else level target
+  ##   Whatever finite object cursor is over, else ground under it, else level pivot
   ##   sits on. In that order, and order is rule.
   ##     Reader pointing at object means that object at depth it stands at; zoom
-  ##     anchored on plane through target crept past or short of it.
+  ##     anchored on plane through pivot crept past or short of it.
   ##     Failing object, ground is what reader means by there, what every map zooms
   ##     against.
-  ##     Level through target survives as last answer, for cursor on empty sky.
+  ##     Level through pivot survives as last answer, for cursor on empty sky.
   ##   Object or ground far from what reader looks at is passed over for level through
-  ##   target; see `FACTOR_ANCHOR_DEPTH`.
+  ##   pivot; see `FACTOR_ANCHOR_DEPTH`.
   ##   `pickNearest` ranks horizon plane last and matches it everywhere, so sky is under
-  ##   cursor almost always; `positionOnItemUnder` refuses horizon shapes for exactly
+  ##   cursor almost always; `positionOnObjectUnder` refuses horizon shapes for exactly
   ##   that reason, and fall-through does work.
   ##   None where none of three answers, leaving caller to zoom at middle of frame.
   # Take caller's extent.
   #   Wheel handler holds overlay cache's extent for exactly this camera, and deriving
   #   fresh one ran `algebraFilled` and joins per wheel notch.
-  let slot = pickNearest(
+  let handle = pickNearest(
     scene, camera, scale, view_projection, width, height, cursor, placed,
   )
-  if slot.isSome:
-    let found = positionUnderPointerOn(scene, slot.get, camera, scale, width, height, cursor)
+  if handle.isSome:
+    let found = positionUnderPointerOn(scene, handle.get, camera, scale, width, height, cursor)
     if found.isSome and isAnchorNear(found.get, camera, scale):
-      let is_standing = shape(scene.geometryOf(slot.get)) != some(Shape.Plane)
+      let is_standing = kindOf(scene.geometryOf(handle.get)) != some(Kind.Plane)
       return some(AnchorZoom(at: found.get, is_standing: is_standing))
   let ground = positionOnGround(camera, width, height, cursor)
   if ground.isSome and isAnchorNear(ground.get, camera, scale):
@@ -909,7 +913,7 @@ func isRingWithinFrame(
 func isLineShownCentrally(
   m: Multivector; scale: DrawExtent; view_projection: Matrix4; width, height: int
 ): bool =
-  ## Report whether grade-2 object reaches centred box, at horizon or finite.
+  ## Report whether grade-2 object reaches centred box, in horizon or finite.
   if m.isHorizon:
     let normal = directionNormalHorizon(m)
     if normal.isNone: return false
@@ -950,7 +954,7 @@ func isPlaneShownCentrally(
   ##     Rim says only whether reader sees whole circle, so it is held to frame: disc
   ##     made to fit *centred box* had to be pushed half again further away than showing
   ##     whole circle needed.
-  ##   Plane at horizon is whole sky, in view from every camera.
+  ##   Horizon plane is whole sky, in view from every camera.
   ##   `anchor_override` centres disc there instead of support, as `tessellate.addPlane`
   ##   reads it; two can stand units apart against disc's radius.
   if m.isHorizon: return true
@@ -992,18 +996,18 @@ func isShownCentrally*(
   ##   Only *ratio* of `width` to `height` matters, so caller holding aspect and one
   ##   dimension may pass any pair in that ratio.
   ##   False where `m` draws nothing at all.
-  let shape_m = shape(m)
+  let shape_m = kindOf(m)
   if shape_m.isNone: return false
   let
     scale = camera.drawExtentFor(height)
     view_projection = camera.initMatrixViewProjection(float(width)/float(height))
   case shape_m.get
-  of Shape.Point:
+  of Kind.Point:
     let anchor = anchorFor(m, scale)
     anchor.isSome and isWithinCentre(
       projectToScreen(view_projection, width, height, anchor.get),
       width, height, INSET_POINT_SHOWN,
     )
-  of Shape.Line: isLineShownCentrally(m, scale, view_projection, width, height)
-  of Shape.Plane:
+  of Kind.Line: isLineShownCentrally(m, scale, view_projection, width, height)
+  of Kind.Plane:
     isPlaneShownCentrally(m, anchor_override, view_projection, width, height)

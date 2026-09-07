@@ -18,12 +18,12 @@ let ms_refresh_ui = 0;
 //   `MessageChannel` rather than `setTimeout(0)`: timers are clamped and, under load,
 //   deferred behind rendering, and message is neither.
 //   Message that still loses to next frame's callback says thread was busy until that
-//   frame began, so reading is clamped to slot's whole remainder rather than left to
+//   frame began, so reading is clamped to handle's whole remainder rather than left to
 //   count next frame's work as well -- measured 24 ms on 16.7 ms frame before clamp.
 //   One in flight at time. Gated on reader: message per frame is cheap, and still work
 //   for nobody while panel is shut.
 let is_render_pending = false;
-let at_render = 0; // Slot frame that posted message was recorded in.
+let at_render = 0; // Handle frame that posted message was recorded in.
 let ms_render_posted = 0;
 function markRendered() {
   is_render_pending = false;
@@ -93,7 +93,7 @@ function renderFrame(now_seconds: number) {
   recordPhaseTime('lines', data.ms_lines);
   recordPhaseTime('planes', data.ms_planes);
   recordPhaseTime('sky', data.ms_sky);
-  recordPhaseTime('ghost', data.ms_ghost);
+  recordPhaseTime('preview', data.ms_preview);
   recordPhaseTime('selected', data.ms_selected);
   for (const name in COUNTS_DIAGNOSTIC) {
     const field = COUNTS_DIAGNOSTIC[name];
@@ -135,8 +135,8 @@ function renderFrame(now_seconds: number) {
   }
   drawRibbons(vbo.ribbon_furniture, count_furniture_held, 0, false);
 
-  // Draw scene objects last, opaque kinds before translucent washes.
-  //   Depth writes off for washes, so translucent plane never occludes line or point
+  // Draw scene objects last, opaque kinds before translucent veils.
+  //   Depth writes off for veils, so translucent plane never occludes line or point
   //   that happens to sit behind it; it only tints over whatever was already drawn
   //   there.
   //   Mirrors renderer.nim's own drawMeshes(MESHES, ...) call exactly.
@@ -179,7 +179,7 @@ function renderFrame(now_seconds: number) {
   if (!data.is_scene_held) count_point_held = uploadBuffer(data.point_verts, vbo.point, 11);
   const count_point = count_point_held;
   drawPoints(count_point, data.point_over, false);
-  // Washes:
+  // Veils:
   //   one record disc or dome, fanned out by their own vertex shaders and walked in scene order
   //   through run list.
   //   Both programs get this frame's matrix before walk, which switches between them per run.
@@ -192,7 +192,7 @@ function renderFrame(now_seconds: number) {
     uploadBuffer(data.dome_records, vbo.dome, 8);
   }
   gl.depthMask(false);
-  drawWashRuns(data.wash_runs, data.wash_run_over, false);
+  drawVeilRuns(data.veil_runs, data.veil_run_over, false);
   gl.depthMask(true);
 
   // Draw overlay over all of it, against depth buffer cleared first.
@@ -202,10 +202,10 @@ function renderFrame(now_seconds: number) {
   //   emission order decided among them, and selected planet drawn after its moon
   //   buried moon standing in front of it.
   //   Second pass over every kind rather than tail on each: selected line drawn only
-  //   after other lines is still tinted by plane's wash, which is later kind.
-  //   Washes write no depth here either, as in main pass.
+  //   after other lines is still tinted by plane's veil, which is later kind.
+  //   Veils write no depth here either, as in main pass.
   //   Mirrors `renderer.drawMeshes`.
-  if (data.ribbon_over + data.ring_over + data.point_over + data.wash_run_over > 0) {
+  if (data.ribbon_over + data.ring_over + data.point_over + data.veil_run_over > 0) {
     gl.clear(gl.DEPTH_BUFFER_BIT);
     gl.useProgram(program_ribbon);
     drawRibbons(vbo.ribbon, count_ribbon, data.ribbon_over, true);
@@ -214,7 +214,7 @@ function renderFrame(now_seconds: number) {
     gl.useProgram(program);
     drawPoints(count_point, data.point_over, true);
     gl.depthMask(false);
-    drawWashRuns(data.wash_runs, data.wash_run_over, true);
+    drawVeilRuns(data.veil_runs, data.veil_run_over, true);
     gl.depthMask(true);
   }
   // Command submission only:
@@ -238,7 +238,7 @@ function frame() {
   nimDriveHeld(seconds_frame);
   settleTwoFingers();
 
-  // Press that has now lasted long enough selects its item. Checked here rather than by.
+  // Press that has now lasted long enough selects its object. Checked here rather than by.
   //   timer that fires on its own, so that moment marker finishes filling is
   //   moment selection lands -- `interaction.isHoldMature` is stated against same
   //   progress marker was just drawn at, so two cannot disagree by frame.
@@ -246,34 +246,34 @@ function frame() {
   //   Asking "is it mature" beside flag kept here for "have I already acted on that" needs two to
   //   agree, and they stopped agreeing once hold outlived its own release:
   //   this handler clears its flag on lift while hold is still settling and still mature, so next
-  //   frame selected item again and toggled it straight back off.
+  //   frame selected object again and toggled it straight back off.
   //   `nimTakeMaturedHold` answers once and never again.
-  const slot_matured = nimTakeMaturedHold(now_seconds);
-  if (slot_matured >= 0) {
+  const handle_matured = nimTakeMaturedHold(now_seconds);
+  if (handle_matured >= 0) {
     // Selected, but hold is **kept**:
     //   its marker stays swollen clear of finger for as long as that finger is down, and settles
     //   only once `nimReleaseHold` says it may.
     has_long_press_fired = true; // Still needed, to stop release also reading as tap.
-    pickByPointer(slot_matured);
-    toggleSelection(slot_matured, position_touch_down);
+    pickByPointer(handle_matured);
+    toggleSelection(handle_matured, position_touch_down);
   }
   // And retire it once that settle is spent, so finished hold stops being drawn at all.
   if (nimIsHoldSpent(now_seconds)) nimCancelHold();
 
   // Recompute what drag in progress would build, and whether its dwell has come due.
-  //   Before frame that ghosts answer is assembled.
+  //   Before frame that previews answer is assembled.
   //   Runs every frame rather than on pointermove alone: dwell is time passing over
   //   cursor that is deliberately still, so there is no move event to hang it off.
   //   Mirrors `visualiser.renderFrame`'s order.
   // Take one dolly and one pick per frame, whatever pointer reported.
   //   Device reporting faster than display would otherwise pay for answers nobody read:
-  //   `picking.pickNearest` walks every live slot.
+  //   `picking.pickNearest` walks every live handle.
   //   Coalesced here, after `nimDriveHeld` so camera is where this frame will draw it,
   //   and before drag update and build so both read answer this frame's cursor
   //   deserves.
   //   Presses do not come through here.
   //     `pointerdown`, touch-down and `handleTap` each need hover reading before their
-  //     own handler returns, since `nimBeginDrag`, `slot_touch_down` and selection are
+  //     own handler returns, since `nimBeginDrag`, `handle_touch_down` and selection are
   //     decided from it, so they pick on spot and are only paths that still do.
   if (deltas_wheel !== 0) {
     nimCameraDollyAt(
@@ -324,8 +324,8 @@ function frame() {
   const ms_now_ui = performance.now();
   // One reading for every kind of UI work this frame did, through `addPhaseTime`:
   //   glide redraw above, tick here and slow pass in idle time after all land in same
-  //   slot. Row build runs every frame while it has rows left; rest runs on its own
-  //   five-a-second cadence; frame doing neither leaves slot unwritten.
+  //   handle. Row build runs every frame while it has rows left; rest runs on its own
+  //   five-a-second cadence; frame doing neither leaves handle unwritten.
   const is_ticking_ui = ms_now_ui - ms_refresh_ui >= MILLISECONDS_WINDOW_READING;
   if (is_ticking_ui || rows_pending !== null) {
     const ms_before_ui = performance.now();

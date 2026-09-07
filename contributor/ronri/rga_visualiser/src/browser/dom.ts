@@ -41,7 +41,7 @@ interface PointLocal {
 // stands.
 //   Buffers arrive from bridge carrying their own count, and every walk here is bounded by
 //   that count, so index inside it is always written. Reader states that once rather than
-//   guarding at every read, and zero is what unwritten slot would mean anyway.
+//   guarding at every read, and zero is what unwritten handle would mean anyway.
 function flatAt(flat: ArrayLike<number>, index: number): number {
   return flat[index] ?? 0;
 }

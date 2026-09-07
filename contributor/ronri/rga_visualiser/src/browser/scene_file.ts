@@ -7,18 +7,18 @@
 /* ---------------------------------------------------------------------- */
 /* Scene save/load: pack and parse exact `.rgascene` binary format         */
 /* `scene.nim`'s own doc comment documents (magic/version/basis-count/     */
-/* item-count/per-item ink+visible+label+16 float64+radius+shines), so    */
+/* object-count/per-object ink+visible+label+16 float64+radius+shines), so    */
 /* build saves loads on desktop build and vice versa. Packing lives       */
 /* here rather than in Nim, since `DataView` already does exactly this     */
-/* natively -- see `browser_bridge.nim`'s own doc comment.                */
+/* natively -- see `bridge.nim`'s own doc comment.                */
 /* ---------------------------------------------------------------------- */
 
 function saveScene() {
-  // Creation order, not slot order: version-3 file promises its sequence is order.
-  //   scene was built in, and removed-then-re-added object sits in reused slot
+  // Creation order, not handle order: version-3 file promises its sequence is order.
+  //   scene was built in, and removed-then-re-added object sits in reused handle
   //   well before objects that predate it. Loading walks sequence back one object at
-  //   time, so writing slot order here would replay construction that never happened.
-  const slots = nimSceneSlotsCreated();
+  //   time, so writing handle order here would replay construction that never happened.
+  const handles = nimSceneHandlesCreated();
   const count_basis = nimBasisCount();
   // Labels go out as UTF-8 bytes, which is what format holds and what `scene.nim`.
   //   writes: derived label carries operator notation (`a ∧ b`, `a ∨ b`, `a ⊖ b`), and
@@ -28,17 +28,17 @@ function saveScene() {
   //   wrong offset. Measured: `a ⊖ b` came back on desktop as `a` and replacement
   //   glyph.
   const encoder = new TextEncoder();
-  const items = slots.map((slot) => ({
-    ink: nimItemInk(slot),
-    visible: nimItemVisible(slot),
-    label: encoder.encode(nimItemLabel(slot)),
-    coefficients: nimItemCoefficients(slot),
-    radius: nimItemRadius(slot),
-    shines: nimItemShines(slot),
+  const objects = handles.map((handle) => ({
+    ink: nimObjectInk(handle),
+    visible: nimObjectVisible(handle),
+    label: encoder.encode(nimObjectLabel(handle)),
+    coefficients: nimObjectCoefficients(handle),
+    radius: nimObjectRadius(handle),
+    shines: nimObjectShines(handle),
   }));
 
   let size = 4 + 1 + 1 + 4;
-  for (const item of items) size += 1 + 1 + 1 + item.label.length + count_basis * 8 + 8 + 1;
+  for (const object of objects) size += 1 + 1 + 1 + object.label.length + count_basis * 8 + 8 + 1;
 
   const buffer = new ArrayBuffer(size);
   const view = new DataView(buffer);
@@ -53,25 +53,25 @@ function saveScene() {
   }
   view.setUint8(offset, nimSceneVersion()); offset += 1;
   view.setUint8(offset, count_basis); offset += 1;
-  view.setUint32(offset, items.length, true); offset += 4;
+  view.setUint32(offset, objects.length, true); offset += 4;
 
-  for (const item of items) {
-    view.setUint8(offset, item.ink); offset += 1;
-    view.setUint8(offset, item.visible ? 1 : 0); offset += 1;
-    view.setUint8(offset, item.label.length); offset += 1;
-    for (const byte of item.label) { view.setUint8(offset, byte); offset += 1; }
+  for (const object of objects) {
+    view.setUint8(offset, object.ink); offset += 1;
+    view.setUint8(offset, object.visible ? 1 : 0); offset += 1;
+    view.setUint8(offset, object.label.length); offset += 1;
+    for (const byte of object.label) { view.setUint8(offset, byte); offset += 1; }
     for (let i = 0; i < count_basis; i++) {
-      view.setFloat64(offset, item.coefficients[i] ?? 0, true);
+      view.setFloat64(offset, object.coefficients[i] ?? 0, true);
       offset += 8;
     }
-    view.setFloat64(offset, item.radius, true); offset += 8;
-    view.setUint8(offset, item.shines ? 1 : 0); offset += 1;
+    view.setFloat64(offset, object.radius, true); offset += 8;
+    view.setUint8(offset, object.shines ? 1 : 0); offset += 1;
   }
 
   deliverFile(
     new Blob([buffer], { type: 'application/octet-stream' }), 'scene.rgascene',
     'application/octet-stream',
-    'A scene file holding ' + items.length + ' object(s)',
+    'A scene file holding ' + objects.length + ' object(s)',
   );
 }
 
@@ -118,16 +118,16 @@ function parseAndLoadScene(buffer: ArrayBuffer) {
       count_basis_here + '-term multivectors.',
     );
   }
-  const count_item = view.getUint32(offset, true); offset += 4;
-  if (count_item > nimSceneCapacity()) {
+  const count_object = view.getUint32(offset, true); offset += 4;
+  if (count_object > nimSceneCapacity()) {
     throw new Error(
-      'File holds ' + count_item + ' objects, more than this build’s ' +
-      nimSceneCapacity() + '-item capacity.',
+      'File holds ' + count_object + ' objects, more than this build’s ' +
+      nimSceneCapacity() + '-object capacity.',
     );
   }
 
   const parsed = [];
-  for (let i = 0; i < count_item; i++) {
+  for (let i = 0; i < count_object; i++) {
     if (offset + 3 > buffer.byteLength) {
       throw new Error('File is truncated partway through object ' + i + '.');
     }
@@ -154,7 +154,7 @@ function parseAndLoadScene(buffer: ArrayBuffer) {
       offset += 8;
     }
     // Radius only where file's version wrote one; which versions did is Nim's rule.
-    //   Older file's items take theirs from upgrade chain, so value passed is moot.
+    //   Older file's objects take theirs from upgrade chain, so value passed is moot.
     let radius = nimDefaultRadius();
     if (nimSceneHasRadius(version)) {
       if (offset + 8 > buffer.byteLength) {
@@ -179,15 +179,15 @@ function parseAndLoadScene(buffer: ArrayBuffer) {
   //   stamped to appear beat after last, so scene replays its own construction.
   //   Version rides along because older file's palette ordinals mean something
   //   else; mapping is Nim's, not this parser's.
-  //   One clock reading for whole arrival, taken before loop: read per item it
+  //   One clock reading for whole arrival, taken before loop: read per object it
   //   would creep forward by however long parsing took, which is stagger nobody chose.
   const arrived = now();
-  for (const item of parsed) {
-    const slot = nimSceneAddRaw(
-      version, item.ink, item.visible, item.label, item.coefficients, item.radius,
-      item.shines, count_item, arrived,
+  for (const object of parsed) {
+    const handle = nimSceneAddRaw(
+      version, object.ink, object.visible, object.label, object.coefficients, object.radius,
+      object.shines, count_object, arrived,
     );
-    if (slot < 0) throw new Error('File names an unknown palette slot or radius for an object.');
+    if (handle < 0) throw new Error('File names an unknown palette slot or radius for an object.');
   }
-  return 'Loaded ' + count_item + ' object(s) from scene file.';
+  return 'Loaded ' + count_object + ' object(s) from scene file.';
 }

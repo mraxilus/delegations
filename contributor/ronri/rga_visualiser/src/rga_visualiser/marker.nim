@@ -1,4 +1,4 @@
-## Shape selection or hover marker to object it marks, in screen pixels.
+## Kind selection or hover marker to object it marks, in screen pixels.
 ##
 ## Marker says "this one", and says it best when its outline echoes thing it surrounds.
 ##   Ring reads as *that point*, pair of rails as *that line*, circle lying on plane as
@@ -12,27 +12,27 @@
 ##   with it.
 ##
 ##   |------------------|---------------------------------------------------------------|
-##   | Shape            | Marker                                                        |
+##   | Kind            | Marker                                                        |
 ##   |------------------|---------------------------------------------------------------|
 ##   | Point            | `Ring`: circle in screen space, about drawn point.            |
 ##   | Line             | `Rails`: two screen-space segments flanking its projection.   |
 ##   | Plane            | `Loop`: circle lying *on plane*, outside its own rim.         |
-##   | Line at horizon  | `Bands`: two small circles on sky flanking great circle       |
+##   | Horizon line  | `Bands`: two small circles on sky flanking great circle       |
 ##   |                  |   line itself is drawn as.                                    |
-##   | Plane at horizon | `Frame`: boundary around whole viewport, since object it      |
+##   | Horizon plane | `Frame`: boundary around whole viewport, since object it      |
 ##   |                  |   marks is whole sky.                                         |
-##   | Point at horizon | `Ring`, about star it is drawn as.                            |
+##   | Horizon point | `Ring`, about star it is drawn as.                            |
 ##   |------------------|---------------------------------------------------------------|
 ##
 ## Last two draw fixed to eye rather than around point in scene.
 ##   What marker surrounds is *whatever is drawn*, and both are drawn: great circle and
 ##   whole sky.
 ## Markers are described here and drawn by each render path's foreground layer
-## (`visualiser.drawSelectionMarker`, `glue.js`'s SVG overlay), never as scene geometry.
+## (`visualiser.drawSelectionMarker`, browser scripts's SVG overlay), never as scene geometry.
 ##   Loop lying exactly on plane would z-fight with its fill, and marker occluded by
 ##   object it marks is not marker.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render paths.
+## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "strictFuncs".}
 
@@ -50,7 +50,7 @@ const
     ## Set clear space between object's drawn edge and its marker, in pixels.
     ##   One number for all three shapes: consistent band of untouched background is
     ##   what makes selection legible.
-    ##   Held tight: wide band reads as second object, and on several selected items
+    ##   Held tight: wide band reads as second object, and on several selected objects
     ##   bands become busiest thing on screen.
   HEIGHT_MARKER_LABEL* = 16.0
     ## Set nominal height of selected object's name label, in pixels.
@@ -123,7 +123,7 @@ const
     ##   Fingertip covers what it presses, so marker filling underneath says nothing to
     ##   person filling it.
     ##   Sized from far end: point's ring reaches about twice thumb's contact patch at
-    ##   peak, in framebuffer pixels and CSS pixels alike; see `glue.js` on two layers.
+    ##   peak, in framebuffer pixels and CSS pixels alike; see browser scripts on two layers.
     ##   Added in pixels rather than multiplied, so it means one thing on point's ring
     ##   and on rim hundreds of pixels across. Mouse never sees it: cursor hides nothing.
   SEGMENTS_MARKER_BANDS* = 48
@@ -562,7 +562,7 @@ func addPulse(
 func cometFor*(
   tail, head: ScreenPosition
 ): Option[array[POINTS_MARKER_PULSE, ScreenPosition]] =
-  ## Shape head of drag band running `tail` -> `head` as closed outline, in pixels.
+  ## Kind head of drag band running `tail` -> `head` as closed outline, in pixels.
   ##   Render path fills it over band.
   ##   Drag is not symmetric: `a ∨ b` and `b ∨ a` differ, and bare line draws
   ##   identically for either. Head says which way round pair is taken, at end where
@@ -761,7 +761,7 @@ func markerRing(
   ##   Fills caller's `marker` and reports whether one was shaped; see `markerFor`.
   ##   Screen-space rather than world circle facing camera: point has no orientation to
   ##   echo, and every facing looks same from one angle it is seen from.
-  ##   `radius` is item's drawn radius, in world units; ring sits `GAP_MARKER` outside
+  ##   `radius` is object's drawn radius, in world units; ring sits `GAP_MARKER` outside
   ##   pixels that spans at point's depth, so it hugs sun and dot alike.
   ##   `progress` sweeps ring rather than growing it: ring growing outward reads as point
   ##   swelling, inward collides with it.
@@ -938,7 +938,7 @@ func markerRails(
   ##     through support to near one, so line wears one comet rather than four.
   ##     Measured from support, lapped against shorter rail, so camera restretching
   ##     rails does not move comet, and pair cannot drift apart. None leaves rails still.
-  ##   None at horizon, and none where line collapses to point on screen.
+  ##   None in horizon, and none where line collapses to point on screen.
   let
     anchor = positionAnchor(geometry)
     axis = direction(geometry)
@@ -1089,7 +1089,7 @@ proc markerLoop(
   ##   normal points at eye.
   ##     Points are generated around plane's frame, and projection answers which way
   ##     that order reads. None leaves circle still.
-  ##   None at horizon, where plane draws as dome fixed to eye.
+  ##   None in horizon, where plane draws as dome fixed to eye.
   let
     anchor = if anchor_override.isSome: anchor_override else: positionAnchor(geometry)
     axes = frame(geometry)
@@ -1311,7 +1311,7 @@ func radiusToEdge(half_width, half_height, angle: float): float =
 func markerFrame(width, height: int; progress, clearance: float; marker: var Marker): bool =
   ## Build horizon plane's frame: boundary around viewport.
   ##   Expands from centre as circle and settles as viewport's rectangle.
-  ##   Plane at horizon is whole sky, drawn as dome filling every direction, so honest
+  ##   Horizon plane is whole sky, drawn as dome filling every direction, so honest
   ##   marker surrounds view. It does not move with camera; what it marks does not either.
   ##   `progress` sets one reach in pixels, and each direction's boundary point stands at
   ##   that reach *or* screen edge, whichever is nearer.
@@ -1320,7 +1320,7 @@ func markerFrame(width, height: int; progress, clearance: float; marker: var Mar
   ##     Full reach is half-diagonal, corners' distance.
   ##   `clearance` pushes it outward past inset: frame is never under finger, and
   ##   shrinking would read as retreating.
-  ##   No pulse: pulse's message is orientation, and plane at horizon has none.
+  ##   No pulse: pulse's message is orientation, and horizon plane has none.
   ##     `frame`, `directionNormal` and `direction` all report nothing, negated or not.
   ##   None only for viewport too small to hold inset.
   let
@@ -1373,14 +1373,14 @@ proc markerFor*(
   marker: var Marker; progress: float = 1.0;
   is_touch: bool = false; travel: Option[float] = none(float); swell: float = 0.0
 ): bool =
-  ## Shape marker for one object, dispatching on its grade and whether it is at horizon.
+  ## Kind marker for one object, dispatching on its grade and whether it lies in horizon.
   ##   Fills caller's `marker` and reports whether one was shaped, not `Option[Marker]`.
   ##     `Marker` reserves every kind's fixed arrays, and on JS backend each return, `get`
   ##     and assignment walked all of it through `nimCopy` (Art. VII.1).
   ##     On `false` storage holds nothing readable.
-  ##   `anchor_override` is item's stored creation anchor, used for plane and ignored
+  ##   `anchor_override` is object's stored creation anchor, used for plane and ignored
   ##   otherwise, as `tessellate.addObject` treats it.
-  ##   `radius` is item's drawn radius, used for point and ignored otherwise, likewise.
+  ##   `radius` is object's drawn radius, used for point and ignored otherwise, likewise.
   ##   `progress` draws marker part-built, for press maturing into selection; 1 is
   ##   finished marker.
   ##     How partial marker is shaped is each outline's business: ring sweeps, rails run
@@ -1390,22 +1390,22 @@ proc markerFor*(
   ##   `travel` places orientation pulse round outline, and is what caller passes to say
   ##   object is selected: hover and keyboard focus pass none.
   ##     Distance in screen pixels from outline's anchor, from `selection.PulseClock`.
-  ##     None where object has no orientation: point, and plane at horizon (see
+  ##     None where object has no orientation: point, and horizon plane (see
   ##     `markerFrame`).
   ##   None only where object has no drawable geometry. Every drawn shape has marker.
-  let shape = shape(geometry)
+  let shape = kindOf(geometry)
   if shape.isNone: return
   let
     is_horizon = geometry.isHorizon
     clearance = clearanceTouch(swell, is_touch)
   case shape.get
-  # Ring point at horizon about fixed star `anchorFor` places, so it needs no branch.
+  # Ring horizon point about fixed star `anchorFor` places, so it needs no branch.
   #   Two below are drawn as great circle and whole sky with no anchor.
-  of Shape.Point:
+  of Kind.Point:
     markerRing(
       geometry, radius, scale, view_projection, width, height, progress, clearance, marker
     )
-  of Shape.Line:
+  of Kind.Line:
     if is_horizon:
       markerBands(
         geometry, scale, view_projection, width, height, progress, clearance, travel,
@@ -1416,7 +1416,7 @@ proc markerFor*(
         geometry, scale, view_projection, width, height, progress, clearance, travel,
         marker,
       )
-  of Shape.Plane:
+  of Kind.Plane:
     if is_horizon: markerFrame(width, height, progress, clearance, marker)
     else:
       markerLoop(

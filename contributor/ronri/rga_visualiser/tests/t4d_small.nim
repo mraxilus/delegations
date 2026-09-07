@@ -1,7 +1,7 @@
 discard """
 action: run
 cmd: "nim c --hints:on -d:testing -d:nimUnittestAbortOnError:on $options -r $file"
-matrix: "-d:visualiser.items_max=12 -d:visualiser.label_max=12 -d:visualiser.history_capacity=4"
+matrix: "-d:visualiser.objects_max=12 -d:visualiser.label_max=12 -d:visualiser.history_capacity=4"
 batchable: true
 joinable: true
 """

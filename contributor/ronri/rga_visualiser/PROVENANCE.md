@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Author | Claude Opus 5 and Claude Sonnet 5 |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | d7526c4b4d7fa1d9 |
+| Rules  | 00f4a795ba695350 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the
@@ -69,6 +69,123 @@ lines — would set the precedent for module system, build step, dependency pinn
 generated file is marked. Conventions were proposed rather than assumed, as issue 27, and are
 unanswered. Rejected as a workaround: choosing them unilaterally and leaving a later ruling to
 invalidate every line written under them.
+Vocabulary
+---
+**Twenty-eight terms were selected by the Architect, in session, and are in `GLOSSARY.md`.**
+None was written on sight: CONTRIBUTOR.md's glossary process says propose the term and let
+the Architect choose, so each was put with its candidates and what each would displace. The
+code was then made to say them, one commit per term or tight group.
+
+**Every word turned out to name more than one thing, and only one sense moved.** This is the
+finding worth carrying: a rename here is never a substitution, and what is spared is spared
+by an explicit list rather than by a rule.
+  `slot` meant three things — an object's address, a position in the `Ink` palette, and a
+  per-phase timing array position in the diagnostics. Only the first became `handle`;
+  `mesh` was left whole, holding no address sense at all.
+  `target` meant five — the camera's orbit centre, the object a press points at, the DOM
+  event target, a render target, and a plain goal figure. Only the first became `pivot`.
+  `budget` meant two: the frame-rate lines, which are `mark`s because nothing is held to
+  them, and real allowances of time, pixels and segments, which keep the word.
+
+**Three names could not be taken, and each says why in place.** `object` is reserved in Nim,
+so code-position `item` took a role instead — `one` where an object is reached through the
+accessor, `saved` where a record is read out of a file. `handle` collides with std's
+`typedthreads.handle`, which wins over an injected local inside a template, so `picking`
+turns on `openSym`. `iterator items` keeps its name because it is Nim's own protocol:
+renaming it would break every `for` loop with no word from the compiler.
+
+**Two spec keys were nearly renamed, and neither would have failed loudly.** `targets: "js"`
+is a testament key; renaming it would have run the browser suite on the wrong backend.
+`visualiser.items_max` is a compile-time define named in the small suite's `matrix`; the
+constant and the define moved together, and that they still meet was checked by compiling
+against it rather than by reading both lines.
+
+**`horizon` stays `pga`'s word** and has no entry here: the algebra's vocabulary belongs to
+that library. What was corrected is this project's phrasing of it. An ideal object does not
+sit *at* the horizon, it lies *in* it, so the kind words a reader sees are `horizon point`,
+`horizon line` and `horizon plane`. The finite half — a plane meets the horizon in a line,
+which is its direction — has no site here, since this project describes ideal objects alone.
+
+*Checked.* Verified by running, after every rename: three suites pass unchanged at 323, 302
+and 310 cases, which is what says no behaviour moved; `tsc` clean under its three flags after
+`bridge.d.ts` is re-derived; `koch tree` at 0 findings; and the page built, loaded and driven
+— object list, a pick, an orbit, undo, and the camera fields the pivot rename touched.
+  **Unverified**: the desktop front-end is not in this repository yet, so no rename here has
+  been compiled against it. Whatever it carries of this vocabulary arrives with it.
+
+Driven Checks
+---
+**Suites test rules; this layer tests wiring.** What a slide does to pivot, what zoom does
+to distance, is suite's. Nothing in suites presses key, turns wheel or puts two fingers on
+canvas, so nothing in them catches rule wired to wrong event. `tools/drive/` does, through
+Playwright, against page `tools/build.nim web` assembled. One command runs both:
+`nim r tools/build.nim drive`.
+
+**135 checks pass today**, one module per section of what page does:
+
+| Module | Covers |
+|--------|--------|
+| `keys`, `wheel`, `pan` | held keys, wheel zoom, mouse pan, what zoom settles onto |
+| `touch`, `construct`, `finger` | pinch, long press, drag construction, crowd, paused drag |
+| `apply`, `framing`, `label` | pickers and menu route, what picking does to camera, names |
+| `chrome`, `comet`, `ground` | hover during gesture, help, horizon comet, ground's reach |
+| `frame`, `diagnostics`, `ramp` | frame's own clocks, tree, colour each row wears |
+| `exceedance`, `rings` | distribution curve, its axis, rings each reading is taken over |
+| `scenery`, `pins`, `hold`, `pool` | what scene costs, repaired faults, scene hold, drawer |
+| `demo`, `loaded`, `objects` | preset, culling, occlusion, and what all of it costs loaded |
+
+Figures from this environment, software-rendered: eight wheel notches take distance 19.00 to
+5.28 and leave what pointer is over **0.00 px** from where it was; right-button drag moves
+pivot 32.5 units at unchanged height; frame is assembled in 0.7 ms median, 0.9 ms at its
+slowest tenth; hover pick over largest demo runs 2.0 ms median; edit past timeline capacity
+costs 2.5 ms over 5,038 objects; closed rows hold 9.1 elements each over 5,040 of them.
+
+**Timing-dependent quantities are asserted as bands, never figures.** How far held key
+travels depends on frames drawn while it was down. Band that will not settle is widened with
+reason recorded, never deleted and never narrowed to fit one lucky run.
+
+**Comet's band caught port's own defect rather than needing widening.** First port selected
+horizon line through `nimSelectOnly`, which moves Nim's selection and leaves page's render
+snapshot behind it, so overlay drew no marker and comet advanced only on harness's own two
+reads: 1.35 px against 5-60 px band. Selecting through page's `selectOnly`, as every pick
+path does, gives 33 px. Every check reading what page *drew* goes through page's own entry
+for that reason.
+
+**Aim tween moves what drag is reaching for.** Press starts glide of camera's pivot toward
+drag, so anchor read at press names where object *was*; drags aimed there let go over empty
+glass and build nothing. Two legs chase destination's live pixel each step for that reason,
+and settle on it before releasing.
+
+**TypeScript rather than Nim, and that is argued rather than assumed.** Playwright's surface
+is about fifteen bindings — genuinely one page of glue, as `dance_ontology` found for its own
+driver. What decided it is that harness's calls are overwhelmingly `page.evaluate` bodies
+naming bridge's 157 exports, which `build/bridge.d.ts` types. Through Nim's foreign-function
+glue each becomes unchecked string, and vocabulary pass renamed every one of those exports:
+string version compiles clean and fails one check at time. Put to curator as issue 48, since
+Article II.9 reads both ways here.
+  `@types/node` is pinned for node's own globals. Its declarations clash with DOM lib, which
+  `evaluate` bodies need, so lib check is skipped: that skips checking *inside* declaration
+  files, never calls against them.
+  Page-script names harness drives are hand-declared in `tools/drive/page.d.ts`, in three
+  groups: page's own selection and chrome entries, exceedance window, and tree, rings and
+  objects list. Bridge's exports are never hand-written; reach for one first, then for DOM.
+  **Cost of that file is coupling**: it names page internals no export exposes, so renaming
+  one breaks harness rather than page, and `tsc` is what says so. Accepted because checks it
+  buys — that curve is distribution, that tick writes only rows that moved — cannot be asked
+  any other way.
+
+*Checked.* Verified by running: 135 of 135 pass through `tools/build.nim drive` on assembled
+page, in Chromium, software-rendered. Every section of prototype's own harness is ported.
+That harness carries about 140 check sites — 125 reported directly and 15 through band
+reader — and this one 151; neither figure is count of claims, since both carry guard reports
+that fire only where check cannot be set up.
+  **Unverified**: **CI does not reach this layer.** Runner's jobs are fixed in curator-owned
+  workflow, and contributor's scope reaches only own project, so no job drives page. Asked as
+  issue 47. Until it is ruled, these checks are contributor's to run, and green here is
+  evidence someone ran it rather than something runner confirms.
+  **Unmeasured**: figures above are this container's, software-rendered, and say more about
+  swiftshader than about any GPU. Bands, not figures, are what checks assert.
+
 Browser Front-End
 ---
 **Page is one self-contained file.** It opens from `file://` or from an artefact host that
@@ -102,7 +219,7 @@ extra flag proved unworkable against `lib.dom`, which is what issue 27 asked to 
 Indexing therefore reports
 absence, and bridge's flat buffers are read through `flatAt` and `pointAt` rather than guarded
 at each of hundred sites: buffers arrive carrying their own count and every walk is bounded by
-it, so absence there is impossible and zero is what unwritten slot would mean.
+it, so absence there is impossible and zero is what unwritten handle would mean.
   Element lookup splits in two for same reason: `elementById` fails loudly for markup this
   build ships, `elementIfPresent` reports absence for control that is genuinely optional.
   Losing that split would turn absent optional control into thrown error mid-frame.
@@ -125,11 +242,10 @@ type-checker: every script clean under three flags above, with no `any` and no n
 assertion used to silence them. Verified by running: three suites pass on pinned commit
 through `koch tests`, unchanged at 323, 302 and 310 cases, which says conversion moved no rule
 out of Nim.
-  **Unverified**: no human has driven this page, and nothing here has been driven by check.
-  Pointer, touch and wheel paths, drag construction, undo, scene save and load, and every
-  diagnostics reading are **untested** in this repository; prototype's own harness arrives
-  next, and until it does every claim about behaviour beyond first frame is assumption.
-  **Unmeasured**: no frame time was taken here. Figures under Measurements are prototype's.
+  **Partly driven now**: held keys, wheel, mouse pan and touch are checked by harness; see
+  Driven Checks for what it covers. Scene save and load remain **untested** in this
+  repository: nothing drives file picker.
+  **Unverified**: no human has driven this page.
 
 Render Paths
 ---
@@ -167,21 +283,21 @@ Scene Storage
 ---
 `Scene` (`scene.nim`) is a fixed-capacity structure-of-arrays arena — geometries, labels,
 inks, visibility, liveness, birth stamps, creation ordinals, placing stamps, anchor
-overrides — addressed by a slot assigned once on `addItem` and never moved. Free slots
+overrides — addressed by a handle assigned once on `addObject` and never moved. Free handles
 thread onto an intrusive singly-linked free list, so add and remove are O(1).
-`ITEMS_MAX` = 5040 and `LABEL_MAX` = 40, both `{.define.}`-overridable. Chosen over a
+`OBJECTS_MAX` = 5040 and `LABEL_MAX` = 40, both `{.define.}`-overridable. Chosen over a
 shift-on-delete array whose removal renumbers every held cross-frame index; the property
-everything else relies on is that **a slot number stays valid until its item is removed**.
+everything else relies on is that **a handle number stays valid until its object is removed**.
 
-**`Scene.bound` is the highest slot ever occupied**, and every per-frame walk runs to it
+**`Scene.bound` is the highest handle ever occupied**, and every per-frame walk runs to it
 rather than to capacity. It only rises, so walking to it is safe. Three walks legitimately
 run to capacity — the free list and the two object-pool strips, whose subject is how much
 room is left — and `bound`'s own doc names them. A walk to capacity over five live objects
 cost 13.3 ms a frame on the JS backend; a driven pin crept 2.5 → 8.8 → 13.3 ms across
 three capacity rises before that was found.
 
-**`Scene.revision` counts edits, and every writer is inside `scene.nim`**: `addItem`,
-`removeItem`, `setInk`, `setVisible`, `replayFrom`, `setGeometryAt`. There is no
+**`Scene.revision` counts edits, and every writer is inside `scene.nim`**: `addObject`,
+`removeObject`, `setInk`, `setVisible`, `replayFrom`, `setGeometryAt`. There is no
 `var`-returning geometry accessor — it was the hole through which a caller could write with
 nothing recorded, and twenty-six of its twenty-nine callers were reading anyway. Whole-scene
 replacement (undo, redo, clear, every load) goes through `restoreFrom`, which issues a
@@ -189,19 +305,19 @@ revision **newer than every revision ever handed out**, `max(live, snapshot) + 1
 snapshot's own count plus one — a number a state between the two had already worn, so a
 placement cache keyed on it drew six objects of the previous demo over the new one.
 
-**Placement is invalidated per slot.** `Scene.revisions_placing` stamps each slot at the
-edit that last changed it, and `restoreFrom` stamps every live slot of the snapshot. The
-browser's placement cache re-places only slots stamped after the revision it last filled at.
+**Placement is invalidated per handle.** `Scene.revisions_placing` stamps each handle at the
+edit that last changed it, and `restoreFrom` stamps every live handle of the snapshot. The
+browser's placement cache re-places only handles stamped after the revision it last filled at.
 Re-placing the whole scene per edit cost a 42 ms frame at 5,038 objects; a restore still
-re-places everything, correct and a whole placement pass per undo at that size. A per-slot
+re-places everything, correct and a whole placement pass per undo at that size. A per-handle
 diff against the live scene would cut that and was not done.
 
-**Creation order is recorded explicitly** (`orders`, `count_created`, `slotsCreated`), not
-inferred. Slot order stops being creation order the moment anything is removed, since the
-free list hands the most recently freed slot to the next arrival. Sorting by `born` was
+**Creation order is recorded explicitly** (`orders`, `count_created`, `handlesCreated`), not
+inferred. Handle order stops being creation order the moment anything is removed, since the
+free list hands the most recently freed handle to the next arrival. Sorting by `born` was
 rejected on three counts that all occur: two objects added in one frame share a clock
-reading; a replayed item's `born` is stamped into the future; a reused slot's `born` is
-stale until overwritten. `slotsCreated` is a heap sort, O(n log n); as an insertion sort at
+reading; a replayed object's `born` is stamped into the future; a reused handle's `born` is
+stale until overwritten. `handlesCreated` is a heap sort, O(n log n); as an insertion sort at
 5,038 objects it ran 12.7 million comparisons a call. The desktop panel caches its answer
 against `scene.revision`, because sorting by `born` every frame was 98% of the desktop's CPU
 frame at 5,038 objects.
@@ -213,11 +329,11 @@ UTF-8, which the JS backend percent-escapes into a name (`%e2%8a`). Derived name
 compound (`b ^ ground⊖ ∧ b ∨ (o ∧ ground…`) and that is left: the full name is what the
 object *is*.
 
-`Item` is a handle, not an assembled copy, and under `nim js` it holds the `Scene` by value;
-the per-frame loops use the by-slot accessors instead (see Browser Pipeline).
+`Object` is a handle, not an assembled copy, and under `nim js` it holds the `Scene` by value;
+the per-frame loops use the by-handle accessors instead (see Browser Pipeline).
 
-*Checked.* Verified by suite cases: slot stability across removal; `slotsCreated` on a
-scrambled arena of hundreds; `revisionPlacingAt` stamping one slot per edit and every slot
+*Checked.* Verified by suite cases: handle stability across removal; `handlesCreated` on a
+scrambled arena of hundreds; `revisionPlacingAt` stamping one handle per edit and every handle
 after a restore; `restoreFrom` landing on a revision no earlier state carried; label
 truncation never splitting a character at any buffer size. Verified by driven check: undo
 while the frame is held redraws the current scene, not the previous one. The 13.3, 42 and
@@ -228,7 +344,7 @@ Memory And Allocation
 ---
 The interactive render loop allocates nothing. `format.nim` wraps C `snprintf` so per-frame
 number formatting writes into stack buffers. Button-driven message building still uses
-`strformat`: once per click, and the result must become a `string` for `addItem` anyway.
+`strformat`: once per click, and the result must become a `string` for `addObject` anyway.
 
 `arena.nim`: a plain `array[N, byte]` carved by `push[T]` and reclaimed by `reset`. Three
 instances in `visualiser.nim`:
@@ -248,12 +364,12 @@ largest carver) sixty times a second. The storyboard's capture loop turns the pa
 its own `renderAt`; without that, captured sub-frames stacked scratch until the fifth
 overflowed.
 
-**The undo timeline is the largest reservation the binary makes.** A `Scene` at 5040 slots
+**The undo timeline is the largest reservation the binary makes.** A `Scene` at 5040 handles
 is 1.15 MiB as a C struct (1,204,616 bytes by `sizeof` on the release compiler), a `Step`
 is a `Scene` beside a five-float `Camera`, and `CAPACITY_HISTORY` = 32 of them reserve
 36.8 MiB (38,549,528 bytes) against 6.2 MiB for both mesh sets. In the browser the same
 timeline is roughly 105 MB of JS heap; the live page measured 85 MB at load before the
-per-slot placing stamps were added and has not been re-measured since. The depth is left at
+per-handle placing stamps were added and has not been re-measured since. The depth is left at
 32: an edit no longer costs anything per step (see Undo/Redo), so what remains is a flat
 reservation, and the lever is linear — about 1.15 MiB of address space and 3.3 MB of JS heap
 a step. `BYTES_MEMORY_TOTAL` counts it; a figure omitting its own largest term is worse than
@@ -278,7 +394,7 @@ Five assignable hues — `Rose, Copper, Olive, Jade, Cobalt` — plus `Backdrop`
 
 **`Invalid` is a reserved magenta**: seeing it means an object is wrong. The drag band wears
 it over a pair that makes nothing (see Interaction Model); nothing else does. It is never
-leaned on alone — magenta reads as *blue* under deuteranopia — and the ghost fails to appear
+leaned on alone — magenta reads as *blue* under deuteranopia — and the preview fails to appear
 beside it. Reserving it cost three hues: `Violet` and `Cerise` measured CVD ΔE 10.2 and 8.3
 from magenta, and `Cobalt`, 88° of hue away, measured **6.6** because blue and magenta
 converge under deuteranopia. `Cobalt` was re-derived lighter and bluer (`#5b90c7`), which
@@ -306,7 +422,7 @@ Derived under floors `tools/check_palette` measures every run:
 2. Axis safety: each hue clears ≥ 20° and a lower ΔE floor (4.0) against `AxisX/Y/Z`, so a
    thin fixed line is never mistaken for a filled object. Loosened from the object floor on
    purpose — a thin line needs less separation than two adjacent fills — which is what freed
-   most of the wheel; the sixteen-slot set that held everything to one floor crammed every
+   most of the wheel; the sixteen-handle set that held everything to one floor crammed every
    hue into a teal/blue/violet arc and read as one colour.
 3. Every assignable hue clears CVD ΔE ≥ 13 from `Invalid`: worst `Cobalt` 14.4, `Rose` 15.2.
 4. Furniture against `Backdrop` ≥ 8.0: the axes land at 15.7–25.3.
@@ -341,7 +457,7 @@ copper — the two seeds that are not arbitrary — and `a`, `b`, `c` take the t
 left, so nothing collides.
 
 *Checked.* Verified: every floor above, by `check_palette` on each run, and the seven-hue
-and sixteen-slot failures by the same tool when those sets were tried. Verified by
+and sixteen-handle failures by the same tool when those sets were tried. Verified by
 rendering: the axis dimming, and that 0.55 grid alpha read as absent (see Geometry). Assumed:
 the prevalence figure for tritanopia, taken from the literature.
 
@@ -383,11 +499,11 @@ frame — zero parallax on translation. A full sphere, not a hemisphere: an orbi
 elevated and tilted down, so a dome cut at the horizontal loses sky the camera sees. Grade 4
 is one-dimensional in this algebra, so every horizon plane is the same universal object.
 
-**Draw-order invariant.** Translucent washes blend in scene order with depth writes off, so
+**Draw-order invariant.** Translucent veils blend in scene order with depth writes off, so
 whichever is appended last wins. Both `visualiser.assembleMeshes` and
-`browser_bridge.nimBuildFrame` insert any visible horizon plane's dome **first** (via
-`objects.isHorizonPlane`), so an ordinary plane's fill blends over the sky whatever slots
-they occupy. Two ordinary washes crossing still look order-dependent; accepted.
+`bridge.nimBuildFrame` insert any visible horizon plane's dome **first** (via
+`objects.isHorizonPlane`), so an ordinary plane's fill blends over the sky whatever handles
+they occupy. Two ordinary veils crossing still look order-dependent; accepted.
 
 **Muting.** `mesh.muted()` blends toward the colour's own luminance (`MUTE_DESATURATION`
 0.6) rather than replacing it with `Ink.Grid`, which made a muted object indistinguishable
@@ -400,18 +516,18 @@ lines exceed furniture lines. `marker` derives every clearance from them and can
 `drawExtentFor` the framebuffer's height rather than the window's.
 
 **Every point has a radius, in world units, and is drawn in perspective.** `Scene.radii` holds
-one per slot (`radiusAt`/`setRadius`, `addItem(..., radius)`), `RADIUS_ITEM_DEFAULT` = 0.08 —
+one per handle (`radiusAt`/`setRadius`, `addObject(..., radius)`), `RADIUS_OBJECT_DEFAULT` = 0.08 —
 what the old nine-pixel sprite spanned at the opening camera, 19 units over 900 px, so old
 scenes and fresh constructions open looking as they did and only gain perspective. Both
 editors carry a `size` field (`EditSession.radius`, `session_edit.radius`), bounded below at
-`RADIUS_ITEM_LEAST` 0.001 because the model refuses zero outright and would take the page down
-with it; `RADIUS_ITEM_MOST` 1e6 exists because ImGui's drag widget reads *no upper bound* as
+`RADIUS_OBJECT_LEAST` 0.001 because the model refuses zero outright and would take the page down
+with it; `RADIUS_OBJECT_MOST` 1e6 exists because ImGui's drag widget reads *no upper bound* as
 *no bounds*. A point crosses the wire as one eight-float record (`Vertex`: centre, radius,
 colour) and is drawn as an **instanced camera-facing quad**, four corners in strip order from
-`mesh.pointCorners`, on both targets: the vertex shader takes `depth = (centre − eye) · forward`,
+`mesh.pointCorners`, on both front-ends: the vertex shader takes `depth = (centre − eye) · forward`,
 `world_per_pixel = 2·depth·tan(fov/2)/height`, `radius = max(own, ½·DIAMETER_POINT_LEAST·
 world_per_pixel)` and steps the corner along the camera's `axis_right`/`axis_up` (new fields of
-`DrawScale`, carried to `glue.js` as `camera_right_*`/`camera_up_*`); the fragment stage
+`DrawScale`, carried to browser scripts as `camera_right_*`/`camera_up_*`); the fragment stage
 discards outside the unit circle and fades the last pixel of rim. The rule is stated once in
 Nim as `radiusDrawnAt` and its pixel reading `radiusPixelsAt`, and the two shaders are its
 sibling copies, named as such. So the size is *fixed in the world* and shrinks with distance
@@ -423,7 +539,7 @@ pixels across is picked anywhere on it (verified: clicking 150 px off Sol's cent
 units selects Sol on this build and the ecliptic behind it on the previous one); the marker
 ring sits `GAP_MARKER` outside the drawn pixels; `isPointInView` widens its side bounds by the
 point's own radius; `reachOf` adds the radius so the far clip holds the whole disc. The
-`gl.POINTS`/`gl_PointSize` path is gone from both targets, and with it `uRound`/`as_point`.
+`gl.POINTS`/`gl_PointSize` path is gone from both front-ends, and with it `uRound`/`as_point`.
   **What is under the pointer is what is picked.** The pick ranked points by pixel
 distance to their centres within a reach of `RADIUS_PICK_POINT` or the drawn radius, so a
 tap inside a planet's disc but nearer a background star's centre than the planet's selected
@@ -466,7 +582,7 @@ SwiftShader's per-instance overhead on 4,938 instances, which a hardware GPU doe
 ribbons, discs and rings already draw instanced here. **Unmeasured on the device**; the
 drawer's `render` row is where it would show.
 
-**Points are shaded as spheres lit by their sun.** An item may *shine* (`Scene.are_shining`,
+**Points are shaded as spheres lit by their sun.** An object may *shine* (`Scene.are_shining`,
 `shinesAt`/`setShining`, a `shines` checkbox in both editors, scene format version 5 with one
 byte after the radius; older files read as nothing shining). `lighting.lightsFor` gives every
 finite, non-shining point the unit direction toward its **nearest** shining point, or zero
@@ -479,7 +595,7 @@ floats per point now); the vertex shader turns it into the camera's basis (right
 the eye) and the fragment stage builds the sphere's normal from the disc's unit coordinates
 (`(x, y, √(1−r²))`) and applies Lambert over an ambient floor `FRACTION_AMBIENT_SHADE` =
 0.25 — a quarter, so the night side still reads as a body in its own hue rather than a hole
-in the field. A zero direction draws flat: suns, ghosts, horizon stars, sunless scenes. The
+in the field. A zero direction draws flat: suns, previews, horizon stars, sunless scenes. The
 demo's Sol and every neighbour star shine. Verified by looking: Jupiter's limb faces Sol and
 its moons carry their own terminators at 1.2 units, the desktop draws the same frame, and the
 suite pins nearest-sun choice, the sun's own darkness, a hidden sun shedding nothing, and the
@@ -491,7 +607,7 @@ placed and placing variants agreeing.
 `FRACTION_GRID_FADE_START` = 0.06 × extent, gone by `FRACTION_GRID_FADE_END` = 0.20 ×
 extent. Those are 1.14 and 3.8 orbit distances, so what the camera looks at sits inside the
 solid core and the fog's edge is still a fifth of the far clip. Both came from rendering the
-alternatives: at 0.03/0.12 the ground at the target read as absent, and a reach of 300
+alternatives: at 0.03/0.12 the ground at the pivot read as absent, and a reach of 300
 faded out at 36 units, inside the eye's own height above ground. Fog rather than a halo
 because a halo makes the origin a place the reader may not leave — pan a hundred units away
 and the ground was gone. The fade runs in the fragment shader against the fragment's own
@@ -552,12 +668,12 @@ occlusion error is assumed to be tolerable, not measured.
 
 Camera
 ---
-`camera.nim` holds an orbit camera: target, distance, azimuth, elevation. `ELEVATION_LIMIT`
+`camera.nim` holds an orbit camera: pivot, distance, azimuth, elevation. `ELEVATION_LIMIT`
 = π/2 − 0.02. The opening placement is `initCameraDefault`, read by both entry points and
 by `home`.
 
 **An orbit distance has a floor and no ceiling.** `DISTANCE_LIMIT_NEAR` = 0.05 is geometry:
-at zero the eye coincides with its target and every direction `camera.frame` derives
+at zero the eye coincides with its pivot and every direction `camera.frame` derives
 collapses. `distanceHeld` is the one statement of it; construction, the dolly, both numeric
 fields and `distanceFitting` pass through it. The 500-unit ceiling that stood beside it read
 as the camera being bounded to a region — dolly out to look at something a kilometre across
@@ -583,33 +699,33 @@ undo-while-held check caught the drop. Near does not stay scaled: at
 one four-hundredth of a 0.7-unit orbit against a far plane at the scene's reach the ratio
 was 1.8 million, and a 24-bit depth buffer then resolves 3 units at a depth of 300 and 34 at
 1,000 — on the device the points near the horizon striped against the discs seen edge-on and
-distant stars faded behind the washes drawn over them, which read as the sky vanishing on a
+distant stars faded behind the veils drawn over them, which read as the sky vanishing on a
 pinch. `distanceNear` is now raised to hold the ratio at `RATIO_CLIP_MAX` = 100,000 (0.17
-units resolved at 300), and never past half the orbit distance, so the target cannot clip
+units resolved at 300), and never past half the orbit distance, so the pivot cannot clip
 however far the scene reaches. A 16-bit depth buffer cannot hold this ratio; nothing here
 detects one.
 
 **The wheel zooms toward what the pointer is over** — the map reading of a zoom.
 `picking.anchorZoomAt` solves the anchor in three answers, in order: the finite object under
-the pointer, else the ground at `z = 0`, else the horizontal plane through the target; where
+the pointer, else the ground at `z = 0`, else the horizontal plane through the pivot; where
 none answers (empty sky above the horizon) the wheel falls back to a centred dolly. **The
 object or ground is taken only where its depth is within `FACTOR_ANCHOR_DEPTH` = 2 of the
-orbit distance, either way**; otherwise the level through the target answers. The starfield
+orbit distance, either way**; otherwise the level through the pivot answers. The starfield
 put some star under every pixel, and anchoring on one a thousand units off slid the eye 38%
-of the way toward it per notch: six notches with the pointer off-centre carried the target
+of the way toward it per notch: six notches with the pointer off-centre carried the pivot
 1,737 units, three opening distances, and the far plane then clipped the field away behind.
 With the window the same six notches carry it 5 units here. Zooming onto a star being
 framed still works, since it stands at the depth being looked at. A cursor toward the horizon
 finds ground beyond the window and takes the level instead, which is what stops a zoom near
 the horizon flying off across the ground; the suite holds both cases. The
 object comes first because pointing at something means *that thing, at the depth it stands
-at*: `positionOnItemUnder` reads a point at its place, a plane where the sight ray crosses
+at*: `positionOnObjectUnder` reads a point at its place, a plane where the sight ray crosses
 it, a line at the point nearest the ray. Horizon objects are refused — drawn at
 `radius_horizon` about the eye, they are not *at* any place, and a horizon plane matches
 every ray. The price is the jump: two notches taken either side of an object's edge converge
 on different depths. `camera.dollyToward` then moves the eye along its own line to the
-anchor, leaving the angles alone, and scales the target toward the anchor by the same factor
-(`target' = anchor + s·(target − anchor)`), so the orbit centre settles onto what is being
+anchor, leaving the angles alone, and scales the pivot toward the anchor by the same factor
+(`pivot' = anchor + s·(pivot − anchor)`), so the orbit centre settles onto what is being
 zoomed into. The scale applied is read back from `distanceHeld`, so a zoom stopped by the
 floor moves the eye by exactly what it was allowed.
 
@@ -619,10 +735,10 @@ gesture; measured, the midpoint-aimed pinch dragged the view 11.4 units where th
 one holds it.
 
 **A drag pan grabs the level under the pointer and carries it.** `interaction.panAcross`
-meets both ends of the pointer's step with the horizontal plane through the target and
+meets both ends of the pointer's step with the horizontal plane through the pivot and
 translates by the difference. It replaces a rate of `FRACTION_PAN_PIXEL` = 0.0016 of the
 distance per pixel, which carried the scene 288 px for a 200 px drag and, sliding within the
-plane *facing the eye*, took the target from z 1.00 to 6.40 one way and −2.24 the other, so
+plane *facing the eye*, took the pivot from z 1.00 to 6.40 one way and −2.24 the other, so
 every later orbit swung about a point in mid-air. Both hold points lie on one level, so the
 height cannot move: 1.000 to 1.000 driven, mouse and two-finger alike, through one rule. The
 rate survives only where a ray misses the level — a drag on sky. **The hold point is
@@ -637,15 +753,15 @@ already reaches 2.7 distances.
 `SLIDE_SECOND` 1.2, `FACTOR_DOLLY_SECOND` 4.0, `FACTOR_HASTE` 4.0 under shift — applied
 each frame scaled by elapsed time, so a hold covers the same ground at 60 Hz and 144 Hz; the
 dolly compounds as `pow(factor, seconds)`. Drag rates differ per front-end for a real
-reason: `visualiser.SPEED_ORBIT` (0.008) is radians per pixel and `glue.js` works in
+reason: `visualiser.SPEED_ORBIT` (0.008) is radians per pixel and browser scripts works in
 fractions of canvas width.
 
 *Checked.* Verified by driven wheel events: an object under the pointer drifts 0.000 px
-across a 3.2× zoom against 1.957 px with the target-level anchor, and wheeling back out
-returns to distance 19.000 and target (0, 0, 1); eight notches over the ground carry the
-target from z 1.00 to 0.32. Verified by driven drags: the pan figures above. Verified by
-suite: `norm(eye − target)` equals the held distance after a floored dolly; the pan's height
-invariance; the clamp's continuity. Verified by driven keys: 500 ms of `w` moved the target
+across a 3.2× zoom against 1.957 px with the pivot-level anchor, and wheeling back out
+returns to distance 19.000 and pivot (0, 0, 1); eight notches over the ground carry the
+pivot from z 1.00 to 0.32. Verified by driven drags: the pan figures above. Verified by
+suite: `norm(eye − pivot)` equals the held distance after a floored dolly; the pan's height
+invariance; the clamp's continuity. Verified by driven keys: 500 ms of `w` moved the pivot
 12.8 units with z unchanged to four decimals, shift 49.3. Assumed: that no ceiling is wanted
 by any reader, argued from the map reading rather than measured.
 
@@ -662,7 +778,7 @@ the proportionality, and the first frame after the change drew a world axis twen
 wide near the origin. An end behind the near plane moves up to it along the segment with its
 tint blended by the same fraction; a segment entirely behind is dropped.
 
-**The widening runs in the vertex shader on both targets.** One fifteen-float
+**The widening runs in the vertex shader on both front-ends.** One fifteen-float
 `RibbonRecord` per segment (sixteen with the `fog` flag) crosses the wire against the
 forty-two floats six CPU vertices cost, expanded by an instanced draw — GL 3.3 core on the
 desktop, `ANGLE_instanced_arrays` on WebGL1. The across is derived per vertex as
@@ -680,7 +796,7 @@ has no orientation, so the record carries none; a 14-float `RingRecord` is a dis
 plus a width, one instance drawing the whole circle over `mesh.ringCorners`. The static
 corner tables come from one generator each in `mesh` (`discCorners`, `domeCorners`,
 `ringCorners`), read by the desktop directly and by the browser through `nim*Corners`, so
-neither target holds a table that could drift from the references (`expandDiscVertex`,
+neither pivot holds a table that could drift from the references (`expandDiscVertex`,
 `expandDomeVertex`, `expandRingVertex`), which the suite pins to the multivector sums they
 replaced. `ribbonOfRing` derives the very `RibbonRecord` a rim segment would have been and
 `expandRingVertex` is `expandRibbon` of it, so a rim is widened by the one rule every line
@@ -693,8 +809,8 @@ The rim was the last to move and it was 85% of the demo frame: `SEGMENTS_CIRCLE_
 811 KB walked four times a frame) and 45 ms of a 53 ms frame on 132 planes. As a record the
 demo's median frame went 239 → 84 ms under SwiftShader.
 
-**Wash order is kept, not assumed away**: two translucent washes still blend in scene
-order, so every append extends or opens a `WashRun` and both render paths walk the runs in
+**Veil order is kept, not assumed away**: two translucent veils still blend in scene
+order, so every append extends or opens a `VeilRun` and both render paths walk the runs in
 sequence rather than drawing one whole array after the other. `markOverlay` seals the current
 run. `RingMesh` carries its own `index_overlay`, or a selected plane's second rim would draw
 depth-tested behind the fill it highlights. Rims are drawn straight after object lines
@@ -702,14 +818,14 @@ rather than interleaved; the only difference is blend order where two translucen
 overlap during a plane's fade-in.
 
 **Capacities** are asserted in `scene.nim`, the one module that can see both sides, so
-raising `ITEMS_MAX` fails to *compile* rather than `doAssert` at draw time (a dead page):
+raising `OBJECTS_MAX` fails to *compile* rather than `doAssert` at draw time (a dead page):
 
 | Cap | Value | Binding case |
 |---|---|---|
-| `VERTICES_MAX` | 10080 = 2 × `ITEMS_MAX` | every slot a point, every one selected |
-| `DISCS_MAX`, `DOMES_MAX`, `RINGS_MAX` | 10081 = 2 × `ITEMS_MAX` + 1 | every slot a plane, |
-|  |  | every one selected, plus a ghost |
-| `RIBBONS_MAX` | 20161 = 4 × `ITEMS_MAX` + 1 | every slot a line, two segments, drawn twice |
+| `VERTICES_MAX` | 10080 = 2 × `OBJECTS_MAX` | every handle a point, every one selected |
+| `DISCS_MAX`, `DOMES_MAX`, `RINGS_MAX` | 10081 = 2 × `OBJECTS_MAX` + 1 | every handle a plane, |
+|  |  | every one selected, plus a preview |
+| `RIBBONS_MAX` | 20161 = 4 × `OBJECTS_MAX` + 1 | every handle a line, two segments, drawn twice |
 
 The furniture set's own binding case is `LINES_GRID_MAX` lattice lines per family. The
 desktop asks for a `SAMPLES_MULTISAMPLE` = 4 framebuffer and **falls back to none if no
@@ -727,8 +843,8 @@ that is not a `Float32Array`. Measured at 0.1 ms a frame once the ring record ha
 input from 204,352 floats to about 9,000; the win is the class, since the conversion scaled
 with the scene.
 
-Draw order in `glue.js` mirrors `renderer.nim` and is kept in step by hand: furniture
-ribbons, then scene ribbons and points, then rings, then washes with `depthMask(false)`.
+Draw order in browser scripts mirrors `renderer.nim` and is kept in step by hand: furniture
+ribbons, then scene ribbons and points, then rings, then veils with `depthMask(false)`.
 
 *Checked.* Verified by suite: the widening reference against the algebra; every stepped disc,
 dome and ring corner against the sum it replaced; all ninety-six rim segments on the plane
@@ -788,13 +904,13 @@ the µs per op figure, from one profile at 1,024 objects.
 
 Selection And Markers
 ---
-`selection.nim`, shared: an ordered fixed-capacity list of slots, a plain value type.
+`selection.nim`, shared: an ordered fixed-capacity list of handles, a plain value type.
 **Order is the whole point** — an operation reads its operands positionally, so the first
-slot picked is `𝐦` and the second `𝐧`. `impliedArity` lives here too. `Selection.revision`
+handle picked is `𝐦` and the second `𝐧`. `impliedArity` lives here too. `Selection.revision`
 counts real changes (a clear of an empty selection is not one), so the frame record and the
-desktop panel compare one integer instead of a 5,040-slot array every frame. Selection is
+desktop panel compare one integer instead of a 5,040-handle array every frame. Selection is
 **not** part of `Scene`: never saved, never on the timeline, cleared outright by a
-successful undo or redo, and `pruneDead` runs after a removal because a freed slot goes
+successful undo or redo, and `pruneDead` runs after a removal because a freed handle goes
 straight back to the next add.
 
 **A selected object is drawn over every other object.** One watermark per mesh
@@ -807,29 +923,29 @@ another by depth exactly as the main pass does. With the test off, emission orde
 among them — `SELECTION` in pick order — and a planet selected after its moon buried the
 moon standing in front of it (verified on the browser: the pixel at Io's centre, Io in
 front of Jupiter at the frame's middle, reads Io's colour with Io alone selected and with
-Jupiter selected too; before, Jupiter's blue). Washes write no depth in this pass either,
+Jupiter selected too; before, Jupiter's blue). Veils write no depth in this pass either,
 as in the main one. A second pass rather than a tail on each kind: the tail left a selected
-line tinted by a later wash. A watermark rather than a third `MeshSet`, because a set
+line tinted by a later veil. A watermark rather than a third `MeshSet`, because a set
 reserves every cap up front for a run that is usually one object. On the desktop marks draw
 on Dear ImGui's **background** list, beneath the panels, exactly as the object is; the drag
 menu alone stays on the foreground list, since it is a control being steered.
 
-"Just built" and "currently selected" are one mechanism: one marker per selected slot,
-plain white, and every construction path replaces the selection with the slot it created.
+"Just built" and "currently selected" are one mechanism: one marker per selected handle,
+plain white, and every construction path replaces the selection with the handle it created.
 Hover draws the identical marker at `ALPHA_MARKER_HOVER` 0.6 against `ALPHA_MARKER_SELECTED`
 0.9; keyboard focus wears it too. Only a caller passing a time gets a pulse, so motion means
 selected.
 
 `marker.nim` shapes the outline to what it marks:
 
-| Shape | Marker | How it fills |
+| Kind | Marker | How it fills |
 |-------|--------|--------------|
 | Point | Circle in screen space about the drawn point. | Sweeps clockwise from twelve. |
 | Line | Two rails flanking its projection, one each side. | Runs out from its support. |
 | Plane | A circle lying *on the plane*, outside its rim. | Opens from the disc's centre. |
-| Line at horizon | Two bands on the sky it circles. | Closes in from a quarter turn. |
-| Plane at horizon | The viewport's edge, inset by the gap. | Expands as a circle from the middle. |
-| Point at horizon | Circle about the fixed star it draws as. | Sweeps. |
+| Horizon line | Two bands on the sky it circles. | Closes in from a quarter turn. |
+| Horizon plane | The viewport's edge, inset by the gap. | Expands as a circle from the middle. |
+| Horizon point | Circle about the fixed star it draws as. | Sweeps. |
 
 All keep `GAP_MARKER` = 6.0 px between the object's drawn edge and the marker, measured out
 from the drawn size: a point's ring radius is `radiusPixelsAt(radius, anchor, scale)` + gap,
@@ -850,9 +966,9 @@ plus half `HEIGHT_MARKER_LABEL` (16 px) above the outline's top at the object's 
 a ring's top (so a held marker's swell lifts the label with it), the bands' highest
 projected point, a plane's circle and a line's own left as below —
 and, for the sky's frame, just inside the top edge, since above a frame that is the
-viewport is off screen. Placed with the marker rather than by each front-end so the two
+viewport is off screen. Placement with the marker rather than by each front-end so the two
 agree by construction; each centres its own text on the point and keeps its own face (the
-page's sans at the shared height, set by `glue.js` from `nimOverlayMetrics`; on the desktop
+page's sans at the shared height, set by browser scripts from `nimOverlayMetrics`; on the desktop
 a face of its own, below).
 
 **A line's label keeps to the line's own left, beside its support clamped into view.**
@@ -865,7 +981,7 @@ label on the line and pushes it to that left: `Marker.is_label_beside` with `lab
 anchor and `label_away_x/y` the unit push, and each front-end, which alone measures its
 text, sets the centre `clearanceBeside` along it — rail, gap, and the label's own box's
 half-extent in that direction (`|away_x|·half_width + |away_y|·half_height`), so a wide name
-beside a steep line still clears it where a fixed lift put letters across it (`glue.js`
+beside a steep line still clears it where a fixed lift put letters across it (browser scripts
 `appendLabel` measures with `getComputedTextLength`, the desktop with `guiLabelWidth` in
 the label face). The anchor is the support's projection while it is in view, held
 `MARGIN_LABEL_VIEW` = 40 px inside the edge along the line; past that it slides along the
@@ -882,7 +998,7 @@ but the first overlaps at vertical, the second follows the viewport rather than 
 the line, and the third flips its text. Verified by suite (a full orbit at two elevations
 in 0.002 rad steps, the second carrying the line through vertical twice: no isolated step,
 push direction turning under 0.05 per step, anchor always in view; the support twelve units
-off the target lands the anchor on the line, in view, a margin from the edge; the clearance
+off the pivot lands the anchor on the line, in view, a margin from the edge; the clearance
 pinned flat and vertical) and by driven check on the browser (402 frames over the same two
 turns: 0 hops, 0 out of view, largest step 9.4 px). Both front-ends rendered and looked at.
 
@@ -921,7 +1037,7 @@ its own, `PATH_FONT_LABEL` = Noto Sans Bold at `HEIGHT_MARKER_LABEL` (the only h
 the system's Noto Sans package ships; there is no semibold), with the math and symbol faces
 merged in at that size so a name like `G = L ∧ c` keeps its wedge — it drew as a box without
 them — and falls back to the UI face where the file is missing. The browser stages
-one SVG `<text>` per selected slot with `paint-order: stroke` and reads the ink colours
+one SVG `<text>` per selected handle with `paint-order: stroke` and reads the ink colours
 into a table once at start-up (`COLOUR_INK_CSS`, since `nimInkColor` builds a sequence per
 call); the desktop has no stroked text, so `guiOverlayLabel` draws the text at the eight
 one-pixel offsets in the halo colour beneath the fill, on the background list the markers
@@ -1003,8 +1119,8 @@ Browser UI on the two pixel spaces. **The swell runs on its own clock in four ph
 fill, **stays there for as long as the finger is down past maturity**, and settles over
 `SECONDS_SWELL_SHRINK` 0.15 s once it lifts. A half sine over the fill put the marker back at
 true size at the very moment the selection landed. `progressHold` starts *after* the grow,
-so a press is 0.62 s end to end. The swollen marker is drawn even once its slot is selected
-and the plain marker for that slot skipped, or the outline snaps at the moment the selection
+so a press is 0.62 s end to end. The swollen marker is drawn even once its handle is selected
+and the plain marker for that handle skipped, or the outline snaps at the moment the selection
 lands; the browser retires the hold only once `isHoldSpent` says the settle is over, stated
 against `swellHold` rather than the shrink duration a second time — subtracting two large
 timestamps measured 0.14999999999997 against 0.15. `cancelHold` snaps away without settling:
@@ -1025,7 +1141,7 @@ measured 96 px along a rail against 334 px round a plane's circle. `FRACTION_MAR
 orientation**: nothing computes the sense, the projection decides a loop's order (+74,393
 from above `ground`, −82,167 from below, as swept angle), a rail is walked as one path from
 far horizon through the support to near, a band takes the great circle's normal. Two shapes
-get none: a point, and a plane at horizon, whose `frame`, `direction` and `directionNormal`
+get none: a point, and a horizon plane, whose `frame`, `direction` and `directionNormal`
 all report nothing and are unchanged by negation. One comet to a line, not one per drawn
 half: the two rails take the phase measured on the first and stay within one comet's length.
 
@@ -1037,7 +1153,7 @@ amplifies a one-percent lap change by the laps accumulated). `PulseTrack` names 
 eye cut. A speed rather than a lap time: one lap per 4.8 s ran 156 px/s along a rail against
 348 round a circle; sixty is what the lap was chosen at over 300 px specimens. A gap longer
 than `SECONDS_STEP_PULSE_MAX` = 0.1 s is an absence, not a frame (83 px in one frame before
-the cap, 1 px after). The advance belongs to "this slot was drawn this frame": a bridge that
+the cap, 1 px after). The advance belongs to "this handle was drawn this frame": a bridge that
 returned before advancing when a rails marker at phase 0 produced no run left lines with no
 comet for a whole round while planes pulsed. The two exports share one shaped marker
 (`MARKER_SHAPED`, boxed behind a `ref` — held by value the memo's own store and read
@@ -1058,7 +1174,7 @@ orientation sweep and their widest reading on both sides; a growing rail startin
 finished one does; the frame's 68 points at 296.8 px flat at half progress; the head sitting
 exactly its carried travel from its anchor at 45 placements, within a pixel; a rails marker
 at phase 0 reporting a positive lap; a matured hold taken once (a 1.62 s hold had selected
-its item and lost it within 50 ms of lift). Verified on the shipped browser: the comet's
+its object and lost it within 50 ms of lift). Verified on the shipped browser: the comet's
 advance from its anchor at 62.4, 61.7, 62.5 and 63.3 px/s across four orbit rates; 178.3,
 179.0 and 179.6 px over three seconds at 36, 60 and 144 fps against 180; the residual at the
 two faster rates — a tenth of frames stepping 236–388 px/s, laps and clip transitions, not
@@ -1096,7 +1212,7 @@ empty space then selects the sky rather than clearing; a tap still treats it as 
 since tapping empty space is a finger's only way to dismiss a selection, and touch reaches
 the sky by long-press. The selection menu follows the middle of the view for it.
 
-**The pick runs once per frame, not per input event.** A pick walks every live slot, linear
+**The pick runs once per frame, not per input event.** A pick walks every live handle, linear
 in the scene (11.4 ms p50 over 1,024 objects, 0.2 over five, before the fixes below). Pointer
 motion marks hover stale and the frame loop picks once after `nimDriveHeld`; the wheel sums
 its notches and the loop applies one dolly, the same zoom since `exp(k·Σdelta)` is the
@@ -1105,10 +1221,10 @@ inside their handler because they must answer before it returns: `pointerdown`, 
 and `handleTap`.
 
 **The pick ranks what was drawn.** It takes the frame's placements and dispatches on
-`Placed.kind` rather than asking `position`, `direction`, `frame` and `spanPerpendicular`
-again per slot; empty means derive per slot, the desktop path and every suite case. A finite
+`Placement.kind` rather than asking `position`, `direction`, `frame` and `spanPerpendicular`
+again per handle; empty means derive per handle, the desktop path and every suite case. A finite
 plane the algebra can span no frame for shares `PlaneEverywhere` with the sky and is not
-pickable; a direction point is picked at the horizon, where the eye puts it. **The pick
+pickable; a direction point is picked in the horizon, where the eye puts it. **The pick
 rejects a plane before meeting it**: `isBeyondDisc` bounds the disc's screen extent by the
 silhouette of the sphere containing it, conservative in the depth and off-axis terms — 20,000
 random configurations with the centre up to three view-widths off screen and 300 surface
@@ -1116,17 +1232,17 @@ samples each found no silhouette point outside the bound. `geometryOf` hands bac
 view, and the walk reads it inline — `lent` removes the copy only where the result is never
 bound. `projectToScreen` is written out as three dot products in local floats (the 4×4
 multiply with two typed arrays allocated per call was 43% of a 15.4 ms pick over 10,000
-slots), and the point branch reads `pixelsFromCursor` rather than building a
-`ScreenPosition` per slot.
+handles), and the point branch reads `pixelsFromCursor` rather than building a
+`ScreenPosition` per handle.
 
-**Slot-liveness guards.** Hovered, dragged, focused and selected slots are plain values
-carried across frames, so any can name a removed item the frame after a delete: `nimAnchorScreen`
-reports nothing for a dead slot; `endDrag` on both paths checks `isAlive` on source and
-destination; removing an item clears the highlight on both paths.
+**Handle-liveness guards.** Hovered, dragged, focused and selected handles are plain values
+carried across frames, so any can name a removed object the frame after a delete: `nimAnchorScreen`
+reports nothing for a dead handle; `endDrag` on both paths checks `isAlive` on source and
+destination; removing an object clears the highlight on both paths.
 
 *Checked.* Verified by suite: both boundaries of each radius and all three priority pairings;
 a horizon point picked at a pixel where the line alone was first asserted picked; the disc
-bound sampled from inside the view. Verified by slot-for-slot map: 4,914 cursor positions
+bound sampled from inside the view. Verified by handle-for-handle map: 4,914 cursor positions
 across three cameras over the 1,024-object demo answered identically before and after the
 placement and copy changes. Verified by driven checks on both builds: dragging bare sky
 turns the view and builds nothing, clicking it selects it. Measured then, not since: one pick
@@ -1141,7 +1257,7 @@ brings the floating selection menu (right yes, left and middle no); `armingOf` s
 a drag opens the choice wheel. Both render paths and `help.nim` read them.
 
 **The selection menu opens on the click, beside the pointer.** A click or tap that reveals
-the menu puts its top-left corner `INSET_MENU_POINTER` = 8 px from the pointer (`glue.js`
+the menu puts its top-left corner `INSET_MENU_POINTER` = 8 px from the pointer (browser scripts
 `positionSelectionMenuAt`, `panel.showSelectionMenuAt`), and from then on the menu remembers
 its offset from the object's anchor (`offset_menu_selection`; `corner_menu_pointer` turned
 into it on the desktop's first layout) so orbiting carries it with the object rather than
@@ -1167,7 +1283,7 @@ delta.
 (not `PIXELS_TAP_SLOP`'s 12 — a mouse does not roll, and a finger's allowance would swallow
 the short deliberate drags between two overlapping objects). A 0.35 s deadline once lost
 every click held 600 ms. The stillness reading is latched and false until a press raises it.
-A right press that never moved is a click too: the wheel only opens over a target *other*
+A right press that never moved is a click too: the wheel only opens over a pivot *other*
 than the source, so such a press never asked for one.
 
 **The press target chooses the scheme; the button chooses whether you are asked.** Press an
@@ -1187,21 +1303,21 @@ lack.
 
 **A press that can construct never moves the camera, not even before its slop is crossed.**
 A finger easing into its drag spent its first frames under the slop, fell through to the
-orbit, latched the camera-dragging flag that suppresses hover, and then ran blind. `glue.js`
+orbit, latched the camera-dragging flag that suppresses hover, and then ran blind. browser scripts
 decides at the press, in `is_touch_press_constructing`, the same question `beginDrag`
 answers when the slop is crossed, refusal over the sky included.
 
 **A finger over a crowd moves the view; it never builds.** In the demo the pick's 34 px
 reach lands on some star almost anywhere, so a one-finger orbit kept becoming a construction
-drag. `picking.pickAt` now reports, beside the winner, how many items of the winner's rank *or
+drag. `picking.pickAt` now reports, beside the winner, how many objects of the winner's rank *or
 better* stood within `RADIUS_CROWD_TOUCH` = 72 px (`PickReport.count_rivals`; a point over a
 plane is no rival to it, since rank already decides, but a point beside a picked line is,
 since the finger may have meant it). The crowd reach is wider than the 34 px pick reach on
 purpose: the question is not what the finger hit but whether it could have meant something
 else, and at the pick reach alone the star field still turned orbits into drags. What is
 *picked* stays at the pick reach. `updateHover` keeps the count as `count_hover_rivals`, and
-`interaction.canConstructByTouch` is true only for a hovered, non-sky item with no rival.
-`beginDrag` refuses `MenuArming.OnDwell` — touch alone — where that is false, and `glue.js`
+`interaction.canConstructByTouch` is true only for a hovered, non-sky object with no rival.
+`beginDrag` refuses `MenuArming.OnDwell` — touch alone — where that is false, and browser scripts
 asks the same export (`nimCanTouchConstruct`) at the press so the pre-slop frames agree. The
 rule is the reader's: where a gesture is ambiguous, movement wins, because the reader can
 zoom in until it is not, whereas an unwanted object has to be undone. The mouse keeps its
@@ -1213,53 +1329,53 @@ by a driven check that drags a finger from a point with a twin 0.05 units away a
 the camera orbited and nothing built; the plane-pick check had to drop the four coincident
 `b ∧ c` lines earlier gestures left, which are exactly the crowd the rule refuses.
 
-**The turntable's target follows what the zoom lands on.** Every rate but orbit is scaled
+**The turntable's pivot follows what the zoom lands on.** Every rate but orbit is scaled
 by the orbit distance on purpose — pan grabs the ground, the slide keys move a fraction of
 the distance per second, dolly is multiplicative — so a drag or a key hold moves the view by
-the same fraction of what is seen at any zoom. What broke that was the target: a pinch
-zoomed straight in with the target left on Sol, so a reader arriving at a planet had the
+the same fraction of what is seen at any zoom. What broke that was the pivot: a pinch
+zoomed straight in with the pivot left on Sol, so a reader arriving at a planet had the
 turntable still revolving about a point far behind it, and every orbit or pan swung the near
 planet across the frame — the "speed changes when zooming" report. `picking.anchorZoomAt`
 now says whether its anchor is where a point or line *stands* or a crossing of the sight ray
 with a plane, the ground or the level (`AnchorZoom.is_standing`); `interaction.dollyAt`
-re-targets along the sight line to a standing anchor's depth after the zoom
-(`camera.retargetToDepth`, which leaves the picture unchanged since eye and direction stay),
+re-pivots along the sight line to a standing anchor's depth after the zoom
+(`camera.repivotToDepth`, which leaves the picture unchanged since eye and direction stay),
 and the pinch goes through the same rule aimed at the middle of the frame (`dollyAtCentre`,
 `nimCameraDollyCentred`) rather than a plain dolly. Crossings are followed by the map rule
-alone, the target sliding toward the anchor as `dollyToward` always did. Rejected: following
+alone, the pivot sliding toward the anchor as `dollyToward` always did. Rejected: following
 the ground crossing too, which a reader zooming onto empty floor might expect. It moved the
-target off its level with every notch, and five driven pins fell at once — the wheel round
-trip, the pinch that must not slide, the two-finger pan, the target's height under pan, and
+pivot off its level with every notch, and five driven pins fell at once — the wheel round
+trip, the pinch that must not slide, the two-finger pan, the pivot's height under pan, and
 the zoom over ground — every one a rule pan, slide and the level anchor rely on. Rejected
 second: following a plane. Its depth under the pointer is not its depth at the middle of
-the frame, and the target lifted to it stood well off the plane being zoomed onto (the
-opening scene's ground *is* a plane item, and the target rose from 1.0 to 2.6 units on the
+the frame, and the pivot lifted to it stood well off the plane being zoomed onto (the
+opening scene's ground *is* a plane object, and the pivot rose from 1.0 to 2.6 units on the
 first notch). Verified: the driven pins now state the rule that holds — the eye and the
-pixel round-trip under a wheel notch each way, the target does not and is not meant to, and
+pixel round-trip under a wheel notch each way, the pivot does not and is not meant to, and
 a pinch that does not slide is one whose eye moves along its own sight line (`nimCameraEye`
 exists for that reading and for nothing on the page). Measured on the demo: eight wheel
-notches over Jupiter from 30 units hold its pixel exactly and bring the target from Sol to
+notches over Jupiter from 30 units hold its pixel exactly and bring the pivot from Sol to
 0.09 units off Jupiter's plane at 1.5 units' distance; a centred pinch onto a planet lands
-the target on it, a zoom over sky leaves the target's height alone, and one over ground
-slides the target toward it by the map rule only, all pinned by suite.
+the pivot on it, a zoom over sky leaves the pivot's height alone, and one over ground
+slides the pivot toward it by the map rule only, all pinned by suite.
 
 **Two fingers are read once per frame, and zoom only past the tap slop.** Each finger's
 move arrives as its own `pointermove`, so between the two events the separation and the
 midpoint are one finger new and the other old; read there, every step of a pan carried
 together was a zoom in by one finger's step and out again by the other's (ratios of 1.24
 and 0.81 alternating on the driven pan), harmless while a dolly was a pure scale and a
-target-moving re-target on every one of them once it was not. `glue.settleTwoFingers` reads
+pivot-moving re-pivot on every one of them once it was not. `glue.settleTwoFingers` reads
 both fingers once per frame from the frame loop instead, after both have reported. On top
 of that, two fingers carried together never hold their separation to the pixel, so a pinch
 zooms only once the separation has changed by more than `interaction.PIXELS_TAP_SLOP`
 since both came down, and the slop itself is not zoomed: the zoom starts from the separation
-where the slop was crossed, without a jump. Verified by the driven two-finger pan: the target
+where the slop was crossed, without a jump. Verified by the driven two-finger pan: the pivot
 moves across its level and the distance and height do not change at all.
 
-**The edit ghost is drawn at the session's own radius.** `Preview` carries a radius
-(`previewStaging(geometry, radius)`), fed by `nimSetGhost(coefficients, radius)` on the
+**The edit preview is drawn at the session's own radius.** `Preview` carries a radius
+(`previewStaging(geometry, radius)`), fed by `nimSetPreviewStaged(coefficients, radius)` on the
 browser and the panel's staged session on the desktop; a derived preview takes
-`RADIUS_ITEM_DEFAULT`, what commit gives it. Before this the ghost took the default, so
+`RADIUS_OBJECT_DEFAULT`, what commit gives it. Before this the preview took the default, so
 editing a moon of 0.03 drew a grey disc nearly three times its size over it.
 
 **Edit from the selection menu waits for its row.** The objects list builds in time-bounded
@@ -1273,10 +1389,10 @@ the end of a pass: a refresh landing mid-build restarted the pass and, with the 
 held back, rebuilt every row already standing, which with selection refreshes arriving was a
 list that never finished. Measured on this container at 5,038 with the list unbuilt: the row
 now lands in view after 15 frames rather than never. Pinned by a driven check that empties
-the list, edits a deep slot and finds its form in view.
+the list, edits a deep handle and finds its form in view.
 
 **The gesture clock is seconds**, on whichever monotonic clock the caller owns, and the
-same reading `addItem` stamps a birth with. `glue.js` divides once in its own `now()`. The
+same reading `addObject` stamps a birth with. browser scripts divides once in its own `now()`. The
 desktop's dwell once needed 450 *seconds* because the durations were named in milliseconds.
 
 **What a drag builds is read off the operands, not the button.** `∧` adds grades and is
@@ -1303,9 +1419,9 @@ measurement crossed a point lying *on* its paired line and read zeros from the f
 which is why `GENERAL_FIRST`/`GENERAL_SECOND` are separate from the random operand sets.
 
 **The drag shows its answer before committing it**: `Interaction.preview` holds what a
-release right now would build, drawn as a ghost in `INK_GHOST` (= `Ink.Guide`) through the
-same `addObject` an edit session's ghost uses, at `preview_anchor` from the same
-`creationAnchor` call the commit makes (or a ghosted plane jumps to its anchor the instant
+release right now would build, drawn as a preview in `INK_PREVIEW` (= `Ink.Guide`) through the
+same `addObject` an edit session's preview uses, at `preview_anchor` from the same
+`creationAnchor` call the commit makes (or a previewed plane jumps to its anchor the instant
 the release lands). It answers for the wedge being aimed at: `updateDrag` resolves through
 `choosing()` where a wheel is open and `proposalFor` where none is, and `choosing` is the
 one statement of which wedge the cursor is in, read by the preview, the release and both
@@ -1314,7 +1430,7 @@ highlights. **Three things a release can do, so three tints** (`ReleaseEffect`: 
 `Scene.index_ink` carries how far the cycle has walked (`inkNext`/`takeInk`/`skipInk`), and
 **every released construction steps it**, built or not, so a colour the reader watched for
 a whole drag is not offered again; a click does not step it, nor `More`; undo restores it;
-loading sets it to the item count.
+loading sets it to the object count.
 
 **Everything that meets an object on screen meets it where it is drawn.** `mesh.anchorFor`
 reads the stored anchor as `addPlane` and `markerFor` do; the band's start, its comet's aim
@@ -1324,7 +1440,7 @@ from the drawn centre on the demo's planes — 13.7 px for `ground` at the home 
 
 **The choice wheel.** Four wedges at fixed compass points — join north, meet east, project
 south, `more…` west — unoffered ones greyed (`ALPHA_MENU_UNOFFERED` 0.45) rather than
-packed out, because a menu whose items move is one nobody learns. A wedge is the selection
+packed out, because a menu whose objects move is one nobody learns. A wedge is the selection
 menu's own button, moved: same surface, hairline, `ROUNDING_MENU_WEDGE` 8 px radius, 12-px
 semibold face and `--accent` border on the one in force; the browser takes those from the
 same CSS variables, the desktop copies the tones into `drawChoiceMenu` with the siblings
@@ -1354,7 +1470,7 @@ already showing the operation last applied at that arity. Not the drawer's apply
 answering a wheel under the cursor by throwing the hand to a side panel buried the two
 objects just named. A degenerate construction is **refused**, the message naming what was
 degenerate, and a construction on a full scene is refused the same way (the drag commits in
-shared code with no panel between it and `addItem`'s assertion; one click on the demo
+shared code with no panel between it and `addObject`'s assertion; one click on the demo
 reached it).
 
 **Touch.** A finger that presses an object constructs; one that presses empty space moves
@@ -1363,14 +1479,14 @@ a selection exists a tap (`TAP_MAX_MS` 350, in JS because a tap timeout is local
 another in or out; a tap on empty space clears. `pointercancel` cancels. `nimClearHover` runs
 once the last finger lifts, or the last reading sits stale forever. Accepted cost: a finger
 starting on the ground plane's disc constructs rather than orbiting — the same trade the
-mouse makes. `SELECTION` (Nim) is the sole source of truth; `glue.js` keeps only a render
+mouse makes. `SELECTION` (Nim) is the sole source of truth; browser scripts keeps only a render
 snapshot refreshed when the selection changes.
 
 **A picker offers symbols alone** (`notationSymbolic`), not the whole catalogue entry, and
 **opens on what was last applied at its own arity** (`OperationMemory`, attitude for one
 operand, wedge for two; per arity because the two lists are disjoint). **Every apply control
-ghosts its answer while the reader is still choosing**: `scene.Preview` is the one statement
-of a construction not yet committed (geometry, anchor, operand slots), built by
+previews its answer while the reader is still choosing**: `scene.Preview` is the one statement
+of a construction not yet committed (geometry, anchor, operand handles), built by
 `previewApplying`, and the drag's own preview is the same type by the same call. Where a
 session and a preview both stand, **the session wins** (`staged`, once per front-end). The
 preview is **framed together with the operands it names** (`Preview.operands`,
@@ -1380,11 +1496,11 @@ object selected beside it.
 **Selection menu** (both builds, one row, following its anchor every frame): `apply`
 leftmost and never moving, opening a picker to its right via a `max-width` transition
 (`width: auto` cannot animate); `edit` shown for exactly one selected, opening the drawer's
-objects section onto a session; `hide`, `delete` on every selected slot; `✕` clears. `apply`
+objects section onto a session; `hide`, `delete` on every selected handle; `✕` clears. `apply`
 is hidden for 3+ selected, since this menu has no operand pickers. **Shown by the gestures
 that pick and hidden by the ones that build**, not derived from the selection being
 non-empty — every construction leaves its result selected and a menu over each new object
-would sit in the way of the next drag. Placed `OFFSET_MENU_SELECTION` = 46 px **above** its
+would sit in the way of the next drag. Placement `OFFSET_MENU_SELECTION` = 46 px **above** its
 object: a Dear ImGui window makes `wantsMouse()` true wherever it sits, so a menu straddling
 its object would swallow the next drag off it. Its screen position is kept between frames so
 an object passing behind the camera leaves it where it was. The document-level tap-outside
@@ -1393,7 +1509,7 @@ before the tap resolves.
 
 *Checked.* Verified by suite: every cell of the drag table and the at-most-one property,
 exhaustively; the click rule; the dwell restarting on movement and surviving a drift under
-the slop; the ghost's anchor equal to the created item's; the ink cycle stepping on release
+the slop; the preview's anchor equal to the created object's; the ink cycle stepping on release
 and not on click. Verified by driven checks: the tint table at each wedge stop
 (`nimDragTint` reading neutral `(0.286, 0.322, 0.400)`, magenta `(0.612, 0, 0.722)`, the
 next hue); shift-clicks held 600 ms selecting; the sub-slop touch drag hovering 2 with the
@@ -1412,7 +1528,7 @@ committed" moment the continuous widgets lacked. One fixed array plus one cursor
 stacks: an entry is a `Step {scene, camera}`, both plain value types, so recording is a copy
 and `entries[cursor].scene` is exactly the live scene. `CAPACITY_HISTORY` = 32.
 
-**The array is a ring.** `first` names the slot holding the oldest step, `slotOf` is the one
+**The array is a ring.** `first` names the handle holding the oldest step, `handleOf` is the one
 place a timeline position becomes an index, and retiring the oldest entry moves one integer.
 Shifting every later entry down was 31 whole scene copies per edit past the thirty-second —
 153.5 ms to toggle one object's visibility on the JS backend, scaling with the *capacity*
@@ -1433,7 +1549,7 @@ Both front-ends abandon their camera tween on a successful step, or the standing
 the view straight back off the placement just restored.
 
 Seeded wherever the scene is (re)initialised, so undo never reaches past the moment
-tracking began. A successful step clears the selection and any ghost. Bound to Ctrl/Cmd+Z,
+tracking began. A successful step clears the selection and any preview. Bound to Ctrl/Cmd+Z,
 Ctrl/Cmd+Shift+Z and Ctrl+Y on both builds, through one function per build rather than the
 button — routing through `button_undo.click()` depended on a `disabled` attribute refreshed
 on the low-cadence tick.
@@ -1443,7 +1559,7 @@ forward and back and comparing each state (`scenesEqual`, since `Multivector`'s 
 intentional compile error); camera restoration across two edits from two viewpoints.
 Verified end to end: `--drive-undo` and the browser drive both build, orbit away, undo, and
 hold the view where the construction was made. The 153.5 / 11.3 ms figures were measured on
-the JS backend at 5,038 slots and not since.
+the JS backend at 5,038 handles and not since.
 
 
 Storyboard And Seeds
@@ -1485,7 +1601,7 @@ wants one; none has been asked for.
 Save/Load Format (`.rgascene`)
 ---
 Compact binary matching `Scene`'s layout, **little-endian throughout** — a free choice that
-had to be *a* choice, because `glue.js` reaches it through `DataView`, and little-endian
+had to be *a* choice, because browser scripts reaches it through `DataView`, and little-endian
 because every file already written contained it. The desktop converts through
 `std/endians`.
 
@@ -1494,28 +1610,28 @@ because every file already written contained it. The desktop converts through
 | 4 | Magic `RGAS` |
 | 1 | Format version (`VERSION_SCENE` = 6) |
 | 1 | Basis count (16 under this build); must match |
-| 4 | Item count, little-endian `uint32` |
-| per item | Ink (1), visibility (1), label length in bytes (1) + UTF-8, one |
+| 4 | Object count, little-endian `uint32` |
+| per object | Ink (1), visibility (1), label length in bytes (1) + UTF-8, one |
 |  | little-endian `float` per basis term, the radius as one more `float`, then shines (1) |
 
-`MAGIC_SCENE` and `VERSION_SCENE` are exported and reach `glue.js` through
+`MAGIC_SCENE` and `VERSION_SCENE` are exported and reach browser scripts through
 `nimSceneMagic`/`nimSceneVersion`, so there is no literal to drift; labels go through
 `TextEncoder`/`TextDecoder`. Three defects of the same shape — a value derived in Nim and
 copied by hand into JavaScript — once left the two builds unable to open each other's files
 while the round-trip suite stayed green, because it only ever asked one build to read what
 it wrote.
 
-Only live items are written, **in creation order** (`nimSceneSlotsCreated` on the browser
-side; `nimSceneSlots` keeps slot order for the combo boxes indexed by position). That order
-is the whole of what version 3 added; version 4 appended the radius after each item's
+Only live objects are written, **in creation order** (`nimSceneHandlesCreated` on the browser
+side; `nimSceneHandles` keeps handle order for the combo boxes indexed by position). That order
+is the whole of what version 3 added; version 4 appended the radius after each object's
 geometry and version 5 the shines byte after that, and which versions carry each is
 `scene.hasRadius`/`hasShine`, reached by the browser parser through
 `nimSceneHasRadius`/`nimSceneHasShine` rather than literals. Version 6 changed no byte: it
-records that the palette lost its structural `Algebra` slot at ordinal 7, so every hue a
+records that the palette lost its structural `Algebra` handle at ordinal 7, so every hue a
 version-2-to-5 file wrote sits one past today's, and `upgradedFrom5` takes it down (a byte
-naming the slot itself is refused, since no build assigned it to an object). The version-1
+naming the handle itself is refused, since no build assigned it to an object). The version-1
 fold therefore lands in version 2's dialect, one past today's, and is taken down by the same
-step — the suite pins both, ordinal by ordinal. Omitted on purpose: slot numbers, a per-item
+step — the suite pins both, ordinal by ordinal. Omitted on purpose: handle numbers, a per-object
 ordinal, fixed-width label padding.
 
 **A loaded scene replays its construction.** `born` is not written, but
@@ -1530,10 +1646,10 @@ build replays — a file, the demo, the opening scene — through one rule in bo
 **Every version ever written is still readable.** `VERSION_SCENE_LEAST` = 1 and should stay
 1: reading an old version costs a mapping func and a suite case, refusing one costs somebody
 their scene. Reading is written once against `VERSION_SCENE`; each past version's difference
-lives in one `upgradedFrom<n>`, and `itemUpgraded` walks an `ItemSaved` up the chain one
+lives in one `upgradedFrom<n>`, and `objectUpgraded` walks an `ObjectSaved` up the chain one
 step at a time. Version 4 costs suns: `upgradedFrom4` fills false, so nothing shines and
 every point draws flat as it did. Version 3 costs sizes: `upgradedFrom3` fills
-`RADIUS_ITEM_DEFAULT`, the size version 3 drew everything at, whatever the parser had in the
+`RADIUS_OBJECT_DEFAULT`, the size version 3 drew everything at, whatever the parser had in the
 field — and the chain refuses a
 radius that is zero, negative or NaN as it refuses an unknown palette slot. Version 2 costs
 nothing but the sequence guarantee (`upgradedFrom2` is an
@@ -1545,7 +1661,7 @@ hue is recoverable, a refused scene is not**. `loadScene` parses into a staging 
 replaces the caller's only on complete success; native-only.
 
 *Checked.* Verified by cross-reading, not round-tripping: the sixteen-object demo saved,
-reloaded and compared item for item in creation order — label, ink, visibility and all
+reloaded and compared object for object in creation order — label, ink, visibility and all
 sixteen coefficients, 304 scalar comparisons exactly equal; the desktop re-saving the
 browser-written file byte-identical, all 2245 bytes; hand-built version-1 and version-2
 files read the same by both parsers (version 1's ordinals 4/7/11/13 as
@@ -1559,17 +1675,17 @@ never exercised (see Known Limitations).
 Demo: The Solar Neighbourhood
 ---
 The demo preset is the build's own load case, in three sizes: `ScaleOrrery.Nearest` (60),
-`Neighbourhood` (360, the default everywhere) and `Catalogue` (5038, two slots short of the
+`Neighbourhood` (360, the default everywhere) and `Catalogue` (5038, two handles short of the
 pool — the smallest margin that still proves the point of leaving one: add a point, then
 join it to something). Every size is the same construction — Sol entire, then real stars
-outward, then four objects at horizon — truncated at a different depth, so a cost can be read
+outward, then four objects in horizon — truncated at a different depth, so a cost can be read
 as a slope. Measured on one page under SwiftShader: 60 / 360 / 5038 objects cost 1.3 / 1.7 /
 3.0 s to build, a frame build 3.1 / 4.6 / 12.8 ms, an edit 9.1 / 8.5 / 8.0 ms — flat, the
 ring timeline doing its job. The working rule: `Nearest` for a quick check, `Neighbourhood`
 for a final one, `Catalogue` when the change could cost performance. **Each size lands on
 its count exactly**: the star walk passes over a system too large for the room left and
-keeps walking, so a nearer four-item system gives way to a further single star; the suite
-bounds the slack (once a system needing `k` items is passed over, at most `k − 1` stars can
+keeps walking, so a nearer four-object system gives way to a further single star; the suite
+bounds the slack (once a system needing `k` objects is passed over, at most `k − 1` stars can
 follow it in). `orrery.showOrrery` is the one copy — arrangement, replayed arrival and camera
 solve — reached by the bridge and by the desktop's `--demo`.
 
@@ -1584,7 +1700,7 @@ tail indices are named constants (`INDEX_SOL_EARTH`, `INDEX_SOL_URANUS`,
 `INDEX_SOL_NEPTUNE`, `INDEX_MOON_LUNA`) held to their bodies at compile time; positional
 indices once put the ecliptic's furthest distance on a comet at 17.8 AU rather than Neptune
 at 30.05 while the doc comment said otherwise. `TILT_MOON` = 0.0897 rad carries Luna's real
-5.14° inclination, separate from the system's lean; the plane at horizon is
+5.14° inclination, separate from the system's lean; the horizon plane is
 `att(ecliptic) ∧ att(earth ∧ luna)` and exists only because the two differ. Moons map their
 real semi-major axes (Phobos at 9,376 km to Nereid at 5.5 million, a range of 588) onto
 `RADIUS_MOON_NEAREST` 0.08 to `RADIUS_MOON_FURTHEST` 0.32 by the same logarithm, **measured
@@ -1605,7 +1721,7 @@ Sol reads as a sun among stars. Neighbour suns take Sol's radius and neighbour p
 (`RADIUS_NEIGHBOUR_SUN`, `RADIUS_NEIGHBOUR_PLANET`): neither catalogue carries radii, and one
 figure for all is honest about that. No other spacing changed — the orbit rings were already
 far wider than any body — and the suite pins order, ratio, every moon's ring clearing its
-planet's disc and its own, and every body above `RADIUS_ITEM_LEAST`. Verified by looking:
+planet's disc and its own, and every body above `RADIUS_OBJECT_LEAST`. Verified by looking:
 Sol at 14 units is a disc among dots, Jupiter's four moons are discs about its disc at 1.2
 units, and the desktop draws the same frame as the browser.
 
@@ -1645,14 +1761,14 @@ logarithm, clamped rather than extended. `FACTOR_ISOLATION_ORRERY` = 2.0 floors 
 pair's separation against their combined reach.
 
 **Colour says what a thing is, not which system it belongs to.** `lut_role_to_ink` maps a
-`Role` to an `Ink`: four kinds of body on four slots and everything derived on the fifth,
+`Role` to an `Ink`: four kinds of body on four handles and everything derived on the fifth,
 `Olive`, the darkest — on a body a moon was a smudge that could not be found against the sky.
 With comets gone the palette's declared `Jade`/`Cobalt` exception is not in this scene: four
 roles, four inks.
 
 **Three suite properties a model of a real system has to get right**: the planets run
 strictly outward in the table's order; the squash is real (outermost under ten times the
-innermost, where the truth is 77); the line at horizon is proportional to `attitude` of the
+innermost, where the truth is 77); the horizon line is proportional to `attitude` of the
 scene's own `ecliptic sol`. No point is a hub (lines and planes through any point ≤ 6, worst
 `sun 1` at 4, where a star-centred layout scored 22); the one orbit line is `sol ∧ earth`,
 asked geometrically rather than by label; three collinear points never wedge to nothing
@@ -1723,7 +1839,7 @@ Animation
 object grows in over them, the camera tween eases over them, and the browser reads them across
 the bridge into `--anim`/`--ease` on `:root` (the CSS curve `cubic-bezier(0.215, 0.61, 0.355,
 1)` is easeOutCubic exactly). One exception, marked as one: the opening hint is a timed
-disclosure whose delay lives in `glue.js` alone — a stylesheet `transition-delay` ran from the
+disclosure whose delay lives in browser scripts alone — a stylesheet `transition-delay` ran from the
 class being added rather than from load, so the two stacked.
 
 *Checked.* Assumed: that one duration suits every transition; nobody has asked otherwise.
@@ -1749,11 +1865,11 @@ moves calls `abandon`, which keeps the goal and marks it done (`release` clears 
 offer is re-made next frame and the camera taken straight back — panning was dead while
 anything stayed selected, on both builds); `release` belongs to the offer's own side. `goal`
 and `destination` are separate fields: the goal depends on geometry alone, the destination is
-a `CameraPlacement` resolved once against the camera as it stood. `advance` eases target and
+a `CameraStance` resolved once against the camera as it stood. `advance` eases pivot and
 angles linearly and **distance geometrically**. `runStoryboard` goes through the same rule and
 calls `settle`.
 
-**Framing** (`framing.nim`): on a new pick, **the orbit target comes to the middle of what
+**Framing** (`framing.nim`): on a new pick, **the orbit pivot comes to the middle of what
 was picked** — `objects.centroidFolded`, a sum of unit-weight points read back through
 `position`, over the same objects the bound is over, each yielded **once** by `watched` (a
 middle is a tally where a bound is a set) — and the camera moves by the **least zoom and
@@ -1779,25 +1895,25 @@ where 19 already showed the whole circle; rim on screen gives 19 → 19 from the
 8 → 15.24 dollied in, 19 → 42.76 on a phone. Screen segments meet the box by Liang–Barsky
 clipping. A plane is judged where its disc is drawn (the stored anchor), not at its support.
 
-**The cut.** `placementFor` first asks whether everything is already in view *where the
+**The cut.** `stanceFor` first asks whether everything is already in view *where the
 camera stands* — judged at the centred placement instead, every pick of something plainly
-visible pulled the view about. Otherwise it builds the full placement (middle as target,
+visible pulled the view about. Otherwise it builds the full placement (middle as pivot,
 facing angles for horizon-only, bisected least distance: `ROUNDS_DISTANCE_FIT` = 8, the
 closed form `radius / sin θ` as the upper bracket only) and searches the least fraction of
 `camera.toward` satisfying `isShownAll`: `STEPS_PLACEMENT_LEAST` = 12 even steps then
 `ROUNDS_PLACEMENT_LEAST` = 5 halvings, each candidate verified at its own placement. The
-target is not part of the cut; distance grows, never shrinks; a finite pick never changes
+pivot is not part of the cut; distance grows, never shrinks; a finite pick never changes
 azimuth or elevation, and a star is turned toward only when nothing finite was picked.
 
 **A pointer pick keeps its object under the pointer and comes in to it.** The centring
 rule above is for picks with no pointer (objects list, keyboard, a shift-added group). A
-click or tap on a point or a line records a `framing.PointerPick` (slot and cursor;
+click or tap on a point or a line records a `framing.PointerPick` (handle and cursor;
 `Panel.pointer_pick`, `POINTER_PICK` in the bridge, written by `nimPickByPointer` from
-`glue.js`'s `pickByPointer` on click, tap and matured hold), which `offerAim` consumes on
-the next frame. The destination is the wheel's own move (`placementUnderPointer`): the eye
+browser scripts's `pickByPointer` on click, tap and matured hold), which `offerAim` consumes on
+the next frame. The destination is the wheel's own move (`stanceUnderPointer`): the eye
 comes in along its line to where the object stands under the pointer
 (`picking.positionUnderPointerOn`, shared with the zoom anchor and without its nearness
-filter), the angles never change, and the target lands on the sight line at the object's
+filter), the angles never change, and the pivot lands on the sight line at the object's
 depth — so the object's pixel does not move and the turntable revolves at its depth, as
 after a wheel zoom onto it. **How far in depends on the shape and on what the reader could
 see**, sized on the frame's height by one formula, `camera.depthSpanning(diameter,
@@ -1819,25 +1935,25 @@ brought to the depth where the disc's diameter `2·EXTENT_PLANE_F` spans
 view, while the crossing under the pointer stays the held anchor — moving the eye along
 its line to the crossing by factor *s* puts the centre at depth d_c − d_a + s·d_a, so the
 crossing ends at D − d_c + d_a, and where that is not positive (the centre further behind
-the crossing than D) the pick falls back to `placementFor`. Rejected: keeping the plane on
+the crossing than D) the pick falls back to `stanceFor`. Rejected: keeping the plane on
 the centring rule, which never pulled in, so a plane picked from far was never brought to
 be looked at. A group keeps the centring rule, since it has to fit, which holding one pixel
 cannot promise. **The ease holds the
 pixel too**: `CameraTween.anchor_held` switches `advance` from `toward` to
 `towardHoldingAnchor`, where the eye's depth to the anchor moves geometrically along the
-eye–anchor line; `toward`'s linear target and geometric distance take the eye off that
+eye–anchor line; `toward`'s linear pivot and geometric distance take the eye off that
 line mid-ease (from 168 to 10 the halfway eye sits at 41 by one curve and 89 by the
 other), and the object swung off the pointer before swinging back. **A pick renews a held
 goal**: the standing offer ignores a goal it already holds, so the same object picked
 again after the wheel had taken the reader out went nowhere — the "sometimes it doesn't
 zoom in" report, reproduced on the demo: from 30 units a pick of Jupiter flew to it, but
-after a wheel out to 168 a pick of a moon moved the target onto it and left the distance
+after a wheel out to 168 a pick of a moon moved the pivot onto it and left the distance
 at 168. `aimAt`'s `is_renewed` re-arms the ease for a pointer pick whatever the tween
 holds. Verified by suite (the pixel stays within 0.01 px through five steps of the ease
 and the arrival distance equals the fit; a near point and a line keep the orbit distance;
 a pair holds no anchor; a re-pick after `abandon` and a dolly re-arms) and by driven check
 on the browser (from 45 units a right-click brings the eye to 19.3 with the anchor
-drifting 0.00 px in flight and settled and the target at the object's depth; a second pick
+drifting 0.00 px in flight and settled and the pivot at the object's depth; a second pick
 after wheeling out past 100 comes in to 19.3 again; a right-click on the opening scene's
 ground plane from Home settles its centre at 48.28, exactly the depth wanted for 0.40).
 The suite pins the plane's arrival from 12 units and from 1, the crossing's pixel held
@@ -1914,7 +2030,7 @@ Blender (WASD, Q/E, shift for faster, F to frame), with the one fork made the ma
 the view *slides* across the ground and the height never changes. Both front-ends watch key
 up as well as down; `releaseKeysAll` empties the held set on blur, on the tab being hidden,
 and when a panel widget takes the keyboard (`gui.wantsKeys`: `WantTextInput` or
-`IsAnyItemFocused` — `WantCaptureKeyboard` is true from the first frame with navigation on).
+`IsAnyObjectFocused` — `WantCaptureKeyboard` is true from the first frame with navigation on).
 Plain `s` moved to `ctrl+s`. Dear ImGui's keyboard navigation is enabled (`io.ConfigFlags`);
 without it Tab reached nothing on the desktop at all.
 
@@ -1927,7 +2043,7 @@ liveness and drawn with the hover marker; the browser adds an inset `:focus-visi
 
 *Checked.* Verified by `--drive-keys`: focus walked, enter selected, azimuth/elevation/distance
 each moved by exactly their own constant. Verified by browser drive: real key events; Tab from
-the canvas moving to the next control and back; a blur mid-hold moving the target 0.0000
+the canvas moving to the next control and back; a blur mid-hold moving the pivot 0.0000
 further; the help table's per-tab overflow at 320×568; `[]-+` typed into a label reaching the
 label. **Not demonstrated**: Tab landing on a Dear ImGui widget — a window that never takes
 focus under `xvfb` gives ImGui nothing to move; `gui.isNavEnabled` reports the configuration,
@@ -1950,7 +2066,7 @@ no figures (which moved here). `tools/check_prose` holds the whole of that mecha
 article rule, summary form, stage form — in every authored language, and runs in `verify.sh`.
 
 **The code was then refactored against both documents in seven passes**, each its own
-commit, each verified by every build target, both suites and the driven checks before the
+commit, each verified by every build pivot, both suites and the driven checks before the
 next began:
 
 - **Separators** (STYLE §5): commas between parameters until one type repeats, across 256
@@ -1965,7 +2081,7 @@ next began:
 - **Purity** (STYLE §1, §2): every proc that compiles as `func` demoted, 148 of them;
   `strictFuncs` in every module including the tools.
 - **Form** (VI.1, X.2–X.4): every foreign binding documented; nesting past three deep split
-  (option parsing, help tab, wash runs, renderer setup); multi-line constructors one field per
+  (option parsing, help tab, veil runs, renderer setup); multi-line constructors one field per
   line; banners and definitions spaced by tier.
 - **Cost** (VII, STYLE §4): the six overlay exports asked per frame answer from module flat
   buffers.
@@ -1983,13 +2099,13 @@ applied: the binding names in `opengl.nim` and `sdl3.nim` keep the foreign API's
 (`getError`, `getString`, `getUniformLocation`), since a reader greps the SDL and GL
 references by those names and V.3's bare-noun rule is for this project's own properties;
 lookup tables at module scope stay lowercase `lut_…` per V.5, the one family V.1's
-screaming case does not cover; `nimCameraTarget`, `nimOverlayMetrics`, `nimInkColor` and the
+screaming case does not cover; `nimCameraPivot`, `nimOverlayMetrics`, `nimInkColor` and the
 scene-listing exports still return sequences, being asked on the UI tick, on a redraw or once
 rather than per frame; `visualiser.main`, `format.formatMagnitude` and the two tool `main`s
 stay over sixty lines with the comment X.4 asks for, as one derivation or one report each.
 Kept from earlier audits: the bridge's FFI-boundary cases translate through one `SLOT_NONE`
 at each proc's return; the `when defined(js)` seams in `scene.nim` are backend necessities;
-`glue.js` and `shell.html` use snake_case for data bindings and camelCase for callables,
+browser scripts and `shell.html` use snake_case for data bindings and camelCase for callables,
 shader attribute strings untouched.
 
 The vendored `pga` library was reviewed and left unmodified by request. Known deviations are
@@ -1997,7 +2113,7 @@ mechanical, plus one substantive: `pga.nim:28` asserts its own module doc is the
 truth for names, which is what makes the notation trap easy to fall into.
 
 *Checked.* Verified: `check_prose` and `check_columns` report zero complaints; every build
-target, the three suites and both drives pass on the refactored tree; the demotion and the
+pivot, the three suites and both drives pass on the refactored tree; the demotion and the
 revert were decided by the compiler, not by reading. Verified by reading the emitted JS: the
 six per-frame exports allocate nothing (`nimDragTint` binds the ink, not the colour, since
 `lent` bound to `let` copies; an array literal handed to an `openArray` parameter is a
@@ -2034,7 +2150,7 @@ compound form (`☆m`, `m ∧☆ n`), needing seven Unicode operator characters 
 request 26074 — merged to `devel`, carried by no release. The pin is therefore
 `requires "nim == 27763495bcfe265507ca98aedc1c7064bf1e0e4d"`, that commit, which
 `toolchain.nim` accepts beside dotted versions and which CI builds from source and caches per
-commit. Rejected: a `devel` label, a moving target recording nothing verified; and waiting for
+commit. Rejected: a `devel` label, a moving pivot recording nothing verified; and waiting for
 a release, which is months of standing behind the library this project exists to exercise.
 
 **Four projections are withdrawn at head, and `projections.nim` stands in until they return.**
@@ -2079,7 +2195,7 @@ and that commit fetches directly from `github.com/nim-lang/Nim`, which is where 
 Assumed: that no release carries 26074 — checked by asking for 2.2.12, 2.4.0 and 2.6.0 and
 getting nothing, which dates rather than proves it.
 
-**Two Atlas defects stand, and the workaround is manual.** `atlas pin` writes `"items": {}`
+**Two Atlas defects stand, and the workaround is manual.** `atlas pin` writes `"objects": {}`
 for a repository carrying no nimble file, so the resolved commit is patched into `atlas.lock`
 by hand; and `atlas` calls the nimble file "broken" because it cannot parse a commit where it
 expects a version, which is cosmetic here since it resolves the dependency regardless. Both
@@ -2097,19 +2213,19 @@ testament:
 |-------------|---------|-----------|-----|
 | `t4d.nim` | C | Default | The desktop build, as shipped |
 | `t4d_browser.nim` | JS | Default | The browser build's own backend |
-| `t4d_small.nim` | C | 12 items, 12-char labels, 4 steps | Boundaries a test reaches |
+| `t4d_small.nim` | C | 12 objects, 12-char labels, 4 steps | Boundaries a test reaches |
 
 The JS row is not a formality: a rule reached through two mechanisms is held together only
 where both run. The reduced row makes any constant tuned to the default fail here;
 `LABEL_MAX` at 12 is under several labels the suite constructs. Cases needing C — `snprintf`,
 the encoders, the arena, save/load — guard themselves `when not defined(js)`. A case that
-walked every pair of slots at 10,000 objects ran ten minutes without output and was killed;
+walked every pair of handles at 10,000 objects ran ten minutes without output and was killed;
 it gathers the joiners once now.
 
 The JS entry point declares `targets: "js"` rather than overriding testament's command. In
 the tree this was ported from, its header named a command testament never ran — the JS suite
 was compiled by a shell script instead — so the header was a claim nothing checked. Under
-`targets` testament compiles with the JS backend and runs the result through node, which is
+`pivots` testament compiles with the JS backend and runs the result through node, which is
 what makes the row real.
 
 **The suites test rules; a second layer drives events.** A rule bug earns a suite case; a
@@ -2151,7 +2267,7 @@ objects:
 
 Browser, SwiftShader: opening-scene frame build 21.9 ms released; demo at 5,038 orbiting,
 scene walk 9.2 ms with the tally off; one hover pick 3.5 ms at 5,038. **No figure here has
-been taken on real GPU hardware**, and a ">500 fps" target cannot be assessed in a software
+been taken on real GPU hardware**, and a ">500 fps" pivot cannot be assessed in a software
 rasteriser, where rasterisation dominates the frame entirely and none of it is this
 project's code.
 
@@ -2164,7 +2280,7 @@ Known Limitations
 ---
 - No human has run either build. Every result here is software-rendered and machine-driven.
 - Tab landing on a desktop widget is unverified (see Hold Feedback, Help And Keys).
-- Two crossing translucent washes blend order-dependently.
+- Two crossing translucent veils blend order-dependently.
 - A camera move is not undoable on its own.
 - The comet's residual steps at fast orbit rates are unexplained (see Selection And Markers).
 - Neither catalogue is checked against its archive by any tool.
@@ -2224,3 +2340,23 @@ other here:
   correcting.
 
 [replications]: https://gitlab.com/mraxilus/replications
+
+## Re-audit, 2026-09-07, issue routing
+
+Audited by a curator against the change that made the issue channel run both ways and gave each
+session a queue. A session now reads the open issues labelled with its own role before any other
+work; a curator who reads this project raises what they find as an issue rather than editing it,
+since they may not; an issue labelled with a session's own role is that session's queue, work
+decided and deferred where the next session here will see it rather than in a conversation that
+ends; and a label is the role string exactly, copied and never composed, because applying a
+label creates it and a misspelling makes a second label nobody filters on.
+
+Nothing in this tree changes: the rule binds how the next session here starts. Two issues stand
+open against this project today, 47 and 48, both now carrying its label, so that session finds
+them by the filter rather than by being told.
+
+One thing here needs care rather than correction. This record already carries *Not yet ported*
+and several *Unverified* lines, which are the same shape as a queue. They stay where they are:
+the record says what **is**, an issue says what is **queued**. Anything filed from them links
+the section rather than restating its counts, since two copies of one count will disagree — as
+the prototype's check count already did once.
