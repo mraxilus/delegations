@@ -50,18 +50,6 @@ Open Questions
 Recorded here and in the pull request body, per CONTRIBUTOR.md: a contributor neither works
 around a rule nor edits it.
 
-**Vocabulary rename left stragglers in constants, and they are still there.** Tasks 175-181
-renamed by word, which uppercase constants and compound identifiers do not match. Surviving in
-already-merged code: `WIDTH_SHAPE_WORD` in `scene.nim`, `ALPHA_WASH` and `ALPHA_WASH_SKY` in
-`mesh.nim` with their uses in `tessellate.nim`, and `GHOST`, `RADIUS_GHOST` and `FLAT_TARGET` in
-`bridge.nim`. Every one names term GLOSSARY.md marks *Avoid*.
-  Found by porting panel, which had to reach `WIDTH_SHAPE_WORD` and could either import retired
-  term into new file or invent name core does not define. Took former, since new code disagreeing
-  with core is worse than new code agreeing with core's own imperfection.
-  Not fixed here: it touches shared core and browser bridge, which is not this port's scope, and
-  bundling it would widen desktop pull request into modules it otherwise never opens. Wants its
-  own pass, over every uppercase name, with compiler as check exactly as it was here.
-
 **System packages have no declared home in this repository.** Nim packages are declared in
 `rga_visualiser.nimble` and pinned by `atlas.lock`; node packages in `package.json`, pinned by
 `package-lock.json`. Desktop front-end links against SDL3, libGL and zlib, drives itself
@@ -404,6 +392,26 @@ stale after reader edits coefficient.
 between frames.** Which operands are picked, what open edit is staging, where to export;
 everything else is read straight off scene and camera, so there is one source of truth and no
 synchronisation step to go stale.
+
+**Rename now covers uppercase constants, which word-boundary passes had missed.** Tasks 175-181
+renamed by word, and no word boundary sits inside `ALPHA_WASH` or `WIDTH_SHAPE_WORD`, so eight
+names survived in merged code, each spelling term GLOSSARY.md marks *Avoid*. Found by porting
+panel, which had to reach one of them. Now: `ALPHA_VEIL` and `ALPHA_VEIL_SKY` (`mesh`,
+`tessellate`), `WIDTH_KIND_WORD` (`scene`), `PREVIEW_EDIT`, `RADIUS_PREVIEW_EDIT`, `FLAT_PIVOT`
+and `REVISION_PLACEMENT` (`bridge`), `PIXELS_RULER_WANTED` (`diagnostics.ts`).
+  None crosses foreign-function boundary: no renamed name is `exportc` and none appears in any
+  script, so derived `bridge.d.ts` is byte for byte what it was. Verified rather than assumed.
+  **`GHOST` could not simply become `PREVIEW`.** Nim compares identifiers ignoring case after
+  first letter and ignoring underscores, and type `Preview` already exists -- so `none(Preview)`
+  silently resolved to renamed variable and compilation failed. Named `PREVIEW_EDIT` instead,
+  which pairs with `PREVIEW_APPLY` already beside it: one is what open edit stages, other is what
+  open apply control would build. Collision forced better name than intended one.
+  Left alone, since each is different word rather than retired one: `ShapedMarker` and
+  `MARKER_SHAPED` use *shape* as verb, which glossary's own Marker entry does too;
+  `nimInkChoosableSlots` names palette position rather than object's handle; ring buffer's slot
+  is genuinely slot; and Dear ImGui's `BeginTabItem` and DOM's `currentTarget` are foreign.
+  `PIXELS_RULER_TARGET` named width bar aims for, which is neither Pivot nor Mark, so it became
+  `PIXELS_RULER_WANTED` rather than being forced into glossary term it is not.
 
 **Vocabulary rename reached these three modules through compiler rather than through reader.**
 Renderer and panel both predate tasks 175-181, so they arrived saying `wash`, `slot`, `target`,
