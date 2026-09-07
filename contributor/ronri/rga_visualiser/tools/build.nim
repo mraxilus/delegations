@@ -15,6 +15,7 @@
 ##   |          | TypeScript, inline faces, fold everything into one self-contained page |
 ##   | drive    | build page, then drive it through real events and report every check  |
 ##   | assets   | fetch vendored faces page embeds, and verify each against its pin      |
+##   | system   | print system packages build needs, one per line, for caller to install |
 ##   | clean    | remove `build`, `bin` and `nimcache`                                   |
 ##   |----------|-----------------------------------------------------------------------|
 ##   Everything lands under `build/`, which root `.gitignore` covers at any depth.
@@ -97,9 +98,24 @@ const
     ##   artefact readers open, so wrong byte here is wrong byte shipped. Repository pins
     ##   compilers to commits and packages to lock files; this is same pin for one fetch that
     ##   had none (repository issue 47).
+  SYSTEM = [
+    ("curl", "fetch faces `assets` pins; build shells out to it"),
+    ("coreutils", "`sha256sum` verifying those pins and `base64` inlining them"),
+    ("nodejs", "run type-checker `types` drives and harness `drive` runs"),
+    ("chromium", "browser `drive` drives; harness takes its path from environment"),
+  ]
+    ## System packages build needs present before it runs, with what each is for
+    ##   (CONTRIBUTOR.md, "System dependencies"). Nim packages are in nimble file and pinned
+    ##   by `atlas.lock`; node packages in `package.json`, pinned by its lock. These have
+    ##   neither.
+    ##   No version is pinned and none is invented: package's version is whatever machine
+    ##   carries, which is honest limit rather than omission. What *is* pinned is every byte
+    ##   fetched at build time -- see `FACES` -- which is what keeps unpinned download out of
+    ##   merge process.
+    ##   Desktop front-end's own libraries join this list when that front-end lands.
   HOST_FACES = "https://cdn.jsdelivr.net/npm/@fontsource"
     ## Host `assets` fetches faces from.
-  USAGE = "Usage: nim r tools/build.nim <declare|types|web|drive|assets|clean>\n"
+  USAGE = "Usage: nim r tools/build.nim <declare|types|web|drive|assets|system|clean>\n"
     ## Text printed on usage error.
 
 
@@ -251,6 +267,17 @@ proc types() =
   run("npx", ["tsc", "--project", PATH_TSCONFIG_DRIVE])
 
 
+proc system() =
+  ## Print every system package this build needs, one per line and nothing else.
+  ##   Prints rather than installs: which package manager serves them is machine's business
+  ##   and varies by distribution, while list is this project's. Caller pipes it --
+  ##   `nim r tools/build.nim system | xargs sudo apt-get install -y` -- so CI installs from
+  ##   this declaration rather than from names written into workflow.
+  ##   Reason each carries stays in `SYSTEM` above, where reader looks; keeping it out of this
+  ##   output is what makes output machine-readable.
+  for (package, _) in SYSTEM: echo package
+
+
 proc digestOf(path: string): string =
   ## Read file's SHA-256, as `sha256sum` writes it.
   ##   Shelled out rather than computed here, and deliberately: no digest of that strength is
@@ -381,6 +408,7 @@ when isMainModule:
     of "web": web()
     of "drive": drive()
     of "assets": assets()
+    of "system": system()
     of "clean": clean()
     else:
       stderr.write USAGE
