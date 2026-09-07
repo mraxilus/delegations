@@ -20,6 +20,7 @@ import {
 } from './construct';
 import { driveHelp, driveHoverDuringGesture } from './chrome';
 import { driveComet } from './comet';
+import { driveGround } from './ground';
 
 /** Viewport every check below is written against. */
 const SIZE_VIEW = { width: 1200, height: 900 };
@@ -76,6 +77,7 @@ async function main(): Promise<void> {
   await driveHoverDuringGesture(page, SIZE_VIEW.width, SIZE_VIEW.height);
   await driveHelp(page, SIZE_VIEW.width, SIZE_VIEW.height);
   await driveComet(page);
+  await driveGround(page);
 
   // Page erroring at all is failure, whatever every check above said.
   report('the page raised no error', errors_page.length === 0, errors_page.join(' | '));
