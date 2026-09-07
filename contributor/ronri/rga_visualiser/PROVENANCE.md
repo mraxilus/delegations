@@ -271,6 +271,20 @@ unbreakable-token exemption covers, as curator's own measurement predicted. Comm
   Noto Sans at 400 and 600, Noto Sans Math, Noto Sans Symbols 2, Noto Serif. Never committed,
   since audit cannot read them; licence notice travels with copies.
 
+**System packages are declared as data in build driver, reached by verb.** `SYSTEM` in
+`tools/build.nim` pairs each package with what it is for, and `system` prints those names one
+per line for caller to install (CONTRIBUTOR.md, "System dependencies"). Declaration lives in
+driver rather than in file of its own: `.nim` is kind audit already reads, output is
+machine-readable so CI installs from this rather than from names written into workflow, and
+registry admits no second build verb.
+  Prints rather than installs: which package manager serves them varies by machine, while list
+  is this project's. Reason stays in declaration rather than in output, which is what keeps
+  output pipeable.
+  No version is pinned and none is invented -- package's version is whatever machine carries.
+  What *is* pinned is every byte fetched at build time, below.
+  Asked as issue 60 before writing anything, since three homes I proposed were all wrong;
+  ruling put it here.
+
 **Each face carries digest of bytes expected, and build refuses anything else.** Host serves
 whatever it serves, and `web` embeds these bytes into artefact readers open, so wrong byte
 fetched is wrong byte shipped. Every other external thing here is pinned -- compiler to commit,
