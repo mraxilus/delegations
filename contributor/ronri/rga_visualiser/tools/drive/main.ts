@@ -13,6 +13,7 @@ import { focusCanvas } from './gestures';
 import { driveKeys } from './keys';
 import { driveAim, drivePan } from './pan';
 import { driveWheel } from './wheel';
+import { driveTouchSelect, drivePinch, openTouch } from './touch';
 
 /** Viewport every check below is written against. */
 const SIZE_VIEW = { width: 1200, height: 900 };
@@ -55,6 +56,11 @@ async function main(): Promise<void> {
   await driveWheel(page);
   await drivePan(page);
   await driveAim(page, SIZE_VIEW.width, SIZE_VIEW.height);
+
+  // Two fingers go through Chrome's own protocol, so channel opens once here.
+  const cdp = await openTouch(page);
+  await drivePinch(page, cdp);
+  await driveTouchSelect(page, cdp);
 
   // Page erroring at all is failure, whatever every check above said.
   report('the page raised no error', errors_page.length === 0, errors_page.join(' | '));
