@@ -47,9 +47,15 @@ suite "reach breaks":
       let at = float(i) * STEP
       if at < BREAK / 2 or at > span - BREAK / 2:
         continue
-      let runs = cutGapsAt(line, @[line[i]])
+      let
+        runs = cutGapsAt(line, @[line[i]])
+        gap = gapFor(at, span)
+        drawn = runs.mapIt(polylineLen(it)).foldl(a + b, 0.0)
       check runs.len == 2
-      check not runs.anyIt(line[i] in it)
+      # Reach loses exactly its gap, no more and no less.  Bare test that
+      # crossing sits in no run passed while gap was cut to whole samples
+      # and so took more than it meant to.
+      check abs(drawn - (span - (gap.shuts - gap.opens))) < 1e-6
 
   test "a reach that crosses nothing is not broken":
     # Break says this line passes under that one.  Where there is no
@@ -66,11 +72,11 @@ suite "reach breaks":
     check runs[^1][^1] == line[^1]
 
   test "a break leaves as much line as its crossing has room for":
-    # Round caps add half a stroke to each end of a piece and take as much
-    # off the gap beside it, so a piece much shorter than a break reads as
-    # a blob and the gap beside it as a nick.  A crossing near a hand
-    # cannot be given a long piece, but it can be given every bit of the
-    # room it does leave, and that is what is claimed here.
+    # Round caps add half stroke to each end of piece and take as much off
+    # gap beside it, so piece much shorter than break reads as blob and
+    # gap beside it as nick.  Crossing near hand cannot be given long
+    # piece; it can be given every bit of room it does leave, and that is
+    # what is claimed here.
     let span = float(N - 1) * STEP
     for i in 0 ..< N:
       let

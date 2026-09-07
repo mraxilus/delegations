@@ -15,7 +15,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[math, options, sequtils, strformat, strutils]
+import std/[algorithm, math, options, sequtils, strformat, strutils]
 
 import ./[body, geometry, style, terms]
 
@@ -772,10 +772,27 @@ func gapFor*(at, span: float): tuple[opens, shuts: float] =
   ##     one break reads like every other.  Gap still covers its crossing
   ##     wherever crossing is half break clear of both ends, which is
   ##     every case that can be drawn whole.
-  let
-    last = max(span - 1.5 * BREAK, BREAK / 2)
-    opens = clamp(at - BREAK / 2, BREAK / 2, last)
-  (opens, opens + BREAK)
+  ##   Centred on its crossing, unless that leaves piece of reach too
+  ##     short to read.  Round caps add half stroke to each end of piece
+  ##     and take as much off gap beside it, so piece much shorter than
+  ##     break is blob and gap beside it is nick.
+  ##   Where that would happen gap is pushed as late, or as early, as it
+  ##     can go while still reaching its own crossing.  Which is as much
+  ##     line as that crossing leaves room for, and no more is on offer:
+  ##     crossing sits where it sits.
+  ##   Crossing lying nearer to hand than third of break carries no break
+  ##     at all: there is no room between hand and crossing to put one in,
+  ##     and dot of ink is worse than none.
+  const SEEN = 2 * BREAK / 3
+    ## Shortest piece of reach that reads as line stopping.
+  let room = min(at, span - at)
+  if room < BREAK / 3:
+    return (at, at)
+  let opens =
+    if at - BREAK / 2 < SEEN: min(at, max(span - BREAK, 0.0))
+    elif span - at - BREAK / 2 < SEEN: max(at - BREAK, 0.0)
+    else: at - BREAK / 2
+  (opens, min(opens + BREAK, span))
 
 
 func alongOf(pts: seq[Point]): seq[float] =
@@ -785,19 +802,53 @@ func alongOf(pts: seq[Point]): seq[float] =
     result.add result[^1] + dist(pts[i], pts[i + 1])
 
 
+func atAlong(pts: seq[Point]; along: seq[float]; want: float): Point =
+  ## Get point this far along reach, reading between two samples where it
+  ## falls between them.
+  for i in 0 ..< pts.high:
+    if along[i + 1] >= want:
+      let step = along[i + 1] - along[i]
+      if step <= 0:
+        return pts[i]
+      let part = (want - along[i]) / step
+      return (x: pts[i].x + (pts[i + 1].x - pts[i].x) * part,
+              y: pts[i].y + (pts[i + 1].y - pts[i].y) * part)
+  pts[^1]
+
+
 func runsOutside(pts: seq[Point]; along: seq[float];
     gaps: seq[tuple[opens, shuts: float]]): seq[Run] =
   ## Collect what is left of reach once its gaps are taken out.
-  var run: Run
-  for i, q in pts:
-    if gaps.anyIt(along[i] >= it.opens and along[i] <= it.shuts):
-      if run.len > 1:
-        result.add run
-      run = @[]
-    else:
-      run.add q
-  if run.len > 1:
-    result.add run
+  ##   Each piece is cut exactly on its gap's edge, between samples where
+  ##     that is where edge lies.  Dropping whole samples instead widened
+  ##     every gap by up to one step at each end and took as much off
+  ##     pieces beside it, which is what left stub too short to read
+  ##     however gap was placed.
+  ##   Gap of no width is no gap, and takes nothing out.
+  var shut: seq[tuple[opens, shuts: float]]
+  for gap in gaps:
+    if gap.shuts > gap.opens:
+      shut.add gap
+  shut.sort(proc (a, b: tuple[opens, shuts: float]): int = cmp(a.opens, b.opens))
+  var
+    keep: seq[tuple[from_here, to_there: float]]
+    at = 0.0
+  for gap in shut:
+    if gap.opens > at:
+      keep.add (at, gap.opens)
+    at = max(at, gap.shuts)
+  if at < along[^1]:
+    keep.add (at, along[^1])
+  for stretch in keep:
+    if stretch.to_there <= stretch.from_here:
+      continue
+    var run = @[atAlong(pts, along, stretch.from_here)]
+    for i, q in pts:
+      if along[i] > stretch.from_here and along[i] < stretch.to_there:
+        run.add q
+    run.add atAlong(pts, along, stretch.to_there)
+    if run.len > 1:
+      result.add run
 
 
 func cutGapsAt*(pts: seq[Point]; centres: seq[Point]): seq[Run] =
