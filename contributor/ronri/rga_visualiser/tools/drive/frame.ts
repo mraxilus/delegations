@@ -33,6 +33,7 @@ export interface Phase {
   records_ribbon: number;
   records_ring: number;
   records_disc: number;
+  is_held: boolean;
   wall: number;
 }
 
@@ -81,7 +82,7 @@ export async function watchFrames(page: Page): Promise<void> {
         records_ribbon: data.ribbon_verts.length / 16,
         records_ring: data.ring_records.length / 14,
         records_disc: data.disc_records.length / 13,
-        wall,
+        is_held: data.is_furniture_held, wall,
       });
       return data;
     };
