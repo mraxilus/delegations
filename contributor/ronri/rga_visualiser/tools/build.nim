@@ -15,6 +15,7 @@
 ##   |          | TypeScript, inline faces, fold everything into one self-contained page |
 ##   | drive    | fetch faces, build page, drive it and report every check it runs      |
 ##   | desktop  | compile desktop front-end through `cpp` backend, into `bin/`           |
+##   | driven   | build desktop front-end, drive it through every scripted run, report   |
 ##   | assets   | fetch vendored faces page embeds, and verify each against its pin      |
 ##   | system   | print system packages build needs, one per line, for caller to install |
 ##   | clean    | remove `build`, `bin` and `nimcache`                                   |
@@ -36,6 +37,7 @@
 ##   Cost: `assets` and `web` need `sha256sum`, for reason `digestOf` gives.
 ##   Cost: `desktop` needs system libraries `SYSTEM` names, and Dear ImGui checkout standing
 ##     at `COMMIT_IMGUI`, which it refuses to build without.
+##   Cost: `driven` needs display; it borrows Xvfb where environment names none.
 
 {.experimental: "strictFuncs".}
 
@@ -62,6 +64,10 @@ const
     ## Page's own type-checker configuration, targeting browser.
   PATH_TSCONFIG_DRIVE = "tsconfig.drive.json"
     ## Harness's own type-checker configuration, targeting node not browser.
+  DRIVES = ["keys", "sky", "undo", "select", "drag"]
+    ## Scripted runs entry point carries, each reporting checks of its own.
+    ##   Help's runs are not here: one per tab, and tabs are read from binary rather than
+    ##   listed again, so `help.HelpPath` stays their one home (Article I.4).
   PATH_DESKTOP_NIM = "src" / "desktop" / "main.nim"
     ## Desktop entry point `desktop` compiles.
   PATH_DESKTOP_BIN = BIN / "rga_visualiser"
@@ -150,7 +156,7 @@ const
   HOST_FACES = "https://cdn.jsdelivr.net/npm/@fontsource"
     ## Host `assets` fetches faces from.
   USAGE = "Usage: nim r tools/build.nim " &
-    "<declare|types|web|drive|desktop|assets|system|clean>\n"
+    "<declare|types|web|drive|desktop|driven|assets|system|clean>\n"
     ## Text printed on usage error.
 
 
@@ -413,22 +419,6 @@ proc web() =
   echo "Wrote ", PATH_PAGE, " (", page.len, " bytes)."
 
 
-proc drive() =
-  ## Drive assembled page through real events, and report every check it runs.
-  ##   Builds page first: harness against stale page checks build nobody has, and `web`
-  ##   runs `types`, which type-checks this harness too.
-  ##   Exit follows harness: non-zero where any check failed, so one command is whole answer.
-  ##   Fetches faces first, so verb satisfies its own precondition rather than assuming someone
-  ##   ran `assets` by hand. Cold checkout is where that assumption showed: runner builds every
-  ##   step and stops at embedding, which is one line to prevent (repository issue 47).
-  ##   `web` keeps refusing absent face by name instead, since caller reaching for it directly
-  ##   is asking to build page rather than to be given one.
-  ##   Costs nothing warm: `assets` skips every face already carrying its pinned digest.
-  assets()
-  web()
-  run("node", [BUILD / "drive" / "main.js"])
-
-
 proc checkImgui() =
   ## Raise unless Dear ImGui checkout stands at commit pinned for it.
   ##   Refuses by name rather than compiling whatever is there, for reason `checkFace` gives:
@@ -484,6 +474,87 @@ proc desktop() =
   echo "Wrote ", PATH_DESKTOP_BIN, "."
 
 
+proc under(args: openArray[string]): (string, seq[string]) =
+  ## Name command and arguments that run desktop binary, borrowing display where none is set.
+  ##   Checks are headless by nature, and machine running them may have no screen at all.
+  ##   `xvfb-run -a` picks free display number rather than colliding with one in use.
+  if getEnv("DISPLAY").len > 0: (PATH_DESKTOP_BIN, @args)
+  else: ("xvfb-run", @["-a", PATH_DESKTOP_BIN] & @args)
+
+
+proc reported(args: openArray[string]): bool =
+  ## Run desktop binary with args, streaming what it says; report whether it passed.
+  ##   Does not raise on failure, unlike `run`: caller drives every scripted run and reports
+  ##   all of them, and first failure must not hide rest.
+  let (command, arguments) = under(args)
+  let process = startProcess(command, args = arguments, options = {poUsePath, poParentStreams})
+  let code = process.waitForExit
+  process.close
+  code == 0
+
+
+proc tabsHelp(): seq[string] =
+  ## Ask binary which help tabs it has, one per line.
+  let (command, arguments) = under(["--help-tabs"])
+  let (written, code) = execCmdEx(command & " " & arguments.quoteShellCommand)
+  if code != 0:
+    raise newException(OSError, "Cannot read help tabs; got exit `" & $code & "`.")
+  for line in written.splitLines:
+    if line.strip.len > 0: result.add line.strip
+
+
+proc driven() =
+  ## Drive desktop front-end through every scripted run, and report every check each runs.
+  ##   Builds first, for reason `drive` does: checks against stale binary check build nobody
+  ##   has.
+  ##   Runs every scripted mode rather than one, since each drives different wiring and no
+  ##   caller should have to know list. Help is driven once per tab binary reports.
+  ##   Exit follows checks: non-zero where any failed, so one command is whole answer.
+  ##   Every failure is reported before exit rather than first one raising: run takes seconds,
+  ##   and knowing which three broke beats knowing that one did.
+  desktop()
+  var failed: seq[string]
+  for drive in DRIVES:
+    echo "== --drive-", drive
+    if not reported(["--hidden", "--drive-" & drive]): failed.add "drive-" & drive
+  for tab in tabsHelp():
+    echo "== --drive-help:", tab
+    if not reported(["--hidden", "--drive-help:" & tab]): failed.add "drive-help:" & tab
+  if failed.len > 0:
+    raise newException(OSError,
+      "Driven runs failed; got " & $failed.len & " -- " & failed.join(", ") & ".")
+  echo "\nEvery scripted run passed."
+
+
+proc drive() =
+  ## Drive assembled page through real events, and report every check it runs.
+  ##   Builds page first: harness against stale page checks build nobody has, and `web`
+  ##   runs `types`, which type-checks this harness too.
+  ##   Exit follows harness: non-zero where any check failed, so one command is whole answer.
+  ##   Fetches faces first, so verb satisfies its own precondition rather than assuming someone
+  ##   ran `assets` by hand. Cold checkout is where that assumption showed: runner builds every
+  ##   step and stops at embedding, which is one line to prevent (repository issue 47).
+  ##   `web` keeps refusing absent face by name instead, since caller reaching for it directly
+  ##   is asking to build page rather than to be given one.
+  ##   Costs nothing warm: `assets` skips every face already carrying its pinned digest.
+  ##   Drives desktop front-end too, where machine carries what it needs: both front-ends draw
+  ##   same scene from same core, and check that runs on one alone is check nobody runs on
+  ##   other. `driven` alone drives desktop by itself.
+  ##   Where those libraries are absent it says so by name and stops there rather than failing:
+  ##   SDL3 has no package on every distribution (see `VERSION_SDL3`), so runner cannot carry
+  ##   it, and browser half is whole answer that machine can give. Skip is printed rather than
+  ##   silent, since check nobody is told was skipped is check nobody knows is missing.
+  assets()
+  web()
+  run("node", [BUILD / "drive" / "main.js"])
+  try:
+    checkSdl3()
+    checkImgui()
+  except OSError as e:
+    echo "\nSkipped desktop scripted runs -- ", e.msg
+    return
+  driven()
+
 proc clean() =
   ## Remove every product, leaving only what git holds.
   for dir in [BUILD, BIN, "nimcache"]:
@@ -505,6 +576,7 @@ when isMainModule:
     of "web": web()
     of "drive": drive()
     of "desktop": desktop()
+    of "driven": driven()
     of "assets": assets()
     of "system": system()
     of "clean": clean()
