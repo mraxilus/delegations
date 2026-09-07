@@ -39,7 +39,8 @@ const
           "B15", "B16", "B17", "B18", "B19", "B20", "B21",
           "B22", "B23", "B24", "B25", "B26", "B27", "B28",
           "C1", "C2", "C3", "C4", "C5", "C6", "C7",
-          "D1", "D2", "D3", "D4", "D5", "D6", "D7"]
+          "D1", "D2", "D3", "D4", "D5", "D6", "D7",
+          "E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8"]
     ## Ids Architect has confirmed accurate.  Added as they are ruled on.
   DROPPED: seq[string] = @[]
     ## Ids Architect has ruled out.
