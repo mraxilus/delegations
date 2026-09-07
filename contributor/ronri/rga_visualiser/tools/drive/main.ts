@@ -18,6 +18,7 @@ import {
   driveCrowd, driveEmptyRelease, drivePausedDrag, driveTouchConstruct,
   driveTwoFingerPan,
 } from './construct';
+import { driveHelp, driveHoverDuringGesture } from './chrome';
 
 /** Viewport every check below is written against. */
 const SIZE_VIEW = { width: 1200, height: 900 };
@@ -70,6 +71,9 @@ async function main(): Promise<void> {
   await driveCrowd(page, cdp);
   await drivePausedDrag(page, cdp);
   await driveEmptyRelease(page, SIZE_VIEW.width, SIZE_VIEW.height);
+
+  await driveHoverDuringGesture(page, SIZE_VIEW.width, SIZE_VIEW.height);
+  await driveHelp(page, SIZE_VIEW.width, SIZE_VIEW.height);
 
   // Page erroring at all is failure, whatever every check above said.
   report('the page raised no error', errors_page.length === 0, errors_page.join(' | '));
