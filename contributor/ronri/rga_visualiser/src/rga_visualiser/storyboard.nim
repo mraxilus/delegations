@@ -1,6 +1,6 @@
 ## Replay construction one operation per step, for capture without hand on mouse.
 ##
-## Each step goes through same `applyOperation` and `addItem` GUI's apply button calls, so
+## Each step goes through same `applyOperation` and `addObject` GUI's apply button calls, so
 ## exported frames show what clicking would have produced.
 ##   Doubles as visual regression harness: frames are comparable between builds.
 ## Steps name operands by index into scene, which is dense and grows by one per step, so
@@ -91,7 +91,7 @@ const
 
 proc constructSeeds*(scene: var Scene, now: float = 0.0) =
   ## Place three points and ground plane every later step derives from.
-  ##   `now` is forwarded to `addItem` untouched, so seeds animate in as any item does.
+  ##   `now` is forwarded to `addObject` untouched, so seeds animate in as any object does.
   let
     point_a = toMultivector(Position(x: 3.0, y: -2.0, z: 2.5))
     point_b = toMultivector(Position(x: -2.5, y: 2.0, z: 5.5))
@@ -113,11 +113,11 @@ proc constructSeeds*(scene: var Scene, now: float = 0.0) =
     while inkCycled(index_ink) in [INK_SEED_GROUND, INK_SEED_ORIGIN]: inc index_ink
     result = inkCycled(index_ink)
     inc index_ink
-  scene.addItem(point_a, "a", inkNext(), now)
-  scene.addItem(point_b, "b", inkNext(), now)
-  scene.addItem(point_c, "c", inkNext(), now)
-  scene.addItem(point_origin, "o", INK_SEED_ORIGIN, now)
-  scene.addItem(ground, "ground", INK_SEED_GROUND, now, anchor_ground)
+  scene.addObject(point_a, "a", inkNext(), now)
+  scene.addObject(point_b, "b", inkNext(), now)
+  scene.addObject(point_c, "c", inkNext(), now)
+  scene.addObject(point_origin, "o", INK_SEED_ORIGIN, now)
+  scene.addObject(ground, "ground", INK_SEED_GROUND, now, anchor_ground)
 
 
 func applyStep*(scene: var Scene, step: Step, now: float = 0.0): Multivector {.discardable.} =
@@ -132,4 +132,4 @@ func applyStep*(scene: var Scene, step: Step, now: float = 0.0): Multivector {.d
     operand_second = scene[step.index_second].geometry
   result = applyOperation(step.operation, operand_first, operand_second)
   let anchor = creationAnchor(step.operation, operand_first, operand_second, result)
-  scene.addItem(result, step.label, step.ink, now, anchor)
+  scene.addObject(result, step.label, step.ink, now, anchor)

@@ -24,8 +24,8 @@ import ./[marker, scene]
 #[ Type Definitions ]#
 
 type Selection* = object ## Define handles picked, in order they were picked.
-  handles: array[ITEMS_MAX, int] ## Picked handles, oldest pick first; first `count` are live.
-  count: int ## Handles picked so far, <= ITEMS_MAX.
+  handles: array[OBJECTS_MAX, int] ## Picked handles, oldest pick first; first `count` are live.
+  count: int ## Handles picked so far, <= OBJECTS_MAX.
   count_changes: int ## How many times membership or order has changed; see `revision`.
 
 
@@ -39,8 +39,8 @@ func len*(selection: Selection): int = selection.count
 func revision*(selection: Selection): int = selection.count_changes
   ## Report how many times this selection has changed.
   ##   Front-end holding last frame's meshes compares this, never whole selection.
-  ##     Two selections compared as values walk `ITEMS_MAX` ints, and copying one to
-  ##     remember it is `ITEMS_MAX` more, per frame, whatever is picked.
+  ##     Two selections compared as values walk `OBJECTS_MAX` ints, and copying one to
+  ##     remember it is `OBJECTS_MAX` more, per frame, whatever is picked.
 
 
 func at*(selection: Selection, position: int): int = selection.handles[position]
@@ -108,7 +108,7 @@ func toggle*(selection: var Selection, handle: int) =
     selection.count.dec
     inc selection.count_changes
     return
-  if selection.count >= ITEMS_MAX: return # Every handle already picked; nothing to add.
+  if selection.count >= OBJECTS_MAX: return # Every handle already picked; nothing to add.
   selection.handles[selection.count] = handle
   selection.count.inc
   inc selection.count_changes
@@ -162,7 +162,7 @@ type PulseClock* = object ## Define each selected object's orientation pulse bet
   ##   neighbour. `arena.nim` is desktop-only in any case.
   ## Here rather than `marker.nim` because indexed by *handle*, over exactly selected set,
   ## which is view of scene this module already is.
-  travels: array[ITEMS_MAX, float] ## Each handle's travel along its marker's outline.
+  travels: array[OBJECTS_MAX, float] ## Each handle's travel along its marker's outline.
     ## In screen pixels from outline's anchor, always reduced below one lap.
   seconds_last: Option[float] ## Clock reading `tick` last saw, for step between frames.
 
@@ -191,18 +191,18 @@ func advance*(clock: var PulseClock; handle: int; lap, seconds: float) =
   ##   never step: step is `SPEED_MARKER_PULSE*seconds` whatever camera does.
   ##   Reducing here keeps carried travel below one lap; see type's doc for why that is
   ##   load-bearing.
-  if handle < 0 or handle >= ITEMS_MAX: return
+  if handle < 0 or handle >= OBJECTS_MAX: return
   clock.travels[handle] = travelAdvanced(clock.travels[handle], lap, seconds)
 
 
 func travelAt*(clock: PulseClock, handle: int): float =
   ## Read one handle's pulse travel, in screen pixels from outline's anchor.
-  if handle < 0 or handle >= ITEMS_MAX: 0.0 else: clock.travels[handle]
+  if handle < 0 or handle >= OBJECTS_MAX: 0.0 else: clock.travels[handle]
 
 
 func forget*(clock: var PulseClock, handle: int) =
   ## Send handle's pulse back to start of its lap.
   ##   Call where handle is handed to fresh object, so new selection begins comet at head
   ##   rather than inheriting wherever since-removed object had got to.
-  if handle < 0 or handle >= ITEMS_MAX: return
+  if handle < 0 or handle >= OBJECTS_MAX: return
   clock.travels[handle] = 0.0

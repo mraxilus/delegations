@@ -190,10 +190,10 @@ suite "Objects":
 
   test "shape follows grade":
     for i in 0 ..< SAMPLES:
-      check shape(POINTS[i]) == some(Shape.Point)
-      check shape(LINES[i]) == some(Shape.Line)
-      check shape(PLANES[i]) == some(Shape.Plane)
-    check shape(1.0 + POINTS[0]).isNone
+      check kindOf(POINTS[i]) == some(Kind.Point)
+      check kindOf(LINES[i]) == some(Kind.Line)
+      check kindOf(PLANES[i]) == some(Kind.Plane)
+    check kindOf(1.0 + POINTS[0]).isNone
 
 
   test "support lies on its object":
@@ -344,7 +344,7 @@ suite "Camera":
     check close.distanceNear <= 0.5*close.distance
     # Reach is measured from what scene holds, point's own radius included.
     var scene = initScene()
-    scene.addItem(toMultivector(Position(x: 300, y: 0, z: 0)), "p", Ink.Rose, radius = 2.5)
+    scene.addObject(toMultivector(Position(x: 300, y: 0, z: 0)), "p", Ink.Rose, radius = 2.5)
     check abs(reachOf(scene) - 302.5) < 1.0e-6
 
   test "a point is culled only where the frustum, sprite margin included, does not reach":
@@ -352,7 +352,7 @@ suite "Camera":
     let camera = initCamera(Position(x: 1, y: 2, z: 3), 10.0, 0.4, 0.3)
     let scale = camera.drawExtentFor(900)
     let bounds = camera.viewBoundsFor(scale, 16.0/9.0)
-    const RADIUS = RADIUS_ITEM_DEFAULT
+    const RADIUS = RADIUS_OBJECT_DEFAULT
     check isPointInView(placeObject(toMultivector(camera.pivot)), RADIUS, bounds)
     check not isPointInView(
       placeObject(toMultivector(bounds.eye - 1.0*bounds.forward)), RADIUS, bounds
@@ -598,7 +598,7 @@ suite "Camera":
     const (WIDE, TALL) = (1440, 900)
     let planet = Position(x: 3.0, y: 1.0, z: 0.0)
     var scene = initScene()
-    scene.addItem(toMultivector(planet), "planet", Ink.Cobalt)
+    scene.addObject(toMultivector(planet), "planet", Ink.Cobalt)
     # Middle of frame over planet, camera aimed at it from afar: pinch's case.
     var camera = initCamera(pivot = planet, distance = 20.0, azimuth = 0.4, elevation = 0.5)
     camera.pivot = Position(x: 3.0, y: 1.0, z: 0.0) + 10.0*camera.frame(camera.eye).forward
@@ -652,7 +652,7 @@ suite "Camera":
       raised = Position(x: 2.0, y: -1.0, z: 6.0)
       on_screen = projectToScreen(view_projection, WIDE, TALL, raised)
     var scene = initScene()
-    scene.addItem(toMultivector(raised), "raised", inkCycled(0))
+    scene.addObject(toMultivector(raised), "raised", inkCycled(0))
 
     # Over point: its own place, not ground below it nor pivot's level.
     let at_object = anchorZoomAt(
@@ -711,7 +711,7 @@ suite "Camera":
     # Plane under cursor is crossing, not place: anchored where ray meets it, but not.
     #   followed to depth, which is not plane's depth at middle of frame.
     var scene_floor = initScene()
-    scene_floor.addItem(
+    scene_floor.addObject(
       planeThrough(toMultivector(ORIGIN), toMultivector(Direction(x: 0, y: 0, z: 1))),
       "floor", inkCycled(1),
     )
@@ -965,7 +965,7 @@ suite "Mesh":
     ##   other geometry test in this suite uses, not for additional rounding much
     ##   larger radius would carry through unrelated to anything this suite tests here.
 
-  test "an item's drawn centre is its own anchor, and only a plane's disc moves":
+  test "an object's drawn centre is its own anchor, and only a plane's disc moves":
     # One reader everything that has to meet object on screen goes through:
     #   rubber-band leaving it, comet aimed from it, menu hanging off it. Plane's
     #   disc is centred on its creation anchor and every other shape ignores one, which is
@@ -1031,7 +1031,7 @@ suite "Mesh":
     MESHES.clearMeshes
 
   test "clearing drops every vertex and every record":
-    MESHES.addMarker(ORIGIN, RADIUS_ITEM_DEFAULT, LIGHT_NONE, Ink.Rose.colour, 1.0)
+    MESHES.addMarker(ORIGIN, RADIUS_OBJECT_DEFAULT, LIGHT_NONE, Ink.Rose.colour, 1.0)
     MESHES.addSegment(ORIGIN, PLACES[0], Ink.Jade.colour, WIDTH_LINE_OBJECT)
     MESHES.addDisc(
       ORIGIN, Direction(x: 1.0, y: 0.0, z: 0.0), Direction(x: 0.0, y: 1.0, z: 0.0),
@@ -1363,8 +1363,8 @@ suite "Mesh":
       volume_second = POINTS[20] ∧ PLANES[7]
       attitude_first = ⊖ volume_first
       attitude_second = ⊖ volume_second
-    check shape(attitude_first) == some(Shape.Plane) and isHorizon(attitude_first)
-    check shape(attitude_second) == some(Shape.Plane) and isHorizon(attitude_second)
+    check kindOf(attitude_first) == some(Kind.Plane) and isHorizon(attitude_first)
+    check kindOf(attitude_second) == some(Kind.Plane) and isHorizon(attitude_second)
 
     check MESHES.addObject(SCRATCH, attitude_first, Ink.Cobalt.colour, SCALE_TEST) ==
       Placement.Horizon
@@ -1414,7 +1414,7 @@ suite "Mesh":
     #   is actually emitted rather than against arithmetic that could drift from it.
     MESHES.clearMeshes
     var built = 0
-    for i in 0 ..< ITEMS_MAX:
+    for i in 0 ..< OBJECTS_MAX:
       let angle = 0.7*float(i)
       let plane =
         toMultivector(Position(x: 6.0*cos(angle), y: 6.0*sin(angle), z: 0.15*float(i))) ∧
@@ -1422,7 +1422,7 @@ suite "Mesh":
         toMultivector(Position(x: 1.0, y: 6.0*sin(angle + 0.9), z: -1.0))
       if MESHES.addObject(SCRATCH, plane, Ink.Olive.colour, SCALE_TEST) == Placement.Finite:
         inc built
-    check built == ITEMS_MAX
+    check built == OBJECTS_MAX
     check MESHES.ribbons.count <= RIBBONS_MAX
     check MESHES.discs.count <= DISCS_MAX
     check MESHES.washes.count <= len(MESHES.washes.runs)
@@ -1792,24 +1792,24 @@ suite "Scene":
       for j in i + 1 ..< inks.len: check inks[i] != inks[j]
 
 
-  test "items are held in order added":
+  test "objects are held in order added":
     var scene = initScene()
     for i in 0 ..< 5:
-      scene.addItem(POINTS[i], "p" & $i, inkCycled(i))
+      scene.addObject(POINTS[i], "p" & $i, inkCycled(i))
     check scene.len == 5
     var count_seen = 0
-    for item in scene:
-      check item.geometry =~ POINTS[count_seen]
-      check item.isVisible
+    for one in scene:
+      check one.geometry =~ POINTS[count_seen]
+      check one.isVisible
       inc count_seen
     check count_seen == 5
 
 
-  test "removeItem drops one handle without moving any other item":
+  test "removeObject drops one handle without moving any other object":
     var scene = initScene()
     for i in 0 ..< 5:
-      scene.addItem(POINTS[i], "p" & $i, inkCycled(i))
-    scene.removeItem(2)
+      scene.addObject(POINTS[i], "p" & $i, inkCycled(i))
+    scene.removeObject(2)
     check scene.len == 4
     check not scene.isAlive(2)
     for handle in [0, 1, 3, 4]:
@@ -1817,43 +1817,43 @@ suite "Scene":
       check scene[handle].geometry =~ POINTS[handle]
 
 
-  test "freed handle is reused by the next addItem, most recently freed first":
+  test "freed handle is reused by the next addObject, most recently freed first":
     var scene = initScene()
     for i in 0 ..< 5:
-      scene.addItem(POINTS[i], "p" & $i, inkCycled(i))
-    scene.removeItem(2)
-    scene.removeItem(0)
-    check scene.addItem(POINTS[5 mod SAMPLES], "p5", Ink.Rose) == 0
-    check scene.addItem(POINTS[6 mod SAMPLES], "p6", Ink.Rose) == 2
+      scene.addObject(POINTS[i], "p" & $i, inkCycled(i))
+    scene.removeObject(2)
+    scene.removeObject(0)
+    check scene.addObject(POINTS[5 mod SAMPLES], "p5", Ink.Rose) == 0
+    check scene.addObject(POINTS[6 mod SAMPLES], "p6", Ink.Rose) == 2
 
 
   test "scene drains to empty regardless of removal order":
     var scene = initScene()
     for i in 0 ..< 5:
-      scene.addItem(POINTS[i], "p" & $i, inkCycled(i))
+      scene.addObject(POINTS[i], "p" & $i, inkCycled(i))
     for handle in [2, 0, 4, 1, 3]:
-      scene.removeItem(handle)
+      scene.removeObject(handle)
     check scene.len == 0
     check not scene.isFull
 
 
   test "isAlive rejects a removed handle and any handle out of range":
     var scene = initScene()
-    discard scene.addItem(POINTS[0], "a", Ink.Rose)
+    discard scene.addObject(POINTS[0], "a", Ink.Rose)
     check scene.isAlive(0)
-    scene.removeItem(0)
+    scene.removeObject(0)
     check not scene.isAlive(0)
     check not scene.isAlive(-1)
-    check not scene.isAlive(ITEMS_MAX)
+    check not scene.isAlive(OBJECTS_MAX)
 
 
   test "scene fills to capacity and reports it":
     var scene = initScene()
-    for i in 0 ..< ITEMS_MAX:
+    for i in 0 ..< OBJECTS_MAX:
       check not scene.isFull
-      scene.addItem(POINTS[i mod SAMPLES], "p", Ink.Rose)
+      scene.addObject(POINTS[i mod SAMPLES], "p", Ink.Rose)
     check scene.isFull
-    check scene.len == ITEMS_MAX
+    check scene.len == OBJECTS_MAX
 
 
   test "unary operations ignore their second operand":
@@ -1881,9 +1881,9 @@ suite "Scene":
         line = applyOperation(Operation.Wedge, POINTS[i], POINTS[j])
         plane = applyOperation(Operation.Wedge, line, POINTS[(i + 2) mod SAMPLES])
         crossed = applyOperation(Operation.WedgeAnti, plane, PLANES[(i + 7) mod SAMPLES])
-      check shape(line) == some(Shape.Line)
-      check shape(plane) == some(Shape.Plane)
-      check shape(crossed) == some(Shape.Line)
+      check kindOf(line) == some(Kind.Line)
+      check kindOf(plane) == some(Kind.Plane)
+      check kindOf(crossed) == some(Kind.Line)
       # Both seed points must lie on line joining them.
       check POINTS[i] ∧ line =~ 0
       check POINTS[j] ∧ line =~ 0
@@ -1907,7 +1907,7 @@ suite "Scene":
         off_plane = toMultivector(far_on_plane + axes.get.normal)
         line = toMultivector(far_on_plane) ∧ off_plane
         crossing = applyOperation(Operation.WedgeAnti, line, plane)
-      check shape(crossing) == some(Shape.Point)
+      check kindOf(crossing) == some(Kind.Point)
       let place = position(crossing)
       check place.isSome
       check place.get =~ far_on_plane
@@ -1920,7 +1920,7 @@ suite "Scene":
         plane = PLANES[i]
         point = POINTS[(i + 9) mod SAMPLES]
         projected = applyOperation(Operation.ProjectOrthogonal, point, plane)
-      check shape(projected) == some(Shape.Point)
+      check kindOf(projected) == some(Kind.Point)
       let place = position(projected)
       check place.isSome
       check toMultivector(place.get) ∧ plane =~ 0
@@ -2068,30 +2068,30 @@ suite "Scene":
       let named = ($initElement(b, 1.0)).strip()
       check lut_basis_to_name[b] == named
     for i in 0 ..< SAMPLES:
-      check shapeText(POINTS[i]) == "point"
-      check shapeText(LINES[i]) == "line"
-      check shapeText(PLANES[i]) == "plane"
+      check kindText(POINTS[i]) == "point"
+      check kindText(LINES[i]) == "line"
+      check kindText(PLANES[i]) == "plane"
       # Attitude of line is its direction, which is point standing at horizon.
-      check shapeText(⊖ LINES[i]) == "point at horizon"
-    check shapeText(1.0 + POINTS[0]) == "mixed grade, nothing to draw"
+      check kindText(⊖ LINES[i]) == "point at horizon"
+    check kindText(1.0 + POINTS[0]) == "mixed grade, nothing to draw"
 
 
   test "handlesCreated walks creation order, whatever order the handles fell in":
     # Arena reuses most recently freed handle, so handle order stops being creation.
     #   order moment anything is removed. This is what save path walks, and what
-    #   `born`-sorted list could not answer: two items added in one frame share reading,
-    #   and replayed item's own born is stamped into future.
+    #   `born`-sorted list could not answer: two objects added in one frame share reading,
+    #   and replayed object's own born is stamped into future.
     var scene = initScene()
     for i in 0 ..< 6:
-      discard scene.addItem(POINTS[i], "p" & $i, inkCycled(i))
-    scene.removeItem(4)
-    scene.removeItem(1)
-    let handle_first = scene.addItem(POINTS[6], "seventh", Ink.Rose)  # lands in handle 1
-    let handle_second = scene.addItem(POINTS[7], "eighth", Ink.Rose)  # lands in handle 4
+      discard scene.addObject(POINTS[i], "p" & $i, inkCycled(i))
+    scene.removeObject(4)
+    scene.removeObject(1)
+    let handle_first = scene.addObject(POINTS[6], "seventh", Ink.Rose)  # lands in handle 1
+    let handle_second = scene.addObject(POINTS[7], "eighth", Ink.Rose)  # lands in handle 4
     check handle_first == 1
     check handle_second == 4
 
-    var handles: array[ITEMS_MAX, int]
+    var handles: array[OBJECTS_MAX, int]
     let count = scene.handlesCreated(handles)
     check count == scene.len
     var labels: seq[string]
@@ -2108,19 +2108,19 @@ suite "Scene":
 
 
   test "handlesCreated orders a scrambled arena of hundreds, not just a handful":
-    # Heapsort has cases insertion sort never exercised: many items, handles freed and.
+    # Heapsort has cases insertion sort never exercised: many objects, handles freed and.
     #   refilled throughout, so ordinals sit nowhere near their handles.
     var scene = initScene()
-    let count_wanted = min(ITEMS_MAX, 300)
+    let count_wanted = min(OBJECTS_MAX, 300)
     for i in 0 ..< count_wanted:
-      discard scene.addItem(POINTS[i mod SAMPLES], "p", Ink.Rose)
+      discard scene.addObject(POINTS[i mod SAMPLES], "p", Ink.Rose)
     var rng = initRand(7)
     for _ in 0 ..< count_wanted div 2:
       let handle = rng.rand(count_wanted - 1)
-      if scene.isAlive(handle): scene.removeItem(handle)
+      if scene.isAlive(handle): scene.removeObject(handle)
     for i in 0 ..< count_wanted div 3:
-      discard scene.addItem(POINTS[i mod SAMPLES], "r", Ink.Rose)
-    var handles: array[ITEMS_MAX, int]
+      discard scene.addObject(POINTS[i mod SAMPLES], "r", Ink.Rose)
+    var handles: array[OBJECTS_MAX, int]
     let count = scene.handlesCreated(handles)
     check count == scene.len
     for position in 1 ..< count:
@@ -2131,7 +2131,7 @@ suite "Scene":
     # Front-end re-places only handles stamped past what it holds, so stamp must move for.
     #   exactly handles whose placing inputs did.
     var scene = initScene()
-    for i in 0 ..< 4: discard scene.addItem(POINTS[i], "p" & $i, inkCycled(i))
+    for i in 0 ..< 4: discard scene.addObject(POINTS[i], "p" & $i, inkCycled(i))
     let revision_built = scene.revision
     for handle in 0 ..< 4: check scene.revisionPlacingAt(handle) <= revision_built
     scene.setGeometryAt(2, POINTS[5])
@@ -2143,7 +2143,7 @@ suite "Scene":
     for handle in [0, 1, 3]: check scene.revisionPlacingAt(handle) < scene.revision
     # Restore may change any handle, so every live one is stamped at new revision.
     var snapshot = initScene()
-    for i in 0 ..< 3: discard snapshot.addItem(POINTS[i + 5], "s" & $i, inkCycled(i))
+    for i in 0 ..< 3: discard snapshot.addObject(POINTS[i + 5], "s" & $i, inkCycled(i))
     scene.restoreFrom(snapshot)
     check scene.len == 3
     for handle in 0 ..< 3: check scene.revisionPlacingAt(handle) == scene.revision
@@ -2154,16 +2154,16 @@ suite "Scene":
     #   number of edit being undone -- so front-end holding meshes on it drew
     #   undone object until camera moved. Measured on built page.
     var scene = initScene()
-    discard scene.addItem(POINTS[0], "a", Ink.Rose)
+    discard scene.addObject(POINTS[0], "a", Ink.Rose)
     let snapshot = scene
-    discard scene.addItem(POINTS[1], "b", Ink.Rose)
+    discard scene.addObject(POINTS[1], "b", Ink.Rose)
     let revision_edit = scene.revision
     scene.restoreFrom(snapshot)
     check scene.len == 1
     check scene.revision > revision_edit
     # And from snapshot ahead of live scene, past that snapshot's own.
     var ahead = snapshot
-    for i in 0 ..< 5: discard ahead.addItem(POINTS[i], "x" & $i, Ink.Rose)
+    for i in 0 ..< 5: discard ahead.addObject(POINTS[i], "x" & $i, Ink.Rose)
     scene.restoreFrom(ahead)
     check scene.len == 6
     check scene.revision > ahead.revision
@@ -2175,59 +2175,59 @@ suite "Scene":
   const ORDINAL_INK_ROSE_V5 = ord(Ink.Rose) + 1
   const ORDINAL_INK_ALGEBRA_V5 = 7
 
-  proc savedWith(ordinal: int, radius = RADIUS_ITEM_DEFAULT, shines = false): ItemSaved =
-    ## Build item differing from its neighbours only in palette slot, radius and shine.
+  proc savedWith(ordinal: int, radius = RADIUS_OBJECT_DEFAULT, shines = false): ObjectSaved =
+    ## Build object differing from its neighbours only in palette slot, radius and shine.
     ##   Three fields version boundaries have ever changed; radius and shine default,
     ##   since most cases care about palette alone.
-    ItemSaved(
+    ObjectSaved(
       ink_ordinal: ordinal, is_visible: true, label: "x", geometry: POINTS[0],
       radius: radius, shines: shines,
     )
 
 
-  test "an item already at this version is carried up unchanged":
+  test "an object already at this version is carried up unchanged":
     # Chain has to be no-op on file this build wrote, or every save/load round.
     #   trip quietly rewrites something.
     for ordinal in ord(Ink.low) .. ord(Ink.high):
-      let carried = itemUpgraded(savedWith(ordinal), VERSION_SCENE)
+      let carried = objectUpgraded(savedWith(ordinal), VERSION_SCENE)
       check carried.isSome
       check carried.get.ink_ordinal == ordinal
       check carried.get.is_visible
       check carried.get.label == "x"
       check carried.get.geometry =~ POINTS[0]
-      check carried.get.radius == RADIUS_ITEM_DEFAULT
+      check carried.get.radius == RADIUS_OBJECT_DEFAULT
     # And ordinal no palette answers to is refused rather than clamped into one.
-    check itemUpgraded(savedWith(ord(Ink.high) + 1), VERSION_SCENE).isNone
-    check itemUpgraded(savedWith(-1), VERSION_SCENE).isNone
+    check objectUpgraded(savedWith(ord(Ink.high) + 1), VERSION_SCENE).isNone
+    check objectUpgraded(savedWith(-1), VERSION_SCENE).isNone
     # Radius this build keeps is whatever file said, so long as it could draw something.
-    check itemUpgraded(savedWith(0, 2.5), VERSION_SCENE).get.radius == 2.5
-    check itemUpgraded(savedWith(0, 2.5, shines = true), VERSION_SCENE).get.shines
-    check itemUpgraded(savedWith(0, 0.0), VERSION_SCENE).isNone
-    check itemUpgraded(savedWith(0, -1.0), VERSION_SCENE).isNone
-    check itemUpgraded(savedWith(0, NaN), VERSION_SCENE).isNone
+    check objectUpgraded(savedWith(0, 2.5), VERSION_SCENE).get.radius == 2.5
+    check objectUpgraded(savedWith(0, 2.5, shines = true), VERSION_SCENE).get.shines
+    check objectUpgraded(savedWith(0, 0.0), VERSION_SCENE).isNone
+    check objectUpgraded(savedWith(0, -1.0), VERSION_SCENE).isNone
+    check objectUpgraded(savedWith(0, NaN), VERSION_SCENE).isNone
 
 
-  test "a version-3 item is given the radius version 3 drew everything at":
+  test "a version-3 object is given the radius version 3 drew everything at":
     # Version 3 wrote no radius, so whatever reader had in field is overwritten, not.
     #   trusted: parser passing garbage or zero there must still land on default.
     for stale in [0.0, -1.0, 7.0, NaN]:
-      let carried = itemUpgraded(savedWith(ORDINAL_INK_ROSE_V5, stale), 3'u8)
+      let carried = objectUpgraded(savedWith(ORDINAL_INK_ROSE_V5, stale), 3'u8)
       check carried.isSome
-      check carried.get.radius == RADIUS_ITEM_DEFAULT
+      check carried.get.radius == RADIUS_OBJECT_DEFAULT
       check carried.get.ink_ordinal == ord(Ink.Rose)
     # Same for every older version: radius joins chain at its boundary, once.
     for version in VERSION_SCENE_LEAST ..< VERSION_SCENE_RADIUS:
       check not hasRadius(version)
       # First hue in each version's own palette; see `ORDINAL_INK_ROSE_V5`.
       let ordinal = if version == 1'u8: ORDINAL_INK_CATEGORICAL_V1 else: ORDINAL_INK_ROSE_V5
-      check itemUpgraded(savedWith(ordinal, 0.0), version).get.radius == RADIUS_ITEM_DEFAULT
+      check objectUpgraded(savedWith(ordinal, 0.0), version).get.radius == RADIUS_OBJECT_DEFAULT
     check hasRadius(VERSION_SCENE)
 
 
-  test "a version-4 item is given no sun, whatever the parser had in the field":
+  test "a version-4 object is given no sun, whatever the parser had in the field":
     for version in VERSION_SCENE_LEAST ..< VERSION_SCENE_SHINE:
       check not hasShine(version)
-      let carried = itemUpgraded(savedWith(ORDINAL_INK_ROSE_V5, shines = true), version)
+      let carried = objectUpgraded(savedWith(ORDINAL_INK_ROSE_V5, shines = true), version)
       check carried.isSome
       check not carried.get.shines
     check hasShine(VERSION_SCENE)
@@ -2237,17 +2237,17 @@ suite "Scene":
     # Version 6 dropped structural `Algebra` from palette; ordinals past it shift, ones.
     #   before it stand, and byte naming slot no build ever assigned is corrupt.
     for ordinal in 0 ..< ORDINAL_INK_ALGEBRA_V5:
-      check itemUpgraded(savedWith(ordinal), 5'u8).get.ink_ordinal == ordinal
-    check itemUpgraded(savedWith(ORDINAL_INK_ALGEBRA_V5), 5'u8).isNone
+      check objectUpgraded(savedWith(ordinal), 5'u8).get.ink_ordinal == ordinal
+    check objectUpgraded(savedWith(ORDINAL_INK_ALGEBRA_V5), 5'u8).isNone
     for ordinal in ORDINAL_INK_ALGEBRA_V5 + 1 .. ord(Ink.high) + 1:
-      check itemUpgraded(savedWith(ordinal), 5'u8).get.ink_ordinal == ordinal - 1
-    check itemUpgraded(savedWith(ORDINAL_INK_ROSE_V5), 5'u8).get.ink_ordinal == ord(Ink.Rose)
+      check objectUpgraded(savedWith(ordinal), 5'u8).get.ink_ordinal == ordinal - 1
+    check objectUpgraded(savedWith(ORDINAL_INK_ROSE_V5), 5'u8).get.ink_ordinal == ord(Ink.Rose)
     # Past what version 5 could name is refused, as ever.
-    check itemUpgraded(savedWith(ord(Ink.high) + 2), 5'u8).isNone
+    check objectUpgraded(savedWith(ord(Ink.high) + 2), 5'u8).isNone
 
 
-  test "a version-2 item needs nothing doing to it but is walked all the same":
-    # Version 2 and 3 differ only in what item *sequence* promises, so item's own.
+  test "a version-2 object needs nothing doing to it but is walked all the same":
+    # Version 2 and 3 differ only in what object *sequence* promises, so object's own.
     #   fields come through untouched -- and must not be folded by version-1 step.
     #   Compared field by field rather than through `==`, which `Multivector` makes
     #   compile error on purpose; geometry is checked with approximate operator.
@@ -2257,8 +2257,8 @@ suite "Scene":
       if ordinal == ORDINAL_INK_ALGEBRA_V5: continue
       let
         today = if ordinal > ORDINAL_INK_ALGEBRA_V5: ordinal - 1 else: ordinal
-        from_two = itemUpgraded(savedWith(ordinal), 2'u8)
-        from_three = itemUpgraded(savedWith(today), VERSION_SCENE)
+        from_two = objectUpgraded(savedWith(ordinal), 2'u8)
+        from_three = objectUpgraded(savedWith(today), VERSION_SCENE)
       check from_two.isSome
       check from_three.isSome
       check from_two.get.ink_ordinal == today
@@ -2268,17 +2268,17 @@ suite "Scene":
       check from_two.get.geometry =~ from_three.get.geometry
 
 
-  test "a version-1 item is carried onto today's palette, hue by hue":
+  test "a version-1 object is carried onto today's palette, hue by hue":
     # Version 1 had no `Invalid` and three more hues, so every ordinal it could hold is.
     #   walked here rather than only two ends.
     for ordinal in 0 ..< ORDINAL_INK_CATEGORICAL_V1:
       # Structural slots are unmoved to this day.
-      let carried = itemUpgraded(savedWith(ordinal), 1'u8)
+      let carried = objectUpgraded(savedWith(ordinal), 1'u8)
       check carried.isSome
       check carried.get.ink_ordinal == ordinal
     for step in 0 ..< 8:
       # Its eight hues all land on hue -- never on `Invalid`, never off end.
-      let carried = itemUpgraded(savedWith(ORDINAL_INK_CATEGORICAL_V1 + step), 1'u8)
+      let carried = objectUpgraded(savedWith(ORDINAL_INK_CATEGORICAL_V1 + step), 1'u8)
       check carried.isSome
       let ink = Ink(carried.get.ink_ordinal)
       check ink == inkCycled(step)
@@ -2290,19 +2290,19 @@ suite "Scene":
     #   palette change and catches no real fault. Where each hue lands is stated above,
     #   through `inkCycled`, which is what fold actually promises.
     # Ordinals version 1 could never have written are corrupt file, not another hue.
-    check itemUpgraded(savedWith(ORDINAL_INK_HIGH_V1 + 1), 1'u8).isNone
-    check itemUpgraded(savedWith(-1), 1'u8).isNone
+    check objectUpgraded(savedWith(ORDINAL_INK_HIGH_V1 + 1), 1'u8).isNone
+    check objectUpgraded(savedWith(-1), 1'u8).isNone
     # Everything that is not palette rides through whole chain untouched.
-    let carried = itemUpgraded(savedWith(ORDINAL_INK_HIGH_V1), 1'u8)
+    let carried = objectUpgraded(savedWith(ORDINAL_INK_HIGH_V1), 1'u8)
     check carried.get.label == "x"
     check carried.get.geometry =~ POINTS[0]
 
 
   test "a version outside what this build reads is refused by the chain itself":
     # Guard lives with walk rather than only at each call site, so caller that.
-    #   forgets to check `readsSceneVersion` still cannot get half-upgraded item.
-    check itemUpgraded(savedWith(ord(Ink.Rose)), 0'u8).isNone
-    check itemUpgraded(savedWith(ord(Ink.Rose)), VERSION_SCENE + 1'u8).isNone
+    #   forgets to check `readsSceneVersion` still cannot get half-upgraded object.
+    check objectUpgraded(savedWith(ord(Ink.Rose)), 0'u8).isNone
+    check objectUpgraded(savedWith(ord(Ink.Rose)), VERSION_SCENE + 1'u8).isNone
     for version in VERSION_SCENE_LEAST .. VERSION_SCENE:
       check readsSceneVersion(version)
       # First hue in each version's own palette; see `ORDINAL_INK_ROSE_V5`.
@@ -2310,7 +2310,7 @@ suite "Scene":
         if version == 1'u8: ORDINAL_INK_CATEGORICAL_V1
         elif version < VERSION_SCENE: ORDINAL_INK_ROSE_V5
         else: ord(Ink.Rose)
-      check itemUpgraded(savedWith(ordinal), version).isSome
+      check objectUpgraded(savedWith(ordinal), version).isSome
 
 
   test "bornReplaying staggers an arrival in order and never runs past the cap":
@@ -2322,7 +2322,7 @@ suite "Scene":
     # Single object arriving alone has nothing to stagger against.
     check bornReplaying(0, 1, CLOCK) =~ CLOCK
     # However many arrive, last of them lands within cap -- and in order.
-    for count in 1 .. ITEMS_MAX:
+    for count in 1 .. OBJECTS_MAX:
       var previous = low(float)
       for index in 0 ..< count:
         let born = bornReplaying(index, count, CLOCK)
@@ -2331,7 +2331,7 @@ suite "Scene":
         previous = born
       check previous - CLOCK <= SECONDS_REPLAY_WHOLE + TOLERANCE_TEST
     # And beat only ever shortens to make that fit, never lengthens.
-    check bornReplaying(1, ITEMS_MAX, CLOCK) - CLOCK < SECONDS_REPLAY_STEP
+    check bornReplaying(1, OBJECTS_MAX, CLOCK) - CLOCK < SECONDS_REPLAY_STEP
 
 
   test "replayFrom restamps a whole scene into an arrival, in creation order":
@@ -2340,14 +2340,14 @@ suite "Scene":
     #   this pins that restamp follows creation order rather than arena's layout.
     var scene = initScene()
     for i in 0 ..< 5:
-      discard scene.addItem(POINTS[i], "p" & $i, inkCycled(i), 99.0)
-    scene.removeItem(1)
-    let handle_late = scene.addItem(POINTS[5], "late", Ink.Rose, 99.0)
+      discard scene.addObject(POINTS[i], "p" & $i, inkCycled(i), 99.0)
+    scene.removeObject(1)
+    let handle_late = scene.addObject(POINTS[5], "late", Ink.Rose, 99.0)
     check handle_late == 1
 
     const CLOCK = 7.5
     scene.replayFrom(CLOCK)
-    var handles: array[ITEMS_MAX, int]
+    var handles: array[OBJECTS_MAX, int]
     let count = scene.handlesCreated(handles)
     check count == 5
     check scene.bornAt(handles[0]) =~ CLOCK
@@ -2403,13 +2403,13 @@ suite "Scene":
   #   match. Every other invariant in this suite holds on both backends and is checked
   #   on both.
   when not defined(js):
-    test "save then load reproduces every live item, compacting freed handles":
+    test "save then load reproduces every live object, compacting freed handles":
       var original = initScene()
-      discard original.addItem(POINTS[0], "a", Ink.Rose)
-      discard original.addItem(POINTS[1], "bb", Ink.Jade, radius = 0.6, shines = true)
-      let handle_doomed = original.addItem(POINTS[2], "doomed", Ink.Olive)
-      original.removeItem(handle_doomed) # leaves hole fresh load must not reproduce
-      let handle_last = original.addItem(POINTS[3], "d", Ink.Cobalt)
+      discard original.addObject(POINTS[0], "a", Ink.Rose)
+      discard original.addObject(POINTS[1], "bb", Ink.Jade, radius = 0.6, shines = true)
+      let handle_doomed = original.addObject(POINTS[2], "doomed", Ink.Olive)
+      original.removeObject(handle_doomed) # leaves hole fresh load must not reproduce
+      let handle_last = original.addObject(POINTS[3], "d", Ink.Cobalt)
       original.setVisible(handle_last, false)
 
       let path = getTempDir() / "visualiser_suite_scene.rgascene"
@@ -2417,17 +2417,17 @@ suite "Scene":
       defer: removeFile(path)
 
       var loaded = initScene()
-      discard loaded.addItem(POINTS[9], "stale", Ink.Cobalt) # load must replace, not merge
+      discard loaded.addObject(POINTS[9], "stale", Ink.Cobalt) # load must replace, not merge
       check loadScene(loaded, path).contains("Loaded 3")
       check loaded.len == 3
 
-      # Freed handle 2 is compacted away: loaded items land at handles 0, 1, 2 in save order.
+      # Freed handle 2 is compacted away: loaded objects land at handles 0, 1, 2 in save order.
       check loaded[0].geometry =~ POINTS[0]
       check toText(loaded[0].label) == "a"
       check loaded[0].ink == Ink.Rose
       check loaded[0].isVisible
       check loaded[0].born == 0.0 # dawn of time, not mid-appear-in-animation
-      check loaded[0].radius == RADIUS_ITEM_DEFAULT
+      check loaded[0].radius == RADIUS_OBJECT_DEFAULT
 
       check loaded[1].geometry =~ POINTS[1]
       check toText(loaded[1].label) == "bb"
@@ -2452,7 +2452,7 @@ suite "Scene":
       var scene = initScene()
       var geometry: Multivector
       geometry[Basis.low] = 2.0 # 0x4000000000000000, whose bytes are unambiguous either way
-      discard scene.addItem(geometry, "e", Ink.Rose)
+      discard scene.addObject(geometry, "e", Ink.Rose)
       let path = getTempDir() / "visualiser_suite_scene_endian.rgascene"
       check saveScene(scene, path).contains("Saved 1")
       defer: removeFile(path)
@@ -2461,12 +2461,12 @@ suite "Scene":
       check bytes[0 ..< len(MAGIC_SCENE)] == MAGIC_SCENE
       check uint8(bytes[len(MAGIC_SCENE)]) == VERSION_SCENE
 
-      # Item count, four bytes straight after magic, version and basis count.
+      # Object count, four bytes straight after magic, version and basis count.
       let start_count = len(MAGIC_SCENE) + 2
       check uint8(bytes[start_count]) == 1'u8
       for offset in 1 .. 3: check uint8(bytes[start_count + offset]) == 0'u8
 
-      # First coefficient, past count and this item's ink, visibility, label length and.
+      # First coefficient, past count and this object's ink, visibility, label length and.
       #   one byte of label itself.
       let start_first = start_count + 4 + 3 + 1
       check uint8(bytes[start_first + 6]) == 0x00'u8
@@ -2480,14 +2480,14 @@ suite "Scene":
       defer: removeFile(path)
 
       var loaded = initScene()
-      discard loaded.addItem(POINTS[0], "will be cleared", Ink.Rose)
+      discard loaded.addObject(POINTS[0], "will be cleared", Ink.Rose)
       check loadScene(loaded, path).contains("Loaded 0")
       check loaded.len == 0
 
 
     test "loading a foreign file leaves scene untouched and reports why":
       var scene = initScene()
-      discard scene.addItem(POINTS[0], "keep", Ink.Rose)
+      discard scene.addObject(POINTS[0], "keep", Ink.Rose)
       let path = getTempDir() / "visualiser_suite_scene_bogus.rgascene"
       writeFile(path, "not a scene file at all")
       defer: removeFile(path)
@@ -2499,7 +2499,7 @@ suite "Scene":
 
     test "loading a file saved under a different PGA dimension is rejected":
       var scene = initScene()
-      discard scene.addItem(POINTS[0], "keep", Ink.Rose)
+      discard scene.addObject(POINTS[0], "keep", Ink.Rose)
       let path = getTempDir() / "visualiser_suite_scene_wrongbasis.rgascene"
       writeFile(path, "RGAS" & char(2) & char(99)) # no build here carries 99 basis terms
       defer: removeFile(path)
@@ -2508,7 +2508,7 @@ suite "Scene":
       check scene.len == 1
 
 
-    proc sceneFileOf(version: uint8, items: seq[(int, bool, string, Multivector)]): string =
+    proc sceneFileOf(version: uint8, saved: seq[(int, bool, string, Multivector)]): string =
       ## Build bytes of scene file by hand, at whatever version is asked for.
       ##   Hand-built rather than saved by this build, because point of cases
       ##   below is to read version this build can no longer *write*: asking `saveScene`
@@ -2516,11 +2516,11 @@ suite "Scene":
       ##   its own writing spelled backwards. Ink is taken as raw ordinal for same
       ##   reason -- old file's ordinals name enum that is gone.
       result = MAGIC_SCENE & char(version) & char(ord(Basis.high) + 1)
-      var count = uint32(len(items))
+      var count = uint32(len(saved))
       var count_bytes = newString(4)
       littleEndian32(addr count_bytes[0], addr count)
       result &= count_bytes
-      for (ordinal, is_visible, label, geometry) in items:
+      for (ordinal, is_visible, label, geometry) in saved:
         result &= char(ordinal) & char(ord(is_visible)) & char(len(label)) & label
         for b in Basis:
           var
@@ -2531,7 +2531,7 @@ suite "Scene":
         # Radius only from version that carries one; older bytes stop at geometry.
         if hasRadius(version):
           var
-            radius = 2.0*RADIUS_ITEM_DEFAULT
+            radius = 2.0*RADIUS_OBJECT_DEFAULT
             bytes = newString(8)
           littleEndian64(addr bytes[0], addr radius)
           result &= bytes
@@ -2540,13 +2540,13 @@ suite "Scene":
 
 
     test "a scene file from before the palette changed is read, not refused":
-      # Item's ink is stored as `Ink`'s own ordinal, and reserving `Invalid` renumbered.
+      # Object's ink is stored as `Ink`'s own ordinal, and reserving `Invalid` renumbered.
       #   that enum -- version-1 file's bytes name different colours now. Reading it
       #   through palette it was written under is what keeps somebody's scene;
       #   three hues that no longer exist fold onto ones that do, which is recoverable
       #   wrong colour rather than unrecoverable refusal.
       var scene = initScene()
-      discard scene.addItem(POINTS[9], "replaced", Ink.Rose)
+      discard scene.addObject(POINTS[9], "replaced", Ink.Rose)
       let path = getTempDir() / "visualiser_suite_scene_v1.rgascene"
       writeFile(path, sceneFileOf(1'u8, @[
         (4, true, "grid-hued", POINTS[0]),  # Structural slot, unmoved between palettes.
@@ -2571,7 +2571,7 @@ suite "Scene":
 
 
     test "a version-2 file's hues come down past the retired debug slot, nothing folded":
-      # Version 2 and 3 differ only in what item *sequence* promises, so version-2.
+      # Version 2 and 3 differ only in what object *sequence* promises, so version-2.
       #   file's ordinals must not be folded through version-1 rule; they are version
       #   5's, one past today's beyond retired `Algebra` slot, and `upgradedFrom5` alone
       #   takes them down.
@@ -2591,9 +2591,9 @@ suite "Scene":
       check not scene[2].isVisible
 
 
-    test "a version-3 file is read with every item at the default radius":
-      # Version 3 stopped at geometry, so bytes run straight from one item's last.
-      #   coefficient into next item's ink: reading radius there would parse whole
+    test "a version-3 file is read with every object at the default radius":
+      # Version 3 stopped at geometry, so bytes run straight from one object's last.
+      #   coefficient into next object's ink: reading radius there would parse whole
       #   rest of file from wrong offset.
       var scene = initScene()
       let path = getTempDir() / "visualiser_suite_scene_v3.rgascene"
@@ -2604,8 +2604,8 @@ suite "Scene":
       defer: removeFile(path)
 
       check loadScene(scene, path).contains("Loaded 2")
-      check scene[0].radius == RADIUS_ITEM_DEFAULT
-      check scene[1].radius == RADIUS_ITEM_DEFAULT
+      check scene[0].radius == RADIUS_OBJECT_DEFAULT
+      check scene[1].radius == RADIUS_OBJECT_DEFAULT
       check scene[1].geometry =~ POINTS[1]
       check toText(scene[1].label) == "second"
       check not scene[1].isVisible
@@ -2616,7 +2616,7 @@ suite "Scene":
       ]))
       defer: removeFile(path_now)
       check loadScene(scene, path_now).contains("Loaded 1")
-      check scene[0].radius == 2.0*RADIUS_ITEM_DEFAULT
+      check scene[0].radius == 2.0*RADIUS_OBJECT_DEFAULT
       check scene[0].shines
       # Version-4 file stops at radius: nothing shines, and bytes parse from right offset.
       let path_four = getTempDir() / "visualiser_suite_scene_v4_only.rgascene"
@@ -2626,7 +2626,7 @@ suite "Scene":
       ]))
       defer: removeFile(path_four)
       check loadScene(scene, path_four).contains("Loaded 2")
-      check scene[0].radius == 2.0*RADIUS_ITEM_DEFAULT
+      check scene[0].radius == 2.0*RADIUS_OBJECT_DEFAULT
       check not scene[0].shines
       check not scene[1].isVisible
 
@@ -2635,7 +2635,7 @@ suite "Scene":
       # Floor never rises, so only ceiling can refuse: later format may mean.
       #   anything at all by these bytes, and there is nothing honest to do but say so.
       var scene = initScene()
-      discard scene.addItem(POINTS[0], "keep", Ink.Rose)
+      discard scene.addObject(POINTS[0], "keep", Ink.Rose)
       let path = getTempDir() / "visualiser_suite_scene_ahead.rgascene"
       writeFile(path, sceneFileOf(VERSION_SCENE + 1'u8, @[
         (ord(Ink.Rose), true, "future", POINTS[1]),
@@ -2649,14 +2649,14 @@ suite "Scene":
 
 
     test "a saved scene keeps creation order however its handles were reused":
-      # What version 3 is for. Removing and re-adding drops new item into freed.
+      # What version 3 is for. Removing and re-adding drops new object into freed.
       #   handle, so handle order and creation order disagree -- and it is creation order
       #   replay has to walk, or file plays back construction that never happened.
       var original = initScene()
       for i in 0 ..< 4:
-        discard original.addItem(POINTS[i], "p" & $i, inkCycled(i))
-      original.removeItem(1)
-      discard original.addItem(POINTS[4], "late", Ink.Rose) # reuses handle 1
+        discard original.addObject(POINTS[i], "p" & $i, inkCycled(i))
+      original.removeObject(1)
+      discard original.addObject(POINTS[4], "late", Ink.Rose) # reuses handle 1
       check original.len == 4
 
       let path = getTempDir() / "visualiser_suite_scene_order.rgascene"
@@ -2686,7 +2686,7 @@ suite "Scene":
       #   sequence rather than from clock reading nobody saved.
       var original = initScene()
       for i in 0 ..< 5:
-        discard original.addItem(POINTS[i], "p" & $i, inkCycled(i))
+        discard original.addObject(POINTS[i], "p" & $i, inkCycled(i))
       let path = getTempDir() / "visualiser_suite_scene_replay.rgascene"
       check saveScene(original, path).contains("Saved 5")
       defer: removeFile(path)
@@ -2709,19 +2709,19 @@ suite "Scene":
 
     test "loading a missing path reports cleanly and leaves scene untouched":
       var scene = initScene()
-      discard scene.addItem(POINTS[0], "keep", Ink.Rose)
+      discard scene.addObject(POINTS[0], "keep", Ink.Rose)
       let path = getTempDir() / "visualiser_suite_scene_does_not_exist.rgascene"
 
       check loadScene(scene, path).contains("No such file")
       check scene.len == 1
 
 
-    test "loading a file naming more items than this build's capacity is rejected":
+    test "loading a file naming more objects than this build's capacity is rejected":
       var scene = initScene()
-      discard scene.addItem(POINTS[0], "keep", Ink.Rose)
+      discard scene.addObject(POINTS[0], "keep", Ink.Rose)
 
       var
-        count = uint32(ITEMS_MAX + 1)
+        count = uint32(OBJECTS_MAX + 1)
         count_bytes = newString(4)
       copyMem(addr count_bytes[0], addr count, 4)
       let path = getTempDir() / "visualiser_suite_scene_toobig.rgascene"
@@ -2735,20 +2735,20 @@ suite "Scene":
 
 suite "History":
   proc scenesEqual(a, b: Scene): bool =
-    ## Compare two scenes item by item, rather than through plain `==`:
+    ## Compare two scenes object by object, rather than through plain `==`:
     ##   `Scene` embeds `Multivector`, whose own `==` is intentional compile error (see
     ##   `pga/multivectors.nim`) steering every other caller toward `=~`'s tolerance -- this is that
     ##   same comparison, just folded field by field over whole scene rather than one multivector at
     ##   time.
     if a.len != b.len: return false
-    for handle in 0 ..< ITEMS_MAX:
+    for handle in 0 ..< OBJECTS_MAX:
       if a.isAlive(handle) != b.isAlive(handle): return false
       if not a.isAlive(handle): continue
-      let (item_a, item_b) = (a[handle], b[handle])
-      if not (item_a.geometry =~ item_b.geometry): return false
-      if item_a.label != item_b.label: return false
-      if item_a.ink != item_b.ink: return false
-      if item_a.isVisible != item_b.isVisible: return false
+      let (object_a, object_b) = (a[handle], b[handle])
+      if not (object_a.geometry =~ object_b.geometry): return false
+      if object_a.label != object_b.label: return false
+      if object_a.ink != object_b.ink: return false
+      if object_a.isVisible != object_b.isVisible: return false
     true
 
 
@@ -2759,7 +2759,7 @@ suite "History":
     history.initHistory(scene, camera)
     var snapshots = @[scene] # Index 0 is seeded initial state.
     for i in 0 ..< CAPACITY_HISTORY - 1:
-      scene.addItem(POINTS[i mod SAMPLES], "p" & $i, inkCycled(i))
+      scene.addObject(POINTS[i mod SAMPLES], "p" & $i, inkCycled(i))
       history.record(scene, camera)
       snapshots.add(scene)
 
@@ -2794,7 +2794,7 @@ suite "History":
     history.initHistory(scene, camera)
     var snapshots = @[scene]
     for i in 0 ..< CAPACITY_HISTORY + 4: # Four states past what timeline retains.
-      scene.addItem(POINTS[i mod SAMPLES], "p" & $i, inkCycled(i))
+      scene.addObject(POINTS[i mod SAMPLES], "p" & $i, inkCycled(i))
       history.record(scene, camera)
       snapshots.add(scene)
 
@@ -2827,18 +2827,18 @@ suite "History":
     var camera = initCameraDefault()
     var history: History
     history.initHistory(scene, camera)
-    scene.addItem(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
     history.record(scene, camera)
     let state_a = scene
 
-    scene.addItem(POINTS[1], "b", Ink.Rose)
+    scene.addObject(POINTS[1], "b", Ink.Rose)
     history.record(scene, camera) # State undo will later discard, never redone.
 
     discard history.undo(scene, camera)
     check scenesEqual(scene, state_a)
     check history.canRedo
 
-    scene.addItem(POINTS[2], "c", Ink.Rose) # Diverges from discarded state above.
+    scene.addObject(POINTS[2], "c", Ink.Rose) # Diverges from discarded state above.
     history.record(scene, camera)
     check not history.canRedo
     check not history.redo(scene, camera)
@@ -2866,14 +2866,14 @@ suite "History":
     # Two edits, each made from its own distinctly different viewpoint.
     camera.azimuth = 0.25
     camera.distance = 11.0
-    scene.addItem(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
     history.record(scene, camera)
     let camera_a = camera
 
     camera.azimuth = 1.75
     camera.distance = 29.0
     camera.elevation = -0.4
-    scene.addItem(POINTS[1], "b", Ink.Rose)
+    scene.addObject(POINTS[1], "b", Ink.Rose)
     history.record(scene, camera)
     let camera_b = camera
 
@@ -2883,7 +2883,7 @@ suite "History":
     camera.distance = 3.0
     camera.elevation = 1.1
 
-    # Undoing `b` takes scene back to one item and view back to where `b` was.
+    # Undoing `b` takes scene back to one object and view back to where `b` was.
     #   built -- `b` is what vanishes, so `b`'s own view is one to watch it from.
     check history.undo(scene, camera)
     checkAimedLike(camera, camera_b)
@@ -2911,7 +2911,7 @@ suite "History":
     history.initHistory(scene, camera)
     var seen = @[scene.revision]
     for i in 0 ..< 3:
-      scene.addItem(POINTS[i], "p" & $i, Ink.Rose)
+      scene.addObject(POINTS[i], "p" & $i, Ink.Rose)
       history.record(scene, camera)
       seen.add(scene.revision)
     for _ in 0 ..< 3:
@@ -2956,7 +2956,7 @@ suite "Camera Aim":
     ## Build scene holding exactly these objects, with every one of them picked.
     var (scene, picked) = (initScene(), Selection())
     for m in objects:
-      picked.toggle(scene.addItem(m, "m", Ink.Rose))
+      picked.toggle(scene.addObject(m, "m", Ink.Rose))
     (scene, picked)
 
   proc offerAim(
@@ -3037,7 +3037,7 @@ suite "Camera Aim":
 
 
   test "on a wide frame the box is as far across as it is down, to the pixel":
-    # Shape itself, measured rather than asserted: walk point out sideways until it.
+    # Kind itself, measured rather than asserted: walk point out sideways until it.
     #   leaves box and check where it went. Edge stands at frame's *height*,
     #   not its width -- 300 px from middle of 1440x900 frame rather than 480 -- less
     #   room drawn dot takes.
@@ -3089,8 +3089,8 @@ suite "Camera Aim":
     let
       line = GENERAL_FIRST[1]
       point = GENERAL_SECOND[0]
-      handle_line = scene.addItem(line, "L", Ink.Rose)
-      handle_point = scene.addItem(point, "p", Ink.Rose)
+      handle_line = scene.addObject(line, "L", Ink.Rose)
+      handle_point = scene.addObject(point, "p", Ink.Rose)
     let previewed = scene.previewApplying(Operation.Wedge, handle_line, handle_point)
     check previewed.get.geometry =~ applyOperation(Operation.Wedge, line, point)
     check previewed.get.operands == some((handle_line, handle_point))
@@ -3102,13 +3102,13 @@ suite "Camera Aim":
     #   grades and pair already lying on each other alike.
     check scene.previewApplying(Operation.WedgeAnti, handle_point, handle_point).isNone
     # And nothing at all where picker is left open across delete.
-    scene.removeItem(handle_point)
+    scene.removeObject(handle_point)
     check scene.previewApplying(Operation.Wedge, handle_line, handle_point).isNone
 
     # Edit session's own staged geometry is same type with neither field, which is.
     #   what keeps it out of framing rule below.
-    check previewStaging(line, RADIUS_ITEM_DEFAULT).anchor.isNone
-    check previewStaging(line, RADIUS_ITEM_DEFAULT).operands.isNone
+    check previewStaging(line, RADIUS_OBJECT_DEFAULT).anchor.isNone
+    check previewStaging(line, RADIUS_OBJECT_DEFAULT).operands.isNone
     # Ghost of point under edit is drawn at session's own radius, not default.
     check previewStaging(line, 0.03).radius == 0.03
     discard picked
@@ -3121,10 +3121,10 @@ suite "Camera Aim":
     #   way -- its staged geometry replaces very object it would be framed against.
     var scene = initScene()
     let
-      handle_first = scene.addItem(
+      handle_first = scene.addObject(
         toMultivector(Position(x: 16.0, y: -13.0, z: 4.0)), "m", Ink.Rose
       )
-      handle_second = scene.addItem(
+      handle_second = scene.addObject(
         toMultivector(Position(x: -12.0, y: 14.0, z: -6.0)), "n", Ink.Rose
       )
     let staged = scene.previewApplying(Operation.Wedge, handle_first, handle_second)
@@ -3150,7 +3150,7 @@ suite "Camera Aim":
 
     # Edit-session case, over same pair: staging one of those points names no.
     #   operands, so other is left out and no pull-back is owed.
-    let alone = some(previewStaging(scene.geometryOf(handle_first), RADIUS_ITEM_DEFAULT))
+    let alone = some(previewStaging(scene.geometryOf(handle_first), RADIUS_OBJECT_DEFAULT))
     let camera = placementAim(0.7, 0.2)
     let aim = aimFor(scene, Selection(), alone, camera.drawExtentFor(HEIGHT_AIM))
     let framed = camera.placed(placementFor(
@@ -3277,7 +3277,7 @@ suite "Camera Aim":
 
 
   test "a plane is judged by the disc drawn, not by the one its support would carry":
-    # `mesh.addPlane` centres disc on item's own creation anchor where it has one,
+    # `mesh.addPlane` centres disc on object's own creation anchor where it has one,
     #   and on demo scene's own planes two stand as far as 3.7 units apart against
     #   radius of 8 -- so test ringing support would frame circle nobody sees.
     let ground = toMultivector(ORIGIN) ∧ toMultivector(Position(x: 1.0, y: 0.0, z: 0.0)) ∧
@@ -3290,13 +3290,13 @@ suite "Camera Aim":
     check not isShownCentrally(
       ground, camera, WIDTH_AIM, HEIGHT_AIM, some(Position(x: 14.0, y: 0.0, z: 0.0))
     )
-    # And framing rule follows same anchor, item by item: same plane in.
+    # And framing rule follows same anchor, object by object: same plane in.
     #   same scene at same camera costs nothing without one and moves view with it.
     let (scene_support, picked_support) = sceneOf(ground)
     check framedFor(scene_support, picked_support, camera) == camera.placementOf
 
     var (scene_drawn, picked_drawn) = (initScene(), Selection())
-    picked_drawn.toggle(scene_drawn.addItem(
+    picked_drawn.toggle(scene_drawn.addObject(
       ground, "ground", Ink.Rose, 0.0, some(Position(x: 14.0, y: 0.0, z: 0.0))
     ))
     let framed = framedFor(scene_drawn, picked_drawn, camera)
@@ -3540,7 +3540,7 @@ suite "Camera Aim":
 
     var empty: Multivector
     tween.offerAim(
-      camera, scene, Selection(), some(previewStaging(empty, RADIUS_ITEM_DEFAULT)),
+      camera, scene, Selection(), some(previewStaging(empty, RADIUS_OBJECT_DEFAULT)),
       camera.drawExtentFor(HEIGHT_AIM), WIDTH_AIM, HEIGHT_AIM, 0.2, 0.35,
     )
     check tween.goal.isNone
@@ -3631,19 +3631,19 @@ suite "Camera Aim":
       scale = camera.drawExtentFor(HEIGHT_AIM)
       near = eye + 0.3*axes.forward + 0.02*axes.axis_right
       far = eye + 40.0*axes.forward + 3.0*axes.axis_up
-    let placed_near = placementUnderPointer(near, Shape.Point, 0.08, near, camera, scale)
+    let placed_near = placementUnderPointer(near, Kind.Point, 0.08, near, camera, scale)
     check placed_near.isSome
     check abs(placed_near.get.distance - 0.3) < 1.0e-9
     check camera.placed(placed_near.get).eye =~ eye
     # Radius half unit stands forty out at thirteen pixels, plainly seen: orbit distance.
-    let placed_seen = placementUnderPointer(far, Shape.Point, 0.5, far, camera, scale)
+    let placed_seen = placementUnderPointer(far, Kind.Point, 0.5, far, camera, scale)
     check placed_seen.isSome
     check abs(placed_seen.get.distance - camera.distance) < 1.0e-9
-    let placed_line = placementUnderPointer(far, Shape.Line, 0.0, far, camera, scale)
+    let placed_line = placementUnderPointer(far, Kind.Line, 0.0, far, camera, scale)
     check placed_line.isSome
     check abs(placed_line.get.distance - camera.distance) < 1.0e-9
     let behind = eye - 2.0*axes.forward
-    let placed_behind = placementUnderPointer(behind, Shape.Point, 0.08, behind, camera, scale)
+    let placed_behind = placementUnderPointer(behind, Kind.Point, 0.08, behind, camera, scale)
     check placed_behind.isNone
 
 
@@ -4026,7 +4026,7 @@ suite "Selection":
     check clock.travelAt(3) == 0.0
     # Out of range is question with no answer, not crash.
     check clock.travelAt(-1) == 0.0
-    check clock.travelAt(ITEMS_MAX) == 0.0
+    check clock.travelAt(OBJECTS_MAX) == 0.0
     # And carried travel is kept below one lap rather than accumulating, which is what.
     #   stops change in lap being multiplied by however many laps have gone by --
     #   original teleport, which unreduced pixel offset would have reproduced.
@@ -4077,8 +4077,8 @@ suite "Selection":
   test "a selection is hidden only when every one of its objects is":
     # What one hide/show button on both front-ends reads to name what it would do.
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
-    scene.addItem(POINTS[1], "b", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[1], "b", Ink.Rose)
     var selection: Selection
     check not selection.isAllHidden(scene) # Nothing picked: nothing to show.
     selection.toggle(0)
@@ -4150,20 +4150,20 @@ suite "Selection":
 
   test "every handle can be picked at once, and picking past that adds nothing":
     var selection: Selection
-    for handle in 0 ..< ITEMS_MAX: selection.toggle(handle)
-    check selection.len == ITEMS_MAX
-    selection.toggle(ITEMS_MAX) # Out of range; capacity is already spent.
-    check selection.len == ITEMS_MAX
+    for handle in 0 ..< OBJECTS_MAX: selection.toggle(handle)
+    check selection.len == OBJECTS_MAX
+    selection.toggle(OBJECTS_MAX) # Out of range; capacity is already spent.
+    check selection.len == OBJECTS_MAX
 
 
   test "pruneDead drops removed handles and keeps the rest in pick order":
     # Removed handle goes straight back to free list, so stale pick left behind.
     #   would silently reattach itself to whatever object is added next.
     var scene = initScene()
-    for i in 0 ..< 3: discard scene.addItem(POINTS[i], "p" & $i, inkCycled(i))
+    for i in 0 ..< 3: discard scene.addObject(POINTS[i], "p" & $i, inkCycled(i))
     var selection: Selection
     for handle in [2, 0, 1]: selection.toggle(handle)
-    scene.removeItem(0)
+    scene.removeObject(0)
     selection.pruneDead(scene)
     check ordered(selection) == @[2, 1]
     check not selection.contains(0)
@@ -4534,13 +4534,13 @@ suite "Picking":
     let scale = camera.drawExtentFor(HEIGHT_PICK)
     let eye = camera.eye
     var near = initScene()
-    near.addItem(toMultivector(Position(x: -0.5*eye.x, y: 0, z: -0.5*eye.z)), "p", Ink.Rose)
+    near.addObject(toMultivector(Position(x: -0.5*eye.x, y: 0, z: -0.5*eye.z)), "p", Ink.Rose)
     let anchor_near = anchorZoomAt(
       near, camera, scale, view_projection, WIDTH_PICK, HEIGHT_PICK, CENTRE,
     )
     check anchor_near.isSome and abs(anchor_near.get.at.z + 0.5*eye.z) < 1.0e-6
     var far = initScene()
-    far.addItem(toMultivector(Position(x: -7.0*eye.x, y: 0, z: -7.0*eye.z)), "p", Ink.Rose)
+    far.addObject(toMultivector(Position(x: -7.0*eye.x, y: 0, z: -7.0*eye.z)), "p", Ink.Rose)
     let anchor_far = anchorZoomAt(
       far, camera, scale, view_projection, WIDTH_PICK, HEIGHT_PICK, CENTRE,
     )
@@ -4552,7 +4552,7 @@ suite "Picking":
     #   360 pixels of radius on 600-pixel frame, and cursor anywhere inside picks Sol,
     #   not ecliptic disc it stands on.
     # Smallest arrangement; reduced-capacity build cannot hold it and skips whole.
-    if ITEMS_MAX < itemsOf(ScaleOrrery.Nearest):
+    if OBJECTS_MAX < objectsOf(ScaleOrrery.Nearest):
       skip()
     else:
       var scene = initScene()
@@ -4612,8 +4612,8 @@ suite "Picking":
     let before = planet - 0.5*frame_camera.forward
     let moon = before + 40.0*worldPerPixelAt(before, scale.scale)*frame_camera.axis_right
     var hidden = initScene()
-    hidden.addItem(toMultivector(planet), "planet", Ink.Cobalt, radius = 0.3)
-    hidden.addItem(toMultivector(star), "star", Ink.Rose, radius = 0.001)
+    hidden.addObject(toMultivector(planet), "planet", Ink.Cobalt, radius = 0.3)
+    hidden.addObject(toMultivector(star), "star", Ink.Rose, radius = 0.001)
     let on_star = projectToScreen(view_projection, WIDTH_PICK, HEIGHT_PICK, star)
     check abs(on_star.x - CENTRE.x - 40.0) < 1.0
     let report_hidden = pickAt(
@@ -4622,8 +4622,8 @@ suite "Picking":
     check report_hidden.handle == some(0)
     check report_hidden.count_rivals == 1 # Hidden star is no rival either.
     var shown = initScene()
-    shown.addItem(toMultivector(planet), "planet", Ink.Cobalt, radius = 0.3)
-    shown.addItem(toMultivector(moon), "moon", Ink.Rose, radius = 0.02)
+    shown.addObject(toMultivector(planet), "planet", Ink.Cobalt, radius = 0.3)
+    shown.addObject(toMultivector(moon), "moon", Ink.Rose, radius = 0.02)
     let on_moon = projectToScreen(view_projection, WIDTH_PICK, HEIGHT_PICK, moon)
     let report_shown = pickAt(
       shown, camera, scale, view_projection, WIDTH_PICK, HEIGHT_PICK, on_moon
@@ -4634,8 +4634,8 @@ suite "Picking":
     #   being narrower than fingertip, not from crowd.
     let eye = camera.eye
     var lunar = initScene()
-    lunar.addItem(toMultivector(moon), "moon", Ink.Rose, radius = 0.02)
-    lunar.addItem(toMultivector(eye + 3.0*(moon - eye)), "star", Ink.Jade, radius = 0.001)
+    lunar.addObject(toMultivector(moon), "moon", Ink.Rose, radius = 0.02)
+    lunar.addObject(toMultivector(eye + 3.0*(moon - eye)), "star", Ink.Jade, radius = 0.001)
     check radiusPixelsAt(0.02, moon, scale.scale) < RADIUS_PICK_POINT
     let report_lunar = pickAt(
       lunar, camera, scale, view_projection, WIDTH_PICK, HEIGHT_PICK, on_moon
@@ -4646,8 +4646,8 @@ suite "Picking":
     #   Star used to win on distance to its own centre. Cursor off disc: star.
     let near_rim = behind + 130.0*worldPerPixelAt(behind, scale.scale)*frame_camera.axis_right
     var rim = initScene()
-    rim.addItem(toMultivector(planet), "planet", Ink.Cobalt, radius = 0.3)
-    rim.addItem(toMultivector(near_rim), "star", Ink.Rose, radius = 0.001)
+    rim.addObject(toMultivector(planet), "planet", Ink.Cobalt, radius = 0.3)
+    rim.addObject(toMultivector(near_rim), "star", Ink.Rose, radius = 0.001)
     let pixels_planet = radiusPixelsAt(0.3, planet, scale.scale)
     check pixels_planet > 100.0 and pixels_planet < 125.0
     let on_disc = ScreenPosition(x: CENTRE.x + pixels_planet - 5.0, y: CENTRE.y, depth: 0.0)
@@ -4661,8 +4661,8 @@ suite "Picking":
     # Star past disc's edge is picked as ever: nothing covers it there.
     let far = behind + 160.0*worldPerPixelAt(behind, scale.scale)*frame_camera.axis_right
     var clear = initScene()
-    clear.addItem(toMultivector(planet), "planet", Ink.Cobalt, radius = 0.3)
-    clear.addItem(toMultivector(far), "star", Ink.Rose, radius = 0.001)
+    clear.addObject(toMultivector(planet), "planet", Ink.Cobalt, radius = 0.3)
+    clear.addObject(toMultivector(far), "star", Ink.Rose, radius = 0.001)
     let on_far = projectToScreen(view_projection, WIDTH_PICK, HEIGHT_PICK, far)
     check on_far.x - CENTRE.x > radiusPixelsAt(0.3, planet, scale.scale)
     check pickNearest(
@@ -4679,8 +4679,8 @@ suite "Picking":
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     let scale = camera.drawExtentFor(HEIGHT_PICK)
     var alone = initScene()
-    alone.addItem(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
-    alone.addItem(groundPlane(), "ground", Ink.Grid)
+    alone.addObject(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
+    alone.addObject(groundPlane(), "ground", Ink.Grid)
     let report_alone = pickAt(
       alone, camera, scale, view_projection, WIDTH_PICK, HEIGHT_PICK, CENTRE
     )
@@ -4690,10 +4690,10 @@ suite "Picking":
     #   front is what is picked. Dot narrower than fingertip hides other from pick, not
     #   from crowd; see pick's hiding rule. Star field's crowds are exactly such dots.
     var crowd = initScene()
-    crowd.addItem(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
-    crowd.addItem(toMultivector(Position(x: 0.05, y: 0, z: 0.05)), "q", Ink.Jade)
-    crowd.addItem(groundPlane(), "ground", Ink.Grid)
-    check radiusPixelsAt(RADIUS_ITEM_DEFAULT, Position(x: 0, y: 0, z: 0), scale.scale) <
+    crowd.addObject(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
+    crowd.addObject(toMultivector(Position(x: 0.05, y: 0, z: 0.05)), "q", Ink.Jade)
+    crowd.addObject(groundPlane(), "ground", Ink.Grid)
+    check radiusPixelsAt(RADIUS_OBJECT_DEFAULT, Position(x: 0, y: 0, z: 0), scale.scale) <
       RADIUS_PICK_POINT
     let report_crowd = pickAt(
       crowd, camera, scale, view_projection, WIDTH_PICK, HEIGHT_PICK, CENTRE
@@ -4714,8 +4714,8 @@ suite "Picking":
     let right = camera.frame(camera.eye).axis_right
     for (pixels, rivals) in [(50.0, 2), (100.0, 1)]:
       var apart = initScene()
-      apart.addItem(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
-      apart.addItem(toMultivector(Position(x: 0, y: 0, z: 0) + (pixels*per_pixel)*right),
+      apart.addObject(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
+      apart.addObject(toMultivector(Position(x: 0, y: 0, z: 0) + (pixels*per_pixel)*right),
         "q", Ink.Jade)
       let report = pickAt(
         apart, camera, scale, view_projection, WIDTH_PICK, HEIGHT_PICK, CENTRE
@@ -4724,8 +4724,8 @@ suite "Picking":
       check report.count_rivals == rivals
     # Point beside picked line is rival too: finger may have meant it.
     var mixed = initScene()
-    mixed.addItem(POINTS[0] ∧ POINTS[1], "l", Ink.Rose)
-    mixed.addItem(toMultivector(Position(x: 0, y: 0, z: 0) + (50.0*per_pixel)*right),
+    mixed.addObject(POINTS[0] ∧ POINTS[1], "l", Ink.Rose)
+    mixed.addObject(toMultivector(Position(x: 0, y: 0, z: 0) + (50.0*per_pixel)*right),
       "q", Ink.Jade)
     let report_mixed = pickAt(
       mixed, camera, scale, view_projection, WIDTH_PICK, HEIGHT_PICK, CENTRE
@@ -4738,7 +4738,7 @@ suite "Picking":
 
   test "point at pivot is picked at screen centre":
     var scene = initScene()
-    scene.addItem(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
+    scene.addObject(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     check pickNearest(
@@ -4747,9 +4747,9 @@ suite "Picking":
     ) == some(0)
 
 
-  test "cursor far from every item picks nothing":
+  test "cursor far from every object picks nothing":
     var scene = initScene()
-    scene.addItem(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
+    scene.addObject(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     let corner = ScreenPosition(x: 5.0, y: 5.0, depth: 0.0)
@@ -4759,9 +4759,9 @@ suite "Picking":
     ).isNone
 
 
-  test "hidden item is never picked":
+  test "hidden object is never picked":
     var scene = initScene()
-    scene.addItem(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
+    scene.addObject(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
     scene.setVisible(0, false)
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
@@ -4775,7 +4775,7 @@ suite "Picking":
     var scene = initScene()
     let axis_z =
       toMultivector(Position(x: 0, y: 0, z: -1)) ∧ toMultivector(Position(x: 0, y: 0, z: 1))
-    scene.addItem(axis_z, "axis_z", Ink.Jade)
+    scene.addObject(axis_z, "axis_z", Ink.Jade)
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     check pickNearest(
@@ -4813,7 +4813,7 @@ suite "Picking":
     # Line alone is picked there -- without this case would pass on cursor that.
     #   simply misses line, proving nothing about which of two wins.
     var scene_line = initScene()
-    scene_line.addItem(line, "L", Ink.Jade)
+    scene_line.addObject(line, "L", Ink.Jade)
     check pickNearest(
       scene_line, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
       WIDTH_PICK, HEIGHT_PICK, at
@@ -4822,8 +4822,8 @@ suite "Picking":
 
     # With both in scene, star takes it.
     var scene = initScene()
-    scene.addItem(line, "L", Ink.Jade)
-    scene.addItem(star, "att", Ink.Cobalt)
+    scene.addObject(line, "L", Ink.Jade)
+    scene.addObject(star, "att", Ink.Cobalt)
     check pickNearest(
       scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
       WIDTH_PICK, HEIGHT_PICK, at
@@ -4832,7 +4832,7 @@ suite "Picking":
 
   test "point pick radius tolerates cursor imprecision, not unlimited slack":
     var scene = initScene()
-    scene.addItem(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
+    scene.addObject(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     # Point itself projects exactly to CENTRE; offsetting cursor instead of.
@@ -4853,7 +4853,7 @@ suite "Picking":
     var scene = initScene()
     let axis_z =
       toMultivector(Position(x: 0, y: 0, z: -1)) ∧ toMultivector(Position(x: 0, y: 0, z: 1))
-    scene.addItem(axis_z, "axis_z", Ink.Jade)
+    scene.addObject(axis_z, "axis_z", Ink.Jade)
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     let near = ScreenPosition(x: CENTRE.x + RADIUS_PICK_LINE - 1.0, y: CENTRE.y, depth: 0.0)
@@ -4872,8 +4872,8 @@ suite "Picking":
     var scene = initScene()
     let axis_z =
       toMultivector(Position(x: 0, y: 0, z: -1)) ∧ toMultivector(Position(x: 0, y: 0, z: 1))
-    scene.addItem(axis_z, "axis_z", Ink.Jade) # Index 0: line, passes straight through origin.
-    scene.addItem(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose) # Index 1: point.
+    scene.addObject(axis_z, "axis_z", Ink.Jade) # Index 0: line, passes straight through origin.
+    scene.addObject(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose) # Index 1: point.
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     check pickNearest(
@@ -4891,8 +4891,8 @@ suite "Picking":
     )
     let axis_z =
       toMultivector(Position(x: 0, y: 0, z: -1)) ∧ toMultivector(Position(x: 0, y: 0, z: 1))
-    scene.addItem(facing, "facing", Ink.Olive) # Index 0: plane, spans view straight on.
-    scene.addItem(axis_z, "axis_z", Ink.Jade) # Index 1: line, passes straight through origin.
+    scene.addObject(facing, "facing", Ink.Olive) # Index 0: plane, spans view straight on.
+    scene.addObject(axis_z, "axis_z", Ink.Jade) # Index 1: line, passes straight through origin.
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     check pickNearest(
@@ -4908,8 +4908,8 @@ suite "Picking":
       toMultivector(Position(x: 0, y: 3, z: -3)) ∧
       toMultivector(Position(x: 0, y: 0, z: 3))
     )
-    scene.addItem(facing, "facing", Ink.Olive) # Index 0: plane, spans view straight on.
-    scene.addItem(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose) # Index 1: point.
+    scene.addObject(facing, "facing", Ink.Olive) # Index 0: plane, spans view straight on.
+    scene.addObject(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose) # Index 1: point.
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     check pickNearest(
@@ -4930,7 +4930,7 @@ suite "Picking":
       toMultivector(Position(x: 0, y: 3, z: -3)) ∧
       toMultivector(Position(x: 0, y: 0, z: 3))
     )
-    scene.addItem(facing, "facing", Ink.Olive)
+    scene.addObject(facing, "facing", Ink.Olive)
     let camera = cameraFacingOrigin(distance = 30.0)
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     check pickNearest(
@@ -5001,7 +5001,7 @@ suite "Picking":
         toMultivector(Position(x: 0, y: 3*facing, z: -3)),
         toMultivector(Position(x: 0, y: 0, z: 3)),
       ]
-      scene.addItem(corners[0] ∧ corners[1] ∧ corners[2], "spanning", Ink.Olive)
+      scene.addObject(corners[0] ∧ corners[1] ∧ corners[2], "spanning", Ink.Olive)
       let camera = cameraFacingOrigin()
       let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
       check pickNearest(
@@ -5024,8 +5024,8 @@ suite "Picking":
       toMultivector(Position(x: 6, y: 3, z: -3)) ∧
       toMultivector(Position(x: 6, y: 0, z: 3))
     )
-    scene.addItem(far_plane, "far", Ink.Olive) # Index 0.
-    scene.addItem(near_plane, "near", Ink.Cobalt) # Index 1.
+    scene.addObject(far_plane, "far", Ink.Olive) # Index 0.
+    scene.addObject(near_plane, "near", Ink.Cobalt) # Index 1.
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     check pickNearest(
@@ -5048,10 +5048,10 @@ suite "Lighting":
     check isDark(lightToward(Position(x: 0, y: 3, z: 0), suns, 2)) # Standing on it.
     # Through scene: sun shines on planet, is unlit itself, and hidden sun sheds nothing.
     var scene = initScene()
-    let handle_sun = scene.addItem(toMultivector(Position(x: 0, y: 0, z: 0)), "sun", Ink.Copper,
+    let handle_sun = scene.addObject(toMultivector(Position(x: 0, y: 0, z: 0)), "sun", Ink.Copper,
       shines = true)
-    let handle_planet = scene.addItem(toMultivector(Position(x: 4, y: 0, z: 0)), "p", Ink.Cobalt)
-    let handle_line = scene.addItem(POINTS[0] ∧ POINTS[1], "l", Ink.Rose)
+    let handle_planet = scene.addObject(toMultivector(Position(x: 4, y: 0, z: 0)), "p", Ink.Cobalt)
+    let handle_line = scene.addObject(POINTS[0] ∧ POINTS[1], "l", Ink.Rose)
     var cache: LightCache
     refreshLights(cache, scene, none(int))
     check abs(cache.lights[handle_planet].x + 1.0) < 1.0e-12
@@ -5065,7 +5065,7 @@ suite "Lighting":
     refreshLights(cache, scene, some(scene.revision - 1))
     check abs(cache.lights[handle_planet].x + 1.0) < 1.0e-12
     # Placed variant answers same as placing one.
-    var placed: array[ITEMS_MAX, Placed]
+    var placed: array[OBJECTS_MAX, Placed]
     for handle in 0 ..< scene.bound:
       if scene.isAlive(handle):
         placed[handle] = placeObject(scene.geometryOf(handle), scene.anchorOverrideAt(handle))
@@ -5096,15 +5096,15 @@ suite "Interaction":
 
   test "drag applies the proposal and appends the result":
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
-    scene.addItem(POINTS[1], "b", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[1], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.index_hover = some(0)
     check interaction.beginDrag(arming = MenuArming.OnDwell, now = 0.0)
     interaction.index_hover = some(1)
     let outcome = interaction.endDrag(scene)
     check scene.len == 3
-    # Two points propose `join`, and item that lands is that join -- not button's.
+    # Two points propose `join`, and object that lands is that join -- not button's.
     #   choice, which is what this used to be.
     check outcome.choice == some(DragChoice.Join)
     check scene[2].geometry =~ (POINTS[0] ∧ POINTS[1])
@@ -5119,8 +5119,8 @@ suite "Interaction":
     #   ambiguous movement wins and reader zooms in until it is not. Mouse saw its
     #   ring and keeps its drag over same crowd.
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
-    scene.addItem(POINTS[1], "b", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[1], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.index_hover = some(0)
     interaction.count_hover_rivals = 2
@@ -5149,7 +5149,7 @@ suite "Interaction":
     #   because it is drawn as dome over every direction. Were it to start drag, orbit
     #   and pan would stop working outright moment sky joined scene.
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
 
     interaction.index_hover = some(0)
@@ -5171,7 +5171,7 @@ suite "Interaction":
     #   From half unit above ground its disc spans frame, and press on it starting drag
     #   left view unmovable; from far off it is ordinary drag handle.
     var floor = initScene()
-    floor.addItem(groundPlane(), "ground", Ink.Grid)
+    floor.addObject(groundPlane(), "ground", Ink.Grid)
     for (distance, is_backdrop) in [(0.5, true), (40.0, false)]:
       let close = initCamera(pivot = ORIGIN, distance = distance, azimuth = 0.9, elevation = 0.9)
       var over = Interaction(is_enabled: true)
@@ -5193,8 +5193,8 @@ suite "Interaction":
     # Press over object has to start drag eagerly -- press target chooses.
     #   scheme -- so whether it *was* one is only answerable at release.
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
-    scene.addItem(POINTS[1], "b", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[1], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(200.0, 200.0)
     interaction.index_hover = some(0)
@@ -5208,8 +5208,8 @@ suite "Interaction":
 
   test "a press that moves past the click slop is a drag, however briefly it lasted":
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
-    scene.addItem(POINTS[1], "b", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[1], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(200.0, 200.0)
     interaction.index_hover = some(0)
@@ -5232,8 +5232,8 @@ suite "Interaction":
     #   measured on built page at 600 ms holds, three objects, none of them picked.
     #   Nothing separates click from hold on mouse: dwell is touch-only.
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
-    scene.addItem(POINTS[1], "b", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[1], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(200.0, 200.0)
     interaction.index_hover = some(0)
@@ -5252,7 +5252,7 @@ suite "Interaction":
     #   *other* than source, so press that never left its own object never asked for
     #   anything -- and refusing it left right button doing nothing on plain click.
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(200.0, 200.0)
     interaction.index_hover = some(0)
@@ -5267,8 +5267,8 @@ suite "Interaction":
     #   Once menu is open reader was offered choice, and answering with quiet selection
     #   instead would make button unreliable.
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
-    scene.addItem(POINTS[1], "b", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[1], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(200.0, 200.0)
     interaction.index_hover = some(0)
@@ -5299,9 +5299,9 @@ suite "Interaction":
     # What makes wheel opened over wrong object recoverable. Before this it latched.
     #   its destination for rest of drag, so only way out was to release.
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
-    scene.addItem(POINTS[1], "b", Ink.Rose)
-    scene.addItem(POINTS[2], "c", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[1], "b", Ink.Rose)
+    scene.addObject(POINTS[2], "c", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(200.0, 200.0)
     interaction.index_hover = some(0)
@@ -5336,8 +5336,8 @@ suite "Interaction":
 
   test "a wheel opens again on the object it was let go of, once the drag has left it":
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
-    scene.addItem(POINTS[1], "b", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[1], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(200.0, 200.0)
     interaction.index_hover = some(0)
@@ -5361,8 +5361,8 @@ suite "Interaction":
     # Reader watched colour on band for whole drag; offering it again to.
     #   next attempt reads as gesture having never registered.
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
-    scene.addItem(POINTS[1], "b", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[1], "b", Ink.Rose)
     let ink_first = scene.inkNext
     check scene.inkNext == ink_first # Peeking never walks cycle.
 
@@ -5393,8 +5393,8 @@ suite "Interaction":
     #   what they get. It used to be operation's own colour, which said nothing about
     #   object about to exist.
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
-    scene.addItem(POINTS[1], "b", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[1], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(200.0, 200.0)
     interaction.index_hover = some(0)
@@ -5412,8 +5412,8 @@ suite "Interaction":
     # Safe default `is_press_still` exists for: caller that never went through.
     #   `beginPress` gets behaviour that predates clicks, whatever clock reads.
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
-    scene.addItem(POINTS[1], "b", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[1], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.index_hover = some(0)
     check not interaction.isClick(0.0)
@@ -5422,7 +5422,7 @@ suite "Interaction":
     check interaction.endDrag(scene, 0.0).index_created == some(2)
 
 
-  test "drag cannot start without a hovered item":
+  test "drag cannot start without a hovered object":
     var interaction = Interaction(is_enabled: true)
     interaction.index_hover = none(int)
     check not interaction.beginDrag(arming = MenuArming.Always, now = 0.0)
@@ -5431,7 +5431,7 @@ suite "Interaction":
 
   test "releasing over empty space adds nothing":
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.index_hover = some(0)
     discard interaction.beginDrag(arming = MenuArming.OnDwell, now = 0.0)
@@ -5457,7 +5457,7 @@ suite "Interaction":
 
   test "releasing on its own source adds nothing":
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.index_hover = some(0)
     discard interaction.beginDrag(arming = MenuArming.OnDwell, now = 0.0)
@@ -5469,12 +5469,12 @@ suite "Interaction":
 
   test "endDrag ignores a drag whose source was removed since it began":
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
-    scene.addItem(POINTS[1], "b", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[1], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.index_hover = some(0)
     discard interaction.beginDrag(arming = MenuArming.OnDwell, now = 0.0) # index_source = 0.
-    scene.removeItem(0) # Source vanishes mid-drag -- e.g. removed by another input path.
+    scene.removeObject(0) # Source vanishes mid-drag -- e.g. removed by another input path.
     interaction.index_hover = some(1)
     let outcome = interaction.endDrag(scene)
     check "no longer exists" in outcome.message
@@ -5485,12 +5485,12 @@ suite "Interaction":
 
   test "endDrag ignores a drag whose destination was removed since it began":
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
-    scene.addItem(POINTS[1], "b", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[1], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.index_hover = some(0)
     discard interaction.beginDrag(arming = MenuArming.OnDwell, now = 0.0) # index_source = 0.
-    scene.removeItem(1)
+    scene.removeObject(1)
     interaction.index_hover = some(1) # Still reports now-dead handle as hovered.
     let outcome = interaction.endDrag(scene)
     check "no longer exists" in outcome.message
@@ -5500,8 +5500,8 @@ suite "Interaction":
 
   test "cancelDrag clears state without applying anything":
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
-    scene.addItem(POINTS[1], "b", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[1], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.index_hover = some(0)
     discard interaction.beginDrag(arming = MenuArming.OnDwell, now = 0.0)
@@ -5512,7 +5512,7 @@ suite "Interaction":
 
   test "endDrag with nothing dragging is a harmless no-op":
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     let outcome = interaction.endDrag(scene)
     check outcome.message == ""
@@ -5526,8 +5526,8 @@ suite "Interaction":
     #   4, and projecting plane onto point gives nothing drawable. One pair in
     #   nine that offers no operation at all, and reason `proposalFor` is `Option`.
     var scene = initScene()
-    scene.addItem(GENERAL_FIRST[2], "G", Ink.Rose)
-    scene.addItem(GENERAL_SECOND[0], "f", Ink.Rose)
+    scene.addObject(GENERAL_FIRST[2], "G", Ink.Rose)
+    scene.addObject(GENERAL_SECOND[0], "f", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.index_hover = some(0)
     discard interaction.beginDrag(arming = MenuArming.OnDwell, now = 0.0)
@@ -5542,10 +5542,10 @@ suite "Interaction":
   test "an insisted-on wedge that makes nothing refuses rather than adding a blank":
     # Two points at same place join to zero. Menu greys that wedge, so this is.
     #   only reachable by releasing on it anyway -- and what happens then is message and
-    #   no item, never handle holding geometry with no shape.
+    #   no object, never handle holding geometry with no shape.
     var scene = initScene()
-    scene.addItem(GENERAL_FIRST[0], "a", Ink.Rose)
-    scene.addItem(GENERAL_FIRST[0], "a again", Ink.Rose)
+    scene.addObject(GENERAL_FIRST[0], "a", Ink.Rose)
+    scene.addObject(GENERAL_FIRST[0], "a again", Ink.Rose)
     check not isOffered(DragChoice.Join, GENERAL_FIRST[0], GENERAL_FIRST[0])
     var interaction = Interaction(is_enabled: true)
     interaction.index_hover = some(0)
@@ -5566,7 +5566,7 @@ suite "Interaction":
     for m in GENERAL_FIRST:
       for n in GENERAL_SECOND:
         check not (isOffered(DragChoice.Join, m, n) and isOffered(DragChoice.Meet, m, n))
-        # Whatever is proposed is drawable, so plain release never adds blank item.
+        # Whatever is proposed is drawable, so plain release never adds blank object.
         let proposal = proposalFor(m, n)
         if proposal.isSome: check resultOf(proposal.get, m, n).isSome
         # And `more…` is always there, which is what keeps menu from ever being empty.
@@ -5609,8 +5609,8 @@ suite "Interaction":
 
   test "an open menu commits the wedge under the cursor, over its latched destination":
     var scene = initScene()
-    scene.addItem(GENERAL_FIRST[0], "a", Ink.Rose)
-    scene.addItem(GENERAL_SECOND[0], "b", Ink.Rose)
+    scene.addObject(GENERAL_FIRST[0], "a", Ink.Rose)
+    scene.addObject(GENERAL_SECOND[0], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(400.0, 300.0)
     interaction.index_hover = some(0)
@@ -5621,7 +5621,7 @@ suite "Interaction":
     # Wheel opened under cursor, so nothing is chosen yet and nothing is ghosted.
     check interaction.proposal.isNone
     check interaction.preview.isNone
-    # Reaching for wedge takes cursor off item; destination must survive it.
+    # Reaching for wedge takes cursor off object; destination must survive it.
     interaction.index_hover = none(int)
     let south = anchorOf(interaction.menu.get, DragChoice.Project)
     interaction.updateCursor(south.x, south.y)
@@ -5639,8 +5639,8 @@ suite "Interaction":
     #   answer whatever wedge cursor was in, so reader reaching for `project` watched
     #   ghost of `join` and only found out what they had asked for after letting go.
     var scene = initScene()
-    scene.addItem(GENERAL_FIRST[0], "a", Ink.Rose)
-    scene.addItem(GENERAL_SECOND[0], "b", Ink.Rose)
+    scene.addObject(GENERAL_FIRST[0], "a", Ink.Rose)
+    scene.addObject(GENERAL_SECOND[0], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(400.0, 300.0)
     interaction.index_hover = some(0)
@@ -5681,8 +5681,8 @@ suite "Interaction":
     #   Two-way test could not carry it: centre and greyed wedge both have no answer, and
     #   they want opposite feedback.
     var scene = initScene()
-    scene.addItem(GENERAL_FIRST[0], "a", Ink.Rose)
-    scene.addItem(GENERAL_SECOND[0], "b", Ink.Rose)
+    scene.addObject(GENERAL_FIRST[0], "a", Ink.Rose)
+    scene.addObject(GENERAL_SECOND[0], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(400.0, 300.0)
     interaction.index_hover = some(0)
@@ -5723,8 +5723,8 @@ suite "Interaction":
     # Left button's own path, unchanged: it never opens wheel, so what it ghosts is.
     #   `proposalFor`'s answer exactly as before.
     var scene = initScene()
-    scene.addItem(GENERAL_FIRST[0], "a", Ink.Rose)
-    scene.addItem(GENERAL_SECOND[0], "b", Ink.Rose)
+    scene.addObject(GENERAL_FIRST[0], "a", Ink.Rose)
+    scene.addObject(GENERAL_SECOND[0], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(400.0, 300.0)
     interaction.index_hover = some(0)
@@ -5738,13 +5738,13 @@ suite "Interaction":
 
 
   test "a ghosted plane is centred where the committed one will be":
-    # `mesh.addPlane` centres disc on item's own creation anchor, so ghost drawn.
+    # `mesh.addPlane` centres disc on object's own creation anchor, so ghost drawn.
     #   without one sits somewhere object is about to leave -- measured at 2.1 units
     #   here, against disc of radius 8, and jump lands at moment reader is
     #   watching hardest.
     var scene = initScene()
-    scene.addItem(GENERAL_FIRST[1], "L", Ink.Rose) # Line ...
-    scene.addItem(GENERAL_SECOND[0], "p", Ink.Rose) # ... joined with point gives plane.
+    scene.addObject(GENERAL_FIRST[1], "L", Ink.Rose) # Line ...
+    scene.addObject(GENERAL_SECOND[0], "p", Ink.Rose) # ... joined with point gives plane.
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(400.0, 300.0)
     interaction.index_hover = some(0)
@@ -5752,7 +5752,7 @@ suite "Interaction":
     interaction.index_hover = some(1)
     interaction.updateDrag(scene, 0.0)
     check interaction.proposal == some(DragChoice.Join)
-    check shape(interaction.preview.get.geometry) == some(Shape.Plane)
+    check kindOf(interaction.preview.get.geometry) == some(Kind.Plane)
     check interaction.preview.get.anchor.isSome
     # Read before releasing: `endDrag` clears drag's whole state on its way out.
     let ghosted = interaction.preview.get.anchor.get
@@ -5765,8 +5765,8 @@ suite "Interaction":
 
   test "a menu release back at the centre commits nothing":
     var scene = initScene()
-    scene.addItem(GENERAL_FIRST[0], "a", Ink.Rose)
-    scene.addItem(GENERAL_SECOND[0], "b", Ink.Rose)
+    scene.addObject(GENERAL_FIRST[0], "a", Ink.Rose)
+    scene.addObject(GENERAL_SECOND[0], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(400.0, 300.0)
     interaction.index_hover = some(0)
@@ -5781,8 +5781,8 @@ suite "Interaction":
 
   test "`more…` builds nothing and hands both operands over, in drag order":
     var scene = initScene()
-    scene.addItem(GENERAL_FIRST[0], "a", Ink.Rose)
-    scene.addItem(GENERAL_SECOND[0], "b", Ink.Rose)
+    scene.addObject(GENERAL_FIRST[0], "a", Ink.Rose)
+    scene.addObject(GENERAL_SECOND[0], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(400.0, 300.0)
     interaction.index_hover = some(0)
@@ -5800,8 +5800,8 @@ suite "Interaction":
 
   test "a touch drag waits out the dwell before offering the menu; a right one never does":
     var scene = initScene()
-    scene.addItem(GENERAL_FIRST[0], "a", Ink.Rose)
-    scene.addItem(GENERAL_SECOND[0], "b", Ink.Rose)
+    scene.addObject(GENERAL_FIRST[0], "a", Ink.Rose)
+    scene.addObject(GENERAL_SECOND[0], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.index_hover = some(0)
     discard interaction.beginDrag(arming = MenuArming.OnDwell, now = 1000.0)
@@ -5839,8 +5839,8 @@ suite "Interaction":
     #   phone before this rule: that release built nothing every time, which read as
     #   drag itself being broken.
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
-    scene.addItem(POINTS[1], "b", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[1], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(200.0, 200.0)
     interaction.index_hover = some(0)
@@ -5865,8 +5865,8 @@ suite "Interaction":
     #   to centre afterwards is deliberate way out -- on dwell wheel exactly
     #   as on summoned one.
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
-    scene.addItem(POINTS[1], "b", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[1], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(200.0, 200.0)
     interaction.index_hover = some(0)
@@ -5892,8 +5892,8 @@ suite "Interaction":
     #   wheel, so lifting back at its centre withdraws gesture even though no wedge
     #   was ever entered.
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
-    scene.addItem(POINTS[1], "b", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[1], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(200.0, 200.0)
     interaction.index_hover = some(0)
@@ -6003,7 +6003,7 @@ suite "Interaction":
 
   test "stepping walks live handles in both directions and wraps at both ends":
     var scene = initScene()
-    for i in 0 ..< 4: scene.addItem(GENERAL_POINTS[i], "p", Ink.Rose)
+    for i in 0 ..< 4: scene.addObject(GENERAL_POINTS[i], "p", Ink.Rose)
     check scene.handleStepped(none(int), 1) == some(0) # Nothing focused starts at first.
     check scene.handleStepped(none(int), -1) == some(3) # ...and backwards, at last.
     check scene.handleStepped(some(0), 1) == some(1)
@@ -6011,11 +6011,11 @@ suite "Interaction":
     check scene.handleStepped(some(0), -1) == some(3) #   that quietly stops working is worse.
 
 
-  test "stepping skips handles whose items have gone":
+  test "stepping skips handles whose objects have gone":
     var scene = initScene()
-    for i in 0 ..< 4: scene.addItem(GENERAL_POINTS[i], "p", Ink.Rose)
-    scene.removeItem(1)
-    scene.removeItem(2)
+    for i in 0 ..< 4: scene.addObject(GENERAL_POINTS[i], "p", Ink.Rose)
+    scene.removeObject(1)
+    scene.removeObject(2)
     # Handles are sparse -- free list reuses holes in any order -- so this cannot be.
     #   arithmetic on handle number, and hole must not be place keyboard lands.
     check scene.handleStepped(some(0), 1) == some(3)
@@ -6026,8 +6026,8 @@ suite "Interaction":
     var scene = initScene()
     check scene.handleStepped(none(int), 1).isNone
     check scene.handleStepped(some(0), 1).isNone
-    scene.addItem(GENERAL_POINTS[0], "p", Ink.Rose)
-    scene.removeItem(0)
+    scene.addObject(GENERAL_POINTS[0], "p", Ink.Rose)
+    scene.removeObject(0)
     check scene.handleStepped(none(int), 1).isNone
 
 
@@ -6172,7 +6172,7 @@ suite "Interaction":
 
   test "each key that acts at a press does its own thing, and moves nothing while held":
     var scene = initScene()
-    scene.addItem(GENERAL_POINTS[0], "a", Ink.Rose)
+    scene.addObject(GENERAL_POINTS[0], "a", Ink.Rose)
     var
       interaction = Interaction(is_enabled: true)
       camera = initCameraDefault()
@@ -6201,8 +6201,8 @@ suite "Interaction":
 
   test "enter reports the focused handle for the caller to select, and nothing before then":
     var scene = initScene()
-    scene.addItem(GENERAL_POINTS[0], "a", Ink.Rose)
-    scene.addItem(GENERAL_POINTS[1], "b", Ink.Rose)
+    scene.addObject(GENERAL_POINTS[0], "a", Ink.Rose)
+    scene.addObject(GENERAL_POINTS[1], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     var camera = initCameraDefault()
     # Pressing enter before stepping anywhere is no-op, not select of handle zero.
@@ -6212,14 +6212,14 @@ suite "Interaction":
     check interaction.applyAction(camera, scene, KeyAction.SelectFocused) == some(0)
 
 
-  test "a focus whose item is removed is dropped rather than left pointing at freed storage":
+  test "a focus whose object is removed is dropped rather than left pointing at freed storage":
     var scene = initScene()
-    scene.addItem(GENERAL_POINTS[0], "a", Ink.Rose)
+    scene.addObject(GENERAL_POINTS[0], "a", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     var camera = initCameraDefault()
     discard interaction.applyAction(camera, scene, KeyAction.FocusNext)
     check interaction.index_focus == some(0)
-    scene.removeItem(0)
+    scene.removeObject(0)
     interaction.pruneFocus(scene)
     check interaction.index_focus.isNone
 
@@ -6230,7 +6230,7 @@ suite "Interaction":
     #   still. Neither gesture is pointing at anything.
     var scene = initScene()
     let pivot = Position(x: 0, y: 0, z: 0)
-    scene.addItem(toMultivector(pivot), "p", Ink.Rose)
+    scene.addObject(toMultivector(pivot), "p", Ink.Rose)
     var
       interaction = Interaction(is_enabled: true)
       camera = initCamera(pivot = pivot, distance = 10.0, azimuth = 0.0, elevation = 0.0)
@@ -6240,7 +6240,7 @@ suite "Interaction":
         scene, camera, camera.drawExtentFor(600), view_projection, 800, 600,
       )
       interaction.index_hover
-    interaction.updateCursor(400.0, 300.0) # Straight at item.
+    interaction.updateCursor(400.0, 300.0) # Straight at object.
     check interaction.hovering == some(0)
 
     interaction.is_dragging_camera = true
@@ -6268,8 +6268,8 @@ suite "Interaction":
     #   cursor every frame, so focus stored there would be gone before it was drawn.
     var scene = initScene()
     let pivot = Position(x: 0, y: 0, z: 0)
-    scene.addItem(toMultivector(pivot), "p", Ink.Rose)
-    scene.addItem(GENERAL_POINTS[5], "far", Ink.Rose)
+    scene.addObject(toMultivector(pivot), "p", Ink.Rose)
+    scene.addObject(GENERAL_POINTS[5], "far", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     var camera = initCamera(pivot = pivot, distance = 10.0, azimuth = 0.0, elevation = 0.0)
     discard interaction.applyAction(camera, scene, KeyAction.FocusNext)
@@ -6290,8 +6290,8 @@ suite "Interaction":
     #   middle of then released into menu and built nothing. Found by driving real
     #   touch drag, not by reading code.
     var scene = initScene()
-    scene.addItem(GENERAL_FIRST[0], "a", Ink.Rose)
-    scene.addItem(GENERAL_SECOND[0], "b", Ink.Rose)
+    scene.addObject(GENERAL_FIRST[0], "a", Ink.Rose)
+    scene.addObject(GENERAL_SECOND[0], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(100.0, 100.0)
     interaction.index_hover = some(0)
@@ -6316,8 +6316,8 @@ suite "Interaction":
     #   dwell nobody can ever reach, which is why threshold is same fingertip
     #   slop that decides press from drag rather than exact equality.
     var scene = initScene()
-    scene.addItem(GENERAL_FIRST[0], "a", Ink.Rose)
-    scene.addItem(GENERAL_SECOND[0], "b", Ink.Rose)
+    scene.addObject(GENERAL_FIRST[0], "a", Ink.Rose)
+    scene.addObject(GENERAL_SECOND[0], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(100.0, 100.0)
     interaction.index_hover = some(0)
@@ -6332,8 +6332,8 @@ suite "Interaction":
 
   test "leaving the pivot restarts the dwell, so pausing on the way across never opens":
     var scene = initScene()
-    scene.addItem(GENERAL_FIRST[0], "a", Ink.Rose)
-    scene.addItem(GENERAL_SECOND[0], "b", Ink.Rose)
+    scene.addObject(GENERAL_FIRST[0], "a", Ink.Rose)
+    scene.addObject(GENERAL_SECOND[0], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.index_hover = some(0)
     discard interaction.beginDrag(arming = MenuArming.OnDwell, now = 1000.0)
@@ -6350,8 +6350,8 @@ suite "Interaction":
 
   test "the rubber-band warns before the release, never after it":
     var scene = initScene()
-    scene.addItem(GENERAL_FIRST[2], "G", Ink.Rose)
-    scene.addItem(GENERAL_SECOND[0], "f", Ink.Rose)
+    scene.addObject(GENERAL_FIRST[2], "G", Ink.Rose)
+    scene.addObject(GENERAL_SECOND[0], "f", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     interaction.index_hover = some(0)
     discard interaction.beginDrag(arming = MenuArming.OnDwell, now = 0.0)
@@ -6369,7 +6369,7 @@ suite "Interaction":
 
   test "disabled interaction never hovers":
     var scene = initScene()
-    scene.addItem(POINTS[0], "a", Ink.Rose)
+    scene.addObject(POINTS[0], "a", Ink.Rose)
     var interaction = Interaction(is_enabled: false)
     let camera = initCamera(pivot = PLACES[0], distance = 10.0, azimuth = 0.0, elevation = 0.0)
     interaction.updateCursor(400.0, 300.0)
@@ -6380,10 +6380,10 @@ suite "Interaction":
     check interaction.index_hover.isNone
 
 
-  test "enabled interaction hovers the item under the cursor":
+  test "enabled interaction hovers the object under the cursor":
     var scene = initScene()
     let pivot = Position(x: 0, y: 0, z: 0)
-    scene.addItem(toMultivector(pivot), "p", Ink.Rose)
+    scene.addObject(toMultivector(pivot), "p", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
     let camera = initCamera(pivot = pivot, distance = 10.0, azimuth = 0.0, elevation = 0.0)
     interaction.updateCursor(400.0, 300.0)
@@ -6470,7 +6470,7 @@ suite "Interaction":
 
 
   test "a matured hold is taken once, and never again however long it is held":
-    # Regression this pins, measured: hold of 1.62 s selected its item and then lost.
+    # Regression this pins, measured: hold of 1.62 s selected its object and then lost.
     #   it within 50 ms of lift. Caller asked "is it mature" beside its own flag for
     #   "have I acted on that", cleared flag on release, and still-settling --
     #   still mature -- hold selected second time and toggled it straight back off.
@@ -6546,7 +6546,7 @@ suite "Marker":
     ##   costs in test.
     var marker: Marker
     if markerFor(
-      geometry, anchor, RADIUS_ITEM_DEFAULT, scale, placement, view_projection, width, height,
+      geometry, anchor, RADIUS_OBJECT_DEFAULT, scale, placement, view_projection, width, height,
       marker, progress, is_touch, travel, swell,
     ): some(marker)
     else: none(Marker)
@@ -6625,19 +6625,19 @@ suite "Marker":
     let marker = markerOf(POINT_A).get
     let anchor = anchorFor(POINT_A, scale).get
     check marker.radius =~
-      radiusPixelsAt(RADIUS_ITEM_DEFAULT, anchor, scale.scale) + GAP_MARKER
+      radiusPixelsAt(RADIUS_OBJECT_DEFAULT, anchor, scale.scale) + GAP_MARKER
     check marker.radius > 0.5*float(DIAMETER_POINT_LEAST) + GAP_MARKER
     # Far point falls to least radius; huge one grows with its own.
     let (placement_far, view_projection_far, scale_far) = setUp(1900.0)
     var ring_far: Marker
     check markerFor(
-      POINT_A, none(Position), RADIUS_ITEM_DEFAULT, scale_far, placement_far,
+      POINT_A, none(Position), RADIUS_OBJECT_DEFAULT, scale_far, placement_far,
       view_projection_far, WIDTH_MARK, HEIGHT_MARK, ring_far,
     )
     check ring_far.radius =~ 0.5*float(DIAMETER_POINT_LEAST) + GAP_MARKER
     var ring_huge: Marker
     check markerFor(
-      POINT_A, none(Position), 100.0*RADIUS_ITEM_DEFAULT, scale, placement,
+      POINT_A, none(Position), 100.0*RADIUS_OBJECT_DEFAULT, scale, placement,
       view_projection, WIDTH_MARK, HEIGHT_MARK, ring_huge,
     )
     check ring_huge.radius > 10.0*marker.radius
@@ -7583,7 +7583,7 @@ suite "Marker":
 # Orrery needs room for its default size, and one configuration here deliberately compiles.
 #   much smaller pool to exercise pool's own limits. Guarded rather than shrunk:
 #   arrangement scaled down would no longer be stress case these cases exist to check.
-when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
+when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
   suite "Orrery":
     ## Check demo preset, heaviest scene this build draws, against world it claims.
     ##   Real solar neighbourhood: these stars stand where they really stand.
@@ -7596,14 +7596,14 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
       ##   above, so this only ever narrows for capacity between two.
       var held: seq[ScaleOrrery]
       for scale in ScaleOrrery:
-        if ITEMS_MAX >= itemsOf(scale): held.add(scale)
+        if OBJECTS_MAX >= objectsOf(scale): held.add(scale)
       held
 
     test "every size fills its own target exactly, and the largest leaves two handles":
       # **Walk lands on count rather than near it.** It passes over system too.
       #   large for room left instead of stopping on it, which is only reason three
       #   unrelated pivots can each come out exact; when it stopped, size hit its pivot
-      #   only where item counts happened to sum to it. Checked at every size, because
+      #   only where object counts happened to sum to it. Checked at every size, because
       #   one size landing exactly says nothing about another.
       #   Handles above largest size are deliberate headroom -- reader can still
       #   build on top of loaded demo rather than meeting refusal, and two is
@@ -7611,21 +7611,21 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
       for scale in SCALES_HELD:
         var scene = initScene()
         constructOrrery(scene, scale)
-        checkpoint(&"{scale}: {scene.len} items, {ITEMS_MAX - scene.len} free")
-        check scene.len == itemsOf(scale)
+        checkpoint(&"{scale}: {scene.len} objects, {OBJECTS_MAX - scene.len} free")
+        check scene.len == objectsOf(scale)
         check not scene.isFull
-        if scale == ScaleOrrery.high: check ITEMS_MAX - scene.len == 2
+        if scale == ScaleOrrery.high: check OBJECTS_MAX - scene.len == 2
 
     test "every object it builds draws something":
       # Three collinear points wedge to multivector of no clean grade, which takes handle.
       #   and renders nothing while scene still counts it. Seven objects did that across
-      #   two earlier rounds, so this counts *shapes* rather than items.
+      #   two earlier rounds, so this counts *shapes* rather than objects.
       var scene = initScene()
       constructOrrery(scene)
       var without: seq[string] = @[]
       for handle in 0 ..< scene.bound:
         if not scene.isAlive(handle): continue
-        if shape(scene.geometryOf(handle)).isNone: without.add(toText(scene.labelAt(handle)))
+        if kindOf(scene.geometryOf(handle)).isNone: without.add(toText(scene.labelAt(handle)))
       check without == newSeq[string]()
 
     test "every size carries every drawable kind, at horizon as well as in the finite world":
@@ -7638,28 +7638,28 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
       for scale in SCALES_HELD:
         var scene = initScene()
         constructOrrery(scene, scale)
-        var tally: array[Shape, int]
-        var at_horizon: array[Shape, int]
+        var tally: array[Kind, int]
+        var at_horizon: array[Kind, int]
         for handle in 0 ..< scene.bound:
           if not scene.isAlive(handle): continue
           let geometry = scene.geometryOf(handle)
-          let kind = shape(geometry)
+          let kind = kindOf(geometry)
           if kind.isNone: continue
           inc tally[kind.get]
           if isHorizon(geometry): inc at_horizon[kind.get]
-        checkpoint(&"{scale}: {tally[Shape.Point]} points, {tally[Shape.Line]} lines, " &
-          &"{tally[Shape.Plane]} planes")
-        for kind in Shape: check tally[kind] > 0
+        checkpoint(&"{scale}: {tally[Kind.Point]} points, {tally[Kind.Line]} lines, " &
+          &"{tally[Kind.Plane]} planes")
+        for kind in Kind: check tally[kind] > 0
         # **Ceiling as well as floor, and lines are only kind with one.** They are cut.
         #   to three that mean something -- two in Sol and one at horizon -- because
         #   line is infinite and crosses whole frame whatever it joins. Floor alone
         #   would let them creep back one edit at time. Same three at every size, since
         #   only Sol carries finite lines.
-        check tally[Shape.Line] in 3 .. 4
-        check at_horizon[Shape.Point] == 2 # Two, and only one of them can make plane.
-        check at_horizon[Shape.Line] == 1
-        check at_horizon[Shape.Plane] == 1
-        counted[scale] = (tally[Shape.Point], tally[Shape.Plane])
+        check tally[Kind.Line] in 3 .. 4
+        check at_horizon[Kind.Point] == 2 # Two, and only one of them can make plane.
+        check at_horizon[Kind.Line] == 1
+        check at_horizon[Kind.Plane] == 1
+        counted[scale] = (tally[Kind.Point], tally[Kind.Plane])
       # Points and planes are what bigger size buys, so both have to rise with it. Stated.
       #   as slope rather than as floor per size: three sets of magic numbers would be
       #   three things to keep true, and what is actually being claimed is that reaching
@@ -7706,7 +7706,7 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
         &"off by {worst:.6f} units")
       # Most of what size spends goes on stars, so most of what it holds should be one.
       #   Folded from size rather than written down, so it survives next one.
-      check seen > (itemsOf(scale) - ITEMS_FIXED_ORRERY) div 2
+      check seen > (objectsOf(scale) - OBJECTS_FIXED_ORRERY) div 2
       check worst <= TOLERANCE_SINGLE
       # And they really are ordered outward, which is what both `RADIUS_ORRERY` and.
       #   nearest-first fill rely on.
@@ -7715,9 +7715,9 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
       # **Nearest-first, and no longer strict prefix -- by bounded amount.** Walk.
       #   passes over system too large for room left rather than stopping on it, which
       #   is only reason three unrelated sizes can each land on their count exactly.
-      #   price is that right at end nearer multi-item system can give way to further
+      #   price is that right at end nearer multi-object system can give way to further
       #   single star. Slack is bounded and bound is derived: once system needing
-      #   `k` items is passed over there are fewer than `k` handles left, and every star costs
+      #   `k` objects is passed over there are fewer than `k` handles left, and every star costs
       #   at least one, so at most `k - 1` stars can follow it in.
       var missing_from = len(STARS)
       for index, star in STARS:
@@ -7728,9 +7728,9 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
       for index in missing_from ..< len(STARS):
         if STARS[index].name in placed: inc slack
       var widest = 0
-      for star in STARS: widest = max(widest, itemsOf(star))
+      for star in STARS: widest = max(widest, objectsOf(star))
       checkpoint(&"{slack} stars placed beyond the first gap; the widest system is " &
-        &"{widest} items, so at most {widest - 1} can be")
+        &"{widest} objects, so at most {widest - 1} can be")
       check slack <= widest - 1
 
     test "the star catalogue is a snapshot, and holds together as one":
@@ -7772,16 +7772,16 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
         if not scene.isAlive(handle): continue
         let geometry = scene.geometryOf(handle)
         if isHorizon(geometry): continue
-        case shape(geometry).get(Shape.Point)
-        of Shape.Plane: planes.add(unitize(geometry))
-        of Shape.Line: lines.add(geometry)
-        of Shape.Point: discard
+        case kindOf(geometry).get(Kind.Point)
+        of Kind.Plane: planes.add(unitize(geometry))
+        of Kind.Line: lines.add(geometry)
+        of Kind.Point: discard
       var worst = 0
       var worst_label = ""
       for handle in 0 ..< scene.bound:
         if not scene.isAlive(handle): continue
         let point = scene.geometryOf(handle)
-        if shape(point) != some(Shape.Point) or isHorizon(point): continue
+        if kindOf(point) != some(Kind.Point) or isHorizon(point): continue
         let place = unitize(point)
         var through = 0
         for plane in planes:
@@ -7818,7 +7818,7 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
       check abs(radii["sol"]/radii["earth"] - sqrt(695_700.0/6_371.0)) < 1.0e-9
       for body in SOL: check radii[body.name] =~ radiusDrawnOf(body.kilometres_radius)
       # Every body stays above what editor accepts, so none is pinned at least dot for good.
-      for moon in MOONS: check radii[moon.name] >= RADIUS_ITEM_LEAST
+      for moon in MOONS: check radii[moon.name] >= RADIUS_OBJECT_LEAST
       # Moon's ring clears planet's disc and its own: two discs never overlap.
       for moon in MOONS:
         let parent = SOL[moon.parent].name
@@ -7884,14 +7884,14 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
           label = toText(scene.labelAt(handle))
           geometry = scene.geometryOf(handle)
         if isHorizon(geometry): continue
-        case shape(geometry).get(Shape.Point)
-        of Shape.Line: lines.add(label)
-        of Shape.Point:
+        case kindOf(geometry).get(Kind.Point)
+        of Kind.Line: lines.add(label)
+        of Kind.Point:
           case roles.getOrDefault(label, Role.Derived)
           of Role.Sun: suns.add(geometry)
           of Role.Planet: planets.add(geometry)
           else: discard
-        of Shape.Plane: discard
+        of Kind.Plane: discard
       check lines == @["sol ∧ earth", "earth ∧ luna"]
       proc lies(line, point: Multivector): bool =
         let place = unitize(point)
@@ -7902,7 +7902,7 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
       for handle in 0 ..< scene.bound:
         if not scene.isAlive(handle): continue
         let geometry = scene.geometryOf(handle)
-        if isHorizon(geometry) or shape(geometry) != some(Shape.Line): continue
+        if isHorizon(geometry) or kindOf(geometry) != some(Kind.Line): continue
         for sun in suns:
           if not lies(geometry, sun): continue
           for planet in planets:
@@ -7933,7 +7933,7 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
       checkpoint(&"earth's direction spans {along:.9f} with the line, luna's {across:.9f}")
       check along <= TOLERANCE_SINGLE # On line: it adds nothing.
       check across > TOLERANCE_SINGLE # Off it: it spans plane.
-      check shape(line ∧ off_it) == some(Shape.Plane)
+      check kindOf(line ∧ off_it) == some(Kind.Plane)
       check isHorizon(line ∧ off_it)
 
     test "the framing radius holds the systems it claims, and the rest run past it":
@@ -7962,7 +7962,7 @@ when ITEMS_MAX >= itemsOf(SCALE_ORRERY_DEFAULT):
       var camera = initCameraDefault()
       camera.azimuth = 1.25 # Left alone by preset, so it has to survive it.
       showOrrery(scene, camera, 1440, 900)
-      check scene.len == itemsOf(SCALE_ORRERY_DEFAULT)
+      check scene.len == objectsOf(SCALE_ORRERY_DEFAULT)
       check camera.pivot =~ POSITION_ORRERY
       check camera.elevation =~ ELEVATION_ORRERY_SHOWN
       check camera.azimuth =~ 1.25

@@ -1,4 +1,4 @@
-## Test scene items against cursor, so mouse action knows which object it touched.
+## Test scene objects against cursor, so mouse action knows which object it touched.
 ##
 ## Every world-space derivation goes through algebra: rays as joins, hits as meets, depths
 ## as `depthAgainst`, nearest points and clips by library's operators.
@@ -14,7 +14,7 @@
 ##   Meet in 3D fails cleanly (ray parallel, hit behind eye) instead of wrongly.
 ##
 ##   |------------|-------------------------------------------------------------------|
-##   | Shape      | Tested against                                                    |
+##   | Kind      | Tested against                                                    |
 ##   |------------|-------------------------------------------------------------------|
 ##   | Point      | Projected marker, by pixel distance.                              |
 ##   | Line       | Projected drawn segment, by distance to its nearest point.        |
@@ -52,13 +52,13 @@ const
   RADIUS_PICK_POINT* = 34.0
     ## Bound how far, in pixels, cursor may sit from point's marker and still hit it.
     ##   Fingertip's contact patch is roughly this wide at phone density.
-    ##   Shape priority (point beats line beats plane) keeps generous radius from
+    ##   Kind priority (point beats line beats plane) keeps generous radius from
     ##   misfiring where targets overlap.
   RADIUS_PICK_LINE* = 24.0
     ## Bound how far, in pixels, cursor may sit from line's drawn segment and still hit it.
     ##   Widened with `RADIUS_PICK_POINT`, for same reason.
   RADIUS_CROWD_TOUCH* = 72.0
-    ## Bound how far, in pixels, second item may stand from finger and still make crowd.
+    ## Bound how far, in pixels, second object may stand from finger and still make crowd.
     ##   Wider than either pick reach: what is asked is not what finger hit but whether it
     ##   could have meant something else, and finger lands whole fingertip wide of where
     ##   reader aimed. At pick reach alone, star field still turned orbits into drags.
@@ -227,8 +227,8 @@ func castRay*(
   ##   Undoes `initMatrixProjection`'s construction: cursor becomes NDC again, scaled by
   ##   same field-of-view tangent, composed from camera's right/up/forward.
   ##   Takes eye and frame precomputed.
-  ##     One cursor tests against every item with same ray, and recomputing per item
-  ##     repeats two joins and antiduals up to `ITEMS_MAX` times.
+  ##     One cursor tests against every object with same ray, and recomputing per object
+  ##     repeats two joins and antiduals up to `OBJECTS_MAX` times.
   let
     half_height = tan(0.5 * degToRad(camera.degrees_field_of_view))
     half_width = half_height * (float(width) / float(height))
@@ -290,10 +290,10 @@ func positionOnLineNearest*(
   position(wedgeAnti(line, wedge(ray, toMultivector(normal_common.get))))
 
 
-func positionOnItemUnder(
+func positionOnObjectUnder(
   geometry: Multivector, ray: Multivector, plane_eye: Multivector
 ): Option[Position] =
-  ## Solve world point of one item cursor's sight `ray` is over.
+  ## Solve world point of one object cursor's sight `ray` is over.
   ##   Point stands where it stands, plane is met where ray crosses it, line is read at
   ##   nearest point to ray; see `positionOnLineNearest`.
   ##   Finite shapes only.
@@ -303,13 +303,13 @@ func positionOnItemUnder(
   ##   direction.
   if geometry.isHorizon: return
   let
-    shaped = shape(geometry)
+    shaped = kindOf(geometry)
     heading = direction(ray)
   if shaped.isNone or heading.isNone: return
   var found = none(Position)
   case shaped.get
-  of Shape.Point: found = positionAnchor(geometry)
-  of Shape.Line:
+  of Kind.Point: found = positionAnchor(geometry)
+  of Kind.Line:
     let (anchor, axis) = (positionAnchor(geometry), direction(geometry))
     if anchor.isSome and axis.isSome:
       # Read ray's two defining elements off ray multivector.
@@ -317,7 +317,7 @@ func positionOnItemUnder(
       let ray_from = positionSupport(ray)
       if ray_from.isSome:
         found = positionOnLineNearest(anchor.get, axis.get, ray_from.get, heading.get)
-  of Shape.Plane: found = position(ray ∨ geometry)
+  of Kind.Plane: found = position(ray ∨ geometry)
   if found.isNone: return
   if depthAgainst(plane_eye, toMultivector(found.get)) <= 1.0e-6: return
   found
@@ -401,11 +401,11 @@ func rayPlaneHit(
 
 
 
-#[ Item Hit Testing ]#
+#[ Object Hit Testing ]#
 
 type PickReport* = object ## Define what one pick found under cursor.
-  handle*: Option[int] ## Nearest item of winning rank; none where nothing is in reach.
-  count_rivals*: int ## How many items of winner's rank or better stood within
+  handle*: Option[int] ## Nearest object of winning rank; none where nothing is in reach.
+  count_rivals*: int ## How many objects of winner's rank or better stood within
     ## `RADIUS_CROWD_TOUCH`, winner included; zero where nothing was picked.
     ## One where pick is unambiguous. Touch has no hover ring to say which of several
     ## finger is over, so its drag refuses to start above one; see
@@ -468,7 +468,7 @@ proc pickWalk(
   width, height: int; cursor: ScreenPosition; placed: openArray[Placed];
   hiders_known: Hiders; is_points_only: bool
 ): PickWalk =
-  ## Walk every visible item once, ranking what stands within reach of cursor.
+  ## Walk every visible object once, ranking what stands within reach of cursor.
   ##   `pickAt`'s one pass; see it for rule. Points `hiders_known` hide are passed over,
   ##   as winner and as rival; discs under cursor met on way are gathered for caller.
   ##   `is_points_only` skips every other kind, for second pass whose winner is already
@@ -512,7 +512,7 @@ proc pickWalk(
       is_under_best = is_under
       handle_best = some(handle)
   # Ask once whether caller brought whole frame's placements; cannot change mid-walk.
-  let is_placed_held = placed.len >= ITEMS_MAX
+  let is_placed_held = placed.len >= OBJECTS_MAX
   var placed_here: Placed # Filled per handle only where caller brought none.
 
   # Walk by handle to `bound`, not to capacity.
@@ -658,7 +658,7 @@ proc pickAt*(
   scene: Scene; camera: Camera; scale: DrawExtent; view_projection: Matrix4;
   width, height: int; cursor: ScreenPosition; placed: openArray[Placed] = []
 ): PickReport =
-  ## Find visible item nearest cursor and count its rivals.
+  ## Find visible object nearest cursor and count its rivals.
   ##   Prefers points over lines over planes; see `PickReport`.
   ##   `placed` is frame's own placements, where caller kept them.
   ##     `tessellate.placeObject` already answers what object is and where, and
@@ -706,7 +706,7 @@ proc pickNearest*(
   scene: Scene; camera: Camera; scale: DrawExtent; view_projection: Matrix4;
   width, height: int; cursor: ScreenPosition; placed: openArray[Placed] = []
 ): Option[int] =
-  ## Find visible item nearest cursor, preferring points over lines over planes.
+  ## Find visible object nearest cursor, preferring points over lines over planes.
   ##   `pickAt`'s handle alone, for caller with no use for rival count.
   pickAt(scene, camera, scale, view_projection, width, height, cursor, placed).handle
 
@@ -723,12 +723,12 @@ func coversView*(
 func isBackdropUnder*(
   scene: Scene, handle: int, scale: DrawExtent, width, height: int
 ): bool =
-  ## Report whether hovered item is backdrop: plane at horizon, or plane filling view.
+  ## Report whether hovered object is backdrop: plane at horizon, or plane filling view.
   ##   Backdrop is click and hold pivot, never drag handle: press on it falls through to
   ##   camera, or view cannot be moved while plane fills every pixel.
   let geometry = scene.geometryOf(handle)
   if geometry.isHorizonPlane: return true
-  if shape(geometry) != some(Shape.Plane): return false
+  if kindOf(geometry) != some(Kind.Plane): return false
   let anchor = anchorFor(geometry, scene.anchorOverrideAt(handle), scale)
   anchor.isSome and coversView(anchor.get, EXTENT_PLANE_F, scale, width, height)
 
@@ -756,12 +756,12 @@ func positionUnderPointerOn*(
   ## Solve where one object stands under `cursor`.
   ##   Point at its place, line at its point nearest sight ray, plane where ray crosses it.
   ##   For zoom's anchor and for pointer pick's aim, both holding that place on its pixel.
-  ##   None for horizon shapes and hits behind eye; see `positionOnItemUnder`.
+  ##   None for horizon shapes and hits behind eye; see `positionOnObjectUnder`.
   ##   No nearness filter: caller wanting one applies `isAnchorNear`.
   let
     frame_camera = camera.frame(scale.eye)
     ray = castRay(camera, scale.eye, frame_camera, width, height, cursor)
-  positionOnItemUnder(scene.geometryOf(handle), ray, scale.plane_eye)
+  positionOnObjectUnder(scene.geometryOf(handle), ray, scale.plane_eye)
 
 
 proc anchorZoomAt*(
@@ -779,7 +779,7 @@ proc anchorZoomAt*(
   ##   Object or ground far from what reader looks at is passed over for level through
   ##   pivot; see `FACTOR_ANCHOR_DEPTH`.
   ##   `pickNearest` ranks horizon plane last and matches it everywhere, so sky is under
-  ##   cursor almost always; `positionOnItemUnder` refuses horizon shapes for exactly
+  ##   cursor almost always; `positionOnObjectUnder` refuses horizon shapes for exactly
   ##   that reason, and fall-through does work.
   ##   None where none of three answers, leaving caller to zoom at middle of frame.
   # Take caller's extent.
@@ -791,7 +791,7 @@ proc anchorZoomAt*(
   if handle.isSome:
     let found = positionUnderPointerOn(scene, handle.get, camera, scale, width, height, cursor)
     if found.isSome and isAnchorNear(found.get, camera, scale):
-      let is_standing = shape(scene.geometryOf(handle.get)) != some(Shape.Plane)
+      let is_standing = kindOf(scene.geometryOf(handle.get)) != some(Kind.Plane)
       return some(AnchorZoom(at: found.get, is_standing: is_standing))
   let ground = positionOnGround(camera, width, height, cursor)
   if ground.isSome and isAnchorNear(ground.get, camera, scale):
@@ -996,18 +996,18 @@ func isShownCentrally*(
   ##   Only *ratio* of `width` to `height` matters, so caller holding aspect and one
   ##   dimension may pass any pair in that ratio.
   ##   False where `m` draws nothing at all.
-  let shape_m = shape(m)
+  let shape_m = kindOf(m)
   if shape_m.isNone: return false
   let
     scale = camera.drawExtentFor(height)
     view_projection = camera.initMatrixViewProjection(float(width)/float(height))
   case shape_m.get
-  of Shape.Point:
+  of Kind.Point:
     let anchor = anchorFor(m, scale)
     anchor.isSome and isWithinCentre(
       projectToScreen(view_projection, width, height, anchor.get),
       width, height, INSET_POINT_SHOWN,
     )
-  of Shape.Line: isLineShownCentrally(m, scale, view_projection, width, height)
-  of Shape.Plane:
+  of Kind.Line: isLineShownCentrally(m, scale, view_projection, width, height)
+  of Kind.Plane:
     isPlaneShownCentrally(m, anchor_override, view_projection, width, height)

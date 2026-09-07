@@ -53,7 +53,7 @@ let touch_down_at: number | null = null;
 let position_touch_down: PointLocal | null = null;
 let has_touch_moved = false;
 let has_long_press_fired = false;
-// Item finger came down on, and whether that press has become construction drag.
+// Object finger came down on, and whether that press has become construction drag.
 //   `handle_touch_down` is read once at pointerdown, while hover still holds it -- picking
 //   again later would report whatever finger has since moved over.
 let handle_touch_down = -1, is_touch_dragging = false;
@@ -134,9 +134,9 @@ canvas.addEventListener('pointerdown', (e) => {
     position_touch_down = local;
     has_touch_moved = false;
     has_long_press_fired = false;
-    // Pick item under finger now and hand press to Nim, which owns how long.
+    // Pick object under finger now and hand press to Nim, which owns how long.
     //   hold takes and whether one is due. Frame loop asks it both, which is also what
-    //   fills item's own marker -- timer firing on its own could not draw anything.
+    //   fills object's own marker -- timer firing on its own could not draw anything.
     //   Handle is kept as well: it is what decides, on first movement, whether this
     //   press was construction drag or camera orbit.
     nimUpdateCursor(local.x, local.y);
@@ -348,7 +348,7 @@ function releasePointer(e: PointerEvent) {
   //   tap is same-finger down+up within time/distance bounds, with no second finger ever joining
   //   and no long-press already having fired -- resolves into selection toggle (see `handleTap`).
   //   Released, whether or not hold had matured; frame that matured it has already
-  //   selected item. Hold itself lives on for one settle, which is what shrinks
+  //   selected object. Hold itself lives on for one settle, which is what shrinks
   //   marker back -- `nimIsHoldSpent` retires it in draw loop.
   nimReleaseHold(now());
   if (is_touch_dragging) {
@@ -625,7 +625,7 @@ menu_selection_back.addEventListener('click', closeSelectionMenuOp);
 menu_selection_hide.addEventListener('click', () => {
   // Whichever way button reads is what it does, so objects it hid can be brought.
   //   back from same place -- `nimSelectionAllHidden` owns what "hidden" means for
-  //   whole selection, way row button reads `nimItemVisible` for one object.
+  //   whole selection, way row button reads `nimObjectVisible` for one object.
   const show = nimSelectionAllHidden();
   for (const handle of handles_selection) nimSetVisible(handle, show);
   toast((show ? 'Showed ' : 'Hid ') + handles_selection.length + ' object(s).');
@@ -635,7 +635,7 @@ menu_selection_hide.addEventListener('click', () => {
 
 menu_selection_delete.addEventListener('click', () => {
   const n = handles_selection.length;
-  for (const handle of handles_selection) nimRemoveItem(handle);
+  for (const handle of handles_selection) nimRemoveObject(handle);
   toast('Deleted ' + n + ' object(s).');
   clearSelection();
   refreshObjectsUI();

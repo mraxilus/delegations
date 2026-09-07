@@ -6,7 +6,7 @@
 
 /* ---------------------------------------------------------------------- */
 /* Objects panel: list, show/hide, remove, rename, recolour, edit         */
-/* coefficients -- mirrors panel.layoutObjects / layoutItem exactly.      */
+/* coefficients -- mirrors panel.layoutObjects / layoutObject exactly.      */
 /* ---------------------------------------------------------------------- */
 
 const list_objects = elementById('objects-list');
@@ -20,7 +20,7 @@ const count_objects = elementById('objects-count');
 /* rebuilds every row from scratch, which would otherwise discard it.      */
 /* ---------------------------------------------------------------------- */
 
-// Item being composed or edited, or `null` where no session is open.
+// Object being composed or edited, or `null` where no session is open.
 //   `handle` is null while composing, since object does not exist yet.
 interface EditSession {
   handle: number | null;
@@ -33,7 +33,7 @@ interface EditSession {
 let session_edit: EditSession | null = null;
 
 function beginEditSession(handle: number | null) {
-  // Null handle composes; real handle edits that item. Seeding composing session from.
+  // Null handle composes; real handle edits that object. Seeding composing session from.
   //   Nim's own defaults keeps auto-label and cycled ink every other construction
   //   path assigns, while leaving both editable before object exists.
   session_edit = handle === null
@@ -47,11 +47,11 @@ function beginEditSession(handle: number | null) {
       }
     : {
         handle,
-        coefficients: Array.from(nimItemCoefficients(handle)),
-        label: nimItemLabel(handle),
-        ink: nimItemInk(handle),
-        radius: nimItemRadius(handle),
-        shines: nimItemShines(handle),
+        coefficients: Array.from(nimObjectCoefficients(handle)),
+        label: nimObjectLabel(handle),
+        ink: nimObjectInk(handle),
+        radius: nimObjectRadius(handle),
+        shines: nimObjectShines(handle),
       };
   nimSetGhost(openSession().coefficients, openSession().radius);
 }
@@ -82,7 +82,7 @@ let signatures_row = new Map();
 
 // Geometry line row shows, held per handle against scene's own revision.
 //   **Costly half of signature, and function of geometry alone.** Measured at
-//   1,024 objects, `nimFormatMultivector` is 11.8 ms of walk and `nimItemShapeWord` 2.9,
+//   1,024 objects, `nimFormatMultivector` is 11.8 ms of walk and `nimObjectKindWord` 2.9,
 //   against 0.8 ms for every other field row draws put together. Geometry changes only
 //   when `scene.revision` does -- every writer bumps it, which is what frame hold and
 //   placement cache already rest on -- so text is re-derived when revision moves
@@ -102,13 +102,13 @@ function geometryTextFor(handle: number) {
   }
   let held = text_geometry_row.get(handle);
   if (held === undefined) {
-    held = nimItemShapeWord(handle) + ': ' + nimFormatMultivector(handle);
+    held = nimObjectKindWord(handle) + ': ' + nimFormatMultivector(handle);
     text_geometry_row.set(handle, held);
   }
   return held;
 }
 
-function signatureOfItemRow(key: string) {
+function signatureOfObjectRow(key: string) {
   // **Everything row draws, and nothing else.** Two equal signatures mean same.
   //   picture, so element standing there is already right and is left alone.
   if (key === KEY_ROW_EMPTY || key === KEY_ROW_PENDING) return key;
@@ -118,7 +118,7 @@ function signatureOfItemRow(key: string) {
   //   it on some unrelated refresh would take caret out of whatever field they were in.
   if (isEditing(handle)) return 'open:' + handle;
   return [
-    nimItemLabel(handle), nimItemInk(handle), nimItemVisible(handle) ? 1 : 0,
+    nimObjectLabel(handle), nimObjectInk(handle), nimObjectVisible(handle) ? 1 : 0,
     handles_selection.includes(handle) ? 1 : 0, geometryTextFor(handle),
   ].join('\u0001');
 }
@@ -131,7 +131,7 @@ function buildRowFor(key: string) {
     p.textContent = 'Nothing here yet -- press `add` above, or drag between two objects.';
     return p;
   }
-  return buildItemRow(key === KEY_ROW_PENDING ? null : parseInt(key, 10));
+  return buildObjectRow(key === KEY_ROW_PENDING ? null : parseInt(key, 10));
 }
 
 function refreshObjectsUI() {
@@ -162,7 +162,7 @@ function refreshObjectsUI() {
   //   changes nothing writes nothing. Same shape as `timings.RECORDS_FRAME`'s
   //   this-frame/last-frame pair and swap arena, one side of wire over.
   // **Ordered by bridge, not by comparator that calls it.** This used to sort by.
-  //   `nimItemBorn`, which is two calls across FFI per comparison -- about 124,000 of
+  //   `nimObjectBorn`, which is two calls across FFI per comparison -- about 124,000 of
   //   them over 5,038 handles, and 165 ms of load, to reach order Nim can hand over.
   //   `nimSceneHandlesCreated` is that order already: `scene.handlesCreated` walks by
   //   creation ordinal, and replayed load stamps `born` in creation order, so reversing
@@ -206,7 +206,7 @@ function refreshAddButton() {
   writeDisabled(button_add, session_edit !== null || nimSceneCount() >= nimSceneCapacity());
 }
 
-function buildItemRow(handle: number | null) {
+function buildObjectRow(handle: number | null) {
   // `handle === null` builds composing row: same layout, but nothing backs it in.
   //   scene, so everything it displays comes from `session_edit` and buttons that act
   //   on real object (hide, remove) are left out entirely.
@@ -219,19 +219,19 @@ function buildItemRow(handle: number | null) {
   //   know -- `scrollRowIntoView` scrolls to bring its edit form into view, and form
   //   standing behind 42px placeholder scrolls to placeholder. `shell.html` reads
   //   this class to keep open row out of containment other thousand are in.
-  row.className = 'item-row'
-    + (is_open ? ' editing-item' : '')
-    + (is_pending ? ' pending-item' : '')
+  row.className = 'object-row'
+    + (is_open ? ' editing-object' : '')
+    + (is_pending ? ' pending-object' : '')
     + (!is_pending && handles_selection.includes(handle) ? ' selected' : '')
-    + (!is_pending && !nimItemVisible(handle) ? ' hidden-item' : '');
+    + (!is_pending && !nimObjectVisible(handle) ? ' hidden-object' : '');
 
   const top = document.createElement('div');
-  top.className = 'item-top';
+  top.className = 'object-top';
 
   // While session is open its staged values drive row, so swatch, label and.
   //   coefficient line preview edit without scene having changed.
-  const inkOf = () => (is_open ? openSession().ink : nimItemInk(handle));
-  const labelOf = () => (is_open ? openSession().label : nimItemLabel(handle));
+  const inkOf = () => (is_open ? openSession().ink : nimObjectInk(handle));
+  const labelOf = () => (is_open ? openSession().label : nimObjectLabel(handle));
 
   // Selection checkbox:
   //   mirrors/toggles membership in `handles_selection`, exactly same helper
@@ -250,13 +250,13 @@ function buildItemRow(handle: number | null) {
   top.appendChild(swatch);
 
   const label = document.createElement('span');
-  label.className = 'item-label';
+  label.className = 'object-label';
   label.textContent = labelOf();
   label.style.color = rgbToCss(nimInkColor(inkOf()));
   top.appendChild(label);
 
   const toggle_edit = document.createElement('button');
-  toggle_edit.className = 'button item-edit-toggle';
+  toggle_edit.className = 'button object-edit-toggle';
   toggle_edit.type = 'button';
   toggle_edit.textContent = is_open ? 'save' : 'edit';
   toggle_edit.title = is_open
@@ -266,7 +266,7 @@ function buildItemRow(handle: number | null) {
     if (!is_open) { beginEditSession(handle); refreshObjectsUI(); return; }
     if (is_pending && nimSceneCount() >= nimSceneCapacity()) { toast('Scene is full.'); return; }
     if (is_pending) {
-      nimAddItem(
+      nimAddObject(
         openSession().coefficients, openSession().label, openSession().ink, openSession().radius,
         openSession().shines, now(),
       );
@@ -274,7 +274,7 @@ function buildItemRow(handle: number | null) {
       adoptConstructionSelection();
       toast('Added `' + label.textContent + '`.');
     } else {
-      nimCommitItem(
+      nimCommitObject(
         handle, openSession().coefficients, openSession().label, openSession().ink,
         openSession().radius, openSession().shines,
       );
@@ -290,7 +290,7 @@ function buildItemRow(handle: number | null) {
     // Abandon: composing row vanishes with nothing added, editing row reverts. In.
     //   both cases scene was never touched, so this only has to drop session.
     const cancel = document.createElement('button');
-    cancel.className = 'button item-edit-cancel';
+    cancel.className = 'button object-edit-cancel';
     cancel.type = 'button';
     cancel.textContent = '✕';
     cancel.title = is_pending ? 'Discard this new object.' : 'Discard these changes.';
@@ -307,25 +307,25 @@ function buildItemRow(handle: number | null) {
     //   acting on one version while looking at another. Composing row has no object at
     //   all yet, so both are left out rather than shown disabled either way.
     const visibility = document.createElement('button');
-    visibility.className = 'button item-visibility';
+    visibility.className = 'button object-visibility';
     visibility.type = 'button';
-    visibility.textContent = nimItemVisible(handle) ? 'hide' : 'show';
+    visibility.textContent = nimObjectVisible(handle) ? 'hide' : 'show';
     visibility.title = 'Show or hide this object without removing it.';
     visibility.addEventListener('click', () => {
-      const was_visible = nimItemVisible(handle);
+      const was_visible = nimObjectVisible(handle);
       nimSetVisible(handle, !was_visible);
       visibility.textContent = was_visible ? 'show' : 'hide'; // Local flip, no full rebuild.
-      row.classList.toggle('hidden-item', was_visible);
+      row.classList.toggle('hidden-object', was_visible);
     });
     top.appendChild(visibility);
 
     const remove = document.createElement('button');
-    remove.className = 'button item-remove';
+    remove.className = 'button object-remove';
     remove.type = 'button';
     remove.textContent = 'remove';
     remove.title = "Delete this object; its handle is reused by the next one you add.";
     remove.addEventListener('click', () => {
-      nimRemoveItem(handle); // Drops handle from selection itself, so stale pick
+      nimRemoveObject(handle); // Drops handle from selection itself, so stale pick
         // cannot linger and read as "selected" once future add reuses freed handle.
       if (isEditing(handle)) endEditSession(); // Its session has nothing left to commit to.
       toast('Removed `' + label.textContent + '`.');
@@ -337,7 +337,7 @@ function buildItemRow(handle: number | null) {
   row.appendChild(top);
 
   const line_coefficient = document.createElement('div');
-  line_coefficient.className = 'item-coefficient';
+  line_coefficient.className = 'object-coefficient';
   const describeStaged = () =>
     is_open ? nimDescribeCoefficients(openSession().coefficients)
            : geometryTextFor(handle);
@@ -351,13 +351,13 @@ function buildItemRow(handle: number | null) {
   //   **76 elements per collapsed row and 80,325 on page**, against 843 on opening
   //   scene; one rebuild of list cost 570 ms of JavaScript and 164 ms of layout, so
   //   tap on `hide` froze page for three quarters of second. It also meant
-  //   `nimItemCoefficients` call across FFI for every row of every rebuild, to fill
+  //   `nimObjectCoefficients` call across FFI for every row of every rebuild, to fill
   //   inputs nobody could see.
   //   Nothing was reachable in there anyway: every field writes into `session_edit`, which
   //   is null unless session is open, so hidden form could only have thrown.
   if (is_open) {
     const box_edit = document.createElement('div');
-    box_edit.className = 'item-edit' + (is_open ? ' open' : '');
+    box_edit.className = 'object-edit' + (is_open ? ' open' : '');
 
     const field_label = document.createElement('div');
     field_label.className = 'field';
@@ -382,7 +382,7 @@ function buildItemRow(handle: number | null) {
     const picker_ink = document.createElement('select');
     // Only categorical slots are offerable; `nimInkChoosableSlots` decides which those.
     //   are, so no palette rule lives out here. Its entries stay whole-palette ordinals,
-    //   same ones `nimItemInk` reports and `nimInkName`/`nimInkColor` accept.
+    //   same ones `nimObjectInk` reports and `nimInkName`/`nimInkColor` accept.
     for (const ink of nimInkChoosableSlots()) {
       const option = document.createElement('option');
       option.value = String(ink);
@@ -453,7 +453,7 @@ function buildItemRow(handle: number | null) {
       (b) =>
         nimFormatNumber(is_open
           ? openSession().coefficients[b] ?? 0
-          : nimItemCoefficients(handle)[b] ?? 0),
+          : nimObjectCoefficients(handle)[b] ?? 0),
     );
     inputs_coefficient.forEach((input, b) => {
       // `input`, not `change`: ghost tracks keystroke rather than waiting for.

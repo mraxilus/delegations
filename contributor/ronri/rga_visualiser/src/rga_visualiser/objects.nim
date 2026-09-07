@@ -29,32 +29,32 @@ static:
 #[ Type Definitions ]#
 
 type
-  Shape* {.pure.} = enum ## Define geometry k-vector stands for in 4D RGA.
+  Kind* {.pure.} = enum ## Define geometry k-vector stands for in 4D RGA.
     Point, ## Grade 1.
     Line, ## Grade 2.
     Plane, ## Grade 3.
 
 
 
-#[ Shape Classification ]#
+#[ Kind Classification ]#
 
-func shape*(m: Multivector): Option[Shape] =
+func kindOf*(m: Multivector): Option[Kind] =
   ## Name geometry multivector stands for.
   ##   None for mixed grade, and for scalar and antiscalar, which draw nothing.
   let grade = m.grade
   if grade.isNone: return
   case int(grade.get)
-  of 1: some(Shape.Point)
-  of 2: some(Shape.Line)
-  of 3: some(Shape.Plane)
-  else: none[Shape]()
+  of 1: some(Kind.Point)
+  of 2: some(Kind.Line)
+  of 3: some(Kind.Plane)
+  else: none[Kind]()
 
 
 func isHorizon*(m: Multivector): bool = abs(( |∘ m)[Basis.scalarAnti]) <= TOLERANCE_ABS
   ## Report whether object lies wholly at horizon, i.e. whether its weight vanishes.
 
 
-func isHorizonPlane*(m: Multivector): bool = shape(m) == some(Shape.Plane) and isHorizon(m)
+func isHorizonPlane*(m: Multivector): bool = kindOf(m) == some(Kind.Plane) and isHorizon(m)
   ## Report whether object is plane at horizon.
   ##   One shape drawn as sky dome (`mesh.addDome`), which frame assembly inserts before
   ##   anything else sharing translucent wash pass. See `visualiser.assembleMeshes`.

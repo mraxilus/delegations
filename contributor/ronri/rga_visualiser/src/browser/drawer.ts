@@ -187,7 +187,7 @@ function openApplyPickerOnOperands(position_local: PointLocal | null) {
 }
 
 // **Settled scroll, not single jump.** Row outside viewport is placeholder.
-//   rather than laid-out row -- see `.item-row`'s `content-visibility` in `shell.html` --
+//   rather than laid-out row -- see `.object-row`'s `content-visibility` in `shell.html` --
 //   so offset of row thousand places down list is estimate until rows
 //   above it have actually been measured. One `scrollIntoView` lands on estimate:
 //   measured on handle 900 of demo, row arrived 428px lower than it should have,

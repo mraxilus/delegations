@@ -95,7 +95,7 @@ function pickOnClick(handle: number, button: number, is_shifted: boolean) {
 
 function adoptConstructionSelection() {
   // Pick up outcome every construction path already decided.
-  //   Each picked its own new object (see nimAddItem/nimApplyOperation/nimEndDrag's own
+  //   Each picked its own new object (see nimAddObject/nimApplyOperation/nimEndDrag's own
   //   doc comments), or cleared selection (nimLoadDemo/nimUndo/nimRedo on success).
   refreshSelectionSnapshot();
   hideSelectionMenu(); // Construction action never itself opens selection menu --

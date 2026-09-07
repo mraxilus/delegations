@@ -39,12 +39,12 @@ import ./[camera, scene]
 const CAPACITY_HISTORY* {.define: "visualiser.history_capacity".} = 32
   ## Fix how many steps of timeline are retained.
   ##   Costs `CAPACITY_HISTORY * sizeof(Step)` of fixed reservation, and `Step` is whole
-  ##   `Scene`, so this scales with `scene.ITEMS_MAX`: not cheap.
+  ##   `Scene`, so this scales with `scene.OBJECTS_MAX`: not cheap.
   ##     Largest reservation binary makes, counted by `visualiser.BYTES_MEMORY_TOTAL`;
   ##     figures in `PROVENANCE.md`.
   ##   Kept at 32: depth costs nothing per edit (see `record`), so what remains is flat
   ##   reservation, linear per step. One lever to pull if page must be lighter.
-  ##   Settable beside `visualiser.items_max` and `visualiser.label_max`, so suite runs
+  ##   Settable beside `visualiser.objects_max` and `visualiser.label_max`, so suite runs
   ##   once at defaults and once at capacities small enough that test reaches them, e.g.
   ##   `--define:visualiser.history_capacity=8`.
 

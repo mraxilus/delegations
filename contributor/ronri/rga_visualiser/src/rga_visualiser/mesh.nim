@@ -86,11 +86,11 @@ const
     ##   pivot.
   RIBBONS_MAX* {.define: "visualiser.ribbons_max".} = 20161
     ## Bound how many ribbon segments one frame holds.
-    ##   Binding case is scene filled to `scene.ITEMS_MAX` with *lines*, each two
+    ##   Binding case is scene filled to `scene.OBJECTS_MAX` with *lines*, each two
     ##   segments `tessellate.addLine` steps out, every one selected and drawn twice,
     ##   plus ghost.
     ##   Furniture set, sharing this cap, wants `2*LINES_GRID_MAX` lattice lines and axes.
-    ##   `scene.nim` carries `static` check tying this to `ITEMS_MAX`, which this module
+    ##   `scene.nim` carries `static` check tying this to `OBJECTS_MAX`, which this module
     ##   cannot see. Overflow is `doAssert`, dead page rather than dropped triangle.
   VERTICES_MAX* {.define: "visualiser.vertices_max".} = 10080
     ## Bound how many vertices point mesh holds, per frame.
@@ -116,15 +116,15 @@ const
     ##   floor keeps distant one readable dot rather than sub-pixel flicker.
     ##   Both render targets read it: desktop as uniform, browser through
     ##   `nimRenderLineWidths`.
-  RADIUS_ITEM_DEFAULT* = 0.08
-    ## Set drawn radius, in world units, item takes when nothing chose one.
+  RADIUS_OBJECT_DEFAULT* = 0.08
+    ## Set drawn radius, in world units, object takes when nothing chose one.
     ##   What nine-pixel dot every point once wore spans at opening camera: 19 units of
     ##   orbit over 900 pixels of height, so old scenes and fresh constructions look as
     ##   they did from there and only gain perspective.
-  RADIUS_ITEM_LEAST* = 0.001
+  RADIUS_OBJECT_LEAST* = 0.001
     ## Bound smallest radius either editor lets reader type.
     ##   Model refuses only zero and below; this keeps typed size above what any camera
-    ##   in demo resolves, so item never vanishes into least on-screen size for good.
+    ##   in demo resolves, so object never vanishes into least on-screen size for good.
   FRACTION_AMBIENT_SHADE* = 0.25'f32
     ## Set how bright lit point's night side is drawn, as fraction of its colour.
     ##   Rest is Lambert's cosine toward its sun; see `Vertex.light`.
@@ -135,7 +135,7 @@ const
     ##   Zero rather than option: it crosses wire as three floats per point, and shader
     ##   has no option to unwrap. Sun, ghost, star at horizon and point with no sun all
     ##   take it.
-  RADIUS_ITEM_MOST* = 1.0e6
+  RADIUS_OBJECT_MOST* = 1.0e6
     ## Bound largest radius either editor lets reader type.
     ##   Desktop's drag widget takes no upper bound as no bounds at all, so one is named;
     ##   far past any scene here, which spans about 3,000 units.
@@ -691,7 +691,7 @@ func easeOutCubic*(t: float): float =
 
 
 func animationProgress*(now, born: float): float =
-  ## Report how much of appear animation item born at `born` has completed by `now`.
+  ## Report how much of appear animation object born at `born` has completed by `now`.
   ##   Clamped and eased, so caller may pass any `now - born` and always get value to
   ##   scale or fade by.
   easeOutCubic((now - born) / ANIMATION_SECONDS)

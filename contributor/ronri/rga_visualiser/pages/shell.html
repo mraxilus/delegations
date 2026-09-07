@@ -174,7 +174,7 @@
     right: max(14px, env(safe-area-inset-right));
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-objects: flex-start;
     gap: 10px;
     pointer-events: none;
   }
@@ -186,7 +186,7 @@
     font: inherit;
     pointer-events: auto;
     display: flex;
-    align-items: center;
+    align-objects: center;
     gap: 8px;
     background: var(--surface);
     backdrop-filter: blur(10px);
@@ -305,7 +305,7 @@
     height: 44px;
     border-radius: 999px;
     display: flex;
-    align-items: center;
+    align-objects: center;
     justify-content: center;
     pointer-events: auto;
     cursor: pointer;
@@ -430,7 +430,7 @@
      track sizing, so each column is measured per tab, from what is actually on screen. */
   .help-rows {
     overflow-y: auto;
-    /* Takes whatever column has left; `min-height: 0` because flex item defaults to
+    /* Takes whatever column has left; `min-height: 0` because flex object defaults to
        its content's minimum and would refuse to shrink, pushing panel off screen. */
     flex: 1 1 auto;
     min-height: 0;
@@ -439,7 +439,7 @@
     column-gap: 10px;
     align-content: start;
   }
-  /* `display: contents` so each row's two cells become items of grid above rather
+  /* `display: contents` so each row's two cells become objects of grid above rather
      than of box of their own. Safe for `touch` marker, which hangs off action
      cell and so keeps box to hang from. */
   .help-row { display: contents; }
@@ -497,7 +497,7 @@
     display: flex;
     flex-direction: column;
     gap: 7px;
-    align-items: stretch;
+    align-objects: stretch;
   }
   .toast-action {
     display: inline-block;
@@ -620,7 +620,7 @@
     appearance: none;
     width: 100%;
     display: flex;
-    align-items: center;
+    align-objects: center;
     justify-content: space-between;
     background: transparent;
     border: none;
@@ -647,7 +647,7 @@
 
   /* ---- Generic field controls ---- */
   .field { margin-bottom: 9px; }
-  .field-check { display: flex; align-items: center; gap: 6px; font-size: 12px;
+  .field-check { display: flex; align-objects: center; gap: 6px; font-size: 12px;
     color: var(--ink-muted); cursor: pointer; }
   .field label {
     display: block;
@@ -702,7 +702,7 @@
 
   .check-row {
     display: flex;
-    align-items: center;
+    align-objects: center;
     gap: 7px;
     font-size: 12.5px;
     color: var(--ink);
@@ -723,9 +723,9 @@
   }
 
   /* ---- Objects list ---- */
-  .objects-header { display: flex; align-items: baseline; justify-content: space-between; }
+  .objects-header { display: flex; align-objects: baseline; justify-content: space-between; }
   .objects-count { font-size: 11px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
-  .item-row {
+  .object-row {
     border-top: 1px solid var(--border);
     padding: 9px 0;
     /* **Row nobody can see is not laid out.** At capacity of 1,024 list holds about
@@ -749,25 +749,25 @@
   /* One row reader is editing is exempt: it is several times taller than collapsed
      one, and `scrollRowIntoView` has to scroll its whole form into view rather than
      placeholder standing in for it. One row of thousand, so saving is untouched. */
-  .item-row.editing-item { content-visibility: visible; contain-intrinsic-size: none; }
-  .item-row:first-of-type { border-top: none; }
-  .item-row.selected {
+  .object-row.editing-object { content-visibility: visible; contain-intrinsic-size: none; }
+  .object-row:first-of-type { border-top: none; }
+  .object-row.selected {
     background: rgba(0, 167, 165, 0.10);
     border-radius: 8px;
     margin: 0 -10px;
     padding: 9px 10px;
   }
-  .item-row.hidden-item { opacity: 0.45; } /* Dimmed but still legible -- mirrors
-    .item-row.selected's own role as lightweight whole-row state cue, just for
+  .object-row.hidden-object { opacity: 0.45; } /* Dimmed but still legible -- mirrors
+    .object-row.selected's own role as lightweight whole-row state cue, just for
     "hidden" instead of "selected"; two are independent and may combine. */
-  .item-top { display: flex; align-items: center; gap: 8px; }
-  .item-top input[type="checkbox"] {
+  .object-top { display: flex; align-objects: center; gap: 8px; }
+  .object-top input[type="checkbox"] {
     accent-color: var(--accent);
     width: 15px;
     height: 15px;
     flex: none;
   }
-  .item-label {
+  .object-label {
     flex: 1;
     font-size: 12.5px;
     font-weight: 600;
@@ -775,21 +775,21 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .item-remove, .item-visibility, .item-edit-toggle, .item-edit-cancel {
+  .object-remove, .object-visibility, .object-edit-toggle, .object-edit-cancel {
     font-size: 10.5px; padding: 4px 8px;
   }
   /* Row being composed has no object behind it yet -- mark it so unsaved row is
      never mistaken for one that already exists. */
-  .item-row.pending-item { border-left: 2px solid var(--accent); padding-left: 8px; }
-  .item-coefficient {
+  .object-row.pending-object { border-left: 2px solid var(--accent); padding-left: 8px; }
+  .object-coefficient {
     font-family: var(--mono);
     font-size: 10.5px;
     color: var(--ink-faint);
     margin: 3px 0 0 23px;
     word-break: break-word;
   }
-  .item-edit { display: none; margin: 8px 0 0 23px; }
-  .item-edit.open { display: block; }
+  .object-edit { display: none; margin: 8px 0 0 23px; }
+  .object-edit.open { display: block; }
   /* Coefficient grid: stacked one row per grade (0 to n), each row itself wrapping --
      grade 2 in this build's own 4D rigid PGA has 6 members, more than comfortably fits
      one line at drawer's own width, so grade's own row wraps onto second line
@@ -892,12 +892,12 @@
     color: var(--ink-faint);
     margin: 2px 0 8px;
     display: flex;
-    align-items: center;
+    align-objects: center;
     flex-wrap: wrap;
     gap: 2px 8px;
     justify-content: space-between;
   }
-  .diagnostic-legend-axis { display: flex; align-items: center; gap: 6px; }
+  .diagnostic-legend-axis { display: flex; align-objects: center; gap: 6px; }
   .diagnostic-legend b { color: var(--ink-muted); font-variant-numeric: tabular-nums; }
   /* Row ramp's own key: ramp itself, as bar. Its gradient is set by glue.js
      from very table rows are tinted out of, so key cannot come to show ramp
@@ -937,7 +937,7 @@
     border-radius: 12px;
     padding: 6px;
     display: none;
-    align-items: center;
+    align-objects: center;
     gap: 5px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.4);
   }
@@ -951,7 +951,7 @@
        upper bound and clip via overflow while doing so, "width: auto" cannot animate at
        all. */
     display: flex;
-    align-items: center;
+    align-objects: center;
     gap: 5px;
     max-width: 0;
     overflow: hidden;

@@ -1,7 +1,7 @@
-## Track drag gesture from one scene item to another, and apply operation it makes.
+## Track drag gesture from one scene object to another, and apply operation it makes.
 ##
 ## Press pivot chooses scheme; button chooses whether reader is asked.
-##   Drag begins only when press lands on pickable item.
+##   Drag begins only when press lands on pickable object.
 ##   Press on empty space is left for camera orbit or pan, so two schemes never compete
 ##   for one click.
 ##   Left button decides, right asks, over same set of choices; neither reaches anything
@@ -15,12 +15,12 @@
 ##   names three things it can amount to, i.e. nothing, refusal, object, which tints
 ##   rubber-band.
 ## Hover is tracked independently of dragging, every frame.
-##   Item drag would start from shows before any button is pressed.
+##   Object drag would start from shows before any button is pressed.
 ## Hold is touch counterpart, with no buttons to name operation.
-##   Press item, keep still, and once press has lasted `SECONDS_LONG_PRESS` it selects item.
+##   Press object, keep still, and once press has lasted `SECONDS_LONG_PRESS` it selects object.
 ##   Elapsed fraction lives here rather than in either presentation layer: how long hold
 ##   takes and whether one is due are rules about gesture.
-##   Both drive item's marker drawn part-built, which is what makes wait bearable.
+##   Both drive object's marker drawn part-built, which is what makes wait bearable.
 ##
 ## Shared between desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render
 ## paths; see `visualiser.nim`'s "Render Paths" table.
@@ -38,7 +38,7 @@ import ./[boundary, camera, format, tessellate, picking, scene]
 #[ Gesture Configuration ]#
 
 # Take every `now` in seconds, on whatever monotonic clock caller owns.
-#   Same clock `scene.addItem` records birth on: one reading threaded through whole release
+#   Same clock `scene.addObject` records birth on: one reading threaded through whole release
 #   rather than two that could disagree.
 #   Named in constants below, since browser's own clock reads milliseconds.
 
@@ -57,14 +57,14 @@ const
     ##   order.
 
   SECONDS_LONG_PRESS* = 0.50
-    ## Hold touch this long on item to select it.
+    ## Hold touch this long on object to select it.
     ##   Long enough that tap, or first instant of drag meant to orbit camera, never matures.
     ##   Short enough that deliberate hold does not feel stuck.
-    ##   Tolerable only because it is shown: `progressHold` drives item's marker drawn
+    ##   Tolerable only because it is shown: `progressHold` drives object's marker drawn
     ##   part-built, so hold reads as filling rather than as nothing happening.
 
   SECONDS_SWELL_GROW* = 0.12
-    ## Take this long to swell touched item's marker clear of finger, before its fill begins.
+    ## Take this long to swell touched object's marker clear of finger, before its fill begins.
     ##   Own phase ahead of fill, so marker is already at size it fills at.
     ##     Bar that grows and fills at once is two motions saying one thing, and growing wins.
     ##   Quick enough to read as marker getting out of way rather than delay.
@@ -94,7 +94,7 @@ const
   PIXELS_TAP_SLOP* = 12.0
     ## Move press further than this and it stops being press.
     ##   Which scheme gesture enters: press staying inside matures into selection; press
-    ##   leaving becomes construction drag where it landed on item, camera move where it did
+    ##   leaving becomes construction drag where it landed on object, camera move where it did
     ##   not.
     ##   Sized for fingertip: finger rolls few pixels on contact even held still, and
     ##   threshold tight enough for mouse makes long-press unreachable on touchscreen.
@@ -193,7 +193,7 @@ type
 
   Compass* {.pure.} = enum ## Define where choice sits in menu, always.
     ## Fixed position per choice; unoffered ones are gaps, never packed out.
-    ##   Menu whose items move is one nobody learns to reach without reading.
+    ##   Menu whose objects move is one nobody learns to reach without reading.
     North, East, South, West
 
   Key* {.pure.} = enum ## Define key 3D view itself reacts to, in neither backend's naming.
@@ -221,8 +221,8 @@ type
     FrameSelection, ## Bring selection into view, through framing rule.
     ViewHome ## Return camera to placement both builds open at.
 
-  Hold* = object ## Define press that selects its item once it has lasted long enough.
-    handle*: int ## Item pressed, whose marker fills as press matures.
+  Hold* = object ## Define press that selects its object once it has lasted long enough.
+    handle*: int ## Object pressed, whose marker fills as press matures.
     started*: float ## When press landed, on clock every caller passes as `now`.
     is_taken*: bool ## Whether this hold's maturity has been acted on.
       ## One-shot lives here because hold outlives its release.
@@ -235,10 +235,10 @@ type
   Interaction* = object ## Define cursor, drag and press state held between frames.
     is_enabled*: bool ## Whether picking and overlay run at all; off during storyboard capture.
     cursor*: ScreenPosition ## Last known cursor position, in window pixels.
-    index_hover*: Option[int] ## Item nearest cursor this frame, regardless of dragging.
-    is_hover_backdrop*: bool ## Whether hovered item is backdrop: plane at horizon, or
+    index_hover*: Option[int] ## Object nearest cursor this frame, regardless of dragging.
+    is_hover_backdrop*: bool ## Whether hovered object is backdrop: plane at horizon, or
       ## finite plane whose disc fills view; see `picking.isBackdropUnder`.
-    count_hover_rivals*: int ## How many items of hovered item's rank were in reach.
+    count_hover_rivals*: int ## How many objects of hovered object's rank were in reach.
       ## `picking.PickReport.count_rivals`; one where hover is unambiguous, zero where
       ## nothing is hovered. Touch reads it through `canConstructByTouch`.
       ## Whole sky, which every ray meets, so true wherever nothing else is under cursor
@@ -247,15 +247,15 @@ type
       ## refuse it without being handed scene.
       ## Refusing keeps camera working: press on empty space becomes orbit because
       ## `beginDrag` fails when nothing is hovered, and sky is hovered everywhere.
-    index_focus*: Option[int] ## Item keyboard stands on.
+    index_focus*: Option[int] ## Object keyboard stands on.
       ## Drawn with hover's marker, so reader without pointer sees where they are.
       ## Separate from `index_hover`: `updateHover` recomputes hover every frame, so focus
       ## stored there would be erased before drawn once.
     is_dragging*: bool ## Whether construction drag is in progress.
       ## Not `Option[DragOperation]`: what drag applies is decided at release, so field
       ## holding operation could only hold placeholder, sentinel smuggled into value's range.
-    index_source*: int ## Item drag started from; meaningful only while `is_dragging`.
-    index_destination*: Option[int] ## Item drag points at, latched moment its menu opens.
+    index_source*: int ## Object drag started from; meaningful only while `is_dragging`.
+    index_destination*: Option[int] ## Object drag points at, latched moment its menu opens.
       ## Readers ask `destinationOf` instead.
     pressed*: ScreenPosition ## Where last pointer press landed, whatever it became.
     started*: float ## When that press landed, on clock every caller passes as `now`.
@@ -267,7 +267,7 @@ type
       ## Stated as still so default is false: press that never went through `beginPress`
       ## is never mistaken for click.
     hold*: Option[Hold] ## Press maturing into selection, if one is in progress.
-    is_over_target*: bool ## Whether drag points at item that is not its source.
+    is_over_target*: bool ## Whether drag points at object that is not its source.
       ## Distinct from `proposal` being none, which it also is over pair making nothing.
       ##   Those two want opposite feedback, neutral versus warning.
     proposal*: Option[DragChoice] ## What release right now would commit.
@@ -282,7 +282,7 @@ type
       ## refused release), and over `More`, which builds nothing itself.
     arming*: MenuArming ## How this drag may open its menu, as pointer chose at press.
     entered*: float ## When cursor last settled over pivot, for dwell to run from.
-      ## Restarted when hovered item changes and when cursor moves away from `settled`.
+      ## Restarted when hovered object changes and when cursor moves away from `settled`.
     settled*: ScreenPosition ## Where cursor was when `entered` was last restarted.
     menu*: Option[ScreenPosition] ## Where choice menu is open, if it is.
     is_menu_entered*: bool ## Whether cursor has stood in any wedge of open menu since it
@@ -524,12 +524,12 @@ func resultOf*(choice: DragChoice; m, n: Multivector): Option[Multivector] =
   ##   None for `More`, and none wherever result has no drawable shape.
   ##     One test covers both ways construction comes to nothing: wrong grades landing on
   ##     scalar or antiscalar, and pair lying on each other giving zero.
-  ##     `objects.shape` reads `grade`, which already tolerances near-zero away, so line of
+  ##     `objects.kindOf` reads `grade`, which already tolerances near-zero away, so line of
   ##     negligible magnitude reports no shape.
   let drag = toDrag(choice)
   if drag.isNone: return
   let derived = applyOperation(drag.get.toOperation, m, n)
-  if shape(derived).isNone: return
+  if kindOf(derived).isNone: return
   some(derived)
 
 
@@ -640,7 +640,7 @@ proc updateHover*(
   interaction: var Interaction; scene: Scene; camera: Camera; scale: DrawExtent;
   view_projection: Matrix4; width, height: int; placed: openArray[Placed] = []
 ) =
-  ## Recompute item nearest cursor, so overlay and drag-start agree on what stands under it.
+  ## Recompute object nearest cursor, so overlay and drag-start agree on what stands under it.
   ##   Nothing is hovered while camera is moving.
   ##     Hover is recomputed every frame, so pan drag would highlight across every object
   ##     it sweeps, and held W would light up whatever slides under still cursor.
@@ -819,7 +819,7 @@ func driveHeld*(interaction: Interaction, camera: var Camera, seconds: float) =
 func applyAction*(
   interaction: var Interaction, camera: var Camera, scene: Scene, action: KeyAction
 ): Option[int] =
-  ## Carry out one keyboard action, and report which item caller should select.
+  ## Carry out one keyboard action, and report which object caller should select.
   ##   Moves camera and focus, both its own state; does not touch selection, which each
   ##   render path owns differently.
   ##     Reporting handle leaves caller to read shift state and decide between replacing
@@ -848,7 +848,7 @@ func applyAction*(
 
 
 func pruneFocus*(interaction: var Interaction, scene: Scene) =
-  ## Drop keyboard focus whose item has gone, same guard selection keeps.
+  ## Drop keyboard focus whose object has gone, same guard selection keeps.
   ##   Handle carried across frames may be freed by any other input path, and focus left
   ##   pointing at dead one would have marker drawn off freed storage.
   if interaction.index_focus.isSome and not scene.isAlive(interaction.index_focus.get):
@@ -896,7 +896,7 @@ func progressHold*(interaction: Interaction, now: float): float =
 
 
 func swellHold*(interaction: Interaction, now: float): float =
-  ## Report how far touched item's marker is swollen clear of finger, 0 to 1.
+  ## Report how far touched object's marker is swollen clear of finger, 0 to 1.
   ##   Zero at true size, one fully out, zero with no press.
   ##   Own clock, not fill's, in four phases:
   ##
@@ -934,7 +934,7 @@ func isHoldSpent*(interaction: Interaction, now: float): bool =
 
 
 func isHoldMature*(interaction: Interaction, now: float): bool =
-  ## Report whether press in progress has lasted long enough to select its item.
+  ## Report whether press in progress has lasted long enough to select its object.
   ##   Stated against `progressHold`, so moment marker finishes filling is moment
   ##   selection lands.
   interaction.hold.isSome and progressHold(interaction, now) >= 1.0
@@ -945,7 +945,7 @@ func takeHold*(interaction: var Interaction, now: float): Option[int] =
   ##   None while hold is filling, none with no hold.
   ##   Replaces "is it mature" beside caller's "have I acted" flag.
   ##     Those stopped agreeing once hold outlived its release: caller cleared flag on lift
-  ##     while hold was settling and still mature, so next frame selected item again and
+  ##     while hold was settling and still mature, so next frame selected object again and
   ##     toggled it off.
   ##   Taking does not end hold; what is spent is selection, not gesture.
   if interaction.hold.isNone or interaction.hold.get.is_taken: return
@@ -958,9 +958,9 @@ func takeHold*(interaction: var Interaction, now: float): Option[int] =
 #[ Drag Lifecycle ]#
 
 func destinationOf*(interaction: Interaction): Option[int] =
-  ## Say which item drag in progress points at, for its release to build with.
-  ##   Hover while no menu is open; item menu opened over once one is.
-  ##     Menu opens centred on cursor, so reaching wedge takes cursor off item, and
+  ## Say which object drag in progress points at, for its release to build with.
+  ##   Hover while no menu is open; object menu opened over once one is.
+  ##     Menu opens centred on cursor, so reaching wedge takes cursor off object, and
   ##     destination read from hover would go none exactly when release needs it.
   ##   None over sky, same refusal `beginDrag` makes.
   ##     Release over backdrop stays "nothing done" rather than taking whole sky as operand.
@@ -997,7 +997,7 @@ func isClick*(interaction: Interaction, now: float): bool =
 
 func canConstructByTouch*(interaction: Interaction): bool =
   ## Report whether press where finger stands may become construction drag.
-  ##   Hovered, not sky, and unambiguous: exactly one item of winning rank in reach.
+  ##   Hovered, not sky, and unambiguous: exactly one object of winning rank in reach.
   ##   Finger sees no hover ring before it lands, so over crowd it cannot know which of
   ##   several it is dragging; where gesture is ambiguous, movement wins, and reader zooms
   ##   in until it is not. Mouse keeps its drag: ring showed it which one.
@@ -1008,7 +1008,7 @@ func canConstructByTouch*(interaction: Interaction): bool =
 
 
 func beginDrag*(interaction: var Interaction, arming: MenuArming, now: float): bool =
-  ## Start construction drag from item currently hovered.
+  ## Start construction drag from object currently hovered.
   ##   Reports whether one started, so caller knows whether to fall back to camera.
   ##   `arming` is what pointer chose; see `MenuArming` and `armingOf`.
   ##   Expects `beginPress` to have run for same press.
@@ -1148,15 +1148,15 @@ func updateDrag*(
 
 type DragOutcome* = object ## Define everything released drag did, for caller to act on.
   message*: string ## What to say happened, whether or not anything was built.
-  index_created*: Option[int] ## Item added, where one was.
+  index_created*: Option[int] ## Object added, where one was.
     ## None for refusal, for release choosing nothing, and for `More`.
   choice*: Option[DragChoice] ## What release resolved to.
     ## So caller recognises `More`, otherwise indistinguishable from refusal.
-  operands*: Option[tuple[source, destination: int]] ## Two items, where both were alive
+  operands*: Option[tuple[source, destination: int]] ## Two objects, where both were alive
     ## and distinct.
     ## What `More` hands to apply section; drag's state is cleared by time caller reads
     ## this.
-  index_clicked*: Option[int] ## Item press that never became drag came down on, for
+  index_clicked*: Option[int] ## Object press that never became drag came down on, for
     ## caller to select.
     ## None for every actual drag.
 
@@ -1167,7 +1167,7 @@ func commitChoice*(
   ## Apply one choice between drag's source and whatever it points at.
   ##   Split out of `endDrag` so menu choice and plain-release proposal reach scene through
   ##   identical path.
-  ##   Refuses rather than adding object that draws nothing: message and no item, which is
+  ##   Refuses rather than adding object that draws nothing: message and no object, which is
   ##   why `index_created` is `Option`.
   ##     Menu greys wedges this would refuse.
   let over = destinationOf(interaction)
@@ -1210,7 +1210,7 @@ func commitChoice*(
   #   fill scene in one click.
   if scene.isFull:
     return DragOutcome(
-      message: &"The scene holds all {ITEMS_MAX} objects it can; {label} was not added.",
+      message: &"The scene holds all {OBJECTS_MAX} objects it can; {label} was not added.",
       choice: some(choice),
       operands: operands,
     )
@@ -1218,9 +1218,9 @@ func commitChoice*(
   let
     anchor = creationAnchor(operation, m, n, derived.get)
     index_created =
-      scene.addItem(derived.get, label, scene.takeInk(), now, anchor)
+      scene.addObject(derived.get, label, scene.takeInk(), now, anchor)
   DragOutcome(
-    message: &"{label} gave {shapeText(derived.get)}.",
+    message: &"{label} gave {kindText(derived.get)}.",
     index_created: some(index_created),
     choice: some(choice),
     operands: operands,

@@ -16,7 +16,7 @@
 ##   from. Nothing stands at `POSITION_ORRERY`'s coordinate but Sol itself.
 ##
 ##   |------------------|-------------------------------------|--------------------------|
-##   | Item             | Built from                          | Present when             |
+##   | Object             | Built from                          | Present when             |
 ##   |------------------|-------------------------------------|--------------------------|
 ##   | star             | placed at its real position         | always                   |
 ##   | planets          | placed, ringing it at real radii    | as many as it has        |
@@ -31,7 +31,7 @@
 ##   ecliptic gives.
 ##   Luna's ring is tipped out of it, so `att(earth ∧ luna)` sits off that line and spans
 ##   plane at horizon with it. See horizon block in `constructOrrery`.
-## `itemsOf(scale)` items on nose at every size, asserted.
+## `objectsOf(scale)` objects on nose at every size, asserted.
 ##   Walk passes over system too large for room left rather than stopping on it.
 ##   Only Sol's block and four at horizon are fixed; everything between is however many
 ##   real stars fit.
@@ -254,8 +254,8 @@ const
   RADIUS_NEIGHBOUR_PLANET = radiusDrawnOf(SOL[INDEX_SOL_EARTH].kilometres_radius)
     ## Fix how large every neighbour planet is drawn.
     ##   Archive carries no radii either; Earth's, same rule as suns take Sol's.
-  COUNT_ITEM_HORIZON = 4
-    ## Count items closing block comes to.
+  COUNT_OBJECT_HORIZON = 4
+    ## Count objects closing block comes to.
     ##   Four, not three: two points at horizon, because one cannot make plane. See
     ##   horizon block in `constructOrrery`.
 
@@ -451,7 +451,7 @@ static:
 
 
 func addHorizon(
-  scene: var Scene, geometry: Multivector, label: string, expected: Shape, now: float
+  scene: var Scene, geometry: Multivector, label: string, expected: Kind, now: float
 ) =
   ## Add one of closing objects at horizon, refusing anything that is not one.
   ##   Same guard `addPlane` is, against second way of getting it wrong.
@@ -459,31 +459,31 @@ func addHorizon(
   ##     make it are genuinely apart: `planet[0] ∧ ecliptic` gave zero, `ecliptic` being
   ##     plane `planet[0]` built.
   ##     `storyboard`'s seeds carry same warning about `o` and `ground`.
-  doAssert shape(geometry) == some(expected) and isHorizon(geometry),
+  doAssert kindOf(geometry) == some(expected) and isHorizon(geometry),
     &"Orrery's `{label}` must be {expected} at horizon, its operands genuinely apart; got " &
-      &"`{shape(geometry)}`."
-  scene.addItem(geometry, label, lut_role_to_ink[Role.Derived], now)
+      &"`{kindOf(geometry)}`."
+  scene.addObject(geometry, label, lut_role_to_ink[Role.Derived], now)
 
 
 func addPlane(
   scene: var Scene, geometry: Multivector, label: string, now: float, anchor: Position
 ) =
   ## Add derived plane, refusing anything that is not one.
-  ##   Three collinear points wedge to multivector of no clean grade, which `objects.shape`
-  ##   reports as nothing to draw: item takes handle and never appears.
+  ##   Three collinear points wedge to multivector of no clean grade, which `objects.kindOf`
+  ##   reports as nothing to draw: object takes handle and never appears.
   ##   Collinearity comes from layout table and any edit can reintroduce it; `angleRing`
   ##   says what edit to avoid.
-  doAssert shape(geometry) == some(Shape.Plane),
+  doAssert kindOf(geometry) == some(Kind.Plane),
     &"Orrery must derive `{label}` from three points spanning a plane, so the layout " &
-      &"holds a collinear triple; got `{shape(geometry)}`."
-  scene.addItem(geometry, label, lut_role_to_ink[Role.Derived], now, some(anchor))
+      &"holds a collinear triple; got `{kindOf(geometry)}`."
+  scene.addObject(geometry, label, lut_role_to_ink[Role.Derived], now, some(anchor))
 
 
-func itemsOf*(star: Star): int =
-  ## Report how many scene items one real star comes to.
+func objectsOf*(star: Star): int =
+  ## Report how many scene objects one real star comes to.
   ##   Exported because suite bounds how far fill may depart from nearest-first with it.
   ##   Itself, known planets, and ecliptic plane it earns with two planets to span one.
-  ##     Every further object would be invention; great majority come to one item.
+  ##     Every further object would be invention; great majority come to one object.
   1 + star.planets + (if star.planets >= 2: 1 else: 0)
 
 
@@ -506,8 +506,8 @@ func systemAt(star: Star): System =
   )
 
 
-const ITEMS_SOL* = len(SOL) + len(MOONS) + 3
-  ## Count scene items Sol comes to.
+const OBJECTS_SOL* = len(SOL) + len(MOONS) + 3
+  ## Count scene objects Sol comes to.
   ##   Star and planets, moons, ecliptic, and two lines that are only finite lines in
   ##   whole arrangement.
 
@@ -523,13 +523,13 @@ type ScaleOrrery* {.pure.} = enum
   Catalogue     ## Load case, two handles short of pool.
 
 
-func itemsOf*(scale: ScaleOrrery): int =
-  ## Report how many items arrangement fills at this size.
+func objectsOf*(scale: ScaleOrrery): int =
+  ## Report how many objects arrangement fills at this size.
   ##   Which size to use is working rule, not build setting.
   ##     `Nearest` for quick check, `Neighbourhood` for final one, `Catalogue` when
   ##     change could cost performance.
   ##     Everything not saying otherwise takes `SCALE_ORRERY_DEFAULT`.
-  ##   `Catalogue` stops two short of `scene.ITEMS_MAX`: smallest margin still proving
+  ##   `Catalogue` stops two short of `scene.OBJECTS_MAX`: smallest margin still proving
   ##   point of leaving one, so reader can add point and join it to something.
   case scale
   of ScaleOrrery.Nearest: 60
@@ -544,35 +544,35 @@ const SCALE_ORRERY_DEFAULT* = ScaleOrrery.Neighbourhood
 
 
 const
-  ITEMS_FIXED_ORRERY* = COUNT_ITEM_HORIZON + ITEMS_SOL
-    ## Count items arrangement comes to before single neighbour is placed.
+  OBJECTS_FIXED_ORRERY* = COUNT_OBJECT_HORIZON + OBJECTS_SOL
+    ## Count objects arrangement comes to before single neighbour is placed.
     ##   Folded from tables rather than written beside them, for reason `RADIUS_ORRERY` is.
 
-  ITEMS_ORRERY_MIN* = ITEMS_FIXED_ORRERY + itemsOf(STARS[0])
+  OBJECTS_ORRERY_MIN* = OBJECTS_FIXED_ORRERY + objectsOf(STARS[0])
     ## Count smallest arrangement there is.
     ##   Sol entire, block at horizon, and one neighbour opening camera is fitted to.
     ##   Floor rather than preference.
-    ##     Below `ITEMS_FIXED_ORRERY` scene cannot hold Sol, and block at horizon takes
+    ##     Below `OBJECTS_FIXED_ORRERY` scene cannot hold Sol, and block at horizon takes
     ##     attitudes of Sol's objects. One neighbour beyond is what `RADIUS_ORRERY` needs
     ##     to be true.
     ##   Folded, so it moves when `SOL`, `MOONS` or catalogue's nearest entry does.
 
 static:
   for scale in ScaleOrrery:
-    doAssert itemsOf(scale) >= ITEMS_ORRERY_MIN,
-      &"`ScaleOrrery.{scale}` must ask for at least `{ITEMS_ORRERY_MIN}` items, Sol, the " &
+    doAssert objectsOf(scale) >= OBJECTS_ORRERY_MIN,
+      &"`ScaleOrrery.{scale}` must ask for at least `{OBJECTS_ORRERY_MIN}` objects, Sol, the " &
         &"block at horizon and the one neighbour the opening camera is fitted to; got " &
-        &"`{itemsOf(scale)}`."
+        &"`{objectsOf(scale)}`."
   doAssert FRAMED_ORRERY == 2,
-    &"`ITEMS_ORRERY_MIN` folds in one neighbour because `FRAMED_ORRERY` is 2, and must " &
+    &"`OBJECTS_ORRERY_MIN` folds in one neighbour because `FRAMED_ORRERY` is 2, and must " &
       &"fold in that many less one; got `{FRAMED_ORRERY}`."
 
 const RADIUS_ORRERY* = block:
   ## Report how far out demo's camera stands back to hold systems it is meant to hold.
   ##   Caller frames arrangement without knowing what is in it.
-  ##   Folded from table, for reason `ITEMS_FIXED_ORRERY` is.
+  ##   Folded from table, for reason `OBJECTS_FIXED_ORRERY` is.
   ##     Only nearest `FRAMED_ORRERY` are folded in.
-  ##     One figure for every size, which `ITEMS_ORRERY_MIN` keeps true.
+  ##     One figure for every size, which `OBJECTS_ORRERY_MIN` keeps true.
   ##   At 100 units per parsec this comes to about 139, against Sol's 12.
   ##     System reader looks into is under tenth of opening frame's radius, price of field
   ##     that does not read as clump. `FRAMED_ORRERY` is knob if ever too much, not
@@ -625,7 +625,7 @@ func constructSol(
       of Role.Moon, Role.Derived: place_sol # `SOL` holds sun and planets; see its check.
     places[index] = place
     placed[index] = toMultivector(place)
-    scene.addItem(
+    scene.addObject(
       placed[index], body.name, lut_role_to_ink[body.role], now,
       radius = radiusDrawnOf(body.kilometres_radius), shines = body.role == Role.Sun,
     )
@@ -637,7 +637,7 @@ func constructSol(
     let place = ringed(places[moon.parent], leaned, across, radiusOfMoon(moon),
       SYSTEM_SOL.spin + 2.4*float(index))
     placed_moons[index] = toMultivector(place)
-    scene.addItem(
+    scene.addObject(
       placed_moons[index], moon.name, lut_role_to_ink[Role.Moon], now,
       radius = radiusDrawnOf(moon.kilometres_radius),
     )
@@ -648,8 +648,8 @@ func constructSol(
   #   Earth lies *in* ecliptic, Luna's ring is tipped out of it, and that difference
   #   makes plane at horizon constructible.
   tether = placed[INDEX_SOL_EARTH] ∧ placed_moons[INDEX_MOON_LUNA]
-  scene.addItem(orbit, "sol ∧ earth", lut_role_to_ink[Role.Derived], now)
-  scene.addItem(tether, "earth ∧ luna", lut_role_to_ink[Role.Derived], now)
+  scene.addObject(orbit, "sol ∧ earth", lut_role_to_ink[Role.Derived], now)
+  scene.addObject(tether, "earth ∧ luna", lut_role_to_ink[Role.Derived], now)
   addPlane(scene, ecliptic, "ecliptic sol", now, place_sol)
 
 
@@ -659,14 +659,14 @@ func constructOrrery*(
   ## Fill scene with every system in turn, then four objects at horizon.
   ##   `scale` says how deep into catalogue to reach; see `ScaleOrrery`. Every size runs
   ##   same code.
-  ##   `now` is forwarded to `addItem` untouched, so every object animates in as one
+  ##   `now` is forwarded to `addObject` untouched, so every object animates in as one
   ##   added by hand.
   ##   Asserts scene handed is empty and that it leaves exactly size asked for.
   doAssert scene.len == 0,
     &"Orrery fills a scene to a stated size, so it must start empty; got `{scene.len}`."
-  doAssert ITEMS_MAX >= itemsOf(scale),
-    &"Orrery at `{scale}` needs `{itemsOf(scale)}` item handles; this build was compiled " &
-      &"with `{ITEMS_MAX}`. Raise `--define:visualiser.items_max`, or ask for a smaller size."
+  doAssert OBJECTS_MAX >= objectsOf(scale),
+    &"Orrery at `{scale}` needs `{objectsOf(scale)}` object handles; this build was compiled " &
+      &"with `{OBJECTS_MAX}`. Raise `--define:visualiser.objects_max`, or ask for a smaller size."
 
   # Build Sol first: nearest system, and horizon block takes attitudes of its objects.
   var ecliptic_sol, orbit_sol, tether_sol: Multivector
@@ -681,13 +681,13 @@ func constructOrrery*(
   #     Cost is that last few systems in are not strictly nearest left, invisible in
   #     field of thousands.
   for star in STARS:
-    if scene.len + itemsOf(star) > itemsOf(scale) - COUNT_ITEM_HORIZON: continue
+    if scene.len + objectsOf(star) > objectsOf(scale) - COUNT_OBJECT_HORIZON: continue
     let
       system = systemAt(star)
       place_sun = sunOf(system)
       (along, across) = spanOf(system)
       sun = toMultivector(place_sun)
-    scene.addItem(
+    scene.addObject(
       sun, star.name, lut_role_to_ink[Role.Sun], now, radius = RADIUS_NEIGHBOUR_SUN,
       shines = true,
     )
@@ -703,7 +703,7 @@ func constructOrrery*(
         body = toMultivector(place)
       if which == 0: first_planet = body
       elif which == 1: second_planet = body
-      scene.addItem(
+      scene.addObject(
         body, planet.name, lut_role_to_ink[Role.Planet], now, radius = RADIUS_NEIGHBOUR_PLANET
       )
 
@@ -723,14 +723,14 @@ func constructOrrery*(
     at_horizon_earth = attitude(orbit_sol)
     at_horizon_luna = attitude(tether_sol)
     at_horizon_ecliptic = attitude(ecliptic_sol)
-  addHorizon(scene, at_horizon_earth, "att(sol ∧ earth)", Shape.Point, now)
-  addHorizon(scene, at_horizon_luna, "att(earth ∧ luna)", Shape.Point, now)
-  addHorizon(scene, at_horizon_ecliptic, "att(ecliptic sol)", Shape.Line, now)
+  addHorizon(scene, at_horizon_earth, "att(sol ∧ earth)", Kind.Point, now)
+  addHorizon(scene, at_horizon_luna, "att(earth ∧ luna)", Kind.Point, now)
+  addHorizon(scene, at_horizon_ecliptic, "att(ecliptic sol)", Kind.Line, now)
   addHorizon(scene, at_horizon_ecliptic ∧ at_horizon_luna,
-    "att(ecliptic sol) ∧ att(earth ∧ luna)", Shape.Plane, now)
+    "att(ecliptic sol) ∧ att(earth ∧ luna)", Kind.Plane, now)
 
-  doAssert scene.len == itemsOf(scale),
-    &"Orrery at `{scale}` must build `{itemsOf(scale)}` items, and its walk passes over " &
+  doAssert scene.len == objectsOf(scale),
+    &"Orrery at `{scale}` must build `{objectsOf(scale)}` objects, and its walk passes over " &
       &"what will not fit rather than stopping, so it falls short only by running out of " &
       &"catalogue, `starfield.STARS` carrying too few stars; got `{scene.len}`."
 

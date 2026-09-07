@@ -238,7 +238,7 @@ function frame() {
   nimDriveHeld(seconds_frame);
   settleTwoFingers();
 
-  // Press that has now lasted long enough selects its item. Checked here rather than by.
+  // Press that has now lasted long enough selects its object. Checked here rather than by.
   //   timer that fires on its own, so that moment marker finishes filling is
   //   moment selection lands -- `interaction.isHoldMature` is stated against same
   //   progress marker was just drawn at, so two cannot disagree by frame.
@@ -246,7 +246,7 @@ function frame() {
   //   Asking "is it mature" beside flag kept here for "have I already acted on that" needs two to
   //   agree, and they stopped agreeing once hold outlived its own release:
   //   this handler clears its flag on lift while hold is still settling and still mature, so next
-  //   frame selected item again and toggled it straight back off.
+  //   frame selected object again and toggled it straight back off.
   //   `nimTakeMaturedHold` answers once and never again.
   const handle_matured = nimTakeMaturedHold(now_seconds);
   if (handle_matured >= 0) {

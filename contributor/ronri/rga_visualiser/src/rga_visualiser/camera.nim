@@ -387,7 +387,7 @@ func frame*(camera: Camera, eye: Position): FrameCamera =
   ## Derive camera's orthonormal axes from its placement, through joins and antiduals.
   ##   Elevation clamp keeps sight axis off world up, so every join below stays defined.
   ##   Takes eye explicitly, so caller already holding it, or calling once per frame
-  ##   across many items, need not pay same trig again.
+  ##   across many objects, need not pay same trig again.
   let
     axis_sight = toMultivector(eye) ∧ toMultivector(camera.pivot)
     forward = direction(axis_sight)
@@ -664,25 +664,25 @@ func aimIncluding*(
   ##     and they contribute nothing thereafter; see `CameraAim.is_bound_by_fitted`.
   ##     Which objects contribute does not depend on order.
   ##   `anchor_override` centres plane's disc there instead of on support, read as
-  ##   `tessellate.addPlane` reads it; ignored for every other shape.
+  ##   `tessellate.addPlane` reads it; ignored for every other kind.
   ##   Horizon objects widen nothing.
   ##     `anchorFor` places star at `scale.eye`, and goal built from where camera stands
   ##     would stop comparing equal frame to frame.
   ##     Twice over for centroid: middle moving with eye would re-aim camera every frame.
-  let shape_m = shape(m)
+  let shape_m = kindOf(m)
   if shape_m.isNone: return aim
   var grown = if aim.isSome: aim.get else: CameraAim()
 
   if isHorizon(m):
     var heading = none(Direction)
     case shape_m.get
-    of Shape.Point: heading = directionHorizon(m)
-    of Shape.Line:
+    of Kind.Point: heading = directionHorizon(m)
+    of Kind.Line:
       let normal = directionNormalHorizon(m)
       if normal.isSome:
         let axes = spanPerpendicular(ORIGIN_WORLD, normal.get)
         if axes.isSome: heading = some(axes.get[0])
-    of Shape.Plane: discard
+    of Kind.Plane: discard
     if heading.isNone: return aim
     let merged =
       if grown.heading.isNone: heading
@@ -695,14 +695,14 @@ func aimIncluding*(
     grown.heading = if merged.isSome: merged else: grown.heading
     return some(grown)
 
-  let is_plane = shape_m.get == Shape.Plane
+  let is_plane = shape_m.get == Kind.Plane
   var anchor = anchorFor(m, scale)
   if is_plane and anchor_override.isSome: anchor = anchor_override
   if anchor.isNone: return aim
   let
     # Fit whole ball plane's disc is drawn as, not anchor alone.
     reach = if is_plane: EXTENT_PLANE_F else: 0.0
-    does_fit = shape_m.get in {Shape.Point, Shape.Plane}
+    does_fit = shape_m.get in {Kind.Point, Kind.Plane}
   if grown.is_bound_by_fitted and not does_fit: return some(grown)
   # Start bound afresh at first object that has to fit, discarding lines that only cross.
   if does_fit and not grown.is_bound_by_fitted:

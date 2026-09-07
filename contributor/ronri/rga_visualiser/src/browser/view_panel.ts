@@ -123,14 +123,14 @@ function captureFrameIfAsked() {
 // as button without this file or markup being touched. Button is labelled with
 // count because count is what reader picking between benchmark scenes is choosing.
 for (const scale of nimDemoScales()) {
-  const items = nimDemoItems(scale);
+  const objects = nimDemoObjects(scale);
   const button = document.createElement('button');
   button.className = 'button';
   button.type = 'button';
-  button.id = `button-load-demo-${items}`;
-  button.textContent = String(items);
+  button.id = `button-load-demo-${objects}`;
+  button.textContent = String(objects);
   button.title =
-    `Load the orrery at ${items} objects: the real solar neighbourhood, Sol at the origin, ` +
+    `Load the orrery at ${objects} objects: the real solar neighbourhood, Sol at the origin, ` +
     'every drawable kind present. The same arrangement at every size, reaching further into ' +
     'the star catalogue as it grows.' +
     (scale === nimDemoScaleDefault() ? ' The size everything opens on.' : '');

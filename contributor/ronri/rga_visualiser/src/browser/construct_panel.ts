@@ -107,7 +107,7 @@ function sliceObjectRows() {
   while (rows_pending.at < keys.length) {
     const at = rows_pending.at;
     const key = keys[at] ?? '';
-    const signature = signatureOfItemRow(key);
+    const signature = signatureOfObjectRow(key);
     let node = standing.get(key);
     const is_building = node === undefined || signatures_row.get(key) !== signature;
     if (is_building) {
@@ -149,7 +149,7 @@ function revealPendingRow() {
   //   Row far down list stands only after every row above it, so this is asked after
   //   each slice as well as at once.
   if (key_reveal_pending === null) return;
-  const row = list_objects.querySelector('.item-row[data-key="' + key_reveal_pending + '"]');
+  const row = list_objects.querySelector('.object-row[data-key="' + key_reveal_pending + '"]');
   if (row === null) return;
   key_reveal_pending = null;
   scrollRowIntoView(row as HTMLElement);
@@ -269,7 +269,7 @@ function refreshOperandOptions() {
       handles.forEach((handle, i) => {
         const option = document.createElement('option');
         option.value = String(i);
-        option.textContent = nimItemLabel(handle);
+        option.textContent = nimObjectLabel(handle);
         selection_target.appendChild(option);
       });
       if (prev !== '' && parseInt(prev, 10) < handles.length) selection_target.value = prev;

@@ -2,7 +2,7 @@
 ##
 ## Nim's `$` and `strformat` produce heap-allocated `string`; C's `snprintf` writes into
 ## storage caller owns.
-##   Every visible item's coefficients are redrawn once per item per frame, so difference
+##   Every visible object's coefficients are redrawn once per object per frame, so difference
 ##   is allocator call per number against none.
 ## Sits beside `sdl3`, `opengl` and `image` as binding over something external, C
 ## runtime's formatter, rather than beside `scene` or `mesh`.
@@ -59,7 +59,7 @@ func formatMagnitude*(value: float): string =
   ##   Same reading `appendMagnitude`'s `%.4g` gives; for browser build, which has no
   ##   `snprintf`.
   ##   Allocates, unlike everything else here.
-  ##     Browser rebuilds number fields when grid changes, not per item per frame.
+  ##     Browser rebuilds number fields when grid changes, not per object per frame.
   ##     Never call from desktop's draw loop.
   ##   `%g`'s rule, from C standard: take exponent value rounds to at this precision,
   ##   write scientifically where it falls outside [-4, DIGITS_SIGNIFICANT), fixed
@@ -177,7 +177,7 @@ func appendMagnitude*(storage: var openArray[char], cursor: var int, value: floa
   ##   than `3.5000`, and 1664 keeps integer part.
   ##   Shared, so both render paths print coefficient identically, each through what costs
   ##   least.
-  ##     Desktop redraws sixteen coefficients per visible item per frame through C's
+  ##     Desktop redraws sixteen coefficients per visible object per frame through C's
   ##     formatter, touching no heap.
   ##     Browser has no C runtime and states same rule in `formatMagnitude` at cost of
   ##     one string.

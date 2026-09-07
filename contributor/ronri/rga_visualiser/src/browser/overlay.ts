@@ -23,7 +23,7 @@ const WIDTH_LABEL_HALO = flatAt(METRICS_OVERLAY, 4);
 const ALPHA_LABEL_HALO = flatAt(METRICS_OVERLAY, 5);
 // Every ink's colour as CSS string, read once: name label wears its object's ink, and.
 //   `nimInkColor` builds sequence per call, which per selected object per frame was
-//   allocation per frame. Indexed by ink ordinal, `nimItemInk`'s answer.
+//   allocation per frame. Indexed by ink ordinal, `nimObjectInk`'s answer.
 const COLOUR_INK_CSS: string[] = [];
 for (let ink = 0; ink < nimInkCount(); ink += 1) {
   const rgb = nimInkColor(ink);
@@ -150,11 +150,11 @@ function appendLabel(handle: number) {
   if (flatAt(at, 2) < 0.5) return;
   const element = stageEl('text', {
     x: flatAt(at, 0), y: flatAt(at, 1), 'text-anchor': 'middle', 'dominant-baseline': 'central',
-    fill: COLOUR_INK_CSS[nimItemInk(handle)] ?? '',
+    fill: COLOUR_INK_CSS[nimObjectInk(handle)] ?? '',
     stroke: COLOUR_LABEL_HALO, 'stroke-width': WIDTH_LABEL_HALO,
     'stroke-linejoin': 'round', 'paint-order': 'stroke',
   });
-  element.textContent = nimItemLabel(handle);
+  element.textContent = nimObjectLabel(handle);
   if (flatAt(at, 3) > 0.5) {
     const half = (element as SVGTextElement).getComputedTextLength() / 2;
     const clearance = nimLabelClearance(flatAt(at, 4), flatAt(at, 5), half);
@@ -257,9 +257,9 @@ function refreshOverlay(cursor: PointLocal | null) {
     appendLabel(handle);
   }
 
-  // Fill pressed item's own marker as press matures into selection.
+  // Fill pressed object's own marker as press matures into selection.
   //   Wait then reads as filling rather than as nothing happening.
-  //   Drawn at selected weight it is about to become, and skipped for item already
+  //   Drawn at selected weight it is about to become, and skipped for object already
   //   selected, whose finished marker is on screen already.
   // Swell filled marker clear of finger doing filling.
   //   `nimBeginHold` is called from touch branch of `pointerdown` and from nowhere

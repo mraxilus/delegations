@@ -1,4 +1,4 @@
-## Shape selection or hover marker to object it marks, in screen pixels.
+## Kind selection or hover marker to object it marks, in screen pixels.
 ##
 ## Marker says "this one", and says it best when its outline echoes thing it surrounds.
 ##   Ring reads as *that point*, pair of rails as *that line*, circle lying on plane as
@@ -12,7 +12,7 @@
 ##   with it.
 ##
 ##   |------------------|---------------------------------------------------------------|
-##   | Shape            | Marker                                                        |
+##   | Kind            | Marker                                                        |
 ##   |------------------|---------------------------------------------------------------|
 ##   | Point            | `Ring`: circle in screen space, about drawn point.            |
 ##   | Line             | `Rails`: two screen-space segments flanking its projection.   |
@@ -50,7 +50,7 @@ const
     ## Set clear space between object's drawn edge and its marker, in pixels.
     ##   One number for all three shapes: consistent band of untouched background is
     ##   what makes selection legible.
-    ##   Held tight: wide band reads as second object, and on several selected items
+    ##   Held tight: wide band reads as second object, and on several selected objects
     ##   bands become busiest thing on screen.
   HEIGHT_MARKER_LABEL* = 16.0
     ## Set nominal height of selected object's name label, in pixels.
@@ -562,7 +562,7 @@ func addPulse(
 func cometFor*(
   tail, head: ScreenPosition
 ): Option[array[POINTS_MARKER_PULSE, ScreenPosition]] =
-  ## Shape head of drag band running `tail` -> `head` as closed outline, in pixels.
+  ## Kind head of drag band running `tail` -> `head` as closed outline, in pixels.
   ##   Render path fills it over band.
   ##   Drag is not symmetric: `a ∨ b` and `b ∨ a` differ, and bare line draws
   ##   identically for either. Head says which way round pair is taken, at end where
@@ -761,7 +761,7 @@ func markerRing(
   ##   Fills caller's `marker` and reports whether one was shaped; see `markerFor`.
   ##   Screen-space rather than world circle facing camera: point has no orientation to
   ##   echo, and every facing looks same from one angle it is seen from.
-  ##   `radius` is item's drawn radius, in world units; ring sits `GAP_MARKER` outside
+  ##   `radius` is object's drawn radius, in world units; ring sits `GAP_MARKER` outside
   ##   pixels that spans at point's depth, so it hugs sun and dot alike.
   ##   `progress` sweeps ring rather than growing it: ring growing outward reads as point
   ##   swelling, inward collides with it.
@@ -1373,14 +1373,14 @@ proc markerFor*(
   marker: var Marker; progress: float = 1.0;
   is_touch: bool = false; travel: Option[float] = none(float); swell: float = 0.0
 ): bool =
-  ## Shape marker for one object, dispatching on its grade and whether it is at horizon.
+  ## Kind marker for one object, dispatching on its grade and whether it is at horizon.
   ##   Fills caller's `marker` and reports whether one was shaped, not `Option[Marker]`.
   ##     `Marker` reserves every kind's fixed arrays, and on JS backend each return, `get`
   ##     and assignment walked all of it through `nimCopy` (Art. VII.1).
   ##     On `false` storage holds nothing readable.
-  ##   `anchor_override` is item's stored creation anchor, used for plane and ignored
+  ##   `anchor_override` is object's stored creation anchor, used for plane and ignored
   ##   otherwise, as `tessellate.addObject` treats it.
-  ##   `radius` is item's drawn radius, used for point and ignored otherwise, likewise.
+  ##   `radius` is object's drawn radius, used for point and ignored otherwise, likewise.
   ##   `progress` draws marker part-built, for press maturing into selection; 1 is
   ##   finished marker.
   ##     How partial marker is shaped is each outline's business: ring sweeps, rails run
@@ -1393,7 +1393,7 @@ proc markerFor*(
   ##     None where object has no orientation: point, and plane at horizon (see
   ##     `markerFrame`).
   ##   None only where object has no drawable geometry. Every drawn shape has marker.
-  let shape = shape(geometry)
+  let shape = kindOf(geometry)
   if shape.isNone: return
   let
     is_horizon = geometry.isHorizon
@@ -1401,11 +1401,11 @@ proc markerFor*(
   case shape.get
   # Ring point at horizon about fixed star `anchorFor` places, so it needs no branch.
   #   Two below are drawn as great circle and whole sky with no anchor.
-  of Shape.Point:
+  of Kind.Point:
     markerRing(
       geometry, radius, scale, view_projection, width, height, progress, clearance, marker
     )
-  of Shape.Line:
+  of Kind.Line:
     if is_horizon:
       markerBands(
         geometry, scale, view_projection, width, height, progress, clearance, travel,
@@ -1416,7 +1416,7 @@ proc markerFor*(
         geometry, scale, view_projection, width, height, progress, clearance, travel,
         marker,
       )
-  of Shape.Plane:
+  of Kind.Plane:
     if is_horizon: markerFrame(width, height, progress, clearance, marker)
     else:
       markerLoop(

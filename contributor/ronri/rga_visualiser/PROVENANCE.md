@@ -167,11 +167,11 @@ Scene Storage
 ---
 `Scene` (`scene.nim`) is a fixed-capacity structure-of-arrays arena — geometries, labels,
 inks, visibility, liveness, birth stamps, creation ordinals, placing stamps, anchor
-overrides — addressed by a handle assigned once on `addItem` and never moved. Free handles
+overrides — addressed by a handle assigned once on `addObject` and never moved. Free handles
 thread onto an intrusive singly-linked free list, so add and remove are O(1).
-`ITEMS_MAX` = 5040 and `LABEL_MAX` = 40, both `{.define.}`-overridable. Chosen over a
+`OBJECTS_MAX` = 5040 and `LABEL_MAX` = 40, both `{.define.}`-overridable. Chosen over a
 shift-on-delete array whose removal renumbers every held cross-frame index; the property
-everything else relies on is that **a handle number stays valid until its item is removed**.
+everything else relies on is that **a handle number stays valid until its object is removed**.
 
 **`Scene.bound` is the highest handle ever occupied**, and every per-frame walk runs to it
 rather than to capacity. It only rises, so walking to it is safe. Three walks legitimately
@@ -180,8 +180,8 @@ room is left — and `bound`'s own doc names them. A walk to capacity over five 
 cost 13.3 ms a frame on the JS backend; a driven pin crept 2.5 → 8.8 → 13.3 ms across
 three capacity rises before that was found.
 
-**`Scene.revision` counts edits, and every writer is inside `scene.nim`**: `addItem`,
-`removeItem`, `setInk`, `setVisible`, `replayFrom`, `setGeometryAt`. There is no
+**`Scene.revision` counts edits, and every writer is inside `scene.nim`**: `addObject`,
+`removeObject`, `setInk`, `setVisible`, `replayFrom`, `setGeometryAt`. There is no
 `var`-returning geometry accessor — it was the hole through which a caller could write with
 nothing recorded, and twenty-six of its twenty-nine callers were reading anyway. Whole-scene
 replacement (undo, redo, clear, every load) goes through `restoreFrom`, which issues a
@@ -200,7 +200,7 @@ diff against the live scene would cut that and was not done.
 inferred. Handle order stops being creation order the moment anything is removed, since the
 free list hands the most recently freed handle to the next arrival. Sorting by `born` was
 rejected on three counts that all occur: two objects added in one frame share a clock
-reading; a replayed item's `born` is stamped into the future; a reused handle's `born` is
+reading; a replayed object's `born` is stamped into the future; a reused handle's `born` is
 stale until overwritten. `handlesCreated` is a heap sort, O(n log n); as an insertion sort at
 5,038 objects it ran 12.7 million comparisons a call. The desktop panel caches its answer
 against `scene.revision`, because sorting by `born` every frame was 98% of the desktop's CPU
@@ -213,7 +213,7 @@ UTF-8, which the JS backend percent-escapes into a name (`%e2%8a`). Derived name
 compound (`b ^ ground⊖ ∧ b ∨ (o ∧ ground…`) and that is left: the full name is what the
 object *is*.
 
-`Item` is a handle, not an assembled copy, and under `nim js` it holds the `Scene` by value;
+`Object` is a handle, not an assembled copy, and under `nim js` it holds the `Scene` by value;
 the per-frame loops use the by-handle accessors instead (see Browser Pipeline).
 
 *Checked.* Verified by suite cases: handle stability across removal; `handlesCreated` on a
@@ -228,7 +228,7 @@ Memory And Allocation
 ---
 The interactive render loop allocates nothing. `format.nim` wraps C `snprintf` so per-frame
 number formatting writes into stack buffers. Button-driven message building still uses
-`strformat`: once per click, and the result must become a `string` for `addItem` anyway.
+`strformat`: once per click, and the result must become a `string` for `addObject` anyway.
 
 `arena.nim`: a plain `array[N, byte]` carved by `push[T]` and reclaimed by `reset`. Three
 instances in `visualiser.nim`:
@@ -400,12 +400,12 @@ lines exceed furniture lines. `marker` derives every clearance from them and can
 `drawExtentFor` the framebuffer's height rather than the window's.
 
 **Every point has a radius, in world units, and is drawn in perspective.** `Scene.radii` holds
-one per handle (`radiusAt`/`setRadius`, `addItem(..., radius)`), `RADIUS_ITEM_DEFAULT` = 0.08 —
+one per handle (`radiusAt`/`setRadius`, `addObject(..., radius)`), `RADIUS_OBJECT_DEFAULT` = 0.08 —
 what the old nine-pixel sprite spanned at the opening camera, 19 units over 900 px, so old
 scenes and fresh constructions open looking as they did and only gain perspective. Both
 editors carry a `size` field (`EditSession.radius`, `session_edit.radius`), bounded below at
-`RADIUS_ITEM_LEAST` 0.001 because the model refuses zero outright and would take the page down
-with it; `RADIUS_ITEM_MOST` 1e6 exists because ImGui's drag widget reads *no upper bound* as
+`RADIUS_OBJECT_LEAST` 0.001 because the model refuses zero outright and would take the page down
+with it; `RADIUS_OBJECT_MOST` 1e6 exists because ImGui's drag widget reads *no upper bound* as
 *no bounds*. A point crosses the wire as one eight-float record (`Vertex`: centre, radius,
 colour) and is drawn as an **instanced camera-facing quad**, four corners in strip order from
 `mesh.pointCorners`, on both targets: the vertex shader takes `depth = (centre − eye) · forward`,
@@ -466,7 +466,7 @@ SwiftShader's per-instance overhead on 4,938 instances, which a hardware GPU doe
 ribbons, discs and rings already draw instanced here. **Unmeasured on the device**; the
 drawer's `render` row is where it would show.
 
-**Points are shaded as spheres lit by their sun.** An item may *shine* (`Scene.are_shining`,
+**Points are shaded as spheres lit by their sun.** An object may *shine* (`Scene.are_shining`,
 `shinesAt`/`setShining`, a `shines` checkbox in both editors, scene format version 5 with one
 byte after the radius; older files read as nothing shining). `lighting.lightsFor` gives every
 finite, non-shining point the unit direction toward its **nearest** shining point, or zero
@@ -603,7 +603,7 @@ framed still works, since it stands at the depth being looked at. A cursor towar
 finds ground beyond the window and takes the level instead, which is what stops a zoom near
 the horizon flying off across the ground; the suite holds both cases. The
 object comes first because pointing at something means *that thing, at the depth it stands
-at*: `positionOnItemUnder` reads a point at its place, a plane where the sight ray crosses
+at*: `positionOnObjectUnder` reads a point at its place, a plane where the sight ray crosses
 it, a line at the point nearest the ray. Horizon objects are refused — drawn at
 `radius_horizon` about the eye, they are not *at* any place, and a horizon plane matches
 every ray. The price is the jump: two notches taken either side of an object's edge converge
@@ -702,14 +702,14 @@ rather than interleaved; the only difference is blend order where two translucen
 overlap during a plane's fade-in.
 
 **Capacities** are asserted in `scene.nim`, the one module that can see both sides, so
-raising `ITEMS_MAX` fails to *compile* rather than `doAssert` at draw time (a dead page):
+raising `OBJECTS_MAX` fails to *compile* rather than `doAssert` at draw time (a dead page):
 
 | Cap | Value | Binding case |
 |---|---|---|
-| `VERTICES_MAX` | 10080 = 2 × `ITEMS_MAX` | every handle a point, every one selected |
-| `DISCS_MAX`, `DOMES_MAX`, `RINGS_MAX` | 10081 = 2 × `ITEMS_MAX` + 1 | every handle a plane, |
+| `VERTICES_MAX` | 10080 = 2 × `OBJECTS_MAX` | every handle a point, every one selected |
+| `DISCS_MAX`, `DOMES_MAX`, `RINGS_MAX` | 10081 = 2 × `OBJECTS_MAX` + 1 | every handle a plane, |
 |  |  | every one selected, plus a ghost |
-| `RIBBONS_MAX` | 20161 = 4 × `ITEMS_MAX` + 1 | every handle a line, two segments, drawn twice |
+| `RIBBONS_MAX` | 20161 = 4 × `OBJECTS_MAX` + 1 | every handle a line, two segments, drawn twice |
 
 The furniture set's own binding case is `LINES_GRID_MAX` lattice lines per family. The
 desktop asks for a `SAMPLES_MULTISAMPLE` = 4 framebuffer and **falls back to none if no
@@ -822,7 +822,7 @@ selected.
 
 `marker.nim` shapes the outline to what it marks:
 
-| Shape | Marker | How it fills |
+| Kind | Marker | How it fills |
 |-------|--------|--------------|
 | Point | Circle in screen space about the drawn point. | Sweeps clockwise from twelve. |
 | Line | Two rails flanking its projection, one each side. | Runs out from its support. |
@@ -1058,7 +1058,7 @@ orientation sweep and their widest reading on both sides; a growing rail startin
 finished one does; the frame's 68 points at 296.8 px flat at half progress; the head sitting
 exactly its carried travel from its anchor at 45 placements, within a pixel; a rails marker
 at phase 0 reporting a positive lap; a matured hold taken once (a 1.62 s hold had selected
-its item and lost it within 50 ms of lift). Verified on the shipped browser: the comet's
+its object and lost it within 50 ms of lift). Verified on the shipped browser: the comet's
 advance from its anchor at 62.4, 61.7, 62.5 and 63.3 px/s across four orbit rates; 178.3,
 179.0 and 179.6 px over three seconds at 36, 60 and 144 fps against 180; the residual at the
 two faster rates — a tenth of frames stepping 236–388 px/s, laps and clip transitions, not
@@ -1120,9 +1120,9 @@ handles), and the point branch reads `pixelsFromCursor` rather than building a
 `ScreenPosition` per handle.
 
 **Handle-liveness guards.** Hovered, dragged, focused and selected handles are plain values
-carried across frames, so any can name a removed item the frame after a delete: `nimAnchorScreen`
+carried across frames, so any can name a removed object the frame after a delete: `nimAnchorScreen`
 reports nothing for a dead handle; `endDrag` on both paths checks `isAlive` on source and
-destination; removing an item clears the highlight on both paths.
+destination; removing an object clears the highlight on both paths.
 
 *Checked.* Verified by suite: both boundaries of each radius and all three priority pairings;
 a horizon point picked at a pixel where the line alone was first asserted picked; the disc
@@ -1193,14 +1193,14 @@ answers when the slop is crossed, refusal over the sky included.
 
 **A finger over a crowd moves the view; it never builds.** In the demo the pick's 34 px
 reach lands on some star almost anywhere, so a one-finger orbit kept becoming a construction
-drag. `picking.pickAt` now reports, beside the winner, how many items of the winner's rank *or
+drag. `picking.pickAt` now reports, beside the winner, how many objects of the winner's rank *or
 better* stood within `RADIUS_CROWD_TOUCH` = 72 px (`PickReport.count_rivals`; a point over a
 plane is no rival to it, since rank already decides, but a point beside a picked line is,
 since the finger may have meant it). The crowd reach is wider than the 34 px pick reach on
 purpose: the question is not what the finger hit but whether it could have meant something
 else, and at the pick reach alone the star field still turned orbits into drags. What is
 *picked* stays at the pick reach. `updateHover` keeps the count as `count_hover_rivals`, and
-`interaction.canConstructByTouch` is true only for a hovered, non-sky item with no rival.
+`interaction.canConstructByTouch` is true only for a hovered, non-sky object with no rival.
 `beginDrag` refuses `MenuArming.OnDwell` — touch alone — where that is false, and `glue.js`
 asks the same export (`nimCanTouchConstruct`) at the press so the pre-slop frames agree. The
 rule is the reader's: where a gesture is ambiguous, movement wins, because the reader can
@@ -1233,7 +1233,7 @@ trip, the pinch that must not slide, the two-finger pan, the pivot's height unde
 the zoom over ground — every one a rule pan, slide and the level anchor rely on. Rejected
 second: following a plane. Its depth under the pointer is not its depth at the middle of
 the frame, and the pivot lifted to it stood well off the plane being zoomed onto (the
-opening scene's ground *is* a plane item, and the pivot rose from 1.0 to 2.6 units on the
+opening scene's ground *is* a plane object, and the pivot rose from 1.0 to 2.6 units on the
 first notch). Verified: the driven pins now state the rule that holds — the eye and the
 pixel round-trip under a wheel notch each way, the pivot does not and is not meant to, and
 a pinch that does not slide is one whose eye moves along its own sight line (`nimCameraEye`
@@ -1259,7 +1259,7 @@ moves across its level and the distance and height do not change at all.
 **The edit ghost is drawn at the session's own radius.** `Preview` carries a radius
 (`previewStaging(geometry, radius)`), fed by `nimSetGhost(coefficients, radius)` on the
 browser and the panel's staged session on the desktop; a derived preview takes
-`RADIUS_ITEM_DEFAULT`, what commit gives it. Before this the ghost took the default, so
+`RADIUS_OBJECT_DEFAULT`, what commit gives it. Before this the ghost took the default, so
 editing a moon of 0.03 drew a grey disc nearly three times its size over it.
 
 **Edit from the selection menu waits for its row.** The objects list builds in time-bounded
@@ -1276,7 +1276,7 @@ now lands in view after 15 frames rather than never. Pinned by a driven check th
 the list, edits a deep handle and finds its form in view.
 
 **The gesture clock is seconds**, on whichever monotonic clock the caller owns, and the
-same reading `addItem` stamps a birth with. `glue.js` divides once in its own `now()`. The
+same reading `addObject` stamps a birth with. `glue.js` divides once in its own `now()`. The
 desktop's dwell once needed 450 *seconds* because the durations were named in milliseconds.
 
 **What a drag builds is read off the operands, not the button.** `∧` adds grades and is
@@ -1314,7 +1314,7 @@ highlights. **Three things a release can do, so three tints** (`ReleaseEffect`: 
 `Scene.index_ink` carries how far the cycle has walked (`inkNext`/`takeInk`/`skipInk`), and
 **every released construction steps it**, built or not, so a colour the reader watched for
 a whole drag is not offered again; a click does not step it, nor `More`; undo restores it;
-loading sets it to the item count.
+loading sets it to the object count.
 
 **Everything that meets an object on screen meets it where it is drawn.** `mesh.anchorFor`
 reads the stored anchor as `addPlane` and `markerFor` do; the band's start, its comet's aim
@@ -1324,7 +1324,7 @@ from the drawn centre on the demo's planes — 13.7 px for `ground` at the home 
 
 **The choice wheel.** Four wedges at fixed compass points — join north, meet east, project
 south, `more…` west — unoffered ones greyed (`ALPHA_MENU_UNOFFERED` 0.45) rather than
-packed out, because a menu whose items move is one nobody learns. A wedge is the selection
+packed out, because a menu whose objects move is one nobody learns. A wedge is the selection
 menu's own button, moved: same surface, hairline, `ROUNDING_MENU_WEDGE` 8 px radius, 12-px
 semibold face and `--accent` border on the one in force; the browser takes those from the
 same CSS variables, the desktop copies the tones into `drawChoiceMenu` with the siblings
@@ -1354,7 +1354,7 @@ already showing the operation last applied at that arity. Not the drawer's apply
 answering a wheel under the cursor by throwing the hand to a side panel buried the two
 objects just named. A degenerate construction is **refused**, the message naming what was
 degenerate, and a construction on a full scene is refused the same way (the drag commits in
-shared code with no panel between it and `addItem`'s assertion; one click on the demo
+shared code with no panel between it and `addObject`'s assertion; one click on the demo
 reached it).
 
 **Touch.** A finger that presses an object constructs; one that presses empty space moves
@@ -1393,7 +1393,7 @@ before the tap resolves.
 
 *Checked.* Verified by suite: every cell of the drag table and the at-most-one property,
 exhaustively; the click rule; the dwell restarting on movement and surviving a drift under
-the slop; the ghost's anchor equal to the created item's; the ink cycle stepping on release
+the slop; the ghost's anchor equal to the created object's; the ink cycle stepping on release
 and not on click. Verified by driven checks: the tint table at each wedge stop
 (`nimDragTint` reading neutral `(0.286, 0.322, 0.400)`, magenta `(0.612, 0, 0.722)`, the
 next hue); shift-clicks held 600 ms selecting; the sub-slop touch drag hovering 2 with the
@@ -1494,8 +1494,8 @@ because every file already written contained it. The desktop converts through
 | 4 | Magic `RGAS` |
 | 1 | Format version (`VERSION_SCENE` = 6) |
 | 1 | Basis count (16 under this build); must match |
-| 4 | Item count, little-endian `uint32` |
-| per item | Ink (1), visibility (1), label length in bytes (1) + UTF-8, one |
+| 4 | Object count, little-endian `uint32` |
+| per object | Ink (1), visibility (1), label length in bytes (1) + UTF-8, one |
 |  | little-endian `float` per basis term, the radius as one more `float`, then shines (1) |
 
 `MAGIC_SCENE` and `VERSION_SCENE` are exported and reach `glue.js` through
@@ -1505,9 +1505,9 @@ copied by hand into JavaScript — once left the two builds unable to open each 
 while the round-trip suite stayed green, because it only ever asked one build to read what
 it wrote.
 
-Only live items are written, **in creation order** (`nimSceneHandlesCreated` on the browser
+Only live objects are written, **in creation order** (`nimSceneHandlesCreated` on the browser
 side; `nimSceneHandles` keeps handle order for the combo boxes indexed by position). That order
-is the whole of what version 3 added; version 4 appended the radius after each item's
+is the whole of what version 3 added; version 4 appended the radius after each object's
 geometry and version 5 the shines byte after that, and which versions carry each is
 `scene.hasRadius`/`hasShine`, reached by the browser parser through
 `nimSceneHasRadius`/`nimSceneHasShine` rather than literals. Version 6 changed no byte: it
@@ -1515,7 +1515,7 @@ records that the palette lost its structural `Algebra` handle at ordinal 7, so e
 version-2-to-5 file wrote sits one past today's, and `upgradedFrom5` takes it down (a byte
 naming the handle itself is refused, since no build assigned it to an object). The version-1
 fold therefore lands in version 2's dialect, one past today's, and is taken down by the same
-step — the suite pins both, ordinal by ordinal. Omitted on purpose: handle numbers, a per-item
+step — the suite pins both, ordinal by ordinal. Omitted on purpose: handle numbers, a per-object
 ordinal, fixed-width label padding.
 
 **A loaded scene replays its construction.** `born` is not written, but
@@ -1530,10 +1530,10 @@ build replays — a file, the demo, the opening scene — through one rule in bo
 **Every version ever written is still readable.** `VERSION_SCENE_LEAST` = 1 and should stay
 1: reading an old version costs a mapping func and a suite case, refusing one costs somebody
 their scene. Reading is written once against `VERSION_SCENE`; each past version's difference
-lives in one `upgradedFrom<n>`, and `itemUpgraded` walks an `ItemSaved` up the chain one
+lives in one `upgradedFrom<n>`, and `objectUpgraded` walks an `ObjectSaved` up the chain one
 step at a time. Version 4 costs suns: `upgradedFrom4` fills false, so nothing shines and
 every point draws flat as it did. Version 3 costs sizes: `upgradedFrom3` fills
-`RADIUS_ITEM_DEFAULT`, the size version 3 drew everything at, whatever the parser had in the
+`RADIUS_OBJECT_DEFAULT`, the size version 3 drew everything at, whatever the parser had in the
 field — and the chain refuses a
 radius that is zero, negative or NaN as it refuses an unknown palette slot. Version 2 costs
 nothing but the sequence guarantee (`upgradedFrom2` is an
@@ -1545,7 +1545,7 @@ hue is recoverable, a refused scene is not**. `loadScene` parses into a staging 
 replaces the caller's only on complete success; native-only.
 
 *Checked.* Verified by cross-reading, not round-tripping: the sixteen-object demo saved,
-reloaded and compared item for item in creation order — label, ink, visibility and all
+reloaded and compared object for object in creation order — label, ink, visibility and all
 sixteen coefficients, 304 scalar comparisons exactly equal; the desktop re-saving the
 browser-written file byte-identical, all 2245 bytes; hand-built version-1 and version-2
 files read the same by both parsers (version 1's ordinals 4/7/11/13 as
@@ -1568,8 +1568,8 @@ as a slope. Measured on one page under SwiftShader: 60 / 360 / 5038 objects cost
 ring timeline doing its job. The working rule: `Nearest` for a quick check, `Neighbourhood`
 for a final one, `Catalogue` when the change could cost performance. **Each size lands on
 its count exactly**: the star walk passes over a system too large for the room left and
-keeps walking, so a nearer four-item system gives way to a further single star; the suite
-bounds the slack (once a system needing `k` items is passed over, at most `k − 1` stars can
+keeps walking, so a nearer four-object system gives way to a further single star; the suite
+bounds the slack (once a system needing `k` objects is passed over, at most `k − 1` stars can
 follow it in). `orrery.showOrrery` is the one copy — arrangement, replayed arrival and camera
 solve — reached by the bridge and by the desktop's `--demo`.
 
@@ -1605,7 +1605,7 @@ Sol reads as a sun among stars. Neighbour suns take Sol's radius and neighbour p
 (`RADIUS_NEIGHBOUR_SUN`, `RADIUS_NEIGHBOUR_PLANET`): neither catalogue carries radii, and one
 figure for all is honest about that. No other spacing changed — the orbit rings were already
 far wider than any body — and the suite pins order, ratio, every moon's ring clearing its
-planet's disc and its own, and every body above `RADIUS_ITEM_LEAST`. Verified by looking:
+planet's disc and its own, and every body above `RADIUS_OBJECT_LEAST`. Verified by looking:
 Sol at 14 units is a disc among dots, Jupiter's four moons are discs about its disc at 1.2
 units, and the desktop draws the same frame as the browser.
 
@@ -1914,7 +1914,7 @@ Blender (WASD, Q/E, shift for faster, F to frame), with the one fork made the ma
 the view *slides* across the ground and the height never changes. Both front-ends watch key
 up as well as down; `releaseKeysAll` empties the held set on blur, on the tab being hidden,
 and when a panel widget takes the keyboard (`gui.wantsKeys`: `WantTextInput` or
-`IsAnyItemFocused` — `WantCaptureKeyboard` is true from the first frame with navigation on).
+`IsAnyObjectFocused` — `WantCaptureKeyboard` is true from the first frame with navigation on).
 Plain `s` moved to `ctrl+s`. Dear ImGui's keyboard navigation is enabled (`io.ConfigFlags`);
 without it Tab reached nothing on the desktop at all.
 
@@ -2079,7 +2079,7 @@ and that commit fetches directly from `github.com/nim-lang/Nim`, which is where 
 Assumed: that no release carries 26074 — checked by asking for 2.2.12, 2.4.0 and 2.6.0 and
 getting nothing, which dates rather than proves it.
 
-**Two Atlas defects stand, and the workaround is manual.** `atlas pin` writes `"items": {}`
+**Two Atlas defects stand, and the workaround is manual.** `atlas pin` writes `"objects": {}`
 for a repository carrying no nimble file, so the resolved commit is patched into `atlas.lock`
 by hand; and `atlas` calls the nimble file "broken" because it cannot parse a commit where it
 expects a version, which is cosmetic here since it resolves the dependency regardless. Both
@@ -2097,7 +2097,7 @@ testament:
 |-------------|---------|-----------|-----|
 | `t4d.nim` | C | Default | The desktop build, as shipped |
 | `t4d_browser.nim` | JS | Default | The browser build's own backend |
-| `t4d_small.nim` | C | 12 items, 12-char labels, 4 steps | Boundaries a test reaches |
+| `t4d_small.nim` | C | 12 objects, 12-char labels, 4 steps | Boundaries a test reaches |
 
 The JS row is not a formality: a rule reached through two mechanisms is held together only
 where both run. The reduced row makes any constant tuned to the default fail here;

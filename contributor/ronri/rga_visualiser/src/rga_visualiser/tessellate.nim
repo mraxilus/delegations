@@ -110,10 +110,10 @@ func anchorFor*(m: Multivector, scale: DrawExtent): Option[Position] =
   ##     Neither needs horizon anchor: `pickNearest` tests horizon line against great
   ##     circle it is drawn as and matches horizon plane outright.
   ##   None where `m` carries no drawable geometry.
-  let shape = shape(m)
-  if shape.isNone: return
-  case shape.get
-  of Shape.Point:
+  let kind = kindOf(m)
+  if kind.isNone: return
+  case kind.get
+  of Kind.Point:
     let place = position(m)
     if place.isSome: return place
     let heading = directionHorizon(m)
@@ -121,7 +121,7 @@ func anchorFor*(m: Multivector, scale: DrawExtent): Option[Position] =
     position(add(
       scale.eye_point, wedge(scale.radiusHorizon, toMultivector(heading.get))
     ))
-  of Shape.Line, Shape.Plane:
+  of Kind.Line, Kind.Plane:
     positionAnchor(m)
 
 
@@ -135,8 +135,8 @@ func anchorFor*(
   ##   one centre.
   ##     Stored creation anchor can stand units from support, so band from support left
   ##     from point nowhere on visible circle.
-  ##   Ignored for every other shape, as `addObject` ignores it.
-  if anchor_override.isSome and shape(m) == some(Shape.Plane): return anchor_override
+  ##   Ignored for every other kind, as `addObject` ignores it.
+  if anchor_override.isSome and kindOf(m) == some(Kind.Plane): return anchor_override
   anchorFor(m, scale)
 
 
@@ -416,7 +416,7 @@ type
     ##     Placing was most of moving frame's scene phase, recomputed per orbit frame for
     ##     objects nobody touched.
     ## Flat rather than variant object.
-    ##   Copied per handle into `array[ITEMS_MAX, Placed]`, and case object's tag would buy
+    ##   Copied per handle into `array[OBJECTS_MAX, Placed]`, and case object's tag would buy
     ##   nothing but narrower read. Which fields carry meaning is `kind`'s to say.
     kind*: PlacedKind
     at*: Position ## Where it stands: point's place, line's support, plane's disc centre.
@@ -450,15 +450,15 @@ proc placeObject*(
   ##   Plane whose support or frame algebra cannot give lands on `PlaneEverywhere`, what
   ##   infinite plane is: sky.
   timed(Side.Placing):
-    let shape = shape(geometry)
-    if shape.isNone: return Placed(kind: PlacedKind.Nothing)
-    case shape.get
-    of Shape.Point:
+    let kind = kindOf(geometry)
+    if kind.isNone: return Placed(kind: PlacedKind.Nothing)
+    case kind.get
+    of Kind.Point:
       let place = position(geometry)
       if place.isSome: return Placed(kind: PlacedKind.PointAt, at: place.get)
       let heading = directionHorizon(geometry)
       if heading.isSome: return Placed(kind: PlacedKind.PointToward, toward: heading.get)
-    of Shape.Line:
+    of Kind.Line:
       let
         anchor = positionAnchor(geometry)
         axis = direction(geometry)
@@ -476,7 +476,7 @@ proc placeObject*(
             axis_second: spanned.get[1],
             normal: normal.get,
           ))
-    of Shape.Plane:
+    of Kind.Plane:
       let
         anchor = if anchor_override.isSome: anchor_override else: positionAnchor(geometry)
         axes = frame(geometry)
@@ -522,7 +522,7 @@ func isPointInView*(placed: Placed, radius: float, bounds: ViewBounds): bool =
 
 proc emitObject*(
   meshes: var MeshSet, placed: var Placed, tint: Rgba, scale: DrawExtent,
-  progress: float = 1.0, radius: float = RADIUS_ITEM_DEFAULT, light: Direction = LIGHT_NONE
+  progress: float = 1.0, radius: float = RADIUS_OBJECT_DEFAULT, light: Direction = LIGHT_NONE
 ): Placement =
   ## Turn one placed object into this frame's records, at this frame's camera.
   ##   Other half of `placeObject`: takes no multivector, so what object *is* was settled
@@ -533,7 +533,7 @@ proc emitObject*(
   ##     to full reach.
   ##   `radius` is how large point is drawn, in world units; every other kind ignores it.
   ##     Horizon point stands at `radius_horizon`, where any radius falls to least
-  ##     on-screen size, so star reads as dot whatever its item says.
+  ##     on-screen size, so star reads as dot whatever its object says.
   ##   `light` is direction finite point is shaded from; see `lighting`. Horizon point is
   ##   never shaded: it is direction, not body.
   ##   `placed` is `var` because nothing here writes it (Art. VII.1).
@@ -628,7 +628,7 @@ proc addObject*(
   meshes: var MeshSet, scratch: var DrawScratch, geometry: Multivector, tint: Rgba,
   scale: DrawExtent, progress: float = 1.0,
   anchor_override: Option[Position] = none(Position),
-  bounds: Option[ViewBounds] = none(ViewBounds), radius: float = RADIUS_ITEM_DEFAULT,
+  bounds: Option[ViewBounds] = none(ViewBounds), radius: float = RADIUS_OBJECT_DEFAULT,
   light: Direction = LIGHT_NONE
 ): Placement =
   ## Append object, dispatching on geometry its grade stands for.

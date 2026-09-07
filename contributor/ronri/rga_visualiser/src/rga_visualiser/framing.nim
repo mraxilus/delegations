@@ -129,10 +129,10 @@ proc reachOf*(scene: Scene): float =
   ##   For `Camera.reach_scene` on path holding no placements; desktop, once per scene
   ##   change. Sibling of `reachOf(placed, scene)`.
   result = 0.0
-  for handle, item in scene.pairs:
-    if not item.isVisible: continue
+  for handle, one in scene.pairs:
+    if not one.isVisible: continue
     result = max(
-      result, reachOfPlaced(placeObject(item.geometry, item.anchorOverride), item.radius)
+      result, reachOfPlaced(placeObject(one.geometry, one.anchorOverride), one.radius)
     )
 
 
@@ -261,7 +261,7 @@ func placementFor*(
 
 
 func placementUnderPointer*(
-  anchor: Position; shaped: Shape; radius: float; centre: Position; camera: Camera;
+  anchor: Position; shaped: Kind; radius: float; centre: Position; camera: Camera;
   scale: DrawExtent
 ): Option[CameraPlacement] =
   ## Resolve where camera ends after pointer pick, `anchor` kept on its pixel.
@@ -290,19 +290,19 @@ func placementUnderPointer*(
   if depth_now <= 1.0e-6: return
   var depth_end = min(depth_now, camera.distance)
   case shaped
-  of Shape.Point:
+  of Kind.Point:
     let is_dot =
       radius < 0.5*float(DIAMETER_POINT_LEAST)*worldPerPixelAt(anchor, scale.scale)
     if is_dot:
       depth_end = min(
         depth_now, depthSpanning(2.0*radius, FRACTION_HEIGHT_APPROACH_POINT, camera)
       )
-  of Shape.Plane:
+  of Kind.Plane:
     let depth_centre = dot(centre - eye, forward)
     depth_end = depthSpanning(2.0*EXTENT_PLANE_F, FRACTION_HEIGHT_APPROACH_PLANE, camera) -
       depth_centre + depth_now
     if depth_end <= 1.0e-6: return
-  of Shape.Line: discard
+  of Kind.Line: discard
   depth_end = distanceHeld(depth_end)
   # Assemble eye as anchor plus offset back toward where it stood, scaled by depths.
   let eye_settled = position(add(
@@ -360,7 +360,7 @@ func offerAim*(
       scene.isAlive(pick.get.handle):
     let
       m = scene.geometryOf(pick.get.handle)
-      shaped = shape(m)
+      shaped = kindOf(m)
       # Size plane by disc it is drawn as, about its stored anchor.
       centre = anchorFor(m, scene.anchorOverrideAt(pick.get.handle), scale)
     if shaped.isSome and not isHorizon(m) and centre.isSome:
@@ -395,6 +395,6 @@ func offerAimAt*(
   var alone: Scene
   var pointer = none(PointerPick)
   offerAim(
-    tween, camera, alone, Selection(), some(previewStaging(m, RADIUS_ITEM_DEFAULT)),
+    tween, camera, alone, Selection(), some(previewStaging(m, RADIUS_OBJECT_DEFAULT)),
     camera.drawExtentFor(height), width, height, now, duration, pointer,
   )
