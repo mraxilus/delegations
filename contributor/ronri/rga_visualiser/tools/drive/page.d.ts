@@ -2,10 +2,11 @@
 //   at run time, and only TypeScript can state them to type-checker.
 //   Bridge's 157 exports are *not* here: they are derived into `build/bridge.d.ts` by
 //   `tools/build.nim declare`, so no signature of theirs is written twice.
-//   These nine are exception, hand-written because nothing derives them: they
-//   live in `src/browser/*.ts` at script scope, which no generator reads yet.
-//   Kept to nine on purpose. Reach for bridge export first, then for DOM; add here only
-//   where neither can say it.
+//   These are exception, hand-written because nothing derives them: they live in
+//   `src/browser/*.ts` at script scope, which no generator reads yet.
+//   Two groups only: page's own selection and chrome entries, and exceedance window, whose
+//   buckets and axis no bridge export reaches. Add here only where neither bridge export
+//   nor DOM can say it.
 
 /** Drop every selected object, as `state` does for chrome that asks. */
 declare function clearSelection(): void;
@@ -37,3 +38,35 @@ declare function showHelp(is_shown: boolean): void;
 
 /** Marker kind page draws horizon line's bands as; mirrors `marker.MarkerKind`. */
 declare const MARKER_BANDS: number;
+
+/* Exceedance window, which `src/browser/diagnostics.ts` owns. */
+
+/** Take one frame's duration into rolling window, as frame loop does every frame. */
+declare function recordExceedance(delta_milliseconds: number): void;
+
+/** Refill `shares_exceedance` from buckets, and report how many frames window holds. */
+declare function scanExceedance(): number;
+
+/** Redraw curve now, rather than waiting for section's own slower cadence. */
+declare function drawExceedance(): void;
+
+/** How many buckets window is cut into. */
+declare const BUCKETS_EXCEEDANCE: number;
+
+/** How many milliseconds one bucket spans. */
+declare const MILLISECONDS_BUCKET: number;
+
+/** Narrowest axis may draw, whatever window holds. */
+declare const MILLISECONDS_AXIS_LEAST: number;
+
+/** Share of frames at or over each bucket's own duration, filled by `scanExceedance`. */
+declare const shares_exceedance: Float64Array;
+
+/** How many frames fell in each bucket. */
+declare const buckets_exceedance: Int32Array;
+
+/** Every frame duration window holds, oldest overwritten first. */
+declare const history_exceedance: Float32Array;
+
+/** When axis's extent first differed from what is drawn; zero while it is settled. */
+declare let ms_axis_restless: number;
