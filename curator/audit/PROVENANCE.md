@@ -720,14 +720,28 @@ at 1.5 s.
   the archive directory is root-owned and awkward to key. Measure the install first, exactly as
   `nimcache` waits on being driven against a deliberately stale cache.
 
-*Checked.* Verified by running, 2026-09-07: `koch driven contributor/ronri/rga_visualiser`
-restores through Atlas, installs 7 node packages, builds the page on the commit-pinned
-compiler and reports **135 of 135 checks passed, 0 findings, in 2 m 36 s** warm. Verified by
-breaking: on the driver's own 2.2.4 the same command fails inside `pga` rather than passing,
-which is what sent this to a matrix. Verified by the gap it found: on a clean checkout the run
-stops at `Missing face 'build/fonts/commit-mono-latin-400-normal.woff2'; run 'assets' first`,
-because `drive` chains `web`, `types` and `declare` but not `assets`. That is the project's to
-fix and is raised on issue 47; the figure above was taken with `assets` run once by hand.
+*Checked.* Verified on the runner, 2026-09-07, which is the only place this claim means
+anything: the `driven` job reports **136 of 136 checks passed, 0 findings, in 5 m 30 s**, in a
+real Chromium over real gestures — pinches, wheel notches, held keys and pixel comparisons —
+and `audit` reads its verdict. Verified locally first, by the same verb: 2 m 36 s warm and
+3 m 31 s on a tree whose `build/` was removed entirely, which is the runner's own case.
+  Verified by breaking: on the driver's own 2.2.4 the same command fails inside `pga` rather
+  than passing, which is what sent this to a matrix rather than to one plain job.
+  Verified by the gap it found, which is the return this job paid for before it ever went
+  green. On a cold checkout the first run stopped at `Missing face
+  'build/fonts/commit-mono-latin-400-normal.woff2'; run 'assets' first`: every expensive step
+  done — Atlas restored, node packages installed, declarations derived, bridge compiled — and
+  one cheap one missing, because `drive` chained `web`, `types` and `declare` but not `assets`.
+  Invisible to its author, whose `build/fonts` was always there. Raised on issue 47, fixed by
+  the project in pull request 71, and the next run was green.
+
+**The browser a declaration names is the browser that runs, and the snap serves.** `apt-get
+install chromium` on `ubuntu-latest` gives `/snap/bin/chromium`, a wrapper rather than a plain
+binary, and whether Playwright would launch one was unknown while this was written — the risk
+was recorded as open rather than guessed at either way. It launches. Recorded because the
+opposite result had a different owner: a package that did not serve the runner would have been
+the project's declaration to change, never a name quietly substituted here, which would have
+moved a real dependency into a file its author does not read.
 
 ## Continuous integration
 
@@ -868,10 +882,25 @@ same container as the rows above. `koch driven contributor/ronri/rga_visualiser`
 compiler already built — and reports 135 of 135 checks passed. Roughly two thirds of that is
 the harness's own deliberate wall-clock windows and its largest-demo load rather than
 anything a faster machine shortens. `assets` costs 1.5 s for six faces over the network.
-  This is a local figure, not a runner one: the runner additionally installs system packages
-  through apt and must build or restore the commit-pinned compiler, neither of which is
-  measured yet. Record the runner's own figures from the first run of this job, and do not
-  treat this row as predicting them.
+  This was recorded as a local figure that should not be treated as predicting the runner's,
+  and it did not: the runner's `driven` job is **5 m 30 s**, half again the warm local run and
+  well over the cold one, on the same checks. The gap is the runner's own — apt install,
+  restoring a 2.4 GB compiler from cache, and a slower core — none of which a local run pays.
+  The rule that produced the right expectation is worth keeping over the number it produced:
+  a figure from one machine predicts another machine's only where what differs has been
+  measured, and here it had not been.
+
+**The caching pair is settled, and it is not the pair that was expected.** Four caches now
+restore on the driven job — npm's store, Atlas checkouts, the commit-pinned compiler, and the
+faces — and the run at 21:49 hit all four, saving the faces for the first time. The compiler
+is the whole figure: restoring it is seconds where building it from source is the fifteen
+minutes the first `driven` attempt would otherwise have cost, and every other cache is noise
+beside it — `npm ci` runs in 2 s cached, and the six faces are 1.5 s uncached.
+  So the pair owed since the caching change lands as one number and three rounding errors,
+  and the honest form of it is that sentence rather than a table of four rows implying four
+  savings. A cold half for npm and faces was never taken under runner conditions and now
+  cannot be without deliberately poisoning a key; that measurement is dropped rather than
+  left owed.
 
 ## Re-audit, 2026-09-07, issue routing
 
