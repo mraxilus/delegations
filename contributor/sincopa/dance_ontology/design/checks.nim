@@ -1325,6 +1325,21 @@ proc checkHandTurns*() =
               &"A break is drawn without a crossing; got one at " &
                 &"`{decimal(mark.opens, 1)}` on {arm} in {manner} edge {edge} " &
                 &"frame {i}."
+          # And every piece break leaves is long enough to read as
+          # line.  Round cap draws piece of no length as disc as wide as
+          # line, so sliver at either end of half -- at seam between two
+          # shades, or at hand -- comes out as dot, and dot inside break
+          # reads as connection coming through it.
+          for k in 0 .. 1:
+            let
+              stretch = if k == 0: deep else: polylineLen(routes[arm]) - deep
+              here = shades[arm][k][i]
+            for mark in here:
+              for piece in [mark.opens, stretch - mark.shuts]:
+                doAssert piece <= 0.01 or piece >= SEEN_RUN,
+                  &"A break leaves a piece too short to read as line; got " &
+                    &"`{decimal(piece, 2)}` on {arm} shade {k} in {manner} " &
+                    &"edge {edge} frame {i}."
           gaps += dips.len
           if i == 0:
             first_cuts[arm] = divesOf(routes[Arm.L], routes[Arm.R],
