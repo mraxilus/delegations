@@ -761,6 +761,44 @@ func crossingsOf*(one, other: seq[Point]): seq[Point] =
         result.add at
 
 
+const
+  DAYLIGHT = 0.6      ## Space left between cut end and what it passes under.
+  GRAZING = 0.25      ## Least sine of crossing angle break is sized from.
+    ## Two reaches meeting almost head on hide unbounded length of one
+    ##   another; gap that long is hole in picture, so angle is floored
+    ##   and grazing pair takes widest break drawing will draw.
+
+func headingAt(pts: seq[Point]; at: Point): float =
+  ## Say which way reach is going where it passes nearest this point.
+  var near = (d: Inf, i: 0)
+  for i, q in pts:
+    let d = dist(q, at)
+    if d < near.d:
+      near = (d, i)
+  let
+    a = pts[max(near.i - 1, 0)]
+    b = pts[min(near.i + 1, pts.high)]
+  arctan2(b.y - a.y, b.x - a.x)
+
+
+func hidesAt*(under, over: seq[Point]; at: Point): float =
+  ## Say how wide gap in under reach is where over one crosses it.
+  ##   Break is **shadow of line crossing over it**.  That line covers its
+  ##     own width square on and more at slant, which is its width over
+  ##     sine of angle between them.
+  ##   Round caps put half width back on each end of gap, so what is
+  ##     written is shadow plus one whole width, and `DAYLIGHT` either
+  ##     side so cut ends do not touch what they pass beneath.
+  ##   Break sized any other way is number rather than shadow, and reads
+  ##     as gap in line wherever it is wider than thing it hides.
+  var between = abs(headingAt(under, at) - headingAt(over, at))
+  while between > PI:
+    between = 2 * PI - between
+  if between > PI / 2:
+    between = PI - between
+  LINK_W / max(sin(between), GRAZING) + LINK_W + 2 * DAYLIGHT
+
+
 func gapFor*(at, span, wide: float): tuple[opens, shuts: float] =
   ## Say where gap for crossing this far along reach opens and shuts.
   ##   Gap slides rather than hangs off end.  Crossing lying within half
@@ -772,27 +810,17 @@ func gapFor*(at, span, wide: float): tuple[opens, shuts: float] =
   ##     one break reads like every other.  Gap still covers its crossing
   ##     wherever crossing is half break clear of both ends, which is
   ##     every case that can be drawn whole.
-  ##   Centred on its crossing, unless that leaves piece of reach too
-  ##     short to read.  Round caps add half stroke to each end of piece
-  ##     and take as much off gap beside it, so piece much shorter than
-  ##     break is blob and gap beside it is nick.
-  ##   Where that would happen gap is pushed as late, or as early, as it
-  ##     can go while still reaching its own crossing.  Which is as much
-  ##     line as that crossing leaves room for, and no more is on offer:
-  ##     crossing sits where it sits.
-  ##   Crossing lying nearer to hand than third of break carries no break
-  ##     at all: there is no room between hand and crossing to put one in,
-  ##     and dot of ink is worse than none.
-  let
-    seen = 2 * wide / 3
-    room = min(at, span - at)
-  if room < wide / 3:
+  ##   Centred on its crossing, always.  Break says line passes under
+  ##     another one, and it says it where they cross; gap pushed to one
+  ##     side leaves crossing drawn whole and puts hole in line where
+  ##     nothing happens.
+  ##   Crossing with less than half gap either side of it carries none:
+  ##     there is no room to put break in without hanging it off end, and
+  ##     reach stopping short of its hand reads as unfinished line rather
+  ##     than as one passing beneath (rule 14).
+  if at <= wide / 2 or span - at <= wide / 2:
     return (at, at)
-  let opens =
-    if at - wide / 2 < seen: min(at, max(span - wide, 0.0))
-    elif span - at - wide / 2 < seen: max(at - wide, 0.0)
-    else: at - wide / 2
-  (opens, min(opens + wide, span))
+  (at - wide / 2, at + wide / 2)
 
 
 func alongOf(pts: seq[Point]): seq[float] =
@@ -851,8 +879,10 @@ func runsOutside(pts: seq[Point]; along: seq[float];
       result.add run
 
 
-func cutGapsAt*(pts: seq[Point]; centres: seq[Point]): seq[Run] =
+func cutGapsAt*(pts, over: seq[Point]; centres: seq[Point]): seq[Run] =
   ## Break reach at every place it runs under another, not only first.
+  ##   Each gap is as wide as what hides it there, which is why reach that
+  ##     crosses over is wanted here and not only its crossings.
   if centres.len == 0:
     return @[pts]
   let along = alongOf(pts)
@@ -863,7 +893,7 @@ func cutGapsAt*(pts: seq[Point]; centres: seq[Point]): seq[Run] =
       let d = dist(p, centre)
       if d < nearest.d:
         nearest = (d, along[i])
-    gaps.add gapFor(nearest.at, along[^1], BREAK)
+    gaps.add gapFor(nearest.at, along[^1], hidesAt(pts, over, centre))
   runsOutside(pts, along, gaps)
 
 
@@ -981,4 +1011,4 @@ func cutGap*(pts: seq[Point]; over: seq[Point]): seq[Run] =
   ##     parallel pair, at end nearest point ties on.
   ##   Same crossings and same gaps as wound pair's, through same two
   ##     funcs, since one break should read like every other.
-  cutGapsAt(pts, crossingsOf(pts, over))
+  cutGapsAt(pts, over, crossingsOf(pts, over))

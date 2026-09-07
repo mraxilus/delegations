@@ -179,13 +179,13 @@ func windOf*(put: Pose; holds: Holds; arm: Arm): tuple[phi, spread: float] =
   (phi_a, wrap180(phi_b - phi_a))
 
 
-func divePlace*(pts: seq[Point]; meeting: Point): float =
-  ## Say how far along reach its break for this crossing is centred.
-  ##   Slid clear of both ends exactly as still reach's gap is
-  ##     (`gapFor`), so moving figure breaks where its still breaks and
-  ##     crossing near hand is still covered.
-  let gap = gapFor(alongAt(pts, meeting), polylineLen(pts), BREAK)
-  (gap.opens + gap.shuts) / 2
+func diveGap*(under, over: seq[Point]; meeting: Point): tuple[opens, shuts: float] =
+  ## Say where moving reach's break for this crossing opens and shuts,
+  ## measured along whole reach.
+  ##   Same gap still reach is cut by, through same two funcs, so moving
+  ##     figure breaks where its still breaks and at same width.
+  gapFor(alongAt(under, meeting), polylineLen(under),
+         hidesAt(under, over, meeting))
 
 
 func divesOf*(one, other: seq[Point]; turns: float): array[Arm, seq[Point]] =
@@ -282,7 +282,7 @@ func partsOf*(pose: Pose; holds: Holds; levels: Levels = default(Levels);
       let
         pts = routes[arm]
         runs =
-          if winding: cutGapsAt(pts, dives[arm])
+          if winding: cutGapsAt(pts, routes[other(arm)], dives[arm])
           elif on_top == some(other(arm)): cutGap(pts, routes[other(arm)])
           else: @[pts]
       bits.add twoTone(runs, pts[pts.len div 2], arm, holds[arm].get)
@@ -415,7 +415,8 @@ const GAPS_DRAWN = 2
   ##     number of them, which is what lets pattern be animated at all.
 
 
-func dashedAt*(pts: seq[Point]; dives: seq[float]; starts = 0.0):
+func dashedAt*(pts: seq[Point]; dives: seq[tuple[opens, shuts: float]];
+    starts = 0.0):
     tuple[pattern, offset: string] =
   ## Say moving reach's break as dash pattern: how far it runs, how long
   ## break is, and then rest of it (rule 29).
@@ -452,8 +453,8 @@ func dashedAt*(pts: seq[Point]; dives: seq[float]; starts = 0.0):
   var breaks: seq[tuple[opens, shuts: float]]
   for dive in dives:
     let
-      opens = clamp(dive - starts - BREAK / 2, 0.0, runs[^1])
-      shuts = clamp(dive - starts + BREAK / 2, 0.0, runs[^1])
+      opens = clamp(dive.opens - starts, 0.0, runs[^1])
+      shuts = clamp(dive.shuts - starts, 0.0, runs[^1])
     if shuts > opens:
       breaks.add (opens, shuts)
   breaks = breaks.sortedByIt(it.opens)
@@ -618,10 +619,10 @@ func animatedPoses*(classes: string; holds: Holds; walk: seq[Pose];
   # crossing is kept rather than only first (rule 31).
   # Kept as how far along its own reach each dive lies, not as where it is
   # on page: snake passes near its own line again further along.
-  var dives: array[Arm, seq[seq[float]]]
+  var dives: array[Arm, seq[seq[tuple[opens, shuts: float]]]]
   if holds[Arm.L].isSome and holds[Arm.R].isSome:
     for i in 0 ..< poses.len:
-      var mine: array[Arm, seq[float]]
+      var mine: array[Arm, seq[tuple[opens, shuts: float]]]
       let
         turned_by = if winds[Arm.L].len == poses.len: winds[Arm.L][i]
                     else: 0.0
@@ -630,7 +631,8 @@ func animatedPoses*(classes: string; holds: Holds; walk: seq[Pose];
         on_top = overArm(turned_by / 360)
       for k, meeting in crossingsOf(routes[Arm.L][i], routes[Arm.R][i]):
         let under = if (k mod 2 == 0) == (on_top == Arm.L): Arm.R else: Arm.L
-        mine[under].add divePlace(routes[under][i], meeting)
+        mine[under].add diveGap(routes[under][i], routes[other(under)][i],
+                                meeting)
       for arm in Arm:
         dives[arm].add mine[arm]
 

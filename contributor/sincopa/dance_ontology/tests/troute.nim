@@ -25,16 +25,24 @@ const
   STEP = 2.0    ## Spacing of sampled line, close to what reach uses.
   N = 33        ## Points in it, which is `ROUTE_N`.
 
-let line = (0 ..< N).mapIt((x: float(it) * STEP, y: 0.0))
-  ## Straight sampled line standing in for reach: laws below are about
-  ## where gap falls along line, and shape of line does not enter them.
+let
+  line = (0 ..< N).mapIt((x: float(it) * STEP, y: 0.0))
+    ## Straight sampled line standing in for reach: laws below are about
+    ## where gap falls along line, and shape of line does not enter them.
+  square = @[(x: 0.0, y: -20.0), (x: 0.0, y: 20.0)]
+    ## Reach crossing it square on, so gap it asks for is plain shadow.
+
+proc crossingAt(where: float): seq[Point] =
+  ## Get reach crossing line square on, this far along it.
+  ##   `proc` rather than `func` only because it reads module's own `square`.
+  square.mapIt((x: where, y: it.y))
 
 
 suite "reach breaks":
 
   test "a break never eats either end of a reach":
     for i in 0 ..< N:
-      let runs = cutGapsAt(line, @[line[i]])
+      let runs = cutGapsAt(line, crossingAt(float(i) * STEP), @[line[i]])
       check runs.len > 0
       check runs[0][0] == line[0]
       check runs[^1][^1] == line[^1]
@@ -48,8 +56,8 @@ suite "reach breaks":
       if at < BREAK / 2 or at > span - BREAK / 2:
         continue
       let
-        runs = cutGapsAt(line, @[line[i]])
-        gap = gapFor(at, span, BREAK)
+        runs = cutGapsAt(line, crossingAt(float(i) * STEP), @[line[i]])
+        gap = gapFor(at, span, hidesAt(line, crossingAt(at), line[i]))
         drawn = runs.mapIt(polylineLen(it)).foldl(a + b, 0.0)
       check runs.len == 2
       # Reach loses exactly its gap, no more and no less.  Bare test that
@@ -77,12 +85,14 @@ suite "reach breaks":
     # and puts hole in line where nothing happens.
     let span = float(N - 1) * STEP
     for i in 0 ..< N:
-      let gap = gapFor(float(i) * STEP, span, 8.0)
+      let
+        at = float(i) * STEP
+        gap = gapFor(at, span, hidesAt(line, crossingAt(at), line[i]))
       if gap.shuts <= gap.opens:
         continue
-      check abs((gap.opens + gap.shuts) / 2 - float(i) * STEP) < 1e-9
+      check abs((gap.opens + gap.shuts) / 2 - at) < 1e-9
 
   test "an uncrossed reach is drawn whole":
-    let runs = cutGapsAt(line, @[])
+    let runs = cutGapsAt(line, square, @[])
     check runs.len == 1
     check runs[0] == line

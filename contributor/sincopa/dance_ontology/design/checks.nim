@@ -1053,7 +1053,7 @@ proc checkHandTurns*() =
     var pieces: array[Arm, int]
     let dives = divesOf(pair[Arm.L], pair[Arm.R], position.wind)
     for arm in Arm:
-      pieces[arm] = cutGapsAt(pair[arm], dives[arm]).len
+      pieces[arm] = cutGapsAt(pair[arm], pair[other(arm)], dives[arm]).len
     doAssert pieces[snake] == 2,
       &"A swan's snake is not drawn in two pieces; got " &
         &"`{pieces[snake]}` in `{position.name}`."
@@ -1111,7 +1111,7 @@ proc checkHandTurns*() =
         # What breaking this reach where it dives takes out of it: cut
         # drops whole sampled points, and one against end of reach
         # drops fewer, so length is worked out rather than counted.
-        want_lost = whole - cutGapsAt(pair[arm], cuts[arm])
+        want_lost = whole - cutGapsAt(pair[arm], pair[other(arm)], cuts[arm])
           .mapIt(polylineLen(it)).foldl(a + b, 0.0)
       doAssert abs(lost - want_lost) < 0.5,
         &"A reach is not drawn broken where it dives; got `{decimal(lost, 1)}` " &
@@ -1264,10 +1264,13 @@ proc checkHandTurns*() =
           var dips: seq[float]
           for meeting in divesOf(routes[Arm.L], routes[Arm.R],
                                  spun[Arm.L] / 360)[arm]:
-            # Where break for that crossing sits, which is crossing itself
-            # unless it lies so near hand that gap would hang off end
-            # (`gapFor`); asked of drawing rather than worked out again.
-            dips.add divePlace(routes[arm], meeting)
+            # Where break for that crossing sits, asked of drawing rather
+            # than worked out again.  Crossing lying nearer to hand than
+            # half its own shadow carries none, since gap would hang off
+            # end (`gapFor`), and there is then nothing to look for.
+            let gap = diveGap(routes[arm], routes[other(arm)], meeting)
+            if gap.shuts > gap.opens:
+              dips.add (gap.opens + gap.shuts) / 2
           # Each dive wears one break, and no break is worn anywhere else --
           # which together are what crossing being drawn as crossing
           # means, however break happened to fall across two
@@ -1302,7 +1305,9 @@ proc checkHandTurns*() =
           # What its still would lose if it were cut where move's own
           # first frame dives: same arm, same places, same
           # length gone.
-          want_lost = whole - cutGapsAt(settled_pair, first_cuts[arm])
+          want_lost = whole - cutGapsAt(settled_pair,
+                                        pairOf(CHAIN[edge].wind)[other(arm)],
+                                        first_cuts[arm])
             .mapIt(polylineLen(it)).foldl(a + b, 0.0)
         doAssert abs(whole - ink - want_lost) < 0.5,
           &"The moving figure breaks a different arm from its still, or in " &
