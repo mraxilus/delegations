@@ -68,8 +68,8 @@ src/rga_visualiser/           geometry and model, reachable from either front-en
                               storyboard, orrery, neighbourhood, starfield, history,
                               format, help, timings, ramp, lighting
 src/…/projections.nim         projections pga withdrew; deleted when they return
-desktop/arena.nim             scratch arena the exporters write through
-desktop/image.nim gif.nim     PNG and GIF encoders, for storyboard frames
+src/desktop/arena.nim         scratch arena the exporters write through
+src/desktop/image.nim gif.nim PNG and GIF encoders, for storyboard frames
 src/browser/bridge.nim        every value the page draws, compiled through the JS backend
 src/browser/*.ts              DOM, WebGL and event wiring alone; gated file kind
 pages/shell.html              committed markup, with tokens the build fills

@@ -293,15 +293,18 @@ Render Paths
 |  |  | `scene`, `selection`, `picking`, `marker`, `framing`, `interaction`, |
 |  |  | `storyboard`, `orrery`, `neighbourhood`, `starfield`, `history`, |
 |  |  | `format`, `help`, `timings`, `ramp`, `lighting` |
-| `desktop` | `visualiser.nim` | `image`, `gif`, `arena` here; `panel`, `renderer`, `opengl`, |
-|  |  | `gui`, `gui_shim.cpp`, `sdl3` arrive with front-end |
-| `browser` | `bridge.nim` | arrives with front-end: `bridge.nim`, `glue.ts` |
+| `src/desktop` | desktop entry alone | `image`, `gif`, `arena` here; `panel`, `renderer`, |
+|  |  | `opengl`, `gui`, `gui_shim.cpp`, `sdl3` arrive with front-end |
+| `src/browser` | `bridge.nim` alone | `bridge.nim` and page's own scripts |
 
-`pga` is a dependency above all three and shared. `core` imports nothing outside itself and
-`pga`; `desktop` and `browser` each import `core` and never each other, readable from the
-import paths (`../core/`). `arena` sits in `desktop` despite being general-purpose: only the
-PNG and GIF encoders and the desktop draw loop reach it, and the JS backend cannot carve
-typed slices from a byte array at all.
+`pga` is dependency above all three and shared. Shared core imports nothing outside itself
+and `pga`; `src/desktop` and `src/browser` each import that core and never each other,
+readable from import paths (`../rga_visualiser/`). Both front-ends sit under `src/` beside
+core they draw through, which is what `srcDir` in nimble file already claims; desktop sat at
+repository root until this port and nothing but history put it there.
+  `arena` sits in `src/desktop` despite being general-purpose: only PNG and GIF encoders and
+  desktop draw loop reach it, and JS backend cannot carve typed slices from byte array at
+  all.
 
 A shared module reaching for something only one path has is a **compile error, not a
 comment**: `toCstring`, `buildChars`, `appendInt`, `appendFixed`, `saveScene`/`loadScene`

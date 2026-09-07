@@ -37,7 +37,7 @@ import ../src/rga_visualiser/[
 #   hand, and they write format's own byte order rather than host's.
 when not defined(js):
   import std/endians
-  import ../desktop/[arena, gif, image]
+  import ../src/desktop/[arena, gif, image]
 
 randomize(0)
 
