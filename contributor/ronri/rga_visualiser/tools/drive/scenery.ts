@@ -25,6 +25,25 @@ const RECORDS_GRID_MAX = 2 * (2 * 120 + 1);
  */
 const SHARE_KINDS_ACCOUNT = 0.995;
 
+/** Assert accounting allowance actually allows something, at smallest sample its own
+ *  checks admit.
+ *
+ *  Guards this allowance to: `kinds.length > 30` here, `heavy.length > 20` in `loaded`, so
+ *  smallest sample either accepts is 21. Allowance leaving no room at that size is allowance
+ *  in name only. Reads constant rather than page: what this guards is arithmetic, not
+ *  anything browser did (repository issue 47).
+ */
+export function driveAllowance(): void {
+  const smallest = 21;
+  const floor = Math.ceil(SHARE_KINDS_ACCOUNT * smallest);
+  report(
+    'the accounting allowance leaves room at the smallest sample its checks admit',
+    floor < smallest && floor > 0,
+    `floor ${floor} of ${smallest} frames, so ${smallest - floor} may miss`,
+  );
+}
+
+
 /** Open one branch of tree, leaving it open where it already was. */
 async function openBranch(page: Page, node: string): Promise<void> {
   await page.evaluate((given) => {
