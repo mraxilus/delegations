@@ -29,6 +29,8 @@ nim r koch tests contributor/ronri/rga_visualiser  # this project alone, three c
 nim r tools/build.nim assets                     # this project: fetch the six faces, once
 nim r tools/build.nim web                        # this project: build/rga_visualiser.html
 nim r tools/build.nim drive                      # this project: build it, then drive it
+nim r tools/build.nim desktop                    # this project: bin/rga_visualiser
+nim r tools/build.nim system                     # this project: what to install first
 ```
 
 Needs **Nim built from commit `27763495b`** on `PATH`, and git. No release will do: the
@@ -38,24 +40,31 @@ git checkout 27763495b && sh build_all.sh`; CI does the same and caches the resu
 commit. The pin is exact and the audit enforces it: running the suites on any other compiler
 is a finding, not a warning.
 
-The browser front-end needs nothing installed beyond that compiler and Node: it builds through
-`nim js` and opens from `file://`. The **desktop** front-end links against system libraries,
-which this repository has no registered file kind to declare (asked as issue 60), so they are
-named here and in `PROVENANCE.md`:
+System packages are declared in `tools/build.nim` and printed by its `system` verb, so this
+README names no list that could drift from the one the build reads (issue 60):
 
-| Package | For |
-|---|---|
-| `libsdl3-dev` | windowing, input and the OpenGL context — `src/desktop/sdl3.nim` |
-| `libgl-dev` | OpenGL headers and loader — `src/desktop/opengl.nim` |
-| `zlib1g-dev` | deflate and CRC the PNG export writes — `src/desktop/image.nim` |
-| `xvfb` | a display for the headless `--drive-*` runs to push real SDL events at |
-| `libgl1-mesa-dri` | the software GL those runs render through |
+```sh
+nim r tools/build.nim system | xargs sudo apt-get install -y
+```
 
-Dear ImGui is compiled from source rather than linked, so clone it beside the project — kept
-locally, never committed, as the Atlas checkouts are:
+The browser front-end needs nothing beyond that compiler and Node. The **desktop** front-end
+links against SDL3, OpenGL and zlib, and its headless runs need Xvfb and a software GL.
+
+Two of its dependencies do not arrive as packages, so both are pinned by version and the
+build refuses either when wrong. **SDL3** has no `libsdl3-dev` on Ubuntu 24.04 — that release
+carries SDL2 only — so build 3.2.31 from source:
+
+```sh
+git clone --branch release-3.2.31 https://github.com/libsdl-org/SDL.git
+cmake -S SDL -B SDL/build && cmake --build SDL/build && sudo cmake --install SDL/build
+```
+
+**Dear ImGui** is compiled from source into the binary rather than linked. Clone it beside
+the project — kept locally, never committed, as the Atlas checkouts are:
 
 ```sh
 git clone --branch docking https://github.com/ocornut/imgui.git deps/imgui
+git -C deps/imgui checkout fd13a1e8923a0a7077b404fc36fd063b25a0c0b5
 ```
 
 The `pga` library is restored by Atlas from `atlas.lock` into `deps/` and is never committed;
@@ -88,12 +97,19 @@ src/rga_visualiser/           geometry and model, reachable from either front-en
                               storyboard, orrery, neighbourhood, starfield, history,
                               format, help, timings, ramp, lighting
 src/…/projections.nim         projections pga withdrew; deleted when they return
+src/desktop/main.nim          desktop entry point: window, event loop, headless runs
+src/desktop/sdl3.nim opengl.nim  bindings to the window system and to GL
+src/desktop/gui.nim gui_shim.cpp  facade over Dear ImGui, and the C++ it needs
+src/desktop/renderer.nim      the GL renderer: one program per record kind
+src/desktop/panel.nim         the panel the reader edits scene and camera through
 src/desktop/arena.nim         scratch arena the exporters write through
 src/desktop/image.nim gif.nim PNG and GIF encoders, for storyboard frames
 src/browser/bridge.nim        every value the page draws, compiled through the JS backend
 src/browser/*.ts              DOM, WebGL and event wiring alone; gated file kind
 pages/shell.html              committed markup, with tokens the build fills
-tools/build.nim               the page's build driver: declare, web, assets, clean
+tools/build.nim               the build driver: declare, types, web, drive, desktop,
+                              assets, system, clean
+tools/drive/                  the Playwright harness the drive verb runs
 tests/suites.nim              every law, over one seeded pool of objects
 tests/t4d.nim t4d_small.nim   C backend, shipped and small capacities
 tests/t4d_browser.nim         JS backend, same suite
@@ -103,15 +119,14 @@ deps/                         PGA library, restored by Atlas; never committed
 ## Status
 
 Ported from a working prototype; see `PROVENANCE.md` for what is verified and what is
-assumed, and for the open questions this port raised. The browser page is here and builds;
-the desktop application is not, and arrives in a follow-up pull request. Its design record
-travels with it.
+assumed, and for the open questions this port raised. Both front-ends are here and build:
+the browser page through `web`, the desktop application through `desktop`.
 
 Every law under test through testament on the pinned commit, in three configurations. The
 page has been built and looked at, its type surface is checked, and a Playwright harness
-drives seventeen checks over held keys, the wheel, mouse pan and touch. Drag, undo, save
-and load remain untested and frame times unmeasured; no runner job reaches the harness,
-so those checks are run by hand — see Driven Checks in `PROVENANCE.md`.
+drives 136 checks over held keys, the wheel, mouse pan and touch — see Driven Checks in
+`PROVENANCE.md`. The desktop binary has been built and one frame of it looked at, headless
+under Xvfb; its own `--drive-*` runs are not yet exercised here, and arrive next.
 
 Unreviewed by a human: nothing here has been
 read line by line, and no human has driven either front-end or seen it on real graphics
