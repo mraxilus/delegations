@@ -922,15 +922,10 @@ func reachMarkup*(runs: seq[Run]; ink: string): string =
 
 func cutGap*(pts: seq[Point]; over: seq[Point]): seq[Run] =
   ## Break under reach where over one crosses it.
-  var cum = @[0.0]
-  for i in 0 ..< pts.high:
-    cum.add cum[^1] + dist(pts[i], pts[i + 1])
-  var nearest = (d: Inf, i: 0)
-  for i, p in pts:
-    for q in over:
-      let d = dist(p, q)
-      if d < nearest.d:
-        nearest = (d, i)
-  # Same gap as every other break, slid clear of both ends for same
-  # reason (`gapFor`).
-  runsOutside(pts, cum, @[gapFor(cum[nearest.i], cum[^1])])
+  ##   Where they cross, and nowhere else: break says reach passes
+  ##     beneath something, so pair that never meets carries none.
+  ##     Cutting at whichever point came nearest instead broke every
+  ##     parallel pair, at end nearest point ties on.
+  ##   Same crossings and same gaps as wound pair's, through same two
+  ##     funcs, since one break should read like every other.
+  cutGapsAt(pts, crossingsOf(pts, over))
