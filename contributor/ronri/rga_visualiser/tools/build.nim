@@ -10,10 +10,12 @@
 ##   | Command  | Effect                                                                |
 ##   |----------|-----------------------------------------------------------------------|
 ##   | declare  | derive `bridge.d.ts` from bridge's own `exportc` signatures            |
+##   | types    | declare, then type-check page's scripts and harness against it         |
 ##   | web      | declare, compile bridge through JS backend, type-check and emit        |
 ##   |          | TypeScript, inline faces, fold everything into one self-contained page |
 ##   | drive    | build page, then drive it through real events and report every check  |
-##   | assets   | fetch vendored faces page embeds                                       |
+##   | assets   | fetch vendored faces page embeds, and verify each against its pin      |
+##   | system   | print system packages build needs, one per line, for caller to install |
 ##   | clean    | remove `build`, `bin` and `nimcache`                                   |
 ##   |----------|-----------------------------------------------------------------------|
 ##   Everything lands under `build/`, which root `.gitignore` covers at any depth.
@@ -29,6 +31,7 @@
 ##
 ##   Cost: driver runs from project directory, since every path here is relative to it.
 ##   Cost: `web` needs node and npm alongside Nim; `assets` needs network once.
+##   Cost: `assets` and `web` need `sha256sum`, for reason `digestOf` gives.
 
 {.experimental: "strictFuncs".}
 
@@ -76,17 +79,43 @@ const
     ##   up through it, `gl` next because every later script draws through it, and `frame`
     ##   last because it starts loop everything else has to be ready for.
   FACES = [
-    "commit-mono-latin-400-normal.woff2",
-    "noto-sans-latin-400-normal.woff2",
-    "noto-sans-latin-600-normal.woff2",
-    "noto-sans-math-math-400-normal.woff2",
-    "noto-sans-symbols-2-symbols-400-normal.woff2",
-    "noto-serif-latin-400-normal.woff2",
+    ("commit-mono-latin-400-normal.woff2",
+      "86132abb57fc615f2ab900cde4cd9d5796e9791daf1f85d79fc933aa50b3b15c"),
+    ("noto-sans-latin-400-normal.woff2",
+      "09aee8065d25508f23a4c3d92cd777ac869c52d93fd868a88f025d888a7937d6"),
+    ("noto-sans-latin-600-normal.woff2",
+      "79e274470d1c5a0118eb325e2ea6f2eb2a449336d7fde1a4f20a2f32fe1119ed"),
+    ("noto-sans-math-math-400-normal.woff2",
+      "90b9ddbed280e379e1af4601eb1d53eee8dd467b4c9174e5fd2d7347fe180d30"),
+    ("noto-sans-symbols-2-symbols-400-normal.woff2",
+      "9c07d511848c274b5430c75bf98d1f2582680ef5f967947bfbdd06b75ca177c2"),
+    ("noto-serif-latin-400-normal.woff2",
+      "4c0cbe3eec50d260754d681c17ee2af49a43d7fd93ce42877f665fcb1a889b87"),
   ]
-    ## Faces page embeds, all SIL Open Font License 1.1; origins in PROVENANCE.md.
+    ## Faces page embeds, each with digest of bytes expected, all SIL Open Font License 1.1;
+    ##   origins in PROVENANCE.md.
+    ##   Digest is pin: host serves whatever it serves, and page embeds these bytes into
+    ##   artefact readers open, so wrong byte here is wrong byte shipped. Repository pins
+    ##   compilers to commits and packages to lock files; this is same pin for one fetch that
+    ##   had none (repository issue 47).
+  SYSTEM = [
+    ("curl", "fetch faces `assets` pins; build shells out to it"),
+    ("coreutils", "`sha256sum` verifying those pins and `base64` inlining them"),
+    ("nodejs", "run type-checker `types` drives and harness `drive` runs"),
+    ("chromium", "browser `drive` drives; harness takes its path from environment"),
+  ]
+    ## System packages build needs present before it runs, with what each is for
+    ##   (CONTRIBUTOR.md, "System dependencies"). Nim packages are in nimble file and pinned
+    ##   by `atlas.lock`; node packages in `package.json`, pinned by its lock. These have
+    ##   neither.
+    ##   No version is pinned and none is invented: package's version is whatever machine
+    ##   carries, which is honest limit rather than omission. What *is* pinned is every byte
+    ##   fetched at build time -- see `FACES` -- which is what keeps unpinned download out of
+    ##   merge process.
+    ##   Desktop front-end's own libraries join this list when that front-end lands.
   HOST_FACES = "https://cdn.jsdelivr.net/npm/@fontsource"
     ## Host `assets` fetches faces from.
-  USAGE = "Usage: nim r tools/build.nim <declare|types|web|drive|assets|clean>\n"
+  USAGE = "Usage: nim r tools/build.nim <declare|types|web|drive|assets|system|clean>\n"
     ## Text printed on usage error.
 
 
@@ -238,17 +267,70 @@ proc types() =
   run("npx", ["tsc", "--project", PATH_TSCONFIG_DRIVE])
 
 
+proc system() =
+  ## Print every system package this build needs, one per line and nothing else.
+  ##   Prints rather than installs: which package manager serves them is machine's business
+  ##   and varies by distribution, while list is this project's. Caller pipes it --
+  ##   `nim r tools/build.nim system | xargs sudo apt-get install -y` -- so CI installs from
+  ##   this declaration rather than from names written into workflow.
+  ##   Reason each carries stays in `SYSTEM` above, where reader looks; keeping it out of this
+  ##   output is what makes output machine-readable.
+  for (package, _) in SYSTEM: echo package
+
+
+proc digestOf(path: string): string =
+  ## Read file's SHA-256, as `sha256sum` writes it.
+  ##   Shelled out rather than computed here, and deliberately: no digest of that strength is
+  ##   in reach from Nim. Curator recorded all three routes as rejected on
+  ##   `curator/audit/src/provenance.nim` -- `std/sha1` deprecated and warning on every build,
+  ##   `checksums` package nimble install in CI for one hash, `std/hashes` unstable across
+  ##   compiler versions. `assets` already shells out for `curl` and `web` for `base64`, so
+  ##   this adds no dependency either lacked.
+  ##   Deriving SHA-256 here rejected outright: crypto primitive is last thing to hand-roll,
+  ##   and Article II.8 asks for dependency rather than copy.
+  let (written, code) = execCmdEx("sha256sum " & quoteShell(path))
+  if code != 0:
+    raise newException(OSError, "Cannot read digest of `" & path & "`; got exit `" & $code & "`.")
+  written.strip.split(' ')[0]
+
+
+proc checkFace(face, wanted: string) =
+  ## Raise unless face on disk carries digest pinned for it.
+  let path = DIR_FONTS / face
+  let got = path.digestOf
+  if got != wanted:
+    raise newException(OSError,
+      "Face `" & face & "` is not what is pinned; wanted `" & wanted & "`, got `" & got & "`.")
+
+
 proc assets() =
-  ## Fetch every face page embeds into `build/fonts`.
+  ## Fetch every face page embeds into `build/fonts`, and verify each against its pin.
   ##   Faces are binary, which audit cannot read, so they are never committed and this verb
   ##   is how contributor gets them (CONTRIBUTOR.md, "Pages and assets").
+  ##   Face already carrying its pinned digest is left alone: verb is then idempotent, second
+  ##   run fetches nothing, and CI keeps faces between runs keyed on that same digest
+  ##   (repository issue 47).
+  ##   Every mismatch is reported together rather than first one raising: host republishing
+  ##   family moves several at once, and one run should name all of them rather than one per
+  ##   run.
   createDir DIR_FONTS
-  for face in FACES:
+  var wrong: seq[string]
+  for (face, digest) in FACES:
+    if fileExists(DIR_FONTS / face) and (DIR_FONTS / face).digestOf == digest:
+      echo "Kept ", face, ", digest already matches"
+      continue
     # Family is name less its last three parts, i.e. subset, weight and style.
     let family = face.rsplit('-', 3)[0]
     run("curl", ["-sSLf", "-o", DIR_FONTS / face, HOST_FACES & "/" & family & "/files/" & face])
-    echo "Fetched ", face
-  echo "Wrote ", DIR_FONTS, " (", FACES.len, " faces)."
+    let got = (DIR_FONTS / face).digestOf
+    if got != digest:
+      wrong.add face & ": wanted `" & digest & "`, got `" & got & "`"
+    else:
+      echo "Fetched ", face, ", digest matches"
+  if wrong.len > 0:
+    raise newException(OSError,
+      "Host served bytes no face is pinned to; got " & $wrong.len & " -- " & wrong.join("; "))
+  echo "Wrote ", DIR_FONTS, " (", FACES.len, " faces, every digest matched)."
 
 
 proc web() =
@@ -275,12 +357,15 @@ proc web() =
     scripts.add "\n" & readFile(path)
 
   var page = readFile(PATH_SHELL)
-  for face in FACES:
+  for (face, digest) in FACES:
     let token = TOKEN_EMBED & face & "@"
     if token notin page: continue
     let path = DIR_FONTS / face
     if not fileExists(path):
       raise newException(OSError, "Missing face `" & path & "`; run `assets` first.")
+    # Verified again here, not only where fetched: `assets` may have run long ago, and what
+    #   this embeds is what every reader downloads. Wrong byte stops build rather than ships.
+    checkFace(face, digest)
     run("bash", ["-c", "base64 -w0 " & quoteShell(path) & " > " & quoteShell(path & ".b64")])
     page = page.replace(token, "data:font/woff2;base64," & readFile(path & ".b64").strip)
 
@@ -323,6 +408,7 @@ when isMainModule:
     of "web": web()
     of "drive": drive()
     of "assets": assets()
+    of "system": system()
     of "clean": clean()
     else:
       stderr.write USAGE
