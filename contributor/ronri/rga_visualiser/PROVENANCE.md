@@ -175,9 +175,10 @@ Article II.9 reads both ways here.
   any other way.
 
 *Checked.* Verified by running: 135 of 135 pass through `tools/build.nim drive` on assembled
-page, in Chromium, software-rendered. Every section of prototype's own harness is ported;
-two counts are not directly comparable, since each carries guard reports that fire only where
-check cannot be set up.
+page, in Chromium, software-rendered. Every section of prototype's own harness is ported.
+That harness carries about 140 check sites — 125 reported directly and 15 through band
+reader — and this one 151; neither figure is count of claims, since both carry guard reports
+that fire only where check cannot be set up.
   **Unverified**: **CI does not reach this layer.** Runner's jobs are fixed in curator-owned
   workflow, and contributor's scope reaches only own project, so no job drives page. Asked as
   issue 47. Until it is ruled, these checks are contributor's to run, and green here is
