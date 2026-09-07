@@ -302,6 +302,16 @@ registry admits no second build verb.
   Asked as issue 60 before writing anything, since three homes I proposed were all wrong;
   ruling put it here.
 
+**`drive` fetches faces; `web` refuses without them.** Split is deliberate rather than
+inconsistent. `drive` is asked for answer -- run every check and report -- so it satisfies its own
+precondition; `web` is asked to assemble page, and caller reaching for it directly is building
+rather than being given, so absent face is their error to see by name.
+  Cold checkout is what showed it. Runner restored Atlas, installed node packages, derived
+  declarations and compiled bridge, then stopped at embedding with `Missing face ...; run
+  `assets` first` -- every expensive step done and one cheap one missing (repository issue 47).
+  Costs nothing warm, which is what makes it safe to chain: `assets` skips every face already
+  carrying its pinned digest, so warm run fetches none.
+
 **Each face carries digest of bytes expected, and build refuses anything else.** Host serves
 whatever it serves, and `web` embeds these bytes into artefact readers open, so wrong byte
 fetched is wrong byte shipped. Every other external thing here is pinned -- compiler to commit,
@@ -323,6 +333,11 @@ packages to lock file, `pga` to commit -- and this fetch was sole exception (rep
   **What cannot be pinned is said rather than implied.** Clone carries commit and apt package
   carries none that survives across distributions, so none is manufactured for one; same shape
   of honest limit `compilers.nim` already records for fetched compilers, trusted on TLS alone.
+
+*Checked.* Verified by running cold: `build/` removed entirely, then `drive` fetches six faces
+and reaches 136 of 136 with no step run by hand -- which is runner's own case. Second run
+immediately after fetches none. `web` alone on same cold tree still refuses by name, which is
+behaviour worth keeping rather than side effect.
 
 *Checked.* Verified by breaking on purpose: one digit changed in one committed digest makes
 `assets` re-fetch and refuse, and `web` refuse to embed, each naming face and both digests;

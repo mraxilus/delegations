@@ -13,7 +13,7 @@
 ##   | types    | declare, then type-check page's scripts and harness against it         |
 ##   | web      | declare, compile bridge through JS backend, type-check and emit        |
 ##   |          | TypeScript, inline faces, fold everything into one self-contained page |
-##   | drive    | build page, then drive it through real events and report every check  |
+##   | drive    | fetch faces, build page, drive it and report every check it runs      |
 ##   | assets   | fetch vendored faces page embeds, and verify each against its pin      |
 ##   | system   | print system packages build needs, one per line, for caller to install |
 ##   | clean    | remove `build`, `bin` and `nimcache`                                   |
@@ -30,7 +30,8 @@
 ##     hoisted, so that order is load-bearing.
 ##
 ##   Cost: driver runs from project directory, since every path here is relative to it.
-##   Cost: `web` needs node and npm alongside Nim; `assets` needs network once.
+##   Cost: `web` needs node and npm alongside Nim; `assets`, and `drive` through it, need
+##     network on cold tree and none on warm one.
 ##   Cost: `assets` and `web` need `sha256sum`, for reason `digestOf` gives.
 
 {.experimental: "strictFuncs".}
@@ -383,6 +384,13 @@ proc drive() =
   ##   Builds page first: harness against stale page checks build nobody has, and `web`
   ##   runs `types`, which type-checks this harness too.
   ##   Exit follows harness: non-zero where any check failed, so one command is whole answer.
+  ##   Fetches faces first, so verb satisfies its own precondition rather than assuming someone
+  ##   ran `assets` by hand. Cold checkout is where that assumption showed: runner builds every
+  ##   step and stops at embedding, which is one line to prevent (repository issue 47).
+  ##   `web` keeps refusing absent face by name instead, since caller reaching for it directly
+  ##   is asking to build page rather than to be given one.
+  ##   Costs nothing warm: `assets` skips every face already carrying its pinned digest.
+  assets()
   web()
   run("node", [BUILD / "drive" / "main.js"])
 
