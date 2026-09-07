@@ -28,6 +28,7 @@ import { driveComet } from './comet';
 import { drivePhaseSums, driveTree } from './diagnostics';
 import { driveAxis, driveAxisGlide, driveCurve, driveScaleSwitch } from './exceedance';
 import { driveSums, driveTint } from './ramp';
+import { driveRings } from './rings';
 import { driveGround } from './ground';
 import { driveFrameWork } from './frame';
 
@@ -107,6 +108,7 @@ async function main(): Promise<void> {
   await driveSums(page);
   await driveAxisGlide(page);
   await driveScaleSwitch(page);
+  await driveRings(page);
 
   // Page erroring at all is failure, whatever every check above said.
   report('the page raised no error', errors_page.length === 0, errors_page.join(' | '));
