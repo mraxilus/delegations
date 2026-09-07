@@ -94,7 +94,7 @@ const SOURCE_FRAGMENT_POINT = `
     gl_FragColor = vec4(vColor.rgb*shade, vColor.a*edge);
   }
 `;
-// Plain colour pass-through, every wash program's fragment stage.
+// Plain colour pass-through, every veil program's fragment stage.
 const SOURCE_FRAGMENT = `
   precision mediump float;
   varying vec4 vColor;
@@ -381,7 +381,7 @@ const SOURCE_VERTEX_RING = `
     vColor = aFill;
   }
 `;
-function linkWashProgram(source_vertex: string): WebGLProgram {
+function linkVeilProgram(source_vertex: string): WebGLProgram {
   const handle = createdProgram();
   gl.attachShader(handle, compileShader(gl.VERTEX_SHADER, source_vertex));
   gl.attachShader(handle, compileShader(gl.FRAGMENT_SHADER, SOURCE_FRAGMENT));
@@ -391,8 +391,8 @@ function linkWashProgram(source_vertex: string): WebGLProgram {
   }
   return handle;
 }
-const program_disc = linkWashProgram(SOURCE_VERTEX_DISC);
-const program_dome = linkWashProgram(SOURCE_VERTEX_DOME);
+const program_disc = linkVeilProgram(SOURCE_VERTEX_DISC);
+const program_dome = linkVeilProgram(SOURCE_VERTEX_DOME);
 const disc_attribs = {
   corner: gl.getAttribLocation(program_disc, 'aCorner'),
   centre: gl.getAttribLocation(program_disc, 'aCentre'),
@@ -405,7 +405,7 @@ const dome_attribs = {
   centre_radius: gl.getAttribLocation(program_dome, 'aCentreRadius'),
   tint: gl.getAttribLocation(program_dome, 'aTint'),
 };
-const program_ring = linkWashProgram(SOURCE_VERTEX_RING);
+const program_ring = linkVeilProgram(SOURCE_VERTEX_RING);
 const ring_attribs = {
   arc: gl.getAttribLocation(program_ring, 'aArc'),
   corner: gl.getAttribLocation(program_ring, 'aCorner'),
@@ -426,7 +426,7 @@ const ring_uniforms = {
 };
 const uniform_disc_mvp = gl.getUniformLocation(program_disc, 'uMVP');
 const uniform_dome_mvp = gl.getUniformLocation(program_dome, 'uMVP');
-// Hold static corner geometry both wash shaders fan records over.
+// Hold static corner geometry both veil shaders fan records over.
 //   Read from mesh.nim's own generators rather than hand-copied table that could drift
 //   from references.
 const CORNERS_DISC = new Float32Array(nimDiscCorners());
@@ -584,12 +584,12 @@ function drawRings(count: number, count_over: number, is_overlay: boolean) {
   }
 }
 
-// One instanced wash draw:
+// One instanced veil draw:
 //   `record_attribs` re-pointed at run's first record (WebGL1 has no base instance), corner attrib
 //   from static buffer, divisors reset after -- they are context state, and left at one they would
 //   corrupt plain program's reads of same attribute indices.
 //   Shared by disc and dome runs below.
-function drawWashInstances(
+function drawVeilInstances(
   buffer_corners: WebGLBuffer, floats_corner: number, count_corners: number,
   corner_attrib: number, handle_records: WebGLBuffer, stride: number,
   record_attribs: Array<[number, number, number]>, first: number, count: number,
@@ -613,32 +613,32 @@ function drawWashInstances(
   }
 }
 
-// Walk one pass's stretch of wash draw order, drawing each run through its kind's program.
-//   `wash_runs` is [kind, first, count] per run, `count_runs_over` how many runs at end
+// Walk one pass's stretch of veil draw order, drawing each run through its kind's program.
+//   `veil_runs` is [kind, first, count] per run, `count_runs_over` how many runs at end
 //   are overlay stretch.
-//   Two washes then still blend in order scene emitted them; mirrors
-//   `renderer.drawWashRuns`.
-function drawWashRuns(
-  wash_runs: Float32Array, count_runs_over: number, is_overlay: boolean,
+//   Two veils then still blend in order scene emitted them; mirrors
+//   `renderer.drawVeilRuns`.
+function drawVeilRuns(
+  veil_runs: Float32Array, count_runs_over: number, is_overlay: boolean,
 ) {
-  const count_runs = wash_runs.length / 3;
+  const count_runs = veil_runs.length / 3;
   const split = count_runs - Math.min(count_runs_over || 0, count_runs);
   const begin = is_overlay ? split : 0;
   const end = is_overlay ? count_runs : split;
   for (let i = begin; i < end; i += 1) {
-    const kind = wash_runs[3 * i] ?? 0;
-    const first = wash_runs[3 * i + 1] ?? 0;
-    const count = wash_runs[3 * i + 2] ?? 0;
+    const kind = veil_runs[3 * i] ?? 0;
+    const first = veil_runs[3 * i + 1] ?? 0;
+    const count = veil_runs[3 * i + 2] ?? 0;
     if (kind === 0) {
       gl.useProgram(program_disc);
-      drawWashInstances(buffer_disc_corners, 2, COUNT_CORNERS_DISC, disc_attribs.corner,
+      drawVeilInstances(buffer_disc_corners, 2, COUNT_CORNERS_DISC, disc_attribs.corner,
         vbo.disc, STRIDE_DISC, ATTRIBUTE_LAYOUT([
           [disc_attribs.centre, 3, 0], [disc_attribs.arm_first, 3, 12],
           [disc_attribs.arm_second, 3, 24], [disc_attribs.fill, 4, 36],
         ]), first, count);
     } else {
       gl.useProgram(program_dome);
-      drawWashInstances(buffer_dome_corners, 3, COUNT_CORNERS_DOME, dome_attribs.unit,
+      drawVeilInstances(buffer_dome_corners, 3, COUNT_CORNERS_DOME, dome_attribs.unit,
         vbo.dome, STRIDE_DOME, ATTRIBUTE_LAYOUT([
           [dome_attribs.centre_radius, 4, 0], [dome_attribs.tint, 4, 16],
         ]), first, count);

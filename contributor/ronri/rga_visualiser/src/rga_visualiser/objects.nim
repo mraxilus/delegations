@@ -57,7 +57,7 @@ func isHorizon*(m: Multivector): bool = abs(( |∘ m)[Basis.scalarAnti]) <= TOLE
 func isHorizonPlane*(m: Multivector): bool = kindOf(m) == some(Kind.Plane) and isHorizon(m)
   ## Report whether object is plane at horizon.
   ##   One shape drawn as sky dome (`mesh.addDome`), which frame assembly inserts before
-  ##   anything else sharing translucent wash pass. See `visualiser.assembleMeshes`.
+  ##   anything else sharing translucent veil pass. See `visualiser.assembleMeshes`.
 
 
 

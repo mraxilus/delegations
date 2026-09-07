@@ -30,7 +30,7 @@
 ##   | Ribbon | `RibbonRecord` x1     | Lines, plane rims, horizon circles, axes,    |
 ##   |        |                       | ground grid.                                 |
 ##   | Disc   | `DiscRecord` x1       | Finite plane's translucent fill.             |
-##   | Dome   | `DomeRecord` x1       | Horizon plane's whole-sky wash.              |
+##   | Dome   | `DomeRecord` x1       | Horizon plane's whole-sky veil.              |
 ##   | Point  | `Vertex` per point    | Points, stars.                               |
 ##   |--------|-----------------------|----------------------------------------------|
 ##
@@ -41,8 +41,8 @@
 ## Line is drawn as ribbon, quad sized to width in screen pixels, never `GL_LINES`.
 ##   Line width is hint pivot may ignore: most WebGL implementations clamp it to one
 ##   pixel. See `addSegment`.
-##   Ribbons draw apart from washes because state differs: ribbon writes depth,
-##   translucent wash does not.
+##   Ribbons draw apart from veils because state differs: ribbon writes depth,
+##   translucent veil does not.
 ##
 ## Shared by desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render paths.
 
@@ -88,7 +88,7 @@ const
     ## Bound how many ribbon segments one frame holds.
     ##   Binding case is scene filled to `scene.OBJECTS_MAX` with *lines*, each two
     ##   segments `tessellate.addLine` steps out, every one selected and drawn twice,
-    ##   plus ghost.
+    ##   plus preview.
     ##   Furniture set, sharing this cap, wants `2*LINES_GRID_MAX` lattice lines and axes.
     ##   `scene.nim` carries `static` check tying this to `OBJECTS_MAX`, which this module
     ##   cannot see. Overflow is `doAssert`, dead page rather than dropped triangle.
@@ -100,7 +100,7 @@ const
   DISCS_MAX* {.define: "visualiser.discs_max".} = 10081
     ## Bound how many disc records one frame holds.
     ##   Binding case: scene filled with finite planes, every one selected and drawn
-    ##   twice, plus ghost.
+    ##   twice, plus preview.
   RINGS_MAX* {.define: "visualiser.rings_max".} = 10081
     ## Bound how many ring records one frame holds, by same worst case as `DISCS_MAX`.
     ##   Plane draws fill and rim together, so two caps move as pair.
@@ -133,7 +133,7 @@ const
   LIGHT_NONE* = Direction(x: 0.0, y: 0.0, z: 0.0)
     ## Name absence of light: zero vector, which both vertex shaders read as flat.
     ##   Zero rather than option: it crosses wire as three floats per point, and shader
-    ##   has no option to unwrap. Sun, ghost, star at horizon and point with no sun all
+    ##   has no option to unwrap. Sun, preview, star at horizon and point with no sun all
     ##   take it.
   RADIUS_OBJECT_MOST* = 1.0e6
     ## Bound largest radius either editor lets reader type.
@@ -279,7 +279,7 @@ type
       ##   Worn by rubber-band of drag over pair that makes nothing
       ##   (`interaction.inkOfDrag`), warning arriving before release.
       ##   Never leaned on alone: magenta reads as blue under deuteranopia, so that drag
-      ##   also shows no ghost.
+      ##   also shows no preview.
     ## Categorical slots, spent by caller on telling one object from another.
     ##   Named by hue rather than role, as caller alone knows what objects mean.
     ##     Grade is legible from shape, so colour carries identity.
@@ -406,22 +406,22 @@ type
     records*: array[DOMES_MAX, DomeRecord]
     count*: int
 
-  WashKind* {.pure.} = enum ## Define which record array one wash run draws from.
+  VeilKind* {.pure.} = enum ## Define which record array one veil run draws from.
     Disc, Dome
 
-  WashRun* = object ## Define one stretch of same-kind wash records, drawn as one call.
-    kind*: WashKind
+  VeilRun* = object ## Define one stretch of same-kind veil records, drawn as one call.
+    kind*: VeilKind
     first*: int32 ## Index of run's first record, within own kind's array.
     count*: int32
 
-  WashRuns* = object ## Define frame's wash draw order, across both record kinds.
+  VeilRuns* = object ## Define frame's veil draw order, across both record kinds.
     ## Translucent pass's memory of scene order.
-    ##   Discs and domes land in two arrays, but two washes crossing still blend in order
+    ##   Discs and domes land in two arrays, but two veils crossing still blend in order
     ##   scene emitted them.
     ##   Each append extends current run where it can and opens new one where kind
     ##   changes, and each render path walks runs in sequence.
     ##   Usually one run per object, of one record.
-    runs*: array[DISCS_MAX + DOMES_MAX, WashRun]
+    runs*: array[DISCS_MAX + DOMES_MAX, VeilRun]
     count*: int
     index_overlay*: Option[int] ## Index of first *run* of overlay pass.
       ## `Mesh.index_overlay`'s rule at run grain, since run never straddles mark:
@@ -434,7 +434,7 @@ type
     discs*: DiscMesh
     rings*: RingMesh
     domes*: DomeMesh
-    washes*: WashRuns
+    veils*: VeilRuns
 
   DrawScale* = object ## Define how far this frame's geometry reaches, and from where.
     ## Euclidean half of frame's camera.
@@ -710,8 +710,8 @@ func clearMeshes*(meshes: var MeshSet) =
   meshes.rings.count = 0
   meshes.rings.index_overlay = none(int)
   meshes.domes.count = 0
-  meshes.washes.count = 0
-  meshes.washes.index_overlay = none(int)
+  meshes.veils.count = 0
+  meshes.veils.index_overlay = none(int)
 
 
 func markOverlay*(meshes: var MeshSet) =
@@ -722,7 +722,7 @@ func markOverlay*(meshes: var MeshSet) =
   meshes.points.index_overlay = some(meshes.points.count_vertices)
   meshes.ribbons.index_overlay = some(meshes.ribbons.count)
   meshes.rings.index_overlay = some(meshes.rings.count)
-  meshes.washes.index_overlay = some(meshes.washes.count)
+  meshes.veils.index_overlay = some(meshes.veils.count)
 
 
 func addMarker*(
@@ -1157,23 +1157,23 @@ func domeCorners*(): seq[float32] =
         at += 3
 
 
-func appendWashRun(meshes: var MeshSet, kind: WashKind) =
-  ## Note one more record of `kind` in wash draw order.
+func appendVeilRun(meshes: var MeshSet, kind: VeilKind) =
+  ## Note one more record of `kind` in veil draw order.
   ##   Extends current run where it is same kind and this side of overlay mark, opens
-  ##   new one otherwise. See `WashRuns`.
-  let count = meshes.washes.count
-  if count > 0 and meshes.washes.runs[count - 1].kind == kind and
-      meshes.washes.index_overlay != some(count):
-    meshes.washes.runs[count - 1].count += 1
+  ##   new one otherwise. See `VeilRuns`.
+  let count = meshes.veils.count
+  if count > 0 and meshes.veils.runs[count - 1].kind == kind and
+      meshes.veils.index_overlay != some(count):
+    meshes.veils.runs[count - 1].count += 1
     return
-  doAssert count < len(meshes.washes.runs),
-    &"Frame holds at most {len(meshes.washes.runs)} wash runs; got `{count}`."
-  meshes.washes.runs[count] = WashRun(
+  doAssert count < len(meshes.veils.runs),
+    &"Frame holds at most {len(meshes.veils.runs)} veil runs; got `{count}`."
+  meshes.veils.runs[count] = VeilRun(
     kind: kind,
-    first: int32(if kind == WashKind.Disc: meshes.discs.count else: meshes.domes.count),
+    first: int32(if kind == VeilKind.Disc: meshes.discs.count else: meshes.domes.count),
     count: 1,
   )
-  meshes.washes.count = count + 1
+  meshes.veils.count = count + 1
 
 
 func addDisc*(
@@ -1189,7 +1189,7 @@ func addDisc*(
   doAssert count < DISCS_MAX,
     &"Frame holds at most {DISCS_MAX} discs, raise `--define:visualiser.discs_max`; got " &
       &"`{count}`."
-  meshes.appendWashRun(WashKind.Disc)
+  meshes.appendVeilRun(VeilKind.Disc)
   let
     arm_first = radius*axis_first
     arm_second = radius*axis_second
@@ -1224,7 +1224,7 @@ func addDome*(meshes: var MeshSet, center: Position, radius: float, tint: Rgba) 
   doAssert count < DOMES_MAX,
     &"Frame holds at most {DOMES_MAX} domes, raise `--define:visualiser.domes_max`; got " &
       &"`{count}`."
-  meshes.appendWashRun(WashKind.Dome)
+  meshes.appendVeilRun(VeilKind.Dome)
   meshes.domes.records[count] = DomeRecord(
     centre_x: float32(center.x),
     centre_y: float32(center.y),

@@ -156,13 +156,13 @@
      wheel is drawn entirely out of tones selection menu uses. */
   .menu-centre { stroke: var(--border); }
 
-  .veil {
+  .chip-layer {
     position: fixed;
     inset: 0;
     pointer-events: none;
     z-index: 5; /* Above .drawer (4) -- position:fixed always opens its own stacking
       context, so z-index set on .chip-row itself (mere descendant) couldn't reach
-      past .veil's own level to outrank .drawer; it has to be set here. Keeps undo/redo/
+      past .chip-layer's own level to outrank .drawer; it has to be set here. Keeps undo/redo/
       axes/grid/menu reachable while wide-viewport drawer (full-height right panel)
       is open, rather than letting it cover that same top-right corner. */
   }
@@ -1027,7 +1027,7 @@
 <canvas id="gl" tabindex="0" aria-label="3D view of the scene"></canvas>
 <svg id="overlay"></svg>
 
-<div class="veil">
+<div class="chip-layer">
   <div class="chip-row">
     <button class="brand drawer-toggle" id="button-drawer" type="button">
       <span class="mark" aria-hidden="true"></span>
@@ -1296,9 +1296,9 @@
                 <div class="diagnostic-line"><span>sky, horizon planes<span
                   class="diagnostic-tally"></span></span
                   ><b id="diagnostic-sky">&mdash;</b></div>
-                <div class="diagnostic-line"><span>ghost + preview<span
+                <div class="diagnostic-line"><span>preview + preview<span
                   class="diagnostic-tally"></span></span
-                  ><b id="diagnostic-ghost">&mdash;</b></div>
+                  ><b id="diagnostic-preview">&mdash;</b></div>
                 <div class="diagnostic-line"><span>selected, drawn again<span
                   class="diagnostic-tally"></span></span
                   ><b id="diagnostic-selected">&mdash;</b></div>
