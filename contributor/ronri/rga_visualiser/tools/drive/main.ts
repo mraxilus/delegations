@@ -26,7 +26,8 @@ import { driveLabelGlide, driveLabelWorn } from './label';
 import { driveHelp, driveHoverDuringGesture } from './chrome';
 import { driveComet } from './comet';
 import { drivePhaseSums, driveTree } from './diagnostics';
-import { driveAxis, driveCurve } from './exceedance';
+import { driveAxis, driveAxisGlide, driveCurve, driveScaleSwitch } from './exceedance';
+import { driveSums, driveTint } from './ramp';
 import { driveGround } from './ground';
 import { driveFrameWork } from './frame';
 
@@ -102,6 +103,10 @@ async function main(): Promise<void> {
   await driveTree(page);
   await driveCurve(page);
   await driveAxis(page);
+  await driveTint(page);
+  await driveSums(page);
+  await driveAxisGlide(page);
+  await driveScaleSwitch(page);
 
   // Page erroring at all is failure, whatever every check above said.
   report('the page raised no error', errors_page.length === 0, errors_page.join(' | '));

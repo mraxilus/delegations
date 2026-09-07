@@ -348,5 +348,107 @@ async function driveMarks(page: Page, least: number): Promise<void> {
     ink_floor.marks.length === 3 && ink_wide.marks.length === 4,
     `${ink_floor.marks.length} marks on a fast window, ${ink_wide.marks.length} on a slow one`,
   );
-  await releaseExceedance(page);
+}
+
+/** Read what axis says it spans, redrawing first so reading is current. */
+async function axisReading(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    drawExceedance();
+    const said = document.getElementById('diagnostic-exceedance-axis')?.textContent ?? '';
+    return Number((said.match(/0–(\d+(?:\.\d+)?) ms/) ?? [])[1]);
+  });
+}
+
+/** Drive one much slower frame into settled window, and assert axis waits then glides.
+ *
+ *  Fitted frame for frame it snapped: one slow frame widened it, and moment that frame aged
+ *  out it snapped back, so two glances second apart could not be compared. Immediately after,
+ *  axis must not have moved at all -- that wait is what lets dip-and-return leave it where it
+ *  was -- and seconds later it must have arrived, having passed through middle.
+ */
+export async function driveAxisGlide(page: Page): Promise<void> {
+  await feedWindow(page, 1024, [[1, 40, 2]]);
+  await settleAxis(page);
+  const settled = await axisReading(page);
+
+  // One frame three times slower than anything else in window, and nothing else changed.
+  await page.evaluate(() => window.__record_kept?.(126));
+  const at_once = await axisReading(page);
+  await page.waitForTimeout(1000);
+  const midway = await axisReading(page);
+  for (let i = 0; i < 24; i += 1) {
+    await page.waitForTimeout(120);
+    const is_settled = await page.evaluate(() => {
+      drawExceedance();
+      return ms_axis_restless === 0;
+    });
+    if (is_settled) break;
+  }
+  const arrived = await axisReading(page);
+  await releaseExceedance(page); // Synthetic windows are done with; real frames resume.
+
+  report(
+    'the axis waits before it moves, then glides to the new extent rather than jumping',
+    Number.isFinite(settled) && settled > 0 &&
+      at_once === settled && // Unmoved while wait stands.
+      midway > settled && midway < arrived && // Under way, but not there yet.
+      arrived >= 120, // Arrived at slow frame's own bucket, which window now reaches to.
+    `settled 0-${settled} ms; at once 0-${at_once}; after 1 s 0-${midway}; ` +
+      `arrived 0-${arrived}`,
+  );
+}
+
+/** Drive log pill, and assert curve is redrawn against its own axis and back.
+ *
+ *  Linear reads proportion as proportion; log reads three decades of distance from top,
+ *  which is only way slowest one percent is legible at all. Driven through pill reader
+ *  presses rather than by setting flag, since flag being right and button being wired are
+ *  separate claims -- and held on pixels, because same data on different axis is different
+ *  curve.
+ */
+export async function driveScaleSwitch(page: Page): Promise<void> {
+  const switched = await page.evaluate(() => {
+    const inked = (): string => {
+      const canvas = document.getElementById('exceedance') as HTMLCanvasElement;
+      const pixels = canvas.getContext('2d')
+        ?.getImageData(0, 0, canvas.width, canvas.height).data ?? new Uint8ClampedArray();
+      // Curve alone, at opacity only it is drawn with, summarised as row each column's mark
+      //   sits on, which is shape of curve and nothing else.
+      const rows: number[] = [];
+      for (let x = 0; x < canvas.width; x += 1) {
+        let row = -1;
+        for (let y = 0; y < canvas.height; y += 1) {
+          if ((pixels[(y * canvas.width + x) * 4 + 3] ?? 0) < 200) continue;
+          row = y;
+          break;
+        }
+        rows.push(row);
+      }
+      return rows.join(',');
+    };
+    const pill = document.getElementById('toggle-exceedance-log');
+    const caption = document.getElementById('diagnostic-exceedance-axis');
+    const standing = (): { rows: string; said: string; is_on: boolean } => ({
+      rows: inked(), said: caption?.textContent ?? '',
+      is_on: pill?.classList.contains('on') ?? false,
+    });
+    drawExceedance();
+    const linear = standing();
+    pill?.click();
+    const log = standing();
+    pill?.click();
+    return { linear, log, back: standing() };
+  });
+
+  report(
+    'the curve switches between a linear axis and a log one, and back',
+    !switched.linear.is_on && switched.log.is_on && !switched.back.is_on &&
+      switched.log.said !== switched.linear.said &&
+      switched.back.said === switched.linear.said &&
+      switched.log.rows !== switched.linear.rows &&
+      switched.back.rows === switched.linear.rows,
+    `"${switched.linear.said}" then "${switched.log.said}", curve ` +
+      `${switched.log.rows === switched.linear.rows ? 'unchanged' : 'redrawn'} and ` +
+      `${switched.back.rows === switched.linear.rows ? 'restored' : 'not restored'}`,
+  );
 }
