@@ -192,7 +192,7 @@ removed.
 `design/README.md`; `checks.nim` asserts what each page claims between building its parts
 and writing it, and the build refuses to write a page whose claims fail. Rejected: rules
 that are implemented and not asserted, which quietly stop being true (it happened here more
-than once, recorded beside the rules). The four generated pages and the hand-drawn
+than once, recorded beside the rules). The five generated pages and the hand-drawn
 whole-cloth page are build products under `build/design/`; the whole-cloth markup is the committed
 file `mockups/wholecloth.html`, its turns panel is `wholecloth_turns.nim` compiled to JavaScript,
 and `wholecloth.nim` splices markup, the sim's sweeps (`turns.nim`) and the panel into one
@@ -207,6 +207,25 @@ records: 37 breaks inside `aria-label` values (accessible names verified equal),
 whitespace-free row with its character references decoded, and the fonts URL held as its own
 constant joined at compile time. Cost: the workbench's `doAssert` gates are the
 check, so its tests are a debug build.
+
+**A verdict is given on a picture, so the picture is pinned.** `review_page.nim` lays out
+every position the project draws as 147 cards -- the sixteen standard diagrams and the one
+anticlockwise counterpart, the twenty-eight distinct single-hand turn positions, both
+hand-to-hand chains, and every animated edge of the last two -- each carrying the identifier
+to quote back and whatever has been ruled on it. The identifiers the Architect has kept or
+dropped are named in the module; what each was drawn as when it was ruled on is held as a
+hash in `design/review-pins.json`, and the build refuses to write the page when a ruled
+card's drawing has moved. Rejected: taking the verdict as given on the identifier, which is
+how a mend that reached further than it meant to carried an approval nobody gave. The guard
+was proved by widening a break's clearance and watching it name the twelve kept cards that
+carry a crossing. Pins are rewritten only by `tools/build.nim pins`, a deliberate second
+step: a verdict and its pin are added together or not at all, and running it to quiet a
+complaint would hand the approval to the new picture. Cost: the verdicts live in the module,
+so every ruling is a commit. Verified by `tmarks.nim`, which builds the page under
+testament; by all 55 pins regenerating identical in content when the page moved into the
+workbench from the scratch generator that first drew it; and by the tally being counted off
+the built page rather than kept while building it -- 55 kept, 0 dropped, 2 marked for a
+mend, 92 still to rule on, of 147.
 
 ## Body sim
 
