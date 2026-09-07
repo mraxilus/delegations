@@ -211,7 +211,19 @@ header on phrase `not Nim because`, which `justification.nim` demands of gated k
 **Bridge's declarations are derived, never kept beside it.** `tools/build.nim declare` reads
 bridge's own `{.exportc.}` signatures and its three boundary records, and writes
 `build/bridge.d.ts`. Hand-written copy of 157 signatures would be second home for each, free
-to drift; this has one. Cost: type-checking needs `declare` run first, which `web` does.
+to drift; this has one. Cost: type-checking needs `declare` run first, which `types` does.
+
+**One verb holds every check that needs no browser.** `tools/build.nim types` is `declare`
+and both type-checker configurations, and stops there: no `nim js`, no faces, no Chromium.
+`web` and `drive` both call it, so neither writes those steps again.
+  Written for runner to run, at curator's ask (repository issue 47): it reaches 10,676 lines
+  of TypeScript and agreement between bridge's 157 `exportc` signatures and derived
+  declarations, and it needs only Nim and npm, both already pinned.
+  Verified by breaking it on purpose: renaming `nimSceneHandles` in `bridge.nim` without
+  touching anything else fails `types` with `TS2304: Cannot find name 'nimSceneHandles'`,
+  which is drift caught at build rather than at run time.
+  Two configurations rather than one, since page's scripts target browser and harness targets
+  node; `web` running harness's check too costs one `tsc` and keeps one verb honest.
 
 **Type-checking runs under `strict`, `noUncheckedIndexedAccess` and
 `exactOptionalPropertyTypes`**, which CONTRIBUTOR.md now requires of any TypeScript. Neither
