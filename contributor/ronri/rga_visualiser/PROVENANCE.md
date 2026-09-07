@@ -50,19 +50,6 @@ Open Questions
 Recorded here and in the pull request body, per CONTRIBUTOR.md: a contributor neither works
 around a rule nor edits it.
 
-**The desktop front-end needs a C++ file kind, and the kind arrives gated.** Dear ImGui is a
-C++ library whose API uses default arguments and overloads that Nim's `cpp` backend cannot
-bind directly, so the front-end reaches it through a 649-line shim, `gui_shim.cpp`. `.cpp` is
-not registered in `curator/audit/src/kinds.nim`, and CONTRIBUTOR.md's instruction for that
-case is to leave the file out and record the question. Asked as issue 26 and ruled: `.cpp`,
-`.hpp`, `.c` and `.h` are to be registered *gated*, so every file of a gated kind carries a
-justification in its own header, and TypeScript is gated the same way rather than
-grandfathered. The front-end therefore waits on that change landing, and `gui_shim.cpp` will
-have to argue in its header that it only flattens overload sets and default arguments — which
-the curator said is what they will read it for. Rejected as workarounds: renaming the file to
-a registered extension, which lies to the checker; and rewriting the shim in Nim, which cannot
-express what the shim exists for.
-
 **System packages have no declared home in this repository.** Nim packages are declared in
 `rga_visualiser.nimble` and pinned by `atlas.lock`; node packages in `package.json`, pinned by
 `package-lock.json`. Desktop front-end links against SDL3, libGL and zlib, drives itself
@@ -320,12 +307,44 @@ table, so mirror cannot drift from assertion guarding it.
   OpenGL enumerants are written as literals instead, and deliberately: their values are fixed
   by OpenGL specification and never renumbered, which is not true of any SDL constant.
 
+**Dear ImGui is reached through C entry points, because there is no symbol to bind.** Its
+interface is C++ with overloads, default arguments and namespaces, and Nim's `cpp` backend
+imports none of those three -- so `src/desktop/gui_shim.cpp` flattens slice this visualiser
+calls into plain C, and `src/desktop/gui.nim` binds that. This is Article II.9's first ground
+in its plainest form, and shim's header says so: no glue reaches these widgets from Nim at any
+price, since there is no symbol for glue to name.
+  Facade rather than generated binding: it declares exactly widgets used, and every default
+  relied on is written once here rather than repeated at every call site. Cost is that adding
+  widget touches two files.
+  Repository's first `.cpp`. Kind is registered *gated* (issue 26), so form rules reach it and
+  `justification.nim` demands its header carry `not Nim because`. Whole 649-line file drew one
+  finding on first check: `Supplemental mathematical operators A`, where checker read Unicode
+  block's suffix as article. Corrected to block's real name, `Miscellaneous Mathematical
+  Symbols-A`, which is what U+27C0..U+27EF is called -- comment was wrong as well as flagged.
+
+**Dear ImGui is compiled into binary rather than linked, and pinned by commit.**
+`fd13a1e8923a0a7077b404fc36fd063b25a0c0b5` of `ocornut/imgui`'s `docking` branch, MIT licence,
+cloned into `deps/imgui` and never committed, as Atlas checkouts are. Four core translation
+units and both of its own backends -- SDL3 and OpenGL 3, unmodified -- compile straight in, so
+no prebuilt library has to be found at link time.
+  `IMGUI_USE_WCHAR32` is set by compiler flag rather than by editing checkout's `imconfig.h`:
+  notation carries Lengyel's bold operands (`𝐦`, U+1D426) and 16-bit `ImWchar` cannot express
+  codepoint past U+FFFF, while edit to checkout would not survive reclone.
+  Path is `--define:visualiser.path_imgui`, resolved against module's own directory, so
+  checkout elsewhere needs no edit either.
+
 *Checked.* Verified by running: both bindings compile and link against SDL3 3.2.31 and libGL
 through `nim cpp`, and their assertions run against real headers. Shared core compiles and runs
 under that same backend too, which nothing had shown before -- it had only ever been built
 through C and JS.
-  **Unverified**: no window has been opened. These two modules are bound surface alone; what
-  draws through them arrives with renderer and entry point.
+  Verified by running headless: Dear ImGui starts over hidden SDL3 window with real OpenGL 3.3
+  core context under Xvfb, draws one frame through both its backends, reports framerate above
+  zero, and shuts down without error. `isFontLoaded` answered false for that run, correctly:
+  no face was passed, which is exactly what it exists to report.
+  Verified by breaking on purpose: mirrored `Scancode.Home` moved by one fails compilation with
+  binding's own message; restored after.
+  **Unverified**: nothing has been drawn but empty frame. What puts geometry on screen arrives
+  with renderer, panel and entry point.
 
 Render Paths
 ---
