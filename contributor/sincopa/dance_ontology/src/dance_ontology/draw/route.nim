@@ -761,7 +761,7 @@ func crossingsOf*(one, other: seq[Point]): seq[Point] =
         result.add at
 
 
-func gapFor*(at, span: float): tuple[opens, shuts: float] =
+func gapFor*(at, span, wide: float): tuple[opens, shuts: float] =
   ## Say where gap for crossing this far along reach opens and shuts.
   ##   Gap slides rather than hangs off end.  Crossing lying within half
   ##     break of hand would leave stub too short to draw at all, and
@@ -783,16 +783,16 @@ func gapFor*(at, span: float): tuple[opens, shuts: float] =
   ##   Crossing lying nearer to hand than third of break carries no break
   ##     at all: there is no room between hand and crossing to put one in,
   ##     and dot of ink is worse than none.
-  const SEEN = 2 * BREAK / 3
-    ## Shortest piece of reach that reads as line stopping.
-  let room = min(at, span - at)
-  if room < BREAK / 3:
+  let
+    seen = 2 * wide / 3
+    room = min(at, span - at)
+  if room < wide / 3:
     return (at, at)
   let opens =
-    if at - BREAK / 2 < SEEN: min(at, max(span - BREAK, 0.0))
-    elif span - at - BREAK / 2 < SEEN: max(at - BREAK, 0.0)
-    else: at - BREAK / 2
-  (opens, min(opens + BREAK, span))
+    if at - wide / 2 < seen: min(at, max(span - wide, 0.0))
+    elif span - at - wide / 2 < seen: max(at - wide, 0.0)
+    else: at - wide / 2
+  (opens, min(opens + wide, span))
 
 
 func alongOf(pts: seq[Point]): seq[float] =
@@ -863,7 +863,7 @@ func cutGapsAt*(pts: seq[Point]; centres: seq[Point]): seq[Run] =
       let d = dist(p, centre)
       if d < nearest.d:
         nearest = (d, along[i])
-    gaps.add gapFor(nearest.at, along[^1])
+    gaps.add gapFor(nearest.at, along[^1], BREAK)
   runsOutside(pts, along, gaps)
 
 

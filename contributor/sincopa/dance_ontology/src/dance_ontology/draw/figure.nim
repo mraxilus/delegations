@@ -184,7 +184,7 @@ func divePlace*(pts: seq[Point]; meeting: Point): float =
   ##   Slid clear of both ends exactly as still reach's gap is
   ##     (`gapFor`), so moving figure breaks where its still breaks and
   ##     crossing near hand is still covered.
-  let gap = gapFor(alongAt(pts, meeting), polylineLen(pts))
+  let gap = gapFor(alongAt(pts, meeting), polylineLen(pts), BREAK)
   (gap.opens + gap.shuts) / 2
 
 

@@ -49,7 +49,7 @@ suite "reach breaks":
         continue
       let
         runs = cutGapsAt(line, @[line[i]])
-        gap = gapFor(at, span)
+        gap = gapFor(at, span, BREAK)
         drawn = runs.mapIt(polylineLen(it)).foldl(a + b, 0.0)
       check runs.len == 2
       # Reach loses exactly its gap, no more and no less.  Bare test that
@@ -71,22 +71,16 @@ suite "reach breaks":
     check runs[0][0] == line[0]
     check runs[^1][^1] == line[^1]
 
-  test "a break leaves as much line as its crossing has room for":
-    # Round caps add half stroke to each end of piece and take as much off
-    # gap beside it, so piece much shorter than break reads as blob and
-    # gap beside it as nick.  Crossing near hand cannot be given long
-    # piece; it can be given every bit of room it does leave, and that is
-    # what is claimed here.
+  test "a break sits on its crossing, not beside it":
+    # Break says this line passes under that one, and it says it where
+    # they cross.  Gap pushed off to one side leaves crossing drawn whole
+    # and puts hole in line where nothing happens.
     let span = float(N - 1) * STEP
     for i in 0 ..< N:
-      let
-        at = float(i) * STEP
-        gap = gapFor(at, span)
-        wanted = min(at, 2 * BREAK / 3)
+      let gap = gapFor(float(i) * STEP, span, 8.0)
       if gap.shuts <= gap.opens:
         continue
-      check gap.opens >= wanted - 1e-9
-      check span - gap.shuts >= min(span - at, 2 * BREAK / 3) - 1e-9
+      check abs((gap.opens + gap.shuts) / 2 - float(i) * STEP) < 1e-9
 
   test "an uncrossed reach is drawn whole":
     let runs = cutGapsAt(line, @[])
