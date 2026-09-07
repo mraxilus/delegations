@@ -18,6 +18,7 @@ import {
   driveCrowd, driveEmptyRelease, drivePausedDrag, driveTouchConstruct,
   driveTwoFingerPan,
 } from './construct';
+import { driveApply, driveReachable, driveUndo } from './apply';
 import { driveHelp, driveHoverDuringGesture } from './chrome';
 import { driveComet } from './comet';
 import { driveGround } from './ground';
@@ -74,6 +75,10 @@ async function main(): Promise<void> {
   await driveCrowd(page, cdp);
   await drivePausedDrag(page, cdp);
   await driveEmptyRelease(page, SIZE_VIEW.width, SIZE_VIEW.height);
+
+  await driveApply(page);
+  await driveUndo(page);
+  await driveReachable(page);
 
   await driveHoverDuringGesture(page, SIZE_VIEW.width, SIZE_VIEW.height);
   await driveHelp(page, SIZE_VIEW.width, SIZE_VIEW.height);

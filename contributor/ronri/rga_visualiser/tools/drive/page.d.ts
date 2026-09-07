@@ -2,9 +2,9 @@
 //   at run time, and only TypeScript can state them to type-checker.
 //   Bridge's 157 exports are *not* here: they are derived into `build/bridge.d.ts` by
 //   `tools/build.nim declare`, so no signature of theirs is written twice.
-//   These seven are exception, hand-written because nothing derives them: they
+//   These nine are exception, hand-written because nothing derives them: they
 //   live in `src/browser/*.ts` at script scope, which no generator reads yet.
-//   Kept to seven on purpose. Reach for bridge export first, then for DOM; add here only
+//   Kept to nine on purpose. Reach for bridge export first, then for DOM; add here only
 //   where neither can say it.
 
 /** Drop every selected object, as `state` does for chrome that asks. */
@@ -16,6 +16,12 @@ declare function clearSelection(): void;
  *  behind it, so overlay draws no marker and its comet never advances.
  */
 declare function selectOnly(handle: number, position_local: null): void;
+
+/** Add or drop one object from selection, and tell page, as shift-click does. */
+declare function toggleSelection(handle: number, position_local: null): void;
+
+/** Rebuild selection menu against selection standing now, as every pick path does. */
+declare function refreshSelectionMenu(position_local: null): void;
 
 /** Shut selection menu, which standing open swallows pointer events over canvas. */
 declare function hideSelectionMenu(): void;
