@@ -1,5 +1,6 @@
 // Checks for what drawer's own list costs, and for how it is kept up to date; not Nim because
-//   every one counts DOM elements or wraps page's own refresh.
+//   crossing forfeits check compiler makes over bodies naming `list_objects`, `rows_pending`
+//   and `refreshObjectsUI`, page's own scope which `page.d.ts` states.
 //   Row reader cannot see does not build form it would edit with: every row used to build
 //   whole edit form -- label field, ink picker, and grid with input per basis element -- and
 //   let stylesheet hide it, which at this size was tens of thousands of elements on page and

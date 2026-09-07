@@ -1,5 +1,6 @@
 // Checks for what drawer costs to keep up to date, and for held placements; not Nim because
-//   they count calls page's own controls make and read its canvases back.
+//   crossing forfeits check compiler makes over bodies naming `nimPoolCellColors`,
+//   `geometry_pool_drawn` and `renderFrame` -- derived or stated, never guessed.
 //   Every figure diagnostics refresh writes is inside drawer, and it used to run several
 //   times second regardless: milliseconds landing on one frame in twelve, against frame scene
 //   hold had taken down to about one. That is what stutter is made of.

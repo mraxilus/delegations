@@ -1,5 +1,8 @@
 // Checks for frame-time distribution curve and axis it is drawn against; not Nim because
-//   they read pixels back out of canvas, which lives only in browser.
+//   crossing forfeits check compiler makes over bulk of this file: every `page.evaluate` body
+//   names page's own exceedance window -- `scanExceedance`, `shares_exceedance`,
+//   `ms_axis_restless` -- which `page.d.ts` states and glue would leave unchecked string.
+//   Reading canvas back is not what decides it: Nim reaches that through glue like any call.
 //   Sparkline holds few seconds and says *when*; this says *how often*, which is question
 //   reader chasing occasional stutter is asking.
 //   Every frame this container draws is slower than 30 fps, so fast bands cannot be reached

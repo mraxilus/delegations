@@ -1,5 +1,7 @@
 // Checks for path reader takes to build objects without dragging: pickers, menu, timeline;
-//   not Nim because every one of them is DOM control, and only browser holds those.
+//   not Nim because crossing forfeits check compiler makes over bulk of this file: its
+//   `page.evaluate` bodies name bridge's derived exports and page's own pick entries, each of
+//   which glue would leave unchecked string. DOM alone would not decide it.
 //   Pickers name *positions* in list they show; scene names handles. Preview was once built
 //   from picker's position passed straight through as handle, which is right only while
 //   nothing has been deleted, so every check here runs after delete.

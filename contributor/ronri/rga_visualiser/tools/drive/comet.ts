@@ -1,5 +1,6 @@
-// Checks for marker on horizon line, and comet that runs along it; not Nim because they
-//   read what page would actually stroke, through DOM and bridge, in browser.
+// Checks for marker on horizon line, and comet that runs along it; not Nim because crossing
+//   forfeits check compiler makes over bodies naming `nimSelectionMarker`, `nimSelectionPulse`
+//   and page's own `selectOnly` -- signatures `declare` derives and `page.d.ts` states.
 //   Circles of that marker run out to line's own vanishing points, and uncut one laps in
 //   hundreds of thousands of pixels of outline no camera can show: comet travelling at
 //   fixed screen pace would be off screen for all but few frames in thousand.

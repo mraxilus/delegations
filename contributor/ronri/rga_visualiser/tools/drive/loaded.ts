@@ -1,5 +1,6 @@
-// Checks for what build costs under largest demo; not Nim because every one drives page's own
-//   controls or reads its rows.
+// Checks for what build costs under largest demo; not Nim because crossing forfeits check
+//   compiler makes over bodies naming bridge's derived exports and page's own scope; glue
+//   would leave every one of them source string nothing reads.
 //   Band that only ever runs at default size cannot see regression that shows under load, so
 //   these reload at largest and measure there. Every band is far above what it measures and
 //   far below fault it catches, so slow container never decides it.

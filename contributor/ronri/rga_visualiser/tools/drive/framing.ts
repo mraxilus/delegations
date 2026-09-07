@@ -1,5 +1,6 @@
-// Checks for what picking does to camera; not Nim because they click real buttons and read
-//   menu's own rectangle out of DOM, neither of which Nim's JS backend expresses.
+// Checks for what picking does to camera; not Nim because buttons are clicked through
+//   Playwright, which node alone reaches, and because crossing would forfeit check compiler
+//   makes over `page.evaluate` bodies naming bridge's derived exports.
 //   Turning about point is what orbit is, so reader who picks objects and turns means to
 //   turn about those. Framing used to leave pivot wherever it was whenever everything
 //   picked was already on screen, which swung picked object around view instead.

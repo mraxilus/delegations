@@ -1,5 +1,6 @@
-// Checks for hover during camera gesture, and for help; not Nim because they read DOM and
-//   drive pointer, neither of which Nim's JS backend expresses.
+// Checks for hover during camera gesture, and for help; not Nim because pointer is driven
+//   through Playwright, which node alone reaches, and because crossing would forfeit check
+//   compiler makes over `page.evaluate` bodies naming bridge's derived exports.
 //   Hover rule is sampled every step, not only at end: one frame of highlight is one too
 //   many, and suite that read only final state would miss string of them lighting up.
 

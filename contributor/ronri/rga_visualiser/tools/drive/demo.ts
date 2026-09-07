@@ -1,6 +1,6 @@
-// Checks for demo preset, which is build's own stress case; not Nim because they press
-//   button reader presses and read pixels back, and wiring between button and preset is
-//   exactly what rename breaks.
+// Checks for demo preset, which is build's own stress case; not Nim because button is pressed
+//   through Playwright, which node alone reaches, and because crossing would forfeit check
+//   compiler makes over bodies naming bridge's derived exports -- wiring rename breaks first.
 //   Nim suite already checks what *scene* contains; what only this can check is that
 //   pressing button gets that scene onto page, and that camera it leaves behind holds
 //   arrangement.

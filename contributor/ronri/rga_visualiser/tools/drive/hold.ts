@@ -1,5 +1,6 @@
 // Checks for scene hold, which is frame matching last one skipping its whole rebuild; not Nim
-//   because they wrap page's own draw and read pixels back out of its context.
+//   because crossing forfeits check compiler makes over bodies that wrap `nimBuildFrame` and
+//   `renderFrame` and read `FrameData`'s fields, every one derived or stated by `page.d.ts`.
 //   Danger of hold is not that it fails to engage -- that costs milliseconds -- but that it
 //   engages when it should not, and shows picture no longer matching scene. So both halves are
 //   held here, and second through *drawn pixels* rather than through flag: hold that released

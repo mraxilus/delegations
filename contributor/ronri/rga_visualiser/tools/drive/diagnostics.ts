@@ -1,5 +1,7 @@
-// Checks for diagnostics section's own clocks and its tree; not Nim because they read
-//   computed style off rendered rows, which exists only in browser.
+// Checks for diagnostics section's own clocks and its tree; not Nim because crossing forfeits
+//   check compiler makes over bulk of this file: its `page.evaluate` bodies name
+//   `PHASES_DIAGNOSTIC`, `element_phase` and rest of panel's own scope, stated by `page.d.ts`.
+//   Reading computed style is not what decides it; glue reaches that too.
 //   Rows are written only while drawer is open -- gate that stopped whole refresh costing
 //   milliseconds five times second with nobody reading it -- and chevron's rotation is
 //   resolvable only on rendered element, since inside `display: none` subtree computed

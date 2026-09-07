@@ -1,5 +1,6 @@
-// Checks for name each selected object wears; not Nim because they read overlay's own
-//   `<text>` elements and their computed style, which live only in DOM.
+// Checks for name each selected object wears; not Nim because crossing forfeits check compiler
+//   makes over its `page.evaluate` bodies, which name bridge's derived exports and page's own
+//   `selectOnly`. Overlay's `<text>` is reachable through glue; losing that check is not.
 //   Label is placed by `marker.nim` and drawn in object's ink, haloed in backdrop's colour.
 //   Selected through page's own entry throughout: bare `nimSelect*` moves Nim's selection
 //   and never tells page, so overlay would carry no label at all to read.

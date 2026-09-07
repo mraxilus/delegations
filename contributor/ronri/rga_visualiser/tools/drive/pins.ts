@@ -1,5 +1,6 @@
-// Pins for every repaired performance fault; not Nim because each is timed through browser's
-//   own clock around bridge call, which only page can make.
+// Pins for every repaired performance fault; not Nim because crossing forfeits check compiler
+//   makes over bodies timing bridge calls by name -- `nimUpdateHover`, `nimAnchorScreen`,
+//   `nimSelectionMarker` -- each checked against signature `declare` derived.
 //   Bands are generous enough to survive loaded shared runner, tight enough to catch fault
 //   class returning, since every fault below was large multiplier while it was alive.
 //   Faults themselves, their causes and their measurements live in PROVENANCE.md.

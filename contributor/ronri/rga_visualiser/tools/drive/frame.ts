@@ -1,6 +1,6 @@
 // Watch what page's own draw loop costs, and check it fits inside frame; not Nim because
-//   only browser has that loop, and only wrapper standing in front of its frame build sees
-//   each frame's work.
+//   crossing forfeits check compiler makes over wrapper standing in front of `nimBuildFrame`,
+//   which reads every field of `FrameData` that `declare` derives.
 //   Measured here is part page owns, not wall clock: browser cannot draw faster than
 //   compositor presents, so "uncapped" is not thing to reach for.
 //   Machine running these checks renders through software GL, so its frame times say more
