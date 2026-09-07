@@ -71,6 +71,12 @@ project; `curator/<name>` is rules and root work. Every pull request runs:
   pinned compiler, restoring its dependencies from its lock file and running its tests.
   These run in parallel, so wall time follows the slowest changed project rather than the
   number of projects in the repository.
+- `types`: `npm ci` then that project's own `types` verb, for every changed project carrying
+  a node manifest. One job on the driver's compiler, since type-checking compiles no project
+  code.
+- `driven`: that project's own `drive` verb, for every changed project carrying one — the
+  page built and driven through real keys, wheels, pointers and touches. A matrix like
+  `project` and on the same pins, because building the page does compile project code.
 - `scope`: every changed path lies inside the branch's folder.
 - `commits`: every subject is a Conventional Commit whose scope matches the branch.
 - `audit`: the gate the other jobs report to, and one of the three required checks.
@@ -78,7 +84,8 @@ project; `curator/<name>` is rules and root work. Every pull request runs:
 Everything is driven by `koch.nim`, a compiled Nim program as in Nim's own repository:
 `nim r koch ci` runs the same checks locally against a fresh `origin/main`, and every
 pull request passes it before it is opened. Needs git, curl and any Nim that builds koch, plus
-npm where a project carries a node manifest: each project's own pinned compiler is resolved
+npm where a project carries a node manifest and whatever that project's own `system` verb
+declares where it carries a `drive` one: each project's own pinned compiler is resolved
 from `PATH`, a cache, or a download, so one machine runs every project's suites whatever they
 pin. A weekly run compiles every project.
 Dependencies are managed per project with Atlas; lock files are committed, checkouts never.
