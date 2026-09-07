@@ -5,6 +5,7 @@
 
 import type { CDPSession, Page } from '@playwright/test';
 import { readCamera, settleCamera } from './camera';
+import { waitFrames } from './frame';
 import { report } from './report';
 import { pixelOf } from './wheel';
 
@@ -50,7 +51,7 @@ export async function pinch(
     await touchAt(cdp, 'touchMove', [
       { x: mid.x - spread, y: mid.y }, { x: mid.x + spread, y: mid.y },
     ]);
-    await page.waitForTimeout(25);
+    await waitFrames(page, 2);
   }
   await touchAt(cdp, 'touchEnd', []);
   await page.waitForTimeout(200);
@@ -90,7 +91,7 @@ export async function dragFinger(
         x: start.x + ((end.x - start.x) * step) / 10,
         y: start.y + ((end.y - start.y) * step) / 10,
       }]);
-      await page.waitForTimeout(30);
+      await waitFrames(page, 2);
     }
   }
   if (lift) {

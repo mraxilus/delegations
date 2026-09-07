@@ -5,6 +5,7 @@
 
 import type { Page } from '@playwright/test';
 import { readCamera, spanPivot } from './camera';
+import { waitFrames } from './frame';
 import { clearTheGlass } from './gestures';
 import { report } from './report';
 
@@ -63,7 +64,7 @@ export async function driveAim(page: Page, width: number, height: number): Promi
   await page.mouse.move(width / 2, height - 200);
   for (let notch = 0; notch < 8; notch += 1) {
     await page.mouse.wheel(0, -120);
-    await page.waitForTimeout(40);
+    await waitFrames(page, 2);
   }
   await page.waitForTimeout(200);
   const after = await readCamera(page);

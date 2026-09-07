@@ -6,6 +6,7 @@
 
 import type { Page } from '@playwright/test';
 import { clearTheGlass } from './gestures';
+import { waitFrames } from './frame';
 import { report } from './report';
 import { pixelOf } from './wheel';
 
@@ -48,7 +49,7 @@ export async function driveHoverDuringGesture(
     await page.evaluate(() => nimUpdateHover(window.innerWidth, window.innerHeight));
     const handle = await page.evaluate(() => nimHoverHandle());
     if (handle >= 0) hovered_moving = handle;
-    await page.waitForTimeout(20);
+    await waitFrames(page, 2);
   }
   await page.mouse.up();
   await page.waitForTimeout(150);

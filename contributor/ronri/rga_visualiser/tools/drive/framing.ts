@@ -10,6 +10,7 @@ import {
   depthOf, readCamera, settleCamera, spanOf, spanPivot, type Stance,
 } from './camera';
 import { clearTheGlass } from './gestures';
+import { waitFrames } from './frame';
 import { report } from './report';
 import { pinch } from './touch';
 
@@ -117,7 +118,7 @@ export async function drivePointerPick(page: Page): Promise<void> {
   await page.mouse.move(400, 300);
   for (let notch = 0; notch < 6; notch += 1) {
     await page.mouse.wheel(0, 120);
-    await page.waitForTimeout(40);
+    await waitFrames(page, 2);
   }
   await settleCamera(page);
   const far = await readCamera(page);
@@ -230,7 +231,7 @@ async function drivePickAgain(page: Page, picked: number, near: Stance): Promise
   //   dot's three pixels.
   for (let notch = 0; notch < 80; notch += 1) {
     await page.mouse.wheel(0, 120);
-    await page.waitForTimeout(40);
+    await waitFrames(page, 2);
     if ((await readCamera(page)).distance > 100) break;
   }
   await settleCamera(page);

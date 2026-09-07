@@ -7,6 +7,7 @@
 
 import type { Page } from '@playwright/test';
 import { settleCamera } from './camera';
+import { waitFrames } from './frame';
 import { clearTheGlass } from './gestures';
 import { report } from './report';
 
@@ -53,7 +54,7 @@ async function walkOrbit(page: Page, elevation: number, walked: Walked): Promise
       nimSetCameraAzimuth(given.azimuth);
       nimSetCameraElevation(given.elevation);
     }, { azimuth: (i / STEPS_ORBIT) * 2 * Math.PI, elevation });
-    await page.waitForTimeout(25);
+    await waitFrames(page, 2);
 
     const at = await labelStanding(page);
     if (at === null) {

@@ -5,6 +5,7 @@
 
 import type { CDPSession, Page } from '@playwright/test';
 import { readCamera, settleCamera, spanPivot } from './camera';
+import { waitFrames } from './frame';
 import { report } from './report';
 import { clearTheGlass } from './gestures';
 import { pixelOf } from './wheel';
@@ -241,7 +242,7 @@ export async function driveBackdropPlane(
   await page.mouse.down();
   for (let step = 1; step <= 6; step += 1) {
     await page.mouse.move(width / 2 + 180 + 30 * step, height / 2 + 140);
-    await page.waitForTimeout(40);
+    await waitFrames(page, 2);
   }
   const is_drag_mid = await page.evaluate(() => nimDragActive());
   await page.mouse.up();
