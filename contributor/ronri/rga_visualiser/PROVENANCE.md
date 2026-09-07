@@ -333,6 +333,18 @@ no prebuilt library has to be found at link time.
   Path is `--define:visualiser.path_imgui`, resolved against module's own directory, so
   checkout elsewhere needs no edit either.
 
+**Renderer owns OpenGL names and draws `mesh`'s records through them, one program per record
+kind.** Each record type has vertex shader widening it over static corner geometry, so CPU hands
+over compact records and does no per-frame expansion. Buffers are reuploaded whole each frame
+rather than tracked for changes: upload sits far below any frame's own reach, and nothing can be
+stale after reader edits coefficient.
+  Draw order is opaque first, translucent second, with depth writes off for translucent, so
+  ribbons and points occlude each other correctly while plane veils occlude nothing and objects
+  stay visible through them. Cost is that two veils crossing look order-dependent.
+  Same records WebGL side already draws, which is what makes this cross-check rather than second
+  implementation: one tessellation, two renderers, and disagreement between them is bug in one.
+  That check cannot run until entry point drives both; nothing here has drawn yet.
+
 *Checked.* Verified by running: both bindings compile and link against SDL3 3.2.31 and libGL
 through `nim cpp`, and their assertions run against real headers. Shared core compiles and runs
 under that same backend too, which nothing had shown before -- it had only ever been built
@@ -343,8 +355,11 @@ through C and JS.
   no face was passed, which is exactly what it exists to report.
   Verified by breaking on purpose: mirrored `Scancode.Home` moved by one fails compilation with
   binding's own message; restored after.
-  **Unverified**: nothing has been drawn but empty frame. What puts geometry on screen arrives
-  with renderer, panel and entry point.
+  Verified by compiling: renderer builds against this core through `nim cpp`, which is what says
+  vocabulary rename reached it -- core says `VeilRuns` and `veils`, and module naming them
+  otherwise does not compile.
+  **Unverified**: nothing has been drawn but empty frame. Renderer is compiled, never run; what
+  puts geometry on screen arrives with panel and entry point.
 
 Render Paths
 ---
