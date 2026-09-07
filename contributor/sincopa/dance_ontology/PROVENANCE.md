@@ -208,6 +208,17 @@ whitespace-free row with its character references decoded, and the fonts URL hel
 constant joined at compile time. Cost: the workbench's `doAssert` gates are the
 check, so its tests are a debug build.
 
+**The four are a manner of turn, not a way of turning.** `Manner` and `MANNERS` replace
+`TurnWay` and `WAYS_OF_TURNING` through the workbench, and the pages, checks and rule ledger
+say "manner" wherever they meant one of the four. "Way" is kept for clockwise against
+anticlockwise, which is what `wayOf` and `wayName` return, so the two senses the one word
+carried are now two words. Rejected: renaming `Way` as well, which would have left the
+turn's direction unnamed. Verified by every drawing on all five pages coming out
+byte-identical across the rename -- 66, 56, 273, 62 and 148 figures -- so nothing but the
+prose moved. Cost: nothing holds a page's prose to `GLOSSARY.md`; `tglossary.nim` reads the
+`_Avoid_` lines but claims only against chain position names, so this rename can drift back
+without a test noticing.
+
 **A verdict is given on a picture, so the picture is pinned.** `review_page.nim` lays out
 every position the project draws as 147 cards -- the sixteen standard diagrams and the one
 anticlockwise counterpart, the twenty-eight distinct single-hand turn positions, both
