@@ -179,6 +179,20 @@ func windOf*(put: Pose; holds: Holds; arm: Arm): tuple[phi, spread: float] =
   (phi_a, wrap180(phi_b - phi_a))
 
 
+func divesOf*(one, other: seq[Point]; turns: float): array[Arm, seq[Point]] =
+  ## Share crossings of two wound reaches out: say which of them dives at
+  ## each one.
+  ##   Arm on top at first crossing stays on top there, so it is other one
+  ##     that dives, and they swap at every crossing after -- which is what
+  ##     makes diamond into twist and not overlap (rule 27).
+  ##   Drawing and checks both ask here, so neither can hold its own idea
+  ##     of which arm goes under where.
+  let on_top = overArm(turns)
+  for i, meeting in crossingsOf(one, other):
+    let under = if (i mod 2 == 0) == (on_top == Arm.L): Arm.R else: Arm.L
+    result[under].add meeting
+
+
 func partsOf*(pose: Pose; holds: Holds; levels: Levels = default(Levels);
     over = none(Arm); free = Free.Fade; captions = true;
     ways: Ways = default(Ways); twist: Twists = NO_TWIST;
@@ -251,14 +265,7 @@ func partsOf*(pose: Pose; holds: Holds; levels: Levels = default(Levels);
   # in order along line, and shared out between two arms.
   var dives: array[Arm, seq[Point]]
   if winding:
-    let meetings = crossingsOf(routes[Arm.L], routes[Arm.R])
-    for i, meeting in meetings:
-      # Arm named `over` stays on top at first meeting, so it is
-      # other one that dives there, and they swap at each one after --
-      # which is what makes diamond into twist and not overlap (rule 27).
-      let under = if (i mod 2 == 0) == (on_top == some(Arm.L)): Arm.R
-                  else: Arm.L
-      dives[under].add meeting
+    dives = divesOf(routes[Arm.L], routes[Arm.R], twist[Arm.L])
 
   let order = if on_top == some(Arm.L): [Arm.R, Arm.L] else: [Arm.L, Arm.R]
   for arm in order:
