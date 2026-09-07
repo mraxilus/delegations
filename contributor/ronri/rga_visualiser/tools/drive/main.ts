@@ -1,0 +1,62 @@
+// Drive built page through real events, and assert what they reached; not Nim because
+//   Playwright's API and node's process are what this speaks, and Nim reaches them only
+//   through glue that would leave every browser-side expression unchecked string.
+//   Run it by `nim r tools/build.nim drive`, which builds page first when it is stale.
+//   Chromium comes from `PLAYWRIGHT_BROWSERS_PATH`, or from `RGA_CHROMIUM` where that names
+//   one. Software rendering is forced, so figures here are not this machine's GPU.
+
+import { chromium } from '@playwright/test';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { countFailed, countRun, report } from './report';
+import { focusCanvas } from './gestures';
+import { driveKeys } from './keys';
+
+/** Viewport every check below is written against. */
+const SIZE_VIEW = { width: 1200, height: 900 };
+
+/** Assembled page, as `tools/build.nim web` writes it. */
+const PATH_PAGE = join(__dirname, '..', '..', 'build', 'rga_visualiser.html');
+
+/** Chromium to drive, where Playwright's own copy is not what is installed.
+ *
+ *  Environments often carry Chromium for Playwright other than pinned one, and fetching
+ *  second is not this harness's business. `RGA_CHROMIUM` names one outright; failing
+ *  that, standard `PLAYWRIGHT_BROWSERS_PATH` usually holds `chromium` beside its numbered
+ *  builds. Absent both, Playwright resolves its own.
+ */
+function chromiumChosen(): string | undefined {
+  const named = process.env['RGA_CHROMIUM'];
+  if (named !== undefined && named.length > 0) return named;
+  const installed = process.env['PLAYWRIGHT_BROWSERS_PATH'];
+  if (installed === undefined) return undefined;
+  const beside = join(installed, 'chromium');
+  return existsSync(beside) ? beside : undefined;
+}
+
+async function main(): Promise<void> {
+  const executable = chromiumChosen();
+  const browser = await chromium.launch({
+    ...(executable === undefined ? {} : { executablePath: executable }),
+    args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--no-sandbox'],
+  });
+  const page = await browser.newPage({ viewport: SIZE_VIEW, hasTouch: true });
+
+  const errors_page: string[] = [];
+  page.on('pageerror', (error) => errors_page.push(error.message));
+
+  await page.goto(`file://${PATH_PAGE}`);
+  await page.waitForTimeout(2000);
+  await focusCanvas(page);
+
+  await driveKeys(page);
+
+  // Page erroring at all is failure, whatever every check above said.
+  report('the page raised no error', errors_page.length === 0, errors_page.join(' | '));
+
+  await browser.close();
+  console.log(`\n${countRun() - countFailed()} of ${countRun()} checks passed.`);
+  process.exit(countFailed() === 0 ? 0 : 1);
+}
+
+void main();
