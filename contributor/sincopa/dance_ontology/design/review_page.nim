@@ -34,10 +34,14 @@ const pinned = block:
 const
   KEPT = ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10",
           "A11", "A12", "A13", "A14", "A15", "A16", "A17",
-          "B1", "B2", "B3", "B4", "B5", "B6", "B7",
+          # B4 and B23 were kept with mend against them: their reach ran
+          # straight to its far hand and bent only there.  Mend is made,
+          # so they go back to unruled rather than carry verdict given on
+          # picture that has since moved.
+          "B1", "B2", "B3", "B5", "B6", "B7",
           "B8", "B9", "B10", "B11", "B12", "B13", "B14",
           "B15", "B16", "B17", "B18", "B19", "B20", "B21",
-          "B22", "B23", "B24", "B25", "B26", "B27", "B28",
+          "B22", "B24", "B25", "B26", "B27", "B28",
           # C1, C7, D1, D7 were kept, then re-drawn when swan's snake moved
           # to over arm, so they go back to unruled rather than carry verdict
           # given on picture that has since moved.
@@ -46,12 +50,7 @@ const
     ## Ids Architect has confirmed accurate.  Added as they are ruled on.
   DROPPED: seq[string] = @[]
     ## Ids Architect has ruled out.
-  FLAWED = {
-    "B23": "called out as unlike its neighbours; it is the exact mirror of " &
-           "B4 -- worst 0.65 at 77% along on both, opposite sign",
-    "B4": "mirror of B23, which was called out: identical, opposite sign. " &
-          "Passed on its own, so the pair wants ruling together",
-  }.toTable
+  FLAWED = initTable[string, string]()
     ## Position is right, drawing is not: kept, with what to mend.
 
 func esc(s: string): string =

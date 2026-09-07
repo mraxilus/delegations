@@ -742,13 +742,21 @@ func clearedReach*(a, b: Point; marks: seq[Mark]): seq[Point] =
   ##     turns together** (`readingCost`): turn has to save more than
   ##     `BEND_COST` of line to be worth making reader follow it.  In most
   ##     of these figures one bend does whole job for some units more.
-  ##   Reach that already turns once or not at all, and turns smoothly, is
-  ##     as plain as line gets, so nothing else is tried for it.  Break
-  ##     is not plain however few of them there are (rule 24), so reach
-  ##     with one in is weighed against curves even so.
+  ##   All three are weighed, every time.  Shortest way was once taken
+  ##     unweighed wherever it turned little and turned smoothly, on
+  ##     grounds that nothing could be plainer -- but taut band hugs
+  ##     whichever mark it meets, and mark near hand puts whole of that
+  ##     hug against that hand.  Line then runs dead straight to its far
+  ##     end and bends only there, which reads as kink beside hand
+  ##     however few degrees each corner turns (rule 24, and `crestOf`
+  ##     measures it).  B4 and B23 of review sheet were drawn that way.
+  ##     Cost of weighing always: three band relaxations per settled
+  ##       reach where one sometimes did.  Accepted -- shape is what
+  ##       page is for, and it buys curve over kink.
+  ##     Margin can be slight: on those two, bow wins by hundredth of
+  ##       unit of line.  Preference is real but thin, and it is review
+  ##       sheet's pins that keep flip from passing unseen.
   result = letGo(a, b, marks, SIDES[0])
-  if bendsIn(result) <= 1 and sharpestIn(result) < SHARP_MAX:
-    return
   var least = readingCost(result)
   for side in SIDES[1 .. ^1]:
     let tried = letGo(a, b, marks, side)
