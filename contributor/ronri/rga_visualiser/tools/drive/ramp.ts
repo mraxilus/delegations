@@ -5,6 +5,7 @@
 //   retuning ramp does not mean rewriting this.
 
 import type { Page } from '@playwright/test';
+import { settleReading } from './frame';
 import { report } from './report';
 
 /** Open drawer, its diagnostics section and every branch of tree.
@@ -26,7 +27,10 @@ async function openEveryBranch(page: Page): Promise<void> {
       (node.querySelector(':scope > .diagnostic-parent') as HTMLElement | null)?.click();
     }
   });
-  await page.waitForTimeout(600);
+  await page.waitForFunction(() => Array.from(
+    document.querySelectorAll('.diagnostic-node'),
+  ).every((node) => node.classList.contains('open')), null, { timeout: 8000, polling: 'raf' });
+  await settleReading(page);
 }
 
 /** One row's reading and where along ramp its colour puts it. */

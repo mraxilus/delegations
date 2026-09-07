@@ -1,11 +1,13 @@
 // Checks for scene hold, which is frame matching last one skipping its whole rebuild; not Nim
-//   because they wrap page's own draw and read pixels back out of its context.
+//   because crossing forfeits check compiler makes over bodies that wrap `nimBuildFrame` and
+//   `renderFrame` and read `FrameData`'s fields, every one derived or stated by `page.d.ts`.
 //   Danger of hold is not that it fails to engage -- that costs milliseconds -- but that it
 //   engages when it should not, and shows picture no longer matching scene. So both halves are
 //   held here, and second through *drawn pixels* rather than through flag: hold that released
 //   but drew old records would pass flag check.
 
 import type { Page } from '@playwright/test';
+import { waitFrames } from './frame';
 import { report } from './report';
 
 /** Each edit path checked, named as reader would name it. */
@@ -91,6 +93,7 @@ async function runEdit(page: Page, what: string): Promise<void> {
 /** Drive still scene, then every edit, and assert hold engages and releases. */
 export async function driveHoldScene(page: Page): Promise<void> {
   await watchHold(page);
+  // Wall time, deliberately: figure is share of frames that held over span of real time.
   await page.waitForTimeout(1200);
   const idle = await page.evaluate(() => ({ ...(window.__hold ?? { held: 0, built: 0 }) }));
   report(
@@ -105,6 +108,8 @@ export async function driveHoldScene(page: Page): Promise<void> {
     const before = await page.evaluate(() => window.__drawn);
     await page.evaluate(() => { window.__hold = { held: 0, built: 0 }; });
     await runEdit(page, what);
+    // Wall time, deliberately: check is that edit released hold and reached canvas, and
+    //   waiting on either would assert what is being asked.
     await page.waitForTimeout(500);
     const after = await page.evaluate(() => window.__drawn);
     const seen = await page.evaluate(() => ({ ...(window.__hold ?? { held: 0, built: 0 }) }));
@@ -122,5 +127,5 @@ export async function driveHoldScene(page: Page): Promise<void> {
       (missed.length === 0 ? '' : `; ${missed.join('; ')}`),
   );
   await page.evaluate(() => nimSelectClear());
-  await page.waitForTimeout(200);
+  await waitFrames(page, 2);
 }

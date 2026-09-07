@@ -28,6 +28,8 @@ export async function driveKeys(page: Page): Promise<void> {
 
   // Release, which key handling must see: held key whose release is missed keeps moving.
   const after_release = await readCamera(page);
+  // Wall time, deliberately: check is that camera stopped, and stopping has no event to wait
+  //   on -- waiting until it stopped would assert exactly what is being asked.
   await page.waitForTimeout(200);
   const later = await readCamera(page);
   report(

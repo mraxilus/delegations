@@ -4,29 +4,12 @@
 //   are written against opening scene's own weight and layout.
 
 import type { CDPSession, Page } from '@playwright/test';
-import { readCamera, spanPivot } from './camera';
+import { settleCamera } from './camera';
+import { settleReading, waitFrames } from './frame';
 import { clearTheGlass } from './gestures';
 import { report } from './report';
 import { touchAt } from './touch';
 import { pixelOf } from './wheel';
-
-/** Wait until camera's own glide has finished, reading it rather than guessing.
- *
- *  `Home` glides camera back rather than snapping it, so anything reading object's own pixel
- *  must wait: pixel read mid-flight names where object *was*, and press then lands on empty
- *  space.
- */
-async function settleGlide(page: Page): Promise<void> {
-  let before = null;
-  for (let attempt = 0; attempt < 40; attempt += 1) {
-    const now_at = await readCamera(page);
-    if (before !== null && Math.abs(now_at.distance - before.distance) < 1e-9 &&
-        Math.abs(now_at.azimuth - before.azimuth) < 1e-9 &&
-        spanPivot(before, now_at) < 1e-9) return;
-    before = now_at;
-    await page.waitForTimeout(50);
-  }
-}
 
 /** Handles of every point in scene, read afresh since checks above delete and build. */
 async function pointsLive(page: Page): Promise<number[]> {
@@ -47,7 +30,7 @@ async function pointsLive(page: Page): Promise<number[]> {
 export async function driveCreep(page: Page, cdp: CDPSession): Promise<void> {
   await clearTheGlass(page);
   await page.keyboard.press('Home');
-  await settleGlide(page);
+  await settleCamera(page);
   await page.evaluate(() => nimSelectClear());
 
   const points = await pointsLive(page);
@@ -69,7 +52,7 @@ export async function driveCreep(page: Page, cdp: CDPSession): Promise<void> {
   const step_creep = (await page.evaluate(() => nimTapSlop())) / 3;
   const start = { x: from[0] ?? 0, y: from[1] ?? 0 };
   await touchAt(cdp, 'touchStart', [start]);
-  await page.waitForTimeout(90);
+  await waitFrames(page, 2);
   const away = Math.hypot((onto[0] ?? 0) - start.x, (onto[1] ?? 0) - start.y);
   for (let step = 1; step <= 4; step += 1) {
     const reach = (step * step_creep) / away;
@@ -77,7 +60,7 @@ export async function driveCreep(page: Page, cdp: CDPSession): Promise<void> {
       x: start.x + ((onto[0] ?? 0) - start.x) * reach,
       y: start.y + ((onto[1] ?? 0) - start.y) * reach,
     }]);
-    await page.waitForTimeout(35);
+    await waitFrames(page, 2);
   }
 
   // Chase object's live pixel, not memorised one: press starts aim tween, which glides camera
@@ -91,7 +74,7 @@ export async function driveCreep(page: Page, cdp: CDPSession): Promise<void> {
       x: start.x + (((live[0] ?? 0) - start.x) * step) / 8,
       y: start.y + (((live[1] ?? 0) - start.y) * step) / 8,
     }]);
-    await page.waitForTimeout(35);
+    await waitFrames(page, 2);
   }
   // Last touch settles on wherever object stands now, so hover read below is claim about
   //   picking rather than about how far tween happened to get.
@@ -99,12 +82,12 @@ export async function driveCreep(page: Page, cdp: CDPSession): Promise<void> {
   if (settled !== null) {
     await touchAt(cdp, 'touchMove', [{ x: settled[0] ?? 0, y: settled[1] ?? 0 }]);
   }
-  await page.waitForTimeout(80);
+  await waitFrames(page, 2);
   const mid = await page.evaluate(
     () => ({ hover: nimHoverHandle(), is_dragging: nimDragActive() }),
   );
   await touchAt(cdp, 'touchEnd', []);
-  await page.waitForTimeout(400);
+  await settleCamera(page);
   const camera_after = await page.evaluate(
     () => ({ azimuth: nimCameraAzimuth(), elevation: nimCameraElevation() }),
   );
@@ -157,7 +140,7 @@ export async function drivePlaneBuilt(page: Page, cdp: CDPSession): Promise<void
     }
   });
   await page.keyboard.press('Home');
-  await settleGlide(page);
+  await settleCamera(page);
   await page.evaluate(() => nimSelectClear());
 
   const points = await pointsLive(page);
@@ -172,10 +155,10 @@ export async function drivePlaneBuilt(page: Page, cdp: CDPSession): Promise<void
       x: (from[0] ?? 0) + (((onto[0] ?? 0) - (from[0] ?? 0)) * step) / 8,
       y: (from[1] ?? 0) + (((onto[1] ?? 0) - (from[1] ?? 0)) * step) / 8,
     }]);
-    await page.waitForTimeout(35);
+    await waitFrames(page, 2);
   }
   await touchAt(cdp, 'touchEnd', []);
-  await page.waitForTimeout(400);
+  await settleCamera(page);
 
   const line = await page.evaluate(
     () => nimSceneHandles().find((one) => nimObjectKindWord(one) === 'line') ?? -1,
@@ -199,13 +182,13 @@ export async function drivePlaneBuilt(page: Page, cdp: CDPSession): Promise<void
       (on_line[0] ?? 0) + (((live[0] ?? 0) - (on_line[0] ?? 0)) * step) / 8,
       (on_line[1] ?? 0) + (((live[1] ?? 0) - (on_line[1] ?? 0)) * step) / 8,
     );
-    await page.waitForTimeout(35);
+    await waitFrames(page, 2);
   }
   const dropped = (await pixelOf(page, points[2] ?? 0)) ?? third;
   await page.mouse.move(dropped[0] ?? 0, dropped[1] ?? 0);
-  await page.waitForTimeout(80);
+  await waitFrames(page, 2);
   await page.mouse.up({ button: 'left' });
-  await page.waitForTimeout(400);
+  await settleCamera(page);
 
   const plane = await page.evaluate(() => nimSceneHandles().find(
     (one) => nimObjectKindWord(one) === 'plane' && nimObjectLabel(one) !== 'ground',
@@ -269,7 +252,8 @@ export async function driveRuler(page: Page): Promise<void> {
   const rulers = [];
   for (const distance of [19, 4000]) {
     await page.evaluate((given) => nimSetCameraDistance(given), distance);
-    await page.waitForTimeout(400);
+    await settleCamera(page);
+    await settleReading(page);
     rulers.push(await page.evaluate((given) => {
       const metrics = nimGridMetrics(window.innerWidth, window.innerHeight);
       const cell = metrics[0] ?? 0, world_per_pixel = metrics[1] ?? 1;
