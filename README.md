@@ -39,6 +39,26 @@ contributor/<domain>/<project>/          same shape as a curator project
 - A **contributor** session builds one project and touches nothing outside its folder. It
   starts from [CONTRIBUTOR.md](CONTRIBUTOR.md).
 
+## Issues
+
+Issues carry what the two roles say to each other, in both directions, without the Architect
+standing between them. A contributor blocked by a rule or a check opens one asking for the rule
+to change. A curator who reads a project and finds something opens one saying what they found,
+because they may not edit a contributor's source: an issue is the only route that reaches its
+author. Either way the answer is written on the issue, and the owner decides.
+
+They also carry each session's own queue. Work a session decides on but does not do goes on an
+issue labelled with that session's own role, since a session ends and takes its intentions with
+it. The record still says what **is**; an issue says what is **queued**, and links the record
+rather than restating it.
+
+Every session posts to GitHub as the same account, so each issue carries a label saying whose it
+is, spelled exactly as the branch prefix: `curator` for the rules, the checks, the merge process
+and the root files; `curator/<project>` or `contributor/<domain>/<project>` for one project. A
+session finds its work by filtering on its own label. Labels are added and never removed, so
+when an answer hands work across, the other role's label joins the first and the issue carries
+everyone who has owed something on it.
+
 ## Branches and checks
 
 `main` is protected; the owner merges pull requests by hand. Branches mirror paths:

@@ -2,7 +2,7 @@
 name: Process change
 about: Ask for a rule, check or capability to change, when one is blocking your work
 title: ''
-labels: ''
+labels: curator
 assignees: ''
 ---
 

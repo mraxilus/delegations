@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Author | Claude Opus 5 and Claude Sonnet 5 |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | d7526c4b4d7fa1d9 |
+| Rules  | 00f4a795ba695350 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the
@@ -2340,3 +2340,23 @@ other here:
   correcting.
 
 [replications]: https://gitlab.com/mraxilus/replications
+
+## Re-audit, 2026-09-07, issue routing
+
+Audited by a curator against the change that made the issue channel run both ways and gave each
+session a queue. A session now reads the open issues labelled with its own role before any other
+work; a curator who reads this project raises what they find as an issue rather than editing it,
+since they may not; an issue labelled with a session's own role is that session's queue, work
+decided and deferred where the next session here will see it rather than in a conversation that
+ends; and a label is the role string exactly, copied and never composed, because applying a
+label creates it and a misspelling makes a second label nobody filters on.
+
+Nothing in this tree changes: the rule binds how the next session here starts. Two issues stand
+open against this project today, 47 and 48, both now carrying its label, so that session finds
+them by the filter rather than by being told.
+
+One thing here needs care rather than correction. This record already carries *Not yet ported*
+and several *Unverified* lines, which are the same shape as a queue. They stay where they are:
+the record says what **is**, an issue says what is **queued**. Anything filed from them links
+the section rather than restating its counts, since two copies of one count will disagree — as
+the prototype's check count already did once.

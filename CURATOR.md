@@ -33,10 +33,12 @@ The owner's brief, which every rule below serves:
   allowed. The owner may merge red deliberately in rare cases; the check still runs.
 - `main` is protected. Nobody commits to it; the owner merges pull requests.
 - A change to the general rules must propagate to every project, enforced, not hoped for.
-- Roles reach each other without the Architect standing between them. A contributor blocked
-  by a rule opens an issue; a curator reads open issues at the start of every session,
-  answers on the issue and reports to the Architect, who decides. Telling the Architect
-  makes it faster and is never what makes it work.
+- Roles reach each other without the Architect standing between them, in both directions. A
+  contributor blocked by a rule opens an issue; a curator who reads a project and finds
+  something opens one too, since they may not edit that project's source. Each session reads
+  the issues labelled with its own role at the start of every session, answers on the issue,
+  and the Architect decides. Telling the Architect makes it faster and is never what makes it
+  work.
 - Regression tests are paramount: every mistake becomes a test so it is never repeated.
 - Every pull request passes the same checks CI runs, locally, before it is opened.
 - A change to the merge process is tested on the merge process itself, not only on its code.
@@ -71,6 +73,8 @@ The owner's brief, which every rule below serves:
 | `.github/workflows/check.yml` | CI: `plan`, `static`, matrix, `scope`, `commits`, gate | curator |
 | `.github/pull_request_template.md` | Body every pull request follows | curator |
 | `.github/ISSUE_TEMPLATE/process-change.md` | Body every process request follows | curator |
+| `.github/ISSUE_TEMPLATE/review-finding.md` | Body every curator finding follows | curator |
+| `.github/ISSUE_TEMPLATE/queued-work.md` | Body every session's own queued work follows | curator |
 | `curator/README.md` | Curator root index | curator |
 | `curator/audit/` | Audit library: every check, tested against its own fixtures | curator |
 | `curator/probe/` | Domain-neutral test project and merge-process probe target | curator |
@@ -99,13 +103,25 @@ The owner's brief, which every rule below serves:
 
 Three reads, before any other work.
 
-- **Open issues.** A contributor blocked by a rule opens one from the process-change
-  template; it is the only channel between roles that does not run through the Architect, so
-  nothing arrives unless you look. For each, judge it: what is asked, why it is needed,
-  whether it is a good idea, and what it costs either way. Write that **as a comment on the
-  issue**, so the reasoning survives the conversation it was decided in, then report the same
-  to the Architect, who decides. A pull request answering an issue says `Closes #N`, and
-  merging it closes the issue.
+- **Open issues labelled `curator`.** Two kinds, separated by the issue's own `**Role:**`
+  line: where it differs from the label somebody is **asking**, and where it reads `curator`
+  the work is **your own queue**, left by an earlier curator session.
+  A contributor blocked by a rule opens a request from the process-change template, which
+  labels it for you; it is the only channel between roles that does not run through the
+  Architect, so nothing arrives unless you look. For each request, judge it: what is asked, why
+  it is needed, whether it is a good idea, and what it costs either way. Write that **as a
+  comment on the issue**, so the reasoning survives the conversation it was decided in, then
+  report the same to the Architect, who decides. Where your answer hands work to a project — a
+  verb they must write, a rule they must apply — add that project's label beside `curator`
+  before you report, so it reaches them through the filter they already read. Labels are added
+  and never removed. A pull request answering an issue says `Closes #N`, and merging it closes
+  the issue.
+  Your own queue needs no judging; it was decided already. Take the requests first, since those
+  are somebody waiting, then pick from it. Curator work spans sessions more than a project's
+  does — a change blocked behind a contributor's, a re-measurement deferred until its baseline
+  moves — and a session ends and takes its intentions with it, so anything you mean to come
+  back to is an issue labelled `curator` or it is gone. Close what you no longer intend to do:
+  this queue is meant to grow, and only closing keeps the list worth reading.
 - **Answered issues that are still open.** Read the list again for issues whose answering
   pull request has already merged, and **close each by hand**, with a comment naming that
   pull request, what shipped, and where the result differs from what was asked. `Closes #N`
@@ -197,12 +213,39 @@ Three reads, before any other work.
    What remains yours to govern by reading: the README is writable, so restraint about
    rewriting a project's prose is still restraint, not enforcement.
 
+## Reviewing a project
+
+Reading a contributor project deeply is curator work, and the only thing you may do with what
+you find is say it. Duty 9 forbids the edit and `scope` enforces it, so an issue labelled with
+that project's role is the channel — and it reaches the one session that can act on it.
+
+A finding carries five things, because the contributor weighing it has none of your context:
+
+- **What you read**, by path and line, and the command whose output you are quoting.
+- **What you found**, stated so it can be disagreed with: a claim, never an impression.
+- **Why it matters**, in terms of a rule, a cost, or a defect that has already happened once.
+- **What it costs to leave it.** "Little today, more at scale" is a real answer and a better
+  one than manufactured urgency.
+- **What you are not asking for**, so that a small finding does not read as a demand to
+  redesign.
+
+It is a proposal. The contributor and the Architect settle it, and a contributor who answers
+with reasons why you are wrong has answered in full. A finding you cannot support with evidence
+from their tree is a hunch: keep it, or go and get the evidence.
+
 ## Saying which role you are
 
 Every session here posts to GitHub as the same account, so the account says nothing about who
 is speaking, and a contributor cannot tell your answer from another contributor's. Open every
 issue, pull request and comment with `**Role:** curator`. Nothing checks it — GitHub is not
 this repository — so it holds because you write it.
+
+An issue's label is that same string: `curator` for the rules, the checks, the merge process
+and the root files, and `curator/<project>` or `contributor/<domain>/<project>` for one
+project. The set is the branch grammar, so nothing writes it down twice and nothing can drift
+out of date. Applying a label creates it, which is how a new project's label comes to exist
+and also the one hazard here: a misspelling does not fail, it makes a second label nobody
+filters on. Copy the role string; never compose one.
 
 Commenting on a contributor's pull request to give context or answer a question is a second
 channel and a welcome one. It is not where process requests live: a pull request closes and
@@ -278,8 +321,9 @@ discovered one at a time.
 
 - **A glossary term is the Architect's to select**, proposed and never written on sight.
   The audit checks a glossary's shape, never whether its words were agreed.
-- **Every issue, pull request and comment opens with its role.** GitHub is not this
-  repository, so no check reads what was posted there.
+- **Every issue, pull request and comment opens with its role, and every issue is labelled
+  with it.** GitHub is not this repository, so no check reads what was posted there — and
+  because applying a label creates it, a mistyped one is a new label rather than an error.
 - **A pull request opens as a draft, and is marked ready only when it is.** Draft state is
   GitHub's, not the tree's.
 - **A published page is linked, not described**, in the pull request and in the message
