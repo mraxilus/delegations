@@ -759,28 +759,36 @@ func crossingsOf*(one, other: seq[Point]): seq[Point] =
         result.add at
 
 
-func cutGapsAt*(pts: seq[Point]; centres: seq[Point]): seq[Run] =
-  ## Break reach at every place it runs under another, not only first.
-  if centres.len == 0:
-    return @[pts]
-  var cum = @[0.0]
+func gapFor*(at, span: float): tuple[opens, shuts: float] =
+  ## Say where gap for crossing this far along reach opens and shuts.
+  ##   Gap slides rather than hangs off end.  Crossing lying within half
+  ##     break of hand would leave stub too short to draw at all, and
+  ##     reach stopping short of its hand reads as unfinished line, never
+  ##     as one passing beneath something -- which is whole of what break
+  ##     is for (rule 14).
+  ##   Sliding rather than shortening, so every gap is same length and
+  ##     one break reads like every other.  Gap still covers its crossing
+  ##     wherever crossing is half break clear of both ends, which is
+  ##     every case that can be drawn whole.
+  let
+    last = max(span - 1.5 * BREAK, BREAK / 2)
+    opens = clamp(at - BREAK / 2, BREAK / 2, last)
+  (opens, opens + BREAK)
+
+
+func alongOf(pts: seq[Point]): seq[float] =
+  ## Measure how far along reach each of its points sits.
+  result = @[0.0]
   for i in 0 ..< pts.high:
-    cum.add cum[^1] + dist(pts[i], pts[i + 1])
-  var breaks: seq[float]
-  for centre in centres:
-    var nearest = (d: Inf, at: 0.0)
-    for i, p in pts:
-      let d = dist(p, centre)
-      if d < nearest.d:
-        nearest = (d, cum[i])
-    breaks.add nearest.at
+    result.add result[^1] + dist(pts[i], pts[i + 1])
+
+
+func runsOutside(pts: seq[Point]; along: seq[float];
+    gaps: seq[tuple[opens, shuts: float]]): seq[Run] =
+  ## Collect what is left of reach once its gaps are taken out.
   var run: Run
   for i, q in pts:
-    var covered = false
-    for at in breaks:
-      if abs(cum[i] - at) <= BREAK / 2:
-        covered = true
-    if covered:
+    if gaps.anyIt(along[i] >= it.opens and along[i] <= it.shuts):
       if run.len > 1:
         result.add run
       run = @[]
@@ -788,6 +796,22 @@ func cutGapsAt*(pts: seq[Point]; centres: seq[Point]): seq[Run] =
       run.add q
   if run.len > 1:
     result.add run
+
+
+func cutGapsAt*(pts: seq[Point]; centres: seq[Point]): seq[Run] =
+  ## Break reach at every place it runs under another, not only first.
+  if centres.len == 0:
+    return @[pts]
+  let along = alongOf(pts)
+  var gaps: seq[tuple[opens, shuts: float]]
+  for centre in centres:
+    var nearest = (d: Inf, at: 0.0)
+    for i, p in pts:
+      let d = dist(p, centre)
+      if d < nearest.d:
+        nearest = (d, along[i])
+    gaps.add gapFor(nearest.at, along[^1])
+  runsOutside(pts, along, gaps)
 
 
 
@@ -907,11 +931,6 @@ func cutGap*(pts: seq[Point]; over: seq[Point]): seq[Run] =
       let d = dist(p, q)
       if d < nearest.d:
         nearest = (d, i)
-  let here = cum[nearest.i]
-  var first, second: Run
-  for i, q in pts:
-    if cum[i] <= here - BREAK / 2:
-      first.add q
-    if cum[i] >= here + BREAK / 2:
-      second.add q
-  @[first, second]
+  # Same gap as every other break, slid clear of both ends for same
+  # reason (`gapFor`).
+  runsOutside(pts, cum, @[gapFor(cum[nearest.i], cum[^1])])

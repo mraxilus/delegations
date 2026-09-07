@@ -40,7 +40,7 @@ suite "reach breaks":
       check runs[^1][^1] == line[^1]
 
   test "a break falls where the lines cross":
-    # Crossing nearer than half a break to either hand cannot be covered
+    # Crossing nearer than half break to either hand cannot be covered
     # and still leave reach whole; every other one is covered.
     let span = float(N - 1) * STEP
     for i in 0 ..< N:
