@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Author | Claude Opus 5 and Claude Sonnet 5 |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 00f4a795ba695350 |
+| Rules  | a011df991e1e6032 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the
@@ -2360,3 +2360,32 @@ and several *Unverified* lines, which are the same shape as a queue. They stay w
 the record says what **is**, an issue says what is **queued**. Anything filed from them links
 the section rather than restating its counts, since two copies of one count will disagree — as
 the prototype's check count already did once.
+
+## Re-audit, 2026-09-07, Article II.9 bound
+
+Audited by a curator against the amendment to Article II.9, which this project's issue 48 asked
+for. The article now bounds when target code may be hand-written: the source language by
+default, the crossing kept narrow, and the target language only where the source cannot reach at
+all or where crossing would forfeit what the target gives for free — a check its own compiler
+makes over the bulk of a file, a cost the glue would add to a hot path — with the file's opening
+comment saying which.
+
+This is the only project the rule reaches: 45 TypeScript files, and every other project holds
+none. **All 45 already comply, and nothing needed correcting.** Each was read. Most stand on the
+first ground and say so — `src/browser/*.ts` on browser APIs Nim's JS backend does not express,
+`keys.ts`, `pan.ts` and `gestures.ts` on Playwright's input API existing only in node,
+`touch.ts` and `construct.ts` on Chrome's own protocol. Three stand on the second: `camera.ts`
+("only TypeScript checks them against bridge's derived declarations"), `main.ts` ("glue that
+would leave every browser-side expression unchecked string") and `page.d.ts` ("only TypeScript
+can state them to type-checker").
+
+That the corpus met a rule written after it is not luck. The `not Nim because` gate already
+refused a file that argued nothing, so every argument existed; the amendment only requires that
+the argument name which of two grounds it stands on, and arguments written honestly already did.
+The rule codifies the practice rather than changing it.
+
+What the amendment does decide, which the article as it stood did not: `exceedance.ts` and its
+kind. 454 lines, 15 `evaluate` bodies, browser-side expressions that are not something the
+target alone *can* do but something the target *checks* and Nim's glue would not. Before the
+amendment that file leaned on a reading of "what the target alone can do" it did not quite fit.
+It now has a clause of its own.
