@@ -44,7 +44,7 @@
 ##   Ribbons draw apart from veils because state differs: ribbon writes depth,
 ##   translucent veil does not.
 ##
-## Shared by desktop (`visualiser.nim`) and browser (`browser_bridge.nim`) render paths.
+## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
 
 {.experimental: "strictFuncs".}
 
@@ -114,7 +114,7 @@ const
     ## Bound smallest diameter point is drawn at, in pixels.
     ##   Point carries world radius and shrinks with distance (see `radiusDrawnAt`); this
     ##   floor keeps distant one readable dot rather than sub-pixel flicker.
-    ##   Both render targets read it: desktop as uniform, browser through
+    ##   Both front-ends read it: desktop as uniform, browser through
     ##   `nimRenderLineWidths`.
   RADIUS_OBJECT_DEFAULT* = 0.08
     ## Set drawn radius, in world units, object takes when nothing chose one.
@@ -129,7 +129,7 @@ const
     ## Set how bright lit point's night side is drawn, as fraction of its colour.
     ##   Rest is Lambert's cosine toward its sun; see `Vertex.light`.
     ##   Quarter: dark side still reads as body in its own hue, not hole in field.
-    ##   Both render targets read it as uniform, browser through `nimShadeAmbient`.
+    ##   Both front-ends read it as uniform, browser through `nimShadeAmbient`.
   LIGHT_NONE* = Direction(x: 0.0, y: 0.0, z: 0.0)
     ## Name absence of light: zero vector, which both vertex shaders read as flat.
     ##   Zero rather than option: it crosses wire as three floats per point, and shader
@@ -522,7 +522,7 @@ func alphaGridFade*(radius, radius_fade_start, radius_end: float): float =
   ##     One schedule for all furniture (grid, axes), so reference ends
   ##     at one horizon.
   ##   Reference fog half of both ribbon fragment shaders is held to.
-  ##     Change to this, GLSL 3.30 in `renderer.nim` or WebGL source in `glue.js` is not
+  ##     Change to this, GLSL 3.30 in `renderer.nim` or WebGL source in `gl.ts` is not
   ##     finished until other two are checked.
   ##     Runs per fragment there against interpolated world position, exact where
   ##     per-piece sampling was piecewise-linear.
@@ -811,7 +811,7 @@ func directionAcross*(tail, head, eye: Position): Option[Direction] =
 func expandRibbon*(record: RibbonRecord, scale: DrawScale): array[6, Vertex] =
   ## Expand one ribbon record into six vertices shader will make of it.
   ##   Reference implementation of ribbon vertex shader; nothing else runs it.
-  ##     Both render targets carry same arithmetic in GLSL (`renderer.nim` and `glue.js`,
+  ##     Both front-ends carry same arithmetic in GLSL (`renderer.nim` and browser's own `gl.ts`,
   ##     sibling copies); change to any of three is not finished until other two are
   ##     checked.
   ##     Suite holds this against algebra (near clip equal to `clipToEyeSide`, across
@@ -975,7 +975,7 @@ proc expandRingVertex*(
 ): array[6, Vertex] =
   ## Expand one segment of ring into six vertices shader will make of it.
   ##   Reference implementation of ring vertex shader; nothing else runs it.
-  ##     Both render targets carry same arithmetic in GLSL, sibling copies as
+  ##     Both front-ends carry same arithmetic in GLSL, sibling copies as
   ##     `expandRibbon` and `expandDiscVertex` have.
   ##   `expandRibbon` of `ribbonOfRing`, and nothing more: ring adds *where* segment is,
   ##   nothing to how line is widened.
@@ -1016,7 +1016,7 @@ func addRing*(
 func expandDiscVertex*(record: DiscRecord; cos_angle, sin_angle: float): Vertex =
   ## Widen one disc record into fan corner given table entry stands for.
   ##   Reference disc-fill vertex shaders are held to, beside `expandRibbon`.
-  ##     Change to it, GLSL in `renderer.nim` or WebGL source in `glue.js` is not
+  ##     Change to it, GLSL in `renderer.nim` or WebGL source in `gl.ts` is not
   ##     finished until other two are checked.
   ##   One statement: centre plus two radius-scaled arms weighted by corner's cosine and
   ##   sine, i.e. `euclid.onCircleAt`, centre corner carrying zero for both.
@@ -1073,7 +1073,7 @@ proc discCorners*(): seq[float32] =
   ##   `(cos, sin)` per corner, three corners per rim segment, wound centre, this
   ##   segment's boundary, next one's.
   ##   Centre corner is `(0, 0)`, which `expandDiscVertex` lands on centre exactly.
-  ##   One source for both render targets: desktop uploads from Nim and browser through
+  ##   One source for both front-ends: desktop uploads from Nim and browser through
   ##   `nimDiscCorners`, so neither carries hand-copied table.
   result = newSeq[float32](2*3*SEGMENTS_CIRCLE_HORIZON)
   for i in 0 ..< SEGMENTS_CIRCLE_HORIZON:
@@ -1097,7 +1097,7 @@ proc pointCorners*(): seq[float32] =
   ##   Vertex shader steps `across*radius` along `DrawScale.axis_right` and `up*radius`
   ##   along `axis_up` from record's centre, and fragment stage discards outside unit
   ##   circle of same pair; see `radiusDrawnAt`.
-  ##   One source for both render targets, as `discCorners` is.
+  ##   One source for both front-ends, as `discCorners` is.
   @[-1.0'f32, -1.0'f32, 1.0'f32, -1.0'f32, -1.0'f32, 1.0'f32, 1.0'f32, 1.0'f32]
 
 
@@ -1111,7 +1111,7 @@ proc ringCorners*(): seq[float32] =
   ##     `expandRingVertex` states what shader does with each corner, and this table is
   ##     only *where* on circle each sits.
   ##   Angles come off `UNIT_CIRCLE_RIM`, so drawn circle is unchanged.
-  ##   One source for both render targets, as `discCorners` is.
+  ##   One source for both front-ends, as `discCorners` is.
   const WINDING = [(0.0'f32, -1.0'f32), (1.0'f32, -1.0'f32), (1.0'f32, 1.0'f32),
     (0.0'f32, -1.0'f32), (1.0'f32, 1.0'f32), (0.0'f32, 1.0'f32)]
   result = newSeq[float32](6*6*SEGMENTS_CIRCLE_HORIZON)
@@ -1134,7 +1134,7 @@ func domeCorners*(): seq[float32] =
   ## Emit dome's static corner buffer.
   ##   One unit direction per corner, six corners per lat/long quad, wound as CPU quads
   ##   were. `expandDomeVertex` says what each becomes.
-  ##   One source for both render targets, as `discCorners` is.
+  ##   One source for both front-ends, as `discCorners` is.
   result = newSeq[float32](3*6*LATITUDES_HORIZON*LONGITUDES_HORIZON)
   var at = 0
   for lat in 0 ..< LATITUDES_HORIZON:
