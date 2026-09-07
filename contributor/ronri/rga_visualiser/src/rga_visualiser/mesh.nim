@@ -216,11 +216,11 @@ const
     ## Set band counts in horizon plane's whole-sky dome.
   ORIGIN_WORLD* = Position(x: 0, y: 0, z: 0)
     ## Set world origin, which objects through it are drawn about.
-  ALPHA_WASH* = 0.16'f32
+  ALPHA_VEIL* = 0.16'f32
     ## Set opacity of finite plane's fill.
     ##   Flat across disc, since rim marks edge; low enough that whatever sits behind,
     ##   including crossing plane, stays legible.
-  ALPHA_WASH_SKY* = 0.22'f32
+  ALPHA_VEIL_SKY* = 0.22'f32
     ## Set opacity of horizon plane's sky dome.
     ##   No edge to fade toward, covering whole sphere, so it must read as coloured sky
     ##   without overwhelming what depth test lets show through.

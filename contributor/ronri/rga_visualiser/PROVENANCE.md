@@ -140,6 +140,23 @@ pivot 32.5 units at unchanged height; frame is assembled in 0.7 ms median, 0.9 m
 slowest tenth; hover pick over largest demo runs 2.0 ms median; edit past timeline capacity
 costs 2.5 ms over 5,038 objects; closed rows hold 9.1 elements each over 5,040 of them.
 
+**Accounting allows two frames of its sample to miss, as count rather than share.** Share of
+0.995 was written after demanding *every* frame failed, and never took effect: `ceil(0.995n)`
+equals `n` for every `n` under 200. Both call sites define what "enough frames accounted" means,
+and neither can be fixed by growing sample -- misses are per frame, so larger sample brings
+proportionally more chances to straddle collection and proportional allowance never pulls ahead.
+Ruled on repository issue 47; one definition now, exported from `scenery` and imported by
+`loaded`, since two copies are what let one site stay inert.
+  Measured either side, which is what says where it bites: `scenery`'s sample is 485-549 frames,
+  above 200, so share already allowed two there and count reproduces it exactly. `loaded`'s
+  sample is 49-50, capped by its own sampling loop stopping at 25 heavy frames, so share allowed
+  *zero* and count now allows two. Failing check was `loaded`'s, and that is why.
+  Per-frame tolerances are untouched, and deliberately: every bit of detection power is in them,
+  and real accounting fault misses on every frame rather than hiding inside two.
+  Improvement is shape rather than rate. Two frames should put red runs near one in thousand if
+  misses are independent, and materially worse if they cluster -- scheduler pause or collection
+  cycle producing two straddles together is plausible and unmeasured.
+
 **Timing-dependent quantities are asserted as bands, never figures.** How far held key
 travels depends on frames drawn while it was down. Band that will not settle is widened with
 reason recorded, never deleted and never narrowed to fit one lucky run.
@@ -388,6 +405,42 @@ stale after reader edits coefficient.
   implementation: one tessellation, two renderers, and disagreement between them is bug in one.
   That check cannot run until entry point drives both; nothing here has drawn yet.
 
+**Panel lays out what reader edits scene and camera through, and holds only what GUI needs
+between frames.** Which operands are picked, what open edit is staging, where to export;
+everything else is read straight off scene and camera, so there is one source of truth and no
+synchronisation step to go stale.
+
+**Rename now covers uppercase constants, which word-boundary passes had missed.** Tasks 175-181
+renamed by word, and no word boundary sits inside `ALPHA_WASH` or `WIDTH_SHAPE_WORD`, so eight
+names survived in merged code, each spelling term GLOSSARY.md marks *Avoid*. Found by porting
+panel, which had to reach one of them. Now: `ALPHA_VEIL` and `ALPHA_VEIL_SKY` (`mesh`,
+`tessellate`), `WIDTH_KIND_WORD` (`scene`), `PREVIEW_EDIT`, `RADIUS_PREVIEW_EDIT`, `FLAT_PIVOT`
+and `REVISION_PLACEMENT` (`bridge`), `PIXELS_RULER_WANTED` (`diagnostics.ts`).
+  None crosses foreign-function boundary: no renamed name is `exportc` and none appears in any
+  script, so derived `bridge.d.ts` is byte for byte what it was. Verified rather than assumed.
+  **`GHOST` could not simply become `PREVIEW`.** Nim compares identifiers ignoring case after
+  first letter and ignoring underscores, and type `Preview` already exists -- so `none(Preview)`
+  silently resolved to renamed variable and compilation failed. Named `PREVIEW_EDIT` instead,
+  which pairs with `PREVIEW_APPLY` already beside it: one is what open edit stages, other is what
+  open apply control would build. Collision forced better name than intended one.
+  Left alone, since each is different word rather than retired one: `ShapedMarker` and
+  `MARKER_SHAPED` use *shape* as verb, which glossary's own Marker entry does too;
+  `nimInkChoosableSlots` names palette position rather than object's handle; ring buffer's slot
+  is genuinely slot; and Dear ImGui's `BeginTabItem` and DOM's `currentTarget` are foreign.
+  `PIXELS_RULER_TARGET` named width bar aims for, which is neither Pivot nor Mark, so it became
+  `PIXELS_RULER_WANTED` rather than being forced into glossary term it is not.
+
+**Vocabulary rename reached these three modules through compiler rather than through reader.**
+Renderer and panel both predate tasks 175-181, so they arrived saying `wash`, `slot`, `target`,
+`Item` and `ghost`. Core says `veil`, `handle`, `pivot`, `Object` and `preview`, so unported file
+does not compile at all -- and it named every miss. Two passes of word-boundary rename missed
+compounds each time (`WashRuns`, `WashKind`, `drawWashRun`; then `ITEMS_MAX`, `describeShape`,
+`shapeText`), and build reported each by name. That is stronger check than review, and it is why
+these were taken before entry point, which imports everything.
+  One `budget` in renderer was left alone deliberately: project renamed *budget* to *mark* for
+  frame-time marks, and that use was ordinary English about cost rather than term of art.
+  Reworded around instead, so retired word is simply absent.
+
 *Checked.* Verified by running: both bindings compile and link against SDL3 3.2.31 and libGL
 through `nim cpp`, and their assertions run against real headers. Shared core compiles and runs
 under that same backend too, which nothing had shown before -- it had only ever been built
@@ -401,8 +454,10 @@ through C and JS.
   Verified by compiling: renderer builds against this core through `nim cpp`, which is what says
   vocabulary rename reached it -- core says `VeilRuns` and `veils`, and module naming them
   otherwise does not compile.
-  **Unverified**: nothing has been drawn but empty frame. Renderer is compiled, never run; what
-  puts geometry on screen arrives with panel and entry point.
+  Verified by compiling: renderer and panel both build against this core through `nim cpp`, which
+  is what says vocabulary rename reached them.
+  **Unverified**: nothing has been drawn but empty frame. Renderer and panel are compiled, never
+  run; what puts geometry on screen arrives with entry point.
 
 Render Paths
 ---
