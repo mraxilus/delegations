@@ -1072,6 +1072,16 @@ proc nimCameraDistance(): cfloat {.exportc.} = cfloat(CAMERA.distance)
 proc nimCameraFov(): cfloat {.exportc.} = cfloat(CAMERA.degrees_field_of_view)
   ## Report vertical field of view, in degrees.
 
+proc nimCameraCarrying(): bool {.exportc.} =
+  ## Report whether ease is still carrying camera toward what it was aimed at.
+  ##   True from frame `offerAim` arms ease until frame `advance` runs it out; see
+  ##   `camera.CameraTween`.
+  ##   Exists for driven checks: harness cannot tell camera at rest from camera not started
+  ##   yet by watching stance alone, and reading stance before ease begins reads camera that
+  ##   never moved (repository issue 73). Tween's own state answers that; stance cannot.
+  ##   Derived rather than tracked beside tween, so no second copy can drift from it.
+  TWEEN_CAMERA.goal.isSome and not TWEEN_CAMERA.is_arrived
+
 proc nimCameraPivot(): FlatBuffer {.exportc.} =
   ## Report point camera orbits around, as `[x, y, z]` view over `FLAT_PIVOT`.
   ##   Refilled per call; camera fields' tick asks five times second and compares before
