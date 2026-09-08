@@ -21,6 +21,10 @@ export interface Reading {
   spots: number[][];
   /** How many pixels carry colour at all. */
   lit: number;
+  /** Whether every pixel read is one same colour, which is picture of nothing. */
+  is_one_colour: boolean;
+  /** Colour of first pixel read, which is whole reading where `is_one_colour` holds. */
+  colour_first: number[];
   /** How many pixels were read. */
   of: number;
 }
@@ -66,6 +70,34 @@ async function canvasAlone(page: Page, selector: string): Promise<Buffer> {
 export async function readCanvas(
   page: Page, spots: Spot[] = [], selector: string = CANVAS_DRAWN,
 ): Promise<Reading> {
+  let reading = await readOnce(page, spots, selector);
+  // Capture until it carries picture, since compositor is what is being waited on and it is
+  //   slower than one frame on software rasteriser: runner returned canvas-shaped sheet of
+  //   white where this machine returned scene, and every comparison over it agreed with every
+  //   other. Settle on what has arrived rather than on clock (Article IX.5).
+  for (let i = 0; i < TRIES_ALONE && reading.is_one_colour; i += 1) {
+    await page.evaluate(() => new Promise<void>((done) => {
+      requestAnimationFrame(() => { requestAnimationFrame(() => { done(); }); });
+    }));
+    reading = await readOnce(page, spots, selector);
+  }
+  if (reading.is_one_colour) {
+    throw new Error(
+      `Canvas read back as one colour, rgb(${reading.colour_first.join(',')}), over all ` +
+      `${reading.of} pixels, after ${TRIES_ALONE + 1} captures. Reading carrying one colour ` +
+      'is capture of no canvas rather than capture of scene -- every comparison over it ' +
+      'agrees with every other, which is how blank canvas passed four checks before. Run ' +
+      'stops here rather than resting them on it.',
+    );
+  }
+  return reading;
+}
+
+/** How many further captures are taken while reading carries no picture. */
+const TRIES_ALONE = 10;
+
+/** Take one capture of canvas and decode it, saying nothing about whether it carries picture. */
+async function readOnce(page: Page, spots: Spot[], selector: string): Promise<Reading> {
   const encoded = (await canvasAlone(page, selector)).toString('base64');
   const reading = await page.evaluate(async (given): Promise<Reading> => {
     const image = new Image();
@@ -83,25 +115,23 @@ export async function readCanvas(
     const data = paper.getImageData(0, 0, flat.width, flat.height).data;
     let mark = 2166136261;
     let lit = 0;
+    let is_one_colour = true;
+    const first = [data[0] ?? 0, data[1] ?? 0, data[2] ?? 0];
     for (let i = 0; i < data.length; i += 4) {
       const red = data[i] ?? 0, green = data[i + 1] ?? 0, blue = data[i + 2] ?? 0;
       if (red > 0 || green > 0 || blue > 0) lit += 1;
+      if (red !== first[0] || green !== first[1] || blue !== first[2]) is_one_colour = false;
       mark = Math.imul(mark ^ red, 16777619) ^ green ^ (blue << 8);
     }
     const found = given.spots.map((spot) => {
       const at = (((Math.round(spot[1]) * flat.width) + Math.round(spot[0])) * 4);
       return [data[at] ?? 0, data[at + 1] ?? 0, data[at + 2] ?? 0, data[at + 3] ?? 0];
     });
-    return { mark: mark | 0, spots: found, lit, of: flat.width * flat.height };
+    return {
+      mark: mark | 0, spots: found, lit, is_one_colour, of: flat.width * flat.height,
+      colour_first: first,
+    };
   }, { encoded, spots });
-  if (reading.lit === 0) {
-    throw new Error(
-      `Canvas read back blank: 0 of ${reading.of} pixels carry colour. Page draws over ` +
-      'rgb(16,19,24), so reading with nothing in it is capture of no canvas rather than ' +
-      'capture of dark scene. Every pixel check below rests on this reading, so run stops ' +
-      'here rather than passing them all on nothing.',
-    );
-  }
   return reading;
 }
 
@@ -123,38 +153,42 @@ export async function settleCanvas(page: Page, spots: Spot[] = []): Promise<Read
 }
 
 
-/** Assert reader refuses reading of canvas with nothing drawn on it, against its own fixture.
+/** Assert reader refuses reading carrying no picture, against fixtures it paints itself.
  *
- *  Instrument unable to tell blank canvas from dark one is what let four checks pass on
- *  nothing, so it is checked here against fixture it stands up itself (Article IX.8) rather
- *  than trusted. Fixture is black canvas, which is hardest case: it is what dark scene and no
- *  scene both look like.
+ *  Instrument unable to tell canvas carrying nothing from canvas carrying scene is what let
+ *  four checks pass on nothing, so it is checked here against fixtures it stands up itself
+ *  (Article IX.8) rather than trusted. Both colours are driven, and second is why: guard that
+ *  refused all-zero alone passed runner's sheet of white, which is same nothing in other
+ *  colour.
  */
 export async function driveBlankRefused(page: Page): Promise<void> {
-  await page.evaluate(() => {
-    const flat = document.createElement('canvas');
-    flat.id = 'reading-fixture';
-    flat.width = 64;
-    flat.height = 64;
-    flat.setAttribute('style', 'position:fixed;left:0;top:0;z-index:9999');
-    const paper = flat.getContext('2d');
-    if (paper !== null) {
-      paper.fillStyle = '#000';
-      paper.fillRect(0, 0, flat.width, flat.height);
+  const refused: string[] = [];
+  for (const ink of ['#000', '#fff']) {
+    await page.evaluate((given) => {
+      const flat = document.createElement('canvas');
+      flat.id = 'reading-fixture';
+      flat.width = 64;
+      flat.height = 64;
+      flat.setAttribute('style', 'position:fixed;left:0;top:0;z-index:9999');
+      const paper = flat.getContext('2d');
+      if (paper !== null) {
+        paper.fillStyle = given;
+        paper.fillRect(0, 0, flat.width, flat.height);
+      }
+      document.body.appendChild(flat);
+    }, ink);
+    try {
+      await readCanvas(page, [], '#reading-fixture');
+      refused.push(`${ink} was read as though it carried picture`);
+    } catch (raised) {
+      const said = raised instanceof Error ? raised.message : String(raised);
+      refused.push(said.startsWith('Canvas read back as one colour') ? `${ink} refused` :
+        `${ink} raised something else: ${said.slice(0, 40)}`);
     }
-    document.body.appendChild(flat);
-  });
-  let refused = '';
-  try {
-    await readCanvas(page, [], '#reading-fixture');
-  } catch (raised) {
-    refused = raised instanceof Error ? raised.message : String(raised);
+    await page.evaluate(() => { document.getElementById('reading-fixture')?.remove(); });
   }
-  await page.evaluate(() => { document.getElementById('reading-fixture')?.remove(); });
   report(
-    'a reading the canvas gave nothing to is refused rather than returned',
-    refused.startsWith('Canvas read back blank'),
-    refused === '' ? 'black canvas was read as though it carried a picture'
-      : `refused: ${refused.slice(0, 46)}...`,
+    'a reading the canvas gave no picture to is refused rather than returned',
+    refused.every((one) => one.endsWith('refused')), refused.join('; '),
   );
 }
