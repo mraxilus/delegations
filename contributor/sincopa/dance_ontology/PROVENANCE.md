@@ -482,12 +482,13 @@ nothing today. It binds the moment this project grows scripts of its own.
 
 ## Re-audit, 2026-09-07, system dependencies
 
-Audited by a curator against rule that system dependencies -- library compiler links against,
-tool build shells out to, browser driven check drives, source clone no package manager carries
--- are declared as data in project's own `tools/build.nim`, each entry carrying its reason, and
-reached by verb. Source clone carries its commit; system package carries no pin surviving across
-distributions and record says so rather than implying one; anything fetched at build time
-carries checksum build verifies. No machine's paths in committed source.
+Audited by a curator against the rule that system dependencies — a library the compiler links
+against, a tool the build shells out to, a browser a driven check drives, a source clone no
+package manager carries — are declared as data in the project's own `tools/build.nim`, each
+entry carrying its reason, and reached by a verb. A source clone carries its commit; a system
+package carries no pin that survives across distributions, and the record says so rather than
+implying one; anything fetched at build time carries a checksum the build verifies. No
+machine's paths in committed source.
 
 **This project does not comply yet, and cannot be made to by curator.** `design/shot.nim` names
 two absolute paths into one machine's layout, with browser version among them:
