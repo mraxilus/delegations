@@ -125,7 +125,7 @@ the browser page through `web`, the desktop application through `desktop`.
 
 Every law under test through testament on the pinned commit, in three configurations. The
 page has been built and looked at, its type surface is checked, and a Playwright harness
-drives 136 checks over held keys, the wheel, mouse pan and touch — see Driven Checks in
+drives 137 checks over held keys, the wheel, mouse pan and touch — see Driven Checks in
 `PROVENANCE.md`. The desktop application has been built, one frame of it looked at, and its own
 twelve scripted runs driven headless under Xvfb — 19 checks, all passing. Those runs need SDL3,
 which no runner can install, so `drive` skips them there by name rather than silently.

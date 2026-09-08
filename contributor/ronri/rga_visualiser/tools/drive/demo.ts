@@ -251,6 +251,12 @@ export async function driveOccluded(page: Page): Promise<void> {
       (occluded.deeper.length === 0 ? '' : `: ${occluded.deeper.slice(0, 3).join(', ')}`),
   );
   report(
+    'the canvas gave a pixel at all, rather than a blank readback',
+    occluded.alone.slice(0, 3).some((v) => v > 0),
+    `pixel at moon ${JSON.stringify(occluded.alone.slice(0, 3))}; page's darkest surface is ` +
+      'rgb(16,19,24), so all zero is readback of nothing rather than dark scene',
+  );
+  report(
     'a selected moon in front of a selected planet is drawn in front of it',
     occluded.is_moon_in_front && occluded.is_moon_at_centre &&
       occluded.alone.every((v, i) => Math.abs(v - (occluded.both[i] ?? 0)) <= 2),

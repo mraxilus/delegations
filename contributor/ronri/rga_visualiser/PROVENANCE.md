@@ -121,7 +121,7 @@ canvas, so nothing in them catches rule wired to wrong event. `tools/drive/` doe
 Playwright, against page `tools/build.nim web` assembled. One command runs both:
 `nim r tools/build.nim drive`.
 
-**135 checks pass today**, one module per section of what page does:
+**137 checks pass today**, one module per section of what page does:
 
 | Module | Covers |
 |--------|--------|
@@ -215,8 +215,38 @@ Article II.9 reads both ways here.
   buys — that curve is distribution, that tick writes only rows that moved — cannot be asked
   any other way.
 
-*Checked.* Verified by running: 135 of 135 pass through `tools/build.nim drive` on assembled
-page, in Chromium, software-rendered. Every section of prototype's own harness is ported.
+**Settling on stance alone cannot tell camera at rest from camera not started.** `settleCamera`
+waited for two consecutive stances to agree. Nothing a check calls moves camera itself:
+`nimSelectOnly` and its kin say what is picked, and `offerAim` inside `nimBuildFrame` turns that
+into ease -- after `advance` has run for that frame. So both polls can land before ease begins,
+agree, and hand check camera that never moved (repository issue 73).
+  Fixed by asking ease rather than inferring from stance: `nimCameraCarrying` reports
+  `goal.isSome and not is_arrived`, derived from tween rather than tracked beside it, and settle
+  waits one draw first, since that draw is what arms ease.
+  Read failure as *never moved*, not *moved wrongly*: runner reported `one pick ->
+  0.00,0.00,1.00` where object sits at `-2.50,2.00,5.50`. `0,0,1` is opening pivot untouched.
+  Curator's own reading was that one half lacked settle other half had. Both halves call it;
+  what differs is that single pick is first action after `Home`, with camera fully at rest, so
+  ease starts latest relative to polls.
+  Second instance of this shape here, after `settleTurn` polled computed transform for two equal
+  reads. Rule that comes out of both: **settle on what moves, not on what has stopped changing**.
+
+**One check passed on blank canvas, which is why blankness went unnamed.** `a selected moon in
+front of a selected planet` compares one pixel against another, so all-zero on both sides agreed.
+Runner read `[0,0,0]`; this machine reads `[44,6,24]`. Check beside it now names it: page's
+darkest surface is `rgb(16,19,24)`, so all zero is readback of nothing rather than dark scene.
+  **Unexplained**: why runner's canvas read back nothing on that run. Blank readback is now
+  reported where before it was silent, which is what turns it from invisible into observable.
+
+*Checked.* Verified by running: 137 of 137 pass through `tools/build.nim drive` on assembled
+page, in Chromium, software-rendered.
+  Verified by breaking on purpose: with `settleCamera` returning at once, run drops to 131 of
+  136 and every loss is framing -- orbit about pick, second pick coming in, plane to two fifths,
+  anchor held in flight, tap clearing selection. That is what says these checks fail when settle
+  returns early, and which ones.
+  **Unverified until runner says so**: race does not reproduce on this machine, so passing run
+  here says no regression rather than no race. Two green runs on runner are what settle it.
+  Every section of prototype's own harness is ported.
 That harness carries about 140 check sites — 125 reported directly and 15 through band
 reader — and this one 151; neither figure is count of claims, since both carry guard reports
 that fire only where check cannot be set up.
