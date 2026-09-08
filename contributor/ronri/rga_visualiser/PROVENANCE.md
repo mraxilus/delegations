@@ -2864,3 +2864,12 @@ exactly that reason. What the curator adds is a rate rather than a finding: acro
 this layer, and it is now the thing the rule asks to be removed. Raised as issue 82 with the
 evidence; the mechanism is this project's to choose, and if the cause proves to be the runner's
 browser rather than this code, it becomes the curator's to carry.
+
+**Answered.** Blank reading can no longer pass: every pixel check reads through compositor and
+refuses reading carrying no lit pixel, and that refusal is itself checked against black canvas
+fixture it stands up (see Driven Checks). Rate above stands as curator's measurement of what
+old reader did. Correction to finding: *four* checks had been comparing one blank reading
+against another, not one -- `pool`'s reported hash 1426046701 is exactly its own fold over
+all-zero 1200x900x4 buffer, which is what shows it. Cause of blankness on runner stays
+**unexplained**; neither Chromium here reproduces it, and unpinned snap browser runner drives
+is raised for curator on issue 77.
