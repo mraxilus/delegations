@@ -8,8 +8,9 @@ joinable: true
 ##
 ##   Every law here is about bodies, joints and arms, and none is about dance: sim is
 ##     witness, and witness that has been told what to say is no witness.  Floor's own
-##     claims are printed beside what sim says and only asserted to be *decided*;
-##     `-d:floorIsLaw` makes them hard, for whoever wants to run floor as law.
+##     claims are printed beside what sim says, and each is held to what sim answers
+##     today, so neither side moves unnoticed; `-d:floorIsLaw` holds sim to floor
+##     outright, which three claims fail.
 ##   Sweeps are computed once and shared by suites: they are slow part, and laws are
 ##     about their every moment.
 ##   Cost: sweeps run on every core (`sweptAll`), so wall time follows core count;
@@ -44,6 +45,33 @@ func twoLinks(a, b, c, d: Arm; band: Band; away = false): State =
     result.stance[Body.Two].facing -= PI
 
 func deg(r: float): string = $int(round(r * 180.0 / PI))
+
+func drawn(v: Verdict; i: int): array[7, Vec] =
+  ## One connection as seven points: shoulder to shoulder through grip.
+  ##   Rebuilt here rather than borrowed from reader, which keeps its own copy
+  ##     private: borrowing it would check reader against itself (Article II.9).
+  let
+    a = v.fits[i].arms[0]
+    b = v.fits[i].arms[1]
+  [a.s, a.e, a.w, a.g, b.w, b.e, b.s]
+
+func nearestOn(line: array[7, Vec]; p: Vec): tuple[off, z: float] =
+  ## How far `p` lies off polyline in plan, and how high polyline is there.
+  result = (1e9, 0.0)
+  for i in 0 ..< 6:
+    let
+      a = line[i]
+      b = line[i + 1]
+      dx = b.x - a.x
+      dy = b.y - a.y
+      run = dx * dx + dy * dy
+    if run < 1e-18:
+      continue
+    let
+      u = clamp(((p.x - a.x) * dx + (p.y - a.y) * dy) / run, 0.0, 1.0)
+      off = sqrt((p.x - a.x - dx * u) ^ 2 + (p.y - a.y - dy * u) ^ 2)
+    if off < result.off:
+      result = (off, a.z + (b.z - a.z) * u)
 
 proc turns(x: float): string = formatFloat(x, ffDecimal, 2)
 
@@ -311,8 +339,16 @@ suite "turning":
       for (sign, blk) in [(-1.0, sw.neg), (1.0, sw.pos)]:
         if blk.stopped:
           check blk.why.reason != Reason.None
+          check blk.at < MOST
           let edge = sw.at(sign * blk.at)
           check edge.isSome and edge.get.verdict.ok
+        else:
+          # No block means moment stands at every turn asked for, last one holding:
+          # `at` alone says nothing, since unstopped sweep reports what it was asked.
+          let edge = sw.at(sign * MOST)
+          check edge.isSome
+          check abs(abs(edge.get.turn) - MOST) < STEP
+          check edge.get.verdict.ok
         let found = if blk.foundAnyway: " (a pose exists there, re-organised)" else: ""
         echo &"    {name} {(if sign < 0: \"-\" else: \"+\")}{turns(blk.at)}: " &
           (if blk.stopped: &"{blk.why.reason}" & found else: "no block")
@@ -333,22 +369,76 @@ suite "turning":
     check settle(oneLink(LEFT, RIGHT, Band.Torso, apart = 1.20)).isSome
     check settle(oneLink(LEFT, RIGHT, Band.Torso, apart = 1.34)).isNone
 
-  test "over the crown, an arm lies nowhere":
-    let m = llCrown.at(0.5)
-    check m.isSome
-    check lyingOn(m.get.state, m.get.verdict, 0, Body.Two).isNone
+  test "an arm lies on its own body below the crown, and nowhere over it":
+    ## Reader answers none at crown by early return, so same law is read at torso,
+    ##   where it must do work: both aspects turn up over one sweep.
+    for sw in [llCrown, lrCrown, rrCrown, rlCrown]:
+      for m in sw.moments:
+        check m.verdict.fits[0].arms[0].g.z > m.state.rig.top[Part.Head]
+        for who in Body:
+          check lyingOn(m.state, m.verdict, 0, who).isNone
+    var
+      lies = 0
+      aspects: set[Aspect]
+    for m in llTorso.moments:
+      for who in Body:
+        let lay = lyingOn(m.state, m.verdict, 0, who)
+        if lay.isSome:
+          inc lies
+          aspects.incl lay.get.aspect
+    echo &"    L-l torso: {lies} of {2 * llTorso.moments.len} readings lie on own body"
+    check lies > 0
+    check aspects == {Aspect.Fore, Aspect.Aft}
 
 
 #[ Two Hands ]#
 
 suite "two hands":
   test "the crossings are counted off the drawn arms, not assumed":
-    for turn in [0.0, 0.5]:
-      let m = pairTorso.at(turn)
-      if m.isSome and abs(m.get.turn - turn) < 0.011:
-        let cs = crossings(m.get.state, m.get.verdict)
-        echo &"    L-r.R-l torso at {turns(turn)}: {cs.len} crossings in plan"
-        check cs.len >= 0
+    ## Every crossing must sit on both connections in plan, and name which is higher
+    ##   there.  Corpus is both two-hand holds at every band over five turns: sweeps
+    ##   show no crossing at any moment they accept, so they cannot be corpus.
+    var seen = 0
+    for rest in [twoLinks(LEFT, RIGHT, RIGHT, LEFT, Band.Torso),
+                 twoLinks(LEFT, LEFT, RIGHT, RIGHT, Band.Torso, away = true)]:
+      for band in Band:
+        for turn in [0.0, 0.25, 0.5, 0.75, 1.0]:
+          var s = rest
+          s.band = band
+          s.stance = turned(rest.stance, Body.Two, turn)
+          let got = settle(s)
+          if got.isNone:
+            continue
+          let
+            v = evaluate(got.get)
+            p = drawn(v, 0)
+            q = drawn(v, 1)
+          for c in crossings(got.get, v):
+            inc seen
+            let
+              i = int(c.along)
+              on = p[i] + (p[i + 1] - p[i]) * (c.along - i.float)
+              other = nearestOn(q, c.at)
+            check abs(c.at.x - on.x) < 1e-9 and abs(c.at.y - on.y) < 1e-9
+            check other.off < 1e-9
+            check (c.over == 0) == (c.at.z >= other.z)
+    echo &"    {seen} crossings read off two holds, three bands, five turns"
+    check seen > 0
+
+  test "a whole turn leaves a body's axes where they were":
+    ## Solver reads stance's axes and never its lap count, so whole turn is no turn
+    ##   to pose sought without history: diamond is rest to it, and swan is X.
+    ##   Rungs past half turn are reached by sweep, which carries arms from moment to
+    ##   moment, and both two-hand sweeps block by 0.58.
+    let st = facing(HUMAN, APART)
+    for laps in [-2.0, -1.0, 1.0, 2.0]:
+      let
+        there = turned(st, Body.Two, laps)
+        here = axesOf(st[Body.Two])
+        gone = axesOf(there[Body.Two])
+      check dist(here.right, gone.right) < 1e-12
+      check dist(here.fore, gone.fore) < 1e-12
+      check abs(twist(there) - twist(st) - laps * 2.0 * PI) < 1e-12
 
   test "the chain is decided, rung by rung":
     for band in Band:
@@ -360,31 +450,38 @@ suite "two hands":
         if got.isSome:
           held = &"a pose holds, strain {formatFloat(evaluate(got.get).strain, ffDecimal, 2)}"
         echo &"    L-r.R-l {band} at {turns(turn)} ({name}): " & held
-        check got.isSome or got.isNone
+        check got.isSome
 
 
 #[ Floor's Claims ]#
 
 suite "the floor's claims":
-  test "floor says / sim says":
-    proc row(claim, said: string; agrees: bool) =
+  test "floor says / sim says, and which claims sim is short of":
+    ## Floor is Architect's own, danced; where sim disagrees it is sim that is wrong.
+    ##   `is_met` records which claims sim meets today, so neither side moves without
+    ##     this going red: mending sim is what changes it to true.
+    ##   `-d:floorIsLaw` holds sim to floor outright; three rows fail there today.
+    let claims = [
+      ("L-l low, the lock way, a whole turn", &"blocks at {turns(llTorso.neg.at)}",
+       llTorso.neg.at >= 0.95 and llTorso.neg.at < 1.5, true),
+      ("L-l low, the wrap way, half a turn", &"blocks at {turns(llTorso.pos.at)}",
+       llTorso.pos.at >= 0.45 and llTorso.pos.at < 1.0, false),
+      ("L-l high, a whole turn either way",
+       &"blocks at -{turns(llNeck.neg.at)} +{turns(llNeck.pos.at)}",
+       llNeck.neg.at >= 0.95 and llNeck.pos.at >= 0.95, false),
+      ("L-l above, no block",
+       &"blocks at -{turns(llCrown.neg.at)} +{turns(llCrown.pos.at)}",
+       not llCrown.neg.stopped and not llCrown.pos.stopped, true),
+      ("L-r low, the wrap way, half a turn", &"blocks at {turns(lrTorso.neg.at)}",
+       lrTorso.neg.at >= 0.45 and lrTorso.neg.at < 1.0, true),
+      ("L-r low, the lock way, a whole turn", &"blocks at {turns(lrTorso.pos.at)}",
+       lrTorso.pos.at >= 0.95 and lrTorso.pos.at < 1.5, false),
+      ("L-r.R-l low, half a turn",
+       &"blocks at -{turns(pairTorso.neg.at)} +{turns(pairTorso.pos.at)}",
+       pairTorso.neg.at >= 0.45 and pairTorso.pos.at >= 0.45, true)]
+    for (claim, said, agrees, is_met) in claims:
       echo &"    {claim}: {said}" & (if agrees: "  (agrees)" else: "  (DISAGREES)")
+      checkpoint(claim)
+      check agrees == is_met
       when defined(floorIsLaw):
         check agrees
-    row("L-l low, the lock way, a whole turn", &"blocks at {turns(llTorso.neg.at)}",
-        llTorso.neg.at >= 0.95 and llTorso.neg.at < 1.5)
-    row("L-l low, the wrap way, half a turn", &"blocks at {turns(llTorso.pos.at)}",
-        llTorso.pos.at >= 0.45 and llTorso.pos.at < 1.0)
-    row("L-l high, a whole turn either way",
-        &"blocks at -{turns(llNeck.neg.at)} +{turns(llNeck.pos.at)}",
-        llNeck.neg.at >= 0.95 and llNeck.pos.at >= 0.95)
-    row("L-l above, no block", &"blocks at -{turns(llCrown.neg.at)} +{turns(llCrown.pos.at)}",
-        not llCrown.neg.stopped and not llCrown.pos.stopped)
-    row("L-r low, the wrap way, half a turn", &"blocks at {turns(lrTorso.neg.at)}",
-        lrTorso.neg.at >= 0.45 and lrTorso.neg.at < 1.0)
-    row("L-r low, the lock way, a whole turn", &"blocks at {turns(lrTorso.pos.at)}",
-        lrTorso.pos.at >= 0.95 and lrTorso.pos.at < 1.5)
-    row("L-r.R-l low, half a turn",
-        &"blocks at -{turns(pairTorso.neg.at)} +{turns(pairTorso.pos.at)}",
-        pairTorso.neg.at >= 0.45 and pairTorso.pos.at >= 0.45)
-    check true
