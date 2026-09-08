@@ -61,31 +61,44 @@ const
 const
   SWAN_FROM = 1.0    ## Turns of wind past which pair stops sharing its
                       ## swing evenly between two connections.
-  SWAN_EASE = 7.0   ## How quickly it hands over, as power of way
+  SWAN_EASE = 5.0   ## How quickly it hands over, as power of way
                       ## through.
     ## Well over one, so hand-over is slow at start and quick at end:
     ##   connection that ends up straight keeps its bend nearly all
     ##   way to swan, and only gives it up at last.
-    ## How far over one is what keeps two crossings all way along.  At
-    ##   3.5 pair still crossed once between 1.28 and 1.38 turns, which
-    ##   reads as one arm laid flat over other rather than going round
-    ##   it; from 5.5 up it never does.  Settled by looking, and held by
-    ##   check that walks that stretch.
     ## It was under one, on grounds that third crossing wanted to arrive
     ##   early.  Measured, it does not: it arrives at swan either way, and
     ##   quick hand-over instead collapsed that connection to short stub
     ##   through middle of walk -- diamond fell apart and swan was built
     ##   again rather than one opening into other.  Architect called that
     ##   out, 2026-09-08, and named bend as what was missing.
-  SWAN_SWING* = 1.3   ## How much swing snake ends up carrying, as
+  SWAN_SWING* = 0.78  ## How much swing snake ends up carrying, as
                       ## multiple of what one connection carries on its own.
-    ## Over one, so snake plainly goes *round* straight connection
-    ##   rather than wobbling beside it -- but not far over, so it keeps in
-    ##   close (rule 35).  Taking whole of what straight one gives
-    ##   up threw loops wider than pair itself.
-    ## How wide is matter of looks and was settled by looking; what
-    ##   check holds is only that snake goes round something and stays
-    ##   inside its own figure.
+    ## Under one, so snake keeps in tight against straight connection,
+    ##   which is what rule 35 asked for -- tighter than either width
+    ##   tried before it.
+    ## It was 1.3, on reading that snake must take *over* what straight
+    ##   one gives up or its loops would not open wide enough to go round
+    ##   anything.  Measured, they open wide enough well under one: snake
+    ##   bows 12.8 where half of `DIAMOND_ROOM` is 12.
+
+## Both knobs above move where two reaches cross, and pair of them is
+##   chosen for that rather than for width alone.
+##   Belief that they could not, which stood while whole family was ruled
+##     out untried, came of comparing two reaches at same point along
+##     each.  They cross where they hold same *place*, at their own
+##     points, and their chords differ: follow's two hands sit up to 20
+##     apart **along** pair's axis wherever follow has turned off half
+##     turn, so equal-point argument holds only at whole and half turns.
+##   Measured over stretch every hundredth of turn, region where third
+##     crossing arrives once and never dives back under hand mark is
+##     ease 4.5 to 6.0 by swing 0.74 to 0.84, narrowing as ease rises;
+##     5.0 and 0.78 sit inside it on both, half step of ease either way
+##     and middle of swing's range at that ease.
+##   Cost: swan is narrower than it was, and swans are Architect's to
+##     rule on.  Width is matter of looks and stays theirs; what checks
+##     hold is that snake goes round something, stays inside its own
+##     figure, and that count of crossings never falls.
 
 
 
