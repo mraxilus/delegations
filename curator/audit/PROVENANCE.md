@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 1931060895ce28b1 |
+| Rules  | 159131cac09fd7c4 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief, the constitution, the Nim style guide and the provenance
@@ -99,7 +99,9 @@ whitespace-split, punctuation-stripped, lowercased, after backtick spans are rem
 - Cost, found on the first build: the label `A`, as in "Appendix A", is flagged; `prose.nim`
   tripped on its own example and writes the label in backticks.
 - Verified by `tprose.nim`: 300 seeded random telegraphic comments pass, each with one inserted
-  article fails; citations `2.2a`, URLs and underscored names pass.
+  article fails; citations `2.2a`, URLs and underscored names pass. The corpus is seeded with
+  `randomize(0)`, so the 300 are the same 300 on every run — the only sampled corpus in this
+  project, and the reason its verdict does not vary (CONTRIBUTOR.md, "Tests are paramount").
 
 ## Form
 
@@ -401,6 +403,16 @@ still checked.
 
 - Cost: a merged change can leave an unrelated project red until it next changes; the weekly
   sweep is the guard, and it is weaker than compiling everything on every push.
+- Cost, and it is deliberately the safe side of the trade: `isChecker` reads the path, never
+  the content, so editing a comment in `koch.nim` or under `curator/audit/src/` selects every
+  project. Measured 2026-09-08: a pull request whose only changes to those two files were doc
+  comments compiled four projects and drove a browser, 674 s, where the same tree's other
+  commits compiled nothing. The machinery to do better exists — `comments.nim` already
+  extracts comments per kind, so `plan` could ask whether anything but comments changed — and
+  it is rejected, because that detector errs toward compiling too little. A wrong "comments
+  only" reports green for work it never did, which is the failure this repository refuses
+  everywhere else, and the reason `nimcache` is still uncached. Eleven minutes is the price of
+  erring the other way.
 - Verified by `tplan.nim`, and driven against this repository's history: a README-only commit
   plans `[]`, and a one-line source change plans that project alone.
 
