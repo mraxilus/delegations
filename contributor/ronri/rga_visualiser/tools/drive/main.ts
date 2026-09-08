@@ -52,6 +52,7 @@ import {
   driveAllowance, driveHold, driveKinds, driveMoving, driveSceneryBound,
 } from './scenery';
 import { driveGround } from './ground';
+import { driveBlankRefused } from './canvas';
 import { driveFrameWork } from './frame';
 
 /** Viewport every check below is written against. */
@@ -96,6 +97,8 @@ async function main(): Promise<void> {
   );
   await focusCanvas(page);
 
+  // Reader every pixel check leans on, checked before any of them lean on it.
+  await driveBlankRefused(page);
   await driveKeys(page);
   await driveWheel(page);
   await drivePan(page);
