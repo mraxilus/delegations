@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 1931060895ce28b1 |
+| Rules  | 159131cac09fd7c4 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief, the constitution, the Nim style guide and the provenance
@@ -99,7 +99,9 @@ whitespace-split, punctuation-stripped, lowercased, after backtick spans are rem
 - Cost, found on the first build: the label `A`, as in "Appendix A", is flagged; `prose.nim`
   tripped on its own example and writes the label in backticks.
 - Verified by `tprose.nim`: 300 seeded random telegraphic comments pass, each with one inserted
-  article fails; citations `2.2a`, URLs and underscored names pass.
+  article fails; citations `2.2a`, URLs and underscored names pass. The corpus is seeded with
+  `randomize(0)`, so the 300 are the same 300 on every run — the only sampled corpus in this
+  project, and the reason its verdict does not vary (CONTRIBUTOR.md, "Tests are paramount").
 
 ## Form
 
