@@ -642,7 +642,8 @@ moment one arrives, and the `not Nim because` gate already refuses one that argu
   the figure and stated the model: one connection **curls around** the other, and the other
   **hinges straight** -- a right angle at the joined hands opening until the two forearms are
   in line. The drawing still gives every connection a sine swung about the pair's axis, and
-  takes the crossings from wherever two such curves meet. The count now behaves (below), so
+  takes the crossings from wherever two such curves meet. The count now behaves — see the
+  third-crossing entry under Drawing chain — so
   this is a question about whether the picture is built from the movement or merely agrees
   with it at the positions checked. A prototype of the hinge-and-curl model gave the right
   counts and drew shapes that are not a swan -- two straight lines crossing in an X -- because
