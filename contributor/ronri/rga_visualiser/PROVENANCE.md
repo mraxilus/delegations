@@ -185,15 +185,21 @@ before it, at unchanged sample sizes.
   frame, so slack that constant exists to give straddling frame is not there at this sample
   size. Pre-existing, and left alone here: waits were not what decided it.
 
-**Pixels are read through compositor, and blank reading is refused rather than returned.**
-Context keeps no drawing buffer (`gl.ts` says why), so `readPixels` is sound only from inside
-frame that drew. Five checks each held their own copy of that wrapper, and four compared one
-reading against another -- so canvas reading back all zero passed all four, and failed only
-fifth, which is what caught it. Reading now comes from `page.locator('#gl').screenshot()`,
-decoded in page, through one `tools/drive/canvas.ts`: it is what reader sees, it is immune to
-buffer being taken after frame that filled it, and it raises on reading with no lit pixel.
-  Blank reading raises rather than reports: canvas nobody can read is instrument lost, not
-  check failed, and reporting it would leave every later pixel check resting on nothing.
+**Pixels are read through compositor, and reading carrying no picture is refused rather than
+returned.** Context keeps no drawing buffer (`gl.ts` says why), so `readPixels` is sound only
+from inside frame that drew. Five checks each held their own copy of that wrapper, and four
+compared one reading against another -- so canvas reading back all zero passed all four, and
+failed only fifth, which is what caught it. Reading now comes from
+`page.locator('#gl').screenshot()`, decoded in page, through one `tools/drive/canvas.ts`: it is
+what reader sees, and it is immune to buffer being taken after frame that filled it.
+  Reading raises rather than reports: canvas nobody can read is instrument lost, not check
+  failed, and reporting it would leave every later pixel check resting on nothing.
+  **Refusal is of one colour, not of black.** First guard tested for all-zero, and runner
+  answered with canvas-shaped sheet of *white*: `[255,255,255]` at moon where this machine reads
+  `[44,6,24]`, seven of eight edits reporting canvas unchanged, every comparison agreeing with
+  every other. Three checks went vacuous second time, on same nothing in other colour. What
+  makes reading empty is that it carries one colour, whichever colour, so that is what is
+  refused, and fixture drives black *and* white for that reason.
   That four were vacuous is arithmetic rather than inference. `pool`'s check reported hash
   1426046701 from runner; same FNV fold over all-zero 1200x900x4 buffer at its own stride
   gives exactly 1426046701, so it had compared nothing against nothing.
@@ -203,13 +209,24 @@ buffer being taken after frame that filled it, and it raises on reading with no 
   composited over it lands in reading: first run of this reader failed held-placement check on
   2,411 pixels, and cropping them showed undo button lighting up after that check's own edit.
   Every sibling of canvas is hidden for length of capture and put back after, by `opacity`
-  so nothing leaves layout and nothing is blurred. Masking was rejected: it asks for list of
-  what covers canvas, and that list goes stale.
-  **Unverified**: why runner read blank. Neither Chromium here reproduces it: full browser and
-  headless shell both read every one of 1,080,000 pixels lit, no GL error, default framebuffer
-  bound, from inside and outside drawing frame alike. Runner's browser is different binary
-  (see below) and was not obtainable here. Composite path is checked in this environment only;
-  whether it reads there is answered by first green `driven` on runner, not before.
+  so nothing leaves layout and nothing is blurred.
+  **Masking cannot serve here, which is worth one line so it is not retried:** `#overlay` spans
+  viewport, so masking `body > *:not(#gl)` covers canvas whole. Probe returned one colour,
+  centre `[255,0,255]`.
+  **Capture waits on compositor rather than on one frame.** Hiding chrome injects style, style
+  forces recomposite, and software rasteriser does not finish it inside single frame first
+  version waited -- capture then catches page behind canvas, which is where sheet of white came
+  from. Reading is taken again until it carries picture, up to ten times: settle on what
+  arrives, not on clock, which is rule two sections above applied to instrument rather than to
+  scene.
+  **Unexplained**: why runner read blank through `readPixels`, and white through compositor.
+  Neither Chromium here reproduces either: full browser and headless shell both read every one
+  of 1,080,000 pixels lit, no GL error, default framebuffer bound, from inside and outside
+  drawing frame alike. Runner's browser is different binary (see below) and was not obtainable
+  here, so timing account above fits evidence rather than being driven against reproduction.
+  **Verified on runner**: reader reads scene there, 138 of 138 on run 34218424425, after two
+  runs that did not. Rate is what stays open -- old reader failed one run in three, so single
+  green says little and several pushes on `main` are what settle it.
 
 **`chromium` in `dependencies.list` is unpinned, and on Ubuntu 24.04 it is snap.** Verified
 with `apt-cache showpkg chromium`: name carries no version of its own and is provided solely by
@@ -2866,8 +2883,9 @@ evidence; the mechanism is this project's to choose, and if the cause proves to 
 browser rather than this code, it becomes the curator's to carry.
 
 **Answered.** Blank reading can no longer pass: every pixel check reads through compositor and
-refuses reading carrying no lit pixel, and that refusal is itself checked against black canvas
-fixture it stands up (see Driven Checks). Rate above stands as curator's measurement of what
+refuses reading carrying one colour, whichever colour, and that refusal is itself checked
+against black *and* white canvas fixtures it stands up (see Driven Checks); white is second
+because runner answered with sheet of it once black alone was refused. Rate above stands as curator's measurement of what
 old reader did. Correction to finding: *four* checks had been comparing one blank reading
 against another, not one -- `pool`'s reported hash 1426046701 is exactly its own fold over
 all-zero 1200x900x4 buffer, which is what shows it. Cause of blankness on runner stays
