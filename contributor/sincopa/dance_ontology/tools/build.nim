@@ -41,8 +41,25 @@ const
     ## Options of browser scripts shipped with pages.
   QUIET = @["--hints:off"]
     ## Options of runs whose output is their product.
-  USAGE = "Usage: nim r tools/build.nim <pages|verdicts|shot|clean>\n"
+  USAGE = "Usage: nim r tools/build.nim <pages|pins|verdicts|shot|system|clean>\n"
     ## Text printed on usage error.
+  SYSTEM = [
+    ("nodejs", "run `shot` helper, which is this project's Nim compiled to javascript"),
+    ("chromium", "browser `shot` drives; helper takes its path from environment"),
+  ]
+    ## System packages this build needs present before it runs, with what each is for
+    ##   (CONTRIBUTOR.md, "System dependencies"). Nim packages are in nimble file; this
+    ##   project carries no node manifest, so these have no lock to pin them.
+    ##   No version is pinned and none is invented: package's version is whatever machine
+    ##   carries, which is honest limit rather than omission.
+    ##   Playwright is deliberately absent, and is this declaration's one gap. It is node
+    ##   package rather than system one, so no installer reading these names serves it, and
+    ##   pinning it would mean `package.json` beside its lock -- which enrols project in
+    ##   `koch types` and demands `types` verb, work Architect has asked not be built while
+    ##   this half of project may go. `design/shot.nim` therefore takes it from environment
+    ##   and stops naming this verb where it is absent, rather than failing as missing file.
+    ##   Only `shot` needs any of these; `pages`, `pins`, `verdicts` and `clean` need Nim
+    ##   alone.
 
 
 proc nim(args: openArray[string]) =
@@ -103,6 +120,15 @@ proc shot() =
   ])
 
 
+proc system() =
+  ## Print every system package this build needs, one per line and nothing else.
+  ##   Prints rather than installs: which package manager serves them is machine's business
+  ##   and varies by distribution, while list is this project's. Caller pipes it, so reason
+  ##   each carries stays in `SYSTEM` above and out of this output, which is what makes
+  ##   output machine-readable.
+  for (package, _) in SYSTEM: echo package
+
+
 proc clean() =
   ## Remove build products, caches and testament binaries.
   for dir in [BIN, BUILD, "nimcache", "testresults"]: removeDir(dir)
@@ -124,6 +150,7 @@ proc main(): int =
     of "pins": pins()
     of "verdicts": verdicts()
     of "shot": shot()
+    of "system": system()
     of "clean": clean()
     else:
       stderr.write USAGE
