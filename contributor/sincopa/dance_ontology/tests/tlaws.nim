@@ -53,9 +53,11 @@ proc turns(x: float): string = formatFloat(x, ffDecimal, 2)
 func job(rest: State; who = Body.Two): Job = Job(rest: rest, who: who, most: MOST)
 
 let
-  sweeps = sweptAll([ # Two over head first: they run furthest.
+  sweeps = sweptAll([ # Four over head first: they run furthest.
     job(oneLink(LEFT, LEFT, Band.Crown)),
     job(oneLink(LEFT, RIGHT, Band.Crown)),
+    job(oneLink(RIGHT, RIGHT, Band.Crown)),
+    job(oneLink(RIGHT, LEFT, Band.Crown)),
     job(oneLink(LEFT, LEFT, Band.Torso)),
     job(oneLink(LEFT, LEFT, Band.Neck)),
     job(oneLink(LEFT, RIGHT, Band.Torso)),
@@ -67,18 +69,22 @@ let
     job(twoLinks(LEFT, LEFT, RIGHT, RIGHT, Band.Torso, away = true))])
   llCrown = sweeps[0]
   lrCrown = sweeps[1]
-  llTorso = sweeps[2]
-  llNeck = sweeps[3]
-  lrTorso = sweeps[4]
-  lrNeck = sweeps[5]
-  rrTorso = sweeps[6]
-  rlTorso = sweeps[7]
-  llByOne = sweeps[8]
-  pairTorso = sweeps[9]
-  crossedTorso = sweeps[10]
+  rrCrown = sweeps[2]
+  rlCrown = sweeps[3]
+  llTorso = sweeps[4]
+  llNeck = sweeps[5]
+  lrTorso = sweeps[6]
+  lrNeck = sweeps[7]
+  rrTorso = sweeps[8]
+  rlTorso = sweeps[9]
+  llByOne = sweeps[10]
+  pairTorso = sweeps[11]
+  crossedTorso = sweeps[12]
   SWEEPS = [("L-l torso", llTorso), ("L-l neck", llNeck), ("L-l crown", llCrown),
             ("L-r torso", lrTorso), ("L-r neck", lrNeck), ("L-r crown", lrCrown),
-            ("R-r torso", rrTorso), ("R-l torso", rlTorso), ("L-l by One", llByOne),
+            ("R-r torso", rrTorso), ("R-r crown", rrCrown),
+            ("R-l torso", rlTorso), ("R-l crown", rlCrown),
+            ("L-l by One", llByOne),
             ("L-r.R-l torso", pairTorso), ("L-l.R-r torso, away", crossedTorso)]
 
 
@@ -312,10 +318,10 @@ suite "turning":
           (if blk.stopped: &"{blk.why.reason}" & found else: "no block")
 
   test "L-l is R-r in a mirror when turned, and L-r is R-l":
-    check abs(llTorso.neg.at - rrTorso.pos.at) < 0.08
-    check abs(llTorso.pos.at - rrTorso.neg.at) < 0.08
-    check abs(lrTorso.neg.at - rlTorso.pos.at) < 0.08
-    check abs(lrTorso.pos.at - rlTorso.neg.at) < 0.08
+    for (a, b) in [(llTorso, rrTorso), (lrTorso, rlTorso),
+                   (llCrown, rrCrown), (lrCrown, rlCrown)]:
+      check abs(limit(a, -1.0) - limit(b, 1.0)) < 0.08
+      check abs(limit(a, 1.0) - limit(b, -1.0)) < 0.08
 
   test "turning the lead of a same-name hold is turning the follow":
     ## Swap two bodies and same-name hold is itself, so what blocks lead turning
