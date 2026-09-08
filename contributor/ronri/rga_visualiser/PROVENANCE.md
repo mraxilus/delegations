@@ -364,10 +364,11 @@ packages to lock file, `pga` to commit -- and this fetch was sole exception (rep
   carries none that survives across distributions, so none is manufactured for one; same shape
   of honest limit `compilers.nim` already records for fetched compilers, trusted on TLS alone.
 
-*Checked.* Verified by running cold: `build/` removed entirely, then `drive` fetches six faces
-and reaches 136 of 136 with no step run by hand -- which is runner's own case. Second run
-immediately after fetches none. `web` alone on same cold tree still refuses by name, which is
-behaviour worth keeping rather than side effect.
+*Checked.* Verified by running cold: `clean` removes `build`, `bin` and `nimcache`, then `drive`
+fetches six faces and reaches 137 of 137 with no step run by hand -- which is runner's own case.
+Re-measured after `drive` gained desktop half, so cold run now builds and drives both front-ends
+rather than page alone. Second run immediately after fetches none. `web` alone on same cold tree
+still refuses by name, which is behaviour worth keeping rather than side effect.
 
 *Checked.* Verified by breaking on purpose: one digit changed in one committed digest makes
 `assets` re-fetch and refuse, and `web` refuse to embed, each naming face and both digests;
@@ -562,9 +563,52 @@ through C and JS.
   not, and scene looks empty at that count. 300 is.
   Vocabulary shows in that frame rather than only in source: panel says *objects (5 of 5040)*
   and *hold still over the pivot*.
-  **Unverified**: no `--drive-*` run has been exercised here, so nothing has driven this binary
-  through events; frame times are unmeasured; and no human has seen it on real graphics hardware
-  -- that run was software GL, which reported no multisampled visual, so thin lines alias.
+  Verified by driving: every scripted run reaches its verdict, 19 checks over 12 runs, in about
+  25 seconds under software GL. See Desktop Driven Checks below.
+  **Unverified**: frame times are unmeasured, and no human has seen this on real graphics
+  hardware -- that run was software GL, which reported no multisampled visual, so thin lines
+  alias.
+
+Desktop Driven Checks
+---
+**Suites test rules and `tools/drive/` tests browser wiring; this tests desktop wiring.** Same
+argument as browser's: rule wired to wrong SDL event is invisible to suite that calls rule
+directly. Entry point carries five scripted runs -- `--drive-keys`, `--drive-sky`,
+`--drive-undo`, `--drive-select`, `--drive-drag` -- plus `--drive-help:<tab>`, one per tab.
+Each pushes real events through SDL's own queue rather than calling handler, so what it
+exercises is wiring.
+  19 checks over 12 runs. Held key slides view and keeps its height; drag across bare sky turns
+  view and builds nothing; undo takes construction back *and* returns view to where it built
+  from; choice menu does not swallow drag after it; every help tab opens with rows in it.
+
+**Two defaults favoured silent pass, and both are gone.** This is what running them found, and
+neither was reachable by reading.
+  Scripted run had no frame bound of its own, and loop ends only on one, so `--drive-keys`
+  alone drove its events and then sat in loop for ever. Run now supplies `FRAMES_DRIVEN` where
+  caller gave none.
+  Verdicts sat behind second flag, `--drive-assert`. Without it, run drove its events, printed
+  *Drew 400 frames*, exited 0 and checked nothing -- so obvious invocation was one that always
+  passed. Flag is retired: scripted run always ends in its verdict.
+  Rejected: bound derived per drive from its own step count. Better number, and it wants every
+  drive's steps lifted out of proc they are local to -- five refactors for run that already
+  ends in seconds.
+
+**`driven` verb runs all twelve and reports every failure, not first.** Run takes seconds, and
+knowing which three broke beats knowing that one did. Verb asks binary which help tabs exist
+(`--help-tabs`, which prints before SDL starts), so `help.HelpPath` stays their one home and
+tab added there is driven without being listed twice (Article I.4).
+  `drive` chains it, so one command drives both front-ends. Where SDL3 or Dear ImGui is absent
+  -- runner, which cannot install SDL3 at all -- it prints skip naming what is missing and
+  stops, rather than failing. Printed rather than silent: check nobody is told was skipped is
+  check nobody knows is missing.
+  **Cost, stated plainly**: these checks do not run in CI, and cannot until SDL3 is installable
+  there. Every runner log says so.
+
+*Checked.* Verified by running: 19 of 19 pass under Xvfb on software GL. Verified by breaking on
+purpose: drag verdict inverted, and run reported ` FAIL  a drag from one object onto another
+opens its choice menu`, `1 driven check(s) failed`, verb answered `Driven runs failed; got 1 --
+drive-drag`, exit 1; restored after. Verified by hiding dependency: with `deps/imgui` moved
+aside, `drive` reported browser's 137 of 137 then named skip with clone command, exit 0.
 
 Render Paths
 ---

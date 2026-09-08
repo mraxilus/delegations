@@ -28,8 +28,9 @@ nim r koch ci                                    # repository root: audit, scope
 nim r koch tests contributor/ronri/rga_visualiser  # this project alone, three configurations
 nim r tools/build.nim assets                     # this project: fetch the six faces, once
 nim r tools/build.nim web                        # this project: build/rga_visualiser.html
-nim r tools/build.nim drive                      # this project: build it, then drive it
+nim r tools/build.nim drive                      # this project: drive both front-ends
 nim r tools/build.nim desktop                    # this project: bin/rga_visualiser
+nim r tools/build.nim driven                     # this project: drive the desktop alone
 nim r tools/build.nim system                     # this project: what to install first
 ```
 
@@ -125,8 +126,9 @@ the browser page through `web`, the desktop application through `desktop`.
 Every law under test through testament on the pinned commit, in three configurations. The
 page has been built and looked at, its type surface is checked, and a Playwright harness
 drives 137 checks over held keys, the wheel, mouse pan and touch — see Driven Checks in
-`PROVENANCE.md`. The desktop binary has been built and one frame of it looked at, headless
-under Xvfb; its own `--drive-*` runs are not yet exercised here, and arrive next.
+`PROVENANCE.md`. The desktop application has been built, one frame of it looked at, and its own
+twelve scripted runs driven headless under Xvfb — 19 checks, all passing. Those runs need SDL3,
+which no runner can install, so `drive` skips them there by name rather than silently.
 
 Unreviewed by a human: nothing here has been
 read line by line, and no human has driven either front-end or seen it on real graphics
