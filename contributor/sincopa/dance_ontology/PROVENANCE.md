@@ -278,7 +278,11 @@ higher (furthest off its connections, 7e-17 m). Assumed, not measured: that `sam
 which gates a fresh pose on the sweep, does useful work -- it compares nought with nought at
 every accepted moment, and what it refused was not recorded. The reader is also knife-edge
 where two arms lie along each other: two stances a whole turn apart, whose poses differ by
-5.6e-17 m, read as four crossings and as one.
+5.6e-17 m, read as four crossings and as one. Underneath it the search is sensitive too: the
+same two stances at the neck settle 0.75 m apart at the furthest joint, off an axis difference
+of 4.9e-16. Neither costs a verdict its determinism -- every law here answers the same on the
+same code, and the suites seed explicitly -- but both say a law read at a knife edge would be
+evidence about arithmetic rather than about bodies, so none of these is.
 
 **The sim page turns by whole quarters and stands where the arms are freest.** Buttons turn
 the lead or the follow a quarter on axis or in orbit (the walker keeps facing the centre,
