@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 1931060895ce28b1 |
+| Rules  | 159131cac09fd7c4 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: curator test project replacing `abstand/intervals`, which lived in a real domain;
@@ -63,8 +63,10 @@ Every rules change is audited against this project in the pull request that make
 is why the `Rules` row above moves. None has yet required a change here: the project carries
 Nim, Markdown and a nimble file, no target-language source, no node manifest, and no system
 dependency beyond the compiler, so the rules governing those bind nothing in this tree today.
-Each binds the moment that changes. What each audit found is in the log rather than restated
-here (Article XI.2).
+Its suites enumerate both rings exhaustively rather than sampling, and nothing in them reads a
+clock, so the rule that a check gives the same verdict on the same code is satisfied by
+construction rather than by seeding. Each binds the moment that changes. What each audit found
+is in the log rather than restated here (Article XI.2).
 
 ## Open questions
 

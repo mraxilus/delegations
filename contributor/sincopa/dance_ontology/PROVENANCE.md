@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 1931060895ce28b1 |
+| Rules  | 159131cac09fd7c4 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the Architect's workbook `ontology.partnerwork.xlsx` (sheets `base` and
@@ -529,12 +529,13 @@ nothing today. It binds the moment this project grows scripts of its own.
 
 ## Re-audit, 2026-09-07, system dependencies
 
-Audited by a curator against rule that system dependencies -- library compiler links against,
-tool build shells out to, browser driven check drives, source clone no package manager carries
--- are declared as data in project's own `tools/build.nim`, each entry carrying its reason, and
-reached by verb. Source clone carries its commit; system package carries no pin surviving across
-distributions and record says so rather than implying one; anything fetched at build time
-carries checksum build verifies. No machine's paths in committed source.
+Audited by a curator against the rule that system dependencies — a library the compiler links
+against, a tool the build shells out to, a browser a driven check drives, a source clone no
+package manager carries — are declared as data in the project's own `tools/build.nim`, each
+entry carrying its reason, and reached by a verb. A source clone carries its commit; a system
+package carries no pin that survives across distributions, and the record says so rather than
+implying one; anything fetched at build time carries a checksum the build verifies. No
+machine's paths in committed source.
 
 **This project does not comply yet, and cannot be made to by curator.** `design/shot.nim` names
 two absolute paths into one machine's layout, with browser version among them:
@@ -548,3 +549,17 @@ Header states situation honestly, so nothing is hidden; rule now says where thos
 instead. Raised as issue 62, labelled for this project, since source is contributor's and
 `scope` holds curator to that. This project carries `tools/build.nim` already, so declaration
 has home waiting.
+
+## Re-audit, 2026-09-08, deterministic verdicts
+
+Audited by a curator against the rule that a check gives the same verdict on the same code,
+and that where it does not, the check is what is wrong.
+
+This project complies today. Its sampled suites seed their generators explicitly —
+`tests/tlaws.nim` uses `initRand(7)` and `initRand(11)` — so each run draws the same corpus,
+and nothing in the suites reads a clock or a display. Nothing needed correcting.
+
+It binds where this project is least protected: `design/shot.nim` drives a browser through
+Playwright, and no `drive` verb enrols it in the runner's driven job, so that layer is neither
+checked nor covered by this rule's evidence today. Whatever it becomes, it should settle on
+what moved rather than on what has stopped changing.

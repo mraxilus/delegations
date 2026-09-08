@@ -362,6 +362,18 @@ Every later session:
 - Test laws, not examples. Enumerate small domains exhaustively; sample large ones with a
   few hundred seeded random cases, and record the count beside the claim.
 - Test where the mechanism runs: real wiring, output read back, bytes re-read.
+- **A check gives the same verdict on the same code, and where it does not, the check is
+  what is wrong.** Article IX.3 already demands determinism of a sampled corpus; this
+  extends it to the verdict itself, because a check whose answer varies is evidence about
+  the run rather than about the code, and every merge it reddens teaches its readers to
+  discount a red `main`. Never answer variance with a retry, a longer timeout, a quarantine
+  or a skip: each keeps the check while throwing away what it was for. Find what the check
+  is really waiting on and wait on that — **settle on what moved, never on what has stopped
+  changing**, which is the rule two races in a driven harness here have already produced.
+  Where the cause is outside your project, say so on an issue rather than absorbing it:
+  a browser, a runner image or a driver is the curator's to carry. Where you cannot make
+  it deterministic, the honest outcome is to say what varies and how often, measured, and
+  let the Architect decide whether the check earns its place.
 - `koch` runs testament over `tests/t*.nim` in your project directory; there is no
   per-project build file. `nim r koch tree` runs the static audit alone, and
   `nim r koch tests <project>` restores that project's dependencies and runs its suites;
