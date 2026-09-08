@@ -160,6 +160,23 @@ keep a flip from passing unseen. Verified: the fix moved exactly two drawings of
 the review page and eight of the 273 on the single-turn page, and nothing on the frame, sign
 or hand-to-hand pages.
 
+**The chain is walked, not jumped, so what lies between two positions is seen.** Past a whole
+turn the pair stops sharing its swing evenly: one connection gives its bend up and runs
+straight while the other snakes round it (rule 31). How *quickly* it gives it up was written
+as a fast start, on the grounds that the third crossing wanted to arrive early. Measured, it
+does not -- the third crossing arrives at the swan whatever the hand-over does. What the fast
+start did instead was collapse the straight connection to a short stub for most of the walk,
+so the diamond fell apart and the swan was built again rather than one opening into the other.
+The Architect danced the figure and named the missing bend. The hand-over is now slow at the
+start and quick at the end, so the connection keeps its bend nearly all the way and gives it
+up at the last. Verified: no still moved -- the hand-over is nothing at a whole turn and
+everything at a turn and a half, which is exactly where the chain's positions sit, so all 87
+pinned cards passed unaltered and only the eight moving chain cells changed. **Not fully
+mended**: the two connections still cross only once between 1.28 and 1.38 turns, where before
+it was 1.11 to 1.41. The crossing walks off the end of the straight connection past the
+follow's hand and walks back on later, which the drawing has no way to carry round; that is
+recorded as an open question rather than claimed as fixed.
+
 **A break that leaves a sliver draws a dot, and a dot says the opposite of a break.** A
 connection is stroked with a round cap, so a painted piece of no length is still drawn -- as a
 disc as wide as the line. Three places left such a piece. `gapFor` dropped a break only where
@@ -617,3 +634,10 @@ names two absolute paths into one machine's layout, recorded above and raised as
 so the rule's new precision about the verb's name and output shape lands on a declaration that
 has yet to be written. The situation is unchanged; only what compliance will have to look like
 is sharper.
+
+## Re-audit, 2026-09-08, draft while you finish
+
+Audited against the rule that a pull request goes back to draft the moment another commit is
+intended, and is marked ready again after. This project's branch carries no open pull request:
+the Architect reads and merges the branch itself. Nothing to change; the rule is recorded so
+that a pull request opened later is opened as draft and kept there while work continues.
