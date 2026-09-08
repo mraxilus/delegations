@@ -55,11 +55,16 @@ const
 const
   SWAN_FROM = 1.0    ## Turns of wind past which pair stops sharing its
                       ## swing evenly between two connections.
-  SWAN_EASE = 3.5   ## How quickly it hands over, as power of way
+  SWAN_EASE = 7.0   ## How quickly it hands over, as power of way
                       ## through.
-    ## Over one, so hand-over is slow at start and quick at end:
+    ## Well over one, so hand-over is slow at start and quick at end:
     ##   connection that ends up straight keeps its bend nearly all
     ##   way to swan, and only gives it up at last.
+    ## How far over one is what keeps two crossings all way along.  At
+    ##   3.5 pair still crossed once between 1.28 and 1.38 turns, which
+    ##   reads as one arm laid flat over other rather than going round
+    ##   it; from 5.5 up it never does.  Settled by looking, and held by
+    ##   check that walks that stretch.
     ## It was under one, on grounds that third crossing wanted to arrive
     ##   early.  Measured, it does not: it arrives at swan either way, and
     ##   quick hand-over instead collapsed that connection to short stub
