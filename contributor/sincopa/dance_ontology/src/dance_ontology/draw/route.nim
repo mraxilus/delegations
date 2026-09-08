@@ -51,17 +51,24 @@ const
   DIAMOND_ROOM* = 24.0 ## How wide diamond that wound pair holds opens at
                        ## its middle.
   WIND_NIP = 0.4     ## How far wound pair draws together between its
-                      ## hands.
+                      ## hands, by whole turn.
     ## Two strands wound round each other pull in where they are wound and
     ##   are held apart only at their ends, so pair nips in at its middle
     ##   -- which is also what turns wide flat lens into diamond.  At no
     ##   wind there is nothing to pull, so it comes on with winding.
+  WIND_NIP_MORE = 0.2 ## And how much further by turn and half.
+    ## Pull does not stop growing at whole turn; only this number's cap
+    ##   did, which left pair drawn as though winding had stopped.
+    ## What it buys is room between two connections where they run
+    ##   alongside each other short of swan: they touched at 1.37 turns,
+    ##   3.35 between their middles where line is 3.4 wide, and Architect
+    ##   read Right as running into other rather than crossing it.
   BAND_STEPS = 120   ## Points along reach relaxed past marks, before it.
 
 const
   SWAN_FROM = 1.0    ## Turns of wind past which pair stops sharing its
                       ## swing evenly between two connections.
-  SWAN_EASE = 5.0   ## How quickly it hands over, as power of way
+  SWAN_EASE = 7.0   ## How quickly it hands over, as power of way
                       ## through.
     ## Well over one, so hand-over is slow at start and quick at end:
     ##   connection that ends up straight keeps its bend nearly all
@@ -72,27 +79,27 @@ const
     ##   through middle of walk -- diamond fell apart and swan was built
     ##   again rather than one opening into other.  Architect called that
     ##   out, 2026-09-08, and named bend as what was missing.
-  SWAN_DRAW_IN* = 0.78 ## How far snake pulls in against its partner
+  SWAN_DRAW_IN* = 0.65 ## How far snake pulls in against its partner
                        ## before it opens, as multiple of one connection's own.
     ## Wind two strands past whole turn and they pull tight on each other
     ##   before either can wrap other, which is what `WIND_NIP` already
     ##   says of pair's middle.  Snake does it as whole.
   SWAN_DRAWS_AT = 3.0 ## How quickly it pulls in, as power of way through.
-  SWAN_SWING* = 1.30  ## And how much swing it carries once opened, on
+  SWAN_SWING* = 1.50  ## And how much swing it carries once opened, on
                       ## same scale.
     ## Over one, so snake plainly goes *round* straight connection rather
     ##   than wobbling beside it (rule 31).
-    ## Width is Architect's, and this is width they had: snake bows 21.8
+    ## Width is Architect's, and this is width they had: snake bows 21.9
     ##   where it bowed 22.0 before this stretch was mended, and 12.8 while
     ##   it carried no opening at all.
   SWAN_OPENS_AT = 20.0 ## How late it opens, as power of way through.
     ## Late, and that is what buys width.  Snake must stay in close where
     ##   third crossing runs near hand -- around 1.42 turns -- or that
     ##   crossing is cut by trim and count of them falls.  Opening after
-    ##   that leaves crossing 8.5 clear of any hand at its tightest, where
-    ##   trim reaches 7.7, so it is drawn every step of way.
-    ## Cost: snake gains 0.16 of its swing over last hundredth of turn,
-    ##   which is 3.2 of line.  Looked at frame by frame and it reads as
+    ##   that leaves crossing clear of every hand by more than trim reaches,
+    ##   so it is drawn every step of way.
+    ## Cost: snake gains 0.19 of its swing over last hundredth of turn,
+    ##   which is 3.8 of line.  Looked at frame by frame and it reads as
     ##   loops opening, not as jump.
 
 ## Both knobs above move where two reaches cross, and pair of them is
@@ -765,7 +772,9 @@ func wound*(a, b: Point; across: Point; phi_a, sweep: float;
     off_b = swing * sin(phi_a + sweep)
     # Wound strands pull in on each other where they are wound, and are
     # held apart only where they are held: at hands.
-    nip = WIND_NIP * min(abs(sweep) / (2 * PI), 1.0)
+    turns = sweep / (2 * PI)
+    nip = WIND_NIP * min(abs(turns), 1.0) +
+          WIND_NIP_MORE * wayThrough(turns)
   for step in 0 .. BAND_STEPS:
     let
       t = float(step) / float(BAND_STEPS)
