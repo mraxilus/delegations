@@ -171,11 +171,13 @@ The Architect danced the figure and named the missing bend. The hand-over is now
 start and quick at the end, so the connection keeps its bend nearly all the way and gives it
 up at the last. Verified: no still moved -- the hand-over is nothing at a whole turn and
 everything at a turn and a half, which is exactly where the chain's positions sit, so all 87
-pinned cards passed unaltered and only the eight moving chain cells changed. **Not fully
-mended**: the two connections still cross only once between 1.28 and 1.38 turns, where before
-it was 1.11 to 1.41. The crossing walks off the end of the straight connection past the
-follow's hand and walks back on later, which the drawing has no way to carry round; that is
-recorded as an open question rather than claimed as fixed.
+pinned cards passed unaltered and only the eight moving chain cells changed. A first pass eased the
+hand-over at 3.5, which left the pair still crossing once between 1.28 and 1.38 turns -- one
+arm laid flat over the other rather than going round it, which the Architect saw and named.
+At 7.0 it never does: measured over the whole stretch at two-hundredths of a turn, the two
+connections cross at least twice everywhere, and a check now walks that stretch and holds it.
+What remains is smaller and of a different kind: the third crossing shows briefly around 1.38
+to 1.40 turns, withdraws, and returns at 1.48. It is recorded rather than claimed fixed.
 
 **A break that leaves a sliver draws a dot, and a dot says the opposite of a break.** A
 connection is stroked with a round cap, so a painted piece of no length is still drawn -- as a
