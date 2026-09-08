@@ -2885,9 +2885,9 @@ browser rather than this code, it becomes the curator's to carry.
 **Answered.** Blank reading can no longer pass: every pixel check reads through compositor and
 refuses reading carrying one colour, whichever colour, and that refusal is itself checked
 against black *and* white canvas fixtures it stands up (see Driven Checks); white is second
-because runner answered with sheet of it once black alone was refused. Rate above stands as curator's measurement of what
-old reader did. Correction to finding: *four* checks had been comparing one blank reading
-against another, not one -- `pool`'s reported hash 1426046701 is exactly its own fold over
-all-zero 1200x900x4 buffer, which is what shows it. Cause of blankness on runner stays
-**unexplained**; neither Chromium here reproduces it, and unpinned snap browser runner drives
-is raised for curator on issue 77.
+because runner answered with sheet of it once black alone was refused. Rate above stands as
+curator's measurement of what old reader did. Correction to finding: *four* checks had been
+comparing one blank reading against another, not one -- `pool`'s reported hash 1426046701 is
+exactly its own fold over all-zero 1200x900x4 buffer, which is what shows it. Cause on runner
+stays **unexplained**; neither Chromium here reproduces it, and unpinned snap browser runner
+drives is raised for curator on issue 77.
