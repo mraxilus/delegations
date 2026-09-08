@@ -1,8 +1,9 @@
 ## Select projects worth compiling for one change, and render them for CI matrix.
 ##   Static checks are cheap and stay whole-tree; compiling and running suites is not, and
-##   it is only cost that grows as projects arrive (0.11 s to 0.245 s static against 14.7 s
-##   to 62.7 s suites when `dance_ontology` landed, PROVENANCE.md Figures). So test set is
-##   scoped and static pass is not.
+##   it is only cost that grows as projects arrive. So test set is scoped and static pass is
+##   not. Pair backing that is in PROVENANCE.md Figures and is not copied here: figures this
+##   header carried were retired there as taken on another machine, and went on being cited
+##   from here for whole day after.
 ##
 ##   Project enters test set when changed path under it is code, i.e. anything but its three
 ##     records, `PROJECT_FILES`: rules propagation rewrites provenance and glossary in every

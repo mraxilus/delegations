@@ -71,9 +71,32 @@ export function spanPivot(before: Stance, after: Stance): number {
  *  instead of racing them. Fixed sleep here was harness's commonest flake (repository issue 47).
  *  Raises where camera never stops, which is fault worth failing on rather than sleeping past.
  */
+async function afterOneFrame(page: Page): Promise<void> {
+  // Let one draw run, whatever else is waited on after.
+  //   Same shape as `frame.waitFrames`, kept local rather than imported: `frame` imports this
+  //   module, and cycle between them is worse than these three lines.
+  await page.evaluate(() => new Promise<void>((done) => {
+    requestAnimationFrame(() => { done(); });
+  }));
+}
+
+
 export async function settleCamera(page: Page): Promise<void> {
+  // Let one draw run before reading anything, since that draw is what arms ease.
+  //   No check moves camera itself: `nimSelectOnly` and its kin only say what is picked, and
+  //   `offerAim` inside `nimBuildFrame` turns that into ease -- after `advance`
+  //   has already run for that frame. So at moment action returns, camera is exactly where it
+  //   was and will stay there for one more frame.
+  //   Without this, poll below reads that stillness as arrival: two equal stances, ease not
+  //   begun, check handed camera that never moved. That is repository issue 73, and it is why
+  //   `one pick -> 0.00,0.00,1.00` reads as origin rather than as wrong pivot.
+  await afterOneFrame(page);
   await page.evaluate(() => { delete window.__stance_last; });
   await page.waitForFunction(() => {
+    // Ask ease whether it is still carrying, rather than inferring from stance.
+    //   Stance repeating says "not moving now", which is true before ease starts as well as
+    //   after it stops; tween's own state tells those two apart.
+    if (nimCameraCarrying()) { delete window.__stance_last; return false; }
     const now_at = [nimCameraDistance(), nimCameraAzimuth(), ...Array.from(nimCameraPivot())];
     const before = window.__stance_last;
     window.__stance_last = now_at;

@@ -9,7 +9,7 @@ drives every project's tests through testament.
 ## Build and test
 
 ```sh
-nim r koch ci                  # from repository root: tree, changed projects, scope, commits
+nim r koch ci                  # from repository root: every check a pull request runs
 nim r koch tests curator/audit # this project alone: testament over tests/t*.nim
 ```
 

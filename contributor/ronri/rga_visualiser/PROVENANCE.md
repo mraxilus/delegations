@@ -121,7 +121,7 @@ canvas, so nothing in them catches rule wired to wrong event. `tools/drive/` doe
 Playwright, against page `tools/build.nim web` assembled. One command runs both:
 `nim r tools/build.nim drive`.
 
-**135 checks pass today**, one module per section of what page does:
+**137 checks pass today**, one module per section of what page does:
 
 | Module | Covers |
 |--------|--------|
@@ -215,8 +215,38 @@ Article II.9 reads both ways here.
   buys — that curve is distribution, that tick writes only rows that moved — cannot be asked
   any other way.
 
-*Checked.* Verified by running: 135 of 135 pass through `tools/build.nim drive` on assembled
-page, in Chromium, software-rendered. Every section of prototype's own harness is ported.
+**Settling on stance alone cannot tell camera at rest from camera not started.** `settleCamera`
+waited for two consecutive stances to agree. Nothing a check calls moves camera itself:
+`nimSelectOnly` and its kin say what is picked, and `offerAim` inside `nimBuildFrame` turns that
+into ease -- after `advance` has run for that frame. So both polls can land before ease begins,
+agree, and hand check camera that never moved (repository issue 73).
+  Fixed by asking ease rather than inferring from stance: `nimCameraCarrying` reports
+  `goal.isSome and not is_arrived`, derived from tween rather than tracked beside it, and settle
+  waits one draw first, since that draw is what arms ease.
+  Read failure as *never moved*, not *moved wrongly*: runner reported `one pick ->
+  0.00,0.00,1.00` where object sits at `-2.50,2.00,5.50`. `0,0,1` is opening pivot untouched.
+  Curator's own reading was that one half lacked settle other half had. Both halves call it;
+  what differs is that single pick is first action after `Home`, with camera fully at rest, so
+  ease starts latest relative to polls.
+  Second instance of this shape here, after `settleTurn` polled computed transform for two equal
+  reads. Rule that comes out of both: **settle on what moves, not on what has stopped changing**.
+
+**One check passed on blank canvas, which is why blankness went unnamed.** `a selected moon in
+front of a selected planet` compares one pixel against another, so all-zero on both sides agreed.
+Runner read `[0,0,0]`; this machine reads `[44,6,24]`. Check beside it now names it: page's
+darkest surface is `rgb(16,19,24)`, so all zero is readback of nothing rather than dark scene.
+  **Unexplained**: why runner's canvas read back nothing on that run. Blank readback is now
+  reported where before it was silent, which is what turns it from invisible into observable.
+
+*Checked.* Verified by running: 137 of 137 pass through `tools/build.nim drive` on assembled
+page, in Chromium, software-rendered.
+  Verified by breaking on purpose: with `settleCamera` returning at once, run drops to 131 of
+  136 and every loss is framing -- orbit about pick, second pick coming in, plane to two fifths,
+  anchor held in flight, tap clearing selection. That is what says these checks fail when settle
+  returns early, and which ones.
+  **Unverified until runner says so**: race does not reproduce on this machine, so passing run
+  here says no regression rather than no race. Two green runs on runner are what settle it.
+  Every section of prototype's own harness is ported.
 That harness carries about 140 check sites — 125 reported directly and 15 through band
 reader — and this one 151; neither figure is count of claims, since both carry guard reports
 that fire only where check cannot be set up.
@@ -334,10 +364,11 @@ packages to lock file, `pga` to commit -- and this fetch was sole exception (rep
   carries none that survives across distributions, so none is manufactured for one; same shape
   of honest limit `compilers.nim` already records for fetched compilers, trusted on TLS alone.
 
-*Checked.* Verified by running cold: `build/` removed entirely, then `drive` fetches six faces
-and reaches 136 of 136 with no step run by hand -- which is runner's own case. Second run
-immediately after fetches none. `web` alone on same cold tree still refuses by name, which is
-behaviour worth keeping rather than side effect.
+*Checked.* Verified by running cold: `clean` removes `build`, `bin` and `nimcache`, then `drive`
+fetches six faces and reaches 137 of 137 with no step run by hand -- which is runner's own case.
+Re-measured after `drive` gained desktop half, so cold run now builds and drives both front-ends
+rather than page alone. Second run immediately after fetches none. `web` alone on same cold tree
+still refuses by name, which is behaviour worth keeping rather than side effect.
 
 *Checked.* Verified by breaking on purpose: one digit changed in one committed digest makes
 `assets` re-fetch and refuse, and `web` refuse to embed, each naming face and both digests;
@@ -532,9 +563,52 @@ through C and JS.
   not, and scene looks empty at that count. 300 is.
   Vocabulary shows in that frame rather than only in source: panel says *objects (5 of 5040)*
   and *hold still over the pivot*.
-  **Unverified**: no `--drive-*` run has been exercised here, so nothing has driven this binary
-  through events; frame times are unmeasured; and no human has seen it on real graphics hardware
-  -- that run was software GL, which reported no multisampled visual, so thin lines alias.
+  Verified by driving: every scripted run reaches its verdict, 19 checks over 12 runs, in about
+  25 seconds under software GL. See Desktop Driven Checks below.
+  **Unverified**: frame times are unmeasured, and no human has seen this on real graphics
+  hardware -- that run was software GL, which reported no multisampled visual, so thin lines
+  alias.
+
+Desktop Driven Checks
+---
+**Suites test rules and `tools/drive/` tests browser wiring; this tests desktop wiring.** Same
+argument as browser's: rule wired to wrong SDL event is invisible to suite that calls rule
+directly. Entry point carries five scripted runs -- `--drive-keys`, `--drive-sky`,
+`--drive-undo`, `--drive-select`, `--drive-drag` -- plus `--drive-help:<tab>`, one per tab.
+Each pushes real events through SDL's own queue rather than calling handler, so what it
+exercises is wiring.
+  19 checks over 12 runs. Held key slides view and keeps its height; drag across bare sky turns
+  view and builds nothing; undo takes construction back *and* returns view to where it built
+  from; choice menu does not swallow drag after it; every help tab opens with rows in it.
+
+**Two defaults favoured silent pass, and both are gone.** This is what running them found, and
+neither was reachable by reading.
+  Scripted run had no frame bound of its own, and loop ends only on one, so `--drive-keys`
+  alone drove its events and then sat in loop for ever. Run now supplies `FRAMES_DRIVEN` where
+  caller gave none.
+  Verdicts sat behind second flag, `--drive-assert`. Without it, run drove its events, printed
+  *Drew 400 frames*, exited 0 and checked nothing -- so obvious invocation was one that always
+  passed. Flag is retired: scripted run always ends in its verdict.
+  Rejected: bound derived per drive from its own step count. Better number, and it wants every
+  drive's steps lifted out of proc they are local to -- five refactors for run that already
+  ends in seconds.
+
+**`driven` verb runs all twelve and reports every failure, not first.** Run takes seconds, and
+knowing which three broke beats knowing that one did. Verb asks binary which help tabs exist
+(`--help-tabs`, which prints before SDL starts), so `help.HelpPath` stays their one home and
+tab added there is driven without being listed twice (Article I.4).
+  `drive` chains it, so one command drives both front-ends. Where SDL3 or Dear ImGui is absent
+  -- runner, which cannot install SDL3 at all -- it prints skip naming what is missing and
+  stops, rather than failing. Printed rather than silent: check nobody is told was skipped is
+  check nobody knows is missing.
+  **Cost, stated plainly**: these checks do not run in CI, and cannot until SDL3 is installable
+  there. Every runner log says so.
+
+*Checked.* Verified by running: 19 of 19 pass under Xvfb on software GL. Verified by breaking on
+purpose: drag verdict inverted, and run reported ` FAIL  a drag from one object onto another
+opens its choice menu`, `1 driven check(s) failed`, verb answered `Driven runs failed; got 1 --
+drive-drag`, exit 1; restored after. Verified by hiding dependency: with `deps/imgui` moved
+aside, `drive` reported browser's 137 of 137 then named skip with clone command, exit 0.
 
 Render Paths
 ---
