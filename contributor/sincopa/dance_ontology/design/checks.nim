@@ -1098,6 +1098,30 @@ proc checkHandTurns*() =
     &"that stretch do the two cross fewer than {fewest} times, and the " &
     &"third crossing arrives once and stays -- at " &
     &"{decimal(abs(turned_at), 2)} of a turn"
+  # And snake does two things in that order, which is what keeps third
+  # crossing clear: pulls in against its partner while pair tightens, then
+  # opens out into loops that go round it.  Order is load-bearing -- snake
+  # that opens early drives that crossing under hand mark, where no break
+  # can be drawn -- so it is asserted rather than left to comment.
+  var
+    tightest_snake = (share: Inf, at: 0.0)
+  for step in countup(100, 150, 1):
+    let
+      wind = -float(step) / 100.0
+      carried = windShare(wind, overArm(wind))
+    if carried < tightest_snake.share: tightest_snake = (carried, wind)
+  doAssert tightest_snake.share < 1.0,
+    &"Snake never pulls in before it opens; got `" &
+      &"{decimal(tightest_snake.share, 2)}` at its tightest."
+  doAssert windShare(-1.5, overArm(-1.5)) > 1.0,
+    &"Snake never opens out into its loops; got " &
+      &"`{decimal(windShare(-1.5, overArm(-1.5)), 2)}` at swan."
+  told.add &"the snake draws in to " &
+    &"{decimal(tightest_snake.share, 2)} of one connection's swing by " &
+    &"{decimal(abs(tightest_snake.at), 2)} of a turn and opens out to " &
+    &"{decimal(windShare(-1.5, overArm(-1.5)), 2)} at the swan, which is " &
+    &"the order that keeps the third crossing clear of the hands"
+
   var
     swans = 0
     flattest = Inf

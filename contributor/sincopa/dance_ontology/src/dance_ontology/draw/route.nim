@@ -72,15 +72,28 @@ const
     ##   through middle of walk -- diamond fell apart and swan was built
     ##   again rather than one opening into other.  Architect called that
     ##   out, 2026-09-08, and named bend as what was missing.
-  SWAN_SWING* = 0.78  ## How much swing snake ends up carrying, as
-                      ## multiple of what one connection carries on its own.
-    ## Under one, so snake keeps in tight against straight connection,
-    ##   which is what rule 35 asked for -- tighter than either width
-    ##   tried before it.
-    ## It was 1.3, on reading that snake must take *over* what straight
-    ##   one gives up or its loops would not open wide enough to go round
-    ##   anything.  Measured, they open wide enough well under one: snake
-    ##   bows 12.8 where half of `DIAMOND_ROOM` is 12.
+  SWAN_DRAW_IN* = 0.78 ## How far snake pulls in against its partner
+                       ## before it opens, as multiple of one connection's own.
+    ## Wind two strands past whole turn and they pull tight on each other
+    ##   before either can wrap other, which is what `WIND_NIP` already
+    ##   says of pair's middle.  Snake does it as whole.
+  SWAN_DRAWS_AT = 3.0 ## How quickly it pulls in, as power of way through.
+  SWAN_SWING* = 1.30  ## And how much swing it carries once opened, on
+                      ## same scale.
+    ## Over one, so snake plainly goes *round* straight connection rather
+    ##   than wobbling beside it (rule 31).
+    ## Width is Architect's, and this is width they had: snake bows 21.8
+    ##   where it bowed 22.0 before this stretch was mended, and 12.8 while
+    ##   it carried no opening at all.
+  SWAN_OPENS_AT = 20.0 ## How late it opens, as power of way through.
+    ## Late, and that is what buys width.  Snake must stay in close where
+    ##   third crossing runs near hand -- around 1.42 turns -- or that
+    ##   crossing is cut by trim and count of them falls.  Opening after
+    ##   that leaves crossing 8.5 clear of any hand at its tightest, where
+    ##   trim reaches 7.7, so it is drawn every step of way.
+    ## Cost: snake gains 0.16 of its swing over last hundredth of turn,
+    ##   which is 3.2 of line.  Looked at frame by frame and it reads as
+    ##   loops opening, not as jump.
 
 ## Both knobs above move where two reaches cross, and pair of them is
 ##   chosen for that rather than for width alone.
@@ -124,10 +137,16 @@ func straightArm*(turns: float): Arm =
   other(overArm(turns))
 
 
+func wayThrough*(turns: float): float =
+  ## Measure how far pair is from whole turn to turn and half: nought at
+  ## one, one at other, so nothing below whole turn is touched.
+  clamp((abs(turns) - SWAN_FROM) / 0.5, 0.0, 1.0)
+
+
 func swanning*(turns: float): float =
   ## Measure how far pair is through hand-over to swan: none up to
   ## whole turn, all of it at one and one-half turns (rule 31).
-  pow(clamp((abs(turns) - SWAN_FROM) / 0.5, 0.0, 1.0), SWAN_EASE)
+  pow(wayThrough(turns), SWAN_EASE)
 
 
 func windShare*(turns: float; arm: Arm): float =
@@ -136,13 +155,17 @@ func windShare*(turns: float; arm: Arm): float =
   ##   Evenly to whole turn, so frame, cross and diamond are drawn
   ##     exactly as they were.  Past that, pair cannot keep swinging
   ##     symmetrically -- wind two strands far enough and one pulls taut
-  ##     through middle while other wraps it -- so share runs
-  ##     off one of them and onto other.
-  ##   Onto, not away: what straight one gives up snake takes, so
-  ##     pair swings as much as it ever did and snake's loops open
-  ##     wide enough to be thing going *round* rather than wobble.
-  if arm == straightArm(turns): 1 - swanning(turns)
-  else: 1 + (SWAN_SWING - 1) * swanning(turns)
+  ##     through middle while other wraps it.
+  ##   Two connections do two different things, which is why they take
+  ##     two shapes rather than one shared between them.  Straight one
+  ##     hinges: it gives up its bend, late and then all at once.  Snake
+  ##     pulls in against it first, then opens out into loops that go
+  ##     *round* it -- and it is that order, in from tight and out only
+  ##     at end, that keeps third crossing clear of hands all way along.
+  let u = wayThrough(turns)
+  if arm == straightArm(turns): 1 - pow(u, SWAN_EASE)
+  else: 1 + (SWAN_DRAW_IN - 1) * pow(u, SWAN_DRAWS_AT) +
+        (SWAN_SWING - SWAN_DRAW_IN) * pow(u, SWAN_OPENS_AT)
 
 const
   BAND_PASSES = 240    ## Turns of pulling tight and pushing clear.
