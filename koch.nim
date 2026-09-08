@@ -9,7 +9,7 @@
 ##   | deps    | `atlas --noexec rep` in every project holding atlas.lock, or in one     |
 ##   | types   | restore node tools, then type-check scripts, projects one change asks   |
 ##   | driven  | restore, build page, drive it through real events, on that project's pin|
-##   | system  | print system packages those projects declare, one per line, for caller  |
+##   | system  | print packages projects with `system` verb declare, one per line        |
 ##   | tests   | restore, then testament over tests/t*.nim, every project or one         |
 ##   | plan    | projects one change asks to compile, as JSON for CI matrix              |
 ##   | scope   | changed paths against branch prefix           (--branch, --base)        |

@@ -79,7 +79,12 @@ project; `curator/<name>` is rules and root work. Every pull request runs:
   `project` and on the same pins, because building the page does compile project code.
 - `scope`: every changed path lies inside the branch's folder.
 - `commits`: every subject is a Conventional Commit whose scope matches the branch.
+- `base`: the branch carries the rules and the checker as `main` now holds them, so a stamp
+  falsified by a rules change that merged after the branch forked is caught before merging.
 - `audit`: the gate the other jobs report to, and one of the three required checks.
+
+A ninth job, `plan`, runs first and computes the matrices the `project` and `driven` jobs
+fan out over; it names projects rather than checking them.
 
 Everything is driven by `koch.nim`, a compiled Nim program as in Nim's own repository:
 `nim r koch ci` runs the same checks locally against a fresh `origin/main`, and every

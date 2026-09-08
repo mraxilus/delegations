@@ -70,7 +70,7 @@ The owner's brief, which every rule below serves:
 | `CLAUDE.md` | Short pointer Claude Code loads on its own | curator |
 | `koch.nim`, `koch.nim.cfg` | Driver of every check; `nim r koch <command>` | curator |
 | `.gitignore`, `.gitattributes` | Build products and Atlas checkouts out, LF endings | curator |
-| `.github/workflows/check.yml` | CI: `plan`, `static`, matrix, `scope`, `commits`, gate | curator |
+| `.github/workflows/check.yml` | Every CI job, and the `audit` gate they report to | curator |
 | `.github/pull_request_template.md` | Body every pull request follows | curator |
 | `.github/ISSUE_TEMPLATE/process-change.md` | Body every process request follows | curator |
 | `.github/ISSUE_TEMPLATE/review-finding.md` | Body every curator finding follows | curator |
@@ -150,7 +150,7 @@ Three reads, before any other work.
    `dependencies`, `toolchain`, `plan`), the branch grammar in `domains.nim`, the stamp,
    and the matrix `plan` emits. A change to any of
    them is tested on the process itself, in this order, before the work is called done:
-   - `nim r koch ci` on the curator branch, then the curator pull request's three jobs
+   - `nim r koch ci` on the curator branch, then every job of the curator pull request
      green on a runner. A runner differs from this machine: the first run on `main` is
      where the toolchain leak surfaced, and nothing local could have shown it.
    - After the owner merges, the `push` run on `main` green. Branch protection already
@@ -194,6 +194,13 @@ Three reads, before any other work.
    minutes. `$KOCH_NIM_DIR` moves that cache. Testament and Atlas come from the resolved
    toolchain with its `bin/` leading `PATH`, since Atlas reads `nim` from `PATH` and would
    otherwise replay a lock against the wrong compiler.
+   Compilers are the only thing that resolves itself. `koch ci` also runs `types` and
+   `driven`, so the same change needs npm on the machine, and, for every selected project
+   carrying a `drive` verb, a browser and whatever that project's `system` verb declares —
+   `nim r koch system` prints that list. Absent, each such project reports a finding rather
+   than being skipped, which is deliberate: a check that quietly does nothing reports green
+   for work it never did. So read the findings before concluding the change under test broke
+   something.
    The weekly sweep's window is one thing named twice: the cron in
    `.github/workflows/check.yml` and `SWEEP_DAYS` in `curator/audit/src/plan.nim`. Change
    both together, or the sweep looks back over a window it does not run on. The sweep skips
@@ -307,14 +314,14 @@ then `./koch <command>`). Every check is a module under `curator/audit/src/`, te
 | `deps` | every project's `atlas.lock` | checkouts restored and matching the lock |
 | `types` | projects with `package.json` | `npm ci`, then that project's own `types` verb |
 | `driven` | projects with a `drive` verb | restore, then that verb, on that project's pin |
-| `system` | those projects' `system` verb | prints what they need installed, one per line |
+| `system` | projects with a `system` verb | prints what they need installed, one per line |
 | `tests` | every project, or one | restore, then testament, on that project's pin |
 | `plan` | changed paths, nimble pins | projects to compile, as JSON; `--sweep` for weekly |
 | `scope` | changed paths | branch grammar; project paths inside prefix |
 | `commits` | commit subjects | Conventional Commits; scope equals branch scope |
 | `base` | paths base gained | branch carries base's rules and checker |
 | `stamp` | rules documents | prints the stamp for `PROVENANCE.md` |
-| `ci` | fresh `origin/main` | tree, changed projects, scope, commits, base; before every PR |
+| `ci` | fresh `origin/main` | tree, types, changed projects, driven, scope, commits, base |
 
 The checker is held to three rules of its own, in `checker.nim`, because it checks every
 project and nothing checked it: a routine exported and called nowhere is a finding; a check
@@ -326,6 +333,11 @@ turned into a rule so the next one is caught by the runner instead.
 Findings print as `path:line: message; got \`value\`.` and exit 1. Kinds, domains, root
 entries, project files, commit types and banned words are data at the top of their modules;
 change the data, never a special case.
+
+`ci` is minutes, not the seconds the static pass costs, whenever a changed project carries a
+`drive` verb: it builds that project's page and drives a real browser, exactly as the runner
+does. Budget for that before marking a pull request ready, since the alternative is finishing
+a nine-minute run after the Architect has already merged.
 
 ## What no check can reach
 
