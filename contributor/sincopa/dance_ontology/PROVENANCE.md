@@ -201,6 +201,33 @@ edge of every manner. Cost: breaks near a hand are shorter than breaks in the mi
 before they were all one length. The fix moved 12 of the 99 cards -- the four swan stills, whose
 straight connection crosses close to a hand, and all eight moving chain cells.
 
+**The third crossing arrives once, and the hand-over's two knobs are what place it.** From a
+whole turn to a turn and a half the pair gains one crossing, so the picture reads two crossings
+and then three, changing once; it used to read two, three, two, three, gaining one at 1.22
+turns, losing it again from 1.41 to 1.46 and taking it back at 1.47. The lost stretch is the
+third crossing diving back under a hand mark, where no break can be drawn: **measured**, it
+sits 2.9 units from the follow's hand at 1.42 where the reach is trimmed at 7.7. `SWAN_EASE`
+and `SWAN_SWING` move where the two reaches cross, and the region in which the third arrives
+once and stays clear runs from ease 4.5 to 6.0 by swing 0.74 to 0.84, narrowing as ease rises;
+5.0 and 0.78 sit inside it on both axes. Rejected: leaving the swing over one, which is where
+it was -- every value from 0.86 up at this ease loses the crossing again. Cost: the swan is
+narrower, its snake bowing 12.8 where it bowed 22, and the swans are exactly the cards the
+Architect has still to rule on. Verified by `tmarks.nim`, which drives the build: a gate now
+walks the stretch every hundredth of a turn and fails if the count ever falls, or rises other
+than once.
+
+**Amplitude was believed unable to move a crossing, and that belief was false.** The argument
+was that both connections carry the same sine about the pair's axis with opposite sign, so
+they meet only where the sine vanishes and the size cancels. It compares the two reaches **at
+the same point along each**, which is only their crossing condition when they share a chord.
+They do not: the follow's two hands sit up to 20 units apart *along* the pair's axis wherever
+the follow has turned off a half turn, so the two chords differ everywhere between the chain's
+positions. **Measured**: holding both connections at one common share and sweeping it from 0.5
+to 2.0 moves the count at 1.20 turns through 0, 2, 3 and 1. The belief stood while the whole
+family was ruled out untried, and while crossings were counted through a fold that merged
+them, so the sweep that would have refuted it was scored blind. It earns its line because
+anyone re-deriving it reaches the same wrong place.
+
 **The map and the spokes are the same picture at two distances.** `map.nim` draws the whole
 ontology with every line laid down before any word, names cut into the line with round caps
 (never painted over, since a hole in a line now means a connection passes underneath), and
@@ -591,41 +618,16 @@ moment one arrives, and the `not Nim because` gate already refuses one that argu
   the Google request; until then the page keeps its remote fonts and system stacks.
 - `tlaws` costs 22 s of a four-core runner per audit; acceptable now, and the figure above
   is the one to watch as sweeps grow.
-- **The chain between a whole turn and a turn and a half is not right yet, and the drawing's
-  own construction is why.** From diamond to swan the pair gains one crossing, so the picture
-  should read two crossings and then three, changing once. It reads two, then a flash of
-  three, then two, then three. The Architect danced the figure and states the model: one
-  connection **curls around** the other, and the other **hinges straight** -- a right angle at
-  the joined hands opening until the two forearms are in line. The drawing instead gives every
-  connection a sine swung about the pair's axis, and takes the crossings from wherever two such
-  curves happen to meet, which near a hand is unstable: a crossing rides up to the hand, and
-  bounces off it.
-  - Excluded by measurement, each of these leaving the flash exactly where it was: the swing
-    either connection carries (every value from none to twice, on either arm); the pinch that
-    draws the pair together; flattening the correction that pins a reach to its hands; the
-    trim keeping a reach clear of a hand mark; sampling (identical at 33, 65, 129 and 257
-    points per reach); bulges of six sizes, two signs and four shapes; the hand-over's speed,
-    the snake's final swing and the stretch of wind it spans, over 48 combinations; the share
-    moved onto the sweep instead of the size; wrap separated from size; wrap conserved
-    between the two; and the wave reshaped as a triangle.
-  - Two findings stand. **The offset is a pure sine about the axis** -- the chord and the
-    correction that pins it to the hands cancel exactly -- so amplitude cancels out of where
-    the two connections meet, which is why no amount of it ever moved a crossing.
-    **`crossingsOf` folds two crossings that land within `BREAK` of each other in the plane**;
-    it means to fold one crossing found twice, and cannot tell that from two real ones close
-    together, so a picture could state one over-under where there are two. It does not bite on
-    what is drawn today -- folded and unfolded counts agree -- but it bites at once on any
-    construction whose crossings sit closer together, and it should be folding by neighbouring
-    segments rather than by distance.
-  - A prototype of the Architect's model gave a clean two-then-three across the whole stretch,
-    and drew shapes that are not a swan: two straight lines crossing in an X. The count was
-    scored while the shape was wrong, which is the same mistake twice. **Draw it and look
-    before scoring it.**
-  - Whatever replaces this must be nothing at a whole turn and everything at a turn and a
-    half, because every chain position sits at one or the other: that keeps all 87 pinned
-    cards drawing exactly as they do, and confines the change to the swans and the moving
-    chain.
-
+- **The drawing does not yet build the chain the way the Architect describes it.** They danced
+  the figure and stated the model: one connection **curls around** the other, and the other
+  **hinges straight** -- a right angle at the joined hands opening until the two forearms are
+  in line. The drawing still gives every connection a sine swung about the pair's axis, and
+  takes the crossings from wherever two such curves meet. The count now behaves (below), so
+  this is a question about whether the picture is built from the movement or merely agrees
+  with it at the positions checked. A prototype of the hinge-and-curl model gave the right
+  counts and drew shapes that are not a swan -- two straight lines crossing in an X -- because
+  it was scored before it was looked at. Anything that replaces the sine is drawn and looked
+  at first.
 ## Re-audit, 2026-09-07, type check on runner
 
 Audited by a curator against the rule that a project carrying `package.json` beside its lock
