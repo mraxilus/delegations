@@ -154,7 +154,9 @@ translation kept visible is evidence, where an assumed identity would be an
 echo. The laws run under `nim r koch tests`; run them before
 `nim r tools/build.nim pages`, because a page drawing a model that has stopped
 holding is worse than no page. The floor's claims are a suite of their
-own that only asserts they are *decided*; `-d:floorIsLaw` makes them hard.
+own, each row held to what the sim answers today so that neither a mend nor
+a regression passes unseen; `-d:floorIsLaw` holds the sim to the floor
+outright, which three of the seven claims fail.
 
 The solver is built to be asked millions of times a sweep without the answers
 depending on it. What a state has that no evaluation changes -- each body's
