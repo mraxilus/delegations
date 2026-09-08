@@ -591,6 +591,40 @@ moment one arrives, and the `not Nim because` gate already refuses one that argu
   the Google request; until then the page keeps its remote fonts and system stacks.
 - `tlaws` costs 22 s of a four-core runner per audit; acceptable now, and the figure above
   is the one to watch as sweeps grow.
+- **The chain between a whole turn and a turn and a half is not right yet, and the drawing's
+  own construction is why.** From diamond to swan the pair gains one crossing, so the picture
+  should read two crossings and then three, changing once. It reads two, then a flash of
+  three, then two, then three. The Architect danced the figure and states the model: one
+  connection **curls around** the other, and the other **hinges straight** -- a right angle at
+  the joined hands opening until the two forearms are in line. The drawing instead gives every
+  connection a sine swung about the pair's axis, and takes the crossings from wherever two such
+  curves happen to meet, which near a hand is unstable: a crossing rides up to the hand, and
+  bounces off it.
+  - Excluded by measurement, each of these leaving the flash exactly where it was: the swing
+    either connection carries (every value from none to twice, on either arm); the pinch that
+    draws the pair together; flattening the correction that pins a reach to its hands; the
+    trim keeping a reach clear of a hand mark; sampling (identical at 33, 65, 129 and 257
+    points per reach); bulges of six sizes, two signs and four shapes; the hand-over's speed,
+    the snake's final swing and the stretch of wind it spans, over 48 combinations; the share
+    moved onto the sweep instead of the size; wrap separated from size; wrap conserved
+    between the two; and the wave reshaped as a triangle.
+  - Two findings stand. **The offset is a pure sine about the axis** -- the chord and the
+    correction that pins it to the hands cancel exactly -- so amplitude cancels out of where
+    the two connections meet, which is why no amount of it ever moved a crossing.
+    **`crossingsOf` folds two crossings that land within `BREAK` of each other in the plane**;
+    it means to fold one crossing found twice, and cannot tell that from two real ones close
+    together, so a picture could state one over-under where there are two. It does not bite on
+    what is drawn today -- folded and unfolded counts agree -- but it bites at once on any
+    construction whose crossings sit closer together, and it should be folding by neighbouring
+    segments rather than by distance.
+  - A prototype of the Architect's model gave a clean two-then-three across the whole stretch,
+    and drew shapes that are not a swan: two straight lines crossing in an X. The count was
+    scored while the shape was wrong, which is the same mistake twice. **Draw it and look
+    before scoring it.**
+  - Whatever replaces this must be nothing at a whole turn and everything at a turn and a
+    half, because every chain position sits at one or the other: that keeps all 87 pinned
+    cards drawing exactly as they do, and confines the change to the swans and the moving
+    chain.
 
 ## Re-audit, 2026-09-07, type check on runner
 
