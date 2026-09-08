@@ -55,7 +55,7 @@ const
 const
   SWAN_FROM = 1.0    ## Turns of wind past which pair stops sharing its
                       ## swing evenly between two connections.
-  SWAN_EASE = 0.45   ## How quickly it hands over, as power of way
+  SWAN_EASE = 3.5   ## How quickly it hands over, as power of way
                       ## through.
     ## Over one, so hand-over is slow at start and quick at end:
     ##   connection that ends up straight keeps its bend nearly all
