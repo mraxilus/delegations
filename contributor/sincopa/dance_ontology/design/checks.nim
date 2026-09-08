@@ -1055,6 +1055,24 @@ proc checkHandTurns*() =
     &"The straight connection gives up its bend too early; at " &
       &"{decimal(HOLDS_ITS_BEND, 2)} turns it carries only " &
       &"`{decimal(windShare(HOLDS_ITS_BEND, straightArm(HOLDS_ITS_BEND)), 2)}`."
+  # And what that bend is for: diamond keeps its two crossings all way to
+  # swan, where third joins them.  Pair that crosses once is one arm laid
+  # over other rather than going round it, and no such state lies between
+  # two positions of chain -- Architect's ruling, 2026-09-08.
+  var fewest = high(int)
+  for step in countup(100, 150, 2):
+    let
+      wind = -float(step) / 100.0
+      met = crossingsOf(pairOf(wind)[Arm.L], pairOf(wind)[Arm.R])
+    fewest = min(fewest, met.len)
+    doAssert met.len >= 2,
+      &"Two connections cross fewer than twice between diamond and swan; " &
+        &"got `{met.len}` at {decimal(wind, 2)} turns."
+  told.add &"and the diamond opens into the swan rather than coming apart " &
+    &"on the way: the straight connection still carries " &
+    &"{decimal(windShare(HOLDS_ITS_BEND, straightArm(HOLDS_ITS_BEND)), 2)} " &
+    &"of its swing at {decimal(HOLDS_ITS_BEND, 2)} turns, and nowhere over " &
+    &"that stretch do the two cross fewer than {fewest} times"
   var
     swans = 0
     flattest = Inf
