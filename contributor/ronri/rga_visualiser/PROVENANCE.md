@@ -270,14 +270,7 @@ agree, and hand check camera that never moved (repository issue 73).
   Second instance of this shape here, after `settleTurn` polled computed transform for two equal
   reads. Rule that comes out of both: **settle on what moves, not on what has stopped changing**.
 
-**One check passed on blank canvas, which is why blankness went unnamed.** `a selected moon in
-front of a selected planet` compares one pixel against another, so all-zero on both sides agreed.
-Runner read `[0,0,0]`; this machine reads `[44,6,24]`. Check beside it now names it: page's
-darkest surface is `rgb(16,19,24)`, so all zero is readback of nothing rather than dark scene.
-  **Unexplained**: why runner's canvas read back nothing on that run. Blank readback is now
-  reported where before it was silent, which is what turns it from invisible into observable.
-
-*Checked.* Verified by running: 137 of 137 pass through `tools/build.nim drive` on assembled
+*Checked.* Verified by running: 138 of 138 pass through `tools/build.nim drive` on assembled
 page, in Chromium, software-rendered.
   Verified by breaking on purpose: with `settleCamera` returning at once, run drops to 131 of
   136 and every loss is framing -- orbit about pick, second pick coming in, plane to two fifths,
@@ -289,10 +282,12 @@ page, in Chromium, software-rendered.
 That harness carries about 140 check sites — 125 reported directly and 15 through band
 reader — and this one 151; neither figure is count of claims, since both carry guard reports
 that fire only where check cannot be set up.
-  **Unverified**: **CI does not reach this layer.** Runner's jobs are fixed in curator-owned
-  workflow, and contributor's scope reaches only own project, so no job drives page. Asked as
-  issue 47. Until it is ruled, these checks are contributor's to run, and green here is
-  evidence someone ran it rather than something runner confirms.
+  **Runner reaches this layer, for browser alone.** `driven` job drives page on every push
+  since issue 47 was ruled, so green there is runner's word rather than someone's report.
+  Desktop half is skipped there for want of SDL3, which `pkg-config` does not find on runner
+  and which is built from source rather than installed: `drive` names skip and exits 0. So
+  desktop's 19 checks stay contributor's to run, and only browser's 138 are confirmed by
+  runner.
   **Unmeasured**: figures above are this container's, software-rendered, and say more about
   swiftshader than about any GPU. Bands, not figures, are what checks assert.
 
@@ -404,7 +399,7 @@ packages to lock file, `pga` to commit -- and this fetch was sole exception (rep
   of honest limit `compilers.nim` already records for fetched compilers, trusted on TLS alone.
 
 *Checked.* Verified by running cold: `clean` removes `build`, `bin` and `nimcache`, then `drive`
-fetches six faces and reaches 137 of 137 with no step run by hand -- which is runner's own case.
+fetches six faces and reaches 138 of 138 with no step run by hand -- which is runner's own case.
 Re-measured after `drive` gained desktop half, so cold run now builds and drives both front-ends
 rather than page alone. Second run immediately after fetches none. `web` alone on same cold tree
 still refuses by name, which is behaviour worth keeping rather than side effect.
@@ -619,6 +614,11 @@ exercises is wiring.
   19 checks over 12 runs. Held key slides view and keeps its height; drag across bare sky turns
   view and builds nothing; undo takes construction back *and* returns view to where it built
   from; choice menu does not swallow drag after it; every help tab opens with rows in it.
+  **These 19 run here and nowhere else.** Runner carries no SDL3 -- `chromium` and its kin come
+  from declaration, and SDL3 has no package there to declare -- so `drive` names skip and moves
+  on. Browser's checks are confirmed by every push; these are confirmed by whoever last ran
+  them. Cost of closing that is building SDL3 from source on every job, which is minutes against
+  checks that have never yet caught what browser's did not.
 
 **Two defaults favoured silent pass, and both are gone.** This is what running them found, and
 neither was reachable by reading.
@@ -647,7 +647,7 @@ tab added there is driven without being listed twice (Article I.4).
 purpose: drag verdict inverted, and run reported ` FAIL  a drag from one object onto another
 opens its choice menu`, `1 driven check(s) failed`, verb answered `Driven runs failed; got 1 --
 drive-drag`, exit 1; restored after. Verified by hiding dependency: with `deps/imgui` moved
-aside, `drive` reported browser's 137 of 137 then named skip with clone command, exit 0.
+aside, `drive` reported browser's 138 of 138 then named skip with clone command, exit 0.
 
 Render Paths
 ---
