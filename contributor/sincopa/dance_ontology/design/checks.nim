@@ -1059,8 +1059,18 @@ proc checkHandTurns*() =
   # swan, where third joins them.  Pair that crosses once is one arm laid
   # over other rather than going round it, and no such state lies between
   # two positions of chain -- Architect's ruling, 2026-09-08.
-  var fewest = high(int)
-  for step in countup(100, 150, 2):
+  # And it gains that third crossing **once**: pair reads two crossings, then
+  # three, and never goes back.  Count that rises and falls again is picture
+  # of pair unwinding half way through winding, which no dancer does, and
+  # Architect stops animation on any frame it likes -- so every frame answers
+  # for itself, not merely seven positions.
+  var
+    fewest = high(int)
+    gained = 0
+    lost = 0
+    before = 0
+    turned_at = 0.0
+  for step in countup(100, 150, 1):
     let
       wind = -float(step) / 100.0
       met = crossingsOf(pairOf(wind)[Arm.L], pairOf(wind)[Arm.R])
@@ -1068,11 +1078,26 @@ proc checkHandTurns*() =
     doAssert met.len >= 2,
       &"Two connections cross fewer than twice between diamond and swan; " &
         &"got `{met.len}` at {decimal(wind, 2)} turns."
+    if step > 100:
+      if met.len > before:
+        inc gained
+        turned_at = wind
+      elif met.len < before:
+        inc lost
+        doAssert false,
+          &"Pair loses a crossing between diamond and swan; got " &
+            &"`{before}` falling to `{met.len}` at {decimal(wind, 2)} turns."
+    before = met.len
+  doAssert gained == 1,
+    &"Third crossing arrives other than once; got `{gained}` gains over " &
+      &"stretch."
   told.add &"and the diamond opens into the swan rather than coming apart " &
     &"on the way: the straight connection still carries " &
     &"{decimal(windShare(HOLDS_ITS_BEND, straightArm(HOLDS_ITS_BEND)), 2)} " &
-    &"of its swing at {decimal(HOLDS_ITS_BEND, 2)} turns, and nowhere over " &
-    &"that stretch do the two cross fewer than {fewest} times"
+    &"of its swing at {decimal(HOLDS_ITS_BEND, 2)} turns, nowhere over " &
+    &"that stretch do the two cross fewer than {fewest} times, and the " &
+    &"third crossing arrives once and stays -- at " &
+    &"{decimal(abs(turned_at), 2)} of a turn"
   var
     swans = 0
     flattest = Inf
