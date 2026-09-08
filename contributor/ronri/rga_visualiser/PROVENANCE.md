@@ -364,10 +364,11 @@ packages to lock file, `pga` to commit -- and this fetch was sole exception (rep
   carries none that survives across distributions, so none is manufactured for one; same shape
   of honest limit `compilers.nim` already records for fetched compilers, trusted on TLS alone.
 
-*Checked.* Verified by running cold: `build/` removed entirely, then `drive` fetches six faces
-and reaches 136 of 136 with no step run by hand -- which is runner's own case. Second run
-immediately after fetches none. `web` alone on same cold tree still refuses by name, which is
-behaviour worth keeping rather than side effect.
+*Checked.* Verified by running cold: `clean` removes `build`, `bin` and `nimcache`, then `drive`
+fetches six faces and reaches 137 of 137 with no step run by hand -- which is runner's own case.
+Re-measured after `drive` gained desktop half, so cold run now builds and drives both front-ends
+rather than page alone. Second run immediately after fetches none. `web` alone on same cold tree
+still refuses by name, which is behaviour worth keeping rather than side effect.
 
 *Checked.* Verified by breaking on purpose: one digit changed in one committed digest makes
 `assets` re-fetch and refuse, and `web` refuse to embed, each naming face and both digests;
@@ -607,7 +608,7 @@ tab added there is driven without being listed twice (Article I.4).
 purpose: drag verdict inverted, and run reported ` FAIL  a drag from one object onto another
 opens its choice menu`, `1 driven check(s) failed`, verb answered `Driven runs failed; got 1 --
 drive-drag`, exit 1; restored after. Verified by hiding dependency: with `deps/imgui` moved
-aside, `drive` reported browser's 136 of 136 then named skip with clone command, exit 0.
+aside, `drive` reported browser's 137 of 137 then named skip with clone command, exit 0.
 
 Render Paths
 ---
