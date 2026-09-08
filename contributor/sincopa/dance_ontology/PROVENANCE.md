@@ -226,6 +226,22 @@ turn and fails if the count ever falls or rises other than once, and two more ho
 drawing in before it opens. The swan bows 22 round its straight connection, which is the width
 before this stretch was mended.
 
+**The two connections keep clear of one another where they run alongside.** Short of the swan
+they ran close enough to touch: at 1.37 turns their middles came 3.35 apart where the line is
+3.4 wide, so the ink merged and the Architect read the Right connection as running *into* the
+other rather than crossing it. The pinch now keeps growing past a whole turn — `WIND_NIP_MORE`
+— where its own cap used to stop it at one, which is what drew the pair as though winding had
+stopped; and the snake pulls in harder before opening wider (`SWAN_DRAW_IN` 0.65,
+`SWAN_SWING` 1.50). **Measured** over the stretch every hundredth of a turn: at 1.37 the two
+now keep 6.51 between their middles where they kept 3.35, the tightest anywhere they are not
+crossing goes from 4.05 to 4.81, and the shallowest crossing goes from 16.1° to 28.9° — well
+clear of `GRAZING`, below which a break can no longer cover what it hides. Verified by looking
+at 1.35, 1.37 and 1.39, 2026-09-08. **No gate holds this**, and that is a gap rather than an
+oversight: every measure of it that runs over the whole stretch is dominated by two other
+effects — the width of a break at its own edge, and the arrival window below — so no threshold
+separates the mended drawing from the faulty one with any margin. Stated here so a later pass
+knows it is unfenced.
+
 **Amplitude was believed unable to move a crossing, and that belief was false.** The argument
 was that both connections carry the same sine about the pair's axis with opposite sign, so
 they meet only where the sine vanishes and the size cancels. It compares the two reaches **at
@@ -648,6 +664,19 @@ moment one arrives, and the `not Nim because` gate already refuses one that argu
   the Google request; until then the page keeps its remote fonts and system stacks.
 - `tlaws` costs 22 s of a four-core runner per audit; acceptable now, and the figure above
   is the one to watch as sweeps grow.
+- **A crossing that has just arrived cannot carry its break, and five hundredths of a turn are
+  drawn without one.** The third crossing enters through the end of a reach, so from 1.24 to
+  1.28 turns it sits between 0.0 and 4.2 along from that end — nearer than half a break — and
+  `gapFor` gives up rather than cut a gap narrower than the line it hides. Those frames draw
+  two connections crossing with nothing saying which is over, against the standing rule that
+  every crossing shows one. **Measured**: 5 of the 51 hundredths over the stretch, all of them
+  at the arrival; before this pass the same crossing went unbroken for 16 of them, because the
+  fold hid it entirely. It is not obviously mendable by tuning: a crossing entering through an
+  endpoint is at the endpoint for some interval whatever the construction, and the choices are
+  to let the break eat the end (which detaches the line from its hand) or to hold the crossing
+  hidden until it can be broken (which means trimming the reach further, and that reaches every
+  drawing). Left for the Architect to rule on.
+
 - **The drawing does not yet build the chain the way the Architect describes it.** They danced
   the figure and stated the model: one connection **curls around** the other, and the other
   **hinges straight** -- a right angle at the joined hands opening until the two forearms are
