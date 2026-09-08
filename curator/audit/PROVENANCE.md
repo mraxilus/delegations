@@ -403,6 +403,16 @@ still checked.
 
 - Cost: a merged change can leave an unrelated project red until it next changes; the weekly
   sweep is the guard, and it is weaker than compiling everything on every push.
+- Cost, and it is deliberately the safe side of the trade: `isChecker` reads the path, never
+  the content, so editing a comment in `koch.nim` or under `curator/audit/src/` selects every
+  project. Measured 2026-09-08: a pull request whose only changes to those two files were doc
+  comments compiled four projects and drove a browser, 674 s, where the same tree's other
+  commits compiled nothing. The machinery to do better exists — `comments.nim` already
+  extracts comments per kind, so `plan` could ask whether anything but comments changed — and
+  it is rejected, because that detector errs toward compiling too little. A wrong "comments
+  only" reports green for work it never did, which is the failure this repository refuses
+  everywhere else, and the reason `nimcache` is still uncached. Eleven minutes is the price of
+  erring the other way.
 - Verified by `tplan.nim`, and driven against this repository's history: a README-only commit
   plans `[]`, and a one-line source change plans that project alone.
 
