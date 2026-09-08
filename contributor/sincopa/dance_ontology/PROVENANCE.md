@@ -201,20 +201,30 @@ edge of every manner. Cost: breaks near a hand are shorter than breaks in the mi
 before they were all one length. The fix moved 12 of the 99 cards -- the four swan stills, whose
 straight connection crosses close to a hand, and all eight moving chain cells.
 
-**The third crossing arrives once, and the hand-over's two knobs are what place it.** From a
-whole turn to a turn and a half the pair gains one crossing, so the picture reads two crossings
-and then three, changing once; it used to read two, three, two, three, gaining one at 1.22
-turns, losing it again from 1.41 to 1.46 and taking it back at 1.47. The lost stretch is the
-third crossing diving back under a hand mark, where no break can be drawn: **measured**, it
-sits 2.9 units from the follow's hand at 1.42 where the reach is trimmed at 7.7. `SWAN_EASE`
-and `SWAN_SWING` move where the two reaches cross, and the region in which the third arrives
-once and stays clear runs from ease 4.5 to 6.0 by swing 0.74 to 0.84, narrowing as ease rises;
-5.0 and 0.78 sit inside it on both axes. Rejected: leaving the swing over one, which is where
-it was -- every value from 0.86 up at this ease loses the crossing again. Cost: the swan is
-narrower, its snake bowing 12.8 where it bowed 22, and the swans are exactly the cards the
-Architect has still to rule on. Verified by `tmarks.nim`, which drives the build: a gate now
-walks the stretch every hundredth of a turn and fails if the count ever falls, or rises other
-than once.
+**The third crossing arrives once, and the snake pulls in before it opens.** From a whole turn
+to a turn and a half the pair gains one crossing, so the picture reads two crossings and then
+three, changing once; it used to read two, three, two, three, gaining one at 1.22 turns, losing
+it again from 1.41 to 1.46 and taking it back at 1.47. The lost stretch is the third crossing
+diving back under a hand mark, where no break can be drawn: **measured**, it sat 2.9 units from
+the follow's hand at 1.42 where the reach is trimmed at 7.7.
+
+The two connections do two different things past a whole turn, so they take two shapes rather
+than one shared between them. The straight one **hinges**: it gives up its bend late and then
+all at once (`SWAN_EASE`). The snake **pulls in** against it while the pair tightens
+(`SWAN_DRAW_IN`, `SWAN_DRAWS_AT`) and only then **opens out** into loops that go round it
+(`SWAN_SWING`, `SWAN_OPENS_AT`). That order is what does the work: the snake is at its tightest,
+0.89 of one connection's swing, at exactly 1.42 turns, which is where the third crossing runs
+nearest a hand, and it opens after. **Measured**: the crossing now keeps 8.5 clear of any hand
+at its tightest against a trim of 7.7, where a snake that opens early drives it under the mark.
+Rejected: one width for the whole stretch, which is what a single `SWAN_SWING` is — the widest
+such swan that keeps the count monotone bows 14.1, against the 22 the Architect had, because in
+that shape width and crossing placement are one number. Cost: the snake gains 0.16 of its swing
+over the last hundredth of a turn, 3.2 of line; looked at frame by frame, 1.43 to 1.50, it
+reads as loops opening rather than as a jump — verified by looking, 2026-09-08, not by test.
+Verified by `tmarks.nim`, which drives the build: a gate walks the stretch every hundredth of a
+turn and fails if the count ever falls or rises other than once, and two more hold the snake to
+drawing in before it opens. The swan bows 22 round its straight connection, which is the width
+before this stretch was mended.
 
 **Amplitude was believed unable to move a crossing, and that belief was false.** The argument
 was that both connections carry the same sine about the pair's axis with opposite sign, so
