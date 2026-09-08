@@ -121,7 +121,7 @@ canvas, so nothing in them catches rule wired to wrong event. `tools/drive/` doe
 Playwright, against page `tools/build.nim web` assembled. One command runs both:
 `nim r tools/build.nim drive`.
 
-**137 checks pass today**, one module per section of what page does:
+**138 checks pass today**, one module per section of what page does:
 
 | Module | Covers |
 |--------|--------|
@@ -184,6 +184,45 @@ before it, at unchanged sample sizes.
   of 50 frames. `SHARE_KINDS_ACCOUNT` is 0.995, which over sample of 50 rounds up to *every*
   frame, so slack that constant exists to give straddling frame is not there at this sample
   size. Pre-existing, and left alone here: waits were not what decided it.
+
+**Pixels are read through compositor, and blank reading is refused rather than returned.**
+Context keeps no drawing buffer (`gl.ts` says why), so `readPixels` is sound only from inside
+frame that drew. Five checks each held their own copy of that wrapper, and four compared one
+reading against another -- so canvas reading back all zero passed all four, and failed only
+fifth, which is what caught it. Reading now comes from `page.locator('#gl').screenshot()`,
+decoded in page, through one `tools/drive/canvas.ts`: it is what reader sees, it is immune to
+buffer being taken after frame that filled it, and it raises on reading with no lit pixel.
+  Blank reading raises rather than reports: canvas nobody can read is instrument lost, not
+  check failed, and reporting it would leave every later pixel check resting on nothing.
+  That four were vacuous is arithmetic rather than inference. `pool`'s check reported hash
+  1426046701 from runner; same FNV fold over all-zero 1200x900x4 buffer at its own stride
+  gives exactly 1426046701, so it had compared nothing against nothing.
+  Costs about 0.49 s per reading against microseconds for `readPixels` -- 0.43 s capture and
+  0.06 s decode -- paid about 19 times over run rather than once per frame.
+  **Element capture takes region page canvas occupies, not canvas alone**, so chrome
+  composited over it lands in reading: first run of this reader failed held-placement check on
+  2,411 pixels, and cropping them showed undo button lighting up after that check's own edit.
+  Every sibling of canvas is hidden for length of capture and put back after, by `opacity`
+  so nothing leaves layout and nothing is blurred. Masking was rejected: it asks for list of
+  what covers canvas, and that list goes stale.
+  **Unverified**: why runner read blank. Neither Chromium here reproduces it: full browser and
+  headless shell both read every one of 1,080,000 pixels lit, no GL error, default framebuffer
+  bound, from inside and outside drawing frame alike. Runner's browser is different binary
+  (see below) and was not obtainable here. Composite path is checked in this environment only;
+  whether it reads there is answered by first green `driven` on runner, not before.
+
+**`chromium` in `dependencies.list` is unpinned, and on Ubuntu 24.04 it is snap.** Verified
+with `apt-cache showpkg chromium`: name carries no version of its own and is provided solely by
+`chromium-browser 2:1snap1-0ubuntu2`, snap transitional shim. So runner's harness drives
+whatever build snap store serves that day, while this environment drives Playwright's own
+pinned Chromium -- and every other dependency here is pinned by commit, version or digest.
+Checks that pin bands and pixels against browser nobody chose is what that costs.
+  Left alone here because remedy is not this project's alone: workflow finds browser with
+  `command -v chromium` and would fail were package dropped. Raised for curator.
+
+  Guard is checked against fixture it stands up itself (Article IX.8): black canvas of its own,
+  which is hardest case, since dark scene and no scene look alike. Check runs before any check
+  leaning on reader does.
 
 **Comet's band caught port's own defect rather than needing widening.** First port selected
 horizon line through `nimSelectOnly`, which moves Nim's selection and leaves page's render
