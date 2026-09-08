@@ -225,13 +225,64 @@ no small move holds and no reachable pose does, the turn is blocked and named. W
 evaluation changes is worked out once into a `Scene`; a seed is tried reach first, then joint
 by joint, then by cost, then against the bodies, giving up at the first refusal; sweeps of
 different holds run side by side on every core (`sweptAll`). Rejected: tuning any number to
-the floor's claims; the floor is printed beside the sim and only asserted to be decided
-(`-d:floorIsLaw` makes it hard). Verified by `tlaws.nim`, 28 laws over every moment of
-eleven sweeps: nothing enters a body, joints inside every range, mirrors agree, blocks
-bracketed with a name, and the clipped contact test against a sampled truth over 300 seeded
-random segments; the forward kinematics over 200 seeded random arms. The optimisation that
-made the solver share a `Scene` and run side by side was measured before the move as a
-pair, but the pair is not in this tree: **unmeasured** here.
+the floor's claims; the floor is printed beside the sim, and each of its seven claims is held
+to what the sim answers today, so neither a mend nor a regression passes unseen
+(`-d:floorIsLaw` holds the sim to the floor outright). Verified by `tlaws.nim`, 29 laws over
+every moment of thirteen sweeps: nothing enters a body, joints inside every range, mirrors
+agree, blocks bracketed with a name, and the clipped contact test against a sampled truth over
+300 seeded random segments; the forward kinematics over 200 seeded random arms. The
+optimisation that made the solver share a `Scene` and run side by side was measured before the
+move as a pair, but the pair is not in this tree: **unmeasured** here.
+
+**Five of those laws could not fail, whatever the model did.** `check cs.len >= 0` on an
+`int`; `check got.isSome or got.isNone` on an `Option`; a bare `check true` with the `agrees`
+values above it computed and discarded; a `lyingOn(...).isNone` over the crown that only
+re-asserted an unconditional early return; and an `if blk.stopped:` guard that ran no
+assertion at all for a sweep which does not block, which is both crown sweeps and so exactly
+the level of the fault
+[#40](https://github.com/mraxilus/delegations/pull/40) mended. That fault was visible and
+reproducible in twelve seconds and no law failed because of it. Each now asserts what its name
+promises, and each was proved able to fail: the thing it claims was broken in the sim, the
+suite run with `-d:nimUnittestAbortOnError:off`, and the law reddened. Four breaks touched
+that law and nothing else; where a break could not be confined -- turning a body not quite a
+whole turn moves every stance there is -- other laws reddened beside it. Cost: the suite takes
+30.8 s on four cores in a danger build against 23.9 s before, measured 2026-09-08 on this
+machine, and the two crown sweeps added to cover R-r and R-l are the difference. Second cost,
+found while proving the laws fail: the suite is built `-d:danger` for that speed, so a model
+change leaving a sweep with no moments segfaults it rather than reddening a law.
+
+**The sim does not meet three of the floor's seven claims, and the floor is right.** The
+Architect dances the floor, so where the two disagree the fault is the sim's: L-l low the wrap
+way blocks at 0.30 against half a turn claimed; L-l high blocks at 0.41 the lock way against a
+whole turn claimed, holding to 1.25 the other way; L-r low the lock way blocks at 0.87 against
+a whole turn claimed. Rejected, again: moving a number to meet a claim. Each row instead
+carries whether the sim meets it today, so mending one turns the suite red until the record
+follows it. Measured 2026-09-08 on this tree, and `-d:floorIsLaw` compiles and fails at the
+first of the three.
+
+**A whole turn is no turn to a pose sought without history.** The solver reads a stance's axes
+and never its lap count -- the couple's `twist` is read for display and by nothing else -- so
+`settle` at a whole turn returns the rest pose: measured at 2.6e-16 m on the furthest joint,
+for both two-hand holds, at rest and at half a turn. Only the sweep carries turn, moment by
+moment, and both two-hand sweeps block by 0.58. So nothing here is evidence about the diamond
+at a whole turn or the swan at a turn and a half: the rungs the chain law prints under those
+names are the rest and the X. Verified by `tlaws.nim`, which now asserts the axes identity
+outright rather than leaving it to be discovered. Cost: the sim cannot yet reach two of the
+positions the drawn chain is built on.
+
+**The crossing reader is exercised off settled poses, because no swept moment crosses.** Not
+one of the 116 moments the two two-hand sweeps accept carries a crossing, so a law read off
+them would assert nothing; the corpus is instead both holds at every band over five turns,
+which gives 12 crossings, each held to sit on both connections in plan and to name which is
+higher (furthest off its connections, 7e-17 m). Assumed, not measured: that `sameCrossings`,
+which gates a fresh pose on the sweep, does useful work -- it compares nought with nought at
+every accepted moment, and what it refused was not recorded. The reader is also knife-edge
+where two arms lie along each other: two stances a whole turn apart, whose poses differ by
+5.6e-17 m, read as four crossings and as one. Underneath it the search is sensitive too: the
+same two stances at the neck settle 0.75 m apart at the furthest joint, off an axis difference
+of 4.9e-16. Neither costs a verdict its determinism -- every law here answers the same on the
+same code, and the suites seed explicitly -- but both say a law read at a knife edge would be
+evidence about arithmetic rather than about bodies, so none of these is.
 
 **The sim page turns by whole quarters and stands where the arms are freest.** Buttons turn
 the lead or the follow a quarter on axis or in orbit (the walker keeps facing the centre,
