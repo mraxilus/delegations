@@ -124,7 +124,7 @@ the browser page through `web`, the desktop application through `desktop`.
 
 Every law under test through testament on the pinned commit, in three configurations. The
 page has been built and looked at, its type surface is checked, and a Playwright harness
-drives 136 checks over held keys, the wheel, mouse pan and touch — see Driven Checks in
+drives 137 checks over held keys, the wheel, mouse pan and touch — see Driven Checks in
 `PROVENANCE.md`. The desktop binary has been built and one frame of it looked at, headless
 under Xvfb; its own `--drive-*` runs are not yet exercised here, and arrive next.
 
