@@ -267,6 +267,17 @@ delegate says "not yet" in the one place the Architect looks; an open pull reque
 Nothing checks this, so it holds by doing it — and a curator who lets it slip has no standing
 to expect it of contributors.
 
+**Ready is not a one-way door: the moment you intend another commit, put it back to draft
+first.** A record entry still to write, a figure still being measured, a fix you have just
+found — each is a reason to return the pull request to draft and mark it ready again after.
+The Architect merges what is green and ready, promptly and correctly, and is right to: intent
+that lives only in your working copy is not a signal, and a commit you have not pushed is one
+nobody else can see. Measured on this repository, 2026-09-07: a record update was committed
+sixteen seconds before its pull request was merged, having been held back behind a nine-minute
+local `koch ci` while the pull request sat green and ready for eleven minutes. It missed the
+merge and cost a second pull request. The merge was correct; the pull request's state was the
+lie. Either push before you mark ready, or draft it while you finish.
+
 ## Repository settings the owner applies
 
 These cannot be set from inside the repository. Ask the owner to confirm they are in place

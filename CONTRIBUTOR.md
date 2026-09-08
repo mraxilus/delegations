@@ -454,6 +454,14 @@ what was rejected, what it costs. There is no `docs/adr/`.
   the signal: `koch ci` and the runner disagree whenever the machines differ, which is what
   the runner is for. Nothing checks this — GitHub is not this repository — so it holds
   because you do it.
+- **Put it back to draft the moment you intend another commit.** Ready is not a one-way door.
+  A record entry still to write, a figure still being measured, a fix you have just found —
+  each is a reason to return the pull request to draft, and to mark it ready again after. The
+  Architect merges what is green and ready, promptly and correctly; intent that lives only in
+  your working copy is not a signal, and a commit you have not pushed is one nobody else can
+  see. A curator lost a record update this way, committing it sixteen seconds before the merge
+  while the pull request had sat green and ready for eleven minutes. Either push before you
+  mark ready, or draft it while you finish.
 
 ## Output contract
 
