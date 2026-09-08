@@ -616,14 +616,18 @@ composes stays pure and `layout.nim` still reads paths only.
 ## Tests
 
 **Testament over `tests/t*.nim`, each stub carrying the header from STYLE.md §6 without
-`-r`.** Three projects carry suites: this one, `curator/probe`, and
-`contributor/sincopa/dance_ontology`, whose eleven stubs dominate every whole-tree run.
+`-r`.** Every project carries suites: 22 files here, one in `curator/probe`, three in
+`contributor/ronri/rga_visualiser`, and twelve in `contributor/sincopa/dance_ontology`, whose
+stubs dominate every whole-tree run. Counted from `git ls-files '*/tests/t*.nim'` rather than
+by hand, which is how the three of them this paragraph used to name went stale.
 Testament runs each binary itself; `-r` in the command would run every test twice
 and `--outdir` breaks testament's search for the binary, so binaries sit beside sources and
 git ignores them everywhere (`**/tests/t*`). Suites are named after constitution articles
 and every assertion carries a citation. Fixtures are built by `fixtures.nim`: a smallest
-clean tree with a project under each root, and throwaway git repositories. Verified: 14
-test files, all passing on Nim 2.2.4 Linux amd64.
+clean tree with a project under each root, and throwaway git repositories. Verified by
+running `nim r koch tests` over every project, 2026-09-08: 39 suites pass, 0 findings, each
+on the compiler its project pins — which is the whole point of that verb, since only one of
+the three pins was on `PATH`.
 
 ## Type checking
 
@@ -749,8 +753,11 @@ moved a real dependency into a file its author does not read.
 `static` runs `nim r koch tree`, `project` is one matrix job per planned project installing
 that project's own pin, `scope` and `commits` run only on pull requests with full history,
 and `audit` is a gate reading the results of `plan`, `static` and `project`. Since grown to
-eight: `types` and `driven` joined, and both reach the merge through that same gate, which is
-what has kept the required names unchanged through every job added since.
+nine: `base`, `types` and `driven` joined, and each reaches the merge through that same gate,
+which is what has kept the required names unchanged through every job added since. That count
+was itself written as eight here, forgetting `base`, and `check.yml`'s own header inherited
+the error — which is why the sentence now names every job that joined rather than a total
+somebody must recount.
   Every job added since is named in `needs` of the gate as well as declared. A job outside it
   is a red check that cannot block a merge, which is the one mistake this arrangement makes
   easy to make and impossible to see afterwards. The gate exists
@@ -932,52 +939,57 @@ moment one arrives, and the `not Nim because` gate already refuses one that argu
 
 ## Re-audit, 2026-09-07, system dependencies
 
-Audited by a curator against rule that system dependencies -- library compiler links against,
-tool build shells out to, browser driven check drives, source clone no package manager carries
--- are declared as data in project's own `tools/build.nim`, each entry carrying its reason, and
-reached by verb. Source clone carries its commit; system package carries no pin surviving across
-distributions and record says so rather than implying one; anything fetched at build time
-carries checksum build verifies. No machine's paths in committed source.
+Audited by a curator against the rule that system dependencies — a library the compiler links
+against, a tool the build shells out to, a browser a driven check drives, a source clone no
+package manager carries — are declared as data in the project's own `tools/build.nim`, each
+entry carrying its reason, and reached by a verb. A source clone carries its commit; a system
+package carries no pin that survives across distributions, and the record says so rather than
+implying one; anything fetched at build time carries a checksum the build verifies. No
+machine's paths in committed source.
 
-**Rule reaches this project only partly, and gap is worth naming.** It speaks of project's own
-`tools/build.nim`; curator projects carry none, since koch drives them. koch's own system needs
-are stated in `README.md` instead, which same rule calls pointer rather than declaration. Making
-koch declare its own needs as data is separate change with its own cost, filed here rather than
-done quietly.
+**The rule reaches this project only partly, and the gap is worth naming.** It speaks of the
+project's own `tools/build.nim`; curator projects carry none, since koch drives them. koch's
+own system needs are stated in `README.md` instead, which the same rule calls a pointer rather
+than a declaration. Making koch declare its own needs as data is a separate change with its own
+cost, filed here rather than done quietly.
 
 **One correction found while auditing, and it was mine.** `README.md` said koch "Needs git and
-any Nim that builds koch". That understated it: koch shells out to `curl` when it fetches
-compiler, and to `npm` since `types` verb landed hours earlier -- drift this curator introduced
-and did not notice at time. Corrected to name git, curl, and npm where project carries node
-manifest.
+any Nim that builds koch". That understated it: koch shells out to `curl` when it fetches a
+compiler, and to `npm` since the `types` verb landed hours earlier — drift this curator
+introduced and did not notice at the time. Corrected to name git, curl, and npm where a project
+carries a node manifest.
 
 ## Re-audit, 2026-09-07, ready is not a one-way door
 
-Audited by curator against rule that pull request already marked ready goes back to draft
-before author adds another commit to it. Rule was asked for by Architect after this curator
-lost commit to it, and both `CURATOR.md` and `CONTRIBUTOR.md` gained direction they lacked:
-each already said open as draft and mark ready only when ready, neither said what to do when
-readiness stops being true.
+Audited by a curator against the rule that a pull request already marked ready goes back to
+draft before its author adds another commit to it. The rule was asked for by the Architect
+after this curator lost a commit to it, and both `CURATOR.md` and `CONTRIBUTOR.md` gained
+direction they lacked: each already said open as a draft and mark ready only when ready,
+neither said what to do when readiness stops being true.
 
-**Rule is written from measurement, and measurement is this curator's own mistake.** Pull
-request 70 was green and ready at 21:55. Record entry for its own figures was committed
-locally at 22:06:30 and never pushed, held behind nine-minute local `koch ci`; merge landed
-sixteen seconds later. Architect merged what was green and ready, which is correct and is what
-protected branch exists to allow. State of pull request was what lied: it said merge me while
-its author intended another commit. Cost was second pull request, and record on `main` that
-said 135 checks, called runner figure unmeasured, and described gap already fixed.
-  What makes this rule rather than one session's lesson: signal has to live where other party
-  looks. Architect reads pull request state; they cannot read working copy, and commit that is
-  not pushed does not exist to them. Same reasoning issue routing already rests on -- session
-  ends and takes its intentions with it, so intention goes somewhere durable.
+**The rule is written from measurement, and the measurement is this curator's own mistake.**
+Pull request 70 was green and ready at 21:55. The record entry for its own figures was
+committed locally at 22:06:30 and never pushed, held behind a nine-minute local `koch ci`; the
+merge landed sixteen seconds later. The Architect merged what was green and ready, which is
+correct and is what a protected branch exists to allow. The state of the pull request was what
+lied: it said merge me while its author intended another commit. The cost was a second pull
+request, and a record on `main` that said 135 checks, called the runner figure unmeasured, and
+described a gap already fixed.
+  What makes this a rule rather than one session's lesson: the signal has to live where the
+  other party looks. The Architect reads pull request state; they cannot read a working copy,
+  and a commit that is not pushed does not exist to them. The same reasoning issue routing
+  already rests on — a session ends and takes its intentions with it, so an intention goes
+  somewhere durable.
 
-**Rejected: asking Architect to wait.** Merging green ready pull request promptly is what
-keeps chain moving, and rule that asks reader to hesitate over every green one costs more than
-it saves. Draft is one click for author and needs nothing of anybody else.
+**Rejected: asking the Architect to wait.** Merging a green, ready pull request promptly is
+what keeps the chain moving, and a rule that asks the reader to hesitate over every green one
+costs more than it saves. A draft is one click for the author and needs nothing of anybody
+else.
 
-**Rejected: check enforcing it.** Nothing here can see intent. Check could compare pull request
-state against later pushes and would only ever report after fact, which is when it is already
-lost. This holds by being done, as rest of that section does.
+**Rejected: a check enforcing it.** Nothing here can see intent. A check could compare pull
+request state against later pushes and would only ever report after the fact, which is when it
+is already lost. This holds by being done, as the rest of that section does.
 
-**Cost: rule this curator broke on same day it was written.** That is worth stating plainly
-rather than smoothing over -- it is evidence rule is needed, not evidence it is understood.
+**Cost: a rule this curator broke on the same day it was written.** That is worth stating
+plainly rather than smoothing over — it is evidence the rule is needed, not evidence it is
+understood.
