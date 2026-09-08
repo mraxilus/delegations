@@ -437,6 +437,26 @@ mock-up now hold a `{{title}}` marker instead of their own names, so opening eit
 file no longer shows what the page is called; the name is one file away, and the alternative
 was spelling it in four places.
 
+**The browser comes from the environment, and the declaration says what to install.** `shot`
+drives Chromium through Playwright, and both used to be named by absolute path in
+`design/shot.nim` — one of them with the browser's build number inside it, which pins a version
+in the least durable place there is (issue 62). Neither path is in the source now.
+`tools/build.nim` declares `nodejs` and `chromium` as data with what each is for, and a `system`
+verb prints those names one per line for an installer; `shot.nim` takes Playwright from
+`DANCE_PLAYWRIGHT` or the bare module name node resolves, and the browser from
+`DANCE_CHROMIUM`, then from `chromium` beside Playwright's own store
+(`PLAYWRIGHT_BROWSERS_PATH`), and otherwise lets Playwright resolve what it installed. Absent
+Playwright stops with a finding naming the verb that says what to install, rather than as a
+missing file. Rejected: pinning Playwright itself, which is a node package and would mean a
+`package.json` beside its lock — that enrols the project in `koch types` and demands a `types`
+verb, work the Architect has asked not be built while this half of the project may go. Cost,
+stated rather than implied: **Playwright carries no pin here at all**, and the system packages
+carry whatever version the machine has. Verified by running all four routes on this machine,
+2026-09-08, Node 22 and Playwright's Chromium 1194: nothing set stops with the finding and exit
+1; `DANCE_PLAYWRIGHT`, `NODE_PATH` and `DANCE_CHROMIUM` each write both themes' screenshots; a
+path naming no browser fails loudly rather than silently. Not repeatable from a checkout — no
+test drives `shot`, since the project carries no `drive` verb.
+
 **URLs are listed once.** Every published page's URL is in this project's `README.md`, in two
 tables that carry the same split; `design/README.md` and `sim/README.md` point at it rather
 than repeating it, as they used to (Article II.1). A page taken out of use keeps its URL and is
@@ -646,18 +666,8 @@ reached by verb. Source clone carries its commit; system package carries no pin 
 distributions and record says so rather than implying one; anything fetched at build time
 carries checksum build verifies. No machine's paths in committed source.
 
-**This project does not comply yet, and cannot be made to by curator.** `design/shot.nim` names
-two absolute paths into one machine's layout, with browser version among them:
-
-```nim
-PLAYWRIGHT = "/opt/node22/lib/node_modules/playwright"
-CHROMIUM = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
-```
-
-Header states situation honestly, so nothing is hidden; rule now says where those belong
-instead. Raised as issue 62, labelled for this project, since source is contributor's and
-`scope` holds curator to that. This project carries `tools/build.nim` already, so declaration
-has home waiting.
+Raised as issue 62, and answered: see "The browser comes from the environment" under Pages and
+build.
 
 ## Re-audit, 2026-09-07, system and driven verbs
 
@@ -666,12 +676,9 @@ project's own `tools/build.nim` and reached by a verb **named `system`**, which 
 one per line and nothing else, since `koch system` feeds that output to an installer; and a
 project enrols in the driven check by carrying a verb **named `drive`** in the same driver.
 
-Neither changes this project's standing. It carries no TypeScript and no driven page, so `drive`
-does not apply. It still does not declare its system dependencies at all -- `design/shot.nim`
-names two absolute paths into one machine's layout, recorded above and raised as issue 62 --
-so the rule's new precision about the verb's name and output shape lands on a declaration that
-has yet to be written. The situation is unchanged; only what compliance will have to look like
-is sharper.
+This project now carries `system`, and `koch system contributor/sincopa/dance_ontology` prints
+what it declares. It carries no `drive` verb and no TypeScript, so the driven check does not
+apply and nothing here is driven on the runner; `shot` stays a helper a person runs.
 
 ## Re-audit, 2026-09-08, draft while you finish
 
