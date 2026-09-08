@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Author | Claude Opus 5 and Claude Sonnet 5 |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 1931060895ce28b1 |
+| Rules  | 159131cac09fd7c4 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the
@@ -2805,3 +2805,22 @@ Two asks stand, both this project's own work, neither of which curator may do:
 
 Second ask is what browser job waits on. Once both land, `drive` reaches runner and this
 record's *Unverified: CI does not reach this layer* stops being true.
+
+## Re-audit, 2026-09-08, deterministic verdicts
+
+Audited by a curator against the rule that a check gives the same verdict on the same code,
+and that where it does not, the check is what is wrong. Retries, longer timeouts, quarantines
+and skips are all refused as answers to variance.
+
+The testament suites comply: `tests/suites.nim` seeds with `randomize(0)`, so the sampled
+corpus is the same corpus on every run.
+
+**The driven harness does not, and this project already knew it.** The section above records
+a blank canvas readback on the runner, `[0,0,0]` where this machine reads `[44,6,24]`, with
+its cause marked **Unexplained** — and the check that names blankness was added here for
+exactly that reason. What the curator adds is a rate rather than a finding: across three
+`push` runs on `main`, runs 147, 148 and 149 on effectively one tree, the readback was blank
+**once in three**. That is the measurement the record could not take while CI did not reach
+this layer, and it is now the thing the rule asks to be removed. Raised as issue 82 with the
+evidence; the mechanism is this project's to choose, and if the cause proves to be the runner's
+browser rather than this code, it becomes the curator's to carry.
