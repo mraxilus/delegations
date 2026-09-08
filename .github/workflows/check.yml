@@ -1,5 +1,5 @@
 # Run repository checks on pull requests, on main, and weekly over every project.
-#   Eight jobs. `plan` names projects one change asks to compile, and names again which of
+#   Nine jobs. `plan` names projects one change asks to compile, and names again which of
 #   those carry driven checks; `static` runs whole-tree checks, which cost tenths of second
 #   and so stay unscoped; `scope` and `commits` read branch; `project` is one matrix job per
 #   named project, each installing that project's own pin; `driven` is second matrix over
