@@ -1042,6 +1042,19 @@ proc checkHandTurns*() =
   # pair stops sharing its swing: one reach is plain chord between
   # its hands and other carries all of it, which is three crossings held
   # round straight line rather than two diamonds stacked.
+  # And it gives that swing up **late**.  Chain is walked, not jumped, so
+  # what lies between diamond and swan is seen: connection that ends up
+  # straight must keep its bend most of way there, or diamond falls apart
+  # into short stub and swan is built again rather than one opening into
+  # other.  Architect danced it and called that out, 2026-09-08.
+  const
+    HOLDS_ITS_BEND = 1.2 ## Turns of wind by which straight one must still
+                         ## carry most of its swing.
+    MOST_OF_IT = 0.5     ## What most of it is, as share.
+  doAssert windShare(HOLDS_ITS_BEND, straightArm(HOLDS_ITS_BEND)) > MOST_OF_IT,
+    &"The straight connection gives up its bend too early; at " &
+      &"{decimal(HOLDS_ITS_BEND, 2)} turns it carries only " &
+      &"`{decimal(windShare(HOLDS_ITS_BEND, straightArm(HOLDS_ITS_BEND)), 2)}`."
   var
     swans = 0
     flattest = Inf

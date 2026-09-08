@@ -57,10 +57,15 @@ const
                       ## swing evenly between two connections.
   SWAN_EASE = 0.45   ## How quickly it hands over, as power of way
                       ## through.
-    ## Under one, so hand-over is quick at start: third crossing
-    ##   arrives as soon as pair is past whole turn, and until one
-    ##   connection is visibly straighter of two, three crossings
-    ##   read as second diamond -- which is thing rule 30 refused.
+    ## Over one, so hand-over is slow at start and quick at end:
+    ##   connection that ends up straight keeps its bend nearly all
+    ##   way to swan, and only gives it up at last.
+    ## It was under one, on grounds that third crossing wanted to arrive
+    ##   early.  Measured, it does not: it arrives at swan either way, and
+    ##   quick hand-over instead collapsed that connection to short stub
+    ##   through middle of walk -- diamond fell apart and swan was built
+    ##   again rather than one opening into other.  Architect called that
+    ##   out, 2026-09-08, and named bend as what was missing.
   SWAN_SWING* = 1.3   ## How much swing snake ends up carrying, as
                       ## multiple of what one connection carries on its own.
     ## Over one, so snake plainly goes *round* straight connection
