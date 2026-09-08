@@ -41,6 +41,12 @@ const WAYS*: array[4, WayRound] = [
 
 const BREAK* = 11.0   ## Length of gap cut in under reach at crossing.
 
+const SAME_SPOT* = 0.1 ## Apart from which two meetings are one meeting.
+  ## Point is written to one decimal (`geometry.n`), so two meetings this
+  ##   close emit as one place and no picture can tell them apart.
+  ## Duplicate this drops is exact: vertex of one reach lying on other is
+  ##   met by both segments sharing it, at that vertex both times.
+
 const
   DIAMOND_ROOM* = 24.0 ## How wide diamond that wound pair holds opens at
                        ## its middle.
@@ -801,8 +807,14 @@ func crossingsOf*(one, other: seq[Point]): seq[Point] =
         continue                     # lines meet, drawn bits do not
       let at: Point = (p.x + r.x * along, p.y + r.y * along)
       # One point per crossing: two segments of one reach can both meet
-      # same segment of other where they turn across it.
-      if result.len == 0 or dist(result[^1], at) > BREAK:
+      # same segment of other where they turn across it, and duplicate that
+      # makes is same point twice, so it is sameness of point that drops it.
+      #   Folding by `BREAK` instead dropped two genuine crossings that fell
+      #     closer than one gap's width, which states one over-under where
+      #     there are two.  It bit on chain between diamond and swan, where
+      #     third crossing ran within eleven units of second from 1.22 turns
+      #     to 1.37 and was drawn with no break at all.
+      if result.len == 0 or dist(result[^1], at) > SAME_SPOT:
         result.add at
 
 
