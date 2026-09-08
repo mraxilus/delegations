@@ -217,7 +217,7 @@ all at once (`SWAN_EASE`). The snake **pulls in** against it while the pair tigh
 nearest a hand, and it opens after. **Measured**: the crossing now keeps 8.5 clear of any hand
 at its tightest against a trim of 7.7, where a snake that opens early drives it under the mark.
 Rejected: one width for the whole stretch, which is what a single `SWAN_SWING` is — the widest
-such swan that keeps the count monotone bows 14.1, against the 22 the Architect had, because in
+such swan that keeps the count monotonic bows 14.1, against the 22 the Architect had, because in
 that shape width and crossing placement are one number. Cost: the snake gains 0.16 of its swing
 over the last hundredth of a turn, 3.2 of line; looked at frame by frame, 1.43 to 1.50, it
 reads as loops opening rather than as a jump — verified by looking, 2026-09-08, not by test.
