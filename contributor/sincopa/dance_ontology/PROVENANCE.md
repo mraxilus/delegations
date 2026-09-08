@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 1931060895ce28b1 |
+| Rules  | 159131cac09fd7c4 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the Architect's workbook `ontology.partnerwork.xlsx` (sheets `base` and
@@ -501,3 +501,17 @@ Header states situation honestly, so nothing is hidden; rule now says where thos
 instead. Raised as issue 62, labelled for this project, since source is contributor's and
 `scope` holds curator to that. This project carries `tools/build.nim` already, so declaration
 has home waiting.
+
+## Re-audit, 2026-09-08, deterministic verdicts
+
+Audited by a curator against the rule that a check gives the same verdict on the same code,
+and that where it does not, the check is what is wrong.
+
+This project complies today. Its sampled suites seed their generators explicitly —
+`tests/tlaws.nim` uses `initRand(7)` and `initRand(11)` — so each run draws the same corpus,
+and nothing in the suites reads a clock or a display. Nothing needed correcting.
+
+It binds where this project is least protected: `design/shot.nim` drives a browser through
+Playwright, and no `drive` verb enrols it in the runner's driven job, so that layer is neither
+checked nor covered by this rule's evidence today. Whatever it becomes, it should settle on
+what moved rather than on what has stopped changing.
