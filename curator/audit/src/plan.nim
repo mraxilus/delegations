@@ -118,6 +118,20 @@ proc systemPackages*(root: string, tree: Tree, dirs: openArray[string]): seq[str
   systemOf(root, targets).sorted
 
 
+proc repositorySystem*(root: string, tree: Tree, dirs: openArray[string]): seq[string] =
+  ## Read what whole machine needs: koch's own packages, plus every named project's, sorted.
+  ##   Answer to "what must be installed before any of this runs" is one command rather than
+  ##   prose somewhere, which is what rule koch enforces asks of every project and what koch
+  ##   itself did not keep (repository issue 78).
+  ##   koch's own are unconditional; project's arrive by that project declaring them, so caller
+  ##   naming one project gets that project's alone and is served by `systemPackages`.
+  var names: seq[string]
+  for (package, _) in KOCH_SYSTEM: names.add package
+  for package in systemPackages(root, tree, dirs):
+    if package notin names: names.add package
+  names.sorted
+
+
 proc typeJobs*(root: string, tree: Tree, dirs: openArray[string]): seq[Finding] =
   ## Restore node tools and type-check every project carrying them.
   ##   No pin is resolved and no toolchain fetched: `tools/build.nim` compiles no project

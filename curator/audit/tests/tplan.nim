@@ -7,7 +7,7 @@ joinable: true
 ## Replicate scoped test selection of `plan.nim` header and CURATOR.md checks reference.
 
 import std/[json, options, unittest]
-import ../src/plan
+import ../src/[plan, projects]
 import ./fixtures
 
 
@@ -139,6 +139,17 @@ suite "Plan":
     check tree.sweepJobs([ALPHA_DIR & "/PROVENANCE.md"]).len == 0  # stamps only
     check tree.sweepJobs(["README.md"]).len == 0  # root prose only
     check SWEEP_DAYS == 7  # window matches weekly cron in check.yml
+
+  test "koch declares what it needs, as the rule it enforces asks of every project":
+    # Repository issue 78: koch held every project to declaration it kept only in prose.
+    #   No project here declares anything, so what comes back is koch's own alone -- which is
+    #   what makes this readable without running any project's verb.
+    check repositorySystem(".", goodTree(), newSeq[string]()) == @["curl", "git"]
+    check KOCH_SYSTEM.len == 2
+    for (package, why) in KOCH_SYSTEM:
+      check package.len > 0
+      check why.len > 0  # reason in field outlives one in comment (CONTRIBUTOR.md)
+      check ' ' notin package  # verb prints bare names; reason would arrive as package name
 
   test "plan renders as matrix entries CI reads":
     let node = parseJson(goodTree().jobs([ALPHA_DIR & "/src/alpha.nim"]).render)

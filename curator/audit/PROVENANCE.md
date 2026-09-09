@@ -744,6 +744,24 @@ that row rather than replacing it, and neither predicts the other.
   largest saving left, and the only cache question whose risk is correctness rather than
   minutes; it needs driving against a deliberately stale cache before adoption or refusal.
 - Whether caching apt archives is worth it, now the install step is measured above.
-- Where koch's own system dependencies are declared. The rule this project enforces asks each
-  project to declare them as data in its own driver; curator projects carry no driver, so koch's
-  are prose in `README.md`, which the same rule calls insufficient.
+**koch declares its own system dependencies, as the rule it enforces asks of every project.**
+`KOCH_SYSTEM` in `projects.nim` pairs each with its reason -- git, since tree is what git lists
+and `ci` fetches base to compare against; curl, since compiler pin nothing on machine serves is
+downloaded. `koch system` with no project prints those and every project's, unscoped, so one
+command answers what machine needs before any of this runs; naming project keeps its old meaning,
+which is what runner asks per matrix job.
+  Nim is deliberately absent: it is toolchain koch runs under rather than package machine
+  installs, and `compilers.nim` resolves each pin itself. npm is absent for different reason --
+  it is needed where project carries node manifest, so it belongs to that project, and
+  `restoreNode` already reports its absence by name.
+  **`README.md` stopped listing them, which is what actually closed gap.** Rule's complaint was
+  prose that decays, and second copy is what decays; README now points at verb rather than
+  naming packages, so declaration is only statement and nothing can drift from it. That is why
+  no check was written to hold two together: there is no second thing to hold.
+  Rejected: stating exemption in `CONTRIBUTOR.md` instead, which was cheaper and was earlier
+  curator's lean. It would have left rule true and repository still answering its own question in
+  prose; and `koch system` already existed, so this invented no mechanism -- bare form previously
+  answered for changed projects, which nothing ever asked it.
+  Cost: koch's two are unconditional, so machine needing neither still installs both. Both are
+  already declared by `rga_visualiser` for its own reasons, so union is unchanged today
+  (repository issue 78).

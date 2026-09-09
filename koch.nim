@@ -149,9 +149,14 @@ proc run(options: Options): int =
     let tree = options.root.readTree
     found = drivenJobs(options.root, tree, options.plannedJobs(tree))
   of "system":
+    # Named project answers for that project, which is what runner asks per matrix job.
+    #   Named none answers for machine: koch's own packages and every project's, unscoped,
+    #   since question is what must be installed rather than what one change touched.
     let tree = options.root.readTree
-    for package in systemPackages(options.root, tree, options.scopedDirsOf(tree)):
-      echo package
+    let named =
+      if options.project.len > 0: systemPackages(options.root, tree, options.dirsOf(tree))
+      else: repositorySystem(options.root, tree, tree.projectDirs)
+    for package in named: echo package
     return 0
   of "tests":
     let tree = options.root.readTree

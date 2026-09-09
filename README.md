@@ -86,9 +86,10 @@ it names projects rather than checking them.
 
 Everything is driven by `koch.nim`, a compiled Nim program as in Nim's own repository:
 `nim r koch ci` runs the same checks locally against a fresh `origin/main`, and every pull
-request passes it before it is opened. It needs git, curl and any Nim that builds koch, plus npm
-where a project carries a node manifest and whatever a project's own `system` verb declares
-where it carries a `drive` one. Each project's pinned compiler is resolved from `PATH`, a cache
+request passes it before it is opened. `nim r koch system` prints what a machine needs installed
+before any of it runs — koch's own packages and every project's, one per line, so it pipes
+straight into a package manager; any Nim that builds koch is the only thing it cannot name for
+you. Each project's pinned compiler is resolved from `PATH`, a cache
 or a download, so one machine runs every project's suites whatever they pin, and a weekly run
 compiles them all. Dependencies are per project with Atlas; lock files are committed, checkouts
 never.
