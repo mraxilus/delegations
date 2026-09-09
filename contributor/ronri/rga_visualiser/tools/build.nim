@@ -74,11 +74,12 @@ const
     ## Desktop binary that verb writes; never committed, since `.gitignore` covers `bin/`.
   DIR_IMGUI = "deps" / "imgui"
     ## Dear ImGui checkout desktop front-end compiles into itself; see `gui.PATH_IMGUI`.
-  VERSION_SDL3 = "3.2.31"
-    ## Version SDL3 must report through `pkg-config`, zlib licence.
-    ##   Not release: it is what head of `release-3.2.x` reports, and that series releases on
-    ##   even patch numbers alone, so this names no bytes. Queued as repository issue 90;
-    ##   PROVENANCE.md carries evidence.
+  VERSION_SDL3 = "3.2.30"
+    ## Release SDL3 must report through `pkg-config`, zlib licence.
+    ##   Names tag rather than version alone: `release-` & this is `release-3.2.30`, which
+    ##   `git clone --branch` resolves, at commit `f5e5f658`. That series releases on even patch
+    ##   numbers alone, so odd one names no tag and no bytes -- which is what 3.2.31 did, and
+    ##   what repository issue 90 was.
     ##   Built from source rather than installed: Ubuntu 24.04 packages SDL2 alone, and
     ##   `apt-get install libsdl3-dev` fails on it outright. Distributions carrying package
     ##   exist, but build cannot depend on which one runs it.
@@ -135,7 +136,7 @@ const
     ("curl", "fetch faces `assets` pins; build shells out to it"),
     ("coreutils", "`sha256sum` verifying those pins and `base64` inlining them"),
     ("nodejs", "run type-checker `types` drives and harness `drive` runs"),
-    ("git", "clone Dear ImGui at its commit and SDL3 at its branch, both checked"),
+    ("git", "clone Dear ImGui and SDL3 at commit and tag `desktop` checks them at"),
     ("cmake", "build SDL3 from source, since no package of it exists on Ubuntu 24.04"),
     ("pkg-config", "read version of that SDL3, which `desktop` checks before compiling"),
     ("fonts-noto-core", "faces desktop front-end loads by path; Dear ImGui aborts on absent one"),
@@ -467,13 +468,11 @@ proc checkSdl3() =
   ## Raise unless SDL3 on this machine reports version pinned for it.
   ##   `pkg-config` rather than header read: SDL3 installs its own `.pc`, and that is where
   ##   version it was built as is stated rather than inferred.
-  ##   Message names branch rather than `release-` & version: no such tag exists, since that
-  ##   series releases on even patch numbers alone (`VERSION_SDL3` says more).
   let (written, code) = execCmdEx("pkg-config --modversion sdl3")
   if code != 0:
     raise newException(OSError,
       "No SDL3 found by `pkg-config`; build " & VERSION_SDL3 & " from source with `git clone" &
-      " --branch release-3.2.x https://github.com/libsdl-org/SDL.git && cmake" &
+      " --branch release-" & VERSION_SDL3 & " https://github.com/libsdl-org/SDL.git && cmake" &
       " -S SDL -B SDL/build && cmake --build SDL/build && sudo cmake --install SDL/build`.")
   let got = written.strip
   if got != VERSION_SDL3:
