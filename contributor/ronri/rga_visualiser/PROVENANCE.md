@@ -755,8 +755,12 @@ tab added there is driven without being listed twice (Article I.4).
   neither checkout present and nothing built: **1 m 27 s** for the whole of `driven` -- both
   clones, SDL3 configured, built and installed, the binary compiled, and twelve runs. Warm:
   **29.3 s**, since a prefix already reporting the pinned version is kept rather than rebuilt.
-  The runner is slower than this container and its figure is its own; it belongs beside a run
-  there rather than quoted from here.
+  **On the runner, measured rather than predicted**: the `driven` step went from **215 s** with
+  the browser half alone (139 checks, run 34412019616) to **411 s** with both (157 checks, run
+  34414563854), so the desktop half costs about **3 m 15 s** there against 1 m 27 s here. One run
+  against one run on the same image and the same day, which is a pair rather than a rate.
+  Where that lands against the rest of the job is the curator's to weigh; repository issue 79
+  carries what the job already spends.
 
 *Checked.* Verified by running: 18 of 18 pass under Xvfb on software GL, 2026-09-09, from a tree
 carrying neither checkout and no SDL3 anywhere on the machine -- `driven` fetched and built both
