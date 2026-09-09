@@ -129,8 +129,9 @@ Every law under test through testament on the pinned commit, in three configurat
 page has been built and looked at, its type surface is checked, and a Playwright harness
 drives 137 checks over held keys, the wheel, mouse pan and touch — see Driven Checks in
 `PROVENANCE.md`. The desktop application has been built, one frame of it looked at, and its own
-twelve scripted runs driven headless under Xvfb — 19 checks, all passing. Those runs need SDL3,
-which no runner can install, so `drive` skips them there by name rather than silently.
+twelve scripted runs driven headless under Xvfb — 18 checks, all passing. Those runs need SDL3,
+which arrives as a source build rather than a package, so `drive` skips them on a runner by name
+rather than silently.
 
 Unreviewed by a human: nothing here has been
 read line by line, and no human has driven either front-end or seen it on real graphics
