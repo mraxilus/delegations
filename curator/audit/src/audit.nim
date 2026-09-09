@@ -15,7 +15,7 @@
 import std/[options, sequtils, sets, strutils]
 import ./[
   findings, kinds, prose, form, justification, checker, layout, provenance, glossary,
-  dependencies, toolchain, plan,
+  dependencies, toolchain, plan, workflows,
 ]
 
 export layout.Tree, layout.Entry, layout.projectDirs
@@ -58,6 +58,11 @@ proc auditTree*(tree: Tree): seq[Finding] =
   if driver.isSome:
     for e in tree:
       if e.path == WORKFLOW_PATH: result.add checkDriver(e.content, driver.get)
+
+  # Every workflow, not just driver's: grant its steps outrun is `403` on runner and nothing
+  #   readable here.
+  for e in tree:
+    if e.path.startsWith(WORKFLOW_DIR): result.add checkScopes(e.path, e.content)
 
   # Checker holds itself to rules it holds everything else to, from tree as git shows it.
   var check_paths, check_sources: seq[string]
