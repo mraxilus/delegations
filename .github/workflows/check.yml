@@ -210,13 +210,6 @@ jobs:
             echo "$PACKAGES" | xargs sudo apt-get install -y --no-install-recommends
           fi
 
-      # Harness reads browser from environment and otherwise falls through to Playwright's
-      #   own, which nothing installed here; so name what was just installed, found rather
-      #   than written down. Absent browser fails here, naming it, rather than inside harness.
-      - run: |
-          CHROMIUM="$(command -v chromium || command -v chromium-browser)"
-          echo "RGA_CHROMIUM=$CHROMIUM" >> "$GITHUB_ENV"
-
       - id: locked
         env:
           PROJECT: ${{ matrix.dir }}
