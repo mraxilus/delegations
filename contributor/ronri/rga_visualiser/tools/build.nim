@@ -139,6 +139,7 @@ const
     ("git", "clone Dear ImGui at its commit and SDL3 at its branch, both checked"),
     ("cmake", "build SDL3 from source, since no package of it exists on Ubuntu 24.04"),
     ("pkg-config", "read version of that SDL3, which `desktop` checks before compiling"),
+    ("fonts-noto-core", "faces desktop front-end loads by path; Dear ImGui aborts on absent one"),
     ("libgl-dev", "OpenGL headers and loader `src/desktop/opengl.nim` binds"),
     ("zlib1g-dev", "deflate and CRC PNG export in `src/desktop/image.nim` writes"),
     ("xvfb", "display headless `--drive-*` runs push real SDL events at"),
