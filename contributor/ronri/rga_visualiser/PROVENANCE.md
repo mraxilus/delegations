@@ -592,6 +592,15 @@ fails on it outright. SDL3 is therefore built from source and installed, at `3.2
 licence, and `checkSdl3` reads what `pkg-config` reports before compiling anything.
   Pinned exactly rather than as floor: 3.2.31 is what this front-end was compiled and drawn
   against, and floor would claim reach across releases nothing here has tried.
+  **3.2.31 is a branch snapshot rather than a release, so the pin names no bytes.** Verified
+  2026-09-09 with `git ls-remote`: there is no `release-3.2.31` tag or branch — that series
+  releases on even patch numbers alone, latest `release-3.2.30` (`f5e5f658`) — while the head of
+  `release-3.2.x` (`402fc52a`, 2026-05-27) reads 3.2.31 in `SDL_version.h`. Every commit on that
+  branch reports 3.2.31 until 3.2.32 releases, and `pkg-config --modversion` is all `checkSdl3`
+  reads, so the check cannot tell two of them apart. Dear ImGui below carries a commit and this
+  does not. Moving it to a release is a rebuild rather than an edit — the binary has to be
+  rebuilt and its 19 checks re-driven before the line moves — so it is queued as repository
+  issue 90, and `README.md` and `checkSdl3` meanwhile quote the branch, which resolves.
   Found by checking rather than by assuming: prototype's own `dependencies.list` named
   `libsdl3-dev`, and this port carried that name into `SYSTEM` -- where it would have failed
   runner's install step, since that step installs from this declaration. Package does not
