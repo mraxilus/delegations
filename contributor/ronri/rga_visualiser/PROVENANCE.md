@@ -613,6 +613,15 @@ libsdl3-dev` fails on it outright. SDL3 is cloned at its tag and built into `bui
 prefix inside the tree, so no step needs root and `clean` removes it like any other product --
 and `checkSdl3` reads what `pkg-config` reports there before compiling anything, at `3.2.30`,
 zlib licence.
+  **SDL3's own build dependencies are declared too, and the runner is what found them.** Its
+  cmake refuses outright where it can find neither X11 nor Wayland development libraries, since
+  a build that cannot open a window is not one anybody wanted. `libx11-dev` arrives beneath
+  `libgl-dev` on this container and `libxext-dev` does not, so the first machine to try without
+  it was the runner. Both are declared now rather than left to arrive under something else --
+  the same lesson the faces taught, one layer down.
+  Verified by removing it: with `libxext-dev` gone and `libx11-dev` still present, cmake reports
+  `SDL_X11 (Wanted: ON): OFF` and exits 1, which is the runner's error exactly; restored, it
+  reports `ON` and exits 0.
   Cost of that prefix is `-rpath`: the loader finds a library outside its search path only when
   the binary names it, so `desktop` passes an absolute path derived from the checkout. Derived
   rather than written down, which is the distinction CONTRIBUTOR.md draws -- a committed

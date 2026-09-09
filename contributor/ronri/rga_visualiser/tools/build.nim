@@ -152,6 +152,8 @@ const
     ("cmake", "build SDL3 from source, since no package of it exists on Ubuntu 24.04"),
     ("pkg-config", "read version of that SDL3, which `desktop` checks before compiling"),
     ("fonts-noto-core", "faces desktop front-end loads by path; Dear ImGui aborts on absent one"),
+    ("libx11-dev", "X11 headers SDL3 builds its video backend from; window is X11 one"),
+    ("libxext-dev", "X extensions that backend also needs, and without which build refuses"),
     ("libgl-dev", "OpenGL headers and loader `src/desktop/opengl.nim` binds"),
     ("zlib1g-dev", "deflate and CRC PNG export in `src/desktop/image.nim` writes"),
     ("xvfb", "display headless `--drive-*` runs push real SDL events at"),
