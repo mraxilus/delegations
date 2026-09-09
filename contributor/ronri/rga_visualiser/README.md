@@ -53,10 +53,12 @@ links against SDL3, OpenGL and zlib, and its headless runs need Xvfb and a softw
 
 Two of its dependencies do not arrive as packages, so both are pinned by version and the
 build refuses either when wrong. **SDL3** has no `libsdl3-dev` on Ubuntu 24.04 — that release
-carries SDL2 only — so build 3.2.31 from source:
+carries SDL2 only — so build 3.2.31 from source. That version is the head of the
+`release-3.2.x` branch rather than a release of its own, which is a weaker pin than Dear ImGui's
+commit below and is queued for correction as issue 90:
 
 ```sh
-git clone --branch release-3.2.31 https://github.com/libsdl-org/SDL.git
+git clone --branch release-3.2.x https://github.com/libsdl-org/SDL.git
 cmake -S SDL -B SDL/build && cmake --build SDL/build && sudo cmake --install SDL/build
 ```
 

@@ -13,7 +13,7 @@
 ##   | types    | declare, then type-check page's scripts and harness against it         |
 ##   | web      | declare, compile bridge through JS backend, type-check and emit        |
 ##   |          | TypeScript, inline faces, fold everything into one self-contained page |
-##   | drive    | fetch faces, build page, drive it and report every check it runs      |
+##   | drive    | fetch faces and browser, build page, drive it, report every check      |
 ##   | desktop  | compile desktop front-end through `cpp` backend, into `bin/`           |
 ##   | driven   | build desktop front-end, drive it through every scripted run, report   |
 ##   | assets   | fetch vendored faces page embeds, and verify each against its pin      |
@@ -32,8 +32,8 @@
 ##     hoisted, so that order is load-bearing.
 ##
 ##   Cost: driver runs from project directory, since every path here is relative to it.
-##   Cost: `web` needs node and npm alongside Nim; `assets`, and `drive` through it, need
-##     network on cold tree and none on warm one.
+##   Cost: `web` needs node and npm alongside Nim; `assets` and `browser`, and `drive`
+##     through both, need network on cold tree and none on warm one.
 ##   Cost: `assets` and `web` need `sha256sum`, for reason `digestOf` gives.
 ##   Cost: `desktop` needs system libraries `SYSTEM` names, and Dear ImGui checkout standing
 ##     at `COMMIT_IMGUI`, which it refuses to build without.
@@ -75,7 +75,10 @@ const
   DIR_IMGUI = "deps" / "imgui"
     ## Dear ImGui checkout desktop front-end compiles into itself; see `gui.PATH_IMGUI`.
   VERSION_SDL3 = "3.2.31"
-    ## Release SDL3 must report through `pkg-config`, zlib licence.
+    ## Version SDL3 must report through `pkg-config`, zlib licence.
+    ##   Not release: it is what head of `release-3.2.x` reports, and that series releases on
+    ##   even patch numbers alone, so this names no bytes. Queued as repository issue 90;
+    ##   PROVENANCE.md carries evidence.
     ##   Built from source rather than installed: Ubuntu 24.04 packages SDL2 alone, and
     ##   `apt-get install libsdl3-dev` fails on it outright. Distributions carrying package
     ##   exist, but build cannot depend on which one runs it.
@@ -132,8 +135,8 @@ const
     ("curl", "fetch faces `assets` pins; build shells out to it"),
     ("coreutils", "`sha256sum` verifying those pins and `base64` inlining them"),
     ("nodejs", "run type-checker `types` drives and harness `drive` runs"),
-    ("chromium", "browser `drive` drives; harness takes its path from environment"),
-    ("git", "clone Dear ImGui and SDL3 at commits `desktop` pins them to"),
+    ("chromium", "browser harness falls back to where Playwright's own build is absent"),
+    ("git", "clone Dear ImGui at its commit and SDL3 at its branch, both checked"),
     ("cmake", "build SDL3 from source, since no package of it exists on Ubuntu 24.04"),
     ("pkg-config", "read version of that SDL3, which `desktop` checks before compiling"),
     ("libgl-dev", "OpenGL headers and loader `src/desktop/opengl.nim` binds"),
@@ -374,6 +377,26 @@ proc assets() =
   echo "Wrote ", DIR_FONTS, " (", FACES.len, " faces, every digest matched)."
 
 
+proc browser() =
+  ## Fetch Chromium Playwright pins, unless environment names browser outright.
+  ##   Harness drives Playwright's own build by default, and `tools/drive/main.ts` says in
+  ##   what order; nothing else on machine installs it, so this satisfies its own
+  ##   precondition exactly as `assets` does for faces.
+  ##   Pin is version rather than digest: `package-lock.json` fixes `@playwright/test` and
+  ##   version fixes browser revision, but Playwright publishes no checksum for archive it
+  ##   serves. So bytes arrive on TLS alone, as compiler tarballs do, and PROVENANCE.md
+  ##   records that rather than implying pin stronger than one there is.
+  ##   Skipped where `RGA_CHROMIUM` names one: harness reads that first, so second browser
+  ##   would be fetched for nobody (Article VII.3). Wrong guess here costs fetch, never wrong
+  ##   browser -- harness resolves, and this only provides.
+  ##   Costs nothing warm: `playwright install` keeps build already at pinned revision.
+  let named = getEnv("RGA_CHROMIUM")
+  if named.len > 0:
+    echo "Kept ", named, ", named by RGA_CHROMIUM"
+    return
+  run("npx", ["playwright", "install", "chromium"])
+
+
 proc web() =
   ## Assemble whole page: declarations, type-check, bridge, scripts, faces, markup.
   ##   Fails with reason rather than emitting broken page: absent face renders as box and
@@ -444,11 +467,13 @@ proc checkSdl3() =
   ## Raise unless SDL3 on this machine reports version pinned for it.
   ##   `pkg-config` rather than header read: SDL3 installs its own `.pc`, and that is where
   ##   version it was built as is stated rather than inferred.
+  ##   Message names branch rather than `release-` & version: no such tag exists, since that
+  ##   series releases on even patch numbers alone (`VERSION_SDL3` says more).
   let (written, code) = execCmdEx("pkg-config --modversion sdl3")
   if code != 0:
     raise newException(OSError,
       "No SDL3 found by `pkg-config`; build " & VERSION_SDL3 & " from source with `git clone" &
-      " --branch release-" & VERSION_SDL3 & " https://github.com/libsdl-org/SDL.git && cmake" &
+      " --branch release-3.2.x https://github.com/libsdl-org/SDL.git && cmake" &
       " -S SDL -B SDL/build && cmake --build SDL/build && sudo cmake --install SDL/build`.")
   let got = written.strip
   if got != VERSION_SDL3:
@@ -536,7 +561,10 @@ proc drive() =
   ##   step and stops at embedding, which is one line to prevent (repository issue 47).
   ##   `web` keeps refusing absent face by name instead, since caller reaching for it directly
   ##   is asking to build page rather than to be given one.
-  ##   Costs nothing warm: `assets` skips every face already carrying its pinned digest.
+  ##   Fetches browser for same reason it fetches faces: harness drives Playwright's own
+  ##   pinned build by default, and nothing else on machine installs it.
+  ##   Costs nothing warm: `assets` skips every face already carrying its pinned digest, and
+  ##   `browser` skips build already at pinned revision.
   ##   Drives desktop front-end too, where machine carries what it needs: both front-ends draw
   ##   same scene from same core, and check that runs on one alone is check nobody runs on
   ##   other. `driven` alone drives desktop by itself.
@@ -546,6 +574,7 @@ proc drive() =
   ##   silent, since check nobody is told was skipped is check nobody knows is missing.
   assets()
   web()
+  browser()
   run("node", [BUILD / "drive" / "main.js"])
   try:
     checkSdl3()

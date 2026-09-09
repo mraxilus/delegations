@@ -224,18 +224,39 @@ what reader sees, and it is immune to buffer being taken after frame that filled
   of 1,080,000 pixels lit, no GL error, default framebuffer bound, from inside and outside
   drawing frame alike. Runner's browser is different binary (see below) and was not obtainable
   here, so timing account above fits evidence rather than being driven against reproduction.
-  **Verified on runner**: reader reads scene there, 138 of 138 on run 34218424425, after two
-  runs that did not. Rate is what stays open -- old reader failed one run in three, so single
-  green says little and several pushes on `main` are what settle it.
+  **Verified on runner**: the reader reads the scene there, 138 of 138 on run 34218424425,
+  after two runs that did not.
+  **The rate is not settled, and the arithmetic says so.** Three runner runs have driven this
+  reader — 34218424425 and 34287703984 on the pull request, 34294113589 on `main` — and all
+  three are green. Against the old reader's one failure in three, three greens in a row is what
+  you would see 30% of the time by luck alone, so this is consistent with the cause being gone
+  and equally consistent with its not being. More pushes are what shorten that; nothing else
+  here can.
 
-**`chromium` in `dependencies.list` is unpinned, and on Ubuntu 24.04 it is snap.** Verified
-with `apt-cache showpkg chromium`: name carries no version of its own and is provided solely by
-`chromium-browser 2:1snap1-0ubuntu2`, snap transitional shim. So runner's harness drives
-whatever build snap store serves that day, while this environment drives Playwright's own
-pinned Chromium -- and every other dependency here is pinned by commit, version or digest.
-Checks that pin bands and pixels against browser nobody chose is what that costs.
-  Left alone here because remedy is not this project's alone: workflow finds browser with
-  `command -v chromium` and would fail were package dropped. Raised for curator.
+**The harness resolves its own browser, and drives Playwright's pinned build by default.**
+Order is what `RGA_CHROMIUM` names, else the build `package-lock.json` pins, else `chromium`
+on `PATH`; `drive` fetches the pinned build first, exactly as it fetches faces. The lock fixes
+`@playwright/test` at 1.63.0 and that version fixes the browser revision (1243 today), so this
+machine and the runner drive one binary rather than two — which is the property a harness
+comparing pixels wants. Ruled on repository issue 77: the curator's first ask was `PATH` first,
+and the evidence below moved it.
+  **The pin is a version, not a digest.** Playwright publishes no checksum for the archive it
+  serves, so those bytes arrive on TLS alone, as the compiler tarballs do. Stated rather than
+  implied. Rejected: digesting the extracted binary, which differs by platform and architecture,
+  so pinning one would make the project unbuildable anywhere else without editing committed
+  source. Measured on this container, 2026-09-09: 11 s cold, 0.8 s warm, since
+  `playwright install` keeps a build already at the pinned revision.
+  **`chromium` on `PATH` is last, and it carries no version.** Verified with
+  `apt-cache showpkg chromium`: on Ubuntu 24.04 the name carries no version of its own and is
+  provided solely by `chromium-browser 2:1snap1-0ubuntu2`, the snap transitional shim. So it is
+  a fallback for a machine that cannot fetch Playwright's, never a choice.
+  **It is still what the runner drives, and that is deliberate.** `.github/workflows/check.yml`
+  exports `RGA_CHROMIUM` naming the snap, and the override is read first, so the browser under
+  the runner's checks is unchanged by this. Dropping `chromium` from `SYSTEM` would fail that
+  step outright — it is a `command -v chromium` whose exit status the step carries — so the
+  package stays until the workflow stops naming it. Both moves are the curator's to land, and
+  the sequencing is theirs: the readback fix goes first and runs on `main` a few times, so a
+  browser change afterwards tests one hypothesis rather than confounding two.
 
   Guard is checked against fixture it stands up itself (Article IX.8): black canvas of its own,
   which is hardest case, since dark scene and no scene look alike. Check runs before any check
@@ -571,6 +592,15 @@ fails on it outright. SDL3 is therefore built from source and installed, at `3.2
 licence, and `checkSdl3` reads what `pkg-config` reports before compiling anything.
   Pinned exactly rather than as floor: 3.2.31 is what this front-end was compiled and drawn
   against, and floor would claim reach across releases nothing here has tried.
+  **3.2.31 is a branch snapshot rather than a release, so the pin names no bytes.** Verified
+  2026-09-09 with `git ls-remote`: there is no `release-3.2.31` tag or branch — that series
+  releases on even patch numbers alone, latest `release-3.2.30` (`f5e5f658`) — while the head of
+  `release-3.2.x` (`402fc52a`, 2026-05-27) reads 3.2.31 in `SDL_version.h`. Every commit on that
+  branch reports 3.2.31 until 3.2.32 releases, and `pkg-config --modversion` is all `checkSdl3`
+  reads, so the check cannot tell two of them apart. Dear ImGui below carries a commit and this
+  does not. Moving it to a release is a rebuild rather than an edit — the binary has to be
+  rebuilt and its 19 checks re-driven before the line moves — so it is queued as repository
+  issue 90, and `README.md` and `checkSdl3` meanwhile quote the branch, which resolves.
   Found by checking rather than by assuming: prototype's own `dependencies.list` named
   `libsdl3-dev`, and this port carried that name into `SYSTEM` -- where it would have failed
   runner's install step, since that step installs from this declaration. Package does not
