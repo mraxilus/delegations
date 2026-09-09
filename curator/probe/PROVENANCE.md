@@ -48,10 +48,11 @@ since no external authority exists. Verified by `tprobe.nim`: 2 matrix rows, 4 t
 ## Toolchain
 
 **Compiler pinned exactly, at the version this project was verified on**:
-`requires "nim == 2.2.4"` in `probe.nimble`. An exact pin rather than a lower bound, because
+`requires "nim == 2.2.12"` in `probe.nimble`. An exact pin rather than a lower bound, because
 no single compiler serves every project here and a range cannot say which one a suite passed
-on. Nothing has asked this project to move, so the pin records that rather than a version
-nobody tried. CI installs it for this project alone, in its own job.
+on. Moved from 2.2.4 with `curator/audit` when a sweep found that pin seventeen months and
+five patch releases stale; the two suites were run on 2.2.12 before it moved, in 10.0 s. CI
+installs it for this project alone, in its own job.
 
 ## Figures
 

@@ -278,8 +278,8 @@ prose.
 "nim == <version>"` in the project's nimble file, read through the same `requireLiterals` scan
 `dependencies.nim` uses, so requirements are parsed in one place. That no single version serves
 every project is measured, not feared: `rga_visualiser` depends on a library 2.2.4 cannot
-compile, and `dance_ontology` crashes the compiler itself on 2.2.8 and 2.2.10 in six of its
-eleven suites.
+compile, and `dance_ontology` crashes the compiler itself on 2.2.8, 2.2.10 and 2.2.12 in
+six of its twelve suites (repository issue 106).
 
 - Rejected: one pin for the repository, which cannot hold both; `>=`, which cannot express the
   upper bound `dance_ontology` needs nor say which compiler a suite passed on; a `.nim-version`
@@ -305,6 +305,24 @@ and runs the whole-tree pass, and `checkDriver` fails the audit unless it equals
 `curator/audit`'s pin, because koch compiles that project's modules — the same derived-view rule
 `layout.nim` applies to the domain table. Verified by driven check: `NIM_VERSION` of `2.2.6`
 against a `2.2.4` pin reports one finding at the workflow, and restoring it clears.
+
+**A pin moves on evidence, and the evidence is a run rather than a release note.** The curator
+projects moved `2.2.4` → `2.2.12` on 2026-09-09, five patch releases and seventeen months, after
+a sweep for versions nothing here should still be running. No release in that series carries a
+CVE — Nim assigns none — so the reason is what the notes carry between 2.2.6 and 2.2.12: SIGSEGV
+under ARC/ORC and under refc, a use after free, an overlapping `copyMem`, and overflow checks
+that could be escaped.
+
+- Verified by running, not by reading: 23 audit suites and 2 probe suites pass on 2.2.12, in
+  41.0 s and 10.0 s on this container, before the pin was pushed anywhere.
+- `dance_ontology` does not follow, and its `2.2.4` is an upper bound rather than neglect. The
+  cause is now measured rather than assumed: `opcAddFloat` at `vm.nim:1095` reads an operand the
+  VM left `rkInt`, because since 2.2.8 a `func` whose implicit `float` result is read by `+=`
+  before it is ever assigned gets an int register for it. Five lines reproduce it with nothing
+  of that project in them, `result = 0.0` first is enough to avoid it, and all twelve of its
+  suites then pass on 2.2.12. Handed over as repository issue 106; the line is theirs to write.
+- Cost: koch's own modules compile under both pins for as long as the two differ, since every
+  project's job installs its own. The matrix is what proves that, rather than this paragraph.
 
 **Koch resolves each pin to its own compiler, and fetches one it lacks.** `PATH` when it already
 serves, then `~/.cache/koch/nim/<pin>/bin`, then a fetch: a release as a tarball, and a commit —
