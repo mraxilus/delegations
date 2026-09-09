@@ -14,7 +14,7 @@
 ##   | web      | declare, compile bridge through JS backend, type-check and emit        |
 ##   |          | TypeScript, inline faces, fold everything into one self-contained page |
 ##   | drive    | fetch faces and browser, build page, drive it, report every check      |
-##   | desktop  | compile desktop front-end through `cpp` backend, into `bin/`           |
+##   | desktop  | fetch SDL3 and Dear ImGui, compile desktop front-end into `bin/`       |
 ##   | driven   | build desktop front-end, drive it through every scripted run, report   |
 ##   | assets   | fetch vendored faces page embeds, and verify each against its pin      |
 ##   | system   | print system packages build needs, one per line, for caller to install |
@@ -35,8 +35,8 @@
 ##   Cost: `web` needs node and npm alongside Nim; `assets` and `browser`, and `drive`
 ##     through both, need network on cold tree and none on warm one.
 ##   Cost: `assets` and `web` need `sha256sum`, for reason `digestOf` gives.
-##   Cost: `desktop` needs system libraries `SYSTEM` names, and Dear ImGui checkout standing
-##     at `COMMIT_IMGUI`, which it refuses to build without.
+##   Cost: `desktop` needs system libraries `SYSTEM` names, and network on cold tree: it
+##     fetches SDL3 and Dear ImGui itself, and refuses to build against wrong version of either.
 ##   Cost: `driven` needs display; it borrows Xvfb where environment names none.
 
 {.experimental: "strictFuncs".}
@@ -74,6 +74,18 @@ const
     ## Desktop binary that verb writes; never committed, since `.gitignore` covers `bin/`.
   DIR_IMGUI = "deps" / "imgui"
     ## Dear ImGui checkout desktop front-end compiles into itself; see `gui.PATH_IMGUI`.
+  URL_IMGUI = "https://github.com/ocornut/imgui.git"
+    ## Origin `imgui` clones from; PROVENANCE.md records it with licence.
+  BRANCH_IMGUI = "docking"
+    ## Branch carrying `COMMIT_IMGUI`; master lacks docking `gui` asks for.
+  DIR_SDL3 = "deps" / "sdl3"
+    ## SDL3 checkout `sdl3` builds, beside Dear ImGui's and never committed (Article XI.3).
+  DIR_SDL3_BUILD = BUILD / "sdl3-build"
+    ## Directory cmake configures SDL3 into.
+  DIR_SDL3_PREFIX = BUILD / "sdl3"
+    ## Prefix SDL3 installs into, so build needs no root and writes nothing outside tree.
+  URL_SDL3 = "https://github.com/libsdl-org/SDL.git"
+    ## Origin `sdl3` clones from; PROVENANCE.md records it with licence.
   VERSION_SDL3 = "3.2.30"
     ## Release SDL3 must report through `pkg-config`, zlib licence.
     ##   Names tag rather than version alone: `release-` & this is `release-3.2.30`, which
@@ -443,6 +455,21 @@ proc web() =
   echo "Wrote ", PATH_PAGE, " (", page.len, " bytes)."
 
 
+proc imgui() =
+  ## Clone Dear ImGui at pinned commit, unless checkout already stands somewhere.
+  ##   Verb fetches what it compiles rather than asking caller to, for reason `drive` fetches
+  ##   faces: check that first wants command run by hand is check runner will not run
+  ##   (CONTRIBUTOR.md, "One command drives it").
+  ##   Leaves existing checkout alone rather than resetting it: `checkImgui` reads what is
+  ##   there next and refuses wrong commit by name, so contributor pointing this at their own
+  ##   clone is told rather than overwritten.
+  ##   `--filter=blob:none` rather than `--depth`: pinned commit is not branch head, and
+  ##   shallow clone cannot reach it. Partial clone fetches blobs that checkout needs alone.
+  if dirExists(DIR_IMGUI): return
+  run("git", ["clone", "--filter=blob:none", "--branch", BRANCH_IMGUI, URL_IMGUI, DIR_IMGUI])
+  run("git", ["-C", DIR_IMGUI, "checkout", "--detach", COMMIT_IMGUI])
+
+
 proc checkImgui() =
   ## Raise unless Dear ImGui checkout stands at commit pinned for it.
   ##   Refuses by name rather than compiling whatever is there, for reason `checkFace` gives:
@@ -464,17 +491,55 @@ proc checkImgui() =
       got & "`.")
 
 
-proc checkSdl3() =
-  ## Raise unless SDL3 on this machine reports version pinned for it.
+proc versionSdl3(): string =
+  ## Read version `pkg-config` reports for SDL3, workspace prefix first; empty where none.
   ##   `pkg-config` rather than header read: SDL3 installs its own `.pc`, and that is where
   ##   version it was built as is stated rather than inferred.
-  let (written, code) = execCmdEx("pkg-config --modversion sdl3")
-  if code != 0:
+  ##   Prefix leads search path so build this drove wins over one machine happens to carry.
+  ##   Machine already carrying pinned version is served by it, which is what keeps `sdl3`
+  ##   from rebuilding what contributor installed.
+  let path_config = getCurrentDir() / DIR_SDL3_PREFIX / "lib" / "pkgconfig"
+  let (written, code) = execCmdEx(
+    "PKG_CONFIG_PATH=" & quoteShell(path_config) & ":$PKG_CONFIG_PATH pkg-config --modversion sdl3"
+  )
+  if code != 0: "" else: written.strip
+
+
+proc sdl3() =
+  ## Build SDL3 at pinned tag into `build/`, unless machine already reports that version.
+  ##   No package carries it (see `VERSION_SDL3`), so this is how machine gets one, and verb
+  ##   fetching what it compiles is same rule `assets` follows for faces.
+  ##   Installs into tree rather than over `/usr/local`: build needing root is build CI cannot
+  ##   run unattended without granting it, and prefix under `build/` is removed by `clean`
+  ##   like any other product. Cost is `-rpath` below, since loader would not find library
+  ##   there otherwise.
+  ##   `--depth 1` is safe here where it is not for Dear ImGui: pin is tag, and tag is what
+  ##   shallow clone fetches.
+  ##   Costs nothing warm: already-built prefix reports pinned version and is left alone.
+  let got = versionSdl3()
+  if got == VERSION_SDL3:
+    echo "Kept SDL3 ", VERSION_SDL3, ", already reported by pkg-config"
+    return
+  if not dirExists(DIR_SDL3):
+    run("git", [
+      "clone", "--depth", "1", "--branch", "release-" & VERSION_SDL3, URL_SDL3, DIR_SDL3,
+    ])
+  run("cmake", ["-S", DIR_SDL3, "-B", DIR_SDL3_BUILD, "-DCMAKE_BUILD_TYPE=Release"])
+  run("cmake", ["--build", DIR_SDL3_BUILD, "-j", $countProcessors()])
+  run("cmake", ["--install", DIR_SDL3_BUILD, "--prefix", getCurrentDir() / DIR_SDL3_PREFIX])
+  echo "Built SDL3 ", VERSION_SDL3, " into ", DIR_SDL3_PREFIX
+
+
+proc checkSdl3() =
+  ## Raise unless SDL3 this build reaches reports version pinned for it.
+  ##   Runs after `sdl3`, so it reads what that built or what machine already carried, and
+  ##   refuses either where version misses -- wrong SDL3 is wrong binary, for reason
+  ##   `checkImgui` gives about wrong commit.
+  let got = versionSdl3()
+  if got.len == 0:
     raise newException(OSError,
-      "No SDL3 found by `pkg-config`; build " & VERSION_SDL3 & " from source with `git clone" &
-      " --branch release-" & VERSION_SDL3 & " https://github.com/libsdl-org/SDL.git && cmake" &
-      " -S SDL -B SDL/build && cmake --build SDL/build && sudo cmake --install SDL/build`.")
-  let got = written.strip
+      "No SDL3 found by `pkg-config`, and `sdl3` did not build one; needs `cmake`, `git` and " &
+      "network, all of which `system` declares.")
   if got != VERSION_SDL3:
     raise newException(OSError,
       "SDL3 is not version pinned for it; wanted `" & VERSION_SDL3 & "`, got `" & got & "`.")
@@ -489,12 +554,27 @@ proc desktop() =
   ##   target, test and front-end wants same two.
   ##   Library flags (`-lSDL3`, `-lGL`, `-lz`) stay in modules needing them, so test binary
   ##   importing one links without repeating anything here.
+  ##   Where `sdl3` built into tree, header, library and run-time paths are added here rather
+  ##   than in those modules: which prefix holds SDL3 is this build's answer and changes with
+  ##   checkout, while `-lSDL3` is module's and does not.
+  ##   `-rpath` is absolute and derived, never written down: loader takes no relative path it
+  ##   can trust, and committing one machine's layout is what CONTRIBUTOR.md forbids. Binary is
+  ##   build product beside prefix it names, so pair moves or is rebuilt together.
   ##   No `-d:release`, unlike `web`: this binary is driven and read rather than shipped, and
   ##   every check it carries is `--drive-*` run reporting through assertions release removes.
+  sdl3()
   checkSdl3()
+  imgui()
   checkImgui()
   createDir BIN
-  run("nim", ["cpp", "--hints:off", "-o:" & PATH_DESKTOP_BIN, PATH_DESKTOP_NIM])
+  var args = @["cpp", "--hints:off", "-o:" & PATH_DESKTOP_BIN]
+  if dirExists(DIR_SDL3_PREFIX):
+    let prefix = getCurrentDir() / DIR_SDL3_PREFIX
+    args.add "--passC:-I" & prefix / "include"
+    args.add "--passL:-L" & prefix / "lib"
+    args.add "--passL:-Wl,-rpath," & prefix / "lib"
+  args.add PATH_DESKTOP_NIM
+  run("nim", args)
   echo "Wrote ", PATH_DESKTOP_BIN, "."
 
 
@@ -564,23 +644,17 @@ proc drive() =
   ##   pinned build by default, and nothing else on machine installs it.
   ##   Costs nothing warm: `assets` skips every face already carrying its pinned digest, and
   ##   `browser` skips build already at pinned revision.
-  ##   Drives desktop front-end too, where machine carries what it needs: both front-ends draw
-  ##   same scene from same core, and check that runs on one alone is check nobody runs on
-  ##   other. `driven` alone drives desktop by itself.
-  ##   Where those libraries are absent it says so by name and stops there rather than failing:
-  ##   SDL3 has no package on every distribution (see `VERSION_SDL3`), so runner cannot carry
-  ##   it, and browser half is whole answer that machine can give. Skip is printed rather than
-  ##   silent, since check nobody is told was skipped is check nobody knows is missing.
+  ##   Drives desktop front-end too, and no longer conditionally: both front-ends draw same
+  ##   scene from same core, and check that runs on one machine alone is check nobody runs.
+  ##   `driven` alone drives desktop by itself.
+  ##   Skip is gone, and that is repository issue 91 ruled: `0 finding(s)` over 156 checks and
+  ##   over 138 were two claims wearing one sentence, which rule that check gives same verdict
+  ##   on same code forbids. Absent dependency now fails by name instead, and `desktop` fetches
+  ##   every one this project can fetch, so failing means machine lacks what `system` declares.
   assets()
   web()
   browser()
   run("node", [BUILD / "drive" / "main.js"])
-  try:
-    checkSdl3()
-    checkImgui()
-  except OSError as e:
-    echo "\nSkipped desktop scripted runs -- ", e.msg
-    return
   driven()
 
 proc clean() =
