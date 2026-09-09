@@ -342,12 +342,11 @@ page, in Chromium, software-rendered.
 That harness carries about 140 check sites — 125 reported directly and 15 through band
 reader — and this one 151; neither figure is count of claims, since both carry guard reports
 that fire only where check cannot be set up.
-  **Runner reaches this layer, for browser alone.** `driven` job drives page on every push
-  since issue 47 was ruled, so green there is runner's word rather than someone's report.
-  Desktop half is skipped there for want of SDL3, which `pkg-config` does not find on runner
-  and which is built from source rather than installed: `drive` names skip and exits 0. So
-  desktop's 18 checks stay contributor's to run, and only browser's 138 are confirmed by
-  runner.
+  **Runner reaches this layer, and both halves of it.** `driven` job drives page on every push
+  since issue 47 was ruled, so green there is runner's word rather than someone's report. Desktop
+  half was skipped there for want of SDL3 until `desktop` began fetching and building it, which
+  repository issue 91 ruled: all 157 checks now answer for themselves on runner rather than 139
+  of them.
   **Unmeasured**: figures above are this container's, software-rendered, and say more about
   swiftshader than about any GPU. Bands, not figures, are what checks assert.
 
@@ -607,11 +606,21 @@ rather than file they must know to look for beside source. Algebra and library p
   No `-d:release`, unlike page: this binary is driven and read rather than shipped, and its
   `--drive-*` runs report through assertions release would remove.
 
-**Neither SDL3 nor Dear ImGui arrives as package, so both are pinned by version.** That is
-this repository's rule about anything fetched at build time, and here it is forced rather than
-chosen: Ubuntu 24.04 carries `libsdl2-dev` and no SDL3 at all, so `apt-get install libsdl3-dev`
-fails on it outright. SDL3 is therefore built from source and installed, at `3.2.30`, zlib
-licence, and `checkSdl3` reads what `pkg-config` reports before compiling anything.
+**Neither SDL3 nor Dear ImGui arrives as package, so `desktop` fetches both at their pins.**
+That is this repository's rule about anything fetched at build time, and here it is forced rather
+than chosen: Ubuntu 24.04 carries `libsdl2-dev` and no SDL3 at all, so `apt-get install
+libsdl3-dev` fails on it outright. SDL3 is cloned at its tag and built into `build/sdl3` -- a
+prefix inside the tree, so no step needs root and `clean` removes it like any other product --
+and `checkSdl3` reads what `pkg-config` reports there before compiling anything, at `3.2.30`,
+zlib licence.
+  Cost of that prefix is `-rpath`: the loader finds a library outside its search path only when
+  the binary names it, so `desktop` passes an absolute path derived from the checkout. Derived
+  rather than written down, which is the distinction CONTRIBUTOR.md draws -- a committed
+  `/opt/...` builds on one machine, and `getCurrentDir()` builds on every one. Binary and prefix
+  are both products under the same tree, so they move or are rebuilt together.
+  Rejected: installing over `/usr/local`, which the README told a contributor to do and which
+  needs root. A build needing root is a build CI cannot run without being granted it, and the
+  runner is the machine this had to reach.
   Pinned exactly rather than as floor: floor would claim reach across releases nothing here has
   tried.
   **The pin is a release tag, and `release-` prefixed to it is the ref that fetches it.**
@@ -691,13 +700,15 @@ exercises is wiring.
   after it; every help tab opens with rows in it.
   Counted by running rather than by reading: this said 19 until 2026-09-09, which is 12 sites plus
   7 tabs with the help site counted twice.
-  **These 18 run here and nowhere else, and there are two reasons rather than one.** Runner
-  carries no SDL3 -- `chromium` and its kin come from declaration, and SDL3 has no package there
-  to declare. Second reason was invisible until clean container ran them: front-end loads four
-  faces by absolute path under `/usr/share/fonts/truetype/noto/`, and machine without them aborts
-  every run inside Dear ImGui rather than degrading. `fonts-noto-core` is declared for that
-  reason now. Browser's checks are confirmed by every push; these are confirmed by whoever last
-  ran them.
+  **These 18 run wherever `drive` runs, which is what repository issue 91 ruled.** They ran here
+  and nowhere else while `drive` skipped them for want of SDL3, and `0 finding(s)` over 157 checks
+  and over 139 were two claims wearing one sentence. `desktop` now fetches and builds both
+  libraries itself, so the skip is gone and an absent dependency fails by name.
+  Two things had to move first, and both were found by a second machine finally trying. SDL3's pin
+  named no ref `git clone` resolves (issue 90). And the front-end loads four faces by absolute
+  path under `/usr/share/fonts/truetype/noto/`, which nothing declared, so a machine without them
+  aborts every run inside Dear ImGui rather than degrading -- `fonts-noto-core` is declared for
+  that reason now, and the abort itself is issue 93.
 
 **Dear ImGui aborts on absent face, so graceful path never runs.** `main.nim` means to warn --
 *"Font `...` was not loaded; operator notation will draw as boxes"* -- but `AddFontFromFileTTF`
@@ -727,24 +738,24 @@ neither was reachable by reading.
 knowing which three broke beats knowing that one did. Verb asks binary which help tabs exist
 (`--help-tabs`, which prints before SDL starts), so `help.HelpPath` stays their one home and
 tab added there is driven without being listed twice (Article I.4).
-  `drive` chains it, so one command drives both front-ends. Where SDL3 or Dear ImGui is absent
-  -- runner, which cannot install SDL3 at all -- it prints skip naming what is missing and
-  stops, rather than failing. Printed rather than silent: check nobody is told was skipped is
-  check nobody knows is missing.
-  **Cost, corrected**: these checks do not run in CI, and that is decision rather than
-  impossibility. Measured on this container, 4 cores, 2026-09-09: SDL3 at pinned branch clones in
-  2.3 s, configures in 19.2 s, builds in 21.5 s and installs in under second -- 43 s in all --
-  after which desktop binary compiles in under 12 s and twelve runs take 24 s. So closing gap
-  costs about minute and half per job, against `minutes` this record claimed before anybody had
-  built it. Whether that is worth spending is curator's, on repository issue 91.
+  `drive` chains it, so one command drives both front-ends, and it no longer stops short of the
+  desktop half. Absent SDL3 or Dear ImGui is now something `desktop` fixes rather than reports:
+  it clones each at its pin and builds SDL3 into `build/sdl3`, so the only remaining failure is a
+  machine lacking what `system` declares, and that fails by name.
+  **What that costs, measured on this container, 4 cores, software GL, 2026-09-09.** Cold, with
+  neither checkout present and nothing built: **1 m 27 s** for the whole of `driven` -- both
+  clones, SDL3 configured, built and installed, the binary compiled, and twelve runs. Warm:
+  **29.3 s**, since a prefix already reporting the pinned version is kept rather than rebuilt.
+  The runner is slower than this container and its figure is its own; it belongs beside a run
+  there rather than quoted from here.
 
-*Checked.* Verified by running: 18 of 18 pass under Xvfb on software GL, 2026-09-09, on container
-that carried neither SDL3 nor faces until this session built and installed both. Verified by
+*Checked.* Verified by running: 18 of 18 pass under Xvfb on software GL, 2026-09-09, from a tree
+carrying neither checkout and no SDL3 anywhere on the machine -- `driven` fetched and built both
+and drove them. Verified idempotent by running it twice: second run kept the prefix and rebuilt
+nothing. Verified by
 breaking on purpose: drag verdict inverted, and run reported ` FAIL  a drag from one object
 onto another opens its choice menu`, `1 driven check(s) failed`, verb answered `Driven runs
-failed; got 1 -- drive-drag`, exit 1; restored after. Verified by hiding dependency: with
-`deps/imgui` moved aside, `drive` reported browser's 138 of 138 then named skip with clone
-command, exit 0.
+failed; got 1 -- drive-drag`, exit 1; restored after.
 
 Render Paths
 ---

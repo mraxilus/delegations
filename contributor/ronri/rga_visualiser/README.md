@@ -51,21 +51,18 @@ nim r tools/build.nim system | xargs sudo apt-get install -y
 The browser front-end needs nothing beyond that compiler and Node. The **desktop** front-end
 links against SDL3, OpenGL and zlib, and its headless runs need Xvfb and a software GL.
 
-Two of its dependencies do not arrive as packages, so both are pinned by version and the
-build refuses either when wrong. **SDL3** has no `libsdl3-dev` on Ubuntu 24.04 — that release
-carries SDL2 only — so build 3.2.30 from source:
+Two of its dependencies arrive as no package, so the build fetches both itself and refuses
+either when its pin misses. **SDL3** has no `libsdl3-dev` on Ubuntu 24.04 — that release carries
+SDL2 only — so `desktop` clones `release-3.2.30` into `deps/sdl3` and builds it into
+`build/sdl3`, a prefix inside the tree that needs no root. **Dear ImGui** is compiled from source
+into the binary rather than linked, and is cloned to `deps/imgui` at its pinned commit. Both are
+kept locally and never committed, as the Atlas checkouts are.
+
+Nothing has to be run by hand for either. Where a machine already carries SDL3 at the pinned
+version, that one is used and nothing is built:
 
 ```sh
-git clone --branch release-3.2.30 https://github.com/libsdl-org/SDL.git
-cmake -S SDL -B SDL/build && cmake --build SDL/build && sudo cmake --install SDL/build
-```
-
-**Dear ImGui** is compiled from source into the binary rather than linked. Clone it beside
-the project — kept locally, never committed, as the Atlas checkouts are:
-
-```sh
-git clone --branch docking https://github.com/ocornut/imgui.git deps/imgui
-git -C deps/imgui checkout fd13a1e8923a0a7077b404fc36fd063b25a0c0b5
+nim r tools/build.nim desktop
 ```
 
 The `pga` library is restored by Atlas from `atlas.lock` into `deps/` and is never committed;
