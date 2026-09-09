@@ -1,0 +1,99 @@
+# Open issue when `check` goes red on main, so nobody has to be awake for it.
+#   CURATOR.md's session-start duty says read latest `push` run because "nothing else watches
+#   it": subscriptions do not cover `main`, and duty 2 has curator watch only their own merge.
+#   Twice that has failed silently -- contributor's merge red with nobody looking, found by
+#   accident twenty-four minutes later; and driven job red on two `main` runs while curator who
+#   named that run as leg still to read did not read it. Both times enforcement was somebody
+#   remembering, and failure was quiet.
+#   So red run becomes issue labelled `curator`, which is same session-start duty's first read
+#   and repository's own answer to session ending and taking its intentions with it. No new
+#   rule: existing rule now produces artefact rule already asks next session to read.
+#
+#   Separate workflow because run cannot watch its own outcome, and `workflow_run` fires only
+#   from copy of this file on default branch -- which is why it cannot be driven from branch,
+#   and why `workflow_dispatch` takes run to read: that is how it is driven against real red
+#   run rather than against manufactured one.
+#   One issue, not one per run: watcher opening issue per red run trains its reader to skim,
+#   which is failure it exists to prevent. Marker in body is what makes second red comment on
+#   first issue instead.
+#   Issue opens with role line as every issue does, and says workflow wrote it, so nobody reads
+#   it as session having judged anything.
+#   Cost: `issues: write` on this workflow, which no other workflow here holds. Nothing else is
+#   granted, and it runs on no event pull request can reach.
+
+name: watch
+
+on:
+  workflow_run:
+    workflows: [check]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Run to read, for driving this against a red run that already happened
+        required: true
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  red:
+    # Dispatch names run deliberately, so it reports whatever that run concluded; `workflow_run`
+    #   fires on every completion, and only failure is worth reporting.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read run, then open or add to issue standing for red main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: >-
+            ${{ github.event_name == 'workflow_dispatch'
+                && inputs.run_id || github.event.workflow_run.id }}
+          MARKER: '<!-- watch:main-red -->'
+        run: |
+          set -euo pipefail
+          run="$(gh api "repos/$REPO/actions/runs/$RUN_ID")"
+          conclusion="$(jq -r .conclusion <<<"$run")"
+          if [ "$conclusion" != "failure" ]; then
+            echo "Run $RUN_ID concluded \`$conclusion\`; nothing to report."
+            exit 0
+          fi
+          url="$(jq -r .html_url <<<"$run")"
+          number="$(jq -r .run_number <<<"$run")"
+          sha="$(jq -r .head_sha <<<"$run")"
+          subject="$(jq -r .display_title <<<"$run")"
+          failed="$(gh api "repos/$REPO/actions/runs/$RUN_ID/jobs" --paginate \
+            --jq '.jobs[] | select(.conclusion == "failure") | "- `" + .name + "`"')"
+
+          # Paragraphs are built by appending rather than written whole: heredoc wants its
+          #   terminator at column zero, which no line inside block scalar may reach, and `<<-`
+          #   strips tabs alone. Measured, not assumed -- written as heredoc first and it would
+          #   not parse.
+          said="Opened by the \`watch\` workflow rather than by a session, so nothing here"
+          said="$said has been read or judged yet. A red \`main\` is the first work of the"
+          said="$said session (CURATOR.md, session start)."
+          at="**Run [$number]($url)** on \`main\`, at \`${sha:0:7}\` — $subject"
+          next="Close this once \`main\` is green again, naming what fixed it. A later red"
+          next="$next run comments here rather than opening a second issue."
+          body="$(printf '%s\n\n**Role:** curator\n\n%s\n\n%s\n\n%s\n\n%s\n\n%s\n' \
+            "$MARKER" "$said" "$at" "Jobs that concluded failure:" "$failed" "$next")"
+
+          # Read open issues rather than search: search indexing lags, and watcher that opens
+          #   duplicate because index was cold is exactly noise this avoids.
+          existing="$(gh issue list --repo "$REPO" --label curator --state open \
+            --limit 100 --json number,body \
+            --jq "[.[] | select(.body | contains(\"$MARKER\")) | .number] | first // empty")"
+
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --repo "$REPO" --body "$body"
+            echo "Commented on issue #$existing."
+          else
+            opened="$(gh issue create --repo "$REPO" --label curator \
+              --title "\`main\` is red: run $number" --body "$body")"
+            echo "Opened $opened."
+          fi
