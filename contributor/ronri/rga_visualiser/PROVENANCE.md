@@ -121,7 +121,7 @@ canvas, so nothing in them catches rule wired to wrong event. `tools/drive/` doe
 Playwright, against page `tools/build.nim web` assembled. One command runs both:
 `nim r tools/build.nim drive`.
 
-**137 checks pass today**, one module per section of what page does:
+**138 checks pass today**, one module per section of what page does:
 
 | Module | Covers |
 |--------|--------|
@@ -185,6 +185,62 @@ before it, at unchanged sample sizes.
   frame, so slack that constant exists to give straddling frame is not there at this sample
   size. Pre-existing, and left alone here: waits were not what decided it.
 
+**Pixels are read through compositor, and reading carrying no picture is refused rather than
+returned.** Context keeps no drawing buffer (`gl.ts` says why), so `readPixels` is sound only
+from inside frame that drew. Five checks each held their own copy of that wrapper, and four
+compared one reading against another -- so canvas reading back all zero passed all four, and
+failed only fifth, which is what caught it. Reading now comes from
+`page.locator('#gl').screenshot()`, decoded in page, through one `tools/drive/canvas.ts`: it is
+what reader sees, and it is immune to buffer being taken after frame that filled it.
+  Reading raises rather than reports: canvas nobody can read is instrument lost, not check
+  failed, and reporting it would leave every later pixel check resting on nothing.
+  **Refusal is of one colour, not of black.** First guard tested for all-zero, and runner
+  answered with canvas-shaped sheet of *white*: `[255,255,255]` at moon where this machine reads
+  `[44,6,24]`, seven of eight edits reporting canvas unchanged, every comparison agreeing with
+  every other. Three checks went vacuous second time, on same nothing in other colour. What
+  makes reading empty is that it carries one colour, whichever colour, so that is what is
+  refused, and fixture drives black *and* white for that reason.
+  That four were vacuous is arithmetic rather than inference. `pool`'s check reported hash
+  1426046701 from runner; same FNV fold over all-zero 1200x900x4 buffer at its own stride
+  gives exactly 1426046701, so it had compared nothing against nothing.
+  Costs about 0.49 s per reading against microseconds for `readPixels` -- 0.43 s capture and
+  0.06 s decode -- paid about 19 times over run rather than once per frame.
+  **Element capture takes region page canvas occupies, not canvas alone**, so chrome
+  composited over it lands in reading: first run of this reader failed held-placement check on
+  2,411 pixels, and cropping them showed undo button lighting up after that check's own edit.
+  Every sibling of canvas is hidden for length of capture and put back after, by `opacity`
+  so nothing leaves layout and nothing is blurred.
+  **Masking cannot serve here, which is worth one line so it is not retried:** `#overlay` spans
+  viewport, so masking `body > *:not(#gl)` covers canvas whole. Probe returned one colour,
+  centre `[255,0,255]`.
+  **Capture waits on compositor rather than on one frame.** Hiding chrome injects style, style
+  forces recomposite, and software rasteriser does not finish it inside single frame first
+  version waited -- capture then catches page behind canvas, which is where sheet of white came
+  from. Reading is taken again until it carries picture, up to ten times: settle on what
+  arrives, not on clock, which is rule two sections above applied to instrument rather than to
+  scene.
+  **Unexplained**: why runner read blank through `readPixels`, and white through compositor.
+  Neither Chromium here reproduces either: full browser and headless shell both read every one
+  of 1,080,000 pixels lit, no GL error, default framebuffer bound, from inside and outside
+  drawing frame alike. Runner's browser is different binary (see below) and was not obtainable
+  here, so timing account above fits evidence rather than being driven against reproduction.
+  **Verified on runner**: reader reads scene there, 138 of 138 on run 34218424425, after two
+  runs that did not. Rate is what stays open -- old reader failed one run in three, so single
+  green says little and several pushes on `main` are what settle it.
+
+**`chromium` in `dependencies.list` is unpinned, and on Ubuntu 24.04 it is snap.** Verified
+with `apt-cache showpkg chromium`: name carries no version of its own and is provided solely by
+`chromium-browser 2:1snap1-0ubuntu2`, snap transitional shim. So runner's harness drives
+whatever build snap store serves that day, while this environment drives Playwright's own
+pinned Chromium -- and every other dependency here is pinned by commit, version or digest.
+Checks that pin bands and pixels against browser nobody chose is what that costs.
+  Left alone here because remedy is not this project's alone: workflow finds browser with
+  `command -v chromium` and would fail were package dropped. Raised for curator.
+
+  Guard is checked against fixture it stands up itself (Article IX.8): black canvas of its own,
+  which is hardest case, since dark scene and no scene look alike. Check runs before any check
+  leaning on reader does.
+
 **Comet's band caught port's own defect rather than needing widening.** First port selected
 horizon line through `nimSelectOnly`, which moves Nim's selection and leaves page's render
 snapshot behind it, so overlay drew no marker and comet advanced only on harness's own two
@@ -231,14 +287,7 @@ agree, and hand check camera that never moved (repository issue 73).
   Second instance of this shape here, after `settleTurn` polled computed transform for two equal
   reads. Rule that comes out of both: **settle on what moves, not on what has stopped changing**.
 
-**One check passed on blank canvas, which is why blankness went unnamed.** `a selected moon in
-front of a selected planet` compares one pixel against another, so all-zero on both sides agreed.
-Runner read `[0,0,0]`; this machine reads `[44,6,24]`. Check beside it now names it: page's
-darkest surface is `rgb(16,19,24)`, so all zero is readback of nothing rather than dark scene.
-  **Unexplained**: why runner's canvas read back nothing on that run. Blank readback is now
-  reported where before it was silent, which is what turns it from invisible into observable.
-
-*Checked.* Verified by running: 137 of 137 pass through `tools/build.nim drive` on assembled
+*Checked.* Verified by running: 138 of 138 pass through `tools/build.nim drive` on assembled
 page, in Chromium, software-rendered.
   Verified by breaking on purpose: with `settleCamera` returning at once, run drops to 131 of
   136 and every loss is framing -- orbit about pick, second pick coming in, plane to two fifths,
@@ -250,10 +299,12 @@ page, in Chromium, software-rendered.
 That harness carries about 140 check sites — 125 reported directly and 15 through band
 reader — and this one 151; neither figure is count of claims, since both carry guard reports
 that fire only where check cannot be set up.
-  **Unverified**: **CI does not reach this layer.** Runner's jobs are fixed in curator-owned
-  workflow, and contributor's scope reaches only own project, so no job drives page. Asked as
-  issue 47. Until it is ruled, these checks are contributor's to run, and green here is
-  evidence someone ran it rather than something runner confirms.
+  **Runner reaches this layer, for browser alone.** `driven` job drives page on every push
+  since issue 47 was ruled, so green there is runner's word rather than someone's report.
+  Desktop half is skipped there for want of SDL3, which `pkg-config` does not find on runner
+  and which is built from source rather than installed: `drive` names skip and exits 0. So
+  desktop's 19 checks stay contributor's to run, and only browser's 138 are confirmed by
+  runner.
   **Unmeasured**: figures above are this container's, software-rendered, and say more about
   swiftshader than about any GPU. Bands, not figures, are what checks assert.
 
@@ -365,7 +416,7 @@ packages to lock file, `pga` to commit -- and this fetch was sole exception (rep
   of honest limit `compilers.nim` already records for fetched compilers, trusted on TLS alone.
 
 *Checked.* Verified by running cold: `clean` removes `build`, `bin` and `nimcache`, then `drive`
-fetches six faces and reaches 137 of 137 with no step run by hand -- which is runner's own case.
+fetches six faces and reaches 138 of 138 with no step run by hand -- which is runner's own case.
 Re-measured after `drive` gained desktop half, so cold run now builds and drives both front-ends
 rather than page alone. Second run immediately after fetches none. `web` alone on same cold tree
 still refuses by name, which is behaviour worth keeping rather than side effect.
@@ -580,6 +631,11 @@ exercises is wiring.
   19 checks over 12 runs. Held key slides view and keeps its height; drag across bare sky turns
   view and builds nothing; undo takes construction back *and* returns view to where it built
   from; choice menu does not swallow drag after it; every help tab opens with rows in it.
+  **These 19 run here and nowhere else.** Runner carries no SDL3 -- `chromium` and its kin come
+  from declaration, and SDL3 has no package there to declare -- so `drive` names skip and moves
+  on. Browser's checks are confirmed by every push; these are confirmed by whoever last ran
+  them. Cost of closing that is building SDL3 from source on every job, which is minutes against
+  checks that have never yet caught what browser's did not.
 
 **Two defaults favoured silent pass, and both are gone.** This is what running them found, and
 neither was reachable by reading.
@@ -608,7 +664,7 @@ tab added there is driven without being listed twice (Article I.4).
 purpose: drag verdict inverted, and run reported ` FAIL  a drag from one object onto another
 opens its choice menu`, `1 driven check(s) failed`, verb answered `Driven runs failed; got 1 --
 drive-drag`, exit 1; restored after. Verified by hiding dependency: with `deps/imgui` moved
-aside, `drive` reported browser's 137 of 137 then named skip with clone command, exit 0.
+aside, `drive` reported browser's 138 of 138 then named skip with clone command, exit 0.
 
 Render Paths
 ---
@@ -2825,3 +2881,13 @@ exactly that reason. What the curator adds is a rate rather than a finding: acro
 this layer, and it is now the thing the rule asks to be removed. Raised as issue 82 with the
 evidence; the mechanism is this project's to choose, and if the cause proves to be the runner's
 browser rather than this code, it becomes the curator's to carry.
+
+**Answered.** Blank reading can no longer pass: every pixel check reads through compositor and
+refuses reading carrying one colour, whichever colour, and that refusal is itself checked
+against black *and* white canvas fixtures it stands up (see Driven Checks); white is second
+because runner answered with sheet of it once black alone was refused. Rate above stands as
+curator's measurement of what old reader did. Correction to finding: *four* checks had been
+comparing one blank reading against another, not one -- `pool`'s reported hash 1426046701 is
+exactly its own fold over all-zero 1200x900x4 buffer, which is what shows it. Cause on runner
+stays **unexplained**; neither Chromium here reproduces it, and unpinned snap browser runner
+drives is raised for curator on issue 77.

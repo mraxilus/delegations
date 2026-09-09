@@ -1,12 +1,16 @@
 // Checks for scene hold, which is frame matching last one skipping its whole rebuild; not Nim
-//   because crossing forfeits check compiler makes over bodies that wrap `nimBuildFrame` and
-//   `renderFrame` and read `FrameData`'s fields, every one derived or stated by `page.d.ts`.
+//   because crossing forfeits check compiler makes over body wrapping `nimBuildFrame` and
+//   reading `FrameData`'s fields, every one derived or stated by `page.d.ts`.
 //   Danger of hold is not that it fails to engage -- that costs milliseconds -- but that it
 //   engages when it should not, and shows picture no longer matching scene. So both halves are
 //   held here, and second through *drawn pixels* rather than through flag: hold that released
 //   but drew old records would pass flag check.
+//   Pixels come from `canvas.readCanvas`, which reads through compositor and refuses blank
+//   reading; earlier `readPixels` copy here reported no change at all on browsers whose
+//   drawing buffer is gone by then, which read as hold never reaching canvas.
 
 import type { Page } from '@playwright/test';
+import { readCanvas } from './canvas';
 import { waitFrames } from './frame';
 import { report } from './report';
 
@@ -20,20 +24,16 @@ declare global {
   interface Window {
     /** How many frames held their records, and how many rebuilt. */
     __hold?: { held: number; built: number };
-    /** Hash of what frame loop last drew, on coarse pixel grid. */
-    __drawn?: number;
   }
 }
 
-/** Wrap page's frame build and its draw, counting holds and hashing what was drawn. */
+/** Wrap page's frame build, counting frames that held their records against those that did not. */
 async function watchHold(page: Page): Promise<void> {
   await page.evaluate(() => {
     nimSelectClear();
     document.getElementById('gl')?.focus();
     window.__hold = { held: 0, built: 0 };
-    const scope = globalThis as unknown as {
-      nimBuildFrame: typeof nimBuildFrame; renderFrame: typeof renderFrame;
-    };
+    const scope = globalThis as unknown as { nimBuildFrame: typeof nimBuildFrame };
     const built = scope.nimBuildFrame;
     scope.nimBuildFrame = function (
       ...given: Parameters<typeof nimBuildFrame>
@@ -51,27 +51,6 @@ async function watchHold(page: Page): Promise<void> {
     const first = nimSceneHandles()[0] ?? 0;
     nimSetInk(first, nimObjectInk(first));
 
-    // Drawn pixels must be sampled from *inside* frame that drew them: context asks for no
-    //   preserved drawing buffer, so read from later task finds buffer compositor has already
-    //   taken. Hooked onto end of draw, where it has just been issued.
-    const canvas = document.getElementById('gl') as HTMLCanvasElement;
-    const gl = canvas.getContext('webgl');
-    const pixels = new Uint8Array(canvas.width * canvas.height * 4);
-    const drawn = scope.renderFrame;
-    scope.renderFrame = function (now_seconds: number): void {
-      drawn(now_seconds);
-      gl?.readPixels(
-        0, 0, canvas.width, canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels,
-      );
-      // Sample every seventh pixel: six-pixel dot, least any point is drawn at, spans six in
-      //   row and cannot slip between samples.
-      let hash = 2166136261;
-      for (let i = 0; i < pixels.length; i += 4 * 7) {
-        hash = Math.imul(hash ^ (pixels[i] ?? 0), 16777619) ^ (pixels[i + 1] ?? 0) ^
-          ((pixels[i + 2] ?? 0) << 8);
-      }
-      window.__drawn = hash | 0;
-    };
   });
 }
 
@@ -105,13 +84,13 @@ export async function driveHoldScene(page: Page): Promise<void> {
   let released = 0, redrawn = 0;
   const missed: string[] = [];
   for (const what of EDITS) {
-    const before = await page.evaluate(() => window.__drawn);
+    const before = (await readCanvas(page)).mark;
     await page.evaluate(() => { window.__hold = { held: 0, built: 0 }; });
     await runEdit(page, what);
     // Wall time, deliberately: check is that edit released hold and reached canvas, and
     //   waiting on either would assert what is being asked.
     await page.waitForTimeout(500);
-    const after = await page.evaluate(() => window.__drawn);
+    const after = (await readCanvas(page)).mark;
     const seen = await page.evaluate(() => ({ ...(window.__hold ?? { held: 0, built: 0 }) }));
     if (seen.built > 0) released += 1;
     if (after !== before) redrawn += 1;
