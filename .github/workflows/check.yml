@@ -227,6 +227,21 @@ jobs:
           path: ~/.npm
           key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
 
+      # Browser Playwright pins: `drive` fetches it, since nothing on runner installs one now
+      #   that this job stopped naming `chromium`. Same lock is key, and not by convenience --
+      #   `package-lock.json` fixes `@playwright/test`, and that version fixes browser revision
+      #   it installs, so tree lock names is tree this restores.
+      #   Made before caching for reason npm's store is: run driving nothing never invokes it
+      #   and leaves path absent, and `actions/cache` warns on absent path.
+      #   Cost this replaces was snap install of `chromium`, which was slowest item in apt step
+      #   (repository issue 79). Whether that trade is net gain is unmeasured until both have
+      #   run; figure belongs on that issue rather than asserted here.
+      - run: mkdir -p ~/.cache/ms-playwright
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+
       # Faces are pinned to digests inside driver, and `assets` keeps one already carrying its
       #   pin, so cache keyed on that file returns what fetch would have written. Stronger
       #   than other two: `assets` re-fetches and refuses any face whose digest misses, and
