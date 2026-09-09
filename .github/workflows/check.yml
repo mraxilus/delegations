@@ -70,7 +70,7 @@ on:
     - cron: '0 6 * * 1'
 
 env:
-  NIM_VERSION: '2.2.4'
+  NIM_VERSION: '2.2.12'
 
 jobs:
   plan:
