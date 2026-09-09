@@ -18,8 +18,13 @@
 #   first issue instead.
 #   Issue opens with role line as every issue does, and says workflow wrote it, so nobody reads
 #   it as session having judged anything.
-#   Cost: `issues: write` on this workflow, which no other workflow here holds. Nothing else is
-#   granted, and it runs on no event pull request can reach.
+#   Cost: `issues: write` on this workflow, which no other workflow here holds. It runs on no
+#   event pull request can reach.
+#   `permissions` block is whole grant, never addition to default: scope left out of it is set
+#   to `none`, not left alone. Written here without `actions: read` first, and first firing got
+#   403 reading run it was pointed at -- from block that named neither `actions` nor anything
+#   else it did not need. So every scope this needs is listed, and list is exactly what token
+#   gets.
 
 name: watch
 
@@ -35,6 +40,7 @@ on:
         required: true
 
 permissions:
+  actions: read
   contents: read
   issues: write
 
