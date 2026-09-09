@@ -226,12 +226,12 @@ what reader sees, and it is immune to buffer being taken after frame that filled
   here, so timing account above fits evidence rather than being driven against reproduction.
   **Verified on runner**: the reader reads the scene there, 138 of 138 on run 34218424425,
   after two runs that did not.
-  **The rate is not settled, and the arithmetic says so.** Three runner runs have driven this
-  reader — 34218424425 and 34287703984 on the pull request, 34294113589 on `main` — and all
-  three are green. Against the old reader's one failure in three, three greens in a row is what
-  you would see 30% of the time by luck alone, so this is consistent with the cause being gone
-  and equally consistent with its not being. More pushes are what shorten that; nothing else
-  here can.
+  **The rate is not settled, and the arithmetic says so.** As of 2026-09-09 four runner runs have
+  driven this reader — 34218424425, 34287703984 and 34300010573 on pull requests, 34294113589 on
+  `main` — and all four are green. Against the old reader's one failure in three, four greens in
+  a row is what you would see 20% of the time by luck alone, so this is consistent with the cause
+  being gone and equally consistent with its not being. Only a push of this project adds a
+  sample, so this count is dated rather than current.
 
 **The harness resolves its own browser, and drives Playwright's pinned build by default.**
 Order is what `RGA_CHROMIUM` names, else the build `package-lock.json` pins, else `chromium`
