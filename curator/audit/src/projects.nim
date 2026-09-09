@@ -33,6 +33,17 @@ const
   SYSTEM_VERB* = "system"
     ## Verb printing system packages project needs, one bare name per line, for caller to
     ## install. Named here and in CONTRIBUTOR.md, "System dependencies".
+  KOCH_SYSTEM* = [
+    ("git", "tree is what git lists, and `ci` fetches base to compare against"),
+    ("curl", "compiler pin nothing on machine serves is downloaded"),
+  ]
+    ## System packages koch itself needs, whatever any project declares. Same shape rule asks
+    ## of every project, kept by driver that enforces it: declaration is data carrying its
+    ## reason, and `koch system` prints it (repository issue 78).
+    ##   Nim is not here: it is toolchain koch runs under rather than package machine installs,
+    ##   and `compilers.nim` resolves each pin itself. npm is not here either -- it is needed
+    ##   where project carries node manifest, so it belongs to that project rather than to
+    ##   koch, and `restoreNode` reports its absence by name.
 
 
 type Target* = object
