@@ -247,17 +247,18 @@ and the evidence below moved it.
   so pinning one would make the project unbuildable anywhere else without editing committed
   source. Measured on this container, 2026-09-09: 11 s cold, 0.8 s warm, since
   `playwright install` keeps a build already at the pinned revision.
-  **`chromium` on `PATH` is last, and it carries no version.** Verified with
-  `apt-cache showpkg chromium`: on Ubuntu 24.04 the name carries no version of its own and is
-  provided solely by `chromium-browser 2:1snap1-0ubuntu2`, the snap transitional shim. So it is
-  a fallback for a machine that cannot fetch Playwright's, never a choice.
-  **It is still what the runner drives, and that is deliberate.** `.github/workflows/check.yml`
-  exports `RGA_CHROMIUM` naming the snap, and the override is read first, so the browser under
-  the runner's checks is unchanged by this. Dropping `chromium` from `SYSTEM` would fail that
-  step outright — it is a `command -v chromium` whose exit status the step carries — so the
-  package stays until the workflow stops naming it. Both moves are the curator's to land, and
-  the sequencing is theirs: the readback fix goes first and runs on `main` a few times, so a
-  browser change afterwards tests one hypothesis rather than confounding two.
+  **`chromium` on `PATH` is last, it carries no version, and nothing here installs it.** Verified
+  with `apt-cache showpkg chromium`: on Ubuntu 24.04 the name carries no version of its own and is
+  provided solely by `chromium-browser 2:1snap1-0ubuntu2`, the snap transitional shim. It was
+  declared in `SYSTEM` while the workflow named it; the workflow stopped (#98), so the package
+  went with it (#96) and this rung is now whatever a machine happens to carry. It exists for a
+  machine that cannot fetch Playwright's build at all, and on such a machine an unpinned browser
+  beats no browser — that is the whole of its case.
+  **The runner drives the pinned build now, and its own cache is keyed on the same lock.**
+  `check.yml` caches `~/.cache/ms-playwright` on `package-lock.json`, which is the file that fixes
+  the revision, so the tree the lock names is the tree the cache restores. Whether trading a snap
+  install for that fetch is a net gain on the runner is unmeasured — both halves have not yet run
+  enough for a figure, and the figure belongs on repository issue 79 rather than here.
 
   Guard is checked against fixture it stands up itself (Article IX.8): black canvas of its own,
   which is hardest case, since dark scene and no scene look alike. Check runs before any check

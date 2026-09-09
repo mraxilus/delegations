@@ -135,7 +135,6 @@ const
     ("curl", "fetch faces `assets` pins; build shells out to it"),
     ("coreutils", "`sha256sum` verifying those pins and `base64` inlining them"),
     ("nodejs", "run type-checker `types` drives and harness `drive` runs"),
-    ("chromium", "browser harness falls back to where Playwright's own build is absent"),
     ("git", "clone Dear ImGui at its commit and SDL3 at its branch, both checked"),
     ("cmake", "build SDL3 from source, since no package of it exists on Ubuntu 24.04"),
     ("pkg-config", "read version of that SDL3, which `desktop` checks before compiling"),
