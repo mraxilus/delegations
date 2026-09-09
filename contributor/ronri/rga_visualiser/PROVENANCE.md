@@ -590,19 +590,24 @@ rather than file they must know to look for beside source. Algebra and library p
 **Neither SDL3 nor Dear ImGui arrives as package, so both are pinned by version.** That is
 this repository's rule about anything fetched at build time, and here it is forced rather than
 chosen: Ubuntu 24.04 carries `libsdl2-dev` and no SDL3 at all, so `apt-get install libsdl3-dev`
-fails on it outright. SDL3 is therefore built from source and installed, at `3.2.31`, zlib
+fails on it outright. SDL3 is therefore built from source and installed, at `3.2.30`, zlib
 licence, and `checkSdl3` reads what `pkg-config` reports before compiling anything.
-  Pinned exactly rather than as floor: 3.2.31 is what this front-end was compiled and drawn
-  against, and floor would claim reach across releases nothing here has tried.
-  **3.2.31 is a branch snapshot rather than a release, so the pin names no bytes.** Verified
-  2026-09-09 with `git ls-remote`: there is no `release-3.2.31` tag or branch — that series
-  releases on even patch numbers alone, latest `release-3.2.30` (`f5e5f658`) — while the head of
-  `release-3.2.x` (`402fc52a`, 2026-05-27) reads 3.2.31 in `SDL_version.h`. Every commit on that
-  branch reports 3.2.31 until 3.2.32 releases, and `pkg-config --modversion` is all `checkSdl3`
-  reads, so the check cannot tell two of them apart. Dear ImGui below carries a commit and this
-  does not. Moving it to a release is a rebuild rather than an edit — the binary has to be
-  rebuilt and its 18 checks re-driven before the line moves — so it is queued as repository
-  issue 90, and `README.md` and `checkSdl3` meanwhile quote the branch, which resolves.
+  Pinned exactly rather than as floor: floor would claim reach across releases nothing here has
+  tried.
+  **The pin is a release tag, and `release-` prefixed to it is the ref that fetches it.**
+  `release-3.2.30` resolves at commit `f5e5f658`, so `VERSION_SDL3` names bytes rather than a
+  version string, and the `README.md` and `checkSdl3` instructions compose the ref from it —
+  one home, no second copy to drift.
+  **An odd patch number names no tag, which is the trap this replaced.** That series releases on
+  even numbers alone; 3.2.31 was the head of `release-3.2.x` and no ref fetched it, so the clone
+  command this project published failed outright and `pkg-config` could not have told two such
+  builds apart. Repository issue 90.
+  **Moved by rebuilding, not by editing the line.** Verified 2026-09-09: SDL3 built from
+  `release-3.2.30` and installed, then `bin/` and `nimcache/` removed and the desktop front-end
+  compiled from cold against its headers, then all 12 scripted runs driven — 18 of 18 pass,
+  29.9 s for the whole of it on this container, 4 cores, software GL. The mirrored event
+  constants below assert against real headers at compile time, so a release that had moved them
+  would have failed the build rather than the checks; it did not.
   Found by checking rather than by assuming: prototype's own `dependencies.list` named
   `libsdl3-dev`, and this port carried that name into `SYSTEM` -- where it would have failed
   runner's install step, since that step installs from this declaration. Package does not
@@ -620,7 +625,7 @@ by name, naming clone command that fixes it.
   clone command; with checkout one commit back, verb names commit wanted and commit found. Restored
   after.
 
-*Checked.* Verified by running: both bindings compile and link against SDL3 3.2.31 and libGL
+*Checked.* Verified by running: both bindings compile and link against SDL3 3.2.30 and libGL
 through `nim cpp`, and their assertions run against real headers. Shared core compiles and runs
 under that same backend too, which nothing had shown before -- it had only ever been built
 through C and JS.
