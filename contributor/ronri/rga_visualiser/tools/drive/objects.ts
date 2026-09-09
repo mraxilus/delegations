@@ -246,7 +246,16 @@ export async function driveTickCadence(page: Page): Promise<void> {
       ticks += 1;
       original_tick();
     };
-    await wait(3000);
+    // Axis switch redraws curve on spot, which is its own claim and not tick's: four
+    //   presses inside window leave switch as it was found and add four redraws that no
+    //   cadence asked for.
+    const toggle = document.getElementById('toggle-exceedance-log');
+    await wait(1200);
+    for (let i = 0; i < 4; i += 1) {
+      toggle?.click();
+      await wait(120);
+    }
+    await wait(1300);
     const open = { ticks, curves };
 
     // Whole tick is skipped with section collapsed inside open drawer: both canvases would
