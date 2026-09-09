@@ -324,7 +324,7 @@ that fire only where check cannot be set up.
   since issue 47 was ruled, so green there is runner's word rather than someone's report.
   Desktop half is skipped there for want of SDL3, which `pkg-config` does not find on runner
   and which is built from source rather than installed: `drive` names skip and exits 0. So
-  desktop's 19 checks stay contributor's to run, and only browser's 138 are confirmed by
+  desktop's 18 checks stay contributor's to run, and only browser's 138 are confirmed by
   runner.
   **Unmeasured**: figures above are this container's, software-rendered, and say more about
   swiftshader than about any GPU. Bands, not figures, are what checks assert.
@@ -599,7 +599,7 @@ licence, and `checkSdl3` reads what `pkg-config` reports before compiling anythi
   branch reports 3.2.31 until 3.2.32 releases, and `pkg-config --modversion` is all `checkSdl3`
   reads, so the check cannot tell two of them apart. Dear ImGui below carries a commit and this
   does not. Moving it to a release is a rebuild rather than an edit — the binary has to be
-  rebuilt and its 19 checks re-driven before the line moves — so it is queued as repository
+  rebuilt and its 18 checks re-driven before the line moves — so it is queued as repository
   issue 90, and `README.md` and `checkSdl3` meanwhile quote the branch, which resolves.
   Found by checking rather than by assuming: prototype's own `dependencies.list` named
   `libsdl3-dev`, and this port carried that name into `SYSTEM` -- where it would have failed
@@ -644,8 +644,8 @@ through C and JS.
   not, and scene looks empty at that count. 300 is.
   Vocabulary shows in that frame rather than only in source: panel says *objects (5 of 5040)*
   and *hold still over the pivot*.
-  Verified by driving: every scripted run reaches its verdict, 19 checks over 12 runs, in about
-  25 seconds under software GL. See Desktop Driven Checks below.
+  Verified by driving: every scripted run reaches its verdict, 18 checks over 12 runs, in 24
+  seconds under software GL, 2026-09-09. See Desktop Driven Checks below.
   **Unverified**: frame times are unmeasured, and no human has seen this on real graphics
   hardware -- that run was software GL, which reported no multisampled visual, so thin lines
   alias.
@@ -658,14 +658,31 @@ directly. Entry point carries five scripted runs -- `--drive-keys`, `--drive-sky
 `--drive-undo`, `--drive-select`, `--drive-drag` -- plus `--drive-help:<tab>`, one per tab.
 Each pushes real events through SDL's own queue rather than calling handler, so what it
 exercises is wiring.
-  19 checks over 12 runs. Held key slides view and keeps its height; drag across bare sky turns
-  view and builds nothing; undo takes construction back *and* returns view to where it built
-  from; choice menu does not swallow drag after it; every help tab opens with rows in it.
-  **These 19 run here and nowhere else.** Runner carries no SDL3 -- `chromium` and its kin come
-  from declaration, and SDL3 has no package there to declare -- so `drive` names skip and moves
-  on. Browser's checks are confirmed by every push; these are confirmed by whoever last ran
-  them. Cost of closing that is building SDL3 from source on every job, which is minutes against
-  checks that have never yet caught what browser's did not.
+  18 checks over 12 runs -- 12 `report` sites, of which the help one fires once per tab. Held key
+  slides view and keeps its height; drag across bare sky turns view and builds nothing; undo takes
+  construction back *and* returns view to where it built from; choice menu does not swallow drag
+  after it; every help tab opens with rows in it.
+  Counted by running rather than by reading: this said 19 until 2026-09-09, which is 12 sites plus
+  7 tabs with the help site counted twice.
+  **These 18 run here and nowhere else, and there are two reasons rather than one.** Runner
+  carries no SDL3 -- `chromium` and its kin come from declaration, and SDL3 has no package there
+  to declare. Second reason was invisible until clean container ran them: front-end loads four
+  faces by absolute path under `/usr/share/fonts/truetype/noto/`, and machine without them aborts
+  every run inside Dear ImGui rather than degrading. `fonts-noto-core` is declared for that
+  reason now. Browser's checks are confirmed by every push; these are confirmed by whoever last
+  ran them.
+
+**Dear ImGui aborts on absent face, so graceful path never runs.** `main.nim` means to warn --
+*"Font `...` was not loaded; operator notation will draw as boxes"* -- but `AddFontFromFileTTF`
+asserts inside `imgui_draw.cpp` before that line is reached, and process takes SIGABRT. Measured
+2026-09-09 on container carrying SDL3 and Dear ImGui but no Noto packages: 12 of 12 runs aborted,
+`driven` reported all twelve failed, exit 1; with `fonts-noto-core` installed, same binary passes
+18 of 18. Declaration fixes symptom; abort is repository issue 93, since fix is check before
+handing path to Dear ImGui and that earns test of its own.
+  Naming those paths in committed source deviates from CONTRIBUTOR.md, which forbids it, and from
+  Article X.8, which has presentation target ship faces it draws with -- browser half embeds six
+  pinned by digest. They are `{.define.}` constants, so build can move them, but default is one
+  distribution's layout. Recorded as deviation rather than defended; same issue carries it.
 
 **Two defaults favoured silent pass, and both are gone.** This is what running them found, and
 neither was reachable by reading.
@@ -687,14 +704,20 @@ tab added there is driven without being listed twice (Article I.4).
   -- runner, which cannot install SDL3 at all -- it prints skip naming what is missing and
   stops, rather than failing. Printed rather than silent: check nobody is told was skipped is
   check nobody knows is missing.
-  **Cost, stated plainly**: these checks do not run in CI, and cannot until SDL3 is installable
-  there. Every runner log says so.
+  **Cost, corrected**: these checks do not run in CI, and that is decision rather than
+  impossibility. Measured on this container, 4 cores, 2026-09-09: SDL3 at pinned branch clones in
+  2.3 s, configures in 19.2 s, builds in 21.5 s and installs in under second -- 43 s in all --
+  after which desktop binary compiles in under 12 s and twelve runs take 24 s. So closing gap
+  costs about minute and half per job, against `minutes` this record claimed before anybody had
+  built it. Whether that is worth spending is curator's, on repository issue 91.
 
-*Checked.* Verified by running: 19 of 19 pass under Xvfb on software GL. Verified by breaking on
-purpose: drag verdict inverted, and run reported ` FAIL  a drag from one object onto another
-opens its choice menu`, `1 driven check(s) failed`, verb answered `Driven runs failed; got 1 --
-drive-drag`, exit 1; restored after. Verified by hiding dependency: with `deps/imgui` moved
-aside, `drive` reported browser's 138 of 138 then named skip with clone command, exit 0.
+*Checked.* Verified by running: 18 of 18 pass under Xvfb on software GL, 2026-09-09, on container
+that carried neither SDL3 nor faces until this session built and installed both. Verified by
+breaking on purpose: drag verdict inverted, and run reported ` FAIL  a drag from one object
+onto another opens its choice menu`, `1 driven check(s) failed`, verb answered `Driven runs
+failed; got 1 -- drive-drag`, exit 1; restored after. Verified by hiding dependency: with
+`deps/imgui` moved aside, `drive` reported browser's 138 of 138 then named skip with clone
+command, exit 0.
 
 Render Paths
 ---
