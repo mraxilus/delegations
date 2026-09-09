@@ -549,6 +549,57 @@ first` — every expensive step done and one cheap one missing, because `drive` 
 `types` and `declare` but not `assets`. Invisible to its author, whose `build/fonts` was always
 there.
 
+## Watching main
+
+**Red `main` opens its own issue, because remembering to look had already failed twice.**
+CURATOR.md's session-start duty said to read the latest `push` run and named its own hole in the
+same breath -- *"nothing else watches it"*. A contributor's merge went red with nobody looking and
+was found by accident twenty-four minutes later; then the driven job was red on two `main` runs
+while the curator who had named that run as the leg still to read did not read it. Both times
+enforcement was somebody remembering, and failure was silent.
+  `watch.yml` reads the run and opens issue labelled `curator` when it concludes failure, which is
+  same session-start duty's first read. No new rule: existing rule now produces artefact rule
+  already asks next session to read, and repository's own answer to session ending and taking its
+  intentions with it is issue labelled `curator`.
+  Separate workflow because run cannot watch its own outcome. `workflow_run` fires only from copy
+  on default branch, so it cannot be driven from branch at all -- which is why it also takes
+  `workflow_dispatch` naming run to read.
+  One issue rather than one per red run, since watcher opening issue per run trains its reader to
+  skim, which is failure it exists to prevent. Marker in body is what makes later red comment on
+  first. Open issues are read directly rather than searched, since cold search index would produce
+  exactly duplicate being avoided.
+
+**It left CURATOR.md's list of what no check can reach, which is direction that list moves.**
+That section held four rules and described fifth without listing it. Test for membership is now
+written there: not whether check would be awkward, but whether rule turns on fact something
+already writes down. Run's own conclusion is one. Glossary term's agreement is not.
+
+**`permissions` block is whole grant, never addition to default.** Scope left out of it is set to
+`none`, not left alone. Written without `actions: read`, first firing got
+`Resource not accessible by integration (HTTP 403)` on its very first call, reading run it was
+pointed at; job log showed `Contents: read, Issues: write, Metadata: read` and no Actions.
+  `workflows.nim` now reports scope workflow's steps demonstrably use that its own block omits,
+  over every file under `.github/workflows/`. Narrow on purpose: it reads what steps call rather
+  than what they might, and workflow declaring no block is left alone, since taking repository
+  default is somebody's decision rather than drift. Cost: marks are text, so step reaching same
+  endpoint by other spelling goes unseen -- floor rather than ceiling, and module says so.
+  Same failure answered question pull request 89 had flagged as unknown: repository setting does
+  not cap this. `Issues: write` was granted. Failure was curator's own.
+
+*Checked.* Verified by firing it against real red runs rather than manufactured one, 2026-09-09.
+Dispatched at run 34165524898 -- `main` at pull request 70's merge -- it opened issue 99 naming
+that run and both jobs that concluded failure, `driven` and `audit`. Dispatched again at run
+34167220207, red at pull request 72's merge, it commented on issue 99 rather than opening second.
+Runs 3, 4 and 7 fired on real `check` completions and concluded `skipped`, which is guard working
+on green. Issue 99 closed after.
+  Verified by breaking, before that: deleting `actions: read` from the workflow makes `koch tree`
+  report it by name and by what was granted; restoring it returns 0 findings. That check's own
+  commit precedes its fix on the branch, so it fails where it stands (Article IX.8).
+  **Unverified**: nothing has yet driven this from a `main` run that went red on its own. Every
+  firing so far has been dispatched at a run already known to be red, so what is proven is the
+  reading and the reporting, not the trigger's own selection. That waits on a red `main`, which is
+  not worth causing.
+
 ## Continuous integration
 
 **Nine jobs, and the three required check names have never changed.** `plan` emits the matrices,
