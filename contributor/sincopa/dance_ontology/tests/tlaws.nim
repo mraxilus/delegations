@@ -81,7 +81,9 @@ proc turns(x: float): string = formatFloat(x, ffDecimal, 2)
 func job(rest: State; who = Body.Two): Job = Job(rest: rest, who: who, most: MOST)
 
 let
-  sweeps = sweptAll([ # Four over head first: they run furthest.
+  sweeps = sweptAll([ # Longest first: chains over head reach furthest of all.
+    job(twoLinks(LEFT, RIGHT, RIGHT, LEFT, Band.Crown)),
+    job(twoLinks(LEFT, LEFT, RIGHT, RIGHT, Band.Crown, away = true)),
     job(oneLink(LEFT, LEFT, Band.Crown)),
     job(oneLink(LEFT, RIGHT, Band.Crown)),
     job(oneLink(RIGHT, RIGHT, Band.Crown)),
@@ -95,25 +97,28 @@ let
     job(oneLink(LEFT, LEFT, Band.Torso), Body.One),
     job(twoLinks(LEFT, RIGHT, RIGHT, LEFT, Band.Torso)),
     job(twoLinks(LEFT, LEFT, RIGHT, RIGHT, Band.Torso, away = true))])
-  llCrown = sweeps[0]
-  lrCrown = sweeps[1]
-  rrCrown = sweeps[2]
-  rlCrown = sweeps[3]
-  llTorso = sweeps[4]
-  llNeck = sweeps[5]
-  lrTorso = sweeps[6]
-  lrNeck = sweeps[7]
-  rrTorso = sweeps[8]
-  rlTorso = sweeps[9]
-  llByOne = sweeps[10]
-  pairTorso = sweeps[11]
-  crossedTorso = sweeps[12]
+  pairCrown = sweeps[0]
+  crossedCrown = sweeps[1]
+  llCrown = sweeps[2]
+  lrCrown = sweeps[3]
+  rrCrown = sweeps[4]
+  rlCrown = sweeps[5]
+  llTorso = sweeps[6]
+  llNeck = sweeps[7]
+  lrTorso = sweeps[8]
+  lrNeck = sweeps[9]
+  rrTorso = sweeps[10]
+  rlTorso = sweeps[11]
+  llByOne = sweeps[12]
+  pairTorso = sweeps[13]
+  crossedTorso = sweeps[14]
   SWEEPS = [("L-l torso", llTorso), ("L-l neck", llNeck), ("L-l crown", llCrown),
             ("L-r torso", lrTorso), ("L-r neck", lrNeck), ("L-r crown", lrCrown),
             ("R-r torso", rrTorso), ("R-r crown", rrCrown),
             ("R-l torso", rlTorso), ("R-l crown", rlCrown),
             ("L-l by One", llByOne),
-            ("L-r.R-l torso", pairTorso), ("L-l.R-r torso, away", crossedTorso)]
+            ("L-r.R-l torso", pairTorso), ("L-l.R-r torso, away", crossedTorso),
+            ("L-r.R-l crown", pairCrown), ("L-l.R-r crown, away", crossedCrown)]
 
 
 #[ Rig ]#
@@ -485,3 +490,46 @@ suite "the floor's claims":
       check agrees == is_met
       when defined(floorIsLaw):
         check agrees
+
+
+
+#[ Reference's Cards ]#
+
+suite "the reference's chain cards":
+  test "sim reaches every chain position Architect has kept":
+    ## Reference page draws chain at seven winds half turn apart, both arms over
+    ##   head, and Architect has ruled `C2`-`C6` and `D2`-`D6` kept -- so those
+    ##   five winds of each chain are signed off, and reaching them is sim's job.
+    ##   `C` is hold that rests face to face (L-r . R-l), `D` its dual, which
+    ##     rests pillion lead (L-l . R-r): `design/parts`, sections `C` and `D`.
+    ##   Count asked for is reference's own classifier rather than second rule:
+    ##     `chainFor` names shape by `int(abs(wind) * 2)` -- open, cross,
+    ##     diamond, swan -- and chain gains one crossing per half turn of wind.
+    ##   `is_met` says which sim reaches today, so neither side moves without
+    ##     this going red.  Three do not: sim's pose at whole turn sits nearer
+    ##     rest than its half turn one, arms having got out of wind by passing
+    ##     over one another, which over head there is room to do.  Mending sim
+    ##     is what turns those three true; regenerating this table is not.
+    const
+      WINDS = [-1.0, -0.5, 0.0, 0.5, 1.0]
+        ## Winds of cards `2` to `6`, which are ones ruled on.
+      MET = [[false, true, true, true, true],   # C2 C3 C4 C5 C6
+             [false, true, true, true, false]]  # D2 D3 D4 D5 D6
+        ## Which card sim draws as reference draws it, today.
+    for (name, sw) in [("C", pairCrown), ("D", crossedCrown)]:
+      let which = if name == "C": 0 else: 1
+      for i, wind in WINDS:
+        let
+          id = &"{name}{i + 2}"
+          want = int(abs(wind) * 2.0)
+          got = sw.at(wind)
+        checkpoint(id)
+        check got.isSome
+        if got.isNone:
+          continue
+        let
+          crossed = crossings(got.get.state, got.get.verdict).len
+          reaches = crossed == want
+        echo &"    {id}: reference draws {want}, sim draws {crossed}" &
+          (if reaches: "  (reaches)" else: "  (SHORT)")
+        check reaches == MET[which][i]
