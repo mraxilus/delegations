@@ -310,6 +310,7 @@ then `./koch <command>`). Every check is a module under `curator/audit/src/`, te
 | `types` | projects with `package.json` | `npm ci`, then that project's own `types` verb |
 | `driven` | projects with a `drive` verb | restore, then that verb, on that project's pin |
 | `system` | projects with a `system` verb | prints what they need installed, one per line |
+| `assets` | files named, against the store | fetches and checks each, prints its path |
 | `tests` | every project, or one | restore, then testament, on that project's pin |
 | `plan` | changed paths, nimble pins | projects to compile, as JSON; `--sweep` for weekly |
 | `scope` | changed paths | branch grammar; project paths inside prefix |
