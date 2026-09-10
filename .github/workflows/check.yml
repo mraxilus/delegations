@@ -260,6 +260,25 @@ jobs:
           path: ${{ matrix.dir }}/build/fonts
           key: faces-${{ runner.os }}-${{ hashFiles(format('{0}/tools/build.nim', matrix.dir)) }}
 
+      # SDL3 is cloned, configured and built from source, and no package carries it, so cold
+      #   job paid 55.8 s of run 214's 357 s for it -- largest single step nothing cached
+      #   (repository issues 79 and 80, both of which named smaller levers).
+      #   Install prefix alone is cached, never cmake build tree beside it: `versionSdl3`
+      #   reads prefix's own `.pc`, so prefix is what makes `sdl3` return early, and build
+      #   tree is what makes stale restore dangerous. Measured rather than feared: cmake tree
+      #   carried from configure that found no X11 kept saying so after headers arrived, and
+      #   cost hour on container that had them. Product caches; build tree does not.
+      #   Key is same driver as faces, and that one file holds both `VERSION_SDL3` and
+      #   `SYSTEM`, so moved pin and changed packages each miss it.
+      #   Cost: most runs stop exercising SDL3 build. Every cache here trades that, but this
+      #   one meets weak pin -- tag rather than commit, checked by version string it reports
+      #   (repository issue 126) -- so cache makes moved tag less likely to be seen, which is
+      #   argument for fixing pin rather than against caching product.
+      - uses: actions/cache@v6
+        with:
+          path: ${{ matrix.dir }}/build/sdl3
+          key: sdl3-${{ runner.os }}-${{ hashFiles(format('{0}/tools/build.nim', matrix.dir)) }}
+
       - env:
           PROJECT: ${{ matrix.dir }}
         run: nim r koch driven "$PROJECT"

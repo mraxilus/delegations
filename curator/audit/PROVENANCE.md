@@ -826,12 +826,55 @@ four-core Intel Xeon 2.80 GHz container, 2026-09-08 — fifty times the row abov
 faster cores. What differs between the two containers has not been measured, so this sits beside
 that row rather than replacing it, and neither predicts the other.
 
+**SDL3's install prefix is cached, and the build tree beside it deliberately is not.** No
+package carries SDL3, so `sdl3` clones, configures and builds it from source: **55.8 s of run
+214's 357 s**, the largest single step nothing cached, and larger than either lever repository
+issues 79 and 80 were weighing.
+
+- The prefix is what makes the verb return early — `versionSdl3` reads `build/sdl3/lib/pkgconfig`
+  — so caching the product is enough and caching the cmake tree is unnecessary.
+- It is also what makes it *safe*, and that is measured rather than reasoned. A cmake build tree
+  carried over from a configure that had found no X11 kept reporting `SDL not configured with
+  OpenGL/GLX support` after the headers arrived, and cost an hour on a container that had them.
+  A product caches; a build tree remembers what it decided about a machine that has since changed.
+- Keyed on the project's `tools/build.nim`, exactly as the faces cache is, and that one file
+  holds both `VERSION_SDL3` and the `SYSTEM` declaration — so a moved pin and a changed package
+  list each miss the key, which is the pair that would otherwise make a restore wrong.
+- Cost: most runs stop exercising the SDL3 build. Every cache here trades that, but this one
+  meets a weak pin — a mutable tag, verified by the version string SDL reports about itself
+  (repository issue 126) — so the cache makes a moved tag *less* likely to be noticed. That is an
+  argument for fixing the pin, not against caching the product, and it is written here so the
+  cache does not quietly stand in for the fix.
+
 ## Open questions
 
-- Whether a restored `nimcache` can let a check pass without compiling what it claims. The
-  largest saving left, and the only cache question whose risk is correctness rather than
-  minutes; it needs driving against a deliberately stale cache before adoption or refusal.
-- Whether caching apt archives is worth it, now the install step is measured above.
+These two were open questions and are now answered; both are kept as answers rather than
+deleted, so neither is reopened from first principles.
+
+**A restored `nimcache` does not let a check pass without compiling what it claims, and it is
+still not worth caching.** Driven rather than argued, three cases: an ordinary rebuild; a cache
+made six years newer than backdated sources; and a full save-mutate-restore, which is what
+`actions/cache` actually does. All three rebuilt correctly — Nim decides by content, not by
+mtime, so a stale restore costs a rebuild rather than a wrong answer. That is the property the
+two Atlas defects lacked, and it is why those bit and this does not.
+
+- Rejected on size, then, not on fear. `nimcache` can only skip Nim compilation, which in run
+  214's `driven` job is a **2.8 s** page build plus part of a 13.7 s desktop build — at most
+  ~16 s of 357 s. Smaller still in practice: that job runs *because* the project's code changed,
+  so the modules that matter are exactly the ones a restored cache cannot serve.
+- The claim it carried — that this was "the largest saving still on the table" — was true when
+  written and is not now. SDL3 was.
+
+**Caching apt archives is not worth it, measured.** The figure the earlier record asked for:
+apt reports `Fetched 27.7 MB in 2s`, and splitting the step gives **2.8 s of download against
+7.6 s of install**. The whole step is 37 s, the rest of it compiling koch and running the
+project's own `system` verb, which no archive cache touches.
+
+- So a cache removes **2.8 s from a 357 s job, 0.8%**, for a root-owned directory and a key. The
+  original instinct — "saves the download and not the install" — was right, and now has a number.
+- The 1 m 47 s that opened repository issue 79 described a step that no longer exists: `chromium`
+  resolved to a snap and left with the browser change, taking most of the step with it. A figure
+  with an expiry date is worth re-taking rather than re-citing.
 **koch declares its own system dependencies, as the rule it enforces asks of every project.**
 `KOCH_SYSTEM` in `projects.nim` pairs each with its reason -- git, since tree is what git lists
 and `ci` fetches base to compare against; curl, since compiler pin nothing on machine serves is
