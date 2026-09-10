@@ -359,11 +359,15 @@ suite "Chapter 2":
    last); replication tests (notation and source correspondence preserved). Never force one
    profile's density onto another.
 8. A presentation target ships the faces it draws with, never naming one a viewer may lack:
-   Noto Sans for interface text, Noto Serif for prose, Commit Mono for code, data and
-   figures. Merge faces by codepoint range where none covers everything, and verify
-   coverage by rendering each codepoint against `.notdef`. One animation duration and one
-   easing curve, named once and read across every boundary; a hand-picked duration is a
-   claim that needs a comment.
+   Noto Serif for headings and titles, Noto Sans for body and interface text, Commit Mono
+   for code, data and figures, with its ligatures enabled wherever the renderer shapes
+   text — a glyph atlas that does no shaping is the exception, and needs none. The split is
+   by element rather than by register because legibility does not decide it: a review of
+   over fifty studies finds no reliable difference between serif and sans, so the deciding
+   factor is that headings and body are what a check can tell apart. Merge faces by
+   codepoint range where none covers everything, and verify coverage by rendering each
+   codepoint against `.notdef`. One animation duration and one easing curve, named once and
+   read across every boundary; a hand-picked duration is a claim that needs a comment.
 
 ```nim
 defineOperator(
