@@ -58,6 +58,7 @@ translation is printed in one table and nothing is tuned to make them agree.
 ```sh
 nim r koch ci                                          # root: tree, tests, scope, commits
 nim r koch tests contributor/sincopa/dance_ontology    # this project alone, its thirteen suites
+nim r tools/build.nim assets                           # faces every page ships, into build/fonts
 nim r tools/build.nim pages                            # every page, picture and script, into build/
 nim r tools/build.nim verdicts                         # rewrite sim/verdicts.md from the model
 nim r tools/build.nim shot                             # screenshot helper, for node and Playwright
