@@ -446,6 +446,40 @@ rather than being given, so absent face is their error to see by name.
   Costs nothing warm, which is what makes it safe to chain: `assets` skips every face already
   carrying its pinned digest, so warm run fetches none.
 
+**The digests left this project, and what stayed is which faces it draws with.** Two targets
+drawing Article X.8's three families pinned four of the same files byte for byte, which is the
+duplication Article II.9 names, and the curator built one store to hold them: `koch assets`
+takes names, fetches what is missing into `~/.cache/koch/assets`, checks each against
+`curator/audit/src/assets.nim`, and prints a path per file (repository issues 116 and 124).
+  It is a store of *any* file fetched at build time rather than of faces — CONTRIBUTOR.md names
+  that class already, and faces are its only instances today. This project's own `assets` verb
+  and the repository's `assets` verb share a word and are different drivers: one asks the other.
+  `assets` is a copy out of that store now rather than its own fetch-and-verify. Everything below
+  about *why* each byte is pinned still holds — it is simply held once for the repository instead
+  of once per project, and the paragraphs are kept because they are why the store exists.
+  **What did not move is the choice.** Six `woff2` for the page and six faces for the desktop
+  binary are this project's, and they differ from the other target's: this one draws maths and
+  symbols, that one draws italic serif. The store says what bytes a name is; it never says which
+  names a target wants.
+  **`web` still reads the bytes twice, and now without holding a digest to read them against.**
+  `assets` writes `build/fonts/store.list`, one line per face naming the store entry it was
+  copied from, and `web` compares its input against that entry before embedding it. So the second
+  reading survived adoption without this project knowing where the store lives or what digest
+  names an entry — both of which are `assets.nim`'s to know.
+  **Verified by breaking it, twice.** With `store.list` moved away, `web` refuses and names
+  `assets`; with one byte appended to a copied face, it refuses and names both the copy and the
+  store entry to compare it against. Re-running `assets` heals the second, copying one face and
+  keeping eleven.
+  **Verified by what did not change**, which is the point of the exercise: the page built from the
+  store is byte for byte the page built from this project's own fetch — `6e0c41ec…` before and
+  after, 3,911,946 bytes. The store was designed to hold the same bytes, and it does.
+  **Cost**, measured end to end through this project's own verb rather than through the store's:
+  `tools/build.nim assets` is **8.8 s** with both the store and `build/fonts` empty — twelve
+  fetches plus compiling koch — and **0.36 s** warm, when it copies nothing. `koch assets` alone
+  is 6.6 s cold and 0.18 s warm for the same twelve, and the store holds 4.1 MB.
+  `curl` and `coreutils` stay declared because they are still needed — one level down, by the
+  verb this asks on its behalf.
+
 **Each face carries digest of bytes expected, and build refuses anything else.** Host serves
 whatever it serves, and `web` embeds these bytes into artefact readers open, so wrong byte
 fetched is wrong byte shipped. Every other external thing here is pinned -- compiler to commit,

@@ -77,9 +77,10 @@ The browser page is assembled by `tools/build.nim`, which compiles the bridge th
 JS backend, type-checks and emits the TypeScript glue, inlines the six font faces, and folds
 all of it into one self-contained `build/rga_visualiser.html` that opens from `file://`.
 That needs Node and npm alongside Nim: `npm ci` restores the two pinned dev dependencies
-into `node_modules/`, which is never committed. `assets` fetches every face both front-ends
-draw with — six the page embeds and six the desktop binary loads — each pinned by version and
-SHA-256, and needs the network once.
+into `node_modules/`, which is never committed. `assets` copies every face both front-ends
+draw with — six the page embeds and six the desktop binary loads — out of the repository's shared
+asset store, which `koch assets` fills and checks against `curator/audit/src/assets.nim`. Which
+faces this project wants is in `tools/build.nim`; what bytes each one is belongs to the store.
 
 Both front-ends draw three roles from three families: **Noto Serif** for titles, **Noto Sans**
 for body and controls, **Commit Mono** for code and for text whose columns carry meaning. Two
