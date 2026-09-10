@@ -495,6 +495,30 @@ the likely mechanism behind the high-band blocks reported as *arm through head*.
 pressure, not the crown fault: with `overhead` set, the same rig and the same bias block
 nothing there. Changing it would move every figure again and wants its own evidence.
 
+**Sim reaches seven of the ten chain cards the reference signs off, and falls short at three.**
+The review page draws each chain at seven winds half a turn apart with both arms over head, and
+the Architect has kept `C2`-`C6` and `D2`-`D6`. Swept from rest, the sim draws what the reference
+draws at seven of those ten and falls short at `C2`, `D2` and `D6` -- every one a **diamond**,
+every one drawn with no crossing where the reference draws two. Measured 2026-09-10 rather than
+inferred, and three readings that each rule something out: loosening the crossing reader's
+tolerance from 1e-9 to 1e-3 changes not one count, so the reader is not implicated; no moment in
+range is reseeded, so it is not lost memory; and the pose the sim settles at a whole turn stands
+0.7 cm (`D2`) and 3.0 cm (`C2`) from the rest pose, against 36-56 cm at a half turn. The arms get
+out of the wind by passing over one another, which over head there is room to do -- **not**
+through one another: the least clearance between the two connections anywhere in either sweep is
+-0.45 cm, inside the give the model already allows for flesh, and no moment's verdict is anything
+but `ok`. Whether a couple whose hands are joined can unwind an overhead chain that way is the
+Architect's to say, and is asked rather than assumed, so no mend is made here. Rejected: refusing
+the freshly settled pose wherever arms could be carried instead, which reaches `C2` and loses
+`C6` -- three cards short either way, and a different three.
+
+**Both chains were swept at the torso alone, and the whole reference is drawn over head.**
+`tests/tlaws.nim` built thirteen sweeps and neither two-hand hold among them stood at the crown,
+so no law covered the one band every chain card is drawn in -- the same shape of fault as the
+five laws that could not fail, found the same way. Both are swept there now, longest first since
+they reach furthest: `tlaws` costs 13 s more for it and the whole runner 8 s more, the sweeps
+sharing cores.
+
 ## Pages and build
 
 **Published titles say which pages the project stands behind.** Two do — the reference and the
