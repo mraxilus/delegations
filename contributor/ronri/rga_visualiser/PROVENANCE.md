@@ -440,6 +440,18 @@ whatever it serves, and `web` embeds these bytes into artefact readers open, so 
 fetched is wrong byte shipped. Every other external thing here is pinned -- compiler to commit,
 packages to lock file, `pga` to commit -- and this fetch was sole exception (repository issue
 47). Digest sits beside face in `FACES`, so pin and thing pinned cannot drift apart.
+  **The package version sits beside it, and that is a second pin rather than decoration.** A
+  digest says what bytes are right; it cannot make a host serve them. The fetch used an
+  unversioned jsDelivr path, which serves whatever resolves — and one face was already past that
+  when a curator sweep asked (repository issue 111). `@fontsource/noto-sans-math` 5.3.0 renamed
+  this face's subset from `math` to `latin`, so 5.3.0 does not carry the file at all, and the
+  unversioned URL kept working only because jsDelivr fell back to **5.2.8**, the newest version
+  still holding what was asked for. Read from the response: `x-jsd-version: 5.2.8` against a
+  `latest` of 5.3.0.
+  So the build worked by an undocumented fallback, which is a build nobody can repeat. Each face
+  now names its own version — five at 5.3.0 and the math face at 5.2.8 — and two of them
+  differing is what pinning the *fetch* rather than the family looks like. Verified by refetching
+  cold with `build/fonts` removed: six of six digests match at the versions named.
   Checked twice, at both places bytes matter: `assets` verifies what it fetched, and `web`
   verifies again before embedding, since `assets` may have run long ago and disk is not
   evidence. Mismatches across six are collected and reported together rather than first raising,
@@ -636,6 +648,12 @@ zlib licence.
   `release-3.2.30` resolves at commit `f5e5f658`, so `VERSION_SDL3` names bytes rather than a
   version string, and the `README.md` and `checkSdl3` instructions compose the ref from it —
   one home, no second copy to drift.
+  **3.2.30 is the newest release of a series still maintained, not a stranded one.** A curator
+  sweep asked whether the pin was behind, since `main` carries 3.5.0 and `release-3.4.x` the
+  current stable series (repository issue 111). Read from the branches rather than a releases
+  page: `release-3.2.x` is still active and its head is 3.2.31 in progress, one past the pin. So
+  there is nothing to bump for currency, and following the series to 3.4.x would be a choice
+  about what to build against rather than a fix. Recorded so the next sweep stops here.
   **An odd patch number names no tag, which is the trap this replaced.** That series releases on
   even numbers alone; 3.2.31 was the head of `release-3.2.x` and no ref fetched it, so the clone
   command this project published failed outright and `pkg-config` could not have told two such
