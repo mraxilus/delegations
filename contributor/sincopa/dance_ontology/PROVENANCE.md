@@ -430,9 +430,46 @@ Declared unmet by this move, so the Style row above stays true (Article VIII.1):
   a hot path may hide there.
 - STYLE §2: `-d:floorIsLaw` predates the `{.define.}` naming convention and stays as the
   bare define the README names.
-- X.8: pages name system font stacks; the whole-cloth page loads Fraunces, Instrument Sans
-  and Spline Sans Mono from Google. Font files are unregistered kinds and cannot be shipped
-  here; see Open questions.
+
+**Every page ships the three faces it draws with, inlined.** Titles take Noto Serif, body
+text Noto Sans, code and data Commit Mono, which are the Architect's standard three and what
+Article X.8 names. Labels drawn inside figures take Noto Sans rather than Commit Mono: X.8's
+"code, data and figures" reads as numbers, and a label naming a hand is interface text.
+Seven faces are fetched by `tools/build.nim`'s `assets` verb into `build/fonts`, never
+committed, each pinned by package version *and* SHA-256 — version because an unversioned
+path serves whatever the host resolves that day, digest because the bytes are embedded in
+what readers open. `design/faces.nim` inlines them as data URIs and `pages` dresses every
+page it wrote, once, after every writer has run; doing it there rather than in each writer
+is what keeps the suites free of the network, which is **verified**: the thirteen suites pass
+with `build/` deleted outright.
+
+Origin of all seven is `@fontsource` 5.3.0 by way of `cdn.jsdelivr.net`, all **SIL Open Font
+License 1.1**, confirmed from each package's own `LICENSE` rather than assumed. Their
+checksums are the `FACES` table in `tools/build.nim` and are deliberately not copied here: a
+third list would be a third thing to drift, and that table is what the build actually
+enforces. Four of the seven are byte-identical to `contributor/ronri/rga_visualiser`'s pins,
+which is why each table names the other (Article II.9); whether the repository wants one
+pinned list both select from is repository issue 116, open.
+
+Cost, measured 2026-09-10 on this container: **+224 kB per page**, 167,424 bytes of woff2
+becoming 224,384 of base64, across ten pages, so `build/` grows from 6.9 MB to 9.1 MB.
+Rejected: linking the host's copy, which names a face the reader may lack and needs network
+at reading time; rejected: subsetting per page, which trades one shared block for ten that
+drift. Commit Mono keeps its ligatures in `calt` rather than `liga` — **measured**, both
+weights, 1932 glyphs in the latin subset — and `calt` is on by default only until something
+sets `font-variant-ligatures`, so the emitted sheet sets `contextual` at root and no later
+reset can lose them.
+
+**What this changed in the drawings, and what it did not.** The label font is named inside
+the figures, so every figure carrying a label changed its bytes. Of 516 figures across the
+six pages, 495 are byte-identical, 21 differ **only** by the font name, and none differs any
+other way — so no geometry moved. Those 21 were then read as pictures rather than as bytes:
+97 labels measured in a browser, none outside its viewBox before or after, none newly
+clipped, widest width change 0.9 px. Verified by hand in Chromium 1194, 2026-09-10, against
+a before-and-after sheet of all 21. The change worth naming is the one that is not visible
+in a diff: those labels used to render in whatever sans the reader's machine carried, so a
+card approved on one machine was a different picture on another, which is the thing X.8
+exists to stop.
 
 ## Toolchain
 
@@ -533,10 +570,6 @@ moment one arrives, and the `not Nim because` gate already refuses one that argu
 ## Open questions
 
 
-- Answered for fonts: binaries are never committed, and a project records each one's origin,
-  version, licence and checksum, then fetches it with an `assets` verb in `tools/build.nim`.
-  Satisfying X.8 means fetching Noto Sans, Noto Serif and Commit Mono that way and dropping
-  the Google request; until then the page keeps its remote fonts and system stacks.
 - `tlaws` costs 22 s of a four-core runner per audit; acceptable now, and the figure above
   is the one to watch as sweeps grow.
 

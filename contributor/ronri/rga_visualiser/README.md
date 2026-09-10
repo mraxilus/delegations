@@ -26,7 +26,7 @@ replicates no published source and derives no algebra of its own.
 ```sh
 nim r koch ci                                    # repository root: audit, scope, commits
 nim r koch tests contributor/ronri/rga_visualiser  # this project alone, three configurations
-nim r tools/build.nim assets                     # this project: fetch the ten faces, once
+nim r tools/build.nim assets                     # this project: fetch the twelve faces, once
 nim r tools/build.nim web                        # this project: build/rga_visualiser.html
 nim r tools/build.nim drive                      # this project: drive both front-ends
 nim r tools/build.nim desktop                    # this project: bin/rga_visualiser
@@ -78,8 +78,16 @@ JS backend, type-checks and emits the TypeScript glue, inlines the six font face
 all of it into one self-contained `build/rga_visualiser.html` that opens from `file://`.
 That needs Node and npm alongside Nim: `npm ci` restores the two pinned dev dependencies
 into `node_modules/`, which is never committed. `assets` fetches every face both front-ends
-draw with — six `woff2` the page embeds and four TrueType the desktop binary loads — each
-pinned by version and SHA-256, and needs the network once.
+draw with — six the page embeds and six the desktop binary loads — each pinned by version and
+SHA-256, and needs the network once.
+
+Both front-ends draw three roles from three families: **Noto Serif** for titles, **Noto Sans**
+for body and controls, **Commit Mono** for code and for text whose columns carry meaning. Two
+Noto faces supply the operators and symbols neither of the other two carries, merged by
+unicode-range in the page and into one atlas on the desktop. Commit Mono splits its ligatures:
+most ride on `calt` and draw unasked, while the arrows and comparisons come from `ss01` and
+`ss02`, which the page asks for by name. The desktop draws none of them, since Dear ImGui shapes
+no text. See Type Roles in `PROVENANCE.md`.
 
 Tests run as three configurations of one shared suite: `t4d` at shipped capacities on the C
 backend, `t4d_small` at capacities small enough that the suite's tests reach them, and

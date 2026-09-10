@@ -141,6 +141,18 @@ const
     ## Set selected object's name label, heavier than UI text as browser's semibold is.
     ##   Bold is heaviest weight Noto Sans ships as static face; no semibold there.
     ##   Own face rather than merged: label alone is set in it, at `HEIGHT_MARKER_LABEL`.
+  FACE_FONT_TITLE* {.define: "visualiser.face_font_title".} = "NotoSerif-SemiBold.ttf"
+    ## Set every heading, which is title role page's stylesheet names as well.
+    ##   Serif against interface's sans, so heading is told from row beneath it by shape
+    ##   rather than by weight alone.
+    ##   Semibold rather than regular, matching 600 page sets its own titles at: same role
+    ##   drawn at same weight through both mechanisms.
+  FACE_FONT_MONO* {.define: "visualiser.face_font_mono".} = "CommitMonoV142-400Regular.otf"
+    ## Set notation, figures and message line: text whose columns carry meaning.
+    ##   `otf` rather than `ttf` because that is what its author publishes; `stb_truetype`
+    ##   reads its CFF outlines, driven rather than assumed.
+    ##   Ligatures it carries are drawn by page and not here: Dear ImGui shapes no text, so
+    ##   `liga` and `calt` never fire. Letterforms are shared, ligatures are not.
   ENV_FONT* = "RGA_FONT"
     ## Environment name carrying interface face's location, where machine keeps its own.
   ENV_FONT_MATH* = "RGA_FONT_MATH"
@@ -149,6 +161,10 @@ const
     ## Environment name carrying symbol face's location.
   ENV_FONT_LABEL* = "RGA_FONT_LABEL"
     ## Environment name carrying label face's location.
+  ENV_FONT_TITLE* = "RGA_FONT_TITLE"
+    ## Environment name carrying title face's location.
+  ENV_FONT_MONO* = "RGA_FONT_MONO"
+    ## Environment name carrying mono face's location.
   SIZE_FONT* = 16.0'f32
   PATH_EXPORT_DEFAULT* = "rga_visualiser.png"
 
@@ -1553,6 +1569,19 @@ proc verdictDriven(
       &"focus {interaction.index_focus}, {scene.bound} objects, no face loaded",
     )
 
+  # Three roles, three faces, and every run says so.
+  #   Claim is that each role got face of its own rather than falling back to interface
+  #   face: fallback draws readable panel and silently loses distinction between heading,
+  #   body and notation, which is exactly failure nobody would see in headless run.
+  #   Skipped where interface face itself is absent, since that run is already reported
+  #   above and asking two questions about one missing directory says nothing new.
+  if gui.isFontLoaded():
+    report(
+      "each type role is drawn in a face of its own",
+      gui.isFontTitleLoaded() and gui.isFontMonoLoaded(),
+      &"title {gui.isFontTitleLoaded()}, mono {gui.isFontMonoLoaded()}, interface true",
+    )
+
   if options.is_key_driven:
     # Check traversal, selection and every kind of camera motion.
     #   Through queue and past Dear ImGui's navigation.
@@ -2026,12 +2055,15 @@ proc main() =
     path_font_math = faceAt(ENV_FONT_MATH, FACE_FONT_MATH)
     path_font_symbol = faceAt(ENV_FONT_SYMBOL, FACE_FONT_SYMBOL)
     path_font_label = faceAt(ENV_FONT_LABEL, FACE_FONT_LABEL)
+    path_font_title = faceAt(ENV_FONT_TITLE, FACE_FONT_TITLE)
+    path_font_mono = faceAt(ENV_FONT_MONO, FACE_FONT_MONO)
   # Conversion is explicit, since implicit one from `let` is warned on and will be error.
   #   Four bindings outlive call, and Dear ImGui copies each path before returning, so no
   #   pointer here outlives string behind it.
   doAssert gui.init(
     window, context, path_font.cstring, path_font_math.cstring, path_font_symbol.cstring,
-    SIZE_FONT, path_font_label.cstring, cfloat(HEIGHT_MARKER_LABEL),
+    SIZE_FONT, path_font_label.cstring, cfloat(HEIGHT_MARKER_LABEL), path_font_title.cstring,
+    path_font_mono.cstring,
   ), "Dear ImGui must start; got `false` from `gui.init`."
   defer: gui.shutdown()
   # Second line only where there was file to load: absent one is already reported by

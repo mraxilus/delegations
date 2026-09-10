@@ -63,17 +63,26 @@ const
 proc init*(
   window: Window; context: GlContext;
   path_font, path_font_math, path_font_symbol: cstring; size_font: cfloat;
-  path_font_label: cstring; size_label: cfloat
+  path_font_label: cstring; size_label: cfloat;
+  path_font_title, path_font_mono: cstring
 ): bool {.importc: "guiInit", sideEffect.}
-  ## Start Dear ImGui over SDL3 window and OpenGL context, loading three faces.
+  ## Start Dear ImGui over SDL3 window and OpenGL context, loading six faces.
   ##   Fourth face, `path_font_label` at `size_label`, sets selected object's name label;
   ##   heavier than UI text. Missing file leaves label in UI face.
+  ##   Fifth sets every heading and sixth sets notation and figures -- title and mono roles,
+  ##   which page draws too. Missing file leaves that role in UI face rather than unset.
 
 proc shutdown*() {.importc: "guiShutdown", sideEffect.}
   ## Tear Dear ImGui and both its backends down.
 
 proc isFontLoaded*(): bool {.importc: "guiFontLoaded", sideEffect.}
   ## Report whether requested faces were accepted rather than default font.
+
+proc isFontTitleLoaded*(): bool {.importc: "guiFontTitleLoaded", sideEffect.}
+  ## Report whether headings have title face of their own rather than interface face.
+
+proc isFontMonoLoaded*(): bool {.importc: "guiFontMonoLoaded", sideEffect.}
+  ## Report whether notation has mono face of its own rather than interface face.
 
 proc processEvent*(event: ptr Event): bool {.importc: "guiProcessEvent", discardable, sideEffect.}
   ## Hand SDL event to Dear ImGui, reporting whether it wanted it.
@@ -202,6 +211,15 @@ proc tabBegin*(label: cstring, is_forced: bool): bool {.importc: "guiTabBegin", 
 
 proc tabEnd*() {.importc: "guiTabEnd", sideEffect.}
   ## End tab begun by `tabBegin`.
+
+proc monoPush*() {.importc: "guiMonoPush", sideEffect.}
+  ## Set text written until `monoPop` in mono face: notation, figures, message line.
+  ##   Pair rather than mono twin of every text proc: three of them write such text, and
+  ##   caller says role once around block instead.
+  ##   No-op where mono face was not loaded, so absent face degrades rather than raising.
+
+proc monoPop*() {.importc: "guiMonoPop", sideEffect.}
+  ## Stop setting text in mono face, returning to interface face.
 
 proc separator*() {.importc: "guiSeparator", sideEffect.}
   ## Draw horizontal rule.
