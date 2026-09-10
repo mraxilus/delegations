@@ -121,7 +121,7 @@ canvas, so nothing in them catches rule wired to wrong event. `tools/drive/` doe
 Playwright, against page `tools/build.nim web` assembled. One command runs both:
 `nim r tools/build.nim drive`.
 
-**138 checks pass today**, one module per section of what page does:
+**139 checks pass today**, one module per section of what page does:
 
 | Module | Covers |
 |--------|--------|
@@ -160,6 +160,26 @@ Ruled on repository issue 47; one definition now, exported from `scenery` and im
 **Timing-dependent quantities are asserted as bands, never figures.** How far held key
 travels depends on frames drawn while it was down. Band that will not settle is widened with
 reason recorded, never deleted and never narrowed to fit one lucky run.
+
+**A count is only as steady as the thing counted, and the thing counted has to be what the
+claim is about.** The panel's cadence check counted calls to `drawExceedance` to show the tick
+asks for slow figures on a slower clock. Three callers reach that function: the tick's rota, the
+axis switch on press, and the frame loop every frame while the axis glides. So the count was of
+three mechanisms and the claim about one, and the verdict moved with whether the other two
+happened to be quiet -- 138 of 138 on one run here and 137 on the next, on identical code.
+  Counting the tick's own entry, `askSlowPass`, settles it by construction rather than by luck:
+  the rota asks on tick 0 of every 5, so asks are `ceil(ticks/5)` and the band has margin at any
+  window length. Measured 3 asks over 17 ticks against 7 redraws in the same window.
+  The collapsed half moved the opposite way for the same reason. Its claim is that nothing is
+  *drawn* while the section is shut; collapsing the canvas fires the resize observer, which
+  asks, and the slow pass then drops the owed job. It counts draws and reports the dropped ask.
+  Rejected: widening the band, which is what a run this shape invites and which would have kept
+  a check that answers a question nobody asked. The rule the two waits races produced --
+  settle on what moved -- has a sibling here: **count the mechanism the claim names.**
+  Verified by breaking on purpose, and committed in that order: four presses of the axis switch
+  inside the window give 7 redraws over 17 ticks, which the old instrument fails and the new one
+  passes. The switch's own redraw is now a check rather than noise -- four presses, four redraws
+  on the spot, none of them the tick's.
 
 **Waits are conditions page reports, not spans of clock.** Harness opened with 115 fixed
 waits against 3 conditions; it carries 16 fixed waits against 21 conditions and 33 frame
@@ -310,7 +330,7 @@ agree, and hand check camera that never moved (repository issue 73).
   Second instance of this shape here, after `settleTurn` polled computed transform for two equal
   reads. Rule that comes out of both: **settle on what moves, not on what has stopped changing**.
 
-*Checked.* Verified by running: 138 of 138 pass through `tools/build.nim drive` on assembled
+*Checked.* Verified by running: 139 of 139 pass through `tools/build.nim drive` on assembled
 page, in Chromium, software-rendered.
   Verified by breaking on purpose: with `settleCamera` returning at once, run drops to 131 of
   136 and every loss is framing -- orbit about pick, second pick coming in, plane to two fifths,
@@ -439,7 +459,7 @@ packages to lock file, `pga` to commit -- and this fetch was sole exception (rep
   of honest limit `compilers.nim` already records for fetched compilers, trusted on TLS alone.
 
 *Checked.* Verified by running cold: `clean` removes `build`, `bin` and `nimcache`, then `drive`
-fetches six faces and reaches 138 of 138 with no step run by hand -- which is runner's own case.
+fetches six faces and reaches 139 of 139 with no step run by hand -- which is runner's own case.
 Re-measured after `drive` gained desktop half, so cold run now builds and drives both front-ends
 rather than page alone. Second run immediately after fetches none. `web` alone on same cold tree
 still refuses by name, which is behaviour worth keeping rather than side effect.

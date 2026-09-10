@@ -50,6 +50,11 @@ declare function scanExceedance(): number;
 /** Redraw curve now, rather than waiting for section's own slower cadence. */
 declare function drawExceedance(): void;
 
+/** Ask slow pass for each figure named, which it draws once in next idle period. */
+declare function askSlowPass(
+  is_curve: boolean, is_sparkline: boolean, is_medians: boolean, is_pool: boolean,
+): void;
+
 /** How many buckets window is cut into. */
 declare const BUCKETS_EXCEEDANCE: number;
 
