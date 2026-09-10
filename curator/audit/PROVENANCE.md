@@ -272,12 +272,24 @@ prose.
 - Verified by driven check: a branch carrying `fix(audit)` alone reports one finding; the same
   branch with `test(audit)` first reports none.
 
-## Faces
+## Assets
 
-**One declaration of every face the repository draws with, in `foundry.nim`.** Article X.8 gives
-three families to every presentation target, so the second target repeats the first target's pins
-— and it did. `rga_visualiser` and `dance_ontology` each pinned four of the same files, byte for
-byte, in their own `tools/build.nim`. Article II.9 calls that a copy no real constraint forces and
+**One declaration of every file fetched at build time, in `assets.nim`.** CONTRIBUTOR.md already
+names the class — *"binaries are never committed, and neither are fonts, images or any file the
+audit cannot read"*, each recorded with origin, version, licence and checksum. The store is that
+class kept once rather than once per project.
+
+Faces are the only instances today, and the rows say so by grouping rather than by column: the
+shape is file, address and digest, which is what any such file needs and no more. **An asset
+wanting a field this row lacks — unpacking, a variant set — is a change rather than something this
+shape already answers**, and the header says so rather than implying it is settled for all time.
+The name was generalised before either project adopted it, since renaming afterwards would have
+meant coordinating three pull requests across two projects a curator may not edit.
+
+The reason it exists at all: Article X.8 gives three families to every presentation target, so
+the second target repeats the first target's pins — and it did. `rga_visualiser` and
+`dance_ontology` each pinned four of the same files, byte for byte, in their own
+`tools/build.nim`. Article II.9 calls that a copy no real constraint forces and
 asks each copy to name its siblings; neither did, and nothing could have told them from two
 different faces (repository issue 116).
 
@@ -291,7 +303,7 @@ different faces (repository issue 116).
 - **Keyed by digest, never by name.** Two projects asking for one face share one entry by
   construction, and a moved pin is a different entry rather than a stale one — the same property
   `check.yml` gets from keying its cache on the file holding the digests, one layer down. The
-  store sits at `~/.cache/koch/faces`, beside `~/.cache/koch/nim` and outside the checkout,
+  store sits at `~/.cache/koch/assets`, beside `~/.cache/koch/nim` and outside the checkout,
   because audit reads untracked files.
 - The rows are the union of two tables that already agreed: where both projects pinned one file
   they pinned the same digest, and **that agreement is what made one table safe to write** rather
@@ -306,6 +318,10 @@ different faces (repository issue 116).
   what is unbounded is the number of pins the repository has ever held, not the bytes.
 - Cost: an upstream that moves bytes under one address now fails every project at once rather
   than one. That is the same failure a digest exists to make loud, and it is louder shared.
+- **The Nim tarball is deliberately not here.** It is fetched and checksummed too, but its digest
+  comes from upstream's sidecar at fetch time rather than from this table, and it is stored
+  *unpacked by pin* because the rest of koch resolves toolchains by pin. Different trust model and
+  different key, so `compilers.nim` keeps it rather than this pretending one shape serves both.
 
 ## Toolchain
 

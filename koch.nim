@@ -10,7 +10,7 @@
 ##   | types   | restore node tools, then type-check scripts, projects one change asks   |
 ##   | driven  | restore, build page, drive it through real events, on that project's pin|
 ##   | system  | print packages projects with `system` verb declare, one per line        |
-##   | faces   | fetch faces named into shared store, print path of each                 |
+##   | assets  | fetch files named into shared store, print path of each                 |
 ##   | tests   | restore, then testament over tests/t*.nim, every project or one         |
 ##   | plan    | projects one change asks to compile, as JSON for CI matrix              |
 ##   | scope   | changed paths against branch prefix           (--branch, --base)        |
@@ -50,13 +50,13 @@
 
 import std/[options, os, parseopt, strutils]
 import ./curator/audit/src/[
-  findings, domains, scope, commits, tree, audit, plan, base, foundry,
+  findings, domains, scope, commits, tree, audit, plan, base, assets,
 ]
 
 
 const USAGE = """
-Usage: koch <tree|deps|types|driven|system|faces|tests|plan|scope|commits|base|stamp|ci>
-            [project|face...]
+Usage: koch <tree|deps|types|driven|system|assets|tests|plan|scope|commits|base|stamp|ci>
+            [project|asset...]
             [--root:<dir>] [--branch:<name>] [--base:<ref>] [--all] [--sweep]
 """
   ## Text printed on usage error.
@@ -81,12 +81,12 @@ proc parseOptions(): Option[Options] =
   for kind, key, value in getopt():
     case kind
     of cmdArgument:
-      # Third argument onward is refused for every verb but `faces`, which names faces
+      # Third argument onward is refused for every verb but `assets`, which names files
       #   rather than one project; refusing them everywhere would make that verb impossible
       #   and accepting them everywhere would let typo pass as argument nothing reads.
       if options.command.len == 0: options.command = key
       elif options.project.len == 0: options.project = key
-      elif options.command == "faces": options.rest.add key
+      elif options.command == "assets": options.rest.add key
       else: return none(Options)
     of cmdLongOption, cmdShortOption:
       case key
@@ -165,19 +165,19 @@ proc run(options: Options): int =
       else: repositorySystem(options.root, tree, tree.projectDirs)
     for package in named: echo package
     return 0
-  of "faces":
-    # Faces are repository's, never one project's: two targets pinned four of same files
-    #   byte for byte before this (repository issue 116). Store holds digest; caller names
-    #   which faces it wants, so what is shared is bytes rather than choice.
-    let root = storeRoot(getEnv(FACES_KEY))
+  of "assets":
+    # Fetched file is repository's, never one project's: two targets pinned four of same
+    #   files byte for byte before this (repository issue 116). Store holds digest; caller
+    #   names which files it wants, so what is shared is bytes rather than choice.
+    let root = storeRoot(getEnv(ASSETS_KEY))
     var wanted = options.rest
     if options.project.len > 0: wanted.insert(options.project, 0)
     for file in wanted:
-      let path = faceIn(root, file)
+      let path = assetIn(root, file)
       if path.len == 0:
         found.add(if file.digestOf.len == 0: unknown(file) else: @[finding(
-          "curator/audit/src/foundry.nim", 0,
-          "Face is declared but could not be fetched or checked; got `" & file & "`.",
+          "curator/audit/src/assets.nim", 0,
+          "Asset is declared but could not be fetched or checked; got `" & file & "`.",
         )])
       else: echo path
     if found.len == 0: return 0

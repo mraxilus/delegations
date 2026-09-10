@@ -4,21 +4,21 @@ cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
 batchable: true
 joinable: true
 """
-## Replicate shared face store of `foundry.nim` header, i.e. one declaration, keyed by digest.
+## Replicate shared store of `assets.nim` header, i.e. one declaration, keyed by digest.
 
 import std/[os, strutils, tempfiles, unittest]
-import ../src/foundry
+import ../src/assets
 
 
-suite "Foundry":
+suite "Assets":
   test "store lies outside repository, and override wins":
-    check storeRoot("/tmp/faces") == "/tmp/faces"
-    check storeRoot("").endsWith(FACES_DIR)
+    check storeRoot("/tmp/assets") == "/tmp/assets"
+    check storeRoot("").endsWith(ASSETS_DIR)
     # Audit reads untracked files, so store inside checkout would be audited.
     check not storeRoot("").startsWith(".")
-    check FACES_DIR == ".cache/koch/faces"  # beside `~/.cache/koch/nim`
+    check ASSETS_DIR == ".cache/koch/assets"  # beside `~/.cache/koch/nim`
 
-  test "face is stored under its digest, never under its name":
+  test "asset is stored under its digest, never under its name":
     # Two projects asking for one face share one entry by construction, and moved pin is
     #   different entry rather than stale one.
     const FACE = "noto-sans-latin-400-normal.woff2"
@@ -46,7 +46,7 @@ suite "Foundry":
 
   test "every row is one file, one address and one digest of sixty-four hex digits":
     var files: seq[string]
-    for (file, prefix, digest) in FACES:
+    for (file, prefix, digest) in ASSETS:
       check file.len > 0
       check file notin files  # nothing declared twice, which is what store exists to stop
       files.add file
@@ -80,8 +80,8 @@ suite "Foundry":
     check path.readDigest != read
     check readDigest(path & ".absent").len == 0  # absent file is nothing, never digest
 
-  test "face nobody declared is finding naming what was asked for":
+  test "asset nobody declared is finding naming what was asked for":
     let found = unknown("fraunces-latin-400-normal.woff2")
     check found.len == 1
     check found[0].message.endsWith("got `fraunces-latin-400-normal.woff2`.")
-    check "foundry.nim" in found[0].path  # names table to add row to
+    check "assets.nim" in found[0].path  # names table to add row to

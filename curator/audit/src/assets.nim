@@ -1,24 +1,32 @@
-## Hold one declaration of every face repository draws with, and fetch it into shared store.
-##   Article X.8 gives three families to every presentation target, so second target repeats
-##   first target's pins. That happened: `rga_visualiser` and `dance_ontology` each pinned
-##   four of same files, byte for byte, in their own `tools/build.nim`. Article II.9 calls
-##   that copy real constraint does not force, and asks each copy name its siblings; neither
-##   did, and nothing could have told them apart from two different faces (repository issue
-##   116).
+## Hold one declaration of every file fetched at build time, and fetch it into shared store.
+##   CONTRIBUTOR.md names class already: "binaries are never committed, and neither are fonts,
+##   images or any file audit cannot read", each recorded with origin, version, licence and
+##   checksum. Store is that class kept once rather than once per project.
+##   Faces are only instances today, and rows say so by grouping rather than by column: shape
+##     is file, address and digest, which is what any such file needs and no more. Asset
+##     wanting field this row lacks -- unpacking, or variant set -- is change rather than
+##     something this shape already answers. Said here so next reader does not assume it does.
+##
+##   Reason it exists at all: Article X.8 gives three families to every presentation target, so
+##     second target repeats first target's pins. That happened -- `rga_visualiser` and
+##     `dance_ontology` each pinned four of same files, byte for byte, in their own
+##     `tools/build.nim`. Article II.9 calls that copy real constraint does not force, and asks
+##     each copy name its siblings; neither did, and nothing could have told them apart from
+##     two different files (repository issue 116).
 ##
 ##   Digest is curator's, choice is project's. Store says what bytes `noto-sans-latin-400`
-##     is; it never says which faces target wants, and targets differ -- one draws maths and
+##     is; it never says which files target wants, and targets differ -- one draws maths and
 ##     symbols, other draws italic serif. So per-project autonomy CONTRIBUTOR.md argues for
 ##     is untouched: what stops being written twice is only what was already identical.
 ##   This is repository's first shared build input, and stays only one. Compilers are pinned
 ##     per project in nimble files, Atlas checkouts per project, npm per project, each
-##     deliberately. Bytes of face are not toolchain: they are same file whoever fetches it.
+##     deliberately. Bytes of file are not toolchain: they are same bytes whoever fetches.
 ##
-##   Store is `$KOCH_FACES_DIR`, else `~/.cache/koch/faces`, beside `~/.cache/koch/nim` that
+##   Store is `$KOCH_ASSETS_DIR`, else `~/.cache/koch/assets`, beside `~/.cache/koch/nim` that
 ##     `compilers.nim` keeps and for same reasons: never inside checkout, since audit reads
 ##     untracked files; keyed by what pins it, so entry cannot serve bytes pin would not have
 ##     fetched.
-##   Keyed by digest rather than by name: two projects asking for one face share one file by
+##   Keyed by digest rather than by name: two projects asking for one asset share one file by
 ##     construction, and changed pin is different path rather than stale one. Same property
 ##     `check.yml` gets from keying cache on file holding digests, one layer down.
 ##   Fetched file is checked before it is kept, and kept by moving into place, so half-written
@@ -26,6 +34,10 @@
 ##
 ##   Cost: `sha256sum` and `curl` are shelled out to, as `compilers.nim` does; `koch system`
 ##     declares both.
+##   Nim tarball is not here, deliberately: its digest comes from upstream sidecar at fetch
+##     time rather than from table here, and it is stored unpacked by pin because rest of koch
+##     resolves toolchains by pin. Different trust and different key, so `compilers.nim` keeps
+##     it rather than this pretending one shape serves both.
 ##   Cost: store grows and nothing prunes it. Face is ~30 kB where compiler is ~300 MB, so
 ##     what is unbounded here is number of pins repository has ever held, not bytes.
 ##   Cost: upstream that moves bytes under one address fails every project at once rather
@@ -38,9 +50,9 @@ import ./findings
 
 
 const
-  FACES_KEY* = "KOCH_FACES_DIR"
-    ## Environment name overriding where faces are stored.
-  FACES_DIR* = ".cache/koch/faces"
+  ASSETS_KEY* = "KOCH_ASSETS_DIR"
+    ## Environment name overriding where assets are stored.
+  ASSETS_DIR* = ".cache/koch/assets"
     ## Default store, under home and beside `~/.cache/koch/nim`.
   FONTSOURCE = "https://cdn.jsdelivr.net/npm/"
     ## Host serving `woff2` packaged by `@fontsource`, which is what page embeds.
@@ -48,7 +60,7 @@ const
     ## Noto project's own release repository, serving TrueType `@fontsource` does not ship.
   COMMIT_MONO = "https://cdn.jsdelivr.net/gh/eigilnikolajsen/commit-mono"
     ## Commit Mono is nobody's Noto, so its TrueType comes from its author's repository.
-  FACES* = [
+  ASSETS* = [
     # Page faces: `woff2` through `@fontsource`, version pinned in address, bytes by digest.
     ("commit-mono-latin-400-normal.woff2",
       FONTSOURCE & "@fontsource/commit-mono@5.3.0/files/",
@@ -97,8 +109,9 @@ const
       COMMIT_MONO & "@1.143/src/fonts/fontlab/",
       "0283fa3bbdb5cb2cb695946a60ea4aa2a0ceb872079304fe548188ab82ee58b2"),
   ]
-    ## Every face repository draws with: file, address prefix it is fetched from, and digest
-    ## of its bytes. All SIL Open Font License 1.1 but Commit Mono, also OFL 1.1.
+    ## Every file fetched at build time: its name, address prefix it is fetched from, and
+    ## digest of its bytes. Faces are all of them today; licence of each is in PROVENANCE.md,
+    ## where CONTRIBUTOR.md already asks for it, rather than in second column here.
     ##   Rows are union of what two projects pinned separately, taken from their own tables
     ##   rather than fetched afresh: where both pinned one file they pinned same digest, and
     ##   that agreement is what made one table safe to write.
@@ -106,38 +119,38 @@ const
 
 
 func storeRoot*(override: string): string =
-  ## Read directory faces are stored under, override winning when set.
-  if override.len > 0: override else: getHomeDir() / FACES_DIR
+  ## Read directory assets are stored under, override winning when set.
+  if override.len > 0: override else: getHomeDir() / ASSETS_DIR
 
 
 func addressOf*(file: string): string =
-  ## Read address face is fetched from; empty when store declares no such face.
-  for (name, prefix, _) in FACES:
+  ## Read address asset is fetched from; empty when store declares no such asset.
+  for (name, prefix, _) in ASSETS:
     if name == file: return prefix & name
   ""
 
 
 func digestOf*(file: string): string =
-  ## Read digest declared for face; empty when store declares no such face.
-  for (name, _, digest) in FACES:
+  ## Read digest declared for asset; empty when store declares no such asset.
+  for (name, _, digest) in ASSETS:
     if name == file: return digest
   ""
 
 
 func pathOf*(root, file: string): string =
-  ## Read path face takes in store, which is its digest; empty when none is declared.
+  ## Read path asset takes in store, which is its digest; empty when none is declared.
   ##   Digest names file rather than its name doing so, since two projects asking for one
-  ##   face then share one entry, and moved pin is different entry rather than stale one.
+  ##   asset then share one entry, and moved pin is different entry rather than stale one.
   let digest = file.digestOf
   if digest.len == 0: "" else: root / digest
 
 
 func unknown*(file: string): seq[Finding] =
-  ## Report face no row declares, naming file asked for.
+  ## Report asset no row declares, naming file asked for.
   @[finding(
-    "curator/audit/src/foundry.nim", 0,
-    "Store declares no such face; add row naming its address and digest, or ask for one it " &
-      "declares; got `" & file & "`.",
+    "curator/audit/src/assets.nim", 0,
+    "Store declares no such asset; add row naming its address and digest, or ask for one " &
+      "it declares; got `" & file & "`.",
   )]
 
 
@@ -154,8 +167,8 @@ proc readDigest*(path: string): string =
   candidate
 
 
-proc fetchFace*(root, file: string): bool =
-  ## Fetch face into store and keep it only when its bytes carry declared digest.
+proc fetchAsset*(root, file: string): bool =
+  ## Fetch asset into store and keep it only when its bytes carry declared digest.
   ##   Downloaded beside destination and moved in once checked, so half-written file is never
   ##   read as verified one.
   let (address, digest) = (file.addressOf, file.digestOf)
@@ -168,18 +181,18 @@ proc fetchFace*(root, file: string): bool =
     return false
   let got = landing.readDigest
   if got != digest:
-    echo "Face does not carry digest declared for it; wanted `" & digest & "`, got `" &
+    echo "Asset does not carry digest declared for it; wanted `" & digest & "`, got `" &
       got & "`."
     return false
   moveFile(landing, root / digest)
   true
 
 
-proc faceIn*(root, file: string): string =
-  ## Read path to face in store, fetching it when store holds none; empty when it cannot.
+proc assetIn*(root, file: string): string =
+  ## Read path to asset in store, fetching it when store holds none; empty when it cannot.
   ##   Entry already present is trusted without re-reading its bytes: name is digest, so
   ##   file at that path either carries it or was never written there by this.
   let path = pathOf(root, file)
   if path.len == 0: return ""
   if fileExists(path): return path
-  if fetchFace(root, file): path else: ""
+  if fetchAsset(root, file): path else: ""
