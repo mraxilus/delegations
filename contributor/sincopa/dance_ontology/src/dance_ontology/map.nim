@@ -123,9 +123,9 @@ func centreOf*(target: Frame): (int, int) =
 const
   COLOUR_INK = "var(--ink, #1a1f1e)"
   COLOUR_DIM = "var(--dim, #6b716e)"
-  LABEL_FONT = "font: 11px ui-sans-serif, system-ui, sans-serif"
+  LABEL_FONT = "font: 11px 'Noto Sans', ui-sans-serif, system-ui, sans-serif"
   LINE_HEIGHT* = 12 ## Height of one line of stacked name.
-  NAME_FONT = "font: 11px ui-sans-serif, system-ui, sans-serif"
+  NAME_FONT = "font: 11px 'Noto Sans', ui-sans-serif, system-ui, sans-serif"
 
 
 func armColour*(side: Side): string =
