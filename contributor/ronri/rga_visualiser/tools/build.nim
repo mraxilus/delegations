@@ -183,7 +183,7 @@ const
     ("curl", "fetch faces asked of shared store, one level down through `koch assets`"),
     ("coreutils", "`base64` inlining those faces, and `sha256sum` store checks them with"),
     ("nodejs", "run type-checker `types` drives and harness `drive` runs"),
-    ("git", "clone Dear ImGui and SDL3 at commit and tag `desktop` checks them at"),
+    ("git", "clone Dear ImGui and SDL3, and read commit `desktop` holds each of them at"),
     ("cmake", "build SDL3 from source, since no package of it exists on Ubuntu 24.04"),
     ("pkg-config", "read version of that SDL3, which `desktop` checks before compiling"),
     ("libx11-dev", "X11 headers SDL3 builds its video backend from; window is X11 one"),
