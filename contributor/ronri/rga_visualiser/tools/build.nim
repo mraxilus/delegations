@@ -104,14 +104,23 @@ const
   VERSION_SDL3 = "3.2.30"
     ## Release SDL3 must report through `pkg-config`, zlib licence.
     ##   Names tag rather than version alone: `release-` & this is `release-3.2.30`, which
-    ##   `git clone --branch` resolves, at commit `f5e5f658`. That series releases on even patch
-    ##   numbers alone, so odd one names no tag and no bytes -- which is what 3.2.31 did, and
-    ##   what repository issue 90 was.
+    ##   `git clone --branch` resolves. That series releases on even patch numbers alone, so
+    ##   odd one names no tag and no bytes -- which is what 3.2.31 did, and what repository
+    ##   issue 90 was.
     ##   Built from source rather than installed: Ubuntu 24.04 packages SDL2 alone, and
     ##   `apt-get install libsdl3-dev` fails on it outright. Distributions carrying package
     ##   exist, but build cannot depend on which one runs it.
     ##   Pinned exactly rather than as floor: this is what desktop front-end was compiled and
     ##   drawn against, and floor would claim reach across releases nothing here has tried.
+  COMMIT_SDL3 = "f5e5f6588921eed3d7d048ce43d9eb1ff0da0ffc"
+    ## Commit `release-3.2.30` resolved to when it was read, and what checkout must stand at.
+    ##   Neither of two things beside it binds bytes: tag is mutable, and version is what SDL
+    ##   says of itself, so tag moved upstream would fetch other sources and `pkg-config` would
+    ##   answer `3.2.30` still. Commit cannot move, for reason `COMMIT_IMGUI` gives, and this
+    ##   is what `checkSdl3` holds clone against (repository issue 126).
+    ##   Tag stays beside it rather than giving way to it: `--depth 1 --branch` needs ref to
+    ##   fetch, and one it fetches is this commit. Tag says where to look, commit says what
+    ##   must arrive.
   COMMIT_IMGUI = "fd13a1e8923a0a7077b404fc36fd063b25a0c0b5"
     ## Commit that checkout must stand at, i.e. `v1.92.9b-docking-35-gfd13a1e`, MIT licence.
     ##   Pinned for reason `FACES` are: this is fetched at build time and compiled into
@@ -190,12 +199,12 @@ const
     ##   neither.
     ##   No version is pinned and none is invented: package's version is whatever machine
     ##   carries, which is honest limit rather than omission. What *is* pinned is every byte
-    ##   fetched at build time -- see `FACES` and `COMMIT_IMGUI` -- which is what keeps
-    ##   unpinned download out of merge process.
+    ##   fetched at build time -- see `FACES`, `COMMIT_IMGUI` and `COMMIT_SDL3` -- which is
+    ##   what keeps unpinned download out of merge process.
     ##   Dear ImGui and SDL3 are absent deliberately: neither arrives as package. Dear ImGui
     ##   is compiled from source into binary, and Ubuntu 24.04 carries no `libsdl3-dev` at all
-    ##   -- only SDL2 -- so SDL3 is built and installed from source too. Both are pinned by
-    ##   version rather than by package manager; see `COMMIT_IMGUI` and `VERSION_SDL3`.
+    ##   -- only SDL2 -- so SDL3 is built and installed from source too. Both are pinned to
+    ##   commit rather than to package manager; see `COMMIT_IMGUI` and `COMMIT_SDL3`.
   USAGE = "Usage: nim r tools/build.nim " &
     "<declare|types|web|drive|desktop|driven|assets|system|clean>\n"
     ## Text printed on usage error.
@@ -512,6 +521,21 @@ proc web() =
   echo "Wrote ", PATH_PAGE, " (", page.len, " bytes)."
 
 
+proc checkCommit(dir, commit, what: string) =
+  ## Raise unless checkout in directory stands at commit pinned for it.
+  ##   Shared by both sources build fetches: each is compiled into binary reader runs, so
+  ##   wrong commit is wrong binary, and one reading holds both rather than two that could
+  ##   part (Article II.9).
+  let (written, code) = execCmdEx("git -C " & quoteShell(dir) & " rev-parse HEAD")
+  if code != 0:
+    raise newException(OSError,
+      "Cannot read commit of `" & dir & "`; got exit `" & $code & "`.")
+  let got = written.strip
+  if got != commit:
+    raise newException(OSError,
+      what & " is not at commit pinned for it; wanted `" & commit & "`, got `" & got & "`.")
+
+
 proc imgui() =
   ## Clone Dear ImGui at pinned commit, unless checkout already stands somewhere.
   ##   Verb fetches what it compiles rather than asking caller to, for reason `drive` fetches
@@ -537,15 +561,7 @@ proc checkImgui() =
       "Missing Dear ImGui at `" & DIR_IMGUI & "`; clone it with `git clone --branch docking" &
       " https://github.com/ocornut/imgui.git " & DIR_IMGUI & " && git -C " & DIR_IMGUI &
       " checkout " & COMMIT_IMGUI & "`.")
-  let (written, code) = execCmdEx("git -C " & quoteShell(DIR_IMGUI) & " rev-parse HEAD")
-  if code != 0:
-    raise newException(OSError,
-      "Cannot read commit of `" & DIR_IMGUI & "`; got exit `" & $code & "`.")
-  let got = written.strip
-  if got != COMMIT_IMGUI:
-    raise newException(OSError,
-      "Dear ImGui is not at commit pinned for it; wanted `" & COMMIT_IMGUI & "`, got `" &
-      got & "`.")
+  checkCommit(DIR_IMGUI, COMMIT_IMGUI, "Dear ImGui")
 
 
 proc versionSdl3(): string =
@@ -570,8 +586,9 @@ proc sdl3() =
   ##   run unattended without granting it, and prefix under `build/` is removed by `clean`
   ##   like any other product. Cost is `-rpath` below, since loader would not find library
   ##   there otherwise.
-  ##   `--depth 1` is safe here where it is not for Dear ImGui: pin is tag, and tag is what
-  ##   shallow clone fetches.
+  ##   `--depth 1` is safe here where it is not for Dear ImGui: commit pinned is one tag
+  ##   names, which is exactly what shallow clone fetches, while Dear ImGui's sits behind
+  ##   branch head where no shallow clone reaches it.
   ##   Costs nothing warm: already-built prefix reports pinned version and is left alone.
   let got = versionSdl3()
   if got == VERSION_SDL3:
@@ -581,6 +598,9 @@ proc sdl3() =
     run("git", [
       "clone", "--depth", "1", "--branch", "release-" & VERSION_SDL3, URL_SDL3, DIR_SDL3,
     ])
+  # Held before cmake rather than after: build is minutes, and sources this refuses are
+  #   sources none of those minutes should be spent on.
+  checkCommit(DIR_SDL3, COMMIT_SDL3, "SDL3")
   run("cmake", ["-S", DIR_SDL3, "-B", DIR_SDL3_BUILD, "-DCMAKE_BUILD_TYPE=Release"])
   run("cmake", ["--build", DIR_SDL3_BUILD, "-j", $countProcessors()])
   run("cmake", ["--install", DIR_SDL3_BUILD, "--prefix", getCurrentDir() / DIR_SDL3_PREFIX])
@@ -588,10 +608,17 @@ proc sdl3() =
 
 
 proc checkSdl3() =
-  ## Raise unless SDL3 this build reaches reports version pinned for it.
+  ## Raise unless SDL3 this build reaches reports version pinned for it, and unless clone it
+  ## was built from stands at commit pinned for it.
   ##   Runs after `sdl3`, so it reads what that built or what machine already carried, and
   ##   refuses either where version misses -- wrong SDL3 is wrong binary, for reason
   ##   `checkImgui` gives about wrong commit.
+  ##   Commit is read here as well as in `sdl3`, so warm tree is held too: `sdl3` returns on
+  ##   version alone where prefix already reports it, and clone it once built from is then
+  ##   never looked at again.
+  ##   Machine carrying its own SDL3 has no clone to read, and version is all there is of it.
+  ##   That is limit of this check rather than case it waves through, and it says aloud which
+  ##   of two it held.
   let got = versionSdl3()
   if got.len == 0:
     raise newException(OSError,
@@ -600,6 +627,10 @@ proc checkSdl3() =
   if got != VERSION_SDL3:
     raise newException(OSError,
       "SDL3 is not version pinned for it; wanted `" & VERSION_SDL3 & "`, got `" & got & "`.")
+  if not dirExists(DIR_SDL3):
+    echo "Kept SDL3 ", VERSION_SDL3, " from machine; no clone here to read commit of"
+    return
+  checkCommit(DIR_SDL3, COMMIT_SDL3, "SDL3")
 
 
 proc desktop() =
