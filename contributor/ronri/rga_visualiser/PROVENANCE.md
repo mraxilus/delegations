@@ -251,8 +251,19 @@ what reader sees, and it is immune to buffer being taken after frame that filled
   in a row is what luck gives (2/3)^*n* of the time, which is 30% at three, 13% at five, and under
   2% at ten. That is the whole of what can be said without a number, and a number is exactly what
   this file cannot hold: only a push of this project adds a sample, so the merge carrying any
-  tally invalidates it. The running count lives on repository issue 77, where the curator's own
-  next move turns on it, and this section deliberately does not duplicate it.
+  tally invalidates it. Issue 77 carried the running count while the curator's next move turned
+  on it; that move has been taken and the issue is closed, so what stands here in place of a
+  tally is a boundary and a deduction, neither of which a later push can falsify.
+  **The sample spans two browsers now, and the reader was green on both.** On `main` the runner
+  drove the snap through run 34399034311 and drives what `package-lock.json` pins from 34404833659
+  onward — the curator's `RGA_CHROMIUM` step went between those two runs (#98), and both are
+  green. Every `push` run on `main` since 34294113589 has passed, which is a deduction rather
+  than a tally — `driven` gates `audit`, so one red reader reddens the whole run, and none of
+  them is red. The snap was the last variable standing when this section was written and it is
+  not standing now; blankness has not returned without it. That moves the compositor reader from
+  *consistent with the cause being gone* toward *the reading was the cause*, and it does not
+  settle what the cause was, which stays **Unexplained** above: neither Chromium here ever
+  reproduced it, so nothing has been driven against a reproduction.
 
 **The harness resolves its own browser, and drives Playwright's pinned build by default.**
 Order is what `RGA_CHROMIUM` names, else the build `package-lock.json` pins, else `chromium`
@@ -3021,5 +3032,6 @@ because runner answered with sheet of it once black alone was refused. Rate abov
 curator's measurement of what old reader did. Correction to finding: *four* checks had been
 comparing one blank reading against another, not one -- `pool`'s reported hash 1426046701 is
 exactly its own fold over all-zero 1200x900x4 buffer, which is what shows it. Cause on runner
-stays **unexplained**; neither Chromium here reproduces it, and unpinned snap browser runner
-drives is raised for curator on issue 77.
+stays **unexplained**; neither Chromium here reproduces it. Browser runner drove was unpinned
+snap, and was raised for curator on issue 77; it is gone. Runner drives build lock pins since
+#98, reader has been green on both, and that is evidence against snap having been cause.
