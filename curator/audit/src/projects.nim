@@ -36,6 +36,8 @@ const
   KOCH_SYSTEM* = [
     ("git", "tree is what git lists, and `ci` fetches base to compare against"),
     ("curl", "compiler pin nothing on machine serves is downloaded"),
+    ("tar", "that download is archive, and unpacking it is what makes it toolchain"),
+    ("coreutils", "`sha256sum` checking it against digest published beside it"),
   ]
     ## System packages koch itself needs, whatever any project declares. Same shape rule asks
     ## of every project, kept by driver that enforces it: declaration is data carrying its
