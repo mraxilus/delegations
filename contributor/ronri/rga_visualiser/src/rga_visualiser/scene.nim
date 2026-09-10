@@ -223,7 +223,7 @@ const lut_operation_to_notation* = [
   ##     over it; spacing modifier carries own advance, so both renderers place it same
   ##     way.
   ##   Not second plain-ASCII table: atlas merges faces carrying astral-plane glyphs (see
-  ##   `visualiser.PATH_FONT_MATH`).
+  ##   `visualiser.face_font_math`).
   ##   `const` of `string`, with `cstring` array picker needs built from it below.
   ##     `help.nim` builds own table at compile time, so catalogue tab needs text before
   ##     program runs; addresses derive from text, never text from addresses.
