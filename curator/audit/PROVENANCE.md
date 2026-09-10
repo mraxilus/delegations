@@ -350,11 +350,30 @@ Two traps, both found by driving rather than reasoning, and both changed the cod
   has not; `choosenim`'s layout, a second convention that cannot serve a commit pin at all.
 - Costs: the checker reaches the network and may build a compiler — seconds for a release,
   minutes for a commit, once per pin; each cached toolchain is a few hundred megabytes and
-  nothing prunes them; downloads are trusted on TLS alone, with no checksum verified, because
-  Nim publishes none in a form worth parsing. That is the one place this repository takes
-  something on trust that it pins everywhere else.
+  nothing prunes them.
 - CI is untouched: every job's installed compiler already satisfies its `matrix.nim`, so
   resolution stops at `PATH` and never fetches.
+
+**The fetched tarball is checked against the digest published beside it.** This paragraph used to
+record the opposite as a cost — trusted on TLS alone, "because Nim publishes none in a form worth
+parsing" — and that was simply wrong. `<tarball url>.sha256` is exactly `sha256sum` output, for
+every release checked, and `fetchRelease` now fetches it and refuses a tarball whose bytes differ.
+
+- What it defends against, stated rather than overclaimed: the digest comes from the same host
+  over the same TLS as the tarball, so it catches a truncated, mirrored or swapped file, **not a
+  compromised nim-lang.org**. A signature would answer that; none is published — `.asc` beside
+  these tarballs is a 404, read rather than assumed.
+- Text that is not a digest reads as *nothing* rather than as a digest that cannot match, so an
+  error document or an empty answer reports "none published" instead of "mismatch". The two are
+  different failures and say different things to whoever reads the line.
+- `KOCH_SYSTEM` gains `coreutils` for `sha256sum` — and `tar`, which `fetchRelease` has always
+  shelled out to and the original declaration missed.
+- Verified by breaking it, not by a fetch that happened to pass: `tcompilers.nim` digests a
+  temporary file, changes one byte and checks the digest moves; and the parse is mutation-tested —
+  dropping its hex validation reddens the suite. Driven end to end 2026-09-10: `2.2.2`, which
+  nothing on this machine served, fetched, digest-checked and unpacked in **4.6 s**.
+- Honest limit of that test: the `sha256sum` exit-code check is belt-and-braces, since the parse
+  already rejects the error text, so no test distinguishes it. Kept for saying what it means.
 - Verified by `ttoolchain.nim`, `tcompilers.nim` and `tprojects.nim`, and driven end to end,
   2026-09-06: `curator/probe` pinned to 2.2.6 with nothing local serving it fetched the tarball
   and ran in **7.6 s** cold, 3.0 s warm; then one command with only 2.2.4 on `PATH` and four

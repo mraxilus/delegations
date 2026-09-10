@@ -395,11 +395,13 @@ follows the core count.
 
 ## Figures
 
-- `tlaws` alone, danger build: 22.0 s wall, 59.0 s CPU, four Xeon cores, Linux amd64
-  container, Nim 2.2.4, 2026-09-05; compile 2.3 s. Single figure, no pair: unmeasured as an
-  optimisation.
-- `tools/build.nim verdicts`: 42.3 s wall, same machine, 2026-09-05, after move; 44.6 s wall
-  and 151 s CPU before it, under retired `make verdicts`.
+- `tlaws` alone, danger build: 31.7 s wall, 83.9 s CPU, four Xeon cores, Linux amd64
+  container, Nim 2.2.12, 2026-09-10; compile 1.3 s warm, 11.1 s cold. Single figure, no
+  pair: unmeasured as an optimisation.
+- `tools/build.nim verdicts`: 50.2 s wall, 176 s CPU, same machine, Nim 2.2.12, 2026-09-10.
+  It rewrites `sim/verdicts.md` byte for byte identically to what 2.2.4 wrote, which is the
+  evidence that moving the pin moved no answer the sim gives -- worth having, since the
+  search is sensitive enough to land 0.75 m away on a last-bit change of input.
 - Eleven testament stubs, under `make check` before move: 52.7 s wall, 93.3 s CPU, same
   machine and date; `tlaws` 23.0 s and `tmarks` 11.5 s of it. Not re-measured alone since;
   whole-repository figure is in `curator/audit/PROVENANCE.md`.
@@ -435,14 +437,30 @@ Declared unmet by this move, so the Style row above stays true (Article VIII.1):
 ## Toolchain
 
 **Compiler pinned exactly, at the version this project was verified on.**
-`requires "nim == 2.2.4"` in `dance_ontology.nimble`. CONTRIBUTOR.md now demands an exact
-pin rather than a lower bound, and this project is the reason an upper bound is needed at
-all: 2.2.8 and 2.2.10 crash the compiler itself on six of the eleven suites
-(`field 'floatVal' is not accessible for type 'TFullReg'`), reported by the contributor of
-`rga_visualiser` while checking which release the whole repository could take. Assumed, not
-re-verified here: that report, which was measured on their machine and not on this one.
-The eleven suites pass on 2.2.4, which is what the pin records. Moving it is this project's
-own work, and it now moves nothing else.
+`requires "nim == 2.2.12"` in `dance_ontology.nimble`. It sat at 2.2.4 for two weeks because
+2.2.8 onward crashed the compiler itself on six of the suites
+(`field 'floatVal' is not accessible for type 'TFullReg' using 'kind = rkInt'`), and that was
+recorded as an upper bound nobody had explained. The cause was one line here, not a fault of
+the release: `polylineLen` in `draw/route.nim` read its float `result` with `+=` before
+anything assigned it, and from 2.2.8 the virtual machine hands such a result an int register,
+then reads `floatVal` off it. It bites only at compile time and only where the function is
+reached in the VM, which is `const SCENES = buildScenes()` in `draw/scene.nim` -- so exactly
+the six suites importing the umbrella module crashed, and the six importing `sim/`, `design/`
+or submodules did not. `result = 0.0` first is the whole of it, and the line carries a comment
+saying why, because it reads redundant and is not.
+
+Verified here 2026-09-10, not assumed: five lines reproduce the crash with nothing from this
+project -- a `func` accumulating into a float `result` and called from a `const` -- compiling
+on 2.2.4 and crashing on 2.2.12 with that message; before the mend 6 of 12 suites crash on
+2.2.12 in 2 m 28 s, after it all 13 pass in 2 m 11 s, and the same 13 pass on 2.2.4. Behaviour
+is unchanged and that is measured rather than argued: every one of the 22 pages
+`tools/build.nim pages` writes is byte-identical built with the line and without it, so no
+page changes and none is republished. Verified by `troute.nim`, which takes a run's length in
+a `const` so the compile-time path has a law naming it; without that, tidying the line away
+would show up only as six suites failing to build. The diagnosis came from a curator's sweep
+for stale versions, issue 106. Rejected: staying on 2.2.4, which kept a bound whose reason
+lived in one sentence of this file. `result +=` on a float survives in `sim/`, `design/` and
+`tools/`, none of which the VM evaluates today: latent, not urgent.
 
 ## Re-audit, 2026-09-06
 
