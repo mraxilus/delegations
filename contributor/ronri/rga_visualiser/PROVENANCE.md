@@ -763,8 +763,8 @@ That is this repository's rule about anything fetched at build time, and here it
 than chosen: Ubuntu 24.04 carries `libsdl2-dev` and no SDL3 at all, so `apt-get install
 libsdl3-dev` fails on it outright. SDL3 is cloned at its tag and built into `build/sdl3` -- a
 prefix inside the tree, so no step needs root and `clean` removes it like any other product --
-and `checkSdl3` reads what `pkg-config` reports there before compiling anything, at `3.2.30`,
-zlib licence.
+and `checkSdl3` reads what `pkg-config` reports there, and the commit the clone stands at,
+before compiling anything, at `3.2.30`, zlib licence.
   **SDL3's own build dependencies are declared too, and the runner is what found them.** Its
   cmake refuses outright where it can find neither X11 nor Wayland development libraries, since
   a build that cannot open a window is not one anybody wanted. `libx11-dev` arrives beneath
@@ -784,10 +784,28 @@ zlib licence.
   runner is the machine this had to reach.
   Pinned exactly rather than as floor: floor would claim reach across releases nothing here has
   tried.
-  **The pin is a release tag, and `release-` prefixed to it is the ref that fetches it.**
-  `release-3.2.30` resolves at commit `f5e5f658`, so `VERSION_SDL3` names bytes rather than a
-  version string, and the `README.md` and `checkSdl3` instructions compose the ref from it —
-  one home, no second copy to drift.
+  **The pin is a release tag, and the commit that tag resolves to is what binds the bytes.**
+  `release-` prefixed to `VERSION_SDL3` is the ref that fetches, and `COMMIT_SDL3` is what has
+  to arrive: `f5e5f6588921eed3d7d048ce43d9eb1ff0da0ffc`, read from the remote and from the
+  clone, which agree. The `README.md` and `checkSdl3` instructions still compose the ref from
+  the version — one home, no second copy to drift.
+  **What that replaced overclaimed, and this line said so.** A tag is mutable and a version
+  string is self-reported, so neither bound a byte: a moved `release-3.2.30` would have fetched
+  other sources and `pkg-config` would have answered `3.2.30` still, and nothing in the path
+  called `rev-parse`. `checkSdl3` now reads `git rev-parse HEAD` against the commit, as
+  `checkImgui` already did, and `checkCommit` is the one reading both go through (repository
+  issue 126).
+  Verified by pinning it wrong: with the prefix already built and `pkg-config` reporting
+  `3.2.30`, a `COMMIT_SDL3` of zeroes is refused by name — which is exactly the case the version
+  check passes and this one does not. Held on the warm tree as well as the cold one, since
+  `sdl3` returns on the version alone where the prefix already reports it, and the clone it
+  built from would otherwise never be looked at again. Held before cmake too, so a refused
+  clone costs no minutes of building.
+  The limit is stated rather than papered over: a machine carrying its own SDL3 has no clone to
+  read, and the version is then all there is of it. That path says so aloud rather than passing
+  as though it had checked. The tag is kept beside the commit because `--depth 1 --branch` needs
+  a ref to fetch, and the commit is what that ref fetches — which is also why a shallow clone is
+  safe here and is not for Dear ImGui, whose pin sits behind a branch head.
   **3.2.30 is the newest release of a series still maintained, not a stranded one.** A curator
   sweep asked whether the pin was behind, since `main` carries 3.5.0 and `release-3.4.x` the
   current stable series (repository issue 111). Read from the branches rather than a releases
