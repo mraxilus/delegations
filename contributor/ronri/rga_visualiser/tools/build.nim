@@ -141,8 +141,8 @@ const
       "90b9ddbed280e379e1af4601eb1d53eee8dd467b4c9174e5fd2d7347fe180d30"),
     ("noto-sans-symbols-2-symbols-400-normal.woff2", "5.3.0",
       "9c07d511848c274b5430c75bf98d1f2582680ef5f967947bfbdd06b75ca177c2"),
-    ("noto-serif-latin-400-normal.woff2", "5.3.0",
-      "4c0cbe3eec50d260754d681c17ee2af49a43d7fd93ce42877f665fcb1a889b87"),
+    ("noto-serif-latin-600-normal.woff2", "5.3.0",
+      "abf0abc765331d7a1bbe6eb3603cf86be1cf3d1edbcf911cc2d52f78998c02d9"),
   ]
     ## Faces page embeds, each with package version fetched and digest of bytes expected, all
     ##   SIL Open Font License 1.1; origins in PROVENANCE.md.
@@ -186,21 +186,41 @@ const
   HOST_FACES = "https://cdn.jsdelivr.net/npm/@fontsource"
     ## Host `assets` fetches page's faces from.
   HOST_FACES_DESKTOP = "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io"
-    ## Host `assets` fetches desktop front-end's faces from.
+    ## Host `assets` fetches desktop front-end's Noto faces from.
     ##   Noto project's own release repository rather than `@fontsource`, which ships `woff2`
     ##   and `woff` alone -- and Dear ImGui reads TrueType, through `stb_truetype`.
+  HOST_FACE_MONO = "https://cdn.jsdelivr.net/gh/eigilnikolajsen/commit-mono"
+    ## Host `assets` fetches desktop front-end's mono face from.
+    ##   Commit Mono is nobody's Noto, so it comes from its own author's repository; page's
+    ##   copy comes through `@fontsource` as `woff2`, which desktop cannot read.
   FACES_DESKTOP = [
-    ("NotoSans-Regular.ttf", "NotoSans-v2.013", "NotoSans/hinted",
+    ("NotoSans-Regular.ttf", HOST_FACES_DESKTOP & "@NotoSans-v2.013/fonts/NotoSans/hinted/ttf/",
       "61b72eacd39533f0e5916cbb458abd7b3cf870667f63f3069dac2a75aa0317a2"),
-    ("NotoSans-Bold.ttf", "NotoSans-v2.013", "NotoSans/hinted",
+    ("NotoSans-Bold.ttf", HOST_FACES_DESKTOP & "@NotoSans-v2.013/fonts/NotoSans/hinted/ttf/",
       "8e6da60154ae06e5e860777c4ccf8c7338d9b96ba34c1222db40a367d79b35dc"),
-    ("NotoSansMath-Regular.ttf", "NotoSansMath-v2.539", "NotoSansMath/unhinted",
+    ("NotoSerif-SemiBold.ttf",
+      HOST_FACES_DESKTOP & "@NotoSerif-v2.013/fonts/NotoSerif/hinted/ttf/",
+      "24d978fa5a0b096fc9e2f8d3f2bd7004634351d19d5b2e3be74b8ed61c68c236"),
+    ("NotoSansMath-Regular.ttf",
+      HOST_FACES_DESKTOP & "@NotoSansMath-v2.539/fonts/NotoSansMath/unhinted/ttf/",
       "05078db8b3bc7cbbe43fc00f36998db309d6a8d145b2f8a2e665bbdf7fc4cde0"),
-    ("NotoSansSymbols2-Regular.ttf", "NotoSansSymbols2-v2.006", "NotoSansSymbols2/unhinted",
+    ("NotoSansSymbols2-Regular.ttf",
+      HOST_FACES_DESKTOP & "@NotoSansSymbols2-v2.006/fonts/NotoSansSymbols2/unhinted/ttf/",
       "31854bbb3451d30b2b9ed205b7a0779a74b9464e0acdb0170fa41fa76b71d732"),
+    ("CommitMonoV142-400Regular.otf", HOST_FACE_MONO & "@1.143/src/fonts/fontlab/",
+      "0283fa3bbdb5cb2cb695946a60ea4aa2a0ceb872079304fe548188ab82ee58b2"),
   ]
-    ## Faces desktop front-end draws with, each with tag fetched, path within repository and
-    ##   digest of bytes expected; SIL Open Font License 1.1, origins in PROVENANCE.md.
+    ## Faces desktop front-end draws with, each with prefix fetched from and digest of bytes
+    ##   expected; SIL Open Font License 1.1, origins in PROVENANCE.md.
+    ##   Six faces for three roles page draws too: `NotoSans` regular and bold for interface
+    ##   and for name labels, `NotoSerif` for headings, `CommitMono` for notation and figures,
+    ##   and two supplementary Noto faces merged into whichever of them carries notation.
+    ##   Whole prefix per face rather than tag and path apart, since faces now come from two
+    ##   repositories laid out differently, and pair of fields could name neither.
+    ##   Mono face is `otf` with CFF outlines rather than TrueType, and it is what author
+    ##   publishes; `stb_truetype` reads CFF, which was driven rather than assumed -- see
+    ##   PROVENANCE.md, Type Roles. Its file says `V142` at tag `1.143`, which is what upstream
+    ##   ships; digest is what pins bytes either way.
     ##   Shipped rather than taken from machine, which Article X.8 asks of presentation target:
     ##   four absolute paths into one distribution's layout were what stood here, and this
     ##   project chose none of them (repository issue 93).
@@ -426,14 +446,11 @@ proc assets() =
       wrong.add face & ": wanted `" & digest & "`, got `" & got & "`"
     else:
       echo "Fetched ", face, ", digest matches"
-  for (face, tag, within, digest) in FACES_DESKTOP:
+  for (face, prefix, digest) in FACES_DESKTOP:
     if fileExists(DIR_FONTS / face) and (DIR_FONTS / face).digestOf == digest:
       echo "Kept ", face, ", digest already matches"
       continue
-    run("curl", [
-      "-sSLf", "-o", DIR_FONTS / face,
-      HOST_FACES_DESKTOP & "@" & tag & "/fonts/" & within & "/ttf/" & face,
-    ])
+    run("curl", ["-sSLf", "-o", DIR_FONTS / face, prefix & face])
     let got = (DIR_FONTS / face).digestOf
     if got != digest:
       wrong.add face & ": wanted `" & digest & "`, got `" & got & "`"
