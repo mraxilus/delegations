@@ -131,25 +131,32 @@ const
     ##   up through it, `gl` next because every later script draws through it, and `frame`
     ##   last because it starts loop everything else has to be ready for.
   FACES = [
-    ("commit-mono-latin-400-normal.woff2",
+    ("commit-mono-latin-400-normal.woff2", "5.3.0",
       "86132abb57fc615f2ab900cde4cd9d5796e9791daf1f85d79fc933aa50b3b15c"),
-    ("noto-sans-latin-400-normal.woff2",
+    ("noto-sans-latin-400-normal.woff2", "5.3.0",
       "09aee8065d25508f23a4c3d92cd777ac869c52d93fd868a88f025d888a7937d6"),
-    ("noto-sans-latin-600-normal.woff2",
+    ("noto-sans-latin-600-normal.woff2", "5.3.0",
       "79e274470d1c5a0118eb325e2ea6f2eb2a449336d7fde1a4f20a2f32fe1119ed"),
-    ("noto-sans-math-math-400-normal.woff2",
+    ("noto-sans-math-math-400-normal.woff2", "5.2.8",
       "90b9ddbed280e379e1af4601eb1d53eee8dd467b4c9174e5fd2d7347fe180d30"),
-    ("noto-sans-symbols-2-symbols-400-normal.woff2",
+    ("noto-sans-symbols-2-symbols-400-normal.woff2", "5.3.0",
       "9c07d511848c274b5430c75bf98d1f2582680ef5f967947bfbdd06b75ca177c2"),
-    ("noto-serif-latin-400-normal.woff2",
+    ("noto-serif-latin-400-normal.woff2", "5.3.0",
       "4c0cbe3eec50d260754d681c17ee2af49a43d7fd93ce42877f665fcb1a889b87"),
   ]
-    ## Faces page embeds, each with digest of bytes expected, all SIL Open Font License 1.1;
-    ##   origins in PROVENANCE.md.
-    ##   Digest is pin: host serves whatever it serves, and page embeds these bytes into
-    ##   artefact readers open, so wrong byte here is wrong byte shipped. Repository pins
-    ##   compilers to commits and packages to lock files; this is same pin for one fetch that
-    ##   had none (repository issue 47).
+    ## Faces page embeds, each with package version fetched and digest of bytes expected, all
+    ##   SIL Open Font License 1.1; origins in PROVENANCE.md.
+    ##   Digest is pin on bytes: page embeds these into artefact readers open, so wrong byte
+    ##   here is wrong byte shipped. Repository pins compilers to commits and packages to lock
+    ##   files; this is same pin for one fetch that had none (repository issue 47).
+    ##   Version is pin on *fetch*, and it is not decoration. Unversioned path serves whatever
+    ##   host resolves, and one of these is already past that: `noto-sans-math` 5.3.0 renamed
+    ##   this face's subset, so 5.3.0 does not carry it, and unversioned URL kept working only
+    ##   because jsDelivr fell back to 5.2.8 -- newest version still holding file asked for.
+    ##   Build that works by undocumented fallback is build nobody can repeat, so version sits
+    ##   beside digest and neither can drift from other (repository issue 111).
+    ##   Two are therefore not same version, and that is what pinning fetch rather than
+    ##   family looks like.
   SYSTEM = [
     ("curl", "fetch faces `assets` pins; build shells out to it"),
     ("coreutils", "`sha256sum` verifying those pins and `base64` inlining them"),
@@ -380,13 +387,16 @@ proc assets() =
   ##   run.
   createDir DIR_FONTS
   var wrong: seq[string]
-  for (face, digest) in FACES:
+  for (face, version, digest) in FACES:
     if fileExists(DIR_FONTS / face) and (DIR_FONTS / face).digestOf == digest:
       echo "Kept ", face, ", digest already matches"
       continue
     # Family is name less its last three parts, i.e. subset, weight and style.
     let family = face.rsplit('-', 3)[0]
-    run("curl", ["-sSLf", "-o", DIR_FONTS / face, HOST_FACES & "/" & family & "/files/" & face])
+    run("curl", [
+      "-sSLf", "-o", DIR_FONTS / face,
+      HOST_FACES & "/" & family & "@" & version & "/files/" & face,
+    ])
     let got = (DIR_FONTS / face).digestOf
     if got != digest:
       wrong.add face & ": wanted `" & digest & "`, got `" & got & "`"
@@ -442,7 +452,7 @@ proc web() =
     scripts.add "\n" & readFile(path)
 
   var page = readFile(PATH_SHELL)
-  for (face, digest) in FACES:
+  for (face, _, digest) in FACES:
     let token = TOKEN_EMBED & face & "@"
     if token notin page: continue
     let path = DIR_FONTS / face
