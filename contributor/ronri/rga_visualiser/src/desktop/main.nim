@@ -126,6 +126,8 @@ const
   PATH_FONT* {.define: "visualiser.path_font".} =
     "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf"
     ## Carry UI's text: Latin, punctuation, subscripts and combining marks.
+    ##   Default is one distribution's layout, and `RGA_FONT` overrides it, for reason
+    ##   `faceAt` gives. Four names below follow same pattern.
   PATH_FONT_MATH* {.define: "visualiser.path_font_math".} =
     "/usr/share/fonts/truetype/noto/NotoSansMath-Regular.ttf"
     ## Carry operators notation is written with, and Lengyel's bold operands.
@@ -138,6 +140,14 @@ const
     ## Set selected object's name label, heavier than UI text as browser's semibold is.
     ##   Bold is only heavier Noto Sans weight system package ships; no semibold there.
     ##   Own face rather than merged: label alone is set in it, at `HEIGHT_MARKER_LABEL`.
+  ENV_FONT* = "RGA_FONT"
+    ## Environment name carrying interface face's location, where machine keeps its own.
+  ENV_FONT_MATH* = "RGA_FONT_MATH"
+    ## Environment name carrying operator face's location.
+  ENV_FONT_SYMBOL* = "RGA_FONT_SYMBOL"
+    ## Environment name carrying symbol face's location.
+  ENV_FONT_LABEL* = "RGA_FONT_LABEL"
+    ## Environment name carrying label face's location.
   SIZE_FONT* = 16.0'f32
   PATH_EXPORT_DEFAULT* = "rga_visualiser.png"
 
@@ -371,6 +381,16 @@ proc parseOptions(): Options =
 
 
 #[ Frame Assembly ]#
+
+proc faceAt(name_environment, path_declared: string): string =
+  ## Read face's location from environment, falling back to what declaration names.
+  ##   Environment first because committed default is one distribution's layout, and
+  ##   CONTRIBUTOR.md admits such path only where it is fallback rather than only answer:
+  ##   machine keeping its faces elsewhere says so rather than editing source.
+  ##   Empty variable counts as unset, since exporting nothing is how shell clears one.
+  let named = getEnv(name_environment)
+  if named.len > 0: named else: path_declared
+
 
 proc secondsNow(): float =
   ## Read monotonic clock as seconds, for animating how recently object was added.
@@ -1981,13 +2001,21 @@ proc main() =
   sdl3.glSetSwapInterval(if options.is_novsync: 0 else: 1)
   echo &"OpenGL: {gl.getString(gl.VERSION)}"
 
+  let
+    path_font = faceAt(ENV_FONT, PATH_FONT)
+    path_font_math = faceAt(ENV_FONT_MATH, PATH_FONT_MATH)
+    path_font_symbol = faceAt(ENV_FONT_SYMBOL, PATH_FONT_SYMBOL)
+    path_font_label = faceAt(ENV_FONT_LABEL, PATH_FONT_LABEL)
+  # Conversion is explicit, since implicit one from `let` is warned on and will be error.
+  #   Four bindings outlive call, and Dear ImGui copies each path before returning, so no
+  #   pointer here outlives string behind it.
   doAssert gui.init(
-    window, context, PATH_FONT, PATH_FONT_MATH, PATH_FONT_SYMBOL, SIZE_FONT,
-    PATH_FONT_LABEL, cfloat(HEIGHT_MARKER_LABEL),
+    window, context, path_font.cstring, path_font_math.cstring, path_font_symbol.cstring,
+    SIZE_FONT, path_font_label.cstring, cfloat(HEIGHT_MARKER_LABEL),
   ), "Dear ImGui must start; got `false` from `gui.init`."
   defer: gui.shutdown()
   if not gui.isFontLoaded():
-    echo &"Font `{PATH_FONT}` was not loaded; operator notation will draw as boxes."
+    echo &"Font `{path_font}` was not loaded; operator notation will draw as boxes."
 
   let renderer = initRenderer()
   var
