@@ -585,3 +585,18 @@ It binds where this project is least protected: `design/shot.nim` drives a brows
 Playwright, and no `drive` verb enrols it in the runner's driven job, so that layer is neither
 checked nor covered by this rule's evidence today. Whatever it becomes, it should settle on
 what moved rather than on what has stopped changing.
+
+## Re-audit, 2026-09-10, faces by element
+
+Audited by a curator against the rules change that splits Article X.8's faces by element —
+Noto Serif for headings and titles, Noto Sans for body and interface text, Commit Mono for
+code with its ligatures enabled. **This one does bind here, and correcting it is this
+project's work.** Every page sets system stacks (`ui-sans-serif`, `ui-monospace`, `ui-serif`)
+and the whole-cloth mockup loads Fraunces, Instrument Sans and Spline Sans Mono from Google
+Fonts, so no face is shipped and X.8's first clause — never naming one a viewer may lack — is
+not kept either. `design/page.nim` writes every stack as the `font` shorthand, so it carries
+no `font-family` at all.
+
+The open question this record already parked — that font files are an unregistered kind and
+cannot be committed — is answered by `rga_visualiser`: fetch at build time, pin every byte by
+SHA-256, embed as base64, commit nothing. Repository issue 119 carries the reading.

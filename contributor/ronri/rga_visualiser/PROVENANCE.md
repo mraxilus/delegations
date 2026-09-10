@@ -3051,3 +3051,13 @@ exactly its own fold over all-zero 1200x900x4 buffer, which is what shows it. Ca
 stays **unexplained**; neither Chromium here reproduces it. Browser runner drove was unpinned
 snap, and was raised for curator on issue 77; it is gone. Runner drives build lock pins since
 #98, reader has been green on both, and that is evidence against snap having been cause.
+
+## Re-audit, 2026-09-10, faces by element
+
+Audited by a curator against the rules change that splits Article X.8's faces by element —
+Noto Serif for headings and titles, Noto Sans for body and interface text, Commit Mono for
+code with its ligatures enabled. This project already ships all three and pins every byte, so
+the first clause is kept. Two things the split newly asks for: `--serif` is declared in
+`pages/shell.html` and never used, so no heading takes it; and Commit Mono is set without
+`calt`, so its ligatures — which are functional rather than decorative — do not render.
+Repository issue 118 carries both.
