@@ -303,5 +303,5 @@ func caption*(centre: Point; facing: float; arm: Arm; text: string;
       elif dx > 2: ("start", 3.0)
       else: ("middle", if p.y < centre.y: -3.0 else: 8.0)
   &"""<text x="{n(p.x)}" y="{n(p.y + dy)}" text-anchor="{anchor}"""" &
-    " style=\"font: 8px ui-sans-serif, system-ui, sans-serif;" &
+    " style=\"font: 8px 'Noto Sans', ui-sans-serif, system-ui, sans-serif;" &
     &""" fill: {ink}">{text}</text>"""
