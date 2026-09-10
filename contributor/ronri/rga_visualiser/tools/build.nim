@@ -41,7 +41,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[os, osproc, strutils]
+import std/[os, osproc, strutils, tables]
 
 
 const
@@ -53,6 +53,15 @@ const
     ## Directory browser products land in.
   DIR_FONTS = BUILD / "fonts"
     ## Directory vendored faces land in; never committed (Article XI.3).
+  PATH_KOCH = ".." / ".." / ".." / "koch.nim"
+    ## Repository's own driver, which `assets` asks for faces through.
+    ##   Relative to this project rather than absolute: derived from where project sits in
+    ##   repository, which is what CONTRIBUTOR.md allows and what naming one machine's layout
+    ##   is not.
+  PATH_FACES_FROM = DIR_FONTS / "store.list"
+    ## Which store entry each face was copied from, written by `assets` and read by `web`.
+    ##   Under `build/` because it is derived rather than declared, and because it holds paths
+    ##   into one machine's own store.
   PATH_BRIDGE_NIM = "src" / "browser" / "bridge.nim"
     ## Bridge compiled through JS backend, and source `declare` reads.
   PATH_BRIDGE_JS = BUILD_BROWSER / "bridge.js"
@@ -131,35 +140,39 @@ const
     ##   up through it, `gl` next because every later script draws through it, and `frame`
     ##   last because it starts loop everything else has to be ready for.
   FACES = [
-    ("commit-mono-latin-400-normal.woff2", "5.3.0",
-      "86132abb57fc615f2ab900cde4cd9d5796e9791daf1f85d79fc933aa50b3b15c"),
-    ("noto-sans-latin-400-normal.woff2", "5.3.0",
-      "09aee8065d25508f23a4c3d92cd777ac869c52d93fd868a88f025d888a7937d6"),
-    ("noto-sans-latin-600-normal.woff2", "5.3.0",
-      "79e274470d1c5a0118eb325e2ea6f2eb2a449336d7fde1a4f20a2f32fe1119ed"),
-    ("noto-sans-math-math-400-normal.woff2", "5.2.8",
-      "90b9ddbed280e379e1af4601eb1d53eee8dd467b4c9174e5fd2d7347fe180d30"),
-    ("noto-sans-symbols-2-symbols-400-normal.woff2", "5.3.0",
-      "9c07d511848c274b5430c75bf98d1f2582680ef5f967947bfbdd06b75ca177c2"),
-    ("noto-serif-latin-600-normal.woff2", "5.3.0",
-      "abf0abc765331d7a1bbe6eb3603cf86be1cf3d1edbcf911cc2d52f78998c02d9"),
+    "commit-mono-latin-400-normal.woff2",
+    "noto-sans-latin-400-normal.woff2",
+    "noto-sans-latin-600-normal.woff2",
+    "noto-sans-math-math-400-normal.woff2",
+    "noto-sans-symbols-2-symbols-400-normal.woff2",
+    "noto-serif-latin-600-normal.woff2",
   ]
-    ## Faces page embeds, each with package version fetched and digest of bytes expected, all
-    ##   SIL Open Font License 1.1; origins in PROVENANCE.md.
-    ##   Digest is pin on bytes: page embeds these into artefact readers open, so wrong byte
-    ##   here is wrong byte shipped. Repository pins compilers to commits and packages to lock
-    ##   files; this is same pin for one fetch that had none (repository issue 47).
-    ##   Version is pin on *fetch*, and it is not decoration. Unversioned path serves whatever
-    ##   host resolves, and one of these is already past that: `noto-sans-math` 5.3.0 renamed
-    ##   this face's subset, so 5.3.0 does not carry it, and unversioned URL kept working only
-    ##   because jsDelivr fell back to 5.2.8 -- newest version still holding file asked for.
-    ##   Build that works by undocumented fallback is build nobody can repeat, so version sits
-    ##   beside digest and neither can drift from other (repository issue 111).
-    ##   Two are therefore not same version, and that is what pinning fetch rather than
-    ##   family looks like.
+    ## Faces page embeds. Names alone: what bytes each name is, and where they come from, is
+    ##   `curator/audit/src/assets.nim`, and `koch assets` fetches and checks them.
+    ##   **Choice is this project's; digest is repository's.** These six are what this page
+    ##   draws -- three of Article X.8's families, plus maths and symbols no other target
+    ##   asks for -- and that stays here because it differs per target. What left is version
+    ##   and SHA-256, which two projects had written identically (repository issue 116).
+    ##   Store keeps entries by digest, so face this project shares with another is one file
+    ##   on disk rather than two, and pin that moves is different entry rather than stale one.
+  FACES_DESKTOP = [
+    "NotoSans-Regular.ttf",
+    "NotoSans-Bold.ttf",
+    "NotoSerif-SemiBold.ttf",
+    "NotoSansMath-Regular.ttf",
+    "NotoSansSymbols2-Regular.ttf",
+    "CommitMonoV142-400Regular.otf",
+  ]
+    ## Faces desktop front-end loads, named same way and from same store.
+    ##   Six for three roles page draws too: `NotoSans` regular and bold for interface and for
+    ##   name labels, `NotoSerif` semibold for headings, `CommitMono` for notation and
+    ##   figures, and two supplementary Noto faces merged into whichever carries notation.
+    ##   Separate list rather than one: page embeds `woff2` and cannot read TrueType, binary
+    ##   reads outlines and cannot read `woff2`, so what each front-end wants is not what
+    ##   other does even where family is same.
   SYSTEM = [
-    ("curl", "fetch faces `assets` pins; build shells out to it"),
-    ("coreutils", "`sha256sum` verifying those pins and `base64` inlining them"),
+    ("curl", "fetch faces asked of shared store, one level down through `koch assets`"),
+    ("coreutils", "`base64` inlining those faces, and `sha256sum` store checks them with"),
     ("nodejs", "run type-checker `types` drives and harness `drive` runs"),
     ("git", "clone Dear ImGui and SDL3 at commit and tag `desktop` checks them at"),
     ("cmake", "build SDL3 from source, since no package of it exists on Ubuntu 24.04"),
@@ -183,52 +196,6 @@ const
     ##   is compiled from source into binary, and Ubuntu 24.04 carries no `libsdl3-dev` at all
     ##   -- only SDL2 -- so SDL3 is built and installed from source too. Both are pinned by
     ##   version rather than by package manager; see `COMMIT_IMGUI` and `VERSION_SDL3`.
-  HOST_FACES = "https://cdn.jsdelivr.net/npm/@fontsource"
-    ## Host `assets` fetches page's faces from.
-  HOST_FACES_DESKTOP = "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io"
-    ## Host `assets` fetches desktop front-end's Noto faces from.
-    ##   Noto project's own release repository rather than `@fontsource`, which ships `woff2`
-    ##   and `woff` alone -- and Dear ImGui reads TrueType, through `stb_truetype`.
-  HOST_FACE_MONO = "https://cdn.jsdelivr.net/gh/eigilnikolajsen/commit-mono"
-    ## Host `assets` fetches desktop front-end's mono face from.
-    ##   Commit Mono is nobody's Noto, so it comes from its own author's repository; page's
-    ##   copy comes through `@fontsource` as `woff2`, which desktop cannot read.
-  FACES_DESKTOP = [
-    ("NotoSans-Regular.ttf", HOST_FACES_DESKTOP & "@NotoSans-v2.013/fonts/NotoSans/hinted/ttf/",
-      "61b72eacd39533f0e5916cbb458abd7b3cf870667f63f3069dac2a75aa0317a2"),
-    ("NotoSans-Bold.ttf", HOST_FACES_DESKTOP & "@NotoSans-v2.013/fonts/NotoSans/hinted/ttf/",
-      "8e6da60154ae06e5e860777c4ccf8c7338d9b96ba34c1222db40a367d79b35dc"),
-    ("NotoSerif-SemiBold.ttf",
-      HOST_FACES_DESKTOP & "@NotoSerif-v2.013/fonts/NotoSerif/hinted/ttf/",
-      "24d978fa5a0b096fc9e2f8d3f2bd7004634351d19d5b2e3be74b8ed61c68c236"),
-    ("NotoSansMath-Regular.ttf",
-      HOST_FACES_DESKTOP & "@NotoSansMath-v2.539/fonts/NotoSansMath/unhinted/ttf/",
-      "05078db8b3bc7cbbe43fc00f36998db309d6a8d145b2f8a2e665bbdf7fc4cde0"),
-    ("NotoSansSymbols2-Regular.ttf",
-      HOST_FACES_DESKTOP & "@NotoSansSymbols2-v2.006/fonts/NotoSansSymbols2/unhinted/ttf/",
-      "31854bbb3451d30b2b9ed205b7a0779a74b9464e0acdb0170fa41fa76b71d732"),
-    ("CommitMonoV142-400Regular.otf", HOST_FACE_MONO & "@1.143/src/fonts/fontlab/",
-      "0283fa3bbdb5cb2cb695946a60ea4aa2a0ceb872079304fe548188ab82ee58b2"),
-  ]
-    ## Faces desktop front-end draws with, each with prefix fetched from and digest of bytes
-    ##   expected; SIL Open Font License 1.1, origins in PROVENANCE.md.
-    ##   Six faces for three roles page draws too: `NotoSans` regular and bold for interface
-    ##   and for name labels, `NotoSerif` for headings, `CommitMono` for notation and figures,
-    ##   and two supplementary Noto faces merged into whichever of them carries notation.
-    ##   Whole prefix per face rather than tag and path apart, since faces now come from two
-    ##   repositories laid out differently, and pair of fields could name neither.
-    ##   Mono face is `otf` with CFF outlines rather than TrueType, and it is what author
-    ##   publishes; `stb_truetype` reads CFF, which was driven rather than assumed -- see
-    ##   PROVENANCE.md, Type Roles. Its file says `V142` at tag `1.143`, which is what upstream
-    ##   ships; digest is what pins bytes either way.
-    ##   Shipped rather than taken from machine, which Article X.8 asks of presentation target:
-    ##   four absolute paths into one distribution's layout were what stood here, and this
-    ##   project chose none of them (repository issue 93).
-    ##   Tag is per family rather than per repository: three families move on their own, and
-    ##   commit would pin all three to whenever one of them last moved.
-    ##   Hinting differs by family because repository ships what it ships -- `NotoSans` carries
-    ##   hinted TrueType and neither supplementary family does -- so path is stated rather than
-    ##   derived from name.
   USAGE = "Usage: nim r tools/build.nim " &
     "<declare|types|web|drive|desktop|driven|assets|system|clean>\n"
     ## Text printed on usage error.
@@ -393,74 +360,90 @@ proc system() =
   for (package, _) in SYSTEM: echo package
 
 
-proc digestOf(path: string): string =
-  ## Read file's SHA-256, as `sha256sum` writes it.
-  ##   Shelled out rather than computed here, and deliberately: no digest of that strength is
-  ##   in reach from Nim. Curator recorded all three routes as rejected on
-  ##   `curator/audit/src/provenance.nim` -- `std/sha1` deprecated and warning on every build,
-  ##   `checksums` package nimble install in CI for one hash, `std/hashes` unstable across
-  ##   compiler versions. `assets` already shells out for `curl` and `web` for `base64`, so
-  ##   this adds no dependency either lacked.
-  ##   Deriving SHA-256 here rejected outright: crypto primitive is last thing to hand-roll,
-  ##   and Article II.8 asks for dependency rather than copy.
-  let (written, code) = execCmdEx("sha256sum " & quoteShell(path))
+proc facesFromStore(names: openArray[string]): seq[string] =
+  ## Ask `koch assets` for each face named, and read back path it holds in shared store.
+  ##   Repository's verb is `assets` and this project's own verb below is also `assets`; they
+  ##   are different drivers, and one asks other. Store serves any file fetched at build time,
+  ##   of which faces are only instances today.
+  ##   Store is repository's (`curator/audit/src/assets.nim`), keyed by digest, and verb
+  ##   fetches what is missing and refuses bytes no row declares -- so verifying here as well
+  ##   would be checking answer against question it was derived from.
+  ##   Paths come back one per line in order asked, and count is asserted rather than trusted:
+  ##   verb prints nothing for face it could not serve, and silently short list would leave
+  ##   copy below pairing wrong bytes with right name.
+  ##   Compiler chatter is turned off rather than filtered, since paths are what is parsed.
+  let (written, code) = execCmdEx(
+    "nim r --hints:off --warnings:off " & quoteShell(PATH_KOCH) & " assets " &
+      names.quoteShellCommand
+  )
   if code != 0:
-    raise newException(OSError, "Cannot read digest of `" & path & "`; got exit `" & $code & "`.")
-  written.strip.split(' ')[0]
-
-
-proc checkFace(face, wanted: string) =
-  ## Raise unless face on disk carries digest pinned for it.
-  let path = DIR_FONTS / face
-  let got = path.digestOf
-  if got != wanted:
     raise newException(OSError,
-      "Face `" & face & "` is not what is pinned; wanted `" & wanted & "`, got `" & got & "`.")
+      "`koch assets` would not serve every face; got exit `" & $code & "` --\n" & written)
+  for line in written.strip.splitLines:
+    let path = line.strip
+    if path.len > 0 and fileExists(path): result.add path
+  if result.len != names.len:
+    raise newException(OSError,
+      "`koch assets` named " & $result.len & " paths for " & $names.len & " faces asked for.")
 
 
 proc assets() =
-  ## Fetch every face both front-ends draw with into `build/fonts`, verifying each against
-  ## its pin.
+  ## Copy every face both front-ends draw with out of shared store into `build/fonts`.
   ##   Faces are binary, which audit cannot read, so they are never committed and this verb
   ##   is how contributor gets them (CONTRIBUTOR.md, "Pages and assets").
-  ##   Face already carrying its pinned digest is left alone: verb is then idempotent, second
-  ##   run fetches nothing, and CI keeps faces between runs keyed on that same digest
-  ##   (repository issue 47).
-  ##   Every mismatch is reported together rather than first one raising: host republishing
-  ##   family moves several at once, and one run should name all of them rather than one per
-  ##   run.
+  ##   Fetching and checking is `koch assets`, not this: digest belongs to repository now that
+  ##   two projects draw same files, and this verb names which faces rather than what bytes
+  ##   they are (repository issues 116 and 124).
+  ##   Copied rather than read from store where they sit: desktop binary finds its faces beside
+  ##   itself, and page's build reads them from one directory whether store is warm or cold.
+  ##   Face already identical to its store entry is left alone, so verb stays idempotent and
+  ##   second run copies nothing.
   createDir DIR_FONTS
-  var wrong: seq[string]
-  for (face, version, digest) in FACES:
-    if fileExists(DIR_FONTS / face) and (DIR_FONTS / face).digestOf == digest:
-      echo "Kept ", face, ", digest already matches"
+  let names = @FACES & @FACES_DESKTOP
+  let paths = facesFromStore(names)
+  var manifest: seq[string]
+  var copied = 0
+  for i, face in names:
+    let (source, destination) = (paths[i], DIR_FONTS / face)
+    manifest.add face & " " & source
+    if fileExists(destination) and sameFileContent(source, destination):
+      echo "Kept ", face, ", already what the store holds"
       continue
-    # Family is name less its last three parts, i.e. subset, weight and style.
-    let family = face.rsplit('-', 3)[0]
-    run("curl", [
-      "-sSLf", "-o", DIR_FONTS / face,
-      HOST_FACES & "/" & family & "@" & version & "/files/" & face,
-    ])
-    let got = (DIR_FONTS / face).digestOf
-    if got != digest:
-      wrong.add face & ": wanted `" & digest & "`, got `" & got & "`"
-    else:
-      echo "Fetched ", face, ", digest matches"
-  for (face, prefix, digest) in FACES_DESKTOP:
-    if fileExists(DIR_FONTS / face) and (DIR_FONTS / face).digestOf == digest:
-      echo "Kept ", face, ", digest already matches"
-      continue
-    run("curl", ["-sSLf", "-o", DIR_FONTS / face, prefix & face])
-    let got = (DIR_FONTS / face).digestOf
-    if got != digest:
-      wrong.add face & ": wanted `" & digest & "`, got `" & got & "`"
-    else:
-      echo "Fetched ", face, ", digest matches"
-  if wrong.len > 0:
+    copyFile(source, destination)
+    copied += 1
+    echo "Copied ", face, " from store"
+  writeFile(PATH_FACES_FROM, manifest.join("\n") & "\n")
+  echo "Wrote ", DIR_FONTS, " (", names.len, " faces, ", copied, " copied)."
+
+
+proc storePathsCopied(): Table[string, string] =
+  ## Read which store entry each face in `build/fonts` was copied from.
+  ##   Written by `assets` rather than derived here, so nothing in this project has to know
+  ##   where store lives or what digest names its entries -- both are `assets.nim`'s.
+  if not fileExists(PATH_FACES_FROM): return
+  for line in readFile(PATH_FACES_FROM).strip.splitLines:
+    let parts = line.strip.split(' ', 1)
+    if parts.len == 2: result[parts[0]] = parts[1]
+
+
+proc checkFace(face: string, copied: Table[string, string]) =
+  ## Raise unless face on disk is still byte for byte what store served for it.
+  ##   Second reading, at moment bytes are embedded rather than only when they were copied:
+  ##   `assets` may have run long ago, and what this embeds is what every reader downloads.
+  ##   Compared against store's own file rather than against digest written down here, which
+  ##   is what adopting store means -- there is one declaration of these bytes and it is not
+  ##   this file.
+  let path = DIR_FONTS / face
+  if face notin copied:
     raise newException(OSError,
-      "Host served bytes no face is pinned to; got " & $wrong.len & " -- " & wrong.join("; "))
-  echo "Wrote ", DIR_FONTS, " (", FACES.len + FACES_DESKTOP.len,
-    " faces, every digest matched)."
+      "Face `" & face & "` names no store entry; run `assets` first.")
+  if not fileExists(copied[face]):
+    raise newException(OSError,
+      "Store no longer holds `" & copied[face] & "` for `" & face & "`; run `assets` again.")
+  if not sameFileContent(path, copied[face]):
+    raise newException(OSError,
+      "Face `" & face & "` is not what the store served; compare `" & path & "` against `" &
+        copied[face] & "`.")
 
 
 proc browser() =
@@ -507,15 +490,16 @@ proc web() =
     scripts.add "\n" & readFile(path)
 
   var page = readFile(PATH_SHELL)
-  for (face, _, digest) in FACES:
+  let copied = storePathsCopied()
+  for face in FACES:
     let token = TOKEN_EMBED & face & "@"
     if token notin page: continue
     let path = DIR_FONTS / face
     if not fileExists(path):
       raise newException(OSError, "Missing face `" & path & "`; run `assets` first.")
-    # Verified again here, not only where fetched: `assets` may have run long ago, and what
-    #   this embeds is what every reader downloads. Wrong byte stops build rather than ships.
-    checkFace(face, digest)
+    # Read again here, not only where copied: `assets` may have run long ago, and what this
+    #   embeds is what every reader downloads. Wrong byte stops build rather than ships.
+    checkFace(face, copied)
     run("bash", ["-c", "base64 -w0 " & quoteShell(path) & " > " & quoteShell(path & ".b64")])
     page = page.replace(token, "data:font/woff2;base64," & readFile(path & ".b64").strip)
 
