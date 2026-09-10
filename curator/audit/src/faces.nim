@@ -11,8 +11,11 @@
 ##       unreachable once face ships, so they cost nothing and stay free -- and "names one
 ##       viewer may lack" is violation only where primary is one viewer may lack. Rule is
 ##       crisp where allow-list of every acceptable fallback would be list nobody maintains.
-##     Heading. Selector naming `h1`..`h6` must set serif family, one `var()` deep: stacks live
-##       in custom properties here, so resolver substitutes property's own value once.
+##     Heading. Selector whose *subject* is `h1`..`h6` must set serif family, one `var()` deep:
+##       stacks live in custom properties here, so resolver substitutes property's own value
+##       once. Subject rather than whole selector, since `.plate h3 .tag` styles label inside
+##       heading rather than heading, and reading whole selector accused two real pages of
+##       setting headings in mono where what they set was uppercase tag beside one.
 ##     Ligature. Source naming Commit Mono must enable `calt`, since its ligatures are
 ##       functional (`!=` reads `≠`) and live in that feature alone.
 ##
@@ -135,18 +138,23 @@ func declarations*(content: string, property: string): seq[(int, string)] =
 
 func propertyValues*(content: string): seq[(string, string)] =
   ## Read every custom property `--name: value` as name and value, for one-deep resolution.
+  ##   Every property on line, not first alone: `:root { --sans: ...; --serif: ...; }` is one
+  ##   line carrying two, and reading only first left second unresolved -- which then read as
+  ##   family nobody names and was reported as one.
   let lines: seq[string] = content.splitLines
   for line in lines:
-    let at = line.find("--")
-    if at < 0: continue
-    let colon = line.find(':', at)
-    if colon < 0: continue
-    let name = line[at ..< colon].strip
-    if name.len <= 2 or ' ' in name: continue
-    var value = line[colon + 1 .. ^1]
-    let stop = value.find(';')
-    if stop >= 0: value = value[0 ..< stop]
-    result.add (name, value.strip)
+    var rest = line
+    while true:
+      let at = rest.find("--")
+      if at < 0: break
+      let colon = rest.find(':', at)
+      if colon < 0: break
+      let name = rest[at ..< colon].strip
+      var value = rest[colon + 1 .. ^1]
+      let stop = value.find(';')
+      if stop >= 0: value = value[0 ..< stop]
+      if name.len > 2 and ' ' notin name: result.add (name, value.strip)
+      rest = rest[colon + 1 .. ^1]
 
 
 func resolved*(value: string, properties: openArray[(string, string)]): string =
@@ -163,18 +171,37 @@ func resolved*(value: string, properties: openArray[(string, string)]): string =
   value
 
 
+func isSubjectHeading(compound: string): bool =
+  ## Decide whether one compound selector's element is heading.
+  ##   Compound is `h3`, `h3.tag`, `.tag` or `span`; element is what stands before first class,
+  ##   identifier, attribute or pseudo. Empty element means compound names class alone.
+  var stop = compound.len
+  for i, c in compound:
+    if c in {'.', '#', '[', ':'}:
+      stop = i
+      break
+  let element = compound[0 ..< stop].strip
+  if element.len != 2 or element[0] != 'h': return false
+  element[1] in {'1' .. '6'}
+
+
 func isHeading*(selector: string): bool =
-  ## Decide whether selector names any heading element.
-  for level in 1 .. 6:
-    let tag = "h" & $level
-    let at = selector.find(tag)
-    if at < 0: continue
-    # Heading tag, never `.h1` class or `graph1`: character before must not continue name.
-    let before = if at == 0: ' ' else: selector[at - 1]
-    let after = if at + tag.len >= selector.len: ' ' else: selector[at + tag.len]
-    if before notin {'.', '#', '-', '_'} and not before.isAlphaNumeric and
-       not after.isAlphaNumeric and after notin {'-', '_'}:
-      return true
+  ## Decide whether selector styles heading itself, rather than something inside one.
+  ##   Subject of selector is its last compound: `.plate h3 .tag` styles `.tag`, and heading
+  ##   is only its ancestor. Reading whole selector instead reported label inside heading as
+  ##   heading taking wrong family -- twice, on real pages, which is what found this.
+  ##   Combinator before subject is dropped: `article > h2` styles `h2`.
+  # Selector text runs up to declaration's own brace, so brace is cut before compounds are
+  #   read; left in, it is last token and reads as subject that is no element at all.
+  let text = selector.split('{')[0]
+  for part in text.split(','):
+    var compounds: seq[string]
+    for token in part.splitWhitespace:
+      if token notin [">", "+", "~"]: compounds.add token
+    if compounds.len == 0: continue
+    var subject = compounds[^1]
+    while subject.len > 0 and subject[0] in {'>', '+', '~'}: subject = subject[1 .. ^1]
+    if subject.isSubjectHeading: return true
   false
 
 

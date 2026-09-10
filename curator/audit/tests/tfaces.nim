@@ -97,10 +97,31 @@ suite "Faces":
     check isHeading("h1")
     check isHeading("h1, h2, h3")
     check isHeading("article > h2")
+    check isHeading("h1.title")  # heading carrying class is still heading
+    check isHeading(".sheet h2")  # heading is subject, ancestor merely locates it
     check not isHeading(".h1")  # class named after heading
     check not isHeading("#h1")
     check not isHeading("graph1")  # word ending in tag
     check not isHeading("h7")
+
+  test "selector styling something inside heading is not styling heading":
+    # Both of these are real, from `design/page.nim` and `mockups/wholecloth.html`. Reading
+    #   whole selector reported each as heading set in mono, where what each sets is small
+    #   uppercase label beside heading. Check that accuses page of what it did not do is
+    #   worse than no check, since curator hands it to contributor as finding.
+    check not isHeading(".plate h3 .tag")
+    check not isHeading(".panel h3 .tag")
+    check not isHeading("h1 span")
+    check not isHeading("h2 > code")
+    check not isHeading("h3 .kicker, h4 .kicker")  # every selector in list reads its own
+    # Subject decides, so list mixing both still reports where subject is heading.
+    check isHeading("h1 .tag, h2")
+    let inside = checkFaces("p.html",
+      "  :root { --mono: \"Commit Mono\", monospace; --serif: \"Noto Serif\", serif; }\n" &
+      "  h3 { font-family: var(--serif); }\n" &
+      "  .plate h3 .tag { font: 600 0.62rem/1 var(--mono); }\n" &
+      "  code { font-feature-settings: \"calt\"; }\n")
+    check inside.len == 0
 
   test "one level of var() is resolved, and unresolvable var is left alone":
     const PROPS = [("--sans", "\"Noto Sans\", Arial"), ("--x", "var(--y)")]
@@ -137,6 +158,19 @@ suite "Faces":
   body { font-family: var(--sans); }
 """
     check checkFaces("p.html", PALETTE).len == 0
+
+  test "line carrying two properties yields both, not first alone":
+    # `:root { --sans: ...; --serif: ...; }` is one line and two stacks. Reading first alone
+    #   left second unresolved, so `var(--serif)` read as family nobody names and page was
+    #   reported for stack it had declared correctly.
+    const ONE_LINE =
+      """  :root { --mono: "Commit Mono", monospace; --serif: "Noto Serif", serif; }"""
+    let held = ONE_LINE.propertyValues
+    check held.len == 2
+    check held[0][0] == "--mono"
+    check held[1][0] == "--serif"
+    check held[1][1] == "\"Noto Serif\", serif"
+    check resolved("var(--serif)", held) == "\"Noto Serif\", serif"
 
   test "value deferring to cascade names no family, so it is not reported":
     # `font-family: inherit` takes whatever parent settled, and parent is checked where set.
