@@ -14,10 +14,9 @@ joinable: true
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, os, strutils, unittest]
+import std/[os, strutils, unittest]
 
 import ../design/faces
-import ../tools/build {.all.}
 
 
 const
@@ -26,6 +25,8 @@ const
     ## Whole page, of shape `pages/app/index.html` carries.
   FRAGMENT = "<title>T</title>\n<style>p{}</style>\n<main>x</main>"
     ## Headless page, of shape review page and mark pages carry.
+  STORE = "../../../curator/audit/src/assets.nim"
+    ## Repository's declaration of every file fetched at build time, from project directory.
 
 
 proc stub(dir: string) =
@@ -40,11 +41,18 @@ suite "faces":
   removeDir(dir)
   stub(dir)
 
-  test "every pinned face is named, and every named face is pinned":
-    var pinned, named: seq[string]
-    for (file, _, _) in build.FACES: pinned.add file
-    for (file, _, _, _) in faces.FACES: named.add file
-    check pinned.sorted == named.sorted
+  test "every face named here is one repository's store declares":
+    ## Store holds digest and address, this project holds choice (repository issue 116),
+    ## and pair has to meet somewhere.  It is checked here rather than left to build
+    ## because this project carries no `drive` verb, so runner never runs its `assets`:
+    ## face named that store lacks would otherwise surface only when somebody built pages
+    ## by hand.  Read as text rather than imported, so this test depends on declaration
+    ## and not on curator's module staying shaped as it is.
+    check fileExists(STORE)
+    let declared = readFile(STORE)
+    for (file, _, _, _) in faces.FACES:
+      checkpoint(file)
+      check ("\"" & file & "\"") in declared
 
   test "each face is inlined once, as bytes rather than as link":
     let style = faceStyle(dir)

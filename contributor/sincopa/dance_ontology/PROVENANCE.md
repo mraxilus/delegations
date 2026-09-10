@@ -445,11 +445,29 @@ with `build/` deleted outright.
 
 Origin of all seven is `@fontsource` 5.3.0 by way of `cdn.jsdelivr.net`, all **SIL Open Font
 License 1.1**, confirmed from each package's own `LICENSE` rather than assumed. Their
-checksums are the `FACES` table in `tools/build.nim` and are deliberately not copied here: a
-third list would be a third thing to drift, and that table is what the build actually
-enforces. Four of the seven are byte-identical to `contributor/ronri/rga_visualiser`'s pins,
-which is why each table names the other (Article II.9); whether the repository wants one
-pinned list both select from is repository issue 116, open.
+addresses and checksums are no longer this project's to hold: they are the `ASSETS` table in
+`curator/audit/src/assets.nim`, the repository's shared store, and `assets` here names the
+seven files it wants while `koch assets` answers with their paths. That is the settlement of
+repository issue 116, which this project raised as its second consumer: four of these seven
+were already pinned byte for byte by `rga_visualiser`, and Article II.9 calls two lists of
+identical digests a copy no constraint forces. **Digest is the curator's, choice is this
+project's** — the store never says which faces a page draws with, so nothing about
+per-project autonomy moved. This project is the first to draw from it; `rga_visualiser` still
+carries its own table.
+
+The store keys entries by digest, so a face arrives under a name that is its hash; `assets`
+restores the file name on the way into `build/fonts`, because everything downstream reads
+faces by name. Verified 2026-09-10: all seven arrive, all seven carry the digest the store
+declares, and every built page is byte-for-byte the size it was when this project fetched
+them itself. Asking for a face the store does not declare fails with a finding naming it,
+which is checked rather than assumed.
+
+That check has to live in a suite, not only in the build: this project carries no `drive`
+verb, so the runner never runs its `assets`, and a face named that the store lacks would
+otherwise surface only when somebody built pages by hand. `tfaces.nim` reads the store's
+declaration as text and holds every face named here against it — as text rather than by
+import, so the law depends on the declaration and not on the curator's module keeping its
+present shape, and so that this project imports no curator source, which none does.
 
 Cost, measured 2026-09-10 on this container: **+224 kB per page**, 167,424 bytes of woff2
 becoming 224,384 of base64, across ten pages, so `build/` grows from 6.9 MB to 9.1 MB.
@@ -633,3 +651,10 @@ no `font-family` at all.
 The open question this record already parked — that font files are an unregistered kind and
 cannot be committed — is answered by `rga_visualiser`: fetch at build time, pin every byte by
 SHA-256, embed as base64, commit nothing. Repository issue 119 carries the reading.
+
+**Done, and this note is kept only because it dates the fault rather than describes it.**
+Every page now ships all three families inlined; the whole-cloth page fetches nothing from
+Google; and the split the rule asks for is what the pages set. The one judgement the rule
+left open, whether a label drawn inside a figure is a figure or interface text, is settled
+the second way here: X.8's own clause reads "Noto Sans for body and interface text", and a
+label naming a hand is interface text rather than a number.
