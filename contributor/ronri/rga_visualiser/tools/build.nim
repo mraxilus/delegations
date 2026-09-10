@@ -164,7 +164,6 @@ const
     ("git", "clone Dear ImGui and SDL3 at commit and tag `desktop` checks them at"),
     ("cmake", "build SDL3 from source, since no package of it exists on Ubuntu 24.04"),
     ("pkg-config", "read version of that SDL3, which `desktop` checks before compiling"),
-    ("fonts-noto-core", "faces desktop front-end loads by path; Dear ImGui aborts on absent one"),
     ("libx11-dev", "X11 headers SDL3 builds its video backend from; window is X11 one"),
     ("libxext-dev", "X extensions that backend also needs, and without which build refuses"),
     ("libgl-dev", "OpenGL headers and loader `src/desktop/opengl.nim` binds"),
@@ -185,7 +184,31 @@ const
     ##   -- only SDL2 -- so SDL3 is built and installed from source too. Both are pinned by
     ##   version rather than by package manager; see `COMMIT_IMGUI` and `VERSION_SDL3`.
   HOST_FACES = "https://cdn.jsdelivr.net/npm/@fontsource"
-    ## Host `assets` fetches faces from.
+    ## Host `assets` fetches page's faces from.
+  HOST_FACES_DESKTOP = "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io"
+    ## Host `assets` fetches desktop front-end's faces from.
+    ##   Noto project's own release repository rather than `@fontsource`, which ships `woff2`
+    ##   and `woff` alone -- and Dear ImGui reads TrueType, through `stb_truetype`.
+  FACES_DESKTOP = [
+    ("NotoSans-Regular.ttf", "NotoSans-v2.013", "NotoSans/hinted",
+      "61b72eacd39533f0e5916cbb458abd7b3cf870667f63f3069dac2a75aa0317a2"),
+    ("NotoSans-Bold.ttf", "NotoSans-v2.013", "NotoSans/hinted",
+      "8e6da60154ae06e5e860777c4ccf8c7338d9b96ba34c1222db40a367d79b35dc"),
+    ("NotoSansMath-Regular.ttf", "NotoSansMath-v2.539", "NotoSansMath/unhinted",
+      "05078db8b3bc7cbbe43fc00f36998db309d6a8d145b2f8a2e665bbdf7fc4cde0"),
+    ("NotoSansSymbols2-Regular.ttf", "NotoSansSymbols2-v2.006", "NotoSansSymbols2/unhinted",
+      "31854bbb3451d30b2b9ed205b7a0779a74b9464e0acdb0170fa41fa76b71d732"),
+  ]
+    ## Faces desktop front-end draws with, each with tag fetched, path within repository and
+    ##   digest of bytes expected; SIL Open Font License 1.1, origins in PROVENANCE.md.
+    ##   Shipped rather than taken from machine, which Article X.8 asks of presentation target:
+    ##   four absolute paths into one distribution's layout were what stood here, and this
+    ##   project chose none of them (repository issue 93).
+    ##   Tag is per family rather than per repository: three families move on their own, and
+    ##   commit would pin all three to whenever one of them last moved.
+    ##   Hinting differs by family because repository ships what it ships -- `NotoSans` carries
+    ##   hinted TrueType and neither supplementary family does -- so path is stated rather than
+    ##   derived from name.
   USAGE = "Usage: nim r tools/build.nim " &
     "<declare|types|web|drive|desktop|driven|assets|system|clean>\n"
     ## Text printed on usage error.
@@ -376,7 +399,8 @@ proc checkFace(face, wanted: string) =
 
 
 proc assets() =
-  ## Fetch every face page embeds into `build/fonts`, and verify each against its pin.
+  ## Fetch every face both front-ends draw with into `build/fonts`, verifying each against
+  ## its pin.
   ##   Faces are binary, which audit cannot read, so they are never committed and this verb
   ##   is how contributor gets them (CONTRIBUTOR.md, "Pages and assets").
   ##   Face already carrying its pinned digest is left alone: verb is then idempotent, second
@@ -402,10 +426,24 @@ proc assets() =
       wrong.add face & ": wanted `" & digest & "`, got `" & got & "`"
     else:
       echo "Fetched ", face, ", digest matches"
+  for (face, tag, within, digest) in FACES_DESKTOP:
+    if fileExists(DIR_FONTS / face) and (DIR_FONTS / face).digestOf == digest:
+      echo "Kept ", face, ", digest already matches"
+      continue
+    run("curl", [
+      "-sSLf", "-o", DIR_FONTS / face,
+      HOST_FACES_DESKTOP & "@" & tag & "/fonts/" & within & "/ttf/" & face,
+    ])
+    let got = (DIR_FONTS / face).digestOf
+    if got != digest:
+      wrong.add face & ": wanted `" & digest & "`, got `" & got & "`"
+    else:
+      echo "Fetched ", face, ", digest matches"
   if wrong.len > 0:
     raise newException(OSError,
       "Host served bytes no face is pinned to; got " & $wrong.len & " -- " & wrong.join("; "))
-  echo "Wrote ", DIR_FONTS, " (", FACES.len, " faces, every digest matched)."
+  echo "Wrote ", DIR_FONTS, " (", FACES.len + FACES_DESKTOP.len,
+    " faces, every digest matched)."
 
 
 proc browser() =
@@ -634,6 +672,9 @@ proc driven() =
   ##   Exit follows checks: non-zero where any failed, so one command is whole answer.
   ##   Every failure is reported before exit rather than first one raising: run takes seconds,
   ##   and knowing which three broke beats knowing that one did.
+  ##   Fetches faces first, for reason `drive` does: front-end draws in faces this project
+  ##   ships, and run against absent one checks nothing anybody would ship.
+  assets()
   desktop()
   var failed: seq[string]
   for drive in DRIVES:
