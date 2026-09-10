@@ -744,10 +744,10 @@ exercises is wiring.
   and over 139 were two claims wearing one sentence. `desktop` now fetches and builds both
   libraries itself, so the skip is gone and an absent dependency fails by name.
   Two things had to move first, and both were found by a second machine finally trying. SDL3's pin
-  named no ref `git clone` resolves (issue 90). And the front-end loads four faces by absolute
+  named no ref `git clone` resolves (issue 90). And the front-end loaded four faces by absolute
   path under `/usr/share/fonts/truetype/noto/`, which nothing declared, so a machine without them
-  aborts every run inside Dear ImGui rather than degrading -- `fonts-noto-core` is declared for
-  that reason now, and the abort itself is issue 93.
+  aborted every run inside Dear ImGui rather than degrading. Both are answered: the abort is a
+  finding now, and this project ships its own faces (issue 93).
 
 **An absent face is a finding now, and it used to be an abort.** Dear ImGui asserts inside
 `AddFontFromFileTTF` where it cannot open a path, and an assertion is SIGABRT rather than a
@@ -756,19 +756,35 @@ warning line, so the graceful path existed on both sides and nothing joined them
 declared went straight to Dear ImGui, and the warning was unreachable. Measured 2026-09-09 on a
 container carrying SDL3 and Dear ImGui but no Noto packages: **12 of 12 runs aborted**, exit 1.
   `faceAt` resolves each of the four to empty where the file is not there, and says which face is
-  missing, which variable names it and what to install. The interface draws in what is left.
+  missing, which variable names it and which verb fetches it. The interface draws in what is left.
   **Locations come from the environment first**, `RGA_FONT` and its three siblings, falling back
-  to what the declaration names -- which is the shape CONTRIBUTOR.md asks of any machine path, and
-  what lets the case be driven at all.
+  to the faces this build ships -- and that fallback is what lets the case be driven at all.
   Verified by driving, committed in that order: `driven` runs `--drive-keys` once with `RGA_FONT`
   naming a path no machine carries. Before the fix that run aborts and the verb reports
   `drive-keys without face`, exit 1; after it, the run reports the finding and passes, and gains a
   verdict of its own -- focus moved and the scene stands while Dear ImGui had no face, so the
   claim is that the scripted work happened rather than that nothing crashed.
-  **The four defaults are still one distribution's layout**, which Article X.8 speaks against --
-  the browser half embeds six faces pinned by digest and this half trusts a package. An override
-  makes that survivable rather than settled, and the choice between shipping pinned faces and
-  keeping a declared system one is open on repository issue 93.
+  **This half ships the faces it draws with now, as the browser half does** (Article X.8). The
+  four absolute paths are gone and no machine's layout is named in source: `DIR_FACES` is relative
+  to the binary, resolved against `getAppDir()`, so `bin/` and `build/fonts/` move together.
+  `fonts-noto-core` went out of `SYSTEM` with them -- the package it declared is no longer what
+  the front-end draws in. Ruled by the Architect on repository issue 93.
+  Faces come from the Noto project's own release repository rather than `@fontsource`, which
+  ships `woff2` and `woff` alone while Dear ImGui reads TrueType. Each is pinned by family tag
+  *and* digest: `NotoSans-v2.013` for the interface and label faces, `NotoSansMath-v2.539` and
+  `NotoSansSymbols2-v2.006` for the two merged ranges. Per family rather than per repository,
+  since three families move on their own and a commit would pin all three to whenever one of
+  them last did.
+  **Coverage was checked rather than assumed, since a face swap turns notation into boxes
+  silently.** Read from each font's `cmap` against the ranges `gui_shim.cpp` declares, comparing
+  what the distribution packages carried with what is now shipped: text 379 of 416 wanted, both;
+  symbols 362 of 544, both; math 1,773 of 1,952, both, with U+2AAC lost and U+23B7 gained and
+  neither appearing anywhere in this project. So nothing this front-end draws moved.
+  Verified by rendering, 2026-09-10: a 300-frame run under Xvfb writes a frame whose operator
+  rows read `m ∧ n`, `m ∨ n` and `n ∨ (m ∧ n☆)`, with subscripted basis names beneath them and
+  no `.notdef` box anywhere.
+  Costs about 2.5 MB fetched into `build/fonts`, against roughly 700 kB of `woff2` for the page.
+  Uncompressed TrueType is what `stb_truetype` reads, so that is the price of the rule.
 
 **Two defaults favoured silent pass, and both are gone.** This is what running them found, and
 neither was reachable by reading.

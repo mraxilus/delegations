@@ -123,22 +123,23 @@ const
     ##   this thin.
   PIXELS_WIDTH* {.define: "visualiser.pixels_width".} = 1440
   PIXELS_HEIGHT* {.define: "visualiser.pixels_height".} = 900
-  PATH_FONT* {.define: "visualiser.path_font".} =
-    "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf"
+  DIR_FACES* {.define: "visualiser.dir_faces".} = "../build/fonts"
+    ## Directory shipped faces sit in, relative to binary rather than to any machine.
+    ##   `tools/build.nim assets` fetches them there, each pinned by tag and digest, and
+    ##   `bin/` sits beside `build/` -- so binary and faces move together and neither is
+    ##   found by absolute path (Article X.8; CONTRIBUTOR.md, "System dependencies").
+  FACE_FONT* {.define: "visualiser.face_font".} = "NotoSans-Regular.ttf"
     ## Carry UI's text: Latin, punctuation, subscripts and combining marks.
-    ##   Default is one distribution's layout, and `RGA_FONT` overrides it, for reason
-    ##   `faceAt` gives. Four names below follow same pattern.
-  PATH_FONT_MATH* {.define: "visualiser.path_font_math".} =
-    "/usr/share/fonts/truetype/noto/NotoSansMath-Regular.ttf"
+    ##   `RGA_FONT` names another outright, for reason `faceAt` gives. Three below follow
+    ##   same pattern.
+  FACE_FONT_MATH* {.define: "visualiser.face_font_math".} = "NotoSansMath-Regular.ttf"
     ## Carry operators notation is written with, and Lengyel's bold operands.
     ##   Neither is in Noto Sans; merged into same atlas font; see `gui_shim.cpp`.
-  PATH_FONT_SYMBOL* {.define: "visualiser.path_font_symbol".} =
-    "/usr/share/fonts/truetype/noto/NotoSansSymbols2-Regular.ttf"
+  FACE_FONT_SYMBOL* {.define: "visualiser.face_font_symbol".} = "NotoSansSymbols2-Regular.ttf"
     ## Carry bulk and weight dual stars and abandon button's cross. Merged same way.
-  PATH_FONT_LABEL* {.define: "visualiser.path_font_label".} =
-    "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf"
+  FACE_FONT_LABEL* {.define: "visualiser.face_font_label".} = "NotoSans-Bold.ttf"
     ## Set selected object's name label, heavier than UI text as browser's semibold is.
-    ##   Bold is only heavier Noto Sans weight system package ships; no semibold there.
+    ##   Bold is heaviest weight Noto Sans ships as static face; no semibold there.
     ##   Own face rather than merged: label alone is set in it, at `HEIGHT_MARKER_LABEL`.
   ENV_FONT* = "RGA_FONT"
     ## Environment name carrying interface face's location, where machine keeps its own.
@@ -382,11 +383,11 @@ proc parseOptions(): Options =
 
 #[ Frame Assembly ]#
 
-proc faceAt(name_environment, path_declared: string): string =
-  ## Read face's location from environment, falling back to declaration; empty where absent.
-  ##   Environment first because committed default is one distribution's layout, and
-  ##   CONTRIBUTOR.md admits such path only where it is fallback rather than only answer:
-  ##   machine keeping its faces elsewhere says so rather than editing source.
+proc faceAt(name_environment, face: string): string =
+  ## Read face's location from environment, else from faces this build ships; empty where none.
+  ##   Shipped face is found beside binary rather than at absolute path: no machine's layout is
+  ##   named in source, and checkout moves without editing anything.
+  ##   Environment first because machine keeping its own faces says so rather than rebuilding.
   ##   Empty variable counts as unset, since exporting nothing is how shell clears one.
   ##   Empty result rather than raising: `gui.init` skips face whose path is empty, so
   ##   interface draws in what is left and run reaches its verdict. Dear ImGui asserts on
@@ -395,9 +396,9 @@ proc faceAt(name_environment, path_declared: string): string =
   ##   Says which face and what to install, since finding naming neither is one nobody acts
   ##   on.
   let named = getEnv(name_environment)
-  let path = if named.len > 0: named else: path_declared
+  let path = if named.len > 0: named else: getAppDir() / DIR_FACES / face
   if fileExists(path): return path
-  echo &"No face at `{path}`; set `{name_environment}`, or install `fonts-noto-core`."
+  echo &"No face at `{path}`; set `{name_environment}`, or run `tools/build.nim assets`."
   ""
 
 
@@ -2021,10 +2022,10 @@ proc main() =
   echo &"OpenGL: {gl.getString(gl.VERSION)}"
 
   let
-    path_font = faceAt(ENV_FONT, PATH_FONT)
-    path_font_math = faceAt(ENV_FONT_MATH, PATH_FONT_MATH)
-    path_font_symbol = faceAt(ENV_FONT_SYMBOL, PATH_FONT_SYMBOL)
-    path_font_label = faceAt(ENV_FONT_LABEL, PATH_FONT_LABEL)
+    path_font = faceAt(ENV_FONT, FACE_FONT)
+    path_font_math = faceAt(ENV_FONT_MATH, FACE_FONT_MATH)
+    path_font_symbol = faceAt(ENV_FONT_SYMBOL, FACE_FONT_SYMBOL)
+    path_font_label = faceAt(ENV_FONT_LABEL, FACE_FONT_LABEL)
   # Conversion is explicit, since implicit one from `let` is warned on and will be error.
   #   Four bindings outlive call, and Dear ImGui copies each path before returning, so no
   #   pointer here outlives string behind it.
