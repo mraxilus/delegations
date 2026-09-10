@@ -251,8 +251,19 @@ what reader sees, and it is immune to buffer being taken after frame that filled
   in a row is what luck gives (2/3)^*n* of the time, which is 30% at three, 13% at five, and under
   2% at ten. That is the whole of what can be said without a number, and a number is exactly what
   this file cannot hold: only a push of this project adds a sample, so the merge carrying any
-  tally invalidates it. The running count lives on repository issue 77, where the curator's own
-  next move turns on it, and this section deliberately does not duplicate it.
+  tally invalidates it. Issue 77 carried the running count while the curator's next move turned
+  on it; that move has been taken and the issue is closed, so what stands here in place of a
+  tally is a boundary and a deduction, neither of which a later push can falsify.
+  **The sample spans two browsers now, and the reader was green on both.** On `main` the runner
+  drove the snap through run 34399034311 and drives what `package-lock.json` pins from 34404833659
+  onward — the curator's `RGA_CHROMIUM` step went between those two runs (#98), and both are
+  green. Every `push` run on `main` since 34294113589 has passed, which is a deduction rather
+  than a tally — `driven` gates `audit`, so one red reader reddens the whole run, and none of
+  them is red. The snap was the last variable standing when this section was written and it is
+  not standing now; blankness has not returned without it. That moves the compositor reader from
+  *consistent with the cause being gone* toward *the reading was the cause*, and it does not
+  settle what the cause was, which stays **Unexplained** above: neither Chromium here ever
+  reproduced it, so nothing has been driven against a reproduction.
 
 **The harness resolves its own browser, and drives Playwright's pinned build by default.**
 Order is what `RGA_CHROMIUM` names, else the build `package-lock.json` pins, else `chromium`
@@ -733,10 +744,10 @@ exercises is wiring.
   and over 139 were two claims wearing one sentence. `desktop` now fetches and builds both
   libraries itself, so the skip is gone and an absent dependency fails by name.
   Two things had to move first, and both were found by a second machine finally trying. SDL3's pin
-  named no ref `git clone` resolves (issue 90). And the front-end loads four faces by absolute
+  named no ref `git clone` resolves (issue 90). And the front-end loaded four faces by absolute
   path under `/usr/share/fonts/truetype/noto/`, which nothing declared, so a machine without them
-  aborts every run inside Dear ImGui rather than degrading -- `fonts-noto-core` is declared for
-  that reason now, and the abort itself is issue 93.
+  aborted every run inside Dear ImGui rather than degrading. Both are answered: the abort is a
+  finding now, and this project ships its own faces (issue 93).
 
 **An absent face is a finding now, and it used to be an abort.** Dear ImGui asserts inside
 `AddFontFromFileTTF` where it cannot open a path, and an assertion is SIGABRT rather than a
@@ -745,19 +756,35 @@ warning line, so the graceful path existed on both sides and nothing joined them
 declared went straight to Dear ImGui, and the warning was unreachable. Measured 2026-09-09 on a
 container carrying SDL3 and Dear ImGui but no Noto packages: **12 of 12 runs aborted**, exit 1.
   `faceAt` resolves each of the four to empty where the file is not there, and says which face is
-  missing, which variable names it and what to install. The interface draws in what is left.
+  missing, which variable names it and which verb fetches it. The interface draws in what is left.
   **Locations come from the environment first**, `RGA_FONT` and its three siblings, falling back
-  to what the declaration names -- which is the shape CONTRIBUTOR.md asks of any machine path, and
-  what lets the case be driven at all.
+  to the faces this build ships -- and that fallback is what lets the case be driven at all.
   Verified by driving, committed in that order: `driven` runs `--drive-keys` once with `RGA_FONT`
   naming a path no machine carries. Before the fix that run aborts and the verb reports
   `drive-keys without face`, exit 1; after it, the run reports the finding and passes, and gains a
   verdict of its own -- focus moved and the scene stands while Dear ImGui had no face, so the
   claim is that the scripted work happened rather than that nothing crashed.
-  **The four defaults are still one distribution's layout**, which Article X.8 speaks against --
-  the browser half embeds six faces pinned by digest and this half trusts a package. An override
-  makes that survivable rather than settled, and the choice between shipping pinned faces and
-  keeping a declared system one is open on repository issue 93.
+  **This half ships the faces it draws with now, as the browser half does** (Article X.8). The
+  four absolute paths are gone and no machine's layout is named in source: `DIR_FACES` is relative
+  to the binary, resolved against `getAppDir()`, so `bin/` and `build/fonts/` move together.
+  `fonts-noto-core` went out of `SYSTEM` with them -- the package it declared is no longer what
+  the front-end draws in. Ruled by the Architect on repository issue 93.
+  Faces come from the Noto project's own release repository rather than `@fontsource`, which
+  ships `woff2` and `woff` alone while Dear ImGui reads TrueType. Each is pinned by family tag
+  *and* digest: `NotoSans-v2.013` for the interface and label faces, `NotoSansMath-v2.539` and
+  `NotoSansSymbols2-v2.006` for the two merged ranges. Per family rather than per repository,
+  since three families move on their own and a commit would pin all three to whenever one of
+  them last did.
+  **Coverage was checked rather than assumed, since a face swap turns notation into boxes
+  silently.** Read from each font's `cmap` against the ranges `gui_shim.cpp` declares, comparing
+  what the distribution packages carried with what is now shipped: text 379 of 416 wanted, both;
+  symbols 362 of 544, both; math 1,773 of 1,952, both, with U+2AAC lost and U+23B7 gained and
+  neither appearing anywhere in this project. So nothing this front-end draws moved.
+  Verified by rendering, 2026-09-10: a 300-frame run under Xvfb writes a frame whose operator
+  rows read `m ∧ n`, `m ∨ n` and `n ∨ (m ∧ n☆)`, with subscripted basis names beneath them and
+  no `.notdef` box anywhere.
+  Costs about 2.5 MB fetched into `build/fonts`, against roughly 700 kB of `woff2` for the page.
+  Uncompressed TrueType is what `stb_truetype` reads, so that is the price of the rule.
 
 **Two defaults favoured silent pass, and both are gone.** This is what running them found, and
 neither was reachable by reading.
@@ -3021,5 +3048,6 @@ because runner answered with sheet of it once black alone was refused. Rate abov
 curator's measurement of what old reader did. Correction to finding: *four* checks had been
 comparing one blank reading against another, not one -- `pool`'s reported hash 1426046701 is
 exactly its own fold over all-zero 1200x900x4 buffer, which is what shows it. Cause on runner
-stays **unexplained**; neither Chromium here reproduces it, and unpinned snap browser runner
-drives is raised for curator on issue 77.
+stays **unexplained**; neither Chromium here reproduces it. Browser runner drove was unpinned
+snap, and was raised for curator on issue 77; it is gone. Runner drives build lock pins since
+#98, reader has been green on both, and that is evidence against snap having been cause.
