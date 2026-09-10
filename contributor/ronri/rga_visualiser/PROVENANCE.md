@@ -480,6 +480,101 @@ packages to lock file, `pga` to commit -- and this fetch was sole exception (rep
   carries none that survives across distributions, so none is manufactured for one; same shape
   of honest limit `compilers.nim` already records for fetched compilers, trusted on TLS alone.
 
+**Three faces, three roles, and nothing else picks between them.** The Architect's standard:
+Noto Serif for titles, Noto Sans for body, Commit Mono for code and monospace. Both front-ends
+draw it — the page through `--serif`, `--sans` and `--mono`, the desktop through `guiHeader` and
+`guiMonoPush`/`guiMonoPop` — so a rule stated once is reached through two mechanisms rather than
+asked to agree with itself.
+  **What counts as a title was looked up rather than asserted**, since the answer decides where
+  the serif goes. Material 3's type system separates *title* styles from *label* styles, and puts
+  "text inside components" — buttons, tabs, chips — in the label role, drawn in the interface
+  face rather than the display one. Butterick's rules for all caps (5–12% letterspacing, caps
+  work at small sizes) cover the small uppercase group labels, which keep their 0.06em tracking
+  and stay sans. And the guidance on monospace is that it is for code and for text whose columns
+  carry meaning, with `font-variant-numeric: tabular-nums` on a proportional face preferred for
+  ordinary figures.
+  So the serif took the headings that name a section and the application's own name, and three
+  things moved *out* of the mono face: the help tab strip and the two toggle-chip rules, which
+  are labels inside components. The objects count sits inside a heading and would have inherited
+  its serif, so it names the interface face outright and keeps its tabular figures.
+  **Commit Mono splits its ligatures across two switches, and the page needed both.** Its GSUB,
+  read out of the embedded `woff2` itself, carries `calt`, `cv01`–`cv11` and `ss01`–`ss05`. Most
+  of the ligatures ride on `calt`, which browsers apply unasked, so those had been drawing all
+  along. The arrows and comparisons do not: they come from the author's opt-in sets, named by his
+  own feature sources — `ss01_less_equal.fea`, `ss02_arrows.fea` — and the page drew `=>` as two
+  glyphs until it asked for them.
+  Driven over four rows of sequences, each feature switched on and off by itself:
+
+  | row | `calt` alone changes it | `ss01`+`ss02` change it |
+  |---|---|---|
+  | `=> -> <- <= >= != ===` | no | **yes** |
+  | `>>= <<= \|> <\| ++ -- :: ...` | yes | yes |
+  | `/* */ <> && \|\| ?? ?: \|=` | yes | no |
+  | `=~ #{ www 0x ;; ## __ ~~` | yes | no |
+
+  So the stylesheet does two things rather than one: `font-variant-ligatures: common-ligatures
+  contextual` says outright what was working by default, since a reset writing `none` for
+  crispness would take `calt` with it; and `font-feature-settings: "ss01" 1, "ss02" 1` asks for
+  what was never on. No combination moves a column — 365 px on every reading — which is what a
+  monospace ligature has to do.
+  **This corrects a claim this record nearly carried.** The first reading said the face
+  publishes no `calt` at all, on the strength of the author's own `otf` and variable builds,
+  which genuinely carry none — and of a browser test that turned `calt` *on* twice and never
+  once off. `contributor/sincopa/dance_ontology` said the opposite on repository issue 116 while
+  this was being written, which is what sent it back to the file. Both readings were half right:
+  the distributed `woff2` carries `calt` and the author's repository builds do not, so the page
+  and the desktop are not drawing from the same feature table even where they draw the same
+  letterforms.
+  **Set at the root, and that is checked rather than assumed safe.** Noto Sans and Noto Serif
+  publish no `ss01` or `ss02` at all (they carry `ss03`, `ss04`, `ss06`, `ss07`), but Noto Sans
+  Math does publish an `ss01`, and the mono stack falls through to it for every operator. So the
+  operators, stars and subscripts this project draws were rendered with the sets on and off and
+  compared: identical. The one face that could have been disturbed was measured rather than
+  reasoned about.
+  **The serif ships at 600 alone, because 600 is the weight every title is set at.** It shipped
+  at 400 before, and every title asks for 600 — so no title was drawn in the face the page
+  shipped: CSS matches the nearest weight in the family and leaves the browser to make up the
+  rest. A face nothing draws is weight carried for nothing, and a weight nothing ships is a face
+  the reader's browser invents; Article X.8 refuses both. So 400 left and 600 arrived, 15 kB of
+  it, and the page grew by 1,804 bytes on the swap.
+  **The check written to hold that was wrong twice, and how it was wrong is worth more than the
+  check.** It compared the live heading's width against canvas measuring the same string in each
+  face. The heading carries `letter-spacing: 0.02em`, which canvas does not, so the live figure
+  sat about 1.3 px above both — and that gap was read as evidence of a synthesised weight when it
+  was only the tracking. Then, with the real 600 face in place, both faces measured `apply` at
+  35.0 px, so width could not have parted them at all. It reads pixels now: the heading is shot
+  as the page has it and again with the interface face forced onto it, and a face that never
+  arrived makes one picture where there should be two. Nothing was loosened to make it pass.
+  **The desktop draws the same three roles from the same three families.** `NotoSerif-SemiBold`
+  matches the page's 600 rather than being merely serif, and `CommitMonoV142-400Regular` sets
+  notation, figures and the message line. The mono face has both supplementary ranges merged into
+  it, as the interface face does, because the rows it exists for are exactly the rows carrying
+  wedges and subscripts; the title face has neither merged, since every heading here is a word
+  this source writes.
+  **Commit Mono comes from its author's own repository, which is a second host and says so.**
+  `@fontsource` ships `woff2` and `woff` alone, and the desktop reads outlines through
+  `stb_truetype`. What that repository publishes is `otf` with **CFF** outlines rather than
+  TrueType, and whether Dear ImGui would take it was driven rather than assumed: pointing
+  `RGA_FONT` at the file and running `--drive-keys` reported 3 of 3, and a 300-frame screenshot
+  drew every glyph including the merged operators, with no `.notdef` box. Its file name says
+  `V142` at tag `1.143`, which is what upstream ships; the digest pins the bytes either way.
+  **One check outside this work gave two verdicts on the same code, and that is recorded rather
+  than left.** `driveRendered` asks for at least 20 frames timed inside a 1,200 ms window. Running
+  the whole repository's checks and a second driven run at once on this container, it read **19**
+  and failed; alone on the same commit it reads **27** and passes. The floor is a fixed count
+  against a fixed span, so what it really asserts is that the machine drew 20 frames in 1.2 s --
+  about 17 fps -- rather than anything about this page. CONTRIBUTOR.md's rule is that a check
+  gives the same verdict on the same code, and where it does not, the check is what is wrong. The
+  cause here was load this session created, not the runner's, so nothing is changed today; the
+  fix, when it comes, is to read the count against frames actually drawn rather than against a
+  span of clock.
+
+  **Ligatures cannot reach the desktop at all, and that is a limit rather than an omission.**
+  Dear ImGui shapes no text — it maps codepoints to glyphs and advances — so no GSUB feature
+  fires, `ss01` and `ss02` included. The two front-ends share the letterforms and do not share
+  the ligatures. Nothing in the panel currently writes a sequence that would form one, so the
+  difference is invisible today; it is written down because the day something does, this is why.
+
 *Checked.* Verified by running cold: `clean` removes `build`, `bin` and `nimcache`, then `drive`
 fetches six faces and reaches 139 of 139 with no step run by hand -- which is runner's own case.
 Re-measured after `drive` gained desktop half, so cold run now builds and drives both front-ends

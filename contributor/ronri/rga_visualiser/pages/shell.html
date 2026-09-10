@@ -39,6 +39,19 @@
     --mono: "Commit Mono UI", "Noto Sans UI", ui-monospace, "SF Mono", Consolas, monospace;
     --sans: "Noto Sans UI", -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
     --serif: "Noto Serif UI", "Noto Sans UI", Georgia, "Times New Roman", serif;
+    /* **Three faces, three roles, and nothing else picks between them.**
+         `--serif` draws titles: heading that names section or view, and application's own
+       name. `--sans` draws everything reader reads or operates -- body, controls, labels,
+       tabs, figures. `--mono` draws code and text whose columns carry meaning: key names,
+       coefficient expressions, tree paths, message notation.
+         Split follows type systems that state roles outright rather than taste: display
+       styles are for headings, label styles for text inside components (Material 3), and
+       monospace is for code rather than for numbers, which want tabular figures in
+       proportional face instead (`font-variant-numeric`, used below). That is why tab strip
+       and toggle chips are `--sans` although they were `--mono`, and why count beside
+       heading is `--sans` although heading is serif.
+         Desktop front-end draws same three roles from same three families, through
+       `gui_shim.cpp`; only ligatures differ, and PROVENANCE says why. */
     /* Both written by browser scripts from `nimAnimationMilliseconds`, so every transition below
        runs to same constant freshly added object grows in over rather than to
        second number written down separately. Curve is easeOutCubic, matching
@@ -74,9 +87,11 @@
     font-display: block;
     unicode-range: U+25A0-25FF, U+2600-26FF, U+2700-27BF;
     src: url(@EMBED:noto-sans-symbols-2-symbols-400-normal.woff2@) format("woff2"); }
-  @font-face { font-family: "Noto Serif UI"; font-style: normal; font-weight: 400;
+  /* Serif ships at 600 alone, which is weight every title is set at; 400 would be face
+     nothing draws, and browser asked for 600 would fake bold from it. */
+  @font-face { font-family: "Noto Serif UI"; font-style: normal; font-weight: 600;
     font-display: block;
-    src: url(@EMBED:noto-serif-latin-400-normal.woff2@) format("woff2"); }
+    src: url(@EMBED:noto-serif-latin-600-normal.woff2@) format("woff2"); }
   @font-face { font-family: "Commit Mono UI"; font-style: normal; font-weight: 400;
     font-display: block;
     src: url(@EMBED:commit-mono-latin-400-normal.woff2@) format("woff2"); }
@@ -92,6 +107,23 @@
     overflow: hidden;
     overscroll-behavior: none;
     font-family: var(--sans);
+    /* **Commit Mono splits its ligatures across two switches, and page needs both.**
+       Most of them ride on `calt`, which browsers apply unasked -- `&&`, `||`, `::`, `...`,
+       `/* */`, `#{` and their kin all draw joined with nothing set. Arrows and comparisons
+       do not: `=>`, `->`, `<-`, `<=`, `>=`, `!=` and `===` come from author's own opt-in
+       sets, `ss01` for less-and-equal and `ss02` for arrows, and page drew them as separate
+       glyphs until this line.
+       So first line protects what is already working -- reset writing `none` for crispness
+       would take `calt` with it -- and second asks for what was never on.
+       Driven rather than read, over four rows of sequences: `calt` alone changes three of
+       them and leaves arrow row untouched, sets change arrow row, and no combination moves
+       column, which is what monospace ligature has to do.
+       Set here rather than beside every mono rule, and that is checked rather than assumed:
+       Noto Sans and Noto Serif publish no `ss01` or `ss02` at all, and Noto Sans Math's
+       `ss01` was rendered against every operator, star and subscript this project draws,
+       on and off -- picture identical. `driveTypeLigatures` holds all of it. */
+    font-variant-ligatures: common-ligatures contextual;
+    font-feature-settings: "ss01" 1, "ss02" 1;
     color: var(--ink);
   }
 
@@ -203,6 +235,7 @@
     flex: none;
   }
   .brand .name {
+    font-family: var(--serif);
     font-size: 12.5px;
     font-weight: 600;
     letter-spacing: 0.01em;
@@ -230,7 +263,9 @@
     border: 1px solid transparent;
     background: transparent;
     color: var(--ink-muted);
-    font-family: var(--mono);
+    /* Label role, so interface face: these name what button does, and mono face is
+       kept for code and for text whose columns line up (see type roles above). */
+    font-family: var(--sans);
     font-size: 11px;
     letter-spacing: 0.03em;
     padding: 7px 11px;
@@ -388,7 +423,10 @@
     padding-bottom: 8px;
   }
   .help-tab {
-    font-family: var(--mono);
+    /* Tab strip names views, but tab is control rather than heading: label role, so
+       interface face. Uppercase and its tracking stay -- caps work at this size when
+       letterspaced, and they are what tells strip apart from rows beneath it. */
+    font-family: var(--sans);
     font-size: 10.5px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -625,7 +663,10 @@
     background: transparent;
     border: none;
     color: var(--ink);
-    font-family: var(--sans);
+    /* Title role: heading naming section takes serif face, which is only role it is
+       drawn in (see type roles above). Weight stays 600, and serif ships at 600 for it:
+       serif at 13px against dark ground thins, and heading has to hold its row. */
+    font-family: var(--serif);
     font-size: 13px;
     font-weight: 600;
     letter-spacing: 0.02em;
@@ -724,7 +765,10 @@
 
   /* ---- Objects list ---- */
   .objects-header { display: flex; align-objects: baseline; justify-content: space-between; }
-  .objects-count { font-size: 11px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  /* Count rides inside heading and would inherit its serif; figures belong in interface
+     face with tabular numerals, so it says so rather than inheriting. */
+  .objects-count { font-family: var(--sans); font-size: 11px; color: var(--ink-faint);
+    font-variant-numeric: tabular-nums; }
   .object-row {
     border-top: 1px solid var(--border);
     padding: 9px 0;
