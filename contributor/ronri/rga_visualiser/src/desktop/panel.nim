@@ -527,7 +527,11 @@ proc layoutObjectDescription(panel: Panel, scene: var Scene, row: ObjectRow) =
     describeKind(geometry_shown, line, cursor)
     appendChars(line, cursor, ": ")
     formatMultivector(geometry_shown, line, cursor)
+  # Mono role: line is notation, and its columns are what reader compares row to row.
+  #   Same choice page makes for `.object-coefficient`.
+  gui.monoPush()
   gui.textWrapped(description)
+  gui.monoPop()
 
 
 proc layoutObject(
@@ -927,14 +931,18 @@ proc layoutDiagnosticsFrameTime(panel: var Panel) =
     appendChars(line, cursor, " fps, ")
     appendFixed(line, cursor, 1000.0/max(gui.framerate(), 1.0), 2)
     appendChars(line, cursor, " ms/frame")
+  gui.monoPush()
   gui.text(text_rate)
+  gui.monoPop()
   let text_tessellate = buildChars(line):
     appendChars(line, cursor, "tessellate ")
     appendFixed(line, cursor, panel.microseconds_tessellate, 1)
     appendChars(line, cursor, " us into ")
     appendInt(line, cursor, panel.count_vertices)
     appendChars(line, cursor, " vertices")
+  gui.monoPush()
   gui.text(text_tessellate)
+  gui.monoPop()
 
 
 proc layoutDiagnosticsMemory(panel: Panel) =
@@ -1021,7 +1029,9 @@ proc layoutDiagnosticsObjectPool(scene: Scene) =
     appendChars(summary, cursor, " active, ")
     appendInt(summary, cursor, OBJECTS_MAX - scene.len)
     appendChars(summary, cursor, " free")
+  gui.monoPush()
   gui.text(text_summary)
+  gui.monoPop()
 
   const
     BYTES_SCENE = sizeof(Scene)
@@ -1034,7 +1044,9 @@ proc layoutDiagnosticsObjectPool(scene: Scene) =
     appendChars(pool_memory, cursor, " KB used, ")
     appendInt(pool_memory, cursor, BYTES_PER_HANDLE)
     appendChars(pool_memory, cursor, " B/handle")
+  gui.monoPush()
   gui.text(text_pool)
+  gui.monoPop()
   gui.tooltip(
     "Scene is one fixed block sized for every handle up front, not allocated one " &
     "object at a time: `allocated` is that whole block, `used` is however many handles " &
@@ -1050,7 +1062,9 @@ proc layoutDiagnosticsTotal(panel: Panel) =
   let text_total = buildChars(total):
     appendFixed(total, cursor, float(panel.bytes_memory_total) / (1024.0*1024.0), 1)
     appendChars(total, cursor, " MB")
+  gui.monoPush()
   gui.text(text_total)
+  gui.monoPop()
   # Fold to one literal.
   #   Depth is read from `CAPACITY_HISTORY` and tooltip is still `cstring` pointing at
   #   static text.
@@ -1319,7 +1333,9 @@ proc layoutHelpTab(
       if entry.path != path: continue
       # Mark touch rows in word rather than only tint.
       #   Survives reader who cannot tell two greys apart.
+      gui.monoPush()
       gui.textTinted(cstring(helpActionOf(entry)), 0.74, 0.95, 0.94)
+      gui.monoPop()
       gui.sameLineAt(offset_outcome)
       gui.text(cstring(entry.outcome))
   gui.childEnd()
@@ -1423,5 +1439,8 @@ proc layoutPanel*(
     layoutObjects(panel, scene, camera, history, now)
     layoutView(panel, camera)
     gui.separator()
+    # Mono role: message carries notation and object names, as page's `.message-line` does.
+    gui.monoPush()
     gui.text(toCstring(panel.message))
+    gui.monoPop()
   gui.windowEnd()

@@ -37,7 +37,7 @@ const
   AXLE_Y = 250     ## Row postures are drawn in, under their arcs.
   NAME_RISE = 14   ## Distance from top of picture up to its name.
   ARC_RISE = 100   ## How far above axle shortest turn's arc reaches.
-  LABEL_FONT = "font: 11px ui-sans-serif, system-ui, sans-serif"
+  LABEL_FONT = "font: 11px 'Noto Sans', ui-sans-serif, system-ui, sans-serif"
 
 
 func axleWidth*: int =

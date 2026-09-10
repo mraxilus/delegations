@@ -47,6 +47,13 @@
 #   download and not install, and `nimcache`, which would be largest saving and whose
 #   staleness is exactly failure repository refuses elsewhere -- check passing without
 #   compiling what it claims. It needs driving against deliberately stale cache first.
+#   Actions are pinned to majors running node24, since node20 runtime is being retired and
+#   runner forces every node20 action onto node24 while warning on each job. `checkout@v7` and
+#   `cache@v6` declare `runs.using: node24`; `@v4` of each declared node20, which is what
+#   warning named. `cache@v5` and later want runner 2.327.1 or newer, and runners here report
+#   2.337.0. Only breaking change either carries is `allow-unsafe-pr-checkout`, which is about
+#   `pull_request_target` defaults; this workflow triggers on `pull_request`, so it does not
+#   reach here.
 #   Branch names and event kind reach koch through environment, never interpolated into
 #   script. Weekly sweep compiles every project, since scoped runs leave unrelated rot
 #   unseen until that project next changes; it skips itself in week nobody merged code,
@@ -63,7 +70,7 @@ on:
     - cron: '0 6 * * 1'
 
 env:
-  NIM_VERSION: '2.2.4'
+  NIM_VERSION: '2.2.12'
 
 jobs:
   plan:
@@ -78,7 +85,7 @@ jobs:
             || github.event.before }}
       SWEEP: ${{ github.event_name == 'schedule' && '--sweep' || '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: jiro4989/setup-nim-action@v2
@@ -93,7 +100,7 @@ jobs:
   static:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: jiro4989/setup-nim-action@v2
         with:
           nim-version: ${{ env.NIM_VERSION }}
@@ -109,7 +116,7 @@ jobs:
       matrix:
         include: ${{ fromJSON(needs.plan.outputs.projects) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Released compiler: setup action installs it.
       - if: matrix.kind == 'version'
@@ -121,7 +128,7 @@ jobs:
       # Commit-pinned compiler: no action installs one, so build it, once per commit.
       - if: matrix.kind == 'commit'
         id: built
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ runner.temp }}/nim-commit
           key: nim-commit-${{ runner.os }}-${{ matrix.nim }}
@@ -148,7 +155,7 @@ jobs:
         run: |
           if [ -f "$PROJECT/atlas.lock" ]; then echo "is_locked=true" >> "$GITHUB_OUTPUT"; fi
       - if: steps.locked.outputs.is_locked == 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ matrix.dir }}/deps
           key: atlas-${{ runner.os }}-${{ hashFiles(format('{0}/atlas.lock', matrix.dir)) }}
@@ -170,7 +177,7 @@ jobs:
       matrix:
         include: ${{ fromJSON(needs.plan.outputs.driven) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Same two compiler arms as `project`, and for same reason: driven verb builds page
       #   through JS backend, which compiles project code, so it needs that project's own pin
@@ -183,7 +190,7 @@ jobs:
           parent-nim-install-directory: ${{ runner.temp }}
       - if: matrix.kind == 'commit'
         id: built
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ runner.temp }}/nim-commit
           key: nim-commit-${{ runner.os }}-${{ matrix.nim }}
@@ -210,29 +217,37 @@ jobs:
             echo "$PACKAGES" | xargs sudo apt-get install -y --no-install-recommends
           fi
 
-      # Harness reads browser from environment and otherwise falls through to Playwright's
-      #   own, which nothing installed here; so name what was just installed, found rather
-      #   than written down. Absent browser fails here, naming it, rather than inside harness.
-      - run: |
-          CHROMIUM="$(command -v chromium || command -v chromium-browser)"
-          echo "RGA_CHROMIUM=$CHROMIUM" >> "$GITHUB_ENV"
-
       - id: locked
         env:
           PROJECT: ${{ matrix.dir }}
         run: |
           if [ -f "$PROJECT/atlas.lock" ]; then echo "is_locked=true" >> "$GITHUB_OUTPUT"; fi
       - if: steps.locked.outputs.is_locked == 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ matrix.dir }}/deps
           key: atlas-${{ runner.os }}-${{ hashFiles(format('{0}/atlas.lock', matrix.dir)) }}
 
       - run: mkdir -p ~/.npm
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: ~/.npm
           key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+
+      # Browser Playwright pins: `drive` fetches it, since nothing on runner installs one now
+      #   that this job stopped naming `chromium`. Same lock is key, and not by convenience --
+      #   `package-lock.json` fixes `@playwright/test`, and that version fixes browser revision
+      #   it installs, so tree lock names is tree this restores.
+      #   Made before caching for reason npm's store is: run driving nothing never invokes it
+      #   and leaves path absent, and `actions/cache` warns on absent path.
+      #   Cost this replaces was snap install of `chromium`, which was slowest item in apt step
+      #   (repository issue 79). Whether that trade is net gain is unmeasured until both have
+      #   run; figure belongs on that issue rather than asserted here.
+      - run: mkdir -p ~/.cache/ms-playwright
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
 
       # Faces are pinned to digests inside driver, and `assets` keeps one already carrying its
       #   pin, so cache keyed on that file returns what fetch would have written. Stronger
@@ -240,7 +255,7 @@ jobs:
       #   `web` verifies again before embedding, so stale entry heals rather than ships.
       #   Key is whole driver rather than digests alone, so it misses on edit that moved no
       #   face; cost is refetch of six files.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: ${{ matrix.dir }}/build/fonts
           key: faces-${{ runner.os }}-${{ hashFiles(format('{0}/tools/build.nim', matrix.dir)) }}
@@ -258,7 +273,7 @@ jobs:
             || github.event.before }}
       ALL: ${{ github.event_name == 'schedule' && '--all' || '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: jiro4989/setup-nim-action@v2
@@ -273,7 +288,7 @@ jobs:
       #   select none, so warning would be on most runs and would mean nothing on any of
       #   them. Empty store saved under same key is harmless: first run using npm fills it.
       - run: mkdir -p ~/.npm
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: ~/.npm
           key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
@@ -286,7 +301,7 @@ jobs:
       BRANCH: ${{ github.head_ref }}
       BASE: origin/${{ github.base_ref }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: jiro4989/setup-nim-action@v2
@@ -302,7 +317,7 @@ jobs:
       BRANCH: ${{ github.head_ref }}
       BASE: origin/${{ github.base_ref }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: jiro4989/setup-nim-action@v2
@@ -317,7 +332,7 @@ jobs:
     env:
       BASE: origin/${{ github.base_ref }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: jiro4989/setup-nim-action@v2

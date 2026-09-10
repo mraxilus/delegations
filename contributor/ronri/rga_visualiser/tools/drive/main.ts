@@ -2,12 +2,13 @@
 //   Playwright's API and node's process are what this speaks, and Nim reaches them only
 //   through glue that would leave every browser-side expression unchecked string.
 //   Run it by `nim r tools/build.nim drive`, which builds page first when it is stale.
-//   Chromium comes from `PLAYWRIGHT_BROWSERS_PATH`, or from `RGA_CHROMIUM` where that names
-//   one. Software rendering is forced, so figures here are not this machine's GPU.
+//   Chromium is one `RGA_CHROMIUM` names, else Playwright's own pinned build, else one on
+//   `PATH`; `chromiumChosen` says why that order. Software rendering is forced, so figures
+//   here are not this machine's GPU.
 
 import { chromium } from '@playwright/test';
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { accessSync, constants, existsSync } from 'node:fs';
+import { delimiter, join } from 'node:path';
 import { countFailed, countRun, report } from './report';
 import { focusCanvas } from './gestures';
 import { driveKeys } from './keys';
@@ -24,6 +25,7 @@ import {
 } from './framing';
 import { driveLabelGlide, driveLabelWorn } from './label';
 import { driveHelp, driveHoverDuringGesture } from './chrome';
+import { driveTypeDrawn, driveTypeLigatures, driveTypeRoles } from './type';
 import { driveCreep, drivePlaneBuilt, driveRuler } from './finger';
 import { driveHoldScene } from './hold';
 import { driveDrawerCost, drivePlacementHeld } from './pool';
@@ -52,6 +54,7 @@ import {
   driveAllowance, driveHold, driveKinds, driveMoving, driveSceneryBound,
 } from './scenery';
 import { driveGround } from './ground';
+import { driveBlankRefused } from './canvas';
 import { driveFrameWork } from './frame';
 
 /** Viewport every check below is written against. */
@@ -60,20 +63,41 @@ const SIZE_VIEW = { width: 1200, height: 900 };
 /** Assembled page, as `tools/build.nim web` writes it. */
 const PATH_PAGE = join(__dirname, '..', '..', 'build', 'rga_visualiser.html');
 
-/** Chromium to drive, where Playwright's own copy is not what is installed.
+/** Chromium to drive, in order of what pins each candidate.
  *
- *  Environments often carry Chromium for Playwright other than pinned one, and fetching
- *  second is not this harness's business. `RGA_CHROMIUM` names one outright; failing
- *  that, standard `PLAYWRIGHT_BROWSERS_PATH` usually holds `chromium` beside its numbered
- *  builds. Absent both, Playwright resolves its own.
+ *  `RGA_CHROMIUM` names one outright and stays first, since that is what override is for;
+ *  nothing outside this project sets it. Failing that, Playwright's own build is what
+ *  `package-lock.json` pins -- lock fixes `@playwright/test`, version fixes browser
+ *  revision -- so this machine and runner drive one binary rather than two. Last is
+ *  `chromium` on `PATH`, which on Ubuntu 24.04 carries no version of its own, and is here
+ *  for machine that cannot fetch Playwright's.
+ *  Undefined lets Playwright resolve its own, which is what `launch` does given no path.
+ *  `tools/build.nim drive` fetches that build before running this, so reaching `PATH` at
+ *  all means fetch was skipped or refused.
  */
 function chromiumChosen(): string | undefined {
   const named = process.env['RGA_CHROMIUM'];
   if (named !== undefined && named.length > 0) return named;
-  const installed = process.env['PLAYWRIGHT_BROWSERS_PATH'];
-  if (installed === undefined) return undefined;
-  const beside = join(installed, 'chromium');
-  return existsSync(beside) ? beside : undefined;
+  if (existsSync(chromium.executablePath())) return undefined;
+  return chromiumOnPath();
+}
+
+/** First executable `chromium` on `PATH`, or undefined where none is. */
+function chromiumOnPath(): string | undefined {
+  for (const directory of (process.env['PATH'] ?? '').split(delimiter)) {
+    for (const name of ['chromium', 'chromium-browser']) {
+      const candidate = join(directory, name);
+      // Executable bit rather than existence: directory of that name is not browser, and
+      //   `command -v` tests same thing.
+      try {
+        accessSync(candidate, constants.X_OK);
+        return candidate;
+      } catch {
+        continue;
+      }
+    }
+  }
+  return undefined;
 }
 
 async function main(): Promise<void> {
@@ -96,6 +120,8 @@ async function main(): Promise<void> {
   );
   await focusCanvas(page);
 
+  // Reader every pixel check leans on, checked before any of them lean on it.
+  await driveBlankRefused(page);
   await driveKeys(page);
   await driveWheel(page);
   await drivePan(page);
@@ -124,6 +150,10 @@ async function main(): Promise<void> {
 
   await driveHoverDuringGesture(page, SIZE_VIEW.width, SIZE_VIEW.height);
   await driveHelp(page, SIZE_VIEW.width, SIZE_VIEW.height);
+  // After help, so tab strip exists to be asked which face it is drawn in.
+  await driveTypeRoles(page);
+  await driveTypeDrawn(page);
+  await driveTypeLigatures(page);
   await driveComet(page);
   await driveGround(page);
   await driveFrameWork(page);

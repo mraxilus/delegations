@@ -56,12 +56,19 @@ static bool is_font_loaded = false;
 //   Null where its file was missing, and label falls back to UI face.
 static ImFont *font_label = nullptr;
 static float size_font_label = 0.0f;
+// Hold two faces standing for other two roles page's stylesheet names: title face every
+//   heading is set in, and mono face notation and figures are.
+//   Null where file was missing, and role falls back to UI face rather than to nothing --
+//   same degrading absent face already earns everywhere else here.
+static ImFont *font_title = nullptr;
+static ImFont *font_mono = nullptr;
 
 extern "C" {
 
 bool guiInit(SDL_Window* window, SDL_GLContext context, const char* path_font,
              const char* path_font_math, const char* path_font_symbol, float size_font,
-             const char* path_font_label, float size_label) {
+             const char* path_font_label, float size_label, const char* path_font_title,
+             const char* path_font_mono) {
   IMGUI_CHECKVERSION();
   if (ImGui::CreateContext() == nullptr) return false;
   ImGui::StyleColorsDark();
@@ -105,6 +112,26 @@ bool guiInit(SDL_Window* window, SDL_GLContext context, const char* path_font,
         }
       }
     }
+    // Add title face third, at UI size. No supplementary range is merged into it:
+    //   headings are words this source writes -- `apply`, `view`, `diagnostics`,
+    //   `objects (n of m)` -- and none carries operator or subscript. Merging both ranges
+    //   again would cost atlas two more copies of them for glyphs no heading asks for.
+    if (path_font_title != nullptr && path_font_title[0] != '\0')
+      font_title = atlas->AddFontFromFileTTF(path_font_title, size_font, nullptr, RANGES_TEXT);
+    // Add mono face last, with both supplementary ranges merged in.
+    //   Unlike headings, text set in it is exactly text carrying notation: coefficient
+    //   line reads `horizon plane: 2.038 e321` with wedge and subscripts in it, so absent
+    //   merge would draw boxes in very rows this face exists for.
+    if (path_font_mono != nullptr && path_font_mono[0] != '\0') {
+      font_mono = atlas->AddFontFromFileTTF(path_font_mono, size_font, nullptr, RANGES_TEXT);
+      if (font_mono != nullptr) {
+        for (auto pair : {std::pair<const char*, const ImWchar*>{path_font_math, RANGES_MATH},
+                          {path_font_symbol, RANGES_SYMBOL}}) {
+          if (pair.first == nullptr || pair.first[0] == '\0') continue;
+          atlas->AddFontFromFileTTF(pair.first, size_font, &merge, pair.second);
+        }
+      }
+    }
   }
   return true;
 }
@@ -116,6 +143,13 @@ void guiShutdown() {
 }
 
 bool guiFontLoaded() { return is_font_loaded; }
+
+// Report whether title and mono roles got faces of their own, rather than falling back.
+//   Separate from `guiFontLoaded`, which answers for interface face and its merged ranges:
+//   role drawn in wrong face is not run that failed to start, and headless run says which.
+bool guiFontTitleLoaded() { return font_title != nullptr; }
+
+bool guiFontMonoLoaded() { return font_mono != nullptr; }
 
 bool guiProcessEvent(const SDL_Event* event) { return ImGui_ImplSDL3_ProcessEvent(event); }
 
@@ -231,10 +265,28 @@ bool guiHeader(const char* label, bool is_open_first) {
   ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.106f, 0.129f, 0.169f, 1.0f));
   ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.165f, 0.196f, 0.239f, 1.0f));
   ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.204f, 0.243f, 0.298f, 1.0f));
+  // Heading is title role, so it is set in title face -- here rather than at call sites,
+  //   since every heading this panel has comes through this one door.
+  //   `0.0f` keeps current size: face is chosen, scale is not.
+  if (font_title != nullptr) ImGui::PushFont(font_title, 0.0f);
   const bool is_open = ImGui::CollapsingHeader(
       label, is_open_first ? ImGuiTreeNodeFlags_DefaultOpen : 0);
+  if (font_title != nullptr) ImGui::PopFont();
   ImGui::PopStyleColor(3);
   return is_open;
+}
+
+// Set text between these two in mono face, for notation and for figures whose columns line up.
+//   Pair rather than one entry point per widget: callers already draw such text through
+//   `guiText`, `guiTextWrapped` and `guiTextTinted`, and wrapping each would be three more
+//   doors for one decision.
+//   No-op where mono face was not loaded, so absent face degrades to UI face.
+void guiMonoPush() {
+  if (font_mono != nullptr) ImGui::PushFont(font_mono, 0.0f);
+}
+
+void guiMonoPop() {
+  if (font_mono != nullptr) ImGui::PopFont();
 }
 
 bool guiButton(const char* label) { return ImGui::Button(label); }

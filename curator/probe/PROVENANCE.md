@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 1931060895ce28b1 |
+| Rules  | 9d34b3aca3dcff6b |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: curator test project replacing `abstand/intervals`, which lived in a real domain;
@@ -48,10 +48,11 @@ since no external authority exists. Verified by `tprobe.nim`: 2 matrix rows, 4 t
 ## Toolchain
 
 **Compiler pinned exactly, at the version this project was verified on**:
-`requires "nim == 2.2.4"` in `probe.nimble`. An exact pin rather than a lower bound, because
+`requires "nim == 2.2.12"` in `probe.nimble`. An exact pin rather than a lower bound, because
 no single compiler serves every project here and a range cannot say which one a suite passed
-on. Nothing has asked this project to move, so the pin records that rather than a version
-nobody tried. CI installs it for this project alone, in its own job.
+on. Moved from 2.2.4 with `curator/audit` when a sweep found that pin seventeen months and
+five patch releases stale; the two suites were run on 2.2.12 before it moved, in 10.0 s. CI
+installs it for this project alone, in its own job.
 
 ## Figures
 
@@ -63,8 +64,10 @@ Every rules change is audited against this project in the pull request that make
 is why the `Rules` row above moves. None has yet required a change here: the project carries
 Nim, Markdown and a nimble file, no target-language source, no node manifest, and no system
 dependency beyond the compiler, so the rules governing those bind nothing in this tree today.
-Each binds the moment that changes. What each audit found is in the log rather than restated
-here (Article XI.2).
+Its suites enumerate both rings exhaustively rather than sampling, and nothing in them reads a
+clock, so the rule that a check gives the same verdict on the same code is satisfied by
+construction rather than by seeding. Each binds the moment that changes. What each audit found
+is in the log rather than restated here (Article XI.2).
 
 ## Open questions
 

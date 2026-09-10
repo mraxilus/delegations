@@ -221,23 +221,35 @@ export async function driveTickWrites(page: Page): Promise<void> {
   );
 }
 
-/** Assert slow figures are redrawn on their own slower clock, and not at all when shut.
+/** Assert slow figures are asked for on their own slower clock, and not at all when shut.
  *
  *  Exceedance curve covers whole window and sparkline and ring medians span seconds: none of
  *  them can change inside one tick, and redrawing them at panel's own rate was half of it.
- *  Counted rather than timed -- call count cannot flake.
+ *  Counted rather than timed, so no clock decides verdict -- but count has to be of thing
+ *  claim is about. Asks are tick's; redraws are not, since axis switch draws on press and
+ *  frame loop draws every frame while axis glides. Counting redraws made this check pass
+ *  only while those two stayed quiet, which is what reddened it.
  */
 export async function driveTickCadence(page: Page): Promise<void> {
   const cadence = await page.evaluate(async () => {
     const wait = (milliseconds: number): Promise<void> =>
       new Promise((done) => setTimeout(done, milliseconds));
     const scope = globalThis as unknown as {
-      drawExceedance: typeof drawExceedance; refreshDiagnostics: typeof refreshDiagnostics;
+      askSlowPass: typeof askSlowPass; drawExceedance: typeof drawExceedance;
+      refreshDiagnostics: typeof refreshDiagnostics;
+    };
+    const original_ask = scope.askSlowPass;
+    let curves = 0;
+    scope.askSlowPass = function (
+      is_curve: boolean, is_sparkline: boolean, is_medians: boolean, is_pool: boolean,
+    ): void {
+      if (is_curve) curves += 1;
+      original_ask(is_curve, is_sparkline, is_medians, is_pool);
     };
     const original_curve = scope.drawExceedance;
-    let curves = 0;
+    let draws = 0;
     scope.drawExceedance = function (): void {
-      curves += 1;
+      draws += 1;
       original_curve();
     };
     const original_tick = scope.refreshDiagnostics;
@@ -246,8 +258,22 @@ export async function driveTickCadence(page: Page): Promise<void> {
       ticks += 1;
       original_tick();
     };
-    await wait(3000);
-    const open = { ticks, curves };
+    // Axis switch redraws curve on spot, which is its own claim and not tick's: four
+    //   presses inside window leave switch as it was found and add four redraws that no
+    //   cadence asked for.
+    const toggle = document.getElementById('toggle-exceedance-log');
+    await wait(1200);
+    let pressed = 0, drew_on_press = 0;
+    for (let i = 0; i < 4; i += 1) {
+      const drawn_before = draws;
+      toggle?.click();
+      pressed += 1;
+      // Handler draws synchronously, so its redraw has landed by time `click` returns.
+      if (draws === drawn_before + 1) drew_on_press += 1;
+      await wait(120);
+    }
+    await wait(1300);
+    const open = { ticks, curves, draws, pressed, drew_on_press };
 
     // Whole tick is skipped with section collapsed inside open drawer: both canvases would
     //   otherwise fall back to made-up width and draw for nobody.
@@ -255,24 +281,34 @@ export async function driveTickCadence(page: Page): Promise<void> {
     section?.classList.remove('open');
     ticks = 0;
     curves = 0;
+    draws = 0;
     await wait(1500);
-    const collapsed = { ticks, curves };
+    const collapsed = { ticks, curves, draws };
     section?.classList.add('open');
+    scope.askSlowPass = original_ask;
     scope.drawExceedance = original_curve;
     scope.refreshDiagnostics = original_tick;
     return { open, collapsed };
   });
   report(
-    'the panel redraws its slower figures on their own slower clock',
+    'the panel asks for its slower figures on their own slower clock',
     cadence.open.ticks >= 8 && cadence.open.curves > 0 &&
       cadence.open.curves * 3 <= cadence.open.ticks,
-    `${cadence.open.curves} curve redraws over ${cadence.open.ticks} ticks`,
+    `${cadence.open.curves} curve asks over ${cadence.open.ticks} ticks, ` +
+      `${cadence.open.draws} redraws in all`,
+  );
+  report(
+    'and the axis switch redraws on the press, without the tick asking',
+    cadence.open.drew_on_press === cadence.open.pressed &&
+      cadence.open.draws > cadence.open.curves,
+    `${cadence.open.drew_on_press} of ${cadence.open.pressed} presses drew on the spot; ` +
+      `${cadence.open.draws} redraws against ${cadence.open.curves} asks`,
   );
   report(
     'and a collapsed diagnostics section costs the tick nothing at all',
-    cadence.collapsed.curves === 0,
-    `${cadence.collapsed.curves} curve redraws over ${cadence.collapsed.ticks} ticks ` +
-      'with the section shut',
+    cadence.collapsed.draws === 0,
+    `${cadence.collapsed.draws} curve redraws over ${cadence.collapsed.ticks} ticks ` +
+      `with the section shut, against ${cadence.collapsed.curves} ask(s) dropped`,
   );
 }
 

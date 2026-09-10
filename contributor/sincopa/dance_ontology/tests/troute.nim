@@ -4,7 +4,8 @@ cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
 batchable: true
 joinable: true
 """
-## Test laws of finding where reaches cross, and of breaking one under other.
+## Test laws of finding where reaches cross, of breaking one under other,
+## and of length drawn run reports.
 ##   Break says which connection is under (rule 14), and it is only
 ##     reading of picture that says so.  So it has two jobs at once: it
 ##     must fall where lines cross, and it must leave reach still
@@ -155,3 +156,30 @@ suite "crossings found":
       let met = crossingsOf(line, crossedBy(wavelength))
       for i in 1 ..< met.len:
         check met[i - 1].x < met[i].x  # rule 27
+
+
+#[ Drawn Length ]#
+
+const
+  SQUARE: seq[Point] = @[(0.0, 0.0), (3.0, 0.0), (3.0, 4.0)]
+    ## Three corners: three-four-five triangle's two short sides.
+  WALKED = polylineLen(SQUARE)
+    ## Taken in compiler's virtual machine, which is what this suite is for.
+    ##   Scene table is built as `const` (`draw/scene.nim`), so length runs there;
+    ##     Nim 2.2.8 onward gives float `result` int register where nothing assigns
+    ##     it before first `+=`, and crashes compiler.  This `const` is what
+    ##     notices, since ordinary call at run time never touches that path.
+
+
+suite "drawn run":
+  test "length of run is sum of its steps, taken at compile time":
+    check abs(WALKED - 7.0) < 1e-9
+
+  test "length of run is same taken at run time":
+    check abs(polylineLen(SQUARE) - WALKED) < 1e-9
+
+  test "run of one point, or none, is no length at all":
+    check polylineLen(@[]) == 0.0
+    check polylineLen(@[(1.0, 2.0)]) == 0.0
+    const NOTHING = polylineLen(@[])
+    check NOTHING == 0.0

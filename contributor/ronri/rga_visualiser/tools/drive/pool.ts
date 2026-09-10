@@ -1,12 +1,16 @@
 // Checks for what drawer costs to keep up to date, and for held placements; not Nim because
-//   crossing forfeits check compiler makes over bodies naming `nimPoolCellColors`,
-//   `geometry_pool_drawn` and `renderFrame` -- derived or stated, never guessed.
+//   crossing forfeits check compiler makes over bodies naming `nimPoolCellColors` and
+//   `geometry_pool_drawn` -- derived or stated, never guessed.
+//   Placement check compares canvas through `canvas.readCanvas`, which reads what compositor
+//   shows and refuses blank reading; its earlier `readPixels` copy compared two readings of
+//   empty buffer and passed on them.
 //   Every figure diagnostics refresh writes is inside drawer, and it used to run several
 //   times second regardless: milliseconds landing on one frame in twelve, against frame scene
 //   hold had taken down to about one. That is what stutter is made of.
 
 import type { Page } from '@playwright/test';
 import { settleCamera } from './camera';
+import { readCanvas } from './canvas';
 import { waitFrames } from './frame';
 import { holdKeys, settleDrawer } from './gestures';
 import { report } from './report';
@@ -15,8 +19,6 @@ declare global {
   interface Window {
     /** How many times pool strip has been rebuilt since counter was reset. */
     __cells?: number;
-    /** Hash of what frame loop last drew, sampled for placement check. */
-    __drawn_placed?: number;
   }
 }
 
@@ -129,36 +131,19 @@ async function drivePoolGrid(page: Page): Promise<void> {
  *  frames must be pixel-identical; if held one had gone stale, they could not be.
  */
 export async function drivePlacementHeld(page: Page): Promise<void> {
-  await page.evaluate(() => {
-    const canvas = document.getElementById('gl') as HTMLCanvasElement;
-    const gl = canvas.getContext('webgl');
-    const pixels = new Uint8Array(canvas.width * canvas.height * 4);
-    const scope = globalThis as unknown as { renderFrame: typeof renderFrame };
-    const drawn = scope.renderFrame;
-    scope.renderFrame = function (now_seconds: number): void {
-      drawn(now_seconds);
-      gl?.readPixels(0, 0, canvas.width, canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-      let hash = 2166136261;
-      for (let i = 0; i < pixels.length; i += 4 * 17) {
-        hash = Math.imul(hash ^ (pixels[i] ?? 0), 16777619) ^ (pixels[i + 1] ?? 0) ^
-          ((pixels[i + 2] ?? 0) << 8);
-      }
-      window.__drawn_placed = hash | 0;
-    };
-    canvas.focus();
-  });
+  await page.evaluate(() => { document.getElementById('gl')?.focus(); });
   await holdKeys(page, ['ArrowRight'], 900);
   await settleCamera(page);
-  const held = await page.evaluate(() => window.__drawn_placed);
+  const held = (await readCanvas(page)).mark;
   await page.evaluate(() => {
     // Scene's revision moves; not one pixel of scene does.
     for (const one of nimSceneHandles()) nimSetInk(one, nimObjectInk(one));
   });
   await waitFrames(page, 2);
-  const fresh = await page.evaluate(() => window.__drawn_placed);
+  const fresh = (await readCanvas(page)).mark;
   report(
     'a placement held across a camera move draws what a fresh one draws',
-    held !== undefined && held === fresh, `held ${held}, re-placed ${fresh}`,
+    held === fresh, `held ${held}, re-placed ${fresh}`,
   );
   await page.keyboard.press('Home');
   await settleCamera(page);

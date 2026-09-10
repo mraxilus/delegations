@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 1931060895ce28b1 |
+| Rules  | 9d34b3aca3dcff6b |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief, the constitution, the Nim style guide and the provenance
@@ -99,7 +99,9 @@ whitespace-split, punctuation-stripped, lowercased, after backtick spans are rem
 - Cost, found on the first build: the label `A`, as in "Appendix A", is flagged; `prose.nim`
   tripped on its own example and writes the label in backticks.
 - Verified by `tprose.nim`: 300 seeded random telegraphic comments pass, each with one inserted
-  article fails; citations `2.2a`, URLs and underscored names pass.
+  article fails; citations `2.2a`, URLs and underscored names pass. The corpus is seeded with
+  `randomize(0)`, so the 300 are the same 300 on every run — the only sampled corpus in this
+  project, and the reason its verdict does not vary (CONTRIBUTOR.md, "Tests are paramount").
 
 ## Form
 
@@ -270,14 +272,65 @@ prose.
 - Verified by driven check: a branch carrying `fix(audit)` alone reports one finding; the same
   branch with `test(audit)` first reports none.
 
+## Assets
+
+**One declaration of every file fetched at build time, in `assets.nim`.** CONTRIBUTOR.md already
+names the class — *"binaries are never committed, and neither are fonts, images or any file the
+audit cannot read"*, each recorded with origin, version, licence and checksum. The store is that
+class kept once rather than once per project.
+
+Faces are the only instances today, and the rows say so by grouping rather than by column: the
+shape is file, address and digest, which is what any such file needs and no more. **An asset
+wanting a field this row lacks — unpacking, a variant set — is a change rather than something this
+shape already answers**, and the header says so rather than implying it is settled for all time.
+The name was generalised before either project adopted it, since renaming afterwards would have
+meant coordinating three pull requests across two projects a curator may not edit.
+
+The reason it exists at all: Article X.8 gives three families to every presentation target, so
+the second target repeats the first target's pins — and it did. `rga_visualiser` and
+`dance_ontology` each pinned four of the same files, byte for byte, in their own
+`tools/build.nim`. Article II.9 calls that a copy no real constraint forces and
+asks each copy to name its siblings; neither did, and nothing could have told them from two
+different faces (repository issue 116).
+
+- **The digest is the curator's, the choice is the project's.** The store says what bytes
+  `noto-sans-latin-400` is; it never says which faces a target wants, and the targets differ — one
+  draws maths and symbols, the other italic serif. What stops being written twice is only what was
+  already identical, so the per-project autonomy CONTRIBUTOR.md argues for is untouched.
+- This is the repository's **first shared build input**, and stays the only one. Compilers are
+  pinned per project in nimble files, Atlas checkouts per project, npm per project, deliberately.
+  The bytes of a face are not a toolchain: they are the same file whoever fetches them.
+- **Keyed by digest, never by name.** Two projects asking for one face share one entry by
+  construction, and a moved pin is a different entry rather than a stale one — the same property
+  `check.yml` gets from keying its cache on the file holding the digests, one layer down. The
+  store sits at `~/.cache/koch/assets`, beside `~/.cache/koch/nim` and outside the checkout,
+  because audit reads untracked files.
+- The rows are the union of two tables that already agreed: where both projects pinned one file
+  they pinned the same digest, and **that agreement is what made one table safe to write** rather
+  than a merge that had to pick a winner. Fifteen faces, nine `woff2` for pages and six TrueType
+  or OpenType for the desktop atlas, which `@fontsource` does not ship.
+- Verified by driving it, and by breaking it. Cold store, three faces including two that both
+  projects shared: **1.0 s**. Warm, same call: **0.117 s**, fetching nothing. Three files, one per
+  digest. A face nobody declares is a finding naming the table to add a row to. And with one
+  declared digest altered in its last character, the fetch refuses the bytes and **leaves the
+  store empty** rather than keeping them.
+- Cost: the store grows and nothing prunes it. A face is ~30 kB where a compiler is ~300 MB, so
+  what is unbounded is the number of pins the repository has ever held, not the bytes.
+- Cost: an upstream that moves bytes under one address now fails every project at once rather
+  than one. That is the same failure a digest exists to make loud, and it is louder shared.
+- **The Nim tarball is deliberately not here.** It is fetched and checksummed too, but its digest
+  comes from upstream's sidecar at fetch time rather than from this table, and it is stored
+  *unpacked by pin* because the rest of koch resolves toolchains by pin. Different trust model and
+  different key, so `compilers.nim` keeps it rather than this pretending one shape serves both.
+
 ## Toolchain
 
 **Each project pins its own compiler; there is no repository-wide Nim.** `requires
 "nim == <version>"` in the project's nimble file, read through the same `requireLiterals` scan
 `dependencies.nim` uses, so requirements are parsed in one place. That no single version serves
 every project is measured, not feared: `rga_visualiser` depends on a library 2.2.4 cannot
-compile, and `dance_ontology` crashes the compiler itself on 2.2.8 and 2.2.10 in six of its
-eleven suites.
+compile, and `dance_ontology` crashes the compiler itself on 2.2.8, 2.2.10 and 2.2.12 in
+six of its twelve suites (repository issue 106).
 
 - Rejected: one pin for the repository, which cannot hold both; `>=`, which cannot express the
   upper bound `dance_ontology` needs nor say which compiler a suite passed on; a `.nim-version`
@@ -303,6 +356,24 @@ and runs the whole-tree pass, and `checkDriver` fails the audit unless it equals
 `curator/audit`'s pin, because koch compiles that project's modules — the same derived-view rule
 `layout.nim` applies to the domain table. Verified by driven check: `NIM_VERSION` of `2.2.6`
 against a `2.2.4` pin reports one finding at the workflow, and restoring it clears.
+
+**A pin moves on evidence, and the evidence is a run rather than a release note.** The curator
+projects moved `2.2.4` → `2.2.12` on 2026-09-09, five patch releases and seventeen months, after
+a sweep for versions nothing here should still be running. No release in that series carries a
+CVE — Nim assigns none — so the reason is what the notes carry between 2.2.6 and 2.2.12: SIGSEGV
+under ARC/ORC and under refc, a use after free, an overlapping `copyMem`, and overflow checks
+that could be escaped.
+
+- Verified by running, not by reading: 23 audit suites and 2 probe suites pass on 2.2.12, in
+  41.0 s and 10.0 s on this container, before the pin was pushed anywhere.
+- `dance_ontology` does not follow, and its `2.2.4` is an upper bound rather than neglect. The
+  cause is now measured rather than assumed: `opcAddFloat` at `vm.nim:1095` reads an operand the
+  VM left `rkInt`, because since 2.2.8 a `func` whose implicit `float` result is read by `+=`
+  before it is ever assigned gets an int register for it. Five lines reproduce it with nothing
+  of that project in them, `result = 0.0` first is enough to avoid it, and all twelve of its
+  suites then pass on 2.2.12. Handed over as repository issue 106; the line is theirs to write.
+- Cost: koch's own modules compile under both pins for as long as the two differ, since every
+  project's job installs its own. The matrix is what proves that, rather than this paragraph.
 
 **Koch resolves each pin to its own compiler, and fetches one it lacks.** `PATH` when it already
 serves, then `~/.cache/koch/nim/<pin>/bin`, then a fetch: a release as a tarball, and a commit —
@@ -330,11 +401,30 @@ Two traps, both found by driving rather than reasoning, and both changed the cod
   has not; `choosenim`'s layout, a second convention that cannot serve a commit pin at all.
 - Costs: the checker reaches the network and may build a compiler — seconds for a release,
   minutes for a commit, once per pin; each cached toolchain is a few hundred megabytes and
-  nothing prunes them; downloads are trusted on TLS alone, with no checksum verified, because
-  Nim publishes none in a form worth parsing. That is the one place this repository takes
-  something on trust that it pins everywhere else.
+  nothing prunes them.
 - CI is untouched: every job's installed compiler already satisfies its `matrix.nim`, so
   resolution stops at `PATH` and never fetches.
+
+**The fetched tarball is checked against the digest published beside it.** This paragraph used to
+record the opposite as a cost — trusted on TLS alone, "because Nim publishes none in a form worth
+parsing" — and that was simply wrong. `<tarball url>.sha256` is exactly `sha256sum` output, for
+every release checked, and `fetchRelease` now fetches it and refuses a tarball whose bytes differ.
+
+- What it defends against, stated rather than overclaimed: the digest comes from the same host
+  over the same TLS as the tarball, so it catches a truncated, mirrored or swapped file, **not a
+  compromised nim-lang.org**. A signature would answer that; none is published — `.asc` beside
+  these tarballs is a 404, read rather than assumed.
+- Text that is not a digest reads as *nothing* rather than as a digest that cannot match, so an
+  error document or an empty answer reports "none published" instead of "mismatch". The two are
+  different failures and say different things to whoever reads the line.
+- `KOCH_SYSTEM` gains `coreutils` for `sha256sum` — and `tar`, which `fetchRelease` has always
+  shelled out to and the original declaration missed.
+- Verified by breaking it, not by a fetch that happened to pass: `tcompilers.nim` digests a
+  temporary file, changes one byte and checks the digest moves; and the parse is mutation-tested —
+  dropping its hex validation reddens the suite. Driven end to end 2026-09-10: `2.2.2`, which
+  nothing on this machine served, fetched, digest-checked and unpacked in **4.6 s**.
+- Honest limit of that test: the `sha256sum` exit-code check is belt-and-braces, since the parse
+  already rejects the error text, so no test distinguishes it. Kept for saying what it means.
 - Verified by `ttoolchain.nim`, `tcompilers.nim` and `tprojects.nim`, and driven end to end,
   2026-09-06: `curator/probe` pinned to 2.2.6 with nothing local serving it fetched the tarball
   and ran in **7.6 s** cold, 3.0 s warm; then one command with only 2.2.4 on `PATH` and four
@@ -401,6 +491,16 @@ still checked.
 
 - Cost: a merged change can leave an unrelated project red until it next changes; the weekly
   sweep is the guard, and it is weaker than compiling everything on every push.
+- Cost, and it is deliberately the safe side of the trade: `isChecker` reads the path, never
+  the content, so editing a comment in `koch.nim` or under `curator/audit/src/` selects every
+  project. Measured 2026-09-08: a pull request whose only changes to those two files were doc
+  comments compiled four projects and drove a browser, 674 s, where the same tree's other
+  commits compiled nothing. The machinery to do better exists — `comments.nim` already
+  extracts comments per kind, so `plan` could ask whether anything but comments changed — and
+  it is rejected, because that detector errs toward compiling too little. A wrong "comments
+  only" reports green for work it never did, which is the failure this repository refuses
+  everywhere else, and the reason `nimcache` is still uncached. Eleven minutes is the price of
+  erring the other way.
 - Verified by `tplan.nim`, and driven against this repository's history: a README-only commit
   plans `[]`, and a one-line source change plans that project alone.
 
@@ -536,6 +636,57 @@ ever went green: on a cold checkout the first run stopped at `Missing face … r
 first` — every expensive step done and one cheap one missing, because `drive` chained `web`,
 `types` and `declare` but not `assets`. Invisible to its author, whose `build/fonts` was always
 there.
+
+## Watching main
+
+**Red `main` opens its own issue, because remembering to look had already failed twice.**
+CURATOR.md's session-start duty said to read the latest `push` run and named its own hole in the
+same breath -- *"nothing else watches it"*. A contributor's merge went red with nobody looking and
+was found by accident twenty-four minutes later; then the driven job was red on two `main` runs
+while the curator who had named that run as the leg still to read did not read it. Both times
+enforcement was somebody remembering, and failure was silent.
+  `watch.yml` reads the run and opens issue labelled `curator` when it concludes failure, which is
+  same session-start duty's first read. No new rule: existing rule now produces artefact rule
+  already asks next session to read, and repository's own answer to session ending and taking its
+  intentions with it is issue labelled `curator`.
+  Separate workflow because run cannot watch its own outcome. `workflow_run` fires only from copy
+  on default branch, so it cannot be driven from branch at all -- which is why it also takes
+  `workflow_dispatch` naming run to read.
+  One issue rather than one per red run, since watcher opening issue per run trains its reader to
+  skim, which is failure it exists to prevent. Marker in body is what makes later red comment on
+  first. Open issues are read directly rather than searched, since cold search index would produce
+  exactly duplicate being avoided.
+
+**It left CURATOR.md's list of what no check can reach, which is direction that list moves.**
+That section held four rules and described fifth without listing it. Test for membership is now
+written there: not whether check would be awkward, but whether rule turns on fact something
+already writes down. Run's own conclusion is one. Glossary term's agreement is not.
+
+**`permissions` block is whole grant, never addition to default.** Scope left out of it is set to
+`none`, not left alone. Written without `actions: read`, first firing got
+`Resource not accessible by integration (HTTP 403)` on its very first call, reading run it was
+pointed at; job log showed `Contents: read, Issues: write, Metadata: read` and no Actions.
+  `workflows.nim` now reports scope workflow's steps demonstrably use that its own block omits,
+  over every file under `.github/workflows/`. Narrow on purpose: it reads what steps call rather
+  than what they might, and workflow declaring no block is left alone, since taking repository
+  default is somebody's decision rather than drift. Cost: marks are text, so step reaching same
+  endpoint by other spelling goes unseen -- floor rather than ceiling, and module says so.
+  Same failure answered question pull request 89 had flagged as unknown: repository setting does
+  not cap this. `Issues: write` was granted. Failure was curator's own.
+
+*Checked.* Verified by firing it against real red runs rather than manufactured one, 2026-09-09.
+Dispatched at run 34165524898 -- `main` at pull request 70's merge -- it opened issue 99 naming
+that run and both jobs that concluded failure, `driven` and `audit`. Dispatched again at run
+34167220207, red at pull request 72's merge, it commented on issue 99 rather than opening second.
+Runs 3, 4 and 7 fired on real `check` completions and concluded `skipped`, which is guard working
+on green. Issue 99 closed after.
+  Verified by breaking, before that: deleting `actions: read` from the workflow makes `koch tree`
+  report it by name and by what was granted; restoring it returns 0 findings. That check's own
+  commit precedes its fix on the branch, so it fails where it stands (Article IX.8).
+  **Unverified**: nothing has yet driven this from a `main` run that went red on its own. Every
+  firing so far has been dispatched at a run already known to be red, so what is proven is the
+  reading and the reporting, not the trigger's own selection. That waits on a red `main`, which is
+  not worth causing.
 
 ## Continuous integration
 
@@ -681,6 +832,24 @@ that row rather than replacing it, and neither predicts the other.
   largest saving left, and the only cache question whose risk is correctness rather than
   minutes; it needs driving against a deliberately stale cache before adoption or refusal.
 - Whether caching apt archives is worth it, now the install step is measured above.
-- Where koch's own system dependencies are declared. The rule this project enforces asks each
-  project to declare them as data in its own driver; curator projects carry no driver, so koch's
-  are prose in `README.md`, which the same rule calls insufficient.
+**koch declares its own system dependencies, as the rule it enforces asks of every project.**
+`KOCH_SYSTEM` in `projects.nim` pairs each with its reason -- git, since tree is what git lists
+and `ci` fetches base to compare against; curl, since compiler pin nothing on machine serves is
+downloaded. `koch system` with no project prints those and every project's, unscoped, so one
+command answers what machine needs before any of this runs; naming project keeps its old meaning,
+which is what runner asks per matrix job.
+  Nim is deliberately absent: it is toolchain koch runs under rather than package machine
+  installs, and `compilers.nim` resolves each pin itself. npm is absent for different reason --
+  it is needed where project carries node manifest, so it belongs to that project, and
+  `restoreNode` already reports its absence by name.
+  **`README.md` stopped listing them, which is what actually closed gap.** Rule's complaint was
+  prose that decays, and second copy is what decays; README now points at verb rather than
+  naming packages, so declaration is only statement and nothing can drift from it. That is why
+  no check was written to hold two together: there is no second thing to hold.
+  Rejected: stating exemption in `CONTRIBUTOR.md` instead, which was cheaper and was earlier
+  curator's lean. It would have left rule true and repository still answering its own question in
+  prose; and `koch system` already existed, so this invented no mechanism -- bare form previously
+  answered for changed projects, which nothing ever asked it.
+  Cost: koch's two are unconditional, so machine needing neither still installs both. Both are
+  already declared by `rga_visualiser` for its own reasons, so union is unchanged today
+  (repository issue 78).

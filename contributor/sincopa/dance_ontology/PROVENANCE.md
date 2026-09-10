@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 1931060895ce28b1 |
+| Rules  | 9d34b3aca3dcff6b |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the Architect's workbook `ontology.partnerwork.xlsx` (sheets `base` and
@@ -399,13 +399,64 @@ no small move holds and no reachable pose does, the turn is blocked and named. W
 evaluation changes is worked out once into a `Scene`; a seed is tried reach first, then joint
 by joint, then by cost, then against the bodies, giving up at the first refusal; sweeps of
 different holds run side by side on every core (`sweptAll`). Rejected: tuning any number to
-the floor's claims; the floor is printed beside the sim and only asserted to be decided
-(`-d:floorIsLaw` makes it hard). Verified by `tlaws.nim`, 28 laws over every moment of
-eleven sweeps: nothing enters a body, joints inside every range, mirrors agree, blocks
-bracketed with a name, and the clipped contact test against a sampled truth over 300 seeded
-random segments; the forward kinematics over 200 seeded random arms. The optimisation that
-made the solver share a `Scene` and run side by side was measured before the move as a
-pair, but the pair is not in this tree: **unmeasured** here.
+the floor's claims; the floor is printed beside the sim, and each of its seven claims is held
+to what the sim answers today, so neither a mend nor a regression passes unseen
+(`-d:floorIsLaw` holds the sim to the floor outright). Verified by `tlaws.nim`, 29 laws over
+every moment of thirteen sweeps: nothing enters a body, joints inside every range, mirrors
+agree, blocks bracketed with a name, and the clipped contact test against a sampled truth over
+300 seeded random segments; the forward kinematics over 200 seeded random arms. The
+optimisation that made the solver share a `Scene` and run side by side was measured before the
+move as a pair, but the pair is not in this tree: **unmeasured** here.
+
+**Five of those laws could not fail, whatever the model did.** `check cs.len >= 0` on an
+`int`; `check got.isSome or got.isNone` on an `Option`; a bare `check true` with the `agrees`
+values above it computed and discarded; a `lyingOn(...).isNone` over the crown that only
+re-asserted an unconditional early return; and an `if blk.stopped:` guard that ran no
+assertion at all for a sweep which does not block, which is both crown sweeps and so exactly
+the level of the fault
+[#40](https://github.com/mraxilus/delegations/pull/40) mended. That fault was visible and
+reproducible in twelve seconds and no law failed because of it. Each now asserts what its name
+promises, and each was proved able to fail: the thing it claims was broken in the sim, the
+suite run with `-d:nimUnittestAbortOnError:off`, and the law reddened. Four breaks touched
+that law and nothing else; where a break could not be confined -- turning a body not quite a
+whole turn moves every stance there is -- other laws reddened beside it. Cost: the suite takes
+30.8 s on four cores in a danger build against 23.9 s before, measured 2026-09-08 on this
+machine, and the two crown sweeps added to cover R-r and R-l are the difference. Second cost,
+found while proving the laws fail: the suite is built `-d:danger` for that speed, so a model
+change leaving a sweep with no moments segfaults it rather than reddening a law.
+
+**The sim does not meet three of the floor's seven claims, and the floor is right.** The
+Architect dances the floor, so where the two disagree the fault is the sim's: L-l low the wrap
+way blocks at 0.30 against half a turn claimed; L-l high blocks at 0.41 the lock way against a
+whole turn claimed, holding to 1.25 the other way; L-r low the lock way blocks at 0.87 against
+a whole turn claimed. Rejected, again: moving a number to meet a claim. Each row instead
+carries whether the sim meets it today, so mending one turns the suite red until the record
+follows it. Measured 2026-09-08 on this tree, and `-d:floorIsLaw` compiles and fails at the
+first of the three.
+
+**A whole turn is no turn to a pose sought without history.** The solver reads a stance's axes
+and never its lap count -- the couple's `twist` is read for display and by nothing else -- so
+`settle` at a whole turn returns the rest pose: measured at 2.6e-16 m on the furthest joint,
+for both two-hand holds, at rest and at half a turn. Only the sweep carries turn, moment by
+moment, and both two-hand sweeps block by 0.58. So nothing here is evidence about the diamond
+at a whole turn or the swan at a turn and a half: the rungs the chain law prints under those
+names are the rest and the X. Verified by `tlaws.nim`, which now asserts the axes identity
+outright rather than leaving it to be discovered. Cost: the sim cannot yet reach two of the
+positions the drawn chain is built on.
+
+**The crossing reader is exercised off settled poses, because no swept moment crosses.** Not
+one of the 116 moments the two two-hand sweeps accept carries a crossing, so a law read off
+them would assert nothing; the corpus is instead both holds at every band over five turns,
+which gives 12 crossings, each held to sit on both connections in plan and to name which is
+higher (furthest off its connections, 7e-17 m). Assumed, not measured: that `sameCrossings`,
+which gates a fresh pose on the sweep, does useful work -- it compares nought with nought at
+every accepted moment, and what it refused was not recorded. The reader is also knife-edge
+where two arms lie along each other: two stances a whole turn apart, whose poses differ by
+5.6e-17 m, read as four crossings and as one. Underneath it the search is sensitive too: the
+same two stances at the neck settle 0.75 m apart at the furthest joint, off an axis difference
+of 4.9e-16. Neither costs a verdict its determinism -- every law here answers the same on the
+same code, and the suites seed explicitly -- but both say a law read at a knife edge would be
+evidence about arithmetic rather than about bodies, so none of these is.
 
 **The sim page turns by whole quarters and stands where the arms are freest.** Buttons turn
 the lead or the follow a quarter on axis or in orbit (the walker keeps facing the centre,
@@ -538,11 +589,13 @@ follows the core count.
 
 ## Figures
 
-- `tlaws` alone, danger build: 22.0 s wall, 59.0 s CPU, four Xeon cores, Linux amd64
-  container, Nim 2.2.4, 2026-09-05; compile 2.3 s. Single figure, no pair: unmeasured as an
-  optimisation.
-- `tools/build.nim verdicts`: 42.3 s wall, same machine, 2026-09-05, after move; 44.6 s wall
-  and 151 s CPU before it, under retired `make verdicts`.
+- `tlaws` alone, danger build: 31.7 s wall, 83.9 s CPU, four Xeon cores, Linux amd64
+  container, Nim 2.2.12, 2026-09-10; compile 1.3 s warm, 11.1 s cold. Single figure, no
+  pair: unmeasured as an optimisation.
+- `tools/build.nim verdicts`: 50.2 s wall, 176 s CPU, same machine, Nim 2.2.12, 2026-09-10.
+  It rewrites `sim/verdicts.md` byte for byte identically to what 2.2.4 wrote, which is the
+  evidence that moving the pin moved no answer the sim gives -- worth having, since the
+  search is sensitive enough to land 0.75 m away on a last-bit change of input.
 - Eleven testament stubs, under `make check` before move: 52.7 s wall, 93.3 s CPU, same
   machine and date; `tlaws` 23.0 s and `tmarks` 11.5 s of it. Not re-measured alone since;
   whole-repository figure is in `curator/audit/PROVENANCE.md`.
@@ -571,21 +624,92 @@ Declared unmet by this move, so the Style row above stays true (Article VIII.1):
   a hot path may hide there.
 - STYLE §2: `-d:floorIsLaw` predates the `{.define.}` naming convention and stays as the
   bare define the README names.
-- X.8: pages name system font stacks; the whole-cloth page loads Fraunces, Instrument Sans
-  and Spline Sans Mono from Google. Font files are unregistered kinds and cannot be shipped
-  here; see Open questions.
+
+**Every page ships the three faces it draws with, inlined.** Titles take Noto Serif, body
+text Noto Sans, code and data Commit Mono, which are the Architect's standard three and what
+Article X.8 names. Labels drawn inside figures take Noto Sans rather than Commit Mono: X.8's
+"code, data and figures" reads as numbers, and a label naming a hand is interface text.
+Seven faces are fetched by `tools/build.nim`'s `assets` verb into `build/fonts`, never
+committed, each pinned by package version *and* SHA-256 — version because an unversioned
+path serves whatever the host resolves that day, digest because the bytes are embedded in
+what readers open. `design/faces.nim` inlines them as data URIs and `pages` dresses every
+page it wrote, once, after every writer has run; doing it there rather than in each writer
+is what keeps the suites free of the network, which is **verified**: the thirteen suites pass
+with `build/` deleted outright.
+
+Origin of all seven is `@fontsource` 5.3.0 by way of `cdn.jsdelivr.net`, all **SIL Open Font
+License 1.1**, confirmed from each package's own `LICENSE` rather than assumed. Their
+addresses and checksums are no longer this project's to hold: they are the `ASSETS` table in
+`curator/audit/src/assets.nim`, the repository's shared store, and `assets` here names the
+seven files it wants while `koch assets` answers with their paths. That is the settlement of
+repository issue 116, which this project raised as its second consumer: four of these seven
+were already pinned byte for byte by `rga_visualiser`, and Article II.9 calls two lists of
+identical digests a copy no constraint forces. **Digest is the curator's, choice is this
+project's** — the store never says which faces a page draws with, so nothing about
+per-project autonomy moved. This project is the first to draw from it; `rga_visualiser` still
+carries its own table.
+
+The store keys entries by digest, so a face arrives under a name that is its hash; `assets`
+restores the file name on the way into `build/fonts`, because everything downstream reads
+faces by name. Verified 2026-09-10: all seven arrive, all seven carry the digest the store
+declares, and every built page is byte-for-byte the size it was when this project fetched
+them itself. Asking for a face the store does not declare fails with a finding naming it,
+which is checked rather than assumed.
+
+That check has to live in a suite, not only in the build: this project carries no `drive`
+verb, so the runner never runs its `assets`, and a face named that the store lacks would
+otherwise surface only when somebody built pages by hand. `tfaces.nim` reads the store's
+declaration as text and holds every face named here against it — as text rather than by
+import, so the law depends on the declaration and not on the curator's module keeping its
+present shape, and so that this project imports no curator source, which none does.
+
+Cost, measured 2026-09-10 on this container: **+224 kB per page**, 167,424 bytes of woff2
+becoming 224,384 of base64, across ten pages, so `build/` grows from 6.9 MB to 9.1 MB.
+Rejected: linking the host's copy, which names a face the reader may lack and needs network
+at reading time; rejected: subsetting per page, which trades one shared block for ten that
+drift. Commit Mono keeps its ligatures in `calt` rather than `liga` — **measured**, both
+weights, 1932 glyphs in the latin subset — and `calt` is on by default only until something
+sets `font-variant-ligatures`, so the emitted sheet sets `contextual` at root and no later
+reset can lose them.
+
+**What this changed in the drawings, and what it did not.** The label font is named inside
+the figures, so every figure carrying a label changed its bytes. Of 516 figures across the
+six pages, 495 are byte-identical, 21 differ **only** by the font name, and none differs any
+other way — so no geometry moved. Those 21 were then read as pictures rather than as bytes:
+97 labels measured in a browser, none outside its viewBox before or after, none newly
+clipped, widest width change 0.9 px. Verified by hand in Chromium 1194, 2026-09-10, against
+a before-and-after sheet of all 21. The change worth naming is the one that is not visible
+in a diff: those labels used to render in whatever sans the reader's machine carried, so a
+card approved on one machine was a different picture on another, which is the thing X.8
+exists to stop.
 
 ## Toolchain
 
 **Compiler pinned exactly, at the version this project was verified on.**
-`requires "nim == 2.2.4"` in `dance_ontology.nimble`. CONTRIBUTOR.md now demands an exact
-pin rather than a lower bound, and this project is the reason an upper bound is needed at
-all: 2.2.8 and 2.2.10 crash the compiler itself on six of the eleven suites
-(`field 'floatVal' is not accessible for type 'TFullReg'`), reported by the contributor of
-`rga_visualiser` while checking which release the whole repository could take. Assumed, not
-re-verified here: that report, which was measured on their machine and not on this one.
-The eleven suites pass on 2.2.4, which is what the pin records. Moving it is this project's
-own work, and it now moves nothing else.
+`requires "nim == 2.2.12"` in `dance_ontology.nimble`. It sat at 2.2.4 for two weeks because
+2.2.8 onward crashed the compiler itself on six of the suites
+(`field 'floatVal' is not accessible for type 'TFullReg' using 'kind = rkInt'`), and that was
+recorded as an upper bound nobody had explained. The cause was one line here, not a fault of
+the release: `polylineLen` in `draw/route.nim` read its float `result` with `+=` before
+anything assigned it, and from 2.2.8 the virtual machine hands such a result an int register,
+then reads `floatVal` off it. It bites only at compile time and only where the function is
+reached in the VM, which is `const SCENES = buildScenes()` in `draw/scene.nim` -- so exactly
+the six suites importing the umbrella module crashed, and the six importing `sim/`, `design/`
+or submodules did not. `result = 0.0` first is the whole of it, and the line carries a comment
+saying why, because it reads redundant and is not.
+
+Verified here 2026-09-10, not assumed: five lines reproduce the crash with nothing from this
+project -- a `func` accumulating into a float `result` and called from a `const` -- compiling
+on 2.2.4 and crashing on 2.2.12 with that message; before the mend 6 of 12 suites crash on
+2.2.12 in 2 m 28 s, after it all 13 pass in 2 m 11 s, and the same 13 pass on 2.2.4. Behaviour
+is unchanged and that is measured rather than argued: every one of the 22 pages
+`tools/build.nim pages` writes is byte-identical built with the line and without it, so no
+page changes and none is republished. Verified by `troute.nim`, which takes a run's length in
+a `const` so the compile-time path has a law naming it; without that, tidying the line away
+would show up only as six suites failing to build. The diagnosis came from a curator's sweep
+for stale versions, issue 106. Rejected: staying on 2.2.4, which kept a bound whose reason
+lived in one sentence of this file. `result +=` on a float survives in `sim/`, `design/` and
+`tools/`, none of which the VM evaluates today: latent, not urgent.
 
 ## Re-audit, 2026-09-06
 
@@ -658,10 +782,6 @@ moment one arrives, and the `not Nim because` gate already refuses one that argu
 ## Open questions
 
 
-- Answered for fonts: binaries are never committed, and a project records each one's origin,
-  version, licence and checksum, then fetches it with an `assets` verb in `tools/build.nim`.
-  Satisfying X.8 means fetching Noto Sans, Noto Serif and Commit Mono that way and dropping
-  the Google request; until then the page keeps its remote fonts and system stacks.
 - `tlaws` costs 22 s of a four-core runner per audit; acceptable now, and the figure above
   is the one to watch as sweeps grow.
 - **A crossing that has just arrived cannot carry its break, and five hundredths of a turn are
@@ -699,12 +819,13 @@ nothing today. It binds the moment this project grows scripts of its own.
 
 ## Re-audit, 2026-09-07, system dependencies
 
-Audited by a curator against rule that system dependencies -- library compiler links against,
-tool build shells out to, browser driven check drives, source clone no package manager carries
--- are declared as data in project's own `tools/build.nim`, each entry carrying its reason, and
-reached by verb. Source clone carries its commit; system package carries no pin surviving across
-distributions and record says so rather than implying one; anything fetched at build time
-carries checksum build verifies. No machine's paths in committed source.
+Audited by a curator against the rule that system dependencies — a library the compiler links
+against, a tool the build shells out to, a browser a driven check drives, a source clone no
+package manager carries — are declared as data in the project's own `tools/build.nim`, each
+entry carrying its reason, and reached by a verb. A source clone carries its commit; a system
+package carries no pin that survives across distributions, and the record says so rather than
+implying one; anything fetched at build time carries a checksum the build verifies. No
+machine's paths in committed source.
 
 Raised as issue 62, and answered: see "The browser comes from the environment" under Pages and
 build.
@@ -726,3 +847,39 @@ Audited against the rule that a pull request goes back to draft the moment anoth
 intended, and is marked ready again after. This project's branch carries no open pull request:
 the Architect reads and merges the branch itself. Nothing to change; the rule is recorded so
 that a pull request opened later is opened as draft and kept there while work continues.
+
+## Re-audit, 2026-09-08, deterministic verdicts
+
+Audited by a curator against the rule that a check gives the same verdict on the same code,
+and that where it does not, the check is what is wrong.
+
+This project complies today. Its sampled suites seed their generators explicitly —
+`tests/tlaws.nim` uses `initRand(7)` and `initRand(11)` — so each run draws the same corpus,
+and nothing in the suites reads a clock or a display. Nothing needed correcting.
+
+It binds where this project is least protected: `design/shot.nim` drives a browser through
+Playwright, and no `drive` verb enrols it in the runner's driven job, so that layer is neither
+checked nor covered by this rule's evidence today. Whatever it becomes, it should settle on
+what moved rather than on what has stopped changing.
+
+## Re-audit, 2026-09-10, faces by element
+
+Audited by a curator against the rules change that splits Article X.8's faces by element —
+Noto Serif for headings and titles, Noto Sans for body and interface text, Commit Mono for
+code with its ligatures enabled. **This one does bind here, and correcting it is this
+project's work.** Every page sets system stacks (`ui-sans-serif`, `ui-monospace`, `ui-serif`)
+and the whole-cloth mockup loads Fraunces, Instrument Sans and Spline Sans Mono from Google
+Fonts, so no face is shipped and X.8's first clause — never naming one a viewer may lack — is
+not kept either. `design/page.nim` writes every stack as the `font` shorthand, so it carries
+no `font-family` at all.
+
+The open question this record already parked — that font files are an unregistered kind and
+cannot be committed — is answered by `rga_visualiser`: fetch at build time, pin every byte by
+SHA-256, embed as base64, commit nothing. Repository issue 119 carries the reading.
+
+**Done, and this note is kept only because it dates the fault rather than describes it.**
+Every page now ships all three families inlined; the whole-cloth page fetches nothing from
+Google; and the split the rule asks for is what the pages set. The one judgement the rule
+left open, whether a label drawn inside a figure is a figure or interface text, is settled
+the second way here: X.8's own clause reads "Noto Sans for body and interface text", and a
+label naming a hand is interface text rather than a number.

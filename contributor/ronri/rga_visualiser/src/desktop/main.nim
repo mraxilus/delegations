@@ -123,21 +123,48 @@ const
     ##   this thin.
   PIXELS_WIDTH* {.define: "visualiser.pixels_width".} = 1440
   PIXELS_HEIGHT* {.define: "visualiser.pixels_height".} = 900
-  PATH_FONT* {.define: "visualiser.path_font".} =
-    "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf"
+  DIR_FACES* {.define: "visualiser.dir_faces".} = "../build/fonts"
+    ## Directory shipped faces sit in, relative to binary rather than to any machine.
+    ##   `tools/build.nim assets` fetches them there, each pinned by tag and digest, and
+    ##   `bin/` sits beside `build/` -- so binary and faces move together and neither is
+    ##   found by absolute path (Article X.8; CONTRIBUTOR.md, "System dependencies").
+  FACE_FONT* {.define: "visualiser.face_font".} = "NotoSans-Regular.ttf"
     ## Carry UI's text: Latin, punctuation, subscripts and combining marks.
-  PATH_FONT_MATH* {.define: "visualiser.path_font_math".} =
-    "/usr/share/fonts/truetype/noto/NotoSansMath-Regular.ttf"
+    ##   `RGA_FONT` names another outright, for reason `faceAt` gives. Three below follow
+    ##   same pattern.
+  FACE_FONT_MATH* {.define: "visualiser.face_font_math".} = "NotoSansMath-Regular.ttf"
     ## Carry operators notation is written with, and Lengyel's bold operands.
     ##   Neither is in Noto Sans; merged into same atlas font; see `gui_shim.cpp`.
-  PATH_FONT_SYMBOL* {.define: "visualiser.path_font_symbol".} =
-    "/usr/share/fonts/truetype/noto/NotoSansSymbols2-Regular.ttf"
+  FACE_FONT_SYMBOL* {.define: "visualiser.face_font_symbol".} = "NotoSansSymbols2-Regular.ttf"
     ## Carry bulk and weight dual stars and abandon button's cross. Merged same way.
-  PATH_FONT_LABEL* {.define: "visualiser.path_font_label".} =
-    "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf"
+  FACE_FONT_LABEL* {.define: "visualiser.face_font_label".} = "NotoSans-Bold.ttf"
     ## Set selected object's name label, heavier than UI text as browser's semibold is.
-    ##   Bold is only heavier Noto Sans weight system package ships; no semibold there.
+    ##   Bold is heaviest weight Noto Sans ships as static face; no semibold there.
     ##   Own face rather than merged: label alone is set in it, at `HEIGHT_MARKER_LABEL`.
+  FACE_FONT_TITLE* {.define: "visualiser.face_font_title".} = "NotoSerif-SemiBold.ttf"
+    ## Set every heading, which is title role page's stylesheet names as well.
+    ##   Serif against interface's sans, so heading is told from row beneath it by shape
+    ##   rather than by weight alone.
+    ##   Semibold rather than regular, matching 600 page sets its own titles at: same role
+    ##   drawn at same weight through both mechanisms.
+  FACE_FONT_MONO* {.define: "visualiser.face_font_mono".} = "CommitMonoV142-400Regular.otf"
+    ## Set notation, figures and message line: text whose columns carry meaning.
+    ##   `otf` rather than `ttf` because that is what its author publishes; `stb_truetype`
+    ##   reads its CFF outlines, driven rather than assumed.
+    ##   Ligatures it carries are drawn by page and not here: Dear ImGui shapes no text, so
+    ##   `liga` and `calt` never fire. Letterforms are shared, ligatures are not.
+  ENV_FONT* = "RGA_FONT"
+    ## Environment name carrying interface face's location, where machine keeps its own.
+  ENV_FONT_MATH* = "RGA_FONT_MATH"
+    ## Environment name carrying operator face's location.
+  ENV_FONT_SYMBOL* = "RGA_FONT_SYMBOL"
+    ## Environment name carrying symbol face's location.
+  ENV_FONT_LABEL* = "RGA_FONT_LABEL"
+    ## Environment name carrying label face's location.
+  ENV_FONT_TITLE* = "RGA_FONT_TITLE"
+    ## Environment name carrying title face's location.
+  ENV_FONT_MONO* = "RGA_FONT_MONO"
+    ## Environment name carrying mono face's location.
   SIZE_FONT* = 16.0'f32
   PATH_EXPORT_DEFAULT* = "rga_visualiser.png"
 
@@ -371,6 +398,25 @@ proc parseOptions(): Options =
 
 
 #[ Frame Assembly ]#
+
+proc faceAt(name_environment, face: string): string =
+  ## Read face's location from environment, else from faces this build ships; empty where none.
+  ##   Shipped face is found beside binary rather than at absolute path: no machine's layout is
+  ##   named in source, and checkout moves without editing anything.
+  ##   Environment first because machine keeping its own faces says so rather than rebuilding.
+  ##   Empty variable counts as unset, since exporting nothing is how shell clears one.
+  ##   Empty result rather than raising: `gui.init` skips face whose path is empty, so
+  ##   interface draws in what is left and run reaches its verdict. Dear ImGui asserts on
+  ##   path it cannot open, and assertion is abort rather than finding, so path it cannot
+  ##   open must not reach it (repository issue 93).
+  ##   Says which face and what to install, since finding naming neither is one nobody acts
+  ##   on.
+  let named = getEnv(name_environment)
+  let path = if named.len > 0: named else: getAppDir() / DIR_FACES / face
+  if fileExists(path): return path
+  echo &"No face at `{path}`; set `{name_environment}`, or run `tools/build.nim assets`."
+  ""
+
 
 proc secondsNow(): float =
   ## Read monotonic clock as seconds, for animating how recently object was added.
@@ -1513,6 +1559,29 @@ proc verdictDriven(
     if not is_passing: inc count_failed
     echo (if is_passing: "  ok   " else: " FAIL  ") & name & " -- " & detail
 
+  # Face nobody installed is its own verdict, and fires only in run driven without one.
+  #   Claim is that run did its scripted work anyway: focus moved, which is what
+  #   `--drive-keys` is for, while Dear ImGui had no face to set interface in.
+  if not gui.isFontLoaded():
+    report(
+      "a face nobody installed leaves the run standing, and names itself",
+      interaction.index_focus.isSome and scene.bound > 0,
+      &"focus {interaction.index_focus}, {scene.bound} objects, no face loaded",
+    )
+
+  # Three roles, three faces, and every run says so.
+  #   Claim is that each role got face of its own rather than falling back to interface
+  #   face: fallback draws readable panel and silently loses distinction between heading,
+  #   body and notation, which is exactly failure nobody would see in headless run.
+  #   Skipped where interface face itself is absent, since that run is already reported
+  #   above and asking two questions about one missing directory says nothing new.
+  if gui.isFontLoaded():
+    report(
+      "each type role is drawn in a face of its own",
+      gui.isFontTitleLoaded() and gui.isFontMonoLoaded(),
+      &"title {gui.isFontTitleLoaded()}, mono {gui.isFontMonoLoaded()}, interface true",
+    )
+
   if options.is_key_driven:
     # Check traversal, selection and every kind of camera motion.
     #   Through queue and past Dear ImGui's navigation.
@@ -1981,13 +2050,26 @@ proc main() =
   sdl3.glSetSwapInterval(if options.is_novsync: 0 else: 1)
   echo &"OpenGL: {gl.getString(gl.VERSION)}"
 
+  let
+    path_font = faceAt(ENV_FONT, FACE_FONT)
+    path_font_math = faceAt(ENV_FONT_MATH, FACE_FONT_MATH)
+    path_font_symbol = faceAt(ENV_FONT_SYMBOL, FACE_FONT_SYMBOL)
+    path_font_label = faceAt(ENV_FONT_LABEL, FACE_FONT_LABEL)
+    path_font_title = faceAt(ENV_FONT_TITLE, FACE_FONT_TITLE)
+    path_font_mono = faceAt(ENV_FONT_MONO, FACE_FONT_MONO)
+  # Conversion is explicit, since implicit one from `let` is warned on and will be error.
+  #   Four bindings outlive call, and Dear ImGui copies each path before returning, so no
+  #   pointer here outlives string behind it.
   doAssert gui.init(
-    window, context, PATH_FONT, PATH_FONT_MATH, PATH_FONT_SYMBOL, SIZE_FONT,
-    PATH_FONT_LABEL, cfloat(HEIGHT_MARKER_LABEL),
+    window, context, path_font.cstring, path_font_math.cstring, path_font_symbol.cstring,
+    SIZE_FONT, path_font_label.cstring, cfloat(HEIGHT_MARKER_LABEL), path_font_title.cstring,
+    path_font_mono.cstring,
   ), "Dear ImGui must start; got `false` from `gui.init`."
   defer: gui.shutdown()
-  if not gui.isFontLoaded():
-    echo &"Font `{PATH_FONT}` was not loaded; operator notation will draw as boxes."
+  # Second line only where there was file to load: absent one is already reported by
+  #   `faceAt`, with what to do about it, and repeating it with empty path says less.
+  if not gui.isFontLoaded() and path_font.len > 0:
+    echo &"Face `{path_font}` would not load; operator notation will draw as boxes."
 
   let renderer = initRenderer()
   var

@@ -26,7 +26,7 @@ replicates no published source and derives no algebra of its own.
 ```sh
 nim r koch ci                                    # repository root: audit, scope, commits
 nim r koch tests contributor/ronri/rga_visualiser  # this project alone, three configurations
-nim r tools/build.nim assets                     # this project: fetch the six faces, once
+nim r tools/build.nim assets                     # this project: fetch the twelve faces, once
 nim r tools/build.nim web                        # this project: build/rga_visualiser.html
 nim r tools/build.nim drive                      # this project: drive both front-ends
 nim r tools/build.nim desktop                    # this project: bin/rga_visualiser
@@ -51,21 +51,18 @@ nim r tools/build.nim system | xargs sudo apt-get install -y
 The browser front-end needs nothing beyond that compiler and Node. The **desktop** front-end
 links against SDL3, OpenGL and zlib, and its headless runs need Xvfb and a software GL.
 
-Two of its dependencies do not arrive as packages, so both are pinned by version and the
-build refuses either when wrong. **SDL3** has no `libsdl3-dev` on Ubuntu 24.04 — that release
-carries SDL2 only — so build 3.2.31 from source:
+Two of its dependencies arrive as no package, so the build fetches both itself and refuses
+either when its pin misses. **SDL3** has no `libsdl3-dev` on Ubuntu 24.04 — that release carries
+SDL2 only — so `desktop` clones `release-3.2.30` into `deps/sdl3` and builds it into
+`build/sdl3`, a prefix inside the tree that needs no root. **Dear ImGui** is compiled from source
+into the binary rather than linked, and is cloned to `deps/imgui` at its pinned commit. Both are
+kept locally and never committed, as the Atlas checkouts are.
+
+Nothing has to be run by hand for either. Where a machine already carries SDL3 at the pinned
+version, that one is used and nothing is built:
 
 ```sh
-git clone --branch release-3.2.31 https://github.com/libsdl-org/SDL.git
-cmake -S SDL -B SDL/build && cmake --build SDL/build && sudo cmake --install SDL/build
-```
-
-**Dear ImGui** is compiled from source into the binary rather than linked. Clone it beside
-the project — kept locally, never committed, as the Atlas checkouts are:
-
-```sh
-git clone --branch docking https://github.com/ocornut/imgui.git deps/imgui
-git -C deps/imgui checkout fd13a1e8923a0a7077b404fc36fd063b25a0c0b5
+nim r tools/build.nim desktop
 ```
 
 The `pga` library is restored by Atlas from `atlas.lock` into `deps/` and is never committed;
@@ -80,8 +77,17 @@ The browser page is assembled by `tools/build.nim`, which compiles the bridge th
 JS backend, type-checks and emits the TypeScript glue, inlines the six font faces, and folds
 all of it into one self-contained `build/rga_visualiser.html` that opens from `file://`.
 That needs Node and npm alongside Nim: `npm ci` restores the two pinned dev dependencies
-into `node_modules/`, which is never committed. `assets` fetches the faces the page embeds,
-and needs the network once.
+into `node_modules/`, which is never committed. `assets` fetches every face both front-ends
+draw with — six the page embeds and six the desktop binary loads — each pinned by version and
+SHA-256, and needs the network once.
+
+Both front-ends draw three roles from three families: **Noto Serif** for titles, **Noto Sans**
+for body and controls, **Commit Mono** for code and for text whose columns carry meaning. Two
+Noto faces supply the operators and symbols neither of the other two carries, merged by
+unicode-range in the page and into one atlas on the desktop. Commit Mono splits its ligatures:
+most ride on `calt` and draw unasked, while the arrows and comparisons come from `ss01` and
+`ss02`, which the page asks for by name. The desktop draws none of them, since Dear ImGui shapes
+no text. See Type Roles in `PROVENANCE.md`.
 
 Tests run as three configurations of one shared suite: `t4d` at shipped capacities on the C
 backend, `t4d_small` at capacities small enough that the suite's tests reach them, and
@@ -125,10 +131,11 @@ the browser page through `web`, the desktop application through `desktop`.
 
 Every law under test through testament on the pinned commit, in three configurations. The
 page has been built and looked at, its type surface is checked, and a Playwright harness
-drives 137 checks over held keys, the wheel, mouse pan and touch — see Driven Checks in
+drives 139 checks over held keys, the wheel, mouse pan and touch — see Driven Checks in
 `PROVENANCE.md`. The desktop application has been built, one frame of it looked at, and its own
-twelve scripted runs driven headless under Xvfb — 19 checks, all passing. Those runs need SDL3,
-which no runner can install, so `drive` skips them there by name rather than silently.
+thirteen scripted runs driven headless under Xvfb — 22 checks, all passing, one of them driven
+with no face installed at all. SDL3 arrives as a source build rather than a package, and `drive`
+fetches and builds it rather than skipping the runs that need it.
 
 Unreviewed by a human: nothing here has been
 read line by line, and no human has driven either front-end or seen it on real graphics

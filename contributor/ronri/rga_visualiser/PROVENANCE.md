@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Author | Claude Opus 5 and Claude Sonnet 5 |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 1931060895ce28b1 |
+| Rules  | 9d34b3aca3dcff6b |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the
@@ -121,7 +121,7 @@ canvas, so nothing in them catches rule wired to wrong event. `tools/drive/` doe
 Playwright, against page `tools/build.nim web` assembled. One command runs both:
 `nim r tools/build.nim drive`.
 
-**137 checks pass today**, one module per section of what page does:
+**139 checks pass today**, one module per section of what page does:
 
 | Module | Covers |
 |--------|--------|
@@ -161,6 +161,26 @@ Ruled on repository issue 47; one definition now, exported from `scenery` and im
 travels depends on frames drawn while it was down. Band that will not settle is widened with
 reason recorded, never deleted and never narrowed to fit one lucky run.
 
+**A count is only as steady as the thing counted, and the thing counted has to be what the
+claim is about.** The panel's cadence check counted calls to `drawExceedance` to show the tick
+asks for slow figures on a slower clock. Three callers reach that function: the tick's rota, the
+axis switch on press, and the frame loop every frame while the axis glides. So the count was of
+three mechanisms and the claim about one, and the verdict moved with whether the other two
+happened to be quiet -- 138 of 138 on one run here and 137 on the next, on identical code.
+  Counting the tick's own entry, `askSlowPass`, settles it by construction rather than by luck:
+  the rota asks on tick 0 of every 5, so asks are `ceil(ticks/5)` and the band has margin at any
+  window length. Measured 3 asks over 17 ticks against 7 redraws in the same window.
+  The collapsed half moved the opposite way for the same reason. Its claim is that nothing is
+  *drawn* while the section is shut; collapsing the canvas fires the resize observer, which
+  asks, and the slow pass then drops the owed job. It counts draws and reports the dropped ask.
+  Rejected: widening the band, which is what a run this shape invites and which would have kept
+  a check that answers a question nobody asked. The rule the two waits races produced --
+  settle on what moved -- has a sibling here: **count the mechanism the claim names.**
+  Verified by breaking on purpose, and committed in that order: four presses of the axis switch
+  inside the window give 7 redraws over 17 ticks, which the old instrument fails and the new one
+  passes. The switch's own redraw is now a check rather than noise -- four presses, four redraws
+  on the spot, none of them the tick's.
+
 **Waits are conditions page reports, not spans of clock.** Harness opened with 115 fixed
 waits against 3 conditions; it carries 16 fixed waits against 21 conditions and 33 frame
 waits today. Four kinds of wait, and only two were races. Camera ease and settling after
@@ -184,6 +204,96 @@ before it, at unchanged sample sizes.
   of 50 frames. `SHARE_KINDS_ACCOUNT` is 0.995, which over sample of 50 rounds up to *every*
   frame, so slack that constant exists to give straddling frame is not there at this sample
   size. Pre-existing, and left alone here: waits were not what decided it.
+
+**Pixels are read through compositor, and reading carrying no picture is refused rather than
+returned.** Context keeps no drawing buffer (`gl.ts` says why), so `readPixels` is sound only
+from inside frame that drew. Five checks each held their own copy of that wrapper, and four
+compared one reading against another -- so canvas reading back all zero passed all four, and
+failed only fifth, which is what caught it. Reading now comes from
+`page.locator('#gl').screenshot()`, decoded in page, through one `tools/drive/canvas.ts`: it is
+what reader sees, and it is immune to buffer being taken after frame that filled it.
+  Reading raises rather than reports: canvas nobody can read is instrument lost, not check
+  failed, and reporting it would leave every later pixel check resting on nothing.
+  **Refusal is of one colour, not of black.** First guard tested for all-zero, and runner
+  answered with canvas-shaped sheet of *white*: `[255,255,255]` at moon where this machine reads
+  `[44,6,24]`, seven of eight edits reporting canvas unchanged, every comparison agreeing with
+  every other. Three checks went vacuous second time, on same nothing in other colour. What
+  makes reading empty is that it carries one colour, whichever colour, so that is what is
+  refused, and fixture drives black *and* white for that reason.
+  That four were vacuous is arithmetic rather than inference. `pool`'s check reported hash
+  1426046701 from runner; same FNV fold over all-zero 1200x900x4 buffer at its own stride
+  gives exactly 1426046701, so it had compared nothing against nothing.
+  Costs about 0.49 s per reading against microseconds for `readPixels` -- 0.43 s capture and
+  0.06 s decode -- paid about 19 times over run rather than once per frame.
+  **Element capture takes region page canvas occupies, not canvas alone**, so chrome
+  composited over it lands in reading: first run of this reader failed held-placement check on
+  2,411 pixels, and cropping them showed undo button lighting up after that check's own edit.
+  Every sibling of canvas is hidden for length of capture and put back after, by `opacity`
+  so nothing leaves layout and nothing is blurred.
+  **Masking cannot serve here, which is worth one line so it is not retried:** `#overlay` spans
+  viewport, so masking `body > *:not(#gl)` covers canvas whole. Probe returned one colour,
+  centre `[255,0,255]`.
+  **Capture waits on compositor rather than on one frame.** Hiding chrome injects style, style
+  forces recomposite, and software rasteriser does not finish it inside single frame first
+  version waited -- capture then catches page behind canvas, which is where sheet of white came
+  from. Reading is taken again until it carries picture, up to ten times: settle on what
+  arrives, not on clock, which is rule two sections above applied to instrument rather than to
+  scene.
+  **Unexplained**: why runner read blank through `readPixels`, and white through compositor.
+  Neither Chromium here reproduces either: full browser and headless shell both read every one
+  of 1,080,000 pixels lit, no GL error, default framebuffer bound, from inside and outside
+  drawing frame alike. Runner's browser is different binary (see below) and was not obtainable
+  here, so timing account above fits evidence rather than being driven against reproduction.
+  **Verified on runner**: the reader reads the scene there, 138 of 138 on run 34218424425,
+  after two runs that did not.
+  **The rate is not settled, and no count belongs here.** Every runner run of this reader has been
+  green since 34218424425, the first, and the old reader failed one run in three — so *n* greens
+  in a row is what luck gives (2/3)^*n* of the time, which is 30% at three, 13% at five, and under
+  2% at ten. That is the whole of what can be said without a number, and a number is exactly what
+  this file cannot hold: only a push of this project adds a sample, so the merge carrying any
+  tally invalidates it. Issue 77 carried the running count while the curator's next move turned
+  on it; that move has been taken and the issue is closed, so what stands here in place of a
+  tally is a boundary and a deduction, neither of which a later push can falsify.
+  **The sample spans two browsers now, and the reader was green on both.** On `main` the runner
+  drove the snap through run 34399034311 and drives what `package-lock.json` pins from 34404833659
+  onward — the curator's `RGA_CHROMIUM` step went between those two runs (#98), and both are
+  green. Every `push` run on `main` since 34294113589 has passed, which is a deduction rather
+  than a tally — `driven` gates `audit`, so one red reader reddens the whole run, and none of
+  them is red. The snap was the last variable standing when this section was written and it is
+  not standing now; blankness has not returned without it. That moves the compositor reader from
+  *consistent with the cause being gone* toward *the reading was the cause*, and it does not
+  settle what the cause was, which stays **Unexplained** above: neither Chromium here ever
+  reproduced it, so nothing has been driven against a reproduction.
+
+**The harness resolves its own browser, and drives Playwright's pinned build by default.**
+Order is what `RGA_CHROMIUM` names, else the build `package-lock.json` pins, else `chromium`
+on `PATH`; `drive` fetches the pinned build first, exactly as it fetches faces. The lock fixes
+`@playwright/test` at 1.63.0 and that version fixes the browser revision (1243 today), so this
+machine and the runner drive one binary rather than two — which is the property a harness
+comparing pixels wants. Ruled on repository issue 77: the curator's first ask was `PATH` first,
+and the evidence below moved it.
+  **The pin is a version, not a digest.** Playwright publishes no checksum for the archive it
+  serves, so those bytes arrive on TLS alone, as the compiler tarballs do. Stated rather than
+  implied. Rejected: digesting the extracted binary, which differs by platform and architecture,
+  so pinning one would make the project unbuildable anywhere else without editing committed
+  source. Measured on this container, 2026-09-09: 11 s cold, 0.8 s warm, since
+  `playwright install` keeps a build already at the pinned revision.
+  **`chromium` on `PATH` is last, it carries no version, and nothing here installs it.** Verified
+  with `apt-cache showpkg chromium`: on Ubuntu 24.04 the name carries no version of its own and is
+  provided solely by `chromium-browser 2:1snap1-0ubuntu2`, the snap transitional shim. It was
+  declared in `SYSTEM` while the workflow named it; the workflow stopped (#98), so the package
+  went with it (#96) and this rung is now whatever a machine happens to carry. It exists for a
+  machine that cannot fetch Playwright's build at all, and on such a machine an unpinned browser
+  beats no browser — that is the whole of its case.
+  **The runner drives the pinned build now, and its own cache is keyed on the same lock.**
+  `check.yml` caches `~/.cache/ms-playwright` on `package-lock.json`, which is the file that fixes
+  the revision, so the tree the lock names is the tree the cache restores. Whether trading a snap
+  install for that fetch is a net gain on the runner is unmeasured — both halves have not yet run
+  enough for a figure, and the figure belongs on repository issue 79 rather than here.
+
+  Guard is checked against fixture it stands up itself (Article IX.8): black canvas of its own,
+  which is hardest case, since dark scene and no scene look alike. Check runs before any check
+  leaning on reader does.
 
 **Comet's band caught port's own defect rather than needing widening.** First port selected
 horizon line through `nimSelectOnly`, which moves Nim's selection and leaves page's render
@@ -231,14 +341,7 @@ agree, and hand check camera that never moved (repository issue 73).
   Second instance of this shape here, after `settleTurn` polled computed transform for two equal
   reads. Rule that comes out of both: **settle on what moves, not on what has stopped changing**.
 
-**One check passed on blank canvas, which is why blankness went unnamed.** `a selected moon in
-front of a selected planet` compares one pixel against another, so all-zero on both sides agreed.
-Runner read `[0,0,0]`; this machine reads `[44,6,24]`. Check beside it now names it: page's
-darkest surface is `rgb(16,19,24)`, so all zero is readback of nothing rather than dark scene.
-  **Unexplained**: why runner's canvas read back nothing on that run. Blank readback is now
-  reported where before it was silent, which is what turns it from invisible into observable.
-
-*Checked.* Verified by running: 137 of 137 pass through `tools/build.nim drive` on assembled
+*Checked.* Verified by running: 139 of 139 pass through `tools/build.nim drive` on assembled
 page, in Chromium, software-rendered.
   Verified by breaking on purpose: with `settleCamera` returning at once, run drops to 131 of
   136 and every loss is framing -- orbit about pick, second pick coming in, plane to two fifths,
@@ -250,10 +353,11 @@ page, in Chromium, software-rendered.
 That harness carries about 140 check sites — 125 reported directly and 15 through band
 reader — and this one 151; neither figure is count of claims, since both carry guard reports
 that fire only where check cannot be set up.
-  **Unverified**: **CI does not reach this layer.** Runner's jobs are fixed in curator-owned
-  workflow, and contributor's scope reaches only own project, so no job drives page. Asked as
-  issue 47. Until it is ruled, these checks are contributor's to run, and green here is
-  evidence someone ran it rather than something runner confirms.
+  **Runner reaches this layer, and both halves of it.** `driven` job drives page on every push
+  since issue 47 was ruled, so green there is runner's word rather than someone's report. Desktop
+  half was skipped there for want of SDL3 until `desktop` began fetching and building it, which
+  repository issue 91 ruled: all 161 checks now answer for themselves on runner rather than 139
+  of them.
   **Unmeasured**: figures above are this container's, software-rendered, and say more about
   swiftshader than about any GPU. Bands, not figures, are what checks assert.
 
@@ -347,6 +451,18 @@ whatever it serves, and `web` embeds these bytes into artefact readers open, so 
 fetched is wrong byte shipped. Every other external thing here is pinned -- compiler to commit,
 packages to lock file, `pga` to commit -- and this fetch was sole exception (repository issue
 47). Digest sits beside face in `FACES`, so pin and thing pinned cannot drift apart.
+  **The package version sits beside it, and that is a second pin rather than decoration.** A
+  digest says what bytes are right; it cannot make a host serve them. The fetch used an
+  unversioned jsDelivr path, which serves whatever resolves — and one face was already past that
+  when a curator sweep asked (repository issue 111). `@fontsource/noto-sans-math` 5.3.0 renamed
+  this face's subset from `math` to `latin`, so 5.3.0 does not carry the file at all, and the
+  unversioned URL kept working only because jsDelivr fell back to **5.2.8**, the newest version
+  still holding what was asked for. Read from the response: `x-jsd-version: 5.2.8` against a
+  `latest` of 5.3.0.
+  So the build worked by an undocumented fallback, which is a build nobody can repeat. Each face
+  now names its own version — five at 5.3.0 and the math face at 5.2.8 — and two of them
+  differing is what pinning the *fetch* rather than the family looks like. Verified by refetching
+  cold with `build/fonts` removed: six of six digests match at the versions named.
   Checked twice, at both places bytes matter: `assets` verifies what it fetched, and `web`
   verifies again before embedding, since `assets` may have run long ago and disk is not
   evidence. Mismatches across six are collected and reported together rather than first raising,
@@ -364,8 +480,103 @@ packages to lock file, `pga` to commit -- and this fetch was sole exception (rep
   carries none that survives across distributions, so none is manufactured for one; same shape
   of honest limit `compilers.nim` already records for fetched compilers, trusted on TLS alone.
 
+**Three faces, three roles, and nothing else picks between them.** The Architect's standard:
+Noto Serif for titles, Noto Sans for body, Commit Mono for code and monospace. Both front-ends
+draw it — the page through `--serif`, `--sans` and `--mono`, the desktop through `guiHeader` and
+`guiMonoPush`/`guiMonoPop` — so a rule stated once is reached through two mechanisms rather than
+asked to agree with itself.
+  **What counts as a title was looked up rather than asserted**, since the answer decides where
+  the serif goes. Material 3's type system separates *title* styles from *label* styles, and puts
+  "text inside components" — buttons, tabs, chips — in the label role, drawn in the interface
+  face rather than the display one. Butterick's rules for all caps (5–12% letterspacing, caps
+  work at small sizes) cover the small uppercase group labels, which keep their 0.06em tracking
+  and stay sans. And the guidance on monospace is that it is for code and for text whose columns
+  carry meaning, with `font-variant-numeric: tabular-nums` on a proportional face preferred for
+  ordinary figures.
+  So the serif took the headings that name a section and the application's own name, and three
+  things moved *out* of the mono face: the help tab strip and the two toggle-chip rules, which
+  are labels inside components. The objects count sits inside a heading and would have inherited
+  its serif, so it names the interface face outright and keeps its tabular figures.
+  **Commit Mono splits its ligatures across two switches, and the page needed both.** Its GSUB,
+  read out of the embedded `woff2` itself, carries `calt`, `cv01`–`cv11` and `ss01`–`ss05`. Most
+  of the ligatures ride on `calt`, which browsers apply unasked, so those had been drawing all
+  along. The arrows and comparisons do not: they come from the author's opt-in sets, named by his
+  own feature sources — `ss01_less_equal.fea`, `ss02_arrows.fea` — and the page drew `=>` as two
+  glyphs until it asked for them.
+  Driven over four rows of sequences, each feature switched on and off by itself:
+
+  | row | `calt` alone changes it | `ss01`+`ss02` change it |
+  |---|---|---|
+  | `=> -> <- <= >= != ===` | no | **yes** |
+  | `>>= <<= \|> <\| ++ -- :: ...` | yes | yes |
+  | `/* */ <> && \|\| ?? ?: \|=` | yes | no |
+  | `=~ #{ www 0x ;; ## __ ~~` | yes | no |
+
+  So the stylesheet does two things rather than one: `font-variant-ligatures: common-ligatures
+  contextual` says outright what was working by default, since a reset writing `none` for
+  crispness would take `calt` with it; and `font-feature-settings: "ss01" 1, "ss02" 1` asks for
+  what was never on. No combination moves a column — 365 px on every reading — which is what a
+  monospace ligature has to do.
+  **This corrects a claim this record nearly carried.** The first reading said the face
+  publishes no `calt` at all, on the strength of the author's own `otf` and variable builds,
+  which genuinely carry none — and of a browser test that turned `calt` *on* twice and never
+  once off. `contributor/sincopa/dance_ontology` said the opposite on repository issue 116 while
+  this was being written, which is what sent it back to the file. Both readings were half right:
+  the distributed `woff2` carries `calt` and the author's repository builds do not, so the page
+  and the desktop are not drawing from the same feature table even where they draw the same
+  letterforms.
+  **Set at the root, and that is checked rather than assumed safe.** Noto Sans and Noto Serif
+  publish no `ss01` or `ss02` at all (they carry `ss03`, `ss04`, `ss06`, `ss07`), but Noto Sans
+  Math does publish an `ss01`, and the mono stack falls through to it for every operator. So the
+  operators, stars and subscripts this project draws were rendered with the sets on and off and
+  compared: identical. The one face that could have been disturbed was measured rather than
+  reasoned about.
+  **The serif ships at 600 alone, because 600 is the weight every title is set at.** It shipped
+  at 400 before, and every title asks for 600 — so no title was drawn in the face the page
+  shipped: CSS matches the nearest weight in the family and leaves the browser to make up the
+  rest. A face nothing draws is weight carried for nothing, and a weight nothing ships is a face
+  the reader's browser invents; Article X.8 refuses both. So 400 left and 600 arrived, 15 kB of
+  it, and the page grew by 1,804 bytes on the swap.
+  **The check written to hold that was wrong twice, and how it was wrong is worth more than the
+  check.** It compared the live heading's width against canvas measuring the same string in each
+  face. The heading carries `letter-spacing: 0.02em`, which canvas does not, so the live figure
+  sat about 1.3 px above both — and that gap was read as evidence of a synthesised weight when it
+  was only the tracking. Then, with the real 600 face in place, both faces measured `apply` at
+  35.0 px, so width could not have parted them at all. It reads pixels now: the heading is shot
+  as the page has it and again with the interface face forced onto it, and a face that never
+  arrived makes one picture where there should be two. Nothing was loosened to make it pass.
+  **The desktop draws the same three roles from the same three families.** `NotoSerif-SemiBold`
+  matches the page's 600 rather than being merely serif, and `CommitMonoV142-400Regular` sets
+  notation, figures and the message line. The mono face has both supplementary ranges merged into
+  it, as the interface face does, because the rows it exists for are exactly the rows carrying
+  wedges and subscripts; the title face has neither merged, since every heading here is a word
+  this source writes.
+  **Commit Mono comes from its author's own repository, which is a second host and says so.**
+  `@fontsource` ships `woff2` and `woff` alone, and the desktop reads outlines through
+  `stb_truetype`. What that repository publishes is `otf` with **CFF** outlines rather than
+  TrueType, and whether Dear ImGui would take it was driven rather than assumed: pointing
+  `RGA_FONT` at the file and running `--drive-keys` reported 3 of 3, and a 300-frame screenshot
+  drew every glyph including the merged operators, with no `.notdef` box. Its file name says
+  `V142` at tag `1.143`, which is what upstream ships; the digest pins the bytes either way.
+  **One check outside this work gave two verdicts on the same code, and that is recorded rather
+  than left.** `driveRendered` asks for at least 20 frames timed inside a 1,200 ms window. Running
+  the whole repository's checks and a second driven run at once on this container, it read **19**
+  and failed; alone on the same commit it reads **27** and passes. The floor is a fixed count
+  against a fixed span, so what it really asserts is that the machine drew 20 frames in 1.2 s --
+  about 17 fps -- rather than anything about this page. CONTRIBUTOR.md's rule is that a check
+  gives the same verdict on the same code, and where it does not, the check is what is wrong. The
+  cause here was load this session created, not the runner's, so nothing is changed today; the
+  fix, when it comes, is to read the count against frames actually drawn rather than against a
+  span of clock.
+
+  **Ligatures cannot reach the desktop at all, and that is a limit rather than an omission.**
+  Dear ImGui shapes no text — it maps codepoints to glyphs and advances — so no GSUB feature
+  fires, `ss01` and `ss02` included. The two front-ends share the letterforms and do not share
+  the ligatures. Nothing in the panel currently writes a sequence that would form one, so the
+  difference is invisible today; it is written down because the day something does, this is why.
+
 *Checked.* Verified by running cold: `clean` removes `build`, `bin` and `nimcache`, then `drive`
-fetches six faces and reaches 137 of 137 with no step run by hand -- which is runner's own case.
+fetches six faces and reaches 139 of 139 with no step run by hand -- which is runner's own case.
 Re-measured after `drive` gained desktop half, so cold run now builds and drives both front-ends
 rather than page alone. Second run immediately after fetches none. `web` alone on same cold tree
 still refuses by name, which is behaviour worth keeping rather than side effect.
@@ -513,13 +724,52 @@ rather than file they must know to look for beside source. Algebra and library p
   No `-d:release`, unlike page: this binary is driven and read rather than shipped, and its
   `--drive-*` runs report through assertions release would remove.
 
-**Neither SDL3 nor Dear ImGui arrives as package, so both are pinned by version.** That is
-this repository's rule about anything fetched at build time, and here it is forced rather than
-chosen: Ubuntu 24.04 carries `libsdl2-dev` and no SDL3 at all, so `apt-get install libsdl3-dev`
-fails on it outright. SDL3 is therefore built from source and installed, at `3.2.31`, zlib
-licence, and `checkSdl3` reads what `pkg-config` reports before compiling anything.
-  Pinned exactly rather than as floor: 3.2.31 is what this front-end was compiled and drawn
-  against, and floor would claim reach across releases nothing here has tried.
+**Neither SDL3 nor Dear ImGui arrives as package, so `desktop` fetches both at their pins.**
+That is this repository's rule about anything fetched at build time, and here it is forced rather
+than chosen: Ubuntu 24.04 carries `libsdl2-dev` and no SDL3 at all, so `apt-get install
+libsdl3-dev` fails on it outright. SDL3 is cloned at its tag and built into `build/sdl3` -- a
+prefix inside the tree, so no step needs root and `clean` removes it like any other product --
+and `checkSdl3` reads what `pkg-config` reports there before compiling anything, at `3.2.30`,
+zlib licence.
+  **SDL3's own build dependencies are declared too, and the runner is what found them.** Its
+  cmake refuses outright where it can find neither X11 nor Wayland development libraries, since
+  a build that cannot open a window is not one anybody wanted. `libx11-dev` arrives beneath
+  `libgl-dev` on this container and `libxext-dev` does not, so the first machine to try without
+  it was the runner. Both are declared now rather than left to arrive under something else --
+  the same lesson the faces taught, one layer down.
+  Verified by removing it: with `libxext-dev` gone and `libx11-dev` still present, cmake reports
+  `SDL_X11 (Wanted: ON): OFF` and exits 1, which is the runner's error exactly; restored, it
+  reports `ON` and exits 0.
+  Cost of that prefix is `-rpath`: the loader finds a library outside its search path only when
+  the binary names it, so `desktop` passes an absolute path derived from the checkout. Derived
+  rather than written down, which is the distinction CONTRIBUTOR.md draws -- a committed
+  `/opt/...` builds on one machine, and `getCurrentDir()` builds on every one. Binary and prefix
+  are both products under the same tree, so they move or are rebuilt together.
+  Rejected: installing over `/usr/local`, which the README told a contributor to do and which
+  needs root. A build needing root is a build CI cannot run without being granted it, and the
+  runner is the machine this had to reach.
+  Pinned exactly rather than as floor: floor would claim reach across releases nothing here has
+  tried.
+  **The pin is a release tag, and `release-` prefixed to it is the ref that fetches it.**
+  `release-3.2.30` resolves at commit `f5e5f658`, so `VERSION_SDL3` names bytes rather than a
+  version string, and the `README.md` and `checkSdl3` instructions compose the ref from it —
+  one home, no second copy to drift.
+  **3.2.30 is the newest release of a series still maintained, not a stranded one.** A curator
+  sweep asked whether the pin was behind, since `main` carries 3.5.0 and `release-3.4.x` the
+  current stable series (repository issue 111). Read from the branches rather than a releases
+  page: `release-3.2.x` is still active and its head is 3.2.31 in progress, one past the pin. So
+  there is nothing to bump for currency, and following the series to 3.4.x would be a choice
+  about what to build against rather than a fix. Recorded so the next sweep stops here.
+  **An odd patch number names no tag, which is the trap this replaced.** That series releases on
+  even numbers alone; 3.2.31 was the head of `release-3.2.x` and no ref fetched it, so the clone
+  command this project published failed outright and `pkg-config` could not have told two such
+  builds apart. Repository issue 90.
+  **Moved by rebuilding, not by editing the line.** Verified 2026-09-09: SDL3 built from
+  `release-3.2.30` and installed, then `bin/` and `nimcache/` removed and the desktop front-end
+  compiled from cold against its headers, then all 13 scripted runs driven — 22 of 22 pass,
+  29.9 s for the whole of it on this container, 4 cores, software GL. The mirrored event
+  constants below assert against real headers at compile time, so a release that had moved them
+  would have failed the build rather than the checks; it did not.
   Found by checking rather than by assuming: prototype's own `dependencies.list` named
   `libsdl3-dev`, and this port carried that name into `SYSTEM` -- where it would have failed
   runner's install step, since that step installs from this declaration. Package does not
@@ -537,7 +787,7 @@ by name, naming clone command that fixes it.
   clone command; with checkout one commit back, verb names commit wanted and commit found. Restored
   after.
 
-*Checked.* Verified by running: both bindings compile and link against SDL3 3.2.31 and libGL
+*Checked.* Verified by running: both bindings compile and link against SDL3 3.2.30 and libGL
 through `nim cpp`, and their assertions run against real headers. Shared core compiles and runs
 under that same backend too, which nothing had shown before -- it had only ever been built
 through C and JS.
@@ -563,8 +813,8 @@ through C and JS.
   not, and scene looks empty at that count. 300 is.
   Vocabulary shows in that frame rather than only in source: panel says *objects (5 of 5040)*
   and *hold still over the pivot*.
-  Verified by driving: every scripted run reaches its verdict, 19 checks over 12 runs, in about
-  25 seconds under software GL. See Desktop Driven Checks below.
+  Verified by driving: every scripted run reaches its verdict, 22 checks over 13 runs, in 24
+  seconds under software GL, 2026-09-09. See Desktop Driven Checks below.
   **Unverified**: frame times are unmeasured, and no human has seen this on real graphics
   hardware -- that run was software GL, which reported no multisampled visual, so thin lines
   alias.
@@ -577,9 +827,59 @@ directly. Entry point carries five scripted runs -- `--drive-keys`, `--drive-sky
 `--drive-undo`, `--drive-select`, `--drive-drag` -- plus `--drive-help:<tab>`, one per tab.
 Each pushes real events through SDL's own queue rather than calling handler, so what it
 exercises is wiring.
-  19 checks over 12 runs. Held key slides view and keeps its height; drag across bare sky turns
-  view and builds nothing; undo takes construction back *and* returns view to where it built
-  from; choice menu does not swallow drag after it; every help tab opens with rows in it.
+  22 checks over 13 runs -- 13 `report` sites, of which the help one fires once per tab and the
+  faceless one only in the run driven without a face. Held key slides view and keeps its height;
+  drag across bare sky turns view and builds nothing; undo takes construction back *and* returns
+  view to where it built from; choice menu does not swallow drag after it; every help tab opens
+  with rows in it; and a run whose face is missing still does its scripted work.
+  Counted by running rather than by reading: this said 19 until 2026-09-09, which is sites plus
+  tabs with the help site counted twice.
+  **These 22 run wherever `drive` runs, which is what repository issue 91 ruled.** They ran here
+  and nowhere else while `drive` skipped them for want of SDL3, and `0 finding(s)` over 161 checks
+  and over 139 were two claims wearing one sentence. `desktop` now fetches and builds both
+  libraries itself, so the skip is gone and an absent dependency fails by name.
+  Two things had to move first, and both were found by a second machine finally trying. SDL3's pin
+  named no ref `git clone` resolves (issue 90). And the front-end loaded four faces by absolute
+  path under `/usr/share/fonts/truetype/noto/`, which nothing declared, so a machine without them
+  aborted every run inside Dear ImGui rather than degrading. Both are answered: the abort is a
+  finding now, and this project ships its own faces (issue 93).
+
+**An absent face is a finding now, and it used to be an abort.** Dear ImGui asserts inside
+`AddFontFromFileTTF` where it cannot open a path, and an assertion is SIGABRT rather than a
+report. The shim already skipped a face whose path is empty and `main.nim` already carried a
+warning line, so the graceful path existed on both sides and nothing joined them: whatever was
+declared went straight to Dear ImGui, and the warning was unreachable. Measured 2026-09-09 on a
+container carrying SDL3 and Dear ImGui but no Noto packages: **12 of 12 runs aborted**, exit 1.
+  `faceAt` resolves each of the four to empty where the file is not there, and says which face is
+  missing, which variable names it and which verb fetches it. The interface draws in what is left.
+  **Locations come from the environment first**, `RGA_FONT` and its three siblings, falling back
+  to the faces this build ships -- and that fallback is what lets the case be driven at all.
+  Verified by driving, committed in that order: `driven` runs `--drive-keys` once with `RGA_FONT`
+  naming a path no machine carries. Before the fix that run aborts and the verb reports
+  `drive-keys without face`, exit 1; after it, the run reports the finding and passes, and gains a
+  verdict of its own -- focus moved and the scene stands while Dear ImGui had no face, so the
+  claim is that the scripted work happened rather than that nothing crashed.
+  **This half ships the faces it draws with now, as the browser half does** (Article X.8). The
+  four absolute paths are gone and no machine's layout is named in source: `DIR_FACES` is relative
+  to the binary, resolved against `getAppDir()`, so `bin/` and `build/fonts/` move together.
+  `fonts-noto-core` went out of `SYSTEM` with them -- the package it declared is no longer what
+  the front-end draws in. Ruled by the Architect on repository issue 93.
+  Faces come from the Noto project's own release repository rather than `@fontsource`, which
+  ships `woff2` and `woff` alone while Dear ImGui reads TrueType. Each is pinned by family tag
+  *and* digest: `NotoSans-v2.013` for the interface and label faces, `NotoSansMath-v2.539` and
+  `NotoSansSymbols2-v2.006` for the two merged ranges. Per family rather than per repository,
+  since three families move on their own and a commit would pin all three to whenever one of
+  them last did.
+  **Coverage was checked rather than assumed, since a face swap turns notation into boxes
+  silently.** Read from each font's `cmap` against the ranges `gui_shim.cpp` declares, comparing
+  what the distribution packages carried with what is now shipped: text 379 of 416 wanted, both;
+  symbols 362 of 544, both; math 1,773 of 1,952, both, with U+2AAC lost and U+23B7 gained and
+  neither appearing anywhere in this project. So nothing this front-end draws moved.
+  Verified by rendering, 2026-09-10: a 300-frame run under Xvfb writes a frame whose operator
+  rows read `m ∧ n`, `m ∨ n` and `n ∨ (m ∧ n☆)`, with subscripted basis names beneath them and
+  no `.notdef` box anywhere.
+  Costs about 2.5 MB fetched into `build/fonts`, against roughly 700 kB of `woff2` for the page.
+  Uncompressed TrueType is what `stb_truetype` reads, so that is the price of the rule.
 
 **Two defaults favoured silent pass, and both are gone.** This is what running them found, and
 neither was reachable by reading.
@@ -597,18 +897,28 @@ neither was reachable by reading.
 knowing which three broke beats knowing that one did. Verb asks binary which help tabs exist
 (`--help-tabs`, which prints before SDL starts), so `help.HelpPath` stays their one home and
 tab added there is driven without being listed twice (Article I.4).
-  `drive` chains it, so one command drives both front-ends. Where SDL3 or Dear ImGui is absent
-  -- runner, which cannot install SDL3 at all -- it prints skip naming what is missing and
-  stops, rather than failing. Printed rather than silent: check nobody is told was skipped is
-  check nobody knows is missing.
-  **Cost, stated plainly**: these checks do not run in CI, and cannot until SDL3 is installable
-  there. Every runner log says so.
+  `drive` chains it, so one command drives both front-ends, and it no longer stops short of the
+  desktop half. Absent SDL3 or Dear ImGui is now something `desktop` fixes rather than reports:
+  it clones each at its pin and builds SDL3 into `build/sdl3`, so the only remaining failure is a
+  machine lacking what `system` declares, and that fails by name.
+  **What that costs, measured on this container, 4 cores, software GL, 2026-09-09.** Cold, with
+  neither checkout present and nothing built: **1 m 27 s** for the whole of `driven` -- both
+  clones, SDL3 configured, built and installed, the binary compiled, and twelve runs. Warm:
+  **29.3 s**, since a prefix already reporting the pinned version is kept rather than rebuilt.
+  **On the runner, measured rather than predicted**: the `driven` step went from **215 s** with
+  the browser half alone (139 checks, run 34412019616) to **411 s** with both (157 checks then, run
+  34414563854), so the desktop half costs about **3 m 15 s** there against 1 m 27 s here. One run
+  against one run on the same image and the same day, which is a pair rather than a rate.
+  Where that lands against the rest of the job is the curator's to weigh; repository issue 79
+  carries what the job already spends.
 
-*Checked.* Verified by running: 19 of 19 pass under Xvfb on software GL. Verified by breaking on
-purpose: drag verdict inverted, and run reported ` FAIL  a drag from one object onto another
-opens its choice menu`, `1 driven check(s) failed`, verb answered `Driven runs failed; got 1 --
-drive-drag`, exit 1; restored after. Verified by hiding dependency: with `deps/imgui` moved
-aside, `drive` reported browser's 137 of 137 then named skip with clone command, exit 0.
+*Checked.* Verified by running: 22 of 22 pass under Xvfb on software GL, 2026-09-09, from a tree
+carrying neither checkout and no SDL3 anywhere on the machine -- `driven` fetched and built both
+and drove them. Verified idempotent by running it twice: second run kept the prefix and rebuilt
+nothing. Verified by
+breaking on purpose: drag verdict inverted, and run reported ` FAIL  a drag from one object
+onto another opens its choice menu`, `1 driven check(s) failed`, verb answered `Driven runs
+failed; got 1 -- drive-drag`, exit 1; restored after.
 
 Render Paths
 ---
@@ -2784,12 +3094,13 @@ cost rather than the value — 135 checks made the value case. See issue 47.
 
 ## Re-audit, 2026-09-07, system dependencies
 
-Audited by a curator against rule that system dependencies -- library compiler links against,
-tool build shells out to, browser driven check drives, source clone no package manager carries
--- are declared as data in project's own `tools/build.nim`, each entry carrying its reason, and
-reached by verb. Source clone carries its commit; system package carries no pin surviving across
-distributions and record says so rather than implying one; anything fetched at build time
-carries checksum build verifies. No machine's paths in committed source.
+Audited by a curator against the rule that system dependencies — a library the compiler links
+against, a tool the build shells out to, a browser a driven check drives, a source clone no
+package manager carries — are declared as data in the project's own `tools/build.nim`, each
+entry carrying its reason, and reached by a verb. A source clone carries its commit; a system
+package carries no pin that survives across distributions, and the record says so rather than
+implying one; anything fetched at build time carries a checksum the build verifies. No
+machine's paths in committed source.
 
 **This project is what rule was written for, and it does not comply yet.** It needs SDL3, libGL,
 zlib, Xvfb and software GL on machine before it builds, clones Dear ImGui from source, and
@@ -2805,3 +3116,43 @@ Two asks stand, both this project's own work, neither of which curator may do:
 
 Second ask is what browser job waits on. Once both land, `drive` reaches runner and this
 record's *Unverified: CI does not reach this layer* stops being true.
+
+## Re-audit, 2026-09-08, deterministic verdicts
+
+Audited by a curator against the rule that a check gives the same verdict on the same code,
+and that where it does not, the check is what is wrong. Retries, longer timeouts, quarantines
+and skips are all refused as answers to variance.
+
+The testament suites comply: `tests/suites.nim` seeds with `randomize(0)`, so the sampled
+corpus is the same corpus on every run.
+
+**The driven harness does not, and this project already knew it.** The section above records
+a blank canvas readback on the runner, `[0,0,0]` where this machine reads `[44,6,24]`, with
+its cause marked **Unexplained** — and the check that names blankness was added here for
+exactly that reason. What the curator adds is a rate rather than a finding: across three
+`push` runs on `main`, runs 147, 148 and 149 on effectively one tree, the readback was blank
+**once in three**. That is the measurement the record could not take while CI did not reach
+this layer, and it is now the thing the rule asks to be removed. Raised as issue 82 with the
+evidence; the mechanism is this project's to choose, and if the cause proves to be the runner's
+browser rather than this code, it becomes the curator's to carry.
+
+**Answered.** Blank reading can no longer pass: every pixel check reads through compositor and
+refuses reading carrying one colour, whichever colour, and that refusal is itself checked
+against black *and* white canvas fixtures it stands up (see Driven Checks); white is second
+because runner answered with sheet of it once black alone was refused. Rate above stands as
+curator's measurement of what old reader did. Correction to finding: *four* checks had been
+comparing one blank reading against another, not one -- `pool`'s reported hash 1426046701 is
+exactly its own fold over all-zero 1200x900x4 buffer, which is what shows it. Cause on runner
+stays **unexplained**; neither Chromium here reproduces it. Browser runner drove was unpinned
+snap, and was raised for curator on issue 77; it is gone. Runner drives build lock pins since
+#98, reader has been green on both, and that is evidence against snap having been cause.
+
+## Re-audit, 2026-09-10, faces by element
+
+Audited by a curator against the rules change that splits Article X.8's faces by element —
+Noto Serif for headings and titles, Noto Sans for body and interface text, Commit Mono for
+code with its ligatures enabled. This project already ships all three and pins every byte, so
+the first clause is kept. Two things the split newly asks for: `--serif` is declared in
+`pages/shell.html` and never used, so no heading takes it; and Commit Mono is set without
+`calt`, so its ligatures — which are functional rather than decorative — do not render.
+Repository issue 118 carries both.

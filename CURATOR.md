@@ -127,10 +127,12 @@ and is not to be relied on: it silently did nothing for issues 25 and 26 while a
 setting was off, and both sat answered and open until a curator noticed. An issue you would
 decline stays open with your reasoning on it: declining is the Architect's, not yours.
 
-**`main` is green.** Read the latest `push` run. Nothing else watches it: pull request
-subscriptions do not cover `main`, and duty 2 has a curator watch only their own merge. A
-contributor's merge went red once with nobody looking, and was found by accident twenty-four
-minutes later. A red `main` is the first work of the session.
+**`main` is green.** Read the latest `push` run. The `watch` workflow reads it too, and opens an
+issue labelled `curator` when it goes red, so a red `main` reaches the read above rather than
+waiting for somebody to think of it — subscriptions do not cover `main`, and duty 2 has a curator
+watch only their own merge. Read the run anyway: the watcher reports a run that concluded, and a
+run cancelled, still queued, or never triggered concludes nothing. A red `main` is the first work
+of the session, whether an issue names it or you found it yourself.
 
 ## Duties
 
@@ -308,6 +310,7 @@ then `./koch <command>`). Every check is a module under `curator/audit/src/`, te
 | `types` | projects with `package.json` | `npm ci`, then that project's own `types` verb |
 | `driven` | projects with a `drive` verb | restore, then that verb, on that project's pin |
 | `system` | projects with a `system` verb | prints what they need installed, one per line |
+| `assets` | files named, against the store | fetches and checks each, prints its path |
 | `tests` | every project, or one | restore, then testament, on that project's pin |
 | `plan` | changed paths, nimble pins | projects to compile, as JSON; `--sweep` for weekly |
 | `scope` | changed paths | branch grammar; project paths inside prefix |
@@ -349,6 +352,16 @@ answer — put it in a check — does not apply.
 Adding a fifth is a real decision rather than a free one: each dilutes the others, since a
 document whose rules are mostly unenforced trains its readers to skim. Prefer a check wherever
 one can be written, and say plainly in the rule when none can.
+
+**A fifth was here and has left, which is the direction this list is meant to move.** *`main` is
+green* held by a curator remembering to look, and this document said so — *"nothing else watches
+it"* — while never listing it here, so it read as a duty rather than as an unenforced rule. It
+failed silently twice: a contributor's merge, found by accident twenty-four minutes later, and
+the driven job red on two `main` runs while the curator who had named that run as the leg still
+to read did not read it. It is now the `watch` workflow's, because unlike the four above it turns
+on no intent and no state GitHub keeps privately — a run's own conclusion is a fact the runner
+produces. That is the test for anything on this list: not whether a check would be awkward, but
+whether what the rule asks about is a fact something already writes down.
 
 ## Output contract
 

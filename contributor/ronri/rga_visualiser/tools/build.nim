@@ -13,8 +13,8 @@
 ##   | types    | declare, then type-check page's scripts and harness against it         |
 ##   | web      | declare, compile bridge through JS backend, type-check and emit        |
 ##   |          | TypeScript, inline faces, fold everything into one self-contained page |
-##   | drive    | fetch faces, build page, drive it and report every check it runs      |
-##   | desktop  | compile desktop front-end through `cpp` backend, into `bin/`           |
+##   | drive    | fetch faces and browser, build page, drive it, report every check      |
+##   | desktop  | fetch SDL3 and Dear ImGui, compile desktop front-end into `bin/`       |
 ##   | driven   | build desktop front-end, drive it through every scripted run, report   |
 ##   | assets   | fetch vendored faces page embeds, and verify each against its pin      |
 ##   | system   | print system packages build needs, one per line, for caller to install |
@@ -32,11 +32,11 @@
 ##     hoisted, so that order is load-bearing.
 ##
 ##   Cost: driver runs from project directory, since every path here is relative to it.
-##   Cost: `web` needs node and npm alongside Nim; `assets`, and `drive` through it, need
-##     network on cold tree and none on warm one.
+##   Cost: `web` needs node and npm alongside Nim; `assets` and `browser`, and `drive`
+##     through both, need network on cold tree and none on warm one.
 ##   Cost: `assets` and `web` need `sha256sum`, for reason `digestOf` gives.
-##   Cost: `desktop` needs system libraries `SYSTEM` names, and Dear ImGui checkout standing
-##     at `COMMIT_IMGUI`, which it refuses to build without.
+##   Cost: `desktop` needs system libraries `SYSTEM` names, and network on cold tree: it
+##     fetches SDL3 and Dear ImGui itself, and refuses to build against wrong version of either.
 ##   Cost: `driven` needs display; it borrows Xvfb where environment names none.
 
 {.experimental: "strictFuncs".}
@@ -72,10 +72,32 @@ const
     ## Desktop entry point `desktop` compiles.
   PATH_DESKTOP_BIN = BIN / "rga_visualiser"
     ## Desktop binary that verb writes; never committed, since `.gitignore` covers `bin/`.
+  ENV_FONT = "RGA_FONT"
+    ## Environment name overriding face front-end sets its interface in.
+    ##   Declared by `src/desktop/main.nim`, which says what all four are for; named again
+    ##   here rather than imported, since driver compiles no project code.
+  PATH_FONT_ABSENT = "/nonexistent/no-such-face.ttf"
+    ## Path no machine carries, so faceless run asks same question everywhere.
   DIR_IMGUI = "deps" / "imgui"
     ## Dear ImGui checkout desktop front-end compiles into itself; see `gui.PATH_IMGUI`.
-  VERSION_SDL3 = "3.2.31"
+  URL_IMGUI = "https://github.com/ocornut/imgui.git"
+    ## Origin `imgui` clones from; PROVENANCE.md records it with licence.
+  BRANCH_IMGUI = "docking"
+    ## Branch carrying `COMMIT_IMGUI`; master lacks docking `gui` asks for.
+  DIR_SDL3 = "deps" / "sdl3"
+    ## SDL3 checkout `sdl3` builds, beside Dear ImGui's and never committed (Article XI.3).
+  DIR_SDL3_BUILD = BUILD / "sdl3-build"
+    ## Directory cmake configures SDL3 into.
+  DIR_SDL3_PREFIX = BUILD / "sdl3"
+    ## Prefix SDL3 installs into, so build needs no root and writes nothing outside tree.
+  URL_SDL3 = "https://github.com/libsdl-org/SDL.git"
+    ## Origin `sdl3` clones from; PROVENANCE.md records it with licence.
+  VERSION_SDL3 = "3.2.30"
     ## Release SDL3 must report through `pkg-config`, zlib licence.
+    ##   Names tag rather than version alone: `release-` & this is `release-3.2.30`, which
+    ##   `git clone --branch` resolves, at commit `f5e5f658`. That series releases on even patch
+    ##   numbers alone, so odd one names no tag and no bytes -- which is what 3.2.31 did, and
+    ##   what repository issue 90 was.
     ##   Built from source rather than installed: Ubuntu 24.04 packages SDL2 alone, and
     ##   `apt-get install libsdl3-dev` fails on it outright. Distributions carrying package
     ##   exist, but build cannot depend on which one runs it.
@@ -109,33 +131,41 @@ const
     ##   up through it, `gl` next because every later script draws through it, and `frame`
     ##   last because it starts loop everything else has to be ready for.
   FACES = [
-    ("commit-mono-latin-400-normal.woff2",
+    ("commit-mono-latin-400-normal.woff2", "5.3.0",
       "86132abb57fc615f2ab900cde4cd9d5796e9791daf1f85d79fc933aa50b3b15c"),
-    ("noto-sans-latin-400-normal.woff2",
+    ("noto-sans-latin-400-normal.woff2", "5.3.0",
       "09aee8065d25508f23a4c3d92cd777ac869c52d93fd868a88f025d888a7937d6"),
-    ("noto-sans-latin-600-normal.woff2",
+    ("noto-sans-latin-600-normal.woff2", "5.3.0",
       "79e274470d1c5a0118eb325e2ea6f2eb2a449336d7fde1a4f20a2f32fe1119ed"),
-    ("noto-sans-math-math-400-normal.woff2",
+    ("noto-sans-math-math-400-normal.woff2", "5.2.8",
       "90b9ddbed280e379e1af4601eb1d53eee8dd467b4c9174e5fd2d7347fe180d30"),
-    ("noto-sans-symbols-2-symbols-400-normal.woff2",
+    ("noto-sans-symbols-2-symbols-400-normal.woff2", "5.3.0",
       "9c07d511848c274b5430c75bf98d1f2582680ef5f967947bfbdd06b75ca177c2"),
-    ("noto-serif-latin-400-normal.woff2",
-      "4c0cbe3eec50d260754d681c17ee2af49a43d7fd93ce42877f665fcb1a889b87"),
+    ("noto-serif-latin-600-normal.woff2", "5.3.0",
+      "abf0abc765331d7a1bbe6eb3603cf86be1cf3d1edbcf911cc2d52f78998c02d9"),
   ]
-    ## Faces page embeds, each with digest of bytes expected, all SIL Open Font License 1.1;
-    ##   origins in PROVENANCE.md.
-    ##   Digest is pin: host serves whatever it serves, and page embeds these bytes into
-    ##   artefact readers open, so wrong byte here is wrong byte shipped. Repository pins
-    ##   compilers to commits and packages to lock files; this is same pin for one fetch that
-    ##   had none (repository issue 47).
+    ## Faces page embeds, each with package version fetched and digest of bytes expected, all
+    ##   SIL Open Font License 1.1; origins in PROVENANCE.md.
+    ##   Digest is pin on bytes: page embeds these into artefact readers open, so wrong byte
+    ##   here is wrong byte shipped. Repository pins compilers to commits and packages to lock
+    ##   files; this is same pin for one fetch that had none (repository issue 47).
+    ##   Version is pin on *fetch*, and it is not decoration. Unversioned path serves whatever
+    ##   host resolves, and one of these is already past that: `noto-sans-math` 5.3.0 renamed
+    ##   this face's subset, so 5.3.0 does not carry it, and unversioned URL kept working only
+    ##   because jsDelivr fell back to 5.2.8 -- newest version still holding file asked for.
+    ##   Build that works by undocumented fallback is build nobody can repeat, so version sits
+    ##   beside digest and neither can drift from other (repository issue 111).
+    ##   Two are therefore not same version, and that is what pinning fetch rather than
+    ##   family looks like.
   SYSTEM = [
     ("curl", "fetch faces `assets` pins; build shells out to it"),
     ("coreutils", "`sha256sum` verifying those pins and `base64` inlining them"),
     ("nodejs", "run type-checker `types` drives and harness `drive` runs"),
-    ("chromium", "browser `drive` drives; harness takes its path from environment"),
-    ("git", "clone Dear ImGui and SDL3 at commits `desktop` pins them to"),
+    ("git", "clone Dear ImGui and SDL3 at commit and tag `desktop` checks them at"),
     ("cmake", "build SDL3 from source, since no package of it exists on Ubuntu 24.04"),
     ("pkg-config", "read version of that SDL3, which `desktop` checks before compiling"),
+    ("libx11-dev", "X11 headers SDL3 builds its video backend from; window is X11 one"),
+    ("libxext-dev", "X extensions that backend also needs, and without which build refuses"),
     ("libgl-dev", "OpenGL headers and loader `src/desktop/opengl.nim` binds"),
     ("zlib1g-dev", "deflate and CRC PNG export in `src/desktop/image.nim` writes"),
     ("xvfb", "display headless `--drive-*` runs push real SDL events at"),
@@ -154,7 +184,51 @@ const
     ##   -- only SDL2 -- so SDL3 is built and installed from source too. Both are pinned by
     ##   version rather than by package manager; see `COMMIT_IMGUI` and `VERSION_SDL3`.
   HOST_FACES = "https://cdn.jsdelivr.net/npm/@fontsource"
-    ## Host `assets` fetches faces from.
+    ## Host `assets` fetches page's faces from.
+  HOST_FACES_DESKTOP = "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io"
+    ## Host `assets` fetches desktop front-end's Noto faces from.
+    ##   Noto project's own release repository rather than `@fontsource`, which ships `woff2`
+    ##   and `woff` alone -- and Dear ImGui reads TrueType, through `stb_truetype`.
+  HOST_FACE_MONO = "https://cdn.jsdelivr.net/gh/eigilnikolajsen/commit-mono"
+    ## Host `assets` fetches desktop front-end's mono face from.
+    ##   Commit Mono is nobody's Noto, so it comes from its own author's repository; page's
+    ##   copy comes through `@fontsource` as `woff2`, which desktop cannot read.
+  FACES_DESKTOP = [
+    ("NotoSans-Regular.ttf", HOST_FACES_DESKTOP & "@NotoSans-v2.013/fonts/NotoSans/hinted/ttf/",
+      "61b72eacd39533f0e5916cbb458abd7b3cf870667f63f3069dac2a75aa0317a2"),
+    ("NotoSans-Bold.ttf", HOST_FACES_DESKTOP & "@NotoSans-v2.013/fonts/NotoSans/hinted/ttf/",
+      "8e6da60154ae06e5e860777c4ccf8c7338d9b96ba34c1222db40a367d79b35dc"),
+    ("NotoSerif-SemiBold.ttf",
+      HOST_FACES_DESKTOP & "@NotoSerif-v2.013/fonts/NotoSerif/hinted/ttf/",
+      "24d978fa5a0b096fc9e2f8d3f2bd7004634351d19d5b2e3be74b8ed61c68c236"),
+    ("NotoSansMath-Regular.ttf",
+      HOST_FACES_DESKTOP & "@NotoSansMath-v2.539/fonts/NotoSansMath/unhinted/ttf/",
+      "05078db8b3bc7cbbe43fc00f36998db309d6a8d145b2f8a2e665bbdf7fc4cde0"),
+    ("NotoSansSymbols2-Regular.ttf",
+      HOST_FACES_DESKTOP & "@NotoSansSymbols2-v2.006/fonts/NotoSansSymbols2/unhinted/ttf/",
+      "31854bbb3451d30b2b9ed205b7a0779a74b9464e0acdb0170fa41fa76b71d732"),
+    ("CommitMonoV142-400Regular.otf", HOST_FACE_MONO & "@1.143/src/fonts/fontlab/",
+      "0283fa3bbdb5cb2cb695946a60ea4aa2a0ceb872079304fe548188ab82ee58b2"),
+  ]
+    ## Faces desktop front-end draws with, each with prefix fetched from and digest of bytes
+    ##   expected; SIL Open Font License 1.1, origins in PROVENANCE.md.
+    ##   Six faces for three roles page draws too: `NotoSans` regular and bold for interface
+    ##   and for name labels, `NotoSerif` for headings, `CommitMono` for notation and figures,
+    ##   and two supplementary Noto faces merged into whichever of them carries notation.
+    ##   Whole prefix per face rather than tag and path apart, since faces now come from two
+    ##   repositories laid out differently, and pair of fields could name neither.
+    ##   Mono face is `otf` with CFF outlines rather than TrueType, and it is what author
+    ##   publishes; `stb_truetype` reads CFF, which was driven rather than assumed -- see
+    ##   PROVENANCE.md, Type Roles. Its file says `V142` at tag `1.143`, which is what upstream
+    ##   ships; digest is what pins bytes either way.
+    ##   Shipped rather than taken from machine, which Article X.8 asks of presentation target:
+    ##   four absolute paths into one distribution's layout were what stood here, and this
+    ##   project chose none of them (repository issue 93).
+    ##   Tag is per family rather than per repository: three families move on their own, and
+    ##   commit would pin all three to whenever one of them last moved.
+    ##   Hinting differs by family because repository ships what it ships -- `NotoSans` carries
+    ##   hinted TrueType and neither supplementary family does -- so path is stated rather than
+    ##   derived from name.
   USAGE = "Usage: nim r tools/build.nim " &
     "<declare|types|web|drive|desktop|driven|assets|system|clean>\n"
     ## Text printed on usage error.
@@ -345,7 +419,8 @@ proc checkFace(face, wanted: string) =
 
 
 proc assets() =
-  ## Fetch every face page embeds into `build/fonts`, and verify each against its pin.
+  ## Fetch every face both front-ends draw with into `build/fonts`, verifying each against
+  ## its pin.
   ##   Faces are binary, which audit cannot read, so they are never committed and this verb
   ##   is how contributor gets them (CONTRIBUTOR.md, "Pages and assets").
   ##   Face already carrying its pinned digest is left alone: verb is then idempotent, second
@@ -356,13 +431,26 @@ proc assets() =
   ##   run.
   createDir DIR_FONTS
   var wrong: seq[string]
-  for (face, digest) in FACES:
+  for (face, version, digest) in FACES:
     if fileExists(DIR_FONTS / face) and (DIR_FONTS / face).digestOf == digest:
       echo "Kept ", face, ", digest already matches"
       continue
     # Family is name less its last three parts, i.e. subset, weight and style.
     let family = face.rsplit('-', 3)[0]
-    run("curl", ["-sSLf", "-o", DIR_FONTS / face, HOST_FACES & "/" & family & "/files/" & face])
+    run("curl", [
+      "-sSLf", "-o", DIR_FONTS / face,
+      HOST_FACES & "/" & family & "@" & version & "/files/" & face,
+    ])
+    let got = (DIR_FONTS / face).digestOf
+    if got != digest:
+      wrong.add face & ": wanted `" & digest & "`, got `" & got & "`"
+    else:
+      echo "Fetched ", face, ", digest matches"
+  for (face, prefix, digest) in FACES_DESKTOP:
+    if fileExists(DIR_FONTS / face) and (DIR_FONTS / face).digestOf == digest:
+      echo "Kept ", face, ", digest already matches"
+      continue
+    run("curl", ["-sSLf", "-o", DIR_FONTS / face, prefix & face])
     let got = (DIR_FONTS / face).digestOf
     if got != digest:
       wrong.add face & ": wanted `" & digest & "`, got `" & got & "`"
@@ -371,7 +459,28 @@ proc assets() =
   if wrong.len > 0:
     raise newException(OSError,
       "Host served bytes no face is pinned to; got " & $wrong.len & " -- " & wrong.join("; "))
-  echo "Wrote ", DIR_FONTS, " (", FACES.len, " faces, every digest matched)."
+  echo "Wrote ", DIR_FONTS, " (", FACES.len + FACES_DESKTOP.len,
+    " faces, every digest matched)."
+
+
+proc browser() =
+  ## Fetch Chromium Playwright pins, unless environment names browser outright.
+  ##   Harness drives Playwright's own build by default, and `tools/drive/main.ts` says in
+  ##   what order; nothing else on machine installs it, so this satisfies its own
+  ##   precondition exactly as `assets` does for faces.
+  ##   Pin is version rather than digest: `package-lock.json` fixes `@playwright/test` and
+  ##   version fixes browser revision, but Playwright publishes no checksum for archive it
+  ##   serves. So bytes arrive on TLS alone, as compiler tarballs do, and PROVENANCE.md
+  ##   records that rather than implying pin stronger than one there is.
+  ##   Skipped where `RGA_CHROMIUM` names one: harness reads that first, so second browser
+  ##   would be fetched for nobody (Article VII.3). Wrong guess here costs fetch, never wrong
+  ##   browser -- harness resolves, and this only provides.
+  ##   Costs nothing warm: `playwright install` keeps build already at pinned revision.
+  let named = getEnv("RGA_CHROMIUM")
+  if named.len > 0:
+    echo "Kept ", named, ", named by RGA_CHROMIUM"
+    return
+  run("npx", ["playwright", "install", "chromium"])
 
 
 proc web() =
@@ -398,7 +507,7 @@ proc web() =
     scripts.add "\n" & readFile(path)
 
   var page = readFile(PATH_SHELL)
-  for (face, digest) in FACES:
+  for (face, _, digest) in FACES:
     let token = TOKEN_EMBED & face & "@"
     if token notin page: continue
     let path = DIR_FONTS / face
@@ -417,6 +526,21 @@ proc web() =
   createDir BUILD
   writeFile(PATH_PAGE, page)
   echo "Wrote ", PATH_PAGE, " (", page.len, " bytes)."
+
+
+proc imgui() =
+  ## Clone Dear ImGui at pinned commit, unless checkout already stands somewhere.
+  ##   Verb fetches what it compiles rather than asking caller to, for reason `drive` fetches
+  ##   faces: check that first wants command run by hand is check runner will not run
+  ##   (CONTRIBUTOR.md, "One command drives it").
+  ##   Leaves existing checkout alone rather than resetting it: `checkImgui` reads what is
+  ##   there next and refuses wrong commit by name, so contributor pointing this at their own
+  ##   clone is told rather than overwritten.
+  ##   `--filter=blob:none` rather than `--depth`: pinned commit is not branch head, and
+  ##   shallow clone cannot reach it. Partial clone fetches blobs that checkout needs alone.
+  if dirExists(DIR_IMGUI): return
+  run("git", ["clone", "--filter=blob:none", "--branch", BRANCH_IMGUI, URL_IMGUI, DIR_IMGUI])
+  run("git", ["-C", DIR_IMGUI, "checkout", "--detach", COMMIT_IMGUI])
 
 
 proc checkImgui() =
@@ -440,17 +564,55 @@ proc checkImgui() =
       got & "`.")
 
 
-proc checkSdl3() =
-  ## Raise unless SDL3 on this machine reports version pinned for it.
+proc versionSdl3(): string =
+  ## Read version `pkg-config` reports for SDL3, workspace prefix first; empty where none.
   ##   `pkg-config` rather than header read: SDL3 installs its own `.pc`, and that is where
   ##   version it was built as is stated rather than inferred.
-  let (written, code) = execCmdEx("pkg-config --modversion sdl3")
-  if code != 0:
+  ##   Prefix leads search path so build this drove wins over one machine happens to carry.
+  ##   Machine already carrying pinned version is served by it, which is what keeps `sdl3`
+  ##   from rebuilding what contributor installed.
+  let path_config = getCurrentDir() / DIR_SDL3_PREFIX / "lib" / "pkgconfig"
+  let (written, code) = execCmdEx(
+    "PKG_CONFIG_PATH=" & quoteShell(path_config) & ":$PKG_CONFIG_PATH pkg-config --modversion sdl3"
+  )
+  if code != 0: "" else: written.strip
+
+
+proc sdl3() =
+  ## Build SDL3 at pinned tag into `build/`, unless machine already reports that version.
+  ##   No package carries it (see `VERSION_SDL3`), so this is how machine gets one, and verb
+  ##   fetching what it compiles is same rule `assets` follows for faces.
+  ##   Installs into tree rather than over `/usr/local`: build needing root is build CI cannot
+  ##   run unattended without granting it, and prefix under `build/` is removed by `clean`
+  ##   like any other product. Cost is `-rpath` below, since loader would not find library
+  ##   there otherwise.
+  ##   `--depth 1` is safe here where it is not for Dear ImGui: pin is tag, and tag is what
+  ##   shallow clone fetches.
+  ##   Costs nothing warm: already-built prefix reports pinned version and is left alone.
+  let got = versionSdl3()
+  if got == VERSION_SDL3:
+    echo "Kept SDL3 ", VERSION_SDL3, ", already reported by pkg-config"
+    return
+  if not dirExists(DIR_SDL3):
+    run("git", [
+      "clone", "--depth", "1", "--branch", "release-" & VERSION_SDL3, URL_SDL3, DIR_SDL3,
+    ])
+  run("cmake", ["-S", DIR_SDL3, "-B", DIR_SDL3_BUILD, "-DCMAKE_BUILD_TYPE=Release"])
+  run("cmake", ["--build", DIR_SDL3_BUILD, "-j", $countProcessors()])
+  run("cmake", ["--install", DIR_SDL3_BUILD, "--prefix", getCurrentDir() / DIR_SDL3_PREFIX])
+  echo "Built SDL3 ", VERSION_SDL3, " into ", DIR_SDL3_PREFIX
+
+
+proc checkSdl3() =
+  ## Raise unless SDL3 this build reaches reports version pinned for it.
+  ##   Runs after `sdl3`, so it reads what that built or what machine already carried, and
+  ##   refuses either where version misses -- wrong SDL3 is wrong binary, for reason
+  ##   `checkImgui` gives about wrong commit.
+  let got = versionSdl3()
+  if got.len == 0:
     raise newException(OSError,
-      "No SDL3 found by `pkg-config`; build " & VERSION_SDL3 & " from source with `git clone" &
-      " --branch release-" & VERSION_SDL3 & " https://github.com/libsdl-org/SDL.git && cmake" &
-      " -S SDL -B SDL/build && cmake --build SDL/build && sudo cmake --install SDL/build`.")
-  let got = written.strip
+      "No SDL3 found by `pkg-config`, and `sdl3` did not build one; needs `cmake`, `git` and " &
+      "network, all of which `system` declares.")
   if got != VERSION_SDL3:
     raise newException(OSError,
       "SDL3 is not version pinned for it; wanted `" & VERSION_SDL3 & "`, got `" & got & "`.")
@@ -465,12 +627,27 @@ proc desktop() =
   ##   target, test and front-end wants same two.
   ##   Library flags (`-lSDL3`, `-lGL`, `-lz`) stay in modules needing them, so test binary
   ##   importing one links without repeating anything here.
+  ##   Where `sdl3` built into tree, header, library and run-time paths are added here rather
+  ##   than in those modules: which prefix holds SDL3 is this build's answer and changes with
+  ##   checkout, while `-lSDL3` is module's and does not.
+  ##   `-rpath` is absolute and derived, never written down: loader takes no relative path it
+  ##   can trust, and committing one machine's layout is what CONTRIBUTOR.md forbids. Binary is
+  ##   build product beside prefix it names, so pair moves or is rebuilt together.
   ##   No `-d:release`, unlike `web`: this binary is driven and read rather than shipped, and
   ##   every check it carries is `--drive-*` run reporting through assertions release removes.
+  sdl3()
   checkSdl3()
+  imgui()
   checkImgui()
   createDir BIN
-  run("nim", ["cpp", "--hints:off", "-o:" & PATH_DESKTOP_BIN, PATH_DESKTOP_NIM])
+  var args = @["cpp", "--hints:off", "-o:" & PATH_DESKTOP_BIN]
+  if dirExists(DIR_SDL3_PREFIX):
+    let prefix = getCurrentDir() / DIR_SDL3_PREFIX
+    args.add "--passC:-I" & prefix / "include"
+    args.add "--passL:-L" & prefix / "lib"
+    args.add "--passL:-Wl,-rpath," & prefix / "lib"
+  args.add PATH_DESKTOP_NIM
+  run("nim", args)
   echo "Wrote ", PATH_DESKTOP_BIN, "."
 
 
@@ -512,6 +689,9 @@ proc driven() =
   ##   Exit follows checks: non-zero where any failed, so one command is whole answer.
   ##   Every failure is reported before exit rather than first one raising: run takes seconds,
   ##   and knowing which three broke beats knowing that one did.
+  ##   Fetches faces first, for reason `drive` does: front-end draws in faces this project
+  ##   ships, and run against absent one checks nothing anybody would ship.
+  assets()
   desktop()
   var failed: seq[string]
   for drive in DRIVES:
@@ -520,6 +700,14 @@ proc driven() =
   for tab in tabsHelp():
     echo "== --drive-help:", tab
     if not reported(["--hidden", "--drive-help:" & tab]): failed.add "drive-help:" & tab
+  # Machine carrying no face, driven once, since that is machine this had never been run on.
+  #   `RGA_FONT` names path no machine has rather than one this machine happens to lack, so
+  #   run asks same question everywhere. Interface face alone is hidden: it is one Dear ImGui
+  #   asserted on, and other three are reached through same code.
+  echo "== --drive-keys, with no face to load"
+  putEnv(ENV_FONT, PATH_FONT_ABSENT)
+  if not reported(["--hidden", "--drive-keys"]): failed.add "drive-keys without face"
+  delEnv(ENV_FONT)
   if failed.len > 0:
     raise newException(OSError,
       "Driven runs failed; got " & $failed.len & " -- " & failed.join(", ") & ".")
@@ -536,23 +724,21 @@ proc drive() =
   ##   step and stops at embedding, which is one line to prevent (repository issue 47).
   ##   `web` keeps refusing absent face by name instead, since caller reaching for it directly
   ##   is asking to build page rather than to be given one.
-  ##   Costs nothing warm: `assets` skips every face already carrying its pinned digest.
-  ##   Drives desktop front-end too, where machine carries what it needs: both front-ends draw
-  ##   same scene from same core, and check that runs on one alone is check nobody runs on
-  ##   other. `driven` alone drives desktop by itself.
-  ##   Where those libraries are absent it says so by name and stops there rather than failing:
-  ##   SDL3 has no package on every distribution (see `VERSION_SDL3`), so runner cannot carry
-  ##   it, and browser half is whole answer that machine can give. Skip is printed rather than
-  ##   silent, since check nobody is told was skipped is check nobody knows is missing.
+  ##   Fetches browser for same reason it fetches faces: harness drives Playwright's own
+  ##   pinned build by default, and nothing else on machine installs it.
+  ##   Costs nothing warm: `assets` skips every face already carrying its pinned digest, and
+  ##   `browser` skips build already at pinned revision.
+  ##   Drives desktop front-end too, and no longer conditionally: both front-ends draw same
+  ##   scene from same core, and check that runs on one machine alone is check nobody runs.
+  ##   `driven` alone drives desktop by itself.
+  ##   Skip is gone, and that is repository issue 91 ruled: `0 finding(s)` over 156 checks and
+  ##   over 138 were two claims wearing one sentence, which rule that check gives same verdict
+  ##   on same code forbids. Absent dependency now fails by name instead, and `desktop` fetches
+  ##   every one this project can fetch, so failing means machine lacks what `system` declares.
   assets()
   web()
+  browser()
   run("node", [BUILD / "drive" / "main.js"])
-  try:
-    checkSdl3()
-    checkImgui()
-  except OSError as e:
-    echo "\nSkipped desktop scripted runs -- ", e.msg
-    return
   driven()
 
 proc clean() =

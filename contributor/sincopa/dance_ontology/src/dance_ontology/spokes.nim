@@ -218,7 +218,7 @@ func labelAt*(spoke: Spoke): (int, int) =
 const
   COLOUR_QUIET = "var(--dim, #6b716e)"
     ## Ink for name whose line has no one ink of its own to lend it.
-  LABEL_FONT = "font: " & $LABEL_SIZE & "px ui-sans-serif, system-ui, sans-serif"
+  LABEL_FONT = "font: " & $LABEL_SIZE & "px 'Noto Sans', ui-sans-serif, system-ui, sans-serif"
 
   # Arm inks come from `map.armColour` and label plates from
   # `map.stack`, which this drawing shares rather than repeats: two views

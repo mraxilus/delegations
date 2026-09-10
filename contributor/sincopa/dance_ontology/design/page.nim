@@ -31,8 +31,9 @@ const STYLE* = """<style>
   --faint: #948d85; --rule: #ddd8d0; --rule-strong: #c2bbb0; --wash: #f1eee9;
   --left: #3d7fd0; --right: #d0763d;
   --left-deep: #133a72; --right-deep: #723a13;
-  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
-  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --serif: "Noto Serif", Georgia, "Times New Roman", serif;
+  --sans: "Noto Sans", ui-sans-serif, system-ui, sans-serif;
+  --mono: "Commit Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --paper: #16151a; --card: #1e1d24; --ink: #ece9e4; --dim: #9a948c;

@@ -10,6 +10,7 @@
 
 import type { Page } from '@playwright/test';
 import { settleCamera } from './camera';
+import { readCanvas, settleCanvas } from './canvas';
 import { report } from './report';
 
 /** Kinds preset must carry, each of which draws something. */
@@ -97,48 +98,37 @@ export async function driveDemo(page: Page, objects: number): Promise<void> {
  *  camera most points are off screen and count row must say so.
  */
 export async function driveCulling(page: Page): Promise<void> {
-  const readings = await page.evaluate(async () => {
-    const wait = (milliseconds: number): Promise<void> =>
-      new Promise((done) => setTimeout(done, milliseconds));
-    const settled = async (): Promise<number | undefined> => {
-      let last;
-      for (let i = 0; i < 30; i += 1) {
-        await wait(150);
-        if (window.__drawn_placed === last) return last;
-        last = window.__drawn_placed;
-      }
-      return last;
-    };
-    const seen = [];
-    const moves = [
-      (): void => { /* Demo's own camera. */ },
-      (): void => nimCameraDolly(0.3),
-      (): void => nimCameraOrbit(0.9, 0.3),
-    ];
-    for (const move of moves) {
-      move();
-      nimSetCulling(true);
-      const hash_on = await settled();
-      const on = {
-        hash: hash_on, points: count_phase['points'] ?? 0, off: count_points_culled,
-      };
-      nimSetCulling(false);
-      const hash_off = await settled();
-      const off = {
-        hash: hash_off, points: count_phase['points'] ?? 0, off: count_points_culled,
-      };
-      seen.push({ on, off });
-    }
-    nimSetCulling(true);
-    return seen;
-  });
+  /** How many camera moves are asked at, and which is which. */
+  const MOVES = 3;
+  const readings: Array<{
+    on: { mark: number; points: number; off: number };
+    off: { mark: number; points: number; off: number };
+  }> = [];
+  const counted = async (): Promise<{ points: number; off: number }> => page.evaluate(() => ({
+    points: count_phase['points'] ?? 0, off: count_points_culled,
+  }));
+  for (let move = 0; move < MOVES; move += 1) {
+    await page.evaluate((given) => {
+      // Demo's own camera first, then closer, then round: each shows different share of scene.
+      if (given === 1) nimCameraDolly(0.3);
+      else if (given === 2) nimCameraOrbit(0.9, 0.3);
+    }, move);
+    await page.evaluate(() => nimSetCulling(true));
+    const shown_on = await settleCanvas(page);
+    const on = { mark: shown_on.mark, ...(await counted()) };
+    await page.evaluate(() => nimSetCulling(false));
+    const shown_off = await settleCanvas(page);
+    const off = { mark: shown_off.mark, ...(await counted()) };
+    readings.push({ on, off });
+  }
+  await page.evaluate(() => nimSetCulling(true));
   report(
     'points outside the view are skipped before emitting, and not one pixel changes',
-    readings.every((one) => one.on.hash === one.off.hash && one.on.hash !== undefined &&
+    readings.every((one) => one.on.mark === one.off.mark &&
       one.on.points + one.on.off === one.off.points && one.off.off === 0) &&
       readings.some((one) => one.on.off > 0),
     readings.map((one) => `${one.on.points} of ${one.on.points + one.on.off} drawn, ` +
-      `${one.on.hash === one.off.hash ? 'same' : 'different'} pixels`).join('; '),
+      `${one.on.mark === one.off.mark ? 'same' : 'different'} pixels`).join('; '),
   );
 }
 
@@ -147,8 +137,8 @@ export async function driveCulling(page: Page): Promise<void> {
  *  Eye is set on line from planet through moon, beyond moon, so moon sits at middle of frame
  *  in front of planet's disc. Pointer sampled across disc must never hover anything deeper
  *  than planet: stars behind it used to win on distance to their own centres. Pixel at moon's
- *  centre, read inside frame that drew it, must be moon's whether moon alone is selected or
- *  planet with it: overlay drawn with depth off buried moon under planet selected after it.
+ *  centre must be moon's whether moon alone is selected or planet with it: overlay drawn with
+ *  depth off buried moon under planet selected after it.
  */
 export async function driveOccluded(page: Page): Promise<void> {
   const occluded = await page.evaluate(async () => {
@@ -204,44 +194,33 @@ export async function driveOccluded(page: Page): Promise<void> {
       }
     }
 
-    const gl = canvas.getContext('webgl');
-    const pixel = new Uint8Array(4);
-    const scope = globalThis as unknown as { renderFrame: typeof renderFrame };
-    const drawn = scope.renderFrame;
-    scope.renderFrame = function (now_seconds: number): void {
-      drawn(now_seconds);
-      gl?.readPixels(
-        Math.round(centre[0] ?? 0), canvas.height - Math.round(centre[1] ?? 0), 1, 1,
-        gl.RGBA, gl.UNSIGNED_BYTE, pixel,
-      );
-      window.__pixel_moon = Array.from(pixel);
-    };
-    nimSelectClear();
-    nimSelectToggle(moon);
-    await wait(400);
-    const alone = window.__pixel_moon ?? [];
-    nimSelectToggle(planet);
-    await wait(400);
-    const both = window.__pixel_moon ?? [];
-    nimSelectClear();
-    await wait(400);
-    scope.renderFrame = drawn;
-
-    const found = {
-      radius, sampled, deeper, alone, both,
+    return {
+      radius, sampled, deeper, planet, moon, before,
+      spot: [Math.round(centre[0] ?? 0), Math.round(centre[1] ?? 0)] as [number, number],
       is_moon_in_front: depthOf(moon) < depthOf(planet),
       is_moon_at_centre: Math.hypot(
         ...Array.from(nimAnchorScreen(moon, width, height)).slice(0, 2)
           .map((v, i) => v - (centre[i] ?? 0)),
       ) < 1,
     };
-    nimSetCameraPivot(before.pivot[0] ?? 0, before.pivot[1] ?? 0, before.pivot[2] ?? 0);
-    nimSetCameraDistance(before.distance);
-    nimSetCameraAzimuth(before.azimuth);
-    nimSetCameraElevation(before.elevation);
-    await wait(200);
-    return found;
   });
+
+  // Selection pulses, so canvas never settles here: each reading is taken at fixed wait after
+  //   its own edit, as this check has always taken them, rather than waited into stillness.
+  await page.evaluate((given) => { nimSelectClear(); nimSelectToggle(given); }, occluded.moon);
+  await page.waitForTimeout(400);
+  const alone = (await readCanvas(page, [occluded.spot])).spots[0] ?? [];
+  await page.evaluate((given) => nimSelectToggle(given), occluded.planet);
+  await page.waitForTimeout(400);
+  const both = (await readCanvas(page, [occluded.spot])).spots[0] ?? [];
+  await page.evaluate((given) => {
+    nimSelectClear();
+    nimSetCameraPivot(given.pivot[0] ?? 0, given.pivot[1] ?? 0, given.pivot[2] ?? 0);
+    nimSetCameraDistance(given.distance);
+    nimSetCameraAzimuth(given.azimuth);
+    nimSetCameraElevation(given.elevation);
+  }, occluded.before);
+  await page.waitForTimeout(200);
 
   report(
     "nothing behind a planet's disc is hovered through it",
@@ -252,26 +231,19 @@ export async function driveOccluded(page: Page): Promise<void> {
   );
   report(
     'the canvas gave a pixel at all, rather than a blank readback',
-    occluded.alone.slice(0, 3).some((v) => v > 0),
-    `pixel at moon ${JSON.stringify(occluded.alone.slice(0, 3))}; page's darkest surface is ` +
+    alone.slice(0, 3).some((v) => v > 0),
+    `pixel at moon ${JSON.stringify(alone.slice(0, 3))}; page's darkest surface is ` +
       'rgb(16,19,24), so all zero is readback of nothing rather than dark scene',
   );
   report(
     'a selected moon in front of a selected planet is drawn in front of it',
     occluded.is_moon_in_front && occluded.is_moon_at_centre &&
-      occluded.alone.every((v, i) => Math.abs(v - (occluded.both[i] ?? 0)) <= 2),
-    `pixel at moon ${JSON.stringify(occluded.alone.slice(0, 3))} alone, ` +
-      `${JSON.stringify(occluded.both.slice(0, 3))} with its planet selected too`,
+      alone.every((v, i) => Math.abs(v - (both[i] ?? 0)) <= 2),
+    `pixel at moon ${JSON.stringify(alone.slice(0, 3))} alone, ` +
+      `${JSON.stringify(both.slice(0, 3))} with its planet selected too`,
   );
   await page.keyboard.press('Home');
   await settleCamera(page);
-}
-
-declare global {
-  interface Window {
-    /** Colour of pixel at planet's centre, read inside frame that drew it. */
-    __pixel_moon?: number[];
-  }
 }
 
 /** Drive six wheel notches at centre and off centre, and assert what each keeps.
