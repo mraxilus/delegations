@@ -345,7 +345,7 @@ that fire only where check cannot be set up.
   **Runner reaches this layer, and both halves of it.** `driven` job drives page on every push
   since issue 47 was ruled, so green there is runner's word rather than someone's report. Desktop
   half was skipped there for want of SDL3 until `desktop` began fetching and building it, which
-  repository issue 91 ruled: all 157 checks now answer for themselves on runner rather than 139
+  repository issue 91 ruled: all 161 checks now answer for themselves on runner rather than 139
   of them.
   **Unmeasured**: figures above are this container's, software-rendered, and say more about
   swiftshader than about any GPU. Bands, not figures, are what checks assert.
@@ -642,7 +642,7 @@ zlib licence.
   builds apart. Repository issue 90.
   **Moved by rebuilding, not by editing the line.** Verified 2026-09-09: SDL3 built from
   `release-3.2.30` and installed, then `bin/` and `nimcache/` removed and the desktop front-end
-  compiled from cold against its headers, then all 12 scripted runs driven — 18 of 18 pass,
+  compiled from cold against its headers, then all 13 scripted runs driven — 22 of 22 pass,
   29.9 s for the whole of it on this container, 4 cores, software GL. The mirrored event
   constants below assert against real headers at compile time, so a release that had moved them
   would have failed the build rather than the checks; it did not.
@@ -689,7 +689,7 @@ through C and JS.
   not, and scene looks empty at that count. 300 is.
   Vocabulary shows in that frame rather than only in source: panel says *objects (5 of 5040)*
   and *hold still over the pivot*.
-  Verified by driving: every scripted run reaches its verdict, 18 checks over 12 runs, in 24
+  Verified by driving: every scripted run reaches its verdict, 22 checks over 13 runs, in 24
   seconds under software GL, 2026-09-09. See Desktop Driven Checks below.
   **Unverified**: frame times are unmeasured, and no human has seen this on real graphics
   hardware -- that run was software GL, which reported no multisampled visual, so thin lines
@@ -703,14 +703,15 @@ directly. Entry point carries five scripted runs -- `--drive-keys`, `--drive-sky
 `--drive-undo`, `--drive-select`, `--drive-drag` -- plus `--drive-help:<tab>`, one per tab.
 Each pushes real events through SDL's own queue rather than calling handler, so what it
 exercises is wiring.
-  18 checks over 12 runs -- 12 `report` sites, of which the help one fires once per tab. Held key
-  slides view and keeps its height; drag across bare sky turns view and builds nothing; undo takes
-  construction back *and* returns view to where it built from; choice menu does not swallow drag
-  after it; every help tab opens with rows in it.
-  Counted by running rather than by reading: this said 19 until 2026-09-09, which is 12 sites plus
-  7 tabs with the help site counted twice.
-  **These 18 run wherever `drive` runs, which is what repository issue 91 ruled.** They ran here
-  and nowhere else while `drive` skipped them for want of SDL3, and `0 finding(s)` over 157 checks
+  22 checks over 13 runs -- 13 `report` sites, of which the help one fires once per tab and the
+  faceless one only in the run driven without a face. Held key slides view and keeps its height;
+  drag across bare sky turns view and builds nothing; undo takes construction back *and* returns
+  view to where it built from; choice menu does not swallow drag after it; every help tab opens
+  with rows in it; and a run whose face is missing still does its scripted work.
+  Counted by running rather than by reading: this said 19 until 2026-09-09, which is sites plus
+  tabs with the help site counted twice.
+  **These 22 run wherever `drive` runs, which is what repository issue 91 ruled.** They ran here
+  and nowhere else while `drive` skipped them for want of SDL3, and `0 finding(s)` over 161 checks
   and over 139 were two claims wearing one sentence. `desktop` now fetches and builds both
   libraries itself, so the skip is gone and an absent dependency fails by name.
   Two things had to move first, and both were found by a second machine finally trying. SDL3's pin
@@ -719,17 +720,26 @@ exercises is wiring.
   aborts every run inside Dear ImGui rather than degrading -- `fonts-noto-core` is declared for
   that reason now, and the abort itself is issue 93.
 
-**Dear ImGui aborts on absent face, so graceful path never runs.** `main.nim` means to warn --
-*"Font `...` was not loaded; operator notation will draw as boxes"* -- but `AddFontFromFileTTF`
-asserts inside `imgui_draw.cpp` before that line is reached, and process takes SIGABRT. Measured
-2026-09-09 on container carrying SDL3 and Dear ImGui but no Noto packages: 12 of 12 runs aborted,
-`driven` reported all twelve failed, exit 1; with `fonts-noto-core` installed, same binary passes
-18 of 18. Declaration fixes symptom; abort is repository issue 93, since fix is check before
-handing path to Dear ImGui and that earns test of its own.
-  Naming those paths in committed source deviates from CONTRIBUTOR.md, which forbids it, and from
-  Article X.8, which has presentation target ship faces it draws with -- browser half embeds six
-  pinned by digest. They are `{.define.}` constants, so build can move them, but default is one
-  distribution's layout. Recorded as deviation rather than defended; same issue carries it.
+**An absent face is a finding now, and it used to be an abort.** Dear ImGui asserts inside
+`AddFontFromFileTTF` where it cannot open a path, and an assertion is SIGABRT rather than a
+report. The shim already skipped a face whose path is empty and `main.nim` already carried a
+warning line, so the graceful path existed on both sides and nothing joined them: whatever was
+declared went straight to Dear ImGui, and the warning was unreachable. Measured 2026-09-09 on a
+container carrying SDL3 and Dear ImGui but no Noto packages: **12 of 12 runs aborted**, exit 1.
+  `faceAt` resolves each of the four to empty where the file is not there, and says which face is
+  missing, which variable names it and what to install. The interface draws in what is left.
+  **Locations come from the environment first**, `RGA_FONT` and its three siblings, falling back
+  to what the declaration names -- which is the shape CONTRIBUTOR.md asks of any machine path, and
+  what lets the case be driven at all.
+  Verified by driving, committed in that order: `driven` runs `--drive-keys` once with `RGA_FONT`
+  naming a path no machine carries. Before the fix that run aborts and the verb reports
+  `drive-keys without face`, exit 1; after it, the run reports the finding and passes, and gains a
+  verdict of its own -- focus moved and the scene stands while Dear ImGui had no face, so the
+  claim is that the scripted work happened rather than that nothing crashed.
+  **The four defaults are still one distribution's layout**, which Article X.8 speaks against --
+  the browser half embeds six faces pinned by digest and this half trusts a package. An override
+  makes that survivable rather than settled, and the choice between shipping pinned faces and
+  keeping a declared system one is open on repository issue 93.
 
 **Two defaults favoured silent pass, and both are gone.** This is what running them found, and
 neither was reachable by reading.
@@ -756,13 +766,13 @@ tab added there is driven without being listed twice (Article I.4).
   clones, SDL3 configured, built and installed, the binary compiled, and twelve runs. Warm:
   **29.3 s**, since a prefix already reporting the pinned version is kept rather than rebuilt.
   **On the runner, measured rather than predicted**: the `driven` step went from **215 s** with
-  the browser half alone (139 checks, run 34412019616) to **411 s** with both (157 checks, run
+  the browser half alone (139 checks, run 34412019616) to **411 s** with both (157 checks then, run
   34414563854), so the desktop half costs about **3 m 15 s** there against 1 m 27 s here. One run
   against one run on the same image and the same day, which is a pair rather than a rate.
   Where that lands against the rest of the job is the curator's to weigh; repository issue 79
   carries what the job already spends.
 
-*Checked.* Verified by running: 18 of 18 pass under Xvfb on software GL, 2026-09-09, from a tree
+*Checked.* Verified by running: 22 of 22 pass under Xvfb on software GL, 2026-09-09, from a tree
 carrying neither checkout and no SDL3 anywhere on the machine -- `driven` fetched and built both
 and drove them. Verified idempotent by running it twice: second run kept the prefix and rebuilt
 nothing. Verified by

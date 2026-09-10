@@ -72,6 +72,12 @@ const
     ## Desktop entry point `desktop` compiles.
   PATH_DESKTOP_BIN = BIN / "rga_visualiser"
     ## Desktop binary that verb writes; never committed, since `.gitignore` covers `bin/`.
+  ENV_FONT = "RGA_FONT"
+    ## Environment name overriding face front-end sets its interface in.
+    ##   Declared by `src/desktop/main.nim`, which says what all four are for; named again
+    ##   here rather than imported, since driver compiles no project code.
+  PATH_FONT_ABSENT = "/nonexistent/no-such-face.ttf"
+    ## Path no machine carries, so faceless run asks same question everywhere.
   DIR_IMGUI = "deps" / "imgui"
     ## Dear ImGui checkout desktop front-end compiles into itself; see `gui.PATH_IMGUI`.
   URL_IMGUI = "https://github.com/ocornut/imgui.git"
@@ -626,6 +632,14 @@ proc driven() =
   for tab in tabsHelp():
     echo "== --drive-help:", tab
     if not reported(["--hidden", "--drive-help:" & tab]): failed.add "drive-help:" & tab
+  # Machine carrying no face, driven once, since that is machine this had never been run on.
+  #   `RGA_FONT` names path no machine has rather than one this machine happens to lack, so
+  #   run asks same question everywhere. Interface face alone is hidden: it is one Dear ImGui
+  #   asserted on, and other three are reached through same code.
+  echo "== --drive-keys, with no face to load"
+  putEnv(ENV_FONT, PATH_FONT_ABSENT)
+  if not reported(["--hidden", "--drive-keys"]): failed.add "drive-keys without face"
+  delEnv(ENV_FONT)
   if failed.len > 0:
     raise newException(OSError,
       "Driven runs failed; got " & $failed.len & " -- " & failed.join(", ") & ".")
