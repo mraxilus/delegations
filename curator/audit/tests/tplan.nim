@@ -144,8 +144,9 @@ suite "Plan":
     # Repository issue 78: koch held every project to declaration it kept only in prose.
     #   No project here declares anything, so what comes back is koch's own alone -- which is
     #   what makes this readable without running any project's verb.
-    check repositorySystem(".", goodTree(), newSeq[string]()) == @["curl", "git"]
-    check KOCH_SYSTEM.len == 2
+    check repositorySystem(".", goodTree(), newSeq[string]()) ==
+      @["coreutils", "curl", "git", "tar"]
+    check KOCH_SYSTEM.len == 4
     for (package, why) in KOCH_SYSTEM:
       check package.len > 0
       check why.len > 0  # reason in field outlives one in comment (CONTRIBUTOR.md)

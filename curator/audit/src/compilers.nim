@@ -16,14 +16,17 @@
 ##   Rejected: directory developer populates by hand, which leaves defect for anyone who has
 ##     not; `choosenim` layout, second convention to maintain that cannot serve commit pin.
 ##   Cost: checker reaches network and may build compiler, once per pin, cached after.
-##   Cost: download is trusted on TLS alone, with no checksum or signature verified, since
-##     Nim publishes none in form worth parsing. One place repository trusts what it
-##     otherwise pins.
+##   Cost: tarball is checked against digest nim-lang.org publishes beside it, which is served
+##     by same host over same TLS, so it catches truncated, mirrored or swapped file and not
+##     compromised nim-lang.org. Signature would answer that and none is published: no `.asc`
+##     exists for these tarballs, read rather than assumed. Header said before that nothing
+##     publishable existed to parse, and that was simply wrong -- `<url>.sha256` is exactly
+##     `sha256sum` output, for every release checked.
 ##   Cost: cached toolchain is few hundred megabytes and nothing prunes them.
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os]
+import std/[options, os, osproc, strutils]
 import ./[findings, projects, toolchain]
 
 
@@ -34,6 +37,10 @@ const
     ## Default cache, under home and beside Nim's own `~/.cache/nim`.
   DOWNLOAD* = "https://nim-lang.org/download/nim-"
     ## Prefix of published release tarball.
+  DIGEST* = ".sha256"
+    ## Suffix of digest nim-lang.org publishes beside each tarball, in `sha256sum` format,
+    ## i.e. digest, two spaces, file name. Read from site rather than assumed: same
+    ## sidecar exists for 2.2.4 and 2.2.12, and no `.asc` is published for either.
   SOURCE* = "https://github.com/nim-lang/Nim"
     ## Repository built from when no tarball serves pin.
   PLATFORMS* = [
@@ -63,6 +70,27 @@ func releaseUrl*(version, platform: string): string =
   DOWNLOAD & version & "-" & platform & ".tar.xz"
 
 
+func digestUrl*(version, platform: string): string =
+  ## Read address of digest published beside that tarball.
+  releaseUrl(version, platform) & DIGEST
+
+
+func pinnedDigest*(published: string): string =
+  ## Read digest out of what that address serves; empty when text is not one.
+  ##   Sidecar is `sha256sum` output, so digest is first field and name is second. Only
+  ##   first field is read, and only when it is exactly sixty-four lowercase hex digits:
+  ##   page that answered with redirect, error document or nothing at all would
+  ##   otherwise arrive as digest that never matches, reporting mismatch where truth is
+  ##   that nothing was published.
+  let first = published.strip.split(Whitespace)
+  if first.len == 0: return ""
+  let candidate = first[0]
+  if candidate.len != 64: return ""
+  for c in candidate:
+    if c notin {'0' .. '9', 'a' .. 'f'}: return ""
+  candidate
+
+
 func cacheRoot*(override: string): string =
   ## Read cache directory toolchains live under, override winning when set.
   if override.len > 0: override else: getHomeDir() / CACHE_DIR
@@ -82,16 +110,41 @@ func missing*(dir, pin, bin: string): seq[Finding] =
   )]
 
 
+proc digestOf*(path: string): string =
+  ## Read file's SHA-256, as `sha256sum` writes it; empty when it cannot be read.
+  ##   Shelled out rather than computed here for reason `std/sha1` is rejected: it is
+  ##   deprecated and too weak, and digest of this strength lives in `checksums`, which is
+  ##   package this project does not take (audit is standard library alone).
+  let (written, code) = execCmdEx("sha256sum " & quoteShell(path))
+  if code != 0: return ""
+  pinnedDigest(written)
+
+
 proc fetchRelease(version, platform, dir: string): bool =
-  ## Download published tarball and unpack it as `dir`; false when any step fails.
+  ## Download published tarball, check it against digest published beside it, and unpack it
+  ## as `dir`; false when any step fails.
   ##   Tarball holds one top folder, `nim-<version>`, which becomes `dir` itself so every
   ##   pin has same shape whether fetched or built.
+  ##   Digest is fetched from same host over same TLS as tarball, so what it defends against
+  ##   is truncated, mirrored or swapped file, never nim-lang.org itself. That is weaker than
+  ##   signature and is what is published: no `.asc` exists for these tarballs, checked
+  ##   rather than assumed. Repository pins every other fetch it makes; this is that pin for
+  ##   one that had none, and its limit is stated instead of overclaimed.
   let work = dir & ".fetching"
   removeDir(work)
   createDir(work)
   defer: removeDir(work)
   let archive = work / "nim.tar.xz"
   if runIn(work, "curl", ["-sSLf", "-o", archive, releaseUrl(version, platform)]) != 0:
+    return false
+  let sidecar = work / "nim.tar.xz.sha256"
+  if runIn(work, "curl", ["-sSLf", "-o", sidecar, digestUrl(version, platform)]) != 0:
+    echo "No digest published at " & digestUrl(version, platform) & "; refusing tarball."
+    return false
+  let (wanted, got) = (pinnedDigest(readFile(sidecar)), archive.digestOf)
+  if wanted.len == 0 or wanted != got:
+    echo "Digest of tarball does not match published one; wanted `" & wanted &
+      "`, got `" & got & "`."
     return false
   if runIn(work, "tar", ["xf", archive]) != 0: return false
   let unpacked = work / ("nim-" & version)
