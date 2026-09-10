@@ -383,13 +383,22 @@ proc parseOptions(): Options =
 #[ Frame Assembly ]#
 
 proc faceAt(name_environment, path_declared: string): string =
-  ## Read face's location from environment, falling back to what declaration names.
+  ## Read face's location from environment, falling back to declaration; empty where absent.
   ##   Environment first because committed default is one distribution's layout, and
   ##   CONTRIBUTOR.md admits such path only where it is fallback rather than only answer:
   ##   machine keeping its faces elsewhere says so rather than editing source.
   ##   Empty variable counts as unset, since exporting nothing is how shell clears one.
+  ##   Empty result rather than raising: `gui.init` skips face whose path is empty, so
+  ##   interface draws in what is left and run reaches its verdict. Dear ImGui asserts on
+  ##   path it cannot open, and assertion is abort rather than finding, so path it cannot
+  ##   open must not reach it (repository issue 93).
+  ##   Says which face and what to install, since finding naming neither is one nobody acts
+  ##   on.
   let named = getEnv(name_environment)
-  if named.len > 0: named else: path_declared
+  let path = if named.len > 0: named else: path_declared
+  if fileExists(path): return path
+  echo &"No face at `{path}`; set `{name_environment}`, or install `fonts-noto-core`."
+  ""
 
 
 proc secondsNow(): float =
@@ -1533,6 +1542,16 @@ proc verdictDriven(
     if not is_passing: inc count_failed
     echo (if is_passing: "  ok   " else: " FAIL  ") & name & " -- " & detail
 
+  # Face nobody installed is its own verdict, and fires only in run driven without one.
+  #   Claim is that run did its scripted work anyway: focus moved, which is what
+  #   `--drive-keys` is for, while Dear ImGui had no face to set interface in.
+  if not gui.isFontLoaded():
+    report(
+      "a face nobody installed leaves the run standing, and names itself",
+      interaction.index_focus.isSome and scene.bound > 0,
+      &"focus {interaction.index_focus}, {scene.bound} objects, no face loaded",
+    )
+
   if options.is_key_driven:
     # Check traversal, selection and every kind of camera motion.
     #   Through queue and past Dear ImGui's navigation.
@@ -2014,8 +2033,10 @@ proc main() =
     SIZE_FONT, path_font_label.cstring, cfloat(HEIGHT_MARKER_LABEL),
   ), "Dear ImGui must start; got `false` from `gui.init`."
   defer: gui.shutdown()
-  if not gui.isFontLoaded():
-    echo &"Font `{path_font}` was not loaded; operator notation will draw as boxes."
+  # Second line only where there was file to load: absent one is already reported by
+  #   `faceAt`, with what to do about it, and repeating it with empty path says less.
+  if not gui.isFontLoaded() and path_font.len > 0:
+    echo &"Face `{path_font}` would not load; operator notation will draw as boxes."
 
   let renderer = initRenderer()
   var
