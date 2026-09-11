@@ -164,13 +164,21 @@ proc engine() =
   ##     in library's fifty files needs generating. Cost: build flags are this file's
   ##     rather than upstream's, and `-O2 -std=c17` is what upstream's release build sets.
   ##   Rebuilt only where library is absent, since fifty files cost twenty seconds.
+  ##   Cloned whole rather than shallow at ref, which `rga_visualiser` must do for SDL3 and
+  ##     keeps tag beside commit for: engine's history is 41 commits and 4.6 MB, so whole
+  ##     clone costs nothing and reaches any commit without ref to fetch. Pin is therefore
+  ##     commit alone, with no tag beside it, and that is measurement rather than taste.
   for (name, url, commit, _, _) in SOURCES:
     let into = DIR_DEPS / name
     if not dirExists(into):
       createDir(DIR_DEPS)
       run("git", ["clone", "--quiet", url, into])
       run("git", ["-C", into, "checkout", "--quiet", commit])
-    let got = execCmdEx("git -C " & into & " rev-parse HEAD").output.strip
+    let (written, code) = execCmdEx("git -C " & quoteShell(into) & " rev-parse HEAD")
+    if code != 0:
+      raise newException(OSError,
+        "Cannot read commit of `" & into & "`; got exit `" & $code & "`.")
+    let got = written.strip
     if got != commit:
       raise newException(OSError,
         "Clone of `" & name & "` stands at `" & got & "`, not pinned `" & commit & "`.")
