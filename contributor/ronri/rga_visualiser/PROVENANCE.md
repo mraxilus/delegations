@@ -879,14 +879,17 @@ directly. Entry point carries five scripted runs -- `--drive-keys`, `--drive-sky
 `--drive-undo`, `--drive-select`, `--drive-drag` -- plus `--drive-help:<tab>`, one per tab.
 Each pushes real events through SDL's own queue rather than calling handler, so what it
 exercises is wiring.
-  22 checks over 13 runs -- 13 `report` sites, of which the help one fires once per tab and the
-  faceless one only in the run driven without a face. Held key slides view and keeps its height;
-  drag across bare sky turns view and builds nothing; undo takes construction back *and* returns
-  view to where it built from; choice menu does not swallow drag after it; every help tab opens
-  with rows in it; and a run whose face is missing still does its scripted work.
-  Counted by running rather than by reading: this said 19 until 2026-09-09, which is sites plus
-  tabs with the help site counted twice.
-  **These 22 run wherever `drive` runs, which is what repository issue 91 ruled.** They ran here
+  39 checks over 14 runs -- 15 `report` sites, of which most fire in every run that reaches
+  them. Held key slides view and keeps its height; drag across bare sky turns view and builds
+  nothing; undo takes construction back *and* returns view to where it built from; choice menu
+  does not swallow drag after it; every help tab opens with rows in it; a run whose face is
+  missing still does its scripted work; every type role is drawn in a face of its own; and a
+  scene filled to capacity leaves what follows its list on the window.
+  Counted by running rather than by reading, and twice now that reading was wrong: this said 19
+  until 2026-09-09, which is sites plus tabs with the help site counted twice, and then 22 until
+  2026-09-11, which stopped being true the day the type-role verdict began firing in every run
+  with a face. `drive`'s own output is the count: `grep -c "^  ok"` over `driven`.
+  **These 39 run wherever `drive` runs, which is what repository issue 91 ruled.** They ran here
   and nowhere else while `drive` skipped them for want of SDL3, and `0 finding(s)` over 161 checks
   and over 139 were two claims wearing one sentence. `desktop` now fetches and builds both
   libraries itself, so the skip is gone and an absent dependency fails by name.
@@ -3199,7 +3202,18 @@ stays **unexplained**; neither Chromium here reproduces it. Browser runner drove
 snap, and was raised for curator on issue 77; it is gone. Runner drives build lock pins since
 #98, reader has been green on both, and that is evidence against snap having been cause.
 
-## Re-audit, 2026-09-10, faces by element
+**One driven check was still asking the machine rather than the code, and it is fixed.**
+`driveRendered` slept 1200 ms and then required twenty timed frames, so its verdict was how
+many frames that machine fitted into a fixed span. It drew 27 idle and **19 with a `koch ci`
+running beside it** — same code, two verdicts, which is exactly what this rule says makes the
+check wrong. It now waits *for frames* rather than for clock: it advances one
+`requestAnimationFrame` at a time until twenty are timed, with a 20 s ceiling that only a page
+drawing nothing reaches, and it reports the wait either way so a slow machine still says what
+it cost. Driven with every core of this container pegged by busy loops: **20 frames timed in
+780 ms**, passing. The ceiling is what remains for real failure, and reaching it means no
+frames rather than slow ones.
+
+## Re-audit, 2026-09-11, panel in line with page
 
 Audited by a curator against the rules change that splits Article X.8's faces by element —
 Noto Serif for headings and titles, Noto Sans for body and interface text, Commit Mono for
@@ -3208,3 +3222,61 @@ the first clause is kept. Two things the split newly asks for: `--serif` is decl
 `pages/shell.html` and never used, so no heading takes it; and Commit Mono is set without
 `calt`, so its ligatures — which are functional rather than decorative — do not render.
 Repository issue 118 carries both.
+
+
+## Re-audit, 2026-09-11, panel in line with page
+
+Asked by the Architect: bring the desktop's text and layout in line with the page, drop text
+that earns nothing, work the buttons, and keep a section's heading reachable while its list
+scrolls.
+
+**The top of the ImGui window was the last copy of something two front-ends used to disagree
+about.** It opened with four lines of prose — one teaching drag, three tinting the wheel's
+wedges, one about right-drag and touchscreens — above any control. Every one of those is in
+help's drag tab, which `?` opens in the same corner of both front-ends, and `help.nim`'s own
+header says it exists because *"desktop wrote this in its panel and browser in hint that
+vanished after four seconds; two had drifted"*. The browser had since dropped its own
+`.drawer-intro`; this was the remaining copy. It is gone, and the window opens on controls as
+the drawer does.
+
+**Removing it turned up something the page had already lost.** `interaction.nim` said in two
+places that the wheel's words are *"taught once, in drawer's intro line"* — and that line no
+longer existed, so **nothing in the browser taught them at all**. A reader met wedges wearing
+`𝐦 ∧ 𝐧` and nothing anywhere said that one is `join`. Both comments now point at help, and
+the words are taught in `descriptionOf(HelpPath.Drag)`, read from `wordOf` and `labelOf` rather
+than written out, so a renamed or renotated wedge is renamed in the telling too. Both UIs
+already render that line, so one edit served both. Held by a law in the shared suite — every
+wheel word and its notation must appear in that description — which **fails without the fix**
+(`Check failed: wordOf(choice) in described`).
+
+**The buttons are the page's three groups, in the page's order.** `add`, `undo` and `redo` on
+one row, as `.action-group` has them; `axes` and `grid` as the accent pill this project already
+draws for `arity`, which is the same pill `.toggles` wears; then the scene file with `save` and
+`load` beside it. The last is where text went as well as shape: a row whose field is named
+`scene file` had `save scene` and `load scene` under it, so the noun was in the row three
+times. The page's menu spells them the same way under its own headings.
+  Checkboxes became pills deliberately. The worry against it is that a pill carries its state
+  in colour where a checkbox carries it in a tick — but `guiButtonToggle` already carries fill,
+  border *and* text colour together, it is what this panel draws for `arity`, and it is what
+  the browser draws for the same two toggles. One control, one shape, across two front-ends.
+
+**A long list no longer buries the rest of the panel, and its heading no longer scrolls away.**
+The rule is one sentence — *the heading naming a section stays reachable while that section's
+list moves* — and each front-end answers it in its own idiom.
+  Desktop bounds the list in a region that hugs its own content until the window runs out and
+  scrolls inside that bound after (`ImGuiChildFlags_AutoResizeY` under
+  `SetNextWindowSizeConstraints`). The heading sits outside that region, so it cannot move.
+  First attempt gave the region a fixed height and a threshold, and a five-object scene sat in
+  a box of blank; hugging the content is what fixed that, and the first attempt is recorded
+  rather than tidied away.
+  Browser sticks the heading with `position: sticky` against `.drawer-scroll`. Its offset is
+  `--drawer-clear`, which is the same number that already pushed the drawer's content below the
+  floating chip row — named once now instead of written twice, since a heading stuck at `0`
+  lands *behind* those controls rather than under them.
+  Measured on both. Desktop, scene filled to capacity: **64 px left under the sections** where
+  the unbounded list ran **319,899 px** past the window's bottom — which is the same verdict
+  failing without the fix, driven by a new scripted run at capacity. Browser: the drawer is
+  scrolled to its floor -- **307,775 px** -- and the heading, which sat at 1123 px, holds at
+  62, where that scroller's own content begins. The scroll itself is asserted too, since a
+  check that reads a stuck heading while nothing moved would pass on a page with no
+  stickiness in it.

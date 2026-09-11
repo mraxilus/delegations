@@ -133,11 +133,12 @@ the browser page through `web`, the desktop application through `desktop`.
 
 Every law under test through testament on the pinned commit, in three configurations. The
 page has been built and looked at, its type surface is checked, and a Playwright harness
-drives 139 checks over held keys, the wheel, mouse pan and touch — see Driven Checks in
+drives 149 checks over held keys, the wheel, mouse pan and touch — see Driven Checks in
 `PROVENANCE.md`. The desktop application has been built, one frame of it looked at, and its own
-thirteen scripted runs driven headless under Xvfb — 22 checks, all passing, one of them driven
-with no face installed at all. SDL3 arrives as a source build rather than a package, and `drive`
-fetches and builds it rather than skipping the runs that need it.
+fourteen scripted runs driven headless under Xvfb — 39 checks, all passing, one of them driven
+with no face installed at all and one with the scene filled to capacity. SDL3 arrives as a
+source build rather than a package, and `drive` fetches and builds it rather than skipping the
+runs that need it.
 
 Unreviewed by a human: nothing here has been
 read line by line, and no human has driven either front-end or seen it on real graphics

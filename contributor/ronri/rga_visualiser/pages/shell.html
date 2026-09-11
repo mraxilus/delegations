@@ -660,7 +660,26 @@
     display: flex;
     align-objects: center;
     justify-content: space-between;
-    background: transparent;
+    /* Stays put while its own section scrolls past, so collapsing long list never means
+       scrolling back to top to find control that collapses it.
+       Sticky against `.drawer-scroll`, which is scroller; `.section` sets no overflow,
+       which sticky inside it would be clipped by.
+       `top: 0` rather than height of chip row, which was first attempt and was wrong:
+       offset is measured from scroller's *content* edge, and that edge is already below
+       those controls, since `.drawer-scroll` carries padding for exactly that. Naming
+       62px again put header 124px down -- one clearance twice -- with gap above it.
+       Solid rather than transparent: rows pass under this band, and transparent one would
+       let them draw through it. Tone is same `--surface-solid` buttons wear, so band reads
+       as part of drawer rather than as second surface -- and desktop's own header is
+       filled bar, so two front-ends read same way (see `panel.layoutObjects`).
+       Negative offsets and padding widen band to drawer's own gutter, so row scrolling
+       under it is covered edge to edge rather than at its sides. */
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    margin: -10px -14px 0 -14px;
+    padding: 10px 16px 6px 16px;
+    background: var(--surface-solid);
     border: none;
     color: var(--ink);
     /* Title role: heading naming section takes serif face, which is only role it is
@@ -670,7 +689,6 @@
     font-size: 13px;
     font-weight: 600;
     letter-spacing: 0.02em;
-    padding: 4px 2px;
     cursor: pointer;
   }
   /* Solid triangle, not U+25B8's small one: at sizes these rows are read at

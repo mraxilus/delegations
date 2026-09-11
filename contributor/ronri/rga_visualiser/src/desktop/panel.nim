@@ -88,6 +88,18 @@ const
     "stacked one row per grade. The object itself only moves when you save."
     ## Explain coefficient grid while editing existing object.
   WIDTH_LABEL_FIELD = 96.0'f32
+  ROWS_OBJECTS_BELOW = 4
+    ## Rows bounded list leaves below itself, for what has to stay reachable.
+    ##   `view` header, separator and message line, plus one so list's own edge is not
+    ##   flush against them.
+  ROWS_OBJECTS_LEAST = 6
+    ## Floor on bounded list's height, for window too short to give it more.
+    ##   Region smaller than this shows less than one object and scrolls by fractions.
+  WIDTH_TOGGLE_CHIP = 72.0'f32
+    ## Width of one top-bar chip, so `axes` and `grid` read as pair rather than as two
+    ## buttons that happen to sit together.
+    ##   Fixed rather than measured: browser's own chips are padding around label and come
+    ##   out near this, and pair of equal chips is what makes row read as group.
     ## Reserve room to right of field for its label, which Dear ImGui draws there.
   SPACING_SEGMENT = 8.0'f32
     ## Separate segments of segmented control, matching gap `sameLine` leaves.
@@ -218,6 +230,11 @@ type
     path_export*: array[PATH_MAX, char] ## Where exported frame is written.
     path_scene*: array[PATH_MAX, char] ## Where scene is saved to and loaded from.
     message*: array[MESSAGE_MAX, char] ## Outcome of last action taken.
+    room_under_sections*: cfloat ## Height window had left once every section had drawn.
+      ## Negative means what follows sections is off window's bottom and reader has to
+      ## scroll window to reach it.
+      ##   Written each frame by `layoutPanel`, read by scripted run's verdict: only way
+      ##   headless run can say list long enough to bury rest of panel did not.
     milliseconds_history*: array[FRAMES_HISTORY, cfloat] ## Ring buffer of recent frame
       ## times.
       ## Oldest to newest by `index_history`; nothing outside panel reads it.
@@ -592,6 +609,21 @@ proc layoutObjects*(
     gui.text("Nothing here yet -- press `add` above, or drag between two objects.")
     return
 
+  # Scroll list inside its own region rather than scrolling whole window.
+  #   Reader scrolling long list had to scroll all way back up to reach this header and
+  #   collapse it; header sits outside region below, so it stays put however far list runs.
+  #   Region is as tall as list until window runs out, then scrolls: fixed height would
+  #   leave five-object scene sitting in blank, which first attempt at this did.
+  #   Browser answers same rule with `position: sticky` on its own header. Two mechanisms,
+  #   one rule: header naming section stays reachable while section's list moves.
+  let height_max = max(
+    gui.childHeightForRows(cint(ROWS_OBJECTS_LEAST)),
+    gui.contentHeight() - gui.childHeightForRows(cint(ROWS_OBJECTS_BELOW)),
+  )
+  if not gui.childBeginBounded("##objects_list", 0.0, height_max):
+    gui.childEnd()
+    return
+
   # Head list with composing row: newest thing here, with no `born` to sort by.
   if is_composing: discard layoutObject(panel, scene, camera, history, none(int), now)
 
@@ -607,6 +639,7 @@ proc layoutObjects*(
     let handle = panel.handles_ordered[position]
     if layoutObject(panel, scene, camera, history, some(handle), now):
       handle_removed = some(handle)
+  gui.childEnd()
   if handle_removed.isSome:
     scene.removeObject(handle_removed.get)
     panel.selection.pruneDead(scene)
@@ -618,43 +651,6 @@ proc layoutObjects*(
 
 
 #[ Construct Panel ]#
-
-proc layoutTopBar*(panel: var Panel, scene: var Scene, now: float) =
-  ## Lay out controls reached for constantly, above every collapsing section.
-  ##   Start new object, toggle world furniture, save or load scene.
-  ##   Outside sections as browser's chip row and menu hold them: each is flipped
-  ##   repeatedly or applies to whole scene.
-  ##   `add` has to live outside `objects`, since pressing it opens that section.
-  gui.disabledPush(panel.session.isSome or scene.isFull)
-  if gui.button("add"):
-    beginSession(panel, scene, none(int))
-  gui.disabledPop()
-  gui.tooltip(
-    "Compose a new object in the Objects list below; nothing joins the scene until you " &
-    "save it. Greyed out while another edit is open, so starting this cannot discard it."
-  )
-
-  gui.sameLine()
-  discard gui.checkbox("axes", addr panel.is_axes_shown)
-  gui.tooltip("Toggle the red/green/blue x/y/z axis lines through the origin.")
-  gui.sameLine()
-  discard gui.checkbox("grid", addr panel.is_grid_shown)
-  gui.tooltip("Toggle the reference grid at z = 0.")
-
-  widthPushField()
-  fieldLabel("scene file")
-  discard gui.inputText("##scene_file", toCstring(panel.path_scene), cint(PATH_MAX))
-  gui.tooltip("File `save scene` writes to and `load scene` reads from.")
-  gui.widthPop()
-  if gui.button("save scene"):
-    toChars(saveScene(scene, toText(panel.path_scene)), panel.message)
-  gui.sameLine()
-  if gui.button("load scene"):
-    # Pass this frame's clock, so file arrives as replay; see `scene.bornReplaying`.
-    toChars(loadScene(scene, toText(panel.path_scene), now), panel.message)
-    # Drop open session: loaded scene's handles are not ones it was opened against.
-    panel.session = none(EditSession)
-
 
 func offerOperationsOfArity*(
   arity: Arity
@@ -1385,6 +1381,75 @@ proc layoutHelp*(panel: var Panel, path_forced: Option[HelpPath] = none(HelpPath
   gui.windowEnd()
 
 
+#[ Top Bar ]#
+
+proc layoutTopBar*(
+  panel: var Panel, scene: var Scene, camera: var Camera, history: var History, now: float
+) =
+  ## Lay out controls reached for constantly, above every collapsing section.
+  ##   Three groups browser's chip row carries, in its order: what acts on scene, what is
+  ##   flipped, and where scene is written. Reader moving between two front-ends meets same
+  ##   controls in same order rather than two arrangements to learn.
+  ##   `add` has to live outside `objects`, since pressing it opens that section.
+  ##   Sits after `stepHistory` rather than beside other sections, since undo and redo are
+  ##   part of this row now; browser groups them same way.
+  # Act on scene: add, undo, redo -- browser's `.action-group`.
+  gui.disabledPush(panel.session.isSome or scene.isFull)
+  if gui.button("add"):
+    beginSession(panel, scene, none(int))
+  gui.disabledPop()
+  gui.tooltip(
+    "Compose a new object in the Objects list below; nothing joins the scene until you " &
+    "save it. Greyed out while another edit is open, so starting this cannot discard it."
+  )
+  gui.sameLine()
+  # Step scene-content edits only; see `history.nim`.
+  #   Orbit is not step, though each step restores view it was made from.
+  #   Each button greys out where its side of timeline is empty.
+  #   Successful step drops open session too.
+  gui.disabledPush(not history.canUndo)
+  if gui.button("undo"):
+    discard stepHistory(panel, scene, camera, history, is_undo = true)
+  gui.disabledPop()
+  gui.tooltip(
+    "Step back through scene-content edits, view and all; an orbit on its own is not a step."
+  )
+  gui.sameLine()
+  gui.disabledPush(not history.canRedo)
+  if gui.button("redo"):
+    discard stepHistory(panel, scene, camera, history, is_undo = false)
+  gui.disabledPop()
+  gui.tooltip("Step forward again; a fresh edit discards whatever was ahead.")
+
+  # Flip furniture: axes, grid -- browser's `.toggles`, in pill its own segment wears.
+  #   Checkbox said same thing in another shape, and two front-ends drew one control two
+  #   ways; `buttonToggle` is already this project's answer for `arity` (see `layoutApply`).
+  if gui.buttonToggle("axes", panel.is_axes_shown, WIDTH_TOGGLE_CHIP):
+    panel.is_axes_shown = not panel.is_axes_shown
+  gui.tooltip("Toggle the red/green/blue x/y/z axis lines through the origin.")
+  gui.sameLine()
+  if gui.buttonToggle("grid", panel.is_grid_shown, WIDTH_TOGGLE_CHIP):
+    panel.is_grid_shown = not panel.is_grid_shown
+  gui.tooltip("Toggle the reference grid at z = 0.")
+
+  # Say where scene is written, then write or read it.
+  #   Buttons say `save` and `load` alone: field above them is named `scene file`, so noun
+  #   was in row twice, and browser's menu spells them same way under its own headings.
+  widthPushField()
+  fieldLabel("scene file")
+  discard gui.inputText("##scene_file", toCstring(panel.path_scene), cint(PATH_MAX))
+  gui.tooltip("File `save` writes to and `load` reads from.")
+  gui.widthPop()
+  if gui.button("save"):
+    toChars(saveScene(scene, toText(panel.path_scene)), panel.message)
+  gui.sameLine()
+  if gui.button("load"):
+    # Pass this frame's clock, so file arrives as replay; see `scene.bornReplaying`.
+    toChars(loadScene(scene, toText(panel.path_scene), now), panel.message)
+    # Drop open session: loaded scene's handles are not ones it was opened against.
+    panel.session = none(EditSession)
+
+
 
 #[ Whole Panel ]#
 
@@ -1399,37 +1464,14 @@ proc layoutPanel*(
   panel.preview = none(Preview)
   gui.windowPlace(16.0, 16.0, WIDTH_PANEL, 720.0)
   if gui.windowBegin("RGA visualiser"):
-    # Teach three symbols, in colours matching rubber-band drawn while dragging.
-    #   Which colour belongs to which is `interaction.inkOf`'s to say.
-    #   Wheel's wedges say `𝐦 ∧ 𝐧` (see `interaction.labelOf`), unreadable until told it
-    #   is `join`, so word and notation appear here together.
-    #   Sibling is browser's `.drawer-intro` line in `shell.html`.
-    gui.textWrapped("Drag one object onto another; the two of them choose what it makes:")
-    for choice in [DragChoice.Join, DragChoice.Meet, DragChoice.Project]:
-      let tint = inkOf(choice).colour
-      gui.textTinted(
-        cstring(wordOf(choice) & "  " & labelOf(choice)), tint.red, tint.green, tint.blue
-      )
-    gui.textWrapped("Right-drag to pick instead; on a touchscreen, hold still over the pivot.")
-
-    # Step scene-content edits only; see `history.nim`.
-    #   Orbit is not step, though each step restores view it was made from.
-    #   Each button greys out where its side of timeline is empty.
-    #   Successful step drops open session too.
-    gui.disabledPush(not history.canUndo)
-    if gui.button("undo"):
-      discard stepHistory(panel, scene, camera, history, is_undo = true)
-    gui.disabledPop()
-    gui.tooltip("Step back through scene-content edits, view and all; an orbit on its own " &
-      "is not a step.")
-    gui.sameLine()
-    gui.disabledPush(not history.canRedo)
-    if gui.button("redo"):
-      discard stepHistory(panel, scene, camera, history, is_undo = false)
-    gui.disabledPop()
-    gui.tooltip("Step forward again; a fresh edit discards whatever was ahead.")
-    gui.separator()
-    layoutTopBar(panel, scene, now)
+    # Straight to controls, as browser's drawer is.
+    #   Four lines of prose stood here teaching drag, its three wedges and right-drag,
+    #   and every one of them is in help's drag tab, which `?` opens in corner of both
+    #   UIs. Browser dropped its own copy of that line; this was last one, which is
+    #   drift `help.nim`'s own header is about.
+    #   Wedge words were taught here alone, so they moved rather than went: they are
+    #   read from `interaction.wordOf` in `help.descriptionOf`, which both render.
+    layoutTopBar(panel, scene, camera, history, now)
     gui.separator()
 
     # Lay sections out in alphabetical order, matching browser's drawer.
@@ -1438,6 +1480,8 @@ proc layoutPanel*(
     layoutDiagnostics(panel, scene)
     layoutObjects(panel, scene, camera, history, now)
     layoutView(panel, camera)
+    # Read what is left before message line takes its own, so figure is what sections cost.
+    panel.room_under_sections = gui.contentHeight()
     gui.separator()
     # Mono role: message carries notation and object names, as page's `.message-line` does.
     gui.monoPush()

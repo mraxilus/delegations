@@ -4467,6 +4467,20 @@ suite "Help":
     check countOf(HelpPath.Operations) == COUNT_OPERATION
 
 
+  test "the help names every wedge the drag wheel offers, and says which word it is":
+    # Wedge wears notation alone, which names nothing until reader is told it is `join`.
+    #   Desktop taught that above its sections and browser in line it has since dropped, so
+    #   nothing taught it for while; help's drag tab is where it lives now, and this is
+    #   what keeps it there. Wedge renamed with no telling fails here rather than quietly
+    #   leaving reader with three symbols and no words.
+    let described = descriptionOf(HelpPath.Drag)
+    for choice in [DragChoice.Join, DragChoice.Meet, DragChoice.Project]:
+      check wordOf(choice) in described
+      check labelOf(choice) in described
+    # `More` takes bare ellipsis, which needs no decoding; its row already says what it does.
+    check wordOf(DragChoice.More) notin described
+
+
   test "the help records every key, every motion and every action the view answers":
     # What "up to date" has to mean if it is to stay true: binding added without row.
     #   fails build day it is added, rather than being noticed by reader who
