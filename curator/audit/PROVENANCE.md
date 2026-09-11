@@ -614,11 +614,15 @@ other thing reaching that stream is the compiler complaining, which always spell
 first, so a line carrying whitespace is dropped. A compiler that complained still fails, since
 the absent package names itself.
 
-**Faces are cached on the file that pins them, and that cache is the safest of the three.**
-`assets` keeps a face already carrying its pinned digest and refetches any that misses, and
-`web` verifies again before embedding, so a stale entry heals rather than ships — where the
-Atlas and npm caches rest on the key alone. The key is the whole driver rather than the digests
-inside it, so an edit moving no face still misses; the cost is refetching six files, 1.5 s.
+**The shared store is cached, and `build/fonts` no longer is.** `koch assets` fetches into
+`~/.cache/koch/assets` and that store is the repository's, so the cache keys on its declaration —
+`curator/audit/src/assets.nim` — and one entry serves every project's job rather than one per
+project. What moved is where the cost is: the fetch is 6.6 s cold and the copy into `build/fonts`
+is milliseconds, so keying on a project's driver cached the cheap half and missed the expensive
+one, which is what repository issue 132 raised with the figures.
+  A looser `restore-keys` prefix is safe here by construction rather than by check, which is
+  unusual and worth stating: the store names entries by digest, so an entry no row declares is
+  unreachable rather than wrong, and `koch assets` fetches whatever an older restore lacks.
 
 **The browser a declaration names is the browser that runs, and the snap serves.** `apt-get
 install chromium` on `ubuntu-latest` gives `/snap/bin/chromium`, a wrapper rather than a plain
@@ -826,10 +830,10 @@ four-core Intel Xeon 2.80 GHz container, 2026-09-08 — fifty times the row abov
 faster cores. What differs between the two containers has not been measured, so this sits beside
 that row rather than replacing it, and neither predicts the other.
 
-**SDL3's install prefix is cached, and the build tree beside it deliberately is not.** No
-package carries SDL3, so `sdl3` clones, configures and builds it from source: **55.8 s of run
-214's 357 s**, the largest single step nothing cached, and larger than either lever repository
-issues 79 and 80 were weighing.
+**SDL3's install prefix is cached, the build tree beside it deliberately is not, and the first
+key did not work.** No package carries SDL3, so `sdl3` clones, configures and builds it from
+source: **55.8 s of run 214's 357 s**, the largest single step nothing cached, and larger than
+either lever repository issues 79 and 80 were weighing.
 
 - The prefix is what makes the verb return early — `versionSdl3` reads `build/sdl3/lib/pkgconfig`
   — so caching the product is enough and caching the cmake tree is unnecessary.
@@ -837,14 +841,22 @@ issues 79 and 80 were weighing.
   carried over from a configure that had found no X11 kept reporting `SDL not configured with
   OpenGL/GLX support` after the headers arrived, and cost an hour on a container that had them.
   A product caches; a build tree remembers what it decided about a machine that has since changed.
-- Keyed on the project's `tools/build.nim`, exactly as the faces cache is, and that one file
-  holds both `VERSION_SDL3` and the `SYSTEM` declaration — so a moved pin and a changed package
-  list each miss the key, which is the pair that would otherwise make a restore wrong.
-- Cost: most runs stop exercising the SDL3 build. Every cache here trades that, but this one
-  meets a weak pin — a mutable tag, verified by the version string SDL reports about itself
-  (repository issue 126) — so the cache makes a moved tag *less* likely to be noticed. That is an
-  argument for fixing the pin, not against caching the product, and it is written here so the
-  cache does not quietly stand in for the fix.
+- **The first key never once hit, and that is measured, not suspected.** Keyed on the exact hash
+  of the project's `tools/build.nim`, it missed on both `driven` runs after it merged — run 221 at
+  `fb1fba1` and run 226 at `b2fa891` — each printing `Built SDL3 3.2.30 into build/sdl3` where a
+  hit prints `Kept SDL3 3.2.30, already reported by pkg-config`, and each ending `Cache saved`
+  rather than `Cache hit`. The reasoning that picked the key held that the file carries both
+  `COMMIT_SDL3` and `SYSTEM`, so a moved pin or a changed package list misses it. True, and beside
+  the point: that file also carries everything else a build driver carries, so it changed in two
+  consecutive pull requests and the key changed with it. A key has to be specific enough to be
+  correct **and** stable enough to hit; only the first was checked.
+- `restore-keys: sdl3-<os>-` is the fix, and the property that makes a loose restore safe is the
+  one already argued above: `versionSdl3` reads the restored prefix's own `.pc` and rebuilds where
+  the version misses the pin, so a wrong restore costs a build that was due anyway. Unverified
+  until a `driven` run prints `Kept SDL3`; no saving is claimed here before then.
+- Cost: most runs stop exercising the SDL3 build. Every cache here trades that, and the pin is a
+  commit rather than a mutable tag now (repository issue 126, answered by pull request 131), so
+  what the cache hides is a rebuild rather than an upstream that moved underneath it.
 
 ## Open questions
 
