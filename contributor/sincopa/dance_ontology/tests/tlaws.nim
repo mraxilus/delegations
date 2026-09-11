@@ -18,7 +18,7 @@ joinable: true
 
 {.experimental: "strictFuncs".}
 
-import std/[math, options, random, strformat, strutils, unittest]
+import std/[math, options, random, sequtils, strformat, strutils, unittest]
 
 import ../sim/[body, contact, limb, read, rig, solve, sweep, vec]
 
@@ -493,6 +493,41 @@ suite "the floor's claims":
 
 
 
+  test "no moment passes one connection through another":
+    ## Crossings come and go in pairs where arms pass over one another, which
+    ##   leaves writhe where it was, and singly only where one slides off end
+    ##   of either connection. Lone crossing leaving middle of both is arms
+    ##   through arms, and no moment of any sweep may do it.
+    ##   Read on both chains, which are only sweeps carrying two connections;
+    ##     one connection has no crossing to lose.
+    ##   Both connections are read, not one: crossing sliding off second's end
+    ##     sits mid-line along first, so `along` alone would call it middle
+    ##     and this law would refuse move that is fair.
+    ##   `evaluate` judges poses and never path between two of them, so this
+    ##     is what stands in for that: pose either side of passing-through is
+    ##     itself clear, and only wind says arms met.
+    for (name, sw) in [("L-r.R-l crown", pairCrown), ("L-l.R-r crown", crossedCrown)]:
+      var
+        before = 0
+        first = true
+        seen: seq[Crossing]
+      for m in sw.moments:
+        let
+          now = crossings(m.state, m.verdict)
+          wound = writhe(m.state, m.verdict)
+        if not first and abs(wound - before) == 1:
+          # One crossing's worth of wind moved: it must have had an end to go by.
+          let ends = (seen & now).anyIt(
+            it.along < AT_END or it.along > 6.0 - AT_END or
+            it.across < AT_END or it.across > 6.0 - AT_END)
+          checkpoint(&"{name} at {turns(m.turn)} turns: wind {before} -> {wound}")
+          check ends
+        if not first:
+          check abs(wound - before) < 2
+        before = wound
+        seen = now
+        first = false
+
 #[ Reference's Cards ]#
 
 suite "the reference's chain cards":
@@ -529,17 +564,19 @@ suite "the reference's chain cards":
           want = int(abs(wind) * 2.0)
           got = sw.at(wind)
         checkpoint(id)
-        check got.isSome
-        if got.isNone:
-          continue
-        let
-          wound = writhe(got.get.state, got.get.verdict)
-          crossed = crossings(got.get.state, got.get.verdict).len
+        var
+          reaches = false
+          said = "chain blocks before this turn"
+        if got.isSome:
+          let
+            wound = writhe(got.get.state, got.get.verdict)
+            crossed = crossings(got.get.state, got.get.verdict).len
           reaches = abs(wound) == want
-        echo &"    {id}: reference draws {want}, sim winds {abs(wound)}" &
-          &" (writhe {wound}, {crossed} crossing(s))" &
+          said = &"sim winds {abs(wound)} (writhe {wound}, {crossed} crossing(s))"
+          # Tally and wind agree on every card reached today. Where they part,
+          #   wind is what is meant, and this says so rather than leaving it.
+          check crossed == abs(wound)
+        echo &"    {id}: reference draws {want}, {said}" &
           (if reaches: "  (reaches)" else: "  (SHORT)")
+        # Card out of reach is card not reached: no verdict, not an error here.
         check reaches == MET[which][i]
-        # Tally and wind agree on every card today. Where they part, wind is
-        #   what is meant, and this says so rather than leaving it to be found.
-        check crossed == abs(wound)

@@ -26,6 +26,8 @@ type
   Crossing* = object ## Where two connections cross in plan.
     at*: Vec
     along*: float ## How far along first connection, nought to six.
+    across*: float ## Same along second, which says whether crossing sits
+                   ## where it can slide off that one's end.
     over*: int ## Which connection is higher there, 0 or 1.
     sense*: int ## +1 where second crosses first left to right
                 ## looking along it, else -1.
@@ -96,7 +98,8 @@ func crossings*(s: State; v: Verdict): seq[Crossing] =
         zp = a.z + (b.z - a.z) * t
         zq = c.z + (d.z - c.z) * u
       result.add Crossing(at: (a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, zp),
-                          along: i.float + t, over: (if zp >= zq: 0 else: 1),
+                          along: i.float + t, across: j.float + u,
+                          over: (if zp >= zq: 0 else: 1),
                           sense: (if den > 0.0: 1 else: -1))
 
 
@@ -107,6 +110,12 @@ func writhe*(s: State; v: Verdict): int =
   for c in crossings(s, v):
     result += (if c.over == 0: 1 else: -1) * c.sense
 
+
+const AT_END* = 0.25
+  ## How near either connection's end crossing must sit to slide off it.
+  ##   Quarter of link, which is shortest distance no crossing was seen to
+  ##     travel in one moment: measured, crossing that stays put moves 0.045
+  ##     along its connection in half of moments and 0.258 in nine tenths.
 
 func sameCrossings*(a: State; va: Verdict; b: State; vb: Verdict): bool =
   ## Whether one judged pose's arms can become other's without passing
