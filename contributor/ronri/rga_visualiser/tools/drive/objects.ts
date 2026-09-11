@@ -37,6 +37,57 @@ async function openObjects(page: Page): Promise<void> {
   );
 }
 
+/** Assert heading naming section stays reachable while that section's list scrolls under it.
+ *
+ *  Reader collapsing long list had to scroll all way back to top to reach control that
+ *  collapses it. Heading sticks where scroller's own content begins, which is below chip row
+ *  floating over drawer, and holds there however far list runs.
+ *  Scroll itself is asserted, not only where heading ended: check reading stuck heading while
+ *  nothing moved passes on page with no stickiness in it at all.
+ *  Desktop answers same rule by bounding its list in its own scrolling region, so heading sits
+ *  outside what moves; see `panel.layoutObjects`. One rule, two mechanisms.
+ */
+export async function driveHeaderPinned(page: Page): Promise<void> {
+  await openObjects(page);
+  const pinned = await page.evaluate(async () => {
+    const scroller = document.querySelector('.drawer-scroll') as HTMLElement | null;
+    const heading = document.querySelector(
+      '.section[data-section="objects"] .section-header',
+    ) as HTMLElement | null;
+    if (scroller === null || heading === null) return null;
+    const settle = () => new Promise((done) => { requestAnimationFrame(() => done(null)); });
+    scroller.scrollTop = 0;
+    await settle();
+    const started = heading.getBoundingClientRect().top;
+    const room = scroller.scrollHeight - scroller.clientHeight;
+    scroller.scrollTop = room;
+    await settle();
+    const box = scroller.getBoundingClientRect();
+    const held = heading.getBoundingClientRect();
+    return {
+      moved: scroller.scrollTop,
+      room,
+      started,
+      top: held.top,
+      bottom: held.bottom,
+      edge: box.top,
+      floor: box.bottom,
+      clear: parseFloat(getComputedStyle(scroller).paddingTop) || 0,
+    };
+  });
+  report(
+    "the heading naming a section holds its place while that section's list scrolls under it",
+    pinned !== null && pinned.moved > 0
+      && pinned.top >= pinned.edge - 0.5 && pinned.bottom <= pinned.floor + 0.5
+      && Math.abs(pinned.top - (pinned.edge + pinned.clear)) < 1.5,
+    pinned === null ? 'no drawer to scroll'
+      : `scrolled ${pinned.moved.toFixed(0)} of ${pinned.room.toFixed(0)} px, and the heading`
+        + ` sat at ${pinned.started.toFixed(0)} px and holds at ${pinned.top.toFixed(0)},`
+        + ` where that scroller's own content begins, ${pinned.clear.toFixed(0)} px in`,
+  );
+}
+
+
 /** Drive objects list open, and assert closed rows build no forms. */
 export async function driveObjectsList(page: Page, objects: number): Promise<void> {
   await openObjects(page);

@@ -139,6 +139,12 @@ proc childBegin*(name: cstring; width, height: cfloat): bool
   {.importc: "guiChildBegin", sideEffect.}
   ## Begin bordered child region of given size, scrolling what overflows it.
 
+proc childBeginBounded*(name: cstring; width, height_max: cfloat): bool
+  {.importc: "guiChildBeginBounded", sideEffect.}
+  ## Open region as tall as its content, up to bound, scrolling inside bound past it.
+  ##   `childEnd` closes it, whatever this returned.
+
+
 proc childEnd*() {.importc: "guiChildEnd", sideEffect.}
   ## End child region begun by `childBegin`.
 
@@ -260,6 +266,10 @@ proc idPop*() {.importc: "guiIdPop", sideEffect.}
 
 proc contentWidth*(): cfloat {.importc: "guiContentWidth", sideEffect.}
   ## Report width still free on current line.
+
+
+proc contentHeight*(): cfloat {.importc: "guiContentHeight", sideEffect.}
+  ## Report height still free down page, for region ending before what follows it.
 
 proc widthPush*(width: cfloat) {.importc: "guiWidthPush", sideEffect.}
   ## Set item width until `widthPop`.

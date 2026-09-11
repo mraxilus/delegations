@@ -715,6 +715,13 @@ proc driven() =
   for tab in tabsHelp():
     echo "== --drive-help:", tab
     if not reported(["--hidden", "--drive-help:" & tab]): failed.add "drive-help:" & tab
+  # Scene at capacity, driven once, since panel's own layout is what fills first.
+  #   `--fill` tops scene up before first frame, so list is longest this build can hold and
+  #   verdict about what fits under it has run to fire in. Keys drive is carrier: it asks
+  #   nothing of list, so anything it reports about one is layout's doing rather than its.
+  echo "== --drive-keys, with the scene filled to capacity"
+  if not reported(["--hidden", "--fill", "--drive-keys"]): failed.add "drive-keys filled"
+
   # Machine carrying no face, driven once, since that is machine this had never been run on.
   #   `RGA_FONT` names path no machine has rather than one this machine happens to lack, so
   #   run asks same question everywhere. Interface face alone is hidden: it is one Dear ImGui

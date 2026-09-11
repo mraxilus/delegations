@@ -1569,6 +1569,19 @@ proc verdictDriven(
       &"focus {interaction.index_focus}, {scene.bound} objects, no face loaded",
     )
 
+  # Scene filled to capacity is its own verdict, and fires only in run driven with one.
+  #   Claim is that longest list this build can hold leaves what sits under it on window:
+  #   list used to run window's whole length, so `view` and message line were reached by
+  #   scrolling, and heading that collapses list was reached by scrolling back up.
+  #   Read as room left rather than as pixels of list: what matters is that something was
+  #   left, whatever window height this machine gave.
+  if scene.isFull:
+    report(
+      "a full object list leaves what follows it on the window",
+      panel.room_under_sections >= 0.0,
+      &"{int(panel.room_under_sections)} px left under the sections, {scene.len} objects",
+    )
+
   # Three roles, three faces, and every run says so.
   #   Claim is that each role got face of its own rather than falling back to interface
   #   face: fallback draws readable panel and silently loses distinction between heading,
