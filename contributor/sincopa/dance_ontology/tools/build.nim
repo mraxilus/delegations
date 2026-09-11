@@ -54,11 +54,13 @@ const
     ## Directory faces land in.  Never committed: fonts are unregistered kind, so
     ##   lock is committed and checkout is not, as Atlas does for packages.
   USAGE = "Usage: nim r tools/build.nim " &
-    "<pages|assets|pins|verdicts|shot|system|clean>\n"
+    "<pages|assets|pins|verdicts|engine|shot|system|clean>\n"
     ## Text printed on usage error.
   SYSTEM = [
     ("nodejs", "run `shot` helper, which is this project's Nim compiled to javascript"),
     ("chromium", "browser `shot` drives; helper takes its path from environment"),
+    ("git", "clone engine's source at its pinned commit; `engine` shells out to it"),
+    ("binutils", "archive engine's objects into one library; `engine` runs `ar`"),
   ]
     ## System packages this build needs present before it runs, with what each is for
     ##   (CONTRIBUTOR.md, "System dependencies"). Nim packages are in nimble file; this
@@ -71,17 +73,39 @@ const
     ##   `koch types` and demands `types` verb, work Architect has asked not be built while
     ##   this half of project may go. `design/shot.nim` therefore takes it from environment
     ##   and stops naming this verb where it is absent, rather than failing as missing file.
-    ##   Only `shot` needs any of these; `pages`, `pins`, `verdicts` and `clean` need Nim
-    ##   alone.
+    ##   Only `shot` needs first two; `engine` needs last two and C compiler, which Nim
+    ##   brings already and so is not named twice. `pages`, `pins`, `verdicts` and `clean`
+    ##   need Nim alone.
+  SOURCES = [
+    ("box3d", "https://github.com/erincatto/box3d",
+     "47d7f7cc7e091142c08d11dc7d2e493c5d34f536",
+     "rigid body solver with contacts that slide; pose search this project had could " &
+       "not wind chain past half turn without arms passing through each other",
+     "MIT"),
+  ]
+    ## Source clones no package manager carries, each pinned by its commit, which is what
+    ##   stands where checksum stands for fetched file (CONTRIBUTOR.md, "System
+    ##   dependencies"). Never vendored: `deps/` is ignored at repository root, and
+    ##   `engine` clones there.
+  DIR_DEPS = "deps"
+    ## Directory source clones land in. Never committed, as Atlas checkouts are not.
+  ENGINE_LIB = BIN / "libbox3d.a"
+    ## Engine archived into one library, which `sim/engine.nim` links.
 
 
-proc nim(args: openArray[string]) =
-  ## Run compiler with args from project directory; raise on non-zero exit.
-  let process = startProcess("nim", args = args, options = {poUsePath, poParentStreams})
+proc run(program: string; args: openArray[string]) =
+  ## Run program with args from project directory; raise on non-zero exit.
+  ##   Named rather than shelled through string, so no argument needs quoting and no
+  ##     path with space in it can split.
+  let process = startProcess(program, args = args, options = {poUsePath, poParentStreams})
   let code = process.waitForExit
   process.close
   if code != 0:
-    raise newException(OSError, "nim failed; got exit `" & $code & "`.")
+    raise newException(OSError, program & " failed; got exit `" & $code & "`.")
+
+proc nim(args: openArray[string]) =
+  ## Run compiler with args from project directory; raise on non-zero exit.
+  run("nim", args)
 
 proc compileRun(args: openArray[string]) =
   ## Compile and run program with args, quietly, binary into `bin/`.
@@ -131,6 +155,42 @@ proc assets() =
   for i, file in wanted:
     copyFile(paths[i], DIR_FONTS / file)
   echo "Faces in ", DIR_FONTS, ": ", wanted.len, ", every one from repository store."
+
+
+proc engine() =
+  ## Clone engine at its pinned commit and archive it into one library.
+  ##   Built by C compiler and `ar` rather than by engine's own CMake: CMake would be
+  ##     third build driver in one project, where registry admits no second, and nothing
+  ##     in library's fifty files needs generating. Cost: build flags are this file's
+  ##     rather than upstream's, and `-O2 -std=c17` is what upstream's release build sets.
+  ##   Rebuilt only where library is absent, since fifty files cost twenty seconds.
+  for (name, url, commit, _, _) in SOURCES:
+    let into = DIR_DEPS / name
+    if not dirExists(into):
+      createDir(DIR_DEPS)
+      run("git", ["clone", "--quiet", url, into])
+      run("git", ["-C", into, "checkout", "--quiet", commit])
+    let got = execCmdEx("git -C " & into & " rev-parse HEAD").output.strip
+    if got != commit:
+      raise newException(OSError,
+        "Clone of `" & name & "` stands at `" & got & "`, not pinned `" & commit & "`.")
+  if fileExists(ENGINE_LIB):
+    echo "Engine already archived: ", ENGINE_LIB
+    return
+  createDir(BIN)
+  let src = DIR_DEPS / "box3d" / "src"
+  var objects: seq[string]
+  for path in walkFiles(src / "*.c"):
+    let obj = BIN / path.extractFilename.changeFileExt("o")
+    run("cc", ["-O2", "-std=c17", "-I" & DIR_DEPS / "box3d" / "include", "-I" & src,
+               "-c", path, "-o", obj])
+    objects.add obj
+  if objects.len == 0:
+    raise newException(OSError, "Engine's source holds no `.c` file; got `" & src & "`.")
+  run("ar", @["rcs", ENGINE_LIB] & objects)
+  for obj in objects:
+    removeFile(obj)
+  echo "Engine archived: ", ENGINE_LIB, ", from ", objects.len, " files."
 
 
 proc dress() =
@@ -204,6 +264,7 @@ proc system() =
 
 proc clean() =
   ## Remove build products, caches and testament binaries.
+  # `deps/` survives clean, as Atlas checkouts do: it is fetched source, not product.
   for dir in [BIN, BUILD, "nimcache", "testresults"]: removeDir(dir)
   for path in walkFiles("tests" / "*"):
     if not path.endsWith(".nim"): removeFile(path)
@@ -223,6 +284,7 @@ proc main(): int =
     of "assets": assets()
     of "pins": pins()
     of "verdicts": verdicts()
+    of "engine": engine()
     of "shot": shot()
     of "system": system()
     of "clean": clean()
