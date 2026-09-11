@@ -512,6 +512,46 @@ Architect's to say, and is asked rather than assumed, so no mend is made here. R
 the freshly settled pose wherever arms could be carried instead, which reaches `C2` and loses
 `C6` -- three cards short either way, and a different three.
 
+**The two connections were passing through one another, and the guard meant to stop it could
+not see it.** `sameCrossings` refused a writhe change of two or more, on the premise its own
+comment stated -- that two arms passing through each other change writhe by two. Measured
+2026-09-11, that premise is false: the pair resting pillion lead sheds one crossing between 0.68
+and 0.70 of a turn, sitting 1.53 along one connection and 4.24 along the other with neither near
+an end, and mirrors it turning the other way. A lone crossing leaving the middle of both
+connections is arms through arms; crossings come and go in pairs where arms pass over one
+another, and singly only at an end. The change moves writhe by one, so the old test waved it
+past. The fault hid because `Crossing` computed how far along the second connection a crossing
+sits and discarded it: a crossing sliding off that one's end reads mid-line along the first, so
+nothing could tell a fair end-slip from a pass-through. Kept now as `across`, and the guard reads
+where crossings sit rather than how far their sum moved. Verified by a law that fails on the old
+guard and passes on the new.
+
+Four readings rule out what it is not, each measured rather than argued: the crossing reader is
+not implicated, since loosening its tolerance from 1e-9 to 1e-3 changes not one count; it is not
+lost memory, since no moment in range is reseeded; it is not coarse stepping, since sixteen times
+finer gives the identical result; and it is not the solver hopping basins, since taking the trust
+region from 0.15 to 0.02 changes nothing. `evaluate` judges poses and never the path between two
+of them, which is why no sampling rate could have found it -- every pose either side of a
+pass-through is itself clear.
+
+**Cost of the mend, stated rather than implied: reach.** The chains now stop at 0.43 turns where
+an arm would enter a body, at 1.07 where the arm is not long enough, at 0.76 and 0.77 where arm
+meets arm; in all four a pose exists a step beyond and no path to it does. Ten rows of
+`sim/verdicts.md` that read as reachable now read as blocked, and it was regenerated for that
+(Article VII.6). They were only ever reached by passing arms through arms, so the smaller figure
+is the true one. Kept chain cards go from seven of ten to six: `C3` joins `C2`, `D2` and `D6` as
+short. That is the reference exposing how far the sim stands from it, which is what the reference
+is for.
+
+**The sim cannot reach the diamond at all, and no gate will change that.** Past 0.6 of a turn
+every pose the solver accepts has writhe nought, measured over every start it tries at each of
+twelve winds: the most this model winds is one crossing, and a diamond is two. The destination
+does not exist, so the shortfall is not the guard's and never was. Two causes, both structural:
+the sim proposes poses and checks them, with no notion of motion, so arms cannot slide along one
+another as a couple's do; and the rig is rigid -- no lean, no torso bend, and `elev` is not a
+`Dof`, which is the elbow bias already recorded above. Rejected: tuning the guard, which was
+tried four ways and moved nothing.
+
 **Wind is read as writhe rather than as a tally of crossings.** A tally cannot tell arms wound
 round one another from two crossings of opposite sign, which annihilate under a small move and
 never were wind at all: measured 2026-09-10, the pair `D` carries just past a whole turn melts to
