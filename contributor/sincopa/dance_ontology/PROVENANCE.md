@@ -512,6 +512,22 @@ Architect's to say, and is asked rather than assumed, so no mend is made here. R
 the freshly settled pose wherever arms could be carried instead, which reaches `C2` and loses
 `C6` -- three cards short either way, and a different three.
 
+**Wind is read as writhe rather than as a tally of crossings.** A tally cannot tell arms wound
+round one another from two crossings of opposite sign, which annihilate under a small move and
+never were wind at all: measured 2026-09-10, the pair `D` carries just past a whole turn melts to
+nothing when walked back 0.10 of a turn, eighty small moves, while `C6`'s two crossings share a
+sign, survive twenty relaxations in place, and are wind. Tally and writhe agree on all ten kept
+cards today and the law checks that they do, so the day they part is the day this is read again
+rather than a day nobody notices. Rejected: keeping the tally as the reading, which would have
+called `D` just past a whole turn a diamond.
+
+**One reading is recorded without a diagnosis.** Turning the two ways should mirror, and for the
+pair that rests pillion lead it does -- `D3` reads +1 and `D5` reads -1. For the pair that rests
+face to face both halves read -1: `C3` and `C5` carry the same handedness. `C` is the crossed
+hold and chiral, so this may be the hold's own asymmetry rather than a fault, and it is written
+down as measured rather than argued either way. It is visible in the suite's own output, which
+prints writhe beside the tally for every card.
+
 **Both chains were swept at the torso alone, and the whole reference is drawn over head.**
 `tests/tlaws.nim` built thirteen sweeps and neither two-hand hold among them stood at the crown,
 so no law covered the one band every chain card is drawn in -- the same shape of fault as the
