@@ -575,6 +575,32 @@ five laws that could not fail, found the same way. Both are swept there now, lon
 they reach furthest: `tlaws` costs 13 s more for it and the whole runner 8 s more, the sweeps
 sharing cores.
 
+**A rigid body engine is cloned, not vendored, and Nim alone speaks to it.** `tools/build.nim`
+declares `box3d` in `SOURCES` with its repository, its commit
+`47d7f7cc7e091142c08d11dc7d2e493c5d34f536`, its reason and its licence (MIT, read from the
+repository's own `LICENSE` rather than assumed); `engine` clones there into `deps/`, refuses a
+clone standing at any other commit, compiles its fifty C files and archives them into
+`bin/libbox3d.a`. The commit is what stands where a checksum stands for a fetched file. Nothing
+of it is committed: `deps/` is ignored at the repository root, exactly as Atlas checkouts are.
+Rejected: its own CMake, which would be a third build driver in a project whose registry admits
+no second — the reason `make` was retired — and which nothing in fifty files needs, since none is
+generated. Cost, stated: the build flags are this project's rather than upstream's, and `-O2
+-std=c17` is what upstream's own release build sets. Measured: 50 files, 24 s cold, and the verb
+returns at once where the archive already stands.
+
+`sim/engine.nim` is the binding, and it is Nim throughout — the gated-language rule is never
+engaged, because no C file of this project's own exists to argue for itself. It links the
+archive and declares what the solver needs: world, body, capsule, ball joint, step, world point,
+angular velocity. Importing it builds the archive first, at compile time, so a suite that drives
+the engine drives its build too (Article IX.6) and no machine needs the verb run by hand.
+`tests/tengine.nim` holds it to two laws and no more — that a body falls half g t squared, which
+catches a struct laid out wrong where linking would not, and that two limb-thick capsules started
+inside one another part to at least two radii. The second is the whole reason the engine is here.
+
+**The engine stands Y up and this project stands Z up**, and the binding deliberately does not
+translate: it is a binding and nothing else, so whatever calls it says which way is up and one
+place holds that decision.
+
 ## Pages and build
 
 **Published titles say which pages the project stands behind.** Two do — the reference and the
