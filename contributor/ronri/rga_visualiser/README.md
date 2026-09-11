@@ -53,10 +53,11 @@ links against SDL3, OpenGL and zlib, and its headless runs need Xvfb and a softw
 
 Two of its dependencies arrive as no package, so the build fetches both itself and refuses
 either when its pin misses. **SDL3** has no `libsdl3-dev` on Ubuntu 24.04 — that release carries
-SDL2 only — so `desktop` clones `release-3.2.30` into `deps/sdl3` and builds it into
-`build/sdl3`, a prefix inside the tree that needs no root. **Dear ImGui** is compiled from source
-into the binary rather than linked, and is cloned to `deps/imgui` at its pinned commit. Both are
-kept locally and never committed, as the Atlas checkouts are.
+SDL2 only — so `desktop` clones `release-3.2.30` into `deps/sdl3`, holds it at the commit that
+tag names, and builds it into `build/sdl3`, a prefix inside the tree that needs no root.
+**Dear ImGui** is compiled from source into the binary rather than linked, and is cloned to
+`deps/imgui` at its pinned commit. Both are held at a commit rather than at a name that could
+move, and both are kept locally and never committed, as the Atlas checkouts are.
 
 Nothing has to be run by hand for either. Where a machine already carries SDL3 at the pinned
 version, that one is used and nothing is built:
