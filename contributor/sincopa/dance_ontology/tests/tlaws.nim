@@ -516,7 +516,7 @@ suite "the floor's claims":
           now = crossings(m.state, m.verdict)
           wound = writhe(m.state, m.verdict)
         if not first and abs(wound - before) == 1:
-          # One crossing's worth of wind moved: it must have had an end to go by.
+          # One crossing's worth of wind moved: it must have had end to go by.
           let ends = (seen & now).anyIt(
             it.along < AT_END or it.along > 6.0 - AT_END or
             it.across < AT_END or it.across > 6.0 - AT_END)
@@ -527,6 +527,7 @@ suite "the floor's claims":
         before = wound
         seen = now
         first = false
+
 
 #[ Reference's Cards ]#
 
@@ -553,7 +554,7 @@ suite "the reference's chain cards":
     const
       WINDS = [-1.0, -0.5, 0.0, 0.5, 1.0]
         ## Winds of cards `2` to `6`, which are ones ruled on.
-      MET = [[false, true, true, true, true],   # C2 C3 C4 C5 C6
+      MET = [[false, false, true, true, true],  # C2 C3 C4 C5 C6
              [false, true, true, true, false]]  # D2 D3 D4 D5 D6
         ## Which card sim draws as reference draws it, today.
     for (name, sw) in [("C", pairCrown), ("D", crossedCrown)]:
@@ -578,5 +579,5 @@ suite "the reference's chain cards":
           check crossed == abs(wound)
         echo &"    {id}: reference draws {want}, {said}" &
           (if reaches: "  (reaches)" else: "  (SHORT)")
-        # Card out of reach is card not reached: no verdict, not an error here.
+        # Card out of reach is card not reached: no verdict, not error here.
         check reaches == MET[which][i]

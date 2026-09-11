@@ -117,10 +117,34 @@ const AT_END* = 0.25
   ##     travel in one moment: measured, crossing that stays put moves 0.045
   ##     along its connection in half of moments and 0.258 in nine tenths.
 
+func slippable(cs: seq[Crossing]): bool =
+  ## Whether any crossing sits where it can leave without arms meeting.
+  for c in cs:
+    if c.along < AT_END or c.along > 6.0 - AT_END or
+       c.across < AT_END or c.across > 6.0 - AT_END:
+      return true
+  false
+
 func sameCrossings*(a: State; va: Verdict; b: State; vb: Verdict): bool =
   ## Whether one judged pose's arms can become other's without passing
-  ## through each other, read off writhe.
-  abs(writhe(a, va) - writhe(b, vb)) < 2
+  ## through each other.
+  ##   Wind is what may not change. Crossings come and go in pairs where arms
+  ##     pass over one another, which leaves writhe where it was, and singly
+  ##     only where crossing slides off end of either connection. Lone
+  ##     crossing leaving middle of both connections is arms through arms.
+  ##   Read off both connections, not one: crossing sliding off second's end
+  ##     sits mid-line along first, so `along` alone calls it middle.
+  ##   Measured 2026-09-11, which is why this is not `< 2`: pair resting
+  ##     pillion lead sheds one crossing between 0.68 and 0.70 of turn, at
+  ##     1.53 along one connection and 4.24 along other, neither near end,
+  ##     and mirrors it turning other way. That moves writhe by one, which
+  ##     old test let through, and it is arms passing through each other.
+  let apart = abs(writhe(a, va) - writhe(b, vb))
+  if apart == 0:
+    return true
+  if apart == 1:
+    return slippable(crossings(a, va)) or slippable(crossings(b, vb))
+  false
 
 func sameCrossings*(a, b: State): bool =
   ## Same, states judged here.

@@ -313,15 +313,15 @@ reach).
 
 ### L-r.R-l, above
 
-Blocks: -2.50: no block within 2.50 turns; +1.07: her reach (a pose holds a step beyond, but not one
-the arms can reach).
+Blocks: -0.43: her arm through her head (a pose holds a step beyond, but not one the arms can
+reach); +1.07: her reach (a pose holds a step beyond, but not one the arms can reach).
 
 | turn | her first arm | her second arm | crossings | strain |
 |---|---|---|---|---|
-| -2 | above | above | none | 0.00 |
-| -1 1/2 | above | above | second over | 0.19 |
-| -1 | above | above | none | 0.00 |
-| -1/2 | above | above | second over | 0.19 |
+| -2 | blocked | | | |
+| -1 1/2 | blocked | | | |
+| -1 | blocked | | | |
+| -1/2 | blocked | | | |
 | 0 | above | above | none | 0.00 |
 | +1/2 | above | above | second over | 0.00 |
 | +1 | above | above | second over, first over | 0.87 (near it) |
@@ -366,19 +366,20 @@ reach).
 
 ### L-l.R-r, from pillion lead, above
 
-Blocks: -2.50: no block within 2.50 turns; +2.50: no block within 2.50 turns.
+Blocks: -0.76: arm through arm (a pose holds a step beyond, but not one the arms can reach); +0.77:
+arm through arm (a pose holds a step beyond, but not one the arms can reach).
 
 | turn | her first arm | her second arm | crossings | strain |
 |---|---|---|---|---|
-| -2 | above | above | none | 0.12 |
-| -1 1/2 | above | above | first over | 0.22 |
-| -1 | above | above | none | 0.12 |
+| -2 | blocked | | | |
+| -1 1/2 | blocked | | | |
+| -1 | blocked | | | |
 | -1/2 | above | above | first over | 0.59 |
 | 0 | above | above | none | 0.00 |
 | +1/2 | above | above | second over | 0.57 |
-| +1 | above | above | none | 0.12 |
-| +1 1/2 | above | above | second over | 0.23 |
-| +2 | above | above | none | 0.12 |
+| +1 | blocked | | | |
+| +1 1/2 | blocked | | | |
+| +2 | blocked | | | |
 
 ## The chain, asked still
 
