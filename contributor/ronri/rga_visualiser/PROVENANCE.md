@@ -879,17 +879,18 @@ directly. Entry point carries five scripted runs -- `--drive-keys`, `--drive-sky
 `--drive-undo`, `--drive-select`, `--drive-drag` -- plus `--drive-help:<tab>`, one per tab.
 Each pushes real events through SDL's own queue rather than calling handler, so what it
 exercises is wiring.
-  39 checks over 14 runs -- 15 `report` sites, of which most fire in every run that reaches
+  41 checks over 15 runs -- 16 `report` sites, of which most fire in every run that reaches
   them. Held key slides view and keeps its height; drag across bare sky turns view and builds
   nothing; undo takes construction back *and* returns view to where it built from; choice menu
   does not swallow drag after it; every help tab opens with rows in it; a run whose face is
-  missing still does its scripted work; every type role is drawn in a face of its own; and a
-  scene filled to capacity leaves what follows its list on the window.
+  missing still does its scripted work; every type role is drawn in a face of its own; a
+  scene filled to capacity leaves what follows its list on the window; and menu opens with
+  its groups in it, offering demo at every size `orrery` has.
   Counted by running rather than by reading, and twice now that reading was wrong: this said 19
   until 2026-09-09, which is sites plus tabs with the help site counted twice, and then 22 until
   2026-09-11, which stopped being true the day the type-role verdict began firing in every run
   with a face. `drive`'s own output is the count: `grep -c "^  ok"` over `driven`.
-  **These 39 run wherever `drive` runs, which is what repository issue 91 ruled.** They ran here
+  **These 41 run wherever `drive` runs, which is what repository issue 91 ruled.** They ran here
   and nowhere else while `drive` skipped them for want of SDL3, and `0 finding(s)` over 161 checks
   and over 139 were two claims wearing one sentence. `desktop` now fetches and builds both
   libraries itself, so the skip is gone and an absent dependency fails by name.
@@ -3280,3 +3281,39 @@ list moves* — and each front-end answers it in its own idiom.
   62, where that scroller's own content begins. The scroll itself is asserted too, since a
   check that reads a stuck heading while nothing moved would pass on a page with no
   stickiness in it.
+
+
+## Re-audit, 2026-09-11, one menu in two front-ends
+
+Asked by the Architect, after the panel was brought in line: give the desktop the menu the
+page has, and make the two as similar as possible.
+
+**What the page had that the desktop did not.** Its `☰` opens a menu of three groups — *save*
+(scene, image), *load* (scene), *demo* (one button per orrery size). The desktop had no menu,
+kept save and load inline in its top bar, hid its PNG export at the bottom of the **view**
+section, and **offered the demo nowhere at all** — `--demo` existed on the command line and
+had no control in the window.
+
+**All three groups are now on both.** The desktop's top bar is what the page's chip row is —
+`add`, `undo`, `redo`, then `axes`, `grid`, then `☰` — and everything else went behind that
+button. `☰` is U+2630, the very character the page's button carries: `RANGES_SYMBOL` already
+merges U+2600–26FF into the interface face, so no face had to be pushed to draw it.
+
+**The demo group is built rather than written.** It walks `orrery.ScaleOrrery` and labels each
+button with `objectsOf`, exactly as the page builds its own from `nimDemoScales`; a size added
+to `orrery` arrives in both menus with neither front-end touched. Loading one calls the same
+`showOrrery` the browser calls, then resets selection, timeline and open session as
+`bridge.nimLoadDemo` does, and says what the page's toast says.
+
+**Two deliberate differences, both stated rather than smoothed over.**
+  The desktop's menu carries `scene file` and `image file` fields above its groups. The page
+  has no such fields because its save is a download and its load is a file picker; a desktop
+  build writes to paths, and the path a button writes to belongs beside that button.
+  The menu hangs from its own button rather than opening at the pointer, which is Dear
+  ImGui's default. The page's menu hangs from its chip, and a menu that lands somewhere
+  different each time is one the reader has to find twice.
+
+**Checked headlessly, which needed a door.** A popup has no state a scripted run can set, so
+`guiMenuBegin` takes `is_forced` and `--drive-menu` opens the menu with no pointer — the same
+door `--drive-help` uses for tabs. The verdict reads what the menu laid out: **3 sizes
+offered, 3 in `orrery`**. That makes 41 checks over 15 runs.

@@ -135,7 +135,7 @@ Every law under test through testament on the pinned commit, in three configurat
 page has been built and looked at, its type surface is checked, and a Playwright harness
 drives 149 checks over held keys, the wheel, mouse pan and touch — see Driven Checks in
 `PROVENANCE.md`. The desktop application has been built, one frame of it looked at, and its own
-fourteen scripted runs driven headless under Xvfb — 39 checks, all passing, one of them driven
+fifteen scripted runs driven headless under Xvfb — 41 checks, all passing, one of them driven
 with no face installed at all and one with the scene filled to capacity. SDL3 arrives as a
 source build rather than a package, and `drive` fetches and builds it rather than skipping the
 runs that need it.
