@@ -505,6 +505,11 @@ suite "the reference's chain cards":
     ##   Count asked for is reference's own classifier rather than second rule:
     ##     `chainFor` names shape by `int(abs(wind) * 2)` -- open, cross,
     ##     diamond, swan -- and chain gains one crossing per half turn of wind.
+    ##   Read as `writhe` rather than as tally, since tally cannot tell arms
+    ##     wound round each other from two crossings of opposite sign, which
+    ##     annihilate under small move and never were wind. Measured: both of
+    ##     `C6`'s crossings carry same sign and survive twenty relaxations in
+    ##     place, so its diamond is wound; three short cards read nought.
     ##   `is_met` says which sim reaches today, so neither side moves without
     ##     this going red.  Three do not: sim's pose at whole turn sits nearer
     ##     rest than its half turn one, arms having got out of wind by passing
@@ -528,8 +533,13 @@ suite "the reference's chain cards":
         if got.isNone:
           continue
         let
+          wound = writhe(got.get.state, got.get.verdict)
           crossed = crossings(got.get.state, got.get.verdict).len
-          reaches = crossed == want
-        echo &"    {id}: reference draws {want}, sim draws {crossed}" &
+          reaches = abs(wound) == want
+        echo &"    {id}: reference draws {want}, sim winds {abs(wound)}" &
+          &" (writhe {wound}, {crossed} crossing(s))" &
           (if reaches: "  (reaches)" else: "  (SHORT)")
         check reaches == MET[which][i]
+        # Tally and wind agree on every card today. Where they part, wind is
+        #   what is meant, and this says so rather than leaving it to be found.
+        check crossed == abs(wound)
