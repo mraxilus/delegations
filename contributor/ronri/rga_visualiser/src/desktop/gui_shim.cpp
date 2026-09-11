@@ -238,6 +238,26 @@ bool guiChildBeginBounded(const char* name, float width, float height_max) {
 
 void guiChildEnd() { ImGui::EndChild(); }
 
+// Menu opened by button, drawn as popup under it.
+//   Browser hides what is reached for rarely behind `☰` in its chip row; this is that
+//   control in idiom Dear ImGui has for it, so two front-ends put one thing in one place.
+//   `is_forced` opens it without click, for headless run that has no pointer to click with
+//   -- same door `--drive-help` uses on help's tabs.
+//   Caller closes with `guiMenuEnd` only where this returned true, which is what
+//   `ImGui::BeginPopup` asks of every caller.
+bool guiMenuBegin(const char* label, const char* id, bool is_forced) {
+  if (ImGui::Button(label) || is_forced) ImGui::OpenPopup(id);
+  // Hang menu from its own button rather than from pointer, which is where popup opens by
+  //   default. Browser's menu hangs from its chip, and menu that lands somewhere else each
+  //   time is menu reader has to find twice.
+  const ImGuiStyle& style = ImGui::GetStyle();
+  ImGui::SetNextWindowPos(
+    ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y + style.ItemSpacing.y));
+  return ImGui::BeginPopup(id);
+}
+
+void guiMenuEnd() { ImGui::EndPopup(); }
+
 void guiText(const char* text) { ImGui::TextUnformatted(text); }
 
 // Wrap at panel's own right edge instead of clipping.

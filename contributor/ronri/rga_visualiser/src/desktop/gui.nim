@@ -146,6 +146,17 @@ proc childBeginBounded*(name: cstring; width, height_max: cfloat): bool
 
 
 proc childEnd*() {.importc: "guiChildEnd", sideEffect.}
+
+
+proc menuBegin*(label, id: cstring, is_forced: bool): bool
+  {.importc: "guiMenuBegin", sideEffect.}
+  ## Draw button opening menu, and open menu's own region where it is showing.
+  ##   `is_forced` opens it with no click, for run that cannot click.
+  ##   `menuEnd` closes it only where this returned true.
+
+
+proc menuEnd*() {.importc: "guiMenuEnd", sideEffect.}
+  ## Close region `menuBegin` opened.
   ## End child region begun by `childBegin`.
 
 proc text*(text: cstring) {.importc: "guiText", sideEffect.}
