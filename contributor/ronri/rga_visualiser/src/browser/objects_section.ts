@@ -264,7 +264,7 @@ function buildObjectRow(handle: number | null) {
     : 'Rename, recolour or reshape this object; nothing changes until you save.';
   toggle_edit.addEventListener('click', () => {
     if (!is_open) { beginEditSession(handle); refreshObjectsUI(); return; }
-    if (is_pending && nimSceneCount() >= nimSceneCapacity()) { toast('Scene is full.'); return; }
+    if (is_pending && nimSceneCount() >= nimSceneCapacity()) { toast(nimFullMessage()); return; }
     if (is_pending) {
       nimAddObject(
         openSession().coefficients, openSession().label, openSession().ink, openSession().radius,
@@ -272,14 +272,14 @@ function buildObjectRow(handle: number | null) {
       );
       endEditSession();
       adoptConstructionSelection();
-      toast('Added `' + label.textContent + '`.');
+      toast(nimAddedMessage(label.textContent ?? ''));
     } else {
       nimCommitObject(
         handle, openSession().coefficients, openSession().label, openSession().ink,
         openSession().radius, openSession().shines,
       );
       endEditSession();
-      toast('Saved `' + label.textContent + '`.');
+      toast(nimSavedMessage(label.textContent ?? ''));
     }
     refreshObjectsUI();
     refreshUndoRedoButtons();
@@ -328,7 +328,7 @@ function buildObjectRow(handle: number | null) {
       nimRemoveObject(handle); // Drops handle from selection itself, so stale pick
         // cannot linger and read as "selected" once future add reuses freed handle.
       if (isEditing(handle)) endEditSession(); // Its session has nothing left to commit to.
-      toast('Removed `' + label.textContent + '`.');
+      toast(nimRemovedMessage(label.textContent ?? ''));
       onSelectionChanged(null);
     });
     top.appendChild(remove);

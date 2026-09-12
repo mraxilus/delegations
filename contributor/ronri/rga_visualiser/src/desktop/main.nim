@@ -106,8 +106,8 @@ import std/[algorithm, math, monotimes, options, os, parseopt, strformat, struti
 
 import pga
 import ../rga_visualiser/[
-  boundary, camera, format, framing, help, history, interaction, lighting, marker, orrery,
-  picking, scene, selection, storyboard, tessellate, timings,
+  boundary, camera, format, framing, help, history, interaction, lighting, marker, message,
+  orrery, picking, scene, selection, storyboard, tessellate, timings,
 ]
 import ./[arena, gif, gui, image, opengl as gl, panel, renderer, sdl3]
 
@@ -844,17 +844,17 @@ proc renderFrame(
   if panel.is_undo_requested or panel.is_redo_requested:
     let is_undo = panel.is_undo_requested
     (panel.is_undo_requested, panel.is_redo_requested) = (false, false)
-    toChars(
-      if stepHistory(panel, scene, camera, HISTORY, is_undo):
-        (if is_undo: "Stepped back." else: "Stepped forward.")
-      else:
-        (if is_undo: "Nothing to undo." else: "Nothing to redo."),
-      panel.message,
-    )
+    # Step that lands says nothing, as page's own does: scene and view both move, and
+    #   that is answer. Only refusal earns sentence, and only key can reach one --
+    #   either button greys out where its side of timeline is empty.
+    if not stepHistory(panel, scene, camera, HISTORY, is_undo):
+      panel.say(stepMessage(is_undo), now)
   layoutPanel(panel, scene, camera, HISTORY, now)
   # Row of constant controls floats over scene beside panel, as browser's chip row does.
   layoutChipRow(panel, scene, camera, HISTORY, now)
   layoutHelp(panel, path_help)
+  # Outcome floats over scene last of all, so nothing drawn this frame covers it.
+  layoutMessage(panel, now)
 
   # Advance tween before this frame's transforms are built, so frame draws where camera is.
   #   `offerCameraAim` sets goal this advance consumes next frame, one frame later by
@@ -1019,7 +1019,7 @@ proc handleEvent(
       if panel.is_help_open: panel.is_help_open = false
       elif interaction.is_dragging:
         interaction.cancelDrag()
-        toChars("Cancelled.", panel.message)
+        panel.say(cancelledMessage(), now)
       elif panel.session.isSome: panel.session = none(EditSession)
       elif panel.is_menu_selection_shown: panel.hideSelectionMenu()
       elif len(panel.selection) > 0: panel.selection.clear()
@@ -1086,7 +1086,7 @@ proc handleEvent(
     let is_shifted = (sdl3.getModState() and MODIFIER_SHIFT) != 0
     if button_dragging == some(event.button.button):
       let outcome = interaction.endDrag(scene, now)
-      if len(outcome.message) > 0: toChars(outcome.message, panel.message)
+      panel.say(outcome.message, now)
       if outcome.index_clicked.isSome:
         # Select what press that never became drag came down on.
         #   Button decides whether menu comes with it; shift decides add or replace;
@@ -1853,7 +1853,7 @@ proc runInteractive(
     if panel.is_export_requested:
       panel.is_export_requested = false
       let report = exportFrame(toText(panel.path_export), width, height)
-      toChars(report, panel.message)
+      panel.say(report, now)
       echo report
 
     sdl3.glSwapWindow(window)
@@ -1952,7 +1952,7 @@ proc runStoryboard(
   scene.restoreFrom(initScene())
   constructSeeds(scene, clock)
   let count_seeds = scene.len
-  toChars("Seeds placed.", panel.message)
+  panel.say("Seeds placed.", clock)
   captureStep("00_seeds")
 
   # Keep every object visible once added, dimming by recency.
@@ -1995,7 +1995,7 @@ proc runStoryboard(
       )
       panel.tween_camera.settle(camera)
 
-    toChars(&"{step.label} gave {kindText(derived)}.", panel.message)
+    panel.say(&"{step.label} gave {kindText(derived)}.", clock)
     panel.selection.selectOnly(count_seeds + index)
     captureStep(step.stem)
 

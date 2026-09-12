@@ -226,12 +226,12 @@ function buildGradedCoefficientGrid(
 }
 
 elementById('button-apply').addEventListener('click', () => {
-  if (nimSceneCount() === 0) { toast('Scene is empty; add a point first.'); return; }
+  if (nimSceneCount() === 0) { toast(nimEmptyMessage()); return; }
   const handles = nimSceneHandles();
   const last = handles.length - 1;
   const first = handles[Math.min(parseInt(picker_operand_first.value, 10) || 0, last)];
   const second = handles[Math.min(parseInt(picker_operand_second.value, 10) || 0, last)];
-  if (nimSceneCount() >= nimSceneCapacity()) { toast('Scene is full.'); return; }
+  if (nimSceneCount() >= nimSceneCapacity()) { toast(nimFullMessage()); return; }
   if (first === undefined || second === undefined) { toast('Pick two objects.'); return; }
   const result = nimApplyOperation(
     parseInt(picker_operation.value, 10), first, second, now());

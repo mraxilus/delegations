@@ -245,7 +245,7 @@ function stepHistory(is_undo: boolean) {
     adoptConstructionSelection();
     refreshObjectsUI();
   } else {
-    toast(is_undo ? 'Nothing to undo.' : 'Nothing to redo.');
+    toast(nimStepMessage(is_undo));
   }
   refreshUndoRedoButtons();
 }

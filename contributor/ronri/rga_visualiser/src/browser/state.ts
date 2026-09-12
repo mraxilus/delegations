@@ -109,6 +109,15 @@ function adoptConstructionSelection() {
 /* ---------------------------------------------------------------------- */
 
 const element_toast = elementById('toast');
+// How long outcome stands, and how long it takes to go, both read from `message.nim`.
+//   Stood at `3200` written here, against nothing at all in window, whose own line simply
+//   stayed until something replaced it. One constant now decides both builds.
+//   Fade is set on element rather than left to `--anim`, so stylesheet is not second
+//   place same number is written.
+const SECONDS_TOAST = nimMessageSeconds();
+const MILLISECONDS_TOAST_STANDING = flatAt(SECONDS_TOAST, 0)*1000;
+const MILLISECONDS_TOAST_FADING = flatAt(SECONDS_TOAST, 1)*1000;
+element_toast.style.transitionDuration = MILLISECONDS_TOAST_FADING + 'ms';
 let timer_toast: ReturnType<typeof setTimeout> | undefined;
 function toast(message: string) {
   // Say nothing for empty message, which is one caller decided not to say.
@@ -120,7 +129,8 @@ function toast(message: string) {
   element_toast.classList.remove('actionable');
   element_toast.classList.add('show');
   clearTimeout(timer_toast);
-  timer_toast = setTimeout(() => element_toast.classList.remove('show'), 3200);
+  timer_toast = setTimeout(
+    () => element_toast.classList.remove('show'), MILLISECONDS_TOAST_STANDING);
 }
 
 function toastWithLink(

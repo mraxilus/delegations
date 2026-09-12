@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Author | Claude Opus 5 and Claude Sonnet 5 |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 3de2c53c542bac80 |
+| Rules  | b4b063b2350a3645 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the
@@ -3354,3 +3354,75 @@ offers three sizes. **That is the case for ending a change with a picture** (rep
 `☰` also grew a chip of its own — 34 px against the width one glyph asks for — because the
 character set at interface size in a button sized to it reads as a mark rather than as a
 control. The browser draws the same character on a round chip far wider than the glyph.
+
+
+## Re-audit, 2026-09-12, one way of saying what happened
+
+Asked by the Architect, after a question about the desktop's message line: make the outcome
+transient, the way the browser's toast already is, and look for the rest of the drift while
+there.
+
+**Where the drift was.** Both front-ends report the outcome of the last action in one short
+sentence, and both had written those sentences themselves. Three had drifted apart, and one
+of them silently:
+
+| Outcome | The page said | The window said |
+|---------|---------------|-----------------|
+| delete a selection of three | `Deleted 3 objects.` | `Deleted the selection.` |
+| hide a selection of two | `Hid 2 object(s).` | `Hid the selection.` |
+| apply with nothing to apply to | `…add a point first.` | `…add a multivector first.` |
+
+The glossary settles the last of those and neither front-end used its word: the scene holds
+**objects**, and point, line and plane are *kinds*. The count is information the window threw
+away; `object(s)` is what writing says when it holds a count and will not spend a word on it.
+All of it now comes from `message.nim`, which both builds read — the same door
+`interaction.wordOf` and `help.nim` already go through (Art. II.9). The page reaches it over
+the bridge (`nimDeletedMessage` and its neighbours); ten sentences crossed, `Cancelled.`
+among them, which both builds had written out in full. The ones only one build can reach —
+the page's download routes and read errors, the window's image export and scene file —
+stayed where they are said.
+
+**The life was drift too, of a worse kind.** The page held its toast for `3200` ms, written
+into `state.ts`; the window held its line *for the rest of the session*, and opened carrying
+`Ready.`, which was the outcome of no action at all. `SECONDS_MESSAGE` and
+`SECONDS_MESSAGE_FADE` are now one pair of constants both read: the page takes them through
+`nimMessageSeconds` and sets its own transition duration from them, so the stylesheet is not a
+second place the same number is written, and the window fades its overlay out by
+`messageFade`.
+
+**Why the fade is arithmetic in the core rather than in the panel.** The suite cannot reach
+Dear ImGui, so a fade computed inside `layoutMessage` could only ever be checked by eye. As a
+function of age it is held to four things: it is whole while the message stands, exactly
+nothing once the fade is done, never rises again at any age, and every sentence fits the
+`MESSAGE_MAX` storage the window draws through. The first two are the defect stated as
+arithmetic — a build whose message never goes fails them.
+
+**What moved on the screen.** The window's outcome was a mono line pinned under the `view`
+header at the foot of the panel; it is now an overlay pinned top-centre, the same place the
+page puts its toast, clear of the panel on the left, the chip row on the right and `?` in the
+far corner. Nothing it covers while it stands is a control. Two rows came back to the objects
+list as a result: `ROWS_OBJECTS_BELOW` was four while a separator and the message line stood
+under `view`, and is two now.
+
+**Outcomes the window had never reported at all.** Committing, adding and removing a row said
+nothing there while the page toasted each one; they say `Added \`m4\`.`, `Saved \`m4\`.` and
+`Removed \`m4\`.` now, from the same sentences. Going the other way, `Stepped back.` and
+`Stepped forward.` were dropped: the page says nothing for a step that lands, because the
+scene and the view both move and that is the answer, and only a refusal earns a sentence —
+which only a key can reach, since either button greys out where its side of the timeline is
+empty.
+
+**Dead rule removed.** `shell.html` still carried `.message-line`, with no element using it,
+left behind when the toast replaced that line. Found while answering the question that started
+this change.
+
+**Counts.** The page's harness goes from 149 checks to 151: the outcome's life is read from
+the bridge rather than written into `state.ts`, and the toast is watched until it takes itself
+away. The desktop's own figure is unchanged at 41 checks over 15 scripted runs — this moves
+where an outcome is drawn rather than adding a run.
+
+**Pictures, and how to remake them.** Before and after, from the storyboard's own third still:
+`./bin/rga_visualiser --hidden --storyboard:DIR`, then `DIR/02_join_plane.png` — before, the
+sentence sits at the foot of the panel below `view`; after, it floats over the scene at the
+top. An empty-handed opening is `--hidden --drive-keys --screenshot:PATH --frames:40`, which
+now shows nothing at all where `Ready.` used to stand.
