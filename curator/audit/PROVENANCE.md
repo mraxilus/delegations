@@ -322,6 +322,26 @@ different faces (repository issue 116).
   comes from upstream's sidecar at fetch time rather than from this table, and it is stored
   *unpacked by pin* because the rest of koch resolves toolchains by pin. Different trust model and
   different key, so `compilers.nim` keeps it rather than this pretending one shape serves both.
+- **The declaration is published, so no consumer parses this source.** `koch assets` naming no
+  file writes every row as `<file> <digest>`, one per line. Before that, a project holding the law
+  that its faces are declared read `assets.nim` as text — a second parser for a format only this
+  module owns, which is the duplication the store exists to end, one layer up (repository issue
+  134). Two columns rather than three: the address is the fetcher's business, and the digest is
+  what a consumer checks bytes against. Neither column can hold a space, so `split` reads a row.
+  **A row never reads as a path, and the suite holds it so.** The verb prints paths when files
+  are named and rows when none are, and both contributor builds tell those apart by shape alone
+  — one keeps lines that `fileExists`, the other lines starting `/`. A row that looked like an
+  absolute path would be copied as a face by one and counted as served by the other. Neither
+  project can check that; the store owns the row's shape, so the store holds the law.
+
+**A `/common/` tree was costed and deferred.** Issue 134 asked for one, and named the bar for
+admitting anything to it: the curator and at least two contributor projects use it, with the users
+named so a later refactor can tell a common project nobody needs from one everybody does. The
+store is the only thing in the repository that clears that bar today. Compilers, Atlas checkouts
+and npm are pinned per project deliberately, and a tree with one inhabitant is a rename with a
+migration attached — so the published contract above ships and the tree waits for a second case.
+**If it is ever built the curator writes it and contributors only read it**, because a shared tree
+a contributor may write is a scope boundary the branch grammar cannot check.
 
 ## Toolchain
 

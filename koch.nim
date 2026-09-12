@@ -10,7 +10,7 @@
 ##   | types   | restore node tools, then type-check scripts, projects one change asks   |
 ##   | driven  | restore, build page, drive it through real events, on that project's pin|
 ##   | system  | print packages projects with `system` verb declare, one per line        |
-##   | assets  | fetch files named into shared store, print path of each                 |
+##   | assets  | fetch files named into store, print path of each; name none to declare  |
 ##   | tests   | restore, then testament over tests/t*.nim, every project or one         |
 ##   | plan    | projects one change asks to compile, as JSON for CI matrix              |
 ##   | scope   | changed paths against branch prefix           (--branch, --base)        |
@@ -172,6 +172,11 @@ proc run(options: Options): int =
     let root = storeRoot(getEnv(ASSETS_KEY))
     var wanted = options.rest
     if options.project.len > 0: wanted.insert(options.project, 0)
+    # Naming no file asks for declaration rather than for bytes: consumer checking whether
+    #   name is declared reads published rows, never this module's source (issue 134).
+    if wanted.len == 0:
+      stdout.write declaration()
+      return 0
     for file in wanted:
       let path = assetIn(root, file)
       if path.len == 0:
