@@ -3515,6 +3515,15 @@ can be driven to hover headlessly, so the four outputs above are what this chang
 instead of a screenshot — which is what `CONTRIBUTOR.md` asks for where a change is not
 visual.
 
+**Named against the house, after the Architect asked.** `wordingOf(key: Wording)` named the key
+twice over, since the key *is* a wording; and `lut_wording` broke the shape every other lookup
+here carries. The house convention is `lut_<key>_to_<value>` — `lut_ink_to_name`,
+`lut_basis_to_name`, `lut_operation_to_arity` — with the accessor named for what it returns, as
+`nimBasisName` is. So the table is `lut_wording_to_text`, the accessor is `wordingText`, and
+`isWordingSpoken` is `hasWords`, since nothing here speaks. **GLOSSARY.md gains *Wording*** in the
+same change, which is what settled the question: a wording is one piece of shown text, the key is
+what code names, and `wordingText` gives the words it stands for.
+
 **Staged, and this is stage one.** The catalogue holds the 41 tooltips, where the drift was
 live. Stage two is labels and headings — `gui.button`, `gui.header`, `gui.separatorText` and
 the page's own `textContent`, about ninety sites. Stage three folds in `help.nim`'s rows and
@@ -3525,3 +3534,81 @@ catalogue means one, and it is not one until they are in it.
 forty-one. A touch target has no hover, so the gap is likely a real difference rather than
 drift, and closing it would mean *writing* thirty new tooltips rather than de-duplicating any.
 The catalogue makes that a one-line change per control whenever it is judged worth it.
+
+## Re-audit, 2026-09-12, stage two: the labels
+
+Stage one of the catalogue took the 41 tooltips. This takes the words on the controls
+themselves, on both front-ends, and closes the hole stage one left: a literal could still go
+back in at any `gui.button` or any `textContent`.
+
+**What the inventory found.** The window named **32** labels in `panel.nim`; the page wrote
+**6** from its scripts and carried **44** more as static text in `pages/shell.html`. So the
+page's labels live in *markup*, not in TypeScript, and stage one's trick — strip the attribute,
+set it from a script at load — does not scale: it would empty 44 elements, invent 44 ids, and
+leave the page blank until its scripts ran.
+
+**The page fills its markup at build time.** `tools/build.nim` already rewrites `shell.html` on
+the way out, replacing `@SCRIPT@` and `@EMBED:<face>@`. Stage two adds one more token to the
+same pass:
+
+```html
+<button class="button" id="button-add" type="button" aria-label="add object"
+>@WORD:NameChipAdd@</button>
+```
+
+filled from `lut_wording_to_text` when the page is assembled. That gives what neither
+alternative does: no second copy of the words, no runtime assignment, and a page whose real
+text is in the markup — so it reads with scripts refused, and with the first paint rather than
+the first frame. A token naming a key the catalogue does not carry stops the build:
+
+```
+Shell names wording catalogue does not carry, at pages/shell.html:
+  1092: <button class="button" id="button-add" … >@WORD:NameChipAdded@</button>
+```
+
+**What had drifted, and what won.**
+
+| shown | the window said | the page said | now |
+|---|---|---|---|
+| coefficients, composing | `…stacked one row per grade…` | no such clause | the window's |
+| coefficients, composing | `…nothing joins the scene…` | no such clause | the window's |
+| coefficients, editing | `…stacked one row per grade.` | no such clause | the window's |
+| help button | `"  ?  "` | `?` | `?`; padding was layout written as text |
+| apostrophe | `library's` | `library’s` | `library's`, as the catalogue has it |
+
+**One key per control, not one key per word.** `NameRowHide` and `NamePickHide` both read
+"hide" today and are two keys, because two buttons honestly wear one word and a translator may
+still need them apart. That is the practice this adapts, and it is why the "no two keys carry
+the same text" law now holds over **prose keys only** — the tooltips and notes, where a
+repeated sentence is still a copy-paste. Labels get their own law instead: stripped, no doubled
+space, no trailing full stop, and at most `RUNES_LABEL_MOST` runes, so prose cannot wander into
+a `Name` key.
+
+**The guard is total now, not a list of prefixes.** `checkWording` used to ban three exact
+strings. It now refuses a quoted literal at any of the fourteen panel calls that put text in
+front of a reader, and at `.title`, `.textContent` and `.innerHTML` in every browser script. A
+hidden ImGui id (`##name`) and an empty label are allowed, because neither is shown. It also
+refuses the opposite defect: a catalogue row **no front-end names**, so the catalogue cannot
+grow words written for nobody.
+
+```
+Shown text belongs in `wording.nim`, named by key; got 3:
+  src/browser/state.ts:166: hint.textContent = 'or press and hold the image to save it';
+  src/browser/state.ts:175: advice.textContent = 'If nothing arrives, this frame is blocking it — '
+  src/browser/state.ts:186: dismiss.textContent = 'dismiss';
+```
+
+Those three were real and are now catalogued, which is why the count is **105 keys**, not the
+~88 the shared labels alone would give: once the guard is total, text one front-end alone shows
+comes in too. That is a change of position from stage one, which said single-front-end text
+stays put — the guard cannot tell shared from unshared, and a guard with a hand-kept allowlist
+would rot. The words still have one home; nothing about which front-end shows them changed.
+
+**`tools/build.nim` imports the catalogue rather than parsing it.** `declare` used to read
+`wording.nim` as text to recover the enum's keys, and would have stopped at the first blank
+line inside the enum. It now imports the module and walks `Wording` itself, so a key renamed
+there and not re-derived fails to compile rather than fails to match.
+
+**Still theirs.** Whether the page should reach every tooltip the window has (`#145`); stage
+three, folding `help.nim`'s rows and `message.nim`'s sentences in — until that lands, "one
+catalogue" is three; and the flaky two-finger pan check (`#153`).
