@@ -1,51 +1,162 @@
 ## Ask body sim about every card reference draws, and write down which it agrees with.
 ##
-##   Reference page carries two tags on each cell.  `kept` is Architect's, given by
-##     eye on floor.  `modelled` is this one: whether sim reaches what card draws.
-##     Goal is both at hundred per cent, and gap between them is work left.
-##   Tag is written here rather than on page because asking sim costs minutes and
-##     page is markup.  Same arrangement `design/turns` uses, and same reason.
-##   Tag must not touch pins.  `review_page.drawingOf` cuts cards back out of built
-##     page by collecting their `svg` elements alone, so badge outside drawing
-##     changes no pin and no kept card is re-drawn by adding this.
-##   Only cards sim has actually been asked about appear.  Card with no answer gets
-##     no tag, which reads as unasked rather than as disagreement.
+##   Reference page carries two tags on each cell.  `kept` is Architect's, given by eye
+##     on floor.  `modelled` is this one: whether sim reaches what card draws.  Goal is
+##     both at hundred per cent, and gap between them is work left.
+##   Written here rather than on page because asking sim costs minutes and page is
+##     markup.  Same arrangement `design/turns` uses, and same reason.
+##   Tag must not touch pins.  `review_page.drawingOf` cuts cards back out of built page
+##     by collecting their `svg` elements alone, so badge outside drawing changes no pin
+##     and no kept card is re-drawn by adding this.
+##   Answers are keyed by question, never by card's own name: page already folds
+##     duplicate pictures together and hands out identifiers, and second place doing
+##     that would be second place to get it wrong.
+##   Four manners are two motions.  Orbit about couple's centre is change of world
+##     frame and moves neither dancer with respect to other, so manner that orbits is
+##     physically turn of *other* dancer, other way about.  Architect's reading, and it
+##     is what `sim/rigid` is asked.  What survives is whose crown hands are over: couple
+##     raise them over dancer who walks under, which follows manner, not physics.
+##   Card sim has not been asked about is absent, and gets no tag: unasked reads as
+##     unasked rather than as disagreement.
 
 {.experimental: "strictFuncs".}
 
-import std/[json, tables]
+import std/[json, options, strformat, tables]
 
 import ../sim/[body, hold, rig, walk]
+import ../src/dance_ontology/draw/terms
+import ../src/dance_ontology/frame
+import ../src/dance_ontology/rotation
 import ./parts
 
 
+const PAIRED: Holds = [some terms.Arm.L, some terms.Arm.R]
+  ## Same-name chain section D draws: lead's left to follow's left, right to right.
+  ## Index is lead's arm and value is follow's it joins, as `HAND_TO_HAND` is read.
+
 const CROWN = Band.Crown
-  ## Whole reference is drawn over crown: `design/parts` picks `ABOVE_BOTH` for
-  ## chains, and every other card above too.
+  ## Whole reference is drawn over crown: `design/parts` picks `ABOVE_BOTH` for chains
+  ## and `ABOVE_ONE`/`ABOVE_OTHER` for singles, so no card asks about any other band.
 
 
-proc reached(arms: seq[(Arm, Arm)]; away: bool): seq[bool] =
-  ## Whether sweep carries this chain to each of `STEPS`, in their order.
-  ##   Captions count clockwise seen from above, which is sweep's negative way.
-  var links: seq[Link] = @[]
-  for (a, b) in arms:
-    links.add Link(ends: [(Body.One, a), (Body.Two, b)])
-  let sw = swept(HUMAN, CROWN, links, most = 1.6, away = away)
-  for w in STEPS:
-    if not sw.restHolds:
-      result.add false
-    else:
-      let side = if w >= 0.0: sw.neg else: sw.pos
-      result.add (not side.stopped or abs(w) <= side.at)
+func bodyOf(who: terms.Dancer): Body =
+  ## Two enums are named `Dancer` in this tree, `terms`' and `rotation`'s.
+  ## `parts.MANNERS` carries `terms`' one, beside `rotation`'s `About`.
+  if ord(who) == ord(terms.Dancer.Lead): Body.One else: Body.Two
+
+func otherThan(who: Body): Body =
+  if ord(who) == ord(Body.One): Body.Two else: Body.One
+
+func armOf(a: terms.Arm): body.Arm =
+  if ord(a) == ord(terms.Arm.L): body.Arm.Left else: body.Arm.Right
+
+func linksOf(holds: Holds): seq[Link] =
+  ## Read `parts`'s hold table: index is lead's arm, value is follow's it joins.
+  for lead, follow in holds.pairs:
+    if follow.isSome:
+      result.add Link(ends: [(Body.One, armOf(terms.Arm(lead))),
+                             (Body.Two, armOf(follow.get))])
+
+
+type Carried = object ## How far one hold carries, one manner, each way.
+  restHolds: bool
+  stopped: array[2, bool] ## Index 0 is turning back, 1 is turning on.
+  at: array[2, float]
+
+func reaches(c: Carried; turns: float): bool =
+  ## Whether that manner carries hold this far, in its own positive sense.
+  if not c.restHolds: return false
+  let i = if turns >= 0.0: 1 else: 0
+  not c.stopped[i] or abs(turns) <= c.at[i]
+
+proc carried(links: seq[Link]; away: bool; manner: Manner; most: float): Carried =
+  ## Sweep this hold under this manner, both ways.
+  let
+    walks = bodyOf(MANNERS[manner].who)
+    turner = if ord(MANNERS[manner].about) == ord(About.Axis): walks
+             else: otherThan(walks)
+    sw = swept(HUMAN, CROWN, links, who = turner, most = most, away = away,
+               head = walks)
+  result.restHolds = sw.restHolds
+  # Orbit is other dancer turned other way about, so its two ways are swapped.
+  let flip = ord(MANNERS[manner].about) != ord(About.Axis)
+  result.stopped = [(if flip: sw.pos.stopped else: sw.neg.stopped),
+                    (if flip: sw.neg.stopped else: sw.pos.stopped)]
+  result.at = [(if flip: sw.pos.at else: sw.neg.at),
+               (if flip: sw.neg.at else: sw.pos.at)]
+
+
+func holdsOf(target: Frame): Holds =
+  ## Which hands this frame joins, in `parts`'s own terms.
+  for side in Side:
+    if target.hold[side].isSome:
+      let
+        lead = (if ord(side) == ord(Side.Left): terms.Arm.L else: terms.Arm.R)
+        follow = (if ord(target.hold[side].get) == ord(Site.LeftHand): terms.Arm.L
+                  else: terms.Arm.R)
+      result[lead] = some follow
+
+func restsFacing(target: Frame): bool =
+  ## Whether frame rests face to face rather than pillion lead.  Same reading
+  ## `review_page` makes, by `phaseOf`, and never written down.
+  if target.countHolds < 2: true else: phaseOf(holdsOf(target)) < 1e-9
 
 
 proc answers(): OrderedTable[string, bool] =
-  ## Every card sim can be asked about today, and what it says.
+  ## Every card sim can be asked about, keyed as page keys its own pictures.
   result = initOrderedTable[string, bool]()
-  for i, got in reached(@[(Arm.Left, Arm.Right), (Arm.Right, Arm.Left)], false):
-    result["C" & $(i + 1)] = got
-  for i, got in reached(@[(Arm.Left, Arm.Left), (Arm.Right, Arm.Right)], true):
-    result["D" & $(i + 1)] = got
+
+  # `A`. Standard diagram: eight frames, each at rest and at half turn from it.
+  #   A17 is one frame drawn turned other way, and is asked other way about.
+  for i, target in FRAMES:
+    let
+      links = linksOf(holdsOf(target))
+      away = not restsFacing(target)
+      walk = carried(links, away, Manner.FollowAxis, most = 0.8)
+    for twist in [0, 1]:
+      result[&"A{i * 2 + twist + 1}"] = walk.reaches(twist.float / 2.0)
+  result["A17"] = block:
+    let target = FRAMES[^1]
+    carried(linksOf(holdsOf(target)), not restsFacing(target),
+            Manner.FollowAxis, most = 0.8).reaches(-0.5)
+
+  # `B` and `E`: four single-hand holds, four manners, four quarters.
+  for c, single in SINGLES:
+    let links = linksOf(single.holds)
+    for manner in Manner:
+      let
+        tag = MANNERS[manner].tag
+        sense = windSense(manner)
+        walk = carried(links, false, manner, most = 1.2)
+      for q in 0 ..< QUARTERS_ROUND:
+        let got = walk.reaches(sense * q.float / QUARTERS_ROUND.float)
+        result[&"st_{tag}_{c}_{q}"] = got
+        result[&"tr_{tag}_{c}_{q}_{(q + 1) mod QUARTERS_ROUND}"] =
+          walk.reaches(sense * (q + 1).float / QUARTERS_ROUND.float)
+      result[&"rd_{tag}_{c}"] = walk.reaches(sense)
+
+  # `C` and `D`: two chains, seven positions each, half turn apart.
+  #   Their captions count *clockwise seen from above*, which is turn's negative
+  #   way, so wind's sign is flipped before it is asked.  Both chains happen to
+  #   stop at same place each way, so this changes no answer today -- it is here
+  #   because it would change one for hold that did not.
+  for (tag, arms, away) in [("C", HAND_TO_HAND, false), ("D", PAIRED, true)]:
+    let
+      links = linksOf(arms)
+      walk = carried(links, away, Manner.FollowAxis, most = 1.6)
+    for i, w in STEPS:
+      result[tag & $(i + 1)] = walk.reaches(-w)
+
+  # `F`: chain under each manner, whole round and each half of it.
+  for manner in Manner:
+    let
+      tag = MANNERS[manner].tag
+      sense = windSense(manner)
+      links = linksOf(HAND_TO_HAND)
+      walk = carried(links, false, manner, most = 1.6)
+    result[&"hc_{tag}"] = walk.reaches(sense * STEPS[^1])
+    for i in 0 ..< STEPS.len - 1:
+      result[&"hw_{tag}_{i}"] = walk.reaches(sense * STEPS[i + 1])
 
 
 when isMainModule:
@@ -53,4 +164,4 @@ when isMainModule:
   for id, got in answers():
     said[id] = %got
   writeFile("design/modelled.json", pretty(said) & "\n")
-  echo "wrote design/modelled.json"
+  echo "wrote design/modelled.json: ", said.len, " answers"

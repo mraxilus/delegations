@@ -148,7 +148,7 @@ func sheetOf(P: Parts): string =
       &"""<div class="picks">{buttons}</div>"""
 
   func card(id, label, note, art: string; drawings: seq[string];
-            switching = false): string =
+            switching = false; asks: seq[string] = @[]): string =
     ## Set one cell beside its identifier, carrying whatever has been ruled
     ## on it.  Unmarked is unreviewed, not approved.
     let
@@ -164,8 +164,14 @@ func sheetOf(P: Parts): string =
       # Sim's own tag, drawn outlined where Architect's is solid, so ruling by
       # eye and reading by engine are never taken for one another.  It sits in
       # other corner, and outside drawing, so no pin moves by its being here.
-      says = if id notin modelled: ""
-             elif modelled[id]: """<em class="tag model">modelled</em>"""
+      # Cell folding several pictures together stands for several questions, and
+      # is modelled only where sim reaches every one of them.  Card nothing has
+      # been asked about carries no tag at all.
+      put = if asks.len > 0: asks else: @[id]
+      known = put.filterIt(it in modelled)
+      says = if known.len == 0: ""
+             elif known.allIt(modelled[it]):
+               """<em class="tag model">modelled</em>"""
              else: """<em class="tag nomodel">not modelled</em>"""
     # Verdict was given on pictures, so picture that moved under one carries
     # approval it was never given.  Card holds itself to what it was drawn
@@ -183,15 +189,16 @@ func sheetOf(P: Parts): string =
     (if flawed: &"""<span class="fix">{esc(FLAWED[id])}</span>""" else: "") &
     "</figcaption></figure>"
 
-  func card(id, label, note, svg: string): string =
+  func card(id, label, note, svg: string; asks: seq[string] = @[]): string =
     ## Set one drawing in cell of its own.
-    card(id, label, note, unpinned(svg), @[unpinned(svg)])
+    card(id, label, note, unpinned(svg), @[unpinned(svg)], asks = asks)
 
   func card(id, label, note: string;
-            steps: seq[tuple[pick, note, svg: string]]): string =
+            steps: seq[tuple[pick, note, svg: string]];
+            asks: seq[string] = @[]): string =
     ## Set several drawings in one cell, switched between by button.
     card(id, label, note, stepped(id, steps),
-         steps.mapIt(unpinned(it.svg)), switching = true)
+         steps.mapIt(unpinned(it.svg)), switching = true, asks = asks)
 
   var body = ""
 
@@ -301,6 +308,7 @@ func sheetOf(P: Parts): string =
     var seen = initTable[string, string]()   # svg -> id already given it
     var order: seq[string]
     var whose = initTable[string, seq[string]]()
+    var asked = initTable[string, seq[string]]()  # svg -> questions it stands for
     for manner in Manner:
       for q in 0 ..< QUARTERS_ROUND:
         let key = &"st_{MANNERS[manner].tag}_{c}_{q}"
@@ -311,12 +319,13 @@ func sheetOf(P: Parts): string =
           seen[svg] = &"B{n}"
           order.add svg
         whose.mgetOrPut(svg, @[]).add said(MANNERS[manner].tag, q)
+        asked.mgetOrPut(svg, @[]).add &"st_{MANNERS[manner].tag}_{c}_{q}"
     for svg in order:
       # Where every manner lands on one picture, say so once rather than four times.
       let who = if whose[svg].len == MANNERS.len and
                    QUARTER_SAID[0] in whose[svg][0]: "every manner, before it starts"
                 else: whose[svg].join(" \u00B7 ")
-      body.add card(seen[svg], SINGLES[c].name, who, svg)
+      body.add card(seen[svg], SINGLES[c].name, who, svg, asks = asked[svg])
     body.add "</div>"
   body.add "</section>"
 
@@ -415,18 +424,22 @@ func sheetOf(P: Parts): string =
       if &"rd_{tag}_{c}" in st:
         inc m
         body.add card(&"E{m}", said, "the whole round, four quarters in one",
-                      st[&"rd_{tag}_{c}"])
-      var steps: seq[tuple[pick, note, svg: string]]
+                      st[&"rd_{tag}_{c}"], asks = @[&"rd_{tag}_{c}"])
+      var
+        steps: seq[tuple[pick, note, svg: string]]
+        asksE: seq[string]
       for q in 0 ..< QUARTERS_ROUND:
         let key = &"tr_{tag}_{c}_{q}_{(q + 1) mod QUARTERS_ROUND}"
         if key notin st: continue
+        asksE.add key
         steps.add ($(q + 1),
           &"quarter {q + 1} of 4: from {QUARTER_FROM[q]} to " &
             &"{QUARTER_FROM[(q + 1) mod QUARTERS_ROUND]}",
           st[key])
       if steps.len > 0:
         inc m
-        body.add card(&"E{m}", said, "one quarter at a time", steps)
+        body.add card(&"E{m}", said, "one quarter at a time", steps,
+                      asks = asksE)
     body.add "</div>"
   body.add "</section>"
 
@@ -461,15 +474,18 @@ func sheetOf(P: Parts): string =
       inc k
       body.add card(&"F{k}", said,
                     &"the whole chain, {CHAIN.len - 1} halves out and back",
-                    hh[&"hc_{tag}"])
-    var steps: seq[tuple[pick, note, svg: string]]
+                    hh[&"hc_{tag}"], asks = @[&"hc_{tag}"])
+    var
+      steps: seq[tuple[pick, note, svg: string]]
+      asksF: seq[string]
     for i in 0 ..< CHAIN.len - 1:
       let key = &"hw_{tag}_{i}"
       if key notin hh: continue
+      asksF.add key
       steps.add ($(i + 1), CHAIN[i].name & " to " & CHAIN[i + 1].name, hh[key])
     if steps.len > 0:
       inc k
-      body.add card(&"F{k}", said, "one edge at a time", steps)
+      body.add card(&"F{k}", said, "one edge at a time", steps, asks = asksF)
   body.add "</div></section>"
 
   const SWITCHING = block:
