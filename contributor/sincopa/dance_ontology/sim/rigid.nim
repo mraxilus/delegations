@@ -57,15 +57,19 @@ const
   PACE* = 0.01        ## Couple step in or out by this, looking for room.
   EASE* = 1.0         ## Hertz of spring holding each joint toward its rest.
   EASE_DAMP* = 1.0    ## And its damping.  Soft: it biases pose, never drives it.
+  GRIP_FIRM* = 4.0    ## How much stiffer knuckles are held than other joints.
+                      ## Hand that is gripping holds its fingers, and slack one
+                      ## only adds give to whole chain, which reads as hands
+                      ## coming apart when it is really hand folding up.
 
 
 type
-  Limb* {.pure.} = enum ## Three links of one arm, shoulder outward.
-    Upper, Fore, Palm
+  Limb* {.pure.} = enum ## Four links of one arm, shoulder outward.
+    Upper, Fore, Palm, Fingers
 
-  ArmRig = object ## One arm's bodies and its three joints.
+  ArmRig = object ## One arm's bodies and its four joints.
     link: array[Limb, eng.BodyId]
-    shoulder, elbow, wrist: eng.JointId
+    shoulder, elbow, wrist, knuckle: eng.JointId
 
   Figure = object ## One dancer: trunk that is turned, and two arms that follow.
     trunk: eng.BodyId
@@ -83,7 +87,7 @@ type
 
   Pose* = object ## Where one connection's two arms lie, and what their joints read.
     arms*: array[2, ArmPose]
-    twist*, bend*, wrist*: array[2, float] ## Each arm's three joints, radians.
+    twist*, bend*, wrist*, fold*: array[2, float] ## Each arm's joints, radians.
     apart*: float ## How far engine has pulled two hands apart, metres.
 
 
@@ -197,9 +201,15 @@ func hingeFrame(): eng.Quat =
   ## Elbow's frame within upper arm: its z is hinge, upper arm's own x.
   qOf(eng.vec(0, 0, 1), eng.vec(0, -1, 0), eng.vec(1, 0, 0))
 
+const FINGER_THICK* = 0.5 ## Fingers, as fraction of arm's own half-thickness.
+  ## Thinner than palm, which is what fingers are.
+
 proc limbOf(c: var Couple; at: Vec; turn: eng.Quat; long: float;
-            group: cint): eng.BodyId =
+            group: cint; thick = 1.0): eng.BodyId =
   ## One link: its own length along its local z, hung from `at`.
+  ##   Every link carries shape of its own, and must: engine takes body's mass
+  ##     from its shapes, and link with none is massless, transmits nothing, and
+  ##     quietly lets joint hung off it hold nothing at all.
   var bd = eng.defaultBody()
   bd.kind = eng.Dynamic
   bd.position = asPlace(at)
@@ -209,12 +219,12 @@ proc limbOf(c: var Couple; at: Vec; turn: eng.Quat; long: float;
   bd.gravityScale = 0.0
   bd.enableSleep = false
   result = eng.createBody(c.world, addr bd)
-  let r = c.rig.limb
+  let r = c.rig.limb * thick
   if long > 2.0 * r:
     capsule(result, eng.vec(0, 0, r), eng.vec(0, 0, long - r), r, DENSITY, group)
   else:
     let mid = eng.vec(0, 0, long / 2.0)
-    capsule(result, mid, mid, long / 2.0, DENSITY, group)
+    capsule(result, mid, mid, max(r, long / 2.0), DENSITY, group)
 
 proc armOf(c: var Couple; who: Body; arm: Arm; group: cint): ArmRig =
   ## Three links on shoulder, elbow and wrist, laid out hanging.
@@ -225,10 +235,12 @@ proc armOf(c: var Couple; who: Body; arm: Arm; group: cint): ArmRig =
     frame = restFrame()
     turn = qMul(trunkQ, frame)
     top = shoulder(c.rig, st, arm)
-    long = [c.rig.upper, c.rig.fore, c.rig.hand]
+    long = [c.rig.upper, c.rig.fore, c.rig.hand * PALM_PART,
+            c.rig.hand * (1.0 - PALM_PART)]
   var at = top
   for l in Limb:
-    result.link[l] = limbOf(c, at, turn, long[ord(l)], group)
+    result.link[l] = limbOf(c, at, turn, long[ord(l)], group,
+                            thick = (if l == Limb.Fingers: FINGER_THICK else: 1.0))
     at = at + (0.0, 0.0, -long[ord(l)])
 
   var ball = eng.defaultBall()
@@ -278,6 +290,20 @@ proc armOf(c: var Couple; who: Body; arm: Arm; group: cint): ArmRig =
   cuff.coneAngle = c.rig.range[Dof.Wrist].hi.cfloat
   result.wrist = eng.createBall(c.world, addr cuff)
 
+  # Knuckles as cone about palm's own length, not hinge.  Fingers of hand that
+  # is gripping wrap whichever way hold asks, and choosing one plane for them
+  # meant choosing elbow's, which has nothing to do with hand.
+  var fold = eng.defaultBall()
+  fold.base.bodyIdA = result.link[Limb.Palm]
+  fold.base.bodyIdB = result.link[Limb.Fingers]
+  fold.base.localFrameA = eng.Frame(
+    p: eng.vec(0, 0, (c.rig.hand * PALM_PART).cfloat), q: eng.IDENTITY)
+  fold.base.localFrameB = eng.Frame(p: eng.vec(0, 0, 0), q: eng.IDENTITY)
+  fold.enableSpring = false
+  fold.enableConeLimit = true
+  fold.coneAngle = KNUCKLE.hi.cfloat
+  result.knuckle = eng.createBall(c.world, addr fold)
+
 proc build*(rig: Rig; stance: array[Body, Stance]; band: Band;
             links: seq[Link]; turning = Body.Two): Couple =
   ## Stand two dancers, hang four arms, and join hands each link names.
@@ -305,10 +331,11 @@ proc build*(rig: Rig; stance: array[Body, Stance]; band: Band;
       group += 1
   for ln in links:
     var g = eng.defaultBall()
-    g.base.bodyIdA = result.who[ln.ends[0].body].arm[ln.ends[0].arm].link[Limb.Palm]
-    g.base.bodyIdB = result.who[ln.ends[1].body].arm[ln.ends[1].arm].link[Limb.Palm]
-    g.base.localFrameA = eng.Frame(p: eng.vec(0, 0, rig.hand.cfloat), q: eng.IDENTITY)
-    g.base.localFrameB = eng.Frame(p: eng.vec(0, 0, rig.hand.cfloat), q: eng.IDENTITY)
+    let tip = eng.vec(0, 0, (rig.hand * (1.0 - PALM_PART)).cfloat)
+    g.base.bodyIdA = result.who[ln.ends[0].body].arm[ln.ends[0].arm].link[Limb.Fingers]
+    g.base.bodyIdB = result.who[ln.ends[1].body].arm[ln.ends[1].arm].link[Limb.Fingers]
+    g.base.localFrameA = eng.Frame(p: tip, q: eng.IDENTITY)
+    g.base.localFrameB = eng.Frame(p: tip, q: eng.IDENTITY)
     result.grip.add eng.createBall(result.world, addr g)
 
 proc free*(c: Couple) = eng.destroyWorld(c.world)
@@ -358,12 +385,13 @@ proc carry(c: Couple) =
     for k in 0 .. 1:
       let
         a = c.who[ln.ends[k].body].arm[ln.ends[k].arm]
-        tip = asWorld(eng.pointOf(a.link[Limb.Palm], eng.vec(0, 0, c.rig.hand.cfloat)))
-        drift = asWorld(eng.driftOf(a.link[Limb.Palm]))
-        lift = (LIFT * (want - tip.z) - FALL * drift.z) / 3.0
-        pull = DRAW[ord(c.band)] / 3.0
-        toward: Vec = ((mid.x - tip.x) * pull - drift.x * FALL / 3.0,
-                       (mid.y - tip.y) * pull - drift.y * FALL / 3.0, lift)
+        tip = asWorld(eng.pointOf(a.link[Limb.Fingers],
+                                  eng.vec(0, 0, (c.rig.hand * (1.0 - PALM_PART)).cfloat)))
+        drift = asWorld(eng.driftOf(a.link[Limb.Fingers]))
+        lift = (LIFT * (want - tip.z) - FALL * drift.z) / 4.0
+        pull = DRAW[ord(c.band)] / 4.0
+        toward: Vec = ((mid.x - tip.x) * pull - drift.x * FALL / 4.0,
+                       (mid.y - tip.y) * pull - drift.y * FALL / 4.0, lift)
       for l in Limb:
         eng.push(a.link[l], asEngine(toward), true)
 
@@ -435,10 +463,12 @@ proc poseOf*(c: Couple; i: int): Pose =
       s: asWorld(eng.pointOf(a.link[Limb.Upper], eng.vec(0, 0, 0))),
       e: asWorld(eng.pointOf(a.link[Limb.Fore], eng.vec(0, 0, 0))),
       w: asWorld(eng.pointOf(a.link[Limb.Palm], eng.vec(0, 0, 0))),
-      g: asWorld(eng.pointOf(a.link[Limb.Palm], eng.vec(0, 0, c.rig.hand.cfloat))))
+      g: asWorld(eng.pointOf(a.link[Limb.Fingers],
+                            eng.vec(0, 0, (c.rig.hand * (1.0 - PALM_PART)).cfloat))))
     result.twist[k] = eng.twistAngleOf(a.shoulder).float
     result.bend[k] = eng.angleOf(a.elbow).float
     result.wrist[k] = eng.coneAngleOf(a.wrist).float
+    result.fold[k] = eng.coneAngleOf(a.knuckle).float
   result.apart = eng.partedBy(c.grip[i]).float
 
 func twistEnds*(rig: Rig; arm: Arm): tuple[lo, hi: float] =
@@ -500,6 +530,7 @@ func roomAt*(c: Couple; p: Pose; i: int): float =
     result = min(result, freedom(turning, p.twist[k], true))
     result = min(result, freedom(c.rig.range[Dof.Bend], p.bend[k], true))
     result = min(result, freedom(c.rig.range[Dof.Wrist], p.wrist[k], false))
+    result = min(result, freedom(KNUCKLE, p.fold[k], false))
 
 func restStance*(rig: Rig; apart: float; away = false): array[Body, Stance] =
   ## Where couple start.  Same-name pair is built pillion: face to face its two
@@ -568,6 +599,8 @@ proc stoppedBy*(c: Couple; i: int): tuple[why: Stop, k: int] =
       return (Stop.Elbow, k)
     if p.wrist[k] >= c.rig.range[Dof.Wrist].hi - AT_END:
       return (Stop.Wrist, k)
+    if p.fold[k] >= KNUCKLE.hi - AT_END:
+      return (Stop.Knuckle, k)
   let met = metBy(c, i)
   if met != Stop.None: (met, 0) else: (Stop.Reach, 0)
 

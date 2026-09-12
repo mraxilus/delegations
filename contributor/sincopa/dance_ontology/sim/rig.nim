@@ -102,6 +102,25 @@ const HUMAN* = Rig(
   ## so hand carried there clears it by construction.
 
 
+const
+  PALM_PART* = 0.6 ## Of wrist to grip, how much is palm; rest is fingers.
+    ## Hand does not meet its partner's as one stiff paddle: it grips, and
+    ## knuckles are where it folds to do so.  Wrist crease to grip's centre
+    ## stays what tape says; joint is put inside that span rather than added
+    ## past it, so reach is untouched.
+  KNUCKLE* = Range(lo: -30.0 * PI / 180.0, hi: 90.0 * PI / 180.0,
+                   easeLo: 10.0 * PI / 180.0, easeHi: 20.0 * PI / 180.0,
+                   neutral: 0.0)
+    ## Knuckles, in degrees of fold: ninety flexion and thirty back, which are
+    ## ordinary clinical figures for metacarpophalangeal joints.  Rest is
+    ## straight, so hand laid out flat is hand this rig had before knuckles
+    ## were in it, and joint only earns its keep where hand is asked to fold.
+    ##   Not one of `Dof`: those five are read off every pose by `limb` and
+    ##     summed over by everything that scores comfort, and adding sixth
+    ##     would move figures in code that never sets it.  Knuckle is asked of
+    ##     engine, which does set it.
+
+
 func halfBreadth*(rig: Rig; part: Part): float =
   ## Side to side, from axis: what tape's round makes ellipse of
   ## part's flatness (Ramanujan's perimeter, inverted).
