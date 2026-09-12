@@ -29,7 +29,7 @@ document.addEventListener('keydown', (e) => {
       button_menu.classList.remove('on');
       return;
     }
-    if (nimDragActive()) { nimCancelDrag(); toast('Cancelled.'); return; }
+    if (nimDragActive()) { nimCancelDrag(); toast(nimCancelledMessage()); return; }
     nimCancelHold();
     if (menu_selection.classList.contains('show')) { clearSelection(); return; }
     if (session_edit !== null) { endEditSession(); refreshObjectsUI(); }

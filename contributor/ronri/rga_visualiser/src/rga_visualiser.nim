@@ -8,7 +8,8 @@
 ##   than naming modules it happens to need today (Article I.6).
 ##
 ## Order of bootstrapping, by what each module needs before it:
-##   [euclid, objects, projections, format, ramp, neighbourhood, starfield, timings]
+##   [euclid, objects, projections, format, message, ramp, neighbourhood, starfield,
+##    timings]
 ##     -> [boundary, mesh] -> tessellate
 ##     -> [camera, scene]
 ##     -> [history, lighting, orrery, picking, storyboard]
@@ -21,6 +22,7 @@
 ##   | `projections`    | Projections `pga` withdrew, until library's own return       |
 ##   | `euclid`         | Positions, directions, matrices, tolerance comparison        |
 ##   | `format`         | Magnitudes and coefficients as text, same on both backends   |
+##   | `message`        | What each outcome says, and how long it stands               |
 ##   | `ramp`           | Colour ramps and their validated steps                       |
 ##   | `neighbourhood`  | Nearby-star catalogue as data                                |
 ##   | `starfield`      | Wider sky, generated from SIMBAD                             |
@@ -46,11 +48,11 @@
 
 import ./rga_visualiser/[
   boundary, camera, euclid, format, framing, help, history, interaction, lighting, marker,
-  mesh, neighbourhood, objects, orrery, picking, projections, ramp, scene, selection,
-  starfield, storyboard, tessellate, timings,
+  mesh, message, neighbourhood, objects, orrery, picking, projections, ramp, scene,
+  selection, starfield, storyboard, tessellate, timings,
 ]
 
 export
   boundary, camera, euclid, format, framing, help, history, interaction, lighting, marker,
-  mesh, neighbourhood, objects, orrery, picking, projections, ramp, scene, selection,
-  starfield, storyboard, tessellate, timings
+  mesh, message, neighbourhood, objects, orrery, picking, projections, ramp, scene,
+  selection, starfield, storyboard, tessellate, timings

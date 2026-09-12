@@ -20,6 +20,7 @@ import {
   driveTwoFingerPan,
 } from './construct';
 import { driveApply, driveReachable, driveUndo } from './apply';
+import { driveMessageGoes } from './message';
 import {
   drivePanWhileSelected, drivePickOrbit, drivePlanePick, drivePointerPick,
 } from './framing';
@@ -136,6 +137,8 @@ async function main(): Promise<void> {
   await driveCrowd(page, cdp);
   await drivePausedDrag(page, cdp);
   await driveEmptyRelease(page, SIZE_VIEW.width, SIZE_VIEW.height);
+  // Beside it, and its opposite: what *is* said goes away again by itself.
+  await driveMessageGoes(page);
 
   await driveApply(page);
   await drivePickOrbit(page);

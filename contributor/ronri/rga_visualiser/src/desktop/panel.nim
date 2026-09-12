@@ -40,8 +40,8 @@ import std/[options, strformat]
 import pga
 import ./gui
 import ../rga_visualiser/[
-  boundary, camera, format, framing, help, history, interaction, orrery, picking, tessellate,
-  scene, selection,
+  boundary, camera, format, framing, help, history, interaction, message, orrery, picking,
+  tessellate, scene, selection,
 ]
 
 
@@ -52,8 +52,6 @@ const
   INSET_MENU_POINTER = 8.0'f32
     ## Set how far menu's corner stands from pointer that opened it, in pixels.
     ##   Context menu's own convention: beside pointer, not under it.
-  MESSAGE_MAX* = 96
-    ## Bound length of outcome reported after action.
   PATH_MAX* = 256
     ## Bound length of export path user may type.
   WIDTH_PANEL* = 440.0'f32
@@ -88,13 +86,21 @@ const
     "stacked one row per grade. The object itself only moves when you save."
     ## Explain coefficient grid while editing existing object.
   WIDTH_LABEL_FIELD = 96.0'f32
-  ROWS_OBJECTS_BELOW = 4
+  ROWS_OBJECTS_BELOW = 2
     ## Rows bounded list leaves below itself, for what has to stay reachable.
-    ##   `view` header, separator and message line, plus one so list's own edge is not
-    ##   flush against them.
+    ##   `view` header, plus one so list's own edge is not flush against it.
+    ##   Was four while separator and pinned message line stood under `view`; both left
+    ##   when outcome became toast over scene, and list takes room they held.
   ROWS_OBJECTS_LEAST = 6
     ## Floor on bounded list's height, for window too short to give it more.
     ##   Region smaller than this shows less than one object and scrolls by fractions.
+  TEXT_SCENE_EMPTY: cstring = emptyMessage()
+    ## Refuse apply for want of operand, in words page refuses it in.
+    ##   Folded at compile time: section redraws this every frame scene is empty.
+  MARGIN_MESSAGE = 60.0'f32
+    ## Drop outcome this far below window's top, centred across it.
+    ##   Same `max(60px, safe-area-inset-top)` page pins its own toast at, and far enough
+    ##   down to clear chip row sitting on `MARGIN_CHIP`.
   MARGIN_CHIP = 16.0'f32
     ## Inset chip row from window's own top and right edges.
     ##   Same inset `?` takes from bottom and right, so two overlays sit on one margin.
@@ -245,6 +251,12 @@ type
     path_export*: array[PATH_MAX, char] ## Where exported frame is written.
     path_scene*: array[PATH_MAX, char] ## Where scene is saved to and loaded from.
     message*: array[MESSAGE_MAX, char] ## Outcome of last action taken.
+      ## Empty where action had nothing to report, which is said by saying nothing.
+    said_message*: float ## Clock reading `message` was set at.
+      ## Outcome stands `SECONDS_MESSAGE`, fades over `SECONDS_MESSAGE_FADE`, and is gone.
+      ##   Sentence is about action reader just took, and line pinned to panel's foot
+      ##   outlived its own occasion by whole session. Page has always shown its own as
+      ##   toast; this is that, in window.
     is_menu_top_forced*: bool ## Whether to open top menu with no click, for scripted run.
       ## Headless run has no pointer to press `☰` with, exactly as it has none for help's
       ## tabs; see `main.--drive-menu`.
@@ -276,7 +288,18 @@ func initPanel*(path_export: string): Panel =
   result.is_vsync_enabled = true
   toChars(path_export, result.path_export)
   toChars("scene.rgascene", result.path_scene)
-  toChars("Ready.", result.message)
+
+
+proc say*(panel: var Panel, text: string, now: float) =
+  ## Report outcome of action reader just took, timed from `now`.
+  ##   One door for every outcome: sentence that arrived by any other route would have no
+  ##   reading to fade from and would stand for rest of session.
+  ##   Empty text says nothing rather than raising empty toast -- drag released over empty
+  ##   space, say. Page guards its own toast this way (`state.toast`); this is that guard,
+  ##   on this side.
+  if len(text) == 0: return
+  toChars(text, panel.message)
+  panel.said_message = now
 
 
 func isPending*(row: ObjectRow): bool = row.handle.isNone
@@ -513,12 +536,14 @@ proc layoutObjectButtons(
           radius = float(session.radius), shines = session.shines,
         )
         panel.selection.selectOnly(handle_added)
+        panel.say(addedMessage(toText(session.label)), now)
       else:
         scene.setGeometryAt(row.handle.get, geometry)
         scene.labelAt(row.handle.get) = session.label
         scene.setInk(row.handle.get, Ink(session.index_ink))
         scene.setRadius(row.handle.get, float(session.radius))
         scene.setShining(row.handle.get, session.shines)
+        panel.say(savedMessage(toText(session.label)), now)
       history.record(scene, camera)
       panel.session = none(EditSession)
   gui.tooltip(
@@ -662,7 +687,10 @@ proc layoutObjects*(
       handle_removed = some(handle)
   gui.childEnd()
   if handle_removed.isSome:
+    # Read label out before removal takes it, so sentence can still name what went.
+    let label_removed = toText(scene.labelAt(handle_removed.get))
     scene.removeObject(handle_removed.get)
+    panel.say(removedMessage(label_removed), now)
     panel.selection.pruneDead(scene)
     # Drop its session, which has nothing left to commit against.
     if panel.session.isSome and panel.session.get.handle == handle_removed:
@@ -765,7 +793,7 @@ func applyPickedOperation(
   )
   history.record(scene, camera)
 
-  toChars(&"{label} gave {kindText(derived)}.", panel.message)
+  panel.say(&"{label} gave {kindText(derived)}.", now)
 
 
 proc layoutApply*(
@@ -778,7 +806,7 @@ proc layoutApply*(
   ##   Object names are `cstring`s borrowed from scene's label storage.
   if not gui.header("apply", is_open_first = false): return
   if scene.len == 0:
-    gui.text("Scene is empty; add a multivector first.")
+    gui.text(TEXT_SCENE_EMPTY)
     return
 
   # Offer every live item by label; `handles` translates combo's dense position back.
@@ -1275,10 +1303,7 @@ proc layoutSelectionMenu*(
         for position in 0 ..< count:
           scene.setVisible(panel.selection.at(position), is_all_hidden)
         history.record(scene, camera)
-        toChars(
-          if is_all_hidden: "Showed the selection." else: "Hid the selection.",
-          panel.message,
-        )
+        panel.say(visibilityMessage(count, is_all_hidden), now)
       gui.tooltip("Show or hide the whole selection, without removing any of it.")
 
       gui.sameLine()
@@ -1294,7 +1319,7 @@ proc layoutSelectionMenu*(
         for position in 0 ..< count: scene.removeObject(handles[position])
         panel.selection.clear()
         history.record(scene, camera)
-        toChars("Deleted the selection.", panel.message)
+        panel.say(deletedMessage(count), now)
         panel.hideSelectionMenu()
       gui.tooltip("Delete the whole selection; each handle is reused by the next add.")
 
@@ -1394,6 +1419,29 @@ proc layoutHelp*(panel: var Panel, path_forced: Option[HelpPath] = none(HelpPath
   gui.windowEnd()
 
 
+proc layoutMessage*(panel: Panel, now: float) =
+  ## Float outcome of last action over scene, and take it away again by itself.
+  ##   Overlay by same door `?` and chip row use: `windowBeginPinned` sizes itself to its
+  ##   one line and takes no title bar, so toast is sentence and border around it.
+  ##   Top centre, which is where page puts its own: clear of panel on left, chip row on
+  ##   right and `?` in far corner, so nothing it covers while it stands is control.
+  ##   Fades rather than blinking out, over same 350 ms every transition on page takes.
+  if panel.message[0] == '\0': return
+  let faded = messageFade(now - panel.said_message)
+  if faded <= 0.0: return
+  # Alpha pushed before window opens, so ground and border fade with letters standing on
+  #   them; pushed after, it would leave box behind once sentence had gone.
+  gui.alphaPush(cfloat(faded))
+  if gui.windowBeginPinned("##message", 0.5*gui.viewportWidth(), MARGIN_MESSAGE, 0.5, 0.0):
+    # Mono role: outcome carries notation and object names, as page's own toast does.
+    gui.monoPush()
+    gui.text(toCstring(panel.message))
+    gui.monoPop()
+  gui.windowEnd()
+  gui.alphaPop()
+
+
+
 #[ Top Bar ]#
 
 proc layoutMenu(
@@ -1423,7 +1471,7 @@ proc layoutMenu(
 
   gui.separatorText("save")
   if gui.button("scene##save"):
-    toChars(saveScene(scene, toText(panel.path_scene)), panel.message)
+    panel.say(saveScene(scene, toText(panel.path_scene)), now)
   gui.tooltip("Save this scene as a .rgascene file.")
   gui.sameLine()
   if gui.button("image##save"): panel.is_export_requested = true
@@ -1432,7 +1480,7 @@ proc layoutMenu(
   gui.separatorText("load")
   if gui.button("scene##load"):
     # Pass this frame's clock, so file arrives as replay; see `scene.bornReplaying`.
-    toChars(loadScene(scene, toText(panel.path_scene), now), panel.message)
+    panel.say(loadScene(scene, toText(panel.path_scene), now), now)
     # Drop open session: loaded scene's handles are not ones it was opened against.
     panel.session = none(EditSession)
   gui.tooltip("Load a .rgascene file, replacing this scene.")
@@ -1454,10 +1502,7 @@ proc layoutMenu(
       panel.selection.clear()
       history.initHistory(scene, camera)
       panel.session = none(EditSession)
-      toChars(
-        &"Loaded the orrery: {scene.len} objects, {OBJECTS_MAX - scene.len} handles free.",
-        panel.message,
-      )
+      panel.say(orreryMessage(scene.len, OBJECTS_MAX), now)
     # Bound before it is passed, so string outlives call rather than being temporary.
     #   Same words browser's own button carries in its `title`.
     let told =
@@ -1507,7 +1552,8 @@ proc layoutChipRow*(
   #   Successful step drops open session too.
   gui.disabledPush(not history.canUndo)
   if gui.button("undo"):
-    discard stepHistory(panel, scene, camera, history, is_undo = true)
+    if not stepHistory(panel, scene, camera, history, is_undo = true):
+      panel.say(stepMessage(is_undo = true), now)
   gui.disabledPop()
   gui.tooltip(
     "Step back through scene-content edits, view and all; an orbit on its own is not a step."
@@ -1515,7 +1561,8 @@ proc layoutChipRow*(
   gui.sameLine()
   gui.disabledPush(not history.canRedo)
   if gui.button("redo"):
-    discard stepHistory(panel, scene, camera, history, is_undo = false)
+    if not stepHistory(panel, scene, camera, history, is_undo = false):
+      panel.say(stepMessage(is_undo = false), now)
   gui.disabledPop()
   gui.tooltip("Step forward again; a fresh edit discards whatever was ahead.")
   gui.sameLineGap(GAP_CHIP_GROUP)
@@ -1565,11 +1612,6 @@ proc layoutPanel*(
     layoutDiagnostics(panel, scene)
     layoutObjects(panel, scene, camera, history, now)
     layoutView(panel, camera)
-    # Read what is left before message line takes its own, so figure is what sections cost.
+    # Read what every section left, which is figure verdict about long list asks for.
     panel.room_under_sections = gui.contentHeight()
-    gui.separator()
-    # Mono role: message carries notation and object names, as page's `.message-line` does.
-    gui.monoPush()
-    gui.text(toCstring(panel.message))
-    gui.monoPop()
   gui.windowEnd()
