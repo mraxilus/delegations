@@ -3454,3 +3454,74 @@ have never worked for a viewer of the published page, and the toast is what a re
 instead. The viewer mediates this through a `downloads` capability a page must declare; that
 is a real fix rather than a workaround, and it is a change to the page rather than to the
 record, so it is queued rather than done here.
+## Re-audit, 2026-09-12, one catalogue for every word shown
+
+Asked by the Architect, after the outcome messages landed: *"there should be 1 source of truth
+for shown text. use best practice for i13n and l18n in games."*
+
+**What was wrong.** Shown text was written where it was drawn, which put one sentence in two
+languages with nothing holding the copies together. Measured before the change: **seven
+tooltips written word for word in both `panel.nim` and the browser scripts**, and three that
+had already drifted —
+
+| control | the window said | the page said |
+|---------|-----------------|---------------|
+| point radius | `Radius a point… shrinks with distance.` | `Radius the point… it shrinks…` |
+| shines | `…from where it stands, and is drawn flat.` | `…from where it stands.` |
+| row select | `Add this object… the 3D view rings each one.` | `Select or deselect this object.` |
+
+The sun is the one that cost a reader something: **and is drawn flat** is a fact about drawing
+that the page had lost. Where one side knew more, the fuller sentence won; where the page read
+better as prose, the page won.
+
+**The practice, and the one place this departs from it.** Games solve this with a string
+catalogue: every shown string gets a stable identifier, code names the identifier rather than
+the words, and one file is what a translator edits. That much is taken as-is. The standard
+form also tolerates a **runtime** miss — catalogue is data loaded after the build, the compiler
+cannot see it, so every such toolchain ships a fallback for a key with no text.
+
+This catalogue compiles in, so it can do better: the key is an **enum** and the table is
+`array[Wording, cstring]` written with its keys, `[TipRowSelect: "…", …]`. There is no miss to
+fall back from. Three failures were checked rather than asserted:
+
+| what was done to it | what happened |
+|---|---|
+| key added to the enum, no row | `Error: type mismatch: got 'array[0..40, string]'` |
+| key misspelt in the table | `Error: undeclared identifier: 'TipChipGrdi'` |
+| key renamed, page not updated | `error TS2339: Property 'TipRowSelect' does not exist` |
+
+**How the key reaches the page.** `tools/build.nim`'s `declare` already derives the bridge's
+TypeScript declarations from the bridge's own source; it now also reads the `Wording` enum and
+emits `declare const enum Wording` beside them. An ambient `const enum` is inlined at each use
+site, so the page carries numbers rather than a lookup object and nothing new joins `SCRIPTS`.
+The third row above is that emitter working: the ordinal is never hand-copied, and a rename
+that is not re-derived fails the type check rather than at run time — the same argument as
+repository issue 47, applied again.
+
+**The catalogue is only useful while it is whole,** so `types` now refuses shown text written
+anywhere else. Putting one literal back:
+
+```
+Shown text belongs in `wording.nim`, named by key; got 1:
+  src/browser/objects_section.ts:311: visibility.title =
+    'Show or hide this object without removing it.';
+```
+
+A named constant is still allowed and quoted text is not: a constant has one home, a literal
+has as many as it is typed in.
+
+**Not visual, so shown as worked examples.** Tooltips appear on hover and neither front-end
+can be driven to hover headlessly, so the four outputs above are what this change shows
+instead of a screenshot — which is what `CONTRIBUTOR.md` asks for where a change is not
+visual.
+
+**Staged, and this is stage one.** The catalogue holds the 41 tooltips, where the drift was
+live. Stage two is labels and headings — `gui.button`, `gui.header`, `gui.separatorText` and
+the page's own `textContent`, about ninety sites. Stage three folds in `help.nim`'s rows and
+`message.nim`'s sentences, which are already shared but are a second and third table; one
+catalogue means one, and it is not one until they are in it.
+
+**Left alone deliberately.** The page still explains eleven controls where the window explains
+forty-one. A touch target has no hover, so the gap is likely a real difference rather than
+drift, and closing it would mean *writing* thirty new tooltips rather than de-duplicating any.
+The catalogue makes that a one-line change per control whenever it is judged worth it.

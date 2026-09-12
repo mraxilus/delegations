@@ -95,6 +95,7 @@ function refreshCameraFields() {
 //   main thread for whole encode, which on phone-sized canvas is most of second of
 //   frozen UI.
 let is_capture_wanted = false;
+elementById('button-export-png').title = nimWording(Wording.TipMenuSaveImage);
 elementById('button-export-png').addEventListener('click', () => {
   is_capture_wanted = true;
   toast('Capturing the next frame\u2026');
@@ -129,11 +130,7 @@ for (const scale of nimDemoScales()) {
   button.type = 'button';
   button.id = `button-load-demo-${objects}`;
   button.textContent = String(objects);
-  button.title =
-    `Load the orrery at ${objects} objects: the real solar neighbourhood, Sol at the origin, ` +
-    'every drawable kind present. The same arrangement at every size, reaching further into ' +
-    'the star catalogue as it grows.' +
-    (scale === nimDemoScaleDefault() ? ' The size everything opens on.' : '');
+  button.title = nimDemoWording(objects, scale === nimDemoScaleDefault());
   button.addEventListener('click', () => {
     nimLoadDemo(scale, now(), canvas.width, canvas.height);
     toast(nimOrreryMessage(nimSceneCount(), nimSceneCapacity()));

@@ -9,7 +9,7 @@
 ##
 ## Order of bootstrapping, by what each module needs before it:
 ##   [euclid, objects, projections, format, message, ramp, neighbourhood, starfield,
-##    timings]
+##    timings, wording]
 ##     -> [boundary, mesh] -> tessellate
 ##     -> [camera, scene]
 ##     -> [history, lighting, orrery, picking, storyboard]
@@ -23,6 +23,7 @@
 ##   | `euclid`         | Positions, directions, matrices, tolerance comparison        |
 ##   | `format`         | Magnitudes and coefficients as text, same on both backends   |
 ##   | `message`        | What each outcome says, and how long it stands               |
+##   | `wording`        | Every word either front-end shows, once and keyed            |
 ##   | `ramp`           | Colour ramps and their validated steps                       |
 ##   | `neighbourhood`  | Nearby-star catalogue as data                                |
 ##   | `starfield`      | Wider sky, generated from SIMBAD                             |
@@ -49,10 +50,10 @@
 import ./rga_visualiser/[
   boundary, camera, euclid, format, framing, help, history, interaction, lighting, marker,
   mesh, message, neighbourhood, objects, orrery, picking, projections, ramp, scene,
-  selection, starfield, storyboard, tessellate, timings,
+  selection, starfield, storyboard, tessellate, timings, wording,
 ]
 
 export
   boundary, camera, euclid, format, framing, help, history, interaction, lighting, marker,
   mesh, message, neighbourhood, objects, orrery, picking, projections, ramp, scene,
-  selection, starfield, storyboard, tessellate, timings
+  selection, starfield, storyboard, tessellate, timings, wording
