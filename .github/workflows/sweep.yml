@@ -3,9 +3,11 @@
 #   on it: whether what rule asks about is fact something already writes down. Three sat there
 #   while GitHub recorded them, behind premise that no check reads what was posted there --
 #   premise `watch.yml` had already made false.
-#   Two leave that list when this lands. Third does not, and saying which is half of point:
-#   issue answered by ruling in comment and then left open has no closing pull request to find,
-#   which is exactly how 116 failed. This catches `Closes #N` half only, so rule stays carried.
+#   None of three leaves that list when this lands, and saying so is half of point: each has
+#   half GitHub does not record. Issue answered by ruling in comment and left open has no
+#   closing pull request to find, which is how 116 failed; sweep reads no comment and cannot
+#   tell copied label from composed one; and it cannot see pull request green now and about
+#   to move. Each rule is narrowed to what is still only read, never struck.
 #
 #   Daily rather than weekly, unlike `check.yml`: pull request ready and red for week is failure
 #   this exists to catch, and week is too long to hold it.
@@ -126,9 +128,9 @@ jobs:
           #   that rather than assumed it.
           said="Opened by \`sweep\` workflow rather than by session, so nothing here has been"
           said="$said read or judged yet. Each line is fact GitHub records, not opinion."
-          note="Two of these rules left CURATOR.md's unchecked list when this workflow landed."
-          note="$note Third stayed: issue answered in comment has no closing pull request to"
-          note="$note find, so that half is still carried by hand."
+          note="None of these rules left CURATOR.md's unchecked list when this workflow landed:"
+          note="$note each has half GitHub does not record, and that half is still carried by"
+          note="$note hand. Lines above are only what runner can see."
           next="Close this once every line is answered. Later sweep comments here rather than"
           next="$next opening second issue."
           # Trailing newline trimmed off list, so paragraph after it is one blank line away
