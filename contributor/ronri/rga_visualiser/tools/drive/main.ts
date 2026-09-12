@@ -38,8 +38,8 @@ import {
   driveUndoDrawn,
 } from './loaded';
 import {
-  driveEditFromMenu, driveObjectsList, drivePerFrame, driveReconcile, driveTickCadence,
-  driveTickWrites,
+  driveEditFromMenu, driveHeaderPinned, driveObjectsList, drivePerFrame, driveReconcile,
+  driveTickCadence, driveTickWrites,
 } from './objects';
 import { driveComet } from './comet';
 import { drivePhaseSums, driveTree } from './diagnostics';
@@ -199,6 +199,7 @@ async function main(): Promise<void> {
   await drivePinPickLoaded(page, MILLISECONDS_PICK_HOVER);
   await driveLoadedAccounting(page, errors_page);
   await driveObjectsList(page, objects_largest);
+  await driveHeaderPinned(page);
   await driveEditFromMenu(page);
   await driveReconcile(page);
   await driveTickWrites(page);

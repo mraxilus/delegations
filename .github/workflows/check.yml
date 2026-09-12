@@ -249,16 +249,48 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
 
-      # Faces are pinned to digests inside driver, and `assets` keeps one already carrying its
-      #   pin, so cache keyed on that file returns what fetch would have written. Stronger
-      #   than other two: `assets` re-fetches and refuses any face whose digest misses, and
-      #   `web` verifies again before embedding, so stale entry heals rather than ships.
-      #   Key is whole driver rather than digests alone, so it misses on edit that moved no
-      #   face; cost is refetch of six files.
+      # Store `koch assets` fills is repository's rather than one project's, so key is its
+      #   declaration and one entry serves every project's job. `assets.nim` says which bytes
+      #   each name is; project's driver says only which names it wants, so keying on driver
+      #   cached copy that costs milliseconds and missed fetch that costs 6.6 s -- cheap half,
+      #   keyed on file that moves most weeks (repository issue 132).
+      #   Made before caching, as npm's store and Playwright's are: job fetching nothing leaves
+      #   path absent, and `actions/cache` warns on absent path.
+      #   `restore-keys` is safe here by construction rather than by check: store names entries
+      #   by digest, so entry no row declares is unreachable rather than wrong, and `koch
+      #   assets` fetches what older restore lacks.
+      #   `build/fonts` is no longer cached: with store warm, `assets` copies twelve faces into
+      #   it in milliseconds, and second key over same bytes is one more thing to disagree.
+      - run: mkdir -p ~/.cache/koch/assets
       - uses: actions/cache@v6
         with:
-          path: ${{ matrix.dir }}/build/fonts
-          key: faces-${{ runner.os }}-${{ hashFiles(format('{0}/tools/build.nim', matrix.dir)) }}
+          path: ~/.cache/koch/assets
+          key: assets-${{ runner.os }}-${{ hashFiles('curator/audit/src/assets.nim') }}
+          restore-keys: assets-${{ runner.os }}-
+
+      # SDL3 is cloned, configured and built from source, and no package carries it, so cold
+      #   job paid 55.8 s of run 214's 357 s for it -- largest single step nothing cached
+      #   (repository issues 79 and 80, both of which named smaller levers).
+      #   Install prefix alone is cached, never cmake build tree beside it: `versionSdl3`
+      #   reads prefix's own `.pc`, so prefix is what makes `sdl3` return early, and build
+      #   tree is what makes stale restore dangerous. Measured rather than feared: cmake tree
+      #   carried from configure that found no X11 kept saying so after headers arrived, and
+      #   cost hour on container that had them. Product caches; build tree does not.
+      #   `restore-keys` is what makes this cache hit at all, and that is measured rather than
+      #   predicted: keyed on exact hash of driver alone it missed twice running, runs 221 and
+      #   226, printing `Built SDL3` both times. Driver holds `COMMIT_SDL3` and `SYSTEM`, which
+      #   made exact key correct, and it also holds everything else that file does, which made
+      #   it miss whenever project was worked on -- which is when CI runs.
+      #   Older prefix is safe for same reason build tree is not: `versionSdl3` reads restored
+      #   `.pc` and rebuilds where version misses pin, so wrong restore costs build already due.
+      #   Cost: most runs stop exercising SDL3 build. Every cache here trades that, and pin is
+      #   commit rather than tag now (repository issue 126, answered by #131), so what cache
+      #   hides is rebuild rather than upstream that moved under it.
+      - uses: actions/cache@v6
+        with:
+          path: ${{ matrix.dir }}/build/sdl3
+          key: sdl3-${{ runner.os }}-${{ hashFiles(format('{0}/tools/build.nim', matrix.dir)) }}
+          restore-keys: sdl3-${{ runner.os }}-
 
       - env:
           PROJECT: ${{ matrix.dir }}

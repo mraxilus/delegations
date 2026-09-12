@@ -96,6 +96,17 @@ func titleOf*(path: HelpPath): string =
   of HelpPath.Operations: "operations"
 
 
+func wheelWordsTaught(): string =
+  ## Say which notation each wheel wedge wears, and which word that notation is.
+  ##   Notation first: reader arrives holding what wedge said and wants its name.
+  ##   `More` is left out -- its wedge is bare ellipsis, which needs no decoding, and row
+  ##   in this tab already says what it hands over.
+  var said: seq[string]
+  for choice in [DragChoice.Join, DragChoice.Meet, DragChoice.Project]:
+    said.add(labelOf(choice) & " is " & wordOf(choice))
+  said[0 ..< said.len - 1].join(", ") & " and " & said[^1]
+
+
 func descriptionOf*(path: HelpPath): string =
   ## Say in one sentence what tab is about, for line above its rows.
   ##   Row stands on its own only so far: `the … wedge` and `the apply section` name
@@ -104,7 +115,15 @@ func descriptionOf*(path: HelpPath): string =
   ##   Context stated once, above rows, for reader who has just opened this tab.
   case path
   of HelpPath.Drag:
-    "Drag one object onto another to build a new one. Some pairs open a wheel of choices."
+    # Teach three wedges their words here, where both UIs already read this line.
+    #   Wedge wears notation alone (`interaction.labelOf`), which names nothing until
+    #   reader is told which operation it is. Desktop taught that in its panel and browser
+    #   in line above its sections; browser's went with that line, and desktop's was last
+    #   copy of what this module exists to hold once.
+    #   Read from `wordOf` and `labelOf` rather than written out, so wedge renamed or
+    #   renotated is renamed here too.
+    "Drag one object onto another to build a new one. Some pairs open a wheel of choices, " &
+    "which name themselves in notation: " & wheelWordsTaught() & "."
   of HelpPath.Select:
     "Say which objects to work on. Whatever is selected wears a white outline."
   of HelpPath.Menu:

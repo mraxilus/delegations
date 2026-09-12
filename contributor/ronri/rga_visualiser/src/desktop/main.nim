@@ -322,6 +322,9 @@ type Options = object ## Define what command line asked of this run.
     ## Headless run then shows where undo leaves view; see `driveUndo`.
   is_sky_driven: bool ## Whether to script drag and click on bare sky.
     ## Headless run then shows press on it still reaches camera; see `driveSky`.
+  is_menu_driven: bool ## Whether to open top menu at startup, with no click.
+    ## Headless run has no pointer to press `☰` with, exactly as it has none for help's
+    ## tabs; verdict then reads what menu laid out.
   path_help_driven: Option[HelpPath] ## Which help tab to open at startup, if any.
     ## Headless run cannot click tab strip, so `--drive-help:<tab>` names one.
 
@@ -358,6 +361,7 @@ proc applyOption(options: var Options, key, value: string) =
   of "drive-select": options.is_select_driven = true
   of "drive-undo": options.is_undo_driven = true
   of "drive-sky": options.is_sky_driven = true
+  of "drive-menu": options.is_menu_driven = true
   of "drive-help":
     for path in HelpPath:
       if titleOf(path) == value: options.path_help_driven = some(path)
@@ -367,13 +371,14 @@ proc applyOption(options: var Options, key, value: string) =
     doAssert false,
       "Option must be one of screenshot, storyboard, load-scene, frames, hidden, " &
       "timings, novsync, fill, demo[:<objects>], help-tabs, drive-drag, drive-keys, " &
-      &"drive-select, drive-undo, drive-sky or drive-help; got `--{key}`."
+      &"drive-select, drive-undo, drive-sky, drive-menu or drive-help; got `--{key}`."
 
 
 func isDriven(options: Options): bool =
   ## Report whether any scripted run was asked for.
   options.is_drag_driven or options.is_key_driven or options.is_select_driven or
-    options.is_undo_driven or options.is_sky_driven or options.path_help_driven.isSome
+    options.is_undo_driven or options.is_sky_driven or options.is_menu_driven or
+    options.path_help_driven.isSome
 
 
 proc parseOptions(): Options =
@@ -847,6 +852,8 @@ proc renderFrame(
       panel.message,
     )
   layoutPanel(panel, scene, camera, HISTORY, now)
+  # Row of constant controls floats over scene beside panel, as browser's chip row does.
+  layoutChipRow(panel, scene, camera, HISTORY, now)
   layoutHelp(panel, path_help)
 
   # Advance tween before this frame's transforms are built, so frame draws where camera is.
@@ -1569,6 +1576,30 @@ proc verdictDriven(
       &"focus {interaction.index_focus}, {scene.bound} objects, no face loaded",
     )
 
+  # Scene filled to capacity is its own verdict, and fires only in run driven with one.
+  #   Claim is that longest list this build can hold leaves what sits under it on window:
+  #   list used to run window's whole length, so `view` and message line were reached by
+  #   scrolling, and heading that collapses list was reached by scrolling back up.
+  #   Read as room left rather than as pixels of list: what matters is that something was
+  #   left, whatever window height this machine gave.
+  if scene.isFull:
+    report(
+      "a full object list leaves what follows it on the window",
+      panel.room_under_sections >= 0.0,
+      &"{int(panel.room_under_sections)} px left under the sections, {scene.len} objects",
+    )
+
+  # Menu is its own verdict, and fires only in run that opened it.
+  #   Claim is that `☰` opens menu with its groups in it, and that demo group offers every
+  #   size `orrery` has rather than sizes written out here -- which is what keeps it level
+  #   with browser's, built from `nimDemoScales`.
+  if options.is_menu_driven:
+    report(
+      "the menu opens, and offers the demo at every size the orrery has",
+      panel.count_demo_offered == ord(ScaleOrrery.high) + 1,
+      &"{panel.count_demo_offered} sizes offered, {ord(ScaleOrrery.high) + 1} in `orrery`",
+    )
+
   # Three roles, three faces, and every run says so.
   #   Claim is that each role got face of its own rather than falling back to interface
   #   face: fallback draws readable panel and silently loses distinction between heading,
@@ -2082,6 +2113,8 @@ proc main() =
   panel.is_vsync_enabled = not options.is_novsync
   # Open help panel where command line asked for tab in it.
   panel.is_help_open = options.path_help_driven.isSome
+  # Open top menu where command line asked for it, for reason help's tab is opened.
+  panel.is_menu_top_forced = options.is_menu_driven
 
   # Open on storyboard's seeds alone, unless saved scene or demo was asked for instead.
   #   Window and script then agree on where construction starts.

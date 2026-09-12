@@ -451,7 +451,7 @@ func labelOf*(choice: DragChoice): string =
   ## Name choice as its wedge says it, in catalogue's symbols.
   ##   Very text apply picker offers, through `scene.notationSymbolic`.
   ##     Wheel and picker are same control in two postures, so whichever reader meets first
-  ##     teaches other; words are taught once, in drawer's intro line.
+  ##     teaches other; words are taught once, in help's drag tab.
   ##   Projection's notation (`𝐧 ∨ (𝐦 ∧ 𝐧☆)`) is near twice width of word it replaces.
   ##     Affordable only at `Compass.South`, clear of two wedges it could collide with.
   ##     Moving choice to different compass point is decision about this label too.
@@ -465,9 +465,9 @@ func labelOf*(choice: DragChoice): string =
 
 func wordOf*(choice: DragChoice): string =
   ## Name choice in words, for one place each is taught rather than offered.
-  ##   Wedge says `𝐦 ∧ 𝐧` (see `labelOf`), readable only once told it is `join`.
-  ##   Telling is drawer's legend line; this keeps legend and help table naming three same
-  ##   way.
+  ##   Wedge wears notation alone (see `labelOf`), readable only once told it is `join`.
+  ##   Telling is `help.descriptionOf(HelpPath.Drag)`, which both UIs render and which
+  ##   reads this; that keeps teaching line and help table naming three same way.
   case choice
   of DragChoice.Join: "join"
   of DragChoice.Meet: "meet"

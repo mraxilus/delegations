@@ -53,10 +53,11 @@ links against SDL3, OpenGL and zlib, and its headless runs need Xvfb and a softw
 
 Two of its dependencies arrive as no package, so the build fetches both itself and refuses
 either when its pin misses. **SDL3** has no `libsdl3-dev` on Ubuntu 24.04 — that release carries
-SDL2 only — so `desktop` clones `release-3.2.30` into `deps/sdl3` and builds it into
-`build/sdl3`, a prefix inside the tree that needs no root. **Dear ImGui** is compiled from source
-into the binary rather than linked, and is cloned to `deps/imgui` at its pinned commit. Both are
-kept locally and never committed, as the Atlas checkouts are.
+SDL2 only — so `desktop` clones `release-3.2.30` into `deps/sdl3`, holds it at the commit that
+tag names, and builds it into `build/sdl3`, a prefix inside the tree that needs no root.
+**Dear ImGui** is compiled from source into the binary rather than linked, and is cloned to
+`deps/imgui` at its pinned commit. Both are held at a commit rather than at a name that could
+move, and both are kept locally and never committed, as the Atlas checkouts are.
 
 Nothing has to be run by hand for either. Where a machine already carries SDL3 at the pinned
 version, that one is used and nothing is built:
@@ -77,9 +78,10 @@ The browser page is assembled by `tools/build.nim`, which compiles the bridge th
 JS backend, type-checks and emits the TypeScript glue, inlines the six font faces, and folds
 all of it into one self-contained `build/rga_visualiser.html` that opens from `file://`.
 That needs Node and npm alongside Nim: `npm ci` restores the two pinned dev dependencies
-into `node_modules/`, which is never committed. `assets` fetches every face both front-ends
-draw with — six the page embeds and six the desktop binary loads — each pinned by version and
-SHA-256, and needs the network once.
+into `node_modules/`, which is never committed. `assets` copies every face both front-ends
+draw with — six the page embeds and six the desktop binary loads — out of the repository's shared
+asset store, which `koch assets` fills and checks against `curator/audit/src/assets.nim`. Which
+faces this project wants is in `tools/build.nim`; what bytes each one is belongs to the store.
 
 Both front-ends draw three roles from three families: **Noto Serif** for titles, **Noto Sans**
 for body and controls, **Commit Mono** for code and for text whose columns carry meaning. Two
@@ -131,11 +133,12 @@ the browser page through `web`, the desktop application through `desktop`.
 
 Every law under test through testament on the pinned commit, in three configurations. The
 page has been built and looked at, its type surface is checked, and a Playwright harness
-drives 139 checks over held keys, the wheel, mouse pan and touch — see Driven Checks in
+drives 149 checks over held keys, the wheel, mouse pan and touch — see Driven Checks in
 `PROVENANCE.md`. The desktop application has been built, one frame of it looked at, and its own
-thirteen scripted runs driven headless under Xvfb — 22 checks, all passing, one of them driven
-with no face installed at all. SDL3 arrives as a source build rather than a package, and `drive`
-fetches and builds it rather than skipping the runs that need it.
+fifteen scripted runs driven headless under Xvfb — 41 checks, all passing, one of them driven
+with no face installed at all and one with the scene filled to capacity. SDL3 arrives as a
+source build rather than a package, and `drive` fetches and builds it rather than skipping the
+runs that need it.
 
 Unreviewed by a human: nothing here has been
 read line by line, and no human has driven either front-end or seen it on real graphics

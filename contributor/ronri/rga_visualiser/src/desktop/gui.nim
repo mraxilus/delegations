@@ -139,7 +139,25 @@ proc childBegin*(name: cstring; width, height: cfloat): bool
   {.importc: "guiChildBegin", sideEffect.}
   ## Begin bordered child region of given size, scrolling what overflows it.
 
+proc childBeginBounded*(name: cstring; width, height_max: cfloat): bool
+  {.importc: "guiChildBeginBounded", sideEffect.}
+  ## Open region as tall as its content, up to bound, scrolling inside bound past it.
+  ##   `childEnd` closes it, whatever this returned.
+
+
 proc childEnd*() {.importc: "guiChildEnd", sideEffect.}
+
+
+proc menuBegin*(label, id: cstring; width: cfloat; is_forced: bool): bool
+  {.importc: "guiMenuBegin", sideEffect.}
+  ## Draw button opening menu, and open menu's own region where it is showing.
+  ##   Menu hangs by its right edge from that button; `width` of zero sizes button to label.
+  ##   `is_forced` opens it with no click, for run that cannot click.
+  ##   `menuEnd` closes it only where this returned true.
+
+
+proc menuEnd*() {.importc: "guiMenuEnd", sideEffect.}
+  ## Close region `menuBegin` opened.
   ## End child region begun by `childBegin`.
 
 proc text*(text: cstring) {.importc: "guiText", sideEffect.}
@@ -228,6 +246,10 @@ proc separatorText*(label: cstring) {.importc: "guiSeparatorText", sideEffect.}
   ## Draw horizontal rule carrying `label`.
 
 proc sameLine*() {.importc: "guiSameLine", sideEffect.}
+
+
+proc sameLineGap*(spacing: cfloat) {.importc: "guiSameLineGap", sideEffect.}
+  ## Continue line with spacing given, for row cut into groups.
   ## Continue current line rather than starting next.
 
 proc sameLineAt*(offset: cfloat) {.importc: "guiSameLineAt", sideEffect.}
@@ -260,6 +282,10 @@ proc idPop*() {.importc: "guiIdPop", sideEffect.}
 
 proc contentWidth*(): cfloat {.importc: "guiContentWidth", sideEffect.}
   ## Report width still free on current line.
+
+
+proc contentHeight*(): cfloat {.importc: "guiContentHeight", sideEffect.}
+  ## Report height still free down page, for region ending before what follows it.
 
 proc widthPush*(width: cfloat) {.importc: "guiWidthPush", sideEffect.}
   ## Set item width until `widthPop`.

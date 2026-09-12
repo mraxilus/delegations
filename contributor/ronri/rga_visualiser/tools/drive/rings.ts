@@ -159,6 +159,21 @@ async function driveExperiments(page: Page): Promise<void> {
   );
 }
 
+/** How many timed frames this check reads, and how long it waits to be handed them.
+ *
+ *  Frames rather than clock, which is second attempt and worth recording: first slept
+ *  1200 ms and then asked for twenty, so how many arrived was how fast machine was. It drew
+ *  27 idle and 19 with `koch ci` running beside it -- same code, two verdicts, which is what
+ *  this repository says makes check wrong rather than machine. Waiting on count takes load
+ *  out of verdict: loaded machine takes longer to reach twenty and still reaches it.
+ *  Ceiling is what remains for page that draws nothing, and is far enough above worst
+ *  measured run that reaching it means no frames rather than slow ones. Time waited is
+ *  reported either way, so slow machine still says what it cost.
+ *  Ring holds `FRAMES_HISTORY` slots, so count asked for has to stay well inside it.
+ */
+const FRAMES_TIMED_WANTED = 20;
+const WAIT_TIMED_MAX = 20_000;
+
 /** Assert browser's own rendering is timed frame by frame while panel is shown.
  *
  *  Message posted as callback ends runs once style, layout, paint and commit are done; row
@@ -167,28 +182,42 @@ async function driveExperiments(page: Page): Promise<void> {
  *  inside one task, which puts in-flight message back on its own slot.
  */
 async function driveRendered(page: Page): Promise<void> {
-  const rendered = await page.evaluate(async () => {
+  const rendered = await page.evaluate(async ([wanted, ceiling]) => {
     if (!(document.getElementById('drawer')?.classList.contains('open') ?? false)) {
       document.getElementById('button-drawer')?.click();
     }
     document.querySelector('.section[data-section="diagnostics"]')?.classList.add('open');
     written_phase['render']?.fill(0); // Only frames timed from here on are read.
-    await new Promise((done) => setTimeout(done, 1200));
-    let written = 0, bad = 0;
-    for (let i = 0; i < FRAMES_HISTORY; i += 1) {
-      if (i === index_history_frame || written_phase['render']?.[i] !== 1) continue;
-      written += 1;
-      const value = history_phase['render']?.[i] ?? -1;
-      if (!(value >= 0) || value > (history_frame[i] ?? 0) + 1) bad += 1;
+    /** Read ring as it stands: how many slots carry timing, and how many say impossible. */
+    const timed = (): { written: number, bad: number } => {
+      let written = 0, bad = 0;
+      for (let i = 0; i < FRAMES_HISTORY; i += 1) {
+        if (i === index_history_frame || written_phase['render']?.[i] !== 1) continue;
+        written += 1;
+        const value = history_phase['render']?.[i] ?? -1;
+        if (!(value >= 0) || value > (history_frame[i] ?? 0) + 1) bad += 1;
+      }
+      return { written, bad };
+    };
+    // Wait one drawn frame at time, so loop advances with page rather than with clock.
+    const started = performance.now();
+    let counted = timed();
+    while (counted.written < (wanted ?? 0) && performance.now() - started < (ceiling ?? 0)) {
+      await new Promise((done) => { requestAnimationFrame(() => done(null)); });
+      counted = timed();
     }
     return {
-      written, bad, text: document.getElementById('diagnostic-render')?.textContent ?? '',
+      written: counted.written,
+      bad: counted.bad,
+      waited: Math.round(performance.now() - started),
+      text: document.getElementById('diagnostic-render')?.textContent ?? '',
     };
-  });
+  }, [FRAMES_TIMED_WANTED, WAIT_TIMED_MAX]);
   report(
     "the browser's style, layout and paint are timed frame by frame while the panel is shown",
-    rendered.written >= 20 && rendered.bad === 0 && / ms$/.test(rendered.text),
-    `${rendered.written} frames timed, ${rendered.bad} out of range, row "${rendered.text}"`,
+    rendered.written >= FRAMES_TIMED_WANTED && rendered.bad === 0 && / ms$/.test(rendered.text),
+    `${rendered.written} frames timed in ${rendered.waited} ms,`
+      + ` ${rendered.bad} out of range, row "${rendered.text}"`,
   );
 }
 

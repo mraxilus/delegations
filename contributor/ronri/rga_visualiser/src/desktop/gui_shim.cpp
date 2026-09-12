@@ -225,7 +225,42 @@ bool guiChildBegin(const char* name, float width, float height) {
   return ImGui::BeginChild(name, ImVec2(width, height), ImGuiChildFlags_Borders);
 }
 
+// Region hugging its own content up to bound, and scrolling inside that bound past it.
+//   For list whose length is scene's to decide: fixed height leaves short list sitting in
+//   blank, and unbounded list pushes everything under it off window.
+//   Auto-size is measured only while region is on screen (see `ImGuiChildFlags_AutoResizeY`),
+//   which is what this wants: region scrolled out of view is not one reader is reading.
+bool guiChildBeginBounded(const char* name, float width, float height_max) {
+  ImGui::SetNextWindowSizeConstraints(ImVec2(0.0f, 0.0f), ImVec2(FLT_MAX, height_max));
+  return ImGui::BeginChild(
+    name, ImVec2(width, 0.0f), ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY);
+}
+
 void guiChildEnd() { ImGui::EndChild(); }
+
+// Menu opened by button, drawn as popup under it.
+//   Browser hides what is reached for rarely behind `☰` in its chip row; this is that
+//   control in idiom Dear ImGui has for it, so two front-ends put one thing in one place.
+//   `is_forced` opens it without click, for headless run that has no pointer to click with
+//   -- same door `--drive-help` uses on help's tabs.
+//   Caller closes with `guiMenuEnd` only where this returned true, which is what
+//   `ImGui::BeginPopup` asks of every caller.
+bool guiMenuBegin(const char* label, const char* id, float width, bool is_forced) {
+  if (ImGui::Button(label, ImVec2(width, 0.0f)) || is_forced) ImGui::OpenPopup(id);
+  // Hang menu from its own button rather than from pointer, which is where popup opens by
+  //   default. Browser's menu hangs from its chip, and menu that lands somewhere else each
+  //   time is menu reader has to find twice.
+  // Hung by its right edge, not its left: button sits at right end of row pinned to right
+  //   of window, so menu opening rightward opens off screen -- which is what it did.
+  //   Browser's own menu hangs down and left from its chip for same reason.
+  const ImGuiStyle& style = ImGui::GetStyle();
+  ImGui::SetNextWindowPos(
+    ImVec2(ImGui::GetItemRectMax().x, ImGui::GetItemRectMax().y + style.ItemSpacing.y),
+    ImGuiCond_Always, ImVec2(1.0f, 0.0f));
+  return ImGui::BeginPopup(id);
+}
+
+void guiMenuEnd() { ImGui::EndPopup(); }
 
 void guiText(const char* text) { ImGui::TextUnformatted(text); }
 
@@ -395,6 +430,11 @@ void guiSeparatorText(const char* label) { ImGui::SeparatorText(label); }
 
 void guiSameLine() { ImGui::SameLine(); }
 
+// Continue line with spacing of caller's choosing, rather than style's own.
+//   For row cut into groups: browser's chip row sets 6px inside group and 8 between, and
+//   gap is what says which controls belong together where no box is drawn around them.
+void guiSameLineGap(float spacing) { ImGui::SameLine(0.0f, spacing); }
+
 // Continue current line at fixed distance from its start.
 //   Column of controls then lines up under one another regardless of how long each one's
 //   own name is.
@@ -436,6 +476,11 @@ void guiIdPop() { ImGui::PopID(); }
 //   Caller laying widgets out with `sameLine` can decide for itself where to wrap; Dear
 //   ImGui runs them off edge otherwise.
 float guiContentWidth() { return ImGui::GetContentRegionAvail().x; }
+
+// Room left down page, for region that has to end before what follows it.
+//   Sibling of width above: list bounded by this scrolls inside window rather than
+//   making window scroll, which is what keeps its header on screen.
+float guiContentHeight() { return ImGui::GetContentRegionAvail().y; }
 
 void guiWidthPush(float width) { ImGui::PushItemWidth(width); }
 

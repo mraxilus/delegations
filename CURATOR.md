@@ -336,7 +336,7 @@ data, never a special case.
 
 ## What no check can reach
 
-Four rules hold by reading and nothing else. Each is a place where this repository's usual
+Five rules hold by reading and nothing else. Each is a place where this repository's usual
 answer — put it in a check — does not apply.
 
 - **A glossary term is the Architect's to select**, proposed and never written on sight. The
@@ -348,20 +348,28 @@ answer — put it in a check — does not apply.
   GitHub's, not the tree's.
 - **A published page is linked, not described**, in the pull request and in the message both.
   Which pages a change alters depends on what each project's build reads.
+- **A change ends by showing itself**, in the message where the work is handed over: a picture
+  where it is visual, a worked example where it is not, and a sentence saying why where neither
+  fits. **No check can reach this one**, by the test below: a screenshot lives in a conversation,
+  which is neither this repository nor a fact the runner writes down. The record carries the
+  command that took it, which is checkable and is not the same thing as having shown it.
+  A curator is bound exactly as a contributor is — pull request 128 shipped a predicted saving
+  with no evidence and stayed wrong for eleven days, because nothing asked.
 
-Adding a fifth is a real decision rather than a free one: each dilutes the others, since a
+Adding a sixth is a real decision rather than a free one: each dilutes the others, since a
 document whose rules are mostly unenforced trains its readers to skim. Prefer a check wherever
 one can be written, and say plainly in the rule when none can.
 
-**A fifth was here and has left, which is the direction this list is meant to move.** *`main` is
-green* held by a curator remembering to look, and this document said so — *"nothing else watches
-it"* — while never listing it here, so it read as a duty rather than as an unenforced rule. It
-failed silently twice: a contributor's merge, found by accident twenty-four minutes later, and
-the driven job red on two `main` runs while the curator who had named that run as the leg still
-to read did not read it. It is now the `watch` workflow's, because unlike the four above it turns
-on no intent and no state GitHub keeps privately — a run's own conclusion is a fact the runner
-produces. That is the test for anything on this list: not whether a check would be awkward, but
-whether what the rule asks about is a fact something already writes down.
+**One was here and has left, which is the direction this list is meant to move** — the count has
+gone five, four, and five again, and the arrival was the Architect's call rather than a curator's.
+*`main` is green* held by a curator remembering to look, and this document said so — *"nothing
+else watches it"* — while never listing it here, so it read as a duty rather than as an unenforced
+rule. It failed silently twice: a contributor's merge, found by accident twenty-four minutes
+later, and the driven job red on two `main` runs while the curator who had named that run as the
+leg still to read did not read it. It is now the `watch` workflow's, because unlike the five above
+it turns on no intent and no state GitHub keeps privately — a run's own conclusion is a fact the
+runner produces. That is the test for anything on this list: not whether a check would be awkward,
+but whether what the rule asks about is a fact something already writes down.
 
 ## Output contract
 

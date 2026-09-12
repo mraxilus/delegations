@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 9d34b3aca3dcff6b |
+| Rules  | 3de2c53c542bac80 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief, the constitution, the Nim style guide and the provenance
@@ -614,11 +614,20 @@ other thing reaching that stream is the compiler complaining, which always spell
 first, so a line carrying whitespace is dropped. A compiler that complained still fails, since
 the absent package names itself.
 
-**Faces are cached on the file that pins them, and that cache is the safest of the three.**
-`assets` keeps a face already carrying its pinned digest and refetches any that misses, and
-`web` verifies again before embedding, so a stale entry heals rather than ships — where the
-Atlas and npm caches rest on the key alone. The key is the whole driver rather than the digests
-inside it, so an edit moving no face still misses; the cost is refetching six files, 1.5 s.
+**The shared store is cached, and `build/fonts` no longer is.** `koch assets` fetches into
+`~/.cache/koch/assets` and that store is the repository's, so the cache keys on its declaration —
+`curator/audit/src/assets.nim` — and one entry serves every project's job rather than one per
+project. What moved is where the cost is: the fetch is 6.6 s cold and the copy into `build/fonts`
+is milliseconds, so keying on a project's driver cached the cheap half and missed the expensive
+one, which is what repository issue 132 raised with the figures.
+  A looser `restore-keys` prefix is safe here by construction rather than by check, which is
+  unusual and worth stating: the store names entries by digest, so an entry no row declares is
+  unreachable rather than wrong, and `koch assets` fetches whatever an older restore lacks.
+  Populated and not yet proven: on its first run, 235, `assets-Linux-…` found nothing to restore
+  and saved on the way out, which is what a cache created one pull request earlier does. Its test
+  is the next `driven` run. What that run did settle is that dropping `build/fonts` costs nothing —
+  `Wrote build/fonts (12 faces, 12 copied)` then `(12 faces, 0 copied)`, since `assets` runs twice
+  per job and the second pass finds every face already in place.
 
 **The browser a declaration names is the browser that runs, and the snap serves.** `apt-get
 install chromium` on `ubuntu-latest` gives `/snap/bin/chromium`, a wrapper rather than a plain
@@ -826,12 +835,80 @@ four-core Intel Xeon 2.80 GHz container, 2026-09-08 — fifty times the row abov
 faster cores. What differs between the two containers has not been measured, so this sits beside
 that row rather than replacing it, and neither predicts the other.
 
+**SDL3's install prefix is cached, the build tree beside it deliberately is not, and the first
+key did not work.** No package carries SDL3, so `sdl3` clones, configures and builds it from
+source: **55.8 s of run 214's 357 s**, the largest single step nothing cached, and larger than
+either lever repository issues 79 and 80 were weighing.
+
+- The prefix is what makes the verb return early — `versionSdl3` reads `build/sdl3/lib/pkgconfig`
+  — so caching the product is enough and caching the cmake tree is unnecessary.
+- It is also what makes it *safe*, and that is measured rather than reasoned. A cmake build tree
+  carried over from a configure that had found no X11 kept reporting `SDL not configured with
+  OpenGL/GLX support` after the headers arrived, and cost an hour on a container that had them.
+  A product caches; a build tree remembers what it decided about a machine that has since changed.
+- **The first key never once hit, and that is measured, not suspected.** Keyed on the exact hash
+  of the project's `tools/build.nim`, it missed on both `driven` runs after it merged — run 221 at
+  `fb1fba1` and run 226 at `b2fa891` — each printing `Built SDL3 3.2.30 into build/sdl3` where a
+  hit prints `Kept SDL3 3.2.30, already reported by pkg-config`, and each ending `Cache saved`
+  rather than `Cache hit`. The reasoning that picked the key held that the file carries both
+  `COMMIT_SDL3` and `SYSTEM`, so a moved pin or a changed package list misses it. True, and beside
+  the point: that file also carries everything else a build driver carries, so it changed in two
+  consecutive pull requests and the key changed with it. A key has to be specific enough to be
+  correct **and** stable enough to hit; only the first was checked.
+- **`restore-keys: sdl3-<os>-` fixed it, and run 235 is the evidence.** Read from that job's log,
+  on `f9e54ad`, 2026-09-12:
+
+  ```
+  11:19:07.307  Cache restored from key: sdl3-Linux-4f98cd632350a0d7…
+  11:22:06.233  Kept SDL3 3.2.30, already reported by pkg-config
+  11:22:06.236  Cloning into 'deps/imgui'...
+  11:24:22.091  Cache saved with key:    sdl3-Linux-75e9e2df1e0287f4…
+  ```
+
+  It **restored from a different key than it saved under**, which is the whole mechanism: pull
+  requests 136 and 137 moved `tools/build.nim`, so the exact key missed exactly as before, the
+  prefix matched an older entry, and `versionSdl3` read the restored `.pc` and returned early.
+  The SDL3 phase runs in **about 20 ms** against 55.8 s built, at a restore cost of roughly 1 s in
+  the cache step, and the job logs **zero** `Building C object` lines against roughly a thousand
+  in run 226.
+- **No whole-job figure is quoted, and that is deliberate.** Run 226 took 290 s with SDL3 built and
+  run 235 took 314 s with it kept, but 136 and 137 added a menu and a *scene filled to capacity*
+  driven run that alone costs 86 s. Those two numbers measure different work, and subtracting them
+  would put a false saving in this file where a false prediction used to be. The phase figure above
+  is the pair; the job figure is not one.
+- Cost: most runs stop exercising the SDL3 build. Every cache here trades that, and the pin is a
+  commit rather than a mutable tag now (repository issue 126, answered by pull request 131), so
+  what the cache hides is a rebuild rather than an upstream that moved underneath it.
+
 ## Open questions
 
-- Whether a restored `nimcache` can let a check pass without compiling what it claims. The
-  largest saving left, and the only cache question whose risk is correctness rather than
-  minutes; it needs driving against a deliberately stale cache before adoption or refusal.
-- Whether caching apt archives is worth it, now the install step is measured above.
+These two were open questions and are now answered; both are kept as answers rather than
+deleted, so neither is reopened from first principles.
+
+**A restored `nimcache` does not let a check pass without compiling what it claims, and it is
+still not worth caching.** Driven rather than argued, three cases: an ordinary rebuild; a cache
+made six years newer than backdated sources; and a full save-mutate-restore, which is what
+`actions/cache` actually does. All three rebuilt correctly — Nim decides by content, not by
+mtime, so a stale restore costs a rebuild rather than a wrong answer. That is the property the
+two Atlas defects lacked, and it is why those bit and this does not.
+
+- Rejected on size, then, not on fear. `nimcache` can only skip Nim compilation, which in run
+  214's `driven` job is a **2.8 s** page build plus part of a 13.7 s desktop build — at most
+  ~16 s of 357 s. Smaller still in practice: that job runs *because* the project's code changed,
+  so the modules that matter are exactly the ones a restored cache cannot serve.
+- The claim it carried — that this was "the largest saving still on the table" — was true when
+  written and is not now. SDL3 was.
+
+**Caching apt archives is not worth it, measured.** The figure the earlier record asked for:
+apt reports `Fetched 27.7 MB in 2s`, and splitting the step gives **2.8 s of download against
+7.6 s of install**. The whole step is 37 s, the rest of it compiling koch and running the
+project's own `system` verb, which no archive cache touches.
+
+- So a cache removes **2.8 s from a 357 s job, 0.8%**, for a root-owned directory and a key. The
+  original instinct — "saves the download and not the install" — was right, and now has a number.
+- The 1 m 47 s that opened repository issue 79 described a step that no longer exists: `chromium`
+  resolved to a snap and left with the browser change, taking most of the step with it. A figure
+  with an expiry date is worth re-taking rather than re-citing.
 **koch declares its own system dependencies, as the rule it enforces asks of every project.**
 `KOCH_SYSTEM` in `projects.nim` pairs each with its reason -- git, since tree is what git lists
 and `ci` fetches base to compare against; curl, since compiler pin nothing on machine serves is

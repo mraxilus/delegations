@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Author | Claude Opus 5 and Claude Sonnet 5 |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 9d34b3aca3dcff6b |
+| Rules  | 3de2c53c542bac80 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the
@@ -446,6 +446,40 @@ rather than being given, so absent face is their error to see by name.
   Costs nothing warm, which is what makes it safe to chain: `assets` skips every face already
   carrying its pinned digest, so warm run fetches none.
 
+**The digests left this project, and what stayed is which faces it draws with.** Two targets
+drawing Article X.8's three families pinned four of the same files byte for byte, which is the
+duplication Article II.9 names, and the curator built one store to hold them: `koch assets`
+takes names, fetches what is missing into `~/.cache/koch/assets`, checks each against
+`curator/audit/src/assets.nim`, and prints a path per file (repository issues 116 and 124).
+  It is a store of *any* file fetched at build time rather than of faces — CONTRIBUTOR.md names
+  that class already, and faces are its only instances today. This project's own `assets` verb
+  and the repository's `assets` verb share a word and are different drivers: one asks the other.
+  `assets` is a copy out of that store now rather than its own fetch-and-verify. Everything below
+  about *why* each byte is pinned still holds — it is simply held once for the repository instead
+  of once per project, and the paragraphs are kept because they are why the store exists.
+  **What did not move is the choice.** Six `woff2` for the page and six faces for the desktop
+  binary are this project's, and they differ from the other target's: this one draws maths and
+  symbols, that one draws italic serif. The store says what bytes a name is; it never says which
+  names a target wants.
+  **`web` still reads the bytes twice, and now without holding a digest to read them against.**
+  `assets` writes `build/fonts/store.list`, one line per face naming the store entry it was
+  copied from, and `web` compares its input against that entry before embedding it. So the second
+  reading survived adoption without this project knowing where the store lives or what digest
+  names an entry — both of which are `assets.nim`'s to know.
+  **Verified by breaking it, twice.** With `store.list` moved away, `web` refuses and names
+  `assets`; with one byte appended to a copied face, it refuses and names both the copy and the
+  store entry to compare it against. Re-running `assets` heals the second, copying one face and
+  keeping eleven.
+  **Verified by what did not change**, which is the point of the exercise: the page built from the
+  store is byte for byte the page built from this project's own fetch — `6e0c41ec…` before and
+  after, 3,911,946 bytes. The store was designed to hold the same bytes, and it does.
+  **Cost**, measured end to end through this project's own verb rather than through the store's:
+  `tools/build.nim assets` is **8.8 s** with both the store and `build/fonts` empty — twelve
+  fetches plus compiling koch — and **0.36 s** warm, when it copies nothing. `koch assets` alone
+  is 6.6 s cold and 0.18 s warm for the same twelve, and the store holds 4.1 MB.
+  `curl` and `coreutils` stay declared because they are still needed — one level down, by the
+  verb this asks on its behalf.
+
 **Each face carries digest of bytes expected, and build refuses anything else.** Host serves
 whatever it serves, and `web` embeds these bytes into artefact readers open, so wrong byte
 fetched is wrong byte shipped. Every other external thing here is pinned -- compiler to commit,
@@ -729,8 +763,8 @@ That is this repository's rule about anything fetched at build time, and here it
 than chosen: Ubuntu 24.04 carries `libsdl2-dev` and no SDL3 at all, so `apt-get install
 libsdl3-dev` fails on it outright. SDL3 is cloned at its tag and built into `build/sdl3` -- a
 prefix inside the tree, so no step needs root and `clean` removes it like any other product --
-and `checkSdl3` reads what `pkg-config` reports there before compiling anything, at `3.2.30`,
-zlib licence.
+and `checkSdl3` reads what `pkg-config` reports there, and the commit the clone stands at,
+before compiling anything, at `3.2.30`, zlib licence.
   **SDL3's own build dependencies are declared too, and the runner is what found them.** Its
   cmake refuses outright where it can find neither X11 nor Wayland development libraries, since
   a build that cannot open a window is not one anybody wanted. `libx11-dev` arrives beneath
@@ -750,10 +784,28 @@ zlib licence.
   runner is the machine this had to reach.
   Pinned exactly rather than as floor: floor would claim reach across releases nothing here has
   tried.
-  **The pin is a release tag, and `release-` prefixed to it is the ref that fetches it.**
-  `release-3.2.30` resolves at commit `f5e5f658`, so `VERSION_SDL3` names bytes rather than a
-  version string, and the `README.md` and `checkSdl3` instructions compose the ref from it —
-  one home, no second copy to drift.
+  **The pin is a release tag, and the commit that tag resolves to is what binds the bytes.**
+  `release-` prefixed to `VERSION_SDL3` is the ref that fetches, and `COMMIT_SDL3` is what has
+  to arrive: `f5e5f6588921eed3d7d048ce43d9eb1ff0da0ffc`, read from the remote and from the
+  clone, which agree. The `README.md` and `checkSdl3` instructions still compose the ref from
+  the version — one home, no second copy to drift.
+  **What that replaced overclaimed, and this line said so.** A tag is mutable and a version
+  string is self-reported, so neither bound a byte: a moved `release-3.2.30` would have fetched
+  other sources and `pkg-config` would have answered `3.2.30` still, and nothing in the path
+  called `rev-parse`. `checkSdl3` now reads `git rev-parse HEAD` against the commit, as
+  `checkImgui` already did, and `checkCommit` is the one reading both go through (repository
+  issue 126).
+  Verified by pinning it wrong: with the prefix already built and `pkg-config` reporting
+  `3.2.30`, a `COMMIT_SDL3` of zeroes is refused by name — which is exactly the case the version
+  check passes and this one does not. Held on the warm tree as well as the cold one, since
+  `sdl3` returns on the version alone where the prefix already reports it, and the clone it
+  built from would otherwise never be looked at again. Held before cmake too, so a refused
+  clone costs no minutes of building.
+  The limit is stated rather than papered over: a machine carrying its own SDL3 has no clone to
+  read, and the version is then all there is of it. That path says so aloud rather than passing
+  as though it had checked. The tag is kept beside the commit because `--depth 1 --branch` needs
+  a ref to fetch, and the commit is what that ref fetches — which is also why a shallow clone is
+  safe here and is not for Dear ImGui, whose pin sits behind a branch head.
   **3.2.30 is the newest release of a series still maintained, not a stranded one.** A curator
   sweep asked whether the pin was behind, since `main` carries 3.5.0 and `release-3.4.x` the
   current stable series (repository issue 111). Read from the branches rather than a releases
@@ -827,14 +879,18 @@ directly. Entry point carries five scripted runs -- `--drive-keys`, `--drive-sky
 `--drive-undo`, `--drive-select`, `--drive-drag` -- plus `--drive-help:<tab>`, one per tab.
 Each pushes real events through SDL's own queue rather than calling handler, so what it
 exercises is wiring.
-  22 checks over 13 runs -- 13 `report` sites, of which the help one fires once per tab and the
-  faceless one only in the run driven without a face. Held key slides view and keeps its height;
-  drag across bare sky turns view and builds nothing; undo takes construction back *and* returns
-  view to where it built from; choice menu does not swallow drag after it; every help tab opens
-  with rows in it; and a run whose face is missing still does its scripted work.
-  Counted by running rather than by reading: this said 19 until 2026-09-09, which is sites plus
-  tabs with the help site counted twice.
-  **These 22 run wherever `drive` runs, which is what repository issue 91 ruled.** They ran here
+  41 checks over 15 runs -- 16 `report` sites, of which most fire in every run that reaches
+  them. Held key slides view and keeps its height; drag across bare sky turns view and builds
+  nothing; undo takes construction back *and* returns view to where it built from; choice menu
+  does not swallow drag after it; every help tab opens with rows in it; a run whose face is
+  missing still does its scripted work; every type role is drawn in a face of its own; a
+  scene filled to capacity leaves what follows its list on the window; and menu opens with
+  its groups in it, offering demo at every size `orrery` has.
+  Counted by running rather than by reading, and twice now that reading was wrong: this said 19
+  until 2026-09-09, which is sites plus tabs with the help site counted twice, and then 22 until
+  2026-09-11, which stopped being true the day the type-role verdict began firing in every run
+  with a face. `drive`'s own output is the count: `grep -c "^  ok"` over `driven`.
+  **These 41 run wherever `drive` runs, which is what repository issue 91 ruled.** They ran here
   and nowhere else while `drive` skipped them for want of SDL3, and `0 finding(s)` over 161 checks
   and over 139 were two claims wearing one sentence. `desktop` now fetches and builds both
   libraries itself, so the skip is gone and an absent dependency fails by name.
@@ -3147,7 +3203,18 @@ stays **unexplained**; neither Chromium here reproduces it. Browser runner drove
 snap, and was raised for curator on issue 77; it is gone. Runner drives build lock pins since
 #98, reader has been green on both, and that is evidence against snap having been cause.
 
-## Re-audit, 2026-09-10, faces by element
+**One driven check was still asking the machine rather than the code, and it is fixed.**
+`driveRendered` slept 1200 ms and then required twenty timed frames, so its verdict was how
+many frames that machine fitted into a fixed span. It drew 27 idle and **19 with a `koch ci`
+running beside it** — same code, two verdicts, which is exactly what this rule says makes the
+check wrong. It now waits *for frames* rather than for clock: it advances one
+`requestAnimationFrame` at a time until twenty are timed, with a 20 s ceiling that only a page
+drawing nothing reaches, and it reports the wait either way so a slow machine still says what
+it cost. Driven with every core of this container pegged by busy loops: **20 frames timed in
+780 ms**, passing. The ceiling is what remains for real failure, and reaching it means no
+frames rather than slow ones.
+
+## Re-audit, 2026-09-11, panel in line with page
 
 Audited by a curator against the rules change that splits Article X.8's faces by element —
 Noto Serif for headings and titles, Noto Sans for body and interface text, Commit Mono for
@@ -3156,3 +3223,134 @@ the first clause is kept. Two things the split newly asks for: `--serif` is decl
 `pages/shell.html` and never used, so no heading takes it; and Commit Mono is set without
 `calt`, so its ligatures — which are functional rather than decorative — do not render.
 Repository issue 118 carries both.
+
+
+## Re-audit, 2026-09-11, panel in line with page
+
+Asked by the Architect: bring the desktop's text and layout in line with the page, drop text
+that earns nothing, work the buttons, and keep a section's heading reachable while its list
+scrolls.
+
+**The top of the ImGui window was the last copy of something two front-ends used to disagree
+about.** It opened with four lines of prose — one teaching drag, three tinting the wheel's
+wedges, one about right-drag and touchscreens — above any control. Every one of those is in
+help's drag tab, which `?` opens in the same corner of both front-ends, and `help.nim`'s own
+header says it exists because *"desktop wrote this in its panel and browser in hint that
+vanished after four seconds; two had drifted"*. The browser had since dropped its own
+`.drawer-intro`; this was the remaining copy. It is gone, and the window opens on controls as
+the drawer does.
+
+**Removing it turned up something the page had already lost.** `interaction.nim` said in two
+places that the wheel's words are *"taught once, in drawer's intro line"* — and that line no
+longer existed, so **nothing in the browser taught them at all**. A reader met wedges wearing
+`𝐦 ∧ 𝐧` and nothing anywhere said that one is `join`. Both comments now point at help, and
+the words are taught in `descriptionOf(HelpPath.Drag)`, read from `wordOf` and `labelOf` rather
+than written out, so a renamed or renotated wedge is renamed in the telling too. Both UIs
+already render that line, so one edit served both. Held by a law in the shared suite — every
+wheel word and its notation must appear in that description — which **fails without the fix**
+(`Check failed: wordOf(choice) in described`).
+
+**The buttons are the page's three groups, in the page's order.** `add`, `undo` and `redo` on
+one row, as `.action-group` has them; `axes` and `grid` as the accent pill this project already
+draws for `arity`, which is the same pill `.toggles` wears; then the scene file with `save` and
+`load` beside it. The last is where text went as well as shape: a row whose field is named
+`scene file` had `save scene` and `load scene` under it, so the noun was in the row three
+times. The page's menu spells them the same way under its own headings.
+  Checkboxes became pills deliberately. The worry against it is that a pill carries its state
+  in colour where a checkbox carries it in a tick — but `guiButtonToggle` already carries fill,
+  border *and* text colour together, it is what this panel draws for `arity`, and it is what
+  the browser draws for the same two toggles. One control, one shape, across two front-ends.
+
+**A long list no longer buries the rest of the panel, and its heading no longer scrolls away.**
+The rule is one sentence — *the heading naming a section stays reachable while that section's
+list moves* — and each front-end answers it in its own idiom.
+  Desktop bounds the list in a region that hugs its own content until the window runs out and
+  scrolls inside that bound after (`ImGuiChildFlags_AutoResizeY` under
+  `SetNextWindowSizeConstraints`). The heading sits outside that region, so it cannot move.
+  First attempt gave the region a fixed height and a threshold, and a five-object scene sat in
+  a box of blank; hugging the content is what fixed that, and the first attempt is recorded
+  rather than tidied away.
+  Browser sticks the heading with `position: sticky` against `.drawer-scroll`. Its offset is
+  `--drawer-clear`, which is the same number that already pushed the drawer's content below the
+  floating chip row — named once now instead of written twice, since a heading stuck at `0`
+  lands *behind* those controls rather than under them.
+  Measured on both. Desktop, scene filled to capacity: **64 px left under the sections** where
+  the unbounded list ran **319,899 px** past the window's bottom — which is the same verdict
+  failing without the fix, driven by a new scripted run at capacity. Browser: the drawer is
+  scrolled to its floor -- **307,775 px** -- and the heading, which sat at 1123 px, holds at
+  62, where that scroller's own content begins. The scroll itself is asserted too, since a
+  check that reads a stuck heading while nothing moved would pass on a page with no
+  stickiness in it.
+
+
+## Re-audit, 2026-09-11, one menu in two front-ends
+
+Asked by the Architect, after the panel was brought in line: give the desktop the menu the
+page has, and make the two as similar as possible.
+
+**What the page had that the desktop did not.** Its `☰` opens a menu of three groups — *save*
+(scene, image), *load* (scene), *demo* (one button per orrery size). The desktop had no menu,
+kept save and load inline in its top bar, hid its PNG export at the bottom of the **view**
+section, and **offered the demo nowhere at all** — `--demo` existed on the command line and
+had no control in the window.
+
+**All three groups are now on both.** The desktop's top bar is what the page's chip row is —
+`add`, `undo`, `redo`, then `axes`, `grid`, then `☰` — and everything else went behind that
+button. `☰` is U+2630, the very character the page's button carries: `RANGES_SYMBOL` already
+merges U+2600–26FF into the interface face, so no face had to be pushed to draw it.
+
+**The demo group is built rather than written.** It walks `orrery.ScaleOrrery` and labels each
+button with `objectsOf`, exactly as the page builds its own from `nimDemoScales`; a size added
+to `orrery` arrives in both menus with neither front-end touched. Loading one calls the same
+`showOrrery` the browser calls, then resets selection, timeline and open session as
+`bridge.nimLoadDemo` does, and says what the page's toast says.
+
+**Two deliberate differences, both stated rather than smoothed over.**
+  The desktop's menu carries `scene file` and `image file` fields above its groups. The page
+  has no such fields because its save is a download and its load is a file picker; a desktop
+  build writes to paths, and the path a button writes to belongs beside that button.
+  The menu hangs from its own button rather than opening at the pointer, which is Dear
+  ImGui's default. The page's menu hangs from its chip, and a menu that lands somewhere
+  different each time is one the reader has to find twice.
+
+**Checked headlessly, which needed a door.** A popup has no state a scripted run can set, so
+`guiMenuBegin` takes `is_forced` and `--drive-menu` opens the menu with no pointer — the same
+door `--drive-help` uses for tabs. The verdict reads what the menu laid out: **3 sizes
+offered, 3 in `orrery`**. That makes 41 checks over 15 runs.
+
+
+## Re-audit, 2026-09-12, the row that floats
+
+Asked by the Architect, after the menu landed: put the constant controls in an overlay of
+their own, as `?` already is, and lay them out as the browser lays them out.
+
+**What was wrong with them inside the panel window.** The browser floats `add`, `undo`,
+`redo`, `axes`, `grid` and `☰` over its canvas in `.chip-row`, and they stay reachable
+whether the drawer is open or shut. The desktop had the same six controls *inside* the panel
+window, so they moved when it moved, and went with it when it collapsed. One set of controls,
+two arrangements.
+
+They are now one line in a `windowBeginPinned` overlay — the same door `?` uses, which
+auto-sizes to its contents and takes no title bar — pinned to the top right on the same 16 px
+inset `?` takes from its own corner. Three groups in the browser's order, with a wider gap
+between groups than inside one, since a gap is what says which controls belong together where
+no box is drawn around them.
+
+**Top right rather than top left, which the browser can afford and this cannot.** The browser
+puts its brand chip on the left because its drawer slides out from under it; the desktop's
+panel window opens at the top left and stays there, so two overlays sharing that corner would
+sit on each other at any window width. The panel's own title bar carries the name and the
+collapse triangle, which is what the brand chip is for over there.
+
+**The first attempt put the menu off the screen, and the screenshot is what showed it.** The
+popup was anchored by its *left* edge under its button — fine when the button sat inside the
+panel at the left, and wrong the moment the row moved to the right, where the menu opened
+past the window and was clipped to a few characters. It now hangs by its right edge, which is
+the direction the browser's own menu falls. Nothing in the checks caught this: the verdict
+asks what the menu *offered*, and a menu offering three sizes off the edge of the screen
+offers three sizes. **That is the case for ending a change with a picture** (repository issue
+138), and it arrived the same day the issue did.
+
+`☰` also grew a chip of its own — 34 px against the width one glyph asks for — because the
+character set at interface size in a button sized to it reads as a mark rather than as a
+control. The browser draws the same character on a round chip far wider than the glyph.
