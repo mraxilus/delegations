@@ -15,7 +15,7 @@
 import std/[options, sequtils, sets, strutils]
 import ./[
   findings, kinds, prose, form, justification, checker, layout, provenance, glossary,
-  dependencies, toolchain, plan, workflows,
+  dependencies, toolchain, plan, workflows, faces,
 ]
 
 export layout.Tree, layout.Entry, layout.projectDirs
@@ -89,6 +89,10 @@ proc auditTree*(tree: Tree): seq[Finding] =
     result.add checkForm(e.path, e.content, rule)
     if rule.is_prose: result.add checkProse(e.path, e.content, rule.syntax)
     result.add checkJustification(e.path, e.content, rule)
+    # Checker's own project names these families as data and carries fixture pages, so it
+    #   would report itself; it holds no presentation target of its own to check.
+    if not e.path.startsWith(DRIVER_DIR & "/"):
+      result.add checkFaces(e.path, e.content)
     for dir in dirs:
       if e.path == dir & "/PROVENANCE.md":
         result.add checkProvenance(e.path, e.content, stamp_now)
