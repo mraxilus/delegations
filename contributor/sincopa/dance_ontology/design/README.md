@@ -51,14 +51,16 @@ the ontology redrawn from the ground up and reviewed plate by plate.  Its one
 generated part is the turns
 panel, which animates a hold turning by drawing what the body sim found --
 `turns.nim` runs `../sim` natively, sweeps every hold at every height a
-fiftieth of a turn at a time, and writes every moment as data: where the
-bodies stand, where each joint of each held arm is, which way each arm lies,
-and where the turn runs out and why; the page only draws, through
-`wholecloth_turns.nim`, compiled to JavaScript.  The turn stops
-where a joint or a body refuses.  Rebuild and splice it with:
+fiftieth of a turn at a time from wherever the couple stand for that turn,
+and writes every moment as data to `design/turns.json`: where the bodies
+stand, where each joint of each held arm is, which way each arm lies, and
+where the turn runs out and why; the page only draws, through
+`wholecloth_turns.nim`, compiled to JavaScript.  The turn stops where a joint
+or a body refuses.  Record, then rebuild and splice, with:
 
 ```
-nim r tools/build.nim pages   # sweeps with design/turns.nim; wholecloth.nim splices it
+nim r tools/build.nim turns   # sweeps with design/turns.nim, to design/turns.json
+nim r tools/build.nim pages   # folds it into turns.js; wholecloth.nim splices it
 ```
 
 `turns.js` and the spliced page are both build products under `build/design/`.

@@ -1137,6 +1137,52 @@ difference between them, and it went when centring was weakened: 0.32 and 0.80 a
 model that roughly tracks the floor with one that does not, at the neck band. It goes when the
 neck band is answered.
 
+## Re-audit, 2026-09-12, later: what was wrong with the sim, one constraint at a time
+
+The Architect: *every position and rotation on the reference has been tested in reality and is
+possible, so where the sim says no, the sim is wrong. Find what, until every cell is modelled.*
+Two changes were tried first and both are recorded as rejected: the lead's arms passing through
+the follow's (it reached the swan by letting two arms occupy one place, which no couple does --
+*"you've made it worse"*), and the wrist cone widened from sixty to seventy five (clinically under,
+but measured net zero: forty seven of fifty six chain questions either way, one manner gained and
+one lost).
+
+**Adduction was the constraint, and the trunk is its real limit.** Every chain jammed on `across`
+at its forty five degree cap with the arm raised. Forty five is the hanging arm's figure -- what
+stops the arm going across the belly. Raised, the arm passes in front of the chest to about a
+hundred and thirty, and what stops it then is the chest. Either way the limit is the trunk, which
+the sim already collides, so the cap was redundant where it was right and wrong exactly where the
+chains live. Set to the clinical horizontal figure, at which the reading -- an arcsin -- can never
+bind, so the body does the stopping. Argued from anatomy first and measured second: chains from
+eighteen to forty seven of fifty six questions, the reference from 193 to **223 of 231**, thirty
+gained and none lost, every kept card met, and every law holding. Two laws failed under the new
+model and were corrected, not loosened: the mirror law compared a quantity that is not
+mirror-invariant when both ways run free (the model was symmetric; the law was not), and the
+reach law's figures were re-measured against the new landscape.
+
+**The old solver is gone.** Its suite went red on its own faults once adduction was freed: its
+optimiser is not mirror-symmetric on the flatter landscape, and it has no arm collision, so only
+its cost kept arms out of each other. Patching its tests would have been investing in a model the
+Architect retired, and giving it a private copy of the old rig would have been the two versions of
+"right" the Architect forbade. Everything that asked it -- the whole-cloth page's sweeps, the
+floor table, the crossings reading -- asks the rig in the engine now. Kept verbatim from its
+suite, what never asked the solver anything: the rig's tape and one arm's geometry (`tlimb`); the
+crossings law retyped onto the engine's own poses (`tread`). The whole-cloth sweeps are recorded by
+their own verb to `design/turns.json`, as `modelled` and `rig` are, because eighteen sweeps each
+searching every distance the couple may stand at cost more than every `pages` run should pay.
+
+**Eight questions remain, all swan-reaching, and the stop probe names each.** Twist for the
+same-name chain under the follow's axis and the cross-name under the follow's orbit; extension for
+the cross-name under the lead's orbit. At each stop *several* joints sit at their ends at once --
+at one, the lead's right arm at extension 44 of 45, twist 99 of 90 and wrist 82 of 60 -- which is
+not one wrong range but an arm reaching where a rigid trunk cannot help it. The rig has no scapula
+and no torso rotation. That is the next structure, argued from anatomy, and it is not built yet.
+
+**Flagged for the Architect, not decided.** At the torso band the single-hand wraps now run free
+where the floor says half a turn. The pose at one and a half turns is a hammerlock -- the follow's
+arm forty three degrees behind her at hip height, wrist at its end -- which a body can make. The
+reference never asks it, being drawn wholly over the crown; the floor is the Architect's.
+
 ## Re-audit, 2026-09-12, every cell of reference asked of model
 
 Reference page carries two tags on each cell now. `kept` is the Architect's, given by eye on the

@@ -10,11 +10,14 @@
 ##   |----------|-----------------------------------------------------------------------|
 ##   | pages    | fetch faces, write shells from Nim hosts, compile browser scripts,    |
 ##   |          | fold each into one self-contained file, render review page and frame  |
-##   |          | pictures, build five mark pages, sweep turns natively, splice         |
-##   |          | whole-cloth page                                                      |
+##   |          | pictures, build five mark pages, fold recorded turns into whole-cloth |
+##   |          | page, build rig viewer                                                |
 ##   | assets   | fetch faces pages embed from repository store into build/fonts        |
 ##   | pins     | rewrite design/review-pins.json from page just built: run when        |
 ##   |          | Architect rules on cards, never to quiet check that says one moved    |
+##   | modelled | rewrite design/modelled.json: which reference cards sim reaches       |
+##   | rig      | rewrite design/rig.json: sweeps rig viewer plays                      |
+##   | turns    | rewrite design/turns.json: sweeps whole-cloth page plays              |
 ##   | verdicts | instrument run, not build: answers land in sim/verdicts.md            |
 ##   | shot     | screenshot helper, for node and Playwright                            |
 ##   | clean    | remove bin, build, nimcache, testresults and testament binaries       |
