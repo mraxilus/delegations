@@ -122,3 +122,39 @@ suite "two dancers in rigid body engine":
             j = joints(m.stance[h.body], h.arm, m.arms[0][k])
           check margin(HUMAN.range[Dof.Extend], j.extend) >= 0.0
           check margin(HUMAN.range[Dof.Across], j.across) >= 0.0
+
+  test "rig is same seen in mirror":
+    ## Lead's left to follow's left, reflected, is lead's right to follow's right,
+    ## and turning one way reflects to turning other.  Anything applied per arm in
+    ## body's mirrored terms has to say whether it is vector or pseudovector:
+    ## torque is pseudovector, and mirroring it as vector turned left arm's own
+    ## correction into shove further out.
+    let
+      same = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Left)])]
+      other = @[Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Right)])]
+      a = swept(HUMAN, Band.Torso, same, most = 0.8)
+      b = swept(HUMAN, Band.Torso, other, most = 0.8)
+    check abs(a.apart - b.apart) < 1e-9
+    check a.pos.stopped == b.neg.stopped
+    check a.neg.stopped == b.pos.stopped
+    check abs(a.pos.at - b.neg.at) < 1e-9
+    check abs(a.neg.at - b.pos.at) < 1e-9
+    check a.pos.why == b.neg.why
+    check a.neg.why == b.pos.why
+
+  test "over crown nothing stops single hold turning":
+    ## Architect, who dances it: above is level that blocks by twist alone, and
+    ## floor's own table says no block either way for either single hold there.
+    ## Arms are clear of both bodies and swing is nowhere near its ends, so this
+    ## is what rig should say without being told.
+    ##   Red before crown's own rule was put back: joined hands over crown go over
+    ##   turning dancer's head, not between two bodies.  Pulled to midpoint, both
+    ##   dancers reach across themselves, spend their adduction, and hold blocks at
+    ##   0.28 of turn.
+    for arms in [[Arm.Left, Arm.Left], [Arm.Left, Arm.Right]]:
+      let
+        links = @[Link(ends: [(Body.One, arms[0]), (Body.Two, arms[1])])]
+        sw = swept(HUMAN, Band.Crown, links, most = 1.5)
+      check sw.restHolds
+      check not sw.pos.stopped
+      check not sw.neg.stopped
