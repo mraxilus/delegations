@@ -343,8 +343,8 @@ migration attached — so the published contract above ships and the tree waits 
 **If it is ever built the curator writes it and contributors only read it**, because a shared tree
 a contributor may write is a scope boundary the branch grammar cannot check.
 
-**A sweep reads what GitHub records, so three carried rules stopped being only read.**
-`sweep.yml` runs daily and writes one issue: a pull request left ready without a green run, a
+**A ledger reads what GitHub records, so three carried rules stopped being only read.**
+`ledger.yml` runs daily and writes one issue: a pull request left ready without a green run, a
 `Closes #N` that never fired, and an issue or pull request opening with no role line or carrying
 no label. Its shape is `watch.yml`'s — one issue found again by a marker, `gh issue list` rather
 than search, label as a hardcoded literal — and its schedule idiom is `check.yml`'s.
@@ -373,12 +373,12 @@ than search, label as a hardcoded literal — and its schedule idiom is `check.y
   the first such workflow, not by reading the check.
 - **`watch.yml` watches it, and that was the condition for merging it.** A sweep cannot be driven
   before it lands — a scheduled workflow runs only from the default branch — so its first real run
-  is unattended. A sweep that quietly stopped running while both documents say a runner holds half
-  of three rules is worse than no sweep, so a red `sweep` opens an issue exactly as a red `check`
+  is unattended. A ledger that quietly stopped running while both documents say a runner holds half
+  of three rules is worse than no ledger, so a red `ledger` opens an issue exactly as a red `check`
   does. Its marker carries the workflow's own name, `watch:red:<name>`, rather than the single
   literal it used before: sharing one marker would let somebody closing a red `check` silently
-  dismiss a broken sweep, which is the failure being closed. Driven through a stub first — a red
-  `sweep` beside an open `check` issue opens its own rather than commenting on that one.
+  dismiss a broken ledger, which is the failure being closed. Driven through a stub first — a red
+  `ledger` beside an open `check` issue opens its own rather than commenting on that one.
 - Cost: about 30 runner-minutes a month. Public repositories draw on no allowance, so this is free
   today; it stops being free if this repository goes private again, where 1,909 of 2,000 free
   minutes were once measured used.

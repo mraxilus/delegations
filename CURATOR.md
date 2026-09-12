@@ -63,7 +63,7 @@ Every rule below serves it:
 | `.gitignore`, `.gitattributes` | Build products and checkouts out, LF endings | curator |
 | `.github/workflows/check.yml` | Every CI job, and the `audit` gate they report to | curator |
 | `.github/workflows/watch.yml` | Issue opened when a run goes red on `main` | curator |
-| `.github/workflows/sweep.yml` | Daily read of what GitHub records, into one issue | curator |
+| `.github/workflows/ledger.yml` | Daily read of what GitHub records, into one issue | curator |
 | `.github/pull_request_template.md` | Body every pull request follows | curator |
 | `.github/ISSUE_TEMPLATE/process-change.md` | Body every process request follows | curator |
 | `.github/ISSUE_TEMPLATE/review-finding.md` | Body every curator finding follows | curator |
@@ -113,7 +113,7 @@ from what was asked. `Closes #N` is not relied on. An issue you would decline st
 your reasoning on it: declining is the Architect's, not yours.
 
 **`main` is green.** Read the latest `push` run. `watch.yml` opens an issue labelled
-`curator` when `check` or `sweep` concludes failure on `main`, so a red `main` reaches the
+`curator` when `check` or `ledger` concludes failure on `main`, so a red `main` reaches the
 first read above; read the run anyway, since a run cancelled, still queued or never triggered
 concludes nothing. A red `main` is the first work of the delegate.
 
@@ -181,13 +181,13 @@ start, on each resolution, at handover.
    packages — `nim r koch system` prints; absent, each reports a finding rather than being
    skipped, since a check that quietly does nothing reports green for work it never did.
 
-9. **Two sweeps, not one.** The weekly run of `check.yml` compiles every project when any
+9. **The weekly run and the ledger.** The weekly run of `check.yml` compiles every project when any
    code merged inside `SWEEP_DAYS` (`plan.nim`), and its window is named twice, as that
-   constant and as the cron: change both together. `sweep.yml` is a different mechanism: a
+   constant and as the cron: change both together. `ledger.yml` is a different mechanism: a
    daily read of what GitHub records — a pull request ready without a green run, a
    `Closes #N` that never fired, an issue or pull request opening with no role line or
    carrying no label — into one issue labelled `curator`. `watch.yml` watches both `check`
-   and `sweep`, opening or extending one issue per workflow.
+   and `ledger`, opening or extending one issue per workflow.
 
 10. **Opening prompts.** `CURATOR.md` and `CONTRIBUTOR.md` are pasted into new delegates as
     their first message. Keep each self-contained and short: every paragraph is read on every

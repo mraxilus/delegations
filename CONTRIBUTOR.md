@@ -66,16 +66,16 @@ it has been broken, so you carry them as a list in the conversation, where the A
 see where you are. This is the only copy; `CURATOR.md` binds a curator to the same seven.
 
 1. **Role line on every issue, pull request and comment**, and the label **copied, never
-   composed** (Say which role you are). `sweep.yml` reads issue and pull-request bodies and
+   composed** (Say which role you are). `ledger.yml` reads issue and pull-request bodies and
    whether an issue carries any label; it reads no comment, and cannot tell a copied label
    from a composed one spelled right.
 2. **An issue you answered in a comment, closed by hand** (Every delegate begins here).
-   `sweep.yml` catches a `Closes #N` that never fired; an issue answered by a ruling has no
+   `ledger.yml` catches a `Closes #N` that never fired; an issue answered by a ruling has no
    pull request to find.
 3. **Requests answered on their issue** — disagreeing with reasons is complete, silence is
    not (Every delegate begins here).
 4. **Back to draft the moment you intend another commit** (Before opening a pull request).
-   `sweep.yml` catches a pull request left ready without a green run; it cannot see one green
+   `ledger.yml` catches a pull request left ready without a green run; it cannot see one green
    now and about to move.
 5. **Published page linked in both places**, pull request and message (Before opening a pull
    request, Output contract).

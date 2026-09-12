@@ -86,7 +86,7 @@ project; `curator/<name>` is rules and root work. Every pull request runs:
 A ninth job, `plan`, runs first and computes the matrices `project` and `driven` fan out over;
 it names projects rather than checking them. Weekly, the same workflow compiles every project
 whenever code merged that week. Two more workflows watch the rest: `watch.yml` opens an issue
-labelled `curator` when a run on `main` concludes failure, and `sweep.yml` reads daily what
+labelled `curator` when a run on `main` concludes failure, and `ledger.yml` reads daily what
 GitHub records of the rules no check reaches — a pull request ready without a green run, a
 `Closes #N` that never fired, an issue or pull request without its role line or label — into
 one issue.
