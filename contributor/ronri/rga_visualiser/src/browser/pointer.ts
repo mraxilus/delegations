@@ -603,7 +603,7 @@ menu_selection_apply.addEventListener('click', () => {
   }
   const n = handles_selection.length;
   if (n !== 1 && n !== 2) return; // Guard only -- apply is hidden for 0/3+ anyway.
-  if (nimSceneCount() >= nimSceneCapacity()) { toast('Scene is full.'); return; }
+  if (nimSceneCount() >= nimSceneCapacity()) { toast(nimFullMessage()); return; }
   const first = handles_selection[0];
   const second = n === 2 ? handles_selection[1] : first; // Unary ignores second operand.
   if (first === undefined || second === undefined) return;
@@ -628,7 +628,7 @@ menu_selection_hide.addEventListener('click', () => {
   //   whole selection, way row button reads `nimObjectVisible` for one object.
   const show = nimSelectionAllHidden();
   for (const handle of handles_selection) nimSetVisible(handle, show);
-  toast((show ? 'Showed ' : 'Hid ') + handles_selection.length + ' object(s).');
+  toast(nimVisibilityMessage(handles_selection.length, show));
   refreshSelectionMenu(null); // Relabels button for what it would now do.
   refreshObjectsUI(); // Selection itself is kept -- hiding doesn't invalidate handle.
 });
@@ -636,7 +636,7 @@ menu_selection_hide.addEventListener('click', () => {
 menu_selection_delete.addEventListener('click', () => {
   const n = handles_selection.length;
   for (const handle of handles_selection) nimRemoveObject(handle);
-  toast('Deleted ' + n + ' object(s).');
+  toast(nimDeletedMessage(n));
   clearSelection();
   refreshObjectsUI();
 });

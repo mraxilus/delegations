@@ -36,8 +36,8 @@ import pga
 import ../rga_visualiser/[
   lighting,
   boundary, camera, format, framing, help, history,
-  interaction, marker, orrery, picking, ramp, scene, selection, storyboard, tessellate,
-  timings,
+  interaction, marker, message, orrery, picking, ramp, scene, selection, storyboard,
+  tessellate, timings,
 ]
 
 
@@ -876,6 +876,72 @@ proc nimPoolCellColors(): seq[float32] {.exportc.} =
     FLAT_POOL[3*handle + 1] = colour.green
     FLAT_POOL[3*handle + 2] = colour.blue
   FLAT_POOL
+
+
+
+#[ Outcome Messages ]#
+
+# Every sentence page says about outcome window also reports, and how long either holds it.
+#   Page wrote its own copies and two drifted: one press of `delete` counted what it removed
+#   here and named whole selection instead there, for same removal.
+#   Sentence page alone can reach -- its download routes, its read errors -- stays in
+#   `state.ts` and is not here.
+
+proc nimMessageSeconds(): seq[float32] {.exportc.} =
+  ## Report `[seconds_standing, seconds_fading]` outcome is shown for.
+  ##   Toast then goes at same moment window's does, from one constant rather than from
+  ##   `3200` written here against nothing at all written there.
+  @[float32(SECONDS_MESSAGE), float32(SECONDS_MESSAGE_FADE)]
+
+
+proc nimDeletedMessage(count: cint): cstring {.exportc.} =
+  ## Report whole selection leaving scene.
+  cstring(deletedMessage(int(count)))
+
+
+proc nimVisibilityMessage(count: cint, is_shown: bool): cstring {.exportc.} =
+  ## Report whole selection being shown or hidden.
+  cstring(visibilityMessage(int(count), is_shown))
+
+
+proc nimAddedMessage(label: cstring): cstring {.exportc.} =
+  ## Report object joining scene under `label`.
+  cstring(addedMessage($label))
+
+
+proc nimSavedMessage(label: cstring): cstring {.exportc.} =
+  ## Report edit to object already in scene being committed.
+  cstring(savedMessage($label))
+
+
+proc nimRemovedMessage(label: cstring): cstring {.exportc.} =
+  ## Report one object leaving scene.
+  cstring(removedMessage($label))
+
+
+proc nimFullMessage(): cstring {.exportc.} =
+  ## Refuse action for want of free handle.
+  cstring(fullMessage())
+
+
+proc nimEmptyMessage(): cstring {.exportc.} =
+  ## Refuse apply for want of operand.
+  cstring(emptyMessage())
+
+
+proc nimCancelledMessage(): cstring {.exportc.} =
+  ## Report gesture reader called off before it landed.
+  cstring(cancelledMessage())
+
+
+proc nimStepMessage(is_undo: bool): cstring {.exportc.} =
+  ## Refuse step past end of timeline.
+  cstring(stepMessage(is_undo))
+
+
+proc nimOrreryMessage(count, capacity: cint): cstring {.exportc.} =
+  ## Report demo scene replacing whatever stood before it.
+  cstring(orreryMessage(int(count), int(capacity)))
 
 
 
