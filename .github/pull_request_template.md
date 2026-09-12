@@ -12,6 +12,9 @@
 ## Verification
 
 <!-- What ran, on which build: `nim r koch ci` result, sample counts, figures with their pair.
+     End by showing it: a screenshot where visual, a worked example where not, or one line saying
+     why neither fits. A screenshot goes in the message to the Architect, not here -- GitHub takes
+     no image from an API.
      Link every page this change republished; a page is opened, not described. -->
 
 ## Record
