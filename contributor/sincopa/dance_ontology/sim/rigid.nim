@@ -163,9 +163,6 @@ const
   ARM_BIT: array[Body, uint64] = [2'u64, 4'u64] ## Lead's arms, follow's arms.
   EVERY = high(uint64)     ## Meets everything.
 
-func other(who: Body): Body =
-  if who == Body.One: Body.Two else: Body.One
-
 proc capsule(c: var Couple; b: eng.BodyId; who: Body; arm: Arm; mark: Mark;
              a, z: eng.Vec; r, density: float; group: cint) =
   ## Hang one capsule on body, with its own group so arm's own links pass.
@@ -177,18 +174,12 @@ proc capsule(c: var Couple; b: eng.BodyId; who: Body; arm: Arm; mark: Mark;
   sd.density = density.cfloat
   sd.filter.groupIndex = group
   sd.filter.categoryBits = (if mark == Mark.Trunk: TRUNK_BIT else: ARM_BIT[who])
-  # Architect: lead always gets his own arm out of way, so follow's elbow never
-  # has to push it.  Model has no way for lead to move deliberately, so choice is
-  # between arms blocking each other -- which lead would not allow -- and arms
-  # passing.  Passing is nearer what couple achieve, and is written as what it is:
-  # simplification standing in for lead who moves.
-  #   Trunks still stop arms either way, so `Through` is untouched.  Only arm
-  #     against *other* dancer's arm goes; dancer's own two arms still meet.
-  #   Measured: cross-name chain over crown goes from 1.22 of turn to free past
-  #     one and half, which is swan, and same-name from 0.70 to 0.86.  `L-r` high
-  #     loses four hundredths, which is only figure that falls.
-  sd.filter.maskBits = (if mark == Mark.Trunk: EVERY
-                        else: EVERY and not ARM_BIT[other(who)])
+  # Everything meets everything, arms of two dancers included.  Letting lead's
+  # arms pass through follow's was tried, on Architect's point that lead gets his
+  # own arm out of way, and it reached swan -- by letting arms occupy same place,
+  # which no couple does.  Architect: it made sim worse.  Reverted.  Point stands
+  # and wants real answer: lead who *moves* his arm, not one whose arm is absent.
+  sd.filter.maskBits = EVERY
   discard eng.createCapsule(b, addr sd, addr cap)
   c.shapes.add Shape(body: b, who: who, arm: arm, mark: mark, a: a, z: z, r: r)
 
