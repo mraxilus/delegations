@@ -1,13 +1,13 @@
 # Provenance
 
-| Field  | Value |
-|--------|-------|
-| Agent  | Claude Code |
-| Author | Claude |
-| Date   | 2026-09-06 |
-| Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 701a3742f7830358 |
-| Review | **Unreviewed.** Nothing here has been read line by line by a human. |
+| Field   | Value |
+|---------|-------|
+| Harness | Claude Code |
+| Author  | Claude |
+| Date    | 2026-09-06 |
+| Style   | CONSTITUTION.md and STYLE.md, followed. |
+| Rules   | 701a3742f7830358 |
+| Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief, the constitution, the Nim style guide and the provenance
 guide, all supplied by the owner; reshaped on the owner's direction into two project roots

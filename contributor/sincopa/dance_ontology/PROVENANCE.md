@@ -1,13 +1,13 @@
 # Provenance
 
-| Field  | Value |
-|--------|-------|
-| Agent  | Claude Code |
-| Author | Claude |
-| Date   | 2026-09-06 |
-| Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 701a3742f7830358 |
-| Review | **Unreviewed.** Nothing here has been read line by line by a human. |
+| Field   | Value |
+|---------|-------|
+| Harness | Claude Code |
+| Author  | Claude |
+| Date    | 2026-09-06 |
+| Style   | CONSTITUTION.md and STYLE.md, followed. |
+| Rules   | 701a3742f7830358 |
+| Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the Architect's workbook `ontology.partnerwork.xlsx` (sheets `base` and
 `vocabulary`, held as data in `src/dance_ontology/workbook.nim`), the Architect's forty

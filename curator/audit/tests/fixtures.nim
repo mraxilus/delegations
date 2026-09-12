@@ -16,7 +16,7 @@ func entry*(path, content: string): Entry =
 
 func provenanceText*(stamp: string): string =
   ## Render minimal PROVENANCE.md header carrying stamp.
-  "# Provenance\n\n| Field | Value |\n|---|---|\n| Agent | Test |\n| Author | Test |\n" &
+  "# Provenance\n\n| Field | Value |\n|---|---|\n| Harness | Test |\n| Author | Test |\n" &
     "| Date | 2026-01-01 |\n| Style | CONSTITUTION.md and STYLE.md, followed. |\n" &
     "| Rules | " & stamp & " |\n| Review | **Unreviewed.** |\n"
 

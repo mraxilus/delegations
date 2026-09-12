@@ -3,14 +3,14 @@ Provenance
 
 _Who made this, from what, and how far it has been checked._
 
-| Field  | Value |
-|--------|-------|
-| Agent  | Claude Code |
-| Author | Claude Opus 5 and Claude Sonnet 5 |
-| Date   | 2026-09-06 |
-| Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 701a3742f7830358 |
-| Review | **Unreviewed.** Nothing here has been read line by line by a human. |
+| Field   | Value |
+|---------|-------|
+| Harness | Claude Code |
+| Author  | Claude Opus 5 and Claude Sonnet 5 |
+| Date    | 2026-09-06 |
+| Style   | CONSTITUTION.md and STYLE.md, followed. |
+| Rules   | 701a3742f7830358 |
+| Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the
 `pga` library: geometry and a scene model shared by two front-ends, plus the encoders a

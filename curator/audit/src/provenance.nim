@@ -1,5 +1,5 @@
 ## Enforce provenance header and rules stamp (Article VIII.6, provenance guide).
-##   Header is first pipe table in file, `| Field | Value |`, with rows Agent, Author, Date,
+##   Header is first pipe table in file, `| Field | Value |`, with rows Harness, Author, Date,
 ##   Style, Rules, Review. Rules value is stamp of governing documents, so stale audit fails
 ##   and rules change cannot merge half-propagated.
 ##
@@ -31,7 +31,7 @@ import ./[findings, markdown]
 const
   RULES* = ["CONSTITUTION.md", "STYLE.md", "CONTRIBUTOR.md"]
     ## Documents stamp covers, in digest order; CURATOR.md is excluded as curator-only.
-  FIELDS* = ["Agent", "Author", "Date", "Style", "Rules", "Review"]
+  FIELDS* = ["Harness", "Author", "Date", "Style", "Rules", "Review"]
     ## Header rows every PROVENANCE.md carries.
   CITATION* = "verified by `"
     ## Opening of claim naming test that repeats it; matched without case.

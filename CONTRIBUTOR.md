@@ -204,14 +204,14 @@ silently passes by.
 Header table for `PROVENANCE.md`:
 
 ```md
-| Field  | Value |
-|--------|-------|
-| Agent  | <tool you run in, e.g. Claude Code> |
-| Author | <model> |
-| Date   | <YYYY-MM-DD> |
-| Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | <last line of `nim r koch stamp`> |
-| Review | **Unreviewed.** Nothing here has been read line by line by a human. |
+| Field   | Value |
+|---------|-------|
+| Harness | <tool you run in, e.g. Claude Code> |
+| Author  | <model> |
+| Date    | <YYYY-MM-DD> |
+| Style   | CONSTITUTION.md and STYLE.md, followed. |
+| Rules   | <last line of `nim r koch stamp`> |
+| Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 ```
 
 ## Toolchain
