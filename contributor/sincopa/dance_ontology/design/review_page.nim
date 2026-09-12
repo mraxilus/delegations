@@ -180,6 +180,13 @@ func sheetOf(P: Parts): string =
       # been asked about carries no tag at all.
       put = if asks.len > 0: asks else: @[id]
       known = put.filterIt(it in modelled)
+      # Cell's own colour says how much of it sim reaches: green only where it
+      # is both kept and wholly reached, amber where part of it is, red where
+      # none is.  Badges keep saying which of two tags each is.
+      stand = if known.len == 0: ""
+              elif known.allIt(modelled[it]): " met"
+              elif known.anyIt(modelled[it]): " part"
+              else: " unmet"
       says = if switching or known.len == 0: ""
              elif known.allIt(modelled[it]):
                """<em class="tag model">modelled</em>"""
@@ -193,7 +200,7 @@ func sheetOf(P: Parts): string =
       doAssert $hash(drawings.join("")) == pinned.getOrDefault(id),
         &"A card already ruled on has been re-drawn: `{id}`.  Either the " &
           "mend is too wide, or that verdict has to go back."
-    &"""<figure class="pic{mark}"><div class="art""" &
+    &"""<figure class="pic{mark}{stand}"><div class="art""" &
     (if switching: " steps" else: "") & &"""">{art}{badge}{says}</div>""" &
     &"""<figcaption><code>{esc(id)}</code><b>{esc(label)}</b>""" &
     (if note.len > 0: &"""<span>{esc(note)}</span>""" else: "") &
