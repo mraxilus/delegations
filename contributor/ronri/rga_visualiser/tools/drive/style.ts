@@ -39,7 +39,12 @@ export async function driveStyleDeclared(page: Page): Promise<void> {
     const sheet = document.querySelector('style');
     const source = (sheet?.textContent ?? '').replace(/\/\*[\s\S]*?\*\//g, '');
     const unknown: string[] = [];
+    const prose: string[] = [];
     let declared = 0;
+    // Rules author opened at top level, counted while walking. Browser's own `cssRules`
+    //   holds one entry per top-level rule, so two numbers have to agree -- and where they
+    //   do not, parser swallowed rules rather than dropped one declaration.
+    let opened = 0;
     // Walk text rather than split it: `url(data:font/woff2;base64,...)` carries semicolons of
     //   its own, so only semicolon outside every bracket ends declaration.
     let prelude = '';
@@ -53,11 +58,14 @@ export async function driveStyleDeclared(page: Page): Promise<void> {
       if (at < 0 || depth === 0) return;
       if (blocks[blocks.length - 1]?.startsWith('@font-face') ?? false) return;
       const name = text.slice(0, at).trim();
-      // Property's name is identifier and nothing else. Guard is against prose, not against
-      //   typos: comment carrying `*/` of its own ends early, and tail of it then reads as
-      //   declaration with colon in it.
-      if (!/^-?[a-zA-Z][-a-zA-Z0-9]*$/.test(name)) return;
       if (name.startsWith('--')) return;
+      // Property's name is identifier and nothing else, so anything else here is **prose
+      //   being read as CSS** -- which happens exactly one way: comment carrying `*/` of
+      //   its own ends where author did not mean it to, and its remaining sentences fall
+      //   into declaration stream. First form of this check *skipped* such text as noise.
+      //   It was not noise. It was tail of ligature comment, and brace inside that tail had
+      //   swallowed 141 of page's 150 rules into block above it.
+      if (!/^-?[a-zA-Z][-a-zA-Z0-9]*$/.test(name)) { prose.push(text.slice(0, 80)); return; }
       const written = text.slice(at + 1).trim().replace(/\s*!important$/, '');
       const value = written.includes('var(') ? 'inherit' : written;
       declared += 1;
@@ -75,6 +83,7 @@ export async function driveStyleDeclared(page: Page): Promise<void> {
       else if (letter === ')') brackets -= 1;
       if (brackets > 0) { piece += letter; continue; }
       if (letter === '{') {
+        if (depth === 0) opened += 1;
         blocks.push(prelude.trim());
         prelude = '';
         piece = '';
@@ -86,9 +95,17 @@ export async function driveStyleDeclared(page: Page): Promise<void> {
       piece += letter;
       if (depth === 0) prelude += letter;
     }
+    const parsed_sheet = document.styleSheets[0];
+    let parsed = -1;
+    try {
+      parsed = parsed_sheet === undefined ? -1 : parsed_sheet.cssRules.length;
+    } catch { parsed = -1; }
     return {
       declared,
       unknown,
+      prose,
+      opened,
+      parsed,
       is_read: declared > least,
       // Predicate answering `true` to everything passes report above on any page at all, so
       //   check asks browser outright whether it can still tell two spellings apart.
@@ -107,5 +124,25 @@ export async function driveStyleDeclared(page: Page): Promise<void> {
     'and it can tell them apart, since the spelling a rename produced is refused',
     found.is_telling,
     'align-items is accepted where align-objects is refused',
+  );
+  // Sweep above reads names it recognises. This reads what it could not: sentence sitting
+  //   where declaration should be is comment that ended early, and brace in such sentence
+  //   takes rest of stylesheet into block above it -- 150 rules became 9, page went on
+  //   drawing because browser reads what was swallowed as *nested* CSS, and only
+  //   `html, body`'s own declarations below break were lost. `color` was one, so every
+  //   element inheriting it drew black, menu's own glyph included.
+  report(
+    'and nothing in the stylesheet is prose the browser is reading as CSS',
+    found.prose.length === 0,
+    found.prose.length === 0 ? 'every declaration parsed as one'
+      : `${found.prose.length} found, first: ${found.prose[0]}`,
+  );
+  // Brace count agrees only where every rule closed itself. Comment ending early is not
+  //   caught here -- stripping comments repeats parser's own reading of them, error and
+  //   all -- but rule left unclosed by hand is.
+  report(
+    'and every rule the page opens is one the browser parsed, none swallowed by its neighbour',
+    found.parsed === found.opened,
+    `${found.opened} rules opened, ${found.parsed} parsed`,
   );
 }
