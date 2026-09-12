@@ -1,0 +1,152 @@
+# Sweep for rules GitHub already records, so remembering them is not their only enforcement.
+#   CURATOR.md keeps list of rules holding by reading alone, and sets own test for what belongs
+#   on it: whether what rule asks about is fact something already writes down. Three sat there
+#   while GitHub recorded them, behind premise that no check reads what was posted there --
+#   premise `watch.yml` had already made false.
+#   Two leave that list when this lands. Third does not, and saying which is half of point:
+#   issue answered by ruling in comment and then left open has no closing pull request to find,
+#   which is exactly how 116 failed. This catches `Closes #N` half only, so rule stays carried.
+#
+#   Daily rather than weekly, unlike `check.yml`: pull request ready and red for week is failure
+#   this exists to catch, and week is too long to hold it.
+#   One issue, not one per finding, and marker in body is what makes second sweep comment on
+#   first issue -- `watch.yml`'s reason, which is about reader: issue per finding trains its
+#   reader to skim, and skimming is failure both workflows exist to prevent.
+#   Bodies only, never comments. Rule covers comments too, but role line in comment is written
+#   loose where issue bodies write it bold, so check over comments would spend first run naming
+#   whoever wrote rule. Comment half stays carried with third rule.
+#
+#   `permissions` block is whole grant, never addition: scope left out is set to `none`. Sweep
+#   reads runs, reads pull requests, writes issues, and names those three and nothing else.
+#   `pull-requests` is why `workflows.nim` gained mark for `gh pr` in same change -- no workflow
+#   had read pull requests before, so check meant to stop this 403 could not see it.
+#   Cost: `issues: write`, as `watch.yml` holds. Both run on events no pull request can reach,
+#     and that is what keeps grant narrow rather than only one file having held it.
+#   Cost: runner minutes, about minute per run, daily. Public repository draws on no allowance;
+#     private one would, and 1909 of 2000 free minutes were measured while this was private.
+#   `concurrency` because dispatch can meet schedule. `watch.yml` carries same race unremarked,
+#     between listing issues and creating one, where both runs can open second issue.
+
+name: sweep
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  issues: write
+  pull-requests: read
+
+concurrency:
+  group: sweep
+  cancel-in-progress: false
+
+jobs:
+  unchecked:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read what GitHub records, then open or add to one issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          MARKER: '<!-- sweep:unchecked -->'
+          SINCE_DAYS: '14'
+        run: |
+          set -euo pipefail
+          found=''
+
+          # Ready and not green. Run still queued or running is not failure yet, and skipping
+          #   those is what stops sweep naming every pull request just marked ready.
+          open_prs="$(gh pr list --repo "$REPO" --state open --limit 100 \
+            --json number,isDraft,headRefOid,title \
+            --jq '.[] | select(.isDraft | not)
+                  | "\(.number)\t\(.headRefOid)\t\(.title)"')"
+          while IFS=$'\t' read -r number sha title; do
+            [ -n "$number" ] || continue
+            runs="$(gh api "repos/$REPO/actions/runs?head_sha=$sha&per_page=100" \
+              --jq '.workflow_runs[] | select(.name == "check")
+                    | .status + ":" + (.conclusion // "none")')"
+            case "$runs" in
+              *completed:success*) continue ;;
+              *queued:*|*in_progress:*) continue ;;
+            esac
+            found="$found- Pull request #$number is ready with no green run, at "
+            found="$found\`${sha:0:7}\` -- $title"$'\n'
+          done <<< "$open_prs"
+
+          # `Closes #N` that never fired. Merge into branch other than default closes nothing,
+          #   and this repository stacks pull requests, so that is likeliest cause here.
+          since="$(date -u -d "$SINCE_DAYS days ago" +%Y-%m-%dT%H:%M:%SZ)"
+          still_open="$(gh issue list --repo "$REPO" --state open --limit 100 \
+            --json number --jq '[.[].number] | map(tostring) | join(" ")')"
+          linked="$(gh pr list --repo "$REPO" --state merged --limit 60 \
+            --json number,mergedAt,baseRefName,closingIssuesReferences \
+            --jq '.[] as $pr | $pr.closingIssuesReferences[]?
+                  | "\($pr.mergedAt)\t\($pr.number)\t\(.number)\t\($pr.baseRefName)"')"
+          while IFS=$'\t' read -r merged_at pr issue base; do
+            [ -n "$issue" ] || continue
+            [ "$merged_at" \> "$since" ] || continue
+            case " $still_open " in
+              *" $issue "*) ;;
+              *) continue ;;
+            esac
+            found="$found- Issue #$issue is open though pull request #$pr merged naming it"
+            found="$found -- base was \`$base\`"$'\n'
+          done <<< "$linked"
+
+          # Role line and label, on bodies. Issue with no label at all is failure that has
+          #   happened; mistyped one is left to reader, since composing role string is what
+          #   makes second label nobody filters on.
+          bare="$(gh issue list --repo "$REPO" --state open --limit 100 \
+            --json number,body,labels \
+            --jq '.[] | select((.body // "") | test("^\\s*\\*{0,2}role:"; "i") | not)
+                  | "- Issue #\(.number) opens with no role line"')"
+          [ -z "$bare" ] || found="$found$bare"$'\n'
+          unlabelled="$(gh issue list --repo "$REPO" --state open --limit 100 \
+            --json number,labels \
+            --jq '.[] | select(.labels | length == 0)
+                  | "- Issue #\(.number) carries no label, so no role filter finds it"')"
+          [ -z "$unlabelled" ] || found="$found$unlabelled"$'\n'
+          bare_prs="$(gh pr list --repo "$REPO" --state open --limit 100 \
+            --json number,body \
+            --jq '.[] | select((.body // "") | test("^\\s*\\*{0,2}role:"; "i") | not)
+                  | "- Pull request #\(.number) opens with no role line"')"
+          [ -z "$bare_prs" ] || found="$found$bare_prs"$'\n'
+
+          if [ -z "$found" ]; then
+            echo "Nothing to report."
+            exit 0
+          fi
+          echo "$found"
+
+          # Paragraphs appended rather than written whole: heredoc wants its terminator at
+          #   column zero, which no line inside block scalar may reach. `watch.yml` measured
+          #   that rather than assumed it.
+          said="Opened by \`sweep\` workflow rather than by session, so nothing here has been"
+          said="$said read or judged yet. Each line is fact GitHub records, not opinion."
+          note="Two of these rules left CURATOR.md's unchecked list when this workflow landed."
+          note="$note Third stayed: issue answered in comment has no closing pull request to"
+          note="$note find, so that half is still carried by hand."
+          next="Close this once every line is answered. Later sweep comments here rather than"
+          next="$next opening second issue."
+          # Trailing newline trimmed off list, so paragraph after it is one blank line away
+          #   rather than two.
+          found="${found%$'\n'}"
+          body="$(printf '%s\n\n**Role:** curator\n\n%s\n\n%s\n%s\n\n%s\n\n%s\n' \
+            "$MARKER" "$said" "Found:" "$found" "$note" "$next")"
+
+          # Read open issues rather than search: search indexing lags, and duplicate opened
+          #   because index was cold is noise this avoids.
+          existing="$(gh issue list --repo "$REPO" --label curator --state open \
+            --limit 100 --json number,body \
+            --jq "[.[] | select(.body | contains(\"$MARKER\")) | .number] | first // empty")"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --repo "$REPO" --body "$body"
+            echo "Commented on issue #$existing."
+          else
+            opened="$(gh issue create --repo "$REPO" --label curator \
+              --title 'Unchecked rules: what this sweep found' --body "$body")"
+            echo "Opened $opened."
+          fi

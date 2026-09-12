@@ -79,15 +79,24 @@ Seven rules in this document hold by reading and nothing else. Each is invisible
 has been broken, which is how `Closes #N` left issues 25 and 26 answered and open until somebody
 noticed, and how a pull request shipped without anybody having seen the thing it changed.
 
+**Three of them shrank when the `sweep` workflow landed, and none of the three left.** A sweep
+reads what GitHub records; every one of these rules has a half it does not record. What is written
+below is the half you still carry — read the section for the whole rule.
+
 **So you carry them as a list, in the conversation, and the Architect can see where you are.**
 
-1. **Role line** on every issue, pull request and comment, and the label **copied, never
-   composed** (Saying which role you are).
-2. **Answered issues closed by hand**, `Closes #N` not relied on (Every session begins here).
+1. **Role line on every comment**, and the label **copied, never composed** (Saying which role
+   you are). `sweep` reads issue and pull-request bodies, and whether an issue carries any label
+   at all — it never reads comments, and no check can tell a copied label from a composed one that
+   happens to be spelled right.
+2. **An issue you answered in a comment, closed by hand** (Every session begins here). `sweep`
+   catches a `Closes #N` that never fired — usually a merge into a base other than `main`. An
+   issue answered by a ruling has no pull request to find at all, which is how 116 sat open.
 3. **Requests answered on their issue** — disagreeing with your reasons is complete, silence is
    not (Every session begins here).
-4. **Pull request opened as draft**, ready only once the runner is green, and back to draft the
-   moment you intend another commit (Before opening a pull request).
+4. **Back to draft the moment you intend another commit** (Before opening a pull request).
+   `sweep` catches a pull request left ready without a green run; it cannot see one that is green
+   now and about to move, which is the half that keeps a reviewer off a moving target.
 5. **Published page linked in both places**, pull request and message (Before opening a pull
    request, Output contract).
 6. **Change ends by showing itself** — picture, worked example, or why neither fits (Before
@@ -113,8 +122,9 @@ thing before the work leaves you.
   failure this one exists to prevent.
 
 Nothing checks this either, and saying so is the point: it is shown to a reader who is present,
-and that reader is the enforcement. Two of these seven are facts GitHub already records, and
-moving them to a check would be better than tracking them by hand — see the issue that proposes it.
+and that reader is the enforcement. The `sweep` workflow now records what GitHub can of three of
+these, and each of those three says above which half it no longer asks you to remember.
+
 ## Boundaries
 
 - **Scope.** Only paths under `contributor/<domain>/<project>/`. The CI job `scope` fails on
