@@ -33,6 +33,7 @@ type
     at*: float  ## Turns reached when something gave.
     why*: Stop
     which*: int ## Which connection gave.
+    whose*: Hand ## And whose hand, on which arm, it gave at.
     moments*: seq[Moment]
 
   Swept* = object ## Both ways from one rest.
@@ -41,7 +42,8 @@ type
     neg*, pos*: Walk
 
 
-proc momentOf(c: Couple; at: float): tuple[m: Moment, why: Stop, which: int] =
+proc momentOf(c: Couple; at: float): tuple[m: Moment, why: Stop, which: int,
+                                           whose: Hand] =
   ## Read every connection at this moment, and say what gave, if anything.
   result.m = Moment(at: at, stance: c.stance, room: Inf)
   result.why = Stop.None
@@ -51,15 +53,16 @@ proc momentOf(c: Couple; at: float): tuple[m: Moment, why: Stop, which: int] =
     result.m.arms.add p.arms
     result.m.room = min(result.m.room, roomAt(c, p, i))
     if result.why == Stop.None:
-      let gave = c.stopOf(i)
+      let (gave, k) = c.stoppedBy(i)
       if gave != Stop.None:
         result.why = gave
         result.which = i
+        result.whose = c.links[i].ends[k]
 
 proc walked(rig: Rig; band: Band; links: seq[Link]; who: Body;
-            apart, most, step: float): Walk =
+            apart, most, step: float; away: bool): Walk =
   ## Turn one way from rest until something gives, or until `most` is reached.
-  var c = build(rig, facing(rig, apart), band, links)
+  var c = build(rig, restStance(rig, apart, away), band, links, who)
   c.settle()
   var at = 0.0
   let first = momentOf(c, at)
@@ -73,15 +76,16 @@ proc walked(rig: Rig; band: Band; links: seq[Link]; who: Body;
       result.at = abs(at)
       result.why = now.why
       result.which = now.which
+      result.whose = now.whose
       break
     result.moments.add now.m
   c.free()
 
 proc swept*(rig: Rig; band: Band; links: seq[Link]; who = Body.Two;
-            most = MOST; step = STEP; apart = 0.0): Swept =
+            most = MOST; step = STEP; apart = 0.0; away = false): Swept =
   ## Sweep both ways from rest, at distance hold settles to unless told one.
-  result.apart = if apart > 0.0: apart else: restApart(rig, band, links)
-  var c = build(rig, facing(rig, result.apart), band, links)
+  result.apart = if apart > 0.0: apart else: restApart(rig, band, links, away)
+  var c = build(rig, restStance(rig, result.apart, away), band, links, who)
   c.settle()
   result.restHolds = true
   for i in 0 ..< links.len:
@@ -90,5 +94,5 @@ proc swept*(rig: Rig; band: Band; links: seq[Link]; who = Body.Two;
   c.free()
   if not result.restHolds:
     return
-  result.pos = walked(rig, band, links, who, result.apart, most, step)
-  result.neg = walked(rig, band, links, who, result.apart, most, -step)
+  result.pos = walked(rig, band, links, who, result.apart, most, step, away)
+  result.neg = walked(rig, band, links, who, result.apart, most, -step, away)

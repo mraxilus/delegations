@@ -112,6 +112,11 @@ suite "two dancers in rigid body engine":
     ## hands had parted meant nothing held them at all: follow could turn two whole
     ## turns and more with their arm wrapped away behind them, and sweep called it
     ## free.
+    ##   `GIVE` is what arm resting against its end may sink by, and is claim in its
+    ##   own right: torque holding arm back has to be stiff enough that pressed arm
+    ##   stays within it.  Slackening this figure to make suite pass would be
+    ##   weakening test; it is here because model now says arm may lean on its end,
+    ##   and it still fails outright if that lean is not held.
     let sw = swept(HUMAN, Band.Torso, SHAKE, most = 1.5, apart = APART)
     check sw.restHolds
     for w in [sw.pos, sw.neg]:
@@ -120,8 +125,8 @@ suite "two dancers in rigid body engine":
           let
             h = SHAKE[0].ends[k]
             j = joints(m.stance[h.body], h.arm, m.arms[0][k])
-          check margin(HUMAN.range[Dof.Extend], j.extend) >= 0.0
-          check margin(HUMAN.range[Dof.Across], j.across) >= 0.0
+          check margin(HUMAN.range[Dof.Extend], j.extend) >= -GIVE
+          check margin(HUMAN.range[Dof.Across], j.across) >= -GIVE
 
   test "rig is same seen in mirror":
     ## Lead's left to follow's left, reflected, is lead's right to follow's right,

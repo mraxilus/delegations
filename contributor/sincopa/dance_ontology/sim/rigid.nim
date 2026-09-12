@@ -44,6 +44,13 @@ const
   DAMP = 4.0          ## Linear and angular damping: arms settle, never ring.
   PARTED* = 0.02      ## Hands this far apart, in metres, are no longer joined.
   AT_END* = 0.02      ## Joint within this of its end, in radians, is at its end.
+  GIVE* = 0.1         ## How far past its end joint may sit and still hold, in that
+                      ## end's ease.  Same reading, and same reason, old solver's
+                      ## `TOLERANCE` had: under three degrees at joint is less than
+                      ## flesh gives.  Without it arm cannot rest against its limit
+                      ## and slide along it, which is what arm does: hold reads
+                      ## blocked at very moment limit is first touched, and torque
+                      ## that should push arm back never gets one step to act in.
   SETTLE* = 3000      ## Steps given to first pose before anything is read off it.
                       ## Measured: twist still moving at 1000, settled by 3000.
   CLEAR* = 0.10       ## Least clear air between two torsos, metres.
@@ -70,6 +77,7 @@ type
     stance*: array[Body, Stance]
     band*: Band
     links*: seq[Link]
+    turning*: Body ## Whose head hands are carried over, at crown.
     who: array[Body, Figure]
     grip: seq[eng.JointId]
 
@@ -271,7 +279,7 @@ proc armOf(c: var Couple; who: Body; arm: Arm; group: cint): ArmRig =
   result.wrist = eng.createBall(c.world, addr cuff)
 
 proc build*(rig: Rig; stance: array[Body, Stance]; band: Band;
-            links: seq[Link]): Couple =
+            links: seq[Link]; turning = Body.Two): Couple =
   ## Stand two dancers, hang four arms, and join hands each link names.
   ##   No gravity.  Question reference asks is where arms can be, not what they
   ##     weigh, and weightless arms stay where turn leaves them, so pose at one
@@ -285,6 +293,7 @@ proc build*(rig: Rig; stance: array[Body, Stance]; band: Band;
   result.stance = stance
   result.band = band
   result.links = links
+  result.turning = turning
   for b in Body:
     let t = trunkOf(result, b)
     result.who[b].trunk = t
@@ -311,27 +320,92 @@ proc free*(c: Couple) = eng.destroyWorld(c.world)
 const
   LIFT = 400.0 ## Newtons per metre couple carry joined hands toward their band by.
   FALL = 40.0  ## And damping on it, so hands arrive rather than swing.
+  DRAW = [40.0, 40.0, 10.0] ## Per band, newtons per metre hands are drawn toward
+    ## where couple mean to carry them.  Weighted as old solver's `CENTRING` was,
+    ## two to two to one half, and weak on purpose: this is preference couple have,
+    ## not constraint.  Strong, it drags hands to one spot and arms trail into
+    ## swings no shoulder makes, and hold reads blocked when only hands were held
+    ## wrongly.  Measured at two hundred newtons per metre: crown blocked at 0.34
+    ## of turn where floor says it never blocks.
+  SHOULDER_BACK = 200.0 ## Newton metres per radian arm is past its swing.
+    ## Stiff, so arm pressed against its end stays within `GIVE` of it rather than
+    ## sinking through.  Upper arm's inertia is about 0.074, so this rings at some
+    ## eight hertz, well inside step of two hundred and forty.
+    ## Swing is only range engine was never given.  Judging it after each step and
+    ## never resisting it let engine walk arm into places no shoulder goes and made
+    ## hold read blocked where dancer would simply have put arm elsewhere.  Torque
+    ## is what other three joints already get from engine; this gives swing same.
 
 proc carry(c: Couple) =
   ## Couple's own intent: hold each pair of joined hands at middle of their band.
   ##   Lift is spread over whole arm, never put on hand alone.  Hand alone levers
   ##     wrist, which then sits at its cone while shoulder and elbow do nothing --
   ##     dancer raising joined hands raises arm.
-  let want = (c.rig.band[c.band].lo + c.rig.band[c.band].hi) / 2.0
+  ##   Hands are drawn toward point between two bodies as well as to their band.
+  ##     Without it grip floats off sideways and arms trail away behind, which
+  ##     reads as shoulder giving out when it is only hands left unheld.
+  let
+    want = (c.rig.band[c.band].lo + c.rig.band[c.band].hi) / 2.0
+    one = axesOf(c.stance[Body.One]).origin
+    two = axesOf(c.stance[Body.Two]).origin
+    mid = (if c.band == Band.Crown: axesOf(c.stance[c.turning]).origin
+           else: (one + two) * 0.5)
+      ## Over crown, hands go over head of dancer who turns, not between two:
+      ## couple setting hold up put them there, and pulling them to midpoint
+      ## instead makes both reach across their own body and spends adduction
+      ## they need for turn.
   for ln in c.links:
     for k in 0 .. 1:
       let
         a = c.who[ln.ends[k].body].arm[ln.ends[k].arm]
         tip = asWorld(eng.pointOf(a.link[Limb.Palm], eng.vec(0, 0, c.rig.hand.cfloat)))
-        rise = asWorld(eng.driftOf(a.link[Limb.Palm])).z
-        f = (LIFT * (want - tip.z) - FALL * rise) / Limb.high.float
+        drift = asWorld(eng.driftOf(a.link[Limb.Palm]))
+        lift = (LIFT * (want - tip.z) - FALL * drift.z) / 3.0
+        pull = DRAW[ord(c.band)] / 3.0
+        toward: Vec = ((mid.x - tip.x) * pull - drift.x * FALL / 3.0,
+                       (mid.y - tip.y) * pull - drift.y * FALL / 3.0, lift)
       for l in Limb:
-        eng.push(a.link[l], asEngine((0.0, 0.0, f)), true)
+        eng.push(a.link[l], asEngine(toward), true)
+
+proc holdSwing(c: Couple) =
+  ## Resist upper arm that has gone past extension or adduction.
+  ##   Torque turns arm back toward range it left, about axis that carries its
+  ##     own direction toward one it should not have passed.  Body's own terms
+  ##     throughout, then back to world, then to engine.
+  for who in Body:
+    let ax = axesOf(c.stance[who])
+    for arm in Arm:
+      let
+        a = c.who[who].arm[arm]
+        s = asWorld(eng.pointOf(a.link[Limb.Upper], eng.vec(0, 0, 0)))
+        e = asWorld(eng.pointOf(a.link[Limb.Upper], eng.vec(0, 0, c.rig.upper.cfloat)))
+        u = ownTerms(ax, arm, e) - ownTerms(ax, arm, s)
+        dir = unit(u)
+      var back: Vec = (0.0, 0.0, 0.0)
+      let
+        extend = arcsin(clamp(-dir.y, -1.0, 1.0))
+        across = arcsin(clamp(-dir.x, -1.0, 1.0))
+        outExtend = extend - c.rig.range[Dof.Extend].hi
+        outAcross = across - c.rig.range[Dof.Across].hi
+      if outExtend > 0.0:
+        back = back + cross(dir, (0.0, 1.0, 0.0)) * (SHOULDER_BACK * outExtend)
+      if outAcross > 0.0:
+        back = back + cross(dir, (1.0, 0.0, 0.0)) * (SHOULDER_BACK * outAcross)
+      if back.x != 0.0 or back.y != 0.0 or back.z != 0.0:
+        # Torque is pseudovector.  Mirrored frame is left handed, so cross product
+        # worked out in it comes back negated: un-mirroring it as plain vector
+        # gives exactly minus what is wanted, and turns correction into shove.
+        let own: Vec = (if arm == Arm.Left: (x: back.x, y: -back.y, z: -back.z)
+                        else: back)
+        eng.twistBy(a.link[Limb.Upper],
+                    asEngine(ax.right * own.x + ax.fore * own.y + (0.0, 0.0, own.z)),
+                    true)
 
 proc advance*(c: Couple; steps: int) =
   ## Run engine on, carrying hands toward their band all through.
   for _ in 1 .. steps:
     carry(c)
+    holdSwing(c)
     eng.step(c.world, (1.0 / HERTZ).cfloat, SUBSTEPS)
 
 proc settle*(c: Couple) = advance(c, SETTLE)
@@ -339,11 +413,17 @@ proc settle*(c: Couple) = advance(c, SETTLE)
 
 proc turn*(c: var Couple; who: Body; by: float; steps: int) =
   ## Turn one dancer on their own spot, anticlockwise seen from above.
+  ##   Stance is carried along step by step rather than set at end: swing is read
+  ##     in dancer's own terms, so leaving stance behind for whole move judges
+  ##     every arm against frame dancer has already left.
   let rate = by * 2.0 * PI * HERTZ / steps.float
   eng.setSpin(c.who[who].trunk, asEngine((0.0, 0.0, rate)))
-  advance(c, steps)
+  for _ in 1 .. steps:
+    carry(c)
+    holdSwing(c)
+    eng.step(c.world, (1.0 / HERTZ).cfloat, SUBSTEPS)
+    c.stance = turned(c.stance, who, by / steps.float)
   eng.setSpin(c.who[who].trunk, asEngine((0.0, 0.0, 0.0)))
-  c.stance = turned(c.stance, who, by)
 
 proc poseOf*(c: Couple; i: int): Pose =
   ## Where one connection's two arms lie, and what engine says their joints read.
@@ -461,8 +541,8 @@ proc restApart*(rig: Rig; band: Band; links: seq[Link]; away = false): float =
       result = apart
     apart += PACE
 
-proc stopOf*(c: Couple; i: int): Stop =
-  ## What stops this connection here, if anything does.
+proc stoppedBy*(c: Couple; i: int): tuple[why: Stop, k: int] =
+  ## What stops this connection here, if anything does, and at which of its two arms.
   ##   Swing is asked first and whatever hands are doing, because engine was never
   ##     given it: nothing else in model holds extension or adduction, so asking
   ##     only once hands had parted left them unheld through every hold that stood.
@@ -473,20 +553,23 @@ proc stopOf*(c: Couple; i: int): Stop =
     let
       h = c.links[i].ends[k]
       j = joints(c.stance[h.body], h.arm, p.arms[k])
-    if margin(c.rig.range[Dof.Extend], j.extend) < 0.0 or
-       margin(c.rig.range[Dof.Across], j.across) < 0.0:
-      return Stop.Swing
+    if margin(c.rig.range[Dof.Extend], j.extend) < -GIVE or
+       margin(c.rig.range[Dof.Across], j.across) < -GIVE:
+      return (Stop.Swing, k)
   if p.apart <= PARTED:
-    return Stop.None
+    return (Stop.None, -1)
   for k in 0 .. 1:
     let
       h = c.links[i].ends[k]
       (lo, hi) = twistEnds(c.rig, h.arm)
     if p.twist[k] <= lo + AT_END or p.twist[k] >= hi - AT_END:
-      return Stop.Twist
+      return (Stop.Twist, k)
     if p.bend[k] >= c.rig.range[Dof.Bend].hi - AT_END:
-      return Stop.Elbow
+      return (Stop.Elbow, k)
     if p.wrist[k] >= c.rig.range[Dof.Wrist].hi - AT_END:
-      return Stop.Wrist
+      return (Stop.Wrist, k)
   let met = metBy(c, i)
-  if met != Stop.None: met else: Stop.Reach
+  if met != Stop.None: (met, 0) else: (Stop.Reach, 0)
+
+proc stopOf*(c: Couple; i: int): Stop = stoppedBy(c, i).why
+  ## What stops this connection here, if anything does.

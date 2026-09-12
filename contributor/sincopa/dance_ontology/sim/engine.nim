@@ -144,6 +144,7 @@ proc partedBy*(j: JointId): cfloat {.importc: "b3Joint_GetLinearSeparation".}
 proc coneAngleOf*(j: JointId): cfloat {.importc: "b3SphericalJoint_GetConeAngle".}
 proc twistAngleOf*(j: JointId): cfloat {.importc: "b3SphericalJoint_GetTwistAngle".}
 proc push*(b: BodyId; force: Vec; wake: bool) {.importc: "b3Body_ApplyForceToCenter".}
+proc twistBy*(b: BodyId; torque: Vec; wake: bool) {.importc: "b3Body_ApplyTorque".}
 {.pop.}
 
 const
