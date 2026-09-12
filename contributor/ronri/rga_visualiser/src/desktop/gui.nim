@@ -148,9 +148,10 @@ proc childBeginBounded*(name: cstring; width, height_max: cfloat): bool
 proc childEnd*() {.importc: "guiChildEnd", sideEffect.}
 
 
-proc menuBegin*(label, id: cstring, is_forced: bool): bool
+proc menuBegin*(label, id: cstring; width: cfloat; is_forced: bool): bool
   {.importc: "guiMenuBegin", sideEffect.}
   ## Draw button opening menu, and open menu's own region where it is showing.
+  ##   Menu hangs by its right edge from that button; `width` of zero sizes button to label.
   ##   `is_forced` opens it with no click, for run that cannot click.
   ##   `menuEnd` closes it only where this returned true.
 
@@ -245,6 +246,10 @@ proc separatorText*(label: cstring) {.importc: "guiSeparatorText", sideEffect.}
   ## Draw horizontal rule carrying `label`.
 
 proc sameLine*() {.importc: "guiSameLine", sideEffect.}
+
+
+proc sameLineGap*(spacing: cfloat) {.importc: "guiSameLineGap", sideEffect.}
+  ## Continue line with spacing given, for row cut into groups.
   ## Continue current line rather than starting next.
 
 proc sameLineAt*(offset: cfloat) {.importc: "guiSameLineAt", sideEffect.}

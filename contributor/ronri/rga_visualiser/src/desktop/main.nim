@@ -852,6 +852,8 @@ proc renderFrame(
       panel.message,
     )
   layoutPanel(panel, scene, camera, HISTORY, now)
+  # Row of constant controls floats over scene beside panel, as browser's chip row does.
+  layoutChipRow(panel, scene, camera, HISTORY, now)
   layoutHelp(panel, path_help)
 
   # Advance tween before this frame's transforms are built, so frame draws where camera is.

@@ -245,14 +245,18 @@ void guiChildEnd() { ImGui::EndChild(); }
 //   -- same door `--drive-help` uses on help's tabs.
 //   Caller closes with `guiMenuEnd` only where this returned true, which is what
 //   `ImGui::BeginPopup` asks of every caller.
-bool guiMenuBegin(const char* label, const char* id, bool is_forced) {
-  if (ImGui::Button(label) || is_forced) ImGui::OpenPopup(id);
+bool guiMenuBegin(const char* label, const char* id, float width, bool is_forced) {
+  if (ImGui::Button(label, ImVec2(width, 0.0f)) || is_forced) ImGui::OpenPopup(id);
   // Hang menu from its own button rather than from pointer, which is where popup opens by
   //   default. Browser's menu hangs from its chip, and menu that lands somewhere else each
   //   time is menu reader has to find twice.
+  // Hung by its right edge, not its left: button sits at right end of row pinned to right
+  //   of window, so menu opening rightward opens off screen -- which is what it did.
+  //   Browser's own menu hangs down and left from its chip for same reason.
   const ImGuiStyle& style = ImGui::GetStyle();
   ImGui::SetNextWindowPos(
-    ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y + style.ItemSpacing.y));
+    ImVec2(ImGui::GetItemRectMax().x, ImGui::GetItemRectMax().y + style.ItemSpacing.y),
+    ImGuiCond_Always, ImVec2(1.0f, 0.0f));
   return ImGui::BeginPopup(id);
 }
 
@@ -425,6 +429,11 @@ float guiChildHeightForRows(int count) {
 void guiSeparatorText(const char* label) { ImGui::SeparatorText(label); }
 
 void guiSameLine() { ImGui::SameLine(); }
+
+// Continue line with spacing of caller's choosing, rather than style's own.
+//   For row cut into groups: browser's chip row sets 6px inside group and 8 between, and
+//   gap is what says which controls belong together where no box is drawn around them.
+void guiSameLineGap(float spacing) { ImGui::SameLine(0.0f, spacing); }
 
 // Continue current line at fixed distance from its start.
 //   Column of controls then lines up under one another regardless of how long each one's

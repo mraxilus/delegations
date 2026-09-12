@@ -3317,3 +3317,40 @@ to `orrery` arrives in both menus with neither front-end touched. Loading one ca
 `guiMenuBegin` takes `is_forced` and `--drive-menu` opens the menu with no pointer — the same
 door `--drive-help` uses for tabs. The verdict reads what the menu laid out: **3 sizes
 offered, 3 in `orrery`**. That makes 41 checks over 15 runs.
+
+
+## Re-audit, 2026-09-12, the row that floats
+
+Asked by the Architect, after the menu landed: put the constant controls in an overlay of
+their own, as `?` already is, and lay them out as the browser lays them out.
+
+**What was wrong with them inside the panel window.** The browser floats `add`, `undo`,
+`redo`, `axes`, `grid` and `☰` over its canvas in `.chip-row`, and they stay reachable
+whether the drawer is open or shut. The desktop had the same six controls *inside* the panel
+window, so they moved when it moved, and went with it when it collapsed. One set of controls,
+two arrangements.
+
+They are now one line in a `windowBeginPinned` overlay — the same door `?` uses, which
+auto-sizes to its contents and takes no title bar — pinned to the top right on the same 16 px
+inset `?` takes from its own corner. Three groups in the browser's order, with a wider gap
+between groups than inside one, since a gap is what says which controls belong together where
+no box is drawn around them.
+
+**Top right rather than top left, which the browser can afford and this cannot.** The browser
+puts its brand chip on the left because its drawer slides out from under it; the desktop's
+panel window opens at the top left and stays there, so two overlays sharing that corner would
+sit on each other at any window width. The panel's own title bar carries the name and the
+collapse triangle, which is what the brand chip is for over there.
+
+**The first attempt put the menu off the screen, and the screenshot is what showed it.** The
+popup was anchored by its *left* edge under its button — fine when the button sat inside the
+panel at the left, and wrong the moment the row moved to the right, where the menu opened
+past the window and was clipped to a few characters. It now hangs by its right edge, which is
+the direction the browser's own menu falls. Nothing in the checks caught this: the verdict
+asks what the menu *offered*, and a menu offering three sizes off the edge of the screen
+offers three sizes. **That is the case for ending a change with a picture** (repository issue
+138), and it arrived the same day the issue did.
+
+`☰` also grew a chip of its own — 34 px against the width one glyph asks for — because the
+character set at interface size in a button sized to it reads as a mark rather than as a
+control. The browser draws the same character on a round chip far wider than the glyph.

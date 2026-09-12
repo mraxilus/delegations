@@ -95,6 +95,17 @@ const
   ROWS_OBJECTS_LEAST = 6
     ## Floor on bounded list's height, for window too short to give it more.
     ##   Region smaller than this shows less than one object and scrolls by fractions.
+  MARGIN_CHIP = 16.0'f32
+    ## Inset chip row from window's own top and right edges.
+    ##   Same inset `?` takes from bottom and right, so two overlays sit on one margin.
+  WIDTH_CHIP_MENU = 34.0'f32
+    ## Width of menu's own chip, wider than its one glyph asks for.
+    ##   `☰` set at interface size in button sized to it reads as mark rather than as
+    ##   control; browser draws same character on round chip far wider than glyph.
+  GAP_CHIP_GROUP = 12.0'f32
+    ## Space between chip row's groups, wider than space inside one.
+    ##   Gap is what says which controls belong together, since no box is drawn around
+    ##   them; browser draws its `.toggles` on pill and leans on same gap either side.
   WIDTH_MENU_FIELD = 210.0'f32
     ## Width of path field inside menu.
     ##   Fixed rather than read from content region: popup sizes itself to what is in it,
@@ -1399,7 +1410,7 @@ proc layoutMenu(
   ##   file picker rather than through file system.
   ##   Demo group is built from `orrery.ScaleOrrery` rather than written out, as browser's
   ##   is built from `nimDemoScales`: size added there arrives in both menus untouched.
-  if not gui.menuBegin("☰", "##menu_top", panel.is_menu_top_forced): return
+  if not gui.menuBegin("☰", "##menu_top", WIDTH_CHIP_MENU, panel.is_menu_top_forced): return
 
   gui.widthPush(WIDTH_MENU_FIELD)
   fieldLabel("scene file")
@@ -1459,16 +1470,27 @@ proc layoutMenu(
   gui.menuEnd()
 
 
-proc layoutTopBar*(
+proc layoutChipRow*(
   panel: var Panel, scene: var Scene, camera: var Camera, history: var History, now: float
 ) =
-  ## Lay out controls reached for constantly, above every collapsing section.
-  ##   Three groups browser's chip row carries, in its order: what acts on scene, what is
-  ##   flipped, and where scene is written. Reader moving between two front-ends meets same
-  ##   controls in same order rather than two arrangements to learn.
+  ## Lay out controls reached for constantly, in overlay of their own over scene.
+  ##   Browser floats these over its canvas in `.chip-row` rather than putting them in
+  ##   drawer, and reaches them whether drawer is open or shut. This is that row: same three
+  ##   groups in same order, on one line, pinned to same corner.
+  ##     Inside panel window they moved with it and went with it when it collapsed, which is
+  ##     two arrangements for one set of controls (repository issue 137).
+  ##   Overlay rather than section, by same door `?` uses: `windowBeginPinned` auto-sizes to
+  ##   what is in it and takes no title bar, so row is its own controls and nothing else.
+  ##   Top right rather than top left: panel window opens top left, and two overlays sharing
+  ##   corner would sit on each other at any window width. Browser has room for brand chip
+  ##   on its left because its drawer slides out from under it; this window does not.
   ##   `add` has to live outside `objects`, since pressing it opens that section.
-  ##   Sits after `stepHistory` rather than beside other sections, since undo and redo are
-  ##   part of this row now; browser groups them same way.
+  if not gui.windowBeginPinned(
+    "##chip_row", gui.viewportWidth() - MARGIN_CHIP, MARGIN_CHIP, 1.0, 0.0
+  ):
+    gui.windowEnd()
+    return
+
   # Act on scene: add, undo, redo -- browser's `.action-group`.
   gui.disabledPush(panel.session.isSome or scene.isFull)
   if gui.button("add"):
@@ -1496,6 +1518,7 @@ proc layoutTopBar*(
     discard stepHistory(panel, scene, camera, history, is_undo = false)
   gui.disabledPop()
   gui.tooltip("Step forward again; a fresh edit discards whatever was ahead.")
+  gui.sameLineGap(GAP_CHIP_GROUP)
 
   # Flip furniture: axes, grid -- browser's `.toggles`, in pill its own segment wears.
   #   Checkbox said same thing in another shape, and two front-ends drew one control two
@@ -1509,8 +1532,9 @@ proc layoutTopBar*(
   gui.tooltip("Toggle the reference grid at z = 0.")
 
   # Everything reached for rarely is behind menu, as browser's `.top-menu` has it.
-  gui.sameLine()
+  gui.sameLineGap(GAP_CHIP_GROUP)
   layoutMenu(panel, scene, camera, history, now)
+  gui.windowEnd()
 
 
 
@@ -1527,16 +1551,14 @@ proc layoutPanel*(
   panel.preview = none(Preview)
   gui.windowPlace(16.0, 16.0, WIDTH_PANEL, 720.0)
   if gui.windowBegin("RGA visualiser"):
-    # Straight to controls, as browser's drawer is.
+    # Straight to sections, as browser's drawer is.
     #   Four lines of prose stood here teaching drag, its three wedges and right-drag,
     #   and every one of them is in help's drag tab, which `?` opens in corner of both
     #   UIs. Browser dropped its own copy of that line; this was last one, which is
     #   drift `help.nim`'s own header is about.
     #   Wedge words were taught here alone, so they moved rather than went: they are
     #   read from `interaction.wordOf` in `help.descriptionOf`, which both render.
-    layoutTopBar(panel, scene, camera, history, now)
-    gui.separator()
-
+    #   Row of constant controls left too, for overlay of its own; see `layoutChipRow`.
     # Lay sections out in alphabetical order, matching browser's drawer.
     #   `objects` open by default.
     layoutApply(panel, scene, camera, history, now)
