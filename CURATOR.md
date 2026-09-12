@@ -70,6 +70,8 @@ The owner's brief, which every rule below serves:
 | `koch.nim`, `koch.nim.cfg` | Driver of every check; `nim r koch <command>` | curator |
 | `.gitignore`, `.gitattributes` | Build products and Atlas checkouts out, LF endings | curator |
 | `.github/workflows/check.yml` | Every CI job, and the `audit` gate they report to | curator |
+| `.github/workflows/watch.yml` | Issue opened when `check` goes red on `main` | curator |
+| `.github/workflows/sweep.yml` | Daily read of rules GitHub records, into one issue | curator |
 | `.github/pull_request_template.md` | Body every pull request follows | curator |
 | `.github/ISSUE_TEMPLATE/process-change.md` | Body every process request follows | curator |
 | `.github/ISSUE_TEMPLATE/review-finding.md` | Body every curator finding follows | curator |
@@ -369,19 +371,29 @@ data, never a special case.
 Seven rules hold by reading and nothing else. Each is a place where this repository's usual
 answer — put it in a check — does not apply.
 
+**Three shrank when `sweep.yml` landed, and none of the three left.** A sweep reads what GitHub
+records, and each of those three has a half GitHub does not record. Each says below which half a
+runner now holds and which half is still only read.
+
 - **A glossary term is the Architect's to select**, proposed and never written on sight. The
   audit checks a glossary's shape, never whether its words were agreed.
 - **Every issue, pull request and comment opens with its role, and every issue is labelled with
-  it.** GitHub is not this repository, so no check reads what was posted there — and because
-  applying a label creates it, a mistyped one is a new label rather than an error.
+  it.** `sweep` reads issue and pull-request bodies, and whether an issue carries a label at all.
+  It reads no comment, and it cannot tell a copied label from a composed one spelled right —
+  applying a label creates it, so a mistyped one is a new label rather than an error. Those two
+  are the read-only half.
 - **An answered issue is closed by hand**, and `Closes #N` is not relied on: it silently did
-  nothing for issues 25 and 26, and both sat answered and open until somebody noticed. Issue 116
-  then repeated it with a curator writing *"closing this as ruled"* and not closing it.
+  nothing for issues 25 and 26, and both sat answered and open until somebody noticed. `sweep`
+  now catches that class — a merged pull request naming an issue still open, usually from a base
+  other than `main`. It cannot catch issue 116's, where a curator wrote *"closing this as ruled"*
+  and did not close it: an issue answered by a ruling has no pull request to find, and judging
+  whether a comment answered anything is the thing no runner does.
 - **A request is answered on its issue**, agreeing or disagreeing with reasons. Silence is not an
   answer, and nothing but a reader can tell the difference between a request declined and one
   nobody opened.
-- **A pull request opens as a draft, and is marked ready only when it is.** Draft state is
-  GitHub's, not the tree's.
+- **A pull request opens as a draft, and goes back to draft once another commit is intended.**
+  `sweep` catches one left ready without a green run. It cannot see one green now and about to
+  move, which is the half that keeps a reviewer off a moving target.
 - **A published page is linked, not described**, in the pull request and in the message both.
   Which pages a change alters depends on what each project's build reads.
 - **A change ends by showing itself**, in the message where the work is handed over: a picture

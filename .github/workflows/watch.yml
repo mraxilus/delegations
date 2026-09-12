@@ -1,4 +1,4 @@
-# Open issue when `check` goes red on main, so nobody has to be awake for it.
+# Open issue when workflow goes red on main, so nobody has to be awake for it.
 #   CURATOR.md's session-start duty says read latest `push` run because "nothing else watches
 #   it": subscriptions do not cover `main`, and duty 2 has curator watch only their own merge.
 #   Twice that has failed silently -- contributor's merge red with nobody looking, found by
@@ -16,10 +16,14 @@
 #   One issue, not one per run: watcher opening issue per red run trains its reader to skim,
 #   which is failure it exists to prevent. Marker in body is what makes second red comment on
 #   first issue instead.
+#   Marker carries workflow's own name rather than being one literal, so red `sweep` cannot be
+#   closed by somebody answering red `check`. `sweep` reads what nothing else here reads, and
+#   sweep that quietly stopped running while documents say runner holds half of three rules is
+#   worse than no sweep -- so it is watched exactly as `check` is.
 #   Issue opens with role line as every issue does, and says workflow wrote it, so nobody reads
 #   it as session having judged anything.
-#   Cost: `issues: write` on this workflow, which no other workflow here holds. It runs on no
-#   event pull request can reach.
+#   Cost: `issues: write`, which `sweep.yml` holds as well. Neither runs on event pull request
+#   can reach, and that is what keeps grant narrow -- never count of files holding it.
 #   `permissions` block is whole grant, never addition to default: scope left out of it is set
 #   to `none`, not left alone. Written here without `actions: read` first, and first firing got
 #   403 reading run it was pointed at -- from block that named neither `actions` nor anything
@@ -30,7 +34,7 @@ name: watch
 
 on:
   workflow_run:
-    workflows: [check]
+    workflows: [check, sweep]
     types: [completed]
     branches: [main]
   workflow_dispatch:
@@ -60,7 +64,6 @@ jobs:
           RUN_ID: >-
             ${{ github.event_name == 'workflow_dispatch'
                 && inputs.run_id || github.event.workflow_run.id }}
-          MARKER: '<!-- watch:main-red -->'
         run: |
           set -euo pipefail
           run="$(gh api "repos/$REPO/actions/runs/$RUN_ID")"
@@ -73,6 +76,11 @@ jobs:
           number="$(jq -r .run_number <<<"$run")"
           sha="$(jq -r .head_sha <<<"$run")"
           subject="$(jq -r .display_title <<<"$run")"
+          # Marker carries workflow's own name, so red `sweep` never hides behind issue
+          #   somebody closed because `check` went green. Read from run rather than from
+          #   event, since dispatch names run and reads same fields either way.
+          workflow="$(jq -r .name <<<"$run")"
+          marker="<!-- watch:red:$workflow -->"
           failed="$(gh api "repos/$REPO/actions/runs/$RUN_ID/jobs" --paginate \
             --jq '.jobs[] | select(.conclusion == "failure") | "- `" + .name + "`"')"
 
@@ -81,25 +89,25 @@ jobs:
           #   strips tabs alone. Measured, not assumed -- written as heredoc first and it would
           #   not parse.
           said="Opened by the \`watch\` workflow rather than by a session, so nothing here"
-          said="$said has been read or judged yet. A red \`main\` is the first work of the"
+          said="$said has been read or judged yet. Workflow red on \`main\` is first work of"
           said="$said session (CURATOR.md, session start)."
           at="**Run [$number]($url)** on \`main\`, at \`${sha:0:7}\` — $subject"
-          next="Close this once \`main\` is green again, naming what fixed it. A later red"
-          next="$next run comments here rather than opening a second issue."
+          next="Close this once \`$workflow\` is green again, naming what fixed it. A later"
+          next="$next red run of that workflow comments here rather than opening second issue."
           body="$(printf '%s\n\n**Role:** curator\n\n%s\n\n%s\n\n%s\n\n%s\n\n%s\n' \
-            "$MARKER" "$said" "$at" "Jobs that concluded failure:" "$failed" "$next")"
+            "$marker" "$said" "$at" "Jobs that concluded failure:" "$failed" "$next")"
 
           # Read open issues rather than search: search indexing lags, and watcher that opens
           #   duplicate because index was cold is exactly noise this avoids.
           existing="$(gh issue list --repo "$REPO" --label curator --state open \
             --limit 100 --json number,body \
-            --jq "[.[] | select(.body | contains(\"$MARKER\")) | .number] | first // empty")"
+            --jq "[.[] | select(.body | contains(\"$marker\")) | .number] | first // empty")"
 
           if [ -n "$existing" ]; then
             gh issue comment "$existing" --repo "$REPO" --body "$body"
             echo "Commented on issue #$existing."
           else
             opened="$(gh issue create --repo "$REPO" --label curator \
-              --title "\`main\` is red: run $number" --body "$body")"
+              --title "\`$workflow\` is red on main: run $number" --body "$body")"
             echo "Opened $opened."
           fi
