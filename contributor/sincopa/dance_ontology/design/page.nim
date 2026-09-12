@@ -34,6 +34,7 @@ const STYLE* = """<style>
   --serif: "Noto Serif", Georgia, "Times New Roman", serif;
   --sans: "Noto Sans", ui-sans-serif, system-ui, sans-serif;
   --mono: "Commit Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-ligatures: contextual;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --paper: #16151a; --card: #1e1d24; --ink: #ece9e4; --dim: #9a948c;

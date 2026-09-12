@@ -110,7 +110,7 @@ func slotChart*(arm = Arm.L): string =
         text = if slot == Slot.Default: "side" else: word(slot)
       bits.add &"""<text x="{n(label.x)}" y="{n(label.y + 3)}"""" &
         &""" text-anchor="{anchor}"""" &
-        " style=\"font: 8px ui-sans-serif, system-ui," &
+        " style=\"font: 8px 'Noto Sans', ui-sans-serif, system-ui," &
         &""" sans-serif; fill: {FAINT}">{text}</text>"""
   bits.join("") & "</svg>"
 
