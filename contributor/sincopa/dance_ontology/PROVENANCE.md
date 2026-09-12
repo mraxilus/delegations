@@ -1051,44 +1051,73 @@ it passed with the sign wrong -- and the fix rests on the physics and on measure
 **Stance travels with the turn.** Swing is read in the dancer's own terms, so leaving the stance
 behind until a move finished judged every arm against a frame the dancer had already left.
 
-**Where the couple stand decides everything else.** Measured, one hand held, low: at fifteen
-centimetres of clear air the wrist sits four hundredths of its ease from its end; at forty it is
-past it; at eighty-five it is nearly straight, with room of 2.80. The rule the page already stated
--- that they stand wherever the joints are furthest from their ends -- is load-bearing. It cannot
-be read off `margin`, which counts a stop with no ease as costing nothing to lean on and so reads a
-straight elbow as perfectly comfortable, sending the couple out to arm's length where the hands
-part after six hundredths of a turn. `limb.room` already drew that distinction.
+**Where the couple stand decides everything else, and it is chosen for the turn.** The Architect's
+ruling: *stand for the turn, hand height for the turn, everything for the turn; nothing should be
+fixed other than preventing collisions.* Standing had been chosen at rest -- wherever the joints
+were furthest from their ends standing still -- and kept through the turn. Measured, the couple
+walk straight out of it. Scanning every distance the cross-name chain over the crown may stand at,
+a centimetre at a time, and sweeping each one whole: the rest-chosen distance is 0.96 metres and
+turns **0.22**, where standing at 0.36 turns **1.12**. Room to move standing still is not what
+turning spends, so the one was never a proxy for the other.
+
+So `reaches` now asks the question of every distance clear of a collision and answers at the first
+that carries the turn, and `holdsAt` does the same for a pose. Maximising over the distances and
+asking whether any of them reaches it are the same answer for a single target, and the second is
+far cheaper: an easy card costs one sweep, and only a card nothing reaches pays for the whole
+search. The grid is two centimetres, coarser than the old `PACE`, because a whole sweep runs at
+each distance and the measured landscape is plateaus four centimetres wide -- a finer grid buys
+under a twentieth of a turn, below anything any card asks.
+
+Rejected: ranking the distances on a cheaper physics and sweeping only the winner at full
+resolution. It would have cost a fifth as much, and it does not rank them the same. At a turn step
+of a tenth it picks 0.46, which carries 0.36 at full resolution, over 0.36, which carries 1.12;
+arms lag differently when the couple are turned faster, so the ordering is not preserved.
+
+Hand height goes the same way: the band's two edges are held and everything between them is free.
+Held to the band's middle instead, the couple spend on height the reach the turn wanted.
+
+The rest-room chooser and its scorer are gone with it. What that scorer needed -- `freedom`, which
+counts both ends of a range where `margin` counts a stop with no ease as costing nothing to lean on
+-- is still what `roomAt` reads with for every moment the page draws, and still cannot be `margin`:
+that reads a straight elbow as perfectly comfortable. `limb.room` already drew the distinction.
 
 **Torso's section.** The engine collides capsules, so the ellipse the old contact test used is not
 available. Two capsules side by side give a stadium of the same tape round at the same flatness,
 and the neck and head fall out of the same line at a flatness of one.
 
 **What it says now, against the floor.** The floor: *everything gets a full turn before it blocks,
-except a low wrap, which gets half.* Turning the follow, from rest, at the distance each hold
-settles to:
+except a low wrap, which gets half.* Turning the follow, from wherever the couple stand for that
+turn. The column before last is the same engine choosing its distance at rest:
 
-| hold | level | way | floor | old solver | engine |
-|---|---|---|---|---|---|
-| L-l | low | lock | a whole turn | 1.12 | 0.80 |
-| L-l | low | wrap | half a turn | 0.30 | 0.32 |
-| L-l | high | lock | a whole turn | 0.41 | 0.40 |
-| L-l | high | wrap | a whole turn | 1.25 | 0.20 |
-| L-l | above | either | no block | no block | no block |
-| L-r | low | lock | a whole turn | 0.87 | 0.76 |
-| L-r | low | wrap | half a turn | 0.56 | 0.38 |
-| L-r | high | lock | a whole turn | 1.06 | 0.38 |
-| L-r | high | wrap | a whole turn | 0.63 | 0.22 |
-| L-r | above | either | no block | no block | no block |
+| hold | level | way | floor | old solver | at rest | for the turn |
+|---|---|---|---|---|---|---|
+| L-l | low | lock | a whole turn | 1.12 | 0.80 | **1.18** |
+| L-l | low | wrap | half a turn | 0.30 | 0.32 | **0.74** |
+| L-l | high | lock | a whole turn | 0.41 | 0.40 | **1.02** |
+| L-l | high | wrap | a whole turn | 1.25 | 0.20 | 0.78 |
+| L-l | above | either | no block | no block | no block | no block |
+| L-r | low | lock | a whole turn | 0.87 | 0.76 | **1.04** |
+| L-r | low | wrap | half a turn | 0.56 | 0.38 | **0.94** |
+| L-r | high | lock | a whole turn | 1.06 | 0.38 | **1.08** |
+| L-r | high | wrap | a whole turn | 0.63 | 0.22 | **1.00** |
+| L-r | above | either | no block | no block | no block | no block |
 
-Not tuned to it: every change above was argued from the rig or from the old model's own written
-rules, and the figures are what came out. The crown agrees exactly. The neck band does not, and
-is the open question -- the engine gives between a fifth and two fifths of a turn where the floor
-says a whole one, and the old solver was nearer on three of those four.
+Not tuned to it: every change above was argued from the rig or from the Architect's ruling, and the
+figures are what came out. Choosing where to stand at rest met **none** of the floor's eight
+claims; choosing it for the turn meets **seven**, and beats the old solver on six. The one left is
+`L-l` high wrap, at 0.78 of the whole turn the floor claims.
+
+That is the strongest evidence so far that the floor was right and the model was wrong, rather than
+the other way about. The neck band was the open question -- the engine gave between a fifth and two
+fifths of a turn where the floor said a whole one -- and it was not the neck band. It was standing
+still to choose where to stand.
 
 **Chains, which are why the engine is here at all.** The old solver winds a chain to one crossing
-and stops, so it can never draw a diamond or a swan. The engine, cross-name chain over the crown,
-reaches **1.28 turns** -- past the diamond at one, short of the swan at one and a half. The
-same-name chain at the neck band finds no pose at rest at all, which is a fault and not a finding.
+and stops, so it can never draw a diamond or a swan. Standing for the turn, the same-name chain
+over the crown runs **free past one and a half turns**, where standing at rest it stopped at 0.28;
+the cross-name chain reaches **1.22**, past the diamond at one and short of the swan. The same-name
+chain at the neck band, which found no pose at rest at all and was recorded here as a fault rather
+than a finding, now stands and turns 0.44: the fault was the standing distance, not the band.
 
 **Rejected: reading anything into `L-l` and `L-r` agreeing.** With centring at two hundred newtons
 per metre the two holds returned the same two figures reflected, which cannot be right -- face to
