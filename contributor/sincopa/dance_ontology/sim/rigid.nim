@@ -346,6 +346,13 @@ proc carry(c: Couple) =
   ##     reads as shoulder giving out when it is only hands left unheld.
   let
     want = (c.rig.band[c.band].lo + c.rig.band[c.band].hi) / 2.0
+    # Height is asked of couple only as they leave face to face.  Architect:
+    # face to face arms may be at any height, and it is once they are no longer
+    # face to face that hands must actually be above -- which is clearance,
+    # since only then would arm have to pass through body to stay low.  Nought
+    # face to face, one at pillion, and smooth between, so demand does not jump
+    # in middle of an edge.
+    turned = abs(sin(twist(c.stance) / 2.0))
     one = axesOf(c.stance[Body.One]).origin
     two = axesOf(c.stance[Body.Two]).origin
     mid = (if c.band == Band.Crown: axesOf(c.stance[c.turning]).origin
@@ -360,7 +367,11 @@ proc carry(c: Couple) =
         a = c.who[ln.ends[k].body].arm[ln.ends[k].arm]
         tip = asWorld(eng.pointOf(a.link[Limb.Palm], eng.vec(0, 0, c.rig.hand.cfloat)))
         drift = asWorld(eng.driftOf(a.link[Limb.Palm]))
-        lift = (LIFT * (want - tip.z) - FALL * drift.z) / 3.0
+        # One sided, and only so far as couple have turned: hands are lifted
+        # where they are too low to clear, never pressed down where arms have
+        # already carried them higher.
+        below = max(0.0, want - tip.z)
+        lift = turned * (LIFT * below - FALL * drift.z) / 3.0
         pull = DRAW[ord(c.band)] / 3.0
         toward: Vec = ((mid.x - tip.x) * pull - drift.x * FALL / 3.0,
                        (mid.y - tip.y) * pull - drift.y * FALL / 3.0, lift)
