@@ -552,6 +552,27 @@ another as a couple's do; and the rig is rigid -- no lean, no torso bend, and `e
 `Dof`, which is the elbow bias already recorded above. Rejected: tuning the guard, which was
 tried four ways and moved nothing.
 
+**Over the head, twist is the only thing that should stop a turn, and in this sim it never
+does.** Architect's rule, given 2026-09-12: overhead is the one level whose block is a twist
+block, since over the head an arm goes round nothing. Measured the same day across all six
+holds at all three bands, thirty-six sweep ends: `Reason.Twist` is what stops **none** of them.
+Single holds overhead do not block at all, which agrees with the floor and with the sheet; the
+two chains overhead block as `Through` at 0.43 of a turn, as `Arms` at 0.76 and 0.77, and as
+`Reach` at 1.07 -- and `Through` overhead is an arm laid through a body, which is the one thing
+the rule says cannot happen up there.
+
+The limit is real and reachable, so this is not a range set too wide: twist runs from -70 to +90
+degrees on this rig, and at the low and high bands it is driven to 104 per cent of that, held
+only by the tolerance. Overhead it reaches 102 per cent for the pair resting pillion lead -- and
+`Arms` still trips first -- 65 per cent for the pair resting face to face, and 29 per cent for a
+single hold, which is nowhere near. So the constraint the Architect names as the only one that
+should bind up there is, in this model, never the one that binds anywhere.
+
+This is what the engine's joints are for. Box3D's ball joint carries a cone limit and a twist
+limit separately, so a shoulder's reach and a shoulder's twist stop being one number: the rule
+becomes something the rig expresses rather than something a cost function must be tuned into.
+Recorded before that work rather than after, so these are the figures it is held to.
+
 **Wind is read as writhe rather than as a tally of crossings.** A tally cannot tell arms wound
 round one another from two crossings of opposite sign, which annihilate under a small move and
 never were wind at all: measured 2026-09-10, the pair `D` carries just past a whole turn melts to
