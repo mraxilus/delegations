@@ -67,7 +67,7 @@ iterator stands*(rig: Rig): float =
 proc momentOf(c: Couple; at: float): tuple[m: Moment, why: Stop, which: int,
                                            whose: Hand] =
   ## Read every connection at this moment, and say what gave, if anything.
-  result.m = Moment(at: at, stance: c.stance, room: Inf)
+  result.m = Moment(at: at, stance: c.chestStances, room: Inf)
   result.why = Stop.None
   result.which = -1
   for i in 0 ..< c.links.len:

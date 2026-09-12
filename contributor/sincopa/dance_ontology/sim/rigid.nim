@@ -67,7 +67,10 @@ type
     shoulder, elbow, wrist: eng.JointId
 
   Figure = object ## One dancer: trunk that is turned, and two arms that follow.
-    trunk: eng.BodyId
+    trunk: eng.BodyId ## Hips: kinematic, turned by sim, never pushed.
+    chest: eng.BodyId ## What shoulders hang from.  Same body as `trunk` unless
+                      ## `waist` is defined, when it is dynamic and yaws on hips.
+    waist: eng.JointId ## Hinge between them, meaningful only under `waist`.
     arm: array[Arm, ArmRig]
 
   Mark* {.pure.} = enum ## What part of whom one capsule is.
@@ -159,6 +162,13 @@ func stadium(rig: Rig; part: Part): tuple[r, spread: float] =
   (wide * q, 2.0 * (wide - wide * q))
 
 const
+  WAIST_HI = 40.0 * PI / 180.0 ## Thoracic rotation each way, clinical.
+    ## Experiment behind `-d:waist`: shoulders may lag or lead hips by this
+    ## much, sprung to neutral.  Rig has no scapula and no trunk twist, and at
+    ## every remaining stop several joints sit at their ends at once, which is
+    ## arm reaching where rigid trunk cannot help it.  Flag until measured.
+
+const
   TRUNK_BIT = 1'u64        ## Torso, neck and head.
   ARM_BIT: array[Body, uint64] = [2'u64, 4'u64] ## Lead's arms, follow's arms.
   EVERY = high(uint64)     ## Meets everything.
@@ -190,8 +200,18 @@ func standing(ax: Axes): eng.Quat =
   ##     project's three axes in project's order, which lays dancer down.
   qOf(asEngine(ax.right), asEngine((0.0, 0.0, 1.0)), asEngine(-ax.fore))
 
-proc trunkOf(c: var Couple; who: Body): eng.BodyId =
-  ## Torso, neck and head as one kinematic body: dancer is turned, never pushed.
+func upFrame(): eng.Quat =
+  ## Frame whose z is trunk's own up, for hinge that yaws.
+  ##   Trunk's local frame has up on its y (`standing`), and revolute hinges
+  ##     about frame A's local z, so hinge frame turns local z onto local y.
+  qOf(eng.vec(1, 0, 0), eng.vec(0, 0, -1), eng.vec(0, 1, 0))
+
+proc trunkOf(c: var Couple; who: Body): tuple[hips, chest: eng.BodyId,
+                                             waist: eng.JointId] =
+  ## Torso, neck and head on one kinematic body: dancer is turned, never pushed.
+  ##   Under `waist`, kinematic body is hips alone, carrying nothing, and every
+  ##     capsule sits on dynamic chest hinged to it about trunk's up, sprung to
+  ##     neutral and stopped at thoracic rotation.  Shoulders hang from chest.
   let
     st = c.stance[who]
     ax = axesOf(st)
@@ -200,7 +220,33 @@ proc trunkOf(c: var Couple; who: Body): eng.BodyId =
   bd.position = asPlace(ax.origin)
   bd.rotation = standing(ax)
   bd.enableSleep = false
-  result = eng.createBody(c.world, addr bd)
+  result.hips = eng.createBody(c.world, addr bd)
+  when defined(waist):
+    var cd = eng.defaultBody()
+    cd.kind = eng.Dynamic
+    cd.position = asPlace(ax.origin)
+    cd.rotation = standing(ax)
+    cd.linearDamping = DAMP.cfloat
+    cd.angularDamping = DAMP.cfloat
+    cd.gravityScale = 0.0
+    cd.enableSleep = false
+    result.chest = eng.createBody(c.world, addr cd)
+    var hinge = eng.defaultHinge()
+    hinge.base.bodyIdA = result.hips
+    hinge.base.bodyIdB = result.chest
+    hinge.base.localFrameA = eng.Frame(p: eng.vec(0, 0, 0), q: upFrame())
+    hinge.base.localFrameB = eng.Frame(p: eng.vec(0, 0, 0), q: upFrame())
+    hinge.enableSpring = true
+    hinge.hertz = EASE.cfloat
+    hinge.dampingRatio = EASE_DAMP.cfloat
+    hinge.targetAngle = 0.0
+    hinge.enableLimit = true
+    hinge.lowerAngle = (-WAIST_HI).cfloat
+    hinge.upperAngle = WAIST_HI.cfloat
+    result.waist = eng.createHinge(c.world, addr hinge)
+  else:
+    result.chest = result.hips
+  let body = result.chest
   for part in Part:
     let
       (r, spread) = stadium(c.rig, part)
@@ -211,7 +257,7 @@ proc trunkOf(c: var Couple; who: Body): eng.BodyId =
       let
         a = asEngine((side * spread, 0.0, (if hi > lo: lo else: mid)))
         z = asEngine((side * spread, 0.0, (if hi > lo: hi else: mid)))
-      capsule(c, result, who, Arm.Left, Mark.Trunk, a, z, r, DENSITY, 0)
+      capsule(c, body, who, Arm.Left, Mark.Trunk, a, z, r, DENSITY, 0)
       if spread == 0.0:
         break
 
@@ -265,7 +311,7 @@ proc armOf(c: var Couple; who: Body; arm: Arm; group: cint): ArmRig =
     at = at + (0.0, 0.0, -long[ord(l)])
 
   var ball = eng.defaultBall()
-  ball.base.bodyIdA = c.who[who].trunk
+  ball.base.bodyIdA = c.who[who].chest
   ball.base.bodyIdB = result.link[Limb.Upper]
   ball.base.localFrameA = eng.Frame(
     p: asEngine((side(arm) * c.rig.shoulderOut, 0.0, c.rig.shoulderUp)), q: frame)
@@ -328,8 +374,10 @@ proc build*(rig: Rig; stance: array[Body, Stance]; band: Band;
   result.links = links
   result.turning = turning
   for b in Body:
-    let t = trunkOf(result, b)
-    result.who[b].trunk = t
+    let (hips, chest, waist) = trunkOf(result, b)
+    result.who[b].trunk = hips
+    result.who[b].chest = chest
+    result.who[b].waist = waist
   var group = 1.cint
   for b in Body:
     for a in Arm:
@@ -343,6 +391,17 @@ proc build*(rig: Rig; stance: array[Body, Stance]; band: Band;
     g.base.localFrameA = eng.Frame(p: eng.vec(0, 0, rig.hand.cfloat), q: eng.IDENTITY)
     g.base.localFrameB = eng.Frame(p: eng.vec(0, 0, rig.hand.cfloat), q: eng.IDENTITY)
     result.grip.add eng.createBall(result.world, addr g)
+
+proc chestStance*(c: Couple; who: Body): Stance =
+  ## Where shoulders stand: hips' stance, turned by waist where there is one.
+  ##   Every reading of arm in body's own terms goes through this, since arm
+  ##     hangs from chest and not from hips.
+  result = c.stance[who]
+  when defined(waist):
+    result.facing += eng.angleOf(c.who[who].waist).float
+
+proc chestStances*(c: Couple): array[Body, Stance] =
+  for who in Body: result[who] = c.chestStance(who)
 
 proc free*(c: Couple) = eng.destroyWorld(c.world)
   ## Give engine its world back.
@@ -423,7 +482,7 @@ proc holdSwing(c: Couple) =
   ##     own direction toward one it should not have passed.  Body's own terms
   ##     throughout, then back to world, then to engine.
   for who in Body:
-    let ax = axesOf(c.stance[who])
+    let ax = axesOf(c.chestStance(who))
     for arm in Arm:
       let
         a = c.who[who].arm[arm]
@@ -490,7 +549,7 @@ proc jointsOf*(c: Couple; who: Body; arm: Arm): tuple[j: Joints, tw, bd, wr: flo
   ## What one arm's joints read: three swings worked off its pose, and three
   ## engine states its own joints in.
   let a = c.who[who].arm[arm]
-  (joints(c.stance[who], arm, c.armPoseOf(who, arm)),
+  (joints(c.chestStance(who), arm, c.armPoseOf(who, arm)),
    eng.twistAngleOf(a.shoulder).float, eng.angleOf(a.elbow).float,
    eng.coneAngleOf(a.wrist).float)
 
@@ -589,7 +648,7 @@ proc stoppedBy*(c: Couple; i: int): tuple[why: Stop, k: int] =
   for k in 0 .. 1:
     let
       h = c.links[i].ends[k]
-      j = joints(c.stance[h.body], h.arm, p.arms[k])
+      j = joints(c.chestStance(h.body), h.arm, p.arms[k])
     if margin(c.rig.range[Dof.Extend], j.extend) < -GIVE or
        margin(c.rig.range[Dof.Across], j.across) < -GIVE:
       return (Stop.Swing, k)

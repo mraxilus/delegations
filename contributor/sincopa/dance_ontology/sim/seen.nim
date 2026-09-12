@@ -79,7 +79,7 @@ proc stillOf(c: Couple; at: float): Still =
   ## Everything page draws of couple as they stand this moment.
   result.at = at
   for who in Body:
-    let ax = axesOf(c.stance[who])
+    let ax = axesOf(c.chestStance(who))
     result.faces[who] = Faces(at: ax.origin, fore: ax.fore)
   for s in c.shapes:
     let (a, z) = c.endsOf(s)
