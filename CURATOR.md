@@ -336,7 +336,7 @@ data, never a special case.
 
 ## What no check can reach
 
-Five rules hold by reading and nothing else. Each is a place where this repository's usual
+Seven rules hold by reading and nothing else. Each is a place where this repository's usual
 answer — put it in a check — does not apply.
 
 - **A glossary term is the Architect's to select**, proposed and never written on sight. The
@@ -344,6 +344,12 @@ answer — put it in a check — does not apply.
 - **Every issue, pull request and comment opens with its role, and every issue is labelled with
   it.** GitHub is not this repository, so no check reads what was posted there — and because
   applying a label creates it, a mistyped one is a new label rather than an error.
+- **An answered issue is closed by hand**, and `Closes #N` is not relied on: it silently did
+  nothing for issues 25 and 26, and both sat answered and open until somebody noticed. Issue 116
+  then repeated it with a curator writing *"closing this as ruled"* and not closing it.
+- **A request is answered on its issue**, agreeing or disagreeing with reasons. Silence is not an
+  answer, and nothing but a reader can tell the difference between a request declined and one
+  nobody opened.
 - **A pull request opens as a draft, and is marked ready only when it is.** Draft state is
   GitHub's, not the tree's.
 - **A published page is linked, not described**, in the pull request and in the message both.
@@ -356,12 +362,13 @@ answer — put it in a check — does not apply.
   A curator is bound exactly as a contributor is — pull request 128 shipped a predicted saving
   with no evidence and stayed wrong for eleven days, because nothing asked.
 
-Adding a sixth is a real decision rather than a free one: each dilutes the others, since a
+Adding an eighth is a real decision rather than a free one: each dilutes the others, since a
 document whose rules are mostly unenforced trains its readers to skim. Prefer a check wherever
 one can be written, and say plainly in the rule when none can.
 
 **One was here and has left, which is the direction this list is meant to move** — the count has
-gone five, four, and five again, and the arrival was the Architect's call rather than a curator's.
+gone five, four, five, and now seven -- the last two arrivals were the Architect's call rather
+than a curator's.
 *`main` is green* held by a curator remembering to look, and this document said so — *"nothing
 else watches it"* — while never listing it here, so it read as a duty rather than as an unenforced
 rule. It failed silently twice: a contributor's merge, found by accident twenty-four minutes
@@ -370,6 +377,27 @@ leg still to read did not read it. It is now the `watch` workflow's, because unl
 it turns on no intent and no state GitHub keeps privately — a run's own conclusion is a fact the
 runner produces. That is the test for anything on this list: not whether a check would be awkward,
 but whether what the rule asks about is a fact something already writes down.
+
+### Carry it in the open
+
+A rule nothing checks is invisible until after it has been broken, and this list is the proof:
+every entry on it is here because it failed at least once quietly. So it is not only read, it is
+**carried** — posted as a list in the conversation, where the Architect can see where you are.
+
+Post it at **session start**, with what applies and what does not. Say so **when an item
+resolves**, where it happens rather than saved up for the end. Post it in full at **handover**, as
+the last thing before the work leaves you.
+
+- An item that does not apply is **`n/a` with its reason**, never quietly dropped and never ticked.
+- A ticked item **names what discharged it** — `#140 opened draft, ready after run 238 green` —
+  since a bare tick is a claim carrying no evidence, which is what Article VIII.1 is about.
+- **An item may stay unticked at handover.** `[ ] #134 — awaiting the Architect` is complete and
+  correct. A list that has to come out all ticked is a list that will, which is the failure it
+  exists to prevent.
+
+`CONTRIBUTOR.md` carries the same seven under *"Carry the unchecked list in the open"*, and a
+change to either belongs in both. Nothing checks the carrying either, and that is the point: it is
+shown to a reader who is present, and that reader is the enforcement.
 
 ## Output contract
 
