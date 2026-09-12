@@ -133,7 +133,7 @@ func slippable(cs: seq[Crossing]): bool =
   false
 
 type Tight* = object ## Joint nearest its edge across every held arm.
-  room*: float ## `margin` of that joint: nought at edge, one an ease in, negative past.
+  room*: float ## `margin` of that joint: nought at edge, one ease in, negative past.
   dof*: Dof
   whose*: Hand
 

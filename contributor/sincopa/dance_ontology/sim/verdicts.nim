@@ -90,13 +90,14 @@ func half(h: int): string =
 func strainWord(t: Tight): string =
   ## Render strain with its nearness to edge.
   let s = formatFloat(t.strain, ffDecimal, 2)
-  if t.strain >= 1.0: s & " (at the edge)" elif t.strain >= 0.7: s & " (near it)" else: s
+  if t.strain >= 1.0: s & " (at edge)" elif t.strain >= 0.7: s & " (near it)" else: s
 
 func blockLine(w: Walk; sign: string): string =
-  ## Say where sweep blocks one way and why, and where couple stood for it.
+  ## Say where sweep blocks one way and why, and how far apart couple stood for it.
+  ##   Kept short: two of these sit in one table row under audit's hundred columns.
   if not w.stopped:
-    return &"{sign}: no block within {turns(MOST)} turns, standing {turns(w.apart)} m"
-  &"{sign}{turns(w.at)}: {why(w)}, standing {turns(w.apart)} m"
+    return &"{sign}: free to {turns(MOST)} turns, {turns(w.apart)} m apart"
+  &"{sign}{turns(w.at)}, {turns(w.apart)} m apart: {why(w)}"
 
 func blocks(sw: Swept): string =
   ## Say both blocks of sweep as one wrapped paragraph.
@@ -156,8 +157,8 @@ proc rigTable(): string =
     twOut = int(round(HUMAN.range[Dof.Twist].hi * 180.0 / PI))
     bend = int(round(HUMAN.range[Dof.Bend].hi * 180.0 / PI))
     wrist = int(round(HUMAN.range[Dof.Wrist].hi * 180.0 / PI))
-  result.add &"| shoulder | {behind} degrees behind the frontal plane; across the body " &
-    "the trunk is what stops it; " & &"twist {twIn} in to {twOut} out |\n"
+  result.add &"| shoulder | {behind} degrees behind the frontal plane; across, the trunk " &
+    &"stops it; twist {twIn} in to {twOut} out |\n"
   result.add &"| elbow | 0 to {bend} degrees |\n"
   result.add &"| wrist | a {wrist} degree cone |\n"
   result.add &"| hands | low {HUMAN.band[Band.Torso].lo}-{HUMAN.band[Band.Torso].hi}, " &
@@ -381,5 +382,5 @@ proc report(): string =
 
 
 when isMainModule:
-  writeFile("sim/verdicts.md", report())
+  writeFile("sim/verdicts.md", report().strip(leading = false) & "\n")
   echo "wrote sim/verdicts.md"

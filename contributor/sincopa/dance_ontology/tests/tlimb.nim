@@ -131,3 +131,32 @@ suite "one arm, forward and back":
 
 
 #[ Contacts ]#
+
+suite "nothing passes through anybody":
+  ## Two laws kept from `tlaws.nim` that asked solver nothing: they hold
+  ## `contact` and `vec` alone, which engine's own contact does not replace,
+  ## since reader still asks them whether arm presses body.
+  test "the clipped test agrees with a sampled truth, and errs only wide":
+    var rng = initRand(11)
+    for _ in 0 ..< 300:
+      let
+        a: Vec = (rng.rand(-0.5 .. 0.5), rng.rand(-0.5 .. 0.5), rng.rand(0.6 .. 1.9))
+        b: Vec = (rng.rand(-0.5 .. 0.5), rng.rand(-0.5 .. 0.5), rng.rand(0.6 .. 1.9))
+        z0 = 0.8
+        z1 = 1.36
+        got = axisNear(a, b, z0, z1).d
+      var truth = Inf
+      for i in 0 .. 400:
+        let p = a + (b - a) * (i.float / 400.0)
+        if p.z >= z0 and p.z <= z1:
+          truth = min(truth, sqrt(p.x * p.x + p.y * p.y))
+      if truth == Inf:
+        check got == Inf
+      else:
+        check got <= truth + 1e-9
+        check got >= truth - 0.003
+
+  test "over the crown there is nothing to hit":
+    let st = facing(HUMAN, APART)[Body.Two]
+    let top = HUMAN.top[Part.Head] + HUMAN.limb + 0.001
+    check bodyGap(HUMAN, st, (0.0, 0.0, top), (0.0, 0.8, top), own = false).gap == Inf
