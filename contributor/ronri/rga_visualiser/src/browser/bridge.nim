@@ -889,7 +889,7 @@ proc nimWording(key: cint): cstring {.exportc.} =
   ##   silently read past table's end, since only untyped caller could produce one.
   doAssert key >= 0 and key <= cint(ord(Wording.high)),
     "Wording key must name an entry; got `" & $key & "`."
-  wordingOf(Wording(key))
+  wordingText(Wording(key))
 
 
 proc nimDemoWording(objects: cint, is_default: bool): cstring {.exportc.} =
