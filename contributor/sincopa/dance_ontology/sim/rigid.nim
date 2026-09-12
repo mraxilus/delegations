@@ -88,6 +88,9 @@ type
   Pose* = object ## Where one connection's two arms lie, and what their joints read.
     arms*: array[2, ArmPose]
     twist*, bend*, wrist*, fold*: array[2, float] ## Each arm's joints, radians.
+    knuckle*: array[2, Vec] ## Where each hand folds, in world.  `ArmPose` holds
+                            ## four points and hand has five now, so it is kept
+                            ## beside rather than squeezed in.
     apart*: float ## How far engine has pulled two hands apart, metres.
 
 
@@ -469,6 +472,7 @@ proc poseOf*(c: Couple; i: int): Pose =
     result.bend[k] = eng.angleOf(a.elbow).float
     result.wrist[k] = eng.coneAngleOf(a.wrist).float
     result.fold[k] = eng.coneAngleOf(a.knuckle).float
+    result.knuckle[k] = asWorld(eng.pointOf(a.link[Limb.Fingers], eng.vec(0, 0, 0)))
   result.apart = eng.partedBy(c.grip[i]).float
 
 func twistEnds*(rig: Rig; arm: Arm): tuple[lo, hi: float] =
