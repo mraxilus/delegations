@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 3de2c53c542bac80 |
+| Rules  | a58639b1bb0bbfef |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief, the constitution, the Nim style guide and the provenance
