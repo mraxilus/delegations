@@ -1,6 +1,6 @@
 # probe
 
-Words this project uses for itself. Five terms written without agreement were removed
-on 2026-09-06; they are in history, awaiting proposal to the Architect.
+Words this project uses for itself. None is agreed yet: each is proposed to the Architect as
+it resolves, and written only once selected.
 
 ## Language
