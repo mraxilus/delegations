@@ -623,6 +623,11 @@ one, which is what repository issue 132 raised with the figures.
   A looser `restore-keys` prefix is safe here by construction rather than by check, which is
   unusual and worth stating: the store names entries by digest, so an entry no row declares is
   unreachable rather than wrong, and `koch assets` fetches whatever an older restore lacks.
+  Populated and not yet proven: on its first run, 235, `assets-Linux-…` found nothing to restore
+  and saved on the way out, which is what a cache created one pull request earlier does. Its test
+  is the next `driven` run. What that run did settle is that dropping `build/fonts` costs nothing —
+  `Wrote build/fonts (12 faces, 12 copied)` then `(12 faces, 0 copied)`, since `assets` runs twice
+  per job and the second pass finds every face already in place.
 
 **The browser a declaration names is the browser that runs, and the snap serves.** `apt-get
 install chromium` on `ubuntu-latest` gives `/snap/bin/chromium`, a wrapper rather than a plain
@@ -850,10 +855,27 @@ either lever repository issues 79 and 80 were weighing.
   the point: that file also carries everything else a build driver carries, so it changed in two
   consecutive pull requests and the key changed with it. A key has to be specific enough to be
   correct **and** stable enough to hit; only the first was checked.
-- `restore-keys: sdl3-<os>-` is the fix, and the property that makes a loose restore safe is the
-  one already argued above: `versionSdl3` reads the restored prefix's own `.pc` and rebuilds where
-  the version misses the pin, so a wrong restore costs a build that was due anyway. Unverified
-  until a `driven` run prints `Kept SDL3`; no saving is claimed here before then.
+- **`restore-keys: sdl3-<os>-` fixed it, and run 235 is the evidence.** Read from that job's log,
+  on `f9e54ad`, 2026-09-12:
+
+  ```
+  11:19:07.307  Cache restored from key: sdl3-Linux-4f98cd632350a0d7…
+  11:22:06.233  Kept SDL3 3.2.30, already reported by pkg-config
+  11:22:06.236  Cloning into 'deps/imgui'...
+  11:24:22.091  Cache saved with key:    sdl3-Linux-75e9e2df1e0287f4…
+  ```
+
+  It **restored from a different key than it saved under**, which is the whole mechanism: pull
+  requests 136 and 137 moved `tools/build.nim`, so the exact key missed exactly as before, the
+  prefix matched an older entry, and `versionSdl3` read the restored `.pc` and returned early.
+  The SDL3 phase runs in **about 20 ms** against 55.8 s built, at a restore cost of roughly 1 s in
+  the cache step, and the job logs **zero** `Building C object` lines against roughly a thousand
+  in run 226.
+- **No whole-job figure is quoted, and that is deliberate.** Run 226 took 290 s with SDL3 built and
+  run 235 took 314 s with it kept, but 136 and 137 added a menu and a *scene filled to capacity*
+  driven run that alone costs 86 s. Those two numbers measure different work, and subtracting them
+  would put a false saving in this file where a false prediction used to be. The phase figure above
+  is the pair; the job figure is not one.
 - Cost: most runs stop exercising the SDL3 build. Every cache here trades that, and the pin is a
   commit rather than a mutable tag now (repository issue 126, answered by pull request 131), so
   what the cache hides is a rebuild rather than an upstream that moved underneath it.
