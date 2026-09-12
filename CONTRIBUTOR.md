@@ -46,6 +46,30 @@ Two reads, before any other work.
   the one thing that tells you what is waiting — stops being worth reading.
 
 
+### Reading the queue without spending the repository's budget
+
+Those two reads are the most expensive thing most sessions do, and the budget they spend is not
+yours. **Every delegate posts as one GitHub account**, so its hourly allowance is shared by every
+session running — a curator listing forty issues with their bodies takes that allowance from the
+contributor about to close one.
+
+It runs out. On 2026-09-12 it ran out mid-session and stayed out for over twenty minutes, leaving
+an issue commented but not closed.
+
+- **Ask git first.** Whether a pull request merged, what a change touched, whether your branch is
+  behind, what the stamp is — `git fetch origin main` then `git log`, `git diff --stat`, `grep`.
+  None of it costs the allowance. Reach for the API only for what lives on GitHub alone: issue
+  state, comments, labels, a run's conclusion.
+- **Read the queue once, and small.** Five to ten per page, naming only the fields you will read.
+  Asking for `body` on a list you are scanning for titles fetches every word of every one.
+- **Do not re-read.** A session that has listed the issues has the list; reading it again to check
+  something you were told is the cheapest kind of waste.
+- **Issues and pull requests draw on a different allowance from workflow runs**, so one being
+  exhausted does not mean the other is. If issue reads are failing, run and log reads may be fine.
+- **On a refusal, wait and retry — never hammer.** Three attempts in a minute spend what a single
+  attempt ten minutes later would not. If it will not clear before you hand over, the item stays
+  unticked on the list above with its reason, which is exactly what that list is for.
+
 ## Carry the unchecked list in the open
 
 Seven rules in this document hold by reading and nothing else. Each is invisible until after it

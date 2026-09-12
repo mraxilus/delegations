@@ -134,6 +134,27 @@ watch only their own merge. Read the run anyway: the watcher reports a run that 
 run cancelled, still queued, or never triggered concludes nothing. A red `main` is the first work
 of the session, whether an issue names it or you found it yourself.
 
+### Reading the queue without spending the repository's budget
+
+Those reads are the most expensive thing a curator session does, and a curator does the widest
+ones — every open issue, every pull request, comments and all. **The budget is not yours.** Every
+delegate posts as one GitHub account, so one hourly allowance covers every session running, and a
+listing of forty issues with their bodies is taken from the contributor about to close one.
+
+Measured on 2026-09-12: it ran out mid-session and stayed out beyond twenty minutes, leaving an
+issue commented and not closed and a pull request green and still draft. Issue and pull-request
+calls draw on a different allowance from workflow-run calls, and only the first was exhausted —
+run and log reads kept working throughout, which is how the cause was found.
+
+- **Ask git first**, and most session-start questions are git's: whether a pull request merged,
+  what a change touched, whether a branch is behind, what the stamp is. `git fetch origin main`
+  costs nothing against the allowance. Reach for the API only for what lives on GitHub alone.
+- **Read the queue once, and small** — five to ten per page, naming only the fields you will read.
+- **On a refusal, wait and retry, never hammer**, and if it will not clear before you hand over,
+  the item stays unticked on the list with its reason.
+
+`CONTRIBUTOR.md` carries the same guidance, and a change to either belongs in both.
+
 ## Duties
 
 1. **Rules change.** `CONSTITUTION.md`, `STYLE.md` and `CONTRIBUTOR.md` are stamped into every
