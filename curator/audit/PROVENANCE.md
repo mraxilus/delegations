@@ -371,6 +371,14 @@ than search, label as a hardcoded literal — and its schedule idiom is `check.y
   that scope gets 403 on its first firing — the exact failure `checkScopes` exists to prevent, and
   it could not see it because no workflow had used `gh pr` before. The gap was found by writing
   the first such workflow, not by reading the check.
+- **`watch.yml` watches it, and that was the condition for merging it.** A sweep cannot be driven
+  before it lands — a scheduled workflow runs only from the default branch — so its first real run
+  is unattended. A sweep that quietly stopped running while both documents say a runner holds half
+  of three rules is worse than no sweep, so a red `sweep` opens an issue exactly as a red `check`
+  does. Its marker carries the workflow's own name, `watch:red:<name>`, rather than the single
+  literal it used before: sharing one marker would let somebody closing a red `check` silently
+  dismiss a broken sweep, which is the failure being closed. Driven through a stub first — a red
+  `sweep` beside an open `check` issue opens its own rather than commenting on that one.
 - Cost: about 30 runner-minutes a month. Public repositories draw on no allowance, so this is free
   today; it stops being free if this repository goes private again, where 1,909 of 2,000 free
   minutes were once measured used.
