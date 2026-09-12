@@ -104,7 +104,7 @@ src/rga_visualiser/           geometry and model, reachable from either front-en
                               objects, euclid, boundary, mesh, tessellate, camera,
                               scene, selection, picking, marker, framing, interaction,
                               storyboard, orrery, neighbourhood, starfield, history,
-                              format, help, message, timings, ramp, lighting
+                              format, help, message, wording, timings, ramp, lighting
 src/…/projections.nim         projections pga withdrew; deleted when they return
 src/desktop/main.nim          desktop entry point: window, event loop, headless runs
 src/desktop/sdl3.nim opengl.nim  bindings to the window system and to GL
