@@ -459,6 +459,17 @@ what was rejected, what it costs. There is no `docs/adr/`.
   rather than rebuild it to see the change. Naming a page is not evidence about a page. Where
   a page cannot be republished before review, say which pages would change and why they are
   not up.
+- **End by showing the thing, not only by counting it.** A figure is *about* a change; what the
+  Architect reads first is the change. Where it is visual, a screenshot of the end product, built
+  from the state you are asking to merge rather than from a working tree mid-change — and where it
+  alters something, one before and one after, since one picture proves a thing exists and two
+  prove it changed. Where it is not visual, a worked example in the same spirit: the command and
+  its real output, the refusal a check now gives quoted, the line whose meaning changed. Never a
+  description of what would happen. Where there is genuinely nothing to show — a cache key, a
+  stamp — write that, and why. **A screenshot cannot reach a pull request**: images attach only by
+  hand in the web UI and Article XI.3 keeps binaries out of the tree, so it goes in the message
+  that says the work is ready, and the pull request carries the figures. The Architect still
+  verifies; this is the ten-second read that happens first.
 - **Open it as a draft, and mark it ready only when it is.** Ready means CI green on the
   runner, every review comment answered, and nothing you still intend to change. A draft
   says "not yet" in the one place the Architect looks; an open pull request says "merge me",
@@ -487,6 +498,11 @@ tell the Architect the work is ready, every page your change republished is link
 there, so opening one costs a click rather than a trip through the pull request to find it.
 The same URL belongs in both places; the pull request is the record, the message is what gets
 read first.
+
+**Show the change in that same message.** A screenshot where it is visual, a worked example where
+it is not, and a sentence saying why there is nothing to show where there is not. GitHub takes no
+image from an API, so this message is the only channel a picture has, and a change that ends
+without one ends with nobody having seen it.
 
 ## Provenance guide
 
@@ -545,6 +561,10 @@ design document.
 - **A rejected alternative earns one line, and only if it is still a trap.** "Not
   camera-scaled, which visibly resizes a plane as the camera orbits" belongs; the story of
   how you found that does not.
+- **A picture shown and not kept still names how to remake it.** A screenshot lives in the
+  conversation rather than in the tree, so the record carries the command that took it —
+  `--screenshot:PATH --frames:N` after a `--drive-*` run, the `page.screenshot` beside a check — and
+  a reader a month later remakes the picture rather than wondering what was seen.
 - **Update it in the same delivery as the change**, in its own commit, so the record never
   lags the code.
 
