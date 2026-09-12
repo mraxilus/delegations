@@ -28,7 +28,7 @@
 #   Driver version builds koch and runs whole-tree checks; it is `curator/audit`'s pin,
 #   never second pin, and `toolchain.nim` fails audit when this file disagrees with it.
 #   Every project pins its own compiler in its nimble file, since no single version serves
-#   all: `pga` needs 2.2.6 or later, `dance_ontology` crashes compiler on 2.2.8 and later.
+#   all: `rga_visualiser` pins compiler commit no release carries, so one version cannot.
 #   Pin is release version, installed by setup action, or full commit, which no action
 #   installs: those are built from source here and cached by commit, so bootstrap is paid
 #   once. Commit pin exists for project following dependency onto devel; driver pin never
