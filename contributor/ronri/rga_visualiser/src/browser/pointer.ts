@@ -506,7 +506,9 @@ function refreshSelectionMenu(position_local: PointLocal | null) {
   menu_selection_apply.style.display = (n === 1 || n === 2) ? '' : 'none'; // 3+: no apply --
     // this menu has no operand pickers, so it cannot say which two of three it would use.
   menu_selection_edit.style.display = n === 1 ? '' : 'none'; // One object has one editor.
-  menu_selection_hide.textContent = nimSelectionAllHidden() ? 'show' : 'hide';
+  menu_selection_hide.textContent = visibilityLabel(
+    !nimSelectionAllHidden(), Wording.NamePickHide, Wording.NamePickShow,
+  );
   closeSelectionMenuOp(); // Any fresh selection change resets picker closed.
   if (position_local) {
     positionSelectionMenuAt(position_local);

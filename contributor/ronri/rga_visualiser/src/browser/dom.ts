@@ -54,3 +54,23 @@ function flatAt(flat: ArrayLike<number>, index: number): number {
 function pointAt(points: Array<[number, number]>, index: number): [number, number] {
   return points[index] ?? [0, 0];
 }
+
+
+// Build `<label>` wearing words catalogue holds for key.
+//   Markup's own labels are filled at build time by `@WORD:` token, but rows are built
+//   here, after build, so theirs are set from same catalogue at run time instead.
+//   Element rather than markup string: `innerHTML` with word in it is second home for that
+//   word, which is exactly what catalogue exists to prevent.
+function labelElement(key: Wording): HTMLLabelElement {
+  const label = document.createElement('label');
+  label.textContent = nimWording(key);
+  return label;
+}
+
+
+// Read word button flipping visibility wears, from pair of keys caller names.
+//   Takes its pair rather than fixing one: object row and menu over selection each name
+//   their own button, and both flip same way. Condition itself is written once.
+function visibilityLabel(is_visible: boolean, hide: Wording, show: Wording): string {
+  return nimWording(is_visible ? hide : show);
+}

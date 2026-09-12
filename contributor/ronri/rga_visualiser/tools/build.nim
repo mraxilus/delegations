@@ -43,6 +43,11 @@
 
 import std/[os, osproc, strutils, tables]
 
+# Catalogue itself, not text of it: keys page names and words page shows are read from
+#   compiled enum and table, so key renamed there and not re-derived here fails to
+#   compile rather than to match (Article II.9).
+import ../src/rga_visualiser/wording
+
 
 const
   BUILD = "build"
@@ -63,11 +68,9 @@ const
     ##   Under `build/` because it is derived rather than declared, and because it holds paths
     ##   into one machine's own store.
   PATH_BRIDGE_NIM = "src" / "browser" / "bridge.nim"
-  PATH_WORDING_NIM = "src" / "rga_visualiser" / "wording.nim"
+    ## Bridge whose own `exportc` signatures `declare` reads.
   PATH_PANEL_NIM = "src" / "desktop" / "panel.nim"
     ## Panel, swept for shown text written where it is drawn.
-    ## Catalogue of shown text, whose keys page names rather than copies.
-    ## Bridge compiled through JS backend, and source `declare` reads.
   PATH_BRIDGE_JS = BUILD_BROWSER / "bridge.js"
     ## Compiled bridge, first script on page.
   PATH_DECLARATIONS = BUILD / "bridge.d.ts"
@@ -138,6 +141,12 @@ const
     ## Token every script replaces, so committed shell stays whole document.
   TOKEN_EMBED = "@EMBED:"
     ## Opening of token one face replaces.
+  TOKEN_WORD = "@WORD:"
+    ## Opening of token one catalogue entry replaces, closed by `@`.
+    ##   Page's own labels sit in markup rather than in script, so they cannot be assigned at
+    ##   load without emptying every element and inventing id for it. Filled here instead:
+    ##   reader meets real words with first paint, catalogue stays their only home, and page
+    ##   with scripts refused still reads.
   MARKER_GATE = "// Not Nim because generated from Nim: declarations of bridge's exports,\n" &
     "//   derived so no second copy of signature can drift from it (Article II.9).\n"
     ## Header derived declarations carry, since `.ts` is gated kind.
@@ -335,25 +344,12 @@ proc declare() =
   #   `declare const enum` and not plain enum: ambient const enum is inlined at every use
   #   site, so page carries numbers rather than lookup object, and nothing new joins
   #   `SCRIPTS`. Both configurations already read this file.
-  var keys: seq[string]
-  block:
-    var is_inside = false
-    for line in readFile(PATH_WORDING_NIM).splitLines:
-      if line.startsWith("type Wording* = enum"):
-        is_inside = true
-        continue
-      if not is_inside: continue
-      let trimmed = line.strip
-      if trimmed.len == 0: break
-      if trimmed.startsWith("##"): continue
-      if not line.startsWith(" "): break
-      for name in trimmed.split(','):
-        let key = name.strip
-        if key.len > 0: keys.add key
-  if keys.len == 0:
-    raise newException(OSError, "Wording carries no keys; page would have none to name.")
-  var wording = "declare const enum Wording {\n"
-  for i, key in keys: wording.add "  " & key & " = " & $i & ",\n"
+  var
+    keys = 0
+    wording = "declare const enum Wording {\n"
+  for key in Wording:
+    wording.add "  " & $key & " = " & $ord(key) & ",\n"
+    inc keys
   wording.add "}\n"
 
   var records: seq[string]
@@ -371,38 +367,85 @@ proc declare() =
       wording & "\n" & records.join("\n") & "\n" & declarations.join("\n") & "\n",
   )
   echo "Wrote ", PATH_DECLARATIONS, " (", declarations.len, " declarations, ",
-    keys.len, " wording keys)."
+    keys, " wording keys)."
 
 
 
 #[ Commands ]#
 
-const WORDING_BANNED = [
-  (PATH_PANEL_NIM, "gui.tooltip(\""), (PATH_PANEL_NIM, "gui.tooltip(cstring\""),
-  (PATH_SHELL, "title=\""),
+const SHOWING_CALLS = [
+  "gui.tooltip(", "gui.text(", "gui.textTinted(", "gui.button(", "gui.buttonSmall(",
+  "gui.buttonWide(", "gui.buttonToggle(", "gui.buttonSmallWidth(", "gui.checkbox(",
+  "gui.header(", "gui.separatorText(", "gui.menuBegin(", "gui.windowBegin(", "fieldLabel(",
 ]
-  ## Reject shown text written where it is drawn rather than named from catalogue.
-  ##   One per file kind that can hold one; browser scripts are swept separately, since
-  ##   `.title` is assigned rather than passed.
+  ## Panel calls that put text in front of reader, and so may not be handed literal.
+  ##   Every other `gui` call takes hidden id (`##name`) rather than words; those are not
+  ##   swept, since id is not shown and has nothing to drift from.
+
+const SHOWING_WRITES = [".title = ", ".textContent = ", ".innerHTML = "]
+  ## Browser properties that put text in front of reader, swept same way.
+  ##   Assigned rather than passed, so they are matched as writes.
+
+proc isLiteralShown(line, call: string): bool =
+  ## Report whether call on this line hands literal text rather than named key.
+  ##   Empty label and hidden ImGui id (`##name`) are not shown text: one draws nothing,
+  ##   other is identity ImGui keys widget by. Everything else quoted here is words.
+  let opened = line.find(call)
+  if opened < 0: return false
+  var rest = line[opened + call.len .. ^1].strip
+  if rest.startsWith("cstring"): rest = rest[7 .. ^1].strip
+  if not (rest.startsWith("\"") or rest.startsWith("'")): return false
+  let quoted = rest[1 .. ^1]
+  let closed = quoted.find(rest[0])
+  if closed < 0: return false
+  let text = quoted[0 ..< closed]
+  text.len > 0 and not text.startsWith("##")
+
+proc namesKey(text, key: string): bool =
+  ## Report whether text names this key rather than one key's name merely starting another's.
+  ##   `NameMenuSave` reads inside `NameMenuSaveScene`, so plain substring would count one
+  ##   key as use of other and let unused row through.
+  var at = text.find(key)
+  while at >= 0:
+    let after = at + key.len
+    if after >= text.len or not (text[after].isAlphaNumeric or text[after] == '_'): return true
+    at = text.find(key, after)
+  false
+
 
 proc checkWording() =
   ## Refuse shown text written anywhere but `wording.nim`.
-  ##   Catalogue is only useful while it is whole: one tooltip left as literal beside it is
+  ##   Catalogue is only useful while it is whole: one label left as literal beside it is
   ##   exactly copy that drifted before (repository issue 145), and nothing else can see it.
-  ##   Named constant is allowed and quoted text is not: constant has one home, literal has
-  ##   as many as it is typed in.
+  ##   Named key is allowed and quoted text is not: key stands for one entry, literal is
+  ##   its own home and answers to nothing.
   var found: seq[string]
-  for pair in WORDING_BANNED:
-    let (path, banned) = pair
+  block:
     # Bound first: bare `splitLines` in `for` resolves to iterator, which yields no index.
-    let lines = readFile(path).splitLines
+    let lines = readFile(PATH_PANEL_NIM).splitLines
     for i, line in lines:
-      if banned in line: found.add path & ":" & $(i + 1) & ": " & line.strip
+      for call in SHOWING_CALLS:
+        if isLiteralShown(line, call):
+          found.add PATH_PANEL_NIM & ":" & $(i + 1) & ": " & line.strip
+          break
+  block:
+    let lines = readFile(PATH_SHELL).splitLines
+    for i, line in lines:
+      if "title=\"" in line: found.add PATH_SHELL & ":" & $(i + 1) & ": " & line.strip
   for path in walkFiles("src" / "browser" / "*.ts"):
     let lines = readFile(path).splitLines
     for i, line in lines:
-      if ".title = '" in line or ".title = \"" in line:
-        found.add path & ":" & $(i + 1) & ": " & line.strip
+      for write in SHOWING_WRITES:
+        if isLiteralShown(line, write):
+          found.add path & ":" & $(i + 1) & ": " & line.strip
+          break
+  # Catalogue may not grow rows nothing shows either. Entry no front-end names is words
+  #   written for nobody, and next reader cannot tell it from one still in use.
+  var shown = readFile(PATH_PANEL_NIM) & readFile(PATH_SHELL)
+  for path in walkFiles("src" / "browser" / "*.ts"): shown.add readFile(path)
+  for key in Wording:
+    if not shown.namesKey($key):
+      found.add "wording.nim: `" & $key & "` is shown by neither front-end"
   if found.len > 0:
     raise newException(
       OSError,
@@ -542,6 +585,28 @@ proc browser() =
   run("npx", ["playwright", "install", "chromium"])
 
 
+proc worded(page: string): string =
+  ## Report page with every `@WORD:<Key>@` replaced by what catalogue holds for that key.
+  ##   Raises on key catalogue does not carry, as missing `@SCRIPT@` raises: token naming
+  ##   nothing would otherwise ship to reader as its own text.
+  ##   Whole document is swept rather than attribute or element kind, since token is written
+  ##   wherever page shows words.
+  result = page
+  for key in Wording:
+    result = result.replace(TOKEN_WORD & $key & "@", $wordingText(key))
+  var unfilled: seq[string]
+  # Bound first: bare `splitLines` in `for` resolves to iterator, which yields no index.
+  let lines = result.splitLines
+  for i, line in lines:
+    if TOKEN_WORD in line: unfilled.add $(i + 1) & ": " & line.strip
+  if unfilled.len > 0:
+    raise newException(
+      OSError,
+      "Shell names wording catalogue does not carry, at " & PATH_SHELL & ":\n  " &
+        unfilled.join("\n  "),
+    )
+
+
 proc web() =
   ## Assemble whole page: declarations, type-check, bridge, scripts, faces, markup.
   ##   Fails with reason rather than emitting broken page: absent face renders as box and
@@ -578,6 +643,8 @@ proc web() =
     checkFace(face, copied)
     run("bash", ["-c", "base64 -w0 " & quoteShell(path) & " > " & quoteShell(path & ".b64")])
     page = page.replace(token, "data:font/woff2;base64," & readFile(path & ".b64").strip)
+
+  page = page.worded
 
   if TOKEN_SCRIPT notin page:
     raise newException(OSError, "Shell carries no `" & TOKEN_SCRIPT & "`; nothing to fill.")
