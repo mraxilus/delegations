@@ -177,15 +177,18 @@ proc capsule(c: var Couple; b: eng.BodyId; who: Body; arm: Arm; mark: Mark;
   sd.density = density.cfloat
   sd.filter.groupIndex = group
   sd.filter.categoryBits = (if mark == Mark.Trunk: TRUNK_BIT else: ARM_BIT[who])
-  sd.filter.maskBits = EVERY
-  when defined(leadYields):
-    # Architect: lead always gets his own arm out of way, so follow's arm never
-    # has to push it.  Model has no way for lead to move deliberately, so choice
-    # is between arms blocking each other -- which lead would not allow -- and
-    # arms passing.  Passing is nearer what couple achieve.  Trunks still stop
-    # arms, so `Through` is untouched; only arm against other dancer's arm goes.
-    if mark != Mark.Trunk:
-      sd.filter.maskBits = EVERY and not ARM_BIT[other(who)]
+  # Architect: lead always gets his own arm out of way, so follow's elbow never
+  # has to push it.  Model has no way for lead to move deliberately, so choice is
+  # between arms blocking each other -- which lead would not allow -- and arms
+  # passing.  Passing is nearer what couple achieve, and is written as what it is:
+  # simplification standing in for lead who moves.
+  #   Trunks still stop arms either way, so `Through` is untouched.  Only arm
+  #     against *other* dancer's arm goes; dancer's own two arms still meet.
+  #   Measured: cross-name chain over crown goes from 1.22 of turn to free past
+  #     one and half, which is swan, and same-name from 0.70 to 0.86.  `L-r` high
+  #     loses four hundredths, which is only figure that falls.
+  sd.filter.maskBits = (if mark == Mark.Trunk: EVERY
+                        else: EVERY and not ARM_BIT[other(who)])
   discard eng.createCapsule(b, addr sd, addr cap)
   c.shapes.add Shape(body: b, who: who, arm: arm, mark: mark, a: a, z: z, r: r)
 
