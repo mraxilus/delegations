@@ -106,19 +106,26 @@ proc answers(): OrderedTable[string, bool] =
   ## Every card sim can be asked about, keyed as page keys its own pictures.
   result = initOrderedTable[string, bool]()
 
-  # `A`. Standard diagram: eight frames, each at rest and at half turn from it.
-  #   A17 is one frame drawn turned other way, and is asked other way about.
+  # `A`. Standard diagram: eight frames, each drawn at two facings.
+  #   `twist` names facing *drawn* -- nought face to face, one pillion lead --
+  #     and not half turns from frame's own rest, which is what this asked at
+  #     first.  Frame that rests pillion is therefore at rest at twist of one,
+  #     and half turn from it at nought: A10 and A12 read "at rest" for that
+  #     reason, and asking them for half turn called them unreachable.
+  #   A17 is last frame drawn turned other way about, and is asked so.
+  func amountFor(target: Frame; twist: int): float =
+    if (twist == 0) == restsFacing(target): 0.0 else: 0.5
   for i, target in FRAMES:
     let
       links = linksOf(holdsOf(target))
       away = not restsFacing(target)
       walk = carried(links, away, Manner.FollowAxis, most = 0.8)
     for twist in [0, 1]:
-      result[&"A{i * 2 + twist + 1}"] = walk.reaches(twist.float / 2.0)
+      result[&"A{i * 2 + twist + 1}"] = walk.reaches(amountFor(target, twist))
   result["A17"] = block:
     let target = FRAMES[^1]
     carried(linksOf(holdsOf(target)), not restsFacing(target),
-            Manner.FollowAxis, most = 0.8).reaches(-0.5)
+            Manner.FollowAxis, most = 0.8).reaches(-amountFor(target, 1))
 
   # `B` and `E`: four single-hand holds, four manners, four quarters.
   for c, single in SINGLES:
