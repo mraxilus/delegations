@@ -184,7 +184,16 @@ proc answers(): OrderedTable[string, bool] =
         walk = carried(links, away, manner, most = 1.6)
       result[&"{key}c_{tag}"] = walk.reaches(sense * STEPS[^1])
       for i in 0 ..< STEPS.len - 1:
-        result[&"{key}w_{tag}_{i}"] = walk.reaches(sense * STEPS[i + 1])
+        # Edge is walked entire, so what it asks of couple is its *furthest*
+        # wound end, kept with its own sign, and not where it happens to
+        # finish.  Chain runs from swan in to frame and out to other swan, so
+        # magnitude falls then rises: asking destination alone made first edge,
+        # which leaves far swan, read as easy as its near end, while last edge,
+        # which arrives at other swan, read as hard as its far one.  Architect
+        # saw it at once -- they are same edge mirrored.
+        let far = (if abs(STEPS[i]) > abs(STEPS[i + 1]): STEPS[i]
+                   else: STEPS[i + 1])
+        result[&"{key}w_{tag}_{i}"] = walk.reaches(sense * far)
 
 
 when isMainModule:
