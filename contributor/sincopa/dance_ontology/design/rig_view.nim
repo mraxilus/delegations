@@ -166,8 +166,8 @@ proc paint() =
       at: Spot = (num(look[k]), num(look[k + 1]), 0.0)
       fore = (x: num(look[k + 2]), y: num(look[k + 3]))
       side = (x: -fore.y, y: fore.x)
-    ctx.strokeStyle = styleOf("--rule-strong").toJs
-    ctx.lineWidth = 2.0.toJs
+    ctx.strokeStyle = styleOf("--ink").toJs
+    ctx.lineWidth = 4.0.toJs
     # Chevron on floor, pointing where they look.
     let nose: Spot = (at.x + fore.x * 0.30, at.y + fore.y * 0.30, 0.0)
     for wing in [-1.0, 1.0]:
@@ -181,7 +181,7 @@ proc paint() =
     # And same again at shoulder height, where figures actually are.
     let
       a: Spot = (at.x, at.y, 1.40)
-      b: Spot = (at.x + fore.x * 0.34, at.y + fore.y * 0.34, 1.40)
+      b: Spot = (at.x + fore.x * 0.46, at.y + fore.y * 0.46, 1.40)
       (pa, pb) = (seen(a), seen(b))
     discard ctx.beginPath()
     discard ctx.moveTo(cx + pa.x * scale, cy + pa.y * scale)
