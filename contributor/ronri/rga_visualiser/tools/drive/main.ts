@@ -39,10 +39,12 @@ import {
   driveUndoDrawn,
 } from './loaded';
 import {
-  driveEditFromMenu, driveHeaderPinned, driveObjectsList, drivePerFrame, driveReconcile,
+  driveEditFromMenu, driveHeaderBanded, driveHeaderPinned, driveObjectsList, drivePerFrame,
+  driveReconcile,
   driveTickCadence, driveTickWrites,
 } from './objects';
 import { driveComet } from './comet';
+import { driveStyleDeclared } from './style';
 import { drivePhaseSums, driveTree } from './diagnostics';
 import { driveAxis, driveAxisGlide, driveCurve, driveScaleSwitch } from './exceedance';
 import { driveSums, driveTint } from './ramp';
@@ -120,6 +122,10 @@ async function main(): Promise<void> {
     null, { timeout: 60000, polling: 'raf' },
   );
   await focusCanvas(page);
+
+  // Stylesheet first, before anything reads what it drew: declaration browser dropped is
+  //   layout nobody wrote, and every check below is against page it styled.
+  await driveStyleDeclared(page);
 
   // Reader every pixel check leans on, checked before any of them lean on it.
   await driveBlankRefused(page);
@@ -203,6 +209,7 @@ async function main(): Promise<void> {
   await driveLoadedAccounting(page, errors_page);
   await driveObjectsList(page, objects_largest);
   await driveHeaderPinned(page);
+  await driveHeaderBanded(page);
   await driveEditFromMenu(page);
   await driveReconcile(page);
   await driveTickWrites(page);

@@ -1,4 +1,4 @@
-<title>RGA visualiser — browser</title>
+<title>@WORD:NameTitle@ — browser</title>
 <style>
   :root {
     --bg: #101318;
@@ -108,8 +108,10 @@
     overscroll-behavior: none;
     font-family: var(--sans);
     /* **Commit Mono splits its ligatures across two switches, and page needs both.**
-       Most of them ride on `calt`, which browsers apply unasked -- `&&`, `||`, `::`, `...`,
-       `/* */`, `#{` and their kin all draw joined with nothing set. Arrows and comparisons
+       Most of them ride on `calt`, which browsers apply unasked -- `&&`, `||`, `::`, `...`
+       and their kin all draw joined with nothing set. Block-comment delimiters ligate too,
+       and are named rather than quoted here: quoting closing one *inside* CSS comment ends
+       that comment on spot, and rest of this prose then parses as CSS. Arrows and comparisons
        do not: `=>`, `->`, `<-`, `<=`, `>=`, `!=` and `===` come from author's own opt-in
        sets, `ss01` for less-and-equal and `ss02` for arrows, and page drew them as separate
        glyphs until this line.
@@ -206,7 +208,7 @@
     right: max(14px, env(safe-area-inset-right));
     display: flex;
     justify-content: space-between;
-    align-objects: flex-start;
+    align-items: flex-start;
     gap: 10px;
     pointer-events: none;
   }
@@ -218,22 +220,39 @@
     font: inherit;
     pointer-events: auto;
     display: flex;
-    align-objects: center;
+    align-items: center;
     gap: 8px;
     background: var(--surface);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--border);
     border-radius: 999px;
-    padding: 7px 14px 7px 10px;
+    padding: 7px 14px;
   }
-  .brand .mark {
-    width: 9px; height: 9px;
-    border-radius: 2px;
-    background: var(--accent);
-    transform: rotate(45deg);
-    flex: none;
+  /* Menu chip wears `.brand`'s pill but carries one glyph, not mark and name, so it says
+     its own metrics rather than inheriting ones tuned for that pair. Left as inherited it
+     drew `☰` at browser's own 16px default with `line-height: normal` -- 15px glyph in
+     27px box, pushed off centre by padding 4px deeper on one side than other -- beside
+     chips set at 11px on `line-height: 1`. Glyph is three hairlines; at that size against
+     blurred ground they wash out, which is what made it unreadable.
+     Square, so pill reads as one chip rather than as pill with word missing.
+     Same metrics `#button-drawer` wears below its own breakpoint; two rules rather than
+     one because this holds at every width and that holds only under media query. Change
+     to one is change to both. */
+  #button-menu {
+    padding: 0;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    font-size: 17px;
+    line-height: 1;
   }
+
+  /* Drawer's own mark, shown in place of name where row is too narrow to carry it. Hidden
+     otherwise, so button reads as product's name at every width that fits one. */
+  .brand .glyph { display: none; }
+
   .brand .name {
     font-family: var(--serif);
     font-size: 12.5px;
@@ -340,7 +359,7 @@
     height: 44px;
     border-radius: 999px;
     display: flex;
-    align-objects: center;
+    align-items: center;
     justify-content: center;
     pointer-events: auto;
     cursor: pointer;
@@ -535,7 +554,7 @@
     display: flex;
     flex-direction: column;
     gap: 7px;
-    align-objects: stretch;
+    align-items: stretch;
   }
   .toast-action {
     display: inline-block;
@@ -567,7 +586,7 @@
   .toast-hint {
     font-family: var(--sans);
     font-size: 11px;
-    color: var(--ink-dim);
+    color: var(--ink-muted);
   }
   /* What each delivery route answered. Recessive and monospaced: it is evidence to read
      when something did not work, never message itself. */
@@ -575,13 +594,13 @@
     font-family: var(--mono);
     font-size: 10px;
     line-height: 15px;
-    color: var(--ink-dim);
+    color: var(--ink-faint);
     word-break: break-word;
   }
   .toast-dismiss {
     font-family: var(--sans);
     font-size: 11px;
-    color: var(--ink-dim);
+    color: var(--ink-muted);
     background: none;
     border: none;
     padding: 2px;
@@ -611,23 +630,50 @@
     transform: translateX(-100%);
     transition: transform var(--anim) var(--ease);
     z-index: 4;
+    /* Top clearance sits here, not on scroller. Inside scroller it is part of what scrolls:
+       rows ride up through it in plain sight, above heading pinned below it, over drawer's
+       own translucent ground and between chips covering only part of that band.
+       Sticky offsets are inset by scroller's padding, so heading pinned at `top: 0` lands at
+       scroller's *content* edge and can never cover padding above it -- band is unreachable
+       from inside. Held out here, scroller begins where content begins, heading pins flush
+       to its top edge, and there is no band left to bleed through.
+       Bottom padding stays on scroller: nothing pins at bottom, so it makes no such band. */
+    padding-top: max(14px, env(safe-area-inset-top));
   }
   .drawer.open { transform: translateX(0); }
   .drawer-scroll {
     flex: 1;
     overflow-y: auto;
-    padding: max(14px, env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom)) 14px;
+    padding: 0 14px calc(14px + env(safe-area-inset-bottom)) 14px;
   }
 
-  @media (max-width: 519px) {
+  @media (max-width: 496px) {
     /* Narrow phones: five chip-row controls (undo, redo, axes, grid, menu) plus
-       brand chip's full "RGA visualiser" label don't fit on one line -- drop label,
-       keeping just mark, rather than letting row wrap or overflow.
-       519, measured rather than guessed: row is swept pixel at time and 520 is
-       narrowest viewport where it stops overflowing. This was 480 and wrong by 39
-       pixels, so every width from 481 to 519 overflowed -- with old label, by 50. */
+       brand chip's full name don't fit on one line -- drop name for drawer's own mark,
+       rather than letting row wrap or overflow. Button stays control either way: it was
+       left drawing nothing at all once decorative mark it used to keep came off.
+       496, measured rather than guessed: row is swept pixel at time and 497 is narrowest
+       viewport where full name stops overflowing. Was 519 while brand carried that mark
+       and its gap, 23 pixels this no longer spends.
+       Swept against build where this very rule was off, which first sweep was not: reading
+       it gave, 397, was width row fits at with name *already* dropped by rule it was
+       measuring, and every width from 397 to 496 would have overflowed by up to 100.
+       Below about 380 row is over its budget even with name dropped -- 29 pixels at 360 --
+       and flex takes that out of these chips, brand included. That is chip row's own
+       budget across five controls, not this rule's, and is raised rather than papered over
+       here. */
     .brand .name { display: none; }
-    .brand { padding: 7px 10px; }
+    .brand .glyph { display: block; }
+    /* Same square chip menu button wears, so two lone glyphs read as one kind of thing. */
+    #button-drawer {
+      padding: 0;
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      font-size: 17px;
+      line-height: 1;
+    }
   }
 
   @media (max-width: 640px) {
@@ -644,44 +690,68 @@
   }
 
   @media (min-width: 641px) {
-    /* Above bottom-sheet breakpoint, drawer is full-height side panel whose
-       own top edge sits directly under chip-row's always-visible controls -- give
-       its content enough top clearance that first section header starts below them
-       instead of running underneath. */
-    .drawer-scroll { padding-top: 62px; }
+    /* Above bottom-sheet breakpoint, drawer is full-height side panel whose own top edge
+       sits directly under chip-row's always-visible controls -- clear them, so first
+       heading starts below rather than running underneath.
+       Literal, not inset-aware: 62 is what chip row occupies, and notch does not move it. */
+    .drawer { padding-top: 62px; }
   }
 
   /* ---- Sections (collapsing headers, matching panel.nim's own structure) ---- */
-  .section { border-bottom: 1px solid var(--border); padding: 10px 0; }
+  /* `relative` for sentinel below, and for nothing else: no `z-index`, so section starts no
+     stacking context and heading's own `z-index: 1` goes on winning over rows. */
+  .section { position: relative; border-bottom: 1px solid var(--border); padding: 10px 0; }
+  /* One pixel marking where heading's own top edge lands, since heading's negative top margin
+     pulls it to section's edge. Watched by `drawer.ts`: when this leaves scrollport upward,
+     heading is pinned, and band it wears is drawn only then.
+     Observer rather than scroll handler, for reason `sizes.ts` gives at length -- read after
+     write lays whole document out inside frame, and this scroller carries thousands of rows. */
+  .section-edge {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    pointer-events: none;
+  }
   .section:last-child { border-bottom: none; }
   .section-header {
     appearance: none;
-    width: 100%;
+    /* Gutter on both sides, not `100%`: negative side margins below pull this band out to
+       drawer's own edges, and percentage width measures content box they shift from, so band
+       came out 28px short and rows scrolled past in strip left bare down its right edge.
+       Written out rather than left to `auto`, which on button is its text's own width. */
+    width: calc(100% + 28px);
     display: flex;
-    align-objects: center;
-    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
     /* Stays put while its own section scrolls past, so collapsing long list never means
        scrolling back to top to find control that collapses it.
        Sticky against `.drawer-scroll`, which is scroller; `.section` sets no overflow,
        which sticky inside it would be clipped by.
        `top: 0` rather than height of chip row, which was first attempt and was wrong:
-       offset is measured from scroller's *content* edge, and that edge is already below
-       those controls, since `.drawer-scroll` carries padding for exactly that. Naming
-       62px again put header 124px down -- one clearance twice -- with gap above it.
-       Solid rather than transparent: rows pass under this band, and transparent one would
-       let them draw through it. Tone is same `--surface-solid` buttons wear, so band reads
-       as part of drawer rather than as second surface -- and desktop's own header is
-       filled bar, so two front-ends read same way (see `panel.layoutObjects`).
+       offset is inset by scroller's own padding, so naming 62px again put header 124px
+       down -- one clearance twice -- with gap above it. Clearance is why that padding is
+       on `.drawer` instead: heading pinned at `0` cannot cover padding of scroller it is
+       pinned inside, and rows rode up through that band in plain sight.
+       Solid rather than transparent *while pinned*: rows pass under this band, and
+       transparent one would let them draw through it. Tone is same `--surface-solid` buttons
+       wear, so band reads as part of drawer rather than as second surface -- and desktop's
+       own header is filled bar, so two front-ends read same way (`panel.layoutObjects`).
+       At rest it carries no fill at all. Band that is always on is slab on every section,
+       announcing covering it is not doing; `.stuck` is put on by `drawer.ts` exactly while
+       rows are passing under. Shadow rather than rule under it, in family popovers already
+       use: line says "edge", shadow says "something passes beneath", and second is true one.
        Negative offsets and padding widen band to drawer's own gutter, so row scrolling
-       under it is covered edge to edge rather than at its sides. */
+       under it is covered edge to edge rather than at its sides. Padding is even, and its
+       left is drawer's own 14, so chevron starts on same column rows below do. */
     position: sticky;
     top: 0;
     z-index: 1;
     margin: -10px -14px 0 -14px;
-    padding: 10px 16px 6px 16px;
-    background: var(--surface-solid);
+    padding: 10px 14px;
+    background: transparent;
     border: none;
     color: var(--ink);
+    transition: background var(--anim) var(--ease), box-shadow var(--anim) var(--ease);
     /* Title role: heading naming section takes serif face, which is only role it is
        drawn in (see type roles above). Weight stays 600, and serif ships at 600 for it:
        serif at 13px against dark ground thins, and heading has to hold its row. */
@@ -691,6 +761,10 @@
     letter-spacing: 0.02em;
     cursor: pointer;
   }
+  .section-header.stuck {
+    background: var(--surface-solid);
+    box-shadow: 0 6px 14px -8px rgba(0, 0, 0, 0.7);
+  }
   /* Solid triangle, not U+25B8's small one: at sizes these rows are read at
      small glyph is speck that reads as punctuation rather than as control. Shared with
      tree rows below, which match these deliberately -- both answer "there is more
@@ -699,6 +773,10 @@
     color: var(--ink-muted);
     transition: transform var(--anim) var(--ease);
     font-size: 10px;
+    /* Own column, ahead of heading, as `.diagnostic-parent`'s is. Chevron trailing line put
+       it against objects count -- `(5038 of 5040)` then mark, reading as part of figure. */
+    width: 14px;
+    flex: none;
   }
   .section.open .section-header .chev { transform: rotate(90deg); }
   .section-body { display: none; padding-top: 10px; }
@@ -706,7 +784,7 @@
 
   /* ---- Generic field controls ---- */
   .field { margin-bottom: 9px; }
-  .field-check { display: flex; align-objects: center; gap: 6px; font-size: 12px;
+  .field-check { display: flex; align-items: center; gap: 6px; font-size: 12px;
     color: var(--ink-muted); cursor: pointer; }
   .field label {
     display: block;
@@ -761,7 +839,7 @@
 
   .check-row {
     display: flex;
-    align-objects: center;
+    align-items: center;
     gap: 7px;
     font-size: 12.5px;
     color: var(--ink);
@@ -774,11 +852,12 @@
   .help-text { font-size: 11px; color: var(--ink-faint); line-height: 1.4; margin: -4px 0 10px; }
 
   /* ---- Objects list ---- */
-  .objects-header { display: flex; align-objects: baseline; justify-content: space-between; }
   /* Count rides inside heading and would inherit its serif; figures belong in interface
-     face with tabular numerals, so it says so rather than inheriting. */
+     face with tabular numerals, so it says so rather than inheriting.
+     Pushed to right edge by its own margin, which is why objects heading needs no wrapper
+     of its own: it was one, carrying inline width, purely to place mark that now leads. */
   .objects-count { font-family: var(--sans); font-size: 11px; color: var(--ink-faint);
-    font-variant-numeric: tabular-nums; }
+    font-variant-numeric: tabular-nums; margin-left: auto; }
   .object-row {
     border-top: 1px solid var(--border);
     padding: 9px 0;
@@ -814,7 +893,7 @@
   .object-row.hidden-object { opacity: 0.45; } /* Dimmed but still legible -- mirrors
     .object-row.selected's own role as lightweight whole-row state cue, just for
     "hidden" instead of "selected"; two are independent and may combine. */
-  .object-top { display: flex; align-objects: center; gap: 8px; }
+  .object-top { display: flex; align-items: center; gap: 8px; }
   .object-top input[type="checkbox"] {
     accent-color: var(--accent);
     width: 15px;
@@ -946,12 +1025,12 @@
     color: var(--ink-faint);
     margin: 2px 0 8px;
     display: flex;
-    align-objects: center;
+    align-items: center;
     flex-wrap: wrap;
     gap: 2px 8px;
     justify-content: space-between;
   }
-  .diagnostic-legend-axis { display: flex; align-objects: center; gap: 6px; }
+  .diagnostic-legend-axis { display: flex; align-items: center; gap: 6px; }
   .diagnostic-legend b { color: var(--ink-muted); font-variant-numeric: tabular-nums; }
   /* Row ramp's own key: ramp itself, as bar. Its gradient is set by `diagnostics`
      from very table rows are tinted out of, so key cannot come to show ramp
@@ -991,7 +1070,7 @@
     border-radius: 12px;
     padding: 6px;
     display: none;
-    align-objects: center;
+    align-items: center;
     gap: 5px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.4);
   }
@@ -1005,7 +1084,7 @@
        upper bound and clip via overflow while doing so, "width: auto" cannot animate at
        all. */
     display: flex;
-    align-objects: center;
+    align-items: center;
     gap: 5px;
     max-width: 0;
     overflow: hidden;
@@ -1083,22 +1162,28 @@
 
 <div class="chip-layer">
   <div class="chip-row">
-    <button class="brand drawer-toggle" id="button-drawer" type="button">
-      <span class="mark" aria-hidden="true"></span>
-      <span class="name">RGA visualiser</span>
+    <!-- Named outright, not by its own text: below breakpoint name is hidden and mark
+         beside it is decoration, which left button with no accessible name at all. -->
+    <button class="brand drawer-toggle" id="button-drawer" type="button"
+      aria-label="@WORD:NameTitle@">
+      <span class="glyph" aria-hidden="true">@WORD:NameChipDrawer@</span>
+      <span class="name">@WORD:NameTitle@</span>
     </button>
     <div style="display:flex; gap:8px; pointer-events:auto;">
       <div class="action-group">
-        <button class="button" id="button-add" type="button" aria-label="add object">add</button>
-        <button class="button" id="button-undo" type="button" aria-label="undo">undo</button>
-        <button class="button" id="button-redo" type="button" aria-label="redo">redo</button>
+        <button class="button" id="button-add" type="button" aria-label="add object"
+        >@WORD:NameChipAdd@</button>
+        <button class="button" id="button-undo" type="button" aria-label="undo"
+        >@WORD:NameChipUndo@</button>
+        <button class="button" id="button-redo" type="button" aria-label="redo"
+        >@WORD:NameChipRedo@</button>
       </div>
       <div class="toggles">
-        <button id="toggle-axes" class="on" type="button">axes</button>
-        <button id="toggle-grid" class="on" type="button">grid</button>
+        <button id="toggle-axes" class="on" type="button">@WORD:NameChipAxes@</button>
+        <button id="toggle-grid" class="on" type="button">@WORD:NameChipGrid@</button>
       </div>
       <button class="brand" id="button-menu" type="button" aria-label="menu">
-        <span aria-hidden="true">&#9776;</span>
+        <span aria-hidden="true">@WORD:NameChipMenu@</span>
       </button>
     </div>
     <input type="file" id="file-load-scene" accept=".rgascene" style="display:none;">
@@ -1118,7 +1203,7 @@
 </div>
 
 <button class="help-open" id="button-help" type="button" aria-label="help" aria-expanded="false">
-  <span aria-hidden="true">?</span>
+  <span aria-hidden="true">@WORD:NameChipHelp@</span>
 </button>
 <div class="help-panel" id="help-panel" role="dialog" aria-label="help">
   <button class="help-close" id="help-close" type="button" aria-label="close help">×</button>
@@ -1128,31 +1213,31 @@
 </div>
 
 <div class="top-menu" id="top-menu">
-  <div class="top-menu-title">save</div>
+  <div class="top-menu-title">@WORD:NameMenuSave@</div>
   <div class="top-menu-group">
     <button
       class="button"
       id="button-save-scene"
       type="button"
-    >scene</button>
+    >@WORD:NameMenuSaveScene@</button>
     <button
       class="button"
       id="button-export-png"
       type="button"
-    >image</button>
+    >@WORD:NameMenuSaveImage@</button>
   </div>
-  <div class="top-menu-title">load</div>
+  <div class="top-menu-title">@WORD:NameMenuLoad@</div>
   <div class="top-menu-group">
     <button
       class="button"
       id="button-load-scene"
       type="button"
-    >scene</button>
+    >@WORD:NameMenuLoadScene@</button>
   </div>
   <!-- One button per size arrangement comes in, filled from `nimDemoScales` rather than
        written out here: sizes are `orrery.ScaleOrrery`'s business, and second copy of
        them in markup is second thing to keep true. -->
-  <div class="top-menu-title">demo</div>
+  <div class="top-menu-title">@WORD:NameMenuDemo@</div>
   <div
     class="top-menu-group"
     id="button-demo-scales"
@@ -1164,14 +1249,16 @@
 <div class="toast" id="toast"></div>
 
 <div class="selection-menu" id="selection-menu">
-  <button id="selection-menu-apply" type="button">apply</button>
-  <button id="selection-menu-edit" type="button">edit</button>
+  <button id="selection-menu-apply" type="button">@WORD:NamePickApply@</button>
+  <button id="selection-menu-edit" type="button">@WORD:NamePickEdit@</button>
   <div class="selection-menu-reveal" id="selection-menu-reveal">
     <select id="selection-menu-select"></select>
-    <button id="selection-menu-back" type="button" aria-label="cancel operation">back</button>
+    <button id="selection-menu-back" type="button" aria-label="cancel operation"
+  >@WORD:NamePickBack@</button>
   </div>
-  <button id="selection-menu-hide" type="button">hide</button>
-  <button id="selection-menu-delete" type="button" class="selection-menu-delete">delete</button>
+  <button id="selection-menu-hide" type="button">@WORD:NamePickHide@</button>
+  <button id="selection-menu-delete" type="button" class="selection-menu-delete"
+  >@WORD:NamePickDelete@</button>
   <button
     id="selection-menu-close"
     type="button"
@@ -1184,40 +1271,44 @@
   <div class="drawer-scroll">
     <!-- Apply -->
     <div class="section" data-section="apply">
+      <div class="section-edge"></div>
       <button
         class="section-header"
         type="button"
-      ><span>apply</span><span class="chev">&#9654;</span></button>
+      ><span class="chev">&#9654;</span><span>@WORD:NameHeadApply@</span></button>
       <div class="section-body">
         <div class="field">
-          <label>arity</label>
+          <label>@WORD:NameApplyArity@</label>
           <div class="toggles" id="op-arity" style="width:100%; justify-content:stretch;">
-            <button class="on" data-arity="0" type="button" style="flex:1;">unary</button>
-            <button data-arity="1" type="button" style="flex:1;">binary</button>
+            <button class="on" data-arity="0" type="button" style="flex:1;"
+            >@WORD:NameApplyUnary@</button>
+            <button data-arity="1" type="button" style="flex:1;">@WORD:NameApplyBinary@</button>
           </div>
         </div>
         <div class="field">
-          <label>operation</label>
+          <label>@WORD:NameApplyOperation@</label>
           <select id="op-select"></select>
         </div>
         <div class="field-row">
-          <div class="field"><label>operand m</label><select id="op-first"></select></div>
+          <div class="field"><label>@WORD:NameApplyFirst@</label
+            ><select id="op-first"></select></div>
           <div
             class="field"
             id="op-second-field"
-          ><label>operand n</label><select id="op-second"></select></div>
+          ><label>@WORD:NameApplySecond@</label><select id="op-second"></select></div>
         </div>
         <button class="button primary" id="button-apply" type="button" style="width:100%;"
-          >apply</button>
+          >@WORD:NameApplyAct@</button>
       </div>
     </div>
 
     <!-- Diagnostics -->
     <div class="section" data-section="diagnostics">
+      <div class="section-edge"></div>
       <button
         class="section-header"
         type="button"
-      ><span>diagnostics</span><span class="chev">&#9654;</span></button>
+      ><span class="chev">&#9654;</span><span>@WORD:NameHeadDiagnostics@</span></button>
       <div class="section-body">
         <!-- What session's frame times actually look like, rather than last four
              seconds of them: for each duration, share of recent frames that came in
@@ -1247,7 +1338,7 @@
             ><b id="diagnostic-exceedance">&mdash;</b>
         </div>
         <canvas class="sparkline" id="sparkline"></canvas>
-        <div class="diagnostic-line"><span>frame time</span
+        <div class="diagnostic-line"><span>@WORD:NameDiagFrame@</span
           ><b id="diagnostic-frametime">&mdash;</b></div>
         <!-- Slowest frame ring holds, split between page's own code and browser.
              Rows below are 200 ms means, which dilute one spike past telling whether
@@ -1421,7 +1512,7 @@
         <div class="diagnostic-line"><span>JS heap</span
           ><b id="diagnostic-heap">unavailable</b></div>
         <hr class="rule">
-        <div class="diagnostic-line"><span>object pool</span
+        <div class="diagnostic-line"><span>@WORD:NameDiagPool@</span
           ><b id="diagnostic-pool">&mdash;</b></div>
         <!-- Legend rides canvas as its own tooltip rather than taking line of
              drawer for itself, and says what desktop's own tooltip says. -->
@@ -1435,13 +1526,10 @@
 
     <!-- Objects -->
     <div class="section open" data-section="objects">
-      <button class="section-header" type="button">
-        <span
-          class="objects-header"
-          style="width:100%;"
-        ><span>objects</span> <span class="objects-count" id="objects-count">&mdash;</span></span>
-        <span class="chev">&#9654;</span>
-      </button>
+      <div class="section-edge"></div>
+      <button class="section-header" type="button"
+        ><span class="chev">&#9654;</span><span>@WORD:NameHeadObjects@</span><span
+          class="objects-count" id="objects-count">&mdash;</span></button>
       <div class="section-body">
         <div id="objects-list"></div>
       </div>
@@ -1449,33 +1537,34 @@
 
     <!-- View -->
     <div class="section" data-section="view">
+      <div class="section-edge"></div>
       <button
         class="section-header"
         type="button"
-      ><span>view</span><span class="chev">&#9654;</span></button>
+      ><span class="chev">&#9654;</span><span>@WORD:NameHeadView@</span></button>
       <div class="section-body">
         <div class="field-row">
           <div class="field">
-            <label>azimuth</label>
+            <label>@WORD:NameViewAzimuth@</label>
             <input type="number" id="cam-azimuth" step="0.05">
           </div>
           <div class="field">
-            <label>elevation</label>
+            <label>@WORD:NameViewElevation@</label>
             <input type="number" id="cam-elevation" step="0.05">
           </div>
         </div>
         <div class="field-row">
           <div class="field">
-            <label>distance</label>
+            <label>@WORD:NameViewDistance@</label>
             <input type="number" id="cam-distance" step="0.1">
           </div>
           <div class="field">
-            <label>field of view</label>
+            <label>@WORD:NameViewLens@</label>
             <input type="number" id="cam-fov" step="1">
           </div>
         </div>
         <div class="field">
-          <label>pivot</label>
+          <label>@WORD:NameViewPivot@</label>
           <div class="field-row">
             <input type="number" id="cam-pivot-x" step="0.1">
             <input type="number" id="cam-pivot-y" step="0.1">

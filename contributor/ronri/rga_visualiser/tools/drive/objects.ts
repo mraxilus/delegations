@@ -40,8 +40,13 @@ async function openObjects(page: Page): Promise<void> {
 /** Assert heading naming section stays reachable while that section's list scrolls under it.
  *
  *  Reader collapsing long list had to scroll all way back to top to reach control that
- *  collapses it. Heading sticks where scroller's own content begins, which is below chip row
- *  floating over drawer, and holds there however far list runs.
+ *  collapses it. Heading sticks to scroller's own top edge and holds there however far list
+ *  runs.
+ *  Flush to that edge, with no band above it: sticky offset is inset by scroller's padding, so
+ *  heading pinned inside padded scroller cannot cover padding above itself, and rows rode up
+ *  through it in plain sight. Clearance chip row needs therefore sits on drawer, outside what
+ *  scrolls. Band is sampled rather than inferred -- gap of zero is what *should* follow, and
+ *  what is asserted is what reader sees: nothing of list drawn above heading.
  *  Scroll itself is asserted, not only where heading ended: check reading stuck heading while
  *  nothing moved passes on page with no stickiness in it at all.
  *  Desktop answers same rule by bounding its list in its own scrolling region, so heading sits
@@ -64,6 +69,20 @@ export async function driveHeaderPinned(page: Page): Promise<void> {
     await settle();
     const box = scroller.getBoundingClientRect();
     const held = heading.getBoundingClientRect();
+    // Walk band from scroller's own top edge down to heading's underside, asking page itself
+    //   what reader would hit there. Row answering anywhere in it is row drawn above heading.
+    //   Swept across width, not down one line: first form sampled midline alone and passed
+    //   while rows showed in strip 28px wide down right edge, which is where heading's own
+    //   band fell short.
+    let bled = 0;
+    for (let x = Math.ceil(box.left) + 1; x < box.right - 1; x += 4) {
+      for (let y = Math.ceil(box.top) + 1; y < held.bottom - 1; y += 3) {
+        // Point answering nothing at all is not row. Written out rather than left to `?.`,
+        //   which reports `undefined` there and would count every such point as bleed.
+        const hit = document.elementFromPoint(x, y);
+        if (hit !== null && hit.closest('.object-row') !== null) bled += 1;
+      }
+    }
     return {
       moved: scroller.scrollTop,
       room,
@@ -72,18 +91,94 @@ export async function driveHeaderPinned(page: Page): Promise<void> {
       bottom: held.bottom,
       edge: box.top,
       floor: box.bottom,
-      clear: parseFloat(getComputedStyle(scroller).paddingTop) || 0,
+      bled,
     };
   });
   report(
     "the heading naming a section holds its place while that section's list scrolls under it",
     pinned !== null && pinned.moved > 0
       && pinned.top >= pinned.edge - 0.5 && pinned.bottom <= pinned.floor + 0.5
-      && Math.abs(pinned.top - (pinned.edge + pinned.clear)) < 1.5,
+      && Math.abs(pinned.top - pinned.edge) < 1.5,
     pinned === null ? 'no drawer to scroll'
       : `scrolled ${pinned.moved.toFixed(0)} of ${pinned.room.toFixed(0)} px, and the heading`
         + ` sat at ${pinned.started.toFixed(0)} px and holds at ${pinned.top.toFixed(0)},`
-        + ` where that scroller's own content begins, ${pinned.clear.toFixed(0)} px in`,
+        + ` flush to that scroller's own top edge at ${pinned.edge.toFixed(0)}`,
+  );
+  report(
+    'nothing of that list is drawn above the heading it scrolls under',
+    pinned !== null && pinned.bled === 0,
+    pinned === null ? 'no drawer to scroll'
+      : `${pinned.bled} of the sampled points between the scroller's edge and the heading's`
+        + ` underside answered with a row`,
+  );
+}
+
+
+/** Assert heading wears its band only while rows are passing under it.
+ *
+ *  Band that is always on is slab on every section, announcing covering it is not doing.
+ *  Read as colour rather than as class: class is mechanism, fill is what reader sees, and
+ *  check that watched class would pass on heading whose rule had been deleted.
+ *  `elementFromPoint` cannot stand in for this. Hit testing answers with element whatever its
+ *  fill, so `driveHeaderPinned`'s own sweep reports band covering even where band is clear --
+ *  it holds geometry, and this holds paint.
+ */
+export async function driveHeaderBanded(page: Page): Promise<void> {
+  await openObjects(page);
+  // Read fill and where scroller stands together: check that cannot say how far it scrolled
+  //   cannot tell band that failed to arrive from list too short to have one.
+  const readAt = async (
+    where: 'top' | 'floor',
+  ): Promise<{
+    fill: string; moved: number; stuck: boolean; edges: number; due: boolean;
+  }> => {
+    await page.evaluate((edge) => {
+      const scroller = document.querySelector('.drawer-scroll') as HTMLElement | null;
+      if (scroller === null) return;
+      scroller.scrollTop = edge === 'top' ? 0 : scroller.scrollHeight - scroller.clientHeight;
+    }, where);
+    // Settled against fill itself rather than against clock: observer reports after layout and
+    //   fill eases in over `--anim`, both of which are page's business rather than this check's.
+    //   Waited for fill to *finish*, not merely to start. Half-eased band reports as `rgba(…)`
+    //   carrying its alpha, and reading there caught it at 0.66 -- true of that instant and
+    //   not of anything worth asserting.
+    await page.waitForFunction((edge) => {
+      const heading = document.querySelector('.section[data-section="objects"] .section-header');
+      if (heading === null) return false;
+      const fill = getComputedStyle(heading).backgroundColor;
+      return edge === 'top' ? fill === 'rgba(0, 0, 0, 0)' : fill.startsWith('rgb(');
+    }, where, { timeout: 8000 }).catch(() => undefined);
+    return page.evaluate(() => {
+      const heading = document.querySelector('.section[data-section="objects"] .section-header');
+      const scroller = document.querySelector('.drawer-scroll') as HTMLElement | null;
+      return {
+        fill: heading === null ? 'no heading' : getComputedStyle(heading).backgroundColor,
+        moved: scroller === null ? -1 : Math.round(scroller.scrollTop),
+        // Mechanism beside outcome: band that never arrives is either class never put on or
+        //   rule that stopped answering to it, and detail line has to tell those apart.
+        stuck: heading !== null && heading.classList.contains('stuck'),
+        edges: document.querySelectorAll('.section-edge').length,
+        // Geometry observer is watching, read here as well. Band missing while this says it
+        //   should be there is observer that stopped answering; band missing while this says
+        //   otherwise is scroll that did not reach.
+        due: (() => {
+          const edge = document.querySelector('.section[data-section="objects"] .section-edge');
+          if (edge === null || scroller === null) return false;
+          return edge.getBoundingClientRect().top <= scroller.getBoundingClientRect().top;
+        })(),
+      };
+    });
+  };
+  const at_rest = await readAt('top');
+  const pinned = await readAt('floor');
+  report(
+    'the heading carries no band of its own until its list is passing under it',
+    at_rest.fill === 'rgba(0, 0, 0, 0)' && pinned.moved > 0
+      && pinned.fill !== 'rgba(0, 0, 0, 0)' && !pinned.fill.startsWith('rgba'),
+    `at ${at_rest.moved} px it is ${at_rest.fill}, and at ${pinned.moved} px it is`
+      + ` ${pinned.fill}; ${pinned.edges} sentinels, the heading reads`
+      + ` ${pinned.stuck ? 'stuck' : 'unstuck'} there, and its sentinel is`
+      + ` ${pinned.due ? 'above the scrollport' : 'still inside it'}`,
   );
 }
 

@@ -23,9 +23,16 @@
 ## from this very enum, so key renamed here and not re-derived fails type check rather than at
 ## run time (repository issue 47's lesson, applied again).
 ##
+## Page's own labels sit in markup rather than in script, so they are not assigned at load:
+## `pages/shell.html` writes `@WORD:<Key>@` and `tools/build.nim` fills it from this table while
+## assembling page. Reader therefore meets real words with first paint, and there is still only
+## one copy of them.
+##
 ## What is *not* here: text one front-end alone can reach, which has no copy to drift from.
-## Outcome sentences live in `message`, help rows in `help`; both are shared already, and both
-## move here as stages two and three.
+## Window's `memory` and `total` headings, page's own diagnostic rows, and page's `dismiss` are
+## each shown by one front-end and stay where they are.
+## Outcome sentences live in `message` and help rows in `help`; both are shared already, and
+## both move here as stage three.
 ##
 ## Shared by desktop (`panel.nim`) and browser (`bridge.nim`, then its scripts).
 
@@ -33,14 +40,25 @@
 
 import std/strutils
 
+const RUNES_LABEL_MOST* = 24
+  ## Bound how long word on control may be, in runes.
+  ##   Not layout limit but kind limit: it is what separates label from prose that wandered
+  ##   into `Name` key. Longest today is "permanent arena", at fifteen.
+
 
 
 #[ Keys ]#
 
 type Wording* = enum
-  ## Name one piece of shown text, by where reader meets it.
-  ##   Prefix is panel area: `Row` for object row, `Apply`, `View`, `Diag` for diagnostics,
-  ##   `Pick` for menu over selection, `Menu` for top menu, `Chip` for row of constant controls.
+  ## Name one piece of shown text, by what it is and where reader meets it.
+  ##   First word is kind: `Tip` for tooltip, `Name` for words control itself wears, `Note`
+  ##   for sentence shown in place.
+  ##   Second is panel area: `Head` for section heading, `Row` for object row, `Apply`, `View`,
+  ##   `Diag` for diagnostics, `Pick` for menu over selection, `Menu` for top menu, `Chip` for
+  ##   row of constant controls.
+  ##   One key per control, not per word: two controls may honestly wear same word, and
+  ##   translator may still need them apart. `NameRowHide` and `NamePickHide` both read "hide"
+  ##   today and are not one key.
   ##   Adding value here without row below does not compile, which is whole point of enum key.
   TipRowSelect, TipRowCommit, TipRowEdit, TipRowDiscardNew, TipRowDiscardEdit,
   TipRowVisible, TipRowRemove, TipRowRadius, TipRowShines,
@@ -51,6 +69,25 @@ type Wording* = enum
   TipPickClose,
   TipMenuSceneFile, TipMenuImageFile, TipMenuSaveScene, TipMenuSaveImage, TipMenuLoadScene,
   TipChipAdd, TipChipUndo, TipChipRedo, TipChipAxes, TipChipGrid
+
+  NameHeadObjects, NameHeadApply, NameHeadView, NameHeadDiagnostics,
+  NameRowCommit, NameRowEdit, NameRowDiscard, NameRowHide, NameRowShow, NameRowRemove,
+  NameRowLabel, NameRowInk, NameRowSize, NameRowShines, NameRowCoefficients,
+  NameApplyArity, NameApplyUnary, NameApplyBinary, NameApplyOperation, NameApplyFirst,
+  NameApplySecond, NameApplyAct,
+  NameViewAzimuth, NameViewElevation, NameViewDistance, NameViewPivot, NameViewLens,
+  NameDiagFrame, NameDiagVsync, NameDiagMemory, NameDiagPermanent, NameDiagFrameArena,
+  NameDiagPool, NameDiagTotal,
+  NamePickApply, NamePickEdit, NamePickBack, NamePickHide, NamePickShow, NamePickDelete,
+  NamePickClose,
+  NameMenuSave, NameMenuSaveScene, NameMenuSaveImage, NameMenuLoad, NameMenuLoadScene,
+  NameMenuDemo, NameMenuSceneFile, NameMenuImageFile,
+  NameChipAdd, NameChipUndo, NameChipRedo, NameChipAxes, NameChipGrid, NameChipHelp,
+  NameChipMenu, NameChipDrawer,
+  NameTitle,
+
+  NoteListEmpty, NoteCoefficientsNew, NoteCoefficientsEdit, NoteDiagnostics,
+  NoteSaveByHold, NoteSaveBlocked, NameSaveDismiss
 
 
 
@@ -132,6 +169,103 @@ const lut_wording_to_text: array[Wording, cstring] = [
   TipChipRedo: "Step forward again; a fresh edit discards whatever was ahead.",
   TipChipAxes: "Toggle the red/green/blue x/y/z axis lines through the origin.",
   TipChipGrid: "Toggle the reference grid at z = 0.",
+
+  # Section headings.
+  NameHeadObjects: "objects",
+  NameHeadApply: "apply",
+  NameHeadView: "view",
+  NameHeadDiagnostics: "diagnostics",
+
+  # Object row, and edit session it opens.
+  NameRowCommit: "save",
+  NameRowEdit: "edit",
+  NameRowDiscard: "✕",
+  NameRowHide: "hide",
+  NameRowShow: "show",
+  NameRowRemove: "remove",
+  NameRowLabel: "label",
+  NameRowInk: "colour",
+  NameRowSize: "size",
+  NameRowShines: "shines",
+  NameRowCoefficients: "coefficients",
+
+  # Apply section.
+  NameApplyArity: "arity",
+  NameApplyUnary: "unary",
+  NameApplyBinary: "binary",
+  NameApplyOperation: "operation",
+  NameApplyFirst: "operand m",
+  NameApplySecond: "operand n",
+  NameApplyAct: "apply",
+
+  # View section.
+  NameViewAzimuth: "azimuth",
+  NameViewElevation: "elevation",
+  NameViewDistance: "distance",
+  NameViewPivot: "pivot",
+  NameViewLens: "field of view",
+
+  # Diagnostics.
+  NameDiagFrame: "frame time",
+  NameDiagVsync: "vsync",
+  NameDiagMemory: "memory",
+  NameDiagPermanent: "permanent arena",
+  NameDiagFrameArena: "frame arena",
+  NameDiagPool: "object pool",
+  NameDiagTotal: "total",
+
+  # Menu that opens over whatever is picked.
+  NamePickApply: "apply",
+  NamePickEdit: "edit",
+  NamePickBack: "back",
+  NamePickHide: "hide",
+  NamePickShow: "show",
+  NamePickDelete: "delete",
+  NamePickClose: "✕",
+
+  # Top menu.
+  NameMenuSave: "save",
+  NameMenuSaveScene: "scene",
+  NameMenuSaveImage: "image",
+  NameMenuLoad: "load",
+  NameMenuLoadScene: "scene",
+  NameMenuDemo: "demo",
+  NameMenuSceneFile: "scene file",
+  NameMenuImageFile: "image file",
+
+  # Row of constant controls, floating over scene.
+  NameChipAdd: "add",
+  NameChipUndo: "undo",
+  NameChipRedo: "redo",
+  NameChipAxes: "axes",
+  NameChipGrid: "grid",
+  # Window padded this word to size its button; button is sized as button now, and word is
+  #   word both front-ends show.
+  NameChipHelp: "?",
+  NameChipMenu: "☰",
+  # Page alone: window has no drawer to open, since its panel never leaves. Shown only
+  #   where chip row is too narrow to carry product's name, in place of it.
+  NameChipDrawer: "◧",
+
+  NameTitle: "RGA Visualiser",
+
+  # Sentences shown in place, where control has nothing to hover.
+  NoteListEmpty: "Nothing here yet -- press `add` above, or drag between two objects.",
+  # Window said more than page here: both draw graded grid, so both may say so.
+  NoteCoefficientsNew:
+    "The 16 numbers of the new multivector, in the library's basis order, stacked one row " &
+    "per grade. A live preview draws as soon as any goes non-zero; nothing joins the scene " &
+    "until you save.",
+  NoteCoefficientsEdit:
+    "The 16 numbers of this object's own multivector, in the library's basis order, " &
+    "stacked one row per grade. The object itself only moves when you save.",
+  NoteDiagnostics: "Live cost of this build, updated every frame.",
+  # Sentence rather than fragment: it stands in its own line under link, not after it.
+  NoteSaveByHold: "Or press and hold the image to save it.",
+  NoteSaveBlocked:
+    "If nothing arrives, this frame is blocking it -- open this page in its own browser " &
+    "tab and save from there.",
+  NameSaveDismiss: "dismiss",
 ]
   ## Hold text for every key, written with its key rather than by position.
   ##   Named form is deliberate: `[TipRowSelect: "...", ...]` cannot be knocked out of step by
@@ -161,6 +295,32 @@ func demoWording*(objects: int, is_default: bool): string =
     "origin, every drawable kind present. The same arrangement at every size, reaching " &
     "further into the star catalogue as it grows." &
     (if is_default: " The size everything opens on." else: "")
+
+
+const NAME_AUTHORITY* = "Projective Geometric Algebra Illuminated"
+  ## Name book this project replicates, as its author titled it.
+  ##   Not catalogue row: it names no control and carries no sentence, and no translator
+  ##   renames book.
+
+
+func captionWindow*(): string =
+  ## Report caption desktop window wears: authority it replicates, then application's name.
+  ##   Composed rather than stored, as `demoWording` is: half is catalogue's and half is
+  ##   this project's subject. Second copy of name is exactly what drifted -- window said
+  ##   `RGA visualiser` where page said `RGA Visualiser`, and no sweep reached entry point
+  ##   holding it.
+  ##   Lives here rather than beside window so suite can hold it: `main` links SDL and GL,
+  ##   which no test binary carries.
+  NAME_AUTHORITY & " — " & $wordingText(NameTitle)
+
+
+func namesControl*(key: Wording): bool =
+  ## Report whether `key` names control rather than carrying prose.
+  ##   Read from key's own first word, which enum's doc above fixes: key added without kind
+  ##   in its name is caught by suite rather than classified wrongly in silence.
+  ##   For suite, which holds prose to sentence's shape and label to label's: "add" is not
+  ##   sentence and must not be asked to end like one.
+  ($key).startsWith("Name")
 
 
 func hasWords*(key: Wording): bool =

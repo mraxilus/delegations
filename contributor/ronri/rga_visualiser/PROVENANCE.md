@@ -3270,10 +3270,13 @@ list moves* — and each front-end answers it in its own idiom.
   First attempt gave the region a fixed height and a threshold, and a five-object scene sat in
   a box of blank; hugging the content is what fixed that, and the first attempt is recorded
   rather than tidied away.
-  Browser sticks the heading with `position: sticky` against `.drawer-scroll`. Its offset is
-  `--drawer-clear`, which is the same number that already pushed the drawer's content below the
-  floating chip row — named once now instead of written twice, since a heading stuck at `0`
-  lands *behind* those controls rather than under them.
+  Browser sticks the heading with `position: sticky; top: 0` against `.drawer-scroll`, and the
+  clearance the floating chip row needs sits on `.drawer`, outside what scrolls. An earlier
+  passage here described a `--drawer-clear` custom property; no such property was ever
+  committed, and every clause around it was wrong — the offset was `0`, the clearance was
+  written once rather than twice, and a heading stuck at `0` landed *under* those controls, not
+  behind them. See the 2026-09-12 re-audit below for what the clearance's position cost and why
+  it moved.
   Measured on both. Desktop, scene filled to capacity: **64 px left under the sections** where
   the unbounded list ran **319,899 px** past the window's bottom — which is the same verdict
   failing without the fix, driven by a new scripted run at capacity. Browser: the drawer is
@@ -3534,3 +3537,376 @@ catalogue means one, and it is not one until they are in it.
 forty-one. A touch target has no hover, so the gap is likely a real difference rather than
 drift, and closing it would mean *writing* thirty new tooltips rather than de-duplicating any.
 The catalogue makes that a one-line change per control whenever it is judged worth it.
+
+## Re-audit, 2026-09-12, stage two: the labels
+
+Stage one of the catalogue took the 41 tooltips. This takes the words on the controls
+themselves, on both front-ends, and closes the hole stage one left: a literal could still go
+back in at any `gui.button` or any `textContent`.
+
+**What the inventory found.** The window named **32** labels in `panel.nim`; the page wrote
+**6** from its scripts and carried **44** more as static text in `pages/shell.html`. So the
+page's labels live in *markup*, not in TypeScript, and stage one's trick — strip the attribute,
+set it from a script at load — does not scale: it would empty 44 elements, invent 44 ids, and
+leave the page blank until its scripts ran.
+
+**The page fills its markup at build time.** `tools/build.nim` already rewrites `shell.html` on
+the way out, replacing `@SCRIPT@` and `@EMBED:<face>@`. Stage two adds one more token to the
+same pass:
+
+```html
+<button class="button" id="button-add" type="button" aria-label="add object"
+>@WORD:NameChipAdd@</button>
+```
+
+filled from `lut_wording_to_text` when the page is assembled. That gives what neither
+alternative does: no second copy of the words, no runtime assignment, and a page whose real
+text is in the markup — so it reads with scripts refused, and with the first paint rather than
+the first frame. A token naming a key the catalogue does not carry stops the build:
+
+```
+Shell names wording catalogue does not carry, at pages/shell.html:
+  1092: <button class="button" id="button-add" … >@WORD:NameChipAdded@</button>
+```
+
+**What had drifted, and what won.**
+
+| shown | the window said | the page said | now |
+|---|---|---|---|
+| coefficients, composing | `…stacked one row per grade…` | no such clause | the window's |
+| coefficients, composing | `…nothing joins the scene…` | no such clause | the window's |
+| coefficients, editing | `…stacked one row per grade.` | no such clause | the window's |
+| help button | `"  ?  "` | `?` | `?`; padding was layout written as text |
+| apostrophe | `library's` | `library’s` | `library's`, as the catalogue has it |
+
+**One key per control, not one key per word.** `NameRowHide` and `NamePickHide` both read
+"hide" today and are two keys, because two buttons honestly wear one word and a translator may
+still need them apart. That is the practice this adapts, and it is why the "no two keys carry
+the same text" law now holds over **prose keys only** — the tooltips and notes, where a
+repeated sentence is still a copy-paste. Labels get their own law instead: stripped, no doubled
+space, no trailing full stop, and at most `RUNES_LABEL_MOST` runes, so prose cannot wander into
+a `Name` key.
+
+**The guard is total now, not a list of prefixes.** `checkWording` used to ban three exact
+strings. It now refuses a quoted literal at any of the fourteen panel calls that put text in
+front of a reader, and at `.title`, `.textContent` and `.innerHTML` in every browser script. A
+hidden ImGui id (`##name`) and an empty label are allowed, because neither is shown. It also
+refuses the opposite defect: a catalogue row **no front-end names**, so the catalogue cannot
+grow words written for nobody.
+
+```
+Shown text belongs in `wording.nim`, named by key; got 3:
+  src/browser/state.ts:166: hint.textContent = 'or press and hold the image to save it';
+  src/browser/state.ts:175: advice.textContent = 'If nothing arrives, this frame is blocking it — '
+  src/browser/state.ts:186: dismiss.textContent = 'dismiss';
+```
+
+Those three were real and are now catalogued, which is why the count is **105 keys**, not the
+~88 the shared labels alone would give: once the guard is total, text one front-end alone shows
+comes in too. That is a change of position from stage one, which said single-front-end text
+stays put — the guard cannot tell shared from unshared, and a guard with a hand-kept allowlist
+would rot. The words still have one home; nothing about which front-end shows them changed.
+
+**`tools/build.nim` imports the catalogue rather than parsing it.** `declare` used to read
+`wording.nim` as text to recover the enum's keys, and would have stopped at the first blank
+line inside the enum. It now imports the module and walks `Wording` itself, so a key renamed
+there and not re-derived fails to compile rather than fails to match.
+
+**The product names itself once, and the guard has a scope rather than a hole.** The Architect
+asked for the application's own name in title case: `NameTitle` reads `RGA Visualiser`, and both
+front-ends move together because both read that key. That exposed a second, hand-written copy in
+`main.nim` — the SDL window caption, `Projective Geometric Algebra Illuminated — RGA visualiser`,
+which no sweep reached, so title-casing the catalogue alone would have left the window spelling its
+own name two ways. The caption now composes: `"… — " & $wordingText(NameTitle)`, resolved at
+compile time.
+
+`checkWording` gains that file, but **not** whole. An entry point is full of option names, paths
+and error text that no reader of the window ever sees, and a check that flags those is a check
+nobody reads. What it holds instead is the one thing that file shows: the caption may not write out
+what `NameTitle` stands for. Matched without regard to case, because the drift this caught *was*
+case alone — a case-sensitive match would have passed the very defect that prompted it:
+
+```
+Shown text belongs in `wording.nim`, named by key; got 1:
+  src/desktop/main.nim: window caption writes out what `NameTitle` stands for
+```
+
+**Still theirs.** Whether the page should reach every tooltip the window has (`#145`); stage
+three, folding `help.nim`'s rows and `message.nim`'s sentences in — until that lands, "one
+catalogue" is three; and the flaky two-finger pan check (`#153`).
+
+## Re-audit, 2026-09-12, the page's own chrome
+
+Four bugs the Architect found by looking at the built page, three of which predate the wording
+catalogue entirely, plus the title case they asked for.
+
+**`align-items` had been dead for five days, in thirteen places.** `8e15c04` ("name scene thing
+object and its geometry kind") renamed the word *item* to *object* across the repository and
+caught a CSS property along with the vocabulary: `pages/shell.html` held **thirteen**
+`align-objects` and **zero** `align-items`. That is not a property; every parser drops it in
+silence. So nothing in the drawer was vertically centred — the brand's mark sat at the top of its
+pill rather than in the middle, which is what the Architect saw as "the spacing is messed up".
+
+Nothing could have caught it. There is no CSS linter in the toolchain, `audit` reads Nim and
+TypeScript, and a dropped declaration produces no error anywhere. So the fix comes with a guard,
+and **the guard asks the browser rather than keeping a list**: `tools/drive/style.ts` puts every
+declaration to `CSS.supports`. A hand-kept vocabulary of valid CSS would be a second copy of a
+specification this repository does not own — the shape of drift the wording catalogue exists to
+stop — and a blacklist of look-alikes would only know the bug already fixed.
+
+It was wrong twice before it was right, and both are the same mistake: a check reporting *ok*
+while reading nothing of consequence.
+
+Its first run passed **vacuously** — `0 declarations read, none unknown`. Nested CSS gives every
+`CSSStyleRule` its own `cssRules`, so testing for that first walked past every declaration on the
+page.
+
+Fixing that exposed the deeper error: it was reading `cssRules` at all. **The parser discards a
+declaration whose property it does not know**, so the model it builds cannot be asked what it
+threw away — a sweep over `cssRules` passes on the very page this check exists for. It now reads
+the `<style>` element's own `textContent`, which is what the author wrote, dropped declarations
+and all, walking it by brace and bracket depth because `url(data:font/woff2;base64,…)` carries
+semicolons of its own. Put to the page with the rename re-applied, it reports **all thirteen**:
+
+```
+618 declarations read, 13 unknown: align-objects: flex-start; align-objects: center; …
+```
+
+It also carries a floor on how much it read, and a fixture asking the browser outright whether it
+can still tell `align-items` from `align-objects` — a predicate answering `true` to everything
+would otherwise earn a pass on any page at all.
+
+*Costs, stated:* evidence about Chromium's parser at Playwright's pinned revision. A value
+carrying `var()` cannot be resolved before parsing, so it is asked about as `inherit` and the
+value half is vacuous there — the property-name half, which is the half this bug was, is not.
+`@font-face` bodies hold descriptors rather than properties and are skipped. A vendor-prefixed
+property is asked about under its plain name too, since the browser serves
+`-webkit-backdrop-filter` as an alias it does not expose to `CSS.supports`. And a name is checked
+against the shape of an identifier before being asked about: a comment carrying `*/` of its own
+ends early, and the tail then reads as a declaration.
+
+**Rows scrolled through a band no heading could cover.** `.drawer-scroll` carried the 62 px that
+clears the floating chip row. Sticky offsets are inset by the scroll container's own padding, so a
+heading pinned at `top: 0` lands at the *content* edge and cannot cover the padding above itself —
+the band was unreachable from inside. Object rows rode up through it in plain sight, over the
+drawer's translucent ground and between chips that cover only part of it.
+
+The clearance moved to `.drawer`, outside the scrollport, and the scroller's own `padding-top`
+went to `0` rather than shrinking: a 14 px band is the same defect at 14 px. The bottom padding
+stays where it is — nothing pins at the bottom, so it makes no such band. Two alternatives were
+weighed and rejected: a spacer as the scroller's first child is itself scrolled content and fixes
+nothing; a fixed opaque cap pays for a second opaque surface over a drawer that is deliberately
+translucent, and hides the symptom rather than removing it.
+
+`driveHeaderPinned` asserted the old geometry (`pinned.top == pinned.edge + pinned.clear`) and
+would have passed vacuously once `clear` reached zero. It now asserts the heading pins flush with
+the scroller's own top edge, and a second check walks that band with `elementFromPoint` and asks
+the page what a reader would hit there — the Architect's words were "it should hide everything
+that goes under it", so what is checked is what is seen, not the geometry that ought to imply it.
+
+That second check earned its keep immediately, and then had to be widened. Sampling the band's
+midline it reported **zero**, and the screenshot taken beside it showed a row still peeking down
+the drawer's right edge. The heading carried `width: 100%` *and* negative side margins, so it
+spanned 372 px of a 400 px drawer and left a 28 px strip bare — the margins were meant to widen
+the band to the gutter, and a percentage width measures the content box they shift from. It is
+`calc(100% + 28px)` now, written out rather than left to `auto`, which on a `<button>` is its
+text's own width and made the band far worse. The check sweeps the whole width, and the header
+measures 0–399 against a scroller of 0–399.
+
+The stuck band also gained a bottom border: `--surface-solid` is the hue the rows sit on and
+`.object-row:first-of-type` has no top border, so a covered row met the band with no edge at all.
+
+**The hamburger, measured before it was fixed.** The suspicion was font fallback — the two latin
+faces declare no `unicode-range`, so they claim every codepoint and U+2630 has two candidates of
+one family at one weight, decided by declaration order rather than by coverage. `CDP
+CSS.getPlatformFontsForNode` settled it on 2026-09-12, in Chromium at Playwright's pinned
+revision:
+
+```
+hamburger -> [{"familyName":"Noto Sans Symbols 2","isCustomFont":true,"glyphCount":1}]
+```
+
+The embedded symbols face was already serving it. The suspicion was wrong, and the cause was
+styling: `#button-menu` had **no rule of its own anywhere in the file**, so it wore `.brand`'s
+`padding: 7px 14px 7px 10px` — asymmetric, tuned for the mark-and-name pair it does not have — at
+the browser's 16 px default with `line-height: normal`, giving a 15 px glyph in a 27 px box pushed
+off centre, beside chips set at 11 px on `line-height: 1`. The glyph is three hairlines; at that
+size against a blurred ground they wash out. It is a 34 px square now, centred both ways, at 17 px
+on `line-height: 1`.
+
+The latin faces were **left unbounded**. Bounding them is spec-correct and would remove the
+ambiguity, but the measurement says the resolution is already right in the browser this project
+verifies, and a range written too tight silently drops a glyph — the page needs `—`, `…`, `’` and
+`×` from those files, none of which the maths or symbols ranges claim. Changing a thing that
+measures correct, on a hunch about a browser that cannot be tested here, is the worse risk. Left
+with the reading recorded, so the next reader has the evidence rather than the hunch.
+
+**The mark came off, and took a breakpoint's number with it.** The 9 × 9 px accent square, rounded
+and turned 45°, is gone at the Architect's word, and `.brand`'s padding is symmetric again —
+`7px 14px 7px 10px` existed only to sit that mark closer to the edge.
+
+The `@media (max-width: 519px)` rule hid the name and kept "just mark", which with the mark gone
+left the drawer's own toggle **drawing nothing at all** — and its accessible name empty with it,
+since the mark was `aria-hidden` and the name `display: none`. The button now carries an
+`aria-label` naming the same key its text does, and below the breakpoint it draws
+`NameChipDrawer` (`◧`, U+25E7), a square chip matching the menu's.
+
+The breakpoint was re-measured rather than adjusted by eye — and the first sweep was **measured
+wrongly**, which is worth recording because the reading looked perfectly reasonable. It gave 397,
+against a build where the rule being measured was still in force at its old 519 px: so what it
+found was the width the row fits at with the name *already hidden*, not the width the name fits
+at. Every viewport from 397 to 496 would have overflowed, by up to 100 px. Swept again with that
+rule off, the answer is **497**, down from 520 — the mark and its gap were worth 23 px, not the 17
+estimated.
+
+Measured across the range afterwards, which is what proved it:
+
+| viewport | overflow | brand | shows |
+|---|---|---|---|
+| 520 px | 0 | 123 px | name |
+| 497 px | 0 | 123 px | name |
+| 496 px | 0 | 34 px | mark |
+| 400 px | 0 | 25 px | mark |
+| 360 px | 29 px | 14 px | mark |
+
+*Open, and raised rather than papered over:* below about 390 px the row is over its budget even
+with the name dropped — 29 px at 360 px — and flex takes that out of the chips, the brand among
+them, which is why it reads 14 px there rather than 34. That is the chip row's own budget across
+five controls, not this rule's, and it predates every change here.
+
+**The product names itself once.** `NameTitle` reads `RGA Visualiser`, and both front-ends move
+together because both read that key. That exposed a second, hand-written copy in `main.nim` — the
+SDL window caption — which no sweep reached, so title-casing the catalogue alone would have left
+the window spelling its own name two ways. The caption composes now, from `wording.captionWindow`
+rather than from a literal, and the composition lives in the catalogue rather than beside the
+window because nothing importing `main.nim` links without SDL and GL, so no suite could hold it
+there. Two laws hold it instead, and the first fails on the old spelling:
+
+```
+tests/suites.nim(8133, 19): Check failed: word[0].isUpperAscii
+[FAILED] the application names itself as a name, and every other label stays a word
+```
+
+`checkWording` gains that file, but **not** whole. An entry point is full of option names, paths
+and error text that no reader of the window ever sees, and a check that flags those is a check
+nobody reads. What it holds is the one declaration that file shows, and it holds it *positively*:
+the caption must name where it comes from. A first attempt forbade the spelling instead, and was
+weaker twice over — it read the whole file, so a comment naming the product would have failed the
+build, and a split literal would have walked straight past it.
+
+## Re-audit, 2026-09-12, one comment, and a hundred and forty-one rules
+
+The Architect asked why the `☰` "is a different color from the other text". The answer is that it
+was **black**, and the reason is one character sequence in a comment.
+
+**The report was right and the reading was wrong.** Tracing the cascade on paper gives
+`body #e7ecf1 → .chip-layer → .chip-row → .brand { color: inherit } → the glyph`, and concludes
+that the glyph is `--ink`, the same as the `add` chip. That conclusion was written down here in
+an earlier draft of this very entry. Measured, both `.brand` buttons compute `rgb(0, 0, 0)`.
+
+Reading CSS as authored assumes it parses. This did not:
+
+```css
+/* Most of them ride on `calt`, which browsers apply unasked -- `&&`, `||`, `::`, `...`,
+   `/* */`, `#{` and their kin all draw joined with nothing set. …
+```
+
+The `*/` quoted as an *example* of a ligature closes the comment where it stands. Everything
+after it parses as CSS, and the `#{` in it opens a brace with no partner — so every following
+rule is swallowed into `html, body`'s own block.
+
+| | broken | fixed |
+|---|---|---|
+| rules parsed, of 150 opened | **9** | **150** |
+| `body` colour | `rgb(0, 0, 0)` | `rgb(231, 236, 241)` |
+| `#button-menu` glyph | `rgb(0, 0, 0)` | `rgb(231, 236, 241)` |
+
+**The page went on drawing, which is why this survived.** Chromium reads the swallowed rules as
+*nested* CSS, so `.brand`, `.section-header` and the rest still reached their elements as
+descendants of `body`. What was lost is only what `html, body` itself declared below the break —
+`font-variant-ligatures`, `font-feature-settings`, and `color`. So the page looked almost right,
+and every element that inherited its colour from `body` drew black. The menu chip's glyph is one,
+which is the illegibility that was reported.
+
+Two checks were run against the repaired page before anything else was touched: the browser
+drive suite reports **156 of 156**, unchanged, so nothing else in the page had been leaning on
+the broken reading.
+
+**The check that could see this had been told not to.** `driveStyleDeclared`, written a day
+earlier for the `align-objects` rename, found a "declaration" whose property name was a sentence
+— the tail of this comment. It was classified as a false positive and suppressed with a guard
+requiring property names to look like identifiers. It was a true positive, pointing straight at
+the break. Prose in a declaration stream has exactly one cause, and the check now reports it
+rather than stepping over it.
+
+A second report counts rules opened against rules parsed. It does **not** catch a comment ending
+early, and says so in its own comment: counting braces means stripping comments first, which
+repeats the parser's own misreading. What it catches is a rule left unclosed by hand. Both are
+worth having; neither is the other.
+
+*Also fixed, found in the same sweep:* `--ink-dim` was referenced three times and defined
+nowhere, so `.toast-hint`, `.toast-detail` and `.toast-dismiss` inherited instead of taking a dim
+tone. Each takes the tone its own comment asks for — `--ink-faint` for the detail line, which its
+comment calls recessive evidence, `--ink-muted` for the hint and the dismiss control. A sweep of
+every `var(--…)` against every `--…:` shows it was the only one.
+
+## Re-audit, 2026-09-12, a band that means something
+
+The heading band that fixed the scroll bleed was on **all the time**, so every section wore a
+solid slab announcing a covering it was not doing. The Architect's word was "ugly", and it was.
+
+It is drawn now only while rows are actually passing under it. A 1px `.section-edge` sits where
+the heading's own top edge lands — the heading's `-10px` margin pulls it to the section's edge,
+so the sentinel marks exactly the moment it begins to stick — and one `IntersectionObserver`
+rooted on `.drawer-scroll` puts `.stuck` on the heading when that sentinel leaves the scrollport
+**upward**. Upward matters: a section scrolled past below has also left, and its heading went
+with it, so treating that as pinned would light a band nobody sees.
+
+The sentinel is watched rather than the heading, because a sticky element never leaves the
+scrollport and so can never report that it has. An observer rather than a scroll handler, for the
+reason `sizes.ts` gives at length: a read after a write lays the whole document out inside that
+event, and this scroller carries a row per object. One observer serves all four sections, since
+the drawer has exactly one scroller.
+
+Under the pinned band, a shadow rather than a rule. A line says *edge*; a shadow says *something
+passes beneath*, and the second is the true one. It is the family the popovers already use, tighter.
+
+**The chevron leads the line now**, in a 14px column, which is where `.diagnostic-parent` has
+always put the same mark — the two idioms were meant to match and did not. Trailing, it landed
+against the objects count, so `(5038 of 5040)▼` read as part of the figure. That also retires the
+objects heading's odd shape: it alone wrapped its contents in a span carrying an inline width,
+purely so the outer `space-between` would push the chevron to the edge. The count takes
+`margin-left: auto` and the wrapper, its inline style and its rule are gone.
+
+**The first mechanism was wrong twice, and the check is what found both.** It works by hand at
+every scroll position, across closing and reopening the drawer, and with the blur experiment
+toggled — and failed inside the full driven run, which is the only place it was exercised after a
+hundred and fifty other checks had moved the page around.
+
+The first fault was trusting the entry. `IntersectionObserver` hands a callback `rootBounds`,
+which arrives **null**, and a `boundingClientRect` that is a snapshot from when the entry was
+computed rather than where the sentinel stands now. On a null root the old code cleared the band —
+and a cleared band *sticks*, because the class is only ever corrected on the next *change* of
+intersection, and a sentinel far above the scrollport has no changes left to report. The entry is
+a signal that something moved and nothing more: the geometry is read live in the callback now,
+which costs nothing because the callback runs after layout — the same bargain `sizes.ts` states
+at length for `ResizeObserver` — and every heading is settled on any signal, since a section whose
+own sentinel reported nothing can still be wearing the wrong answer. `settleBands` is called at
+the two moments layout moves without a scroll as well: the drawer opening, and a section toggling.
+
+The second fault was in the check, and only visible once the first was fixed: it read the fill
+**mid-transition** and reported `rgba(22, 27, 34, 0.66)`, which is true of that instant and not of
+anything worth asserting. It waits for the eased fill to finish now — an opaque `rgb(…)` rather
+than merely a non-transparent one.
+
+Both were found by the diagnostic the check carries: it reports the geometry the observer watches
+beside the class and the fill, so a band that fails to arrive says whether the observer stopped
+answering or the scroll never reached. That line is what turned an unreproducible failure into a
+one-line fix.
+
+**The check holds it by colour.** `driveHeaderBanded` reads the heading's computed
+`backgroundColor` at rest and again at the scroll floor. Reading the class instead would
+pass on a heading whose rule had been deleted; reading `elementFromPoint` cannot see it at all,
+since hit testing answers with the element whatever its fill — which means `driveHeaderPinned`'s
+own sweep would report a clear band as covering. That check holds geometry, this one holds paint,
+and the band needs both.
