@@ -277,8 +277,9 @@ from their tree is a hunch: keep it, or go and get the evidence.
 ## Saying which role you are
 
 Every session posts to GitHub as the same account, so the account says nothing about who is
-speaking. Open every issue, pull request and comment with `**Role:** curator`. Nothing checks it
-— GitHub is not this repository — so it holds because you write it.
+speaking. Open every issue, pull request and comment with `**Role:** curator`. `sweep.yml` reads
+issue and pull-request bodies for it; a comment it never reads, so there it holds because you
+write it.
 
 An issue's label is that same string: `curator` for the rules, the checks, the merge process and
 the root files, and `curator/<project>` or `contributor/<domain>/<project>` for one project. The

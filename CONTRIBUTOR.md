@@ -168,10 +168,11 @@ these, and each of those three says above which half it no longer asks you to re
   rather than restating it, so one can never contradict the other.
 - **Say which role you are.** Every session here posts to GitHub as the same account, so the
   account says nothing about who is speaking. Open every issue, pull request and comment
-  with your role: `**Role:** contributor/<domain>/<project>`. Nothing checks this — GitHub
-  is not this repository — so it holds because you write it. Your issue label is that same
-  string. Copy it, never compose it: applying a label creates it, so a misspelling makes a
-  second label nobody filters on rather than an error you would notice.
+  with your role: `**Role:** contributor/<domain>/<project>`. The `sweep` workflow reads
+  issue and pull-request bodies for it daily; a comment it never reads, so there it holds
+  because you write it. Your issue label is that same string. Copy it, never compose it:
+  applying a label creates it, so a misspelling makes a second label nobody filters on rather
+  than an error you would notice.
 - **Language.** Nim. TypeScript only where JavaScript is unavoidable (a browser or Node
   host); C++ or C only where no Nim import expresses the library. Never plain JavaScript,
   never Python. Each such file argues for itself in its opening comment, on the phrase
@@ -555,7 +556,8 @@ what was rejected, what it costs. There is no `docs/adr/`.
   says "not yet" in the one place the Architect looks; an open pull request says "merge me",
   and one merged before it was ready cost a second pull request to undo. Local green is not
   the signal: `koch ci` and the runner disagree whenever the machines differ, which is what
-  the runner is for. Nothing checks this — GitHub is not this repository — so it holds
+  the runner is for. The `sweep` workflow names a pull request left ready without a green
+  run; going back to draft when you intend another commit it cannot see, so that half holds
   because you do it.
 - **Put it back to draft the moment you intend another commit.** Ready is not a one-way door.
   A record entry still to write, a figure still being measured, a fix you have just found —
