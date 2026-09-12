@@ -60,9 +60,9 @@ proc momentOf(c: Couple; at: float): tuple[m: Moment, why: Stop, which: int,
         result.whose = c.links[i].ends[k]
 
 proc walked(rig: Rig; band: Band; links: seq[Link]; who: Body;
-            apart, most, step: float; away: bool): Walk =
+            apart, most, step: float; away: bool; head: Body): Walk =
   ## Turn one way from rest until something gives, or until `most` is reached.
-  var c = build(rig, restStance(rig, apart, away), band, links, who)
+  var c = build(rig, restStance(rig, apart, away), band, links, head)
   c.settle()
   var at = 0.0
   let first = momentOf(c, at)
@@ -82,10 +82,16 @@ proc walked(rig: Rig; band: Band; links: seq[Link]; who: Body;
   c.free()
 
 proc swept*(rig: Rig; band: Band; links: seq[Link]; who = Body.Two;
-            most = MOST; step = STEP; apart = 0.0; away = false): Swept =
+            most = MOST; step = STEP; apart = 0.0; away = false;
+            head = Body.Two): Swept =
   ## Sweep both ways from rest, at distance hold settles to unless told one.
+  ##   `who` turns; `head` is whose crown joined hands are carried over.  They
+  ##     are usually same dancer and part company for orbit: orbit about
+  ##     couple's centre is change of world frame and moves neither dancer with
+  ##     respect to other, so it is turn of *other* dancer physically -- but
+  ##     couple still raised their hands over one who walks.
   result.apart = if apart > 0.0: apart else: restApart(rig, band, links, away)
-  var c = build(rig, restStance(rig, result.apart, away), band, links, who)
+  var c = build(rig, restStance(rig, result.apart, away), band, links, head)
   c.settle()
   result.restHolds = true
   for i in 0 ..< links.len:
@@ -94,5 +100,5 @@ proc swept*(rig: Rig; band: Band; links: seq[Link]; who = Body.Two;
   c.free()
   if not result.restHolds:
     return
-  result.pos = walked(rig, band, links, who, result.apart, most, step, away)
-  result.neg = walked(rig, band, links, who, result.apart, most, -step, away)
+  result.pos = walked(rig, band, links, who, result.apart, most, step, away, head)
+  result.neg = walked(rig, band, links, who, result.apart, most, -step, away, head)

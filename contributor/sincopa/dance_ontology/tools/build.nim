@@ -220,12 +220,10 @@ proc pages() =
   ##   Faces first: every page embeds them, and check that wants verb run by hand
   ##     first is check runner will not run.
   assets()
-  for dir in ["app", "sim", "review", "design"]: createDir(BUILD / dir)
+  for dir in ["app", "review", "design"]: createDir(BUILD / dir)
   compileRun(["tools/pages.nim", BUILD])
   nim(@["js"] & RELEASE & @["-o:" & BUILD / "app" / "app.js", "app/app.nim"])
-  nim(@["js"] & RELEASE & @["-o:" & BUILD / "sim" / "sim.js", "sim/page.nim"])
   compileRun(["tools/bundle.nim", BUILD / "app", "app"])
-  compileRun(["tools/bundle.nim", BUILD / "sim", "sim"])
   compileRun(["tools/review.nim", BUILD / "review"])
   compileRun(["design/marks.nim", BUILD / "design"])
   nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "design/turns.nim"])
