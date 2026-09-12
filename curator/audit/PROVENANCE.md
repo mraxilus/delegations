@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | b61f9e50efbc3e96 |
+| Rules  | 3497e71b8d327cfa |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief, the constitution, the Nim style guide and the provenance
@@ -342,6 +342,50 @@ and npm are pinned per project deliberately, and a tree with one inhabitant is a
 migration attached — so the published contract above ships and the tree waits for a second case.
 **If it is ever built the curator writes it and contributors only read it**, because a shared tree
 a contributor may write is a scope boundary the branch grammar cannot check.
+
+**A sweep reads what GitHub records, so three carried rules stopped being only read.**
+`sweep.yml` runs daily and writes one issue: a pull request left ready without a green run, a
+`Closes #N` that never fired, and an issue or pull request opening with no role line or carrying
+no label. Its shape is `watch.yml`'s — one issue found again by a marker, `gh issue list` rather
+than search, label as a hardcoded literal — and its schedule idiom is `check.yml`'s.
+
+- **None of the three rules left the carried list, and the change that built the sweep is where
+  that was discovered.** Issue 143 claimed three would leave; the plan for it claimed two. Both
+  were too generous. Every one of the three has a half GitHub does not record: the sweep reads
+  bodies but no comment, and cannot tell a copied label from a composed one spelled right; it
+  catches a `Closes #N` that misfired but never issue 116's shape, where a ruling in a comment
+  left an issue open and no pull request existed to find; it catches a pull request ready without
+  a green run but not one green now and about to move. So the three rules were **narrowed to their
+  remaining half** rather than struck, and the list stays at seven.
+- **Verified against fixtures rather than only on the runner.** `gh` is not installed here and a
+  scheduled workflow runs only from the default branch, so the sweep was driven through a stub
+  standing in for `gh`: a draft is skipped, a green head is skipped, a head whose run is still
+  `in_progress` is skipped, and a red head is named. A merged pull request naming an issue still
+  open is named with its base, and one outside the window is not. A body opening `**Role:**` and
+  one opening `Role:` unbolded both pass, while a null body and a missing label are named.
+- **The unbolded form passes deliberately.** Issue bodies here open `**Role:**`, but comments are
+  written loose — the Architect's own on issue 134 opens `Role: architect`. A check demanding bold
+  would spend its first run naming whoever wrote the rule.
+- **`workflows.nim` gained `("pull-requests", "gh pr ")` in the same change.** A `permissions`
+  block sets every unnamed scope to `none`, so a workflow reading pull requests without naming
+  that scope gets 403 on its first firing — the exact failure `checkScopes` exists to prevent, and
+  it could not see it because no workflow had used `gh pr` before. The gap was found by writing
+  the first such workflow, not by reading the check.
+- **`watch.yml` watches it, and that was the condition for merging it.** A sweep cannot be driven
+  before it lands — a scheduled workflow runs only from the default branch — so its first real run
+  is unattended. A sweep that quietly stopped running while both documents say a runner holds half
+  of three rules is worse than no sweep, so a red `sweep` opens an issue exactly as a red `check`
+  does. Its marker carries the workflow's own name, `watch:red:<name>`, rather than the single
+  literal it used before: sharing one marker would let somebody closing a red `check` silently
+  dismiss a broken sweep, which is the failure being closed. Driven through a stub first — a red
+  `sweep` beside an open `check` issue opens its own rather than commenting on that one.
+- Cost: about 30 runner-minutes a month. Public repositories draw on no allowance, so this is free
+  today; it stops being free if this repository goes private again, where 1,909 of 2,000 free
+  minutes were once measured used.
+- Unmeasured: whether a run authenticating as `GITHUB_TOKEN` spends the repository's allowance
+  rather than the account's. It should, and that would keep the sweep off the budget every
+  delegate shares — but nothing here has measured it, and this session has twice found a
+  GitHub-metering belief wrong.
 
 ## Toolchain
 

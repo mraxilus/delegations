@@ -69,3 +69,27 @@ jobs:
   test "a job-level block is left to its job, since only column zero is the whole grant":
     const NESTED = "name: x\n\njobs:\n  a:\n    permissions:\n      issues: write\n"
     check NESTED.permissionScopes.isNone
+
+  test "listing pull requests wants `pull-requests`, which no other mark reaches":
+    # Second workflow here sweeps pull requests, and `gh pr` is its own reach: `issues`
+    #   does not cover it, so block granting only that loses it to `none` and sweep gets
+    #   403 on its first firing -- same failure `watch.yml` met, unseen because no
+    #   workflow had used `gh pr` before.
+    const LISTS_PRS = """
+name: sweep
+
+permissions:
+  actions: read
+  issues: write
+
+jobs:
+  a:
+    steps:
+      - run: gh pr list --state open --json number,isDraft
+"""
+    let found = checkScopes(".github/workflows/sweep.yml", LISTS_PRS)
+    check found.len == 1
+    check "pull-requests" in found[0].message
+    check "actions, issues" in found[0].message  # names what was granted
+    let granted = LISTS_PRS.replace("  issues: write\n", "  issues: write\n  pull-requests: read\n")
+    check checkScopes(".github/workflows/sweep.yml", granted).len == 0
