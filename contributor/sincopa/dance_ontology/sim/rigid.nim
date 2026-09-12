@@ -421,13 +421,20 @@ func roomAt*(c: Couple; p: Pose; i: int): float =
     result = min(result, freedom(c.rig.range[Dof.Bend], p.bend[k], true))
     result = min(result, freedom(c.rig.range[Dof.Wrist], p.wrist[k], false))
 
-proc roomAt*(rig: Rig; band: Band; links: seq[Link]; apart: float): float =
+func restStance*(rig: Rig; apart: float; away = false): array[Body, Stance] =
+  ## Where couple start.  Same-name pair is built pillion: face to face its two
+  ## connections lie through each other, so couple would not collect it there.
+  result = facing(rig, apart)
+  if away: result = turned(result, Body.Two, 0.5)
+
+proc roomAt*(rig: Rig; band: Band; links: seq[Link]; apart: float;
+             away = false): float =
   ## Build couple that far apart, settle, and report their least room.
   ##   Least of several starts at infinity.  Starting it at nought, which is what
   ##     float comes as, made every distance score nought and sent couple to
   ##     closest one there was, whatever their joints said.
   result = Inf
-  var c = build(rig, facing(rig, apart), band, links)
+  var c = build(rig, restStance(rig, apart, away), band, links)
   c.settle()
   for i in 0 ..< links.len:
     let p = c.poseOf(i)
@@ -438,7 +445,7 @@ proc roomAt*(rig: Rig; band: Band; links: seq[Link]; apart: float): float =
   if links.len == 0: result = 0.0
   c.free()
 
-proc restApart*(rig: Rig; band: Band; links: seq[Link]): float =
+proc restApart*(rig: Rig; band: Band; links: seq[Link]; away = false): float =
   ## How far apart couple stand for this hold: wherever joints are furthest from
   ## their ends, stepping by `PACE`, never inside `CLEAR` of clear air.
   ##   Found once, at rest, and kept through turn, as page before this one did:
@@ -448,17 +455,27 @@ proc restApart*(rig: Rig; band: Band; links: seq[Link]): float =
   var best = -Inf
   var apart = least
   while apart <= least + 1.0:
-    let room = roomAt(rig, band, links, apart)
+    let room = roomAt(rig, band, links, apart, away)
     if room > best:
       best = room
       result = apart
     apart += PACE
 
 proc stopOf*(c: Couple; i: int): Stop =
-  ## Why one connection's hands came apart, if they did.
-  ##   Engine's own joints are asked first, since engine is what held them; swing
-  ##     is read off pose and judged against rig, which engine was not given.
+  ## What stops this connection here, if anything does.
+  ##   Swing is asked first and whatever hands are doing, because engine was never
+  ##     given it: nothing else in model holds extension or adduction, so asking
+  ##     only once hands had parted left them unheld through every hold that stood.
+  ##   Everything else engine itself enforces, so it can only be reached by hands
+  ##     coming apart, and then engine's own joints say which gave.
   let p = poseOf(c, i)
+  for k in 0 .. 1:
+    let
+      h = c.links[i].ends[k]
+      j = joints(c.stance[h.body], h.arm, p.arms[k])
+    if margin(c.rig.range[Dof.Extend], j.extend) < 0.0 or
+       margin(c.rig.range[Dof.Across], j.across) < 0.0:
+      return Stop.Swing
   if p.apart <= PARTED:
     return Stop.None
   for k in 0 .. 1:
@@ -471,12 +488,5 @@ proc stopOf*(c: Couple; i: int): Stop =
       return Stop.Elbow
     if p.wrist[k] >= c.rig.range[Dof.Wrist].hi - AT_END:
       return Stop.Wrist
-  for k in 0 .. 1:
-    let
-      h = c.links[i].ends[k]
-      j = joints(c.stance[h.body], h.arm, p.arms[k])
-    if margin(c.rig.range[Dof.Extend], j.extend) < 0.0 or
-       margin(c.rig.range[Dof.Across], j.across) < 0.0:
-      return Stop.Swing
   let met = metBy(c, i)
   if met != Stop.None: met else: Stop.Reach
