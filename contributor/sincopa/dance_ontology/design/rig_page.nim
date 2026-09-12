@@ -27,7 +27,9 @@ const BODY = """
       engine reports, at the radius it collides on. Nothing is drawn that is not
       simulated, and nothing simulated is left out &mdash; including the gap under
       the hips, because the rig is trunk upward and has no legs. Drag to turn the
-      view, scroll to zoom.</p>
+      view, scroll to zoom. A chevron on the floor and a line at shoulder height
+      say which way each dancer looks, since a capsule cannot: the torso's
+      section is symmetric front to back and the head is a sphere.</p>
   </header>
 
   <div class="rigwrap">

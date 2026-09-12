@@ -158,6 +158,14 @@ func stadium(rig: Rig; part: Part): tuple[r, spread: float] =
     wide = rig.round[part] / (2.0 * PI * q + 4.0 * (1.0 - q))
   (wide * q, 2.0 * (wide - wide * q))
 
+const
+  TRUNK_BIT = 1'u64        ## Torso, neck and head.
+  ARM_BIT: array[Body, uint64] = [2'u64, 4'u64] ## Lead's arms, follow's arms.
+  EVERY = high(uint64)     ## Meets everything.
+
+func other(who: Body): Body =
+  if who == Body.One: Body.Two else: Body.One
+
 proc capsule(c: var Couple; b: eng.BodyId; who: Body; arm: Arm; mark: Mark;
              a, z: eng.Vec; r, density: float; group: cint) =
   ## Hang one capsule on body, with its own group so arm's own links pass.
@@ -168,6 +176,16 @@ proc capsule(c: var Couple; b: eng.BodyId; who: Body; arm: Arm; mark: Mark;
     sd = eng.defaultShape()
   sd.density = density.cfloat
   sd.filter.groupIndex = group
+  sd.filter.categoryBits = (if mark == Mark.Trunk: TRUNK_BIT else: ARM_BIT[who])
+  sd.filter.maskBits = EVERY
+  when defined(leadYields):
+    # Architect: lead always gets his own arm out of way, so follow's arm never
+    # has to push it.  Model has no way for lead to move deliberately, so choice
+    # is between arms blocking each other -- which lead would not allow -- and
+    # arms passing.  Passing is nearer what couple achieve.  Trunks still stop
+    # arms, so `Through` is untouched; only arm against other dancer's arm goes.
+    if mark != Mark.Trunk:
+      sd.filter.maskBits = EVERY and not ARM_BIT[other(who)]
   discard eng.createCapsule(b, addr sd, addr cap)
   c.shapes.add Shape(body: b, who: who, arm: arm, mark: mark, a: a, z: z, r: r)
 

@@ -34,8 +34,13 @@ type
     read*: array[Dof, float]  ## What joint reads.
     lo*, hi*: array[Dof, float] ## And ends it is held between.
 
+  Faces* = object ## Where one dancer stands and which way they look.
+    at*: Vec   ## Axis at floor.
+    fore*: Vec ## Unit, horizontal, out of their chest.
+
   Still* = object ## One moment, everything page draws of it.
     at*: float          ## Turns from rest, signed.
+    faces*: array[Body, Faces]
     bars*: seq[Bar]
     arms*: seq[Ache]
     grips*: seq[Vec]    ## Where each pair of joined hands has got to.
@@ -73,6 +78,9 @@ proc acheOf(c: Couple; who: Body; arm: Arm): Ache =
 proc stillOf(c: Couple; at: float): Still =
   ## Everything page draws of couple as they stand this moment.
   result.at = at
+  for who in Body:
+    let ax = axesOf(c.stance[who])
+    result.faces[who] = Faces(at: ax.origin, fore: ax.fore)
   for s in c.shapes:
     let (a, z) = c.endsOf(s)
     result.bars.add Bar(who: s.who, arm: s.arm, mark: s.mark, a: a, z: z, r: s.r)

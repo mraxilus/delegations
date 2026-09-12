@@ -45,7 +45,7 @@ proc inkOf(side, who: int): cstring =
   styleOf(NAMES[side][who])
 
 const
-  NEAR = 5.0 * PI / 180.0   ## Within this of an end, joint reads as spent.
+  NEAR = 5.0 * PI / 180.0   ## Within this of either end, joint reads as spent.
   DOFS = [cstring"extend", cstring"across", cstring"twist",
           cstring"bend", cstring"wrist"]
   SIDES = [cstring"left", cstring"right"]
@@ -154,6 +154,38 @@ proc paint() =
     discard ctx.beginPath()
     discard ctx.moveTo(cx + pa.x * scale, cy + pa.y * scale)
     discard ctx.lineTo(cx + pz.x * scale, cy + pz.y * scale)
+    discard ctx.stroke()
+
+  # Which way each dancer looks.  Capsules cannot say: torso's section is
+  # symmetric front to back and head is sphere, so without this nothing on
+  # screen tells face to face from pillion.
+  let look = sweep().f[frame]
+  for who in 0 .. 1:
+    let
+      k = who * 4
+      at: Spot = (num(look[k]), num(look[k + 1]), 0.0)
+      fore = (x: num(look[k + 2]), y: num(look[k + 3]))
+      side = (x: -fore.y, y: fore.x)
+    ctx.strokeStyle = styleOf("--rule-strong").toJs
+    ctx.lineWidth = 2.0.toJs
+    # Chevron on floor, pointing where they look.
+    let nose: Spot = (at.x + fore.x * 0.30, at.y + fore.y * 0.30, 0.0)
+    for wing in [-1.0, 1.0]:
+      let tail: Spot = (nose.x - fore.x * 0.22 + side.x * 0.16 * wing,
+                        nose.y - fore.y * 0.22 + side.y * 0.16 * wing, 0.0)
+      let (pn, pt) = (seen(nose), seen(tail))
+      discard ctx.beginPath()
+      discard ctx.moveTo(cx + pt.x * scale, cy + pt.y * scale)
+      discard ctx.lineTo(cx + pn.x * scale, cy + pn.y * scale)
+      discard ctx.stroke()
+    # And same again at shoulder height, where figures actually are.
+    let
+      a: Spot = (at.x, at.y, 1.40)
+      b: Spot = (at.x + fore.x * 0.34, at.y + fore.y * 0.34, 1.40)
+      (pa, pb) = (seen(a), seen(b))
+    discard ctx.beginPath()
+    discard ctx.moveTo(cx + pa.x * scale, cy + pa.y * scale)
+    discard ctx.lineTo(cx + pb.x * scale, cy + pb.y * scale)
     discard ctx.stroke()
 
   # Where hands are joined, and how far engine has pulled them apart.
