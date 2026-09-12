@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 3de2c53c542bac80 |
+| Rules  | b4b063b2350a3645 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief, the constitution, the Nim style guide and the provenance
@@ -879,6 +879,37 @@ either lever repository issues 79 and 80 were weighing.
 - Cost: most runs stop exercising the SDL3 build. Every cache here trades that, and the pin is a
   commit rather than a mutable tag now (repository issue 126, answered by pull request 131), so
   what the cache hides is a rebuild rather than an upstream that moved underneath it.
+
+**GitHub's allowance is one account's, and every delegate spends it.** Measured 2026-09-12, on
+this repository, after a curator session stopped being able to close an issue:
+
+| | limit | state when it failed |
+|---|---|---|
+| GraphQL — issues, pull requests, comments | 5,000 points per hour per **user** | exhausted |
+| REST — workflow runs, jobs, logs | 5,000 requests per hour per **user** | healthy throughout |
+| Secondary, shared | 80 content-creating per minute, 500 per hour | not reached, ~15 made |
+
+The two primary allowances are separate, which is how the cause was found: `actions_list` and
+`get_job_logs` kept answering while every `issue_read`, `issue_write` and `list_issues` refused
+with *"API rate limit already exceeded for user ID 1268439"*. The GitHub MCP server routes issues
+and pull requests through GraphQL — its cursor pagination gives it away, and a mutation fails at
+*"failed to get issue ID"*, which is the node lookup before the write.
+
+- **Per user, not per session.** Every delegate posts as one account, so one allowance covers every
+  session running at once. `rga_visualiser` merged three pull requests and raised an issue in the
+  hours before this, and that is not a complaint about that session — it is the shape of the
+  problem. Nobody can see what the others have spent.
+- **The expensive half was avoidable and was the curator's.** The MCP server's own guidance says to
+  page in batches of five to ten and to ask for minimal output; this session listed twenty, thirty
+  and forty issues with bodies and comments, several times, and read back things `git log` already
+  knew. Guidance now sits in `CONTRIBUTOR.md` and `CURATOR.md` under *"Reading the queue without
+  spending the repository's budget"*.
+- **It did not clear quickly.** Twenty minutes after the first refusal it was still refusing, so a
+  session that hits this does not wait it out inside one piece of work. The honest outcome is the
+  unticked item on the carried list, which is what happened.
+- Unmeasured: what a single `list_issues` actually costs in points. The server surfaces no
+  `x-ratelimit-remaining`, so the budget is spent blind, and that is the strongest argument for
+  asking git first rather than for tuning page sizes.
 
 ## Open questions
 

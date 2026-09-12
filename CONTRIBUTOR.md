@@ -45,6 +45,73 @@ Two reads, before any other work.
   answered and open until somebody noticed. Left alone they accumulate, and the list above —
   the one thing that tells you what is waiting — stops being worth reading.
 
+
+### Reading the queue without spending the repository's budget
+
+Those two reads are the most expensive thing most sessions do, and the budget they spend is not
+yours. **Every delegate posts as one GitHub account**, so its hourly allowance is shared by every
+session running — a curator listing forty issues with their bodies takes that allowance from the
+contributor about to close one.
+
+It runs out. On 2026-09-12 it ran out mid-session and stayed out for over twenty minutes, leaving
+an issue commented but not closed.
+
+- **Ask git first.** Whether a pull request merged, what a change touched, whether your branch is
+  behind, what the stamp is — `git fetch origin main` then `git log`, `git diff --stat`, `grep`.
+  None of it costs the allowance. Reach for the API only for what lives on GitHub alone: issue
+  state, comments, labels, a run's conclusion.
+- **Read the queue once, and small.** Five to ten per page, naming only the fields you will read.
+  Asking for `body` on a list you are scanning for titles fetches every word of every one.
+- **Do not re-read.** A session that has listed the issues has the list; reading it again to check
+  something you were told is the cheapest kind of waste.
+- **Issues and pull requests draw on a different allowance from workflow runs**, so one being
+  exhausted does not mean the other is. If issue reads are failing, run and log reads may be fine.
+- **On a refusal, wait and retry — never hammer.** Three attempts in a minute spend what a single
+  attempt ten minutes later would not. If it will not clear before you hand over, the item stays
+  unticked on the list above with its reason, which is exactly what that list is for.
+
+## Carry the unchecked list in the open
+
+Seven rules in this document hold by reading and nothing else. Each is invisible until after it
+has been broken, which is how `Closes #N` left issues 25 and 26 answered and open until somebody
+noticed, and how a pull request shipped without anybody having seen the thing it changed.
+
+**So you carry them as a list, in the conversation, and the Architect can see where you are.**
+
+1. **Role line** on every issue, pull request and comment, and the label **copied, never
+   composed** (Saying which role you are).
+2. **Answered issues closed by hand**, `Closes #N` not relied on (Every session begins here).
+3. **Requests answered on their issue** — disagreeing with your reasons is complete, silence is
+   not (Every session begins here).
+4. **Pull request opened as draft**, ready only once the runner is green, and back to draft the
+   moment you intend another commit (Before opening a pull request).
+5. **Published page linked in both places**, pull request and message (Before opening a pull
+   request, Output contract).
+6. **Change ends by showing itself** — picture, worked example, or why neither fits (Before
+   opening a pull request).
+7. **Glossary term proposed, never written on sight** (Glossary process).
+
+This list is a view of those sections, not a second copy of them: **where it and a section
+disagree, the section wins.** `CURATOR.md` carries the same seven for a curator under
+*"What no check can reach"*, and a change to either belongs in both.
+
+### Three moments, and three rules that keep it honest
+
+Post it at **session start**, with what applies and what does not. Say so **when an item
+resolves**, where it happens rather than saved up. Post it in full at **handover**, as the last
+thing before the work leaves you.
+
+- An item that does not apply is **`n/a` with its reason**, never quietly dropped and never
+  ticked.
+- A ticked item **names what discharged it** — `#140 opened draft, ready after run 238 green` —
+  since a bare tick is a claim carrying no evidence, and Article VIII.1 is about exactly that.
+- **An item may stay unticked at handover.** `[ ] third leg — not merged yet` is a complete and
+  correct answer. A list that has to come out all ticked is a list that will, which is the
+  failure this one exists to prevent.
+
+Nothing checks this either, and saying so is the point: it is shown to a reader who is present,
+and that reader is the enforcement. Two of these seven are facts GitHub already records, and
+moving them to a check would be better than tracking them by hand — see the issue that proposes it.
 ## Boundaries
 
 - **Scope.** Only paths under `contributor/<domain>/<project>/`. The CI job `scope` fails on

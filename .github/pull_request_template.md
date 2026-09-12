@@ -19,6 +19,9 @@
 
 ## Record
 
+<!-- These are about this change. The standing list of what nothing checks is carried in the
+     conversation, not here -- see "Carry the unchecked list in the open". -->
+
 - [ ] PROVENANCE.md updated in its own commit, design by subsystem, verified or assumed marked
 - [ ] GLOSSARY.md updated for every term resolved
 - [ ] Every mistake found earned a test that fails without the fix, not one written to pass
