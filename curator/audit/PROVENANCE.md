@@ -392,9 +392,10 @@ than search, label as a hardcoded literal — and its schedule idiom is `check.y
 **Each project pins its own compiler; there is no repository-wide Nim.** `requires
 "nim == <version>"` in the project's nimble file, read through the same `requireLiterals` scan
 `dependencies.nim` uses, so requirements are parsed in one place. That no single version serves
-every project is measured, not feared: `rga_visualiser` depends on a library 2.2.4 cannot
-compile, and `dance_ontology` crashes the compiler itself on 2.2.8, 2.2.10 and 2.2.12 in
-six of its twelve suites (repository issue 106).
+every project is measured, not feared: `rga_visualiser` pins a compiler commit no release
+carries, and `dance_ontology` sat on 2.2.4 for a week because 2.2.8 onward crashed the
+compiler on its suites, until the cause was found in its own source (repository issue 106)
+and it moved to 2.2.12.
 
 - Rejected: one pin for the repository, which cannot hold both; `>=`, which cannot express the
   upper bound `dance_ontology` needs nor say which compiler a suite passed on; a `.nim-version`
@@ -430,14 +431,12 @@ that could be escaped.
 
 - Verified by running, not by reading: 23 audit suites and 2 probe suites pass on 2.2.12, in
   41.0 s and 10.0 s on this container, before the pin was pushed anywhere.
-- `dance_ontology` does not follow, and its `2.2.4` is an upper bound rather than neglect. The
-  cause is now measured rather than assumed: `opcAddFloat` at `vm.nim:1095` reads an operand the
-  VM left `rkInt`, because since 2.2.8 a `func` whose implicit `float` result is read by `+=`
-  before it is ever assigned gets an int register for it. Five lines reproduce it with nothing
-  of that project in them, `result = 0.0` first is enough to avoid it, and all twelve of its
-  suites then pass on 2.2.12. Handed over as repository issue 106; the line is theirs to write.
-- Cost: koch's own modules compile under both pins for as long as the two differ, since every
-  project's job installs its own. The matrix is what proves that, rather than this paragraph.
+- `dance_ontology` followed once the cause was measured rather than assumed: since 2.2.8 a
+  `func` whose implicit `float` result is read by `+=` before it is ever assigned gets an int
+  register for it, and `result = 0.0` first is enough to avoid it. Handed over as repository
+  issue 106 with a five-line reproduction; its record holds the diagnosis.
+- Cost: koch's own modules compile under every pin in the tree, since every project's job
+  installs its own. The matrix is what proves that, rather than this paragraph.
 
 **Koch resolves each pin to its own compiler, and fetches one it lacks.** `PATH` when it already
 serves, then `~/.cache/koch/nim/<pin>/bin`, then a fetch: a release as a tarball, and a commit —
@@ -610,12 +609,11 @@ after constitution articles and every assertion carries a citation. Fixtures are
 `fixtures.nim`: a smallest clean tree with a project under each root, and throwaway git
 repositories.
 
-Every project carries suites: 22 files here, one in `curator/probe`, three in
-`rga_visualiser`, twelve in `dance_ontology`, whose stubs dominate every whole-tree run. Counted
-from `git ls-files` rather than by hand, which is how an earlier count of three projects and
-fourteen files went stale. Verified by running `nim r koch tests` over every project,
-2026-09-08: 39 suites pass, 0 findings, each on the compiler its project pins — only one of the
-three pins was on `PATH`, which is the point of that verb.
+Every project carries suites, and `dance_ontology`'s dominate every whole-tree run. No count
+is written here: two written counts went stale within days, and `git ls-files '*/tests/t*.nim'`
+answers in a second. Verified by running `nim r koch tests` over every project, 2026-09-08:
+every suite passed, 0 findings, each on the compiler its project pins — only one of the three
+pins was on `PATH`, which is the point of that verb.
 
 ## Type checking
 
@@ -785,11 +783,11 @@ mistake this arrangement makes easy to make and impossible to see afterwards.
   written to pass on `skipped` and fail on `failure` or `cancelled`, and until that run only the
   first half had been exercised.
 
-**`koch audit` was removed.** It ran the static pass and then every project's suites, which
-per-project pins made a verb that cannot succeed: one machine holds one compiler on `PATH`, pins
-differ, so at least one project reported a mismatch and it always exited 1. Chosen against
-teaching it a version-to-path map nobody asked for. Cost: no single local command checks
-everything, the honest consequence of independent pins.
+**`koch audit` was removed, and `koch tests` with no project is what replaced it.** The old
+verb ran the static pass and then every project's suites on the one compiler `PATH` held, so
+once pins differed it always exited 1. Since koch resolves each pin (Toolchain), `nim r koch
+tests` alone runs every project on its own compiler, and `ci` stays scoped to what a change
+touched. Cost: checking everything locally is two commands, `tree` and `tests`, rather than one.
 
 **`nim r koch ci` is the local form of the jobs**, fetching `origin/main` and then running the
 whole-tree pass, the planned projects' restores and suites, the type check, the driven checks,
@@ -999,53 +997,28 @@ labels could not survive that, and the charter wording derived from them could n
   `x-ratelimit-remaining`, so the budget is spent blind, and that is the strongest argument for
   asking git first rather than for tuning page sizes.
 
+**Two caches are deliberately not kept, each measured rather than feared.** A restored
+`nimcache` cannot let a check pass without compiling what it claims — driven over an ordinary
+rebuild, a cache made six years newer than backdated sources, and a full save-mutate-restore,
+Nim decides by content rather than mtime and every case rebuilt correctly — but it can only
+skip Nim compilation, at most ~16 s of a 357 s driven job, and the modules that matter on such
+a job are exactly the ones it cannot serve. Caching apt archives saves the download and not
+the install: 2.8 s of a 357 s job, 0.8%, for a root-owned directory and a key. Both figures
+are from one `driven` run on 2026-09-12 and expire with the job they measured.
+
+**Koch declares its own system dependencies, as the rule it enforces asks of every project.**
+`KOCH_SYSTEM` in `projects.nim` pairs each with its reason, and `koch system` with no project
+prints those and every project's, unscoped, so one command answers what a machine needs
+before any of this runs; naming a project keeps the per-job meaning the runner asks for. Nim
+is deliberately absent, being the toolchain koch runs under rather than a package a machine
+installs, and `compilers.nim` resolves each pin itself; npm is absent because it belongs to
+the project carrying a node manifest, and `restoreNode` reports its absence by name. The root
+`README.md` points at the verb rather than naming packages, so the declaration is the only
+statement and nothing can drift from it. Rejected: stating an exemption in `CONTRIBUTOR.md`,
+which would have left the rule true and the repository still answering its own question in
+prose. Cost: koch's own packages are unconditional, so a machine needing none of them still
+installs them (repository issue 78).
+
 ## Open questions
 
-These two were open questions and are now answered; both are kept as answers rather than
-deleted, so neither is reopened from first principles.
-
-**A restored `nimcache` does not let a check pass without compiling what it claims, and it is
-still not worth caching.** Driven rather than argued, three cases: an ordinary rebuild; a cache
-made six years newer than backdated sources; and a full save-mutate-restore, which is what
-`actions/cache` actually does. All three rebuilt correctly — Nim decides by content, not by
-mtime, so a stale restore costs a rebuild rather than a wrong answer. That is the property the
-two Atlas defects lacked, and it is why those bit and this does not.
-
-- Rejected on size, then, not on fear. `nimcache` can only skip Nim compilation, which in run
-  214's `driven` job is a **2.8 s** page build plus part of a 13.7 s desktop build — at most
-  ~16 s of 357 s. Smaller still in practice: that job runs *because* the project's code changed,
-  so the modules that matter are exactly the ones a restored cache cannot serve.
-- The claim it carried — that this was "the largest saving still on the table" — was true when
-  written and is not now. SDL3 was.
-
-**Caching apt archives is not worth it, measured.** The figure the earlier record asked for:
-apt reports `Fetched 27.7 MB in 2s`, and splitting the step gives **2.8 s of download against
-7.6 s of install**. The whole step is 37 s, the rest of it compiling koch and running the
-project's own `system` verb, which no archive cache touches.
-
-- So a cache removes **2.8 s from a 357 s job, 0.8%**, for a root-owned directory and a key. The
-  original instinct — "saves the download and not the install" — was right, and now has a number.
-- The 1 m 47 s that opened repository issue 79 described a step that no longer exists: `chromium`
-  resolved to a snap and left with the browser change, taking most of the step with it. A figure
-  with an expiry date is worth re-taking rather than re-citing.
-**koch declares its own system dependencies, as the rule it enforces asks of every project.**
-`KOCH_SYSTEM` in `projects.nim` pairs each with its reason -- git, since tree is what git lists
-and `ci` fetches base to compare against; curl, since compiler pin nothing on machine serves is
-downloaded. `koch system` with no project prints those and every project's, unscoped, so one
-command answers what machine needs before any of this runs; naming project keeps its old meaning,
-which is what runner asks per matrix job.
-  Nim is deliberately absent: it is toolchain koch runs under rather than package machine
-  installs, and `compilers.nim` resolves each pin itself. npm is absent for different reason --
-  it is needed where project carries node manifest, so it belongs to that project, and
-  `restoreNode` already reports its absence by name.
-  **`README.md` stopped listing them, which is what actually closed gap.** Rule's complaint was
-  prose that decays, and second copy is what decays; README now points at verb rather than
-  naming packages, so declaration is only statement and nothing can drift from it. That is why
-  no check was written to hold two together: there is no second thing to hold.
-  Rejected: stating exemption in `CONTRIBUTOR.md` instead, which was cheaper and was earlier
-  curator's lean. It would have left rule true and repository still answering its own question in
-  prose; and `koch system` already existed, so this invented no mechanism -- bare form previously
-  answered for changed projects, which nothing ever asked it.
-  Cost: koch's two are unconditional, so machine needing neither still installs both. Both are
-  already declared by `rga_visualiser` for its own reasons, so union is unchanged today
-  (repository issue 78).
+None.
