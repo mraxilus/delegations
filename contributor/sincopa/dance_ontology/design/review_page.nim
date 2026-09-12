@@ -135,8 +135,8 @@ func sheetOf(P: Parts): string =
     ## apiece.
     ##   Each step carries sim's own tag, not cell.  Cell that folds six edges
     ##     together and is marked by worst of them paints five reachable edges
-    ##     red for sake of sixth, and reader asking why an easy one is refused
-    ##     is reading tag that was never about it.
+    ##     red for sake of sixth, and reader asking why easy one is refused is
+    ##     reading tag that was never about it.
     ##   Radio button and sibling rule do switching, so cell needs no script:
     ##     page stays markup browser can draw with nothing running.
     ##   Every step keeps its own note under its own picture, since note is
@@ -500,7 +500,8 @@ func sheetOf(P: Parts): string =
   body.add "</div></section>"
 
   # `G`. Every edge of paired chain animated, as `F` does for section C.
-  body.add &"""<section id="paired-moving"><h2>G &middot; Hand-to-hand chain, pillion lead, moving</h2>
+  body.add &"""<section id="paired-moving">
+  <h2>G &middot; Hand-to-hand chain, pillion lead, moving</h2>
   <p class="lede">What <b>F</b> is to <b>C</b>, this is to <b>D</b>: every edge of
   the same-name chain, walked by every manner of turn. The same two cells per
   manner &mdash; the whole chain in one figure, and an edge at a time with a
