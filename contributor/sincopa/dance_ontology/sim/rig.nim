@@ -82,6 +82,15 @@ type
 
 func deg(d: float): float = d * PI / 180.0
 
+const
+  ACROSS_HI = (when defined(acrossFree): deg(130) else: deg(45))
+    ## Experiment: adduction as clinical *horizontal* adduction rather than
+    ## hanging arm's.  Reading is arcsin and cannot pass ninety, so at this figure
+    ## nothing but trunk stops arm crossing body -- which is what stops it in
+    ## life.  Flag until measured.
+  WRIST_HI = (when defined(wristWide): deg(75) else: deg(60))
+    ## Experiment: cone at clinical flexion and extension rather than under both.
+
 
 const HUMAN* = Rig(
   round: [0.95, 0.37, 0.56],
@@ -93,10 +102,10 @@ const HUMAN* = Rig(
   limb: 0.045,
   range: [
     Range(lo: deg(-90), hi: deg(45), easeLo: 0.0, easeHi: deg(20), neutral: 0.0),
-    Range(lo: deg(-90), hi: deg(45), easeLo: 0.0, easeHi: deg(20), neutral: 0.0),
+    Range(lo: deg(-90), hi: ACROSS_HI, easeLo: 0.0, easeHi: deg(20), neutral: 0.0),
     Range(lo: deg(-70), hi: deg(90), easeLo: deg(25), easeHi: deg(25), neutral: 0.0),
     Range(lo: 0.0, hi: deg(140), easeLo: 0.0, easeHi: deg(35), neutral: deg(30)),
-    Range(lo: 0.0, hi: deg(60), easeLo: 0.0, easeHi: deg(20), neutral: 0.0)],
+    Range(lo: 0.0, hi: WRIST_HI, easeLo: 0.0, easeHi: deg(20), neutral: 0.0)],
   band: [(1.00, 1.35), (1.40, 1.50), (1.735, 2.00)])
   ## Average adult.  Crown band starts limb's radius over head
   ## so hand carried there clears it by construction.
