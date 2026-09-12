@@ -28,10 +28,13 @@ const
     ("actions", "/actions/"),
     ("actions", "gh run "),
     ("issues", "gh issue "),
+    ("pull-requests", "gh pr "),
     ("contents", "actions/checkout"),
   ]
     ## Text step uses scope by, paired with scope it then needs. Endpoint path is what `gh api`
-    ## spells; `gh run` and `gh issue` are same reach through subcommand.
+    ## spells; `gh run`, `gh issue` and `gh pr` are same reach through subcommand.
+    ## `pull-requests` arrived late: no workflow read pull requests until sweep did, so gap
+    ## sat unseen behind check written to stop exactly it.
 
 
 func permissionScopes*(workflow: string): Option[seq[string]] =
