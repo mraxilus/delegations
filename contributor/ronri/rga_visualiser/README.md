@@ -104,7 +104,7 @@ src/rga_visualiser/           geometry and model, reachable from either front-en
                               objects, euclid, boundary, mesh, tessellate, camera,
                               scene, selection, picking, marker, framing, interaction,
                               storyboard, orrery, neighbourhood, starfield, history,
-                              format, help, message, timings, ramp, lighting
+                              format, help, message, wording, timings, ramp, lighting
 src/…/projections.nim         projections pga withdrew; deleted when they return
 src/desktop/main.nim          desktop entry point: window, event loop, headless runs
 src/desktop/sdl3.nim opengl.nim  bindings to the window system and to GL
@@ -124,6 +124,21 @@ tests/t4d.nim t4d_small.nim   C backend, shipped and small capacities
 tests/t4d_browser.nim         JS backend, same suite
 deps/                         PGA library, restored by Atlas; never committed
 ```
+
+## Published
+
+The browser front-end is published, so it can be opened rather than rebuilt. Republish it from
+`build/rga_visualiser.html` after any change that alters what the page shows, and put the URL
+in the pull request and in the message that says the work is ready.
+
+| built file, under `build/` | published at |
+| --- | --- |
+| rga_visualiser.html | https://claude.ai/code/artifact/a523f27b-d74e-4987-9b6e-7b1680e469a6 |
+
+The URL is written here because it was not written anywhere: the page existed and three
+changes to it merged without a republish, because nobody reading this repository could find
+where it was published. The desktop front-end has no entry — it is a binary, and Article XI.3
+keeps binaries out of the tree, so it is shown as a screenshot instead.
 
 ## Status
 

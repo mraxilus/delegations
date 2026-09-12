@@ -6,7 +6,7 @@
 | Author | Claude |
 | Date   | 2026-09-06 |
 | Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | b4b063b2350a3645 |
+| Rules  | b61f9e50efbc3e96 |
 | Review | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief, the constitution, the Nim style guide and the provenance
@@ -322,6 +322,26 @@ different faces (repository issue 116).
   comes from upstream's sidecar at fetch time rather than from this table, and it is stored
   *unpacked by pin* because the rest of koch resolves toolchains by pin. Different trust model and
   different key, so `compilers.nim` keeps it rather than this pretending one shape serves both.
+- **The declaration is published, so no consumer parses this source.** `koch assets` naming no
+  file writes every row as `<file> <digest>`, one per line. Before that, a project holding the law
+  that its faces are declared read `assets.nim` as text — a second parser for a format only this
+  module owns, which is the duplication the store exists to end, one layer up (repository issue
+  134). Two columns rather than three: the address is the fetcher's business, and the digest is
+  what a consumer checks bytes against. Neither column can hold a space, so `split` reads a row.
+  **A row never reads as a path, and the suite holds it so.** The verb prints paths when files
+  are named and rows when none are, and both contributor builds tell those apart by shape alone
+  — one keeps lines that `fileExists`, the other lines starting `/`. A row that looked like an
+  absolute path would be copied as a face by one and counted as served by the other. Neither
+  project can check that; the store owns the row's shape, so the store holds the law.
+
+**A `/common/` tree was costed and deferred.** Issue 134 asked for one, and named the bar for
+admitting anything to it: the curator and at least two contributor projects use it, with the users
+named so a later refactor can tell a common project nobody needs from one everybody does. The
+store is the only thing in the repository that clears that bar today. Compilers, Atlas checkouts
+and npm are pinned per project deliberately, and a tree with one inhabitant is a rename with a
+migration attached — so the published contract above ships and the tree waits for a second case.
+**If it is ever built the curator writes it and contributors only read it**, because a shared tree
+a contributor may write is a scope boundary the branch grammar cannot check.
 
 ## Toolchain
 
@@ -885,16 +905,40 @@ this repository, after a curator session stopped being able to close an issue:
 
 | | limit | state when it failed |
 |---|---|---|
-| GraphQL — issues, pull requests, comments | 5,000 points per hour per **user** | exhausted |
-| REST — workflow runs, jobs, logs | 5,000 requests per hour per **user** | healthy throughout |
+| GraphQL | 5,000 points per hour per **user** | exhausted |
+| REST | 5,000 requests per hour per **user** | healthy throughout |
 | Secondary, shared | 80 content-creating per minute, 500 per hour | not reached, ~15 made |
 
 The two primary allowances are separate, which is how the cause was found: `actions_list` and
-`get_job_logs` kept answering while every `issue_read`, `issue_write` and `list_issues` refused
-with *"API rate limit already exceeded for user ID 1268439"*. The GitHub MCP server routes issues
-and pull requests through GraphQL — its cursor pagination gives it away, and a mutation fails at
-*"failed to get issue ID"*, which is the node lookup before the write.
+`get_job_logs` kept answering while `list_issues` refused with *"API rate limit already exceeded
+for user ID 1268439"*. A GraphQL call gives itself away by its cursor pagination — `after` and an
+`endCursor` from a `pageInfo` — and a refused mutation fails at *"failed to get issue ID"*, which
+is the node lookup before the write.
 
+**The split is by API and by nothing else, and this table said otherwise for a day.** Its rows
+were first labelled by subject — *GraphQL — issues, pull requests, comments* against *REST —
+workflow runs, jobs, logs* — which reads well and is false. `rga_visualiser` found it: `list_issues`
+and `update_pull_request` were refused in the same seconds `create_pull_request` and
+`pull_request_read` answered, same repository, pull-request calls on both sides. The subject
+labels could not survive that, and the charter wording derived from them could not either.
+
+- **It is per method, not per tool.** `pull_request_read` pages its review-comment method by
+  cursor and its others by `page` and `perPage`, so one tool sits on both meters, and no name at
+  the call site says which.
+- **Measured again the same afternoon, and the second time under control.** Marking pull request
+  148 ready was refused while calls seconds either side of it answered: `create_pull_request`,
+  `actions_list`, `add_issue_comment` and `issue_read` all went through, and
+  `update_pull_request`, `issue_write` and `list_issues` all refused. Seven calls, one window, one
+  repository — no room for the allowance to have run out in between, which is the confound the
+  first measurement had.
+- That refused `update_pull_request` passed **only** `draft`, so the draft toggle itself is on the
+  GraphQL meter; opening a pull request, an ordinary REST `POST`, is not. What is still not
+  established is whether the tool's other fields take REST — no call has isolated one.
+- **So no delegate can route around it by choosing tools**, which is why the guidance in
+  `CONTRIBUTOR.md` and `CURATOR.md` is the observable rule rather than the mechanism: a refusal on
+  one call says nothing about another, so try the one you need before concluding GitHub is shut.
+  The wrong version would have had a contributor sit out a window in which opening their pull
+  request would have worked.
 - **Per user, not per session.** Every delegate posts as one account, so one allowance covers every
   session running at once. `rga_visualiser` merged three pull requests and raised an issue in the
   hours before this, and that is not a complaint about that session — it is the shape of the

@@ -64,8 +64,11 @@ an issue commented but not closed.
   Asking for `body` on a list you are scanning for titles fetches every word of every one.
 - **Do not re-read.** A session that has listed the issues has the list; reading it again to check
   something you were told is the cheapest kind of waste.
-- **Issues and pull requests draw on a different allowance from workflow runs**, so one being
-  exhausted does not mean the other is. If issue reads are failing, run and log reads may be fine.
+- **A refusal on one call says nothing about another.** GitHub meters its two APIs separately, and
+  a call's name does not say which it takes: `list_issues` and `update_pull_request` were refused
+  in the same seconds `create_pull_request` and `pull_request_read` answered. It is not even per
+  tool — one method of a tool can take one API and another method the other. So a refusal does not
+  mean GitHub is unreachable, and the call you actually need may well succeed. Try it.
 - **On a refusal, wait and retry — never hammer.** Three attempts in a minute spend what a single
   attempt ten minutes later would not. If it will not clear before you hand over, the item stays
   unticked on the list above with its reason, which is exactly what that list is for.

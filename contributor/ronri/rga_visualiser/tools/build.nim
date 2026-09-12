@@ -63,6 +63,10 @@ const
     ##   Under `build/` because it is derived rather than declared, and because it holds paths
     ##   into one machine's own store.
   PATH_BRIDGE_NIM = "src" / "browser" / "bridge.nim"
+  PATH_WORDING_NIM = "src" / "rga_visualiser" / "wording.nim"
+  PATH_PANEL_NIM = "src" / "desktop" / "panel.nim"
+    ## Panel, swept for shown text written where it is drawn.
+    ## Catalogue of shown text, whose keys page names rather than copies.
     ## Bridge compiled through JS backend, and source `declare` reads.
   PATH_BRIDGE_JS = BUILD_BROWSER / "bridge.js"
     ## Compiled bridge, first script on page.
@@ -325,6 +329,33 @@ proc declare() =
     let rendered = lines.signatureAt(i).declarationOf
     if rendered.len > 0: declarations.add rendered
 
+  # Page names shown text by key, and key is Nim enum. Emitted here rather than written
+  #   twice: renaming key and not re-deriving then fails type check, exactly as renamed
+  #   export does (repository issue 47).
+  #   `declare const enum` and not plain enum: ambient const enum is inlined at every use
+  #   site, so page carries numbers rather than lookup object, and nothing new joins
+  #   `SCRIPTS`. Both configurations already read this file.
+  var keys: seq[string]
+  block:
+    var is_inside = false
+    for line in readFile(PATH_WORDING_NIM).splitLines:
+      if line.startsWith("type Wording* = enum"):
+        is_inside = true
+        continue
+      if not is_inside: continue
+      let trimmed = line.strip
+      if trimmed.len == 0: break
+      if trimmed.startsWith("##"): continue
+      if not line.startsWith(" "): break
+      for name in trimmed.split(','):
+        let key = name.strip
+        if key.len > 0: keys.add key
+  if keys.len == 0:
+    raise newException(OSError, "Wording carries no keys; page would have none to name.")
+  var wording = "declare const enum Wording {\n"
+  for i, key in keys: wording.add "  " & key & " = " & $i & ",\n"
+  wording.add "}\n"
+
   var records: seq[string]
   for name in RECORDS:
     let rendered = lines.recordOf(name)
@@ -337,13 +368,48 @@ proc declare() =
     PATH_DECLARATIONS,
     MARKER_GATE &
       "//   Regenerate with `nim r tools/build.nim declare`; never edit by hand.\n\n" &
-      records.join("\n") & "\n" & declarations.join("\n") & "\n",
+      wording & "\n" & records.join("\n") & "\n" & declarations.join("\n") & "\n",
   )
-  echo "Wrote ", PATH_DECLARATIONS, " (", declarations.len, " declarations)."
+  echo "Wrote ", PATH_DECLARATIONS, " (", declarations.len, " declarations, ",
+    keys.len, " wording keys)."
 
 
 
 #[ Commands ]#
+
+const WORDING_BANNED = [
+  (PATH_PANEL_NIM, "gui.tooltip(\""), (PATH_PANEL_NIM, "gui.tooltip(cstring\""),
+  (PATH_SHELL, "title=\""),
+]
+  ## Reject shown text written where it is drawn rather than named from catalogue.
+  ##   One per file kind that can hold one; browser scripts are swept separately, since
+  ##   `.title` is assigned rather than passed.
+
+proc checkWording() =
+  ## Refuse shown text written anywhere but `wording.nim`.
+  ##   Catalogue is only useful while it is whole: one tooltip left as literal beside it is
+  ##   exactly copy that drifted before (repository issue 145), and nothing else can see it.
+  ##   Named constant is allowed and quoted text is not: constant has one home, literal has
+  ##   as many as it is typed in.
+  var found: seq[string]
+  for pair in WORDING_BANNED:
+    let (path, banned) = pair
+    # Bound first: bare `splitLines` in `for` resolves to iterator, which yields no index.
+    let lines = readFile(path).splitLines
+    for i, line in lines:
+      if banned in line: found.add path & ":" & $(i + 1) & ": " & line.strip
+  for path in walkFiles("src" / "browser" / "*.ts"):
+    let lines = readFile(path).splitLines
+    for i, line in lines:
+      if ".title = '" in line or ".title = \"" in line:
+        found.add path & ":" & $(i + 1) & ": " & line.strip
+  if found.len > 0:
+    raise newException(
+      OSError,
+      "Shown text belongs in `wording.nim`, named by key; got " & $found.len & ":\n  " &
+        found.join("\n  "),
+    )
+
 
 proc types() =
   ## Derive bridge's declarations, then type-check every script against them.
@@ -354,6 +420,7 @@ proc types() =
   ##   node, and neither's lib set admits other's.
   ##   `web` and `drive` both call this, so no step is written twice.
   declare()
+  checkWording()
   run("npx", ["tsc", "--project", PATH_TSCONFIG])
   run("npx", ["tsc", "--project", PATH_TSCONFIG_DRIVE])
 

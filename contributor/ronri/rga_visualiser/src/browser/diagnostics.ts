@@ -26,6 +26,7 @@ const diagnostic_slowest_split = elementById('diagnostic-slowest-split');
 const diagnostic_heap = elementById('diagnostic-heap');
 const diagnostic_pool = elementById('diagnostic-pool');
 const grid_pool = elementById<HTMLCanvasElement>('pool-grid');
+grid_pool.title = nimWording(Wording.TipDiagPool);
 const context_pool = grid_pool === null ? null : grid_pool.getContext('2d');
 // Scene revision grid was last drawn at; -1 until it has been drawn once. Grid.
 //   is picture of which handles are occupied and in what ink, so it changes exactly when
