@@ -392,22 +392,41 @@ proc metBy(c: Couple; i: int): Stop =
           return Stop.Arms
   Stop.None
 
+func freedom(r: Range; value: float; bothEnds: bool): float =
+  ## How far value sits from nearer end of range, in that end's ease.
+  ##   Not `margin`: margin counts stop with no ease as costing nothing to lean
+  ##     on, so straight elbow reads infinitely comfortable.  Choosing where to
+  ##     stand asks what arm is free to do, and straight elbow cannot straighten
+  ##     further however painless it is, so both ends count here.  `limb.room`
+  ##     draws same distinction, for same reason.
+  let
+    easeLo = if r.easeLo > 0.0: r.easeLo else: r.easeHi
+    easeHi = if r.easeHi > 0.0: r.easeHi else: r.easeLo
+  result = (r.hi - value) / easeHi
+  if bothEnds:
+    result = min(result, (value - r.lo) / easeLo)
+
 func roomAt*(c: Couple; p: Pose; i: int): float =
-  ## How far this connection's nearest joint is from its end, in that end's ease.
-  ##   Same reading old solver called comfort, off engine's own joints rather than
-  ##     off pose read back, and without swing, which engine was not given.
+  ## How free this connection's tightest joint still is to move either way.
+  ##   Read off engine's own joints rather than off pose again, and without
+  ##     swing, which engine was never given.  Wrist's range is cone, so its
+  ##     nought is middle of it and only its edge counts.
   result = Inf
   for k in 0 .. 1:
     let
       tw = c.rig.range[Dof.Twist]
       (lo, hi) = twistEnds(c.rig, c.links[i].ends[k].arm)
       turning = Range(lo: lo, hi: hi, easeLo: tw.easeLo, easeHi: tw.easeHi)
-    result = min(result, margin(turning, p.twist[k]))
-    result = min(result, margin(c.rig.range[Dof.Bend], p.bend[k]))
-    result = min(result, margin(c.rig.range[Dof.Wrist], p.wrist[k]))
+    result = min(result, freedom(turning, p.twist[k], true))
+    result = min(result, freedom(c.rig.range[Dof.Bend], p.bend[k], true))
+    result = min(result, freedom(c.rig.range[Dof.Wrist], p.wrist[k], false))
 
 proc roomAt*(rig: Rig; band: Band; links: seq[Link]; apart: float): float =
   ## Build couple that far apart, settle, and report their least room.
+  ##   Least of several starts at infinity.  Starting it at nought, which is what
+  ##     float comes as, made every distance score nought and sent couple to
+  ##     closest one there was, whatever their joints said.
+  result = Inf
   var c = build(rig, facing(rig, apart), band, links)
   c.settle()
   for i in 0 ..< links.len:
