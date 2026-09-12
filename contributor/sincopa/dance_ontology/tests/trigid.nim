@@ -19,9 +19,9 @@ joinable: false
 
 {.experimental: "strictFuncs".}
 
-import std/[math, unittest]
+import std/[math, strformat, unittest]
 
-import ../sim/[body, hold, limb, rig, rigid, vec, walk]
+import ../sim/[body, contact, hold, limb, rig, rigid, vec, walk]
 
 
 const
@@ -318,3 +318,69 @@ suite "two dancers in rigid body engine":
       check sw.restHolds
       check not sw.pos.stopped
       check not sw.neg.stopped
+
+
+#[ Arms Move As Arms Do ]#
+
+const
+  SLOP = 0.005 ## Engine's own linear slop, metres: contact rests this deep.
+  LEAP = 0.08  ## Furthest any point of arm may move between two moments.
+    ## Arm at one metre per second while couple turn at quarter turn per second
+    ## covers eight centimetres in one fiftieth of turn; dancer's hand crossing
+    ## more than that between frames is leap, not move.
+
+iterator corpus(): tuple[name: string, band: Band, links: seq[Link], w: Walk] =
+  ## Two single holds walked one way from nearest stance: crown is where arm
+  ## goes over head, torso is where arms lie against bodies.
+  var apart = 0.0
+  for a in stands(HUMAN):
+    apart = a
+    break
+  for (name, band, arms) in [("L-l above", Band.Crown, [Arm.Left, Arm.Left]),
+                             ("L-r low", Band.Torso, [Arm.Left, Arm.Right])]:
+    let links = @[Link(ends: [(Body.One, arms[0]), (Body.Two, arms[1])])]
+    yield (name, band, links,
+           walked(HUMAN, band, links, Body.Two, apart, 1.0, STEP, false, Body.Two))
+
+suite "arms move as arms do":
+  ## Architect, watching viewer: bodies too rigid, arms crushed and passing
+  ## through them, sharp moves between frames.  Measured before these laws:
+  ## forearm 45 mm inside its own trunk with nothing said, and hand crossing
+  ## 359 mm between first two moments.
+
+  test "no arm sits inside any body in any moment":
+    ## Read with reader's own clipped gap, not engine's manifolds, so engine is
+    ## not asked to mark its own work (Article II.9).  Own body counts as other
+    ## does: engine collides own arm with own trunk, so surfaces are what meet,
+    ## and `own`'s pad of nought was old solver's excuse for arm hanging at side.
+    for (name, band, links, w) in corpus():
+      check w.restHolds
+      check w.moments.len > 5
+      var deepest = 0.0
+      for m in w.moments:
+        for i in 0 ..< links.len:
+          for k in 0 .. 1:
+            let a = m.arms[i][k]
+            for (p, q) in [(a.s, a.e), (a.e, a.w), (a.w, a.g)]:
+              for who in Body:
+                deepest = min(deepest, bodyGap(HUMAN, m.stance[who], p, q, own = false).gap)
+      echo &"    {name}: deepest any link sits in any body {-deepest * 1000:.1f} mm"
+      check deepest > -SLOP - 1e-9
+
+  test "no point of any arm leaps between two moments":
+    for (name, band, links, w) in corpus():
+      var most = 0.0
+      var where = 0.0
+      for j in 1 ..< w.moments.len:
+        for i in 0 ..< links.len:
+          for k in 0 .. 1:
+            let
+              a = w.moments[j - 1].arms[i][k]
+              b = w.moments[j].arms[i][k]
+            for (p, q) in [(a.s, b.s), (a.e, b.e), (a.w, b.w), (a.g, b.g)]:
+              if dist(p, q) > most:
+                most = dist(p, q)
+                where = w.moments[j].at
+      echo &"    {name}: furthest any point moves between moments {most * 1000:.0f} mm, " &
+        &"at {where:.2f}"
+      check most < LEAP
