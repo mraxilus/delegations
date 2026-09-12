@@ -141,14 +141,23 @@ func frames(sw: Swept; band: Band; links: seq[Link]): JsonNode =
   for m in sw.pos.moments:
     result.add frame(m, band, links)
 
+func went(w: Walk): float =
+  ## How far one way got: where it stopped, else as far as it was walked.
+  ##   `Walk.at` is set only where something gave.  Page reads this as edge of
+  ##     what it may draw, so free way written as nought would be drawn not at
+  ##     all; old solver wrote `MOST` there and page still expects that.
+  if w.stopped: w.at
+  elif w.moments.len > 0: abs(w.moments[^1].at)
+  else: 0.0
+
 proc sweepJson(hold, word: string; band: Band): JsonNode =
   let
     links = linksOf(hold)
     sw = swept(HUMAN, band, links, most = MOST, away = restsAway(hold))
   result = %*{
     "restHolds": sw.restHolds,
-    "neg": round(sw.neg.at * 1000.0) / 1000.0,
-    "pos": round(sw.pos.at * 1000.0) / 1000.0,
+    "neg": round(went(sw.neg) * 1000.0) / 1000.0,
+    "pos": round(went(sw.pos) * 1000.0) / 1000.0,
     "stoppedNeg": sw.neg.stopped,
     "stoppedPos": sw.pos.stopped,
     "whyNeg": why(sw.neg),
@@ -158,7 +167,7 @@ proc sweepJson(hold, word: string; band: Band): JsonNode =
     "apartNeg": round(sw.neg.apart * 1000.0) / 1000.0,
     "apartPos": round(sw.pos.apart * 1000.0) / 1000.0,
     "frames": (if sw.restHolds: frames(sw, band, links) else: newJArray())}
-  stderr.writeLine hold & " " & word & ": -" & $sw.neg.at & " +" & $sw.pos.at &
+  stderr.writeLine hold & " " & word & ": -" & $went(sw.neg) & " +" & $went(sw.pos) &
     " (" & $(sw.neg.moments.len + sw.pos.moments.len) & " moments)"
 
 
