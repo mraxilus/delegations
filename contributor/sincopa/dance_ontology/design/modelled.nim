@@ -69,6 +69,21 @@ func reaches(c: Carried; turns: float): bool =
   let i = if turns >= 0.0: 1 else: 0
   not c.stopped[i] or abs(turns) <= c.at[i]
 
+var settled: Table[string, float]
+  ## Where each hold stands, once found.  Finding it costs hundred settles of
+  ## three thousand steps apiece, and same hold at same band was being asked for
+  ## it forty times over: caching cannot move any figure, only stop re-deriving
+  ## one already had.
+
+proc standsAt(links: seq[Link]; away: bool): float =
+  var key = (if away: "|" else: "")
+  for l in links:
+    for e in l.ends:
+      key.add $ord(e.body) & $ord(e.arm)
+  if key notin settled:
+    settled[key] = restApart(HUMAN, CROWN, links, away)
+  settled[key]
+
 proc carried(links: seq[Link]; away: bool; manner: Manner; most: float): Carried =
   ## Sweep this hold under this manner, both ways.
   let
@@ -76,7 +91,7 @@ proc carried(links: seq[Link]; away: bool; manner: Manner; most: float): Carried
     turner = if ord(MANNERS[manner].about) == ord(About.Axis): walks
              else: otherThan(walks)
     sw = swept(HUMAN, CROWN, links, who = turner, most = most, away = away,
-               head = walks)
+               head = walks, apart = standsAt(links, away))
   result.restHolds = sw.restHolds
   # Orbit is other dancer turned other way about, so its two ways are swapped.
   let flip = ord(MANNERS[manner].about) != ord(About.Axis)
@@ -119,7 +134,7 @@ proc answers(): OrderedTable[string, bool] =
     let
       links = linksOf(holdsOf(target))
       away = not restsFacing(target)
-      far = restApart(HUMAN, CROWN, links, away)
+      far = standsAt(links, away)
     for twist in [0, 1]:
       result[&"A{i * 2 + twist + 1}"] =
         holdsAt(HUMAN, CROWN, links, amountFor(target, twist), away, apart = far)
@@ -128,7 +143,8 @@ proc answers(): OrderedTable[string, bool] =
       target = FRAMES[^1]
       links = linksOf(holdsOf(target))
       away = not restsFacing(target)
-    holdsAt(HUMAN, CROWN, links, -amountFor(target, 1), away)
+    holdsAt(HUMAN, CROWN, links, -amountFor(target, 1), away,
+            apart = standsAt(links, away))
 
   # `B` and `E`: four single-hand holds, four manners, four quarters.
   for c, single in SINGLES:
@@ -138,7 +154,7 @@ proc answers(): OrderedTable[string, bool] =
         tag = MANNERS[manner].tag
         sense = windSense(manner)
         walk = carried(links, false, manner, most = 1.2)
-        far = restApart(HUMAN, CROWN, links, false)
+        far = standsAt(links, false)
       for q in 0 ..< QUARTERS_ROUND:
         let at = sense * q.float / QUARTERS_ROUND.float
         result[&"st_{tag}_{c}_{q}"] =
@@ -156,7 +172,7 @@ proc answers(): OrderedTable[string, bool] =
   for (tag, arms, away) in [("C", HAND_TO_HAND, false), ("D", PAIRED, true)]:
     let
       links = linksOf(arms)
-      far = restApart(HUMAN, CROWN, links, away)
+      far = standsAt(links, away)
     for i, w in STEPS:
       result[tag & $(i + 1)] = holdsAt(HUMAN, CROWN, links, -w, away, apart = far)
 
