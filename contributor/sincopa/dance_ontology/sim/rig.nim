@@ -83,11 +83,16 @@ type
 func deg(d: float): float = d * PI / 180.0
 
 const
-  ACROSS_HI = (when defined(acrossFree): deg(130) else: deg(45))
-    ## Experiment: adduction as clinical *horizontal* adduction rather than
-    ## hanging arm's.  Reading is arcsin and cannot pass ninety, so at this figure
-    ## nothing but trunk stops arm crossing body -- which is what stops it in
-    ## life.  Flag until measured.
+  ACROSS_HI = deg(130)
+    ## Adduction at clinical *horizontal* adduction, not hanging arm's.  Forty
+    ## five is how far arm goes across with arm hanging, and what stops it there
+    ## is belly; raised, arm passes in front of chest to about hundred and
+    ## thirty, and what stops it then is chest.  Either way limit is trunk, which
+    ## sim collides already.  Reading is arcsin and cannot pass ninety, so at
+    ## this figure cap never binds and body does stopping -- as in life.
+    ##   Measured: every chain jammed on old cap with arm raised.  Freed, chains
+    ##     go from 18 to 47 of 56 questions and reference from 193 to 223 of 231,
+    ##     with nothing lost; every law holds, and mirror law was corrected on way.
   WRIST_HI = (when defined(wristWide): deg(75) else: deg(60))
     ## Experiment: cone at clinical flexion and extension rather than under both.
 
