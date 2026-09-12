@@ -87,3 +87,20 @@ suite "two dancers in rigid body engine":
 
   test "couple stand further off than their two torsos allow":
     check restApart(HUMAN, Band.Torso, SHAKE) >= touching(HUMAN) + CLEAR
+
+  test "couple do not stand as close as they are permitted to":
+    ## Least of several starts at infinity.  Started at nought, which is what
+    ## float comes as, every distance scores nought, first one tried wins, and
+    ## couple stand chest to chest whatever their joints say.
+    for band in Band:
+      check restApart(HUMAN, band, SHAKE) > touching(HUMAN) + CLEAR + PACE
+
+  test "at rest every joint is free to move either way":
+    ## Where couple stand cannot be chosen on `margin`, which counts stop with no
+    ## ease as costing nothing to lean on: that reads straight elbow as perfectly
+    ## comfortable and sends couple out to arm's length, where no turn is possible
+    ## at all.  Freedom to move is what standing asks about.
+    for band in Band:
+      let c = rest(band, restApart(HUMAN, band, SHAKE))
+      check roomAt(c, c.poseOf(0), 0) > 0.0
+      c.free()
