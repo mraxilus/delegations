@@ -30,10 +30,6 @@ import ../src/dance_ontology/rotation
 import ./parts
 
 
-const PAIRED: Holds = [some terms.Arm.L, some terms.Arm.R]
-  ## Same-name chain section D draws: lead's left to follow's left, right to right.
-  ## Index is lead's arm and value is follow's it joins, as `HAND_TO_HAND` is read.
-
 const CROWN = Band.Crown
   ## Whole reference is drawn over crown: `design/parts` picks `ABOVE_BOTH` for chains
   ## and `ABOVE_ONE`/`ABOVE_OTHER` for singles, so no card asks about any other band.
@@ -176,16 +172,19 @@ proc answers(): OrderedTable[string, bool] =
     for i, w in STEPS:
       result[tag & $(i + 1)] = holdsAt(HUMAN, CROWN, links, -w, away, apart = far)
 
-  # `F`: chain under each manner, whole round and each half of it.
-  for manner in Manner:
-    let
-      tag = MANNERS[manner].tag
-      sense = windSense(manner)
-      links = linksOf(HAND_TO_HAND)
-      walk = carried(links, false, manner, most = 1.6)
-    result[&"hc_{tag}"] = walk.reaches(sense * STEPS[^1])
-    for i in 0 ..< STEPS.len - 1:
-      result[&"hw_{tag}_{i}"] = walk.reaches(sense * STEPS[i + 1])
+  # `F` and `G`: each chain under each manner, whole chain and each half of it.
+  #   These are moving cards, so they are asked whether couple carry along them
+  #   rather than whether pose stands there.
+  for (key, arms, away) in [("h", HAND_TO_HAND, false), ("p", PAIRED, true)]:
+    let links = linksOf(arms)
+    for manner in Manner:
+      let
+        tag = MANNERS[manner].tag
+        sense = windSense(manner)
+        walk = carried(links, away, manner, most = 1.6)
+      result[&"{key}c_{tag}"] = walk.reaches(sense * STEPS[^1])
+      for i in 0 ..< STEPS.len - 1:
+        result[&"{key}w_{tag}_{i}"] = walk.reaches(sense * STEPS[i + 1])
 
 
 when isMainModule:

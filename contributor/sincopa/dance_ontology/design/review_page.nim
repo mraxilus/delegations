@@ -121,6 +121,8 @@ proc reviewParts*(): Parts =
   result = singleTurnParts()
   for key, svg in handTurnParts():
     result[key] = svg
+  for key, svg in pairTurnParts():
+    result[key] = svg
 
 
 func sheetOf(P: Parts): string =
@@ -486,6 +488,40 @@ func sheetOf(P: Parts): string =
     if steps.len > 0:
       inc k
       body.add card(&"F{k}", said, "one edge at a time", steps, asks = asksF)
+  body.add "</div></section>"
+
+  # `G`. Every edge of paired chain animated, as `F` does for section C.
+  body.add &"""<section id="paired-moving"><h2>G &middot; Hand-to-hand chain, pillion lead, moving</h2>
+  <p class="lede">What <b>F</b> is to <b>C</b>, this is to <b>D</b>: every edge of
+  the same-name chain, walked by every manner of turn. The same two cells per
+  manner &mdash; the whole chain in one figure, and an edge at a time with a
+  button apiece &mdash; and the same reading of which way each manner walks it.
+  This chain rests <b>pillion lead</b> rather than face to face, because face to
+  face its two connections lie through each other (rule 31), so its phase
+  measures {dualPhase} where the hand-to-hand chain's measures {HAND_PHASE}.</p>
+  <div class="grid wide">"""
+  var g = 0
+  for manner in Manner:
+    let
+      tag = MANNERS[manner].tag
+      said = &"{MANNER_SAID[tag]} {chainWay(manner)}"
+    if &"pc_{tag}" in hh:
+      inc g
+      body.add card(&"G{g}", said,
+                    &"the whole chain, {dualChain.len - 1} halves out and back",
+                    hh[&"pc_{tag}"], asks = @[&"pc_{tag}"])
+    var
+      steps: seq[tuple[pick, note, svg: string]]
+      asksG: seq[string]
+    for i in 0 ..< dualChain.len - 1:
+      let key = &"pw_{tag}_{i}"
+      if key notin hh: continue
+      asksG.add key
+      steps.add ($(i + 1),
+                 dualChain[i].name & " to " & dualChain[i + 1].name, hh[key])
+    if steps.len > 0:
+      inc g
+      body.add card(&"G{g}", said, "one edge at a time", steps, asks = asksG)
   body.add "</div></section>"
 
   const SWITCHING = block:

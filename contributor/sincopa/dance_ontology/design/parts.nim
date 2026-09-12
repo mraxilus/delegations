@@ -696,8 +696,19 @@ func windSense*(manner: Manner): float =
   if turned_by < -1e-9: -1.0 else: 1.0
 
 
-func handTurnParts*(): Parts =
-  ## Build every SVG hand-to-hand turns page places.
+const PAIRED*: Holds = [some Arm.L, some Arm.R]
+  ## Same-name chain: lead's left to follow's left, right to right.  Index is
+  ## lead's arm and value is follow's it joins, as `HAND_TO_HAND` is read.
+  ##   Rests pillion lead rather than face to face, since face to face its two
+  ##     connections lie through each other (rule 31).
+
+
+func chainTurnParts*(holds: Holds; key: string): Parts =
+  ## Build every SVG one chain's turns page places, keyed under `key`.
+  ##   Two chains are drawn -- hand to hand, and same-name pair -- and they
+  ##     differ only in which hands are joined and where chain rests.  Written
+  ##     once and called twice rather than copied: what is true of walking one
+  ##     is true of walking other, and second copy is second thing to get wrong.
   ##   Rules 28 and 31: seven positions, half turn apart -- frame,
   ##     cross either side of it, diamond beyond each cross, and swan
   ##     beyond each diamond.
@@ -707,18 +718,22 @@ func handTurnParts*(): Parts =
   ##     its side to centre winds pair as far as it carries
   ##     walker.  Which is measured rather than claimed, as it was when
   ##     answer was other one.
+  let
+    chain = chainFor(holds)
+    phase = phaseOf(holds)
   var
-    walks: array[Manner, array[CHAIN.len - 1, Walk]]
+    walks: array[Manner, seq[Walk]]
     still_half = 0.0
     walk_half: array[Manner, float]
-  for position in CHAIN:
-    still_half = max(still_half, extent(handPose(position.wind),
+  for position in chain:
+    still_half = max(still_half, extent(posedAt(position.wind, phase),
                                         captions = false))
   for manner in Manner:
     let
       w = MANNERS[manner]
       sense = windSense(manner)
-    for i in 0 ..< CHAIN.len - 1:
+    walks[manner] = newSeq[Walk](chain.len - 1)
+    for i in 0 ..< chain.len - 1:
       # Each edge starts where it starts and turns half, so manner that
       # winds walks one step along chain and manner that does not
       # simply carries pair out and back.
@@ -727,7 +742,7 @@ func handTurnParts*(): Parts =
       #     turn by lead unwinds what positive turn by follow
       #     winds, so turning both same way sent lead's edges off
       #     end into second diamond.
-      walks[manner][i] = turnWalk(handPose(CHAIN[i].wind), w.who, w.about,
+      walks[manner][i] = turnWalk(posedAt(chain[i].wind, phase), w.who, w.about,
                                HALF * sense, on = Anchor.Lead)
       for put in walks[manner][i].poses:
         walk_half[manner] = max(walk_half[manner], extent(put, captions = false))
@@ -738,47 +753,47 @@ func handTurnParts*(): Parts =
   var chains: array[Manner, Walk]
   for manner in Manner:
     let w = MANNERS[manner]
-    chains[manner] = turnWalk(handPose(CHAIN[0].wind), w.who, w.about,
+    chains[manner] = turnWalk(posedAt(chain[0].wind, phase), w.who, w.about,
                               HALF * windSense(manner), on = Anchor.Lead,
-                              steps = CHAIN.len - 1)
+                              steps = chain.len - 1)
     for put in chains[manner].poses:
       walk_half[manner] = max(walk_half[manner], extent(put, captions = false))
 
   # Chain, drawn once: all four manners reach these same seven (rule 32), so
   # drawing them per manner would be same picture over again.
-  for i, position in CHAIN:
-    result[&"hh_{i}"] = sized(renderFigure("tiny", HAND_TO_HAND, ABOVE_BOTH,
-      captions = false, pose = some handPose(position.wind),
+  for i, position in chain:
+    result[&"{key}h_{i}"] = sized(renderFigure("tiny", holds, ABOVE_BOTH,
+      captions = false, pose = some posedAt(position.wind, phase),
       half = some still_half, twist = windTwist(position.wind),
       clear_marks = true), "tiny", still_half, STILL_PX)
 
   # And every edge of it, walked by every manner of turn.
   for manner in Manner:
     let w = MANNERS[manner]
-    for i in 0 ..< CHAIN.len - 1:
-      result[&"hw_{w.tag}_{i}"] = sized(animatedPoses("mv", HAND_TO_HAND,
+    for i in 0 ..< chain.len - 1:
+      result[&"{key}w_{w.tag}_{i}"] = sized(animatedPoses("mv", holds,
         walks[manner][i].poses, some walk_half[manner], ABOVE_BOTH,
         dur = WALK_SECONDS,
-        times = walks[manner][i].times, wound = CHAIN[i].wind),
+        times = walks[manner][i].times, wound = chain[i].wind),
         "mv", walk_half[manner], PX)
       # Still stands in where motion is turned off, so it is
       # picture move sets off from (rule 22's exemption again).
-      result[&"hw_{w.tag}_{i}_still"] = sized(renderFigure("mv still",
-        HAND_TO_HAND, ABOVE_BOTH, captions = false,
-        pose = some handPose(CHAIN[i].wind), half = some walk_half[manner],
-        twist = windTwist(CHAIN[i].wind), clear_marks = true),
+      result[&"{key}w_{w.tag}_{i}_still"] = sized(renderFigure("mv still",
+        holds, ABOVE_BOTH, captions = false,
+        pose = some posedAt(chain[i].wind, phase), half = some walk_half[manner],
+        twist = windTwist(chain[i].wind), clear_marks = true),
         "mv still", walk_half[manner], PX)
 
     # And whole chain in one figure, at pace its own edges run at: six legs
     # out and six back where edge has one of each.
-    result[&"hc_{w.tag}"] = sized(animatedPoses("mv", HAND_TO_HAND,
+    result[&"{key}c_{w.tag}"] = sized(animatedPoses("mv", holds,
       chains[manner].poses, some walk_half[manner], ABOVE_BOTH,
-      dur = float(CHAIN.len - 1) * WALK_SECONDS, times = chains[manner].times,
-      wound = CHAIN[0].wind), "mv", walk_half[manner], PX)
-    result[&"hc_{w.tag}_still"] = sized(renderFigure("mv still",
-      HAND_TO_HAND, ABOVE_BOTH, captions = false,
-      pose = some handPose(CHAIN[0].wind), half = some walk_half[manner],
-      twist = windTwist(CHAIN[0].wind), clear_marks = true),
+      dur = float(chain.len - 1) * WALK_SECONDS, times = chains[manner].times,
+      wound = chain[0].wind), "mv", walk_half[manner], PX)
+    result[&"{key}c_{w.tag}_still"] = sized(renderFigure("mv still",
+      holds, ABOVE_BOTH, captions = false,
+      pose = some posedAt(chain[0].wind, phase), half = some walk_half[manner],
+      twist = windTwist(chain[0].wind), clear_marks = true),
       "mv still", walk_half[manner], PX)
 
   # Narrow, because chain is seven long now and glyph stands
@@ -786,10 +801,17 @@ func handTurnParts*(): Parts =
   result["g_half"] = turnGlyph("a half turn", 52.0)
 
   # Every position draws differently, or they are not seven positions.
-  for i in 0 ..< CHAIN.len:
+  for i in 0 ..< chain.len:
     for j in 0 ..< i:
-      doAssert result[&"hh_{i}"] != result[&"hh_{j}"],
-        &"Two positions draw alike; got `{i}` and `{j}`."
+      doAssert result[&"{key}h_{i}"] != result[&"{key}h_{j}"],
+        &"Two positions draw alike; got `{i}` and `{j}` under `{key}`."
+
+
+func handTurnParts*(): Parts = chainTurnParts(HAND_TO_HAND, "h")
+  ## Hand-to-hand chain: sections C and F.
+
+func pairTurnParts*(): Parts = chainTurnParts(PAIRED, "p")
+  ## Same-name pair's chain: sections D and G.
 
 
 
