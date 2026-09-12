@@ -56,12 +56,13 @@ const
           # that connection detached from its hand; it is drawn now, so
           # they go back to unruled rather than carry verdict given on
           # picture that has since moved.
-          "C2", "C3", "C4", "C5", "C6",
-          "D2", "D3", "D4", "D5", "D6",
+          "C1", "C2", "C3", "C4", "C5", "C6", "C7",
+          "D1", "D2", "D3", "D4", "D5", "D6", "D7",
           "E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8",
           "E9", "E10", "E11", "E12", "E13", "E14", "E15", "E16",
           "E17", "E18", "E19", "E20", "E21", "E22", "E23", "E24",
-          "E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32"]
+          "E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32",
+          "F1", "F2"]
     ## Ids Architect has confirmed accurate.  Added as they are ruled on.
   DROPPED: seq[string] = @[]
     ## Ids Architect has ruled out.
@@ -128,9 +129,14 @@ proc reviewParts*(): Parts =
 func sheetOf(P: Parts): string =
   ## Build page, holding every card already ruled on to its own pin.
 
-  func stepped(id: string; steps: seq[tuple[pick, note, svg: string]]): string =
+  func stepped(id: string; steps: seq[tuple[pick, note, svg: string]];
+               asks: seq[string] = @[]): string =
     ## Stack several drawings in one cell, one shown at time, with button
     ## apiece.
+    ##   Each step carries sim's own tag, not cell.  Cell that folds six edges
+    ##     together and is marked by worst of them paints five reachable edges
+    ##     red for sake of sixth, and reader asking why an easy one is refused
+    ##     is reading tag that was never about it.
     ##   Radio button and sibling rule do switching, so cell needs no script:
     ##     page stays markup browser can draw with nothing running.
     ##   Every step keeps its own note under its own picture, since note is
@@ -143,7 +149,10 @@ func sheetOf(P: Parts): string =
       let at = &"{id}-{i + 1}"
       picks.add &"""<input type="radio" name="{id}" id="{at}""" &
         (if i == 0: "\" checked>" else: "\">")
-      frames.add &"""<div>{unpinned(step.svg)}""" &
+      let says = if i >= asks.len or asks[i] notin modelled: ""
+                 elif modelled[asks[i]]: """<em class="tag model">modelled</em>"""
+                 else: """<em class="tag nomodel">not modelled</em>"""
+      frames.add &"""<div>{unpinned(step.svg)}{says}""" &
         &"""<span class="step">{esc(step.note)}</span></div>"""
       buttons.add &"""<label for="{at}">{esc(step.pick)}</label>"""
     &"""{picks}<div class="frames">{frames}</div>""" &
@@ -171,7 +180,7 @@ func sheetOf(P: Parts): string =
       # been asked about carries no tag at all.
       put = if asks.len > 0: asks else: @[id]
       known = put.filterIt(it in modelled)
-      says = if known.len == 0: ""
+      says = if switching or known.len == 0: ""
              elif known.allIt(modelled[it]):
                """<em class="tag model">modelled</em>"""
              else: """<em class="tag nomodel">not modelled</em>"""
@@ -199,7 +208,7 @@ func sheetOf(P: Parts): string =
             steps: seq[tuple[pick, note, svg: string]];
             asks: seq[string] = @[]): string =
     ## Set several drawings in one cell, switched between by button.
-    card(id, label, note, stepped(id, steps),
+    card(id, label, note, stepped(id, steps, asks),
          steps.mapIt(unpinned(it.svg)), switching = true, asks = asks)
 
   var body = ""
@@ -596,7 +605,7 @@ func sheetOf(P: Parts): string =
   .pic .fix { color: var(--mend-ink); font: .62rem/1.35 var(--sans); }
   .pic { overflow: hidden; }
   .steps > input { position: absolute; width: 1px; height: 1px; opacity: 0; }
-  .frames > div { display: none; }
+  .frames > div { display: none; position: relative; }
   .frames span.step { display: block; color: var(--dim); margin-top: .25rem;
     font: .6rem/1.3 var(--mono); }
   .picks { display: flex; flex-wrap: wrap; gap: .2rem; justify-content: center;
