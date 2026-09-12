@@ -3426,3 +3426,31 @@ where an outcome is drawn rather than adding a run.
 sentence sits at the foot of the panel below `view`; after, it floats over the scene at the
 top. An empty-handed opening is `--hidden --drive-keys --screenshot:PATH --frames:40`, which
 now shows nothing at all where `Ready.` used to stand.
+
+
+## Re-audit, 2026-09-12, the page nobody could find
+
+The browser front-end has been published since at least 2026-08-10 and the URL was written
+down nowhere: not in this file, not in `README.md`, not in any comment. The consequence is
+measurable rather than hypothetical — **three changes to what the page shows merged without a
+republish**, `31f12bf` (three type roles in three faces), `9ce3763` (panel laid out as the
+page, headings pinned) and `916fa2b` (the outcome message), leaving the published page three
+days behind `main`.
+
+`CONTRIBUTOR.md` asks for a published page to be linked rather than described, in the pull
+request and in the message both. That rule cannot be followed by a session that cannot find
+the URL, and every session here failed to find it — including the one writing this, which
+searched `README.md` and this file, found nothing, and concluded from the absence that no page
+had ever been published. It had; `contributor/sincopa/dance_ontology/README.md` has carried a
+`built file → published at` table for eight pages all along, and this project had no such
+table. It has one now, under *Published*.
+
+**Found on republishing, and not fixed here.** The artifact viewer refuses every download a
+page starts itself — `<a download>`, `data:` and `blob:` hrefs alike. The page's own
+`download.ts` already assumes something like this: `toastWithLink` offers the file as an
+anchor, offers the image to press and hold, and says in as many words that the frame may be
+blocking it and the page should be opened in its own tab. So `save scene` and `save image`
+have never worked for a viewer of the published page, and the toast is what a reader gets
+instead. The viewer mediates this through a `downloads` capability a page must declare; that
+is a real fix rather than a workaround, and it is a change to the page rather than to the
+record, so it is queued rather than done here.
