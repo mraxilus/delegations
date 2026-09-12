@@ -40,8 +40,13 @@ async function openObjects(page: Page): Promise<void> {
 /** Assert heading naming section stays reachable while that section's list scrolls under it.
  *
  *  Reader collapsing long list had to scroll all way back to top to reach control that
- *  collapses it. Heading sticks where scroller's own content begins, which is below chip row
- *  floating over drawer, and holds there however far list runs.
+ *  collapses it. Heading sticks to scroller's own top edge and holds there however far list
+ *  runs.
+ *  Flush to that edge, with no band above it: sticky offset is inset by scroller's padding, so
+ *  heading pinned inside padded scroller cannot cover padding above itself, and rows rode up
+ *  through it in plain sight. Clearance chip row needs therefore sits on drawer, outside what
+ *  scrolls. Band is sampled rather than inferred -- gap of zero is what *should* follow, and
+ *  what is asserted is what reader sees: nothing of list drawn above heading.
  *  Scroll itself is asserted, not only where heading ended: check reading stuck heading while
  *  nothing moved passes on page with no stickiness in it at all.
  *  Desktop answers same rule by bounding its list in its own scrolling region, so heading sits
@@ -64,6 +69,20 @@ export async function driveHeaderPinned(page: Page): Promise<void> {
     await settle();
     const box = scroller.getBoundingClientRect();
     const held = heading.getBoundingClientRect();
+    // Walk band from scroller's own top edge down to heading's underside, asking page itself
+    //   what reader would hit there. Row answering anywhere in it is row drawn above heading.
+    //   Swept across width, not down one line: first form sampled midline alone and passed
+    //   while rows showed in strip 28px wide down right edge, which is where heading's own
+    //   band fell short.
+    let bled = 0;
+    for (let x = Math.ceil(box.left) + 1; x < box.right - 1; x += 4) {
+      for (let y = Math.ceil(box.top) + 1; y < held.bottom - 1; y += 3) {
+        // Point answering nothing at all is not row. Written out rather than left to `?.`,
+        //   which reports `undefined` there and would count every such point as bleed.
+        const hit = document.elementFromPoint(x, y);
+        if (hit !== null && hit.closest('.object-row') !== null) bled += 1;
+      }
+    }
     return {
       moved: scroller.scrollTop,
       room,
@@ -72,18 +91,25 @@ export async function driveHeaderPinned(page: Page): Promise<void> {
       bottom: held.bottom,
       edge: box.top,
       floor: box.bottom,
-      clear: parseFloat(getComputedStyle(scroller).paddingTop) || 0,
+      bled,
     };
   });
   report(
     "the heading naming a section holds its place while that section's list scrolls under it",
     pinned !== null && pinned.moved > 0
       && pinned.top >= pinned.edge - 0.5 && pinned.bottom <= pinned.floor + 0.5
-      && Math.abs(pinned.top - (pinned.edge + pinned.clear)) < 1.5,
+      && Math.abs(pinned.top - pinned.edge) < 1.5,
     pinned === null ? 'no drawer to scroll'
       : `scrolled ${pinned.moved.toFixed(0)} of ${pinned.room.toFixed(0)} px, and the heading`
         + ` sat at ${pinned.started.toFixed(0)} px and holds at ${pinned.top.toFixed(0)},`
-        + ` where that scroller's own content begins, ${pinned.clear.toFixed(0)} px in`,
+        + ` flush to that scroller's own top edge at ${pinned.edge.toFixed(0)}`,
+  );
+  report(
+    'nothing of that list is drawn above the heading it scrolls under',
+    pinned !== null && pinned.bled === 0,
+    pinned === null ? 'no drawer to scroll'
+      : `${pinned.bled} of the sampled points between the scroller's edge and the heading's`
+        + ` underside answered with a row`,
   );
 }
 
