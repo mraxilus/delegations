@@ -142,9 +142,17 @@ delegate posts as one GitHub account, so one hourly allowance covers every sessi
 listing of forty issues with their bodies is taken from the contributor about to close one.
 
 Measured on 2026-09-12: it ran out mid-session and stayed out beyond twenty minutes, leaving an
-issue commented and not closed and a pull request green and still draft. Issue and pull-request
-calls draw on a different allowance from workflow-run calls, and only the first was exhausted —
-run and log reads kept working throughout, which is how the cause was found.
+issue commented and not closed and a pull request green and still draft. Run and log reads kept
+working throughout, which is how the cause was found.
+
+**The split is by API, not by subject, and an earlier wording here said otherwise.** GitHub meters
+GraphQL and REST separately, and a call's name does not say which it takes: `list_issues` and
+`update_pull_request` were refused in the same seconds `create_pull_request` and
+`pull_request_read` answered. It is not even per tool — `pull_request_read` takes one API for its
+review-comment method and the other for the rest. Run reads survived because they are REST, not
+because they are about runs, and a contributor reading the old wording would have expected opening
+a pull request to fail when the queue would not load. `rga_visualiser` caught that, which is the
+only reason it is right here now.
 
 - **Ask git first**, and most session-start questions are git's: whether a pull request merged,
   what a change touched, whether a branch is behind, what the stamp is. `git fetch origin main`
@@ -388,13 +396,13 @@ document whose rules are mostly unenforced trains its readers to skim. Prefer a 
 one can be written, and say plainly in the rule when none can.
 
 **One was here and has left, which is the direction this list is meant to move** — the count has
-gone five, four, five, and now seven -- the last two arrivals were the Architect's call rather
+gone five, four, five, and now seven — the last two arrivals were the Architect's call rather
 than a curator's.
 *`main` is green* held by a curator remembering to look, and this document said so — *"nothing
 else watches it"* — while never listing it here, so it read as a duty rather than as an unenforced
 rule. It failed silently twice: a contributor's merge, found by accident twenty-four minutes
 later, and the driven job red on two `main` runs while the curator who had named that run as the
-leg still to read did not read it. It is now the `watch` workflow's, because unlike the five above
+leg still to read did not read it. It is now the `watch` workflow's, because unlike the seven above
 it turns on no intent and no state GitHub keeps privately — a run's own conclusion is a fact the
 runner produces. That is the test for anything on this list: not whether a check would be awkward,
 but whether what the rule asks about is a fact something already writes down.
