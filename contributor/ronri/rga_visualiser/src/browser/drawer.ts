@@ -26,6 +26,8 @@ button_drawer.addEventListener('click', () => {
   //   rows, operand pickers.
   //   Both are no-ops when their own section is still collapsed.
   refreshObjectsUI();
+  // Drawer sliding in moves every heading in it, and no scroll happened.
+  settleBands();
 });
 
 // Top menu: one popover holding every top-bar action (undo/redo, axes/grid, save/load.
@@ -39,11 +41,54 @@ button_menu.addEventListener('click', () => {
   button_menu.classList.toggle('on', open);
 });
 
+// **Heading wears its band only while rows are passing under it.** Band that is always on is
+//   slab on every section, announcing covering it is not doing; one that arrives when heading
+//   pins says what is happening.
+//   Watched rather than measured: reading heading's box on every scroll event lays whole
+//   document out inside that event, and this scroller carries row per object -- same cost
+//   `sizes.ts` keeps `ResizeObserver` for. One observer serves all four, since drawer has
+//   exactly one scroller.
+//   Sentinel rather than heading itself: sticky element never leaves scrollport, so it can
+//   never report that it has. `.section-edge` sits where heading's own top edge lands and
+//   does leave.
+//   Leaving *upward* is what pins it. Section scrolled past below has also left, and heading
+//   that went with it is off screen; treating that as pinned would light band nobody sees.
+const scroller = document.querySelector('.drawer-scroll');
+const edges = Array.from(document.querySelectorAll('.section-edge'));
+
+// **Read where sentinels are, never what entry says about them.** Entry carries
+//   `rootBounds` that arrives null, and `boundingClientRect` that is snapshot from when entry
+//   was computed rather than where sentinel stands now. First form trusted both, and cleared
+//   band on null root -- which sticks, because class is only ever corrected on next
+//   *change* of intersection, and sentinel far above scrollport has no changes left to
+//   report. Band then stayed off for good, which is exactly what long run caught.
+//   Entry is signal that something moved, and nothing more.
+//   Reading here costs nothing: observer's callback runs after layout, same bargain
+//   `sizes.ts` states at length for `ResizeObserver`.
+//   Every heading is settled on any signal, not one that fired: section whose own sentinel
+//   reported nothing can still be wearing wrong answer.
+function settleBands(): void {
+  if (scroller === null) return;
+  const top = scroller.getBoundingClientRect().top;
+  for (const edge of edges) {
+    const header = edge.parentElement?.querySelector('.section-header');
+    header?.classList.toggle('stuck', edge.getBoundingClientRect().top <= top);
+  }
+}
+
+if (scroller !== null && typeof IntersectionObserver === 'function') {
+  const watch = new IntersectionObserver(settleBands, { root: scroller, threshold: 0 });
+  edges.forEach((edge) => watch.observe(edge));
+}
+
 document.querySelectorAll('.section-header').forEach((header) => {
   header.addEventListener('click', () => {
     const section = header.parentElement;
     if (section === null) throw new Error('Section header outside section.');
     section.classList.toggle('open');
+    // Section opening or closing moves every heading below it, and no scroll happened, so
+    //   no sentinel reports it.
+    settleBands();
     // Start or end apply section's own preview with section itself.
     //   Preview lives exactly as long as section is on screen, so opening one starts it
     //   and collapsing one ends it.
@@ -217,6 +262,7 @@ function openPanelTo(handle: number | null) {
   drawer.classList.add('open');
   button_drawer.classList.add('on');
   refreshObjectsUI();
+  settleBands();
   // Scrolled once its row stands, which is now or slices from now; see `revealPendingRow`.
   //   Asked at once as well, since list already built ends refresh above without slicing.
   //   Querying row here and giving up where it was not yet built left panel open on

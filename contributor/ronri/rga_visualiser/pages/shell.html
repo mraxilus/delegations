@@ -586,7 +586,7 @@
   .toast-hint {
     font-family: var(--sans);
     font-size: 11px;
-    color: var(--ink-dim);
+    color: var(--ink-muted);
   }
   /* What each delivery route answered. Recessive and monospaced: it is evidence to read
      when something did not work, never message itself. */
@@ -594,13 +594,13 @@
     font-family: var(--mono);
     font-size: 10px;
     line-height: 15px;
-    color: var(--ink-dim);
+    color: var(--ink-faint);
     word-break: break-word;
   }
   .toast-dismiss {
     font-family: var(--sans);
     font-size: 11px;
-    color: var(--ink-dim);
+    color: var(--ink-muted);
     background: none;
     border: none;
     padding: 2px;
@@ -698,7 +698,20 @@
   }
 
   /* ---- Sections (collapsing headers, matching panel.nim's own structure) ---- */
-  .section { border-bottom: 1px solid var(--border); padding: 10px 0; }
+  /* `relative` for sentinel below, and for nothing else: no `z-index`, so section starts no
+     stacking context and heading's own `z-index: 1` goes on winning over rows. */
+  .section { position: relative; border-bottom: 1px solid var(--border); padding: 10px 0; }
+  /* One pixel marking where heading's own top edge lands, since heading's negative top margin
+     pulls it to section's edge. Watched by `drawer.ts`: when this leaves scrollport upward,
+     heading is pinned, and band it wears is drawn only then.
+     Observer rather than scroll handler, for reason `sizes.ts` gives at length -- read after
+     write lays whole document out inside frame, and this scroller carries thousands of rows. */
+  .section-edge {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    pointer-events: none;
+  }
   .section:last-child { border-bottom: none; }
   .section-header {
     appearance: none;
@@ -709,7 +722,7 @@
     width: calc(100% + 28px);
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 8px;
     /* Stays put while its own section scrolls past, so collapsing long list never means
        scrolling back to top to find control that collapses it.
        Sticky against `.drawer-scroll`, which is scroller; `.section` sets no overflow,
@@ -719,21 +732,26 @@
        down -- one clearance twice -- with gap above it. Clearance is why that padding is
        on `.drawer` instead: heading pinned at `0` cannot cover padding of scroller it is
        pinned inside, and rows rode up through that band in plain sight.
-       Solid rather than transparent: rows pass under this band, and transparent one would
-       let them draw through it. Tone is same `--surface-solid` buttons wear, so band reads
-       as part of drawer rather than as second surface -- and desktop's own header is
-       filled bar, so two front-ends read same way (see `panel.layoutObjects`).
+       Solid rather than transparent *while pinned*: rows pass under this band, and
+       transparent one would let them draw through it. Tone is same `--surface-solid` buttons
+       wear, so band reads as part of drawer rather than as second surface -- and desktop's
+       own header is filled bar, so two front-ends read same way (`panel.layoutObjects`).
+       At rest it carries no fill at all. Band that is always on is slab on every section,
+       announcing covering it is not doing; `.stuck` is put on by `drawer.ts` exactly while
+       rows are passing under. Shadow rather than rule under it, in family popovers already
+       use: line says "edge", shadow says "something passes beneath", and second is true one.
        Negative offsets and padding widen band to drawer's own gutter, so row scrolling
-       under it is covered edge to edge rather than at its sides. */
+       under it is covered edge to edge rather than at its sides. Padding is even, and its
+       left is drawer's own 14, so chevron starts on same column rows below do. */
     position: sticky;
     top: 0;
     z-index: 1;
     margin: -10px -14px 0 -14px;
-    padding: 10px 16px 6px 16px;
-    background: var(--surface-solid);
+    padding: 10px 14px;
+    background: transparent;
     border: none;
-    border-bottom: 1px solid var(--border);
     color: var(--ink);
+    transition: background var(--anim) var(--ease), box-shadow var(--anim) var(--ease);
     /* Title role: heading naming section takes serif face, which is only role it is
        drawn in (see type roles above). Weight stays 600, and serif ships at 600 for it:
        serif at 13px against dark ground thins, and heading has to hold its row. */
@@ -743,6 +761,10 @@
     letter-spacing: 0.02em;
     cursor: pointer;
   }
+  .section-header.stuck {
+    background: var(--surface-solid);
+    box-shadow: 0 6px 14px -8px rgba(0, 0, 0, 0.7);
+  }
   /* Solid triangle, not U+25B8's small one: at sizes these rows are read at
      small glyph is speck that reads as punctuation rather than as control. Shared with
      tree rows below, which match these deliberately -- both answer "there is more
@@ -751,6 +773,10 @@
     color: var(--ink-muted);
     transition: transform var(--anim) var(--ease);
     font-size: 10px;
+    /* Own column, ahead of heading, as `.diagnostic-parent`'s is. Chevron trailing line put
+       it against objects count -- `(5038 of 5040)` then mark, reading as part of figure. */
+    width: 14px;
+    flex: none;
   }
   .section.open .section-header .chev { transform: rotate(90deg); }
   .section-body { display: none; padding-top: 10px; }
@@ -826,11 +852,12 @@
   .help-text { font-size: 11px; color: var(--ink-faint); line-height: 1.4; margin: -4px 0 10px; }
 
   /* ---- Objects list ---- */
-  .objects-header { display: flex; align-items: baseline; justify-content: space-between; }
   /* Count rides inside heading and would inherit its serif; figures belong in interface
-     face with tabular numerals, so it says so rather than inheriting. */
+     face with tabular numerals, so it says so rather than inheriting.
+     Pushed to right edge by its own margin, which is why objects heading needs no wrapper
+     of its own: it was one, carrying inline width, purely to place mark that now leads. */
   .objects-count { font-family: var(--sans); font-size: 11px; color: var(--ink-faint);
-    font-variant-numeric: tabular-nums; }
+    font-variant-numeric: tabular-nums; margin-left: auto; }
   .object-row {
     border-top: 1px solid var(--border);
     padding: 9px 0;
@@ -1244,10 +1271,11 @@
   <div class="drawer-scroll">
     <!-- Apply -->
     <div class="section" data-section="apply">
+      <div class="section-edge"></div>
       <button
         class="section-header"
         type="button"
-      ><span>@WORD:NameHeadApply@</span><span class="chev">&#9654;</span></button>
+      ><span class="chev">&#9654;</span><span>@WORD:NameHeadApply@</span></button>
       <div class="section-body">
         <div class="field">
           <label>@WORD:NameApplyArity@</label>
@@ -1276,10 +1304,11 @@
 
     <!-- Diagnostics -->
     <div class="section" data-section="diagnostics">
+      <div class="section-edge"></div>
       <button
         class="section-header"
         type="button"
-      ><span>@WORD:NameHeadDiagnostics@</span><span class="chev">&#9654;</span></button>
+      ><span class="chev">&#9654;</span><span>@WORD:NameHeadDiagnostics@</span></button>
       <div class="section-body">
         <!-- What session's frame times actually look like, rather than last four
              seconds of them: for each duration, share of recent frames that came in
@@ -1497,14 +1526,10 @@
 
     <!-- Objects -->
     <div class="section open" data-section="objects">
-      <button class="section-header" type="button">
-        <span
-          class="objects-header"
-          style="width:100%;"
-        ><span>@WORD:NameHeadObjects@</span> <span
-          class="objects-count" id="objects-count">&mdash;</span></span>
-        <span class="chev">&#9654;</span>
-      </button>
+      <div class="section-edge"></div>
+      <button class="section-header" type="button"
+        ><span class="chev">&#9654;</span><span>@WORD:NameHeadObjects@</span><span
+          class="objects-count" id="objects-count">&mdash;</span></button>
       <div class="section-body">
         <div id="objects-list"></div>
       </div>
@@ -1512,10 +1537,11 @@
 
     <!-- View -->
     <div class="section" data-section="view">
+      <div class="section-edge"></div>
       <button
         class="section-header"
         type="button"
-      ><span>@WORD:NameHeadView@</span><span class="chev">&#9654;</span></button>
+      ><span class="chev">&#9654;</span><span>@WORD:NameHeadView@</span></button>
       <div class="section-body">
         <div class="field-row">
           <div class="field">

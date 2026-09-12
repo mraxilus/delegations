@@ -114,6 +114,75 @@ export async function driveHeaderPinned(page: Page): Promise<void> {
 }
 
 
+/** Assert heading wears its band only while rows are passing under it.
+ *
+ *  Band that is always on is slab on every section, announcing covering it is not doing.
+ *  Read as colour rather than as class: class is mechanism, fill is what reader sees, and
+ *  check that watched class would pass on heading whose rule had been deleted.
+ *  `elementFromPoint` cannot stand in for this. Hit testing answers with element whatever its
+ *  fill, so `driveHeaderPinned`'s own sweep reports band covering even where band is clear --
+ *  it holds geometry, and this holds paint.
+ */
+export async function driveHeaderBanded(page: Page): Promise<void> {
+  await openObjects(page);
+  // Read fill and where scroller stands together: check that cannot say how far it scrolled
+  //   cannot tell band that failed to arrive from list too short to have one.
+  const readAt = async (
+    where: 'top' | 'floor',
+  ): Promise<{
+    fill: string; moved: number; stuck: boolean; edges: number; due: boolean;
+  }> => {
+    await page.evaluate((edge) => {
+      const scroller = document.querySelector('.drawer-scroll') as HTMLElement | null;
+      if (scroller === null) return;
+      scroller.scrollTop = edge === 'top' ? 0 : scroller.scrollHeight - scroller.clientHeight;
+    }, where);
+    // Settled against fill itself rather than against clock: observer reports after layout and
+    //   fill eases in over `--anim`, both of which are page's business rather than this check's.
+    //   Waited for fill to *finish*, not merely to start. Half-eased band reports as `rgba(…)`
+    //   carrying its alpha, and reading there caught it at 0.66 -- true of that instant and
+    //   not of anything worth asserting.
+    await page.waitForFunction((edge) => {
+      const heading = document.querySelector('.section[data-section="objects"] .section-header');
+      if (heading === null) return false;
+      const fill = getComputedStyle(heading).backgroundColor;
+      return edge === 'top' ? fill === 'rgba(0, 0, 0, 0)' : fill.startsWith('rgb(');
+    }, where, { timeout: 8000 }).catch(() => undefined);
+    return page.evaluate(() => {
+      const heading = document.querySelector('.section[data-section="objects"] .section-header');
+      const scroller = document.querySelector('.drawer-scroll') as HTMLElement | null;
+      return {
+        fill: heading === null ? 'no heading' : getComputedStyle(heading).backgroundColor,
+        moved: scroller === null ? -1 : Math.round(scroller.scrollTop),
+        // Mechanism beside outcome: band that never arrives is either class never put on or
+        //   rule that stopped answering to it, and detail line has to tell those apart.
+        stuck: heading !== null && heading.classList.contains('stuck'),
+        edges: document.querySelectorAll('.section-edge').length,
+        // Geometry observer is watching, read here as well. Band missing while this says it
+        //   should be there is observer that stopped answering; band missing while this says
+        //   otherwise is scroll that did not reach.
+        due: (() => {
+          const edge = document.querySelector('.section[data-section="objects"] .section-edge');
+          if (edge === null || scroller === null) return false;
+          return edge.getBoundingClientRect().top <= scroller.getBoundingClientRect().top;
+        })(),
+      };
+    });
+  };
+  const at_rest = await readAt('top');
+  const pinned = await readAt('floor');
+  report(
+    'the heading carries no band of its own until its list is passing under it',
+    at_rest.fill === 'rgba(0, 0, 0, 0)' && pinned.moved > 0
+      && pinned.fill !== 'rgba(0, 0, 0, 0)' && !pinned.fill.startsWith('rgba'),
+    `at ${at_rest.moved} px it is ${at_rest.fill}, and at ${pinned.moved} px it is`
+      + ` ${pinned.fill}; ${pinned.edges} sentinels, the heading reads`
+      + ` ${pinned.stuck ? 'stuck' : 'unstuck'} there, and its sentinel is`
+      + ` ${pinned.due ? 'above the scrollport' : 'still inside it'}`,
+  );
+}
+
+
 /** Drive objects list open, and assert closed rows build no forms. */
 export async function driveObjectsList(page: Page, objects: number): Promise<void> {
   await openObjects(page);

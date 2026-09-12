@@ -3793,3 +3793,120 @@ nobody reads. What it holds is the one declaration that file shows, and it holds
 the caption must name where it comes from. A first attempt forbade the spelling instead, and was
 weaker twice over — it read the whole file, so a comment naming the product would have failed the
 build, and a split literal would have walked straight past it.
+
+## Re-audit, 2026-09-12, one comment, and a hundred and forty-one rules
+
+The Architect asked why the `☰` "is a different color from the other text". The answer is that it
+was **black**, and the reason is one character sequence in a comment.
+
+**The report was right and the reading was wrong.** Tracing the cascade on paper gives
+`body #e7ecf1 → .chip-layer → .chip-row → .brand { color: inherit } → the glyph`, and concludes
+that the glyph is `--ink`, the same as the `add` chip. That conclusion was written down here in
+an earlier draft of this very entry. Measured, both `.brand` buttons compute `rgb(0, 0, 0)`.
+
+Reading CSS as authored assumes it parses. This did not:
+
+```css
+/* Most of them ride on `calt`, which browsers apply unasked -- `&&`, `||`, `::`, `...`,
+   `/* */`, `#{` and their kin all draw joined with nothing set. …
+```
+
+The `*/` quoted as an *example* of a ligature closes the comment where it stands. Everything
+after it parses as CSS, and the `#{` in it opens a brace with no partner — so every following
+rule is swallowed into `html, body`'s own block.
+
+| | broken | fixed |
+|---|---|---|
+| rules parsed, of 150 opened | **9** | **150** |
+| `body` colour | `rgb(0, 0, 0)` | `rgb(231, 236, 241)` |
+| `#button-menu` glyph | `rgb(0, 0, 0)` | `rgb(231, 236, 241)` |
+
+**The page went on drawing, which is why this survived.** Chromium reads the swallowed rules as
+*nested* CSS, so `.brand`, `.section-header` and the rest still reached their elements as
+descendants of `body`. What was lost is only what `html, body` itself declared below the break —
+`font-variant-ligatures`, `font-feature-settings`, and `color`. So the page looked almost right,
+and every element that inherited its colour from `body` drew black. The menu chip's glyph is one,
+which is the illegibility that was reported.
+
+Two checks were run against the repaired page before anything else was touched: the browser
+drive suite reports **156 of 156**, unchanged, so nothing else in the page had been leaning on
+the broken reading.
+
+**The check that could see this had been told not to.** `driveStyleDeclared`, written a day
+earlier for the `align-objects` rename, found a "declaration" whose property name was a sentence
+— the tail of this comment. It was classified as a false positive and suppressed with a guard
+requiring property names to look like identifiers. It was a true positive, pointing straight at
+the break. Prose in a declaration stream has exactly one cause, and the check now reports it
+rather than stepping over it.
+
+A second report counts rules opened against rules parsed. It does **not** catch a comment ending
+early, and says so in its own comment: counting braces means stripping comments first, which
+repeats the parser's own misreading. What it catches is a rule left unclosed by hand. Both are
+worth having; neither is the other.
+
+*Also fixed, found in the same sweep:* `--ink-dim` was referenced three times and defined
+nowhere, so `.toast-hint`, `.toast-detail` and `.toast-dismiss` inherited instead of taking a dim
+tone. Each takes the tone its own comment asks for — `--ink-faint` for the detail line, which its
+comment calls recessive evidence, `--ink-muted` for the hint and the dismiss control. A sweep of
+every `var(--…)` against every `--…:` shows it was the only one.
+
+## Re-audit, 2026-09-12, a band that means something
+
+The heading band that fixed the scroll bleed was on **all the time**, so every section wore a
+solid slab announcing a covering it was not doing. The Architect's word was "ugly", and it was.
+
+It is drawn now only while rows are actually passing under it. A 1px `.section-edge` sits where
+the heading's own top edge lands — the heading's `-10px` margin pulls it to the section's edge,
+so the sentinel marks exactly the moment it begins to stick — and one `IntersectionObserver`
+rooted on `.drawer-scroll` puts `.stuck` on the heading when that sentinel leaves the scrollport
+**upward**. Upward matters: a section scrolled past below has also left, and its heading went
+with it, so treating that as pinned would light a band nobody sees.
+
+The sentinel is watched rather than the heading, because a sticky element never leaves the
+scrollport and so can never report that it has. An observer rather than a scroll handler, for the
+reason `sizes.ts` gives at length: a read after a write lays the whole document out inside that
+event, and this scroller carries a row per object. One observer serves all four sections, since
+the drawer has exactly one scroller.
+
+Under the pinned band, a shadow rather than a rule. A line says *edge*; a shadow says *something
+passes beneath*, and the second is the true one. It is the family the popovers already use, tighter.
+
+**The chevron leads the line now**, in a 14px column, which is where `.diagnostic-parent` has
+always put the same mark — the two idioms were meant to match and did not. Trailing, it landed
+against the objects count, so `(5038 of 5040)▼` read as part of the figure. That also retires the
+objects heading's odd shape: it alone wrapped its contents in a span carrying an inline width,
+purely so the outer `space-between` would push the chevron to the edge. The count takes
+`margin-left: auto` and the wrapper, its inline style and its rule are gone.
+
+**The first mechanism was wrong twice, and the check is what found both.** It works by hand at
+every scroll position, across closing and reopening the drawer, and with the blur experiment
+toggled — and failed inside the full driven run, which is the only place it was exercised after a
+hundred and fifty other checks had moved the page around.
+
+The first fault was trusting the entry. `IntersectionObserver` hands a callback `rootBounds`,
+which arrives **null**, and a `boundingClientRect` that is a snapshot from when the entry was
+computed rather than where the sentinel stands now. On a null root the old code cleared the band —
+and a cleared band *sticks*, because the class is only ever corrected on the next *change* of
+intersection, and a sentinel far above the scrollport has no changes left to report. The entry is
+a signal that something moved and nothing more: the geometry is read live in the callback now,
+which costs nothing because the callback runs after layout — the same bargain `sizes.ts` states
+at length for `ResizeObserver` — and every heading is settled on any signal, since a section whose
+own sentinel reported nothing can still be wearing the wrong answer. `settleBands` is called at
+the two moments layout moves without a scroll as well: the drawer opening, and a section toggling.
+
+The second fault was in the check, and only visible once the first was fixed: it read the fill
+**mid-transition** and reported `rgba(22, 27, 34, 0.66)`, which is true of that instant and not of
+anything worth asserting. It waits for the eased fill to finish now — an opaque `rgb(…)` rather
+than merely a non-transparent one.
+
+Both were found by the diagnostic the check carries: it reports the geometry the observer watches
+beside the class and the fill, so a band that fails to arrive says whether the observer stopped
+answering or the scroll never reached. That line is what turned an unreproducible failure into a
+one-line fix.
+
+**The check holds it by colour.** `driveHeaderBanded` reads the heading's computed
+`backgroundColor` at rest and again at the scroll floor. Reading the class instead would
+pass on a heading whose rule had been deleted; reading `elementFromPoint` cannot see it at all,
+since hit testing answers with the element whatever its fill — which means `driveHeaderPinned`'s
+own sweep would report a clear band as covering. That check holds geometry, this one holds paint,
+and the band needs both.
