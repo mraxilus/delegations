@@ -15,9 +15,6 @@ joinable: false
 ##     every other law may ask engine rather than measure pose again.
 ##     Law itself was wrong first time it ran, and rig was right: `angleBetween` takes
 ##     units, and raw vectors gave it constant eighty-nine degrees whatever pose was.
-##     It went wrong second time for like reason, and rig was right again: wrist is
-##     angle forearm makes with *palm*, and once hand gained knuckles, running that
-##     line on to grip measured wrist and fold together.
 ##   Not joinable: it links C archive, which testament's joined binary cannot share.
 
 {.experimental: "strictFuncs".}
@@ -68,7 +65,7 @@ suite "two dancers in rigid body engine":
       for k in 0 .. 1:
         let
           a = p.arms[k]
-          drawn = angleBetween(unit(a.w - a.e), unit(p.knuckle[k] - a.w))
+          drawn = angleBetween(unit(a.w - a.e), unit(a.g - a.w))
         check abs(p.wrist[k] - drawn) < 0.01
       c.free()
 

@@ -20,7 +20,6 @@ type
     Twist,    ## Upper arm turned about its own length as far as it goes.
     Elbow,    ## Elbow at its bend.
     Wrist,    ## Hand as far off forearm as it goes.
-    Knuckle,  ## Fingers folded as far as they go.
     Swing,    ## Upper arm too far behind or across body.
     Through,  ## Arm against body.
     Arms      ## Arm against arm.
@@ -34,7 +33,6 @@ func says*(stop: Stop): string =
   of Stop.Twist: "shoulder twists no further"
   of Stop.Elbow: "elbow bends no further"
   of Stop.Wrist: "wrist bends no further"
-  of Stop.Knuckle: "fingers fold no further"
   of Stop.Swing: "upper arm swings no further behind or across"
   of Stop.Through: "arm meets body"
   of Stop.Arms: "arm meets arm"
