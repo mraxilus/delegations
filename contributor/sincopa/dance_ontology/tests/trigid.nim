@@ -21,7 +21,7 @@ joinable: false
 
 import std/[math, unittest]
 
-import ../sim/[body, hold, rig, rigid, vec]
+import ../sim/[body, hold, limb, rig, rigid, vec, walk]
 
 
 const
@@ -104,3 +104,21 @@ suite "two dancers in rigid body engine":
       let c = rest(band, restApart(HUMAN, band, SHAKE))
       check roomAt(c, c.poseOf(0), 0) > 0.0
       c.free()
+
+  test "no arm swings past what rig allows while hold still stands":
+    ## Engine holds elbow, wrist and twist.  Extension and adduction across body
+    ## it was never given -- rig states them as two ranges of their own and engine
+    ## offers one cone -- so nothing holds them but this reading.  Asking only once
+    ## hands had parted meant nothing held them at all: follow could turn two whole
+    ## turns and more with their arm wrapped away behind them, and sweep called it
+    ## free.
+    let sw = swept(HUMAN, Band.Torso, SHAKE, most = 1.5, apart = APART)
+    check sw.restHolds
+    for w in [sw.pos, sw.neg]:
+      for m in w.moments:
+        for k in 0 .. 1:
+          let
+            h = SHAKE[0].ends[k]
+            j = joints(m.stance[h.body], h.arm, m.arms[0][k])
+          check margin(HUMAN.range[Dof.Extend], j.extend) >= 0.0
+          check margin(HUMAN.range[Dof.Across], j.across) >= 0.0
