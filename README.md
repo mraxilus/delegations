@@ -23,8 +23,8 @@ Overarching theme: methods of communication.
 ## Layout
 
 ```text
-README.md  LICENSE.md  CONSTITUTION.md  STYLE.md  CURATOR.md  CONTRIBUTOR.md  CLAUDE.md
-GLOSSARY.md  koch.nim  koch.nim.cfg  .gitignore  .gitattributes  .github/
+README.md  LICENSE.md  CONSTITUTION.md  STYLE.md  CURATOR.md  CONTRIBUTOR.md  GUIDE.md
+CLAUDE.md  GLOSSARY.md  koch.nim  koch.nim.cfg  .gitignore  .gitattributes  .github/
 curator/README.md                        curator projects: audit, probe, any other
 curator/<project>/                       README.md  PROVENANCE.md  GLOSSARY.md  <project>.nimble
                                          src/  tests/  [tools/build.nim  pages/  mockups/
@@ -40,6 +40,7 @@ contributor/<domain>/<project>/          same shape as a curator project
   never writes contributor project code. It starts from [CURATOR.md](CURATOR.md).
 - A **contributor** delegate builds one project and touches nothing outside its folder. It
   starts from [CONTRIBUTOR.md](CONTRIBUTOR.md).
+- Both then read [GUIDE.md](GUIDE.md), the how-to they share.
 
 ## Issues
 

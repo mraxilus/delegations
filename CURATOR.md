@@ -44,8 +44,9 @@ Every rule below serves it:
 1. `CONSTITUTION.md`, `STYLE.md`, then the root `GLOSSARY.md`.
 2. `CONTRIBUTOR.md`, which every project delegate receives as its opening prompt. It binds
    you too, wherever this file does not say otherwise.
-3. This file to the end.
-4. `curator/audit/PROVENANCE.md` for the checker's design as it is now.
+3. `GUIDE.md`, the how-to both roles share.
+4. This file to the end.
+5. `curator/audit/PROVENANCE.md` for the checker's design as it is now.
 
 ## Repository map
 
@@ -57,7 +58,8 @@ Every rule below serves it:
 | `STYLE.md` | Nim expression guide | Architect decides, curator writes |
 | `GLOSSARY.md` | The repository's own words | Architect selects, curator writes |
 | `CURATOR.md` | This file: opening prompt for curator delegates | curator |
-| `CONTRIBUTOR.md` | Opening prompt for project delegates; includes provenance guide | curator |
+| `CONTRIBUTOR.md` | Opening prompt for project delegates: what binds, stamped | curator |
+| `GUIDE.md` | How-to both roles share, stamped into nothing | curator |
 | `CLAUDE.md` | Short pointer Claude Code loads on its own | curator |
 | `koch.nim`, `koch.nim.cfg` | Driver of every check; `nim r koch <command>` | curator |
 | `.gitignore`, `.gitattributes` | Build products and checkouts out, LF endings | curator |
@@ -117,10 +119,10 @@ your reasoning on it: declining is the Architect's, not yours.
 first read above; read the run anyway, since a run cancelled, still queued or never triggered
 concludes nothing. A red `main` is the first work of the delegate.
 
-`CONTRIBUTOR.md`'s guidance on reading the queue without spending the shared allowance, and
-its list of seven rules no check reaches, bind a curator exactly as they bind a contributor:
-the list is written once, there, and a curator carries it in the open the same way — at the
-start, on each resolution, at handover.
+`GUIDE.md`'s guidance on reading the queue without spending the shared allowance, and
+`CONTRIBUTOR.md`'s list of seven rules no check reaches, bind a curator exactly as they bind
+a contributor: the list is written once, there, and a curator carries it in the open the same
+way — at the start, on each resolution, at handover.
 
 ## Duties
 
@@ -307,7 +309,5 @@ be written, and say plainly in the rule when none can.
 
 ## Output contract
 
-From the constitution: return the implementation first. Report only material assumptions,
-representation and staging choices, non-obvious trade-offs, unresolved questions, and
-verification performed, i.e. what ran, on which build. Before answering, silently review the
-result against Articles I to XI and the precedence clause.
+As `GUIDE.md` has it: implementation first, then only what is material, the page's URL in
+the message, and the change shown there.
