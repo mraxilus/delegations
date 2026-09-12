@@ -244,7 +244,7 @@ const lut_wording_to_text: array[Wording, cstring] = [
   NameChipHelp: "?",
   NameChipMenu: "☰",
 
-  NameTitle: "RGA visualiser",
+  NameTitle: "RGA Visualiser",
 
   # Sentences shown in place, where control has nothing to hover.
   NoteListEmpty: "Nothing here yet -- press `add` above, or drag between two objects.",

@@ -71,6 +71,8 @@ const
     ## Bridge whose own `exportc` signatures `declare` reads.
   PATH_PANEL_NIM = "src" / "desktop" / "panel.nim"
     ## Panel, swept for shown text written where it is drawn.
+  PATH_MAIN_NIM = "src" / "desktop" / "main.nim"
+    ## Desktop entry point, which shows exactly one piece of text: window's own caption.
   PATH_BRIDGE_JS = BUILD_BROWSER / "bridge.js"
     ## Compiled bridge, first script on page.
   PATH_DECLARATIONS = BUILD / "bridge.d.ts"
@@ -439,9 +441,18 @@ proc checkWording() =
         if isLiteralShown(line, write):
           found.add path & ":" & $(i + 1) & ": " & line.strip
           break
+  # Window caption is one piece of shown text living outside three files swept above.
+  #   Entry point is not swept whole: it is full of option names, paths and error text that
+  #   no reader of window ever sees, and check that flags those is check nobody reads. What
+  #   is held instead is that caption *composes* product's name rather than typing it again.
+  #   Matched without regard to case, since drift this caught was case alone.
+  let caption = readFile(PATH_MAIN_NIM)
+  if toLowerAscii($wordingText(NameTitle)) in toLowerAscii(caption):
+    found.add PATH_MAIN_NIM & ": window caption writes out what `NameTitle` stands for"
+
   # Catalogue may not grow rows nothing shows either. Entry no front-end names is words
   #   written for nobody, and next reader cannot tell it from one still in use.
-  var shown = readFile(PATH_PANEL_NIM) & readFile(PATH_SHELL)
+  var shown = readFile(PATH_PANEL_NIM) & readFile(PATH_SHELL) & caption
   for path in walkFiles("src" / "browser" / "*.ts"): shown.add readFile(path)
   for key in Wording:
     if not shown.namesKey($key):

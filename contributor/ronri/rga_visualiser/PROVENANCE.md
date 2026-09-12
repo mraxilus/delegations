@@ -3609,6 +3609,25 @@ would rot. The words still have one home; nothing about which front-end shows th
 line inside the enum. It now imports the module and walks `Wording` itself, so a key renamed
 there and not re-derived fails to compile rather than fails to match.
 
+**The product names itself once, and the guard has a scope rather than a hole.** The Architect
+asked for the application's own name in title case: `NameTitle` reads `RGA Visualiser`, and both
+front-ends move together because both read that key. That exposed a second, hand-written copy in
+`main.nim` — the SDL window caption, `Projective Geometric Algebra Illuminated — RGA visualiser`,
+which no sweep reached, so title-casing the catalogue alone would have left the window spelling its
+own name two ways. The caption now composes: `"… — " & $wordingText(NameTitle)`, resolved at
+compile time.
+
+`checkWording` gains that file, but **not** whole. An entry point is full of option names, paths
+and error text that no reader of the window ever sees, and a check that flags those is a check
+nobody reads. What it holds instead is the one thing that file shows: the caption may not write out
+what `NameTitle` stands for. Matched without regard to case, because the drift this caught *was*
+case alone — a case-sensitive match would have passed the very defect that prompted it:
+
+```
+Shown text belongs in `wording.nim`, named by key; got 1:
+  src/desktop/main.nim: window caption writes out what `NameTitle` stands for
+```
+
 **Still theirs.** Whether the page should reach every tooltip the window has (`#145`); stage
 three, folding `help.nim`'s rows and `message.nim`'s sentences in — until that lands, "one
 catalogue" is three; and the flaky two-finger pan check (`#153`).

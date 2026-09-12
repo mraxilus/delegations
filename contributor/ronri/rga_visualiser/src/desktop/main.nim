@@ -107,7 +107,7 @@ import std/[algorithm, math, monotimes, options, os, parseopt, strformat, struti
 import pga
 import ../rga_visualiser/[
   boundary, camera, format, framing, help, history, interaction, lighting, marker, message,
-  orrery, picking, scene, selection, storyboard, tessellate, timings,
+  orrery, picking, scene, selection, storyboard, tessellate, timings, wording,
 ]
 import ./[arena, gif, gui, image, opengl as gl, panel, renderer, sdl3]
 
@@ -116,7 +116,11 @@ import ./[arena, gif, gui, image, opengl as gl, panel, renderer, sdl3]
 #[ Application Configuration ]#
 
 const
-  TITLE* = "Projective Geometric Algebra Illuminated — RGA visualiser"
+  TITLE* = "Projective Geometric Algebra Illuminated — " & $wordingText(NameTitle)
+    ## Name window wears in whatever bar host draws for it.
+    ##   Second half is read from catalogue rather than typed again: product naming itself
+    ##   two ways is exactly drift `wording` exists to stop, and this file is one
+    ##   `build.checkWording` does not sweep, so suite holds it instead.
   SAMPLES_MULTISAMPLE* {.define: "visualiser.samples_multisample".} = 4
     ## Ask framebuffer for this many samples per pixel.
     ##   Four is where thin ribbon stops reading as dotted; more buys little on geometry
