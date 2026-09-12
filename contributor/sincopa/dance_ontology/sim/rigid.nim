@@ -354,7 +354,7 @@ proc carry(c: Couple) =
     # face to face that hands must actually be above -- which is clearance,
     # since only then would arm have to pass through body to stay low.  Nought
     # face to face, one at pillion, and smooth between, so demand does not jump
-    # in middle of an edge.
+    # in middle of edge.
     turned = abs(sin(twist(c.stance) / 2.0))
     one = axesOf(c.stance[Body.One]).origin
     two = axesOf(c.stance[Body.Two]).origin
