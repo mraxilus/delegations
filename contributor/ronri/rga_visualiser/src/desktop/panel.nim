@@ -40,7 +40,7 @@ import std/[options, strformat]
 import pga
 import ./gui
 import ../rga_visualiser/[
-  boundary, camera, format, framing, help, history, interaction, message, orrery, picking,
+  boundary, camera, format, framing, help, history, message, orrery, picking,
   tessellate, scene, selection, wording,
 ]
 

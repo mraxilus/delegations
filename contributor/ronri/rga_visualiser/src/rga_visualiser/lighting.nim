@@ -16,7 +16,6 @@
 
 import std/[math, options]
 
-import pga
 import ./[boundary, tessellate, scene]
 
 
