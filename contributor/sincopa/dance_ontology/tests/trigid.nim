@@ -39,13 +39,18 @@ proc rest(band = Band.Torso; apart = APART): Couple =
   result.settle()
 
 const
-  ASK = 0.84 ## Turn laws below put to that hold, in turns.
-    ## Chosen to make search work for its answer: measured, that hold carries 0.78
-    ## from first distance couple may stand at and 0.94 from best of them, so this
-    ## is reached only by looking past first.  At half turn, which first distance
-    ## already carries, search that gave up after one distance answered correctly
-    ## and law below passed on it.
-  BEYOND = 1.2 ## And turn no distance carries at all; best of them is 0.94.
+  ASK = 1.2 ## Turn laws below put to that hold, in turns.
+    ## Chosen to make search work for its answer: measured, that hold carries 1.04
+    ## from first distance couple may stand at and runs free from 0.88 to 1.00, so
+    ## this is reached only by looking past first.  At half turn, which first
+    ## distance already carries, search that gave up after one distance answered
+    ## correctly and law below passed on it.
+  CHAIN = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Left)]),
+            Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Right)])]
+    ## Same-name chain, built pillion: hold that stops from every distance at
+    ## torso height, which plain hold no longer does.  Turn no distance carries
+    ## has to be asked of hold that has one.
+  BEYOND = 1.2 ## Turn no distance carries that chain; best of them is 1.00.
 
 let CHOSEN = block:
   ## Where that hold stands to turn each way at torso height, and how far it
@@ -148,7 +153,7 @@ suite "two dancers in rigid body engine":
       if w.restHolds and not w.stopped: any = true
     check any
     check reaches(HUMAN, Band.Torso, SHAKE, ASK)
-    check not reaches(HUMAN, Band.Torso, SHAKE, BEYOND)
+    check not reaches(HUMAN, Band.Torso, CHAIN, BEYOND, away = true)
 
   test "at rest every joint is free to move either way":
     ## `freedom` is what `roomAt` reads with, and it counts both ends of range.
@@ -244,7 +249,13 @@ suite "two dancers in rigid body engine":
       other = @[Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Right)])]
       a = swept(HUMAN, Band.Torso, same, most = 0.8)
       b = swept(HUMAN, Band.Torso, other, most = 0.8)
-    check abs(a.apart - b.apart) < 1e-9
+    ## Standing distance is chosen per way, so it is compared per way, as every
+    ## other figure here is.  `Swept.apart` is whichever way went furthest, and
+    ## when both run free they tie and it takes positive way for both -- which
+    ## mirror does not equate, since positive way of one is negative way of
+    ## other.  Comparing it passed only while ways did not tie.
+    check abs(a.pos.apart - b.neg.apart) < 1e-9
+    check abs(a.neg.apart - b.pos.apart) < 1e-9
     check a.pos.stopped == b.neg.stopped
     check a.neg.stopped == b.pos.stopped
     check abs(a.pos.at - b.neg.at) < 1e-9
