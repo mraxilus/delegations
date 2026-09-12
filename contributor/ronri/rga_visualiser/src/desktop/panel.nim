@@ -40,8 +40,8 @@ import std/[options, strformat]
 import pga
 import ./gui
 import ../rga_visualiser/[
-  boundary, camera, format, framing, help, history, interaction, picking, tessellate, scene,
-  selection,
+  boundary, camera, format, framing, help, history, interaction, orrery, picking, tessellate,
+  scene, selection,
 ]
 
 
@@ -95,6 +95,10 @@ const
   ROWS_OBJECTS_LEAST = 6
     ## Floor on bounded list's height, for window too short to give it more.
     ##   Region smaller than this shows less than one object and scrolls by fractions.
+  WIDTH_MENU_FIELD = 210.0'f32
+    ## Width of path field inside menu.
+    ##   Fixed rather than read from content region: popup sizes itself to what is in it,
+    ##   so field asking for what is left would ask before anything had set it.
   WIDTH_TOGGLE_CHIP = 72.0'f32
     ## Width of one top-bar chip, so `axes` and `grid` read as pair rather than as two
     ## buttons that happen to sit together.
@@ -230,6 +234,12 @@ type
     path_export*: array[PATH_MAX, char] ## Where exported frame is written.
     path_scene*: array[PATH_MAX, char] ## Where scene is saved to and loaded from.
     message*: array[MESSAGE_MAX, char] ## Outcome of last action taken.
+    is_menu_top_forced*: bool ## Whether to open top menu with no click, for scripted run.
+      ## Headless run has no pointer to press `☰` with, exactly as it has none for help's
+      ## tabs; see `main.--drive-menu`.
+    count_demo_offered*: int ## Sizes menu's demo group offered, last time it was drawn.
+      ## Zero until menu has been opened once. Read by scripted run's verdict, which is
+      ## only way headless run can say menu came up with its groups in it.
     room_under_sections*: cfloat ## Height window had left once every section had drawn.
       ## Negative means what follows sections is off window's bottom and reader has to
       ## scroll window to reach it.
@@ -882,14 +892,6 @@ proc layoutView*(panel: var Panel, camera: var Camera) =
   gui.tooltip("Lens angle; smaller looks through a telephoto, larger through a wide angle.")
   gui.widthPop()
 
-  gui.separatorText("export")
-  widthPushField()
-  fieldLabel("path")
-  discard gui.inputText("##path_export", toCstring(panel.path_export), cint(PATH_MAX))
-  gui.tooltip("File `save PNG` and the `S` key both write the current frame to.")
-  gui.widthPop()
-  if gui.button("save PNG"): panel.is_export_requested = true
-
 
 
 #[ Diagnostics Panel ]#
@@ -1383,6 +1385,80 @@ proc layoutHelp*(panel: var Panel, path_forced: Option[HelpPath] = none(HelpPath
 
 #[ Top Bar ]#
 
+proc layoutMenu(
+  panel: var Panel, scene: var Scene, camera: var Camera, history: var History, now: float
+) =
+  ## Lay out menu holding what is reached for rarely: where scene is written, and preset.
+  ##   Same `☰`, same three groups, same order as browser's `.top-menu`: save, load, demo.
+  ##   Browser hides these because its chip row is one line on phone; desktop follows it so
+  ##   reader meeting both meets one arrangement rather than two (repository issue 136).
+  ##   `☰` is U+2630, same character browser's button carries. Interface face merges symbol
+  ##   range it is in, so it draws here without any face being pushed.
+  ##   Paths sit above groups rather than beside their buttons: both groups read them, and
+  ##   browser has no such field only because its own save and load go through download and
+  ##   file picker rather than through file system.
+  ##   Demo group is built from `orrery.ScaleOrrery` rather than written out, as browser's
+  ##   is built from `nimDemoScales`: size added there arrives in both menus untouched.
+  if not gui.menuBegin("☰", "##menu_top", panel.is_menu_top_forced): return
+
+  gui.widthPush(WIDTH_MENU_FIELD)
+  fieldLabel("scene file")
+  discard gui.inputText("##scene_file", toCstring(panel.path_scene), cint(PATH_MAX))
+  gui.tooltip("File `save scene` writes to and `load scene` reads from.")
+  fieldLabel("image file")
+  discard gui.inputText("##path_export", toCstring(panel.path_export), cint(PATH_MAX))
+  gui.tooltip("File `save image` and the `S` key both write the current frame to.")
+  gui.widthPop()
+
+  gui.separatorText("save")
+  if gui.button("scene##save"):
+    toChars(saveScene(scene, toText(panel.path_scene)), panel.message)
+  gui.tooltip("Save this scene as a .rgascene file.")
+  gui.sameLine()
+  if gui.button("image##save"): panel.is_export_requested = true
+  gui.tooltip("Save the current view as a PNG image.")
+
+  gui.separatorText("load")
+  if gui.button("scene##load"):
+    # Pass this frame's clock, so file arrives as replay; see `scene.bornReplaying`.
+    toChars(loadScene(scene, toText(panel.path_scene), now), panel.message)
+    # Drop open session: loaded scene's handles are not ones it was opened against.
+    panel.session = none(EditSession)
+  gui.tooltip("Load a .rgascene file, replacing this scene.")
+
+  gui.separatorText("demo")
+  panel.count_demo_offered = 0
+  for scale in ScaleOrrery:
+    if scale != ScaleOrrery.low: gui.sameLine()
+    var name: array[16, char]
+    let label = buildChars(name):
+      appendInt(name, cursor, objectsOf(scale))
+    inc panel.count_demo_offered
+    if gui.button(label):
+      # Frame for window as it stands, which is what browser passes its canvas size for.
+      showOrrery(
+        scene, camera, int(gui.viewportWidth()), int(gui.viewportHeight()), scale, now
+      )
+      # Reset around replaced scene exactly as `bridge.nimLoadDemo` does.
+      panel.selection.clear()
+      history.initHistory(scene, camera)
+      panel.session = none(EditSession)
+      toChars(
+        &"Loaded the orrery: {scene.len} objects, {OBJECTS_MAX - scene.len} handles free.",
+        panel.message,
+      )
+    # Bound before it is passed, so string outlives call rather than being temporary.
+    #   Same words browser's own button carries in its `title`.
+    let told =
+      "Load the orrery at " & $objectsOf(scale) & " objects: the real solar neighbourhood, " &
+      "Sol at the origin, every drawable kind present. The same arrangement at every size, " &
+      "reaching further into the star catalogue as it grows." &
+      (if scale == SCALE_ORRERY_DEFAULT: " The size everything opens on." else: "")
+    gui.tooltip(cstring(told))
+
+  gui.menuEnd()
+
+
 proc layoutTopBar*(
   panel: var Panel, scene: var Scene, camera: var Camera, history: var History, now: float
 ) =
@@ -1432,22 +1508,9 @@ proc layoutTopBar*(
     panel.is_grid_shown = not panel.is_grid_shown
   gui.tooltip("Toggle the reference grid at z = 0.")
 
-  # Say where scene is written, then write or read it.
-  #   Buttons say `save` and `load` alone: field above them is named `scene file`, so noun
-  #   was in row twice, and browser's menu spells them same way under its own headings.
-  widthPushField()
-  fieldLabel("scene file")
-  discard gui.inputText("##scene_file", toCstring(panel.path_scene), cint(PATH_MAX))
-  gui.tooltip("File `save` writes to and `load` reads from.")
-  gui.widthPop()
-  if gui.button("save"):
-    toChars(saveScene(scene, toText(panel.path_scene)), panel.message)
+  # Everything reached for rarely is behind menu, as browser's `.top-menu` has it.
   gui.sameLine()
-  if gui.button("load"):
-    # Pass this frame's clock, so file arrives as replay; see `scene.bornReplaying`.
-    toChars(loadScene(scene, toText(panel.path_scene), now), panel.message)
-    # Drop open session: loaded scene's handles are not ones it was opened against.
-    panel.session = none(EditSession)
+  layoutMenu(panel, scene, camera, history, now)
 
 
 

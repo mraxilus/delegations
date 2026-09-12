@@ -73,7 +73,7 @@ const
     ## Page's own type-checker configuration, targeting browser.
   PATH_TSCONFIG_DRIVE = "tsconfig.drive.json"
     ## Harness's own type-checker configuration, targeting node not browser.
-  DRIVES = ["keys", "sky", "undo", "select", "drag"]
+  DRIVES = ["keys", "sky", "undo", "select", "drag", "menu"]
     ## Scripted runs entry point carries, each reporting checks of its own.
     ##   Help's runs are not here: one per tab, and tabs are read from binary rather than
     ##   listed again, so `help.HelpPath` stays their one home (Article I.4).
