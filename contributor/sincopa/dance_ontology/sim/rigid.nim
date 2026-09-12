@@ -70,6 +70,17 @@ type
     trunk: eng.BodyId
     arm: array[Arm, ArmRig]
 
+  Mark* {.pure.} = enum ## What part of whom one capsule is.
+    Trunk, Upper, Fore, Palm
+
+  Shape* = object ## One capsule engine collides, as engine was given it.
+    body*: eng.BodyId
+    who*: Body  ## Whose.
+    arm*: Arm   ## Which arm, where `mark` is not `Trunk`.
+    mark*: Mark
+    a*, z*: eng.Vec ## Its segment's two ends, in that body's own terms.
+    r*: float       ## And radius round segment.
+
   Couple* = object ## Both dancers, their world, and connections between their hands.
     world: eng.WorldId
     rig*: Rig
@@ -79,6 +90,9 @@ type
     turning*: Body ## Whose head hands are carried over, at crown.
     who: array[Body, Figure]
     grip: seq[eng.JointId]
+    shapes*: seq[Shape] ## Every capsule above, kept as it was handed to engine.
+      ## Recorded rather than worked out again, so anything drawing couple draws
+      ## what is being simulated and cannot quietly disagree with it.
 
   Pose* = object ## Where one connection's two arms lie, and what their joints read.
     arms*: array[2, ArmPose]
@@ -144,14 +158,18 @@ func stadium(rig: Rig; part: Part): tuple[r, spread: float] =
     wide = rig.round[part] / (2.0 * PI * q + 4.0 * (1.0 - q))
   (wide * q, 2.0 * (wide - wide * q))
 
-proc capsule(b: eng.BodyId; a, z: eng.Vec; r, density: float; group: cint) =
+proc capsule(c: var Couple; b: eng.BodyId; who: Body; arm: Arm; mark: Mark;
+             a, z: eng.Vec; r, density: float; group: cint) =
   ## Hang one capsule on body, with its own group so arm's own links pass.
+  ##   Kept on couple as well as handed to engine: page draws this list, so shape
+  ##     drawn and shape collided are one thing said once.
   var
     cap = eng.Capsule(center1: a, center2: z, radius: r.cfloat)
     sd = eng.defaultShape()
   sd.density = density.cfloat
   sd.filter.groupIndex = group
   discard eng.createCapsule(b, addr sd, addr cap)
+  c.shapes.add Shape(body: b, who: who, arm: arm, mark: mark, a: a, z: z, r: r)
 
 func standing(ax: Axes): eng.Quat =
   ## Turn carrying dancer's own axes onto world's, in engine's terms.
@@ -181,9 +199,12 @@ proc trunkOf(c: var Couple; who: Body): eng.BodyId =
       let
         a = asEngine((side * spread, 0.0, (if hi > lo: lo else: mid)))
         z = asEngine((side * spread, 0.0, (if hi > lo: hi else: mid)))
-      capsule(result, a, z, r, DENSITY, 0)
+      capsule(c, result, who, Arm.Left, Mark.Trunk, a, z, r, DENSITY, 0)
       if spread == 0.0:
         break
+
+const MARKS = [Mark.Upper, Mark.Fore, Mark.Palm]
+  ## Which mark each of arm's three links carries, in `Limb`'s own order.
 
 func restFrame(): eng.Quat =
   ## Shoulder's frame at rest, in trunk's own terms: arm hanging, elbow forward.
@@ -196,8 +217,8 @@ func hingeFrame(): eng.Quat =
   ## Elbow's frame within upper arm: its z is hinge, upper arm's own x.
   qOf(eng.vec(0, 0, 1), eng.vec(0, -1, 0), eng.vec(1, 0, 0))
 
-proc limbOf(c: var Couple; at: Vec; turn: eng.Quat; long: float;
-            group: cint): eng.BodyId =
+proc limbOf(c: var Couple; who: Body; arm: Arm; mark: Mark; at: Vec;
+            turn: eng.Quat; long: float; group: cint): eng.BodyId =
   ## One link: its own length along its local z, hung from `at`.
   var bd = eng.defaultBody()
   bd.kind = eng.Dynamic
@@ -210,10 +231,11 @@ proc limbOf(c: var Couple; at: Vec; turn: eng.Quat; long: float;
   result = eng.createBody(c.world, addr bd)
   let r = c.rig.limb
   if long > 2.0 * r:
-    capsule(result, eng.vec(0, 0, r), eng.vec(0, 0, long - r), r, DENSITY, group)
+    capsule(c, result, who, arm, mark, eng.vec(0, 0, r), eng.vec(0, 0, long - r),
+            r, DENSITY, group)
   else:
     let mid = eng.vec(0, 0, long / 2.0)
-    capsule(result, mid, mid, long / 2.0, DENSITY, group)
+    capsule(c, result, who, arm, mark, mid, mid, long / 2.0, DENSITY, group)
 
 proc armOf(c: var Couple; who: Body; arm: Arm; group: cint): ArmRig =
   ## Three links on shoulder, elbow and wrist, laid out hanging.
@@ -227,7 +249,7 @@ proc armOf(c: var Couple; who: Body; arm: Arm; group: cint): ArmRig =
     long = [c.rig.upper, c.rig.fore, c.rig.hand]
   var at = top
   for l in Limb:
-    result.link[l] = limbOf(c, at, turn, long[ord(l)], group)
+    result.link[l] = limbOf(c, who, arm, MARKS[ord(l)], at, turn, long[ord(l)], group)
     at = at + (0.0, 0.0, -long[ord(l)])
 
   var ball = eng.defaultBall()
@@ -441,17 +463,38 @@ proc turn*(c: var Couple; who: Body; by: float; steps: int) =
     c.stance = turned(c.stance, who, by / steps.float)
   eng.setSpin(c.who[who].trunk, asEngine((0.0, 0.0, 0.0)))
 
+proc armPoseOf*(c: Couple; who: Body; arm: Arm): ArmPose =
+  ## Four points of one arm, joined or not.
+  ##   Every arm, not only ones holding: arm hanging free is still arm, and
+  ##     anything drawing couple has to draw it.
+  let a = c.who[who].arm[arm]
+  ArmPose(
+    s: asWorld(eng.pointOf(a.link[Limb.Upper], eng.vec(0, 0, 0))),
+    e: asWorld(eng.pointOf(a.link[Limb.Fore], eng.vec(0, 0, 0))),
+    w: asWorld(eng.pointOf(a.link[Limb.Palm], eng.vec(0, 0, 0))),
+    g: asWorld(eng.pointOf(a.link[Limb.Palm], eng.vec(0, 0, c.rig.hand.cfloat))))
+
+proc jointsOf*(c: Couple; who: Body; arm: Arm): tuple[j: Joints, tw, bd, wr: float] =
+  ## What one arm's joints read: three swings worked off its pose, and three
+  ## engine states its own joints in.
+  let a = c.who[who].arm[arm]
+  (joints(c.stance[who], arm, c.armPoseOf(who, arm)),
+   eng.twistAngleOf(a.shoulder).float, eng.angleOf(a.elbow).float,
+   eng.coneAngleOf(a.wrist).float)
+
+proc endsOf*(c: Couple; s: Shape): tuple[a, z: Vec] =
+  ## Where one capsule's segment lies in world now.
+  ##   Asked of engine rather than worked out from stance, so drawing cannot
+  ##     drift from what is being simulated.
+  (asWorld(eng.pointOf(s.body, s.a)), asWorld(eng.pointOf(s.body, s.z)))
+
 proc poseOf*(c: Couple; i: int): Pose =
   ## Where one connection's two arms lie, and what engine says their joints read.
   for k in 0 .. 1:
     let
       h = c.links[i].ends[k]
       a = c.who[h.body].arm[h.arm]
-    result.arms[k] = ArmPose(
-      s: asWorld(eng.pointOf(a.link[Limb.Upper], eng.vec(0, 0, 0))),
-      e: asWorld(eng.pointOf(a.link[Limb.Fore], eng.vec(0, 0, 0))),
-      w: asWorld(eng.pointOf(a.link[Limb.Palm], eng.vec(0, 0, 0))),
-      g: asWorld(eng.pointOf(a.link[Limb.Palm], eng.vec(0, 0, c.rig.hand.cfloat))))
+    result.arms[k] = c.armPoseOf(h.body, h.arm)
     result.twist[k] = eng.twistAngleOf(a.shoulder).float
     result.bend[k] = eng.angleOf(a.elbow).float
     result.wrist[k] = eng.coneAngleOf(a.wrist).float

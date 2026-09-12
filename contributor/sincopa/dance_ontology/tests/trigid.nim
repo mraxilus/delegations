@@ -21,7 +21,7 @@ joinable: false
 
 import std/[math, unittest]
 
-import ../sim/[body, hold, limb, rig, rigid, vec, walk]
+import ../sim/[body, hold, limb, rig, rigid, seen, vec, walk]
 
 
 const
@@ -182,6 +182,56 @@ suite "two dancers in rigid body engine":
             j = joints(m.stance[h.body], h.arm, m.arms[0][k])
           check margin(HUMAN.range[Dof.Extend], j.extend) >= -GIVE
           check margin(HUMAN.range[Dof.Across], j.across) >= -GIVE
+
+  test "every capsule page draws is one engine was given":
+    ## Page is debug view, so its honesty rests on this: list it draws from is
+    ## list handed to engine, recorded as it was handed over rather than worked
+    ## out again afterwards.  Two trunks of four capsules, and four arms of
+    ## three, is what `build` makes.
+    let c = rest()
+    check c.shapes.len == 2 * 4 + 4 * 3
+    var trunks, limbs = 0
+    for s in c.shapes:
+      check s.r > 0.0
+      if s.mark == Mark.Trunk: trunks += 1 else: limbs += 1
+    check trunks == 8
+    check limbs == 12
+    c.free()
+
+  test "arm's three capsules run end to end":
+    ## Drawing that lets links drift apart draws arm nobody has.  Far end of one
+    ## link and near end of next are same joint, so they meet within what solver
+    ## lets joint separate.
+    let c = rest()
+    for who in Body:
+      for arm in Arm:
+        var run: seq[tuple[a, z: Vec]]
+        for s in c.shapes:
+          if s.mark != Mark.Trunk and s.who == who and s.arm == arm:
+            run.add c.endsOf(s)
+        check run.len == 3
+        for i in 0 ..< run.len - 1:
+          check dist(run[i].z, run[i + 1].a) < 2.0 * HUMAN.limb + 0.01
+    c.free()
+
+  test "capsules move where couple move":
+    ## Guards drawing frozen at rest: ends are asked of engine each moment, so
+    ## turning one dancer has to move their arms and leave other's trunk alone.
+    var c = rest()
+    let before = c.endsOf(c.shapes[0])
+    var wasArm: seq[tuple[a, z: Vec]]
+    for s in c.shapes:
+      if s.mark != Mark.Trunk and s.who == Body.Two: wasArm.add c.endsOf(s)
+    c.turn(Body.Two, 0.25, 600)
+    var nowArm: seq[tuple[a, z: Vec]]
+    for s in c.shapes:
+      if s.mark != Mark.Trunk and s.who == Body.Two: nowArm.add c.endsOf(s)
+    var moved = 0.0
+    for i in 0 ..< wasArm.len:
+      moved = max(moved, dist(wasArm[i].a, nowArm[i].a))
+    check moved > 0.05
+    check dist(before.a, c.endsOf(c.shapes[0]).a) < 1e-6
+    c.free()
 
   test "rig is same seen in mirror":
     ## Lead's left to follow's left, reflected, is lead's right to follow's right,

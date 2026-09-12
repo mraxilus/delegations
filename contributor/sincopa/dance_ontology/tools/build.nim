@@ -54,7 +54,7 @@ const
     ## Directory faces land in.  Never committed: fonts are unregistered kind, so
     ##   lock is committed and checkout is not, as Atlas does for packages.
   USAGE = "Usage: nim r tools/build.nim " &
-    "<pages|assets|pins|modelled|verdicts|engine|shot|system|clean>\n"
+    "<pages|assets|pins|modelled|rig|verdicts|engine|shot|system|clean>\n"
     ## Text printed on usage error.
   SYSTEM = [
     ("nodejs", "run `shot` helper, which is this project's Nim compiled to javascript"),
@@ -231,6 +231,10 @@ proc pages() =
     "-o:" & BUILD / "design" / "wholecloth_turns.js", "design/wholecloth_turns.nim",
   ])
   compileRun(["design/wholecloth.nim", BUILD / "design"])
+  nim(@["js"] & RELEASE & @[
+    "-o:" & BUILD / "design" / "rig_view.js", "design/rig_view.nim",
+  ])
+  compileRun(["design/rig_page.nim", BUILD / "design"])
   dress()
 
 
@@ -252,6 +256,14 @@ proc modelled() =
   ##     is claim, and it is added deliberately rather than refreshed by build
   ##     into agreeing with whatever model happens to say today.
   nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "design/modelled.nim"])
+
+
+proc rig() =
+  ## Rewrite `design/rig.json`: sweeps viewer page plays.
+  ##   Own verb, as `modelled` is, and for like reason: recording costs eight
+  ##     stance searches over every distance couple may stand at, and every
+  ##     `pages` run would pay for it.  Page folds in whatever was last recorded.
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "design/rig.nim"])
 
 
 proc verdicts() =
@@ -298,6 +310,7 @@ proc main(): int =
     of "assets": assets()
     of "pins": pins()
     of "modelled": modelled()
+    of "rig": rig()
     of "verdicts": verdicts()
     of "engine": engine()
     of "shot": shot()

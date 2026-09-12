@@ -1,0 +1,144 @@
+## Record sweeps for viewer page, as `design/rig.json`.
+##
+##   Run at build time, natively: engine is C, page is script in browser, so every
+##     figure page draws is found here and played there.  Same arrangement
+##     `design/turns` uses.
+##   Written beside source rather than under `build/`, and run by its own verb, as
+##     `design/modelled.json` is: recording costs eight stance searches, and every
+##     `pages` run would pay for it.  `rig_page` folds it into page, which is
+##     published as single document and so may leave nothing to fetch.
+##   What is constant across a sweep is written once -- radius and owner of each
+##     capsule, and each joint's two ends -- and only what moves is written per
+##     moment.  Straight transcription ran to four megabytes; this is a fifth of
+##     that and says exactly as much.
+##
+##   Usage: rig          writes design/rig.json
+
+{.experimental: "strictFuncs".}
+
+import std/[math, os, strformat, strutils]
+
+import ../sim/[body, hold, rig, seen, walk]
+
+
+type Cut = tuple[name: string, arms: seq[(Arm, Arm)], away: bool, band: Band]
+
+const SHOWN: seq[Cut] = @[
+  ("One hand, same name", @[(Arm.Left, Arm.Left)], false, Band.Crown),
+  ("One hand, cross name", @[(Arm.Left, Arm.Right)], false, Band.Crown),
+  ("Chain, cross name", @[(Arm.Left, Arm.Right), (Arm.Right, Arm.Left)],
+   false, Band.Crown),
+  ("Chain, same name", @[(Arm.Left, Arm.Left), (Arm.Right, Arm.Right)],
+   true, Band.Crown),
+  ("Chain, cross name", @[(Arm.Left, Arm.Right), (Arm.Right, Arm.Left)],
+   false, Band.Neck),
+  ("Chain, same name", @[(Arm.Left, Arm.Left), (Arm.Right, Arm.Right)],
+   true, Band.Neck),
+  ("Chain, cross name", @[(Arm.Left, Arm.Right), (Arm.Right, Arm.Left)],
+   false, Band.Torso),
+  ("Chain, same name", @[(Arm.Left, Arm.Left), (Arm.Right, Arm.Right)],
+   true, Band.Torso)]
+  ## Eight sweeps worth watching: four holds over crown, where whole reference is
+  ## drawn, and two chains at each lower band, where floor and engine still argue.
+
+const
+  PLACE = 4 ## Decimal places kept.  Tenth of millimetre on lengths, and finer
+            ## than any reading on angles; more is noise from solver's own jitter.
+  BANDS = ["torso", "neck", "above"]
+
+
+func num(x: float): string =
+  ## Shortest text that still says figure to `PLACE`, with no trailing nought.
+  ##   Nought is written `0` rather than `0.0000`: file holds tens of thousands
+  ##     of them and page reads both same way.
+  if x == 0.0 or abs(x) < 0.5 / (10.0 ^ PLACE):
+    return "0"
+  result = formatFloat(x, ffDecimal, PLACE)
+  result = result.strip(leading = false, chars = {'0'})
+  if result.endsWith('.'): result.setLen(result.len - 1)
+
+func arr(xs: seq[float]): string =
+  var bits: seq[string]
+  for x in xs: bits.add num(x)
+  "[" & bits.join(",") & "]"
+
+
+func flat(s: Still): seq[float] =
+  ## Every capsule's two ends, one after another.
+  for b in s.bars:
+    result.add [b.a.x, b.a.y, b.a.z, b.z.x, b.z.y, b.z.z]
+
+func angles(s: Still): seq[float] =
+  ## Every arm's five joints, one arm after another.
+  for a in s.arms:
+    for d in Dof: result.add a.read[d]
+
+func gripped(s: Still): seq[float] =
+  for g in s.grips: result.add [g.x, g.y, g.z]
+
+
+proc bodyOfSweep(sh: Shown): string =
+  ## One sweep as page reads it.
+  var bits: seq[string]
+  bits.add &"\"hold\":\"{sh.hold}\""
+  bits.add &"\"band\":\"{BANDS[ord(sh.band)]}\""
+  bits.add &"\"apart\":{num(sh.apart)}"
+  bits.add &"\"turns\":{num(sh.turns)}"
+  bits.add &"\"stopped\":" & (if sh.stopped: "true" else: "false")
+  bits.add &"\"why\":\"{sh.why}\""
+  bits.add "\"says\":\"" & sh.why.says & "\""
+  bits.add &"\"whose\":[{ord(sh.whose.body)},{ord(sh.whose.arm)}]"
+  if sh.stills.len == 0:
+    bits.add "\"stills\":[]"
+    return "{" & bits.join(",") & "}"
+  let first = sh.stills[0]
+  var tag, rad: seq[string]
+  for b in first.bars:
+    tag.add &"[{ord(b.who)},{ord(b.arm)},{ord(b.mark)}]"
+    rad.add num(b.r)
+  bits.add "\"tag\":[" & tag.join(",") & "]"
+  bits.add "\"rad\":[" & rad.join(",") & "]"
+  var owner, lo, hi: seq[string]
+  for a in first.arms:
+    owner.add &"[{ord(a.who)},{ord(a.arm)}]"
+    for d in Dof:
+      lo.add num(a.lo[d])
+      hi.add num(a.hi[d])
+  bits.add "\"arm\":[" & owner.join(",") & "]"
+  bits.add "\"lo\":[" & lo.join(",") & "]"
+  bits.add "\"hi\":[" & hi.join(",") & "]"
+  var at, pts, angs, grp, apart: seq[string]
+  for s in sh.stills:
+    at.add num(s.at)
+    pts.add arr(s.flat)
+    angs.add arr(s.angles)
+    grp.add arr(s.gripped)
+    apart.add arr(s.apart)
+  bits.add "\"at\":[" & at.join(",") & "]"
+  bits.add "\"p\":[" & pts.join(",") & "]"
+  bits.add "\"j\":[" & angs.join(",") & "]"
+  bits.add "\"g\":[" & grp.join(",") & "]"
+  bits.add "\"d\":[" & apart.join(",") & "]"
+  "{" & bits.join(",") & "}"
+
+
+when isMainModule:
+  var cuts: seq[string]
+  for cut in SHOWN:
+    var links: seq[Link] = @[]
+    for (a, b) in cut.arms:
+      links.add Link(ends: [(Body.One, a), (Body.Two, b)])
+    let sh = shown(HUMAN, cut.band, links, cut.name, away = cut.away)
+    echo &"{cut.name}, {BANDS[ord(cut.band)]}: stood {sh.apart:.2f}, " &
+         &"{sh.stills.len} moments, {sh.turns:.2f} {sh.why}"
+    cuts.add bodyOfSweep(sh)
+  var head: seq[string]
+  head.add "\"upper\":" & num(HUMAN.upper)
+  head.add "\"fore\":" & num(HUMAN.fore)
+  head.add "\"hand\":" & num(HUMAN.hand)
+  head.add "\"dofs\":[\"extend\",\"across\",\"twist\",\"bend\",\"wrist\"]"
+  head.add "\"marks\":[\"trunk\",\"upper\",\"fore\",\"palm\"]"
+  head.add "\"sweeps\":[" & cuts.join(",") & "]"
+  let path = "design" / "rig.json"
+  writeFile(path, "{" & head.join(",") & "}\n")
+  echo "wrote ", path
