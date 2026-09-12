@@ -25,11 +25,24 @@ import ../src/dance_ontology/draw/[figure, terms]
 const PINS = staticRead("review-pins.json")
   ## What every ruled card's drawing was when it was ruled on.
 
+const MODELLED = staticRead("modelled.json")
+  ## Which cards body sim reaches, written by `design/modelled`.
+  ##   Second tag each cell carries.  `kept` is Architect's, by eye on floor;
+  ##     `modelled` is sim's, and goal is both at hundred per cent.
+  ##   Card sim has not been asked about is absent, and gets no tag: unasked
+  ##     reads as unasked rather than as disagreement.
+
 const pinned = block:
   var held: Table[string, string]
   for pair in PINS.parseJson.pairs:
     held[pair.key] = pair.val.getStr
   held
+
+const modelled = block:
+  var said: Table[string, bool]
+  for pair in MODELLED.parseJson.pairs:
+    said[pair.key] = pair.val.getBool
+  said
 
 const
   KEPT = ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10",
@@ -148,6 +161,12 @@ func sheetOf(P: Parts): string =
               elif kept: """<em class="tag keep">kept</em>"""
               elif dropped: """<em class="tag drop">drop</em>"""
               else: ""
+      # Sim's own tag, drawn outlined where Architect's is solid, so ruling by
+      # eye and reading by engine are never taken for one another.  It sits in
+      # other corner, and outside drawing, so no pin moves by its being here.
+      says = if id notin modelled: ""
+             elif modelled[id]: """<em class="tag model">modelled</em>"""
+             else: """<em class="tag nomodel">not modelled</em>"""
     # Verdict was given on pictures, so picture that moved under one carries
     # approval it was never given.  Card holds itself to what it was drawn
     # as when it was ruled on, and mend reaching further than it meant to
@@ -158,7 +177,7 @@ func sheetOf(P: Parts): string =
         &"A card already ruled on has been re-drawn: `{id}`.  Either the " &
           "mend is too wide, or that verdict has to go back."
     &"""<figure class="pic{mark}"><div class="art""" &
-    (if switching: " steps" else: "") & &"""">{art}{badge}</div>""" &
+    (if switching: " steps" else: "") & &"""">{art}{badge}{says}</div>""" &
     &"""<figcaption><code>{esc(id)}</code><b>{esc(label)}</b>""" &
     (if note.len > 0: &"""<span>{esc(note)}</span>""" else: "") &
     (if flawed: &"""<span class="fix">{esc(FLAWED[id])}</span>""" else: "") &
@@ -518,6 +537,9 @@ func sheetOf(P: Parts): string =
   .pic.dropped { border-color: var(--drop); background: var(--drop-wash); }
   .pic.dropped .art svg { opacity: .38; }
   .tag.mend { background: var(--mend); color: var(--card); }
+  .tag.model, .tag.nomodel { right: auto; left: 0; background: var(--card); }
+  .tag.model { color: var(--keep); border: 1px solid var(--keep); }
+  .tag.nomodel { color: var(--drop); border: 1px solid var(--drop); }
   .pic.flawed { border-color: var(--mend); background: var(--mend-wash); }
   .pic .fix { color: var(--mend-ink); font: .62rem/1.35 var(--sans); }
   .pic { overflow: hidden; }

@@ -54,7 +54,7 @@ const
     ## Directory faces land in.  Never committed: fonts are unregistered kind, so
     ##   lock is committed and checkout is not, as Atlas does for packages.
   USAGE = "Usage: nim r tools/build.nim " &
-    "<pages|assets|pins|verdicts|engine|shot|system|clean>\n"
+    "<pages|assets|pins|modelled|verdicts|engine|shot|system|clean>\n"
     ## Text printed on usage error.
   SYSTEM = [
     ("nodejs", "run `shot` helper, which is this project's Nim compiled to javascript"),
@@ -248,6 +248,14 @@ proc pins() =
   echo "wrote design/review-pins.json"
 
 
+proc modelled() =
+  ## Rewrite `design/modelled.json`: which cards sim reaches.
+  ##   Second step, as `pins` is, and for like reason: tag saying model agrees
+  ##     is claim, and it is added deliberately rather than refreshed by build
+  ##     into agreeing with whatever model happens to say today.
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "design/modelled.nim"])
+
+
 proc verdicts() =
   ## Rewrite `sim/verdicts.md` from model; instrument run, not build.
   nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "sim/verdicts.nim"])
@@ -291,6 +299,7 @@ proc main(): int =
     of "pages": pages()
     of "assets": assets()
     of "pins": pins()
+    of "modelled": modelled()
     of "verdicts": verdicts()
     of "engine": engine()
     of "shot": shot()
