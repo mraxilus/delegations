@@ -62,19 +62,29 @@ func arr(xs: seq[float]): string =
   for x in xs: bits.add num(x)
   "[" & bits.join(",") & "]"
 
-func wrapped(s: string; width = 92): string =
+func wrapped(s: string; width = 96): string =
   ## Break long run of figures across lines after commas.  Charter holds every
   ## committed file to hundred columns, and one sweep's points on one line runs
   ## to hundreds of thousands.
+  ##   Break is decided before piece is written, not after: deciding after lets
+  ##     line run one whole figure past width, which is how first try still left
+  ##     twenty one lines over hundred.
   ##   Only figures go through here, never text: hold's name carries comma of its
   ##     own, and breaking inside it would be breaking inside string.
-  var line = 0
-  for ch in s:
-    result.add ch
-    line += 1
-    if ch == ',' and line >= width:
+  var
+    line = 0
+    i = 0
+  while i < s.len:
+    var j = i
+    while j < s.len and s[j] != ',': j += 1
+    if j < s.len: j += 1
+    let piece = s[i ..< j]
+    if line > 0 and line + piece.len > width:
       result.add '\n'
       line = 0
+    result.add piece
+    line += piece.len
+    i = j
 
 
 func flat(s: Still): seq[float] =
