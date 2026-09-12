@@ -5,8 +5,8 @@
 ##     viewer compiled from `design/rig_view` by `nim js`.  Page is published as
 ##     single file, so nothing may be left to fetch.
 ##   Faces are inlined by `design/faces`, which also turns Commit Mono's
-##     ligatures on at root.  Article X.8: a presentation target ships the faces
-##     it draws with, never naming one a viewer may lack.
+##     ligatures on at root.  Article X.8: presentation target ships faces it
+##     draws with, never naming one reader may lack.
 ##
 ##   Usage: rig_page <dir>   reads design/rig.json and <dir>/rig_view.js,
 ##                           writes <dir>/rig.html

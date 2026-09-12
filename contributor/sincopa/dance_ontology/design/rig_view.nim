@@ -13,7 +13,7 @@
 ##     other can still come out wrong way round; they are drawn at half weight
 ##     where they overlap rather than pretending otherwise.
 ##   Data is read in place through `jsffi`, never copied into Nim values: every
-##     copy on JS backend is deep (STYLE.md), and this is read sixty times a
+##     copy on JS backend is deep (STYLE.md), and this is read sixty times per
 ##     second.
 
 {.experimental: "strictFuncs".}

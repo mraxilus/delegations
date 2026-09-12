@@ -7,9 +7,9 @@
 ##     `design/modelled.json` is: recording costs eight stance searches, and every
 ##     `pages` run would pay for it.  `rig_page` folds it into page, which is
 ##     published as single document and so may leave nothing to fetch.
-##   What is constant across a sweep is written once -- radius and owner of each
+##   What is constant through sweep is written once -- radius and owner of each
 ##     capsule, and each joint's two ends -- and only what moves is written per
-##     moment.  Straight transcription ran to four megabytes; this is a fifth of
+##     moment.  Straight transcription ran to four megabytes; this is fifth of
 ##     that and says exactly as much.
 ##
 ##   Usage: rig          writes design/rig.json
