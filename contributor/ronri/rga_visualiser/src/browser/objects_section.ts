@@ -240,7 +240,7 @@ function buildObjectRow(handle: number | null) {
   check_select.type = 'checkbox';
   check_select.checked = !is_pending && handles_selection.includes(handle);
   check_select.disabled = is_pending; // Nothing to select until it exists.
-  check_select.title = 'Select or deselect this object.';
+  check_select.title = nimWording(Wording.TipRowSelect);
   if (!is_pending) check_select.addEventListener('change', () => toggleSelection(handle, null));
   top.appendChild(check_select);
 
@@ -259,9 +259,7 @@ function buildObjectRow(handle: number | null) {
   toggle_edit.className = 'button object-edit-toggle';
   toggle_edit.type = 'button';
   toggle_edit.textContent = is_open ? 'save' : 'edit';
-  toggle_edit.title = is_open
-    ? 'Commit these values to the scene.'
-    : 'Rename, recolour or reshape this object; nothing changes until you save.';
+  toggle_edit.title = nimWording(is_open ? Wording.TipRowCommit : Wording.TipRowEdit);
   toggle_edit.addEventListener('click', () => {
     if (!is_open) { beginEditSession(handle); refreshObjectsUI(); return; }
     if (is_pending && nimSceneCount() >= nimSceneCapacity()) { toast(nimFullMessage()); return; }
@@ -293,7 +291,7 @@ function buildObjectRow(handle: number | null) {
     cancel.className = 'button object-edit-cancel';
     cancel.type = 'button';
     cancel.textContent = '✕';
-    cancel.title = is_pending ? 'Discard this new object.' : 'Discard these changes.';
+    cancel.title = nimWording(is_pending ? Wording.TipRowDiscardNew : Wording.TipRowDiscardEdit);
     cancel.addEventListener('click', () => {
       endEditSession();
       refreshObjectsUI();
@@ -310,7 +308,7 @@ function buildObjectRow(handle: number | null) {
     visibility.className = 'button object-visibility';
     visibility.type = 'button';
     visibility.textContent = nimObjectVisible(handle) ? 'hide' : 'show';
-    visibility.title = 'Show or hide this object without removing it.';
+    visibility.title = nimWording(Wording.TipRowVisible);
     visibility.addEventListener('click', () => {
       const was_visible = nimObjectVisible(handle);
       nimSetVisible(handle, !was_visible);
@@ -323,7 +321,7 @@ function buildObjectRow(handle: number | null) {
     remove.className = 'button object-remove';
     remove.type = 'button';
     remove.textContent = 'remove';
-    remove.title = "Delete this object; its handle is reused by the next one you add.";
+    remove.title = nimWording(Wording.TipRowRemove);
     remove.addEventListener('click', () => {
       nimRemoveObject(handle); // Drops handle from selection itself, so stale pick
         // cannot linger and read as "selected" once future add reuses freed handle.
@@ -411,7 +409,7 @@ function buildObjectRow(handle: number | null) {
     input_radius.min = String(nimLeastRadius());
     input_radius.step = 'any';
     input_radius.value = nimFormatNumber(openSession().radius);
-    input_radius.title = 'Radius the point is drawn at, in world units; it shrinks with distance.';
+    input_radius.title = nimWording(Wording.TipRowRadius);
     input_radius.addEventListener('input', () => {
       const typed = parseFloat(input_radius.value);
       openSession().radius = Number.isFinite(typed) && typed >= nimLeastRadius()
@@ -431,7 +429,7 @@ function buildObjectRow(handle: number | null) {
     input_shines.addEventListener('change', () => { openSession().shines = input_shines.checked; });
     field_shines.appendChild(input_shines);
     field_shines.appendChild(document.createTextNode(' shines'));
-    field_shines.title = 'A sun: lights every other point from where it stands.';
+    field_shines.title = nimWording(Wording.TipRowShines);
     box_edit.appendChild(field_shines);
 
     const note_coefficient = document.createElement('div');
@@ -472,6 +470,10 @@ function buildObjectRow(handle: number | null) {
   return row;
 }
 
+// Set here rather than in markup: shown text has one home, and attribute in
+//   `shell.html` could only hold second copy of it.
+elementById('button-save-scene').title = nimWording(Wording.TipMenuSaveScene);
+elementById('button-load-scene').title = nimWording(Wording.TipMenuLoadScene);
 elementById('button-save-scene').addEventListener('click', saveScene);
 elementById('button-load-scene').addEventListener('click', () => {
   elementById('file-load-scene').click();

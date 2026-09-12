@@ -37,7 +37,7 @@ import ../rga_visualiser/[
   lighting,
   boundary, camera, format, framing, help, history,
   interaction, marker, message, orrery, picking, ramp, scene, selection, storyboard,
-  tessellate, timings,
+  tessellate, timings, wording,
 ]
 
 
@@ -876,6 +876,25 @@ proc nimPoolCellColors(): seq[float32] {.exportc.} =
     FLAT_POOL[3*handle + 1] = colour.green
     FLAT_POOL[3*handle + 2] = colour.blue
   FLAT_POOL
+
+
+
+#[ Shown Text ]#
+
+proc nimWording(key: cint): cstring {.exportc.} =
+  ## Report text reader sees for one catalogue key.
+  ##   Page names key through `Wording`, which `tools/build.nim`'s `declare` writes out from
+  ##   catalogue's own enum, so ordinal is never hand-copied and renamed key fails type check.
+  ##   Out-of-range key cannot arrive from type-checked page; it is refused rather than
+  ##   silently read past table's end, since only untyped caller could produce one.
+  doAssert key >= 0 and key <= cint(ord(Wording.high)),
+    "Wording key must name an entry; got `" & $key & "`."
+  wordingOf(Wording(key))
+
+
+proc nimDemoWording(objects: cint, is_default: bool): cstring {.exportc.} =
+  ## Report text for one demo size, which names size it loads.
+  cstring(demoWording(int(objects), is_default))
 
 
 

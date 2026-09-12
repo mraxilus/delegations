@@ -29,7 +29,7 @@ import ../src/rga_visualiser/projections
 import ../src/rga_visualiser/[
   boundary, camera, format, framing, help, history, interaction, lighting,
   marker {.all.}, message, neighbourhood, objects, orrery, picking {.all.}, scene,
-  selection, starfield, storyboard, tessellate,
+  selection, starfield, storyboard, tessellate, wording,
 ]
 # Arena, PNG encoder and GIF encoder are desktop-only: each binds C entry.
 #   point JS backend has none of. Their own suites are guarded to match, below.
@@ -8063,3 +8063,55 @@ suite "Message":
       fullMessage(), emptyMessage(), stepMessage(is_undo = true),
     ]:
       check len(text) < MESSAGE_MAX
+
+
+suite "Wording":
+  test "every key carries text, and no two keys carry the same text":
+    # Empty entry would draw empty tooltip, which reads as broken rather than as silent.
+    #   Compiler already refuses key with no row; this refuses row with no words in it.
+    #   Two keys sharing text is copy-paste: one control took another's key, and both then
+    #   move together when only one should.
+    var seen: Table[string, Wording]
+    for key in Wording:
+      check isWordingSpoken(key)
+      let text = $wordingOf(key)
+      if text in seen:
+        checkpoint(&"`{key}` says what `{seen[text]}` says: {text}")
+        fail()
+      seen[text] = key
+    check len(seen) == ord(Wording.high) + 1
+
+
+  test "every entry reads as one finished sentence":
+    # Tooltip is prose reader reads, not label. Stops at full stop, carries no stray space,
+    #   and starts with capital -- three things eye notices and no reviewer reliably does.
+    for key in Wording:
+      let text = $wordingOf(key)
+      check text == strip(text)
+      check "  " notin text
+      check text.endsWith(".")
+      check text[0].isUpperAscii
+
+
+  test "the three that had drifted now read one way, and keep what each side knew":
+    # Page and window each said these differently before one catalogue held them.
+    #   Pinned here because surviving wording is decision rather than accident: where one
+    #   side knew more, fuller sentence won.
+    # Window worded radius tersely; page's prose won.
+    check $wordingOf(TipRowRadius) ==
+      "Radius the point is drawn at, in world units; it shrinks with distance."
+    # Page dropped that sun is drawn flat. Window knew, and that clause survives.
+    check "drawn flat" in $wordingOf(TipRowShines)
+    # Page named picking alone; window said why view rings what is picked.
+    check "rings each one" in $wordingOf(TipRowSelect)
+
+
+  test "a demo size names itself, and only the opening size says so":
+    # Sentence carries figure no catalogue row can hold, so it is composed from parts
+    #   catalogue does hold -- and composing is held to here rather than in two front-ends
+    #   writing it out.
+    let told = demoWording(33, is_default = false)
+    check "33 objects" in told
+    check "The size everything opens on." notin told
+    check demoWording(33, is_default = true).endsWith("The size everything opens on.")
+    check told.endsWith(".")
