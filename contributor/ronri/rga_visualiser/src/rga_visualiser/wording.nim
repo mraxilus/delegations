@@ -83,7 +83,7 @@ type Wording* = enum
   NameMenuSave, NameMenuSaveScene, NameMenuSaveImage, NameMenuLoad, NameMenuLoadScene,
   NameMenuDemo, NameMenuSceneFile, NameMenuImageFile,
   NameChipAdd, NameChipUndo, NameChipRedo, NameChipAxes, NameChipGrid, NameChipHelp,
-  NameChipMenu,
+  NameChipMenu, NameChipDrawer,
   NameTitle,
 
   NoteListEmpty, NoteCoefficientsNew, NoteCoefficientsEdit, NoteDiagnostics,
@@ -243,6 +243,9 @@ const lut_wording_to_text: array[Wording, cstring] = [
   #   word both front-ends show.
   NameChipHelp: "?",
   NameChipMenu: "☰",
+  # Page alone: window has no drawer to open, since its panel never leaves. Shown only
+  #   where chip row is too narrow to carry product's name, in place of it.
+  NameChipDrawer: "◧",
 
   NameTitle: "RGA Visualiser",
 
@@ -292,6 +295,23 @@ func demoWording*(objects: int, is_default: bool): string =
     "origin, every drawable kind present. The same arrangement at every size, reaching " &
     "further into the star catalogue as it grows." &
     (if is_default: " The size everything opens on." else: "")
+
+
+const NAME_AUTHORITY* = "Projective Geometric Algebra Illuminated"
+  ## Name book this project replicates, as its author titled it.
+  ##   Not catalogue row: it names no control and carries no sentence, and no translator
+  ##   renames book.
+
+
+func captionWindow*(): string =
+  ## Report caption desktop window wears: authority it replicates, then application's name.
+  ##   Composed rather than stored, as `demoWording` is: half is catalogue's and half is
+  ##   this project's subject. Second copy of name is exactly what drifted -- window said
+  ##   `RGA visualiser` where page said `RGA Visualiser`, and no sweep reached entry point
+  ##   holding it.
+  ##   Lives here rather than beside window so suite can hold it: `main` links SDL and GL,
+  ##   which no test binary carries.
+  NAME_AUTHORITY & " — " & $wordingText(NameTitle)
 
 
 func namesControl*(key: Wording): bool =

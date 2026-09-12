@@ -206,7 +206,7 @@
     right: max(14px, env(safe-area-inset-right));
     display: flex;
     justify-content: space-between;
-    align-objects: flex-start;
+    align-items: flex-start;
     gap: 10px;
     pointer-events: none;
   }
@@ -218,22 +218,39 @@
     font: inherit;
     pointer-events: auto;
     display: flex;
-    align-objects: center;
+    align-items: center;
     gap: 8px;
     background: var(--surface);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--border);
     border-radius: 999px;
-    padding: 7px 14px 7px 10px;
+    padding: 7px 14px;
   }
-  .brand .mark {
-    width: 9px; height: 9px;
-    border-radius: 2px;
-    background: var(--accent);
-    transform: rotate(45deg);
-    flex: none;
+  /* Menu chip wears `.brand`'s pill but carries one glyph, not mark and name, so it says
+     its own metrics rather than inheriting ones tuned for that pair. Left as inherited it
+     drew `☰` at browser's own 16px default with `line-height: normal` -- 15px glyph in
+     27px box, pushed off centre by padding 4px deeper on one side than other -- beside
+     chips set at 11px on `line-height: 1`. Glyph is three hairlines; at that size against
+     blurred ground they wash out, which is what made it unreadable.
+     Square, so pill reads as one chip rather than as pill with word missing.
+     Same metrics `#button-drawer` wears below its own breakpoint; two rules rather than
+     one because this holds at every width and that holds only under media query. Change
+     to one is change to both. */
+  #button-menu {
+    padding: 0;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    font-size: 17px;
+    line-height: 1;
   }
+
+  /* Drawer's own mark, shown in place of name where row is too narrow to carry it. Hidden
+     otherwise, so button reads as product's name at every width that fits one. */
+  .brand .glyph { display: none; }
+
   .brand .name {
     font-family: var(--serif);
     font-size: 12.5px;
@@ -340,7 +357,7 @@
     height: 44px;
     border-radius: 999px;
     display: flex;
-    align-objects: center;
+    align-items: center;
     justify-content: center;
     pointer-events: auto;
     cursor: pointer;
@@ -535,7 +552,7 @@
     display: flex;
     flex-direction: column;
     gap: 7px;
-    align-objects: stretch;
+    align-items: stretch;
   }
   .toast-action {
     display: inline-block;
@@ -611,23 +628,50 @@
     transform: translateX(-100%);
     transition: transform var(--anim) var(--ease);
     z-index: 4;
+    /* Top clearance sits here, not on scroller. Inside scroller it is part of what scrolls:
+       rows ride up through it in plain sight, above heading pinned below it, over drawer's
+       own translucent ground and between chips covering only part of that band.
+       Sticky offsets are inset by scroller's padding, so heading pinned at `top: 0` lands at
+       scroller's *content* edge and can never cover padding above it -- band is unreachable
+       from inside. Held out here, scroller begins where content begins, heading pins flush
+       to its top edge, and there is no band left to bleed through.
+       Bottom padding stays on scroller: nothing pins at bottom, so it makes no such band. */
+    padding-top: max(14px, env(safe-area-inset-top));
   }
   .drawer.open { transform: translateX(0); }
   .drawer-scroll {
     flex: 1;
     overflow-y: auto;
-    padding: max(14px, env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom)) 14px;
+    padding: 0 14px calc(14px + env(safe-area-inset-bottom)) 14px;
   }
 
-  @media (max-width: 519px) {
+  @media (max-width: 496px) {
     /* Narrow phones: five chip-row controls (undo, redo, axes, grid, menu) plus
-       brand chip's full "RGA visualiser" label don't fit on one line -- drop label,
-       keeping just mark, rather than letting row wrap or overflow.
-       519, measured rather than guessed: row is swept pixel at time and 520 is
-       narrowest viewport where it stops overflowing. This was 480 and wrong by 39
-       pixels, so every width from 481 to 519 overflowed -- with old label, by 50. */
+       brand chip's full name don't fit on one line -- drop name for drawer's own mark,
+       rather than letting row wrap or overflow. Button stays control either way: it was
+       left drawing nothing at all once decorative mark it used to keep came off.
+       496, measured rather than guessed: row is swept pixel at time and 497 is narrowest
+       viewport where full name stops overflowing. Was 519 while brand carried that mark
+       and its gap, 23 pixels this no longer spends.
+       Swept against build where this very rule was off, which first sweep was not: reading
+       it gave, 397, was width row fits at with name *already* dropped by rule it was
+       measuring, and every width from 397 to 496 would have overflowed by up to 100.
+       Below about 380 row is over its budget even with name dropped -- 29 pixels at 360 --
+       and flex takes that out of these chips, brand included. That is chip row's own
+       budget across five controls, not this rule's, and is raised rather than papered over
+       here. */
     .brand .name { display: none; }
-    .brand { padding: 7px 10px; }
+    .brand .glyph { display: block; }
+    /* Same square chip menu button wears, so two lone glyphs read as one kind of thing. */
+    #button-drawer {
+      padding: 0;
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      font-size: 17px;
+      line-height: 1;
+    }
   }
 
   @media (max-width: 640px) {
@@ -644,11 +688,11 @@
   }
 
   @media (min-width: 641px) {
-    /* Above bottom-sheet breakpoint, drawer is full-height side panel whose
-       own top edge sits directly under chip-row's always-visible controls -- give
-       its content enough top clearance that first section header starts below them
-       instead of running underneath. */
-    .drawer-scroll { padding-top: 62px; }
+    /* Above bottom-sheet breakpoint, drawer is full-height side panel whose own top edge
+       sits directly under chip-row's always-visible controls -- clear them, so first
+       heading starts below rather than running underneath.
+       Literal, not inset-aware: 62 is what chip row occupies, and notch does not move it. */
+    .drawer { padding-top: 62px; }
   }
 
   /* ---- Sections (collapsing headers, matching panel.nim's own structure) ---- */
@@ -656,18 +700,23 @@
   .section:last-child { border-bottom: none; }
   .section-header {
     appearance: none;
-    width: 100%;
+    /* Gutter on both sides, not `100%`: negative side margins below pull this band out to
+       drawer's own edges, and percentage width measures content box they shift from, so band
+       came out 28px short and rows scrolled past in strip left bare down its right edge.
+       Written out rather than left to `auto`, which on button is its text's own width. */
+    width: calc(100% + 28px);
     display: flex;
-    align-objects: center;
+    align-items: center;
     justify-content: space-between;
     /* Stays put while its own section scrolls past, so collapsing long list never means
        scrolling back to top to find control that collapses it.
        Sticky against `.drawer-scroll`, which is scroller; `.section` sets no overflow,
        which sticky inside it would be clipped by.
        `top: 0` rather than height of chip row, which was first attempt and was wrong:
-       offset is measured from scroller's *content* edge, and that edge is already below
-       those controls, since `.drawer-scroll` carries padding for exactly that. Naming
-       62px again put header 124px down -- one clearance twice -- with gap above it.
+       offset is inset by scroller's own padding, so naming 62px again put header 124px
+       down -- one clearance twice -- with gap above it. Clearance is why that padding is
+       on `.drawer` instead: heading pinned at `0` cannot cover padding of scroller it is
+       pinned inside, and rows rode up through that band in plain sight.
        Solid rather than transparent: rows pass under this band, and transparent one would
        let them draw through it. Tone is same `--surface-solid` buttons wear, so band reads
        as part of drawer rather than as second surface -- and desktop's own header is
@@ -681,6 +730,7 @@
     padding: 10px 16px 6px 16px;
     background: var(--surface-solid);
     border: none;
+    border-bottom: 1px solid var(--border);
     color: var(--ink);
     /* Title role: heading naming section takes serif face, which is only role it is
        drawn in (see type roles above). Weight stays 600, and serif ships at 600 for it:
@@ -706,7 +756,7 @@
 
   /* ---- Generic field controls ---- */
   .field { margin-bottom: 9px; }
-  .field-check { display: flex; align-objects: center; gap: 6px; font-size: 12px;
+  .field-check { display: flex; align-items: center; gap: 6px; font-size: 12px;
     color: var(--ink-muted); cursor: pointer; }
   .field label {
     display: block;
@@ -761,7 +811,7 @@
 
   .check-row {
     display: flex;
-    align-objects: center;
+    align-items: center;
     gap: 7px;
     font-size: 12.5px;
     color: var(--ink);
@@ -774,7 +824,7 @@
   .help-text { font-size: 11px; color: var(--ink-faint); line-height: 1.4; margin: -4px 0 10px; }
 
   /* ---- Objects list ---- */
-  .objects-header { display: flex; align-objects: baseline; justify-content: space-between; }
+  .objects-header { display: flex; align-items: baseline; justify-content: space-between; }
   /* Count rides inside heading and would inherit its serif; figures belong in interface
      face with tabular numerals, so it says so rather than inheriting. */
   .objects-count { font-family: var(--sans); font-size: 11px; color: var(--ink-faint);
@@ -814,7 +864,7 @@
   .object-row.hidden-object { opacity: 0.45; } /* Dimmed but still legible -- mirrors
     .object-row.selected's own role as lightweight whole-row state cue, just for
     "hidden" instead of "selected"; two are independent and may combine. */
-  .object-top { display: flex; align-objects: center; gap: 8px; }
+  .object-top { display: flex; align-items: center; gap: 8px; }
   .object-top input[type="checkbox"] {
     accent-color: var(--accent);
     width: 15px;
@@ -946,12 +996,12 @@
     color: var(--ink-faint);
     margin: 2px 0 8px;
     display: flex;
-    align-objects: center;
+    align-items: center;
     flex-wrap: wrap;
     gap: 2px 8px;
     justify-content: space-between;
   }
-  .diagnostic-legend-axis { display: flex; align-objects: center; gap: 6px; }
+  .diagnostic-legend-axis { display: flex; align-items: center; gap: 6px; }
   .diagnostic-legend b { color: var(--ink-muted); font-variant-numeric: tabular-nums; }
   /* Row ramp's own key: ramp itself, as bar. Its gradient is set by `diagnostics`
      from very table rows are tinted out of, so key cannot come to show ramp
@@ -991,7 +1041,7 @@
     border-radius: 12px;
     padding: 6px;
     display: none;
-    align-objects: center;
+    align-items: center;
     gap: 5px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.4);
   }
@@ -1005,7 +1055,7 @@
        upper bound and clip via overflow while doing so, "width: auto" cannot animate at
        all. */
     display: flex;
-    align-objects: center;
+    align-items: center;
     gap: 5px;
     max-width: 0;
     overflow: hidden;
@@ -1083,8 +1133,11 @@
 
 <div class="chip-layer">
   <div class="chip-row">
-    <button class="brand drawer-toggle" id="button-drawer" type="button">
-      <span class="mark" aria-hidden="true"></span>
+    <!-- Named outright, not by its own text: below breakpoint name is hidden and mark
+         beside it is decoration, which left button with no accessible name at all. -->
+    <button class="brand drawer-toggle" id="button-drawer" type="button"
+      aria-label="@WORD:NameTitle@">
+      <span class="glyph" aria-hidden="true">@WORD:NameChipDrawer@</span>
       <span class="name">@WORD:NameTitle@</span>
     </button>
     <div style="display:flex; gap:8px; pointer-events:auto;">
