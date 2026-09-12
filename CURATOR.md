@@ -152,7 +152,8 @@ GraphQL and REST separately, and a call's name does not say which it takes: `lis
 review-comment method and the other for the rest. Run reads survived because they are REST, not
 because they are about runs, and a contributor reading the old wording would have expected opening
 a pull request to fail when the queue would not load. `rga_visualiser` caught that, which is the
-only reason it is right here now.
+only reason it is right here now; a curator session then reproduced it under control, seven calls
+in one window, four through and three refused.
 
 - **Ask git first**, and most session-start questions are git's: whether a pull request merged,
   what a change touched, whether a branch is behind, what the stamp is. `git fetch origin main`

@@ -925,10 +925,15 @@ labels could not survive that, and the charter wording derived from them could n
 - **It is per method, not per tool.** `pull_request_read` pages its review-comment method by
   cursor and its others by `page` and `perPage`, so one tool sits on both meters, and no name at
   the call site says which.
-- Assumed rather than measured: that `update_pull_request` failed on a draft toggle, which has no
-  REST route and so must be a GraphQL mutation, where opening a pull request is an ordinary REST
-  `POST`. What was reported is which calls refused, not which field was being set, and the rule
-  below does not rest on this being right.
+- **Measured again the same afternoon, and the second time under control.** Marking pull request
+  148 ready was refused while calls seconds either side of it answered: `create_pull_request`,
+  `actions_list`, `add_issue_comment` and `issue_read` all went through, and
+  `update_pull_request`, `issue_write` and `list_issues` all refused. Seven calls, one window, one
+  repository — no room for the allowance to have run out in between, which is the confound the
+  first measurement had.
+- That refused `update_pull_request` passed **only** `draft`, so the draft toggle itself is on the
+  GraphQL meter; opening a pull request, an ordinary REST `POST`, is not. What is still not
+  established is whether the tool's other fields take REST — no call has isolated one.
 - **So no delegate can route around it by choosing tools**, which is why the guidance in
   `CONTRIBUTOR.md` and `CURATOR.md` is the observable rule rather than the mechanism: a refusal on
   one call says nothing about another, so try the one you need before concluding GitHub is shut.
