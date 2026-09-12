@@ -320,7 +320,7 @@ proc free*(c: Couple) = eng.destroyWorld(c.world)
 const
   LIFT = 400.0 ## Newtons per metre couple carry joined hands toward their band by.
   FALL = 40.0  ## And damping on it, so hands arrive rather than swing.
-  DRAW = [40.0, 40.0, 0.0] ## Per band, newtons per metre hands are drawn toward
+  DRAW = [40.0, 40.0, 10.0] ## Per band, newtons per metre hands are drawn toward
     ## where couple mean to carry them.  Weighted as old solver's `CENTRING` was,
     ## two to two to one half, and weak on purpose: this is preference couple have,
     ## not constraint.  Strong, it drags hands to one spot and arms trail into
@@ -348,14 +348,12 @@ proc carry(c: Couple) =
     want = (c.rig.band[c.band].lo + c.rig.band[c.band].hi) / 2.0
     one = axesOf(c.stance[Body.One]).origin
     two = axesOf(c.stance[Body.Two]).origin
-    mid = (one + two) * 0.5
-      ## Only below crown.  Over crown nothing draws hands sideways at all:
-      ## Architect's ruling is that joined hands go wherever is comfortable, and
-      ## that on-axis turns *tend* to sit over turnee's head rather than being
-      ## put there.  So joints' own rest springs place them, and where they end
-      ## up is model's answer rather than this file's assumption.  Measured
-      ## before that: forcing them over turner's head reached 1.28 of chain and
-      ## over partner's 0.76, which is two wrong answers, not one right one.
+    mid = (if c.band == Band.Crown: axesOf(c.stance[c.turning]).origin
+           else: (one + two) * 0.5)
+      ## Over crown, hands go over head of dancer who turns, not between two:
+      ## couple setting hold up put them there, and pulling them to midpoint
+      ## instead makes both reach across their own body and spends adduction
+      ## they need for turn.
   for ln in c.links:
     for k in 0 .. 1:
       let
