@@ -106,11 +106,12 @@ answers and nothing is tuned to make them agree.
 
 The shoulder girdle is rigid: rolling a shoulder forward adds several
 centimetres to a real reach and none here, so a wrap that a dancer gets by
-that is refused a little early. The trunk does not twist or bend. The couple
-stand for each turn wherever it carries furthest, from clear of each other
-outward, so a stance is found rather than given and two ways of one turn may
-stand at two distances; what they cannot do is step as they turn, or take a
-hammerlock's own footwork. Every arm is there, held or free, and every capsule
+that is refused a little early. The trunk twists at the waist, forty degrees
+each way and sprung to square, and does not bend. The couple stand for each
+turn wherever it carries furthest, from clear of each other outward, so a
+stance is found rather than given and two ways of one turn may stand at two
+distances; what they cannot do is step as they turn, or take a hammerlock's
+own footwork. Every arm is there, held or free, and every capsule
 of every arm meets every other body's, so a wrap going under or over the
 *other* arm is what the engine says it is. The bodies are one stature. And a
 torso is a stadium of its round, which is a tape's shape and not a chest's.

@@ -21,7 +21,7 @@ joinable: false
 
 import std/[math, unittest]
 
-import ../sim/[body, hold, limb, rig, rigid, seen, vec, walk]
+import ../sim/[body, hold, limb, rig, rigid, vec, walk]
 
 
 const
@@ -73,9 +73,28 @@ suite "two dancers in rigid body engine":
       p = c.poseOf(0)
     for k in 0 .. 1:
       let h = c.links[0].ends[k]
-      check dist(p.arms[k].s, shoulder(HUMAN, c.stance[h.body], h.arm)) < 0.001
+      check dist(p.arms[k].s, shoulder(HUMAN, c.chestStance(h.body), h.arm)) < 0.001
     check abs(p.arms[0].s.z - HUMAN.shoulderUp) < 0.001
     c.free()
+
+  test "shoulders yaw on hips no further than thorax turns, and rest square":
+    ## Chest is what shoulders hang from.  With hold pulling it yields, sprung,
+    ## and never past clinical thoracic rotation; with nothing pulling it sits
+    ## square on hips.
+    var c = rest()
+    for who in Body:
+      let yaw = c.chestStance(who).facing - c.stance[who].facing
+      check abs(yaw) <= 40.0 * PI / 180.0 + SLACK
+    c.turn(Body.Two, 0.5, 600)
+    for who in Body:
+      let yaw = c.chestStance(who).facing - c.stance[who].facing
+      check abs(yaw) <= 40.0 * PI / 180.0 + SLACK
+    c.free()
+    var free = build(HUMAN, facing(HUMAN, APART), Band.Torso, @[])
+    free.settle()
+    for who in Body:
+      check abs(free.chestStance(who).facing - free.stance[who].facing) < 1e-3
+    free.free()
 
   test "engine's own reading of wrist is angle its three points make":
     for apart in [0.6, 0.9, 1.1]:
@@ -235,7 +254,19 @@ suite "two dancers in rigid body engine":
     for i in 0 ..< wasArm.len:
       moved = max(moved, dist(wasArm[i].a, nowArm[i].a))
     check moved > 0.05
-    check dist(before.a, c.endsOf(c.shapes[0]).a) < 1e-6
+    ## Other dancer's trunk may yaw on hips as hold pulls, and nothing else:
+    ## each capsule end keeps its distance from hip axis and its height.  That
+    ## still catches drawing frozen, and catches trunk carried off or tilted,
+    ## which "stays put" also caught and yaw does not break.  To tenth of
+    ## millimetre, not micron: waist is soft constraint, and chest under hold
+    ## measured ten microns off hip axis (9.7e-6 m, 2026-09-12).
+    let
+      hip = axesOf(c.stance[Body.One]).origin
+      after = c.endsOf(c.shapes[0]).a
+      radiusWas = sqrt((before.a.x - hip.x) ^ 2 + (before.a.y - hip.y) ^ 2)
+      radiusNow = sqrt((after.x - hip.x) ^ 2 + (after.y - hip.y) ^ 2)
+    check abs(radiusWas - radiusNow) < 1e-4
+    check abs(before.a.z - after.z) < 1e-4
     c.free()
 
   test "rig is same seen in mirror":
@@ -254,8 +285,16 @@ suite "two dancers in rigid body engine":
     ## when both run free they tie and it takes positive way for both -- which
     ## mirror does not equate, since positive way of one is negative way of
     ## other.  Comparing it passed only while ways did not tie.
-    check abs(a.pos.apart - b.neg.apart) < 1e-9
-    check abs(a.neg.apart - b.pos.apart) < 1e-9
+    ## Within one step of search grid, not exact.  Chest is dynamic and its yaw
+    ## mirrors to two ten-thousandths of degree at rest and six thousandths at
+    ## 0.60 metres, but at 0.40 it sits four centimetres from contact and
+    ## engine's iteration order, which differs between mirror-image holds,
+    ## is amplified there to six tenths of degree.  Two distances that carry
+    ## equally far then tie one way for one hold and other way for its mirror.
+    ## Turn reached and what stopped it are still held exact below, which is
+    ## what caught torque mirrored as vector.
+    check abs(a.pos.apart - b.neg.apart) < SEEK + 1e-9
+    check abs(a.neg.apart - b.pos.apart) < SEEK + 1e-9
     check a.pos.stopped == b.neg.stopped
     check a.neg.stopped == b.pos.stopped
     check abs(a.pos.at - b.neg.at) < 1e-9

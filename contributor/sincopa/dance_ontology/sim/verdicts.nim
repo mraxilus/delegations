@@ -157,10 +157,12 @@ proc rigTable(): string =
     twOut = int(round(HUMAN.range[Dof.Twist].hi * 180.0 / PI))
     bend = int(round(HUMAN.range[Dof.Bend].hi * 180.0 / PI))
     wrist = int(round(HUMAN.range[Dof.Wrist].hi * 180.0 / PI))
+    waist = int(round(WAIST_HI * 180.0 / PI))
   result.add &"| shoulder | {behind} degrees behind the frontal plane; across, the trunk " &
     &"stops it; twist {twIn} in to {twOut} out |\n"
   result.add &"| elbow | 0 to {bend} degrees |\n"
   result.add &"| wrist | a {wrist} degree cone |\n"
+  result.add &"| waist | {waist} degrees each way, sprung to square |\n"
   result.add &"| hands | low {HUMAN.band[Band.Torso].lo}-{HUMAN.band[Band.Torso].hi}, " &
     &"high {HUMAN.band[Band.Neck].lo}-{HUMAN.band[Band.Neck].hi}, " &
     &"above {HUMAN.band[Band.Crown].lo}-{HUMAN.band[Band.Crown].hi} m |\n"
@@ -367,11 +369,12 @@ proc report(): string =
   result.add "| the hands in the neck band | high |\n"
   result.add "| the hands over the crown | above |\n"
   result.add "| the arm carried there but not pressing the body | led |\n\n"
-  result.add prose("Read with the model's limits in mind: the shoulder girdle is rigid and " &
-    "the trunk does not twist, so a reach a dancer gets by rolling a shoulder forward is " &
-    "refused here; a torso is a stadium of its round; and the couple stand for each turn " &
-    "wherever it carries furthest, never inside each other.  A *blocks* is therefore a " &
-    "little early, and a *holds* says the pose exists without any of that help.")
+  result.add prose("Read with the model's limits in mind: the shoulder girdle is rigid, so " &
+    "a reach a dancer gets by rolling a shoulder forward is refused here; the trunk twists " &
+    "at the waist and does not bend; a torso is a stadium of its round; and the couple " &
+    "stand for each turn wherever it carries furthest, never inside each other.  A " &
+    "*blocks* is therefore a little early, and a *holds* says the pose exists without " &
+    "any of that help.")
   result.add rigTable()
   result.add singleHolds()
   result.add floorClaim()

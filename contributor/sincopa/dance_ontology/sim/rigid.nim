@@ -68,9 +68,8 @@ type
 
   Figure = object ## One dancer: trunk that is turned, and two arms that follow.
     trunk: eng.BodyId ## Hips: kinematic, turned by sim, never pushed.
-    chest: eng.BodyId ## What shoulders hang from.  Same body as `trunk` unless
-                      ## `waist` is defined, when it is dynamic and yaws on hips.
-    waist: eng.JointId ## Hinge between them, meaningful only under `waist`.
+    chest: eng.BodyId ## What shoulders hang from: dynamic, yaws on hips.
+    waist: eng.JointId ## Hinge between them, about trunk's up.
     arm: array[Arm, ArmRig]
 
   Mark* {.pure.} = enum ## What part of whom one capsule is.
@@ -162,11 +161,16 @@ func stadium(rig: Rig; part: Part): tuple[r, spread: float] =
   (wide * q, 2.0 * (wide - wide * q))
 
 const
-  WAIST_HI = 40.0 * PI / 180.0 ## Thoracic rotation each way, clinical.
-    ## Experiment behind `-d:waist`: shoulders may lag or lead hips by this
-    ## much, sprung to neutral.  Rig has no scapula and no trunk twist, and at
-    ## every remaining stop several joints sit at their ends at once, which is
-    ## arm reaching where rigid trunk cannot help it.  Flag until measured.
+  WAIST_HI* = 40.0 * PI / 180.0 ## Thoracic rotation each way, clinical.
+    ## Shoulders lag or lead hips by this much, sprung to neutral.  At every
+    ## stop left before this, several joints sat at their ends at once, which is
+    ## arm reaching where rigid trunk cannot help it; dancer winding chain turns
+    ## shoulders ahead of or behind hips, and this is that.
+    ##   Measured: every chain over crown free or past swan under every manner,
+    ##     fifty six of fifty six chain questions, and every lower band up --
+    ##     same-name chain at neck 1.00 to 1.12, at torso 0.88 to 1.06.  Low
+    ##     wraps of single holds now stop, at 0.96 and 1.56, where they ran free
+    ##     without it, which is nearer floor's half turn though still past it.
 
 const
   TRUNK_BIT = 1'u64        ## Torso, neck and head.
@@ -208,10 +212,9 @@ func upFrame(): eng.Quat =
 
 proc trunkOf(c: var Couple; who: Body): tuple[hips, chest: eng.BodyId,
                                              waist: eng.JointId] =
-  ## Torso, neck and head on one kinematic body: dancer is turned, never pushed.
-  ##   Under `waist`, kinematic body is hips alone, carrying nothing, and every
-  ##     capsule sits on dynamic chest hinged to it about trunk's up, sprung to
-  ##     neutral and stopped at thoracic rotation.  Shoulders hang from chest.
+  ## Hips as kinematic body, turned and never pushed, carrying nothing; every
+  ## capsule on dynamic chest hinged to them about trunk's up, sprung to neutral
+  ## and stopped at thoracic rotation.  Shoulders hang from chest.
   let
     st = c.stance[who]
     ax = axesOf(st)
@@ -221,31 +224,28 @@ proc trunkOf(c: var Couple; who: Body): tuple[hips, chest: eng.BodyId,
   bd.rotation = standing(ax)
   bd.enableSleep = false
   result.hips = eng.createBody(c.world, addr bd)
-  when defined(waist):
-    var cd = eng.defaultBody()
-    cd.kind = eng.Dynamic
-    cd.position = asPlace(ax.origin)
-    cd.rotation = standing(ax)
-    cd.linearDamping = DAMP.cfloat
-    cd.angularDamping = DAMP.cfloat
-    cd.gravityScale = 0.0
-    cd.enableSleep = false
-    result.chest = eng.createBody(c.world, addr cd)
-    var hinge = eng.defaultHinge()
-    hinge.base.bodyIdA = result.hips
-    hinge.base.bodyIdB = result.chest
-    hinge.base.localFrameA = eng.Frame(p: eng.vec(0, 0, 0), q: upFrame())
-    hinge.base.localFrameB = eng.Frame(p: eng.vec(0, 0, 0), q: upFrame())
-    hinge.enableSpring = true
-    hinge.hertz = EASE.cfloat
-    hinge.dampingRatio = EASE_DAMP.cfloat
-    hinge.targetAngle = 0.0
-    hinge.enableLimit = true
-    hinge.lowerAngle = (-WAIST_HI).cfloat
-    hinge.upperAngle = WAIST_HI.cfloat
-    result.waist = eng.createHinge(c.world, addr hinge)
-  else:
-    result.chest = result.hips
+  var cd = eng.defaultBody()
+  cd.kind = eng.Dynamic
+  cd.position = asPlace(ax.origin)
+  cd.rotation = standing(ax)
+  cd.linearDamping = DAMP.cfloat
+  cd.angularDamping = DAMP.cfloat
+  cd.gravityScale = 0.0
+  cd.enableSleep = false
+  result.chest = eng.createBody(c.world, addr cd)
+  var hinge = eng.defaultHinge()
+  hinge.base.bodyIdA = result.hips
+  hinge.base.bodyIdB = result.chest
+  hinge.base.localFrameA = eng.Frame(p: eng.vec(0, 0, 0), q: upFrame())
+  hinge.base.localFrameB = eng.Frame(p: eng.vec(0, 0, 0), q: upFrame())
+  hinge.enableSpring = true
+  hinge.hertz = EASE.cfloat
+  hinge.dampingRatio = EASE_DAMP.cfloat
+  hinge.targetAngle = 0.0
+  hinge.enableLimit = true
+  hinge.lowerAngle = (-WAIST_HI).cfloat
+  hinge.upperAngle = WAIST_HI.cfloat
+  result.waist = eng.createHinge(c.world, addr hinge)
   let body = result.chest
   for part in Part:
     let
@@ -393,12 +393,11 @@ proc build*(rig: Rig; stance: array[Body, Stance]; band: Band;
     result.grip.add eng.createBall(result.world, addr g)
 
 proc chestStance*(c: Couple; who: Body): Stance =
-  ## Where shoulders stand: hips' stance, turned by waist where there is one.
+  ## Where shoulders stand: hips' stance, turned by waist.
   ##   Every reading of arm in body's own terms goes through this, since arm
   ##     hangs from chest and not from hips.
   result = c.stance[who]
-  when defined(waist):
-    result.facing += eng.angleOf(c.who[who].waist).float
+  result.facing += eng.angleOf(c.who[who].waist).float
 
 proc chestStances*(c: Couple): array[Body, Stance] =
   for who in Body: result[who] = c.chestStance(who)
