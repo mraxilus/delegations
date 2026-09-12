@@ -54,7 +54,7 @@ const
     ## Directory faces land in.  Never committed: fonts are unregistered kind, so
     ##   lock is committed and checkout is not, as Atlas does for packages.
   USAGE = "Usage: nim r tools/build.nim " &
-    "<pages|assets|pins|modelled|rig|verdicts|engine|shot|system|clean>\n"
+    "<pages|assets|pins|modelled|rig|turns|verdicts|engine|shot|system|clean>\n"
     ## Text printed on usage error.
   SYSTEM = [
     ("nodejs", "run `shot` helper, which is this project's Nim compiled to javascript"),
@@ -215,6 +215,22 @@ proc dress() =
   echo "Faces put into ", dressed, " pages."
 
 
+proc turnsJs() =
+  ## Fold recorded sweeps into script whole-cloth page reads.
+  ##   Recording is `turns` verb's, as `modelled` and `rig` are theirs: eighteen
+  ##     sweeps searching every distance couple may stand at cost more than
+  ##     every `pages` run should pay.
+  let data = "design" / "turns.json"
+  if not fileExists(data):
+    quit("Whole-cloth page has no sweeps; run `nim r tools/build.nim turns`: got `" &
+      data & "`.", 1)
+  writeFile(BUILD / "design" / "turns.js", "var TURNS = " & readFile(data).strip() & ";\n")
+  echo "wrote " & BUILD / "design" / "turns.js"
+
+proc turns() =
+  ## Rewrite `design/turns.json`: every hold turning, for whole-cloth page.
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "design/turns.nim"])
+
 proc pages() =
   ## Write every page, picture and script under `build/`.
   ##   Faces first: every page embeds them, and check that wants verb run by hand
@@ -226,7 +242,7 @@ proc pages() =
   compileRun(["tools/bundle.nim", BUILD / "app", "app"])
   compileRun(["tools/review.nim", BUILD / "review"])
   compileRun(["design/marks.nim", BUILD / "design"])
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "design/turns.nim"])
+  turnsJs()
   nim(@["js"] & RELEASE & @[
     "-o:" & BUILD / "design" / "wholecloth_turns.js", "design/wholecloth_turns.nim",
   ])
@@ -311,6 +327,7 @@ proc main(): int =
     of "pins": pins()
     of "modelled": modelled()
     of "rig": rig()
+    of "turns": turns()
     of "verdicts": verdicts()
     of "engine": engine()
     of "shot": shot()
