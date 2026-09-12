@@ -1100,3 +1100,45 @@ difference between them, and it went when centring was weakened: 0.32 and 0.80 a
 **The old solver stays until the engine is at least as close.** Deleting it now would replace a
 model that roughly tracks the floor with one that does not, at the neck band. It goes when the
 neck band is answered.
+
+## Re-audit, 2026-09-12, every cell of reference asked of model
+
+Reference page carries two tags on each cell now. `kept` is the Architect's, given by eye on the
+floor; `modelled` is the sim's, whether it reaches what the card draws. The goal is both at a
+hundred per cent, and the gap between them is the work left. The tag sits outside the drawing, so
+it moves no pin and re-draws no kept card -- read off `drawingOf`, which collects a card's `svg`
+elements alone, rather than assumed.
+
+First full score: **eighty one of ninety nine reached, and eighty one of the eighty seven kept**.
+A fifteen of seventeen, B twenty eight of twenty eight, C five of seven, D one of seven, E
+thirty two of thirty two, F none of eight.
+
+**B and E being whole is a weak result, not a strong one.** Every card in them is drawn over the
+crown, and over the crown a single-hand hold sweeps free past two and a half turns each way. Sixty
+cells therefore say "nothing blocks up there" sixty times, which the floor also says. They are
+green because the question is easy, and they test the model hardly at all. The cards that
+discriminate are the chains under wind, and that is where every failure is.
+
+**Sixteen of the eighteen failures are one joint.** The wrist sits at sixty one degrees against a
+sixty degree cone at rest in the pillion chain, stops C's swans at 1.28 of one and a half, and
+stops all of F. The grip is modelled as a single point with each hand aimed exactly at it, so
+every awkward approach of the two forearms is paid for entirely in wrist bend. A real clasp meets
+across a palm's width and the hands turn against one another; neither is modelled. How much slack
+that is worth is a fact about hands, and is the Architect's to give rather than a number to pick
+until the cards go green.
+
+**The other two are A9 and A11, and they are not a fault.** They draw the same-name pair face to
+face, which is the position rule 31 says has its two connections lying through each other -- the
+reason section D is built pillion lead at all. The model refusing to reach it agrees with the
+project's own rule.
+
+**Rejected, for now: chasing A to a hundred.** Section A's cards assert what the standard diagram
+can express, not what a couple can stand in -- "they are literally a table built at compile time".
+Asking a body whether it can reach a drawing's entry may be the wrong question of that section,
+and A9 and A11 are where the two readings come apart. Left as it stands, and flagged, rather than
+answered by bending either side.
+
+**One fault of this reading, found and fixed.** `twist` on an A card names the facing *drawn* --
+nought face to face, one pillion lead -- and not half turns from the frame's own rest. Read the
+second way, every frame that rests pillion was asked for half a turn where it was already at rest,
+and A10 and A12 came back unreachable. `facingNote` says which it is outright.
