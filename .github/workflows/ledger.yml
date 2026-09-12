@@ -1,22 +1,24 @@
-# Sweep for rules GitHub already records, so remembering them is not their only enforcement.
+# Ledger of rules GitHub already records, so remembering them is not their only enforcement.
 #   CURATOR.md keeps list of rules holding by reading alone, and sets own test for what belongs
 #   on it: whether what rule asks about is fact something already writes down. Three sat there
 #   while GitHub recorded them, behind premise that no check reads what was posted there --
 #   premise `watch.yml` had already made false.
-#   Two leave that list when this lands. Third does not, and saying which is half of point:
-#   issue answered by ruling in comment and then left open has no closing pull request to find,
-#   which is exactly how 116 failed. This catches `Closes #N` half only, so rule stays carried.
+#   None of three leaves that list when this lands, and saying so is half of point: each has
+#   half GitHub does not record. Issue answered by ruling in comment and left open has no
+#   closing pull request to find, which is how 116 failed; ledger reads no comment and cannot
+#   tell copied label from composed one; and it cannot see pull request green now and about
+#   to move. Each rule is narrowed to what is still only read, never struck.
 #
 #   Daily rather than weekly, unlike `check.yml`: pull request ready and red for week is failure
 #   this exists to catch, and week is too long to hold it.
-#   One issue, not one per finding, and marker in body is what makes second sweep comment on
+#   One issue, not one per finding, and marker in body is what makes second run comment on
 #   first issue -- `watch.yml`'s reason, which is about reader: issue per finding trains its
 #   reader to skim, and skimming is failure both workflows exist to prevent.
 #   Bodies only, never comments. Rule covers comments too, but role line in comment is written
 #   loose where issue bodies write it bold, so check over comments would spend first run naming
 #   whoever wrote rule. Comment half stays carried with third rule.
 #
-#   `permissions` block is whole grant, never addition: scope left out is set to `none`. Sweep
+#   `permissions` block is whole grant, never addition: scope left out is set to `none`. Ledger
 #   reads runs, reads pull requests, writes issues, and names those three and nothing else.
 #   `pull-requests` is why `workflows.nim` gained mark for `gh pr` in same change -- no workflow
 #   had read pull requests before, so check meant to stop this 403 could not see it.
@@ -27,7 +29,7 @@
 #   `concurrency` because dispatch can meet schedule. `watch.yml` carries same race unremarked,
 #     between listing issues and creating one, where both runs can open second issue.
 
-name: sweep
+name: ledger
 
 on:
   schedule:
@@ -40,7 +42,7 @@ permissions:
   pull-requests: read
 
 concurrency:
-  group: sweep
+  group: ledger
   cancel-in-progress: false
 
 jobs:
@@ -51,14 +53,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          MARKER: '<!-- sweep:unchecked -->'
+          MARKER: '<!-- ledger:unchecked -->'
           SINCE_DAYS: '14'
         run: |
           set -euo pipefail
           found=''
 
           # Ready and not green. Run still queued or running is not failure yet, and skipping
-          #   those is what stops sweep naming every pull request just marked ready.
+          #   those is what stops ledger naming every pull request just marked ready.
           open_prs="$(gh pr list --repo "$REPO" --state open --limit 100 \
             --json number,isDraft,headRefOid,title \
             --jq '.[] | select(.isDraft | not)
@@ -124,12 +126,12 @@ jobs:
           # Paragraphs appended rather than written whole: heredoc wants its terminator at
           #   column zero, which no line inside block scalar may reach. `watch.yml` measured
           #   that rather than assumed it.
-          said="Opened by \`sweep\` workflow rather than by session, so nothing here has been"
+          said="Opened by \`ledger\` workflow rather than by delegate, so nothing here has been"
           said="$said read or judged yet. Each line is fact GitHub records, not opinion."
-          note="Two of these rules left CURATOR.md's unchecked list when this workflow landed."
-          note="$note Third stayed: issue answered in comment has no closing pull request to"
-          note="$note find, so that half is still carried by hand."
-          next="Close this once every line is answered. Later sweep comments here rather than"
+          note="None of these rules left CURATOR.md's unchecked list when this workflow landed:"
+          note="$note each has half GitHub does not record, and that half is still carried by"
+          note="$note hand. Lines above are only what runner can see."
+          next="Close this once every line is answered. Later run comments here rather than"
           next="$next opening second issue."
           # Trailing newline trimmed off list, so paragraph after it is one blank line away
           #   rather than two.
@@ -147,6 +149,6 @@ jobs:
             echo "Commented on issue #$existing."
           else
             opened="$(gh issue create --repo "$REPO" --label curator \
-              --title 'Unchecked rules: what this sweep found' --body "$body")"
+              --title 'Unchecked rules: what the ledger found' --body "$body")"
             echo "Opened $opened."
           fi

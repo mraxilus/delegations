@@ -1,193 +1,140 @@
 # Contributor
 
-You are a contributor session in `delegations`, a repository of model-written code under one
-owner's architecture. You are assigned exactly one project, `contributor/<domain>/<project>`,
-named in the prompt that carried this file. Everything you write lives there, on a branch
-named for it. The owner merges by hand. You never merge, never touch `main`, never write
-outside your project.
+You are a contributor delegate in `delegations`, a repository of model-written code under one
+Architect's direction. You are assigned exactly one project, `contributor/<domain>/<project>`,
+named in the prompt that carried this file. Everything you write lives there, on a branch named
+for it. The Architect merges by hand. You never merge, never touch `main`, never write outside
+your project.
 
 ## Read first, in this order
 
-1. `CONSTITUTION.md`. Every rule is a decision already made. Where a task forces you to
-   break one, say so and write down the cost.
+1. `CONSTITUTION.md`. Every rule is a decision already made. Where a task forces you to break
+   one, say so and write down the cost.
 2. `STYLE.md`. How each rule is spelled in Nim.
-3. This file to the end, including the glossary process and the provenance guide.
-4. `contributor/<domain>/README.md` for the domain's theme, then your project's `README.md`,
-   `PROVENANCE.md` and `GLOSSARY.md` when they exist. `PROVENANCE.md` describes the design
-   as it is now; read it before the code, and correct it when the code disagrees.
-5. `curator/probe/` is a complete worked example of the project shape: nimble file, source,
+3. `GLOSSARY.md` at the root: the repository's own words, which this file uses.
+4. This file to the end, then `GUIDE.md`: the queue, the toolchain, dependencies, the
+   glossary, the record and what to report. How-to, read by both roles, stamped into nothing.
+5. `contributor/<domain>/README.md` for the domain's theme, then your project's `README.md`,
+   `PROVENANCE.md` and `GLOSSARY.md` when they exist. `PROVENANCE.md` describes the design as
+   it is now; read it before the code, and correct it when the code disagrees.
+6. `curator/probe/` is a complete worked example of the project shape: nimble file, source,
    matrix tests, provenance, glossary. `curator/audit/tests/` is a larger suite.
 
-## Every session begins here
+## Every delegate begins here
 
-Two reads, before any other work.
+Two reads before any other work, and one list to carry.
 
 - **Issues labelled with your role.** Filter the open issues on
-  `contributor/<domain>/<project>`, spelled exactly as your `**Role:**` line. Two kinds come
-  back, and the issue's own `**Role:**` line separates them: where it differs from the label
-  somebody is **asking**, and where it matches, the work is **your own queue**, left by an
-  earlier session here.
-  - **A request** — a curator who read your project raises what they found there, because they
-    may not edit your source; the Architect may put a question there too. Each is a proposal,
-    never an instruction. Judge it: what is asked, whether it is right, what it costs to do and
-    to decline. Write that **as a comment on the issue**, so the reasoning survives the
-    conversation it was decided in, and the owner decides. Disagreeing, with your reasons on
-    the issue, is a complete answer; silence is not.
-  - **Your own queue** needs no judging; it was decided already. Pick from it, or leave it and
-    say why on the issue if what you learnt this session changed the answer.
+  `contributor/<domain>/<project>`, spelled exactly as your `**Role:**` line. The issue's own
+  `**Role:**` line separates two kinds: where it differs from the label somebody is
+  **asking**; where it matches, the work is **your own queue**, left by an earlier delegate.
+  - **A request** is a proposal, never an instruction: a curator who read your project and
+    may not edit it, or the Architect with a question. Judge it — what is asked, whether it
+    is right, what it costs to do and to decline — **as a comment on the issue**, so the
+    reasoning outlives the conversation, and the Architect decides. Disagreeing with reasons
+    is a complete answer; silence is not.
+  - **Your own queue** needs no judging; it was decided already. Pick from it, or say on the
+    issue why what you learnt since changed the answer.
 
-  Take the requests first: they are somebody waiting. Every queue grows, and this one is meant
-  to, so it is closing what you no longer intend to do that keeps the list worth reading.
-- **Answered issues that are still open.** Read the list again for issues whose answering pull
-  request has already merged, and **close each by hand**, with a comment naming that pull
-  request and what shipped. `Closes #N` usually does this for you and is not to be relied on:
-  it silently did nothing for issues 25 and 26 while a repository setting was off, and both sat
-  answered and open until somebody noticed. Left alone they accumulate, and the list above —
-  the one thing that tells you what is waiting — stops being worth reading.
+  Take requests first: somebody is waiting. Close what you no longer intend to do; that is
+  what keeps a growing queue worth reading.
+- **Answered issues still open.** Where the answering pull request has merged, **close the
+  issue by hand**, with a comment naming that pull request and what shipped. `Closes #N` is
+  not relied on: it fires only for a merge into the default branch, and it has failed here.
 
-
-### Reading the queue without spending the repository's budget
-
-Those two reads are the most expensive thing most sessions do, and the budget they spend is not
-yours. **Every delegate posts as one GitHub account**, so its hourly allowance is shared by every
-session running — a curator listing forty issues with their bodies takes that allowance from the
-contributor about to close one.
-
-It runs out. On 2026-09-12 it ran out mid-session and stayed out for over twenty minutes, leaving
-an issue commented but not closed.
-
-- **Ask git first.** Whether a pull request merged, what a change touched, whether your branch is
-  behind, what the stamp is — `git fetch origin main` then `git log`, `git diff --stat`, `grep`.
-  None of it costs the allowance. Reach for the API only for what lives on GitHub alone: issue
-  state, comments, labels, a run's conclusion.
-- **Read the queue once, and small.** Five to ten per page, naming only the fields you will read.
-  Asking for `body` on a list you are scanning for titles fetches every word of every one.
-- **Do not re-read.** A session that has listed the issues has the list; reading it again to check
-  something you were told is the cheapest kind of waste.
-- **A refusal on one call says nothing about another.** GitHub meters its two APIs separately, and
-  a call's name does not say which it takes: `list_issues` and `update_pull_request` were refused
-  in the same seconds `create_pull_request` and `pull_request_read` answered. It is not even per
-  tool — one method of a tool can take one API and another method the other. So a refusal does not
-  mean GitHub is unreachable, and the call you actually need may well succeed. Try it.
-- **On a refusal, wait and retry — never hammer.** Three attempts in a minute spend what a single
-  attempt ten minutes later would not. If it will not clear before you hand over, the item stays
-  unticked on the list above with its reason, which is exactly what that list is for.
+Reading the queue without spending the shared GitHub allowance is `GUIDE.md`'s first section.
 
 ## Carry the unchecked list in the open
 
-Seven rules in this document hold by reading and nothing else. Each is invisible until after it
-has been broken, which is how `Closes #N` left issues 25 and 26 answered and open until somebody
-noticed, and how a pull request shipped without anybody having seen the thing it changed.
+Seven rules in this repository hold by reading and nothing else. Each is invisible until after
+it has been broken, so you carry them as a list in the conversation, where the Architect can
+see where you are. This is the only copy; `CURATOR.md` binds a curator to the same seven.
 
-**Three of them shrank when the `sweep` workflow landed, and none of the three left.** A sweep
-reads what GitHub records; every one of these rules has a half it does not record. What is written
-below is the half you still carry — read the section for the whole rule.
-
-**So you carry them as a list, in the conversation, and the Architect can see where you are.**
-
-1. **Role line on every comment**, and the label **copied, never composed** (Saying which role
-   you are). `sweep` reads issue and pull-request bodies, and whether an issue carries any label
-   at all — it never reads comments, and no check can tell a copied label from a composed one that
-   happens to be spelled right.
-2. **An issue you answered in a comment, closed by hand** (Every session begins here). `sweep`
-   catches a `Closes #N` that never fired — usually a merge into a base other than `main`. An
-   issue answered by a ruling has no pull request to find at all, which is how 116 sat open.
-3. **Requests answered on their issue** — disagreeing with your reasons is complete, silence is
-   not (Every session begins here).
+1. **Role line on every issue, pull request and comment**, and the label **copied, never
+   composed** (Say which role you are). `ledger.yml` reads issue and pull-request bodies and
+   whether an issue carries any label; it reads no comment, and cannot tell a copied label
+   from a composed one spelled right.
+2. **An issue you answered in a comment, closed by hand** (Every delegate begins here).
+   `ledger.yml` catches a `Closes #N` that never fired; an issue answered by a ruling has no
+   pull request to find.
+3. **Requests answered on their issue** — disagreeing with reasons is complete, silence is
+   not (Every delegate begins here).
 4. **Back to draft the moment you intend another commit** (Before opening a pull request).
-   `sweep` catches a pull request left ready without a green run; it cannot see one that is green
-   now and about to move, which is the half that keeps a reviewer off a moving target.
+   `ledger.yml` catches a pull request left ready without a green run; it cannot see one green
+   now and about to move.
 5. **Published page linked in both places**, pull request and message (Before opening a pull
-   request, Output contract).
+   request; `GUIDE.md`, Output contract).
 6. **Change ends by showing itself** — picture, worked example, or why neither fits (Before
    opening a pull request).
-7. **Glossary term proposed, never written on sight** (Glossary process).
+7. **Glossary term proposed, never written on sight** (`GUIDE.md`, Glossary process).
 
-This list is a view of those sections, not a second copy of them: **where it and a section
-disagree, the section wins.** `CURATOR.md` carries the same seven for a curator under
-*"What no check can reach"*, and a change to either belongs in both.
+The list is a view of those sections: where it and a section disagree, the section wins.
 
-### Three moments, and three rules that keep it honest
-
-Post it at **session start**, with what applies and what does not. Say so **when an item
-resolves**, where it happens rather than saved up. Post it in full at **handover**, as the last
+Post it **at the start** with what applies and what does not; say so **when an item
+resolves**, where it happens rather than saved up; post it in full **at handover**, as the last
 thing before the work leaves you.
 
-- An item that does not apply is **`n/a` with its reason**, never quietly dropped and never
-  ticked.
-- A ticked item **names what discharged it** — `#140 opened draft, ready after run 238 green` —
-  since a bare tick is a claim carrying no evidence, and Article VIII.1 is about exactly that.
-- **An item may stay unticked at handover.** `[ ] third leg — not merged yet` is a complete and
-  correct answer. A list that has to come out all ticked is a list that will, which is the
-  failure this one exists to prevent.
+- An item that does not apply is **`n/a` with its reason**, never dropped and never ticked.
+- A ticked item **names what discharged it** — `#140 opened draft, ready after run 238 green`.
+  A bare tick is a claim carrying no evidence (Article VIII.1).
+- **An item may stay unticked at handover.** `[ ] #134 — awaiting the Architect` is complete
+  and correct. A list that has to come out all ticked is a list that will.
 
-Nothing checks this either, and saying so is the point: it is shown to a reader who is present,
-and that reader is the enforcement. The `sweep` workflow now records what GitHub can of three of
-these, and each of those three says above which half it no longer asks you to remember.
+Nothing checks the carrying, and that is the point: it is shown to a reader who is present,
+and that reader is the enforcement.
 
 ## Boundaries
 
 - **Scope.** Only paths under `contributor/<domain>/<project>/`. The CI job `scope` fails on
   any other path. Root files, `koch.nim`, `curator/`, the root and domain READMEs and other
-  projects are not yours, even to fix a typo. The owner may merge a red check deliberately;
-  never count on it.
-- **Blocked by a rule or a check.** Do not work around it and do not edit the rule.
-  **Open a GitHub issue** from the process-change template, which labels it `curator` for you.
-  Say what is blocked, which rule stands in the way, what you tried and rejected, what you
-  propose, and what it costs to decline. A curator reads issues labelled `curator` at the start
-  of every session, judges the request, answers on the issue and reports it to the Architect.
-  You may also tell the Architect, to make it faster; nothing depends on your doing so, and no
-  request is lost by your not.
-  The curator changes rules; you do not. Nor do they change your code: a curator branch may
-  write only your `README.md`, `PROVENANCE.md` and `GLOSSARY.md`, and the `scope` job holds
-  them to it. An answer arrives as a changed rule or check for you to apply, never as an
-  edit to your source.
-- **When a curator raises something.** A curator may read your project as deeply as they like
-  and may not change a line of it, so what they find arrives as an issue labelled with your
-  role: the finding, its evidence, why it matters, and what it costs to leave. Weigh it as you
-  would your own design question and answer on the issue — agreeing, disagreeing with your
-  reasons, or proposing something else. You and the Architect settle it; the curator does not,
-  and nothing obliges you to implement a finding you have argued against. What you do take on,
-  you implement in your own pull request, saying `Closes #N`.
-- **Which channel.** Three places, and the label says which:
+  projects are not yours, even to fix a typo. The Architect may merge a red check
+  deliberately; never count on it.
+- **Blocked by a rule or a check.** Do not work around it and do not edit the rule. **Open an
+  issue** from the process-change template, which labels it `curator`: what is blocked,
+  which rule stands in the way, what you tried and rejected, what you propose, what it costs
+  to decline. A curator reads issues labelled `curator` when it starts,
+  answers on the issue and reports to the Architect. Telling the Architect as well makes it
+  faster; nothing depends on it. The answer arrives as a changed rule or check for you to
+  apply, never as an edit to your source: a curator branch may write only your `README.md`,
+  `PROVENANCE.md` and `GLOSSARY.md`, and the `scope` job holds it to that.
+- **When a curator raises something.** It arrives as an issue labelled with your role: the
+  finding, its evidence, why it matters, what it costs to leave. Weigh it as your own design
+  question and answer on the issue. You and the Architect settle it; nothing obliges you to
+  implement a finding you have argued against. What you take on, you implement in your own
+  pull request, saying `Closes #N` and closing by hand when that does not fire.
+- **Which channel.** Three, and the label says which:
   - An `## Open questions` entry in `PROVENANCE.md` is a **design question you left
     undecided**, recorded for whoever picks it up.
   - An issue labelled with **your own** role is **work you mean to do and are not doing
-    now**. Open one: a session ends and takes its intentions with it, so anything not written
-    to this repository or to an issue is lost. Say what the work is, why it is not being done
-    now, and what done looks like — the middle one is what keeps a queue from becoming a wish
-    list. Close it when it ships, or when you no longer mean to do it.
+    now**: what it is, why not now, what done looks like. Close it when it ships, or when you
+    no longer mean to do it.
   - An issue labelled with **another** role is **something only that role can change**: a
     rule, a check, or a capability the repository does not have.
 
-  A question only your project can answer is the first; one whose answer would change what
-  every project may do is the third. When it is both, write the design half in provenance and
-  open an issue for the rest. Your record and your queue must not become two backlogs: the
-  record says what **is** — what is here, what is unverified, what is not ported — and an
-  issue says what is **queued**. Where both apply, link the record's section from the issue
-  rather than restating it, so one can never contradict the other.
-- **Say which role you are.** Every session here posts to GitHub as the same account, so the
-  account says nothing about who is speaking. Open every issue, pull request and comment
-  with your role: `**Role:** contributor/<domain>/<project>`. Nothing checks this — GitHub
-  is not this repository — so it holds because you write it. Your issue label is that same
-  string. Copy it, never compose it: applying a label creates it, so a misspelling makes a
-  second label nobody filters on rather than an error you would notice.
+  The record says what **is**; an issue says what is **queued**. Where both apply, the issue
+  links the record's section rather than restating it, so the two can never disagree.
+- **Say which role you are.** Every delegate posts as the same account, so open every issue,
+  pull request and comment with `**Role:** contributor/<domain>/<project>`. Your label is that
+  same string, copied and never composed: applying a label creates it, so a misspelling makes
+  a second label nobody filters on rather than an error you would notice.
 - **Language.** Nim. TypeScript only where JavaScript is unavoidable (a browser or Node
   host); C++ or C only where no Nim import expresses the library. Never plain JavaScript,
-  never Python. Each such file argues for itself in its opening comment, on the phrase
-  `not Nim because <reason>` — what follows the phrase is the argument, and a curator weighs
-  it when reading your pull request.
-- **File kinds.** Only kinds registered in `curator/audit/src/kinds.nim` may exist; the
-  `audit` job rejects any other. Need a new kind: record it as an open question and leave
-  the file out until the curator registers it.
+  never Python, never make. Each such file argues for itself in its opening comment, on the
+  phrase `not Nim because <reason>`; the audit checks the phrase is there, and a curator
+  weighs the reason when reading your pull request.
+- **File kinds.** Only kinds registered in `curator/audit/src/kinds.nim` may exist; the audit
+  rejects any other. Need a new kind: record it as an open question and leave the file out
+  until the curator registers it.
 - **Dependencies.** Derive what the project exists to understand (Article II.8). External
   concerns may be dependencies, each justified where imported, declared in your nimble file
-  and pinned with Atlas (below). Vendored source stays out of the repository (Article
-  XI.3); `deps/` is ignored and `PROVENANCE.md` records each dependency's origin and licence.
+  and pinned with Atlas: the audit demands `atlas.lock` whenever the nimble file requires a
+  package, and the steps are in `GUIDE.md`. Vendored source stays out of the repository
+  (Article XI.3); `deps/` is ignored and `PROVENANCE.md` records each dependency's origin and
+  licence.
 - **Comments are telegraphic** in every file kind: no `a`, `an`, `the` in any comment. The
   audit reads comments in Nim, NimScript, nimble files, cfg files, YAML, `.gitignore`,
-  `.gitattributes`, TypeScript, C++ and C. Markdown documents are prose and keep their
-  articles.
+  `.gitattributes`, TypeScript, C++, C, HTML and SVG. Markdown is prose and keeps its
+  articles: a record or a README written without them is wrong in the other direction.
 
 ## Branch and commits
 
@@ -200,7 +147,8 @@ git checkout -b contributor/<domain>/<project>/<name> origin/main
 
 - Exactly four segments, mirroring the path. `<domain>` is one of `abstand`, `bangu`,
   `ronri`, `sincopa`, `comma_games`. `<project>` matches `[a-z][a-z0-9_]*`. `<name>` matches
-  `[a-z0-9][a-z0-9_-]*`.
+  `[a-z0-9][a-z0-9_-]*`. A branch a tool named for you (`claude/...`) is outside the grammar
+  and fails `scope`; push to a branch inside it.
 - Conventional Commits with the project folder as scope: `feat(<project>): add parser`.
   Lowercase imperative summary, no final period. Types: `build`, `chore`, `ci`, `docs`,
   `feat`, `fix`, `perf`, `refactor`, `revert`, `style`, `test`. One intention per commit.
@@ -208,122 +156,64 @@ git checkout -b contributor/<domain>/<project>/<name> origin/main
   in the same delivery as the change they describe.
 - Never rewrite pushed history. The log is part of the document (Article XI.2).
 - `nim r koch ci` at the repository root passes on the exact commit you are about to push.
-  Only then push with `git push -u origin <branch>` and open a pull request from the
-  template. Do not merge and do not ask for a merge; the owner reads and merges.
+  Only then push with `git push -u origin <branch>` and open a draft pull request from the
+  template. Never merge, and never ask for a merge.
 
 ## Starting a project
 
 Before any code:
 
 1. Create `contributor/<domain>/<project>/`.
-2. Write `PROVENANCE.md` first, opening with the header table below. The `Rules` value is
-   the stamp of the governing documents: run `nim r koch stamp` at the repository root
-   (needs git and any Nim that builds koch, which is `curator/audit`'s pin) and paste its
-   last line.
+2. Write `PROVENANCE.md` first, opening with the header table in `GUIDE.md`. `Rules` is the stamp of
+   the governing documents: `nim r koch stamp` at the repository root prints it.
 3. Write `GLOSSARY.md`: `# <project>` heading, one sentence on what the project is,
    `## Language`. Terms are added as they resolve, never in advance.
-4. Write `README.md`: purpose, authority replicated if any, build and test command, status.
+4. Write `README.md`: purpose, authority replicated if any, build and test commands, where
+   its pages are published, status.
 5. Write `<project>.nimble`: `version`, `author`, `description`, `license`,
-   `srcDir = "src"`, and `requires "nim == <version>"` naming the compiler you verified the
-   project on. Copy `curator/probe/probe.nimble`. Atlas and the audit read requirements from
-   this file; the audit demands exactly one nimble file, named after the project folder, and
-   an exact pin rather than a range (see Toolchain).
-6. Create `src/` and `tests/` with at least one test. Use the testament stub shape from
+   `srcDir = "src"`, and `requires "nim == <pin>"` naming the compiler you verified on. Copy
+   `curator/probe/probe.nimble`. The audit demands exactly one nimble file, named after the
+   folder, with an exact pin (see Toolchain).
+6. Create `src/` and `tests/` with at least one test, in the testament stub shape of
    `STYLE.md` §6; `curator/probe/tests/tprobe.nim` is a worked example with a matrix.
    `nim r koch tests contributor/<domain>/<project>` runs your tests alone.
 
 Directories inside your project are yours: nest `src/`, `app/`, `design/` or anything else
-the work wants. Koch runs your tests; it holds no verb for anything else. A project needing
-more, pages to build or an instrument to run, carries its own compiled driver
-`tools/build.nim` taking one command argument, never a build file, since make is retired
-and a task in the nimble file would put logic in the compiler's virtual machine.
-`contributor/sincopa/dance_ontology/tools/build.nim` is the worked example; run it with
-`nim r tools/build.nim <command>` from the project directory.
-
-Header table for `PROVENANCE.md`:
-
-```md
-| Field  | Value |
-|--------|-------|
-| Agent  | <tool you run in, e.g. Claude Code> |
-| Author | <model> |
-| Date   | <YYYY-MM-DD> |
-| Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | <last line of `nim r koch stamp`> |
-| Review | **Unreviewed.** Nothing here has been read line by line by a human. |
-```
+the work wants. Koch runs your tests and reaches three verbs of your own, and holds nothing
+else. A project needing more — pages to build, an instrument to run, packages to declare —
+carries one compiled driver, `tools/build.nim`, taking one command argument; never a build
+file, since make is retired and a nimble task puts logic in the compiler's virtual machine.
+Run it as `nim r tools/build.nim <command>` from the project directory. The verbs koch reaches
+are `types`, `drive` and `system`, each described below; koch learns which your project
+carries by reading the driver's own dispatch, so a verb spelled otherwise is one the runner
+silently passes by.
 
 ## Toolchain
 
-Your project pins its own compiler. No single version serves every project here, and that is
-a fact rather than a preference: one project's dependency needs 2.2.6 or later, and another
-crashes the compiler on 2.2.8 and later. So the version lives in your nimble file, beside the
-packages Atlas pins, and it is exact for the same reason `atlas.lock` is exact — it records
-what was verified, never a range nobody tried.
+Your project pins its own compiler, exactly, in its nimble file: `requires "nim == 2.2.12"`.
+No single version serves every project here — one follows its dependency onto a compiler
+commit no release carries — so the pin is the project's, and it is exact for the reason
+`atlas.lock` is: it records what was verified, never a range nobody tried.
 
-- `requires "nim == 2.2.6"`. A range is rejected by the audit: `>=` cannot say which
-  compiler your suites actually passed on, and cannot express an upper bound when a later
-  release breaks you.
-- Where your project must follow a dependency onto `devel`, and no release carries what it
-  needs, pin the compiler's own commit instead: `requires "nim == <forty hex characters>"`.
-  A commit records what you verified exactly as a version does. `devel` on its own is
-  rejected, and rightly: it is a moving target and records nothing. Pin a release whenever
-  one will do — a commit costs everyone who builds your project, including CI.
-- **You do not have to install it.** `koch` resolves each project's pin on its own: the
-  compiler on `PATH` when it already serves the pin, otherwise one cached under
-  `~/.cache/koch/nim/<pin>/`, otherwise it fetches one — a published release as a tarball,
-  and a commit (or a platform nim-lang.org publishes no build for) by cloning `nim-lang/Nim`
-  and running `sh build_all.sh`. That is paid once per pin and cached; a release takes
-  seconds, a commit build takes minutes. `$KOCH_NIM_DIR` moves the cache. This is why
-  `koch ci` is green as one command even when your project and the next pin different
-  compilers, which is the ordinary case whenever a rules change touches every project.
-- Each project's suites run on its own compiler, and `testament` and `atlas` come from that
-  same toolchain with its `bin/` leading `PATH` — Atlas reads `nim` from `PATH`, so without
-  that it would replay your lock against whichever compiler happened to be there.
-- A pin nothing can serve, because the network is unreachable or the version does not exist,
-  is a finding naming the pin and the cache it tried. It is never a silent fallback to
-  another compiler: the wrong one either fails confusingly or passes without testing what CI
-  will run.
-- Installing it yourself still works and skips the fetch: put a matching `bin/` on `PATH`,
-  or drop a toolchain at `~/.cache/koch/nim/<pin>/`. `nim --version` prints `git hash:`,
-  which is what a commit pin is compared against.
-- Bumping the pin is your work, and it is a change like any other: run the suites on the new
-  version, move the line, and record in `PROVENANCE.md` what moved and why.
-- CI installs your pin for your project alone, in its own job. You are never held to another
-  project's compiler, and no other project is held to yours.
-
-## Adding a dependency
-
-Dependencies are managed per project with Atlas, Nim's dependency manager (`atlas` ships
-with Nim). Inside your project directory:
-
-1. `atlas init` once; it writes `deps/atlas.config`. Move that file to the project root
-   (`mv deps/atlas.config .`) so it is committed; `deps/` never is.
-2. `atlas use <package>`: clones into `deps/`, appends `requires "<package>"` to your nimble
-   file and writes `--path` lines into `nim.cfg` between marker comments.
-3. `atlas pin`: writes `atlas.lock` with exact commits. The audit demands this file whenever
-   the nimble file requires a package.
-4. Commit `<project>.nimble`, `atlas.config`, `atlas.lock` and `nim.cfg`. Justify the import
-   in the module header that uses it (Article II.8) and record origin, commit and licence
-   in `PROVENANCE.md` (Article XI.3).
-
-`nim r koch deps` restores every project's checkouts from its lock (`atlas --noexec rep`,
-verified by `atlas changed`); the `audit` job runs it before the tests. Atlas needs the
-network for every command, so a project with no packages carries no lock and skips Atlas.
+- A range is rejected by the audit: `>=` cannot say which compiler your suites passed on, and
+  cannot express an upper bound when a later release breaks you.
+- Where your project must follow a dependency onto `devel`, pin the compiler's own commit:
+  `requires "nim == <forty hex characters>"`. `devel` alone is rejected, being a moving
+  target that records nothing. Pin a release whenever one will do; a commit is built from
+  source by everyone who builds your project, CI included.
+How koch serves a pin, how to install or bump one, and what happens to a pin nothing can
+serve, are in `GUIDE.md`.
 
 ## System dependencies
 
-Some things must be on the machine before your build runs at all: a library the compiler links
-against, a tool the build shells out to, a browser a driven check drives, a source clone no
-package manager carries. Atlas pins Nim packages and a lockfile pins node ones; these have
-neither, so they are declared instead.
+A library the compiler links against, a tool the build shells out to, a browser a driven
+check drives, a source clone no package manager carries: Atlas pins Nim packages and a
+lockfile pins node ones, and these have neither, so they are declared.
 
-**Declare them as data in your `tools/build.nim`, reached by a `system` verb**, the way node
-packages are declared in `package.json` and reached by `types`. Each entry carries what it is
-and why it is needed, because Article II.8 admits an external concern only where it is
-justified — and a reason in a field outlives a reason in a comment. The verb prints the names
-one per line and nothing else, reasons included; `koch system` reads that, and the runner
-installs what it prints, so a reason in the output would arrive as a package name.
+**Declare them as data in `tools/build.nim`, reached by a `system` verb.** Each entry carries
+what it is and why it is needed, because Article II.8 admits an external concern only where
+it is justified. The verb prints the names alone, one per line, since the runner installs
+what it prints.
 
 ```nim
 const SYSTEM = [
@@ -332,336 +222,126 @@ const SYSTEM = [
 ]
 ```
 
-It goes in the driver you already have rather than in a file of its own: `.nim` is a kind the
-audit already reads, the declaration is machine-readable so CI can install from it, and the
-registry admits no second build verb — the same reason `make` was retired.
+- A source clone carries its commit; clone at that commit and never vendor (Article XI.3).
+- A system package carries no pin that survives across distributions. Do not invent one; the
+  record says plainly that its version is whatever the machine has.
+- Anything fetched at build time carries a checksum the build verifies, failing on mismatch
+  rather than using what arrived.
+- **Never name one machine's paths in committed source.** Take a location from the
+  environment, fall back to what the declaration names, and fail with a finding that says
+  what to install, never with a missing file.
 
-**Say what is pinned and what is not, rather than implying a guarantee.**
-
-- **A source clone carries its commit.** Clone at that commit and never vendor the source
-  (Article XI.3), exactly as Atlas clones into `deps/`.
-- **A system package carries no pin that survives across distributions.** Do not invent one.
-  Name the package and let the record say plainly that its version is whatever the machine has —
-  the same honest limit the toolchain record already states about compilers trusted on TLS alone.
-- **Anything fetched at build time carries a checksum the build verifies**, and fails on a
-  mismatch rather than using what arrived. That is what keeps an unpinned download out of the
-  merge process, and it is also what lets CI cache the file instead of refetching it.
-
-**Never name one machine's paths in committed source.** A constant like
-`/opt/pw-browsers/chromium-1194/chrome-linux/chrome` pins a version in the least durable place
-there is, and builds only where that layout exists. Take the location from the environment, fall
-back to what the declaration names, and fail with a finding that says what to install — not with
-a missing file.
-
-`README.md` may point at the declaration; it is not the declaration. Prose nothing reads decays
-exactly the way an unrun check does.
+`README.md` may point at the declaration; it is not the declaration.
 
 ## TypeScript and Node
 
-TypeScript is admitted where JavaScript is forced — a browser or a Node host — and nowhere
-else. Every such file argues for itself in its opening comment, as any gated language does.
-Whatever a derived value depends on stays in Nim behind an export (Article II.9); what
-remains in TypeScript is what the target alone can do, such as the DOM, WebGL, pointer
-events, or a test driver's host API.
+Admitted where JavaScript is forced — a browser or a Node host — and nowhere else. Whatever a
+derived value depends on stays in Nim behind an export (Article II.9); TypeScript keeps what
+the target alone can do: the DOM, WebGL, pointer events, a test driver's host API.
 
-- **`tsconfig.json` at the project root**, with `strict`, `noUncheckedIndexedAccess` and
-  `exactOptionalPropertyTypes`. `strict` alone still hands you a value the type says is
-  present when it is not; those two make indexing and optionality behave the way Nim's do,
-  which is what Article IV.1 asks of any target.
-- **Sources are committed and everything `tsc` emits lives under `build/`**, never committed,
-  like any other build product.
-- **Node packages are pinned the way Atlas pins Nim ones**: `package.json` and its lockfile
-  are committed, `node_modules/` never is, and `PROVENANCE.md` records each dependency's
-  origin, version and licence (Article XI.3). The lock is committed, the checkout is not, and
-  one verb restores it.
-- **One command builds it**: a `web` verb in your project's `tools/build.nim`, so a driven
-  check is evidence for a build anyone can repeat rather than for one invocation nobody saw.
-- **One command type-checks it, and the runner runs that one**: a `types` verb in the same
-  driver, which derives whatever your scripts read and then type-checks every configuration,
-  and stops there — no browser, no fetched asset, nothing needing a display. Carrying
-  `package.json` beside its lockfile is what enrols your project: `koch types` finds it from
-  those two files, so nothing lists your project anywhere and nothing can drift. Your `web`
-  and driven verbs should call `types` rather than repeat its steps. Until a project carries
-  the verb, CI type-checks none of its TypeScript, which for a front end is most of its code.
-- **One command drives it, and the runner runs that one**: a `drive` verb in the same driver,
-  which builds the page and drives it through real events. Carrying that verb is what enrols
-  your project — `koch driven` reads your driver's own dispatch to find it, so nothing lists
-  your project anywhere and a verb spelled otherwise is a project the runner silently passes
-  by. It runs on your project's own pin, not the driver's, because building the page compiles
-  your code. Make it fetch and build everything it needs itself: a driven check that first
-  wants some other verb run by hand is a check the runner will not run.
-
-A generated lockfile passes the form rules unchanged. That is measured rather than assumed:
-its long lines are single unbreakable tokens — an `integrity` digest or a registry URL — and
-the width rule already exempts a line that breaking cannot fix. Never reformat one to fit.
+- **`tsconfig.json` at the project root** with `strict`, `noUncheckedIndexedAccess` and
+  `exactOptionalPropertyTypes`, so indexing and optionality behave as Nim's do (Article IV.1).
+- **Sources are committed; everything `tsc` emits lives under `build/`.**
+- **`package.json` and `package-lock.json` are committed, `node_modules/` never**, and
+  `PROVENANCE.md` records each dependency's origin, version and licence (Article XI.3). A
+  generated lockfile passes the width rule unchanged, since its long lines are single
+  unbreakable tokens; never reformat one.
+- **`web` builds it, `types` type-checks it, `drive` drives it**, three verbs of
+  `tools/build.nim`. Carrying `package.json` beside its lock enrols your project in
+  `koch types`, which runs on the driver's compiler since type-checking compiles no project
+  code; dispatching `drive` enrols it in `koch driven`, which runs on your own pin, since
+  building the page does. `types` derives whatever your scripts read, type-checks every
+  configuration, and stops there: no browser, no fetched asset, nothing needing a display.
+  `web` and `drive` call `types` rather than repeat it, and `drive` fetches and builds
+  everything it needs itself: a driven check that first wants some other verb run by hand is
+  a check the runner will not run.
 
 ## Pages and assets
 
 A page the project stands behind lives in `pages/`; a one-off exploration kept for reference
-lives in `mockups/`. Both hold hand-written HTML and SVG, committed as files and obeying
-every rule any other file obeys: 100 columns, no tabs, telegraphic comments inside
-`<!-- -->`. A line may pass the width rule only when breaking cannot fix it, which covers a
-long URL and nothing else.
-
-Everything a build emits is a build product under `build/`, never committed, whatever it
-looks like: generated markup is one long line and fails width on its own.
+lives in `mockups/`. Both hold hand-written HTML and SVG, committed and obeying every rule any
+other file obeys: 100 columns, no tabs, telegraphic comments inside `<!-- -->`. A line passes
+the width rule only when breaking cannot fix it, which covers a long URL and nothing else.
+Everything a build emits is a build product under `build/`, never committed; generated
+markup is one long line and fails width on its own.
 
 Binaries are never committed, and neither are fonts, images or any file the audit cannot
-read. Record each one in `PROVENANCE.md` with its origin, version, licence and checksum,
-and add an `assets` verb to `tools/build.nim` that fetches it into `build/`. This is the
-rule Atlas already follows for packages: the lock is committed, the checkout is not, and one
-verb restores it. A contributor who can run that verb needs nothing else from you.
-
-## Building on a project
-
-Every later session:
-
-1. Read `PROVENANCE.md` in full, then `GLOSSARY.md`, then the code in the order the umbrella
-   module's bootstrap diagram gives.
-2. Run `nim r koch tests contributor/<domain>/<project>` for your project. It must be green
-   before you start. Before every push, `nim r koch ci` must be green (see below).
-3. `Rules stamp stale` on your project means the governing documents changed after the
-   project's last audit. Normally the curator re-audits every project in the same pull
-   request as a rules change, so this appears only when your branch predates one. Merge
-   `origin/main` into your branch, read the diff of `CONSTITUTION.md`, `STYLE.md` and
-   `CONTRIBUTOR.md` since the `Date` in your header, re-audit the project against each
-   changed rule, fix, then paste the new stamp in its own `docs` commit.
-4. Work in small commits. Update `PROVENANCE.md` in the same delivery as each design change,
-   pruning what the change replaced.
+read. Every such file fetched at build time is declared once, in the repository's store
+(`curator/audit/src/assets.nim`: name, address, digest); `koch assets <file>` fetches it into
+`~/.cache/koch/assets`, checks it, and prints its path, and `koch assets` alone prints every
+row it declares. Your `tools/build.nim` names the files it wants and copies them into
+`build/`; `PROVENANCE.md` records each one's origin, version and licence. A file the store
+does not declare is a process-change issue for the curator, who adds the row. A presentation
+target ships the faces Article X.8 names, inlined, and the store serves them.
 
 ## Tests are paramount
 
 - Article IX applies in full. Where an authority exists, suites are named after its chapters
   and every assertion cites it in a trailing comment.
-- **Regression rule.** Every mistake found, in any session, earns a test that fails before
-  the fix and passes after, committed before the fix: `test(<project>): cover <mistake>`,
-  then `fix(<project>): <fix>`. Never delete, weaken or skip a test to get green. The
-  `commits` job enforces this: a `fix` with no earlier `test` of the same scope on your
-  branch is a finding. A change that needs no new test is not a `fix` — it is a `refactor`,
-  a `chore` or a `docs`, and saying so is honest rather than evasive.
-- Test laws, not examples. Enumerate small domains exhaustively; sample large ones with a
-  few hundred seeded random cases, and record the count beside the claim.
+- **Regression rule.** Every mistake found, by anyone, earns a test that fails before
+  the fix and passes after, committed first: `test(<project>): cover <mistake>`, then
+  `fix(<project>): <fix>`. Never delete, weaken or skip a test to get green. The `commits`
+  job enforces it: a `fix` with no earlier `test` of the same scope on your branch is a
+  finding. A change needing no new test is not a `fix`; it is a `refactor`, a `chore` or a
+  `docs`, and saying so is honest rather than evasive.
+- Test laws, not examples. Enumerate small domains exhaustively; sample large ones with a few
+  hundred seeded random cases, and record the count beside the claim.
 - Test where the mechanism runs: real wiring, output read back, bytes re-read.
-- **A check gives the same verdict on the same code, and where it does not, the check is
-  what is wrong.** Article IX.3 already demands determinism of a sampled corpus; this
-  extends it to the verdict itself, because a check whose answer varies is evidence about
-  the run rather than about the code, and every merge it reddens teaches its readers to
-  discount a red `main`. Never answer variance with a retry, a longer timeout, a quarantine
-  or a skip: each keeps the check while throwing away what it was for. Find what the check
-  is really waiting on and wait on that — **settle on what moved, never on what has stopped
-  changing**, which is the rule two races in a driven harness here have already produced.
-  Where the cause is outside your project, say so on an issue rather than absorbing it:
-  a browser, a runner image or a driver is the curator's to carry. Where you cannot make
-  it deterministic, the honest outcome is to say what varies and how often, measured, and
-  let the Architect decide whether the check earns its place.
+- **A check gives the same verdict on the same code; where it does not, the check is what is
+  wrong.** A check whose answer varies is evidence about the run rather than about the code,
+  and every merge it reddens teaches its readers to discount a red `main`. Never answer
+  variance with a retry, a longer timeout, a quarantine or a skip. Find what the check is
+  really waiting on and wait on that: **settle on what moved, never on what has stopped
+  changing**. Where the cause is outside your project — a browser, a runner image, a driver
+  — say so on an issue rather than absorbing it. Where you cannot make it deterministic, say
+  what varies and how often, measured, and let the Architect decide whether the check earns
+  its place.
 - `koch` runs testament over `tests/t*.nim` in your project directory; there is no
-  per-project build file. `nim r koch tree` runs the static audit alone, and
-  `nim r koch tests <project>` restores that project's dependencies and runs its suites;
-  `nim r koch ci` is the one to run before a push. Nothing runs every project at once on
-  one machine, because their compilers differ; CI sweeps them, one job each.
-
-## Glossary process
-
-`GLOSSARY.md` follows Matt Pocock's `CONTEXT.md` format and his domain-modeling discipline,
-renamed for this repository. It is the project's ubiquitous language: the words the
-Architect, the code and every later delegate share. The repository's own words are in the
-top-level `GLOSSARY.md`; use those, and define here only what is specific to this project.
-Format:
-
-```md
-# <project>
-
-<One or two sentences on what this project is and why it exists.>
-
-## Language
-
-**Term**:
-<One or two sentences: what the thing IS, not what it does.>
-_Avoid_: <rejected synonyms, comma separated>
-```
-
-Rules of the file:
-
-- Be opinionated. When several words exist for one concept, pick one and list the others
-  under `_Avoid_`.
-- Keep definitions tight: one or two sentences, defining what the thing is.
-- Only terms specific to this project. General programming concepts do not belong, however
-  often the code uses them.
-- Group terms under subheadings when natural clusters emerge; a flat list is fine otherwise.
-- A glossary and nothing else: no implementation detail, no specification, no scratch notes.
-
-Five moves during every session, not at its end:
-
-1. **Challenge against the glossary.** When the owner or the code uses a term that conflicts
-   with an entry, say so at once and ask which meaning holds.
-2. **Sharpen fuzzy language.** When a term is vague or overloaded, propose a precise
-   canonical one.
-3. **Discuss concrete scenarios.** Stress-test relationships between concepts with specific
-   edge cases until boundaries are exact.
-4. **Cross-reference with code.** When a statement about behaviour disagrees with the code,
-   surface the contradiction instead of choosing silently.
-5. **Propose the term; never write it on sight.** Set out the concept, offer candidate
-   names with what each would displace, and stop. Only the name the Architect selects is
-   written, and only then. A term invented in passing is a term nobody agreed to, and the
-   audit cannot catch it: it checks a glossary's shape, never whether its words were
-   chosen. This rule holds by the Architect's reading, and by nothing else.
-
-Where Pocock's process would write an architecture decision record, this repository writes
-the decision into `PROVENANCE.md` under its subsystem (Article VIII.6): what was chosen,
-what was rejected, what it costs. There is no `docs/adr/`.
+  per-project build file. `nim r koch tree` is the static audit alone; `nim r koch tests
+  <project>` restores one project's dependencies and runs its suites; `nim r koch ci` is the
+  one to run before a push.
 
 ## Before opening a pull request
 
 - `nim r koch ci` at the repository root passes on the exact commit you push. It fetches
-  `origin/main`, then runs what CI runs: the whole-tree static pass (layout, form, comments,
-  provenance stamps, glossary shape, compiler pins), then dependency restore and the suites
-  of every project whose code changed — normally yours alone — then `scope` (every changed
-  path starts with `contributor/<domain>/<project>/`) and `commits` (every subject parses as
-  `type(<project>): summary`). A pull request opened before it passes is a process
-  violation whatever CI later says: the runner confirms, it never discovers. Run it again
-  before every later push to the same pull request.
-- A change touching only your project's records — `README.md`, `PROVENANCE.md` and
-  `GLOSSARY.md` — compiles nothing, since it alters
-  no behaviour; the static pass still checks every stamp.
+  `origin/main`, then runs what CI runs: the whole-tree static pass, `types`, the suites and
+  driven checks of every project whose code changed — normally yours alone — then `scope`,
+  `commits` and `base`. A pull request opened before it passes is a process violation
+  whatever CI later says: the runner confirms, it never discovers. Run it again before every
+  later push to the same pull request. A change touching only your three records compiles
+  nothing; the static pass still checks every stamp.
 - **`base` fails when the rules or the checker moved on `main` after you branched.** Your
-  stamp then claims a charter that no longer exists, and merging would redden `main` — which
-  has happened. Merge `origin/main`, read the diff of the rules documents, re-audit your
-  project against each change, re-stamp, and push. Only the charter and the checker count:
-  another project's code moving underneath you is not your problem and will not stop you.
-- `PROVENANCE.md` describes the design as it now is, with each claim marked verified or
-  assumed and each figure carrying its pair; nothing narrates.
-- `GLOSSARY.md` holds every term that resolved.
+  stamp then claims a charter that no longer exists, and merging would redden `main`. Merge
+  `origin/main`, read the diff of the rules documents, re-audit your project against each
+  change, re-stamp, and push. Only the charter and the checker count: another project's code
+  moving underneath you will not stop you.
+- `PROVENANCE.md` describes the design as it now is, each claim marked verified or assumed,
+  each figure carrying its pair; nothing narrates. `GLOSSARY.md` holds every term that
+  resolved.
 - No debug output left behind. Whitespace, tabs and width the audit already checks.
-- Pull request body follows `.github/pull_request_template.md`: intent, scope, verification
+- The body follows `.github/pull_request_template.md`: role, intent, scope, verification
   (what ran, on which build), record, notes.
 - **A published page is linked, not described.** Where your change alters what a page shows,
-  republish it and put the URL in the verification section, so the Architect can open it
-  rather than rebuild it to see the change. Naming a page is not evidence about a page. Where
-  a page cannot be republished before review, say which pages would change and why they are
-  not up.
-- **End by showing the thing, not only by counting it.** A figure is *about* a change; what the
-  Architect reads first is the change. Where it is visual, a screenshot of the end product, built
-  from the state you are asking to merge rather than from a working tree mid-change — and where it
-  alters something, one before and one after, since one picture proves a thing exists and two
-  prove it changed. Where it is not visual, a worked example in the same spirit: the command and
-  its real output, the refusal a check now gives quoted, the line whose meaning changed. Never a
-  description of what would happen. Where there is genuinely nothing to show — a cache key, a
-  stamp — write that, and why. **A screenshot cannot reach a pull request**: images attach only by
-  hand in the web UI and Article XI.3 keeps binaries out of the tree, so it goes in the message
-  that says the work is ready, and the pull request carries the figures. The Architect still
-  verifies; this is the ten-second read that happens first.
+  republish it and put the URL in the verification section, so the Architect opens it rather
+  than rebuilding it. Naming a page is not evidence about a page. Where a page cannot be
+  republished before review, say which pages would change and why they are not up.
+- **End by showing the thing, not only by counting it.** Where it is visual, a screenshot of
+  the end product built from the commit you ask to merge — one before and one after where
+  something changed, since one picture proves a thing exists and two prove it changed. Where
+  it is not visual, a worked example: the command and its real output, the refusal a check
+  now gives, the line whose meaning changed. Never a description of what would happen. Where
+  there is genuinely nothing to show — a cache key, a stamp — write that, and why. A
+  screenshot cannot reach a pull request through an API and Article XI.3 keeps binaries out
+  of the tree, so it goes in the message that says the work is ready; the pull request
+  carries the figures.
 - **Open it as a draft, and mark it ready only when it is.** Ready means CI green on the
-  runner, every review comment answered, and nothing you still intend to change. A draft
-  says "not yet" in the one place the Architect looks; an open pull request says "merge me",
-  and one merged before it was ready cost a second pull request to undo. Local green is not
-  the signal: `koch ci` and the runner disagree whenever the machines differ, which is what
-  the runner is for. Nothing checks this — GitHub is not this repository — so it holds
-  because you do it.
-- **Put it back to draft the moment you intend another commit.** Ready is not a one-way door.
-  A record entry still to write, a figure still being measured, a fix you have just found —
-  each is a reason to return the pull request to draft, and to mark it ready again after. The
-  Architect merges what is green and ready, promptly and correctly; intent that lives only in
-  your working copy is not a signal, and a commit you have not pushed is one nobody else can
-  see. A curator lost a record update this way, committing it sixteen seconds before the merge
-  while the pull request had sat green and ready for eleven minutes. Either push before you
-  mark ready, or draft it while you finish.
-
-## Output contract
-
-From the constitution: return the implementation first. Report only material assumptions,
-representation and staging choices, non-obvious trade-offs, unresolved questions, and
-verification performed, i.e. what ran, on which build. Before answering, silently review the
-result against Articles I to XI and the precedence clause.
-
-**Put a published page's URL in the message itself, not only in the pull request.** When you
-tell the Architect the work is ready, every page your change republished is linked right
-there, so opening one costs a click rather than a trip through the pull request to find it.
-The same URL belongs in both places; the pull request is the record, the message is what gets
-read first.
-
-**Show the change in that same message.** A screenshot where it is visual, a worked example where
-it is not, and a sentence saying why there is nothing to show where there is not. GitHub takes no
-image from an API, so this message is the only channel a picture has, and a change that ends
-without one ends with nobody having seen it.
-
-## Provenance guide
-
-Instructions for an assistant working on a project that keeps a `PROVENANCE.md`. The file
-records who made the work, from what, how far it has been checked, and why the design is
-the way it is. It is read by whoever picks the project up next, human or model, so that
-they can rebuild it from the file plus the source without repeating your mistakes.
-
-### Create it at the start, not the end
-
-Open the file before writing code. Begin with a table:
-
-| Field  | Value |
-|--------|-------|
-| Agent  | the tool you are running in |
-| Author | the model |
-| Date   | today |
-| Style  | which style or constitution documents govern the code, and that they were followed |
-| Rules  | the stamp `nim r koch stamp` prints for the governing documents you audited against |
-| Review | **Unreviewed.** Nothing here has been read line by line by a human. |
-
-The review line is the point of the file. AI-authored work must carry its own verification
-status, and that line must stay true: change it only when a human has actually reviewed
-something, and say what.
-
-### Record the current design, by subsystem
-
-Organise the body by subsystem, not by date. Each section describes the design **as it is
-now**. For every non-obvious decision write three things: what was chosen, what was
-rejected, and what the choice costs. Keep every concrete constant with its reasoning, so
-nobody has to rediscover why a number is what it is.
-
-Mark what is **verified** and what is **assumed**, and say how each was verified: a test
-case, a driven check, a rendered frame that was looked at, a measurement. That distinction
-is the file's most valuable property; it is what makes the text provenance rather than a
-design document.
-
-### Rules that keep it honest
-
-- **Verify by running.** A claim about behaviour, cost, or appearance goes in the file
-  only after you ran the code, rendered the output, or read the bytes back.
-- **A claim someone else can repeat cites the test that repeats it**, written as
-  ``Verified by `tfoo.nim` ``. The audit resolves that name against your `tests/` directory
-  and fails when it does not exist, so a citation cannot quietly rot when a suite is renamed
-  or removed. It checks only that the file exists; whether that test makes the claim beside
-  it is read, never checked.
-- **A claim verified any other way says so, and names the tool and the date.** Verified by
-  hand, in a browser, or with something that is not in this repository means nobody can
-  re-run it from a checkout, and a later reader is entitled to know that before trusting it.
-  Write "verified by hand in Firefox 141, 2026-09-06" rather than "verified". Prefer turning
-  such a claim into a test; where the thing genuinely cannot be tested here, the sentence
-  carries its own expiry, and that is the honest outcome.
-- **Measurements come in pairs.** A cost is a before and an after, on a named machine and
-  scene, with the method. If you did not measure, write "unmeasured" rather than repeat an
-  earlier figure.
-- **A rejected alternative earns one line, and only if it is still a trap.** "Not
-  camera-scaled, which visibly resizes a plane as the camera orbits" belongs; the story of
-  how you found that does not.
-- **A picture shown and not kept still names how to remake it.** A screenshot lives in the
-  conversation rather than in the tree, so the record carries the command that took it —
-  `--screenshot:PATH --frames:N` after a `--drive-*` run, the `page.screenshot` beside a check — and
-  a reader a month later remakes the picture rather than wondering what was seen.
-- **Update it in the same delivery as the change**, in its own commit, so the record never
-  lags the code.
-
-### Prune, never narrate
-
-The file is not a changelog. When a design is replaced, rewrite its section to describe the
-replacement and delete the old account. Fixed bugs, abandoned experiments and superseded
-figures come out. If the file starts reading as a diary of what happened, prune it until it
-reads as a description of what is.
-
-### What a good entry looks like
-
-> **The selection menu opens beside the pointer and stays with the object.** A click that
-> reveals it puts its corner 8 px from the pointer, as a desktop context menu does, and it
-> remembers its offset from the object's anchor so orbiting carries it along. Rejected:
-> re-gluing it to the object every frame, which snapped it away from the click one frame
-> later. Verified by driven check: a right-click 15 px off a point opens the menu within
-> the inset, and a pan moves menu and anchor by the same delta.
-
-Name the mechanism, the reason, the rejected path, the cost, and the check. Nothing else.
+  runner, every review comment answered, and nothing you still intend to change. A draft says
+  "not yet" in the one place the Architect looks; an open pull request says "merge me".
+  Local green is not the signal: `koch ci` and the runner disagree whenever the machines
+  differ, which is what the runner is for.
+- **Put it back to draft the moment you intend another commit.** A record entry still to
+  write, a figure still being measured, a fix you have just found — each is a reason to
+  draft it again and mark it ready after. The Architect merges what is green and ready,
+  promptly and correctly; intent that lives only in your working copy is not a signal, and a
+  commit you have not pushed is one nobody else can see. Either push before you mark ready,
+  or draft it while you finish.

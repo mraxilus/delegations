@@ -362,8 +362,7 @@ suite "Chapter 2":
    Noto Serif for headings and titles, Noto Sans for body and interface text, Commit Mono
    for code, data and figures, with its ligatures enabled wherever the renderer shapes
    text — a glyph atlas that does no shaping is the exception, and needs none. The split is
-   the owner's preference rather than a finding: legibility does not separate serif from
-   sans — over fifty studies find no reliable difference — so taste decides, and says so.
+   the Architect's preference rather than a finding, so taste decides, and says so.
    Merge faces by codepoint range where none covers everything, and verify coverage by
    rendering each codepoint against `.notdef`. One animation duration and one easing curve,
    named once and read across every boundary; a hand-picked duration is a claim that needs
