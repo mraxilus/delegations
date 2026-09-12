@@ -1010,3 +1010,93 @@ Google; and the split the rule asks for is what the pages set. The one judgement
 left open, whether a label drawn inside a figure is a figure or interface text, is settled
 the second way here: X.8's own clause reads "Noto Sans for body and interface text", and a
 label naming a hand is interface text rather than a number.
+
+## Re-audit, 2026-09-12, engine holds what it can and judges what it cannot
+
+The pose search this project began with proposed poses and checked them, with no motion between
+two of them, so arms could never slide along one another: it wound a chain to one crossing and
+stopped, where the reference draws two crossings at a whole turn and three at a turn and a half.
+Box3D replaces it. `sim/rigid.nim` builds both dancers from `sim/rig`'s tape, and `sim/walk.nim`
+turns one of them and keeps every moment.
+
+**What the engine can hold, and what it cannot.** Elbow's hinge and wrist's cone it holds exactly;
+shoulder's twist too. Shoulder's *swing* it cannot: the rig gives extension and adduction as two
+ranges of their own, and a spherical joint offers one symmetric cone about rest. Rejected: fitting
+a cone to the pair. A cone about the hanging arm would also bound elevation, for which the rig
+gives no range at all, and every hold over the crown would block at once. The cone is left off,
+and swing is read back off the pose and judged against the rig.
+
+That choice is why the crown behaves as the Architect reports it: arms over the head are clear of
+both bodies and nowhere near either swing end, so twist is the only thing left to run out. It falls
+out of the rig rather than being special-cased.
+
+**A judged limit must still push back.** Judging swing after each step and never resisting it let
+the engine walk an arm where no shoulder goes, and the hold then read as blocked -- where a dancer
+would simply have put the arm elsewhere. Every one of nine sweeps blocked on `Swing`, including
+the crown, at 0.28 of a turn where the floor says no block at all. The limit now applies a torque,
+as the other three joints already get from the engine.
+
+**And a limit that pushes back needs room to push in.** With the block declared the instant the
+margin went negative, the torque engaged and the sweep stopped in the same step, and the figures
+were bit-identical with the torque and without it. An arm rests against its limit and slides along
+it; it blocks when it is forced past. `GIVE` is that room, and is the same reading, for the same
+reason, that the old solver's `TOLERANCE` had.
+
+**Torque is a pseudovector.** Each arm is worked out in the body's mirrored terms so one set of
+ranges serves both sides. A mirrored frame is left-handed, so a cross product worked out in it
+comes back negated: un-mirroring a torque as a plain vector gives exactly minus what is wanted, and
+turns the correction into a shove. The mirror law in `tests/trigid.nim` does **not** catch this --
+it passed with the sign wrong -- and the fix rests on the physics and on measurement instead.
+
+**Stance travels with the turn.** Swing is read in the dancer's own terms, so leaving the stance
+behind until a move finished judged every arm against a frame the dancer had already left.
+
+**Where the couple stand decides everything else.** Measured, one hand held, low: at fifteen
+centimetres of clear air the wrist sits four hundredths of its ease from its end; at forty it is
+past it; at eighty-five it is nearly straight, with room of 2.80. The rule the page already stated
+-- that they stand wherever the joints are furthest from their ends -- is load-bearing. It cannot
+be read off `margin`, which counts a stop with no ease as costing nothing to lean on and so reads a
+straight elbow as perfectly comfortable, sending the couple out to arm's length where the hands
+part after six hundredths of a turn. `limb.room` already drew that distinction.
+
+**Torso's section.** The engine collides capsules, so the ellipse the old contact test used is not
+available. Two capsules side by side give a stadium of the same tape round at the same flatness,
+and the neck and head fall out of the same line at a flatness of one.
+
+**What it says now, against the floor.** The floor: *everything gets a full turn before it blocks,
+except a low wrap, which gets half.* Turning the follow, from rest, at the distance each hold
+settles to:
+
+| hold | level | way | floor | old solver | engine |
+|---|---|---|---|---|---|
+| L-l | low | lock | a whole turn | 1.12 | 0.80 |
+| L-l | low | wrap | half a turn | 0.30 | 0.32 |
+| L-l | high | lock | a whole turn | 0.41 | 0.40 |
+| L-l | high | wrap | a whole turn | 1.25 | 0.20 |
+| L-l | above | either | no block | no block | no block |
+| L-r | low | lock | a whole turn | 0.87 | 0.76 |
+| L-r | low | wrap | half a turn | 0.56 | 0.38 |
+| L-r | high | lock | a whole turn | 1.06 | 0.38 |
+| L-r | high | wrap | a whole turn | 0.63 | 0.22 |
+| L-r | above | either | no block | no block | no block |
+
+Not tuned to it: every change above was argued from the rig or from the old model's own written
+rules, and the figures are what came out. The crown agrees exactly. The neck band does not, and
+is the open question -- the engine gives between a fifth and two fifths of a turn where the floor
+says a whole one, and the old solver was nearer on three of those four.
+
+**Chains, which are why the engine is here at all.** The old solver winds a chain to one crossing
+and stops, so it can never draw a diamond or a swan. The engine, cross-name chain over the crown,
+reaches **1.28 turns** -- past the diamond at one, short of the swan at one and a half. The
+same-name chain at the neck band finds no pose at rest at all, which is a fault and not a finding.
+
+**Rejected: reading anything into `L-l` and `L-r` agreeing.** With centring at two hundred newtons
+per metre the two holds returned the same two figures reflected, which cannot be right -- face to
+face `L-l` is a reach across one's own body and `L-r` is a straight one, and the reflection that
+maps `L-l` anywhere maps it to `R-r`. It was an artefact of centring strong enough to flatten the
+difference between them, and it went when centring was weakened: 0.32 and 0.80 against 0.76 and
+0.38.
+
+**The old solver stays until the engine is at least as close.** Deleting it now would replace a
+model that roughly tracks the floor with one that does not, at the neck band. It goes when the
+neck band is answered.
