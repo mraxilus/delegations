@@ -23,7 +23,7 @@
 
 import std/[json, options, strformat, tables]
 
-import ../sim/[body, hold, rig, walk]
+import ../sim/[body, hold, rig, rigid, walk]
 import ../src/dance_ontology/draw/terms
 import ../src/dance_ontology/frame
 import ../src/dance_ontology/rotation
@@ -119,13 +119,16 @@ proc answers(): OrderedTable[string, bool] =
     let
       links = linksOf(holdsOf(target))
       away = not restsFacing(target)
-      walk = carried(links, away, Manner.FollowAxis, most = 0.8)
+      far = restApart(HUMAN, CROWN, links, away)
     for twist in [0, 1]:
-      result[&"A{i * 2 + twist + 1}"] = walk.reaches(amountFor(target, twist))
+      result[&"A{i * 2 + twist + 1}"] =
+        holdsAt(HUMAN, CROWN, links, amountFor(target, twist), away, apart = far)
   result["A17"] = block:
-    let target = FRAMES[^1]
-    carried(linksOf(holdsOf(target)), not restsFacing(target),
-            Manner.FollowAxis, most = 0.8).reaches(-amountFor(target, 1))
+    let
+      target = FRAMES[^1]
+      links = linksOf(holdsOf(target))
+      away = not restsFacing(target)
+    holdsAt(HUMAN, CROWN, links, -amountFor(target, 1), away)
 
   # `B` and `E`: four single-hand holds, four manners, four quarters.
   for c, single in SINGLES:
@@ -135,9 +138,12 @@ proc answers(): OrderedTable[string, bool] =
         tag = MANNERS[manner].tag
         sense = windSense(manner)
         walk = carried(links, false, manner, most = 1.2)
+        far = restApart(HUMAN, CROWN, links, false)
       for q in 0 ..< QUARTERS_ROUND:
-        let got = walk.reaches(sense * q.float / QUARTERS_ROUND.float)
-        result[&"st_{tag}_{c}_{q}"] = got
+        let at = sense * q.float / QUARTERS_ROUND.float
+        result[&"st_{tag}_{c}_{q}"] =
+          holdsAt(HUMAN, CROWN, links, at, head = bodyOf(MANNERS[manner].who),
+                  apart = far)
         result[&"tr_{tag}_{c}_{q}_{(q + 1) mod QUARTERS_ROUND}"] =
           walk.reaches(sense * (q + 1).float / QUARTERS_ROUND.float)
       result[&"rd_{tag}_{c}"] = walk.reaches(sense)
@@ -150,9 +156,9 @@ proc answers(): OrderedTable[string, bool] =
   for (tag, arms, away) in [("C", HAND_TO_HAND, false), ("D", PAIRED, true)]:
     let
       links = linksOf(arms)
-      walk = carried(links, away, Manner.FollowAxis, most = 1.6)
+      far = restApart(HUMAN, CROWN, links, away)
     for i, w in STEPS:
-      result[tag & $(i + 1)] = walk.reaches(-w)
+      result[tag & $(i + 1)] = holdsAt(HUMAN, CROWN, links, -w, away, apart = far)
 
   # `F`: chain under each manner, whole round and each half of it.
   for manner in Manner:

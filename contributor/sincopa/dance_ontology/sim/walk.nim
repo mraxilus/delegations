@@ -81,6 +81,24 @@ proc walked(rig: Rig; band: Band; links: seq[Link]; who: Body;
     result.moments.add now.m
   c.free()
 
+proc holdsAt*(rig: Rig; band: Band; links: seq[Link]; turns: float;
+              away = false; head = Body.Two; apart = 0.0): bool =
+  ## Whether any pose holds at this facing, asked afresh where couple stand.
+  ##   Still card claims position exists; moving one claims couple can carry to
+  ##     it.  They are not same question, and `sim/verdicts` already kept them
+  ##     apart -- "asked afresh whether any pose holds there at all, not whether
+  ##     arms can carry to it".  Asking still card reachability calls drawing
+  ##     wrong for want of way in, which is not what it says.
+  let far = if apart > 0.0: apart else: restApart(rig, band, links, away)
+  var c = build(rig, turned(restStance(rig, far, away), Body.Two, turns),
+                band, links, head)
+  c.settle()
+  result = true
+  for i in 0 ..< links.len:
+    if c.stopOf(i) != Stop.None:
+      result = false
+  c.free()
+
 proc swept*(rig: Rig; band: Band; links: seq[Link]; who = Body.Two;
             most = MOST; step = STEP; apart = 0.0; away = false;
             head = Body.Two): Swept =
