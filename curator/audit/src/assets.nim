@@ -137,6 +137,19 @@ func digestOf*(file: string): string =
   ""
 
 
+func declaration*(): string =
+  ## Render every declared asset as `<file> <digest>`, one per line, ending in newline.
+  ##   Published so no consumer parses this source. Project holding law that its faces are
+  ##     declared read `assets.nim` as text -- second parser for format only this module
+  ##     owns, which is duplication store exists to end, one layer up (repository issue 134).
+  ##   Two columns rather than three: address is fetcher's business, digest is what consumer
+  ##     checks bytes against. Neither column can hold space, so `split` reads row.
+  ##   Row never reads as path, and suite holds it so: verb prints paths when files are named
+  ##     and rows when none are, and both project builds tell those apart by shape alone.
+  for (file, _, digest) in ASSETS:
+    result.add file & " " & digest & "\n"
+
+
 func pathOf*(root, file: string): string =
   ## Read path asset takes in store, which is its digest; empty when none is declared.
   ##   Digest names file rather than its name doing so, since two projects asking for one

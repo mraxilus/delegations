@@ -85,3 +85,29 @@ suite "Assets":
     check found.len == 1
     check found[0].message.endsWith("got `fraunces-latin-400-normal.woff2`.")
     check "assets.nim" in found[0].path  # names table to add row to
+
+  test "declaration publishes every row, so no consumer parses this source":
+    # Issue 134: project held law that its faces are declared by reading `assets.nim` as
+    #   text. Published rows are contract that read was standing in for.
+    let rows = declaration().strip.splitLines
+    check rows.len == ASSETS.len  # every row, none extra
+    for row in rows:
+      let parts = row.split(' ')
+      check parts.len == 2  # neither column holds space, so `split` is enough
+      check parts[1].len == 64  # digest, rendered whole
+      check parts[1] == parts[0].digestOf  # column two is what store declares for column one
+      check parts[0].addressOf.len > 0  # column one names row store knows
+    # Ends in newline, so appending or piping row-wise needs no special case.
+    check declaration().endsWith("\n")
+    # Proven by asking for one that is there: consumer checks membership without parsing.
+    check "noto-serif-latin-600-normal.woff2 " in declaration()
+
+  test "no declared row can be read as a path, which both project builds rely on":
+    # Verb prints paths when files are named and rows when none are. Both contributor
+    #   builds tell them apart by shape -- one keeps lines that `fileExists`, other keeps
+    #   lines starting `/` -- so row that looked like absolute path would be copied as
+    #   face by one and counted as served by other. Neither project can check this; store
+    #   owns row shape, so store holds law.
+    for row in declaration().strip.splitLines:
+      check not row.startsWith('/')  # never absolute path
+      check not row.fileExists  # nor relative one that happens to resolve
