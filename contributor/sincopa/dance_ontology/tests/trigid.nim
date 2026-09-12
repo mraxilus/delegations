@@ -27,7 +27,9 @@ import ../sim/[body, hold, limb, rig, rigid, vec, walk]
 const
   SHAKE = @[Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Left)])]
     ## Plainest hold there is: one hand each, face to face.
-  APART = 1.10 ## Where that hold leaves joints freest, to nearest centimetre.
+  APART = 1.10 ## One distance laws below that do not care where couple stand use.
+    ## Was where that hold left joints freest standing still, back when that was
+    ## how standing was chosen.  It is now only place to build couple at.
   SLACK = 3.0 * PI / 180.0 ## Engine's limits are solved, not clamped, so joint may
                            ## stand this far past its end for one step and come back.
 
@@ -36,13 +38,26 @@ proc rest(band = Band.Torso; apart = APART): Couple =
   result = build(HUMAN, facing(HUMAN, apart), band, SHAKE)
   result.settle()
 
-let SETTLED = block:
-  ## Where that hold stands at each level.  Found once: laws below all want it,
-  ## and each finding of it costs hundred settles.
-  var found: array[Band, float]
-  for band in Band:
-    found[band] = restApart(HUMAN, band, SHAKE)
-  found
+const
+  ASK = 0.84 ## Turn laws below put to that hold, in turns.
+    ## Chosen to make search work for its answer: measured, that hold carries 0.78
+    ## from first distance couple may stand at and 0.94 from best of them, so this
+    ## is reached only by looking past first.  At half turn, which first distance
+    ## already carries, search that gave up after one distance answered correctly
+    ## and law below passed on it.
+  BEYOND = 1.2 ## And turn no distance carries at all; best of them is 0.94.
+
+let CHOSEN = block:
+  ## Where that hold stands to turn each way at torso height, and how far it
+  ## carries from there.  Found once: laws below want it, and finding it sweeps
+  ## every distance couple may stand at.
+  let sw = swept(HUMAN, Band.Torso, SHAKE, most = 1.6)
+  [sw.neg, sw.pos]
+
+func carried(w: Walk): float =
+  ## How far this walk went, counting one that never stopped as further than any
+  ## that did.
+  if not w.restHolds: -Inf elif w.stopped: w.at else: Inf
 
 
 suite "two dancers in rigid body engine":
@@ -93,23 +108,55 @@ suite "two dancers in rigid body engine":
         c.turn(Body.Two, 0.25, 600)
       c.free()
 
-  test "couple stand further off than their two torsos allow":
-    check SETTLED[Band.Torso] >= touching(HUMAN) + CLEAR
+  test "couple are never offered place inside each other":
+    ## Only thing fixed about where couple stand.  Architect: stand for turn, hand
+    ## height for turn, everything for turn, nothing fixed but preventing
+    ## collisions.  So this is whole of what constrains standing, and if it does
+    ## not hold nothing does.
+    var count = 0
+    for apart in stands(HUMAN):
+      check apart >= touching(HUMAN) + CLEAR
+      count += 1
+    check count > 1
 
-  test "couple do not stand as close as they are permitted to":
-    ## Least of several starts at infinity.  Started at nought, which is what
-    ## float comes as, every distance scores nought, first one tried wins, and
-    ## couple stand chest to chest whatever their joints say.
-    for band in Band:
-      check SETTLED[band] > touching(HUMAN) + CLEAR + PACE
+  test "no distance couple could stand at carries turn further than one they chose":
+    ## Standing was chosen at rest before this: wherever joints were freest standing
+    ## still.  Couple walked straight out of it -- measured, chain over crown stood
+    ## at 0.96 and turned 0.22 where standing at 0.36 turns 1.12 -- because room to
+    ## move standing still is not what turning spends.
+    ##   Law is argument maximum itself, so search broken any way at all fails here:
+    ##   best started at infinity, sign of step dropped, range stopping short, rest
+    ##   that never held counted as carrying.
+    for way in 0 .. 1:
+      let
+        step = (if way == 0: -STEP else: STEP)
+        chose = CHOSEN[way]
+      check chose.restHolds
+      for apart in stands(HUMAN):
+        let w = walked(HUMAN, Band.Torso, SHAKE, Body.Two, apart, 1.6, step,
+                       false, Body.Two)
+        check w.carried <= chose.carried
+
+  test "turn couple are said to reach is turn some distance carries":
+    ## `reaches` answers at first distance that carries turn rather than at best of
+    ## them, which is same answer for less work only so long as it looks at every
+    ## distance before saying no.
+    var any = false
+    for apart in stands(HUMAN):
+      let w = walked(HUMAN, Band.Torso, SHAKE, Body.Two, apart, ASK, STEP,
+                     false, Body.Two)
+      if w.restHolds and not w.stopped: any = true
+    check any
+    check reaches(HUMAN, Band.Torso, SHAKE, ASK)
+    check not reaches(HUMAN, Band.Torso, SHAKE, BEYOND)
 
   test "at rest every joint is free to move either way":
-    ## Where couple stand cannot be chosen on `margin`, which counts stop with no
-    ## ease as costing nothing to lean on: that reads straight elbow as perfectly
-    ## comfortable and sends couple out to arm's length, where no turn is possible
-    ## at all.  Freedom to move is what standing asks about.
-    for band in Band:
-      let c = rest(band, SETTLED[band])
+    ## `freedom` is what `roomAt` reads with, and it counts both ends of range.
+    ## On `margin`, which counts stop with no ease as costing nothing to lean on,
+    ## straight elbow reads perfectly comfortable and every moment page draws
+    ## reports room it does not have.
+    for way in 0 .. 1:
+      let c = rest(Band.Torso, CHOSEN[way].apart)
       check roomAt(c, c.poseOf(0), 0) > 0.0
       c.free()
 

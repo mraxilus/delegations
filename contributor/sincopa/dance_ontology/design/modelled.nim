@@ -23,7 +23,7 @@
 
 import std/[json, options, strformat, tables]
 
-import ../sim/[body, hold, rig, rigid, walk]
+import ../sim/[body, hold, rig, walk]
 import ../src/dance_ontology/draw/terms
 import ../src/dance_ontology/frame
 import ../src/dance_ontology/rotation
@@ -54,47 +54,21 @@ func linksOf(holds: Holds): seq[Link] =
                              (Body.Two, armOf(follow.get))])
 
 
-type Carried = object ## How far one hold carries, one manner, each way.
-  restHolds: bool
-  stopped: array[2, bool] ## Index 0 is turning back, 1 is turning on.
-  at: array[2, float]
-
-func reaches(c: Carried; turns: float): bool =
-  ## Whether that manner carries hold this far, in its own positive sense.
-  if not c.restHolds: return false
-  let i = if turns >= 0.0: 1 else: 0
-  not c.stopped[i] or abs(turns) <= c.at[i]
-
-var settled: Table[string, float]
-  ## Where each hold stands, once found.  Finding it costs hundred settles of
-  ## three thousand steps apiece, and same hold at same band was being asked for
-  ## it forty times over: caching cannot move any figure, only stop re-deriving
-  ## one already had.
-
-proc standsAt(links: seq[Link]; away: bool): float =
-  var key = (if away: "|" else: "")
-  for l in links:
-    for e in l.ends:
-      key.add $ord(e.body) & $ord(e.arm)
-  if key notin settled:
-    settled[key] = restApart(HUMAN, CROWN, links, away)
-  settled[key]
-
-proc carried(links: seq[Link]; away: bool; manner: Manner; most: float): Carried =
-  ## Sweep this hold under this manner, both ways.
+proc carries(links: seq[Link]; away: bool; manner: Manner; turns: float): bool =
+  ## Whether this hold carries this far under this manner, in its positive sense.
+  ##   Couple stand for turn they are about to take, so question goes straight to
+  ##     `walk.reaches`, which asks it of every distance couple may stand at and
+  ##     answers at first that carries it.  Sweeping once and reading several
+  ##     answers off it would be cheaper, but it would pin whole manner to one
+  ##     distance again, which is what Architect ruled against.
   let
     walks = bodyOf(MANNERS[manner].who)
     turner = if ord(MANNERS[manner].about) == ord(About.Axis): walks
              else: otherThan(walks)
-    sw = swept(HUMAN, CROWN, links, who = turner, most = most, away = away,
-               head = walks, apart = standsAt(links, away))
-  result.restHolds = sw.restHolds
-  # Orbit is other dancer turned other way about, so its two ways are swapped.
-  let flip = ord(MANNERS[manner].about) != ord(About.Axis)
-  result.stopped = [(if flip: sw.pos.stopped else: sw.neg.stopped),
-                    (if flip: sw.neg.stopped else: sw.pos.stopped)]
-  result.at = [(if flip: sw.pos.at else: sw.neg.at),
-               (if flip: sw.neg.at else: sw.pos.at)]
+    # Orbit is other dancer turned other way about, so its sense is flipped.
+    flip = ord(MANNERS[manner].about) != ord(About.Axis)
+    way = (if flip: -turns else: turns)
+  reaches(HUMAN, CROWN, links, way, away = away, who = turner, head = walks)
 
 
 func holdsOf(target: Frame): Holds =
@@ -130,17 +104,15 @@ proc answers(): OrderedTable[string, bool] =
     let
       links = linksOf(holdsOf(target))
       away = not restsFacing(target)
-      far = standsAt(links, away)
     for twist in [0, 1]:
       result[&"A{i * 2 + twist + 1}"] =
-        holdsAt(HUMAN, CROWN, links, amountFor(target, twist), away, apart = far)
+        holdsAt(HUMAN, CROWN, links, amountFor(target, twist), away)
   result["A17"] = block:
     let
       target = FRAMES[^1]
       links = linksOf(holdsOf(target))
       away = not restsFacing(target)
-    holdsAt(HUMAN, CROWN, links, -amountFor(target, 1), away,
-            apart = standsAt(links, away))
+    holdsAt(HUMAN, CROWN, links, -amountFor(target, 1), away)
 
   # `B` and `E`: four single-hand holds, four manners, four quarters.
   for c, single in SINGLES:
@@ -149,16 +121,13 @@ proc answers(): OrderedTable[string, bool] =
       let
         tag = MANNERS[manner].tag
         sense = windSense(manner)
-        walk = carried(links, false, manner, most = 1.2)
-        far = standsAt(links, false)
       for q in 0 ..< QUARTERS_ROUND:
         let at = sense * q.float / QUARTERS_ROUND.float
         result[&"st_{tag}_{c}_{q}"] =
-          holdsAt(HUMAN, CROWN, links, at, head = bodyOf(MANNERS[manner].who),
-                  apart = far)
+          holdsAt(HUMAN, CROWN, links, at, head = bodyOf(MANNERS[manner].who))
         result[&"tr_{tag}_{c}_{q}_{(q + 1) mod QUARTERS_ROUND}"] =
-          walk.reaches(sense * (q + 1).float / QUARTERS_ROUND.float)
-      result[&"rd_{tag}_{c}"] = walk.reaches(sense)
+          carries(links, false, manner, sense * (q + 1).float / QUARTERS_ROUND.float)
+      result[&"rd_{tag}_{c}"] = carries(links, false, manner, sense)
 
   # `C` and `D`: two chains, seven positions each, half turn apart.
   #   Their captions count *clockwise seen from above*, which is turn's negative
@@ -166,11 +135,9 @@ proc answers(): OrderedTable[string, bool] =
   #   stop at same place each way, so this changes no answer today -- it is here
   #   because it would change one for hold that did not.
   for (tag, arms, away) in [("C", HAND_TO_HAND, false), ("D", PAIRED, true)]:
-    let
-      links = linksOf(arms)
-      far = standsAt(links, away)
+    let links = linksOf(arms)
     for i, w in STEPS:
-      result[tag & $(i + 1)] = holdsAt(HUMAN, CROWN, links, -w, away, apart = far)
+      result[tag & $(i + 1)] = holdsAt(HUMAN, CROWN, links, -w, away)
 
   # `F` and `G`: each chain under each manner, whole chain and each half of it.
   #   These are moving cards, so they are asked whether couple carry along them
@@ -181,8 +148,7 @@ proc answers(): OrderedTable[string, bool] =
       let
         tag = MANNERS[manner].tag
         sense = windSense(manner)
-        walk = carried(links, away, manner, most = 1.6)
-      result[&"{key}c_{tag}"] = walk.reaches(sense * STEPS[^1])
+      result[&"{key}c_{tag}"] = carries(links, away, manner, sense * STEPS[^1])
       for i in 0 ..< STEPS.len - 1:
         # Edge is walked entire, so what it asks of couple is its *furthest*
         # wound end, kept with its own sign, and not where it happens to
@@ -193,7 +159,7 @@ proc answers(): OrderedTable[string, bool] =
         # saw it at once -- they are same edge mirrored.
         let far = (if abs(STEPS[i]) > abs(STEPS[i + 1]): STEPS[i]
                    else: STEPS[i + 1])
-        result[&"{key}w_{tag}_{i}"] = walk.reaches(sense * far)
+        result[&"{key}w_{tag}_{i}"] = carries(links, away, manner, sense * far)
 
 
 when isMainModule:

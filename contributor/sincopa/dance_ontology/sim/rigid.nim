@@ -54,7 +54,6 @@ const
   SETTLE* = 3000      ## Steps given to first pose before anything is read off it.
                       ## Measured: twist still moving at 1000, settled by 3000.
   CLEAR* = 0.10       ## Least clear air between two torsos, metres.
-  PACE* = 0.01        ## Couple step in or out by this, looking for room.
   EASE* = 1.0         ## Hertz of spring holding each joint toward its rest.
   EASE_DAMP* = 1.0    ## And its damping.  Soft: it biases pose, never drives it.
 
@@ -337,7 +336,11 @@ const
     ## is what other three joints already get from engine; this gives swing same.
 
 proc carry(c: Couple) =
-  ## Couple's own intent: hold each pair of joined hands at middle of their band.
+  ## Couple's own intent: keep each pair of joined hands somewhere in their band.
+  ##   Band's two edges are held; everything between them is free.  Architect:
+  ##     hand height is for turn, and nothing is fixed but keeping bodies apart.
+  ##     Held at middle instead, couple spend on height reach turn wanted, and
+  ##     card is answered about pose couple would never have chosen.
   ##   Lift is spread over whole arm, never put on hand alone.  Hand alone levers
   ##     wrist, which then sits at its cone while shoulder and elbow do nothing --
   ##     dancer raising joined hands raises arm.
@@ -345,7 +348,7 @@ proc carry(c: Couple) =
   ##     Without it grip floats off sideways and arms trail away behind, which
   ##     reads as shoulder giving out when it is only hands left unheld.
   let
-    want = (c.rig.band[c.band].lo + c.rig.band[c.band].hi) / 2.0
+    band = c.rig.band[c.band]
     # Height is asked of couple only as they leave face to face.  Architect:
     # face to face arms may be at any height, and it is once they are no longer
     # face to face that hands must actually be above -- which is clearance,
@@ -367,11 +370,13 @@ proc carry(c: Couple) =
         a = c.who[ln.ends[k].body].arm[ln.ends[k].arm]
         tip = asWorld(eng.pointOf(a.link[Limb.Palm], eng.vec(0, 0, c.rig.hand.cfloat)))
         drift = asWorld(eng.driftOf(a.link[Limb.Palm]))
-        # One sided, and only so far as couple have turned: hands are lifted
-        # where they are too low to clear, never pressed down where arms have
-        # already carried them higher.
-        below = max(0.0, want - tip.z)
-        lift = turned * (LIFT * below - FALL * drift.z) / 3.0
+        # Nought anywhere inside band, and only so far as couple have turned.
+        # Hands are pressed back toward whichever edge they left, and left
+        # alone between them.
+        off = (if tip.z < band.lo: band.lo - tip.z
+               elif tip.z > band.hi: band.hi - tip.z
+               else: 0.0)
+        lift = turned * (LIFT * off - FALL * drift.z) / 3.0
         pull = DRAW[ord(c.band)] / 3.0
         toward: Vec = ((mid.x - tip.x) * pull - drift.x * FALL / 3.0,
                        (mid.y - tip.y) * pull - drift.y * FALL / 3.0, lift)
@@ -517,40 +522,6 @@ func restStance*(rig: Rig; apart: float; away = false): array[Body, Stance] =
   ## connections lie through each other, so couple would not collect it there.
   result = facing(rig, apart)
   if away: result = turned(result, Body.Two, 0.5)
-
-proc roomAt*(rig: Rig; band: Band; links: seq[Link]; apart: float;
-             away = false): float =
-  ## Build couple that far apart, settle, and report their least room.
-  ##   Least of several starts at infinity.  Starting it at nought, which is what
-  ##     float comes as, made every distance score nought and sent couple to
-  ##     closest one there was, whatever their joints said.
-  result = Inf
-  var c = build(rig, restStance(rig, apart, away), band, links)
-  c.settle()
-  for i in 0 ..< links.len:
-    let p = c.poseOf(i)
-    if p.apart > PARTED:
-      c.free()
-      return -Inf
-    result = min(result, roomAt(c, p, i))
-  if links.len == 0: result = 0.0
-  c.free()
-
-proc restApart*(rig: Rig; band: Band; links: seq[Link]; away = false): float =
-  ## How far apart couple stand for this hold: wherever joints are furthest from
-  ## their ends, stepping by `PACE`, never inside `CLEAR` of clear air.
-  ##   Found once, at rest, and kept through turn, as page before this one did:
-  ##     couple who have taken hold do not step to and fro as they turn.
-  let least = touching(rig) + CLEAR
-  result = least
-  var best = -Inf
-  var apart = least
-  while apart <= least + 1.0:
-    let room = roomAt(rig, band, links, apart, away)
-    if room > best:
-      best = room
-      result = apart
-    apart += PACE
 
 proc stoppedBy*(c: Couple; i: int): tuple[why: Stop, k: int] =
   ## What stops this connection here, if anything does, and at which of its two arms.
