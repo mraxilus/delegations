@@ -1113,11 +1113,18 @@ fifths of a turn where the floor said a whole one -- and it was not the neck ban
 still to choose where to stand.
 
 **Chains, which are why the engine is here at all.** The old solver winds a chain to one crossing
-and stops, so it can never draw a diamond or a swan. Standing for the turn, the same-name chain
-over the crown runs **free past one and a half turns**, where standing at rest it stopped at 0.28;
-the cross-name chain reaches **1.22**, past the diamond at one and short of the swan. The same-name
-chain at the neck band, which found no pose at rest at all and was recorded here as a fault rather
-than a finding, now stands and turns 0.44: the fault was the standing distance, not the band.
+and stops, so it can never draw a diamond or a swan. Standing for the turn, the cross-name chain
+over the crown reaches **1.22**, past the diamond at one and short of the swan at one and a half;
+the same-name chain over the crown reaches **0.70**, where standing at rest it stopped at 0.28. The
+same-name chain at the neck band, which found no pose at rest at all and was recorded here as a
+fault rather than a finding, now stands and turns 0.32: the fault was the standing distance, not
+the band. At the torso band it is 0.68 either way, unmoved.
+
+The same-name chain is built pillion, and the first figures taken for it here were taken face to
+face, where its two connections lie through each other. They read 0.44 at the neck and free past
+one and a half over the crown, and both were wrong -- a hold the couple would never collect there,
+measured by a probe that had dropped the argument saying so. The generator itself passes it
+correctly and always did, so `design/modelled.json` was never affected; the reading was.
 
 **Rejected: reading anything into `L-l` and `L-r` agreeing.** With centring at two hundred newtons
 per metre the two holds returned the same two figures reflected, which cannot be right -- face to
