@@ -8073,8 +8073,8 @@ suite "Wording":
     #   move together when only one should.
     var seen: Table[string, Wording]
     for key in Wording:
-      check isWordingSpoken(key)
-      let text = $wordingOf(key)
+      check hasWords(key)
+      let text = $wordingText(key)
       if text in seen:
         checkpoint(&"`{key}` says what `{seen[text]}` says: {text}")
         fail()
@@ -8086,7 +8086,7 @@ suite "Wording":
     # Tooltip is prose reader reads, not label. Stops at full stop, carries no stray space,
     #   and starts with capital -- three things eye notices and no reviewer reliably does.
     for key in Wording:
-      let text = $wordingOf(key)
+      let text = $wordingText(key)
       check text == strip(text)
       check "  " notin text
       check text.endsWith(".")
@@ -8098,12 +8098,12 @@ suite "Wording":
     #   Pinned here because surviving wording is decision rather than accident: where one
     #   side knew more, fuller sentence won.
     # Window worded radius tersely; page's prose won.
-    check $wordingOf(TipRowRadius) ==
+    check $wordingText(TipRowRadius) ==
       "Radius the point is drawn at, in world units; it shrinks with distance."
     # Page dropped that sun is drawn flat. Window knew, and that clause survives.
-    check "drawn flat" in $wordingOf(TipRowShines)
+    check "drawn flat" in $wordingText(TipRowShines)
     # Page named picking alone; window said why view rings what is picked.
-    check "rings each one" in $wordingOf(TipRowSelect)
+    check "rings each one" in $wordingText(TipRowSelect)
 
 
   test "a demo size names itself, and only the opening size says so":
