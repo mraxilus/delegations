@@ -602,7 +602,12 @@ func sheetOf(P: Parts): string =
     border-radius: 2px; font-style: normal; }
   .tag.keep { background: var(--keep); color: var(--card); }
   .tag.drop { background: var(--drop); color: var(--card); }
-  .pic.kept { border-color: var(--keep); background: var(--keep-wash); }
+  /* Cell is green only where Architect kept it *and* sim reaches all of it.
+     Kept alone coloured nothing: it was page's one colour and said nothing of
+     second tag, so page read finished wherever verdict was given. */
+  .pic.part { border-color: var(--mend); background: var(--mend-wash); }
+  .pic.unmet { border-color: var(--drop); background: var(--drop-wash); }
+  .pic.kept.met { border-color: var(--keep); background: var(--keep-wash); }
   .pic.dropped { border-color: var(--drop); background: var(--drop-wash); }
   .pic.dropped .art svg { opacity: .38; }
   .tag.mend { background: var(--mend); color: var(--card); }
