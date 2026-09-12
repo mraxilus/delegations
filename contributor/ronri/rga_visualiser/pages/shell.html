@@ -108,8 +108,10 @@
     overscroll-behavior: none;
     font-family: var(--sans);
     /* **Commit Mono splits its ligatures across two switches, and page needs both.**
-       Most of them ride on `calt`, which browsers apply unasked -- `&&`, `||`, `::`, `...`,
-       `/* */`, `#{` and their kin all draw joined with nothing set. Arrows and comparisons
+       Most of them ride on `calt`, which browsers apply unasked -- `&&`, `||`, `::`, `...`
+       and their kin all draw joined with nothing set. Block-comment delimiters ligate too,
+       and are named rather than quoted here: quoting closing one *inside* CSS comment ends
+       that comment on spot, and rest of this prose then parses as CSS. Arrows and comparisons
        do not: `=>`, `->`, `<-`, `<=`, `>=`, `!=` and `===` come from author's own opt-in
        sets, `ss01` for less-and-equal and `ss02` for arrows, and page drew them as separate
        glyphs until this line.
