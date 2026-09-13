@@ -235,9 +235,10 @@ proc readout() =
       let
         who = num(sw.arm[a][0]).int
         side = num(sw.arm[a][1]).int
-      html = html & cstring"<div class='arm'><h4><i style='background:" &
+      # Label, not heading: heading would take serif face (Article X.8).
+      html = html & cstring"<div class='arm'><p class='who'><i style='background:" &
         inkOf(side, who) & cstring"'></i>" & WHOSE[who] & cstring" " &
-        SIDES[side] & cstring"</h4>"
+        SIDES[side] & cstring"</p>"
       for d in 0 ..< DOFS.len:
         let
           k = a * DOFS.len + d

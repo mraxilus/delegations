@@ -71,7 +71,7 @@ const HEAD_BODY = """
 const SHEET = """<style>
 .rigview { max-width: 76rem; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
 .rigview header { max-width: 44rem; margin-bottom: 1.5rem; }
-.rigview h1 { font: 600 1.6rem/1.2 var(--serif); margin: 0.2rem 0 0.6rem; }
+.rigview h1 { font-size: 1.6rem; line-height: 1.2; font-weight: 600; margin: 0.2rem 0 0.6rem; }
 .rigview .lede { font: 0.95rem/1.55 var(--sans); color: var(--dim); margin: 0 0 0.6rem; }
 .rigwrap { display: grid; grid-template-columns: minmax(0, 1fr) 20rem;
   gap: 1.25rem; align-items: start; }
@@ -107,10 +107,10 @@ const SHEET = """<style>
 .ref code { font: .64rem var(--mono); color: var(--faint); }
 .ref span { color: var(--dim); font: .64rem/1.3 var(--mono); }
 .arm { margin-bottom: 0.7rem; }
-.arm h4 { font: 600 0.62rem/1 var(--mono); letter-spacing: 0.1em;
+.arm .who { font: 600 0.62rem/1 var(--mono); letter-spacing: 0.1em;
   text-transform: uppercase; color: var(--dim); margin: 0 0 0.3rem;
   display: flex; align-items: center; gap: 0.35rem; }
-.arm h4 i { width: 0.6rem; height: 0.6rem; border-radius: 50%; display: block; }
+.arm .who i { width: 0.6rem; height: 0.6rem; border-radius: 50%; display: block; }
 .dof { display: grid; grid-template-columns: 3.6rem 1fr 2.2rem 3.4rem;
   gap: 0.35rem; align-items: center; font: 0.64rem/1.4 var(--mono);
   color: var(--dim); }
