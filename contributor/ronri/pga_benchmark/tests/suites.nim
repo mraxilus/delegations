@@ -217,6 +217,8 @@ suite "Inspector":
     check demangle("wedge_u0__referenceZrigid3") == "wedge"  # plain identifier
     check demangle("dualBulk_u1__referenceZrigid3") == "dualBulk"  # overload index stripped
     check demangle("nimZeroMem") == "nimZeroMem"  # no suffix at all
+    check overloadOf("X5BX5D__u1__pgaZmultivectors") == 1  # overload index read back
+    check overloadOf("wedge_u0__referenceZrigid3") == 0 and overloadOf("nimZeroMem") == -1  # none
 
   test "functions are split and counted from fixture C":
     const MV = "tyObject_Multivector__h"
