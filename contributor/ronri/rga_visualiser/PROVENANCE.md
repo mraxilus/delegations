@@ -116,10 +116,24 @@ take it; the window's caption is `captionWindow()`, which reads the catalogue ra
 spelling the name a second time. A law requires that name to be title case and every other label
 to stay a word.
 
-*Checked.* Verified by build and by driven check: `declare` reports **106 wording keys**; a
+**Help rows and outcome sentences are the catalogue's too.** A help cell is a `Help` key, a
+tab's title a `NameTab` key and its line a `NoteTab` key; `help.nim` holds which cell sits in
+which row and nothing a reader sees. A cell is neither label nor sentence — it is read across
+its row — so it carries its own law: no capital opens it, no full stop closes it, and no two
+say one thing. A row naming a button or a key composes it through the catalogue's own funcs
+(`withButton`, `namesJoined`, `sectionNamed`, `wheelWordsTaught`), so the glue between a
+button's name and its words is the catalogue's as much as the words are, and the menu tab
+names each button by the button's own key, so a renamed button is renamed in its row. Outcome
+sentences are composed here as well, `derivedMessage` among them, which four sites had each
+written out; `message.nim` keeps how long an outcome stands. The guard sweeps `help.nim` for
+any quoted letter, since a word quoted there is a copy the catalogue cannot see. Not here: the
+algebra's own words — operation names and notation from `pga`'s declarations, kind words, key
+and button names — which help composes with rather than copies.
+
+*Checked.* Verified by build and by driven check: `declare` reports **175 wording keys**; a
 literal put back at a label call is refused, which is how three page-only strings in `state.ts`
-were found; and a `@WORD:` token naming an absent key fails the build with the line that carries
-it.
+were found; a key named only inside the catalogue is refused as shown by nobody; and a `@WORD:`
+token naming an absent key fails the build with the line that carries it.
 
 ## Driven Checks
 
@@ -1922,10 +1936,6 @@ rendering inflates all three readings, so the ratio is the part to hold.
 catalogue and neither front-end writes a literal, but the page still explains eleven controls
 where the window explains all of them. Whether it should reach every one is a design question
 rather than a defect, raised as `#145`.
-
-**The catalogue is three files rather than one.** `wording.nim` holds the labels and tooltips;
-`help.nim` holds the help rows and `message.nim` the outcome sentences. Folding the last two in
-is stage three, and until it lands "one catalogue" is true of one file of three.
 
 **A two-finger pan check has failed once and has not been reproduced.** Raised as `#153` with
 what was tried. It is recorded rather than quarantined, since a check giving two verdicts on one
