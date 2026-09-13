@@ -9,8 +9,8 @@
 | Rules   | 099a64692df68e6c |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
-Origin: built from the owner's brief, the constitution, the Nim style guide and the provenance
-guide, all supplied by the owner; reshaped on the owner's direction into two project roots
+Origin: built from the Architect's brief, the constitution, the Nim style guide and the provenance
+guide, all supplied by the Architect; reshaped on the Architect's direction into two project roots
 driven by koch with Atlas for dependencies. No vendored source.
 
 This file describes the checker as it is. How each pass got here is in the log (Article XI.2).
@@ -193,10 +193,10 @@ check cannot know what was agreed, so agreement holds by reading. It runs on the
 **Branch grammar mirrors paths: two, three or four segments, and the prefix decides.**
 `curator/<name>` owns the empty prefix, so every path passes; `curator/<project>/<name>` and
 `contributor/<domain>/<project>/<name>` own their folder. `main` passes because pushes to it are
-merges the owner approved.
+merges the Architect approved.
 
 - Rejected: a special case for the curator root; the empty prefix is one mechanism.
-- Cost: fixed segment counts reject nested branch names; the owner may merge red deliberately,
+- Cost: fixed segment counts reject nested branch names; the Architect may merge red deliberately,
   so this is a guard, not a gate.
 - Verified by `tscope.nim` over five domains, one curator project, the curator root and two
   rejected forms; `tdomains.nim` over 18 rejected branch forms.
@@ -335,7 +335,7 @@ different faces (repository issue 116).
   project can check that; the store owns the row's shape, so the store holds the law.
 
 **A `/common/` tree was costed and deferred.** Issue 134 asked for one, and named the bar for
-admitting anything to it: the curator and at least two contributor projects use it, with the users
+admitting anything to it: the curator and at least two contributor projects use it, each of them
 named so a later refactor can tell a common project nobody needs from one everybody does. The
 store is the only thing in the repository that clears that bar today. Compilers, Atlas checkouts
 and npm are pinned per project deliberately, and a tree with one inhabitant is a rename with a
@@ -384,7 +384,7 @@ than search, label as a hardcoded literal — and its schedule idiom is `check.y
   minutes were once measured used.
 - Unmeasured: whether a run authenticating as `GITHUB_TOKEN` spends the repository's allowance
   rather than the account's. It should, and that would keep the sweep off the budget every
-  delegate shares — but nothing here has measured it, and this session has twice found a
+  delegate shares — but nothing here has measured it, and this delegate has twice found a
   GitHub-metering belief wrong.
 
 ## Toolchain
@@ -460,7 +460,7 @@ Two traps, both found by driving rather than reasoning, and both changed the cod
   falls back to `PATH` rather than raising, since what `koch tools` produces moves between Nim
   versions.
 
-- Rejected: a directory the developer populates by hand, which leaves the defect for anyone who
+- Rejected: a directory a delegate populates by hand, which leaves the defect for anyone who
   has not; `choosenim`'s layout, a second convention that cannot serve a commit pin at all.
 - Costs: the checker reaches the network and may build a compiler — seconds for a release,
   minutes for a commit, once per pin; each cached toolchain is a few hundred megabytes and
@@ -649,7 +649,7 @@ verb builds the page and drives it through held keys, wheels, right-button pans,
 pinches and long presses. Testament tests rules — what a slide does to the pivot — and nothing
 in it presses a key, so a rule wired to the wrong event is the class of defect no suite here
 could see. `rga_visualiser` had 135 such checks and the runner ran none, which made every one of
-them evidence that its author ran it.
+them evidence that its writer ran it.
 
 **Enrolment is the verb, read from the project's own driver.** `verbDirs` reads the dispatch of
 `tools/build.nim` and selects projects naming `drive`, the derivation `nodeDirs` uses one step
@@ -694,7 +694,7 @@ one, which is what repository issue 132 raised with the figures.
 **The browser a declaration names is the browser that runs, and the snap serves.** `apt-get
 install chromium` on `ubuntu-latest` gives `/snap/bin/chromium`, a wrapper rather than a plain
 binary, and whether Playwright would launch one was unknown while this was written. It launches.
-Recorded because the opposite result had a different owner: a package that did not serve the
+Recorded because the opposite result had a different remedy: a package that did not serve the
 runner would have been the project's declaration to change, never a name quietly substituted
 here.
 
@@ -705,20 +705,20 @@ tree whose `build/` was removed. Verified by breaking: on the driver's 2.2.4 the
 fails inside `pga`, which is what sent this to a matrix. Verified by the gap it found before it
 ever went green: on a cold checkout the first run stopped at `Missing face … run 'assets'
 first` — every expensive step done and one cheap one missing, because `drive` chained `web`,
-`types` and `declare` but not `assets`. Invisible to its author, whose `build/fonts` was always
+`types` and `declare` but not `assets`. Invisible to its writer, whose `build/fonts` was always
 there.
 
 ## Watching main
 
 **Red `main` opens its own issue, because remembering to look had already failed twice.**
-CURATOR.md's session-start duty said to read the latest `push` run and named its own hole in the
+CURATOR.md's opening duty said to read the latest `push` run and named its own hole in the
 same breath -- *"nothing else watches it"*. A contributor's merge went red with nobody looking and
 was found by accident twenty-four minutes later; then the driven job was red on two `main` runs
 while the curator who had named that run as the leg still to read did not read it. Both times
 enforcement was somebody remembering, and failure was silent.
   `watch.yml` reads the run and opens issue labelled `curator` when it concludes failure, which is
-  same session-start duty's first read. No new rule: existing rule now produces artefact rule
-  already asks next session to read, and repository's own answer to session ending and taking its
+  same opening duty's first read. No new rule: existing rule now produces artefact rule
+  already asks next delegate to read, and repository's own answer to delegate ending and taking its
   intentions with it is issue labelled `curator`.
   Separate workflow because run cannot watch its own outcome. `workflow_run` fires only from copy
   on default branch, so it cannot be driven from branch at all -- which is why it also takes
@@ -772,7 +772,7 @@ while `audit`, `scope` and `commits` must stay required. Every job added is name
 `needs` as well as declared: a job outside it is a red check that cannot block a merge, the one
 mistake this arrangement makes easy to make and impossible to see afterwards.
 
-- Rejected: renaming the required checks, which would make the owner reconfigure `main`;
+- Rejected: renaming the required checks, which would make the Architect reconfigure `main`;
   computing the matrix in shell, which is untested glue where koch is tested.
 - Branch names and event kind reach koch through the environment, never interpolated into the
   script. Nim installs under the runner's temp directory, never the workspace, and `.gitignore`
@@ -943,7 +943,7 @@ either lever repository issues 79 and 80 were weighing.
   what the cache hides is a rebuild rather than an upstream that moved underneath it.
 
 **GitHub's allowance is one account's, and every delegate spends it.** Measured 2026-09-12, on
-this repository, after a curator session stopped being able to close an issue:
+this repository, after a curator delegate stopped being able to close an issue:
 
 | | limit | state when it failed |
 |---|---|---|
@@ -952,9 +952,10 @@ this repository, after a curator session stopped being able to close an issue:
 | Secondary, shared | 80 content-creating per minute, 500 per hour | not reached, ~15 made |
 
 The two primary allowances are separate, which is how the cause was found: `actions_list` and
-`get_job_logs` kept answering while `list_issues` refused with *"API rate limit already exceeded
-for user ID 1268439"*. A GraphQL call gives itself away by its cursor pagination — `after` and an
-`endCursor` from a `pageInfo` — and a refused mutation fails at *"failed to get issue ID"*, which
+`get_job_logs` kept answering while `list_issues` refused with
+`API rate limit already exceeded for user ID 1268439`. A GraphQL call gives itself away by
+its cursor pagination — `after` and an `endCursor` from a `pageInfo` — and a refused mutation
+fails at *"failed to get issue ID"*, which
 is the node lookup before the write.
 
 **The split is by API and by nothing else, and this table said otherwise for a day.** Its rows
@@ -981,17 +982,17 @@ labels could not survive that, and the charter wording derived from them could n
   one call says nothing about another, so try the one you need before concluding GitHub is shut.
   The wrong version would have had a contributor sit out a window in which opening their pull
   request would have worked.
-- **Per user, not per session.** Every delegate posts as one account, so one allowance covers every
-  session running at once. `rga_visualiser` merged three pull requests and raised an issue in the
-  hours before this, and that is not a complaint about that session — it is the shape of the
-  problem. Nobody can see what the others have spent.
+- **Per account, not per delegate.** Every delegate posts as one account, so one allowance
+  covers every delegate running at once. `rga_visualiser` merged three pull requests and
+  raised an issue in the hours before this, and that is not a complaint about that delegate —
+  it is the shape of the problem. Nobody can see what the others have spent.
 - **The expensive half was avoidable and was the curator's.** The MCP server's own guidance says to
-  page in batches of five to ten and to ask for minimal output; this session listed twenty, thirty
+  page in batches of five to ten and to ask for minimal output; this delegate listed twenty, thirty
   and forty issues with bodies and comments, several times, and read back things `git log` already
   knew. Guidance now sits in `CONTRIBUTOR.md` and `CURATOR.md` under *"Reading the queue without
   spending the repository's budget"*.
 - **It did not clear quickly.** Twenty minutes after the first refusal it was still refusing, so a
-  session that hits this does not wait it out inside one piece of work. The honest outcome is the
+  delegate that hits this does not wait it out inside one piece of work. The honest outcome is the
   unticked item on the carried list, which is what happened.
 - Unmeasured: what a single `list_issues` actually costs in points. The server surfaces no
   `x-ratelimit-remaining`, so the budget is spent blind, and that is the strongest argument for
