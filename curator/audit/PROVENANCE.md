@@ -244,6 +244,24 @@ drifted that way.
 - Cost: a paragraph reworded by one word passes; the check catches a copy, never a paraphrase.
 - Verified by `tduplicates.nim`.
 
+## Faces
+
+**Every presentation target ships the faces Article X.8 names, and four line forms hold it.**
+A source is read only where it declares `font-family` or the `font` shorthand, and the
+checker's own project is exempt, since it names the families as data and carries fixture
+pages. A page linking a font host is a finding, since the viewer then fetches the face instead
+of receiving it. Every stack's first family is Noto Serif, Noto Sans or Commit Mono, subset
+aliases included; the fallbacks after it are free, since the shipped face is what the viewer
+gets. A selector whose subject is `h1` to `h6` sets the serif, with one level of `var()`
+resolved from the page's own custom properties, and a selector styling something inside a
+heading is not styling the heading. A source naming Commit Mono enables `calt`, where its
+functional ligatures live.
+
+- Cost: declarations are read and expressions are not, so a stack assembled through `&` is
+  unseen, and so is a heading styled through a class alone. The desktop atlas is outside the
+  ligature rule by X.8 itself, since Dear ImGui shapes no text, and it declares no CSS.
+- Verified by `tfaces.nim`, each rule by line, the label beside a heading among them.
+
 ## Branch scope
 
 **Branch grammar mirrors paths: two, three or four segments, and the prefix decides.**

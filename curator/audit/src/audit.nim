@@ -15,7 +15,7 @@
 import std/[options, os, sequtils, sets, strutils]
 import ./[
   findings, kinds, prose, form, justification, checker, layout, provenance, glossary,
-  dependencies, toolchain, plan, workflows, record, prompts, duplicates, tree, domains,
+  dependencies, toolchain, plan, workflows, record, prompts, duplicates, tree, domains, faces,
 ]
 
 export layout.Tree, layout.Entry, layout.projectDirs
@@ -132,6 +132,10 @@ proc auditTree*(tree: Tree): seq[Finding] =
       if is_governed and not e.path.endsWith("GLOSSARY.md"):
         result.add checkPeopleWords(e.path, e.content)
     if e.path in PROMPT_PATHS: result.add checkPrompt(e.path, e.content)
+    # Checker's own project names these families as data and carries fixture pages, so it
+    #   would report itself; it holds no presentation target of its own to check.
+    if not e.path.startsWith(DRIVER_DIR & "/"):
+      result.add checkFaces(e.path, e.content)
     for dir in dirs:
       if e.path == dir & "/PROVENANCE.md":
         result.add checkProvenance(e.path, e.content, stamp_now)
