@@ -142,7 +142,7 @@ wheel or puts two fingers on the canvas, so nothing in it catches a rule wired t
 event. `tools/drive/` does, through Playwright, against the page `tools/build.nim web`
 assembles; `nim r tools/build.nim drive` runs both front-ends.
 
-**161 checks pass**, one module per section of what the page does, counted by running and
+**162 checks pass**, one module per section of what the page does, counted by running and
 never read off this file:
 
 | Module | Covers |
@@ -229,12 +229,24 @@ runner earns 24 ms and takes about 20 of 94 ms. `driveListFills` reads the media
 run saw, derives the budget, and divides by a conservative 4 rows per millisecond — against
 11.4 measured under 5 ms slices and 6.4 under 24 ms ones.
 
+**A touch id is never reused across gestures, and every gesture starts by asking the page
+whether any pointer is still down.** The page keys live pointers by id, so an id reused
+from the gesture before overwrites a finger left standing by a dropped or reordered lift in
+silence, and the pair the page reads is not the pair the harness sent — which is the one
+mechanism found for a two-finger pan reading as a pinch (repository issues 153 and 154). A
+fresh id per finger leaves a stale one standing where the guard names it and the gesture's
+own check fails on it. The guard reads events the browser delivered, through a listener the
+harness installs on `window`, never the page's own bookkeeping: the page's surface is not
+widened for a test, and what is asserted is what the page received. It is silent when
+clean and reports the stale ids when not, and one positive check stands before the pan,
+which follows a tap.
+
 **The chip row's check asserts reach beside fit.** `driveChipRowFits` requires exactly two
 toggles wherever they stand alongside zero overflow, since a row that fits because two
 controls were dropped is broken more quietly, and sweeps 396, 395 and 394, because a rule
 written one pixel out passes every sweep that never lands on it.
 
-*Checked.* Verified by running: 161 of 161 through `tools/build.nim drive`, both front-ends,
+*Checked.* Verified by running: 162 of 162 through `tools/build.nim drive`, both front-ends,
 software-rendered, here and on the runner — `driven` gates `audit`, so a green push run is
 the runner's own word (repository issues 47 and 91). **Unmeasured**: the figures are this
 container's and say more about SwiftShader than about any GPU; bands are what the checks
@@ -1938,7 +1950,8 @@ where the window explains all of them. Whether it should reach every one is a de
 rather than a defect, raised as `#145`.
 
 **A two-finger pan check has failed once and has not been reproduced.** Raised as `#153` with
-what was tried. It is recorded rather than quarantined, since a check giving two verdicts on one
-tree is what the determinism rule calls wrong.
+what was tried. The harness now gives every finger a fresh id and asserts no pointer is down
+before each gesture (see Driven Checks), so a stale finger is named rather than masked; the
+question stays open until a run reproduces it or names what it was.
 
 [replications]: https://gitlab.com/mraxilus/replications
