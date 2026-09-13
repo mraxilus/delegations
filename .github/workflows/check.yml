@@ -84,6 +84,9 @@ jobs:
             && format('origin/{0}', github.base_ref)
             || github.event.before }}
       SWEEP: ${{ github.event_name == 'schedule' && '--sweep' || '' }}
+      # Branch decides what plan keeps: curator branch its curator projects, contributor
+      #   branch its own; empty on push and schedule, so main and sweep keep every project.
+      BRANCH: ${{ github.head_ref }}
     steps:
       - uses: actions/checkout@v7
         with:
