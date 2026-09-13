@@ -464,8 +464,8 @@ suite "arms move as arms do":
       check deepest > -THROUGH - 1e-9
 
   test "every shoulder hangs from its own body":
-    ## Architect, on viewer at 1.68 of same-name crown turn: "The bodies are too
-    ## rigid, the arms get dislocated because of it."  Measured, no joint parts
+    ## Architect, on viewer at 1.68 of same-name crown turn: bodies "too rigid",
+    ## arms "get dislocated because of it".  Measured, no joint parts
     ## by more than four millimetres; what reads as dislocation is that shoulder
     ## joint sits at 0.18 out and 1.40 up, where torso's stadium is 0.166 wide
     ## and its dome has dropped below 1.24, so arm hangs from point nine
