@@ -166,6 +166,10 @@ Header table for `PROVENANCE.md`:
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 ```
 
+One row is optional: `| Pruned | <commit> |`, the commit before the last prune of this file,
+so that version's own `Pruned` row points further back and history is a chain
+`git show <commit>:<path>` follows. The audit checks the commit touched the file.
+
 ### Create it at the start, not the end
 
 Open the file before writing code. Begin with the header table above. The review line is the
@@ -218,7 +222,8 @@ and answered questions come out; `## Open questions` holds only what is still op
 the last section. A rules audit that binds nothing writes nothing but the `Rules` row, since
 the log already records that it happened; one that binds rewrites the sections it binds. No
 section is headed by a date. If the file starts reading as a diary of what happened, prune it
-until it reads as a description of what is.
+until it reads as a description of what is. A record over 2,000 lines is a finding, and the
+remedy is the same prune: git keeps what came out, and the `Pruned` row says where.
 
 ### What a good entry looks like
 

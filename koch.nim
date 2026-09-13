@@ -5,7 +5,7 @@
 ##   |---------|-------------------------------------------------------------------------|
 ##   | Command | Effect                                                                  |
 ##   |---------|-------------------------------------------------------------------------|
-##   | tree    | layout, form, comments, provenance, glossary over files git sees        |
+##   | tree    | layout, form, comments, provenance, glossary, prompts, copies; git sees |
 ##   | deps    | `atlas --noexec rep` in every project holding atlas.lock, or in one     |
 ##   | types   | restore node tools, then type-check scripts, projects one change asks   |
 ##   | driven  | restore, build page, drive it through real events, on that project's pin|
@@ -150,7 +150,9 @@ proc run(options: Options): int =
   var found: seq[Finding]
   case options.command
   of "tree":
-    found = options.root.readTree.auditTree
+    let tree = options.root.readTree
+    found = tree.auditTree
+    found.add prunedFindings(options.root, tree)
   of "deps":
     let tree = options.root.readTree
     found = restoreJobs(options.root, tree.jobsFor(options.dirsOf(tree)))
@@ -221,6 +223,7 @@ proc run(options: Options): int =
     let tree = options.root.readTree
     let (branch, base) = (options.branchOrDefault, options.baseOrDefault)
     found = tree.auditTree
+    found.add prunedFindings(options.root, tree)
     found.add typeJobs(options.root, tree, options.scopedDirsOf(tree))
     found.add ciJobs(options.root, tree, tree.jobs(changedPaths(options.root, base)))
     found.add checkScope(branch, changedPaths(options.root, base), movedPaths(options.root, base))

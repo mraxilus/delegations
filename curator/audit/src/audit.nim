@@ -15,7 +15,7 @@
 import std/[options, os, sequtils, sets, strutils]
 import ./[
   findings, kinds, prose, form, justification, checker, layout, provenance, glossary,
-  dependencies, toolchain, plan, workflows,
+  dependencies, toolchain, plan, workflows, record, prompts, duplicates, tree, domains, faces,
 ]
 
 export layout.Tree, layout.Entry, layout.projectDirs
@@ -45,6 +45,25 @@ proc writeRulesRows*(root: string, tree: Tree): seq[string] =
       if written != e.content:
         writeFile(root / path, written)
         result.add path
+
+
+proc prunedFindings*(root: string, tree: Tree): seq[Finding] =
+  ## Report `Pruned` row naming commit that never touched its record, read from git log.
+  ##   Lives beside static pass rather than in it, since form of row is pure check's and
+  ##   existence of commit is git's; koch runs both under `tree` and `ci`.
+  ##   Needs full log: shallow clone reports true row as missing, so static job fetches depth 0.
+  for dir in tree.projectDirs:
+    let path = dir & "/PROVENANCE.md"
+    for e in tree:
+      if e.path != path: continue
+      let named = e.content.prunedOf
+      if not named.isCommitId: continue
+      let touched = gitFields(root, ["log", "-z", "--format=%H", "--", path])
+      if not touched.anyIt(it.strip.startsWith(named)):
+        result.add finding(
+          path, 0,
+          "`" & PRUNED & "` must name commit that touched this record; got `" & named & "`.",
+        )
 
 
 proc lockFindings(tree: Tree, dirs: openArray[string]): seq[Finding] =
@@ -97,6 +116,7 @@ proc auditTree*(tree: Tree): seq[Finding] =
   result.add tree.lockFindings(dirs)
   var paths = initHashSet[string]()
   for e in tree: paths.incl e.path
+  var documents: seq[(string, string)]
   for e in tree:
     if e.kind.isNone: continue
     if e.path == "GLOSSARY.md": result.add checkGlossary(e.path, e.content)
@@ -104,8 +124,22 @@ proc auditTree*(tree: Tree): seq[Finding] =
     result.add checkForm(e.path, e.content, rule)
     if rule.is_prose: result.add checkProse(e.path, e.content, rule.syntax)
     result.add checkJustification(e.path, e.content, rule)
+    if e.kind.get == Kind.Markdown:
+      documents.add (e.path, e.content)
+      # Root files and curator records are held to glossary's people words; contributor
+      #   prose is its own, and glossary itself lists words it avoids.
+      let is_governed = '/' notin e.path or e.path.startsWith(CURATOR & "/")
+      if is_governed and not e.path.endsWith("GLOSSARY.md"):
+        result.add checkPeopleWords(e.path, e.content)
+    if e.path in PROMPT_PATHS: result.add checkPrompt(e.path, e.content)
+    # Checker's own project names these families as data and carries fixture pages, so it
+    #   would report itself; it holds no presentation target of its own to check.
+    if not e.path.startsWith(DRIVER_DIR & "/"):
+      result.add checkFaces(e.path, e.content)
     for dir in dirs:
       if e.path == dir & "/PROVENANCE.md":
         result.add checkProvenance(e.path, e.content, stamp_now)
         result.add checkCitations(e.path, e.content, dir & "/" & TESTS_DIR & "/", paths)
+        result.add checkRecord(e.path, e.content)
       if e.path == dir & "/GLOSSARY.md": result.add checkGlossary(e.path, e.content)
+  result.add checkDuplicates(documents)
