@@ -12,7 +12,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, sequtils, sets, strutils]
+import std/[options, os, sequtils, sets, strutils]
 import ./[
   findings, kinds, prose, form, justification, checker, layout, provenance, glossary,
   dependencies, toolchain, plan, workflows,
@@ -30,6 +30,21 @@ func rulesStamp*(tree: Tree): string =
       if e.path == rule: content = e.content
     contents.add content
   contents.stamp
+
+
+proc writeRulesRows*(root: string, tree: Tree): seq[string] =
+  ## Rewrite every project record's `Rules` row to tree's stamp; return paths that changed.
+  ##   Record is read from tree, as checks read it, and written back only when row moves, so
+  ##   diff is that row alone and duty 1's hand step is one verb.
+  let stamp_now = tree.rulesStamp
+  for dir in tree.projectDirs:
+    let path = dir & "/PROVENANCE.md"
+    for e in tree:
+      if e.path != path: continue
+      let written = e.content.withRulesRow(stamp_now)
+      if written != e.content:
+        writeFile(root / path, written)
+        result.add path
 
 
 proc lockFindings(tree: Tree, dirs: openArray[string]): seq[Finding] =

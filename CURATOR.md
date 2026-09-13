@@ -172,9 +172,9 @@ in one window, four through and three refused.
    project's `PROVENANCE.md` (`Rules` row). Change one and the `audit` job fails on every
    project until re-stamped. In the same pull request: read the diff, re-audit every project
    against each changed rule, apply what the rule now demands, update each project's
-   `PROVENANCE.md` (affected sections and the `Rules` row from `nim r koch stamp`) in its own
-   commit, and finish with `nim r koch ci` green. Nothing merges half-propagated. `CURATOR.md`
-   is not stamped; editing it touches no project.
+   `PROVENANCE.md` (affected sections, then `nim r koch stamp --write` for every `Rules`
+   row) in its own commit, and finish with `nim r koch ci` green. Nothing merges
+   half-propagated. `CURATOR.md` is not stamped; editing it touches no project.
 
 2. **Merge-process changes.** Anything a pull request passes through is the merge process:
    `.github/workflows/check.yml`, `koch.nim`, `.gitignore`, `.gitattributes`,
@@ -348,7 +348,7 @@ then `./koch <command>`). Every check is a module under `curator/audit/src/`, te
 | `scope` | changed paths | branch grammar; project paths inside prefix |
 | `commits` | commit subjects | Conventional Commits; scope equals branch scope |
 | `base` | paths base gained | branch carries base's rules and checker |
-| `stamp` | rules documents | prints the stamp for `PROVENANCE.md` |
+| `stamp` | rules documents | prints the stamp; `--write` sets every `Rules` row to it |
 | `ci` | fresh `origin/main` | tree, types, changed projects, driven, scope, commits, base |
 
 `ci` is minutes, not the seconds the static pass costs, whenever a changed project carries a

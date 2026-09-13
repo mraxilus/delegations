@@ -1,9 +1,10 @@
 ## Enforce per-project Nim pin, and driver version derived from it (CURATOR.md duty 7).
-##   Project's compiler is property of project, not of repository: `pga` needs 2.2.6 or
-##   later, `dance_ontology` crashes compiler on 2.2.8 and later, so no single version
-##   serves both. Pin therefore lives in project's nimble file as `requires "nim == x.y.z"`,
-##   beside package requirements Atlas already reads, and is exact for same reason
-##   `atlas.lock` is exact: it records what was verified, never range nobody tried.
+##   Project's compiler is property of project, not of repository: `pga` needs lexer change
+##   no release carries yet, so `rga_visualiser` pins commit while every other project pins
+##   release, and no single version serves them all. Pin therefore lives in project's nimble
+##   file as `requires "nim == <pin>"`, beside package requirements Atlas already reads, and
+##   is exact for same reason `atlas.lock` is exact: it records what was verified, never
+##   range nobody tried.
 ##
 ##   Driver version, which builds koch and runs static checks, is not second pin: it is
 ##     `curator/audit`'s pin, since koch compiles that project's modules. Workflow names it
