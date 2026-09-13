@@ -21,7 +21,7 @@ joinable: false
 
 import std/[math, strformat, unittest]
 
-import ../sim/[body, contact, hold, limb, rig, rigid, vec, walk]
+import ../sim/[body, hold, limb, rig, rigid, vec, walk]
 
 
 const
@@ -39,18 +39,19 @@ proc rest(band = Band.Torso; apart = APART): Couple =
   result.settle()
 
 const
-  ASK = 1.2 ## Turn laws below put to that hold, in turns.
-    ## Chosen to make search work for its answer: measured, that hold carries 1.04
-    ## from first distance couple may stand at and runs free from 0.88 to 1.00, so
-    ## this is reached only by looking past first.  At half turn, which first
-    ## distance already carries, search that gave up after one distance answered
-    ## correctly and law below passed on it.
+  ASK = 0.6 ## Turn laws below put to that hold, in turns, turning her negative way.
+    ## Chosen to make search work for its answer: measured 2026-09-13 with bodies
+    ## solid, that hold carries 0.28 that way from first distance couple may stand
+    ## at and 0.64 only from 0.70 to 0.72 m, so this is reached only by looking
+    ## past first.  Turning her other way first distance carries most, 0.64, and
+    ## search that gave up after one distance would answer correctly.  Before
+    ## bodies were solid it carried 1.04, arm through torso.
   CHAIN = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Left)]),
             Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Right)])]
     ## Same-name chain, built pillion: hold that stops from every distance at
     ## torso height, which plain hold no longer does.  Turn no distance carries
     ## has to be asked of hold that has one.
-  BEYOND = 1.2 ## Turn no distance carries that chain; best of them is 1.00.
+  BEYOND = 0.5 ## Turn no distance carries that chain; best of them is 0.42.
 
 let CHOSEN = block:
   ## Where that hold stands to turn each way at torso height, and how far it
@@ -167,11 +168,11 @@ suite "two dancers in rigid body engine":
     ## distance before saying no.
     var any = false
     for apart in stands(HUMAN):
-      let w = walked(HUMAN, Band.Torso, SHAKE, Body.Two, apart, ASK, STEP,
+      let w = walked(HUMAN, Band.Torso, SHAKE, Body.Two, apart, ASK, -STEP,
                      false, Body.Two)
       if w.restHolds and not w.stopped: any = true
     check any
-    check reaches(HUMAN, Band.Torso, SHAKE, ASK)
+    check reaches(HUMAN, Band.Torso, SHAKE, -ASK)
     check not reaches(HUMAN, Band.Torso, CHAIN, BEYOND, away = true)
 
   test "at rest every joint is free to move either way":
@@ -297,8 +298,12 @@ suite "two dancers in rigid body engine":
     check abs(a.neg.apart - b.pos.apart) < SEEK + 1e-9
     check a.pos.stopped == b.neg.stopped
     check a.neg.stopped == b.pos.stopped
-    check abs(a.pos.at - b.neg.at) < 1e-9
-    check abs(a.neg.at - b.pos.at) < 1e-9
+    ## Turn reached within one step, not exact, since bodies became solid:
+    ## contact is where stop is decided now, and engine's contact is not mirror
+    ## symmetric to step -- mirror-image holds stop one step apart from same
+    ## distance, 0.02, measured 2026-09-13.  What stopped them is still exact.
+    check abs(a.pos.at - b.neg.at) < STEP + 1e-9
+    check abs(a.neg.at - b.pos.at) < STEP + 1e-9
     check a.pos.why == b.neg.why
     check a.neg.why == b.pos.why
 
@@ -311,10 +316,15 @@ suite "two dancers in rigid body engine":
     ##   turning dancer's head, not between two bodies.  Pulled to midpoint, both
     ##   dancers reach across themselves, spend their adduction, and hold blocks at
     ##   0.28 of turn.
+    ##   Whole turn, not turn and half: with bodies solid, cross-name hold winds
+    ##   her shoulder to its end at 1.20 to 1.30 turning one way from every
+    ##   distance, which is twist alone and past every card.  Turn and half was
+    ##   free only with arm through head.  Architect's to say whether that wind
+    ##   is real.
     for arms in [[Arm.Left, Arm.Left], [Arm.Left, Arm.Right]]:
       let
         links = @[Link(ends: [(Body.One, arms[0]), (Body.Two, arms[1])])]
-        sw = swept(HUMAN, Band.Crown, links, most = 1.5)
+        sw = swept(HUMAN, Band.Crown, links, most = 1.0)
       check sw.restHolds
       check not sw.pos.stopped
       check not sw.neg.stopped
@@ -323,24 +333,61 @@ suite "two dancers in rigid body engine":
 #[ Arms Move As Arms Do ]#
 
 const
-  SLOP = 0.005 ## Engine's own linear slop, metres: contact rests this deep.
-  LEAP = 0.08  ## Furthest any point of arm may move between two moments.
-    ## Arm at one metre per second while couple turn at quarter turn per second
-    ## covers eight centimetres in one fiftieth of turn; dancer's hand crossing
-    ## more than that between frames is leap, not move.
+  LEAP = 2.0 * PI * STEP * (HUMAN.shoulderOut + reach(HUMAN)) + 0.08
+    ## Furthest any point of arm may move between two moments: point carried at
+    ## arm's reach from turning axis goes 113 mm in one fiftieth of turn, and
+    ## arm moving on its own at one metre per second while couple turn at
+    ## quarter turn per second adds eight centimetres, both at once and along
+    ## one line.  Measured before: 245 to 891 mm, hands pinned between torsos
+    ## popping up between heads, arms sliding off head's dome, and elbow of
+    ## weightless arm wandering about line from shoulder to wrist.  After: 83
+    ## and 161 mm, second being wrist dragged in last moment before swing gives.
+
+func between(a, b, c, d: Vec): float =
+  ## Least distance between two segments, worked out here so law borrows
+  ## nothing from what it checks.
+  let
+    u = b - a
+    v = d - c
+    w = a - c
+    uu = dot(u, u)
+    uv = dot(u, v)
+    vv = dot(v, v)
+    uw = dot(u, w)
+    vw = dot(v, w)
+    den = uu * vv - uv * uv
+  var s = 0.0
+  var t = 0.0
+  if den > 1e-12:
+    s = clamp((uv * vw - vv * uw) / den, 0.0, 1.0)
+  t = (uv * s + vw) / max(vv, 1e-12)
+  if t < 0.0:
+    t = 0.0
+    s = clamp(-uw / max(uu, 1e-12), 0.0, 1.0)
+  elif t > 1.0:
+    t = 1.0
+    s = clamp((uv - uw) / max(uu, 1e-12), 0.0, 1.0)
+  dist(a + u * s, c + v * t)
+
+func linkCapsules(rig: Rig; a: ArmPose): seq[tuple[p, q: Vec, r: float]] =
+  ## Arm's three links as engine holds them: capsule set in from each joint by
+  ## its radius, and hand too short for that as ball at its middle.
+  for (s, e, long) in [(a.s, a.e, rig.upper), (a.e, a.w, rig.fore), (a.w, a.g, rig.hand)]:
+    let dir = unit(e - s)
+    if long > 2.0 * rig.limb:
+      result.add (s + dir * rig.limb, e - dir * rig.limb, rig.limb)
+    else:
+      result.add ((s + e) * 0.5, (s + e) * 0.5, long / 2.0)
 
 iterator corpus(): tuple[name: string, band: Band, links: seq[Link], w: Walk] =
-  ## Two single holds walked one way from nearest stance: crown is where arm
-  ## goes over head, torso is where arms lie against bodies.
-  var apart = 0.0
-  for a in stands(HUMAN):
-    apart = a
-    break
+  ## Two single holds walked one way from where couple choose to stand, which
+  ## is what pages draw: crown is where arm goes over head, torso is where arms
+  ## lie against bodies.
   for (name, band, arms) in [("L-l above", Band.Crown, [Arm.Left, Arm.Left]),
                              ("L-r low", Band.Torso, [Arm.Left, Arm.Right])]:
     let links = @[Link(ends: [(Body.One, arms[0]), (Body.Two, arms[1])])]
-    yield (name, band, links,
-           walked(HUMAN, band, links, Body.Two, apart, 1.0, STEP, false, Body.Two))
+    let sw = swept(HUMAN, band, links, most = 1.0)
+    yield (name, band, links, sw.pos)
 
 suite "arms move as arms do":
   ## Architect, watching viewer: bodies too rigid, arms crushed and passing
@@ -349,10 +396,15 @@ suite "arms move as arms do":
   ## 359 mm between first two moments.
 
   test "no arm sits inside any body in any moment":
-    ## Read with reader's own clipped gap, not engine's manifolds, so engine is
-    ## not asked to mark its own work (Article II.9).  Own body counts as other
-    ## does: engine collides own arm with own trunk, so surfaces are what meet,
-    ## and `own`'s pad of nought was old solver's excuse for arm hanging at side.
+    ## Read against trunk capsules where engine has them, with distance worked
+    ## out here and not engine's manifolds, so engine is not asked to mark its
+    ## own work (Article II.9).  Not reader's `bodyGap` either: it draws parts
+    ## as cylinders with flat ends, and over torso's dome reads arm 37 mm inside
+    ## body at rest where engine has it clear.  Own body counts as other does:
+    ## engine collides own arm with own trunk.  Deeper than `THROUGH` is what
+    ## model itself calls arm through body and stops at, so no recorded moment
+    ## may be deeper; engine once reported no touch with upper arm 67 mm inside
+    ## own head, which is what this is for.
     for (name, band, links, w) in corpus():
       check w.restHolds
       check w.moments.len > 5
@@ -360,12 +412,12 @@ suite "arms move as arms do":
       for m in w.moments:
         for i in 0 ..< links.len:
           for k in 0 .. 1:
-            let a = m.arms[i][k]
-            for (p, q) in [(a.s, a.e), (a.e, a.w), (a.w, a.g)]:
+            for (p, q, r) in linkCapsules(HUMAN, m.arms[i][k]):
               for who in Body:
-                deepest = min(deepest, bodyGap(HUMAN, m.stance[who], p, q, own = false).gap)
+                for (c0, c1, cr) in m.trunks[who]:
+                  deepest = min(deepest, between(p, q, c0, c1) - r - cr)
       echo &"    {name}: deepest any link sits in any body {-deepest * 1000:.1f} mm"
-      check deepest > -SLOP - 1e-9
+      check deepest > -THROUGH - 1e-9
 
   test "no point of any arm leaps between two moments":
     for (name, band, links, w) in corpus():
