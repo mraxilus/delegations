@@ -180,6 +180,16 @@ files, 16 lowercase hex digits. CURATOR.md is excluded, so curator-only edits to
   CRLF invariance; by `taudit.nim`, one byte in any rules document goes stale in every project
   and one byte in CURATOR.md in none.
 
+**`koch stamp --write` sets every record's `Rules` row itself.** The row is rewritten in place
+by `withRulesRow`, found as `headerFields` finds it, so what is written is what the check then
+reads; a record already current is not touched, and each path that moved is printed. Duty 1's
+four hand edits were one step too many (curator review, C10).
+
+- Rejected: writing the whole header back, which would reformat a table its writer padded.
+- Verified by `tprovenance.nim`: the new stamp lands, padding and every other byte stay, a
+  second write is a no-op, an absent row leaves the source untouched, and only the first
+  `Rules` row moves.
+
 ## Record shape
 
 **A record is read as `#` lines with fenced code blanked, and held to four forms the guide
@@ -843,6 +853,10 @@ runner confirms, it never discovers.
 - Cost: a curator whose change selects every project needs every pinned compiler, which
   resolution provides, plus npm, a browser and each driven project's declared packages, which it
   does not.
+- `ciJobs` resolves pins once, restores once, runs the suites, then drives the projects that
+  carry driven checks. Before it, `runJobs` and `drivenJobs` each restored a driven project,
+  and the second restore was Atlas confirming nothing had moved: seconds per project per run,
+  and work nobody asked for. A failed restore still stops driving alone, as it did.
 
 Two traps, each found by a merge rather than by reading.
 
@@ -852,8 +866,8 @@ Two traps, each found by a merge rather than by reading.
   project against its own `CONTRIBUTOR.md`; git merges their edits cleanly when they touch
   different sections, but the merged document digests to a value matching neither, so whichever
   merged second would leave `main` red on every project. The cure is to stack rather than
-  discover: merge the earlier branch into the later, resolve each `Rules` row to what
-  `nim r koch stamp` reports for the merged rules, and fix the merge order.
+  discover: merge the earlier branch into the later, run `nim r koch stamp --write` on the
+  merged rules, and fix the merge order.
 
 ## The checker checks itself
 
