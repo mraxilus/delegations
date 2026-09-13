@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 0d155c6b8d8a6dbd |
+| Rules   | 5aa3c7b7f2865a05 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief, the constitution, the Nim style guide and the provenance
@@ -554,34 +554,29 @@ reports the first differing line.
 ## Scoped checks
 
 **The static pass stays whole-tree; only compilation is scoped.** A project enters the test set
-when a changed path under it is anything but its three records (`PROJECT_FILES`), and a change
-to `koch.nim`, `koch.nim.cfg` or `curator/audit/src/` selects every project, because how each is
-checked changed. A path inside no project selects nothing by itself. The branch then keeps
-what it owns: a curator branch the curator projects, a contributor branch its own project,
-`main` or a branch outside the grammar every project, since the push run and the weekly sweep
-are the repository's rather than one delegate's (CURATOR.md duty 11). A contributor's suite is
-the contributor's to run; a curator's change to the runner is proven on `main`. Chosen against
+when a changed path under it is anything but its three records (`PROJECT_FILES`); a change to
+`koch.nim` or `koch.nim.cfg` selects the driver's project, whose suites read them, and a change
+under `curator/audit/src/` selects it as code. Nothing selects every project: the push run on
+`main` plans against the push's own base and the weekly run against its window, so every run
+compiles what changed and nothing else (CURATOR.md duty 11). A contributor's suite is the
+contributor's to run. A path inside no project selects nothing by itself. Chosen against
 scoping the static pass on the figures below: it is hundredths of a second against tens of
 seconds of suites, so scoping it buys nothing measurable and costs a second code path plus the
 whole-tree layout and stamp guarantees. Rules propagation therefore compiles nothing while
 every stamp is still checked.
 
-- Cost: a merged change can leave an unrelated project red until it next changes; the weekly
-  sweep is the guard, and it is weaker than compiling everything on every push.
-- Cost, and it is deliberately the safe side of the trade: `isChecker` reads the path, never
-  the content, so editing a comment in `koch.nim` or under `curator/audit/src/` selects every
-  project. Measured 2026-09-08: a pull request whose only changes to those two files were doc
-  comments compiled four projects and drove a browser, 674 s, where the same tree's other
-  commits compiled nothing. The machinery to do better exists — `comments.nim` already
-  extracts comments per kind, so `plan` could ask whether anything but comments changed — and
-  it is rejected, because that detector errs toward compiling too little. A wrong "comments
-  only" reports green for work it never did, which is the failure this repository refuses
-  everywhere else, and the reason `nimcache` is still uncached. Eleven minutes is the price of
-  erring the other way.
+- Cost: a change to the checker can leave an unchanged project red until it next changes,
+  and nothing compiles it sooner; running that suite is that project's work, which is the
+  rule's point.
+- Cost: `isChecker` reads the path, never the content, so a comment edit in `koch.nim`
+  compiles the driver's project: one project, seconds. The machinery to do better exists —
+  `comments.nim` already extracts comments per kind, so `plan` could ask whether anything but
+  comments changed — and it is rejected, because that detector errs toward compiling too
+  little. A wrong "comments only" reports green for work it never did, which is the failure
+  this repository refuses everywhere else, and the reason `nimcache` is still uncached.
 - Verified by `tplan.nim`, and driven against this repository's history: a README-only commit
-  plans `[]`, and a one-line source change plans that project alone. Ownership by
-  `tplan.nim` too: a curator branch keeps the curator project, a contributor branch its own,
-  `main` and a branch outside the grammar both.
+  plans `[]`, and a one-line source change plans that project alone; a change to `koch.nim`
+  plans the driver's project alone, and the sweep plans what merged in its window.
 
 **The sweep fires, and it promises a day rather than an hour.** Observed 2026-09-07, the first
 Monday after the cron landed: all four projects planned, each on its own pin, four jobs starting
@@ -590,13 +585,13 @@ within one second, the phase finishing in about four minutes against about nine 
 curator reading the cron and returning at 06:05 finds nothing and wrongly concludes the guard is
 broken. Waiting is part of reading this signal.
 
-**The sweep skips itself in a quiet week**, planning every project when any code merged inside
-`SWEEP_DAYS` and nothing when none did, judging "code" by the record-file exclusion scoped runs
-use. Rot arrives with merges, and compiling four projects to confirm a quiet week is runner time
-for no information.
+**The sweep plans what merged inside `SWEEP_DAYS`** and nothing in a quiet week, judging "code"
+by the record-file exclusion scoped runs use. Rot arrives with merges, and compiling a project
+nothing touched is runner time for no information.
 
-- Rejected: sweeping the projects that changed in the window, which the push runs already did
-  and would miss exactly the cross-project rot the sweep is for.
+- Rejected, by the Architect's rule that every run covers what changed: sweeping every
+  project when anything merged. Cross-project rot from a checker change surfaces when that
+  project next changes.
 - Cost: rot from outside the repository — a runner image moving under a pinned compiler — goes
   unseen through a quiet week.
 - Cost: the window is named twice, as the cron and `SWEEP_DAYS`; nothing checks they agree, so
