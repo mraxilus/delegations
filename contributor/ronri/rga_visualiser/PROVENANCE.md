@@ -4027,3 +4027,51 @@ floats off one layout and the scroll offset itself can land fractional.
 The check that missed it was reading one heading. It reads all four now: *nothing scrolled means
 no heading anywhere in the drawer is wearing one*. Proven red against the build that still carried
 `<=` — `{"headings":4,"worn":1,"which":["apply"],"scrollTop":0}` — and green after.
+
+### Axes and grid ride in the menu where the row cannot carry them
+
+The chip row carries six controls — the drawer's mark, add, undo, redo, the axes and grid
+toggles, and the menu. Below a certain width it stopped fitting, and because the row is flex,
+what gave was not the row but the controls inside it: every chip shrank to keep a group that no
+longer fit, the brand worst of all. That was raised on #158 and left open pending a decision on
+what should give. The Architect's answer: move axes and grid into the menu popover when there is
+not enough space, and do not worry about anything narrower than that.
+
+**The breakpoint is measured, not chosen.** Swept a pixel at a time with the brand already at its
+mark:
+
+| width | overflow |
+| --- | --- |
+| 396 px | 0 |
+| **395 px** | **0** |
+| 394 px | 1 px |
+| 386 px | 9 px |
+| 320 px | 75 px |
+
+So 395 is the last width that fits six controls, and the toggles move at 394. The group costs
+114px plus its 8px gap, which is why dropping it clears an overflow that only reaches 75px at the
+narrowest width worth drawing.
+
+**Moved, never copied.** A second pair of buttons in the menu would be a second `on` state to keep
+in step with the scene's own, and the first refresh that wrote one and not the other would be
+wrong in a way nothing reports. One node, one id, one handler, two homes — `settleToggles` moves
+`.toggles` between the chip row and `#top-menu-show` on a `matchMedia` change, and the menu's
+block is `hidden` at every width that does not hold it, since a group that is moved rather than
+copied leaves an empty container behind.
+
+`#top-menu-show[hidden]` has to spell out `display: none`, for the same reason `.help-row[hidden]`
+already does: author `display` beats the UA stylesheet's own rule for the attribute. That
+precedent was already in the file and is worth following rather than rediscovering.
+
+Inside the menu the pair stretches to fill its row (`flex: 1`), as `.top-menu .button` does in
+every group above it. In the chip row they are compact because the row is short of width; in the
+menu width is what there is most of, and a pair sitting hard left under stretched rows reads as
+unfinished.
+
+**The check asserts reach beside fit, and that pairing is the whole of it.** A row that fits
+because two controls were dropped on the floor is not fixed, it is broken more quietly — so
+`driveChipRowFits` counts the toggles wherever they stand and requires exactly two at every width,
+alongside zero overflow. It sweeps 1200, 500, 396, 395, 394, 360 and 320: both sides of the
+boundary are asked, because a rule written one pixel out passes every sweep that never lands on
+it. Where the pair is found is read off the DOM rather than inferred from the breakpoint, so the
+check reports what a reader would reach for and not what the rule intended.

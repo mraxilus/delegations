@@ -81,7 +81,7 @@ type Wording* = enum
   NamePickApply, NamePickEdit, NamePickBack, NamePickHide, NamePickShow, NamePickDelete,
   NamePickClose,
   NameMenuSave, NameMenuSaveScene, NameMenuSaveImage, NameMenuLoad, NameMenuLoadScene,
-  NameMenuDemo, NameMenuSceneFile, NameMenuImageFile,
+  NameMenuDemo, NameMenuSceneFile, NameMenuImageFile, NameMenuShow,
   NameChipAdd, NameChipUndo, NameChipRedo, NameChipAxes, NameChipGrid, NameChipHelp,
   NameChipMenu, NameChipDrawer,
   NameTitle,
@@ -232,6 +232,7 @@ const lut_wording_to_text: array[Wording, cstring] = [
   NameMenuDemo: "demo",
   NameMenuSceneFile: "scene file",
   NameMenuImageFile: "image file",
+  NameMenuShow: "show",
 
   # Row of constant controls, floating over scene.
   NameChipAdd: "add",

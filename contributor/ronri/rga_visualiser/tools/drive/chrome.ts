@@ -126,3 +126,57 @@ export async function driveHelp(page: Page, width: number, height: number): Prom
     'closed by its own button',
   );
 }
+
+/** Widths chip row is swept at, either side of where its toggles move into menu.
+ *
+ *  395 is width row measured as last fitting six controls; 394 overflows by one pixel. Both are
+ *  asked, so check holds boundary itself rather than two points far from it -- rule written one
+ *  pixel out passes every sweep that never lands on it.
+ *  320 is narrowest phone worth drawing, and 1200 is suite's own viewport.
+ */
+const WIDTHS_ROW_SWEPT = [1200, 500, 396, 395, 394, 360, 320];
+
+/** Assert chip row fits at every width, and that its toggles are reachable wherever they sit.
+ *
+ *  Row carries six controls and fits down to 395px. Below that flex took overflow out of chips
+ *  themselves, shrinking every control to keep group that no longer fit -- brand worst, since it
+ *  is what gives. Axes and grid move into menu popover there instead.
+ *  Reachability is asserted beside fit, deliberately: row that fits because two controls were
+ *  dropped on floor is not fixed, it is broken more quietly. Toggles are counted wherever
+ *  they are, and asked to be exactly one pair at every width.
+ */
+export async function driveChipRowFits(page: Page): Promise<void> {
+  const swept: string[] = [];
+  let fitted = true;
+  let reachable = true;
+  for (const width of WIDTHS_ROW_SWEPT) {
+    await page.setViewportSize({ width, height: 800 });
+    await waitFrames(page, 3);
+    const read = await page.evaluate(() => {
+      const row = document.querySelector('.chip-row');
+      const menu = document.getElementById('top-menu');
+      const toggles = document.querySelector('.toggles');
+      if (row === null || menu === null || toggles === null) return null;
+      const right = Math.max(...Array.from(row.querySelectorAll('button'))
+        .map((each) => each.getBoundingClientRect().right));
+      return {
+        over: Math.round(Math.max(0, right - window.innerWidth)),
+        // Where pair actually stands, asked of DOM rather than of breakpoint, so check reads
+        //   what reader would reach for, never what rule intended.
+        housed: menu.contains(toggles) ? 'menu' : 'row',
+        pairs: document.querySelectorAll('#toggle-axes, #toggle-grid').length,
+      };
+    });
+    if (read === null) { fitted = false; break; }
+    if (read.over > 0) fitted = false;
+    if (read.pairs !== 2) reachable = false;
+    swept.push(`${width}: ${read.over} px over, in the ${read.housed}`);
+  }
+  await page.setViewportSize({ width: 1200, height: 900 });
+  await waitFrames(page, 3);
+  report(
+    'the chip row fits at every width, and its toggles are reachable wherever they sit',
+    fitted && reachable,
+    swept.join('; '),
+  );
+}
