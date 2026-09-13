@@ -321,6 +321,12 @@ suite "two dancers in rigid body engine":
     ##   distance, which is twist alone and past every card.  Turn and half was
     ##   free only with arm through head.  Architect's to say whether that wind
     ##   is real.
+    ##   And no held arm is carried to its swing's end on way there.  Architect,
+    ##   watching viewer at 0.68 of cross-name turn: "no-one would let their arm
+    ##   wrap behind their head like this".  Her arm sat at forty five degrees
+    ##   behind frontal plane, swing's end, for six arm-moments of that sweep and
+    ##   in its ease for fifty five, where going over top costs nothing: engine's
+    ##   limits are walls and nothing preferred middle of range.
     for arms in [[Arm.Left, Arm.Left], [Arm.Left, Arm.Right]]:
       let
         links = @[Link(ends: [(Body.One, arms[0]), (Body.Two, arms[1])])]
@@ -328,6 +334,19 @@ suite "two dancers in rigid body engine":
       check sw.restHolds
       check not sw.pos.stopped
       check not sw.neg.stopped
+      var atEnd = 0
+      var peak = -Inf
+      for w in [sw.pos, sw.neg]:
+        for m in w.moments:
+          for k in 0 .. 1:
+            let
+              h = links[0].ends[k]
+              j = joints(m.stance[h.body], h.arm, m.arms[0][k])
+            peak = max(peak, j.extend)
+            if j.extend > HUMAN.range[Dof.Extend].hi - 5.0 * PI / 180.0: inc atEnd
+      echo &"    {arms[0]}-{arms[1]}: extension peaks {peak * 180.0 / PI:.1f} degrees, " &
+        &"{atEnd} arm-moments at swing's end"
+      check atEnd == 0
 
 
 #[ Arms Move As Arms Do ]#
