@@ -5,7 +5,7 @@
 ##   |---------|-------------------------------------------------------------------------|
 ##   | Command | Effect                                                                  |
 ##   |---------|-------------------------------------------------------------------------|
-##   | tree    | layout, form, comments, provenance, glossary over files git sees        |
+##   | tree    | layout, form, comments, provenance, glossary, prompts, copies; git sees |
 ##   | deps    | `atlas --noexec rep` in every project holding atlas.lock, or in one     |
 ##   | types   | restore node tools, then type-check scripts, projects one change asks   |
 ##   | driven  | restore, build page, drive it through real events, on that project's pin|

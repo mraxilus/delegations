@@ -15,7 +15,7 @@
 import std/[options, sequtils, sets, strutils]
 import ./[
   findings, kinds, prose, form, justification, checker, layout, provenance, glossary,
-  dependencies, toolchain, plan, workflows, record, prompts, tree, domains,
+  dependencies, toolchain, plan, workflows, record, prompts, duplicates, tree, domains,
 ]
 
 export layout.Tree, layout.Entry, layout.projectDirs
@@ -100,6 +100,7 @@ proc auditTree*(tree: Tree): seq[Finding] =
   result.add tree.lockFindings(dirs)
   var paths = initHashSet[string]()
   for e in tree: paths.incl e.path
+  var documents: seq[(string, string)]
   for e in tree:
     if e.kind.isNone: continue
     if e.path == "GLOSSARY.md": result.add checkGlossary(e.path, e.content)
@@ -108,6 +109,7 @@ proc auditTree*(tree: Tree): seq[Finding] =
     if rule.is_prose: result.add checkProse(e.path, e.content, rule.syntax)
     result.add checkJustification(e.path, e.content, rule)
     if e.kind.get == Kind.Markdown:
+      documents.add (e.path, e.content)
       # Root files and curator records are held to glossary's people words; contributor
       #   prose is its own, and glossary itself lists words it avoids.
       let is_governed = '/' notin e.path or e.path.startsWith(CURATOR & "/")
@@ -120,3 +122,4 @@ proc auditTree*(tree: Tree): seq[Finding] =
         result.add checkCitations(e.path, e.content, dir & "/" & TESTS_DIR & "/", paths)
         result.add checkRecord(e.path, e.content)
       if e.path == dir & "/GLOSSARY.md": result.add checkGlossary(e.path, e.content)
+  result.add checkDuplicates(documents)

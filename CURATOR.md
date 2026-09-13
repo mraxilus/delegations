@@ -268,7 +268,7 @@ then `./koch <command>`). Every check is a module under `curator/audit/src/`, te
 
 | Command | Reads | Enforces |
 |---------|-------|----------|
-| `tree` | files git sees | layout, form, comments, provenance header and stamp, glossary |
+| `tree` | files git sees | layout, form, comments, records, prompts, glossary, copied paragraphs |
 | `deps` | every project's `atlas.lock` | checkouts restored and matching the lock |
 | `types` | projects with `package.json` | `npm ci`, then that project's own `types` verb |
 | `driven` | projects with a `drive` verb | restore, then that verb, on that project's pin |
