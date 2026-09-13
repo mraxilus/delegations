@@ -40,6 +40,19 @@ suite "Article VIII":
     check stale.len == 1 and stale[0].message.endsWith("got `deadbeefdeadbeef`.")  # stale
     check "`0000000000000000`" in stale[0].message  # expected stamp named
 
+  test "VIII.6 Rules row is rewritten in place, padding and neighbours kept":
+    let old = provenanceText("deadbeefdeadbeef")
+    let written = old.withRulesRow("0123456789abcdef")
+    check written.headerFields["Rules"] == "0123456789abcdef"  # row carries new stamp
+    check written.replace("0123456789abcdef", "deadbeefdeadbeef") == old  # nothing else moved
+    check written.withRulesRow("0123456789abcdef") == written  # idempotent
+    let padded = "| Field  | Value |\n|--------|-------|\n| Rules  | deadbeefdeadbeef |\n"
+    check padded.withRulesRow("0123456789abcdef") ==
+      "| Field  | Value |\n|--------|-------|\n| Rules  | 0123456789abcdef |\n"  # padding kept
+    check "# x\n\nprose\n".withRulesRow("0123456789abcdef") == "# x\n\nprose\n"  # no row
+    check "| Rules | a |\n| Rules | b |\n".withRulesRow("c") ==
+      "| Rules | c |\n| Rules | b |\n"  # first row only, as headerFields reads first
+
   test "VIII.6 ISO date grammar":
     check "2026-09-05".isIsoDate and not "2026-9-5".isIsoDate  # zero-padded
     check not "2026/09/05".isIsoDate and not "".isIsoDate  # separators
