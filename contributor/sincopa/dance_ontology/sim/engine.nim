@@ -71,8 +71,11 @@ type
     angularDamping* {.importc.}: cfloat
     gravityScale* {.importc.}: cfloat
     enableSleep* {.importc.}: bool
+  Material* {.importc: "b3SurfaceMaterial", bycopy.} = object
+    friction* {.importc.}: cfloat
   ShapeDef* {.importc: "b3ShapeDef", bycopy.} = object
     density* {.importc.}: cfloat
+    material* {.importc: "baseMaterial".}: Material
     filter* {.importc.}: Filter
     enableContactEvents* {.importc.}: bool
   Filter* {.importc: "b3Filter", bycopy.} = object
