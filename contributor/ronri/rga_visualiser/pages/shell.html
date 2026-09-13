@@ -1,4 +1,4 @@
-<title>RGA visualiser — browser</title>
+<title>@WORD:NameTitle@ — browser</title>
 <style>
   :root {
     --bg: #101318;
@@ -1085,20 +1085,23 @@
   <div class="chip-row">
     <button class="brand drawer-toggle" id="button-drawer" type="button">
       <span class="mark" aria-hidden="true"></span>
-      <span class="name">RGA visualiser</span>
+      <span class="name">@WORD:NameTitle@</span>
     </button>
     <div style="display:flex; gap:8px; pointer-events:auto;">
       <div class="action-group">
-        <button class="button" id="button-add" type="button" aria-label="add object">add</button>
-        <button class="button" id="button-undo" type="button" aria-label="undo">undo</button>
-        <button class="button" id="button-redo" type="button" aria-label="redo">redo</button>
+        <button class="button" id="button-add" type="button" aria-label="add object"
+        >@WORD:NameChipAdd@</button>
+        <button class="button" id="button-undo" type="button" aria-label="undo"
+        >@WORD:NameChipUndo@</button>
+        <button class="button" id="button-redo" type="button" aria-label="redo"
+        >@WORD:NameChipRedo@</button>
       </div>
       <div class="toggles">
-        <button id="toggle-axes" class="on" type="button">axes</button>
-        <button id="toggle-grid" class="on" type="button">grid</button>
+        <button id="toggle-axes" class="on" type="button">@WORD:NameChipAxes@</button>
+        <button id="toggle-grid" class="on" type="button">@WORD:NameChipGrid@</button>
       </div>
       <button class="brand" id="button-menu" type="button" aria-label="menu">
-        <span aria-hidden="true">&#9776;</span>
+        <span aria-hidden="true">@WORD:NameChipMenu@</span>
       </button>
     </div>
     <input type="file" id="file-load-scene" accept=".rgascene" style="display:none;">
@@ -1118,7 +1121,7 @@
 </div>
 
 <button class="help-open" id="button-help" type="button" aria-label="help" aria-expanded="false">
-  <span aria-hidden="true">?</span>
+  <span aria-hidden="true">@WORD:NameChipHelp@</span>
 </button>
 <div class="help-panel" id="help-panel" role="dialog" aria-label="help">
   <button class="help-close" id="help-close" type="button" aria-label="close help">×</button>
@@ -1128,31 +1131,31 @@
 </div>
 
 <div class="top-menu" id="top-menu">
-  <div class="top-menu-title">save</div>
+  <div class="top-menu-title">@WORD:NameMenuSave@</div>
   <div class="top-menu-group">
     <button
       class="button"
       id="button-save-scene"
       type="button"
-    >scene</button>
+    >@WORD:NameMenuSaveScene@</button>
     <button
       class="button"
       id="button-export-png"
       type="button"
-    >image</button>
+    >@WORD:NameMenuSaveImage@</button>
   </div>
-  <div class="top-menu-title">load</div>
+  <div class="top-menu-title">@WORD:NameMenuLoad@</div>
   <div class="top-menu-group">
     <button
       class="button"
       id="button-load-scene"
       type="button"
-    >scene</button>
+    >@WORD:NameMenuLoadScene@</button>
   </div>
   <!-- One button per size arrangement comes in, filled from `nimDemoScales` rather than
        written out here: sizes are `orrery.ScaleOrrery`'s business, and second copy of
        them in markup is second thing to keep true. -->
-  <div class="top-menu-title">demo</div>
+  <div class="top-menu-title">@WORD:NameMenuDemo@</div>
   <div
     class="top-menu-group"
     id="button-demo-scales"
@@ -1164,14 +1167,16 @@
 <div class="toast" id="toast"></div>
 
 <div class="selection-menu" id="selection-menu">
-  <button id="selection-menu-apply" type="button">apply</button>
-  <button id="selection-menu-edit" type="button">edit</button>
+  <button id="selection-menu-apply" type="button">@WORD:NamePickApply@</button>
+  <button id="selection-menu-edit" type="button">@WORD:NamePickEdit@</button>
   <div class="selection-menu-reveal" id="selection-menu-reveal">
     <select id="selection-menu-select"></select>
-    <button id="selection-menu-back" type="button" aria-label="cancel operation">back</button>
+    <button id="selection-menu-back" type="button" aria-label="cancel operation"
+  >@WORD:NamePickBack@</button>
   </div>
-  <button id="selection-menu-hide" type="button">hide</button>
-  <button id="selection-menu-delete" type="button" class="selection-menu-delete">delete</button>
+  <button id="selection-menu-hide" type="button">@WORD:NamePickHide@</button>
+  <button id="selection-menu-delete" type="button" class="selection-menu-delete"
+  >@WORD:NamePickDelete@</button>
   <button
     id="selection-menu-close"
     type="button"
@@ -1187,28 +1192,30 @@
       <button
         class="section-header"
         type="button"
-      ><span>apply</span><span class="chev">&#9654;</span></button>
+      ><span>@WORD:NameHeadApply@</span><span class="chev">&#9654;</span></button>
       <div class="section-body">
         <div class="field">
-          <label>arity</label>
+          <label>@WORD:NameApplyArity@</label>
           <div class="toggles" id="op-arity" style="width:100%; justify-content:stretch;">
-            <button class="on" data-arity="0" type="button" style="flex:1;">unary</button>
-            <button data-arity="1" type="button" style="flex:1;">binary</button>
+            <button class="on" data-arity="0" type="button" style="flex:1;"
+            >@WORD:NameApplyUnary@</button>
+            <button data-arity="1" type="button" style="flex:1;">@WORD:NameApplyBinary@</button>
           </div>
         </div>
         <div class="field">
-          <label>operation</label>
+          <label>@WORD:NameApplyOperation@</label>
           <select id="op-select"></select>
         </div>
         <div class="field-row">
-          <div class="field"><label>operand m</label><select id="op-first"></select></div>
+          <div class="field"><label>@WORD:NameApplyFirst@</label
+            ><select id="op-first"></select></div>
           <div
             class="field"
             id="op-second-field"
-          ><label>operand n</label><select id="op-second"></select></div>
+          ><label>@WORD:NameApplySecond@</label><select id="op-second"></select></div>
         </div>
         <button class="button primary" id="button-apply" type="button" style="width:100%;"
-          >apply</button>
+          >@WORD:NameApplyAct@</button>
       </div>
     </div>
 
@@ -1217,7 +1224,7 @@
       <button
         class="section-header"
         type="button"
-      ><span>diagnostics</span><span class="chev">&#9654;</span></button>
+      ><span>@WORD:NameHeadDiagnostics@</span><span class="chev">&#9654;</span></button>
       <div class="section-body">
         <!-- What session's frame times actually look like, rather than last four
              seconds of them: for each duration, share of recent frames that came in
@@ -1247,7 +1254,7 @@
             ><b id="diagnostic-exceedance">&mdash;</b>
         </div>
         <canvas class="sparkline" id="sparkline"></canvas>
-        <div class="diagnostic-line"><span>frame time</span
+        <div class="diagnostic-line"><span>@WORD:NameDiagFrame@</span
           ><b id="diagnostic-frametime">&mdash;</b></div>
         <!-- Slowest frame ring holds, split between page's own code and browser.
              Rows below are 200 ms means, which dilute one spike past telling whether
@@ -1421,7 +1428,7 @@
         <div class="diagnostic-line"><span>JS heap</span
           ><b id="diagnostic-heap">unavailable</b></div>
         <hr class="rule">
-        <div class="diagnostic-line"><span>object pool</span
+        <div class="diagnostic-line"><span>@WORD:NameDiagPool@</span
           ><b id="diagnostic-pool">&mdash;</b></div>
         <!-- Legend rides canvas as its own tooltip rather than taking line of
              drawer for itself, and says what desktop's own tooltip says. -->
@@ -1439,7 +1446,8 @@
         <span
           class="objects-header"
           style="width:100%;"
-        ><span>objects</span> <span class="objects-count" id="objects-count">&mdash;</span></span>
+        ><span>@WORD:NameHeadObjects@</span> <span
+          class="objects-count" id="objects-count">&mdash;</span></span>
         <span class="chev">&#9654;</span>
       </button>
       <div class="section-body">
@@ -1452,30 +1460,30 @@
       <button
         class="section-header"
         type="button"
-      ><span>view</span><span class="chev">&#9654;</span></button>
+      ><span>@WORD:NameHeadView@</span><span class="chev">&#9654;</span></button>
       <div class="section-body">
         <div class="field-row">
           <div class="field">
-            <label>azimuth</label>
+            <label>@WORD:NameViewAzimuth@</label>
             <input type="number" id="cam-azimuth" step="0.05">
           </div>
           <div class="field">
-            <label>elevation</label>
+            <label>@WORD:NameViewElevation@</label>
             <input type="number" id="cam-elevation" step="0.05">
           </div>
         </div>
         <div class="field-row">
           <div class="field">
-            <label>distance</label>
+            <label>@WORD:NameViewDistance@</label>
             <input type="number" id="cam-distance" step="0.1">
           </div>
           <div class="field">
-            <label>field of view</label>
+            <label>@WORD:NameViewLens@</label>
             <input type="number" id="cam-fov" step="1">
           </div>
         </div>
         <div class="field">
-          <label>pivot</label>
+          <label>@WORD:NameViewPivot@</label>
           <div class="field-row">
             <input type="number" id="cam-pivot-x" step="0.1">
             <input type="number" id="cam-pivot-y" step="0.1">
