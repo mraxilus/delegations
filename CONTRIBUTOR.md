@@ -307,13 +307,13 @@ target ships the faces Article X.8 names, inlined, and the store serves them.
 
 - `nim r koch ci` at the repository root passes on the exact commit you push. It fetches
   `origin/main`, then runs what CI runs: the whole-tree static pass, `types`, the suites and
-  driven checks of every project your branch owns whose code changed — yours — then
-  `scope`, `commits` and `base`. A pull request opened before it passes is a process
+  driven checks of every project whose code changed — yours — then `scope`, `commits` and
+  `base`. A pull request opened before it passes is a process
   violation whatever CI later says: the runner confirms, it never discovers. Run it again
   before every later push to the same pull request. A change touching only your three
   records compiles nothing; the static pass still checks every stamp. A curator's change to
-  the checker compiles the curator projects, never yours: your suites run on the push to
-  `main` and in the weekly run.
+  the checker compiles the checker's own project, never yours; the push to `main` and the
+  weekly run compile what changed too, so your suites run when your code moves.
 - **`base` fails when the rules or the checker moved on `main` after you branched.** Your
   stamp then claims a charter that no longer exists, and merging would redden `main`. Merge
   `origin/main`, read the diff of the rules documents, re-audit your project against each

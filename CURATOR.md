@@ -183,8 +183,8 @@ way — at the start, on each resolution, at handover.
    packages — `nim r koch system` prints; absent, each reports a finding rather than being
    skipped, since a check that quietly does nothing reports green for work it never did.
 
-9. **The weekly run and the ledger.** The weekly run of `check.yml` compiles every project when any
-   code merged inside `SWEEP_DAYS` (`plan.nim`), and its window is named twice, as that
+9. **The weekly run and the ledger.** The weekly run of `check.yml` compiles the projects
+   whose code merged inside `SWEEP_DAYS` (`plan.nim`), and its window is named twice, as that
    constant and as the cron: change both together. `ledger.yml` is a different mechanism: a
    daily read of what GitHub records — a pull request ready without a green run, a
    `Closes #N` that never fired, an issue or pull request opening with no role line or
@@ -201,9 +201,10 @@ way — at the start, on each resolution, at handover.
 11. **Never** write contributor project code, create a contributor project, or resolve a
     contributor's open question by editing their project. Answer it by changing a rule, a
     check, or this file, and let the contributor apply it. Their suites are theirs to run as
-    well: on a curator branch, `koch ci` and the runner compile the curator projects only,
-    however much the checker changed, and the push run on `main` and the weekly run compile
-    the rest. The static pass reads every project regardless. The `scope` job holds this duty:
+    well: every run, on a branch, on the push to `main` and weekly, compiles the projects
+    whose code changed and nothing else, so a change to the checker compiles the checker's
+    own project and leaves theirs until their code moves. The static pass reads every
+    project regardless. The `scope` job holds this duty:
     on `curator/<name>` the only writable paths inside a contributor project are its
     `README.md`, `PROVENANCE.md` and `GLOSSARY.md` — the stamp row, the agreed terms, and
     prose a rule change invalidated, which is what propagation is. The README is writable,
@@ -278,7 +279,7 @@ then `./koch <command>`). Every check is a module under `curator/audit/src/`, te
 | `system` | projects with a `system` verb | prints what they need installed, one per line |
 | `assets` | files named, against the store | fetches and checks each, prints its path |
 | `tests` | every project, or one | restore, then testament, on that project's pin |
-| `plan` | changed paths, branch, pins | projects the branch owns to compile, as JSON; `--sweep` |
+| `plan` | changed paths, pins | projects whose code changed, as JSON; `--sweep` for the week |
 | `scope` | changed paths | branch grammar; project paths inside prefix |
 | `commits` | commit subjects | Conventional Commits; scope equals branch scope |
 | `base` | paths base gained | branch carries base's rules and checker |
