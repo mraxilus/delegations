@@ -15,7 +15,7 @@
 import std/[options, sequtils, sets, strutils]
 import ./[
   findings, kinds, prose, form, justification, checker, layout, provenance, glossary,
-  dependencies, toolchain, plan, workflows, record, tree,
+  dependencies, toolchain, plan, workflows, record, tree, domains,
 ]
 
 export layout.Tree, layout.Entry, layout.projectDirs
@@ -107,6 +107,12 @@ proc auditTree*(tree: Tree): seq[Finding] =
     result.add checkForm(e.path, e.content, rule)
     if rule.is_prose: result.add checkProse(e.path, e.content, rule.syntax)
     result.add checkJustification(e.path, e.content, rule)
+    if e.kind.get == Kind.Markdown:
+      # Root files and curator records are held to glossary's people words; contributor
+      #   prose is its own, and glossary itself lists words it avoids.
+      let is_governed = '/' notin e.path or e.path.startsWith(CURATOR & "/")
+      if is_governed and not e.path.endsWith("GLOSSARY.md"):
+        result.add checkPeopleWords(e.path, e.content)
     for dir in dirs:
       if e.path == dir & "/PROVENANCE.md":
         result.add checkProvenance(e.path, e.content, stamp_now)
