@@ -68,9 +68,10 @@ func checkHeadings*(path, source: string): seq[Finding] =
     elif i + 1 < lines.len and lines[i + 1].isUnderline:
       let s = line.strip
       if s.len > 0 and not s.startsWith("|"):
+        let mark = if lines[i + 1].strip[0] == '=': "# " else: "## "
         result.add finding(
           path, i + 1,
-          "Heading is underlined, which no reader here sees; write `## " & s & "`.",
+          "Heading is underlined, which no reader here sees; write `" & mark & s & "`.",
         )
   if open_at > 0 and open_at != last_at:
     result.add finding(
