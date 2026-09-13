@@ -6,7 +6,7 @@ joinable: true
 """
 ## Replicate scoped test selection of `plan.nim` header and CURATOR.md checks reference.
 
-import std/[json, options, unittest]
+import std/[json, options, sequtils, unittest]
 import ../src/[plan, projects]
 import ./fixtures
 
@@ -56,9 +56,9 @@ suite "Plan":
     check both.nodeDirs(testSet(DIRS, [ALPHA_DIR & "/src/alpha.nim"])) == @[ALPHA_DIR]
     # Change to other project selects that project alone, and it carries no manifest.
     check both.nodeDirs(testSet(DIRS, [AUDIT_DIR & "/tests/taudit.nim"])).len == 0
-    # Checker change selects every project, so it type-checks node ones too: how each is
-    #   checked changed, and that reaches this check exactly as it reaches compiling.
-    check both.nodeDirs(testSet(DIRS, ["koch.nim"])) == @[ALPHA_DIR]
+    # Checker change selects driver's project alone, which carries no manifest, so it
+    #   type-checks nothing: only project whose code changed compiles or type-checks.
+    check both.nodeDirs(testSet(DIRS, ["koch.nim"])).len == 0
 
   test "project gains driven checks by carrying that verb, read from its own driver":
     # Nothing lists which project is driven either: koch reads driver's own dispatch, so
@@ -97,18 +97,18 @@ suite "Plan":
     check selected[0].pin == PIN  # driven job installs project's own pin, as `tests` does
     # Change to project carrying no driven verb selects that project and drives nothing.
     check tree.drivenOnly(tree.jobs([AUDIT_DIR & "/tests/taudit.nim"])).len == 0
-    # Checker change selects every project, so it drives driven ones: how each is checked
-    #   changed, and that reaches this check exactly as it reaches compiling.
-    check tree.drivenOnly(tree.jobs([CHECKER_DIR & "/plan.nim"])) == selected
+    # Checker change selects driver's project alone, which carries no driven verb.
+    check tree.drivenOnly(tree.jobs([CHECKER_DIR & "/plan.nim"])).len == 0
     # Sweep and whole-repository runs narrow to driven ones too, rather than driving all.
     check tree.drivenOnly(tree.allJobs) == selected
     check tree.drivenOnly(tree.sweepJobs([ALPHA_DIR & "/src/alpha.nim"])) == selected
 
-  test "checker change selects every project, because how each is checked changed":
-    check testSet(DIRS, ["koch.nim"]) == @DIRS  # driver
-    check testSet(DIRS, ["koch.nim.cfg"]) == @DIRS  # driver flags
-    check testSet(DIRS, [CHECKER_DIR & "/layout.nim"]) == @DIRS  # check source
-    check isChecker(CHECKER_DIR & "/layout.nim")
+  test "checker change selects the driver's project alone, never every project":
+    check testSet(DIRS, ["koch.nim"]) == @[AUDIT_DIR]  # driver's suites read it
+    check testSet(DIRS, ["koch.nim.cfg"]) == @[AUDIT_DIR]  # driver flags
+    check testSet(DIRS, [CHECKER_DIR & "/layout.nim"]) == @[AUDIT_DIR]  # code of that project
+    check testSet(DIRS, ["koch.nim", CHECKER_DIR & "/plan.nim"]) == @[AUDIT_DIR]  # once
+    check isChecker(CHECKER_DIR & "/layout.nim")  # still governing, for `base`
     check not isChecker(AUDIT_DIR & "/tests/tlayout.nim")  # checker's own suite is code
 
   test "path inside no project selects nothing by itself":
@@ -123,17 +123,17 @@ suite "Plan":
     check selected.len == 1
     check selected[0].dir == ALPHA_DIR
     check selected[0].pin == PIN
-    check tree.allJobs.len == DIRS.len  # sweep names every project
+    check tree.allJobs.len == DIRS.len  # `--all` names every project
     let unpinned = tree.replaced(
       ALPHA_DIR & "/alpha.nimble", "requires \"nim >= 2.2.4\"\n"
     )
     check unpinned.jobs([ALPHA_DIR & "/src/alpha.nim"]).len == 0  # nothing to install
 
-  test "sweep runs whole repository, or nothing at all":
+  test "sweep runs what merged in its window, or nothing at all":
     let tree = goodTree()
-    # Code merged in window: every project, since rot can land anywhere.
-    check tree.sweepJobs([ALPHA_DIR & "/src/alpha.nim"]).len == DIRS.len
-    check tree.sweepJobs([CHECKER_DIR & "/layout.nim"]).len == DIRS.len
+    # Code merged in window: that project, and only it, as scoped runs select.
+    check tree.sweepJobs([ALPHA_DIR & "/src/alpha.nim"]).mapIt(it.dir) == @[ALPHA_DIR]
+    check tree.sweepJobs([CHECKER_DIR & "/layout.nim"]).mapIt(it.dir) == @[AUDIT_DIR]
     # Nothing merged, or records only: sweep skips itself entirely.
     check tree.sweepJobs(newSeq[string]()).len == 0  # quiet week
     check tree.sweepJobs([ALPHA_DIR & "/PROVENANCE.md"]).len == 0  # stamps only

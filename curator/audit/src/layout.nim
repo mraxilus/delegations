@@ -43,7 +43,8 @@ type
 const
   ROOT_FILES* = [
     "README.md", "LICENSE.md", "CONSTITUTION.md", "STYLE.md", "CURATOR.md", "CONTRIBUTOR.md",
-    "CLAUDE.md", "GLOSSARY.md", "koch.nim", "koch.nim.cfg", ".gitignore", ".gitattributes",
+    "GUIDE.md", "CLAUDE.md", "GLOSSARY.md", "koch.nim", "koch.nim.cfg", ".gitignore",
+    ".gitattributes",
   ]
     ## Files allowed directly at root.
   ROOT_DIRS* = [".github"]
