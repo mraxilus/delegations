@@ -1389,6 +1389,15 @@ drawing next to the readouts. A still no distance holds is drawn as none and say
 cell each question belongs to is read off the page itself, from an attribute the reference page
 now writes on every cell; that attribute is outside every drawing, so no pin moved.
 
+**The modelled tag is the Architect's to give, not the sim's.** On seeing the sim's stills laid
+beside the reference: "a lot of the static states are wrong, mark everything as unmodelled until
+I confirm". So the second tag has three states. *Not modelled* where the sim reaches no pose for
+the card; *unconfirmed* where it reaches one the Architect has not yet held against their own
+body; *modelled* only once they have, by name in `CONFIRMED` beside `KEPT`, none yet. A
+confirmation is of one still, so a confirmed cell whose sim still moves comes out of the list
+until it is confirmed again. The sim reaching a card is a claim, and the reference reads 0 of
+231 confirmed against 165 reached.
+
 **Not decided: what the swan is in the body.** Its four stills are what stands between the
 stills and a hundred per cent. The reference draws it pillion with all four hands above; the
 Architect, asked about a hammerlock, described a low one -- arm down, shoulder rotating in as the
