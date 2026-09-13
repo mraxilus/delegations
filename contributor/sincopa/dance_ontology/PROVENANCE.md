@@ -1327,3 +1327,29 @@ still card is built already wound, its rest was taken as where it was built, and
 nothing. The rest is face to face, or pillion for a hold built so, whatever stance the couple are
 built at. All six hold again; the reference reads 203 of 231, and the crown single holds
 turn free both ways.
+
+**The Architect, on the viewer at 1.68 of the same-name crown turn: "The bodies are too rigid, the
+arms get dislocated because of it."** Measured first: no joint's two anchors part by more than four
+millimetres anywhere in that sweep, so the engine is not tearing joints. What reads as dislocation
+is geometry: the shoulder joint sits at 0.18 out and 1.40 up, where the torso's stadium is 0.166
+wide and its dome has dropped below 1.24, so every arm hung from a point nine centimetres outside
+every capsule of its own body, and nothing of that point could give. The rig had no shoulder
+girdle, in mass or in motion. Each shoulder is now its own body -- a capsule from the neck's side
+out to the joint, deltoid and trapezius -- welded to the chest on a spring at three hertz, about
+two kilograms, so forty newtons moves it five centimetres, what a scapula gives, and held within
+five centimetres by a rope the engine solves, since the spring alone let a free arm shoved by the
+other body carry its girdle 251 mm off into its own torso, and a force pushing it back rang or
+lost; a girdle squeezed between two torsos is a shoulder through a body and stops the turn as an
+arm's would. Shoulders travel up to 25 mm in the same-name crown turn and 65 in the cross-name.
+One law moved to what the model reports: the joint law checks while the hold stands, since a
+whole turn forced at 1.10 m parts the hands by twenty centimetres at the half turn, and what a
+wrist does then -- nine degrees past its cone, once the girdle could give -- is no pose the model
+reports. Softening the grip to fifteen hertz for that law instead cost every still card, since two
+centimetres apart is then seventy newtons; it stays at thirty. Verified by testament on
+2026-09-13, `tests/trigid.nim`:
+every shoulder joint lies inside some capsule of its own body, red first at 90 mm outside for all
+four. The girdle's radius, 60 mm, is an estimate and not tape; the Architect's to measure.
+With it, the reference reads 205 of 231 -- every still card holds, and every question lost is a
+chain wound to the swan -- and the floor table turns: both low lock ways now go past the floor's
+whole turn, to 1.38 and 1.40, and the cross-name high lock to 1.48, all by her wrist; the wraps
+stop at 0.56 to 0.92 by her twist or his wrist, where the floor says half or whole.
