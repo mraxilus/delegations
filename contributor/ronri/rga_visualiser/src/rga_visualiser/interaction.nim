@@ -31,7 +31,7 @@ import std/[math, options, strformat]
 
 # `pga` arrives through `projections`, which stands in for four it has withdrawn.
 import ./projections
-import ./[boundary, camera, format, tessellate, picking, scene]
+import ./[boundary, camera, format, tessellate, picking, scene, wording]
 
 
 
@@ -1220,7 +1220,7 @@ func commitChoice*(
     index_created =
       scene.addObject(derived.get, label, scene.takeInk(), now, anchor)
   DragOutcome(
-    message: &"{label} gave {kindText(derived.get)}.",
+    message: derivedMessage(label, kindText(derived.get)),
     index_created: some(index_created),
     choice: some(choice),
     operands: operands,

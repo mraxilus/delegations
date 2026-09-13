@@ -28,11 +28,18 @@
 ## assembling page. Reader therefore meets real words with first paint, and there is still only
 ## one copy of them.
 ##
+## Outcome sentences and help rows are here too: row's cells are `Help` keys, tab's title is
+## `NameTab` key and its line `NoteTab` key, and whatever is composed at run time -- count,
+## label, button's name -- is composed by func below, so glue between parts is this file's
+## as much as parts are. `help` keeps table's shape and `message` how long outcome stands;
+## neither holds word reader sees.
+##
 ## What is *not* here: text one front-end alone can reach, which has no copy to drift from.
 ## Window's `memory` and `total` headings, page's own diagnostic rows, and page's `dismiss` are
-## each shown by one front-end and stay where they are.
-## Outcome sentences live in `message` and help rows in `help`; both are shared already, and
-## both move here as stage three.
+## each shown by one front-end and stay where they are. Nor is algebra's own vocabulary:
+## operation names and notation come from `pga`'s declarations through `scene`, kind words
+## from `objects`, key and button names from `interaction`, and help composes them through
+## funcs here rather than carrying copy.
 ##
 ## Shared by desktop (`panel.nim`) and browser (`bridge.nim`, then its scripts).
 
@@ -52,7 +59,8 @@ const RUNES_LABEL_MOST* = 24
 type Wording* = enum
   ## Name one piece of shown text, by what it is and where reader meets it.
   ##   First word is kind: `Tip` for tooltip, `Name` for words control itself wears, `Note`
-  ##   for sentence shown in place.
+  ##   for sentence shown in place, `Help` for cell of help table, which is fragment reader
+  ##   reads across row rather than sentence or label.
   ##   Second is panel area: `Head` for section heading, `Row` for object row, `Apply`, `View`,
   ##   `Diag` for diagnostics, `Pick` for menu over selection, `Menu` for top menu, `Chip` for
   ##   row of constant controls.
@@ -87,7 +95,26 @@ type Wording* = enum
   NameTitle,
 
   NoteListEmpty, NoteCoefficientsNew, NoteCoefficientsEdit, NoteDiagnostics,
-  NoteSaveByHold, NoteSaveBlocked, NameSaveDismiss
+  NoteSaveByHold, NoteSaveBlocked, NameSaveDismiss,
+
+  NameTabDrag, NameTabSelect, NameTabMenu, NameTabPanel, NameTabCamera, NameTabKeys,
+  NameTabOperations,
+  NoteTabDrag, NoteTabSelect, NoteTabMenu, NoteTabPanel, NoteTabCamera, NoteTabKeys,
+  NoteTabOperations,
+
+  HelpDragOnto, HelpBuildUnasked, HelpBuildOrPause, HelpOpenWheel, HelpDragAloneOnto,
+  HelpBuildDefined, HelpPauseMidDrag, HelpOpenWheelNoButton, HelpHandToPicker,
+  HelpClickObject, HelpSameAndMenu, HelpSelectJustOne, HelpHoldShiftClick, HelpAddOrDrop,
+  HelpClickSelected, HelpMenuBack, HelpClickEmpty, HelpClearOrSky, HelpPressHold,
+  HelpSelectFills, HelpTapAnother, HelpAddToSelection,
+  HelpRunOperation, HelpChangeObject, HelpKeepStopDrawing, HelpRemoveSelection,
+  HelpClearClose,
+  HelpCreatePoint, HelpRunCatalogue, HelpEveryObject, HelpWriteRead, HelpFurniture,
+  HelpDragEmpty, HelpOrbit, HelpSlideSideways, HelpWheel, HelpMoveToward,
+  HelpDragEmptyOrCrowd, HelpPinch, HelpMoveCloser, HelpDragTwoFingers,
+  HelpEscape, HelpBackOut, HelpUndoRedoKeys, HelpUndoRedo, HelpTab, HelpMoveFocus,
+  HelpSlideGround, HelpLowerRaise, HelpFurtherCloser, HelpBackIntoView,
+  HelpHighlightPrevNext, HelpSelectHighlighted, HelpCameraHome
 
 
 
@@ -267,6 +294,87 @@ const lut_wording_to_text: array[Wording, cstring] = [
     "If nothing arrives, this frame is blocking it -- open this page in its own browser " &
     "tab and save from there.",
   NameSaveDismiss: "dismiss",
+
+  # Help: one tab per way of working, named as reader would say what they are doing.
+  NameTabDrag: "drag",
+  NameTabSelect: "select",
+  NameTabMenu: "menu",
+  NameTabPanel: "panel",
+  NameTabCamera: "camera",
+  NameTabKeys: "keys",
+  NameTabOperations: "operations",
+
+  # Help: line above each tab's rows, carrying what two-column row cannot.
+  #   Drag's line goes on to teach wheel's words, through `wheelWordsTaught`.
+  NoteTabDrag:
+    "Drag one object onto another to build a new one. Some pairs open a wheel of choices, " &
+    "which name themselves in notation.",
+  NoteTabSelect: "Say which objects to work on. Whatever is selected wears a white outline.",
+  NoteTabMenu: "The small menu that appears beside whatever you just selected.",
+  NoteTabPanel: "The panel and the buttons above it.",
+  NoteTabCamera: "Move your viewpoint. None of this changes the scene itself.",
+  NoteTabKeys: "Keyboard shortcuts. The 3D view needs focus first — press tab until it has it.",
+  NoteTabOperations:
+    "Every operation the apply section and the selection menu offer, and what each is " &
+    "called.",
+
+  # Help rows: what reader does, and what happens. Cells, not sentences: read across row.
+  #   Row naming button or key composes it through `withButton` and `keysNamed`, so cell
+  #   holds words alone and button's own name comes from `interaction`.
+  HelpDragOnto: "drag one object onto another",
+  HelpBuildUnasked: "build the one object those two define, without ever asking",
+  HelpBuildOrPause: "build that object, or pause on the pivot to be asked",
+  HelpOpenWheel: "open the wheel, whatever the pair would have made on its own",
+  HelpDragAloneOnto: "drag an object on its own onto another",
+  HelpBuildDefined: "build the one object those two define",
+  HelpPauseMidDrag: "pause on the pivot mid-drag",
+  HelpOpenWheelNoButton: "open the wheel without needing a second button",
+  HelpHandToPicker: "hand both objects to the apply picker, which lists every operation",
+  HelpClickObject: "click an object",
+  HelpSameAndMenu: "the same, and open its menu of actions",
+  HelpSelectJustOne: "select just that one, dropping anything else",
+  HelpHoldShiftClick: "hold shift as you click",
+  HelpAddOrDrop: "add it, or drop it again if it is already picked",
+  HelpClickSelected: "click with objects selected",
+  HelpMenuBack: "bring their menu back, changing nothing",
+  HelpClickEmpty: "click empty space",
+  HelpClearOrSky: "clear the selection, or pick the sky if there is one",
+  HelpPressHold: "press and hold an object",
+  HelpSelectFills: "select it — its outline fills as you hold",
+  HelpTapAnother: "tap another object while one is selected",
+  HelpAddToSelection: "add it to the selection",
+  HelpRunOperation: "run any operation on what you selected",
+  HelpChangeObject: "change the selected object's name, colour or coordinates",
+  HelpKeepStopDrawing: "keep the selection but stop drawing it",
+  HelpRemoveSelection: "remove the selection from the scene",
+  HelpClearClose: "clear the selection and close this menu",
+  HelpCreatePoint: "create a point by typing its coordinates",
+  HelpRunCatalogue: "run any operation in the catalogue on what you selected",
+  HelpEveryObject: "every object in the scene, each with rename, hide and delete",
+  HelpWriteRead: "write the whole scene to a file, or read one back",
+  HelpFurniture: "show or hide the reference furniture, leaving the scene alone",
+  HelpDragEmpty: "drag empty space",
+  HelpOrbit: "orbit the view around what you are looking at",
+  HelpSlideSideways: "slide the view sideways and up or down",
+  HelpWheel: "wheel",
+  HelpMoveToward: "move toward or away from whatever you point at",
+  HelpDragEmptyOrCrowd: "drag empty space, or a crowd of objects, with one finger",
+  HelpPinch: "pinch",
+  HelpMoveCloser: "move closer in or further out",
+  HelpDragTwoFingers: "drag with two fingers",
+  HelpEscape: "escape",
+  HelpBackOut: "back out of whatever is part-way through, one step at a time",
+  HelpUndoRedoKeys: "ctrl+z, ctrl+shift+z",
+  HelpUndoRedo: "undo, then redo, the last change to the scene",
+  HelpTab: "tab",
+  HelpMoveFocus: "move focus between the controls and the 3D view",
+  HelpSlideGround: "slide the view across the ground; hold shift to move faster",
+  HelpLowerRaise: "lower or raise the view",
+  HelpFurtherCloser: "move further out, or closer in",
+  HelpBackIntoView: "bring whatever is selected back into view",
+  HelpHighlightPrevNext: "move the highlight to the previous or next object",
+  HelpSelectHighlighted: "select the highlighted object; hold shift to add it",
+  HelpCameraHome: "put the camera back where it started",
 ]
   ## Hold text for every key, written with its key rather than by position.
   ##   Named form is deliberate: `[TipRowSelect: "...", ...]` cannot be knocked out of step by
@@ -324,8 +432,129 @@ func namesControl*(key: Wording): bool =
   ($key).startsWith("Name")
 
 
+func isHelpCell*(key: Wording): bool =
+  ## Report whether `key` is cell of help table rather than sentence or label.
+  ##   Read from key's first word, as `namesControl` is. Cell is fragment reader reads across
+  ##   its row -- no capital opens it and no full stop closes it -- so suite holds it to
+  ##   neither shape, and to its own.
+  ($key).startsWith("Help")
+
+
 func hasWords*(key: Wording): bool =
   ## Report whether `key` carries words worth showing.
   ##   For suite, which holds every key to it: empty entry would draw empty tooltip, which is
   ##   worse than none at all.
   len(strip($lut_wording_to_text[key])) > 0
+
+
+
+#[ Help Composed ]#
+
+func withButton*(button: string, key: Wording): string =
+  ## Write help cell naming which button does it: `left-click an object`.
+  ##   Button's name is `interaction`'s, read from its own enum; hyphen and cell are here.
+  button & "-" & $wordingText(key)
+
+
+func sectionNamed*(key: Wording): string =
+  ## Write help cell naming panel section by heading it wears: `the apply section`.
+  "the " & $wordingText(key) & " section"
+
+
+func wedgeNamed*(label: string): string =
+  ## Write help cell naming wheel wedge by label it wears: `the … wedge`.
+  "the " & label & " wedge"
+
+
+func namesJoined*(names: openArray[string]): string =
+  ## Write help cell listing several keys or controls: `w, a, s, d`.
+  names.join(", ")
+
+
+func pathNamed*(keys: openArray[Wording]): string =
+  ## Write help cell naming menu path by its buttons: `save scene`.
+  var said: seq[string]
+  for key in keys: said.add($wordingText(key))
+  said.join(" ")
+
+
+func wheelWordsTaught*(taught: openArray[tuple[notation, word: string]]): string =
+  ## Say which notation each wheel wedge wears, and which word that notation is.
+  ##   Notation first: reader arrives holding what wedge said and wants its name.
+  ##   Sentence of its own, which `help` sets after `NoteTabDrag`.
+  var said: seq[string]
+  for (notation, word) in taught: said.add(notation & " is " & word)
+  said[0 ..< said.len - 1].join(", ") & " and " & said[^1] & "."
+
+
+
+#[ Outcomes ]#
+
+func objectsCounted*(count: int): string =
+  ## Name `count` objects, singular where there is one.
+  ##   "1 object", never "1 object(s)": parenthesis is what writing says when it holds
+  ##   count and will not spend word on it.
+  if count == 1: "1 object" else: $count & " objects"
+
+
+func deletedMessage*(count: int): string =
+  ## Report whole selection leaving scene.
+  "Deleted " & objectsCounted(count) & "."
+
+
+func visibilityMessage*(count: int, is_shown: bool): string =
+  ## Report whole selection being shown or hidden.
+  ##   Reads way button that did it read, which is what selection would become.
+  (if is_shown: "Showed " else: "Hid ") & objectsCounted(count) & "."
+
+
+func addedMessage*(label: string): string =
+  ## Report object joining scene under `label`.
+  "Added `" & label & "`."
+
+
+func savedMessage*(label: string): string =
+  ## Report edit to object already in scene being committed.
+  "Saved `" & label & "`."
+
+
+func removedMessage*(label: string): string =
+  ## Report one object leaving scene.
+  "Removed `" & label & "`."
+
+
+func derivedMessage*(label, kind: string): string =
+  ## Report operation deriving object `label` of `kind`.
+  ##   Was written at four sites, one per front-end and two in shared code, and one edit
+  ##   would have moved one of them.
+  label & " gave " & kind & "."
+
+
+func fullMessage*(): string =
+  ## Refuse action for want of free handle.
+  "Scene is full."
+
+
+func emptyMessage*(): string =
+  ## Refuse apply for want of operand.
+  ##   "object" is glossary's word for what scene holds; front-ends said "point" and
+  ##   "multivector", and neither is it.
+  "Scene is empty; add an object first."
+
+
+func cancelledMessage*(): string =
+  ## Report gesture reader called off before it landed.
+  ##   Escape over drag in progress, on either build.
+  "Cancelled."
+
+
+func stepMessage*(is_undo: bool): string =
+  ## Refuse step past end of timeline.
+  ##   Step that lands says nothing: scene and view both move, and that is answer.
+  if is_undo: "Nothing to undo." else: "Nothing to redo."
+
+
+func orreryMessage*(count, capacity: int): string =
+  ## Report demo scene replacing whatever stood before it.
+  "Loaded the orrery: " & objectsCounted(count) & ", " & $(capacity - count) &
+    " handles free."

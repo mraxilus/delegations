@@ -116,10 +116,24 @@ take it; the window's caption is `captionWindow()`, which reads the catalogue ra
 spelling the name a second time. A law requires that name to be title case and every other label
 to stay a word.
 
-*Checked.* Verified by build and by driven check: `declare` reports **106 wording keys**; a
+**Help rows and outcome sentences are the catalogue's too.** A help cell is a `Help` key, a
+tab's title a `NameTab` key and its line a `NoteTab` key; `help.nim` holds which cell sits in
+which row and nothing a reader sees. A cell is neither label nor sentence — it is read across
+its row — so it carries its own law: no capital opens it, no full stop closes it, and no two
+say one thing. A row naming a button or a key composes it through the catalogue's own funcs
+(`withButton`, `namesJoined`, `sectionNamed`, `wheelWordsTaught`), so the glue between a
+button's name and its words is the catalogue's as much as the words are, and the menu tab
+names each button by the button's own key, so a renamed button is renamed in its row. Outcome
+sentences are composed here as well, `derivedMessage` among them, which four sites had each
+written out; `message.nim` keeps how long an outcome stands. The guard sweeps `help.nim` for
+any quoted letter, since a word quoted there is a copy the catalogue cannot see. Not here: the
+algebra's own words — operation names and notation from `pga`'s declarations, kind words, key
+and button names — which help composes with rather than copies.
+
+*Checked.* Verified by build and by driven check: `declare` reports **175 wording keys**; a
 literal put back at a label call is refused, which is how three page-only strings in `state.ts`
-were found; and a `@WORD:` token naming an absent key fails the build with the line that carries
-it.
+were found; a key named only inside the catalogue is refused as shown by nobody; and a `@WORD:`
+token naming an absent key fails the build with the line that carries it.
 
 ## Driven Checks
 
@@ -128,7 +142,7 @@ wheel or puts two fingers on the canvas, so nothing in it catches a rule wired t
 event. `tools/drive/` does, through Playwright, against the page `tools/build.nim web`
 assembles; `nim r tools/build.nim drive` runs both front-ends.
 
-**161 checks pass**, one module per section of what the page does, counted by running and
+**162 checks pass**, one module per section of what the page does, counted by running and
 never read off this file:
 
 | Module | Covers |
@@ -215,12 +229,24 @@ runner earns 24 ms and takes about 20 of 94 ms. `driveListFills` reads the media
 run saw, derives the budget, and divides by a conservative 4 rows per millisecond — against
 11.4 measured under 5 ms slices and 6.4 under 24 ms ones.
 
+**A touch id is never reused across gestures, and every gesture starts by asking the page
+whether any pointer is still down.** The page keys live pointers by id, so an id reused
+from the gesture before overwrites a finger left standing by a dropped or reordered lift in
+silence, and the pair the page reads is not the pair the harness sent — which is the one
+mechanism found for a two-finger pan reading as a pinch (repository issues 153 and 154). A
+fresh id per finger leaves a stale one standing where the guard names it and the gesture's
+own check fails on it. The guard reads events the browser delivered, through a listener the
+harness installs on `window`, never the page's own bookkeeping: the page's surface is not
+widened for a test, and what is asserted is what the page received. It is silent when
+clean and reports the stale ids when not, and one positive check stands before the pan,
+which follows a tap.
+
 **The chip row's check asserts reach beside fit.** `driveChipRowFits` requires exactly two
 toggles wherever they stand alongside zero overflow, since a row that fits because two
 controls were dropped is broken more quietly, and sweeps 396, 395 and 394, because a rule
 written one pixel out passes every sweep that never lands on it.
 
-*Checked.* Verified by running: 161 of 161 through `tools/build.nim drive`, both front-ends,
+*Checked.* Verified by running: 162 of 162 through `tools/build.nim drive`, both front-ends,
 software-rendered, here and on the runner — `driven` gates `audit`, so a green push run is
 the runner's own word (repository issues 47 and 91). **Unmeasured**: the figures are this
 container's and say more about SwiftShader than about any GPU; bands are what the checks
@@ -1923,12 +1949,9 @@ catalogue and neither front-end writes a literal, but the page still explains el
 where the window explains all of them. Whether it should reach every one is a design question
 rather than a defect, raised as `#145`.
 
-**The catalogue is three files rather than one.** `wording.nim` holds the labels and tooltips;
-`help.nim` holds the help rows and `message.nim` the outcome sentences. Folding the last two in
-is stage three, and until it lands "one catalogue" is true of one file of three.
-
 **A two-finger pan check has failed once and has not been reproduced.** Raised as `#153` with
-what was tried. It is recorded rather than quarantined, since a check giving two verdicts on one
-tree is what the determinism rule calls wrong.
+what was tried. The harness now gives every finger a fresh id and asserts no pointer is down
+before each gesture (see Driven Checks), so a stale finger is named rather than masked; the
+question stays open until a run reproduces it or names what it was.
 
 [replications]: https://gitlab.com/mraxilus/replications

@@ -9,7 +9,7 @@ import { waitFrames } from './frame';
 import { report } from './report';
 import { clearTheGlass } from './gestures';
 import { pixelOf } from './wheel';
-import { dragFinger, tapAt, pinch } from './touch';
+import { dragFinger, pointersDown, tapAt, pinch } from './touch';
 
 /** Put camera back where it opened and drop selection, so each check starts alike. */
 async function fromHome(page: Page): Promise<void> {
@@ -22,6 +22,13 @@ async function fromHome(page: Page): Promise<void> {
 export async function driveTwoFingerPan(page: Page, cdp: CDPSession): Promise<void> {
   await page.keyboard.press('Home');
   await settleCamera(page);
+  // Gesture before this ends in tap; finger it left standing would make three pointers of
+  //   this pair, and pan below would then fail for that reason rather than its own.
+  const down = await pointersDown(page);
+  report(
+    'no pointer is still down from the gesture before',
+    down.length === 0, `ids ${down.join(', ') || 'none'}`,
+  );
   const before = await readCamera(page);
   await pinch(page, cdp, { x: 400, y: 400 }, { x: 700, y: 500 }, 80, 80);
   const after = await readCamera(page);

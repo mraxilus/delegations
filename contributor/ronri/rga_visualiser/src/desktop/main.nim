@@ -2001,7 +2001,7 @@ proc runStoryboard(
       )
       panel.tween_camera.settle(camera)
 
-    panel.say(&"{step.label} gave {kindText(derived)}.", clock)
+    panel.say(derivedMessage(step.label, kindText(derived)), clock)
     panel.selection.selectOnly(count_seeds + index)
     captureStep(step.stem)
 

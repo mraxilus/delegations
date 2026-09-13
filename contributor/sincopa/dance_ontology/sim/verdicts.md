@@ -359,21 +359,23 @@ Blocks: -1.20, 0.36 m apart: her shoulder, twist; +1.22, 0.36 m apart: her shoul
 
 ## The chain, asked still
 
-L-r.R-l turned to each rung and asked afresh whether any pose holds there at all -- not whether the
-arms can carry to it, which the sweeps above say.  Asked from every distance the couple may stand
-at, and shown from first that holds.
+L-r.R-l wound to each rung and asked whether pose holds there standing still -- not whether the arms
+carry to it at the pace of the turn, which the sweeps above say.  Wound, not built there: a rung is
+a winding of the arms, which no facing says, so the couple are turned to it with the hands lifted
+and then left to stand.  Asked from every distance the couple may stand at, and shown from first
+that holds.
 
 | level | rung | holds | strain | crossings | standing |
 |---|---|---|---|---|---|
-| low | X (0.50) | yes | 1.00 (at edge) | 1 | 0.52 m |
-| low | diamond (1.00) | yes | 0.00 | 0 | 0.36 m |
-| low | swan (1.50) | yes | 1.00 (at edge) | 1 | 0.52 m |
-| high | X (0.50) | yes | 1.00 (at edge) | 1 | 0.52 m |
-| high | diamond (1.00) | yes | 0.00 | 0 | 0.36 m |
-| high | swan (1.50) | yes | 1.00 (at edge) | 1 | 0.52 m |
-| above | X (0.50) | yes | 1.00 (at edge) | 1 | 0.50 m |
-| above | diamond (1.00) | yes | 0.19 | 0 | 0.36 m |
-| above | swan (1.50) | yes | 1.00 (at edge) | 1 | 0.50 m |
+| low | X (0.50) | yes | 1.00 (at edge) | 0 | 0.36 m |
+| low | diamond (1.00) | no | | | no pose holds |
+| low | swan (1.50) | no | | | no pose holds |
+| high | X (0.50) | yes | 0.46 | 0 | 0.36 m |
+| high | diamond (1.00) | no | | | no pose holds |
+| high | swan (1.50) | no | | | no pose holds |
+| above | X (0.50) | yes | 0.29 | 0 | 0.36 m |
+| above | diamond (1.00) | yes | 0.31 | 2 | 0.36 m |
+| above | swan (1.50) | no | | | no pose holds |
 
 ## The states the whole-cloth page draws
 

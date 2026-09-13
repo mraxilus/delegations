@@ -4517,6 +4517,25 @@ suite "Help":
       check len(entry.outcome) > 0
 
 
+  test "the menu tab names each button by the button's own key":
+    # Row whose action is button is read from that button's key, so button renamed is
+    #   renamed in its row; row written out again would have been copy that drifted.
+    var actions: seq[string]
+    for entry in lut_help_entries:
+      if entry.path == HelpPath.Menu: actions.add(entry.action)
+    check actions == [
+      $wordingText(NamePickApply), $wordingText(NamePickEdit), $wordingText(NamePickHide),
+      $wordingText(NamePickDelete), $wordingText(NamePickClose),
+    ]
+
+
+  test "an apply's outcome is one sentence, however it was applied":
+    # Written at four sites before: drag's outcome in `interaction`, panel's apply, desktop's
+    #   storyboard and bridge's apply, so one edit moved one of them.
+    check derivedMessage("m ∧ n", "line") == "m ∧ n gave line."
+    check len(derivedMessage("m ∧ n", "line")) < MESSAGE_MAX
+
+
   test "every tab says what it is about, so none opens on rows with no context":
     # Check line above rows, carrying what two-column row cannot.
     #   Which menu this is, what wedge is; path added without one would render that line
@@ -8090,12 +8109,25 @@ suite "Wording":
     #   no stray space, and starts with capital -- three things eye notices and no reviewer
     #   reliably does.
     for key in Wording:
-      if key.namesControl: continue
+      if key.namesControl or key.isHelpCell: continue
       let text = $wordingText(key)
       check text == strip(text)
       check "  " notin text
       check text.endsWith(".")
       check text[0].isUpperAscii
+
+
+  test "every help cell reads as a fragment, across its row":
+    # Cell is neither label nor sentence: reader reads action and outcome across one row,
+    #   so capital opening cell or full stop closing it breaks that reading. Held to
+    #   fragment's own shape, and to prose's rule that no two say one thing.
+    for key in Wording:
+      if not key.isHelpCell: continue
+      let text = $wordingText(key)
+      check text == strip(text)
+      check "  " notin text
+      check not text.endsWith(".")
+      check not text[0].isUpperAscii
 
 
   test "every label stays a label":
