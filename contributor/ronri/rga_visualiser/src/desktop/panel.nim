@@ -797,7 +797,7 @@ func applyPickedOperation(
   )
   history.record(scene, camera)
 
-  panel.say(&"{label} gave {kindText(derived)}.", now)
+  panel.say(derivedMessage(label, kindText(derived)), now)
 
 
 proc layoutApply*(

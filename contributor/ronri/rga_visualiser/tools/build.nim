@@ -72,6 +72,7 @@ const
   PATH_PANEL_NIM = "src" / "desktop" / "panel.nim"
     ## Panel, swept for shown text written where it is drawn.
   PATH_MAIN_NIM = "src" / "desktop" / "main.nim"
+  PATH_HELP_NIM = "src" / "rga_visualiser" / "help.nim"
     ## Desktop entry point, which shows exactly one piece of text: window's own caption.
   PATH_BRIDGE_JS = BUILD_BROWSER / "bridge.js"
     ## Compiled bridge, first script on page.
@@ -406,6 +407,21 @@ proc isLiteralShown(line, call: string): bool =
   let text = quoted[0 ..< closed]
   text.len > 0 and not text.startsWith("##")
 
+proc isWordsLiteral(line: string): bool =
+  ## Report whether line of help table quotes words rather than naming key.
+  ##   Table's cells are catalogue keys, and what it composes them with is punctuation:
+  ##   quoted letter is word written where no reader of catalogue can see it. Assertion
+  ##   messages, pragmas and comments are not shown and are passed over.
+  let s = line.strip
+  if s.startsWith("#") or s.startsWith("{.") or s.startsWith("&\"") or "doAssert" in s:
+    return false
+  var is_open = false
+  for c in s:
+    if c == '"': is_open = not is_open
+    elif is_open and c.isAlphaAscii: return true
+  false
+
+
 proc namesKey(text, key: string): bool =
   ## Report whether text names this key rather than one key's name merely starting another's.
   ##   `NameMenuSave` reads inside `NameMenuSaveScene`, so plain substring would count one
@@ -444,6 +460,11 @@ proc checkWording() =
         if isLiteralShown(line, write):
           found.add path & ":" & $(i + 1) & ": " & line.strip
           break
+  block:
+    # Help table names keys and composes them; word quoted there is copy catalogue lost.
+    let lines = readFile(PATH_HELP_NIM).splitLines
+    for i, line in lines:
+      if isWordsLiteral(line): found.add PATH_HELP_NIM & ":" & $(i + 1) & ": " & line.strip
   # Window caption is one piece of shown text living outside three files swept above.
   #   Entry point is not swept whole: it is full of option names, paths and error text that
   #   no reader of window ever sees, and check that flags those is check nobody reads.
@@ -466,7 +487,7 @@ proc checkWording() =
 
   # Catalogue may not grow rows nothing shows either. Entry no front-end names is words
   #   written for nobody, and next reader cannot tell it from one still in use.
-  var shown = readFile(PATH_PANEL_NIM) & readFile(PATH_SHELL) & caption
+  var shown = readFile(PATH_PANEL_NIM) & readFile(PATH_SHELL) & caption & readFile(PATH_HELP_NIM)
   for path in walkFiles("src" / "browser" / "*.ts"): shown.add readFile(path)
   for key in Wording:
     if not shown.namesKey($key):

@@ -682,7 +682,7 @@ proc nimApplyOperation(
   let kind_word = kindText(derived)
   OperationResult(
     created_handle: cint(handle_created),
-    message: cstring(&"{label} gave {kind_word}."),
+    message: cstring(derivedMessage(label, kind_word)),
     kind_word: cstring(kind_word),
   )
 
