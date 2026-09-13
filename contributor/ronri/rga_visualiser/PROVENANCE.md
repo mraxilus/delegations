@@ -3515,6 +3515,15 @@ can be driven to hover headlessly, so the four outputs above are what this chang
 instead of a screenshot — which is what `CONTRIBUTOR.md` asks for where a change is not
 visual.
 
+**Named against the house, after the Architect asked.** `wordingOf(key: Wording)` named the key
+twice over, since the key *is* a wording; and `lut_wording` broke the shape every other lookup
+here carries. The house convention is `lut_<key>_to_<value>` — `lut_ink_to_name`,
+`lut_basis_to_name`, `lut_operation_to_arity` — with the accessor named for what it returns, as
+`nimBasisName` is. So the table is `lut_wording_to_text`, the accessor is `wordingText`, and
+`isWordingSpoken` is `hasWords`, since nothing here speaks. **GLOSSARY.md gains *Wording*** in the
+same change, which is what settled the question: a wording is one piece of shown text, the key is
+what code names, and `wordingText` gives the words it stands for.
+
 **Staged, and this is stage one.** The catalogue holds the 41 tooltips, where the drift was
 live. Stage two is labels and headings — `gui.button`, `gui.header`, `gui.separatorText` and
 the page's own `textContent`, about ninety sites. Stage three folds in `help.nim`'s rows and

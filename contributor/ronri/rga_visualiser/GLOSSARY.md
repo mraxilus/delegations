@@ -76,6 +76,12 @@ _Avoid_: placement, pose, position, state
 
 ### The front-ends
 
+**Wording**:
+One piece of text a front-end shows a reader: a tooltip, the words on a control, a sentence
+saying what an action did. Every wording is named, and named once, so both front-ends show the
+same words.
+_Avoid_: string, label, copy, caption, blurb
+
 **Front-end**:
 One of the two things built from the shared geometry code: the browser page, or the desktop
 application.

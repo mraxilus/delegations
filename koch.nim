@@ -16,7 +16,7 @@
 ##   | scope   | changed paths against branch prefix           (--branch, --base)        |
 ##   | commits | commit subjects against branch scope          (--branch, --base)        |
 ##   | base    | paths branch gained against base's own rules  (--base)                  |
-##   | stamp   | print rules stamp for PROVENANCE.md                                     |
+##   | stamp   | print rules stamp for PROVENANCE.md; --write sets every Rules row       |
 ##   | ci      | fetch origin/main, then every check above but `deps`, each as it scopes |
 ##   |---------|-------------------------------------------------------------------------|
 ##   Verb of one project is that project's own, in its `tools/build.nim`; koch names verb and
@@ -29,7 +29,8 @@
 ##   Options: `--root:<dir>` (default `.`); `--branch:<name>` (default env `BRANCH`, else
 ##     current git branch); `--base:<ref>` (default env `BASE`, else `origin/main`); `--all`
 ##     makes `plan` name every project; `--sweep` names every project only when code merged
-##     within window, else none; `--driven` keeps only those carrying driven checks. Second
+##     within window, else none; `--driven` keeps only those carrying driven checks;
+##     `--write` makes `stamp` set every record's Rules row rather than print stamp. Second
 ##     argument names one project directory, and every verb given one drops its scoping.
 ##     Exit: 0 clean, 1 findings, 2 usage error.
 ##
@@ -57,7 +58,7 @@ import ./curator/audit/src/[
 const USAGE = """
 Usage: koch <tree|deps|types|driven|system|assets|tests|plan|scope|commits|base|stamp|ci>
             [project|asset...]
-            [--root:<dir>] [--branch:<name>] [--base:<ref>] [--all] [--sweep]
+            [--root:<dir>] [--branch:<name>] [--base:<ref>] [--all] [--sweep] [--write]
 """
   ## Text printed on usage error.
 
@@ -73,6 +74,7 @@ type Options = object
   is_all: bool
   is_sweep: bool
   is_driven: bool
+  is_write: bool
 
 
 proc parseOptions(): Option[Options] =
@@ -96,6 +98,7 @@ proc parseOptions(): Option[Options] =
       of "all": options.is_all = true
       of "sweep": options.is_sweep = true
       of "driven": options.is_driven = true
+      of "write": options.is_write = true
       else: return none(Options)
     of cmdEnd: discard
   if options.command.len == 0: return none(Options)
@@ -204,7 +207,12 @@ proc run(options: Options): int =
   of "base":
     found = checkBase(gainedPaths(options.root, options.baseOrDefault))
   of "stamp":
-    echo options.root.readTree.rulesStamp
+    # Printing serves record written by hand; writing serves duty 1, where every record moves
+    #   at once and four hand edits were one step too many (curator review, C10).
+    let tree = options.root.readTree
+    if options.is_write:
+      for path in writeRulesRows(options.root, tree): echo path
+    else: echo tree.rulesStamp
     return 0
   of "ci":
     discard gitFields(options.root, ["fetch", "-q", "origin", MAIN])
@@ -212,8 +220,7 @@ proc run(options: Options): int =
     let (branch, base) = (options.branchOrDefault, options.baseOrDefault)
     found = tree.auditTree
     found.add typeJobs(options.root, tree, options.scopedDirsOf(tree))
-    found.add runJobs(options.root, tree.jobs(changedPaths(options.root, base)))
-    found.add drivenJobs(options.root, tree, tree.jobs(changedPaths(options.root, base)))
+    found.add ciJobs(options.root, tree, tree.jobs(changedPaths(options.root, base)))
     found.add checkScope(branch, changedPaths(options.root, base), movedPaths(options.root, base))
     found.add checkCommits(branch, subjects(options.root, base))
     found.add checkBase(gainedPaths(options.root, base))
