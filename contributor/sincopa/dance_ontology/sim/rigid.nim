@@ -656,16 +656,17 @@ proc elbowDown(c: Couple) =
 
 const
   TWIST_LEAN = 7.0   ## Newton metres per radian twist is into its ease: three at
-                     ## ease's end, gentle as `SWING_LEAN` and for same reason.
+                     ## ease's end, gentle where `SWING_LEAN` is stiff, since
+                     ## nothing measured asked more of twist.
   ELBOW_LEAN = 6.0   ## Same for elbow, whose ease is thirty five degrees.
-  WRIST_LEAN = 2.5   ## Same for wrist: hand about it is a thousandth, and this
+  WRIST_LEAN = 2.5   ## Same for wrist: hand about it is one thousandth, and this
                      ## rings at eight hertz there.
 
 proc easeOff(c: Couple) =
   ## Turn each joint engine holds back out of its ease, as `holdSwing` turns
   ## swing back.
   ##   Engine's limits are walls and its springs, at one hertz, are nothing, so
-  ##     every joint ran to an end and stayed: twist at ninety through rise and
+  ##     every joint ran to its end and stayed: twist at ninety through rise and
   ##     at minus seventy after, wrist at its cone from 0.40 on, elbow straight.
   ##     Architect: arms are not following comfort.  Comfort is slope inside
   ##     range, free in middle and rising through ease to end; this is that
