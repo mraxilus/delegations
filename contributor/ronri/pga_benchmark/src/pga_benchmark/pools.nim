@@ -1,4 +1,4 @@
-## Fill sample pools once, seeded, so every suite and probe reads same objects.
+## Fill sample pools once, seeded, so every suite and measurand reads same objects.
 ##   Dense pool holds Gaussian components on every basis; graded pools hold one grade
 ##   each, for operations that read grade; typed pools hold objects built as geometry
 ##   builds them (lines as joins of points, planes as joins of line and point, motors as
@@ -14,9 +14,9 @@ import std/[math, options, random]
 
 import pga
 
-import ./[bridge, kinds]
+import ./[kinds, widening]
 
-export bridge
+export widening
 
 
 var
@@ -73,7 +73,7 @@ func toUpperAscii(s: string): string {.compileTime.} =
 
 
 func libraryPoolName*(kind: Kind; grade: Option[int]): string {.compileTime.} =
-  ## Name pool feeding library side of probe: dense image, graded dense, or scalar.
+  ## Name pool feeding library implementation of measurand: dense image, graded dense, or scalar.
   ##   Branches as `if` rather than `case`, since algebras without typed kinds leave
   ##   typed branch unreachable and compiler would say so.
   if kind == Kind.General:
@@ -83,7 +83,7 @@ func libraryPoolName*(kind: Kind; grade: Option[int]): string {.compileTime.} =
 
 
 func referencePoolName*(kind: Kind): string {.compileTime.} =
-  ## Name pool feeding reference side of probe: typed object, or same as library side.
+  ## Name pool feeding reference implementation of measurand: typed object, or library's.
   if kind == Kind.General: "POOL_GENERAL"
   elif kind == Kind.Scalar: "POOL_SCALAR"
   else: "POOL_" & toUpperAscii($kind)
@@ -125,7 +125,7 @@ when IS_CONFORMAL and DIMENSIONS == 5:
 
 
 proc fillPools*(seed = 0) =
-  ## Fill every pool from seed; deterministic, so suites and probes agree across runs.
+  ## Fill every pool from seed; deterministic, so suites and measurands agree across runs.
   randomize(seed)
   for i in 0 ..< OBJECTS:
     POOL_GENERAL[i] = randMultivector()
@@ -138,10 +138,10 @@ proc fillPools*(seed = 0) =
       POOL_LINE[i] = wedge(randPoint(), randPoint())
       POOL_PLANE[i] = wedge(wedge(randPoint(), randPoint()), randPoint())
       POOL_MOTOR[i] = randMotor()
-      POOL_POINT_MV[i] = POOL_POINT[i].toMultivector
-      POOL_LINE_MV[i] = POOL_LINE[i].toMultivector
-      POOL_PLANE_MV[i] = POOL_PLANE[i].toMultivector
-      POOL_MOTOR_MV[i] = POOL_MOTOR[i].toMultivector
+      POOL_POINT_MV[i] = POOL_POINT[i].widen
+      POOL_LINE_MV[i] = POOL_LINE[i].widen
+      POOL_PLANE_MV[i] = POOL_PLANE[i].widen
+      POOL_MOTOR_MV[i] = POOL_MOTOR[i].widen
   when IS_CONFORMAL and DIMENSIONS == 5:
     for i in 0 ..< OBJECTS:
       POOL_ROUNDPOINT[i] = randRoundPoint()
@@ -150,7 +150,7 @@ proc fillPools*(seed = 0) =
       POOL_SPHERE[i] = wedge(
         wedge(wedge(randRoundPoint(), randRoundPoint()), randRoundPoint()), randRoundPoint()
       )
-      POOL_ROUNDPOINT_MV[i] = POOL_ROUNDPOINT[i].toMultivector
-      POOL_DIPOLE_MV[i] = POOL_DIPOLE[i].toMultivector
-      POOL_CIRCLE_MV[i] = POOL_CIRCLE[i].toMultivector
-      POOL_SPHERE_MV[i] = POOL_SPHERE[i].toMultivector
+      POOL_ROUNDPOINT_MV[i] = POOL_ROUNDPOINT[i].widen
+      POOL_DIPOLE_MV[i] = POOL_DIPOLE[i].widen
+      POOL_CIRCLE_MV[i] = POOL_CIRCLE[i].widen
+      POOL_SPHERE_MV[i] = POOL_SPHERE[i].widen

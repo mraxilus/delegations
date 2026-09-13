@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "kind": "register",
+  "kind": "docket",
   "next": 316,
   "ids": {
     "cga4d/add": "G281",

@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "kind": "inspect",
-  "config": {
+  "kind": "static",
+  "algebra": {
     "name": "rga4d",
     "dimensions": 4,
     "is_conformal": false,
@@ -22,341 +22,6 @@
         "Multivector",
         "Basis"
       ],
-      "returns": "NF*",
-      "inline": true,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "zero_fills": 0,
-        "temporaries": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 3
-      },
-      "total": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "zero_fills": 0,
-        "temporaries": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 3
-      },
-      "movement": {
-        "bytes_read": 128,
-        "bytes_written": 0,
-        "bytes_zeroed": 0,
-        "bytes_copied": 0,
-        "bytes_temporaries": 0,
-        "bytes_moved": 128
-      }
-    },
-    "wedge(Point,Point)": {
-      "symbol": "wedge",
-      "module": "reference/rigid3",
-      "params": [
-        "Point",
-        "Point"
-      ],
-      "returns": "Line",
-      "inline": true,
-      "own": {
-        "multiplies": 12,
-        "adds": 0,
-        "subs": 6,
-        "zero_fills": 0,
-        "temporaries": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 6
-      },
-      "total": {
-        "multiplies": 12,
-        "adds": 0,
-        "subs": 6,
-        "zero_fills": 0,
-        "temporaries": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 6
-      },
-      "movement": {
-        "bytes_read": 64,
-        "bytes_written": 48,
-        "bytes_zeroed": 0,
-        "bytes_copied": 0,
-        "bytes_temporaries": 0,
-        "bytes_moved": 112
-      }
-    },
-    "wedge(Line,Point)": {
-      "symbol": "wedge",
-      "module": "reference/rigid3",
-      "params": [
-        "Line",
-        "Point"
-      ],
-      "returns": "Plane",
-      "inline": true,
-      "own": {
-        "multiplies": 12,
-        "adds": 3,
-        "subs": 5,
-        "zero_fills": 0,
-        "temporaries": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 4
-      },
-      "total": {
-        "multiplies": 12,
-        "adds": 3,
-        "subs": 5,
-        "zero_fills": 0,
-        "temporaries": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 4
-      },
-      "movement": {
-        "bytes_read": 80,
-        "bytes_written": 32,
-        "bytes_zeroed": 0,
-        "bytes_copied": 0,
-        "bytes_temporaries": 0,
-        "bytes_moved": 112
-      }
-    },
-    "wedgeDotAnti(Motor,Motor)": {
-      "symbol": "wedgeDotAnti",
-      "module": "reference/rigid3",
-      "params": [
-        "Motor",
-        "Motor"
-      ],
-      "returns": "Motor",
-      "inline": true,
-      "own": {
-        "multiplies": 48,
-        "adds": 22,
-        "subs": 18,
-        "zero_fills": 0,
-        "temporaries": 0,
-        "copies": 1,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 10
-      },
-      "total": {
-        "multiplies": 48,
-        "adds": 22,
-        "subs": 18,
-        "zero_fills": 0,
-        "temporaries": 0,
-        "copies": 1,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 10
-      },
-      "movement": {
-        "bytes_read": 128,
-        "bytes_written": 64,
-        "bytes_zeroed": 0,
-        "bytes_copied": 64,
-        "bytes_temporaries": 0,
-        "bytes_moved": 256
-      }
-    },
-    "*(Vec3,float)": {
-      "symbol": "*",
-      "module": "reference/rigid3",
-      "params": [
-        "Vec3",
-        "float"
-      ],
-      "returns": "Vec3",
-      "inline": true,
-      "own": {
-        "multiplies": 3,
-        "adds": 0,
-        "subs": 0,
-        "zero_fills": 0,
-        "temporaries": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 7
-      },
-      "total": {
-        "multiplies": 3,
-        "adds": 0,
-        "subs": 0,
-        "zero_fills": 0,
-        "temporaries": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 7
-      },
-      "movement": {
-        "bytes_read": 32,
-        "bytes_written": 24,
-        "bytes_zeroed": 0,
-        "bytes_copied": 0,
-        "bytes_temporaries": 0,
-        "bytes_moved": 56
-      }
-    },
-    "translator(Vec3)": {
-      "symbol": "translator",
-      "module": "reference/rigid3",
-      "params": [
-        "Vec3"
-      ],
-      "returns": "Motor",
-      "inline": true,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "zero_fills": 2,
-        "temporaries": 0,
-        "copies": 0,
-        "checks": 1,
-        "calls": 1,
-        "allocations": 0,
-        "lines": 18
-      },
-      "total": {
-        "multiplies": 3,
-        "adds": 0,
-        "subs": 0,
-        "zero_fills": 2,
-        "temporaries": 0,
-        "copies": 0,
-        "checks": 1,
-        "calls": 1,
-        "allocations": 0,
-        "lines": 25
-      },
-      "movement": {
-        "bytes_read": 24,
-        "bytes_written": 64,
-        "bytes_zeroed": 128,
-        "bytes_copied": 0,
-        "bytes_temporaries": 0,
-        "bytes_moved": 216
-      }
-    },
-    "rotor(Vec3,float)": {
-      "symbol": "rotor",
-      "module": "reference/rigid3",
-      "params": [
-        "Vec3",
-        "float"
-      ],
-      "returns": "Motor",
-      "inline": true,
-      "own": {
-        "multiplies": 1,
-        "adds": 0,
-        "subs": 0,
-        "zero_fills": 2,
-        "temporaries": 0,
-        "copies": 0,
-        "checks": 1,
-        "calls": 1,
-        "allocations": 0,
-        "lines": 23
-      },
-      "total": {
-        "multiplies": 4,
-        "adds": 0,
-        "subs": 0,
-        "zero_fills": 2,
-        "temporaries": 0,
-        "copies": 0,
-        "checks": 1,
-        "calls": 1,
-        "allocations": 0,
-        "lines": 30
-      },
-      "movement": {
-        "bytes_read": 32,
-        "bytes_written": 64,
-        "bytes_zeroed": 128,
-        "bytes_copied": 0,
-        "bytes_temporaries": 0,
-        "bytes_moved": 224
-      }
-    },
-    "dot(Vec3,Vec3)": {
-      "symbol": "dot",
-      "module": "reference/rigid3",
-      "params": [
-        "Vec3",
-        "Vec3"
-      ],
-      "returns": "float",
-      "inline": true,
-      "own": {
-        "multiplies": 3,
-        "adds": 2,
-        "subs": 0,
-        "zero_fills": 0,
-        "temporaries": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 3
-      },
-      "total": {
-        "multiplies": 3,
-        "adds": 2,
-        "subs": 0,
-        "zero_fills": 0,
-        "temporaries": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 3
-      },
-      "movement": {
-        "bytes_read": 48,
-        "bytes_written": 8,
-        "bytes_zeroed": 0,
-        "bytes_copied": 0,
-        "bytes_temporaries": 0,
-        "bytes_moved": 56
-      }
-    },
-    "[](Multivector,Basis)#2": {
-      "symbol": "[]",
-      "module": "pga/multivectors",
-      "params": [
-        "Multivector",
-        "Basis"
-      ],
       "returns": "float",
       "inline": true,
       "own": {
@@ -364,7 +29,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -376,7 +41,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -388,7 +53,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 136
       }
     },
@@ -406,7 +71,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 3,
-        "temporaries": 2,
+        "intermediates": 2,
         "copies": 1,
         "checks": 2,
         "calls": 2,
@@ -418,7 +83,7 @@
         "adds": 84,
         "subs": 0,
         "zero_fills": 5,
-        "temporaries": 2,
+        "intermediates": 2,
         "copies": 1,
         "checks": 242,
         "calls": 2,
@@ -430,7 +95,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 640,
         "bytes_copied": 128,
-        "bytes_temporaries": 256,
+        "bytes_intermediates": 256,
         "bytes_moved": 1408
       }
     },
@@ -448,7 +113,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 3,
-        "temporaries": 2,
+        "intermediates": 2,
         "copies": 1,
         "checks": 2,
         "calls": 2,
@@ -460,7 +125,7 @@
         "adds": 103,
         "subs": 0,
         "zero_fills": 5,
-        "temporaries": 2,
+        "intermediates": 2,
         "copies": 1,
         "checks": 304,
         "calls": 2,
@@ -472,7 +137,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 640,
         "bytes_copied": 128,
-        "bytes_temporaries": 256,
+        "bytes_intermediates": 256,
         "bytes_moved": 1408
       }
     },
@@ -490,7 +155,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 3,
-        "temporaries": 2,
+        "intermediates": 2,
         "copies": 1,
         "checks": 2,
         "calls": 2,
@@ -502,7 +167,7 @@
         "adds": 103,
         "subs": 0,
         "zero_fills": 5,
-        "temporaries": 2,
+        "intermediates": 2,
         "copies": 1,
         "checks": 304,
         "calls": 2,
@@ -514,7 +179,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 640,
         "bytes_copied": 128,
-        "bytes_temporaries": 256,
+        "bytes_intermediates": 256,
         "bytes_moved": 1408
       }
     },
@@ -532,7 +197,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 3,
-        "temporaries": 2,
+        "intermediates": 2,
         "copies": 1,
         "checks": 2,
         "calls": 2,
@@ -544,7 +209,7 @@
         "adds": 84,
         "subs": 0,
         "zero_fills": 5,
-        "temporaries": 2,
+        "intermediates": 2,
         "copies": 1,
         "checks": 242,
         "calls": 2,
@@ -556,8 +221,134 @@
         "bytes_written": 128,
         "bytes_zeroed": 640,
         "bytes_copied": 128,
-        "bytes_temporaries": 256,
+        "bytes_intermediates": 256,
         "bytes_moved": 1408
+      }
+    },
+    "[](Multivector,Basis)#2": {
+      "symbol": "[]",
+      "module": "pga/multivectors",
+      "params": [
+        "Multivector",
+        "Basis"
+      ],
+      "returns": "NF*",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 0,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 128
+      }
+    },
+    "wedge(Point,Point)": {
+      "symbol": "wedge",
+      "module": "reference/rigid3",
+      "params": [
+        "Point",
+        "Point"
+      ],
+      "returns": "Line",
+      "inline": true,
+      "own": {
+        "multiplies": 12,
+        "adds": 0,
+        "subs": 6,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 6
+      },
+      "total": {
+        "multiplies": 12,
+        "adds": 0,
+        "subs": 6,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 6
+      },
+      "movement": {
+        "bytes_read": 64,
+        "bytes_written": 48,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 112
+      }
+    },
+    "wedge(Line,Point)": {
+      "symbol": "wedge",
+      "module": "reference/rigid3",
+      "params": [
+        "Line",
+        "Point"
+      ],
+      "returns": "Plane",
+      "inline": true,
+      "own": {
+        "multiplies": 12,
+        "adds": 3,
+        "subs": 5,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "total": {
+        "multiplies": 12,
+        "adds": 3,
+        "subs": 5,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 112
       }
     },
     "wedge(Point,Line)": {
@@ -574,7 +365,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -586,7 +377,7 @@
         "adds": 3,
         "subs": 5,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -598,7 +389,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 32,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 144
       }
     },
@@ -616,7 +407,7 @@
         "adds": 0,
         "subs": 6,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -628,7 +419,7 @@
         "adds": 0,
         "subs": 6,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -640,7 +431,7 @@
         "bytes_written": 48,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 112
       }
     },
@@ -658,7 +449,7 @@
         "adds": 3,
         "subs": 5,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -670,7 +461,7 @@
         "adds": 3,
         "subs": 5,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -682,7 +473,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 112
       }
     },
@@ -700,7 +491,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -712,7 +503,7 @@
         "adds": 3,
         "subs": 5,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -724,8 +515,50 @@
         "bytes_written": 32,
         "bytes_zeroed": 32,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 144
+      }
+    },
+    "dot(Vec3,Vec3)": {
+      "symbol": "dot",
+      "module": "reference/rigid3",
+      "params": [
+        "Vec3",
+        "Vec3"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 3,
+        "adds": 2,
+        "subs": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 3,
+        "adds": 2,
+        "subs": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 48,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 56
       }
     },
     "wedgeAnti(Line,Line)": {
@@ -742,7 +575,7 @@
         "adds": 0,
         "subs": 1,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 2,
         "calls": 2,
@@ -754,7 +587,7 @@
         "adds": 4,
         "subs": 1,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 2,
         "calls": 2,
@@ -766,7 +599,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 104
       }
     },
@@ -784,7 +617,7 @@
         "adds": 3,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -796,7 +629,7 @@
         "adds": 3,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -808,7 +641,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 72
       }
     },
@@ -826,7 +659,7 @@
         "adds": 2,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -838,7 +671,7 @@
         "adds": 2,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -850,7 +683,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 72
       }
     },
@@ -868,7 +701,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -880,7 +713,7 @@
         "adds": 2,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -892,7 +725,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 104
       }
     },
@@ -910,7 +743,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -922,7 +755,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -934,7 +767,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 72
       }
     },
@@ -952,7 +785,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -964,7 +797,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -976,7 +809,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 72
       }
     },
@@ -994,7 +827,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -1006,7 +839,7 @@
         "adds": 2,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -1018,7 +851,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 104
       }
     },
@@ -1036,7 +869,7 @@
         "adds": 2,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -1048,7 +881,7 @@
         "adds": 2,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -1060,8 +893,50 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 72
+      }
+    },
+    "wedgeDotAnti(Motor,Motor)": {
+      "symbol": "wedgeDotAnti",
+      "module": "reference/rigid3",
+      "params": [
+        "Motor",
+        "Motor"
+      ],
+      "returns": "Motor",
+      "inline": true,
+      "own": {
+        "multiplies": 48,
+        "adds": 22,
+        "subs": 18,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "total": {
+        "multiplies": 48,
+        "adds": 22,
+        "subs": 18,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 64,
+        "bytes_zeroed": 0,
+        "bytes_copied": 64,
+        "bytes_intermediates": 0,
+        "bytes_moved": 256
       }
     },
     "+(Vec3,Vec3)": {
@@ -1078,7 +953,7 @@
         "adds": 3,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -1090,7 +965,7 @@
         "adds": 3,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -1102,7 +977,7 @@
         "bytes_written": 24,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 72
       }
     },
@@ -1120,7 +995,7 @@
         "adds": 0,
         "subs": 3,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -1132,7 +1007,7 @@
         "adds": 0,
         "subs": 3,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -1144,8 +1019,50 @@
         "bytes_written": 24,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 72
+      }
+    },
+    "*(Vec3,float)": {
+      "symbol": "*",
+      "module": "reference/rigid3",
+      "params": [
+        "Vec3",
+        "float"
+      ],
+      "returns": "Vec3",
+      "inline": true,
+      "own": {
+        "multiplies": 3,
+        "adds": 0,
+        "subs": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "total": {
+        "multiplies": 3,
+        "adds": 0,
+        "subs": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 24,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 56
       }
     },
     "-(Vec3,Vec3)": {
@@ -1162,7 +1079,7 @@
         "adds": 0,
         "subs": 3,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -1174,7 +1091,7 @@
         "adds": 0,
         "subs": 3,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -1186,7 +1103,7 @@
         "bytes_written": 24,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 72
       }
     },
@@ -1204,7 +1121,7 @@
         "adds": 3,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 8,
         "calls": 8,
@@ -1216,7 +1133,7 @@
         "adds": 9,
         "subs": 9,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 8,
         "calls": 8,
@@ -1228,7 +1145,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 32,
         "bytes_copied": 32,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 192
       }
     },
@@ -1247,7 +1164,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 6,
         "calls": 6,
@@ -1259,7 +1176,7 @@
         "adds": 6,
         "subs": 6,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 6,
         "calls": 6,
@@ -1271,7 +1188,7 @@
         "bytes_written": 24,
         "bytes_zeroed": 24,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 104
       }
     },
@@ -1288,7 +1205,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 6,
         "calls": 6,
@@ -1300,7 +1217,7 @@
         "adds": 3,
         "subs": 6,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 6,
         "calls": 6,
@@ -1312,7 +1229,7 @@
         "bytes_written": 24,
         "bytes_zeroed": 24,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 112
       }
     },
@@ -1330,7 +1247,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 5,
         "calls": 5,
@@ -1342,7 +1259,7 @@
         "adds": 18,
         "subs": 21,
         "zero_fills": 4,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 23,
         "calls": 23,
@@ -1354,7 +1271,7 @@
         "bytes_written": 48,
         "bytes_zeroed": 192,
         "bytes_copied": 48,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 400
       }
     },
@@ -1372,7 +1289,7 @@
         "adds": 0,
         "subs": 1,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 3,
         "calls": 3,
@@ -1384,7 +1301,7 @@
         "adds": 11,
         "subs": 13,
         "zero_fills": 3,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 15,
         "calls": 15,
@@ -1396,7 +1313,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 96,
         "bytes_copied": 32,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 256
       }
     },
@@ -1414,7 +1331,7 @@
         "adds": 5,
         "subs": 3,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 0,
         "calls": 0,
@@ -1426,7 +1343,7 @@
         "adds": 5,
         "subs": 3,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 0,
         "calls": 0,
@@ -1438,7 +1355,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 0,
         "bytes_copied": 32,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 128
       }
     },
@@ -1456,7 +1373,7 @@
         "adds": 5,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 2,
         "calls": 2,
@@ -1468,7 +1385,7 @@
         "adds": 7,
         "subs": 3,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 2,
         "calls": 2,
@@ -1480,7 +1397,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 32,
         "bytes_copied": 32,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 176
       }
     },
@@ -1498,7 +1415,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 10,
         "calls": 10,
@@ -1510,7 +1427,7 @@
         "adds": 6,
         "subs": 9,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 10,
         "calls": 10,
@@ -1522,7 +1439,7 @@
         "bytes_written": 48,
         "bytes_zeroed": 48,
         "bytes_copied": 48,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 224
       }
     },
@@ -1539,7 +1456,7 @@
         "adds": 0,
         "subs": 3,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -1551,7 +1468,7 @@
         "adds": 2,
         "subs": 3,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -1563,7 +1480,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 32,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 112
       }
     },
@@ -1580,7 +1497,7 @@
         "adds": 2,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -1592,7 +1509,7 @@
         "adds": 2,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -1604,7 +1521,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 64
       }
     },
@@ -1621,7 +1538,7 @@
         "adds": 2,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -1633,7 +1550,7 @@
         "adds": 2,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -1645,7 +1562,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 64
       }
     },
@@ -1662,7 +1579,7 @@
         "adds": 0,
         "subs": 3,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -1674,7 +1591,7 @@
         "adds": 2,
         "subs": 3,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -1686,7 +1603,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 32,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 112
       }
     },
@@ -1703,7 +1620,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -1715,7 +1632,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -1727,7 +1644,7 @@
         "bytes_written": 24,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 48
       }
     },
@@ -1744,7 +1661,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 2,
         "calls": 2,
@@ -1756,7 +1673,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 2,
         "calls": 2,
@@ -1768,7 +1685,7 @@
         "bytes_written": 64,
         "bytes_zeroed": 64,
         "bytes_copied": 64,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 256
       }
     },
@@ -1785,7 +1702,7 @@
         "adds": 1,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -1797,7 +1714,7 @@
         "adds": 3,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -1809,7 +1726,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 72
       }
     },
@@ -1826,7 +1743,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 2,
         "checks": 3,
         "calls": 3,
@@ -1838,7 +1755,7 @@
         "adds": 3,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 2,
         "checks": 4,
         "calls": 4,
@@ -1850,7 +1767,7 @@
         "bytes_written": 64,
         "bytes_zeroed": 64,
         "bytes_copied": 128,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 320
       }
     },
@@ -1867,7 +1784,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -1879,7 +1796,7 @@
         "adds": 3,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 2,
         "calls": 2,
@@ -1891,7 +1808,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 72
       }
     },
@@ -1908,7 +1825,7 @@
         "adds": 1,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -1920,7 +1837,7 @@
         "adds": 3,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -1932,7 +1849,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 72
       }
     },
@@ -1949,7 +1866,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -1961,7 +1878,7 @@
         "adds": 3,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 2,
         "calls": 2,
@@ -1973,7 +1890,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 72
       }
     },
@@ -1990,7 +1907,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -2002,7 +1919,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -2014,7 +1931,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 64
       }
     },
@@ -2031,7 +1948,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -2043,7 +1960,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -2055,7 +1972,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 64
       }
     },
@@ -2072,7 +1989,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 0,
         "calls": 0,
@@ -2084,7 +2001,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 0,
         "calls": 0,
@@ -2096,7 +2013,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 0,
         "bytes_copied": 32,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 96
       }
     },
@@ -2113,7 +2030,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 0,
         "calls": 0,
@@ -2125,7 +2042,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 0,
         "calls": 0,
@@ -2137,7 +2054,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 0,
         "bytes_copied": 32,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 96
       }
     },
@@ -2154,7 +2071,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -2166,7 +2083,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -2178,7 +2095,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 64
       }
     },
@@ -2195,7 +2112,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -2207,7 +2124,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -2219,7 +2136,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 64
       }
     },
@@ -2236,7 +2153,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 0,
         "calls": 0,
@@ -2248,7 +2165,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 0,
         "calls": 0,
@@ -2260,7 +2177,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 0,
         "bytes_copied": 32,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 96
       }
     },
@@ -2277,7 +2194,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 0,
         "calls": 0,
@@ -2289,7 +2206,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 0,
         "calls": 0,
@@ -2301,7 +2218,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 0,
         "bytes_copied": 32,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 96
       }
     },
@@ -2318,7 +2235,7 @@
         "adds": 2,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -2330,7 +2247,7 @@
         "adds": 2,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -2342,7 +2259,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 40
       }
     },
@@ -2359,7 +2276,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -2371,7 +2288,7 @@
         "adds": 2,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -2383,7 +2300,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 40
       }
     },
@@ -2400,7 +2317,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 1,
@@ -2412,7 +2329,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 1,
@@ -2424,7 +2341,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 40
       }
     },
@@ -2441,7 +2358,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 2,
         "checks": 0,
         "calls": 0,
@@ -2453,7 +2370,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 2,
         "checks": 0,
         "calls": 0,
@@ -2465,7 +2382,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 0,
         "bytes_copied": 64,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 128
       }
     },
@@ -2482,7 +2399,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -2494,7 +2411,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -2506,7 +2423,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 40
       }
     },
@@ -2523,7 +2440,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 2,
         "calls": 2,
@@ -2535,7 +2452,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 2,
         "calls": 2,
@@ -2547,7 +2464,7 @@
         "bytes_written": 48,
         "bytes_zeroed": 48,
         "bytes_copied": 48,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 192
       }
     },
@@ -2564,7 +2481,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 2,
         "calls": 2,
@@ -2576,7 +2493,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 2,
         "calls": 2,
@@ -2588,7 +2505,7 @@
         "bytes_written": 48,
         "bytes_zeroed": 48,
         "bytes_copied": 48,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 192
       }
     },
@@ -2605,7 +2522,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 2,
         "calls": 2,
@@ -2617,7 +2534,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 2,
         "calls": 2,
@@ -2629,7 +2546,7 @@
         "bytes_written": 48,
         "bytes_zeroed": 48,
         "bytes_copied": 48,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 192
       }
     },
@@ -2646,7 +2563,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 2,
         "calls": 2,
@@ -2658,7 +2575,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 2,
         "calls": 2,
@@ -2670,7 +2587,7 @@
         "bytes_written": 48,
         "bytes_zeroed": 48,
         "bytes_copied": 48,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 192
       }
     },
@@ -2687,7 +2604,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 1,
         "calls": 1,
@@ -2699,7 +2616,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 1,
         "calls": 1,
@@ -2711,7 +2628,7 @@
         "bytes_written": 48,
         "bytes_zeroed": 48,
         "bytes_copied": 48,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 192
       }
     },
@@ -2728,7 +2645,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 1,
         "calls": 1,
@@ -2740,7 +2657,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 1,
         "calls": 1,
@@ -2752,7 +2669,7 @@
         "bytes_written": 48,
         "bytes_zeroed": 48,
         "bytes_copied": 48,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 192
       }
     },
@@ -2769,7 +2686,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 0,
         "calls": 0,
@@ -2781,7 +2698,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 0,
         "calls": 0,
@@ -2793,7 +2710,7 @@
         "bytes_written": 48,
         "bytes_zeroed": 0,
         "bytes_copied": 48,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 144
       }
     },
@@ -2810,7 +2727,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 0,
         "calls": 0,
@@ -2822,7 +2739,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 0,
         "calls": 0,
@@ -2834,7 +2751,7 @@
         "bytes_written": 48,
         "bytes_zeroed": 0,
         "bytes_copied": 48,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 144
       }
     },
@@ -2851,7 +2768,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -2863,7 +2780,7 @@
         "adds": 2,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -2875,7 +2792,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 56
       }
     },
@@ -2892,7 +2809,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -2904,7 +2821,7 @@
         "adds": 2,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 2,
         "calls": 2,
@@ -2916,7 +2833,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 56
       }
     },
@@ -2933,7 +2850,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -2945,7 +2862,7 @@
         "adds": 2,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -2957,7 +2874,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 56
       }
     },
@@ -2974,7 +2891,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -2986,7 +2903,7 @@
         "adds": 2,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 2,
         "calls": 2,
@@ -2998,7 +2915,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 56
       }
     },
@@ -3015,7 +2932,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 2,
         "checks": 3,
         "calls": 3,
@@ -3027,7 +2944,7 @@
         "adds": 2,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 2,
         "checks": 4,
         "calls": 4,
@@ -3039,7 +2956,7 @@
         "bytes_written": 48,
         "bytes_zeroed": 48,
         "bytes_copied": 96,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 240
       }
     },
@@ -3056,7 +2973,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -3068,7 +2985,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -3080,7 +2997,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 80
       }
     },
@@ -3097,7 +3014,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -3109,7 +3026,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -3121,7 +3038,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 64
       }
     },
@@ -3138,7 +3055,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -3150,7 +3067,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -3162,7 +3079,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 64
       }
     },
@@ -3179,7 +3096,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 0,
         "calls": 0,
@@ -3191,7 +3108,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 0,
         "calls": 0,
@@ -3203,7 +3120,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 0,
         "bytes_copied": 32,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 96
       }
     },
@@ -3220,7 +3137,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 0,
         "calls": 0,
@@ -3232,7 +3149,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 0,
         "calls": 0,
@@ -3244,7 +3161,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 0,
         "bytes_copied": 32,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 96
       }
     },
@@ -3261,7 +3178,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -3273,7 +3190,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -3285,7 +3202,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 64
       }
     },
@@ -3302,7 +3219,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -3314,7 +3231,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -3326,7 +3243,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 64
       }
     },
@@ -3343,7 +3260,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 0,
         "calls": 0,
@@ -3355,7 +3272,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 0,
         "calls": 0,
@@ -3367,7 +3284,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 0,
         "bytes_copied": 32,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 96
       }
     },
@@ -3384,7 +3301,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 0,
         "calls": 0,
@@ -3396,7 +3313,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 1,
         "checks": 0,
         "calls": 0,
@@ -3408,7 +3325,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 0,
         "bytes_copied": 32,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 96
       }
     },
@@ -3425,7 +3342,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 1,
@@ -3437,7 +3354,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 1,
@@ -3449,7 +3366,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 40
       }
     },
@@ -3466,7 +3383,7 @@
         "adds": 2,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -3478,7 +3395,7 @@
         "adds": 2,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -3490,7 +3407,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 40
       }
     },
@@ -3507,7 +3424,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -3519,7 +3436,7 @@
         "adds": 2,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -3531,7 +3448,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 40
       }
     },
@@ -3548,7 +3465,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 2,
         "checks": 1,
         "calls": 1,
@@ -3560,7 +3477,7 @@
         "adds": 2,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 2,
         "checks": 1,
         "calls": 1,
@@ -3572,7 +3489,7 @@
         "bytes_written": 32,
         "bytes_zeroed": 32,
         "bytes_copied": 64,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 160
       }
     },
@@ -3589,7 +3506,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -3601,7 +3518,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -3613,8 +3530,91 @@
         "bytes_written": 48,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 80
+      }
+    },
+    "translator(Vec3)": {
+      "symbol": "translator",
+      "module": "reference/rigid3",
+      "params": [
+        "Vec3"
+      ],
+      "returns": "Motor",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "zero_fills": 2,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 18
+      },
+      "total": {
+        "multiplies": 3,
+        "adds": 0,
+        "subs": 0,
+        "zero_fills": 2,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 25
+      },
+      "movement": {
+        "bytes_read": 24,
+        "bytes_written": 64,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 216
+      }
+    },
+    "rotor(Vec3,float)": {
+      "symbol": "rotor",
+      "module": "reference/rigid3",
+      "params": [
+        "Vec3",
+        "float"
+      ],
+      "returns": "Motor",
+      "inline": true,
+      "own": {
+        "multiplies": 1,
+        "adds": 0,
+        "subs": 0,
+        "zero_fills": 2,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 23
+      },
+      "total": {
+        "multiplies": 4,
+        "adds": 0,
+        "subs": 0,
+        "zero_fills": 2,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 30
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 64,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 224
       }
     },
     "grade(Basis)": {
@@ -3630,7 +3630,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -3642,7 +3642,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
@@ -3654,7 +3654,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 8
       }
     },
@@ -3671,7 +3671,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -3683,7 +3683,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 0,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 1,
         "calls": 1,
@@ -3695,7 +3695,7 @@
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 8
       }
     },
@@ -3713,7 +3713,7 @@
         "adds": 1,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 3,
         "calls": 0,
@@ -3725,7 +3725,7 @@
         "adds": 1,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 3,
         "calls": 0,
@@ -3737,7 +3737,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 512
       }
     },
@@ -3755,7 +3755,7 @@
         "adds": 0,
         "subs": 1,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 3,
         "calls": 0,
@@ -3767,7 +3767,7 @@
         "adds": 0,
         "subs": 1,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 3,
         "calls": 0,
@@ -3779,7 +3779,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 512
       }
     },
@@ -3796,7 +3796,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 2,
         "calls": 0,
@@ -3808,7 +3808,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 2,
         "calls": 0,
@@ -3820,7 +3820,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 384
       }
     },
@@ -3838,7 +3838,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 4,
         "calls": 1,
@@ -3850,7 +3850,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 4,
         "calls": 1,
@@ -3862,7 +3862,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 392
       }
     },
@@ -3880,7 +3880,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 4,
         "calls": 1,
@@ -3892,7 +3892,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 5,
         "calls": 2,
@@ -3904,7 +3904,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 392
       }
     },
@@ -3922,7 +3922,7 @@
         "adds": 65,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 178,
         "calls": 0,
@@ -3934,7 +3934,7 @@
         "adds": 65,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 178,
         "calls": 0,
@@ -3946,7 +3946,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 512
       }
     },
@@ -3964,7 +3964,7 @@
         "adds": 65,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 178,
         "calls": 0,
@@ -3976,7 +3976,7 @@
         "adds": 65,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 178,
         "calls": 0,
@@ -3988,7 +3988,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 512
       }
     },
@@ -4006,7 +4006,7 @@
         "adds": 176,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 400,
         "calls": 0,
@@ -4018,7 +4018,7 @@
         "adds": 176,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 400,
         "calls": 0,
@@ -4030,7 +4030,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 512
       }
     },
@@ -4048,7 +4048,7 @@
         "adds": 176,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 400,
         "calls": 0,
@@ -4060,7 +4060,7 @@
         "adds": 176,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 400,
         "calls": 0,
@@ -4072,7 +4072,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 512
       }
     },
@@ -4090,7 +4090,7 @@
         "adds": 7,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 17,
         "calls": 0,
@@ -4102,7 +4102,7 @@
         "adds": 7,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 17,
         "calls": 0,
@@ -4114,7 +4114,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 512
       }
     },
@@ -4132,7 +4132,7 @@
         "adds": 7,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 17,
         "calls": 0,
@@ -4144,7 +4144,7 @@
         "adds": 7,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 17,
         "calls": 0,
@@ -4156,7 +4156,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 512
       }
     },
@@ -4174,7 +4174,7 @@
         "adds": 38,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 124,
         "calls": 0,
@@ -4186,7 +4186,7 @@
         "adds": 38,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 124,
         "calls": 0,
@@ -4198,7 +4198,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 512
       }
     },
@@ -4216,7 +4216,7 @@
         "adds": 19,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 62,
         "calls": 0,
@@ -4228,7 +4228,7 @@
         "adds": 19,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 62,
         "calls": 0,
@@ -4240,7 +4240,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 512
       }
     },
@@ -4258,7 +4258,7 @@
         "adds": 19,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 62,
         "calls": 0,
@@ -4270,7 +4270,7 @@
         "adds": 19,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 62,
         "calls": 0,
@@ -4282,7 +4282,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 512
       }
     },
@@ -4300,7 +4300,7 @@
         "adds": 38,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 124,
         "calls": 0,
@@ -4312,7 +4312,7 @@
         "adds": 38,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 124,
         "calls": 0,
@@ -4324,7 +4324,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 512
       }
     },
@@ -4342,7 +4342,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 2,
         "calls": 0,
@@ -4354,7 +4354,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 2,
         "calls": 0,
@@ -4366,7 +4366,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 392
       }
     },
@@ -4383,7 +4383,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 16,
         "calls": 0,
@@ -4395,7 +4395,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 16,
         "calls": 0,
@@ -4407,7 +4407,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 384
       }
     },
@@ -4424,7 +4424,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 16,
         "calls": 0,
@@ -4436,7 +4436,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 16,
         "calls": 0,
@@ -4448,7 +4448,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 384
       }
     },
@@ -4465,7 +4465,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 32,
         "calls": 0,
@@ -4477,7 +4477,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 32,
         "calls": 0,
@@ -4489,7 +4489,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 384
       }
     },
@@ -4506,7 +4506,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 32,
         "calls": 0,
@@ -4518,7 +4518,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 32,
         "calls": 0,
@@ -4530,7 +4530,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 384
       }
     },
@@ -4547,7 +4547,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 32,
         "calls": 0,
@@ -4559,7 +4559,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 32,
         "calls": 0,
@@ -4571,7 +4571,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 384
       }
     },
@@ -4588,7 +4588,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 32,
         "calls": 0,
@@ -4600,7 +4600,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 32,
         "calls": 0,
@@ -4612,7 +4612,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 384
       }
     },
@@ -4629,7 +4629,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 16,
         "calls": 0,
@@ -4641,7 +4641,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 16,
         "calls": 0,
@@ -4653,7 +4653,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 384
       }
     },
@@ -4670,7 +4670,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 16,
         "calls": 0,
@@ -4682,7 +4682,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 0,
+        "intermediates": 0,
         "copies": 0,
         "checks": 16,
         "calls": 0,
@@ -4694,7 +4694,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 128,
         "bytes_copied": 0,
-        "bytes_temporaries": 0,
+        "bytes_intermediates": 0,
         "bytes_moved": 384
       }
     },
@@ -4711,7 +4711,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 2,
-        "temporaries": 1,
+        "intermediates": 1,
         "copies": 0,
         "checks": 3,
         "calls": 1,
@@ -4723,7 +4723,7 @@
         "adds": 7,
         "subs": 0,
         "zero_fills": 3,
-        "temporaries": 1,
+        "intermediates": 1,
         "copies": 0,
         "checks": 20,
         "calls": 1,
@@ -4735,7 +4735,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 384,
         "bytes_copied": 0,
-        "bytes_temporaries": 128,
+        "bytes_intermediates": 128,
         "bytes_moved": 768
       }
     },
@@ -4752,7 +4752,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 2,
-        "temporaries": 1,
+        "intermediates": 1,
         "copies": 0,
         "checks": 3,
         "calls": 1,
@@ -4764,7 +4764,7 @@
         "adds": 7,
         "subs": 0,
         "zero_fills": 3,
-        "temporaries": 1,
+        "intermediates": 1,
         "copies": 0,
         "checks": 20,
         "calls": 1,
@@ -4776,7 +4776,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 384,
         "bytes_copied": 0,
-        "bytes_temporaries": 128,
+        "bytes_intermediates": 128,
         "bytes_moved": 768
       }
     },
@@ -4793,7 +4793,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 3,
-        "temporaries": 2,
+        "intermediates": 2,
         "copies": 0,
         "checks": 6,
         "calls": 2,
@@ -4805,7 +4805,7 @@
         "adds": 14,
         "subs": 0,
         "zero_fills": 9,
-        "temporaries": 4,
+        "intermediates": 4,
         "copies": 0,
         "checks": 46,
         "calls": 4,
@@ -4817,7 +4817,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 1152,
         "bytes_copied": 0,
-        "bytes_temporaries": 512,
+        "bytes_intermediates": 512,
         "bytes_moved": 1920
       }
     },
@@ -4834,7 +4834,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 1,
+        "intermediates": 1,
         "copies": 1,
         "checks": 4,
         "calls": 2,
@@ -4846,7 +4846,7 @@
         "adds": 7,
         "subs": 0,
         "zero_fills": 4,
-        "temporaries": 2,
+        "intermediates": 2,
         "copies": 1,
         "checks": 24,
         "calls": 3,
@@ -4858,7 +4858,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 512,
         "bytes_copied": 128,
-        "bytes_temporaries": 256,
+        "bytes_intermediates": 256,
         "bytes_moved": 1152
       }
     },
@@ -4875,7 +4875,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
-        "temporaries": 1,
+        "intermediates": 1,
         "copies": 1,
         "checks": 4,
         "calls": 2,
@@ -4887,7 +4887,7 @@
         "adds": 7,
         "subs": 0,
         "zero_fills": 4,
-        "temporaries": 2,
+        "intermediates": 2,
         "copies": 1,
         "checks": 24,
         "calls": 3,
@@ -4899,7 +4899,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 512,
         "bytes_copied": 128,
-        "bytes_temporaries": 256,
+        "bytes_intermediates": 256,
         "bytes_moved": 1152
       }
     },
@@ -4916,7 +4916,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 2,
-        "temporaries": 1,
+        "intermediates": 1,
         "copies": 1,
         "checks": 1,
         "calls": 1,
@@ -4928,7 +4928,7 @@
         "adds": 65,
         "subs": 0,
         "zero_fills": 3,
-        "temporaries": 1,
+        "intermediates": 1,
         "copies": 1,
         "checks": 179,
         "calls": 1,
@@ -4940,7 +4940,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 384,
         "bytes_copied": 128,
-        "bytes_temporaries": 128,
+        "bytes_intermediates": 128,
         "bytes_moved": 896
       }
     },
@@ -4957,7 +4957,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 4,
-        "temporaries": 3,
+        "intermediates": 3,
         "copies": 1,
         "checks": 3,
         "calls": 3,
@@ -4969,7 +4969,7 @@
         "adds": 130,
         "subs": 0,
         "zero_fills": 7,
-        "temporaries": 3,
+        "intermediates": 3,
         "copies": 1,
         "checks": 375,
         "calls": 3,
@@ -4981,7 +4981,7 @@
         "bytes_written": 128,
         "bytes_zeroed": 896,
         "bytes_copied": 128,
-        "bytes_temporaries": 384,
+        "bytes_intermediates": 384,
         "bytes_moved": 1664
       }
     },
@@ -4998,7 +4998,7 @@
         "adds": 0,
         "subs": 0,
         "zero_fills": 4,
-        "temporaries": 3,
+        "intermediates": 3,
         "copies": 1,
         "checks": 3,
         "calls": 3,
@@ -5010,7 +5010,7 @@
         "adds": 130,
         "subs": 0,
         "zero_fills": 7,
-        "temporaries": 3,
+        "intermediates": 3,
         "copies": 1,
         "checks": 375,
         "calls": 3,
@@ -5022,17 +5022,17 @@
         "bytes_written": 128,
         "bytes_zeroed": 896,
         "bytes_copied": 128,
-        "bytes_temporaries": 384,
+        "bytes_intermediates": 384,
         "bytes_moved": 1664
       }
     }
   },
-  "probes": {
+  "measurands": {
     "wedge": {
       "symbol": "∧",
       "alias": "wedge",
       "arity": 2,
-      "spell": "(m ∧ n)",
+      "expression": "(m ∧ n)",
       "library": "∧(Multivector,Multivector)",
       "reference": "",
       "cite": "2.17"
@@ -5041,7 +5041,7 @@
       "symbol": "∨",
       "alias": "wedgeAnti",
       "arity": 2,
-      "spell": "(m ∨ n)",
+      "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "",
       "cite": "2.29"
@@ -5050,7 +5050,7 @@
       "symbol": "⟑",
       "alias": "wedgeDot",
       "arity": 2,
-      "spell": "(m ⟑ n)",
+      "expression": "(m ⟑ n)",
       "library": "⟑(Multivector,Multivector)",
       "reference": "",
       "cite": "wiki:Geometric_product"
@@ -5059,7 +5059,7 @@
       "symbol": "⟇",
       "alias": "wedgeDotAnti",
       "arity": 2,
-      "spell": "(m ⟇ n)",
+      "expression": "(m ⟇ n)",
       "library": "⟇(Multivector,Multivector)",
       "reference": "",
       "cite": "wiki:Geometric_product"
@@ -5068,7 +5068,7 @@
       "symbol": "∙",
       "alias": "dot",
       "arity": 2,
-      "spell": "(m ∙ n)",
+      "expression": "(m ∙ n)",
       "library": "∙(Multivector,Multivector)",
       "reference": "",
       "cite": "2.76"
@@ -5077,7 +5077,7 @@
       "symbol": "∘",
       "alias": "dotAnti",
       "arity": 2,
-      "spell": "(m ∘ n)",
+      "expression": "(m ∘ n)",
       "library": "∘(Multivector,Multivector)",
       "reference": "",
       "cite": "2.76"
@@ -5086,7 +5086,7 @@
       "symbol": "∨★",
       "alias": "contractBulk",
       "arity": 2,
-      "spell": "(m ∨★ n)",
+      "expression": "(m ∨★ n)",
       "library": "∨★(Multivector,Multivector)",
       "reference": "",
       "cite": "2.119"
@@ -5095,7 +5095,7 @@
       "symbol": "∨☆",
       "alias": "contractWeight",
       "arity": 2,
-      "spell": "(m ∨☆ n)",
+      "expression": "(m ∨☆ n)",
       "library": "∨☆(Multivector,Multivector)",
       "reference": "",
       "cite": "2.120"
@@ -5104,7 +5104,7 @@
       "symbol": "∧★",
       "alias": "expandBulk",
       "arity": 2,
-      "spell": "(m ∧★ n)",
+      "expression": "(m ∧★ n)",
       "library": "∧★(Multivector,Multivector)",
       "reference": "",
       "cite": "wiki:Expansions"
@@ -5113,7 +5113,7 @@
       "symbol": "∧☆",
       "alias": "expandWeight",
       "arity": 2,
-      "spell": "(m ∧☆ n)",
+      "expression": "(m ∧☆ n)",
       "library": "∧☆(Multivector,Multivector)",
       "reference": "",
       "cite": "wiki:Expansions"
@@ -5122,7 +5122,7 @@
       "symbol": "+",
       "alias": "add",
       "arity": 2,
-      "spell": "(m + n)",
+      "expression": "(m + n)",
       "library": "+(Multivector,Multivector)",
       "reference": "",
       "cite": "2.24"
@@ -5131,7 +5131,7 @@
       "symbol": "-",
       "alias": "subtract",
       "arity": 2,
-      "spell": "(m - n)",
+      "expression": "(m - n)",
       "library": "-(Multivector,Multivector)",
       "reference": "",
       "cite": "2.24"
@@ -5140,7 +5140,7 @@
       "symbol": "",
       "alias": "projectCentral",
       "arity": 2,
-      "spell": "projectCentral(m, n)",
+      "expression": "projectCentral(m, n)",
       "library": "projectCentral(Multivector,Multivector)",
       "reference": "",
       "cite": "wiki:Projections"
@@ -5149,7 +5149,7 @@
       "symbol": "",
       "alias": "projectCentralAnti",
       "arity": 2,
-      "spell": "projectCentralAnti(m, n)",
+      "expression": "projectCentralAnti(m, n)",
       "library": "projectCentralAnti(Multivector,Multivector)",
       "reference": "",
       "cite": "wiki:Projections"
@@ -5158,7 +5158,7 @@
       "symbol": "",
       "alias": "projectOrthogonal",
       "arity": 2,
-      "spell": "projectOrthogonal(m, n)",
+      "expression": "projectOrthogonal(m, n)",
       "library": "projectOrthogonal(Multivector,Multivector)",
       "reference": "",
       "cite": "wiki:Projections"
@@ -5167,7 +5167,7 @@
       "symbol": "",
       "alias": "projectOrthogonalAnti",
       "arity": 2,
-      "spell": "projectOrthogonalAnti(m, n)",
+      "expression": "projectOrthogonalAnti(m, n)",
       "library": "projectOrthogonalAnti(Multivector,Multivector)",
       "reference": "",
       "cite": "wiki:Projections"
@@ -5176,7 +5176,7 @@
       "symbol": "∧",
       "alias": "wedge",
       "arity": 2,
-      "spell": "(m ∧ n)",
+      "expression": "(m ∧ n)",
       "library": "∧(float,Multivector)",
       "reference": "",
       "cite": "2.24"
@@ -5185,7 +5185,7 @@
       "symbol": "∙",
       "alias": "bulk",
       "arity": 1,
-      "spell": "(∙ m)",
+      "expression": "(∙ m)",
       "library": "∙(Multivector)",
       "reference": "",
       "cite": "2.68"
@@ -5194,7 +5194,7 @@
       "symbol": "∘",
       "alias": "weight",
       "arity": 1,
-      "spell": "(∘ m)",
+      "expression": "(∘ m)",
       "library": "∘(Multivector)",
       "reference": "",
       "cite": "2.68"
@@ -5203,7 +5203,7 @@
       "symbol": "/",
       "alias": "complementRight",
       "arity": 1,
-      "spell": "(/ m)",
+      "expression": "(/ m)",
       "library": "/(Multivector)",
       "reference": "",
       "cite": "2.19"
@@ -5212,7 +5212,7 @@
       "symbol": "\\",
       "alias": "complementLeft",
       "arity": 1,
-      "spell": "(\\ m)",
+      "expression": "(\\ m)",
       "library": "\\(Multivector)",
       "reference": "",
       "cite": "2.20"
@@ -5221,7 +5221,7 @@
       "symbol": "~",
       "alias": "reverse",
       "arity": 1,
-      "spell": "(~ m)",
+      "expression": "(~ m)",
       "library": "~(Multivector)",
       "reference": "",
       "cite": "wiki:Reverses"
@@ -5230,7 +5230,7 @@
       "symbol": "~∘",
       "alias": "reverseAnti",
       "arity": 1,
-      "spell": "(~∘ m)",
+      "expression": "(~∘ m)",
       "library": "~∘(Multivector)",
       "reference": "",
       "cite": "wiki:Reverses"
@@ -5239,7 +5239,7 @@
       "symbol": "★",
       "alias": "dualBulk",
       "arity": 1,
-      "spell": "(★ m)",
+      "expression": "(★ m)",
       "library": "★(Multivector)",
       "reference": "",
       "cite": "2.103"
@@ -5248,7 +5248,7 @@
       "symbol": "☆",
       "alias": "dualWeight",
       "arity": 1,
-      "spell": "(☆ m)",
+      "expression": "(☆ m)",
       "library": "☆(Multivector)",
       "reference": "",
       "cite": "2.103"
@@ -5257,7 +5257,7 @@
       "symbol": "-",
       "alias": "negate",
       "arity": 1,
-      "spell": "(- m)",
+      "expression": "(- m)",
       "library": "-(Multivector)",
       "reference": "",
       "cite": "2.24"
@@ -5266,7 +5266,7 @@
       "symbol": "|∙",
       "alias": "normBulk",
       "arity": 1,
-      "spell": "(|∙ m)",
+      "expression": "(|∙ m)",
       "library": "|∙(Multivector)",
       "reference": "",
       "cite": "2.87"
@@ -5275,7 +5275,7 @@
       "symbol": "|∘",
       "alias": "normWeight",
       "arity": 1,
-      "spell": "(|∘ m)",
+      "expression": "(|∘ m)",
       "library": "|∘(Multivector)",
       "reference": "",
       "cite": "2.88"
@@ -5284,7 +5284,7 @@
       "symbol": "|",
       "alias": "norm",
       "arity": 1,
-      "spell": "(| m)",
+      "expression": "(| m)",
       "library": "|(Multivector)",
       "reference": "",
       "cite": "2.90"
@@ -5293,7 +5293,7 @@
       "symbol": "^∙",
       "alias": "normalizeBulk",
       "arity": 1,
-      "spell": "(^∙ m)",
+      "expression": "(^∙ m)",
       "library": "^∙(Multivector)",
       "reference": "",
       "cite": "2.89"
@@ -5302,7 +5302,7 @@
       "symbol": "^∘",
       "alias": "normalizeWeight",
       "arity": 1,
-      "spell": "(^∘ m)",
+      "expression": "(^∘ m)",
       "library": "^∘(Multivector)",
       "reference": "",
       "cite": "2.89"
@@ -5311,7 +5311,7 @@
       "symbol": "^",
       "alias": "unitize",
       "arity": 1,
-      "spell": "(^ m)",
+      "expression": "(^ m)",
       "library": "^∘(Multivector)",
       "reference": "",
       "cite": "2.89"
@@ -5320,7 +5320,7 @@
       "symbol": "⊖",
       "alias": "attitude",
       "arity": 1,
-      "spell": "(⊖ m)",
+      "expression": "(⊖ m)",
       "library": "⊖(Multivector)",
       "reference": "",
       "cite": "2.73"
@@ -5329,7 +5329,7 @@
       "symbol": "{}",
       "alias": "selectGrade",
       "arity": 1,
-      "spell": "(m{Grade(1)})",
+      "expression": "(m{Grade(1)})",
       "library": "{}(Multivector,int)",
       "reference": "",
       "cite": "2.17"
@@ -5338,7 +5338,7 @@
       "symbol": "{}",
       "alias": "selectGradeAnti",
       "arity": 1,
-      "spell": "(m{GradeAnti(1)})",
+      "expression": "(m{GradeAnti(1)})",
       "library": "{}(Multivector,int)#2",
       "reference": "",
       "cite": "2.29"
@@ -5347,7 +5347,7 @@
       "symbol": "[]",
       "alias": "selectPart",
       "arity": 1,
-      "spell": "(m[Basis.E1])",
+      "expression": "(m[Basis.E1])",
       "library": "[](Multivector,Basis)",
       "reference": "",
       "cite": "2.24"
@@ -5356,7 +5356,7 @@
       "symbol": "∩",
       "alias": "support",
       "arity": 1,
-      "spell": "(∩ m)",
+      "expression": "(∩ m)",
       "library": "∩(Multivector)",
       "reference": "",
       "cite": "wiki:Support"
@@ -5365,7 +5365,7 @@
       "symbol": "∪",
       "alias": "supportAnti",
       "arity": 1,
-      "spell": "(∪ m)",
+      "expression": "(∪ m)",
       "library": "∪(Multivector)",
       "reference": "",
       "cite": "wiki:Support"
@@ -5374,7 +5374,7 @@
       "symbol": "∧",
       "alias": "wedge",
       "arity": 2,
-      "spell": "(m ∧ n)",
+      "expression": "(m ∧ n)",
       "library": "∧(Multivector,Multivector)",
       "reference": "wedge(Point,Point)",
       "cite": "2.17"
@@ -5383,7 +5383,7 @@
       "symbol": "∧",
       "alias": "wedge",
       "arity": 2,
-      "spell": "(m ∧ n)",
+      "expression": "(m ∧ n)",
       "library": "∧(Multivector,Multivector)",
       "reference": "wedge(Line,Point)",
       "cite": "2.17"
@@ -5392,7 +5392,7 @@
       "symbol": "∧",
       "alias": "wedge",
       "arity": 2,
-      "spell": "(m ∧ n)",
+      "expression": "(m ∧ n)",
       "library": "∧(Multivector,Multivector)",
       "reference": "wedge(Point,Line)",
       "cite": "2.18"
@@ -5401,7 +5401,7 @@
       "symbol": "∨",
       "alias": "wedgeAnti",
       "arity": 2,
-      "spell": "(m ∨ n)",
+      "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "wedgeAnti(Plane,Plane)",
       "cite": "2.29"
@@ -5410,7 +5410,7 @@
       "symbol": "∨",
       "alias": "wedgeAnti",
       "arity": 2,
-      "spell": "(m ∨ n)",
+      "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "wedgeAnti(Plane,Line)",
       "cite": "2.29"
@@ -5419,7 +5419,7 @@
       "symbol": "∨",
       "alias": "wedgeAnti",
       "arity": 2,
-      "spell": "(m ∨ n)",
+      "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "wedgeAnti(Line,Plane)",
       "cite": "2.32"
@@ -5428,7 +5428,7 @@
       "symbol": "∨",
       "alias": "wedgeAnti",
       "arity": 2,
-      "spell": "(m ∨ n)",
+      "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "wedgeAnti(Line,Line)",
       "cite": "2.29"
@@ -5437,7 +5437,7 @@
       "symbol": "∨",
       "alias": "wedgeAnti",
       "arity": 2,
-      "spell": "(m ∨ n)",
+      "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "wedgeAnti(Point,Plane)",
       "cite": "2.29"
@@ -5446,7 +5446,7 @@
       "symbol": "∙",
       "alias": "dot",
       "arity": 2,
-      "spell": "(m ∙ n)",
+      "expression": "(m ∙ n)",
       "library": "∙(Multivector,Multivector)",
       "reference": "dot(Point,Point)",
       "cite": "2.76"
@@ -5455,7 +5455,7 @@
       "symbol": "∙",
       "alias": "dot",
       "arity": 2,
-      "spell": "(m ∙ n)",
+      "expression": "(m ∙ n)",
       "library": "∙(Multivector,Multivector)",
       "reference": "dot(Line,Line)",
       "cite": "2.76"
@@ -5464,7 +5464,7 @@
       "symbol": "∙",
       "alias": "dot",
       "arity": 2,
-      "spell": "(m ∙ n)",
+      "expression": "(m ∙ n)",
       "library": "∙(Multivector,Multivector)",
       "reference": "dot(Plane,Plane)",
       "cite": "2.76"
@@ -5473,7 +5473,7 @@
       "symbol": "∘",
       "alias": "dotAnti",
       "arity": 2,
-      "spell": "(m ∘ n)",
+      "expression": "(m ∘ n)",
       "library": "∘(Multivector,Multivector)",
       "reference": "dotAnti(Point,Point)",
       "cite": "2.76"
@@ -5482,7 +5482,7 @@
       "symbol": "∘",
       "alias": "dotAnti",
       "arity": 2,
-      "spell": "(m ∘ n)",
+      "expression": "(m ∘ n)",
       "library": "∘(Multivector,Multivector)",
       "reference": "dotAnti(Line,Line)",
       "cite": "2.76"
@@ -5491,7 +5491,7 @@
       "symbol": "∘",
       "alias": "dotAnti",
       "arity": 2,
-      "spell": "(m ∘ n)",
+      "expression": "(m ∘ n)",
       "library": "∘(Multivector,Multivector)",
       "reference": "dotAnti(Plane,Plane)",
       "cite": "2.76"
@@ -5500,7 +5500,7 @@
       "symbol": "⟇",
       "alias": "wedgeDotAnti",
       "arity": 2,
-      "spell": "(m ⟇ n)",
+      "expression": "(m ⟇ n)",
       "library": "⟇(Multivector,Multivector)",
       "reference": "wedgeDotAnti(Motor,Motor)",
       "cite": "wiki:Motor"
@@ -5509,7 +5509,7 @@
       "symbol": "",
       "alias": "",
       "arity": 2,
-      "spell": "((n ⟇ m) ⟇ (~∘ n))",
+      "expression": "((n ⟇ m) ⟇ (~∘ n))",
       "library": "",
       "reference": "transform(Point,Motor)",
       "cite": "wiki:Motor"
@@ -5518,7 +5518,7 @@
       "symbol": "",
       "alias": "",
       "arity": 2,
-      "spell": "((n ⟇ m) ⟇ (~∘ n))",
+      "expression": "((n ⟇ m) ⟇ (~∘ n))",
       "library": "",
       "reference": "transform(Line,Motor)",
       "cite": "wiki:Motor"
@@ -5527,7 +5527,7 @@
       "symbol": "",
       "alias": "",
       "arity": 2,
-      "spell": "((n ⟇ m) ⟇ (~∘ n))",
+      "expression": "((n ⟇ m) ⟇ (~∘ n))",
       "library": "",
       "reference": "transform(Plane,Motor)",
       "cite": "wiki:Motor"
@@ -5536,7 +5536,7 @@
       "symbol": "",
       "alias": "projectOrthogonal",
       "arity": 2,
-      "spell": "projectOrthogonal(m, n)",
+      "expression": "projectOrthogonal(m, n)",
       "library": "projectOrthogonal(Multivector,Multivector)",
       "reference": "projectOrthogonal(Point,Plane)",
       "cite": "wiki:Projections"
@@ -5545,7 +5545,7 @@
       "symbol": "",
       "alias": "projectOrthogonal",
       "arity": 2,
-      "spell": "projectOrthogonal(m, n)",
+      "expression": "projectOrthogonal(m, n)",
       "library": "projectOrthogonal(Multivector,Multivector)",
       "reference": "projectOrthogonal(Point,Line)",
       "cite": "wiki:Projections"
@@ -5554,7 +5554,7 @@
       "symbol": "",
       "alias": "projectOrthogonal",
       "arity": 2,
-      "spell": "projectOrthogonal(m, n)",
+      "expression": "projectOrthogonal(m, n)",
       "library": "projectOrthogonal(Multivector,Multivector)",
       "reference": "projectOrthogonal(Line,Plane)",
       "cite": "wiki:Projections"
@@ -5563,7 +5563,7 @@
       "symbol": "∩",
       "alias": "support",
       "arity": 1,
-      "spell": "(∩ m)",
+      "expression": "(∩ m)",
       "library": "∩(Multivector)",
       "reference": "support(Line)",
       "cite": "wiki:Support"
@@ -5572,7 +5572,7 @@
       "symbol": "∩",
       "alias": "support",
       "arity": 1,
-      "spell": "(∩ m)",
+      "expression": "(∩ m)",
       "library": "∩(Multivector)",
       "reference": "support(Plane)",
       "cite": "wiki:Support"
@@ -5581,7 +5581,7 @@
       "symbol": "∪",
       "alias": "supportAnti",
       "arity": 1,
-      "spell": "(∪ m)",
+      "expression": "(∪ m)",
       "library": "∪(Multivector)",
       "reference": "supportAnti(Point)",
       "cite": "wiki:Support"
@@ -5590,7 +5590,7 @@
       "symbol": "∪",
       "alias": "supportAnti",
       "arity": 1,
-      "spell": "(∪ m)",
+      "expression": "(∪ m)",
       "library": "∪(Multivector)",
       "reference": "supportAnti(Line)",
       "cite": "wiki:Support"
@@ -5599,7 +5599,7 @@
       "symbol": "~∘",
       "alias": "reverseAnti",
       "arity": 1,
-      "spell": "(~∘ m)",
+      "expression": "(~∘ m)",
       "library": "~∘(Multivector)",
       "reference": "reverseAnti(Motor)",
       "cite": "wiki:Motor"
@@ -5608,7 +5608,7 @@
       "symbol": "^",
       "alias": "unitize",
       "arity": 1,
-      "spell": "(^ m)",
+      "expression": "(^ m)",
       "library": "^∘(Multivector)",
       "reference": "unitize(Motor)",
       "cite": "wiki:Motor"
@@ -5617,7 +5617,7 @@
       "symbol": "|∘",
       "alias": "normWeight",
       "arity": 1,
-      "spell": "(|∘ m)",
+      "expression": "(|∘ m)",
       "library": "|∘(Multivector)",
       "reference": "normWeight(Motor)",
       "cite": "wiki:Motor"
@@ -5626,7 +5626,7 @@
       "symbol": "|∙",
       "alias": "normBulk",
       "arity": 1,
-      "spell": "(|∙ m)",
+      "expression": "(|∙ m)",
       "library": "|∙(Multivector)",
       "reference": "normBulk(Motor)",
       "cite": "wiki:Motor"
@@ -5635,7 +5635,7 @@
       "symbol": "/",
       "alias": "complementRight",
       "arity": 1,
-      "spell": "(/ m)",
+      "expression": "(/ m)",
       "library": "/(Multivector)",
       "reference": "complementRight(Point)",
       "cite": "2.19"
@@ -5644,7 +5644,7 @@
       "symbol": "\\",
       "alias": "complementLeft",
       "arity": 1,
-      "spell": "(\\ m)",
+      "expression": "(\\ m)",
       "library": "\\(Multivector)",
       "reference": "complementLeft(Point)",
       "cite": "2.20"
@@ -5653,7 +5653,7 @@
       "symbol": "~",
       "alias": "reverse",
       "arity": 1,
-      "spell": "(~ m)",
+      "expression": "(~ m)",
       "library": "~(Multivector)",
       "reference": "reverse(Point)",
       "cite": "wiki:Reverses"
@@ -5662,7 +5662,7 @@
       "symbol": "~∘",
       "alias": "reverseAnti",
       "arity": 1,
-      "spell": "(~∘ m)",
+      "expression": "(~∘ m)",
       "library": "~∘(Multivector)",
       "reference": "reverseAnti(Point)",
       "cite": "wiki:Reverses"
@@ -5671,7 +5671,7 @@
       "symbol": "★",
       "alias": "dualBulk",
       "arity": 1,
-      "spell": "(★ m)",
+      "expression": "(★ m)",
       "library": "★(Multivector)",
       "reference": "dualBulk(Point)",
       "cite": "2.103"
@@ -5680,7 +5680,7 @@
       "symbol": "☆",
       "alias": "dualWeight",
       "arity": 1,
-      "spell": "(☆ m)",
+      "expression": "(☆ m)",
       "library": "☆(Multivector)",
       "reference": "dualWeight(Point)",
       "cite": "2.103"
@@ -5689,7 +5689,7 @@
       "symbol": "∙",
       "alias": "bulk",
       "arity": 1,
-      "spell": "(∙ m)",
+      "expression": "(∙ m)",
       "library": "∙(Multivector)",
       "reference": "bulk(Point)",
       "cite": "2.68"
@@ -5698,7 +5698,7 @@
       "symbol": "∘",
       "alias": "weight",
       "arity": 1,
-      "spell": "(∘ m)",
+      "expression": "(∘ m)",
       "library": "∘(Multivector)",
       "reference": "weight(Point)",
       "cite": "2.68"
@@ -5707,7 +5707,7 @@
       "symbol": "|∙",
       "alias": "normBulk",
       "arity": 1,
-      "spell": "(|∙ m)",
+      "expression": "(|∙ m)",
       "library": "|∙(Multivector)",
       "reference": "normBulk(Point)",
       "cite": "2.87"
@@ -5716,7 +5716,7 @@
       "symbol": "|∘",
       "alias": "normWeight",
       "arity": 1,
-      "spell": "(|∘ m)",
+      "expression": "(|∘ m)",
       "library": "|∘(Multivector)",
       "reference": "normWeight(Point)",
       "cite": "2.88"
@@ -5725,7 +5725,7 @@
       "symbol": "^",
       "alias": "unitize",
       "arity": 1,
-      "spell": "(^ m)",
+      "expression": "(^ m)",
       "library": "^∘(Multivector)",
       "reference": "unitize(Point)",
       "cite": "2.89"
@@ -5734,7 +5734,7 @@
       "symbol": "⊖",
       "alias": "attitude",
       "arity": 1,
-      "spell": "(⊖ m)",
+      "expression": "(⊖ m)",
       "library": "⊖(Multivector)",
       "reference": "attitude(Point)",
       "cite": "2.73"
@@ -5743,7 +5743,7 @@
       "symbol": "/",
       "alias": "complementRight",
       "arity": 1,
-      "spell": "(/ m)",
+      "expression": "(/ m)",
       "library": "/(Multivector)",
       "reference": "complementRight(Line)",
       "cite": "2.19"
@@ -5752,7 +5752,7 @@
       "symbol": "\\",
       "alias": "complementLeft",
       "arity": 1,
-      "spell": "(\\ m)",
+      "expression": "(\\ m)",
       "library": "\\(Multivector)",
       "reference": "complementLeft(Line)",
       "cite": "2.20"
@@ -5761,7 +5761,7 @@
       "symbol": "~",
       "alias": "reverse",
       "arity": 1,
-      "spell": "(~ m)",
+      "expression": "(~ m)",
       "library": "~(Multivector)",
       "reference": "reverse(Line)",
       "cite": "wiki:Reverses"
@@ -5770,7 +5770,7 @@
       "symbol": "~∘",
       "alias": "reverseAnti",
       "arity": 1,
-      "spell": "(~∘ m)",
+      "expression": "(~∘ m)",
       "library": "~∘(Multivector)",
       "reference": "reverseAnti(Line)",
       "cite": "wiki:Reverses"
@@ -5779,7 +5779,7 @@
       "symbol": "★",
       "alias": "dualBulk",
       "arity": 1,
-      "spell": "(★ m)",
+      "expression": "(★ m)",
       "library": "★(Multivector)",
       "reference": "dualBulk(Line)",
       "cite": "2.103"
@@ -5788,7 +5788,7 @@
       "symbol": "☆",
       "alias": "dualWeight",
       "arity": 1,
-      "spell": "(☆ m)",
+      "expression": "(☆ m)",
       "library": "☆(Multivector)",
       "reference": "dualWeight(Line)",
       "cite": "2.103"
@@ -5797,7 +5797,7 @@
       "symbol": "∙",
       "alias": "bulk",
       "arity": 1,
-      "spell": "(∙ m)",
+      "expression": "(∙ m)",
       "library": "∙(Multivector)",
       "reference": "bulk(Line)",
       "cite": "2.68"
@@ -5806,7 +5806,7 @@
       "symbol": "∘",
       "alias": "weight",
       "arity": 1,
-      "spell": "(∘ m)",
+      "expression": "(∘ m)",
       "library": "∘(Multivector)",
       "reference": "weight(Line)",
       "cite": "2.68"
@@ -5815,7 +5815,7 @@
       "symbol": "|∙",
       "alias": "normBulk",
       "arity": 1,
-      "spell": "(|∙ m)",
+      "expression": "(|∙ m)",
       "library": "|∙(Multivector)",
       "reference": "normBulk(Line)",
       "cite": "2.87"
@@ -5824,7 +5824,7 @@
       "symbol": "|∘",
       "alias": "normWeight",
       "arity": 1,
-      "spell": "(|∘ m)",
+      "expression": "(|∘ m)",
       "library": "|∘(Multivector)",
       "reference": "normWeight(Line)",
       "cite": "2.88"
@@ -5833,7 +5833,7 @@
       "symbol": "^",
       "alias": "unitize",
       "arity": 1,
-      "spell": "(^ m)",
+      "expression": "(^ m)",
       "library": "^∘(Multivector)",
       "reference": "unitize(Line)",
       "cite": "2.89"
@@ -5842,7 +5842,7 @@
       "symbol": "⊖",
       "alias": "attitude",
       "arity": 1,
-      "spell": "(⊖ m)",
+      "expression": "(⊖ m)",
       "library": "⊖(Multivector)",
       "reference": "attitude(Line)",
       "cite": "2.73"
@@ -5851,7 +5851,7 @@
       "symbol": "/",
       "alias": "complementRight",
       "arity": 1,
-      "spell": "(/ m)",
+      "expression": "(/ m)",
       "library": "/(Multivector)",
       "reference": "complementRight(Plane)",
       "cite": "2.19"
@@ -5860,7 +5860,7 @@
       "symbol": "\\",
       "alias": "complementLeft",
       "arity": 1,
-      "spell": "(\\ m)",
+      "expression": "(\\ m)",
       "library": "\\(Multivector)",
       "reference": "complementLeft(Plane)",
       "cite": "2.20"
@@ -5869,7 +5869,7 @@
       "symbol": "~",
       "alias": "reverse",
       "arity": 1,
-      "spell": "(~ m)",
+      "expression": "(~ m)",
       "library": "~(Multivector)",
       "reference": "reverse(Plane)",
       "cite": "wiki:Reverses"
@@ -5878,7 +5878,7 @@
       "symbol": "~∘",
       "alias": "reverseAnti",
       "arity": 1,
-      "spell": "(~∘ m)",
+      "expression": "(~∘ m)",
       "library": "~∘(Multivector)",
       "reference": "reverseAnti(Plane)",
       "cite": "wiki:Reverses"
@@ -5887,7 +5887,7 @@
       "symbol": "★",
       "alias": "dualBulk",
       "arity": 1,
-      "spell": "(★ m)",
+      "expression": "(★ m)",
       "library": "★(Multivector)",
       "reference": "dualBulk(Plane)",
       "cite": "2.103"
@@ -5896,7 +5896,7 @@
       "symbol": "☆",
       "alias": "dualWeight",
       "arity": 1,
-      "spell": "(☆ m)",
+      "expression": "(☆ m)",
       "library": "☆(Multivector)",
       "reference": "dualWeight(Plane)",
       "cite": "2.103"
@@ -5905,7 +5905,7 @@
       "symbol": "∙",
       "alias": "bulk",
       "arity": 1,
-      "spell": "(∙ m)",
+      "expression": "(∙ m)",
       "library": "∙(Multivector)",
       "reference": "bulk(Plane)",
       "cite": "2.68"
@@ -5914,7 +5914,7 @@
       "symbol": "∘",
       "alias": "weight",
       "arity": 1,
-      "spell": "(∘ m)",
+      "expression": "(∘ m)",
       "library": "∘(Multivector)",
       "reference": "weight(Plane)",
       "cite": "2.68"
@@ -5923,7 +5923,7 @@
       "symbol": "|∙",
       "alias": "normBulk",
       "arity": 1,
-      "spell": "(|∙ m)",
+      "expression": "(|∙ m)",
       "library": "|∙(Multivector)",
       "reference": "normBulk(Plane)",
       "cite": "2.87"
@@ -5932,7 +5932,7 @@
       "symbol": "|∘",
       "alias": "normWeight",
       "arity": 1,
-      "spell": "(|∘ m)",
+      "expression": "(|∘ m)",
       "library": "|∘(Multivector)",
       "reference": "normWeight(Plane)",
       "cite": "2.88"
@@ -5941,7 +5941,7 @@
       "symbol": "^",
       "alias": "unitize",
       "arity": 1,
-      "spell": "(^ m)",
+      "expression": "(^ m)",
       "library": "^∘(Multivector)",
       "reference": "unitize(Plane)",
       "cite": "2.89"
@@ -5950,7 +5950,7 @@
       "symbol": "⊖",
       "alias": "attitude",
       "arity": 1,
-      "spell": "(⊖ m)",
+      "expression": "(⊖ m)",
       "library": "⊖(Multivector)",
       "reference": "attitude(Plane)",
       "cite": "2.73"

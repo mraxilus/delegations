@@ -1,8 +1,8 @@
-## Read counts out of C compiler emits: terms, zero fills, temporaries, copies, checks, calls.
+## Read counts out of C compiler emits: terms, zero fills, intermediates, copies, checks, calls.
 ##   Library's operators are straight-line C, one function each; what that function spends
 ##   is countable from its text, deterministically, so regression in it is finding rather
 ##   than timing noise (Article VII.1 asks emitted code be read; this reads it every run).
-##   Reference forms are inline functions in same cache, counted same way, so both sides
+##   Reference forms are inline functions in same cache, counted same way, so both implementations
 ##   of gap list come from one reader.
 ##
 ##   Names are read back through compiler's own mangling: ASCII operator characters become
@@ -45,7 +45,7 @@ type
       ## Floating operations spelled as terms.
     zero_fills*: int
       ## `nimZeroMem` calls, i.e. whole-object zero fills.
-    temporaries*: int
+    intermediates*: int
       ## Local multivector objects declared.
     copies*: int
       ## Whole-object assignments and memory copies.
@@ -204,7 +204,7 @@ func callSites*(body: string): seq[string] =
       result.add name
 
 
-func countTemporaries(body: string): int =
+func countIntermediates(body: string): int =
   ## Count local multivector declarations, i.e. lines `tyObject_Multivector__<id> T<n>_;`.
   for line in body.splitLines:
     let s = line.strip
@@ -219,7 +219,7 @@ func count*(body: string): Counts =
     adds: body.count(") + ("),
     subs: body.count(") - ("),
     zero_fills: body.count("nimZeroMem("),
-    temporaries: body.countTemporaries,
+    intermediates: body.countIntermediates,
     copies: body.count("(*Result) = ") + body.count("nimCopyMem(") + body.count("memcpy("),
     checks: body.count("NIM_UNLIKELY((*nimErr_))"),
     calls: body.callSites.len,
@@ -243,7 +243,7 @@ func `+`*(a, b: Counts): Counts =
     adds: a.adds + b.adds,
     subs: a.subs + b.subs,
     zero_fills: a.zero_fills + b.zero_fills,
-    temporaries: a.temporaries + b.temporaries,
+    intermediates: a.intermediates + b.intermediates,
     copies: a.copies + b.copies,
     checks: a.checks + b.checks,
     calls: a.calls + b.calls,

@@ -1,5 +1,5 @@
-## Time and count every catalogued probe, library side and reference side, from one entry.
-##   Each probe becomes one timed loop over its pool, `ROUNDS` times, median and minimum
+## Time and count every catalogued measurand in both implementations, from one entry.
+##   Each measurand becomes one timed loop over its pool, `ROUNDS` times, median and minimum
 ##   nanoseconds per object reported. Around every timed run, allocation counters are read
 ##   so any heap use shows as count, and every result is folded into one sink after timing
 ##   so nothing is optimised away; share of results carrying NaN is counted alongside, since
@@ -10,8 +10,8 @@
 ##   Instrument gates: allocation counts are live only under `-d:nimAllocStats`, and
 ##     `isAllocationMeasured` says so, since counter reading zero means nothing otherwise
 ##     (Article VII.4); driver runs plain build for timings and instrumented one for counts.
-##   Cost: figures arrays hold one entry per probe per side; sink is one float.
-##   Cost: pairing slot i with slot (7i + 3) mod OBJECTS costs integer ops both sides.
+##   Cost: measurements arrays hold one entry per measurand per implementation; sink is float.
+##   Cost: pairing slot i with slot (7i + 3) mod OBJECTS costs integer ops in both.
 
 {.experimental: "strictFuncs".}
 
@@ -19,17 +19,17 @@ import std/[algorithm, macros, math, monotimes, strutils, times]
 
 import pga
 
-import ./[bridge, catalogue, kinds, pools]
+import ./[catalogue, kinds, pools, widening]
 
 
 type
-  Side* {.pure.} = enum
-    ## Define which implementation figure belongs to.
+  Implementation* {.pure.} = enum
+    ## Define which implementation measurement belongs to.
     Library, Reference
-  Figure* = object
-    ## Define figures of one probe on one side.
+  Measurement* = object
+    ## Define measurements of one measurand in one implementation.
     is_measured*: bool
-      ## False where side has no expression, i.e. reference absent.
+      ## False where implementation has no expression, i.e. reference absent.
     ns_median*, ns_min*: float
       ## Nanoseconds per object, median and minimum over rounds.
     allocations*: int
@@ -39,8 +39,8 @@ type
 
 
 var
-  FIGURES*: array[Side, array[PROBES.len, Figure]]
-    ## Figures of every probe, filled by `runProbes`.
+  MEASUREMENTS*: array[Implementation, array[CATALOGUE.len, Measurement]]
+    ## Measurements of every measurand, filled by `measureCatalogue`.
   SINK*: float
     ## Fold of every result, printed so no result is dead.
 
@@ -53,7 +53,7 @@ func isAllocationMeasured*(): bool =
 func allocationsOf*(stats: AllocStats): int =
   ## Read allocation count out of counter difference.
   ##   `AllocStats` exports its fields to nobody and only `-` and default `$`, so count is
-  ##   read back from its rendering, `(allocCount: N, deallocCount: M)`; tool side, after
+  ##   read back from its rendering, `(allocCount: N, deallocCount: M)`; tool it, after
   ##   timing, never on hot path.
   let text = $stats
   let start = text.find("allocCount: ") + "allocCount: ".len
@@ -120,23 +120,25 @@ template timeRounds(rounds: var array[ROUNDS, int64]; loop: untyped) =
     rounds[r] = (getMonoTime() - started).inNanoseconds
 
 
-macro emitProbe(index: static int; side: static Side; probe: static Probe): untyped =
-  ## Emit timed run of one probe on one side into `FIGURES[side][index]`.
-  let expression = if side == Side.Library: probe.spell else: probe.reference
+macro emitMeasurand(
+  index: static int; it: static Implementation; measurand: static Measurand
+): untyped =
+  ## Emit timed run of one measurand in one implementation into `MEASUREMENTS[it][index]`.
+  let expression = if it == Implementation.Library: measurand.expression else: measurand.reference
   if expression.len == 0:
-    let side_lit = newCall(ident"Side", newLit(ord(side)))
+    let it_lit = newCall(ident"Implementation", newLit(ord(it)))
     return quote do:
-      FIGURES[`side_lit`][`index`] = Figure(is_measured: false)
+      MEASUREMENTS[`it_lit`][`index`] = Measurement(is_measured: false)
   let body = parseExpr(expression)
   let (m, n) = (ident"m", ident"n")  # plain idents, so expression binds them
-  let side_lit = newCall(ident"Side", newLit(ord(side)))
+  let it_lit = newCall(ident"Implementation", newLit(ord(it)))
   let pool_m = parseExpr(
-    if side == Side.Library: libraryPoolName(probe.operands[0], probe.grade)
-    else: referencePoolName(probe.operands[0])
+    if it == Implementation.Library: libraryPoolName(measurand.operands[0], measurand.grade)
+    else: referencePoolName(measurand.operands[0])
   )
   let pool_n = parseExpr(
-    if side == Side.Library: libraryPoolName(probe.operands[1], probe.grade)
-    else: referencePoolName(probe.operands[1])
+    if it == Implementation.Library: libraryPoolName(measurand.operands[1], measurand.grade)
+    else: referencePoolName(measurand.operands[1])
   )
   quote do:
     block:
@@ -158,7 +160,7 @@ macro emitProbe(index: static int; side: static Side; probe: static Probe): unty
         if hasNan(results[i]): inc nan_count
         else: SINK += fold(results[i])
       let (median, minimum) = summarise(rounds, OBJECTS)
-      FIGURES[`side_lit`][`index`] = Figure(
+      MEASUREMENTS[`it_lit`][`index`] = Measurement(
         is_measured: true,
         ns_median: median,
         ns_min: minimum,
@@ -167,21 +169,21 @@ macro emitProbe(index: static int; side: static Side; probe: static Probe): unty
       )
 
 
-macro emitProbes(): untyped =
-  ## Emit every probe on both sides, in catalogue order.
+macro emitCatalogue(): untyped =
+  ## Emit every measurand in both implementations, in catalogue order.
   result = newStmtList()
-  for index in 0 ..< PROBES.len:
-    for side in [Side.Library, Side.Reference]:
+  for index in 0 ..< CATALOGUE.len:
+    for it in [Implementation.Library, Implementation.Reference]:
       result.add newCall(
-        bindSym"emitProbe",
+        bindSym"emitMeasurand",
         newLit(index),
-        newCall(ident"Side", newLit(ord(side))),
-        newTree(nnkBracketExpr, ident"PROBES", newLit(index)),
+        newCall(ident"Implementation", newLit(ord(it))),
+        newTree(nnkBracketExpr, ident"CATALOGUE", newLit(index)),
       )
 
 
-proc runProbes*() =
-  ## Time and count every probe on both sides; pools must be filled first.
+proc measureCatalogue*() =
+  ## Time and count every measurand in both implementations; pools must be filled first.
   ##   First recorded round warms caches; median over rounds discounts it, minimum shows
   ##   warmed cost.
-  emitProbes()
+  emitCatalogue()

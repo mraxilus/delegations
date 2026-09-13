@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "kind": "bench",
-  "config": {
+  "kind": "runtime",
+  "algebra": {
     "name": "cga5d",
     "dimensions": 5,
     "is_conformal": true,
@@ -17,7 +17,7 @@
     "objects": 1024,
     "is_allocation_measured": true
   },
-  "probes": {
+  "measurands": {
     "wedge": {
       "symbol": "∧",
       "arity": 2,

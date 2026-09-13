@@ -7,7 +7,7 @@ import std/[algorithm, compilesettings, json, macros, options, sequtils, strutil
 from std/unicode import runeLen
 
 import ../src/pga_benchmark
-import ../src/pga_benchmark/[baseline, gaps, inspector, model, probes, report]
+import ../src/pga_benchmark/[gaps, guard, inspector, measurements, model, report]
 
 
 const
@@ -26,13 +26,13 @@ const
     ## scalar `∧`, which catalogue measures once as `scale`.
 
 
-macro spellsCompile(probes: static seq[Probe]): untyped =
-  ## Emit one `check compiles(spell)` per probe, with `m` and `n` bound by operand kind.
+macro expressionsCompile(measurands: static seq[Measurand]): untyped =
+  ## Emit one `check compiles(expression)` per measurand, with `m` and `n` bound by operand kind.
   ##   Kinds without typed reference yet bind to library's own multivector.
   result = newStmtList()
-  let (m, n) = (ident"m", ident"n")  # plain idents, so spell's own `m` and `n` bind
-  for p in probes:
-    let spell = parseExpr(p.spell)
+  let (m, n) = (ident"m", ident"n")  # plain idents, so expression's own `m` and `n` bind
+  for p in measurands:
+    let expression = parseExpr(p.expression)
     let kind_m = if p.operands[0] == Kind.Scalar: ident"float" else: ident"Multivector"
     let kind_n = if p.operands[1] == Kind.Scalar: ident"float" else: ident"Multivector"
     let id = newLit(p.id)
@@ -40,21 +40,21 @@ macro spellsCompile(probes: static seq[Probe]): untyped =
       block:
         var `m` {.used.}: `kind_m`
         var `n` {.used.}: `kind_n`
-        check compiles(`spell`)  # spell of `id` parses and resolves against library
-        check `id`.len > 0  # id names row
+        check compiles(`expression`)  # expression of `id` parses and resolves against library
+        check `id`.len > 0  # id names gap
 
 
-macro checkReferences(probes: static seq[Probe]; chapter: static string): untyped =
-  ## Emit one test per probe holding library spell on images to reference on typed objects.
-  ##   Chapter "2" takes rows citing book equations of chapter 2; "3" takes rest, which
+macro checkReferences(measurands: static seq[Measurand]; chapter: static string): untyped =
+  ## Emit one test per measurand holding library expression on images to reference on typed.
+  ##   Chapter "2" takes gaps citing book equations of chapter 2; "3" takes rest, which
   ##   are motor, projection and support pages of rigidgeometricalgebra.org.
   ##   Operands pair pool slot i with slot j = (7i + 3) mod OBJECTS, so pairs vary.
   result = newStmtList()
-  let (m, n) = (ident"m", ident"n")  # plain idents, so spell and reference bind them
-  for p in probes:
+  let (m, n) = (ident"m", ident"n")  # plain idents, so expression and reference bind them
+  for p in measurands:
     if p.reference.len == 0: continue
     if (chapter == "2") != p.cite.startsWith("2."): continue
-    let spell = parseExpr(p.spell)
+    let expression = parseExpr(p.expression)
     let reference = parseExpr(p.reference)
     let library_m = parseExpr(libraryPoolName(p.operands[0], p.grade))
     let library_n = parseExpr(libraryPoolName(p.operands[1], p.grade))
@@ -68,11 +68,11 @@ macro checkReferences(probes: static seq[Probe]; chapter: static string): untype
           let expected = block:
             let `m` {.used.} = `reference_m`[i]
             let `n` {.used.} = `reference_n`[j]
-            toMultivector(`reference`)
+            widen(`reference`)
           let got = block:
             let `m` {.used.} = `library_m`[i]
             let `n` {.used.} = `library_n`[j]
-            `spell`
+            `expression`
           check got =~ expected  # library on images equals reference embedded
   if result.len == 0: result.add newNimNode(nnkDiscardStmt).add(newEmptyNode())
 
@@ -84,9 +84,9 @@ suite "Configuration":
   test "stub matrix names algebra umbrella reports":
     check DIMENSIONS in 2 .. 6  # library's own bound
     when DIMENSIONS == 4 and IS_RIGID:
-      check CONFIG == "rga4d"  # 3D Euclidean rigid, default of nim.cfg
+      check ALGEBRA_NAME == "rga4d"  # 3D Euclidean rigid, default of nim.cfg
     when DIMENSIONS == 5 and IS_CONFORMAL:
-      check CONFIG == "cga5d"  # 3D Euclidean conformal
+      check ALGEBRA_NAME == "cga5d"  # 3D Euclidean conformal
 
 
 suite "Surface":
@@ -136,17 +136,17 @@ func hidden(m: Multivector): Multivector = m
 
 suite "Catalogue":
   test "ids are unique":
-    let ids = idsOf(PROBES) & idsOf(MISSING)
-    check ids.deduplicate.len == ids.len  # one row per operation
+    let ids = idsOf(CATALOGUE) & idsOf(MISSING)
+    check ids.deduplicate.len == ids.len  # one gap per operation
 
-  test "every spell compiles against library":
-    spellsCompile(PROBES)
+  test "every expression compiles against library":
+    expressionsCompile(CATALOGUE)
 
   test "symbols match every operator library exports":
     let exported = (
       symbolsIn(SOURCE_OPERATORS, IS_CONFORMAL) & symbolsIn(SOURCE_MULTIVECTORS, IS_CONFORMAL)
     ).filterIt(it notin EXCLUDED).deduplicate
-    check symbolsOf(PROBES).sorted == exported.sorted  # no exported operator unmeasured
+    check symbolsOf(CATALOGUE).sorted == exported.sorted  # no exported operator unmeasured
 
   test "templates name every symbol library spells over another":
     for (symbol, target) in TEMPLATES:
@@ -155,32 +155,34 @@ suite "Catalogue":
 
   test "aliases match every name library's umbrella exports":
     let exported = aliasesIn(SOURCE_UMBRELLA, IS_CONFORMAL)
-    let catalogued = (aliasesOf(PROBES) & aliasesOf(MISSING)).deduplicate
+    let catalogued = (aliasesOf(CATALOGUE) & aliasesOf(MISSING)).deduplicate
     check catalogued.sorted == exported.sorted  # missing ones counted as gaps, not forgotten
 
 
 suite "Chapter 2":
-  checkReferences(PROBES, "2")
+  checkReferences(CATALOGUE, "2")
 
 
 suite "Chapter 3":
-  checkReferences(PROBES, "3")
+  checkReferences(CATALOGUE, "3")
 
 
-suite "Probes":
+suite "Measurements":
   test "summarise reads median and minimum per object":
     check summarise([300'i64, 100, 200], 100) == (median: 2.0, minimum: 1.0)  # odd count
     check summarise([400'i64, 100, 300, 200], 100) == (median: 2.5, minimum: 1.0)  # even count
 
-  test "every probe yields finite positive figures and results reach sink":
-    runProbes()
+  test "every measurand yields finite positive measurements and results reach sink":
+    measureCatalogue()
     check SINK != 0.0  # results folded, none dead
-    for index, probe in PROBES:
-      let figure = FIGURES[Side.Library][index]
-      check figure.is_measured  # library side always spelled
-      check figure.ns_median > 0.0 and figure.ns_median < 1.0e6  # per-object nanoseconds
-      check figure.ns_min > 0.0 and figure.ns_min <= figure.ns_median  # minimum bounds median
-      check FIGURES[Side.Reference][index].is_measured == (probe.reference.len > 0)  # side present
+    for index, measurand in CATALOGUE:
+      let measurement = MEASUREMENTS[Implementation.Library][index]
+      check measurement.is_measured  # library implementation always has expression
+      check measurement.ns_median > 0.0 and measurement.ns_median < 1.0e6  # per-object nanoseconds
+      check measurement.ns_min > 0.0  # positive
+      check measurement.ns_min <= measurement.ns_median  # minimum bounds median
+      check MEASUREMENTS[Implementation.Reference][index].is_measured ==
+        (measurand.reference.len > 0)  # reference implementation present where written
 
 
 suite "Allocation":
@@ -192,13 +194,13 @@ suite "Allocation":
     check allocationsOf(after - before) > 0  # positive control: counter moved
     check control[0] == 1.0  # control kept alive
 
-  test "no probe allocates on either side":
-    runProbes()
-    for index, probe in PROBES:
-      for side in [Side.Library, Side.Reference]:
-        let figure = FIGURES[side][index]
-        if figure.is_measured:
-          check figure.allocations == 0  # heap untouched over every round
+  test "no measurand allocates in either implementation":
+    measureCatalogue()
+    for index, measurand in CATALOGUE:
+      for it in [Implementation.Library, Implementation.Reference]:
+        let measurement = MEASUREMENTS[it][index]
+        if measurement.is_measured:
+          check measurement.allocations == 0  # heap untouched over every round
 
 
 suite "Inspector":
@@ -259,7 +261,7 @@ suite "Inspector":
     check functions[0].module == "OOZpgaZoperators"  # suffix after last `__`
     let c = count(functions[0].body)
     check c.multiplies == 2 and c.adds == 1 and c.subs == 1  # terms as spelled
-    check c.zero_fills == 1 and c.temporaries == 1 and c.checks == 2  # fills, locals, branches
+    check c.zero_fills == 1 and c.intermediates == 1 and c.checks == 2  # fills, locals, branches
     check c.calls == 1  # norm call counted, accessor read not
     check functions[1].symbol == "dot" and functions[1].params == @["Vec3", "Vec3"]
     check functions[1].result_stem == "float" and functions[1].is_inline  # via return type
@@ -285,9 +287,9 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
     let f = CFunction(
       symbol: "∧", params: @["Multivector", "Multivector"], result_stem: "Multivector"
     )
-    let m = movement(f, Counts(zero_fills: 1, temporaries: 2, copies: 1), 128)
+    let m = movement(f, Counts(zero_fills: 1, intermediates: 2, copies: 1), 128)
     check m.bytes_read == 256 and m.bytes_written == 128  # two in, one out
-    check m.bytes_zeroed == 128 and m.bytes_copied == 128 and m.bytes_temporaries == 256
+    check m.bytes_zeroed == 128 and m.bytes_copied == 128 and m.bytes_intermediates == 256
     check m.bytes_moved == 896  # sum of every cause
     check sizeOfStem("Point", 128) == 32 and sizeOfStem("float", 128) == 8  # typed sizes
     check sizeOfStem("Unknown", 128) == 0  # unknown stems add nothing
@@ -297,7 +299,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
     let functions = inspectCache(CACHE)
     var keys: seq[string]
     for f in functions: keys.add f.key
-    for p in PROBES:
+    for p in CATALOGUE:
       if p.symbol.len == 0: continue
       var is_found = false
       for f in functions:
@@ -314,7 +316,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
           check count(f.body).multiplies == 12 and count(f.body).subs == 6  # as documented
 
 
-suite "Baseline":
+suite "Guard":
   const
     PATH = "baseline/rga4d.json"
     KEY = "∧(Multivector,Multivector)"
@@ -329,9 +331,9 @@ suite "Baseline":
     }
 
   func doc(functions: JsonNode; flags = "-d:release"; dimensions = 4): JsonNode =
-    ## Shape inspect document around functions.
+    ## Shape static measurements document around functions.
     result = document(
-      "inspect", configNode("rga4d", dimensions, false, 128),
+      "static", algebraNode("rga4d", dimensions, false, 128),
       %*{"date": "2026-09-13", "machine": "m", "nim": "n", "pga": "p", "flags": flags},
     )
     result["functions"] = functions
@@ -364,7 +366,7 @@ suite "Baseline":
       compare(doc(one(KEY, node(81, 178, 1, 512))), doc(one(KEY, node(81, 178, 1, 640))), PATH)
     check v.findings.len == 1 and "bytes_moved" in v.findings[0].message  # movement grew
 
-  test "function absent on either side is finding":
+  test "function absent in either document is finding":
     let before = compare(doc(one(KEY, node(81, 178, 1, 512))), doc(newJObject()), PATH)
     check before.findings.len == 1 and "absent now" in before.findings[0].message  # gone
     let after = compare(doc(newJObject()), doc(one(KEY, node(81, 178, 1, 512))), PATH)
@@ -394,10 +396,10 @@ suite "Gaps":
       "movement": movementNode(Movement(bytes_moved: bytes)),
     }
 
-  func inspectDoc(): JsonNode =
-    ## Shape inspect document: two library operators, one accessor, one reference form.
+  func staticDoc(): JsonNode =
+    ## Shape static measurements document: two library operators, accessor, reference form.
     result = document(
-      "inspect", configNode("rga4d", 4, false, 128),
+      "static", algebraNode("rga4d", 4, false, 128),
       %*{"date": "2026-09-13", "machine": "m", "nim": "n", "pga": "p", "flags": "f"},
     )
     var functions = newJObject()
@@ -406,7 +408,7 @@ suite "Gaps":
     functions["~(Multivector)"] = fn("~", "pga/operators", false, 0, 0, 1, 384)
     functions["[](Multivector,Basis)"] = fn("[]", "pga/multivectors", true, 0, 0, 0, 136)
     result["functions"] = functions
-    result["probes"] = %*{
+    result["measurands"] = %*{
       "wedge": {"symbol": "∧", "library": KEY_WEDGE, "reference": ""},
       "wedge_point_point": {
         "symbol": "∧", "library": KEY_WEDGE, "reference": "wedge(Point,Point)"
@@ -418,93 +420,97 @@ suite "Gaps":
     }
     result["missing"] = newJObject()
 
-  func figure(ns: float): JsonNode =
-    ## Shape one bench figure.
+  func measurement(ns: float): JsonNode =
+    ## Shape one bench measurement.
     %*{"ns_median": ns, "ns_min": ns, "allocations": 0, "nan_share": 0.0}
 
-  func benchDoc(): JsonNode =
-    ## Shape bench document over same probes.
+  func runtimeDoc(): JsonNode =
+    ## Shape runtime measurements document over same measurands.
     result = document(
-      "bench", configNode("rga4d", 4, false, 128),
+      "runtime", algebraNode("rga4d", 4, false, 128),
       %*{
         "date": "2026-09-13", "machine": "m", "rounds": 3, "objects": 64,
         "is_allocation_measured": true,
       },
     )
-    result["probes"] = %*{
-      "wedge": {"library": figure(24.1), "reference": newJNull()},
-      "wedge_point_point": {"library": figure(24.1), "reference": figure(1.3)},
-      "select_part": {"library": figure(0.5), "reference": newJNull()},
-      "transform_point_motor": {"library": figure(60.0), "reference": figure(5.0)},
+    result["measurands"] = %*{
+      "wedge": {"library": measurement(24.1), "reference": newJNull()},
+      "wedge_point_point": {"library": measurement(24.1), "reference": measurement(1.3)},
+      "select_part": {"library": measurement(0.5), "reference": newJNull()},
+      "transform_point_motor": {"library": measurement(60.0), "reference": measurement(5.0)},
     }
 
-  let ALGEBRAS = @[Algebra(config: "rga4d", inspect: inspectDoc(), bench: benchDoc())]
+  let ALGEBRAS = @[
+    Algebra(name: "rga4d", static_measurements: staticDoc(), runtime_measurements: runtimeDoc())
+  ]
 
-  func decidedOf(rule: Rule; algebras: seq[Algebra]; rows: seq[Row]): Decided =
-    ## Decide design gap carrying rule.
-    for d in DESIGNS:
-      if d.rule == rule: return d.decideDesign(algebras, rows)
+  func decidedOf(rule: Rule; algebras: seq[Algebra]; gaps: seq[Gap]): Decision =
+    ## Decide cause carrying rule.
+    for d in CAUSES:
+      if d.rule == rule: return d.decideCause(algebras, gaps)
 
-  test "rows are decided against reference and against zero":
-    let rows = rowsOf(ALGEBRAS[0])
-    check rows.len == 4  # one per probe
-    let by = rows.mapIt((it.probe, it)).toTable
-    check by["wedge"].status == Status.Open and "checks" in by["wedge"].open_on  # absolute
-    check "multiplies" notin by["wedge"].open_on  # no reference, no relative target
-    check by["wedge_point_point"].open_on ==
+  test "gaps are decided against reference and against zero":
+    let gaps = gapsOf(ALGEBRAS[0])
+    check gaps.len == 4  # one per measurand
+    let by = gaps.mapIt((it.measurand, it)).toTable
+    check by["wedge"].status == Status.Over and "checks" in by["wedge"].over_on  # absolute
+    check "multiplies" notin by["wedge"].over_on  # no reference, no relative target
+    check by["wedge_point_point"].over_on ==
       @["multiplies", "bytes", "zero_fills", "checks", "time"]  # in decided order
-    check by["select_part"].status == Status.Closed  # nothing spent, nothing exceeded
-    check by["transform_point_motor"].open_on == @["time"]  # composed spell, timing alone
+    check by["select_part"].status == Status.Met  # nothing spent, nothing exceeded
+    check by["transform_point_motor"].over_on == @["time"]  # composed expression, timing alone
 
-  test "row without counts or timing is unmeasured":
-    let rows = rowsOf(Algebra(config: "rga4d", inspect: inspectDoc(), bench: nil))
-    let by = rows.mapIt((it.probe, it)).toTable
+  test "gap without counts or timing is unmeasured":
+    let gaps = gapsOf(
+      Algebra(name: "rga4d", static_measurements: staticDoc(), runtime_measurements: nil)
+    )
+    let by = gaps.mapIt((it.measurand, it)).toTable
     check by["transform_point_motor"].status == Status.Unmeasured  # nothing to decide on
-    check "time" notin by["wedge_point_point"].open_on  # no bench, no time verdict
+    check "time" notin by["wedge_point_point"].over_on  # no bench, no time verdict
 
-  test "register keeps identifiers across reorder and allots next to new key":
-    var rows = rowsOf(ALGEBRAS[0])
-    var register = registerOf(nil)
-    rows.assign(register)
-    check rows[0].id == "G001" and rows[3].id == "G004" and register.next == 5  # in order
-    rows.reverse
-    var again = registerOf(register.toJson)
-    rows.assign(again)
-    check rows[0].id == "G004" and rows[3].id == "G001" and again.next == 5  # never renumbered
-    rows.add Row(key: "cga5d/wedge", config: "cga5d", probe: "wedge")
-    rows.assign(again)
-    check rows[^1].id == "G005" and again.next == 6  # next number, never one reused
+  test "docket keeps identifiers across reorder and allots next to new key":
+    var gaps = gapsOf(ALGEBRAS[0])
+    var docket = docketOf(nil)
+    gaps.assign(docket)
+    check gaps[0].id == "G001" and gaps[3].id == "G004" and docket.next == 5  # in order
+    gaps.reverse
+    var again = docketOf(docket.toJson)
+    gaps.assign(again)
+    check gaps[0].id == "G004" and gaps[3].id == "G001" and again.next == 5  # never renumbered
+    gaps.add Gap(key: "cga5d/wedge", algebra: "cga5d", measurand: "wedge")
+    gaps.assign(again)
+    check gaps[^1].id == "G005" and again.next == 6  # next number, never one reused
 
-  test "design gaps are decided by rule with evidence":
-    let rows = rowsOf(ALGEBRAS[0])
-    let checks = decidedOf(Rule.Checks, ALGEBRAS, rows)
-    check checks.status == Status.Open and "1 of 3 library functions" in checks.evidence  # ∧
+  test "causes are decided by rule with evidence":
+    let gaps = gapsOf(ALGEBRAS[0])
+    let checks = decidedOf(Rule.Checks, ALGEBRAS, gaps)
+    check checks.status == Status.Over and "1 of 3 library functions" in checks.evidence  # ∧
     check "`" & KEY_WEDGE & "` with 178" in checks.evidence  # most
-    check decidedOf(Rule.Inline, ALGEBRAS, rows).evidence ==
+    check decidedOf(Rule.Inline, ALGEBRAS, gaps).evidence ==
       "1 of 3 library operators, e.g. rga4d `~(Multivector)`."  # light operator called
-    check decidedOf(Rule.ZeroFills, ALGEBRAS, rows).evidence.startsWith("2 of 3")  # ∧ and ~
-    check decidedOf(Rule.Terms, ALGEBRAS, rows).evidence ==
-      "1 rows; widest rga4d/wedge_point_point spends 81 multiplies against 12."  # widest
-    check decidedOf(Rule.Time, ALGEBRAS, rows).evidence ==
-      "2 rows; worst rga4d/wedge_point_point at 24.1 ns against 1.3 ns."  # worst ratio
-    check decidedOf(Rule.Nan, ALGEBRAS, rows).status == Status.Closed  # every share zero
-    check decidedOf(Rule.Compound, ALGEBRAS, rows).evidence ==
-      "rga4d/transform_point_motor."  # composed spell named
-    check decidedOf(Rule.Missing, ALGEBRAS, rows).status == Status.Closed  # nothing missing
-    check decidedOf(Rule.Cayley, ALGEBRAS, rows).status == Status.Unmeasured  # not readable here
+    check decidedOf(Rule.ZeroFills, ALGEBRAS, gaps).evidence.startsWith("2 of 3")  # ∧ and ~
+    check decidedOf(Rule.Terms, ALGEBRAS, gaps).evidence ==
+      "1 gaps; widest rga4d/wedge_point_point spends 81 multiplies against 12."  # widest
+    check decidedOf(Rule.Time, ALGEBRAS, gaps).evidence ==
+      "2 gaps; worst rga4d/wedge_point_point at 24.1 ns against 1.3 ns."  # worst ratio
+    check decidedOf(Rule.Nan, ALGEBRAS, gaps).status == Status.Met  # every share zero
+    check decidedOf(Rule.Compound, ALGEBRAS, gaps).evidence ==
+      "rga4d/transform_point_motor."  # composed expression named
+    check decidedOf(Rule.Missing, ALGEBRAS, gaps).status == Status.Met  # nothing missing
+    check decidedOf(Rule.Cayley, ALGEBRAS, gaps).status == Status.Unmeasured  # not readable here
 
-  test "rendered list fits width and names every row":
-    let (text, register) = generate(ALGEBRAS, registerOf(nil))
+  test "rendered list fits width and names every gap":
+    let (text, docket) = generate(ALGEBRAS, docketOf(nil))
     var widest = 0
     for line in text.splitLines: widest = max(widest, runeLen(line))
     check widest <= WIDTH  # form check reads product
-    check "| G002 | wedge_point_point | 81/12 | 512/112 | 0/0 | 178/0 | 24.1/1.3 | open |" in
+    check "| G002 | wedge_point_point | 81/12 | 512/112 | 0/0 | 178/0 | 24.1/1.3 | over |" in
       text  # cells read library/reference
-    check "| G004 | transform_point_motor | – | – | – | – | 60.0/5.0 | open |" in
-      text  # composed spell has no counts
-    check "- **D05, open.**" in text and "- **D10, unmeasured.**" in text  # design verdicts
-    check "Rows: 4; open 3, closed 1, unmeasured 0." in text  # summary
-    check register.next == 5  # register grew with rows
+    check "| G004 | transform_point_motor | – | – | – | – | 60.0/5.0 | over |" in
+      text  # composed expression has no counts
+    check "- **D05, over.**" in text and "- **D10, unmeasured.**" in text  # design verdicts
+    check "Gaps: 4; over 3, met 1, unmeasured 0." in text  # summary
+    check docket.next == 5  # docket grew with gaps
 
   test "wrap breaks at spaces within width and indents continuation":
     check wrap("aa bb cc", 5) == @["aa bb", "cc"]  # fits, then breaks

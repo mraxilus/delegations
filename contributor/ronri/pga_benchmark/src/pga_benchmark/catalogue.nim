@@ -1,13 +1,13 @@
-## Catalogue every library operation as data: what to spell, on what, against which reference.
-##   One `Probe` per operation per algebra, built at compile time under `when`, so every
+## Catalogue every library operation as data: what to expression, on what, against which reference.
+##   One `Measurand` per operation per algebra, built at compile time under `when`, so every
 ##   later instrument (timing, C inspection, gap list) walks one list and nothing is
-##   benchmarked by hand. Spell is library expression over `m` and `n`, fully parenthesised
+##   benchmarked by hand. Expression is library code over `m` and `n`, fully parenthesised
 ##   since library's own header warns `∨` parses additive and `∧` multiplicative; reference
 ##   is expression over same names in typed reference, empty where reference has none.
-##   `MISSING` names operations reference carries and library lacks, each one gap row.
+##   `MISSING` names operations reference carries and library lacks, each one gap.
 ##
-##   Cost: spells are strings lowered by `parseExpr` where probes are emitted, so misspelt
-##     spell fails at that compile rather than here; suite `Catalogue` compiles every one.
+##   Cost: expressions are strings lowered by `parseExpr` where measurands are emitted, so
+##     misspelt one fails at that compile rather than here; suite `Catalogue` compiles every one.
 ##   Cost: `cite` is book equation where library's own suites cite one, else wiki page name,
 ##     never invented number.
 ##   Cost: conformal aliases differ from rigid ones in library (`bulkRound` for `bulk`), so
@@ -24,21 +24,21 @@ import ./kinds
 
 type
   Arity* = range[1 .. 2]
-    ## Define operand count of probe.
-  Probe* = object
+    ## Define operand count of measurand.
+  Measurand* = object
     ## Define one catalogued operation under measurement.
     id*: string
-      ## Stable ASCII key, e.g. `wedge_point_point`; keys JSON, register and gap rows.
+      ## Stable ASCII key, e.g. `wedge_point_point`; keys JSON, docket and gaps.
     symbol*: string
       ## Library symbol, e.g. `∧`; empty where operation is alias-only compound.
     alias*: string
       ## Library named alias from `pga.nim`, e.g. `wedge`; empty where none exists.
-    spell*: string
+    expression*: string
       ## Library expression over `m` and `n`, fully parenthesised, e.g. `(m ∧ n)`.
     arity*: Arity = 1
-      ## Operand count spell reads; defaulted so object has valid zero value.
+      ## Operand count expression reads; defaulted so object has valid zero value.
     operands*: array[2, Kind]
-      ## Kind of `m` and of `n`; second is `General` and unread for unary probe.
+      ## Kind of `m` and of `n`; second is `General` and unread for unary measurand.
     grade*: Option[int]
       ## Grade `General` operands are drawn at, where operation needs k-vector; none = mixed.
     reference*: string
@@ -59,14 +59,14 @@ const
 
 
 func general(
-  id, symbol, alias, spell: string; arity: Arity; cite: string
-): Probe {.compileTime.} =
-  ## Construct probe over dense mixed-grade multivectors, i.e. library's own type.
-  Probe(
+  id, symbol, alias, expression: string; arity: Arity; cite: string
+): Measurand {.compileTime.} =
+  ## Construct measurand over dense mixed-grade multivectors, i.e. library's own type.
+  Measurand(
     id: id,
     symbol: symbol,
     alias: alias,
-    spell: spell,
+    expression: expression,
     arity: arity,
     operands: [Kind.General, Kind.General],
     grade: none(int),
@@ -76,16 +76,16 @@ func general(
 
 
 func typed(
-  id, symbol, alias, spell: string; operands: array[2, Kind]; reference, cite: string
-): Probe {.compileTime.} =
-  ## Construct probe over typed operands, held to reference expression.
-  ##   Arity follows second operand: `General` there marks unary row, since no typed row
+  id, symbol, alias, expression: string; operands: array[2, Kind]; reference, cite: string
+): Measurand {.compileTime.} =
+  ## Construct measurand over typed operands, held to reference expression.
+  ##   Arity follows second operand: `General` there marks unary measurand, since no typed measurand
   ##   pairs typed object with dense one.
-  Probe(
+  Measurand(
     id: id,
     symbol: symbol,
     alias: alias,
-    spell: spell,
+    expression: expression,
     arity: (if operands[1] == Kind.General: 1 else: 2),
     operands: operands,
     grade: none(int),
@@ -95,11 +95,11 @@ func typed(
 
 
 
-#[ Probes ]#
+#[ Catalogue ]#
 
-const PROBES* = block:
-  ## Every operation library exports under this algebra, general rows first.
-  var s: seq[Probe]
+const CATALOGUE* = block:
+  ## Every operation library exports under this algebra, general measurands first.
+  var s: seq[Measurand]
 
   # Binary products over dense operands.
   s.add general("wedge", "∧", "wedge", "(m ∧ n)", 2, "2.17")
@@ -131,8 +131,8 @@ const PROBES* = block:
   )
 
   # Scalar scaling, spelled through exterior product as library defines it.
-  s.add Probe(
-    id: "scale", symbol: "∧", alias: "wedge", spell: "(m ∧ n)", arity: 2,
+  s.add Measurand(
+    id: "scale", symbol: "∧", alias: "wedge", expression: "(m ∧ n)", arity: 2,
     operands: [Kind.Scalar, Kind.General], grade: none(int), reference: "", cite: "2.24",
   )
 
@@ -172,16 +172,16 @@ const PROBES* = block:
     s.add general("center", "⊙", "center", "(⊙ m)", 1, "wiki:Center")
     s.add general("container", "⊡", "container", "(⊡ m)", 1, "wiki:Container")
     # Partner reads operand's grade and panics on mixed grade, so pool draws round points.
-    s.add Probe(
-      id: "partner", symbol: "⊛", alias: "partner", spell: "(⊛ m)", arity: 1,
+    s.add Measurand(
+      id: "partner", symbol: "⊛", alias: "partner", expression: "(⊛ m)", arity: 1,
       operands: [Kind.General, Kind.General], grade: some(1), reference: "",
       cite: "wiki:Partner",
     )
 
-  # Typed rows: same library spell on images of typed objects, held to reference.
-  #   Tuples read id, symbol, alias, spell, kinds of m and n, reference, cite.
+  # Typed measurands: same library expression on images of typed objects, held to reference.
+  #   Tuples read id, symbol, alias, expression, kinds of m and n, reference, cite.
   when IS_RIGID and DIMENSIONS == 4:
-    for row in [
+    for entry in [
       (
         "wedge_point_point", "∧", "wedge", "(m ∧ n)",
         Kind.Point, Kind.Point, "wedge(m, n)", "2.17",
@@ -299,11 +299,11 @@ const PROBES* = block:
         Kind.Motor, Kind.General, "normBulk(m)", "wiki:Motor",
       ),
     ]:
-      s.add typed(row[0], row[1], row[2], row[3], [row[4], row[5]], row[6], row[7])
+      s.add typed(entry[0], entry[1], entry[2], entry[3], [entry[4], entry[5]], entry[6], entry[7])
 
-    # Unary maps every flat object carries; one row per object kind.
+    # Unary maps every flat object carries; one measurand per object kind.
     for (kind, name) in [(Kind.Point, "point"), (Kind.Line, "line"), (Kind.Plane, "plane")]:
-      for row in [
+      for entry in [
         ("complement_right", "/", "complementRight", "(/ m)", "complementRight(m)", "2.19"),
         ("complement_left", "\\", "complementLeft", "(\\ m)", "complementLeft(m)", "2.20"),
         ("reverse", "~", "reverse", "(~ m)", "reverse(m)", "wiki:Reverses"),
@@ -318,11 +318,12 @@ const PROBES* = block:
         ("attitude", "⊖", "attitude", "(⊖ m)", "attitude(m)", "2.73"),
       ]:
         s.add typed(
-          row[0] & "_" & name, row[1], row[2], row[3], [kind, Kind.General], row[4], row[5]
+          entry[0] & "_" & name, entry[1], entry[2], entry[3], [kind, Kind.General], entry[4],
+          entry[5],
         )
 
   when IS_CONFORMAL and DIMENSIONS == 5:
-    for row in [
+    for entry in [
       (
         "wedge_round_point_round_point", "∧", "wedge", "(m ∧ n)",
         Kind.RoundPoint, Kind.RoundPoint, "wedge(m, n)", "2.17",
@@ -404,14 +405,14 @@ const PROBES* = block:
         Kind.Sphere, Kind.Sphere, "dotAnti(m, n)", "2.76",
       ),
     ]:
-      s.add typed(row[0], row[1], row[2], row[3], [row[4], row[5]], row[6], row[7])
+      s.add typed(entry[0], entry[1], entry[2], entry[3], [entry[4], entry[5]], entry[6], entry[7])
 
-    # Unary maps every round object carries; one row per object kind.
+    # Unary maps every round object carries; one measurand per object kind.
     for (kind, name) in [
       (Kind.RoundPoint, "round_point"), (Kind.Dipole, "dipole"), (Kind.Circle, "circle"),
       (Kind.Sphere, "sphere"),
     ]:
-      for row in [
+      for entry in [
         ("complement_right", "/", "complementRight", "(/ m)", "complementRight(m)", "2.19"),
         ("complement_left", "\\", "complementLeft", "(\\ m)", "complementLeft(m)", "2.20"),
         ("reverse", "~", "reverse", "(~ m)", "reverse(m)", "wiki:Reverses"),
@@ -430,22 +431,23 @@ const PROBES* = block:
         ("partner", "⊛", "partner", "(⊛ m)", "partner(m)", "wiki:Partner"),
       ]:
         s.add typed(
-          row[0] & "_" & name, row[1], row[2], row[3], [kind, Kind.General], row[4], row[5]
+          entry[0] & "_" & name, entry[1], entry[2], entry[3], [kind, Kind.General], entry[4],
+          entry[5],
         )
   s
 
 
 const MISSING* = block:
-  ## Operations reference carries and library lacks, each one gap row; ids of same shape.
-  var s: seq[Probe]
+  ## Operations reference carries and library lacks, each one gap; ids of same shape.
+  var s: seq[Measurand]
   when IS_CONFORMAL:
-    s.add Probe(
-      id: "norm_center", symbol: "|⊙", alias: "normCenter", spell: "", arity: 1,
+    s.add Measurand(
+      id: "norm_center", symbol: "|⊙", alias: "normCenter", expression: "", arity: 1,
       operands: [Kind.General, Kind.General], grade: none(int), reference: "",
       cite: "wiki:Center_norm",
     )
-    s.add Probe(
-      id: "norm_radius", symbol: "|⊘", alias: "normRadius", spell: "", arity: 1,
+    s.add Measurand(
+      id: "norm_radius", symbol: "|⊘", alias: "normRadius", expression: "", arity: 1,
       operands: [Kind.General, Kind.General], grade: none(int), reference: "",
       cite: "wiki:Radius_norm",
     )
@@ -457,25 +459,25 @@ const TEMPLATES* = [("^", "^∘")]
   ## suite holds each pair to library source.
 
 
-func emitted*(p: Probe): string =
-  ## Read symbol of function library emits for probe: template's target, else own symbol.
+func emitted*(p: Measurand): string =
+  ## Read symbol of function library emits for measurand: template's target, else own symbol.
   for (symbol, target) in TEMPLATES:
     if p.symbol == symbol: return target
   p.symbol
 
 
-func symbolsOf*(probes: openArray[Probe]): seq[string] =
-  ## Read distinct symbols probes spell, in first-seen order; tool and test side.
-  for p in probes:
+func symbolsOf*(measurands: openArray[Measurand]): seq[string] =
+  ## Read distinct symbols measurands spell, in first-seen order; tool and test side.
+  for p in measurands:
     if p.symbol.len > 0 and p.symbol notin result: result.add p.symbol
 
 
-func aliasesOf*(probes: openArray[Probe]): seq[string] =
-  ## Read distinct aliases probes name, in first-seen order; tool and test side.
-  for p in probes:
+func aliasesOf*(measurands: openArray[Measurand]): seq[string] =
+  ## Read distinct aliases measurands name, in first-seen order; tool and test side.
+  for p in measurands:
     if p.alias.len > 0 and p.alias notin result: result.add p.alias
 
 
-func idsOf*(probes: openArray[Probe]): seq[string] =
-  ## Read ids of probes in order; tool and test side.
-  for p in probes: result.add p.id
+func idsOf*(measurands: openArray[Measurand]): seq[string] =
+  ## Read ids of measurands in order; tool and test side.
+  for p in measurands: result.add p.id

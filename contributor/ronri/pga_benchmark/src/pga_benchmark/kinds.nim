@@ -1,4 +1,4 @@
-## Name operand kinds every probe speaks in, and sizes every figure is scaled by.
+## Name operand kinds every measurand speaks in, and sizes every measurement is scaled by.
 ##   Kinds are typed objects Lengyel's reference carries for one algebra, plus `General`
 ##   for library's full multivector and `Scalar` for plain float. Algebra decides which
 ##   kinds exist, so two complete enums stand under `when`: enum cannot hold `when` inside.
@@ -22,7 +22,7 @@
 ##   | FlatPlane  | --                                | g = (e₄₂₃₅ e₄₃₁₅ e₄₁₂₅ e₃₂₁₅)        |
 ##   |------------|-----------------------------------|--------------------------------------|
 ##
-##   Cost: rigid algebras of other dimension carry only `General` and `Scalar` rows, since
+##   Cost: rigid algebras of other dimension carry only `General` and `Scalar` measurands, since
 ##     Lengyel's typed reference exists for 3D Euclidean space alone here; scaling sweep
 ##     measures those dense against dense.
 
@@ -49,10 +49,10 @@ const
   OBJECTS* {.define: "pga_benchmark.objects".} = (when defined(testing): 64 else: 1024)
     ## Objects per sample pool; small under `-d:testing` so suites stay quick.
   ROUNDS* {.define: "pga_benchmark.rounds".} = (when defined(testing): 3 else: 40)
-    ## Timed rounds per probe; median and minimum over rounds are figures reported.
+    ## Timed rounds per measurand; median and minimum over rounds are measurements reported.
   SIZE_MULTIVECTOR* = sizeof(Multivector)
     ## Bytes one dense multivector occupies, i.e. 8 × 2^DIMENSIONS.
 
 static:
   doAssert OBJECTS >= 2, "Pool should hold at least two objects; got `" & $OBJECTS & "`."
-  doAssert ROUNDS >= 1, "Probe should time at least one round; got `" & $ROUNDS & "`."
+  doAssert ROUNDS >= 1, "Measurand should time at least one round; got `" & $ROUNDS & "`."

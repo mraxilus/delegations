@@ -1,12 +1,12 @@
-## Run every probe of this algebra and write figures as JSON: `bench <output.json>`.
+## Run every measurand of this algebra and write measurements as JSON: `bench <output.json>`.
 ##   Entry point driver compiles once per configuration, with `-d:release` for timings and
 ##   again with `-d:nimAllocStats` for allocation counts. Same build's nimcache is what
 ##   inspector reads, since every library operation is reached from here and Nim emits
 ##   only reached procedures.
-##   Prints one line per probe and sink's checksum, so run is legible without JSON.
+##   Prints one line per measurand and sink's checksum, so run is legible without JSON.
 ##
-##   Cost: pools fill once (seeded), then `runProbes` walks catalogue; JSON writing is
-##     tool side and allocates after every figure is taken.
+##   Cost: pools fill once (seeded), then `measureCatalogue` walks catalogue; JSON writing is
+##     tool side and allocates after every measurement is taken.
 
 {.experimental: "strictFuncs".}
 
@@ -14,15 +14,15 @@ import std/[json, os, strutils]
 
 import pga
 
-import ./[catalogue, kinds, pools, probes, report]
+import ./[catalogue, kinds, measurements, pools, report]
 
 
-const CONFIG = (if IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"
+const ALGEBRA_NAME = (if IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"
   ## Name of algebra this build measures; umbrella spells same, kept here to stay entry.
 
 
-func figureNode(f: Figure): JsonNode =
-  ## Shape one side's figure; absent side is `null`.
+func measurementNode(f: Measurement): JsonNode =
+  ## Shape one implementation's measurement; absent implementation is `null`.
   if not f.is_measured: return newJNull()
   %*{
     "ns_median": f.ns_median,
@@ -33,22 +33,22 @@ func figureNode(f: Figure): JsonNode =
 
 
 proc benchDocument(): JsonNode =
-  ## Shape every probe's figures into `bench` document.
+  ## Shape every measurand's measurements into `bench` document.
   result = document(
-    "bench", configNode(CONFIG, DIMENSIONS, IS_CONFORMAL, SIZE_MULTIVECTOR), takenNow()
+    "runtime", algebraNode(ALGEBRA_NAME, DIMENSIONS, IS_CONFORMAL, SIZE_MULTIVECTOR), takenNow()
   )
   result["taken"]["rounds"] = %ROUNDS
   result["taken"]["objects"] = %OBJECTS
   result["taken"]["is_allocation_measured"] = %isAllocationMeasured()
-  var probes = newJObject()
-  for index, probe in PROBES:
-    probes[probe.id] = %*{
-      "symbol": probe.symbol,
-      "arity": int(probe.arity),
-      "library": figureNode(FIGURES[Side.Library][index]),
-      "reference": figureNode(FIGURES[Side.Reference][index]),
+  var measurands = newJObject()
+  for index, measurand in CATALOGUE:
+    measurands[measurand.id] = %*{
+      "symbol": measurand.symbol,
+      "arity": int(measurand.arity),
+      "library": measurementNode(MEASUREMENTS[Implementation.Library][index]),
+      "reference": measurementNode(MEASUREMENTS[Implementation.Reference][index]),
     }
-  result["probes"] = probes
+  result["measurands"] = measurands
 
 
 proc controlAllocation(): bool =
@@ -62,7 +62,7 @@ proc controlAllocation(): bool =
 
 
 proc main(): int =
-  ## Fill pools, run probes, print figures, write JSON to path given.
+  ## Fill pools, run measurands, print measurements, write JSON to path given.
   if paramCount() != 1:
     stderr.write "Usage: bench <output.json>\n"
     return 2
@@ -70,13 +70,13 @@ proc main(): int =
   if isAllocationMeasured() and not controlAllocation():
     stderr.write "Allocation counter inert under -d:nimAllocStats; refusing to report.\n"
     return 1
-  runProbes()
-  echo "config ", CONFIG, " objects ", OBJECTS, " rounds ", ROUNDS, " allocation gauge ",
+  measureCatalogue()
+  echo "algebra ", ALGEBRA_NAME, " objects ", OBJECTS, " rounds ", ROUNDS, " allocation gauge ",
     (if isAllocationMeasured(): "live" else: "off")
-  for index, probe in PROBES:
-    let l = FIGURES[Side.Library][index]
-    let r = FIGURES[Side.Reference][index]
-    var line = probe.id.alignLeft(34) & formatFloat(l.ns_median, ffDecimal, 2).align(9) & " ns"
+  for index, measurand in CATALOGUE:
+    let l = MEASUREMENTS[Implementation.Library][index]
+    let r = MEASUREMENTS[Implementation.Reference][index]
+    var line = measurand.id.alignLeft(34) & formatFloat(l.ns_median, ffDecimal, 2).align(9) & " ns"
     if r.is_measured:
       line.add "  reference " & formatFloat(r.ns_median, ffDecimal, 2).align(8) & " ns"
     if l.allocations > 0: line.add "  allocations " & $l.allocations

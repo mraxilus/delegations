@@ -1,5 +1,5 @@
 ## Carry typed reference objects into library's dense multivector and back.
-##   Suites compare both sides through these images: reference result embedded must equal
+##   Suites compare both implementations through these images: reference result embedded must equal
 ##   library result on embedded operands. Extraction under `-d:testing` asserts every
 ##   component outside object's slots is zero, so library result of wrong grade fails
 ##   loudly rather than silently losing components.
@@ -37,7 +37,7 @@ func only(m: Multivector; slots: set[Basis]) =
           "Component outside object's slots; got `" & $m & "` at `" & $b & "`."
 
 
-func toMultivector*(s: float): Multivector =
+func widen*(s: float): Multivector =
   ## Embed scalar as s𝟏.
   result[Basis.scalar] = s
 
@@ -47,7 +47,7 @@ func toScalar*(m: Multivector): float =
   m[Basis.scalar]
 
 
-func toMultivector*(t: Antiscalar): Multivector =
+func widen*(t: Antiscalar): Multivector =
   ## Embed antiscalar as t𝟙.
   result[Basis.scalarAnti] = float(t)
 
@@ -58,7 +58,7 @@ func toAntiscalar*(m: Multivector): Antiscalar =
 
 
 when IS_RIGID and DIMENSIONS == 4:
-  func toMultivector*(p: Point): Multivector =
+  func widen*(p: Point): Multivector =
     ## Embed point into e₁ e₂ e₃ e₄.
     result[Basis.E1] = p.x
     result[Basis.E2] = p.y
@@ -70,7 +70,7 @@ when IS_RIGID and DIMENSIONS == 4:
     m.only({Basis.E1, Basis.E2, Basis.E3, Basis.E4})
     Point(x: m[Basis.E1], y: m[Basis.E2], z: m[Basis.E3], w: m[Basis.E4])
 
-  func toMultivector*(l: Line): Multivector =
+  func widen*(l: Line): Multivector =
     ## Embed line into e₄₁ e₄₂ e₄₃ and e₂₃ e₃₁ e₁₂.
     result[Basis.E41] = l.v.x
     result[Basis.E42] = l.v.y
@@ -87,7 +87,7 @@ when IS_RIGID and DIMENSIONS == 4:
       m: Vec3(x: m[Basis.E23], y: m[Basis.E31], z: m[Basis.E12]),
     )
 
-  func toMultivector*(g: Plane): Multivector =
+  func widen*(g: Plane): Multivector =
     ## Embed plane into e₄₂₃ e₄₃₁ e₄₁₂ e₃₂₁.
     result[Basis.E423] = g.x
     result[Basis.E431] = g.y
@@ -99,7 +99,7 @@ when IS_RIGID and DIMENSIONS == 4:
     m.only({Basis.E423, Basis.E431, Basis.E412, Basis.E321})
     Plane(x: m[Basis.E423], y: m[Basis.E431], z: m[Basis.E412], w: m[Basis.E321])
 
-  func toMultivector*(q: Motor): Multivector =
+  func widen*(q: Motor): Multivector =
     ## Embed motor into grade-2 slots, 𝟙 and 𝟏.
     result[Basis.E41] = q.v.x
     result[Basis.E42] = q.v.y
@@ -125,7 +125,7 @@ when IS_RIGID and DIMENSIONS == 4:
 
 
 when IS_CONFORMAL and DIMENSIONS == 5:
-  func toMultivector*(a: RoundPoint): Multivector =
+  func widen*(a: RoundPoint): Multivector =
     ## Embed round point into e₁ e₂ e₃ e₄ e₅.
     result[Basis.E1] = a.x
     result[Basis.E2] = a.y
@@ -138,14 +138,14 @@ when IS_CONFORMAL and DIMENSIONS == 5:
     m.only({Basis.E1, Basis.E2, Basis.E3, Basis.E4, Basis.E5})
     RoundPoint(x: m[Basis.E1], y: m[Basis.E2], z: m[Basis.E3], w: m[Basis.E4], u: m[Basis.E5])
 
-  func toMultivector*(p: FlatPoint): Multivector =
+  func widen*(p: FlatPoint): Multivector =
     ## Embed flat point into e₁₅ e₂₅ e₃₅ e₄₅.
     result[Basis.E15] = p.x
     result[Basis.E25] = p.y
     result[Basis.E35] = p.z
     result[Basis.E45] = p.w
 
-  func toMultivector*(d: Dipole): Multivector =
+  func widen*(d: Dipole): Multivector =
     ## Embed dipole into grade-2 slots.
     result[Basis.E41] = d.v.x
     result[Basis.E42] = d.v.y
@@ -170,7 +170,7 @@ when IS_CONFORMAL and DIMENSIONS == 5:
       p: FlatPoint(x: m[Basis.E15], y: m[Basis.E25], z: m[Basis.E35], w: m[Basis.E45]),
     )
 
-  func toMultivector*(l: FlatLine): Multivector =
+  func widen*(l: FlatLine): Multivector =
     ## Embed flat line into e₄₁₅ e₄₂₅ e₄₃₅ and e₂₃₅ e₃₁₅ e₁₂₅.
     result[Basis.E415] = l.v.x
     result[Basis.E425] = l.v.y
@@ -179,7 +179,7 @@ when IS_CONFORMAL and DIMENSIONS == 5:
     result[Basis.E315] = l.m.y
     result[Basis.E125] = l.m.z
 
-  func toMultivector*(c: Circle): Multivector =
+  func widen*(c: Circle): Multivector =
     ## Embed circle into grade-3 slots.
     result[Basis.E423] = c.g.x
     result[Basis.E431] = c.g.y
@@ -204,14 +204,14 @@ when IS_CONFORMAL and DIMENSIONS == 5:
       m: Vec3(x: m[Basis.E235], y: m[Basis.E315], z: m[Basis.E125]),
     )
 
-  func toMultivector*(g: FlatPlane): Multivector =
+  func widen*(g: FlatPlane): Multivector =
     ## Embed flat plane into e₄₂₃₅ e₄₃₁₅ e₄₁₂₅ e₃₂₁₅.
     result[Basis.E4235] = g.x
     result[Basis.E4315] = g.y
     result[Basis.E4125] = g.z
     result[Basis.E3215] = g.w
 
-  func toMultivector*(s: Sphere): Multivector =
+  func widen*(s: Sphere): Multivector =
     ## Embed sphere into grade-4 slots.
     result[Basis.E1234] = s.u
     result[Basis.E4235] = s.x

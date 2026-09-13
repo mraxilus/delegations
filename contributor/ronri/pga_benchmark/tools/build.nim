@@ -7,12 +7,12 @@
 ##   |----------|-----------------------------------------------------------------------|
 ##   | inspect  | compile bench entry per algebra, read its emitted C, write counts     |
 ##   | bench    | compile and run bench per algebra, plain then instrumented, record    |
-##   |          | figures as `baseline/bench_<algebra>.json`                            |
+##   |          | measurements as `baseline/bench_<algebra>.json`                            |
 ##   | baseline | inspect, then record counts as `baseline/<algebra>.json`              |
-##   | check    | compare last inspect against baseline; any count grown is finding     |
+##   | guard    | compare last inspect against baseline; any count grown is finding     |
 ##   | drive    | inspect, check, and hold committed `gaps.md` to regeneration          |
-##   | gaps     | regenerate `gaps.md` and register from committed baselines              |
-##   | sweep    | time general probes at two to six dimensions, rigid; never in CI      |
+##   | gaps     | regenerate `gaps.md` and docket from committed baselines              |
+##   | sweep    | time general measurands at two to six dimensions, rigid; never in CI      |
 ##   | system   | print system packages build needs, one per line, for caller          |
 ##   | clean    | remove `build`                                                        |
 ##   |----------|-----------------------------------------------------------------------|
@@ -21,14 +21,14 @@
 ##     relative and every build compiles library. `drive` is deterministic: static counts
 ##     only, no timing, so runner's verdict is same as local one.
 ##   Cost: `drive` compiles bench and inspect entries once per algebra, seconds each.
-##   Cost: `bench` figures name machine they were taken on; committing them records that
+##   Cost: `bench` measurements name machine they were taken on; committing them records that
 ##     run and nothing more, as `PROVENANCE.md` says of every pair.
 
 {.experimental: "strictFuncs".}
 
 import std/[json, os, osproc, strutils]
 
-import ../src/pga_benchmark/[baseline, gaps]
+import ../src/pga_benchmark/[gaps, guard]
 
 
 const
@@ -38,12 +38,12 @@ const
     ## Directory committed documents live in.
   PATH_GAPS = "gaps.md"
     ## Rendered list, committed.
-  PATH_REGISTER = BASELINE / "register.json"
-    ## Identifier register, committed.
+  PATH_DOCKET = BASELINE / "docket.json"
+    ## Identifier docket, committed.
   PATH_LOCK = "atlas.lock"
     ## Lock naming library commit.
   ENTRY_BENCH = "src/pga_benchmark/bench.nim"
-    ## Entry reaching every probe; its cache is what inspect reads.
+    ## Entry reaching every measurand; its cache is what inspect reads.
   ENTRY_INSPECT = "src/pga_benchmark/inspect.nim"
     ## Entry reading cache, compiled per algebra for its catalogue.
   FLAGS = "-d:release"
@@ -51,12 +51,12 @@ const
   CONFIGS = [("rga4d", 4, false), ("cga5d", 5, true), ("rga3d", 3, false), ("cga4d", 4, true)]
     ## Algebras driven, typed ones first: name, dimensions, conformal.
   SWEEP = 2 .. 6
-    ## Dimensions swept, rigid metric, general probes only.
+    ## Dimensions swept, rigid metric, general measurands only.
   SYSTEM: seq[(string, string)] = @[]
     ## System packages build needs beyond compiler: none. Compiler is toolchain, pinned in
     ## nimble file; library is Atlas checkout, pinned in lock; nothing else is fetched.
   USAGE = "Usage: nim r tools/build.nim " &
-    "<inspect|bench|baseline|check|drive|gaps|sweep|system|clean>\n"
+    "<inspect|bench|baseline|guard|drive|gaps|sweep|system|clean>\n"
     ## Text printed on usage error.
 
 
@@ -135,25 +135,26 @@ proc inspect() =
       ENTRY_INSPECT, inspector, BUILD / "cache_inspect_" & name, dimensions, is_conformal,
       nim, pga,
     )
-    run(inspector, [cache, BUILD / "inspect_" & name & ".json", nim, pga, FLAGS])
+    run(inspector, [cache, BUILD / "static_" & name & ".json", nim, pga, FLAGS])
 
 
 proc merged(plain, instrumented: JsonNode): JsonNode =
   ## Take timings from plain run and allocation counts from instrumented one.
   result = plain
   result["taken"]["is_allocation_measured"] = instrumented{"taken", "is_allocation_measured"}
-  for id, probe in instrumented{"probes"}.pairs:
-    for side in ["library", "reference"]:
-      let figure = probe{side}
-      if figure.isNil or figure.kind != JObject or not result["probes"].hasKey(id): continue
-      let target = result["probes"][id]{side}
+  for id, measurand in instrumented{"measurands"}.pairs:
+    for implementation in ["library", "reference"]:
+      let measurement = measurand{implementation}
+      if measurement.isNil or measurement.kind != JObject: continue
+      if not result["measurands"].hasKey(id): continue
+      let target = result["measurands"][id]{implementation}
       if target.isNil or target.kind != JObject: continue
-      target["allocations"] = figure{"allocations"}
+      target["allocations"] = measurement{"allocations"}
 
 
 proc bench() =
   ## Compile and run bench per algebra, plain for timings and instrumented for allocations,
-  ## and record merged figures into `baseline/`.
+  ## and record merged measurements into `baseline/`.
   let nim = nimCommit()
   let pga = pgaCommit()
   createDir BUILD
@@ -169,7 +170,7 @@ proc bench() =
     )
     run(instrumented, [instrumented & ".json"])
     let doc = merged(readDocument(plain & ".json"), readDocument(instrumented & ".json"))
-    let recorded = BASELINE / "bench_" & name & ".json"
+    let recorded = BASELINE / "runtime_" & name & ".json"
     writeFile(recorded, pretty(doc) & "\n")
     echo "Recorded ", recorded
 
@@ -179,15 +180,15 @@ proc baseline() =
   inspect()
   createDir BASELINE
   for (name, _, _) in CONFIGS:
-    copyFile(BUILD / "inspect_" & name & ".json", BASELINE / name & ".json")
-    echo "Recorded ", BASELINE / name & ".json"
+    copyFile(BUILD / "static_" & name & ".json", BASELINE / "static_" & name & ".json")
+    echo "Recorded ", BASELINE / "static_" & name & ".json"
 
 
-proc checked(): seq[Finding] =
+proc guarded(): seq[Finding] =
   ## Compare last inspect of every algebra against its baseline; print improvements.
   for (name, _, _) in CONFIGS:
-    let path = BASELINE / name & ".json"
-    let fresh = BUILD / "inspect_" & name & ".json"
+    let path = BASELINE / "static_" & name & ".json"
+    let fresh = BUILD / "static_" & name & ".json"
     if not fileExists(path):
       result.add Finding(path: path, message: "No baseline recorded; run `baseline`.")
       continue
@@ -206,55 +207,55 @@ proc report(findings: seq[Finding]) =
   if findings.len > 0: quit 1
 
 
-proc check() =
+proc guard() =
   ## Compare and report.
-  report(checked())
+  report(guarded())
 
 
 proc algebras(): seq[Algebra] =
   ## Read every algebra's committed documents, in driven order; bench nil where absent.
   for (name, _, _) in CONFIGS:
-    let path = BASELINE / name & ".json"
+    let path = BASELINE / "static_" & name & ".json"
     if not fileExists(path): continue
-    var a = Algebra(config: name, inspect: readDocument(path))
-    let bench_path = BASELINE / "bench_" & name & ".json"
-    if fileExists(bench_path): a.bench = readDocument(bench_path)
+    var a = Algebra(name: name, static_measurements: readDocument(path))
+    let bench_path = BASELINE / "runtime_" & name & ".json"
+    if fileExists(bench_path): a.runtime_measurements = readDocument(bench_path)
     result.add a
 
 
 proc generated(): (string, string) =
-  ## Generate list and register text from committed documents.
-  let register =
-    if fileExists(PATH_REGISTER): registerOf(readDocument(PATH_REGISTER)) else: registerOf(nil)
-  let (text, grown) = generate(algebras(), register)
+  ## Generate list and docket text from committed documents.
+  let docket =
+    if fileExists(PATH_DOCKET): docketOf(readDocument(PATH_DOCKET)) else: docketOf(nil)
+  let (text, grown) = generate(algebras(), docket)
   (text, pretty(grown.toJson) & "\n")
 
 
 proc gaps() =
-  ## Regenerate list and register.
-  let (text, register) = generated()
+  ## Regenerate list and docket.
+  let (text, docket) = generated()
   createDir BASELINE
   writeFile(PATH_GAPS, text)
-  writeFile(PATH_REGISTER, register)
-  echo "Wrote ", PATH_GAPS, " and ", PATH_REGISTER
+  writeFile(PATH_DOCKET, docket)
+  echo "Wrote ", PATH_GAPS, " and ", PATH_DOCKET
 
 
 proc drive() =
-  ## Inspect, check against baselines, and hold committed list and register to regeneration.
+  ## Inspect, check against baselines, and hold committed list and docket to regeneration.
   inspect()
-  var findings = checked()
-  let (text, register) = generated()
+  var findings = guarded()
+  let (text, docket) = generated()
   if not fileExists(PATH_GAPS) or readFile(PATH_GAPS) != text:
     findings.add Finding(path: PATH_GAPS, message: "List differs from regeneration; run `gaps`.")
-  if not fileExists(PATH_REGISTER) or readFile(PATH_REGISTER) != register:
+  if not fileExists(PATH_DOCKET) or readFile(PATH_DOCKET) != docket:
     findings.add Finding(
-      path: PATH_REGISTER, message: "Register differs from regeneration; run `gaps`."
+      path: PATH_DOCKET, message: "Docket differs from regeneration; run `gaps`."
     )
   report(findings)
 
 
 proc sweep() =
-  ## Time general probes at every swept dimension, rigid metric, and print medians.
+  ## Time general measurands at every swept dimension, rigid metric, and print medians.
   let nim = nimCommit()
   let pga = pgaCommit()
   createDir BUILD
@@ -265,16 +266,16 @@ proc sweep() =
     compile(ENTRY_BENCH, binary, BUILD / "cache_" & name, dimensions, false, nim, pga)
     run(binary, [binary & ".json"])
     docs.add readDocument(binary & ".json")
-  var header = "probe".alignLeft(26)
+  var header = "measurand".alignLeft(26)
   for dimensions in SWEEP: header.add ($dimensions & "d").align(10)
   echo header
-  for id, _ in docs[0]{"probes"}.pairs:
+  for id, _ in docs[0]{"measurands"}.pairs:
     var line = id.alignLeft(26)
     for doc in docs:
-      let figure = doc{"probes", id, "library"}
+      let measurement = doc{"measurands", id, "library"}
       line.add(
-        if figure.isNil or figure.kind != JObject: "–".align(10)
-        else: formatFloat(figure{"ns_median"}.getFloat, ffDecimal, 1).align(10)
+        if measurement.isNil or measurement.kind != JObject: "–".align(10)
+        else: formatFloat(measurement{"ns_median"}.getFloat, ffDecimal, 1).align(10)
       )
     echo line
 
@@ -299,10 +300,10 @@ when isMainModule:
     quit 2
   try:
     case paramStr(1)
-    of "inspect": inspect()
-    of "bench": bench()
+    of "static": inspect()
+    of "runtime": bench()
     of "baseline": baseline()
-    of "check": check()
+    of "guard": guard()
     of "drive": drive()
     of "gaps": gaps()
     of "sweep": sweep()

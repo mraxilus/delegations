@@ -1,15 +1,15 @@
-## Generate gap list from committed baselines: one row per probe per algebra, design gaps first.
-##   Row is decided against reference where one exists and against zero where target is
-##   absolute (zero fills, temporaries, checks, allocations, NaN share); time opens beyond
-##   `TIME_BAND`, since medians on shared machine wander. Identifiers come from register,
+## Generate gap list from committed baselines: one gap per measurand per algebra, causes first.
+##   Gap is decided against reference where one exists and against zero where target is
+##   absolute (zero fills, intermediates, checks, allocations, NaN share); time opens beyond
+##   `TOLERANCE`, since medians on shared machine wander. Identifiers come from docket,
 ##   which allots next number to any new key and reuses none, so `G017` names same gap in
 ##   every regeneration and every conversation about it.
-##   Design gaps are data: each carries rule deciding it from documents and sentence saying
+##   Cause gaps are data: each carries rule deciding it from documents and sentence saying
 ##   what closes it, so list closes by measurement and never by edit.
 ##
 ##   Cost: renders markdown with every line under `WIDTH` runes, wrapping prose and refusing
-##     table row that does not fit, since product is committed and form-checked.
-##   Cost: probe naming no library function (composed sandwich) has no counts; its row rests
+##     table gap that does not fit, since product is committed and form-checked.
+##   Cost: measurand naming no library function (composed sandwich) has no counts; its gap rests
 ##     on timing and reads `unmeasured` until bench is recorded.
 
 {.experimental: "strictFuncs".}
@@ -20,56 +20,56 @@ import ./report
 
 
 const
-  TIME_BAND* = 1.25
-    ## Factor library median may exceed reference median by before row opens on time.
+  TOLERANCE* = 1.25
+    ## Factor library median may exceed reference median by before gap opens on time.
   WIDTH* = 100
     ## Runes per line rendered list stays within, since form check reads it.
-  KIND_REGISTER = "register"
-    ## Document kind of register file.
+  KIND_DOCKET = "docket"
+    ## Document kind of docket file.
 
 
 type
   Status* {.pure.} = enum
-    ## Define verdict of one row or design gap.
-    Open, Closed, Unmeasured
-  Readings* = object
-    ## Define one side's figures of one row; each absent where side or instrument is absent.
-    multiplies*, bytes*, zero_fills*, temporaries*, checks*, allocations*: Option[int]
-      ## Counts read from emitted C; bytes are modelled movement.
+    ## Define verdict of one gap or cause.
+    Over, Met, Unmeasured
+  Values* = object
+    ## Define one implementation's values of one gap; each absent where it or instrument is absent.
+    multiplies*, bytes*, zero_fills*, intermediates*, checks*, allocations*: Option[int]
+      ## Static measurements: counts read from emitted C; bytes are modelled movement.
     ns*, nan_share*: Option[float]
-      ## Bench figures, absent where no bench is recorded.
-  Row* = object
-    ## Define one probe of one algebra with both sides' figures.
+      ## Runtime measurements, absent where none is recorded.
+  Gap* = object
+    ## Define one measurand of one algebra with both implementations' values.
     key*: string
-      ## `<config>/<probe id>`, register key.
+      ## `<algebra>/<measurand id>`, docket key.
     id*: string
-      ## Register identifier, e.g. `G017`.
-    config*, probe*: string
-      ## Algebra and probe id.
-    library*, reference*: Readings
-      ## Both sides.
-    open_on*: seq[string]
+      ## Docket identifier, e.g. `G017`.
+    algebra*, measurand*: string
+      ## Algebra name and measurand id.
+    library*, reference*: Values
+      ## Both implementations.
+    over_on*: seq[string]
       ## Metrics library exceeds target on.
     status*: Status
       ## Verdict.
   Algebra* = object
     ## Define one algebra's documents as read from `baseline/`.
-    config*: string
+    name*: string
       ## Algebra name, e.g. `rga4d`.
-    inspect*: JsonNode
-      ## Inspect document.
-    bench*: JsonNode
-      ## Bench document; nil where none is recorded.
-  Register* = object
-    ## Define identifier register: next number and every key allotted so far.
+    static_measurements*: JsonNode
+      ## Static measurements document.
+    runtime_measurements*: JsonNode
+      ## Runtime measurements document; nil where none is recorded.
+  Docket* = object
+    ## Define identifier docket: next number and every key allotted so far.
     next*: int
       ## Next number to allot.
     ids*: Table[string, string]
-      ## Identifier per row key.
+      ## Identifier per gap key.
   Rule* {.pure.} = enum
-    ## Define how design gap is decided from documents.
-    Terms, Time, ZeroFills, Temporaries, Checks, Inline, Nan, Compound, Missing, Cayley
-  Design* = object
+    ## Define how cause is decided from documents.
+    Terms, Time, ZeroFills, Intermediates, Checks, Inline, Nan, Compound, Missing, Cayley
+  Cause* = object
     ## Define one design-level gap.
     id*: string
       ## Stable identifier, `D01` onward, never renumbered.
@@ -79,141 +79,142 @@ type
       ## How documents decide it.
     closes_when*: string
       ## Condition closing it, in words.
-  Decided* = object
-    ## Define design gap with its verdict and evidence.
-    design*: Design
+  Decision* = object
+    ## Define cause with its verdict and evidence.
+    design*: Cause
     status*: Status
     evidence*: string
 
 
-const DESIGNS* = [
-  Design(
+const CAUSES* = [
+  Cause(
     id: "D01", rule: Rule.Terms,
     title: "Dense products spend every Cayley-table term where typed forms spend few.",
-    closes_when: "no typed row spends more multiplies than its reference.",
+    closes_when: "no typed gap spends more multiplies than its reference.",
   ),
-  Design(
+  Cause(
     id: "D02", rule: Rule.Time,
     title: "Library calls run slower than typed forms beyond the band.",
-    closes_when: "no row's library median exceeds " & $TIME_BAND & " times its reference's.",
+    closes_when: "no gap's library median exceeds " & $TOLERANCE & " times its reference's.",
   ),
-  Design(
+  Cause(
     id: "D03", rule: Rule.ZeroFills,
     title: "Operators zero-fill their full-width result before writing it.",
     closes_when: "no library function calls `nimZeroMem`.",
   ),
-  Design(
-    id: "D04", rule: Rule.Temporaries,
-    title: "Chains materialise full-width temporaries.",
+  Cause(
+    id: "D04", rule: Rule.Intermediates,
+    title: "Chains materialise full-width intermediates.",
     closes_when: "no library function declares a local multivector.",
   ),
-  Design(
+  Cause(
     id: "D05", rule: Rule.Checks,
     title: "Error-flag checks survive into release builds.",
     closes_when: "no library function branches on `nimErr_`; `--panics:on` on the pinned " &
-      "compiler already emits none on either side, so the library's users must know to pass it.",
+      "compiler already emits none in either implementation, so the library's users must know to " &
+      "pass it.",
   ),
-  Design(
+  Cause(
     id: "D06", rule: Rule.Inline,
     title: "Sign and permutation operators cross the module boundary as calls.",
     closes_when: "every library function spending no multiply, add or subtract is inline.",
   ),
-  Design(
+  Cause(
     id: "D07", rule: Rule.Nan,
     title: "Conformal norms return NaN on real objects.",
-    closes_when: "every bench figure's NaN share is zero.",
+    closes_when: "every bench measurement's NaN share is zero.",
   ),
-  Design(
+  Cause(
     id: "D08", rule: Rule.Compound,
     title: "Transforms by motor are composed of three products, with no operator of their own.",
-    closes_when: "every catalogued probe spells one library function.",
+    closes_when: "every catalogued measurand spells one library function.",
   ),
-  Design(
+  Cause(
     id: "D09", rule: Rule.Missing,
     title: "Norms the reference carries and the library refuses.",
     closes_when: "the catalogue's missing list is empty.",
   ),
-  Design(
+  Cause(
     id: "D10", rule: Rule.Cayley,
     title: "Compile-time Cayley work is computed and discarded, by the audit's reading.",
     closes_when: "compile-time tables built are measured against tables used; nothing " &
       "here reads compile time.",
   ),
 ]
-  ## Design gaps in identifier order; rows below them are data, these are their causes.
+  ## Cause gaps in identifier order; gaps below them are data, these are their causes.
 
 
 
-#[ Rows ]#
+#[ Gaps ]#
 
 func at(node: JsonNode; key: string): JsonNode =
   ## Read child by key; nil where node is nil or key absent.
   if node.isNil: nil else: node{key}
 
 
-func figuresOf(functions, figure: JsonNode; key: string; is_allocation_measured: bool): Readings =
-  ## Read one side's figures: counts of function keyed, timing of bench figure.
+func valuesOf(functions, measurement: JsonNode; key: string; is_allocation_measured: bool): Values =
+  ## Read one implementation's values: counts of function keyed, runtime measurement's timing.
   if key.len > 0 and not functions.isNil and functions.hasKey(key):
     let f = functions[key]
     result.multiplies = some(f{"total", "multiplies"}.getInt)
     result.bytes = some(f{"movement", "bytes_moved"}.getInt)
     result.zero_fills = some(f{"total", "zero_fills"}.getInt)
-    result.temporaries = some(f{"total", "temporaries"}.getInt)
+    result.intermediates = some(f{"total", "intermediates"}.getInt)
     result.checks = some(f{"total", "checks"}.getInt)
-  if not figure.isNil and figure.kind == JObject:
-    result.ns = some(figure{"ns_median"}.getFloat)
-    result.nan_share = some(figure{"nan_share"}.getFloat)
-    if is_allocation_measured: result.allocations = some(figure{"allocations"}.getInt)
+  if not measurement.isNil and measurement.kind == JObject:
+    result.ns = some(measurement{"ns_median"}.getFloat)
+    result.nan_share = some(measurement{"nan_share"}.getFloat)
+    if is_allocation_measured: result.allocations = some(measurement{"allocations"}.getInt)
 
 
-func decide*(row: var Row) =
-  ## Decide row: relative metrics open above reference, absolute ones above zero.
-  row.open_on = @[]
+func decide*(gap: var Gap) =
+  ## Decide gap: relative metrics open above reference, absolute ones above zero.
+  gap.over_on = @[]
   template relative(name: string; field: untyped) =
-    if row.library.field.isSome and row.reference.field.isSome and
-        row.library.field.get > row.reference.field.get:
-      row.open_on.add name
+    if gap.library.field.isSome and gap.reference.field.isSome and
+        gap.library.field.get > gap.reference.field.get:
+      gap.over_on.add name
   template absolute(name: string; field: untyped) =
-    if row.library.field.isSome and row.library.field.get > row.reference.field.get(0):
-      row.open_on.add name
+    if gap.library.field.isSome and gap.library.field.get > gap.reference.field.get(0):
+      gap.over_on.add name
   relative("multiplies", multiplies)
   relative("bytes", bytes)
   absolute("zero_fills", zero_fills)
-  absolute("temporaries", temporaries)
+  absolute("intermediates", intermediates)
   absolute("checks", checks)
   absolute("allocations", allocations)
-  if row.library.nan_share.get(0.0) > 0.0: row.open_on.add "nan"
-  if row.library.ns.isSome and row.reference.ns.isSome and
-      row.library.ns.get > TIME_BAND * row.reference.ns.get:
-    row.open_on.add "time"
-  row.status =
-    if row.open_on.len > 0: Status.Open
-    elif row.library.multiplies.isNone and row.library.ns.isNone: Status.Unmeasured
-    else: Status.Closed
+  if gap.library.nan_share.get(0.0) > 0.0: gap.over_on.add "nan"
+  if gap.library.ns.isSome and gap.reference.ns.isSome and
+      gap.library.ns.get > TOLERANCE * gap.reference.ns.get:
+    gap.over_on.add "time"
+  gap.status =
+    if gap.over_on.len > 0: Status.Over
+    elif gap.library.multiplies.isNone and gap.library.ns.isNone: Status.Unmeasured
+    else: Status.Met
 
 
-func rowsOf*(a: Algebra): seq[Row] =
-  ## Read one row per catalogued probe of algebra, decided.
-  let probes = a.inspect.at("probes")
-  if probes.isNil: return
-  let functions = a.inspect.at("functions")
-  let measured = a.bench.at("taken").at("is_allocation_measured").getBool
-  for id, p in probes.pairs:
-    var row = Row(key: a.config & "/" & id, config: a.config, probe: id)
-    let figure = a.bench.at("probes").at(id)
-    row.library = figuresOf(functions, figure.at("library"), p{"library"}.getStr, measured)
-    row.reference = figuresOf(
-      functions, figure.at("reference"), p{"reference"}.getStr, measured
+func gapsOf*(a: Algebra): seq[Gap] =
+  ## Read one gap per catalogued measurand of algebra, decided.
+  let measurands = a.static_measurements.at("measurands")
+  if measurands.isNil: return
+  let functions = a.static_measurements.at("functions")
+  let measured = a.runtime_measurements.at("taken").at("is_allocation_measured").getBool
+  for id, p in measurands.pairs:
+    var gap = Gap(key: a.name & "/" & id, algebra: a.name, measurand: id)
+    let measurement = a.runtime_measurements.at("measurands").at(id)
+    gap.library = valuesOf(functions, measurement.at("library"), p{"library"}.getStr, measured)
+    gap.reference = valuesOf(
+      functions, measurement.at("reference"), p{"reference"}.getStr, measured
     )
-    row.decide
-    result.add row
+    gap.decide
+    result.add gap
 
 
 
-#[ Register ]#
+#[ Docket ]#
 
-func registerOf*(node: JsonNode): Register =
-  ## Read register from its document; empty register where document is nil.
+func docketOf*(node: JsonNode): Docket =
+  ## Read docket from its document; empty docket where document is nil.
   result.next = 1
   if node.isNil: return
   result.next = max(1, node{"next"}.getInt(1))
@@ -222,24 +223,24 @@ func registerOf*(node: JsonNode): Register =
   for key, id in ids.pairs: result.ids[key] = id.getStr
 
 
-func toJson*(l: Register): JsonNode =
-  ## Shape register as document, keys sorted so file moves only where ids do.
+func toJson*(l: Docket): JsonNode =
+  ## Shape docket as document, keys sorted so file moves only where ids do.
   var ids = newJObject()
   for key in toSeq(l.ids.keys).sorted: ids[key] = %l.ids[key]
-  %*{"schema": SCHEMA, "kind": KIND_REGISTER, "next": l.next, "ids": ids}
+  %*{"schema": SCHEMA, "kind": KIND_DOCKET, "next": l.next, "ids": ids}
 
 
-func assign*(rows: var seq[Row]; register: var Register) =
-  ## Give every row its identifier, allotting next number to keys register lacks.
-  for row in rows.mitems:
-    if row.key notin register.ids:
-      register.ids[row.key] = "G" & align($register.next, 3, '0')
-      inc register.next
-    row.id = register.ids[row.key]
+func assign*(gaps: var seq[Gap]; docket: var Docket) =
+  ## Give every gap its identifier, allotting next number to keys docket lacks.
+  for gap in gaps.mitems:
+    if gap.key notin docket.ids:
+      docket.ids[gap.key] = "G" & align($docket.next, 3, '0')
+      inc docket.next
+    gap.id = docket.ids[gap.key]
 
 
 
-#[ Design ]#
+#[ Cause ]#
 
 func isLibrary(f: JsonNode): bool =
   ## Decide whether inspected function is library's rather than reference's.
@@ -271,7 +272,7 @@ func countFunctions(
   ## count, total, worst key and its value.
   var worst_value = -1
   for a in algebras:
-    let functions = a.inspect.at("functions")
+    let functions = a.static_measurements.at("functions")
     if functions.isNil: continue
     for key, f in functions.pairs:
       if not f.isLibrary or (is_inline_rule and not f.isOperator): continue
@@ -283,14 +284,14 @@ func countFunctions(
       inc result[0]
       if value > worst_value:
         worst_value = value
-        result[2] = a.config & " `" & key & "`"
+        result[2] = a.name & " `" & key & "`"
         result[3] = value
 
 
-func openRows(rows: openArray[Row]; metric: string): seq[Row] =
-  ## Select rows open on metric.
-  for row in rows:
-    if metric in row.open_on: result.add row
+func overGaps(gaps: openArray[Gap]; metric: string): seq[Gap] =
+  ## Select gaps open on metric.
+  for gap in gaps:
+    if metric in gap.over_on: result.add gap
 
 
 func ratio(l, r: float): float =
@@ -298,57 +299,57 @@ func ratio(l, r: float): float =
   if r == 0.0: (if l == 0.0: 1.0 else: 1.0e9) else: l / r
 
 
-func decideDesign*(d: Design; algebras: openArray[Algebra]; rows: openArray[Row]): Decided =
-  ## Decide design gap by its rule over documents and rows, with evidence in one sentence.
+func decideCause*(d: Cause; algebras: openArray[Algebra]; gaps: openArray[Gap]): Decision =
+  ## Decide cause by its rule over documents and gaps, with evidence in one sentence.
   result.design = d
   case d.rule
   of Rule.Terms:
-    let open = rows.openRows("multiplies")
-    var worst: Row
-    var worst_gap = 0
-    for row in open:
-      let gap = row.library.multiplies.get - row.reference.multiplies.get
-      if gap > worst_gap:
-        worst_gap = gap
-        worst = row
-    result.status = if open.len > 0: Status.Open else: Status.Closed
+    let open = gaps.overGaps("multiplies")
+    var worst: Gap
+    var worst_excess = 0
+    for gap in open:
+      let excess = gap.library.multiplies.get - gap.reference.multiplies.get
+      if excess > worst_excess:
+        worst_excess = excess
+        worst = gap
+    result.status = if open.len > 0: Status.Over else: Status.Met
     result.evidence =
-      if open.len == 0: "no typed row spends more than its reference."
+      if open.len == 0: "no typed gap spends more than its reference."
       else:
-        $open.len & " rows; widest " & worst.key & " spends " & $worst.library.multiplies.get &
+        $open.len & " gaps; widest " & worst.key & " spends " & $worst.library.multiplies.get &
           " multiplies against " & $worst.reference.multiplies.get & "."
   of Rule.Time:
     var is_any_measured = false
     for a in algebras:
-      if not a.bench.isNil: is_any_measured = true
+      if not a.runtime_measurements.isNil: is_any_measured = true
     if not is_any_measured:
       result.status = Status.Unmeasured
       result.evidence = "no bench recorded."
       return
-    let open = rows.openRows("time")
-    var worst: Row
+    let open = gaps.overGaps("time")
+    var worst: Gap
     var worst_ratio = 0.0
-    for row in open:
-      let q = ratio(row.library.ns.get, row.reference.ns.get)
+    for gap in open:
+      let q = ratio(gap.library.ns.get, gap.reference.ns.get)
       if q > worst_ratio:
         worst_ratio = q
-        worst = row
-    result.status = if open.len > 0: Status.Open else: Status.Closed
+        worst = gap
+    result.status = if open.len > 0: Status.Over else: Status.Met
     result.evidence =
-      if open.len == 0: "no row's library median exceeds band."
+      if open.len == 0: "no gap's library median exceeds band."
       else:
-        $open.len & " rows; worst " & worst.key & " at " &
+        $open.len & " gaps; worst " & worst.key & " at " &
           formatFloat(worst.library.ns.get, ffDecimal, 1) & " ns against " &
           formatFloat(worst.reference.ns.get, ffDecimal, 1) & " ns."
-  of Rule.ZeroFills, Rule.Temporaries, Rule.Checks, Rule.Inline:
+  of Rule.ZeroFills, Rule.Intermediates, Rule.Checks, Rule.Inline:
     let metric =
       case d.rule
       of Rule.ZeroFills: "zero_fills"
-      of Rule.Temporaries: "temporaries"
+      of Rule.Intermediates: "intermediates"
       of Rule.Checks: "checks"
       else: "inline"
     let (count, total, worst, value) = countFunctions(algebras, metric, d.rule == Rule.Inline)
-    result.status = if count > 0: Status.Open else: Status.Closed
+    result.status = if count > 0: Status.Over else: Status.Met
     result.evidence =
       if count == 0: "no library function of " & $total & "."
       elif d.rule == Rule.Inline:
@@ -358,34 +359,34 @@ func decideDesign*(d: Design; algebras: openArray[Algebra]; rows: openArray[Row]
   of Rule.Nan:
     var is_any_measured = false
     var names: seq[string]
-    for row in rows:
-      if row.library.nan_share.isSome: is_any_measured = true
-      if row.library.nan_share.get(0.0) > 0.0: names.add row.key
+    for gap in gaps:
+      if gap.library.nan_share.isSome: is_any_measured = true
+      if gap.library.nan_share.get(0.0) > 0.0: names.add gap.key
     result.status =
       if not is_any_measured: Status.Unmeasured
-      elif names.len > 0: Status.Open
-      else: Status.Closed
+      elif names.len > 0: Status.Over
+      else: Status.Met
     result.evidence =
       if not is_any_measured: "no bench recorded."
-      elif names.len == 0: "every figure finite."
+      elif names.len == 0: "every measurement finite."
       else: named(names) & "."
   of Rule.Compound:
     var names: seq[string]
     for a in algebras:
-      let probes = a.inspect.at("probes")
-      if probes.isNil: continue
-      for id, p in probes.pairs:
-        if p{"library"}.getStr.len == 0: names.add a.config & "/" & id
-    result.status = if names.len > 0: Status.Open else: Status.Closed
+      let measurands = a.static_measurements.at("measurands")
+      if measurands.isNil: continue
+      for id, p in measurands.pairs:
+        if p{"library"}.getStr.len == 0: names.add a.name & "/" & id
+    result.status = if names.len > 0: Status.Over else: Status.Met
     result.evidence =
-      if names.len == 0: "every probe names one function." else: named(names) & "."
+      if names.len == 0: "every measurand names one function." else: named(names) & "."
   of Rule.Missing:
     var names: seq[string]
     for a in algebras:
-      let missing = a.inspect.at("missing")
+      let missing = a.static_measurements.at("missing")
       if missing.isNil: continue
-      for id, p in missing.pairs: names.add a.config & "/" & id & " `" & p{"symbol"}.getStr & "`"
-    result.status = if names.len > 0: Status.Open else: Status.Closed
+      for id, p in missing.pairs: names.add a.name & "/" & id & " `" & p{"symbol"}.getStr & "`"
+    result.status = if names.len > 0: Status.Over else: Status.Met
     result.evidence = if names.len == 0: "nothing missing." else: named(names) & "."
   of Rule.Cayley:
     result.status = Status.Unmeasured
@@ -428,24 +429,24 @@ func word(s: Status): string =
 
 func headerOf(a: Algebra): string =
   ## Render one paragraph naming what algebra's documents measured, on what, and when.
-  let c = a.inspect.at("config")
-  let t = a.inspect.at("taken")
+  let c = a.static_measurements.at("algebra")
+  let t = a.static_measurements.at("taken")
   result = $c{"dimensions"}.getInt & " dimensions, " &
     (if c{"is_conformal"}.getBool: "conformal" else: "rigid") & " metric, " &
     $c{"sizeof_multivector"}.getInt & "-byte multivector. Counts: inspect taken " &
     t{"date"}.getStr & " on " & t{"machine"}.getStr & "; nim `" & t{"nim"}.getStr &
     "`; pga `" & t{"pga"}.getStr & "`; flags `" & t{"flags"}.getStr & "`."
-  if a.bench.isNil:
+  if a.runtime_measurements.isNil:
     result.add " Times: unmeasured, no bench recorded."
   else:
-    let b = a.bench.at("taken")
+    let b = a.runtime_measurements.at("taken")
     result.add " Times: bench taken " & b{"date"}.getStr & " on " & b{"machine"}.getStr & ", " &
       $b{"rounds"}.getInt & " rounds over " & $b{"objects"}.getInt & " objects, allocation " &
       "gauge " & (if b{"is_allocation_measured"}.getBool: "live" else: "off") & "."
 
 
 func render*(
-  algebras: openArray[Algebra]; rows: openArray[Row]; decided: openArray[Decided]
+  algebras: openArray[Algebra]; gaps: openArray[Gap]; decided: openArray[Decision]
 ): string =
   ## Render whole list as markdown; raise where any line outruns width.
   var lines: seq[string]
@@ -453,15 +454,16 @@ func render*(
   lines.add ""
   lines.add wrap(
     "Generated by `nim r tools/build.nim gaps` from `baseline/*.json`; do not edit by " &
-    "hand. Identifiers are stable: `baseline/register.json` maps every row to its number and " &
-    "none is reused. Counts are read from the C the pinned compiler emits for the `bench` " &
-    "entry, cells reading `library/reference`; bytes are modelled movement per call; times " &
-    "are medians of the last hand-run bench, on the machine each section names. A row is " &
-    "open where the library exceeds its reference, or spends any zero fill, temporary, " &
-    "error check, allocation or NaN; time opens beyond " & $TIME_BAND & " times the reference."
+    "hand. Identifiers are stable: `baseline/docket.json` maps every gap to its number and " &
+    "none is reused. Static measurements are read from the C the pinned compiler emits for " &
+    "the `bench` entry, cells reading `library/reference`; bytes are modelled movement per " &
+    "call; runtime measurements are medians of the last hand-run bench, on the machine each " &
+    "section names. A gap is over where the library exceeds its reference, or spends any " &
+    "zero fill, intermediate, error check, allocation or NaN; time is over beyond a " &
+    "tolerance of " & $TOLERANCE & " times the reference, and met otherwise."
   )
   lines.add ""
-  lines.add "## Design"
+  lines.add "## Causes"
   lines.add ""
   for d in decided:
     lines.add wrap(
@@ -471,41 +473,41 @@ func render*(
     )
   for a in algebras:
     lines.add ""
-    lines.add "## " & a.config
+    lines.add "## " & a.name
     lines.add ""
     lines.add wrap(a.headerOf)
     var counts: array[Status, int]
-    var own: seq[Row]
-    for row in rows:
-      if row.config == a.config:
-        inc counts[row.status]
-        own.add row
+    var own: seq[Gap]
+    for gap in gaps:
+      if gap.algebra == a.name:
+        inc counts[gap.status]
+        own.add gap
     lines.add wrap(
-      "Rows: " & $own.len & "; open " & $counts[Status.Open] & ", closed " &
-      $counts[Status.Closed] & ", unmeasured " & $counts[Status.Unmeasured] & "."
+      "Gaps: " & $own.len & "; over " & $counts[Status.Over] & ", met " &
+      $counts[Status.Met] & ", unmeasured " & $counts[Status.Unmeasured] & "."
     )
     lines.add ""
-    lines.add "| Id | Probe | Mul | Bytes | Tmp | Chk | ns | Status |"
+    lines.add "| Id | Measurand | Mul | Bytes | Tmp | Chk | ns | Status |"
     lines.add "|----|-------|-----|-------|-----|-----|----|--------|"
-    for row in own:
-      lines.add "| " & row.id & " | " & row.probe & " | " &
-        cell(row.library.multiplies, row.reference.multiplies) & " | " &
-        cell(row.library.bytes, row.reference.bytes) & " | " &
-        cell(row.library.temporaries, row.reference.temporaries) & " | " &
-        cell(row.library.checks, row.reference.checks) & " | " &
-        cellNs(row.library.ns, row.reference.ns) & " | " & row.status.word & " |"
+    for gap in own:
+      lines.add "| " & gap.id & " | " & gap.measurand & " | " &
+        cell(gap.library.multiplies, gap.reference.multiplies) & " | " &
+        cell(gap.library.bytes, gap.reference.bytes) & " | " &
+        cell(gap.library.intermediates, gap.reference.intermediates) & " | " &
+        cell(gap.library.checks, gap.reference.checks) & " | " &
+        cellNs(gap.library.ns, gap.reference.ns) & " | " & gap.status.word & " |"
   for line in lines:
     if line.runeLen > WIDTH:
       raise newException(ValueError, "Rendered line outruns width; got `" & line & "`.")
   lines.join("\n") & "\n"
 
 
-func generate*(algebras: openArray[Algebra]; register: Register): (string, Register) =
-  ## Generate list and grown register from documents.
-  var rows: seq[Row]
-  for a in algebras: rows.add a.rowsOf
-  var grown = register
-  rows.assign(grown)
-  var decided: seq[Decided]
-  for d in DESIGNS: decided.add d.decideDesign(algebras, rows)
-  (render(algebras, rows, decided), grown)
+func generate*(algebras: openArray[Algebra]; docket: Docket): (string, Docket) =
+  ## Generate list and grown docket from documents.
+  var gaps: seq[Gap]
+  for a in algebras: gaps.add a.gapsOf
+  var grown = docket
+  gaps.assign(grown)
+  var decided: seq[Decision]
+  for d in CAUSES: decided.add d.decideCause(algebras, gaps)
+  (render(algebras, gaps, decided), grown)

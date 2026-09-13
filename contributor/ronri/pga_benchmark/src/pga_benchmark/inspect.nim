@@ -1,15 +1,15 @@
 ## Read nimcache of one build and write counts of library and reference functions as JSON.
 ##   `inspect <cache> <output.json> <nim> <pga> <flags>`
 ##   Compiled once per algebra, as `bench` is, since it carries catalogue: document names
-##   every probe with key of library function its spell calls and key of reference function,
-##   so gap list joins probes to counts without reading any Nim. Functions kept: library's
+##   every measurand with key of library function its expression calls and key of reference's,
+##   so gap list joins measurands to counts without reading any Nim. Functions kept: library's
 ##   own, whose module names its checkout, and typed reference's.
 ##
 ##   Cost: reads every C file of cache, megabytes at six dimensions; seconds.
 ##   Cost: `{}` instantiates twice, grade then antigrade, in order `selectGrade` and
 ##     `selectGradeAnti` are declared in library umbrella; antigrade takes second key.
-##   Cost: probe whose spell composes several calls (motor sandwich) names no library
-##     function, so its counts are absent and its row rests on timing alone.
+##   Cost: measurand whose expression composes several calls (motor sandwich) names no library
+##     function, so its counts are absent and its gap rests on timing alone.
 
 {.experimental: "strictFuncs".}
 
@@ -21,7 +21,7 @@ import ./[catalogue, inspector, kinds, report]
 
 
 const
-  CONFIG = (if IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"
+  ALGEBRA_NAME = (if IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"
     ## Name of algebra this build inspects; umbrella spells same, kept here to stay entry.
   LIBRARY_MARK = "illuminatedZpga"
     ## Substring of module suffix of every library module, from its checkout path.
@@ -48,21 +48,21 @@ func referenceStem(k: Kind): string =
   if k == Kind.Scalar: "float" elif k == Kind.General: "Multivector" else: $k
 
 
-func libraryKey(p: Probe): string =
-  ## Key of library function probe's spell calls; empty where spell composes several.
-  if p.symbol == "{}": return KEY_SELECT & (if "Anti" in p.spell: "#2" else: "")
+func libraryKey(p: Measurand): string =
+  ## Key of library function measurand's expression calls; empty where it composes several.
+  if p.symbol == "{}": return KEY_SELECT & (if "Anti" in p.expression: "#2" else: "")
   if p.symbol == "[]": return KEY_PART
   let head =
     if p.symbol.len > 0: p.emitted
-    elif p.alias.len > 0 and p.spell.startsWith(p.alias & "("): p.alias
+    elif p.alias.len > 0 and p.expression.startsWith(p.alias & "("): p.alias
     else: return ""
   var stems: seq[string]
   for i in 0 ..< int(p.arity): stems.add libraryStem(p.operands[i])
   head & "(" & stems.join(",") & ")"
 
 
-func referenceKey(p: Probe): string =
-  ## Key of reference function probe names, operands read off argument names.
+func referenceKey(p: Measurand): string =
+  ## Key of reference function measurand names, operands read off argument names.
   let open = p.reference.find('(')
   let close = p.reference.rfind(')')
   if open < 0 or close < open: return ""
@@ -75,15 +75,15 @@ func referenceKey(p: Probe): string =
   p.reference[0 ..< open] & "(" & stems.join(",") & ")"
 
 
-func probesNode(): JsonNode =
-  ## Shape catalogue: one object per probe naming both keys, spell and citation.
+func measurandsNode(): JsonNode =
+  ## Shape catalogue: one object per measurand naming both keys, expression and citation.
   result = newJObject()
-  for p in PROBES:
+  for p in CATALOGUE:
     result[p.id] = %*{
       "symbol": p.symbol,
       "alias": p.alias,
       "arity": int(p.arity),
-      "spell": p.spell,
+      "expression": p.expression,
       "library": p.libraryKey,
       "reference": p.referenceKey,
       "cite": p.cite,
@@ -109,7 +109,7 @@ proc main(): int =
   taken["pga"] = %paramStr(4)
   taken["flags"] = %paramStr(5)
   var doc = document(
-    "inspect", configNode(CONFIG, DIMENSIONS, IS_CONFORMAL, SIZE_MULTIVECTOR), taken
+    "static", algebraNode(ALGEBRA_NAME, DIMENSIONS, IS_CONFORMAL, SIZE_MULTIVECTOR), taken
   )
   var kept = newJObject()
   var count = 0
@@ -125,7 +125,7 @@ proc main(): int =
     kept[key] = functionNode(f, count(f.body), total[f.name], SIZE_MULTIVECTOR)
     inc count
   doc["functions"] = kept
-  doc["probes"] = probesNode()
+  doc["measurands"] = measurandsNode()
   doc["missing"] = missingNode()
   writeFile(paramStr(2), pretty(doc) & "\n")
   echo "inspected ", functions.len, " functions, kept ", count, " into ", paramStr(2)

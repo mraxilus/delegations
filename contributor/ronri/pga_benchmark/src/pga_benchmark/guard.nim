@@ -1,4 +1,4 @@
-## Compare one inspect document against its committed baseline; any count grown is finding.
+## Compare static measurements against their committed baseline; any count grown is finding.
 ##   Gate is monotone: growth in any gated count or in bytes moved fails, shrink is noticed
 ##   and never fails, so baseline moves by choice (`baseline` verb) and never by drift.
 ##   Headers must name same algebra, compiler commit and flags, since counts of another
@@ -31,13 +31,13 @@ type
 
 const
   HEADER_CONFIG = ["name", "dimensions", "is_conformal", "sizeof_multivector"]
-    ## Fields of `config` both documents must agree on.
+    ## Fields of `algebra` both documents must agree on.
   HEADER_TAKEN = ["nim", "flags"]
     ## Fields of `taken` both documents must agree on; others describe run, not build.
 
 
 func render*(f: Finding): string =
-  ## Render finding as `path:0: message`, line `0` since document is one figure.
+  ## Render finding as `path:0: message`, line `0` since document is one measurement.
   f.path & ":0: " & f.message
 
 
@@ -49,18 +49,18 @@ func text(node: JsonNode; keys: varargs[string]): string =
 
 func compare*(baseline, current: JsonNode; path: string): Verdict =
   ## Compare current document against baseline at path; growth or mismatch is finding.
-  for (node, side) in [(baseline, "Baseline"), (current, "Current")]:
-    let why = checkSchema(node, "inspect")
+  for (node, party) in [(baseline, "Baseline"), (current, "Current")]:
+    let why = checkSchema(node, "static")
     if why.len > 0:
-      result.findings.add Finding(path: path, message: side & " document unusable; " & why)
+      result.findings.add Finding(path: path, message: party & " document unusable; " & why)
   if result.findings.len > 0: return
   for field in HEADER_CONFIG:
-    let before = text(baseline, "config", field)
-    let after = text(current, "config", field)
+    let before = text(baseline, "algebra", field)
+    let after = text(current, "algebra", field)
     if before != after:
       result.findings.add Finding(
         path: path,
-        message: "Config `" & field & "` differs; got `" & after & "`, baseline `" & before & "`.",
+        message: "Algebra `" & field & "` differs; got `" & after & "`, baseline `" & before & "`.",
       )
   for field in HEADER_TAKEN:
     let before = text(baseline, "taken", field)

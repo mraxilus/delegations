@@ -1,6 +1,6 @@
 ## Model bytes one call moves, from counts read out of C and sizes of what it reads and writes.
 ##   Movement is what memory sees: operands read, result written, whole-object zero fills,
-##   whole-object copies and temporaries materialised. Sizes come from type stems C names:
+##   whole-object copies and intermediates materialised. Sizes come from type stems C names:
 ##   library's dense multivector is 8 × 2^dimensions, typed reference objects are their
 ##   Nim sizes, scalars eight bytes.
 ##
@@ -24,8 +24,8 @@ type Movement* = object
     ## Whole-object zero fills, i.e. `nimZeroMem` calls times result size.
   bytes_copied*: int
     ## Whole-object copies times result size.
-  bytes_temporaries*: int
-    ## Local multivector temporaries times multivector size.
+  bytes_intermediates*: int
+    ## Local multivector intermediates times multivector size.
   bytes_moved*: int
     ## Sum of every cause.
 
@@ -61,7 +61,7 @@ func movement*(f: CFunction; c: Counts; size_multivector: int): Movement =
     bytes_written: written,
     bytes_zeroed: c.zero_fills * written,
     bytes_copied: c.copies * written,
-    bytes_temporaries: c.temporaries * size_multivector,
+    bytes_intermediates: c.intermediates * size_multivector,
   )
   result.bytes_moved = result.bytes_read + result.bytes_written + result.bytes_zeroed +
-    result.bytes_copied + result.bytes_temporaries
+    result.bytes_copied + result.bytes_intermediates

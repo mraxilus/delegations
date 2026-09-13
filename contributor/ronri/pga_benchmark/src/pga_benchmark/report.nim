@@ -1,8 +1,8 @@
-## Shape figures and counts as JSON, schema 1, and read them back; tool side only.
-##   One document per configuration and kind: `bench` holds timing figures of every probe
-##   on both sides, `inspect` holds counts read from emitted C. Both open with same
-##   `config` and `taken` objects, so any file says what it measured, on what, and when
-##   (Article VII.6). Keys are probe ids, ASCII, stable across runs.
+## Shape measurements as JSON, schema 1, and read them back; tool side only.
+##   One document per configuration and kind: `bench` holds timing measurements of every measurand
+##   of both implementations, `static` holds counts read from emitted C. Both open with same
+##   `algebra` and `taken` objects, so any file says what it measured, on what, and when
+##   (Article VII.6). Keys are measurand ids, ASCII, stable across runs.
 ##
 ##   Cost: `std/json` allocates freely; runs once per file, never on timed path.
 
@@ -21,7 +21,7 @@ const
   PGA_COMMIT* {.strdefine: "pga_benchmark.pga_commit".} = "unmeasured"
     ## Library commit driver reads from `atlas.lock` at build.
   FLAGS* {.strdefine: "pga_benchmark.flags".} = "unrecorded"
-    ## Build flags driver passes, so figures name their build.
+    ## Build flags driver passes, so measurements name their build.
 
 
 proc takenNow*(): JsonNode =
@@ -35,7 +35,7 @@ proc takenNow*(): JsonNode =
   }
 
 
-func configNode*(name: string; dimensions: int; is_conformal: bool; size: int): JsonNode =
+func algebraNode*(name: string; dimensions: int; is_conformal: bool; size: int): JsonNode =
   ## Describe algebra measured: name, dimensions, metric, multivector size in bytes.
   %*{
     "name": name,
@@ -45,9 +45,9 @@ func configNode*(name: string; dimensions: int; is_conformal: bool; size: int): 
   }
 
 
-func document*(kind: string; config, taken: JsonNode): JsonNode =
+func document*(kind: string; algebra, taken: JsonNode): JsonNode =
   ## Open document of given kind with shared header.
-  %*{"schema": SCHEMA, "kind": kind, "config": config, "taken": taken}
+  %*{"schema": SCHEMA, "kind": kind, "algebra": algebra, "taken": taken}
 
 
 func checkSchema*(node: JsonNode; kind: string): string =
@@ -67,7 +67,7 @@ func countsNode*(c: Counts): JsonNode =
     "adds": c.adds,
     "subs": c.subs,
     "zero_fills": c.zero_fills,
-    "temporaries": c.temporaries,
+    "intermediates": c.intermediates,
     "copies": c.copies,
     "checks": c.checks,
     "calls": c.calls,
@@ -83,7 +83,7 @@ func movementNode*(m: Movement): JsonNode =
     "bytes_written": m.bytes_written,
     "bytes_zeroed": m.bytes_zeroed,
     "bytes_copied": m.bytes_copied,
-    "bytes_temporaries": m.bytes_temporaries,
+    "bytes_intermediates": m.bytes_intermediates,
     "bytes_moved": m.bytes_moved,
   }
 
@@ -100,7 +100,7 @@ func moduleTail*(module: string): string =
 func functionNode*(f: CFunction; own, total: Counts; size_multivector: int): JsonNode =
   ## Shape one inspected function: key parts, module tail, inline flag, own and total
   ## counts, movement modelled on total counts. Mangled name is left out: it spells
-  ## checkout path and compiler hash, neither of which is figure.
+  ## checkout path and compiler hash, neither of which is measurement.
   %*{
     "symbol": f.symbol,
     "module": moduleTail(f.module),
@@ -114,7 +114,7 @@ func functionNode*(f: CFunction; own, total: Counts; size_multivector: int): Jso
 
 
 const GATED* = [
-  "multiplies", "adds", "subs", "zero_fills", "temporaries", "copies", "checks", "calls",
+  "multiplies", "adds", "subs", "zero_fills", "intermediates", "copies", "checks", "calls",
   "allocations", "lines",
 ]
   ## Count names gate compares: any growth is finding, every one deterministic.

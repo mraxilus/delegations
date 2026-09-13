@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "kind": "bench",
-  "config": {
+  "kind": "runtime",
+  "algebra": {
     "name": "rga4d",
     "dimensions": 4,
     "is_conformal": false,
@@ -17,7 +17,7 @@
     "objects": 1024,
     "is_allocation_measured": true
   },
-  "probes": {
+  "measurands": {
     "wedge": {
       "symbol": "∧",
       "arity": 2,
