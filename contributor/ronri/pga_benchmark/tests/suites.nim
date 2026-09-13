@@ -270,6 +270,73 @@ suite "Inspector":
     check count(functions[1].body).multiplies == 2  # inline body counted alike
     check functions[0].key == "∧(Multivector,Multivector)"  # key spells stems
 
+  test "terms inside loops of constant bound count once per trip":
+    const MV = "tyObject_Multivector__h"
+    const LOOP = [
+      "N_LIB_PRIVATE N_NIMCALL(void, scale__u0__OOZpgaZops)(NF s_p0, " & MV & "* m_p1, " & MV &
+        "* Result) {",
+      "NI i_1;",
+      "NI res_1;",
+      "i_1 = ((NI) 0);",
+      "{",
+      "\twhile (1) {",
+      "\tNF T3_;",
+      "if ((!((i_1 < ((NI) 16))))) {",
+      "\tgoto LA7;",
+      "}",
+      "T3_ = (((NF) (*m_p1).data[i_1]) * ((NF) s_p0));",
+      "(*Result).data[i_1] = (((NF) T3_) + ((NF) 1.0));",
+      "halve__u0__OOZpgaZops(((&(*Result).data[i_1])));",
+      "i_1 += ((NI) 1);",
+      "}",
+      "LA7: ;",
+      "}",
+      "res_1 = ((NI) 0);",
+      "{",
+      "\twhile (1) {",
+      "if ((!((res_1 <= ((NI) 3))))) {",
+      "\tgoto LA9;",
+      "}",
+      "{",
+      "\tNI j_1;",
+      "j_1 = ((NI) 0);",
+      "\twhile (1) {",
+      "if ((!((j_1 < ((NI) 4))))) {",
+      "\tgoto LA11;",
+      "}",
+      "(*Result).data[j_1] = (((NF) (*m_p1).data[j_1]) - ((NF) s_p0));",
+      "j_1 += ((NI) 1);",
+      "}",
+      "LA11: ;",
+      "}",
+      "res_1 += ((NI) 1);",
+      "}",
+      "LA9: ;",
+      "}",
+      "{",
+      "\twhile (1) {",
+      "if ((!((i_1 < L_1)))) {",
+      "\tgoto LA13;",
+      "}",
+      "(*Result).data[0] = (((NF) s_p0) * ((NF) s_p0));",
+      "i_1 += ((NI) 1);",
+      "}",
+      "LA13: ;",
+      "}",
+      "}",
+      "",
+      "static N_INLINE(void, halve__u0__OOZpgaZops)(NF* x_p0) {",
+      "(*x_p0) = (((NF) (*x_p0)) * ((NF) 0.5));",
+      "}",
+    ].join("\n") & "\n"
+    let functions = functionsIn(LOOP)
+    let c = count(functions[0].body)
+    check c.multiplies == 16 + 1  # 16-trip loop counts its term sixteen times; unknown bound once
+    check c.adds == 16  # every term inside loop is weighted
+    check c.subs == 4 * 4  # nested loops multiply: `<= 3` from 0 is four trips, `< 4` four
+    check c.calls == 16 and c.lines == 48  # call site per trip; lines stay static
+    check totals(functions)["scale__u0__OOZpgaZops"].multiplies == 17 + 16  # callee per trip
+
   test "totals fold callees per call site":
     const FIXTURE = """
 N_NIMCALL(void, outer__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivector__h* Result) {
