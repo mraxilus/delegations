@@ -10,6 +10,8 @@
 
 import std/[cpuinfo, json, times]
 
+import ./[inspector, model]
+
 
 const
   SCHEMA* = 1
@@ -56,3 +58,54 @@ func checkSchema*(node: JsonNode; kind: string): string =
   if node{"kind"}.getStr != kind:
     return "Kind differs; got `" & node{"kind"}.getStr & "`, wanted `" & kind & "`."
   ""
+
+
+func countsNode*(c: Counts): JsonNode =
+  ## Shape counts as object with one field per count.
+  %*{
+    "multiplies": c.multiplies,
+    "adds": c.adds,
+    "subs": c.subs,
+    "zero_fills": c.zero_fills,
+    "temporaries": c.temporaries,
+    "copies": c.copies,
+    "checks": c.checks,
+    "calls": c.calls,
+    "allocations": c.allocations,
+    "lines": c.lines,
+  }
+
+
+func movementNode*(m: Movement): JsonNode =
+  ## Shape movement model as object with one field per cause.
+  %*{
+    "bytes_read": m.bytes_read,
+    "bytes_written": m.bytes_written,
+    "bytes_zeroed": m.bytes_zeroed,
+    "bytes_copied": m.bytes_copied,
+    "bytes_temporaries": m.bytes_temporaries,
+    "bytes_moved": m.bytes_moved,
+  }
+
+
+func functionNode*(f: CFunction; own, total: Counts; size_multivector: int): JsonNode =
+  ## Shape one inspected function: name, key parts, inline flag, own and total counts,
+  ## movement modelled on total counts.
+  %*{
+    "name": f.name,
+    "symbol": f.symbol,
+    "module": f.module,
+    "params": f.params,
+    "returns": f.result_stem,
+    "inline": f.is_inline,
+    "own": countsNode(own),
+    "total": countsNode(total),
+    "movement": movementNode(movement(f, total, size_multivector)),
+  }
+
+
+const GATED* = [
+  "multiplies", "adds", "subs", "zero_fills", "temporaries", "copies", "checks", "calls",
+  "allocations", "lines",
+]
+  ## Count names gate compares: any growth is finding, every one deterministic.

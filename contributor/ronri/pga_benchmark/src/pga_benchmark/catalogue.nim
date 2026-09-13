@@ -452,6 +452,18 @@ const MISSING* = block:
   s
 
 
+const TEMPLATES* = [("^", "^∘")]
+  ## Symbols library spells as template over another, so C carries only second's function;
+  ## suite holds each pair to library source.
+
+
+func emitted*(p: Probe): string =
+  ## Read symbol of function library emits for probe: template's target, else own symbol.
+  for (symbol, target) in TEMPLATES:
+    if p.symbol == symbol: return target
+  p.symbol
+
+
 func symbolsOf*(probes: openArray[Probe]): seq[string] =
   ## Read distinct symbols probes spell, in first-seen order; tool and test side.
   for p in probes:

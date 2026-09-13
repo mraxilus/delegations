@@ -102,7 +102,7 @@ func `*`*(a: Vec3; s: float): Vec3 {.inline.} =
 
 #[ Exterior Products ]#
 
-func wedge*(a, b: RoundPoint): Dipole =
+func wedge*(a, b: RoundPoint): Dipole {.inline.} =
   ## Join round points into dipole, i.e. 𝐚 ∧ 𝐛; 20 mul, 10 sub.
   Dipole(
     v: Vec3(x: a.w * b.x - a.x * b.w, y: a.w * b.y - a.y * b.w, z: a.w * b.z - a.z * b.w),
@@ -113,7 +113,7 @@ func wedge*(a, b: RoundPoint): Dipole =
     ),
   )
 
-func wedge*(d: Dipole; a: RoundPoint): Circle =
+func wedge*(d: Dipole; a: RoundPoint): Circle {.inline.} =
   ## Join dipole and round point into circle, i.e. 𝐝 ∧ 𝐚; 30 mul, 20 add.
   Circle(
     g: CarrierPlane(
@@ -138,7 +138,7 @@ func wedge*(a: RoundPoint; d: Dipole): Circle {.inline.} =
   ## Join round point and dipole, i.e. 𝐚 ∧ 𝐝 = 𝐝 ∧ 𝐚 since grades 1 and 2 commute.
   wedge(d, a)
 
-func wedge*(c: Circle; a: RoundPoint): Sphere =
+func wedge*(c: Circle; a: RoundPoint): Sphere {.inline.} =
   ## Join circle and round point into sphere, i.e. 𝐜 ∧ 𝐚; 20 mul, 15 add.
   Sphere(
     u: -c.g.x * a.x - c.g.y * a.y - c.g.z * a.z - c.g.w * a.w,
@@ -148,7 +148,7 @@ func wedge*(c: Circle; a: RoundPoint): Sphere =
     w: c.m.x * a.x + c.m.y * a.y + c.m.z * a.z + c.g.w * a.u,
   )
 
-func wedge*(a: RoundPoint; c: Circle): Sphere =
+func wedge*(a: RoundPoint; c: Circle): Sphere {.inline.} =
   ## Join round point and circle, i.e. 𝐚 ∧ 𝐜 = −(𝐜 ∧ 𝐚); 20 mul, 15 add.
   Sphere(
     u: a.x * c.g.x + a.y * c.g.y + a.z * c.g.z + a.w * c.g.w,
@@ -158,7 +158,7 @@ func wedge*(a: RoundPoint; c: Circle): Sphere =
     w: -a.x * c.m.x - a.y * c.m.y - a.z * c.m.z - a.u * c.g.w,
   )
 
-func wedge*(d, f: Dipole): Sphere =
+func wedge*(d, f: Dipole): Sphere {.inline.} =
   ## Join dipoles into sphere, i.e. 𝐝 ∧ 𝐟; 30 mul, 25 add.
   Sphere(
     u: -d.m.x * f.v.x - d.m.y * f.v.y - d.m.z * f.v.z -
@@ -173,7 +173,7 @@ func wedge*(d, f: Dipole): Sphere =
       d.p.x * f.m.x - d.p.y * f.m.y - d.p.z * f.m.z,
   )
 
-func wedgeAnti*(s, t: Sphere): Circle =
+func wedgeAnti*(s, t: Sphere): Circle {.inline.} =
   ## Meet spheres in circle, i.e. 𝐬 ∨ 𝐭; 20 mul, 10 sub.
   Circle(
     g: CarrierPlane(
@@ -184,7 +184,7 @@ func wedgeAnti*(s, t: Sphere): Circle =
     m: Vec3(x: s.x * t.w - s.w * t.x, y: s.y * t.w - s.w * t.y, z: s.z * t.w - s.w * t.z),
   )
 
-func wedgeAnti*(s: Sphere; c: Circle): Dipole =
+func wedgeAnti*(s: Sphere; c: Circle): Dipole {.inline.} =
   ## Meet sphere and circle in dipole, i.e. 𝐬 ∨ 𝐜; 30 mul, 20 add.
   Dipole(
     v: Vec3(
@@ -209,7 +209,7 @@ func wedgeAnti*(c: Circle; s: Sphere): Dipole {.inline.} =
   ## Meet circle and sphere, i.e. 𝐜 ∨ 𝐬 = 𝐬 ∨ 𝐜 since antigrades 1 and 2 commute.
   wedgeAnti(s, c)
 
-func wedgeAnti*(c, o: Circle): RoundPoint =
+func wedgeAnti*(c, o: Circle): RoundPoint {.inline.} =
   ## Meet circles in round point, i.e. 𝐜 ∨ 𝐨; 30 mul, 25 add.
   RoundPoint(
     x: c.g.z * o.m.y - c.g.y * o.m.z + c.m.y * o.g.z - c.m.z * o.g.y +
@@ -224,7 +224,7 @@ func wedgeAnti*(c, o: Circle): RoundPoint =
       c.v.x * o.m.x - c.v.y * o.m.y - c.v.z * o.m.z,
   )
 
-func wedgeAnti*(s: Sphere; d: Dipole): RoundPoint =
+func wedgeAnti*(s: Sphere; d: Dipole): RoundPoint {.inline.} =
   ## Meet sphere and dipole in round point, i.e. 𝐬 ∨ 𝐝; 20 mul, 15 add.
   RoundPoint(
     x: s.y * d.m.z - s.z * d.m.y + s.u * d.p.x - s.w * d.v.x,
@@ -234,7 +234,7 @@ func wedgeAnti*(s: Sphere; d: Dipole): RoundPoint =
     u: -s.x * d.p.x - s.y * d.p.y - s.z * d.p.z - s.w * d.p.w,
   )
 
-func wedgeAnti*(d: Dipole; s: Sphere): RoundPoint =
+func wedgeAnti*(d: Dipole; s: Sphere): RoundPoint {.inline.} =
   ## Meet dipole and sphere, i.e. 𝐝 ∨ 𝐬 = −(𝐬 ∨ 𝐝); 20 mul, 15 add.
   RoundPoint(
     x: d.m.y * s.z - d.m.z * s.y + d.v.x * s.w - d.p.x * s.u,
@@ -512,11 +512,11 @@ func carrierCo*(s: Sphere): FlatPoint {.inline.} =
 
 #[ Centers, Containers, Partners ]#
 
-func center*(a: RoundPoint): RoundPoint =
+func center*(a: RoundPoint): RoundPoint {.inline.} =
   ## Center 𝐚⊞ ∨ 𝐚, i.e. same point scaled by its weight; 5 mul.
   RoundPoint(x: a.x * a.w, y: a.y * a.w, z: a.z * a.w, w: a.w * a.w, u: a.w * a.u)
 
-func center*(d: Dipole): RoundPoint =
+func center*(d: Dipole): RoundPoint {.inline.} =
   ## Center of dipole as round point with its radius; 16 mul, 10 add.
   RoundPoint(
     x: d.v.y * d.m.z - d.v.z * d.m.y + d.v.x * d.p.w,
@@ -526,7 +526,7 @@ func center*(d: Dipole): RoundPoint =
     u: d.p.w * d.p.w - d.v.x * d.p.x - d.v.y * d.p.y - d.v.z * d.p.z,
   )
 
-func center*(c: Circle): RoundPoint =
+func center*(c: Circle): RoundPoint {.inline.} =
   ## Center of circle as round point with its radius; 18 mul, 12 add.
   RoundPoint(
     x: c.g.y * c.v.z - c.g.z * c.v.y - c.g.x * c.g.w,
@@ -536,21 +536,21 @@ func center*(c: Circle): RoundPoint =
     u: dot(c.v, c.v) + c.g.x * c.m.x + c.g.y * c.m.y + c.g.z * c.m.z,
   )
 
-func center*(s: Sphere): RoundPoint =
+func center*(s: Sphere): RoundPoint {.inline.} =
   ## Center of sphere as round point with its radius; 8 mul, 3 add.
   RoundPoint(
     x: -s.x * s.u, y: -s.y * s.u, z: -s.z * s.u, w: s.u * s.u,
     u: s.x * s.x + s.y * s.y + s.z * s.z - s.w * s.u,
   )
 
-func container*(a: RoundPoint): Sphere =
+func container*(a: RoundPoint): Sphere {.inline.} =
   ## Container 𝐚 ∧ (𝐚⊟)☆, i.e. smallest sphere holding round point; 8 mul, 3 add.
   Sphere(
     u: -a.w * a.w, x: a.x * a.w, y: a.y * a.w, z: a.z * a.w,
     w: a.w * a.u - a.x * a.x - a.y * a.y - a.z * a.z,
   )
 
-func container*(d: Dipole): Sphere =
+func container*(d: Dipole): Sphere {.inline.} =
   ## Container of dipole, i.e. smallest sphere holding it; 18 mul, 12 add.
   Sphere(
     u: dot(d.v, d.v),
@@ -560,7 +560,7 @@ func container*(d: Dipole): Sphere =
     w: dot(d.m, d.m) + d.v.x * d.p.x + d.v.y * d.p.y + d.v.z * d.p.z,
   )
 
-func container*(c: Circle): Sphere =
+func container*(c: Circle): Sphere {.inline.} =
   ## Container of circle, i.e. smallest sphere holding it; 16 mul, 10 add.
   Sphere(
     u: -c.g.x * c.g.x - c.g.y * c.g.y - c.g.z * c.g.z,
@@ -570,11 +570,11 @@ func container*(c: Circle): Sphere =
     w: c.g.x * c.m.x + c.g.y * c.m.y + c.g.z * c.m.z - c.g.w * c.g.w,
   )
 
-func container*(s: Sphere): Sphere =
+func container*(s: Sphere): Sphere {.inline.} =
   ## Container of sphere, i.e. itself scaled by its weight; 5 mul.
   Sphere(u: s.u * s.u, x: s.x * s.u, y: s.y * s.u, z: s.z * s.u, w: s.w * s.u)
 
-func partner*(a: RoundPoint): RoundPoint =
+func partner*(a: RoundPoint): RoundPoint {.inline.} =
   ## Partner, i.e. same point with squared radius negated; 10 mul, 4 add.
   let w2 = a.w * a.w
   RoundPoint(
@@ -582,7 +582,7 @@ func partner*(a: RoundPoint): RoundPoint =
     u: (a.x * a.x + a.y * a.y + a.z * a.z - a.w * a.u) * a.w,
   )
 
-func partner*(d: Dipole): Dipole =
+func partner*(d: Dipole): Dipole {.inline.} =
   ## Partner of dipole; 30 mul, 17 add.
   let v2 = dot(d.v, d.v)
   let f = d.p.w * d.p.w - dot(d.m, d.m) - d.v.x * d.p.x - d.v.y * d.p.y - d.v.z * d.p.z
@@ -597,7 +597,7 @@ func partner*(d: Dipole): Dipole =
     ),
   )
 
-func partner*(c: Circle): Circle =
+func partner*(c: Circle): Circle {.inline.} =
   ## Partner of circle; 30 mul, 17 add.
   ##   Symmetric with dipole's partner: f = gʷ² − 𝐯 ∙ 𝐯 − 𝐠 ∙ 𝐦; Terathon's header spells
   ##   its v-term with mixed signs, and library's own form is what suite holds this to.
@@ -613,7 +613,7 @@ func partner*(c: Circle): Circle =
     ),
   )
 
-func partner*(s: Sphere): Sphere =
+func partner*(s: Sphere): Sphere {.inline.} =
   ## Partner of sphere; 10 mul, 4 add.
   let u2 = s.u * s.u
   Sphere(
