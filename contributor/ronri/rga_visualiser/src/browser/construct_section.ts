@@ -69,14 +69,25 @@ function previewDrawerOperation() {
   nimPreviewOperation(parseInt(picker_operation.value, 10), first, second);
 }
 
-// How long one slice of row building may take before it yields frame. Under third of.
-//   60 fps frame: long enough that few dozen rows land per slice, short enough that
-//   frame it is spending is still frame that draws.
+// Share of frame one slice of row building may take. Intent has always been "under third of.
+//   frame": long enough that few dozen rows land per slice, short enough that frame it is
+//   spending is still frame that draws. What it used to be was third of *60 fps* frame, written
+//   down as five milliseconds and then held there whatever frame turned out to be.
+//   List that is longest is list drawn beside heaviest scene, so that is exactly where
+//   assumption broke: frame drawing 5,038 objects measured 80 ms, five milliseconds of it is 6%
+//   rather than 30%, and list took 88 frames to fill -- 6.5 s of drawer filling in front of
+//   reader, every time section is opened first time at that size.
+//   Third of frame actually being spent holds that intent at any frame rate.
+const SHARE_ROWS_SLICE = 0.3;
+// Floor, and what 60 fps frame already gave: `16.7 * 0.3` is 5.0. Frame that is keeping up.
+//   therefore gets exactly budget it got before, and widening bites only once frame is slow.
 const MILLISECONDS_ROWS_SLICE = 5;
 // Wider slice while row is waited for: reader pressed `edit` and is looking at nothing.
 //   until that row stands, so frames give way to rows -- five thousand at largest demo,
 //   which at five milliseconds is over one second of list filling before row can be
 //   scrolled to. See `openPanelTo`.
+//   Also cap on share above: widest slice list may take is one reveal path already takes,
+//   so slow frame cannot be handed over whole.
 const MILLISECONDS_ROWS_SLICE_REVEAL = 24;
 // Row `openPanelTo` is waiting to scroll to, by key, or null.
 //   Consumed by `revealPendingRow` once row stands, whether that is at once or slices later.
@@ -95,14 +106,25 @@ interface RowsPending {
 }
 let rows_pending: RowsPending | null = null;
 
-function sliceObjectRows() {
+/** Build one slice of pending reconcile, given how long frame calling this last took.
+ *
+ *  `ms_frame` is frame loop's own reading, which it already holds for `recordFrameTime`; see
+ *  `SHARE_ROWS_SLICE` for why budget is share of it rather than figure of its own. Caller that
+ *  is not inside frame passes nothing and takes floor, which is right -- it has no frame to
+ *  take share of.
+ */
+function sliceObjectRows(ms_frame = 0) {
   // One slice of pending reconcile, bounded by time rather than by row count: row.
   //   that is already standing and unchanged costs almost nothing, and one that has to be
   //   built costs far more, so fixed count would be different budget on every pass.
   if (rows_pending === null) return;
   const { keys, standing } = rows_pending;
   const budget = key_reveal_pending === null
-    ? MILLISECONDS_ROWS_SLICE : MILLISECONDS_ROWS_SLICE_REVEAL;
+    ? Math.min(
+      Math.max(ms_frame * SHARE_ROWS_SLICE, MILLISECONDS_ROWS_SLICE),
+      MILLISECONDS_ROWS_SLICE_REVEAL,
+    )
+    : MILLISECONDS_ROWS_SLICE_REVEAL;
   const until = performance.now() + budget;
   while (rows_pending.at < keys.length) {
     const at = rows_pending.at;

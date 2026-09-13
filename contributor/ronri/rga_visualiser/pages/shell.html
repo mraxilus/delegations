@@ -715,11 +715,12 @@
   .section:last-child { border-bottom: none; }
   .section-header {
     appearance: none;
-    /* Gutter on both sides, not `100%`: negative side margins below pull this band out to
-       drawer's own edges, and percentage width measures content box they shift from, so band
-       came out 28px short and rows scrolled past in strip left bare down its right edge.
+    /* Width carries side margins, not `100%`: percentage measures content box margins shift
+       *from*, so pill written as `100%` beside `-10px` margins comes out 20px short and rows
+       scroll past in strip left bare down its right edge -- which is exactly what happened at
+       14px once already. Two numbers move together; change to one is change to other.
        Written out rather than left to `auto`, which on button is its text's own width. */
-    width: calc(100% + 28px);
+    width: calc(100% + 20px);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -739,18 +740,24 @@
        announcing covering it is not doing; `.stuck` is put on by `drawer.ts` exactly while
        rows are passing under, and wears drawer's own ground so that arrival is not itself
        something to look at -- see `.stuck` below.
-       Negative offsets and padding widen band to drawer's own gutter, so row scrolling
-       under it is covered edge to edge rather than at its sides. Padding is even, and its
-       left is drawer's own 14, so chevron starts on same column rows below do. */
+       Pinned, it wears pill rest of page's floating controls wear -- same radius, same 1px
+       `--border` -- so heading that has lifted off list reads as same kind of thing as brand
+       and toggle chips do. Box is one `.object-row.selected` already uses, `0 -10px`, so it
+       bleeds 10px into each gutter: rows span content box, so pill at that width covers them
+       outright, and its 10px padding still lands text on column rows below start on.
+       Border is here rather than on `.stuck`, transparent, because border arriving on pin
+       would widen box by 2px and shove text sideways -- `.toggles button` holds transparent
+       one for same reason. Only its colour moves. */
     position: sticky;
     top: 0;
     z-index: 1;
-    margin: -10px -14px 0 -14px;
-    padding: 10px 14px;
+    margin: -10px -10px 0 -10px;
+    padding: 10px 10px;
     background: transparent;
-    border: none;
+    border: 1px solid transparent;
+    border-radius: 999px;
     color: var(--ink);
-    transition: background var(--anim) var(--ease);
+    transition: background var(--anim) var(--ease), border-color var(--anim) var(--ease);
     /* Title role: heading naming section takes serif face, which is only role it is
        drawn in (see type roles above). Weight stays 600, and serif ships at 600 for it:
        serif at 13px against dark ground thins, and heading has to hold its row. */
@@ -769,10 +776,14 @@
      What it cannot match, and no opaque fill can: drawer also blurs what is behind it, so where
      star or grid line sits under drawer its ground picks up that smear. Over open scene, which
      is most of drawer's own width, blur is no-op and match is exact.
-     No shadow. Shadow is what made pinning read as *floating*, which is change Architect asked
-     to lose; row passing under simply clips at band's edge, as it does under any solid heading. */
+     No shadow. Shadow is what made pinning read as *floating* in way nothing else on page did;
+     row passing under simply clips at pill's edge, as it does under any solid heading.
+     Opaque, although pills it borrows shape from are `--surface` over blur: rows pass under
+     this one, and heading asked to hide them cannot be seen through. Shape is what is shared;
+     fill stays what covering costs. */
   .section-header.stuck {
     background: color-mix(in srgb, rgb(22 27 34) 82%, var(--bg));
+    border-color: var(--border);
   }
   /* Solid triangle, not U+25B8's small one: at sizes these rows are read at
      small glyph is speck that reads as punctuation rather than as control. Shared with

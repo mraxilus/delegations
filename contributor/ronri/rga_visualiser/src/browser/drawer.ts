@@ -67,12 +67,24 @@ const edges = Array.from(document.querySelectorAll('.section-edge'));
 //   `sizes.ts` states at length for `ResizeObserver`.
 //   Every heading is settled on any signal, not one that fired: section whose own sentinel
 //   reported nothing can still be wearing wrong answer.
+// Half pixel of scroll before heading counts as pinned, not none at all. Topmost section's
+//   sentinel sits *exactly* at scroller's own top edge when nothing has scrolled, so `<=` read
+//   that heading as pinned at rest and it wore its band from first paint. That went unseen
+//   while band was drawer's own ground and nothing but fill marked it; moment pinned heading
+//   took border, top section came up wearing pill with nothing under it.
+//   Epsilon rather than bare `<` because both readings are floats off same layout and scroll
+//   offset itself can land fractional; half pixel is under what any screen draws, and matches
+//   tolerance `driveHeaderPinned` already reads flushness at.
+const PIXELS_PINNED_LEAST = 0.5;
+
 function settleBands(): void {
   if (scroller === null) return;
   const top = scroller.getBoundingClientRect().top;
   for (const edge of edges) {
     const header = edge.parentElement?.querySelector('.section-header');
-    header?.classList.toggle('stuck', edge.getBoundingClientRect().top <= top);
+    header?.classList.toggle(
+      'stuck', edge.getBoundingClientRect().top < top - PIXELS_PINNED_LEAST,
+    );
   }
 }
 

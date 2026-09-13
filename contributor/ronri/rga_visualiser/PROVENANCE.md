@@ -3949,3 +3949,81 @@ pass on a heading whose rule had been deleted; reading `elementFromPoint` cannot
 since hit testing answers with the element whatever its fill — which means `driveHeaderPinned`'s
 own sweep would report a clear band as covering. That check holds geometry, this one holds paint,
 and the band needs both.
+
+### The drawer's few-second freeze, and the pill that came after it
+
+**"Sometimes opening the objects drawer freezes for a few seconds."** Measured before it was
+touched: at the largest demo the first fill of the objects list took **6,465 ms**. The
+"sometimes" is the tell — it happens only the first time, because once the rows stand, closing
+and re-opening the section costs 152 ms.
+
+The row building was never the problem. `MILLISECONDS_ROWS_SLICE = 5` carried its own assumption
+in its comment: *"Under third of 60 fps frame."* Five milliseconds **is** a third of 16.7 ms. But
+the frame drawing 5,038 objects is not 16.7 ms — measured at 80 ms — so the list was taking 6% of
+each frame rather than a third, and 5,038 rows needed about 88 of them. The list that is longest
+is the list drawn beside the heaviest scene, which is exactly where the assumption fails.
+
+| condition, drawer open at 5,038 objects | median frame |
+| --- | --- |
+| drawer closed | 51 ms |
+| drawer open, list standing | 75 ms |
+| drawer open, `backdrop-filter` forced off | 64 ms |
+| drawer open, scrolling the list | 79 ms |
+
+The fix keeps the stated intent and stops hard-coding which frame it applies to: the budget is
+now `frame × 0.3`, floored at 5 ms and capped at the 24 ms the reveal path already takes. The
+floor is not arbitrary: `16.7 × 0.3 = 5.0`, so **a machine that is keeping up gets exactly the
+budget it got before** and nothing about its behaviour changes. The widening bites only once the
+frame is already slow. The frame's own duration is not measured again — `frame.ts` already
+computes it for `recordFrameTime`, and now hands the same reading on.
+
+Measured after: **2,862 ms**, and 13 to 20 frames against 88. The trade is real and worth stating:
+at an 80 ms frame the list now takes 24 ms of it rather than 5, so frames during the fill run
+longer. The scene animates more coarsely for two seconds instead of more finely for six and a
+half.
+
+**The check for it is not a stopwatch, and not a flat frame count either.** Both were tried on
+paper and both are wrong. A wall-clock bound measures how fast the runner draws, which is not what
+the fix changed. A flat frame count is worse than it looks: a fast machine earns a 5 ms budget and
+rightly takes ~88 frames of 16 ms each, while this one earns 24 ms and takes ~20 of 94 ms — so a
+count that passes here fails there, and says nothing either way. What holds on both is that the
+list gets *the budget the frame owes it*, so `driveListFills` reads the median frame the run
+actually saw, derives the budget the page is asked for, and bounds the frames by it. The
+rows-per-millisecond floor it divides by is deliberately conservative — 4, against 11.4 measured
+under 5 ms slices and 6.4 under 24 ms ones, bigger slices being less efficient because the clock
+is only read after a row is built and the last row of each slice overruns.
+
+**Then the pinned heading became a pill.** Asked to wear what the page's other floating controls
+wear, and asked how far to take that given the earlier *"it should hide everything that goes under
+it"*, the Architect chose the shape without the translucency: same radius, same 1px `--border`,
+same inset box, but an opaque fill. So the `color-mix` derivation recorded above survives intact —
+only the shape is borrowed. The box is the one `.object-row.selected` already used, `0 -10px`,
+which covers rows outright (they span 14–385 of a 400px drawer; the pill spans 4–395) while its
+10px padding still lands the chevron on the column the rows start on, measured at 15px against
+their 14.
+
+The border is on `.section-header` as `transparent`, not on `.stuck`. A border arriving on pin
+would widen the box by 2px and shove the text sideways — which is the sort of jump the previous
+round existed to remove. `.toggles button` already holds a transparent border for the same reason.
+
+**Two things were found by checks rather than by reading.**
+
+*The exemplar had a state.* The first form of `driveHeaderStyled` compared the pinned heading
+against `.brand`, which is what the Architect named. It failed: the heading read
+`rgb(42, 50, 61)` and the brand read `rgb(0, 167, 165)`. `.brand` is itself the drawer's toggle,
+and `.drawer-toggle.on` takes an accent border while the drawer is open — which it must be for the
+check to have a pinned heading to read at all. It compares against `.toggles` now, which wears the
+same pill and has no state of its own.
+
+*The top heading had been pinned since the first paint.* The screenshot of the pill at rest showed
+`apply` wearing one with nothing under it. `settleBands` tested `edge.top <= top`, and the topmost
+section's sentinel sits **exactly** at the scroller's own top edge when nothing has scrolled — so
+that heading read as pinned from load. It had been that way all along and nobody could see it:
+while the band was the drawer's own ground and nothing but fill marked it, a spuriously-pinned
+heading was invisible. Giving the pinned heading a border is what made it show. The condition now
+asks for half a pixel of real scroll — an epsilon rather than a bare `<`, since both readings are
+floats off one layout and the scroll offset itself can land fractional.
+
+The check that missed it was reading one heading. It reads all four now: *nothing scrolled means
+no heading anywhere in the drawer is wearing one*. Proven red against the build that still carried
+`<=` — `{"headings":4,"worn":1,"which":["apply"],"scrollTop":0}` — and green after.

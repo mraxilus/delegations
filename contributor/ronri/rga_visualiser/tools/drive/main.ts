@@ -39,7 +39,8 @@ import {
   driveUndoDrawn,
 } from './loaded';
 import {
-  driveEditFromMenu, driveHeaderBanded, driveHeaderPinned, driveObjectsList, drivePerFrame,
+  driveEditFromMenu, driveHeaderBanded, driveHeaderPinned, driveHeaderStyled, driveListFills,
+  driveObjectsList, drivePerFrame,
   driveReconcile,
   driveTickCadence, driveTickWrites,
 } from './objects';
@@ -210,6 +211,10 @@ async function main(): Promise<void> {
   await driveObjectsList(page, objects_largest);
   await driveHeaderPinned(page);
   await driveHeaderBanded(page);
+  await driveHeaderStyled(page);
+  // Last of heading checks, since it empties list and builds it again: one above reads shape
+  //   heading wears, and reading that against half-filled list would be racing it.
+  await driveListFills(page);
   await driveEditFromMenu(page);
   await driveReconcile(page);
   await driveTickWrites(page);

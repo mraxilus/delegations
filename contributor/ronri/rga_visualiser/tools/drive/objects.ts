@@ -146,7 +146,7 @@ export async function driveHeaderBanded(page: Page): Promise<void> {
   const readAt = async (
     where: 'top' | 'floor',
   ): Promise<{
-    fill: string; moved: number; stuck: boolean; edges: number; due: boolean;
+    fill: string; moved: number; stuck: boolean; edges: number; due: boolean; worn: number;
   }> => {
     await page.evaluate((edge) => {
       const scroller = document.querySelector('.drawer-scroll') as HTMLElement | null;
@@ -182,6 +182,12 @@ export async function driveHeaderBanded(page: Page): Promise<void> {
         //   rule that stopped answering to it, and detail line has to tell those apart.
         stuck: heading !== null && heading.classList.contains('stuck'),
         edges: document.querySelectorAll('.section-edge').length,
+        // Every heading, not only this one. Topmost section's sentinel sits exactly at
+        //   scroller's top edge at rest, and condition that read `<=` called it pinned from
+        //   first paint -- band nobody could see while band was drawer's own ground, pill
+        //   plainly wrong once pinned heading took border. Check reading one heading missed it.
+        worn: Array.from(document.querySelectorAll('.section-header'))
+          .filter((each) => each.classList.contains('stuck')).length,
         // Geometry observer is watching, read here as well. Band missing while this says it
         //   should be there is observer that stopped answering; band missing while this says
         //   otherwise is scroll that did not reach.
@@ -202,6 +208,158 @@ export async function driveHeaderBanded(page: Page): Promise<void> {
       + ` ${pinned.fill}; ${pinned.edges} sentinels, the heading reads`
       + ` ${pinned.stuck ? 'stuck' : 'unstuck'} there, and its sentinel is`
       + ` ${pinned.due ? 'above the scrollport' : 'still inside it'}`,
+  );
+  report(
+    'and nothing scrolled means no heading anywhere in the drawer is wearing one',
+    at_rest.worn === 0,
+    `${at_rest.worn} of ${at_rest.edges} headings read stuck with the drawer at rest`,
+  );
+}
+
+
+/** Assert pinned heading wears shape page's own floating controls wear.
+ *
+ *  Architect asked for heading that floats to read as same kind of thing as chip row's own
+ *  pills, which is requirement about *sameness* rather than about any figure. So radius and
+ *  border are read off heading and off pill and compared, never spelled out here: check
+ *  naming `999px` would pass page whose pills had all moved somewhere else, which is drift this
+ *  exists to catch.
+ *  Pill read against is `.toggles`, not `.brand`, although `.brand` is one Architect named.
+ *  `.brand` is itself drawer's toggle, and `.drawer-toggle.on` takes accent border while drawer
+ *  is open -- which it has to be for this check to have heading to read. First form compared
+ *  against it and reported `rgb(0, 167, 165)` where heading held `rgb(42, 50, 61)`: exemplar
+ *  was in state, not idiom. `.toggles` wears same pill and has no state of its own.
+ *  Fill is deliberately *not* compared. Those pills are `--surface` over blur; this one is
+ *  opaque, because rows pass under it and heading asked to hide them cannot be seen through.
+ *  `driveHeaderBanded` holds that opacity; this holds shape.
+ */
+export async function driveHeaderStyled(page: Page): Promise<void> {
+  await openObjects(page);
+  const worn = await page.evaluate(async () => {
+    const scroller = document.querySelector('.drawer-scroll') as HTMLElement | null;
+    const heading = document.querySelector(
+      '.section[data-section="objects"] .section-header',
+    ) as HTMLElement | null;
+    const pill = document.querySelector('.toggles') as HTMLElement | null;
+    if (scroller === null || heading === null || pill === null) return null;
+    // Read while pinned: shape is what heading wears once it has lifted off list.
+    scroller.scrollTop = scroller.scrollHeight - scroller.clientHeight;
+    await new Promise((done) => { requestAnimationFrame(() => done(null)); });
+    const shapeOf = (node: HTMLElement) => {
+      const style = getComputedStyle(node);
+      return {
+        radius: style.borderTopLeftRadius,
+        width: style.borderTopWidth,
+        style: style.borderTopStyle,
+        colour: style.borderTopColor,
+      };
+    };
+    return {
+      heading: shapeOf(heading), pill: shapeOf(pill),
+      stuck: heading.classList.contains('stuck'),
+    };
+  });
+  report(
+    'a heading that has lifted off its list wears the pill the page\'s own controls wear',
+    worn !== null && worn.stuck
+      && worn.heading.radius === worn.pill.radius
+      && worn.heading.width === worn.pill.width
+      && worn.heading.style === worn.pill.style
+      && worn.heading.colour === worn.pill.colour,
+    worn === null ? 'no drawer to scroll'
+      : `heading reads ${worn.stuck ? 'stuck' : 'unstuck'} and wears ${worn.heading.radius}`
+        + ` with ${worn.heading.width} ${worn.heading.style} ${worn.heading.colour};`
+        + ` the chip row's pill wears ${worn.pill.radius} with ${worn.pill.width}`
+        + ` ${worn.pill.style} ${worn.pill.colour}`,
+  );
+}
+
+
+/** Slowest row building may be taken to be, in rows per millisecond of slice.
+ *
+ *  Floor rather than reading: how many rows machine gets through in millisecond is machine's
+ *  business, and check that pinned it to one would be reporting on runner. Measured here at
+ *  11.4 building under 5 ms slices and 6.4 under 24 ms ones -- bigger slice is less efficient
+ *  per millisecond, since clock is read only after row is built and last row of slice overruns
+ *  -- so 4 carries about 1.6x slack against slower of two.
+ */
+const ROWS_PER_MILLISECOND_LEAST = 4;
+
+/** Share of frame row building is meant to take, and its floor and cap; see `construct_section`.
+ *
+ *  Stated twice, once there and once here, and that is deliberate: check reading budget out of
+ *  page would pass whatever page happened to do. These are what page is *asked* for.
+ */
+const SHARE_SLICE = 0.3;
+const MILLISECONDS_SLICE_LEAST = 5;
+const MILLISECONDS_SLICE_MOST = 24;
+
+/** Assert list fills in frames it is owed, rather than dripping one fixed budget per frame.
+ *
+ *  Slice budget used to be flat 5 ms, written against 60 fps frame. Frame drawing largest demo
+ *  measured 80 ms, so list got 6% of each rather than third: 5,038 rows took 88 frames and
+ *  6.5 s, every first opening at that size, which is what Architect felt as freeze. Budget is
+ *  share of frame now, and same fill takes 33 frames and 2.9 s.
+ *  Bound is *derived from frame this run actually saw*, never fixed count. Fast machine earns
+ *  5 ms budget and rightly takes ~88 frames of 16 ms; slow one earns 24 ms and takes ~33 of
+ *  80 ms. Flat count would fail on faster runner than this and flat clock would fail on slower
+ *  one, and neither would be saying anything about fix. What holds on both is that list gets
+ *  budget frame owes it.
+ *  Section is emptied and reopened rather than measured on first build: closed section builds
+ *  nothing, so this times filling itself and not load that happened to precede it.
+ */
+export async function driveListFills(page: Page): Promise<void> {
+  await openObjects(page);
+  const filled = await page.evaluate(async () => {
+    const section = document.querySelector('.section[data-section="objects"]');
+    const header = section?.querySelector('.section-header') as HTMLElement | null;
+    const list = document.getElementById('objects-list');
+    if (header === null || list === null) return null;
+    header.click();                                   // shut it, and drop every row it held
+    await new Promise((done) => { requestAnimationFrame(() => done(null)); });
+    list.replaceChildren();
+    refreshObjectsUI();
+    await new Promise((done) => { requestAnimationFrame(() => done(null)); });
+    header.click();                                   // open again, and count frames from here
+    let frames = 0;
+    const gaps: number[] = [];
+    let last = performance.now();
+    await new Promise((done) => {
+      const tick = () => {
+        const now = performance.now();
+        gaps.push(now - last);
+        last = now;
+        frames += 1;
+        if (rows_pending === null && list.children.length === nimSceneCount()) done(null);
+        else if (frames > 600) done(null);
+        else requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+    gaps.sort((first, second) => first - second);
+    return {
+      frames,
+      rows: list.children.length,
+      want: nimSceneCount(),
+      // Median, not mean: first frame of fill carries opening itself and last carries whatever
+      //   followed it, and neither says how long frame beside this list runs.
+      median: gaps[Math.floor(gaps.length / 2)] ?? 0,
+    };
+  });
+  // Budget page is asked to take for frame it was actually given, and most frames list may
+  //   therefore take to build its rows at slowest building may be taken to go.
+  const budget = filled === null ? MILLISECONDS_SLICE_LEAST : Math.min(
+    Math.max(filled.median * SHARE_SLICE, MILLISECONDS_SLICE_LEAST), MILLISECONDS_SLICE_MOST,
+  );
+  const allowed = filled === null ? 0
+    : Math.ceil(filled.want / (ROWS_PER_MILLISECOND_LEAST * budget));
+  report(
+    'a long list fills in the frames its budget owes it, however heavy the scene beside it',
+    filled !== null && filled.rows === filled.want && filled.frames <= allowed,
+    filled === null ? 'no list to fill'
+      : `${filled.rows} of ${filled.want} rows stood after ${filled.frames} frames, against`
+        + ` ${allowed} allowed -- frames ran ${filled.median.toFixed(0)} ms, which earns a`
+        + ` ${budget.toFixed(0)} ms slice`,
   );
 }
 
