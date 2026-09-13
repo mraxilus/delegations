@@ -51,6 +51,7 @@ proc prunedFindings*(root: string, tree: Tree): seq[Finding] =
   ## Report `Pruned` row naming commit that never touched its record, read from git log.
   ##   Lives beside static pass rather than in it, since form of row is pure check's and
   ##   existence of commit is git's; koch runs both under `tree` and `ci`.
+  ##   Needs full log: shallow clone reports true row as missing, so static job fetches depth 0.
   for dir in tree.projectDirs:
     let path = dir & "/PROVENANCE.md"
     for e in tree:

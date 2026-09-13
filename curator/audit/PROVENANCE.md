@@ -198,7 +198,8 @@ text appears twice, and no title is underlined, since every reader here sees `#`
 underlined title is invisible to all of them. A record over 2,000 lines is a finding whose
 remedy is the prune the guide already asks for; the header may carry a `Pruned` row naming the
 commit before that prune, whose form the check reads and whose existence koch reads from
-`git log` on the record itself, under `tree` and `ci`.
+`git log` on the record itself, under `tree` and `ci`, on a full clone; a shallow one has no
+such log, so the static job fetches every commit.
 
 - Rejected: splitting a long record into files by subsystem, since the checker names one
   record per project and the stamp lives in its header; history is git's, and the row says
