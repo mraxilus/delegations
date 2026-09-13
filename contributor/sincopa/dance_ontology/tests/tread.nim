@@ -54,7 +54,7 @@ suite "two hands":
       for band in Band:
         for turn in [0.0, 0.25, 0.5, 0.75, 1.0]:
           var c = build(HUMAN, turned(restStance(HUMAN, APART, away), Body.Two, turn),
-                        band, links)
+                        band, links, away = away)
           c.settle()
           var arms: Arms
           for i in 0 ..< links.len:

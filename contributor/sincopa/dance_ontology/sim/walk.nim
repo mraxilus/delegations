@@ -97,7 +97,7 @@ proc walked*(rig: Rig; band: Band; links: seq[Link]; who: Body;
              apart, most, step: float; away: bool; head: Body): Walk =
   ## Turn one way from one standing distance until something gives, or until
   ## `most` is reached.
-  var c = build(rig, restStance(rig, apart, away), band, links, head)
+  var c = build(rig, restStance(rig, apart, away), band, links, head, away)
   c.settle()
   result.apart = apart
   var at = 0.0
@@ -122,7 +122,7 @@ proc standsAt(rig: Rig; band: Band; links: seq[Link]; turns: float;
               away: bool; head: Body; apart: float): bool =
   ## Whether pose holds at this facing from this one distance.
   var c = build(rig, turned(restStance(rig, apart, away), Body.Two, turns),
-                band, links, head)
+                band, links, head, away)
   c.settle()
   result = true
   for i in 0 ..< links.len:

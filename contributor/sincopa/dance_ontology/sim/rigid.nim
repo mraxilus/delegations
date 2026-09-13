@@ -132,7 +132,7 @@ type
     band*: Band
     links*: seq[Link]
     turning*: Body ## Whose head hands are carried over, at crown.
-    restTwist: float ## Couple's twist as built, so how far they have wound is known.
+    restTwist: float ## Twist of couple's rest, so how far they have wound is known.
     restTip: seq[array[2, float]] ## Where each joined hand settled at rest, per
                                   ## connection and end, from which it rises.
     who: array[Body, Figure]
@@ -422,7 +422,7 @@ proc armOf(c: var Couple; who: Body; arm: Arm; group: cint): ArmRig =
   result.wrist = eng.createBall(c.world, addr cuff)
 
 proc build*(rig: Rig; stance: array[Body, Stance]; band: Band;
-            links: seq[Link]; turning = Body.Two): Couple =
+            links: seq[Link]; turning = Body.Two; away = false): Couple =
   ## Stand two dancers, hang four arms, and join hands each link names.
   ##   No gravity.  Question reference asks is where arms can be, not what they
   ##     weigh, and weightless arms stay where turn leaves them, so pose at one
@@ -435,7 +435,11 @@ proc build*(rig: Rig; stance: array[Body, Stance]; band: Band;
   result.world = eng.createWorld(addr wd)
   result.rig = rig
   result.stance = stance
-  result.restTwist = twist(stance)
+  # Rest is face to face, or pillion for hold built so, whatever stance couple
+  # are built at: still card built already wound is wound from that rest and
+  # asks what turning does, and built as its own rest it asked for nothing --
+  # no lift, no draw -- and four chain cards Architect keeps were lost.
+  result.restTwist = (if away: PI else: 0.0)
   result.band = band
   result.links = links
   result.turning = turning
@@ -492,7 +496,7 @@ const
     ## swings no shoulder makes, and hold reads blocked when only hands were held
     ## wrongly.  Measured at two hundred newtons per metre: crown blocked at 0.34
     ## of turn where floor says it never blocks.
-  SHOULDER_BACK = 200.0 ## Newton metres per radian arm is into its swing's ease.
+  SHOULDER_BACK = 200.0 ## Newton metres per radian arm is past its swing.
     ## Stiff, so arm pressed against its end stays within `GIVE` of it rather than
     ## sinking through.  Upper arm's inertia is about 0.074, so this rings at some
     ## eight hertz, well inside step of two hundred and forty.
@@ -500,11 +504,15 @@ const
     ## never resisting it let engine walk arm into places no shoulder goes and made
     ## hold read blocked where dancer would simply have put arm elsewhere.  Torque
     ## is what other three joints already get from engine; this gives swing same.
-    ## Torque begins where ease does, not at end: end alone is wall, and arm led
-    ## over crown went round back of head at that wall, forty five degrees behind
-    ## frontal plane at head's height, where going over top costs nothing.
-    ## Architect: no one would let their arm wrap behind their head like this.
-    ## Comfort is slope inside range, and this is that slope for swing.
+  SWING_LEAN = 200.0 ## Newton metres per radian arm is into its swing's ease: as
+    ## stiff as wall past its end.  End alone is wall, and arm led over crown
+    ## went round back of head at that wall, forty five degrees behind frontal
+    ## plane at head's height, where going over top costs nothing.  Architect:
+    ## no one would let their arm wrap behind their head like this.  Comfort is
+    ## slope inside range, and this is that slope for swing.  Measured at ten,
+    ## three and half newton metres at ease's end: hold carried her arm to wall
+    ## at 0.24 of cross-name crown turn and stopped there; at this, her
+    ## extension peaks at 27 and turn is free.
 
 func tipOf(c: Couple; a: ArmRig): Vec =
   ## Fingertip, which band is asked of.
@@ -591,8 +599,16 @@ proc holdSwing(c: Couple) =
       let
         extend = arcsin(clamp(-dir.y, -1.0, 1.0))
         across = arcsin(clamp(-dir.x, -1.0, 1.0))
-        outExtend = extend - (c.rig.range[Dof.Extend].hi - c.rig.range[Dof.Extend].easeHi)
-        outAcross = across - (c.rig.range[Dof.Across].hi - c.rig.range[Dof.Across].easeHi)
+        exRange = c.rig.range[Dof.Extend]
+        acRange = c.rig.range[Dof.Across]
+        leanExtend = extend - (exRange.hi - exRange.easeHi)
+        leanAcross = across - (acRange.hi - acRange.easeHi)
+        outExtend = extend - exRange.hi
+        outAcross = across - acRange.hi
+      if leanExtend > 0.0:
+        back = back + cross(dir, (0.0, 1.0, 0.0)) * (SWING_LEAN * leanExtend)
+      if leanAcross > 0.0:
+        back = back + cross(dir, (1.0, 0.0, 0.0)) * (SWING_LEAN * leanAcross)
       if outExtend > 0.0:
         back = back + cross(dir, (0.0, 1.0, 0.0)) * (SHOULDER_BACK * outExtend)
       if outAcross > 0.0:
@@ -639,11 +655,11 @@ proc elbowDown(c: Couple) =
       eng.twistBy(a.link[Limb.Upper], asEngine(turn * ELBOW_DOWN), true)
 
 const
-  TWIST_BACK = 50.0  ## Newton metres per radian twist is into its ease.  Upper arm
-                     ## and bent forearm about arm's line are some 0.02, so this
-                     ## rings at eight hertz, as `SHOULDER_BACK` does.
-  ELBOW_BACK = 200.0 ## Same for elbow: forearm and hand about it are 0.077.
-  WRIST_BACK = 2.5   ## Same for wrist: hand about it is a thousandth.
+  TWIST_LEAN = 7.0   ## Newton metres per radian twist is into its ease: three at
+                     ## ease's end, gentle as `SWING_LEAN` and for same reason.
+  ELBOW_LEAN = 6.0   ## Same for elbow, whose ease is thirty five degrees.
+  WRIST_LEAN = 2.5   ## Same for wrist: hand about it is a thousandth, and this
+                     ## rings at eight hertz there.
 
 proc easeOff(c: Couple) =
   ## Turn each joint engine holds back out of its ease, as `holdSwing` turns
@@ -673,8 +689,8 @@ proc easeOff(c: Couple) =
                                     else: (-tw.hi, -tw.lo, tw.easeHi, tw.easeLo))
         t = eng.twistAngleOf(a.shoulder).float
       var back = 0.0
-      if t > hi - easeHi: back = -TWIST_BACK * (t - (hi - easeHi))
-      elif t < lo + easeLo: back = TWIST_BACK * ((lo + easeLo) - t)
+      if t > hi - easeHi: back = -TWIST_LEAN * (t - (hi - easeHi))
+      elif t < lo + easeLo: back = TWIST_LEAN * ((lo + easeLo) - t)
       if back != 0.0:
         eng.twistBy(a.link[Limb.Upper], asEngine(u * back), true)
       # Elbow, about its hinge: rotating forearm toward upper arm closes nothing
@@ -685,7 +701,7 @@ proc easeOff(c: Couple) =
       if overBend > 0.0:
         let n = cross(u, f)
         if dot(n, n) > 1e-6:
-          let torque = unit(n) * (ELBOW_BACK * overBend)
+          let torque = unit(n) * (ELBOW_LEAN * overBend)
           eng.twistBy(a.link[Limb.Fore], asEngine(torque * -1.0), true)
           eng.twistBy(a.link[Limb.Upper], asEngine(torque), true)
       # Wrist, its cone: hand turned back toward forearm's line.
@@ -695,7 +711,7 @@ proc easeOff(c: Couple) =
       if overCone > 0.0:
         let n = cross(f, h)
         if dot(n, n) > 1e-6:
-          let torque = unit(n) * (WRIST_BACK * overCone)
+          let torque = unit(n) * (WRIST_LEAN * overCone)
           eng.twistBy(a.link[Limb.Palm], asEngine(torque * -1.0), true)
           eng.twistBy(a.link[Limb.Fore], asEngine(torque), true)
 

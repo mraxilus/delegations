@@ -106,7 +106,7 @@ proc shown*(rig: Rig; band: Band; links: seq[Link]; name: string;
                  stopped: best.stopped, why: best.why, whose: best.whose)
   if not best.restHolds:
     return
-  var c = build(rig, restStance(rig, best.apart, away), band, links, head)
+  var c = build(rig, restStance(rig, best.apart, away), band, links, head, away)
   c.settle()
   var at = 0.0
   result.stills.add stillOf(c, at)
