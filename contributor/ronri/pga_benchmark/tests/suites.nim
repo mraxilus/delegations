@@ -262,7 +262,7 @@ suite "Inspector":
     check functions[0].result_stem == "Multivector" and not functions[0].is_inline  # via Result
     check functions[0].module == "OOZpgaZoperators"  # suffix after last `__`
     let c = count(functions[0].body)
-    check c.multiplies == 2 and c.adds == 1 and c.subs == 1  # terms as spelled
+    check c.multiplies == 2 and c.adds == 1 and c.subs == 1 and c.divides == 0  # as spelled
     check c.zero_fills == 1 and c.intermediates == 1 and c.checks == 2  # fills, locals, branches
     check c.calls == 1  # norm call counted, accessor read not
     check functions[1].symbol == "dot" and functions[1].params == @["Vec3", "Vec3"]
@@ -336,6 +336,36 @@ suite "Inspector":
     check c.subs == 4 * 4  # nested loops multiply: `<= 3` from 0 is four trips, `< 4` four
     check c.calls == 16 and c.lines == 48  # call site per trip; lines stay static
     check totals(functions)["scale__u0__OOZpgaZops"].multiplies == 17 + 16  # callee per trip
+
+  test "divisions count as terms, once per trip, and fold from callees":
+    const MV = "tyObject_Multivector__h"
+    const DIVIDE = [
+      "N_LIB_PRIVATE N_NIMCALL(void, unit__u0__OOZpgaZops)(" & MV & "* m_p0, " & MV & "* Result) {",
+      "NF n_1;",
+      "NI i_1;",
+      "n_1 = (((NF) 1.0) / ((NF) (*m_p0).data[0]));",
+      "i_1 = ((NI) 0);",
+      "{",
+      "\twhile (1) {",
+      "if ((!((i_1 < ((NI) 4))))) {",
+      "\tgoto LA7;",
+      "}",
+      "slasheq__u0__system(((&(*Result).data[i_1])), n_1);",
+      "i_1 += ((NI) 1);",
+      "}",
+      "LA7: ;",
+      "}",
+      "}",
+      "",
+      "static N_INLINE(void, slasheq__u0__system)(NF* x_p0, NF y_p1) {",
+      "(*x_p0) = (((NF) (*x_p0)) / ((NF) y_p1));",
+      "}",
+    ].join("\n") & "\n"
+    let functions = functionsIn(DIVIDE)
+    check count(functions[0].body).divides == 1  # reciprocal outside loop, once
+    check count(functions[1].body).divides == 1  # callee's own division
+    check totals(functions)["unit__u0__OOZpgaZops"].divides == 1 + 4  # folded once per trip
+    check count(functions[0].body).multiplies == 0  # division is not multiply
 
   test "totals fold callees per call site":
     const FIXTURE = """
