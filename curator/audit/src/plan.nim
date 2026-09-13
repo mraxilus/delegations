@@ -9,30 +9,25 @@
 ##     records, `PROJECT_FILES`: rules propagation rewrites provenance and glossary in every
 ##     project and changes no behaviour, so it compiles nothing while static pass still
 ##     verifies every stamp; README describes project and runs nothing, by same reasoning.
-##   Change to koch or to check sources selects every project, because how each is checked
-##     changed. Those files are curator's alone and move rarely, so common case stays small.
+##   Change to `koch.nim` or `koch.nim.cfg` selects driver's project, whose suites read them;
+##     check sources are that project's code and select it as any code does. Nothing selects
+##     every project: push run on `main` plans against push's own base and weekly sweep
+##     against its window, so each compiles what changed and nothing else (CURATOR.md duty
+##     11). Contributor suite is contributor's to run, and static pass reads every project
+##     regardless.
 ##   Path inside no project selects nothing by itself.
-##   Branch then keeps what it owns (CURATOR.md duty 11): curator branch compiles curator
-##     projects, contributor branch its own project, and `main` or branch outside grammar
-##     every project, since push run and weekly sweep are repository's rather than one
-##     delegate's. Contributor suite is contributor's to run; curator's change to runner is
-##     proven on `main`. Static pass reads every project regardless.
 ##
 ##   Rendered plan drives one CI job per project, each installing that project's own pin, so
 ##     wall time is slowest changed project rather than sum of all. Entry carries `kind`,
 ##     since version is installed by setup action and commit is built from source.
-##   Cost: scoped run leaves unrelated project's rot unseen until it next changes; weekly
-##     sweep over every project is guard, and it is weaker than running everything always.
-##   Sweep itself is skipped in week no code merged, since rot arrives with merges. Cost:
-##     rot from outside repository, such as runner image moving under pinned compiler, goes
-##     unseen through quiet week; it surfaces on next sweep that runs.
+##   Cost: rot checker change brings to unchanged project is unseen until that project next
+##     changes, and so is rot from outside repository, such as runner image moving under
+##     pinned compiler; weekly sweep compiles what merged inside its window, nothing more.
 
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, json, options, os, strutils, tables]
-import ./[
-  findings, checker, layout, toolchain, compilers, dependencies, projects, tree, domains,
-]
+import ./[findings, checker, layout, toolchain, compilers, dependencies, projects, tree]
 
 
 const
@@ -71,12 +66,11 @@ func isCode*(dir, path: string): bool =
 
 
 func testSet*(dirs, paths: openArray[string]): seq[string] =
-  ## Select projects one change asks to compile, sorted.
-  for path in paths:
-    if path.isChecker: return (@dirs).sorted
+  ## Select projects one change asks to compile, sorted: each whose code changed, and
+  ##   driver's project when driver's root files did, since its suites read them.
   for dir in dirs:
     for path in paths:
-      if isCode(dir, path):
+      if isCode(dir, path) or (dir == DRIVER_DIR and path in CHECKER_FILES):
         result.add dir
         break
   result.sort
@@ -170,27 +164,6 @@ func pinOf*(tree: Tree, dir: string): Option[string] =
   tree.nimbleOf(dir).nimPin
 
 
-func inScope*(dir, branch: string): bool =
-  ## Decide whether project directory is branch's own to compile.
-  let parsed = branch.parseBranch
-  if parsed.isNone: return true
-  case parsed.get.role
-  of Role.Curator, Role.CuratorProject: dir.startsWith(CURATOR & "/")
-  of Role.Contributor: dir == parsed.get.prefix.strip(chars = {'/'})
-
-
-func scoped*(dirs: openArray[string], branch: string): seq[string] =
-  ## Keep directories branch owns.
-  for dir in dirs:
-    if dir.inScope(branch): result.add dir
-
-
-func scoped*(jobs: openArray[Job], branch: string): seq[Job] =
-  ## Keep jobs of projects branch owns.
-  for job in jobs:
-    if job.dir.inScope(branch): result.add job
-
-
 func jobsFor*(tree: Tree, dirs: openArray[string]): seq[Job] =
   ## Build one job per directory, carrying its pin; unpinned project is skipped, since
   ##   `layout.nim` already reports it and matrix cannot install version nobody named.
@@ -210,12 +183,11 @@ func allJobs*(tree: Tree): seq[Job] =
 
 
 func sweepJobs*(tree: Tree, paths: openArray[string]): seq[Job] =
-  ## Build sweep: every project when any code changed in window, none when nothing did.
-  ##   Sweep exists to catch rot scoped runs missed, and rot arrives with merges, so week
-  ##   nobody merged code has nothing to find. Record-only weeks count as nothing, by same
+  ## Build sweep: projects whose code merged in window, none when nothing did.
+  ##   Rot arrives with merges, so week nobody merged code has nothing to find, and week
+  ##   somebody did has that project to compile. Record-only merges count as nothing, by same
   ##   rule scoped runs use.
-  if testSet(tree.projectDirs, paths).len == 0: return
-  tree.allJobs
+  tree.jobs(paths)
 
 
 proc sweepFor*(root: string, tree: Tree, days: int): seq[Job] =
