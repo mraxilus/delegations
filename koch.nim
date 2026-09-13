@@ -220,8 +220,7 @@ proc run(options: Options): int =
     let (branch, base) = (options.branchOrDefault, options.baseOrDefault)
     found = tree.auditTree
     found.add typeJobs(options.root, tree, options.scopedDirsOf(tree))
-    found.add runJobs(options.root, tree.jobs(changedPaths(options.root, base)))
-    found.add drivenJobs(options.root, tree, tree.jobs(changedPaths(options.root, base)))
+    found.add ciJobs(options.root, tree, tree.jobs(changedPaths(options.root, base)))
     found.add checkScope(branch, changedPaths(options.root, base), movedPaths(options.root, base))
     found.add checkCommits(branch, subjects(options.root, base))
     found.add checkBase(gainedPaths(options.root, base))
