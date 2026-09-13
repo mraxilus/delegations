@@ -86,7 +86,7 @@ Gaps: 103; over 102, met 1, unmeasured 0.
 | G033 | attitude | 81/– | 896/– | 1/– | 179/– | 42.2/– | over |
 | G034 | select_grade | 0/– | 392/– | 0/– | 4/– | 21.9/– | over |
 | G035 | select_grade_anti | 0/– | 392/– | 0/– | 5/– | 29.8/– | over |
-| G036 | select_part | 0/– | 136/– | 0/– | 0/– | 0.6/– | met |
+| G036 | select_part | 0/– | 128/– | 0/– | 0/– | 0.6/– | met |
 | G037 | support | 162/– | 1664/– | 3/– | 375/– | 81.8/– | over |
 | G038 | support_anti | 162/– | 1664/– | 3/– | 375/– | 80.8/– | over |
 | G039 | wedge_point_point | 81/12 | 512/112 | 0/0 | 178/0 | 29.7/2.8 | over |
@@ -200,7 +200,7 @@ Gaps: 129; over 128, met 1, unmeasured 0.
 | G136 | attitude | 243/– | 1792/– | 1/– | 519/– | 99.4/– | over |
 | G137 | select_grade | 0/– | 776/– | 0/– | 4/– | 40.4/– | over |
 | G138 | select_grade_anti | 0/– | 776/– | 0/– | 5/– | 54.0/– | over |
-| G139 | select_part | 0/– | 264/– | 0/– | 0/– | 0.9/– | met |
+| G139 | select_part | 0/– | 256/– | 0/– | 0/– | 0.9/– | met |
 | G140 | bulk_flat | 0/– | 768/– | 0/– | 16/– | 12.7/– | over |
 | G141 | weight_flat | 0/– | 768/– | 0/– | 16/– | 12.5/– | over |
 | G142 | norm_bulk_flat | 32/– | 1536/– | 1/– | 68/– | 18.2/– | over |
@@ -340,7 +340,7 @@ Gaps: 38; over 37, met 1, unmeasured 0.
 | G265 | attitude | 27/– | 448/– | 1/– | 63/– | 9.7/– | over |
 | G266 | select_grade | 0/– | 200/– | 0/– | 4/– | 16.5/– | over |
 | G267 | select_grade_anti | 0/– | 200/– | 0/– | 5/– | 11.9/– | over |
-| G268 | select_part | 0/– | 72/– | 0/– | 0/– | 0.6/– | met |
+| G268 | select_part | 0/– | 64/– | 0/– | 0/– | 0.6/– | met |
 | G269 | support | 54/– | 832/– | 3/– | 135/– | 19.6/– | over |
 | G270 | support_anti | 54/– | 832/– | 3/– | 135/– | 18.5/– | over |
 
@@ -389,7 +389,7 @@ Gaps: 45; over 44, met 1, unmeasured 0.
 | G303 | attitude | 81/– | 896/– | 1/– | 179/– | 48.6/– | over |
 | G304 | select_grade | 0/– | 392/– | 0/– | 4/– | 29.7/– | over |
 | G305 | select_grade_anti | 0/– | 392/– | 0/– | 5/– | 31.4/– | over |
-| G306 | select_part | 0/– | 136/– | 0/– | 0/– | 0.7/– | met |
+| G306 | select_part | 0/– | 128/– | 0/– | 0/– | 0.7/– | met |
 | G307 | bulk_flat | 0/– | 384/– | 0/– | 8/– | 11.6/– | over |
 | G308 | weight_flat | 0/– | 384/– | 0/– | 8/– | 11.6/– | over |
 | G309 | norm_bulk_flat | 16/– | 768/– | 1/– | 36/– | 14.3/– | over |

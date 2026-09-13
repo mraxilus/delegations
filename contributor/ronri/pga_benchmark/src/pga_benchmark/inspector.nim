@@ -31,6 +31,8 @@ type
       ## Demangled head, e.g. `∧`, `|∙`, `wedge`, `{}`.
     module*: string
       ## Module suffix after last `__`, e.g. `referenceZrigid3`; empty where name has none.
+    overload*: int
+      ## Overload index `_u<n>`, `-1` where name carries none.
     params*: seq[string]
       ## Parameter type stems in order, e.g. `Multivector`, `Point`, `float`; `Result` excluded.
     result_stem*: string
@@ -137,6 +139,19 @@ func moduleOf(name: string): string =
   if at < 0: "" else: name[at + 2 ..< name.len]
 
 
+func overloadOf*(name: string): int =
+  ## Read overload index `_u<n>` before module suffix; `-1` where name carries none.
+  ##   Compiler numbers overloads in declaration order within module, so index is stable
+  ##   where emission order is not.
+  let stop = name.rfind("__")
+  if stop < 0: return -1
+  var i = stop - 1
+  while i >= 0 and name[i] in Digits: dec i
+  if i >= 1 and i < stop - 1 and name[i] == 'u' and name[i - 1] == '_':
+    parseInt(name[i + 1 ..< stop])
+  else: -1
+
+
 
 #[ Functions ]#
 
@@ -180,6 +195,7 @@ func functionsIn*(source: string): seq[CFunction] =
       name: name,
       symbol: name.demangle,
       module: name.moduleOf,
+      overload: name.overloadOf,
       params: params,
       result_stem: result_stem,
       is_inline: is_inline,

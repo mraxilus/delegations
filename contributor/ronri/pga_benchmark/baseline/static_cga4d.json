@@ -22,6 +22,48 @@
         "Multivector",
         "Basis"
       ],
+      "returns": "NF*",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 0,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 128
+      }
+    },
+    "[](Multivector,Basis)#u1": {
+      "symbol": "[]",
+      "module": "pga/multivectors",
+      "params": [
+        "Multivector",
+        "Basis"
+      ],
       "returns": "float",
       "inline": true,
       "own": {
@@ -223,48 +265,6 @@
         "bytes_copied": 128,
         "bytes_intermediates": 256,
         "bytes_moved": 1408
-      }
-    },
-    "[](Multivector,Basis)#2": {
-      "symbol": "[]",
-      "module": "pga/multivectors",
-      "params": [
-        "Multivector",
-        "Basis"
-      ],
-      "returns": "NF*",
-      "inline": true,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "zero_fills": 0,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 3
-      },
-      "total": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "zero_fills": 0,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 3
-      },
-      "movement": {
-        "bytes_read": 128,
-        "bytes_written": 0,
-        "bytes_zeroed": 0,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 128
       }
     },
     "grade(Basis)": {
@@ -516,7 +516,7 @@
         "bytes_moved": 392
       }
     },
-    "{}(Multivector,int)#2": {
+    "{}(Multivector,int)#u1": {
       "symbol": "{}",
       "module": "projective_geometric_algebra_illuminated/pga",
       "params": [
@@ -681,37 +681,37 @@
         "bytes_moved": 0
       }
     },
-    "none(void)": {
-      "symbol": "none",
+    "get(Option)#u1": {
+      "symbol": "get",
       "module": "pga/multivectors",
       "params": [
-        "void"
+        "Option"
       ],
-      "returns": "Option",
+      "returns": "NI*",
       "inline": true,
       "own": {
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 0,
-        "calls": 0,
+        "checks": 1,
+        "calls": 1,
         "allocations": 0,
-        "lines": 3
+        "lines": 30
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
-        "checks": 0,
-        "calls": 0,
+        "checks": 1,
+        "calls": 1,
         "allocations": 0,
-        "lines": 3
+        "lines": 33
       },
       "movement": {
         "bytes_read": 0,
@@ -722,7 +722,7 @@
         "bytes_moved": 0
       }
     },
-    "none(void)#2": {
+    "none(void)": {
       "symbol": "none",
       "module": "pga/multivectors",
       "params": [
@@ -753,6 +753,47 @@
         "calls": 1,
         "allocations": 0,
         "lines": 15
+      },
+      "movement": {
+        "bytes_read": 0,
+        "bytes_written": 0,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 0
+      }
+    },
+    "none(void)#u5": {
+      "symbol": "none",
+      "module": "pga/multivectors",
+      "params": [
+        "void"
+      ],
+      "returns": "Option",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
       },
       "movement": {
         "bytes_read": 0,
@@ -2168,47 +2209,6 @@
         "bytes_moved": 2176
       }
     },
-    "get(Option)#2": {
-      "symbol": "get",
-      "module": "pga/multivectors",
-      "params": [
-        "Option"
-      ],
-      "returns": "NI*",
-      "inline": true,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "zero_fills": 0,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 1,
-        "calls": 1,
-        "allocations": 0,
-        "lines": 30
-      },
-      "total": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "zero_fills": 0,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 1,
-        "calls": 1,
-        "allocations": 0,
-        "lines": 33
-      },
-      "movement": {
-        "bytes_read": 0,
-        "bytes_written": 0,
-        "bytes_zeroed": 0,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 0
-      }
-    },
     "⊛(Multivector)": {
       "symbol": "⊛",
       "module": "pga/operators",
@@ -2563,7 +2563,7 @@
       "alias": "selectGradeAnti",
       "arity": 1,
       "expression": "(m{GradeAnti(1)})",
-      "library": "{}(Multivector,int)#2",
+      "library": "{}(Multivector,int)#u1",
       "reference": "",
       "cite": "2.29"
     },

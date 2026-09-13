@@ -6,14 +6,16 @@
 ##   own, whose module names its checkout, and typed reference's.
 ##
 ##   Cost: reads every C file of cache, megabytes at six dimensions; seconds.
-##   Cost: `{}` instantiates twice, grade then antigrade, in order `selectGrade` and
-##     `selectGradeAnti` are declared in library umbrella; antigrade takes second key.
+##   Cost: functions sharing stems share key; later ones are numbered by overload index,
+##     which compiler assigns in declaration order, so key holds whatever order C emits them
+##     in. `{}` instantiates twice, grade then antigrade, as `selectGrade` and
+##     `selectGradeAnti` are declared; antigrade is `#u1`.
 ##   Cost: measurand whose expression composes several calls (motor sandwich) names no library
 ##     function, so its counts are absent and its gap rests on timing alone.
 
 {.experimental: "strictFuncs".}
 
-import std/[json, os, strutils, tables]
+import std/[algorithm, json, os, strutils, tables]
 
 import pga
 
@@ -28,7 +30,8 @@ const
   REFERENCE_MARK = "referenceZ"
     ## Prefix of module suffix of every typed reference module.
   KEY_SELECT = "{}(Multivector,int)"
-    ## Key both grade selections share; antigrade's instantiation takes numbered one.
+    ## Key both grade selections share; antigrade's instantiation, second declared, takes
+    ## key numbered by its overload index.
   KEY_PART = "[](Multivector,Basis)"
     ## Key component read shares with its `var` twin; read is declared first.
 
@@ -36,6 +39,24 @@ const
 func isKept(f: CFunction): bool =
   ## Decide whether function belongs to library or reference, i.e. to gap list.
   LIBRARY_MARK in f.module or f.module.startsWith(REFERENCE_MARK)
+
+
+func keyed(functions: seq[CFunction]): seq[(string, CFunction)] =
+  ## Key kept functions, numbering those sharing stems by overload index so key holds
+  ## whatever order compiler emits them in: lowest index keeps bare key, others append
+  ## `#u<n>`. `{}` over grade and antigrade, and `[]` read beside its `var` twin, collide.
+  var groups: Table[string, seq[CFunction]]
+  var order: seq[string]
+  for f in functions:
+    if not f.isKept: continue
+    if f.key notin groups: order.add f.key
+    groups.mgetOrPut(f.key, @[]).add f
+  for key in order:
+    var group = groups[key]
+    group.sort(proc (a, b: CFunction): int = cmp(a.overload, b.overload))
+    for i, f in group:
+      let numbered = if i == 0: key else: key & "#u" & $f.overload
+      result.add((numbered, f))
 
 
 func libraryStem(k: Kind): string =
@@ -50,7 +71,7 @@ func referenceStem(k: Kind): string =
 
 func libraryKey(p: Measurand): string =
   ## Key of library function measurand's expression calls; empty where it composes several.
-  if p.symbol == "{}": return KEY_SELECT & (if "Anti" in p.expression: "#2" else: "")
+  if p.symbol == "{}": return KEY_SELECT & (if "Anti" in p.expression: "#u1" else: "")
   if p.symbol == "[]": return KEY_PART
   let head =
     if p.symbol.len > 0: p.emitted
@@ -113,15 +134,7 @@ proc main(): int =
   )
   var kept = newJObject()
   var count = 0
-  for f in functions:
-    if not f.isKept: continue
-    # Instantiations sharing stems (`{}` over grade and antigrade) share key too; second and
-    # later take numbered key, in emission order, which is instantiation order.
-    var key = f.key
-    var n = 1
-    while kept.hasKey(key):
-      inc n
-      key = f.key & "#" & $n
+  for (key, f) in functions.keyed:
     kept[key] = functionNode(f, count(f.body), total[f.name], SIZE_MULTIVECTOR)
     inc count
   doc["functions"] = kept

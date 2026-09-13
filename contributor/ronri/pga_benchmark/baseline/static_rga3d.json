@@ -22,6 +22,48 @@
         "Multivector",
         "Basis"
       ],
+      "returns": "NF*",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 64,
+        "bytes_written": 0,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 64
+      }
+    },
+    "[](Multivector,Basis)#u1": {
+      "symbol": "[]",
+      "module": "pga/multivectors",
+      "params": [
+        "Multivector",
+        "Basis"
+      ],
       "returns": "float",
       "inline": true,
       "own": {
@@ -223,48 +265,6 @@
         "bytes_copied": 64,
         "bytes_intermediates": 128,
         "bytes_moved": 704
-      }
-    },
-    "[](Multivector,Basis)#2": {
-      "symbol": "[]",
-      "module": "pga/multivectors",
-      "params": [
-        "Multivector",
-        "Basis"
-      ],
-      "returns": "NF*",
-      "inline": true,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "zero_fills": 0,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 3
-      },
-      "total": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "zero_fills": 0,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 3
-      },
-      "movement": {
-        "bytes_read": 64,
-        "bytes_written": 0,
-        "bytes_zeroed": 0,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 64
       }
     },
     "grade(Basis)": {
@@ -516,7 +516,7 @@
         "bytes_moved": 200
       }
     },
-    "{}(Multivector,int)#2": {
+    "{}(Multivector,int)#u1": {
       "symbol": "{}",
       "module": "projective_geometric_algebra_illuminated/pga",
       "params": [
@@ -1989,7 +1989,7 @@
       "alias": "selectGradeAnti",
       "arity": 1,
       "expression": "(m{GradeAnti(1)})",
-      "library": "{}(Multivector,int)#2",
+      "library": "{}(Multivector,int)#u1",
       "reference": "",
       "cite": "2.29"
     },
