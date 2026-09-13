@@ -64,7 +64,7 @@ proc checkFrame*() =
 
   # And whole cycle comes back to exactly where it started.
   for m in MOVES:
-    let poses = cycle(m.apply)
+    let poses = cycle(m.apply).poses
     doAssert relative(poses[^1]) == relative(rest()),
       &"A cycle does not close; got `{relative(poses[^1])}` for {m.name}."
 
@@ -129,7 +129,7 @@ proc checkFrame*() =
     "Continuity breaks at the wrap."
   var biggest = 0.0
   for m in MOVES:
-    let poses = cycle(m.apply)
+    let poses = cycle(m.apply).poses
     for who in Dancer:
       let steps = facings(poses, who)
       for i in 0 ..< steps.high:
@@ -206,7 +206,7 @@ proc checkRules*() =
   var swept = Inf
   for m in MOVES:
     let
-      poses = cycle(m.apply).mapIt(
+      poses = cycle(m.apply).poses.mapIt(
         settled(it, HOLD, default(Levels), default(Ways)))
       hands = poses.mapIt(handsOf(it))
     var frames: seq[route.Ends]
@@ -447,42 +447,42 @@ proc checkSingleTurns*() =
     "frames, turned; nothing new is drawn"
 
   # RULE 19.  `"you should also include orbit turns not just the axis`
-  # `turns."`  Four ways: each dancer's own axis turn and each dancer's orbit
+  # `turns."`  Four manners: each dancer's own axis turn and each dancer's orbit
   # of other -- orbits ringed, since ring says who is standing
-  # still.  Which ways share round of positions is measured here rather
+  # still.  Which manners share round of positions is measured here rather
   # than taken from table, and table is held to measurement.
-  var axis_ways, orbit_ways = 0
-  for way in TurnWay:
-    let w = WAYS_OF_TURNING[way]
-    if w.about == About.Axis: inc axis_ways else: inc orbit_ways
+  var axis_manners, orbit_manners = 0
+  for manner in Manner:
+    let w = MANNERS[manner]
+    if w.about == About.Axis: inc axis_manners else: inc orbit_manners
     let ringed = built[&"tr_{w.tag}_0_0_1"].contains("stroke-dasharray")
     doAssert ringed == (w.about == About.Orbit),
-      &"An orbit's ring is missing or an axis turn has one; got {way}."
-  doAssert axis_ways == 2 and orbit_ways == 2,
-    &"Four ways expected; got `{axis_ways}` axis and `{orbit_ways}` orbit."
+      &"An orbit's ring is missing or an axis turn has one; got {manner}."
+  doAssert axis_manners == 2 and orbit_manners == 2,
+    &"Four manners expected; got `{axis_manners}` axis and `{orbit_manners}` orbit."
 
-  func roundOfWay(way: TurnWay): HashSet[tuple[axis, facing: float]] =
-    ## Collect set of places one way of turning walks through.
+  func roundOfManner(manner: Manner): HashSet[tuple[axis, facing: float]] =
+    ## Collect set of places one manner of turn walks through.
     for quarter in 0 ..< QUARTERS_ROUND:
-      result.incl placeOf(quarterPose(way, quarter))
+      result.incl placeOf(quarterPose(manner, quarter))
 
   var rounds: seq[HashSet[tuple[axis, facing: float]]]
-  for way in TurnWay:
-    let walked = roundOfWay(way)
-    # Table's claim about this way holds: it shares its round with
-    # every way of its family, and with no other.
-    for mate in TurnWay:
-      let shares = roundOfWay(mate) == walked
-      doAssert shares == (FAMILY_OF[mate] == FAMILY_OF[way]),
-        &"A way left its family; got {way} against {mate}."
+  for manner in Manner:
+    let walked = roundOfManner(manner)
+    # Table's claim about this manner holds: it shares its round with
+    # every manner of its family, and with no other.
+    for mate in Manner:
+      let shares = roundOfManner(mate) == walked
+      doAssert shares == (FAMILY_OF[mate] == FAMILY_OF[manner]),
+        &"A manner left its family; got {manner} against {mate}."
     if walked notin rounds:
       rounds.add walked
   doAssert rounds.len == 2,
-    &"Two rounds expected of four ways; got `{rounds.len}`."
-  told.add &"{axis_ways} axis turns and {orbit_ways} orbits, the orbits " &
-    &"ringed; the four ways walk {rounds.len} rounds, each reached by one " &
+    &"Two rounds expected of four manners; got `{rounds.len}`."
+  told.add &"{axis_manners} axis turns and {orbit_manners} orbits, the orbits " &
+    &"ringed; the four manners walk {rounds.len} rounds, each reached by one " &
     "axis turn and by the other dancer's orbit -- which is rule 32's own " &
-    "consequence, and what lets the ways be equated"
+    "consequence, and what lets the manners be equated"
 
   # RULE 18.  `"the leads' transitions should still be in the 2 stage form,`
   # `stage 1 is the lead turns with the original perspective stage 2 is`
@@ -491,10 +491,10 @@ proc checkSingleTurns*() =
   # stage two brings it back.  Turn that leaves framing exactly as
   # it found it has no second stage to draw, and framed on lead
   # (rule 25) that is every turn but lead's own.
-  for way in TurnWay:
+  for manner in Manner:
     let
-      w = WAYS_OF_TURNING[way]
-      walk = turnWalk(quarterPose(way, 0), w.who, w.about, QUARTER,
+      w = MANNERS[manner]
+      walk = turnWalk(quarterPose(manner, 0), w.who, w.about, QUARTER,
                       on = Anchor.Lead)
     var
       leaned = 0.0
@@ -507,16 +507,16 @@ proc checkSingleTurns*() =
     let re_framed = w.who == Dancer.Lead
     if re_framed:
       doAssert leaned > 45 or strayed > 1,
-        &"A turn never left the canonical framing; got {way}."
+        &"A turn never left the canonical framing; got {manner}."
       doAssert abs(wrap180(walk.poses[^1].facing[Dancer.Lead])) < 1e-9,
-        &"A turn ended off upright; got {way}."
+        &"A turn ended off upright; got {manner}."
       doAssert dist(walk.poses[^1].place[Dancer.Lead],
                     canonicalise(walk.poses[^1], on = Anchor.Lead)
                       .place[Dancer.Lead]) < 1e-9,
-        &"A turn ended off centre; got {way}."
+        &"A turn ended off centre; got {manner}."
     else:
       doAssert leaned < 1e-9 and strayed < 1e-9,
-        &"A turn moved the framing with nothing to re-frame; got {way}."
+        &"A turn moved the framing with nothing to re-frame; got {manner}."
   told.add "a turn that moves the framing is danced in two stages -- the " &
     "room holds still while it happens, then the picture is brought back " &
     "to the lead facing up and back on their own spot; framed on the lead, " &
@@ -525,22 +525,38 @@ proc checkSingleTurns*() =
   # RULE 16 and RULE 15.  Four orientations per connection, round
   # closing rather than refusing; every one of them drawn and every edge
   # between them animated.
-  var statics, moving = 0
+  var statics, moving, walked_whole = 0
   for key in built.keys:
     if key.startsWith("st_"): inc statics
     if key.startsWith("tr_") and not key.endsWith("_still"): inc moving
-  let want = (TurnWay.high.int + 1) * SINGLES.len * QUARTERS_ROUND
+    if key.startsWith("rd_") and not key.endsWith("_still"): inc walked_whole
+  let
+    want = (Manner.high.int + 1) * SINGLES.len * QUARTERS_ROUND
+    whole = (Manner.high.int + 1) * SINGLES.len
   doAssert statics == want,
     &"A position went undrawn; got `{statics}` of `{want}`."
   doAssert moving == want,
     &"An edge went unanimated; got `{moving}` of `{want}`."
-  for way in TurnWay:
-    doAssert placeOf(quarterPose(way, QUARTERS_ROUND)) ==
-      placeOf(quarterPose(way, 0)),
-      &"Four quarters do not close the round; got {way}."
+  # Round is walked whole as well as edge by edge, and it closes, so its
+  # last pose is its first: walk that ended anywhere else would be round
+  # of four quarters that is not round.
+  doAssert walked_whole == whole,
+    &"A round went unwalked whole; got `{walked_whole}` of `{whole}`."
+  for manner in Manner:
+    let w = MANNERS[manner]
+    let walk = turnWalk(quarterPose(manner, 0), w.who, w.about, QUARTER,
+                        on = Anchor.Lead, steps = QUARTERS_ROUND, back = false)
+    doAssert placeOf(walk.poses[^1]) == placeOf(walk.poses[0]),
+      &"A whole round did not close where it set off; got {manner}."
+  for manner in Manner:
+    doAssert placeOf(quarterPose(manner, QUARTERS_ROUND)) ==
+      placeOf(quarterPose(manner, 0)),
+      &"Four quarters do not close the round; got {manner}."
   told.add &"a single hand above turns for ever: {QUARTERS_ROUND} " &
-    &"orientations a way, the round closing rather than refusing, all " &
-    &"{statics} positions drawn and all {moving} transitions animated"
+    &"orientations a manner, the round closing rather than refusing, all " &
+    &"{statics} positions drawn, all {moving} transitions animated, and " &
+    &"each of the {walked_whole} rounds walked whole as well, closing " &
+    "where it set off"
 
   # RULE 32.  `"orbit should not maintain bearing, but instead keep whatever`
   # `side faces the center, facing the center."`  Measured through every orbit
@@ -550,10 +566,10 @@ proc checkSingleTurns*() =
   var
     swung = 0.0
     held = 0.0
-  for way in TurnWay:
+  for manner in Manner:
     let
-      w = WAYS_OF_TURNING[way]
-      start = quarterPose(way, 0)
+      w = MANNERS[manner]
+      start = quarterPose(manner, 0)
       walk = turnWalk(start, w.who, w.about, QUARTER, on = Anchor.Lead)
       other_one = if w.who == Dancer.Lead: Dancer.Follow else: Dancer.Lead
     var carried = 0.0
@@ -574,12 +590,12 @@ proc checkSingleTurns*() =
            start.facing[w.who]))))
       doAssert facing_in < 1e-9,
         &"An orbit turned the walker off the centre; got " &
-          &"`{decimal(facing_in, 1)}` for {way}."
+          &"`{decimal(facing_in, 1)}` for {manner}."
       held = max(held, carried)
       swung = max(swung, abs(wrap180(
-        placeOf(quarterPose(way, 1)).axis - placeOf(quarterPose(way, 0)).axis)))
+        placeOf(quarterPose(manner, 1)).axis - placeOf(quarterPose(manner, 0)).axis)))
     doAssert carried > 45,
-      &"A way of turning never turned its dancer; got {way}."
+      &"A manner of turn never turned its dancer; got {manner}."
   doAssert abs(swung - QUARTER) < 1e-9,
     &"An orbit swung the axis by the wrong amount; got `{decimal(swung, 1)}`."
   doAssert abs(held - QUARTER) < 1e-9,
@@ -606,7 +622,8 @@ proc checkSingleTurns*() =
     moving_hatched = 0
     held_still = 0
   for key, figure in built:
-    if not key.startsWith("tr_") or key.endsWith("_still"):
+    if not (key.startsWith("tr_") or key.startsWith("rd_")) or
+        key.endsWith("_still"):
       continue
     doAssert "url(#h" in figure,
       &"A moving hand lost its level; got no hatch in `{key}`."
@@ -618,8 +635,9 @@ proc checkSingleTurns*() =
           &"got `{key}`."
       inc held_still
     inc moving_hatched
-  doAssert moving_hatched == want,
-    &"A transition went unhatched; got `{moving_hatched}` of `{want}`."
+  doAssert moving_hatched == want + whole,
+    &"A transition went unhatched; got `{moving_hatched}` of " &
+      &"`{want + whole}`."
   told.add &"all {moving_hatched} animations carry the above hatch on " &
     &"their held hands, as the still figures beside them do -- and all " &
     &"{held_still} of those marks are carried by a transform rather than " &
@@ -629,13 +647,13 @@ proc checkSingleTurns*() =
   # RULE 14.  Nothing wraps body: measured as how far reach bows off
   # chord between its own two hands, standing and turning alike.
   var bowed = 0.0
-  for way in TurnWay:
-    let w = WAYS_OF_TURNING[way]
+  for manner in Manner:
+    let w = MANNERS[manner]
     for single in SINGLES:
       for arm in Arm:
         if single.holds[arm].isNone:
           continue
-        let walk = turnWalk(quarterPose(way, 0), w.who, w.about, QUARTER,
+        let walk = turnWalk(quarterPose(manner, 0), w.who, w.about, QUARTER,
                             on = Anchor.Lead)
         var runs: seq[seq[Point]]
         for put in walk.poses:
@@ -680,7 +698,14 @@ proc checkSingleTurns*() =
   # RULE 24.  `"prefer smooth long curves instead of sharp breaks."`  Curve
   # drawn as straight bits turns some degrees at each of them; break
   # turns many at one.  So sharpest single corner on page is what
-  # is measured, over every settled reach.
+  # is measured, over every settled reach -- and, since corner alone
+  # missed it, where each reach that leaves its chord crests off it.
+  #   Reach can turn gently at every corner and still read as kink, by
+  #     putting whole of its offset against one hand and running straight
+  #     to it.  Long curve is one that crests away from both.
+  const
+    CREST_SEEN = 0.1   ## Least offset counted as shape rather than as noise.
+    CREST_IN = 0.25    ## How far in from either hand crest has to stand.
   var
     turns: array[4, int]
     bought = 0.0
@@ -689,14 +714,16 @@ proc checkSingleTurns*() =
     daylight = Inf
     fouled = 0.0
     kept = 0
-  for way in TurnWay:
+    curved = 0
+    crest_in = Inf
+  for manner in Manner:
     for single in SINGLES:
       for arm in Arm:
         if single.holds[arm].isNone:
           continue
         for quarter in 0 ..< QUARTERS_ROUND:
           let
-            put = settled(quarterPose(way, quarter), single.holds,
+            put = settled(quarterPose(manner, quarter), single.holds,
                           levelsFor(single.holds), default(Ways))
             p = handsOf(put)
             (a, b) = (p[Dancer.Lead][arm], p[Dancer.Follow][single.holds[arm].get])
@@ -704,13 +731,21 @@ proc checkSingleTurns*() =
           let settled_reach = clearedReach(a, b, marks)
           turns[min(bendsIn(settled_reach), turns.high)] += 1
           sharpest = max(sharpest, sharpestIn(settled_reach))
+          let crest = crestOf(settled_reach)
+          if crest.off > CREST_SEEN:
+            let stands = min(crest.at, 1 - crest.at)
+            doAssert stands > CREST_IN,
+              &"A reach crests beside a hand rather than across its span; " &
+                &"got `{decimal(crest.at, 2)}` on {manner} of {single.name}."
+            inc curved
+            crest_in = min(crest_in, stands)
           if bendsIn(settled_reach) > 1:
             # It kept second turn, so every plainer way past these marks
             # must have cost more line than turn is worth.
             for side in SIDES:
               let other = letGo(a, b, marks, side)
               doAssert readingCost(settled_reach) <= readingCost(other) + 1e-6,
-                &"A plainer reach went untaken; got {way} on {single.name}."
+                &"A plainer reach went untaken; got {manner} on {single.name}."
               if bendsIn(other) < bendsIn(settled_reach):
                 bought = max(bought,
                              polylineLen(other) - polylineLen(settled_reach))
@@ -753,20 +788,24 @@ proc checkSingleTurns*() =
   told.add &"and it bends rather than breaks: the sharpest corner anywhere " &
     &"on the page turns {decimal(sharpest, 1)} degrees, so what turns, turns " &
     "over a run of the line and not at a point in it"
+  told.add &"and what turns, turns across its span rather than beside a " &
+    &"hand: of the {curved} reaches that leave their chord at all, the one " &
+    &"that crests nearest an end still crests " &
+    &"{decimal(100 * crest_in, 0)} per cent of the way along it"
 
   # RULE 25.  `"lead position should remain fixed as much as possible ...`
   # `obviously this can't really be the case when the lead orbits."`
   # Measured through every walk: how far lead's own place travels from
   # first frame to last, and across four positions of every round.
   var re_entered: seq[string]
-  for way in TurnWay:
-    let w = WAYS_OF_TURNING[way]
+  for manner in Manner:
+    let w = MANNERS[manner]
     var moved = 0.0
     for quarter in 0 ..< QUARTERS_ROUND:
-      let start = quarterPose(way, quarter)
+      let start = quarterPose(manner, quarter)
       doAssert dist(start.place[Dancer.Lead],
-                    quarterPose(way, 0).place[Dancer.Lead]) < 1e-9,
-        &"The lead stands somewhere else in this position; got {way}."
+                    quarterPose(manner, 0).place[Dancer.Lead]) < 1e-9,
+        &"The lead stands somewhere else in this position; got {manner}."
       for put in turnWalk(start, w.who, w.about, QUARTER,
                           on = Anchor.Lead).poses:
         moved = max(moved, dist(put.place[Dancer.Lead],
@@ -776,7 +815,7 @@ proc checkSingleTurns*() =
     let walks_off = w.who == Dancer.Lead and w.about == About.Orbit
     doAssert (moved > 1) == walks_off,
       &"The lead moved where they should not, or held where they " &
-        &"cannot; got `{decimal(moved, 1)}` for {way}."
+        &"cannot; got `{decimal(moved, 1)}` for {manner}."
     if walks_off:
       re_entered.add w.title.toLowerAscii
   # RULE 26.  `"make the second animation stage quicker ... so it has less`
@@ -785,10 +824,10 @@ proc checkSingleTurns*() =
   # where whole picture moves rigidly is re-framing, and one where
   # nothing moves at all is held beat.
   var slowest = 0.0
-  for way in TurnWay:
+  for manner in Manner:
     let
-      w = WAYS_OF_TURNING[way]
-      walk = turnWalk(quarterPose(way, 0), w.who, w.about, QUARTER,
+      w = MANNERS[manner]
+      walk = turnWalk(quarterPose(manner, 0), w.who, w.about, QUARTER,
                       on = Anchor.Lead)
     var turning, framing, beats = 0.0
     for i in 0 ..< walk.poses.high:
@@ -804,11 +843,11 @@ proc checkSingleTurns*() =
     doAssert abs(turning + framing + beats - 1.0) < 1e-9,
       &"A move's clock does not add up; got `{turning + framing + beats}`."
     doAssert (framing > 0) == (w.who == Dancer.Lead),
-      &"A move re-framed when it had nothing to re-frame; got {way}."
+      &"A move re-framed when it had nothing to re-frame; got {manner}."
     if framing > 0:
       doAssert framing < turning / 2,
         &"The re-framing takes as long as the turn; got " &
-          &"`{decimal(framing, 2)}` against `{decimal(turning, 2)}` for {way}."
+          &"`{decimal(framing, 2)}` against `{decimal(turning, 2)}` for {manner}."
       slowest = max(slowest, framing / turning)
   told.add &"and the turn is what a transition is of: where the picture " &
     &"has to be brought back afterwards it takes {decimal(100 * slowest, 0)} " &
@@ -816,10 +855,57 @@ proc checkSingleTurns*() =
     "landing, so it reads as the frame catching up rather than as a second " &
     "move"
 
-  let ways = TurnWay.toSeq.len
+  # RULE 26 carried to whole move.  Going out is what figure is of and
+  # coming back only undoes it, so reset takes less clock than turn it
+  # undoes; at same pace two legs read as two moves and neither is
+  # subject.  Legs are built alike, so join sits at half of poses and
+  # that is asserted rather than assumed.
+  #   Margin, not bare `<`: two legs paced alike come out equal to within
+  #     rounding, and one float hair either way is not difference anybody
+  #     sees.  `RESET_READS` is how much quicker return has to be before
+  #     eye takes it for reset rather than for repeat.
+  const RESET_READS = 0.9
+  var laziest = 0.0
+  for manner in Manner:
+    let
+      w = MANNERS[manner]
+      walk = turnWalk(quarterPose(manner, 0), w.who, w.about, QUARTER,
+                      on = Anchor.Lead)
+    doAssert walk.poses.len mod 2 == 0,
+      &"A move's two legs are not the same length; got `{walk.poses.len}` " &
+        &"for {manner}."
+    let
+      half = walk.poses.len div 2
+      going = walk.times[half - 1]
+      coming = 1.0 - walk.times[half]
+    doAssert coming < going * RESET_READS,
+      &"A move's reset does not read as quicker than its turn; got " &
+        &"`{decimal(coming, 3)}` against `{decimal(going, 3)}` for {manner}."
+    laziest = max(laziest, coming / going)
+  # Same law over other builder.  It draws its own animations and carried
+  # no clock at all until now, so its move, its settle and its reset all
+  # ran at one speed however rule 26 was worded.
+  for m in MOVES:
+    let walk = cycle(m.apply)
+    doAssert walk.poses.len == walk.times.len and walk.poses.len mod 2 == 0,
+      &"A cycle's clock does not match its poses; got `{walk.poses.len}` " &
+        &"poses against `{walk.times.len}` times for {m.name}."
+    let
+      half = walk.poses.len div 2
+      going = walk.times[half - 1]
+      coming = 1.0 - walk.times[half]
+    doAssert coming < going * RESET_READS,
+      &"A cycle's reset does not read as quicker than its move; got " &
+        &"`{decimal(coming, 3)}` against `{decimal(going, 3)}` for {m.name}."
+    laziest = max(laziest, coming / going)
+  told.add &"and coming back is a reset rather than a second move: it takes " &
+    &"at most {decimal(100 * laziest, 0)} per cent of the clock going out " &
+    "takes, in every animation either builder draws"
+
+  let manners = Manner.toSeq.len
   told.add &"the lead is the still point: they stand on the same spot in " &
     &"every position of every round, and never move through " &
-    &"{ways - re_entered.len} of the {ways} ways of turning -- only " &
+    &"{manners - re_entered.len} of the {manners} manners of turn -- only " &
     &"""{re_entered.join(" and ")} takes them off it, and there the """ &
     "picture has to bring them back"
 
@@ -899,7 +985,7 @@ proc checkHandTurns*() =
           &"`{decimal(turned_by, 2)}` for `{position.name}`."
     # And facing alternates down chain: partners face one
     # another where wind is whole number of turns and same way
-    # where it is half of one, which is what makes X what it is and is
+    # where it is half of one, which is what makes cross what it is and is
     # half turn of offset at which other pattern is read (rule 31).
     let facing_apart = abs(wrap180(
       put.facing[Dancer.Follow] - put.facing[Dancer.Lead]))
@@ -911,7 +997,7 @@ proc checkHandTurns*() =
     "pair's own axis, not taken on trust"
 
   # RULE 27 and RULE 28.  Crossings are what wind makes: none at
-  # frame, one at half turn -- X -- and two at whole one, one
+  # frame, one at half turn -- cross -- and two at whole one, one
   # by each dancer, with diamond between.
   var
     smallest = Inf
@@ -941,14 +1027,14 @@ proc checkHandTurns*() =
     for run in [pair[Arm.L], reversed(pair[Arm.R])]:
       for q in run:
         if dist(q, meetings[0]) + dist(q, meetings[1]) <
-            dist(meetings[0], meetings[1]) + BOX_ROOM:
+            dist(meetings[0], meetings[1]) + DIAMOND_ROOM:
           ring.add q
     var twice = 0.0
     for k in 0 ..< ring.high:
       twice += ring[k].x * ring[k + 1].y - ring[k + 1].x * ring[k].y
     twice += ring[^1].x * ring[0].y - ring[0].x * ring[^1].y
     smallest = min(smallest, abs(twice) / 2)
-  doAssert smallest > 2 * BOX_ROOM,
+  doAssert smallest > 2 * DIAMOND_ROOM,
     &"The diamond pinched shut; got `{decimal(smallest, 0)}` of room in it."
 
   # RULE 31.  `"don't draw it as a double box, draw it as one connection`
@@ -956,6 +1042,86 @@ proc checkHandTurns*() =
   # pair stops sharing its swing: one reach is plain chord between
   # its hands and other carries all of it, which is three crossings held
   # round straight line rather than two diamonds stacked.
+  # And it gives that swing up **late**.  Chain is walked, not jumped, so
+  # what lies between diamond and swan is seen: connection that ends up
+  # straight must keep its bend most of way there, or diamond falls apart
+  # into short stub and swan is built again rather than one opening into
+  # other.  Architect danced it and called that out, 2026-09-08.
+  const
+    HOLDS_ITS_BEND = 1.2 ## Turns of wind by which straight one must still
+                         ## carry most of its swing.
+    MOST_OF_IT = 0.5     ## What most of it is, as share.
+  doAssert windShare(HOLDS_ITS_BEND, straightArm(HOLDS_ITS_BEND)) > MOST_OF_IT,
+    &"The straight connection gives up its bend too early; at " &
+      &"{decimal(HOLDS_ITS_BEND, 2)} turns it carries only " &
+      &"`{decimal(windShare(HOLDS_ITS_BEND, straightArm(HOLDS_ITS_BEND)), 2)}`."
+  # And what that bend is for: diamond keeps its two crossings all way to
+  # swan, where third joins them.  Pair that crosses once is one arm laid
+  # over other rather than going round it, and no such state lies between
+  # two positions of chain -- Architect's ruling, 2026-09-08.
+  # And it gains that third crossing **once**: pair reads two crossings, then
+  # three, and never goes back.  Count that rises and falls again is picture
+  # of pair unwinding half way through winding, which no dancer does, and
+  # Architect stops animation on any frame it likes -- so every frame answers
+  # for itself, not merely seven positions.
+  var
+    fewest = high(int)
+    gained = 0
+    lost = 0
+    before = 0
+    turned_at = 0.0
+  for step in countup(100, 150, 1):
+    let
+      wind = -float(step) / 100.0
+      met = crossingsOf(pairOf(wind)[Arm.L], pairOf(wind)[Arm.R])
+    fewest = min(fewest, met.len)
+    doAssert met.len >= 2,
+      &"Two connections cross fewer than twice between diamond and swan; " &
+        &"got `{met.len}` at {decimal(wind, 2)} turns."
+    if step > 100:
+      if met.len > before:
+        inc gained
+        turned_at = wind
+      elif met.len < before:
+        inc lost
+        doAssert false,
+          &"Pair loses a crossing between diamond and swan; got " &
+            &"`{before}` falling to `{met.len}` at {decimal(wind, 2)} turns."
+    before = met.len
+  doAssert gained == 1,
+    &"Third crossing arrives other than once; got `{gained}` gains over " &
+      &"stretch."
+  told.add &"and the diamond opens into the swan rather than coming apart " &
+    &"on the way: the straight connection still carries " &
+    &"{decimal(windShare(HOLDS_ITS_BEND, straightArm(HOLDS_ITS_BEND)), 2)} " &
+    &"of its swing at {decimal(HOLDS_ITS_BEND, 2)} turns, nowhere over " &
+    &"that stretch do the two cross fewer than {fewest} times, and the " &
+    &"third crossing arrives once and stays -- at " &
+    &"{decimal(abs(turned_at), 2)} of a turn"
+  # And snake does two things in that order, which is what keeps third
+  # crossing clear: pulls in against its partner while pair tightens, then
+  # opens out into loops that go round it.  Order is load-bearing -- snake
+  # that opens early drives that crossing under hand mark, where no break
+  # can be drawn -- so it is asserted rather than left to comment.
+  var
+    tightest_snake = (share: Inf, at: 0.0)
+  for step in countup(100, 150, 1):
+    let
+      wind = -float(step) / 100.0
+      carried = windShare(wind, overArm(wind))
+    if carried < tightest_snake.share: tightest_snake = (carried, wind)
+  doAssert tightest_snake.share < 1.0,
+    &"Snake never pulls in before it opens; got `" &
+      &"{decimal(tightest_snake.share, 2)}` at its tightest."
+  doAssert windShare(-1.5, overArm(-1.5)) > 1.0,
+    &"Snake never opens out into its loops; got " &
+      &"`{decimal(windShare(-1.5, overArm(-1.5)), 2)}` at swan."
+  told.add &"the snake draws in to " &
+    &"{decimal(tightest_snake.share, 2)} of one connection's swing by " &
+    &"{decimal(abs(tightest_snake.at), 2)} of a turn and opens out to " &
+    &"{decimal(windShare(-1.5, overArm(-1.5)), 2)} at the swan, which is " &
+    &"the order that keeps the third crossing clear of the hands"
+
   var
     swans = 0
     flattest = Inf
@@ -974,9 +1140,12 @@ proc checkHandTurns*() =
       doAssert abs(bowed[Arm.L] - bowed[Arm.R]) < 1e-6,
         &"A pair short of a swan drew lopsided; got `{position.name}`."
       continue
+    # Snake is arm that is over at first crossing (Architect, 2026-09-07).
+    # Named from `overArm` rather than from `straightArm`, so this states
+    # rule instead of echoing whichever answer drawing happens to hold.
     let
-      straight = straightArm(position.wind)
-      snake = other(straight)
+      snake = overArm(position.wind)
+      straight = other(snake)
     doAssert bowed[straight] < MARK_STROKE,
       &"A swan's straight connection is not straight; got " &
         &"`{decimal(bowed[straight], 1)}` of bow in `{position.name}`."
@@ -989,13 +1158,27 @@ proc checkHandTurns*() =
       put = settled(posedAt(position.wind, HAND_PHASE), HAND_TO_HAND,
                     ABOVE_BOTH, default(Ways))
       apart = dist(put.place[Dancer.Lead], put.place[Dancer.Follow])
-    doAssert bowed[snake] > BOX_ROOM / 2,
+    doAssert bowed[snake] > DIAMOND_ROOM / 2,
       &"A swan's snake does not go round anything; got " &
         &"`{decimal(bowed[snake], 1)}` of bow in `{position.name}`."
     doAssert bowed[snake] < apart,
       &"A swan's snake bows clean out of the figure; got " &
         &"`{decimal(bowed[snake], 1)}` against `{decimal(apart, 1)}` in " &
         &"`{position.name}`."
+    # Snake is arm position is named over, and it is over where name says
+    # -- at lead's own crossover.  Alternation then leaves it over at both
+    # outer crossings and under at middle, so it is drawn in two pieces
+    # and straight one, diving either side of it, in three.
+    var pieces: array[Arm, int]
+    let dives = divesOf(pair[Arm.L], pair[Arm.R], position.wind)
+    for arm in Arm:
+      pieces[arm] = cutGapsAt(pair[arm], pair[other(arm)], dives[arm]).len
+    doAssert pieces[snake] == 2,
+      &"A swan's snake is not drawn in two pieces; got " &
+        &"`{pieces[snake]}` in `{position.name}`."
+    doAssert pieces[straight] == 3,
+      &"A swan's straight connection is not drawn in three pieces; got " &
+        &"`{pieces[straight]}` in `{position.name}`."
     flattest = min(flattest, bowed[straight])
     snakiest = min(snakiest, bowed[snake])
     inc swans
@@ -1033,13 +1216,10 @@ proc checkHandTurns*() =
     let
       figure = built[&"hh_{i}"]
       pair = pairOf(position.wind)
-      on_top = overArm(position.wind)
-    # Alternation that drawing uses, worked out rather than trusted:
-    # with three crossings it is two dives on one arm and one on other.
-    var cuts: array[Arm, seq[Point]]
-    for k, meeting in crossingsOf(pair[Arm.L], pair[Arm.R]):
-      cuts[if (k mod 2 == 0) == (on_top == Arm.L): Arm.R
-           else: Arm.L].add meeting
+      # Alternation drawing uses, asked of drawing rather than repeated
+      # here: with three crossings it is two dives on one arm, one on
+      # other, and which arm takes which is `divesOf`'s to say.
+      cuts = divesOf(pair[Arm.L], pair[Arm.R], position.wind)
     for arm in Arm:
       var ink = 0.0
       for shade in [DEEP[arm], INK[HAND_TO_HAND[arm].get]]:
@@ -1050,15 +1230,15 @@ proc checkHandTurns*() =
         # What breaking this reach where it dives takes out of it: cut
         # drops whole sampled points, and one against end of reach
         # drops fewer, so length is worked out rather than counted.
-        want_lost = whole - cutGapsAt(pair[arm], cuts[arm])
+        want_lost = whole - cutGapsAt(pair[arm], pair[other(arm)], cuts[arm])
           .mapIt(polylineLen(it)).foldl(a + b, 0.0)
       doAssert abs(lost - want_lost) < 0.5,
         &"A reach is not drawn broken where it dives; got `{decimal(lost, 1)}` " &
           &"missing from {arm} for `{decimal(want_lost, 1)}` of breaking at " &
           &"`{cuts[arm].len}` dives in `{position.name}`."
   told.add &"the wind makes the crossings: none at the frame, one at a " &
-    &"half turn -- the X the partners make facing the same way -- and two " &
-    &"at a whole one, one by each dancer, holding a diamond of " &
+    &"half turn -- the cross the partners make facing the same way -- and " &
+    &"two at a whole one, one by each dancer, holding a diamond of " &
     &"{decimal(smallest, 0)} square units with its points {decimal(apart, 0)} apart"
 
   # RULE 28 again.  `"the animations are very jankey and tied to the final`
@@ -1066,8 +1246,8 @@ proc checkHandTurns*() =
   # test is that drawing moves smoothly: no frame of any walk
   # shifts reach further than one step of turn itself would.
   var jump = 0.0
-  for way in TurnWay:
-    let w = WAYS_OF_TURNING[way]
+  for manner in Manner:
+    let w = MANNERS[manner]
     for i in 0 ..< CHAIN.len - 1:
       let walk = turnWalk(handPose(CHAIN[i].wind), w.who, w.about, HALF,
                           on = Anchor.Lead)
@@ -1083,30 +1263,30 @@ proc checkHandTurns*() =
     &"it: through every frame of every walk it never moves more than " &
     &"{decimal(jump, 0)} degrees at a step, so nothing snaps"
 
-  # RULE 19, RULE 28 and RULE 32.  Which ways of turning walk chain:
+  # RULE 19, RULE 28 and RULE 32.  Which manners of turn walk chain:
   # all of them, now that orbit faces centre and so turns walker
   # relative to their partner.  Half turn is half turn however danced,
   # which is whole of rule 32's reason.
   var winders: seq[string]
-  for way in TurnWay:
+  for manner in Manner:
     let
-      w = WAYS_OF_TURNING[way]
+      w = MANNERS[manner]
       landed = canonicalise(turned(handPose(), w.who, w.about, HALF),
                             on = Anchor.Lead)
       put = settled(landed, HAND_TO_HAND, ABOVE_BOTH, default(Ways))
       spun = windOf(put, HAND_TO_HAND, Arm.L).spread
     # Half turn of wind, whichever way round it went.
     doAssert abs(abs(wrap180(spun)) - HALF) < 1e-6,
-      &"A way of turning did not wind a half turn; got " &
-        &"`{decimal(spun, 1)}` for {way}."
+      &"A manner of turn did not wind a half turn; got " &
+        &"`{decimal(spun, 1)}` for {manner}."
     winders.add w.title.toLowerAscii
-  # No count assert: `winders` gains one entry per way unconditionally, so
-  # counting it against `TurnWay` could never fail.  doAssert in
-  # loop is check -- way that does not wind stops build there.
-  told.add &"all {winders.len} ways wind the pair a half turn and so walk " &
+  # No count assert: `winders` gains one entry per manner unconditionally, so
+  # counting it against `Manner` could never fail.  doAssert in
+  # loop is check -- manner that does not wind stops build there.
+  told.add &"all {winders.len} manners wind the pair a half turn and so walk " &
     "the chain, orbits as much as axis turns -- because an orbit that keeps " &
     "its side to the centre turns the walker relative to their partner, " &
-    "which is what lets the ways be equated at all"
+    "which is what lets the manners be equated at all"
 
   # RULE 29.  `"the animations don't have the proper breaks that the static`
   # `images do ... they end up on the wrong z order."`  Moving reach cannot
@@ -1146,14 +1326,15 @@ proc checkHandTurns*() =
           along += run
         result.add here
 
+  const WRITTEN = 0.15 ## Slack markup's own one decimal leaves in sum.
   var gaps = 0
-  for way in TurnWay:
-    let w = WAYS_OF_TURNING[way]
+  for manner in Manner:
+    let w = MANNERS[manner]
     for edge in 0 ..< CHAIN.len - 1:
       let
         figure = built[&"hw_{w.tag}_{edge}"]
         walk = turnWalk(handPose(CHAIN[edge].wind), w.who, w.about,
-                        HALF * windSense(way), on = Anchor.Lead)
+                        HALF * windSense(manner), on = Anchor.Lead)
         put = walk.poses.mapIt(settled(it, HAND_TO_HAND, ABOVE_BOTH,
                                        default(Ways)))
       var shades: array[Arm, array[2, seq[seq[tuple[opens, shuts: float]]]]]
@@ -1162,7 +1343,7 @@ proc checkHandTurns*() =
           shades[arm][k] = gapsIn(figure, shade)
           doAssert shades[arm][k].len == walk.poses.len,
             &"A break does not run the whole move; got " &
-              &"`{shades[arm][k].len}` of `{walk.poses.len}` in {way}."
+              &"`{shades[arm][k].len}` of `{walk.poses.len}` in {manner}."
       # Every crossing broken exactly once, frame by frame, and broken on
       # arm that alternation names: crossing with none or with two is
       # picture that does not say which connection is on top.
@@ -1182,11 +1363,10 @@ proc checkHandTurns*() =
                               degToRad(windOf(put[i], HAND_TO_HAND, arm).phi),
                               degToRad(spun[arm]),
                               share = windShare(spun[arm] / 360, arm))
-        let
-          meetings = crossingsOf(routes[Arm.L], routes[Arm.R])
-          # Drawing reads wind off Left connection to name
-          # which is on top, so check has to read it off same one.
-          on_top = overArm(spun[Arm.L])
+        # Drawing reads wind off Left connection to say which arm is on
+        # top, so check reads it off same one and asks `divesOf` for
+        # answer rather than working it out again.
+        let meetings = crossingsOf(routes[Arm.L], routes[Arm.R])
         for arm in Arm:
           let
             middle = routes[arm].len div 2
@@ -1202,11 +1382,15 @@ proc checkHandTurns*() =
           # And where this reach dives, in same measure: crossings
           # in order, diving arm alternating from first.
           var dips: seq[float]
-          for k, meeting in meetings:
-            let under = if (k mod 2 == 0) == (on_top == Arm.L): Arm.R
-                        else: Arm.L
-            if under == arm:
-              dips.add alongAt(routes[arm], meeting)
+          for meeting in divesOf(routes[Arm.L], routes[Arm.R],
+                                 spun[Arm.L] / 360)[arm]:
+            # Where break for that crossing sits, asked of drawing rather
+            # than worked out again.  Crossing lying nearer to hand than
+            # half its own shadow carries none, since gap would hang off
+            # end (`gapFor`), and there is then nothing to look for.
+            let gap = diveGap(routes[arm], routes[other(arm)], meeting)
+            if gap.shuts > gap.opens:
+              dips.add (gap.opens + gap.shuts) / 2
           # Each dive wears one break, and no break is worn anywhere else --
           # which together are what crossing being drawn as crossing
           # means, however break happened to fall across two
@@ -1214,21 +1398,39 @@ proc checkHandTurns*() =
           for at in dips:
             doAssert marks.anyIt(at >= it.opens - 1 and at <= it.shuts + 1),
               &"A crossing is drawn without a break; got a dive at " &
-                &"`{decimal(at, 1)}` on {arm} outside every break in {way} " &
+                &"`{decimal(at, 1)}` on {arm} outside every break in {manner} " &
                 &"edge {edge} frame {i}."
           for mark in marks:
             doAssert dips.anyIt(it >= mark.opens - BREAK and
                                 it <= mark.shuts + BREAK),
               &"A break is drawn without a crossing; got one at " &
-                &"`{decimal(mark.opens, 1)}` on {arm} in {way} edge {edge} " &
+                &"`{decimal(mark.opens, 1)}` on {arm} in {manner} edge {edge} " &
                 &"frame {i}."
+          # And every piece break leaves is long enough to read as
+          # line.  Round cap draws piece of no length as disc as wide as
+          # line, so sliver at either end of half -- at seam between two
+          # shades, or at hand -- comes out as dot, and dot inside break
+          # reads as connection coming through it.
+          for k in 0 .. 1:
+            let
+              stretch = if k == 0: deep else: polylineLen(routes[arm]) - deep
+              here = shades[arm][k][i]
+            for m, mark in here:
+              let after = if m + 1 < here.len: here[m + 1].opens - mark.shuts
+                          else: stretch - mark.shuts
+              for piece in [mark.opens, after]:
+                # Nothing at all is written as nothing to within precision
+                # markup carries, which is one decimal on each of several
+                # numbers.  Drawing emits no piece between that and
+                # `SEEN_RUN`, so gap between them is where fault shows.
+                doAssert piece <= WRITTEN or piece >= SEEN_RUN - WRITTEN,
+                  &"A break leaves a piece too short to read as line; got " &
+                    &"`{decimal(piece, 2)}` on {arm} shade {k} in {manner} " &
+                    &"edge {edge} frame {i}."
           gaps += dips.len
           if i == 0:
-            for k, meeting in meetings:
-              let under = if (k mod 2 == 0) == (on_top == Arm.L): Arm.R
-                          else: Arm.L
-              if under == arm:
-                first_cuts[arm].add meeting
+            first_cuts[arm] = divesOf(routes[Arm.L], routes[Arm.R],
+                                      spun[Arm.L] / 360)[arm]
       # And arm it breaks is arm its still breaks, and as many
       # times -- which is disagreement this rule was given for.
       # Measured as length lost, so break that lands where two
@@ -1244,13 +1446,15 @@ proc checkHandTurns*() =
           # What its still would lose if it were cut where move's own
           # first frame dives: same arm, same places, same
           # length gone.
-          want_lost = whole - cutGapsAt(settled_pair, first_cuts[arm])
+          want_lost = whole - cutGapsAt(settled_pair,
+                                        pairOf(CHAIN[edge].wind)[other(arm)],
+                                        first_cuts[arm])
             .mapIt(polylineLen(it)).foldl(a + b, 0.0)
         doAssert abs(whole - ink - want_lost) < 0.5,
           &"The moving figure breaks a different arm from its still, or in " &
             &"different places; got `{decimal(whole - ink, 1)}` missing from " &
             &"the still for `{decimal(want_lost, 1)}` of the move's " &
-            &"`{first_cuts[arm].len}` dives on {arm} in {way} edge {edge}."
+            &"`{first_cuts[arm].len}` dives on {arm} in {manner} edge {edge}."
   told.add &"a moving reach carries the break a still one does: {gaps} of " &
     "them drawn across the page, one at every crossing on every frame, on " &
     "the same arm the still breaks -- worn as a dash, since a reach cut " &
@@ -1267,13 +1471,13 @@ proc checkHandTurns*() =
   var
     winding = 0
     reach = 0.0
-  for way in TurnWay:
-    let w = WAYS_OF_TURNING[way]
+  for manner in Manner:
+    let w = MANNERS[manner]
     var winds_at_all = false
     for edge in 0 ..< CHAIN.len - 1:
       let
         walk = turnWalk(handPose(CHAIN[edge].wind), w.who, w.about,
-                        HALF * windSense(way), on = Anchor.Lead)
+                        HALF * windSense(manner), on = Anchor.Lead)
         put = walk.poses.mapIt(settled(it, HAND_TO_HAND, ABOVE_BOTH,
                                        default(Ways)))
       for arm in Arm:
@@ -1285,32 +1489,32 @@ proc checkHandTurns*() =
           doAssert abs(turned_by) < 360 * abs(STEPS[^1]) + 1e-6,
             &"An animation winds past the end of the chain; got " &
               &"`{decimal(turned_by / 360, 2)}` turns at frame `{i}` of " &
-              &"{way} edge {edge}."
+              &"{manner} edge {edge}."
         # And it starts and turns where chain says, so edges are
         # chain: out to next position along, and back as it came.
         doAssert abs(spun[0] - 360 * CHAIN[edge].wind) < 1e-6 and
             abs(spun[^1] - 360 * CHAIN[edge].wind) < 1e-6,
           &"An edge does not start and end on its own position; got " &
             &"`{decimal(spun[0] / 360, 2)}` to `{decimal(spun[^1] / 360, 2)}` in " &
-            &"{way} edge {edge}."
+            &"{manner} edge {edge}."
         let far = spun[spun.mapIt(abs(it)).maxIndex]
         if abs(abs(far) - abs(360 * CHAIN[edge].wind)) > 1e-6:
           winds_at_all = true
           doAssert abs(far - 360 * CHAIN[edge + 1].wind) < 1e-6,
             &"An edge turns away from the next position instead of " &
               &"towards it; got `{decimal(far / 360, 2)}` for " &
-              &"`{CHAIN[edge + 1].name}` in {way} edge {edge}."
+              &"`{CHAIN[edge + 1].name}` in {manner} edge {edge}."
         reach = max(reach, abs(far))
       # And it really travels, or sense that was measured for it has
       # quietly frozen it in place.
       doAssert walk.poses.anyIt(
           it.place[Dancer.Follow] != walk.poses[0].place[Dancer.Follow] or
           it.facing[Dancer.Follow] != walk.poses[0].facing[Dancer.Follow]),
-        &"A transition does not move at all; got {way} edge {edge}."
+        &"A transition does not move at all; got {manner} edge {edge}."
     if winds_at_all:
       inc winding
   told.add &"the chain has ends and they hold: {winding} of " &
-    &"{TurnWay.toSeq.len} ways wind, every edge rocks out to the next " &
+    &"{Manner.toSeq.len} manners wind, every edge rocks out to the next " &
     &"position along and back, and nothing anywhere is drawn past " &
     &"{decimal(reach / 360, 2)} of a turn -- the swans, which are the ends"
   told.add &"and the two patterns are one chain read half a turn apart: " &
@@ -1327,7 +1531,8 @@ proc checkHandTurns*() =
     hatched = 0
     hatch_still = 0
   for key, figure in built:
-    if not (key.startsWith("hh_") or key.startsWith("hw_")):
+    if not (key.startsWith("hh_") or key.startsWith("hw_") or
+            key.startsWith("hc_")):
       continue
     doAssert "r=\"2.7\"" notin figure,
       &"A high dot appears where above was asked for; got `{key}`."

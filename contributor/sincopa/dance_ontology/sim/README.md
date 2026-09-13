@@ -106,16 +106,18 @@ answers and nothing is tuned to make them agree.
 
 The shoulder girdle is rigid: rolling a shoulder forward adds several
 centimetres to a real reach and none here, so a wrap that a dancer gets by
-that is refused a little early. The trunk does not twist or bend. The couple
-step in and out a centimetre at a time as they turn, wherever that leaves the
-joints freer, so a stance is found rather than given; what they cannot do is
-step sideways or take a hammerlock's own footwork. A free arm is not there at
-all, so whether a wrap goes
-under or over the *other* arm cannot be read for a one-hand hold. The bodies
-are one stature. The search is local: a block is reported with whether any
-pose exists a step beyond, and a pose that exists but was not found would
-show there as *re-organised*. And a torso is an ellipse of its round, which
-is a tape's shape and not a chest's.
+that is refused a little early. The trunk twists at the waist, forty degrees
+each way and sprung to square, and does not bend. The arms weigh nothing; what
+weight does to an elbow about the line from shoulder to wrist is put back as a
+torque, and nothing else weight does is. The couple stand for each turn
+wherever it carries furthest and, among distances carrying it as far, wherever
+the arms move least between moments, so a stance is found rather than given
+and two ways of one turn may stand at two distances; what they cannot do is
+step as they turn, or take a hammerlock's own footwork. Every arm is there,
+held or free, and every capsule of every arm meets every other body's, so a
+wrap going under or over the *other* arm is what the engine says it is. The
+bodies are one stature. And a torso is a stadium of its round, which is a
+tape's shape and not a chest's.
 
 ## Reading it
 
@@ -124,25 +126,32 @@ vec.nim      points, directions, and the two contact tests
 rig.nim      every measurement, with its source
 body.nim     two bodies standing and facing; where the shoulders are
 limb.nim     one arm: forward kinematics, inverse kinematics, joint readings
-contact.nim  arms against bodies and against arms
-solve.nim    a pose evaluated, seeded, refined, settled; routing
-sweep.nim    turning, moment by moment, until something gives
-read.nim     what a pose says about itself, still in body words
-draw.nim     a state as two pictures: from above, and from the side
-page.nim     the browser page, compiled to JS: a hold, a level, and a
-             quarter turn at a time by buttons, on axis or in orbit; each
-             quarter is carried the same way and stops where the arms do,
-             and the couple stand wherever the joints have the most room
-../tests/tlaws.nim  what the model is held to, all of it about bodies and arms
+contact.nim  arms against bodies and against arms, as geometry
+hold.nim     what the couple is asked: which hands are joined, what may stop
+engine.nim   the rigid body engine, bound; nothing above it knows it is C
+rigid.nim    two dancers in that engine: capsules, joints, their ranges,
+             and what stops a connection
+walk.nim     a hold turned until something gives, from wherever the couple
+             stand for that turn; whether a pose holds, whether a turn reaches
+seen.nim     one sweep recorded whole -- every capsule, every joint -- for
+             the rig viewer to draw
+read.nim     what a pose says about itself, still in body words: crossings,
+             lying, the tightest joint
+../tests/trigid.nim  the rig held to tape, geometry and the Architect's floor
+../tests/tlimb.nim   the tape's numbers and one arm's kinematics
+../tests/tread.nim   crossings read off the drawn arms, not assumed
 verdicts.nim the sim run as an instrument against the ontology's sheet
 verdicts.md  what it said, translated once and generated, not edited
-../pages/sim/index.html  the page's shell and style, written by hand;
-             copied into build/ by `nim r tools/build.nim pages`
+../design/rig_view.nim  the rig viewer, compiled to JS: every capsule the
+             engine collides, and every joint beside its range
 ```
 
 ```
 nim r koch tests contributor/sincopa/dance_ontology  # the laws, with every other suite
-nim r tools/build.nim pages       # the page, into build/sim/
+nim r tools/build.nim pages       # every page, the rig viewer among them
+nim r tools/build.nim modelled    # rewrite design/modelled.json: cards reached
+nim r tools/build.nim rig         # rewrite design/rig.json: sweeps the viewer plays
+nim r tools/build.nim turns       # rewrite design/turns.json: whole-cloth sweeps
 nim r tools/build.nim verdicts    # rewrite verdicts.md from the current model
 ```
 
@@ -153,25 +162,23 @@ agreed words. Because here it *measures* what the ontology *asserts*, and a
 translation kept visible is evidence, where an assumed identity would be an
 echo. The laws run under `nim r koch tests`; run them before
 `nim r tools/build.nim pages`, because a page drawing a model that has stopped
-holding is worse than no page. The floor's claims are a suite of their
-own, each row held to what the sim answers today so that neither a mend nor
-a regression passes unseen; `-d:floorIsLaw` holds the sim to the floor
-outright, which three of the seven claims fail.
+holding is worse than no page. The floor's claims are read beside the sim's
+answers in `verdicts.md`, and nothing is tuned to make them agree; where they
+disagree the record says which, and `PROVENANCE.md` says what was done about
+it.
 
-The solver is built to be asked millions of times a sweep without the answers
-depending on it. What a state has that no evaluation changes -- each body's
-axes, its parts' sections and height bands, its shoulders -- is worked out
-once into a `Scene` and handed down; a seed is tried reach first, then joint
-by joint with the dear twist last, then by cost, and only then against the
-bodies, giving up at the first refusal, which is the same verdict `evaluate`
-reaches in full; a trial pose in the pattern search is one number changed in
-place and put back; and every pose the sweep carries is carried with the
-verdict that found it. Sweeps of different holds share nothing, so
-`sweptAll` runs them side by side on the cores there are, in a fixed order.
-None of it moves a number: the laws, `verdicts.md` and the whole-cloth page's
-`turns.js` come out byte for byte as they did when all of it was done the
-plain way, and that is the test of any change here.
+What costs is the search for where to stand. A sweep is run whole at every
+distance the couple may stand at, two centimetres apart from clear of each
+other outward, and only the one that carries furthest is kept; a card asking
+whether a turn is reached is answered at the first distance that reaches it,
+so an easy card costs one sweep and only a card nothing reaches pays for the
+whole search. Ranking distances on a coarser physics and sweeping only the
+winner at full resolution was measured and rejected: it does not rank them
+the same. The three recorders -- `modelled`, `rig`, `turns` -- are their own
+verbs for that reason, and their answers are committed, so `pages` folds what
+was last recorded rather than paying for it again.
 
-This is one of two pages the project stands behind, rather than a mock-up.  Its
-URL is listed with every other published page in `../README.md`; republishing
-`build/sim/artifact.html` to that URL is the whole release step.
+The rig viewer is one of two pages the project stands behind, rather than a
+mock-up: `design/rig_page.nim` writes `build/design/rig.html` from
+`design/rig.json`, and its URL is listed with every other published page in
+`../README.md`.

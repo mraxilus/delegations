@@ -29,7 +29,7 @@ const TITLE* = "Hand-to-Hand Turns, So Far"
   ## What page calls itself, in its tab and at its head.
 
 
-const WINDING: array[TurnWay, string] = [
+const WINDING: array[Manner, string] = [
   "The follow turns half a circle where they stand, and the pair winds " &
     "half a turn with them. Nobody travels and nothing needs bringing back " &
     "afterwards, so this is the plainest of the four: one stage, and the " &
@@ -48,20 +48,20 @@ const WINDING: array[TurnWay, string] = [
     "winds: it walks the chain, and it lands on the very position the " &
     "<em>lead's</em> axis turn lands on.",
   "The lead walks the half circle instead, facing the centre the same way, " &
-    "and it winds the pair a half turn too. It is the one way of the four " &
+    "and it winds the pair a half turn too. It is the one manner of the four " &
     "that takes the lead off their spot, so it is the one whose second " &
     "stage has both the travelling and the turning to bring back.",
-] ## What each way of turning does to pair, in this page's terms.
-  ##   Not `WAYS_OF_TURNING`'s own blurbs: those speak of single hand
+] ## What each manner of turn does to pair, in this page's terms.
+  ##   Not `MANNERS`'s own blurbs: those speak of single hand
   ##     coming round, and here orientation is exactly what returns.
 
 
 func plates(P: Parts): string =
-  ## Lay out four ways of turning, each walking every edge of chain.
-  for way in TurnWay:
-    let w = WAYS_OF_TURNING[way]
+  ## Lay out four manners of turn, each walking every edge of chain.
+  for manner in Manner:
+    let w = MANNERS[manner]
     result.add &"""<div class="plate"><h3>{w.title}</h3>"""
-    result.add &"<p>{WINDING[way]}</p>"
+    result.add &"<p>{WINDING[manner]}</p>"
     result.add """<p>Every edge of the chain, each rocking between its two
       ends so the half turn reads both ways:</p>"""
     result.add """<div class="row mid">"""
@@ -70,7 +70,7 @@ func plates(P: Parts): string =
         moving = P[&"hw_{w.tag}_{i}"].replaceFirst(
           "class=\"mv\"", "class=\"mv moving\"")
         still = P[&"hw_{w.tag}_{i}_still"]
-      # Every way walks chain now, orbits included (rule 32), so every
+      # Every manner walks chain now, orbits included (rule 32), so every
       # cell says position it lands on.
       result.add &"<figure>{moving}{still}<figcaption>{CHAIN[i].name}" &
         &"<br>&rarr; <b>{CHAIN[i + 1].name}</b></figcaption></figure>"
@@ -106,14 +106,15 @@ const BODY = """
   half turn from there winds the pair one step further, and the chain runs
   out at a turn and a half each way.</p>
   <p><b>Which way the partners face follows from the wind</b>, so the
-  captions leave it out and it is said once here: <b>face to face</b> at a
-  whole number of turns — the frame and the diamonds — and <b>both facing
-  one way</b> at a half — the X's and the swans.</p>
-  <p><b>A half turn makes an X.</b> The partners end up facing the same way,
-  and the two connections cross once overhead — the plain crossing the app
-  already uses for a crossed pair, with the over-and-under break saying
-  which arm is on top. <b>A whole turn makes a diamond</b>: the pair crosses
-  <em>twice</em>, once by the lead and once by the follow, and what the two
+  captions leave it out and it is said once here: <b>face-to-face</b> at a
+  whole number of turns — the frame and the diamonds — and <b>pillion
+  lead</b> at a half — the crosses and the swans.</p>
+  <p><b>A half turn makes a cross.</b> The partners end up pillion lead, both
+  facing one way with the lead behind, and the two connections cross once
+  overhead — the plain crossing the app already uses for a crossed pair, with
+  the over-and-under break saying which arm is on top. <b>A whole turn makes a
+  diamond</b>: the pair crosses <em>twice</em>, once by the lead and once by
+  the follow, and what the two
   crossings enclose is the shape rule 27 named. <b>The two crossings say
   opposite things</b> — whichever connection is over at the lead's end is
   under at the follow's, because that is what being wound together means.</p>
@@ -131,25 +132,25 @@ const BODY = """
   is what going round means, and the difference between the two ends is the
   wind. A reach is then just the shadow of a wound arm from above — its
   offset from the axis swinging as far round as the pair has. Straight at
-  none, an X at a half, a diamond at a whole, and every frame in between
+  none, a cross at a half, a diamond at a whole, and every frame in between
   following from the same measure, which is what stops a turn snapping into
   its final shape.</p>
-  <p><b>All four ways of turning wind, and by the same half turn.</b> That
+  <p><b>All four manners of turn wind, and by the same half turn.</b> That
   is rule 32's doing and its whole reason: an orbiter keeps whatever side of
   them faced the centre facing it, so they turn as far as they travel and
   the pair winds with them. A half turn is then a half turn however it is
-  danced, and the four ways can be equated. <b>An orbit even lands on the
+  danced, and the four manners can be equated. <b>An orbit even lands on the
   same position the other dancer's axis turn lands on</b> — measured, and
   asserted on every build.</p>
   <p><b>It was not always so.</b> An earlier rule had an orbiter keep their
   own bearing, and a walker who does that never turns relative to their
   partner: measured, that orbit wound nothing at all, and only two of the
-  four ways walked this chain. Keeping the bearing is still a move — it is
+  four manners walked this chain. Keeping the bearing is still a move — it is
   the orbit with a counter-turn danced into it — but it is not the orbit.</p>
   <p><b>The names are preliminary and yours.</b> <em>Left over Right</em> is
   the position where the lead's Left connection passes over the Right at the
-  lead's own crossover; <em>Right over Left</em> is its mirror. The X, the
-  diamond and the swan a step apart share a name because they are the same
+  lead's own crossover; <em>Right over Left</em> is its mirror. The cross,
+  the diamond and the swan a step apart share a name because they are the same
   winding, carried further.</p>
 </section>
 
@@ -159,11 +160,11 @@ const BODY = """
   <p><b>Hand to hand and the crossed pair are the same chain.</b> A hold has
   one position where its two connections run parallel and cross nothing —
   and that position sits at a different <em>facing</em> for each of them.
-  Hand to hand is parallel with the partners <b>face to face</b>; hold left
-  to left and right to right instead and it is parallel with one of them
-  <b>facing away</b>, which on this page's chain is half a turn along. Every
-  step after that is the same step: X, diamond, swan, out to a turn and a
-  half each way.</p>
+  Hand to hand is parallel with the partners <b>face-to-face</b>; hold left
+  to left and right to right instead and it is parallel <b>pillion lead</b>,
+  which on this page's chain is half a turn along. Every
+  step after that is the same step: cross, diamond, swan, out to a turn and
+  a half each way.</p>
   <p><b>So the phase is measured, not written down.</b> The build turns the
   follow to each candidate and asks which one leaves the hold unwound, using
   the same measure everything else here uses. This page comes out at nothing;
@@ -178,9 +179,9 @@ const BODY = """
 <section>
   <div class="head"><span class="n">The chain</span><h2>The seven, in
   order</h2></div>
-  <p>All four ways of turning reach these same seven, so they are drawn once
+  <p>All four manners of turn reach these same seven, so they are drawn once
   rather than four times over. Which dancer turned is not something a position
-  can say — only the path can, which is why every way is animated below.</p>
+  can say — only the path can, which is why every manner is animated below.</p>
   <div class="row mid">
     {chain}
   </div>
@@ -201,7 +202,7 @@ const BODY = """
   are the ends of the chain and they hold — no frame of any animation is
   wound further, and no position anywhere draws two diamonds stacked. Which
   way a turn goes is chosen for it: whichever way walks the chain
-  <em>inward</em>, measured per way rather than assumed. The chain runs out
+  <em>inward</em>, measured per manner rather than assumed. The chain runs out
   where this scope does, not where the dance does — a pair can keep
   winding, and what lies past the swan is yours to settle.</p>
 </div>
@@ -210,10 +211,10 @@ const BODY = """
   <p><b>Still not in the app.</b> Same standing as the other pages: the app
   keeps drawing the eight frames and nothing else until the marks are
   settled.</p>
-  <p>Yours to settle on this page: whether <em>box</em> is the word, and
-  whether the two ends should be named for the lead's crossover as they are
-  here or for the whole shape; how wide the box should open; and whether an
-  edge should carry the turn sign, which was built for exactly this job.</p>
+  <p>Yours to settle on this page: whether the two ends should be named for
+  the lead's crossover as they are here or for the whole shape; how wide the
+  diamond should open; and whether an edge should carry the turn sign, which
+  was built for exactly this job.</p>
 </div>
 
 </div>

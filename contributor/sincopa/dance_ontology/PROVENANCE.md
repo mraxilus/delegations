@@ -23,7 +23,7 @@ sheet arrives; until then they are stale by construction, not by neglect.
 ## Language
 
 **Every term is agreed with Architect before it is written.** Forty-four terms written
-without agreement were removed on 2026-09-06 and are in history. Thirty-seven are now agreed,
+without agreement were removed on 2026-09-06 and are in history. Forty-six are now agreed,
 each concept set out with candidate names and their costs, and only selected name written.
 Audit checks glossary's shape and never its words, so this holds by Architect's reading
 alone.
@@ -33,6 +33,14 @@ coins its own only where none does; four are its own -- rig, pose, strain, block
 it witness is that it imports nothing from `src/` and is told no answer, never that it speaks
 other language. Care is needed only where sim *measures* what ontology *asserts*: there
 translation stays visible (`sim/verdicts.nim`), since assumed identity would be echo.
+
+**`wind` is `twist`, and the workbench still says `wind`.** `GLOSSARY.md` has listed `wind`
+under Twist's _Avoid_ all along, and the workbench uses it in about fourteen identifiers and
+across page prose, for the quantity the model calls twist. Architect confirmed the two are one
+on 2026-09-07 and put the rename after the frame-position review, so captions do not move
+while they are being ruled on. A unit differs where the word does not: the model counts twist
+in half turns (`HalfTurns`), this glossary says quarter turns, and the workbench counts turns
+as a real number. Which of the three the term means is the second thing that pass settles.
 
 Held back by decision, not omission. Workbook, base sheet and vocabulary sheet wait until new
 sheet arrives, since nothing should be written about file this project has not seen. Review
@@ -131,6 +139,121 @@ markup and none of the routing, at the price of compile time. Verified by `tdiag
 (every picture says what its frame is, at any size) and by the workbench's gates
 (`design/checks.nim`, 102 assertions on the pages).
 
+**Rule 24 was measured at the corner, and a kink walked through it.** A settled reach picks
+its way past the marks it must not touch by weighing three candidates -- the taut band let
+go from the straight line, and a bow over each side -- on length and turns together
+(`readingCost`). Until now the taut band was taken unweighed wherever it turned little and
+turned smoothly, on the grounds that nothing could be plainer. It can be: the band hugs
+whichever mark it meets, and a mark that sits near a hand puts the whole of that hug against
+that hand, so the line runs dead straight to its far end and bends only there. The Architect
+called out exactly that on B4 and B23 of the review sheet. **Measured**: their reach crested
+0.88 of the way along its chord with 8.3 degrees at one corner, where every other bending
+reach on the page crested between 0.40 and 0.60; the bow those two now take crests at 0.53
+and 0.59 with 3.4 degrees, which is the shape of B7 beside them. All three candidates are
+now weighed every time, and `crestOf` measures rule 24 along the reach as well as at its
+sharpest corner -- a reach that leaves its chord must crest away from both hands. Rejected:
+tuning a clearance to move the hug, which would have left the rule measuring half of itself.
+Cost: three band relaxations per settled reach where one sometimes did, which is the mark
+suite going from 20.9 to 23.3 seconds; and the bow beats the hug on those two by a hundredth
+of a unit of line, so the preference is real but thin -- it is the review sheet's pins that
+keep a flip from passing unseen. Verified: the fix moved exactly two drawings of the 148 on
+the review page and eight of the 273 on the single-turn page, and nothing on the frame, sign
+or hand-to-hand pages.
+
+**The chain is walked, not jumped, so what lies between two positions is seen.** Past a whole
+turn the pair stops sharing its swing evenly: one connection gives its bend up and runs
+straight while the other snakes round it (rule 31). How *quickly* it gives it up was written
+as a fast start, on the grounds that the third crossing wanted to arrive early. Measured, it
+does not -- the third crossing arrives at the swan whatever the hand-over does. What the fast
+start did instead was collapse the straight connection to a short stub for most of the walk,
+so the diamond fell apart and the swan was built again rather than one opening into the other.
+The Architect danced the figure and named the missing bend. The hand-over is now slow at the
+start and quick at the end, so the connection keeps its bend nearly all the way and gives it
+up at the last. Verified: no still moved -- the hand-over is nothing at a whole turn and
+everything at a turn and a half, which is exactly where the chain's positions sit, so all 87
+pinned cards passed unaltered and only the eight moving chain cells changed. A first pass eased the
+hand-over at 3.5, which left the pair still crossing once between 1.28 and 1.38 turns -- one
+arm laid flat over the other rather than going round it, which the Architect saw and named.
+At 7.0 it never does: measured over the whole stretch at two-hundredths of a turn, the two
+connections cross at least twice everywhere, and a check now walks that stretch and holds it.
+What remains is smaller and of a different kind: the third crossing shows briefly around 1.38
+to 1.40 turns, withdraws, and returns at 1.48. It is recorded rather than claimed fixed.
+
+**A break that leaves a sliver draws a dot, and a dot says the opposite of a break.** A
+connection is stroked with a round cap, so a painted piece of no length is still drawn -- as a
+disc as wide as the line. Three places left such a piece. `gapFor` dropped a break only where
+the gap would hang off the end of the reach, so a crossing a hair inside that threshold kept a
+full-width gap and left the line joined to its hand by a stub of 0.01; the moving reach's dash
+pattern left a hair of paint at the seam between a reach's two shades, and another where two
+breaks nearly met; and the pattern is measured along the sampled polyline but spent along the
+smoothed curve drawn through it, which is about half a per cent longer, so a gap stopping at
+the polyline's end left the curve's own tail painted. Each drew a dot: at a hand it read as the
+connection detached from it, and inside a break it sat on the crossing the break exists to
+show, so the two connections read as passing through one another. The Architect saw both on the
+hand-to-hand chain, swan to diamond. `SEEN_RUN` now names the least piece that reads as a line;
+`gapFor` narrows a break rather than dropping it, keeping that much line at each hand, and gives
+up only where the gap would be narrower than the line it hides; and the dash pattern gives any
+shorter piece at a seam to the break, running it a stroke past the polyline's end. Rejected:
+widening the suppression threshold, which would have drawn more crossings with no break at all
+-- the opposite of what rule 14 asks. Verified by `tmarks.nim`, which drives the build: every
+piece a break leaves is now nothing at all or at least `SEEN_RUN`, over every frame of every
+edge of every manner. Cost: breaks near a hand are shorter than breaks in the middle, where
+before they were all one length. The fix moved 12 of the 99 cards -- the four swan stills, whose
+straight connection crosses close to a hand, and all eight moving chain cells.
+
+**The third crossing arrives once, and the snake pulls in before it opens.** From a whole turn
+to a turn and a half the pair gains one crossing, so the picture reads two crossings and then
+three, changing once; it used to read two, three, two, three, gaining one at 1.22 turns, losing
+it again from 1.41 to 1.46 and taking it back at 1.47. The lost stretch is the third crossing
+diving back under a hand mark, where no break can be drawn: **measured**, it sat 2.9 units from
+the follow's hand at 1.42 where the reach is trimmed at 7.7.
+
+The two connections do two different things past a whole turn, so they take two shapes rather
+than one shared between them. The straight one **hinges**: it gives up its bend late and then
+all at once (`SWAN_EASE`). The snake **pulls in** against it while the pair tightens
+(`SWAN_DRAW_IN`, `SWAN_DRAWS_AT`) and only then **opens out** into loops that go round it
+(`SWAN_SWING`, `SWAN_OPENS_AT`). That order is what does the work: the snake is at its tightest,
+0.89 of one connection's swing, at exactly 1.42 turns, which is where the third crossing runs
+nearest a hand, and it opens after. **Measured**: the crossing now keeps 8.5 clear of any hand
+at its tightest against a trim of 7.7, where a snake that opens early drives it under the mark.
+Rejected: one width for the whole stretch, which is what a single `SWAN_SWING` is — the widest
+such swan that keeps the count monotonic bows 14.1, against the 22 the Architect had, because in
+that shape width and crossing placement are one number. Cost: the snake gains 0.16 of its swing
+over the last hundredth of a turn, 3.2 of line; looked at frame by frame, 1.43 to 1.50, it
+reads as loops opening rather than as a jump — verified by looking, 2026-09-08, not by test.
+Verified by `tmarks.nim`, which drives the build: a gate walks the stretch every hundredth of a
+turn and fails if the count ever falls or rises other than once, and two more hold the snake to
+drawing in before it opens. The swan bows 22 round its straight connection, which is the width
+before this stretch was mended.
+
+**The two connections keep clear of one another where they run alongside.** Short of the swan
+they ran close enough to touch: at 1.37 turns their middles came 3.35 apart where the line is
+3.4 wide, so the ink merged and the Architect read the Right connection as running *into* the
+other rather than crossing it. The pinch now keeps growing past a whole turn — `WIND_NIP_MORE`
+— where its own cap used to stop it at one, which is what drew the pair as though winding had
+stopped; and the snake pulls in harder before opening wider (`SWAN_DRAW_IN` 0.65,
+`SWAN_SWING` 1.50). **Measured** over the stretch every hundredth of a turn: at 1.37 the two
+now keep 6.51 between their middles where they kept 3.35, the tightest anywhere they are not
+crossing goes from 4.05 to 4.81, and the shallowest crossing goes from 16.1° to 28.9° — well
+clear of `GRAZING`, below which a break can no longer cover what it hides. Verified by looking
+at 1.35, 1.37 and 1.39, 2026-09-08. **No gate holds this**, and that is a gap rather than an
+oversight: every measure of it that runs over the whole stretch is dominated by two other
+effects — the width of a break at its own edge, and the arrival window below — so no threshold
+separates the mended drawing from the faulty one with any margin. Stated here so a later pass
+knows it is unfenced.
+
+**Amplitude was believed unable to move a crossing, and that belief was false.** The argument
+was that both connections carry the same sine about the pair's axis with opposite sign, so
+they meet only where the sine vanishes and the size cancels. It compares the two reaches **at
+the same point along each**, which is only their crossing condition when they share a chord.
+They do not: the follow's two hands sit up to 20 units apart *along* the pair's axis wherever
+the follow has turned off a half turn, so the two chords differ everywhere between the chain's
+positions. **Measured**: holding both connections at one common share and sweeping it from 0.5
+to 2.0 moves the count at 1.20 turns through 0, 2, 3 and 1. The belief stood while the whole
+family was ruled out untried, and while crossings were counted through a fold that merged
+them, so the sweep that would have refuted it was scored blind. It earns its line because
+anyone re-deriving it reaches the same wrong place.
+
 **The map and the spokes are the same picture at two distances.** `map.nim` draws the whole
 ontology with every line laid down before any word, names cut into the line with round caps
 (never painted over, since a hole in a line now means a connection passes underneath), and
@@ -184,7 +307,7 @@ removed.
 `design/README.md`; `checks.nim` asserts what each page claims between building its parts
 and writing it, and the build refuses to write a page whose claims fail. Rejected: rules
 that are implemented and not asserted, which quietly stop being true (it happened here more
-than once, recorded beside the rules). The four generated pages and the hand-drawn
+than once, recorded beside the rules). The five generated pages and the hand-drawn
 whole-cloth page are build products under `build/design/`; the whole-cloth markup is the committed
 file `mockups/wholecloth.html`, its turns panel is `wholecloth_turns.nim` compiled to JavaScript,
 and `wholecloth.nim` splices markup, the sim's sweeps (`turns.nim`) and the panel into one
@@ -199,6 +322,57 @@ records: 37 breaks inside `aria-label` values (accessible names verified equal),
 whitespace-free row with its character references decoded, and the fonts URL held as its own
 constant joined at compile time. Cost: the workbench's `doAssert` gates are the
 check, so its tests are a debug build.
+
+**The four are a manner of turn, not a way of turning.** `Manner` and `MANNERS` replace
+`TurnWay` and `WAYS_OF_TURNING` through the workbench, and the pages, checks and rule ledger
+say "manner" wherever they meant one of the four. "Way" is kept for clockwise against
+anticlockwise, which is what `wayOf` and `wayName` return, so the two senses the one word
+carried are now two words. Rejected: renaming `Way` as well, which would have left the
+turn's direction unnamed. Verified by every drawing on all five pages coming out
+byte-identical across the rename -- 66, 56, 273, 62 and 148 figures -- so nothing but the
+prose moved. Cost: nothing holds a page's prose to `GLOSSARY.md`; `tglossary.nim` reads the
+`_Avoid_` lines but claims only against chain position names, so this rename can drift back
+without a test noticing.
+
+**The moving sections show a walk whole before they show it in pieces.** Sections E and F of
+the review sheet drew one cell per edge -- 64 quarter-turn edges and 24 chain edges, 88 cells
+of animation to scroll past. Each manner of each hold now takes two cells instead: the walk
+entire, and the same walk step by step with a button per step. `turnWalk` gained `steps` and
+`back`, so one builder makes a single rocking edge, a whole round of four quarters that
+closes on itself and needs no return, and a whole chain of six halves out and back, which
+does need one because the chain has ends. The switching is a radio button and a sibling
+rule, so the page stays markup a browser draws with nothing running; rejected: script, which
+these pages have never needed. The pin now covers every drawing in a cell rather than the
+last one, since a verdict on a cell is a verdict on all of it -- and for a cell holding one
+drawing that is the same string, which is why all 59 existing pins still matched. Cost: 99
+cells where there were 147, but 6.9 MB where there were 4.2, since a walk shown whole is
+drawn as well as its pieces, not instead of them. Every animation runs at one pace
+(`WALK_SECONDS`), so the length of a loop says how far it goes rather than how fast: the
+whole chain is six times an edge, which is a long loop and is flagged on the page as
+something to shorten if it reads as slow. Verified by `tmarks.nim`, which drives the build and so
+the gates: the 16 rounds are counted, each asserted to close where it set off, and the
+whole-walk figures are held to the same hatch laws as the edges. Verified again by every
+drawing on all five pages coming out byte-identical when `steps` and `back` took their
+defaults.
+
+**A verdict is given on a picture, so the picture is pinned.** `review_page.nim` lays out
+every position the project draws as 147 cards -- the sixteen standard diagrams and the one
+anticlockwise counterpart, the twenty-eight distinct single-hand turn positions, both
+hand-to-hand chains, and every animated edge of the last two -- each carrying the identifier
+to quote back and whatever has been ruled on it. The identifiers the Architect has kept or
+dropped are named in the module; what each was drawn as when it was ruled on is held as a
+hash in `design/review-pins.json`, and the build refuses to write the page when a ruled
+card's drawing has moved. Rejected: taking the verdict as given on the identifier, which is
+how a mend that reached further than it meant to carried an approval nobody gave. The guard
+was proved by widening a break's clearance and watching it name the twelve kept cards that
+carry a crossing. Pins are rewritten only by `tools/build.nim pins`, a deliberate second
+step: a verdict and its pin are added together or not at all, and running it to quiet a
+complaint would hand the approval to the new picture. Cost: the verdicts live in the module,
+so every ruling is a commit. Verified by `tmarks.nim`, which builds the page under
+testament; by all 55 pins regenerating identical in content when the page moved into the
+workbench from the scratch generator that first drew it; and by the tally being counted off
+the built page rather than kept while building it -- 55 kept, 0 dropped, 2 marked for a
+mend, 92 still to rule on, of 147.
 
 ## Body sim
 
@@ -227,10 +401,12 @@ by joint, then by cost, then against the bodies, giving up at the first refusal;
 different holds run side by side on every core (`sweptAll`). Rejected: tuning any number to
 the floor's claims; the floor is printed beside the sim, and each of its seven claims is held
 to what the sim answers today, so neither a mend nor a regression passes unseen
-(`-d:floorIsLaw` holds the sim to the floor outright). Verified by `tlaws.nim`, 29 laws over
-every moment of thirteen sweeps: nothing enters a body, joints inside every range, mirrors
-agree, blocks bracketed with a name, and the clipped contact test against a sampled truth over
-300 seeded random segments; the forward kinematics over 200 seeded random arms. The
+(`-d:floorIsLaw` holds the sim to the floor outright). Verified by testament on 2026-09-08,
+with the 29 laws of `tests/tlaws.nim` as it then stood (retired with the solver on 2026-09-12,
+see that entry) over every moment of thirteen sweeps: nothing enters a body, joints inside every
+range, mirrors agree, blocks bracketed with a name, and the clipped contact test against a
+sampled truth over 300 seeded random segments; the forward kinematics over 200 seeded random
+arms. The
 optimisation that made the solver share a `Scene` and run side by side was measured before the
 move as a pair, but the pair is not in this tree: **unmeasured** here.
 
@@ -266,8 +442,9 @@ and never its lap count -- the couple's `twist` is read for display and by nothi
 for both two-hand holds, at rest and at half a turn. Only the sweep carries turn, moment by
 moment, and both two-hand sweeps block by 0.58. So nothing here is evidence about the diamond
 at a whole turn or the swan at a turn and a half: the rungs the chain law prints under those
-names are the rest and the X. Verified by `tlaws.nim`, which now asserts the axes identity
-outright rather than leaving it to be discovered. Cost: the sim cannot yet reach two of the
+names are the rest and the X. Verified by testament on 2026-09-08, with `tests/tlaws.nim` as it
+then stood (retired 2026-09-12) asserting the axes identity outright rather than leaving it to
+be discovered. Cost: the sim cannot yet reach two of the
 positions the drawn chain is built on.
 
 **The crossing reader is exercised off settled poses, because no swept moment crosses.** Not
@@ -321,6 +498,133 @@ the likely mechanism behind the high-band blocks reported as *arm through head*.
 pressure, not the crown fault: with `overhead` set, the same rig and the same bias block
 nothing there. Changing it would move every figure again and wants its own evidence.
 
+**Sim reaches seven of the ten chain cards the reference signs off, and falls short at three.**
+The review page draws each chain at seven winds half a turn apart with both arms over head, and
+the Architect has kept `C2`-`C6` and `D2`-`D6`. Swept from rest, the sim draws what the reference
+draws at seven of those ten and falls short at `C2`, `D2` and `D6` -- every one a **diamond**,
+every one drawn with no crossing where the reference draws two. Measured 2026-09-10 rather than
+inferred, and three readings that each rule something out: loosening the crossing reader's
+tolerance from 1e-9 to 1e-3 changes not one count, so the reader is not implicated; no moment in
+range is reseeded, so it is not lost memory; and the pose the sim settles at a whole turn stands
+0.7 cm (`D2`) and 3.0 cm (`C2`) from the rest pose, against 36-56 cm at a half turn. The arms get
+out of the wind by passing over one another, which over head there is room to do -- **not**
+through one another: the least clearance between the two connections anywhere in either sweep is
+-0.45 cm, inside the give the model already allows for flesh, and no moment's verdict is anything
+but `ok`. Whether a couple whose hands are joined can unwind an overhead chain that way is the
+Architect's to say, and is asked rather than assumed, so no mend is made here. Rejected: refusing
+the freshly settled pose wherever arms could be carried instead, which reaches `C2` and loses
+`C6` -- three cards short either way, and a different three.
+
+**The two connections were passing through one another, and the guard meant to stop it could
+not see it.** `sameCrossings` refused a writhe change of two or more, on the premise its own
+comment stated -- that two arms passing through each other change writhe by two. Measured
+2026-09-11, that premise is false: the pair resting pillion lead sheds one crossing between 0.68
+and 0.70 of a turn, sitting 1.53 along one connection and 4.24 along the other with neither near
+an end, and mirrors it turning the other way. A lone crossing leaving the middle of both
+connections is arms through arms; crossings come and go in pairs where arms pass over one
+another, and singly only at an end. The change moves writhe by one, so the old test waved it
+past. The fault hid because `Crossing` computed how far along the second connection a crossing
+sits and discarded it: a crossing sliding off that one's end reads mid-line along the first, so
+nothing could tell a fair end-slip from a pass-through. Kept now as `across`, and the guard reads
+where crossings sit rather than how far their sum moved. Verified by a law that fails on the old
+guard and passes on the new.
+
+Four readings rule out what it is not, each measured rather than argued: the crossing reader is
+not implicated, since loosening its tolerance from 1e-9 to 1e-3 changes not one count; it is not
+lost memory, since no moment in range is reseeded; it is not coarse stepping, since sixteen times
+finer gives the identical result; and it is not the solver hopping basins, since taking the trust
+region from 0.15 to 0.02 changes nothing. `evaluate` judges poses and never the path between two
+of them, which is why no sampling rate could have found it -- every pose either side of a
+pass-through is itself clear.
+
+**Cost of the mend, stated rather than implied: reach.** The chains now stop at 0.43 turns where
+an arm would enter a body, at 1.07 where the arm is not long enough, at 0.76 and 0.77 where arm
+meets arm; in all four a pose exists a step beyond and no path to it does. Ten rows of
+`sim/verdicts.md` that read as reachable now read as blocked, and it was regenerated for that
+(Article VII.6). They were only ever reached by passing arms through arms, so the smaller figure
+is the true one. Kept chain cards go from seven of ten to six: `C3` joins `C2`, `D2` and `D6` as
+short. That is the reference exposing how far the sim stands from it, which is what the reference
+is for.
+
+**The sim cannot reach the diamond at all, and no gate will change that.** Past 0.6 of a turn
+every pose the solver accepts has writhe nought, measured over every start it tries at each of
+twelve winds: the most this model winds is one crossing, and a diamond is two. The destination
+does not exist, so the shortfall is not the guard's and never was. Two causes, both structural:
+the sim proposes poses and checks them, with no notion of motion, so arms cannot slide along one
+another as a couple's do; and the rig is rigid -- no lean, no torso bend, and `elev` is not a
+`Dof`, which is the elbow bias already recorded above. Rejected: tuning the guard, which was
+tried four ways and moved nothing.
+
+**Over the head, twist is the only thing that should stop a turn, and in this sim it never
+does.** Architect's rule, given 2026-09-12: overhead is the one level whose block is a twist
+block, since over the head an arm goes round nothing. Measured the same day across all six
+holds at all three bands, thirty-six sweep ends: `Reason.Twist` is what stops **none** of them.
+Single holds overhead do not block at all, which agrees with the floor and with the sheet; the
+two chains overhead block as `Through` at 0.43 of a turn, as `Arms` at 0.76 and 0.77, and as
+`Reach` at 1.07 -- and `Through` overhead is an arm laid through a body, which is the one thing
+the rule says cannot happen up there.
+
+The limit is real and reachable, so this is not a range set too wide: twist runs from -70 to +90
+degrees on this rig, and at the low and high bands it is driven to 104 per cent of that, held
+only by the tolerance. Overhead it reaches 102 per cent for the pair resting pillion lead -- and
+`Arms` still trips first -- 65 per cent for the pair resting face to face, and 29 per cent for a
+single hold, which is nowhere near. So the constraint the Architect names as the only one that
+should bind up there is, in this model, never the one that binds anywhere.
+
+This is what the engine's joints are for. Box3D's ball joint carries a cone limit and a twist
+limit separately, so a shoulder's reach and a shoulder's twist stop being one number: the rule
+becomes something the rig expresses rather than something a cost function must be tuned into.
+Recorded before that work rather than after, so these are the figures it is held to.
+
+**Wind is read as writhe rather than as a tally of crossings.** A tally cannot tell arms wound
+round one another from two crossings of opposite sign, which annihilate under a small move and
+never were wind at all: measured 2026-09-10, the pair `D` carries just past a whole turn melts to
+nothing when walked back 0.10 of a turn, eighty small moves, while `C6`'s two crossings share a
+sign, survive twenty relaxations in place, and are wind. Tally and writhe agree on all ten kept
+cards today and the law checks that they do, so the day they part is the day this is read again
+rather than a day nobody notices. Rejected: keeping the tally as the reading, which would have
+called `D` just past a whole turn a diamond.
+
+**One reading is recorded without a diagnosis.** Turning the two ways should mirror, and for the
+pair that rests pillion lead it does -- `D3` reads +1 and `D5` reads -1. For the pair that rests
+face to face both halves read -1: `C3` and `C5` carry the same handedness. `C` is the crossed
+hold and chiral, so this may be the hold's own asymmetry rather than a fault, and it is written
+down as measured rather than argued either way. It is visible in the suite's own output, which
+prints writhe beside the tally for every card.
+
+**Both chains were swept at the torso alone, and the whole reference is drawn over head.**
+`tests/tlaws.nim` built thirteen sweeps and neither two-hand hold among them stood at the crown,
+so no law covered the one band every chain card is drawn in -- the same shape of fault as the
+five laws that could not fail, found the same way. Both are swept there now, longest first since
+they reach furthest: `tlaws` costs 13 s more for it and the whole runner 8 s more, the sweeps
+sharing cores.
+
+**A rigid body engine is cloned, not vendored, and Nim alone speaks to it.** `tools/build.nim`
+declares `box3d` in `SOURCES` with its repository, its commit
+`47d7f7cc7e091142c08d11dc7d2e493c5d34f536`, its reason and its licence (MIT, read from the
+repository's own `LICENSE` rather than assumed); `engine` clones there into `deps/`, refuses a
+clone standing at any other commit, compiles its fifty C files and archives them into
+`bin/libbox3d.a`. The commit is what stands where a checksum stands for a fetched file. Nothing
+of it is committed: `deps/` is ignored at the repository root, exactly as Atlas checkouts are.
+Rejected: its own CMake, which would be a third build driver in a project whose registry admits
+no second — the reason `make` was retired — and which nothing in fifty files needs, since none is
+generated. Cost, stated: the build flags are this project's rather than upstream's, and `-O2
+-std=c17` is what upstream's own release build sets. Measured: 50 files, 24 s cold, and the verb
+returns at once where the archive already stands.
+
+`sim/engine.nim` is the binding, and it is Nim throughout — the gated-language rule is never
+engaged, because no C file of this project's own exists to argue for itself. It links the
+archive and declares what the solver needs: world, body, capsule, ball joint, step, world point,
+angular velocity. Importing it builds the archive first, at compile time, so a suite that drives
+the engine drives its build too (Article IX.6) and no machine needs the verb run by hand.
+`tests/tengine.nim` holds it to two laws and no more — that a body falls half g t squared, which
+catches a struct laid out wrong where linking would not, and that two limb-thick capsules started
+inside one another part to at least two radii. The second is the whole reason the engine is here.
+
+**The engine stands Y up and this project stands Z up**, and the binding deliberately does not
+translate: it is a binding and nothing else, so whatever calls it says which way is up and one
+place holds that decision.
+
 ## Pages and build
 
 **Published titles say which pages the project stands behind.** Two do — the reference and the
@@ -339,6 +643,26 @@ charter's `Artifact` (a file a build writes, under `build/`) or coined a word fo
 mock-up now hold a `{{title}}` marker instead of their own names, so opening either committed
 file no longer shows what the page is called; the name is one file away, and the alternative
 was spelling it in four places.
+
+**The browser comes from the environment, and the declaration says what to install.** `shot`
+drives Chromium through Playwright, and both used to be named by absolute path in
+`design/shot.nim` — one of them with the browser's build number inside it, which pins a version
+in the least durable place there is (issue 62). Neither path is in the source now.
+`tools/build.nim` declares `nodejs` and `chromium` as data with what each is for, and a `system`
+verb prints those names one per line for an installer; `shot.nim` takes Playwright from
+`DANCE_PLAYWRIGHT` or the bare module name node resolves, and the browser from
+`DANCE_CHROMIUM`, then from `chromium` beside Playwright's own store
+(`PLAYWRIGHT_BROWSERS_PATH`), and otherwise lets Playwright resolve what it installed. Absent
+Playwright stops with a finding naming the verb that says what to install, rather than as a
+missing file. Rejected: pinning Playwright itself, which is a node package and would mean a
+`package.json` beside its lock — that enrols the project in `koch types` and demands a `types`
+verb, work the Architect has asked not be built while this half of the project may go. Cost,
+stated rather than implied: **Playwright carries no pin here at all**, and the system packages
+carry whatever version the machine has. Verified by running all four routes on this machine,
+2026-09-08, Node 22 and Playwright's Chromium 1194: nothing set stops with the finding and exit
+1; `DANCE_PLAYWRIGHT`, `NODE_PATH` and `DANCE_CHROMIUM` each write both themes' screenshots; a
+path naming no browser fails loudly rather than silently. Not repeatable from a checkout — no
+test drives `shot`, since the project carries no `drive` verb.
 
 **URLs are listed once.** Every published page's URL is in this project's `README.md`, in two
 tables that carry the same split; `design/README.md` and `sim/README.md` point at it rather
@@ -590,7 +914,30 @@ moment one arrives, and the `not Nim because` gate already refuses one that argu
 
 - `tlaws` costs 22 s of a four-core runner per audit; acceptable now, and the figure above
   is the one to watch as sweeps grow.
+- **A crossing that has just arrived cannot carry its break, and five hundredths of a turn are
+  drawn without one.** The third crossing enters through the end of a reach, so from 1.24 to
+  1.28 turns it sits between 0.0 and 4.2 along from that end — nearer than half a break — and
+  `gapFor` gives up rather than cut a gap narrower than the line it hides. Those frames draw
+  two connections crossing with nothing saying which is over, against the standing rule that
+  every crossing shows one. **Measured**: 5 of the 51 hundredths over the stretch, all of them
+  at the arrival; before this pass the same crossing went unbroken for 16 of them, because the
+  fold hid it entirely. It is not obviously mendable by tuning: a crossing entering through an
+  endpoint is at the endpoint for some interval whatever the construction, and the choices are
+  to let the break eat the end (which detaches the line from its hand) or to hold the crossing
+  hidden until it can be broken (which means trimming the reach further, and that reaches every
+  drawing). Left for the Architect to rule on.
 
+- **The drawing does not yet build the chain the way the Architect describes it.** They danced
+  the figure and stated the model: one connection **curls around** the other, and the other
+  **hinges straight** -- a right angle at the joined hands opening until the two forearms are
+  in line. The drawing still gives every connection a sine swung about the pair's axis, and
+  takes the crossings from wherever two such curves meet. The count now behaves — see the
+  third-crossing entry under Drawing chain — so
+  this is a question about whether the picture is built from the movement or merely agrees
+  with it at the positions checked. A prototype of the hinge-and-curl model gave the right
+  counts and drew shapes that are not a swan -- two straight lines crossing in an X -- because
+  it was scored before it was looked at. Anything that replaces the sine is drawn and looked
+  at first.
 ## Re-audit, 2026-09-07, type check on runner
 
 Audited by a curator against the rule that a project carrying `package.json` beside its lock
@@ -610,18 +957,26 @@ package carries no pin that survives across distributions, and the record says s
 implying one; anything fetched at build time carries a checksum the build verifies. No
 machine's paths in committed source.
 
-**This project does not comply yet, and cannot be made to by curator.** `design/shot.nim` names
-two absolute paths into one machine's layout, with browser version among them:
+Raised as issue 62, and answered: see "The browser comes from the environment" under Pages and
+build.
 
-```nim
-PLAYWRIGHT = "/opt/node22/lib/node_modules/playwright"
-CHROMIUM = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
-```
+## Re-audit, 2026-09-07, system and driven verbs
 
-Header states situation honestly, so nothing is hidden; rule now says where those belong
-instead. Raised as issue 62, labelled for this project, since source is contributor's and
-`scope` holds curator to that. This project carries `tools/build.nim` already, so declaration
-has home waiting.
+Audited against the rule as it now stands: system dependencies are declared as data in the
+project's own `tools/build.nim` and reached by a verb **named `system`**, which prints the names
+one per line and nothing else, since `koch system` feeds that output to an installer; and a
+project enrols in the driven check by carrying a verb **named `drive`** in the same driver.
+
+This project now carries `system`, and `koch system contributor/sincopa/dance_ontology` prints
+what it declares. It carries no `drive` verb and no TypeScript, so the driven check does not
+apply and nothing here is driven on the runner; `shot` stays a helper a person runs.
+
+## Re-audit, 2026-09-08, draft while you finish
+
+Audited against the rule that a pull request goes back to draft the moment another commit is
+intended, and is marked ready again after. This project's branch carries no open pull request:
+the Architect reads and merges the branch itself. Nothing to change; the rule is recorded so
+that a pull request opened later is opened as draft and kept there while work continues.
 
 ## Re-audit, 2026-09-08, deterministic verdicts
 
@@ -658,3 +1013,290 @@ Google; and the split the rule asks for is what the pages set. The one judgement
 left open, whether a label drawn inside a figure is a figure or interface text, is settled
 the second way here: X.8's own clause reads "Noto Sans for body and interface text", and a
 label naming a hand is interface text rather than a number.
+
+## Re-audit, 2026-09-12, engine holds what it can and judges what it cannot
+
+The pose search this project began with proposed poses and checked them, with no motion between
+two of them, so arms could never slide along one another: it wound a chain to one crossing and
+stopped, where the reference draws two crossings at a whole turn and three at a turn and a half.
+Box3D replaces it. `sim/rigid.nim` builds both dancers from `sim/rig`'s tape, and `sim/walk.nim`
+turns one of them and keeps every moment.
+
+**What the engine can hold, and what it cannot.** Elbow's hinge and wrist's cone it holds exactly;
+shoulder's twist too. Shoulder's *swing* it cannot: the rig gives extension and adduction as two
+ranges of their own, and a spherical joint offers one symmetric cone about rest. Rejected: fitting
+a cone to the pair. A cone about the hanging arm would also bound elevation, for which the rig
+gives no range at all, and every hold over the crown would block at once. The cone is left off,
+and swing is read back off the pose and judged against the rig.
+
+That choice is why the crown behaves as the Architect reports it: arms over the head are clear of
+both bodies and nowhere near either swing end, so twist is the only thing left to run out. It falls
+out of the rig rather than being special-cased.
+
+**A judged limit must still push back.** Judging swing after each step and never resisting it let
+the engine walk an arm where no shoulder goes, and the hold then read as blocked -- where a dancer
+would simply have put the arm elsewhere. Every one of nine sweeps blocked on `Swing`, including
+the crown, at 0.28 of a turn where the floor says no block at all. The limit now applies a torque,
+as the other three joints already get from the engine.
+
+**And a limit that pushes back needs room to push in.** With the block declared the instant the
+margin went negative, the torque engaged and the sweep stopped in the same step, and the figures
+were bit-identical with the torque and without it. An arm rests against its limit and slides along
+it; it blocks when it is forced past. `GIVE` is that room, and is the same reading, for the same
+reason, that the old solver's `TOLERANCE` had.
+
+**Torque is a pseudovector.** Each arm is worked out in the body's mirrored terms so one set of
+ranges serves both sides. A mirrored frame is left-handed, so a cross product worked out in it
+comes back negated: un-mirroring a torque as a plain vector gives exactly minus what is wanted, and
+turns the correction into a shove. The mirror law in `tests/trigid.nim` does **not** catch this --
+it passed with the sign wrong -- and the fix rests on the physics and on measurement instead.
+
+**Stance travels with the turn.** Swing is read in the dancer's own terms, so leaving the stance
+behind until a move finished judged every arm against a frame the dancer had already left.
+
+**Where the couple stand decides everything else, and it is chosen for the turn.** The Architect's
+ruling: *stand for the turn, hand height for the turn, everything for the turn; nothing should be
+fixed other than preventing collisions.* Standing had been chosen at rest -- wherever the joints
+were furthest from their ends standing still -- and kept through the turn. Measured, the couple
+walk straight out of it. Scanning every distance the cross-name chain over the crown may stand at,
+a centimetre at a time, and sweeping each one whole: the rest-chosen distance is 0.96 metres and
+turns **0.22**, where standing at 0.36 turns **1.12**. Room to move standing still is not what
+turning spends, so the one was never a proxy for the other.
+
+So `reaches` now asks the question of every distance clear of a collision and answers at the first
+that carries the turn, and `holdsAt` does the same for a pose. Maximising over the distances and
+asking whether any of them reaches it are the same answer for a single target, and the second is
+far cheaper: an easy card costs one sweep, and only a card nothing reaches pays for the whole
+search. The grid is two centimetres, coarser than the old `PACE`, because a whole sweep runs at
+each distance and the measured landscape is plateaus four centimetres wide -- a finer grid buys
+under a twentieth of a turn, below anything any card asks.
+
+Rejected: ranking the distances on a cheaper physics and sweeping only the winner at full
+resolution. It would have cost a fifth as much, and it does not rank them the same. At a turn step
+of a tenth it picks 0.46, which carries 0.36 at full resolution, over 0.36, which carries 1.12;
+arms lag differently when the couple are turned faster, so the ordering is not preserved.
+
+Hand height goes the same way: the band's two edges are held and everything between them is free.
+Held to the band's middle instead, the couple spend on height the reach the turn wanted.
+
+The rest-room chooser and its scorer are gone with it. What that scorer needed -- `freedom`, which
+counts both ends of a range where `margin` counts a stop with no ease as costing nothing to lean on
+-- is still what `roomAt` reads with for every moment the page draws, and still cannot be `margin`:
+that reads a straight elbow as perfectly comfortable. `limb.room` already drew the distinction.
+
+**Torso's section.** The engine collides capsules, so the ellipse the old contact test used is not
+available. Two capsules side by side give a stadium of the same tape round at the same flatness,
+and the neck and head fall out of the same line at a flatness of one.
+
+**What it says now, against the floor.** The floor: *everything gets a full turn before it blocks,
+except a low wrap, which gets half.* Turning the follow, from wherever the couple stand for that
+turn. The column before last is the same engine choosing its distance at rest:
+
+| hold | level | way | floor | old solver | at rest | for the turn |
+|---|---|---|---|---|---|---|
+| L-l | low | lock | a whole turn | 1.12 | 0.80 | **1.18** |
+| L-l | low | wrap | half a turn | 0.30 | 0.32 | **0.74** |
+| L-l | high | lock | a whole turn | 0.41 | 0.40 | **1.02** |
+| L-l | high | wrap | a whole turn | 1.25 | 0.20 | 0.78 |
+| L-l | above | either | no block | no block | no block | no block |
+| L-r | low | lock | a whole turn | 0.87 | 0.76 | **1.04** |
+| L-r | low | wrap | half a turn | 0.56 | 0.38 | **0.94** |
+| L-r | high | lock | a whole turn | 1.06 | 0.38 | **1.08** |
+| L-r | high | wrap | a whole turn | 0.63 | 0.22 | **1.00** |
+| L-r | above | either | no block | no block | no block | no block |
+
+Not tuned to it: every change above was argued from the rig or from the Architect's ruling, and the
+figures are what came out. Choosing where to stand at rest met **none** of the floor's eight
+claims; choosing it for the turn meets **seven**, and beats the old solver on six. The one left is
+`L-l` high wrap, at 0.78 of the whole turn the floor claims.
+
+That is the strongest evidence so far that the floor was right and the model was wrong, rather than
+the other way about. The neck band was the open question -- the engine gave between a fifth and two
+fifths of a turn where the floor said a whole one -- and it was not the neck band. It was standing
+still to choose where to stand.
+
+**Chains, which are why the engine is here at all.** The old solver winds a chain to one crossing
+and stops, so it can never draw a diamond or a swan. Standing for the turn, the cross-name chain
+over the crown reaches **1.22**, past the diamond at one and short of the swan at one and a half;
+the same-name chain over the crown reaches **0.70**, where standing at rest it stopped at 0.28. The
+same-name chain at the neck band, which found no pose at rest at all and was recorded here as a
+fault rather than a finding, now stands and turns 0.32: the fault was the standing distance, not
+the band. At the torso band it is 0.68 either way, unmoved.
+
+The same-name chain is built pillion, and the first figures taken for it here were taken face to
+face, where its two connections lie through each other. They read 0.44 at the neck and free past
+one and a half over the crown, and both were wrong -- a hold the couple would never collect there,
+measured by a probe that had dropped the argument saying so. The generator itself passes it
+correctly and always did, so `design/modelled.json` was never affected; the reading was.
+
+**Rejected: reading anything into `L-l` and `L-r` agreeing.** With centring at two hundred newtons
+per metre the two holds returned the same two figures reflected, which cannot be right -- face to
+face `L-l` is a reach across one's own body and `L-r` is a straight one, and the reflection that
+maps `L-l` anywhere maps it to `R-r`. It was an artefact of centring strong enough to flatten the
+difference between them, and it went when centring was weakened: 0.32 and 0.80 against 0.76 and
+0.38.
+
+**The old solver stays until the engine is at least as close.** Deleting it now would replace a
+model that roughly tracks the floor with one that does not, at the neck band. It goes when the
+neck band is answered.
+
+## Re-audit, 2026-09-12, later: what was wrong with the sim, one constraint at a time
+
+The Architect: *every position and rotation on the reference has been tested in reality and is
+possible, so where the sim says no, the sim is wrong. Find what, until every cell is modelled.*
+Two changes were tried first and both are recorded as rejected: the lead's arms passing through
+the follow's (it reached the swan by letting two arms occupy one place, which no couple does --
+*"you've made it worse"*), and the wrist cone widened from sixty to seventy five (clinically under,
+but measured net zero: forty seven of fifty six chain questions either way, one manner gained and
+one lost).
+
+**Adduction was the constraint, and the trunk is its real limit.** Every chain jammed on `across`
+at its forty five degree cap with the arm raised. Forty five is the hanging arm's figure -- what
+stops the arm going across the belly. Raised, the arm passes in front of the chest to about a
+hundred and thirty, and what stops it then is the chest. Either way the limit is the trunk, which
+the sim already collides, so the cap was redundant where it was right and wrong exactly where the
+chains live. Set to the clinical horizontal figure, at which the reading -- an arcsin -- can never
+bind, so the body does the stopping. Argued from anatomy first and measured second: chains from
+eighteen to forty seven of fifty six questions, the reference from 193 to **223 of 231**, thirty
+gained and none lost, every kept card met, and every law holding. Two laws failed under the new
+model and were corrected, not loosened: the mirror law compared a quantity that is not
+mirror-invariant when both ways run free (the model was symmetric; the law was not), and the
+reach law's figures were re-measured against the new landscape.
+
+**The old solver is gone.** Its suite went red on its own faults once adduction was freed: its
+optimiser is not mirror-symmetric on the flatter landscape, and it has no arm collision, so only
+its cost kept arms out of each other. Patching its tests would have been investing in a model the
+Architect retired, and giving it a private copy of the old rig would have been the two versions of
+"right" the Architect forbade. Everything that asked it -- the whole-cloth page's sweeps, the
+floor table, the crossings reading -- asks the rig in the engine now. Kept verbatim from its
+suite, what never asked the solver anything: the rig's tape and one arm's geometry (`tlimb`); the
+crossings law retyped onto the engine's own poses (`tread`). The whole-cloth sweeps are recorded by
+their own verb to `design/turns.json`, as `modelled` and `rig` are, because eighteen sweeps each
+searching every distance the couple may stand at cost more than every `pages` run should pay.
+
+**Eight questions remain, all swan-reaching, and the stop probe names each.** Twist for the
+same-name chain under the follow's axis and the cross-name under the follow's orbit; extension for
+the cross-name under the lead's orbit. At each stop *several* joints sit at their ends at once --
+at one, the lead's right arm at extension 44 of 45, twist 99 of 90 and wrist 82 of 60 -- which is
+not one wrong range but an arm reaching where a rigid trunk cannot help it. The rig has no scapula
+and no torso rotation. That is the next structure, argued from anatomy, and it is not built yet.
+
+**Flagged for the Architect, not decided.** At the torso band the single-hand wraps now run free
+where the floor says half a turn. The pose at one and a half turns is a hammerlock -- the follow's
+arm forty three degrees behind her at hip height, wrist at its end -- which a body can make. The
+reference never asks it, being drawn wholly over the crown; the floor is the Architect's.
+
+## Re-audit, 2026-09-12, every cell of reference asked of model
+
+Reference page carries two tags on each cell now. `kept` is the Architect's, given by eye on the
+floor; `modelled` is the sim's, whether it reaches what the card draws. The goal is both at a
+hundred per cent, and the gap between them is the work left. The tag sits outside the drawing, so
+it moves no pin and re-draws no kept card -- read off `drawingOf`, which collects a card's `svg`
+elements alone, rather than assumed.
+
+First full score: **eighty one of ninety nine reached, and eighty one of the eighty seven kept**.
+A fifteen of seventeen, B twenty eight of twenty eight, C five of seven, D one of seven, E
+thirty two of thirty two, F none of eight.
+
+**B and E being whole is a weak result, not a strong one.** Every card in them is drawn over the
+crown, and over the crown a single-hand hold sweeps free past two and a half turns each way. Sixty
+cells therefore say "nothing blocks up there" sixty times, which the floor also says. They are
+green because the question is easy, and they test the model hardly at all. The cards that
+discriminate are the chains under wind, and that is where every failure is.
+
+**Sixteen of the eighteen failures are one joint.** The wrist sits at sixty one degrees against a
+sixty degree cone at rest in the pillion chain, stops C's swans at 1.28 of one and a half, and
+stops all of F. The grip is modelled as a single point with each hand aimed exactly at it, so
+every awkward approach of the two forearms is paid for entirely in wrist bend. A real clasp meets
+across a palm's width and the hands turn against one another; neither is modelled. How much slack
+that is worth is a fact about hands, and is the Architect's to give rather than a number to pick
+until the cards go green.
+
+**The other two are A9 and A11, and they are not a fault.** They draw the same-name pair face to
+face, which is the position rule 31 says has its two connections lying through each other -- the
+reason section D is built pillion lead at all. The model refusing to reach it agrees with the
+project's own rule.
+
+**Rejected, for now: chasing A to a hundred.** Section A's cards assert what the standard diagram
+can express, not what a couple can stand in -- "they are literally a table built at compile time".
+Asking a body whether it can reach a drawing's entry may be the wrong question of that section,
+and A9 and A11 are where the two readings come apart. Left as it stands, and flagged, rather than
+answered by bending either side.
+
+**One fault of this reading, found and fixed.** `twist` on an A card names the facing *drawn* --
+nought face to face, one pillion lead -- and not half turns from the frame's own rest. Read the
+second way, every frame that rests pillion was asked for half a turn where it was already at rest,
+and A10 and A12 came back unreachable. `facingNote` says which it is outright.
+
+## Re-audit, 2026-09-13, bodies solid
+
+**The trunk twists, measured with arms through bodies.** At each of the eight stops left after
+adduction was freed, several joints sat at their ends at once -- at one, the lead's right arm at
+extension 44 of 45, twist 99 of 90 and wrist 82 of 60 -- which is an arm reaching where a rigid
+trunk cannot help it. So the trunk is two bodies: the hips, kinematic and carrying nothing, and
+the chest, dynamic, carrying every trunk capsule and both shoulders, hinged to the hips about the
+trunk's own up, sprung to neutral and stopped at forty degrees each way, clinical thoracic
+rotation. Measured behind a flag first, it took every chain over the crown free or past the swan,
+fifty six of fifty six chain questions. Adopted on that -- and that measurement was of a sim whose
+arms passed through bodies, which the next paragraph found. Verified by testament on 2026-09-13,
+`tests/trigid.nim`: shoulders yaw on hips no further than the thorax turns, and rest square.
+
+**The Architect, watching the viewer: "the bodies are doing weird things, they're too rigid on
+the floor as the arms get crushed and phase through, watch for sharp movements like that."**
+Measured on the recorded sweeps before anything was changed: a forearm 45 mm inside its own
+trunk with the hands still joined, and a hand crossing 359 mm between two moments a fiftieth of
+a turn apart. The retired `tlaws.nim` had a law for each and neither had been carried onto the
+rig. Both were written first and red -- 103 mm by the reader's own gap, 359 mm -- and then each
+cause was found by measurement, in this order.
+
+- *Contact softness.* The engine's contact stiffness defaults to thirty hertz, softer than the
+  sim's own forces, so arms were pressed through bodies. At the engine's own cap, an eighth of
+  its substep rate, the deepest overlap on a crown sweep went from 44.7 mm to 2.2.
+- *Own trunk.* The engine lets bodies one joint connects pass through each other unless told
+  otherwise, so the upper arm hung from the chest sank into its own torso, neck and head unseen:
+  67 mm inside its own head by capsule geometry while the engine reported no touch. The shoulder
+  joint now collides.
+- *Joints.* At the engine's default the waist hinge let an arm pressing its own chest carry the
+  chest 34 mm off the hips' axis; and once contact was stiff the joints tore instead -- an elbow
+  42 degrees past straight, a wrist 40 past its cone. Every joint but the grip now holds at the
+  engine's cap; the grip alone at thirty hertz, the softest thing in the couple, so a hold forced
+  past what arms can do gives at the hands, in life as here.
+- *Depth is a stop.* An arm deeper than twice the engine's slop in anything is an arm through a
+  body, read off the engine's manifolds every moment. Before, only the hands parting said so, and
+  a hold stood with an arm through a torso.
+- *The rise.* The band was asked of the hands like a switch thrown at the first moment of the
+  turn, and a weightless arm crossed 359 mm answering it. The hands now rise along a ramp from
+  where each settled, over the first quarter turn, held to it from both sides. Asked of the elbow
+  too, so the forearm would clear the crown outright, the rise went in bursts of 289 mm; so a
+  forearm meeting a head is the contact's to answer.
+- *The elbow.* A weightless arm's elbow wandered about the line from shoulder to wrist, 280 mm
+  between moments. What weight does to an elbow about that line is put back as one newton metre,
+  and nothing else weight does is. The wrist's spring, at one hertz on a four hundred gram hand,
+  was three hundredths of a newton metre per radian, so once the elbow was turned down the
+  wrists sat at sixty of sixty at rest and the plainest hold carried 0.56; at five hertz, the
+  passive stiffness of a wrist, they rest at forty four with room to spare.
+- *The stance.* The search took the nearest distance that carried the turn, which is chest to
+  chest: joined hands pinned between the torsos, then popping up between the heads 300 mm in one
+  moment, at a distance no couple would turn under an arm at. Among distances carrying a turn as
+  far, the couple now stand where the arms move least between moments; leaps within five
+  millimetres count as one, since the engine is not exactly mirror symmetric.
+
+After: no point of any held arm crosses 161 mm between moments on the laws' corpus, against a
+bound of 193 -- a point carried at arm's reach plus an arm's own move -- and the deepest overlap
+is under half a millimetre. Verified by testament on 2026-09-13, `tests/trigid.nim`, seventeen
+laws, two of them these.
+
+**What solid bodies cost, and the reference now.** Every figure the sim gave before was of arms
+that could pass through bodies. With bodies solid: the plainest low hold carries 0.64 where it
+carried 1.04 (the floor's whole turn was reached with an arm through a torso); the cross-name
+crown hold winds her shoulder to its end at 1.2 to 1.3 turning one way, from every distance, which
+is twist alone and past every card; the reference reads 192 of 231 questions. Rejected:
+tuning any of it to the floor. Each disagreement is printed beside the floor's claim and is the
+Architect's to rule on -- a hammerlock that the floor says goes a whole turn, and that the rig's
+shoulder now stops at 0.64 by wrist or by swing, is the first question to put to them.
+
+**Two laws moved to what the model measures, not loosened to pass.** The reach law asks 0.6
+turning her negative way, reached only from 0.70 m, since 1.2 was true of an arm through a
+torso; the crown law asks a whole turn, since a turn and a half was free only with an arm through
+a head. The mirror law holds the turn reached within one step, since contact decides stops now
+and the engine's contact is not mirror symmetric to the step; what stopped them is still exact.

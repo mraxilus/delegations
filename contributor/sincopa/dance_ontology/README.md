@@ -51,7 +51,8 @@ translation is printed in one table and nothing is tuned to make them agree.
 - The Architect's forty drawing rules as given, held as data in `design/rules.nim` and
   mirrored entry for entry in `design/README.md`; `design/checks.nim` holds the pages to them.
 - For the body sim, the ANSUR II medians with the AAOS and NASA-STD-3000 joint ranges,
-  every one in `sim/rig.nim` with its derivation; `tests/tlaws.nim` holds the sim to them.
+  every one in `sim/rig.nim` with its derivation; `tests/trigid.nim`, `tlimb.nim` and
+  `tread.nim` hold the sim to them.
 
 ## Build and test
 
@@ -94,6 +95,7 @@ Mock-ups:
 | design/signs.html | https://claude.ai/code/artifact/153dee12-0829-4c04-ad01-72fe96f7607e |
 | design/turns-single.html | https://claude.ai/code/artifact/a2dce7eb-7a87-4575-a1c8-ce8d488a6530 |
 | design/turns-hands.html | https://claude.ai/code/artifact/9c4d89c1-8b72-4574-8051-c41e130148f1 |
+| design/review.html | https://claude.ai/code/artifact/f02b7b94-3b57-4442-abdd-f544d7911a21 |
 | design/wholecloth.html | https://claude.ai/code/artifact/9440ffbc-93be-4634-a3ce-dd17d7b33c6c |
 | review/review.html | https://claude.ai/code/artifact/61c41287-0a91-4fb9-9b15-622a5fd7db43 |
 
@@ -125,9 +127,11 @@ pages/                             hand-written pages this project stands behind
 mockups/                           wholecloth.html, hand-drawn proposal to react to
 tools/review.nim                   fills the review page's markers from the model
 tools/pages.nim, tools/bundle.nim  copy the shells in; fold a page into one file
-tools/build.nim                    this project's verbs: pages, verdicts, shot, clean
+tools/build.nim                    this project's verbs: pages, modelled, rig, turns,
+                                   verdicts, shot, clean
 tests/                             the laws, over every pair of frames; the sim's laws
-                                   (tlaws); the workbench's gates (tmarks); the review
+                                   (trigid, tlimb, tread); the workbench's gates (tmarks);
+                                   the review
                                    page rendered whole (treview)
 build/                             every page, picture and script; ignored by git
 ```

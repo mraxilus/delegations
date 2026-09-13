@@ -1,10 +1,11 @@
 ## Share chrome every mark page uses: style sheet, key,
 ## wrapper.
 ##
-##   Four explorations live on four pages -- frame picture, turn
-##     sign, and one turn mock-up per kind of hold -- because they are
-##     separate questions that happen to be related, and page that holds
-##     more than one of them makes each harder to read.
+##   Five explorations live on five pages -- frame picture, turn
+##     sign, one turn mock-up per kind of hold, and sheet every drawn
+##     position is ruled on -- because they are separate questions that
+##     happen to be related, and page that holds more than one of them
+##     makes each harder to read.
 ##   What they do share is palette and furniture, which is here so it
 ##     cannot drift between them.
 ##   Page body is template with `{marker}` holes and `filled` closes
@@ -33,6 +34,7 @@ const STYLE* = """<style>
   --serif: "Noto Serif", Georgia, "Times New Roman", serif;
   --sans: "Noto Sans", ui-sans-serif, system-ui, sans-serif;
   --mono: "Commit Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-ligatures: contextual;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --paper: #16151a; --card: #1e1d24; --ink: #ece9e4; --dim: #9a948c;
@@ -148,7 +150,7 @@ func document*(title, page_body: string): string =
   ## Wrap one page: shared style sheet, then whatever page is about.
   ##   Title is what browser tab and published gallery both show, so
   ##     it carries name of work as well as name of page.
-  ##   Every page this wraps is exploration, so all four take mockup form.
+  ##   Every page this wraps is exploration, so all five take mockup form.
   &"<meta charset=\"utf-8\">\n<title>{MOCKUP} — {title}</title>\n" &
     &"{STYLE}{page_body}"
 

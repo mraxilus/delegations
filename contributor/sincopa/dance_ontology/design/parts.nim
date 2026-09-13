@@ -22,10 +22,10 @@ type Parts* = OrderedTable[string, string]
 
 
 const ORIENTATIONS* = [
-  (name: "face to face", lead_turn: 0.0, follow_turn: 0.0),
-  (name: "the follow faces away", lead_turn: 0.0, follow_turn: 180.0),
-  (name: "the lead faces away", lead_turn: 180.0, follow_turn: 0.0),
-  (name: "back to back", lead_turn: 180.0, follow_turn: 180.0),
+  (name: "face-to-face", lead_turn: 0.0, follow_turn: 0.0),
+  (name: "pillion lead", lead_turn: 0.0, follow_turn: 180.0),
+  (name: "pillion follow", lead_turn: 180.0, follow_turn: 0.0),
+  (name: "back-to-back", lead_turn: 180.0, follow_turn: 180.0),
 ] ## Four ways couple can face, as pages walk them.
 
 const HOLD*: Holds = [some Arm.L, none Arm]
@@ -35,13 +35,13 @@ const SETTLINGS* = [
   (level: none Level, way: none Way, follow_turn: 0.0,
    caption: "no way said<br>— it stays at its side"),
   (level: some Level.Low, way: some Way.Lock, follow_turn: 0.0,
-   caption: "<em>low</em> lock<br>face to face"),
+   caption: "<em>low</em> lock<br>face-to-face"),
   (level: some Level.High, way: some Way.Lock, follow_turn: 0.0,
-   caption: "<em>high</em> lock<br>face to face"),
+   caption: "<em>high</em> lock<br>face-to-face"),
   (level: some Level.Low, way: some Way.Wrap, follow_turn: 180.0,
-   caption: "<em>low</em> wrap<br>the follow turned away"),
+   caption: "<em>low</em> wrap<br>pillion lead"),
   (level: some Level.High, way: some Way.Wrap, follow_turn: 180.0,
-   caption: "<em>high</em> wrap<br>the follow turned away"),
+   caption: "<em>high</em> wrap<br>pillion lead"),
 ] ## Each settling drawn in orientation that admits it, because most do
   ## not: lock or wrap only exists where line really goes round.
 
@@ -110,7 +110,7 @@ func slotChart*(arm = Arm.L): string =
         text = if slot == Slot.Default: "side" else: word(slot)
       bits.add &"""<text x="{n(label.x)}" y="{n(label.y + 3)}"""" &
         &""" text-anchor="{anchor}"""" &
-        " style=\"font: 8px ui-sans-serif, system-ui," &
+        " style=\"font: 8px 'Noto Sans', ui-sans-serif, system-ui," &
         &""" sans-serif; fill: {FAINT}">{text}</text>"""
   bits.join("") & "</svg>"
 
@@ -270,7 +270,7 @@ func frameParts*(): Parts =
   for m in MOVES:
     let
       tag = m.name.replace(" ", "_").replace(",", "")
-      half = cycle(m.apply).mapIt(extent(it, captions = false)).max
+      half = cycle(m.apply).poses.mapIt(extent(it, captions = false)).max
       style = &"""class="mv" style="width: {n(2 * half * MOVE_PX)}px;""" &
         &""" height: {n(2 * half * MOVE_PX)}px""""
     result[&"mv_{tag}"] = animated("mv", HOLD, m.apply, some half)
@@ -288,6 +288,10 @@ func frameParts*(): Parts =
 const
   PX = 1.0        ## Pixels one unit takes in turn page's moving cell.
   STILL_PX = 0.72 ## And in still one, where figures are smaller.
+  WALK_SECONDS = 5.4 ## Clock one edge of state graph takes, out and back.
+    ## Walk of several edges takes multiple of it, so every animation on
+    ##   these pages runs at one pace and length of loop says how far it
+    ##   goes rather than how fast.
 
 
 func sized(svg, cls: string; half, px: float): string =
@@ -320,13 +324,13 @@ const
   QUARTER* = 90.0            ## Degrees in one of them.
 
 type
-  Family* {.pure.} = enum ## Which round of positions one way of turning walks.
+  Family* {.pure.} = enum ## Which round of positions one manner of turn walks.
     FollowFacing,         ## Follow comes round where they stand.
     PairSwung             ## Axis swings and follow's facing with it.
-  TurnWay* {.pure.} = enum ## Four ways couple can turn quarter.
+  Manner* {.pure.} = enum ## Four manners of turn couple can take.
     FollowAxis, LeadAxis, FollowOrbit, LeadOrbit
 
-const WAYS_OF_TURNING*: array[TurnWay, tuple[
+const MANNERS*: array[Manner, tuple[
     tag, title, blurb: string; who: Dancer; about: About]] = [
   (tag: "fa", title: "The follow turns on the spot",
    blurb: "The follow turns on their own axis and nobody travels. What " &
@@ -352,27 +356,27 @@ const WAYS_OF_TURNING*: array[TurnWay, tuple[
    who: Dancer.Follow, about: About.Orbit),
   (tag: "lo", title: "The lead orbits the follow",
    blurb: "The lead walks the ring round the follow, facing the centre the " &
-     "same way. It is the one way of the four that takes the lead off " &
+     "same way. It is the one manner of the four that takes the lead off " &
      "their spot, so it is the one whose second stage has anything to do. " &
      "It lands where the <em>follow's own axis turn</em> lands. Which " &
      "dancer walked is not something the drawing can say; only the path " &
      "can, which is why all four are animated.",
    who: Dancer.Lead, about: About.Orbit),
-] ## What each way of turning is called on pages, who dances it, and
+] ## What each manner of turn is called on pages, who dances it, and
   ## about what.  Which round it walks is not restated here: `FAMILY_OF`
   ## carries that, measured -- second copy had crept into these rows and
   ## been one nothing read.
 
-const FAMILY_OF*: array[TurnWay, Family] = [
+const FAMILY_OF*: array[Manner, Family] = [
   Family.FollowFacing, Family.PairSwung, Family.PairSwung,
   Family.FollowFacing,
-] ## Which round each way walks, measured and asserted below.
+] ## Which round each manner walks, measured and asserted below.
   ##   Orbit that faces centre turns walker as far as it carries
   ##     them (rule 32), so it comes to same thing as their partner's
-  ##     axis turn other way: two rounds between four ways, each
+  ##     axis turn other way: two rounds between four manners, each
   ##     reached by one axis turn and one orbit.
   ##   Which is point of correction.  Half turn is then half
-  ##     turn however it is danced, and ways can be equated.
+  ##     turn however it is danced, and manners can be equated.
 
 
 func levelsFor*(holds: Holds): Levels =
@@ -380,8 +384,8 @@ func levelsFor*(holds: Holds): Levels =
   if holds[Arm.L].isSome: ABOVE_ONE else: ABOVE_OTHER
 
 
-func quarterPose*(way: TurnWay; quarter: int): Pose =
-  ## Get pose this way of turning reaches after so many quarters.
+func quarterPose*(manner: Manner; quarter: int): Pose =
+  ## Get pose this manner of turn reaches after so many quarters.
   ##   Drawn canonically, with lead facing up: that is what position
   ##     is, whatever stages turning took to arrive at it.
   ##   And without ring: dashed ring says *somebody is going round
@@ -389,7 +393,7 @@ func quarterPose*(way: TurnWay; quarter: int): Pose =
   ##     stand.  It is why orbit rounds draw as their axis partners do.
   ##   Framed on lead (rule 25), so they stand in same spot in
   ##     every cell of row and it is follow who is seen to move.
-  let w = WAYS_OF_TURNING[way]
+  let w = MANNERS[manner]
   result = canonicalise(turned(rest(), w.who, w.about,
                                QUARTER * float(quarter)), on = Anchor.Lead)
   result.ring = none(Ring)
@@ -428,7 +432,7 @@ func singleTurnParts*(): Parts =
   ##   Rule 16: single hand held above turns for ever, so no position is
   ##     ever refused and how far it has wound is not part of its state.
   ##     What is left is four quarter-turn orientations per connection.
-  ##   Rule 19: four ways of turning reach them -- each dancer's own axis
+  ##   Rule 19: four manners of turn reach them -- each dancer's own axis
   ##     turn and each dancer's orbit of other.
   ##   Rule 15: every position drawn, every edge animated.
   ##   Rule 25: framed on lead, who therefore falls on same spot in
@@ -436,79 +440,104 @@ func singleTurnParts*(): Parts =
   ##     same box.
   ##     Row of positions takes one box for whole page, since every
   ##       position stands same distance apart.  Row of transitions
-  ##       takes one box per way of turning, because lead who walks
+  ##       takes one box per manner of turn, because lead who walks
   ##       ring needs room lead who stands still does not, and spending
   ##       that room on every cell of every row would shrink all of them.
   ##     Each cell is then given what its box needs at scale its own row
   ##       draws at, so marks stay size they were and it is
   ##       cells that grow.
   var
-    walks: array[TurnWay, array[QUARTERS_ROUND, Walk]]
+    walks: array[Manner, array[QUARTERS_ROUND, Walk]]
     still_half = 0.0
-    walk_half: array[TurnWay, float]
-  for way in TurnWay:
-    let w = WAYS_OF_TURNING[way]
+    walk_half: array[Manner, float]
+  for manner in Manner:
+    let w = MANNERS[manner]
     for quarter in 0 ..< QUARTERS_ROUND:
       still_half = max(still_half,
-                       extent(quarterPose(way, quarter), captions = false))
-      walks[way][quarter] = turnWalk(quarterPose(way, quarter), w.who,
+                       extent(quarterPose(manner, quarter), captions = false))
+      walks[manner][quarter] = turnWalk(quarterPose(manner, quarter), w.who,
                                      w.about, QUARTER, on = Anchor.Lead)
-      for put in walks[way][quarter].poses:
-        walk_half[way] = max(walk_half[way], extent(put, captions = false))
+      for put in walks[manner][quarter].poses:
+        walk_half[manner] = max(walk_half[manner], extent(put, captions = false))
 
-  for way in TurnWay:
-    let w = WAYS_OF_TURNING[way]
+  # Whole round, walked in one figure.  Four quarters close it (rule 16), so
+  # it needs no return leg: it ends where it set off.
+  #   Its poses are ones four edges already pass through, so it asks box for
+  #     nothing new -- which is measured here rather than assumed.
+  var rounds: array[Manner, Walk]
+  for manner in Manner:
+    let w = MANNERS[manner]
+    rounds[manner] = turnWalk(quarterPose(manner, 0), w.who, w.about, QUARTER,
+                              on = Anchor.Lead, steps = QUARTERS_ROUND,
+                              back = false)
+    for put in rounds[manner].poses:
+      walk_half[manner] = max(walk_half[manner], extent(put, captions = false))
+
+  for manner in Manner:
+    let w = MANNERS[manner]
     for c, single in SINGLES:
       let levels = levelsFor(single.holds)
 
-      # Every derived position of this way.
+      # Every derived position of this manner.
       for quarter in 0 ..< QUARTERS_ROUND:
         result[&"st_{w.tag}_{c}_{quarter}"] = sized(renderFigure("tiny",
           single.holds, levels, captions = false,
-          pose = some quarterPose(way, quarter), half = some still_half,
+          pose = some quarterPose(manner, quarter), half = some still_half,
           clear_marks = true), "tiny", still_half, STILL_PX)
 
       # And every edge, walked in stages rule 18 asks for.
       for quarter in 0 ..< QUARTERS_ROUND:
         let to = (quarter + 1) mod QUARTERS_ROUND
         result[&"tr_{w.tag}_{c}_{quarter}_{to}"] = sized(animatedPoses("mv",
-          single.holds, walks[way][quarter].poses, some walk_half[way],
-          levels, dur = 5.4, times = walks[way][quarter].times),
-          "mv", walk_half[way], PX)
+          single.holds, walks[manner][quarter].poses, some walk_half[manner],
+          levels, dur = WALK_SECONDS, times = walks[manner][quarter].times),
+          "mv", walk_half[manner], PX)
         # Still stands in where motion is turned off, so it is settled
         # picture and bends by rule 22; moving figure it replaces is
         # rule's own exemption and stays straight.
         result[&"tr_{w.tag}_{c}_{quarter}_{to}_still"] = sized(
           renderFigure("mv still", single.holds, levels, captions = false,
-                pose = some quarterPose(way, quarter),
-                half = some walk_half[way], clear_marks = true),
-          "mv still", walk_half[way], PX)
+                pose = some quarterPose(manner, quarter),
+                half = some walk_half[manner], clear_marks = true),
+          "mv still", walk_half[manner], PX)
+
+      # And whole round in one figure, at pace its own quarters run at:
+      # four legs where edge has two, so twice their clock.
+      result[&"rd_{w.tag}_{c}"] = sized(animatedPoses("mv",
+        single.holds, rounds[manner].poses, some walk_half[manner],
+        levels, dur = 2 * WALK_SECONDS, times = rounds[manner].times),
+        "mv", walk_half[manner], PX)
+      result[&"rd_{w.tag}_{c}_still"] = sized(
+        renderFigure("mv still", single.holds, levels, captions = false,
+              pose = some quarterPose(manner, 0),
+              half = some walk_half[manner], clear_marks = true),
+        "mv still", walk_half[manner], PX)
 
   result["g_quarter"] = turnGlyph("&#188; turn")
 
   # Every position of round draws differently, or position it is not.
-  for way in TurnWay:
+  for manner in Manner:
     for c in 0 ..< SINGLES.len:
       var seen: seq[string]
       for quarter in 0 ..< QUARTERS_ROUND:
-        let figure = result[&"st_{WAYS_OF_TURNING[way].tag}_{c}_{quarter}"]
+        let figure = result[&"st_{MANNERS[manner].tag}_{c}_{quarter}"]
         doAssert figure notin seen,
-          &"Two quarters draw alike; got `{quarter}` of {way} on {c}."
+          &"Two quarters draw alike; got `{quarter}` of {manner} on {c}."
         seen.add figure
 
-  # Ways of one family walk one round of positions, and ways of different
+  # Manners of one family walk one round of positions, and manners of different
   # families never meet except where every round meets, at rest.
-  for way in TurnWay:
-    for mate in TurnWay:
+  for manner in Manner:
+    for mate in Manner:
       var shared = 0
       for quarter in 0 ..< QUARTERS_ROUND:
         for other_quarter in 0 ..< QUARTERS_ROUND:
-          if placeOf(quarterPose(way, quarter)) ==
+          if placeOf(quarterPose(manner, quarter)) ==
               placeOf(quarterPose(mate, other_quarter)):
             inc shared
-      let same_round = FAMILY_OF[way] == FAMILY_OF[mate]
+      let same_round = FAMILY_OF[manner] == FAMILY_OF[mate]
       doAssert shared == (if same_round: QUARTERS_ROUND else: 1),
-        &"A way left its family; got `{shared}` shared of {way} and {mate}."
+        &"A manner left its family; got `{shared}` shared of {manner} and {mate}."
 
   # And nothing on this page wraps body: reach is connection's own
   # stroke width, and one drawn with arc has walked round body.
@@ -535,8 +564,8 @@ const
 const STEPS* = [-1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5]
   ## One chain, in turns of wind from hold's own parallel state (rule 31).
   ##   Seven positions half turn apart: hold's own frame in middle,
-  ##     rule 28's X either side of it, rule 27's diamond beyond each of
-  ##     those, and rule 13's extra arm twist -- **swan** -- at each end.
+  ##     rule 28's cross either side of it, rule 27's diamond beyond each
+  ##     of those, and rule 13's extra arm twist -- **swan** -- at each end.
   ##   Steps are whole of chain; what differs between one hold
   ##     and another is only which facing sits at nothing wound, which is
   ##     half turn of offset rule 31 names, and that is measured rather
@@ -553,7 +582,7 @@ func windTwist*(wind: float): Twists =
 
 func posedAt*(wind, phase: float): Pose =
   ## Get pose hold stands in when it is wound this far from its own
-  ## parallel state, that state being `phase` turns off face to face.
+  ## parallel state, that state being `phase` turns off face-to-face.
   ##   Follow's own axis turn is what poses are built from, so
   ##     half turn faces them away where they stand and whole turn brings
   ##     everything back.  Which dancer did turning is not something
@@ -564,14 +593,14 @@ func posedAt*(wind, phase: float): Pose =
 
 
 func phaseOf*(holds: Holds): float =
-  ## Say how far off face to face this hold's two connections run parallel:
+  ## Say how far off face-to-face this hold's two connections run parallel:
   ## phase of chain it sits on (rule 31).
   ##   Measured, in rule 28's habit: hold is parallel where angle
   ##     its two ends make with pair's axis agree, and `windOf` is
   ##     already thing that measures that.
   ##   Two candidates and no more, because chain steps by half turns:
-  ##     hand to hand runs parallel with partners facing one another,
-  ##     crossed pair with one of them facing away, and those are
+  ##     hand to hand runs parallel with partners face-to-face,
+  ##     crossed pair pillion lead, and those are
   ##     same chain read half turn apart.
   for phase in [0.0, 0.5]:
     let put = settled(posedAt(0.0, phase), holds, ABOVE_BOTH, default(Ways))
@@ -582,8 +611,11 @@ func phaseOf*(holds: Holds): float =
 
 func chainFor*(holds: Holds): seq[Position] =
   ## Lay out chain one hold walks: every step of it, named and noted.
-  ##   Names are preliminary and user's: position is called for
-  ##     whichever of lead's arms passes over other at lead's
+  ##   Shape is glossary's word for that step of chain -- **open**,
+  ##     **cross**, **diamond**, **swan** -- which is why neither `x` nor
+  ##     `box` appears here: glossary names both as words to avoid.
+  ##   Which arm is over is preliminary and user's: position is called
+  ##     for whichever of lead's arms passes over other at lead's
   ##     own crossover, and for shape pair makes there.
   # Asked for its refusal alone: hold that runs parallel at neither
   # phase cannot walk chain, and dies here rather than mid-table.
@@ -593,8 +625,8 @@ func chainFor*(holds: Holds): seq[Position] =
       shape = case int(abs(wind) * 2)
               of 0: &"Left-to-{handName(holds[Arm.L].get)} and " &
                     &"Right-to-{handName(holds[Arm.R].get)}"
-              of 1: "X"
-              of 2: "box"
+              of 1: "cross"
+              of 2: "diamond"
               else: "swan"
       far = case int(abs(wind) * 2)
             of 0: "the app's frame"
@@ -603,11 +635,13 @@ func chainFor*(holds: Holds): seq[Position] =
             else: "a turn and a half"
     # Which way partners face is pose's business and follows from
     # wind, so page says rule of it once in prose rather than
-    # every caption saying it over: face to face at whole number of
-    # turns, both one way at half.  It is also whole of offset
+    # every caption saying it over: face-to-face at whole number of
+    # turns, pillion lead at half.  It is also whole of offset
     # between this hold and its dual (rule 31).
     result.add (wind,
-      if abs(wind) < 1e-9: shape
+      # Middle of chain is glossary's **open**, and it alone says which
+      # hands are joined, since every other position inherits that.
+      if abs(wind) < 1e-9: &"{shape} open"
       elif wind > 0: &"Left over Right {shape}"
       else: &"Right over Left {shape}",
       far)
@@ -638,8 +672,8 @@ func pairAt*(holds: Holds; wind, phase: float): array[Arm, seq[Point]] =
                         2 * PI * wind, share = windShare(wind, arm))
 
 
-func windSense*(way: TurnWay): float =
-  ## Say which way along chain positive turn by this way winds.
+func windSense*(manner: Manner): float =
+  ## Say which way along chain positive turn by this manner winds.
   ##   Measured, not tabulated (rule 30, and rule 28's habit): turn
   ##     quarter from frame and read wind off farthest pose it
   ##     passes through.
@@ -647,11 +681,11 @@ func windSense*(way: TurnWay): float =
   ##     again, so it ends where it began and end says nothing.
   ##   Quarter, because half turn's wind sits exactly on `wrap180`'s
   ##     seam and so carries no sign to read.
-  ##   Way that winds nothing at all would take forward sense, having
+  ##   Manner that winds nothing at all would take forward sense, having
   ##     no end to walk off side of.  Since rule 32 there is no such
-  ##     way -- every one of four winds -- and fallback stands only
-  ##     so way that stopped winding could not silently freeze.
-  let w = WAYS_OF_TURNING[way]
+  ##     manner -- every one of four winds -- and fallback stands only
+  ##     so manner that stopped winding could not silently freeze.
+  let w = MANNERS[manner]
   var turned_by = 0.0
   for put in turnWalk(handPose(), w.who, w.about, HALF / 2,
                       on = Anchor.Lead).poses:
@@ -662,75 +696,122 @@ func windSense*(way: TurnWay): float =
   if turned_by < -1e-9: -1.0 else: 1.0
 
 
-func handTurnParts*(): Parts =
-  ## Build every SVG hand-to-hand turns page places.
+const PAIRED*: Holds = [some Arm.L, some Arm.R]
+  ## Same-name chain: lead's left to follow's left, right to right.  Index is
+  ## lead's arm and value is follow's it joins, as `HAND_TO_HAND` is read.
+  ##   Rests pillion lead rather than face to face, since face to face its two
+  ##     connections lie through each other (rule 31).
+
+
+func chainTurnParts*(holds: Holds; key: string): Parts =
+  ## Build every SVG one chain's turns page places, keyed under `key`.
+  ##   Two chains are drawn -- hand to hand, and same-name pair -- and they
+  ##     differ only in which hands are joined and where chain rests.  Written
+  ##     once and called twice rather than copied: what is true of walking one
+  ##     is true of walking other, and second copy is second thing to get wrong.
   ##   Rules 28 and 31: seven positions, half turn apart -- frame,
-  ##     X either side of it, diamond beyond each X, and swan beyond
-  ##     each diamond.
-  ##   Rule 15: every position drawn, every edge animated, by every way of
-  ##     turning.
+  ##     cross either side of it, diamond beyond each cross, and swan
+  ##     beyond each diamond.
+  ##   Rule 15: every position drawn, every edge animated, by every manner
+  ##     of turn.
   ##   Rule 32: all four of them walk chain, since orbit that keeps
   ##     its side to centre winds pair as far as it carries
   ##     walker.  Which is measured rather than claimed, as it was when
   ##     answer was other one.
+  let
+    chain = chainFor(holds)
+    phase = phaseOf(holds)
   var
-    walks: array[TurnWay, array[CHAIN.len - 1, Walk]]
+    walks: array[Manner, seq[Walk]]
     still_half = 0.0
-    walk_half: array[TurnWay, float]
-  for position in CHAIN:
-    still_half = max(still_half, extent(handPose(position.wind),
+    walk_half: array[Manner, float]
+  for position in chain:
+    still_half = max(still_half, extent(posedAt(position.wind, phase),
                                         captions = false))
-  for way in TurnWay:
+  for manner in Manner:
     let
-      w = WAYS_OF_TURNING[way]
-      sense = windSense(way)
-    for i in 0 ..< CHAIN.len - 1:
-      # Each edge starts where it starts and turns half, so way that
-      # winds walks one step along chain and way that does not
+      w = MANNERS[manner]
+      sense = windSense(manner)
+    walks[manner] = newSeq[Walk](chain.len - 1)
+    for i in 0 ..< chain.len - 1:
+      # Each edge starts where it starts and turns half, so manner that
+      # winds walks one step along chain and manner that does not
       # simply carries pair out and back.
-      #   Which way it turns is way that walks chain *inward*,
+      #   Which way it turns is manner that walks chain *inward*,
       #     because ends of chain are ends (rule 30): positive
       #     turn by lead unwinds what positive turn by follow
       #     winds, so turning both same way sent lead's edges off
       #     end into second diamond.
-      walks[way][i] = turnWalk(handPose(CHAIN[i].wind), w.who, w.about,
+      walks[manner][i] = turnWalk(posedAt(chain[i].wind, phase), w.who, w.about,
                                HALF * sense, on = Anchor.Lead)
-      for put in walks[way][i].poses:
-        walk_half[way] = max(walk_half[way], extent(put, captions = false))
+      for put in walks[manner][i].poses:
+        walk_half[manner] = max(walk_half[manner], extent(put, captions = false))
 
-  # Chain, drawn once: all four ways reach these same seven (rule 32), so
-  # drawing them per way would be same picture over again.
-  for i, position in CHAIN:
-    result[&"hh_{i}"] = sized(renderFigure("tiny", HAND_TO_HAND, ABOVE_BOTH,
-      captions = false, pose = some handPose(position.wind),
+  # Whole chain, walked in one figure: six halves out from one swan to
+  # other, and back.  Chain has ends (rule 30), so unlike round it cannot
+  # close and takes return leg.
+  var chains: array[Manner, Walk]
+  for manner in Manner:
+    let w = MANNERS[manner]
+    chains[manner] = turnWalk(posedAt(chain[0].wind, phase), w.who, w.about,
+                              HALF * windSense(manner), on = Anchor.Lead,
+                              steps = chain.len - 1)
+    for put in chains[manner].poses:
+      walk_half[manner] = max(walk_half[manner], extent(put, captions = false))
+
+  # Chain, drawn once: all four manners reach these same seven (rule 32), so
+  # drawing them per manner would be same picture over again.
+  for i, position in chain:
+    result[&"{key}h_{i}"] = sized(renderFigure("tiny", holds, ABOVE_BOTH,
+      captions = false, pose = some posedAt(position.wind, phase),
       half = some still_half, twist = windTwist(position.wind),
       clear_marks = true), "tiny", still_half, STILL_PX)
 
-  # And every edge of it, walked by every way of turning.
-  for way in TurnWay:
-    let w = WAYS_OF_TURNING[way]
-    for i in 0 ..< CHAIN.len - 1:
-      result[&"hw_{w.tag}_{i}"] = sized(animatedPoses("mv", HAND_TO_HAND,
-        walks[way][i].poses, some walk_half[way], ABOVE_BOTH, dur = 5.4,
-        times = walks[way][i].times, wound = CHAIN[i].wind),
-        "mv", walk_half[way], PX)
+  # And every edge of it, walked by every manner of turn.
+  for manner in Manner:
+    let w = MANNERS[manner]
+    for i in 0 ..< chain.len - 1:
+      result[&"{key}w_{w.tag}_{i}"] = sized(animatedPoses("mv", holds,
+        walks[manner][i].poses, some walk_half[manner], ABOVE_BOTH,
+        dur = WALK_SECONDS,
+        times = walks[manner][i].times, wound = chain[i].wind),
+        "mv", walk_half[manner], PX)
       # Still stands in where motion is turned off, so it is
       # picture move sets off from (rule 22's exemption again).
-      result[&"hw_{w.tag}_{i}_still"] = sized(renderFigure("mv still",
-        HAND_TO_HAND, ABOVE_BOTH, captions = false,
-        pose = some handPose(CHAIN[i].wind), half = some walk_half[way],
-        twist = windTwist(CHAIN[i].wind), clear_marks = true),
-        "mv still", walk_half[way], PX)
+      result[&"{key}w_{w.tag}_{i}_still"] = sized(renderFigure("mv still",
+        holds, ABOVE_BOTH, captions = false,
+        pose = some posedAt(chain[i].wind, phase), half = some walk_half[manner],
+        twist = windTwist(chain[i].wind), clear_marks = true),
+        "mv still", walk_half[manner], PX)
+
+    # And whole chain in one figure, at pace its own edges run at: six legs
+    # out and six back where edge has one of each.
+    result[&"{key}c_{w.tag}"] = sized(animatedPoses("mv", holds,
+      chains[manner].poses, some walk_half[manner], ABOVE_BOTH,
+      dur = float(chain.len - 1) * WALK_SECONDS, times = chains[manner].times,
+      wound = chain[0].wind), "mv", walk_half[manner], PX)
+    result[&"{key}c_{w.tag}_still"] = sized(renderFigure("mv still",
+      holds, ABOVE_BOTH, captions = false,
+      pose = some posedAt(chain[0].wind, phase), half = some walk_half[manner],
+      twist = windTwist(chain[0].wind), clear_marks = true),
+      "mv still", walk_half[manner], PX)
 
   # Narrow, because chain is seven long now and glyph stands
   # between every pair of them (rule 31).
   result["g_half"] = turnGlyph("a half turn", 52.0)
 
   # Every position draws differently, or they are not seven positions.
-  for i in 0 ..< CHAIN.len:
+  for i in 0 ..< chain.len:
     for j in 0 ..< i:
-      doAssert result[&"hh_{i}"] != result[&"hh_{j}"],
-        &"Two positions draw alike; got `{i}` and `{j}`."
+      doAssert result[&"{key}h_{i}"] != result[&"{key}h_{j}"],
+        &"Two positions draw alike; got `{i}` and `{j}` under `{key}`."
+
+
+func handTurnParts*(): Parts = chainTurnParts(HAND_TO_HAND, "h")
+  ## Hand-to-hand chain: sections C and F.
+
+func pairTurnParts*(): Parts = chainTurnParts(PAIRED, "p")
+  ## Same-name pair's chain: sections D and G.
 
 
 
