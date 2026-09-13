@@ -15,7 +15,7 @@
 
 {.experimental: "strictFuncs".}
 
-import ./[body, hold, limb, rig, rigid]
+import ./[body, hold, limb, rig, rigid, vec]
 
 
 const
@@ -28,13 +28,21 @@ const
     ## over one; finer than that buys under twentieth of turn, which is below
     ## anything any card asks.
   ROOM* = 1.0    ## And how far out from clear air search looks.
+  SMOOTH* = 0.005 ## Leaps within this of each other, metres, count as one: engine
+                  ## is not exactly mirror symmetric, and leaps of mirror-image
+                  ## holds differ by up to three millimetres, which chose stances
+                  ## two search steps apart for what should be one hold seen in
+                  ## mirror.  Nearer stance keeps tie.
 
 
 type
+  Capsule* = tuple[a, z: Vec, r: float] ## Segment's two ends in world, and radius.
+
   Moment* = object ## One moment of turn, all page needs to draw it.
     at*: float ## Turns from rest, signed.
     stance*: array[Body, Stance]
     arms*: seq[array[2, ArmPose]] ## One per connection.
+    trunks*: array[Body, seq[Capsule]] ## Every trunk capsule where engine has it.
     room*: float ## Least room any joint had here.
 
   Walk* = object ## One sweep, one way.
@@ -68,6 +76,10 @@ proc momentOf(c: Couple; at: float): tuple[m: Moment, why: Stop, which: int,
                                            whose: Hand] =
   ## Read every connection at this moment, and say what gave, if anything.
   result.m = Moment(at: at, stance: c.chestStances, room: Inf)
+  for s in c.shapes:
+    if s.mark == Mark.Trunk:
+      let ends = c.endsOf(s)
+      result.m.trunks[s.who].add (ends.a, ends.z, s.r)
   result.why = Stop.None
   result.which = -1
   for i in 0 ..< c.links.len:
@@ -152,21 +164,45 @@ proc reaches*(rig: Rig; band: Band; links: seq[Link]; turns: float;
       return true
   false
 
+func leapOf*(w: Walk): float =
+  ## Furthest any point of any held arm moves between two moments of walk.
+  for j in 1 ..< w.moments.len:
+    for i in 0 ..< w.moments[j].arms.len:
+      for k in 0 .. 1:
+        let
+          a = w.moments[j - 1].arms[i][k]
+          b = w.moments[j].arms[i][k]
+        for (p, q) in [(a.s, b.s), (a.e, b.e), (a.w, b.w), (a.g, b.g)]:
+          result = max(result, dist(p, q))
+
 proc furthest(rig: Rig; band: Band; links: seq[Link]; who: Body;
               most, step: float; away: bool; head: Body): Walk =
-  ## Walk one way from whichever distance carries it furthest.
+  ## Walk one way from whichever distance carries it furthest, and among
+  ## distances carrying it as far, from one where arms move least between
+  ## moments.
   ##   This is what `reaches` asks, kept whole: page has to draw one turn, so it
   ##     wants moments of best of them rather than bare yes.  Distance that never
   ##     leaves rest is no distance to stand at and is passed over.
+  ##   Nearest distance that carried turn was taken before, and nearest is
+  ##     chest to chest: joined hands pinned between two torsos, then popping up
+  ##     between heads 300 mm in one moment, at distance no couple would turn
+  ##     under arm at.  Couple stand where move is smooth.  Search steps out
+  ##     while that improves and stops when it does not, since walking every
+  ##     distance that carries free turn costs fifty walks where one did.
   var far = -Inf
+  var smooth = Inf
   for apart in stands(rig):
     let w = walked(rig, band, links, who, apart, most, step, away, head)
     if not w.restHolds: continue
-    let got = (if w.stopped: w.at else: Inf)
-    if got > far:
+    let
+      got = (if w.stopped: w.at else: Inf)
+      leap = leapOf(w)
+    if got > far or (got == far and leap < smooth - SMOOTH):
       far = got
+      smooth = leap
       result = w
-    if got == Inf: break
+    elif got == Inf:
+      break
 
 proc swept*(rig: Rig; band: Band; links: seq[Link]; who = Body.Two;
             most = MOST; step = STEP; apart = 0.0; away = false;

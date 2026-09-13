@@ -60,6 +60,7 @@ type
 
   WorldDef* {.importc: "b3WorldDef", bycopy.} = object
     gravity* {.importc.}: Vec
+    contactHertz* {.importc.}: cfloat ## How stiffly overlap is pushed apart.
     enableSleep* {.importc.}: bool
     enableContinuous* {.importc.}: bool
   BodyDef* {.importc: "b3BodyDef", bycopy.} = object
@@ -89,6 +90,8 @@ type
     bodyIdB* {.importc.}: BodyId
     localFrameA* {.importc.}: Frame
     localFrameB* {.importc.}: Frame
+    constraintHertz* {.importc.}: cfloat ## How stiffly joint holds its bodies together.
+    constraintDampingRatio* {.importc.}: cfloat
     collideConnected* {.importc.}: bool
   BallDef* {.importc: "b3SphericalJointDef", bycopy.} = object
     base* {.importc.}: JointDef
@@ -111,10 +114,19 @@ type
     enableLimit* {.importc.}: bool
     lowerAngle* {.importc.}: cfloat
     upperAngle* {.importc.}: cfloat
+  TouchPoint* {.importc: "b3ManifoldPoint", bycopy.} = object
+    ## One contact point: how deep, negative where shapes overlap.
+    separation* {.importc.}: cfloat
+  Manifold* {.importc: "b3Manifold", bycopy.} = object
+    ## Contact points of one touching pair, one to four of them.
+    points* {.importc.}: array[4, TouchPoint]
+    pointCount* {.importc.}: cint
   Touch* {.importc: "b3ContactData", bycopy.} = object
     ## One pair of shapes engine found touching.
     shapeIdA* {.importc.}: ShapeId
     shapeIdB* {.importc.}: ShapeId
+    manifolds* {.importc.}: ptr Manifold ## Engine's own, valid until next step.
+    manifoldCount* {.importc.}: cint
 
 proc defaultWorld*(): WorldDef {.importc: "b3DefaultWorldDef".}
 proc defaultBody*(): BodyDef {.importc: "b3DefaultBodyDef".}
