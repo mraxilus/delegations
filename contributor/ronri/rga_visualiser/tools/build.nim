@@ -71,6 +71,8 @@ const
     ## Bridge whose own `exportc` signatures `declare` reads.
   PATH_PANEL_NIM = "src" / "desktop" / "panel.nim"
     ## Panel, swept for shown text written where it is drawn.
+  PATH_MAIN_NIM = "src" / "desktop" / "main.nim"
+    ## Desktop entry point, which shows exactly one piece of text: window's own caption.
   PATH_BRIDGE_JS = BUILD_BROWSER / "bridge.js"
     ## Compiled bridge, first script on page.
   PATH_DECLARATIONS = BUILD / "bridge.d.ts"
@@ -382,6 +384,9 @@ const SHOWING_CALLS = [
   ##   Every other `gui` call takes hidden id (`##name`) rather than words; those are not
   ##   swept, since id is not shown and has nothing to drift from.
 
+const DECLARATION_CAPTION = "TITLE* ="
+  ## Declaration desktop's window caption is read from, and only shown text entry point holds.
+
 const SHOWING_WRITES = [".title = ", ".textContent = ", ".innerHTML = "]
   ## Browser properties that put text in front of reader, swept same way.
   ##   Assigned rather than passed, so they are matched as writes.
@@ -439,9 +444,29 @@ proc checkWording() =
         if isLiteralShown(line, write):
           found.add path & ":" & $(i + 1) & ": " & line.strip
           break
+  # Window caption is one piece of shown text living outside three files swept above.
+  #   Entry point is not swept whole: it is full of option names, paths and error text that
+  #   no reader of window ever sees, and check that flags those is check nobody reads.
+  #   Its one showing declaration is read instead, and held to *naming* where caption comes
+  #   from. Positive rather than prohibiting: rule forbidding one spelling reads whole file,
+  #   so comment naming product fails build, and split literal walks straight past it.
+  #   Declaration absent at all is itself finding -- caption cannot go unnamed.
+  let caption = readFile(PATH_MAIN_NIM)
+  block:
+    var is_declared = false
+    let lines = caption.splitLines
+    for i, line in lines:
+      if not line.strip.startsWith(DECLARATION_CAPTION): continue
+      is_declared = true
+      if not line.namesKey("captionWindow"):
+        found.add PATH_MAIN_NIM & ":" & $(i + 1) & ": caption must name `captionWindow`; got " &
+          line.strip
+    if not is_declared:
+      found.add PATH_MAIN_NIM & ": no `" & DECLARATION_CAPTION & "` for caption to read from"
+
   # Catalogue may not grow rows nothing shows either. Entry no front-end names is words
   #   written for nobody, and next reader cannot tell it from one still in use.
-  var shown = readFile(PATH_PANEL_NIM) & readFile(PATH_SHELL)
+  var shown = readFile(PATH_PANEL_NIM) & readFile(PATH_SHELL) & caption
   for path in walkFiles("src" / "browser" / "*.ts"): shown.add readFile(path)
   for key in Wording:
     if not shown.namesKey($key):

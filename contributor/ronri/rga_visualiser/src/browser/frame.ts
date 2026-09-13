@@ -227,8 +227,9 @@ function frame() {
   const now_seconds = now();
 
   const now_milliseconds = performance.now();
-  const seconds_frame = (now_milliseconds - time_frame_last) / 1000;
-  recordFrameTime(now_milliseconds - time_frame_last);
+  const milliseconds_frame = now_milliseconds - time_frame_last;
+  const seconds_frame = milliseconds_frame / 1000;
+  recordFrameTime(milliseconds_frame);
   time_frame_last = now_milliseconds;
 
   // Move camera by one frame's worth of whatever key is held, before drawing.
@@ -329,7 +330,9 @@ function frame() {
   const is_ticking_ui = ms_now_ui - ms_refresh_ui >= MILLISECONDS_WINDOW_READING;
   if (is_ticking_ui || rows_pending !== null) {
     const ms_before_ui = performance.now();
-    sliceObjectRows();
+    // Row building takes share of frame rather than fixed figure, so it is handed frame it is
+    //   spending. Reading is one `recordFrameTime` was given above, not second clock.
+    sliceObjectRows(milliseconds_frame);
     if (is_ticking_ui) {
       ms_refresh_ui = ms_now_ui;
       refreshCameraFields();
