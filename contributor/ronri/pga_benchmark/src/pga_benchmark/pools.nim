@@ -44,6 +44,25 @@ when IS_RIGID and DIMENSIONS == 4:
     POOL_MOTOR_MV*: array[OBJECTS, Multivector]
       ## Dense images of `POOL_MOTOR`.
 
+when IS_CONFORMAL and DIMENSIONS == 5:
+  var
+    POOL_ROUNDPOINT*: array[OBJECTS, RoundPoint]
+      ## Round points with weight near one and Gaussian flat bulk.
+    POOL_DIPOLE*: array[OBJECTS, Dipole]
+      ## Dipoles joining two round points.
+    POOL_CIRCLE*: array[OBJECTS, Circle]
+      ## Circles joining dipole and round point.
+    POOL_SPHERE*: array[OBJECTS, Sphere]
+      ## Spheres joining circle and round point.
+    POOL_ROUNDPOINT_MV*: array[OBJECTS, Multivector]
+      ## Dense images of `POOL_ROUNDPOINT`.
+    POOL_DIPOLE_MV*: array[OBJECTS, Multivector]
+      ## Dense images of `POOL_DIPOLE`.
+    POOL_CIRCLE_MV*: array[OBJECTS, Multivector]
+      ## Dense images of `POOL_CIRCLE`.
+    POOL_SPHERE_MV*: array[OBJECTS, Multivector]
+      ## Dense images of `POOL_SPHERE`.
+
 
 func toUpperAscii(s: string): string {.compileTime.} =
   ## Upper-case ASCII letters; local so runtime imports no string library.
@@ -93,6 +112,15 @@ when IS_RIGID and DIMENSIONS == 4:
     wedgeDotAnti(translator(t), rotor(randUnitAxis(), gauss(0.0, 1.5)))
 
 
+when IS_CONFORMAL and DIMENSIONS == 5:
+  proc randRoundPoint(): RoundPoint =
+    ## Draw round point with Gaussian position and flat bulk, weight near one.
+    RoundPoint(
+      x: gauss(0.0, 1.0), y: gauss(0.0, 1.0), z: gauss(0.0, 1.0), w: gauss(1.0, 0.25),
+      u: gauss(0.0, 1.0),
+    )
+
+
 proc fillPools*(seed = 0) =
   ## Fill every pool from seed; deterministic, so suites and probes agree across runs.
   randomize(seed)
@@ -111,3 +139,15 @@ proc fillPools*(seed = 0) =
       POOL_LINE_MV[i] = POOL_LINE[i].toMultivector
       POOL_PLANE_MV[i] = POOL_PLANE[i].toMultivector
       POOL_MOTOR_MV[i] = POOL_MOTOR[i].toMultivector
+  when IS_CONFORMAL and DIMENSIONS == 5:
+    for i in 0 ..< OBJECTS:
+      POOL_ROUNDPOINT[i] = randRoundPoint()
+      POOL_DIPOLE[i] = wedge(randRoundPoint(), randRoundPoint())
+      POOL_CIRCLE[i] = wedge(wedge(randRoundPoint(), randRoundPoint()), randRoundPoint())
+      POOL_SPHERE[i] = wedge(
+        wedge(wedge(randRoundPoint(), randRoundPoint()), randRoundPoint()), randRoundPoint()
+      )
+      POOL_ROUNDPOINT_MV[i] = POOL_ROUNDPOINT[i].toMultivector
+      POOL_DIPOLE_MV[i] = POOL_DIPOLE[i].toMultivector
+      POOL_CIRCLE_MV[i] = POOL_CIRCLE[i].toMultivector
+      POOL_SPHERE_MV[i] = POOL_SPHERE[i].toMultivector

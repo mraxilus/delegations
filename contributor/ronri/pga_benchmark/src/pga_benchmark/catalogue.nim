@@ -320,6 +320,118 @@ const PROBES* = block:
         s.add typed(
           row[0] & "_" & name, row[1], row[2], row[3], [kind, Kind.General], row[4], row[5]
         )
+
+  when IS_CONFORMAL and DIMENSIONS == 5:
+    for row in [
+      (
+        "wedge_round_point_round_point", "∧", "wedge", "(m ∧ n)",
+        Kind.RoundPoint, Kind.RoundPoint, "wedge(m, n)", "2.17",
+      ),
+      (
+        "wedge_dipole_round_point", "∧", "wedge", "(m ∧ n)",
+        Kind.Dipole, Kind.RoundPoint, "wedge(m, n)", "2.17",
+      ),
+      (
+        "wedge_round_point_dipole", "∧", "wedge", "(m ∧ n)",
+        Kind.RoundPoint, Kind.Dipole, "wedge(m, n)", "2.18",
+      ),
+      (
+        "wedge_circle_round_point", "∧", "wedge", "(m ∧ n)",
+        Kind.Circle, Kind.RoundPoint, "wedge(m, n)", "2.17",
+      ),
+      (
+        "wedge_round_point_circle", "∧", "wedge", "(m ∧ n)",
+        Kind.RoundPoint, Kind.Circle, "wedge(m, n)", "2.18",
+      ),
+      (
+        "wedge_dipole_dipole", "∧", "wedge", "(m ∧ n)",
+        Kind.Dipole, Kind.Dipole, "wedge(m, n)", "2.17",
+      ),
+      (
+        "wedge_anti_sphere_sphere", "∨", "wedgeAnti", "(m ∨ n)",
+        Kind.Sphere, Kind.Sphere, "wedgeAnti(m, n)", "2.29",
+      ),
+      (
+        "wedge_anti_sphere_circle", "∨", "wedgeAnti", "(m ∨ n)",
+        Kind.Sphere, Kind.Circle, "wedgeAnti(m, n)", "2.29",
+      ),
+      (
+        "wedge_anti_circle_sphere", "∨", "wedgeAnti", "(m ∨ n)",
+        Kind.Circle, Kind.Sphere, "wedgeAnti(m, n)", "2.32",
+      ),
+      (
+        "wedge_anti_circle_circle", "∨", "wedgeAnti", "(m ∨ n)",
+        Kind.Circle, Kind.Circle, "wedgeAnti(m, n)", "2.29",
+      ),
+      (
+        "wedge_anti_sphere_dipole", "∨", "wedgeAnti", "(m ∨ n)",
+        Kind.Sphere, Kind.Dipole, "wedgeAnti(m, n)", "2.29",
+      ),
+      (
+        "wedge_anti_dipole_sphere", "∨", "wedgeAnti", "(m ∨ n)",
+        Kind.Dipole, Kind.Sphere, "wedgeAnti(m, n)", "2.32",
+      ),
+      (
+        "dot_round_point_round_point", "∙", "dot", "(m ∙ n)",
+        Kind.RoundPoint, Kind.RoundPoint, "dot(m, n)", "2.76",
+      ),
+      (
+        "dot_dipole_dipole", "∙", "dot", "(m ∙ n)",
+        Kind.Dipole, Kind.Dipole, "dot(m, n)", "2.76",
+      ),
+      (
+        "dot_circle_circle", "∙", "dot", "(m ∙ n)",
+        Kind.Circle, Kind.Circle, "dot(m, n)", "2.76",
+      ),
+      (
+        "dot_sphere_sphere", "∙", "dot", "(m ∙ n)",
+        Kind.Sphere, Kind.Sphere, "dot(m, n)", "2.76",
+      ),
+      (
+        "dot_anti_round_point_round_point", "∘", "dotAnti", "(m ∘ n)",
+        Kind.RoundPoint, Kind.RoundPoint, "dotAnti(m, n)", "2.76",
+      ),
+      (
+        "dot_anti_dipole_dipole", "∘", "dotAnti", "(m ∘ n)",
+        Kind.Dipole, Kind.Dipole, "dotAnti(m, n)", "2.76",
+      ),
+      (
+        "dot_anti_circle_circle", "∘", "dotAnti", "(m ∘ n)",
+        Kind.Circle, Kind.Circle, "dotAnti(m, n)", "2.76",
+      ),
+      (
+        "dot_anti_sphere_sphere", "∘", "dotAnti", "(m ∘ n)",
+        Kind.Sphere, Kind.Sphere, "dotAnti(m, n)", "2.76",
+      ),
+    ]:
+      s.add typed(row[0], row[1], row[2], row[3], [row[4], row[5]], row[6], row[7])
+
+    # Unary maps every round object carries; one row per object kind.
+    for (kind, name) in [
+      (Kind.RoundPoint, "round_point"), (Kind.Dipole, "dipole"), (Kind.Circle, "circle"),
+      (Kind.Sphere, "sphere"),
+    ]:
+      for row in [
+        ("complement_right", "/", "complementRight", "(/ m)", "complementRight(m)", "2.19"),
+        ("complement_left", "\\", "complementLeft", "(\\ m)", "complementLeft(m)", "2.20"),
+        ("reverse", "~", "reverse", "(~ m)", "reverse(m)", "wiki:Reverses"),
+        ("reverse_anti", "~∘", "reverseAnti", "(~∘ m)", "reverseAnti(m)", "wiki:Reverses"),
+        ("dual_bulk", "★", "dualBulk", "(★ m)", "dualBulk(m)", "2.103"),
+        ("dual_weight", "☆", "dualWeight", "(☆ m)", "dualWeight(m)", "2.103"),
+        ("bulk", "∙", "bulkRound", "(∙ m)", "bulk(m)", "2.68"),
+        ("weight", "∘", "weightRound", "(∘ m)", "weight(m)", "2.68"),
+        ("bulk_flat", "■", "bulkFlat", "(■ m)", "bulkFlat(m)", "wiki:Flat_bulk"),
+        ("weight_flat", "□", "weightFlat", "(□ m)", "weightFlat(m)", "wiki:Flat_weight"),
+        ("attitude", "⊖", "attitude", "(⊖ m)", "attitude(m)", "2.73"),
+        ("carrier", "⊟", "carrier", "(⊟ m)", "carrier(m)", "wiki:Carrier"),
+        ("carrier_co", "⊞", "carrierCo", "(⊞ m)", "carrierCo(m)", "wiki:Cocarrier"),
+        ("center", "⊙", "center", "(⊙ m)", "center(m)", "wiki:Center"),
+        ("container", "⊡", "container", "(⊡ m)", "container(m)", "wiki:Container"),
+        ("partner", "⊛", "partner", "(⊛ m)", "partner(m)", "wiki:Partner"),
+      ]:
+        s.add typed(
+          row[0] & "_" & name, row[1], row[2], row[3], [kind, Kind.General], row[4], row[5]
+        )
   s
 
 

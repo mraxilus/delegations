@@ -33,6 +33,10 @@
 
 import std/math
 
+import ./scalars
+
+export scalars
+
 
 type
   Vec3* = object
@@ -51,12 +55,6 @@ type
     ## Define motor 𝐐 with weight (v, vw) and bulk (m, mw); even grades.
     v*, m*: Vec3
     vw*, mw*: float
-  Antiscalar* = distinct float
-    ## Define magnitude landing in 𝟙, so antiscalar results never mix with scalar ones.
-
-
-func `==`*(a, b: Antiscalar): bool {.borrow.}
-  ## Compare antiscalars exactly; suites compare through tolerance on images instead.
 
 
 
