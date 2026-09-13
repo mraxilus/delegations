@@ -1,0 +1,1861 @@
+{
+  "schema": 1,
+  "kind": "runtime",
+  "algebra": {
+    "name": "cga5d",
+    "dimensions": 5,
+    "is_conformal": true,
+    "sizeof_multivector": 256
+  },
+  "taken": {
+    "date": "2026-09-13",
+    "machine": "linux amd64, 4 cores",
+    "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
+    "pga": "0bc465509d1c93b6bec3ced25aa29f080a2cf110",
+    "flags": "-d:release",
+    "rounds": 40,
+    "objects": 1024,
+    "is_allocation_measured": true
+  },
+  "measurands": {
+    "wedge": {
+      "symbol": "∧",
+      "arity": 2,
+      "library": {
+        "ns_median": 69.82275390625,
+        "ns_min": 59.509765625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "wedge_anti": {
+      "symbol": "∨",
+      "arity": 2,
+      "library": {
+        "ns_median": 76.50390625,
+        "ns_min": 75.080078125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "wedge_dot": {
+      "symbol": "⟑",
+      "arity": 2,
+      "library": {
+        "ns_median": 291.3583984375,
+        "ns_min": 282.658203125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "wedge_dot_anti": {
+      "symbol": "⟇",
+      "arity": 2,
+      "library": {
+        "ns_median": 286.490234375,
+        "ns_min": 234.92578125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "dot": {
+      "symbol": "∙",
+      "arity": 2,
+      "library": {
+        "ns_median": 18.095703125,
+        "ns_min": 17.6923828125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "dot_anti": {
+      "symbol": "∘",
+      "arity": 2,
+      "library": {
+        "ns_median": 18.00830078125,
+        "ns_min": 17.9462890625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "contract_bulk": {
+      "symbol": "∨★",
+      "arity": 2,
+      "library": {
+        "ns_median": 66.4990234375,
+        "ns_min": 66.29296875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "contract_weight": {
+      "symbol": "∨☆",
+      "arity": 2,
+      "library": {
+        "ns_median": 66.70263671875,
+        "ns_min": 66.2197265625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "expand_bulk": {
+      "symbol": "∧★",
+      "arity": 2,
+      "library": {
+        "ns_median": 58.69970703125,
+        "ns_min": 58.2275390625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "expand_weight": {
+      "symbol": "∧☆",
+      "arity": 2,
+      "library": {
+        "ns_median": 59.44921875,
+        "ns_min": 59.0283203125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "add": {
+      "symbol": "+",
+      "arity": 2,
+      "library": {
+        "ns_median": 13.6875,
+        "ns_min": 13.568359375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "subtract": {
+      "symbol": "-",
+      "arity": 2,
+      "library": {
+        "ns_median": 13.65087890625,
+        "ns_min": 13.576171875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "project_central": {
+      "symbol": "",
+      "arity": 2,
+      "library": {
+        "ns_median": 159.595703125,
+        "ns_min": 156.55078125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "project_central_anti": {
+      "symbol": "",
+      "arity": 2,
+      "library": {
+        "ns_median": 150.11376953125,
+        "ns_min": 149.0439453125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "project_orthogonal": {
+      "symbol": "",
+      "arity": 2,
+      "library": {
+        "ns_median": 162.5224609375,
+        "ns_min": 159.810546875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "project_orthogonal_anti": {
+      "symbol": "",
+      "arity": 2,
+      "library": {
+        "ns_median": 175.9619140625,
+        "ns_min": 172.625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "scale": {
+      "symbol": "∧",
+      "arity": 2,
+      "library": {
+        "ns_median": 14.7998046875,
+        "ns_min": 14.6533203125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "bulk": {
+      "symbol": "∙",
+      "arity": 1,
+      "library": {
+        "ns_median": 12.51513671875,
+        "ns_min": 12.4599609375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "weight": {
+      "symbol": "∘",
+      "arity": 1,
+      "library": {
+        "ns_median": 12.513671875,
+        "ns_min": 12.4716796875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "complement_right": {
+      "symbol": "/",
+      "arity": 1,
+      "library": {
+        "ns_median": 16.01025390625,
+        "ns_min": 15.953125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "complement_left": {
+      "symbol": "\\",
+      "arity": 1,
+      "library": {
+        "ns_median": 13.65869140625,
+        "ns_min": 13.6083984375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "reverse": {
+      "symbol": "~",
+      "arity": 1,
+      "library": {
+        "ns_median": 13.7373046875,
+        "ns_min": 13.65234375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "reverse_anti": {
+      "symbol": "~∘",
+      "arity": 1,
+      "library": {
+        "ns_median": 13.72216796875,
+        "ns_min": 13.6318359375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "dual_bulk": {
+      "symbol": "★",
+      "arity": 1,
+      "library": {
+        "ns_median": 13.44287109375,
+        "ns_min": 13.3720703125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "dual_weight": {
+      "symbol": "☆",
+      "arity": 1,
+      "library": {
+        "ns_median": 13.40478515625,
+        "ns_min": 13.3408203125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "negate": {
+      "symbol": "-",
+      "arity": 1,
+      "library": {
+        "ns_median": 11.90087890625,
+        "ns_min": 11.8828125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "norm_bulk": {
+      "symbol": "|∙",
+      "arity": 1,
+      "library": {
+        "ns_median": 15.41796875,
+        "ns_min": 15.3076171875,
+        "allocations": 0,
+        "nan_share": 0.4970703125
+      },
+      "reference": null
+    },
+    "norm_weight": {
+      "symbol": "|∘",
+      "arity": 1,
+      "library": {
+        "ns_median": 15.98388671875,
+        "ns_min": 15.71484375,
+        "allocations": 0,
+        "nan_share": 0.5029296875
+      },
+      "reference": null
+    },
+    "norm": {
+      "symbol": "|",
+      "arity": 1,
+      "library": {
+        "ns_median": 56.5908203125,
+        "ns_min": 56.2314453125,
+        "allocations": 0,
+        "nan_share": 1.0
+      },
+      "reference": null
+    },
+    "normalize_bulk": {
+      "symbol": "^∙",
+      "arity": 1,
+      "library": {
+        "ns_median": 46.5634765625,
+        "ns_min": 46.2236328125,
+        "allocations": 0,
+        "nan_share": 0.4970703125
+      },
+      "reference": null
+    },
+    "normalize_weight": {
+      "symbol": "^∘",
+      "arity": 1,
+      "library": {
+        "ns_median": 53.986328125,
+        "ns_min": 47.0390625,
+        "allocations": 0,
+        "nan_share": 0.5029296875
+      },
+      "reference": null
+    },
+    "unitize": {
+      "symbol": "^",
+      "arity": 1,
+      "library": {
+        "ns_median": 55.01318359375,
+        "ns_min": 54.7646484375,
+        "allocations": 0,
+        "nan_share": 0.5029296875
+      },
+      "reference": null
+    },
+    "attitude": {
+      "symbol": "⊖",
+      "arity": 1,
+      "library": {
+        "ns_median": 99.40234375,
+        "ns_min": 98.2373046875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "select_grade": {
+      "symbol": "{}",
+      "arity": 1,
+      "library": {
+        "ns_median": 40.44970703125,
+        "ns_min": 38.390625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "select_grade_anti": {
+      "symbol": "{}",
+      "arity": 1,
+      "library": {
+        "ns_median": 53.966796875,
+        "ns_min": 43.2119140625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "select_part": {
+      "symbol": "[]",
+      "arity": 1,
+      "library": {
+        "ns_median": 0.86572265625,
+        "ns_min": 0.8466796875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "bulk_flat": {
+      "symbol": "■",
+      "arity": 1,
+      "library": {
+        "ns_median": 12.66015625,
+        "ns_min": 10.740234375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "weight_flat": {
+      "symbol": "□",
+      "arity": 1,
+      "library": {
+        "ns_median": 12.478515625,
+        "ns_min": 10.580078125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "norm_bulk_flat": {
+      "symbol": "|■",
+      "arity": 1,
+      "library": {
+        "ns_median": 18.15283203125,
+        "ns_min": 18.0625,
+        "allocations": 0,
+        "nan_share": 0.4970703125
+      },
+      "reference": null
+    },
+    "norm_weight_flat": {
+      "symbol": "|□",
+      "arity": 1,
+      "library": {
+        "ns_median": 18.84130859375,
+        "ns_min": 18.640625,
+        "allocations": 0,
+        "nan_share": 0.5029296875
+      },
+      "reference": null
+    },
+    "carrier": {
+      "symbol": "⊟",
+      "arity": 1,
+      "library": {
+        "ns_median": 86.8759765625,
+        "ns_min": 73.80859375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "carrier_co": {
+      "symbol": "⊞",
+      "arity": 1,
+      "library": {
+        "ns_median": 98.77490234375,
+        "ns_min": 84.91015625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "center": {
+      "symbol": "⊙",
+      "arity": 1,
+      "library": {
+        "ns_median": 202.84912109375,
+        "ns_min": 174.07421875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "container": {
+      "symbol": "⊡",
+      "arity": 1,
+      "library": {
+        "ns_median": 184.84716796875,
+        "ns_min": 184.064453125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "partner": {
+      "symbol": "⊛",
+      "arity": 1,
+      "library": {
+        "ns_median": 375.783203125,
+        "ns_min": 365.45703125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": null
+    },
+    "wedge_round_point_round_point": {
+      "symbol": "∧",
+      "arity": 2,
+      "library": {
+        "ns_median": 58.43505859375,
+        "ns_min": 57.9736328125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 3.59716796875,
+        "ns_min": 3.568359375,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "wedge_dipole_round_point": {
+      "symbol": "∧",
+      "arity": 2,
+      "library": {
+        "ns_median": 59.24267578125,
+        "ns_min": 59.009765625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 8.75390625,
+        "ns_min": 8.6728515625,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "wedge_round_point_dipole": {
+      "symbol": "∧",
+      "arity": 2,
+      "library": {
+        "ns_median": 58.76806640625,
+        "ns_min": 58.4814453125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 8.54345703125,
+        "ns_min": 8.4580078125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "wedge_circle_round_point": {
+      "symbol": "∧",
+      "arity": 2,
+      "library": {
+        "ns_median": 60.02099609375,
+        "ns_min": 59.50390625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 4.787109375,
+        "ns_min": 4.76171875,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "wedge_round_point_circle": {
+      "symbol": "∧",
+      "arity": 2,
+      "library": {
+        "ns_median": 59.904296875,
+        "ns_min": 59.564453125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 5.27392578125,
+        "ns_min": 5.2158203125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "wedge_dipole_dipole": {
+      "symbol": "∧",
+      "arity": 2,
+      "library": {
+        "ns_median": 58.87353515625,
+        "ns_min": 58.5712890625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 8.98681640625,
+        "ns_min": 8.87890625,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "wedge_anti_sphere_sphere": {
+      "symbol": "∨",
+      "arity": 2,
+      "library": {
+        "ns_median": 77.12451171875,
+        "ns_min": 76.7314453125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 4.84423828125,
+        "ns_min": 4.8203125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "wedge_anti_sphere_circle": {
+      "symbol": "∨",
+      "arity": 2,
+      "library": {
+        "ns_median": 78.57421875,
+        "ns_min": 78.056640625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 10.56884765625,
+        "ns_min": 10.5205078125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "wedge_anti_circle_sphere": {
+      "symbol": "∨",
+      "arity": 2,
+      "library": {
+        "ns_median": 68.27587890625,
+        "ns_min": 65.62890625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 8.64501953125,
+        "ns_min": 8.5869140625,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "wedge_anti_circle_circle": {
+      "symbol": "∨",
+      "arity": 2,
+      "library": {
+        "ns_median": 66.3779296875,
+        "ns_min": 66.1220703125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 7.7470703125,
+        "ns_min": 7.6484375,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "wedge_anti_sphere_dipole": {
+      "symbol": "∨",
+      "arity": 2,
+      "library": {
+        "ns_median": 66.71923828125,
+        "ns_min": 66.1943359375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 5.06396484375,
+        "ns_min": 5.0224609375,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "wedge_anti_dipole_sphere": {
+      "symbol": "∨",
+      "arity": 2,
+      "library": {
+        "ns_median": 66.18212890625,
+        "ns_min": 66.0009765625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 4.7294921875,
+        "ns_min": 4.701171875,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "dot_round_point_round_point": {
+      "symbol": "∙",
+      "arity": 2,
+      "library": {
+        "ns_median": 18.08349609375,
+        "ns_min": 17.8271484375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 2.70361328125,
+        "ns_min": 2.6962890625,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "dot_dipole_dipole": {
+      "symbol": "∙",
+      "arity": 2,
+      "library": {
+        "ns_median": 17.9619140625,
+        "ns_min": 17.7392578125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 3.76708984375,
+        "ns_min": 3.740234375,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "dot_circle_circle": {
+      "symbol": "∙",
+      "arity": 2,
+      "library": {
+        "ns_median": 17.880859375,
+        "ns_min": 17.7294921875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 3.7861328125,
+        "ns_min": 3.7587890625,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "dot_sphere_sphere": {
+      "symbol": "∙",
+      "arity": 2,
+      "library": {
+        "ns_median": 17.84228515625,
+        "ns_min": 17.6171875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 2.705078125,
+        "ns_min": 2.6904296875,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "dot_anti_round_point_round_point": {
+      "symbol": "∘",
+      "arity": 2,
+      "library": {
+        "ns_median": 18.029296875,
+        "ns_min": 17.9716796875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 2.7099609375,
+        "ns_min": 2.6982421875,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "dot_anti_dipole_dipole": {
+      "symbol": "∘",
+      "arity": 2,
+      "library": {
+        "ns_median": 18.03759765625,
+        "ns_min": 17.9931640625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 3.84326171875,
+        "ns_min": 3.806640625,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "dot_anti_circle_circle": {
+      "symbol": "∘",
+      "arity": 2,
+      "library": {
+        "ns_median": 18.02880859375,
+        "ns_min": 17.98046875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 3.87451171875,
+        "ns_min": 3.84765625,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "dot_anti_sphere_sphere": {
+      "symbol": "∘",
+      "arity": 2,
+      "library": {
+        "ns_median": 18.04248046875,
+        "ns_min": 17.9970703125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 2.71044921875,
+        "ns_min": 2.7001953125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "complement_right_round_point": {
+      "symbol": "/",
+      "arity": 1,
+      "library": {
+        "ns_median": 13.46142578125,
+        "ns_min": 13.365234375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 1.50048828125,
+        "ns_min": 1.4658203125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "complement_left_round_point": {
+      "symbol": "\\",
+      "arity": 1,
+      "library": {
+        "ns_median": 13.58251953125,
+        "ns_min": 13.4873046875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 2.72509765625,
+        "ns_min": 2.5966796875,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "reverse_round_point": {
+      "symbol": "~",
+      "arity": 1,
+      "library": {
+        "ns_median": 12.71875,
+        "ns_min": 12.681640625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 8.5263671875,
+        "ns_min": 8.2783203125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "reverse_anti_round_point": {
+      "symbol": "~∘",
+      "arity": 1,
+      "library": {
+        "ns_median": 12.77099609375,
+        "ns_min": 12.7001953125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 8.52734375,
+        "ns_min": 8.2802734375,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "dual_bulk_round_point": {
+      "symbol": "★",
+      "arity": 1,
+      "library": {
+        "ns_median": 12.9326171875,
+        "ns_min": 12.8974609375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 0.9150390625,
+        "ns_min": 0.876953125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "dual_weight_round_point": {
+      "symbol": "☆",
+      "arity": 1,
+      "library": {
+        "ns_median": 12.919921875,
+        "ns_min": 12.865234375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 1.46435546875,
+        "ns_min": 1.4326171875,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "bulk_round_point": {
+      "symbol": "∙",
+      "arity": 1,
+      "library": {
+        "ns_median": 9.82470703125,
+        "ns_min": 9.607421875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 1.72802734375,
+        "ns_min": 1.498046875,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "weight_round_point": {
+      "symbol": "∘",
+      "arity": 1,
+      "library": {
+        "ns_median": 9.6142578125,
+        "ns_min": 9.603515625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 1.79931640625,
+        "ns_min": 1.5849609375,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "bulk_flat_round_point": {
+      "symbol": "■",
+      "arity": 1,
+      "library": {
+        "ns_median": 9.88330078125,
+        "ns_min": 9.828125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 0.8505859375,
+        "ns_min": 0.8408203125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "weight_flat_round_point": {
+      "symbol": "□",
+      "arity": 1,
+      "library": {
+        "ns_median": 9.8818359375,
+        "ns_min": 9.5810546875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 0.6591796875,
+        "ns_min": 0.658203125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "attitude_round_point": {
+      "symbol": "⊖",
+      "arity": 1,
+      "library": {
+        "ns_median": 85.01806640625,
+        "ns_min": 83.5078125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 0.52197265625,
+        "ns_min": 0.279296875,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "carrier_round_point": {
+      "symbol": "⊟",
+      "arity": 1,
+      "library": {
+        "ns_median": 73.29931640625,
+        "ns_min": 72.8818359375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 0.64501953125,
+        "ns_min": 0.634765625,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "carrier_co_round_point": {
+      "symbol": "⊞",
+      "arity": 1,
+      "library": {
+        "ns_median": 83.2861328125,
+        "ns_min": 82.85546875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 0.283203125,
+        "ns_min": 0.2802734375,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "center_round_point": {
+      "symbol": "⊙",
+      "arity": 1,
+      "library": {
+        "ns_median": 177.38330078125,
+        "ns_min": 172.87890625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 1.68212890625,
+        "ns_min": 1.4091796875,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "container_round_point": {
+      "symbol": "⊡",
+      "arity": 1,
+      "library": {
+        "ns_median": 158.462890625,
+        "ns_min": 155.9111328125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 1.4296875,
+        "ns_min": 1.4140625,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "partner_round_point": {
+      "symbol": "⊛",
+      "arity": 1,
+      "library": {
+        "ns_median": 374.33837890625,
+        "ns_min": 364.8046875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 1.81640625,
+        "ns_min": 1.5283203125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "complement_right_dipole": {
+      "symbol": "/",
+      "arity": 1,
+      "library": {
+        "ns_median": 15.21240234375,
+        "ns_min": 12.8759765625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 5.11279296875,
+        "ns_min": 5.072265625,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "complement_left_dipole": {
+      "symbol": "\\",
+      "arity": 1,
+      "library": {
+        "ns_median": 15.2021484375,
+        "ns_min": 15.1328125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 6.84814453125,
+        "ns_min": 6.7919921875,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "reverse_dipole": {
+      "symbol": "~",
+      "arity": 1,
+      "library": {
+        "ns_median": 15.0048828125,
+        "ns_min": 14.9599609375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 2.79052734375,
+        "ns_min": 2.7587890625,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "reverse_anti_dipole": {
+      "symbol": "~∘",
+      "arity": 1,
+      "library": {
+        "ns_median": 14.9951171875,
+        "ns_min": 14.9638671875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 2.77783203125,
+        "ns_min": 2.73828125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "dual_bulk_dipole": {
+      "symbol": "★",
+      "arity": 1,
+      "library": {
+        "ns_median": 15.2099609375,
+        "ns_min": 15.1748046875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 2.9013671875,
+        "ns_min": 2.8583984375,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "dual_weight_dipole": {
+      "symbol": "☆",
+      "arity": 1,
+      "library": {
+        "ns_median": 15.18994140625,
+        "ns_min": 15.1376953125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 3.28466796875,
+        "ns_min": 3.244140625,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "bulk_dipole": {
+      "symbol": "∙",
+      "arity": 1,
+      "library": {
+        "ns_median": 11.57080078125,
+        "ns_min": 11.5498046875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 3.05126953125,
+        "ns_min": 3.0,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "weight_dipole": {
+      "symbol": "∘",
+      "arity": 1,
+      "library": {
+        "ns_median": 11.5751953125,
+        "ns_min": 11.498046875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 4.0458984375,
+        "ns_min": 4.0048828125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "bulk_flat_dipole": {
+      "symbol": "■",
+      "arity": 1,
+      "library": {
+        "ns_median": 11.6328125,
+        "ns_min": 11.5517578125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 2.81884765625,
+        "ns_min": 2.7763671875,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "weight_flat_dipole": {
+      "symbol": "□",
+      "arity": 1,
+      "library": {
+        "ns_median": 11.51171875,
+        "ns_min": 11.49609375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 3.69482421875,
+        "ns_min": 3.6689453125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "attitude_dipole": {
+      "symbol": "⊖",
+      "arity": 1,
+      "library": {
+        "ns_median": 98.24072265625,
+        "ns_min": 83.7265625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 1.3984375,
+        "ns_min": 1.3828125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "carrier_dipole": {
+      "symbol": "⊟",
+      "arity": 1,
+      "library": {
+        "ns_median": 75.1669921875,
+        "ns_min": 72.716796875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 1.111328125,
+        "ns_min": 1.09375,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "carrier_co_dipole": {
+      "symbol": "⊞",
+      "arity": 1,
+      "library": {
+        "ns_median": 83.623046875,
+        "ns_min": 82.43359375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 0.92578125,
+        "ns_min": 0.9052734375,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "center_dipole": {
+      "symbol": "⊙",
+      "arity": 1,
+      "library": {
+        "ns_median": 209.02294921875,
+        "ns_min": 176.93359375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 3.72900390625,
+        "ns_min": 3.15625,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "container_dipole": {
+      "symbol": "⊡",
+      "arity": 1,
+      "library": {
+        "ns_median": 158.4189453125,
+        "ns_min": 156.19921875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 2.78515625,
+        "ns_min": 2.7822265625,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "partner_dipole": {
+      "symbol": "⊛",
+      "arity": 1,
+      "library": {
+        "ns_median": 453.146484375,
+        "ns_min": 373.0029296875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 3.43701171875,
+        "ns_min": 3.4189453125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "complement_right_circle": {
+      "symbol": "/",
+      "arity": 1,
+      "library": {
+        "ns_median": 12.70654296875,
+        "ns_min": 12.66015625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 4.36279296875,
+        "ns_min": 4.3291015625,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "complement_left_circle": {
+      "symbol": "\\",
+      "arity": 1,
+      "library": {
+        "ns_median": 12.7197265625,
+        "ns_min": 12.548828125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 5.7431640625,
+        "ns_min": 5.6533203125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "reverse_circle": {
+      "symbol": "~",
+      "arity": 1,
+      "library": {
+        "ns_median": 12.5205078125,
+        "ns_min": 12.4794921875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 2.36865234375,
+        "ns_min": 2.3330078125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "reverse_anti_circle": {
+      "symbol": "~∘",
+      "arity": 1,
+      "library": {
+        "ns_median": 12.5361328125,
+        "ns_min": 12.5224609375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 2.36962890625,
+        "ns_min": 2.3388671875,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "dual_bulk_circle": {
+      "symbol": "★",
+      "arity": 1,
+      "library": {
+        "ns_median": 12.73828125,
+        "ns_min": 12.6884765625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 2.3134765625,
+        "ns_min": 2.2529296875,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "dual_weight_circle": {
+      "symbol": "☆",
+      "arity": 1,
+      "library": {
+        "ns_median": 12.6884765625,
+        "ns_min": 12.65625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 2.44580078125,
+        "ns_min": 2.40625,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "bulk_circle": {
+      "symbol": "∙",
+      "arity": 1,
+      "library": {
+        "ns_median": 9.63330078125,
+        "ns_min": 9.587890625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 3.26416015625,
+        "ns_min": 3.23828125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "weight_circle": {
+      "symbol": "∘",
+      "arity": 1,
+      "library": {
+        "ns_median": 9.6279296875,
+        "ns_min": 9.5888671875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 3.44189453125,
+        "ns_min": 3.3916015625,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "bulk_flat_circle": {
+      "symbol": "■",
+      "arity": 1,
+      "library": {
+        "ns_median": 9.83056640625,
+        "ns_min": 9.7802734375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 3.25830078125,
+        "ns_min": 3.2353515625,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "weight_flat_circle": {
+      "symbol": "□",
+      "arity": 1,
+      "library": {
+        "ns_median": 9.5947265625,
+        "ns_min": 9.564453125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 2.5908203125,
+        "ns_min": 2.5615234375,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "attitude_circle": {
+      "symbol": "⊖",
+      "arity": 1,
+      "library": {
+        "ns_median": 83.8408203125,
+        "ns_min": 83.142578125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 3.474609375,
+        "ns_min": 3.431640625,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "carrier_circle": {
+      "symbol": "⊟",
+      "arity": 1,
+      "library": {
+        "ns_median": 73.07080078125,
+        "ns_min": 72.6787109375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 0.861328125,
+        "ns_min": 0.8388671875,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "carrier_co_circle": {
+      "symbol": "⊞",
+      "arity": 1,
+      "library": {
+        "ns_median": 82.6357421875,
+        "ns_min": 81.947265625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 1.90673828125,
+        "ns_min": 1.8876953125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "center_circle": {
+      "symbol": "⊙",
+      "arity": 1,
+      "library": {
+        "ns_median": 205.7470703125,
+        "ns_min": 176.0419921875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 3.2734375,
+        "ns_min": 3.267578125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "container_circle": {
+      "symbol": "⊡",
+      "arity": 1,
+      "library": {
+        "ns_median": 186.88525390625,
+        "ns_min": 183.650390625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 2.98876953125,
+        "ns_min": 2.970703125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "partner_circle": {
+      "symbol": "⊛",
+      "arity": 1,
+      "library": {
+        "ns_median": 399.57763671875,
+        "ns_min": 369.787109375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 4.33203125,
+        "ns_min": 4.3017578125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "complement_right_sphere": {
+      "symbol": "/",
+      "arity": 1,
+      "library": {
+        "ns_median": 15.72119140625,
+        "ns_min": 15.53515625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 1.00341796875,
+        "ns_min": 0.9951171875,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "complement_left_sphere": {
+      "symbol": "\\",
+      "arity": 1,
+      "library": {
+        "ns_median": 15.76904296875,
+        "ns_min": 15.572265625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 3.06201171875,
+        "ns_min": 3.046875,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "reverse_sphere": {
+      "symbol": "~",
+      "arity": 1,
+      "library": {
+        "ns_median": 15.4833984375,
+        "ns_min": 15.4375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 8.52880859375,
+        "ns_min": 8.279296875,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "reverse_anti_sphere": {
+      "symbol": "~∘",
+      "arity": 1,
+      "library": {
+        "ns_median": 13.357421875,
+        "ns_min": 13.318359375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 8.77880859375,
+        "ns_min": 8.529296875,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "dual_bulk_sphere": {
+      "symbol": "★",
+      "arity": 1,
+      "library": {
+        "ns_median": 15.05224609375,
+        "ns_min": 13.302734375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 1.08984375,
+        "ns_min": 1.0810546875,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "dual_weight_sphere": {
+      "symbol": "☆",
+      "arity": 1,
+      "library": {
+        "ns_median": 15.4794921875,
+        "ns_min": 15.4140625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 1.0908203125,
+        "ns_min": 1.0771484375,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "bulk_sphere": {
+      "symbol": "∙",
+      "arity": 1,
+      "library": {
+        "ns_median": 11.9560546875,
+        "ns_min": 11.8349609375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 0.7744140625,
+        "ns_min": 0.7724609375,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "weight_sphere": {
+      "symbol": "∘",
+      "arity": 1,
+      "library": {
+        "ns_median": 11.951171875,
+        "ns_min": 11.9365234375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 2.18603515625,
+        "ns_min": 1.9951171875,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "bulk_flat_sphere": {
+      "symbol": "■",
+      "arity": 1,
+      "library": {
+        "ns_median": 12.22509765625,
+        "ns_min": 12.2021484375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 0.9990234375,
+        "ns_min": 0.9892578125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "weight_flat_sphere": {
+      "symbol": "□",
+      "arity": 1,
+      "library": {
+        "ns_median": 10.07666015625,
+        "ns_min": 10.05078125,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 1.6982421875,
+        "ns_min": 1.55078125,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "attitude_sphere": {
+      "symbol": "⊖",
+      "arity": 1,
+      "library": {
+        "ns_median": 84.54541015625,
+        "ns_min": 83.7568359375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 3.08544921875,
+        "ns_min": 3.05859375,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "carrier_sphere": {
+      "symbol": "⊟",
+      "arity": 1,
+      "library": {
+        "ns_median": 87.32861328125,
+        "ns_min": 74.0947265625,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 0.283203125,
+        "ns_min": 0.2802734375,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "carrier_co_sphere": {
+      "symbol": "⊞",
+      "arity": 1,
+      "library": {
+        "ns_median": 84.50439453125,
+        "ns_min": 83.7724609375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 0.7119140625,
+        "ns_min": 0.701171875,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "center_sphere": {
+      "symbol": "⊙",
+      "arity": 1,
+      "library": {
+        "ns_median": 179.10400390625,
+        "ns_min": 175.32421875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 1.62646484375,
+        "ns_min": 1.5869140625,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "container_sphere": {
+      "symbol": "⊡",
+      "arity": 1,
+      "library": {
+        "ns_median": 158.3720703125,
+        "ns_min": 156.609375,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 1.9453125,
+        "ns_min": 1.8896484375,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    },
+    "partner_sphere": {
+      "symbol": "⊛",
+      "arity": 1,
+      "library": {
+        "ns_median": 444.14208984375,
+        "ns_min": 379.4248046875,
+        "allocations": 0,
+        "nan_share": 0.0
+      },
+      "reference": {
+        "ns_median": 1.7587890625,
+        "ns_min": 1.7255859375,
+        "allocations": 0,
+        "nan_share": 0.0
+      }
+    }
+  }
+}
