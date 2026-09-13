@@ -68,8 +68,10 @@ project; `curator/<name>` is rules and root work. Every pull request runs:
 
 - `static`: layout, form, telegraphic comments, provenance headers and rules stamps,
   glossary shape, and each project's compiler pin, over the whole tree.
-- `project`: one job per project whose code changed, each installing that project's own
-  pinned compiler, restoring its dependencies from its lock file and running its tests.
+- `project`: one job per project the branch owns whose code changed (a curator branch owns
+  the curator projects, a contributor branch its own, `main` and the weekly run every
+  project), each installing that project's own pinned compiler, restoring its dependencies
+  from its lock file and running its tests.
   These run in parallel, so wall time follows the slowest changed project rather than the
   number of projects in the repository.
 - `types`: `npm ci` then that project's own `types` verb, for every changed project carrying

@@ -200,7 +200,10 @@ way — at the start, on each resolution, at handover.
 
 11. **Never** write contributor project code, create a contributor project, or resolve a
     contributor's open question by editing their project. Answer it by changing a rule, a
-    check, or this file, and let the contributor apply it. The `scope` job holds this duty:
+    check, or this file, and let the contributor apply it. Their suites are theirs to run as
+    well: on a curator branch, `koch ci` and the runner compile the curator projects only,
+    however much the checker changed, and the push run on `main` and the weekly run compile
+    the rest. The static pass reads every project regardless. The `scope` job holds this duty:
     on `curator/<name>` the only writable paths inside a contributor project are its
     `README.md`, `PROVENANCE.md` and `GLOSSARY.md` — the stamp row, the agreed terms, and
     prose a rule change invalidated, which is what propagation is. The README is writable,
@@ -275,7 +278,7 @@ then `./koch <command>`). Every check is a module under `curator/audit/src/`, te
 | `system` | projects with a `system` verb | prints what they need installed, one per line |
 | `assets` | files named, against the store | fetches and checks each, prints its path |
 | `tests` | every project, or one | restore, then testament, on that project's pin |
-| `plan` | changed paths, nimble pins | projects to compile, as JSON; `--sweep` for weekly |
+| `plan` | changed paths, branch, pins | projects the branch owns to compile, as JSON; `--sweep` |
 | `scope` | changed paths | branch grammar; project paths inside prefix |
 | `commits` | commit subjects | Conventional Commits; scope equals branch scope |
 | `base` | paths base gained | branch carries base's rules and checker |
