@@ -122,17 +122,24 @@ proc walked*(rig: Rig; band: Band; links: seq[Link]; who: Body;
     result.moments.add now.m
   c.free()
 
+proc stood*(rig: Rig; band: Band; links: seq[Link]; turns: float;
+            away: bool; head: Body; apart: float): tuple[holds: bool, c: Couple] =
+  ## Couple standing at this facing from this one distance, and whether pose
+  ## holds there.  Caller frees couple, holding or not.
+  result.c = build(rig, turned(restStance(rig, apart, away), Body.Two, turns),
+                   band, links, head, away)
+  result.c.settle()
+  result.holds = true
+  for i in 0 ..< links.len:
+    if result.c.stopOf(i) != Stop.None:
+      result.holds = false
+
 proc standsAt(rig: Rig; band: Band; links: seq[Link]; turns: float;
               away: bool; head: Body; apart: float): bool =
   ## Whether pose holds at this facing from this one distance.
-  var c = build(rig, turned(restStance(rig, apart, away), Body.Two, turns),
-                band, links, head, away)
-  c.settle()
-  result = true
-  for i in 0 ..< links.len:
-    if c.stopOf(i) != Stop.None:
-      result = false
+  let (holds, c) = stood(rig, band, links, turns, away, head, apart)
   c.free()
+  holds
 
 proc holdsAt*(rig: Rig; band: Band; links: seq[Link]; turns: float;
               away = false; head = Body.Two; apart = 0.0): bool =

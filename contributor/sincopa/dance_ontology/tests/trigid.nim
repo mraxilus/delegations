@@ -21,7 +21,7 @@ joinable: false
 
 import std/[math, strformat, unittest]
 
-import ../sim/[body, hold, limb, rig, rigid, vec, walk]
+import ../sim/[body, hold, limb, read, rig, rigid, vec, walk]
 
 
 const
@@ -55,6 +55,11 @@ const
     ## has to be asked of hold that has one.
   BEYOND = 1.2 ## Turn no distance carries that chain; best of them is 0.92, measured
                ## 2026-09-13 with shoulder girdles giving, against 0.42 before them.
+  WOUND = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)]),
+            Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Left)])]
+    ## Cross-name chain, whose stills reference draws wound to turn and half.
+  SAG = 0.03 ## Metres joined hand may sit under its band's edge, lift being spring
+             ## against comfort and not wall.
 
 let CHOSEN = block:
   ## Where that hold stands to turn each way at torso height, and how far it
@@ -485,6 +490,44 @@ suite "arms move as arms do":
         echo &"    {who} {arm}: shoulder joint {gap * 1000:.0f} mm outside own body"
         check gap <= 0.0
     c.free()
+
+  test "still asked past face to face has its joined hands in their band":
+    ## Architect: face to face arms may be at any height, and once couple are no
+    ## longer face to face hands must actually be above.  Still card was built at
+    ## its facing and settled, and lift starts only after settling: over crown at
+    ## half turn every joined hand hung at hip height, 0.87 m, so every still past
+    ## face to face on reference was answered with hands nowhere near its band.
+    var found = false
+    for apart in stands(HUMAN):
+      let (holds, c) = stood(HUMAN, Band.Crown, WOUND, 0.5, false, Body.Two, apart)
+      if holds:
+        found = true
+        for ln in WOUND:
+          for h in ln.ends:
+            check c.armPoseOf(h.body, h.arm).g.z >= HUMAN.band[Band.Crown].lo - SAG
+      c.free()
+      if found: break
+    check found
+
+  test "still at diamond is wound where open is not":
+    ## Winding is path, not facing.  Couple built at whole turn stand as they do
+    ## at none: diamond read as open and swan as cross, and every wound still on
+    ## reference was answered by unwound pose.  Turned there, diamond's two
+    ## connections cross twice in plan where open's run clear.
+    proc crossed(turns: float): int =
+      ## How many times two connections cross, from first distance that holds.
+      result = -1
+      for apart in stands(HUMAN):
+        let (holds, c) = stood(HUMAN, Band.Crown, WOUND, turns, false, Body.Two, apart)
+        if holds:
+          var arms: Arms
+          for i in 0 ..< WOUND.len:
+            arms.add c.poseOf(i).arms
+          result = crossings(arms).len
+        c.free()
+        if holds: break
+    check crossed(0.0) == 0
+    check crossed(1.0) >= 2
 
   test "no point of any arm leaps between two moments":
     for (name, band, links, w) in corpus():
