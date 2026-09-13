@@ -4,16 +4,19 @@
 ##   so one source serves every configuration and stubs pick which.
 ##
 ##   Bootstrap order:
-##     [pga] -> pga_benchmark (this umbrella)
+##     [pga] -> kinds -> catalogue -> pga_benchmark (this umbrella)
+##     surface (pure, reads library source; test side)
 ##
-##   Cost: nothing measured yet; this commit opens project shape audit demands, and every
-##     later module lands with test that holds it.
+##   Cost: nothing timed yet; catalogue names every operation and suite holds it to
+##     library's exported surface, so later instruments walk list that cannot drift.
 
 {.experimental: "strictFuncs".}
 
 import pga
 
-export pga
+import ./pga_benchmark/[catalogue, kinds, surface]
+
+export catalogue, kinds, pga, surface
 
 
 const CONFIG* = (if IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"
