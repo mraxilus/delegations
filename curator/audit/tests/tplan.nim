@@ -6,7 +6,7 @@ joinable: true
 """
 ## Replicate scoped test selection of `plan.nim` header and CURATOR.md checks reference.
 
-import std/[json, options, unittest]
+import std/[json, options, sequtils, unittest]
 import ../src/[plan, projects]
 import ./fixtures
 
@@ -110,6 +110,17 @@ suite "Plan":
     check testSet(DIRS, [CHECKER_DIR & "/layout.nim"]) == @DIRS  # check source
     check isChecker(CHECKER_DIR & "/layout.nim")
     check not isChecker(AUDIT_DIR & "/tests/tlayout.nim")  # checker's own suite is code
+
+  test "branch keeps what it owns: curator its curator projects, contributor its own":
+    check scoped(DIRS, "curator/anything") == @[AUDIT_DIR]  # curator root branch
+    check scoped(DIRS, "curator/audit/anything") == @[AUDIT_DIR]  # curator project branch
+    check scoped(DIRS, "contributor/ronri/alpha/anything") == @[ALPHA_DIR]  # own project
+    check scoped(DIRS, "contributor/ronri/other/anything").len == 0  # not even neighbour
+    check scoped(DIRS, "main") == @DIRS  # push run owns everything
+    check scoped(DIRS, "claude/outside-grammar") == @DIRS  # outside grammar, all
+    let jobs = [Job(dir: ALPHA_DIR, pin: PIN), Job(dir: AUDIT_DIR, pin: PIN)]
+    check scoped(jobs, "curator/x").mapIt(it.dir) == @[AUDIT_DIR]  # jobs filter same way
+    check scoped(jobs, "").len == 2  # no branch known, all
 
   test "path inside no project selects nothing by itself":
     check testSet(DIRS, ["CONSTITUTION.md"]).len == 0  # rules reach projects by stamp
