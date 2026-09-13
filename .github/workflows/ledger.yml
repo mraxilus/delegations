@@ -116,6 +116,11 @@ jobs:
             --jq '.[] | select((.body // "") | test("^\\s*\\*{0,2}role:"; "i") | not)
                   | "- Pull request #\(.number) opens with no role line"')"
           [ -z "$bare_prs" ] || found="$found$bare_prs"$'\n'
+          unlabelled_prs="$(gh pr list --repo "$REPO" --state open --limit 100 \
+            --json number,labels \
+            --jq '.[] | select(.labels | length == 0)
+                  | "- Pull request #\(.number) carries no label, so no role filter finds it"')"
+          [ -z "$unlabelled_prs" ] || found="$found$unlabelled_prs"$'\n'
 
           if [ -z "$found" ]; then
             echo "Nothing to report."
