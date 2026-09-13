@@ -11,8 +11,9 @@
 #   verdicts and is gate branch protection requires, so required names stay `audit`, `scope`,
 #   `commits` while matrix names vary. `base`, `types` and `driven` reach merge through that
 #   gate, which is why requiring branches up to date needs no paid ruleset here.
-#   Weekly sweep has no base commit to scope against, so `types` takes `--all` there, as
-#   `plan` takes `--sweep`; `driven` needs neither, since it filters plan's own selection.
+#   Weekly sweep scopes against its window rather than base commit, so `types` takes
+#   `--sweep` there, as `plan` does; `driven` needs neither, since it filters plan's own
+#   selection.
 #
 #   `driven` is matrix where `types` is one job, and difference is what each verb compiles.
 #   Type check derives declarations by reading source as text; driven check builds page
@@ -55,10 +56,10 @@
 #   `pull_request_target` defaults; this workflow triggers on `pull_request`, so it does not
 #   reach here.
 #   Branch names and event kind reach koch through environment, never interpolated into
-#   script. Weekly sweep compiles every project, since scoped runs leave unrelated rot
-#   unseen until that project next changes; it skips itself in week nobody merged code,
-#   because rot arrives with merges. Cron here and `SWEEP_DAYS` in `plan.nim` are one
-#   window named twice: change both together.
+#   script. Weekly sweep compiles projects whose code merged inside its window and nothing
+#   in week nobody merged code, because rot arrives with merges; every run, push and
+#   schedule alike, covers what changed and nothing else. Cron here and `SWEEP_DAYS` in
+#   `plan.nim` are one window named twice: change both together.
 
 name: check
 
@@ -84,9 +85,6 @@ jobs:
             && format('origin/{0}', github.base_ref)
             || github.event.before }}
       SWEEP: ${{ github.event_name == 'schedule' && '--sweep' || '' }}
-      # Branch decides what plan keeps: curator branch its curator projects, contributor
-      #   branch its own; empty on push and schedule, so main and sweep keep every project.
-      BRANCH: ${{ github.head_ref }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -306,7 +304,7 @@ jobs:
         ${{ github.event_name == 'pull_request'
             && format('origin/{0}', github.base_ref)
             || github.event.before }}
-      ALL: ${{ github.event_name == 'schedule' && '--all' || '' }}
+      SWEEP: ${{ github.event_name == 'schedule' && '--sweep' || '' }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -327,7 +325,7 @@ jobs:
         with:
           path: ~/.npm
           key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
-      - run: nim r koch types $ALL
+      - run: nim r koch types $SWEEP
 
   scope:
     if: github.event_name == 'pull_request'
