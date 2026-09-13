@@ -15,9 +15,9 @@ joinable: false
 
 {.experimental: "strictFuncs".}
 
-import std/[math, strformat, unittest]
+import std/[math, random, strformat, tables, unittest]
 
-import ../sim/[body, hold, read, rig, rigid, vec]
+import ../sim/[body, hold, limb, read, rig, rigid, vec]
 
 
 const APART = 0.40
@@ -74,6 +74,47 @@ suite "two hands":
           c.free()
     echo &"    {seen} crossings read off two holds, three bands, five turns"
     check seen > 0
+
+  test "crossing reader gives one answer at knife edge":
+    ## Where crossing sits at vertex of both polylines, reader counted it on
+    ## every adjacent segment pair, four for one; where one arm lies along
+    ## other in plan and leaves to far side, sign noise inside overlap read
+    ## nought, one or two.  Two poses differing by less than float carries read
+    ## as four crossings and as one (repository issue 88).  Same count for exact
+    ## figures and for thousand poses jittered by 1e-13, which is below anything
+    ## pose carries, and count in exact terms is one in both.
+    func armsOf(p, q: array[7, Vec]): Arms =
+      ## Two connections from their seven points each, grip in middle.
+      func pose(s, e, w, g: Vec): ArmPose = ArmPose(s: s, e: e, w: w, g: g)
+      @[[pose(p[0], p[1], p[2], p[3]), pose(p[6], p[5], p[4], p[3])],
+        [pose(q[0], q[1], q[2], q[3]), pose(q[6], q[5], q[4], q[3])]]
+    let
+      # Along x at y nought; vertex two at (0.4, 0).
+      p: array[7, Vec] = [(0.0, 0.0, 1.0), (0.2, 0.0, 1.1), (0.4, 0.0, 1.2), (0.6, 0.0, 1.3),
+                          (0.8, 0.0, 1.3), (1.0, 0.0, 1.2), (1.2, 0.0, 1.1)]
+      # Up y at x 0.4; vertex three at (0.4, 0): crossing at vertex of both.
+      q: array[7, Vec] = [(0.4, -0.6, 1.5), (0.4, -0.4, 1.5), (0.4, -0.2, 1.5), (0.4, 0.0, 1.5),
+                          (0.4, 0.2, 1.5), (0.4, 0.4, 1.5), (0.4, 0.6, 1.5)]
+      # In from below, along p for four vertices, out to above: one crossing.
+      t: array[7, Vec] = [(0.05, -0.05, 1.5), (0.3, 0.0, 1.5), (0.5, 0.0, 1.5), (0.7, 0.0, 1.5),
+                          (0.9, 0.0, 1.5), (1.1, 0.1, 1.5), (1.3, 0.2, 1.5)]
+    var rng = initRand(7)
+    for (name, other) in [("at vertex", q), ("along", t)]:
+      let exact = crossings(armsOf(p, other)).len
+      var counts: CountTable[int]
+      for trial in 0 ..< 1000:
+        var pp = p
+        var oo = other
+        for i in 0 .. 6:
+          pp[i] = (pp[i].x + rng.rand(-1e-13 .. 1e-13), pp[i].y + rng.rand(-1e-13 .. 1e-13),
+                   pp[i].z)
+          oo[i] = (oo[i].x + rng.rand(-1e-13 .. 1e-13), oo[i].y + rng.rand(-1e-13 .. 1e-13),
+                   oo[i].z)
+        counts.inc crossings(armsOf(pp, oo)).len
+      echo &"    {name}: exact {exact}, jittered {counts}"
+      check exact == 1
+      check counts.len == 1
+      check counts.hasKey(exact)
 
   test "tightest joint is one nearest its edge, and strain is one there":
     ## Read off same poses: whichever joint `tightest` names, no other joint of
