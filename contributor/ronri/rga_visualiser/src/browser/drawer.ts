@@ -41,6 +41,35 @@ button_menu.addEventListener('click', () => {
   button_menu.classList.toggle('on', open);
 });
 
+// **Axes and grid ride in chip row where it fits them, and in menu where it does not.**
+//   Row carries six controls; measured, it fits down to 395px and overflows by one pixel at
+//   394 and by nine at 386. Below that, flex takes overflow out of chips themselves, so every
+//   control shrinks to keep group that no longer fits -- toggles included, and they are what
+//   reader reaches for least often of six.
+//   Moved, never copied. Second pair of buttons in menu would be second `on` state to keep in
+//   step with scene's own, and first refresh that wrote one and not other would be wrong in
+//   way nothing reports. One node, one id, one handler, two homes.
+//   Breakpoint is measured rather than rounded to device: 394 is width row actually stops
+//   fitting at, and `driveChipRowFits` sweeps either side of it.
+const PIXELS_ROW_TOGGLES_LEAST = 395;
+const fits_toggles = window.matchMedia(`(min-width: ${PIXELS_ROW_TOGGLES_LEAST}px)`);
+const group_toggles = document.querySelector('.toggles');
+const home_menu_toggles = document.getElementById('top-menu-show');
+
+function settleToggles(): void {
+  if (group_toggles === null || home_menu_toggles === null) return;
+  if (fits_toggles.matches) {
+    // Back to its own place in row, ahead of menu chip it sits left of.
+    button_menu.parentElement?.insertBefore(group_toggles, button_menu);
+    home_menu_toggles.hidden = true;
+  } else {
+    home_menu_toggles.appendChild(group_toggles);
+    home_menu_toggles.hidden = false;
+  }
+}
+settleToggles();
+fits_toggles.addEventListener('change', settleToggles);
+
 // **Heading wears its band only while rows are passing under it.** Band that is always on is
 //   slab on every section, announcing covering it is not doing; one that arrives when heading
 //   pins says what is happening.

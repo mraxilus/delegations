@@ -504,6 +504,14 @@
      row hidden by attribute would keep its box and every tab would report whole table's
      height. Measured: without this line all five tabs scrolled, including two-row one. */
   .help-row[hidden] { display: none; }
+  /* Same bargain as `.help-row` above: `.top-menu.show` sets `display` on its children's
+     parent and this block is laid out by it, so `hidden` has to be spelled out to win. */
+  #top-menu-show[hidden] { display: none; }
+  #top-menu-show .toggles { margin-top: 2px; }
+  /* Buttons fill their row here, as `.top-menu .button` does in every group above it. In chip
+     row these two are compact, because row is short of width; in menu width is what there is
+     most of, and pair sitting hard left under stretched rows reads as unfinished. */
+  #top-menu-show .toggles button { flex: 1; }
   .help-action {
     padding: 2px 0;
     font-family: var(--mono);
@@ -1264,6 +1272,12 @@
     role="group"
     aria-label="load the orrery, at one of three sizes"
   ></div>
+  <!-- Where `.toggles` lands once chip row is too narrow to carry it; see `settleToggles`.
+       Empty and hidden at every width that fits row, since group is moved rather than
+       copied -- two copies of one control are two states to keep in step. -->
+  <div id="top-menu-show" hidden>
+    <div class="top-menu-title">@WORD:NameMenuShow@</div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>

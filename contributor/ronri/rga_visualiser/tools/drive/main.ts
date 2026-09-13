@@ -25,7 +25,7 @@ import {
   drivePanWhileSelected, drivePickOrbit, drivePlanePick, drivePointerPick,
 } from './framing';
 import { driveLabelGlide, driveLabelWorn } from './label';
-import { driveHelp, driveHoverDuringGesture } from './chrome';
+import { driveChipRowFits, driveHelp, driveHoverDuringGesture } from './chrome';
 import { driveTypeDrawn, driveTypeLigatures, driveTypeRoles } from './type';
 import { driveCreep, drivePlaneBuilt, driveRuler } from './finger';
 import { driveHoldScene } from './hold';
@@ -160,6 +160,9 @@ async function main(): Promise<void> {
 
   await driveHoverDuringGesture(page, SIZE_VIEW.width, SIZE_VIEW.height);
   await driveHelp(page, SIZE_VIEW.width, SIZE_VIEW.height);
+  // Sweeps viewport and puts it back; kept beside other chrome checks rather than among
+  //   drawer's, since what it reads is row above drawer and not drawer itself.
+  await driveChipRowFits(page);
   // After help, so tab strip exists to be asked which face it is drawn in.
   await driveTypeRoles(page);
   await driveTypeDrawn(page);
