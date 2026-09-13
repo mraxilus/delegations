@@ -15,7 +15,7 @@
 import std/[options, sequtils, sets, strutils]
 import ./[
   findings, kinds, prose, form, justification, checker, layout, provenance, glossary,
-  dependencies, toolchain, plan, workflows, record, tree, domains,
+  dependencies, toolchain, plan, workflows, record, prompts, tree, domains,
 ]
 
 export layout.Tree, layout.Entry, layout.projectDirs
@@ -113,6 +113,7 @@ proc auditTree*(tree: Tree): seq[Finding] =
       let is_governed = '/' notin e.path or e.path.startsWith(CURATOR & "/")
       if is_governed and not e.path.endsWith("GLOSSARY.md"):
         result.add checkPeopleWords(e.path, e.content)
+    if e.path in PROMPT_PATHS: result.add checkPrompt(e.path, e.content)
     for dir in dirs:
       if e.path == dir & "/PROVENANCE.md":
         result.add checkProvenance(e.path, e.content, stamp_now)
