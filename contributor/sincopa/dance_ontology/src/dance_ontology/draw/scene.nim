@@ -14,7 +14,7 @@
 ##   Every scene is built **at compile time**.  Nothing here has side
 ##     effect, so whole chain -- settling hands, routing each
 ##     connection round bodies, breaking one that passes underneath
-##     -- runs in compiler and what ships is sixteen strings.
+##     -- runs in compiler and what ships is twenty-four strings.
 ##     Which is worth more than speed: app regenerates its whole page
 ##       on every interaction, and router that ran per draw would run
 ##       thousands of times per second for answer that never changes.  It
@@ -30,10 +30,10 @@
 import std/[options, strutils]
 
 import ../frame
-import ./[figure, pose, terms]
+import ./[figure, pose, route, terms]
 
 
-const HOW_MANY = FRAMES.len * 2
+const HOW_MANY = FRAMES.len * 3
   ## Every frame, facing and turned: whole of what picture can say.
   ##   Follow's facing is only rotation frame picture carries, and
   ##     only its parity, so half turn and one and one-half turns draw alike.
@@ -71,7 +71,7 @@ func poseFor(facing: bool): Pose {.compileTime.} =
   canonicalise(spinAbout(rest(), Dancer.Follow, if facing: 0.0 else: 180.0))
 
 
-func sceneOf(target: Frame; facing: bool): string {.compileTime.} =
+func sceneOf(target: Frame; facing, clockwise: bool): string {.compileTime.} =
   ## Draw one frame: two bodies, their hands, and what joins them.
   ##   No level is said, because `Frame` does not carry one -- levels live
   ##     in `rotation.Posture` and nothing hands them here yet.  So every
@@ -81,27 +81,44 @@ func sceneOf(target: Frame; facing: bool): string {.compileTime.} =
   ##   No captions: this picture is drawn as small as node on map, where
   ##     word beside hand is smudge.  Shape says whose hand it is and
   ##     colour says which side, and both survive any size.
+  ##   Where frame says which connection is over, that stands.  Where it
+  ##     says nothing and follow is turned, its two connections cross, and
+  ##     which one is over follows which way she turned -- by `overArm`,
+  ##     same rule wound pair is drawn by (rules 27, 29).
+  ##     Facing, nothing crosses, so there is nothing for way round to
+  ##       decide and none is asked for.
   partsOf(poseFor(facing), holdsOf(target), captions = false,
           over = (if target.over.isSome: some armOf(target.over.get)
-                  else: none(Arm))).join("")
+                  elif facing: none(Arm)
+                  else: some overArm(if clockwise: 1.0 else: -1.0))).join("")
 
 
 func buildScenes(): array[HOW_MANY, string] {.compileTime.} =
-  ## Draw every frame model has, both ways round, once and for all.
+  ## Draw every frame model has, in every state it draws, once and for all.
+  ##   Three states, not two: facing, turned one way, turned other.  Third
+  ##     earns its place on one frame alone -- app's own, which holds both
+  ##     hands and says nothing about over and under -- and is duplicate of
+  ##     second everywhere else.  Cost is seven strings nobody can tell
+  ##     apart; other way is one frame drawn with its crossing unbroken,
+  ##     and rule 14 has no exception in it.
   for i, target in FRAMES:
-    for k, facing in [true, false]:
-      result[i * 2 + k] = sceneOf(target, facing)
+    result[i * 3] = sceneOf(target, facing = true, clockwise = true)
+    result[i * 3 + 1] = sceneOf(target, facing = false, clockwise = true)
+    result[i * 3 + 2] = sceneOf(target, facing = false, clockwise = false)
 
 
 const SCENES = buildScenes()
   ## Every frame picture, drawn in compiler and shipped as text.
 
 
-func sceneFor*(target: Frame; facing: bool): string =
-  ## Get picture of this frame, seen with follow facing or turned.
+func sceneFor*(target: Frame; facing, clockwise: bool): string =
+  ## Get picture of this frame, seen with follow facing or turned one way.
   ##   Invalid frame has no picture rather than blank one: it is not
   ##     state, so there is nothing to draw and nothing to make up.
+  ##   `clockwise` is read only where follow is turned, and says which way
+  ##     she turned to get there.  Caller does that arithmetic, since
+  ##     naming it here would need `rotation`'s words.
   let at = frameIndex(target)
   if at.isNone:
     return ""
-  SCENES[at.get * 2 + (if facing: 0 else: 1)]
+  SCENES[at.get * 3 + (if facing: 0 elif clockwise: 1 else: 2)]

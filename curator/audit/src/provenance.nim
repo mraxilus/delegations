@@ -64,6 +64,23 @@ func headerFields*(source: string): Table[string, string] =
     if row.len == 2 and row[0] notin result: result[row[0]] = row[1]
 
 
+func withRulesRow*(source, stamp_new: string): string =
+  ## Rewrite first `Rules` row's value to stamp, keeping every other byte; source unchanged
+  ##   when no such row exists. Row is found as `headerFields` finds it, by its first cell,
+  ##   so what `koch stamp --write` sets is what check then reads.
+  var is_done = false
+  for line in source.splitLines(keepEol = true):
+    let s = line.strip
+    if not is_done and s.len >= 2 and s.startsWith("|") and s.endsWith("|"):
+      let cells = s[1 ..< s.high].split('|')
+      if cells.len == 2 and cells[0].strip == "Rules":
+        let mid = line.find('|', line.find('|') + 1)
+        result.add line[0 .. mid] & " " & stamp_new & " " & line[line.rfind('|') .. ^1]
+        is_done = true
+        continue
+    result.add line
+
+
 func isIsoDate*(s: string): bool =
   ## Decide whether `s` is `YYYY-MM-DD`.
   s.len == 10 and s[4] == '-' and s[7] == '-' and

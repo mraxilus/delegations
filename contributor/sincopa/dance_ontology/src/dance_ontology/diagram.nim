@@ -69,12 +69,15 @@ const
 
 func frameBody(target: Frame; twist: HalfTurns): string =
   ## Draw contents of frame picture, without frame around them.
-  ##   Only *parity* of twist reaches drawing: whole turn puts
-  ##     follow back where they were, so picture can say facing or
-  ##     turned and nothing else.  Asking `isFacing` here rather than passing
-  ##     number on is what makes half turn each way draw alike by
-  ##     construction instead of by arithmetic that happens to agree.
-  "<title>" & target.describe & "</title>" & sceneFor(target, isFacing(twist))
+  ##   Two things reach drawing, and no more: whether follow faces, and
+  ##     which way she turned if she does not.  Whole turn puts her back
+  ##     where she was, so size of twist says nothing past its parity --
+  ##     but its *sign* does, wherever turning makes two connections cross
+  ##     and something has to say which of them is over (rule 14).
+  ##   Arithmetic is done here because `scene` may not have `rotation`'s
+  ##     words; it takes two plain flags.
+  "<title>" & target.describe & "</title>" &
+    sceneFor(target, isFacing(twist), clockwise = twist > 0)
 
 
 func frameHeight*(width: int): int =

@@ -68,7 +68,7 @@ func shoulder*(rig: Rig; st: Stance; arm: Arm): Vec =
   toWorld(axesOf(st), (side(arm) * rig.shoulderOut, 0.0, rig.shoulderUp))
 
 func twist*(st: array[Body, Stance]): float =
-  ## How far Two has turned relative to One, radians, from face to face.
+  ## How far Two has turned relative to One, radians, from face-to-face.
   st[Body.Two].facing - st[Body.One].facing + PI
 
 func turned*(st: array[Body, Stance]; who: Body; turns: float): array[Body, Stance] =
