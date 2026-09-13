@@ -1353,3 +1353,44 @@ With it, the reference reads 205 of 231 -- every still card holds, and every que
 chain wound to the swan -- and the floor table turns: both low lock ways now go past the floor's
 whole turn, to 1.38 and 1.40, and the cross-name high lock to 1.48, all by her wrist; the wraps
 stop at 0.56 to 0.92 by her twist or his wrist, where the floor says half or whole.
+
+## Re-audit, 2026-09-13, later: every still wound to its facing
+
+**Every still card was answered without its hands lifted, and without its winding.** Found on
+the way to the swan, the position every one of the twenty six lost cells is an edge into. A still
+was built at its facing and settled, and the lift into the band starts only after settling: over
+the crown at half a turn every joined hand hung at hip height, 0.87 m, where the band starts at
+1.735 m -- against the Architect's own ruling, quoted in `carry`, that once the couple are no
+longer face to face the hands must actually be above. And winding is a path, not a facing: a
+couple built at a whole turn stand exactly as at none, so the diamond was read as the open frame
+and the swan as the cross, and the verdicts table's X and swan rows were identical. Every still
+on the reference read *modelled*, and for the wound ones the tag was vacuous. Two laws written
+first and red -- hands at 0.87 against 1.705, and no crossing at the diamond where the reference
+draws two -- then `walk.stood`: a still is wound to its facing from rest at the walk's own pace,
+hands lifted as the couple leave face to face, then left to stand, and asked from the first
+standing distance that holds it. Green on 2026-09-13, `tests/trigid.nim`, twenty laws.
+
+The Architect ruled on hearing it: all stills modelled before any movement modelling, still
+positions at a hundred per cent. Asked honestly, ninety one of ninety five stills hold; the four
+that do not are the four swans, C1, C7, D1 and D7. The cross-name swan stops at 1.32 with the
+hands pulling apart while an arm rests against an arm, which `metBy` names *arm meets arm*; the
+same-name swan at 1.20 to 1.22 by twist. The reference reads 201 of 231, from 205: nothing was
+gained and four vacuous answers were given back. At the torso and neck bands the diamond holds
+nowhere either, which the sweeps already said.
+
+**The viewer lays the reference beside the sim, cell by cell.** Architect: make the rig page
+match the layout of the reference page, so each cell can be compared with what it looks like in
+the model, with next and previous. `design/rig` now records every still beside its sweeps, one
+moment each, and `design/rig_page` cuts every still cell out of the built reference page --
+drawing, badges and caption, so what is compared is what was ruled on -- and draws the sim's
+still beside it. One list of entries, stills first in the page's order and sweeps after, walked
+by two buttons or the arrow keys; clicking a cell puts it on the stage with the reference's own
+drawing next to the readouts. A still no distance holds is drawn as none and says so. Which
+cell each question belongs to is read off the page itself, from an attribute the reference page
+now writes on every cell; that attribute is outside every drawing, so no pin moved.
+
+**Not decided: what the swan is in the body.** Its four stills are what stands between the
+stills and a hundred per cent. The reference draws it pillion with all four hands above; the
+Architect, asked about a hammerlock, described a low one -- arm down, shoulder rotating in as the
+hand goes behind the back, elbow bending behind to an L. Which of those the swan over the crown
+is, is the Architect's to say, and the next measurement waits on it.
