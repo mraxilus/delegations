@@ -438,6 +438,29 @@ suite "arms move as arms do":
       echo &"    {name}: deepest any link sits in any body {-deepest * 1000:.1f} mm"
       check deepest > -THROUGH - 1e-9
 
+  test "every shoulder hangs from its own body":
+    ## Architect, on viewer at 1.68 of same-name crown turn: "The bodies are too
+    ## rigid, the arms get dislocated because of it."  Measured, no joint parts
+    ## by more than four millimetres; what reads as dislocation is that shoulder
+    ## joint sits at 0.18 out and 1.40 up, where torso's stadium is 0.166 wide
+    ## and its dome has dropped below 1.24, so arm hangs from point nine
+    ## centimetres outside body with nothing between.  Rig had no shoulder girdle,
+    ## in mass or in motion.  Shoulder joint must lie inside some capsule of its
+    ## own body that is not arm.
+    var c = build(HUMAN, facing(HUMAN, APART), Band.Torso, @[])
+    c.settle()
+    for who in Body:
+      for arm in Arm:
+        let s = c.armPoseOf(who, arm).s
+        var gap = Inf
+        for sh in c.shapes:
+          if sh.who != who or sh.mark in {Mark.Upper, Mark.Fore, Mark.Palm}: continue
+          let ends = c.endsOf(sh)
+          gap = min(gap, between(s, s, ends.a, ends.z) - sh.r)
+        echo &"    {who} {arm}: shoulder joint {gap * 1000:.0f} mm outside own body"
+        check gap <= 0.0
+    c.free()
+
   test "no point of any arm leaps between two moments":
     for (name, band, links, w) in corpus():
       var most = 0.0
