@@ -122,26 +122,58 @@ proc walked*(rig: Rig; band: Band; links: seq[Link]; who: Body;
     result.moments.add now.m
   c.free()
 
+proc stood*(rig: Rig; band: Band; links: seq[Link]; turns: float;
+            away: bool; head: Body; apart: float): tuple[holds: bool, c: Couple] =
+  ## Couple wound to this facing from rest at this one distance and left
+  ## standing there, and whether pose holds.  Caller frees couple, holding or not.
+  ##   Wound, not built there.  Winding is path, not facing: couple built at
+  ##     whole turn stand exactly as at none, so diamond read as open and swan
+  ##     as cross, and every wound still on reference was answered by unwound
+  ##     pose.  And built at facing and settled, lift never came: every joined
+  ##     hand of every still past face to face hung at hip height, 0.87 m, over
+  ##     crown.  So couple are turned there as walk turns them, hands lifted as
+  ##     they leave face to face, and then let stand.
+  ##   Way in is walk's own, at walk's own pace, from this one distance: still
+  ##     card claims position exists, and position that is winding of arms
+  ##     exists only where some winding gets there.
+  result.c = build(rig, restStance(rig, apart, away), band, links, head, away)
+  result.c.settle()
+  result.holds = true
+  for i in 0 ..< links.len:
+    if result.c.stopOf(i) != Stop.None:
+      result.holds = false
+  if not result.holds:
+    return
+  let step = (if turns >= 0.0: STEP else: -STEP)
+  var at = 0.0
+  while abs(at) + 1e-9 < abs(turns):
+    result.c.turn(Body.Two, step, BEATS)
+    at += step
+    for i in 0 ..< links.len:
+      if result.c.stopOf(i) != Stop.None:
+        result.holds = false
+        return
+  # Left to stand: turn has stopped, and hold is asked of couple at rest there.
+  result.c.advance(SETTLE)
+  for i in 0 ..< links.len:
+    if result.c.stopOf(i) != Stop.None:
+      result.holds = false
+
 proc standsAt(rig: Rig; band: Band; links: seq[Link]; turns: float;
               away: bool; head: Body; apart: float): bool =
   ## Whether pose holds at this facing from this one distance.
-  var c = build(rig, turned(restStance(rig, apart, away), Body.Two, turns),
-                band, links, head, away)
-  c.settle()
-  result = true
-  for i in 0 ..< links.len:
-    if c.stopOf(i) != Stop.None:
-      result = false
+  let (holds, c) = stood(rig, band, links, turns, away, head, apart)
   c.free()
+  holds
 
 proc holdsAt*(rig: Rig; band: Band; links: seq[Link]; turns: float;
               away = false; head = Body.Two; apart = 0.0): bool =
   ## Whether any pose holds at this facing, from any distance couple may stand at.
   ##   Still card claims position exists; moving one claims couple can carry to
-  ##     it.  They are not same question, and `sim/verdicts` already kept them
-  ##     apart -- "asked afresh whether any pose holds there at all, not whether
-  ##     arms can carry to it".  Asking still card reachability calls drawing
-  ##     wrong for want of way in, which is not what it says.
+  ##     it under one manner.  They are not same question, and `sim/verdicts`
+  ##     keeps them apart.  Still is wound there all same, as `stood` says why:
+  ##     what is asked once there is whether it holds standing, not whether
+  ##     that way in was one card meant.
   ##   Card claims pose exists, so one distance holding it is enough: answer comes
   ##     as soon as one does, and only pose nothing holds pays for whole search.
   if apart > 0.0:

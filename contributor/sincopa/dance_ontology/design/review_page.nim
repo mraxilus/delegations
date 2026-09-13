@@ -28,7 +28,12 @@ const PINS = staticRead("review-pins.json")
 const MODELLED = staticRead("modelled.json")
   ## Which cards body sim reaches, written by `design/modelled`.
   ##   Second tag each cell carries.  `kept` is Architect's, by eye on floor;
-  ##     `modelled` is sim's, and goal is both at hundred per cent.
+  ##     `modelled` is sim's answer confirmed by Architect against their own body,
+  ##     and goal is both at hundred per cent.  Sim reaching card is not enough:
+  ##     Architect, on seeing sim's stills laid beside reference: many static
+  ##     states are wrong; mark everything unmodelled until confirmed.  So card
+  ##     sim reaches reads *unconfirmed* until its name is in `CONFIRMED`, and
+  ##     only then *modelled*.
   ##   Card sim has not been asked about is absent, and gets no tag: unasked
   ##     reads as unasked rather than as disagreement.
 
@@ -66,6 +71,11 @@ const
     ## Ids Architect has confirmed accurate.  Added as they are ruled on.
   DROPPED: seq[string] = @[]
     ## Ids Architect has ruled out.
+  CONFIRMED: seq[string] = @[]
+    ## Ids whose sim still Architect has confirmed against their own body, on
+    ## viewer page that lays each beside its cell.  Added as they are confirmed,
+    ## none yet.  Confirmation is of one still; when sim's still of confirmed
+    ## cell moves, its name comes out of here until it is confirmed again.
   FLAWED = initTable[string, string]()
     ## Position is right, drawing is not: kept, with what to mend.
 
@@ -150,8 +160,9 @@ func sheetOf(P: Parts): string =
       picks.add &"""<input type="radio" name="{id}" id="{at}""" &
         (if i == 0: "\" checked>" else: "\">")
       let says = if i >= asks.len or asks[i] notin modelled: ""
-                 elif modelled[asks[i]]: """<em class="tag model">modelled</em>"""
-                 else: """<em class="tag nomodel">not modelled</em>"""
+                 elif not modelled[asks[i]]: """<em class="tag nomodel">not modelled</em>"""
+                 elif id in CONFIRMED: """<em class="tag model">modelled</em>"""
+                 else: """<em class="tag unsure">unconfirmed</em>"""
       frames.add &"""<div>{unpinned(step.svg)}{says}""" &
         &"""<span class="step">{esc(step.note)}</span></div>"""
       buttons.add &"""<label for="{at}">{esc(step.pick)}</label>"""
@@ -176,21 +187,25 @@ func sheetOf(P: Parts): string =
       # eye and reading by engine are never taken for one another.  It sits in
       # other corner, and outside drawing, so no pin moves by its being here.
       # Cell folding several pictures together stands for several questions, and
-      # is modelled only where sim reaches every one of them.  Card nothing has
+      # is reached only where sim reaches every one of them.  Card nothing has
       # been asked about carries no tag at all.
       put = if asks.len > 0: asks else: @[id]
       known = put.filterIt(it in modelled)
-      # Cell's own colour says how much of it sim reaches: green only where it
-      # is both kept and wholly reached, amber where part of it is, red where
-      # none is.  Badges keep saying which of two tags each is.
+      reached = known.len > 0 and known.allIt(modelled[it])
+      # Cell's own colour says how far it has got: green only where it is kept,
+      # wholly reached and confirmed; amber where sim reaches all or part of it
+      # and Architect has not yet confirmed; red where sim reaches none of it.
+      # Badges keep saying which of two tags each is.
       stand = if known.len == 0: ""
-              elif known.allIt(modelled[it]): " met"
-              elif known.anyIt(modelled[it]): " part"
+              elif reached and id in CONFIRMED: " met"
+              elif reached or known.anyIt(modelled[it]): " part"
               else: " unmet"
       says = if switching or known.len == 0: ""
-             elif known.allIt(modelled[it]):
-               """<em class="tag model">modelled</em>"""
-             else: """<em class="tag nomodel">not modelled</em>"""
+             elif not reached: """<em class="tag nomodel">not modelled</em>"""
+             elif id in CONFIRMED: """<em class="tag model">modelled</em>"""
+             else: """<em class="tag unsure">unconfirmed</em>"""
+    # Questions cell stands for are written on it, so viewer page laying sim
+    # beside each cell can find its still by question and not by cell's name.
     # Verdict was given on pictures, so picture that moved under one carries
     # approval it was never given.  Card holds itself to what it was drawn
     # as when it was ruled on, and mend reaching further than it meant to
@@ -200,7 +215,7 @@ func sheetOf(P: Parts): string =
       doAssert $hash(drawings.join("")) == pinned.getOrDefault(id),
         &"A card already ruled on has been re-drawn: `{id}`.  Either the " &
           "mend is too wide, or that verdict has to go back."
-    &"""<figure class="pic{mark}{stand}"><div class="art""" &
+    &"""<figure class="pic{mark}{stand}" data-asks="{put.join(" ")}"><div class="art""" &
     (if switching: " steps" else: "") & &"""">{art}{badge}{says}</div>""" &
     &"""<figcaption><code>{esc(id)}</code><b>{esc(label)}</b>""" &
     (if note.len > 0: &"""<span>{esc(note)}</span>""" else: "") &
@@ -611,7 +626,9 @@ func sheetOf(P: Parts): string =
   .pic.dropped { border-color: var(--drop); background: var(--drop-wash); }
   .pic.dropped .art svg { opacity: .38; }
   .tag.mend { background: var(--mend); color: var(--card); }
-  .tag.model, .tag.nomodel { right: auto; left: 0; background: var(--card); }
+  .tag.model, .tag.nomodel, .tag.unsure { right: auto; left: 0;
+    background: var(--card); }
+  .tag.unsure { color: var(--mend-ink); border: 1px solid var(--mend); }
   .tag.model { color: var(--keep); border: 1px solid var(--keep); }
   .tag.nomodel { color: var(--drop); border: 1px solid var(--drop); }
   .pic.flawed { border-color: var(--mend); background: var(--mend-wash); }
@@ -639,15 +656,24 @@ func sheetOf(P: Parts): string =
   complete at sixteen. Sections B and C are drawn by a different chain entirely
   &mdash; they take a pose, arm levels and a fractional wind, none of which the
   standard diagram can say. Nothing in A knows what level an arm is held at.</p>
+  <p class="how"><b>Two tags on every cell.</b> <i>Kept</i> is the Architect's ruling
+  on the drawing, by eye on the floor. The second is the body sim's: <i>not
+  modelled</i> where the sim reaches no pose for the card, <i>unconfirmed</i> where
+  it reaches one that the Architect has not yet held against their own body on
+  the viewer page, and <i>modelled</i> only once they have. The sim reaching a
+  card is a claim, not a verdict.</p>
   """ & body & "</div>"
 
   # Counted off page itself rather than tallied while building it, so
   # count cannot drift from what is drawn.
   let
     seen = sheet.count("""<figure class="pic""")
+    unsure = sheet.count("""<em class="tag unsure">""")
     tally = &"""<b>{KEPT.len}</b> kept &middot; <b>{DROPPED.len}</b> dropped """ &
       &"""&middot; <b>{FLAWED.len}</b> marked for a mend &middot; """ &
-      &"""<b>{seen - KEPT.len - DROPPED.len}</b> still to rule on, of {seen}."""
+      &"""<b>{seen - KEPT.len - DROPPED.len}</b> still to rule on, of {seen}. """ &
+      &"""Against the model: <b>{CONFIRMED.len}</b> confirmed by the Architect, """ &
+      &"""<b>{unsure}</b> reached by the sim and not yet confirmed."""
   sheet.replace("{{tally}}", tally)
 
 

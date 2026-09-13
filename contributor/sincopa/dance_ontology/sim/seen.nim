@@ -92,6 +92,22 @@ proc stillOf(c: Couple; at: float): Still =
     result.grips.add (p.arms[0].g + p.arms[1].g) * 0.5
     result.apart.add p.apart
 
+proc standing*(rig: Rig; band: Band; links: seq[Link]; name: string;
+               turns: float; away = false; head = Body.Two): Shown =
+  ## One still, from first distance that holds it, or none if no distance does.
+  ##   Still is wound to its facing and left standing, as `walk.stood` has it,
+  ##     so what page draws of it is what `modelled` answered about it.
+  result = Shown(hold: name, band: band, turns: turns, stopped: true, why: Stop.None)
+  for apart in stands(rig):
+    let (holds, c) = stood(rig, band, links, turns, away, head, apart)
+    if holds:
+      result.apart = apart
+      result.stopped = false
+      result.why = Stop.None
+      result.stills.add stillOf(c, turns)
+    c.free()
+    if holds: return
+
 proc shown*(rig: Rig; band: Band; links: seq[Link]; name: string;
             who = Body.Two; step = STEP; away = false;
             head = Body.Two): Shown =

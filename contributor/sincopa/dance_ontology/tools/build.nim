@@ -16,7 +16,7 @@
 ##   | pins     | rewrite design/review-pins.json from page just built: run when        |
 ##   |          | Architect rules on cards, never to quiet check that says one moved    |
 ##   | modelled | rewrite design/modelled.json: which reference cards sim reaches       |
-##   | rig      | rewrite design/rig.json: sweeps rig viewer plays                      |
+##   | rig      | rewrite design/rig.json: sweeps rig viewer plays, and every still      |
 ##   | turns    | rewrite design/turns.json: sweeps whole-cloth page plays              |
 ##   | verdicts | instrument run, not build: answers land in sim/verdicts.md            |
 ##   | shot     | screenshot helper, for node and Playwright                            |
@@ -278,7 +278,8 @@ proc modelled() =
 
 
 proc rig() =
-  ## Rewrite `design/rig.json`: sweeps viewer page plays.
+  ## Rewrite `design/rig.json`: sweeps viewer page plays, and every still it lays
+  ## beside reference.
   ##   Own verb, as `modelled` is, and for like reason: recording costs eight
   ##     stance searches over every distance couple may stand at, and every
   ##     `pages` run would pay for it.  Page folds in whatever was last recorded.

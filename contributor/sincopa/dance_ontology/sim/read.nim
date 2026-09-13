@@ -79,8 +79,37 @@ func polyline*(arms: Arms; i: int): array[7, Vec] =
   [a.s, a.e, a.w, a.g, b.w, b.e, b.s]
 
 
+const ON_LINE = 1e-9
+  ## Metres within which point counts as lying on segment's line in plan: below
+  ## anything pose carries, above float noise, so answer is same for two poses
+  ## that differ by less than float carries.
+
+func sideOf(a, b, p: Vec): int =
+  ## Which side of line through `a` and `b` point `p` lies on in plan: one either
+  ## way, nought within `ON_LINE`, nought for segment too short to have line.
+  let
+    dx = b.x - a.x
+    dy = b.y - a.y
+    run = sqrt(dx * dx + dy * dy)
+  if run < 1e-18:
+    return 0
+  let off = (dx * (p.y - a.y) - dy * (p.x - a.x)) / run
+  if off > ON_LINE: 1 elif off < -ON_LINE: -1 else: 0
+
+func lifted(side: int): int =
+  ## Point on line counts as on its positive side.  One rule for every tie, so
+  ## vertex two segments share is counted for exactly one of them, and arm lying
+  ## along other crosses it once where it leaves to far side and never inside
+  ## overlap.  Simulation of simplicity, with tie set by `ON_LINE` rather than
+  ## by whichever way last bit fell.
+  if side == 0: 1 else: side
+
 func crossings*(arms: Arms): seq[Crossing] =
   ## Where two connections cross in plan, and which is over at each.
+  ##   Two segments cross where each has other's ends on opposite sides of its
+  ##     line, sides read with ties lifted.  Read as parametric intersection
+  ##     alone, crossing at vertex of both polylines was counted four times and
+  ##     once under any jitter, and arm laid along other read nought, one or two.
   if arms.len < 2:
     return
   let
@@ -93,14 +122,26 @@ func crossings*(arms: Arms): seq[Crossing] =
         b = p[i + 1]
         c = q[j]
         d = q[j + 1]
-        den = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
-      if abs(den) < 1e-12:
+      if lifted(sideOf(a, b, c)) == lifted(sideOf(a, b, d)):
         continue
-      let
-        t = ((c.x - a.x) * (d.y - c.y) - (c.y - a.y) * (d.x - c.x)) / den
-        u = ((c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x)) / den
-      if t < 0.0 or t > 1.0 or u < 0.0 or u > 1.0:
+      if lifted(sideOf(c, d, a)) == lifted(sideOf(c, d, b)):
         continue
+      let den = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
+      var t, u: float
+      if abs(den) < 1e-18:
+        # Sides differ only by tie: segments run along one another and one end
+        # sits on other's line.  Crossing is that end.
+        if sideOf(a, b, c) == 0: u = 0.0 else: u = 1.0
+        let
+          e = (if u == 0.0: c else: d)
+          dx = b.x - a.x
+          dy = b.y - a.y
+          run = dx * dx + dy * dy
+        t = (if run < 1e-18: 0.0
+             else: clamp(((e.x - a.x) * dx + (e.y - a.y) * dy) / run, 0.0, 1.0))
+      else:
+        t = clamp(((c.x - a.x) * (d.y - c.y) - (c.y - a.y) * (d.x - c.x)) / den, 0.0, 1.0)
+        u = clamp(((c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x)) / den, 0.0, 1.0)
       let
         zp = a.z + (b.z - a.z) * t
         zq = c.z + (d.z - c.z) * u
