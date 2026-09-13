@@ -29,3 +29,8 @@ suite "mark workbench":
       # either.  Asserted against constant, so title cannot drift while test still passes.
       check "<title>" & MOCKUP & " — " in written
       check "<title>" & WORK & " — " notin written
+      # Rule 26 ranks move's stages, and markup can only rank them through
+      # `keyTimes`: without it browser spreads frames evenly, so turn, settle and
+      # reset all read at one speed.  Every animated element carries its own
+      # clock, on every page, or none of that ranking survives being written out.
+      check written.count("<animate") == written.count("keyTimes=")

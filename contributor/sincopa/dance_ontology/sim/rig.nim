@@ -82,6 +82,23 @@ type
 
 func deg(d: float): float = d * PI / 180.0
 
+const
+  ACROSS_HI = deg(130)
+    ## Adduction at clinical *horizontal* adduction, not hanging arm's.  Forty
+    ## five is how far arm goes across with arm hanging, and what stops it there
+    ## is belly; raised, arm passes in front of chest to about hundred and
+    ## thirty, and what stops it then is chest.  Either way limit is trunk, which
+    ## sim collides already.  Reading is arcsin and cannot pass ninety, so at
+    ## this figure cap never binds and body does stopping -- as in life.
+    ##   Measured: every chain jammed on old cap with arm raised.  Freed, chains
+    ##     go from 18 to 47 of 56 questions and reference from 193 to 223 of 231,
+    ##     with nothing lost; every law holds, and mirror law was corrected on way.
+  WRIST_HI = deg(60)
+    ## Cone under clinical flexion and extension, which are seventy to eighty.
+    ## Widened to seventy five and measured: chains carry 47 of 56 questions
+    ## either way, gaining one manner and losing another, so it is not what
+    ## binds and is left where tape had it until something shows it does.
+
 
 const HUMAN* = Rig(
   round: [0.95, 0.37, 0.56],
@@ -93,10 +110,10 @@ const HUMAN* = Rig(
   limb: 0.045,
   range: [
     Range(lo: deg(-90), hi: deg(45), easeLo: 0.0, easeHi: deg(20), neutral: 0.0),
-    Range(lo: deg(-90), hi: deg(45), easeLo: 0.0, easeHi: deg(20), neutral: 0.0),
+    Range(lo: deg(-90), hi: ACROSS_HI, easeLo: 0.0, easeHi: deg(20), neutral: 0.0),
     Range(lo: deg(-70), hi: deg(90), easeLo: deg(25), easeHi: deg(25), neutral: 0.0),
     Range(lo: 0.0, hi: deg(140), easeLo: 0.0, easeHi: deg(35), neutral: deg(30)),
-    Range(lo: 0.0, hi: deg(60), easeLo: 0.0, easeHi: deg(20), neutral: 0.0)],
+    Range(lo: 0.0, hi: WRIST_HI, easeLo: 0.0, easeHi: deg(20), neutral: 0.0)],
   band: [(1.00, 1.35), (1.40, 1.50), (1.735, 2.00)])
   ## Average adult.  Crown band starts limb's radius over head
   ## so hand carried there clears it by construction.

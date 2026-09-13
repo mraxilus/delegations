@@ -4,7 +4,7 @@
 ##     single hand turns for ever (rules 16 and 17), so this page has no
 ##     refusals in it: what it holds is four quarter-turn orientations
 ##     of each of app's four single-hand frames, under each of four
-##     ways of turning (rule 19), and animation of every edge between
+##     manners of turn (rule 19), and animation of every edge between
 ##     them -- lead's in two stages rule 18 asks for.
 ##   Plates are generated rather than written out, because sixty-four
 ##     positions and sixty-four transitions are table, not argument.
@@ -28,13 +28,13 @@ const QUARTER_NAMES = ["none", "&#188;", "&#189;", "&#190;"]
   ## How far round from app's own frame, in quarters.
 
 
-func plates(P: Parts; way: TurnWay): string =
-  ## Lay out one way of turning: one plate per connection, positions then
+func plates(P: Parts; manner: Manner): string =
+  ## Lay out one manner of turn: one plate per connection, positions then
   ## edges.
-  let tag = WAYS_OF_TURNING[way].tag
+  let tag = MANNERS[manner].tag
   for c, single in SINGLES:
     result.add &"""<div class="plate"><h3>{single.name}</h3>"""
-    result.add """<p>Every position this way reaches, a quarter turn """ &
+    result.add """<p>Every position this manner reaches, a quarter turn """ &
       """apart. The fourth quarter comes back to the first: the round """ &
       """closes, and nothing is ever refused.</p>"""
     result.add """<div class="row mid">"""
@@ -85,14 +85,14 @@ const BODY = """
 </header>
 
 <section>
-  <div class="head"><span class="n">What is here</span><h2>Four ways to
+  <div class="head"><span class="n">What is here</span><h2>Four manners of
   turn, and two sets of places they reach</h2></div>
   <p><b>A position is a frame plus a quarter.</b> Turning does not change
   which hands are held, so it does not change the frame — it changes which
   way the pair is pointing. The first cell of every row is the frame
   exactly as the app draws it; each step is a quarter turn; the fourth
   brings the round back to the first.</p>
-  <p><b>Four ways of turning, not two.</b> Either dancer can turn on their
+  <p><b>Four manners of turn, not two.</b> Either dancer can turn on their
   own axis, and either can orbit the other — so all four are drawn.
   <b>A dashed ring says an orbit</b>, centred on whoever is standing still;
   it is the same dash the frame picture uses, and nothing else on this page
@@ -103,7 +103,7 @@ const BODY = """
   A walker who kept their own bearing instead would be dancing an orbit and
   a counter-turn at once — the <em>compound</em>, which is a different move
   and is not what these sections draw.</p>
-  <p><b>Which is what makes the ways comparable.</b> A bearing-keeping
+  <p><b>Which is what makes the manners comparable.</b> A bearing-keeping
   walker never turns relative to their partner, so a half turn of that
   orbit would not be half a turn of anything. Facing the centre, an orbit
   turns the pair exactly as far as an axis turn does — and lands on the
@@ -111,7 +111,7 @@ const BODY = """
   <p><b>The lead is the still point.</b> Every picture here is framed on
   them: they stand on the same spot in every cell of a row, facing up, and
   what you watch is the follow going round them. That is not only tidier —
-  it takes the second stage out of three of the four ways of turning. A
+  it takes the second stage out of three of the four manners of turn. A
   follow's orbit moves the lead not at all, so there is nothing to bring
   back and the animation is simply the walk.</p>
   <p><b>Where a second stage remains, it is danced in two.</b> <b>Stage
@@ -181,11 +181,11 @@ const BODY = """
 </section>
 
 <div class="note">
-  <p><b>What the collapse costs, and what it buys.</b> Where two ways reach
+  <p><b>What the collapse costs, and what it buys.</b> Where two manners reach
   one round, a position cannot say which of them was danced — only the edge
-  can. That now holds for every way in pairs, so the state graph underneath
+  can. That now holds for every manner in pairs, so the state graph underneath
   these four sections has <b>two rounds</b> in it, not four. Whether the
-  page should be reorganised to say that first — two rounds, four ways of
+  page should be reorganised to say that first — two rounds, four manners of
   walking them — is yours to call, and the case for it is stronger than it
   was.</p>
   <p><b>What it costs is the distinction the frame page once drew.</b> That
@@ -205,7 +205,7 @@ const BODY = """
   keeps drawing the eight frames and nothing else until the marks are
   settled.</p>
   <p>Yours to settle on this page: whether the two rounds should lead the
-  page rather than the four ways; whether a quarter is the right grain, or
+  page rather than the four manners; whether a quarter is the right grain, or
   whether an eighth is danced; and what mark, if any, the edges themselves
   should carry — the turn sign was built for exactly this job and these are
   the first edges it could label.</p>
@@ -218,9 +218,9 @@ const BODY = """
 func render*(P: Parts): string =
   ## Lay single-hand turns page out around given figures.
   var fills: seq[tuple[marker, value: string]]
-  for way in TurnWay:
-    let w = WAYS_OF_TURNING[way]
+  for manner in Manner:
+    let w = MANNERS[manner]
     fills.add (&"{w.tag}_title", w.title)
     fills.add (&"{w.tag}_blurb", w.blurb)
-    fills.add (&"{w.tag}_plates", plates(P, way))
+    fills.add (&"{w.tag}_plates", plates(P, manner))
   document(TITLE, BODY.filled(fills))
