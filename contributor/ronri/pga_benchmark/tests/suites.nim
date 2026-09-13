@@ -3,7 +3,7 @@
 ##   decides what ran. Library sources are read at compile time from Atlas checkout, so
 ##   catalogue is held to what library exports rather than to what this project remembers.
 
-import std/[algorithm, macros, sequtils, unittest]
+import std/[algorithm, macros, sequtils, strutils, unittest]
 
 import ../src/pga_benchmark
 
@@ -40,6 +40,42 @@ macro spellsCompile(probes: static seq[Probe]): untyped =
         var `n` {.used.}: `kind_n`
         check compiles(`spell`)  # spell of `id` parses and resolves against library
         check `id`.len > 0  # id names row
+
+
+macro checkReferences(probes: static seq[Probe]; chapter: static string): untyped =
+  ## Emit one test per probe holding library spell on images to reference on typed objects.
+  ##   Chapter "2" takes rows citing book equations of chapter 2; "3" takes rest, which
+  ##   are motor, projection and support pages of rigidgeometricalgebra.org.
+  ##   Operands pair pool slot i with slot j = (7i + 3) mod OBJECTS, so pairs vary.
+  result = newStmtList()
+  let (m, n) = (ident"m", ident"n")  # plain idents, so spell and reference bind them
+  for p in probes:
+    if p.reference.len == 0: continue
+    if (chapter == "2") != p.cite.startsWith("2."): continue
+    let spell = parseExpr(p.spell)
+    let reference = parseExpr(p.reference)
+    let library_m = parseExpr(libraryPoolName(p.operands[0], p.grade))
+    let library_n = parseExpr(libraryPoolName(p.operands[1], p.grade))
+    let reference_m = parseExpr(referencePoolName(p.operands[0]))
+    let reference_n = parseExpr(referencePoolName(p.operands[1]))
+    let name = newLit(p.id & "  # " & p.cite)
+    result.add quote do:
+      test `name`:
+        for i in 0 ..< OBJECTS:
+          let j = (i * 7 + 3) mod OBJECTS
+          let expected = block:
+            let `m` {.used.} = `reference_m`[i]
+            let `n` {.used.} = `reference_n`[j]
+            toMultivector(`reference`)
+          let got = block:
+            let `m` {.used.} = `library_m`[i]
+            let `n` {.used.} = `library_n`[j]
+            `spell`
+          check got =~ expected  # library on images equals reference embedded
+  if result.len == 0: result.add newNimNode(nnkDiscardStmt).add(newEmptyNode())
+
+
+fillPools(0)
 
 
 suite "Configuration":
@@ -114,3 +150,11 @@ suite "Catalogue":
     let exported = aliasesIn(SOURCE_UMBRELLA, IS_CONFORMAL)
     let catalogued = (aliasesOf(PROBES) & aliasesOf(MISSING)).deduplicate
     check catalogued.sorted == exported.sorted  # missing ones counted as gaps, not forgotten
+
+
+suite "Chapter 2":
+  checkReferences(PROBES, "2")
+
+
+suite "Chapter 3":
+  checkReferences(PROBES, "3")
