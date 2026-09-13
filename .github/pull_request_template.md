@@ -1,4 +1,5 @@
-**Role:** <!-- curator, or contributor/<domain>/<project> -->
+**Role:** <!-- curator, or contributor/<domain>/<project>. Label this pull request with that
+same string, copied from the branch grammar, as every issue is labelled. -->
 
 ## Intent
 
