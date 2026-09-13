@@ -1,0 +1,60 @@
+{
+  "items": {
+    "replications.mraxilus.gitlab.com": {
+      "dir": "$deps/replications.mraxilus.gitlab.com",
+      "url": "https://gitlab.com/mraxilus/replications",
+      "commit": "0bc465509d1c93b6bec3ced25aa29f080a2cf110",
+      "version": ""
+    }
+  },
+  "nimcfg": [
+    "# Configure every build of this project: where PGA library sits, and which algebra is",
+    "#   default. Library is restored under `deps/` by Atlas and never committed (Article",
+    "#   XI.3). It sits three directories inside replications repository, and Atlas clones",
+    "#   whole repositories, so path names subdirectory rather than checkout root;",
+    "#   `atlas.lock` records directory name, which Atlas derives from clone URL.",
+    "#   Algebra named here is default only: four dimensions, rigid metric, i.e. 3D Euclidean",
+    "#   space. Test stubs and build driver pass `-d:pga.dimensions` and",
+    "#   `-d:pga.is_conformal` themselves; command line wins over this file, since compiler",
+    "#   reads configs first.",
+    "",
+    "--path:\"deps/replications.mraxilus.gitlab.com/lengyel/projective_geometric_algebra_illuminated\"",
+    "--define:\"pga.dimensions=4\"",
+    "--define:\"pga.is_conformal=false\"",
+    "",
+    "############# begin Atlas config section ##########",
+    "--noNimblePath",
+    "############# end Atlas config section   ##########",
+    ""
+  ],
+  "nimbleFile": {
+    "filename": "pga_benchmark.nimble",
+    "content": [
+      "# Package description read by Atlas and nimble; requirements live here (Article II.8).",
+      "",
+      "version = \"0.1.0\"",
+      "author = \"Emmanuel M. Smith\"",
+      "description = \"Benchmark and gap list of pga against Lengyel's hand-rolled reference.\"",
+      "license = \"Prosperity-3.0.0\"",
+      "srcDir = \"src\"",
+      "",
+      "# PGA library is subject this project measures, so it is dependency rather than copy",
+      "#   (Article II.8). It lives inside replications repository rather than at its root,",
+      "#   and that repository carries no nimble file, so requirement pins commit and",
+      "#   `nim.cfg` names path Atlas restores it to. Pin follows library's head, as Architect",
+      "#   instructed; every pull request says which commit it measured and whether that is",
+      "#   head.",
+      "# Compiler is pinned by commit rather than release: library's head spells its operators",
+      "#   with characters no release lexes. Same commit `rga_visualiser` pins, so one cached",
+      "#   build serves both projects; see PROVENANCE.md, Dependencies.",
+      "requires \"nim == 27763495bcfe265507ca98aedc1c7064bf1e0e4d\"",
+      "requires \"https://gitlab.com/mraxilus/replications#0bc4655\"",
+      ""
+    ]
+  },
+  "hostOS": "linux",
+  "hostCPU": "amd64",
+  "nimVersion": "2.3.1",
+  "gccVersion": "13.3.0",
+  "clangVersion": ""
+}

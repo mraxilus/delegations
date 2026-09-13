@@ -1,0 +1,7300 @@
+{
+  "schema": 1,
+  "kind": "static",
+  "algebra": {
+    "name": "cga5d",
+    "dimensions": 5,
+    "is_conformal": true,
+    "sizeof_multivector": 256
+  },
+  "taken": {
+    "date": "2026-09-13",
+    "machine": "linux amd64, 4 cores",
+    "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
+    "pga": "0bc465509d1c93b6bec3ced25aa29f080a2cf110",
+    "flags": "-d:release"
+  },
+  "functions": {
+    "[](Multivector,Basis)": {
+      "symbol": "[]",
+      "module": "pga/multivectors",
+      "params": [
+        "Multivector",
+        "Basis"
+      ],
+      "returns": "NF*",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 0,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 256
+      }
+    },
+    "[](Multivector,Basis)#u1": {
+      "symbol": "[]",
+      "module": "pga/multivectors",
+      "params": [
+        "Multivector",
+        "Basis"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 264
+      }
+    },
+    "projectCentral(Multivector,Multivector)": {
+      "symbol": "projectCentral",
+      "module": "projective_geometric_algebra_illuminated/pga",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 2,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 19
+      },
+      "total": {
+        "multiplies": 486,
+        "adds": 422,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 5,
+        "intermediates": 2,
+        "copies": 1,
+        "checks": 1038,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 6311
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 1280,
+        "bytes_copied": 256,
+        "bytes_intermediates": 512,
+        "bytes_moved": 2816
+      }
+    },
+    "projectCentralAnti(Multivector,Multivector)": {
+      "symbol": "projectCentralAnti",
+      "module": "projective_geometric_algebra_illuminated/pga",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 2,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 19
+      },
+      "total": {
+        "multiplies": 486,
+        "adds": 422,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 5,
+        "intermediates": 2,
+        "copies": 1,
+        "checks": 1038,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 6311
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 1280,
+        "bytes_copied": 256,
+        "bytes_intermediates": 512,
+        "bytes_moved": 2816
+      }
+    },
+    "projectOrthogonal(Multivector,Multivector)": {
+      "symbol": "projectOrthogonal",
+      "module": "projective_geometric_algebra_illuminated/pga",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 2,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 19
+      },
+      "total": {
+        "multiplies": 486,
+        "adds": 422,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 5,
+        "intermediates": 2,
+        "copies": 1,
+        "checks": 1038,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 6311
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 1280,
+        "bytes_copied": 256,
+        "bytes_intermediates": 512,
+        "bytes_moved": 2816
+      }
+    },
+    "projectOrthogonalAnti(Multivector,Multivector)": {
+      "symbol": "projectOrthogonalAnti",
+      "module": "projective_geometric_algebra_illuminated/pga",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 2,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 19
+      },
+      "total": {
+        "multiplies": 486,
+        "adds": 422,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 5,
+        "intermediates": 2,
+        "copies": 1,
+        "checks": 1038,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 6311
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 1280,
+        "bytes_copied": 256,
+        "bytes_intermediates": 512,
+        "bytes_moved": 2816
+      }
+    },
+    "wedge(RoundPoint,RoundPoint)": {
+      "symbol": "wedge",
+      "module": "reference/conformal3",
+      "params": [
+        "RoundPoint",
+        "RoundPoint"
+      ],
+      "returns": "Dipole",
+      "inline": true,
+      "own": {
+        "multiplies": 20,
+        "adds": 0,
+        "subs": 10,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "total": {
+        "multiplies": 20,
+        "adds": 0,
+        "subs": 10,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 160
+      }
+    },
+    "wedge(Dipole,RoundPoint)": {
+      "symbol": "wedge",
+      "module": "reference/conformal3",
+      "params": [
+        "Dipole",
+        "RoundPoint"
+      ],
+      "returns": "Circle",
+      "inline": true,
+      "own": {
+        "multiplies": 30,
+        "adds": 9,
+        "subs": 11,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "total": {
+        "multiplies": 30,
+        "adds": 9,
+        "subs": 11,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "movement": {
+        "bytes_read": 120,
+        "bytes_written": 80,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 200
+      }
+    },
+    "wedge(RoundPoint,Dipole)": {
+      "symbol": "wedge",
+      "module": "reference/conformal3",
+      "params": [
+        "RoundPoint",
+        "Dipole"
+      ],
+      "returns": "Circle",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 10
+      },
+      "total": {
+        "multiplies": 30,
+        "adds": 9,
+        "subs": 11,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 20
+      },
+      "movement": {
+        "bytes_read": 120,
+        "bytes_written": 80,
+        "bytes_zeroed": 80,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 280
+      }
+    },
+    "wedge(Circle,RoundPoint)": {
+      "symbol": "wedge",
+      "module": "reference/conformal3",
+      "params": [
+        "Circle",
+        "RoundPoint"
+      ],
+      "returns": "Sphere",
+      "inline": true,
+      "own": {
+        "multiplies": 20,
+        "adds": 6,
+        "subs": 9,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "total": {
+        "multiplies": 20,
+        "adds": 6,
+        "subs": 9,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "movement": {
+        "bytes_read": 120,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 160
+      }
+    },
+    "wedge(RoundPoint,Circle)": {
+      "symbol": "wedge",
+      "module": "reference/conformal3",
+      "params": [
+        "RoundPoint",
+        "Circle"
+      ],
+      "returns": "Sphere",
+      "inline": true,
+      "own": {
+        "multiplies": 20,
+        "adds": 6,
+        "subs": 9,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "total": {
+        "multiplies": 20,
+        "adds": 6,
+        "subs": 9,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "movement": {
+        "bytes_read": 120,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 160
+      }
+    },
+    "wedge(Dipole,Dipole)": {
+      "symbol": "wedge",
+      "module": "reference/conformal3",
+      "params": [
+        "Dipole",
+        "Dipole"
+      ],
+      "returns": "Sphere",
+      "inline": true,
+      "own": {
+        "multiplies": 30,
+        "adds": 9,
+        "subs": 16,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "total": {
+        "multiplies": 30,
+        "adds": 9,
+        "subs": 16,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "movement": {
+        "bytes_read": 160,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 200
+      }
+    },
+    "wedgeAnti(Sphere,Sphere)": {
+      "symbol": "wedgeAnti",
+      "module": "reference/conformal3",
+      "params": [
+        "Sphere",
+        "Sphere"
+      ],
+      "returns": "Circle",
+      "inline": true,
+      "own": {
+        "multiplies": 20,
+        "adds": 0,
+        "subs": 10,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "total": {
+        "multiplies": 20,
+        "adds": 0,
+        "subs": 10,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 160
+      }
+    },
+    "wedgeAnti(Sphere,Circle)": {
+      "symbol": "wedgeAnti",
+      "module": "reference/conformal3",
+      "params": [
+        "Sphere",
+        "Circle"
+      ],
+      "returns": "Dipole",
+      "inline": true,
+      "own": {
+        "multiplies": 30,
+        "adds": 9,
+        "subs": 11,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "total": {
+        "multiplies": 30,
+        "adds": 9,
+        "subs": 11,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "movement": {
+        "bytes_read": 120,
+        "bytes_written": 80,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 200
+      }
+    },
+    "wedgeAnti(Circle,Sphere)": {
+      "symbol": "wedgeAnti",
+      "module": "reference/conformal3",
+      "params": [
+        "Circle",
+        "Sphere"
+      ],
+      "returns": "Dipole",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 10
+      },
+      "total": {
+        "multiplies": 30,
+        "adds": 9,
+        "subs": 11,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 20
+      },
+      "movement": {
+        "bytes_read": 120,
+        "bytes_written": 80,
+        "bytes_zeroed": 80,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 280
+      }
+    },
+    "wedgeAnti(Circle,Circle)": {
+      "symbol": "wedgeAnti",
+      "module": "reference/conformal3",
+      "params": [
+        "Circle",
+        "Circle"
+      ],
+      "returns": "RoundPoint",
+      "inline": true,
+      "own": {
+        "multiplies": 30,
+        "adds": 9,
+        "subs": 16,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "total": {
+        "multiplies": 30,
+        "adds": 9,
+        "subs": 16,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "movement": {
+        "bytes_read": 160,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 200
+      }
+    },
+    "wedgeAnti(Sphere,Dipole)": {
+      "symbol": "wedgeAnti",
+      "module": "reference/conformal3",
+      "params": [
+        "Sphere",
+        "Dipole"
+      ],
+      "returns": "RoundPoint",
+      "inline": true,
+      "own": {
+        "multiplies": 20,
+        "adds": 6,
+        "subs": 9,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "total": {
+        "multiplies": 20,
+        "adds": 6,
+        "subs": 9,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "movement": {
+        "bytes_read": 120,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 160
+      }
+    },
+    "wedgeAnti(Dipole,Sphere)": {
+      "symbol": "wedgeAnti",
+      "module": "reference/conformal3",
+      "params": [
+        "Dipole",
+        "Sphere"
+      ],
+      "returns": "RoundPoint",
+      "inline": true,
+      "own": {
+        "multiplies": 20,
+        "adds": 6,
+        "subs": 9,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "total": {
+        "multiplies": 20,
+        "adds": 6,
+        "subs": 9,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "movement": {
+        "bytes_read": 120,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 160
+      }
+    },
+    "dot(RoundPoint,RoundPoint)": {
+      "symbol": "dot",
+      "module": "reference/conformal3",
+      "params": [
+        "RoundPoint",
+        "RoundPoint"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 5,
+        "adds": 2,
+        "subs": 2,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 5,
+        "adds": 2,
+        "subs": 2,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 88
+      }
+    },
+    "dot(Vec3,Vec3)": {
+      "symbol": "dot",
+      "module": "reference/conformal3",
+      "params": [
+        "Vec3",
+        "Vec3"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 3,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 3,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 48,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 56
+      }
+    },
+    "dot(Dipole,Dipole)": {
+      "symbol": "dot",
+      "module": "reference/conformal3",
+      "params": [
+        "Dipole",
+        "Dipole"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 1,
+        "adds": 2,
+        "subs": 1,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 3,
+        "calls": 3,
+        "allocations": 0,
+        "lines": 35
+      },
+      "total": {
+        "multiplies": 10,
+        "adds": 8,
+        "subs": 1,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 3,
+        "calls": 3,
+        "allocations": 0,
+        "lines": 44
+      },
+      "movement": {
+        "bytes_read": 160,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 168
+      }
+    },
+    "dot(Circle,Circle)": {
+      "symbol": "dot",
+      "module": "reference/conformal3",
+      "params": [
+        "Circle",
+        "Circle"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 1,
+        "adds": 0,
+        "subs": 3,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 3,
+        "calls": 3,
+        "allocations": 0,
+        "lines": 35
+      },
+      "total": {
+        "multiplies": 10,
+        "adds": 6,
+        "subs": 3,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 3,
+        "calls": 3,
+        "allocations": 0,
+        "lines": 44
+      },
+      "movement": {
+        "bytes_read": 160,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 168
+      }
+    },
+    "dot(Sphere,Sphere)": {
+      "symbol": "dot",
+      "module": "reference/conformal3",
+      "params": [
+        "Sphere",
+        "Sphere"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 5,
+        "adds": 1,
+        "subs": 3,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 5,
+        "adds": 1,
+        "subs": 3,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 88
+      }
+    },
+    "dotAnti(RoundPoint,RoundPoint)": {
+      "symbol": "dotAnti",
+      "module": "reference/conformal3",
+      "params": [
+        "RoundPoint",
+        "RoundPoint"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 15
+      },
+      "total": {
+        "multiplies": 5,
+        "adds": 2,
+        "subs": 2,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 18
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 88
+      }
+    },
+    "dotAnti(Dipole,Dipole)": {
+      "symbol": "dotAnti",
+      "module": "reference/conformal3",
+      "params": [
+        "Dipole",
+        "Dipole"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 15
+      },
+      "total": {
+        "multiplies": 10,
+        "adds": 8,
+        "subs": 1,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 4,
+        "calls": 4,
+        "allocations": 0,
+        "lines": 59
+      },
+      "movement": {
+        "bytes_read": 160,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 168
+      }
+    },
+    "dotAnti(Circle,Circle)": {
+      "symbol": "dotAnti",
+      "module": "reference/conformal3",
+      "params": [
+        "Circle",
+        "Circle"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 15
+      },
+      "total": {
+        "multiplies": 10,
+        "adds": 6,
+        "subs": 3,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 4,
+        "calls": 4,
+        "allocations": 0,
+        "lines": 59
+      },
+      "movement": {
+        "bytes_read": 160,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 168
+      }
+    },
+    "dotAnti(Sphere,Sphere)": {
+      "symbol": "dotAnti",
+      "module": "reference/conformal3",
+      "params": [
+        "Sphere",
+        "Sphere"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 15
+      },
+      "total": {
+        "multiplies": 5,
+        "adds": 1,
+        "subs": 3,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 18
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 88
+      }
+    },
+    "complementRight(RoundPoint)": {
+      "symbol": "complementRight",
+      "module": "reference/conformal3",
+      "params": [
+        "RoundPoint"
+      ],
+      "returns": "Sphere",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 80
+      }
+    },
+    "complementLeft(RoundPoint)": {
+      "symbol": "complementLeft",
+      "module": "reference/conformal3",
+      "params": [
+        "RoundPoint"
+      ],
+      "returns": "Sphere",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 10
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 15
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 40,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 120
+      }
+    },
+    "reverse(RoundPoint)": {
+      "symbol": "reverse",
+      "module": "reference/conformal3",
+      "params": [
+        "RoundPoint"
+      ],
+      "returns": "RoundPoint",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 1
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 1
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 40,
+        "bytes_intermediates": 0,
+        "bytes_moved": 120
+      }
+    },
+    "reverseAnti(RoundPoint)": {
+      "symbol": "reverseAnti",
+      "module": "reference/conformal3",
+      "params": [
+        "RoundPoint"
+      ],
+      "returns": "RoundPoint",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 1
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 1
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 40,
+        "bytes_intermediates": 0,
+        "bytes_moved": 120
+      }
+    },
+    "dualBulk(RoundPoint)": {
+      "symbol": "dualBulk",
+      "module": "reference/conformal3",
+      "params": [
+        "RoundPoint"
+      ],
+      "returns": "Sphere",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 80
+      }
+    },
+    "dualWeight(RoundPoint)": {
+      "symbol": "dualWeight",
+      "module": "reference/conformal3",
+      "params": [
+        "RoundPoint"
+      ],
+      "returns": "Sphere",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 80
+      }
+    },
+    "bulk(RoundPoint)": {
+      "symbol": "bulk",
+      "module": "reference/conformal3",
+      "params": [
+        "RoundPoint"
+      ],
+      "returns": "RoundPoint",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 40,
+        "bytes_intermediates": 0,
+        "bytes_moved": 120
+      }
+    },
+    "weight(RoundPoint)": {
+      "symbol": "weight",
+      "module": "reference/conformal3",
+      "params": [
+        "RoundPoint"
+      ],
+      "returns": "RoundPoint",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 40,
+        "bytes_intermediates": 0,
+        "bytes_moved": 120
+      }
+    },
+    "bulkFlat(RoundPoint)": {
+      "symbol": "bulkFlat",
+      "module": "reference/conformal3",
+      "params": [
+        "RoundPoint"
+      ],
+      "returns": "RoundPoint",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 40,
+        "bytes_intermediates": 0,
+        "bytes_moved": 120
+      }
+    },
+    "weightFlat(RoundPoint)": {
+      "symbol": "weightFlat",
+      "module": "reference/conformal3",
+      "params": [
+        "RoundPoint"
+      ],
+      "returns": "RoundPoint",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 80
+      }
+    },
+    "attitude(RoundPoint)": {
+      "symbol": "attitude",
+      "module": "reference/conformal3",
+      "params": [
+        "RoundPoint"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 48
+      }
+    },
+    "carrier(RoundPoint)": {
+      "symbol": "carrier",
+      "module": "reference/conformal3",
+      "params": [
+        "RoundPoint"
+      ],
+      "returns": "FlatPoint",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 72
+      }
+    },
+    "carrierCo(RoundPoint)": {
+      "symbol": "carrierCo",
+      "module": "reference/conformal3",
+      "params": [
+        "RoundPoint"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 48
+      }
+    },
+    "center(RoundPoint)": {
+      "symbol": "center",
+      "module": "reference/conformal3",
+      "params": [
+        "RoundPoint"
+      ],
+      "returns": "RoundPoint",
+      "inline": true,
+      "own": {
+        "multiplies": 5,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "total": {
+        "multiplies": 5,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 40,
+        "bytes_intermediates": 0,
+        "bytes_moved": 120
+      }
+    },
+    "container(RoundPoint)": {
+      "symbol": "container",
+      "module": "reference/conformal3",
+      "params": [
+        "RoundPoint"
+      ],
+      "returns": "Sphere",
+      "inline": true,
+      "own": {
+        "multiplies": 8,
+        "adds": 0,
+        "subs": 3,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "total": {
+        "multiplies": 8,
+        "adds": 0,
+        "subs": 3,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 80
+      }
+    },
+    "partner(RoundPoint)": {
+      "symbol": "partner",
+      "module": "reference/conformal3",
+      "params": [
+        "RoundPoint"
+      ],
+      "returns": "RoundPoint",
+      "inline": true,
+      "own": {
+        "multiplies": 10,
+        "adds": 2,
+        "subs": 1,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 9
+      },
+      "total": {
+        "multiplies": 10,
+        "adds": 2,
+        "subs": 1,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 9
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 40,
+        "bytes_intermediates": 0,
+        "bytes_moved": 120
+      }
+    },
+    "-(Vec3)": {
+      "symbol": "-",
+      "module": "reference/conformal3",
+      "params": [
+        "Vec3"
+      ],
+      "returns": "Vec3",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "movement": {
+        "bytes_read": 24,
+        "bytes_written": 24,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 48
+      }
+    },
+    "complementRight(Dipole)": {
+      "symbol": "complementRight",
+      "module": "reference/conformal3",
+      "params": [
+        "Dipole"
+      ],
+      "returns": "Circle",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 24
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 38
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 240,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 400
+      }
+    },
+    "complementLeft(Dipole)": {
+      "symbol": "complementLeft",
+      "module": "reference/conformal3",
+      "params": [
+        "Dipole"
+      ],
+      "returns": "Circle",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 10
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 4,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 3,
+        "calls": 3,
+        "allocations": 0,
+        "lines": 48
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 320,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 480
+      }
+    },
+    "reverse(Dipole)": {
+      "symbol": "reverse",
+      "module": "reference/conformal3",
+      "params": [
+        "Dipole"
+      ],
+      "returns": "Dipole",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 20
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 34
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 80,
+        "bytes_copied": 80,
+        "bytes_intermediates": 0,
+        "bytes_moved": 320
+      }
+    },
+    "reverseAnti(Dipole)": {
+      "symbol": "reverseAnti",
+      "module": "reference/conformal3",
+      "params": [
+        "Dipole"
+      ],
+      "returns": "Dipole",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 13
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 0,
+        "copies": 2,
+        "checks": 3,
+        "calls": 3,
+        "allocations": 0,
+        "lines": 47
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 240,
+        "bytes_copied": 160,
+        "bytes_intermediates": 0,
+        "bytes_moved": 560
+      }
+    },
+    "dualBulk(Dipole)": {
+      "symbol": "dualBulk",
+      "module": "reference/conformal3",
+      "params": [
+        "Dipole"
+      ],
+      "returns": "Circle",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 20
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 27
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 160,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 320
+      }
+    },
+    "dualWeight(Dipole)": {
+      "symbol": "dualWeight",
+      "module": "reference/conformal3",
+      "params": [
+        "Dipole"
+      ],
+      "returns": "Circle",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 12
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 12
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 160
+      }
+    },
+    "bulk(Dipole)": {
+      "symbol": "bulk",
+      "module": "reference/conformal3",
+      "params": [
+        "Dipole"
+      ],
+      "returns": "Dipole",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 14
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 14
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 0,
+        "bytes_copied": 80,
+        "bytes_intermediates": 0,
+        "bytes_moved": 240
+      }
+    },
+    "weight(Dipole)": {
+      "symbol": "weight",
+      "module": "reference/conformal3",
+      "params": [
+        "Dipole"
+      ],
+      "returns": "Dipole",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 14
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 14
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 0,
+        "bytes_copied": 80,
+        "bytes_intermediates": 0,
+        "bytes_moved": 240
+      }
+    },
+    "bulkFlat(Dipole)": {
+      "symbol": "bulkFlat",
+      "module": "reference/conformal3",
+      "params": [
+        "Dipole"
+      ],
+      "returns": "Dipole",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 12
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 12
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 0,
+        "bytes_copied": 80,
+        "bytes_intermediates": 0,
+        "bytes_moved": 240
+      }
+    },
+    "weightFlat(Dipole)": {
+      "symbol": "weightFlat",
+      "module": "reference/conformal3",
+      "params": [
+        "Dipole"
+      ],
+      "returns": "Dipole",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 12
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 12
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 0,
+        "bytes_copied": 80,
+        "bytes_intermediates": 0,
+        "bytes_moved": 240
+      }
+    },
+    "attitude(Dipole)": {
+      "symbol": "attitude",
+      "module": "reference/conformal3",
+      "params": [
+        "Dipole"
+      ],
+      "returns": "RoundPoint",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 120
+      }
+    },
+    "carrier(Dipole)": {
+      "symbol": "carrier",
+      "module": "reference/conformal3",
+      "params": [
+        "Dipole"
+      ],
+      "returns": "FlatLine",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 48,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 128
+      }
+    },
+    "carrierCo(Dipole)": {
+      "symbol": "carrierCo",
+      "module": "reference/conformal3",
+      "params": [
+        "Dipole"
+      ],
+      "returns": "FlatPlane",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 112
+      }
+    },
+    "center(Dipole)": {
+      "symbol": "center",
+      "module": "reference/conformal3",
+      "params": [
+        "Dipole"
+      ],
+      "returns": "RoundPoint",
+      "inline": true,
+      "own": {
+        "multiplies": 13,
+        "adds": 3,
+        "subs": 6,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 17
+      },
+      "total": {
+        "multiplies": 16,
+        "adds": 5,
+        "subs": 6,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 20
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 40,
+        "bytes_zeroed": 40,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 160
+      }
+    },
+    "container(Dipole)": {
+      "symbol": "container",
+      "module": "reference/conformal3",
+      "params": [
+        "Dipole"
+      ],
+      "returns": "Sphere",
+      "inline": true,
+      "own": {
+        "multiplies": 12,
+        "adds": 3,
+        "subs": 6,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 23
+      },
+      "total": {
+        "multiplies": 18,
+        "adds": 7,
+        "subs": 6,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 29
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 40,
+        "bytes_zeroed": 40,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 160
+      }
+    },
+    "*(Vec3,float)": {
+      "symbol": "*",
+      "module": "reference/conformal3",
+      "params": [
+        "Vec3",
+        "float"
+      ],
+      "returns": "Vec3",
+      "inline": true,
+      "own": {
+        "multiplies": 3,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "total": {
+        "multiplies": 3,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 24,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 56
+      }
+    },
+    "partner(Dipole)": {
+      "symbol": "partner",
+      "module": "reference/conformal3",
+      "params": [
+        "Dipole"
+      ],
+      "returns": "Dipole",
+      "inline": true,
+      "own": {
+        "multiplies": 17,
+        "adds": 3,
+        "subs": 7,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 4,
+        "calls": 4,
+        "allocations": 0,
+        "lines": 33
+      },
+      "total": {
+        "multiplies": 29,
+        "adds": 7,
+        "subs": 7,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 4,
+        "calls": 4,
+        "allocations": 0,
+        "lines": 53
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 80,
+        "bytes_copied": 80,
+        "bytes_intermediates": 0,
+        "bytes_moved": 320
+      }
+    },
+    "complementRight(Circle)": {
+      "symbol": "complementRight",
+      "module": "reference/conformal3",
+      "params": [
+        "Circle"
+      ],
+      "returns": "Dipole",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 24
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 38
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 240,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 400
+      }
+    },
+    "complementLeft(Circle)": {
+      "symbol": "complementLeft",
+      "module": "reference/conformal3",
+      "params": [
+        "Circle"
+      ],
+      "returns": "Dipole",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 10
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 4,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 3,
+        "calls": 3,
+        "allocations": 0,
+        "lines": 48
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 320,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 480
+      }
+    },
+    "reverse(Circle)": {
+      "symbol": "reverse",
+      "module": "reference/conformal3",
+      "params": [
+        "Circle"
+      ],
+      "returns": "Circle",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 20
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 34
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 80,
+        "bytes_copied": 80,
+        "bytes_intermediates": 0,
+        "bytes_moved": 320
+      }
+    },
+    "reverseAnti(Circle)": {
+      "symbol": "reverseAnti",
+      "module": "reference/conformal3",
+      "params": [
+        "Circle"
+      ],
+      "returns": "Circle",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 13
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 0,
+        "copies": 2,
+        "checks": 3,
+        "calls": 3,
+        "allocations": 0,
+        "lines": 47
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 240,
+        "bytes_copied": 160,
+        "bytes_intermediates": 0,
+        "bytes_moved": 560
+      }
+    },
+    "dualBulk(Circle)": {
+      "symbol": "dualBulk",
+      "module": "reference/conformal3",
+      "params": [
+        "Circle"
+      ],
+      "returns": "Dipole",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 12
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 12
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 160
+      }
+    },
+    "dualWeight(Circle)": {
+      "symbol": "dualWeight",
+      "module": "reference/conformal3",
+      "params": [
+        "Circle"
+      ],
+      "returns": "Dipole",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 20
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 27
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 160,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 320
+      }
+    },
+    "bulk(Circle)": {
+      "symbol": "bulk",
+      "module": "reference/conformal3",
+      "params": [
+        "Circle"
+      ],
+      "returns": "Circle",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 12
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 12
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 0,
+        "bytes_copied": 80,
+        "bytes_intermediates": 0,
+        "bytes_moved": 240
+      }
+    },
+    "weight(Circle)": {
+      "symbol": "weight",
+      "module": "reference/conformal3",
+      "params": [
+        "Circle"
+      ],
+      "returns": "Circle",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 12
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 12
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 0,
+        "bytes_copied": 80,
+        "bytes_intermediates": 0,
+        "bytes_moved": 240
+      }
+    },
+    "bulkFlat(Circle)": {
+      "symbol": "bulkFlat",
+      "module": "reference/conformal3",
+      "params": [
+        "Circle"
+      ],
+      "returns": "Circle",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 14
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 14
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 0,
+        "bytes_copied": 80,
+        "bytes_intermediates": 0,
+        "bytes_moved": 240
+      }
+    },
+    "weightFlat(Circle)": {
+      "symbol": "weightFlat",
+      "module": "reference/conformal3",
+      "params": [
+        "Circle"
+      ],
+      "returns": "Circle",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 14
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 14
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 0,
+        "bytes_copied": 80,
+        "bytes_intermediates": 0,
+        "bytes_moved": 240
+      }
+    },
+    "attitude(Circle)": {
+      "symbol": "attitude",
+      "module": "reference/conformal3",
+      "params": [
+        "Circle"
+      ],
+      "returns": "Dipole",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 160
+      }
+    },
+    "carrier(Circle)": {
+      "symbol": "carrier",
+      "module": "reference/conformal3",
+      "params": [
+        "Circle"
+      ],
+      "returns": "FlatPlane",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 112
+      }
+    },
+    "carrierCo(Circle)": {
+      "symbol": "carrierCo",
+      "module": "reference/conformal3",
+      "params": [
+        "Circle"
+      ],
+      "returns": "FlatLine",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 16
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 23
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 48,
+        "bytes_zeroed": 96,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 224
+      }
+    },
+    "center(Circle)": {
+      "symbol": "center",
+      "module": "reference/conformal3",
+      "params": [
+        "Circle"
+      ],
+      "returns": "RoundPoint",
+      "inline": true,
+      "own": {
+        "multiplies": 15,
+        "adds": 5,
+        "subs": 6,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 17
+      },
+      "total": {
+        "multiplies": 18,
+        "adds": 7,
+        "subs": 6,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 20
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 40,
+        "bytes_zeroed": 40,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 160
+      }
+    },
+    "container(Circle)": {
+      "symbol": "container",
+      "module": "reference/conformal3",
+      "params": [
+        "Circle"
+      ],
+      "returns": "Sphere",
+      "inline": true,
+      "own": {
+        "multiplies": 16,
+        "adds": 2,
+        "subs": 9,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "total": {
+        "multiplies": 16,
+        "adds": 2,
+        "subs": 9,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 120
+      }
+    },
+    "partner(Circle)": {
+      "symbol": "partner",
+      "module": "reference/conformal3",
+      "params": [
+        "Circle"
+      ],
+      "returns": "Circle",
+      "inline": true,
+      "own": {
+        "multiplies": 23,
+        "adds": 5,
+        "subs": 7,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 29
+      },
+      "total": {
+        "multiplies": 29,
+        "adds": 7,
+        "subs": 7,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 39
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 80,
+        "bytes_zeroed": 80,
+        "bytes_copied": 80,
+        "bytes_intermediates": 0,
+        "bytes_moved": 320
+      }
+    },
+    "complementRight(Sphere)": {
+      "symbol": "complementRight",
+      "module": "reference/conformal3",
+      "params": [
+        "Sphere"
+      ],
+      "returns": "RoundPoint",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 80
+      }
+    },
+    "complementLeft(Sphere)": {
+      "symbol": "complementLeft",
+      "module": "reference/conformal3",
+      "params": [
+        "Sphere"
+      ],
+      "returns": "RoundPoint",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 10
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 15
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 40,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 120
+      }
+    },
+    "reverse(Sphere)": {
+      "symbol": "reverse",
+      "module": "reference/conformal3",
+      "params": [
+        "Sphere"
+      ],
+      "returns": "Sphere",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 1
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 1
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 40,
+        "bytes_intermediates": 0,
+        "bytes_moved": 120
+      }
+    },
+    "reverseAnti(Sphere)": {
+      "symbol": "reverseAnti",
+      "module": "reference/conformal3",
+      "params": [
+        "Sphere"
+      ],
+      "returns": "Sphere",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 1
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 1
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 40,
+        "bytes_intermediates": 0,
+        "bytes_moved": 120
+      }
+    },
+    "dualBulk(Sphere)": {
+      "symbol": "dualBulk",
+      "module": "reference/conformal3",
+      "params": [
+        "Sphere"
+      ],
+      "returns": "RoundPoint",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 80
+      }
+    },
+    "dualWeight(Sphere)": {
+      "symbol": "dualWeight",
+      "module": "reference/conformal3",
+      "params": [
+        "Sphere"
+      ],
+      "returns": "RoundPoint",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 80
+      }
+    },
+    "bulk(Sphere)": {
+      "symbol": "bulk",
+      "module": "reference/conformal3",
+      "params": [
+        "Sphere"
+      ],
+      "returns": "Sphere",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 80
+      }
+    },
+    "weight(Sphere)": {
+      "symbol": "weight",
+      "module": "reference/conformal3",
+      "params": [
+        "Sphere"
+      ],
+      "returns": "Sphere",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 40,
+        "bytes_intermediates": 0,
+        "bytes_moved": 120
+      }
+    },
+    "bulkFlat(Sphere)": {
+      "symbol": "bulkFlat",
+      "module": "reference/conformal3",
+      "params": [
+        "Sphere"
+      ],
+      "returns": "Sphere",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 40,
+        "bytes_intermediates": 0,
+        "bytes_moved": 120
+      }
+    },
+    "weightFlat(Sphere)": {
+      "symbol": "weightFlat",
+      "module": "reference/conformal3",
+      "params": [
+        "Sphere"
+      ],
+      "returns": "Sphere",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 40,
+        "bytes_intermediates": 0,
+        "bytes_moved": 120
+      }
+    },
+    "attitude(Sphere)": {
+      "symbol": "attitude",
+      "module": "reference/conformal3",
+      "params": [
+        "Sphere"
+      ],
+      "returns": "Circle",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 80,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 120
+      }
+    },
+    "carrier(Sphere)": {
+      "symbol": "carrier",
+      "module": "reference/conformal3",
+      "params": [
+        "Sphere"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 48
+      }
+    },
+    "carrierCo(Sphere)": {
+      "symbol": "carrierCo",
+      "module": "reference/conformal3",
+      "params": [
+        "Sphere"
+      ],
+      "returns": "FlatPoint",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 72
+      }
+    },
+    "center(Sphere)": {
+      "symbol": "center",
+      "module": "reference/conformal3",
+      "params": [
+        "Sphere"
+      ],
+      "returns": "RoundPoint",
+      "inline": true,
+      "own": {
+        "multiplies": 8,
+        "adds": 2,
+        "subs": 1,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "total": {
+        "multiplies": 8,
+        "adds": 2,
+        "subs": 1,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 80
+      }
+    },
+    "container(Sphere)": {
+      "symbol": "container",
+      "module": "reference/conformal3",
+      "params": [
+        "Sphere"
+      ],
+      "returns": "Sphere",
+      "inline": true,
+      "own": {
+        "multiplies": 5,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "total": {
+        "multiplies": 5,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 40,
+        "bytes_intermediates": 0,
+        "bytes_moved": 120
+      }
+    },
+    "partner(Sphere)": {
+      "symbol": "partner",
+      "module": "reference/conformal3",
+      "params": [
+        "Sphere"
+      ],
+      "returns": "Sphere",
+      "inline": true,
+      "own": {
+        "multiplies": 10,
+        "adds": 2,
+        "subs": 1,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 9
+      },
+      "total": {
+        "multiplies": 10,
+        "adds": 2,
+        "subs": 1,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 9
+      },
+      "movement": {
+        "bytes_read": 40,
+        "bytes_written": 40,
+        "bytes_zeroed": 0,
+        "bytes_copied": 40,
+        "bytes_intermediates": 0,
+        "bytes_moved": 120
+      }
+    },
+    "grade(Basis)": {
+      "symbol": "grade",
+      "module": "pga/algebra",
+      "params": [
+        "Basis"
+      ],
+      "returns": "int",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 0,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 8
+      }
+    },
+    "gradeAnti(Basis)": {
+      "symbol": "gradeAnti",
+      "module": "pga/algebra",
+      "params": [
+        "Basis"
+      ],
+      "returns": "int",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 20
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 23
+      },
+      "movement": {
+        "bytes_read": 0,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 8
+      }
+    },
+    "+(Multivector,Multivector)": {
+      "symbol": "+",
+      "module": "pga/multivectors",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 32,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 96,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 51
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 32,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 96,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 51
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 1024
+      }
+    },
+    "-(Multivector,Multivector)": {
+      "symbol": "-",
+      "module": "pga/multivectors",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 32,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 96,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 51
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 32,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 96,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 51
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 1024
+      }
+    },
+    "-(Multivector)": {
+      "symbol": "-",
+      "module": "pga/multivectors",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 64,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 45
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 64,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 45
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
+    "{}(Multivector,int)": {
+      "symbol": "{}",
+      "module": "projective_geometric_algebra_illuminated/pga",
+      "params": [
+        "Multivector",
+        "int"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 128,
+        "calls": 32,
+        "allocations": 0,
+        "lines": 69
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 128,
+        "calls": 32,
+        "allocations": 0,
+        "lines": 165
+      },
+      "movement": {
+        "bytes_read": 264,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 776
+      }
+    },
+    "{}(Multivector,int)#u1": {
+      "symbol": "{}",
+      "module": "projective_geometric_algebra_illuminated/pga",
+      "params": [
+        "Multivector",
+        "int"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 128,
+        "calls": 32,
+        "allocations": 0,
+        "lines": 69
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 160,
+        "calls": 64,
+        "allocations": 0,
+        "lines": 805
+      },
+      "movement": {
+        "bytes_read": 264,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 776
+      }
+    },
+    "isNone(Option)": {
+      "symbol": "isNone",
+      "module": "pga/multivectors",
+      "params": [
+        "Option"
+      ],
+      "returns": "bool",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 0,
+        "bytes_written": 0,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 0
+      }
+    },
+    "some(int)": {
+      "symbol": "some",
+      "module": "pga/multivectors",
+      "params": [
+        "int"
+      ],
+      "returns": "Option",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 5
+      },
+      "movement": {
+        "bytes_read": 8,
+        "bytes_written": 0,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 8
+      }
+    },
+    "get(Option)": {
+      "symbol": "get",
+      "module": "pga/multivectors",
+      "params": [
+        "Option"
+      ],
+      "returns": "NI*",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 31
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 34
+      },
+      "movement": {
+        "bytes_read": 0,
+        "bytes_written": 0,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 0
+      }
+    },
+    "get(Option)#u1": {
+      "symbol": "get",
+      "module": "pga/multivectors",
+      "params": [
+        "Option"
+      ],
+      "returns": "NI*",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 30
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 33
+      },
+      "movement": {
+        "bytes_read": 0,
+        "bytes_written": 0,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 0
+      }
+    },
+    "none(void)": {
+      "symbol": "none",
+      "module": "pga/multivectors",
+      "params": [
+        "void"
+      ],
+      "returns": "Option",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 12
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 15
+      },
+      "movement": {
+        "bytes_read": 0,
+        "bytes_written": 0,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 0
+      }
+    },
+    "none(void)#u5": {
+      "symbol": "none",
+      "module": "pga/multivectors",
+      "params": [
+        "void"
+      ],
+      "returns": "Option",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 0,
+        "bytes_written": 0,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 0
+      }
+    },
+    "grade(Multivector)": {
+      "symbol": "grade",
+      "module": "pga/multivectors",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Option",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 225,
+        "calls": 225,
+        "allocations": 0,
+        "lines": 114
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 98,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 289,
+        "calls": 289,
+        "allocations": 0,
+        "lines": 2263
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 0,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 256
+      }
+    },
+    "∧(Multivector,Multivector)": {
+      "symbol": "∧",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 243,
+        "adds": 211,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 518,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3146
+      },
+      "total": {
+        "multiplies": 243,
+        "adds": 211,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 518,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3146
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 1024
+      }
+    },
+    "∨(Multivector,Multivector)": {
+      "symbol": "∨",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 243,
+        "adds": 211,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 518,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3146
+      },
+      "total": {
+        "multiplies": 243,
+        "adds": 211,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 518,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3146
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 1024
+      }
+    },
+    "⟑(Multivector,Multivector)": {
+      "symbol": "⟑",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 1024,
+        "adds": 992,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 2080,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 12518
+      },
+      "total": {
+        "multiplies": 1024,
+        "adds": 992,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 2080,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 12518
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 1024
+      }
+    },
+    "⟇(Multivector,Multivector)": {
+      "symbol": "⟇",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 1024,
+        "adds": 992,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 2080,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 12518
+      },
+      "total": {
+        "multiplies": 1024,
+        "adds": 992,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 2080,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 12518
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 1024
+      }
+    },
+    "∙(Multivector,Multivector)": {
+      "symbol": "∙",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 32,
+        "adds": 31,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 65,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 397
+      },
+      "total": {
+        "multiplies": 32,
+        "adds": 31,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 65,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 397
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 1024
+      }
+    },
+    "∘(Multivector,Multivector)": {
+      "symbol": "∘",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 32,
+        "adds": 31,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 65,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 397
+      },
+      "total": {
+        "multiplies": 32,
+        "adds": 31,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 65,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 397
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 1024
+      }
+    },
+    "∨★(Multivector,Multivector)": {
+      "symbol": "∨★",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 243,
+        "adds": 211,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 518,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3146
+      },
+      "total": {
+        "multiplies": 243,
+        "adds": 211,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 518,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3146
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 1024
+      }
+    },
+    "∨☆(Multivector,Multivector)": {
+      "symbol": "∨☆",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 243,
+        "adds": 211,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 518,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3146
+      },
+      "total": {
+        "multiplies": 243,
+        "adds": 211,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 518,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3146
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 1024
+      }
+    },
+    "∧★(Multivector,Multivector)": {
+      "symbol": "∧★",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 243,
+        "adds": 211,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 518,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3146
+      },
+      "total": {
+        "multiplies": 243,
+        "adds": 211,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 518,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3146
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 1024
+      }
+    },
+    "∧☆(Multivector,Multivector)": {
+      "symbol": "∧☆",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 243,
+        "adds": 211,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 518,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3146
+      },
+      "total": {
+        "multiplies": 243,
+        "adds": 211,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 518,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3146
+      },
+      "movement": {
+        "bytes_read": 512,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 1024
+      }
+    },
+    "∧(float,Multivector)": {
+      "symbol": "∧",
+      "module": "pga/operators",
+      "params": [
+        "float",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 32,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 64,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 45
+      },
+      "total": {
+        "multiplies": 32,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 64,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 45
+      },
+      "movement": {
+        "bytes_read": 264,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 776
+      }
+    },
+    "∙(Multivector)": {
+      "symbol": "∙",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 16,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 110
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 16,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 110
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
+    "∘(Multivector)": {
+      "symbol": "∘",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 16,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 110
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 16,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 110
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
+    "/(Multivector)": {
+      "symbol": "/",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 64,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 422
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 64,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 422
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
+    "\\(Multivector)": {
+      "symbol": "\\",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 64,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 422
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 64,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 422
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
+    "~(Multivector)": {
+      "symbol": "~",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 64,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 422
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 64,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 422
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
+    "~∘(Multivector)": {
+      "symbol": "~∘",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 64,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 422
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 64,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 422
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
+    "★(Multivector)": {
+      "symbol": "★",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 64,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 422
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 64,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 422
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
+    "☆(Multivector)": {
+      "symbol": "☆",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 64,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 422
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 64,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 422
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
+    "|∙(Multivector)": {
+      "symbol": "|∙",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 1,
+        "copies": 0,
+        "checks": 3,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 25
+      },
+      "total": {
+        "multiplies": 32,
+        "adds": 31,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 1,
+        "copies": 0,
+        "checks": 68,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 422
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 768,
+        "bytes_copied": 0,
+        "bytes_intermediates": 256,
+        "bytes_moved": 1536
+      }
+    },
+    "|∘(Multivector)": {
+      "symbol": "|∘",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 1,
+        "copies": 0,
+        "checks": 3,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 25
+      },
+      "total": {
+        "multiplies": 32,
+        "adds": 31,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 1,
+        "copies": 0,
+        "checks": 68,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 422
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 768,
+        "bytes_copied": 0,
+        "bytes_intermediates": 256,
+        "bytes_moved": 1536
+      }
+    },
+    "|■(Multivector)": {
+      "symbol": "|■",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 1,
+        "copies": 0,
+        "checks": 3,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 25
+      },
+      "total": {
+        "multiplies": 32,
+        "adds": 31,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 1,
+        "copies": 0,
+        "checks": 68,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 422
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 768,
+        "bytes_copied": 0,
+        "bytes_intermediates": 256,
+        "bytes_moved": 1536
+      }
+    },
+    "|□(Multivector)": {
+      "symbol": "|□",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 1,
+        "copies": 0,
+        "checks": 3,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 25
+      },
+      "total": {
+        "multiplies": 32,
+        "adds": 31,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 1,
+        "copies": 0,
+        "checks": 68,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 422
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 768,
+        "bytes_copied": 0,
+        "bytes_intermediates": 256,
+        "bytes_moved": 1536
+      }
+    },
+    "|(Multivector)": {
+      "symbol": "|",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 2,
+        "copies": 0,
+        "checks": 6,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 44
+      },
+      "total": {
+        "multiplies": 64,
+        "adds": 62,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 9,
+        "intermediates": 4,
+        "copies": 0,
+        "checks": 142,
+        "calls": 4,
+        "allocations": 0,
+        "lines": 888
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 2304,
+        "bytes_copied": 0,
+        "bytes_intermediates": 1024,
+        "bytes_moved": 3840
+      }
+    },
+    "^∙(Multivector)": {
+      "symbol": "^∙",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 1,
+        "copies": 1,
+        "checks": 66,
+        "calls": 33,
+        "allocations": 0,
+        "lines": 59
+      },
+      "total": {
+        "multiplies": 32,
+        "adds": 31,
+        "subs": 0,
+        "divides": 32,
+        "zero_fills": 4,
+        "intermediates": 2,
+        "copies": 1,
+        "checks": 134,
+        "calls": 34,
+        "allocations": 0,
+        "lines": 513
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 1024,
+        "bytes_copied": 256,
+        "bytes_intermediates": 512,
+        "bytes_moved": 2304
+      }
+    },
+    "^∘(Multivector)": {
+      "symbol": "^∘",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 1,
+        "copies": 1,
+        "checks": 66,
+        "calls": 33,
+        "allocations": 0,
+        "lines": 59
+      },
+      "total": {
+        "multiplies": 32,
+        "adds": 31,
+        "subs": 0,
+        "divides": 32,
+        "zero_fills": 4,
+        "intermediates": 2,
+        "copies": 1,
+        "checks": 134,
+        "calls": 34,
+        "allocations": 0,
+        "lines": 513
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 1024,
+        "bytes_copied": 256,
+        "bytes_intermediates": 512,
+        "bytes_moved": 2304
+      }
+    },
+    "⊖(Multivector)": {
+      "symbol": "⊖",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 1,
+        "copies": 1,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 13
+      },
+      "total": {
+        "multiplies": 243,
+        "adds": 211,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 1,
+        "copies": 1,
+        "checks": 519,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 3159
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 768,
+        "bytes_copied": 256,
+        "bytes_intermediates": 256,
+        "bytes_moved": 1792
+      }
+    },
+    "■(Multivector)": {
+      "symbol": "■",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 16,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 110
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 16,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 110
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
+    "□(Multivector)": {
+      "symbol": "□",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 16,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 110
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 16,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 110
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 768
+      }
+    },
+    "⊟(Multivector)": {
+      "symbol": "⊟",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 1,
+        "copies": 1,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 13
+      },
+      "total": {
+        "multiplies": 243,
+        "adds": 211,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 1,
+        "copies": 1,
+        "checks": 519,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 3159
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 768,
+        "bytes_copied": 256,
+        "bytes_intermediates": 256,
+        "bytes_moved": 1792
+      }
+    },
+    "⊞(Multivector)": {
+      "symbol": "⊞",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 2,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 19
+      },
+      "total": {
+        "multiplies": 243,
+        "adds": 211,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 5,
+        "intermediates": 2,
+        "copies": 1,
+        "checks": 584,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 3587
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 1280,
+        "bytes_copied": 256,
+        "bytes_intermediates": 512,
+        "bytes_moved": 2560
+      }
+    },
+    "⊙(Multivector)": {
+      "symbol": "⊙",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 2,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 19
+      },
+      "total": {
+        "multiplies": 486,
+        "adds": 422,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 9,
+        "intermediates": 4,
+        "copies": 2,
+        "checks": 1104,
+        "calls": 4,
+        "allocations": 0,
+        "lines": 6752
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 2304,
+        "bytes_copied": 512,
+        "bytes_intermediates": 1024,
+        "bytes_moved": 4352
+      }
+    },
+    "⊡(Multivector)": {
+      "symbol": "⊡",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 4,
+        "intermediates": 3,
+        "copies": 1,
+        "checks": 3,
+        "calls": 3,
+        "allocations": 0,
+        "lines": 25
+      },
+      "total": {
+        "multiplies": 486,
+        "adds": 422,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 9,
+        "intermediates": 4,
+        "copies": 2,
+        "checks": 1104,
+        "calls": 4,
+        "allocations": 0,
+        "lines": 6752
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 2304,
+        "bytes_copied": 512,
+        "bytes_intermediates": 1024,
+        "bytes_moved": 4352
+      }
+    },
+    "⊛(Multivector)": {
+      "symbol": "⊛",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 6,
+        "intermediates": 5,
+        "copies": 1,
+        "checks": 8,
+        "calls": 8,
+        "allocations": 0,
+        "lines": 65
+      },
+      "total": {
+        "multiplies": 1004,
+        "adds": 844,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 119,
+        "intermediates": 10,
+        "copies": 4,
+        "checks": 2569,
+        "calls": 305,
+        "allocations": 0,
+        "lines": 15993
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 256,
+        "bytes_zeroed": 30464,
+        "bytes_copied": 1024,
+        "bytes_intermediates": 2560,
+        "bytes_moved": 34560
+      }
+    }
+  },
+  "measurands": {
+    "wedge": {
+      "symbol": "∧",
+      "alias": "wedge",
+      "arity": 2,
+      "expression": "(m ∧ n)",
+      "library": "∧(Multivector,Multivector)",
+      "reference": "",
+      "cite": "2.17"
+    },
+    "wedge_anti": {
+      "symbol": "∨",
+      "alias": "wedgeAnti",
+      "arity": 2,
+      "expression": "(m ∨ n)",
+      "library": "∨(Multivector,Multivector)",
+      "reference": "",
+      "cite": "2.29"
+    },
+    "wedge_dot": {
+      "symbol": "⟑",
+      "alias": "wedgeDot",
+      "arity": 2,
+      "expression": "(m ⟑ n)",
+      "library": "⟑(Multivector,Multivector)",
+      "reference": "",
+      "cite": "wiki:Geometric_product"
+    },
+    "wedge_dot_anti": {
+      "symbol": "⟇",
+      "alias": "wedgeDotAnti",
+      "arity": 2,
+      "expression": "(m ⟇ n)",
+      "library": "⟇(Multivector,Multivector)",
+      "reference": "",
+      "cite": "wiki:Geometric_product"
+    },
+    "dot": {
+      "symbol": "∙",
+      "alias": "dot",
+      "arity": 2,
+      "expression": "(m ∙ n)",
+      "library": "∙(Multivector,Multivector)",
+      "reference": "",
+      "cite": "2.76"
+    },
+    "dot_anti": {
+      "symbol": "∘",
+      "alias": "dotAnti",
+      "arity": 2,
+      "expression": "(m ∘ n)",
+      "library": "∘(Multivector,Multivector)",
+      "reference": "",
+      "cite": "2.76"
+    },
+    "contract_bulk": {
+      "symbol": "∨★",
+      "alias": "contractBulk",
+      "arity": 2,
+      "expression": "(m ∨★ n)",
+      "library": "∨★(Multivector,Multivector)",
+      "reference": "",
+      "cite": "2.119"
+    },
+    "contract_weight": {
+      "symbol": "∨☆",
+      "alias": "contractWeight",
+      "arity": 2,
+      "expression": "(m ∨☆ n)",
+      "library": "∨☆(Multivector,Multivector)",
+      "reference": "",
+      "cite": "2.120"
+    },
+    "expand_bulk": {
+      "symbol": "∧★",
+      "alias": "expandBulk",
+      "arity": 2,
+      "expression": "(m ∧★ n)",
+      "library": "∧★(Multivector,Multivector)",
+      "reference": "",
+      "cite": "wiki:Expansions"
+    },
+    "expand_weight": {
+      "symbol": "∧☆",
+      "alias": "expandWeight",
+      "arity": 2,
+      "expression": "(m ∧☆ n)",
+      "library": "∧☆(Multivector,Multivector)",
+      "reference": "",
+      "cite": "wiki:Expansions"
+    },
+    "add": {
+      "symbol": "+",
+      "alias": "add",
+      "arity": 2,
+      "expression": "(m + n)",
+      "library": "+(Multivector,Multivector)",
+      "reference": "",
+      "cite": "2.24"
+    },
+    "subtract": {
+      "symbol": "-",
+      "alias": "subtract",
+      "arity": 2,
+      "expression": "(m - n)",
+      "library": "-(Multivector,Multivector)",
+      "reference": "",
+      "cite": "2.24"
+    },
+    "project_central": {
+      "symbol": "",
+      "alias": "projectCentral",
+      "arity": 2,
+      "expression": "projectCentral(m, n)",
+      "library": "projectCentral(Multivector,Multivector)",
+      "reference": "",
+      "cite": "wiki:Projections"
+    },
+    "project_central_anti": {
+      "symbol": "",
+      "alias": "projectCentralAnti",
+      "arity": 2,
+      "expression": "projectCentralAnti(m, n)",
+      "library": "projectCentralAnti(Multivector,Multivector)",
+      "reference": "",
+      "cite": "wiki:Projections"
+    },
+    "project_orthogonal": {
+      "symbol": "",
+      "alias": "projectOrthogonal",
+      "arity": 2,
+      "expression": "projectOrthogonal(m, n)",
+      "library": "projectOrthogonal(Multivector,Multivector)",
+      "reference": "",
+      "cite": "wiki:Projections"
+    },
+    "project_orthogonal_anti": {
+      "symbol": "",
+      "alias": "projectOrthogonalAnti",
+      "arity": 2,
+      "expression": "projectOrthogonalAnti(m, n)",
+      "library": "projectOrthogonalAnti(Multivector,Multivector)",
+      "reference": "",
+      "cite": "wiki:Projections"
+    },
+    "scale": {
+      "symbol": "∧",
+      "alias": "wedge",
+      "arity": 2,
+      "expression": "(m ∧ n)",
+      "library": "∧(float,Multivector)",
+      "reference": "",
+      "cite": "2.24"
+    },
+    "bulk": {
+      "symbol": "∙",
+      "alias": "bulkRound",
+      "arity": 1,
+      "expression": "(∙ m)",
+      "library": "∙(Multivector)",
+      "reference": "",
+      "cite": "2.68"
+    },
+    "weight": {
+      "symbol": "∘",
+      "alias": "weightRound",
+      "arity": 1,
+      "expression": "(∘ m)",
+      "library": "∘(Multivector)",
+      "reference": "",
+      "cite": "2.68"
+    },
+    "complement_right": {
+      "symbol": "/",
+      "alias": "complementRight",
+      "arity": 1,
+      "expression": "(/ m)",
+      "library": "/(Multivector)",
+      "reference": "",
+      "cite": "2.19"
+    },
+    "complement_left": {
+      "symbol": "\\",
+      "alias": "complementLeft",
+      "arity": 1,
+      "expression": "(\\ m)",
+      "library": "\\(Multivector)",
+      "reference": "",
+      "cite": "2.20"
+    },
+    "reverse": {
+      "symbol": "~",
+      "alias": "reverse",
+      "arity": 1,
+      "expression": "(~ m)",
+      "library": "~(Multivector)",
+      "reference": "",
+      "cite": "wiki:Reverses"
+    },
+    "reverse_anti": {
+      "symbol": "~∘",
+      "alias": "reverseAnti",
+      "arity": 1,
+      "expression": "(~∘ m)",
+      "library": "~∘(Multivector)",
+      "reference": "",
+      "cite": "wiki:Reverses"
+    },
+    "dual_bulk": {
+      "symbol": "★",
+      "alias": "dualBulk",
+      "arity": 1,
+      "expression": "(★ m)",
+      "library": "★(Multivector)",
+      "reference": "",
+      "cite": "2.103"
+    },
+    "dual_weight": {
+      "symbol": "☆",
+      "alias": "dualWeight",
+      "arity": 1,
+      "expression": "(☆ m)",
+      "library": "☆(Multivector)",
+      "reference": "",
+      "cite": "2.103"
+    },
+    "negate": {
+      "symbol": "-",
+      "alias": "negate",
+      "arity": 1,
+      "expression": "(- m)",
+      "library": "-(Multivector)",
+      "reference": "",
+      "cite": "2.24"
+    },
+    "norm_bulk": {
+      "symbol": "|∙",
+      "alias": "normBulkRound",
+      "arity": 1,
+      "expression": "(|∙ m)",
+      "library": "|∙(Multivector)",
+      "reference": "",
+      "cite": "2.87"
+    },
+    "norm_weight": {
+      "symbol": "|∘",
+      "alias": "normWeightRound",
+      "arity": 1,
+      "expression": "(|∘ m)",
+      "library": "|∘(Multivector)",
+      "reference": "",
+      "cite": "2.88"
+    },
+    "norm": {
+      "symbol": "|",
+      "alias": "norm",
+      "arity": 1,
+      "expression": "(| m)",
+      "library": "|(Multivector)",
+      "reference": "",
+      "cite": "2.90"
+    },
+    "normalize_bulk": {
+      "symbol": "^∙",
+      "alias": "normalizeBulk",
+      "arity": 1,
+      "expression": "(^∙ m)",
+      "library": "^∙(Multivector)",
+      "reference": "",
+      "cite": "2.89"
+    },
+    "normalize_weight": {
+      "symbol": "^∘",
+      "alias": "normalizeWeight",
+      "arity": 1,
+      "expression": "(^∘ m)",
+      "library": "^∘(Multivector)",
+      "reference": "",
+      "cite": "2.89"
+    },
+    "unitize": {
+      "symbol": "^",
+      "alias": "unitize",
+      "arity": 1,
+      "expression": "(^ m)",
+      "library": "^∘(Multivector)",
+      "reference": "",
+      "cite": "2.89"
+    },
+    "attitude": {
+      "symbol": "⊖",
+      "alias": "attitude",
+      "arity": 1,
+      "expression": "(⊖ m)",
+      "library": "⊖(Multivector)",
+      "reference": "",
+      "cite": "2.73"
+    },
+    "select_grade": {
+      "symbol": "{}",
+      "alias": "selectGrade",
+      "arity": 1,
+      "expression": "(m{Grade(1)})",
+      "library": "{}(Multivector,int)",
+      "reference": "",
+      "cite": "2.17"
+    },
+    "select_grade_anti": {
+      "symbol": "{}",
+      "alias": "selectGradeAnti",
+      "arity": 1,
+      "expression": "(m{GradeAnti(1)})",
+      "library": "{}(Multivector,int)#u1",
+      "reference": "",
+      "cite": "2.29"
+    },
+    "select_part": {
+      "symbol": "[]",
+      "alias": "selectPart",
+      "arity": 1,
+      "expression": "(m[Basis.E1])",
+      "library": "[](Multivector,Basis)",
+      "reference": "",
+      "cite": "2.24"
+    },
+    "bulk_flat": {
+      "symbol": "■",
+      "alias": "bulkFlat",
+      "arity": 1,
+      "expression": "(■ m)",
+      "library": "■(Multivector)",
+      "reference": "",
+      "cite": "wiki:Flat_bulk"
+    },
+    "weight_flat": {
+      "symbol": "□",
+      "alias": "weightFlat",
+      "arity": 1,
+      "expression": "(□ m)",
+      "library": "□(Multivector)",
+      "reference": "",
+      "cite": "wiki:Flat_weight"
+    },
+    "norm_bulk_flat": {
+      "symbol": "|■",
+      "alias": "normBulkFlat",
+      "arity": 1,
+      "expression": "(|■ m)",
+      "library": "|■(Multivector)",
+      "reference": "",
+      "cite": "wiki:Flat_bulk"
+    },
+    "norm_weight_flat": {
+      "symbol": "|□",
+      "alias": "normWeightFlat",
+      "arity": 1,
+      "expression": "(|□ m)",
+      "library": "|□(Multivector)",
+      "reference": "",
+      "cite": "wiki:Flat_weight"
+    },
+    "carrier": {
+      "symbol": "⊟",
+      "alias": "carrier",
+      "arity": 1,
+      "expression": "(⊟ m)",
+      "library": "⊟(Multivector)",
+      "reference": "",
+      "cite": "wiki:Carrier"
+    },
+    "carrier_co": {
+      "symbol": "⊞",
+      "alias": "carrierCo",
+      "arity": 1,
+      "expression": "(⊞ m)",
+      "library": "⊞(Multivector)",
+      "reference": "",
+      "cite": "wiki:Cocarrier"
+    },
+    "center": {
+      "symbol": "⊙",
+      "alias": "center",
+      "arity": 1,
+      "expression": "(⊙ m)",
+      "library": "⊙(Multivector)",
+      "reference": "",
+      "cite": "wiki:Center"
+    },
+    "container": {
+      "symbol": "⊡",
+      "alias": "container",
+      "arity": 1,
+      "expression": "(⊡ m)",
+      "library": "⊡(Multivector)",
+      "reference": "",
+      "cite": "wiki:Container"
+    },
+    "partner": {
+      "symbol": "⊛",
+      "alias": "partner",
+      "arity": 1,
+      "expression": "(⊛ m)",
+      "library": "⊛(Multivector)",
+      "reference": "",
+      "cite": "wiki:Partner"
+    },
+    "wedge_round_point_round_point": {
+      "symbol": "∧",
+      "alias": "wedge",
+      "arity": 2,
+      "expression": "(m ∧ n)",
+      "library": "∧(Multivector,Multivector)",
+      "reference": "wedge(RoundPoint,RoundPoint)",
+      "cite": "2.17"
+    },
+    "wedge_dipole_round_point": {
+      "symbol": "∧",
+      "alias": "wedge",
+      "arity": 2,
+      "expression": "(m ∧ n)",
+      "library": "∧(Multivector,Multivector)",
+      "reference": "wedge(Dipole,RoundPoint)",
+      "cite": "2.17"
+    },
+    "wedge_round_point_dipole": {
+      "symbol": "∧",
+      "alias": "wedge",
+      "arity": 2,
+      "expression": "(m ∧ n)",
+      "library": "∧(Multivector,Multivector)",
+      "reference": "wedge(RoundPoint,Dipole)",
+      "cite": "2.18"
+    },
+    "wedge_circle_round_point": {
+      "symbol": "∧",
+      "alias": "wedge",
+      "arity": 2,
+      "expression": "(m ∧ n)",
+      "library": "∧(Multivector,Multivector)",
+      "reference": "wedge(Circle,RoundPoint)",
+      "cite": "2.17"
+    },
+    "wedge_round_point_circle": {
+      "symbol": "∧",
+      "alias": "wedge",
+      "arity": 2,
+      "expression": "(m ∧ n)",
+      "library": "∧(Multivector,Multivector)",
+      "reference": "wedge(RoundPoint,Circle)",
+      "cite": "2.18"
+    },
+    "wedge_dipole_dipole": {
+      "symbol": "∧",
+      "alias": "wedge",
+      "arity": 2,
+      "expression": "(m ∧ n)",
+      "library": "∧(Multivector,Multivector)",
+      "reference": "wedge(Dipole,Dipole)",
+      "cite": "2.17"
+    },
+    "wedge_anti_sphere_sphere": {
+      "symbol": "∨",
+      "alias": "wedgeAnti",
+      "arity": 2,
+      "expression": "(m ∨ n)",
+      "library": "∨(Multivector,Multivector)",
+      "reference": "wedgeAnti(Sphere,Sphere)",
+      "cite": "2.29"
+    },
+    "wedge_anti_sphere_circle": {
+      "symbol": "∨",
+      "alias": "wedgeAnti",
+      "arity": 2,
+      "expression": "(m ∨ n)",
+      "library": "∨(Multivector,Multivector)",
+      "reference": "wedgeAnti(Sphere,Circle)",
+      "cite": "2.29"
+    },
+    "wedge_anti_circle_sphere": {
+      "symbol": "∨",
+      "alias": "wedgeAnti",
+      "arity": 2,
+      "expression": "(m ∨ n)",
+      "library": "∨(Multivector,Multivector)",
+      "reference": "wedgeAnti(Circle,Sphere)",
+      "cite": "2.32"
+    },
+    "wedge_anti_circle_circle": {
+      "symbol": "∨",
+      "alias": "wedgeAnti",
+      "arity": 2,
+      "expression": "(m ∨ n)",
+      "library": "∨(Multivector,Multivector)",
+      "reference": "wedgeAnti(Circle,Circle)",
+      "cite": "2.29"
+    },
+    "wedge_anti_sphere_dipole": {
+      "symbol": "∨",
+      "alias": "wedgeAnti",
+      "arity": 2,
+      "expression": "(m ∨ n)",
+      "library": "∨(Multivector,Multivector)",
+      "reference": "wedgeAnti(Sphere,Dipole)",
+      "cite": "2.29"
+    },
+    "wedge_anti_dipole_sphere": {
+      "symbol": "∨",
+      "alias": "wedgeAnti",
+      "arity": 2,
+      "expression": "(m ∨ n)",
+      "library": "∨(Multivector,Multivector)",
+      "reference": "wedgeAnti(Dipole,Sphere)",
+      "cite": "2.32"
+    },
+    "dot_round_point_round_point": {
+      "symbol": "∙",
+      "alias": "dot",
+      "arity": 2,
+      "expression": "(m ∙ n)",
+      "library": "∙(Multivector,Multivector)",
+      "reference": "dot(RoundPoint,RoundPoint)",
+      "cite": "2.76"
+    },
+    "dot_dipole_dipole": {
+      "symbol": "∙",
+      "alias": "dot",
+      "arity": 2,
+      "expression": "(m ∙ n)",
+      "library": "∙(Multivector,Multivector)",
+      "reference": "dot(Dipole,Dipole)",
+      "cite": "2.76"
+    },
+    "dot_circle_circle": {
+      "symbol": "∙",
+      "alias": "dot",
+      "arity": 2,
+      "expression": "(m ∙ n)",
+      "library": "∙(Multivector,Multivector)",
+      "reference": "dot(Circle,Circle)",
+      "cite": "2.76"
+    },
+    "dot_sphere_sphere": {
+      "symbol": "∙",
+      "alias": "dot",
+      "arity": 2,
+      "expression": "(m ∙ n)",
+      "library": "∙(Multivector,Multivector)",
+      "reference": "dot(Sphere,Sphere)",
+      "cite": "2.76"
+    },
+    "dot_anti_round_point_round_point": {
+      "symbol": "∘",
+      "alias": "dotAnti",
+      "arity": 2,
+      "expression": "(m ∘ n)",
+      "library": "∘(Multivector,Multivector)",
+      "reference": "dotAnti(RoundPoint,RoundPoint)",
+      "cite": "2.76"
+    },
+    "dot_anti_dipole_dipole": {
+      "symbol": "∘",
+      "alias": "dotAnti",
+      "arity": 2,
+      "expression": "(m ∘ n)",
+      "library": "∘(Multivector,Multivector)",
+      "reference": "dotAnti(Dipole,Dipole)",
+      "cite": "2.76"
+    },
+    "dot_anti_circle_circle": {
+      "symbol": "∘",
+      "alias": "dotAnti",
+      "arity": 2,
+      "expression": "(m ∘ n)",
+      "library": "∘(Multivector,Multivector)",
+      "reference": "dotAnti(Circle,Circle)",
+      "cite": "2.76"
+    },
+    "dot_anti_sphere_sphere": {
+      "symbol": "∘",
+      "alias": "dotAnti",
+      "arity": 2,
+      "expression": "(m ∘ n)",
+      "library": "∘(Multivector,Multivector)",
+      "reference": "dotAnti(Sphere,Sphere)",
+      "cite": "2.76"
+    },
+    "complement_right_round_point": {
+      "symbol": "/",
+      "alias": "complementRight",
+      "arity": 1,
+      "expression": "(/ m)",
+      "library": "/(Multivector)",
+      "reference": "complementRight(RoundPoint)",
+      "cite": "2.19"
+    },
+    "complement_left_round_point": {
+      "symbol": "\\",
+      "alias": "complementLeft",
+      "arity": 1,
+      "expression": "(\\ m)",
+      "library": "\\(Multivector)",
+      "reference": "complementLeft(RoundPoint)",
+      "cite": "2.20"
+    },
+    "reverse_round_point": {
+      "symbol": "~",
+      "alias": "reverse",
+      "arity": 1,
+      "expression": "(~ m)",
+      "library": "~(Multivector)",
+      "reference": "reverse(RoundPoint)",
+      "cite": "wiki:Reverses"
+    },
+    "reverse_anti_round_point": {
+      "symbol": "~∘",
+      "alias": "reverseAnti",
+      "arity": 1,
+      "expression": "(~∘ m)",
+      "library": "~∘(Multivector)",
+      "reference": "reverseAnti(RoundPoint)",
+      "cite": "wiki:Reverses"
+    },
+    "dual_bulk_round_point": {
+      "symbol": "★",
+      "alias": "dualBulk",
+      "arity": 1,
+      "expression": "(★ m)",
+      "library": "★(Multivector)",
+      "reference": "dualBulk(RoundPoint)",
+      "cite": "2.103"
+    },
+    "dual_weight_round_point": {
+      "symbol": "☆",
+      "alias": "dualWeight",
+      "arity": 1,
+      "expression": "(☆ m)",
+      "library": "☆(Multivector)",
+      "reference": "dualWeight(RoundPoint)",
+      "cite": "2.103"
+    },
+    "bulk_round_point": {
+      "symbol": "∙",
+      "alias": "bulkRound",
+      "arity": 1,
+      "expression": "(∙ m)",
+      "library": "∙(Multivector)",
+      "reference": "bulk(RoundPoint)",
+      "cite": "2.68"
+    },
+    "weight_round_point": {
+      "symbol": "∘",
+      "alias": "weightRound",
+      "arity": 1,
+      "expression": "(∘ m)",
+      "library": "∘(Multivector)",
+      "reference": "weight(RoundPoint)",
+      "cite": "2.68"
+    },
+    "bulk_flat_round_point": {
+      "symbol": "■",
+      "alias": "bulkFlat",
+      "arity": 1,
+      "expression": "(■ m)",
+      "library": "■(Multivector)",
+      "reference": "bulkFlat(RoundPoint)",
+      "cite": "wiki:Flat_bulk"
+    },
+    "weight_flat_round_point": {
+      "symbol": "□",
+      "alias": "weightFlat",
+      "arity": 1,
+      "expression": "(□ m)",
+      "library": "□(Multivector)",
+      "reference": "weightFlat(RoundPoint)",
+      "cite": "wiki:Flat_weight"
+    },
+    "attitude_round_point": {
+      "symbol": "⊖",
+      "alias": "attitude",
+      "arity": 1,
+      "expression": "(⊖ m)",
+      "library": "⊖(Multivector)",
+      "reference": "attitude(RoundPoint)",
+      "cite": "2.73"
+    },
+    "carrier_round_point": {
+      "symbol": "⊟",
+      "alias": "carrier",
+      "arity": 1,
+      "expression": "(⊟ m)",
+      "library": "⊟(Multivector)",
+      "reference": "carrier(RoundPoint)",
+      "cite": "wiki:Carrier"
+    },
+    "carrier_co_round_point": {
+      "symbol": "⊞",
+      "alias": "carrierCo",
+      "arity": 1,
+      "expression": "(⊞ m)",
+      "library": "⊞(Multivector)",
+      "reference": "carrierCo(RoundPoint)",
+      "cite": "wiki:Cocarrier"
+    },
+    "center_round_point": {
+      "symbol": "⊙",
+      "alias": "center",
+      "arity": 1,
+      "expression": "(⊙ m)",
+      "library": "⊙(Multivector)",
+      "reference": "center(RoundPoint)",
+      "cite": "wiki:Center"
+    },
+    "container_round_point": {
+      "symbol": "⊡",
+      "alias": "container",
+      "arity": 1,
+      "expression": "(⊡ m)",
+      "library": "⊡(Multivector)",
+      "reference": "container(RoundPoint)",
+      "cite": "wiki:Container"
+    },
+    "partner_round_point": {
+      "symbol": "⊛",
+      "alias": "partner",
+      "arity": 1,
+      "expression": "(⊛ m)",
+      "library": "⊛(Multivector)",
+      "reference": "partner(RoundPoint)",
+      "cite": "wiki:Partner"
+    },
+    "complement_right_dipole": {
+      "symbol": "/",
+      "alias": "complementRight",
+      "arity": 1,
+      "expression": "(/ m)",
+      "library": "/(Multivector)",
+      "reference": "complementRight(Dipole)",
+      "cite": "2.19"
+    },
+    "complement_left_dipole": {
+      "symbol": "\\",
+      "alias": "complementLeft",
+      "arity": 1,
+      "expression": "(\\ m)",
+      "library": "\\(Multivector)",
+      "reference": "complementLeft(Dipole)",
+      "cite": "2.20"
+    },
+    "reverse_dipole": {
+      "symbol": "~",
+      "alias": "reverse",
+      "arity": 1,
+      "expression": "(~ m)",
+      "library": "~(Multivector)",
+      "reference": "reverse(Dipole)",
+      "cite": "wiki:Reverses"
+    },
+    "reverse_anti_dipole": {
+      "symbol": "~∘",
+      "alias": "reverseAnti",
+      "arity": 1,
+      "expression": "(~∘ m)",
+      "library": "~∘(Multivector)",
+      "reference": "reverseAnti(Dipole)",
+      "cite": "wiki:Reverses"
+    },
+    "dual_bulk_dipole": {
+      "symbol": "★",
+      "alias": "dualBulk",
+      "arity": 1,
+      "expression": "(★ m)",
+      "library": "★(Multivector)",
+      "reference": "dualBulk(Dipole)",
+      "cite": "2.103"
+    },
+    "dual_weight_dipole": {
+      "symbol": "☆",
+      "alias": "dualWeight",
+      "arity": 1,
+      "expression": "(☆ m)",
+      "library": "☆(Multivector)",
+      "reference": "dualWeight(Dipole)",
+      "cite": "2.103"
+    },
+    "bulk_dipole": {
+      "symbol": "∙",
+      "alias": "bulkRound",
+      "arity": 1,
+      "expression": "(∙ m)",
+      "library": "∙(Multivector)",
+      "reference": "bulk(Dipole)",
+      "cite": "2.68"
+    },
+    "weight_dipole": {
+      "symbol": "∘",
+      "alias": "weightRound",
+      "arity": 1,
+      "expression": "(∘ m)",
+      "library": "∘(Multivector)",
+      "reference": "weight(Dipole)",
+      "cite": "2.68"
+    },
+    "bulk_flat_dipole": {
+      "symbol": "■",
+      "alias": "bulkFlat",
+      "arity": 1,
+      "expression": "(■ m)",
+      "library": "■(Multivector)",
+      "reference": "bulkFlat(Dipole)",
+      "cite": "wiki:Flat_bulk"
+    },
+    "weight_flat_dipole": {
+      "symbol": "□",
+      "alias": "weightFlat",
+      "arity": 1,
+      "expression": "(□ m)",
+      "library": "□(Multivector)",
+      "reference": "weightFlat(Dipole)",
+      "cite": "wiki:Flat_weight"
+    },
+    "attitude_dipole": {
+      "symbol": "⊖",
+      "alias": "attitude",
+      "arity": 1,
+      "expression": "(⊖ m)",
+      "library": "⊖(Multivector)",
+      "reference": "attitude(Dipole)",
+      "cite": "2.73"
+    },
+    "carrier_dipole": {
+      "symbol": "⊟",
+      "alias": "carrier",
+      "arity": 1,
+      "expression": "(⊟ m)",
+      "library": "⊟(Multivector)",
+      "reference": "carrier(Dipole)",
+      "cite": "wiki:Carrier"
+    },
+    "carrier_co_dipole": {
+      "symbol": "⊞",
+      "alias": "carrierCo",
+      "arity": 1,
+      "expression": "(⊞ m)",
+      "library": "⊞(Multivector)",
+      "reference": "carrierCo(Dipole)",
+      "cite": "wiki:Cocarrier"
+    },
+    "center_dipole": {
+      "symbol": "⊙",
+      "alias": "center",
+      "arity": 1,
+      "expression": "(⊙ m)",
+      "library": "⊙(Multivector)",
+      "reference": "center(Dipole)",
+      "cite": "wiki:Center"
+    },
+    "container_dipole": {
+      "symbol": "⊡",
+      "alias": "container",
+      "arity": 1,
+      "expression": "(⊡ m)",
+      "library": "⊡(Multivector)",
+      "reference": "container(Dipole)",
+      "cite": "wiki:Container"
+    },
+    "partner_dipole": {
+      "symbol": "⊛",
+      "alias": "partner",
+      "arity": 1,
+      "expression": "(⊛ m)",
+      "library": "⊛(Multivector)",
+      "reference": "partner(Dipole)",
+      "cite": "wiki:Partner"
+    },
+    "complement_right_circle": {
+      "symbol": "/",
+      "alias": "complementRight",
+      "arity": 1,
+      "expression": "(/ m)",
+      "library": "/(Multivector)",
+      "reference": "complementRight(Circle)",
+      "cite": "2.19"
+    },
+    "complement_left_circle": {
+      "symbol": "\\",
+      "alias": "complementLeft",
+      "arity": 1,
+      "expression": "(\\ m)",
+      "library": "\\(Multivector)",
+      "reference": "complementLeft(Circle)",
+      "cite": "2.20"
+    },
+    "reverse_circle": {
+      "symbol": "~",
+      "alias": "reverse",
+      "arity": 1,
+      "expression": "(~ m)",
+      "library": "~(Multivector)",
+      "reference": "reverse(Circle)",
+      "cite": "wiki:Reverses"
+    },
+    "reverse_anti_circle": {
+      "symbol": "~∘",
+      "alias": "reverseAnti",
+      "arity": 1,
+      "expression": "(~∘ m)",
+      "library": "~∘(Multivector)",
+      "reference": "reverseAnti(Circle)",
+      "cite": "wiki:Reverses"
+    },
+    "dual_bulk_circle": {
+      "symbol": "★",
+      "alias": "dualBulk",
+      "arity": 1,
+      "expression": "(★ m)",
+      "library": "★(Multivector)",
+      "reference": "dualBulk(Circle)",
+      "cite": "2.103"
+    },
+    "dual_weight_circle": {
+      "symbol": "☆",
+      "alias": "dualWeight",
+      "arity": 1,
+      "expression": "(☆ m)",
+      "library": "☆(Multivector)",
+      "reference": "dualWeight(Circle)",
+      "cite": "2.103"
+    },
+    "bulk_circle": {
+      "symbol": "∙",
+      "alias": "bulkRound",
+      "arity": 1,
+      "expression": "(∙ m)",
+      "library": "∙(Multivector)",
+      "reference": "bulk(Circle)",
+      "cite": "2.68"
+    },
+    "weight_circle": {
+      "symbol": "∘",
+      "alias": "weightRound",
+      "arity": 1,
+      "expression": "(∘ m)",
+      "library": "∘(Multivector)",
+      "reference": "weight(Circle)",
+      "cite": "2.68"
+    },
+    "bulk_flat_circle": {
+      "symbol": "■",
+      "alias": "bulkFlat",
+      "arity": 1,
+      "expression": "(■ m)",
+      "library": "■(Multivector)",
+      "reference": "bulkFlat(Circle)",
+      "cite": "wiki:Flat_bulk"
+    },
+    "weight_flat_circle": {
+      "symbol": "□",
+      "alias": "weightFlat",
+      "arity": 1,
+      "expression": "(□ m)",
+      "library": "□(Multivector)",
+      "reference": "weightFlat(Circle)",
+      "cite": "wiki:Flat_weight"
+    },
+    "attitude_circle": {
+      "symbol": "⊖",
+      "alias": "attitude",
+      "arity": 1,
+      "expression": "(⊖ m)",
+      "library": "⊖(Multivector)",
+      "reference": "attitude(Circle)",
+      "cite": "2.73"
+    },
+    "carrier_circle": {
+      "symbol": "⊟",
+      "alias": "carrier",
+      "arity": 1,
+      "expression": "(⊟ m)",
+      "library": "⊟(Multivector)",
+      "reference": "carrier(Circle)",
+      "cite": "wiki:Carrier"
+    },
+    "carrier_co_circle": {
+      "symbol": "⊞",
+      "alias": "carrierCo",
+      "arity": 1,
+      "expression": "(⊞ m)",
+      "library": "⊞(Multivector)",
+      "reference": "carrierCo(Circle)",
+      "cite": "wiki:Cocarrier"
+    },
+    "center_circle": {
+      "symbol": "⊙",
+      "alias": "center",
+      "arity": 1,
+      "expression": "(⊙ m)",
+      "library": "⊙(Multivector)",
+      "reference": "center(Circle)",
+      "cite": "wiki:Center"
+    },
+    "container_circle": {
+      "symbol": "⊡",
+      "alias": "container",
+      "arity": 1,
+      "expression": "(⊡ m)",
+      "library": "⊡(Multivector)",
+      "reference": "container(Circle)",
+      "cite": "wiki:Container"
+    },
+    "partner_circle": {
+      "symbol": "⊛",
+      "alias": "partner",
+      "arity": 1,
+      "expression": "(⊛ m)",
+      "library": "⊛(Multivector)",
+      "reference": "partner(Circle)",
+      "cite": "wiki:Partner"
+    },
+    "complement_right_sphere": {
+      "symbol": "/",
+      "alias": "complementRight",
+      "arity": 1,
+      "expression": "(/ m)",
+      "library": "/(Multivector)",
+      "reference": "complementRight(Sphere)",
+      "cite": "2.19"
+    },
+    "complement_left_sphere": {
+      "symbol": "\\",
+      "alias": "complementLeft",
+      "arity": 1,
+      "expression": "(\\ m)",
+      "library": "\\(Multivector)",
+      "reference": "complementLeft(Sphere)",
+      "cite": "2.20"
+    },
+    "reverse_sphere": {
+      "symbol": "~",
+      "alias": "reverse",
+      "arity": 1,
+      "expression": "(~ m)",
+      "library": "~(Multivector)",
+      "reference": "reverse(Sphere)",
+      "cite": "wiki:Reverses"
+    },
+    "reverse_anti_sphere": {
+      "symbol": "~∘",
+      "alias": "reverseAnti",
+      "arity": 1,
+      "expression": "(~∘ m)",
+      "library": "~∘(Multivector)",
+      "reference": "reverseAnti(Sphere)",
+      "cite": "wiki:Reverses"
+    },
+    "dual_bulk_sphere": {
+      "symbol": "★",
+      "alias": "dualBulk",
+      "arity": 1,
+      "expression": "(★ m)",
+      "library": "★(Multivector)",
+      "reference": "dualBulk(Sphere)",
+      "cite": "2.103"
+    },
+    "dual_weight_sphere": {
+      "symbol": "☆",
+      "alias": "dualWeight",
+      "arity": 1,
+      "expression": "(☆ m)",
+      "library": "☆(Multivector)",
+      "reference": "dualWeight(Sphere)",
+      "cite": "2.103"
+    },
+    "bulk_sphere": {
+      "symbol": "∙",
+      "alias": "bulkRound",
+      "arity": 1,
+      "expression": "(∙ m)",
+      "library": "∙(Multivector)",
+      "reference": "bulk(Sphere)",
+      "cite": "2.68"
+    },
+    "weight_sphere": {
+      "symbol": "∘",
+      "alias": "weightRound",
+      "arity": 1,
+      "expression": "(∘ m)",
+      "library": "∘(Multivector)",
+      "reference": "weight(Sphere)",
+      "cite": "2.68"
+    },
+    "bulk_flat_sphere": {
+      "symbol": "■",
+      "alias": "bulkFlat",
+      "arity": 1,
+      "expression": "(■ m)",
+      "library": "■(Multivector)",
+      "reference": "bulkFlat(Sphere)",
+      "cite": "wiki:Flat_bulk"
+    },
+    "weight_flat_sphere": {
+      "symbol": "□",
+      "alias": "weightFlat",
+      "arity": 1,
+      "expression": "(□ m)",
+      "library": "□(Multivector)",
+      "reference": "weightFlat(Sphere)",
+      "cite": "wiki:Flat_weight"
+    },
+    "attitude_sphere": {
+      "symbol": "⊖",
+      "alias": "attitude",
+      "arity": 1,
+      "expression": "(⊖ m)",
+      "library": "⊖(Multivector)",
+      "reference": "attitude(Sphere)",
+      "cite": "2.73"
+    },
+    "carrier_sphere": {
+      "symbol": "⊟",
+      "alias": "carrier",
+      "arity": 1,
+      "expression": "(⊟ m)",
+      "library": "⊟(Multivector)",
+      "reference": "carrier(Sphere)",
+      "cite": "wiki:Carrier"
+    },
+    "carrier_co_sphere": {
+      "symbol": "⊞",
+      "alias": "carrierCo",
+      "arity": 1,
+      "expression": "(⊞ m)",
+      "library": "⊞(Multivector)",
+      "reference": "carrierCo(Sphere)",
+      "cite": "wiki:Cocarrier"
+    },
+    "center_sphere": {
+      "symbol": "⊙",
+      "alias": "center",
+      "arity": 1,
+      "expression": "(⊙ m)",
+      "library": "⊙(Multivector)",
+      "reference": "center(Sphere)",
+      "cite": "wiki:Center"
+    },
+    "container_sphere": {
+      "symbol": "⊡",
+      "alias": "container",
+      "arity": 1,
+      "expression": "(⊡ m)",
+      "library": "⊡(Multivector)",
+      "reference": "container(Sphere)",
+      "cite": "wiki:Container"
+    },
+    "partner_sphere": {
+      "symbol": "⊛",
+      "alias": "partner",
+      "arity": 1,
+      "expression": "(⊛ m)",
+      "library": "⊛(Multivector)",
+      "reference": "partner(Sphere)",
+      "cite": "wiki:Partner"
+    }
+  },
+  "missing": {
+    "norm_center": {
+      "symbol": "|⊙",
+      "alias": "normCenter",
+      "cite": "wiki:Center_norm"
+    },
+    "norm_radius": {
+      "symbol": "|⊘",
+      "alias": "normRadius",
+      "cite": "wiki:Radius_norm"
+    }
+  }
+}

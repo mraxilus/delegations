@@ -1,0 +1,6202 @@
+{
+  "schema": 1,
+  "kind": "static",
+  "algebra": {
+    "name": "rga4d",
+    "dimensions": 4,
+    "is_conformal": false,
+    "sizeof_multivector": 128
+  },
+  "taken": {
+    "date": "2026-09-13",
+    "machine": "linux amd64, 4 cores",
+    "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
+    "pga": "0bc465509d1c93b6bec3ced25aa29f080a2cf110",
+    "flags": "-d:release"
+  },
+  "functions": {
+    "[](Multivector,Basis)": {
+      "symbol": "[]",
+      "module": "pga/multivectors",
+      "params": [
+        "Multivector",
+        "Basis"
+      ],
+      "returns": "NF*",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 0,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 128
+      }
+    },
+    "[](Multivector,Basis)#u1": {
+      "symbol": "[]",
+      "module": "pga/multivectors",
+      "params": [
+        "Multivector",
+        "Basis"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 136
+      }
+    },
+    "projectCentral(Multivector,Multivector)": {
+      "symbol": "projectCentral",
+      "module": "projective_geometric_algebra_illuminated/pga",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 2,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 19
+      },
+      "total": {
+        "multiplies": 108,
+        "adds": 84,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 5,
+        "intermediates": 2,
+        "copies": 1,
+        "checks": 242,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 1495
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 640,
+        "bytes_copied": 128,
+        "bytes_intermediates": 256,
+        "bytes_moved": 1408
+      }
+    },
+    "projectCentralAnti(Multivector,Multivector)": {
+      "symbol": "projectCentralAnti",
+      "module": "projective_geometric_algebra_illuminated/pga",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 2,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 19
+      },
+      "total": {
+        "multiplies": 135,
+        "adds": 103,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 5,
+        "intermediates": 2,
+        "copies": 1,
+        "checks": 304,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 1875
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 640,
+        "bytes_copied": 128,
+        "bytes_intermediates": 256,
+        "bytes_moved": 1408
+      }
+    },
+    "projectOrthogonal(Multivector,Multivector)": {
+      "symbol": "projectOrthogonal",
+      "module": "projective_geometric_algebra_illuminated/pga",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 2,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 19
+      },
+      "total": {
+        "multiplies": 135,
+        "adds": 103,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 5,
+        "intermediates": 2,
+        "copies": 1,
+        "checks": 304,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 1875
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 640,
+        "bytes_copied": 128,
+        "bytes_intermediates": 256,
+        "bytes_moved": 1408
+      }
+    },
+    "projectOrthogonalAnti(Multivector,Multivector)": {
+      "symbol": "projectOrthogonalAnti",
+      "module": "projective_geometric_algebra_illuminated/pga",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 2,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 19
+      },
+      "total": {
+        "multiplies": 108,
+        "adds": 84,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 5,
+        "intermediates": 2,
+        "copies": 1,
+        "checks": 242,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 1495
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 640,
+        "bytes_copied": 128,
+        "bytes_intermediates": 256,
+        "bytes_moved": 1408
+      }
+    },
+    "wedge(Point,Point)": {
+      "symbol": "wedge",
+      "module": "reference/rigid3",
+      "params": [
+        "Point",
+        "Point"
+      ],
+      "returns": "Line",
+      "inline": true,
+      "own": {
+        "multiplies": 12,
+        "adds": 0,
+        "subs": 6,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 6
+      },
+      "total": {
+        "multiplies": 12,
+        "adds": 0,
+        "subs": 6,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 6
+      },
+      "movement": {
+        "bytes_read": 64,
+        "bytes_written": 48,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 112
+      }
+    },
+    "wedge(Line,Point)": {
+      "symbol": "wedge",
+      "module": "reference/rigid3",
+      "params": [
+        "Line",
+        "Point"
+      ],
+      "returns": "Plane",
+      "inline": true,
+      "own": {
+        "multiplies": 12,
+        "adds": 3,
+        "subs": 5,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "total": {
+        "multiplies": 12,
+        "adds": 3,
+        "subs": 5,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 112
+      }
+    },
+    "wedge(Point,Line)": {
+      "symbol": "wedge",
+      "module": "reference/rigid3",
+      "params": [
+        "Point",
+        "Line"
+      ],
+      "returns": "Plane",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 10
+      },
+      "total": {
+        "multiplies": 12,
+        "adds": 3,
+        "subs": 5,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 14
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 32,
+        "bytes_zeroed": 32,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 144
+      }
+    },
+    "wedgeAnti(Plane,Plane)": {
+      "symbol": "wedgeAnti",
+      "module": "reference/rigid3",
+      "params": [
+        "Plane",
+        "Plane"
+      ],
+      "returns": "Line",
+      "inline": true,
+      "own": {
+        "multiplies": 12,
+        "adds": 0,
+        "subs": 6,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 6
+      },
+      "total": {
+        "multiplies": 12,
+        "adds": 0,
+        "subs": 6,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 6
+      },
+      "movement": {
+        "bytes_read": 64,
+        "bytes_written": 48,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 112
+      }
+    },
+    "wedgeAnti(Plane,Line)": {
+      "symbol": "wedgeAnti",
+      "module": "reference/rigid3",
+      "params": [
+        "Plane",
+        "Line"
+      ],
+      "returns": "Point",
+      "inline": true,
+      "own": {
+        "multiplies": 12,
+        "adds": 3,
+        "subs": 5,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "total": {
+        "multiplies": 12,
+        "adds": 3,
+        "subs": 5,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 112
+      }
+    },
+    "wedgeAnti(Line,Plane)": {
+      "symbol": "wedgeAnti",
+      "module": "reference/rigid3",
+      "params": [
+        "Line",
+        "Plane"
+      ],
+      "returns": "Point",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 10
+      },
+      "total": {
+        "multiplies": 12,
+        "adds": 3,
+        "subs": 5,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 14
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 32,
+        "bytes_zeroed": 32,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 144
+      }
+    },
+    "dot(Vec3,Vec3)": {
+      "symbol": "dot",
+      "module": "reference/rigid3",
+      "params": [
+        "Vec3",
+        "Vec3"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 3,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 3,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 48,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 56
+      }
+    },
+    "wedgeAnti(Line,Line)": {
+      "symbol": "wedgeAnti",
+      "module": "reference/rigid3",
+      "params": [
+        "Line",
+        "Line"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 1,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 21
+      },
+      "total": {
+        "multiplies": 6,
+        "adds": 4,
+        "subs": 1,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 27
+      },
+      "movement": {
+        "bytes_read": 96,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 104
+      }
+    },
+    "wedgeAnti(Point,Plane)": {
+      "symbol": "wedgeAnti",
+      "module": "reference/rigid3",
+      "params": [
+        "Point",
+        "Plane"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 4,
+        "adds": 3,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 4,
+        "adds": 3,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 64,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 72
+      }
+    },
+    "dot(Point,Point)": {
+      "symbol": "dot",
+      "module": "reference/rigid3",
+      "params": [
+        "Point",
+        "Point"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 3,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 3,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 64,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 72
+      }
+    },
+    "dot(Line,Line)": {
+      "symbol": "dot",
+      "module": "reference/rigid3",
+      "params": [
+        "Line",
+        "Line"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 12
+      },
+      "total": {
+        "multiplies": 3,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 15
+      },
+      "movement": {
+        "bytes_read": 96,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 104
+      }
+    },
+    "dot(Plane,Plane)": {
+      "symbol": "dot",
+      "module": "reference/rigid3",
+      "params": [
+        "Plane",
+        "Plane"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 1,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 1,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 64,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 72
+      }
+    },
+    "dotAnti(Point,Point)": {
+      "symbol": "dotAnti",
+      "module": "reference/rigid3",
+      "params": [
+        "Point",
+        "Point"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 1,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 1,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 64,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 72
+      }
+    },
+    "dotAnti(Line,Line)": {
+      "symbol": "dotAnti",
+      "module": "reference/rigid3",
+      "params": [
+        "Line",
+        "Line"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 12
+      },
+      "total": {
+        "multiplies": 3,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 15
+      },
+      "movement": {
+        "bytes_read": 96,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 104
+      }
+    },
+    "dotAnti(Plane,Plane)": {
+      "symbol": "dotAnti",
+      "module": "reference/rigid3",
+      "params": [
+        "Plane",
+        "Plane"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 3,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 3,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 64,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 72
+      }
+    },
+    "wedgeDotAnti(Motor,Motor)": {
+      "symbol": "wedgeDotAnti",
+      "module": "reference/rigid3",
+      "params": [
+        "Motor",
+        "Motor"
+      ],
+      "returns": "Motor",
+      "inline": true,
+      "own": {
+        "multiplies": 48,
+        "adds": 22,
+        "subs": 18,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "total": {
+        "multiplies": 48,
+        "adds": 22,
+        "subs": 18,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 64,
+        "bytes_zeroed": 0,
+        "bytes_copied": 64,
+        "bytes_intermediates": 0,
+        "bytes_moved": 256
+      }
+    },
+    "+(Vec3,Vec3)": {
+      "symbol": "+",
+      "module": "reference/rigid3",
+      "params": [
+        "Vec3",
+        "Vec3"
+      ],
+      "returns": "Vec3",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 3,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 3,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "movement": {
+        "bytes_read": 48,
+        "bytes_written": 24,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 72
+      }
+    },
+    "cross(Vec3,Vec3)": {
+      "symbol": "cross",
+      "module": "reference/rigid3",
+      "params": [
+        "Vec3",
+        "Vec3"
+      ],
+      "returns": "Vec3",
+      "inline": true,
+      "own": {
+        "multiplies": 6,
+        "adds": 0,
+        "subs": 3,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "total": {
+        "multiplies": 6,
+        "adds": 0,
+        "subs": 3,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "movement": {
+        "bytes_read": 48,
+        "bytes_written": 24,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 72
+      }
+    },
+    "*(Vec3,float)": {
+      "symbol": "*",
+      "module": "reference/rigid3",
+      "params": [
+        "Vec3",
+        "float"
+      ],
+      "returns": "Vec3",
+      "inline": true,
+      "own": {
+        "multiplies": 3,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "total": {
+        "multiplies": 3,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 24,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 56
+      }
+    },
+    "-(Vec3,Vec3)": {
+      "symbol": "-",
+      "module": "reference/rigid3",
+      "params": [
+        "Vec3",
+        "Vec3"
+      ],
+      "returns": "Vec3",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 3,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 3,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "movement": {
+        "bytes_read": 48,
+        "bytes_written": 24,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 72
+      }
+    },
+    "transform(Point,Motor)": {
+      "symbol": "transform",
+      "module": "reference/rigid3",
+      "params": [
+        "Point",
+        "Motor"
+      ],
+      "returns": "Point",
+      "inline": true,
+      "own": {
+        "multiplies": 4,
+        "adds": 3,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 8,
+        "calls": 8,
+        "allocations": 0,
+        "lines": 56
+      },
+      "total": {
+        "multiplies": 25,
+        "adds": 9,
+        "subs": 9,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 8,
+        "calls": 8,
+        "allocations": 0,
+        "lines": 112
+      },
+      "movement": {
+        "bytes_read": 96,
+        "bytes_written": 32,
+        "bytes_zeroed": 32,
+        "bytes_copied": 32,
+        "bytes_intermediates": 0,
+        "bytes_moved": 192
+      }
+    },
+    "rotate(Vec3,Vec3,float)": {
+      "symbol": "rotate",
+      "module": "reference/rigid3",
+      "params": [
+        "Vec3",
+        "Vec3",
+        "float"
+      ],
+      "returns": "Vec3",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 6,
+        "calls": 6,
+        "allocations": 0,
+        "lines": 37
+      },
+      "total": {
+        "multiplies": 18,
+        "adds": 6,
+        "subs": 6,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 6,
+        "calls": 6,
+        "allocations": 0,
+        "lines": 79
+      },
+      "movement": {
+        "bytes_read": 56,
+        "bytes_written": 24,
+        "bytes_zeroed": 24,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 104
+      }
+    },
+    "translation(Motor)": {
+      "symbol": "translation",
+      "module": "reference/rigid3",
+      "params": [
+        "Motor"
+      ],
+      "returns": "Vec3",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 6,
+        "calls": 6,
+        "allocations": 0,
+        "lines": 37
+      },
+      "total": {
+        "multiplies": 15,
+        "adds": 3,
+        "subs": 6,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 6,
+        "calls": 6,
+        "allocations": 0,
+        "lines": 79
+      },
+      "movement": {
+        "bytes_read": 64,
+        "bytes_written": 24,
+        "bytes_zeroed": 24,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 112
+      }
+    },
+    "transform(Line,Motor)": {
+      "symbol": "transform",
+      "module": "reference/rigid3",
+      "params": [
+        "Line",
+        "Motor"
+      ],
+      "returns": "Line",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 5,
+        "calls": 5,
+        "allocations": 0,
+        "lines": 37
+      },
+      "total": {
+        "multiplies": 57,
+        "adds": 18,
+        "subs": 21,
+        "divides": 0,
+        "zero_fills": 4,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 23,
+        "calls": 23,
+        "allocations": 0,
+        "lines": 288
+      },
+      "movement": {
+        "bytes_read": 112,
+        "bytes_written": 48,
+        "bytes_zeroed": 192,
+        "bytes_copied": 48,
+        "bytes_intermediates": 0,
+        "bytes_moved": 400
+      }
+    },
+    "transform(Plane,Motor)": {
+      "symbol": "transform",
+      "module": "reference/rigid3",
+      "params": [
+        "Plane",
+        "Motor"
+      ],
+      "returns": "Plane",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 1,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 3,
+        "calls": 3,
+        "allocations": 0,
+        "lines": 32
+      },
+      "total": {
+        "multiplies": 36,
+        "adds": 11,
+        "subs": 13,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 15,
+        "calls": 15,
+        "allocations": 0,
+        "lines": 193
+      },
+      "movement": {
+        "bytes_read": 96,
+        "bytes_written": 32,
+        "bytes_zeroed": 96,
+        "bytes_copied": 32,
+        "bytes_intermediates": 0,
+        "bytes_moved": 256
+      }
+    },
+    "projectOrthogonal(Point,Plane)": {
+      "symbol": "projectOrthogonal",
+      "module": "reference/rigid3",
+      "params": [
+        "Point",
+        "Plane"
+      ],
+      "returns": "Point",
+      "inline": true,
+      "own": {
+        "multiplies": 14,
+        "adds": 5,
+        "subs": 3,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "total": {
+        "multiplies": 14,
+        "adds": 5,
+        "subs": 3,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "movement": {
+        "bytes_read": 64,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 32,
+        "bytes_intermediates": 0,
+        "bytes_moved": 128
+      }
+    },
+    "projectOrthogonal(Point,Line)": {
+      "symbol": "projectOrthogonal",
+      "module": "reference/rigid3",
+      "params": [
+        "Point",
+        "Line"
+      ],
+      "returns": "Point",
+      "inline": true,
+      "own": {
+        "multiplies": 10,
+        "adds": 5,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 25
+      },
+      "total": {
+        "multiplies": 19,
+        "adds": 7,
+        "subs": 3,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 35
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 32,
+        "bytes_zeroed": 32,
+        "bytes_copied": 32,
+        "bytes_intermediates": 0,
+        "bytes_moved": 176
+      }
+    },
+    "projectOrthogonal(Line,Plane)": {
+      "symbol": "projectOrthogonal",
+      "module": "reference/rigid3",
+      "params": [
+        "Line",
+        "Plane"
+      ],
+      "returns": "Line",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 10,
+        "calls": 10,
+        "allocations": 0,
+        "lines": 60
+      },
+      "total": {
+        "multiplies": 27,
+        "adds": 6,
+        "subs": 9,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 10,
+        "calls": 10,
+        "allocations": 0,
+        "lines": 118
+      },
+      "movement": {
+        "bytes_read": 80,
+        "bytes_written": 48,
+        "bytes_zeroed": 48,
+        "bytes_copied": 48,
+        "bytes_intermediates": 0,
+        "bytes_moved": 224
+      }
+    },
+    "support(Line)": {
+      "symbol": "support",
+      "module": "reference/rigid3",
+      "params": [
+        "Line"
+      ],
+      "returns": "Point",
+      "inline": true,
+      "own": {
+        "multiplies": 6,
+        "adds": 0,
+        "subs": 3,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 16
+      },
+      "total": {
+        "multiplies": 9,
+        "adds": 2,
+        "subs": 3,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 19
+      },
+      "movement": {
+        "bytes_read": 48,
+        "bytes_written": 32,
+        "bytes_zeroed": 32,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 112
+      }
+    },
+    "support(Plane)": {
+      "symbol": "support",
+      "module": "reference/rigid3",
+      "params": [
+        "Plane"
+      ],
+      "returns": "Point",
+      "inline": true,
+      "own": {
+        "multiplies": 6,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "total": {
+        "multiplies": 6,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 64
+      }
+    },
+    "supportAnti(Point)": {
+      "symbol": "supportAnti",
+      "module": "reference/rigid3",
+      "params": [
+        "Point"
+      ],
+      "returns": "Plane",
+      "inline": true,
+      "own": {
+        "multiplies": 6,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "total": {
+        "multiplies": 6,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 64
+      }
+    },
+    "supportAnti(Line)": {
+      "symbol": "supportAnti",
+      "module": "reference/rigid3",
+      "params": [
+        "Line"
+      ],
+      "returns": "Plane",
+      "inline": true,
+      "own": {
+        "multiplies": 6,
+        "adds": 0,
+        "subs": 3,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 16
+      },
+      "total": {
+        "multiplies": 9,
+        "adds": 2,
+        "subs": 3,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 19
+      },
+      "movement": {
+        "bytes_read": 48,
+        "bytes_written": 32,
+        "bytes_zeroed": 32,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 112
+      }
+    },
+    "-(Vec3)": {
+      "symbol": "-",
+      "module": "reference/rigid3",
+      "params": [
+        "Vec3"
+      ],
+      "returns": "Vec3",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 7
+      },
+      "movement": {
+        "bytes_read": 24,
+        "bytes_written": 24,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 48
+      }
+    },
+    "reverseAnti(Motor)": {
+      "symbol": "reverseAnti",
+      "module": "reference/rigid3",
+      "params": [
+        "Motor"
+      ],
+      "returns": "Motor",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 18
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 32
+      },
+      "movement": {
+        "bytes_read": 64,
+        "bytes_written": 64,
+        "bytes_zeroed": 64,
+        "bytes_copied": 64,
+        "bytes_intermediates": 0,
+        "bytes_moved": 256
+      }
+    },
+    "normWeightSquared(Motor)": {
+      "symbol": "normWeightSquared",
+      "module": "reference/rigid3",
+      "params": [
+        "Motor"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 1,
+        "adds": 1,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 15
+      },
+      "total": {
+        "multiplies": 4,
+        "adds": 3,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 18
+      },
+      "movement": {
+        "bytes_read": 64,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 72
+      }
+    },
+    "unitize(Motor)": {
+      "symbol": "unitize",
+      "module": "reference/rigid3",
+      "params": [
+        "Motor"
+      ],
+      "returns": "Motor",
+      "inline": true,
+      "own": {
+        "multiplies": 2,
+        "adds": 0,
+        "subs": 0,
+        "divides": 1,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 2,
+        "checks": 3,
+        "calls": 3,
+        "allocations": 0,
+        "lines": 36
+      },
+      "total": {
+        "multiplies": 12,
+        "adds": 3,
+        "subs": 0,
+        "divides": 1,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 2,
+        "checks": 4,
+        "calls": 4,
+        "allocations": 0,
+        "lines": 68
+      },
+      "movement": {
+        "bytes_read": 64,
+        "bytes_written": 64,
+        "bytes_zeroed": 64,
+        "bytes_copied": 128,
+        "bytes_intermediates": 0,
+        "bytes_moved": 320
+      }
+    },
+    "normWeight(Motor)": {
+      "symbol": "normWeight",
+      "module": "reference/rigid3",
+      "params": [
+        "Motor"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 15
+      },
+      "total": {
+        "multiplies": 4,
+        "adds": 3,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 33
+      },
+      "movement": {
+        "bytes_read": 64,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 72
+      }
+    },
+    "normBulkSquared(Motor)": {
+      "symbol": "normBulkSquared",
+      "module": "reference/rigid3",
+      "params": [
+        "Motor"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 1,
+        "adds": 1,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 15
+      },
+      "total": {
+        "multiplies": 4,
+        "adds": 3,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 18
+      },
+      "movement": {
+        "bytes_read": 64,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 72
+      }
+    },
+    "normBulk(Motor)": {
+      "symbol": "normBulk",
+      "module": "reference/rigid3",
+      "params": [
+        "Motor"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 15
+      },
+      "total": {
+        "multiplies": 4,
+        "adds": 3,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 33
+      },
+      "movement": {
+        "bytes_read": 64,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 72
+      }
+    },
+    "complementRight(Point)": {
+      "symbol": "complementRight",
+      "module": "reference/rigid3",
+      "params": [
+        "Point"
+      ],
+      "returns": "Plane",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 64
+      }
+    },
+    "complementLeft(Point)": {
+      "symbol": "complementLeft",
+      "module": "reference/rigid3",
+      "params": [
+        "Point"
+      ],
+      "returns": "Plane",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 64
+      }
+    },
+    "reverse(Point)": {
+      "symbol": "reverse",
+      "module": "reference/rigid3",
+      "params": [
+        "Point"
+      ],
+      "returns": "Point",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 1
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 1
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 32,
+        "bytes_intermediates": 0,
+        "bytes_moved": 96
+      }
+    },
+    "reverseAnti(Point)": {
+      "symbol": "reverseAnti",
+      "module": "reference/rigid3",
+      "params": [
+        "Point"
+      ],
+      "returns": "Point",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 6
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 6
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 32,
+        "bytes_intermediates": 0,
+        "bytes_moved": 96
+      }
+    },
+    "dualBulk(Point)": {
+      "symbol": "dualBulk",
+      "module": "reference/rigid3",
+      "params": [
+        "Point"
+      ],
+      "returns": "Plane",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 64
+      }
+    },
+    "dualWeight(Point)": {
+      "symbol": "dualWeight",
+      "module": "reference/rigid3",
+      "params": [
+        "Point"
+      ],
+      "returns": "Plane",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 64
+      }
+    },
+    "bulk(Point)": {
+      "symbol": "bulk",
+      "module": "reference/rigid3",
+      "params": [
+        "Point"
+      ],
+      "returns": "Point",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 6
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 6
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 32,
+        "bytes_intermediates": 0,
+        "bytes_moved": 96
+      }
+    },
+    "weight(Point)": {
+      "symbol": "weight",
+      "module": "reference/rigid3",
+      "params": [
+        "Point"
+      ],
+      "returns": "Point",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 6
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 6
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 32,
+        "bytes_intermediates": 0,
+        "bytes_moved": 96
+      }
+    },
+    "normBulkSquared(Point)": {
+      "symbol": "normBulkSquared",
+      "module": "reference/rigid3",
+      "params": [
+        "Point"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 3,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 3,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 40
+      }
+    },
+    "normBulk(Point)": {
+      "symbol": "normBulk",
+      "module": "reference/rigid3",
+      "params": [
+        "Point"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 15
+      },
+      "total": {
+        "multiplies": 3,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 18
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 40
+      }
+    },
+    "normWeight(Point)": {
+      "symbol": "normWeight",
+      "module": "reference/rigid3",
+      "params": [
+        "Point"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 7
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 40
+      }
+    },
+    "unitize(Point)": {
+      "symbol": "unitize",
+      "module": "reference/rigid3",
+      "params": [
+        "Point"
+      ],
+      "returns": "Point",
+      "inline": true,
+      "own": {
+        "multiplies": 3,
+        "adds": 0,
+        "subs": 0,
+        "divides": 1,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 2,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 19
+      },
+      "total": {
+        "multiplies": 3,
+        "adds": 0,
+        "subs": 0,
+        "divides": 1,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 2,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 19
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 64,
+        "bytes_intermediates": 0,
+        "bytes_moved": 128
+      }
+    },
+    "attitude(Point)": {
+      "symbol": "attitude",
+      "module": "reference/rigid3",
+      "params": [
+        "Point"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 40
+      }
+    },
+    "complementRight(Line)": {
+      "symbol": "complementRight",
+      "module": "reference/rigid3",
+      "params": [
+        "Line"
+      ],
+      "returns": "Line",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 16
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 30
+      },
+      "movement": {
+        "bytes_read": 48,
+        "bytes_written": 48,
+        "bytes_zeroed": 48,
+        "bytes_copied": 48,
+        "bytes_intermediates": 0,
+        "bytes_moved": 192
+      }
+    },
+    "complementLeft(Line)": {
+      "symbol": "complementLeft",
+      "module": "reference/rigid3",
+      "params": [
+        "Line"
+      ],
+      "returns": "Line",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 16
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 30
+      },
+      "movement": {
+        "bytes_read": 48,
+        "bytes_written": 48,
+        "bytes_zeroed": 48,
+        "bytes_copied": 48,
+        "bytes_intermediates": 0,
+        "bytes_moved": 192
+      }
+    },
+    "reverse(Line)": {
+      "symbol": "reverse",
+      "module": "reference/rigid3",
+      "params": [
+        "Line"
+      ],
+      "returns": "Line",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 16
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 30
+      },
+      "movement": {
+        "bytes_read": 48,
+        "bytes_written": 48,
+        "bytes_zeroed": 48,
+        "bytes_copied": 48,
+        "bytes_intermediates": 0,
+        "bytes_moved": 192
+      }
+    },
+    "reverseAnti(Line)": {
+      "symbol": "reverseAnti",
+      "module": "reference/rigid3",
+      "params": [
+        "Line"
+      ],
+      "returns": "Line",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 16
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 30
+      },
+      "movement": {
+        "bytes_read": 48,
+        "bytes_written": 48,
+        "bytes_zeroed": 48,
+        "bytes_copied": 48,
+        "bytes_intermediates": 0,
+        "bytes_moved": 192
+      }
+    },
+    "dualBulk(Line)": {
+      "symbol": "dualBulk",
+      "module": "reference/rigid3",
+      "params": [
+        "Line"
+      ],
+      "returns": "Line",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 15
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 22
+      },
+      "movement": {
+        "bytes_read": 48,
+        "bytes_written": 48,
+        "bytes_zeroed": 48,
+        "bytes_copied": 48,
+        "bytes_intermediates": 0,
+        "bytes_moved": 192
+      }
+    },
+    "dualWeight(Line)": {
+      "symbol": "dualWeight",
+      "module": "reference/rigid3",
+      "params": [
+        "Line"
+      ],
+      "returns": "Line",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 15
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 22
+      },
+      "movement": {
+        "bytes_read": 48,
+        "bytes_written": 48,
+        "bytes_zeroed": 48,
+        "bytes_copied": 48,
+        "bytes_intermediates": 0,
+        "bytes_moved": 192
+      }
+    },
+    "bulk(Line)": {
+      "symbol": "bulk",
+      "module": "reference/rigid3",
+      "params": [
+        "Line"
+      ],
+      "returns": "Line",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "movement": {
+        "bytes_read": 48,
+        "bytes_written": 48,
+        "bytes_zeroed": 0,
+        "bytes_copied": 48,
+        "bytes_intermediates": 0,
+        "bytes_moved": 144
+      }
+    },
+    "weight(Line)": {
+      "symbol": "weight",
+      "module": "reference/rigid3",
+      "params": [
+        "Line"
+      ],
+      "returns": "Line",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 10
+      },
+      "movement": {
+        "bytes_read": 48,
+        "bytes_written": 48,
+        "bytes_zeroed": 0,
+        "bytes_copied": 48,
+        "bytes_intermediates": 0,
+        "bytes_moved": 144
+      }
+    },
+    "normBulkSquared(Line)": {
+      "symbol": "normBulkSquared",
+      "module": "reference/rigid3",
+      "params": [
+        "Line"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 12
+      },
+      "total": {
+        "multiplies": 3,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 15
+      },
+      "movement": {
+        "bytes_read": 48,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 56
+      }
+    },
+    "normBulk(Line)": {
+      "symbol": "normBulk",
+      "module": "reference/rigid3",
+      "params": [
+        "Line"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 15
+      },
+      "total": {
+        "multiplies": 3,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 30
+      },
+      "movement": {
+        "bytes_read": 48,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 56
+      }
+    },
+    "normWeightSquared(Line)": {
+      "symbol": "normWeightSquared",
+      "module": "reference/rigid3",
+      "params": [
+        "Line"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 12
+      },
+      "total": {
+        "multiplies": 3,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 15
+      },
+      "movement": {
+        "bytes_read": 48,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 56
+      }
+    },
+    "normWeight(Line)": {
+      "symbol": "normWeight",
+      "module": "reference/rigid3",
+      "params": [
+        "Line"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 15
+      },
+      "total": {
+        "multiplies": 3,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 30
+      },
+      "movement": {
+        "bytes_read": 48,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 56
+      }
+    },
+    "unitize(Line)": {
+      "symbol": "unitize",
+      "module": "reference/rigid3",
+      "params": [
+        "Line"
+      ],
+      "returns": "Line",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 1,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 2,
+        "checks": 3,
+        "calls": 3,
+        "allocations": 0,
+        "lines": 34
+      },
+      "total": {
+        "multiplies": 9,
+        "adds": 2,
+        "subs": 0,
+        "divides": 1,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 2,
+        "checks": 4,
+        "calls": 4,
+        "allocations": 0,
+        "lines": 63
+      },
+      "movement": {
+        "bytes_read": 48,
+        "bytes_written": 48,
+        "bytes_zeroed": 48,
+        "bytes_copied": 96,
+        "bytes_intermediates": 0,
+        "bytes_moved": 240
+      }
+    },
+    "attitude(Line)": {
+      "symbol": "attitude",
+      "module": "reference/rigid3",
+      "params": [
+        "Line"
+      ],
+      "returns": "Point",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "movement": {
+        "bytes_read": 48,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 80
+      }
+    },
+    "complementRight(Plane)": {
+      "symbol": "complementRight",
+      "module": "reference/rigid3",
+      "params": [
+        "Plane"
+      ],
+      "returns": "Point",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 64
+      }
+    },
+    "complementLeft(Plane)": {
+      "symbol": "complementLeft",
+      "module": "reference/rigid3",
+      "params": [
+        "Plane"
+      ],
+      "returns": "Point",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 64
+      }
+    },
+    "reverse(Plane)": {
+      "symbol": "reverse",
+      "module": "reference/rigid3",
+      "params": [
+        "Plane"
+      ],
+      "returns": "Plane",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 6
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 6
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 32,
+        "bytes_intermediates": 0,
+        "bytes_moved": 96
+      }
+    },
+    "reverseAnti(Plane)": {
+      "symbol": "reverseAnti",
+      "module": "reference/rigid3",
+      "params": [
+        "Plane"
+      ],
+      "returns": "Plane",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 1
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 1
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 32,
+        "bytes_intermediates": 0,
+        "bytes_moved": 96
+      }
+    },
+    "dualBulk(Plane)": {
+      "symbol": "dualBulk",
+      "module": "reference/rigid3",
+      "params": [
+        "Plane"
+      ],
+      "returns": "Point",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 64
+      }
+    },
+    "dualWeight(Plane)": {
+      "symbol": "dualWeight",
+      "module": "reference/rigid3",
+      "params": [
+        "Plane"
+      ],
+      "returns": "Point",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 4
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 64
+      }
+    },
+    "bulk(Plane)": {
+      "symbol": "bulk",
+      "module": "reference/rigid3",
+      "params": [
+        "Plane"
+      ],
+      "returns": "Plane",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 6
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 6
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 32,
+        "bytes_intermediates": 0,
+        "bytes_moved": 96
+      }
+    },
+    "weight(Plane)": {
+      "symbol": "weight",
+      "module": "reference/rigid3",
+      "params": [
+        "Plane"
+      ],
+      "returns": "Plane",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 6
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 1,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 6
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 32,
+        "bytes_zeroed": 0,
+        "bytes_copied": 32,
+        "bytes_intermediates": 0,
+        "bytes_moved": 96
+      }
+    },
+    "normBulk(Plane)": {
+      "symbol": "normBulk",
+      "module": "reference/rigid3",
+      "params": [
+        "Plane"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 7
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 40
+      }
+    },
+    "normWeightSquared(Plane)": {
+      "symbol": "normWeightSquared",
+      "module": "reference/rigid3",
+      "params": [
+        "Plane"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 3,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 3,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 40
+      }
+    },
+    "normWeight(Plane)": {
+      "symbol": "normWeight",
+      "module": "reference/rigid3",
+      "params": [
+        "Plane"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 15
+      },
+      "total": {
+        "multiplies": 3,
+        "adds": 2,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 18
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 40
+      }
+    },
+    "unitize(Plane)": {
+      "symbol": "unitize",
+      "module": "reference/rigid3",
+      "params": [
+        "Plane"
+      ],
+      "returns": "Plane",
+      "inline": true,
+      "own": {
+        "multiplies": 4,
+        "adds": 0,
+        "subs": 0,
+        "divides": 1,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 2,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 30
+      },
+      "total": {
+        "multiplies": 7,
+        "adds": 2,
+        "subs": 0,
+        "divides": 1,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 2,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 33
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 32,
+        "bytes_zeroed": 32,
+        "bytes_copied": 64,
+        "bytes_intermediates": 0,
+        "bytes_moved": 160
+      }
+    },
+    "attitude(Plane)": {
+      "symbol": "attitude",
+      "module": "reference/rigid3",
+      "params": [
+        "Plane"
+      ],
+      "returns": "Line",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 6
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 6
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 48,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 80
+      }
+    },
+    "translator(Vec3)": {
+      "symbol": "translator",
+      "module": "reference/rigid3",
+      "params": [
+        "Vec3"
+      ],
+      "returns": "Motor",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 18
+      },
+      "total": {
+        "multiplies": 3,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 25
+      },
+      "movement": {
+        "bytes_read": 24,
+        "bytes_written": 64,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 216
+      }
+    },
+    "rotor(Vec3,float)": {
+      "symbol": "rotor",
+      "module": "reference/rigid3",
+      "params": [
+        "Vec3",
+        "float"
+      ],
+      "returns": "Motor",
+      "inline": true,
+      "own": {
+        "multiplies": 1,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 23
+      },
+      "total": {
+        "multiplies": 4,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 30
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 64,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 224
+      }
+    },
+    "grade(Basis)": {
+      "symbol": "grade",
+      "module": "pga/algebra",
+      "params": [
+        "Basis"
+      ],
+      "returns": "int",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 0,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 8
+      }
+    },
+    "gradeAnti(Basis)": {
+      "symbol": "gradeAnti",
+      "module": "pga/algebra",
+      "params": [
+        "Basis"
+      ],
+      "returns": "int",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 20
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 23
+      },
+      "movement": {
+        "bytes_read": 0,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 8
+      }
+    },
+    "+(Multivector,Multivector)": {
+      "symbol": "+",
+      "module": "pga/multivectors",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 16,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 48,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 51
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 16,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 48,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 51
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "-(Multivector,Multivector)": {
+      "symbol": "-",
+      "module": "pga/multivectors",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 16,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 48,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 51
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 16,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 48,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 51
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "-(Multivector)": {
+      "symbol": "-",
+      "module": "pga/multivectors",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 32,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 45
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 32,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 45
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 384
+      }
+    },
+    "{}(Multivector,int)": {
+      "symbol": "{}",
+      "module": "projective_geometric_algebra_illuminated/pga",
+      "params": [
+        "Multivector",
+        "int"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 64,
+        "calls": 16,
+        "allocations": 0,
+        "lines": 69
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 64,
+        "calls": 16,
+        "allocations": 0,
+        "lines": 117
+      },
+      "movement": {
+        "bytes_read": 136,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 392
+      }
+    },
+    "{}(Multivector,int)#u1": {
+      "symbol": "{}",
+      "module": "projective_geometric_algebra_illuminated/pga",
+      "params": [
+        "Multivector",
+        "int"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 64,
+        "calls": 16,
+        "allocations": 0,
+        "lines": 69
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 80,
+        "calls": 32,
+        "allocations": 0,
+        "lines": 437
+      },
+      "movement": {
+        "bytes_read": 136,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 392
+      }
+    },
+    "∧(Multivector,Multivector)": {
+      "symbol": "∧",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 81,
+        "adds": 65,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 178,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 1090
+      },
+      "total": {
+        "multiplies": 81,
+        "adds": 65,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 178,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 1090
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "∨(Multivector,Multivector)": {
+      "symbol": "∨",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 81,
+        "adds": 65,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 178,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 1090
+      },
+      "total": {
+        "multiplies": 81,
+        "adds": 65,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 178,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 1090
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "⟑(Multivector,Multivector)": {
+      "symbol": "⟑",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 192,
+        "adds": 176,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 400,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 2422
+      },
+      "total": {
+        "multiplies": 192,
+        "adds": 176,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 400,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 2422
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "⟇(Multivector,Multivector)": {
+      "symbol": "⟇",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 192,
+        "adds": 176,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 400,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 2422
+      },
+      "total": {
+        "multiplies": 192,
+        "adds": 176,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 400,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 2422
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "∙(Multivector,Multivector)": {
+      "symbol": "∙",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 8,
+        "adds": 7,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 17,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 109
+      },
+      "total": {
+        "multiplies": 8,
+        "adds": 7,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 17,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 109
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "∘(Multivector,Multivector)": {
+      "symbol": "∘",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 8,
+        "adds": 7,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 17,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 109
+      },
+      "total": {
+        "multiplies": 8,
+        "adds": 7,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 17,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 109
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "∨★(Multivector,Multivector)": {
+      "symbol": "∨★",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 54,
+        "adds": 38,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 124,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 766
+      },
+      "total": {
+        "multiplies": 54,
+        "adds": 38,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 124,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 766
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "∨☆(Multivector,Multivector)": {
+      "symbol": "∨☆",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 27,
+        "adds": 19,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 62,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 386
+      },
+      "total": {
+        "multiplies": 27,
+        "adds": 19,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 62,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 386
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "∧★(Multivector,Multivector)": {
+      "symbol": "∧★",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 27,
+        "adds": 19,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 62,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 386
+      },
+      "total": {
+        "multiplies": 27,
+        "adds": 19,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 62,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 386
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "∧☆(Multivector,Multivector)": {
+      "symbol": "∧☆",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 54,
+        "adds": 38,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 124,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 766
+      },
+      "total": {
+        "multiplies": 54,
+        "adds": 38,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 124,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 766
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "∧(float,Multivector)": {
+      "symbol": "∧",
+      "module": "pga/operators",
+      "params": [
+        "float",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 16,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 32,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 45
+      },
+      "total": {
+        "multiplies": 16,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 32,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 45
+      },
+      "movement": {
+        "bytes_read": 136,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 392
+      }
+    },
+    "∙(Multivector)": {
+      "symbol": "∙",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 16,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 110
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 16,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 110
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 384
+      }
+    },
+    "∘(Multivector)": {
+      "symbol": "∘",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 16,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 110
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 16,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 110
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 384
+      }
+    },
+    "/(Multivector)": {
+      "symbol": "/",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 32,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 214
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 32,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 214
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 384
+      }
+    },
+    "\\(Multivector)": {
+      "symbol": "\\",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 32,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 214
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 32,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 214
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 384
+      }
+    },
+    "~(Multivector)": {
+      "symbol": "~",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 32,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 214
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 32,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 214
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 384
+      }
+    },
+    "~∘(Multivector)": {
+      "symbol": "~∘",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 32,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 214
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 32,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 214
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 384
+      }
+    },
+    "★(Multivector)": {
+      "symbol": "★",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 16,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 110
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 16,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 110
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 384
+      }
+    },
+    "☆(Multivector)": {
+      "symbol": "☆",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 16,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 110
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 16,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 110
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 384
+      }
+    },
+    "|∙(Multivector)": {
+      "symbol": "|∙",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 1,
+        "copies": 0,
+        "checks": 3,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 25
+      },
+      "total": {
+        "multiplies": 8,
+        "adds": 7,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 1,
+        "copies": 0,
+        "checks": 20,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 134
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 384,
+        "bytes_copied": 0,
+        "bytes_intermediates": 128,
+        "bytes_moved": 768
+      }
+    },
+    "|∘(Multivector)": {
+      "symbol": "|∘",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 1,
+        "copies": 0,
+        "checks": 3,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 25
+      },
+      "total": {
+        "multiplies": 8,
+        "adds": 7,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 1,
+        "copies": 0,
+        "checks": 20,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 134
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 384,
+        "bytes_copied": 0,
+        "bytes_intermediates": 128,
+        "bytes_moved": 768
+      }
+    },
+    "|(Multivector)": {
+      "symbol": "|",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 2,
+        "copies": 0,
+        "checks": 6,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 44
+      },
+      "total": {
+        "multiplies": 16,
+        "adds": 14,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 9,
+        "intermediates": 4,
+        "copies": 0,
+        "checks": 46,
+        "calls": 4,
+        "allocations": 0,
+        "lines": 312
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 1152,
+        "bytes_copied": 0,
+        "bytes_intermediates": 512,
+        "bytes_moved": 1920
+      }
+    },
+    "^∙(Multivector)": {
+      "symbol": "^∙",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 1,
+        "copies": 1,
+        "checks": 34,
+        "calls": 17,
+        "allocations": 0,
+        "lines": 59
+      },
+      "total": {
+        "multiplies": 8,
+        "adds": 7,
+        "subs": 0,
+        "divides": 16,
+        "zero_fills": 4,
+        "intermediates": 2,
+        "copies": 1,
+        "checks": 54,
+        "calls": 18,
+        "allocations": 0,
+        "lines": 209
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 512,
+        "bytes_copied": 128,
+        "bytes_intermediates": 256,
+        "bytes_moved": 1152
+      }
+    },
+    "^∘(Multivector)": {
+      "symbol": "^∘",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 1,
+        "copies": 1,
+        "checks": 34,
+        "calls": 17,
+        "allocations": 0,
+        "lines": 59
+      },
+      "total": {
+        "multiplies": 8,
+        "adds": 7,
+        "subs": 0,
+        "divides": 16,
+        "zero_fills": 4,
+        "intermediates": 2,
+        "copies": 1,
+        "checks": 54,
+        "calls": 18,
+        "allocations": 0,
+        "lines": 209
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 512,
+        "bytes_copied": 128,
+        "bytes_intermediates": 256,
+        "bytes_moved": 1152
+      }
+    },
+    "⊖(Multivector)": {
+      "symbol": "⊖",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 1,
+        "copies": 1,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 13
+      },
+      "total": {
+        "multiplies": 81,
+        "adds": 65,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 1,
+        "copies": 1,
+        "checks": 179,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 1103
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 384,
+        "bytes_copied": 128,
+        "bytes_intermediates": 128,
+        "bytes_moved": 896
+      }
+    },
+    "∩(Multivector)": {
+      "symbol": "∩",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 4,
+        "intermediates": 3,
+        "copies": 1,
+        "checks": 3,
+        "calls": 3,
+        "allocations": 0,
+        "lines": 25
+      },
+      "total": {
+        "multiplies": 162,
+        "adds": 130,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 7,
+        "intermediates": 3,
+        "copies": 1,
+        "checks": 375,
+        "calls": 3,
+        "allocations": 0,
+        "lines": 2315
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 896,
+        "bytes_copied": 128,
+        "bytes_intermediates": 384,
+        "bytes_moved": 1664
+      }
+    },
+    "∪(Multivector)": {
+      "symbol": "∪",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": false,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 4,
+        "intermediates": 3,
+        "copies": 1,
+        "checks": 3,
+        "calls": 3,
+        "allocations": 0,
+        "lines": 25
+      },
+      "total": {
+        "multiplies": 162,
+        "adds": 130,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 7,
+        "intermediates": 3,
+        "copies": 1,
+        "checks": 375,
+        "calls": 3,
+        "allocations": 0,
+        "lines": 2315
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 896,
+        "bytes_copied": 128,
+        "bytes_intermediates": 384,
+        "bytes_moved": 1664
+      }
+    }
+  },
+  "measurands": {
+    "wedge": {
+      "symbol": "∧",
+      "alias": "wedge",
+      "arity": 2,
+      "expression": "(m ∧ n)",
+      "library": "∧(Multivector,Multivector)",
+      "reference": "",
+      "cite": "2.17"
+    },
+    "wedge_anti": {
+      "symbol": "∨",
+      "alias": "wedgeAnti",
+      "arity": 2,
+      "expression": "(m ∨ n)",
+      "library": "∨(Multivector,Multivector)",
+      "reference": "",
+      "cite": "2.29"
+    },
+    "wedge_dot": {
+      "symbol": "⟑",
+      "alias": "wedgeDot",
+      "arity": 2,
+      "expression": "(m ⟑ n)",
+      "library": "⟑(Multivector,Multivector)",
+      "reference": "",
+      "cite": "wiki:Geometric_product"
+    },
+    "wedge_dot_anti": {
+      "symbol": "⟇",
+      "alias": "wedgeDotAnti",
+      "arity": 2,
+      "expression": "(m ⟇ n)",
+      "library": "⟇(Multivector,Multivector)",
+      "reference": "",
+      "cite": "wiki:Geometric_product"
+    },
+    "dot": {
+      "symbol": "∙",
+      "alias": "dot",
+      "arity": 2,
+      "expression": "(m ∙ n)",
+      "library": "∙(Multivector,Multivector)",
+      "reference": "",
+      "cite": "2.76"
+    },
+    "dot_anti": {
+      "symbol": "∘",
+      "alias": "dotAnti",
+      "arity": 2,
+      "expression": "(m ∘ n)",
+      "library": "∘(Multivector,Multivector)",
+      "reference": "",
+      "cite": "2.76"
+    },
+    "contract_bulk": {
+      "symbol": "∨★",
+      "alias": "contractBulk",
+      "arity": 2,
+      "expression": "(m ∨★ n)",
+      "library": "∨★(Multivector,Multivector)",
+      "reference": "",
+      "cite": "2.119"
+    },
+    "contract_weight": {
+      "symbol": "∨☆",
+      "alias": "contractWeight",
+      "arity": 2,
+      "expression": "(m ∨☆ n)",
+      "library": "∨☆(Multivector,Multivector)",
+      "reference": "",
+      "cite": "2.120"
+    },
+    "expand_bulk": {
+      "symbol": "∧★",
+      "alias": "expandBulk",
+      "arity": 2,
+      "expression": "(m ∧★ n)",
+      "library": "∧★(Multivector,Multivector)",
+      "reference": "",
+      "cite": "wiki:Expansions"
+    },
+    "expand_weight": {
+      "symbol": "∧☆",
+      "alias": "expandWeight",
+      "arity": 2,
+      "expression": "(m ∧☆ n)",
+      "library": "∧☆(Multivector,Multivector)",
+      "reference": "",
+      "cite": "wiki:Expansions"
+    },
+    "add": {
+      "symbol": "+",
+      "alias": "add",
+      "arity": 2,
+      "expression": "(m + n)",
+      "library": "+(Multivector,Multivector)",
+      "reference": "",
+      "cite": "2.24"
+    },
+    "subtract": {
+      "symbol": "-",
+      "alias": "subtract",
+      "arity": 2,
+      "expression": "(m - n)",
+      "library": "-(Multivector,Multivector)",
+      "reference": "",
+      "cite": "2.24"
+    },
+    "project_central": {
+      "symbol": "",
+      "alias": "projectCentral",
+      "arity": 2,
+      "expression": "projectCentral(m, n)",
+      "library": "projectCentral(Multivector,Multivector)",
+      "reference": "",
+      "cite": "wiki:Projections"
+    },
+    "project_central_anti": {
+      "symbol": "",
+      "alias": "projectCentralAnti",
+      "arity": 2,
+      "expression": "projectCentralAnti(m, n)",
+      "library": "projectCentralAnti(Multivector,Multivector)",
+      "reference": "",
+      "cite": "wiki:Projections"
+    },
+    "project_orthogonal": {
+      "symbol": "",
+      "alias": "projectOrthogonal",
+      "arity": 2,
+      "expression": "projectOrthogonal(m, n)",
+      "library": "projectOrthogonal(Multivector,Multivector)",
+      "reference": "",
+      "cite": "wiki:Projections"
+    },
+    "project_orthogonal_anti": {
+      "symbol": "",
+      "alias": "projectOrthogonalAnti",
+      "arity": 2,
+      "expression": "projectOrthogonalAnti(m, n)",
+      "library": "projectOrthogonalAnti(Multivector,Multivector)",
+      "reference": "",
+      "cite": "wiki:Projections"
+    },
+    "scale": {
+      "symbol": "∧",
+      "alias": "wedge",
+      "arity": 2,
+      "expression": "(m ∧ n)",
+      "library": "∧(float,Multivector)",
+      "reference": "",
+      "cite": "2.24"
+    },
+    "bulk": {
+      "symbol": "∙",
+      "alias": "bulk",
+      "arity": 1,
+      "expression": "(∙ m)",
+      "library": "∙(Multivector)",
+      "reference": "",
+      "cite": "2.68"
+    },
+    "weight": {
+      "symbol": "∘",
+      "alias": "weight",
+      "arity": 1,
+      "expression": "(∘ m)",
+      "library": "∘(Multivector)",
+      "reference": "",
+      "cite": "2.68"
+    },
+    "complement_right": {
+      "symbol": "/",
+      "alias": "complementRight",
+      "arity": 1,
+      "expression": "(/ m)",
+      "library": "/(Multivector)",
+      "reference": "",
+      "cite": "2.19"
+    },
+    "complement_left": {
+      "symbol": "\\",
+      "alias": "complementLeft",
+      "arity": 1,
+      "expression": "(\\ m)",
+      "library": "\\(Multivector)",
+      "reference": "",
+      "cite": "2.20"
+    },
+    "reverse": {
+      "symbol": "~",
+      "alias": "reverse",
+      "arity": 1,
+      "expression": "(~ m)",
+      "library": "~(Multivector)",
+      "reference": "",
+      "cite": "wiki:Reverses"
+    },
+    "reverse_anti": {
+      "symbol": "~∘",
+      "alias": "reverseAnti",
+      "arity": 1,
+      "expression": "(~∘ m)",
+      "library": "~∘(Multivector)",
+      "reference": "",
+      "cite": "wiki:Reverses"
+    },
+    "dual_bulk": {
+      "symbol": "★",
+      "alias": "dualBulk",
+      "arity": 1,
+      "expression": "(★ m)",
+      "library": "★(Multivector)",
+      "reference": "",
+      "cite": "2.103"
+    },
+    "dual_weight": {
+      "symbol": "☆",
+      "alias": "dualWeight",
+      "arity": 1,
+      "expression": "(☆ m)",
+      "library": "☆(Multivector)",
+      "reference": "",
+      "cite": "2.103"
+    },
+    "negate": {
+      "symbol": "-",
+      "alias": "negate",
+      "arity": 1,
+      "expression": "(- m)",
+      "library": "-(Multivector)",
+      "reference": "",
+      "cite": "2.24"
+    },
+    "norm_bulk": {
+      "symbol": "|∙",
+      "alias": "normBulk",
+      "arity": 1,
+      "expression": "(|∙ m)",
+      "library": "|∙(Multivector)",
+      "reference": "",
+      "cite": "2.87"
+    },
+    "norm_weight": {
+      "symbol": "|∘",
+      "alias": "normWeight",
+      "arity": 1,
+      "expression": "(|∘ m)",
+      "library": "|∘(Multivector)",
+      "reference": "",
+      "cite": "2.88"
+    },
+    "norm": {
+      "symbol": "|",
+      "alias": "norm",
+      "arity": 1,
+      "expression": "(| m)",
+      "library": "|(Multivector)",
+      "reference": "",
+      "cite": "2.90"
+    },
+    "normalize_bulk": {
+      "symbol": "^∙",
+      "alias": "normalizeBulk",
+      "arity": 1,
+      "expression": "(^∙ m)",
+      "library": "^∙(Multivector)",
+      "reference": "",
+      "cite": "2.89"
+    },
+    "normalize_weight": {
+      "symbol": "^∘",
+      "alias": "normalizeWeight",
+      "arity": 1,
+      "expression": "(^∘ m)",
+      "library": "^∘(Multivector)",
+      "reference": "",
+      "cite": "2.89"
+    },
+    "unitize": {
+      "symbol": "^",
+      "alias": "unitize",
+      "arity": 1,
+      "expression": "(^ m)",
+      "library": "^∘(Multivector)",
+      "reference": "",
+      "cite": "2.89"
+    },
+    "attitude": {
+      "symbol": "⊖",
+      "alias": "attitude",
+      "arity": 1,
+      "expression": "(⊖ m)",
+      "library": "⊖(Multivector)",
+      "reference": "",
+      "cite": "2.73"
+    },
+    "select_grade": {
+      "symbol": "{}",
+      "alias": "selectGrade",
+      "arity": 1,
+      "expression": "(m{Grade(1)})",
+      "library": "{}(Multivector,int)",
+      "reference": "",
+      "cite": "2.17"
+    },
+    "select_grade_anti": {
+      "symbol": "{}",
+      "alias": "selectGradeAnti",
+      "arity": 1,
+      "expression": "(m{GradeAnti(1)})",
+      "library": "{}(Multivector,int)#u1",
+      "reference": "",
+      "cite": "2.29"
+    },
+    "select_part": {
+      "symbol": "[]",
+      "alias": "selectPart",
+      "arity": 1,
+      "expression": "(m[Basis.E1])",
+      "library": "[](Multivector,Basis)",
+      "reference": "",
+      "cite": "2.24"
+    },
+    "support": {
+      "symbol": "∩",
+      "alias": "support",
+      "arity": 1,
+      "expression": "(∩ m)",
+      "library": "∩(Multivector)",
+      "reference": "",
+      "cite": "wiki:Support"
+    },
+    "support_anti": {
+      "symbol": "∪",
+      "alias": "supportAnti",
+      "arity": 1,
+      "expression": "(∪ m)",
+      "library": "∪(Multivector)",
+      "reference": "",
+      "cite": "wiki:Support"
+    },
+    "wedge_point_point": {
+      "symbol": "∧",
+      "alias": "wedge",
+      "arity": 2,
+      "expression": "(m ∧ n)",
+      "library": "∧(Multivector,Multivector)",
+      "reference": "wedge(Point,Point)",
+      "cite": "2.17"
+    },
+    "wedge_line_point": {
+      "symbol": "∧",
+      "alias": "wedge",
+      "arity": 2,
+      "expression": "(m ∧ n)",
+      "library": "∧(Multivector,Multivector)",
+      "reference": "wedge(Line,Point)",
+      "cite": "2.17"
+    },
+    "wedge_point_line": {
+      "symbol": "∧",
+      "alias": "wedge",
+      "arity": 2,
+      "expression": "(m ∧ n)",
+      "library": "∧(Multivector,Multivector)",
+      "reference": "wedge(Point,Line)",
+      "cite": "2.18"
+    },
+    "wedge_anti_plane_plane": {
+      "symbol": "∨",
+      "alias": "wedgeAnti",
+      "arity": 2,
+      "expression": "(m ∨ n)",
+      "library": "∨(Multivector,Multivector)",
+      "reference": "wedgeAnti(Plane,Plane)",
+      "cite": "2.29"
+    },
+    "wedge_anti_plane_line": {
+      "symbol": "∨",
+      "alias": "wedgeAnti",
+      "arity": 2,
+      "expression": "(m ∨ n)",
+      "library": "∨(Multivector,Multivector)",
+      "reference": "wedgeAnti(Plane,Line)",
+      "cite": "2.29"
+    },
+    "wedge_anti_line_plane": {
+      "symbol": "∨",
+      "alias": "wedgeAnti",
+      "arity": 2,
+      "expression": "(m ∨ n)",
+      "library": "∨(Multivector,Multivector)",
+      "reference": "wedgeAnti(Line,Plane)",
+      "cite": "2.32"
+    },
+    "wedge_anti_line_line": {
+      "symbol": "∨",
+      "alias": "wedgeAnti",
+      "arity": 2,
+      "expression": "(m ∨ n)",
+      "library": "∨(Multivector,Multivector)",
+      "reference": "wedgeAnti(Line,Line)",
+      "cite": "2.29"
+    },
+    "wedge_anti_point_plane": {
+      "symbol": "∨",
+      "alias": "wedgeAnti",
+      "arity": 2,
+      "expression": "(m ∨ n)",
+      "library": "∨(Multivector,Multivector)",
+      "reference": "wedgeAnti(Point,Plane)",
+      "cite": "2.29"
+    },
+    "dot_point_point": {
+      "symbol": "∙",
+      "alias": "dot",
+      "arity": 2,
+      "expression": "(m ∙ n)",
+      "library": "∙(Multivector,Multivector)",
+      "reference": "dot(Point,Point)",
+      "cite": "2.76"
+    },
+    "dot_line_line": {
+      "symbol": "∙",
+      "alias": "dot",
+      "arity": 2,
+      "expression": "(m ∙ n)",
+      "library": "∙(Multivector,Multivector)",
+      "reference": "dot(Line,Line)",
+      "cite": "2.76"
+    },
+    "dot_plane_plane": {
+      "symbol": "∙",
+      "alias": "dot",
+      "arity": 2,
+      "expression": "(m ∙ n)",
+      "library": "∙(Multivector,Multivector)",
+      "reference": "dot(Plane,Plane)",
+      "cite": "2.76"
+    },
+    "dot_anti_point_point": {
+      "symbol": "∘",
+      "alias": "dotAnti",
+      "arity": 2,
+      "expression": "(m ∘ n)",
+      "library": "∘(Multivector,Multivector)",
+      "reference": "dotAnti(Point,Point)",
+      "cite": "2.76"
+    },
+    "dot_anti_line_line": {
+      "symbol": "∘",
+      "alias": "dotAnti",
+      "arity": 2,
+      "expression": "(m ∘ n)",
+      "library": "∘(Multivector,Multivector)",
+      "reference": "dotAnti(Line,Line)",
+      "cite": "2.76"
+    },
+    "dot_anti_plane_plane": {
+      "symbol": "∘",
+      "alias": "dotAnti",
+      "arity": 2,
+      "expression": "(m ∘ n)",
+      "library": "∘(Multivector,Multivector)",
+      "reference": "dotAnti(Plane,Plane)",
+      "cite": "2.76"
+    },
+    "wedge_dot_anti_motor_motor": {
+      "symbol": "⟇",
+      "alias": "wedgeDotAnti",
+      "arity": 2,
+      "expression": "(m ⟇ n)",
+      "library": "⟇(Multivector,Multivector)",
+      "reference": "wedgeDotAnti(Motor,Motor)",
+      "cite": "wiki:Motor"
+    },
+    "transform_point_motor": {
+      "symbol": "",
+      "alias": "",
+      "arity": 2,
+      "expression": "((n ⟇ m) ⟇ (~∘ n))",
+      "library": "",
+      "reference": "transform(Point,Motor)",
+      "cite": "wiki:Motor"
+    },
+    "transform_line_motor": {
+      "symbol": "",
+      "alias": "",
+      "arity": 2,
+      "expression": "((n ⟇ m) ⟇ (~∘ n))",
+      "library": "",
+      "reference": "transform(Line,Motor)",
+      "cite": "wiki:Motor"
+    },
+    "transform_plane_motor": {
+      "symbol": "",
+      "alias": "",
+      "arity": 2,
+      "expression": "((n ⟇ m) ⟇ (~∘ n))",
+      "library": "",
+      "reference": "transform(Plane,Motor)",
+      "cite": "wiki:Motor"
+    },
+    "project_orthogonal_point_plane": {
+      "symbol": "",
+      "alias": "projectOrthogonal",
+      "arity": 2,
+      "expression": "projectOrthogonal(m, n)",
+      "library": "projectOrthogonal(Multivector,Multivector)",
+      "reference": "projectOrthogonal(Point,Plane)",
+      "cite": "wiki:Projections"
+    },
+    "project_orthogonal_point_line": {
+      "symbol": "",
+      "alias": "projectOrthogonal",
+      "arity": 2,
+      "expression": "projectOrthogonal(m, n)",
+      "library": "projectOrthogonal(Multivector,Multivector)",
+      "reference": "projectOrthogonal(Point,Line)",
+      "cite": "wiki:Projections"
+    },
+    "project_orthogonal_line_plane": {
+      "symbol": "",
+      "alias": "projectOrthogonal",
+      "arity": 2,
+      "expression": "projectOrthogonal(m, n)",
+      "library": "projectOrthogonal(Multivector,Multivector)",
+      "reference": "projectOrthogonal(Line,Plane)",
+      "cite": "wiki:Projections"
+    },
+    "support_line": {
+      "symbol": "∩",
+      "alias": "support",
+      "arity": 1,
+      "expression": "(∩ m)",
+      "library": "∩(Multivector)",
+      "reference": "support(Line)",
+      "cite": "wiki:Support"
+    },
+    "support_plane": {
+      "symbol": "∩",
+      "alias": "support",
+      "arity": 1,
+      "expression": "(∩ m)",
+      "library": "∩(Multivector)",
+      "reference": "support(Plane)",
+      "cite": "wiki:Support"
+    },
+    "support_anti_point": {
+      "symbol": "∪",
+      "alias": "supportAnti",
+      "arity": 1,
+      "expression": "(∪ m)",
+      "library": "∪(Multivector)",
+      "reference": "supportAnti(Point)",
+      "cite": "wiki:Support"
+    },
+    "support_anti_line": {
+      "symbol": "∪",
+      "alias": "supportAnti",
+      "arity": 1,
+      "expression": "(∪ m)",
+      "library": "∪(Multivector)",
+      "reference": "supportAnti(Line)",
+      "cite": "wiki:Support"
+    },
+    "reverse_anti_motor": {
+      "symbol": "~∘",
+      "alias": "reverseAnti",
+      "arity": 1,
+      "expression": "(~∘ m)",
+      "library": "~∘(Multivector)",
+      "reference": "reverseAnti(Motor)",
+      "cite": "wiki:Motor"
+    },
+    "unitize_motor": {
+      "symbol": "^",
+      "alias": "unitize",
+      "arity": 1,
+      "expression": "(^ m)",
+      "library": "^∘(Multivector)",
+      "reference": "unitize(Motor)",
+      "cite": "wiki:Motor"
+    },
+    "norm_weight_motor": {
+      "symbol": "|∘",
+      "alias": "normWeight",
+      "arity": 1,
+      "expression": "(|∘ m)",
+      "library": "|∘(Multivector)",
+      "reference": "normWeight(Motor)",
+      "cite": "wiki:Motor"
+    },
+    "norm_bulk_motor": {
+      "symbol": "|∙",
+      "alias": "normBulk",
+      "arity": 1,
+      "expression": "(|∙ m)",
+      "library": "|∙(Multivector)",
+      "reference": "normBulk(Motor)",
+      "cite": "wiki:Motor"
+    },
+    "complement_right_point": {
+      "symbol": "/",
+      "alias": "complementRight",
+      "arity": 1,
+      "expression": "(/ m)",
+      "library": "/(Multivector)",
+      "reference": "complementRight(Point)",
+      "cite": "2.19"
+    },
+    "complement_left_point": {
+      "symbol": "\\",
+      "alias": "complementLeft",
+      "arity": 1,
+      "expression": "(\\ m)",
+      "library": "\\(Multivector)",
+      "reference": "complementLeft(Point)",
+      "cite": "2.20"
+    },
+    "reverse_point": {
+      "symbol": "~",
+      "alias": "reverse",
+      "arity": 1,
+      "expression": "(~ m)",
+      "library": "~(Multivector)",
+      "reference": "reverse(Point)",
+      "cite": "wiki:Reverses"
+    },
+    "reverse_anti_point": {
+      "symbol": "~∘",
+      "alias": "reverseAnti",
+      "arity": 1,
+      "expression": "(~∘ m)",
+      "library": "~∘(Multivector)",
+      "reference": "reverseAnti(Point)",
+      "cite": "wiki:Reverses"
+    },
+    "dual_bulk_point": {
+      "symbol": "★",
+      "alias": "dualBulk",
+      "arity": 1,
+      "expression": "(★ m)",
+      "library": "★(Multivector)",
+      "reference": "dualBulk(Point)",
+      "cite": "2.103"
+    },
+    "dual_weight_point": {
+      "symbol": "☆",
+      "alias": "dualWeight",
+      "arity": 1,
+      "expression": "(☆ m)",
+      "library": "☆(Multivector)",
+      "reference": "dualWeight(Point)",
+      "cite": "2.103"
+    },
+    "bulk_point": {
+      "symbol": "∙",
+      "alias": "bulk",
+      "arity": 1,
+      "expression": "(∙ m)",
+      "library": "∙(Multivector)",
+      "reference": "bulk(Point)",
+      "cite": "2.68"
+    },
+    "weight_point": {
+      "symbol": "∘",
+      "alias": "weight",
+      "arity": 1,
+      "expression": "(∘ m)",
+      "library": "∘(Multivector)",
+      "reference": "weight(Point)",
+      "cite": "2.68"
+    },
+    "norm_bulk_point": {
+      "symbol": "|∙",
+      "alias": "normBulk",
+      "arity": 1,
+      "expression": "(|∙ m)",
+      "library": "|∙(Multivector)",
+      "reference": "normBulk(Point)",
+      "cite": "2.87"
+    },
+    "norm_weight_point": {
+      "symbol": "|∘",
+      "alias": "normWeight",
+      "arity": 1,
+      "expression": "(|∘ m)",
+      "library": "|∘(Multivector)",
+      "reference": "normWeight(Point)",
+      "cite": "2.88"
+    },
+    "unitize_point": {
+      "symbol": "^",
+      "alias": "unitize",
+      "arity": 1,
+      "expression": "(^ m)",
+      "library": "^∘(Multivector)",
+      "reference": "unitize(Point)",
+      "cite": "2.89"
+    },
+    "attitude_point": {
+      "symbol": "⊖",
+      "alias": "attitude",
+      "arity": 1,
+      "expression": "(⊖ m)",
+      "library": "⊖(Multivector)",
+      "reference": "attitude(Point)",
+      "cite": "2.73"
+    },
+    "complement_right_line": {
+      "symbol": "/",
+      "alias": "complementRight",
+      "arity": 1,
+      "expression": "(/ m)",
+      "library": "/(Multivector)",
+      "reference": "complementRight(Line)",
+      "cite": "2.19"
+    },
+    "complement_left_line": {
+      "symbol": "\\",
+      "alias": "complementLeft",
+      "arity": 1,
+      "expression": "(\\ m)",
+      "library": "\\(Multivector)",
+      "reference": "complementLeft(Line)",
+      "cite": "2.20"
+    },
+    "reverse_line": {
+      "symbol": "~",
+      "alias": "reverse",
+      "arity": 1,
+      "expression": "(~ m)",
+      "library": "~(Multivector)",
+      "reference": "reverse(Line)",
+      "cite": "wiki:Reverses"
+    },
+    "reverse_anti_line": {
+      "symbol": "~∘",
+      "alias": "reverseAnti",
+      "arity": 1,
+      "expression": "(~∘ m)",
+      "library": "~∘(Multivector)",
+      "reference": "reverseAnti(Line)",
+      "cite": "wiki:Reverses"
+    },
+    "dual_bulk_line": {
+      "symbol": "★",
+      "alias": "dualBulk",
+      "arity": 1,
+      "expression": "(★ m)",
+      "library": "★(Multivector)",
+      "reference": "dualBulk(Line)",
+      "cite": "2.103"
+    },
+    "dual_weight_line": {
+      "symbol": "☆",
+      "alias": "dualWeight",
+      "arity": 1,
+      "expression": "(☆ m)",
+      "library": "☆(Multivector)",
+      "reference": "dualWeight(Line)",
+      "cite": "2.103"
+    },
+    "bulk_line": {
+      "symbol": "∙",
+      "alias": "bulk",
+      "arity": 1,
+      "expression": "(∙ m)",
+      "library": "∙(Multivector)",
+      "reference": "bulk(Line)",
+      "cite": "2.68"
+    },
+    "weight_line": {
+      "symbol": "∘",
+      "alias": "weight",
+      "arity": 1,
+      "expression": "(∘ m)",
+      "library": "∘(Multivector)",
+      "reference": "weight(Line)",
+      "cite": "2.68"
+    },
+    "norm_bulk_line": {
+      "symbol": "|∙",
+      "alias": "normBulk",
+      "arity": 1,
+      "expression": "(|∙ m)",
+      "library": "|∙(Multivector)",
+      "reference": "normBulk(Line)",
+      "cite": "2.87"
+    },
+    "norm_weight_line": {
+      "symbol": "|∘",
+      "alias": "normWeight",
+      "arity": 1,
+      "expression": "(|∘ m)",
+      "library": "|∘(Multivector)",
+      "reference": "normWeight(Line)",
+      "cite": "2.88"
+    },
+    "unitize_line": {
+      "symbol": "^",
+      "alias": "unitize",
+      "arity": 1,
+      "expression": "(^ m)",
+      "library": "^∘(Multivector)",
+      "reference": "unitize(Line)",
+      "cite": "2.89"
+    },
+    "attitude_line": {
+      "symbol": "⊖",
+      "alias": "attitude",
+      "arity": 1,
+      "expression": "(⊖ m)",
+      "library": "⊖(Multivector)",
+      "reference": "attitude(Line)",
+      "cite": "2.73"
+    },
+    "complement_right_plane": {
+      "symbol": "/",
+      "alias": "complementRight",
+      "arity": 1,
+      "expression": "(/ m)",
+      "library": "/(Multivector)",
+      "reference": "complementRight(Plane)",
+      "cite": "2.19"
+    },
+    "complement_left_plane": {
+      "symbol": "\\",
+      "alias": "complementLeft",
+      "arity": 1,
+      "expression": "(\\ m)",
+      "library": "\\(Multivector)",
+      "reference": "complementLeft(Plane)",
+      "cite": "2.20"
+    },
+    "reverse_plane": {
+      "symbol": "~",
+      "alias": "reverse",
+      "arity": 1,
+      "expression": "(~ m)",
+      "library": "~(Multivector)",
+      "reference": "reverse(Plane)",
+      "cite": "wiki:Reverses"
+    },
+    "reverse_anti_plane": {
+      "symbol": "~∘",
+      "alias": "reverseAnti",
+      "arity": 1,
+      "expression": "(~∘ m)",
+      "library": "~∘(Multivector)",
+      "reference": "reverseAnti(Plane)",
+      "cite": "wiki:Reverses"
+    },
+    "dual_bulk_plane": {
+      "symbol": "★",
+      "alias": "dualBulk",
+      "arity": 1,
+      "expression": "(★ m)",
+      "library": "★(Multivector)",
+      "reference": "dualBulk(Plane)",
+      "cite": "2.103"
+    },
+    "dual_weight_plane": {
+      "symbol": "☆",
+      "alias": "dualWeight",
+      "arity": 1,
+      "expression": "(☆ m)",
+      "library": "☆(Multivector)",
+      "reference": "dualWeight(Plane)",
+      "cite": "2.103"
+    },
+    "bulk_plane": {
+      "symbol": "∙",
+      "alias": "bulk",
+      "arity": 1,
+      "expression": "(∙ m)",
+      "library": "∙(Multivector)",
+      "reference": "bulk(Plane)",
+      "cite": "2.68"
+    },
+    "weight_plane": {
+      "symbol": "∘",
+      "alias": "weight",
+      "arity": 1,
+      "expression": "(∘ m)",
+      "library": "∘(Multivector)",
+      "reference": "weight(Plane)",
+      "cite": "2.68"
+    },
+    "norm_bulk_plane": {
+      "symbol": "|∙",
+      "alias": "normBulk",
+      "arity": 1,
+      "expression": "(|∙ m)",
+      "library": "|∙(Multivector)",
+      "reference": "normBulk(Plane)",
+      "cite": "2.87"
+    },
+    "norm_weight_plane": {
+      "symbol": "|∘",
+      "alias": "normWeight",
+      "arity": 1,
+      "expression": "(|∘ m)",
+      "library": "|∘(Multivector)",
+      "reference": "normWeight(Plane)",
+      "cite": "2.88"
+    },
+    "unitize_plane": {
+      "symbol": "^",
+      "alias": "unitize",
+      "arity": 1,
+      "expression": "(^ m)",
+      "library": "^∘(Multivector)",
+      "reference": "unitize(Plane)",
+      "cite": "2.89"
+    },
+    "attitude_plane": {
+      "symbol": "⊖",
+      "alias": "attitude",
+      "arity": 1,
+      "expression": "(⊖ m)",
+      "library": "⊖(Multivector)",
+      "reference": "attitude(Plane)",
+      "cite": "2.73"
+    }
+  },
+  "missing": {}
+}
