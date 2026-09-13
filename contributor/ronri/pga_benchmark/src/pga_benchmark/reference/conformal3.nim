@@ -73,6 +73,23 @@ func dot*(a, b: Vec3): float {.inline.} =
   ## Dot product, i.e. 𝐚 ∙ 𝐛; 3 mul, 2 add.
   a.x * b.x + a.y * b.y + a.z * b.z
 
+template zero3(): Vec3 =
+  ## Spell zero vector by components; `Vec3()` costs zero fill and hook calls here.
+  Vec3(x: 0.0, y: 0.0, z: 0.0)
+
+template read3(v: Vec3): Vec3 =
+  ## Spell copy of vector by components; whole-object copy costs `=dup` hook call here.
+  Vec3(x: v.x, y: v.y, z: v.z)
+
+template zeroFlatPoint(): FlatPoint =
+  ## Spell zero flat point by components.
+  FlatPoint(x: 0.0, y: 0.0, z: 0.0, w: 0.0)
+
+template zeroCarrier(): CarrierPlane =
+  ## Spell zero carrier plane by components.
+  CarrierPlane(x: 0.0, y: 0.0, z: 0.0, w: 0.0)
+
+
 func `-`*(a: Vec3): Vec3 {.inline.} =
   ## Negated vector; 0 mul.
   Vec3(x: -a.x, y: -a.y, z: -a.z)
@@ -348,12 +365,12 @@ func dualBulk*(d: Dipole): Circle {.inline.} =
 
 func dualWeight*(d: Dipole): Circle {.inline.} =
   ## Antidual 𝐝☆; 0 mul.
-  Circle(g: CarrierPlane(x: d.v.x, y: d.v.y, z: d.v.z, w: -d.p.w), v: d.m,
+  Circle(g: CarrierPlane(x: d.v.x, y: d.v.y, z: d.v.z, w: -d.p.w), v: read3(d.m),
     m: Vec3(x: d.p.x, y: d.p.y, z: d.p.z))
 
 func dualBulk*(c: Circle): Dipole {.inline.} =
   ## Dual 𝐜★; 0 mul.
-  Dipole(v: Vec3(x: c.g.x, y: c.g.y, z: c.g.z), m: c.v,
+  Dipole(v: Vec3(x: c.g.x, y: c.g.y, z: c.g.z), m: read3(c.v),
     p: FlatPoint(x: c.m.x, y: c.m.y, z: c.m.z, w: -c.g.w))
 
 func dualWeight*(c: Circle): Dipole {.inline.} =
@@ -387,43 +404,43 @@ func bulkFlat*(a: RoundPoint): RoundPoint {.inline.} =
 
 func weightFlat*(a: RoundPoint): RoundPoint {.inline.} =
   ## Flat weight 𝐚□, components with both e₄ and e₅, none for round point; 0 mul.
-  RoundPoint()
+  RoundPoint(x: 0.0, y: 0.0, z: 0.0, w: 0.0, u: 0.0)
 
 func bulk*(d: Dipole): Dipole {.inline.} =
   ## Round bulk 𝐝∙, i.e. carrier moment; 0 mul.
-  Dipole(v: Vec3(), m: d.m, p: FlatPoint())
+  Dipole(v: zero3, m: read3(d.m), p: zeroFlatPoint)
 
 func weight*(d: Dipole): Dipole {.inline.} =
   ## Round weight 𝐝∘, i.e. carrier direction; 0 mul.
-  Dipole(v: d.v, m: Vec3(), p: FlatPoint())
+  Dipole(v: read3(d.v), m: zero3, p: zeroFlatPoint)
 
 func bulkFlat*(d: Dipole): Dipole {.inline.} =
   ## Flat bulk 𝐝■, i.e. flat position; 0 mul.
-  Dipole(v: Vec3(), m: Vec3(), p: FlatPoint(x: d.p.x, y: d.p.y, z: d.p.z, w: 0.0))
+  Dipole(v: zero3, m: zero3, p: FlatPoint(x: d.p.x, y: d.p.y, z: d.p.z, w: 0.0))
 
 func weightFlat*(d: Dipole): Dipole {.inline.} =
   ## Flat weight 𝐝□, i.e. flat weight; 0 mul.
-  Dipole(v: Vec3(), m: Vec3(), p: FlatPoint(x: 0.0, y: 0.0, z: 0.0, w: d.p.w))
+  Dipole(v: zero3, m: zero3, p: FlatPoint(x: 0.0, y: 0.0, z: 0.0, w: d.p.w))
 
 func bulk*(c: Circle): Circle {.inline.} =
   ## Round bulk 𝐜∙, i.e. carrier position; 0 mul.
-  Circle(g: CarrierPlane(x: 0.0, y: 0.0, z: 0.0, w: c.g.w), v: Vec3(), m: Vec3())
+  Circle(g: CarrierPlane(x: 0.0, y: 0.0, z: 0.0, w: c.g.w), v: zero3, m: zero3)
 
 func weight*(c: Circle): Circle {.inline.} =
   ## Round weight 𝐜∘, i.e. carrier normal; 0 mul.
-  Circle(g: CarrierPlane(x: c.g.x, y: c.g.y, z: c.g.z, w: 0.0), v: Vec3(), m: Vec3())
+  Circle(g: CarrierPlane(x: c.g.x, y: c.g.y, z: c.g.z, w: 0.0), v: zero3, m: zero3)
 
 func bulkFlat*(c: Circle): Circle {.inline.} =
   ## Flat bulk 𝐜■, i.e. flat moment; 0 mul.
-  Circle(g: CarrierPlane(), v: Vec3(), m: c.m)
+  Circle(g: zeroCarrier, v: zero3, m: read3(c.m))
 
 func weightFlat*(c: Circle): Circle {.inline.} =
   ## Flat weight 𝐜□, i.e. flat direction; 0 mul.
-  Circle(g: CarrierPlane(), v: c.v, m: Vec3())
+  Circle(g: zeroCarrier, v: read3(c.v), m: zero3)
 
 func bulk*(s: Sphere): Sphere {.inline.} =
   ## Round bulk 𝐬∙, none for sphere; 0 mul.
-  Sphere()
+  Sphere(u: 0.0, x: 0.0, y: 0.0, z: 0.0, w: 0.0)
 
 func weight*(s: Sphere): Sphere {.inline.} =
   ## Round weight 𝐬∘, i.e. carrier weight; 0 mul.
@@ -451,12 +468,12 @@ func attitude*(d: Dipole): RoundPoint {.inline.} =
 
 func attitude*(c: Circle): Dipole {.inline.} =
   ## Attitude of circle, i.e. carrier normal and flat direction as dipole; 0 mul.
-  Dipole(v: Vec3(), m: Vec3(x: c.g.x, y: c.g.y, z: c.g.z),
+  Dipole(v: zero3, m: Vec3(x: c.g.x, y: c.g.y, z: c.g.z),
     p: FlatPoint(x: c.v.x, y: c.v.y, z: c.v.z, w: 0.0))
 
 func attitude*(s: Sphere): Circle {.inline.} =
   ## Attitude of sphere, i.e. carrier weight and flat normal as circle; 0 mul.
-  Circle(g: CarrierPlane(x: 0.0, y: 0.0, z: 0.0, w: s.u), v: Vec3(),
+  Circle(g: CarrierPlane(x: 0.0, y: 0.0, z: 0.0, w: s.u), v: zero3,
     m: Vec3(x: s.x, y: s.y, z: s.z))
 
 func carrier*(a: RoundPoint): FlatPoint {.inline.} =
@@ -465,7 +482,7 @@ func carrier*(a: RoundPoint): FlatPoint {.inline.} =
 
 func carrier*(d: Dipole): FlatLine {.inline.} =
   ## Carrier 𝐝 ∧ 𝐞₅, i.e. flat line through dipole; 0 mul.
-  FlatLine(v: d.v, m: d.m)
+  FlatLine(v: read3(d.v), m: read3(d.m))
 
 func carrier*(c: Circle): FlatPlane {.inline.} =
   ## Carrier 𝐜 ∧ 𝐞₅, i.e. flat plane containing circle; 0 mul.

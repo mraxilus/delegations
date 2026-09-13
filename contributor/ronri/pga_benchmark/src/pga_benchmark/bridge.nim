@@ -13,6 +13,8 @@
 
 import pga
 
+import ./reference/scalars
+
 when IS_RIGID and DIMENSIONS == 4:
   import ./reference/rigid3
 
@@ -22,6 +24,8 @@ when IS_CONFORMAL and DIMENSIONS == 5:
   import ./reference/conformal3
 
   export conformal3
+
+export scalars
 
 
 func only(m: Multivector; slots: set[Basis]) =
@@ -43,15 +47,14 @@ func toScalar*(m: Multivector): float =
   m[Basis.scalar]
 
 
-when (IS_RIGID and DIMENSIONS == 4) or (IS_CONFORMAL and DIMENSIONS == 5):
-  func toMultivector*(t: Antiscalar): Multivector =
-    ## Embed antiscalar as t𝟙.
-    result[Basis.scalarAnti] = float(t)
+func toMultivector*(t: Antiscalar): Multivector =
+  ## Embed antiscalar as t𝟙.
+  result[Basis.scalarAnti] = float(t)
 
-  func toAntiscalar*(m: Multivector): Antiscalar =
-    ## Extract antiscalar t𝟙.
-    m.only({Basis.scalarAnti})
-    Antiscalar(m[Basis.scalarAnti])
+func toAntiscalar*(m: Multivector): Antiscalar =
+  ## Extract antiscalar t𝟙.
+  m.only({Basis.scalarAnti})
+  Antiscalar(m[Basis.scalarAnti])
 
 
 when IS_RIGID and DIMENSIONS == 4:

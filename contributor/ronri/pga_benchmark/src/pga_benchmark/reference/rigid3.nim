@@ -84,6 +84,17 @@ func `*`*(a: Vec3; s: float): Vec3 {.inline.} =
   ## Vector scaled; 3 mul.
   Vec3(x: a.x * s, y: a.y * s, z: a.z * s)
 
+template zero3(): Vec3 =
+  ## Spell zero vector by components; default constructor `Vec3()` costs zero fill and
+  ##   hook calls on this compiler, measured at 4 ns against 0 (see PROVENANCE, Reference).
+  Vec3(x: 0.0, y: 0.0, z: 0.0)
+
+template read3(v: Vec3): Vec3 =
+  ## Spell copy of vector by components; whole-object copy into constructor goes through
+  ##   `=dup` hook call on this compiler, measured at 20 ns against 2 (see PROVENANCE).
+  Vec3(x: v.x, y: v.y, z: v.z)
+
+
 func rotate(x: Vec3; v: Vec3; vw: float): Vec3 {.inline.} =
   ## Rotate vector by unit quaternion (v, vw), i.e. x + 2(vw v × x + v × (v × x)).
   ##   18 mul, 12 add.
@@ -228,7 +239,7 @@ func dualBulk*(p: Point): Plane {.inline.} =
 
 func dualBulk*(l: Line): Line {.inline.} =
   ## Bulk dual 𝐥★; 0 mul.
-  Line(v: -l.m, m: Vec3())
+  Line(v: -l.m, m: zero3)
 
 func dualBulk*(g: Plane): Point {.inline.} =
   ## Bulk dual 𝐠★; 0 mul.
@@ -240,7 +251,7 @@ func dualWeight*(p: Point): Plane {.inline.} =
 
 func dualWeight*(l: Line): Line {.inline.} =
   ## Weight dual 𝐥☆; 0 mul.
-  Line(v: Vec3(), m: -l.v)
+  Line(v: zero3, m: -l.v)
 
 func dualWeight*(g: Plane): Point {.inline.} =
   ## Weight dual 𝐠☆; 0 mul.
@@ -260,11 +271,11 @@ func weight*(p: Point): Point {.inline.} =
 
 func bulk*(l: Line): Line {.inline.} =
   ## Bulk 𝐥∙, i.e. moment; 0 mul.
-  Line(v: Vec3(), m: l.m)
+  Line(v: zero3, m: read3(l.m))
 
 func weight*(l: Line): Line {.inline.} =
   ## Weight 𝐥∘, i.e. direction; 0 mul.
-  Line(v: l.v, m: Vec3())
+  Line(v: read3(l.v), m: zero3)
 
 func bulk*(g: Plane): Plane {.inline.} =
   ## Bulk 𝐠∙, i.e. position; 0 mul.
@@ -284,7 +295,7 @@ func attitude*(l: Line): Point {.inline.} =
 
 func attitude*(g: Plane): Line {.inline.} =
   ## Attitude of plane, i.e. its normal as line at infinity; 0 mul.
-  Line(v: Vec3(), m: Vec3(x: g.x, y: g.y, z: g.z))
+  Line(v: zero3, m: Vec3(x: g.x, y: g.y, z: g.z))
 
 
 
@@ -500,7 +511,7 @@ func transform*(l: Line; q: Motor): Line =
   ##   Direction rotates; moment rotates and gains 𝐭 × direction.
   let v = rotate(l.v, q.v, q.vw)
   let m = rotate(l.m, q.v, q.vw)
-  Line(v: v, m: m + cross(q.translation, v))
+  Line(v: read3(v), m: m + cross(q.translation, v))
 
 func transform*(g: Plane; q: Motor): Plane =
   ## Move plane by unit motor, i.e. 𝐐 ⟇ 𝐠 ⟇ 𝐐̰; 33 mul, 23 add.
@@ -511,8 +522,8 @@ func transform*(g: Plane; q: Motor): Plane =
 func rotor*(axis: Vec3; angle: float): Motor =
   ## Construct rotation motor about unit axis through origin; 4 mul, 1 sin, 1 cos.
   let h = angle * 0.5
-  Motor(v: axis * sin(h), m: Vec3(), vw: cos(h), mw: 0.0)
+  Motor(v: axis * sin(h), m: zero3, vw: cos(h), mw: 0.0)
 
 func translator*(t: Vec3): Motor {.inline.} =
   ## Construct translation motor by t, i.e. 𝟙 + (𝐭 / 2); 3 mul.
-  Motor(v: Vec3(), m: t * 0.5, vw: 1.0, mw: 0.0)
+  Motor(v: zero3, m: t * 0.5, vw: 1.0, mw: 0.0)

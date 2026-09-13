@@ -16,6 +16,8 @@ import pga
 
 import ./[bridge, kinds]
 
+export bridge
+
 
 var
   POOL_GENERAL*: array[OBJECTS, Multivector]
@@ -72,17 +74,18 @@ func toUpperAscii(s: string): string {.compileTime.} =
 
 func libraryPoolName*(kind: Kind; grade: Option[int]): string {.compileTime.} =
   ## Name pool feeding library side of probe: dense image, graded dense, or scalar.
-  case kind
-  of Kind.General: (if grade.isSome: "POOL_GRADED[" & $grade.get & "]" else: "POOL_GENERAL")
-  of Kind.Scalar: "POOL_SCALAR"
+  ##   Branches as `if` rather than `case`, since algebras without typed kinds leave
+  ##   typed branch unreachable and compiler would say so.
+  if kind == Kind.General:
+    if grade.isSome: "POOL_GRADED[" & $grade.get & "]" else: "POOL_GENERAL"
+  elif kind == Kind.Scalar: "POOL_SCALAR"
   else: "POOL_" & toUpperAscii($kind) & "_MV"
 
 
 func referencePoolName*(kind: Kind): string {.compileTime.} =
   ## Name pool feeding reference side of probe: typed object, or same as library side.
-  case kind
-  of Kind.General: "POOL_GENERAL"
-  of Kind.Scalar: "POOL_SCALAR"
+  if kind == Kind.General: "POOL_GENERAL"
+  elif kind == Kind.Scalar: "POOL_SCALAR"
   else: "POOL_" & toUpperAscii($kind)
 
 

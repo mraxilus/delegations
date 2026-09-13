@@ -5,13 +5,16 @@
 ##
 ##   Bootstrap order:
 ##     [pga] -> kinds -> catalogue
-##     [pga] -> reference/rigid3 -> bridge -> pools
+##     [pga] -> reference/scalars -> reference/{rigid3, conformal3} -> bridge -> pools
 ##     catalogue, pools -> pga_benchmark (this umbrella)
+##     catalogue, pools -> probes -> bench (entry point, tool side, with report)
 ##     surface (pure, reads library source; test side)
 ##
-##   Cost: nothing timed yet; catalogue names every operation, suite holds it to library's
-##     exported surface and holds every typed row to its reference, so later instruments
-##     walk list that cannot drift and measure against forms already proven equal.
+##   Umbrella exports what suites and instruments share; `probes`, `report` and `bench`
+##     stay behind it, since they carry figure arrays and JSON and belong to tool side.
+##   Cost: catalogue names every operation, suite holds it to library's exported surface
+##     and holds every typed row to its reference, so instruments walk list that cannot
+##     drift and measure against forms already proven equal.
 
 {.experimental: "strictFuncs".}
 
