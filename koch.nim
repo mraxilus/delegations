@@ -34,10 +34,11 @@
 ##     argument names one project directory, and every verb given one drops its scoping.
 ##     Exit: 0 clean, 1 findings, 2 usage error.
 ##
-##   `ci` compiles only projects whose code changed, since static pass costs tenths of
-##     second and suites cost minutes. Whole repository is swept by CI matrix, one job per
-##     project on its own pin, never by one local verb: pins differ, and one machine holds
-##     one compiler on PATH.
+##   `ci` compiles only projects whose code changed and that branch owns, since static pass
+##     costs tenths of second and suites cost minutes: curator branch owns curator projects,
+##     contributor branch its own, `main` every one (CURATOR.md duty 11). Whole repository is
+##     swept by CI matrix on `main` and weekly, one job per project on its own pin, never by
+##     one local verb: pins differ, and one machine holds one compiler on PATH.
 ##   Compiler on PATH must equal changed project's pin, else finding and no compile: wrong
 ##     compiler either fails confusingly or passes without testing what CI will run.
 ##
@@ -129,7 +130,7 @@ proc plannedJobs(options: Options, tree: Tree): seq[Job] =
     tree.jobsFor([options.project.strip(chars = {'/'})])
   elif options.is_sweep: sweepFor(options.root, tree, SWEEP_DAYS)
   elif options.is_all: tree.allJobs
-  else: tree.jobs(changedPaths(options.root, options.baseOrDefault))
+  else: tree.jobs(changedPaths(options.root, options.baseOrDefault)).scoped(options.branchOrDefault)
 
 
 proc scopedDirsOf(options: Options, tree: Tree): seq[string] =
@@ -140,7 +141,9 @@ proc scopedDirsOf(options: Options, tree: Tree): seq[string] =
   ##   against, exactly as `plan` takes `--sweep` there.
   if options.project.len > 0: @[options.project.strip(chars = {'/'})]
   elif options.is_all: tree.projectDirs
-  else: testSet(tree.projectDirs, changedPaths(options.root, options.baseOrDefault))
+  else:
+    testSet(tree.projectDirs, changedPaths(options.root, options.baseOrDefault))
+      .scoped(options.branchOrDefault)
 
 
 proc run(options: Options): int =
@@ -220,7 +223,7 @@ proc run(options: Options): int =
     let (branch, base) = (options.branchOrDefault, options.baseOrDefault)
     found = tree.auditTree
     found.add typeJobs(options.root, tree, options.scopedDirsOf(tree))
-    found.add ciJobs(options.root, tree, tree.jobs(changedPaths(options.root, base)))
+    found.add ciJobs(options.root, tree, tree.jobs(changedPaths(options.root, base)).scoped(branch))
     found.add checkScope(branch, changedPaths(options.root, base), movedPaths(options.root, base))
     found.add checkCommits(branch, subjects(options.root, base))
     found.add checkBase(gainedPaths(options.root, base))

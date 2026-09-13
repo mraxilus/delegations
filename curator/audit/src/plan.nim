@@ -12,6 +12,11 @@
 ##   Change to koch or to check sources selects every project, because how each is checked
 ##     changed. Those files are curator's alone and move rarely, so common case stays small.
 ##   Path inside no project selects nothing by itself.
+##   Branch then keeps what it owns (CURATOR.md duty 11): curator branch compiles curator
+##     projects, contributor branch its own project, and `main` or branch outside grammar
+##     every project, since push run and weekly sweep are repository's rather than one
+##     delegate's. Contributor suite is contributor's to run; curator's change to runner is
+##     proven on `main`. Static pass reads every project regardless.
 ##
 ##   Rendered plan drives one CI job per project, each installing that project's own pin, so
 ##     wall time is slowest changed project rather than sum of all. Entry carries `kind`,
@@ -25,7 +30,9 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, json, options, os, strutils, tables]
-import ./[findings, checker, layout, toolchain, compilers, dependencies, projects, tree]
+import ./[
+  findings, checker, layout, toolchain, compilers, dependencies, projects, tree, domains,
+]
 
 
 const
@@ -161,6 +168,27 @@ func nimbleOf*(tree: Tree, dir: string): string =
 func pinOf*(tree: Tree, dir: string): Option[string] =
   ## Read exact Nim pin project declares; `none` when nimble file or pin is absent.
   tree.nimbleOf(dir).nimPin
+
+
+func inScope*(dir, branch: string): bool =
+  ## Decide whether project directory is branch's own to compile.
+  let parsed = branch.parseBranch
+  if parsed.isNone: return true
+  case parsed.get.role
+  of Role.Curator, Role.CuratorProject: dir.startsWith(CURATOR & "/")
+  of Role.Contributor: dir == parsed.get.prefix.strip(chars = {'/'})
+
+
+func scoped*(dirs: openArray[string], branch: string): seq[string] =
+  ## Keep directories branch owns.
+  for dir in dirs:
+    if dir.inScope(branch): result.add dir
+
+
+func scoped*(jobs: openArray[Job], branch: string): seq[Job] =
+  ## Keep jobs of projects branch owns.
+  for job in jobs:
+    if job.dir.inScope(branch): result.add job
 
 
 func jobsFor*(tree: Tree, dirs: openArray[string]): seq[Job] =
