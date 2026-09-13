@@ -19,7 +19,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[os, strutils, tables]
+import std/[algorithm, os, strutils, tables]
 
 
 type
@@ -281,9 +281,14 @@ func totals*(functions: seq[CFunction]): Table[string, Counts] =
 proc inspectCache*(dir: string): seq[CFunction] =
   ## Read every function of every C file in nimcache directory, first definition kept.
   ##   Inline functions are emitted once per module using them; duplicates share body.
-  var seen: Table[string, bool]
+  ##   Files are read in path order, so numbering of colliding keys is same on every
+  ##   file system.
+  var paths: seq[string]
   for path in walkDirRec(dir):
-    if not path.endsWith(".c"): continue
+    if path.endsWith(".c"): paths.add path
+  paths.sort
+  var seen: Table[string, bool]
+  for path in paths:
     for f in functionsIn(readFile(path)):
       if f.name in seen: continue
       seen[f.name] = true

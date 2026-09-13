@@ -8,7 +8,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[cpuinfo, json, times]
+import std/[cpuinfo, json, strutils, times]
 
 import ./[inspector, model]
 
@@ -88,13 +88,22 @@ func movementNode*(m: Movement): JsonNode =
   }
 
 
+func moduleTail*(module: string): string =
+  ## Read last two segments of mangled module path, `pga/operators` out of
+  ## `OOZdepsZ...ZpgaZoperators`, since whole path spells checkout and outruns line width.
+  ##   Compiler spells `/` as `Z` and `_` as `95`; only those two are undone.
+  let parts = module.split('Z')
+  let tail = if parts.len >= 2: parts[^2 .. ^1] else: parts
+  tail.join("/").replace("95", "_")
+
+
 func functionNode*(f: CFunction; own, total: Counts; size_multivector: int): JsonNode =
-  ## Shape one inspected function: name, key parts, inline flag, own and total counts,
-  ## movement modelled on total counts.
+  ## Shape one inspected function: key parts, module tail, inline flag, own and total
+  ## counts, movement modelled on total counts. Mangled name is left out: it spells
+  ## checkout path and compiler hash, neither of which is figure.
   %*{
-    "name": f.name,
     "symbol": f.symbol,
-    "module": f.module,
+    "module": moduleTail(f.module),
     "params": f.params,
     "returns": f.result_stem,
     "inline": f.is_inline,
