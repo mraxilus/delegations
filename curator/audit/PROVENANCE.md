@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | b77d038ad8048309 |
+| Rules   | 0d155c6b8d8a6dbd |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the owner's brief, the constitution, the Nim style guide and the provenance
@@ -556,11 +556,15 @@ reports the first differing line.
 **The static pass stays whole-tree; only compilation is scoped.** A project enters the test set
 when a changed path under it is anything but its three records (`PROJECT_FILES`), and a change
 to `koch.nim`, `koch.nim.cfg` or `curator/audit/src/` selects every project, because how each is
-checked changed. A path inside no project selects nothing by itself. Chosen against scoping the
-static pass on the figures below: it is hundredths of a second against tens of seconds of
-suites, so scoping it buys nothing measurable and costs a second code path plus the whole-tree
-layout and stamp guarantees. Rules propagation therefore compiles nothing while every stamp is
-still checked.
+checked changed. A path inside no project selects nothing by itself. The branch then keeps
+what it owns: a curator branch the curator projects, a contributor branch its own project,
+`main` or a branch outside the grammar every project, since the push run and the weekly sweep
+are the repository's rather than one delegate's (CURATOR.md duty 11). A contributor's suite is
+the contributor's to run; a curator's change to the runner is proven on `main`. Chosen against
+scoping the static pass on the figures below: it is hundredths of a second against tens of
+seconds of suites, so scoping it buys nothing measurable and costs a second code path plus the
+whole-tree layout and stamp guarantees. Rules propagation therefore compiles nothing while
+every stamp is still checked.
 
 - Cost: a merged change can leave an unrelated project red until it next changes; the weekly
   sweep is the guard, and it is weaker than compiling everything on every push.
@@ -575,7 +579,9 @@ still checked.
   everywhere else, and the reason `nimcache` is still uncached. Eleven minutes is the price of
   erring the other way.
 - Verified by `tplan.nim`, and driven against this repository's history: a README-only commit
-  plans `[]`, and a one-line source change plans that project alone.
+  plans `[]`, and a one-line source change plans that project alone. Ownership by
+  `tplan.nim` too: a curator branch keeps the curator project, a contributor branch its own,
+  `main` and a branch outside the grammar both.
 
 **The sweep fires, and it promises a day rather than an hour.** Observed 2026-09-07, the first
 Monday after the cron landed: all four projects planned, each on its own pin, four jobs starting
