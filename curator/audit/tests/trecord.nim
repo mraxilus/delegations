@@ -55,6 +55,9 @@ suite "Article VIII":
     let found = checkRecord("p", setext)
     check found.len == 1 and found[0].line == 12
     check found[0].message.endsWith("write `## Design`.")
+    let title = provenanceText("d") & "\nProvenance\n===\n\nWhat is.\n"
+    check messages(title) ==
+      @["Heading is underlined, which no reader here sees; write `# Provenance`."]
     check messages(provenanceText("d") & "\nText.\n\n---\n\nMore.\n").len == 0  # rule after blank
     check messages(provenanceText("d") & "\n| a | b |\n|---|---|\n").len == 0  # table rule
 
