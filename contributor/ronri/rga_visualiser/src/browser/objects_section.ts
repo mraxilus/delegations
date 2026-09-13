@@ -128,7 +128,7 @@ function buildRowFor(key: string) {
     const p = document.createElement('div');
     p.className = 'help-text';
     p.style.margin = '8px 0 0';
-    p.textContent = 'Nothing here yet -- press `add` above, or drag between two objects.';
+    p.textContent = nimWording(Wording.NoteListEmpty);
     return p;
   }
   return buildObjectRow(key === KEY_ROW_PENDING ? null : parseInt(key, 10));
@@ -258,7 +258,8 @@ function buildObjectRow(handle: number | null) {
   const toggle_edit = document.createElement('button');
   toggle_edit.className = 'button object-edit-toggle';
   toggle_edit.type = 'button';
-  toggle_edit.textContent = is_open ? 'save' : 'edit';
+  toggle_edit.textContent =
+    nimWording(is_open ? Wording.NameRowCommit : Wording.NameRowEdit);
   toggle_edit.title = nimWording(is_open ? Wording.TipRowCommit : Wording.TipRowEdit);
   toggle_edit.addEventListener('click', () => {
     if (!is_open) { beginEditSession(handle); refreshObjectsUI(); return; }
@@ -290,7 +291,7 @@ function buildObjectRow(handle: number | null) {
     const cancel = document.createElement('button');
     cancel.className = 'button object-edit-cancel';
     cancel.type = 'button';
-    cancel.textContent = '✕';
+    cancel.textContent = nimWording(Wording.NameRowDiscard);
     cancel.title = nimWording(is_pending ? Wording.TipRowDiscardNew : Wording.TipRowDiscardEdit);
     cancel.addEventListener('click', () => {
       endEditSession();
@@ -307,12 +308,17 @@ function buildObjectRow(handle: number | null) {
     const visibility = document.createElement('button');
     visibility.className = 'button object-visibility';
     visibility.type = 'button';
-    visibility.textContent = nimObjectVisible(handle) ? 'hide' : 'show';
+    visibility.textContent = visibilityLabel(
+      nimObjectVisible(handle), Wording.NameRowHide, Wording.NameRowShow,
+    );
     visibility.title = nimWording(Wording.TipRowVisible);
     visibility.addEventListener('click', () => {
       const was_visible = nimObjectVisible(handle);
       nimSetVisible(handle, !was_visible);
-      visibility.textContent = was_visible ? 'show' : 'hide'; // Local flip, no full rebuild.
+      // Local flip, no full rebuild.
+      visibility.textContent = visibilityLabel(
+        !was_visible, Wording.NameRowHide, Wording.NameRowShow,
+      );
       row.classList.toggle('hidden-object', was_visible);
     });
     top.appendChild(visibility);
@@ -320,7 +326,7 @@ function buildObjectRow(handle: number | null) {
     const remove = document.createElement('button');
     remove.className = 'button object-remove';
     remove.type = 'button';
-    remove.textContent = 'remove';
+    remove.textContent = nimWording(Wording.NameRowRemove);
     remove.title = nimWording(Wording.TipRowRemove);
     remove.addEventListener('click', () => {
       nimRemoveObject(handle); // Drops handle from selection itself, so stale pick
@@ -359,7 +365,7 @@ function buildObjectRow(handle: number | null) {
 
     const field_label = document.createElement('div');
     field_label.className = 'field';
-    field_label.innerHTML = '<label>label</label>';
+    field_label.appendChild(labelElement(Wording.NameRowLabel));
     // Write every field below into session, never scene.
     //   Row's own swatch, label and coefficient line preview change, preview previews
     //   geometry, and only `save` above reaches `SCENE`.
@@ -376,7 +382,7 @@ function buildObjectRow(handle: number | null) {
 
     const field_ink = document.createElement('div');
     field_ink.className = 'field';
-    field_ink.innerHTML = '<label>colour</label>';
+    field_ink.appendChild(labelElement(Wording.NameRowInk));
     const picker_ink = document.createElement('select');
     // Only categorical slots are offerable; `nimInkChoosableSlots` decides which those.
     //   are, so no palette rule lives out here. Its entries stay whole-palette ordinals,
@@ -403,7 +409,7 @@ function buildObjectRow(handle: number | null) {
     //   outright and would take page down with it.
     const field_radius = document.createElement('div');
     field_radius.className = 'field';
-    field_radius.innerHTML = '<label>size</label>';
+    field_radius.appendChild(labelElement(Wording.NameRowSize));
     const input_radius = document.createElement('input');
     input_radius.type = 'number';
     input_radius.min = String(nimLeastRadius());
@@ -428,18 +434,18 @@ function buildObjectRow(handle: number | null) {
     input_shines.checked = openSession().shines;
     input_shines.addEventListener('change', () => { openSession().shines = input_shines.checked; });
     field_shines.appendChild(input_shines);
-    field_shines.appendChild(document.createTextNode(' shines'));
+    field_shines.appendChild(
+      document.createTextNode(' ' + nimWording(Wording.NameRowShines)),
+    );
     field_shines.title = nimWording(Wording.TipRowShines);
     box_edit.appendChild(field_shines);
 
     const note_coefficient = document.createElement('div');
     note_coefficient.className = 'help-text';
     note_coefficient.style.margin = '6px 0';
-    note_coefficient.textContent = is_pending
-      ? 'The 16 numbers of the new multivector, in the library’s basis order. ' +
-        'A live preview draws as soon as any goes non-zero.'
-      : 'The 16 numbers of this object’s own multivector, in the library’s basis ' +
-        'order. The object itself only moves when you save.';
+    note_coefficient.textContent = nimWording(
+      is_pending ? Wording.NoteCoefficientsNew : Wording.NoteCoefficientsEdit,
+    );
     box_edit.appendChild(note_coefficient);
 
     const grid = document.createElement('div');
