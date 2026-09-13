@@ -158,8 +158,8 @@ proc rigTable(): string =
     bend = int(round(HUMAN.range[Dof.Bend].hi * 180.0 / PI))
     wrist = int(round(HUMAN.range[Dof.Wrist].hi * 180.0 / PI))
     waist = int(round(WAIST_HI * 180.0 / PI))
-  result.add &"| shoulder | {behind} degrees behind the frontal plane; across, the trunk " &
-    &"stops it; twist {twIn} in to {twOut} out |\n"
+  result.add &"| shoulder | {behind} degrees behind the frontal plane; across, trunk stops " &
+    &"it; twist {twIn} in to {twOut} out |\n"
   result.add &"| elbow | 0 to {bend} degrees |\n"
   result.add &"| wrist | a {wrist} degree cone |\n"
   result.add &"| waist | {waist} degrees each way, sprung to square |\n"

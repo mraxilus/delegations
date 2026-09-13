@@ -401,10 +401,12 @@ by joint, then by cost, then against the bodies, giving up at the first refusal;
 different holds run side by side on every core (`sweptAll`). Rejected: tuning any number to
 the floor's claims; the floor is printed beside the sim, and each of its seven claims is held
 to what the sim answers today, so neither a mend nor a regression passes unseen
-(`-d:floorIsLaw` holds the sim to the floor outright). Verified by `tlaws.nim`, 29 laws over
-every moment of thirteen sweeps: nothing enters a body, joints inside every range, mirrors
-agree, blocks bracketed with a name, and the clipped contact test against a sampled truth over
-300 seeded random segments; the forward kinematics over 200 seeded random arms. The
+(`-d:floorIsLaw` holds the sim to the floor outright). Verified by testament on 2026-09-08,
+with the 29 laws of `tests/tlaws.nim` as it then stood (retired with the solver on 2026-09-12,
+see that entry) over every moment of thirteen sweeps: nothing enters a body, joints inside every
+range, mirrors agree, blocks bracketed with a name, and the clipped contact test against a
+sampled truth over 300 seeded random segments; the forward kinematics over 200 seeded random
+arms. The
 optimisation that made the solver share a `Scene` and run side by side was measured before the
 move as a pair, but the pair is not in this tree: **unmeasured** here.
 
@@ -440,8 +442,9 @@ and never its lap count -- the couple's `twist` is read for display and by nothi
 for both two-hand holds, at rest and at half a turn. Only the sweep carries turn, moment by
 moment, and both two-hand sweeps block by 0.58. So nothing here is evidence about the diamond
 at a whole turn or the swan at a turn and a half: the rungs the chain law prints under those
-names are the rest and the X. Verified by `tlaws.nim`, which now asserts the axes identity
-outright rather than leaving it to be discovered. Cost: the sim cannot yet reach two of the
+names are the rest and the X. Verified by testament on 2026-09-08, with `tests/tlaws.nim` as it
+then stood (retired 2026-09-12) asserting the axes identity outright rather than leaving it to
+be discovered. Cost: the sim cannot yet reach two of the
 positions the drawn chain is built on.
 
 **The crossing reader is exercised off settled poses, because no swept moment crosses.** Not
@@ -1224,3 +1227,76 @@ answered by bending either side.
 nought face to face, one pillion lead -- and not half turns from the frame's own rest. Read the
 second way, every frame that rests pillion was asked for half a turn where it was already at rest,
 and A10 and A12 came back unreachable. `facingNote` says which it is outright.
+
+## Re-audit, 2026-09-13, bodies solid
+
+**The trunk twists, measured with arms through bodies.** At each of the eight stops left after
+adduction was freed, several joints sat at their ends at once -- at one, the lead's right arm at
+extension 44 of 45, twist 99 of 90 and wrist 82 of 60 -- which is an arm reaching where a rigid
+trunk cannot help it. So the trunk is two bodies: the hips, kinematic and carrying nothing, and
+the chest, dynamic, carrying every trunk capsule and both shoulders, hinged to the hips about the
+trunk's own up, sprung to neutral and stopped at forty degrees each way, clinical thoracic
+rotation. Measured behind a flag first, it took every chain over the crown free or past the swan,
+fifty six of fifty six chain questions. Adopted on that -- and that measurement was of a sim whose
+arms passed through bodies, which the next paragraph found. Verified by testament on 2026-09-13,
+`tests/trigid.nim`: shoulders yaw on hips no further than the thorax turns, and rest square.
+
+**The Architect, watching the viewer: "the bodies are doing weird things, they're too rigid on
+the floor as the arms get crushed and phase through, watch for sharp movements like that."**
+Measured on the recorded sweeps before anything was changed: a forearm 45 mm inside its own
+trunk with the hands still joined, and a hand crossing 359 mm between two moments a fiftieth of
+a turn apart. The retired `tlaws.nim` had a law for each and neither had been carried onto the
+rig. Both were written first and red -- 103 mm by the reader's own gap, 359 mm -- and then each
+cause was found by measurement, in this order.
+
+- *Contact softness.* The engine's contact stiffness defaults to thirty hertz, softer than the
+  sim's own forces, so arms were pressed through bodies. At the engine's own cap, an eighth of
+  its substep rate, the deepest overlap on a crown sweep went from 44.7 mm to 2.2.
+- *Own trunk.* The engine lets bodies one joint connects pass through each other unless told
+  otherwise, so the upper arm hung from the chest sank into its own torso, neck and head unseen:
+  67 mm inside its own head by capsule geometry while the engine reported no touch. The shoulder
+  joint now collides.
+- *Joints.* At the engine's default the waist hinge let an arm pressing its own chest carry the
+  chest 34 mm off the hips' axis; and once contact was stiff the joints tore instead -- an elbow
+  42 degrees past straight, a wrist 40 past its cone. Every joint but the grip now holds at the
+  engine's cap; the grip alone at thirty hertz, the softest thing in the couple, so a hold forced
+  past what arms can do gives at the hands, in life as here.
+- *Depth is a stop.* An arm deeper than twice the engine's slop in anything is an arm through a
+  body, read off the engine's manifolds every moment. Before, only the hands parting said so, and
+  a hold stood with an arm through a torso.
+- *The rise.* The band was asked of the hands like a switch thrown at the first moment of the
+  turn, and a weightless arm crossed 359 mm answering it. The hands now rise along a ramp from
+  where each settled, over the first quarter turn, held to it from both sides. Asked of the elbow
+  too, so the forearm would clear the crown outright, the rise went in bursts of 289 mm; so a
+  forearm meeting a head is the contact's to answer.
+- *The elbow.* A weightless arm's elbow wandered about the line from shoulder to wrist, 280 mm
+  between moments. What weight does to an elbow about that line is put back as one newton metre,
+  and nothing else weight does is. The wrist's spring, at one hertz on a four hundred gram hand,
+  was three hundredths of a newton metre per radian, so once the elbow was turned down the
+  wrists sat at sixty of sixty at rest and the plainest hold carried 0.56; at five hertz, the
+  passive stiffness of a wrist, they rest at forty four with room to spare.
+- *The stance.* The search took the nearest distance that carried the turn, which is chest to
+  chest: joined hands pinned between the torsos, then popping up between the heads 300 mm in one
+  moment, at a distance no couple would turn under an arm at. Among distances carrying a turn as
+  far, the couple now stand where the arms move least between moments; leaps within five
+  millimetres count as one, since the engine is not exactly mirror symmetric.
+
+After: no point of any held arm crosses 161 mm between moments on the laws' corpus, against a
+bound of 193 -- a point carried at arm's reach plus an arm's own move -- and the deepest overlap
+is under half a millimetre. Verified by testament on 2026-09-13, `tests/trigid.nim`, seventeen
+laws, two of them these.
+
+**What solid bodies cost, and the reference now.** Every figure the sim gave before was of arms
+that could pass through bodies. With bodies solid: the plainest low hold carries 0.64 where it
+carried 1.04 (the floor's whole turn was reached with an arm through a torso); the cross-name
+crown hold winds her shoulder to its end at 1.2 to 1.3 turning one way, from every distance, which
+is twist alone and past every card; the reference reads 192 of 231 questions. Rejected:
+tuning any of it to the floor. Each disagreement is printed beside the floor's claim and is the
+Architect's to rule on -- a hammerlock that the floor says goes a whole turn, and that the rig's
+shoulder now stops at 0.64 by wrist or by swing, is the first question to put to them.
+
+**Two laws moved to what the model measures, not loosened to pass.** The reach law asks 0.6
+turning her negative way, reached only from 0.70 m, since 1.2 was true of an arm through a
+torso; the crown law asks a whole turn, since a turn and a half was free only with an arm through
+a head. The mirror law holds the turn reached within one step, since contact decides stops now
+and the engine's contact is not mirror symmetric to the step; what stopped them is still exact.
