@@ -8125,6 +8125,28 @@ suite "Wording":
     check "rings each one" in $wordingText(TipRowSelect)
 
 
+  test "the application names itself as a name, and every other label stays a word":
+    # Label is word on control and stays lower case. This one is proper noun both front-ends
+    #   show, window's own caption included, and it was written half one way: `RGA` carried
+    #   its capital where second word did not.
+    for word in strutils.splitWhitespace($wordingText(NameTitle)):
+      check word[0].isUpperAscii
+    for key in Wording:
+      if not key.namesControl or key == NameTitle: continue
+      let text = $wordingText(key)
+      check not text[0].isUpperAscii
+
+
+  test "the window's caption reads the catalogue rather than spelling the name again":
+    # Window carried its own copy of product's name, which no sweep reached. Title-casing
+    #   catalogue alone would have left one build spelling its own name two ways.
+    #   Held here rather than beside window because `main` links SDL and GL, which no test
+    #   binary carries; composition lives in catalogue for exactly that reason.
+    check captionWindow().endsWith($wordingText(NameTitle))
+    check captionWindow().startsWith(NAME_AUTHORITY)
+    check captionWindow().count($wordingText(NameTitle)) == 1
+
+
   test "a demo size names itself, and only the opening size says so":
     # Sentence carries figure no catalogue row can hold, so it is composed from parts
     #   catalogue does hold -- and composing is held to here rather than in two front-ends

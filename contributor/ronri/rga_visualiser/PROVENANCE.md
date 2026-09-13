@@ -45,30 +45,6 @@ hardware**; every figure in this file was software-rendered, and every one of th
 taken on a different compiler from the one this repository builds with (see Measurements).
 
 
-Open Questions
----
-Recorded here and in the pull request body, per CONTRIBUTOR.md: a contributor neither works
-around a rule nor edits it.
-
-**System packages have no declared home in this repository.** Nim packages are declared in
-`rga_visualiser.nimble` and pinned by `atlas.lock`; node packages in `package.json`, pinned by
-`package-lock.json`. Desktop front-end links against SDL3, libGL and zlib, drives itself
-headless through Xvfb and software GL, and compiles Dear ImGui from clone rather than linking
-it -- and none of those five is expressible in either file. Prototype used
-`dependencies.list`; that extension is not among thirteen kinds
-`curator/audit/src/kinds.nim` registers, so committing one is finding rather than declaration.
-  Named in `README.md`'s build section meanwhile, as table beside compiler pin already there,
-  with ImGui's clone command under it. Honest and reader finds it, but nothing checks it, so it
-  decays as any unrun check does. Asked as issue 60, with three ways out offered and no
-  preference between them. Rejected as workaround: committing `dependencies.list` regardless,
-  which is exactly rule CONTRIBUTOR.md forbids working around.
-
-**The browser front-end waits on conventions for the repository's first TypeScript.** No `.ts`
-file is committed anywhere, so this project's conversion of the browser glue — some 9,000
-lines — would set the precedent for module system, build step, dependency pinning and how a
-generated file is marked. Conventions were proposed rather than assumed, as issue 27, and are
-unanswered. Rejected as a workaround: choosing them unilaterally and leaving a later ruling to
-invalidate every line written under them.
 Vocabulary
 ---
 **Twenty-eight terms were selected by the Architect, in session, and are in `GLOSSARY.md`.**
@@ -113,6 +89,47 @@ and 310 cases, which is what says no behaviour moved; `tsc` clean under its thre
   **Unverified**: the desktop front-end is not in this repository yet, so no rename here has
   been compiled against it. Whatever it carries of this vocabulary arrives with it.
 
+Wording Catalogue
+---
+**Every word either front-end shows has one name in `wording.nim`, and neither writes a
+literal.** Shown text written where it is drawn puts one sentence in two places, and two places
+drift: the window and the page had said different things about the same wedge, the same
+coefficient grid and the same outcome. The catalogue is a `Wording` enum and a table indexed by
+it, so a key renamed there fails to compile rather than failing to match.
+
+**The page fills its markup at build time rather than at load.** Its labels live in markup, not
+in TypeScript — 44 static text nodes against 6 written from scripts — so stripping an attribute
+and setting it from a script, which serves a tooltip, would empty 44 elements, invent 44 ids and
+leave the page blank until its scripts ran. `tools/build.nim` already rewrites `shell.html` on
+the way out for `@SCRIPT@` and `@EMBED:<face>@`; `@WORD:<key>@` joins the same pass. The real
+text is therefore in the committed markup, so it reads with the first paint and with scripts
+refused. A token naming a key the catalogue does not carry stops the build.
+
+**The guard is total rather than a list of forbidden strings.** `checkWording` refuses a quoted
+literal at any of the fourteen panel calls that put text in front of a reader, and at `.title`,
+`.textContent` and `.innerHTML` in every browser script; a hidden Dear ImGui id (`##name`) and
+an empty label are allowed, since neither is shown. It also refuses the opposite defect — a
+catalogue row no front-end names — so the catalogue cannot grow words written for nobody.
+  `tools/build.nim` imports the catalogue rather than parsing it: reading `wording.nim` as text
+  to recover the enum's keys stops at the first blank line inside the enum, where walking
+  `Wording` after importing it fails to compile when a key moves.
+
+**One key per control, not one key per word.** `NameRowHide` and `NamePickHide` both read `hide`
+and are two keys, because two buttons honestly wear one word and a translator may still need
+them apart. The law that no two keys carry the same text therefore holds over **prose** keys
+alone — the tooltips and notes, where a repeated sentence is a copy-paste. Labels carry their
+own law: stripped, no doubled space, no trailing full stop, at most `RUNES_LABEL_MOST` runes.
+
+**The application names itself once.** `NameTitle` reads `RGA Visualiser` and both front-ends
+take it; the window's caption is `captionWindow()`, which reads the catalogue rather than
+spelling the name a second time. A law requires that name to be title case and every other label
+to stay a word.
+
+*Checked.* Verified by build and by driven check: `declare` reports **106 wording keys**; a
+literal put back at a label call is refused, which is how three page-only strings in `state.ts`
+were found; and a `@WORD:` token naming an absent key fails the build with the line that carries
+it.
+
 Driven Checks
 ---
 **Suites test rules; this layer tests wiring.** What a slide does to pivot, what zoom does
@@ -121,7 +138,7 @@ canvas, so nothing in them catches rule wired to wrong event. `tools/drive/` doe
 Playwright, against page `tools/build.nim web` assembled. One command runs both:
 `nim r tools/build.nim drive`.
 
-**139 checks pass today**, one module per section of what page does:
+**161 checks pass today**, one module per section of what page does:
 
 | Module | Covers |
 |--------|--------|
@@ -361,6 +378,44 @@ that fire only where check cannot be set up.
   **Unmeasured**: figures above are this container's, software-rendered, and say more about
   swiftshader than about any GPU. Bands, not figures, are what checks assert.
 
+**A dropped CSS declaration is invisible to the CSSOM, so the check reads authored text.** A
+parser discards a declaration whose property it does not know, so the model it builds cannot be
+asked what it threw away, and a sweep over `cssRules` passes on the very page the check exists
+for. `driveStyleDeclared` scans the `<style>` element's own `textContent`, walking by brace and
+bracket depth, and asks the browser whether each property name is one it knows — a vocabulary
+this repository does not own and therefore keeps no copy of. It carries a floor on how much it
+read, and a fixture asking the browser outright whether it can still tell `align-items` from
+`align-objects`. A name shaped like prose rather than an identifier is reported rather than
+skipped: the one instance skipped was the tail of a comment that had ended itself.
+
+**The heading checks hold geometry, paint and shape separately, since none stands in for
+another.** `driveHeaderPinned` sweeps `elementFromPoint` across the full band width; sampling
+the midline alone passed while rows showed in a 28 px strip down the right edge.
+`driveHeaderBanded` reads the computed fill, because hit testing answers with an element
+whatever its fill — and reads *opacity* rather than a notation, since the pinned fill is a
+`color-mix` computing to `color(srgb …)` and the resting one reports as `oklab(0 0 0 / 0)`, so a
+check naming `rgb(` holds syntax where it means to hold paint. It also asks that **no** heading
+anywhere wears a band while nothing has scrolled. `driveHeaderStyled` compares radius and border
+against `.toggles` rather than naming figures, so the pill cannot drift from the row's; `.brand`
+is not the exemplar, being itself the drawer's toggle and taking an accent border whenever the
+drawer is open.
+
+**A fill is bounded by the frames its budget owes it, never by a clock or a flat count.** A
+wall-clock bound measures how fast the runner draws. A flat frame count is worse than it looks:
+a fast machine earns a 5 ms budget and rightly takes about 88 frames of 16 ms, where this runner
+earns 24 ms and takes about 20 of 94 ms, so a count passing on one fails on the other and says
+nothing either way. `driveListFills` reads the median frame the run actually saw, derives the
+budget the page is asked for, and divides by a deliberately conservative 4 rows per millisecond
+— against 11.4 measured under 5 ms slices and 6.4 under 24 ms ones, a bigger slice being less
+efficient because the clock is read only after a row is built and the last row of each overruns.
+
+**The chip row's check asserts reach beside fit.** A row that fits because two controls were
+dropped on the floor is not fixed, it is broken more quietly, so `driveChipRowFits` counts the
+toggles wherever they stand and requires exactly two at every width alongside zero overflow. It
+sweeps both sides of the boundary — 396, 395, 394 — because a rule written one pixel out passes
+every sweep that never lands on it, and reads where the pair stands off the DOM rather than
+inferring it from the breakpoint.
+
 Browser Front-End
 ---
 **Page is one self-contained file.** It opens from `file://` or from an artefact host that
@@ -533,8 +588,8 @@ asked to agree with itself.
   its serif, so it names the interface face outright and keeps its tabular figures.
   **Commit Mono splits its ligatures across two switches, and the page needed both.** Its GSUB,
   read out of the embedded `woff2` itself, carries `calt`, `cv01`–`cv11` and `ss01`–`ss05`. Most
-  of the ligatures ride on `calt`, which browsers apply unasked, so those had been drawing all
-  along. The arrows and comparisons do not: they come from the author's opt-in sets, named by his
+  of the ligatures ride on `calt`, which browsers apply unasked, so those draw with nothing set.
+  The arrows and comparisons do not: they come from the author's opt-in sets, named by his
   own feature sources — `ss01_less_equal.fea`, `ss02_arrows.fea` — and the page drew `=>` as two
   glyphs until it asked for them.
   Driven over four rows of sequences, each feature switched on and off by itself:
@@ -571,14 +626,12 @@ asked to agree with itself.
   rest. A face nothing draws is weight carried for nothing, and a weight nothing ships is a face
   the reader's browser invents; Article X.8 refuses both. So 400 left and 600 arrived, 15 kB of
   it, and the page grew by 1,804 bytes on the swap.
-  **The check written to hold that was wrong twice, and how it was wrong is worth more than the
-  check.** It compared the live heading's width against canvas measuring the same string in each
-  face. The heading carries `letter-spacing: 0.02em`, which canvas does not, so the live figure
-  sat about 1.3 px above both — and that gap was read as evidence of a synthesised weight when it
-  was only the tracking. Then, with the real 600 face in place, both faces measured `apply` at
-  35.0 px, so width could not have parted them at all. It reads pixels now: the heading is shot
-  as the page has it and again with the interface face forced onto it, and a face that never
-  arrived makes one picture where there should be two. Nothing was loosened to make it pass.
+  **The check reads pixels, not width.** The heading is shot as the page has it and again with
+  the interface face forced onto it, and a face that never arrived makes one picture where there
+  should be two. Not width against a canvas measuring the same string — the heading carries
+  `letter-spacing: 0.02em` and canvas does not, which puts the live figure about 1.3 px above
+  both faces and reads as a synthesised weight when it is only the tracking; and with the real
+  600 face in place both measure `apply` at 35.0 px, so width cannot part them at all.
   **The desktop draws the same three roles from the same three families.** `NotoSerif-SemiBold`
   matches the page's 600 rather than being merely serif, and `CommitMonoV142-400Regular` sets
   notation, figures and the message line. The mono face has both supplementary ranges merged into
@@ -634,6 +687,80 @@ out of Nim.
   repository: nothing drives file picker.
   **Unverified**: no human has driven this page.
 
+**The chip row floats over the canvas, and its width budget is measured rather than assumed.**
+Six controls ride it — the drawer's own mark, `add`, `undo`, `redo`, the `axes`/`grid` pair and
+the menu — and the row is flex, so where it stops fitting what gives is not the row but the
+controls inside it, the brand worst of all. Two breakpoints, each swept a pixel at a time:
+  **497 px.** Below it the brand draws `NameChipDrawer` in place of its name. At 520 and 497 the
+  brand is 123 px wide and the row fits; at 496 it is 34.
+  **395 px.** Below it `.toggles` moves into the menu popover under its own `show` heading. The
+  row fits at 395 and overflows by 1 px at 394, 9 px at 386 and 75 px at 320. That group costs
+  114 px plus its 8 px gap, which is why moving it clears an overflow never worse than 75.
+  Moved rather than copied: a second pair of buttons in the menu would be a second `on` state to
+  keep in step with the scene's own, and the first refresh writing one and not the other would
+  be wrong in a way nothing reports. `settleToggles` moves the one node between homes on a
+  `matchMedia` change, and the menu's block is `hidden` at every width that does not hold it.
+  `#top-menu-show[hidden]` spells out `display: none`, as `.help-row[hidden]` already must:
+  author `display` beats the user-agent stylesheet's own rule for the attribute.
+
+**A section's heading holds its place while that section's list scrolls under it.**
+`position: sticky; top: 0` against `.drawer-scroll`, with the clearance the floating row needs
+sitting on `.drawer`, outside what scrolls — a sticky offset is inset by its scroller's own
+padding, so a heading pinned at `0` cannot cover the padding above itself, and rows ride up
+through any band left above it.
+  Pinning is watched rather than measured: one `IntersectionObserver` over a 1 px
+  `.section-edge` sentinel per section, because a sticky element never leaves the scrollport and
+  so can never report that it has. The entry is a signal that something moved and nothing more —
+  its `rootBounds` arrives null and its `boundingClientRect` is a snapshot of where the sentinel
+  was — so `settleBands` reads live geometry, for every heading, on any signal. Reading there
+  costs nothing: the callback runs after layout, the bargain `sizes.ts` states at length.
+  Half a pixel of real scroll before a heading counts as pinned, never none: the topmost
+  sentinel sits *exactly* at the scroller's top edge when nothing has scrolled, so `<=` there
+  reads that heading as pinned from the first paint, and it wears its band over nothing.
+  Not a scroll handler: a read after a write lays the whole document out inside that event, and
+  this scroller carries a row per object.
+
+**Pinned, a heading wears the pill the chip row's own controls wear.** Same radius, same 1 px
+`--border`, and the box `.object-row.selected` already used (`margin: 0 -10px`), which covers
+rows outright — they span 14–385 px of a 400 px drawer where the pill spans 4–395 — while its
+10 px padding still lands the chevron on the column the rows start on.
+  The fill is **opaque**, although the pills it borrows its shape from are `--surface` over a
+  blur: rows pass under this one, and a heading asked to hide them cannot be seen through. Shape
+  is what is shared; fill is what covering costs.
+  That fill is the drawer's own ground, arrived at the way the drawer arrives at it, rather
+  than a tone picked to sit near it: `color-mix(in srgb, rgb(22 27 34) 82%, var(--bg))`, where
+  `--bg` is written at runtime by `gl.ts` from the clear colour. `0.82 × surface + 0.18 ×
+  Ink.Backdrop` gives 20.92, 25.56 and 32.56 over 255, and the browser computes
+  `color(srgb 0.0820392 0.100235 0.127686)` — exact on all three channels. A named tone sits
+  about 1.4/255 off that composite today and drifts as the clear colour moves.
+  What no opaque fill can match: `.drawer` also blurs what is behind it, so where a star or grid
+  line sits under it its ground picks up that smear. Over open scene, most of the drawer's own
+  width, the blur is a no-op and the match is exact.
+  The border is `transparent` on `.section-header` rather than added by `.stuck`, since a border
+  arriving on pin would widen the box by 2 px and shove the text sideways; `.toggles button`
+  holds a transparent border for the same reason. Not a shadow, which is what made pinning read
+  as *floating* in a way nothing else on the page did.
+
+**Row building takes a share of the frame it is spending, never a fixed span.** The budget is
+`frame × 0.3`, floored at 5 ms and capped at the 24 ms the reveal path already takes. The floor
+is not arbitrary: `16.7 × 0.3 = 5.0`, so a machine keeping up gets exactly what a flat 5 ms
+gives, and the widening bites only once the frame is already slow.
+  Not a flat 5 ms — that is a third of a 60 fps frame and assumes that frame. The frame drawing
+  5,038 objects measures 80 ms, where 5 ms is 6% of it rather than a third: 5,038 rows then take
+  about 88 frames and 6,465 ms of a drawer filling in front of a reader, against 13 to 20 frames
+  and 2,862 ms under the share. The list that is longest is the list drawn beside the heaviest
+  scene, which is exactly where a fixed span fails.
+  Cost: at an 80 ms frame the list takes 24 ms of it rather than 5, so the scene animates more
+  coarsely for two seconds instead of more finely for six and a half.
+  The frame's duration is not measured twice — `frame.ts` already holds it for `recordFrameTime`
+  and hands the same reading on.
+
+**A comment may not quote a closing block-comment delimiter.** A comment that does ends itself
+on the spot, and the prose after it parses as CSS — enough to swallow 141 of the page's 150
+rules with the page still drawing, because a parser discards what it cannot read and reports
+nothing. Reading CSS as authored is therefore never evidence about the CSS that ran. Delimiters
+are named rather than quoted.
+
 Desktop Front-End
 ---
 **Two libraries are bound rather than wrapped, and only where they are called.** SDL3 owns
@@ -669,9 +796,8 @@ price, since there is no symbol for glue to name.
   widget touches two files.
   Repository's first `.cpp`. Kind is registered *gated* (issue 26), so form rules reach it and
   `justification.nim` demands its header carry `not Nim because`. Whole 649-line file drew one
-  finding on first check: `Supplemental mathematical operators A`, where checker read Unicode
-  block's suffix as article. Corrected to block's real name, `Miscellaneous Mathematical
-  Symbols-A`, which is what U+27C0..U+27EF is called -- comment was wrong as well as flagged.
+  finding on first check, where checker read Unicode block's suffix as article. Block carries its
+  real name, `Miscellaneous Mathematical Symbols-A`, which is what U+27C0..U+27EF is called.
 
 **Dear ImGui is compiled into binary rather than linked, and pinned by commit.**
 `fd13a1e8923a0a7077b404fc36fd063b25a0c0b5` of `ocornut/imgui`'s `docking` branch, MIT licence,
@@ -871,6 +997,53 @@ through C and JS.
   hardware -- that run was software GL, which reported no multisampled visual, so thin lines
   alias.
 
+**The constant controls float in an overlay of their own, not inside the panel window.** The
+browser keeps `add`, `undo`, `redo`, `axes`, `grid` and the menu reachable whether its drawer is
+open or shut; the same six inside the panel window moved when it moved and went with it when it
+collapsed. They are one line in a `windowBeginPinned` overlay — the door `?` already uses, which
+auto-sizes to its contents and takes no title bar — on the same 16 px inset from its corner, in
+the browser's three groups, with a wider gap between groups than inside one, since a gap is what
+says which controls belong together where no box is drawn around them.
+  Top right rather than top left, which the browser can afford and this cannot: the panel window
+  opens at the top left and stays there, so two overlays sharing that corner would sit on each
+  other at any width. The panel's own title bar carries the name and the collapse triangle,
+  which is what the browser's brand chip is for.
+  The menu hangs by its **right** edge. Anchored by its left it opened past the window and was
+  clipped to a few characters once the row moved right, and no check caught it: the verdict asks
+  what the menu *offered*, and a menu offering three sizes off the edge of the screen offers
+  three sizes. A change that alters what a window shows ends with a picture for that reason.
+
+**Both front-ends offer the same three menu groups, and the demo group is built rather than
+written.** It walks `orrery.ScaleOrrery` and labels each button with `objectsOf`, exactly as the
+page builds its own from `nimDemoScales`, so a size added to `orrery` arrives in both menus with
+neither front-end touched. Loading one calls the same `showOrrery` the browser calls.
+  Two deliberate differences. The desktop's menu carries `scene file` and `image file` fields
+  above its groups, because a desktop build writes to paths and the path a button writes to
+  belongs beside that button, where the page's save is a download and its load a picker. And the
+  menu hangs from its own button rather than from the pointer, which is Dear ImGui's default: a
+  menu landing somewhere different each time is one the reader has to find twice.
+  A popup has no state a scripted run can set, so `guiMenuBegin` takes `is_forced` and
+  `--drive-menu` opens it with no pointer — the same door `--drive-help` uses for tabs.
+
+**A long list is bounded rather than left to run past the window.** It sits in a region that
+hugs its own content until the window runs out and scrolls inside that bound after
+(`ImGuiChildFlags_AutoResizeY` under `SetNextWindowSizeConstraints`), with the heading outside
+that region so it cannot move. Not a fixed height with a threshold, which put a five-object
+scene in a box of blank. One rule — the heading naming a section stays reachable while that
+section's list moves — and two mechanisms, the browser answering it with `position: sticky`.
+
+**The panel opens on controls, as the drawer does.** It had opened with four lines of prose
+above any control, every one of which is in help's drag tab that `?` opens in the same corner of
+both front-ends. The wheel's words are taught there, in `descriptionOf(HelpPath.Drag)`, read
+from `wordOf` and `labelOf` rather than written out, so a renamed or renotated wedge is renamed
+in the telling too. Held by a law in the shared suite: every wheel word and its notation must
+appear in that description.
+
+**Toggles are pills on both front-ends, not checkboxes on one.** The worry against it is that a
+pill carries its state in colour where a checkbox carries it in a tick — but `guiButtonToggle`
+carries fill, border *and* text colour together, and it is what both front-ends already draw for
+the same two toggles. One control, one shape, across two front-ends.
+
 Desktop Driven Checks
 ---
 **Suites test rules and `tools/drive/` tests browser wiring; this tests desktop wiring.** Same
@@ -886,10 +1059,8 @@ exercises is wiring.
   missing still does its scripted work; every type role is drawn in a face of its own; a
   scene filled to capacity leaves what follows its list on the window; and menu opens with
   its groups in it, offering demo at every size `orrery` has.
-  Counted by running rather than by reading, and twice now that reading was wrong: this said 19
-  until 2026-09-09, which is sites plus tabs with the help site counted twice, and then 22 until
-  2026-09-11, which stopped being true the day the type-role verdict began firing in every run
-  with a face. `drive`'s own output is the count: `grep -c "^  ok"` over `driven`.
+  Counted by running rather than by reading: `drive`'s own output is the count,
+  `grep -c "^  ok"` over `driven`. A figure read off this file instead has twice been stale.
   **These 41 run wherever `drive` runs, which is what repository issue 91 ruled.** They ran here
   and nowhere else while `drive` skipped them for want of SDL3, and `0 finding(s)` over 161 checks
   and over 139 were two claims wearing one sentence. `desktop` now fetches and builds both
@@ -900,20 +1071,21 @@ exercises is wiring.
   aborted every run inside Dear ImGui rather than degrading. Both are answered: the abort is a
   finding now, and this project ships its own faces (issue 93).
 
-**An absent face is a finding now, and it used to be an abort.** Dear ImGui asserts inside
+**An absent face is a finding, never an abort.** Dear ImGui asserts inside
 `AddFontFromFileTTF` where it cannot open a path, and an assertion is SIGABRT rather than a
-report. The shim already skipped a face whose path is empty and `main.nim` already carried a
-warning line, so the graceful path existed on both sides and nothing joined them: whatever was
-declared went straight to Dear ImGui, and the warning was unreachable. Measured 2026-09-09 on a
-container carrying SDL3 and Dear ImGui but no Noto packages: **12 of 12 runs aborted**, exit 1.
+report, so a declared path that does not resolve must not reach it. A shim that skips an empty
+path and a warning line in `main.nim` are not enough on their own: both sides can hold a graceful
+path while nothing joins them, and the warning is then unreachable. Measured 2026-09-09 on a
+container carrying SDL3 and Dear ImGui but no Noto packages: **12 of 12 runs abort**, exit 1,
+where the declared path goes straight through.
   `faceAt` resolves each of the four to empty where the file is not there, and says which face is
   missing, which variable names it and which verb fetches it. The interface draws in what is left.
   **Locations come from the environment first**, `RGA_FONT` and its three siblings, falling back
   to the faces this build ships -- and that fallback is what lets the case be driven at all.
   Verified by driving, committed in that order: `driven` runs `--drive-keys` once with `RGA_FONT`
-  naming a path no machine carries. Before the fix that run aborts and the verb reports
-  `drive-keys without face`, exit 1; after it, the run reports the finding and passes, and gains a
-  verdict of its own -- focus moved and the scene stands while Dear ImGui had no face, so the
+  naming a path no machine carries. Without the resolution that run aborts and the verb reports
+  `drive-keys without face`, exit 1; with it the run reports the finding and passes, carrying a
+  verdict of its own -- focus moved and the scene stands while Dear ImGui has no face, so the
   claim is that the scripted work happened rather than that nothing crashed.
   **This half ships the faces it draws with now, as the browser half does** (Article X.8). The
   four absolute paths are gone and no machine's layout is named in source: `DIR_FACES` is relative
@@ -3023,592 +3195,27 @@ Known Limitations
 - `.rgascene` is little-endian by rule, but only a little-endian host has ever written or
   read one; the byte-swapping path is unexercised.
 
-## Re-audit, 2026-09-06
-
-Merged carrying a stamp that three rules changes had moved under it, which reddened `main`
-until re-stamped. Audited against each change, by a curator, who may write this file and no
-other here:
-
-- **Per-project compiler pin.** Already met: `requires "nim == 2.2.10"` is exact.
-- **Curator reach and the regression rule.** No effect on this project's own work.
-- **Repeatable verification.** Partly met, and the rest is yours. The *Checked* blocks already
-  name how each claim was reached, which is more than most of this repository does. The rule
-  now also asks that a claim nobody can repeat from a checkout name its **tool and its date**
-  — "Verified by looking", "Verified by rendering", "Verified by driven check" and the
-  unmeasured device figures each need one. Nothing was invented to fill those in: only the
-  session that ran them knows when, and this curator does not.
-- **Citations.** The mechanical half passes: `` `--drive-keys` `` and `` `sizeof` `` name a
-  flag and an operator, not files, so `checkCitations` leaves both alone.
-- **Gated languages.** Nothing to correct today: this project carries no `.ts`, `.cpp` or
-  `.c` file yet. It binds the next pull request rather than this record. C++ and C are now
-  registered kinds, so the ImGui shim of issue 26 may land; and every file of a gated kind —
-  the TypeScript conversion of issue 27 included — must open with `not Nim because <reason>`,
-  which the audit checks. The reason itself is what a curator reads, and a shim that only
-  flattens overload sets is a different claim from one carrying logic.
-- **The lock's stored nimble.** Already met, and by this project's own hand: `atlas.lock`
-  here stores `requires "nim == 2.2.10"`, matching the committed file, after the hand-patch
-  reported in issue 25. The check added for it passes on this project.
-- **TypeScript and Node.** Nothing to correct today, and everything to read before the
-  conversion: CONTRIBUTOR.md now carries the section answering issue 27. Four of the six
-  points proposed there were already rules and are confirmed as such; the new rule is npm
-  pinning by committed `package.json` and lockfile with each dependency recorded here; and
-  the amendments are `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes` beside
-  `strict`, plus a `web` verb in `tools/build.nim`. A generated lockfile was measured against
-  the form rules before the rule was written, so it may be committed as generated and must
-  not be reformatted to fit.
-- **Records compile nothing.** A change touching only this project's `README.md`,
-  `PROVENANCE.md` or `GLOSSARY.md` now plans `[]`; a README change previously ran the whole
-  suite, which for this project means its browser tests too. Nothing here needed correcting.
-- **Published pages are linked.** This project publishes no page today, so nothing needed
-  correcting; it binds the moment one does. Raised by `dance_ontology` as issue 42.
-- **Compiler resolution.** Directly relevant here, since this project is the one pinning a
-  commit: koch now resolves each pin itself, so a session holding only a release compiler can
-  still run this project's suites — it builds the pinned commit once into
-  `~/.cache/koch/nim/<commit>/` and reuses it. Driven on 2026-09-06: `koch ci` green as one
-  command with 2.2.4 on `PATH`, this project on its commit and the other three on 2.2.4.
-  Atlas now runs with that toolchain leading `PATH`, so the `environment mismatch` warning
-  this project's lock produced is gone.
-- **Draft pull requests.** Binds how your next pull request is opened rather than anything in
-  this record: open it as a draft and mark it ready only when CI is green on the runner,
-  every comment is answered, and you intend no further change. Nothing here needed
-  correcting.
-
-[replications]: https://gitlab.com/mraxilus/replications
-
-## Re-audit, 2026-09-07, issue routing
-
-Audited by a curator against the change that made the issue channel run both ways and gave each
-session a queue. A session now reads the open issues labelled with its own role before any other
-work; a curator who reads this project raises what they find as an issue rather than editing it,
-since they may not; an issue labelled with a session's own role is that session's queue, work
-decided and deferred where the next session here will see it rather than in a conversation that
-ends; and a label is the role string exactly, copied and never composed, because applying a
-label creates it and a misspelling makes a second label nobody filters on.
-
-Nothing in this tree changes: the rule binds how the next session here starts. Two issues stand
-open against this project today, 47 and 48, both now carrying its label, so that session finds
-them by the filter rather than by being told.
-
-One thing here needs care rather than correction. This record already carries *Not yet ported*
-and several *Unverified* lines, which are the same shape as a queue. They stay where they are:
-the record says what **is**, an issue says what is **queued**. Anything filed from them links
-the section rather than restating its counts, since two copies of one count will disagree — as
-the prototype's check count already did once.
-
-## Re-audit, 2026-09-07, Article II.9 bound
-
-Audited by a curator against the amendment to Article II.9, which this project's issue 48 asked
-for. The article now bounds when target code may be hand-written: the source language by
-default, the crossing kept narrow, and the target language only where the source cannot reach at
-all or where crossing would forfeit what the target gives for free — a check its own compiler
-makes over the bulk of a file, a cost the glue would add to a hot path — with the file's opening
-comment saying which.
-
-This is the only project the rule reaches: 45 TypeScript files, and every other project holds
-none. **All 45 already comply, and nothing needed correcting.** Each was read. Most stand on the
-first ground and say so — `src/browser/*.ts` on browser APIs Nim's JS backend does not express,
-`keys.ts`, `pan.ts` and `gestures.ts` on Playwright's input API existing only in node,
-`touch.ts` and `construct.ts` on Chrome's own protocol. Three stand on the second: `camera.ts`
-("only TypeScript checks them against bridge's derived declarations"), `main.ts` ("glue that
-would leave every browser-side expression unchecked string") and `page.d.ts` ("only TypeScript
-can state them to type-checker").
-
-That the corpus met a rule written after it is not luck. The `not Nim because` gate already
-refused a file that argued nothing, so every argument existed; the amendment only requires that
-the argument name which of two grounds it stands on, and arguments written honestly already did.
-The rule codifies the practice rather than changing it.
-
-What the amendment does decide, which the article as it stood did not: `exceedance.ts` and its
-kind. 454 lines, 15 `evaluate` bodies, browser-side expressions that are not something the
-target alone *can* do but something the target *checks* and Nim's glue would not. Before the
-amendment that file leaned on a reading of "what the target alone can do" it did not quite fit.
-It now has a clause of its own.
-
-## Re-audit, 2026-09-07, type check on runner
-
-Audited by a curator against the rule that a project carrying `package.json` beside its lock
-carries a `types` verb in `tools/build.nim`, and that CI runs it: `koch types` restores node
-tools and drives that verb, scoped to projects one change asks for.
-
-**This is the only project the rule reaches today, and it already met it**: issue 47 asked for
-the verb and pull request 56 landed it before this job existed. Nothing here needed correcting.
-
-What changes is who runs it. The record's line under Driven Checks — *"green here is evidence
-someone ran it rather than something runner confirms"* — is now true of `drive` alone. The type
-check is the runner's: 10,676 lines of TypeScript across `src/browser/` and `tools/drive/`, and
-the agreement between `bridge.nim`'s 157 `exportc` signatures and the derived `bridge.d.ts`.
-
-The curator drove that agreement independently rather than taking this project's word for it:
-renaming `nimSceneHandles` to `nimSceneSlots` in `bridge.nim` alone makes `koch types` report
-one finding over `TS2304: Cannot find name 'nimSceneHandles'` at four sites in
-`construct_section.ts`, and reverting returns 0. Same regression pull request 56 recorded,
-reproduced through the runner's path.
-
-**Not reached, and still this project's to run:** `drive` itself. That is held on the harness's
-115 fixed sleeps against 3 waits on a condition the page reports, which is now the deciding
-cost rather than the value — 135 checks made the value case. See issue 47.
-
-## Re-audit, 2026-09-07, system dependencies
-
-Audited by a curator against the rule that system dependencies — a library the compiler links
-against, a tool the build shells out to, a browser a driven check drives, a source clone no
-package manager carries — are declared as data in the project's own `tools/build.nim`, each
-entry carrying its reason, and reached by a verb. A source clone carries its commit; a system
-package carries no pin that survives across distributions, and the record says so rather than
-implying one; anything fetched at build time carries a checksum the build verifies. No
-machine's paths in committed source.
-
-**This project is what rule was written for, and it does not comply yet.** It needs SDL3, libGL,
-zlib, Xvfb and software GL on machine before it builds, clones Dear ImGui from source, and
-fetches its faces from `cdn.jsdelivr.net` trusting whatever arrives. None of that is declared
-anywhere: `README.md`'s build section names none of it, contrary to what issue 60 reported.
-
-Two asks stand, both this project's own work, neither of which curator may do:
-  Declare those packages and ImGui's commit as data in `tools/build.nim`, each carrying its
-    reason, reached by verb (issue 60, ruled).
-  Commit checksum per face and make `assets` fail on mismatch (issue 47, ruled by Architect).
-    That is what keeps unpinned download out of merge process, and it is also what lets runner
-    cache faces rather than refetch them.
-
-Second ask is what browser job waits on. Once both land, `drive` reaches runner and this
-record's *Unverified: CI does not reach this layer* stops being true.
-
-## Re-audit, 2026-09-08, deterministic verdicts
-
-Audited by a curator against the rule that a check gives the same verdict on the same code,
-and that where it does not, the check is what is wrong. Retries, longer timeouts, quarantines
-and skips are all refused as answers to variance.
-
-The testament suites comply: `tests/suites.nim` seeds with `randomize(0)`, so the sampled
-corpus is the same corpus on every run.
-
-**The driven harness does not, and this project already knew it.** The section above records
-a blank canvas readback on the runner, `[0,0,0]` where this machine reads `[44,6,24]`, with
-its cause marked **Unexplained** — and the check that names blankness was added here for
-exactly that reason. What the curator adds is a rate rather than a finding: across three
-`push` runs on `main`, runs 147, 148 and 149 on effectively one tree, the readback was blank
-**once in three**. That is the measurement the record could not take while CI did not reach
-this layer, and it is now the thing the rule asks to be removed. Raised as issue 82 with the
-evidence; the mechanism is this project's to choose, and if the cause proves to be the runner's
-browser rather than this code, it becomes the curator's to carry.
-
-**Answered.** Blank reading can no longer pass: every pixel check reads through compositor and
-refuses reading carrying one colour, whichever colour, and that refusal is itself checked
-against black *and* white canvas fixtures it stands up (see Driven Checks); white is second
-because runner answered with sheet of it once black alone was refused. Rate above stands as
-curator's measurement of what old reader did. Correction to finding: *four* checks had been
-comparing one blank reading against another, not one -- `pool`'s reported hash 1426046701 is
-exactly its own fold over all-zero 1200x900x4 buffer, which is what shows it. Cause on runner
-stays **unexplained**; neither Chromium here reproduces it. Browser runner drove was unpinned
-snap, and was raised for curator on issue 77; it is gone. Runner drives build lock pins since
-#98, reader has been green on both, and that is evidence against snap having been cause.
-
-**One driven check was still asking the machine rather than the code, and it is fixed.**
-`driveRendered` slept 1200 ms and then required twenty timed frames, so its verdict was how
-many frames that machine fitted into a fixed span. It drew 27 idle and **19 with a `koch ci`
-running beside it** — same code, two verdicts, which is exactly what this rule says makes the
-check wrong. It now waits *for frames* rather than for clock: it advances one
-`requestAnimationFrame` at a time until twenty are timed, with a 20 s ceiling that only a page
-drawing nothing reaches, and it reports the wait either way so a slow machine still says what
-it cost. Driven with every core of this container pegged by busy loops: **20 frames timed in
-780 ms**, passing. The ceiling is what remains for real failure, and reaching it means no
-frames rather than slow ones.
-
-## Re-audit, 2026-09-11, panel in line with page
-
-Audited by a curator against the rules change that splits Article X.8's faces by element —
-Noto Serif for headings and titles, Noto Sans for body and interface text, Commit Mono for
-code with its ligatures enabled. This project already ships all three and pins every byte, so
-the first clause is kept. Two things the split newly asks for: `--serif` is declared in
-`pages/shell.html` and never used, so no heading takes it; and Commit Mono is set without
-`calt`, so its ligatures — which are functional rather than decorative — do not render.
-Repository issue 118 carries both.
-
-
-## Re-audit, 2026-09-11, panel in line with page
-
-Asked by the Architect: bring the desktop's text and layout in line with the page, drop text
-that earns nothing, work the buttons, and keep a section's heading reachable while its list
-scrolls.
-
-**The top of the ImGui window was the last copy of something two front-ends used to disagree
-about.** It opened with four lines of prose — one teaching drag, three tinting the wheel's
-wedges, one about right-drag and touchscreens — above any control. Every one of those is in
-help's drag tab, which `?` opens in the same corner of both front-ends, and `help.nim`'s own
-header says it exists because *"desktop wrote this in its panel and browser in hint that
-vanished after four seconds; two had drifted"*. The browser had since dropped its own
-`.drawer-intro`; this was the remaining copy. It is gone, and the window opens on controls as
-the drawer does.
-
-**Removing it turned up something the page had already lost.** `interaction.nim` said in two
-places that the wheel's words are *"taught once, in drawer's intro line"* — and that line no
-longer existed, so **nothing in the browser taught them at all**. A reader met wedges wearing
-`𝐦 ∧ 𝐧` and nothing anywhere said that one is `join`. Both comments now point at help, and
-the words are taught in `descriptionOf(HelpPath.Drag)`, read from `wordOf` and `labelOf` rather
-than written out, so a renamed or renotated wedge is renamed in the telling too. Both UIs
-already render that line, so one edit served both. Held by a law in the shared suite — every
-wheel word and its notation must appear in that description — which **fails without the fix**
-(`Check failed: wordOf(choice) in described`).
-
-**The buttons are the page's three groups, in the page's order.** `add`, `undo` and `redo` on
-one row, as `.action-group` has them; `axes` and `grid` as the accent pill this project already
-draws for `arity`, which is the same pill `.toggles` wears; then the scene file with `save` and
-`load` beside it. The last is where text went as well as shape: a row whose field is named
-`scene file` had `save scene` and `load scene` under it, so the noun was in the row three
-times. The page's menu spells them the same way under its own headings.
-  Checkboxes became pills deliberately. The worry against it is that a pill carries its state
-  in colour where a checkbox carries it in a tick — but `guiButtonToggle` already carries fill,
-  border *and* text colour together, it is what this panel draws for `arity`, and it is what
-  the browser draws for the same two toggles. One control, one shape, across two front-ends.
-
-**A long list no longer buries the rest of the panel, and its heading no longer scrolls away.**
-The rule is one sentence — *the heading naming a section stays reachable while that section's
-list moves* — and each front-end answers it in its own idiom.
-  Desktop bounds the list in a region that hugs its own content until the window runs out and
-  scrolls inside that bound after (`ImGuiChildFlags_AutoResizeY` under
-  `SetNextWindowSizeConstraints`). The heading sits outside that region, so it cannot move.
-  First attempt gave the region a fixed height and a threshold, and a five-object scene sat in
-  a box of blank; hugging the content is what fixed that, and the first attempt is recorded
-  rather than tidied away.
-  Browser sticks the heading with `position: sticky` against `.drawer-scroll`. Its offset is
-  `--drawer-clear`, which is the same number that already pushed the drawer's content below the
-  floating chip row — named once now instead of written twice, since a heading stuck at `0`
-  lands *behind* those controls rather than under them.
-  Measured on both. Desktop, scene filled to capacity: **64 px left under the sections** where
-  the unbounded list ran **319,899 px** past the window's bottom — which is the same verdict
-  failing without the fix, driven by a new scripted run at capacity. Browser: the drawer is
-  scrolled to its floor -- **307,775 px** -- and the heading, which sat at 1123 px, holds at
-  62, where that scroller's own content begins. The scroll itself is asserted too, since a
-  check that reads a stuck heading while nothing moved would pass on a page with no
-  stickiness in it.
-
-
-## Re-audit, 2026-09-11, one menu in two front-ends
-
-Asked by the Architect, after the panel was brought in line: give the desktop the menu the
-page has, and make the two as similar as possible.
-
-**What the page had that the desktop did not.** Its `☰` opens a menu of three groups — *save*
-(scene, image), *load* (scene), *demo* (one button per orrery size). The desktop had no menu,
-kept save and load inline in its top bar, hid its PNG export at the bottom of the **view**
-section, and **offered the demo nowhere at all** — `--demo` existed on the command line and
-had no control in the window.
-
-**All three groups are now on both.** The desktop's top bar is what the page's chip row is —
-`add`, `undo`, `redo`, then `axes`, `grid`, then `☰` — and everything else went behind that
-button. `☰` is U+2630, the very character the page's button carries: `RANGES_SYMBOL` already
-merges U+2600–26FF into the interface face, so no face had to be pushed to draw it.
-
-**The demo group is built rather than written.** It walks `orrery.ScaleOrrery` and labels each
-button with `objectsOf`, exactly as the page builds its own from `nimDemoScales`; a size added
-to `orrery` arrives in both menus with neither front-end touched. Loading one calls the same
-`showOrrery` the browser calls, then resets selection, timeline and open session as
-`bridge.nimLoadDemo` does, and says what the page's toast says.
-
-**Two deliberate differences, both stated rather than smoothed over.**
-  The desktop's menu carries `scene file` and `image file` fields above its groups. The page
-  has no such fields because its save is a download and its load is a file picker; a desktop
-  build writes to paths, and the path a button writes to belongs beside that button.
-  The menu hangs from its own button rather than opening at the pointer, which is Dear
-  ImGui's default. The page's menu hangs from its chip, and a menu that lands somewhere
-  different each time is one the reader has to find twice.
-
-**Checked headlessly, which needed a door.** A popup has no state a scripted run can set, so
-`guiMenuBegin` takes `is_forced` and `--drive-menu` opens the menu with no pointer — the same
-door `--drive-help` uses for tabs. The verdict reads what the menu laid out: **3 sizes
-offered, 3 in `orrery`**. That makes 41 checks over 15 runs.
-
-
-## Re-audit, 2026-09-12, the row that floats
-
-Asked by the Architect, after the menu landed: put the constant controls in an overlay of
-their own, as `?` already is, and lay them out as the browser lays them out.
-
-**What was wrong with them inside the panel window.** The browser floats `add`, `undo`,
-`redo`, `axes`, `grid` and `☰` over its canvas in `.chip-row`, and they stay reachable
-whether the drawer is open or shut. The desktop had the same six controls *inside* the panel
-window, so they moved when it moved, and went with it when it collapsed. One set of controls,
-two arrangements.
-
-They are now one line in a `windowBeginPinned` overlay — the same door `?` uses, which
-auto-sizes to its contents and takes no title bar — pinned to the top right on the same 16 px
-inset `?` takes from its own corner. Three groups in the browser's order, with a wider gap
-between groups than inside one, since a gap is what says which controls belong together where
-no box is drawn around them.
-
-**Top right rather than top left, which the browser can afford and this cannot.** The browser
-puts its brand chip on the left because its drawer slides out from under it; the desktop's
-panel window opens at the top left and stays there, so two overlays sharing that corner would
-sit on each other at any window width. The panel's own title bar carries the name and the
-collapse triangle, which is what the brand chip is for over there.
-
-**The first attempt put the menu off the screen, and the screenshot is what showed it.** The
-popup was anchored by its *left* edge under its button — fine when the button sat inside the
-panel at the left, and wrong the moment the row moved to the right, where the menu opened
-past the window and was clipped to a few characters. It now hangs by its right edge, which is
-the direction the browser's own menu falls. Nothing in the checks caught this: the verdict
-asks what the menu *offered*, and a menu offering three sizes off the edge of the screen
-offers three sizes. **That is the case for ending a change with a picture** (repository issue
-138), and it arrived the same day the issue did.
-
-`☰` also grew a chip of its own — 34 px against the width one glyph asks for — because the
-character set at interface size in a button sized to it reads as a mark rather than as a
-control. The browser draws the same character on a round chip far wider than the glyph.
-
-
-## Re-audit, 2026-09-12, one way of saying what happened
-
-Asked by the Architect, after a question about the desktop's message line: make the outcome
-transient, the way the browser's toast already is, and look for the rest of the drift while
-there.
-
-**Where the drift was.** Both front-ends report the outcome of the last action in one short
-sentence, and both had written those sentences themselves. Three had drifted apart, and one
-of them silently:
-
-| Outcome | The page said | The window said |
-|---------|---------------|-----------------|
-| delete a selection of three | `Deleted 3 objects.` | `Deleted the selection.` |
-| hide a selection of two | `Hid 2 object(s).` | `Hid the selection.` |
-| apply with nothing to apply to | `…add a point first.` | `…add a multivector first.` |
-
-The glossary settles the last of those and neither front-end used its word: the scene holds
-**objects**, and point, line and plane are *kinds*. The count is information the window threw
-away; `object(s)` is what writing says when it holds a count and will not spend a word on it.
-All of it now comes from `message.nim`, which both builds read — the same door
-`interaction.wordOf` and `help.nim` already go through (Art. II.9). The page reaches it over
-the bridge (`nimDeletedMessage` and its neighbours); ten sentences crossed, `Cancelled.`
-among them, which both builds had written out in full. The ones only one build can reach —
-the page's download routes and read errors, the window's image export and scene file —
-stayed where they are said.
-
-**The life was drift too, of a worse kind.** The page held its toast for `3200` ms, written
-into `state.ts`; the window held its line *for the rest of the session*, and opened carrying
-`Ready.`, which was the outcome of no action at all. `SECONDS_MESSAGE` and
-`SECONDS_MESSAGE_FADE` are now one pair of constants both read: the page takes them through
-`nimMessageSeconds` and sets its own transition duration from them, so the stylesheet is not a
-second place the same number is written, and the window fades its overlay out by
-`messageFade`.
-
-**Why the fade is arithmetic in the core rather than in the panel.** The suite cannot reach
-Dear ImGui, so a fade computed inside `layoutMessage` could only ever be checked by eye. As a
-function of age it is held to four things: it is whole while the message stands, exactly
-nothing once the fade is done, never rises again at any age, and every sentence fits the
-`MESSAGE_MAX` storage the window draws through. The first two are the defect stated as
-arithmetic — a build whose message never goes fails them.
-
-**What moved on the screen.** The window's outcome was a mono line pinned under the `view`
-header at the foot of the panel; it is now an overlay pinned top-centre, the same place the
-page puts its toast, clear of the panel on the left, the chip row on the right and `?` in the
-far corner. Nothing it covers while it stands is a control. Two rows came back to the objects
-list as a result: `ROWS_OBJECTS_BELOW` was four while a separator and the message line stood
-under `view`, and is two now.
-
-**Outcomes the window had never reported at all.** Committing, adding and removing a row said
-nothing there while the page toasted each one; they say `Added \`m4\`.`, `Saved \`m4\`.` and
-`Removed \`m4\`.` now, from the same sentences. Going the other way, `Stepped back.` and
-`Stepped forward.` were dropped: the page says nothing for a step that lands, because the
-scene and the view both move and that is the answer, and only a refusal earns a sentence —
-which only a key can reach, since either button greys out where its side of the timeline is
-empty.
-
-**Dead rule removed.** `shell.html` still carried `.message-line`, with no element using it,
-left behind when the toast replaced that line. Found while answering the question that started
-this change.
-
-**Counts.** The page's harness goes from 149 checks to 151: the outcome's life is read from
-the bridge rather than written into `state.ts`, and the toast is watched until it takes itself
-away. The desktop's own figure is unchanged at 41 checks over 15 scripted runs — this moves
-where an outcome is drawn rather than adding a run.
-
-**Pictures, and how to remake them.** Before and after, from the storyboard's own third still:
-`./bin/rga_visualiser --hidden --storyboard:DIR`, then `DIR/02_join_plane.png` — before, the
-sentence sits at the foot of the panel below `view`; after, it floats over the scene at the
-top. An empty-handed opening is `--hidden --drive-keys --screenshot:PATH --frames:40`, which
-now shows nothing at all where `Ready.` used to stand.
-
-
-## Re-audit, 2026-09-12, the page nobody could find
-
-The browser front-end has been published since at least 2026-08-10 and the URL was written
-down nowhere: not in this file, not in `README.md`, not in any comment. The consequence is
-measurable rather than hypothetical — **three changes to what the page shows merged without a
-republish**, `31f12bf` (three type roles in three faces), `9ce3763` (panel laid out as the
-page, headings pinned) and `916fa2b` (the outcome message), leaving the published page three
-days behind `main`.
-
-`CONTRIBUTOR.md` asks for a published page to be linked rather than described, in the pull
-request and in the message both. That rule cannot be followed by a session that cannot find
-the URL, and every session here failed to find it — including the one writing this, which
-searched `README.md` and this file, found nothing, and concluded from the absence that no page
-had ever been published. It had; `contributor/sincopa/dance_ontology/README.md` has carried a
-`built file → published at` table for eight pages all along, and this project had no such
-table. It has one now, under *Published*.
-
-**Found on republishing, and not fixed here.** The artifact viewer refuses every download a
-page starts itself — `<a download>`, `data:` and `blob:` hrefs alike. The page's own
-`download.ts` already assumes something like this: `toastWithLink` offers the file as an
-anchor, offers the image to press and hold, and says in as many words that the frame may be
-blocking it and the page should be opened in its own tab. So `save scene` and `save image`
-have never worked for a viewer of the published page, and the toast is what a reader gets
-instead. The viewer mediates this through a `downloads` capability a page must declare; that
-is a real fix rather than a workaround, and it is a change to the page rather than to the
-record, so it is queued rather than done here.
-## Re-audit, 2026-09-12, one catalogue for every word shown
-
-Asked by the Architect, after the outcome messages landed: *"there should be 1 source of truth
-for shown text. use best practice for i13n and l18n in games."*
-
-**What was wrong.** Shown text was written where it was drawn, which put one sentence in two
-languages with nothing holding the copies together. Measured before the change: **seven
-tooltips written word for word in both `panel.nim` and the browser scripts**, and three that
-had already drifted —
-
-| control | the window said | the page said |
-|---------|-----------------|---------------|
-| point radius | `Radius a point… shrinks with distance.` | `Radius the point… it shrinks…` |
-| shines | `…from where it stands, and is drawn flat.` | `…from where it stands.` |
-| row select | `Add this object… the 3D view rings each one.` | `Select or deselect this object.` |
-
-The sun is the one that cost a reader something: **and is drawn flat** is a fact about drawing
-that the page had lost. Where one side knew more, the fuller sentence won; where the page read
-better as prose, the page won.
-
-**The practice, and the one place this departs from it.** Games solve this with a string
-catalogue: every shown string gets a stable identifier, code names the identifier rather than
-the words, and one file is what a translator edits. That much is taken as-is. The standard
-form also tolerates a **runtime** miss — catalogue is data loaded after the build, the compiler
-cannot see it, so every such toolchain ships a fallback for a key with no text.
-
-This catalogue compiles in, so it can do better: the key is an **enum** and the table is
-`array[Wording, cstring]` written with its keys, `[TipRowSelect: "…", …]`. There is no miss to
-fall back from. Three failures were checked rather than asserted:
-
-| what was done to it | what happened |
-|---|---|
-| key added to the enum, no row | `Error: type mismatch: got 'array[0..40, string]'` |
-| key misspelt in the table | `Error: undeclared identifier: 'TipChipGrdi'` |
-| key renamed, page not updated | `error TS2339: Property 'TipRowSelect' does not exist` |
-
-**How the key reaches the page.** `tools/build.nim`'s `declare` already derives the bridge's
-TypeScript declarations from the bridge's own source; it now also reads the `Wording` enum and
-emits `declare const enum Wording` beside them. An ambient `const enum` is inlined at each use
-site, so the page carries numbers rather than a lookup object and nothing new joins `SCRIPTS`.
-The third row above is that emitter working: the ordinal is never hand-copied, and a rename
-that is not re-derived fails the type check rather than at run time — the same argument as
-repository issue 47, applied again.
-
-**The catalogue is only useful while it is whole,** so `types` now refuses shown text written
-anywhere else. Putting one literal back:
-
-```
-Shown text belongs in `wording.nim`, named by key; got 1:
-  src/browser/objects_section.ts:311: visibility.title =
-    'Show or hide this object without removing it.';
-```
-
-A named constant is still allowed and quoted text is not: a constant has one home, a literal
-has as many as it is typed in.
-
-**Not visual, so shown as worked examples.** Tooltips appear on hover and neither front-end
-can be driven to hover headlessly, so the four outputs above are what this change shows
-instead of a screenshot — which is what `CONTRIBUTOR.md` asks for where a change is not
-visual.
-
-**Named against the house, after the Architect asked.** `wordingOf(key: Wording)` named the key
-twice over, since the key *is* a wording; and `lut_wording` broke the shape every other lookup
-here carries. The house convention is `lut_<key>_to_<value>` — `lut_ink_to_name`,
-`lut_basis_to_name`, `lut_operation_to_arity` — with the accessor named for what it returns, as
-`nimBasisName` is. So the table is `lut_wording_to_text`, the accessor is `wordingText`, and
-`isWordingSpoken` is `hasWords`, since nothing here speaks. **GLOSSARY.md gains *Wording*** in the
-same change, which is what settled the question: a wording is one piece of shown text, the key is
-what code names, and `wordingText` gives the words it stands for.
-
-**Staged, and this is stage one.** The catalogue holds the 41 tooltips, where the drift was
-live. Stage two is labels and headings — `gui.button`, `gui.header`, `gui.separatorText` and
-the page's own `textContent`, about ninety sites. Stage three folds in `help.nim`'s rows and
-`message.nim`'s sentences, which are already shared but are a second and third table; one
-catalogue means one, and it is not one until they are in it.
-
-**Left alone deliberately.** The page still explains eleven controls where the window explains
-forty-one. A touch target has no hover, so the gap is likely a real difference rather than
-drift, and closing it would mean *writing* thirty new tooltips rather than de-duplicating any.
-The catalogue makes that a one-line change per control whenever it is judged worth it.
-
-## Re-audit, 2026-09-12, stage two: the labels
-
-Stage one of the catalogue took the 41 tooltips. This takes the words on the controls
-themselves, on both front-ends, and closes the hole stage one left: a literal could still go
-back in at any `gui.button` or any `textContent`.
-
-**What the inventory found.** The window named **32** labels in `panel.nim`; the page wrote
-**6** from its scripts and carried **44** more as static text in `pages/shell.html`. So the
-page's labels live in *markup*, not in TypeScript, and stage one's trick — strip the attribute,
-set it from a script at load — does not scale: it would empty 44 elements, invent 44 ids, and
-leave the page blank until its scripts ran.
-
-**The page fills its markup at build time.** `tools/build.nim` already rewrites `shell.html` on
-the way out, replacing `@SCRIPT@` and `@EMBED:<face>@`. Stage two adds one more token to the
-same pass:
-
-```html
-<button class="button" id="button-add" type="button" aria-label="add object"
->@WORD:NameChipAdd@</button>
-```
-
-filled from `lut_wording_to_text` when the page is assembled. That gives what neither
-alternative does: no second copy of the words, no runtime assignment, and a page whose real
-text is in the markup — so it reads with scripts refused, and with the first paint rather than
-the first frame. A token naming a key the catalogue does not carry stops the build:
-
-```
-Shell names wording catalogue does not carry, at pages/shell.html:
-  1092: <button class="button" id="button-add" … >@WORD:NameChipAdded@</button>
-```
-
-**What had drifted, and what won.**
-
-| shown | the window said | the page said | now |
-|---|---|---|---|
-| coefficients, composing | `…stacked one row per grade…` | no such clause | the window's |
-| coefficients, composing | `…nothing joins the scene…` | no such clause | the window's |
-| coefficients, editing | `…stacked one row per grade.` | no such clause | the window's |
-| help button | `"  ?  "` | `?` | `?`; padding was layout written as text |
-| apostrophe | `library's` | `library’s` | `library's`, as the catalogue has it |
-
-**One key per control, not one key per word.** `NameRowHide` and `NamePickHide` both read
-"hide" today and are two keys, because two buttons honestly wear one word and a translator may
-still need them apart. That is the practice this adapts, and it is why the "no two keys carry
-the same text" law now holds over **prose keys only** — the tooltips and notes, where a
-repeated sentence is still a copy-paste. Labels get their own law instead: stripped, no doubled
-space, no trailing full stop, and at most `RUNES_LABEL_MOST` runes, so prose cannot wander into
-a `Name` key.
-
-**The guard is total now, not a list of prefixes.** `checkWording` used to ban three exact
-strings. It now refuses a quoted literal at any of the fourteen panel calls that put text in
-front of a reader, and at `.title`, `.textContent` and `.innerHTML` in every browser script. A
-hidden ImGui id (`##name`) and an empty label are allowed, because neither is shown. It also
-refuses the opposite defect: a catalogue row **no front-end names**, so the catalogue cannot
-grow words written for nobody.
-
-```
-Shown text belongs in `wording.nim`, named by key; got 3:
-  src/browser/state.ts:166: hint.textContent = 'or press and hold the image to save it';
-  src/browser/state.ts:175: advice.textContent = 'If nothing arrives, this frame is blocking it — '
-  src/browser/state.ts:186: dismiss.textContent = 'dismiss';
-```
-
-Those three were real and are now catalogued, which is why the count is **105 keys**, not the
-~88 the shared labels alone would give: once the guard is total, text one front-end alone shows
-comes in too. That is a change of position from stage one, which said single-front-end text
-stays put — the guard cannot tell shared from unshared, and a guard with a hand-kept allowlist
-would rot. The words still have one home; nothing about which front-end shows them changed.
-
-**`tools/build.nim` imports the catalogue rather than parsing it.** `declare` used to read
-`wording.nim` as text to recover the enum's keys, and would have stopped at the first blank
-line inside the enum. It now imports the module and walks `Wording` itself, so a key renamed
-there and not re-derived fails to compile rather than fails to match.
-
-**Still theirs.** Whether the page should reach every tooltip the window has (`#145`); stage
-three, folding `help.nim`'s rows and `message.nim`'s sentences in — until that lands, "one
-catalogue" is three; and the flaky two-finger pan check (`#153`).
+Open questions
+---
+Recorded here and in the pull request body, per CONTRIBUTOR.md: a contributor neither works
+around a rule nor edits it.
+
+**The drawer's `backdrop-filter` costs about 11 ms of every frame at the largest scene.**
+Measured with the drawer open over 5,038 objects: 75 ms per frame against 64 ms with the filter
+forced off, where the drawer closed is 51 ms and the page carries 45,813 elements. The blur is
+what makes the drawer read as glass over a live 3D view, so it is not plainly the wrong trade;
+the figure is recorded so the question can be asked with it rather than about it. Software
+rendering inflates all three readings, so the ratio is the part to hold.
+
+**The page shows fewer tooltips than the window.** Stage one moved 41 tooltips into the
+catalogue and neither front-end writes a literal, but the page still explains eleven controls
+where the window explains all of them. Whether it should reach every one is a design question
+rather than a defect, raised as `#145`.
+
+**The catalogue is three files rather than one.** `wording.nim` holds the labels and tooltips;
+`help.nim` holds the help rows and `message.nim` the outcome sentences. Folding the last two in
+is stage three, and until it lands "one catalogue" is true of one file of three.
+
+**A two-finger pan check has failed once and has not been reproduced.** Raised as `#153` with
+what was tried. It is recorded rather than quarantined, since a check giving two verdicts on one
+tree is what the determinism rule calls wrong.
