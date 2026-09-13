@@ -9,18 +9,20 @@
 ##     records, `PROJECT_FILES`: rules propagation rewrites provenance and glossary in every
 ##     project and changes no behaviour, so it compiles nothing while static pass still
 ##     verifies every stamp; README describes project and runs nothing, by same reasoning.
-##   Change to koch or to check sources selects every project, because how each is checked
-##     changed. Those files are curator's alone and move rarely, so common case stays small.
+##   Change to `koch.nim` or `koch.nim.cfg` selects driver's project, whose suites read them;
+##     check sources are that project's code and select it as any code does. Nothing selects
+##     every project: push run on `main` plans against push's own base and weekly sweep
+##     against its window, so each compiles what changed and nothing else (CURATOR.md duty
+##     11). Contributor suite is contributor's to run, and static pass reads every project
+##     regardless.
 ##   Path inside no project selects nothing by itself.
 ##
 ##   Rendered plan drives one CI job per project, each installing that project's own pin, so
 ##     wall time is slowest changed project rather than sum of all. Entry carries `kind`,
 ##     since version is installed by setup action and commit is built from source.
-##   Cost: scoped run leaves unrelated project's rot unseen until it next changes; weekly
-##     sweep over every project is guard, and it is weaker than running everything always.
-##   Sweep itself is skipped in week no code merged, since rot arrives with merges. Cost:
-##     rot from outside repository, such as runner image moving under pinned compiler, goes
-##     unseen through quiet week; it surfaces on next sweep that runs.
+##   Cost: rot checker change brings to unchanged project is unseen until that project next
+##     changes, and so is rot from outside repository, such as runner image moving under
+##     pinned compiler; weekly sweep compiles what merged inside its window, nothing more.
 
 {.experimental: "strictFuncs".}
 
@@ -64,12 +66,11 @@ func isCode*(dir, path: string): bool =
 
 
 func testSet*(dirs, paths: openArray[string]): seq[string] =
-  ## Select projects one change asks to compile, sorted.
-  for path in paths:
-    if path.isChecker: return (@dirs).sorted
+  ## Select projects one change asks to compile, sorted: each whose code changed, and
+  ##   driver's project when driver's root files did, since its suites read them.
   for dir in dirs:
     for path in paths:
-      if isCode(dir, path):
+      if isCode(dir, path) or (dir == DRIVER_DIR and path in CHECKER_FILES):
         result.add dir
         break
   result.sort
@@ -182,12 +183,11 @@ func allJobs*(tree: Tree): seq[Job] =
 
 
 func sweepJobs*(tree: Tree, paths: openArray[string]): seq[Job] =
-  ## Build sweep: every project when any code changed in window, none when nothing did.
-  ##   Sweep exists to catch rot scoped runs missed, and rot arrives with merges, so week
-  ##   nobody merged code has nothing to find. Record-only weeks count as nothing, by same
+  ## Build sweep: projects whose code merged in window, none when nothing did.
+  ##   Rot arrives with merges, so week nobody merged code has nothing to find, and week
+  ##   somebody did has that project to compile. Record-only merges count as nothing, by same
   ##   rule scoped runs use.
-  if testSet(tree.projectDirs, paths).len == 0: return
-  tree.allJobs
+  tree.jobs(paths)
 
 
 proc sweepFor*(root: string, tree: Tree, days: int): seq[Job] =
@@ -267,3 +267,26 @@ proc drivenJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
     if tree.nodeDirs([target.dir]).len > 0: result.add restoreNode(root, target)
   if result.len > 0: return
   result.add runDriven(root, targets)
+
+
+proc ciJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
+  ## Restore each planned project once, test it, then drive those carrying driven checks.
+  ##   `ci` once ran `runJobs` then `drivenJobs`, and each restored driven project's
+  ##   checkouts: second restore was Atlas confirming nothing moved, seconds per project, and
+  ##   work nobody asked for is still work. Restore failing still stops driving alone, as
+  ##   `drivenJobs` stops, since driving unrestored project fails again for second reason.
+  let (targets, found) = jobs.targetsFor
+  result = found
+  let restored = restoreAll(root, targets)
+  result.add restored
+  result.add runTests(root, targets)
+  var driven: seq[Target]
+  for job in tree.drivenOnly(jobs):
+    for target in targets:
+      if target.dir == job.dir: driven.add target
+  if driven.len == 0 or found.len > 0 or restored.len > 0: return
+  var node_found: seq[Finding]
+  for target in driven:
+    if tree.nodeDirs([target.dir]).len > 0: node_found.add restoreNode(root, target)
+  result.add node_found
+  if node_found.len == 0: result.add runDriven(root, driven)

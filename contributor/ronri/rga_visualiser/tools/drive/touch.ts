@@ -2,6 +2,15 @@
 //   debugging protocol, which only node reaches.
 //   Playwright's touch API is single-touch, so pinch is dispatched through CDP directly.
 //   Touch is where pinch regression lived, and no suite has finger at all.
+//   Touch ids are never reused across gestures, and every gesture starts by asking page
+//     whether any pointer is still down. Id reused from gesture before is indistinguishable
+//     from finger left live by dropped or reordered lift: page keys pointers by id, so
+//     stale finger is overwritten in silence and pair page reads is not pair harness sent
+//     (repository issues 153 and 154). Fresh id leaves stale one standing, where guard names
+//     it and gesture's own check fails on it, rather than passing or failing by luck.
+//   Guard reads events browser delivered, tracked by listener harness installs, never
+//     page's own bookkeeping: page's surface is not widened for test, and what is asserted
+//     is what page received.
 
 import type { CDPSession, Page } from '@playwright/test';
 import { readCamera, settleCamera } from './camera';
@@ -15,22 +24,76 @@ interface Finger {
   y: number;
 }
 
-/** Open channel two-finger gestures are dispatched down. */
+/** Attribute on document root where harness's listener writes ids of pointers down. */
+const ATTRIBUTE_POINTERS_DOWN = 'pointersDown';
+
+/** Open channel two-finger gestures are dispatched down, and start watching pointers.
+ *
+ *  Listener on window, capturing, so it sees every pointer event page does whatever page
+ *  does with it; ids still down are written to document root, where `pointersDown` reads
+ *  them without any global page script would have to declare.
+ */
 export async function openTouch(page: Page): Promise<CDPSession> {
+  await page.evaluate((attribute) => {
+    const down = new Set<number>();
+    const write = (): void => {
+      document.documentElement.dataset[attribute] = [...down].join(',');
+    };
+    window.addEventListener('pointerdown', (e) => { down.add(e.pointerId); write(); }, true);
+    const lift = (e: PointerEvent): void => { down.delete(e.pointerId); write(); };
+    window.addEventListener('pointerup', lift, true);
+    window.addEventListener('pointercancel', lift, true);
+    write();
+  }, ATTRIBUTE_POINTERS_DOWN);
   return page.context().newCDPSession(page);
+}
+
+/** Read ids of pointers page has seen go down and not yet come up. */
+export async function pointersDown(page: Page): Promise<number[]> {
+  const text = await page.evaluate(
+    (attribute) => document.documentElement.dataset[attribute] ?? '', ATTRIBUTE_POINTERS_DOWN,
+  );
+  return text === '' ? [] : text.split(',').map(Number);
+}
+
+/** Report only where pointer is still down as gesture begins, naming it.
+ *
+ *  Silent when clean, so tally does not grow by one line per gesture; what it adds is
+ *  name of stale pointer beside failure that follows, in place of two camera numbers.
+ */
+async function ensureLifted(page: Page, gesture: string): Promise<void> {
+  const ids = await pointersDown(page);
+  if (ids.length > 0) {
+    report(`no pointer is still down before ${gesture}`, false, `ids ${ids.join(', ')}`);
+  }
 }
 
 /** Which touch event is dispatched, as Chrome's protocol names them. */
 export type TouchKind = 'touchStart' | 'touchMove' | 'touchEnd' | 'touchCancel';
 
+// Ids of fingers down now, and next id to hand out: one id per finger per gesture, never
+//   reused, so finger left standing from gesture before cannot wear new finger's id.
+let ids_down: number[] = [];
+let id_touch_next = 1;
+
 /** Dispatch one touch event, however many fingers are down. */
 export async function touchAt(
   cdp: CDPSession, kind: TouchKind, points: Finger[],
 ): Promise<void> {
+  if (kind === 'touchStart') {
+    ids_down = points.map(() => { id_touch_next += 1; return id_touch_next; });
+  } else if (kind === 'touchMove' && points.length !== ids_down.length) {
+    throw new Error(
+      `a touchMove must move every finger down; got ${points.length} of ${ids_down.length}`,
+    );
+  }
   await cdp.send('Input.dispatchTouchEvent', {
     type: kind,
-    touchPoints: points.map((point, index) => ({ x: point.x, y: point.y, id: index })),
+    touchPoints: points.map((point, index) => ({
+      x: point.x, y: point.y, id: ids_down[index] ?? 0,
+    })),
   });
+  if (kind === 'touchEnd' || kind === 'touchCancel') ids_down = [];
 }
 
 /** Put two fingers down and draw them apart or together, moving their midpoint. */
@@ -38,6 +101,7 @@ export async function pinch(
   page: Page, cdp: CDPSession, mid_from: Finger, mid_to: Finger,
   spread_from: number, spread_to: number,
 ): Promise<void> {
+  await ensureLifted(page, 'a pinch');
   await touchAt(cdp, 'touchStart', [
     { x: mid_from.x - spread_from, y: mid_from.y },
     { x: mid_from.x + spread_from, y: mid_from.y },
@@ -61,6 +125,7 @@ export async function pinch(
 export async function tapAt(
   page: Page, cdp: CDPSession, x: number, y: number, milliseconds = 60,
 ): Promise<void> {
+  await ensureLifted(page, 'a tap');
   await touchAt(cdp, 'touchStart', [{ x, y }]);
   // Wall time, deliberately: how long finger stays down is what caller asked for, and long
   //   press is decided by that duration rather than by anything page reports.
@@ -87,6 +152,7 @@ export async function dragFinger(
   const start = { x: from[0] ?? 0, y: from[1] ?? 0 };
   const end = { x: onto[0] ?? 0, y: onto[1] ?? 0 };
   if (press) {
+    await ensureLifted(page, 'a finger drag');
     await touchAt(cdp, 'touchStart', [start]);
     for (let step = 1; step <= 10; step += 1) {
       await touchAt(cdp, 'touchMove', [{

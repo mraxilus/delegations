@@ -38,3 +38,14 @@ suite "Glossary":
   test "term line grammar":
     check "**Order**:".isTermLine and not "**Order**".isTermLine  # colon required
     check not "**:".isTermLine and not "Order:".isTermLine  # bold and content required
+
+  test "people words glossary avoids stay out of governed prose":
+    check peopleWordsIn("The owner merges by hand.") == @["owner"]
+    check peopleWordsIn("Sessions end; each session carries its own.") == @["Sessions", "session"]
+    check peopleWordsIn("Run `git config user.name` first.").len == 0  # code span
+    check peopleWordsIn("The Architect and the delegate.").len == 0  # agreed terms
+    check peopleWordsIn("The browser is used by many.").len == 0  # `used` is not `user`
+    check peopleWordsIn("assets, agents").len == 1  # plural read as its word
+    let found = checkPeopleWords("CURATOR.md", "# T\n\nowner\n| Author | x |\n```\nbot\n```\n")
+    check found.mapIt(it.line) == @[3]  # table row and fence skipped
+    check found[0].message.endsWith("got `owner`.")

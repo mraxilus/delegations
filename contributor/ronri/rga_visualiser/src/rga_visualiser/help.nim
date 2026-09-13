@@ -6,6 +6,9 @@
 ##   neither.
 ## Entries name *user's* action and its outcome, in reader's words, not handler.
 ##   "Drag one object onto another", not "pointerdown then pointermove".
+##   Words are `wording`'s: every cell, title and line is key there, and this module holds
+##   which cell sits in which row. Cell naming button or key composes through `wording`'s
+##   own funcs, so no word reader sees is written here.
 ##   Binding derived from rule stated elsewhere is read from there: `lut_help_entries`
 ##   builds construct rows out of `interaction.armingOf`, so rebinding button rewrites help.
 ## Every row has to make sense with rows above it covered up.
@@ -29,7 +32,7 @@
 
 import std/[options, strformat, strutils]
 
-import ./[interaction, scene]
+import ./[interaction, scene, wording]
 
 
 
@@ -86,25 +89,24 @@ type
 
 func titleOf*(path: HelpPath): string =
   ## Name one tab as reader would say what they are doing.
-  case path
-  of HelpPath.Drag: "drag"
-  of HelpPath.Select: "select"
-  of HelpPath.Menu: "menu"
-  of HelpPath.Panel: "panel"
-  of HelpPath.Camera: "camera"
-  of HelpPath.Keys: "keys"
-  of HelpPath.Operations: "operations"
+  $wordingText(
+    case path
+    of HelpPath.Drag: NameTabDrag
+    of HelpPath.Select: NameTabSelect
+    of HelpPath.Menu: NameTabMenu
+    of HelpPath.Panel: NameTabPanel
+    of HelpPath.Camera: NameTabCamera
+    of HelpPath.Keys: NameTabKeys
+    of HelpPath.Operations: NameTabOperations
+  )
 
 
-func wheelWordsTaught(): string =
-  ## Say which notation each wheel wedge wears, and which word that notation is.
-  ##   Notation first: reader arrives holding what wedge said and wants its name.
+func wheelPairs(): seq[tuple[notation, word: string]] =
+  ## Pair each wheel wedge's notation with word it is, for `wording.wheelWordsTaught`.
   ##   `More` is left out -- its wedge is bare ellipsis, which needs no decoding, and row
   ##   in this tab already says what it hands over.
-  var said: seq[string]
   for choice in [DragChoice.Join, DragChoice.Meet, DragChoice.Project]:
-    said.add(labelOf(choice) & " is " & wordOf(choice))
-  said[0 ..< said.len - 1].join(", ") & " and " & said[^1]
+    result.add((labelOf(choice), wordOf(choice)))
 
 
 func descriptionOf*(path: HelpPath): string =
@@ -117,26 +119,16 @@ func descriptionOf*(path: HelpPath): string =
   of HelpPath.Drag:
     # Teach three wedges their words here, where both UIs already read this line.
     #   Wedge wears notation alone (`interaction.labelOf`), which names nothing until
-    #   reader is told which operation it is. Desktop taught that in its panel and browser
-    #   in line above its sections; browser's went with that line, and desktop's was last
-    #   copy of what this module exists to hold once.
+    #   reader is told which operation it is.
     #   Read from `wordOf` and `labelOf` rather than written out, so wedge renamed or
     #   renotated is renamed here too.
-    "Drag one object onto another to build a new one. Some pairs open a wheel of choices, " &
-    "which name themselves in notation: " & wheelWordsTaught() & "."
-  of HelpPath.Select:
-    "Say which objects to work on. Whatever is selected wears a white outline."
-  of HelpPath.Menu:
-    "The small menu that appears beside whatever you just selected."
-  of HelpPath.Panel:
-    "The panel and the buttons above it."
-  of HelpPath.Camera:
-    "Move your viewpoint. None of this changes the scene itself."
-  of HelpPath.Keys:
-    "Keyboard shortcuts. The 3D view needs focus first — press tab until it has it."
-  of HelpPath.Operations:
-    "Every operation the apply section and the selection menu offer, and what each is " &
-    "called."
+    $wordingText(NoteTabDrag) & " " & wheelWordsTaught(wheelPairs())
+  of HelpPath.Select: $wordingText(NoteTabSelect)
+  of HelpPath.Menu: $wordingText(NoteTabMenu)
+  of HelpPath.Panel: $wordingText(NoteTabPanel)
+  of HelpPath.Camera: $wordingText(NoteTabCamera)
+  of HelpPath.Keys: $wordingText(NoteTabKeys)
+  of HelpPath.Operations: $wordingText(NoteTabOperations)
 
 
 
@@ -154,16 +146,20 @@ const lut_help_entries* = block:
   ##     Size is hand-written rows plus catalogue, which is generated.
   ##   Entries of one path are written together, asserted below: both front-ends walk this
   ##   once in order, so split path renders as two tabs of same name.
+  ##   Every cell is `wording`'s key, or composed by `wording`'s func from one; row whose
+  ##   action names button or key composes it, so button's name is `interaction`'s alone.
   var lut: array[39 + COUNT_OPERATION, HelpEntry]
   var count = 0
-  proc add(path: HelpPath; action, outcome: string; is_touch = false) =
+  proc add(path: HelpPath; action: string; outcome: Wording; is_touch = false) =
     lut[count] = HelpEntry(
       path: path,
       action: action,
-      outcome: outcome,
+      outcome: $wordingText(outcome),
       is_touch: is_touch,
     )
     inc count
+  proc add(path: HelpPath; action, outcome: Wording; is_touch = false) =
+    add(path, $wordingText(action), outcome, is_touch)
 
   # Ask `interaction.armingOf` which button asks and which decides.
   #   Walked in reading order rather than `PointerButton`'s physical left, middle, right.
@@ -171,137 +167,105 @@ const lut_help_entries* = block:
     let arming = armingOf(button)
     if arming.isNone: continue
     add(
-      HelpPath.Drag, nameOf(button) & "-drag one object onto another",
+      HelpPath.Drag, withButton(nameOf(button), HelpDragOnto),
       case arming.get
-      of MenuArming.Never: "build the one object those two define, without ever asking"
-      of MenuArming.OnDwell: "build that object, or pause on the pivot to be asked"
-      of MenuArming.Always: "open the wheel, whatever the pair would have made on its own",
+      of MenuArming.Never: HelpBuildUnasked
+      of MenuArming.OnDwell: HelpBuildOrPause
+      of MenuArming.Always: HelpOpenWheel,
     )
   # Say "on its own": finger over crowd moves view instead; see `interaction.canConstructByTouch`.
-  add(
-    HelpPath.Drag, "drag an object on its own onto another",
-    "build the one object those two define", is_touch = true,
-  )
+  add(HelpPath.Drag, HelpDragAloneOnto, HelpBuildDefined, is_touch = true)
   # Touch alone, now that mouse decides by button; see `MenuArming`.
-  add(
-    HelpPath.Drag, "pause on the pivot mid-drag",
-    "open the wheel without needing a second button", is_touch = true,
-  )
-  add(
-    HelpPath.Drag, "the … wedge",
-    "hand both objects to the apply picker, which lists every operation",
-  )
+  add(HelpPath.Drag, HelpPauseMidDrag, HelpOpenWheelNoButton, is_touch = true)
+  add(HelpPath.Drag, wedgeNamed(labelOf(DragChoice.More)), HelpHandToPicker)
 
   # Ask `interaction.revealsMenuOn` which button brings menu, as drag rows ask `armingOf`.
   #   Shift gets one row, not one per button: shift means same thing whichever button,
   #   and four rows overflow phone.
   for button in [PointerButton.Left, PointerButton.Right]:
     add(
-      HelpPath.Select, nameOf(button) & "-click an object",
-      if revealsMenuOn(button): "the same, and open its menu of actions"
-      else: "select just that one, dropping anything else",
+      HelpPath.Select, withButton(nameOf(button), HelpClickObject),
+      if revealsMenuOn(button): HelpSameAndMenu else: HelpSelectJustOne,
     )
+  add(HelpPath.Select, HelpHoldShiftClick, HelpAddOrDrop)
   add(
-    HelpPath.Select, "hold shift as you click",
-    "add it, or drop it again if it is already picked",
+    HelpPath.Select, withButton(nameOf(PointerButton.Right), HelpClickSelected), HelpMenuBack
   )
-  add(
-    HelpPath.Select, nameOf(PointerButton.Right) & "-click with objects selected",
-    "bring their menu back, changing nothing",
-  )
-  add(
-    HelpPath.Select, "click empty space",
-    "clear the selection, or pick the sky if there is one",
-  )
-  add(
-    HelpPath.Select, "press and hold an object",
-    "select it — its outline fills as you hold", is_touch = true,
-  )
-  add(
-    HelpPath.Select, "tap another object while one is selected",
-    "add it to the selection", is_touch = true,
-  )
+  add(HelpPath.Select, HelpClickEmpty, HelpClearOrSky)
+  add(HelpPath.Select, HelpPressHold, HelpSelectFills, is_touch = true)
+  add(HelpPath.Select, HelpTapAnother, HelpAddToSelection, is_touch = true)
   # Give menu beside selection own tab rather than tail of `select`.
   #   Ten rows on phone wrap and scroll.
-  add(HelpPath.Menu, "apply", "run any operation on what you selected")
-  add(HelpPath.Menu, "edit", "change the selected object's name, colour or coordinates")
-  add(HelpPath.Menu, "hide", "keep the selection but stop drawing it")
-  add(HelpPath.Menu, "delete", "remove the selection from the scene")
-  add(HelpPath.Menu, "✕", "clear the selection and close this menu")
+  #   Action is button's own key, so button renamed is renamed in its row.
+  add(HelpPath.Menu, NamePickApply, HelpRunOperation)
+  add(HelpPath.Menu, NamePickEdit, HelpChangeObject)
+  add(HelpPath.Menu, NamePickHide, HelpKeepStopDrawing)
+  add(HelpPath.Menu, NamePickDelete, HelpRemoveSelection)
+  add(HelpPath.Menu, NamePickClose, HelpClearClose)
 
   # Name rows by button rather than by where it sits.
   #   `add` and toggles are in desktop's top bar and browser's chip row, so row naming
   #   place is false on one build.
-  add(HelpPath.Panel, "add", "create a point by typing its coordinates")
+  add(HelpPath.Panel, NameChipAdd, HelpCreatePoint)
+  add(HelpPath.Panel, sectionNamed(NameHeadApply), HelpRunCatalogue)
+  add(HelpPath.Panel, sectionNamed(NameHeadObjects), HelpEveryObject)
   add(
-    HelpPath.Panel, "the apply section",
-    "run any operation in the catalogue on what you selected",
+    HelpPath.Panel,
+    namesJoined([
+      pathNamed([NameMenuSave, NameMenuSaveScene]), pathNamed([NameMenuLoad, NameMenuLoadScene]),
+    ]),
+    HelpWriteRead,
   )
   add(
-    HelpPath.Panel, "the objects section",
-    "every object in the scene, each with rename, hide and delete",
-  )
-  add(
-    HelpPath.Panel, "save scene, load scene",
-    "write the whole scene to a file, or read one back",
-  )
-  add(
-    HelpPath.Panel, "axes, grid",
-    "show or hide the reference furniture, leaving the scene alone",
+    HelpPath.Panel,
+    namesJoined([$wordingText(NameChipAxes), $wordingText(NameChipGrid)]), HelpFurniture,
   )
 
-  add(HelpPath.Camera, "drag empty space", "orbit the view around what you are looking at")
-  add(HelpPath.Camera, "right-drag empty space", "slide the view sideways and up or down")
-  add(HelpPath.Camera, "wheel", "move toward or away from whatever you point at")
+  add(HelpPath.Camera, HelpDragEmpty, HelpOrbit)
+  add(
+    HelpPath.Camera, withButton(nameOf(PointerButton.Right), HelpDragEmpty), HelpSlideSideways
+  )
+  add(HelpPath.Camera, HelpWheel, HelpMoveToward)
   # Say `empty space or a crowd`, not just `with one finger`: finger starting on *lone*.
   #   object builds; over several it moves, and zooming in separates them.
-  add(
-    HelpPath.Camera, "drag empty space, or a crowd of objects, with one finger",
-    "orbit the view around what you are looking at", is_touch = true,
-  )
-  add(HelpPath.Camera, "pinch", "move closer in or further out", is_touch = true)
-  add(
-    HelpPath.Camera, "drag with two fingers",
-    "slide the view sideways and up or down", is_touch = true,
-  )
+  add(HelpPath.Camera, HelpDragEmptyOrCrowd, HelpOrbit, is_touch = true)
+  add(HelpPath.Camera, HelpPinch, HelpMoveCloser, is_touch = true)
+  add(HelpPath.Camera, HelpDragTwoFingers, HelpSlideSideways, is_touch = true)
 
-  add(
-    HelpPath.Keys, "escape", "back out of whatever is part-way through, one step at a time"
-  )
-  add(HelpPath.Keys, "ctrl+z, ctrl+shift+z", "undo, then redo, the last change to the scene")
-  add(HelpPath.Keys, "tab", "move focus between the controls and the 3D view")
-  # Read keys out of `interaction.motionFor` and `actionFor`, so rebinding rewrites row.
-  #   Grouped by job, since reader looks for job first; names come from `nameOf`.
+  add(HelpPath.Keys, HelpEscape, HelpBackOut)
+  add(HelpPath.Keys, HelpUndoRedoKeys, HelpUndoRedo)
+  add(HelpPath.Keys, HelpTab, HelpMoveFocus)
+  # Name keys out of `interaction.nameOf`, so key renamed is renamed in its row.
+  #   Grouped by job, since reader looks for job first.
   add(
     HelpPath.Keys,
-    nameOf(Key.W) & ", " & nameOf(Key.A) & ", " & nameOf(Key.S) & ", " & nameOf(Key.D),
-    "slide the view across the ground; hold " & nameOf(Key.Shift) & " to move faster",
+    namesJoined([nameOf(Key.W), nameOf(Key.A), nameOf(Key.S), nameOf(Key.D)]),
+    HelpSlideGround,
   )
-  add(HelpPath.Keys, nameOf(Key.Q) & ", " & nameOf(Key.E), "lower or raise the view")
+  add(HelpPath.Keys, namesJoined([nameOf(Key.Q), nameOf(Key.E)]), HelpLowerRaise)
   add(
     HelpPath.Keys,
-    nameOf(Key.Left) & ", " & nameOf(Key.Right) & ", " &
-      nameOf(Key.Up) & ", " & nameOf(Key.Down),
-    "orbit the view around what you are looking at",
+    namesJoined([nameOf(Key.Left), nameOf(Key.Right), nameOf(Key.Up), nameOf(Key.Down)]),
+    HelpOrbit,
   )
+  add(HelpPath.Keys, namesJoined([nameOf(Key.Minus), nameOf(Key.Plus)]), HelpFurtherCloser)
+  add(HelpPath.Keys, nameOf(Key.F), HelpBackIntoView)
   add(
-    HelpPath.Keys, nameOf(Key.Minus) & ", " & nameOf(Key.Plus), "move further out, or closer in"
+    HelpPath.Keys, namesJoined([nameOf(Key.BracketLeft), nameOf(Key.BracketRight)]),
+    HelpHighlightPrevNext,
   )
-  add(HelpPath.Keys, nameOf(Key.F), "bring whatever is selected back into view")
-
-  add(
-    HelpPath.Keys, nameOf(Key.BracketLeft) & ", " & nameOf(Key.BracketRight),
-    "move the highlight to the previous or next object",
-  )
-  add(
-    HelpPath.Keys, nameOf(Key.Enter),
-    "select the highlighted object; hold shift to add it",
-  )
-  add(HelpPath.Keys, nameOf(Key.Home), "put the camera back where it started")
+  add(HelpPath.Keys, nameOf(Key.Enter), HelpSelectHighlighted)
+  add(HelpPath.Keys, nameOf(Key.Home), HelpCameraHome)
   # Generate whole catalogue: row per operation, named as every picker offers it.
   #   `scene.notationSymbolic`, `scene.notationNamed`; hand-written list falls behind.
   for operation in Operation:
-    add(HelpPath.Operations, notationSymbolic(operation), notationNamed(operation))
+    lut[count] = HelpEntry(
+      path: HelpPath.Operations,
+      action: notationSymbolic(operation),
+      outcome: notationNamed(operation),
+      is_touch: false,
+    )
+    inc count
 
   doAssert count == len(lut),
     &"Every help handle must be filled, adjust the array's size; got `{count}` of `{len(lut)}`."

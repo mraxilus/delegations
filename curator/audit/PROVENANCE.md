@@ -1,16 +1,16 @@
 # Provenance
 
-| Field  | Value |
-|--------|-------|
-| Agent  | Claude Code |
-| Author | Claude |
-| Date   | 2026-09-06 |
-| Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 3497e71b8d327cfa |
-| Review | **Unreviewed.** Nothing here has been read line by line by a human. |
+| Field   | Value |
+|---------|-------|
+| Harness | Claude Code |
+| Author  | Claude |
+| Date    | 2026-09-06 |
+| Style   | CONSTITUTION.md and STYLE.md, followed. |
+| Rules   | 5aa3c7b7f2865a05 |
+| Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
-Origin: built from the owner's brief, the constitution, the Nim style guide and the provenance
-guide, all supplied by the owner; reshaped on the owner's direction into two project roots
+Origin: built from the Architect's brief, the constitution, the Nim style guide and the provenance
+guide, all supplied by the Architect; reshaped on the Architect's direction into two project roots
 driven by koch with Atlas for dependencies. No vendored source.
 
 This file describes the checker as it is. How each pass got here is in the log (Article XI.2).
@@ -180,6 +180,34 @@ files, 16 lowercase hex digits. CURATOR.md is excluded, so curator-only edits to
   CRLF invariance; by `taudit.nim`, one byte in any rules document goes stale in every project
   and one byte in CURATOR.md in none.
 
+**`koch stamp --write` sets every record's `Rules` row itself.** The row is rewritten in place
+by `withRulesRow`, found as `headerFields` finds it, so what is written is what the check then
+reads; a record already current is not touched, and each path that moved is printed. Duty 1's
+four hand edits were one step too many (curator review, C10).
+
+- Rejected: writing the whole header back, which would reformat a table its writer padded.
+- Verified by `tprovenance.nim`: the new stamp lands, padding and every other byte stay, a
+  second write is a no-op, an absent row leaves the source untouched, and only the first
+  `Rules` row moves.
+
+## Record shape
+
+**A record is read as `#` lines with fenced code blanked, and held to four forms the guide
+states.** No heading carries a date, `## Open questions` is the last `##` section, no heading
+text appears twice, and no title is underlined, since every reader here sees `#` lines and an
+underlined title is invisible to all of them. A record over 2,000 lines is a finding whose
+remedy is the prune the guide already asks for; the header may carry a `Pruned` row naming the
+commit before that prune, whose form the check reads and whose existence koch reads from
+`git log` on the record itself, under `tree` and `ci`, on a full clone; a shallow one has no
+such log, so the static job fetches every commit.
+
+- Rejected: splitting a long record into files by subsystem, since the checker names one
+  record per project and the stamp lives in its header; history is git's, and the row says
+  where.
+- Cost: line forms, never a Markdown parse: a heading inside an HTML comment counts and front
+  matter is not skipped; no governed record carries either.
+- Verified by `trecord.nim`, each form by line; `fencedOut` by `tmarkdown.nim`.
+
 ## Glossary
 
 **Shape only: heading, `## Language`, and a definition line after every `**Term**:`.** Content
@@ -188,15 +216,43 @@ check cannot know what was agreed, so agreement holds by reading. It runs on the
 `GLOSSARY.md` too. Zero terms pass, because the format creates entries lazily. Verified by
 `tglossary.nim`.
 
+**People words the glossary avoids are held out of root files and curator records.**
+`PEOPLE_WORDS` is the avoid list under Architect, Delegate, Curator, Contributor and Role, read
+whole and without case, plural included, outside code spans, fences and tables. People only:
+the full avoid list holds build, rules and version, plain words everywhere, and would have
+flagged 367 places; `identity` is left out as algebra's word in `curator/probe`. Contributor
+prose is not read. Verified by `tglossary.nim`.
+
+## Prompts
+
+**Both opening prompts are held to duty 10 by two forms.** A prose line naming a date, `#N`,
+`issue N`, `pull request N` or `run N` is a finding, since an incident belongs in this record
+or the log and only the rule belongs in a prompt; a prompt over `PROMPT_BYTES`, 24,000, is a
+finding, so the next rule added pays with a prune. Code spans and fences pass, which keeps the
+carried-list example legal.
+
+- Cost: `II.9`, `duty 10` and a bare year pass by shape; only a whole date is a diary here.
+- Verified by `tprompts.nim`.
+
+## Copies
+
+**A paragraph of 25 words or more written twice, in one Markdown file or across two, is a
+finding at its later place naming its first.** Fenced code, table rows and headings are left
+out; whitespace is collapsed before comparing. Two copies of one rule drift, and the prompts
+drifted that way.
+
+- Cost: a paragraph reworded by one word passes; the check catches a copy, never a paraphrase.
+- Verified by `tduplicates.nim`.
+
 ## Branch scope
 
 **Branch grammar mirrors paths: two, three or four segments, and the prefix decides.**
 `curator/<name>` owns the empty prefix, so every path passes; `curator/<project>/<name>` and
 `contributor/<domain>/<project>/<name>` own their folder. `main` passes because pushes to it are
-merges the owner approved.
+merges the Architect approved.
 
 - Rejected: a special case for the curator root; the empty prefix is one mechanism.
-- Cost: fixed segment counts reject nested branch names; the owner may merge red deliberately,
+- Cost: fixed segment counts reject nested branch names; the Architect may merge red deliberately,
   so this is a guard, not a gate.
 - Verified by `tscope.nim` over five domains, one curator project, the curator root and two
   rejected forms; `tdomains.nim` over 18 rejected branch forms.
@@ -335,7 +391,7 @@ different faces (repository issue 116).
   project can check that; the store owns the row's shape, so the store holds the law.
 
 **A `/common/` tree was costed and deferred.** Issue 134 asked for one, and named the bar for
-admitting anything to it: the curator and at least two contributor projects use it, with the users
+admitting anything to it: the curator and at least two contributor projects use it, each of them
 named so a later refactor can tell a common project nobody needs from one everybody does. The
 store is the only thing in the repository that clears that bar today. Compilers, Atlas checkouts
 and npm are pinned per project deliberately, and a tree with one inhabitant is a rename with a
@@ -343,8 +399,8 @@ migration attached — so the published contract above ships and the tree waits 
 **If it is ever built the curator writes it and contributors only read it**, because a shared tree
 a contributor may write is a scope boundary the branch grammar cannot check.
 
-**A sweep reads what GitHub records, so three carried rules stopped being only read.**
-`sweep.yml` runs daily and writes one issue: a pull request left ready without a green run, a
+**A ledger reads what GitHub records, so three carried rules stopped being only read.**
+`ledger.yml` runs daily and writes one issue: a pull request left ready without a green run, a
 `Closes #N` that never fired, and an issue or pull request opening with no role line or carrying
 no label. Its shape is `watch.yml`'s — one issue found again by a marker, `gh issue list` rather
 than search, label as a hardcoded literal — and its schedule idiom is `check.yml`'s.
@@ -373,18 +429,18 @@ than search, label as a hardcoded literal — and its schedule idiom is `check.y
   the first such workflow, not by reading the check.
 - **`watch.yml` watches it, and that was the condition for merging it.** A sweep cannot be driven
   before it lands — a scheduled workflow runs only from the default branch — so its first real run
-  is unattended. A sweep that quietly stopped running while both documents say a runner holds half
-  of three rules is worse than no sweep, so a red `sweep` opens an issue exactly as a red `check`
+  is unattended. A ledger that quietly stopped running while both documents say a runner holds half
+  of three rules is worse than no ledger, so a red `ledger` opens an issue exactly as a red `check`
   does. Its marker carries the workflow's own name, `watch:red:<name>`, rather than the single
   literal it used before: sharing one marker would let somebody closing a red `check` silently
-  dismiss a broken sweep, which is the failure being closed. Driven through a stub first — a red
-  `sweep` beside an open `check` issue opens its own rather than commenting on that one.
+  dismiss a broken ledger, which is the failure being closed. Driven through a stub first — a red
+  `ledger` beside an open `check` issue opens its own rather than commenting on that one.
 - Cost: about 30 runner-minutes a month. Public repositories draw on no allowance, so this is free
   today; it stops being free if this repository goes private again, where 1,909 of 2,000 free
   minutes were once measured used.
 - Unmeasured: whether a run authenticating as `GITHUB_TOKEN` spends the repository's allowance
   rather than the account's. It should, and that would keep the sweep off the budget every
-  delegate shares — but nothing here has measured it, and this session has twice found a
+  delegate shares — but nothing here has measured it, and this delegate has twice found a
   GitHub-metering belief wrong.
 
 ## Toolchain
@@ -392,9 +448,10 @@ than search, label as a hardcoded literal — and its schedule idiom is `check.y
 **Each project pins its own compiler; there is no repository-wide Nim.** `requires
 "nim == <version>"` in the project's nimble file, read through the same `requireLiterals` scan
 `dependencies.nim` uses, so requirements are parsed in one place. That no single version serves
-every project is measured, not feared: `rga_visualiser` depends on a library 2.2.4 cannot
-compile, and `dance_ontology` crashes the compiler itself on 2.2.8, 2.2.10 and 2.2.12 in
-six of its twelve suites (repository issue 106).
+every project is measured, not feared: `rga_visualiser` pins a compiler commit no release
+carries, and `dance_ontology` sat on 2.2.4 for a week because 2.2.8 onward crashed the
+compiler on its suites, until the cause was found in its own source (repository issue 106)
+and it moved to 2.2.12.
 
 - Rejected: one pin for the repository, which cannot hold both; `>=`, which cannot express the
   upper bound `dance_ontology` needs nor say which compiler a suite passed on; a `.nim-version`
@@ -430,14 +487,12 @@ that could be escaped.
 
 - Verified by running, not by reading: 23 audit suites and 2 probe suites pass on 2.2.12, in
   41.0 s and 10.0 s on this container, before the pin was pushed anywhere.
-- `dance_ontology` does not follow, and its `2.2.4` is an upper bound rather than neglect. The
-  cause is now measured rather than assumed: `opcAddFloat` at `vm.nim:1095` reads an operand the
-  VM left `rkInt`, because since 2.2.8 a `func` whose implicit `float` result is read by `+=`
-  before it is ever assigned gets an int register for it. Five lines reproduce it with nothing
-  of that project in them, `result = 0.0` first is enough to avoid it, and all twelve of its
-  suites then pass on 2.2.12. Handed over as repository issue 106; the line is theirs to write.
-- Cost: koch's own modules compile under both pins for as long as the two differ, since every
-  project's job installs its own. The matrix is what proves that, rather than this paragraph.
+- `dance_ontology` followed once the cause was measured rather than assumed: since 2.2.8 a
+  `func` whose implicit `float` result is read by `+=` before it is ever assigned gets an int
+  register for it, and `result = 0.0` first is enough to avoid it. Handed over as repository
+  issue 106 with a five-line reproduction; its record holds the diagnosis.
+- Cost: koch's own modules compile under every pin in the tree, since every project's job
+  installs its own. The matrix is what proves that, rather than this paragraph.
 
 **Koch resolves each pin to its own compiler, and fetches one it lacks.** `PATH` when it already
 serves, then `~/.cache/koch/nim/<pin>/bin`, then a fetch: a release as a tarball, and a commit —
@@ -461,7 +516,7 @@ Two traps, both found by driving rather than reasoning, and both changed the cod
   falls back to `PATH` rather than raising, since what `koch tools` produces moves between Nim
   versions.
 
-- Rejected: a directory the developer populates by hand, which leaves the defect for anyone who
+- Rejected: a directory a delegate populates by hand, which leaves the defect for anyone who
   has not; `choosenim`'s layout, a second convention that cannot serve a commit pin at all.
 - Costs: the checker reaches the network and may build a compiler — seconds for a release,
   minutes for a commit, once per pin; each cached toolchain is a few hundred megabytes and
@@ -545,28 +600,29 @@ reports the first differing line.
 ## Scoped checks
 
 **The static pass stays whole-tree; only compilation is scoped.** A project enters the test set
-when a changed path under it is anything but its three records (`PROJECT_FILES`), and a change
-to `koch.nim`, `koch.nim.cfg` or `curator/audit/src/` selects every project, because how each is
-checked changed. A path inside no project selects nothing by itself. Chosen against scoping the
-static pass on the figures below: it is hundredths of a second against tens of seconds of
-suites, so scoping it buys nothing measurable and costs a second code path plus the whole-tree
-layout and stamp guarantees. Rules propagation therefore compiles nothing while every stamp is
-still checked.
+when a changed path under it is anything but its three records (`PROJECT_FILES`); a change to
+`koch.nim` or `koch.nim.cfg` selects the driver's project, whose suites read them, and a change
+under `curator/audit/src/` selects it as code. Nothing selects every project: the push run on
+`main` plans against the push's own base and the weekly run against its window, so every run
+compiles what changed and nothing else (CURATOR.md duty 11). A contributor's suite is the
+contributor's to run. A path inside no project selects nothing by itself. Chosen against
+scoping the static pass on the figures below: it is hundredths of a second against tens of
+seconds of suites, so scoping it buys nothing measurable and costs a second code path plus the
+whole-tree layout and stamp guarantees. Rules propagation therefore compiles nothing while
+every stamp is still checked.
 
-- Cost: a merged change can leave an unrelated project red until it next changes; the weekly
-  sweep is the guard, and it is weaker than compiling everything on every push.
-- Cost, and it is deliberately the safe side of the trade: `isChecker` reads the path, never
-  the content, so editing a comment in `koch.nim` or under `curator/audit/src/` selects every
-  project. Measured 2026-09-08: a pull request whose only changes to those two files were doc
-  comments compiled four projects and drove a browser, 674 s, where the same tree's other
-  commits compiled nothing. The machinery to do better exists — `comments.nim` already
-  extracts comments per kind, so `plan` could ask whether anything but comments changed — and
-  it is rejected, because that detector errs toward compiling too little. A wrong "comments
-  only" reports green for work it never did, which is the failure this repository refuses
-  everywhere else, and the reason `nimcache` is still uncached. Eleven minutes is the price of
-  erring the other way.
+- Cost: a change to the checker can leave an unchanged project red until it next changes,
+  and nothing compiles it sooner; running that suite is that project's work, which is the
+  rule's point.
+- Cost: `isChecker` reads the path, never the content, so a comment edit in `koch.nim`
+  compiles the driver's project: one project, seconds. The machinery to do better exists —
+  `comments.nim` already extracts comments per kind, so `plan` could ask whether anything but
+  comments changed — and it is rejected, because that detector errs toward compiling too
+  little. A wrong "comments only" reports green for work it never did, which is the failure
+  this repository refuses everywhere else, and the reason `nimcache` is still uncached.
 - Verified by `tplan.nim`, and driven against this repository's history: a README-only commit
-  plans `[]`, and a one-line source change plans that project alone.
+  plans `[]`, and a one-line source change plans that project alone; a change to `koch.nim`
+  plans the driver's project alone, and the sweep plans what merged in its window.
 
 **The sweep fires, and it promises a day rather than an hour.** Observed 2026-09-07, the first
 Monday after the cron landed: all four projects planned, each on its own pin, four jobs starting
@@ -575,13 +631,13 @@ within one second, the phase finishing in about four minutes against about nine 
 curator reading the cron and returning at 06:05 finds nothing and wrongly concludes the guard is
 broken. Waiting is part of reading this signal.
 
-**The sweep skips itself in a quiet week**, planning every project when any code merged inside
-`SWEEP_DAYS` and nothing when none did, judging "code" by the record-file exclusion scoped runs
-use. Rot arrives with merges, and compiling four projects to confirm a quiet week is runner time
-for no information.
+**The sweep plans what merged inside `SWEEP_DAYS`** and nothing in a quiet week, judging "code"
+by the record-file exclusion scoped runs use. Rot arrives with merges, and compiling a project
+nothing touched is runner time for no information.
 
-- Rejected: sweeping the projects that changed in the window, which the push runs already did
-  and would miss exactly the cross-project rot the sweep is for.
+- Rejected, by the Architect's rule that every run covers what changed: sweeping every
+  project when anything merged. Cross-project rot from a checker change surfaces when that
+  project next changes.
 - Cost: rot from outside the repository — a runner image moving under a pinned compiler — goes
   unseen through a quiet week.
 - Cost: the window is named twice, as the cron and `SWEEP_DAYS`; nothing checks they agree, so
@@ -610,12 +666,11 @@ after constitution articles and every assertion carries a citation. Fixtures are
 `fixtures.nim`: a smallest clean tree with a project under each root, and throwaway git
 repositories.
 
-Every project carries suites: 22 files here, one in `curator/probe`, three in
-`rga_visualiser`, twelve in `dance_ontology`, whose stubs dominate every whole-tree run. Counted
-from `git ls-files` rather than by hand, which is how an earlier count of three projects and
-fourteen files went stale. Verified by running `nim r koch tests` over every project,
-2026-09-08: 39 suites pass, 0 findings, each on the compiler its project pins — only one of the
-three pins was on `PATH`, which is the point of that verb.
+Every project carries suites, and `dance_ontology`'s dominate every whole-tree run. No count
+is written here: two written counts went stale within days, and `git ls-files '*/tests/t*.nim'`
+answers in a second. Verified by running `nim r koch tests` over every project, 2026-09-08:
+every suite passed, 0 findings, each on the compiler its project pins — only one of the three
+pins was on `PATH`, which is the point of that verb.
 
 ## Type checking
 
@@ -651,7 +706,7 @@ verb builds the page and drives it through held keys, wheels, right-button pans,
 pinches and long presses. Testament tests rules — what a slide does to the pivot — and nothing
 in it presses a key, so a rule wired to the wrong event is the class of defect no suite here
 could see. `rga_visualiser` had 135 such checks and the runner ran none, which made every one of
-them evidence that its author ran it.
+them evidence that its writer ran it.
 
 **Enrolment is the verb, read from the project's own driver.** `verbDirs` reads the dispatch of
 `tools/build.nim` and selects projects naming `drive`, the derivation `nodeDirs` uses one step
@@ -696,7 +751,7 @@ one, which is what repository issue 132 raised with the figures.
 **The browser a declaration names is the browser that runs, and the snap serves.** `apt-get
 install chromium` on `ubuntu-latest` gives `/snap/bin/chromium`, a wrapper rather than a plain
 binary, and whether Playwright would launch one was unknown while this was written. It launches.
-Recorded because the opposite result had a different owner: a package that did not serve the
+Recorded because the opposite result had a different remedy: a package that did not serve the
 runner would have been the project's declaration to change, never a name quietly substituted
 here.
 
@@ -707,20 +762,20 @@ tree whose `build/` was removed. Verified by breaking: on the driver's 2.2.4 the
 fails inside `pga`, which is what sent this to a matrix. Verified by the gap it found before it
 ever went green: on a cold checkout the first run stopped at `Missing face … run 'assets'
 first` — every expensive step done and one cheap one missing, because `drive` chained `web`,
-`types` and `declare` but not `assets`. Invisible to its author, whose `build/fonts` was always
+`types` and `declare` but not `assets`. Invisible to its writer, whose `build/fonts` was always
 there.
 
 ## Watching main
 
 **Red `main` opens its own issue, because remembering to look had already failed twice.**
-CURATOR.md's session-start duty said to read the latest `push` run and named its own hole in the
+CURATOR.md's opening duty said to read the latest `push` run and named its own hole in the
 same breath -- *"nothing else watches it"*. A contributor's merge went red with nobody looking and
 was found by accident twenty-four minutes later; then the driven job was red on two `main` runs
 while the curator who had named that run as the leg still to read did not read it. Both times
 enforcement was somebody remembering, and failure was silent.
   `watch.yml` reads the run and opens issue labelled `curator` when it concludes failure, which is
-  same session-start duty's first read. No new rule: existing rule now produces artefact rule
-  already asks next session to read, and repository's own answer to session ending and taking its
+  same opening duty's first read. No new rule: existing rule now produces artefact rule
+  already asks next delegate to read, and repository's own answer to delegate ending and taking its
   intentions with it is issue labelled `curator`.
   Separate workflow because run cannot watch its own outcome. `workflow_run` fires only from copy
   on default branch, so it cannot be driven from branch at all -- which is why it also takes
@@ -774,7 +829,7 @@ while `audit`, `scope` and `commits` must stay required. Every job added is name
 `needs` as well as declared: a job outside it is a red check that cannot block a merge, the one
 mistake this arrangement makes easy to make and impossible to see afterwards.
 
-- Rejected: renaming the required checks, which would make the owner reconfigure `main`;
+- Rejected: renaming the required checks, which would make the Architect reconfigure `main`;
   computing the matrix in shell, which is untested glue where koch is tested.
 - Branch names and event kind reach koch through the environment, never interpolated into the
   script. Nim installs under the runner's temp directory, never the workspace, and `.gitignore`
@@ -785,11 +840,11 @@ mistake this arrangement makes easy to make and impossible to see afterwards.
   written to pass on `skipped` and fail on `failure` or `cancelled`, and until that run only the
   first half had been exercised.
 
-**`koch audit` was removed.** It ran the static pass and then every project's suites, which
-per-project pins made a verb that cannot succeed: one machine holds one compiler on `PATH`, pins
-differ, so at least one project reported a mismatch and it always exited 1. Chosen against
-teaching it a version-to-path map nobody asked for. Cost: no single local command checks
-everything, the honest consequence of independent pins.
+**`koch audit` was removed, and `koch tests` with no project is what replaced it.** The old
+verb ran the static pass and then every project's suites on the one compiler `PATH` held, so
+once pins differed it always exited 1. Since koch resolves each pin (Toolchain), `nim r koch
+tests` alone runs every project on its own compiler, and `ci` stays scoped to what a change
+touched. Cost: checking everything locally is two commands, `tree` and `tests`, rather than one.
 
 **`nim r koch ci` is the local form of the jobs**, fetching `origin/main` and then running the
 whole-tree pass, the planned projects' restores and suites, the type check, the driven checks,
@@ -800,6 +855,10 @@ runner confirms, it never discovers.
 - Cost: a curator whose change selects every project needs every pinned compiler, which
   resolution provides, plus npm, a browser and each driven project's declared packages, which it
   does not.
+- `ciJobs` resolves pins once, restores once, runs the suites, then drives the projects that
+  carry driven checks. Before it, `runJobs` and `drivenJobs` each restored a driven project,
+  and the second restore was Atlas confirming nothing had moved: seconds per project per run,
+  and work nobody asked for. A failed restore still stops driving alone, as it did.
 
 Two traps, each found by a merge rather than by reading.
 
@@ -809,8 +868,8 @@ Two traps, each found by a merge rather than by reading.
   project against its own `CONTRIBUTOR.md`; git merges their edits cleanly when they touch
   different sections, but the merged document digests to a value matching neither, so whichever
   merged second would leave `main` red on every project. The cure is to stack rather than
-  discover: merge the earlier branch into the later, resolve each `Rules` row to what
-  `nim r koch stamp` reports for the merged rules, and fix the merge order.
+  discover: merge the earlier branch into the later, run `nim r koch stamp --write` on the
+  merged rules, and fix the merge order.
 
 ## The checker checks itself
 
@@ -945,7 +1004,7 @@ either lever repository issues 79 and 80 were weighing.
   what the cache hides is a rebuild rather than an upstream that moved underneath it.
 
 **GitHub's allowance is one account's, and every delegate spends it.** Measured 2026-09-12, on
-this repository, after a curator session stopped being able to close an issue:
+this repository, after a curator delegate stopped being able to close an issue:
 
 | | limit | state when it failed |
 |---|---|---|
@@ -954,9 +1013,10 @@ this repository, after a curator session stopped being able to close an issue:
 | Secondary, shared | 80 content-creating per minute, 500 per hour | not reached, ~15 made |
 
 The two primary allowances are separate, which is how the cause was found: `actions_list` and
-`get_job_logs` kept answering while `list_issues` refused with *"API rate limit already exceeded
-for user ID 1268439"*. A GraphQL call gives itself away by its cursor pagination — `after` and an
-`endCursor` from a `pageInfo` — and a refused mutation fails at *"failed to get issue ID"*, which
+`get_job_logs` kept answering while `list_issues` refused with
+`API rate limit already exceeded for user ID 1268439`. A GraphQL call gives itself away by
+its cursor pagination — `after` and an `endCursor` from a `pageInfo` — and a refused mutation
+fails at *"failed to get issue ID"*, which
 is the node lookup before the write.
 
 **The split is by API and by nothing else, and this table said otherwise for a day.** Its rows
@@ -983,69 +1043,44 @@ labels could not survive that, and the charter wording derived from them could n
   one call says nothing about another, so try the one you need before concluding GitHub is shut.
   The wrong version would have had a contributor sit out a window in which opening their pull
   request would have worked.
-- **Per user, not per session.** Every delegate posts as one account, so one allowance covers every
-  session running at once. `rga_visualiser` merged three pull requests and raised an issue in the
-  hours before this, and that is not a complaint about that session — it is the shape of the
-  problem. Nobody can see what the others have spent.
+- **Per account, not per delegate.** Every delegate posts as one account, so one allowance
+  covers every delegate running at once. `rga_visualiser` merged three pull requests and
+  raised an issue in the hours before this, and that is not a complaint about that delegate —
+  it is the shape of the problem. Nobody can see what the others have spent.
 - **The expensive half was avoidable and was the curator's.** The MCP server's own guidance says to
-  page in batches of five to ten and to ask for minimal output; this session listed twenty, thirty
+  page in batches of five to ten and to ask for minimal output; this delegate listed twenty, thirty
   and forty issues with bodies and comments, several times, and read back things `git log` already
   knew. Guidance now sits in `CONTRIBUTOR.md` and `CURATOR.md` under *"Reading the queue without
   spending the repository's budget"*.
 - **It did not clear quickly.** Twenty minutes after the first refusal it was still refusing, so a
-  session that hits this does not wait it out inside one piece of work. The honest outcome is the
+  delegate that hits this does not wait it out inside one piece of work. The honest outcome is the
   unticked item on the carried list, which is what happened.
 - Unmeasured: what a single `list_issues` actually costs in points. The server surfaces no
   `x-ratelimit-remaining`, so the budget is spent blind, and that is the strongest argument for
   asking git first rather than for tuning page sizes.
 
+**Two caches are deliberately not kept, each measured rather than feared.** A restored
+`nimcache` cannot let a check pass without compiling what it claims — driven over an ordinary
+rebuild, a cache made six years newer than backdated sources, and a full save-mutate-restore,
+Nim decides by content rather than mtime and every case rebuilt correctly — but it can only
+skip Nim compilation, at most ~16 s of a 357 s driven job, and the modules that matter on such
+a job are exactly the ones it cannot serve. Caching apt archives saves the download and not
+the install: 2.8 s of a 357 s job, 0.8%, for a root-owned directory and a key. Both figures
+are from one `driven` run on 2026-09-12 and expire with the job they measured.
+
+**Koch declares its own system dependencies, as the rule it enforces asks of every project.**
+`KOCH_SYSTEM` in `projects.nim` pairs each with its reason, and `koch system` with no project
+prints those and every project's, unscoped, so one command answers what a machine needs
+before any of this runs; naming a project keeps the per-job meaning the runner asks for. Nim
+is deliberately absent, being the toolchain koch runs under rather than a package a machine
+installs, and `compilers.nim` resolves each pin itself; npm is absent because it belongs to
+the project carrying a node manifest, and `restoreNode` reports its absence by name. The root
+`README.md` points at the verb rather than naming packages, so the declaration is the only
+statement and nothing can drift from it. Rejected: stating an exemption in `CONTRIBUTOR.md`,
+which would have left the rule true and the repository still answering its own question in
+prose. Cost: koch's own packages are unconditional, so a machine needing none of them still
+installs them (repository issue 78).
+
 ## Open questions
 
-These two were open questions and are now answered; both are kept as answers rather than
-deleted, so neither is reopened from first principles.
-
-**A restored `nimcache` does not let a check pass without compiling what it claims, and it is
-still not worth caching.** Driven rather than argued, three cases: an ordinary rebuild; a cache
-made six years newer than backdated sources; and a full save-mutate-restore, which is what
-`actions/cache` actually does. All three rebuilt correctly — Nim decides by content, not by
-mtime, so a stale restore costs a rebuild rather than a wrong answer. That is the property the
-two Atlas defects lacked, and it is why those bit and this does not.
-
-- Rejected on size, then, not on fear. `nimcache` can only skip Nim compilation, which in run
-  214's `driven` job is a **2.8 s** page build plus part of a 13.7 s desktop build — at most
-  ~16 s of 357 s. Smaller still in practice: that job runs *because* the project's code changed,
-  so the modules that matter are exactly the ones a restored cache cannot serve.
-- The claim it carried — that this was "the largest saving still on the table" — was true when
-  written and is not now. SDL3 was.
-
-**Caching apt archives is not worth it, measured.** The figure the earlier record asked for:
-apt reports `Fetched 27.7 MB in 2s`, and splitting the step gives **2.8 s of download against
-7.6 s of install**. The whole step is 37 s, the rest of it compiling koch and running the
-project's own `system` verb, which no archive cache touches.
-
-- So a cache removes **2.8 s from a 357 s job, 0.8%**, for a root-owned directory and a key. The
-  original instinct — "saves the download and not the install" — was right, and now has a number.
-- The 1 m 47 s that opened repository issue 79 described a step that no longer exists: `chromium`
-  resolved to a snap and left with the browser change, taking most of the step with it. A figure
-  with an expiry date is worth re-taking rather than re-citing.
-**koch declares its own system dependencies, as the rule it enforces asks of every project.**
-`KOCH_SYSTEM` in `projects.nim` pairs each with its reason -- git, since tree is what git lists
-and `ci` fetches base to compare against; curl, since compiler pin nothing on machine serves is
-downloaded. `koch system` with no project prints those and every project's, unscoped, so one
-command answers what machine needs before any of this runs; naming project keeps its old meaning,
-which is what runner asks per matrix job.
-  Nim is deliberately absent: it is toolchain koch runs under rather than package machine
-  installs, and `compilers.nim` resolves each pin itself. npm is absent for different reason --
-  it is needed where project carries node manifest, so it belongs to that project, and
-  `restoreNode` already reports its absence by name.
-  **`README.md` stopped listing them, which is what actually closed gap.** Rule's complaint was
-  prose that decays, and second copy is what decays; README now points at verb rather than
-  naming packages, so declaration is only statement and nothing can drift from it. That is why
-  no check was written to hold two together: there is no second thing to hold.
-  Rejected: stating exemption in `CONTRIBUTOR.md` instead, which was cheaper and was earlier
-  curator's lean. It would have left rule true and repository still answering its own question in
-  prose; and `koch system` already existed, so this invented no mechanism -- bare form previously
-  answered for changed projects, which nothing ever asked it.
-  Cost: koch's two are unconditional, so machine needing neither still installs both. Both are
-  already declared by `rga_visualiser` for its own reasons, so union is unchanged today
-  (repository issue 78).
+None.

@@ -1,5 +1,5 @@
 ## Enforce provenance header and rules stamp (Article VIII.6, provenance guide).
-##   Header is first pipe table in file, `| Field | Value |`, with rows Agent, Author, Date,
+##   Header is first pipe table in file, `| Field | Value |`, with rows Harness, Author, Date,
 ##   Style, Rules, Review. Rules value is stamp of governing documents, so stale audit fails
 ##   and rules change cannot merge half-propagated.
 ##
@@ -31,7 +31,7 @@ import ./[findings, markdown]
 const
   RULES* = ["CONSTITUTION.md", "STYLE.md", "CONTRIBUTOR.md"]
     ## Documents stamp covers, in digest order; CURATOR.md is excluded as curator-only.
-  FIELDS* = ["Agent", "Author", "Date", "Style", "Rules", "Review"]
+  FIELDS* = ["Harness", "Author", "Date", "Style", "Rules", "Review"]
     ## Header rows every PROVENANCE.md carries.
   CITATION* = "verified by `"
     ## Opening of claim naming test that repeats it; matched without case.
@@ -62,6 +62,23 @@ func headerFields*(source: string): Table[string, string] =
   if rows.len == 0 or rows[0] != @["Field", "Value"]: return
   for row in rows[1 .. ^1]:
     if row.len == 2 and row[0] notin result: result[row[0]] = row[1]
+
+
+func withRulesRow*(source, stamp_new: string): string =
+  ## Rewrite first `Rules` row's value to stamp, keeping every other byte; source unchanged
+  ##   when no such row exists. Row is found as `headerFields` finds it, by its first cell,
+  ##   so what `koch stamp --write` sets is what check then reads.
+  var is_done = false
+  for line in source.splitLines(keepEol = true):
+    let s = line.strip
+    if not is_done and s.len >= 2 and s.startsWith("|") and s.endsWith("|"):
+      let cells = s[1 ..< s.high].split('|')
+      if cells.len == 2 and cells[0].strip == "Rules":
+        let mid = line.find('|', line.find('|') + 1)
+        result.add line[0 .. mid] & " " & stamp_new & " " & line[line.rfind('|') .. ^1]
+        is_done = true
+        continue
+    result.add line
 
 
 func isIsoDate*(s: string): bool =

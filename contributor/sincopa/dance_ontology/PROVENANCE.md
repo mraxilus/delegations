@@ -1,13 +1,13 @@
 # Provenance
 
-| Field  | Value |
-|--------|-------|
-| Agent  | Claude Code |
-| Author | Claude |
-| Date   | 2026-09-06 |
-| Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 3497e71b8d327cfa |
-| Review | **Unreviewed.** Nothing here has been read line by line by a human. |
+| Field   | Value |
+|---------|-------|
+| Harness | Claude Code |
+| Author  | Claude |
+| Date    | 2026-09-06 |
+| Style   | CONSTITUTION.md and STYLE.md, followed. |
+| Rules   | 5aa3c7b7f2865a05 |
+| Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the Architect's workbook `ontology.partnerwork.xlsx` (sheets `base` and
 `vocabulary`, held as data in `src/dance_ontology/workbook.nim`), the Architect's forty
@@ -22,63 +22,67 @@ sheet arrives; until then they are stale by construction, not by neglect.
 
 ## Language
 
-**Every term is agreed with Architect before it is written.** Forty-four terms written
-without agreement were removed on 2026-09-06 and are in history. Thirty-seven are now agreed,
-each concept set out with candidate names and their costs, and only selected name written.
-Audit checks glossary's shape and never its words, so this holds by Architect's reading
-alone.
+**Every term is agreed with the Architect before it is written.** Forty-four terms written
+without agreement were removed on 2026-09-06 and are in the history. Forty-six are now
+agreed, each concept set out with candidate names and their costs, and only the selected name
+written. The audit checks the glossary's shape and never its words, so this holds by the
+Architect's reading alone.
 
-**Sim is isolated in code, not in concepts.** It reuses agreed words wherever one fits and
-coins its own only where none does; four are its own -- rig, pose, strain, block. What keeps
-it witness is that it imports nothing from `src/` and is told no answer, never that it speaks
-other language. Care is needed only where sim *measures* what ontology *asserts*: there
-translation stays visible (`sim/verdicts.nim`), since assumed identity would be echo.
+**The sim is isolated in code, not in concepts.** It reuses agreed words wherever one fits
+and coins its own only where none does; four are its own -- rig, pose, strain, block. What
+keeps it a witness is that it imports nothing from `src/` and is told no answer, never that it
+speaks another language. Care is needed only where the sim *measures* what the ontology
+*asserts*: there the translation stays visible (`sim/verdicts.nim`), since an assumed identity
+would be an echo.
 
-Held back by decision, not omission. Workbook, base sheet and vocabulary sheet wait until new
-sheet arrives, since nothing should be written about file this project has not seen. Review
-page waits on same sheet; ledger waits on forty rules being reconciled. Sweep, stance, moment,
-rest, re-organised, room and verdict are sim's method rather than dance, and earn no entry;
-neither does sim's `(led)` mark, nor its point where hands meet, `Grip` naming manner of
-holding instead.
+**`wind` is `twist`, and the workbench still says `wind`.** `GLOSSARY.md` has listed `wind`
+under Twist's _Avoid_ all along, and the workbench uses it in about fourteen identifiers and
+across page prose, for the quantity the model calls twist. Architect confirmed the two are one
+on 2026-09-07 and put the rename after the frame-position review, so captions do not move
+while they are being ruled on. A unit differs where the word does not: the model counts twist
+in half turns (`HalfTurns`), this glossary says quarter turns, and the workbench counts turns
+as a real number. Which of the three the term means is the second thing that pass settles.
 
-**`Block` now describes code rather than specifying it.** Term says turn stops "because no
-small move holds and no reachable pose does", and that is **verified**: `tests/tcarry.nim`
-walks every one-hand hold over the crown two whole turns each way and holds page to naming
-what refuses wherever it stops. It was assumed until 2026-09-06, when page gated carried
-poses through `agrees` where sweep accepted them, looked no further than coarse grid before
-calling block, and never set `overhead` -- so hands above head were pulled to point between
-two dancers instead of over head of whoever turns. `L-l` and `R-r` stopped after quarter of
-turn where sweep found no block in two and half. Moment's decision is written once now, in
-`sweep.advanced`, and both paths take it (Article II.1).
+Held back by decision, not omission. The workbook, the base sheet and the vocabulary sheet
+wait until the new sheet arrives, since nothing should be written about a file this project
+has not seen. The review page waits on the same sheet; the ledger waits on the forty rules
+being reconciled. Sweep, stance, moment, rest, room and verdict are the sim's method rather
+than dance, and earn no entry; neither does the sim's `(led)` mark, nor its point where the
+hands meet, `Grip` naming the manner of holding instead.
 
-Agreed words disagree with code in fourteen places, recorded rather than acted on. From
-hand-to-hand half: `frame.position` means opposite of `Frame position`, stripping `over` and
-returning frame hold said aloud; `Frame` and `rotation.Posture` split across frame state
-rather than along it; `isFacing` returns parity of twist where facing is four-valued; twist is
-counted in quarters where `HalfTurns` is half turns; `Level.Above` is `Overhead`; `Compound`
-is `Compound move`; drawing chain's `route` and `wind` are `Transition` and `Twist`. From sim:
-`Band` is `Level` and its members Low, High and Overhead; `Body.One` and `.Two` are Lead and
-Follow; `Aspect.Fore` and `.Aft` are Wrap and Lock; `Link` is `Connection` and `page.Hold` is
-`Frame hold`, both words already on avoid lines; and `Move`, `Twist`, `Chain`, `Way` and
-`overhead` each name something in sim unrelated to agreed term of same spelling.
+**`Block` describes the code.** The term says a turn stops "because no small move holds and
+no reachable pose does"; in the engine a small move is the engine carrying the arms on for one
+moment, and what stops it is one named thing, decided once in `rigid.stoppedBy` and read by
+every sweep, still and page alike (Article II.1). Verified by `trigid.nim`: the turn a couple
+are said to reach is the turn some distance carries, and every stop carries its name.
 
-**Review page's layout block was stale in five ways, and is corrected.** Curator left one
-line for this project's hand -- domain folder printed as `síncopa` where it is now `sincopa`.
-Four more were false beside it: `transition.nim` was said to hold four primitives where it
-holds two; `app/shell.nim` and `tools/review_prose.nim` were named though this project's own
-earlier delivery moved them to `pages/`; and build was invoked as `make`, retired since. Going
-past one line was deliberate: block named three files that do not exist, two of them removed
-by this project, and page is read by Architect. Its wording still uses `validator` and
-`primitives` where agreed words are `Reference` and `Move`; that is vocabulary sweep of whole
-page, not this fix.
+The agreed words disagree with the code in fourteen places, recorded rather than acted on.
+From the hand-to-hand half: `frame.position` means the opposite of `Frame position`,
+stripping `over` and returning the frame hold said aloud; `Frame` and `rotation.Posture`
+split across the frame state rather than along it; `isFacing` returns the parity of twist
+where facing is four-valued; twist is counted in quarters where `HalfTurns` is half turns;
+`Level.Above` is `Overhead`; `Compound` is `Compound move`; the drawing chain's `route` and
+`wind` are `Transition` and `Twist`. From the sim: `Band` is `Level` and its members Low, High
+and Overhead; `Body.One` and `.Two` are Lead and Follow; `Aspect.Fore` and `.Aft` are Wrap and
+Lock; `Link` is `Connection` and `page.Hold` is `Frame hold`, both words already on avoid
+lines; and `Move`, `Twist`, `Chain`, `Way` and `overhead` each name something in the sim
+unrelated to the agreed term of the same spelling.
 
-**Three faults live in generated output, not merely pending renames.** `sim/verdicts.md`
-prints `above` and `X`, both on avoid lines, where agreed words are Overhead and Cross. It
-prints `her arm` and `his arm` in every sweep table, avoided for Follow and Lead. Translation
-table stands in three copies -- `sim/verdicts.nim`, `design/turns.nim`, `sim/page.nim` -- and
-has drifted: `turns.nim` dropped `elbow forward` clause `verdicts.nim` adds (Article II.1).
-Two reader surfaces also disagree, `verdicts.nim` translating to wrap and lock where sim
-page's `lies` prints "across the front" untranslated.
+**The review page's layout block was stale in five ways, and is corrected.** The curator left
+one line for this project's hand -- the domain folder printed as `síncopa` where it is now
+`sincopa`. Four more were false beside it: `transition.nim` was said to hold four primitives
+where it holds two; `app/shell.nim` and `tools/review_prose.nim` were named though this
+project's own earlier delivery moved them to `pages/`; and the build was invoked as `make`,
+retired since. Going past one line was deliberate: the block named three files that do not
+exist, two of them removed by this project, and the page is read by the Architect. Its wording
+still uses `validator` and `primitives` where the agreed words are `Reference` and `Move`; that
+is a vocabulary sweep of the whole page, not this fix.
+
+**Two faults live in generated output, not merely pending renames.** `sim/verdicts.md` prints
+`above` and `X`, both on avoid lines, where the agreed words are Overhead and Cross, and it
+prints `her arm` and `his arm` in every sweep table, avoided for Follow and Lead. The
+translation table stands in two copies, `sim/verdicts.nim` and `design/turns.nim`, and the
+second drops the `elbow forward` clause the first adds (Article II.1).
 
 ## Model
 
@@ -130,6 +134,121 @@ picture. Cost: every frame's picture is built at compile time, so the browser sh
 markup and none of the routing, at the price of compile time. Verified by `tdiagram.nim`
 (every picture says what its frame is, at any size) and by the workbench's gates
 (`design/checks.nim`, 102 assertions on the pages).
+
+**Rule 24 was measured at the corner, and a kink walked through it.** A settled reach picks
+its way past the marks it must not touch by weighing three candidates -- the taut band let
+go from the straight line, and a bow over each side -- on length and turns together
+(`readingCost`). Until now the taut band was taken unweighed wherever it turned little and
+turned smoothly, on the grounds that nothing could be plainer. It can be: the band hugs
+whichever mark it meets, and a mark that sits near a hand puts the whole of that hug against
+that hand, so the line runs dead straight to its far end and bends only there. The Architect
+called out exactly that on B4 and B23 of the review sheet. **Measured**: their reach crested
+0.88 of the way along its chord with 8.3 degrees at one corner, where every other bending
+reach on the page crested between 0.40 and 0.60; the bow those two now take crests at 0.53
+and 0.59 with 3.4 degrees, which is the shape of B7 beside them. All three candidates are
+now weighed every time, and `crestOf` measures rule 24 along the reach as well as at its
+sharpest corner -- a reach that leaves its chord must crest away from both hands. Rejected:
+tuning a clearance to move the hug, which would have left the rule measuring half of itself.
+Cost: three band relaxations per settled reach where one sometimes did, which is the mark
+suite going from 20.9 to 23.3 seconds; and the bow beats the hug on those two by a hundredth
+of a unit of line, so the preference is real but thin -- it is the review sheet's pins that
+keep a flip from passing unseen. Verified: the fix moved exactly two drawings of the 148 on
+the review page and eight of the 273 on the single-turn page, and nothing on the frame, sign
+or hand-to-hand pages.
+
+**The chain is walked, not jumped, so what lies between two positions is seen.** Past a whole
+turn the pair stops sharing its swing evenly: one connection gives its bend up and runs
+straight while the other snakes round it (rule 31). How *quickly* it gives it up was written
+as a fast start, on the grounds that the third crossing wanted to arrive early. Measured, it
+does not -- the third crossing arrives at the swan whatever the hand-over does. What the fast
+start did instead was collapse the straight connection to a short stub for most of the walk,
+so the diamond fell apart and the swan was built again rather than one opening into the other.
+The Architect danced the figure and named the missing bend. The hand-over is now slow at the
+start and quick at the end, so the connection keeps its bend nearly all the way and gives it
+up at the last. Verified: no still moved -- the hand-over is nothing at a whole turn and
+everything at a turn and a half, which is exactly where the chain's positions sit, so all 87
+pinned cards passed unaltered and only the eight moving chain cells changed. A first pass eased the
+hand-over at 3.5, which left the pair still crossing once between 1.28 and 1.38 turns -- one
+arm laid flat over the other rather than going round it, which the Architect saw and named.
+At 7.0 it never does: measured over the whole stretch at two-hundredths of a turn, the two
+connections cross at least twice everywhere, and a check now walks that stretch and holds it.
+What remains is smaller and of a different kind: the third crossing shows briefly around 1.38
+to 1.40 turns, withdraws, and returns at 1.48. It is recorded rather than claimed fixed.
+
+**A break that leaves a sliver draws a dot, and a dot says the opposite of a break.** A
+connection is stroked with a round cap, so a painted piece of no length is still drawn -- as a
+disc as wide as the line. Three places left such a piece. `gapFor` dropped a break only where
+the gap would hang off the end of the reach, so a crossing a hair inside that threshold kept a
+full-width gap and left the line joined to its hand by a stub of 0.01; the moving reach's dash
+pattern left a hair of paint at the seam between a reach's two shades, and another where two
+breaks nearly met; and the pattern is measured along the sampled polyline but spent along the
+smoothed curve drawn through it, which is about half a per cent longer, so a gap stopping at
+the polyline's end left the curve's own tail painted. Each drew a dot: at a hand it read as the
+connection detached from it, and inside a break it sat on the crossing the break exists to
+show, so the two connections read as passing through one another. The Architect saw both on the
+hand-to-hand chain, swan to diamond. `SEEN_RUN` now names the least piece that reads as a line;
+`gapFor` narrows a break rather than dropping it, keeping that much line at each hand, and gives
+up only where the gap would be narrower than the line it hides; and the dash pattern gives any
+shorter piece at a seam to the break, running it a stroke past the polyline's end. Rejected:
+widening the suppression threshold, which would have drawn more crossings with no break at all
+-- the opposite of what rule 14 asks. Verified by `tmarks.nim`, which drives the build: every
+piece a break leaves is now nothing at all or at least `SEEN_RUN`, over every frame of every
+edge of every manner. Cost: breaks near a hand are shorter than breaks in the middle, where
+before they were all one length. The fix moved 12 of the 99 cards -- the four swan stills, whose
+straight connection crosses close to a hand, and all eight moving chain cells.
+
+**The third crossing arrives once, and the snake pulls in before it opens.** From a whole turn
+to a turn and a half the pair gains one crossing, so the picture reads two crossings and then
+three, changing once; it used to read two, three, two, three, gaining one at 1.22 turns, losing
+it again from 1.41 to 1.46 and taking it back at 1.47. The lost stretch is the third crossing
+diving back under a hand mark, where no break can be drawn: **measured**, it sat 2.9 units from
+the follow's hand at 1.42 where the reach is trimmed at 7.7.
+
+The two connections do two different things past a whole turn, so they take two shapes rather
+than one shared between them. The straight one **hinges**: it gives up its bend late and then
+all at once (`SWAN_EASE`). The snake **pulls in** against it while the pair tightens
+(`SWAN_DRAW_IN`, `SWAN_DRAWS_AT`) and only then **opens out** into loops that go round it
+(`SWAN_SWING`, `SWAN_OPENS_AT`). That order is what does the work: the snake is at its tightest,
+0.89 of one connection's swing, at exactly 1.42 turns, which is where the third crossing runs
+nearest a hand, and it opens after. **Measured**: the crossing now keeps 8.5 clear of any hand
+at its tightest against a trim of 7.7, where a snake that opens early drives it under the mark.
+Rejected: one width for the whole stretch, which is what a single `SWAN_SWING` is — the widest
+such swan that keeps the count monotonic bows 14.1, against the 22 the Architect had, because in
+that shape width and crossing placement are one number. Cost: the snake gains 0.16 of its swing
+over the last hundredth of a turn, 3.2 of line; looked at frame by frame, 1.43 to 1.50, it
+reads as loops opening rather than as a jump — verified by looking, 2026-09-08, not by test.
+Verified by `tmarks.nim`, which drives the build: a gate walks the stretch every hundredth of a
+turn and fails if the count ever falls or rises other than once, and two more hold the snake to
+drawing in before it opens. The swan bows 22 round its straight connection, which is the width
+before this stretch was mended.
+
+**The two connections keep clear of one another where they run alongside.** Short of the swan
+they ran close enough to touch: at 1.37 turns their middles came 3.35 apart where the line is
+3.4 wide, so the ink merged and the Architect read the Right connection as running *into* the
+other rather than crossing it. The pinch now keeps growing past a whole turn — `WIND_NIP_MORE`
+— where its own cap used to stop it at one, which is what drew the pair as though winding had
+stopped; and the snake pulls in harder before opening wider (`SWAN_DRAW_IN` 0.65,
+`SWAN_SWING` 1.50). **Measured** over the stretch every hundredth of a turn: at 1.37 the two
+now keep 6.51 between their middles where they kept 3.35, the tightest anywhere they are not
+crossing goes from 4.05 to 4.81, and the shallowest crossing goes from 16.1° to 28.9° — well
+clear of `GRAZING`, below which a break can no longer cover what it hides. Verified by looking
+at 1.35, 1.37 and 1.39, 2026-09-08. **No gate holds this**, and that is a gap rather than an
+oversight: every measure of it that runs over the whole stretch is dominated by two other
+effects — the width of a break at its own edge, and the arrival window below — so no threshold
+separates the mended drawing from the faulty one with any margin. Stated here so a later pass
+knows it is unfenced.
+
+**Amplitude was believed unable to move a crossing, and that belief was false.** The argument
+was that both connections carry the same sine about the pair's axis with opposite sign, so
+they meet only where the sine vanishes and the size cancels. It compares the two reaches **at
+the same point along each**, which is only their crossing condition when they share a chord.
+They do not: the follow's two hands sit up to 20 units apart *along* the pair's axis wherever
+the follow has turned off a half turn, so the two chords differ everywhere between the chain's
+positions. **Measured**: holding both connections at one common share and sweeping it from 0.5
+to 2.0 moves the count at 1.20 turns through 0, 2, 3 and 1. The belief stood while the whole
+family was ruled out untried, and while crossings were counted through a fold that merged
+them, so the sweep that would have refuted it was scored blind. It earns its line because
+anyone re-deriving it reaches the same wrong place.
 
 **The map and the spokes are the same picture at two distances.** `map.nim` draws the whole
 ontology with every line laid down before any word, names cut into the line with round caps
@@ -184,7 +303,7 @@ removed.
 `design/README.md`; `checks.nim` asserts what each page claims between building its parts
 and writing it, and the build refuses to write a page whose claims fail. Rejected: rules
 that are implemented and not asserted, which quietly stop being true (it happened here more
-than once, recorded beside the rules). The four generated pages and the hand-drawn
+than once, recorded beside the rules). The five generated pages and the hand-drawn
 whole-cloth page are build products under `build/design/`; the whole-cloth markup is the committed
 file `mockups/wholecloth.html`, its turns panel is `wholecloth_turns.nim` compiled to JavaScript,
 and `wholecloth.nim` splices markup, the sim's sweeps (`turns.nim`) and the panel into one
@@ -200,126 +319,274 @@ whitespace-free row with its character references decoded, and the fonts URL hel
 constant joined at compile time. Cost: the workbench's `doAssert` gates are the
 check, so its tests are a debug build.
 
+**The four are a manner of turn, not a way of turning.** `Manner` and `MANNERS` replace
+`TurnWay` and `WAYS_OF_TURNING` through the workbench, and the pages, checks and rule ledger
+say "manner" wherever they meant one of the four. "Way" is kept for clockwise against
+anticlockwise, which is what `wayOf` and `wayName` return, so the two senses the one word
+carried are now two words. Rejected: renaming `Way` as well, which would have left the
+turn's direction unnamed. Verified by every drawing on all five pages coming out
+byte-identical across the rename -- 66, 56, 273, 62 and 148 figures -- so nothing but the
+prose moved. Cost: nothing holds a page's prose to `GLOSSARY.md`; `tglossary.nim` reads the
+`_Avoid_` lines but claims only against chain position names, so this rename can drift back
+without a test noticing.
+
+**The moving sections show a walk whole before they show it in pieces.** Sections E and F of
+the review sheet drew one cell per edge -- 64 quarter-turn edges and 24 chain edges, 88 cells
+of animation to scroll past. Each manner of each hold now takes two cells instead: the walk
+entire, and the same walk step by step with a button per step. `turnWalk` gained `steps` and
+`back`, so one builder makes a single rocking edge, a whole round of four quarters that
+closes on itself and needs no return, and a whole chain of six halves out and back, which
+does need one because the chain has ends. The switching is a radio button and a sibling
+rule, so the page stays markup a browser draws with nothing running; rejected: script, which
+these pages have never needed. The pin now covers every drawing in a cell rather than the
+last one, since a verdict on a cell is a verdict on all of it -- and for a cell holding one
+drawing that is the same string, which is why all 59 existing pins still matched. Cost: 99
+cells where there were 147, but 6.9 MB where there were 4.2, since a walk shown whole is
+drawn as well as its pieces, not instead of them. Every animation runs at one pace
+(`WALK_SECONDS`), so the length of a loop says how far it goes rather than how fast: the
+whole chain is six times an edge, which is a long loop and is flagged on the page as
+something to shorten if it reads as slow. Verified by `tmarks.nim`, which drives the build and so
+the gates: the 16 rounds are counted, each asserted to close where it set off, and the
+whole-walk figures are held to the same hatch laws as the edges. Verified again by every
+drawing on all five pages coming out byte-identical when `steps` and `back` took their
+defaults.
+
+**A verdict is given on a picture, so the picture is pinned.** `review_page.nim` lays out
+every position the project draws as 147 cards -- the sixteen standard diagrams and the one
+anticlockwise counterpart, the twenty-eight distinct single-hand turn positions, both
+hand-to-hand chains, and every animated edge of the last two -- each carrying the identifier
+to quote back and whatever has been ruled on it. The identifiers the Architect has kept or
+dropped are named in the module; what each was drawn as when it was ruled on is held as a
+hash in `design/review-pins.json`, and the build refuses to write the page when a ruled
+card's drawing has moved. Rejected: taking the verdict as given on the identifier, which is
+how a mend that reached further than it meant to carried an approval nobody gave. The guard
+was proved by widening a break's clearance and watching it name the twelve kept cards that
+carry a crossing. Pins are rewritten only by `tools/build.nim pins`, a deliberate second
+step: a verdict and its pin are added together or not at all, and running it to quiet a
+complaint would hand the approval to the new picture. Cost: the verdicts live in the module,
+so every ruling is a commit. Verified by `tmarks.nim`, which builds the page under
+testament; by all 55 pins regenerating identical in content when the page moved into the
+workbench from the scratch generator that first drew it; and by the tally being counted off
+the built page rather than kept while building it -- 55 kept, 0 dropped, 2 marked for a
+mend, 92 still to rule on, of 147.
+
 ## Body sim
 
-**Two bodies of the average adult and their arms, sharing no code with ontology.** The
-rig (`rig.nim`) is mixed-sex midpoints of ANSUR II medians with AAOS and NASA-STD-3000 joint
-ranges, every number with its derivation; a torso is an ellipse three quarters as deep as it
-is broad because a round section of a chest's girth stands three centimetres too far out at
-the front. An arm is three rigid links on a shoulder that swings and twists, an elbow and a
-wrist, and past a range is refused with the joint named; the stretch before an edge is
-reported as strain. No link passes through a body or another arm; an arm may press its own
-body. Rejected: importing anything from `src/`, because shorthand cannot check itself and sim
-is what shorthand is for. Not rejected, and reversed since: sharing vocabulary. Sim reuses
-agreed words where one fits and coins its own only where none does; what keeps it witness is
-that it imports no code and is told no answer, never that it speaks different language.
+**Two bodies of the average adult and their arms, sharing no code with the ontology.** The rig
+(`rig.nim`) is mixed-sex midpoints of ANSUR II medians with AAOS and NASA-STD-3000 joint ranges,
+every number with its derivation, and the ranges are what a dancer will do without pain rather
+than what a joint can be forced to. A torso is a stadium of its tape round, three quarters as deep
+as it is broad, because a round section of a chest's girth stands three centimetres too far out at
+the front; the neck and head are round. An arm is three links, upper arm, forearm and hand, on a
+shoulder that swings and twists, an elbow that hinges and a wrist that bends within a cone.
+Extension is held to 45 degrees behind the frontal plane, adduction to the clinical horizontal
+figure of 130 -- the hanging arm's 45 is what the belly stops, and raised, the arm passes in front
+of the chest until the chest stops it, so either way the limit is the trunk, which the engine
+collides, and the cap is set where the reading can never bind; humeral rotation 70 in and 90 out;
+the elbow to 140; the wrist's flexion and extension taken as one 60 degree cone, since the
+forearm's own rotation can turn the plane it bends in. Hands are offered three bands, torso 1.00
+to 1.35 m, neck 1.40 to 1.50, crown 1.735 to 2.00, the crown starting a limb's radius over the
+head so a hand carried there clears it by construction. Rejected: importing anything from `src/`,
+because shorthand cannot check itself and the sim is what shorthand is for; not rejected, and
+reversed since, sharing vocabulary. Verified by `tlimb.nim`: the tape and one arm's forward
+kinematics over seeded random arms, and the contact test against a sampled truth.
 
-**A pose is found, not drawn, and turning is a path, not a pose.** Given shoulders and grip
-an arm has three freedoms, searched with the grip by a deterministic pattern search from a
-grid of seeds for the most comfortable pose that holds: joints nearest rest, arms lowest,
-grip between the bodies on the line between their centrelines, at whatever height in its
-band leaves the joints least constrained. A body turns a fiftieth of a turn at a time and the
-arms are carried by small moves; a pose is sought afresh each moment and taken only where it
-is enough more comfortable and the arms can get there the same way round the bodies. Where
-no small move holds and no reachable pose does, the turn is blocked and named. What no
-evaluation changes is worked out once into a `Scene`; a seed is tried reach first, then joint
-by joint, then by cost, then against the bodies, giving up at the first refusal; sweeps of
-different holds run side by side on every core (`sweptAll`). Rejected: tuning any number to
-the floor's claims; the floor is printed beside the sim, and each of its seven claims is held
-to what the sim answers today, so neither a mend nor a regression passes unseen
-(`-d:floorIsLaw` holds the sim to the floor outright). Verified by `tlaws.nim`, 29 laws over
-every moment of thirteen sweeps: nothing enters a body, joints inside every range, mirrors
-agree, blocks bracketed with a name, and the clipped contact test against a sampled truth over
-300 seeded random segments; the forward kinematics over 200 seeded random arms. The
-optimisation that made the solver share a `Scene` and run side by side was measured before the
-move as a pair, but the pair is not in this tree: **unmeasured** here.
+**A rigid body engine is cloned, not vendored, and Nim alone speaks to it.** `tools/build.nim`
+declares `box3d` in `SOURCES` with its repository, its commit
+`47d7f7cc7e091142c08d11dc7d2e493c5d34f536`, its reason and its licence (MIT, read from the
+repository's own `LICENSE` rather than assumed); `engine` clones there into `deps/`, refuses a
+clone standing at any other commit, compiles its C files and archives them into `bin/libbox3d.a`.
+The commit is what stands where a checksum stands for a fetched file. Nothing of it is committed:
+`deps/` is ignored at the repository root, exactly as Atlas checkouts are. Rejected: its own
+CMake, which would be a third build driver in a project whose registry admits no second, and
+which nothing in its sources needs, since none is generated. Cost, stated: the build flags are this
+project's rather than upstream's, and `-O2 -std=c17` is what upstream's own release build sets.
+Measured: 24 s cold, and the verb returns at once where the archive already stands.
+`sim/engine.nim` is the binding, Nim throughout, so the gated-language rule is never engaged. It
+links the archive and declares what the rig needs: world, body, capsule with its surface
+material, ball, hinge, weld and distance joints, contact manifolds, step, world point, angular
+velocity. Importing it builds the archive first, at compile time, so a suite that drives the
+engine drives its build too (Article IX.6). Verified by `tengine.nim`, which holds it to two laws
+and no more: that a body falls half g t squared, which catches a struct laid out wrong where
+linking would not, and that two limb-thick capsules started inside one another part to at least
+two radii. **The engine stands Y up and this project stands Z up**, and the binding deliberately
+does not translate: whatever calls it says which way is up, and `sim/rigid.nim` is the one place
+that does.
 
-**Five of those laws could not fail, whatever the model did.** `check cs.len >= 0` on an
-`int`; `check got.isSome or got.isNone` on an `Option`; a bare `check true` with the `agrees`
-values above it computed and discarded; a `lyingOn(...).isNone` over the crown that only
-re-asserted an unconditional early return; and an `if blk.stopped:` guard that ran no
-assertion at all for a sweep which does not block, which is both crown sweeps and so exactly
-the level of the fault
-[#40](https://github.com/mraxilus/delegations/pull/40) mended. That fault was visible and
-reproducible in twelve seconds and no law failed because of it. Each now asserts what its name
-promises, and each was proved able to fail: the thing it claims was broken in the sim, the
-suite run with `-d:nimUnittestAbortOnError:off`, and the law reddened. Four breaks touched
-that law and nothing else; where a break could not be confined -- turning a body not quite a
-whole turn moves every stance there is -- other laws reddened beside it. Cost: the suite takes
-30.8 s on four cores in a danger build against 23.9 s before, measured 2026-09-08 on this
-machine, and the two crown sweeps added to cover R-r and R-l are the difference. Second cost,
-found while proving the laws fail: the suite is built `-d:danger` for that speed, so a model
-change leaving a sweep with no moments segfaults it rather than reddening a law.
+**What the engine holds, and what it judges.** The elbow's hinge, the wrist's cone and the
+shoulder's twist are the engine's own limits. The shoulder's swing is not: the rig gives extension
+and adduction as two ranges of their own, and a spherical joint offers one symmetric cone about
+rest, which would also bound elevation, for which the rig gives no range at all, and every hold
+over the crown would block at once. So swing is read back off the pose in the dancer's own terms
+and resisted by a torque, as the other joints are resisted by the engine, at 200 newton metres per
+radian past either end (`SHOULDER_BACK`), stiff enough that an arm pressed against its end stays
+within `GIVE` of it rather than sinking through. An arm rests against a limit and slides along it;
+it blocks only when forced past by more than `GIVE`, which is the room a limit that pushes back
+needs to push in. Torque is a pseudovector: each arm is worked out in the body's mirrored terms so
+one set of ranges serves both sides, a mirrored frame is left-handed, and un-mirroring a torque as
+a plain vector turns the correction into a shove -- the mirror law does not catch this, and the
+sign rests on the physics. The stance travels with the turn step by step, since swing read against
+a frame the dancer has already left judges every arm wrongly. Rejected: fitting a cone to the
+pair of swing ranges.
 
-**The sim does not meet three of the floor's seven claims, and the floor is right.** The
-Architect dances the floor, so where the two disagree the fault is the sim's: L-l low the wrap
-way blocks at 0.30 against half a turn claimed; L-l high blocks at 0.41 the lock way against a
-whole turn claimed, holding to 1.25 the other way; L-r low the lock way blocks at 0.87 against
-a whole turn claimed. Rejected, again: moving a number to meet a claim. Each row instead
-carries whether the sim meets it today, so mending one turns the suite red until the record
-follows it. Measured 2026-09-08 on this tree, and `-d:floorIsLaw` compiles and fails at the
-first of the three.
+**Comfort is a slope inside a range, not a wall at its end.** The engine's limits are walls and
+its springs, at one hertz (`EASE`), are nothing, so every joint ran to an end and stayed: her arm
+sat forty five degrees behind the frontal plane at the head's height for six arm-moments of a
+crown turn, which the Architect refused on sight. Each joint's range carries an ease band before
+each end, and inside it a torque grows with the lean: swing at the same 200 newton metres per
+radian as its wall (`SWING_LEAN`, since at ten her arm still reached the wall), twist at 7
+(`TWIST_LEAN`), the elbow at 6 (`ELBOW_LEAN`), the wrist at 2.5 (`WRIST_LEAN`, which rings at
+eight hertz on a hand). The arms weigh nothing, and the one thing weight does to an elbow -- turn
+it toward hanging below the line from shoulder to wrist -- is put back as one newton metre
+(`ELBOW_DOWN`); nothing else weight does is, so it neither loads the rise nor pulls a hand down.
+The wrist's own spring is five hertz (`WRIST_EASE`), the passive stiffness of a wrist, since at one
+hertz the wrists sat at their cone at rest once the elbow was turned down. Friction where arm meets
+body is 0.2 (`FRICTION`), cloth on cloth: at the engine's 0.6 an arm lying over a head was dragged
+round with it as she turned under, winding her shoulder to its end. Rejected, each measured and
+each worse: gravity on the arms; higher damping; ramping the elbow; raising the crown's floor;
+pulling the hands to a disc rather than a point. Verified by `trigid.nim`: no held arm over the
+crown is carried to its swing's end, red first.
 
-**A whole turn is no turn to a pose sought without history.** The solver reads a stance's axes
-and never its lap count -- the couple's `twist` is read for display and by nothing else -- so
-`settle` at a whole turn returns the rest pose: measured at 2.6e-16 m on the furthest joint,
-for both two-hand holds, at rest and at half a turn. Only the sweep carries turn, moment by
-moment, and both two-hand sweeps block by 0.58. So nothing here is evidence about the diamond
-at a whole turn or the swan at a turn and a half: the rungs the chain law prints under those
-names are the rest and the X. Verified by `tlaws.nim`, which now asserts the axes identity
-outright rather than leaving it to be discovered. Cost: the sim cannot yet reach two of the
-positions the drawn chain is built on.
+**The trunk twists at the waist and does not bend.** The hips are a kinematic body, turned and
+never pushed, carrying nothing; every trunk capsule and both shoulders ride on a dynamic chest
+hinged to the hips about the trunk's own up, sprung to neutral and stopped at forty degrees each
+way (`WAIST_HI`), clinical thoracic rotation. Verified by `trigid.nim`: shoulders yaw on hips no
+further than the thorax turns, and rest square.
 
-**The crossing reader is exercised off settled poses, because no swept moment crosses.** Not
-one of the 116 moments the two two-hand sweeps accept carries a crossing, so a law read off
-them would assert nothing; the corpus is instead both holds at every band over five turns,
-which gives 12 crossings, each held to sit on both connections in plan and to name which is
-higher (furthest off its connections, 7e-17 m). Assumed, not measured: that `sameCrossings`,
-which gates a fresh pose on the sweep, does useful work -- it compares nought with nought at
-every accepted moment, and what it refused was not recorded. The reader is also knife-edge
-where two arms lie along each other: two stances a whole turn apart, whose poses differ by
-5.6e-17 m, read as four crossings and as one. Underneath it the search is sensitive too: the
-same two stances at the neck settle 0.75 m apart at the furthest joint, off an axis difference
-of 4.9e-16. Neither costs a verdict its determinism -- every law here answers the same on the
-same code, and the suites seed explicitly -- but both say a law read at a knife edge would be
-evidence about arithmetic rather than about bodies, so none of these is.
+**Each shoulder is a girdle that gives.** The shoulder joint sits at 0.18 m out and 1.40 up, nine
+centimetres outside every capsule of its own torso, and with nothing there to give the arms read
+as dislocated on the viewer. Each shoulder is its own body: a capsule of radius 0.06 (`GIRDLE_R`,
+an estimate and not tape) from the neck's side out to the joint, deltoid and trapezius, welded to
+the chest on a spring at three hertz (`GIRDLE_HZ`) so forty newtons moves it five centimetres,
+what a scapula gives, and held within five centimetres (`GIRDLE_RANGE`) by a rope the engine
+solves -- the spring alone let a free arm shoved by the other body carry its girdle 251 mm into
+its own torso, and a force pushing it back rang or lost. A girdle squeezed between two torsos is a
+shoulder through a body and stops the turn as an arm's would. Verified by `trigid.nim`: every
+shoulder joint lies inside some capsule of its own body, red first at 90 mm outside.
 
-**The sim page turns by whole quarters and stands where the arms are freest.** Buttons turn
-the lead or the follow a quarter on axis or in orbit (the walker keeps facing the centre,
-rule 32); a quarter is animated as small moves and either completes or is refused whole,
-the couple restored to where they were, so tallies are always multiples of a quarter. Hands
-prefer to lie between the bodies near the centrelines, within the level's band at whichever
-height minimises constraints. The distance apart is not a control: after every settle the
-page steps the couple in or out to the stance with the most joint room, never closer than
-ten centimetres of air between the torsos, read off the torso ellipses along the line
-between the axes. Body sizes are static. Verified before the move by driven check in a
-browser (four quarters of the follow refused at the fourth with the tally holding at 0.75;
-distance never under the extents plus 0.10 m); not re-driven since: **assumed**. Browser and
-date unrecorded, so this too cannot be repeated from a checkout.
+**Bodies are solid.** Contact is held at the engine's own cap, an eighth of the substep rate
+(`CONTACT`, 240 hertz at `HERTZ` 240 and `SUBSTEPS` 8), since at the default thirty the sim's own
+forces pressed arms through bodies by 45 mm. The upper arm collides with the chest it hangs from,
+since the engine lets bodies one joint connects pass through each other unless told otherwise, and
+the arm sank 67 mm into its own head unseen. Every joint but the grip holds at the engine's cap
+(`HOLD`, 480 hertz); the grip alone at thirty (`GRIP`), the softest thing in the couple, so a hold
+forced past what arms can do gives at the hands, in life as here -- at fifteen it fixed one law and
+cost every still card. An arm deeper than a centimetre (`THROUGH`) in a body or in another arm,
+read off the engine's manifolds every moment, is a stop; before, only the hands parting said so,
+and a hold stood with an arm through a torso. The trunk's capsules and both girdles are recorded
+where the engine has them, so a law reads the engine and never a copy. Verified by `trigid.nim`:
+no arm sits inside any body in any moment of the laws' corpus, and every capsule the page draws is
+one the engine was given.
 
-**Verdicts are an instrument run, assumed current.** `sim/verdicts.nim` asks the sim what the
-sheet asks and writes `sim/verdicts.md` in the sheet's words through one visible translation
-table, wrapped at 100 columns; no test compares the committed record with the model, so it
-is current as of 2026-09-05 (`tools/build.nim verdicts`, 42.3 s wall on this machine) and
-stale until rerun. Rerun during move reproduced committed file byte for byte.
+**Turning is a path, walked a fiftieth of a turn at a time.** One dancer's hips are spun for 200
+engine steps per moment (`walk.BEATS`, `STEP`), slow enough to stay quasi-static, and the arms are
+carried on by the engine: a pose at each moment is the pose before it carried on, so an arm that
+has gone round a body stays round it. Joined hands rise from where each settled at rest along a
+ramp over the first quarter turn (`RAISE`) to their band's lower edge, held to the ramp from both
+sides, since asked for the band outright a weightless hand crossed 359 mm in one moment; risen,
+the band's two edges are held (`LIFT` 400 newtons per metre, spread over the whole arm, `FALL` 40
+damping it) and everything between them is free -- the band is a bound, not a preference, and
+face to face nothing is asked. The lift starts only as the couple leave face to face, which is
+where hands must actually be above. Hands are drawn toward a point as they rise, weakly (`DRAW`,
+40 newtons per metre at the torso and neck, 10 over the crown): between the two bodies below the
+crown, and over the crown to the axis of whoever turns, since couple setting a hold up put them
+there and pulling both to the midpoint spends the adduction the turn wants. What stops a turn is
+one thing, asked in order: swing past its range by more than `GIVE`; an arm through a body or an
+arm (`Stop.Through`, `Stop.Arms`); then, and only once the hands have parted by `PARTED`, which
+of twist, elbow or wrist sits at its end, what the arm was against, or reach. Verified by
+`trigid.nim`: hands that are joined stay joined, no joint goes past what the rig allows while the
+hold stands, capsules move where the couple move, and no point of any held arm leaps more than an
+arm's reach plus its own move between two moments, 193 mm on the laws' corpus.
 
-**Couple step as they turn, in sweep as on page.** Stepping in or out a centimetre at a time
-wherever that leaves the joints freer was the page's alone; the sweep held one stance, so it
-refused turns a real couple take by shifting their feet. Both do it now, from one place in
-`sim/sweep`. Cost, measured rather than guessed: three block positions moved, by 0.02 turns
-at most (`-0.65` to `-0.63`, `-0.59` to `-0.58`), and the crossed pair above went from
-`+1.09` on arm through arm to `+1.07` on reach. No floor claim changed side. Three poses that
-were reported *(led)* no longer are, having gained the room. `verdicts.md` was regenerated for
-this and its diff read, since nothing keeps it honest by itself.
+**Where the couple stand is chosen for the turn, and every distance is tried.** The Architect's
+ruling: stand for the turn, hand height for the turn, everything for the turn; nothing is fixed
+but keeping bodies apart. Standing had been chosen at rest, wherever the joints were freest, and
+the couple walked straight out of it: the rest-chosen distance turned 0.22 where 0.36 m turned
+1.12. Every distance from clear of each other (`CLEAR`) outward over a metre (`ROOM`), two
+centimetres apart (`SEEK`, since the measured landscape is plateaus four centimetres wide), is
+swept whole; a card that asks whether the couple carry a turn (`reaches`) is answered at the first
+distance that does, and a sweep shown for its own sake (`furthest`) stands where the turn carries
+furthest, ties broken toward the stance whose arms move least between moments, within five
+millimetres (`SMOOTH`, the engine not being exactly mirror symmetric), nearer keeping the tie --
+since the nearest distance that carried a turn was chest to chest, with joined hands pinned between
+the torsos and popping up between the heads. Rejected: ranking distances on a cheaper physics and
+sweeping only the winner, which costs a fifth as much and does not rank them the same. Verified by
+`trigid.nim`: no distance carries a turn further than the one chosen, the couple are never offered
+a place inside each other, and the mirror law holds turn reached within one step and what stopped
+it exact.
 
-**One pressure on the elbow is recorded, not tuned.** Nothing in `comfort` rewards raising or
-flaring an elbow, and two terms weighted 1.0 punish both: `lift` rises with elevation, and
-`across` costs 1.0 at full abduction. `elev` is not a `Dof` at all, so shoulder elevation is
-unbounded and unpenalised except through `lift`. The solver therefore settles the elbow low
-and tucked toward the body's own midline, which is where the neck and head are, and that is
-the likely mechanism behind the high-band blocks reported as *arm through head*. It is a
-pressure, not the crown fault: with `overhead` set, the same rig and the same bias block
-nothing there. Changing it would move every figure again and wants its own evidence.
+**A still is wound, not built.** A card that draws the couple at half a turn or a turn and a half
+draws a winding of the arms, and no facing says that: built at the facing, the couple at a whole
+turn stand exactly as at none, so the diamond read as the open frame and the swan as the cross,
+and every joined hand hung at hip height, the lift never having started. `walk.stood` turns the
+couple there from rest at the walk's own pace, hands lifted as they leave face to face, then lets
+them stand, from the first distance that holds it. Verified by `trigid.nim`: a still asked past
+face to face has every joined hand in its band, and the diamond crosses where the open does not,
+both red first.
+
+**The reference is asked of the model cell by cell, and the answer is a claim until the Architect
+confirms it.** `design/asks.nim` is one list of what every still card asks -- which hands, how far
+turned, whose crown the hands go over -- read by `design/modelled`, which answers each and writes
+`design/modelled.json`, and by `design/rig`, which records each still. Moving cards ask whether the
+couple carry the turn under one manner of the four; an orbit is the other dancer turned the other
+way about, so its sense is flipped, and hands are raised over whoever walks under. Every cell of
+the reference carries the sim's tag beside the Architect's: *not modelled* where the sim reaches
+no pose, *unconfirmed* where it reaches one the Architect has not yet held against their own body
+on the viewer, *modelled* only once they have, by name in `CONFIRMED` beside `KEPT`. A
+confirmation is of one still, so a confirmed cell whose still moves comes out of the list. The
+tag sits outside every drawing and moves no pin. What the sim reaches today is counted off the
+built page rather than written here. Two readings of section A come apart at A9 and A11, which
+draw the same-name pair face to face, the position the project's own rule 31 says has its
+connections lying through each other; the model refusing it agrees with the rule, and chasing A
+to a hundred by bending either side is rejected. Sections B and E being whole is a weak result:
+every card in them is over the crown, where a single hold sweeps free past two turns, so they test
+the model hardly at all; the cards that discriminate are the chains under wind.
+
+**The viewer draws what the engine collides, beside the cell it answers.** `design/rig` records
+every still and eight sweeps as capsule ends the engine reports, at the radius it collides on, and
+`design/rig_page` lays every still cell of the built reference page -- drawing, badges and caption,
+cut from the page itself so what is compared is what was ruled on -- beside the sim's still of it,
+one list of entries walked by two buttons or the arrow keys, with the reference's own drawing next
+to the joint readouts on the stage. Orthographic on purpose, so a capsule's outline is exactly a
+stadium; painter's order by depth, half weight where two capsules overlap rather than pretending
+otherwise; hue is side, shade is whose.
+
+**Against the floor, which is the Architect's.** The floor says everything gets a whole turn before
+it blocks, except a low wrap, which gets half. Nothing is tuned to it; every change is argued from
+the rig or from the Architect's ruling, and `sim/verdicts.md` prints what came out beside each
+claim, so a mend and a regression are both seen. Standing for the turn met seven of the floor's
+eight single-hand claims where standing at rest met none, which is the strongest evidence so far
+that the floor was right and the model wrong rather than the other way about. With bodies solid
+the crown is free both ways, both low lock ways and the cross-name high lock go past the floor's
+whole turn by her wrist, and the wraps stop between half and a whole turn by her twist or his
+wrist; each disagreement is printed and is the Architect's to rule on.
+
+**Verdicts are an instrument run, assumed current.** `sim/verdicts.nim` asks the sim what the sheet
+asks and writes `sim/verdicts.md` in the sheet's words through one visible translation table,
+wrapped at 100 columns; the chain rungs there are wound to, as stills are. No test compares the
+committed record with the model, so it is current as of its last run and stale until rerun, and
+it is rerun in the same delivery as any change to the model.
+
+**The swan is the position the model does not reach, and its cause is measured this far.** One
+connection over the crown winds freely past a turn and a half: his arm straight up, her elbow
+bent, her wrist and shoulder twist at their ends the whole way. Two connections stop: cross-name at
+1.32 turns with the hands pulling apart while an arm rests against an arm, same-name at 1.20 by
+twist, from every distance. Drawing the hands to the turner's axis firmly rather than gently, 200
+newtons per metre against 10, is the one single change that moves it, to 1.44 and 1.48, and the
+block is then every wrist at its cone and both her shoulders at their twist ends, the four arms
+knotted over her head; the wrist cone at the clinical 75 makes one swan hold and moves the rest to
+her twist; a wider band, a straight elbow at rest and a firmer draw than 200 change nothing or
+lose ground. Rejected outright: the lead's arms passing through the follow's, which reached the
+swan by letting two arms occupy one place. What the swan is in the body is an open question below,
+and no number moves until it is answered.
+
+**Known and not mended: the crossing reader is a knife edge where two arms lie along each other.**
+`read.crossings` counts where two connections cross in plan by a segment intersection, and two
+poses differing by less than a float's precision have read as four crossings and as one when a
+crossing sits at a vertex of both polylines. The verdicts tables and the diamond law read it on
+poses well away from that edge (loosening its tolerance six orders of magnitude changed no count
+on any kept chain card); a law that samples arms laid along each other on purpose is owed, and
+the fold rule is repository issue 88.
 
 ## Pages and build
 
@@ -339,6 +606,26 @@ charter's `Artifact` (a file a build writes, under `build/`) or coined a word fo
 mock-up now hold a `{{title}}` marker instead of their own names, so opening either committed
 file no longer shows what the page is called; the name is one file away, and the alternative
 was spelling it in four places.
+
+**The browser comes from the environment, and the declaration says what to install.** `shot`
+drives Chromium through Playwright, and both used to be named by absolute path in
+`design/shot.nim` — one of them with the browser's build number inside it, which pins a version
+in the least durable place there is (issue 62). Neither path is in the source now.
+`tools/build.nim` declares `nodejs` and `chromium` as data with what each is for, and a `system`
+verb prints those names one per line for an installer; `shot.nim` takes Playwright from
+`DANCE_PLAYWRIGHT` or the bare module name node resolves, and the browser from
+`DANCE_CHROMIUM`, then from `chromium` beside Playwright's own store
+(`PLAYWRIGHT_BROWSERS_PATH`), and otherwise lets Playwright resolve what it installed. Absent
+Playwright stops with a finding naming the verb that says what to install, rather than as a
+missing file. Rejected: pinning Playwright itself, which is a node package and would mean a
+`package.json` beside its lock — that enrols the project in `koch types` and demands a `types`
+verb, work the Architect has asked not be built while this half of the project may go. Cost,
+stated rather than implied: **Playwright carries no pin here at all**, and the system packages
+carry whatever version the machine has. Verified by running all four routes on this machine,
+2026-09-08, Node 22 and Playwright's Chromium 1194: nothing set stops with the finding and exit
+1; `DANCE_PLAYWRIGHT`, `NODE_PATH` and `DANCE_CHROMIUM` each write both themes' screenshots; a
+path naming no browser fails loudly rather than silently. Not repeatable from a checkout — no
+test drives `shot`, since the project carries no `drive` verb.
 
 **URLs are listed once.** Every published page's URL is in this project's `README.md`, in two
 tables that carry the same split; `design/README.md` and `sim/README.md` point at it rather
@@ -373,63 +660,15 @@ is not registered kind and it is not wanted back, since form check now enforces 
 enforced by hand. Cost: an edit that lengthens a line past 100 runes is caught by audit rather than
 repaired by script.
 
-**Project's verbs live in compiled driver, since make is retired.** `tools/build.nim` takes
-one command (`pages`, `verdicts`, `shot`, `clean`) and runs exactly what each Makefile
-recipe ran, same programs and arguments in same order; koch drives tests, and holds no verb
-for pages. Rejected: nimble task, which would put build logic in compiler's virtual machine;
-asking koch for project-specific verb. Cost: driver runs from project directory, since every
-path in it is relative. Verified by running each: `pages` writes every artefact in 58.4 s
-against Makefile's 57.3 s, `verdicts` rewrote `sim/verdicts.md` byte-identical to committed
-file in 42.3 s, `shot` emits `build/design/shot.js`, `clean` leaves source only, unknown
-command exits 2.
-
-## Tests
-
-**Testament over `tests/t*.nim` from the project directory, one stub per suite.** Each stub
-carries the curator's header; `tlaws.nim` adds `-d:danger` because the sweeps are the slow
-part and `doAssert` survives it. Test binaries inherit testament's working directory, so
-`build/review`, `build/design` and `walkFiles("tests/t*.nim")` resolve only when testament
-runs from the project directory, as koch's runner does; running it from the repository root
-breaks them. Cost: `tlaws` runs on every core and its wall time
-follows the core count.
-
-## Figures
-
-- `tlaws` alone, danger build: 31.7 s wall, 83.9 s CPU, four Xeon cores, Linux amd64
-  container, Nim 2.2.12, 2026-09-10; compile 1.3 s warm, 11.1 s cold. Single figure, no
-  pair: unmeasured as an optimisation.
-- `tools/build.nim verdicts`: 50.2 s wall, 176 s CPU, same machine, Nim 2.2.12, 2026-09-10.
-  It rewrites `sim/verdicts.md` byte for byte identically to what 2.2.4 wrote, which is the
-  evidence that moving the pin moved no answer the sim gives -- worth having, since the
-  search is sensitive enough to land 0.75 m away on a last-bit change of input.
-- Eleven testament stubs, under `make check` before move: 52.7 s wall, 93.3 s CPU, same
-  machine and date; `tlaws` 23.0 s and `tmarks` 11.5 s of it. Not re-measured alone since;
-  whole-repository figure is in `curator/audit/PROVENANCE.md`.
-- `tools/build.nim pages`, every page including the turns sweep: 58.4 s wall, same machine,
-  after move; 57.3 s under retired `make pages`.
-- Whole-cloth port parity, driven under Chromium with fonts stubbed and `requestAnimationFrame`
-  replaced by a stepped queue on both pages: 707 states, 0 mismatches. Body outside the turns
-  panel with whitespace collapsed, head without title, and the full-body accessibility snapshot
-  equal at load; the panel's markup and slider value equal at load and for 6 holds × 3 levels ×
-  (after the buttons, 15 slider moments, both exact blocks), 324 panel states, plus 54 animation
-  states (300 frames playing, 120 to rest, 120 after a strip-figure click, compared every ten).
-  No console or page errors on either page. `grep -c nimCopy` on the emitted
-  `wholecloth_turns.js`: 13, all the runtime's own; none from module code, after five binding
-  shapes were read and rejected (35 before).
-
-## Rules deferred
-
-Declared unmet by this move, so the Style row above stays true (Article VIII.1):
-
-- VI.1: a few declarations in `tests/tlaws.nim` and `sim/verdicts.nim` carried no doc when
-  the move began; the ones touched gained one, the rest keep `## TODO: Document.` in spirit
-  but not in text. Cost: a reader opens the body.
-- X.2: banner tiers are unmarked; every banner is spaced as second tier.
-- VII.1: emitted-code readings exist for the whole-cloth port only; the validator and the
-  sim page were written before the rule and their binding shapes are unread. Cost: a copy in
-  a hot path may hide there.
-- STYLE §2: `-d:floorIsLaw` predates the `{.define.}` naming convention and stays as the
-  bare define the README names.
+**The project's verbs live in a compiled driver, since make is retired.** `tools/build.nim`
+takes one command and runs it from the project directory, each named and explained in the
+table at the head of the file: the pages and their assets, the engine, the four recordings
+(`modelled`, `rig`, `turns`, `verdicts`) that rewrite committed data nothing else may edit,
+the pins, the screenshot helper, the system declaration and `clean`; koch drives the tests and
+holds no verb for pages. Rejected: a nimble task, which would put build logic in the compiler's
+virtual machine; asking koch for a project-specific verb. Cost: the driver runs from the
+project directory, since every path in it is relative, and each recording costs minutes, which
+is why none runs under `pages`.
 
 **Every page ships the three faces it draws with, inlined.** Titles take Noto Serif, body
 text Noto Sans, code and data Commit Mono, which are the Architect's standard three and what
@@ -489,6 +728,53 @@ in a diff: those labels used to render in whatever sans the reader's machine car
 card approved on one machine was a different picture on another, which is the thing X.8
 exists to stop.
 
+## Tests
+
+**Testament over `tests/t*.nim` from the project directory, one stub per suite.** Each stub
+carries the curator's header; `trigid.nim` adds `-d:danger` because the sweeps are the slow part
+and `doAssert` survives it, and is not joinable, since it links the engine's C archive, which
+testament's joined binary cannot share. Test binaries inherit testament's working directory, so
+`build/review`, `build/design` and `walkFiles("tests/t*.nim")` resolve only when testament runs
+from the project directory, as koch's runner does; running it from the repository root breaks
+them. Cost: `trigid` is nearly the whole of the suite's wall time, and a model change that leaves
+a sweep with no moments crashes a danger build rather than reddening a law.
+
+## Figures
+
+- `trigid.nim`, danger build, under `nim r koch ci`: 331 s wall, four Xeon cores shared with
+  nothing else, Linux amd64 container, Nim 2.2.12, 2026-09-13. `tmarks` 12.6 s, `tread` 7.9 s,
+  `tengine` 3.3 s, every other suite under 2 s. Single figure, no pair: unmeasured as an
+  optimisation.
+- `tools/build.nim modelled`: 913 s wall, same machine and day, with two other recordings
+  sharing its cores; unmeasured alone.
+- `tools/build.nim rig`: 523 s wall, same day, sharing cores with the suite; unmeasured alone.
+- `tools/build.nim verdicts`: 1079 s wall, same day, sharing cores with two other recordings;
+  50.2 s on 2026-09-10 with the pose search that preceded the engine, which is a pair across two
+  models and not an optimisation.
+- `tools/build.nim pages`, every page with faces from the shared store: 26 s wall, same day.
+- `tools/build.nim engine`: 24 s cold, at once where the archive stands.
+- Whole-cloth port parity, driven under Chromium with fonts stubbed and `requestAnimationFrame`
+  replaced by a stepped queue on both pages: 707 states, 0 mismatches. Body outside the turns
+  panel with whitespace collapsed, head without title, and the full-body accessibility snapshot
+  equal at load; the panel's markup and slider value equal at load and for 6 holds × 3 levels ×
+  (after the buttons, 15 slider moments, both exact blocks), 324 panel states, plus 54 animation
+  states (300 frames playing, 120 to rest, 120 after a strip-figure click, compared every ten).
+  No console or page errors on either page. `grep -c nimCopy` on the emitted
+  `wholecloth_turns.js`: 13, all the runtime's own; none from module code, after five binding
+  shapes were read and rejected (35 before).
+
+## Rules deferred
+
+Declared unmet, so the Style row above stays true (Article VIII.1):
+
+- VI.1: a few declarations in `sim/verdicts.nim` carried no doc when the driver moved; the ones
+  touched since gained one, the rest keep `## TODO: Document.` in spirit but not in text. Cost: a
+  reader opens the body.
+- X.2: banner tiers are unmarked; every banner is spaced as second tier.
+- VII.1: emitted-code readings exist for the whole-cloth port only; the validator and the
+  viewer were written before the rule and their binding shapes are unread. Cost: a copy in a
+  hot path may hide there.
+
 ## Toolchain
 
 **Compiler pinned exactly, at the version this project was verified on.**
@@ -517,144 +803,51 @@ for stale versions, issue 106. Rejected: staying on 2.2.4, which kept a bound wh
 lived in one sentence of this file. `result +=` on a float survives in `sim/`, `design/` and
 `tools/`, none of which the VM evaluates today: latent, not urgent.
 
-## Re-audit, 2026-09-06
-
-Audited by a curator against the rules change that registers C++ and C and puts a check
-behind the gated-language rule. This project carries Nim, Markdown, a nimble file and
-hand-written HTML; none of those is a gated kind, so the new rule binds nothing here and
-nothing needed correcting. The stamp moves because the charter did.
-
-## Re-audit, 2026-09-06, TypeScript conventions
-
-Audited by a curator against the rules change that added the TypeScript and Node section to
-CONTRIBUTOR.md. This project carries no `.ts` file, so the section binds nothing here and
-nothing needed correcting; the stamp moves because the charter did.
-
-## Re-audit, 2026-09-06, draft pull requests
-
-Audited by a curator against the rules change that asks every pull request to open as a
-draft and be marked ready only when it is. It binds how this project's next pull request is
-opened, not anything in the tree; nothing needed correcting. The stamp moves because the
-charter did.
-
-## Re-audit, 2026-09-06, compiler resolution
-
-Audited by a curator against the rules change that has koch resolve each project's pin to its
-own compiler and fetch one it lacks. Nothing here needed correcting: the pin itself is
-unchanged, and what moved is how koch finds a compiler for it. The practical effect is that
-`nim r koch ci` is green as one command on a machine holding any one Nim, so verifying a
-change that touches every project no longer needs two compilers and two commands.
-
-## Re-audit, 2026-09-06, published pages linked
-
-Audited by a curator against the rules change requiring a published page to be linked rather
-than described — in the pull request's verification section and in the message to the
-Architect both. Raised by `contributor/sincopa/dance_ontology` as issue 42, after the
-omission it describes happened in pull request 40.
-
-## Re-audit, 2026-09-06, curator pass
-
-Audited by a curator against the pass that corrected six pieces of drift, split compiler
-acquisition out of `toolchain.nim`, and covered the two modules that had no test. One change
-reaches this project: a change touching only its `README.md`, `PROVENANCE.md` or
-`GLOSSARY.md` now compiles nothing, where a README change previously ran the whole suite.
-Nothing here needed correcting.
-
-## Re-audit, 2026-09-07, issue routing
-
-Audited by a curator against the change that made the issue channel run both ways and gave each
-session a queue. A session now reads the open issues labelled with its own role before any other
-work; a curator who reads this project raises what they find as an issue rather than editing it,
-since they may not; an issue labelled with a session's own role is that session's queue, work
-decided and deferred where the next session here will see it rather than in a conversation that
-ends; and a label is the role string exactly, copied and never composed, because applying a
-label creates it and a misspelling makes a second label nobody filters on.
-
-Nothing in this tree changes: the rule binds how the next session here starts. No issue is open
-against this project today, so its filter starts empty, which is the answer the rule is meant
-to give when there is nothing waiting.
-
-## Re-audit, 2026-09-07, Article II.9 bound
-
-Audited by a curator against the amendment to Article II.9, which bounds when target code may
-be hand-written: the source language by default, the crossing kept narrow, and the target
-language only where the source cannot reach at all or where crossing would forfeit what the
-target gives for free — a check its own compiler makes over the bulk of a file, a cost the glue
-would add to a hot path — with the file's opening comment saying which.
-
-This project holds no target-language file, so the rule binds nothing here today. It binds the
-moment one arrives, and the `not Nim because` gate already refuses one that argues nothing.
-
 ## Open questions
 
+- **A crossing that has just arrived cannot carry its break, and five hundredths of a turn are
+  drawn without one.** The third crossing enters through the end of a reach, so from 1.24 to
+  1.28 turns it sits between 0.0 and 4.2 along from that end — nearer than half a break — and
+  `gapFor` gives up rather than cut a gap narrower than the line it hides. Those frames draw
+  two connections crossing with nothing saying which is over, against the standing rule that
+  every crossing shows one. **Measured**: 5 of the 51 hundredths over the stretch, all of them
+  at the arrival; before this pass the same crossing went unbroken for 16 of them, because the
+  fold hid it entirely. It is not obviously mendable by tuning: a crossing entering through an
+  endpoint is at the endpoint for some interval whatever the construction, and the choices are
+  to let the break eat the end (which detaches the line from its hand) or to hold the crossing
+  hidden until it can be broken (which means trimming the reach further, and that reaches every
+  drawing). Left for the Architect to rule on.
 
-- `tlaws` costs 22 s of a four-core runner per audit; acceptable now, and the figure above
-  is the one to watch as sweeps grow.
+- **The drawing does not yet build the chain the way the Architect describes it.** They danced
+  the figure and stated the model: one connection **curls around** the other, and the other
+  **hinges straight** -- a right angle at the joined hands opening until the two forearms are
+  in line. The drawing still gives every connection a sine swung about the pair's axis, and
+  takes the crossings from wherever two such curves meet. The count now behaves — see the
+  third-crossing entry under Drawing chain — so
+  this is a question about whether the picture is built from the movement or merely agrees
+  with it at the positions checked. A prototype of the hinge-and-curl model gave the right
+  counts and drew shapes that are not a swan -- two straight lines crossing in an X -- because
+  it was scored before it was looked at. Anything that replaces the sine is drawn and looked
+  at first.
 
-## Re-audit, 2026-09-07, type check on runner
-
-Audited by a curator against the rule that a project carrying `package.json` beside its lock
-carries a `types` verb in `tools/build.nim`, and that CI runs it: `koch types` restores node
-tools and drives that verb, scoped to projects one change asks for.
-
-This project carries no node manifest, so nothing here is type-checked and the rule binds
-nothing today. It binds the moment this project grows scripts of its own.
-
-## Re-audit, 2026-09-07, system dependencies
-
-Audited by a curator against the rule that system dependencies — a library the compiler links
-against, a tool the build shells out to, a browser a driven check drives, a source clone no
-package manager carries — are declared as data in the project's own `tools/build.nim`, each
-entry carrying its reason, and reached by a verb. A source clone carries its commit; a system
-package carries no pin that survives across distributions, and the record says so rather than
-implying one; anything fetched at build time carries a checksum the build verifies. No
-machine's paths in committed source.
-
-**This project does not comply yet, and cannot be made to by curator.** `design/shot.nim` names
-two absolute paths into one machine's layout, with browser version among them:
-
-```nim
-PLAYWRIGHT = "/opt/node22/lib/node_modules/playwright"
-CHROMIUM = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
-```
-
-Header states situation honestly, so nothing is hidden; rule now says where those belong
-instead. Raised as issue 62, labelled for this project, since source is contributor's and
-`scope` holds curator to that. This project carries `tools/build.nim` already, so declaration
-has home waiting.
-
-## Re-audit, 2026-09-08, deterministic verdicts
-
-Audited by a curator against the rule that a check gives the same verdict on the same code,
-and that where it does not, the check is what is wrong.
-
-This project complies today. Its sampled suites seed their generators explicitly —
-`tests/tlaws.nim` uses `initRand(7)` and `initRand(11)` — so each run draws the same corpus,
-and nothing in the suites reads a clock or a display. Nothing needed correcting.
-
-It binds where this project is least protected: `design/shot.nim` drives a browser through
-Playwright, and no `drive` verb enrols it in the runner's driven job, so that layer is neither
-checked nor covered by this rule's evidence today. Whatever it becomes, it should settle on
-what moved rather than on what has stopped changing.
-
-## Re-audit, 2026-09-10, faces by element
-
-Audited by a curator against the rules change that splits Article X.8's faces by element —
-Noto Serif for headings and titles, Noto Sans for body and interface text, Commit Mono for
-code with its ligatures enabled. **This one does bind here, and correcting it is this
-project's work.** Every page sets system stacks (`ui-sans-serif`, `ui-monospace`, `ui-serif`)
-and the whole-cloth mockup loads Fraunces, Instrument Sans and Spline Sans Mono from Google
-Fonts, so no face is shipped and X.8's first clause — never naming one a viewer may lack — is
-not kept either. `design/page.nim` writes every stack as the `font` shorthand, so it carries
-no `font-family` at all.
-
-The open question this record already parked — that font files are an unregistered kind and
-cannot be committed — is answered by `rga_visualiser`: fetch at build time, pin every byte by
-SHA-256, embed as base64, commit nothing. Repository issue 119 carries the reading.
-
-**Done, and this note is kept only because it dates the fault rather than describes it.**
-Every page now ships all three families inlined; the whole-cloth page fetches nothing from
-Google; and the split the rule asks for is what the pages set. The one judgement the rule
-left open, whether a label drawn inside a figure is a figure or interface text, is settled
-the second way here: X.8's own clause reads "Noto Sans for body and interface text", and a
-label naming a hand is interface text rather than a number.
+- **What the swan is in the body.** The reference draws it pillion with all four hands above;
+  asked about a hammerlock, the Architect described a low one -- arm down, shoulder rotating in
+  as the hand goes behind the back, elbow bending behind to an L. Which the swan over the crown
+  is, and whether the extra full turn beyond the cross lives in the wrists and the hand hold or
+  in the arms wrapping each other, decides the four still cards the model does not reach and
+  every moving card into them. Asked; no number moves until it is answered.
+- **Every still awaits the Architect's confirmation against their own body.** They have said
+  many are wrong and will say what is wrong with each, cell by cell on the viewer; the tags
+  read *unconfirmed* until then.
+- **The floor at the low and neck bands.** The wraps stop between half and a whole turn by her
+  twist or his wrist where the floor says half or whole, and the low locks go past the floor's
+  whole turn; whether a hammerlock goes a whole turn, and what moves in the body when it does,
+  is the Architect's.
+- **The girdle's radius, 60 mm, is an estimate and not tape.**
+- **Two one-moment flips in the cross-name crown turn**, 370 mm as his arm straightens over at
+  0.28 and 220 mm as hers turns over at 1.18, which weightless links with springs this weak do
+  at no cost; the leap law's corpus does not include that sweep and says so.
+- **The crossing reader at a knife edge**, arms laid along each other, repository issue 88.
+- **Whether section A's cards are a question a body can be asked.** A9 and A11 draw the
+  same-name pair face to face, which rule 31 says has its connections lying through each
+  other; the model refusing them agrees with the rule.

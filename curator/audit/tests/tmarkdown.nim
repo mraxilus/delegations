@@ -8,7 +8,7 @@ joinable: true
 ##   Layout, provenance and glossary all read documents through these three, and each was
 ##   covered only through those checks until this file.
 
-import std/unittest
+import std/[strutils, unittest]
 import ../src/markdown
 
 
@@ -41,3 +41,11 @@ suite "Markdown":
     check firstNonBlank("# Title\n") == "# Title"
     check firstNonBlank("").len == 0
     check firstNonBlank("\n  \n\t\n").len == 0
+
+  test "fenced code is blanked, fences included, and line count is kept":
+    let document = "one\n```nim\n## not a heading\n```\n## Section\n"
+    check document.fencedOut == "one\n\n\n\n## Section\n"  # example gone, lines kept
+    check document.fencedOut.headingLines == @["## Section"]  # composes with readers
+    check fencedOut("a\r\n```\r\nb\r\n") == "a\r\n\r\n\r\n"  # open fence blanks to end; CRLF kept
+    check fencedOut("  ```\n  x\n  ```\ny\n") == "\n\n\ny\n"  # indented fence
+    check fencedOut("plain\n") == "plain\n"

@@ -1,16 +1,16 @@
 # Provenance
 
-| Field  | Value |
-|--------|-------|
-| Agent  | Claude Code |
-| Author | Claude |
-| Date   | 2026-09-06 |
-| Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 3497e71b8d327cfa |
-| Review | **Unreviewed.** Nothing here has been read line by line by a human. |
+| Field   | Value |
+|---------|-------|
+| Harness | Claude Code |
+| Author  | Claude |
+| Date    | 2026-09-06 |
+| Style   | CONSTITUTION.md and STYLE.md, followed. |
+| Rules   | 5aa3c7b7f2865a05 |
+| Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: curator test project replacing `abstand/intervals`, which lived in a real domain;
-owner asked for a domain-neutral project serving the same testing function. No authority
+the Architect asked for a domain-neutral project serving the same testing function. No authority
 replicated; the laws tested are the ring's own. No vendored source.
 
 This project exists to be checked rather than to be used. Every mechanism the audit enforces
