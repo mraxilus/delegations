@@ -1300,3 +1300,30 @@ turning her negative way, reached only from 0.70 m, since 1.2 was true of an arm
 torso; the crown law asks a whole turn, since a turn and a half was free only with an arm through
 a head. The mirror law holds the turn reached within one step, since contact decides stops now
 and the engine's contact is not mirror symmetric to the step; what stopped them is still exact.
+
+**The Architect, on the viewer at 0.68 of the cross-name crown turn: "Arms aren't really following
+comfort here, no-one would let their arm wrap behind their head like this."** Her arm sat at the
+swing's end, forty five degrees behind the frontal plane at the head's height, where going over the
+top costs nothing. Traced through that turn, every joint ran to an end and stayed -- twist at ninety
+through the rise and minus seventy after, wrist at its cone from 0.40 on, elbow straight. Three
+causes, each measured: the engine's limits are walls and its springs at one hertz are nothing, so
+nothing preferred the middle of a range (the swing's torque now begins where its ease does, and
+twist, elbow and wrist get the same slope through their ease bands; her extension peaks at 27 where
+it sat at 46); the hands were drawn toward the mid-point all through, so over the crown her hand was
+pulled to her own axis before any turn and her wrist sat at its cone from the first moment (drawn
+only as the hands rise); and the engine's default friction of 0.6 dragged an arm lying over a head
+round with it as she turned under, winding her shoulder to its end by 1.24 turns (0.2, cloth on
+cloth, and the turn is free). Verified by testament on 2026-09-13, `tests/trigid.nim`: no held arm
+over the crown is carried to its swing's end, red first with six arm-moments there and fifty five
+in its ease. Left and
+flagged: arms still re-configure in one moment twice in that turn, 370 mm as his arm straightens
+over at 0.28 and 220 mm as hers turns over at 1.18, which weightless links with springs this weak do
+at no cost; the leap law's corpus does not yet include that sweep, and says so here rather than
+being widened to a claim the model does not meet.
+
+**One regression caught by the reference, not by a law.** Drawing the hands toward the mid-point
+only as they rise lost four still cards -- the cross-name chain's swans and X -- and two frames: a
+still card is built already wound, its rest was taken as where it was built, and so it asked for
+nothing. The rest is face to face, or pillion for a hold built so, whatever stance the couple are
+built at. All six hold again; the reference reads 203 of 231, and the crown single holds
+turn free both ways.
