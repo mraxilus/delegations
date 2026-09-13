@@ -3,10 +3,11 @@
 ##   decides what ran. Library sources are read at compile time from Atlas checkout, so
 ##   catalogue is held to what library exports rather than to what this project remembers.
 
-import std/[algorithm, compilesettings, macros, sequtils, strutils, tables, unittest]
+import std/[algorithm, compilesettings, json, macros, options, sequtils, strutils, tables, unittest]
+from std/unicode import runeLen
 
 import ../src/pga_benchmark
-import ../src/pga_benchmark/[inspector, model, probes]
+import ../src/pga_benchmark/[baseline, gaps, inspector, model, probes, report]
 
 
 const
@@ -311,3 +312,201 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
       for f in functions:
         if f.key == "wedge(Point,Point)":
           check count(f.body).multiplies == 12 and count(f.body).subs == 6  # as documented
+
+
+suite "Baseline":
+  const
+    PATH = "baseline/rga4d.json"
+    KEY = "∧(Multivector,Multivector)"
+
+  func node(multiplies, checks, zero_fills, bytes: int): JsonNode =
+    ## Shape one function as inspect does, from counts and bytes moved.
+    let c = Counts(multiplies: multiplies, checks: checks, zero_fills: zero_fills)
+    %*{
+      "symbol": "∧", "module": "pga/operators", "params": ["Multivector", "Multivector"],
+      "returns": "Multivector", "inline": false, "own": countsNode(c), "total": countsNode(c),
+      "movement": movementNode(Movement(bytes_moved: bytes)),
+    }
+
+  func doc(functions: JsonNode; flags = "-d:release"; dimensions = 4): JsonNode =
+    ## Shape inspect document around functions.
+    result = document(
+      "inspect", configNode("rga4d", dimensions, false, 128),
+      %*{"date": "2026-09-13", "machine": "m", "nim": "n", "pga": "p", "flags": flags},
+    )
+    result["functions"] = functions
+
+  func one(key: string; f: JsonNode): JsonNode =
+    ## Shape functions object holding one function.
+    result = newJObject()
+    result[key] = f
+
+  test "equal documents pass with nothing to say":
+    let same = one(KEY, node(81, 178, 1, 512))
+    let v = compare(doc(same), doc(same), PATH)
+    check v.findings.len == 0 and v.improvements.len == 0  # gate silent
+
+  test "grown count is one finding naming function, metric and both values":
+    let v =
+      compare(doc(one(KEY, node(81, 178, 1, 512))), doc(one(KEY, node(90, 178, 1, 512))), PATH)
+    check v.findings.len == 1 and v.improvements.len == 0  # one metric grew
+    check v.findings[0].render ==
+      PATH & ":0: Total `multiplies` of `" & KEY & "` grew; got `90`, baseline `81`."  # IV.4
+
+  test "shrunk count is improvement, never finding":
+    let v =
+      compare(doc(one(KEY, node(81, 178, 1, 512))), doc(one(KEY, node(81, 0, 1, 512))), PATH)
+    check v.findings.len == 0 and v.improvements.len == 1  # baseline moves by choice
+    check "checks" in v.improvements[0] and "got `0`" in v.improvements[0]  # what shrank
+
+  test "bytes moved are gated with counts":
+    let v =
+      compare(doc(one(KEY, node(81, 178, 1, 512))), doc(one(KEY, node(81, 178, 1, 640))), PATH)
+    check v.findings.len == 1 and "bytes_moved" in v.findings[0].message  # movement grew
+
+  test "function absent on either side is finding":
+    let before = compare(doc(one(KEY, node(81, 178, 1, 512))), doc(newJObject()), PATH)
+    check before.findings.len == 1 and "absent now" in before.findings[0].message  # gone
+    let after = compare(doc(newJObject()), doc(one(KEY, node(81, 178, 1, 512))), PATH)
+    check after.findings.len == 1 and "absent from baseline" in after.findings[0].message  # new
+
+  test "documents of another build are not compared":
+    let same = one(KEY, node(81, 178, 1, 512))
+    let flags = compare(doc(same), doc(same, flags = "-d:danger"), PATH)
+    check flags.findings.len == 1 and "`flags`" in flags.findings[0].message  # build differs
+    let dims = compare(doc(same), doc(same, dimensions = 5), PATH)
+    check dims.findings.len == 1 and "`dimensions`" in dims.findings[0].message  # algebra differs
+    let schema = compare(doc(same), %*{"schema": 2}, PATH)
+    check schema.findings.len == 1 and "Schema differs" in schema.findings[0].message  # refused
+
+
+suite "Gaps":
+  const KEY_WEDGE = "∧(Multivector,Multivector)"
+
+  func fn(
+    symbol, module: string; is_inline: bool; multiplies, checks, zero_fills, bytes: int
+  ): JsonNode =
+    ## Shape one inspected function.
+    let c = Counts(multiplies: multiplies, checks: checks, zero_fills: zero_fills)
+    %*{
+      "symbol": symbol, "module": module, "params": [], "returns": "", "inline": is_inline,
+      "own": countsNode(c), "total": countsNode(c),
+      "movement": movementNode(Movement(bytes_moved: bytes)),
+    }
+
+  func inspectDoc(): JsonNode =
+    ## Shape inspect document: two library operators, one accessor, one reference form.
+    result = document(
+      "inspect", configNode("rga4d", 4, false, 128),
+      %*{"date": "2026-09-13", "machine": "m", "nim": "n", "pga": "p", "flags": "f"},
+    )
+    var functions = newJObject()
+    functions[KEY_WEDGE] = fn("∧", "pga/operators", false, 81, 178, 1, 512)
+    functions["wedge(Point,Point)"] = fn("wedge", "reference/rigid3", true, 12, 0, 0, 112)
+    functions["~(Multivector)"] = fn("~", "pga/operators", false, 0, 0, 1, 384)
+    functions["[](Multivector,Basis)"] = fn("[]", "pga/multivectors", true, 0, 0, 0, 136)
+    result["functions"] = functions
+    result["probes"] = %*{
+      "wedge": {"symbol": "∧", "library": KEY_WEDGE, "reference": ""},
+      "wedge_point_point": {
+        "symbol": "∧", "library": KEY_WEDGE, "reference": "wedge(Point,Point)"
+      },
+      "select_part": {"symbol": "[]", "library": "[](Multivector,Basis)", "reference": ""},
+      "transform_point_motor": {
+        "symbol": "", "library": "", "reference": "transform(Point,Motor)"
+      },
+    }
+    result["missing"] = newJObject()
+
+  func figure(ns: float): JsonNode =
+    ## Shape one bench figure.
+    %*{"ns_median": ns, "ns_min": ns, "allocations": 0, "nan_share": 0.0}
+
+  func benchDoc(): JsonNode =
+    ## Shape bench document over same probes.
+    result = document(
+      "bench", configNode("rga4d", 4, false, 128),
+      %*{
+        "date": "2026-09-13", "machine": "m", "rounds": 3, "objects": 64,
+        "is_allocation_measured": true,
+      },
+    )
+    result["probes"] = %*{
+      "wedge": {"library": figure(24.1), "reference": newJNull()},
+      "wedge_point_point": {"library": figure(24.1), "reference": figure(1.3)},
+      "select_part": {"library": figure(0.5), "reference": newJNull()},
+      "transform_point_motor": {"library": figure(60.0), "reference": figure(5.0)},
+    }
+
+  let ALGEBRAS = @[Algebra(config: "rga4d", inspect: inspectDoc(), bench: benchDoc())]
+
+  func decidedOf(rule: Rule; algebras: seq[Algebra]; rows: seq[Row]): Decided =
+    ## Decide design gap carrying rule.
+    for d in DESIGNS:
+      if d.rule == rule: return d.decideDesign(algebras, rows)
+
+  test "rows are decided against reference and against zero":
+    let rows = rowsOf(ALGEBRAS[0])
+    check rows.len == 4  # one per probe
+    let by = rows.mapIt((it.probe, it)).toTable
+    check by["wedge"].status == Status.Open and "checks" in by["wedge"].open_on  # absolute
+    check "multiplies" notin by["wedge"].open_on  # no reference, no relative target
+    check by["wedge_point_point"].open_on ==
+      @["multiplies", "bytes", "zero_fills", "checks", "time"]  # in decided order
+    check by["select_part"].status == Status.Closed  # nothing spent, nothing exceeded
+    check by["transform_point_motor"].open_on == @["time"]  # composed spell, timing alone
+
+  test "row without counts or timing is unmeasured":
+    let rows = rowsOf(Algebra(config: "rga4d", inspect: inspectDoc(), bench: nil))
+    let by = rows.mapIt((it.probe, it)).toTable
+    check by["transform_point_motor"].status == Status.Unmeasured  # nothing to decide on
+    check "time" notin by["wedge_point_point"].open_on  # no bench, no time verdict
+
+  test "ledger keeps identifiers across reorder and allots next to new key":
+    var rows = rowsOf(ALGEBRAS[0])
+    var ledger = ledgerOf(nil)
+    rows.assign(ledger)
+    check rows[0].id == "G001" and rows[3].id == "G004" and ledger.next == 5  # in order
+    rows.reverse
+    var again = ledgerOf(ledger.toJson)
+    rows.assign(again)
+    check rows[0].id == "G004" and rows[3].id == "G001" and again.next == 5  # never renumbered
+    rows.add Row(key: "cga5d/wedge", config: "cga5d", probe: "wedge")
+    rows.assign(again)
+    check rows[^1].id == "G005" and again.next == 6  # next number, never one reused
+
+  test "design gaps are decided by rule with evidence":
+    let rows = rowsOf(ALGEBRAS[0])
+    let checks = decidedOf(Rule.Checks, ALGEBRAS, rows)
+    check checks.status == Status.Open and "1 of 3 library functions" in checks.evidence  # ∧
+    check "`" & KEY_WEDGE & "` with 178" in checks.evidence  # most
+    check decidedOf(Rule.Inline, ALGEBRAS, rows).evidence ==
+      "1 of 3 library operators, e.g. rga4d `~(Multivector)`."  # light operator called
+    check decidedOf(Rule.ZeroFills, ALGEBRAS, rows).evidence.startsWith("2 of 3")  # ∧ and ~
+    check decidedOf(Rule.Terms, ALGEBRAS, rows).evidence ==
+      "1 rows; widest rga4d/wedge_point_point spends 81 multiplies against 12."  # widest
+    check decidedOf(Rule.Time, ALGEBRAS, rows).evidence ==
+      "2 rows; worst rga4d/wedge_point_point at 24.1 ns against 1.3 ns."  # worst ratio
+    check decidedOf(Rule.Nan, ALGEBRAS, rows).status == Status.Closed  # every share zero
+    check decidedOf(Rule.Compound, ALGEBRAS, rows).evidence ==
+      "rga4d/transform_point_motor."  # composed spell named
+    check decidedOf(Rule.Missing, ALGEBRAS, rows).status == Status.Closed  # nothing missing
+    check decidedOf(Rule.Cayley, ALGEBRAS, rows).status == Status.Unmeasured  # not readable here
+
+  test "rendered list fits width and names every row":
+    let (text, ledger) = generate(ALGEBRAS, ledgerOf(nil))
+    var widest = 0
+    for line in text.splitLines: widest = max(widest, runeLen(line))
+    check widest <= WIDTH  # form check reads product
+    check "| G002 | wedge_point_point | 81/12 | 512/112 | 0/0 | 178/0 | 24.1/1.3 | open |" in
+      text  # cells read library/reference
+    check "| G004 | transform_point_motor | – | – | – | – | 60.0/5.0 | open |" in
+      text  # composed spell has no counts
+    check "- **D05, open.**" in text and "- **D10, unmeasured.**" in text  # design verdicts
+    check "Rows: 4; open 3, closed 1, unmeasured 0." in text  # summary
+    check ledger.next == 5  # ledger grew with rows
+
+  test "wrap breaks at spaces within width and indents continuation":
+    check wrap("aa bb cc", 5) == @["aa bb", "cc"]  # fits, then breaks
+    check wrap("aa bb cc", 5, "  ") == @["aa bb", "  cc"]  # continuation indented
+    check wrap("∧∧∧ ∧∧∧", 3) == @["∧∧∧", "∧∧∧"]  # runes, not bytes
