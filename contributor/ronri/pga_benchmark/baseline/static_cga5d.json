@@ -3949,24 +3949,24 @@
       "inline": false,
       "own": {
         "multiplies": 0,
-        "adds": 1,
+        "adds": 32,
         "subs": 0,
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 3,
+        "checks": 96,
         "calls": 0,
         "allocations": 0,
         "lines": 51
       },
       "total": {
         "multiplies": 0,
-        "adds": 1,
+        "adds": 32,
         "subs": 0,
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 3,
+        "checks": 96,
         "calls": 0,
         "allocations": 0,
         "lines": 51
@@ -3992,11 +3992,11 @@
       "own": {
         "multiplies": 0,
         "adds": 0,
-        "subs": 1,
+        "subs": 32,
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 3,
+        "checks": 96,
         "calls": 0,
         "allocations": 0,
         "lines": 51
@@ -4004,11 +4004,11 @@
       "total": {
         "multiplies": 0,
         "adds": 0,
-        "subs": 1,
+        "subs": 32,
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 3,
+        "checks": 96,
         "calls": 0,
         "allocations": 0,
         "lines": 51
@@ -4037,7 +4037,7 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 2,
+        "checks": 64,
         "calls": 0,
         "allocations": 0,
         "lines": 45
@@ -4049,7 +4049,7 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 2,
+        "checks": 64,
         "calls": 0,
         "allocations": 0,
         "lines": 45
@@ -4079,8 +4079,8 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 4,
-        "calls": 1,
+        "checks": 128,
+        "calls": 32,
         "allocations": 0,
         "lines": 69
       },
@@ -4091,10 +4091,10 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 4,
-        "calls": 1,
+        "checks": 128,
+        "calls": 32,
         "allocations": 0,
-        "lines": 72
+        "lines": 165
       },
       "movement": {
         "bytes_read": 264,
@@ -4121,8 +4121,8 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 4,
-        "calls": 1,
+        "checks": 128,
+        "calls": 32,
         "allocations": 0,
         "lines": 69
       },
@@ -4133,10 +4133,10 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 5,
-        "calls": 2,
+        "checks": 160,
+        "calls": 64,
         "allocations": 0,
-        "lines": 92
+        "lines": 805
       },
       "movement": {
         "bytes_read": 264,
@@ -4408,8 +4408,8 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 8,
-        "calls": 8,
+        "checks": 225,
+        "calls": 225,
         "allocations": 0,
         "lines": 114
       },
@@ -4417,13 +4417,13 @@
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
-        "zero_fills": 5,
+        "zero_fills": 98,
         "intermediates": 0,
         "copies": 0,
-        "checks": 10,
-        "calls": 10,
+        "checks": 289,
+        "calls": 289,
         "allocations": 0,
-        "lines": 186
+        "lines": 2263
       },
       "movement": {
         "bytes_read": 256,
@@ -4864,25 +4864,25 @@
       "returns": "Multivector",
       "inline": false,
       "own": {
-        "multiplies": 1,
+        "multiplies": 32,
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 2,
+        "checks": 64,
         "calls": 0,
         "allocations": 0,
         "lines": 45
       },
       "total": {
-        "multiplies": 1,
+        "multiplies": 32,
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 2,
+        "checks": 64,
         "calls": 0,
         "allocations": 0,
         "lines": 45
@@ -5444,8 +5444,8 @@
         "zero_fills": 1,
         "intermediates": 1,
         "copies": 1,
-        "checks": 4,
-        "calls": 2,
+        "checks": 66,
+        "calls": 33,
         "allocations": 0,
         "lines": 59
       },
@@ -5456,10 +5456,10 @@
         "zero_fills": 4,
         "intermediates": 2,
         "copies": 1,
-        "checks": 72,
-        "calls": 3,
+        "checks": 134,
+        "calls": 34,
         "allocations": 0,
-        "lines": 482
+        "lines": 513
       },
       "movement": {
         "bytes_read": 256,
@@ -5485,8 +5485,8 @@
         "zero_fills": 1,
         "intermediates": 1,
         "copies": 1,
-        "checks": 4,
-        "calls": 2,
+        "checks": 66,
+        "calls": 33,
         "allocations": 0,
         "lines": 59
       },
@@ -5497,10 +5497,10 @@
         "zero_fills": 4,
         "intermediates": 2,
         "copies": 1,
-        "checks": 72,
-        "calls": 3,
+        "checks": 134,
+        "calls": 34,
         "allocations": 0,
-        "lines": 482
+        "lines": 513
       },
       "movement": {
         "bytes_read": 256,
@@ -5819,24 +5819,24 @@
         "lines": 65
       },
       "total": {
-        "multiplies": 973,
+        "multiplies": 1004,
         "adds": 844,
         "subs": 0,
-        "zero_fills": 26,
+        "zero_fills": 119,
         "intermediates": 10,
         "copies": 4,
-        "checks": 2228,
-        "calls": 26,
+        "checks": 2569,
+        "calls": 305,
         "allocations": 0,
-        "lines": 13916
+        "lines": 15993
       },
       "movement": {
         "bytes_read": 256,
         "bytes_written": 256,
-        "bytes_zeroed": 6656,
+        "bytes_zeroed": 30464,
         "bytes_copied": 1024,
         "bytes_intermediates": 2560,
-        "bytes_moved": 10752
+        "bytes_moved": 34560
       }
     }
   },

@@ -10,6 +10,8 @@
 ##     appends `_`; then `_u<n>` disambiguates overloads and `__<module>` names module.
 ##     Reader strips suffix from last `__`, then decodes head only where trailing `_` says
 ##     it was encoded.
+##   Terms inside loop count once per trip where loop's bound is literal (`for b in Basis`,
+##     `0 ..< 16`); bound naming variable counts once, since trips are not in text.
 ##   Counts are own body's, then total with callees found in same reading, recursively,
 ##     since library chains (norm calls both norms; support calls three products) spend
 ##     what their callees spend.
@@ -204,9 +206,10 @@ func functionsIn*(source: string): seq[CFunction] =
     pos = i
 
 
-func callSites*(body: string): seq[string] =
-  ## Read mangled name at every call site of Nim function in body, accessor reads excluded.
-  ##   Call is identifier holding `__` followed by `(`; runtime helpers hold none.
+func plainSites(body: string): seq[string] =
+  ## Read mangled name at every call site of Nim function in text holding no loop,
+  ## accessor reads excluded. Call is identifier holding `__` followed by `(`; runtime
+  ## helpers hold none.
   var i = 0
   while i < body.len:
     if body[i] notin IdentStartChars:
@@ -228,28 +231,59 @@ func countIntermediates(body: string): int =
       inc result
 
 
-func count*(body: string): Counts =
-  ## Count what one function body spends, by text.
+const
+  LOOP_OPEN = "while (1) {"
+    ## Text every loop compiler emits opens with; bound is tested inside.
+  BOUND_OPEN = "if ((!(("
+    ## Text loop's bound test opens with, e.g. `if ((!((i_1 < ((NI) 16))))) {`.
+  BOUND_TYPE = "((NI) "
+    ## Text before literal bound; bound naming variable instead is unknown.
+
+
+func startOf(context: string; counter: string): int =
+  ## Read value counter was last set to before loop, `<counter> = ((NI) <n>);`; zero else.
+  let at = context.rfind(counter & " = ((NI) ")
+  if at < 0: return 0
+  let from_digits = at + counter.len + " = ((NI) ".len
+  var stop = from_digits
+  while stop < context.len and context[stop] in Digits: inc stop
+  if stop == from_digits: 0 else: parseInt(context[from_digits ..< stop])
+
+
+func tripsOf(inner, context: string): int =
+  ## Read how many times loop body runs from its bound test and counter's start; one
+  ## where bound is not literal.
+  let at = inner.find(BOUND_OPEN)
+  if at < 0: return 1
+  let start = at + BOUND_OPEN.len
+  var i = start
+  while i < inner.len and inner[i] in IdentChars: inc i
+  let counter = inner[start ..< i]
+  if counter.len == 0: return 1
+  let is_inclusive = inner.continuesWith(" <= ", i)
+  if not is_inclusive and not inner.continuesWith(" < ", i): return 1
+  i += (if is_inclusive: " <= ".len else: " < ".len)
+  if not inner.continuesWith(BOUND_TYPE, i): return 1
+  i += BOUND_TYPE.len
+  var stop = i
+  while stop < inner.len and inner[stop] in Digits: inc stop
+  if stop == i: return 1
+  let bound = parseInt(inner[i ..< stop]) + (if is_inclusive: 1 else: 0)
+  max(1, bound - startOf(context, counter))
+
+
+func plain(body: string): Counts =
+  ## Count spent terms of text holding no loop, i.e. once each.
   Counts(
     multiplies: body.count(") * ("),
     adds: body.count(") + ("),
     subs: body.count(") - ("),
     zero_fills: body.count("nimZeroMem("),
-    intermediates: body.countIntermediates,
     copies: body.count("(*Result) = ") + body.count("nimCopyMem(") + body.count("memcpy("),
     checks: body.count("NIM_UNLIKELY((*nimErr_))"),
-    calls: body.callSites.len,
+    calls: body.plainSites.len,
     allocations: body.count("alloc(") + body.count("newSeq") + body.count("rawNewString"),
-    lines: body.count('\n'),
   )
-
-
-
-#[ Totals ]#
-
-func key*(f: CFunction): string =
-  ## Key function by symbol and parameter stems, e.g. `∧(Multivector,Multivector)`.
-  f.symbol & "(" & f.params.join(",") & ")"
 
 
 func `+`*(a, b: Counts): Counts =
@@ -266,6 +300,93 @@ func `+`*(a, b: Counts): Counts =
     allocations: a.allocations + b.allocations,
     lines: a.lines + b.lines,
   )
+
+
+func `*`(c: Counts; trips: int): Counts =
+  ## Scale spent terms by trips; declarations and lines are static and stay.
+  Counts(
+    multiplies: c.multiplies * trips,
+    adds: c.adds * trips,
+    subs: c.subs * trips,
+    zero_fills: c.zero_fills * trips,
+    intermediates: c.intermediates,
+    copies: c.copies * trips,
+    checks: c.checks * trips,
+    calls: c.calls * trips,
+    allocations: c.allocations * trips,
+    lines: c.lines,
+  )
+
+
+func weighted(body, context: string): Counts =
+  ## Count spent terms with every loop's body weighted by its trips, nested loops
+  ## multiplying; text outside loops counts once.
+  var pos = 0
+  var outside = ""
+  while true:
+    let at = body.find(LOOP_OPEN, pos)
+    if at < 0:
+      outside.add body[pos ..< body.len]
+      break
+    outside.add body[pos ..< at]
+    var i = at + LOOP_OPEN.len
+    var depth = 1
+    while i < body.len and depth > 0:
+      if body[i] == '{': inc depth
+      elif body[i] == '}': dec depth
+      inc i
+    let inner = body[at + LOOP_OPEN.len ..< max(at + LOOP_OPEN.len, i - 1)]
+    let before = context & body[0 ..< at]
+    result = result + weighted(inner, before) * tripsOf(inner, before)
+    pos = i
+  result = result + plain(outside)
+
+
+func weightedSites(body, context: string): seq[string] =
+  ## Read call sites with every loop's body repeated by its trips, so callees fold once
+  ## per trip; sites outside loops once.
+  var pos = 0
+  var outside = ""
+  while true:
+    let at = body.find(LOOP_OPEN, pos)
+    if at < 0:
+      outside.add body[pos ..< body.len]
+      break
+    outside.add body[pos ..< at]
+    var i = at + LOOP_OPEN.len
+    var depth = 1
+    while i < body.len and depth > 0:
+      if body[i] == '{': inc depth
+      elif body[i] == '}': dec depth
+      inc i
+    let inner = body[at + LOOP_OPEN.len ..< max(at + LOOP_OPEN.len, i - 1)]
+    let before = context & body[0 ..< at]
+    let sites = weightedSites(inner, before)
+    for _ in 1 .. tripsOf(inner, before): result.add sites
+    pos = i
+  result.add plainSites(outside)
+
+
+func callSites*(body: string): seq[string] =
+  ## Read mangled name at every call site of Nim function in body, once per loop trip,
+  ## accessor reads excluded.
+  weightedSites(body, "")
+
+
+func count*(body: string): Counts =
+  ## Count what one function body spends, by text: terms once per loop trip where loop's
+  ## bound is literal, declarations and lines once.
+  result = weighted(body, "")
+  result.intermediates = body.countIntermediates
+  result.lines = body.count('\n')
+
+
+
+#[ Totals ]#
+
+func key*(f: CFunction): string =
+  ## Key function by symbol and parameter stems, e.g. `∧(Multivector,Multivector)`.
+  f.symbol & "(" & f.params.join(",") & ")"
 
 
 func totalOf(

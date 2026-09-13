@@ -360,24 +360,24 @@
       "inline": false,
       "own": {
         "multiplies": 0,
-        "adds": 1,
+        "adds": 8,
         "subs": 0,
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 3,
+        "checks": 24,
         "calls": 0,
         "allocations": 0,
         "lines": 51
       },
       "total": {
         "multiplies": 0,
-        "adds": 1,
+        "adds": 8,
         "subs": 0,
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 3,
+        "checks": 24,
         "calls": 0,
         "allocations": 0,
         "lines": 51
@@ -403,11 +403,11 @@
       "own": {
         "multiplies": 0,
         "adds": 0,
-        "subs": 1,
+        "subs": 8,
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 3,
+        "checks": 24,
         "calls": 0,
         "allocations": 0,
         "lines": 51
@@ -415,11 +415,11 @@
       "total": {
         "multiplies": 0,
         "adds": 0,
-        "subs": 1,
+        "subs": 8,
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 3,
+        "checks": 24,
         "calls": 0,
         "allocations": 0,
         "lines": 51
@@ -448,7 +448,7 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 2,
+        "checks": 16,
         "calls": 0,
         "allocations": 0,
         "lines": 45
@@ -460,7 +460,7 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 2,
+        "checks": 16,
         "calls": 0,
         "allocations": 0,
         "lines": 45
@@ -490,8 +490,8 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 4,
-        "calls": 1,
+        "checks": 32,
+        "calls": 8,
         "allocations": 0,
         "lines": 69
       },
@@ -502,10 +502,10 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 4,
-        "calls": 1,
+        "checks": 32,
+        "calls": 8,
         "allocations": 0,
-        "lines": 72
+        "lines": 93
       },
       "movement": {
         "bytes_read": 72,
@@ -532,8 +532,8 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 4,
-        "calls": 1,
+        "checks": 32,
+        "calls": 8,
         "allocations": 0,
         "lines": 69
       },
@@ -544,10 +544,10 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 5,
-        "calls": 2,
+        "checks": 40,
+        "calls": 16,
         "allocations": 0,
-        "lines": 92
+        "lines": 253
       },
       "movement": {
         "bytes_read": 72,
@@ -988,25 +988,25 @@
       "returns": "Multivector",
       "inline": false,
       "own": {
-        "multiplies": 1,
+        "multiplies": 8,
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 2,
+        "checks": 16,
         "calls": 0,
         "allocations": 0,
         "lines": 45
       },
       "total": {
-        "multiplies": 1,
+        "multiplies": 8,
         "adds": 0,
         "subs": 0,
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 2,
+        "checks": 16,
         "calls": 0,
         "allocations": 0,
         "lines": 45
@@ -1486,8 +1486,8 @@
         "zero_fills": 1,
         "intermediates": 1,
         "copies": 1,
-        "checks": 4,
-        "calls": 2,
+        "checks": 18,
+        "calls": 9,
         "allocations": 0,
         "lines": 59
       },
@@ -1498,10 +1498,10 @@
         "zero_fills": 4,
         "intermediates": 2,
         "copies": 1,
-        "checks": 16,
-        "calls": 3,
+        "checks": 30,
+        "calls": 10,
         "allocations": 0,
-        "lines": 146
+        "lines": 153
       },
       "movement": {
         "bytes_read": 64,
@@ -1527,8 +1527,8 @@
         "zero_fills": 1,
         "intermediates": 1,
         "copies": 1,
-        "checks": 4,
-        "calls": 2,
+        "checks": 18,
+        "calls": 9,
         "allocations": 0,
         "lines": 59
       },
@@ -1539,10 +1539,10 @@
         "zero_fills": 4,
         "intermediates": 2,
         "copies": 1,
-        "checks": 16,
-        "calls": 3,
+        "checks": 30,
+        "calls": 10,
         "allocations": 0,
-        "lines": 146
+        "lines": 153
       },
       "movement": {
         "bytes_read": 64,

@@ -11,18 +11,18 @@ beyond a tolerance of 1.25 times the reference, and met otherwise.
 ## Causes
 
 - **D01, over.** Dense products spend every Cayley-table term where typed forms spend few. Evidence:
-  79 gaps; widest cga5d/partner_round_point spends 973 multiplies against 10. Closes when no typed
+  79 gaps; widest cga5d/partner_round_point spends 1004 multiplies against 10. Closes when no typed
   gap spends more multiplies than its reference.
 - **D02, over.** Library calls run slower than typed forms beyond the band. Evidence: 149 gaps;
   worst cga5d/carrier_sphere at 87.3 ns against 0.3 ns. Closes when no gap's library median exceeds
   1.25 times its reference's.
 - **D03, over.** Operators zero-fill their full-width result before writing it. Evidence: 166 of 188
-  library functions; most cga5d `⊛(Multivector)` with 26. Closes when no library function calls
+  library functions; most cga5d `⊛(Multivector)` with 119. Closes when no library function calls
   `nimZeroMem`.
 - **D04, over.** Chains materialise full-width intermediates. Evidence: 58 of 188 library functions;
   most cga5d `⊛(Multivector)` with 10. Closes when no library function declares a local multivector.
 - **D05, over.** Error-flag checks survive into release builds. Evidence: 170 of 188 library
-  functions; most cga5d `⊛(Multivector)` with 2228. Closes when no library function branches on
+  functions; most cga5d `⊛(Multivector)` with 2569. Closes when no library function branches on
   `nimErr_`; `--panics:on` on the pinned compiler already emits none in either implementation, so
   the library's users must know to pass it.
 - **D06, over.** Sign and permutation operators cross the module boundary as calls. Evidence: 48 of
@@ -61,13 +61,13 @@ Gaps: 103; over 102, met 1, unmeasured 0.
 | G008 | contract_weight | 27/– | 512/– | 0/– | 62/– | 19.2/– | over |
 | G009 | expand_bulk | 27/– | 512/– | 0/– | 62/– | 19.0/– | over |
 | G010 | expand_weight | 54/– | 512/– | 0/– | 124/– | 24.9/– | over |
-| G011 | add | 0/– | 512/– | 0/– | 3/– | 13.7/– | over |
-| G012 | subtract | 0/– | 512/– | 0/– | 3/– | 14.5/– | over |
+| G011 | add | 0/– | 512/– | 0/– | 48/– | 13.7/– | over |
+| G012 | subtract | 0/– | 512/– | 0/– | 48/– | 14.5/– | over |
 | G013 | project_central | 108/– | 1408/– | 2/– | 242/– | 83.2/– | over |
 | G014 | project_central_anti | 135/– | 1408/– | 2/– | 304/– | 74.9/– | over |
 | G015 | project_orthogonal | 135/– | 1408/– | 2/– | 304/– | 70.1/– | over |
 | G016 | project_orthogonal_anti | 108/– | 1408/– | 2/– | 242/– | 83.2/– | over |
-| G017 | scale | 1/– | 392/– | 0/– | 2/– | 13.7/– | over |
+| G017 | scale | 16/– | 392/– | 0/– | 32/– | 13.7/– | over |
 | G018 | bulk | 0/– | 384/– | 0/– | 16/– | 12.4/– | over |
 | G019 | weight | 0/– | 384/– | 0/– | 16/– | 12.6/– | over |
 | G020 | complement_right | 0/– | 384/– | 0/– | 32/– | 13.5/– | over |
@@ -76,16 +76,16 @@ Gaps: 103; over 102, met 1, unmeasured 0.
 | G023 | reverse_anti | 0/– | 384/– | 0/– | 32/– | 13.5/– | over |
 | G024 | dual_bulk | 0/– | 384/– | 0/– | 16/– | 11.9/– | over |
 | G025 | dual_weight | 0/– | 384/– | 0/– | 16/– | 12.6/– | over |
-| G026 | negate | 0/– | 384/– | 0/– | 2/– | 12.7/– | over |
+| G026 | negate | 0/– | 384/– | 0/– | 32/– | 12.7/– | over |
 | G027 | norm_bulk | 8/– | 768/– | 1/– | 20/– | 12.7/– | over |
 | G028 | norm_weight | 8/– | 768/– | 1/– | 20/– | 10.8/– | over |
 | G029 | norm | 16/– | 1920/– | 4/– | 46/– | 46.5/– | over |
-| G030 | normalize_bulk | 8/– | 1152/– | 2/– | 24/– | 21.8/– | over |
-| G031 | normalize_weight | 8/– | 1152/– | 2/– | 24/– | 21.7/– | over |
-| G032 | unitize | 8/– | 1152/– | 2/– | 24/– | 21.6/– | over |
+| G030 | normalize_bulk | 8/– | 1152/– | 2/– | 54/– | 21.8/– | over |
+| G031 | normalize_weight | 8/– | 1152/– | 2/– | 54/– | 21.7/– | over |
+| G032 | unitize | 8/– | 1152/– | 2/– | 54/– | 21.6/– | over |
 | G033 | attitude | 81/– | 896/– | 1/– | 179/– | 42.2/– | over |
-| G034 | select_grade | 0/– | 392/– | 0/– | 4/– | 21.9/– | over |
-| G035 | select_grade_anti | 0/– | 392/– | 0/– | 5/– | 29.8/– | over |
+| G034 | select_grade | 0/– | 392/– | 0/– | 64/– | 21.9/– | over |
+| G035 | select_grade_anti | 0/– | 392/– | 0/– | 80/– | 29.8/– | over |
 | G036 | select_part | 0/– | 128/– | 0/– | 0/– | 0.6/– | met |
 | G037 | support | 162/– | 1664/– | 3/– | 375/– | 81.8/– | over |
 | G038 | support_anti | 162/– | 1664/– | 3/– | 375/– | 80.8/– | over |
@@ -115,7 +115,7 @@ Gaps: 103; over 102, met 1, unmeasured 0.
 | G062 | support_anti_point | 162/6 | 1664/64 | 3/0 | 375/0 | 85.6/1.3 | over |
 | G063 | support_anti_line | 162/9 | 1664/112 | 3/0 | 375/1 | 94.2/2.1 | over |
 | G064 | reverse_anti_motor | 0/0 | 384/256 | 0/0 | 32/2 | 12.7/1.4 | over |
-| G065 | unitize_motor | 8/12 | 1152/320 | 2/0 | 24/4 | 25.0/13.1 | over |
+| G065 | unitize_motor | 8/12 | 1152/320 | 2/0 | 54/4 | 25.0/13.1 | over |
 | G066 | norm_weight_motor | 8/4 | 768/72 | 1/0 | 20/2 | 12.2/1.5 | over |
 | G067 | norm_bulk_motor | 8/4 | 768/72 | 1/0 | 20/2 | 12.0/1.8 | over |
 | G068 | complement_right_point | 0/0 | 384/64 | 0/0 | 32/0 | 12.7/0.7 | over |
@@ -128,7 +128,7 @@ Gaps: 103; over 102, met 1, unmeasured 0.
 | G075 | weight_point | 0/0 | 384/96 | 0/0 | 16/0 | 11.2/0.8 | over |
 | G076 | norm_bulk_point | 8/3 | 768/40 | 1/0 | 20/1 | 12.1/1.8 | over |
 | G077 | norm_weight_point | 8/0 | 768/40 | 1/0 | 20/0 | 12.1/0.5 | over |
-| G078 | unitize_point | 8/3 | 1152/128 | 2/0 | 24/0 | 25.0/1.2 | over |
+| G078 | unitize_point | 8/3 | 1152/128 | 2/0 | 54/0 | 25.0/1.2 | over |
 | G079 | attitude_point | 81/0 | 896/40 | 1/0 | 179/0 | 48.6/0.6 | over |
 | G080 | complement_right_line | 0/0 | 384/192 | 0/0 | 32/2 | 12.7/3.4 | over |
 | G081 | complement_left_line | 0/0 | 384/192 | 0/0 | 32/2 | 13.0/3.4 | over |
@@ -140,7 +140,7 @@ Gaps: 103; over 102, met 1, unmeasured 0.
 | G087 | weight_line | 0/0 | 384/144 | 0/0 | 16/0 | 9.8/1.8 | over |
 | G088 | norm_bulk_line | 8/3 | 768/56 | 1/0 | 20/2 | 10.3/1.5 | over |
 | G089 | norm_weight_line | 8/3 | 768/56 | 1/0 | 20/2 | 10.4/1.5 | over |
-| G090 | unitize_line | 8/9 | 1152/240 | 2/0 | 24/4 | 21.8/10.2 | over |
+| G090 | unitize_line | 8/9 | 1152/240 | 2/0 | 54/4 | 21.8/10.2 | over |
 | G091 | attitude_line | 81/0 | 896/80 | 1/0 | 179/0 | 41.3/0.8 | over |
 | G092 | complement_right_plane | 0/0 | 384/64 | 0/0 | 32/0 | 10.8/0.6 | over |
 | G093 | complement_left_plane | 0/0 | 384/64 | 0/0 | 32/0 | 11.2/0.6 | over |
@@ -152,7 +152,7 @@ Gaps: 103; over 102, met 1, unmeasured 0.
 | G099 | weight_plane | 0/0 | 384/96 | 0/0 | 16/0 | 11.5/0.8 | over |
 | G100 | norm_bulk_plane | 8/0 | 768/40 | 1/0 | 20/0 | 11.8/0.6 | over |
 | G101 | norm_weight_plane | 8/3 | 768/40 | 1/0 | 20/1 | 12.9/1.8 | over |
-| G102 | unitize_plane | 8/7 | 1152/160 | 2/0 | 24/1 | 25.5/12.4 | over |
+| G102 | unitize_plane | 8/7 | 1152/160 | 2/0 | 54/1 | 25.5/12.4 | over |
 | G103 | attitude_plane | 81/0 | 896/80 | 1/0 | 179/0 | 49.2/2.3 | over |
 
 ## cga5d
@@ -175,13 +175,13 @@ Gaps: 129; over 128, met 1, unmeasured 0.
 | G111 | contract_weight | 243/– | 1024/– | 0/– | 518/– | 66.7/– | over |
 | G112 | expand_bulk | 243/– | 1024/– | 0/– | 518/– | 58.7/– | over |
 | G113 | expand_weight | 243/– | 1024/– | 0/– | 518/– | 59.4/– | over |
-| G114 | add | 0/– | 1024/– | 0/– | 3/– | 13.7/– | over |
-| G115 | subtract | 0/– | 1024/– | 0/– | 3/– | 13.7/– | over |
+| G114 | add | 0/– | 1024/– | 0/– | 96/– | 13.7/– | over |
+| G115 | subtract | 0/– | 1024/– | 0/– | 96/– | 13.7/– | over |
 | G116 | project_central | 486/– | 2816/– | 2/– | 1038/– | 159.6/– | over |
 | G117 | project_central_anti | 486/– | 2816/– | 2/– | 1038/– | 150.1/– | over |
 | G118 | project_orthogonal | 486/– | 2816/– | 2/– | 1038/– | 162.5/– | over |
 | G119 | project_orthogonal_anti | 486/– | 2816/– | 2/– | 1038/– | 176.0/– | over |
-| G120 | scale | 1/– | 776/– | 0/– | 2/– | 14.8/– | over |
+| G120 | scale | 32/– | 776/– | 0/– | 64/– | 14.8/– | over |
 | G121 | bulk | 0/– | 768/– | 0/– | 16/– | 12.5/– | over |
 | G122 | weight | 0/– | 768/– | 0/– | 16/– | 12.5/– | over |
 | G123 | complement_right | 0/– | 768/– | 0/– | 64/– | 16.0/– | over |
@@ -190,16 +190,16 @@ Gaps: 129; over 128, met 1, unmeasured 0.
 | G126 | reverse_anti | 0/– | 768/– | 0/– | 64/– | 13.7/– | over |
 | G127 | dual_bulk | 0/– | 768/– | 0/– | 64/– | 13.4/– | over |
 | G128 | dual_weight | 0/– | 768/– | 0/– | 64/– | 13.4/– | over |
-| G129 | negate | 0/– | 768/– | 0/– | 2/– | 11.9/– | over |
+| G129 | negate | 0/– | 768/– | 0/– | 64/– | 11.9/– | over |
 | G130 | norm_bulk | 32/– | 1536/– | 1/– | 68/– | 15.4/– | over |
 | G131 | norm_weight | 32/– | 1536/– | 1/– | 68/– | 16.0/– | over |
 | G132 | norm | 64/– | 3840/– | 4/– | 142/– | 56.6/– | over |
-| G133 | normalize_bulk | 32/– | 2304/– | 2/– | 72/– | 46.6/– | over |
-| G134 | normalize_weight | 32/– | 2304/– | 2/– | 72/– | 54.0/– | over |
-| G135 | unitize | 32/– | 2304/– | 2/– | 72/– | 55.0/– | over |
+| G133 | normalize_bulk | 32/– | 2304/– | 2/– | 134/– | 46.6/– | over |
+| G134 | normalize_weight | 32/– | 2304/– | 2/– | 134/– | 54.0/– | over |
+| G135 | unitize | 32/– | 2304/– | 2/– | 134/– | 55.0/– | over |
 | G136 | attitude | 243/– | 1792/– | 1/– | 519/– | 99.4/– | over |
-| G137 | select_grade | 0/– | 776/– | 0/– | 4/– | 40.4/– | over |
-| G138 | select_grade_anti | 0/– | 776/– | 0/– | 5/– | 54.0/– | over |
+| G137 | select_grade | 0/– | 776/– | 0/– | 128/– | 40.4/– | over |
+| G138 | select_grade_anti | 0/– | 776/– | 0/– | 160/– | 54.0/– | over |
 | G139 | select_part | 0/– | 256/– | 0/– | 0/– | 0.9/– | met |
 | G140 | bulk_flat | 0/– | 768/– | 0/– | 16/– | 12.7/– | over |
 | G141 | weight_flat | 0/– | 768/– | 0/– | 16/– | 12.5/– | over |
@@ -209,7 +209,7 @@ Gaps: 129; over 128, met 1, unmeasured 0.
 | G145 | carrier_co | 243/– | 2560/– | 2/– | 584/– | 98.8/– | over |
 | G146 | center | 486/– | 4352/– | 4/– | 1104/– | 202.8/– | over |
 | G147 | container | 486/– | 4352/– | 4/– | 1104/– | 184.8/– | over |
-| G148 | partner | 973/– | 10752/– | 10/– | 2228/– | 375.8/– | over |
+| G148 | partner | 1004/– | 34560/– | 10/– | 2569/– | 375.8/– | over |
 | G149 | wedge_round_point_round_point | 243/20 | 1024/160 | 0/0 | 518/0 | 58.4/3.6 | over |
 | G150 | wedge_dipole_round_point | 243/30 | 1024/200 | 0/0 | 518/0 | 59.2/8.8 | over |
 | G151 | wedge_round_point_dipole | 243/30 | 1024/280 | 0/0 | 518/1 | 58.8/8.5 | over |
@@ -245,7 +245,7 @@ Gaps: 129; over 128, met 1, unmeasured 0.
 | G181 | carrier_co_round_point | 243/0 | 2560/48 | 2/0 | 584/0 | 83.3/0.3 | over |
 | G182 | center_round_point | 486/5 | 4352/120 | 4/0 | 1104/0 | 177.4/1.7 | over |
 | G183 | container_round_point | 486/8 | 4352/80 | 4/0 | 1104/0 | 158.5/1.4 | over |
-| G184 | partner_round_point | 973/10 | 10752/120 | 10/0 | 2228/0 | 374.3/1.8 | over |
+| G184 | partner_round_point | 1004/10 | 34560/120 | 10/0 | 2569/0 | 374.3/1.8 | over |
 | G185 | complement_right_dipole | 0/0 | 768/400 | 0/0 | 64/2 | 15.2/5.1 | over |
 | G186 | complement_left_dipole | 0/0 | 768/480 | 0/0 | 64/3 | 15.2/6.8 | over |
 | G187 | reverse_dipole | 0/0 | 768/320 | 0/0 | 64/2 | 15.0/2.8 | over |
@@ -261,7 +261,7 @@ Gaps: 129; over 128, met 1, unmeasured 0.
 | G197 | carrier_co_dipole | 243/0 | 2560/112 | 2/0 | 584/0 | 83.6/0.9 | over |
 | G198 | center_dipole | 486/16 | 4352/160 | 4/0 | 1104/1 | 209.0/3.7 | over |
 | G199 | container_dipole | 486/18 | 4352/160 | 4/0 | 1104/2 | 158.4/2.8 | over |
-| G200 | partner_dipole | 973/29 | 10752/320 | 10/0 | 2228/4 | 453.1/3.4 | over |
+| G200 | partner_dipole | 1004/29 | 34560/320 | 10/0 | 2569/4 | 453.1/3.4 | over |
 | G201 | complement_right_circle | 0/0 | 768/400 | 0/0 | 64/2 | 12.7/4.4 | over |
 | G202 | complement_left_circle | 0/0 | 768/480 | 0/0 | 64/3 | 12.7/5.7 | over |
 | G203 | reverse_circle | 0/0 | 768/320 | 0/0 | 64/2 | 12.5/2.4 | over |
@@ -277,7 +277,7 @@ Gaps: 129; over 128, met 1, unmeasured 0.
 | G213 | carrier_co_circle | 243/0 | 2560/224 | 2/0 | 584/1 | 82.6/1.9 | over |
 | G214 | center_circle | 486/18 | 4352/160 | 4/0 | 1104/1 | 205.7/3.3 | over |
 | G215 | container_circle | 486/16 | 4352/120 | 4/0 | 1104/0 | 186.9/3.0 | over |
-| G216 | partner_circle | 973/29 | 10752/320 | 10/0 | 2228/2 | 399.6/4.3 | over |
+| G216 | partner_circle | 1004/29 | 34560/320 | 10/0 | 2569/2 | 399.6/4.3 | over |
 | G217 | complement_right_sphere | 0/0 | 768/80 | 0/0 | 64/0 | 15.7/1.0 | over |
 | G218 | complement_left_sphere | 0/0 | 768/120 | 0/0 | 64/1 | 15.8/3.1 | over |
 | G219 | reverse_sphere | 0/0 | 768/120 | 0/0 | 64/0 | 15.5/8.5 | over |
@@ -293,7 +293,7 @@ Gaps: 129; over 128, met 1, unmeasured 0.
 | G229 | carrier_co_sphere | 243/0 | 2560/72 | 2/0 | 584/0 | 84.5/0.7 | over |
 | G230 | center_sphere | 486/8 | 4352/80 | 4/0 | 1104/0 | 179.1/1.6 | over |
 | G231 | container_sphere | 486/5 | 4352/120 | 4/0 | 1104/0 | 158.4/1.9 | over |
-| G232 | partner_sphere | 973/10 | 10752/120 | 10/0 | 2228/0 | 444.1/1.8 | over |
+| G232 | partner_sphere | 1004/10 | 34560/120 | 10/0 | 2569/0 | 444.1/1.8 | over |
 
 ## rga3d
 
@@ -315,13 +315,13 @@ Gaps: 38; over 37, met 1, unmeasured 0.
 | G240 | contract_weight | 9/– | 256/– | 0/– | 22/– | 4.5/– | over |
 | G241 | expand_bulk | 9/– | 256/– | 0/– | 22/– | 4.4/– | over |
 | G242 | expand_weight | 18/– | 256/– | 0/– | 44/– | 6.7/– | over |
-| G243 | add | 0/– | 256/– | 0/– | 3/– | 4.2/– | over |
-| G244 | subtract | 0/– | 256/– | 0/– | 3/– | 4.2/– | over |
+| G243 | add | 0/– | 256/– | 0/– | 24/– | 4.2/– | over |
+| G244 | subtract | 0/– | 256/– | 0/– | 24/– | 4.2/– | over |
 | G245 | project_central | 36/– | 704/– | 2/– | 86/– | 48.9/– | over |
 | G246 | project_central_anti | 45/– | 704/– | 2/– | 108/– | 50.3/– | over |
 | G247 | project_orthogonal | 45/– | 704/– | 2/– | 108/– | 50.2/– | over |
 | G248 | project_orthogonal_anti | 36/– | 704/– | 2/– | 86/– | 48.7/– | over |
-| G249 | scale | 1/– | 200/– | 0/– | 2/– | 3.9/– | over |
+| G249 | scale | 8/– | 200/– | 0/– | 16/– | 3.9/– | over |
 | G250 | bulk | 0/– | 192/– | 0/– | 8/– | 4.3/– | over |
 | G251 | weight | 0/– | 192/– | 0/– | 8/– | 4.2/– | over |
 | G252 | complement_right | 0/– | 192/– | 0/– | 16/– | 4.3/– | over |
@@ -330,16 +330,16 @@ Gaps: 38; over 37, met 1, unmeasured 0.
 | G255 | reverse_anti | 0/– | 192/– | 0/– | 16/– | 4.1/– | over |
 | G256 | dual_bulk | 0/– | 192/– | 0/– | 8/– | 4.1/– | over |
 | G257 | dual_weight | 0/– | 192/– | 0/– | 8/– | 4.1/– | over |
-| G258 | negate | 0/– | 192/– | 0/– | 2/– | 3.8/– | over |
+| G258 | negate | 0/– | 192/– | 0/– | 16/– | 3.8/– | over |
 | G259 | norm_bulk | 4/– | 384/– | 1/– | 12/– | 3.5/– | over |
 | G260 | norm_weight | 4/– | 384/– | 1/– | 12/– | 3.5/– | over |
 | G261 | norm | 8/– | 960/– | 4/– | 30/– | 8.1/– | over |
-| G262 | normalize_bulk | 4/– | 576/– | 2/– | 16/– | 7.1/– | over |
-| G263 | normalize_weight | 4/– | 576/– | 2/– | 16/– | 7.1/– | over |
-| G264 | unitize | 4/– | 576/– | 2/– | 16/– | 7.1/– | over |
+| G262 | normalize_bulk | 4/– | 576/– | 2/– | 30/– | 7.1/– | over |
+| G263 | normalize_weight | 4/– | 576/– | 2/– | 30/– | 7.1/– | over |
+| G264 | unitize | 4/– | 576/– | 2/– | 30/– | 7.1/– | over |
 | G265 | attitude | 27/– | 448/– | 1/– | 63/– | 9.7/– | over |
-| G266 | select_grade | 0/– | 200/– | 0/– | 4/– | 16.5/– | over |
-| G267 | select_grade_anti | 0/– | 200/– | 0/– | 5/– | 11.9/– | over |
+| G266 | select_grade | 0/– | 200/– | 0/– | 32/– | 16.5/– | over |
+| G267 | select_grade_anti | 0/– | 200/– | 0/– | 40/– | 11.9/– | over |
 | G268 | select_part | 0/– | 64/– | 0/– | 0/– | 0.6/– | met |
 | G269 | support | 54/– | 832/– | 3/– | 135/– | 19.6/– | over |
 | G270 | support_anti | 54/– | 832/– | 3/– | 135/– | 18.5/– | over |
@@ -364,13 +364,13 @@ Gaps: 45; over 44, met 1, unmeasured 0.
 | G278 | contract_weight | 81/– | 512/– | 0/– | 178/– | 33.7/– | over |
 | G279 | expand_bulk | 81/– | 512/– | 0/– | 178/– | 34.4/– | over |
 | G280 | expand_weight | 81/– | 512/– | 0/– | 178/– | 35.6/– | over |
-| G281 | add | 0/– | 512/– | 0/– | 3/– | 13.8/– | over |
-| G282 | subtract | 0/– | 512/– | 0/– | 3/– | 13.8/– | over |
+| G281 | add | 0/– | 512/– | 0/– | 48/– | 13.8/– | over |
+| G282 | subtract | 0/– | 512/– | 0/– | 48/– | 13.8/– | over |
 | G283 | project_central | 162/– | 1408/– | 2/– | 358/– | 93.5/– | over |
 | G284 | project_central_anti | 162/– | 1408/– | 2/– | 358/– | 93.4/– | over |
 | G285 | project_orthogonal | 162/– | 1408/– | 2/– | 358/– | 94.3/– | over |
 | G286 | project_orthogonal_anti | 162/– | 1408/– | 2/– | 358/– | 93.1/– | over |
-| G287 | scale | 1/– | 392/– | 0/– | 2/– | 13.4/– | over |
+| G287 | scale | 16/– | 392/– | 0/– | 32/– | 13.4/– | over |
 | G288 | bulk | 0/– | 384/– | 0/– | 8/– | 11.6/– | over |
 | G289 | weight | 0/– | 384/– | 0/– | 8/– | 11.2/– | over |
 | G290 | complement_right | 0/– | 384/– | 0/– | 32/– | 13.2/– | over |
@@ -379,16 +379,16 @@ Gaps: 45; over 44, met 1, unmeasured 0.
 | G293 | reverse_anti | 0/– | 384/– | 0/– | 32/– | 12.9/– | over |
 | G294 | dual_bulk | 0/– | 384/– | 0/– | 32/– | 13.2/– | over |
 | G295 | dual_weight | 0/– | 384/– | 0/– | 32/– | 13.2/– | over |
-| G296 | negate | 0/– | 384/– | 0/– | 2/– | 12.5/– | over |
+| G296 | negate | 0/– | 384/– | 0/– | 32/– | 12.5/– | over |
 | G297 | norm_bulk | 16/– | 768/– | 1/– | 36/– | 13.9/– | over |
 | G298 | norm_weight | 16/– | 768/– | 1/– | 36/– | 14.3/– | over |
 | G299 | norm | 32/– | 1920/– | 4/– | 78/– | 54.3/– | over |
-| G300 | normalize_bulk | 16/– | 1152/– | 2/– | 40/– | 37.8/– | over |
-| G301 | normalize_weight | 16/– | 1152/– | 2/– | 40/– | 37.9/– | over |
-| G302 | unitize | 16/– | 1152/– | 2/– | 40/– | 39.1/– | over |
+| G300 | normalize_bulk | 16/– | 1152/– | 2/– | 70/– | 37.8/– | over |
+| G301 | normalize_weight | 16/– | 1152/– | 2/– | 70/– | 37.9/– | over |
+| G302 | unitize | 16/– | 1152/– | 2/– | 70/– | 39.1/– | over |
 | G303 | attitude | 81/– | 896/– | 1/– | 179/– | 48.6/– | over |
-| G304 | select_grade | 0/– | 392/– | 0/– | 4/– | 29.7/– | over |
-| G305 | select_grade_anti | 0/– | 392/– | 0/– | 5/– | 31.4/– | over |
+| G304 | select_grade | 0/– | 392/– | 0/– | 64/– | 29.7/– | over |
+| G305 | select_grade_anti | 0/– | 392/– | 0/– | 80/– | 31.4/– | over |
 | G306 | select_part | 0/– | 128/– | 0/– | 0/– | 0.7/– | met |
 | G307 | bulk_flat | 0/– | 384/– | 0/– | 8/– | 11.6/– | over |
 | G308 | weight_flat | 0/– | 384/– | 0/– | 8/– | 11.6/– | over |
@@ -398,4 +398,4 @@ Gaps: 45; over 44, met 1, unmeasured 0.
 | G312 | carrier_co | 81/– | 1280/– | 2/– | 212/– | 71.9/– | over |
 | G313 | center | 162/– | 2176/– | 4/– | 392/– | 118.7/– | over |
 | G314 | container | 162/– | 2176/– | 4/– | 392/– | 110.0/– | over |
-| G315 | partner | 325/– | 5376/– | 10/– | 804/– | 250.1/– | over |
+| G315 | partner | 340/– | 11136/– | 10/– | 969/– | 250.1/– | over |
