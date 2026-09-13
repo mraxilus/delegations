@@ -3,10 +3,10 @@
 ##   decides what ran. Library sources are read at compile time from Atlas checkout, so
 ##   catalogue is held to what library exports rather than to what this project remembers.
 
-import std/[algorithm, macros, sequtils, strutils, unittest]
+import std/[algorithm, compilesettings, macros, sequtils, strutils, tables, unittest]
 
 import ../src/pga_benchmark
-import ../src/pga_benchmark/probes
+import ../src/pga_benchmark/[inspector, model, probes]
 
 
 const
@@ -147,6 +147,11 @@ suite "Catalogue":
     ).filterIt(it notin EXCLUDED).deduplicate
     check symbolsOf(PROBES).sorted == exported.sorted  # no exported operator unmeasured
 
+  test "templates name every symbol library spells over another":
+    for (symbol, target) in TEMPLATES:
+      let line = "template `" & symbol & "`*(m: Multivector): Multivector = " & target & " m"
+      check line in SOURCE_OPERATORS  # one-line template, target's function is what C holds
+
   test "aliases match every name library's umbrella exports":
     let exported = aliasesIn(SOURCE_UMBRELLA, IS_CONFORMAL)
     let catalogued = (aliasesOf(PROBES) & aliasesOf(MISSING)).deduplicate
@@ -193,3 +198,116 @@ suite "Allocation":
         let figure = FIGURES[side][index]
         if figure.is_measured:
           check figure.allocations == 0  # heap untouched over every round
+
+
+suite "Inspector":
+  test "mangled names demangle to symbols":
+    check demangle("XE2X88XA7__u0__OOZdepsZpgaZoperators") == "∧"  # non-ASCII bytes
+    check demangle("barXE2X88X99__u0__pgaZoperators") == "|∙"  # special word then bytes
+    check demangle("roofXE2X88X98__u0__pgaZoperators") == "^∘"  # roof is `^`
+    check demangle("tildeXE2X88X98__u0__pgaZoperators") == "~∘"  # tilde is `~`
+    check demangle("X7BX7D__u0__probes") == "{}"  # generic instantiated where used
+    check demangle("X5BX5D__u1__pgaZmultivectors") == "[]"  # accessor
+    check demangle("slash__u0__pgaZoperators") == "/"  # encoded head keeps its underscore
+    check demangle("backslash__u0__pgaZoperators") == "\\"  # longest word first
+    check demangle("minus__u1__pgaZmultivectors") == "-"  # ASCII operator alone
+    check demangle("wedge_u0__referenceZrigid3") == "wedge"  # plain identifier
+    check demangle("dualBulk_u1__referenceZrigid3") == "dualBulk"  # overload index stripped
+    check demangle("nimZeroMem") == "nimZeroMem"  # no suffix at all
+
+  test "functions are split and counted from fixture C":
+    const MV = "tyObject_Multivector__h"
+    const FIXTURE = [
+      "N_LIB_PRIVATE N_NIMCALL(void, XE2X88XA7__u0__OOZpgaZoperators)(" & MV & "* m_p0, " &
+        MV & "* n_p1, " & MV & "* Result) {",
+      "\tNF* T1_;",
+      "NF T2_;",
+      MV & " T3_;",
+      "NIM_BOOL* nimErr_;",
+      "{",
+      "\t\tnimErr_ = nimErrorFlag();",
+      "nimZeroMem(((void*) Result), sizeof(" & MV & "));",
+      "T2_ = X5BX5D__u1__OOZpgaZmultivectors(m_p0, ((tyEnum_Basis__h) 1));",
+      "if (NIM_UNLIKELY((*nimErr_))) {",
+      "\tgoto BeforeRet_;",
+      "}",
+      "(*T1_) = ((((NF) T2_) * ((NF) T2_)) + (((NF) T2_) * ((NF) T2_)));",
+      "(*T1_) = (((NF) T2_) - ((NF) T2_));",
+      "barXE2X88X99__u0__OOZpgaZoperators(m_p0, ((&T3_)));",
+      "if (NIM_UNLIKELY((*nimErr_))) {",
+      "\tgoto BeforeRet_;",
+      "}",
+      "}",
+      "\tBeforeRet_: ;",
+      "}",
+      "",
+      "static N_INLINE(NF, dot_u0__referenceZrigid3)(tyObject_Vec3__h* a_p0, " &
+        "tyObject_Vec3__h* b_p1) {",
+      "\tNF result;",
+      "result = ((((NF) (*a_p0).x) * ((NF) (*b_p1).x)) + (((NF) (*a_p0).y) * ((NF) (*b_p1).y)));",
+      "\treturn result;",
+      "}",
+      "",
+      "N_LIB_PRIVATE N_NIMCALL(void, declared__u0__mod)(" & MV & "* m_p0, " & MV & "* Result);",
+    ].join("\n") & "\n"
+    let functions = functionsIn(FIXTURE)
+    check functions.len == 2  # declaration ending in `;` skipped
+    check functions[0].symbol == "∧"  # head demangled
+    check functions[0].params == @["Multivector", "Multivector"]  # stems in order
+    check functions[0].result_stem == "Multivector" and not functions[0].is_inline  # via Result
+    check functions[0].module == "OOZpgaZoperators"  # suffix after last `__`
+    let c = count(functions[0].body)
+    check c.multiplies == 2 and c.adds == 1 and c.subs == 1  # terms as spelled
+    check c.zero_fills == 1 and c.temporaries == 1 and c.checks == 2  # fills, locals, branches
+    check c.calls == 1  # norm call counted, accessor read not
+    check functions[1].symbol == "dot" and functions[1].params == @["Vec3", "Vec3"]
+    check functions[1].result_stem == "float" and functions[1].is_inline  # via return type
+    check count(functions[1].body).multiplies == 2  # inline body counted alike
+    check functions[0].key == "∧(Multivector,Multivector)"  # key spells stems
+
+  test "totals fold callees per call site":
+    const FIXTURE = """
+N_NIMCALL(void, outer__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivector__h* Result) {
+inner__u0__m(m_p0, Result);
+inner__u0__m(m_p0, Result);
+}
+
+N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivector__h* Result) {
+(*Result) = (((NF) 1.0) * ((NF) 2.0));
+}
+"""
+    let totals = totals(functionsIn(FIXTURE))
+    check totals["inner__u0__m"].multiplies == 1  # own
+    check totals["outer__u0__m"].multiplies == 2 and totals["outer__u0__m"].calls == 2  # twice
+
+  test "movement models bytes from stems and counts":
+    let f = CFunction(
+      symbol: "∧", params: @["Multivector", "Multivector"], result_stem: "Multivector"
+    )
+    let m = movement(f, Counts(zero_fills: 1, temporaries: 2, copies: 1), 128)
+    check m.bytes_read == 256 and m.bytes_written == 128  # two in, one out
+    check m.bytes_zeroed == 128 and m.bytes_copied == 128 and m.bytes_temporaries == 256
+    check m.bytes_moved == 896  # sum of every cause
+    check sizeOfStem("Point", 128) == 32 and sizeOfStem("float", 128) == 8  # typed sizes
+    check sizeOfStem("Unknown", 128) == 0  # unknown stems add nothing
+
+  test "own nimcache holds every catalogued symbol at its arity":
+    const CACHE = querySetting(SingleValueSetting.nimcacheDir)
+    let functions = inspectCache(CACHE)
+    var keys: seq[string]
+    for f in functions: keys.add f.key
+    for p in PROBES:
+      if p.symbol.len == 0: continue
+      var is_found = false
+      for f in functions:
+        if f.symbol != p.emitted: continue
+        var arity = 0
+        for stem in f.params:
+          if stem == "Multivector" or stem == "float": inc arity
+        if arity == int(p.arity): is_found = true
+      check is_found  # every spelled operator is emitted at its arity
+    when IS_RIGID and DIMENSIONS == 4:
+      check "wedge(Point,Point)" in keys  # typed reference reached from suites
+      for f in functions:
+        if f.key == "wedge(Point,Point)":
+          check count(f.body).multiplies == 12 and count(f.body).subs == 6  # as documented
