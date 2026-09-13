@@ -25,7 +25,7 @@ nim r koch tests contributor/ronri/pga_benchmark  # this project alone, every co
 nim r tools/build.nim drive     # project directory: inspect, check, hold gaps.md; what CI runs
 nim r tools/build.nim bench     # time every probe, record baseline/bench_<algebra>.json
 nim r tools/build.nim baseline  # re-record counts after an intended change to the library
-nim r tools/build.nim gaps      # regenerate gaps.md and the ledger from baseline/
+nim r tools/build.nim gaps      # regenerate gaps.md and the register from baseline/
 nim r tools/build.nim sweep     # dense timings at two to six dimensions, never in CI
 ```
 
@@ -50,16 +50,17 @@ src/pga_benchmark/inspector.nim  read counts out of emitted C
 src/pga_benchmark/model.nim      bytes moved from counts and sizes
 src/pga_benchmark/inspect.nim    entry: read one nimcache, write counts
 src/pga_benchmark/baseline.nim   compare counts against baseline
-src/pga_benchmark/gaps.nim       rows, ledger, design gaps, rendering
+src/pga_benchmark/gaps.nim       rows, register, design gaps, rendering
 tools/build.nim                  driver verbs
-baseline/                        committed counts, bench records and ledger
+baseline/                        committed counts, bench records and register
 tests/                           suites and one testament stub per algebra
 ```
 
 ## Status
 
-Measured on the pinned compiler and library head `0bc4655`: 315 rows across four algebras,
-ten design gaps, all open but the last, which nothing here can read. Unreviewed by a human.
-See `PROVENANCE.md` for the figures and what each subsystem was checked against.
+Measured on the pinned compiler and library head `0bc4655`: one row per operation per
+algebra, and the design gaps above them, every one open but the last, which nothing here can
+read; `gaps.md` counts them. Unreviewed by a human. See `PROVENANCE.md` for the figures and
+what each subsystem was checked against.
 
 [replications]: https://gitlab.com/mraxilus/replications

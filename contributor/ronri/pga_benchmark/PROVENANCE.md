@@ -1,13 +1,13 @@
 # Provenance
 
-| Field  | Value |
-|--------|-------|
-| Agent  | Claude Code |
-| Author | Claude Fable 5.1 |
-| Date   | 2026-09-13 |
-| Style  | CONSTITUTION.md and STYLE.md, followed. |
-| Rules  | 3497e71b8d327cfa |
-| Review | **Unreviewed.** Nothing here has been read line by line by a human. |
+| Field   | Value |
+|---------|-------|
+| Harness | Claude Code |
+| Author  | Claude Fable 5.1 |
+| Date    | 2026-09-13 |
+| Style   | CONSTITUTION.md and STYLE.md, followed. |
+| Rules   | 5aa3c7b7f2865a05 |
+| Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: the Architect audited `pga` (head `0bc4655`) in the session that opened this
 project, measuring a dense-representation cost of about nine times a hand-written sparse
@@ -17,7 +17,8 @@ This project turns that audit into a standing instrument: the gap list the Archi
 while improving the library, and the benchmark plus C inspection that shows nothing
 regressed. Authority replicated: Lengyel's equations, through the library's own suites and
 through the typed reference here. No vendored source. The list itself is `gaps.md`,
-generated and committed; its identifiers live in `baseline/ledger.json`.
+generated and committed; its identifiers live in `baseline/register.json`. Nothing here
+counts its own rows in prose: `nim r tools/build.nim gaps` counts them, and the list says.
 
 ## Catalogue
 
@@ -32,9 +33,10 @@ additive and `∧` multiplicative, and are lowered by `parseExpr` where probes a
 records the pair and the suite holds it to the library's source. `MISSING` names the two
 conformal norms the library declares as errors.
 
-*Checked.* Suite `Catalogue`: ids unique; every spell compiles against the library; the set
-of symbols equals the set of exported operators read out of `pga/operators.nim` and
-`pga/multivectors.nim`; the set of aliases equals the umbrella's exports.
+Verified by `trga4d.nim` and `tcga5d.nim`, suite `Catalogue`: ids unique; every spell
+compiles against the library; the set of symbols equals the set of exported operators read
+out of `pga/operators.nim` and `pga/multivectors.nim`; the set of aliases equals the
+umbrella's exports.
 
 ## Reference
 
@@ -53,11 +55,11 @@ construction goes through `zero3` and `read3` templates rather than `Vec3()` def
 whole-object field copies, because on the pinned commit the former costs about 4 ns and the
 latter about 20 ns through the `=dup` hook, which would have hidden the library's cost.
 
-*Checked.* Suites `Chapter 2` (72 laws at 4D) and `Chapter 3` (91 laws at 5D): for every
-typed probe and 64 seeded samples, the reference embedded through the bridge equals the
-library within `=~`, each check citing its equation or wiki page. Suite `Inspector` reads
-the test binary's own nimcache and finds `wedge(Point,Point)` spending twelve multiplies and
-six subtractions, as its documentation states.
+Verified by `trga4d.nim`, suite `Chapter 2`, and by `tcga5d.nim`, suite `Chapter 3`: for
+every typed probe and every seeded sample, the reference embedded through the bridge equals
+the library within `=~`, each check citing its equation or wiki page. Suite `Inspector`
+reads the test binary's own nimcache and finds `wedge(Point,Point)` spending twelve
+multiplies and six subtractions, as its documentation states.
 
 ## Bridge and pools
 
@@ -67,8 +69,8 @@ filled once from `randomize(0)`: dense multivectors of every grade, typed object
 position, lines and planes joined from points, motors unitized; every typed pool has a
 dense image so the two sides read equivalent operands.
 
-*Checked.* Suites `Chapter 2` and `Chapter 3` run through the bridge; suite `Probes` runs
-every probe over the pools.
+Verified by `trga4d.nim` and `tcga5d.nim`: suites `Chapter 2` and `Chapter 3` run through
+the bridge; suite `Probes` runs every probe over the pools.
 
 ## Probes and bench
 
@@ -83,9 +85,9 @@ counts unless a positive control raised the counter first, so a zero means zero 
 an inert instrument (Article VII.4). The plain build reports the gauge as off: that is the
 figure taken once compiled out.
 
-*Checked.* Suite `Probes`: `summarise` on fixture rounds; a 3-round, 64-object run gives
-finite positive nanoseconds and a non-zero sink. Suite `Allocation`: the positive control
-raises the counter, then no probe allocates over a preallocated loop.
+Verified by `trga4d.nim` and `tcga5d.nim`, suites `Probes` and `Allocation`: `summarise`
+on fixture rounds; a short run gives finite positive nanoseconds and a non-zero sink; the
+positive control raises the counter, then no probe allocates over a preallocated loop.
 
 ## Inspector and movement model
 
@@ -105,9 +107,9 @@ exceptions, on both sides, and `{.raises: [].}` on the callee does not remove it
 `--panics:on` does (see Figures). The counts here are taken with the flags the documents
 name, `-d:release`, which is what a user of the library gets by default.
 
-*Checked.* Suite `Inspector`: a demangling table, a fixture C source with known counts,
-callee folding, movement from stems, and the test binary's own nimcache holding every
-catalogued symbol at its arity.
+Verified by `trga4d.nim` and `tcga5d.nim`, suite `Inspector`: a demangling table, a
+fixture C source with known counts, callee folding, movement from stems, and the test
+binary's own nimcache holding every catalogued symbol at its arity.
 
 ## Baseline and gate
 
@@ -118,11 +120,12 @@ count or bytes moved that grew is a finding rendered as `path:0: message; got va
 shrink is a notice, and documents of another algebra, compiler or flags are refused rather
 than compared. Date and machine are ignored, since static counts owe them nothing. `drive`
 is the verb koch and CI run: inspect every algebra, check, and hold the committed `gaps.md`
-and ledger to regeneration. It is deterministic because it times nothing.
+and register to regeneration. It is deterministic because it times nothing.
 
-*Checked.* Suite `Baseline`: equal documents pass silently; one grown count is one finding
-naming function, metric and both values; shrink is an improvement only; bytes moved are
-gated; a function absent on either side is a finding; another build or schema is refused.
+Verified by `trga4d.nim` and `tcga5d.nim`, suite `Baseline`: equal documents pass
+silently; one grown count is one finding naming function, metric and both values; shrink is
+an improvement only; bytes moved are gated; a function absent on either side is a finding;
+another build or schema is refused.
 
 ## Gap list
 
@@ -131,15 +134,16 @@ multiplies or bytes moved, spends any zero fill, temporary, error check or alloc
 returns any NaN; time opens beyond `TIME_BAND = 1.25` times the reference median, because
 medians on a shared machine move by tens of percent between runs. Rows with no reference
 are decided on the absolute metrics alone. Every row key `<algebra>/<probe>` is given a
-number by the ledger on first sight and keeps it; the ledger never reuses a number. Ten
-design gaps sit above the rows, each decided by a rule over the documents and carrying its
-evidence and the condition that closes it, so the list closes by measurement and never by
-edit. The renderer refuses any line beyond 100 runes, since the product is committed and
-form-checked.
+number by the register on first sight and keeps it; the register never reuses a number. It
+is named register rather than ledger because the repository's glossary already uses ledger
+for the daily read of GitHub. Design gaps sit above the rows, each decided by a rule over
+the documents and carrying its evidence and the condition that closes it, so the list closes
+by measurement and never by edit. The renderer refuses any line beyond 100 runes, since the
+product is committed and form-checked.
 
-*Checked.* Suite `Gaps`: row statuses on fixture documents, an unmeasured row, ledger
-stability across reorder and a new key, every design rule's verdict and evidence, rendered
-width, and rune-counting wrap.
+Verified by `trga4d.nim` and `tcga5d.nim`, suite `Gaps`: row statuses on fixture documents,
+an unmeasured row, register stability across reorder and a new key, every design rule's
+verdict and evidence, rendered width, and rune-counting wrap.
 
 ## Driver
 
@@ -149,8 +153,11 @@ itself. `system` prints nothing: the compiler is the toolchain and the library i
 checkout, both pinned, and nothing else is fetched. `sweep` compiles the bench at two to
 six dimensions, rigid metric, and prints general-probe medians; it never runs in CI.
 
-*Checked.* `nim r tools/build.nim drive` exits 0 on the recorded baselines; lowering one
-count in a baseline by hand makes `check` exit 1 with a line naming it.
+Verified by hand on 2026-09-13: `nim r tools/build.nim drive` exits 0 on the recorded
+baselines; lowering `∧(Multivector,Multivector)` total multiplies in `baseline/rga4d.json`
+from 81 to 80 makes `check` exit 1 with
+`baseline/rga4d.json:0: Total \`multiplies\` of \`∧(Multivector,Multivector)\` grew; got
+\`81\`, baseline \`80\`.` and restoring it returns 0 findings.
 
 ## Dependencies
 
@@ -220,6 +227,17 @@ reference's `rotate` falls from 6 branches and one zero fill to none. That switc
 defects fatal, so whether the library's users may take it is the Architect's call; the gate
 measures the default.
 
+## Known limitations
+
+- Timings come from a shared cloud container and vary by tens of percent between runs; the
+  time band absorbs some of that and the rest is why timing never gates.
+- Movement is modelled from the bytes the code names, never measured as cache traffic.
+- The inspector reads text patterns of this compiler commit; another commit could spell the
+  same C differently and the suite that holds the reader to the test binary's own nimcache
+  is what would say so.
+- 32-bit floats and SIMD forms are unmeasured; Terathon's SSE paths were not compared.
+- `sweep` is hand-run only, and the 6D figure was taken once.
+
 ## Open questions
 
 - Whether `--panics:on` is a build the library will stand behind, or whether the checks
@@ -233,17 +251,6 @@ measures the default.
   components directly would lower the reference figures further.
 - Whether the 2D references (rga3d, cga4d) are worth deriving; their rows carry library
   counts and absolute verdicts only.
-
-## Known limitations
-
-- Timings come from a shared cloud container and vary by tens of percent between runs; the
-  time band absorbs some of that and the rest is why timing never gates.
-- Movement is modelled from the bytes the code names, never measured as cache traffic.
-- The inspector reads text patterns of this compiler commit; another commit could spell the
-  same C differently and the suite that holds the reader to the test binary's own nimcache
-  is what would say so.
-- 32-bit floats and SIMD forms are unmeasured; Terathon's SSE paths were not compared.
-- `sweep` is hand-run only, and the 6D figure was taken once.
 
 [replications]: https://gitlab.com/mraxilus/replications
 [terathon]: https://github.com/EricLengyel/Terathon-Math-Library
