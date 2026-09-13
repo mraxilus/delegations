@@ -144,6 +144,8 @@ document.querySelectorAll('.section-header').forEach((header) => {
     refreshObjectsUI();
   });
 });
+elementById('toggle-axes').title = nimWording(Wording.TipChipAxes);
+elementById('toggle-grid').title = nimWording(Wording.TipChipGrid);
 elementById('toggle-axes').addEventListener('click', (e) => {
   is_axes_shown = !is_axes_shown;
   (e.currentTarget as HTMLElement).classList.toggle('on', is_axes_shown);
@@ -255,6 +257,9 @@ button_help.addEventListener('click', (e) => {
 const button_add = elementById<HTMLButtonElement>('button-add');
 const button_undo = elementById<HTMLButtonElement>('button-undo');
 const button_redo = elementById<HTMLButtonElement>('button-redo');
+button_add.title = nimWording(Wording.TipChipAdd);
+button_undo.title = nimWording(Wording.TipChipUndo);
+button_redo.title = nimWording(Wording.TipChipRedo);
 
 function openApplyPickerOnOperands(position_local: PointLocal | null) {
   // Where drag menu's `more…` lands: `nimEndDrag` has already selected both operands.

@@ -17,6 +17,14 @@ const fields_camera = {
   ty: elementById<HTMLInputElement>('cam-pivot-y'),
   tz: elementById<HTMLInputElement>('cam-pivot-z'),
 };
+// Same sentences window's view section hangs on same fields; pivot's three share one.
+fields_camera.azimuth.title = nimWording(Wording.TipViewAzimuth);
+fields_camera.elevation.title = nimWording(Wording.TipViewElevation);
+fields_camera.distance.title = nimWording(Wording.TipViewDistance);
+fields_camera.fov.title = nimWording(Wording.TipViewLens);
+for (const field of [fields_camera.tx, fields_camera.ty, fields_camera.tz]) {
+  field.title = nimWording(Wording.TipViewPivot);
+}
 let are_fields_camera_focused = false;
 Object.values(fields_camera).forEach((element) => {
   element.addEventListener('focus', () => { are_fields_camera_focused = true; });
