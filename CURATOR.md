@@ -224,12 +224,12 @@ Every delegate posts to GitHub as the same account, so the account says nothing 
 speaking. Open every issue, pull request and comment with `**Role:** curator`. Nothing checks
 the comments, so it holds because you write it.
 
-An issue's label is that same string: `curator` for the rules, the checks, the merge process
-and the root files, and `curator/<project>` or `contributor/<domain>/<project>` for one
-project. The set is the branch grammar, so nothing writes it down twice. Applying a label
-creates it, which is how a new project's label comes to exist and also the one hazard: a
-misspelling does not fail, it makes a second label nobody filters on. Copy the role string;
-never compose one.
+The label on every issue and pull request is that same string: `curator` for the rules, the
+checks, the merge process and the root files, and `curator/<project>` or
+`contributor/<domain>/<project>` for one project. The set is the branch grammar, so nothing
+writes it down twice. Applying a label creates it, which is how a new project's label comes
+to exist and also the one hazard: a misspelling does not fail, it makes a second label nobody
+filters on. Copy the role string; never compose one.
 
 Commenting on a contributor's pull request to give context or answer a question is a welcome
 second channel. It is not where process requests live: a pull request closes and takes its

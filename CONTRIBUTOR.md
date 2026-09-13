@@ -50,10 +50,10 @@ Seven rules in this repository hold by reading and nothing else. Each is invisib
 it has been broken, so you carry them as a list in the conversation, where the Architect can
 see where you are. This is the only copy; `CURATOR.md` binds a curator to the same seven.
 
-1. **Role line on every issue, pull request and comment**, and the label **copied, never
-   composed** (Say which role you are). `ledger.yml` reads issue and pull-request bodies and
-   whether an issue carries any label; it reads no comment, and cannot tell a copied label
-   from a composed one spelled right.
+1. **Role line on every issue, pull request and comment**, and the label on every issue and
+   pull request, **copied, never composed** (Say which role you are). `ledger.yml` reads
+   issue and pull-request bodies and whether either carries any label; it reads no comment,
+   and cannot tell a copied label from a composed one spelled right.
 2. **An issue you answered in a comment, closed by hand** (Every delegate begins here).
    `ledger.yml` catches a `Closes #N` that never fired; an issue answered by a ruling has no
    pull request to find.
@@ -114,9 +114,11 @@ and that reader is the enforcement.
   The record says what **is**; an issue says what is **queued**. Where both apply, the issue
   links the record's section rather than restating it, so the two can never disagree.
 - **Say which role you are.** Every delegate posts as the same account, so open every issue,
-  pull request and comment with `**Role:** contributor/<domain>/<project>`. Your label is that
-  same string, copied and never composed: applying a label creates it, so a misspelling makes
-  a second label nobody filters on rather than an error you would notice.
+  pull request and comment with `**Role:** contributor/<domain>/<project>`, and label every
+  issue and pull request you open with that same string, so a filter on it finds what needs
+  your eyes and what came from your hands. Copied, never composed: applying a label creates
+  it, so a misspelling makes a second label nobody filters on rather than an error you would
+  notice.
 - **Language.** Nim. TypeScript only where JavaScript is unavoidable (a browser or Node
   host); C++ or C only where no Nim import expresses the library. Never plain JavaScript,
   never Python, never make. Each such file argues for itself in its opening comment, on the
