@@ -66,6 +66,7 @@ func countsNode*(c: Counts): JsonNode =
     "multiplies": c.multiplies,
     "adds": c.adds,
     "subs": c.subs,
+    "divides": c.divides,
     "zero_fills": c.zero_fills,
     "intermediates": c.intermediates,
     "copies": c.copies,
@@ -114,7 +115,7 @@ func functionNode*(f: CFunction; own, total: Counts; size_multivector: int): Jso
 
 
 const GATED* = [
-  "multiplies", "adds", "subs", "zero_fills", "intermediates", "copies", "checks", "calls",
-  "allocations", "lines",
+  "multiplies", "adds", "subs", "divides", "zero_fills", "intermediates", "copies", "checks",
+  "calls", "allocations", "lines",
 ]
   ## Count names gate compares: any growth is finding, every one deterministic.

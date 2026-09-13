@@ -1,4 +1,4 @@
-## Read counts out of C compiler emits: terms, zero fills, intermediates, copies, checks, calls.
+## Read counts out of C compiler emits: terms, divisions, zero fills, intermediates, checks.
 ##   Library's operators are straight-line C, one function each; what that function spends
 ##   is countable from its text, deterministically, so regression in it is finding rather
 ##   than timing noise (Article VII.1 asks emitted code be read; this reads it every run).
@@ -45,8 +45,8 @@ type
       ## Text between function's braces.
   Counts* = object
     ## Define what one function's text spends.
-    multiplies*, adds*, subs*: int
-      ## Floating operations spelled as terms.
+    multiplies*, adds*, subs*, divides*: int
+      ## Floating operations spelled as terms; divisions cost several multiplies each.
     zero_fills*: int
       ## `nimZeroMem` calls, i.e. whole-object zero fills.
     intermediates*: int
@@ -278,6 +278,7 @@ func plain(body: string): Counts =
     multiplies: body.count(") * ("),
     adds: body.count(") + ("),
     subs: body.count(") - ("),
+    divides: body.count(") / ("),
     zero_fills: body.count("nimZeroMem("),
     copies: body.count("(*Result) = ") + body.count("nimCopyMem(") + body.count("memcpy("),
     checks: body.count("NIM_UNLIKELY((*nimErr_))"),
@@ -292,6 +293,7 @@ func `+`*(a, b: Counts): Counts =
     multiplies: a.multiplies + b.multiplies,
     adds: a.adds + b.adds,
     subs: a.subs + b.subs,
+    divides: a.divides + b.divides,
     zero_fills: a.zero_fills + b.zero_fills,
     intermediates: a.intermediates + b.intermediates,
     copies: a.copies + b.copies,
@@ -308,6 +310,7 @@ func `*`(c: Counts; trips: int): Counts =
     multiplies: c.multiplies * trips,
     adds: c.adds * trips,
     subs: c.subs * trips,
+    divides: c.divides * trips,
     zero_fills: c.zero_fills * trips,
     intermediates: c.intermediates,
     copies: c.copies * trips,

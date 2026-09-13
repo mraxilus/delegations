@@ -34,7 +34,7 @@ type
     Over, Met, Unmeasured
   Values* = object
     ## Define one implementation's values of one gap; each absent where it or instrument is absent.
-    multiplies*, bytes*, zero_fills*, intermediates*, checks*, allocations*: Option[int]
+    multiplies*, divides*, bytes*, zero_fills*, intermediates*, checks*, allocations*: Option[int]
       ## Static measurements: counts read from emitted C; bytes are modelled movement.
     ns*, nan_share*: Option[float]
       ## Runtime measurements, absent where none is recorded.
@@ -157,6 +157,7 @@ func valuesOf(functions, measurement: JsonNode; key: string; is_allocation_measu
   if key.len > 0 and not functions.isNil and functions.hasKey(key):
     let f = functions[key]
     result.multiplies = some(f{"total", "multiplies"}.getInt)
+    result.divides = some(f{"total", "divides"}.getInt)
     result.bytes = some(f{"movement", "bytes_moved"}.getInt)
     result.zero_fills = some(f{"total", "zero_fills"}.getInt)
     result.intermediates = some(f{"total", "intermediates"}.getInt)
@@ -178,6 +179,7 @@ func decide*(gap: var Gap) =
     if gap.library.field.isSome and gap.library.field.get > gap.reference.field.get(0):
       gap.over_on.add name
   relative("multiplies", multiplies)
+  relative("divides", divides)
   relative("bytes", bytes)
   absolute("zero_fills", zero_fills)
   absolute("intermediates", intermediates)
@@ -459,8 +461,8 @@ func render*(
     "the `bench` entry, cells reading `library/reference`; bytes are modelled movement per " &
     "call; runtime measurements are medians of the last hand-run bench, on the machine each " &
     "section names. A gap is over where the library exceeds its reference, or spends any " &
-    "zero fill, intermediate, error check, allocation or NaN; time is over beyond a " &
-    "tolerance of " & $TOLERANCE & " times the reference, and met otherwise."
+    "zero fill, intermediate, error check, allocation or NaN, or more divisions; time is over " &
+    "beyond a tolerance of " & $TOLERANCE & " times the reference, and met otherwise."
   )
   lines.add ""
   lines.add "## Causes"
@@ -487,11 +489,12 @@ func render*(
       $counts[Status.Met] & ", unmeasured " & $counts[Status.Unmeasured] & "."
     )
     lines.add ""
-    lines.add "| Id | Measurand | Mul | Bytes | Tmp | Chk | ns | Status |"
-    lines.add "|----|-------|-----|-------|-----|-----|----|--------|"
+    lines.add "| Id | Measurand | Mul | Div | Bytes | Int | Chk | ns | Status |"
+    lines.add "|----|-----------|-----|-----|-------|-----|-----|----|--------|"
     for gap in own:
       lines.add "| " & gap.id & " | " & gap.measurand & " | " &
         cell(gap.library.multiplies, gap.reference.multiplies) & " | " &
+        cell(gap.library.divides, gap.reference.divides) & " | " &
         cell(gap.library.bytes, gap.reference.bytes) & " | " &
         cell(gap.library.intermediates, gap.reference.intermediates) & " | " &
         cell(gap.library.checks, gap.reference.checks) & " | " &

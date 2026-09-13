@@ -573,9 +573,9 @@ suite "Gaps":
     var widest = 0
     for line in text.splitLines: widest = max(widest, runeLen(line))
     check widest <= WIDTH  # form check reads product
-    check "| G002 | wedge_point_point | 81/12 | 512/112 | 0/0 | 178/0 | 24.1/1.3 | over |" in
+    check "| G002 | wedge_point_point | 81/12 | 0/0 | 512/112 | 0/0 | 178/0 | 24.1/1.3 | over |" in
       text  # cells read library/reference
-    check "| G004 | transform_point_motor | – | – | – | – | 60.0/5.0 | over |" in
+    check "| G004 | transform_point_motor | – | – | – | – | – | 60.0/5.0 | over |" in
       text  # composed expression has no counts
     check "- **D05, over.**" in text and "- **D10, unmeasured.**" in text  # design verdicts
     check "Gaps: 4; over 3, met 1, unmeasured 0." in text  # summary
