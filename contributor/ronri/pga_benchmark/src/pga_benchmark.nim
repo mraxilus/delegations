@@ -4,19 +4,22 @@
 ##   so one source serves every configuration and stubs pick which.
 ##
 ##   Bootstrap order:
-##     [pga] -> kinds -> catalogue -> pga_benchmark (this umbrella)
+##     [pga] -> kinds -> catalogue
+##     [pga] -> reference/rigid3 -> bridge -> pools
+##     catalogue, pools -> pga_benchmark (this umbrella)
 ##     surface (pure, reads library source; test side)
 ##
-##   Cost: nothing timed yet; catalogue names every operation and suite holds it to
-##     library's exported surface, so later instruments walk list that cannot drift.
+##   Cost: nothing timed yet; catalogue names every operation, suite holds it to library's
+##     exported surface and holds every typed row to its reference, so later instruments
+##     walk list that cannot drift and measure against forms already proven equal.
 
 {.experimental: "strictFuncs".}
 
 import pga
 
-import ./pga_benchmark/[catalogue, kinds, surface]
+import ./pga_benchmark/[bridge, catalogue, kinds, pools, surface]
 
-export catalogue, kinds, pga, surface
+export bridge, catalogue, kinds, pga, pools, surface
 
 
 const CONFIG* = (if IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"

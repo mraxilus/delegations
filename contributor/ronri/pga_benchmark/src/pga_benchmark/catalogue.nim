@@ -75,6 +75,25 @@ func general(
   )
 
 
+func typed(
+  id, symbol, alias, spell: string; operands: array[2, Kind]; reference, cite: string
+): Probe {.compileTime.} =
+  ## Construct probe over typed operands, held to reference expression.
+  ##   Arity follows second operand: `General` there marks unary row, since no typed row
+  ##   pairs typed object with dense one.
+  Probe(
+    id: id,
+    symbol: symbol,
+    alias: alias,
+    spell: spell,
+    arity: (if operands[1] == Kind.General: 1 else: 2),
+    operands: operands,
+    grade: none(int),
+    reference: reference,
+    cite: cite,
+  )
+
+
 
 #[ Probes ]#
 
@@ -158,6 +177,149 @@ const PROBES* = block:
       operands: [Kind.General, Kind.General], grade: some(1), reference: "",
       cite: "wiki:Partner",
     )
+
+  # Typed rows: same library spell on images of typed objects, held to reference.
+  #   Tuples read id, symbol, alias, spell, kinds of m and n, reference, cite.
+  when IS_RIGID and DIMENSIONS == 4:
+    for row in [
+      (
+        "wedge_point_point", "∧", "wedge", "(m ∧ n)",
+        Kind.Point, Kind.Point, "wedge(m, n)", "2.17",
+      ),
+      (
+        "wedge_line_point", "∧", "wedge", "(m ∧ n)",
+        Kind.Line, Kind.Point, "wedge(m, n)", "2.17",
+      ),
+      (
+        "wedge_point_line", "∧", "wedge", "(m ∧ n)",
+        Kind.Point, Kind.Line, "wedge(m, n)", "2.18",
+      ),
+      (
+        "wedge_anti_plane_plane", "∨", "wedgeAnti", "(m ∨ n)",
+        Kind.Plane, Kind.Plane, "wedgeAnti(m, n)", "2.29",
+      ),
+      (
+        "wedge_anti_plane_line", "∨", "wedgeAnti", "(m ∨ n)",
+        Kind.Plane, Kind.Line, "wedgeAnti(m, n)", "2.29",
+      ),
+      (
+        "wedge_anti_line_plane", "∨", "wedgeAnti", "(m ∨ n)",
+        Kind.Line, Kind.Plane, "wedgeAnti(m, n)", "2.32",
+      ),
+      (
+        "wedge_anti_line_line", "∨", "wedgeAnti", "(m ∨ n)",
+        Kind.Line, Kind.Line, "wedgeAnti(m, n)", "2.29",
+      ),
+      (
+        "wedge_anti_point_plane", "∨", "wedgeAnti", "(m ∨ n)",
+        Kind.Point, Kind.Plane, "wedgeAnti(m, n)", "2.29",
+      ),
+      (
+        "dot_point_point", "∙", "dot", "(m ∙ n)",
+        Kind.Point, Kind.Point, "dot(m, n)", "2.76",
+      ),
+      (
+        "dot_line_line", "∙", "dot", "(m ∙ n)",
+        Kind.Line, Kind.Line, "dot(m, n)", "2.76",
+      ),
+      (
+        "dot_plane_plane", "∙", "dot", "(m ∙ n)",
+        Kind.Plane, Kind.Plane, "dot(m, n)", "2.76",
+      ),
+      (
+        "dot_anti_point_point", "∘", "dotAnti", "(m ∘ n)",
+        Kind.Point, Kind.Point, "dotAnti(m, n)", "2.76",
+      ),
+      (
+        "dot_anti_line_line", "∘", "dotAnti", "(m ∘ n)",
+        Kind.Line, Kind.Line, "dotAnti(m, n)", "2.76",
+      ),
+      (
+        "dot_anti_plane_plane", "∘", "dotAnti", "(m ∘ n)",
+        Kind.Plane, Kind.Plane, "dotAnti(m, n)", "2.76",
+      ),
+      (
+        "wedge_dot_anti_motor_motor", "⟇", "wedgeDotAnti", "(m ⟇ n)",
+        Kind.Motor, Kind.Motor, "wedgeDotAnti(m, n)", "wiki:Motor",
+      ),
+      (
+        "transform_point_motor", "", "", "((n ⟇ m) ⟇ (~∘ n))",
+        Kind.Point, Kind.Motor, "transform(m, n)", "wiki:Motor",
+      ),
+      (
+        "transform_line_motor", "", "", "((n ⟇ m) ⟇ (~∘ n))",
+        Kind.Line, Kind.Motor, "transform(m, n)", "wiki:Motor",
+      ),
+      (
+        "transform_plane_motor", "", "", "((n ⟇ m) ⟇ (~∘ n))",
+        Kind.Plane, Kind.Motor, "transform(m, n)", "wiki:Motor",
+      ),
+      (
+        "project_orthogonal_point_plane", "", "projectOrthogonal", "projectOrthogonal(m, n)",
+        Kind.Point, Kind.Plane, "projectOrthogonal(m, n)", "wiki:Projections",
+      ),
+      (
+        "project_orthogonal_point_line", "", "projectOrthogonal", "projectOrthogonal(m, n)",
+        Kind.Point, Kind.Line, "projectOrthogonal(m, n)", "wiki:Projections",
+      ),
+      (
+        "project_orthogonal_line_plane", "", "projectOrthogonal", "projectOrthogonal(m, n)",
+        Kind.Line, Kind.Plane, "projectOrthogonal(m, n)", "wiki:Projections",
+      ),
+      (
+        "support_line", "∩", "support", "(∩ m)",
+        Kind.Line, Kind.General, "support(m)", "wiki:Support",
+      ),
+      (
+        "support_plane", "∩", "support", "(∩ m)",
+        Kind.Plane, Kind.General, "support(m)", "wiki:Support",
+      ),
+      (
+        "support_anti_point", "∪", "supportAnti", "(∪ m)",
+        Kind.Point, Kind.General, "supportAnti(m)", "wiki:Support",
+      ),
+      (
+        "support_anti_line", "∪", "supportAnti", "(∪ m)",
+        Kind.Line, Kind.General, "supportAnti(m)", "wiki:Support",
+      ),
+      (
+        "reverse_anti_motor", "~∘", "reverseAnti", "(~∘ m)",
+        Kind.Motor, Kind.General, "reverseAnti(m)", "wiki:Motor",
+      ),
+      (
+        "unitize_motor", "^", "unitize", "(^ m)",
+        Kind.Motor, Kind.General, "unitize(m)", "wiki:Motor",
+      ),
+      (
+        "norm_weight_motor", "|∘", "normWeight", "(|∘ m)",
+        Kind.Motor, Kind.General, "normWeight(m)", "wiki:Motor",
+      ),
+      (
+        "norm_bulk_motor", "|∙", "normBulk", "(|∙ m)",
+        Kind.Motor, Kind.General, "normBulk(m)", "wiki:Motor",
+      ),
+    ]:
+      s.add typed(row[0], row[1], row[2], row[3], [row[4], row[5]], row[6], row[7])
+
+    # Unary maps every flat object carries; one row per object kind.
+    for (kind, name) in [(Kind.Point, "point"), (Kind.Line, "line"), (Kind.Plane, "plane")]:
+      for row in [
+        ("complement_right", "/", "complementRight", "(/ m)", "complementRight(m)", "2.19"),
+        ("complement_left", "\\", "complementLeft", "(\\ m)", "complementLeft(m)", "2.20"),
+        ("reverse", "~", "reverse", "(~ m)", "reverse(m)", "wiki:Reverses"),
+        ("reverse_anti", "~∘", "reverseAnti", "(~∘ m)", "reverseAnti(m)", "wiki:Reverses"),
+        ("dual_bulk", "★", "dualBulk", "(★ m)", "dualBulk(m)", "2.103"),
+        ("dual_weight", "☆", "dualWeight", "(☆ m)", "dualWeight(m)", "2.103"),
+        ("bulk", "∙", "bulk", "(∙ m)", "bulk(m)", "2.68"),
+        ("weight", "∘", "weight", "(∘ m)", "weight(m)", "2.68"),
+        ("norm_bulk", "|∙", "normBulk", "(|∙ m)", "normBulk(m)", "2.87"),
+        ("norm_weight", "|∘", "normWeight", "(|∘ m)", "normWeight(m)", "2.88"),
+        ("unitize", "^", "unitize", "(^ m)", "unitize(m)", "2.89"),
+        ("attitude", "⊖", "attitude", "(⊖ m)", "attitude(m)", "2.73"),
+      ]:
+        s.add typed(
+          row[0] & "_" & name, row[1], row[2], row[3], [kind, Kind.General], row[4], row[5]
+        )
   s
 
 
