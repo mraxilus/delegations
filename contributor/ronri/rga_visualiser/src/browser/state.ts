@@ -163,7 +163,7 @@ function toastWithLink(
     preview.src = url_image;
     preview.alt = filename;
     hint.className = 'toast-hint';
-    hint.textContent = 'or press and hold the image to save it';
+    hint.textContent = nimWording(Wording.NoteSaveByHold);
   }
   // Something to do about it, in words, above evidence. Measured on Android phone in.
   //   Claude app: that frame withholds `allow-downloads`, `allow-popups` and
@@ -172,8 +172,7 @@ function toastWithLink(
   //   cannot fire, and same page opened as its own tab downloads normally.
   const advice = document.createElement('div');
   advice.className = 'toast-hint';
-  advice.textContent = 'If nothing arrives, this frame is blocking it — '
-    + 'open this page in its own browser tab and save from there.';
+  advice.textContent = nimWording(Wording.NoteSaveBlocked);
   // What was tried and what came back, beside thing it was tried on. Every round of.
   //   this fault so far ended with reader who could only report "nothing happened"; this
   //   is what turns next report into diagnosis.
@@ -183,7 +182,7 @@ function toastWithLink(
   const dismiss = document.createElement('button');
   dismiss.className = 'toast-dismiss';
   dismiss.type = 'button';
-  dismiss.textContent = 'dismiss';
+  dismiss.textContent = nimWording(Wording.NameSaveDismiss);
   dismiss.addEventListener('click', () => {
     element_toast.classList.remove('show', 'actionable');
   });
