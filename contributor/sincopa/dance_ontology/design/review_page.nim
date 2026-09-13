@@ -191,6 +191,8 @@ func sheetOf(P: Parts): string =
              elif known.allIt(modelled[it]):
                """<em class="tag model">modelled</em>"""
              else: """<em class="tag nomodel">not modelled</em>"""
+    # Questions cell stands for are written on it, so viewer page laying sim
+    # beside each cell can find its still by question and not by cell's name.
     # Verdict was given on pictures, so picture that moved under one carries
     # approval it was never given.  Card holds itself to what it was drawn
     # as when it was ruled on, and mend reaching further than it meant to
@@ -200,7 +202,7 @@ func sheetOf(P: Parts): string =
       doAssert $hash(drawings.join("")) == pinned.getOrDefault(id),
         &"A card already ruled on has been re-drawn: `{id}`.  Either the " &
           "mend is too wide, or that verdict has to go back."
-    &"""<figure class="pic{mark}{stand}"><div class="art""" &
+    &"""<figure class="pic{mark}{stand}" data-asks="{put.join(" ")}"><div class="art""" &
     (if switching: " steps" else: "") & &"""">{art}{badge}{says}</div>""" &
     &"""<figcaption><code>{esc(id)}</code><b>{esc(label)}</b>""" &
     (if note.len > 0: &"""<span>{esc(note)}</span>""" else: "") &

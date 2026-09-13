@@ -270,8 +270,10 @@ proc pairHolds(): string =
 proc chain(): string =
   ## Tabulate whether any pose holds at each rung of chain, asked still.
   result.add "## The chain, asked still\n\n"
-  result.add prose("L-r.R-l turned to each rung and asked afresh whether any pose holds " &
-    "there at all -- not whether the arms can carry to it, which the sweeps above say.  " &
+  result.add prose("L-r.R-l wound to each rung and asked whether pose holds there standing " &
+    "still -- not whether the arms carry to it at the pace of the turn, which the sweeps " &
+    "above say.  Wound, not built there: a rung is a winding of the arms, which no facing " &
+    "says, so the couple are turned to it with the hands lifted and then left to stand.  " &
     "Asked from every distance the couple may stand at, and shown from first that holds.")
   result.add "| level | rung | holds | strain | crossings | standing |\n" &
     "|---|---|---|---|---|---|\n"
@@ -280,12 +282,9 @@ proc chain(): string =
     for (turn, rung) in [(0.5, "X"), (1.0, "diamond"), (1.5, "swan")]:
       var found = false
       for apart in stands(HUMAN):
-        var c = build(HUMAN, turned(restStance(HUMAN, apart), Body.Two, turn), band, links)
-        c.settle()
-        var holds = true
+        let (holds, c) = stood(HUMAN, band, links, turn, false, Body.Two, apart)
         var arms: Arms
         for i in 0 ..< links.len:
-          if c.stopOf(i) != Stop.None: holds = false
           arms.add c.poseOf(i).arms
         if holds:
           let tight = tightest(HUMAN, c.stance, links, arms)

@@ -12,13 +12,18 @@
 ##     moment.  Straight transcription ran to four megabytes; this is fifth of
 ##     that and says exactly as much.
 ##
+##   Every still card of reference is recorded beside sweeps, one moment each,
+##     wound to its facing as `walk.stood` winds it, so viewer can lay sim's
+##     answer beside each cell.
+##
 ##   Usage: rig          writes design/rig.json
 
 {.experimental: "strictFuncs".}
 
 import std/[math, os, strformat, strutils]
 
-import ../sim/[body, hold, rig, seen, walk]
+import ../sim/[body, hold, rig, seen]
+import ./asks
 
 
 type Cut = tuple[name: string, arms: seq[(Arm, Arm)], away: bool, band: Band]
@@ -109,20 +114,24 @@ func gripped(s: Still): seq[float] =
   for g in s.grips: result.add [g.x, g.y, g.z]
 
 
-proc bodyOfSweep(sh: Shown): string =
-  ## One sweep as page reads it.
+proc bodyOfSweep(sh: Shown; key = ""): string =
+  ## One sweep as page reads it, or one still, keyed by question it answers.
   var bits: seq[string]
+  if key.len > 0:
+    bits.add &"\"key\":\"{key}\""
   bits.add &"\"hold\":\"{sh.hold}\""
   bits.add &"\"band\":\"{BANDS[ord(sh.band)]}\""
   bits.add &"\"apart\":{num(sh.apart)}"
   bits.add &"\"turns\":{num(sh.turns)}"
   bits.add &"\"stopped\":" & (if sh.stopped: "true" else: "false")
   bits.add &"\"why\":\"{sh.why}\""
-  bits.add "\"says\":\"" & sh.why.says & "\""
+  bits.add "\"says\":\"" & (if key.len > 0 and sh.stills.len == 0:
+                             "no pose holds at any distance"
+                           else: sh.why.says) & "\""
   bits.add &"\"whose\":[{ord(sh.whose.body)},{ord(sh.whose.arm)}]"
   if sh.stills.len == 0:
     bits.add "\"stills\":[]"
-    return "{" & bits.join(",") & "}"
+    return "{" & bits.join(",\n") & "}"
   let first = sh.stills[0]
   var tag, rad: seq[string]
   for b in first.bars:
@@ -166,6 +175,18 @@ when isMainModule:
     echo &"{cut.name}, {BANDS[ord(cut.band)]}: stood {sh.apart:.2f}, " &
          &"{sh.stills.len} moments, {sh.turns:.2f} {sh.why}"
     cuts.add bodyOfSweep(sh)
+  # Every still card, wound to its facing from first distance that holds it.
+  #   Recorded whole, one moment each, so viewer can lay sim's answer beside
+  #   each cell of reference; card no distance holds is recorded with no moment.
+  var stills: seq[string]
+  for a in stillAsks():
+    let sh = standing(HUMAN, Band.Crown, a.links, a.key, a.turns, away = a.away,
+                      head = a.head)
+    if sh.stills.len > 0:
+      echo &"{a.key}: {a.turns:+.2f} turns, stood {sh.apart:.2f}"
+    else:
+      echo &"{a.key}: {a.turns:+.2f} turns, no pose holds"
+    stills.add bodyOfSweep(sh, a.key)
   var head: seq[string]
   head.add "\"upper\":" & num(HUMAN.upper)
   head.add "\"fore\":" & num(HUMAN.fore)
@@ -173,6 +194,7 @@ when isMainModule:
   head.add "\"dofs\":[\"extend\",\"across\",\"twist\",\"bend\",\"wrist\"]"
   head.add "\"marks\":[\"trunk\",\"upper\",\"fore\",\"palm\",\"girdle\"]"
   head.add "\"sweeps\":[\n" & cuts.join(",\n") & "]"
+  head.add "\"stills\":[\n" & stills.join(",\n") & "]"
   let path = "design" / "rig.json"
   writeFile(path, "{" & head.join(",\n") & "}\n")
   echo "wrote ", path

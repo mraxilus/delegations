@@ -59,6 +59,15 @@ holds and no reachable pose does, the turn is **blocked**, and the sim names
 what fails a step beyond and whether a pose exists there that the arms
 cannot reach.
 
+**A still is wound, not built.** A card that draws the couple at half a turn,
+or at a turn and a half, draws a winding of the arms, and no facing says
+that: built at the facing, the couple at a whole turn stand exactly as at
+none, and the swan reads as the cross. So a still is asked by turning the
+couple there from rest, at the walk's own pace, with the hands lifted as they
+leave face to face, and then letting them stand; what is asked once there is
+whether the hold stands still, from the first standing distance that lets it.
+The viewer draws each such still beside the reference's own cell of it.
+
 A couple set a hold up for the turn they are about to do: of the few distinct
 rests the search settles on, the sweep starts from the one that turns furthest
 in a short trial each way, and a hand held over a head is held over the
