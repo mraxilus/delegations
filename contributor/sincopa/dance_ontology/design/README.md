@@ -51,14 +51,16 @@ the ontology redrawn from the ground up and reviewed plate by plate.  Its one
 generated part is the turns
 panel, which animates a hold turning by drawing what the body sim found --
 `turns.nim` runs `../sim` natively, sweeps every hold at every height a
-fiftieth of a turn at a time, and writes every moment as data: where the
-bodies stand, where each joint of each held arm is, which way each arm lies,
-and where the turn runs out and why; the page only draws, through
-`wholecloth_turns.nim`, compiled to JavaScript.  The turn stops
-where a joint or a body refuses.  Rebuild and splice it with:
+fiftieth of a turn at a time from wherever the couple stand for that turn,
+and writes every moment as data to `design/turns.json`: where the bodies
+stand, where each joint of each held arm is, which way each arm lies, and
+where the turn runs out and why; the page only draws, through
+`wholecloth_turns.nim`, compiled to JavaScript.  The turn stops where a joint
+or a body refuses.  Record, then rebuild and splice, with:
 
 ```
-nim r tools/build.nim pages   # sweeps with design/turns.nim; wholecloth.nim splices it
+nim r tools/build.nim turns   # sweeps with design/turns.nim, to design/turns.json
+nim r tools/build.nim pages   # folds it into turns.js; wholecloth.nim splices it
 ```
 
 `turns.js` and the spliced page are both build products under `build/design/`.
@@ -185,7 +187,7 @@ has happened here more than once.
     back to facing them up.  A follow's turn leaves the lead facing up
     already, so it needs only the one stage -- measured, not assumed.
 19. **"you should also include orbit turns not just the axis turns."**
-    Four ways: each dancer's own axis turn and each dancer's orbit of the
+    Four manners: each dancer's own axis turn and each dancer's orbit of the
     other, the orbits marked by the dashed ring while they happen.
 20. **"make sure orbit turns keep their bearing, youre currently combining
     orbit and axis turns to keep the partner facing the other."**  The
@@ -194,7 +196,7 @@ has happened here more than once.
     axis turn danced together and is named as the compound it is.
     Measured with the bearing kept: the two orbits walk **one** round
     between them -- the drawing cannot say who walked -- and that round is
-    neither axis round.  Four ways of turning, three rounds of positions.
+    neither axis round.  Four manners of turn, three rounds of positions.
     ***Reversed by rule 32***, which is what the code does now: the
     bearing-keeping walk is the compound and the locked form is the orbit.
     This entry is kept for what it measured, not for what it concluded.
@@ -263,7 +265,7 @@ has happened here more than once.
     an orbiter turns as far as they travel, so the lead comes home with a
     quarter of rotation to undo as well as the slide.  Under rule 20 it was
     the slide alone.*  Measured: the lead holds one spot through three of
-    the four ways of turning and across every position of every round.
+    the four manners of turn and across every position of every round.
     *The frame page keeps the midpoint anchor for now, which is what holds
     `frames.html` still; carrying it over is the same piece of work as
     rule 22's.*
@@ -336,7 +338,7 @@ has happened here more than once.
     wound, which was only true because all four had been told to.*
     ***Rule 32 has since made that finding moot*** by changing what an orbit
     is.  A walker who keeps their side to the centre does turn relative to
-    their partner, so all four ways wind after all — and this time it is
+    their partner, so all four manners wind after all — and this time it is
     measured rather than claimed.  What survived the reversal untouched is
     the measuring itself.
 29. **"the animations don't have the proper breaks that the static images
@@ -442,7 +444,7 @@ has happened here more than once.
     that matters: it is about the whole scheme, not about orbits.  Rule 20's
     orbiter never turned relative to their partner, so -- measured, under
     rule 28 -- that orbit wound the pair by *nothing*.  Half a turn of it was
-    half a turn of no quantity, and two of the four ways of turning did not
+    half a turn of no quantity, and two of the four manners of turn did not
     walk the chain at all.  An orbiter who keeps their side to the centre
     turns as far as they travel, so an orbit winds exactly as far as it
     carries, and every way steps one position per half turn.
@@ -452,7 +454,7 @@ has happened here more than once.
     side, and it is the bearing-keeping walk that is the compound now: an
     orbit with a counter-turn danced into it.
     **The consequence runs through everything.**  An orbit lands where the
-    *other* dancer's axis turn lands, so the four ways walk **two** rounds of
+    *other* dancer's axis turn lands, so the four manners walk **two** rounds of
     positions rather than three, each reached by one axis turn and by the
     other dancer's orbit.  All four stay drawn: which dancer walked is a fact
     about the path, and only the path can say it.  On the frame page the two

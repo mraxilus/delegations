@@ -15,7 +15,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[math, options, sequtils, strformat, strutils]
+import std/[algorithm, math, options, sequtils, strformat, strutils]
 
 import ./[body, geometry, style, terms]
 
@@ -41,35 +41,84 @@ const WAYS*: array[4, WayRound] = [
 
 const BREAK* = 11.0   ## Length of gap cut in under reach at crossing.
 
+const SAME_SPOT* = 0.1 ## Apart from which two meetings are one meeting.
+  ## Point is written to one decimal (`geometry.n`), so two meetings this
+  ##   close emit as one place and no picture can tell them apart.
+  ## Duplicate this drops is exact: vertex of one reach lying on other is
+  ##   met by both segments sharing it, at that vertex both times.
+
 const
-  BOX_ROOM* = 24.0    ## How wide diamond that wound pair holds opens at
-                      ## its middle.
+  DIAMOND_ROOM* = 24.0 ## How wide diamond that wound pair holds opens at
+                       ## its middle.
   WIND_NIP = 0.4     ## How far wound pair draws together between its
-                      ## hands.
+                      ## hands, by whole turn.
     ## Two strands wound round each other pull in where they are wound and
     ##   are held apart only at their ends, so pair nips in at its middle
     ##   -- which is also what turns wide flat lens into diamond.  At no
     ##   wind there is nothing to pull, so it comes on with winding.
+  WIND_NIP_MORE = 0.2 ## And how much further by turn and half.
+    ## Pull does not stop growing at whole turn; only this number's cap
+    ##   did, which left pair drawn as though winding had stopped.
+    ## What it buys is room between two connections where they run
+    ##   alongside each other short of swan: they touched at 1.37 turns,
+    ##   3.35 between their middles where line is 3.4 wide, and Architect
+    ##   read Right as running into other rather than crossing it.
   BAND_STEPS = 120   ## Points along reach relaxed past marks, before it.
 
 const
   SWAN_FROM = 1.0    ## Turns of wind past which pair stops sharing its
                       ## swing evenly between two connections.
-  SWAN_EASE = 0.45   ## How quickly it hands over, as power of way
+  SWAN_EASE = 7.0   ## How quickly it hands over, as power of way
                       ## through.
-    ## Under one, so hand-over is quick at start: third crossing
-    ##   arrives as soon as pair is past whole turn, and until one
-    ##   connection is visibly straighter of two, three crossings
-    ##   read as second diamond -- which is thing rule 30 refused.
-  SWAN_SWING* = 1.3   ## How much swing snake ends up carrying, as
-                      ## multiple of what one connection carries on its own.
-    ## Over one, so snake plainly goes *round* straight connection
-    ##   rather than wobbling beside it -- but not far over, so it keeps in
-    ##   close (rule 35).  Taking whole of what straight one gives
-    ##   up threw loops wider than pair itself.
-    ## How wide is matter of looks and was settled by looking; what
-    ##   check holds is only that snake goes round something and stays
-    ##   inside its own figure.
+    ## Well over one, so hand-over is slow at start and quick at end:
+    ##   connection that ends up straight keeps its bend nearly all
+    ##   way to swan, and only gives it up at last.
+    ## It was under one, on grounds that third crossing wanted to arrive
+    ##   early.  Measured, it does not: it arrives at swan either way, and
+    ##   quick hand-over instead collapsed that connection to short stub
+    ##   through middle of walk -- diamond fell apart and swan was built
+    ##   again rather than one opening into other.  Architect called that
+    ##   out, 2026-09-08, and named bend as what was missing.
+  SWAN_DRAW_IN* = 0.65 ## How far snake pulls in against its partner
+                       ## before it opens, as multiple of one connection's own.
+    ## Wind two strands past whole turn and they pull tight on each other
+    ##   before either can wrap other, which is what `WIND_NIP` already
+    ##   says of pair's middle.  Snake does it as whole.
+  SWAN_DRAWS_AT = 3.0 ## How quickly it pulls in, as power of way through.
+  SWAN_SWING* = 1.50  ## And how much swing it carries once opened, on
+                      ## same scale.
+    ## Over one, so snake plainly goes *round* straight connection rather
+    ##   than wobbling beside it (rule 31).
+    ## Width is Architect's, and this is width they had: snake bows 21.9
+    ##   where it bowed 22.0 before this stretch was mended, and 12.8 while
+    ##   it carried no opening at all.
+  SWAN_OPENS_AT = 20.0 ## How late it opens, as power of way through.
+    ## Late, and that is what buys width.  Snake must stay in close where
+    ##   third crossing runs near hand -- around 1.42 turns -- or that
+    ##   crossing is cut by trim and count of them falls.  Opening after
+    ##   that leaves crossing clear of every hand by more than trim reaches,
+    ##   so it is drawn every step of way.
+    ## Cost: snake gains 0.19 of its swing over last hundredth of turn,
+    ##   which is 3.8 of line.  Looked at frame by frame and it reads as
+    ##   loops opening, not as jump.
+
+## Both knobs above move where two reaches cross, and pair of them is
+##   chosen for that rather than for width alone.
+##   Belief that they could not, which stood while whole family was ruled
+##     out untried, came of comparing two reaches at same point along
+##     each.  They cross where they hold same *place*, at their own
+##     points, and their chords differ: follow's two hands sit up to 20
+##     apart **along** pair's axis wherever follow has turned off half
+##     turn, so equal-point argument holds only at whole and half turns.
+##   Measured over stretch every hundredth of turn, region where third
+##     crossing arrives once and never dives back under hand mark is
+##     ease 4.5 to 6.0 by swing 0.74 to 0.84, narrowing as ease rises;
+##     5.0 and 0.78 sit inside it on both, half step of ease either way
+##     and middle of swing's range at that ease.
+##   Cost: swan is narrower than it was, and swans are Architect's to
+##     rule on.  Width is matter of looks and stays theirs; what checks
+##     hold is that snake goes round something, stays inside its own
+##     figure, and that count of crossings never falls.
 
 
 
@@ -84,33 +133,46 @@ func overArm*(turns: float): Arm =
 func straightArm*(turns: float): Arm =
   ## Get which connection runs straight through middle of swan while
   ## other snakes round it (rule 31).
-  ##   One on top at first crossing, which by alternation is
-  ##     one that dives only once -- so it is still visibly straight
-  ##     line, and snake is thing that goes behind it and out
-  ##     again.  Other way round breaks straight one twice and
-  ##     there is no centre left to be surrounded by anything.
-  overArm(turns)
+  ##   Snake is arm that is **over** at first crossing, so straight one
+  ##     is other: Architect's reading, 2026-09-07.  Position is named for
+  ##     that same arm, so `Right over Left swan` has Right going round
+  ##     and Right on top at lead's own crossover.
+  ##   This file argued opposite until then -- that one on top dives only
+  ##     once and so stays visibly straight, while one diving twice has
+  ##     no centre left to be surrounded by anything.  Both draw, and
+  ##     drawing cannot tell which is danced, so ruling settles it.
+  other(overArm(turns))
+
+
+func wayThrough*(turns: float): float =
+  ## Measure how far pair is from whole turn to turn and half: nought at
+  ## one, one at other, so nothing below whole turn is touched.
+  clamp((abs(turns) - SWAN_FROM) / 0.5, 0.0, 1.0)
 
 
 func swanning*(turns: float): float =
   ## Measure how far pair is through hand-over to swan: none up to
   ## whole turn, all of it at one and one-half turns (rule 31).
-  pow(clamp((abs(turns) - SWAN_FROM) / 0.5, 0.0, 1.0), SWAN_EASE)
+  pow(wayThrough(turns), SWAN_EASE)
 
 
 func windShare*(turns: float; arm: Arm): float =
   ## Measure how much of wound pair's swing this connection carries
   ## (rule 31).
-  ##   Evenly to whole turn, so frame, X and diamond are drawn
+  ##   Evenly to whole turn, so frame, cross and diamond are drawn
   ##     exactly as they were.  Past that, pair cannot keep swinging
   ##     symmetrically -- wind two strands far enough and one pulls taut
-  ##     through middle while other wraps it -- so share runs
-  ##     off one of them and onto other.
-  ##   Onto, not away: what straight one gives up snake takes, so
-  ##     pair swings as much as it ever did and snake's loops open
-  ##     wide enough to be thing going *round* rather than wobble.
-  if arm == straightArm(turns): 1 - swanning(turns)
-  else: 1 + (SWAN_SWING - 1) * swanning(turns)
+  ##     through middle while other wraps it.
+  ##   Two connections do two different things, which is why they take
+  ##     two shapes rather than one shared between them.  Straight one
+  ##     hinges: it gives up its bend, late and then all at once.  Snake
+  ##     pulls in against it first, then opens out into loops that go
+  ##     *round* it -- and it is that order, in from tight and out only
+  ##     at end, that keeps third crossing clear of hands all way along.
+  let u = wayThrough(turns)
+  if arm == straightArm(turns): 1 - pow(u, SWAN_EASE)
+  else: 1 + (SWAN_DRAW_IN - 1) * pow(u, SWAN_DRAWS_AT) +
+        (SWAN_SWING - SWAN_DRAW_IN) * pow(u, SWAN_OPENS_AT)
 
 const
   BAND_PASSES = 240    ## Turns of pulling tight and pushing clear.
@@ -447,6 +509,33 @@ func sharpestIn*(pts: seq[Point]): float =
     result = max(result, abs(radToDeg(arctan2(cross, dot))))
 
 
+func crestOf*(pts: seq[Point]): tuple[at, off: float] =
+  ## Say where drawn reach stands furthest off its own chord, and how far
+  ## (rule 24).
+  ##   `at` is fraction of chord that happens at, `off` is how far off it
+  ##     reach has got there.
+  ##   Sharpest corner says how hard reach turns at one place.  This says
+  ##     where turning has put it, which is shape reader sees: same offset
+  ##     crammed against one hand reads as kink beside that hand, and
+  ##     carried whole way reads as curve.
+  ##   Reach that never leaves its chord answers no offset at all, and
+  ##     then `at` says nothing.
+  let
+    a = pts[0]
+    b = pts[^1]
+    span = dist(a, b)
+  if span < 1e-9:
+    return
+  let along = ((b.x - a.x) / span, (b.y - a.y) / span)
+  for p in pts:
+    let
+      dx = p.x - a.x
+      dy = p.y - a.y
+      off = abs(dy * along[0] - dx * along[1])
+    if off > result.off:
+      result = ((dx * along[0] + dy * along[1]) / span, off)
+
+
 func readingCost*(pts: seq[Point]): float =
   ## Measure what drawn reach asks of reader: its length, and its turns.
   ##   Turn is worth `BEND_COST` of line: taking one has to save at least
@@ -671,7 +760,7 @@ func wound*(a, b: Point; across: Point; phi_a, sweep: float;
   ##     wound further.
   ##   That is whole of drawing.  At no wind, angle holds still
   ##     and reach is straight.  At half turn it sweeps half way round
-  ##     and offset crosses axis once: pair makes **X**.  At
+  ##     and offset crosses axis once: pair makes **cross**.  At
   ##     whole turn it sweeps whole way and crosses twice, once by
   ##     each dancer, with **diamond** between: rule 27's shape, arrived
   ##     at rather than imposed.
@@ -689,7 +778,9 @@ func wound*(a, b: Point; across: Point; phi_a, sweep: float;
     off_b = swing * sin(phi_a + sweep)
     # Wound strands pull in on each other where they are wound, and are
     # held apart only where they are held: at hands.
-    nip = WIND_NIP * min(abs(sweep) / (2 * PI), 1.0)
+    turns = sweep / (2 * PI)
+    nip = WIND_NIP * min(abs(turns), 1.0) +
+          WIND_NIP_MORE * wayThrough(turns)
   for step in 0 .. BAND_STEPS:
     let
       t = float(step) / float(BAND_STEPS)
@@ -718,13 +809,21 @@ func clearedReach*(a, b: Point; marks: seq[Mark]): seq[Point] =
   ##     turns together** (`readingCost`): turn has to save more than
   ##     `BEND_COST` of line to be worth making reader follow it.  In most
   ##     of these figures one bend does whole job for some units more.
-  ##   Reach that already turns once or not at all, and turns smoothly, is
-  ##     as plain as line gets, so nothing else is tried for it.  Break
-  ##     is not plain however few of them there are (rule 24), so reach
-  ##     with one in is weighed against curves even so.
+  ##   All three are weighed, every time.  Shortest way was once taken
+  ##     unweighed wherever it turned little and turned smoothly, on
+  ##     grounds that nothing could be plainer -- but taut band hugs
+  ##     whichever mark it meets, and mark near hand puts whole of that
+  ##     hug against that hand.  Line then runs dead straight to its far
+  ##     end and bends only there, which reads as kink beside hand
+  ##     however few degrees each corner turns (rule 24, and `crestOf`
+  ##     measures it).  B4 and B23 of review sheet were drawn that way.
+  ##     Cost of weighing always: three band relaxations per settled
+  ##       reach where one sometimes did.  Accepted -- shape is what
+  ##       page is for, and it buys curve over kink.
+  ##     Margin can be slight: on those two, bow wins by hundredth of
+  ##       unit of line.  Preference is real but thin, and it is review
+  ##       sheet's pins that keep flip from passing unseen.
   result = letGo(a, b, marks, SIDES[0])
-  if bendsIn(result) <= 1 and sharpestIn(result) < SHARP_MAX:
-    return
   var least = readingCost(result)
   for side in SIDES[1 .. ^1]:
     let tried = letGo(a, b, marks, side)
@@ -738,7 +837,7 @@ func crossingsOf*(one, other: seq[Point]): seq[Point] =
   ##   Segment against segment, and where they really cross rather than
   ##     where their sampled points come close.  Two lines crossing steeply
   ##     pass between one another's points without any pair of them being
-  ##     near at all, which is how one X went unbroken.
+  ##     near at all, which is how one cross went unbroken.
   ##   In order along `one`, so arm that dives can be alternated from
   ##     first crossing to last (rules 14, 27, 29).
   for i in 0 ..< one.high:
@@ -759,40 +858,167 @@ func crossingsOf*(one, other: seq[Point]): seq[Point] =
         continue                     # lines meet, drawn bits do not
       let at: Point = (p.x + r.x * along, p.y + r.y * along)
       # One point per crossing: two segments of one reach can both meet
-      # same segment of other where they turn across it.
-      if result.len == 0 or dist(result[^1], at) > BREAK:
+      # same segment of other where they turn across it, and duplicate that
+      # makes is same point twice, so it is sameness of point that drops it.
+      #   Folding by `BREAK` instead dropped two genuine crossings that fell
+      #     closer than one gap's width, which states one over-under where
+      #     there are two.  It bit on chain between diamond and swan, where
+      #     third crossing ran within eleven units of second from 1.22 turns
+      #     to 1.37 and was drawn with no break at all.
+      if result.len == 0 or dist(result[^1], at) > SAME_SPOT:
         result.add at
 
 
-func cutGapsAt*(pts: seq[Point]; centres: seq[Point]): seq[Run] =
+const
+  DAYLIGHT = LINK_W * 2 / 5 ## Space left between cut end and what it
+                            ## passes under.
+    ## Two fifths of stroke either side.  At none, cut ends sit against
+    ##   thing they pass beneath and break reads as touch rather than as
+    ##   clearance; at half stroke or more, gap opens past what it hides
+    ##   and reads as hole in line again.
+    ## Settled by looking (rules 33 to 35): swan and diamond were drawn
+    ##   side by side at four clearances and Architect chose between
+    ##   third of stroke and half of it.
+  GRAZING = 0.25      ## Least sine of crossing angle break is sized from.
+    ## Two reaches meeting almost head on hide unbounded length of one
+    ##   another; gap that long is hole in picture, so angle is floored
+    ##   and grazing pair takes widest break drawing will draw.
+
+func headingAt(pts: seq[Point]; at: Point): float =
+  ## Say which way reach is going where it passes nearest this point.
+  var near = (d: Inf, i: 0)
+  for i, q in pts:
+    let d = dist(q, at)
+    if d < near.d:
+      near = (d, i)
+  let
+    a = pts[max(near.i - 1, 0)]
+    b = pts[min(near.i + 1, pts.high)]
+  arctan2(b.y - a.y, b.x - a.x)
+
+
+func hidesAt*(under, over: seq[Point]; at: Point): float =
+  ## Say how wide gap in under reach is where over one crosses it.
+  ##   Break is **shadow of line crossing over it**.  That line covers its
+  ##     own width square on and more at slant, which is its width over
+  ##     sine of angle between them.
+  ##   Round caps put half width back on each end of gap, so what is
+  ##     written is shadow plus one whole width, and `DAYLIGHT` either
+  ##     side so cut ends do not touch what they pass beneath.
+  ##   Break sized any other way is number rather than shadow, and reads
+  ##     as gap in line wherever it is wider than thing it hides.
+  var between = abs(headingAt(under, at) - headingAt(over, at))
+  while between > PI:
+    between = 2 * PI - between
+  if between > PI / 2:
+    between = PI - between
+  LINK_W / max(sin(between), GRAZING) + LINK_W + 2 * DAYLIGHT
+
+
+func gapFor*(at, span, wide: float): tuple[opens, shuts: float] =
+  ## Say where gap for crossing this far along reach opens and shuts.
+  ##   Gap slides rather than hangs off end.  Crossing lying within half
+  ##     break of hand would leave stub too short to draw at all, and
+  ##     reach stopping short of its hand reads as unfinished line, never
+  ##     as one passing beneath something -- which is whole of what break
+  ##     is for (rule 14).
+  ##   Centred on its crossing, always.  Break says line passes under
+  ##     another one, and it says it where they cross; gap pushed to one
+  ##     side leaves crossing drawn whole and puts hole in line where
+  ##     nothing happens.
+  ##   Narrowed, rather than slid, where crossing lies near hand.  Every
+  ##     break was once same length and one that would not fit was left
+  ##     off; threshold for that was exactly gap hanging off end, so
+  ##     crossing hair inside it kept whole gap and left piece of line
+  ##     shorter than line is wide.  Round cap draws such piece as dot,
+  ##     and reach ending in dot reads as detached from its hand.
+  ##     So gap gives way instead: piece left at each hand is never
+  ##       shorter than `SEEN_RUN`, and break shrinks to make room.
+  ##     Cost: breaks near hand are shorter than breaks in middle, where
+  ##       before they were all one length.  Accepted -- break that hides
+  ##       its crossing is what rule 14 asks for, and it still does.
+  ##   Break narrower than line it hides says nothing at all, so crossing
+  ##     with no room for that much carries none.
+  let
+    room = min(at, span - at) - SEEN_RUN
+    half = min(wide / 2, room)
+  if 2 * half < LINK_W:
+    return (at, at)
+  (at - half, at + half)
+
+
+func alongOf(pts: seq[Point]): seq[float] =
+  ## Measure how far along reach each of its points sits.
+  result = @[0.0]
+  for i in 0 ..< pts.high:
+    result.add result[^1] + dist(pts[i], pts[i + 1])
+
+
+func atAlong(pts: seq[Point]; along: seq[float]; want: float): Point =
+  ## Get point this far along reach, reading between two samples where it
+  ## falls between them.
+  for i in 0 ..< pts.high:
+    if along[i + 1] >= want:
+      let step = along[i + 1] - along[i]
+      if step <= 0:
+        return pts[i]
+      let part = (want - along[i]) / step
+      return (x: pts[i].x + (pts[i + 1].x - pts[i].x) * part,
+              y: pts[i].y + (pts[i + 1].y - pts[i].y) * part)
+  pts[^1]
+
+
+func runsOutside(pts: seq[Point]; along: seq[float];
+    gaps: seq[tuple[opens, shuts: float]]): seq[Run] =
+  ## Collect what is left of reach once its gaps are taken out.
+  ##   Each piece is cut exactly on its gap's edge, between samples where
+  ##     that is where edge lies.  Dropping whole samples instead widened
+  ##     every gap by up to one step at each end and took as much off
+  ##     pieces beside it, which is what left stub too short to read
+  ##     however gap was placed.
+  ##   Gap of no width is no gap, and takes nothing out.
+  var shut: seq[tuple[opens, shuts: float]]
+  for gap in gaps:
+    if gap.shuts > gap.opens:
+      shut.add gap
+  shut.sort(proc (a, b: tuple[opens, shuts: float]): int = cmp(a.opens, b.opens))
+  var
+    keep: seq[tuple[from_here, to_there: float]]
+    at = 0.0
+  for gap in shut:
+    if gap.opens > at:
+      keep.add (at, gap.opens)
+    at = max(at, gap.shuts)
+  if at < along[^1]:
+    keep.add (at, along[^1])
+  for stretch in keep:
+    if stretch.to_there <= stretch.from_here:
+      continue
+    var run = @[atAlong(pts, along, stretch.from_here)]
+    for i, q in pts:
+      if along[i] > stretch.from_here and along[i] < stretch.to_there:
+        run.add q
+    run.add atAlong(pts, along, stretch.to_there)
+    if run.len > 1:
+      result.add run
+
+
+func cutGapsAt*(pts, over: seq[Point]; centres: seq[Point]): seq[Run] =
   ## Break reach at every place it runs under another, not only first.
+  ##   Each gap is as wide as what hides it there, which is why reach that
+  ##     crosses over is wanted here and not only its crossings.
   if centres.len == 0:
     return @[pts]
-  var cum = @[0.0]
-  for i in 0 ..< pts.high:
-    cum.add cum[^1] + dist(pts[i], pts[i + 1])
-  var breaks: seq[float]
+  let along = alongOf(pts)
+  var gaps: seq[tuple[opens, shuts: float]]
   for centre in centres:
     var nearest = (d: Inf, at: 0.0)
     for i, p in pts:
       let d = dist(p, centre)
       if d < nearest.d:
-        nearest = (d, cum[i])
-    breaks.add nearest.at
-  var run: Run
-  for i, q in pts:
-    var covered = false
-    for at in breaks:
-      if abs(cum[i] - at) <= BREAK / 2:
-        covered = true
-    if covered:
-      if run.len > 1:
-        result.add run
-      run = @[]
-    else:
-      run.add q
-  if run.len > 1:
-    result.add run
+        nearest = (d, along[i])
+    gaps.add gapFor(nearest.at, along[^1], hidesAt(pts, over, centre))
+  runsOutside(pts, along, gaps)
 
 
 
@@ -903,20 +1129,10 @@ func reachMarkup*(runs: seq[Run]; ink: string): string =
 
 func cutGap*(pts: seq[Point]; over: seq[Point]): seq[Run] =
   ## Break under reach where over one crosses it.
-  var cum = @[0.0]
-  for i in 0 ..< pts.high:
-    cum.add cum[^1] + dist(pts[i], pts[i + 1])
-  var nearest = (d: Inf, i: 0)
-  for i, p in pts:
-    for q in over:
-      let d = dist(p, q)
-      if d < nearest.d:
-        nearest = (d, i)
-  let here = cum[nearest.i]
-  var first, second: Run
-  for i, q in pts:
-    if cum[i] <= here - BREAK / 2:
-      first.add q
-    if cum[i] >= here + BREAK / 2:
-      second.add q
-  @[first, second]
+  ##   Where they cross, and nowhere else: break says reach passes
+  ##     beneath something, so pair that never meets carries none.
+  ##     Cutting at whichever point came nearest instead broke every
+  ##     parallel pair, at end nearest point ties on.
+  ##   Same crossings and same gaps as wound pair's, through same two
+  ##     funcs, since one break should read like every other.
+  cutGapsAt(pts, over, crossingsOf(pts, over))
