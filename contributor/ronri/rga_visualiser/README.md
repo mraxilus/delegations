@@ -24,7 +24,7 @@ replicates no published source and derives no algebra of its own.
 ## Build and test
 
 ```sh
-nim r koch ci                                    # repository root: audit, scope, commits
+nim r koch ci                                    # repository root: every check but deps, scoped
 nim r koch tests contributor/ronri/rga_visualiser  # this project alone, three configurations
 nim r tools/build.nim assets                     # this project: fetch the twelve faces, once
 nim r tools/build.nim web                        # this project: build/rga_visualiser.html
@@ -34,12 +34,13 @@ nim r tools/build.nim driven                     # this project: drive the deskt
 nim r tools/build.nim system                     # this project: what to install first
 ```
 
-Needs **Nim built from commit `27763495b`** on `PATH`, and git. No release will do: the
-`pga` library spells its operators with seven characters Nim learned to lex in that commit,
-and no release carries it yet. Build it with `git clone https://github.com/nim-lang/Nim &&
-git checkout 27763495b && sh build_all.sh`; CI does the same and caches the result per
-commit. The pin is exact and the audit enforces it: running the suites on any other compiler
-is a finding, not a warning.
+Builds on **Nim at commit `27763495b`**, and nothing has to be installed for it: koch resolves
+the pin itself — the compiler on `PATH` where it already serves, else one cached under
+`~/.cache/koch/nim/<pin>/`, else a clone of `nim-lang/Nim` built at that commit and cached,
+paid once per machine (`GUIDE.md`, Toolchain). CI resolves the same pin the same way. No
+release will do: the `pga` library spells its operators with seven characters Nim learned to
+lex in that commit, and no release carries it yet. The pin is exact, and a pin nothing can
+serve is a finding naming the pin and the cache tried, never a fallback to another compiler.
 
 System packages are declared in `tools/build.nim` and printed by its `system` verb, so this
 README names no list that could drift from the one the build reads (issue 60):
@@ -148,7 +149,7 @@ the browser page through `web`, the desktop application through `desktop`.
 
 Every law under test through testament on the pinned commit, in three configurations. The
 page has been built and looked at, its type surface is checked, and a Playwright harness
-drives 151 checks over held keys, the wheel, mouse pan and touch — see Driven Checks in
+drives 161 checks over held keys, the wheel, mouse pan and touch — see Driven Checks in
 `PROVENANCE.md`. The desktop application has been built, one frame of it looked at, and its own
 fifteen scripted runs driven headless under Xvfb — 41 checks, all passing, one of them driven
 with no face installed at all and one with the scene filled to capacity. SDL3 arrives as a
