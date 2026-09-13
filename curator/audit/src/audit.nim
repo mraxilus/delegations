@@ -15,7 +15,7 @@
 import std/[options, sequtils, sets, strutils]
 import ./[
   findings, kinds, prose, form, justification, checker, layout, provenance, glossary,
-  dependencies, toolchain, plan, workflows,
+  dependencies, toolchain, plan, workflows, record, tree,
 ]
 
 export layout.Tree, layout.Entry, layout.projectDirs
@@ -30,6 +30,24 @@ func rulesStamp*(tree: Tree): string =
       if e.path == rule: content = e.content
     contents.add content
   contents.stamp
+
+
+proc prunedFindings*(root: string, tree: Tree): seq[Finding] =
+  ## Report `Pruned` row naming commit that never touched its record, read from git log.
+  ##   Lives beside static pass rather than in it, since form of row is pure check's and
+  ##   existence of commit is git's; koch runs both under `tree` and `ci`.
+  for dir in tree.projectDirs:
+    let path = dir & "/PROVENANCE.md"
+    for e in tree:
+      if e.path != path: continue
+      let named = e.content.prunedOf
+      if not named.isCommitId: continue
+      let touched = gitFields(root, ["log", "-z", "--format=%H", "--", path])
+      if not touched.anyIt(it.strip.startsWith(named)):
+        result.add finding(
+          path, 0,
+          "`" & PRUNED & "` must name commit that touched this record; got `" & named & "`.",
+        )
 
 
 proc lockFindings(tree: Tree, dirs: openArray[string]): seq[Finding] =
@@ -93,4 +111,5 @@ proc auditTree*(tree: Tree): seq[Finding] =
       if e.path == dir & "/PROVENANCE.md":
         result.add checkProvenance(e.path, e.content, stamp_now)
         result.add checkCitations(e.path, e.content, dir & "/" & TESTS_DIR & "/", paths)
+        result.add checkRecord(e.path, e.content)
       if e.path == dir & "/GLOSSARY.md": result.add checkGlossary(e.path, e.content)

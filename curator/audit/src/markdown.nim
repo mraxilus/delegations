@@ -2,7 +2,8 @@
 ##   Deliberately tiny: no Markdown parser, only line forms governed documents use.
 ##
 ##   Cost: table cell holding `|` splits wrongly; no governed table carries one.
-##   Cost: fenced code blocks are not skipped, so table inside fence counts as table.
+##   Cost: fenced code blocks are not skipped by readers below, so table inside fence counts
+##     as table; reader that must not see example composes `fencedOut` first.
 
 {.experimental: "strictFuncs".}
 
@@ -35,3 +36,15 @@ func firstNonBlank*(markdown: string): string =
   for line in markdown.splitLines:
     if line.strip.len > 0: return line
   ""
+
+
+func fencedOut*(markdown: string): string =
+  ## Blank every line of fenced code, fences included, keeping line count and endings.
+  ##   Fence is line opening with three backticks after optional indent; next such line
+  ##   closes it, and fence left open blanks to end of document.
+  var is_inside = false
+  for line in markdown.splitLines(keepEol = true):
+    let is_fence = line.strip.startsWith("```")
+    if is_fence: is_inside = not is_inside
+    let body = line.strip(leading = false, chars = {'\r', '\n'})
+    result.add(if is_fence or is_inside: line[body.len .. ^1] else: line)

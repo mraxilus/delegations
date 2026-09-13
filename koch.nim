@@ -145,7 +145,9 @@ proc run(options: Options): int =
   var found: seq[Finding]
   case options.command
   of "tree":
-    found = options.root.readTree.auditTree
+    let tree = options.root.readTree
+    found = tree.auditTree
+    found.add prunedFindings(options.root, tree)
   of "deps":
     let tree = options.root.readTree
     found = restoreJobs(options.root, tree.jobsFor(options.dirsOf(tree)))
@@ -211,6 +213,7 @@ proc run(options: Options): int =
     let tree = options.root.readTree
     let (branch, base) = (options.branchOrDefault, options.baseOrDefault)
     found = tree.auditTree
+    found.add prunedFindings(options.root, tree)
     found.add typeJobs(options.root, tree, options.scopedDirsOf(tree))
     found.add runJobs(options.root, tree.jobs(changedPaths(options.root, base)))
     found.add drivenJobs(options.root, tree, tree.jobs(changedPaths(options.root, base)))
