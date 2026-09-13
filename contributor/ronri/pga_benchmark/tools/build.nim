@@ -11,7 +11,7 @@
 ##   | baseline | inspect, then record counts as `baseline/<algebra>.json`              |
 ##   | check    | compare last inspect against baseline; any count grown is finding     |
 ##   | drive    | inspect, check, and hold committed `gaps.md` to regeneration          |
-##   | gaps     | regenerate `gaps.md` and ledger from committed baselines              |
+##   | gaps     | regenerate `gaps.md` and register from committed baselines              |
 ##   | sweep    | time general probes at two to six dimensions, rigid; never in CI      |
 ##   | system   | print system packages build needs, one per line, for caller          |
 ##   | clean    | remove `build`                                                        |
@@ -38,8 +38,8 @@ const
     ## Directory committed documents live in.
   PATH_GAPS = "gaps.md"
     ## Rendered list, committed.
-  PATH_LEDGER = BASELINE / "ledger.json"
-    ## Identifier ledger, committed.
+  PATH_REGISTER = BASELINE / "register.json"
+    ## Identifier register, committed.
   PATH_LOCK = "atlas.lock"
     ## Lock naming library commit.
   ENTRY_BENCH = "src/pga_benchmark/bench.nim"
@@ -223,31 +223,32 @@ proc algebras(): seq[Algebra] =
 
 
 proc generated(): (string, string) =
-  ## Generate list and ledger text from committed documents.
-  let ledger = if fileExists(PATH_LEDGER): ledgerOf(readDocument(PATH_LEDGER)) else: ledgerOf(nil)
-  let (text, grown) = generate(algebras(), ledger)
+  ## Generate list and register text from committed documents.
+  let register =
+    if fileExists(PATH_REGISTER): registerOf(readDocument(PATH_REGISTER)) else: registerOf(nil)
+  let (text, grown) = generate(algebras(), register)
   (text, pretty(grown.toJson) & "\n")
 
 
 proc gaps() =
-  ## Regenerate list and ledger.
-  let (text, ledger) = generated()
+  ## Regenerate list and register.
+  let (text, register) = generated()
   createDir BASELINE
   writeFile(PATH_GAPS, text)
-  writeFile(PATH_LEDGER, ledger)
-  echo "Wrote ", PATH_GAPS, " and ", PATH_LEDGER
+  writeFile(PATH_REGISTER, register)
+  echo "Wrote ", PATH_GAPS, " and ", PATH_REGISTER
 
 
 proc drive() =
-  ## Inspect, check against baselines, and hold committed list and ledger to regeneration.
+  ## Inspect, check against baselines, and hold committed list and register to regeneration.
   inspect()
   var findings = checked()
-  let (text, ledger) = generated()
+  let (text, register) = generated()
   if not fileExists(PATH_GAPS) or readFile(PATH_GAPS) != text:
     findings.add Finding(path: PATH_GAPS, message: "List differs from regeneration; run `gaps`.")
-  if not fileExists(PATH_LEDGER) or readFile(PATH_LEDGER) != ledger:
+  if not fileExists(PATH_REGISTER) or readFile(PATH_REGISTER) != register:
     findings.add Finding(
-      path: PATH_LEDGER, message: "Ledger differs from regeneration; run `gaps`."
+      path: PATH_REGISTER, message: "Register differs from regeneration; run `gaps`."
     )
   report(findings)
 

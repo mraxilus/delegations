@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "kind": "ledger",
+  "kind": "register",
   "next": 316,
   "ids": {
     "cga4d/add": "G281",

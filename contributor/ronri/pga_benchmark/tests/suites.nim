@@ -462,13 +462,13 @@ suite "Gaps":
     check by["transform_point_motor"].status == Status.Unmeasured  # nothing to decide on
     check "time" notin by["wedge_point_point"].open_on  # no bench, no time verdict
 
-  test "ledger keeps identifiers across reorder and allots next to new key":
+  test "register keeps identifiers across reorder and allots next to new key":
     var rows = rowsOf(ALGEBRAS[0])
-    var ledger = ledgerOf(nil)
-    rows.assign(ledger)
-    check rows[0].id == "G001" and rows[3].id == "G004" and ledger.next == 5  # in order
+    var register = registerOf(nil)
+    rows.assign(register)
+    check rows[0].id == "G001" and rows[3].id == "G004" and register.next == 5  # in order
     rows.reverse
-    var again = ledgerOf(ledger.toJson)
+    var again = registerOf(register.toJson)
     rows.assign(again)
     check rows[0].id == "G004" and rows[3].id == "G001" and again.next == 5  # never renumbered
     rows.add Row(key: "cga5d/wedge", config: "cga5d", probe: "wedge")
@@ -494,7 +494,7 @@ suite "Gaps":
     check decidedOf(Rule.Cayley, ALGEBRAS, rows).status == Status.Unmeasured  # not readable here
 
   test "rendered list fits width and names every row":
-    let (text, ledger) = generate(ALGEBRAS, ledgerOf(nil))
+    let (text, register) = generate(ALGEBRAS, registerOf(nil))
     var widest = 0
     for line in text.splitLines: widest = max(widest, runeLen(line))
     check widest <= WIDTH  # form check reads product
@@ -504,7 +504,7 @@ suite "Gaps":
       text  # composed spell has no counts
     check "- **D05, open.**" in text and "- **D10, unmeasured.**" in text  # design verdicts
     check "Rows: 4; open 3, closed 1, unmeasured 0." in text  # summary
-    check ledger.next == 5  # ledger grew with rows
+    check register.next == 5  # register grew with rows
 
   test "wrap breaks at spaces within width and indents continuation":
     check wrap("aa bb cc", 5) == @["aa bb", "cc"]  # fits, then breaks

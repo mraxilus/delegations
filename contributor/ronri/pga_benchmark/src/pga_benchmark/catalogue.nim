@@ -28,7 +28,7 @@ type
   Probe* = object
     ## Define one catalogued operation under measurement.
     id*: string
-      ## Stable ASCII key, e.g. `wedge_point_point`; keys JSON, ledger and gap rows.
+      ## Stable ASCII key, e.g. `wedge_point_point`; keys JSON, register and gap rows.
     symbol*: string
       ## Library symbol, e.g. `∧`; empty where operation is alias-only compound.
     alias*: string
