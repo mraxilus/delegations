@@ -123,6 +123,22 @@ export async function driveHeaderPinned(page: Page): Promise<void> {
  *  fill, so `driveHeaderPinned`'s own sweep reports band covering even where band is clear --
  *  it holds geometry, and this holds paint.
  */
+/** Read how opaque computed fill is, whatever notation browser reported it in.
+ *
+ *  `rgb(…)` and `color(srgb …)` are opaque; `rgba(…, a)` and `color(srgb … / a)` carry own
+ *  alpha. Written because fill is `color-mix`, which computes to `color(srgb …)`, and check
+ *  spelling out one notation holds syntax where it means to hold paint.
+ *  Said again inside `waitForFunction` above, which runs in page and cannot see this.
+ */
+function alphaOfFill(fill: string): number {
+  const sliced = fill.match(/\/\s*([0-9.]+)\s*\)/);
+  if (sliced !== null) return Number(sliced[1]);
+  const listed = fill.match(/^rgba\(.*,\s*([0-9.]+)\s*\)$/);
+  if (listed !== null) return Number(listed[1]);
+  return fill === 'transparent' ? 0 : 1;
+}
+
+
 export async function driveHeaderBanded(page: Page): Promise<void> {
   await openObjects(page);
   // Read fill and where scroller stands together: check that cannot say how far it scrolled
@@ -142,11 +158,19 @@ export async function driveHeaderBanded(page: Page): Promise<void> {
     //   Waited for fill to *finish*, not merely to start. Half-eased band reports as `rgba(…)`
     //   carrying its alpha, and reading there caught it at 0.66 -- true of that instant and
     //   not of anything worth asserting.
+    //   Opacity is what is waited for, never notation. Fill is `color-mix`, which computes to
+    //   `color(srgb …)` rather than to `rgb(…)`, and check naming either spelling holds syntax
+    //   where it means to hold paint. `alphaOfFill` below says it once for this file; page
+    //   cannot see that, so predicate here says it again -- two copies, each naming other.
     await page.waitForFunction((edge) => {
       const heading = document.querySelector('.section[data-section="objects"] .section-header');
       if (heading === null) return false;
       const fill = getComputedStyle(heading).backgroundColor;
-      return edge === 'top' ? fill === 'rgba(0, 0, 0, 0)' : fill.startsWith('rgb(');
+      const sliced = fill.match(/\/\s*([0-9.]+)\s*\)/);
+      const listed = fill.match(/^rgba\(.*,\s*([0-9.]+)\s*\)$/);
+      const alpha = sliced !== null ? Number(sliced[1])
+        : listed !== null ? Number(listed[1]) : (fill === 'transparent' ? 0 : 1);
+      return edge === 'top' ? alpha === 0 : alpha === 1;
     }, where, { timeout: 8000 }).catch(() => undefined);
     return page.evaluate(() => {
       const heading = document.querySelector('.section[data-section="objects"] .section-header');
@@ -173,8 +197,7 @@ export async function driveHeaderBanded(page: Page): Promise<void> {
   const pinned = await readAt('floor');
   report(
     'the heading carries no band of its own until its list is passing under it',
-    at_rest.fill === 'rgba(0, 0, 0, 0)' && pinned.moved > 0
-      && pinned.fill !== 'rgba(0, 0, 0, 0)' && !pinned.fill.startsWith('rgba'),
+    alphaOfFill(at_rest.fill) === 0 && pinned.moved > 0 && alphaOfFill(pinned.fill) === 1,
     `at ${at_rest.moved} px it is ${at_rest.fill}, and at ${pinned.moved} px it is`
       + ` ${pinned.fill}; ${pinned.edges} sentinels, the heading reads`
       + ` ${pinned.stuck ? 'stuck' : 'unstuck'} there, and its sentinel is`

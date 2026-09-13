@@ -3868,8 +3868,47 @@ reason `sizes.ts` gives at length: a read after a write lays the whole document 
 event, and this scroller carries a row per object. One observer serves all four sections, since
 the drawer has exactly one scroller.
 
-Under the pinned band, a shadow rather than a rule. A line says *edge*; a shadow says *something
-passes beneath*, and the second is the true one. It is the family the popovers already use, tighter.
+Under the pinned band, at first a shadow rather than a rule — a line says *edge*, a shadow says
+*something passes beneath*. **That reasoning was wrong about what was wanted.** The Architect's
+answer on seeing it: *"I don't like the apparent style change when it starts floating."* A shadow
+is exactly what makes a thing read as floating, and the arrival of the band is not supposed to be
+something to look at. It is gone; a row passing under clips at the band's edge, as it does under
+any solid heading.
+
+The fill went with it, in the sense that it stopped being a tone of its own. It had been
+`--surface-solid`, chosen to sit *near* the drawer's ground. Measured, that tone is about **1.4
+levels per channel brighter** than the ground it sits on — under one part in 180, which is not
+what made the pinning show; the shadow was. But it is a fixed tone against a ground that moves,
+and the gap opens as the clear colour does. So the fill is now arrived at the same way the drawer
+arrives at its own ground:
+
+```css
+background: color-mix(in srgb, rgb(22 27 34) 82%, var(--bg));
+```
+
+`--surface` over `--bg` at 82% is precisely what `.drawer` paints, and `--bg` is written at
+runtime by `gl.ts` from the clear colour — which is `Ink.Backdrop` in `mesh.nim`,
+`(0.063, 0.075, 0.102)`, or `rgb(16, 19, 26)`. Verified against the arithmetic rather than by eye:
+the browser computes `color(srgb 0.0820392 0.100235 0.127686)`, which over 255 is
+`20.92, 25.56, 32.56`, and
+
+| channel | `0.82 × surface + 0.18 × backdrop` | measured |
+| ------- | ---------------------------------- | -------- |
+| red     | `0.82 × 22 + 0.18 × 16` = **20.92** | 20.92    |
+| green   | `0.82 × 27 + 0.18 × 19` = **25.56** | 25.56    |
+| blue    | `0.82 × 34 + 0.18 × 26` = **32.56** | 32.56    |
+
+Exact on all three.
+
+*What no opaque fill can match:* the drawer also blurs what is behind it, so where a star or a
+grid line sits under it, its ground picks up that smear. Over open scene — most of the drawer's
+own width — a blur is a no-op and the match is exact. The drawer is translucent over a moving 3D
+view and a band that hides rows cannot be; that much is inherent rather than unfinished.
+
+*And the check learned something from it.* `driveHeaderBanded` had asserted the pinned fill
+`startsWith('rgb(')`, which was true of a named colour and is **not** true of a `color-mix` — it
+computes to `color(srgb …)`. A check naming a notation holds syntax where it means to hold paint.
+It reads the alpha now, in whatever notation the browser reports.
 
 **The chevron leads the line now**, in a 14px column, which is where `.diagnostic-parent` has
 always put the same mark — the two idioms were meant to match and did not. Trailing, it landed
