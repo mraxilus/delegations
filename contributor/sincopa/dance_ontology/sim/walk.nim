@@ -43,6 +43,7 @@ type
     stance*: array[Body, Stance]
     arms*: seq[array[2, ArmPose]] ## One per connection.
     trunks*: array[Body, seq[Capsule]] ## Every trunk capsule where engine has it.
+    girdles*: array[Body, array[Arm, Capsule]] ## And each shoulder's.
     room*: float ## Least room any joint had here.
 
   Walk* = object ## One sweep, one way.
@@ -80,6 +81,9 @@ proc momentOf(c: Couple; at: float): tuple[m: Moment, why: Stop, which: int,
     if s.mark == Mark.Trunk:
       let ends = c.endsOf(s)
       result.m.trunks[s.who].add (ends.a, ends.z, s.r)
+    elif s.mark == Mark.Girdle:
+      let ends = c.endsOf(s)
+      result.m.girdles[s.who][s.arm] = (ends.a, ends.z, s.r)
   result.why = Stop.None
   result.which = -1
   for i in 0 ..< c.links.len:

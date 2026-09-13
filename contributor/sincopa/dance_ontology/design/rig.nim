@@ -63,6 +63,8 @@ func arr(xs: seq[float]): string =
   "[" & bits.join(",") & "]"
 
 func wrapped(s: string; width = 96): string =
+  ## Whole field is wrapped, name and all: wrapped after its name, first line
+  ## ran to 102 once shoulders were capsules too.
   ## Break long run of figures across lines after commas.  Charter holds every
   ## committed file to hundred columns, and one sweep's points on one line runs
   ## to hundreds of thousands.
@@ -126,17 +128,17 @@ proc bodyOfSweep(sh: Shown): string =
   for b in first.bars:
     tag.add &"[{ord(b.who)},{ord(b.arm)},{ord(b.mark)}]"
     rad.add num(b.r)
-  bits.add "\"tag\":" & wrapped("[" & tag.join(",") & "]")
-  bits.add "\"rad\":" & wrapped("[" & rad.join(",") & "]")
+  bits.add wrapped("\"tag\":[" & tag.join(",") & "]")
+  bits.add wrapped("\"rad\":[" & rad.join(",") & "]")
   var owner, lo, hi: seq[string]
   for a in first.arms:
     owner.add &"[{ord(a.who)},{ord(a.arm)}]"
     for d in Dof:
       lo.add num(a.lo[d])
       hi.add num(a.hi[d])
-  bits.add "\"arm\":" & wrapped("[" & owner.join(",") & "]")
-  bits.add "\"lo\":" & wrapped("[" & lo.join(",") & "]")
-  bits.add "\"hi\":" & wrapped("[" & hi.join(",") & "]")
+  bits.add wrapped("\"arm\":[" & owner.join(",") & "]")
+  bits.add wrapped("\"lo\":[" & lo.join(",") & "]")
+  bits.add wrapped("\"hi\":[" & hi.join(",") & "]")
   var at, pts, angs, grp, apart, look: seq[string]
   for s in sh.stills:
     at.add num(s.at)
@@ -145,12 +147,12 @@ proc bodyOfSweep(sh: Shown): string =
     angs.add arr(s.angles)
     grp.add arr(s.gripped)
     apart.add arr(s.apart)
-  bits.add "\"at\":" & wrapped("[" & at.join(",") & "]")
-  bits.add "\"p\":" & wrapped("[" & pts.join(",") & "]")
-  bits.add "\"j\":" & wrapped("[" & angs.join(",") & "]")
-  bits.add "\"g\":" & wrapped("[" & grp.join(",") & "]")
-  bits.add "\"d\":" & wrapped("[" & apart.join(",") & "]")
-  bits.add "\"f\":" & wrapped("[" & look.join(",") & "]")
+  bits.add wrapped("\"at\":[" & at.join(",") & "]")
+  bits.add wrapped("\"p\":[" & pts.join(",") & "]")
+  bits.add wrapped("\"j\":[" & angs.join(",") & "]")
+  bits.add wrapped("\"g\":[" & grp.join(",") & "]")
+  bits.add wrapped("\"d\":[" & apart.join(",") & "]")
+  bits.add wrapped("\"f\":[" & look.join(",") & "]")
   "{" & bits.join(",\n") & "}"
 
 
@@ -169,7 +171,7 @@ when isMainModule:
   head.add "\"fore\":" & num(HUMAN.fore)
   head.add "\"hand\":" & num(HUMAN.hand)
   head.add "\"dofs\":[\"extend\",\"across\",\"twist\",\"bend\",\"wrist\"]"
-  head.add "\"marks\":[\"trunk\",\"upper\",\"fore\",\"palm\"]"
+  head.add "\"marks\":[\"trunk\",\"upper\",\"fore\",\"palm\",\"girdle\"]"
   head.add "\"sweeps\":[\n" & cuts.join(",\n") & "]"
   let path = "design" / "rig.json"
   writeFile(path, "{" & head.join(",\n") & "}\n")

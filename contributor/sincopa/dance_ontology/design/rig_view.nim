@@ -149,7 +149,7 @@ proc paint() =
       pz = seen(z)
       r = num(sweep().rad[i])
     ctx.lineWidth = (2.0 * r * scale).toJs
-    ctx.strokeStyle = (if mark == 0: styleOf("--rule-strong")
+    ctx.strokeStyle = (if mark == 0 or mark == 4: styleOf("--rule-strong")
                        else: inkOf(num(tag[1]).int, num(tag[0]).int)).toJs
     discard ctx.beginPath()
     discard ctx.moveTo(cx + pa.x * scale, cy + pa.y * scale)

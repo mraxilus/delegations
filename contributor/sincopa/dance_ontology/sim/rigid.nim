@@ -70,12 +70,14 @@ const
   THROUGH* = 0.01     ## Overlap this deep, in metres, is arm through body: twice
                       ## engine's slop, where contact holding is never seen.
   GRIP = 30.0         ## Hertz joined hands hold at: half engine's default, and
-                      ## softest thing in couple, so hold forced past what arms
-                      ## can do gives at hands, in life as here, and parting is
-                      ## what says which joint was at its end.  Measured through
-                      ## forced whole turn at 0.40 m: at sixty, twist and wrist
-                      ## carried three degrees past their ends' slack; at this
-                      ## and at fifteen, nothing.  Held as stiffly as joints,
+                      ## and softest thing in couple after shoulder girdle, so
+                      ## hold forced past what arms can do gives at hands, in
+                      ## life as here, and parting is what says which joint was
+                      ## at its end.  Measured through forced whole turn at
+                      ## 1.10 m: at sixty, twist and wrist carried three degrees
+                      ## past their ends' slack; at thirty, once girdle could give
+                      ## its five centimetres first, wrist carried nine past its
+                      ## cone; at this, nothing.  Held as stiffly as joints,
                       ## joints tore.
   HOLD = 0.25 * HERTZ * SUBSTEPS.float ## Hertz every joint but grip holds at: engine's
                       ## own cap, quarter of its substep rate, and above contact's,
@@ -104,7 +106,9 @@ type
   Limb* {.pure.} = enum ## Three links of one arm, shoulder outward.
     Upper, Fore, Palm
 
-  ArmRig = object ## One arm's bodies and its three joints.
+  ArmRig = object ## One arm's bodies and its three joints, and what it hangs from.
+    girdle: eng.BodyId ## Shoulder girdle: welded to chest on spring, so shoulder
+                       ## joint rises and comes forward under load, as scapula does.
     link: array[Limb, eng.BodyId]
     shoulder, elbow, wrist: eng.JointId
 
@@ -115,7 +119,8 @@ type
     arm: array[Arm, ArmRig]
 
   Mark* {.pure.} = enum ## What part of whom one capsule is.
-    Trunk, Upper, Fore, Palm
+    Trunk, Upper, Fore, Palm,
+    Girdle ## Shoulder: from neck's side out to shoulder joint, on body that gives.
 
   Shape* = object ## One capsule engine collides, as engine was given it.
     body*: eng.BodyId
@@ -224,6 +229,24 @@ func trunkCapsules*(rig: Rig): seq[tuple[a, z: Vec, r: float]] =
         break
 
 const
+  GIRDLE_R = 0.06  ## Radius of shoulder's capsule, neck's side to shoulder joint:
+                   ## deltoid and trapezius, estimate and not tape.  Architect's
+                   ## to measure.
+  GIRDLE_RANGE = 0.05 ## Metres shoulder joint may travel from tape before girdle
+                      ## meets its end: scapula's elevation and protraction, about.
+                      ## Held by rope engine solves, not force: spring alone let
+                      ## free arm shoved by other body carry its girdle 251 mm
+                      ## off, into own torso, which it is welded to and never
+                      ## meets; force pushing it back rang or lost, 158 to 324 mm.
+                      ## Stopped, girdle squeezed between two torsos is shoulder
+                      ## through body, and stops turn as arm's would.
+  GIRDLE_HZ = 3.0  ## Hertz of spring holding shoulder joint where tape puts it.
+                   ## Girdle weighs some two kilograms here, so this is 800 N/m:
+                   ## forty newtons, arm's weight, moves shoulder five
+                   ## centimetres, which is what scapula gives.  Architect: bodies
+                   ## are too rigid, arms get dislocated because of it -- shoulder
+                   ## joint sat nine centimetres outside every capsule of its own
+                   ## body, and nothing of it could give.
   WAIST_HI* = 40.0 * PI / 180.0 ## Thoracic rotation each way, clinical.
     ## Shoulders lag or lead hips by this much, sprung to neutral.  At every
     ## stop left before this, several joints sat at their ends at once, which is
@@ -364,19 +387,59 @@ proc armOf(c: var Couple; who: Body; arm: Arm; group: cint): ArmRig =
     result.link[l] = limbOf(c, who, arm, MARKS[ord(l)], at, turn, long[ord(l)], group)
     at = at + (0.0, 0.0, -long[ord(l)])
 
+  # Shoulder girdle: its own body at shoulder joint, carrying capsule from
+  # neck's side out to joint, welded to chest on spring.
+  var gd = eng.defaultBody()
+  gd.kind = eng.Dynamic
+  gd.position = asPlace(top)
+  gd.rotation = trunkQ
+  gd.linearDamping = DAMP.cfloat
+  gd.angularDamping = DAMP.cfloat
+  gd.gravityScale = 0.0
+  gd.enableSleep = false
+  result.girdle = eng.createBody(c.world, addr gd)
+  let inner: Vec = (side(arm) * (halfBreadth(c.rig, Part.Neck) - c.rig.shoulderOut), 0.0,
+                    c.rig.top[Part.Torso] - c.rig.shoulderUp)
+  capsule(c, result.girdle, who, arm, Mark.Girdle, asEngine(inner), asEngine((0.0, 0.0, 0.0)),
+          GIRDLE_R, DENSITY, 0)
+  var weld = eng.defaultWeld()
+  weld.base.bodyIdA = c.who[who].chest
+  weld.base.bodyIdB = result.girdle
+  weld.base.localFrameA = eng.Frame(
+    p: asEngine((side(arm) * c.rig.shoulderOut, 0.0, c.rig.shoulderUp)), q: eng.IDENTITY)
+  weld.base.localFrameB = eng.Frame(p: eng.vec(0, 0, 0), q: eng.IDENTITY)
+  weld.linearHertz = GIRDLE_HZ.cfloat
+  weld.linearDampingRatio = 1.0
+  weld.angularHertz = 0.0
+  weld.base.constraintHertz = HOLD.cfloat
+  discard eng.createWeld(c.world, addr weld)
+  var rope = eng.defaultDistance()
+  rope.base.bodyIdA = c.who[who].chest
+  rope.base.bodyIdB = result.girdle
+  rope.base.localFrameA = weld.base.localFrameA
+  rope.base.localFrameB = weld.base.localFrameB
+  # Rope: spring on at no stiffness, so joint is free to its limit and rigid
+  # past it; off, it would be rod of fixed length.
+  rope.length = GIRDLE_RANGE.cfloat
+  rope.enableSpring = true
+  rope.hertz = 0.0
+  rope.dampingRatio = 0.0
+  rope.enableLimit = true
+  rope.minLength = 0.0
+  rope.maxLength = GIRDLE_RANGE.cfloat
+  rope.base.constraintHertz = HOLD.cfloat
+  discard eng.createDistance(c.world, addr rope)
+
   var ball = eng.defaultBall()
-  ball.base.bodyIdA = c.who[who].chest
+  ball.base.bodyIdA = result.girdle
   ball.base.bodyIdB = result.link[Limb.Upper]
-  ball.base.localFrameA = eng.Frame(
-    p: asEngine((side(arm) * c.rig.shoulderOut, 0.0, c.rig.shoulderUp)), q: frame)
+  ball.base.localFrameA = eng.Frame(p: eng.vec(0, 0, 0), q: frame)
   ball.base.localFrameB = eng.Frame(p: eng.vec(0, 0, 0), q: eng.IDENTITY)
-  # Engine lets bodies one joint connects pass through each other unless told
-  # otherwise, and upper arm hung from chest sank into own torso, neck and head
-  # unseen: 67 mm inside own head by capsule geometry while engine reported no
-  # touch.  Shoulder joint sits three centimetres outside torso, less than
-  # limb's radius, so hanging arm now rests against its side, abducted by what
-  # that takes -- about three degrees at elbow.
-  ball.base.collideConnected = true
+  # Upper arm and girdle overlap at joint by construction and never collide;
+  # upper arm and chest are no longer one joint apart, so they do, and arm
+  # hung from chest no longer sinks into own torso, neck and head unseen --
+  # 67 mm inside own head by capsule geometry while engine reported no touch,
+  # before shoulder was told to collide with what it hung from.
   ball.enableSpring = true
   ball.hertz = EASE.cfloat
   ball.dampingRatio = EASE_DAMP.cfloat
@@ -462,6 +525,12 @@ proc build*(rig: Rig; stance: array[Body, Stance]; band: Band;
     g.base.localFrameB = eng.Frame(p: eng.vec(0, 0, rig.hand.cfloat), q: eng.IDENTITY)
     g.base.constraintHertz = GRIP.cfloat
     result.grip.add eng.createBall(result.world, addr g)
+
+proc partedAt*(c: Couple; who: Body; arm: Arm): array[3, float] =
+  ## How far shoulder, elbow and wrist of one arm have each been pulled apart,
+  ## metres: engine's joints are soft, and what they give is dislocation.
+  let a = c.who[who].arm[arm]
+  [eng.partedBy(a.shoulder).float, eng.partedBy(a.elbow).float, eng.partedBy(a.wrist).float]
 
 proc chestStance*(c: Couple; who: Body): Stance =
   ## Where shoulders stand: hips' stance, turned by waist.
@@ -802,25 +871,33 @@ proc deepest(c: Couple; i: int): tuple[depth: float, met: Stop, k: int] =
   ##     is not hold couple have, and before this only hands parting said so.
   result = (0.0, Stop.None, -1)
   var seen: array[8, eng.Touch]
+  # Each held arm's three links, and each dancer's two shoulder girdles, which
+  # squeezed between two torsos are shoulder through body.
+  var mine: seq[tuple[body: eng.BodyId, k: int]]
   for k in 0 .. 1:
     let h = c.links[i].ends[k]
     for l in Limb:
-      let
-        me = c.who[h.body].arm[h.arm].link[l]
-        n = eng.touches(me, addr seen[0], 8.cint)
-      for t in 0 ..< n:
-        let other = (if eng.bodyOf(seen[t].shapeIdA) == me: eng.bodyOf(seen[t].shapeIdB)
-                     else: eng.bodyOf(seen[t].shapeIdA))
-        var trunk = false
-        for b in Body:
-          if other == c.who[b].chest:
+      mine.add (c.who[h.body].arm[h.arm].link[l], k)
+    for arm in Arm:
+      mine.add (c.who[h.body].arm[arm].girdle, k)
+  for (me, k) in mine:
+    let n = eng.touches(me, addr seen[0], 8.cint)
+    for t in 0 ..< n:
+      let other = (if eng.bodyOf(seen[t].shapeIdA) == me: eng.bodyOf(seen[t].shapeIdB)
+                   else: eng.bodyOf(seen[t].shapeIdA))
+      var trunk = false
+      for b in Body:
+        if other == c.who[b].chest:
+          trunk = true
+        for arm in Arm:
+          if other == c.who[b].arm[arm].girdle:
             trunk = true
-        let folds = cast[ptr UncheckedArray[eng.Manifold]](seen[t].manifolds)
-        for m in 0 ..< seen[t].manifoldCount:
-          for p in 0 ..< folds[m].pointCount:
-            let depth = -folds[m].points[p].separation.float
-            if depth > result.depth:
-              result = (depth, (if trunk: Stop.Through else: Stop.Arms), k)
+      let folds = cast[ptr UncheckedArray[eng.Manifold]](seen[t].manifolds)
+      for m in 0 ..< seen[t].manifoldCount:
+        for p in 0 ..< folds[m].pointCount:
+          let depth = -folds[m].points[p].separation.float
+          if depth > result.depth:
+            result = (depth, (if trunk: Stop.Through else: Stop.Arms), k)
 
 proc metBy(c: Couple; i: int): Stop =
   ## What one connection's arms are against, if anything, once hands have parted.

@@ -104,9 +104,10 @@ answers and nothing is tuned to make them agree.
 
 ## What it will not say
 
-The shoulder girdle is rigid: rolling a shoulder forward adds several
-centimetres to a real reach and none here, so a wrap that a dancer gets by
-that is refused a little early. The trunk twists at the waist, forty degrees
+The shoulder girdle is a spring: each shoulder joint sits on its own girdle,
+welded to the chest at three hertz, so a pull of forty newtons moves it five
+centimetres in any direction, about what a scapula gives; it has no range of
+its own and no muscle to lift it unasked. The trunk twists at the waist, forty degrees
 each way and sprung to square, and does not bend. The arms weigh nothing; what
 weight does to an elbow about the line from shoulder to wrist is put back as a
 torque, and nothing else weight does is. The couple stand for each turn

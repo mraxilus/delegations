@@ -124,6 +124,23 @@ type
     ## Contact points of one touching pair, one to four of them.
     points* {.importc.}: array[4, TouchPoint]
     pointCount* {.importc.}: cint
+  WeldDef* {.importc: "b3WeldJointDef", bycopy.} = object
+    ## Joint holding two bodies as one, or as one on spring: shoulder girdle.
+    base* {.importc.}: JointDef
+    linearHertz* {.importc.}: cfloat ## Nought is rigid.
+    angularHertz* {.importc.}: cfloat
+    linearDampingRatio* {.importc.}: cfloat
+    angularDampingRatio* {.importc.}: cfloat
+  DistanceDef* {.importc: "b3DistanceJointDef", bycopy.} = object
+    ## Joint holding two points within some distance of each other: girdle's rope.
+    base* {.importc.}: JointDef
+    length* {.importc.}: cfloat
+    enableSpring* {.importc.}: bool ## Off, joint is rigid rod and limit is ignored.
+    hertz* {.importc.}: cfloat ## Nought with spring on is rope: free to its limit.
+    dampingRatio* {.importc.}: cfloat
+    enableLimit* {.importc.}: bool
+    minLength* {.importc.}: cfloat
+    maxLength* {.importc.}: cfloat
   Touch* {.importc: "b3ContactData", bycopy.} = object
     ## One pair of shapes engine found touching.
     shapeIdA* {.importc.}: ShapeId
@@ -146,6 +163,10 @@ proc pointOf*(b: BodyId; local: Vec): Pos {.importc: "b3Body_GetWorldPoint".}
 proc setSpin*(b: BodyId; spin: Vec) {.importc: "b3Body_SetAngularVelocity".}
 proc defaultHinge*(): HingeDef {.importc: "b3DefaultRevoluteJointDef".}
 proc createHinge*(w: WorldId; def: ptr HingeDef): JointId {.importc: "b3CreateRevoluteJoint".}
+proc defaultWeld*(): WeldDef {.importc: "b3DefaultWeldJointDef".}
+proc defaultDistance*(): DistanceDef {.importc: "b3DefaultDistanceJointDef".}
+proc createDistance*(w: WorldId; def: ptr DistanceDef): JointId {.importc: "b3CreateDistanceJoint".}
+proc createWeld*(w: WorldId; def: ptr WeldDef): JointId {.importc: "b3CreateWeldJoint".}
 proc angleOf*(j: JointId): cfloat {.importc: "b3RevoluteJoint_GetAngle".}
 proc destroyWorld*(w: WorldId) {.importc: "b3DestroyWorld".}
 proc turnOf*(b: BodyId): Quat {.importc: "b3Body_GetRotation".}
