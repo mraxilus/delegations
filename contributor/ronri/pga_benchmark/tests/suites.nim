@@ -6,6 +6,7 @@
 import std/[algorithm, macros, sequtils, strutils, unittest]
 
 import ../src/pga_benchmark
+import ../src/pga_benchmark/probes
 
 
 const
@@ -158,3 +159,37 @@ suite "Chapter 2":
 
 suite "Chapter 3":
   checkReferences(PROBES, "3")
+
+
+suite "Probes":
+  test "summarise reads median and minimum per object":
+    check summarise([300'i64, 100, 200], 100) == (median: 2.0, minimum: 1.0)  # odd count
+    check summarise([400'i64, 100, 300, 200], 100) == (median: 2.5, minimum: 1.0)  # even count
+
+  test "every probe yields finite positive figures and results reach sink":
+    runProbes()
+    check SINK != 0.0  # results folded, none dead
+    for index, probe in PROBES:
+      let figure = FIGURES[Side.Library][index]
+      check figure.is_measured  # library side always spelled
+      check figure.ns_median > 0.0 and figure.ns_median < 1.0e6  # per-object nanoseconds
+      check figure.ns_min > 0.0 and figure.ns_min <= figure.ns_median  # minimum bounds median
+      check FIGURES[Side.Reference][index].is_measured == (probe.reference.len > 0)  # side present
+
+
+suite "Allocation":
+  test "allocation gauge is live under this build":
+    let before = getAllocStats()
+    var control = newSeq[float](8)
+    control[0] = 1.0
+    let after = getAllocStats()
+    check allocationsOf(after - before) > 0  # positive control: counter moved
+    check control[0] == 1.0  # control kept alive
+
+  test "no probe allocates on either side":
+    runProbes()
+    for index, probe in PROBES:
+      for side in [Side.Library, Side.Reference]:
+        let figure = FIGURES[side][index]
+        if figure.is_measured:
+          check figure.allocations == 0  # heap untouched over every round
