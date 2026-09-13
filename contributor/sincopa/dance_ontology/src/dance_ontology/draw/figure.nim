@@ -27,7 +27,7 @@ const
 
 type Twists* = array[Arm, float]
   ## How far each connection has wound, in turns: what reach swings
-  ## through (rules 27, 28).  Zero draws straight, half draws X,
+  ## through (rules 27, 28).  Zero draws straight, half draws cross,
   ## whole draws diamond, one and one-half draws swan.
   ##   It once carried two more channels -- pigtail at lone reach's
   ##     middle and braid across pair -- which retired rotation page
@@ -179,6 +179,29 @@ func windOf*(put: Pose; holds: Holds; arm: Arm): tuple[phi, spread: float] =
   (phi_a, wrap180(phi_b - phi_a))
 
 
+func diveGap*(under, over: seq[Point]; meeting: Point): tuple[opens, shuts: float] =
+  ## Say where moving reach's break for this crossing opens and shuts,
+  ## measured along whole reach.
+  ##   Same gap still reach is cut by, through same two funcs, so moving
+  ##     figure breaks where its still breaks and at same width.
+  gapFor(alongAt(under, meeting), polylineLen(under),
+         hidesAt(under, over, meeting))
+
+
+func divesOf*(one, other: seq[Point]; turns: float): array[Arm, seq[Point]] =
+  ## Share crossings of two wound reaches out: say which of them dives at
+  ## each one.
+  ##   Arm on top at first crossing stays on top there, so it is other one
+  ##     that dives, and they swap at every crossing after -- which is what
+  ##     makes diamond into twist and not overlap (rule 27).
+  ##   Drawing and checks both ask here, so neither can hold its own idea
+  ##     of which arm goes under where.
+  let on_top = overArm(turns)
+  for i, meeting in crossingsOf(one, other):
+    let under = if (i mod 2 == 0) == (on_top == Arm.L): Arm.R else: Arm.L
+    result[under].add meeting
+
+
 func partsOf*(pose: Pose; holds: Holds; levels: Levels = default(Levels);
     over = none(Arm); free = Free.Fade; captions = true;
     ways: Ways = default(Ways); twist: Twists = NO_TWIST;
@@ -214,7 +237,7 @@ func partsOf*(pose: Pose; holds: Holds; levels: Levels = default(Levels);
     bits.add hand(q.x, q.y, who == Dancer.Lead, arm, held = false,
                   free = Free.Grey)
   # Wound pair crosses: once by half turn, twice by whole one, with
-  # X or diamond that makes (rules 27, 28).
+  # cross or diamond that makes (rules 27, 28).
   let winding = holds[Arm.L].isSome and holds[Arm.R].isSome and
     abs(twist[Arm.L]) > 1e-9
   # And wound pair says which way it wound by which arm it keeps on top,
@@ -251,14 +274,7 @@ func partsOf*(pose: Pose; holds: Holds; levels: Levels = default(Levels);
   # in order along line, and shared out between two arms.
   var dives: array[Arm, seq[Point]]
   if winding:
-    let meetings = crossingsOf(routes[Arm.L], routes[Arm.R])
-    for i, meeting in meetings:
-      # Arm named `over` stays on top at first meeting, so it is
-      # other one that dives there, and they swap at each one after --
-      # which is what makes box into twist and not overlap (rule 27).
-      let under = if (i mod 2 == 0) == (on_top == some(Arm.L)): Arm.R
-                  else: Arm.L
-      dives[under].add meeting
+    dives = divesOf(routes[Arm.L], routes[Arm.R], twist[Arm.L])
 
   let order = if on_top == some(Arm.L): [Arm.R, Arm.L] else: [Arm.L, Arm.R]
   for arm in order:
@@ -266,7 +282,7 @@ func partsOf*(pose: Pose; holds: Holds; levels: Levels = default(Levels);
       let
         pts = routes[arm]
         runs =
-          if winding: cutGapsAt(pts, dives[arm])
+          if winding: cutGapsAt(pts, routes[other(arm)], dives[arm])
           elif on_top == some(other(arm)): cutGap(pts, routes[other(arm)])
           else: @[pts]
       bits.add twoTone(runs, pts[pts.len div 2], arm, holds[arm].get)
@@ -399,7 +415,8 @@ const GAPS_DRAWN = 2
   ##     number of them, which is what lets pattern be animated at all.
 
 
-func dashedAt*(pts: seq[Point]; dives: seq[float]; starts = 0.0):
+func dashedAt*(pts: seq[Point]; dives: seq[tuple[opens, shuts: float]];
+    starts = 0.0):
     tuple[pattern, offset: string] =
   ## Say moving reach's break as dash pattern: how far it runs, how long
   ## break is, and then rest of it (rule 29).
@@ -435,12 +452,39 @@ func dashedAt*(pts: seq[Point]; dives: seq[float]; starts = 0.0):
   # without flickering; crossing outside this half leaves nothing.
   var breaks: seq[tuple[opens, shuts: float]]
   for dive in dives:
-    let
-      opens = clamp(dive - starts - BREAK / 2, 0.0, runs[^1])
-      shuts = clamp(dive - starts + BREAK / 2, 0.0, runs[^1])
+    var
+      opens = clamp(dive.opens - starts, 0.0, runs[^1])
+      shuts = clamp(dive.shuts - starts, 0.0, runs[^1])
+    # Sliver of paint at seam between two halves draws as dot under round
+    # cap, and dot sitting inside break reads as line coming through it.
+    # So piece too short to read as line is given to break there, since
+    # other half carries line on.
+    #   Only at seam.  Other end of half is hand, where `gapFor` has
+    #     already left piece long enough to read, and taking it would draw
+    #     reach stopping short of its own hand.
+    #   Half that starts at nothing is first, so its seam is its end;
+    #     half that starts further along is second, and its seam is its
+    #     start.
     if shuts > opens:
+      if starts > 0 and opens < SEEN_RUN:
+        opens = 0.0
+      if starts <= 0 and runs[^1] - shuts < SEEN_RUN:
+        # Past end rather than to it: pattern is measured along polyline
+        # and spent along smoothed curve drawn through it, which is
+        # slightly longer, so gap stopping at polyline's end leaves
+        # curve's own tail painted -- which is dot again.
+        shuts = runs[^1] + LINK_W
       breaks.add (opens, shuts)
   breaks = breaks.sortedByIt(it.opens)
+  # Two crossings close together leave hair of paint between their breaks,
+  # which draws as dot for same reason.  One break covers both.
+  var joined: seq[tuple[opens, shuts: float]]
+  for gap in breaks:
+    if joined.len > 0 and gap.opens - joined[^1].shuts < SEEN_RUN:
+      joined[^1].shuts = max(joined[^1].shuts, gap.shuts)
+    else:
+      joined.add gap
+  breaks = joined
   # Run, gap, run, gap: one pair per break pattern has room for.
   var
     lens: seq[float]
@@ -593,24 +637,29 @@ func animatedPoses*(classes: string; holds: Holds; walk: seq[Pose];
 
   # Where pair crosses, one of them dives, and it is same one
   # still figure breaks: crossings in order along reach, diving
-  # arm alternating from first, and first named by sign of
-  # wind (rule 29).  Moving reach cannot be cut into runs -- number of
-  # them would change from frame to frame and path that changes shape
+  # arm alternating from first, and first named by `overArm` -- same
+  # answer still figure alternates from (rule 29).  Moving reach cannot be
+  # cut into runs -- number of them would change from frame to frame and
+  # path that changes shape
   # cannot morph -- so it keeps its one piece and wears break as dash.
   # Swan crosses three times, so arm can dive more than once and every
   # crossing is kept rather than only first (rule 31).
   # Kept as how far along its own reach each dive lies, not as where it is
   # on page: snake passes near its own line again further along.
-  var dives: array[Arm, seq[seq[float]]]
+  var dives: array[Arm, seq[seq[tuple[opens, shuts: float]]]]
   if holds[Arm.L].isSome and holds[Arm.R].isSome:
     for i in 0 ..< poses.len:
-      var mine: array[Arm, seq[float]]
+      var mine: array[Arm, seq[tuple[opens, shuts: float]]]
       let
-        turned_by = if winds[Arm.L].len == poses.len: winds[Arm.L][i] else: 0.0
-        on_top = overArm(turned_by)
+        turned_by = if winds[Arm.L].len == poses.len: winds[Arm.L][i]
+                    else: 0.0
+        # In turns, since every other reader of wind counts them; `winds`
+        # counts degrees.
+        on_top = overArm(turned_by / 360)
       for k, meeting in crossingsOf(routes[Arm.L][i], routes[Arm.R][i]):
         let under = if (k mod 2 == 0) == (on_top == Arm.L): Arm.R else: Arm.L
-        mine[under].add alongAt(routes[under][i], meeting)
+        mine[under].add diveGap(routes[under][i], routes[other(under)][i],
+                                meeting)
       for arm in Arm:
         dives[arm].add mine[arm]
 
@@ -689,4 +738,6 @@ func animated*(classes: string; holds: Holds; move: MoveApply;
     half = none(float); levels: Levels = default(Levels);
     ways: Ways = default(Ways); dur = 9.6; samples = 14): string =
   ## Draw same picture, moving: stage one travels, stage two comes home.
-  animatedPoses(classes, holds, cycle(move, samples), half, levels, ways, dur)
+  let walk = cycle(move, samples)
+  animatedPoses(classes, holds, walk.poses, half, levels, ways, dur,
+                times = walk.times)

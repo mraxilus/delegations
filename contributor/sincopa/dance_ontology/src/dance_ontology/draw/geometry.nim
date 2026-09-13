@@ -58,7 +58,7 @@ func wrap180*(degrees: float): float =
 func continuous*(angles: seq[float]): seq[float] =
   ## Say same turning without jump in it.
   ##   Each angle is taken short way from one before, so sequence
-  ##     handed to animation is monotone through half turn instead of
+  ##     handed to animation is monotonic through half turn instead of
   ##     stepping from 179 to -179.
   ##     Anything interpolating between two frames reads that step as most of
   ##       one turn backwards, and draws body spinning wrong way.

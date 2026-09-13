@@ -267,3 +267,26 @@ proc drivenJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
     if tree.nodeDirs([target.dir]).len > 0: result.add restoreNode(root, target)
   if result.len > 0: return
   result.add runDriven(root, targets)
+
+
+proc ciJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
+  ## Restore each planned project once, test it, then drive those carrying driven checks.
+  ##   `ci` once ran `runJobs` then `drivenJobs`, and each restored driven project's
+  ##   checkouts: second restore was Atlas confirming nothing moved, seconds per project, and
+  ##   work nobody asked for is still work. Restore failing still stops driving alone, as
+  ##   `drivenJobs` stops, since driving unrestored project fails again for second reason.
+  let (targets, found) = jobs.targetsFor
+  result = found
+  let restored = restoreAll(root, targets)
+  result.add restored
+  result.add runTests(root, targets)
+  var driven: seq[Target]
+  for job in tree.drivenOnly(jobs):
+    for target in targets:
+      if target.dir == job.dir: driven.add target
+  if driven.len == 0 or found.len > 0 or restored.len > 0: return
+  var node_found: seq[Finding]
+  for target in driven:
+    if tree.nodeDirs([target.dir]).len > 0: node_found.add restoreNode(root, target)
+  result.add node_found
+  if node_found.len == 0: result.add runDriven(root, driven)
