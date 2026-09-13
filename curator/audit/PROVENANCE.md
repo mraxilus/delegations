@@ -180,6 +180,23 @@ files, 16 lowercase hex digits. CURATOR.md is excluded, so curator-only edits to
   CRLF invariance; by `taudit.nim`, one byte in any rules document goes stale in every project
   and one byte in CURATOR.md in none.
 
+## Record shape
+
+**A record is read as `#` lines with fenced code blanked, and held to four forms the guide
+states.** No heading carries a date, `## Open questions` is the last `##` section, no heading
+text appears twice, and no title is underlined, since every reader here sees `#` lines and an
+underlined title is invisible to all of them. A record over 2,000 lines is a finding whose
+remedy is the prune the guide already asks for; the header may carry a `Pruned` row naming the
+commit before that prune, whose form the check reads and whose existence koch reads from
+`git log` on the record itself, under `tree` and `ci`.
+
+- Rejected: splitting a long record into files by subsystem, since the checker names one
+  record per project and the stamp lives in its header; history is git's, and the row says
+  where.
+- Cost: line forms, never a Markdown parse: a heading inside an HTML comment counts and front
+  matter is not skipped; no governed record carries either.
+- Verified by `trecord.nim`, each form by line; `fencedOut` by `tmarkdown.nim`.
+
 ## Glossary
 
 **Shape only: heading, `## Language`, and a definition line after every `**Term**:`.** Content
@@ -187,6 +204,34 @@ is the contributor's and the Architect's; a term enters only when the Architect 
 check cannot know what was agreed, so agreement holds by reading. It runs on the top-level
 `GLOSSARY.md` too. Zero terms pass, because the format creates entries lazily. Verified by
 `tglossary.nim`.
+
+**People words the glossary avoids are held out of root files and curator records.**
+`PEOPLE_WORDS` is the avoid list under Architect, Delegate, Curator, Contributor and Role, read
+whole and without case, plural included, outside code spans, fences and tables. People only:
+the full avoid list holds build, rules and version, plain words everywhere, and would have
+flagged 367 places; `identity` is left out as algebra's word in `curator/probe`. Contributor
+prose is not read. Verified by `tglossary.nim`.
+
+## Prompts
+
+**Both opening prompts are held to duty 10 by two forms.** A prose line naming a date, `#N`,
+`issue N`, `pull request N` or `run N` is a finding, since an incident belongs in this record
+or the log and only the rule belongs in a prompt; a prompt over `PROMPT_BYTES`, 24,000, is a
+finding, so the next rule added pays with a prune. Code spans and fences pass, which keeps the
+carried-list example legal.
+
+- Cost: `II.9`, `duty 10` and a bare year pass by shape; only a whole date is a diary here.
+- Verified by `tprompts.nim`.
+
+## Copies
+
+**A paragraph of 25 words or more written twice, in one Markdown file or across two, is a
+finding at its later place naming its first.** Fenced code, table rows and headings are left
+out; whitespace is collapsed before comparing. Two copies of one rule drift, and the prompts
+drifted that way.
+
+- Cost: a paragraph reworded by one word passes; the check catches a copy, never a paraphrase.
+- Verified by `tduplicates.nim`.
 
 ## Branch scope
 
