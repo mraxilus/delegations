@@ -11,6 +11,10 @@ import ../src/toolchain
 import ./fixtures
 
 
+const OTHER_PATH = ".github/workflows/role.yml"
+  ## Second workflow installing compiler; driver's own is `WORKFLOW_PATH`.
+
+
 suite "Toolchain":
   test "version is digit runs separated by single dots":
     check isVersion("2.2.4")  # release
@@ -56,15 +60,25 @@ suite "Toolchain":
 
   test "driver pins version, never commit":
     let commit = "295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3"
-    let found = checkDriver(WORKFLOW_TEXT, commit)
+    let found = checkDriver(WORKFLOW_PATH, WORKFLOW_TEXT, commit)
     check found.len == 1  # setup action installs releases; every job waits on driver
     check found[0].message.endsWith("got `" & commit & "`.")
+    check checkDriver(OTHER_PATH, WORKFLOW_TEXT, commit).len == 0  # named once, not per file
 
   test "driver version must equal driver project pin":
-    check checkDriver(WORKFLOW_TEXT, PIN).len == 0  # agreement
-    check checkDriver(WORKFLOW_TEXT, "2.2.6").len == 1  # drift
-    check checkDriver("name: check\n", PIN).len == 1  # unstated
-    check checkDriver(WORKFLOW_TEXT, "2.2.6")[0].path == WORKFLOW_PATH  # points at workflow
+    check checkDriver(WORKFLOW_PATH, WORKFLOW_TEXT, PIN).len == 0  # agreement
+    check checkDriver(WORKFLOW_PATH, WORKFLOW_TEXT, "2.2.6").len == 1  # drift
+    check checkDriver(WORKFLOW_PATH, "name: check\n", PIN).len == 1  # unstated
+    check checkDriver(WORKFLOW_PATH, WORKFLOW_TEXT, "2.2.6")[0].path ==
+      WORKFLOW_PATH  # points at workflow
+
+  test "every workflow stating version is held to same pin":
+    check checkDriver(OTHER_PATH, WORKFLOW_TEXT, PIN).len == 0  # second workflow agrees
+    let drifted = checkDriver(OTHER_PATH, WORKFLOW_TEXT, "2.2.6")
+    check drifted.len == 1
+    check drifted[0].path == OTHER_PATH  # points at file that drifted
+    # Workflow installing no compiler states no version, and is left alone.
+    check checkDriver(OTHER_PATH, "name: role\n", PIN).len == 0
 
 
   test "pin is served by commit for commit, by version otherwise":
