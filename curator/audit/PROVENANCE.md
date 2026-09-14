@@ -342,16 +342,22 @@ imperative mood is unverified. Verified by `tcommits.nim`: every type with three
 breaking marker, 11 rejected forms, scope enforcement on both project branch forms.
 
 **The regression rule is enforced, not hoped for.** `commits` reads subjects newest first and
-demands every `fix` carry an earlier `test` of the same scope on the same branch (Article IX.8),
-because "every mistake becomes a test" was the Architect's stated priority and lived only in
-prose.
+demands that the commit immediately before every `fix` be a `test` of the same scope, one test
+to one fix with nothing between them, because "every mistake becomes a test" was the
+Architect's stated priority and lived only in prose, and because the log then reads as the
+ladder the rule describes.
 
+- Rejected: any earlier `test` of the scope on the branch, which one token test satisfies for
+  every later fix, so it measures the order of kinds and nothing of the pairing.
 - Rejected: matching across `main`'s history, which needs the whole log and would still pass a
   fix whose test landed years earlier under a different intent.
 - Cost: a fix whose test already sits on `main` needs a test here or another type. The escape is
   honest — a change needing no new test is not a `fix`.
-- Verified by driven check: a branch carrying `fix(audit)` alone reports one finding; the same
-  branch with `test(audit)` first reports none.
+- Cost: a `revert` or a `docs` between the pair breaks it, and so does a second fix on one test;
+  three tests then one fix pass, since only the commit before is read.
+- Verified by `tcommits.nim`: the pair passes and tests before the test pass; a fix alone, a
+  test after its fix, another scope's test, a second fix on one test, a commit between them and
+  a revert between them each report one finding.
 
 ## Assets
 
