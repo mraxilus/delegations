@@ -1,13 +1,13 @@
 # Open issue when workflow goes red on main, so nobody has to be awake for it.
-#   CURATOR.md's session-start duty says read latest `push` run because "nothing else watches
-#   it": subscriptions do not cover `main`, and duty 2 has curator watch only their own merge.
+#   CURATOR.md's first read, Every delegate begins here, has curator read latest `push` run:
+#   subscriptions do not cover `main`, and duty 2 has curator watch only their own merge.
 #   Twice that has failed silently -- contributor's merge red with nobody looking, found by
 #   accident twenty-four minutes later; and driven job red on two `main` runs while curator who
 #   named that run as leg still to read did not read it. Both times enforcement was somebody
 #   remembering, and failure was quiet.
-#   So red run becomes issue labelled `curator`, which is same session-start duty's first read
-#   and repository's own answer to session ending and taking its intentions with it. No new
-#   rule: existing rule now produces artefact rule already asks next session to read.
+#   So red run becomes issue labelled `curator`, which is that same first read and repository's
+#   own answer to delegate ending and taking its intentions with it. No new rule: existing rule
+#   now produces artefact rule already asks next delegate to read.
 #
 #   Separate workflow because run cannot watch its own outcome, and `workflow_run` fires only
 #   from copy of this file on default branch -- which is why it cannot be driven from branch,
@@ -88,9 +88,9 @@ jobs:
           #   terminator at column zero, which no line inside block scalar may reach, and `<<-`
           #   strips tabs alone. Measured, not assumed -- written as heredoc first and it would
           #   not parse.
-          said="Opened by the \`watch\` workflow rather than by a session, so nothing here"
+          said="Opened by the \`watch\` workflow rather than by a delegate, so nothing here"
           said="$said has been read or judged yet. Workflow red on \`main\` is first work of"
-          said="$said session (CURATOR.md, session start)."
+          said="$said a delegate (CURATOR.md, Every delegate begins here)."
           at="**Run [$number]($url)** on \`main\`, at \`${sha:0:7}\` — $subject"
           next="Close this once \`$workflow\` is green again, naming what fixed it. A later"
           next="$next red run of that workflow comments here rather than opening second issue."
