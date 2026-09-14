@@ -130,3 +130,13 @@ func scope*(b: Branch): string =
   case b.role
   of Role.Curator: CURATOR
   of Role.CuratorProject, Role.Contributor: b.project
+
+
+func roleName*(b: Branch): string =
+  ## Read role string branch's pull request opens with and is labelled by.
+  ##   It is prefix without trailing `/`, except curator root, whose prefix is whole tree and
+  ##   whose role is `curator`. Same three arms, so grammar names role once.
+  case b.role
+  of Role.Curator: CURATOR
+  of Role.CuratorProject: CURATOR & "/" & b.project
+  of Role.Contributor: CONTRIBUTOR & "/" & b.domain & "/" & b.project

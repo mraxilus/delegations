@@ -254,9 +254,10 @@ These cannot be set from inside the repository. Ask the Architect to confirm the
 on `main` under Settings, Branches, branch protection or a ruleset:
 
 - Require a pull request before merging; no direct pushes.
-- Require status checks to pass: `audit`, `scope`, `commits`. `audit` is the gate job
+- Require status checks to pass: `audit`, `scope`, `commits`, `role`. `audit` is the gate job
   standing for every other, whose names vary with the change and so can never be required
-  checks themselves.
+  checks themselves. `role` is its own workflow, because it fires on a label event and the
+  rest do not; until it is required it reports without gating.
 - Block force pushes and deletions.
 - Optionally include administrators, so the Architect's own merges see the same red.
 
@@ -283,8 +284,13 @@ then `./koch <command>`). Every check is a module under `curator/audit/src/`, te
 | `scope` | changed paths | branch grammar; project paths inside prefix |
 | `commits` | commit subjects | Conventional Commits; scope equals branch scope |
 | `base` | paths base gained | branch carries base's rules and checker |
+| `role` | a pull request's body and labels | opening line and label are the branch's role |
 | `stamp` | rules documents | prints the stamp; `--write` sets every `Rules` row to it |
 | `ci` | fresh `origin/main` | tree, types, changed projects, driven, scope, commits, base |
+
+`role` is the one verb `ci` leaves out, because it reads a pull request rather than the tree:
+its body and labels arrive from the event payload as `ROLE_BODY` and `ROLE_LABELS`, so only
+the runner can supply them.
 
 `ci` costs minutes rather than the second the static pass costs whenever a changed project
 carries a `drive` verb, since it builds that project's page and drives a real browser exactly

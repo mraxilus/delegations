@@ -16,8 +16,9 @@
 ##   | scope   | changed paths against branch prefix           (--branch, --base)        |
 ##   | commits | commit subjects against branch scope          (--branch, --base)        |
 ##   | base    | paths branch gained against base's own rules  (--base)                  |
+##   | role    | pull request's role line and labels against branch  (--branch)          |
 ##   | stamp   | print rules stamp for PROVENANCE.md; --write sets every Rules row       |
-##   | ci      | fetch origin/main, then every check above but `deps`, each as it scopes |
+##   | ci      | fetch origin/main, then every check but `deps` and `role`, as it scopes |
 ##   |---------|-------------------------------------------------------------------------|
 ##   Verb of one project is that project's own, in its `tools/build.nim`; koch names verb and
 ##     selects projects carrying it, and holds none of what it does. `types`, `drive` and
@@ -33,6 +34,9 @@
 ##     `--write` makes `stamp` set every record's Rules row rather than print stamp. Second
 ##     argument names one project directory, and every verb given one drops its scoping.
 ##     Exit: 0 clean, 1 findings, 2 usage error.
+##   `role` reads pull request rather than tree, so its two inputs come from event payload
+##     through env `ROLE_BODY` and `ROLE_LABELS`, latter as JSON array of label names. That is
+##     why `ci` leaves it out: local run has no pull request to read.
 ##
 ##   `ci` compiles only projects whose code changed, since static pass costs tenths of
 ##     second and suites cost minutes; push run on `main` and weekly sweep do same against
@@ -48,14 +52,14 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, os, parseopt, sequtils, strutils]
+import std/[json, options, os, parseopt, sequtils, strutils]
 import ./curator/audit/src/[
-  findings, domains, scope, commits, tree, audit, plan, base, assets,
+  findings, domains, scope, commits, tree, audit, plan, base, role, assets,
 ]
 
 
 const USAGE = """
-Usage: koch <tree|deps|types|driven|system|assets|tests|plan|scope|commits|base|stamp|ci>
+Usage: koch <tree|deps|types|driven|system|assets|tests|plan|scope|commits|base|role|stamp|ci>
             [project|asset...]
             [--root:<dir>] [--branch:<name>] [--base:<ref>] [--all] [--sweep] [--write]
 """
@@ -208,6 +212,14 @@ proc run(options: Options): int =
     found = checkCommits(options.branchOrDefault, subjects(options.root, options.baseOrDefault))
   of "base":
     found = checkBase(gainedPaths(options.root, options.baseOrDefault))
+  of "role":
+    # Pull request's own two facts, which runner alone holds: they arrive through environment,
+    #   never interpolated into script, as branch and event kind already do.
+    let named = getEnv("ROLE_LABELS").strip
+    let labels =
+      if named.len == 0: newSeq[string]()
+      else: named.parseJson.getElems.mapIt(it.getStr)
+    found = checkRole(options.branchOrDefault, getEnv("ROLE_BODY"), labels)
   of "stamp":
     # Printing serves record written by hand; writing serves duty 1, where every record moves
     #   at once and four hand edits were one step too many (curator review, C10).

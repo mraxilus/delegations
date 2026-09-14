@@ -50,10 +50,11 @@ Seven rules in this repository hold by reading and nothing else. Each is invisib
 it has been broken, so you carry them as a list in the conversation, where the Architect can
 see where you are. This is the only copy; `CURATOR.md` binds a curator to the same seven.
 
-1. **Role line on every issue, pull request and comment**, and the label on every issue and
-   pull request, **copied, never composed** (Say which role you are). `ledger.yml` reads
-   issue and pull-request bodies and whether either carries any label; it reads no comment,
-   and cannot tell a copied label from a composed one spelled right.
+1. **Role line on every issue and comment**, and the label on every issue, **copied, never
+   composed** (Say which role you are). The `role` job holds a pull request to both, against
+   the role its branch names. An issue has no branch, so which label it should carry is a
+   judgement; `ledger.yml` reads only whether its body opens with a role and whether it
+   carries any label, and no check reads a comment at all.
 2. **An issue you answered in a comment, closed by hand** (Every delegate begins here).
    `ledger.yml` catches a `Closes #N` that never fired; an issue answered by a ruling has no
    pull request to find.
