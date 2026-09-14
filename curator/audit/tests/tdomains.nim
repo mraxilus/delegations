@@ -20,6 +20,7 @@ suite "Branch grammar":
           check parsed.isSome and parsed.get.role == Role.Contributor  # four segments
           check parsed.get.prefix == "contributor/" & d.folder & "/" & project & "/"  # prefix
           check parsed.get.scope == project  # scope is project
+          check parsed.get.roleName == "contributor/" & d.folder & "/" & project  # role
 
   test "curator project branches are confined, curator root owns tree":
     for project in ["audit", "probe", "a_2"]:
@@ -28,10 +29,12 @@ suite "Branch grammar":
         check parsed.isSome and parsed.get.role == Role.CuratorProject  # three segments
         check parsed.get.prefix == "curator/" & project & "/"  # prefix is project
         check parsed.get.scope == project  # scope is project
+        check parsed.get.roleName == "curator/" & project  # role is prefix without slash
     for tail in ["setup", "rules-2"]:
       let parsed = ("curator/" & tail).parseBranch
       check parsed.isSome and parsed.get.role == Role.Curator  # two segments
       check parsed.get.prefix == "" and parsed.get.scope == "curator"  # whole tree
+      check parsed.get.roleName == "curator"  # role is named where prefix is empty
 
   test "grammar rejects every deviation":
     for branch in [
