@@ -61,7 +61,7 @@ suite "Scope":
     ]
     check checkScope("curator/rules", records).len == 0  # stamp, terms, invalidated prose
 
-    # Indexes above project are curator's outright, per repository map and duty 5, which
+    # Indexes above project are curator's outright, per repository map and duty 6, which
     #   has curator write domain README whenever domain is added.
     check checkScope("curator/rules", [CONTRIBUTOR & "/README.md"]).len == 0
     check checkScope("curator/rules", [CONTRIBUTOR & "/ronri/README.md"]).len == 0
