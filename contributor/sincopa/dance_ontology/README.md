@@ -58,7 +58,7 @@ translation is printed in one table and nothing is tuned to make them agree.
 
 ```sh
 nim r koch ci                                          # root: tree, tests, scope, commits
-nim r koch tests contributor/sincopa/dance_ontology    # this project alone, its thirteen suites
+nim r koch tests contributor/sincopa/dance_ontology    # this project alone, every suite of it
 nim r tools/build.nim assets                           # faces every page ships, into build/fonts
 nim r tools/build.nim pages                            # every page, picture and script, into build/
 nim r tools/build.nim verdicts                         # rewrite sim/verdicts.md from the model
@@ -75,19 +75,18 @@ Publishing a page is republishing its built file to the URL it already has, list
 
 ## Published pages
 
-Two of these the project stands behind; the other six are mock-ups, one-off explorations
-kept for reference. `CONTRIBUTOR.md` draws the same line between `pages/` and `mockups/`,
-and every published title carries it, so a gallery holding both says which is which before
-either is opened.
+The validator is the page the project stands behind; every other is a mock-up or an
+instrument, kept for reference. `CONTRIBUTOR.md` draws the same line between `pages/` and
+`mockups/`, and every published title carries it, so a gallery holding both says which is
+which before either is opened.
 
 What the project stands behind:
 
 | built file, under `build/` | published at |
 | --- | --- |
 | app/artifact.html | https://claude.ai/code/artifact/a447cf22-a71a-4416-a905-ae4999d7284c |
-| sim/artifact.html | https://claude.ai/code/artifact/2944bc6a-551e-4b86-a258-7df1bfa83629 |
 
-Mock-ups:
+Mock-ups and instruments:
 
 | built file, under `build/` | published at |
 | --- | --- |
@@ -96,6 +95,7 @@ Mock-ups:
 | design/turns-single.html | https://claude.ai/code/artifact/a2dce7eb-7a87-4575-a1c8-ce8d488a6530 |
 | design/turns-hands.html | https://claude.ai/code/artifact/9c4d89c1-8b72-4574-8051-c41e130148f1 |
 | design/review.html | https://claude.ai/code/artifact/f02b7b94-3b57-4442-abdd-f544d7911a21 |
+| design/rig.html | https://claude.ai/code/artifact/1ca8be4e-d66f-45d7-ba16-bd7875eb0fbf |
 | design/wholecloth.html | https://claude.ai/code/artifact/9440ffbc-93be-4634-a3ce-dd17d7b33c6c |
 | review/review.html | https://claude.ai/code/artifact/61c41287-0a91-4fb9-9b15-622a5fd7db43 |
 

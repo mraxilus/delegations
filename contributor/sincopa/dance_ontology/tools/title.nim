@@ -5,9 +5,11 @@
 ##     told from somebody else's at one glance.
 ##   Two forms, because two kinds of page are published and reader deserves to know which is
 ##     which before opening either:
-##     `WORK` titles page project stands behind -- reference and body sim.
-##     `MOCKUP` titles one-off exploration kept for reference, which is every other page
-##       (`CONTRIBUTOR.md` draws same line between `pages/` and `mockups/`).
+##     `WORK` titles page project stands behind, which is validator.
+##     `MOCKUP` titles exploration or instrument kept for reference, which is every other
+##       page (`CONTRIBUTOR.md` draws same line between `pages/` and `mockups/`).
+##       Body sim's page stood behind until it went with solver it drove; viewer that
+##       replaced it plays sweeps recorded here and is titled as instrument it is.
 ##   Mockup form is derived from `WORK`, never written out again, so name of work is spelt
 ##     once in whole project (Article II.1).
 ##   Every title reads in title case, so published set is one consistent form.
