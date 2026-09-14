@@ -85,11 +85,13 @@ project; `curator/<name>` is rules and root work. Every pull request runs:
 - `commits`: every subject is a Conventional Commit whose scope matches the branch.
 - `base`: the branch carries the rules and the checker as `main` now holds them, so a stamp
   falsified by a rules change that merged after the branch forked is caught before merging.
-- `audit`: the gate the other jobs report to, and one of the three required checks.
+- `audit`: the gate the other jobs report to, and one of the required checks.
 
 A ninth job, `plan`, runs first and computes the matrices `project` and `driven` fan out over;
 it names projects rather than checking them. Weekly, the same workflow compiles the projects
-whose code merged that week. Two more workflows watch the rest: `watch.yml` opens an issue
+whose code merged that week. `role.yml` runs beside it on every pull request, and again
+whenever a label changes, holding the opening role line and the labels to the role the branch
+names. Two more workflows watch the rest: `watch.yml` opens an issue
 labelled `curator` when a run on `main` concludes failure, and `ledger.yml` reads daily what
 GitHub records of the rules no check reaches — a pull request ready without a green run, a
 `Closes #N` that never fired, an issue or pull request without its role line or label — into
