@@ -362,24 +362,24 @@ at runtime by `gl.ts` from the clear colour — where a named tone drifts. The b
 `transparent` at rest rather than added by `.stuck`, since a border arriving on pin would
 widen the box by 2 px. Not a shadow, which made pinning read as *floating*.
 
-**Only the rows near the viewport exist.** The list is a window over its keys: two spacers
-stand in for the rows above and below at the heights those rows measured, or 61 px until
-they have, and the window covers the scroller's height plus one screen either side. A
-scroll marks the window stale and the frame loop settles it after the tick's own writes, so
-the cost lands in the `ui` phase and the layout its reads force serves the tick too; a
-refresh renders at once, so a caller that changed the scene finds its row standing before
-the call returns. Keys are rebuilt only when the scene's revision, its count or the composing
-row moves, so a refresh on selection alone keeps five thousand keys as they stand. Heights
-are read by a `ResizeObserver`, never inside the scroll path, which also catches a row that
-changes size without rebuilding. Not time-sliced building of every row, which at 5,038
-objects is 2,862 ms of list filling across 33 frames of 80 ms and 45,813 elements standing
-after; the window opens in 3 ms with 27 rows, and the page then carries about 750
-elements, 250 of them in the list. Not `content-visibility: auto` over every row, which
-skips their layout and not their building. Cost: a row leaving the window is built again on
-its return, about 0.15 ms each; and a row above the viewport is an estimate until scrolled
-to, which the browser's own scroll anchoring absorbs — the spacers are `overflow-anchor:
-none`, so the anchor is always a row, and a jump to an estimated offset with nothing but a
-spacer in view adjusts nothing.
+**Only the rows near the viewport exist.** The list is a window over its keys: two spacers stand
+in for the rows above and below at the heights those rows measured, or 61 px until they have, and
+the window covers the scroller's height plus one screen either side. A scroll marks the window
+stale and the frame loop settles it after the tick's own writes, so the cost lands in the `ui`
+phase and the layout its reads force serves the tick too; a refresh renders at once, so a caller
+that changed the scene finds its row standing before the call returns. Keys are rebuilt only when
+the scene's revision, its count or the composing row moves, so a refresh on selection alone keeps
+five thousand keys as they stand. Heights are read by a `ResizeObserver`, never inside the scroll
+path, which also catches a row that changes size without rebuilding. Not time-sliced building of
+every row, which at 5,038 objects is 2,862 ms of list filling across 33 frames of 80 ms and
+45,813 elements standing after; the window opens in 3 ms with 27 rows, and the page then carries
+about 750 elements, 250 of them in the list. Scrolling it at 300 px a frame builds about five
+rows a frame for 0.8 ms of the `ui` phase, and the frame itself moves from 59 to 62 ms. Not
+`content-visibility: auto` over every row, which skips their layout and not their building. Cost:
+a row leaving the window is built again on its return, about 0.15 ms each; and a row above the
+viewport is an estimate until scrolled to, which the browser's own scroll anchoring absorbs — the
+spacers are `overflow-anchor: none`, so the anchor is always a row, and a jump to an estimated
+offset with nothing but a spacer in view adjusts nothing.
 
 **A comment may not quote a closing block-comment delimiter.** A comment that does ends itself
 on the spot, and the prose after it parses as CSS — enough to swallow 141 of the page's 150
@@ -1953,12 +1953,15 @@ to confirm.
 Recorded here and in the pull request body, per CONTRIBUTOR.md: a contributor neither works
 around a rule nor edits it.
 
-**The drawer's `backdrop-filter` costs about 11 ms of every frame at the largest scene.**
-Measured with the drawer open over 5,038 objects: 75 ms per frame against 64 ms with the filter
-forced off, where the drawer closed is 51 ms and the page carries 45,813 elements. The blur is
-what makes the drawer read as glass over a live 3D view, so it is not plainly the wrong trade;
-the figure is recorded so the question can be asked with it rather than about it. Software
-rendering inflates all three readings, so the ratio is the part to hold.
+**The drawer's `backdrop-filter` costs about 12 ms of every frame at the largest scene, and is
+the whole of what an open drawer costs.** Measured with the drawer open over 5,040 objects: 59 ms
+per frame against 47 ms with the filter forced off, where the drawer closed is 47 ms and the page
+carries about 860 elements; scrolling the list at 300 px a frame holds 62 ms, 0.8 ms of it in the
+`ui` phase. The blur is what makes the drawer read as glass over a live 3D view, so it is not
+plainly the wrong trade; the figure is recorded so the question can be asked with it rather than
+about it. Software rendering inflates a blur far more than it inflates the rest, so the share is
+an upper bound on hardware. The choices are to keep it, to drop it, or to drop it only while the
+frame runs slow.
 
 **The page shows fewer tooltips than the window.** Stage one moved 41 tooltips into the
 catalogue and neither front-end writes a literal, but the page still explains eleven controls
