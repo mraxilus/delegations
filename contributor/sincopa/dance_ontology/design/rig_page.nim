@@ -143,6 +143,10 @@ figure.pic.picked { outline: 2px solid var(--ink); outline-offset: 2px; }
 </style>"""
 
 
+const TITLE* = "The rig, as the engine holds it"
+  ## Page's own name, after work's name: what browser tab and published gallery show.
+
+
 func esc(s: string): string =
   s.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"))
 
@@ -267,7 +271,7 @@ when isMainModule:
   let
     reviewHtml = readFile(review)
     dataText = readFile(data).strip()
-    html = document("The rig, as the engine holds it",
+    html = document(TITLE,
                     sheetOf(reviewHtml) & SHEET & HEAD_BODY &
                     cellsBody(reviewHtml, parseJson(dataText)) &
                     "<script>var RIG = " & dataText & ";</script>\n" &
