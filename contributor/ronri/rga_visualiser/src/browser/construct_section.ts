@@ -13,6 +13,11 @@ const picker_arity = elementById('op-arity');
 const picker_operation = elementById<HTMLSelectElement>('op-select');
 const picker_operand_first = elementById<HTMLSelectElement>('op-first');
 const picker_operand_second = elementById<HTMLSelectElement>('op-second');
+// Same sentences window's panel hangs on same four controls, from one catalogue.
+picker_arity.title = nimWording(Wording.TipApplyArity);
+picker_operation.title = nimWording(Wording.TipApplyOperation);
+picker_operand_first.title = nimWording(Wording.TipApplyFirst);
+picker_operand_second.title = nimWording(Wording.TipApplySecond);
 const field_operand_second = elementById('op-second-field');
 
 let arity_current = 0; // 0 = unary, 1 = binary -- matches nimOperationArity's own convention.
