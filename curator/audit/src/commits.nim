@@ -8,7 +8,7 @@
 ##     commit immediately before every `fix` is `test` of same scope, one test to one fix with
 ##     nothing between them, since mistake earns test that fails before fix and passes after,
 ##     committed first, and log then reads as that ladder. Subjects arrive newest first, so
-##     commit before an element is next element.
+##     commit before element `i` is element `i + 1`.
 ##   Rejected: any earlier `test` of scope on branch, which one token test satisfies for every
 ##     later fix, so it measured order of kinds and nothing of pairing.
 ##   Change needing no new test is not `fix`: it is `refactor`, `chore` or `docs`. That is

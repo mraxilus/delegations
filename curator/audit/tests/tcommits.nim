@@ -42,13 +42,13 @@ suite "Article XI":
     check checkCommits("contributor/ronri/alpha/work", []).len == 0  # no commits, no findings
 
   test "Regression rule: test of same scope sits immediately before each fix":
-    # Subjects arrive newest first, so commit before an element is the next element.
+    # Subjects arrive newest first, so commit before element `i` is element `i + 1`.
     check checkCommits(
       "curator/work", ["fix(audit): stop it", "test(audit): cover it"]
     ).len == 0  # test immediately before
     check checkCommits(
       "curator/work", ["fix(audit): stop it", "test(audit): cover it", "test(audit): cover more"]
-    ).len == 0  # tests before the test are free
+    ).len == 0  # tests before test are free
     let found = checkCommits("curator/work", ["fix(audit): stop it"])
     check found.len == 1
     check found[0].message.endsWith("got `fix(audit): stop it`.")
@@ -64,10 +64,10 @@ suite "Article XI":
     ).len == 1  # one test clears one fix
     check checkCommits(
       "curator/work", ["fix(audit): stop it", "docs(audit): say it", "test(audit): cover it"]
-    ).len == 1  # commit between them breaks the pair
+    ).len == 1  # commit between them breaks pair
     check checkCommits(
       "curator/work", ["fix(audit): stop it", "revert(audit): undo it", "test(audit): cover it"]
-    ).len == 1  # revert between them breaks the pair too
+    ).len == 1  # revert between them breaks pair too
     check checkCommits(
       "curator/work", ["refactor(audit): tidy it"]
     ).len == 0  # change needing no test is not fix
