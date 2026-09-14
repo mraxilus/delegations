@@ -1,8 +1,7 @@
 ## Probe every mechanism audit enforces, on domain-neutral ring of steps modulo `MODULUS`.
 ##   Project exists to be checked, not used: build-time configuration validated statically,
 ##   distinct type over range, symbolic operator with named alias, poisoned operator,
-##   Unicode identifier, banner, matrix test. Merge-process probes branch from
-##   `curator/probe/probe-<name>` and touch README.md only.
+##   Unicode identifier, banner, matrix test.
 ##
 ##   |----------|----------|---------------------------------------|
 ##   | Code     | Notation | Meaning                               |
