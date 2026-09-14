@@ -142,7 +142,7 @@ wheel or puts two fingers on the canvas, so nothing in it catches a rule wired t
 event. `tools/drive/` does, through Playwright, against the page `tools/build.nim web`
 assembles; `nim r tools/build.nim drive` runs both front-ends.
 
-**162 checks pass**, one module per section of what the page does, counted by running and
+**163 checks pass**, one module per section of what the page does, counted by running and
 never read off this file:
 
 | Module | Covers |
@@ -223,11 +223,17 @@ a notation, since the pinned fill computes to `color(srgb …)` and the resting 
 `oklab(0 0 0 / 0)`. `driveHeaderStyled` compares radius and border against `.toggles`; not
 `.brand`, which takes an accent border whenever the drawer is open.
 
-**A fill is bounded by the frames its budget owes it, never by a clock or a flat count.** A
-fast machine earns a 5 ms budget and rightly takes about 88 frames of 16 ms, where this
-runner earns 24 ms and takes about 20 of 94 ms. `driveListFills` reads the median frame the
-run saw, derives the budget, and divides by a conservative 4 rows per millisecond — against
-11.4 measured under 5 ms slices and 6.4 under 24 ms ones.
+**The list is held to a window, never to a fill.** `driveListWindowed` shuts the objects
+section and opens it again, and reads the rows standing before the click returns: they stand
+for every object and number no more than three screens of 40 px rows, which is loose where it
+must be and still tens against thousands. It then scrolls to either end and finds that end's
+row on screen within the same bound. The bound is stated in the check as well as in the page,
+since a check reading the window out of the page passes whatever the page does. Time is
+reported and never asserted — 3 ms here, with 27 rows standing for 5,040 objects —
+since how long tens of rows take is the runner's business, and the count holds on every
+runner. `driveEditFromMenu` opens the panel onto the 41st object created, near the far end of
+the list, and reads its row as standing before the call returns and as lying under the pinned
+heading with its whole form above the scroller's floor.
 
 **A touch id is never reused across gestures, and every gesture starts by asking the page
 whether any pointer is still down.** The page keys live pointers by id, so an id reused
@@ -246,7 +252,7 @@ toggles wherever they stand alongside zero overflow, since a row that fits becau
 controls were dropped is broken more quietly, and sweeps 396, 395 and 394, because a rule
 written one pixel out passes every sweep that never lands on it.
 
-*Checked.* Verified by running: 162 of 162 through `tools/build.nim drive`, both front-ends,
+*Checked.* Verified by running: 163 of 163 through `tools/build.nim drive`, both front-ends,
 software-rendered, here and on the runner — `driven` gates `audit`, so a green push run is
 the runner's own word (repository issues 47 and 91). **Unmeasured**: the figures are this
 container's and say more about SwiftShader than about any GPU; bands are what the checks
@@ -356,14 +362,24 @@ at runtime by `gl.ts` from the clear colour — where a named tone drifts. The b
 `transparent` at rest rather than added by `.stuck`, since a border arriving on pin would
 widen the box by 2 px. Not a shadow, which made pinning read as *floating*.
 
-**Row building takes a share of the frame it is spending, never a fixed span.** The budget is
-`frame × 0.3`, floored at 5 ms and capped at the 24 ms the reveal path already takes; the
-floor is `16.7 × 0.3 = 5.0`, so a machine keeping up gets what a flat 5 ms gives. Not a flat
-5 ms, which assumes a 60 fps frame: the frame drawing 5,038 objects measures 80 ms, so 5,038
-rows take about 88 frames and 6,465 ms in front of a reader, against 13 to 20 frames and
-2,862 ms under the share. Cost: at an 80 ms frame the scene animates more coarsely for two
-seconds instead of more finely for six and a half. `frame.ts` already holds the frame's
-duration and hands the same reading on.
+**Only the rows near the viewport exist.** The list is a window over its keys: two spacers
+stand in for the rows above and below at the heights those rows measured, or 61 px until
+they have, and the window covers the scroller's height plus one screen either side. A
+scroll marks the window stale and the frame loop settles it after the tick's own writes, so
+the cost lands in the `ui` phase and the layout its reads force serves the tick too; a
+refresh renders at once, so a caller that changed the scene finds its row standing before
+the call returns. Keys are rebuilt only when the scene's revision, its count or the composing
+row moves, so a refresh on selection alone keeps five thousand keys as they stand. Heights
+are read by a `ResizeObserver`, never inside the scroll path, which also catches a row that
+changes size without rebuilding. Not time-sliced building of every row, which at 5,038
+objects is 2,862 ms of list filling across 33 frames of 80 ms and 45,813 elements standing
+after; the window opens in 3 ms with 27 rows, and the page then carries about 750
+elements, 250 of them in the list. Not `content-visibility: auto` over every row, which
+skips their layout and not their building. Cost: a row leaving the window is built again on
+its return, about 0.15 ms each; and a row above the viewport is an estimate until scrolled
+to, which the browser's own scroll anchoring absorbs — the spacers are `overflow-anchor:
+none`, so the anchor is always a row, and a jump to an estimated offset with nothing but a
+spacer in view adjusts nothing.
 
 **A comment may not quote a closing block-comment delimiter.** A comment that does ends itself
 on the spot, and the prose after it parses as CSS — enough to swallow 141 of the page's 150
@@ -1272,13 +1288,13 @@ hold their separation to the pixel, so a pinch zooms only once the separation ha
 more than `PIXELS_TAP_SLOP`, from the separation where the slop was crossed, without a jump.
 
 **The edit preview is drawn at the session's own radius**, or editing a moon of 0.03 draws a
-grey disc nearly three times its size over it. **Edit from the selection menu waits for its
-row**: the objects list builds in time-bounded slices, so `key_reveal_pending` names the row
-and `revealPendingRow` scrolls the moment it stands, after each slice, with the slice budget
-widened to 24 ms while a reveal is pending. Row signatures are committed **per row**, or a
-refresh landing mid-build restarts the pass and rebuilds every row standing, a list that
-never finishes. **The gesture clock is seconds**, on whichever monotonic clock the caller
-owns; a dwell named in milliseconds once needed 450 *seconds*.
+grey disc nearly three times its size over it. **Edit from the selection menu scrolls to its
+row's offset and renders the window there**, in one call: the offset is the sum of the
+heights above it, an estimate where a row has never stood, so the row lands inside the
+window and one reading of where it actually stands corrects the rest. It lands under the
+pinned heading rather than at the scroller's own edge, which the heading covers. **The
+gesture clock is seconds**, on whichever monotonic clock the caller owns; a dwell named in
+milliseconds once needed 450 *seconds*.
 
 **What a drag builds is read off the operands, not the button.** `∧` adds grades and is
 drawable when the sum ≤ 4; `∨` adds antigrades and is drawable when the sum ≥ 4. Over every

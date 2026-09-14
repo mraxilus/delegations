@@ -713,7 +713,7 @@
      pulls it to section's edge. Watched by `drawer.ts`: when this leaves scrollport upward,
      heading is pinned, and band it wears is drawn only then.
      Observer rather than scroll handler, for reason `sizes.ts` gives at length -- read after
-     write lays whole document out inside frame, and this scroller carries thousands of rows. */
+     write lays whole document out inside frame. */
   .section-edge {
     position: absolute;
     top: 0; left: 0; right: 0;
@@ -889,29 +889,13 @@
   .object-row {
     border-top: 1px solid var(--border);
     padding: 9px 0;
-    /* **Row nobody can see is not laid out.** At capacity of 1,024 list holds about
-       eleven thousand of page's twelve and half thousand elements, and although
-       diagnostics tick never writes into any of them, every write it makes elsewhere in
-       drawer sent browser back over all of them. Measured on demo, still, drawer
-       open: frame after tick cost 5.2 ms more than plain frame, and 2.8 ms of that
-       was these rows -- deleting list outright reached same 2.4 ms floor this rule
-       does, so it buys what virtualising list would buy without virtualised list.
-       `auto` on intrinsic size, not bare length: browser then remembers each
-       row's real height once it has laid it out, and only row never yet scrolled past
-       uses fallback. **Fallback is content-box height**, so it excludes this
-       rule's own 18px of padding and 1px of border -- border-box figure here makes every
-       skipped row 19px too tall, which measured as list 27% longer than it is. Modal
-       collapsed row is 61px overall (930 of demo's 1,024; 93 wrap their coefficients to
-       second line at 76px, and open row is taller still), so 42px is content
-       inside it and fresh list's extent starts within couple of percent. */
-    content-visibility: auto;
-    contain-intrinsic-size: auto 42px;
   }
-  /* One row reader is editing is exempt: it is several times taller than collapsed
-     one, and `scrollRowIntoView` has to scroll its whole form into view rather than
-     placeholder standing in for it. One row of thousand, so saving is untouched. */
-  .object-row.editing-object { content-visibility: visible; contain-intrinsic-size: none; }
-  .object-row:first-of-type { border-top: none; }
+  /* Only rows near viewport stand: `objects_section.ts` windows list, and these two stand in
+     for rest at heights rows measured. Left out of scroll anchoring so browser anchors on row
+     instead: row above viewport measured taller than its estimate then holds its place, and
+     jump to estimated offset with nothing but spacer in view adjusts nothing. */
+  .object-spacer { overflow-anchor: none; }
+  .object-row.first { border-top: none; }
   .object-row.selected {
     background: rgba(0, 167, 165, 0.10);
     border-radius: 8px;

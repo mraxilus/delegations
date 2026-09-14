@@ -77,8 +77,9 @@ function endEditSession() {
 //   talk about every row same way.
 const KEY_ROW_EMPTY = 'empty';
 const KEY_ROW_PENDING = 'pending';
-// What each key's row was picture of when it was last built. Compared, never ordered.
-let signatures_row = new Map();
+// What each standing row was picture of when it was built. Compared, never ordered; row that
+//   leaves window takes its entry with it, so map is exactly rows standing.
+let signatures_row = new Map<string, string>();
 
 // Geometry line row shows, held per handle against scene's own revision.
 //   **Costly half of signature, and function of geometry alone.** Measured at
@@ -134,14 +135,69 @@ function buildRowFor(key: string) {
   return buildObjectRow(key === KEY_ROW_PENDING ? null : parseInt(key, 10));
 }
 
+// **Only rows near viewport exist.** List is window over its keys: two spacers stand in.
+//   for rows above and below it at heights they measured, or `PIXELS_ROW_ESTIMATE` until
+//   they have, and window covers scroller's height plus `SCREENS_SLACK_WINDOW` each side.
+//   Building every row, even in time-bounded slices, was 2,862 ms of list filling across 33
+//   frames of 80 ms at 5,038 objects, and 45,813 elements standing after -- freeze on first
+//   opening, and every write in drawer after it paid for tree that size.
+//   Scroll marks window stale and frame loop settles it (`settleObjectWindow`), so cost lands
+//   in `ui` phase beside rest; refresh renders at once, so caller that changed scene finds its
+//   row standing before call returns.
+// Keys of every row list stands for, in order, as of last refresh.
+let keys_list: string[] = [];
+// Height each row stands at, by key, kept across refreshes; row never yet stood has none.
+const heights_row = new Map<string, number>();
+// Same heights by index into `keys_list`, so walk on scroll is over numbers, not map.
+let heights_list: number[] = [];
+// Collapsed row's modal height: 930 of demo's 1,024 measure 61 px, and 93 wrap coefficients to
+//   76. Row above viewport measured taller than this once scrolled to is held in place by
+//   browser's own scroll anchoring; see `.object-spacer` in `shell.html`.
+const PIXELS_ROW_ESTIMATE = 61;
+// Screens of rows built beyond viewport, each side. Fling at 2,000 px/s moves 160 px in 80 ms
+//   frame, and one screen is several times that.
+const SCREENS_SLACK_WINDOW = 1;
+// Where each standing row's key sits in `keys_list`, so measurement can patch by index.
+const index_of_row = new WeakMap<Element, number>();
+// Scene and session keys were last built against; unchanged means keys need no rebuilding.
+let stamp_keys_list = '';
+const spacer_top = document.createElement('div');
+const spacer_bottom = document.createElement('div');
+spacer_top.className = 'object-spacer';
+spacer_bottom.className = 'object-spacer';
+list_objects.append(spacer_top, spacer_bottom);
+// Set by scroll and resize, cleared by render, read by frame loop.
+let is_window_stale = false;
+if (scroller !== null) {
+  scroller.addEventListener('scroll', () => { is_window_stale = true; }, { passive: true });
+}
+window.addEventListener('resize', () => { is_window_stale = true; });
+
+// Heights read after layout, never inside scroll path: reading box inside scroll handler lays
+//   document out inside that event, bargain `sizes.ts` states at length. Row that changes size
+//   without rebuilding -- coefficient line wrapping as reader types, drawer narrowing -- reports
+//   here too, which no measurement at build time would see.
+const measurer_rows = typeof ResizeObserver === 'function'
+  ? new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const node = entry.target as HTMLElement;
+        const height = entry.borderBoxSize[0]?.blockSize ?? node.offsetHeight;
+        if (height <= 0) continue; // Section shut reports every row at nothing.
+        const key = node.dataset.key ?? '';
+        heights_row.set(key, height);
+        const at = index_of_row.get(node);
+        if (at !== undefined && keys_list[at] === key) heights_list[at] = height;
+      }
+    })
+  : null;
+
+function heightOf(key: string): number { return heights_row.get(key) ?? PIXELS_ROW_ESTIMATE; }
+
 function refreshObjectsUI() {
-  // **Closed section builds nothing, and catches up when it opens.** Loading largest.
-  //   size with this section collapsed built 5,038 rows for list nobody could see: 790 ms
-  //   of 1,496 ms load, half of it, spent on picture that was not on screen. Count
-  //   in header is written either way -- it is one string, it is visible while
-  //   section is shut, and it is only part of this reader can see from there.
-  //   Same shape as pool grid's `is_pool_stale` and diagnostics tick's own
-  //   `open` check; section handler above is what redeems flag.
+  // **Closed section builds nothing, and catches up when it opens.** Count in header is.
+  //   written either way -- it is one string, it is visible while section is shut, and it is
+  //   only part of this reader can see from there. Same shape as pool grid's `is_pool_stale`
+  //   and diagnostics tick's own `open` check; section handler is what redeems flag.
   count_objects.textContent =
     '(' + nimSceneCount() + ' of ' + nimSceneCapacity() + ')';
   // These two belong to *apply* section and to button above list, not to.
@@ -152,46 +208,138 @@ function refreshObjectsUI() {
   refreshAddButton();
   if (!isDrawerObjectsOpen()) return;
 
-  // **Reconciled against rows already standing, not rebuilt.** This used to empty.
-  //   list and build every row again, which on 1,024-object demo was 570 ms of
-  //   JavaScript and 164 ms of layout -- and there are dozen callers, so tap on `hide`
-  //   paid all of it to change one checkbox.
-  //   Built as diff rather than by making tap-driven callers call something narrower:
-  //   list of `the cheap callers` is contract thirteenth caller breaks silently, and
-  //   this way every caller is cheap, including ones not yet written. Refresh that
-  //   changes nothing writes nothing. Same shape as `timings.RECORDS_FRAME`'s
-  //   this-frame/last-frame pair and swap arena, one side of wire over.
-  // **Ordered by bridge, not by comparator that calls it.** This used to sort by.
-  //   `nimObjectBorn`, which is two calls across FFI per comparison -- about 124,000 of
-  //   them over 5,038 handles, and 165 ms of load, to reach order Nim can hand over.
-  //   `nimSceneHandlesCreated` is that order already: `scene.handlesCreated` walks by
-  //   creation ordinal, and replayed load stamps `born` in creation order, so reversing
-  //   it is same "most recently added first" for one pass and no comparator at all.
-  const handles = Array.from(nimSceneHandlesCreated()).reverse();
-  const keys: string[] = [];
-  if (handles.length === 0 && !isComposing()) keys.push(KEY_ROW_EMPTY);
-  // Composing session heads list: it is newest thing here, and it has no.
-  //   `born` reading to sort by since nothing backs it in scene yet.
-  if (isComposing()) keys.push(KEY_ROW_PENDING);
-  for (const handle of handles) keys.push(String(handle));
+  // **Keys rebuilt only when scene or session moved.** Revision moves on every edit, count on.
+  //   every add and remove, and composing row is only other row there is; refresh on selection
+  //   alone, which is most of them, keeps five thousand keys and their heights as they stand.
+  // **Ordered by bridge, not by comparator that calls it.** `nimSceneHandlesCreated` walks by.
+  //   creation ordinal, and replayed load stamps `born` in creation order, so reversing it is
+  //   "most recently added first" for one pass and no comparator at all -- sorting by
+  //   `nimObjectBorn` was two calls across FFI per comparison, 124,000 over 5,038 handles.
+  const stamp = nimSceneRevision() + ':' + nimSceneCount() + ':' + (isComposing() ? 'p' : '');
+  if (stamp !== stamp_keys_list) {
+    stamp_keys_list = stamp;
+    const handles = Array.from(nimSceneHandlesCreated()).reverse();
+    keys_list = [];
+    if (handles.length === 0 && !isComposing()) keys_list.push(KEY_ROW_EMPTY);
+    // Composing session heads list: it is newest thing here, and it has no.
+    //   `born` reading to sort by since nothing backs it in scene yet.
+    if (isComposing()) keys_list.push(KEY_ROW_PENDING);
+    for (const handle of handles) keys_list.push(String(handle));
+    heights_list = keys_list.map(heightOf);
+    // What list stands for, for harness that cannot count rows it does not build.
+    list_objects.dataset.count = String(handles.length);
+  }
+  renderObjectWindow();
+}
 
-  // Snapshotted, not walked live: loop below inserts into this very collection.
+function renderObjectWindow() {
+  // Rows around viewport, reconciled against rows already standing; see `keys_list`.
+  is_window_stale = false;
+  if (scroller === null) return;
+  // Harness or reset that emptied list took spacers with it.
+  if (spacer_top.parentNode !== list_objects) list_objects.prepend(spacer_top);
+  if (spacer_bottom.parentNode !== list_objects) list_objects.append(spacer_bottom);
+
+  const height_view = scroller.clientHeight;
+  const top_list = list_objects.getBoundingClientRect().top
+    - scroller.getBoundingClientRect().top + scroller.scrollTop;
+  const from = scroller.scrollTop - top_list - height_view * SCREENS_SLACK_WINDOW;
+  const until = from + height_view * (1 + 2 * SCREENS_SLACK_WINDOW);
+
+  // Walk to window's edges. Numbers, not map: five thousand adds is microseconds.
+  const count = keys_list.length;
+  let lo = 0;
+  let y_lo = 0;
+  while (lo < count && y_lo + (heights_list[lo] ?? PIXELS_ROW_ESTIMATE) <= from) {
+    y_lo += heights_list[lo] ?? PIXELS_ROW_ESTIMATE;
+    lo += 1;
+  }
+  let hi = lo;
+  let y_hi = y_lo;
+  while (hi < count && y_hi < until) {
+    y_hi += heights_list[hi] ?? PIXELS_ROW_ESTIMATE;
+    hi += 1;
+  }
+  let y_end = y_hi;
+  for (let at = hi; at < count; at += 1) y_end += heights_list[at] ?? PIXELS_ROW_ESTIMATE;
+
+  // Rows outside window, or for keys scene no longer has, go; signatures with them.
+  //   Snapshotted, not walked live: loop below inserts into this very collection.
+  const wanted = new Set<string>();
+  for (let at = lo; at < hi; at += 1) wanted.add(keys_list[at] ?? '');
   const standing = new Map<string, HTMLElement>();
   for (const node of Array.from(list_objects.children) as HTMLElement[]) {
-    standing.set(node.dataset.key ?? '', node);
+    if (node === spacer_top || node === spacer_bottom) continue;
+    const key = node.dataset.key ?? '';
+    if (wanted.has(key)) standing.set(key, node);
+    else dropRow(node, key);
   }
 
-  // **Built in slices, so long list cannot freeze page.** Five thousand rows is 820 ms.
-  //   of element construction in one block -- whole of load, once bridge stopped
-  //   deep-copying timeline -- and there is no version of that reader does not feel.
-  //   Diff itself stays whole and synchronous: it is *building* that costs, and
-  //   half-applied diff is only ever list that has not finished filling, never wrong one.
-  //   Rows appear top-down as scene's own objects animate in, which is order
-  //   they arrive in anyway.
-  //   Refresh that finds everything already standing does no building and so never yields
-  //   -- common case, tap on `hide`, stays exactly as immediate as it was.
-  rows_pending = { keys, standing, signatures: new Map<string, string>(), at: 0 };
-  sliceObjectRows();
+  // **Reconciled against rows already standing, not rebuilt.** Two equal signatures mean.
+  //   same picture, so element standing there is already right and is left alone: refresh
+  //   that changes nothing writes nothing, and tap on `hide` stays immediate. Built as diff
+  //   rather than by making tap-driven callers call something narrower: list of `the cheap
+  //   callers` is contract thirteenth caller breaks silently.
+  for (let at = lo; at < hi; at += 1) {
+    const key = keys_list[at] ?? '';
+    const signature = signatureOfObjectRow(key);
+    let node = standing.get(key);
+    if (node === undefined || signatures_row.get(key) !== signature) {
+      if (node !== undefined) dropRow(node, key);
+      node = buildRowFor(key);
+      node.dataset.key = key;
+      signatures_row.set(key, signature);
+      measurer_rows?.observe(node);
+    }
+    index_of_row.set(node, at);
+    node.classList.toggle('first', at === 0);
+    // Already in right place is common case; otherwise this moves it there.
+    const place = 1 + (at - lo);
+    if (list_objects.children[place] !== node) {
+      list_objects.insertBefore(node, list_objects.children[place] ?? null);
+    }
+  }
+  const above = y_lo + 'px';
+  const below = (y_end - y_hi) + 'px';
+  if (spacer_top.style.height !== above) spacer_top.style.height = above;
+  if (spacer_bottom.style.height !== below) spacer_bottom.style.height = below;
+}
+
+function dropRow(node: HTMLElement, key: string) {
+  measurer_rows?.unobserve(node);
+  node.remove();
+  signatures_row.delete(key);
+}
+
+/** Settle window frame loop found stale, and say whether it did. */
+function settleObjectWindow(): boolean {
+  if (!is_window_stale) return false;
+  is_window_stale = false;
+  if (!isDrawerObjectsOpen()) return false;
+  renderObjectWindow();
+  return true;
+}
+
+function revealObjectRow(key: string) {
+  // Scroll list to this key's row and render window there, in one call. Offset is sum of.
+  //   heights above it, estimate where row has never stood, so row lands inside window and
+  //   one reading of where it actually stands corrects rest. Placed under pinned heading rather
+  //   than at scroller's own edge, which heading covers; see `.section-header`.
+  if (scroller === null) return;
+  const at = keys_list.indexOf(key);
+  if (at < 0) return;
+  let offset = 0;
+  for (let i = 0; i < at; i += 1) offset += heights_list[i] ?? PIXELS_ROW_ESTIMATE;
+  const heading = document.querySelector('.section[data-section="objects"] .section-header');
+  const clearance = heading === null ? 0 : heading.getBoundingClientRect().height;
+  const box_scroller = scroller.getBoundingClientRect();
+  const top_list = list_objects.getBoundingClientRect().top - box_scroller.top
+    + scroller.scrollTop;
+  scroller.scrollTop = top_list + offset - clearance;
+  renderObjectWindow();
+  const row = list_objects.querySelector('[data-key="' + key + '"]');
+  if (row === null) return;
+  scroller.scrollTop += row.getBoundingClientRect().top - box_scroller.top - clearance;
 }
 
 function isComposing() { return session_edit !== null && session_edit.handle === null; }
@@ -215,12 +363,7 @@ function buildObjectRow(handle: number | null) {
 
   const row = document.createElement('div');
   if (!is_pending) row.dataset.handle = String(handle); // Lets caller find one row again by handle.
-  // Open row says so on itself: it is one row whose real height panel has to.
-  //   know -- `scrollRowIntoView` scrolls to bring its edit form into view, and form
-  //   standing behind 42px placeholder scrolls to placeholder. `shell.html` reads
-  //   this class to keep open row out of containment other thousand are in.
   row.className = 'object-row'
-    + (is_open ? ' editing-object' : '')
     + (is_pending ? ' pending-object' : '')
     + (!is_pending && handles_selection.includes(handle) ? ' selected' : '')
     + (!is_pending && !nimObjectVisible(handle) ? ' hidden-object' : '');
