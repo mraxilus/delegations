@@ -4,7 +4,7 @@
 ##   root branch accepts any valid scope, because rules propagation commits carry each
 ##   project's scope.
 ##   Merge commits are excluded upstream (`git log --no-merges`); reverts use type `revert`.
-##   Regression rule is enforced here, not hoped for (Article IX.8, CONTRIBUTOR.md): every
+##   Regression rule is enforced here, not hoped for (CONTRIBUTOR.md, Tests are paramount): every
 ##     `fix` carries earlier `test` of same scope on same branch, since mistake earns test
 ##     that fails before fix and passes after, committed first. Subjects arrive newest
 ##     first, so earlier means later in sequence.
@@ -71,7 +71,7 @@ func checkCommits*(branch: string, subjects: openArray[string]): seq[Finding] =
       result.add finding(
         "", 0,
         "Fix needs earlier `test(" & parsed.get.scope & ")` on branch; mistake earns test " &
-          "that fails before it (Article IX.8); got `" & subjects[i] & "`.",
+          "that fails before it (CONTRIBUTOR.md, Tests are paramount); got `" & subjects[i] & "`.",
       )
 
   for s in subjects:
