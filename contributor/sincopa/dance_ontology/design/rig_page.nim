@@ -143,7 +143,7 @@ figure.pic.picked { outline: 2px solid var(--ink); outline-offset: 2px; }
 </style>"""
 
 
-const TITLE* = "The rig, as the engine holds it"
+const TITLE* = "The Rig, as the Engine Holds It"
   ## Page's own name, after work's name: what browser tab and published gallery show.
 
 
