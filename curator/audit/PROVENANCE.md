@@ -38,7 +38,7 @@ Git runs as a direct process with an argument list, never through a shell.
 - Rejected: `execCmdEx`, which reads by line and appends a newline to NUL-separated output.
 - Cost: git must be on `PATH`.
 - Verified by `ttree.nim` on a throwaway repository: ignored `bin/` absent, untracked file
-  present, accented path unquoted, rename showing as its destination alone.
+  present, rename showing as its destination alone.
 
 ## File kinds
 
@@ -78,7 +78,7 @@ TypeScript" would have been under no gate at all.
 
 ## Comment extraction
 
-**Five hand-written scanners, one per-line accumulator.** Nim: line, doc, nesting block
+**Six hand-written scanners, one per-line accumulator.** Nim: line, doc, nesting block
 comments, plain, triple and generalized raw strings, char literals, numeric suffix quotes. Cfg:
 `#` unless `\#`. YAML: `#` at line start or after whitespace, outside quotes. Ignore files:
 leading `#` only. TypeScript: `//`, `/* */`, three string forms, doc stars stripped. Markup:
@@ -164,8 +164,8 @@ suite was renamed.
   ending is the guard.
 - Cost, the honest limit: a delegate can cite a real test beside a claim it does not make. That
   gap closes by reading.
-- Verified by `tprovenance.nim`, and driven on this repository: all nineteen citations on `main`
-  resolve, while renaming one to an absent file, a source file, or another project's test each
+- Verified by `tprovenance.nim`, and driven on this repository: every citation on `main`
+  resolves, while renaming one to an absent file, a source file, or another project's test each
   reports one finding.
 
 ## Provenance stamp
@@ -278,13 +278,13 @@ merges the Architect approved.
 **Curator reach into contributor projects stops at their records.** Under `contributor/`, the
 only writable paths on a curator branch are `README.md`, `PROVENANCE.md` and `GLOSSARY.md` —
 `PROJECT_FILES`, read from `layout.nim` rather than repeated. That empty prefix was the one hole
-in an otherwise mechanical system, and it belonged to the most-run role: duty 9 forbade writing
-contributor code and nothing but reading held it.
+in an otherwise mechanical system, and it belonged to the most-run role: duty 11 forbade
+writing contributor code and nothing but reading held it.
 
 - Rejected: restricting to `PROVENANCE.md` and `GLOSSARY.md` alone, which the toolchain
   propagation disproved — it removed "Needs Nim 2.2.4" from three contributor READMEs, prose
   the rule itself invalidated, and the tighter set would have blocked it.
-- Cost: the README stays writable, so restraint about rewriting a project's prose is duty 9's
+- Cost: the README stays writable, so restraint about rewriting a project's prose is duty 11's
   to govern by reading, never the check's.
 - Verified by driven check: a curator branch touching `dance_ontology`'s source reports one
   finding naming the path; the same branch touching its `PROVENANCE.md` and `README.md` reports
@@ -315,10 +315,17 @@ prevents this with "require branches to be up to date", which is behind paid rul
 feeds the `audit` gate branch protection already requires, so no setting changed.
 
 Only two kinds of path count: a charter document moves the stamp every project claims, and the
-checker decides what the audit accepts. Everything else may differ freely.
+checker decides what the audit accepts. Everything else may differ freely. On the runner the
+job checks out the branch head, never the merge ref a pull request offers: that ref's first
+parent is the base's tip, so what it gained over the base is empty by construction and the
+check would report nothing on every fresh run, while `static` on the same merge ref is what
+holds a stale stamp there.
 
 - Cost: merging a rules change reddens every open pull request until each merges the base. That
   is the paid setting's cost too, and it fires exactly when staleness is real.
+- Verified by replaying a branch left behind by a week of `main`: at its head, `koch base`
+  reports the finding; at a synthetic merge of that head into `main`, with `main` as first
+  parent, it reports nothing.
 - Cost, the honest limit: this reads at pull request time, never merge time, so a branch green
   at ten can merge at five past after another lands. Only a merge queue closes that, and that is
   the paid feature again.
@@ -659,7 +666,7 @@ nothing touched is runner time for no information.
 - Cost: rot from outside the repository — a runner image moving under a pinned compiler — goes
   unseen through a quiet week.
 - Cost: the window is named twice, as the cron and `SWEEP_DAYS`; nothing checks they agree, so
-  CURATOR.md duty 7 says to change them together.
+  CURATOR.md duty 9 says to change them together.
 - A repository younger than the window has every commit inside it, so the skip is verified by
   suite rather than a live Monday: `tplan.nim` drives the decision over code, record-only and
   empty changes, and `ttree.nim` drives `revBefore` at both ends.

@@ -6,12 +6,12 @@ labels: ''
 assignees: ''
 ---
 
-**Role:** <!-- curator. Every session posts as the same account, so this line is the only
+**Role:** <!-- curator. Every delegate posts as the same account, so this line is the only
 thing that says who is speaking. -->
 
 <!-- Label this issue with the project's own role string, `contributor/<domain>/<project>`
 or `curator/<project>`, copied rather than composed: applying a label creates it, so a
-misspelling makes a second label nobody filters on. That label is how the session that can
+misspelling makes a second label nobody filters on. That label is how the delegate that can
 act on this finds it. -->
 
 ## What was read

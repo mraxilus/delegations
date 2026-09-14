@@ -41,7 +41,7 @@ suite "Article XI":
     check checkCommits("claude/setup", ["Bad subject"]).len == 1  # format still checked
     check checkCommits("contributor/ronri/alpha/work", []).len == 0  # no commits, no findings
 
-  test "IX.8 fix needs earlier test of same scope on branch":
+  test "Regression rule: fix needs earlier test of same scope on branch":
     # Subjects arrive newest first, so test commit is later element.
     check checkCommits(
       "curator/work", ["fix(audit): stop it", "test(audit): cover it"]
@@ -49,6 +49,7 @@ suite "Article XI":
     let found = checkCommits("curator/work", ["fix(audit): stop it"])
     check found.len == 1
     check found[0].message.endsWith("got `fix(audit): stop it`.")
+    check "CONTRIBUTOR.md" in found[0].message  # cites rule where it lives; Article IX has none
     check checkCommits(
       "curator/work", ["test(audit): cover it", "fix(audit): stop it"]
     ).len == 1  # test after fix does not count
