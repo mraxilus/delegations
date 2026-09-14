@@ -89,9 +89,9 @@ Every rule below serves it:
 - **One curator project**: branch `curator/<project>/<name>`, confined to `curator/<project>/`,
   commit scope `<project>`, exactly like a contributor branch.
 - Conventional Commits throughout: `feat(audit): register json kind`. The `commits` job
-  enforces the regression rule (duty 4): every `fix` carries an earlier `test` of the
-  same scope on the same branch. A change that needs no new test is a `refactor`, a `chore`
-  or a `docs`.
+  enforces the regression rule (duty 4): the commit immediately before every `fix` is a
+  `test` of the same scope, one to one. A change that needs no new test is a `refactor`, a
+  `chore` or a `docs`.
 - A branch a tool named for you (`claude/...`) is outside the grammar and fails `scope`. Push
   to a branch inside it; where the tool decides the name, ask the Architect.
 
