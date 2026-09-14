@@ -89,7 +89,7 @@ Every rule below serves it:
 - **One curator project**: branch `curator/<project>/<name>`, confined to `curator/<project>/`,
   commit scope `<project>`, exactly like a contributor branch.
 - Conventional Commits throughout: `feat(audit): register json kind`. The `commits` job
-  enforces the regression rule (Article IX.8): every `fix` carries an earlier `test` of the
+  enforces the regression rule (duty 4): every `fix` carries an earlier `test` of the
   same scope on the same branch. A change that needs no new test is a `refactor`, a `chore`
   or a `docs`.
 - A branch a tool named for you (`claude/...`) is outside the grammar and fails `scope`. Push
@@ -157,7 +157,7 @@ way — at the start, on each resolution, at handover.
    yourself.
 
 4. **Regression.** Every mistake that slipped past the audit becomes a fixture-driven test
-   in `curator/audit/tests/` before the fix (Article IX.8). Suites are named after the
+   in `curator/audit/tests/` before the fix. Suites are named after the
    constitution's articles and assertions cite them.
 
 5. **New file kind.** Register it in `curator/audit/src/kinds.nim` with its comment syntax,

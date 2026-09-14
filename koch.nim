@@ -5,7 +5,7 @@
 ##   |---------|-------------------------------------------------------------------------|
 ##   | Command | Effect                                                                  |
 ##   |---------|-------------------------------------------------------------------------|
-##   | tree    | layout, form, comments, provenance, glossary, prompts, copies; git sees |
+##   | tree    | layout, form, comments, records, glossary, prompts, copies, faces       |
 ##   | deps    | `atlas --noexec rep` in every project holding atlas.lock, or in one     |
 ##   | types   | restore node tools, then type-check scripts, projects one change asks   |
 ##   | driven  | restore, build page, drive it through real events, on that project's pin|
@@ -20,7 +20,7 @@
 ##   | ci      | fetch origin/main, then every check above but `deps`, each as it scopes |
 ##   |---------|-------------------------------------------------------------------------|
 ##   Verb of one project is that project's own, in its `tools/build.nim`; koch names verb and
-##     selects projects carrying it, and holds none of what it does. `types`, `driven` and
+##     selects projects carrying it, and holds none of what it does. `types`, `drive` and
 ##     `system` are those, and koch learns which projects carry each by reading that driver's
 ##     own dispatch, never from list.
 ##   `types` runs on driver's compiler and `driven` on project's own, because type check
@@ -36,11 +36,9 @@
 ##
 ##   `ci` compiles only projects whose code changed, since static pass costs tenths of
 ##     second and suites cost minutes; push run on `main` and weekly sweep do same against
-##     their own base, so nothing compiles every project (CURATOR.md duty 11). Matrix runs
-##     each on its own pin, never one local verb: pins differ, and one machine holds one
-##     compiler on PATH.
-##   Compiler on PATH must equal changed project's pin, else finding and no compile: wrong
-##     compiler either fails confusingly or passes without testing what CI will run.
+##     their own base, so nothing compiles every project (CURATOR.md duty 9). Matrix runs
+##     each on its own pin, as `ci` does locally: `compilers.nim` serves each changed project's
+##     pin from PATH, cache or fetch, so which compiler PATH holds decides nothing.
 ##
 ##   Rejected: make (second toolchain, recipe tabs, untested glue); NimScript tasks (compiler
 ##     VM subset, script loaded on every compile, task names shadow compiler commands,

@@ -66,8 +66,9 @@ so when an answer hands work across, the other role's label joins the first.
 `contributor/<domain>/<project>/<name>` and `curator/<project>/<name>` may change only that
 project; `curator/<name>` is rules and root work. Every pull request runs:
 
-- `static`: layout, form, telegraphic comments, provenance headers and rules stamps,
-  glossary shape, and each project's compiler pin, over the whole tree.
+- `static`: layout, form, telegraphic comments, records with their headers and stamps,
+  glossary shape, the prompts, copied paragraphs, shipped faces, workflow grants and each
+  project's compiler pin, over the whole tree.
 - `project`: one job per project whose code changed, on a pull request, on the push to
   `main` and in the weekly run alike, each installing that project's own pinned compiler,
   restoring its dependencies from its lock file and running its tests. Nothing compiles
@@ -87,8 +88,8 @@ project; `curator/<name>` is rules and root work. Every pull request runs:
 - `audit`: the gate the other jobs report to, and one of the three required checks.
 
 A ninth job, `plan`, runs first and computes the matrices `project` and `driven` fan out over;
-it names projects rather than checking them. Weekly, the same workflow compiles every project
-whenever code merged that week. Two more workflows watch the rest: `watch.yml` opens an issue
+it names projects rather than checking them. Weekly, the same workflow compiles the projects
+whose code merged that week. Two more workflows watch the rest: `watch.yml` opens an issue
 labelled `curator` when a run on `main` concludes failure, and `ledger.yml` reads daily what
 GitHub records of the rules no check reaches — a pull request ready without a green run, a
 `Closes #N` that never fired, an issue or pull request without its role line or label — into
