@@ -22,11 +22,9 @@ sheet arrives; until then they are stale by construction, not by neglect.
 
 ## Language
 
-**Every term is agreed with the Architect before it is written.** Forty-four terms written
-without agreement were removed on 2026-09-06 and are in the history. Forty-six are now
-agreed, each concept set out with candidate names and their costs, and only the selected name
-written. The audit checks the glossary's shape and never its words, so this holds by the
-Architect's reading alone.
+**Every term is agreed with the Architect before it is written.** Each concept is set out with
+candidate names and their costs, and only the selected name is written. The audit checks the
+glossary's shape and never its words, so this holds by the Architect's reading alone.
 
 **The sim is isolated in code, not in concepts.** It reuses agreed words wherever one fits
 and coins its own only where none does; four are its own -- rig, pose, strain, block. What
@@ -340,9 +338,9 @@ does need one because the chain has ends. The switching is a radio button and a 
 rule, so the page stays markup a browser draws with nothing running; rejected: script, which
 these pages have never needed. The pin now covers every drawing in a cell rather than the
 last one, since a verdict on a cell is a verdict on all of it -- and for a cell holding one
-drawing that is the same string, which is why all 59 existing pins still matched. Cost: 99
-cells where there were 147, but 6.9 MB where there were 4.2, since a walk shown whole is
-drawn as well as its pieces, not instead of them. Every animation runs at one pace
+drawing that is the same string, which is why every existing pin still matched. Cost: fewer
+cells, and a larger page -- 6.9 MB where there were 4.2 -- since a walk shown whole is drawn
+as well as its pieces, not instead of them. Every animation runs at one pace
 (`WALK_SECONDS`), so the length of a loop says how far it goes rather than how fast: the
 whole chain is six times an edge, which is a long loop and is flagged on the page as
 something to shorten if it reads as slow. Verified by `tmarks.nim`, which drives the build and so
@@ -352,10 +350,10 @@ drawing on all five pages coming out byte-identical when `steps` and `back` took
 defaults.
 
 **A verdict is given on a picture, so the picture is pinned.** `review_page.nim` lays out
-every position the project draws as 147 cards -- the sixteen standard diagrams and the one
-anticlockwise counterpart, the twenty-eight distinct single-hand turn positions, both
-hand-to-hand chains, and every animated edge of the last two -- each carrying the identifier
-to quote back and whatever has been ruled on it. The identifiers the Architect has kept or
+every position the project draws as a card -- the standard diagrams and the one anticlockwise
+counterpart, the distinct single-hand turn positions, both hand-to-hand chains, and every
+animated edge of the last two -- each carrying the identifier to quote back and whatever has
+been ruled on it. The identifiers the Architect has kept or
 dropped are named in the module; what each was drawn as when it was ruled on is held as a
 hash in `design/review-pins.json`, and the build refuses to write the page when a ruled
 card's drawing has moved. Rejected: taking the verdict as given on the identifier, which is
@@ -365,10 +363,11 @@ carry a crossing. Pins are rewritten only by `tools/build.nim pins`, a deliberat
 step: a verdict and its pin are added together or not at all, and running it to quiet a
 complaint would hand the approval to the new picture. Cost: the verdicts live in the module,
 so every ruling is a commit. Verified by `tmarks.nim`, which builds the page under
-testament; by all 55 pins regenerating identical in content when the page moved into the
+testament; by every pin regenerating identical in content when the page moved into the
 workbench from the scratch generator that first drew it; and by the tally being counted off
-the built page rather than kept while building it -- 55 kept, 0 dropped, 2 marked for a
-mend, 92 still to rule on, of 147.
+the built page rather than kept while building it, so what the page says of itself cannot
+drift from what it holds. The page prints that tally where a reader sees it, which is why no
+number of it is written here.
 
 ## Body sim
 
@@ -590,16 +589,21 @@ the fold rule is repository issue 88.
 
 ## Pages and build
 
-**Published titles say which pages the project stands behind.** Two do — the reference and the
-body sim — and the other six are mock-ups, which is the line `CONTRIBUTOR.md` already draws
-between `pages/` and `mockups/`. The first two are titled `Dance Ontology — …`, the rest
-`Dance Ontology Mockup — …`, in title case throughout, so a gallery holding both says which is
-which before either is opened. The name is spelt once, in `tools/title.nim`, and the mock-up
-form is derived from it (Article II.1); `design/page.nim`, `tools/bundle.nim`,
-`tools/review.nim` and `design/wholecloth.nim` all read it, and before this it was written
-twice and drifting. `tests/tmarks.nim` and `tests/treview.nim` assert the built pages carry the
-mock-up form and never the plain one, against the constant rather than against a repeated
-literal: **verified**, by breaking the constant and watching both suites fail.
+**Published titles say which pages the project stands behind.** The validator does, titled
+`Dance Ontology — …`; every other page is a mock-up or an instrument and is titled
+`Dance Ontology Mockup — …`, which is the line `CONTRIBUTOR.md` already draws between
+`pages/` and `mockups/`, so a gallery holding both says which is which before either is
+opened. The body sim's page was the second that stood behind, and it went with the solver it
+drove; the viewer that replaced it plays sweeps recorded here and is titled as the
+exploration it is. The name is spelt once, in `tools/title.nim`, and the mock-up form is
+derived from it (Article II.1); `design/page.nim`, `tools/bundle.nim`, `tools/review.nim` and
+`design/wholecloth.nim` all read it, and before this it was written twice and drifting.
+`tests/tmarks.nim` and `tests/treview.nim` assert the built pages carry the mock-up form and
+never the plain one, against the constant rather than against a repeated literal:
+**verified**, by breaking the constant and watching both suites fail. Every title reads in
+title case, which `tests/tmarks.nim` holds each page to, off the title the page was written
+with rather than off a list: red first on the viewer, which shipped with a sentence for a
+title while every page beside it was cased.
 Rejected: agreeing a project term for the two categories, which would have overloaded the
 charter's `Artifact` (a file a build writes, under `build/`) or coined a word for what
 `CONTRIBUTOR.md` already says in plain English. Cost: the review page and the whole-cloth
@@ -634,7 +638,7 @@ not listed, and the repository does not treat a published copy as its record: th
 Cost: a URL is no longer beside the subsystem that builds the page.
 
 **Hand-written pages are committed files; everything a build emits is not.** The validator's and
-body sim's shells are `pages/app/index.html` and `pages/sim/index.html`, the review page's prose
+validator's shell is `pages/app/index.html`, the review page's prose
 with one marker per derived figure is `pages/review/review.html`, and the hand-drawn proposal is
 `mockups/wholecloth.html`. `tools/build.nim pages` copies both shells into `build/`, compiles each
 page's script beside it, folds each into one file with `tools/bundle.nim`, fills review's markers
@@ -679,7 +683,7 @@ committed, each pinned by package version *and* SHA-256 — version because an u
 path serves whatever the host resolves that day, digest because the bytes are embedded in
 what readers open. `design/faces.nim` inlines them as data URIs and `pages` dresses every
 page it wrote, once, after every writer has run; doing it there rather than in each writer
-is what keeps the suites free of the network, which is **verified**: the thirteen suites pass
+is what keeps the suites free of the network, which is **verified**: every suite passes
 with `build/` deleted outright.
 
 Origin of all seven is `@fontsource` 5.3.0 by way of `cdn.jsdelivr.net`, all **SIL Open Font
@@ -691,8 +695,8 @@ repository issue 116, which this project raised as its second consumer: four of 
 were already pinned byte for byte by `rga_visualiser`, and Article II.9 calls two lists of
 identical digests a copy no constraint forces. **Digest is the curator's, choice is this
 project's** — the store never says which faces a page draws with, so nothing about
-per-project autonomy moved. This project is the first to draw from it; `rga_visualiser` still
-carries its own table.
+per-project autonomy moved. This project was the first to draw from it, and
+`rga_visualiser` draws from it too.
 
 The store keys entries by digest, so a face arrives under a name that is its hash; `assets`
 restores the file name on the way into `build/fonts`, because everything downstream reads

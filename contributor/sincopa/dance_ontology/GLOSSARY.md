@@ -1,8 +1,8 @@
 # dance_ontology
 
 Words this project uses for itself, each agreed with the Architect before it was written.
-Forty-four terms written without agreement were removed on 2026-09-06; they are in history,
-and the language is being re-proposed a theme at a time.
+The language is proposed a theme at a time, and a term is written here only once it is
+agreed.
 
 ## Language
 
