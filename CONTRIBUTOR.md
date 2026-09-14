@@ -283,9 +283,10 @@ target ships the faces Article X.8 names, inlined, and the store serves them.
 - **Regression rule.** Every mistake found, by anyone, earns a test that fails before
   the fix and passes after, committed first: `test(<project>): cover <mistake>`, then
   `fix(<project>): <fix>`. Never delete, weaken or skip a test to get green. The `commits`
-  job enforces it: a `fix` with no earlier `test` of the same scope on your branch is a
-  finding. A change needing no new test is not a `fix`; it is a `refactor`, a `chore` or a
-  `docs`, and saying so is honest rather than evasive.
+  job enforces it: the commit immediately before every `fix` is a `test` of the same scope,
+  one test to one fix with nothing between them, or the `fix` is a finding. A change needing
+  no new test is not a `fix`; it is a `refactor`, a `chore` or a `docs`, and saying so is
+  honest rather than evasive.
 - Test laws, not examples. Enumerate small domains exhaustively; sample large ones with a few
   hundred seeded random cases, and record the count beside the claim.
 - Test where the mechanism runs: real wiring, output read back, bytes re-read.

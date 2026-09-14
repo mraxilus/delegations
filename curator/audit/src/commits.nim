@@ -4,10 +4,13 @@
 ##   root branch accepts any valid scope, because rules propagation commits carry each
 ##   project's scope.
 ##   Merge commits are excluded upstream (`git log --no-merges`); reverts use type `revert`.
-##   Regression rule is enforced here, not hoped for (CONTRIBUTOR.md, Tests are paramount): every
-##     `fix` carries earlier `test` of same scope on same branch, since mistake earns test
-##     that fails before fix and passes after, committed first. Subjects arrive newest
-##     first, so earlier means later in sequence.
+##   Regression rule is enforced here, not hoped for (CONTRIBUTOR.md, Tests are paramount):
+##     commit immediately before every `fix` is `test` of same scope, one test to one fix with
+##     nothing between them, since mistake earns test that fails before fix and passes after,
+##     committed first, and log then reads as that ladder. Subjects arrive newest first, so
+##     commit before element `i` is element `i + 1`.
+##   Rejected: any earlier `test` of scope on branch, which one token test satisfies for every
+##     later fix, so it measured order of kinds and nothing of pairing.
 ##   Change needing no new test is not `fix`: it is `refactor`, `chore` or `docs`. That is
 ##     escape, and it is honest one, since `fix` claims mistake was found.
 ##
@@ -61,17 +64,19 @@ func checkCommits*(branch: string, subjects: openArray[string]): seq[Finding] =
       some(parsed_branch.get.scope)
     else:
       none(string)
-  # Regression rule: `test` of same scope lands before `fix` it covers.
-  var tested: seq[string]
+  # Regression rule: `test` of same scope is commit immediately before `fix` it covers.
   for i in countdown(subjects.high, 0):
     let parsed = subjects[i].parseSubject
-    if parsed.isNone: continue
-    if parsed.get.kind == "test": tested.add parsed.get.scope
-    elif parsed.get.kind == "fix" and parsed.get.scope notin tested:
+    if parsed.isNone or parsed.get.kind != "fix": continue
+    let before = if i < subjects.high: subjects[i + 1].parseSubject else: none(Subject)
+    let is_paired = before.isSome and before.get.kind == "test" and
+      before.get.scope == parsed.get.scope
+    if not is_paired:
       result.add finding(
         "", 0,
-        "Fix needs earlier `test(" & parsed.get.scope & ")` on branch; mistake earns test " &
-          "that fails before it (CONTRIBUTOR.md, Tests are paramount); got `" & subjects[i] & "`.",
+        "Fix needs `test(" & parsed.get.scope & ")` as commit immediately before it; mistake " &
+          "earns test that fails before fix (CONTRIBUTOR.md, Tests are paramount); got `" &
+          subjects[i] & "`.",
       )
 
   for s in subjects:
