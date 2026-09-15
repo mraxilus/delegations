@@ -74,9 +74,8 @@ fits_toggles.addEventListener('change', settleToggles);
 //   slab on every section, announcing covering it is not doing; one that arrives when heading
 //   pins says what is happening.
 //   Watched rather than measured: reading heading's box on every scroll event lays whole
-//   document out inside that event, and this scroller carries row per object -- same cost
-//   `sizes.ts` keeps `ResizeObserver` for. One observer serves all four, since drawer has
-//   exactly one scroller.
+//   document out inside that event -- same cost `sizes.ts` keeps `ResizeObserver` for. One
+//   observer serves all four, since drawer has exactly one scroller.
 //   Sentinel rather than heading itself: sticky element never leaves scrollport, so it can
 //   never report that it has. `.section-edge` sits where heading's own top edge lands and
 //   does leave.
@@ -272,26 +271,6 @@ function openApplyPickerOnOperands(position_local: PointLocal | null) {
   if (menu_selection_apply.style.display !== 'none') openSelectionMenuOp();
 }
 
-// **Settled scroll, not single jump.** Row outside viewport is placeholder.
-//   rather than laid-out row -- see `.object-row`'s `content-visibility` in `shell.html` --
-//   so offset of row thousand places down list is estimate until rows
-//   above it have actually been measured. One `scrollIntoView` lands on estimate:
-//   measured on handle 900 of demo, row arrived 428px lower than it should have,
-//   leaving edit form it was opening off bottom of screen. Each pass lays out
-//   rows it scrolls past, so estimate is exact where it matters by next one.
-//   Stops as soon as row holds still, which on list short enough to be laid out
-//   whole is immediately.
-const PASSES_SCROLL_SETTLE = 4;
-function scrollRowIntoView(row: HTMLElement, passes = PASSES_SCROLL_SETTLE) {
-  row.scrollIntoView({ block: 'nearest' }); // Long list can open past it.
-  if (passes <= 1) return;
-  const settled = row.getBoundingClientRect().top;
-  requestAnimationFrame(() => {
-    if (Math.abs(row.getBoundingClientRect().top - settled) < 1) return;
-    scrollRowIntoView(row, passes - 1);
-  });
-}
-
 function openPanelTo(handle: number | null) {
   // Open edit session on `handle` (or composing one where null) and bring drawer.
   //   and Objects section far enough open to see it -- shared by top bar's `add`
@@ -304,12 +283,8 @@ function openPanelTo(handle: number | null) {
   button_drawer.classList.add('on');
   refreshObjectsUI();
   settleBands();
-  // Scrolled once its row stands, which is now or slices from now; see `revealPendingRow`.
-  //   Asked at once as well, since list already built ends refresh above without slicing.
-  //   Querying row here and giving up where it was not yet built left panel open on
-  //   top of list with wanted row thousands of pixels down it.
-  key_reveal_pending = handle === null ? KEY_ROW_PENDING : String(handle);
-  revealPendingRow();
+  // Row stands before refresh above returns, wherever in list it is; see `revealObjectRow`.
+  revealObjectRow(handle === null ? KEY_ROW_PENDING : String(handle));
 }
 
 button_add.addEventListener('click', () => {
