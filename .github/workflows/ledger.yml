@@ -1,8 +1,8 @@
 # Ledger of rules GitHub already records, so remembering them is not their only enforcement.
-#   CURATOR.md keeps list of rules holding by reading alone, and sets own test for what belongs
-#   on it: whether what rule asks about is fact something already writes down. Three sat there
-#   while GitHub recorded them, behind premise that no check reads what was posted there --
-#   premise `watch.yml` had already made false.
+#   CONTRIBUTOR.md keeps list of rules holding by reading alone, and CURATOR.md sets test for
+#   what belongs on it: whether what rule asks about is fact something already writes down.
+#   Three sat there while GitHub recorded them, behind premise that no check reads what was
+#   posted there -- premise `watch.yml` had already made false.
 #   None of three leaves that list when this lands, and saying so is half of point: each has
 #   half GitHub does not record. Issue answered by ruling in comment and left open has no
 #   closing pull request to find, which is how 116 failed; ledger reads no comment and cannot
@@ -100,10 +100,12 @@ jobs:
 
           # Role line and label, on bodies. Issue with no label at all is failure that has
           #   happened; mistyped one is left to reader, since composing role string is what
-          #   makes second label nobody filters on.
+          #   makes second label nobody filters on. Line must go on to name role: unfilled
+          #   template opens `**Role:** <!--` and would pass otherwise.
           bare="$(gh issue list --repo "$REPO" --state open --limit 100 \
             --json number,body,labels \
-            --jq '.[] | select((.body // "") | test("^\\s*\\*{0,2}role:"; "i") | not)
+            --jq '.[] | select((.body // "")
+                  | test("^\\s*\\*{0,2}role:\\*{0,2}\\s*`?(curator|contributor/)"; "i") | not)
                   | "- Issue #\(.number) opens with no role line"')"
           [ -z "$bare" ] || found="$found$bare"$'\n'
           unlabelled="$(gh issue list --repo "$REPO" --state open --limit 100 \
@@ -113,7 +115,8 @@ jobs:
           [ -z "$unlabelled" ] || found="$found$unlabelled"$'\n'
           bare_prs="$(gh pr list --repo "$REPO" --state open --limit 100 \
             --json number,body \
-            --jq '.[] | select((.body // "") | test("^\\s*\\*{0,2}role:"; "i") | not)
+            --jq '.[] | select((.body // "")
+                  | test("^\\s*\\*{0,2}role:\\*{0,2}\\s*`?(curator|contributor/)"; "i") | not)
                   | "- Pull request #\(.number) opens with no role line"')"
           [ -z "$bare_prs" ] || found="$found$bare_prs"$'\n'
           unlabelled_prs="$(gh pr list --repo "$REPO" --state open --limit 100 \
@@ -133,7 +136,7 @@ jobs:
           #   that rather than assumed it.
           said="Opened by \`ledger\` workflow rather than by delegate, so nothing here has been"
           said="$said read or judged yet. Each line is fact GitHub records, not opinion."
-          note="None of these rules left CURATOR.md's unchecked list when this workflow landed:"
+          note="None of these rules left CONTRIBUTOR.md's carried list when this workflow landed:"
           note="$note each has half GitHub does not record, and that half is still carried by"
           note="$note hand. Lines above are only what runner can see."
           next="Close this once every line is answered. Later run comments here rather than"

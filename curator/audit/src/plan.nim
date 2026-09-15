@@ -35,7 +35,7 @@ const
     ## Root files driving every project's checks.
   SWEEP_DAYS* = 7
     ## Window sweep looks back over, matching weekly cron in `check.yml`. Both are named
-    ## once; changing one means changing other, which CURATOR.md duty 7 says.
+    ## once; changing one means changing other, which CURATOR.md duty 9 says.
   CHECKER_DIR* = DRIVER_DIR & "/src"
     ## Check sources driving every project; same folder as driver project, by coincidence
     ## of koch compiling exactly what it drives.

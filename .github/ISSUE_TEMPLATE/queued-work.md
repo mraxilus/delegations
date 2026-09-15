@@ -1,13 +1,13 @@
 ---
 name: Queued work
-about: Work you mean to do and are not doing now, so it outlives the session that decided it
+about: Work you mean to do and are not doing now, so it outlives the delegate that decided it
 title: ''
 labels: ''
 assignees: ''
 ---
 
 **Role:** <!-- Your own role: `curator`, `curator/<project>`, or
-`contributor/<domain>/<project>`. Every session posts as the same account, so this line is the
+`contributor/<domain>/<project>`. Every delegate posts as the same account, so this line is the
 only thing that says who is speaking — and where it matches the label, it says this is that
 role's own queue rather than somebody asking. -->
 
@@ -32,4 +32,4 @@ count will disagree. -->
 
 ## What done looks like
 
-<!-- How the next session knows it is finished, and what it should have run to be sure. -->
+<!-- How the next delegate knows it is finished, and what it should have run to be sure. -->

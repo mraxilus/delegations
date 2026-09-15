@@ -1,4 +1,4 @@
-## Enforce per-project Nim pin, and driver version derived from it (CURATOR.md duty 7).
+## Enforce per-project Nim pin, and driver version derived from it (CURATOR.md duty 8).
 ##   Project's compiler is property of project, not of repository: `pga` needs lexer change
 ##   no release carries yet, so `rga_visualiser` pins commit while every other project pins
 ##   release, and no single version serves them all. Pin therefore lives in project's nimble
