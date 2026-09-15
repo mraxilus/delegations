@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | a83bbdc1c17d9788 |
-| Pruned  | deb6973cfdd27afcf3c013c8e79124594ad33230 |
+| Pruned  | ca56fd4f8b61f44d3b38f3533ba0f177c4cc27b8 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the
@@ -41,19 +41,17 @@ held by that tool then and re-verified by nothing here.
 rerun through `koch tests`, on the C backend at two capacities and on the JS backend, and
 both front-ends are driven through `tools/build.nim drive`. **No human has driven either
 front-end, clicked a button, or seen this on real GPU hardware**; every figure in this file
-was software-rendered (see Measurements).
+was software-rendered.
 
 ## Vocabulary
 
-**Twenty-eight terms are the Architect's, in `GLOSSARY.md`, and the code says them.** None
-was written on sight: each was proposed with its candidates and what it would displace, and
-chosen there. A rename here is never a substitution, since every word named more than one
-thing and only one sense moved, spared by an explicit list rather than by a rule: `slot`
-meant an address, an `Ink` palette position and a timing array position, and only the first
-is `handle`; `target` meant the orbit centre, the object a press points at, the DOM event
-target, a render target and a plain goal, and only the first is `pivot`; `budget` names real
-allowances of time, pixels and segments, where the frame-rate lines are `mark`s because
-nothing is held to them.
+**The terms are the Architect's, in `GLOSSARY.md`, and the code says them.** A rename here is
+never a substitution, since every word named more than one thing and only one sense moved, spared
+by an explicit list rather than by a rule: `slot` meant an address, an `Ink` palette position and
+a timing array position, and only the first is `handle`; `target` meant the orbit centre, the
+object a press points at, the DOM event target, a render target and a plain goal, and only the
+first is `pivot`; `budget` names real allowances of time, pixels and segments, where the
+frame-rate lines are `mark`s because nothing is held to them.
 
 **Three names could not be taken, and each says why in place.** `object` is reserved in Nim,
 so code-position `item` took a role instead — `one` where an object is reached through the
@@ -76,7 +74,7 @@ It is `PREVIEW_EDIT`, beside `PREVIEW_APPLY`.
 that library. An ideal object does not sit *at* the horizon, it lies *in* it, so the kind
 words a reader sees are `horizon point`, `horizon line` and `horizon plane`.
 
-*Checked.* Verified after every rename: three suites unchanged at 323, 302 and 310 cases,
+*Checked.* Verified after every rename: every suite unchanged, case for case,
 which is what says no behaviour moved; `tsc` clean after `bridge.d.ts` is re-derived;
 `koch tree` at 0 findings; both front-ends built and driven.
 
@@ -142,8 +140,8 @@ wheel or puts two fingers on the canvas, so nothing in it catches a rule wired t
 event. `tools/drive/` does, through Playwright, against the page `tools/build.nim web`
 assembles; `nim r tools/build.nim drive` runs both front-ends.
 
-**163 checks pass**, one module per section of what the page does, counted by running and
-never read off this file:
+**Every check passes**, one module per section of what the page does. `drive` counts them
+and this file does not:
 
 | Module | Covers |
 |--------|--------|
@@ -205,7 +203,7 @@ runner drive one binary, and `check.yml` caches `~/.cache/ms-playwright` on that
 The pin is a version, not a digest: Playwright publishes no checksum.
 
 **TypeScript rather than Nim, argued rather than assumed.** The harness's calls are
-overwhelmingly `page.evaluate` bodies naming the bridge's 157 exports, which
+overwhelmingly `page.evaluate` bodies naming the bridge's exports, which
 `build/bridge.d.ts` types; through Nim's foreign-function glue each is an unchecked string
 (repository issue 48). Page-script names the harness drives are hand-declared in
 `tools/drive/page.d.ts`, so renaming one breaks the harness rather than the page.
@@ -252,7 +250,7 @@ toggles wherever they stand alongside zero overflow, since a row that fits becau
 controls were dropped is broken more quietly, and sweeps 396, 395 and 394, because a rule
 written one pixel out passes every sweep that never lands on it.
 
-*Checked.* Verified by running: 163 of 163 through `tools/build.nim drive`, both front-ends,
+*Checked.* Verified by running: every check through `tools/build.nim drive`, both front-ends,
 software-rendered, here and on the runner — `driven` gates `audit`, so a green push run is
 the runner's own word (repository issues 47 and 91). **Unmeasured**: the figures are this
 container's and say more about SwiftShader than about any GPU; bands are what the checks
@@ -279,7 +277,7 @@ its header on the phrase `not Nim because`, which `justification.nim` demands of
 
 **The bridge's declarations are derived, never kept beside it.** `tools/build.nim declare`
 reads the bridge's own `{.exportc.}` signatures and writes `build/bridge.d.ts`; a
-hand-written copy of 157 signatures would be a second home for each. `types` is `declare`
+hand-written copy of those signatures would be a second home for each. `types` is `declare`
 and both type-checker configurations and stops there; `web` and `drive` both call it.
 Verified by breaking on purpose: renaming `nimSceneHandles` alone fails `types`.
 
@@ -290,25 +288,27 @@ buffers arrive carrying their own count and every walk is bounded by it. `elemen
 loudly for markup this build ships; `elementIfPresent` reports absence for an optional one.
 
 **Node dependencies are pinned and their checkout is not committed**: `package.json` and
-`package-lock.json` are committed, `node_modules/` is ignored; `typescript` 7.0.2 and
-`@playwright/test` 1.63.0, both MIT. **System packages are declared as data in the build
-driver**: `SYSTEM` in `tools/build.nim` pairs each package with what it is for, and `system`
-prints those names for the caller to install (repository issue 60); no package version is
-pinned or invented. **`drive` fetches faces; `web` refuses without them**, since a caller
+`package-lock.json` are committed, `node_modules/` is ignored. `typescript` 7.0.2 and
+`@playwright/test` 1.63.0 are Microsoft's, both Apache-2.0; `@types/node` 22.20.2 is
+DefinitelyTyped's, MIT, and types the Node surface `tools/build.nim` and the harness reach. Each
+licence is read off the package rather than assumed. **System packages are declared as data in
+the build driver**: `SYSTEM` in `tools/build.nim` pairs each package with what it is for, and
+`system` prints those names for the caller to install (repository issue 60); no package version
+is pinned or invented. **`drive` fetches faces; `web` refuses without them**, since a caller
 reaching for `web` directly is building rather than being given.
 
-**Faces come from the repository's store; which faces is this project's.** `koch assets`
-holds any file fetched at build time — names, digests and the fetch in
-`curator/audit/src/assets.nim` — and this project's `assets` verb copies twelve out of it
-(repository issues 116 and 124): six `@fontsource` `woff2` for the page (Commit Mono, Noto
-Sans at 400 and 600, Noto Sans Math, Noto Sans Symbols 2, Noto Serif; SIL Open Font License
-1.1) and six TrueType faces for the desktop. `assets` writes `build/fonts/store.list`, one
-line per face naming the store entry it was copied from, and `web` compares its input
-against that entry before embedding. Verified by breaking it, twice: `store.list` moved
-away, and one byte appended to a copied face. **The math face is pinned one version behind
-its siblings**, which is the fetch pinned rather than the family: 5.3.0 renamed its subset,
-and an unversioned path had kept working only by falling back to 5.2.8 (repository issue
-111).
+**Faces come from the repository's store; which faces is this project's.** `koch assets` holds
+any file fetched at build time — names, digests and the fetch in `curator/audit/src/assets.nim` —
+and this project's `assets` verb copies both front-ends' faces out of it (repository issues 116
+and 124): the page's `@fontsource` `woff2` (Commit Mono, Noto Sans at 400 and 600, Noto Sans
+Math, Noto Sans Symbols 2, Noto Serif; SIL Open Font License 1.1) and the desktop's own, which
+`FACES_DESKTOP` names. Commit Mono is `otf` there, which is what its author publishes;
+`stb_truetype` reads its CFF outlines. `assets` writes `build/fonts/store.list`, one line per
+face naming the store entry it was copied from, and `web` compares its input against that entry
+before embedding. Verified by breaking it, twice: `store.list` moved away, and one byte appended
+to a copied face. **The math face is pinned one version behind its siblings**, which is the fetch
+pinned rather than the family: 5.3.0 renamed its subset, and an unversioned path had kept working
+only by falling back to 5.2.8 (repository issue 111).
 
 **Three faces, three roles, and nothing else picks between them.** The Architect's standard:
 Noto Serif for titles, Noto Sans for body, Commit Mono for code and monospace, drawn by the
@@ -386,7 +386,7 @@ on the spot, and the prose after it parses as CSS — enough to swallow 141 of t
 rules with the page still drawing. Delimiters are named rather than quoted.
 
 *Checked.* Verified by running cold: `clean` removes `build`, `bin` and `nimcache`, then
-`drive` fetches twelve faces, builds both front-ends and drives them with no step run by
+`drive` fetches every face, builds both front-ends and drives them with no step run by
 hand, which is the runner's own case; a second run fetches nothing. Verified by
 type-checker: every script clean under the three flags above, with no `any` and no non-null
 assertion. Verified by driven check: `driveTypeRoles`, `driveTypeDrawn` and
@@ -497,7 +497,7 @@ entry point carries scripted runs — `--drive-keys`, `--drive-sky`, `--drive-un
 each pushing real events through SDL's own queue. `driven` runs all of them and reports
 every failure, not the first, asking the binary which help tabs exist (`--help-tabs`) so
 `help.HelpPath` stays their one home (Article I.4). `drive` chains it, here and on the
-runner (repository issue 91). 41 checks over 15 runs, counted by running: a held key slides
+runner (repository issue 91). `driven` counts them; what they cover: a held key slides
 the view and keeps its height; a drag across bare sky turns the view and builds nothing;
 undo takes a construction back *and* returns the view to where it built from; the choice
 menu does not swallow the drag after it; every help tab opens with rows in it; a run whose
@@ -507,10 +507,10 @@ offering the demo at every size `orrery` has.
 
 **An absent face is a finding, never an abort.** Dear ImGui asserts inside
 `AddFontFromFileTTF` where it cannot open a path, and an assertion is SIGABRT rather than a
-report: a declared path that does not resolve aborts 12 of 12 runs. `faceAt` resolves each
-of the four faces to empty where the file is not there, and says which face is missing,
-which variable names it and which verb fetches it; the interface draws in what is left.
-Locations come from the environment first — `RGA_FONT` and its three siblings — falling
+report: a declared path that does not resolve aborts every scripted run. `faceAt` resolves
+each face to empty where the file is not there, and says which face is missing, which
+variable names it and which verb fetches it; the interface draws in what is left.
+Locations come from the environment first — one `RGA_FONT…` name per face — falling
 back to the faces this build ships, and that fallback is what lets the case be driven:
 `driven` runs `--drive-keys` once with `RGA_FONT` naming a path no machine carries.
 **This half ships the faces it draws with** (Article X.8; repository issue 93): `DIR_FACES`
@@ -519,7 +519,7 @@ Faces come from the Noto project's own release repository, pinned by family tag 
 digest — `NotoSans-v2.013`, `NotoSansMath-v2.539`, `NotoSansSymbols2-v2.006` — per family,
 since three families move on their own; coverage was read from each font's `cmap` against
 the ranges `gui_shim.cpp` declares (math 1,773 of 1,952 wanted). Costs about 2.5 MB fetched
-into `build/fonts`: uncompressed TrueType is what `stb_truetype` reads.
+into `build/fonts`: uncompressed faces are what `stb_truetype` reads.
 
 **No default favours a silent pass.** A scripted run supplies `FRAMES_DRIVEN` where the
 caller gave no frame bound, since the loop ends only on one; and every scripted run ends in
@@ -616,7 +616,7 @@ otherwise, which the JS backend percent-escapes into a name (`%e2%8a`). `Object`
 handle, not an assembled copy, and under `nim js` it holds the `Scene` by value; the
 per-frame loops use the by-handle accessors instead.
 
-*Checked.* Verified by suite cases: handle stability across removal; `handlesCreated` on a
+*Checked.* Verified by `suites.nim`: handle stability across removal; `handlesCreated` on a
 scrambled arena of hundreds; `revisionPlacingAt` stamping one handle per edit and every handle
 after a restore; `restoreFrom` landing on a revision no earlier state carried; label
 truncation never splitting a character at any buffer size. Verified by driven check: undo
@@ -662,7 +662,7 @@ not bump-only append. **LZW early change**: the format widens the code size one 
 earlier on decode than on encode; a from-scratch decoder in the suite round-trips a real
 frame past the growth point.
 
-*Checked.* Verified by suite cases: the swap pair keeps last frame's bytes; the GIF
+*Checked.* Verified by `suites.nim`: the swap pair keeps last frame's bytes; the GIF
 round-trip. Verified by `sizeof`: the struct and timeline sizes. Assumed: the JS heap figure
 per step, extrapolated from one measurement at the earlier stamp-less layout.
 
@@ -837,7 +837,7 @@ tied to one cell ran 11,983 px at orbit distance 3. Both numbers come from `nimG
 in CSS pixels. **The drawer draws over it** (`z-index` 3 under the drawer's 4) rather than
 hiding it: a bar a panel sits on can be read by closing the panel.
 
-*Checked.* Verified by suite cases: a meet far outside the drawn disc, from both sides of one
+*Checked.* Verified by `suites.nim`: a meet far outside the drawn disc, from both sides of one
 plane; both halves of a line pickable; the horizon plane's dome inserted first; the great
 circle's segment count after the eye cut; the fog radii at an eye inside its own fog; a star
 behind a wider disc unpicked with one rival and a moon in front of it picked with two; the
@@ -916,7 +916,7 @@ work in fractions of canvas width.
 *Checked.* Verified by driven wheel events: an object under the pointer drifts 0.000 px
 across a 3.2× zoom against 1.957 px with the pivot-level anchor, and wheeling back out
 returns to distance 19.000 and pivot (0, 0, 1). Verified by driven drags: 1.000 to 1.000 of
-height, mouse and two-finger alike. Verified by suite: `norm(eye − pivot)` equals the held
+height, mouse and two-finger alike. Verified by `suites.nim`: `norm(eye − pivot)` equals the held
 distance after a floored dolly; the pan's height invariance; the clamp's continuity; the
 reach stamped at every derivation point, which the undo-while-held check caught missing.
 Verified by driven keys: 500 ms of `w` moved the pivot 12.8 units with z unchanged to four
@@ -980,7 +980,7 @@ behind three `importjs` lines, allocated once at its mesh's cap and never grown;
 hands back a `subarray` view, no copy. Measured at 0.1 ms a frame. Draw order in the
 browser scripts mirrors `renderer.nim` and is kept in step by hand.
 
-*Checked.* Verified by suite: the widening reference against the algebra; every stepped disc,
+*Checked.* Verified by `suites.nim`: the widening reference against the algebra; every stepped disc,
 dome and ring corner against the sum it replaced; all ninety-six rim segments on the plane
 at its radius; the capacity assertions, by building the binding scenes. Verified by desktop
 A/B under Xvfb: 0 of 1,296,000 pixels for the ribbon move, at most 38 per storyboard frame
@@ -1028,7 +1028,7 @@ anything and is gone with its two modules, its palette slot, its `nimBuildFrame`
 diagnostics row and its four driven checks. `addGridFamily` and `radiusOnPlaneFor` still
 lay a lattice on any plane, since the ground is that case.
 
-*Checked.* Verified by suite: every moved form pinned to its algebraic reference. Assumed:
+*Checked.* Verified by `suites.nim`: every moved form pinned to its algebraic reference. Assumed:
 the µs per op figure, from one profile at 1,024 objects.
 
 ## Selection And Markers
@@ -1154,7 +1154,7 @@ longer than `SECONDS_STEP_PULSE_MAX` = 0.1 s is an absence, not a frame. The des
 needs a **fixed winding** (`gui_shim.guiOverlayRibbon` imposes it). **A drag band swells
 into its head** (`marker.cometFor`), because `a ∨ b` and `b ∨ a` are different operations.
 
-*Checked.* Verified by suite cases: the loop's points on the plane (1.1e-15 on the
+*Checked.* Verified by `suites.nim`: the loop's points on the plane (1.1e-15 on the
 antiscalar); the rails' straightness and widest reading over an orientation sweep; the
 frame's 68 points at 296.8 px flat at half progress; the head sitting its carried travel at
 45 placements; a matured hold taken once; a full orbit at two elevations in 0.002 rad steps
@@ -1209,7 +1209,7 @@ carried across frames, so any can name a removed object the frame after a delete
 `nimAnchorScreen` reports nothing for a dead handle; `endDrag` on both paths checks
 `isAlive` on source and destination; removing an object clears the highlight on both paths.
 
-*Checked.* Verified by suite: both boundaries of each radius and all three priority pairings;
+*Checked.* Verified by `suites.nim`: both boundaries of each radius and all three priority pairings;
 a horizon point picked; the disc bound sampled from inside the view; the ground hovered from
 half a unit (backdrop, drag refused) and from forty (drag starts). Verified by
 handle-for-handle map: 4,914 cursor positions across three cameras over the 1,024-object
@@ -1362,7 +1362,7 @@ selected and a menu over each new object would sit in the way of the next drag. 
 `wantsMouse()` true wherever it sits, so a menu straddling its object would swallow the next
 drag off it. The tap-outside listener excludes the canvas, the drawer and the chip row.
 
-*Checked.* Verified by suite: every cell of the drag table and the at-most-one property,
+*Checked.* Verified by `suites.nim`: every cell of the drag table and the at-most-one property,
 exhaustively; the click rule; the dwell restarting on movement; the preview's anchor equal
 to the created object's; the ink cycle stepping on release and not on click; the crowd
 count and the refusal; the re-pivot rules under wheel, pinch and sky. Verified by driven
@@ -1402,7 +1402,7 @@ front-ends abandon their camera tween on a successful step. Seeded wherever the 
 Ctrl/Cmd+Shift+Z and Ctrl+Y on both builds, through one function per build rather than the
 button, whose `disabled` attribute is refreshed on the low-cadence tick.
 
-*Checked.* Verified by suite: recording to capacity and past it, walking every retained step
+*Checked.* Verified by `suites.nim`: recording to capacity and past it, walking every retained step
 forward and back and comparing each state (`scenesEqual`, since `Multivector`'s `==` is an
 intentional compile error); camera restoration across two edits from two viewpoints.
 Verified end to end: `--drive-undo` and the browser drive both build, orbit away, undo, and
@@ -1440,7 +1440,7 @@ rendering hint excluded from save/load), since many operand sets produce an iden
 `Multivector`. All anchor arithmetic is RGA-native — summing unit-weight points and reading
 `position`, which divides by weight.
 
-*Checked.* Verified by suite: each special case's anchor. Assumed: that no other operation
+*Checked.* Verified by `suites.nim`: each special case's anchor. Assumed: that no other operation
 wants one; none has been asked for.
 
 ## Save/Load Format (`.rgascene`)
@@ -1501,7 +1501,7 @@ browser-written file byte-identical, all 2245 bytes; hand-built version-1 and ve
 files read the same by both parsers; a file one version ahead refused by both; ordinal 15
 in a version-1 file refused; the version-6 fold pinned ordinal by ordinal. Verified by
 watching: seeds arriving over 0.480 s and the demo's sixteen over 1.84 s in the browser.
-Verified by suite: the on-disk bytes of a known float. Assumed: the big-endian host path,
+Verified by `suites.nim`: the on-disk bytes of a known float. Assumed: the big-endian host path,
 never exercised (see Known Limitations).
 
 ## Demo: The Solar Neighbourhood
@@ -1565,7 +1565,7 @@ separation against their combined reach. **Colour says what a thing is, not whic
 it belongs to**: `lut_role_to_ink` maps a `Role` to an `Ink`, four kinds of body on four
 handles and everything derived on the fifth, `Olive`, the darkest.
 
-*Checked.* Verified by suite at every size: every star at the distance its table gives it,
+*Checked.* Verified by `suites.nim` at every size: every star at the distance its table gives it,
 the table ordered outward, the count exact, the camera solve, every object against the role
 table with four distinct body inks; the planets run strictly outward, the squash is real, the
 horizon line is proportional to `attitude` of the scene's own `ecliptic sol`, no point is a
@@ -1620,10 +1620,10 @@ number that changes width is harder to read.
 Fixed char storage is read through `format.toText`, never `$toCstring`, which casts the
 storage's *address* and yields an empty string on the JS backend.
 
-*Checked.* Verified by suite on both backends: 17,001 values across 25 decades including every
-exact eighth, zero disagreements against C's `%.4g` and zero between backends; the JS entry
-point pins the tie cases' text directly. A C-only `magnitudesAgree` stays green while 330 of
-7000 values differ between the front-ends, which is why the suite runs under `nim js`.
+*Checked.* Verified by `suites.nim` on both backends: 17,001 values across 25 decades including
+every exact eighth, zero disagreements against C's `%.4g` and zero between backends; the JS entry
+point pins the tie cases' text directly. A C-only `magnitudesAgree` stays green while 330 of 7000
+values differ between the front-ends, which is why the suite runs under `nim js`.
 
 ## Animation
 
@@ -1700,7 +1700,7 @@ that line mid-ease. **A pick renews a held goal**: `aimAt`'s `is_renewed` re-arm
 for a pointer pick whatever the tween holds, or the same object picked again after the
 wheel had taken the reader out goes nowhere.
 
-*Checked.* Verified by suite: the pixel stays within 0.01 px through five steps of the ease
+*Checked.* Verified by `suites.nim`: the pixel stays within 0.01 px through five steps of the ease
 and the arrival distance equals the fit; a near point and a line keep the orbit distance; a
 re-pick after `abandon` and a dolly re-arms; the plane's arrival from 12 units and from 1.
 Verified by driven check: from 45 units a right-click brings the eye to 19.3 with the anchor
@@ -1779,10 +1779,10 @@ focus under `xvfb` gives ImGui nothing to move.
 
 ## Style Guide
 
-Two documents at the project root. `CONSTITUTION.md` is the rule of law: eleven articles over
+Two documents at the repository root. `CONSTITUTION.md` is the rule of law: eleven articles over
 exposition, derivation, notation, build-time safety, naming, documentation, cost, honesty,
 tests, form and the record, with a precedence clause and three gated mechanisms. `STYLE.md`
-is the Nim expression guide. Every comment is in the vendored `pga` library's register — a
+is the Nim expression guide. Every comment is in the `pga` library's register — a
 one-line imperative summary ending in a period, elaboration as a hanging outline one claim
 per line, no articles, no history and no figures, which live here — and `koch tree` holds
 that mechanically over every authored language.
@@ -1805,7 +1805,7 @@ six per-frame overlay exports answer from module flat buffers: `nimDragTint` bin
 not the colour, since `lent` bound to `let` copies, and an array literal handed to an
 `openArray` parameter is a `new Float32Array` per call, which is why the fills are templates.
 
-The vendored `pga` library is unmodified by request. One substantive deviation: `pga.nim:28`
+The `pga` library is unmodified by request. One substantive deviation: `pga.nim:28`
 asserts its own module doc is the source of truth for names, which is what makes the
 notation trap easy to fall into (see Operation Notation).
 
@@ -1864,8 +1864,8 @@ expects a version, which is cosmetic. The lock's stored nimble must equal the co
 exactly or `rep` reverts the pin silently (repository issue 25); the static pass refuses the
 difference, so the hand-patch is checked rather than trusted.
 
-*Checked.* Verified by running, on the pinned commit through `koch tests`: 323 cases on the C
-backend, 302 on JS, 310 at reduced capacities, the same three counts the previous pin
+*Checked.* Verified by running, on the pinned commit through `koch tests`: every suite on the
+C backend, on JS and at reduced capacities, at the same case counts the previous pin
 produced, which is what says the stand-ins behave as the library's own did. Verified:
 `deps/` deleted, `atlas --noexec rep` clones and checks out `295bafc`, `atlas changed` exits
 0, and the nimble file is byte-identical afterwards. Verified by running that the guard
@@ -1904,35 +1904,11 @@ state behind taxes every check after it, and says so. Timing-dependent quantitie
 asserted as **bands**: identical code has measured 25.0 and 29.8 ms hours apart on a shared
 runner, and a flat ±1 ms band failed one frame in a hundred and twenty.
 
-*Checked.* Verified on the pinned commit through `koch tests`: 323 cases on the C backend,
-302 on JS, 310 at reduced capacities; the JS count is lower because the C-only cases skip
+*Checked.* Verified on the pinned commit through `koch tests`: every suite on the C backend,
+on JS and at reduced capacities; the JS count is lower because the C-only cases skip
 themselves. Verified on the runner as well as locally: the C suites bind zlib for the PNG
 encoder, so their passing proves the runner carries that library. Assumed: nothing about
 the suite itself.
-
-## Measurements
-
-**Every figure below is unmeasured on this repository's compiler.** All were taken on a
-2.3.1 devel build of Nim in the tree this project was ported from, at a different commit,
-and none has been re-taken; Article VII.6 makes them indicative and nothing more. They are
-kept because the constants they justified are still in the code.
-
-Desktop, release build, 4 cores at 2.8 GHz, 1440×900, headless Xvfb + Mesa `llvmpipe`, at 64
-objects:
-
-| Quantity | Cost |
-|----------|------|
-| Tessellate a 64-object scene | 61 µs (~0.95 µs/object) |
-| Any catalogued operation | 80–170 ns |
-
-Browser, SwiftShader: opening-scene frame build 21.9 ms released; demo at 5,038 orbiting,
-scene walk 9.2 ms with the tally off; one hover pick 3.5 ms at 5,038. **No figure here has
-been taken on real GPU hardware**, and a ">500 fps" target cannot be assessed in a software
-rasteriser, where rasterisation dominates the frame and none of it is this project's code.
-
-*Checked.* Verified: nothing in this section, on this compiler. Assumed: that the constants
-these figures justified remain the right ones, which the ported code has not been re-profiled
-to confirm.
 
 ## Known Limitations
 
