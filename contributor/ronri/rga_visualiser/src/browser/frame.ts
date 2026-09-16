@@ -325,14 +325,11 @@ function frame() {
   const ms_now_ui = performance.now();
   // One reading for every kind of UI work this frame did, through `addPhaseTime`:
   //   glide redraw above, tick here and slow pass in idle time after all land in same
-  //   handle. Row build runs every frame while it has rows left; rest runs on its own
+  //   handle. Objects window settles on frame that scrolled it; rest runs on its own
   //   five-a-second cadence; frame doing neither leaves handle unwritten.
   const is_ticking_ui = ms_now_ui - ms_refresh_ui >= MILLISECONDS_WINDOW_READING;
-  if (is_ticking_ui || rows_pending !== null) {
+  if (is_ticking_ui || is_window_stale) {
     const ms_before_ui = performance.now();
-    // Row building takes share of frame rather than fixed figure, so it is handed frame it is
-    //   spending. Reading is one `recordFrameTime` was given above, not second clock.
-    sliceObjectRows(milliseconds_frame);
     if (is_ticking_ui) {
       ms_refresh_ui = ms_now_ui;
       refreshCameraFields();
@@ -344,6 +341,8 @@ function frame() {
       syncOperandsToSelection(); // catches selection changes from tap-to-select too.
       refreshAddButton(); // catches paths that fill or empty scene without click.
     }
+    // After tick's writes, so layout its rows force serves those writes too.
+    settleObjectWindow();
     addPhaseTime('ui', performance.now() - ms_before_ui);
   }
 

@@ -151,28 +151,6 @@ func crossings*(arms: Arms): seq[Crossing] =
                           sense: (if den > 0.0: 1 else: -1))
 
 
-func writhe*(arms: Arms): int =
-  ## Crossings summed with their signs: which is over, times which way
-  ## it crosses.  Two arms passing through each other change it by two;
-  ## crossing appearing or vanishing at arm's end changes it by one.
-  for c in crossings(arms):
-    result += (if c.over == 0: 1 else: -1) * c.sense
-
-
-const AT_END* = 0.25
-  ## How near either connection's end crossing must sit to slide off it.
-  ##   Quarter of link, which is shortest distance no crossing was seen to
-  ##     travel in one moment: measured, crossing that stays put moves 0.045
-  ##     along its connection in half of moments and 0.258 in nine tenths.
-
-func slippable(cs: seq[Crossing]): bool =
-  ## Whether any crossing sits where it can leave without arms meeting.
-  for c in cs:
-    if c.along < AT_END or c.along > 6.0 - AT_END or
-       c.across < AT_END or c.across > 6.0 - AT_END:
-      return true
-  false
-
 type Tight* = object ## Joint nearest its edge across every held arm.
   room*: float ## `margin` of that joint: nought at edge, one ease in, negative past.
   dof*: Dof
@@ -204,24 +182,3 @@ func tightest*(rig: Rig; stance: array[Body, Stance]; links: seq[Link];
 func strain*(t: Tight): float =
   ## How far into last stretch before edge tightest joint is: one is edge.
   clamp(1.0 - t.room, 0.0, 1.0)
-
-func sameCrossings*(a, b: Arms): bool =
-  ## Whether one pose's arms can become other's without passing through
-  ## each other.
-  ##   Wind is what may not change. Crossings come and go in pairs where arms
-  ##     pass over one another, which leaves writhe where it was, and singly
-  ##     only where crossing slides off end of either connection. Lone
-  ##     crossing leaving middle of both connections is arms through arms.
-  ##   Read off both connections, not one: crossing sliding off second's end
-  ##     sits mid-line along first, so `along` alone calls it middle.
-  ##   Measured 2026-09-11, which is why this is not `< 2`: pair resting
-  ##     pillion lead sheds one crossing between 0.68 and 0.70 of turn, at
-  ##     1.53 along one connection and 4.24 along other, neither near end,
-  ##     and mirrors it turning other way. That moves writhe by one, which
-  ##     old test let through, and it is arms passing through each other.
-  let apart = abs(writhe(a) - writhe(b))
-  if apart == 0:
-    return true
-  if apart == 1:
-    return slippable(crossings(a)) or slippable(crossings(b))
-  false

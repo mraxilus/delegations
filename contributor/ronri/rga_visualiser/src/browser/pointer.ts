@@ -441,6 +441,14 @@ const menu_selection_reveal = elementById('selection-menu-reveal');
 const menu_selection_select = elementById<HTMLSelectElement>('selection-menu-select');
 const menu_selection_back = elementById('selection-menu-back');
 const menu_selection_close = elementById('selection-menu-close');
+// Same sentences window's floating menu hangs on same seven controls.
+menu_selection_apply.title = nimWording(Wording.TipPickApply);
+menu_selection_select.title = nimWording(Wording.TipPickOperation);
+menu_selection_back.title = nimWording(Wording.TipPickBack);
+menu_selection_edit.title = nimWording(Wording.TipPickEdit);
+menu_selection_hide.title = nimWording(Wording.TipPickVisible);
+menu_selection_delete.title = nimWording(Wording.TipPickDelete);
+menu_selection_close.title = nimWording(Wording.TipPickClose);
 let arity_menu_last = -1; // Arity last used to rebuild selection-menu-select's own
   // <option> list -- like drawer's own populateOperations, only rebuilds when it
   // actually changes, not on every reveal.

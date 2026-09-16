@@ -1,10 +1,10 @@
 // Checks for what drawer's own list costs, and for how it is kept up to date; not Nim because
-//   crossing forfeits check compiler makes over bodies naming `list_objects`, `rows_pending`
+//   crossing forfeits check compiler makes over bodies naming `list_objects`, `openPanelTo`
 //   and `refreshObjectsUI`, page's own scope which `page.d.ts` states.
-//   Row reader cannot see does not build form it would edit with: every row used to build
-//   whole edit form -- label field, ink picker, and grid with input per basis element -- and
-//   let stylesheet hide it, which at this size was tens of thousands of elements on page and
-//   most of second frozen on one tap.
+//   Row reader cannot see is not built: every row used to be, with whole edit form -- label
+//   field, ink picker, and grid with input per basis element -- hidden by stylesheet, which at
+//   this size was tens of thousands of elements on page and most of second frozen on one tap;
+//   then every row without its form, in slices, which was seconds of list filling instead.
 
 import type { Page } from '@playwright/test';
 import { report } from './report';
@@ -16,12 +16,11 @@ import { report } from './report';
  */
 const ELEMENTS_ROW_MAX = 12;
 
-/** Open drawer and its objects section, then wait for list to stand complete.
+/** Open drawer and its objects section, then wait for list to stand for scene.
  *
  *  List nobody is looking at builds nothing, which is point of gate this check is on other
- *  side of. It fills across frames rather than in one block, which is also what reader sees.
- *  Waited against scene's own count rather than size that was loaded, since list is one row
- *  per live object either way.
+ *  side of. Rows it builds are those near viewport, so what is waited on is count list says it
+ *  stands for, against scene's own count rather than size that was loaded.
  */
 async function openObjects(page: Page): Promise<void> {
   await page.evaluate(() => {
@@ -32,9 +31,22 @@ async function openObjects(page: Page): Promise<void> {
     }
   });
   await page.waitForFunction(
-    () => document.getElementById('objects-list')?.children.length === nimSceneCount(),
+    () => document.getElementById('objects-list')?.dataset['count'] === String(nimSceneCount()),
     null, { timeout: 120000 },
   );
+}
+
+/** Rows window may hold over scroller this tall: screens it covers, over shortest row there is.
+ *
+ *  Stated here as well as in page (`SCREENS_SLACK_WINDOW`), and that is deliberate: check
+ *  reading window out of page would pass whatever page happened to do. Floor of 40 px is well
+ *  under 61 px collapsed row measures, so bound is loose where it must be and still tens of rows
+ *  against thousands.
+ */
+const SCREENS_WINDOW = 3;
+const PIXELS_ROW_LEAST = 40;
+function rowsMost(height_scroller: number): number {
+  return Math.ceil((SCREENS_WINDOW * height_scroller) / PIXELS_ROW_LEAST) + 2;
 }
 
 /** Assert heading naming section stays reachable while that section's list scrolls under it.
@@ -275,108 +287,106 @@ export async function driveHeaderStyled(page: Page): Promise<void> {
 }
 
 
-/** Slowest row building may be taken to be, in rows per millisecond of slice.
+/** Assert long list stands as its section opens, and only rows near viewport are built.
  *
- *  Floor rather than reading: how many rows machine gets through in millisecond is machine's
- *  business, and check that pinned it to one would be reporting on runner. Measured here at
- *  11.4 building under 5 ms slices and 6.4 under 24 ms ones -- bigger slice is less efficient
- *  per millisecond, since clock is read only after row is built and last row of slice overruns
- *  -- so 4 carries about 1.6x slack against slower of two.
+ *  Every row used to be built, in time-bounded slices: 5,038 rows took 33 frames of 80 ms and
+ *  2.9 s in front of reader on every first opening at that size, and 45,813 elements stood
+ *  after. List is window over its keys now, so opening it builds tens of rows whatever scene
+ *  holds, and scrolling to either end finds that end's row standing and no more than window.
+ *  Section is shut and reopened rather than read on first build: closed section builds
+ *  nothing, so this times opening itself and not load that preceded it.
+ *  Time is reported, never asserted: how long tens of rows take is runner's business, and what
+ *  holds on every runner is count.
  */
-const ROWS_PER_MILLISECOND_LEAST = 4;
-
-/** Share of frame row building is meant to take, and its floor and cap; see `construct_section`.
- *
- *  Stated twice, once there and once here, and that is deliberate: check reading budget out of
- *  page would pass whatever page happened to do. These are what page is *asked* for.
- */
-const SHARE_SLICE = 0.3;
-const MILLISECONDS_SLICE_LEAST = 5;
-const MILLISECONDS_SLICE_MOST = 24;
-
-/** Assert list fills in frames it is owed, rather than dripping one fixed budget per frame.
- *
- *  Slice budget used to be flat 5 ms, written against 60 fps frame. Frame drawing largest demo
- *  measured 80 ms, so list got 6% of each rather than third: 5,038 rows took 88 frames and
- *  6.5 s, every first opening at that size, which is what Architect felt as freeze. Budget is
- *  share of frame now, and same fill takes 33 frames and 2.9 s.
- *  Bound is *derived from frame this run actually saw*, never fixed count. Fast machine earns
- *  5 ms budget and rightly takes ~88 frames of 16 ms; slow one earns 24 ms and takes ~33 of
- *  80 ms. Flat count would fail on faster runner than this and flat clock would fail on slower
- *  one, and neither would be saying anything about fix. What holds on both is that list gets
- *  budget frame owes it.
- *  Section is emptied and reopened rather than measured on first build: closed section builds
- *  nothing, so this times filling itself and not load that happened to precede it.
- */
-export async function driveListFills(page: Page): Promise<void> {
+export async function driveListWindowed(page: Page): Promise<void> {
   await openObjects(page);
-  const filled = await page.evaluate(async () => {
+  const stood = await page.evaluate(async () => {
     const section = document.querySelector('.section[data-section="objects"]');
     const header = section?.querySelector('.section-header') as HTMLElement | null;
     const list = document.getElementById('objects-list');
-    if (header === null || list === null) return null;
-    header.click();                                   // shut it, and drop every row it held
-    await new Promise((done) => { requestAnimationFrame(() => done(null)); });
-    list.replaceChildren();
-    refreshObjectsUI();
-    await new Promise((done) => { requestAnimationFrame(() => done(null)); });
-    header.click();                                   // open again, and count frames from here
-    let frames = 0;
-    const gaps: number[] = [];
-    let last = performance.now();
-    await new Promise((done) => {
-      const tick = () => {
-        const now = performance.now();
-        gaps.push(now - last);
-        last = now;
-        frames += 1;
-        if (rows_pending === null && list.children.length === nimSceneCount()) done(null);
-        else if (frames > 600) done(null);
-        else requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
-    });
-    gaps.sort((first, second) => first - second);
+    const scroller = document.querySelector('.drawer-scroll') as HTMLElement | null;
+    if (header === null || list === null || scroller === null) return null;
+    const settle = () => new Promise((done) => { requestAnimationFrame(() => done(null)); });
+    const rowsNow = () => list.querySelectorAll('.object-row').length;
+    header.click();                                   // shut it
+    await settle();
+    const started = performance.now();
+    header.click();                                   // open again; rows stand before this returns
+    const milliseconds = performance.now() - started;
+    const at_once = rowsNow();
+    const count = Number(list.dataset['count'] ?? '0');
+    const elements = list.querySelectorAll('*').length;
+    const page = document.querySelectorAll('*').length;
+    await settle();
+    // Newest object heads list and oldest ends it: list reads most recently added first.
+    const created = nimSceneHandlesCreated();
+    const key_last = String(created[0] ?? -1);
+    const key_first = String(created[created.length - 1] ?? -1);
+    // Two frames, not one: scroll event lands in next frame and window settles in it.
+    scroller.scrollTop = scroller.scrollHeight - scroller.clientHeight;
+    await settle();
+    await settle();
+    const box_scroller = scroller.getBoundingClientRect();
+    const box_last = list.querySelector('.object-row[data-key="' + key_last + '"]')
+      ?.getBoundingClientRect() ?? null;
+    const at_floor = rowsNow();
+    // List's own top, not scroller's: sections above it stand open, so at scroll 0 list lies
+    //   below fold and its first rows, standing, are off screen.
+    scroller.scrollTop = list.getBoundingClientRect().top - box_scroller.top + scroller.scrollTop;
+    await settle();
+    await settle();
+    const box_first = list.querySelector('.object-row[data-key="' + key_first + '"]')
+      ?.getBoundingClientRect() ?? null;
+    const at_top = rowsNow();
+    const isShown = (box: DOMRect | null) =>
+      box !== null && box.bottom > box_scroller.top && box.top < box_scroller.bottom;
     return {
-      frames,
-      rows: list.children.length,
-      want: nimSceneCount(),
-      // Median, not mean: first frame of fill carries opening itself and last carries whatever
-      //   followed it, and neither says how long frame beside this list runs.
-      median: gaps[Math.floor(gaps.length / 2)] ?? 0,
+      milliseconds, at_once, count, want: nimSceneCount(), height: scroller.clientHeight,
+      at_floor, is_last_shown: isShown(box_last), at_top, is_first_shown: isShown(box_first),
+      elements, page,
     };
   });
-  // Budget page is asked to take for frame it was actually given, and most frames list may
-  //   therefore take to build its rows at slowest building may be taken to go.
-  const budget = filled === null ? MILLISECONDS_SLICE_LEAST : Math.min(
-    Math.max(filled.median * SHARE_SLICE, MILLISECONDS_SLICE_LEAST), MILLISECONDS_SLICE_MOST,
-  );
-  const allowed = filled === null ? 0
-    : Math.ceil(filled.want / (ROWS_PER_MILLISECOND_LEAST * budget));
+  const most = stood === null ? 0 : rowsMost(stood.height);
   report(
-    'a long list fills in the frames its budget owes it, however heavy the scene beside it',
-    filled !== null && filled.rows === filled.want && filled.frames <= allowed,
-    filled === null ? 'no list to fill'
-      : `${filled.rows} of ${filled.want} rows stood after ${filled.frames} frames, against`
-        + ` ${allowed} allowed -- frames ran ${filled.median.toFixed(0)} ms, which earns a`
-        + ` ${budget.toFixed(0)} ms slice`,
+    'a long list stands the moment its section opens, and only the rows near the viewport exist',
+    stood !== null && stood.count === stood.want && stood.at_once > 0 && stood.at_once <= most,
+    stood === null ? 'no list to open'
+      : `${stood.at_once} rows stood for ${stood.count} objects ${stood.milliseconds.toFixed(1)}`
+        + ` ms after the click, against ${most} allowed over a ${stood.height} px scroller;`
+        + ` ${stood.elements} elements in the list and ${stood.page} on the page`,
+  );
+  report(
+    "scrolling to either end of it finds that end's row on screen, within the same bound",
+    stood !== null && stood.is_last_shown && stood.at_floor <= most
+      && stood.is_first_shown && stood.at_top <= most,
+    stood === null ? 'no list to scroll'
+      : `at the floor the oldest object's row is ${stood.is_last_shown ? 'shown' : 'not shown'}`
+        + ` among ${stood.at_floor} rows, and back at the top the newest is`
+        + ` ${stood.is_first_shown ? 'shown' : 'not shown'} among ${stood.at_top}`,
   );
 }
 
 
-/** Drive objects list open, and assert closed rows build no forms. */
+/** Drive objects list open, and assert closed rows build no forms and unseen rows nothing. */
 export async function driveObjectsList(page: Page, objects: number): Promise<void> {
   await openObjects(page);
-  const standing = await page.evaluate(() => ({
-    elements: document.querySelectorAll('*').length,
-    rows: document.querySelectorAll('#objects-list > *').length,
-    forms: document.querySelectorAll('#objects-list .object-edit').length,
-  }));
+  const standing = await page.evaluate(() => {
+    const list = document.getElementById('objects-list');
+    return {
+      elements: list?.querySelectorAll('*').length ?? 0,
+      rows: document.querySelectorAll('#objects-list > .object-row').length,
+      forms: document.querySelectorAll('#objects-list .object-edit').length,
+      count: Number(list?.dataset['count'] ?? '0'),
+      height: document.querySelector('.drawer-scroll')?.clientHeight ?? 0,
+    };
+  });
+  const most = rowsMost(standing.height);
   report(
-    'a closed row builds no edit form, so the page holds thousands of elements and not tens',
-    standing.rows >= objects && standing.forms === 0 &&
-      standing.elements < ELEMENTS_ROW_MAX * standing.rows,
-    `${standing.elements} elements over ${standing.rows} rows ` +
+    'a closed row builds no edit form, and a row the reader cannot see is not built at all',
+    standing.count >= objects && standing.rows > 0 && standing.rows <= most
+      && standing.forms === 0 && standing.elements < ELEMENTS_ROW_MAX * standing.rows,
+    `${standing.rows} rows stand for ${standing.count} objects, against ${most} allowed; ` +
+      `${standing.elements} elements in them ` +
       `(${(standing.elements / standing.rows).toFixed(1)} each), ${standing.forms} edit forms`,
   );
 
@@ -404,55 +414,61 @@ export async function driveObjectsList(page: Page, objects: number): Promise<voi
   );
 }
 
-/** Assert edit from selection menu reaches its row, list built or not.
+/** Assert edit from selection menu opens onto its row, however deep in list it is.
  *
- *  With objects section shut its rows do not exist, and opening panel used to query that row
- *  at once, find none, and never scroll: panel opened onto top of list with wanted row
- *  thousands of pixels down it. Now it waits for row. Deep handle, so row stands only after
- *  most of list.
+ *  Row outside window does not exist until list is scrolled to it, and opening panel used to
+ *  query that row at once, find none, and never scroll: panel opened onto top of list with
+ *  wanted row thousands of pixels down it. Panel now scrolls to row's offset and renders window
+ *  there before returning, so row is read as standing before any frame has run. Deep handle,
+ *  so row stands only at its own offset. In view means under pinned heading, which covers
+ *  scroller's own top edge, with whole form above scroller's floor.
  */
 export async function driveEditFromMenu(page: Page): Promise<void> {
   const reached = await page.evaluate(async () => {
-    // Shut section and drop its rows, state load with section shut leaves list in.
+    // Shut section and drawer, state load with section shut leaves them in.
     document.querySelector('.section[data-section="objects"]')?.classList.remove('open');
     drawer.classList.remove('open');
-    list_objects.innerHTML = '';
-    signatures_row.clear();
     await new Promise((done) => setTimeout(done, 200));
 
     const handle = nimSceneHandlesCreated()[40] ?? 0;
+    const rowOf = () => list_objects.querySelector('.object-row[data-handle="' + handle + '"]');
     const started = performance.now();
     nimSelectOnly(handle);
     openPanelTo(handle);
-    let frames = 0;
-    while (rows_pending !== null && frames < 600) {
-      await new Promise((done) => requestAnimationFrame(() => done(null)));
-      frames += 1;
-    }
+    const milliseconds = performance.now() - started;
+    const is_standing_at_once = rowOf() !== null;
     await new Promise((done) => setTimeout(done, 300));
-    const row = list_objects.querySelector('.object-row[data-handle="' + handle + '"]');
+    const row = rowOf();
     const box = row === null ? null : row.getBoundingClientRect();
+    const ceiling = document.querySelector('.section[data-section="objects"] .section-header')
+      ?.getBoundingClientRect().bottom ?? 0;
+    const floor = document.querySelector('.drawer-scroll')?.getBoundingClientRect().bottom ?? 0;
     return {
-      frames, milliseconds: performance.now() - started,
-      is_in_view: box !== null && box.top >= -1 && box.top < window.innerHeight,
-      top: box === null ? null : box.top,
+      milliseconds, is_standing_at_once,
+      is_in_view: box !== null && box.top >= ceiling - 1 && box.bottom <= floor + 1,
+      top: box === null ? null : box.top, bottom: box === null ? null : box.bottom,
+      ceiling, floor,
       has_form: row !== null && row.querySelector('.coefficient-grid') !== null,
-      rows: list_objects.children.length, count: nimSceneCount(),
+      rows: list_objects.querySelectorAll('.object-row').length,
+      count: Number(list_objects.dataset['count'] ?? '0'), want: nimSceneCount(),
     };
   });
+  const span = (at: number | null) => (at === null ? 'none' : at.toFixed(0));
   report(
-    'edit from the selection menu scrolls to the row once it stands, form open',
-    reached.is_in_view && reached.has_form && reached.frames > 1 &&
-      reached.rows === reached.count,
-    `row top ${reached.top === null ? 'none' : reached.top.toFixed(0)} px after ` +
-      `${reached.frames} frames of building, form ${reached.has_form}, ${reached.rows} rows`,
+    'edit from the selection menu opens onto its row, however deep, with its whole form in view',
+    reached.is_standing_at_once && reached.is_in_view && reached.has_form
+      && reached.count === reached.want,
+    `row spans ${span(reached.top)} to ${span(reached.bottom)} px, under a heading ending at ` +
+      `${reached.ceiling.toFixed(0)} and above a floor at ${reached.floor.toFixed(0)}; it stood ` +
+      `${reached.is_standing_at_once ? 'before' : 'only after'} the call returned, ` +
+      `${reached.milliseconds.toFixed(1)} ms; form ${reached.has_form}, ${reached.rows} rows ` +
+      `for ${reached.count} objects`,
   );
   await page.evaluate(() => {
     endEditSession();
     nimSelectClear();
     refreshObjectsUI();
   });
-  await page.waitForFunction(() => rows_pending === null, null, { timeout: 120000 });
 }
 
 /** Assert list reconciles against what is standing rather than rebuilding.
@@ -463,16 +479,24 @@ export async function driveEditFromMenu(page: Page): Promise<void> {
  *  exactly claim, since rebuilt row is different object however fast it was made.
  */
 export async function driveReconcile(page: Page): Promise<void> {
-  const reconciled = await page.evaluate(() => {
+  const reconciled = await page.evaluate(async () => {
     const rowsNow = (): Element[] =>
-      Array.from(document.querySelectorAll('#objects-list > *'));
+      Array.from(document.querySelectorAll('#objects-list > .object-row'));
     const isSame = (a: Element[], b: Element[]): boolean =>
       a.length === b.length && a.every((node, i) => node === b[i]);
+    const settle = () => new Promise((done) => { requestAnimationFrame(() => done(null)); });
 
+    // List at rest first. Row's height is read frame after it is built or changes size, and
+    //   window's far edge follows on next render: form check before this closed is 530 px
+    //   shorter as row, so refresh read as idle here would extend window by nine rows.
+    refreshObjectsUI();
+    await settle();
+    await settle();
     const before_idle = rowsNow();
     refreshObjectsUI();
     const after_idle = rowsNow();
-    const handle = nimSceneHandles()[0] ?? 0;
+    // Handle off row that stands: rows outside window are not there to be kept or rebuilt.
+    const handle = Number((rowsNow()[0] as HTMLElement | undefined)?.dataset['handle'] ?? '0');
     const before_hide = rowsNow();
     nimSetVisible(handle, false);
     refreshObjectsUI();
@@ -489,7 +513,7 @@ export async function driveReconcile(page: Page): Promise<void> {
     };
   });
   report(
-    'an unchanged refresh writes nothing, and a hide rebuilds one row of a thousand',
+    'an unchanged refresh writes nothing, and a hide rebuilds one row alone',
     reconciled.is_idle_kept && reconciled.touched_by_hide === 1,
     `idle kept every element: ${reconciled.is_idle_kept}; a hide rebuilt ` +
       `${reconciled.touched_by_hide} of ${reconciled.rows} rows`,

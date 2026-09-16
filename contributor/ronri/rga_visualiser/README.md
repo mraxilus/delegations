@@ -26,7 +26,7 @@ replicates no published source and derives no algebra of its own.
 ```sh
 nim r koch ci                                    # repository root: every check but deps, scoped
 nim r koch tests contributor/ronri/rga_visualiser  # this project alone, three configurations
-nim r tools/build.nim assets                     # this project: fetch the twelve faces, once
+nim r tools/build.nim assets                     # this project: fetch every face, once
 nim r tools/build.nim web                        # this project: build/rga_visualiser.html
 nim r tools/build.nim drive                      # this project: drive both front-ends
 nim r tools/build.nim desktop                    # this project: bin/rga_visualiser
@@ -75,14 +75,14 @@ until they return — see Dependencies / Vendoring in `PROVENANCE.md`. The algeb
 builds against — four dimensions, rigid metric — is set once in `nim.cfg`, so no entry point
 repeats it.
 
-The browser page is assembled by `tools/build.nim`, which compiles the bridge through the
-JS backend, type-checks and emits the TypeScript glue, inlines the six font faces, and folds
-all of it into one self-contained `build/rga_visualiser.html` that opens from `file://`.
-That needs Node and npm alongside Nim: `npm ci` restores the two pinned dev dependencies
-into `node_modules/`, which is never committed. `assets` copies every face both front-ends
-draw with — six the page embeds and six the desktop binary loads — out of the repository's shared
-asset store, which `koch assets` fills and checks against `curator/audit/src/assets.nim`. Which
-faces this project wants is in `tools/build.nim`; what bytes each one is belongs to the store.
+The browser page is assembled by `tools/build.nim`, which compiles the bridge through the JS
+backend, type-checks and emits the TypeScript glue, inlines the font faces, and folds all of it
+into one self-contained `build/rga_visualiser.html` that opens from `file://`. That needs Node
+and npm alongside Nim: `npm ci` restores the pinned dev dependencies into `node_modules/`, which
+is never committed. `assets` copies every face both front-ends draw with — those the page embeds
+and those the desktop binary loads — out of the repository's shared asset store, which `koch
+assets` fills and checks against `curator/audit/src/assets.nim`. Which faces this project wants
+is in `tools/build.nim`; what bytes each one is belongs to the store.
 
 Both front-ends draw three roles from three families: **Noto Serif** for titles, **Noto Sans**
 for body and controls, **Commit Mono** for code and for text whose columns carry meaning. Two
@@ -147,14 +147,13 @@ Ported from a working prototype; see `PROVENANCE.md` for what is verified and wh
 assumed, and for the open questions this port raised. Both front-ends are here and build:
 the browser page through `web`, the desktop application through `desktop`.
 
-Every law under test through testament on the pinned commit, in three configurations. The
-page has been built and looked at, its type surface is checked, and a Playwright harness
-drives 162 checks over held keys, the wheel, mouse pan and touch — see Driven Checks in
-`PROVENANCE.md`. The desktop application has been built, one frame of it looked at, and its own
-fifteen scripted runs driven headless under Xvfb — 41 checks, all passing, one of them driven
-with no face installed at all and one with the scene filled to capacity. SDL3 arrives as a
-source build rather than a package, and `drive` fetches and builds it rather than skipping the
-runs that need it.
+Every law under test through testament on the pinned commit, in three configurations. The page
+has been built and looked at, its type surface is checked, and a Playwright harness drives its
+checks over held keys, the wheel, mouse pan and touch — see Driven Checks in `PROVENANCE.md`. The
+desktop application has been built, one frame of it looked at, and its own scripted runs driven
+headless under Xvfb, all passing, one of them driven with no face installed at all and one with
+the scene filled to capacity. SDL3 arrives as a source build rather than a package, and `drive`
+fetches and builds it rather than skipping the runs that need it.
 
 Unreviewed by a human: nothing here has been
 read line by line, and no human has driven either front-end or seen it on real graphics
