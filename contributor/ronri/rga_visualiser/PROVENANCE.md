@@ -111,6 +111,13 @@ them apart. The law that no two keys carry the same text therefore holds over **
 alone — the tooltips and notes, where a repeated sentence is a copy-paste. Labels carry their
 own law: stripped, no doubled space, no trailing full stop, at most `RUNES_LABEL_MOST` runes.
 
+**Every control both front-ends have is explained on both, from one key.** The page hangs
+35 of the 41 `Tip` keys on its controls, set from scripts at load since the markup carries no
+`title`; the six it does not are the window's alone — its two file-path fields, its vsync
+switch, its two arenas, and its scene block, whose page row reads a count over a capacity
+rather than the bytes the sentence names. A control the page has and the window explains
+without the page explaining it is a gap to close, not a design choice.
+
 **The application names itself once.** `NameTitle` reads `RGA Visualiser` and both front-ends
 take it; the window's caption is `captionWindow()`, which reads the catalogue rather than
 spelling the name a second time. A law requires that name to be title case and every other label
@@ -1943,11 +1950,6 @@ forced off, where the drawer closed is 51 ms and the page carries 45,813 element
 what makes the drawer read as glass over a live 3D view, so it is not plainly the wrong trade;
 the figure is recorded so the question can be asked with it rather than about it. Software
 rendering inflates all three readings, so the ratio is the part to hold.
-
-**The page shows fewer tooltips than the window.** Stage one moved 41 tooltips into the
-catalogue and neither front-end writes a literal, but the page still explains eleven controls
-where the window explains all of them. Whether it should reach every one is a design question
-rather than a defect, raised as `#145`.
 
 **A two-finger pan check has failed once and has not been reproduced.** Raised as `#153` with
 what was tried. The harness now gives every finger a fresh id and asserts no pointer is down
