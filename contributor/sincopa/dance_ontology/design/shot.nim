@@ -93,7 +93,7 @@ proc playwright(): JsObject =
     result = require(at)
   except:
     report(cstring("Cannot load playwright from `" & $at & "`; install what " &
-      "`nim r tools/build.nim system` names, or point `" & ENV_PLAYWRIGHT &
+      "`nim r tools/build.nim shot` names, or point `" & ENV_PLAYWRIGHT &
       "` at it."))
     stop(1)
 

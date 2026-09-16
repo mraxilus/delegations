@@ -60,10 +60,10 @@ const
     "<pages|assets|pins|modelled|rig|turns|verdicts|engine|shot|system|clean>\n"
     ## Text printed on usage error.
   SYSTEM = [
-    ("nodejs", "run `shot` helper, which is this project's Nim compiled to javascript"),
-    ("chromium", "browser `shot` drives; helper takes its path from environment"),
-    ("git", "clone engine's source at its pinned commit; `engine` shells out to it"),
-    ("binutils", "archive engine's objects into one library; `engine` runs `ar`"),
+    ("git", true, "clone engine's source at its pinned commit; `engine` shells out to it"),
+    ("binutils", true, "archive engine's objects into one library; `engine` runs `ar`"),
+    ("nodejs", false, "run `shot` helper, which is this project's Nim compiled to javascript"),
+    ("chromium", false, "browser `shot` drives; helper takes its path from environment"),
   ]
     ## System packages this build needs present before it runs, with what each is for
     ##   (CONTRIBUTOR.md, "System dependencies"). Nim packages are in nimble file; this
@@ -76,9 +76,14 @@ const
     ##   `koch types` and demands `types` verb, work Architect has asked not be built while
     ##   this half of project may go. `design/shot.nim` therefore takes it from environment
     ##   and stops naming this verb where it is absent, rather than failing as missing file.
-    ##   Only `shot` needs first two; `engine` needs last two and C compiler, which Nim
-    ##   brings already and so is not named twice. `pages`, `pins`, `verdicts` and `clean`
-    ##   need Nim alone.
+    ##   Flag says whether runner installs it: it installs what `system` prints, and opens
+    ##   nothing else.  `engine` needs first two and C compiler, which Nim brings already and
+    ##   so is not named twice, and every suite builds engine.  Last two are `shot`'s, which
+    ##   no run of runner opens: project carries no `drive` verb, so driven job skips it and
+    ##   helper is one person runs by hand.  Naming them in `SYSTEM` anyway keeps one
+    ##   spelling of what each needs (Article II.1), and `shot` prints them where it builds,
+    ##   so person running it is told what to install while runner installs no browser it
+    ##   never starts.  `pages`, `pins`, `verdicts` and `clean` need Nim alone.
   SOURCES = [
     ("box3d", "https://github.com/erincatto/box3d",
      "47d7f7cc7e091142c08d11dc7d2e493c5d34f536",
@@ -291,8 +296,17 @@ proc verdicts() =
   nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "sim/verdicts.nim"])
 
 
+func helpers(): seq[string] =
+  ## Packages only hand-run helper needs, which runner is never asked to install.
+  for (package, installed, _) in SYSTEM:
+    if not installed: result.add package
+
+
 proc shot() =
   ## Build screenshot helper, for node and Playwright.
+  ##   Says what helper needs before building it: these are packages runner never installs,
+  ##   since it never opens them, so person running this is only reader told.
+  echo "`shot` is run by hand and needs: ", helpers().join(", ")
   createDir(BUILD / "design")
   nim(@["js"] & QUIET & @[
     "-d:nodejs", "-o:" & BUILD / "design" / "shot.js", "design/shot.nim",
@@ -300,12 +314,14 @@ proc shot() =
 
 
 proc system() =
-  ## Print every system package this build needs, one per line and nothing else.
+  ## Print every system package runner must install before this build runs, one per line
+  ## and nothing else.
   ##   Prints rather than installs: which package manager serves them is machine's business
   ##   and varies by distribution, while list is this project's. Caller pipes it, so reason
   ##   each carries stays in `SYSTEM` above and out of this output, which is what makes
   ##   output machine-readable.
-  for (package, _) in SYSTEM: echo package
+  for (package, installed, _) in SYSTEM:
+    if installed: echo package
 
 
 proc clean() =

@@ -68,7 +68,7 @@ nim r tools/build.nim pages   # folds it into turns.js; wholecloth.nim splices i
 To screenshot them (the animations need a browser):
 
 ```
-make shot                                       # builds build/design/shot.js
+nim r tools/build.nim shot                      # builds build/design/shot.js
 node build/design/shot.js build/design/frames.html out-prefix
 ```
 
