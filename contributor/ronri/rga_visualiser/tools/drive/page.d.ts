@@ -156,16 +156,10 @@ declare let count_points_culled: number;
 /** Drawer itself, for reading whether it stands open. */
 declare const drawer: HTMLElement;
 
-/** List every live object gets one row in. */
+/** List every live object gets one row in, near viewport; `data-count` says how many. */
 declare const list_objects: HTMLElement;
 
-/** Signature each standing row was built from, which reconciler diffs against. */
-declare const signatures_row: Map<string, unknown>;
-
-/** Rows still to build this pass, or nothing once list stands complete. */
-declare let rows_pending: unknown;
-
-/** Open drawer onto this object's own row, scrolling to it once it stands. */
+/** Open drawer onto this object's own row, scrolled to before this returns. */
 declare function openPanelTo(handle: number | null): void;
 
 /** Close whatever edit session stands, discarding its staged values. */
