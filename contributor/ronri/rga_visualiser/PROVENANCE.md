@@ -896,12 +896,18 @@ distance to the origin plus the scene's reach (`Camera.reach_scene`, times `MARG
 the starfield 3,000 units across, six notches in at the demo's centre leave 49 of 4,938
 points drawn that way, and 367 with the reach. The reach (`framing.reachOf`) is stamped onto
 the camera at every derivation point rather than kept in it, because `home` and every path
-that replaces the camera value would drop a stored one. Near does not stay scaled: at a
-0.7-unit orbit against a far plane at the scene's reach a 24-bit depth buffer resolves 3
-units at a depth of 300, and on the device the points near the horizon striped against
-discs seen edge-on. `distanceNear` is raised to hold the ratio at `RATIO_CLIP_MAX` =
-100,000, and never past half the orbit distance, so the pivot cannot clip. A 16-bit depth
-buffer cannot hold this ratio; nothing here detects one.
+that replaces the camera value would drop a stored one.
+
+**Depth is logarithmic.** Every shader on both front-ends writes `camera.depthOf` of its own
+view depth, `log2(D / near) / log2(far / near)` scaled to clip depth, per fragment through
+`EXT_frag_depth` or GL 3.3's `gl_FragDepth` and per vertex where the page lacks the
+extension, so resolution is a fixed fraction of distance at every distance and a buffer of
+any width holds Io before Jupiter and a star before the sky dome alike. Not linear depth
+with the near plane raised to hold the ratio at 100,000: that spent nearly every step inside
+the first orbit distances, and with the far plane at a star field millions of units out the
+field and the dome fell into the last steps, where an Android GPU dropped every star past a
+few hundred thousand units from beside a far star. The near plane stays at 1/400 of the
+orbit distance whatever the far plane reaches, so nothing between eye and pivot clips.
 
 **The wheel zooms toward what the pointer is over** — the map reading of a zoom.
 `picking.anchorZoomAt` solves the anchor in three answers, in order: the finite object under
@@ -940,7 +946,10 @@ dolly compounds as `pow(factor, seconds)`. Drag rates differ per front-end for a
 reason: the desktop's `SPEED_ORBIT` (0.008) is radians per pixel and the browser scripts
 work in fractions of canvas width.
 
-*Checked.* Verified by driven wheel events: an object under the pointer drifts 0.000 px
+*Checked.* Verified by `suites.nim`: the logarithmic depth maps near to −1 and far to +1, is
+monotone across every decade the demo spans, and keeps Io before Jupiter and a star before
+the dome by more than a 16-bit step. Verified by driven check: the sky is drawn behind a far
+star. Verified by driven wheel events: an object under the pointer drifts 0.000 px
 across a 3.2× zoom against 1.957 px with the pivot-level anchor, and wheeling back out
 returns to distance 19.000 and pivot (0, 0, 1). Verified by driven drags: 1.000 to 1.000 of
 height, mouse and two-finger alike. Verified by `suites.nim`: `norm(eye − pivot)` equals the held
@@ -1963,9 +1972,7 @@ the suite itself.
 - Conformal metric (`IS_CONFORMAL`) is unfinished in the library; this build is rigid 4D.
 - `.rgascene` is little-endian by rule, but only a little-endian host has ever written or
   read one; the byte-swapping path is unexercised.
-- Depth collapses far out at an extreme zoom: near at half the orbit distance and far at the
-  star field's reach leave a 24-bit depth buffer nothing between objects millions of units
-  off, so from a moon of ours a neighbour's star and its plane's veil draw in either order.
+
 - The demo's planet inclinations, ring phases and neighbour planes are stated simplifications.
 
 ## Open questions
