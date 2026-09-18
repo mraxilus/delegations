@@ -16,8 +16,11 @@
 
 {.experimental: "strictFuncs".}
 
-import std/math
+import std/[algorithm, math]
 
+
+const DAB* = 0.04 ## Longest dab one capsule is painted in, metres: torso in
+                  ## eight, upper arm in six, sphere in one.
 
 type
   Spot* = tuple[x, y, z: float] ## One point in world, metres, z up.
@@ -46,18 +49,29 @@ func drawnAs*(a, z: Spot): Drawn =
   ## Stroke between its two ends, and disc where they are one point.
   if a == z: Drawn.Disc else: Drawn.Stroke
 
+func along(a, z: Spot; t: float): Spot =
+  (a.x + (z.x - a.x) * t, a.y + (z.y - a.y) * t, a.z + (z.z - a.z) * t)
+
 func drawOrder*(caps: openArray[tuple[a, z: Spot]]; az, el: float;
                 f: Framing): seq[Piece] =
-  ## Every capsule whole, painter's order: furthest first, by depth of its
-  ## nearer end.
+  ## Every capsule in pieces no longer than `DAB`, painter's order: furthest
+  ## first, by depth of each piece's middle, equal depths in engine's order.
+  ##   Whole capsule by depth of its nearer end painted upper arm hanging from
+  ##     shoulder above torso's top over torso all way down, lower half showing
+  ##     through torso's silhouette from near overhead (A5).  Piece by its own
+  ##     depth goes under torso's top where it is below it.  Two capsules
+  ##     through one another can still come out wrong way round within one
+  ##     piece, and bodies are filtered not to.
   var keyed: seq[(float, Piece)]
   for i, c in caps:
-    let near = max(seen(c.a, az, el, f).d, seen(c.z, az, el, f).d)
-    keyed.add (near, (cap: i, a: c.a, z: c.z))
-  # Insertion sort, stable: equal depths keep engine's order.
-  for i in 1 ..< keyed.len:
-    var j = i
-    while j > 0 and keyed[j - 1][0] > keyed[j][0]:
-      swap(keyed[j - 1], keyed[j])
-      dec j
+    let
+      long = sqrt((c.z.x - c.a.x) ^ 2 + (c.z.y - c.a.y) ^ 2 + (c.z.z - c.a.z) ^ 2)
+      n = max(1, ceil(long / DAB).int)
+    for k in 0 ..< n:
+      let
+        a = along(c.a, c.z, k.float / n.float)
+        z = along(c.a, c.z, (k + 1).float / n.float)
+        mid = along(c.a, c.z, (k.float + 0.5) / n.float)
+      keyed.add (seen(mid, az, el, f).d, (cap: i, a: a, z: z))
+  keyed.sort(proc (p, q: (float, Piece)): int = cmp(p[0], q[0]))
   for k in keyed: result.add k[1]
