@@ -978,19 +978,18 @@ join `directionNormal(tail ∧ head ∧ eye)`, sign included.
 **A plane's fill, its rim and the sky are one record each.** A 13-float `DiscRecord` is spanned over
 the view box of its bounding sphere, `viewBoxOfDisc`, on the static unit-circle corner buffer, and
 every fragment casts its own ray at the plane, `hitDiscAlong`, so the disc is exact at any grazing
-angle and agrees with `picking.rayPlaneHit`. Not a fan of corners on the plane: a corner behind the
-eye left the clipper a sliver that rasterised to nothing under a camera within 0.06° of the plane,
-and the disc ended at a hard chord. An 8-float `DomeRecord` widens over a static unit sphere, which
-has no orientation; a 14-float `RingRecord` is a disc's thirteen plus a width, one instance drawing
-the whole circle. The static corner tables come from one generator each in `mesh`, read by the
-desktop directly and by the browser through `nim*Corners`, so neither front-end holds a table that
-could drift from the references, which the suite pins to the multivector sums they replaced.
-`ribbonOfRing` derives the very `RibbonRecord` a rim segment would have been, so a rim is widened by
-the one rule every line is. The rim steps off `UNIT_CIRCLE_RIM`, resolved at start-up with the
-runtime's own `cos`/`sin`, not at compile time, whose evaluator need not agree with each backend's
-libm in the last bit. The rim as one record is what the demo frame turns on: 96 ribbon records per
-plane were 99.2% of ribbon traffic on 132 planes, and the demo's median frame went 239 → 84 ms under
-SwiftShader.
+angle and agrees with `picking.rayPlaneHit`. Not a fan of corners on the plane, whose corner behind
+the eye left the clipper a sliver that rasterised to nothing under a grazing camera, the disc ending
+at a hard chord. An 8-float `DomeRecord` widens over a static unit sphere, which has no orientation;
+a 14-float `RingRecord` is a disc's thirteen plus a width, one instance drawing the whole circle.
+The static corner tables come from one generator each in `mesh`, read by the desktop directly and by
+the browser through `nim*Corners`, so neither front-end holds a table that could drift from the
+references, which the suite pins to the multivector sums they replaced. `ribbonOfRing` derives the
+very `RibbonRecord` a rim segment would have been, so a rim is widened by the one rule every line
+is. The rim steps off `UNIT_CIRCLE_RIM`, resolved at start-up with the runtime's own `cos`/`sin`,
+not at compile time, whose evaluator need not agree with each backend's libm in the last bit. The
+rim as one record is what the demo frame turns on: 96 ribbon records per plane were 99.2% of ribbon
+traffic on 132 planes, and the demo's median frame went 239 → 84 ms under SwiftShader.
 
 **Every record's position is stored about the frame's origin**, the camera's pivot (see
 Camera); the suite pins the five writers against an origin a million units off.
@@ -1116,35 +1115,32 @@ it marks. Markers are stroked by each render path's foreground layer, never as s
 geometry: a loop on a plane would z-fight its fill, and a marker the object can occlude is
 not a marker. Not a 3D-modelling-style outline; do not reintroduce it without being asked.
 
-**A selected object wears its name above its marker**, filled in the object's own ink and
-outlined in the marker's stroke; hover and focus wear none. Where it sits is `marker.nim`'s
-decision: centred `GAP_MARKER` plus half `HEIGHT_MARKER_LABEL` (16 px) above the outline's
-top, and for the sky's frame just inside the top edge; each front-end centres its own text.
-  **A line's label keeps to the line's own left, beside its support clamped into view.**
-  "Above the line" cannot be continuous, since which side is up flips as the line passes
-  vertical; the side of the line's *own* direction is. So `marker.placeLabelBesideLine`
-  pushes the label to that left, and each front-end, which alone measures its text, sets
-  the clearance along the push. The anchor is the support's projection while in view, held
-  `MARGIN_LABEL_VIEW` = 40 px inside the edge; past that it slides along the visible stretch.
-  Not the upward side, which hopped five times on a 24 s camera path where this hopped none.
-  **Every label is then held wholly inside the view**: `labelInView` clamps the measured box
-  `MARGIN_LABEL_EDGE` = 4 px in from each edge on both front-ends, since the horizon line's
-  label, placed above its band's topmost point wherever that falls, ran off a phone's right edge.
-  **A plane's label stands on the disc's column at the height of its circle's true top.**
-  `marker.topmostOnCircle` solves the top of the projected circle in closed form (screen y
-  is stationary where `(b·d − a·e) + (c·d − a·f)·sin + (b·f − c·e)·cos = 0`) rather than
-  taking the highest of 64 projected vertices, which hops a segment at a time. Its
-  **height** alone is used and the label's x is the disc centre's column, which is what
-  makes the flip invisible: at the edge-on moment the far and near rims' tops part in x
-  while both go to the plane's horizon in y. Not the top's own x, which pops at the flip.
-  **The halo is the backdrop's colour, not the marker's white**, since a halo blends with
-  the background to knock the surroundings out of the letters while a contrasting halo
-  dominates them (Peterson, *Cartographer's Toolkit*; Dawson, *About label halos*):
-  `WIDTH_MARKER_LABEL_HALO` = 2 px of `Ink.Backdrop` at `ALPHA_MARKER_LABEL_HALO` = 0.85, a
-  16 px face at weight 600. The desktop sets the label in `PATH_FONT_LABEL` with the math
-  and symbol faces merged in, so `G = L ∧ c` keeps its wedge, and draws it at eight
-  one-pixel offsets in the halo colour, having no stroked text; the browser stages one SVG
-  `<text>` per selected handle with `paint-order: stroke`.
+**A selected object wears its name above its marker**, filled in the object's own ink and outlined
+in the marker's stroke; hover and focus wear none. Where it sits is `marker.nim`'s decision: centred
+`GAP_MARKER` plus half `HEIGHT_MARKER_LABEL` (16 px) above the outline's top, and for the sky's
+frame just inside the top edge; each front-end centres its own text. **A line's label keeps to the
+line's own left, beside its support clamped into view.** "Above the line" cannot be continuous,
+since which side is up flips as the line passes vertical; the side of the line's *own* direction is.
+So `marker.placeLabelBesideLine` pushes the label to that left, and each front-end, which alone
+measures its text, sets the clearance along the push. The anchor is the support's projection while
+in view, held `MARGIN_LABEL_VIEW` = 40 px inside the edge; past that it slides along the visible
+stretch. Not the upward side, which hopped five times on a 24 s camera path where this hopped none.
+**Every label is then held wholly inside the view**: `labelInView` clamps the measured box
+`MARGIN_LABEL_EDGE` = 4 px in from each edge on both front-ends, since a horizon line's label, above
+its band's top wherever that fell, ran off a phone's right edge. **A plane's label stands on the
+disc's column at the height of its circle's true top.** `marker.topmostOnCircle` solves the top of
+the projected circle in closed form (screen y is stationary where `(b·d − a·e) + (c·d − a·f)·sin +
+(b·f − c·e)·cos = 0`) rather than taking the highest of 64 projected vertices, which hops a segment
+at a time. Its **height** alone is used and the label's x is the disc centre's column, which is what
+makes the flip invisible: at the edge-on moment the far and near rims' tops part in x while both go
+to the plane's horizon in y. Not the top's own x, which pops at the flip. **The halo is the
+backdrop's colour, not the marker's white**, since a halo blends with the background to knock the
+surroundings out of the letters while a contrasting halo dominates them (Peterson, *Cartographer's
+Toolkit*; Dawson, *About label halos*): `WIDTH_MARKER_LABEL_HALO` = 2 px of `Ink.Backdrop` at
+`ALPHA_MARKER_LABEL_HALO` = 0.85, a 16 px face at weight 600. The desktop sets the label in
+`PATH_FONT_LABEL` with the math and symbol faces merged in, so `G = L ∧ c` keeps its wedge, and
+draws it at eight one-pixel offsets in the halo colour, having no stroked text; the browser stages
+one SVG `<text>` per selected handle with `paint-order: stroke`.
 
 **A plane's loop lies on the plane**, traced from the plane's frame about the same anchor
 `addPlane` centres its disc on; its clearance is a world distance sized through
@@ -1603,9 +1599,9 @@ field and Sol's planets share one frame; read straight, every star stood 23° of
 **Nothing is generated**: a star with no known planet is a star, and the 49 of 544 planets with no
 recorded semi-major axis are left out rather than placed by their order among siblings, `placedOf`
 counting what a star places and `objectsOf` folding it. Neighbour suns and planets are drawn at
-`RADIUS_OBJECT_LEAST`, a dot claiming no size, since neither catalogue carries radii. A neighbour's
-plane is joined as `star ∧ along ∧ across`, a point and two directions: three of its points a
-million units out cancel to noise, a tenth of the normal.
+`RADIUS_OBJECT_LEAST`, since neither catalogue carries radii. A neighbour's plane is joined as `star
+∧ along ∧ across`, a point and two directions: three of its points a million units out cancel to
+noise, a tenth of the normal.
 
 **The opening camera frames Sol's system to Neptune**: `RADIUS_ORRERY` is Neptune's own semi-major
 axis, fitted by `camera.distanceFitting` at `ELEVATION_ORRERY_SHOWN` = 0.95 rad (at 0.42 every ring
@@ -1621,26 +1617,28 @@ every planet at its real axis with z = 0, every moon at its real axis perpendicu
 `normalOfMoon` with the leans quoted above pinned; every neighbour planet at its real axis at its
 star's height and every planet without an axis absent, 49 counted from the table; every body's
 radius the conversion of its kilometres; no point a hub (lines and planes through any point ≤ 6);
-the two horizon points' difference. Verified by reading the built scene: the normals quoted above.
-Verified by driven check: the demo button stands the camera back past 40 units, and the occlusion
-check stands its own camera by Jupiter's real radius for a sixty-pixel disc with Io in front of it.
-Assumed: the archive snapshots themselves, and the JPL elements transcribed by hand. **No table is
-checked against its source by any tool.**
-## Operation Notation
+the two horizon points' difference. Verified by driven check: the demo button stands the camera back
+past 40 units, and the occlusion check stands its own camera by Jupiter's real radius for a
+sixty-pixel disc with Io in front of it. Assumed: the archive snapshots themselves, and the JPL
+elements transcribed by hand. **No table is checked against its source by any tool.** ## Operation
+Notation
 
-**One table, `scene.lut_operation_to_notation`, read by both builds**, each entry Lengyel's
-bold notation, two spaces, the English name (`𝐦⊖  attitude`); `notationSymbolic` and
-`notationNamed` are its two halves. `notationSubstituted` swaps `𝐦`/`𝐧` for real operand
-names through two sentinel passes, so an operand whose name contains a placeholder is never
-re-touched and a template with `𝐧` twice substitutes both.
+**One table, `scene.lut_operation_to_notation`, read by both builds**, each entry Lengyel's bold
+notation, two spaces, the English name (`𝐦⊖  attitude`); `notationSymbolic` and `notationNamed` are
+its two halves. `notationSubstituted` walks the template token by token, inserting each operand name
+once, so a name containing a placeholder is never re-touched and a template with `𝐧` twice
+substitutes both. A composite name is parenthesised where the template binds it tighter than its own
+outermost operator, always under a postfix or a negation and under a binary operator unless that is
+its own associative one: `(a ∧ b)★`, `a ∧ b ∧ c`, `(a ∧ b) ∨ c`. Not bare substitution, which read
+`a ∧ b ∨ c`.
 
 **Every glyph and its placement comes from that operator's own declaration doc comment in
-`pga/operators.nim`/`pga/multivectors.nim`** — never from `pga.nim`'s summary table, whose
-"Lengyel" column renders several unary operators in a functional shorthand the declarations
-do not use, and which has carried prefix glyphs where the declaration says postfix. Verify by
-extracting codepoints, not by eye; U+2212 minus is invisible against a hyphen. One deliberate
-exception: `Attitude` reads prefix in its doc comment and is placed postfix (`𝐦⊖`) on explicit
-request, for consistency with every other unary entry.
+`pga/operators.nim`/`pga/multivectors.nim`** — never from `pga.nim`'s summary table, whose "Lengyel"
+column renders several unary operators in a functional shorthand the declarations do not use, and
+which has carried prefix glyphs where the declaration says postfix. Verify by codepoint, not by eye:
+U+2212 minus looks like a hyphen. One deliberate exception: `Attitude` reads prefix in its doc
+comment and is placed postfix (`𝐦⊖`) on explicit request, for consistency with every other unary
+entry.
 
 The five accented operands use **spacing modifier letters** (`ˆ` U+02C6, `ˍ` U+02CD, `¯`
 U+00AF, `˜` U+02DC, `˷` U+02F7), not combining marks: Dear ImGui has no shaper, so a
@@ -1648,9 +1646,10 @@ combining form landed to the right of its operand, and antireverse's tilde-below
 left complement's low line. Of the four compound operators only the `★` pair works infix;
 `m ∧☆ n` must be written `` m.`∧ ☆`n ``.
 
-*Checked.* Verified by rendering all 27 entries at once and reading them; by suite, every
-entry non-empty and the substitution's placeholder rules. Verified then, by the prototype's
-`check_atlas`, that every glyph is in the atlas; nothing here re-checks it.
+*Checked.* Verified by rendering all 27 entries at once and reading them; by suite, every entry
+non-empty, the substitution's placeholder rules and every parenthesis case; by driven check, a join
+of joins flat and a meet of joins parenthesised on the page. Nothing here re-checks that every glyph
+is in the atlas.
 
 ## Naming And Number Formatting
 
