@@ -53,6 +53,13 @@ func holdsOf*(target: Frame): Holds =
                   else: terms.Arm.R)
       result[lead] = some follow
 
+func asked*(wind: float): float = -wind
+  ## Page's turn as sim's.  Page counts clockwise seen from above
+  ## (`rotation.wayOf`, "how drawings see couple"); sim counts anticlockwise
+  ## (`body.turned`).  Every wind is flipped here, in one place, before it is
+  ## asked: flipped for chains alone, A16 was stood in C3's pose and A17 in
+  ## C5's, mirror of what each card draws, and every single-hand card likewise.
+
 func restsFacing*(target: Frame): bool =
   ## Whether frame rests face to face rather than pillion lead.  Same reading
   ## `review_page` makes, by `phaseOf`, and never written down.
@@ -74,12 +81,12 @@ func stillAsks*(): seq[StillAsk] =
   for i, target in FRAMES:
     for twist in [0, 1]:
       result.add StillAsk(key: &"A{i * 2 + twist + 1}", links: linksOf(holdsOf(target)),
-                          turns: amountFor(target, twist),
+                          turns: asked(amountFor(target, twist)),
                           away: not restsFacing(target), head: Body.Two)
   block:
     let target = FRAMES[^1]
     result.add StillAsk(key: "A17", links: linksOf(holdsOf(target)),
-                        turns: -amountFor(target, 1),
+                        turns: asked(-amountFor(target, 1)),
                         away: not restsFacing(target), head: Body.Two)
   # `B`: four single-hand holds, four manners, four quarters.  Hands go over
   # crown of dancer who walks under, which follows manner.
@@ -89,12 +96,10 @@ func stillAsks*(): seq[StillAsk] =
       for q in 0 ..< QUARTERS_ROUND:
         result.add StillAsk(key: &"st_{MANNERS[manner].tag}_{c}_{q}",
                             links: linksOf(single.holds),
-                            turns: sense * q.float / QUARTERS_ROUND.float,
+                            turns: asked(sense * q.float / QUARTERS_ROUND.float),
                             away: false, head: bodyOf(MANNERS[manner].who))
   # `C` and `D`: two chains, seven positions each, half turn apart.
-  #   Their captions count *clockwise seen from above*, which is turn's negative
-  #   way, so wind's sign is flipped before it is asked.
   for (tag, arms, away) in [("C", HAND_TO_HAND, false), ("D", PAIRED, true)]:
     for i, w in STEPS:
-      result.add StillAsk(key: tag & $(i + 1), links: linksOf(arms), turns: -w,
+      result.add StillAsk(key: tag & $(i + 1), links: linksOf(arms), turns: asked(w),
                           away: away, head: Body.Two)

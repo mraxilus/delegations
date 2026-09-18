@@ -68,7 +68,7 @@ proc answers(): OrderedTable[string, bool] =
         sense = windSense(manner)
       for q in 0 ..< QUARTERS_ROUND:
         result[&"tr_{tag}_{c}_{q}_{(q + 1) mod QUARTERS_ROUND}"] =
-          carries(links, false, manner, sense * (q + 1).float / QUARTERS_ROUND.float)
+          carries(links, false, manner, asked(sense * (q + 1).float / QUARTERS_ROUND.float))
       result[&"rd_{tag}_{c}"] = carries(links, false, manner, sense)
 
   # `F` and `G`: each chain under each manner, whole chain and each half of it.
@@ -80,7 +80,7 @@ proc answers(): OrderedTable[string, bool] =
       let
         tag = MANNERS[manner].tag
         sense = windSense(manner)
-      result[&"{key}c_{tag}"] = carries(links, away, manner, sense * STEPS[^1])
+      result[&"{key}c_{tag}"] = carries(links, away, manner, asked(sense * STEPS[^1]))
       for i in 0 ..< STEPS.len - 1:
         # Edge is walked entire, so what it asks of couple is its *furthest*
         # wound end, kept with its own sign, and not where it happens to
@@ -91,7 +91,7 @@ proc answers(): OrderedTable[string, bool] =
         # saw it at once -- they are same edge mirrored.
         let far = (if abs(STEPS[i]) > abs(STEPS[i + 1]): STEPS[i]
                    else: STEPS[i + 1])
-        result[&"{key}w_{tag}_{i}"] = carries(links, away, manner, sense * far)
+        result[&"{key}w_{tag}_{i}"] = carries(links, away, manner, asked(sense * far))
 
 
 when isMainModule:
