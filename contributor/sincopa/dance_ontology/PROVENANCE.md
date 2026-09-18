@@ -636,7 +636,11 @@ cut from the page itself so what is compared is what was ruled on -- beside the 
 one list of entries walked by two buttons or the arrow keys, with the reference's own drawing next
 to the joint readouts on the stage. Orthographic on purpose, so a capsule's outline is exactly a
 stadium; painter's order by depth, half weight where two capsules overlap rather than pretending
-otherwise; hue is side, shade is whose.
+otherwise; hue is side, shade is whose. A capsule of no length -- each palm is a sphere -- is filled
+as a disc rather than stroked as a line of no length (`drawn`), since browsers disagree on what that
+is: Chromium draws the round caps as a disc and WebKit draws nothing, and on the Architect's phone
+every hand vanished, each forearm ending 118 mm short of the grip it was joined at, seen on A7 on
+2026-09-18. Verified by `tdrawn.nim`, red first.
 
 **Against the floor, which is the Architect's.** The floor says everything gets a whole turn before
 it blocks, except a low wrap, which gets half. Nothing is tuned to it; every change is argued from
