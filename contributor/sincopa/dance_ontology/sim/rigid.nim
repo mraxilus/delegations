@@ -1046,7 +1046,6 @@ proc deepest(c: Couple; i: int): tuple[depth: float, met: Stop, k: int] =
   ##     through body as much as held one, and asking only held arms let couple
   ##     stand with free arm inside partner and call it holding.
   result = (0.0, Stop.None, -1)
-  var seen: array[8, eng.Touch]
   # Every arm's three links, and every shoulder girdle, which squeezed between
   # two torsos is shoulder through body.
   var mine: seq[tuple[body: eng.BodyId, k: int]]
@@ -1060,7 +1059,11 @@ proc deepest(c: Couple; i: int): tuple[depth: float, met: Stop, k: int] =
         mine.add (c.who[who].arm[arm].link[l], k)
       mine.add (c.who[who].arm[arm].girdle, k)
   for (me, k) in mine:
-    let n = eng.touches(me, addr seen[0], 8.cint)
+    # Room for every contact body has: asked with room for eight, forearm
+    # touching nine things had its deepest dropped unseen, and two forearms
+    # stood 22 mm through each other with nothing said.
+    var seen = newSeq[eng.Touch](max(1, eng.touchRoom(me).int))
+    let n = eng.touches(me, addr seen[0], seen.len.cint)
     for t in 0 ..< n:
       let other = (if eng.bodyOf(seen[t].shapeIdA) == me: eng.bodyOf(seen[t].shapeIdB)
                    else: eng.bodyOf(seen[t].shapeIdA))
