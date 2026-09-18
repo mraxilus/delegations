@@ -88,6 +88,11 @@ func litAt*(fore: Seen; s: float): float =
   let across = sqrt(fore.x * fore.x + fore.y * fore.y)
   clamp(0.5 + 0.5 * (s * across + sqrt(max(0.0, 1.0 - s * s)) * fore.d), 0.0, 1.0)
 
+func lightAcross*(fore, axis: Seen): Seen =
+  ## Facing's image on screen as light runs across one piece whose screen
+  ## axis is `axis`: as it fell, for now.
+  fore
+
 func mixHex*(dark, light: string; t: float): string =
   ## Colour `t` of way from `dark` to `light`, each `#rrggbb`, as `rgb(r, g, b)`.
   var parts: seq[string]

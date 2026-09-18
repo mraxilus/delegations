@@ -162,7 +162,8 @@ proc paintOn(cv: JsObject; e: JsObject; at: int; az, el, zoom: float;
       # Trunk and girdle: light across from back edge to front edge, along
       # facing's image on screen, through piece's middle.
       let
-        fore = facing[num(tag[0]).int]
+        axis: Seen = (x: pz.x - pa.x, y: pz.y - pa.y, d: 0.0)
+        fore = lightAcross(facing[num(tag[0]).int], axis)
         across = sqrt(fore.x * fore.x + fore.y * fore.y)
         (mx, my) = (cx + (pa.x + pz.x) / 2.0 * scale, cy + (pa.y + pz.y) / 2.0 * scale)
       if across < 0.02:
