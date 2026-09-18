@@ -4,14 +4,9 @@
 ##     world ends engine reports, at radius engine collides on.  Nothing is added
 ##     for looks and nothing is left out: arm that is not holding is still drawn,
 ##     because arm that is not holding is still in room.
-##   Projection is orthographic on purpose.  Under it capsule's outline is exactly
-##     stadium -- round capped line from one end to other, as wide as twice its
-##     radius -- so line drawn with round cap *is* shape, not likeness of it.
-##     Under perspective it is not, and drawing would quietly stop being true at
-##     angles where it mattered most.
-##   Painter's order by depth of far end.  Two capsules that run through each
-##     other can still come out wrong way round; they are drawn at half weight
-##     where they overlap rather than pretending otherwise.
+##   Projection, painter's order and what each capsule is put down as are
+##     `drawn`'s, pure and held to laws natively; this file only puts ink on
+##     canvas in that order.
 ##   One list of entries: every still of reference first, in page's order, then
 ##     every sweep.  Stage shows one; every still is also drawn small beside its
 ##     own cell of reference, and clicking cell puts it on stage.  Architect: lay
@@ -66,10 +61,6 @@ const
   AZ = 0.6      ## Camera round world's up at start, radians.
   EL = 0.18     ## And tilt above floor.
 
-type
-  Framing = tuple[mid: array[3, float], reach: float]
-    ## Middle of what one entry covers, and half of how far it spreads.
-
 var
   az = AZ
   el = EL
@@ -90,22 +81,6 @@ proc sweep(): JsObject = entry(pick)
 proc momentsOf(e: JsObject): int = (if has(e, "at"): count(e.at) else: 0)
 proc moments(): int = momentsOf(sweep())
 proc isStill(e: JsObject): bool = has(e, "key")
-
-
-proc seen(p: Spot; az, el: float; f: Framing): tuple[x, y, d: float] =
-  ## Project one world point: screen across, screen down, and depth toward eye.
-  ##   Orthographic, so scale does not fall off with depth and capsule's outline
-  ##     stays exactly stadium however far away it is.
-  ##   Screen's down is world's up negated: canvas counts y downward, so point
-  ##     higher off floor has to come out smaller.  Signed other way, floor grid
-  ##     draws above dancers standing on it.
-  let
-    (ca, sa) = (cos(az), sin(az))
-    (ce, se) = (cos(el), sin(el))
-    (x, y, z) = (p.x - f.mid[0], p.y - f.mid[1], p.z - f.mid[2])
-  (x: -sa * x + ca * y,
-   y: ca * se * x + sa * se * y - ce * z,
-   d: ca * ce * x + sa * ce * y + se * z)
 
 
 proc ends(e: JsObject; i, at: int): tuple[a, z: Spot] =
@@ -151,23 +126,17 @@ proc paintOn(cv: JsObject; e: JsObject; at: int; az, el, zoom: float;
       discard ctx.stroke()
     g += 0.5
 
-  # Capsules, furthest first.  Order is by far end's depth: near enough for
-  # bodies that do not pass through one another, and they are filtered not to.
-  var order: seq[(float, int)]
+  # Capsules, furthest first, in order `drawn` gives.
+  var caps: seq[tuple[a, z: Spot]]
   for i in 0 ..< count(e.rad):
-    let (a, z) = ends(e, i, at)
-    order.add (max(seen(a, az, el, f).d, seen(z, az, el, f).d), i)
-  for pass in 0 ..< order.len:
-    for i in 0 ..< order.len - 1 - pass:
-      if order[i][0] > order[i + 1][0]:
-        swap(order[i], order[i + 1])
-
+    caps.add ends(e, i, at)
   ctx.lineCap = cstring("round").toJs
-  for (_, i) in order:
+  for piece in drawOrder(caps, az, el, f):
     let
+      i = piece.cap
       tag = e.tag[i]
       mark = num(tag[2]).int
-      (a, z) = ends(e, i, at)
+      (a, z) = (piece.a, piece.z)
       pa = seen(a, az, el, f)
       pz = seen(z, az, el, f)
       r = num(e.rad[i])
