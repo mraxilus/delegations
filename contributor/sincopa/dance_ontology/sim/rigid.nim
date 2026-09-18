@@ -727,6 +727,11 @@ func risen*(c: Couple): float =
   ##     hands at shoulder.
   if c.restTwist != 0.0: 1.0 else: min(1.0, c.wound / RAISE)
 
+func up*(c: Couple): float =
+  ## How far joined hands are from resting toward being over their band, nought
+  ## to one: `risen` by another name, until it is keyed to something else.
+  c.risen
+
 func tipOf(c: Couple; a: ArmRig): Vec =
   ## Fingertip, which band is asked of.
   ##   Fingertip alone, forearm's lower end not too: asked of elbow as well over
