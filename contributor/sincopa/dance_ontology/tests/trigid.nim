@@ -58,8 +58,6 @@ const
   WOUND = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)]),
             Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Left)])]
     ## Cross-name chain, whose stills reference draws wound to turn and half.
-  SAG = 0.03 ## Metres joined hand may sit under its band's edge, lift being spring
-             ## against comfort and not wall.
 
 let CHOSEN = block:
   ## Where that hold stands to turn each way at torso height, and how far it
@@ -547,11 +545,122 @@ suite "arms move as arms do":
         &"at {where:.2f}"
       check most < LEAP
 
+
 #[ Every Still Stands At Ease ]#
+
+const
+  SLOP = 0.005 ## Engine's own linear slop, metres: overlap it never resolves.
+  AT_EASE = 0.1 ## Strain no dancer feels: two degrees of twenty into ease that is
+                ## assumed to begin there, under what its own start is known to.
+  JOINED = 0.005 ## Metres joined hands may sit apart and still be joined: slop.
+  PART = 0.002 ## Metres any joint of any arm may be pulled apart: dislocation past this.
+  FREE: seq[Link] = @[] ## No hands joined.
+  ONE_L = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Left)])]
+    ## Single hold over crown, left to left.
+  ONE_R = @[Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Left)])]
+    ## Single hold over crown, right to left: standard diagram's A4 wound half.
+
+iterator stills(): tuple[name: string, links: seq[Link], turns: float, away: bool] =
+  ## Corpus of stills: both chains from cross to cross, free frame stood pillion,
+  ## and single hold at quarter and half.
+  ##   Chains are what reference draws wound: cross-name rests face to face,
+  ##     same-name pillion (`WOUND`, `CHAIN`).  Reference draws seven rungs each,
+  ##     half turn apart, swan at either end; diamonds stand fifth of way into
+  ##     her wrist's ease and swans hold nowhere, which `PROVENANCE.md` records
+  ##     under body sim, so corpus stops at cross until model reaches further.
+  for (tag, links, away) in [("cross-name", WOUND, false), ("same-name", CHAIN, true)]:
+    for w in [-0.5, 0.0, 0.5]:
+      yield (&"{tag} at {w:+.1f}", links, w, away)
+  yield ("free, pillion", FREE, 0.5, false)
+  yield ("left to left at quarter", ONE_L, 0.25, false)
+  yield ("left to left at half", ONE_L, 0.5, false)
+
+proc overlapOf(c: Couple): tuple[depth: float, pair: string] =
+  ## Deepest any two capsules engine collides sit in each other, by geometry
+  ## worked out here and not engine's manifolds, and which two.
+  ##   Pairs engine never collides are left out: capsules of one body, one arm's
+  ##     own links, girdle and upper arm it hangs from, trunk and girdles of one
+  ##     dancer, and two joined palms.
+  proc skipped(a, b: Shape): bool =
+    if a.body == b.body: return true
+    if a.who == b.who:
+      let limbs = {Mark.Upper, Mark.Fore, Mark.Palm}
+      if a.mark notin limbs and b.mark notin limbs: return true
+      if a.arm == b.arm and a.mark in limbs and b.mark in limbs: return true
+      if a.arm == b.arm and {a.mark, b.mark} == {Mark.Girdle, Mark.Upper}: return true
+    if a.mark == Mark.Palm and b.mark == Mark.Palm:
+      for ln in c.links:
+        let (p, q) = (ln.ends[0], ln.ends[1])
+        if (p == (a.who, a.arm) and q == (b.who, b.arm)) or
+           (q == (a.who, a.arm) and p == (b.who, b.arm)): return true
+    false
+  result = (0.0, "")
+  for i in 0 ..< c.shapes.len:
+    for k in i + 1 ..< c.shapes.len:
+      let (a, b) = (c.shapes[i], c.shapes[k])
+      if skipped(a, b): continue
+      let
+        ea = c.endsOf(a)
+        eb = c.endsOf(b)
+        depth = a.r + b.r - between(ea.a, ea.z, eb.a, eb.z)
+      if depth > result.depth:
+        result = (depth, &"{a.who} {a.arm} {a.mark} against {b.who} {b.arm} {b.mark}")
 
 suite "every still stands at ease":
   ## Architect: every state is easily doable in reality without any strain,
-  ## effort or forcing; no clipping, no dislocations, no cheating.
+  ## effort or forcing; no clipping, no dislocations, no cheating.  Read where
+  ## couple stand for each still: nothing at any end past `AT_EASE`, nothing
+  ## through anything, nothing pulled apart, hands joined.
+
+  test "still couple stand for has nothing at its end":
+    ## Strain is nought outside every ease band, one at some end.  Every arm,
+    ## held or free, both waists, every collarbone: free arm shoved to its end
+    ## by partner's trunk is strain couple feel, as much as held one's.
+    for (name, links, turns, away) in stills():
+      let where = standing(HUMAN, Band.Crown, links, turns, away, Body.Two)
+      echo &"    {name}: stood {where.apart:.2f}, strain {where.strain.most:.2f} " &
+        &"at {where.strain.what} {where.strain.whose.body} {where.strain.whose.arm}"
+      check where.holds
+      check where.strain.most <= AT_EASE
+
+  test "no capsule of any arm sits in any other, hands joined, no joint parted":
+    ## Read against every capsule engine collides, with distance worked out here
+    ## and not engine's manifolds, so engine is not asked to mark its own work.
+    ## Deeper than slop is one thing in another; hands further apart than slop
+    ## are not joined; joint pulled further than `PART` is dislocation.
+    for (name, links, turns, away) in stills():
+      let where = standing(HUMAN, Band.Crown, links, turns, away, Body.Two)
+      check where.holds
+      if not where.holds: continue
+      let (holds, c) = stood(HUMAN, Band.Crown, links, turns, away, Body.Two, where.apart)
+      check holds
+      let (depth, pair) = c.overlapOf
+      var apart = 0.0
+      for i in 0 ..< links.len: apart = max(apart, c.poseOf(i).apart)
+      var parted = 0.0
+      for who in Body:
+        for arm in Arm: parted = max(parted, max(c.partedAt(who, arm)))
+      echo &"    {name}: deepest {depth * 1000:.1f} mm ({pair}), hands {apart * 1000:.1f} mm " &
+        &"apart, joints parted {parted * 1000:.1f} mm"
+      check depth <= SLOP
+      check apart <= JOINED
+      check parted <= PART
+      c.free()
+
+  test "hands are above whenever couple are not face to face, from rest on":
+    ## Architect: face to face arms may be at any height; once couple are no
+    ## longer face to face hands must actually be above.  Hold that rests
+    ## pillion is not face to face, so its hands are above at its rest, as its
+    ## card draws them.  Keyed to hold's own rest instead, every same-name still
+    ## was wound from hold at hip.
+    let where = standing(HUMAN, Band.Crown, CHAIN, 0.0, true, Body.Two)
+    check where.holds
+    let (holds, c) = stood(HUMAN, Band.Crown, CHAIN, 0.0, true, Body.Two, where.apart)
+    check holds
+    for ln in CHAIN:
+      for h in ln.ends:
+        check c.armPoseOf(h.body, h.arm).g.z >= HUMAN.band[Band.Crown].lo - SAG
+    c.free()
 
   test "hands are risen through second half of whole turn, and from rest pillion":
     ## Head that passes under joined hands is under them at every wind past
@@ -571,3 +680,29 @@ suite "every still stands at ease":
     check p.wound == 0.0
     check p.risen == 1.0
     p.free()
+
+  test "still that fixes no way about is wound whichever way sits easier":
+    ## Card whose picture is same turned either way claims position, not path:
+    ## couple take whichever way there sits easier, and answer is never worse
+    ## than way asked alone.
+    let
+      asked = standing(HUMAN, Band.Crown, ONE_R, 0.5, false, Body.Two)
+      free = standing(HUMAN, Band.Crown, ONE_R, 0.5, false, Body.Two, either = true)
+    echo &"    right to left at half: asked way stood {asked.apart:.2f} strain " &
+      &"{asked.strain.most:.2f}; either way stood {free.apart:.2f} at {free.turns:+.1f} " &
+      &"strain {free.strain.most:.2f}"
+    check free.holds
+    check free.strain.most <= asked.strain.most
+    check free.strain.most <= AT_EASE
+
+  test "same still from same distance answers same twice":
+    ## Check gives same verdict on same code.  Winding is chaotic enough that
+    ## distances differing in their last bit answer differently, so what is
+    ## held is exact repetition: same distance, same numbers.
+    for i in 0 .. 1:
+      var got: array[2, float]
+      for run in 0 .. 1:
+        let (holds, c) = stood(HUMAN, Band.Crown, WOUND, 1.0, false, Body.Two, 0.44)
+        got[run] = (if holds: c.strainOf.most else: -1.0)
+        c.free()
+      check got[0] == got[1]
