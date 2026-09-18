@@ -57,7 +57,8 @@ proc answers(): OrderedTable[string, bool] =
   # Every still, as `asks` lists them: built at its facing and asked whether
   # any pose holds there.
   for a in stillAsks():
-    result[a.key] = holdsAt(HUMAN, CROWN, a.links, a.turns, a.away, a.head)
+    result[a.key] = holdsAt(HUMAN, CROWN, a.links, a.turns, a.away, a.head,
+                          either = a.either)
 
   # `B` and `E`: four single-hand holds, four manners, four quarters, moving.
   for c, single in SINGLES:

@@ -156,17 +156,19 @@ proc stood*(rig: Rig; band: Band; links: seq[Link]; turns: float;
 type Stood* = object ## Where couple stand for one still, and how it sits.
   holds*: bool
   apart*: float  ## Distance chosen, metres axis to axis.
+  turns*: float  ## Way couple were wound there, signed: their own where still
+                 ## fixes neither.
   strain*: Strain ## How near pose there is to any end.
 
 proc standsAt(rig: Rig; band: Band; links: seq[Link]; turns: float;
               away: bool; head: Body; apart: float): Stood =
   ## Whether pose holds at this facing from this one distance, and how it sits.
   let (holds, c) = stood(rig, band, links, turns, away, head, apart)
-  result = Stood(holds: holds, apart: apart, strain: c.strainOf)
+  result = Stood(holds: holds, apart: apart, turns: turns, strain: c.strainOf)
   c.free()
 
 proc standing*(rig: Rig; band: Band; links: seq[Link]; turns: float;
-               away = false; head = Body.Two): Stood =
+               away = false; head = Body.Two; either = false): Stood =
   ## Where couple stand for this still: distance whose pose holds nearest to
   ## ease, of every distance couple may stand at.
   ##   Still card claims position exists; moving one claims couple can carry to
@@ -183,20 +185,24 @@ proc standing*(rig: Rig; band: Band; links: seq[Link]; turns: float;
   ##   Distance at ease outright ends search: no distance further out is nearer
   ##     to ease than nought, and nearer distance keeps tie, so first at ease is
   ##     couple's choice.  Only still no distance eases pays for whole search.
+  ##   Still that fixes no way about (`either`) is wound either way at every
+  ##     distance, and way asked keeps tie: card claims position, and couple
+  ##     take whichever way there sits easier.
   result = Stood(holds: false, strain: Strain(most: Inf))
   for far in stands(rig):
-    let got = standsAt(rig, band, links, turns, away, head, far)
-    if not got.holds: continue
-    if not result.holds or got.strain.most < result.strain.most:
-      result = got
-    if result.strain.most <= 0.0: return
+    for way in (if either: @[turns, -turns] else: @[turns]):
+      let got = standsAt(rig, band, links, way, away, head, far)
+      if not got.holds: continue
+      if not result.holds or got.strain.most < result.strain.most:
+        result = got
+      if result.strain.most <= 0.0: return
 
 proc holdsAt*(rig: Rig; band: Band; links: seq[Link]; turns: float;
-              away = false; head = Body.Two; apart = 0.0): bool =
+              away = false; head = Body.Two; apart = 0.0; either = false): bool =
   ## Whether any pose holds at this facing, from any distance couple may stand at.
   if apart > 0.0:
     return standsAt(rig, band, links, turns, away, head, apart).holds
-  standing(rig, band, links, turns, away, head).holds
+  standing(rig, band, links, turns, away, head, either).holds
 
 proc reaches*(rig: Rig; band: Band; links: seq[Link]; turns: float;
               away = false; who = Body.Two; head = Body.Two): bool =

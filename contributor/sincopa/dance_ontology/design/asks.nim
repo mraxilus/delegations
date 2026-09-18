@@ -12,8 +12,10 @@
 import std/[options, strformat]
 
 import ../sim/[body, hold]
+import ../src/dance_ontology/diagram
 import ../src/dance_ontology/draw/terms
 import ../src/dance_ontology/frame
+from ../src/dance_ontology/rotation import HalfTurns
 import ./parts
 
 
@@ -23,6 +25,8 @@ type StillAsk* = object ## One still card, as sim is asked it.
   turns*: float   ## Facing, in turns from where hold rests.
   away*: bool     ## Whether hold rests pillion lead rather than face to face.
   head*: Body     ## Whose crown joined hands go over.
+  either*: bool   ## Whether couple may be wound to this facing either way about:
+                  ## card that draws same picture turned either way fixes neither.
 
 
 func bodyOf*(who: terms.Dancer): Body =
@@ -76,13 +80,20 @@ func stillAsks*(): seq[StillAsk] =
   #     and A12 read "at rest" for that reason, and asking them for half turn
   #     called them unreachable.
   #   A17 is last frame drawn turned other way about, and is asked so.
+  #   Card whose picture is same turned either way fixes neither way, and is
+  #     asked either way (`either`): half turn from rest is half turn whichever
+  #     way couple took it.  Same reading page makes when it decides whether to
+  #     draw frame turned other way at all (A17).
   func amountFor(target: Frame; twist: int): float =
     if (twist == 0) == restsFacing(target): 0.0 else: 0.5
+  func eitherWay(target: Frame): bool =
+    renderFrame(target, HalfTurns(1)) == renderFrame(target, HalfTurns(-1))
   for i, target in FRAMES:
     for twist in [0, 1]:
+      let amount = amountFor(target, twist)
       result.add StillAsk(key: &"A{i * 2 + twist + 1}", links: linksOf(holdsOf(target)),
-                          turns: asked(amountFor(target, twist)),
-                          away: not restsFacing(target), head: Body.Two)
+                          turns: asked(amount), away: not restsFacing(target),
+                          head: Body.Two, either: amount != 0.0 and eitherWay(target))
   block:
     let target = FRAMES[^1]
     result.add StillAsk(key: "A17", links: linksOf(holdsOf(target)),

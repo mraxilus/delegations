@@ -93,19 +93,21 @@ proc stillOf(c: Couple; at: float): Still =
     result.apart.add p.apart
 
 proc still*(rig: Rig; band: Band; links: seq[Link]; name: string;
-            turns: float; away = false; head = Body.Two): Shown =
+            turns: float; away = false; head = Body.Two; either = false): Shown =
   ## One still, from distance couple stand for it, or none if no distance holds.
   ##   Still is wound to its facing and left standing, as `walk.stood` has it,
-  ##     and distance is `walk.standing`'s choice, so what page draws of it is
-  ##     what `modelled` answered about it, where model has couple stand.
+  ##     and distance is `walk.standing`'s choice, as is way about where still
+  ##     fixes none, so what page draws of it is what `modelled` answered about
+  ##     it, where model has couple stand.
   result = Shown(hold: name, band: band, turns: turns, stopped: true, why: Stop.None)
-  let where = standing(rig, band, links, turns, away, head)
+  let where = standing(rig, band, links, turns, away, head, either)
   if not where.holds: return
-  let (holds, c) = stood(rig, band, links, turns, away, head, where.apart)
+  let (holds, c) = stood(rig, band, links, where.turns, away, head, where.apart)
   if holds:
     result.apart = where.apart
+    result.turns = where.turns
     result.stopped = false
-    result.stills.add stillOf(c, turns)
+    result.stills.add stillOf(c, where.turns)
   c.free()
 
 proc shown*(rig: Rig; band: Band; links: seq[Link]; name: string;

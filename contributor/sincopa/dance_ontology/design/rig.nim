@@ -181,9 +181,9 @@ when isMainModule:
   var stills: seq[string]
   for a in stillAsks():
     let sh = still(HUMAN, Band.Crown, a.links, a.key, a.turns, away = a.away,
-                   head = a.head)
+                   head = a.head, either = a.either)
     if sh.stills.len > 0:
-      echo &"{a.key}: {a.turns:+.2f} turns, stood {sh.apart:.2f}"
+      echo &"{a.key}: {sh.turns:+.2f} turns, stood {sh.apart:.2f}"
     else:
       echo &"{a.key}: {a.turns:+.2f} turns, no pose holds"
     stills.add bodyOfSweep(sh, a.key)
