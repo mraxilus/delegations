@@ -815,18 +815,17 @@ read the same under it but the sun itself, which drew flat. Cost: three floats f
 record, and no per-edit relighting pass.
 
 **Furniture** (ground grid, world axes) reaches `extent_furniture`, `FACTOR_CLIP_FAR` orbit
-distances, and is drawn as **fog about the eye**, not a halo about the origin. Not the far
-clip, which also reaches the scene's farthest object: the demo reaches millions of units, and
-a grid sized to that put its cell at a hundred thousand with no line under any camera inside
-Sol's system. Lines and the horizon still reach the far clip. The fog holds full strength within
-`FRACTION_GRID_FADE_START` = 0.06 × extent, gone by `FRACTION_GRID_FADE_END` = 0.20 × extent
-— 1.14 and 3.8 orbit distances; at 0.03/0.12 the ground at the pivot read as absent. A halo
-makes the origin a place the reader may not leave. The fade runs in the fragment shader
-against the fragment's own world position, held to `alphaGridFade` as its reference; a
-per-record `fog` flag says who fades, so furniture and scene ribbons share one buffer.
-`addGrid` lays lines on world multiples of the cell size inside the ground disc the fog
-leaves (`mesh.radiusGroundFor`), one record per lattice line, skipping the two through the
-origin, which coincide with the axes.
+distances, and is drawn as **fog about the eye**, not a halo about the origin. Not the far clip,
+which also reaches the scene's farthest object: the demo reaches millions of units, and a grid sized
+to that put its cell at a hundred thousand with no line under any camera inside Sol's system. Lines
+and the horizon still reach the far bound. The fog holds full strength within
+`FRACTION_GRID_FADE_START` = 0.06 × extent, gone by `FRACTION_GRID_FADE_END` = 0.20 × extent — 1.14
+and 3.8 orbit distances; at 0.03/0.12 the ground at the pivot read as absent. A halo makes the
+origin a place the reader may not leave. The fade runs in the fragment shader against the fragment's
+own world position, held to `alphaGridFade` as its reference; a per-record `fog` flag says who
+fades, so furniture and scene ribbons share one buffer. `addGrid` lays lines on world multiples of
+the cell size inside the ground disc the fog leaves (`mesh.radiusGroundFor`), one record per lattice
+line, skipping the two through the origin, which coincide with the axes.
 
 **The cell is `SIZE_CELL_GRID` = 10.0 at every reach a reader works at.** A cell that walks
 with the reach re-scales the ground under a reader as they dolly; a fixed cell is a ruler.
@@ -876,27 +875,28 @@ demo's moons ring their planets at thousandths of a unit and are millionths wide
 floor of a twentieth kept the camera outside every one of them. Not a ceiling, which reads
 as the camera being bounded to a region and which nothing downstream needs.
 
-**Every record is stored about the pivot.** `mesh.clearMeshes` takes the frame's origin,
-both front-ends pass the camera's pivot, and each of the five record writers subtracts it at
-the float32 write, so what the camera looks at is exact wherever it stands: a moon a
-thousandth of a unit from its planet a million units out, where float32 about the world
-origin steps by a sixteenth and loses the whole offset. The GPU's transform is
-`initMatrixViewProjection` about the same origin, only its translation column moved; picking,
-hover and every marker keep the transform about the world. `Matrix4` is double precision for
-the same reason: a float32 translation column carried tenths of a unit that far out, into
-every pick. Not a moving world origin, which would rewrite every stored multivector per frame.
-What degrades far out is float32 in what stands far from the pivot, past roughly 10⁶ units
-from it, invisible at that reach; wheeled out to 3 × 10¹⁹ the view empties to a speck rather
-than breaking, and `home` returns.
+**Every record is stored about the pivot.** `mesh.clearMeshes` takes the frame's origin, both
+front-ends pass the camera's pivot, and each of the five record writers subtracts it at the float32
+write, so what the camera looks at is exact wherever it stands: a moon a thousandth of a unit from
+its planet a million units out, where float32 about the world origin steps by a sixteenth and loses
+the whole offset. The GPU's transform is `initMatrixViewProjection` about the same origin, only its
+translation column moved; picking, hover and every marker keep the transform about the world.
+`Matrix4` is double precision for the same reason: a float32 translation column carried tenths of a
+unit that far out, into every pick. Not a moving world origin, which would rewrite every stored
+multivector per frame. Float32 degrades what stands past roughly 10⁶ units from the pivot, invisible
+at that reach; wheeled out to 3 × 10¹⁹ the view empties to a speck and `home` returns.
 
-**Clip planes follow orbit distance, and the far plane never comes inside the scene** —
-`FACTOR_CLIP_NEAR` 1/400 of the orbit distance and `FACTOR_CLIP_FAR` 20 times it, or the eye's
-distance to the origin plus the scene's reach (`Camera.reach_scene`, times `MARGIN_REACH_FAR`
-1.05) where that is farther — derived, never stored. Not twenty orbit distances alone: with
-the starfield 3,000 units across, six notches in at the demo's centre leave 49 of 4,938
-points drawn that way, and 367 with the reach. The reach (`framing.reachOf`) is stamped onto
-the camera at every derivation point rather than kept in it, because `home` and every path
-that replaces the camera value would drop a stored one.
+**Clip planes follow orbit distance, and nothing clips at the far bound** — `FACTOR_CLIP_NEAR` 1/400
+of the orbit distance and `FACTOR_CLIP_FAR` 20 times it, or the eye's distance to the origin plus
+the scene's reach (`Camera.reach_scene`, times `MARGIN_REACH_FAR` 1.05) where that is farther —
+derived, never stored. The projection has no far plane: its depth climbs toward 1 − `SLACK_CLIP_FAR`
+(1/1024) and never reaches it. Not `(f + n)/(f − n)` with the far plane at the star field's reach:
+the farthest stars and the dome at 0.9 of it then sat within two float32 ulps of the far plane, and
+an Android GPU's rounding clipped them, points flickering as the camera moved and the dome drawn in
+patches along its cells. Not twenty orbit distances alone: with the starfield 3,000 units across,
+six notches in at the demo's centre leave 49 of 4,938 points drawn that way, and 367 with the reach.
+The reach (`framing.reachOf`) is stamped onto the camera at every derivation point rather than kept
+in it, because `home` and every path that replaces the camera value would drop a stored one.
 
 **Depth is logarithmic, written per fragment.** Every fragment shader on both front-ends writes
 `camera.depthOf` of its own view depth, `log2(D / near) / log2(far / near)` scaled to clip depth,
@@ -905,8 +905,6 @@ at every distance. Not linear depth with the near plane raised to hold the ratio
 spent nearly every step inside the first orbit distances, and an Android GPU dropped the whole star
 field from beside a far star. Never in the clip position: the clipper interpolates clip coordinates
 linearly and cut a corner behind the eye beside its front corner, the disc ending at a hard chord.
-The near plane stays at 1/400 of the orbit distance whatever the far plane reaches, so nothing
-between eye and pivot clips.
 
 **The wheel zooms toward what the pointer is over** — the map reading of a zoom.
 `picking.anchorZoomAt` solves the anchor in three answers, in order: the finite object under
@@ -947,15 +945,16 @@ work in fractions of canvas width.
 
 *Checked.* Verified by `suites.nim`: the logarithmic depth maps near to −1 and far to +1, is
 monotone across every decade the demo spans, and keeps Io before Jupiter and a star before the dome
-by more than a 16-bit step. Verified by driven checks: the sky is drawn behind a far star, and the
-ecliptic's disc reaches under a camera 1.5 units off Sol, 0.3 and 0.0003 rad up. Verified by driven
-wheel events: an object under the pointer drifts 0.000 px across a 3.2× zoom against 1.957 px with
-the pivot-level anchor, and wheeling back out returns to distance 19.000 and pivot (0, 0, 1).
-Verified by driven drags: 1.000 to 1.000 of height, mouse and two-finger alike. Verified by
-`suites.nim`: `norm(eye − pivot)` equals the held distance after a floored dolly; the pan's height
-invariance; the clamp's continuity; the reach stamped at every derivation point, which the
-undo-while-held check caught missing. Verified by driven keys: 500 ms of `w` moved the pivot 12.8
-units with z unchanged to four decimals, shift 49.3. Assumed: that no ceiling is wanted by any
+by more than a 16-bit step; the flattened float32 matrix keeps the farthest star and the dome half
+the slack inside the far plane at four orbit distances. Verified by driven checks: the sky is drawn
+behind a far star, and the ecliptic's disc reaches under a camera 1.5 units off Sol, 0.3 and 0.0003
+rad up. Verified by driven wheel events: an object under the pointer drifts 0.000 px across a 3.2×
+zoom against 1.957 px with the pivot-level anchor, and wheeling back out returns to distance 19.000
+and pivot (0, 0, 1). Verified by driven drags: 1.000 to 1.000 of height, mouse and two-finger alike.
+Verified by `suites.nim`: `norm(eye − pivot)` equals the held distance after a floored dolly; the
+pan's height invariance; the clamp's continuity; the reach stamped at every derivation point, which
+the undo-while-held check caught missing. Verified by driven keys: 500 ms of `w` moved the pivot
+12.8 units with z unchanged to four decimals, shift 49.3. Assumed: that no ceiling is wanted by any
 reader.
 
 ## Records And Shaders
