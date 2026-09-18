@@ -347,6 +347,20 @@ export async function driveDiscUnderfoot(page: Page): Promise<void> {
     `disc past Sol reads ${past.toFixed(1)}, under camera ` +
       `${under.map((one) => one.toFixed(1)).join(', ')}; bare backdrop reads 19`,
   );
+  // Second stance grazes plane, 0.0003 rad up: eye stands one eighth of near plane's
+  //   distance off it, where fan's own near cut ended disc one third of way down.
+  await page.evaluate(() => { nimSetCameraElevation(0.0003); });
+  await settleCamera(page);
+  await page.waitForTimeout(400);
+  const grazing = (await readCanvas(page, spots.slice(1))).spots
+    .map((one) => luminance(one ?? []));
+  const gap_grazing = Math.max(...grazing.map((one) => Math.abs(one - past)));
+  report(
+    "the plane's disc holds under a grazing camera",
+    gap_grazing <= 3,
+    `under camera 0.0003 rad over plane ${grazing.map((one) => one.toFixed(1)).join(', ')}, ` +
+      `against ${past.toFixed(1)} past Sol`,
+  );
   await page.evaluate((given) => {
     nimSetCameraPivot(given.pivot[0] ?? 0, given.pivot[1] ?? 0, given.pivot[2] ?? 0);
     nimSetCameraDistance(given.distance);
