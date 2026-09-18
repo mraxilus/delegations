@@ -20,7 +20,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[math, os, strformat, strutils]
+import std/[cpuinfo, math, os, strformat, strutils, typedthreads]
 
 import ../sim/[body, hold, rig, seen]
 import ./asks
@@ -165,28 +165,66 @@ proc bodyOfSweep(sh: Shown; key = ""): string =
   "{" & bits.join(",\n") & "}"
 
 
+type Job = object ## One recording: sweep by its place in `SHOWN`, or still by its ask.
+  cut: int
+  ask: StillAsk
+  still: bool
+
+func jobs(): seq[Job] =
+  ## Every recording, sweeps first then every still card in page's own order.
+  for i in 0 ..< SHOWN.len: result.add Job(cut: i, still: false)
+  for a in stillAsks(): result.add Job(ask: a, still: true)
+
+var
+  bodies: seq[string] ## Each recording's text, written by whichever worker did it.
+  notes: seq[string]  ## And one line saying what it found.
+
+proc work(slice: tuple[first, every: int]) {.thread.} =
+  ## Record every `every`th job from `first` on.  Each worker lists jobs for
+  ## itself, as `design/modelled` does: one list read by four threads raced on
+  ## its strings' counts.
+  {.cast(gcsafe).}:
+    let all = jobs()
+    var i = slice.first
+    while i < all.len:
+      let j = all[i]
+      if j.still:
+        let a = j.ask
+        let sh = still(HUMAN, Band.Crown, a.links, a.key, a.turns, away = a.away,
+                       head = a.head, either = a.either)
+        notes[i] = (if sh.stills.len > 0: &"{a.key}: {sh.turns:+.2f} turns, stood {sh.apart:.2f}"
+                    else: &"{a.key}: {a.turns:+.2f} turns, no pose holds")
+        bodies[i] = bodyOfSweep(sh, a.key)
+      else:
+        let cut = SHOWN[j.cut]
+        var links: seq[Link] = @[]
+        for (a, b) in cut.arms:
+          links.add Link(ends: [(Body.One, a), (Body.Two, b)])
+        let sh = shown(HUMAN, cut.band, links, cut.name, away = cut.away)
+        notes[i] = &"{cut.name}, {BANDS[ord(cut.band)]}: stood {sh.apart:.2f}, " &
+                   &"{sh.stills.len} moments, {sh.turns:.2f} {sh.why}"
+        bodies[i] = bodyOfSweep(sh)
+      i += slice.every
+
+
 when isMainModule:
-  var cuts: seq[string]
-  for cut in SHOWN:
-    var links: seq[Link] = @[]
-    for (a, b) in cut.arms:
-      links.add Link(ends: [(Body.One, a), (Body.Two, b)])
-    let sh = shown(HUMAN, cut.band, links, cut.name, away = cut.away)
-    echo &"{cut.name}, {BANDS[ord(cut.band)]}: stood {sh.apart:.2f}, " &
-         &"{sh.stills.len} moments, {sh.turns:.2f} {sh.why}"
-    cuts.add bodyOfSweep(sh)
-  # Every still card, wound to its facing from first distance that holds it.
+  # Recorded on every core at once: sweeps and stills each build their own
+  # worlds and share nothing but their two slots.
+  let count = jobs().len
+  bodies = newSeq[string](count)
+  notes = newSeq[string](count)
+  let cores = max(1, countProcessors())
+  var workers = newSeq[Thread[tuple[first, every: int]]](cores)
+  for w in 0 ..< cores:
+    createThread(workers[w], work, (w, cores))
+  joinThreads(workers)
+  for n in notes: echo n
+  # Every still card, wound to its facing from distance that sits easiest.
   #   Recorded whole, one moment each, so viewer can lay sim's answer beside
   #   each cell of reference; card no distance holds is recorded with no moment.
-  var stills: seq[string]
-  for a in stillAsks():
-    let sh = still(HUMAN, Band.Crown, a.links, a.key, a.turns, away = a.away,
-                   head = a.head, either = a.either)
-    if sh.stills.len > 0:
-      echo &"{a.key}: {sh.turns:+.2f} turns, stood {sh.apart:.2f}"
-    else:
-      echo &"{a.key}: {a.turns:+.2f} turns, no pose holds"
-    stills.add bodyOfSweep(sh, a.key)
+  let
+    cuts = bodies[0 ..< SHOWN.len]
+    stills = bodies[SHOWN.len ..< count]
   var head: seq[string]
   head.add "\"upper\":" & num(HUMAN.upper)
   head.add "\"fore\":" & num(HUMAN.fore)
