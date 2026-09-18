@@ -371,6 +371,61 @@ suite "two dancers in rigid body engine":
       check atEnd == 0
 
 
+#[ Couple Stand For Sweep ]#
+
+suite "couple stand for sweep":
+  ## Where couple stand for sweep is chosen from every distance walked, by what
+  ## each carried and how its arms moved.  Both are chaotic: two walks differing
+  ## in last bit answer differently, and same source built by another compiler
+  ## differs in last bits.  Choice has to stand still under that.
+  const
+    ## Same-name single hold at torso, walked 0.8 of turn: distances carrying
+    ## most and their largest leaps, measured 2026-09-18.  L-l turning her
+    ## positive way and R-r her negative are one hold seen in mirror.  Nearer
+    ## distances carry 0.46 at most, and 0.52 on carries 0.66.
+    LL_POS: seq[Carry] = @[(0.44, 0.72, 0.125), (0.46, 0.72, 0.171),
+                           (0.48, 0.72, 0.126), (0.50, 0.68, 0.121)]
+    RR_NEG: seq[Carry] = @[(0.44, 0.72, 0.135), (0.46, 0.72, 0.174),
+                           (0.48, 0.72, 0.106), (0.50, 0.72, 0.121)]
+    ## Same walks from same source, built into another binary: leaps differ by
+    ## up to thirty five per cent, and at 0.50 L-l carries 0.68 either way.
+    LL_POS_ELSE: seq[Carry] = @[(0.44, 0.72, 0.114), (0.46, 0.72, 0.169),
+                                (0.48, 0.72, 0.133), (0.50, 0.68, 0.163)]
+    RR_NEG_ELSE: seq[Carry] = @[(0.44, 0.72, 0.116), (0.46, 0.72, 0.155),
+                                (0.48, 0.72, 0.124), (0.50, 0.68, 0.159)]
+    ## Same hold at neck, walked whole sweep: L-l carries 1.00 from 0.42 and
+    ## 0.98 from 0.38, and R-r 0.98 from both -- one step, which is how exactly
+    ## stop is decided.
+    LL_HIGH: seq[Carry] = @[(0.36, 0.22, 0.045), (0.38, 0.98, 0.093),
+                            (0.40, 0.96, 0.100), (0.42, 1.00, 0.099),
+                            (0.44, 0.82, 0.114), (0.46, 0.96, 0.104)]
+    RR_HIGH: seq[Carry] = @[(0.36, 0.22, 0.046), (0.38, 0.98, 0.099),
+                            (0.40, 0.96, 0.097), (0.42, 0.98, 0.100),
+                            (0.44, 0.82, 0.109), (0.46, 0.98, 0.104)]
+    ## Same hold over crown, running free from first distance: chest to chest
+    ## joined hands are pinned between torsos and pop up, 189 mm in one moment,
+    ## and from 0.42 on arms move under 90 mm.
+    LL_ABOVE: seq[Carry] = @[(0.36, Inf, 0.189), (0.38, Inf, 0.155),
+                             (0.40, Inf, 0.131), (0.42, Inf, 0.086),
+                             (0.44, Inf, 0.077), (0.46, Inf, 0.084)]
+
+  func standAt(walks: openArray[Carry]): float = walks[chosen(walks)].apart
+
+  test "stance chosen is same seen in mirror and built by another compiler":
+    ## Red: five millimetres broke tie between 0.44 and 0.48 for R-r, leaps 135
+    ## and 106, and held it for L-l, 125 and 126: stances two steps apart for
+    ## one hold in mirror, and `rig is same seen in mirror` failed on this tree
+    ## and not on last, nothing about rig having changed.
+    for (a, b) in [(LL_POS, RR_NEG), (LL_POS, LL_POS_ELSE), (RR_NEG, RR_NEG_ELSE),
+                   (LL_POS_ELSE, RR_NEG_ELSE), (LL_HIGH, RR_HIGH)]:
+      check abs(standAt(a) - standAt(b)) < SEEK + 1e-9
+
+  test "stance steps out from hands pinned between torsos":
+    ## Kept from before: nearest distance that carries turn is chest to chest.
+    check standAt(LL_ABOVE) >= 0.40
+    check LL_ABOVE[chosen(LL_ABOVE)].leap * 2.0 <= LL_ABOVE[0].leap
+
+
 #[ Arms Move As Arms Do ]#
 
 const
