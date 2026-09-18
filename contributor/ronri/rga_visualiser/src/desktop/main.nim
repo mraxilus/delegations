@@ -106,7 +106,7 @@ import std/[algorithm, math, monotimes, options, os, parseopt, strformat, struti
 
 import pga
 import ../rga_visualiser/[
-  boundary, camera, format, framing, help, history, interaction, lighting, marker, message,
+  boundary, camera, format, framing, help, history, interaction, marker, message,
   orrery, picking, scene, selection, storyboard, tessellate, timings, wording,
 ]
 import ./[arena, gif, gui, image, opengl as gl, panel, renderer, sdl3]
@@ -294,8 +294,6 @@ var TIMINGS_FRAME_MILLISECONDS: array[FRAMES_TIMING_MAX, float32]
 #   stamped onto camera each frame rather than kept in it: `home` replaces camera value.
 var REVISION_REACH = none(int)
 var REACH_SCENE = 0.0
-var LIGHTS: LightCache
-  ## Hold per-handle direction toward its sun, refreshed with reach; see `lighting.LightCache`.
 
 
 
@@ -497,7 +495,7 @@ proc assembleMeshes(
     let tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
     discard MESHES.addObject(
       scratch[0], one.geometry, tint, scale, progress, one.anchorOverride, bounds = bounds,
-      radius = one.radius, light = LIGHTS.lights[handle],
+      radius = one.radius,
     )
 
   # Emit open edit session's staged multivector, through same dispatch real object uses.
@@ -536,7 +534,7 @@ proc assembleMeshes(
     let tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
     discard MESHES.addObject(
       scratch[0], one.geometry, tint, scale, progress, one.anchorOverride, bounds = bounds,
-      radius = one.radius, light = LIGHTS.lights[handle],
+      radius = one.radius,
     )
 
   panel.microseconds_tessellate = float(getMonoTime().ticks - ticks_start) / 1000.0
@@ -869,7 +867,6 @@ proc renderFrame(
   # Measure scene's reach on edit, so far clip follows; see `camera.distanceFar`.
   if REVISION_REACH != some(scene.revision):
     REACH_SCENE = reachOf(scene)
-    refreshLights(LIGHTS, scene, REVISION_REACH)
     REVISION_REACH = some(scene.revision)
   camera.reach_scene = REACH_SCENE
 

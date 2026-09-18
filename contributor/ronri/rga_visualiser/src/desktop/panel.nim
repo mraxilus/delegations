@@ -154,7 +154,6 @@ type
       ## buffer must not change before save.
     index_ink*: cint ## Staged palette handle.
     radius*: cfloat ## Staged drawn radius, in world units; see `scene.radiusAt`.
-    shines*: bool ## Staged sun flag; see `scene.shinesAt`.
 
   ObjectRow* = object ## Define what one object row has resolved about itself.
     ## Computed once at top of `layoutObject` and handed to each part of row, so three agree.
@@ -431,7 +430,6 @@ func beginSession(panel: var Panel, scene: var Scene, handle: Option[int]) =
     session.label = scene.labelAt(handle.get)
     session.index_ink = cint(scene.inkAt(handle.get))
     session.radius = cfloat(scene.radiusAt(handle.get))
-    session.shines = scene.shinesAt(handle.get)
   else:
     toChars(&"m{scene.len}", session.label)
     session.index_ink = cint(scene.inkNext)
@@ -465,8 +463,6 @@ proc layoutSessionFields(panel: var Panel, is_pending: bool) =
   )
   gui.tooltip(wordingText(TipRowRadius))
   gui.widthPop()
-  discard gui.checkbox(wordingText(NameRowShines), addr panel.session.get.shines)
-  gui.tooltip(wordingText(TipRowShines))
   gui.textTinted(
     wordingText(NameRowCoefficients), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue
   )
@@ -540,7 +536,7 @@ proc layoutObjectButtons(
       if row.isPending:
         let handle_added = scene.addObject(
           geometry, toText(session.label), Ink(session.index_ink), now,
-          radius = float(session.radius), shines = session.shines,
+          radius = float(session.radius),
         )
         panel.selection.selectOnly(handle_added)
         panel.say(addedMessage(toText(session.label)), now)
@@ -549,7 +545,6 @@ proc layoutObjectButtons(
         scene.labelAt(row.handle.get) = session.label
         scene.setInk(row.handle.get, Ink(session.index_ink))
         scene.setRadius(row.handle.get, float(session.radius))
-        scene.setShining(row.handle.get, session.shines)
         panel.say(savedMessage(toText(session.label)), now)
       history.record(scene, camera)
       panel.session = none(EditSession)

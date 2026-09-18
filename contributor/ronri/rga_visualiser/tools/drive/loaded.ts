@@ -49,7 +49,7 @@ export async function drivePlacingCost(page: Page, objects: number): Promise<voi
     const times: number[] = [];
     for (let i = 0; i < 6; i += 1) {
       const handle = nimAddObject(
-        model, 'placed', nimDefaultInk(), nimDefaultRadius(), false, performance.now() / 1000,
+        model, 'placed', nimDefaultInk(), nimDefaultRadius(), performance.now() / 1000,
       );
       const started = performance.now();
       nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true, true);
@@ -87,7 +87,7 @@ export async function driveUndoDrawn(page: Page): Promise<void> {
     const model = nimObjectCoefficients(nimSceneHandles()[0] ?? 0);
     const before = stateOf(build());
     nimAddObject(
-      model, 'undone', nimDefaultInk(), nimDefaultRadius(), false, performance.now() / 1000,
+      model, 'undone', nimDefaultInk(), nimDefaultRadius(), performance.now() / 1000,
     );
     nimSelectClear();
     let is_held = false;
@@ -145,7 +145,7 @@ async function fillScene(page: Page): Promise<void> {
   await page.evaluate(() => {
     const model = nimObjectCoefficients(nimSceneHandles()[0] ?? 0);
     while (nimSceneCount() < nimSceneCapacity()) {
-      nimAddObject(model, 'filler', nimDefaultInk(), nimDefaultRadius(), false, 0);
+      nimAddObject(model, 'filler', nimDefaultInk(), nimDefaultRadius(), 0);
     }
     nimSelectClear(); // Each add selects what it added; leave nothing standing behind.
   });

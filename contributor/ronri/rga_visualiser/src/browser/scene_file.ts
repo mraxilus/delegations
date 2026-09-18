@@ -7,8 +7,8 @@
 /* ---------------------------------------------------------------------- */
 /* Scene save/load: pack and parse exact `.rgascene` binary format         */
 /* `scene.nim`'s own doc comment documents (magic/version/basis-count/     */
-/* object-count/per-object ink+visible+label+16 float64+radius+shines), so    */
-/* build saves loads on desktop build and vice versa. Packing lives       */
+/* object-count/per-object ink+visible+label+16 float64+radius), so build    */
+/* saves loads on desktop build and vice versa. Packing lives             */
 /* here rather than in Nim, since `DataView` already does exactly this     */
 /* natively -- see `bridge.nim`'s own doc comment.                */
 /* ---------------------------------------------------------------------- */
@@ -34,11 +34,10 @@ function saveScene() {
     label: encoder.encode(nimObjectLabel(handle)),
     coefficients: nimObjectCoefficients(handle),
     radius: nimObjectRadius(handle),
-    shines: nimObjectShines(handle),
   }));
 
   let size = 4 + 1 + 1 + 4;
-  for (const object of objects) size += 1 + 1 + 1 + object.label.length + count_basis * 8 + 8 + 1;
+  for (const object of objects) size += 1 + 1 + 1 + object.label.length + count_basis * 8 + 8;
 
   const buffer = new ArrayBuffer(size);
   const view = new DataView(buffer);
@@ -65,7 +64,6 @@ function saveScene() {
       offset += 8;
     }
     view.setFloat64(offset, object.radius, true); offset += 8;
-    view.setUint8(offset, object.shines ? 1 : 0); offset += 1;
   }
 
   deliverFile(
@@ -163,15 +161,15 @@ function parseAndLoadScene(buffer: ArrayBuffer) {
       radius = view.getFloat64(offset, true);
       offset += 8;
     }
-    let shines = false;
+    // Versions 5 and 6 wrote byte saying whether point shone; skipped, since nothing
+    //   reads it any more. Which versions is Nim's rule, as radius above.
     if (nimSceneHasShine(version)) {
       if (offset + 1 > buffer.byteLength) {
         throw new Error('File is truncated partway through object ' + i + '’s shine.');
       }
-      shines = view.getUint8(offset) !== 0;
       offset += 1;
     }
-    parsed.push({ ink, visible, label, coefficients, radius, shines });
+    parsed.push({ ink, visible, label, coefficients, radius });
   }
 
   nimSceneClear();
@@ -185,7 +183,7 @@ function parseAndLoadScene(buffer: ArrayBuffer) {
   for (const object of parsed) {
     const handle = nimSceneAddRaw(
       version, object.ink, object.visible, object.label, object.coefficients, object.radius,
-      object.shines, count_object, arrived,
+      count_object, arrived,
     );
     if (handle < 0) throw new Error('File names an unknown palette slot or radius for an object.');
   }

@@ -1,9 +1,8 @@
 ## Hold every word either front-end shows reader, once.
 ##
 ## Shown text was written where it is drawn, which put one sentence in two languages and let
-## copies drift apart unseen: two front-ends worded point's radius differently, window told
-## reader sun is drawn flat where page did not, and window explained forty-one controls
-## against page's eleven. No check could see any of it, because
+## copies drift apart unseen: two front-ends worded point's radius differently, and window
+## explained forty-one controls against page's eleven. No check could see any of it, because
 ## sentence in `panel.nim` and sentence in `objects_section.ts` are two literals that never
 ## meet (repository issue 145).
 ##
@@ -69,7 +68,7 @@ type Wording* = enum
   ##   today and are not one key.
   ##   Adding value here without row below does not compile, which is whole point of enum key.
   TipRowSelect, TipRowCommit, TipRowEdit, TipRowDiscardNew, TipRowDiscardEdit,
-  TipRowVisible, TipRowRemove, TipRowRadius, TipRowShines,
+  TipRowVisible, TipRowRemove, TipRowRadius,
   TipApplyArity, TipApplyOperation, TipApplyFirst, TipApplySecond,
   TipViewAzimuth, TipViewElevation, TipViewDistance, TipViewPivot, TipViewLens,
   TipDiagFrames, TipDiagVsync, TipDiagPermanent, TipDiagFrame, TipDiagPool, TipDiagScene,
@@ -80,7 +79,7 @@ type Wording* = enum
 
   NameHeadObjects, NameHeadApply, NameHeadView, NameHeadDiagnostics,
   NameRowCommit, NameRowEdit, NameRowDiscard, NameRowHide, NameRowShow, NameRowRemove,
-  NameRowLabel, NameRowInk, NameRowSize, NameRowShines, NameRowCoefficients,
+  NameRowLabel, NameRowInk, NameRowSize, NameRowCoefficients,
   NameApplyArity, NameApplyUnary, NameApplyBinary, NameApplyOperation, NameApplyFirst,
   NameApplySecond, NameApplyAct,
   NameViewAzimuth, NameViewElevation, NameViewDistance, NameViewPivot, NameViewLens,
@@ -131,8 +130,6 @@ const lut_wording_to_text: array[Wording, cstring] = [
   TipRowRemove: "Delete this object; its handle is reused by the next one you add.",
   # Page read better than window here, so page's sentence is one both now say.
   TipRowRadius: "Radius the point is drawn at, in world units; it shrinks with distance.",
-  # Window said more than page here -- "drawn flat" is fact about drawing page had lost.
-  TipRowShines: "A sun: lights every other point from where it stands, and is drawn flat.",
 
   # Apply section: operation over one or two operands.
   TipApplyArity: "Whether to list operations reading one operand or two.",
@@ -213,7 +210,6 @@ const lut_wording_to_text: array[Wording, cstring] = [
   NameRowLabel: "label",
   NameRowInk: "colour",
   NameRowSize: "size",
-  NameRowShines: "shines",
   NameRowCoefficients: "coefficients",
 
   # Apply section.

@@ -522,7 +522,7 @@ func isPointInView*(placed: Placement, radius: float, bounds: ViewBounds): bool 
 
 proc emitObject*(
   meshes: var MeshSet, placed: var Placement, tint: Rgba, scale: DrawExtent,
-  progress: float = 1.0, radius: float = RADIUS_OBJECT_DEFAULT, light: Direction = LIGHT_NONE
+  progress: float = 1.0, radius: float = RADIUS_OBJECT_DEFAULT
 ): Outcome =
   ## Turn one placed object into this frame's records, at this frame's camera.
   ##   Other half of `placeObject`: takes no multivector, so what object *is* was settled
@@ -534,8 +534,6 @@ proc emitObject*(
   ##   `radius` is how large point is drawn, in world units; every other kind ignores it.
   ##     Horizon point stands at `radius_horizon`, where any radius falls to least
   ##     on-screen size, so star reads as dot whatever its object says.
-  ##   `light` is direction finite point is shaded from; see `lighting`. Horizon point is
-  ##   never shaded: it is direction, not body.
   ##   `placed` is `var` because nothing here writes it (Art. VII.1).
   ##     Under JS backend value parameter is deep-copied at every call, and caller
   ##     emitting thousand held placements per frame would copy thousand nested objects.
@@ -551,7 +549,7 @@ proc emitObject*(
 
   of Case.PointAt:
     timed(Side.Emitting):
-      meshes.addMarker(placed.at, radius, light, tint, tint.alpha*progress)
+      meshes.addMarker(placed.at, radius, tint, tint.alpha*progress)
     Outcome.Finite
 
   of Case.PointToward:
@@ -562,7 +560,7 @@ proc emitObject*(
       star = pointFrom(add(scale.eye_point,
         wedge(progress*scale.radiusHorizon, toMultivector(placed.toward))))
     timed(Side.Emitting):
-      meshes.addMarker(star, radius, LIGHT_NONE, tint, tint.alpha*progress)
+      meshes.addMarker(star, radius, tint, tint.alpha*progress)
     Outcome.Horizon
 
   of Case.LineThrough:
@@ -628,8 +626,7 @@ proc addObject*(
   meshes: var MeshSet, scratch: var DrawScratch, geometry: Multivector, tint: Rgba,
   scale: DrawExtent, progress: float = 1.0,
   anchor_override: Option[Position] = none(Position),
-  bounds: Option[ViewBounds] = none(ViewBounds), radius: float = RADIUS_OBJECT_DEFAULT,
-  light: Direction = LIGHT_NONE
+  bounds: Option[ViewBounds] = none(ViewBounds), radius: float = RADIUS_OBJECT_DEFAULT
 ): Outcome =
   ## Append object, dispatching on geometry its grade stands for.
   ##   Place then emit in one call, for every caller with nothing to gain by keeping
@@ -642,8 +639,8 @@ proc addObject*(
   ##   `scratch` is taken for shape every other tessellation entry point has.
   ##   `bounds`, where given, skips point outside view before it costs emitting; Empty
   ##   then. See `isPointInView`.
-  ##   `radius` is point's drawn radius and `light` its sun's direction; see `emitObject`.
+  ##   `radius` is point's drawn radius; see `emitObject`.
   discard scratch
   var placed = placeObject(geometry, anchor_override)
   if bounds.isSome and not isPointInView(placed, radius, bounds.get): return Outcome.Empty
-  meshes.emitObject(placed, tint, scale, progress, radius, light)
+  meshes.emitObject(placed, tint, scale, progress, radius)
