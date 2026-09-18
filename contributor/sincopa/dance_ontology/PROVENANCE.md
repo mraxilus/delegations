@@ -441,10 +441,16 @@ the passive stiffness of a shoulder near the end of its rotation; at seven, thre
 the ease's end was under what forty newtons of lift at reach puts on a shoulder, and joints sat at
 their ends in most stills), the elbow at 15 (`ELBOW_LEAN`), the wrist at 6 (`WRIST_LEAN`, which
 rings at twelve hertz on a hand); the three are assumed. The arms weigh nothing, and the one thing
-weight does to an elbow -- turn it toward hanging below the line from shoulder to wrist -- is put
-back as one newton metre (`ELBOW_DOWN`); nothing else weight does is, so it neither loads the rise
-nor pulls a hand down. The wrist's own spring is five hertz (`WRIST_EASE`), the passive stiffness of
-a wrist, since at one hertz the wrists sat at their cone at rest once the elbow was turned down.
+weight does to a held arm's elbow -- turn it toward hanging below the line from shoulder to wrist --
+is put back as one newton metre (`ELBOW_DOWN`); nothing else weight does is, so it neither loads the
+rise nor pulls a hand down. A free arm gets none of it and rests with its elbow near straight
+(`HANG_BEND`, assumed): the fixed moment about a hanging arm's near vertical line, against an engine
+spring that gives twist next to nothing, an arm being thin about its own length, twisted every
+hanging arm forty degrees and swung it forward twenty, forearm pointing at the partner, so a free
+couple at rest stood with arms crossed between them. Verified by `trigid.nim`: a free couple at rest
+hang every arm near plumb, elbow near straight, untwisted, no arm within its own thickness of the
+other's, red first. The wrist's own spring is five hertz (`WRIST_EASE`), the passive stiffness of a
+wrist, since at one hertz the wrists sat at their cone at rest once the elbow was turned down.
 Friction where arm meets body is 0.2 (`FRICTION`), cloth on cloth: at the engine's 0.6 an arm lying
 over a head was dragged round with it as she turned under, winding her shoulder to its end.
 Rejected, each measured and each worse: gravity on the arms; higher damping; ramping the elbow;
