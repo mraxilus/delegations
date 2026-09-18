@@ -635,12 +635,20 @@ every still and eight sweeps as capsule ends the engine reports, at the radius i
 cut from the page itself so what is compared is what was ruled on -- beside the sim's still of it,
 one list of entries walked by two buttons or the arrow keys, with the reference's own drawing next
 to the joint readouts on the stage. Orthographic on purpose, so a capsule's outline is exactly a
-stadium; painter's order by depth, half weight where two capsules overlap rather than pretending
-otherwise; hue is side, shade is whose. A capsule of no length -- each palm is a sphere -- is filled
-as a disc rather than stroked as a line of no length (`drawn`), since browsers disagree on what that
-is: Chromium draws the round caps as a disc and WebKit draws nothing, and on the Architect's phone
-every hand vanished, each forearm ending 118 mm short of the grip it was joined at, seen on A7 on
-2026-09-18. Verified by `tdrawn.nim`, red first.
+stadium. Painter's order by depth, each capsule in pieces no longer than 40 mm and each piece by the
+depth of its own middle (`drawOrder`, `DAB`): a whole capsule ordered by its nearer end painted an
+arm hanging from a shoulder over the torso all the way down, its lower half showing through the
+torso's silhouette from near overhead (A5, the Architect's report, 2026-09-18). Hue is side, shade
+is whose, and each body is lit from its own front (`litAt`, `mixHex`), the side toward where the
+dancer faces light and the other side dark, a body facing the eye light all over, so facing is read
+from the body itself; the chevron on the floor and the line at shoulder height that said it before
+are gone, the Architect finding them noise. A capsule of no length -- each palm is a sphere -- is
+filled as a disc rather than stroked as a line of no length (`drawn`), since browsers disagree on
+what that is: Chromium draws the round caps as a disc and WebKit draws nothing, and on the
+Architect's phone every hand vanished, each forearm ending 118 mm short of the grip it was joined
+at, seen on A7 on 2026-09-18. Verified by `tdrawn.nim`: a capsule of no length is a disc, an arm
+hanging beside a torso is painted behind it where it is behind, and the front of each body is
+lighter than its back; the first two red first.
 
 **Against the floor, which is the Architect's.** The floor says everything gets a whole turn before
 it blocks, except a low wrap, which gets half. Nothing is tuned to it; every change is argued from
