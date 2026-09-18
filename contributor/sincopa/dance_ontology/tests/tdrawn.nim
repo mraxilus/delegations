@@ -24,3 +24,27 @@ suite "capsule on canvas":
     let p: Spot = (0.039, 0.211, 0.995)
     check drawnAs(p, p) == Drawn.Disc
     check drawnAs(p, (0.108, 0.244, 1.020)) == Drawn.Stroke
+
+  test "capsule hanging beside another is painted behind it where it is behind":
+    ## Architect, on viewer from near overhead: z ordering is messed up at some
+    ## angles.  Whole capsule was ordered by depth of its nearer end, so upper
+    ## arm hanging from shoulder above torso's top was painted over torso all
+    ## way down, and its lower half showed through torso's silhouette (A5).
+    ## Painted in pieces, each by its own depth, arm's lower pieces go under
+    ## torso's top and its shoulder end stays over it.
+    let
+      f: Framing = ([0.0, 0.0, 1.1], 1.0)
+      trunk = (a: (0.0, 0.0, 0.925), z: (0.0, 0.0, 1.235))
+      arm = (a: (0.0, 0.15, 1.35), z: (0.0, 0.15, 1.05))
+      order = drawOrder([trunk, arm], 0.0, 1.2, f)
+    proc place(cap: int; height: float): int =
+      ## Where in order piece of `cap` nearest `height` is painted.
+      var best = Inf
+      for i, p in order:
+        if p.cap != cap: continue
+        let off = abs((p.a.z + p.z.z) / 2.0 - height)
+        if off < best:
+          best = off
+          result = i
+    check place(1, 1.07) < place(0, 1.22)
+    check place(1, 1.33) > place(0, 1.22)
