@@ -28,11 +28,16 @@ const
     ## over one; finer than that buys under twentieth of turn, which is below
     ## anything any card asks.
   ROOM* = 1.0    ## And how far out from clear air search looks.
-  SMOOTH* = 0.005 ## Leaps within this of each other, metres, count as one: engine
-                  ## is not exactly mirror symmetric, and leaps of mirror-image
-                  ## holds differ by up to three millimetres, which chose stances
-                  ## two search steps apart for what should be one hold seen in
-                  ## mirror.  Nearer stance keeps tie.
+  SMOOTHER* = 2.0 ## Stance further out takes tie from nearer only for arms moving
+                  ## this many times less between moments.  Largest leap of walk is
+                  ## chaotic: seen in mirror it differs by up to fifth, and built
+                  ## from same source by another compiler by up to thirty five per
+                  ## cent, last bits amplified.  Tie broken within five millimetres
+                  ## chose stances two steps apart for one hold seen in mirror, and
+                  ## again for one hold built twice.
+  LOOK* = 0.1    ## Metres further out looked once turn runs free, for stance
+                 ## moving arms less: free way is not walked over whole `ROOM`,
+                 ## fifty walks where one did.
 
 
 type
@@ -238,14 +243,18 @@ func leapOf*(w: Walk): float =
           result = max(result, dist(p, q))
 
 func chosen*(walks: openArray[Carry]): int =
-  ## Which of walked distances couple stand at, -1 for none: one carrying
-  ## furthest, and among those carrying as far, one moving arms least between
-  ## moments, within `SMOOTH`, nearer keeping tie.
+  ## Which of walked distances couple stand at, -1 for none: nearest carrying
+  ## turn as far as any to one step, unless one further out moves arms less
+  ## than `SMOOTHER` times as far between moments.
+  ##   To one step: stop is decided at moment something gives, and mirror-image
+  ##     holds give one moment apart from same distance.  Furthest to last bit
+  ##     stood L-l at 0.42 for 1.00 and R-r at 0.38 for 0.98, two steps apart.
   result = -1
+  var far = -Inf
+  for c in walks: far = max(far, c.got)
   for i, c in walks:
-    if result < 0 or c.got > walks[result].got or
-       (c.got == walks[result].got and c.leap < walks[result].leap - SMOOTH):
-      result = i
+    if c.got != far and far - c.got > STEP + 1e-9: continue
+    if result < 0 or c.leap * SMOOTHER < walks[result].leap: result = i
 
 proc furthest(rig: Rig; band: Band; links: seq[Link]; who: Body;
               most, step: float; away: bool; head: Body): Walk =
@@ -258,18 +267,20 @@ proc furthest(rig: Rig; band: Band; links: seq[Link]; who: Body;
   ##   Nearest distance that carried turn was taken before, and nearest is
   ##     chest to chest: joined hands pinned between two torsos, then popping up
   ##     between heads 300 mm in one moment, at distance no couple would turn
-  ##     under arm at.  Couple stand where move is smooth.  Search steps out
-  ##     while that improves and stops when it does not, since walking every
-  ##     distance that carries free turn costs fifty walks where one did.
+  ##     under arm at.  Couple stand where move is smooth.  Once turn runs free
+  ##     search looks `LOOK` further out for that and no further, since walking
+  ##     every distance that carries free turn costs fifty walks where one did.
   var
     walks: seq[Walk]
     carries: seq[Carry]
+    free = Inf ## First distance turn ran free from.
   for apart in stands(rig):
+    if apart > free + LOOK + SEEK / 2.0: break
     let w = walked(rig, band, links, who, apart, most, step, away, head)
     if not w.restHolds: continue
     walks.add w
     carries.add (apart, (if w.stopped: w.at else: Inf), leapOf(w))
-    if carries[^1].got == Inf and chosen(carries) != carries.high: break
+    if carries[^1].got == Inf: free = min(free, apart)
   if carries.len > 0: result = walks[chosen(carries)]
 
 proc swept*(rig: Rig; band: Band; links: seq[Link]; who = Body.Two;

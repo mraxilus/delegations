@@ -170,6 +170,11 @@ suite "two dancers in rigid body engine":
     ##   Law is argument maximum itself, so search broken any way at all fails here:
     ##   best started at infinity, sign of step dropped, range stopping short, rest
     ##   that never held counted as carrying.
+    ##   To one step since 2026-09-18: stop is decided at moment something gives,
+    ##   and search counts distances carrying within one step as carrying as far,
+    ##   nearest keeping tie (`chosen`).  Exact, this law would fail from noise
+    ##   fix was for: one build carries one step more from one distance than
+    ##   another build does, and neither is wrong.
     for way in 0 .. 1:
       let
         step = (if way == 0: -STEP else: STEP)
@@ -178,7 +183,7 @@ suite "two dancers in rigid body engine":
       for apart in stands(HUMAN):
         let w = walked(HUMAN, Band.Torso, SHAKE, Body.Two, apart, 1.6, step,
                        false, Body.Two)
-        check w.carried <= chose.carried
+        check w.carried <= chose.carried + STEP + 1e-9
 
   test "turn couple are said to reach is turn some distance carries":
     ## `reaches` answers at first distance that carries turn rather than at best of
