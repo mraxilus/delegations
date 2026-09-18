@@ -462,6 +462,37 @@ suite "Camera":
       check isNear(clipped[2]/clipped[3], expected)
 
 
+  test "nothing far clips: the farthest star and the sky dome keep a float32 margin":
+    # Bug this guards: with far plane at star field's reach, `(far + near)/(far - near)`
+    #   put farthest stars and dome at 0.9 of far within two float32 ulps of far plane,
+    #   and Android GPU's rounding clipped them, points flickering as camera moved and
+    #   dome drawn in patches. Read as GPU reads: flattened float32 matrix, row dotted
+    #   in float32, at demo's reach and four orbit distances down to one unit.
+    when not defined(js):
+      const REACH = 268557.0
+      for distance in [122.0, 36.6, 5.0, 1.0]:
+        var camera = initCamera(
+          pivot = Position(x: 0, y: 0, z: 0), distance = distance, azimuth = 0.4,
+          elevation = 0.3,
+        )
+        camera.reach_scene = REACH
+        let
+          flat = camera.initMatrixViewProjection(1.6).flattened
+          eye = camera.eye
+          forward = camera.frame(eye).forward
+        for (depth, name) in [(REACH, "star"), (0.9*camera.distanceFar, "dome")]:
+          let at = eye + depth*forward
+          var (z, w) = (0.0'f32, 0.0'f32)
+          for (column, coordinate) in [(0, at.x), (1, at.y), (2, at.z)]:
+            z += flat[column*4 + 2]*float32(coordinate)
+            w += flat[column*4 + 3]*float32(coordinate)
+          z += flat[14]
+          w += flat[15]
+          check w > 0.0'f32
+          # Half of `SLACK_CLIP_FAR`, which fix names; projection before it left two ulps.
+          check w - z > float32(1.0/2048.0)*w
+
+
   test "whole transform carries pivot to centre of view":
     for i in 0 ..< SAMPLES:
       let camera = initCamera(
