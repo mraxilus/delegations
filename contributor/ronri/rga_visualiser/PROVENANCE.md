@@ -898,16 +898,17 @@ points drawn that way, and 367 with the reach. The reach (`framing.reachOf`) is 
 the camera at every derivation point rather than kept in it, because `home` and every path
 that replaces the camera value would drop a stored one.
 
-**Depth is logarithmic.** Every shader on both front-ends writes `camera.depthOf` of its own
-view depth, `log2(D / near) / log2(far / near)` scaled to clip depth, per fragment through
-`EXT_frag_depth` or GL 3.3's `gl_FragDepth` and per vertex where the page lacks the
-extension, so resolution is a fixed fraction of distance at every distance and a buffer of
-any width holds Io before Jupiter and a star before the sky dome alike. Not linear depth
-with the near plane raised to hold the ratio at 100,000: that spent nearly every step inside
-the first orbit distances, and with the far plane at a star field millions of units out the
-field and the dome fell into the last steps, where an Android GPU dropped every star past a
-few hundred thousand units from beside a far star. The near plane stays at 1/400 of the
-orbit distance whatever the far plane reaches, so nothing between eye and pivot clips.
+**Depth is logarithmic, written per fragment.** Every fragment shader on both front-ends writes
+`camera.depthOf` of its own view depth, `log2(D / near) / log2(far / near)` scaled to clip depth,
+through `EXT_frag_depth` or GL 3.3's `gl_FragDepth`, so resolution is a fixed fraction of distance
+at every distance. Not linear depth with the near plane raised to hold the ratio at 100,000: that
+spent nearly every step inside the first orbit distances, and with the far plane at a star field
+millions of units out the field and the dome fell into the last steps, where an Android GPU dropped
+the whole field from beside a far star. Not the logarithm in the clip position either: the clipper
+interpolates clip coordinates linearly, so a fan corner behind the eye, mapped far past the far
+plane, had its triangle cut beside the disc's centre, and the disc ended at a hard chord under a
+camera standing inside it. The near plane stays at 1/400 of the orbit distance whatever the far
+plane reaches, so nothing between eye and pivot clips.
 
 **The wheel zooms toward what the pointer is over** — the map reading of a zoom.
 `picking.anchorZoomAt` solves the anchor in three answers, in order: the finite object under
@@ -947,16 +948,16 @@ reason: the desktop's `SPEED_ORBIT` (0.008) is radians per pixel and the browser
 work in fractions of canvas width.
 
 *Checked.* Verified by `suites.nim`: the logarithmic depth maps near to −1 and far to +1, is
-monotone across every decade the demo spans, and keeps Io before Jupiter and a star before
-the dome by more than a 16-bit step. Verified by driven check: the sky is drawn behind a far
-star. Verified by driven wheel events: an object under the pointer drifts 0.000 px
-across a 3.2× zoom against 1.957 px with the pivot-level anchor, and wheeling back out
-returns to distance 19.000 and pivot (0, 0, 1). Verified by driven drags: 1.000 to 1.000 of
-height, mouse and two-finger alike. Verified by `suites.nim`: `norm(eye − pivot)` equals the held
-distance after a floored dolly; the pan's height invariance; the clamp's continuity; the
-reach stamped at every derivation point, which the undo-while-held check caught missing.
-Verified by driven keys: 500 ms of `w` moved the pivot 12.8 units with z unchanged to four
-decimals, shift 49.3. Assumed: that no ceiling is wanted by any reader.
+monotone across every decade the demo spans, and keeps Io before Jupiter and a star before the dome
+by more than a 16-bit step. Verified by driven checks: the sky is drawn behind a far star, and the
+ecliptic's disc reaches under a camera 1.5 units off Sol. Verified by driven wheel events: an object
+under the pointer drifts 0.000 px across a 3.2× zoom against 1.957 px with the pivot-level anchor,
+and wheeling back out returns to distance 19.000 and pivot (0, 0, 1). Verified by driven drags:
+1.000 to 1.000 of height, mouse and two-finger alike. Verified by `suites.nim`: `norm(eye − pivot)`
+equals the held distance after a floored dolly; the pan's height invariance; the clamp's continuity;
+the reach stamped at every derivation point, which the undo-while-held check caught missing.
+Verified by driven keys: 500 ms of `w` moved the pivot 12.8 units with z unchanged to four decimals,
+shift 49.3. Assumed: that no ceiling is wanted by any reader.
 
 ## Records And Shaders
 
@@ -1972,7 +1973,7 @@ the suite itself.
 - Conformal metric (`IS_CONFORMAL`) is unfinished in the library; this build is rigid 4D.
 - `.rgascene` is little-endian by rule, but only a little-endian host has ever written or
   read one; the byte-swapping path is unexercised.
-
+- A page whose WebGL lacks `EXT_frag_depth` keeps linear depth, and the far field's fault with it.
 - The demo's planet inclinations, ring phases and neighbour planes are stated simplifications.
 
 ## Open questions
