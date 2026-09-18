@@ -237,13 +237,14 @@ layout (location = 1) in vec3 in_centre;
 layout (location = 2) in vec3 in_arm_first;
 layout (location = 3) in vec3 in_arm_second;
 layout (location = 4) in vec4 in_fill;
-uniform mat4 view_projection;
 uniform vec3 eye;
 uniform vec3 forward;
 uniform vec3 axis_right;
 uniform vec3 axis_up;
 uniform float tangent_half_view;
 uniform float aspect;
+uniform float depth_near;
+uniform float depth_log;
 out vec4 vertex_colour;
 out vec2 vertex_view;
 out vec3 vertex_to_centre;
@@ -277,8 +278,8 @@ void main() {
       tanBounded(bearing_up + spread_up)/tall), -1.0, 1.0);
   }
   vertex_view = 0.5*(lo + hi) + 1.41421356*in_corner*0.5*(hi - lo);
-  vec4 centre_clip = view_projection*vec4(in_centre, 1.0);
-  float centre_depth = clamp(centre_clip.z/max(centre_clip.w, 1.0e-30), -1.0, 1.0);
+  float centre_depth = clamp(log2(max(depth, depth_near)/depth_near)*depth_log - 1.0,
+    -1.0, 1.0);
   gl_Position = vec4(vertex_view, centre_depth, 1.0);
   vertex_colour = in_fill;
   vertex_to_centre = to_centre;
@@ -290,7 +291,8 @@ void main() {
   ##   source in `gl.ts`; change to any one is not finished until other two are checked.
   ##   Each axis is bounded by sphere's limb in that axis's plane with sight axis; whole
   ##   view where sphere holds eye; corner is box's middle plus corner scaled by root two
-  ##   of half extents. Clip depth is centre's, for fragment stage to overwrite.
+  ##   of half extents. Clip depth is centre's logarithmic one, for fragment stage to
+  ##   overwrite.
 
 
 const SOURCE_FRAGMENT_DISC = """
@@ -457,7 +459,6 @@ type
     buffer_ribbon_corners: gl.Uint
     buffer_ribbon_records: gl.Uint
     program_disc: gl.Uint
-    location_disc_view_projection: gl.Int
     location_disc_depth_near: gl.Int
     location_disc_depth_log: gl.Int
     location_disc_eye: gl.Int
@@ -652,8 +653,6 @@ proc initRibbonProgram(renderer: var Renderer) =
 proc initDiscProgram(renderer: var Renderer) =
   ## Build disc program over `mesh.discCorners`, same source `glue.js` uploads.
   renderer.program_disc = linkProgram(SOURCE_VERTEX_DISC, SOURCE_FRAGMENT_DISC)
-  renderer.location_disc_view_projection =
-    gl.getUniformLocation(renderer.program_disc, "view_projection")
   renderer.location_disc_depth_near = gl.getUniformLocation(renderer.program_disc, "depth_near")
   renderer.location_disc_depth_log = gl.getUniformLocation(renderer.program_disc, "depth_log")
   renderer.location_disc_eye = gl.getUniformLocation(renderer.program_disc, "eye")
@@ -1025,9 +1024,6 @@ proc drawMeshes*(
   # Give both veil programs this frame's matrix before run walk.
   #   Walk switches between them per run.
   gl.useProgram(renderer.program_disc)
-  gl.uniformMatrix4fv(
-    renderer.location_disc_view_projection, 1, gl.FALSE, unsafeAddr flat[0]
-  )
   gl.uniform1f(renderer.location_disc_depth_near, gl.Float(scale.depthNear))
   gl.uniform1f(renderer.location_disc_depth_log, gl.Float(scale.depthLog))
   gl.uniform3f(renderer.location_disc_eye, gl.Float(eye.x), gl.Float(eye.y), gl.Float(eye.z))

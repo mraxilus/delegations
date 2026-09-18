@@ -189,7 +189,6 @@ function renderFrame(now_seconds: number) {
   //   Disc program takes camera too: its box is spanned in view and its fragments cast
   //   rays from eye.
   gl.useProgram(program_disc);
-  gl.uniformMatrix4fv(uniform_disc_mvp, false, data.view_projection);
   gl.uniform1f(uniform_disc_depth_near, data.camera_depth_near);
   gl.uniform1f(uniform_disc_depth_log, data.camera_depth_log);
   gl.uniform3f(uniform_disc_eye, data.camera_eye_x, data.camera_eye_y, data.camera_eye_z);
