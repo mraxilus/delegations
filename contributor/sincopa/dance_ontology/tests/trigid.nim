@@ -546,3 +546,28 @@ suite "arms move as arms do":
       echo &"    {name}: furthest any point moves between moments {most * 1000:.0f} mm, " &
         &"at {where:.2f}"
       check most < LEAP
+
+#[ Every Still Stands At Ease ]#
+
+suite "every still stands at ease":
+  ## Architect: every state is easily doable in reality without any strain,
+  ## effort or forcing; no clipping, no dislocations, no cheating.
+
+  test "hands are risen through second half of whole turn, and from rest pillion":
+    ## Head that passes under joined hands is under them at every wind past
+    ## first quarter, whole turns and all.  Keyed to distance from face to face,
+    ## which folds whole turns away, lift let hands down onto her head through
+    ## second half of every whole turn, and every diamond and swan was wound
+    ## with hands at shoulder.  Hold resting pillion is not face to face, and
+    ## its hands are risen from its rest on.
+    var c = build(HUMAN, restStance(HUMAN, 0.44), Band.Crown, WOUND, Body.Two)
+    for w in [0.0, 0.1, 0.3, 0.6, 0.8, 1.0, 1.4]:
+      c.stance = turned(restStance(HUMAN, 0.44), Body.Two, w)
+      check abs(c.wound - w) < 1e-9
+      check c.risen == (if w >= 0.25: 1.0 else: w / 0.25)
+    c.free()
+    var p = build(HUMAN, restStance(HUMAN, 0.44, away = true), Band.Crown, CHAIN, Body.Two,
+                  away = true)
+    check p.wound == 0.0
+    check p.risen == 1.0
+    p.free()
