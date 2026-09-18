@@ -7,20 +7,28 @@
 ## Three sizes of one arrangement, so cost reads as slope rather than single number.
 ##   `ScaleOrrery.Nearest` (60), `Neighbourhood` (360, default) and `Catalogue` (5038,
 ##   two handles short of pool). Every one is same construction truncated at different depth.
-## Also claim about world.
+## Also claim about world, made to scale.
+##   One world unit is one astronomical unit (`KILOMETRES_PER_AU`). Every distance is real
+##   distance and every drawn radius real radius: Sol 0.00465 units wide, Earth one unit
+##   out, Proxima 268,000 units out. Nothing is compressed to preference.
 ##   Every system but ours is real star known to carry planets, at real distance in real
-##   direction, carrying planets it really has at real relative distances.
+##   direction, carrying planets it really has at real semi-major axes.
 ##     From `neighbourhood.nim`, shipped snapshot of NASA Exoplanet Archive;
 ##     `PROVENANCE.md` records query, date and acknowledgement, and what is checked.
+##     Planet archive records no semi-major axis for is left out, not placed by guess.
 ##   `SOL` is our own, hand-written and modelled same way, at origin rest are measured
 ##   from. Nothing stands at `POSITION_ORRERY`'s coordinate but Sol itself.
+##   Every moon rings its planet in its real orbit plane; see `normalOfMoon`.
+##   Stated simplifications, each one claim short of ephemeris: planets ring Sol in
+##   ecliptic itself, inclinations dropped (Mercury's 7 degrees largest); where on its
+##   ring any body stands is spread by rule, not read off date; neighbour systems lie flat.
 ##
 ##   |------------------|-------------------------------------|--------------------------|
 ##   | Object             | Built from                          | Present when             |
 ##   |------------------|-------------------------------------|--------------------------|
 ##   | star             | placed at its real position         | always                   |
-##   | planets          | placed, ringing it at real radii    | as many as it has        |
-##   | ecliptic plane   | `star ∧ planet[0] ∧ planet[1]`      | it has two planets       |
+##   | planets          | placed, ringing it at real radii    | axis is on record        |
+##   | ecliptic plane   | `star ∧ along ∧ across`, its plane  | two planets are placed   |
 ##   |------------------|-------------------------------------|--------------------------|
 ##
 ## Sol alone also carries moons and only two finite lines in whole scene: `sol ∧ earth`
@@ -29,8 +37,9 @@
 ## Four objects in horizon, two of them points because only one can make plane.
 ##   Earth lies in Sol's ecliptic, so `att(sol ∧ earth)` sits *on* horizon line
 ##   ecliptic gives.
-##   Luna's ring is tipped out of it, so `att(earth ∧ luna)` sits off that line and spans
-##   horizon plane with it. See horizon block in `constructOrrery`.
+##   Luna's ring is tipped out of it by its real 5.16 degrees, so `att(earth ∧ luna)`
+##   sits off that line and spans horizon plane with it. See horizon block in
+##   `constructOrrery`.
 ## `objectsOf(scale)` objects on nose at every size, asserted.
 ##   Walk passes over system too large for room left rather than stopping on it.
 ##   Only Sol's block and four in horizon are fixed; everything between is however many
@@ -69,13 +78,15 @@ type
     parent*: int ## Which entry of `SOL` it rings.
     kilometres_orbit*: float ## Real semi-major axis about that parent, in kilometres.
     kilometres_radius*: float ## Real mean radius, in kilometres; see `radiusDrawnOf`.
+    inclination*: float ## Real inclination of its orbit to its reference plane, in degrees.
+    node*: float ## Real longitude of its ascending node on that plane, in degrees.
+    pole_ascension*: float ## Right ascension of reference plane's pole, in degrees, J2000.
+    pole_declination*: float ## Declination of reference plane's pole, in degrees, J2000.
 
-  System* = object ## Define where one system stands and how wide it is drawn.
+  System* = object ## Define where one system stands and which way its ring is spun.
     reach*: float ## How far its sun stands from `POSITION_ORRERY`, in world units.
     bearing*: float ## Which way it lies from that centre, in radians about vertical.
     rise*: float ## How far it stands above or below centre's level, in radians.
-    radius*: float ## How far outermost planet rings its sun, in world units.
-    lean*: float ## How far its plane leans out of horizontal, in radians.
     spin*: float ## Where first planet stands on its ring, in radians.
 
 
@@ -90,6 +101,27 @@ const
     ##   Not lifted to keep southern systems above ground; they stand below it, where they
     ##   are.
 
+  KILOMETRES_PER_AU* = 149_597_870.7
+    ## Fix how many kilometres one astronomical unit is, IAU 2012 definition.
+    ##   One world unit is one astronomical unit: every radius in kilometres and every
+    ##   orbit in kilometres is divided by this and nothing else.
+
+  AU_PER_PARSEC* = 206_264.806
+    ## Fix how many astronomical units one parsec is, 648,000 over pi.
+    ##   Every star's distance in parsecs is multiplied by this and nothing else.
+
+  OBLIQUITY_ECLIPTIC = degToRad(23.4392911)
+    ## Fix angle Earth's equator leans from ecliptic, J2000, in radians.
+    ##   Both catalogues and every moon's reference pole are equatorial, right ascension and
+    ##   declination; scene's ground is ecliptic, plane Sol's planets ring in. Turning
+    ##   equatorial direction about x axis by this puts it in ecliptic frame; see
+    ##   `toEcliptic`.
+
+  ASCENSION_POLE_ECLIPTIC = 270.0
+  DECLINATION_POLE_ECLIPTIC = 90.0 - 23.4392911
+    ## Name ecliptic's own north pole in equatorial terms.
+    ##   Reference pole of moons whose elements are given against ecliptic itself.
+
   SOL*: array[9, SolBody] = [
     SolBody(name: "sol", role: Role.Sun, distance: 0.0, kilometres_radius: 695_700.0),
     SolBody(name: "mercury", role: Role.Planet, distance: 0.39, kilometres_radius: 2_439.7),
@@ -100,11 +132,9 @@ const
     SolBody(name: "saturn", role: Role.Planet, distance: 9.58, kilometres_radius: 58_232.0),
     SolBody(name: "uranus", role: Role.Planet, distance: 19.20, kilometres_radius: 25_362.0),
     SolBody(name: "neptune", role: Role.Planet, distance: 30.05, kilometres_radius: 24_622.0),
-  ] ## One system modelling real one: ours, not to scale.
-    ##   Distances are real semi-major axes in astronomical units; `radiusOfSolBody` says
-    ##   what is done to them.
-    ##     True numbers kept because they are thing worth checking, and compression is
-    ##     then one function rather than nine hand-tuned constants.
+  ] ## One system modelling real one: ours, to scale.
+    ##   Distances are real semi-major axes in astronomical units, and are radii planets
+    ##   ring Sol at: one unit is one astronomical unit.
     ##   Sol and eight planets, nothing else: moons are table of own, since moon's
     ##   distance is measured from parent and one field holding two units is wrong.
     ##   Only system whose bodies are named and whose planets stand at different radii,
@@ -112,54 +142,81 @@ const
 
   MOONS*: array[21, SolMoon] = [
     SolMoon(name: "luna", parent: 3, kilometres_orbit: 384_400.0,
-      kilometres_radius: 1_737.4),
+      kilometres_radius: 1_737.4, inclination: 5.16, node: 125.08,
+      pole_ascension: ASCENSION_POLE_ECLIPTIC, pole_declination: DECLINATION_POLE_ECLIPTIC),
     SolMoon(name: "phobos", parent: 4, kilometres_orbit: 9_376.0,
-      kilometres_radius: 11.1),
+      kilometres_radius: 11.1, inclination: 1.1, node: 169.2,
+      pole_ascension: 317.7, pole_declination: 52.9),
     SolMoon(name: "deimos", parent: 4, kilometres_orbit: 23_463.0,
-      kilometres_radius: 6.2),
+      kilometres_radius: 6.2, inclination: 1.8, node: 54.3,
+      pole_ascension: 316.6, pole_declination: 53.5),
     SolMoon(name: "io", parent: 5, kilometres_orbit: 421_800.0,
-      kilometres_radius: 1_821.6),
+      kilometres_radius: 1_821.6, inclination: 0.0, node: 0.0,
+      pole_ascension: 268.1, pole_declination: 64.5),
     SolMoon(name: "europa", parent: 5, kilometres_orbit: 671_100.0,
-      kilometres_radius: 1_560.8),
+      kilometres_radius: 1_560.8, inclination: 0.5, node: 184.0,
+      pole_ascension: 268.1, pole_declination: 64.5),
     SolMoon(name: "ganymede", parent: 5, kilometres_orbit: 1_070_400.0,
-      kilometres_radius: 2_634.1),
+      kilometres_radius: 2_634.1, inclination: 0.2, node: 58.5,
+      pole_ascension: 268.2, pole_declination: 64.6),
     SolMoon(name: "callisto", parent: 5, kilometres_orbit: 1_882_700.0,
-      kilometres_radius: 2_410.3),
+      kilometres_radius: 2_410.3, inclination: 0.3, node: 309.1,
+      pole_ascension: 268.7, pole_declination: 64.8),
     SolMoon(name: "mimas", parent: 6, kilometres_orbit: 185_540.0,
-      kilometres_radius: 198.2),
+      kilometres_radius: 198.2, inclination: 1.6, node: 66.2,
+      pole_ascension: 40.6, pole_declination: 83.5),
     SolMoon(name: "enceladus", parent: 6, kilometres_orbit: 238_040.0,
-      kilometres_radius: 252.1),
+      kilometres_radius: 252.1, inclination: 0.0, node: 0.0,
+      pole_ascension: 40.6, pole_declination: 83.5),
     SolMoon(name: "tethys", parent: 6, kilometres_orbit: 294_670.0,
-      kilometres_radius: 531.1),
+      kilometres_radius: 531.1, inclination: 1.1, node: 273.0,
+      pole_ascension: 40.6, pole_declination: 83.5),
     SolMoon(name: "dione", parent: 6, kilometres_orbit: 377_420.0,
-      kilometres_radius: 561.4),
+      kilometres_radius: 561.4, inclination: 0.0, node: 0.0,
+      pole_ascension: 40.6, pole_declination: 83.5),
     SolMoon(name: "rhea", parent: 6, kilometres_orbit: 527_070.0,
-      kilometres_radius: 763.8),
+      kilometres_radius: 763.8, inclination: 0.3, node: 133.7,
+      pole_ascension: 40.6, pole_declination: 83.5),
     SolMoon(name: "titan", parent: 6, kilometres_orbit: 1_221_870.0,
-      kilometres_radius: 2_574.7),
+      kilometres_radius: 2_574.7, inclination: 0.3, node: 78.6,
+      pole_ascension: 36.4, pole_declination: 84.0),
     SolMoon(name: "iapetus", parent: 6, kilometres_orbit: 3_560_840.0,
-      kilometres_radius: 734.5),
+      kilometres_radius: 734.5, inclination: 7.6, node: 86.5,
+      pole_ascension: 288.7, pole_declination: 78.9),
     SolMoon(name: "miranda", parent: 7, kilometres_orbit: 129_900.0,
-      kilometres_radius: 235.8),
+      kilometres_radius: 235.8, inclination: 4.4, node: 100.9,
+      pole_ascension: 77.311, pole_declination: 15.175),
     SolMoon(name: "ariel", parent: 7, kilometres_orbit: 190_900.0,
-      kilometres_radius: 578.9),
+      kilometres_radius: 578.9, inclination: 0.0, node: 0.0,
+      pole_ascension: 77.311, pole_declination: 15.175),
     SolMoon(name: "umbriel", parent: 7, kilometres_orbit: 266_000.0,
-      kilometres_radius: 584.7),
+      kilometres_radius: 584.7, inclination: 0.1, node: 174.8,
+      pole_ascension: 77.311, pole_declination: 15.175),
     SolMoon(name: "titania", parent: 7, kilometres_orbit: 436_300.0,
-      kilometres_radius: 788.4),
+      kilometres_radius: 788.4, inclination: 0.1, node: 29.5,
+      pole_ascension: 77.311, pole_declination: 15.175),
     SolMoon(name: "oberon", parent: 7, kilometres_orbit: 583_500.0,
-      kilometres_radius: 761.4),
+      kilometres_radius: 761.4, inclination: 0.1, node: 76.8,
+      pole_ascension: 77.311, pole_declination: 15.175),
     SolMoon(name: "triton", parent: 8, kilometres_orbit: 354_760.0,
-      kilometres_radius: 1_353.4),
+      kilometres_radius: 1_353.4, inclination: 157.3, node: 178.1,
+      pole_ascension: 299.8, pole_declination: 43.1),
     SolMoon(name: "nereid", parent: 8, kilometres_orbit: 5_513_800.0,
-      kilometres_radius: 170.0),
-  ] ## Major named satellites of modelled system, real semi-major axes and radii in km.
+      kilometres_radius: 170.0, inclination: 5.1, node: 319.5,
+      pole_ascension: ASCENSION_POLE_ECLIPTIC, pole_declination: DECLINATION_POLE_ECLIPTIC),
+  ] ## Major named satellites of modelled system, real semi-major axes and radii in km,
+    ## real orbit orientation.
     ##   Major ones, not all: some three hundred are known, most unnamed rocks; these are
     ##   ones reader recognises, stated here so what is drawn is what is written down.
-    ##   `radiusOfMoon` says what is done to orbit's kilometres.
-    ##     Phobos rings Mars 588 times nearer than Nereid rings Neptune, so same logarithm
-    ##     `radiusOfSolBody` uses squashes it.
-    ##   `radiusDrawnOf` says what is done to radius's.
+    ##   Orientation is JPL's mean elements: inclination and node against each moon's own
+    ##   reference plane, that plane named by its pole. Luna and Nereid against ecliptic;
+    ##   Uranus's five against Uranus's equator, pole being spin's own (RA 77.311, Dec
+    ##   15.175), antipode of IAU's north, so their orbits read prograde about it as
+    ##   elements state them; rest against local Laplace planes. `normalOfMoon` turns each
+    ##   into one unit normal in scene's ecliptic frame. `PROVENANCE.md` names source and
+    ##   date.
+    ##   `radiusDrawnOf` says what is done to radius's: divided into astronomical units,
+    ##   nothing more.
     ##   `parent` indexes `SOL`; static block below checks every one is planet.
 
   INDEX_SOL_EARTH = 3
@@ -167,135 +224,35 @@ const
     ##   Named rather than searched: one body arrangement's orbit line joins, load-bearing
     ##   in three places. Held to `SOL`'s name by compile-time check below.
 
-  INDEX_SOL_URANUS = 7
   INDEX_SOL_NEPTUNE = 8
-    ## Name which entries of `SOL` are two outermost planets.
-    ##   Pair ecliptic is spanned from, and body setting system's scale.
-    ##   Named rather than counted from end, which slid ecliptic onto wrong pair when last
-    ##   entry was removed. Each is held by compile-time check below.
+    ## Name which entry of `SOL` is outermost planet, body setting system's reach.
+    ##   Named rather than counted from end, which slid reach onto wrong body when last
+    ##   entry was removed. Held by compile-time check below.
 
   INDEX_MOON_LUNA = 0
     ## Name which entry of `MOONS` is Luna.
     ##   Second finite line joins it to Earth, and horizon plane exists only because
     ##   Luna's ring is tipped out of ecliptic; load-bearing as `INDEX_SOL_EARTH` is.
 
-  SYSTEM_SOL = System(reach: 0.0, bearing: 0.0, rise: 0.0, radius: 12.0, lean: 0.0,
-    spin: 0.4)
-    ## Place Sol, and say how wide it is drawn.
+  SYSTEM_SOL = System(reach: 0.0, bearing: 0.0, rise: 0.0, spin: 0.4)
+    ## Place Sol.
     ##   At `POSITION_ORRERY` itself, reach zero: Sol is origin every other system is
     ##   measured from, so it is one system not placed at all.
-    ##   Lean zero: ecliptic lies flat on ground grid, plane z = 0 grid is ruled on.
-    ##     That is why moons have tilt of own (`TILT_MOON`): lean once tipped both
-    ##     system's plane and Luna's ring, and horizon plane is built from difference.
+    ##   Its ecliptic lies flat on ground grid, plane z = 0 grid is ruled on; every other
+    ##   direction in scene is measured against it.
 
-  UNITS_PER_PARSEC* = 100.0
-    ## Fix how many world units one parsec stands for.
-    ##   Single number turning real neighbourhood into scene.
-    ##     Proxima, 1.30 parsecs out, stands 130 units from Sol, fourteen neighbour
-    ##     widths; outermost star at 31.5 parsecs stands about 3,153 units out.
-    ##   Chosen, not derived: knob for how far apart.
-    ##     What reads as clustered is *ratio* of spacing to system size, so
-    ##     `RADIUS_NEIGHBOUR` and `SYSTEM_SOL.radius` do not move with it.
-    ##     Cost is stated at `RADIUS_ORRERY`.
-    ##   Units-per-parsec rather than reciprocal because that is question anyone asks.
-
-  RADIUS_NEIGHBOUR* = 9.0
-    ## Fix how wide neighbour system is drawn, in world units.
-    ##   One width for all: real extents differ enormously, but at this scale difference
-    ##   is invisible and pretending to it is fiction dressed as data.
-    ##   Sol is drawn wider (`SYSTEM_SOL.radius`) because it is one system reader looks
-    ##   into.
-
-  FACTOR_ISOLATION_ORRERY* = 2.0
-    ## Fix how many times combined width two systems' suns must stand apart.
-    ##   Concrete meaning of isolated, checkable: nearer than this bodies interleave.
-    ##     Held by suite case over built scene.
-    ##   Two, not three: clear gap between outer edges is still as wide as both systems,
-    ##   and every unit demanded here is paid by shrinking systems against framed view.
-    ##   Table measures 2.20 at tightest pair, so floor is pinned just under what layout
-    ##   achieves: edit eating tenth of margin fails run.
-
-  FRAMED_ORRERY* = 2
-    ## Fix how many systems, nearest first, demo's opening camera is fitted to.
-    ##   Sol and Proxima, two of three hundred and thirty-two.
-    ##     Fitted to more, opening camera stood so far off that nothing was left to go and
-    ##     find.
-    ##   Distant stars stay *visible* whatever this is: point never falls under least
-    ##   pixel size (`mesh.DIAMETER_POINT_LEAST`).
+  RADIUS_ORRERY* = SOL[INDEX_SOL_NEPTUNE].distance
+    ## Fix how far out demo's camera stands back to hold Sol's system to Neptune.
+    ##   Opening frame holds our own system whole and nothing beyond it: nearest star
+    ##   stands nine thousand Neptune orbits out, and frame holding it would show one dot.
+    ##   Every body is under least dot from here; reader dollies in to any of them.
+    ##   Folded from table, so it moves when `SOL` does.
 
 const
-  RADIUS_SOL_DRAWN = 0.6
-    ## Fix how large Sol is drawn, in world units, anchor every body's size is scaled from.
-    ##   Under quarter of Mercury's ring at 2.75, so innermost planet stands clear; wider
-    ##   than opening camera's least dot, so Sol reads as sun among stars from 139 units.
-  KILOMETRES_SOL = SOL[0].kilometres_radius
-    ## Name Sol's real radius, denominator of `radiusDrawnOf`.
-  RADIUS_NEIGHBOUR_SUN = RADIUS_SOL_DRAWN
-    ## Fix how large every neighbour star is drawn.
-    ##   Catalogue carries no radii, and one figure for all is honest about that; Sol's
-    ##   own, so our star is not singled out.
-
-
-func radiusDrawnOf*(kilometres: float): float =
-  ## Report how large body of real radius `kilometres` is drawn, in world units.
-  ##   Square root of ratio to Sol, anchored at `RADIUS_SOL_DRAWN`.
-  ##     True scale is unreadable: Sol's real radius is 0.0047 astronomical units, and at
-  ##     Mercury's seven units per unit of orbit that is 0.03, Earth 0.0003, every body
-  ##     under least dot from any camera that shows two of them. Picture would be one
-  ##     before sizes existed.
-  ##     Linear scale anchored at Sol puts Earth at 0.006, still dot beside 0.6 sun.
-  ##     Square root keeps order and compresses Sol-to-Earth ratio from 109 to 10: Sol,
-  ##     Jupiter, Earth and Luna read as four sizes, at 0.6, 0.19, 0.057 and 0.03.
-  ##   Exported so suite pins bodies against it.
-  RADIUS_SOL_DRAWN*sqrt(kilometres/KILOMETRES_SOL)
-
-
-const
-  RADIUS_NEIGHBOUR_PLANET = radiusDrawnOf(SOL[INDEX_SOL_EARTH].kilometres_radius)
-    ## Fix how large every neighbour planet is drawn.
-    ##   Archive carries no radii either; Earth's, same rule as suns take Sol's.
   COUNT_OBJECT_HORIZON = 4
     ## Count objects closing block comes to.
     ##   Four, not three: two points in horizon, because one cannot make plane. See
     ##   horizon block in `constructOrrery`.
-
-  RADIUS_MOON_NEAREST = 0.08
-  RADIUS_MOON_FURTHEST = 0.32
-    ## Fix how far nearest and furthest moon ring parents' drawn rims, in world units.
-    ##   From rim rather than centre; see `radiusOfMoon`.
-    ##   Small, necessarily: tightest planet pair, Venus and Earth, stands 0.74 apart, so
-    ##   moon ring wider than third of that reaches next orbit.
-    ##     Moon is dot beside planet at opening camera and separate body once reader goes
-    ##     and looks.
-    ##   Range rather than single multiple: twenty-one moons need range to map onto.
-    ##   From rim, since planet now has one: Io's ring measured from Jupiter's centre lay
-    ##   inside Jupiter's disc, at 0.22 against 0.19.
-
-
-  TILT_MOON = 0.0897
-    ## Fix how far moon's ring leans out of planet's orbital plane, in radians.
-    ##   Luna's real inclination to ecliptic, 5.14 degrees.
-    ##     One figure for every moon: real inclinations are all small, and one that has
-    ##     to be right is Luna's.
-    ##   Horizon plane exists only because this is not zero.
-    ##     `addHorizon` refuses pair if this ever goes flat.
-
-  SHIFT_SOL = 1.0
-    ## Fix how far `radiusOfSolBody`'s logarithm is lifted before normalising.
-    ##   Without it Mercury lands at radius zero, *inside* Sol.
-    ##   One keeps Venus and Earth about sixteenth of system's radius apart, two clear
-    ##   dots at framed camera.
-
-  AU_NEIGHBOUR_NEAREST = 0.01
-    ## Fix nearest semi-major axis neighbour ring's logarithm is scaled from.
-    ##   Real planets come far closer to stars than Mercury does, so scale cannot start
-    ##   where Sol's does.
-    ##   Clamped: below this planet is drawn at ring's inner limit, honest about drawing
-    ##   being unable to separate it from star.
-
-  AU_NEIGHBOUR_FURTHEST = 30.0
-    ## Fix furthest semi-major axis scale runs to, Neptune's own.
-    ##   Neighbour's ring and Sol's read on same scale.
 
 const lut_role_to_ink*: array[Role, Ink] = [
   Role.Sun: Ink.Copper,
@@ -318,6 +275,68 @@ const lut_role_to_ink*: array[Role, Ink] = [
 
 
 
+#[ Frames ]#
+
+func directionEquatorial(ascension, declination: float): Direction =
+  ## Report unit direction right ascension and declination name, both in degrees.
+  ##   Equatorial frame: x toward vernal equinox, z along Earth's spin axis.
+  let
+    along = degToRad(ascension)
+    up = degToRad(declination)
+  Direction(x: cos(up)*cos(along), y: cos(up)*sin(along), z: sin(up))
+
+
+func toEcliptic(d: Direction): Direction =
+  ## Turn equatorial direction into ecliptic frame, scene's own.
+  ##   Rotation about shared x axis, vernal equinox, by `OBLIQUITY_ECLIPTIC`: ecliptic's
+  ##   pole lands on +z, where ground grid's normal is.
+  Direction(
+    x: d.x,
+    y: d.y*cos(OBLIQUITY_ECLIPTIC) + d.z*sin(OBLIQUITY_ECLIPTIC),
+    z: -d.y*sin(OBLIQUITY_ECLIPTIC) + d.z*cos(OBLIQUITY_ECLIPTIC),
+  )
+
+
+func turned(first, second: Direction; angle: float): Direction =
+  ## Turn `first` toward `second` by `angle`, both unit and perpendicular.
+  Direction(
+    x: first.x*cos(angle) + second.x*sin(angle),
+    y: first.y*cos(angle) + second.y*sin(angle),
+    z: first.z*cos(angle) + second.z*sin(angle),
+  )
+
+
+func normalOfMoon*(moon: SolMoon): Direction =
+  ## Report unit normal of moon's real orbit plane, in scene's ecliptic frame.
+  ##   Elements name plane against reference plane whose pole is given: node is where
+  ##   orbit climbs through reference plane, measured from where reference plane climbs
+  ##   through equator; inclination is how far orbit leans from reference plane about that
+  ##   node. Two rotations, both right-handed about their axes, then whole thing turned
+  ##   into ecliptic frame.
+  ##   Reference pole along equator's own z, ecliptic's never, leaves node's origin
+  ##   undefined; no moon's is, and guard takes equinox for it.
+  ##   Exported so suite pins Luna's lean, Triton's retrograde ring and Uranus's tipped
+  ##   family against it.
+  let
+    pole = directionEquatorial(moon.pole_ascension, moon.pole_declination)
+    across_equator = normalize(cross(Direction(x: 0, y: 0, z: 1), pole))
+    origin_node = across_equator.get(Direction(x: 1, y: 0, z: 0))
+    node = turned(origin_node, cross(pole, origin_node), degToRad(moon.node))
+    normal = turned(pole, cross(node, pole), degToRad(moon.inclination))
+  toEcliptic(normal)
+
+
+func spanOfNormal(normal: Direction): (Direction, Direction) =
+  ## Report two unit directions spanning plane of unit `normal`, node first.
+  ##   First lies along plane's ascending node on ecliptic, where plane climbs through
+  ##   ground; second is normal turned onto it, so pair is right-handed about normal.
+  ##   Plane lying flat has no node, and takes x axis.
+  let node = normalize(cross(Direction(x: 0, y: 0, z: 1), normal))
+  let first = node.get(Direction(x: 1, y: 0, z: 0))
+  (first, cross(normal, first))
+
+
+
 #[ Construction ]#
 
 func sunOf(system: System): Position =
@@ -336,30 +355,12 @@ func spanOf(system: System): (Direction, Direction) =
   ## Report two directions system's own plane is spanned by.
   ##   One place orientation is written down, so planet placed on its ecliptic is on very
   ##   plane scene holds.
-  ##   `lean` tips first direction out of horizontal; second stays level, so lean of zero
-  ##   lays system flat.
+  ##   Flat: every system's plane is level with Sol's ecliptic, turned about vertical by
+  ##   its bearing so first planet's phase reads outward. Real orientation of any
+  ##   neighbour's plane is not on record, and none is claimed.
   (
-    Direction(x: cos(system.bearing)*cos(system.lean),
-      y: sin(system.bearing)*cos(system.lean), z: sin(system.lean)),
+    Direction(x: cos(system.bearing), y: sin(system.bearing), z: 0.0),
     Direction(x: -sin(system.bearing), y: cos(system.bearing), z: 0.0),
-  )
-
-
-func normalOf(system: System): Direction =
-  ## Report unit normal of system's own plane.
-  ##   `spanOf` returns orthonormal pair, so cross product is already unit.
-  ##     Reason pair is built orthonormal: everything tipped out of plane is tipped by
-  ##     rotation, and axis not of length one stretches what it turns.
-  let (along, across) = spanOf(system)
-  cross(along, across)
-
-
-func tipped(first, second: Direction; angle: float): Direction =
-  ## Turn `first` toward `second` by `angle`, both unit and perpendicular.
-  Direction(
-    x: first.x*cos(angle) + second.x*sin(angle),
-    y: first.y*cos(angle) + second.y*sin(angle),
-    z: first.z*cos(angle) + second.z*sin(angle),
   )
 
 
@@ -381,64 +382,38 @@ func angleRing(spin: float; index, count: int): float =
   spin + TAU*float(index)/float(count + 1)
 
 
-func radiusOfSolBody(body: SolBody): float =
-  ## Report how far body of `SOL` rings Sol in scene, in world units.
-  ##   Not to scale, squashed by logarithm.
-  ##     Real distances span 0.39 to 30.05 astronomical units, range of 77: laid out
-  ##     faithfully, four inner planets share innermost fiftieth as single dot.
-  ##     Logarithm keeps order and shape of spacing while compressing 77 to about 5.
-  ##   Lifted by `SHIFT_SOL` before normalising, or Mercury lands on Sol; scaled so
-  ##   Neptune sits at exactly system's radius.
-  let
-    nearest = ln(SOL[1].distance)
-    furthest = ln(SOL[INDEX_SOL_NEPTUNE].distance)
-    span = furthest - nearest + SHIFT_SOL
-  SYSTEM_SOL.radius*(ln(body.distance) - nearest + SHIFT_SOL)/span
+func radiusDrawnOf*(kilometres: float): float =
+  ## Report how large body of real radius `kilometres` is drawn, in world units.
+  ##   Real radius in astronomical units, since one world unit is one: Sol 0.00465,
+  ##   Earth 0.0000426, Phobos 0.000000074. Every body is under least dot until reader
+  ##   dollies close enough to resolve it, and then it is its real size.
+  ##   Exported so suite pins bodies against it.
+  kilometres/KILOMETRES_PER_AU
 
 
 func radiusOfMoon(moon: SolMoon): float =
   ## Report how far moon of `MOONS` rings its planet's centre in scene, in world units.
-  ##   Same logarithm `radiusOfSolBody` uses: real axes run from Phobos at 9,376 km to
-  ##   Nereid at 5.5 million, range of 588.
-  ##   Mapped onto `RADIUS_MOON_NEAREST`..`RADIUS_MOON_FURTHEST` rather than multiple of
-  ##   system's radius: what bounds moon ring is gap to next planet's orbit, distance in
-  ##   world units.
-  var nearest = MOONS[0].kilometres_orbit
-  var furthest = MOONS[0].kilometres_orbit
-  for other in MOONS:
-    nearest = min(nearest, other.kilometres_orbit)
-    furthest = max(furthest, other.kilometres_orbit)
-  let share = (ln(moon.kilometres_orbit) - ln(nearest))/(ln(furthest) - ln(nearest))
-  # From parent's rim, so ring clears disc parent is drawn as; see `RADIUS_MOON_NEAREST`.
-  radiusDrawnOf(SOL[moon.parent].kilometres_radius) +
-    RADIUS_MOON_NEAREST + share*(RADIUS_MOON_FURTHEST - RADIUS_MOON_NEAREST)
+  ##   Real semi-major axis in astronomical units, from parent's centre, as it is measured.
+  moon.kilometres_orbit/KILOMETRES_PER_AU
 
 
-func radiusOfNeighbourPlanet(planet: NeighbourPlanet; which, count: int): float =
-  ## Report how far real planet rings its star in scene, in world units.
-  ##   Same logarithm `radiusOfSolBody` uses: real axes in one system span three orders
-  ##   of magnitude.
-  ##   Where archive carries no semi-major axis, planet is placed by order among siblings,
-  ##   spread evenly over ring.
-  ##     One place number is supplied rather than read, confined to planets
-  ##     `neighbourhood.nim` stores as `0.0`.
-  if planet.au <= 0.0:
-    return RADIUS_NEIGHBOUR*(0.35 + 0.65*float(which + 1)/float(max(count, 1)))
-  let
-    nearest = ln(AU_NEIGHBOUR_NEAREST)
-    span = ln(AU_NEIGHBOUR_FURTHEST) - nearest + SHIFT_SOL
-  RADIUS_NEIGHBOUR*clamp((ln(planet.au) - nearest + SHIFT_SOL)/span, 0.12, 1.0)
+func placedOf*(star: Star): int =
+  ## Report how many of real star's planets are placed: those with semi-major axis on record.
+  ##   Archive stores missing axis as `0.0` (`neighbourhood.nim`); planet with none is left
+  ##   out rather than placed by guess, since distance is whole of what this scene claims.
+  ##   Exported so suite can count what is left out.
+  result = 0
+  for which in star.first ..< star.first + star.planets:
+    if PLANETS[which].au > 0.0: inc result
 
 
 static:
   doAssert SOL[INDEX_SOL_EARTH].name == "earth",
     &"`INDEX_SOL_EARTH` must name Earth, whose orbit line joins it to Sol and whose " &
       &"attitude is the horizon point; got `{SOL[INDEX_SOL_EARTH].name}`."
-  doAssert SOL[INDEX_SOL_URANUS].name == "uranus" and
-      SOL[INDEX_SOL_NEPTUNE].name == "neptune",
-    &"`INDEX_SOL_URANUS` and `INDEX_SOL_NEPTUNE` must name the two outermost planets, " &
-      &"which span the ecliptic and set the system's scale; got " &
-      &"`{SOL[INDEX_SOL_URANUS].name}` and `{SOL[INDEX_SOL_NEPTUNE].name}`."
+  doAssert SOL[INDEX_SOL_NEPTUNE].name == "neptune",
+    &"`INDEX_SOL_NEPTUNE` must name the outermost planet, which sets the system's reach; " &
+      &"got `{SOL[INDEX_SOL_NEPTUNE].name}`."
   doAssert MOONS[INDEX_MOON_LUNA].name == "luna",
     &"`INDEX_MOON_LUNA` must name Luna, whose line to Earth gives the horizon plane " &
       &"its attitude; got `{MOONS[INDEX_MOON_LUNA].name}`."
@@ -448,6 +423,9 @@ static:
         SOL[moon.parent].role == Role.Planet,
       &"Every moon must ring a planet of `SOL`, see `MOONS`' own `parent` column; got " &
         &"`{moon.parent}` for `{moon.name}`."
+    doAssert moon.kilometres_orbit > SOL[moon.parent].kilometres_radius + moon.kilometres_radius,
+      &"Every moon must ring its planet outside both bodies, or the two discs overlap; got " &
+        &"`{moon.kilometres_orbit}` km for `{moon.name}`."
 
 
 func addHorizon(
@@ -469,39 +447,43 @@ func addPlane(
   scene: var Scene, geometry: Multivector, label: string, now: float, anchor: Position
 ) =
   ## Add derived plane, refusing anything that is not one.
-  ##   Three collinear points wedge to multivector of no clean grade, which `objects.kindOf`
-  ##   reports as nothing to draw: object takes handle and never appears.
-  ##   Collinearity comes from layout table and any edit can reintroduce it; `angleRing`
-  ##   says what edit to avoid.
+  ##   Plane is joined from sun and two directions its planets ring along, never from
+  ##   three of its points: join of three points millions of units out sums products of
+  ##   their coordinates and cancels to noise, one part in ten of plane's own normal,
+  ##   where point and two directions is same plane with nothing to cancel.
+  ##   Guard stays: directions that fail to span leave multivector of no clean grade,
+  ##   which `objects.kindOf` reports as nothing to draw.
   doAssert kindOf(geometry) == some(Kind.Plane),
-    &"Orrery must derive `{label}` from three points spanning a plane, so the layout " &
-      &"holds a collinear triple; got `{kindOf(geometry)}`."
+    &"Orrery must derive `{label}` from a point and two directions spanning a plane; got " &
+      &"`{kindOf(geometry)}`."
   scene.addObject(geometry, label, lut_role_to_ink[Role.Derived], now, some(anchor))
 
 
 func objectsOf*(star: Star): int =
   ## Report how many scene objects one real star comes to.
   ##   Exported because suite bounds how far fill may depart from nearest-first with it.
-  ##   Itself, known planets, and ecliptic plane it earns with two planets to span one.
+  ##   Itself, planets with axis on record, and ecliptic plane it earns with two placed
+  ##   planets to span one.
   ##     Every further object would be invention; great majority come to one object.
-  1 + star.planets + (if star.planets >= 2: 1 else: 0)
+  let placed = placedOf(star)
+  1 + placed + (if placed >= 2: 1 else: 0)
 
 
 func systemAt(star: Star): System =
-  ## Report where real star stands and how wide its system is drawn.
+  ## Report where real star stands.
   ##   Right ascension and declination are real direction, distance real length:
   ##   placement is coordinate conversion, not layout.
-  ##     Declination measures up from celestial equator and ascension around it, exactly
-  ##     `rise`/`bearing` pair `sunOf` takes.
-  ##   `lean` and `spin` are one thing here *not* real: no orientation is claimed.
-  ##     Spread by star's own coordinates so no two systems lie parallel; deterministic,
+  ##     Catalogue frame is equatorial and scene's is ecliptic, so direction is turned
+  ##     by `toEcliptic` first; declination read straight as rise stood every star
+  ##     23 degrees off where it is against Sol's planets.
+  ##   `spin` is one thing here *not* real: where on its ring each planet stands.
+  ##     Spread by star's own coordinates so no two systems' phases agree; deterministic,
   ##     stated as arbitrary.
+  let toward = toEcliptic(directionEquatorial(star.ascension, star.declination))
   System(
-    reach: star.parsecs*UNITS_PER_PARSEC,
-    bearing: degToRad(star.ascension),
-    rise: degToRad(star.declination),
-    radius: RADIUS_NEIGHBOUR,
-    lean: 0.25 + 0.9*abs(sin(star.ascension)),
+    reach: star.parsecs*AU_PER_PARSEC,
+    bearing: arctan2(toward.y, toward.x),
+    rise: arcsin(clamp(toward.z, -1.0, 1.0)),
     spin: star.declination,
   )
 
@@ -546,42 +528,22 @@ const SCALE_ORRERY_DEFAULT* = ScaleOrrery.Neighbourhood
 const
   OBJECTS_FIXED_ORRERY* = COUNT_OBJECT_HORIZON + OBJECTS_SOL
     ## Count objects arrangement comes to before single neighbour is placed.
-    ##   Folded from tables rather than written beside them, for reason `RADIUS_ORRERY` is.
+    ##   Folded from tables rather than written beside them, so it moves when they do.
 
   OBJECTS_ORRERY_MIN* = OBJECTS_FIXED_ORRERY + objectsOf(STARS[0])
     ## Count smallest arrangement there is.
-    ##   Sol entire, block in horizon, and one neighbour opening camera is fitted to.
+    ##   Sol entire, block in horizon, and one neighbour: neighbourhood of one system is
+    ##   no neighbourhood, so no size may stop short of nearest star.
     ##   Floor rather than preference.
     ##     Below `OBJECTS_FIXED_ORRERY` scene cannot hold Sol, and block in horizon takes
-    ##     attitudes of Sol's objects. One neighbour beyond is what `RADIUS_ORRERY` needs
-    ##     to be true.
+    ##     attitudes of Sol's objects.
     ##   Folded, so it moves when `SOL`, `MOONS` or catalogue's nearest entry does.
 
 static:
   for scale in ScaleOrrery:
     doAssert objectsOf(scale) >= OBJECTS_ORRERY_MIN,
       &"`ScaleOrrery.{scale}` must ask for at least `{OBJECTS_ORRERY_MIN}` objects, Sol, the " &
-        &"block in horizon and the one neighbour the opening camera is fitted to; got " &
-        &"`{objectsOf(scale)}`."
-  doAssert FRAMED_ORRERY == 2,
-    &"`OBJECTS_ORRERY_MIN` folds in one neighbour because `FRAMED_ORRERY` is 2, and must " &
-      &"fold in that many less one; got `{FRAMED_ORRERY}`."
-
-const RADIUS_ORRERY* = block:
-  ## Report how far out demo's camera stands back to hold systems it is meant to hold.
-  ##   Caller frames arrangement without knowing what is in it.
-  ##   Folded from table, for reason `OBJECTS_FIXED_ORRERY` is.
-  ##     Only nearest `FRAMED_ORRERY` are folded in.
-  ##     One figure for every size, which `OBJECTS_ORRERY_MIN` keeps true.
-  ##   At 100 units per parsec this comes to about 139, against Sol's 12.
-  ##     System reader looks into is under tenth of opening frame's radius, price of field
-  ##     that does not read as clump. `FRAMED_ORRERY` is knob if ever too much, not
-  ##     spacing.
-  var far = SYSTEM_SOL.reach + SYSTEM_SOL.radius
-  for index, star in STARS:
-    if index + 1 < FRAMED_ORRERY:
-      far = max(far, star.parsecs*UNITS_PER_PARSEC + RADIUS_NEIGHBOUR)
-  far
+        &"block in horizon and the nearest neighbour; got `{objectsOf(scale)}`."
 
 const
   ELEVATION_ORRERY_SHOWN* = 0.95
@@ -589,29 +551,26 @@ const
     ##   Opening camera at 0.42 is nearly edge-on to systems on planes: every ring collapses
     ##   to line and arrangement reads as starburst.
     ##   Steeper also makes sphere fit honest.
-    ##   Not overhead: at `TAU/4` leans stop reading and ground grid disappears into own
-    ##   horizon.
+    ##   Not overhead: at `TAU/4` ground grid disappears into own horizon.
     ##   Azimuth is left where reader had it.
 
   INSET_ORRERY_SHOWN* = 24.0
     ## Fix how many pixels of margin arrangement is framed with, per side.
     ##   Wider than framed selection takes (`framing.INSET_POINT_SHOWN`).
-    ##     Fitted tightly, outermost framed system's marker ring touches frame edge, and
-    ##     marker is drawn in pixels about dot solve knows nothing about.
+    ##     Fitted tightly, Neptune's marker ring touches frame edge, and marker is drawn
+    ##     in pixels about dot solve knows nothing about.
 
 
 func constructSol(
   scene: var Scene; now: float; ecliptic, orbit, tether: var Multivector
 ) =
   ## Build modelled solar system, handing back three objects horizon block takes attitudes of.
-  ##   Planets ring Sol at `radiusOfSolBody`'s radii rather than one shared radius, whole
-  ##   reason this is not generic template.
+  ##   Planets ring Sol at their own real semi-major axes rather than one shared radius,
+  ##   whole reason this is not generic template.
   let
     place_sol = sunOf(SYSTEM_SOL)
     (along, across) = spanOf(SYSTEM_SOL)
     sol = toMultivector(place_sol)
-    # Tip moon's ring out of ecliptic; see `TILT_MOON`.
-    leaned = tipped(along, normalOf(SYSTEM_SOL), TILT_MOON)
   var placed: array[len(SOL), Multivector]
   var places: array[len(SOL), Position]
   for index, body in SOL:
@@ -621,7 +580,7 @@ func constructSol(
     let place =
       case body.role
       of Role.Sun: place_sol
-      of Role.Planet: ringed(place_sol, along, across, radiusOfSolBody(body), angle)
+      of Role.Planet: ringed(place_sol, along, across, body.distance, angle)
       of Role.Moon, Role.Derived: place_sol # `SOL` holds sun and planets; see its check.
     places[index] = place
     placed[index] = toMultivector(place)
@@ -629,20 +588,22 @@ func constructSol(
       placed[index], body.name, lut_role_to_ink[body.role], now,
       radius = radiusDrawnOf(body.kilometres_radius),
     )
-  # Ring every moon about planet it really rings, in that plane tipped by `TILT_MOON`.
-  #   Phases step by golden angle per moon, so two moons of one planet never stand
-  #   together.
+  # Ring every moon about planet it really rings, in plane it really rings in.
+  #   Phase is measured from ring's ascending node on ecliptic and stepped by golden angle
+  #   per moon, so two moons of one planet never stand together and none stands on its
+  #   node, where its direction from its planet would lie in ecliptic.
   var placement_moons: array[len(MOONS), Multivector]
   for index, moon in MOONS:
-    let place = ringed(places[moon.parent], leaned, across, radiusOfMoon(moon),
+    let (node, across_moon) = spanOfNormal(normalOfMoon(moon))
+    let place = ringed(places[moon.parent], node, across_moon, radiusOfMoon(moon),
       SYSTEM_SOL.spin + 2.4*float(index))
     placement_moons[index] = toMultivector(place)
     scene.addObject(
       placement_moons[index], moon.name, lut_role_to_ink[Role.Moon], now,
       radius = radiusDrawnOf(moon.kilometres_radius),
     )
-  # Span ecliptic by Sol and two outermost planets, best conditioned join of eight.
-  ecliptic = sol ∧ placed[INDEX_SOL_NEPTUNE] ∧ placed[INDEX_SOL_URANUS]
+  # Span ecliptic by Sol and two directions planets ring along; see `addPlane`.
+  ecliptic = sol ∧ toMultivector(along) ∧ toMultivector(across)
   orbit = sol ∧ placed[INDEX_SOL_EARTH]
   # Join two lines in whole arrangement, which horizon block is built from.
   #   Earth lies *in* ecliptic, Luna's ring is tipped out of it, and that difference
@@ -673,7 +634,7 @@ func constructOrrery*(
   constructSol(scene, now, ecliptic_sol, orbit_sol, tether_sol)
 
   # Place every other star where it really stands, with planets archive records.
-  #   Nothing invented: star earns ecliptic with two known planets, and great majority
+  #   Nothing invented: star earns ecliptic with two placed planets, and great majority
   #   are single point.
   #   Walk outward until scene holds what size asks for, less horizon block added after.
   #   System too large for room left is passed over, not stopped on: `break` reached
@@ -687,28 +648,31 @@ func constructOrrery*(
       place_sun = sunOf(system)
       (along, across) = spanOf(system)
       sun = toMultivector(place_sun)
+      count_placed = placedOf(star)
+    # No radius on record for any star or planet but our own; see `mesh.RADIUS_OBJECT_LEAST`.
     scene.addObject(
-      sun, star.name, lut_role_to_ink[Role.Sun], now, radius = RADIUS_NEIGHBOUR_SUN,
+      sun, star.name, lut_role_to_ink[Role.Sun], now, radius = RADIUS_OBJECT_LEAST,
     )
-    if star.planets == 0: continue
+    if count_placed == 0: continue
 
-    var first_planet, second_planet: Multivector
+    # Planet with no axis on record is left out; see `placedOf`.
+    #   Guarded by block rather than `continue`: compiled to JS, `continue` here placed
+    #   every axis-less planet regardless, where C skipped them; block reads same on both.
+    var which_placed = 0
     for which in 0 ..< star.planets:
-      let
-        planet = PLANETS[star.first + which]
-        place = ringed(place_sun, along, across,
-          radiusOfNeighbourPlanet(planet, which, star.planets),
-          angleRing(system.spin, which, star.planets))
-        body = toMultivector(place)
-      if which == 0: first_planet = body
-      elif which == 1: second_planet = body
-      scene.addObject(
-        body, planet.name, lut_role_to_ink[Role.Planet], now, radius = RADIUS_NEIGHBOUR_PLANET
-      )
+      let planet = PLANETS[star.first + which]
+      if planet.au > 0.0:
+        let place = ringed(place_sun, along, across, planet.au,
+          angleRing(system.spin, which_placed, count_placed))
+        inc which_placed
+        scene.addObject(
+          toMultivector(place), planet.name, lut_role_to_ink[Role.Planet], now,
+          radius = RADIUS_OBJECT_LEAST,
+        )
 
-    # Span plane from two planets; star with single known planet gets no invented second.
-    if star.planets >= 2:
-      addPlane(scene, sun ∧ first_planet ∧ second_planet,
+    # Span plane from ring's own directions; star with single placed planet gets none.
+    if count_placed >= 2:
+      addPlane(scene, sun ∧ toMultivector(along) ∧ toMultivector(across),
         "ecliptic " & star.name, now, place_sun)
 
   # Close in horizon, every one attitude of one of Sol's objects.
@@ -738,16 +702,16 @@ func showOrrery*(
   scene: var Scene; camera: var Camera; width, height: int;
   scale: ScaleOrrery = SCALE_ORRERY_DEFAULT; now: float = 0.0
 ) =
-  ## Replace scene with arrangement and stand camera back to hold it.
+  ## Replace scene with arrangement and stand camera back to hold Sol's system.
   ##   Whole preset in one place, because both front-ends open on it.
   ##   Arrives as replay: `scene.replayFrom` restamps whole construction, so nearest
   ##   system appears first, as loaded `.rgascene` does.
   ##     Restamped after fact so beat is fitted to whole arrival.
-  ##   Camera stands back far enough to hold nearer systems, aims at arrangement's centre,
-  ##   pitches up over it.
+  ##   Camera stands back far enough to hold Neptune's ring, aims at Sol, pitches up over
+  ##   it.
   ##     Solved: `distanceFitting` is same sphere-tangent solve framed selection uses.
   ##     Pitched first, since solve reads camera handed; azimuth is left where reader had
-  ##     it. `POSITION_ORRERY` holds no object.
+  ##     it.
   ##   Not here: anything either front-end keeps of own (born stamps, selection, undo
   ##   timeline), bookkeeping about scene rather than part of it.
   scene.restoreFrom(initScene())

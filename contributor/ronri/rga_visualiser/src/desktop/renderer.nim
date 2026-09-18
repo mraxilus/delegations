@@ -840,12 +840,18 @@ proc drawMeshes*(
   ##   Overlay is drawn against depth buffer cleared first, not with test off.
   ##     Nothing unselected is left to reject against, so selected object shows through
   ##     whatever stands before it; selected objects still reject one another by depth.
+  # Matrix as float32 once, and eye about records' own origin; see `mesh.clearMeshes`.
+  let flat = view_projection.flattened
+  let eye = (
+    x: scale.eye.x - meshes.origin.x, y: scale.eye.y - meshes.origin.y,
+    z: scale.eye.z - meshes.origin.z,
+  )
   gl.useProgram(renderer.program_ribbon)
   gl.uniformMatrix4fv(
-    renderer.location_ribbon_view_projection, 1, gl.FALSE, view_projection.elementsAddress
+    renderer.location_ribbon_view_projection, 1, gl.FALSE, unsafeAddr flat[0]
   )
   gl.uniform3f(renderer.location_ribbon_eye,
-    gl.Float(scale.eye.x), gl.Float(scale.eye.y), gl.Float(scale.eye.z))
+    gl.Float(eye.x), gl.Float(eye.y), gl.Float(eye.z))
   gl.uniform3f(renderer.location_ribbon_forward,
     gl.Float(scale.forward.x), gl.Float(scale.forward.y), gl.Float(scale.forward.z))
   gl.uniform1f(renderer.location_ribbon_depth_near, gl.Float(scale.depthNear))
@@ -862,10 +868,10 @@ proc drawMeshes*(
   #   Disc is spanned across them at centre's depth; see `mesh.radiusDrawnAt`.
   gl.useProgram(renderer.program)
   gl.uniformMatrix4fv(
-    renderer.location_view_projection, 1, gl.FALSE, view_projection.elementsAddress
+    renderer.location_view_projection, 1, gl.FALSE, unsafeAddr flat[0]
   )
   gl.uniform3f(renderer.location_point_eye,
-    gl.Float(scale.eye.x), gl.Float(scale.eye.y), gl.Float(scale.eye.z))
+    gl.Float(eye.x), gl.Float(eye.y), gl.Float(eye.z))
   gl.uniform3f(renderer.location_point_forward,
     gl.Float(scale.forward.x), gl.Float(scale.forward.y), gl.Float(scale.forward.z))
   gl.uniform3f(renderer.location_point_right,
@@ -883,20 +889,20 @@ proc drawMeshes*(
   #   Walk switches between them per run.
   gl.useProgram(renderer.program_disc)
   gl.uniformMatrix4fv(
-    renderer.location_disc_view_projection, 1, gl.FALSE, view_projection.elementsAddress
+    renderer.location_disc_view_projection, 1, gl.FALSE, unsafeAddr flat[0]
   )
   gl.useProgram(renderer.program_dome)
   gl.uniformMatrix4fv(
-    renderer.location_dome_view_projection, 1, gl.FALSE, view_projection.elementsAddress
+    renderer.location_dome_view_projection, 1, gl.FALSE, unsafeAddr flat[0]
   )
   # Give ring program ribbon program's whole camera.
   #   Rim is widened in screen space by very rule line is.
   gl.useProgram(renderer.program_ring)
   gl.uniformMatrix4fv(
-    renderer.location_ring_view_projection, 1, gl.FALSE, view_projection.elementsAddress
+    renderer.location_ring_view_projection, 1, gl.FALSE, unsafeAddr flat[0]
   )
   gl.uniform3f(renderer.location_ring_eye,
-    gl.Float(scale.eye.x), gl.Float(scale.eye.y), gl.Float(scale.eye.z))
+    gl.Float(eye.x), gl.Float(eye.y), gl.Float(eye.z))
   gl.uniform3f(renderer.location_ring_forward,
     gl.Float(scale.forward.x), gl.Float(scale.forward.y), gl.Float(scale.forward.z))
   gl.uniform1f(renderer.location_ring_depth_near, gl.Float(scale.depthNear))

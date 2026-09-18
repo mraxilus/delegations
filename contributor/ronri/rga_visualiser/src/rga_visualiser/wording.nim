@@ -396,9 +396,9 @@ func demoWording*(objects: int, is_default: bool): string =
   ## Report text for one demo size, which names size it loads.
   ##   Composed rather than stored, since sentence carries number only caller knows. Parts are
   ##   here so wording stays in one file; caller supplies figure alone.
-  "Load the orrery at " & $objects & " objects: the real solar neighbourhood, Sol at the " &
-    "origin, every drawable kind present. The same arrangement at every size, reaching " &
-    "further into the star catalogue as it grows." &
+  "Load the orrery at " & $objects & " objects: the real solar neighbourhood to scale, one " &
+    "unit one astronomical unit, Sol at the origin, every drawable kind present. The same " &
+    "arrangement at every size, reaching further into the star catalogue as it grows." &
     (if is_default: " The size everything opens on." else: "")
 
 

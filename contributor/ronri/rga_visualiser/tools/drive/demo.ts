@@ -159,7 +159,11 @@ export async function driveOccluded(page: Page): Promise<void> {
     nimSetCameraPivot(at_planet[0] ?? 0, at_planet[1] ?? 0, at_planet[2] ?? 0);
     nimSetCameraAzimuth(Math.atan2(heading[1] ?? 0, heading[0] ?? 0));
     nimSetCameraElevation(Math.asin((heading[2] ?? 0) / span));
-    nimSetCameraDistance(span * 6);
+    // Stand where planet's disc is sixty pixels wide, and never short of moon: bodies are
+    //   their real size, and fixed six spans out put Jupiter's disc at thirty pixels.
+    const tall = (document.getElementById('gl') as HTMLCanvasElement).clientHeight;
+    const per_radian = (tall / 2) / Math.tan(((nimCameraFov() * Math.PI) / 180) / 2);
+    nimSetCameraDistance(Math.max((nimObjectRadius(planet) * per_radian) / 60, span * 1.5));
     await wait(500);
 
     const canvas = document.getElementById('gl') as HTMLCanvasElement;

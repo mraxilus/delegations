@@ -471,13 +471,13 @@ proc assembleMeshes(
   )
   if SETTINGS_FURNITURE_HELD.isNone or SETTINGS_FURNITURE_HELD.get != settings_furniture:
     SETTINGS_FURNITURE_HELD = some(settings_furniture)
-    MESHES_FURNITURE.clearMeshes
+    MESHES_FURNITURE.clearMeshes(camera.pivot)
     if panel.is_grid_shown:
       MESHES_FURNITURE.addGrid(scratch[0], scale.extentFurniture, scale)
     if panel.is_axes_shown:
       MESHES_FURNITURE.addAxes(scratch[0], scale.extentFurniture, scale)
 
-  MESHES.clearMeshes
+  MESHES.clearMeshes(camera.pivot) # About pivot; see `mesh.clearMeshes`.
   # Emit horizon plane's dome first, before anything sharing translucent veil pass.
   #   Veil runs draw in append order, unsorted by depth, so dome first guarantees every
   #   ordinary plane's fill blends over it whatever handle either occupies.
@@ -890,8 +890,11 @@ proc renderFrame(
     panel, scene, interaction, camera, now, scale, int(width), int(height), are_dimmed
   )
   clearFrame(int(width), int(height))
-  renderer.drawMeshes(MESHES_FURNITURE, view_projection, scale)
-  renderer.drawMeshes(MESHES, view_projection, scale)
+  # GPU takes transform about records' origin; `view_projection` above stays about world,
+  #   for hover, menu and markers, which read world coordinates.
+  let view_projection_drawn = camera.initMatrixViewProjection(width / height, MESHES.origin)
+  renderer.drawMeshes(MESHES_FURNITURE, view_projection_drawn, scale)
+  renderer.drawMeshes(MESHES, view_projection_drawn, scale)
 
   # Take one reading per frame, before any handle advances.
   #   Every selected object's comet then moves by same step.

@@ -473,6 +473,50 @@ suite "Camera":
       check isNear(clipped[1]/clipped[3], 0)
 
 
+  test "a transform about an origin agrees with the world one, and keeps a far close-up":
+    # Records are stored about frame's origin (`mesh.clearMeshes`) and GPU takes transform.
+    #   built about same point, so position about origin lands where world transform puts
+    #   world position: storing relative to pivot is invisible on screen.
+    for i in 0 ..< SAMPLES:
+      let camera = initCamera(
+        pivot = PLACES[i], distance = 3.0, azimuth = rand(2.0*PI), elevation = rand(-1.2 .. 1.2)
+      )
+      let place = camera.pivot +
+        Direction(x: rand(-1.0 .. 1.0), y: rand(-1.0 .. 1.0), z: rand(-1.0 .. 1.0))
+      let about_world = transform(camera.initMatrixViewProjection(1.6), place, 1.0)
+      let about_pivot = transform(
+        camera.initMatrixViewProjection(1.6, camera.pivot), ORIGIN + (place - camera.pivot), 1.0
+      )
+      for k in 0 .. 3:
+        check abs(about_world[k] - about_pivot[k]) <= 1.0e-9*max(1.0, abs(about_world[k]))
+    # Far out is where it matters: pivot million units off and moon thousandth of unit from.
+    #   it, as demo's moons are. Float32 of world position steps by sixteenth there, so
+    #   moon's whole offset is lost; float32 about pivot carries what close-up needs, and
+    #   double matrix keeps translation column of world transform, which picking reads,
+    #   exact too.
+    let far = initCamera(
+      pivot = Position(x: 1.0e6, y: -2.0e6, z: 3.0e5), distance = 0.004, azimuth = 0.3,
+      elevation = 0.4,
+    )
+    let moon = far.pivot + Direction(x: 0.001, y: 0.0, z: 0.0)
+    let stored_world = Position(
+      x: float(float32(moon.x)), y: float(float32(moon.y)), z: float(float32(moon.z)),
+    )
+    let stored_pivot = Position(
+      x: float(float32(moon.x - far.pivot.x)), y: float(float32(moon.y - far.pivot.y)),
+      z: float(float32(moon.z - far.pivot.z)),
+    )
+    # C backend alone: JS backend keeps `float32` as double, and page's typed arrays round
+    #   outside suite's reach.
+    when not defined(js):
+      check norm(stored_world - moon) > 0.5e-3
+      check norm((far.pivot + (stored_pivot - ORIGIN)) - moon) < 1.0e-9
+    let seen_world = transform(far.initMatrixViewProjection(1.6), moon, 1.0)
+    let seen_pivot = transform(far.initMatrixViewProjection(1.6, far.pivot), stored_pivot, 1.0)
+    for k in 0 .. 1:
+      check abs(seen_world[k]/seen_world[3] - seen_pivot[k]/seen_pivot[3]) < 1.0e-6
+
+
   test "the clip planes follow the orbit distance, rather than where they were built":
     # Bug this guards: pair was stored at construction and kept its value through.
     #   every dolly, so far plane sat at fixed 400 while orbit could reach 500 --
@@ -921,7 +965,8 @@ suite "Camera":
     var camera = initCamera(pivot = ORIGIN, distance = 0.1, azimuth = 0.4, elevation = 0.5)
     let anchor = positionUnderCursor(camera, 1440, 900, ScreenPosition(x: 400.0, y: 600.0))
     check anchor.isSome
-    camera.dollyToward(0.001, anchor.get)
+    # Factor far past floor, which is tiny; see `DISTANCE_LIMIT_NEAR`.
+    camera.dollyToward(1.0e-12, anchor.get)
     check camera.distance =~ DISTANCE_LIMIT_NEAR
     check norm(camera.eye - camera.pivot) =~ camera.distance
 
@@ -1044,6 +1089,36 @@ suite "Mesh":
     check MESHES.discs.count == 0
     check MESHES.domes.count == 0
     check MESHES.veils.count == 0
+
+  test "every record is stored about the origin its frame was cleared with":
+    # Five writers, one rule: subtract `origin` at float32 write, so what camera looks at.
+    #   million units from world origin is stored exact; see `mesh.clearMeshes`.
+    let origin = Position(x: 1.0e6, y: -2.0e6, z: 3.0e5)
+    MESHES.clearMeshes(origin)
+    check MESHES.origin =~ origin
+    let at = origin + Direction(x: 0.25, y: 0.5, z: -0.125)
+    MESHES.addMarker(at, RADIUS_OBJECT_DEFAULT, Ink.Rose.colour, 1.0)
+    let vertex = MESHES.points.vertices[0]
+    check float(vertex.x) == 0.25 and float(vertex.y) == 0.5 and float(vertex.z) == -0.125
+    MESHES.addSegment(at, at + Direction(x: 1.0, y: 0.0, z: 0.0), Ink.Rose.colour, 1.0)
+    let ribbon = MESHES.ribbons.records[0]
+    check float(ribbon.tail_x) == 0.25 and float(ribbon.head_x) == 1.25
+    check float(ribbon.tail_z) == -0.125 and float(ribbon.head_z) == -0.125
+    MESHES.addDisc(
+      at, Direction(x: 1.0, y: 0.0, z: 0.0), Direction(x: 0.0, y: 1.0, z: 0.0), 1.0,
+      Ink.Rose.colour,
+    )
+    check float(MESHES.discs.records[0].centre_y) == 0.5
+    MESHES.addRing(
+      at, Direction(x: 1.0, y: 0.0, z: 0.0), Direction(x: 0.0, y: 1.0, z: 0.0), 1.0,
+      Ink.Rose.colour, 1.0,
+    )
+    check float(MESHES.rings.records[0].centre_z) == -0.125
+    MESHES.addDome(at, 5.0, Ink.Rose.colour)
+    check float(MESHES.domes.records[0].centre_x) == 0.25
+    # Cleared without one is world origin again: nothing stays relative by accident.
+    MESHES.clearMeshes
+    check MESHES.origin =~ ORIGIN_WORLD
 
 
   test "point becomes one marker where it stands":
@@ -4591,9 +4666,9 @@ suite "Picking":
       abs(anchor_far.get.at.z) < 1.0e-6
 
   test "a point drawn wide is picked anywhere on its disc, over the plane behind it":
-    # Pick radius follows drawn disc: Sol at 0.6 units from 1.2 units away spans about.
+    # Pick radius follows drawn disc: Sol seen from two of its own radii away spans about.
     #   360 pixels of radius on 600-pixel frame, and cursor anywhere inside picks Sol,
-    #   not ecliptic disc it stands on.
+    #   not ecliptic disc it stands on. Two radii, since Sol is its real size, 0.00465.
     # Smallest arrangement; reduced-capacity build cannot hold it and skips whole.
     if OBJECTS_MAX < objectsOf(ScaleOrrery.Nearest):
       skip()
@@ -4605,7 +4680,8 @@ suite "Picking":
         if scene.isAlive(handle) and toText(scene.labelAt(handle)) == "sol": handle_sol = handle
       check handle_sol >= 0
       let camera = initCamera(
-        pivot = Position(x: 0, y: 0, z: 0), distance = 1.2, azimuth = 0.9, elevation = 0.4
+        pivot = Position(x: 0, y: 0, z: 0), distance = 2.0*scene.radiusAt(handle_sol),
+        azimuth = 0.9, elevation = 0.4,
       )
       let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
       let scale = camera.drawExtentFor(HEIGHT_PICK)
@@ -7577,7 +7653,8 @@ suite "Marker":
 when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
   suite "Orrery":
     ## Check demo preset, heaviest scene this build draws, against world it claims.
-    ##   Real solar neighbourhood: these stars stand where they really stand.
+    ##   Real solar neighbourhood to scale: these bodies stand where they really stand, as
+    ##   large as they really are, one unit one astronomical unit.
     ##   That claim needs checking as much as counting does, and it is one thing no
     ##   amount of looking at picture would catch.
 
@@ -7589,6 +7666,19 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       for scale in ScaleOrrery:
         if OBJECTS_MAX >= objectsOf(scale): held.add(scale)
       held
+
+    proc placesOf(scene: var Scene): Table[string, Position] =
+      ## Read every finite point of scene by label, as position.
+      for handle in 0 ..< scene.bound:
+        if not scene.isAlive(handle): continue
+        let geometry = scene.geometryOf(handle)
+        if kindOf(geometry) != some(Kind.Point) or isHorizon(geometry): continue
+        result[toText(scene.labelAt(handle))] = position(geometry).get
+
+    proc isClose(a, b: float; parts: float = 1.0e-9): bool =
+      ## Compare to relative tolerance, since radii here run down to hundredths of metres.
+      ##   `=~` widens to absolute tolerance under one, which is every size in this scene.
+      abs(a - b) <= parts*max(abs(a), abs(b))
 
     test "every size fills its own target exactly, and the largest leaves two handles":
       # **Walk lands on count rather than near it.** It passes over system too.
@@ -7662,24 +7752,27 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
         check counted[larger].points > counted[smaller].points
         check counted[larger].planes > counted[smaller].planes
 
-    test "the stars stand where the catalogue says they stand":
+    test "the stars stand where the catalogue says they stand, turned into the ecliptic":
       # **Claim this arrangement makes about world.** Every object after Sol is real.
       #   star placed from its real right ascension, declination and distance, so thing
       #   worth checking is conversion -- not that layout looks spread out. Measured
       #   against `starfield.STARS` itself, which is shipped snapshot and one layer
       #   that says where anything is.
+      #   Distance is parsecs into astronomical units, nothing else. Direction is
+      #   catalogue's equatorial one turned about equinox by obliquity, so ecliptic lands on
+      #   ground grid: read straight, every star stood 23 degrees off against Sol's planets.
+      #   Turn is redone here from its definition rather than through module's own.
       #   Run at largest size this build holds, which is only one that reaches far
       #   enough into catalogue for claim to be worth much.
       let scale = SCALES_HELD[^1]
       var scene = initScene()
       constructOrrery(scene, scale)
-      var placed: Table[string, Multivector]
-      for handle in 0 ..< scene.bound:
-        if not scene.isAlive(handle): continue
-        placed[toText(scene.labelAt(handle))] = scene.geometryOf(handle)
+      let placed = placesOf(scene)
       let sol = placed[SOL[0].name]
+      let obliquity = degToRad(23.4392911)
       var worst = 0.0
       var worst_name = ""
+      var worst_turn = 0.0
       var seen = 0
       # Catalogue carries more stars than scene has room for, so what is checked is.
       #   every star that *was* placed -- and, below, that ones placed are nearest.
@@ -7687,20 +7780,37 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
         if star.name notin placed: continue
         inc seen
         let
-          drawn = distanceBetween(placed[star.name], sol)
-          wanted = star.parsecs*UNITS_PER_PARSEC
-          off = abs(drawn - wanted)
+          apart = placed[star.name] - sol
+          drawn = norm(apart)
+          wanted = star.parsecs*AU_PER_PARSEC
+          off = abs(drawn - wanted)/wanted
         if off > worst:
           worst = off
           worst_name = star.name
+        let
+          along = degToRad(star.ascension)
+          up = degToRad(star.declination)
+          equatorial = Direction(x: cos(up)*cos(along), y: cos(up)*sin(along), z: sin(up))
+          ecliptic = Direction(
+            x: equatorial.x,
+            y: equatorial.y*cos(obliquity) + equatorial.z*sin(obliquity),
+            z: -equatorial.y*sin(obliquity) + equatorial.z*cos(obliquity),
+          )
+          heading = (1.0/drawn)*apart
+        worst_turn = max(worst_turn, norm(heading + (-ecliptic)))
       checkpoint(&"{scale}: {seen} stars placed; worst is `{worst_name}`, " &
-        &"off by {worst:.6f} units")
+        &"off by {worst:.3e} of its distance; worst direction off by {worst_turn:.3e}")
       # Most of what size spends goes on stars, so most of what it holds should be one.
       #   Folded from size rather than written down, so it survives next one.
       check seen > (objectsOf(scale) - OBJECTS_FIXED_ORRERY) div 2
-      check worst <= TOLERANCE_SINGLE
-      # And they really are ordered outward, which is what both `RADIUS_ORRERY` and.
-      #   nearest-first fill rely on.
+      check worst <= 1.0e-12
+      check worst_turn <= 1.0e-9
+      # Turn is real one: Proxima's ecliptic latitude, -44.8 degrees, is well north of its
+      #   declination, -62.7.
+      let proxima = (1.0/norm(placed[STARS[0].name] - sol))*(placed[STARS[0].name] - sol)
+      check arcsin(proxima.z) > degToRad(STARS[0].declination) + degToRad(10.0)
+      check abs(radToDeg(arcsin(proxima.z)) + 44.8) < 0.5
+      # And they really are ordered outward, which is what nearest-first fill relies on.
       for index in 1 ..< len(STARS):
         check STARS[index].parsecs >= STARS[index - 1].parsecs
       # **Nearest-first, and no longer strict prefix -- by bounded amount.** Walk.
@@ -7788,38 +7898,110 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       checkpoint(&"worst point is `{worst_label}`, carrying {worst} lines and planes")
       check worst <= 6
 
-    test "every body is drawn at its real radius on the square-root scale, clear of its moons":
-      # Sizes are what reader compares by eye, so what is pinned is order and ratio.
-      #   Sol over Earth compresses from 109 to about ten, and every moon ring starts
-      #   outside its planet's drawn disc.
+    test "every body is drawn at its real radius, one unit one astronomical unit":
+      # Sizes are real, so what is pinned is conversion and nothing else: Sol over Earth
+      #   is 109, as it is, and every body stays above what editor accepts.
       var scene = initScene()
       constructOrrery(scene)
       var radii: Table[string, float]
-      var places: Table[string, Multivector]
       for handle in 0 ..< scene.bound:
         if not scene.isAlive(handle): continue
         radii[toText(scene.labelAt(handle))] = scene.radiusAt(handle)
-        places[toText(scene.labelAt(handle))] = scene.geometryOf(handle)
-      check radii["sol"] =~ 0.6
+      check isClose(radii["sol"], 695_700.0/149_597_870.7)
+      check isClose(radii["sol"]/radii["earth"], 695_700.0/6_371.0)
       check radii["sol"] > radii["jupiter"]
       check radii["jupiter"] > radii["saturn"]
       check radii["saturn"] > radii["earth"]
       check radii["earth"] > radii["luna"]
       check radii["luna"] > radii["phobos"]
-      check abs(radii["sol"]/radii["earth"] - sqrt(695_700.0/6_371.0)) < 1.0e-9
-      for body in SOL: check radii[body.name] =~ radiusDrawnOf(body.kilometres_radius)
-      # Every body stays above what editor accepts, so none is pinned at least dot for good.
+      for body in SOL: check isClose(radii[body.name], radiusDrawnOf(body.kilometres_radius))
+      for moon in MOONS: check isClose(radii[moon.name], radiusDrawnOf(moon.kilometres_radius))
+      # Smallest body stays above what editor accepts, so none is pinned at least dot for good.
       for moon in MOONS: check radii[moon.name] >= RADIUS_OBJECT_LEAST
-      # Moon's ring clears planet's disc and its own: two discs never overlap.
-      for moon in MOONS:
-        let parent = SOL[moon.parent].name
-        let apart = distanceBetween(places[moon.name], places[parent])
-        check apart > radii[parent] + radii[moon.name]
-      # Neighbour suns and planets take Sol's and Earth's, having no radii of their own.
-      check radii[STARS[0].name] =~ radii["sol"]
+      # Neighbour suns and planets claim no size, having none on record: least, and stated.
+      check radii[STARS[0].name] == RADIUS_OBJECT_LEAST
       for planet in PLANETS:
-        if planet.name in radii: check radii[planet.name] =~ radii["earth"]
+        if planet.name in radii: check radii[planet.name] == RADIUS_OBJECT_LEAST
 
+    test "every planet rings Sol at its real semi-major axis, in the ecliptic":
+      # Distances are real, so what is pinned is that table's astronomical units are.
+      #   radii ring is drawn at, unsquashed, and that ring lies in z = 0 ground grid is
+      #   ruled on, which is what makes ecliptic ground.
+      var scene = initScene()
+      constructOrrery(scene)
+      let placed = placesOf(scene)
+      let sol = placed["sol"]
+      for body in SOL:
+        if body.role != Role.Planet: continue
+        check isClose(norm(placed[body.name] - sol), body.distance)
+        check abs(placed[body.name].z) <= 1.0e-12
+      check norm(placed["neptune"] - sol) =~ RADIUS_ORRERY
+
+    test "every moon rings its planet at its real distance, in its real orbit plane":
+      # Orientation is one thing tables carry that picture cannot be trusted to show.
+      #   Luna leans its real 5.16 degrees from ecliptic; Triton rings Neptune backwards;
+      #   Uranus's family is tipped nearly onto its side. Each pinned against
+      #   `normalOfMoon`, and every moon's place pinned perpendicular to it.
+      var scene = initScene()
+      constructOrrery(scene)
+      let placed = placesOf(scene)
+      var normals: Table[string, Direction]
+      for moon in MOONS:
+        let
+          parent = SOL[moon.parent].name
+          apart = placed[moon.name] - placed[parent]
+          normal = normalOfMoon(moon)
+        normals[moon.name] = normal
+        check isClose(norm(apart), moon.kilometres_orbit/149_597_870.7)
+        check norm(normal) =~ 1.0
+        check abs(dot(apart, normal)) <= 1.0e-9*norm(apart)
+        # Ring clears both discs: bodies never overlap.
+        check norm(apart) > radiusDrawnOf(SOL[moon.parent].kilometres_radius) +
+          radiusDrawnOf(moon.kilometres_radius)
+      checkpoint(&"luna leans {radToDeg(arccos(normals[\"luna\"].z)):.2f} degrees, triton's " &
+        &"normal z {normals[\"triton\"].z:.3f}, miranda's {normals[\"miranda\"].z:.3f}")
+      check abs(radToDeg(arccos(normals["luna"].z)) - 5.16) <= 1.0e-6
+      check normals["triton"].z < 0.0
+      for name in ["miranda", "ariel", "umbriel", "titania", "oberon"]:
+        check abs(normals[name].z) < 0.3
+      for name in ["io", "europa", "ganymede", "callisto"]:
+        check radToDeg(arccos(normals[name].z)) < 3.0
+      # Luna's direction from Earth is off ecliptic: horizon plane stands on this.
+      check abs((placed["luna"] - placed["earth"]).z) > 1.0e-6
+
+    test "every neighbour planet rings its star at its real axis, and one without is left out":
+      # Archive stores missing semi-major axis as zero; such planet is left out rather
+      #   than placed by order among siblings, since distance is whole of claim. Counted
+      #   from table, so figure is catalogue's own.
+      #   Neighbour's plane is flat, stated: every placed planet shares its star's height.
+      let scale = SCALES_HELD[^1]
+      var scene = initScene()
+      constructOrrery(scene, scale)
+      let placed = placesOf(scene)
+      var left_out, checked = 0
+      for star in STARS:
+        if star.name notin placed or star.planets == 0: continue
+        for which in star.first ..< star.first + star.planets:
+          let planet = PLANETS[which]
+          if planet.au <= 0.0:
+            check planet.name notin placed
+            inc left_out
+            continue
+          check planet.name in placed
+          let apart = placed[planet.name] - placed[star.name]
+          check abs(norm(apart) - planet.au) <= 1.0e-7
+          check abs(apart.z) <= 1.0e-7
+          inc checked
+      var without = 0
+      for planet in PLANETS:
+        if planet.au <= 0.0: inc without
+      checkpoint(&"{checked} planets placed at their axes, {left_out} of {without} " &
+        &"without one left out")
+      check checked > 0
+      check without == 49
+      # Count each star comes to says same: placed planets, not archive's.
+      for star in STARS:
+        check objectsOf(star) == 1 + placedOf(star) + (if placedOf(star) >= 2: 1 else: 0)
 
     test "every object wears its own type's colour, and no two types share one":
       # Moon and planet are two identical dots and hue is only thing separating.
@@ -7918,21 +8100,18 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       check kindOf(line ∧ off_it) == some(Kind.Plane)
       check isHorizon(line ∧ off_it)
 
-    test "the framing radius holds the systems it claims, and the rest run past it":
-      var scene = initScene()
-      constructOrrery(scene)
-      # `RADIUS_ORRERY` is fitted to Sol and nearest few, and claim worth checking.
-      #   is not exact count -- handful of real stars happen to fall inside radius
-      #   fitted to their neighbours -- but that overwhelming majority lie *beyond* it.
-      #   That is what makes crossing neighbourhood journey rather than nudge.
-      var held, beyond = 0
-      for star in STARS:
-        if star.parsecs*UNITS_PER_PARSEC > RADIUS_ORRERY: inc beyond else: inc held
-      checkpoint(&"{held} stars inside the opening frame, {beyond} beyond it")
-      check held >= FRAMED_ORRERY - 1 # Sol is framed too, and is not in this table.
-      check beyond >= 9*len(STARS) div 10
-      check RADIUS_ORRERY > 0.0
-
+    test "the opening frame holds Sol's system to Neptune, and every star stands far beyond":
+      # `RADIUS_ORRERY` is Neptune's own axis, and claim worth checking is that nothing
+      #   else comes near it: nearest star stands thousands of that radius out, so frame
+      #   fitted to our system shows one system and crossing neighbourhood is journey.
+      check RADIUS_ORRERY =~ 30.05
+      var nearest = STARS[0].parsecs*AU_PER_PARSEC
+      for star in STARS: nearest = min(nearest, star.parsecs*AU_PER_PARSEC)
+      checkpoint(&"nearest star at {nearest:.0f} units, {nearest/RADIUS_ORRERY:.0f} " &
+        &"opening radii out")
+      check nearest > 1000.0*RADIUS_ORRERY
+      check AU_PER_PARSEC =~ 206_264.806
+      check KILOMETRES_PER_AU =~ 149_597_870.7
 
     test "the preset both front-ends open on is one preset":
       # `showOrrery` is whole thing demo button loads -- arrangement, its replayed.
