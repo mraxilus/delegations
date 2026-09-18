@@ -7385,6 +7385,26 @@ suite "Marker":
       check room > 0.5*MARGIN_LABEL_VIEW - 1.0
 
 
+  test "label is held wholly inside view, and centred where its box cannot fit":
+    # Page 393 wide, 560 tall, label 80 wide: right edge, top edge, both corners, and free.
+    const (WIDTH_PAGE, HEIGHT_PAGE, HALF) = (393.0, 560.0, 40.0)
+    let
+      half_height = 0.5*HEIGHT_MARKER_LABEL
+      (lo_x, hi_x) = (MARGIN_LABEL_EDGE + HALF, WIDTH_PAGE - MARGIN_LABEL_EDGE - HALF)
+      (lo_y, hi_y) =
+        (MARGIN_LABEL_EDGE + half_height, HEIGHT_PAGE - MARGIN_LABEL_EDGE - half_height)
+    check labelInView(390.0, 505.0, HALF, WIDTH_PAGE, HEIGHT_PAGE) == (hi_x, 505.0)
+    check labelInView(100.0, 3.0, HALF, WIDTH_PAGE, HEIGHT_PAGE) == (100.0, lo_y)
+    check labelInView(-20.0, 700.0, HALF, WIDTH_PAGE, HEIGHT_PAGE) == (lo_x, hi_y)
+    check labelInView(100.0, 100.0, HALF, WIDTH_PAGE, HEIGHT_PAGE) == (100.0, 100.0)
+    # Held box's edges: halo's stroke and one pixel of air stay inside.
+    check hi_x + HALF == WIDTH_PAGE - MARGIN_LABEL_EDGE
+    check MARGIN_LABEL_EDGE > WIDTH_MARKER_LABEL_HALO
+    # Wider than view, or taller: centred on that axis.
+    check labelInView(100.0, 100.0, 300.0, WIDTH_PAGE, HEIGHT_PAGE) == (0.5*WIDTH_PAGE, 100.0)
+    check labelInView(100.0, 100.0, HALF, WIDTH_PAGE, 10.0) == (100.0, 5.0)
+
+
   test "a label pushed beside a line clears it by its own box":
     # Clearance is rail, gap, and box's half-extent along push: flat line uses half height,.
     #   vertical one half width.

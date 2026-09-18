@@ -71,6 +71,9 @@ const
     ## Set how far in from view's edge line's label anchor is held, in pixels, along line.
     ##   Support off screen slides anchor along visible stretch to this far from edge it
     ##   left through; whole label then stays readable rather than half cut.
+  MARGIN_LABEL_EDGE* = 4.0
+    ## Keep label's whole box this far inside view's edge, in pixels; see `labelInView`.
+    ##   Room for halo's stroke, `WIDTH_MARKER_LABEL_HALO`, and one pixel of air.
   WIDTH_MARKER_COMET* = 3.5'f32
     ## Widen comet to this thickness at head, in pixels, tapering to `WIDTH_MARKER`.
     ##   Thicker than `WIDTH_MARKER`, whole of how it reads: weight separates lit part
@@ -624,6 +627,23 @@ func clearanceBeside*(away_x, away_y, half_width: float): float =
   ##   `half_width` is front-end's measured text, half; height is nominal one shared.
   OFFSET_MARKER_RAIL + GAP_MARKER + abs(away_x)*half_width +
     abs(away_y)*0.5*HEIGHT_MARKER_LABEL
+
+
+func labelInView*(x, y, half_width, width, height: float): (float, float) =
+  ## Hold label's centre where its box stands wholly inside view, `MARGIN_LABEL_EDGE` in.
+  ##   Box is front-end's measured text, `half_width` each side, by nominal
+  ##   `HEIGHT_MARKER_LABEL` tall. Applied by both front-ends after any push beside line,
+  ##   each with its own measured text; page reaches it through `nimLabelInView`.
+  ##   Box wider or taller than view is centred.
+  ##   Every placement lands label where geometry puts it: horizon line's above its band's
+  ##   topmost point wherever that falls, so on narrow page its name ran off right edge.
+  let
+    half_height = 0.5*HEIGHT_MARKER_LABEL
+    (lo_x, hi_x) = (MARGIN_LABEL_EDGE + half_width, width - MARGIN_LABEL_EDGE - half_width)
+    (lo_y, hi_y) = (MARGIN_LABEL_EDGE + half_height, height - MARGIN_LABEL_EDGE - half_height)
+    held_x = if lo_x > hi_x: 0.5*width else: clamp(x, lo_x, hi_x)
+    held_y = if lo_y > hi_y: 0.5*height else: clamp(y, lo_y, hi_y)
+  (held_x, held_y)
 
 
 func clipToView(tail, head: ScreenPosition; width, height: int): Option[(float, float)] =

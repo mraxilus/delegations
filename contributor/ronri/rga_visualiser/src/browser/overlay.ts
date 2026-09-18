@@ -144,9 +144,11 @@ function appendMarkerPulse(
 //   attributes only, and recycled <text> keeps last content unless overwritten.
 //   Line's label comes as anchor on line plus direction to push it: text is measured
 //   here, where its face is, and pushed by `nimLabelClearance` so its own box clears
-//   line at any angle; see `marker.Marker.is_label_beside`.
+//   line at any angle; see `marker.Marker.is_label_beside`. Every label is then held
+//   wholly inside canvas by `nimLabelInView`, with same measured text.
 function appendLabel(handle: number) {
-  const at = nimSelectionLabelAt(handle, canvas.clientWidth, canvas.clientHeight);
+  const width = canvas.clientWidth, height = canvas.clientHeight;
+  const at = nimSelectionLabelAt(handle, width, height);
   if (flatAt(at, 2) < 0.5) return;
   const element = stageEl('text', {
     x: flatAt(at, 0), y: flatAt(at, 1), 'text-anchor': 'middle', 'dominant-baseline': 'central',
@@ -155,12 +157,16 @@ function appendLabel(handle: number) {
     'stroke-linejoin': 'round', 'paint-order': 'stroke',
   });
   element.textContent = nimObjectLabel(handle);
+  const half = (element as SVGTextElement).getComputedTextLength() / 2;
+  let x = flatAt(at, 0), y = flatAt(at, 1);
   if (flatAt(at, 3) > 0.5) {
-    const half = (element as SVGTextElement).getComputedTextLength() / 2;
     const clearance = nimLabelClearance(flatAt(at, 4), flatAt(at, 5), half);
-    element.setAttribute('x', String(flatAt(at, 0) + clearance * flatAt(at, 4)));
-    element.setAttribute('y', String(flatAt(at, 1) + clearance * flatAt(at, 5)));
+    x += clearance * flatAt(at, 4);
+    y += clearance * flatAt(at, 5);
   }
+  const held = nimLabelInView(x, y, half, width, height);
+  element.setAttribute('x', String(flatAt(held, 0)));
+  element.setAttribute('y', String(flatAt(held, 1)));
 }
 
 function appendMarker(

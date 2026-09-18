@@ -309,6 +309,7 @@ var
   FLAT_PIVOT = initFlatFloats(3)
   FLAT_EYE = initFlatFloats(3)
   FLAT_LABEL = initFlatFloats(6)
+  FLAT_LABEL_HELD = initFlatFloats(2)
   FLAT_ANCHOR_WORLD = initFlatFloats(3)
   FLAT_MENU = initFlatFloats(3*(ord(DragChoice.high) + 1))
   FLAT_MENU_CENTRE = initFlatFloats(2)
@@ -1943,6 +1944,14 @@ proc nimLabelClearance(away_x, away_y, half_width: cfloat): cfloat {.exportc.} =
   ## Report how far label centre stands off line along `away`; see `marker.clearanceBeside`.
   ##   `half_width` is glue's measured text, half.
   cfloat(clearanceBeside(float(away_x), float(away_y), float(half_width)))
+
+
+proc nimLabelInView(x, y, half_width, width, height: cfloat): FlatBuffer {.exportc.} =
+  ## Report where label centred at `x, y` stands with its box wholly inside `width` x
+  ##   `height` view, over `FLAT_LABEL_HELD`; see `marker.labelInView`.
+  ##   Two floats, `[x, y]`. `half_width` is glue's measured text, half.
+  let held = labelInView(float(x), float(y), float(half_width), float(width), float(height))
+  FLAT_LABEL_HELD.fill2(float32(held[0]), float32(held[1]))
 
 
 proc nimSelectionPulse(
