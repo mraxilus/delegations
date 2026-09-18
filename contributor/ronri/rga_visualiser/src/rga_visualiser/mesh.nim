@@ -353,8 +353,8 @@ type
     ## Disc-fill vertex shader's input, not vertex.
     ##   Each record is drawn as one instance of static fan of
     ##   `3 * SEGMENTS_CIRCLE_HORIZON` unit-circle corners.
-    ##   Shader places every corner at `centre + cos*arm_first + sin*arm_second`: work
-    ##   `expandDiscVertex` states in Nim.
+    ##   Shader places every corner on view box of disc's sphere, `viewBoxOfDisc`, and
+    ##   fragment stage casts its own ray at plane, `hitDiscAlong`; both stated in Nim.
     ##   Thirteen floats against fanned vertices, and no per-frame trigonometry on CPU.
     ## Arms arrive already scaled by radius, so record needs no radius.
     centre_x*, centre_y*, centre_z*: float32
@@ -1024,47 +1024,140 @@ func addRing*(
   inc meshes.rings.count
 
 
-func expandDiscVertex*(record: DiscRecord; cos_angle, sin_angle: float): Vertex =
-  ## Widen one disc record into fan corner given table entry stands for.
-  ##   Reference disc-fill vertex shaders are held to, beside `expandRibbon`.
+const TANGENT_BOUND = 1.0e6
+  ## Stand in for tangent past quarter turn in `viewBoxOfDisc`.
+  ##   Limb past quarter turn closes that whole side of view; any bound beyond view's edge
+  ##   is clamped to it, so magnitude only has to exceed one.
+
+
+func tanBounded(angle: float): float =
+  ## Tangent of `angle`, bounded past quarter turn either way; see `TANGENT_BOUND`.
+  if angle >= 0.5*PI: return TANGENT_BOUND
+  if angle <= -0.5*PI: return -TANGENT_BOUND
+  tan(angle)
+
+
+func viewBoxOfDisc*(
+  record: DiscRecord; eye: Position; axis_right, axis_up, forward: Direction;
+  tangent_half_view, aspect: float
+): tuple[lo, hi: (float, float)] =
+  ## Bound disc's picture on view, in view fractions -1 .. 1 across and up.
+  ##   Reference disc vertex shaders are held to, beside `expandRibbon`.
   ##     Change to it, GLSL in `renderer.nim` or WebGL source in `gl.ts` is not
   ##     finished until other two are checked.
-  ##   One statement: centre plus two radius-scaled arms weighted by corner's cosine and
-  ##   sine, i.e. `euclid.onCircleAt`, centre corner carrying zero for both.
-  ##   Flat tint across fan; see `addDisc`.
-  let at = onCircleAt(
-    Position(
-      x: float(record.centre_x),
-      y: float(record.centre_y),
-      z: float(record.centre_z),
+  ##   Box of disc's bounding sphere, radius being arm's length. Each axis is bounded by
+  ##   sphere's limb in that axis's plane with sight axis: centre's bearing plus and minus
+  ##   half-angle sphere subtends, tangent bounded past quarter turn, over view's own
+  ##   tangent, clamped to view. Whole view where eye stands within radius of centre in
+  ##   either plane, sphere then holding eye. Empty box where sphere stands behind eye.
+  ##   Not fan of corners on plane itself: corner behind eye left triangle for clipper,
+  ##   and sliver clipper returned rasterised to nothing under grazing camera, so disc
+  ##   ended at hard chord under camera standing inside it. Box is filled by fragment
+  ##   stage casting its own ray, `hitDiscAlong`, exact at any grazing angle.
+  let
+    to_centre = Direction(
+      x: float(record.centre_x) - eye.x,
+      y: float(record.centre_y) - eye.y,
+      z: float(record.centre_z) - eye.z,
+    )
+    radius = norm(Direction(
+      x: float(record.arm_first_x), y: float(record.arm_first_y), z: float(record.arm_first_z)
+    ))
+    across = dot(to_centre, axis_right)
+    up = dot(to_centre, axis_up)
+    depth = dot(to_centre, forward)
+    reach_across = hypot(across, depth)
+    reach_up = hypot(up, depth)
+  if min(reach_across, reach_up) <= radius: return (lo: (-1.0, -1.0), hi: (1.0, 1.0))
+  let
+    bearing_across = arctan2(across, depth)
+    spread_across = arcsin(radius/reach_across)
+    bearing_up = arctan2(up, depth)
+    spread_up = arcsin(radius/reach_up)
+    wide = tangent_half_view*aspect
+    tall = tangent_half_view
+  (
+    lo: (
+      clamp(tanBounded(bearing_across - spread_across)/wide, -1.0, 1.0),
+      clamp(tanBounded(bearing_up - spread_up)/tall, -1.0, 1.0),
     ),
-    Direction(
-      x: float(record.arm_first_x),
-      y: float(record.arm_first_y),
-      z: float(record.arm_first_z),
+    hi: (
+      clamp(tanBounded(bearing_across + spread_across)/wide, -1.0, 1.0),
+      clamp(tanBounded(bearing_up + spread_up)/tall, -1.0, 1.0),
     ),
-    Direction(
-      x: float(record.arm_second_x),
-      y: float(record.arm_second_y),
+  )
+
+
+func expandDiscCorner*(
+  box: tuple[lo, hi: (float, float)]; cos_angle, sin_angle: float
+): (float, float) =
+  ## Place one static corner on box `viewBoxOfDisc` gave, in view fractions.
+  ##   Ellipse through box's corners: box's middle plus corner scaled by root two of its
+  ##   half extents, so fan of unit-circle corners covers whole box; centre corner
+  ##   `(0, 0)` lands on middle.
+  let
+    middle = (0.5*(box.lo[0] + box.hi[0]), 0.5*(box.lo[1] + box.hi[1]))
+    half = (0.5*(box.hi[0] - box.lo[0]), 0.5*(box.hi[1] - box.lo[1]))
+  (middle[0] + sqrt(2.0)*cos_angle*half[0], middle[1] + sqrt(2.0)*sin_angle*half[1])
+
+
+func rayThroughView*(
+  view_x, view_y: float; axis_right, axis_up, forward: Direction; tangent_half_view,
+  aspect: float
+): Direction =
+  ## Cast sight ray through view fraction `(view_x, view_y)`, -1 .. 1 across and up.
+  ##   Sight axis plus lateral step, unnormalised, so distance along it is view depth.
+  let
+    across = view_x*aspect*tangent_half_view
+    up = view_y*tangent_half_view
+  Direction(
+    x: forward.x + across*axis_right.x + up*axis_up.x,
+    y: forward.y + across*axis_right.y + up*axis_up.y,
+    z: forward.z + across*axis_right.z + up*axis_up.z,
+  )
+
+
+func hitDiscAlong*(record: DiscRecord; eye: Position; ray: Direction): Option[float] =
+  ## Cast `ray` from `eye` at disc; report view depth where it lands inside disc.
+  ##   Reference disc fragment shaders are held to, same three-way rule as
+  ##   `viewBoxOfDisc`. `ray` is `rayThroughView`'s, so depth along it is view depth.
+  ##   None where ray runs along plane, meets it behind eye, or lands past rim: inside is
+  ##   where hit's coordinate on each arm, over arm's own square, sums under one.
+  ##   Nearer than near plane is still hit: that band is what clipper cut, and depth
+  ##   written for it rests on buffer's floor.
+  ##   Same meet `picking.rayPlaneHit` reads through algebra, so pixel and pick agree.
+  let
+    arm_first = Direction(
+      x: float(record.arm_first_x), y: float(record.arm_first_y), z: float(record.arm_first_z)
+    )
+    arm_second = Direction(
+      x: float(record.arm_second_x), y: float(record.arm_second_y),
       z: float(record.arm_second_z),
-    ),
-    cos_angle, sin_angle,
-  )
-  Vertex(
-    x: float32(at.x),
-    y: float32(at.y),
-    z: float32(at.z),
-    red: record.fill_red,
-    green: record.fill_green,
-    blue: record.fill_blue,
-    alpha: record.fill_alpha,
-  )
+    )
+    to_centre = Direction(
+      x: float(record.centre_x) - eye.x,
+      y: float(record.centre_y) - eye.y,
+      z: float(record.centre_z) - eye.z,
+    )
+    normal = cross(arm_first, arm_second)
+    rate = dot(ray, normal)
+  if rate == 0.0: return
+  let depth = dot(to_centre, normal)/rate
+  if depth <= 0.0: return
+  let
+    hit = Direction(
+      x: depth*ray.x - to_centre.x, y: depth*ray.y - to_centre.y, z: depth*ray.z - to_centre.z
+    )
+    first = dot(hit, arm_first)/dot(arm_first, arm_first)
+    second = dot(hit, arm_second)/dot(arm_second, arm_second)
+  if first*first + second*second > 1.0: return
+  some(depth)
 
 
 func expandDomeVertex*(record: DomeRecord, unit: Direction): Vertex =
   ## Widen one dome record into sphere corner given unit direction stands for.
   ##   Reference dome vertex shaders are held to; same three-way rule as
-  ##   `expandDiscVertex`.
+  ##   `viewBoxOfDisc`.
   ##   One statement: centre plus unit direction scaled by radius.
   ##     Sum `spherePoint` walked through algebra before sphere became static geometry,
   ##     which suite still holds it equal to.
@@ -1083,7 +1176,7 @@ proc discCorners*(): seq[float32] =
   ## Emit disc fan's static corner buffer.
   ##   `(cos, sin)` per corner, three corners per rim segment, wound centre, this
   ##   segment's boundary, next one's.
-  ##   Centre corner is `(0, 0)`, which `expandDiscVertex` lands on centre exactly.
+  ##   Centre corner is `(0, 0)`, which `expandDiscCorner` lands on box's middle.
   ##   One source for both front-ends: desktop uploads from Nim and browser through
   ##   `nimDiscCorners`, so neither carries hand-copied table.
   result = newSeq[float32](2*3*SEGMENTS_CIRCLE_HORIZON)

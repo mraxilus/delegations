@@ -1020,13 +1020,18 @@ suite "Mesh":
 
   let SCALE_TEST = block:
     let eye = Position(x: 5, y: -3, z: 7)
+    # Looking back at origin, which is where every fixture below is built around; screen
+    #   axes about that sight axis as camera's frame lays them, right level and up over it.
+    let
+      forward = direction(toMultivector(eye) ∧ toMultivector(ORIGIN)).get
+      level = cross(forward, Direction(x: 0, y: 0, z: 1))
+      right = (1.0/norm(level))*level
     # `algebraFilled`, as every hand-built extent must be, or multivector twins.
     #   tessellation reads are zero and it silently draws nothing.
     algebraFilled(DrawExtent(scale: DrawScale(
       extent_furniture: 30.0,
       eye: eye, radius_horizon: 50.0,
-      # Looking back at origin, which is where every fixture below is built around.
-      forward: direction(toMultivector(eye) ∧ toMultivector(ORIGIN)).get,
+      forward: forward, axis_right: right, axis_up: cross(right, forward),
       tangent_half_view: tan(0.5*degToRad(45.0)),
       height_pixels: HEIGHT_SCALE_TEST,
       depth_near: 0.1,
@@ -1257,6 +1262,56 @@ suite "Mesh":
         check isNear(far_first, star) or isNear(far_second, star)
 
 
+  test "disc is hit under a grazing eye nearer than the near plane, and boxed by its sphere":
+    # Record as `addDisc` writes ecliptic's: radius eight about origin, in ground plane.
+    let record = DiscRecord(arm_first_x: 8.0, arm_second_y: 8.0, fill_alpha: 1.0)
+    let
+      (right, up, forward) =
+        (Direction(x: 0, y: -1, z: 0), Direction(x: 0, y: 0, z: 1), Direction(x: 1, y: 0, z: 0))
+      height = 2.6e-6
+      eye = Position(x: -0.13, y: 0.0, z: height)
+      tangent = 0.443
+    # Ray half way down view meets plane 1.2e-5 ahead, under near plane at 1/400 of 0.13:
+    #   band fan's near cut lost, and ray finds.
+    let down = rayThroughView(0.0, -0.5, right, up, forward, tangent, 1.0)
+    let hit = hitDiscAlong(record, eye, down)
+    check hit.isSome
+    check isNear(hit.get, height/(0.5*tangent))
+    check hit.get < 0.13*FACTOR_CLIP_NEAR
+    # Ray half way up meets plane behind eye; ray along sight axis runs along plane.
+    check hitDiscAlong(
+      record, eye, rayThroughView(0.0, 0.5, right, up, forward, tangent, 1.0)
+    ).isNone
+    check hitDiscAlong(record, eye, forward).isNone
+    # Sphere holds eye, so box is whole view.
+    let box = viewBoxOfDisc(record, eye, right, up, forward, tangent, 1.0)
+    check box.lo == (-1.0, -1.0) and box.hi == (1.0, 1.0)
+    # From ten units above, disc of radius one subtends 5.74 degrees each way: box is its
+    #   tangent over view's, aspect widening across; rim is hit just inside and missed just
+    #   outside, at depth ten.
+    let
+      small = DiscRecord(arm_first_x: 1.0, arm_second_y: 1.0, fill_alpha: 1.0)
+      above = Position(x: 0.0, y: 0.0, z: 10.0)
+      (right_down, up_down, forward_down) =
+        (Direction(x: 1, y: 0, z: 0), Direction(x: 0, y: 1, z: 0), Direction(x: 0, y: 0, z: -1))
+      box_small = viewBoxOfDisc(small, above, right_down, up_down, forward_down, 0.5, 2.0)
+      limb = tan(arcsin(0.1))
+    check isNear(box_small.hi[0], limb/(0.5*2.0)) and isNear(box_small.lo[0], -limb/(0.5*2.0))
+    check isNear(box_small.hi[1], limb/0.5) and isNear(box_small.lo[1], -limb/0.5)
+    let inside = hitDiscAlong(small, above, Direction(x: 0.099, y: 0.0, z: -1.0))
+    check inside.isSome and isNear(inside.get, 10.0)
+    check hitDiscAlong(small, above, Direction(x: 0.101, y: 0.0, z: -1.0)).isNone
+    # Corner lands on box's middle at `(0, 0)` and root two out at rim corner.
+    let corner = expandDiscCorner(box_small, 1.0, 0.0)
+    check isNear(corner[0], sqrt(2.0)*box_small.hi[0]) and isNear(corner[1], 0.0)
+    check expandDiscCorner(box_small, 0.0, 0.0) == (0.0, 0.0)
+    # Disc behind eye: box is empty.
+    let box_behind = viewBoxOfDisc(
+      small, Position(x: 0.0, y: 0.0, z: -10.0), right_down, up_down, forward_down, 0.5, 2.0
+    )
+    check box_behind.lo == box_behind.hi
+
+
   test "plane becomes a flat filled disc and a rim, every vertex on it":
     for plane in PLANES:
       MESHES.clearMeshes
@@ -1278,19 +1333,48 @@ suite "Mesh":
       # Vertex lies on plane exactly when its offset from support is normal to normal.
       let (anchor, normal) = (positionAnchor(plane), directionNormal(plane))
       check anchor.isSome and normal.isSome
-      let corners_disc = discCorners()
-      for i in 0 ..< 3*SEGMENTS_CIRCLE_HORIZON:
-        let vertex = expandDiscVertex(
-          MESHES.discs.records[0],
-          float(corners_disc[2*i]), float(corners_disc[2*i + 1]),
-        )
-        check isNear(dot(vertex.toPosition - anchor.get, normal.get), 0)
-        check isNear(float(vertex.alpha), ALPHA_VEIL)
-        # Every fill vertex is either fan's own centre or out at plane's own.
-        #   fixed radius -- flat alpha throughout, so unlike old fading disc there
-        #   is no band strictly between two to rule out.
-        let radius_vertex = norm(vertex.toPosition - anchor.get)
-        check isNear(radius_vertex, 0) or isNear(radius_vertex, EXTENT_PLANE_F)
+      # Disc is spanned over view box of its sphere and filled by fragment's own ray:
+      #   `viewBoxOfDisc` and `hitDiscAlong` -- its references -- are what is read here.
+      #   Every rim point in front of eye projects inside box, clamped to view as box is;
+      #   ray through centre lands at centre's depth; alpha is veil's, flat.
+      let
+        record = MESHES.discs.records[0]
+        (eye, right, up, forward) =
+          (SCALE_TEST.eye, SCALE_TEST.axisRight, SCALE_TEST.axisUp, SCALE_TEST.forward)
+        tangent = SCALE_TEST.tangentHalfView
+        box = viewBoxOfDisc(record, eye, right, up, forward, tangent, 1.0)
+      check isNear(float(record.fill_alpha), ALPHA_VEIL)
+      for i in 0 .. SEGMENTS_CIRCLE_HORIZON:
+        let
+          (cos_angle, sin_angle) = (UNIT_CIRCLE_RIM[i].cos_angle, UNIT_CIRCLE_RIM[i].sin_angle)
+          on_rim = Direction(
+            x: float(record.centre_x) + cos_angle*float(record.arm_first_x) +
+              sin_angle*float(record.arm_second_x) - eye.x,
+            y: float(record.centre_y) + cos_angle*float(record.arm_first_y) +
+              sin_angle*float(record.arm_second_y) - eye.y,
+            z: float(record.centre_z) + cos_angle*float(record.arm_first_z) +
+              sin_angle*float(record.arm_second_z) - eye.z,
+          )
+          depth = dot(on_rim, forward)
+        if depth <= SCALE_TEST.depthNear: continue
+        let
+          across = clamp(dot(on_rim, right)/(depth*tangent), -1.0, 1.0)
+          rise = clamp(dot(on_rim, up)/(depth*tangent), -1.0, 1.0)
+        check across >= box.lo[0] - 1.0e-9 and across <= box.hi[0] + 1.0e-9
+        check rise >= box.lo[1] - 1.0e-9 and rise <= box.hi[1] + 1.0e-9
+      let
+        to_centre = anchor.get - eye
+        depth_centre = dot(to_centre, forward)
+      let ray = rayThroughView(
+        dot(to_centre, right)/(depth_centre*tangent), dot(to_centre, up)/(depth_centre*tangent),
+        right, up, forward, tangent, 1.0,
+      )
+      # Record's floats are narrowed, and ray grazing plane multiplies that into depth,
+      #   so plane met under six degrees is left to its box check alone.
+      if depth_centre > SCALE_TEST.depthNear and
+          abs(dot(ray, normal.get)) > 0.1*norm(ray)*norm(normal.get):
+        let hit = hitDiscAlong(record, eye, ray)
+        check hit.isSome and isNear(hit.get, depth_centre)
       # Rim is drawn as line is, so its own *corners* stand half line width off.
       #   plane -- step sideways is perpendicular to segment and to sight
       #   ray, which is only in plane when eye happens to lie in it. What is still
@@ -1377,13 +1461,19 @@ suite "Mesh":
         arm_second = radius*axes.get.axis_second
         arm_first_point = wedge(radius, toMultivector(axes.get.axis_first))
         arm_second_point = wedge(radius, toMultivector(axes.get.axis_second))
-      # Record's own expansion beside plain stepping: `expandDiscVertex` is.
-      #   reference both disc-fill vertex shaders are held to, so it too must land on
-      #   multivector sums, corner for corner, through record's narrowed floats.
+      # Record's own rim beside plain stepping: arms `hitDiscAlong` reads are what both
+      #   disc fragment shaders bound by, so record's narrowed floats too must land on
+      #   multivector sums, corner for corner, and ray from ten radii above cast at point
+      #   just inside each corner lands on disc where one just outside misses.
       MESHES.clearMeshes
       MESHES.addDisc(
         anchor.get, axes.get.axis_first, axes.get.axis_second, radius, Ink.Olive.colour
       )
+      let
+        record = MESHES.discs.records[0]
+        normal = directionNormal(plane)
+      check normal.isSome
+      let above = anchor.get + 10.0*radius*normal.get
       for i in 0 ..< SEGMENTS_CIRCLE_HORIZON:
         let
           angle = (2.0*PI * float(i)) / float(SEGMENTS_CIRCLE_HORIZON)
@@ -1391,9 +1481,20 @@ suite "Mesh":
           assembled = pointFrom(add(centre_point, add(
             wedge(cos(angle), arm_first_point), wedge(sin(angle), arm_second_point),
           )))
-          expanded = expandDiscVertex(MESHES.discs.records[0], cos(angle), sin(angle))
+          on_record = Position(
+            x: float(record.centre_x) + cos(angle)*float(record.arm_first_x) +
+              sin(angle)*float(record.arm_second_x),
+            y: float(record.centre_y) + cos(angle)*float(record.arm_first_y) +
+              sin(angle)*float(record.arm_second_y),
+            z: float(record.centre_z) + cos(angle)*float(record.arm_first_z) +
+              sin(angle)*float(record.arm_second_z),
+          )
+          spoke = assembled - anchor.get
+          inside = hitDiscAlong(record, above, (anchor.get + 0.999*spoke) - above)
         check stepped =~ assembled
-        check isNear(expanded.toPosition, assembled)
+        check isNear(on_record, assembled)
+        check inside.isSome and isNear(inside.get, 1.0)
+        check hitDiscAlong(record, above, (anchor.get + 1.001*spoke) - above).isNone
 
 
   test "horizon point becomes a star fixed at eye plus its own direction":

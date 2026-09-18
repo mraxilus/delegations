@@ -893,8 +893,8 @@ proc renderFrame(
   # GPU takes transform about records' origin; `view_projection` above stays about world,
   #   for hover, menu and markers, which read world coordinates.
   let view_projection_drawn = camera.initMatrixViewProjection(width / height, MESHES.origin)
-  renderer.drawMeshes(MESHES_FURNITURE, view_projection_drawn, scale)
-  renderer.drawMeshes(MESHES, view_projection_drawn, scale)
+  renderer.drawMeshes(MESHES_FURNITURE, view_projection_drawn, scale, width / height)
+  renderer.drawMeshes(MESHES, view_projection_drawn, scale, width / height)
 
   # Take one reading per frame, before any handle advances.
   #   Every selected object's comet then moves by same step.

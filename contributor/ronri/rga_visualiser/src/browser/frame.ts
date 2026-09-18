@@ -186,10 +186,19 @@ function renderFrame(now_seconds: number) {
   //   one record disc or dome, fanned out by their own vertex shaders and walked in scene order
   //   through run list.
   //   Both programs get this frame's matrix before walk, which switches between them per run.
+  //   Disc program takes camera too: its box is spanned in view and its fragments cast
+  //   rays from eye.
   gl.useProgram(program_disc);
   gl.uniformMatrix4fv(uniform_disc_mvp, false, data.view_projection);
   gl.uniform1f(uniform_disc_depth_near, data.camera_depth_near);
   gl.uniform1f(uniform_disc_depth_log, data.camera_depth_log);
+  gl.uniform3f(uniform_disc_eye, data.camera_eye_x, data.camera_eye_y, data.camera_eye_z);
+  gl.uniform3f(uniform_disc_forward,
+    data.camera_forward_x, data.camera_forward_y, data.camera_forward_z);
+  gl.uniform3f(uniform_disc_right, data.camera_right_x, data.camera_right_y, data.camera_right_z);
+  gl.uniform3f(uniform_disc_up, data.camera_up_x, data.camera_up_y, data.camera_up_z);
+  gl.uniform1f(uniform_disc_tangent, data.camera_tangent_half_view);
+  gl.uniform1f(uniform_disc_aspect, aspect);
   gl.useProgram(program_dome);
   gl.uniformMatrix4fv(uniform_dome_mvp, false, data.view_projection);
   gl.uniform1f(uniform_dome_depth_near, data.camera_depth_near);
