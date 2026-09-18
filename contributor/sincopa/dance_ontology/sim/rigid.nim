@@ -100,6 +100,14 @@ const
   CLEAR* = 0.10       ## Least clear air between two torsos, metres.
   EASE* = 1.0         ## Hertz of spring holding each joint toward its rest.
   EASE_DAMP* = 1.0    ## And its damping.  Soft: it biases pose, never drives it.
+  HANG_HZ* = 5.0      ## Hertz of shoulder's spring on arm hanging free, standing
+                      ## in for weight that holds hanging arm plumb: five kilograms
+                      ## of arm at third of metre is seventeen newton metres per
+                      ## radian.  At one hertz, spring is about two, and flank's
+                      ## friction dragged her arms behind her slow half turn by
+                      ## forty nine degrees, creeping back to thirty three through
+                      ## settle; at two, twenty four and eight; three, thirteen and
+                      ## five; here, five and four.  Assumed.
   WRIST_EASE* = 5.0   ## Hertz of wrist's spring.  Hand weighs four hundred grams,
                       ## so at one hertz its spring is three hundredths of newton
                       ## metre per radian and wrist meets nothing before its cone:
@@ -537,8 +545,9 @@ proc armOf(c: var Couple; who: Body; arm: Arm; group: cint): ArmRig =
   # hung from chest no longer sinks into own torso, neck and head unseen --
   # 67 mm inside own head by capsule geometry while engine reported no touch,
   # before shoulder was told to collide with what it hung from.
+  # Held arm is placed by its hold and biased alone; free arm hangs by weight.
   ball.enableSpring = true
-  ball.hertz = EASE.cfloat
+  ball.hertz = (if c.isHeld(who, arm): EASE else: HANG_HZ).cfloat
   ball.dampingRatio = EASE_DAMP.cfloat
   ball.targetRotation = eng.IDENTITY
   ball.enableTwistLimit = true
