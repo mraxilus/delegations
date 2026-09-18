@@ -7413,11 +7413,11 @@ suite "Marker":
         # Margin right of leftmost point either band shows, and in view. Not left half of
         #   view: tilted horizon here leaves through top or bottom edge on right at some
         #   azimuths, and whole visible stretch stands right of centre.
-        check at.x >= 12.0 - TOLERANCE_TEST and at.x <= float(WIDTH_MARK)
+        check at.x >= MARGIN_LABEL_HORIZON - TOLERANCE_TEST and at.x <= float(WIDTH_MARK)
         for side in 0 .. 1:
           for i in 0 ..< bands.get.counts_band[side]:
             check bands.get.points_band[side][i].x >=
-              at.x - 12.0 - 0.5 - TOLERANCE_TEST
+              at.x - MARGIN_LABEL_HORIZON - PIXELS_TIE_LEFTMOST - TOLERANCE_TEST
         if at_before.isSome:
           check hypot(at.x - at_before.get.x, at.y - at_before.get.y) < 40.0
         at_before = some(at)
@@ -7527,12 +7527,12 @@ suite "Marker":
     for side in 0 .. 1:
       for i in 0 ..< bands.counts_band[side]:
         check bands.points_band[side][i].x >=
-          bands.label_at.x - 12.0 - 0.5 - TOLERANCE_TEST
+          bands.label_at.x - MARGIN_LABEL_HORIZON - PIXELS_TIE_LEFTMOST - TOLERANCE_TEST
     let frame = markerOf(PLANE_HORIZON).get
     check frame.kind == MarkerKind.Frame and frame.has_label and frame.is_label_beside
-    check frame.label_at.x =~ GAP_MARKER + 12.0
+    check frame.label_at.x =~ GAP_MARKER + MARGIN_LABEL_HORIZON
     check frame.label_at.y =~
-      float(HEIGHT_MARK) - 40.0 - 12.0 - 0.5*HEIGHT_MARKER_LABEL
+      float(HEIGHT_MARK) - MARGIN_LABEL_FOOT - MARGIN_LABEL_HORIZON - 0.5*HEIGHT_MARKER_LABEL
     check frame.label_away_x =~ 1.0 and frame.label_away_y =~ 0.0
 
 
