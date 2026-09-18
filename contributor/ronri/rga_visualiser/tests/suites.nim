@@ -2223,6 +2223,41 @@ suite "Scene":
     check notationSubstituted(Operation.Wedge, "mn", "nm") == "mn ∧ nm"
 
 
+  test "a composite operand is parenthesised where the formula needs it, flat where not":
+    # Bug this guards: derived name was substituted bare, so meet of `a ∧ b` with `c` read
+    #   `a ∧ b ∨ c`, and expansion of `p` by `L ∨ G` read `p ∧ L ∨ G★`, naming other objects.
+    # Chain of one associative operator stays flat; any other binding wraps.
+    check notationSubstituted(Operation.Wedge, "a ∧ b", "c") == "a ∧ b ∧ c"
+    check notationSubstituted(Operation.Wedge, "a", "b ∧ c") == "a ∧ b ∧ c"
+    check notationSubstituted(Operation.WedgeAnti, "a ∧ b", "c") == "(a ∧ b) ∨ c"
+    check notationSubstituted(Operation.Wedge, "L ∨ G", "p") == "(L ∨ G) ∧ p"
+    check notationSubstituted(Operation.WedgeAnti, "P ∨ Q", "R ∨ S") == "P ∨ Q ∨ R ∨ S"
+    check notationSubstituted(Operation.Add, "a + b", "c") == "a + b + c"
+    # Subtraction is not associative: both sides wrap.
+    check notationSubstituted(Operation.Subtract, "a - b", "c") == "(a - b) - c"
+    check notationSubstituted(Operation.Subtract, "a", "b - c") == "a - (b - c)"
+    # Postfix binds tighter than anything: composite under it always wraps.
+    check notationSubstituted(Operation.ExpandBulk, "p", "L ∨ G") == "p ∧ (L ∨ G)★"
+    check notationSubstituted(Operation.Attitude, "a ∧ b", "unused") == "(a ∧ b)⊖"
+    check notationSubstituted(Operation.DualWeight, "a + b", "unused") == "(a + b)☆"
+    # Negation wraps composite, and negated name wraps under anything.
+    check notationSubstituted(Operation.Negate, "a + b", "unused") == "−(a + b)"
+    check notationSubstituted(Operation.Negate, "a", "unused") == "−a"
+    check notationSubstituted(Operation.DualBulk, "−a", "unused") == "(−a)★"
+    check notationSubstituted(Operation.Wedge, "−a", "b") == "(−a) ∧ b"
+    # Projection binds `𝐧` twice, once by meet and once by star.
+    check notationSubstituted(Operation.ProjectCentral, "p ∧ q", "a ∨ b") ==
+      "a ∨ b ∨ (p ∧ q ∧ (a ∨ b)★)"
+    check notationSubstituted(Operation.ProjectOrthogonal, "p", "G") == "G ∨ (p ∧ G☆)"
+    # Postfix name is atomic, and name already wrapped is not wrapped again.
+    check notationSubstituted(Operation.Wedge, "L⊖", "p") == "L⊖ ∧ p"
+    check notationSubstituted(Operation.WedgeAnti, "(a ∧ b)", "c") == "(a ∧ b) ∨ c"
+    check notationSubstituted(Operation.WedgeAnti, "(a ∧ b) ∧ (c ∧ d)", "e") ==
+      "((a ∧ b) ∧ (c ∧ d)) ∨ e"
+    # Name with spaces but no operator is atomic: reader's own label stays bare.
+    check notationSubstituted(Operation.Wedge, "my point", "q") == "my point ∧ q"
+
+
   test "labels truncate and stay terminated":
     var storage: Label
     toChars("short", storage)

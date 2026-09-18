@@ -19,7 +19,7 @@ import {
   driveBackdropPlane, driveCrowd, driveEmptyRelease, drivePausedDrag, driveTouchConstruct,
   driveTwoFingerPan,
 } from './construct';
-import { driveApply, driveReachable, driveUndo } from './apply';
+import { driveApply, driveApplyNamed, driveReachable, driveUndo } from './apply';
 import { driveMessageGoes } from './message';
 import {
   drivePanWhileSelected, drivePickOrbit, drivePlanePick, drivePointerPick,
@@ -203,6 +203,8 @@ async function main(): Promise<void> {
   // Demo runs last, and under load: it builds thousands of objects, and every check above is
   //   written against opening scene's own weight.
   await driveDemo(page, await objectsDefault(page));
+  // Under default size, where arena has room: largest size below fills it to capacity.
+  await driveApplyNamed(page);
   const objects_largest = await objectsLargest(page);
   await loadDemo(page, objects_largest);
   await driveCulling(page);
