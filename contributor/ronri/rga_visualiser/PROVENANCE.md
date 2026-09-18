@@ -850,17 +850,15 @@ in CSS pixels. **The drawer draws over it** (`z-index` 3 under the drawer's 4) r
 hiding it: a bar a panel sits on can be read by closing the panel.
 
 *Checked.* Verified by `suites.nim`: a meet far outside the drawn disc, from both sides of one
-plane; both halves of a line pickable; the horizon plane's dome inserted first; the great
-circle's segment count after the eye cut; the fog radii at an eye inside its own fog; a star
-behind a wider disc unpicked with one rival and a moon in front of it picked with two.
-Verified by driven checks: the plane pick
-from either side, sweeping the canvas for a pixel picking a plane the gesture itself built;
-the scale bar's length against its label at two distances a decade apart, layered under the
-open drawer; forty-eight hover samples across Jupiter's disc finding nothing deeper.
-Verified by rendering: the fade fractions, the cell size, the grid alpha, the axis dimming.
-Verified by driven check: a wide disc's upper half brighter than its lower on the page, which
-is world-up on screen from the opening camera. The far-end occlusion error is assumed to
-be tolerable, not measured.
+plane; both halves of a line pickable; the horizon plane's dome inserted first; the great circle's
+segment count after the eye cut; the fog radii at an eye inside its own fog; a star behind a wider
+disc unpicked with one rival and a moon in front of it picked with two. Verified by driven checks:
+the plane pick from either side, sweeping the canvas for a pixel picking a plane the gesture itself
+built; the scale bar's length against its label at two distances a decade apart, layered under the
+open drawer; forty-eight hover samples across Jupiter's disc finding nothing deeper. Verified by
+rendering: the fade fractions, the cell size, the grid alpha, the axis dimming. Verified by driven
+check: a wide disc's upper half brighter than its lower on the page, which is world-up on screen
+from the opening camera. The far-end occlusion error is assumed to be tolerable, not measured.
 
 ## Camera
 
@@ -1134,7 +1132,14 @@ top; each front-end centres its own text.
   `MARGIN_LABEL_FOOT` = 40 px up, clear of the page's scale bar (top 33 px up), pushed rightward by
   each front-end's measured text as a line's label is pushed off its rail; not centred inside the
   top edge, under the chip row. **Every label is then held wholly inside the view**: `labelInView`
-  clamps the measured box `MARGIN_LABEL_EDGE` = 4 px in from each edge on both front-ends.
+  clamps the measured box `MARGIN_LABEL_EDGE` = 4 px in from each edge on both front-ends. **Labels
+  of several selected objects settle apart** (`marker.settleLabels`): each later selection's box
+  slides along its own axis, a ring's or loop's column, a rail's line, the bands' edge, the frame's
+  foot, by the least shift that parts it from every earlier box with `GAP_LABEL_APART` = 2 px of
+  air, the nearer sense first and the other where the view's edge holds it back, over at most
+  `PASSES_LABEL_SETTLE` = 4 rounds; both front-ends hand it their measured boxes, the page through
+  `nimLabelsSettled` with its 22 px height, the desktop at the nominal 16. Not placement alone,
+  which stacked the inner planets' names into one heap where they align.
   **A plane's label stands on the disc's column at the height of its circle's true top.**
   `marker.topmostOnCircle` solves the top of the projected circle in closed form (screen y
   is stationary where `(b·d − a·e) + (c·d − a·f)·sin + (b·f − c·e)·cos = 0`) rather than
@@ -1211,15 +1216,16 @@ rails' straightness and widest reading over an orientation sweep; the frame's 68
 flat at half progress; the head sitting its carried travel at 45 placements; a matured hold taken
 once; a full orbit at two elevations in 0.002 rad steps with no isolated label step, two more with
 the horizon line's label on the leftmost band point in the left half, the frame's label on its left
-edge at its foot, and a plane's label a milliradian either side of the flip standing under a pixel
-apart. Verified by driven check: 402 frames with 0 label hops, 48 at phone width with 0 side swaps
-and none on the right, the frame's label box in its corner above the scale bar; a 720-step orbit
-with the rail gap changing at most 0.103 px between frames; two crossing planes selected changing
-15,668 canvas pixels against a 0-pixel noise floor. Verified on the shipped browser: the comet's
-advance at 62.4 to 63.3 px/s across four orbit rates — the residual at faster rates, a tenth of
-frames stepping 236–388 px/s at laps and clip transitions, is **not explained** to the standard the
-medians are. Verified on the desktop: the selected line's pure-ink pixels 2,626 with the second pass
-against 1,106 with the tail.
+edge at its foot, hand-built label boxes settling up a column, along a line and off an edge, and a
+plane's label a milliradian either side of the flip standing under a pixel apart. Verified by driven
+check: 402 frames with 0 label hops, 48 at phone width with 0 side swaps and none on the right, the
+frame's label box in its corner above the scale bar, six labels apart and whole through 48 frames; a
+720-step orbit with the rail gap changing at most 0.103 px between frames; two crossing planes
+selected changing 15,668 canvas pixels against a 0-pixel noise floor. Verified on the shipped
+browser: the comet's advance at 62.4 to 63.3 px/s across four orbit rates — the residual at faster
+rates, a tenth of frames stepping 236–388 px/s at laps and clip transitions, is **not explained** to
+the standard the medians are. Verified on the desktop: the selected line's pure-ink pixels 2,626
+with the second pass against 1,106 with the tail.
 
 ## Picking
 
@@ -1735,26 +1741,24 @@ of something plainly visible pulled the view about; otherwise it builds the full
 `ROUNDS_PLACEMENT_LEAST` = 5 halvings. Distance grows, never shrinks; a finite pick never
 changes azimuth or elevation.
 
-**A pointer pick keeps its object under the pointer and comes in to it.** The centring rule
-above is for picks with no pointer (objects list, keyboard, a shift-added group). A click or
-tap on a point or a line records a `framing.PointerPick`, which `offerAim` consumes on the
-next frame. The destination is the wheel's own move (`stanceUnderPointer`): the eye comes in
-along its line to where the object stands under the pointer, the angles never change, and
-the pivot lands on the sight line at the object's depth. **How far in depends on the shape
-and on what the reader could see**, sized on the frame's height by
-`camera.depthSpanning(diameter, fraction)`: a point drawn at the floor dot is only a place,
-so the camera comes in until its disc spans `FRACTION_HEIGHT_APPROACH_POINT` = 0.01 of the
-frame's height (a sixth was too close; chosen by eye); a point seen at its size, and a line,
-come in no further than the orbit distance; a plane is framed **both ways**, its disc's
-centre brought to the depth where the disc's diameter spans
-`FRACTION_HEIGHT_APPROACH_PLANE` = 0.40 while the crossing under the pointer stays the held
-anchor, falling back to `stanceFor` where that has no positive solution. Not the centring
-rule for a plane, which never pulls in. **The ease holds the pixel too**:
-`CameraTween.anchor_held` switches `advance` to `towardHoldingAnchor`, where the eye's depth
-to the anchor moves geometrically along the eye–anchor line, since `toward` takes the eye off
-that line mid-ease. **A pick renews a held goal**: `aimAt`'s `is_renewed` re-arms the ease
-for a pointer pick whatever the tween holds, or the same object picked again after the
-wheel had taken the reader out goes nowhere.
+**A pointer pick keeps its object under the pointer and comes in to it.** The centring rule above is
+for picks with no pointer (objects list, keyboard, a shift-added group). A click or tap on a point
+or a line records a `framing.PointerPick`, which `offerAim` consumes on the next frame. The
+destination is the wheel's own move (`stanceUnderPointer`): the eye comes in along its line to where
+the object stands under the pointer, the angles never change, and the pivot lands on the sight line
+at the object's depth. **How far in depends on the shape and on what the reader could see**, sized
+on the frame's height by `camera.depthSpanning(diameter, fraction)`: a point drawn at the floor dot
+is only a place, so the camera comes in until its disc spans `FRACTION_HEIGHT_APPROACH_POINT` = 0.01
+of the frame's height (a sixth was too close; chosen by eye); a point seen at its size, and a line,
+come in no further than the orbit distance; a plane is framed **both ways**, its disc's centre
+brought to the depth where the disc's diameter spans `FRACTION_HEIGHT_APPROACH_PLANE` = 0.40 while
+the crossing under the pointer stays the held anchor, falling back to `stanceFor` where that has no
+positive solution. Not the centring rule for a plane, which never pulls in. **The ease holds the
+pixel too**: `CameraTween.anchor_held` switches `advance` to `towardHoldingAnchor`, where the eye's
+depth to the anchor moves geometrically along the eye–anchor line, since `toward` takes the eye off
+that line mid-ease. **A pick renews a held goal**: `aimAt`'s `is_renewed` re-arms the ease for a
+pointer pick whatever the tween holds, or the same object picked again after the wheel had taken the
+reader out goes nowhere.
 
 *Checked.* Verified by `suites.nim`: the pixel stays within 0.01 px through five steps of the ease
 and the arrival distance equals the fit; a near point and a line keep the orbit distance; a
@@ -1897,21 +1901,19 @@ of standing behind the library this project exists to exercise. The pin moves to
 once one carries 26074. The lexer change reaches this project's own source: `-☆(m)` lexes
 as the single operator `-☆` and is spelled `-(☆m)`.
 
-**Four projections are withdrawn at head, and `projections.nim` stands in until they
-return.** `projectCentral`, `projectCentralAnti`, `projectOrthogonal` and
-`projectOrthogonalAnti` are declared `{.error.}` while the library rebuilds them as compound
-operators (`∨∧★`, `∧∨★`, `∨∧☆`, `∧∨☆`); this project calls two of them at eight sites, so
-head alone does not compile here. Each stand-in is a template carrying the definition the
-library's own operator table gives — copied, never derived, so nothing about the algebra is
-invented here (Article II.8). The module is a seam: `scene`, `tessellate`, `interaction`
-and the suite import it instead of `pga`; `export pga except` those four keeps the names
-from colliding, and importing both raises an ambiguous call rather than quietly answering
-from the wrong one. **The guard is what makes this transitional rather than a fork**: a
-`compiles` probe through a qualified call reads the library's own declaration, and an
-`{.error.}` refuses the build the day it gains a body, naming the module to delete and the
-imports to restore. Not holding the pin one commit back, which leaves the project trailing
-its own dependency; not reshaping the call sites, which lets the library's build state
-decide what the visualiser offers.
+**Four projections are withdrawn at head, and `projections.nim` stands in until they return.**
+`projectCentral`, `projectCentralAnti`, `projectOrthogonal` and `projectOrthogonalAnti` are declared
+`{.error.}` while the library rebuilds them as compound operators (`∨∧★`, `∧∨★`, `∨∧☆`, `∧∨☆`); this
+project calls two of them at eight sites, so head alone does not compile here. Each stand-in is a
+template carrying the definition the library's own operator table gives — copied, never derived, so
+nothing about the algebra is invented here (Article II.8). The module is a seam: `scene`,
+`tessellate`, `interaction` and the suite import it instead of `pga`; `export pga except` those four
+keeps the names from colliding, and importing both raises an ambiguous call rather than quietly
+answering from the wrong one. **The guard is what makes this transitional rather than a fork**: a
+`compiles` probe through a qualified call reads the library's own declaration, and an `{.error.}`
+refuses the build the day it gains a body, naming the module to delete and the imports to restore.
+Not holding the pin one commit back, which leaves the project trailing its own dependency; not
+reshaping the call sites, which lets the library's build state decide what the visualiser offers.
 
 **Two Atlas defects stand, and the workaround is manual.** `atlas pin` writes `"objects": {}`
 for a repository carrying no nimble file, so the resolved commit is patched into `atlas.lock`
@@ -1985,14 +1987,12 @@ the suite itself.
 
 ## Open questions
 
-**The drawer's `backdrop-filter` costs about 12 ms of every frame at the largest scene, and is
-the whole of what an open drawer costs.** Measured with the drawer open over 5,040 objects: 59 ms
-per frame against 47 ms with the filter forced off, where the drawer closed is 47 ms and the page
-carries about 860 elements; scrolling the list at 300 px a frame holds 62 ms, 0.8 ms of it in the
-`ui` phase. The blur is what makes the drawer read as glass over a live 3D view, so it is not
-plainly the wrong trade; the figure is recorded so the question can be asked with it rather than
-about it. Software rendering inflates a blur far more than it inflates the rest, so the share is
-an upper bound on hardware. The choices are to keep it, to drop it, or to drop it only while the
-frame runs slow.
+**The drawer's `backdrop-filter` costs about 12 ms of every frame at the largest scene, and is the
+whole of what an open drawer costs.** Measured over 5,040 objects: 59 ms per frame against 47 ms
+with the filter forced off, 47 ms with the drawer closed, about 860 elements on the page; scrolling
+the list at 300 px a frame holds 62 ms, 0.8 ms of it in the `ui` phase. The blur is what makes the
+drawer read as glass over a live view, so it is not plainly the wrong trade; software rendering
+inflates a blur far more than the rest, so the share is an upper bound on hardware. The choices are
+to keep it, to drop it, or to drop it only while the frame runs slow.
 
 [replications]: https://gitlab.com/mraxilus/replications
