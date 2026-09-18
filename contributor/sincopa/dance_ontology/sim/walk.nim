@@ -138,10 +138,7 @@ proc stood*(rig: Rig; band: Band; links: seq[Link]; turns: float;
   ##     exists only where some winding gets there.
   result.c = build(rig, restStance(rig, apart, away), band, links, head, away)
   result.c.settle()
-  result.holds = true
-  for i in 0 ..< links.len:
-    if result.c.stopOf(i) != Stop.None:
-      result.holds = false
+  result.holds = result.c.gives == Stop.None
   if not result.holds:
     return
   let step = (if turns >= 0.0: STEP else: -STEP)
@@ -149,39 +146,57 @@ proc stood*(rig: Rig; band: Band; links: seq[Link]; turns: float;
   while abs(at) + 1e-9 < abs(turns):
     result.c.turn(Body.Two, step, BEATS)
     at += step
-    for i in 0 ..< links.len:
-      if result.c.stopOf(i) != Stop.None:
-        result.holds = false
-        return
+    if result.c.gives != Stop.None:
+      result.holds = false
+      return
   # Left to stand: turn has stopped, and hold is asked of couple at rest there.
   result.c.advance(SETTLE)
-  for i in 0 ..< links.len:
-    if result.c.stopOf(i) != Stop.None:
-      result.holds = false
+  result.holds = result.c.gives == Stop.None
+
+type Stood* = object ## Where couple stand for one still, and how it sits.
+  holds*: bool
+  apart*: float  ## Distance chosen, metres axis to axis.
+  strain*: Strain ## How near pose there is to any end.
 
 proc standsAt(rig: Rig; band: Band; links: seq[Link]; turns: float;
-              away: bool; head: Body; apart: float): bool =
-  ## Whether pose holds at this facing from this one distance.
+              away: bool; head: Body; apart: float): Stood =
+  ## Whether pose holds at this facing from this one distance, and how it sits.
   let (holds, c) = stood(rig, band, links, turns, away, head, apart)
+  result = Stood(holds: holds, apart: apart, strain: c.strainOf)
   c.free()
-  holds
 
-proc holdsAt*(rig: Rig; band: Band; links: seq[Link]; turns: float;
-              away = false; head = Body.Two; apart = 0.0): bool =
-  ## Whether any pose holds at this facing, from any distance couple may stand at.
+proc standing*(rig: Rig; band: Band; links: seq[Link]; turns: float;
+               away = false; head = Body.Two): Stood =
+  ## Where couple stand for this still: distance whose pose holds nearest to
+  ## ease, of every distance couple may stand at.
   ##   Still card claims position exists; moving one claims couple can carry to
   ##     it under one manner.  They are not same question, and `sim/verdicts`
   ##     keeps them apart.  Still is wound there all same, as `stood` says why:
   ##     what is asked once there is whether it holds standing, not whether
   ##     that way in was one card meant.
-  ##   Card claims pose exists, so one distance holding it is enough: answer comes
-  ##     as soon as one does, and only pose nothing holds pays for whole search.
-  if apart > 0.0:
-    return standsAt(rig, band, links, turns, away, head, apart)
+  ##   Every distance is asked, and one at ease is taken over one that merely
+  ##     holds.  First distance that held was taken before, and first is chest to
+  ##     chest: couple asked pillion there had her free arm crushed between two
+  ##     torsos, shoulder at its rope's end, twist at its end, waist at forty,
+  ##     with nothing held -- couple would stand anywhere else.  Ties go to
+  ##     nearer distance, as before.
+  ##   Distance at ease outright ends search: no distance further out is nearer
+  ##     to ease than nought, and nearer distance keeps tie, so first at ease is
+  ##     couple's choice.  Only still no distance eases pays for whole search.
+  result = Stood(holds: false, strain: Strain(most: Inf))
   for far in stands(rig):
-    if standsAt(rig, band, links, turns, away, head, far):
-      return true
-  false
+    let got = standsAt(rig, band, links, turns, away, head, far)
+    if not got.holds: continue
+    if not result.holds or got.strain.most < result.strain.most:
+      result = got
+    if result.strain.most <= 0.0: return
+
+proc holdsAt*(rig: Rig; band: Band; links: seq[Link]; turns: float;
+              away = false; head = Body.Two; apart = 0.0): bool =
+  ## Whether any pose holds at this facing, from any distance couple may stand at.
+  if apart > 0.0:
+    return standsAt(rig, band, links, turns, away, head, apart).holds
+  standing(rig, band, links, turns, away, head).holds
 
 proc reaches*(rig: Rig; band: Band; links: seq[Link]; turns: float;
               away = false; who = Body.Two; head = Body.Two): bool =

@@ -180,8 +180,8 @@ when isMainModule:
   #   each cell of reference; card no distance holds is recorded with no moment.
   var stills: seq[string]
   for a in stillAsks():
-    let sh = standing(HUMAN, Band.Crown, a.links, a.key, a.turns, away = a.away,
-                      head = a.head)
+    let sh = still(HUMAN, Band.Crown, a.links, a.key, a.turns, away = a.away,
+                   head = a.head)
     if sh.stills.len > 0:
       echo &"{a.key}: {a.turns:+.2f} turns, stood {sh.apart:.2f}"
     else:
