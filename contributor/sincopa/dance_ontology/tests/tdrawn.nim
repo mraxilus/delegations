@@ -48,3 +48,18 @@ suite "capsule on canvas":
           result = i
     check place(1, 1.07) < place(0, 1.22)
     check place(1, 1.33) > place(0, 1.22)
+
+  test "each body is lit from its own front":
+    ## Architect: see facing easily, without chevrons on floor and lines at
+    ## shoulder height.  Side of body toward where dancer faces is lighter than
+    ## other side, body facing eye is lighter than one facing away, and colour
+    ## between shade and light is mixed by that much.
+    let across: Seen = (x: 1.0, y: 0.0, d: 0.0)
+    check litAt(across, 1.0) > litAt(across, -1.0)
+    check litAt(across, 1.0) > litAt(across, 0.0)
+    check litAt((x: 0.0, y: 0.0, d: 1.0), 0.0) > litAt((x: 0.0, y: 0.0, d: -1.0), 0.0)
+    check litAt((x: 0.0, y: 0.0, d: 1.0), 0.0) == 1.0
+    check litAt((x: 0.0, y: 0.0, d: -1.0), 0.0) == 0.0
+    check mixHex("#000000", "#ffffff", 0.0) == "rgb(0, 0, 0)"
+    check mixHex("#000000", "#ffffff", 1.0) == "rgb(255, 255, 255)"
+    check mixHex("#102030", "#ffffff", 0.5) == "rgb(136, 144, 152)"

@@ -126,6 +126,23 @@ proc paintOn(cv: JsObject; e: JsObject; at: int; az, el, zoom: float;
       discard ctx.stroke()
     g += 0.5
 
+  # Where each dancer faces, on screen: body is lit from its own front, since
+  # capsule cannot say -- torso's section is symmetric front to back and head
+  # is sphere.  Facing is unit vector, and projection is linear, so its screen
+  # image is difference of two projected points.
+  let look = e.f[at]
+  var facing: array[2, Seen]
+  for who in 0 .. 1:
+    let
+      k = who * 4
+      here: Spot = (num(look[k]), num(look[k + 1]), 0.0)
+      ahead: Spot = (here.x + num(look[k + 2]), here.y + num(look[k + 3]), 0.0)
+      (ph, pf) = (seen(here, az, el, f), seen(ahead, az, el, f))
+    facing[who] = (x: pf.x - ph.x, y: pf.y - ph.y, d: pf.d - ph.d)
+  let
+    shade = $styleOf("--body-shade")
+    lit = $styleOf("--body-lit")
+
   # Capsules, furthest first, in order `drawn` gives.
   var caps: seq[tuple[a, z: Spot]]
   for i in 0 ..< count(e.rad):
@@ -140,53 +157,38 @@ proc paintOn(cv: JsObject; e: JsObject; at: int; az, el, zoom: float;
       pa = seen(a, az, el, f)
       pz = seen(z, az, el, f)
       r = num(e.rad[i])
-      ink = (if mark == 0 or mark == 4: styleOf("--rule-strong")
-             else: inkOf(num(tag[1]).int, num(tag[0]).int))
+    var ink: JsObject
+    if mark == 0 or mark == 4:
+      # Trunk and girdle: light across from back edge to front edge, along
+      # facing's image on screen, through piece's middle.
+      let
+        fore = facing[num(tag[0]).int]
+        across = sqrt(fore.x * fore.x + fore.y * fore.y)
+        (mx, my) = (cx + (pa.x + pz.x) / 2.0 * scale, cy + (pa.y + pz.y) / 2.0 * scale)
+      if across < 0.02:
+        ink = cstring(mixHex(shade, lit, litAt(fore, 0.0))).toJs
+      else:
+        let
+          (ux, uy) = (fore.x / across * r * scale, fore.y / across * r * scale)
+          grad = ctx.createLinearGradient(mx - ux, my - uy, mx + ux, my + uy)
+        for (stop, s) in [(0.0, -1.0), (0.5, 0.0), (1.0, 1.0)]:
+          discard grad.addColorStop(stop, cstring(mixHex(shade, lit, litAt(fore, s))))
+        ink = grad
+    else:
+      ink = inkOf(num(tag[1]).int, num(tag[0]).int).toJs
     case drawnAs(a, z)
     of Drawn.Stroke:
       ctx.lineWidth = (2.0 * r * scale).toJs
-      ctx.strokeStyle = ink.toJs
+      ctx.strokeStyle = ink
       discard ctx.beginPath()
       discard ctx.moveTo(cx + pa.x * scale, cy + pa.y * scale)
       discard ctx.lineTo(cx + pz.x * scale, cy + pz.y * scale)
       discard ctx.stroke()
     of Drawn.Disc:
-      ctx.fillStyle = ink.toJs
+      ctx.fillStyle = ink
       discard ctx.beginPath()
       discard ctx.arc(cx + pa.x * scale, cy + pa.y * scale, r * scale, 0.0, 2.0 * PI)
       discard ctx.fill()
-
-  # Which way each dancer looks.  Capsules cannot say: torso's section is
-  # symmetric front to back and head is sphere, so without this nothing on
-  # screen tells face to face from pillion.
-  let look = e.f[at]
-  for who in 0 .. 1:
-    let
-      k = who * 4
-      here: Spot = (num(look[k]), num(look[k + 1]), 0.0)
-      fore = (x: num(look[k + 2]), y: num(look[k + 3]))
-      side = (x: -fore.y, y: fore.x)
-    ctx.strokeStyle = styleOf("--ink").toJs
-    ctx.lineWidth = 4.0.toJs
-    # Chevron on floor, pointing where they look.
-    let nose: Spot = (here.x + fore.x * 0.30, here.y + fore.y * 0.30, 0.0)
-    for wing in [-1.0, 1.0]:
-      let tail: Spot = (nose.x - fore.x * 0.22 + side.x * 0.16 * wing,
-                        nose.y - fore.y * 0.22 + side.y * 0.16 * wing, 0.0)
-      let (pn, pt) = (seen(nose, az, el, f), seen(tail, az, el, f))
-      discard ctx.beginPath()
-      discard ctx.moveTo(cx + pt.x * scale, cy + pt.y * scale)
-      discard ctx.lineTo(cx + pn.x * scale, cy + pn.y * scale)
-      discard ctx.stroke()
-    # And same again at shoulder height, where figures actually are.
-    let
-      a: Spot = (here.x, here.y, 1.40)
-      b: Spot = (here.x + fore.x * 0.46, here.y + fore.y * 0.46, 1.40)
-      (pa, pb) = (seen(a, az, el, f), seen(b, az, el, f))
-    discard ctx.beginPath()
-    discard ctx.moveTo(cx + pa.x * scale, cy + pa.y * scale)
-    discard ctx.lineTo(cx + pb.x * scale, cy + pb.y * scale)
-    discard ctx.stroke()
 
   # Where hands are joined, and how far engine has pulled them apart.
   let grip = e.g[at]

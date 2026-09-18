@@ -16,7 +16,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, math]
+import std/[algorithm, math, strutils]
 
 
 const DAB* = 0.04 ## Longest dab one capsule is painted in, metres: torso in
@@ -75,3 +75,25 @@ func drawOrder*(caps: openArray[tuple[a, z: Spot]]; az, el: float;
       keyed.add (seen(mid, az, el, f).d, (cap: i, a: a, z: z))
   keyed.sort(proc (p, q: (float, Piece)): int = cmp(p[0], q[0]))
   for k in keyed: result.add k[1]
+
+func litAt*(fore: Seen; s: float): float =
+  ## How lit one body's side is at offset `s` across it, -1 at its back edge to
+  ## 1 at its front edge, given where it faces on screen: 0 dark, 1 light.
+  ##   Each dancer is lit from their own front, as if they carried lamp on
+  ##     their chest: side of body toward where they face is light, other side
+  ##     dark, body facing eye light all over and one facing away dark all over.
+  ##     Rounded body's normal at that offset has that much of facing across
+  ##     screen and rest toward eye.  Architect: see facing without chevrons on
+  ##     floor and lines at shoulder height, which were noise.
+  let across = sqrt(fore.x * fore.x + fore.y * fore.y)
+  clamp(0.5 + 0.5 * (s * across + sqrt(max(0.0, 1.0 - s * s)) * fore.d), 0.0, 1.0)
+
+func mixHex*(dark, light: string; t: float): string =
+  ## Colour `t` of way from `dark` to `light`, each `#rrggbb`, as `rgb(r, g, b)`.
+  var parts: seq[string]
+  for k in 0 .. 2:
+    let
+      a = parseHexInt(dark[1 + 2 * k .. 2 + 2 * k]).float
+      b = parseHexInt(light[1 + 2 * k .. 2 + 2 * k]).float
+    parts.add $round(a + (b - a) * t).int
+  "rgb(" & parts.join(", ") & ")"
