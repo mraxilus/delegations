@@ -35,7 +35,6 @@ const SOURCE_VERTEX_POINT = `
   attribute vec2 aCorner;
   attribute vec3 aCentre;
   attribute float aRadius;
-  attribute vec3 aLight;
   attribute vec4 aColor;
   uniform mat4 uMVP;
   uniform vec3 uEye;
@@ -67,14 +66,14 @@ const SOURCE_VERTEX_POINT = `
     vColor = aColor;
     vCorner = aCorner;
     vRadiusPixels = radius/world_per_pixel;
-    vLight = vec3(dot(aLight, uRight), dot(aLight, uUp), -dot(aLight, uForward));
+    vLight = vec3(uRight.z, uUp.z, -uForward.z);
   }
 `;
 // Round point's quad into disc, fading its last pixel of rim, shaded as sphere.
 //   Corner pair is unit-circle coordinate, so edge is where its length passes one, and
-//   sphere's normal is that pair with height lifted off it. Lit where record carries
-//   light, in camera's basis from vertex stage: Lambert toward it over `uAmbient` floor;
-//   flat otherwise. Sibling of GLSL 3.30 source in `renderer.nim`.
+//   sphere's normal is that pair with height lifted off it. Every disc is lit: Lambert
+//   toward world's up, turned into camera's basis by vertex stage, over `uAmbient` floor.
+//   Sibling of GLSL 3.30 source in `renderer.nim`.
 const SOURCE_FRAGMENT_POINT = `
   precision mediump float;
   varying vec4 vColor;
@@ -86,11 +85,8 @@ const SOURCE_FRAGMENT_POINT = `
     float reach = length(vCorner);
     if (reach > 1.0) discard;
     float edge = clamp((1.0 - reach)*vRadiusPixels, 0.0, 1.0);
-    float shade = 1.0;
-    if (dot(vLight, vLight) > 0.5) {
-      vec3 normal = vec3(vCorner, sqrt(max(0.0, 1.0 - reach*reach)));
-      shade = uAmbient + (1.0 - uAmbient)*max(0.0, dot(normal, vLight));
-    }
+    vec3 normal = vec3(vCorner, sqrt(max(0.0, 1.0 - reach*reach)));
+    float shade = uAmbient + (1.0 - uAmbient)*max(0.0, dot(normal, vLight));
     gl_FragColor = vec4(vColor.rgb*shade, vColor.a*edge);
   }
 `;
@@ -141,7 +137,6 @@ const point_attribs = {
   corner: gl.getAttribLocation(program, 'aCorner'),
   centre: gl.getAttribLocation(program, 'aCentre'),
   radius: gl.getAttribLocation(program, 'aRadius'),
-  light: gl.getAttribLocation(program, 'aLight'),
   colour: gl.getAttribLocation(program, 'aColor'),
 };
 const point_uniforms = {
@@ -457,7 +452,7 @@ const vbo = {
   ribbon: createdBuffer(), point: createdBuffer(),
   ribbon_furniture: createdBuffer(),
 };
-const STRIDE_POINT = 11 * 4;
+const STRIDE_POINT = 8 * 4;
 const STRIDE_RIBBON = 16 * 4;
 const STRIDE_DISC = 13 * 4;
 const STRIDE_DOME = 8 * 4;
@@ -664,8 +659,8 @@ function drawPoints(count: number, count_over: number, is_overlay: boolean) {
   gl.bindBuffer(gl.ARRAY_BUFFER, vbo.point);
   const base = first * STRIDE_POINT;
   const records: Array<[number, number, number]> = [
-    [point_attribs.centre, 3, 0], [point_attribs.radius, 1, 12], [point_attribs.light, 3, 16],
-    [point_attribs.colour, 4, 28],
+    [point_attribs.centre, 3, 0], [point_attribs.radius, 1, 12],
+    [point_attribs.colour, 4, 16],
   ];
   for (const [attrib, floats, offset] of records) {
     gl.enableVertexAttribArray(attrib);

@@ -110,7 +110,7 @@ alone — the tooltips and notes, where a repeated sentence is a copy-paste. Lab
 own law: stripped, no doubled space, no trailing full stop, at most `RUNES_LABEL_MOST` runes.
 
 **Every control both front-ends have is explained on both, from one key.** The page hangs
-35 of the 41 `Tip` keys on its controls, set from scripts at load since the markup carries no
+34 of the 40 `Tip` keys on its controls, set from scripts at load since the markup carries no
 `title`; the six it does not are the window's alone — its two file-path fields, its vsync
 switch, its two arenas, and its scene block, whose page row reads a count over a capacity
 rather than the bytes the sentence names. A control the page has and the window explains
@@ -135,7 +135,7 @@ any quoted letter, since a word quoted there is a copy the catalogue cannot see.
 algebra's own words — operation names and notation from `pga`'s declarations, kind words, key
 and button names — which help composes with rather than copies.
 
-*Checked.* Verified by build and by driven check: `declare` reports **175 wording keys**; a
+*Checked.* Verified by build and by driven check: `declare` reports **173 wording keys**; a
 literal put back at a label call is refused, which is how three page-only strings in `state.ts`
 were found; a key named only inside the catalogue is refused as shown by nobody; and a `@WORD:`
 token naming an absent key fails the build with the line that carries it.
@@ -553,7 +553,7 @@ answers `Driven runs failed; got 1 -- drive-drag`, exit 1.
 | `src/rga_visualiser` | Both | `objects`, `euclid`, `boundary`, `mesh`, `tessellate`, `camera`, |
 |  |  | `scene`, `selection`, `picking`, `marker`, `framing`, `interaction`, |
 |  |  | `storyboard`, `orrery`, `neighbourhood`, `starfield`, `history`, |
-|  |  | `format`, `help`, `message`, `wording`, `timings`, `ramp`, `lighting`, |
+|  |  | `format`, `help`, `message`, `wording`, `timings`, `ramp`, |
 |  |  | `projections` |
 | `src/desktop` | `main.nim` alone | `main`, `panel`, `renderer`, `gui`, `gui_shim.cpp`, |
 |  |  | `opengl`, `sdl3`, `image`, `gif`, `arena` |
@@ -581,7 +581,7 @@ both backends (see Testing); the `sideEffect` marks are what turned 51 funcs bac
 
 `Scene` (`scene.nim`) is a fixed-capacity structure-of-arrays arena — geometries, labels,
 inks, visibility, liveness, birth stamps, creation ordinals, placing stamps, anchor
-overrides, radii, shining — addressed by a handle assigned once on `addObject` and never
+overrides, radii — addressed by a handle assigned once on `addObject` and never
 moved. Free handles thread onto an intrusive singly-linked free list, so add and remove are
 O(1). `OBJECTS_MAX` = 5040 and `LABEL_MAX` = 40, both `{.define.}`-overridable. Not a
 shift-on-delete array, whose removal renumbers every held cross-frame index: **a handle
@@ -803,13 +803,16 @@ catalogue stars visible. Pick, marker, cull and framing follow the drawn disc.
   per-instance overhead in the software rasteriser, by hypothesis. **Unmeasured on a
   device**; the drawer's `render` row is where it shows.
 
-**Points are shaded as spheres lit by their sun.** An object may *shine* (scene format
-version 5). `lighting.lightsFor` gives every finite, non-shining point the unit direction
-toward its **nearest** shining point, or zero — nearest rather than brightest because the
-catalogues carry no luminosities and a system's own star is nearest to its planets by a
-hundred to one — recomputed only where the scene's revision moved. The fragment stage
-applies Lambert over an ambient floor `FRACTION_AMBIENT_SHADE` = 0.25, a quarter, so the
-night side still reads as a body in its own hue rather than a hole in the field.
+**Every point is shaded as a sphere lit from world-up.** The light is `camera.UP_WORLD`, one
+direction for every point, turned into the camera's basis in the vertex shader on both front-ends
+as the three axes' own z components; the fragment stage applies Lambert over an ambient floor
+`FRACTION_AMBIENT_SHADE` = 0.25, a quarter, so the underside still reads as a body in its own hue
+rather than a hole in the field. Nothing in the scene carries a light: shading is presentation
+that gives a disc its sphere, not a property of any object. Not a point that shines on the
+others, which the scene format carried from version 5 to 6 and the record kept as a *sun*: it was
+one more thing the demo's astronomy had written into a visualiser of an algebra, and every point
+read the same under it but the sun itself, which drew flat. Cost: three floats fewer per point
+record, and no per-edit relighting pass.
 
 **Furniture** (ground grid, world axes) reaches `extent_furniture`, from the far clip, and is
 drawn as **fog about the eye**, not a halo about the origin: full strength within
@@ -847,13 +850,14 @@ hiding it: a bar a panel sits on can be read by closing the panel.
 *Checked.* Verified by `suites.nim`: a meet far outside the drawn disc, from both sides of one
 plane; both halves of a line pickable; the horizon plane's dome inserted first; the great
 circle's segment count after the eye cut; the fog radii at an eye inside its own fog; a star
-behind a wider disc unpicked with one rival and a moon in front of it picked with two; the
-nearest-sun choice and the sun's own darkness. Verified by driven checks: the plane pick
+behind a wider disc unpicked with one rival and a moon in front of it picked with two.
+Verified by driven checks: the plane pick
 from either side, sweeping the canvas for a pixel picking a plane the gesture itself built;
 the scale bar's length against its label at two distances a decade apart, layered under the
 open drawer; forty-eight hover samples across Jupiter's disc finding nothing deeper.
-Verified by rendering: the fade fractions, the cell size, the grid alpha, the axis dimming,
-and Jupiter's limb facing Sol on both front-ends. The far-end occlusion error is assumed to
+Verified by rendering: the fade fractions, the cell size, the grid alpha, the axis dimming.
+Verified by driven check: a wide disc's upper half brighter than its lower on the page, which
+is world-up on screen from the opening camera. The far-end occlusion error is assumed to
 be tolerable, not measured.
 
 ## Camera
@@ -1073,7 +1077,7 @@ selected. `marker.nim` shapes the outline to what it marks:
 | Horizon point | Circle about the fixed star it draws as. | Sweeps. |
 
 All keep `GAP_MARKER` = 6.0 px between the object's drawn edge and the marker, measured out
-from the drawn size, so a point's ring hugs a sun and a dot alike; `OFFSET_MARKER_RAIL` =
+from the drawn size, so a point's ring hugs a wide disc and a dot alike; `OFFSET_MARKER_RAIL` =
 `WIDTH_LINE_OBJECT`/2 + gap = 7.25 px; `WIDTH_MARKER` 1.5 px, asserted thinner than the line
 it marks. Markers are stroked by each render path's foreground layer, never as scene
 geometry: a loop on a plane would z-fight its fill, and a marker the object can occlude is
@@ -1460,11 +1464,11 @@ because every file already written contained it. The desktop converts through
 | Bytes | Field |
 |-------|-------|
 | 4 | Magic `RGAS` |
-| 1 | Format version (`VERSION_SCENE` = 6) |
+| 1 | Format version (`VERSION_SCENE` = 7) |
 | 1 | Basis count (16 under this build); must match |
 | 4 | Object count, little-endian `uint32` |
 | per object | Ink (1), visibility (1), label length in bytes (1) + UTF-8, one |
-|  | little-endian `float` per basis term, the radius as one more `float`, then shines (1) |
+|  | little-endian `float` per basis term, the radius as one more `float` |
 
 `MAGIC_SCENE` and `VERSION_SCENE` are exported and reach the browser through
 `nimSceneMagic`/`nimSceneVersion`, so there is no literal to drift; labels go through
@@ -1472,14 +1476,15 @@ because every file already written contained it. The desktop converts through
 the shape of defect that leaves the two builds unable to open each other's files while a
 round-trip suite stays green, because it only ever asks one build to read what it wrote.
 
-Only live objects are written, **in creation order** (`nimSceneHandlesCreated`). That order
-is the whole of what version 3 added; version 4 appended the radius after each object's
-geometry and version 5 the shines byte after that, and which versions carry each is
+Only live objects are written, **in creation order** (`nimSceneHandlesCreated`). That order is
+the whole of what version 3 added; version 4 appended the radius after each object's geometry;
+version 5 appended a byte after that saying whether the point shone, and version 7 dropped it, so
+versions 5 and 6 alone carry one, read and skipped. Which versions carry each is
 `scene.hasRadius`/`hasShine`, reached by the browser parser through `nimSceneHasRadius` and
-`nimSceneHasShine` rather than literals. Version 6 changed no byte: it records that the
-palette lost its structural `Algebra` handle at ordinal 7, so every hue a version-2-to-5
-file wrote sits one past today's, and `upgradedFrom5` takes it down. Omitted on purpose:
-handle numbers, a per-object ordinal, fixed-width label padding.
+`nimSceneHasShine` rather than literals. Version 6 changed no byte: it records that the palette
+lost its structural `Algebra` handle at ordinal 7, so every hue a version-2-to-5 file wrote sits
+one past today's, and `upgradedFrom5` takes it down. Omitted on purpose: handle numbers, a
+per-object ordinal, fixed-width label padding.
 
 **A loaded scene replays its construction.** `born` is not written, but
 `scene.bornReplaying(index, count, now)` stamps the `index`-th of `count` arrivals a beat
@@ -1493,7 +1498,7 @@ build replays — a file, the demo, the opening scene — through one rule in bo
 1: reading an old version costs a mapping func and a suite case, refusing one costs somebody
 their scene. Reading is written once against `VERSION_SCENE`; each past version's difference
 lives in one `upgradedFrom<n>`, and `objectUpgraded` walks an `ObjectSaved` up the chain one
-step at a time. Version 4 costs suns; version 3 costs sizes, `upgradedFrom3` filling
+step at a time. Version 3 costs sizes, `upgradedFrom3` filling
 `RADIUS_OBJECT_DEFAULT`, and the chain refuses a radius that is zero, negative or NaN as it
 refuses an unknown palette slot; version 1 costs colours only — its ordinals name a palette
 that no longer exists, folded by the same cycle `inkCycled` walks, bounded by
@@ -1675,7 +1680,7 @@ and `halfAngleCentred` the cone `distanceFitting` solves.
 
 **Three readings, following what each shape is drawn at**: a point's dot fits inside the
 centred box (inset by half of `DIAMETER_POINT_LEAST` — the least dot, not the point's own
-disc, or a sun filling half the frame would push the camera out to hold its rim); a line
+disc, or a disc filling half the frame would push the camera out to hold its rim); a line
 merely crosses it; a plane's **centre** is in the centred box and its **rim** on screen —
 holding the rim to the box threw the camera from 19 to 29.9 on the ground plane where 19
 already showed the whole circle. **The cut**: `stanceFor` first asks whether everything is

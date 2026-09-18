@@ -100,8 +100,6 @@ type
     inks: array[OBJECTS_MAX, Ink] ## Per-handle palette entry.
     radii: array[OBJECTS_MAX, float] ## Per-handle drawn radius, in world units; see `radiusAt`.
       ## Read only for point: line and plane take their size from camera and horizon.
-    are_shining: array[OBJECTS_MAX, bool] ## Per-handle whether object lights others; see
-      ## `shinesAt`.
     are_visible: array[OBJECTS_MAX, bool] ## Per-handle visibility.
     are_alive: array[OBJECTS_MAX, bool] ## Per-handle occupancy; false where handle is free.
     borns: array[OBJECTS_MAX, float] ## Per-handle moment object was added, for appear animation.
@@ -623,10 +621,6 @@ func radius*(one: Object): float = one.scene.radii[one.handle]
   ## Read object's drawn radius, straight out of scene handle points at; see `radiusAt`.
 
 
-func shines*(one: Object): bool = one.scene.are_shining[one.handle]
-  ## Read whether object lights others, straight out of scene handle points at.
-
-
 func born*(one: Object): float = one.scene.borns[one.handle]
   ## Read object's `born` reading, straight out of scene handle points at.
 
@@ -691,14 +685,6 @@ func radiusAt*(scene: Scene, handle: int): float =
   ##   drawn at position does; front-end holds least on-screen size, not this.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
   scene.radii[handle]
-
-
-func shinesAt*(scene: Scene, handle: int): bool =
-  ## Read whether object lights others, by handle rather than through `Object`; see `inkAt`.
-  ##   Sun: point every other point takes its shading from, and drawn flat itself; see
-  ##   `lighting`. Meaningful for point alone.
-  doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
-  scene.are_shining[handle]
 
 
 func bornAt*(scene: Scene, handle: int): float =
@@ -824,13 +810,6 @@ func setRadius*(scene: var Scene, handle: int, radius: float) =
   scene.markEdited()
 
 
-func setShining*(scene: var Scene, handle: int, shines: bool) =
-  ## Rewrite whether object lights others, by handle, mirroring `setInk`.
-  doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
-  scene.are_shining[handle] = shines
-  scene.markEdited()
-
-
 func setVisible*(scene: var Scene, handle: int, is_visible: bool) =
   ## Rewrite object's visibility, by handle, mirroring `setInk`.
   ##   Only writer: `isVisibleAt(...) = visible` accessor silently lands on copied
@@ -857,8 +836,7 @@ iterator pairs*(scene: Scene): (int, Object) =
 
 func addObject*(
   scene: var Scene, geometry: Multivector, label: string, ink: Ink, now: float = 0.0,
-  anchor_override: Option[Position] = none(Position), radius: float = RADIUS_OBJECT_DEFAULT,
-  shines: bool = false
+  anchor_override: Option[Position] = none(Position), radius: float = RADIUS_OBJECT_DEFAULT
 ): int {.discardable.} =
   ## Insert object into scene at first free handle, visible; report handle used.
   ##   Silently refuses nothing: caller checks `isFull` first, as scene cannot grow.
@@ -867,7 +845,6 @@ func addObject*(
   ##   `anchor_override` is where plane's circle should centre instead of support, where
   ##   construction fixes that; see `creationAnchor`.
   ##   `radius` is how large point is drawn, in world units; see `radiusAt`.
-  ##   `shines` says point lights others; see `shinesAt`.
   doAssert not scene.isFull,
     &"Scene holds at most {OBJECTS_MAX} objects, raise `--define:visualiser.objects_max`; got " &
       &"`{scene.len}`."
@@ -878,7 +855,6 @@ func addObject*(
   scene.inks[result] = ink
   doAssert radius > 0.0, &"Object radius must be positive; got `{radius}`."
   scene.radii[result] = radius
-  scene.are_shining[result] = shines
   scene.are_visible[result] = true
   scene.are_alive[result] = true
   scene.borns[result] = now
@@ -926,7 +902,7 @@ func removeObject*(scene: var Scene, handle: int) =
 ##   | 4        | Object count, little-endian `uint32`.                          |
 ##   | per object | Ink (1), visibility (1), label length (1) then that many     |
 ##   |          |   bytes, one little-endian `float` per basis term, radius as |
-##   |          |   one more little-endian `float`, then shines (1).           |
+##   |          |   one more little-endian `float`.                            |
 ##   |----------|--------------------------------------------------------------|
 ##
 ## Only live objects are written, in order created, whole of what version 3 added.
@@ -941,12 +917,13 @@ func removeObject*(scene: var Scene, handle: int) =
 ##   |---------|-------------------------------------------------------------------|
 ##   | Version | Read as                                                           |
 ##   |---------|-------------------------------------------------------------------|
-##   | 6       | Exactly.                                                          |
-##   | 5       | Exactly, except palette had one more structural slot, `Algebra`,  |
-##   |         |   at ordinal 7; every hue past it moves one down; see             |
+##   | 7       | Exactly.                                                          |
+##   | 6       | Exactly, except one byte follows each object's radius, saying     |
+##   |         |   whether it shone; read and dropped; see `upgradedFrom6`.        |
+##   | 5       | As 6, and palette had one more structural slot, `Algebra`, at     |
+##   |         |   ordinal 7; every hue past it moves one down; see                |
 ##   |         |   `upgradedFrom5`.                                                |
-##   | 4       | Exactly, except nothing shines, so every point draws flat; see    |
-##   |         |   `upgradedFrom4`.                                                |
+##   | 4       | Exactly; see `upgradedFrom4`.                                     |
 ##   | 3       | Exactly, except every object is drawn at `RADIUS_OBJECT_DEFAULT`, size |
 ##   |         |   version 3 drew everything at; see `upgradedFrom3`.              |
 ##   | 2       | Exactly, except object sequence is handle order, so scene whose       |
@@ -967,7 +944,7 @@ func removeObject*(scene: var Scene, handle: int) =
 const
   MAGIC_SCENE* = "RGAS"
     ## Open every `.rgascene` file with these four bytes.
-  VERSION_SCENE* = 6'u8
+  VERSION_SCENE* = 7'u8
     ## Stamp format version this build writes.
     ##   Every version down to `VERSION_SCENE_LEAST` is still read; see table above.
     ##   Version 2 moved every stored ink ordinal, when `Ink` gained reserved `Invalid`
@@ -977,10 +954,12 @@ const
     ##     build order or handle order.
     ##   Version 4 appended one float64 radius to each object, after its geometry.
     ##   Version 5 appended one shines byte to each object, after its radius.
+    ##   Version 7 dropped it: nothing shines, every point is shaded from world's up.
   VERSION_SCENE_RADIUS* = 4'u8
     ## Record first version whose objects carry radius; see `hasRadius`.
   VERSION_SCENE_SHINE* = 5'u8
-    ## Record first version whose objects carry shines byte; see `hasShine`.
+  VERSION_SCENE_SHINE_LAST* = 6'u8
+    ## Record first and last version whose objects carry shines byte; see `hasShine`.
   VERSION_SCENE_LEAST* = 1'u8
     ## Bound oldest format version this build still reads.
     ##   One, and it stays one: version floor that rises throws reader's work away.
@@ -1035,9 +1014,11 @@ func hasRadius*(version: uint8): bool = version >= VERSION_SCENE_RADIUS
   ##   Both readers ask this rather than compare against literal; see `nimSceneHasRadius`.
 
 
-func hasShine*(version: uint8): bool = version >= VERSION_SCENE_SHINE
+func hasShine*(version: uint8): bool =
   ## Report whether file of this version carries shines byte after each object's radius.
+  ##   Reader skips it: no build reads it into anything since version 7.
   ##   Asked as `hasRadius` is; see `nimSceneHasShine`.
+  version >= VERSION_SCENE_SHINE and version <= VERSION_SCENE_SHINE_LAST
 
 
 type ObjectSaved* = object
@@ -1050,7 +1031,6 @@ type ObjectSaved* = object
   label*: string ## Display label, decoded from file's UTF-8 bytes.
   geometry*: Multivector ## Object itself, one coefficient per basis term.
   radius*: float ## Drawn radius, in world units; `RADIUS_OBJECT_DEFAULT` before version 4.
-  shines*: bool ## Whether object lights others; false before version 5.
 
 
 const ORDINAL_INK_ALGEBRA_V5 = 7
@@ -1097,12 +1077,10 @@ func upgradedFrom3(saved: ObjectSaved): Option[ObjectSaved] =
   some(carried)
 
 
-func upgradedFrom4(saved: ObjectSaved): Option[ObjectSaved] =
-  ## Carry one object from what version 4 meant to what version 5 means.
-  ##   Version 4 knew no sun, so nothing shines and every point draws flat, as it did.
-  var carried = saved
-  carried.shines = false
-  some(carried)
+func upgradedFrom4(saved: ObjectSaved): Option[ObjectSaved] = some(saved)
+  ## Carry one object from what version 4 meant to what version 5 means, which is nothing.
+  ##   Version 5 added byte saying whether point shone, which no build reads any more.
+  ##   Kept as explicit step so chain has one entry per boundary.
 
 
 func upgradedFrom5(saved: ObjectSaved): Option[ObjectSaved] =
@@ -1114,6 +1092,12 @@ func upgradedFrom5(saved: ObjectSaved): Option[ObjectSaved] =
   var carried = saved
   if carried.ink_ordinal > ORDINAL_INK_ALGEBRA_V5: dec carried.ink_ordinal
   some(carried)
+
+
+func upgradedFrom6(saved: ObjectSaved): Option[ObjectSaved] = some(saved)
+  ## Carry one object from what version 6 meant to what version 7 means, which is nothing.
+  ##   Version 7 dropped shines byte; reader skipped it before this step, and object
+  ##   carries nothing from it.
 
 
 func objectUpgraded*(saved: ObjectSaved, version: uint8): Option[ObjectSaved] =
@@ -1132,6 +1116,7 @@ func objectUpgraded*(saved: ObjectSaved, version: uint8): Option[ObjectSaved] =
       of 3'u8: carried.upgradedFrom3
       of 4'u8: carried.upgradedFrom4
       of 5'u8: carried.upgradedFrom5
+      of 6'u8: carried.upgradedFrom6
       else: none(ObjectSaved) # Unreachable: `readsSceneVersion` bounds walk above.
     if stepped.isNone: return none(ObjectSaved)
     carried = stepped.get
@@ -1239,7 +1224,6 @@ when not defined(js):
       discard file.writeChars(text, 0, len(text))
       for b in Basis: file.writeLittle(geometry[b])
       file.writeLittle(one.radius)
-      file.write(char(ord(one.shines)))
 
     &"Saved {scene.len} object(s) to `{path}`."
 
@@ -1305,13 +1289,11 @@ when not defined(js):
       if hasRadius(version) and not file.readLittle(radius):
         return &"`{path}` is truncated partway through object {index}'s radius."
 
-      # Read shines byte only where file has one, as radius above.
-      var shines = false
+      # Skip shines byte where file has one; nothing reads it since version 7.
       if hasShine(version):
         var shine_byte: array[1, char]
         if file.readChars(shine_byte) != 1:
           return &"`{path}` is truncated partway through object {index}'s shine."
-        shines = uint8(shine_byte[0]) != 0
 
       # Read at file's version, then carry up to this build's.
       #   Every field below means what `VERSION_SCENE` says.
@@ -1322,7 +1304,6 @@ when not defined(js):
           label: label,
           geometry: geometry,
           radius: radius,
-          shines: shines,
         ),
         version,
       )
@@ -1333,7 +1314,6 @@ when not defined(js):
       let handle = staging.addObject(
         carried.get.geometry, carried.get.label, Ink(carried.get.ink_ordinal),
         bornReplaying(index, int(count), now), radius = carried.get.radius,
-        shines = carried.get.shines,
       )
       staging.setVisible(handle, carried.get.is_visible)
 

@@ -45,6 +45,7 @@ import {
   driveTickCadence, driveTickWrites,
 } from './objects';
 import { driveComet } from './comet';
+import { driveShadedFromAbove } from './shade';
 import { driveStyleDeclared } from './style';
 import { drivePhaseSums, driveTree } from './diagnostics';
 import { driveAxis, driveAxisGlide, driveCurve, driveScaleSwitch } from './exceedance';
@@ -167,6 +168,7 @@ async function main(): Promise<void> {
   await driveTypeRoles(page);
   await driveTypeDrawn(page);
   await driveTypeLigatures(page);
+  await driveShadedFromAbove(page);
   await driveComet(page);
   await driveGround(page);
   await driveFrameWork(page);

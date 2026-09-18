@@ -762,7 +762,7 @@ func markerRing(
   ##   Screen-space rather than world circle facing camera: point has no orientation to
   ##   echo, and every facing looks same from one angle it is seen from.
   ##   `radius` is object's drawn radius, in world units; ring sits `GAP_MARKER` outside
-  ##   pixels that spans at point's depth, so it hugs sun and dot alike.
+  ##   pixels that spans at point's depth, so it hugs wide disc and dot alike.
   ##   `progress` sweeps ring rather than growing it: ring growing outward reads as point
   ##   swelling, inward collides with it.
   let anchor = anchorFor(geometry, scale)

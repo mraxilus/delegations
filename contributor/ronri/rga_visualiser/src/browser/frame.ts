@@ -176,7 +176,7 @@ function renderFrame(now_seconds: number) {
   gl.uniform1f(point_uniforms.height, data.camera_height_pixels);
   gl.uniform1f(point_uniforms.diameter_least, DIAMETER_POINT_LEAST * ratio_pixel);
   gl.uniform1f(point_uniforms.ambient, AMBIENT_SHADE);
-  if (!data.is_scene_held) count_point_held = uploadBuffer(data.point_verts, vbo.point, 11);
+  if (!data.is_scene_held) count_point_held = uploadBuffer(data.point_verts, vbo.point, 8);
   const count_point = count_point_held;
   drawPoints(count_point, data.point_over, false);
   // Veils:

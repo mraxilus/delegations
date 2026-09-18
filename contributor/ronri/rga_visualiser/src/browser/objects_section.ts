@@ -28,7 +28,6 @@ interface EditSession {
   label: string;
   ink: number;
   radius: number;
-  shines: boolean;
 }
 let session_edit: EditSession | null = null;
 
@@ -43,7 +42,6 @@ function beginEditSession(handle: number | null) {
         label: nimDefaultLabel(),
         ink: nimDefaultInk(),
         radius: nimDefaultRadius(),
-        shines: false,
       }
     : {
         handle,
@@ -51,7 +49,6 @@ function beginEditSession(handle: number | null) {
         label: nimObjectLabel(handle),
         ink: nimObjectInk(handle),
         radius: nimObjectRadius(handle),
-        shines: nimObjectShines(handle),
       };
   nimSetPreviewStaged(openSession().coefficients, openSession().radius);
 }
@@ -410,7 +407,7 @@ function buildObjectRow(handle: number | null) {
     if (is_pending) {
       nimAddObject(
         openSession().coefficients, openSession().label, openSession().ink, openSession().radius,
-        openSession().shines, now(),
+        now(),
       );
       endEditSession();
       adoptConstructionSelection();
@@ -418,7 +415,7 @@ function buildObjectRow(handle: number | null) {
     } else {
       nimCommitObject(
         handle, openSession().coefficients, openSession().label, openSession().ink,
-        openSession().radius, openSession().shines,
+        openSession().radius,
       );
       endEditSession();
       toast(nimSavedMessage(label.textContent ?? ''));
@@ -568,20 +565,6 @@ function buildObjectRow(handle: number | null) {
     });
     field_radius.appendChild(input_radius);
     box_edit.appendChild(field_radius);
-
-    // Sun: point every other point is shaded from, drawn flat itself; see `lighting`.
-    const field_shines = document.createElement('label');
-    field_shines.className = 'field field-check';
-    const input_shines = document.createElement('input');
-    input_shines.type = 'checkbox';
-    input_shines.checked = openSession().shines;
-    input_shines.addEventListener('change', () => { openSession().shines = input_shines.checked; });
-    field_shines.appendChild(input_shines);
-    field_shines.appendChild(
-      document.createTextNode(' ' + nimWording(Wording.NameRowShines)),
-    );
-    field_shines.title = nimWording(Wording.TipRowShines);
-    box_edit.appendChild(field_shines);
 
     const note_coefficient = document.createElement('div');
     note_coefficient.className = 'help-text';

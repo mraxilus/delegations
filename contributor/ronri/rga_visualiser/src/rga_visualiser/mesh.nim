@@ -126,15 +126,13 @@ const
     ##   Model refuses only zero and below; this keeps typed size above what any camera
     ##   in demo resolves, so object never vanishes into least on-screen size for good.
   FRACTION_AMBIENT_SHADE* = 0.25'f32
-    ## Set how bright lit point's night side is drawn, as fraction of its colour.
-    ##   Rest is Lambert's cosine toward its sun; see `Vertex.light`.
-    ##   Quarter: dark side still reads as body in its own hue, not hole in field.
+    ## Set how bright point's underside is drawn, as fraction of its colour.
+    ##   Rest is Lambert's cosine toward world's up, `camera.UP_WORLD`, which both vertex
+    ##   shaders turn into camera's basis and every point is shaded from.
+    ##     One direction for every point rather than one carried per point: light is
+    ##     presentation that gives disc its sphere, not property of anything in scene.
+    ##   Quarter: underside still reads as body in its own hue, not hole in field.
     ##   Both front-ends read it as uniform, browser through `nimShadeAmbient`.
-  LIGHT_NONE* = Direction(x: 0.0, y: 0.0, z: 0.0)
-    ## Name absence of light: zero vector, which both vertex shaders read as flat.
-    ##   Zero rather than option: it crosses wire as three floats per point, and shader
-    ##   has no option to unwrap. Sun, preview, star in horizon and point with no sun all
-    ##   take it.
   RADIUS_OBJECT_MOST* = 1.0e6
     ## Bound largest radius either editor lets reader type.
     ##   Desktop's drag widget takes no upper bound as no bounds at all, so one is named;
@@ -307,9 +305,6 @@ type
     ## `pointCorners`, and fragment stage rounds quad into disc; see `radiusDrawnAt`.
     x*, y*, z*: float32
     radius*: float32 ## Drawn radius, in world units.
-    light_x*, light_y*, light_z*: float32 ## Unit direction toward point's sun, or zero.
-      ## Fragment stage shades disc as sphere lit from there; zero draws flat. See
-      ## `lighting.lightsFor` and `FRACTION_AMBIENT_SHADE`.
     red*, green*, blue*, alpha*: float32
 
   Mesh* = object ## Define point vertices, in storage fixed at compile time.
@@ -726,11 +721,10 @@ func markOverlay*(meshes: var MeshSet) =
 
 
 func addMarker*(
-  meshes: var MeshSet, at: Position, radius: float, light: Direction, tint: Rgba,
-  alpha: float32
+  meshes: var MeshSet, at: Position, radius: float, tint: Rgba, alpha: float32
 ) =
   ## Append point marking single position at `radius`, in `tint`'s hue at `alpha`.
-  ##   Lit from `light`, unit direction toward sun, or `LIGHT_NONE` for flat disc.
+  ##   Shaded as sphere lit from world's up by shaders; see `FRACTION_AMBIENT_SHADE`.
   ##   Alpha apart from tint so caller fading point need not build faded `Rgba` first.
   ##     `fade` per point was two allocations and copy, once per point per frame.
   ##   `radius` is world units; shader floors it at `DIAMETER_POINT_LEAST` on screen.
@@ -745,9 +739,6 @@ func addMarker*(
   vertex.y = float32(at.y)
   vertex.z = float32(at.z)
   vertex.radius = float32(radius)
-  vertex.light_x = float32(light.x)
-  vertex.light_y = float32(light.y)
-  vertex.light_z = float32(light.z)
   vertex.red = tint.red
   vertex.green = tint.green
   vertex.blue = tint.blue

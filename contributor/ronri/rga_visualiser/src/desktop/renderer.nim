@@ -37,8 +37,7 @@ const SOURCE_VERTEX_POINT = """
 layout (location = 0) in vec2 in_corner;
 layout (location = 1) in vec3 in_centre;
 layout (location = 2) in float in_radius;
-layout (location = 3) in vec3 in_light;
-layout (location = 4) in vec4 in_colour;
+layout (location = 3) in vec4 in_colour;
 uniform mat4 view_projection;
 uniform vec3 eye;
 uniform vec3 forward;
@@ -69,7 +68,7 @@ void main() {
   vertex_colour = in_colour;
   vertex_corner = in_corner;
   vertex_radius_pixels = radius/world_per_pixel;
-  vertex_light = vec3(dot(in_light, axis_right), dot(in_light, axis_up), -dot(in_light, forward));
+  vertex_light = vec3(axis_right.z, axis_up.z, -forward.z);
 }
 """ ## Fan one point record into camera-facing quad at its own radius.
   ##   Sibling copy of `mesh.radiusDrawnAt` and of `glue.js`'s `SOURCE_VERTEX_POINT`;
@@ -77,8 +76,9 @@ void main() {
   ##   Quad spans camera's screen axes at centre's depth, so disc shrinks with distance
   ##   exactly as perspective says and floors at `diameter_least` pixels.
   ##   Behind near plane it collapses to clip-space point outside frustum.
-  ##   Light is turned into camera's basis here, once per corner: right, up, toward eye,
-  ##   which is basis fragment stage builds sphere's normal in.
+  ##   Light is world's up, `camera.UP_WORLD`, turned into camera's basis here once per
+  ##   corner: right, up, toward eye, which is basis fragment stage builds sphere's normal
+  ##   in. Its components are those axes' own z, since up is `(0, 0, 1)`.
 
 
 const SOURCE_FRAGMENT_POINT = """
@@ -93,18 +93,15 @@ void main() {
   float reach = length(vertex_corner);
   if (reach > 1.0) discard;
   float edge = clamp((1.0 - reach)*vertex_radius_pixels, 0.0, 1.0);
-  float shade = 1.0;
-  if (dot(vertex_light, vertex_light) > 0.5) {
-    vec3 normal = vec3(vertex_corner, sqrt(max(0.0, 1.0 - reach*reach)));
-    shade = ambient + (1.0 - ambient)*max(0.0, dot(normal, vertex_light));
-  }
+  vec3 normal = vec3(vertex_corner, sqrt(max(0.0, 1.0 - reach*reach)));
+  float shade = ambient + (1.0 - ambient)*max(0.0, dot(normal, vertex_light));
   out_colour = vec4(vertex_colour.rgb*shade, vertex_colour.a*edge);
 }
 """ ## Round point's quad into disc, fading its last pixel of rim, shaded as sphere.
   ##   Corner pair is unit-circle coordinate, so edge is where its length passes one, and
   ##   sphere's normal is that pair with height lifted off it.
-  ##   Lit where record carries light: Lambert toward it over `ambient` floor; flat
-  ##   otherwise. Sibling of `glue.js`'s `SOURCE_FRAGMENT_POINT`.
+  ##   Every disc is lit: Lambert toward world's up over `ambient` floor. Sibling of
+  ##   `glue.js`'s `SOURCE_FRAGMENT_POINT`.
   ##   Fade over one pixel of radius keeps small disc from shimmering as it moves.
 
 
@@ -422,10 +419,9 @@ type AttributeView = tuple[index: gl.Uint, floats: gl.Int, offset: int]
 
 const
   VIEWS_POINT = [
-    (gl.Uint(1), gl.Int(3), 0), (gl.Uint(2), gl.Int(1), 3), (gl.Uint(3), gl.Int(3), 4),
-    (gl.Uint(4), gl.Int(4), 7),
-  ] ## Hold point record's four views over `mesh.Vertex`.
-    ## Centre, radius, light then colour, after corner's one at location zero.
+    (gl.Uint(1), gl.Int(3), 0), (gl.Uint(2), gl.Int(1), 3), (gl.Uint(3), gl.Int(4), 4),
+  ] ## Hold point record's three views over `mesh.Vertex`.
+    ## Centre, radius then colour, after corner's one at location zero.
   VIEWS_CORNER_FLAT = [(gl.Uint(0), gl.Int(2), 0)]
     ## Hold one view over corner buffer of `(end, side)` pairs, ribbon's and disc's alike.
   VIEWS_CORNER_DOME = [(gl.Uint(0), gl.Int(3), 0)]

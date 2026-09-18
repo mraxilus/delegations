@@ -12,7 +12,7 @@
 ##    timings, wording]
 ##     -> [boundary, mesh] -> tessellate
 ##     -> [camera, scene]
-##     -> [history, lighting, orrery, picking, storyboard]
+##     -> [history, orrery, picking, storyboard]
 ##     -> [interaction, marker] -> [help, selection] -> framing
 ##
 ##   |------------------|--------------------------------------------------------------|
@@ -34,7 +34,6 @@
 ##   | `camera`         | Orbit, dolly, pan, projection, screen placement              |
 ##   | `scene`          | Handles, labels, operations catalogue, save and load           |
 ##   | `history`        | Undo and redo over scene content                             |
-##   | `lighting`       | Which shining point lights each body                         |
 ##   | `orrery`         | Demo scenes at three sizes                                   |
 ##   | `picking`        | Which object pointer is over                                 |
 ##   | `storyboard`     | Scripted seeds and frames                                    |
@@ -48,12 +47,12 @@
 {.experimental: "strictFuncs".}
 
 import ./rga_visualiser/[
-  boundary, camera, euclid, format, framing, help, history, interaction, lighting, marker,
+  boundary, camera, euclid, format, framing, help, history, interaction, marker,
   mesh, message, neighbourhood, objects, orrery, picking, projections, ramp, scene,
   selection, starfield, storyboard, tessellate, timings, wording,
 ]
 
 export
-  boundary, camera, euclid, format, framing, help, history, interaction, lighting, marker,
+  boundary, camera, euclid, format, framing, help, history, interaction, marker,
   mesh, message, neighbourhood, objects, orrery, picking, projections, ramp, scene,
   selection, starfield, storyboard, tessellate, timings, wording

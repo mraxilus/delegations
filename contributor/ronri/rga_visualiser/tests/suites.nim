@@ -27,7 +27,7 @@ import ../src/rga_visualiser/projections
 #   `isBeyondDisc` is broad phase whose only property worth pinning, never rejecting hit
 #   meet would accept, is stated against it directly.
 import ../src/rga_visualiser/[
-  boundary, camera, format, framing, help, history, interaction, lighting,
+  boundary, camera, format, framing, help, history, interaction,
   marker {.all.}, message, neighbourhood, objects, orrery, picking {.all.}, scene,
   selection, starfield, storyboard, tessellate, wording,
 ]
@@ -1031,7 +1031,7 @@ suite "Mesh":
     MESHES.clearMeshes
 
   test "clearing drops every vertex and every record":
-    MESHES.addMarker(ORIGIN, RADIUS_OBJECT_DEFAULT, LIGHT_NONE, Ink.Rose.colour, 1.0)
+    MESHES.addMarker(ORIGIN, RADIUS_OBJECT_DEFAULT, Ink.Rose.colour, 1.0)
     MESHES.addSegment(ORIGIN, PLACES[0], Ink.Jade.colour, WIDTH_LINE_OBJECT)
     MESHES.addDisc(
       ORIGIN, Direction(x: 1.0, y: 0.0, z: 0.0), Direction(x: 0.0, y: 1.0, z: 0.0),
@@ -2175,13 +2175,12 @@ suite "Scene":
   const ORDINAL_INK_ROSE_V5 = ord(Ink.Rose) + 1
   const ORDINAL_INK_ALGEBRA_V5 = 7
 
-  proc savedWith(ordinal: int, radius = RADIUS_OBJECT_DEFAULT, shines = false): ObjectSaved =
-    ## Build object differing from its neighbours only in palette slot, radius and shine.
-    ##   Three fields version boundaries have ever changed; radius and shine default,
-    ##   since most cases care about palette alone.
+  proc savedWith(ordinal: int, radius = RADIUS_OBJECT_DEFAULT): ObjectSaved =
+    ## Build object differing from its neighbours only in palette slot and radius.
+    ##   Two fields version boundaries have ever changed and kept; radius defaults, since
+    ##   most cases care about palette alone.
     ObjectSaved(
-      ink_ordinal: ordinal, is_visible: true, label: "x", geometry: POINTS[0],
-      radius: radius, shines: shines,
+      ink_ordinal: ordinal, is_visible: true, label: "x", geometry: POINTS[0], radius: radius,
     )
 
 
@@ -2201,7 +2200,6 @@ suite "Scene":
     check objectUpgraded(savedWith(-1), VERSION_SCENE).isNone
     # Radius this build keeps is whatever file said, so long as it could draw something.
     check objectUpgraded(savedWith(0, 2.5), VERSION_SCENE).get.radius == 2.5
-    check objectUpgraded(savedWith(0, 2.5, shines = true), VERSION_SCENE).get.shines
     check objectUpgraded(savedWith(0, 0.0), VERSION_SCENE).isNone
     check objectUpgraded(savedWith(0, -1.0), VERSION_SCENE).isNone
     check objectUpgraded(savedWith(0, NaN), VERSION_SCENE).isNone
@@ -2224,13 +2222,16 @@ suite "Scene":
     check hasRadius(VERSION_SCENE)
 
 
-  test "a version-4 object is given no sun, whatever the parser had in the field":
+  test "only versions 5 and 6 carry a shines byte, and this build writes none":
+    # Byte is skipped on reading and nothing is carried from it, so whole of what.
+    #   version pair means is which offsets bytes after it parse from; see `sceneFileOf`.
     for version in VERSION_SCENE_LEAST ..< VERSION_SCENE_SHINE:
       check not hasShine(version)
-      let carried = objectUpgraded(savedWith(ORDINAL_INK_ROSE_V5, shines = true), version)
-      check carried.isSome
-      check not carried.get.shines
-    check hasShine(VERSION_SCENE)
+    for version in VERSION_SCENE_SHINE .. VERSION_SCENE_SHINE_LAST:
+      check hasShine(version)
+      check objectUpgraded(savedWith(ORDINAL_INK_ROSE_V5), version).isSome
+    check not hasShine(VERSION_SCENE)
+    check VERSION_SCENE > VERSION_SCENE_SHINE_LAST
 
 
   test "a version-5 hue past the retired debug slot moves one down, and the slot is refused":
@@ -2406,7 +2407,7 @@ suite "Scene":
     test "save then load reproduces every live object, compacting freed handles":
       var original = initScene()
       discard original.addObject(POINTS[0], "a", Ink.Rose)
-      discard original.addObject(POINTS[1], "bb", Ink.Jade, radius = 0.6, shines = true)
+      discard original.addObject(POINTS[1], "bb", Ink.Jade, radius = 0.6)
       let handle_doomed = original.addObject(POINTS[2], "doomed", Ink.Olive)
       original.removeObject(handle_doomed) # leaves hole fresh load must not reproduce
       let handle_last = original.addObject(POINTS[3], "d", Ink.Cobalt)
@@ -2434,8 +2435,6 @@ suite "Scene":
       check loaded[1].ink == Ink.Jade
       check loaded[1].isVisible
       check loaded[1].radius == 0.6
-      check loaded[1].shines
-      check not loaded[0].shines
 
       check loaded[2].geometry =~ POINTS[3]
       check toText(loaded[2].label) == "d"
@@ -2617,8 +2616,7 @@ suite "Scene":
       defer: removeFile(path_now)
       check loadScene(scene, path_now).contains("Loaded 1")
       check scene[0].radius == 2.0*RADIUS_OBJECT_DEFAULT
-      check scene[0].shines
-      # Version-4 file stops at radius: nothing shines, and bytes parse from right offset.
+      # Version-4 file stops at radius, and bytes parse from right offset.
       let path_four = getTempDir() / "visualiser_suite_scene_v4_only.rgascene"
       writeFile(path_four, sceneFileOf(4'u8, @[
         (ord(Ink.Rose), true, "sized", POINTS[0]),
@@ -2627,7 +2625,19 @@ suite "Scene":
       defer: removeFile(path_four)
       check loadScene(scene, path_four).contains("Loaded 2")
       check scene[0].radius == 2.0*RADIUS_OBJECT_DEFAULT
-      check not scene[0].shines
+      check not scene[1].isVisible
+      # Version-6 file carries shines byte after radius: skipped, and every object after it
+      #   still parses from right offset, which is whole of what reading it costs.
+      let path_six = getTempDir() / "visualiser_suite_scene_v6_shine.rgascene"
+      writeFile(path_six, sceneFileOf(VERSION_SCENE_SHINE_LAST, @[
+        (ord(Ink.Rose), true, "shone", POINTS[0]),
+        (ord(Ink.Cobalt), false, "second", POINTS[1]),
+      ]))
+      defer: removeFile(path_six)
+      check loadScene(scene, path_six).contains("Loaded 2")
+      check scene[0].radius == 2.0*RADIUS_OBJECT_DEFAULT
+      check toText(scene[1].label) == "second"
+      check scene[1].geometry =~ POINTS[1]
       check not scene[1].isVisible
 
 
@@ -4580,7 +4590,7 @@ suite "Picking":
     check anchor_far.isSome and abs(anchor_far.get.at.x) < 1.0e-6 and
       abs(anchor_far.get.at.z) < 1.0e-6
 
-  test "a sun drawn wide is picked anywhere on its disc, over the plane behind it":
+  test "a point drawn wide is picked anywhere on its disc, over the plane behind it":
     # Pick radius follows drawn disc: Sol at 0.6 units from 1.2 units away spans about.
     #   360 pixels of radius on 600-pixel frame, and cursor anywhere inside picks Sol,
     #   not ecliptic disc it stands on.
@@ -5065,58 +5075,6 @@ suite "Picking":
       scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
       WIDTH_PICK, HEIGHT_PICK, CENTRE
     ) == some(1)
-
-
-
-suite "Lighting":
-  func isDark(light: Direction): bool = light.x == 0.0 and light.y == 0.0 and light.z == 0.0
-    ## Report whether light is `LIGHT_NONE`; `Direction` refuses `==` on purpose.
-
-  test "a point is lit from its nearest sun, and a sun or a sunless scene is lit from nowhere":
-    let suns = [Position(x: 10, y: 0, z: 0), Position(x: 0, y: 3, z: 0)]
-    let light = lightToward(Position(x: 0, y: 0, z: 0), suns, 2)
-    check abs(light.y - 1.0) < 1.0e-12 and abs(light.x) < 1.0e-12
-    check abs(norm(light) - 1.0) < 1.0e-12
-    check isDark(lightToward(Position(x: 0, y: 0, z: 0), suns, 0))
-    check isDark(lightToward(Position(x: 0, y: 3, z: 0), suns, 2)) # Standing on it.
-    # Through scene: sun shines on planet, is unlit itself, and hidden sun sheds nothing.
-    var scene = initScene()
-    let handle_sun = scene.addObject(toMultivector(Position(x: 0, y: 0, z: 0)), "sun", Ink.Copper,
-      shines = true)
-    let handle_planet = scene.addObject(toMultivector(Position(x: 4, y: 0, z: 0)), "p", Ink.Cobalt)
-    let handle_line = scene.addObject(POINTS[0] ∧ POINTS[1], "l", Ink.Rose)
-    var cache: LightCache
-    refreshLights(cache, scene, none(int))
-    check abs(cache.lights[handle_planet].x + 1.0) < 1.0e-12
-    check isDark(cache.lights[handle_sun])
-    check isDark(cache.lights[handle_line])
-    # Hidden sun sheds nothing; suns changed, so every light is redone whatever revision.
-    scene.setVisible(handle_sun, false)
-    refreshLights(cache, scene, some(scene.revision - 1))
-    check isDark(cache.lights[handle_planet])
-    scene.setVisible(handle_sun, true)
-    refreshLights(cache, scene, some(scene.revision - 1))
-    check abs(cache.lights[handle_planet].x + 1.0) < 1.0e-12
-    # Placement variant answers same as placing one.
-    var placed: array[OBJECTS_MAX, Placement]
-    for handle in 0 ..< scene.bound:
-      if scene.isAlive(handle):
-        placed[handle] = placeObject(scene.geometryOf(handle), scene.anchorOverrideAt(handle))
-    var cache_placed: LightCache
-    refreshLights(cache_placed, scene, placed, none(int))
-    check cache_placed.lights[handle_planet].x == cache.lights[handle_planet].x
-    check cache_placed.lights[handle_planet].y == cache.lights[handle_planet].y
-    # Edit that moves planet alone relights that planet and leaves rest untouched.
-    let revision_before = scene.revision
-    scene.setGeometryAt(handle_planet, toMultivector(Position(x: 0, y: 5, z: 0)))
-    refreshLights(cache, scene, some(revision_before))
-    check abs(cache.lights[handle_planet].y + 1.0) < 1.0e-12
-    check isDark(cache.lights[handle_sun])
-    # Moving sun relights everything, revision or not.
-    let revision_sun = scene.revision
-    scene.setGeometryAt(handle_sun, toMultivector(Position(x: 0, y: 10, z: 0)))
-    refreshLights(cache, scene, some(revision_sun))
-    check abs(cache.lights[handle_planet].y - 1.0) < 1.0e-12
 
 
 
@@ -7859,15 +7817,6 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
         check apart > radii[parent] + radii[moon.name]
       # Neighbour suns and planets take Sol's and Earth's, having no radii of their own.
       check radii[STARS[0].name] =~ radii["sol"]
-      # Suns shine and nothing else does; see `lighting`.
-      var shining: Table[string, bool]
-      for handle in 0 ..< scene.bound:
-        if scene.isAlive(handle): shining[toText(scene.labelAt(handle))] = scene.shinesAt(handle)
-      check shining["sol"]
-      check shining[STARS[0].name]
-      for body in SOL:
-        if body.role == Role.Planet: check not shining[body.name]
-      for moon in MOONS: check not shining[moon.name]
       for planet in PLANETS:
         if planet.name in radii: check radii[planet.name] =~ radii["earth"]
 
@@ -8151,8 +8100,6 @@ suite "Wording":
     # Window worded radius tersely; page's prose won.
     check $wordingText(TipRowRadius) ==
       "Radius the point is drawn at, in world units; it shrinks with distance."
-    # Page dropped that sun is drawn flat. Window knew, and that clause survives.
-    check "drawn flat" in $wordingText(TipRowShines)
     # Page named picking alone; window said why view rings what is picked.
     check "rings each one" in $wordingText(TipRowSelect)
 

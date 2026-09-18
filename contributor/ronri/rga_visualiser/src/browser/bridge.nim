@@ -34,7 +34,6 @@ import std/[options, strformat]
 
 import pga
 import ../rga_visualiser/[
-  lighting,
   boundary, camera, format, framing, help, history,
   interaction, marker, message, orrery, picking, ramp, scene, selection, storyboard,
   tessellate, timings, wording,
@@ -232,8 +231,6 @@ var
     ## Held for scene's handles only: preview and drag preview move with pointer, so both are
     ## placed where drawn.
     ## Dead handles hold whatever last occupant left; every walk skips them.
-  LIGHTS: LightCache ## Per-handle direction toward its sun; see `lighting.LightCache`.
-    ## Refreshed with `PLACEMENTS`, since it reads them.
   REVISION_PLACEMENT = none(int) ## Scene revision `PLACEMENTS` was filled at, or none before
     ## first fill.
   BORN_LAST = 0.0 ## Latest birth stamp `stampBorn` has written.
@@ -298,7 +295,7 @@ var
   #   Consumer uploads or reads within same frame and holds nothing across two.
   FLAT_RIBBON = initFlatFloats(RIBBONS_MAX*16)
   FLAT_FURNITURE = initFlatFloats(RIBBONS_MAX*16)
-  FLAT_POINT = initFlatFloats(VERTICES_MAX*11)
+  FLAT_POINT = initFlatFloats(VERTICES_MAX*8)
   FLAT_RING = initFlatFloats(RINGS_MAX*14)
   FLAT_DISC = initFlatFloats(DISCS_MAX*13)
   FLAT_DOME = initFlatFloats(DOMES_MAX*8)
@@ -424,22 +421,19 @@ proc stampBorn(handle: int, born: float) =
 
 
 proc flattenInto(mesh: Mesh, dest: var FlatFloats) =
-  ## Interleave point records as `x, y, z, radius, light xyz, r, g, b, a, ...` into `dest`.
+  ## Interleave point records as `x, y, z, radius, r, g, b, a, ...` into `dest`.
   ##   Ready for `gl.bufferData`; `mesh.Vertex`'s field order.
-  dest.used = mesh.count_vertices * 11
+  dest.used = mesh.count_vertices * 8
   for i in 0 ..< mesh.count_vertices:
     template v: untyped = mesh.vertices[i]
-    dest[11*i + 0] = v.x
-    dest[11*i + 1] = v.y
-    dest[11*i + 2] = v.z
-    dest[11*i + 3] = v.radius
-    dest[11*i + 4] = v.light_x
-    dest[11*i + 5] = v.light_y
-    dest[11*i + 6] = v.light_z
-    dest[11*i + 7] = v.red
-    dest[11*i + 8] = v.green
-    dest[11*i + 9] = v.blue
-    dest[11*i + 10] = v.alpha
+    dest[8*i + 0] = v.x
+    dest[8*i + 1] = v.y
+    dest[8*i + 2] = v.z
+    dest[8*i + 3] = v.radius
+    dest[8*i + 4] = v.red
+    dest[8*i + 5] = v.green
+    dest[8*i + 6] = v.blue
+    dest[8*i + 7] = v.alpha
 
 
 
@@ -557,9 +551,6 @@ proc nimObjectVisible(handle: cint): bool {.exportc.} = SCENE.isVisible(int(hand
 proc nimObjectRadius(handle: cint): cfloat {.exportc.} = cfloat(SCENE.radiusAt(int(handle)))
   ## Report object's drawn radius, in world units, by handle.
 
-proc nimObjectShines(handle: cint): bool {.exportc.} = SCENE.shinesAt(int(handle))
-  ## Report whether object lights others, by handle.
-
 proc nimDefaultRadius(): cfloat {.exportc.} = cfloat(RADIUS_OBJECT_DEFAULT)
   ## Report radius freshly composed object starts out with.
 
@@ -614,19 +605,18 @@ proc nimDefaultInk(): cint {.exportc.} = cint(SCENE.inkNext)
   ##   Cycled as every construction path cycles it.
 
 proc nimAddObject(
-  coefficients: seq[float], label: cstring, ink_ordinal: cint, radius: cfloat, shines: bool,
-  now: cfloat
+  coefficients: seq[float], label: cstring, ink_ordinal: cint, radius: cfloat, now: cfloat
 ): cint {.exportc.} =
   ## Commit composing edit session as fresh scene object.
-  ##   Takes label, palette slot, radius and shines session staged; all are editable
-  ##   before commit, unlike every other construction path.
+  ##   Takes label, palette slot and radius session staged; all are editable before
+  ##   commit, unlike every other construction path.
   ##   Builds `geometry` coefficient by coefficient rather than reusing `nimSceneAddRaw`.
   ##     That one skips `HISTORY.record`, stamps `BORNS` to 0.0 and never touches
   ##     `SELECTION`, all three of which user-driven add must do.
   var geometry: Multivector
   for b in Basis: geometry[b] = coefficients[ord(b)]
   result = cint(SCENE.addObject(
-    geometry, $label, Ink(ink_ordinal), float(now), radius = float(radius), shines = shines
+    geometry, $label, Ink(ink_ordinal), float(now), radius = float(radius)
   ))
   stampBorn(int(result), float(now))
   SELECTION.selectOnly(int(result))
@@ -634,8 +624,7 @@ proc nimAddObject(
 
 
 proc nimCommitObject(
-  handle: cint, coefficients: seq[float], label: cstring, ink_ordinal: cint, radius: cfloat,
-  shines: bool
+  handle: cint, coefficients: seq[float], label: cstring, ink_ordinal: cint, radius: cfloat
 ) {.exportc.} =
   ## Commit editing session onto object it was opened against.
   ##   Writes every staged field at once and records history exactly once.
@@ -648,7 +637,6 @@ proc nimCommitObject(
   toChars($label, SCENE.labelAt(index))
   SCENE.setInk(index, Ink(ink_ordinal))
   SCENE.setRadius(index, float(radius))
-  SCENE.setShining(index, shines)
   HISTORY.record(SCENE, CAMERA)
 
 
@@ -744,12 +732,6 @@ proc nimSetInk(handle: cint, ink_ordinal: cint) {.exportc.} =
 proc nimSetRadius(handle: cint, radius: cfloat) {.exportc.} =
   ## Rewrite object's drawn radius, by handle.
   SCENE.setRadius(int(handle), float(radius))
-  HISTORY.record(SCENE, CAMERA)
-
-
-proc nimSetShining(handle: cint, shines: bool) {.exportc.} =
-  ## Rewrite whether object lights others, by handle.
-  SCENE.setShining(int(handle), shines)
   HISTORY.record(SCENE, CAMERA)
 
 
@@ -1051,8 +1033,6 @@ proc ensurePlacement() =
   #   Held here and stamped onto camera at each derivation point, never kept in camera:
   #   `home` and every path replacing camera value would drop it.
   REACH_SCENE = reachOf(PLACEMENTS, SCENE)
-  # Suns move with same edits, so lights follow, as far as edit reached.
-  refreshLights(LIGHTS, SCENE, PLACEMENTS, REVISION_PLACEMENT)
   REVISION_PLACEMENT = some(SCENE.revision)
 
 
@@ -2043,6 +2023,7 @@ proc nimSceneHasRadius(version: cint): bool {.exportc.} =
 
 proc nimSceneHasShine(version: cint): bool {.exportc.} =
   ## Report whether file of this version carries shines byte after each object's radius.
+  ##   Parser skips it; see `scene.hasShine`.
   version >= 0 and version <= int(high(uint8)) and hasShine(uint8(version))
 
 
@@ -2055,7 +2036,7 @@ proc nimSceneClear() {.exportc.} =
 
 proc nimSceneAddRaw(
   version: cint, ink_ordinal: cint, is_visible: bool, label: cstring,
-  coefficients: seq[float], radius: cfloat, shines: bool, count_total: cint, now: cfloat
+  coefficients: seq[float], radius: cfloat, count_total: cint, now: cfloat
 ): cint {.exportc.} =
   ## Add one object straight from parsed `.rgascene` fields, for load path.
   ##   Presentation layer parses bytes into these fields and calls this once per object, in
@@ -2076,7 +2057,6 @@ proc nimSceneAddRaw(
       label: $label,
       geometry: geometry,
       radius: float(radius),
-      shines: shines,
     ),
     uint8(version),
   )
@@ -2086,7 +2066,7 @@ proc nimSceneAddRaw(
   let born = bornReplaying(SCENE.len, int(count_total), float(now))
   let handle = SCENE.addObject(
     carried.get.geometry, carried.get.label, Ink(carried.get.ink_ordinal), born,
-    radius = carried.get.radius, shines = carried.get.shines,
+    radius = carried.get.radius,
   )
   SCENE.setVisible(handle, carried.get.is_visible)
   # Stamp rather than leave alone: handle could hold stale reading from earlier occupant.
@@ -2413,7 +2393,6 @@ proc nimBuildFrame(
           let progress = animationProgress(float(now), BORNS[handle])
           discard MESHES.emitObject(
             PLACEMENTS[handle], SCENE.inkAt(handle).colour, scale, progress, SCENE.radiusAt(handle),
-            LIGHTS.lights[handle],
           )
           cost.chargeTally(
             PLACEMENTS[handle].kind, is_sky = false, is_preview = false, is_selected = false,
@@ -2458,7 +2437,6 @@ proc nimBuildFrame(
       let progress = animationProgress(float(now), BORNS[handle])
       discard MESHES.emitObject(
         PLACEMENTS[handle], SCENE.inkAt(handle).colour, scale, progress, SCENE.radiusAt(handle),
-        LIGHTS.lights[handle],
       )
       cost.chargeTally(
         PLACEMENTS[handle].kind, is_sky = false, is_preview = false, is_selected = true

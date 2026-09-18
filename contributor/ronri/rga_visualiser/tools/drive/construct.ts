@@ -92,7 +92,7 @@ export async function driveCrowd(page: Page, cdp: CDPSession): Promise<void> {
   const rival = await page.evaluate((one) => {
     const model = Array.from(nimObjectCoefficients(one));
     model[1] = (model[1] ?? 0) + 0.05;
-    const added = nimAddObject(model, 'rival', nimDefaultInk(), nimDefaultRadius(), false, 0);
+    const added = nimAddObject(model, 'rival', nimDefaultInk(), nimDefaultRadius(), 0);
     nimSelectClear();
     return added;
   }, first);

@@ -72,7 +72,7 @@ const
   INSET_POINT_SHOWN* = 0.5*float(DIAMETER_POINT_LEAST)
     ## Shrink centred box by this many pixels when asking whether *point* is in view.
     ##   Smallest drawn dot then fits inside rather than only its middle.
-    ##   Least radius rather than point's own: sun filling half of frame is shown once its
+    ##   Least radius rather than point's own: disc filling half of frame is shown once its
     ##   centre is, and framing against its disc would push camera out to hold rim.
     ##   Deliberately not selection marker's radius.
     ##     That ring swells while touch hold fills (see `marker.clearanceTouch`), and box
@@ -539,7 +539,7 @@ proc pickWalk(
       #   Branch almost every handle takes wants distance, not projected position to
       #   measure one from.
       # Widen to disc drawn where that is larger than generous default.
-      #   Sun hundred pixels across is picked anywhere on it, not only near middle.
+      #   Disc hundred pixels across is picked anywhere on it, not only near middle.
       # Read depth off projection, and drawn radius off depth.
       #   Neither builds anything per point; see `depthAlongSight`.
       let depth = depthAlongSight(view_projection, place.at)
