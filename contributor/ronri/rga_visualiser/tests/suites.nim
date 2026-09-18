@@ -336,12 +336,12 @@ suite "Camera":
     camera.reach_scene = 3000.0
     let eye = camera.eye
     check camera.distanceFar >= norm(eye - Position(x: 0, y: 0, z: 0)) + 3000.0
-    # Near rises with far, holding ratio, and never past half orbit distance.
-    check camera.distanceFar/camera.distanceNear <= RATIO_CLIP_MAX*(1.0 + 1.0e-9)
-    check camera.distanceNear <= 0.5*camera.distance
+    # Near stays scaled whatever far reaches: depth is logarithmic, so ratio costs nothing.
+    check camera.distanceNear =~ camera.distance*FACTOR_CLIP_NEAR
     var close = initCamera(Position(x: 0, y: 0, z: 0), 0.05, 0.0, 0.0)
     close.reach_scene = 3000.0
-    check close.distanceNear <= 0.5*close.distance
+    check close.distanceNear =~ close.distance*FACTOR_CLIP_NEAR
+    check close.distanceFar/close.distanceNear > 1.0e6
     # Reach is measured from what scene holds, point's own radius included.
     var scene = initScene()
     scene.addObject(toMultivector(Position(x: 300, y: 0, z: 0)), "p", Ink.Rose, radius = 2.5)
@@ -473,6 +473,50 @@ suite "Camera":
       check isNear(clipped[1]/clipped[3], 0)
 
 
+  test "a transform about an origin agrees with the world one, and keeps a far close-up":
+    # Records are stored about frame's origin (`mesh.clearMeshes`) and GPU takes transform.
+    #   built about same point, so position about origin lands where world transform puts
+    #   world position: storing relative to pivot is invisible on screen.
+    for i in 0 ..< SAMPLES:
+      let camera = initCamera(
+        pivot = PLACES[i], distance = 3.0, azimuth = rand(2.0*PI), elevation = rand(-1.2 .. 1.2)
+      )
+      let place = camera.pivot +
+        Direction(x: rand(-1.0 .. 1.0), y: rand(-1.0 .. 1.0), z: rand(-1.0 .. 1.0))
+      let about_world = transform(camera.initMatrixViewProjection(1.6), place, 1.0)
+      let about_pivot = transform(
+        camera.initMatrixViewProjection(1.6, camera.pivot), ORIGIN + (place - camera.pivot), 1.0
+      )
+      for k in 0 .. 3:
+        check abs(about_world[k] - about_pivot[k]) <= 1.0e-9*max(1.0, abs(about_world[k]))
+    # Far out is where it matters: pivot million units off and moon thousandth of unit from.
+    #   it, as demo's moons are. Float32 of world position steps by sixteenth there, so
+    #   moon's whole offset is lost; float32 about pivot carries what close-up needs, and
+    #   double matrix keeps translation column of world transform, which picking reads,
+    #   exact too.
+    let far = initCamera(
+      pivot = Position(x: 1.0e6, y: -2.0e6, z: 3.0e5), distance = 0.004, azimuth = 0.3,
+      elevation = 0.4,
+    )
+    let moon = far.pivot + Direction(x: 0.001, y: 0.0, z: 0.0)
+    let stored_world = Position(
+      x: float(float32(moon.x)), y: float(float32(moon.y)), z: float(float32(moon.z)),
+    )
+    let stored_pivot = Position(
+      x: float(float32(moon.x - far.pivot.x)), y: float(float32(moon.y - far.pivot.y)),
+      z: float(float32(moon.z - far.pivot.z)),
+    )
+    # C backend alone: JS backend keeps `float32` as double, and page's typed arrays round
+    #   outside suite's reach.
+    when not defined(js):
+      check norm(stored_world - moon) > 0.5e-3
+      check norm((far.pivot + (stored_pivot - ORIGIN)) - moon) < 1.0e-9
+    let seen_world = transform(far.initMatrixViewProjection(1.6), moon, 1.0)
+    let seen_pivot = transform(far.initMatrixViewProjection(1.6, far.pivot), stored_pivot, 1.0)
+    for k in 0 .. 1:
+      check abs(seen_world[k]/seen_world[3] - seen_pivot[k]/seen_pivot[3]) < 1.0e-6
+
+
   test "the clip planes follow the orbit distance, rather than where they were built":
     # Bug this guards: pair was stored at construction and kept its value through.
     #   every dolly, so far plane sat at fixed 400 while orbit could reach 500 --
@@ -487,6 +531,38 @@ suite "Camera":
     # Scale together, so frustum keeps its shape and depth buffer its precision.
     #   Precision is function of far-to-near ratio, however far camera stands.
     check camera.distanceFar/camera.distanceNear =~ far_opened/near_opened
+
+
+  test "depth is logarithmic, so a moon before its planet and the sky behind a star stay apart":
+    # Linear depth spent nearly all of buffer inside first few orbit distances, and with.
+    #   far at star field's reach whole field and sky fell into its last steps: on device
+    #   with coarse depth every star past few hundred thousand units failed test and
+    #   vanished from beside far star. Pinned against sixteen-bit step, coarsest buffer
+    #   WebGL may hand out, at demo's own camera and at moon's.
+    const STEP_SIXTEEN_BIT = 2.0/65535.0
+    var camera = initCamera(pivot = ORIGIN, distance = 122.0, azimuth = 1.0, elevation = 0.95)
+    camera.reach_scene = 6.5e6
+    check camera.depthOf(camera.distanceNear) =~ -1.0
+    check camera.depthOf(camera.distanceFar) =~ 1.0
+    # Star at million units stands clear of sky dome at nine tenths of far, and of star.
+    #   at fifth of its distance.
+    check camera.depthOf(0.9*camera.distanceFar) - camera.depthOf(1.0e6) > STEP_SIXTEEN_BIT
+    check camera.depthOf(1.0e6) - camera.depthOf(2.0e5) > STEP_SIXTEEN_BIT
+    # Io before Jupiter, from where occlusion check stands: three spans out, moon one in.
+    var near = initCamera(pivot = ORIGIN, distance = 0.0085, azimuth = 1.0, elevation = 0.3)
+    near.reach_scene = 6.5e6
+    check near.depthOf(0.0085) - near.depthOf(0.0085 - 0.0028) > STEP_SIXTEEN_BIT
+    # Monotone across every decade scene spans, and clipping planes still clip.
+    var last = -2.0
+    for exponent in -8 .. 6:
+      let depth = pow(10.0, float(exponent))
+      if depth <= camera.distanceNear or depth >= camera.distanceFar: continue
+      let z = camera.depthOf(depth)
+      check z > last and z > -1.0 and z < 1.0
+      last = z
+    check camera.depthOf(0.5*camera.distanceNear) < -1.0
+    check camera.depthOf(2.0*camera.distanceFar) > 1.0
+    check camera.depthLogScale =~ 2.0/log2(camera.distanceFar/camera.distanceNear)
 
 
   test "an orbit distance has a floor and no ceiling":
@@ -921,7 +997,8 @@ suite "Camera":
     var camera = initCamera(pivot = ORIGIN, distance = 0.1, azimuth = 0.4, elevation = 0.5)
     let anchor = positionUnderCursor(camera, 1440, 900, ScreenPosition(x: 400.0, y: 600.0))
     check anchor.isSome
-    camera.dollyToward(0.001, anchor.get)
+    # Factor far past floor, which is tiny; see `DISTANCE_LIMIT_NEAR`.
+    camera.dollyToward(1.0e-12, anchor.get)
     check camera.distance =~ DISTANCE_LIMIT_NEAR
     check norm(camera.eye - camera.pivot) =~ camera.distance
 
@@ -943,13 +1020,18 @@ suite "Mesh":
 
   let SCALE_TEST = block:
     let eye = Position(x: 5, y: -3, z: 7)
+    # Looking back at origin, which is where every fixture below is built around; screen
+    #   axes about that sight axis as camera's frame lays them, right level and up over it.
+    let
+      forward = direction(toMultivector(eye) ∧ toMultivector(ORIGIN)).get
+      level = cross(forward, Direction(x: 0, y: 0, z: 1))
+      right = (1.0/norm(level))*level
     # `algebraFilled`, as every hand-built extent must be, or multivector twins.
     #   tessellation reads are zero and it silently draws nothing.
     algebraFilled(DrawExtent(scale: DrawScale(
       extent_furniture: 30.0,
       eye: eye, radius_horizon: 50.0,
-      # Looking back at origin, which is where every fixture below is built around.
-      forward: direction(toMultivector(eye) ∧ toMultivector(ORIGIN)).get,
+      forward: forward, axis_right: right, axis_up: cross(right, forward),
       tangent_half_view: tan(0.5*degToRad(45.0)),
       height_pixels: HEIGHT_SCALE_TEST,
       depth_near: 0.1,
@@ -1044,6 +1126,36 @@ suite "Mesh":
     check MESHES.discs.count == 0
     check MESHES.domes.count == 0
     check MESHES.veils.count == 0
+
+  test "every record is stored about the origin its frame was cleared with":
+    # Five writers, one rule: subtract `origin` at float32 write, so what camera looks at.
+    #   million units from world origin is stored exact; see `mesh.clearMeshes`.
+    let origin = Position(x: 1.0e6, y: -2.0e6, z: 3.0e5)
+    MESHES.clearMeshes(origin)
+    check MESHES.origin =~ origin
+    let at = origin + Direction(x: 0.25, y: 0.5, z: -0.125)
+    MESHES.addMarker(at, RADIUS_OBJECT_DEFAULT, Ink.Rose.colour, 1.0)
+    let vertex = MESHES.points.vertices[0]
+    check float(vertex.x) == 0.25 and float(vertex.y) == 0.5 and float(vertex.z) == -0.125
+    MESHES.addSegment(at, at + Direction(x: 1.0, y: 0.0, z: 0.0), Ink.Rose.colour, 1.0)
+    let ribbon = MESHES.ribbons.records[0]
+    check float(ribbon.tail_x) == 0.25 and float(ribbon.head_x) == 1.25
+    check float(ribbon.tail_z) == -0.125 and float(ribbon.head_z) == -0.125
+    MESHES.addDisc(
+      at, Direction(x: 1.0, y: 0.0, z: 0.0), Direction(x: 0.0, y: 1.0, z: 0.0), 1.0,
+      Ink.Rose.colour,
+    )
+    check float(MESHES.discs.records[0].centre_y) == 0.5
+    MESHES.addRing(
+      at, Direction(x: 1.0, y: 0.0, z: 0.0), Direction(x: 0.0, y: 1.0, z: 0.0), 1.0,
+      Ink.Rose.colour, 1.0,
+    )
+    check float(MESHES.rings.records[0].centre_z) == -0.125
+    MESHES.addDome(at, 5.0, Ink.Rose.colour)
+    check float(MESHES.domes.records[0].centre_x) == 0.25
+    # Cleared without one is world origin again: nothing stays relative by accident.
+    MESHES.clearMeshes
+    check MESHES.origin =~ ORIGIN_WORLD
 
 
   test "point becomes one marker where it stands":
@@ -1150,6 +1262,56 @@ suite "Mesh":
         check isNear(far_first, star) or isNear(far_second, star)
 
 
+  test "disc is hit under a grazing eye nearer than the near plane, and boxed by its sphere":
+    # Record as `addDisc` writes ecliptic's: radius eight about origin, in ground plane.
+    let record = DiscRecord(arm_first_x: 8.0, arm_second_y: 8.0, fill_alpha: 1.0)
+    let
+      (right, up, forward) =
+        (Direction(x: 0, y: -1, z: 0), Direction(x: 0, y: 0, z: 1), Direction(x: 1, y: 0, z: 0))
+      height = 2.6e-6
+      eye = Position(x: -0.13, y: 0.0, z: height)
+      tangent = 0.443
+    # Ray half way down view meets plane 1.2e-5 ahead, under near plane at 1/400 of 0.13:
+    #   band fan's near cut lost, and ray finds.
+    let down = rayThroughView(0.0, -0.5, right, up, forward, tangent, 1.0)
+    let hit = hitDiscAlong(record, eye, down)
+    check hit.isSome
+    check isNear(hit.get, height/(0.5*tangent))
+    check hit.get < 0.13*FACTOR_CLIP_NEAR
+    # Ray half way up meets plane behind eye; ray along sight axis runs along plane.
+    check hitDiscAlong(
+      record, eye, rayThroughView(0.0, 0.5, right, up, forward, tangent, 1.0)
+    ).isNone
+    check hitDiscAlong(record, eye, forward).isNone
+    # Sphere holds eye, so box is whole view.
+    let box = viewBoxOfDisc(record, eye, right, up, forward, tangent, 1.0)
+    check box.lo == (-1.0, -1.0) and box.hi == (1.0, 1.0)
+    # From ten units above, disc of radius one subtends 5.74 degrees each way: box is its
+    #   tangent over view's, aspect widening across; rim is hit just inside and missed just
+    #   outside, at depth ten.
+    let
+      small = DiscRecord(arm_first_x: 1.0, arm_second_y: 1.0, fill_alpha: 1.0)
+      above = Position(x: 0.0, y: 0.0, z: 10.0)
+      (right_down, up_down, forward_down) =
+        (Direction(x: 1, y: 0, z: 0), Direction(x: 0, y: 1, z: 0), Direction(x: 0, y: 0, z: -1))
+      box_small = viewBoxOfDisc(small, above, right_down, up_down, forward_down, 0.5, 2.0)
+      limb = tan(arcsin(0.1))
+    check isNear(box_small.hi[0], limb/(0.5*2.0)) and isNear(box_small.lo[0], -limb/(0.5*2.0))
+    check isNear(box_small.hi[1], limb/0.5) and isNear(box_small.lo[1], -limb/0.5)
+    let inside = hitDiscAlong(small, above, Direction(x: 0.099, y: 0.0, z: -1.0))
+    check inside.isSome and isNear(inside.get, 10.0)
+    check hitDiscAlong(small, above, Direction(x: 0.101, y: 0.0, z: -1.0)).isNone
+    # Corner lands on box's middle at `(0, 0)` and root two out at rim corner.
+    let corner = expandDiscCorner(box_small, 1.0, 0.0)
+    check isNear(corner[0], sqrt(2.0)*box_small.hi[0]) and isNear(corner[1], 0.0)
+    check expandDiscCorner(box_small, 0.0, 0.0) == (0.0, 0.0)
+    # Disc behind eye: box is empty.
+    let box_behind = viewBoxOfDisc(
+      small, Position(x: 0.0, y: 0.0, z: -10.0), right_down, up_down, forward_down, 0.5, 2.0
+    )
+    check box_behind.lo == box_behind.hi
+
+
   test "plane becomes a flat filled disc and a rim, every vertex on it":
     for plane in PLANES:
       MESHES.clearMeshes
@@ -1171,19 +1333,48 @@ suite "Mesh":
       # Vertex lies on plane exactly when its offset from support is normal to normal.
       let (anchor, normal) = (positionAnchor(plane), directionNormal(plane))
       check anchor.isSome and normal.isSome
-      let corners_disc = discCorners()
-      for i in 0 ..< 3*SEGMENTS_CIRCLE_HORIZON:
-        let vertex = expandDiscVertex(
-          MESHES.discs.records[0],
-          float(corners_disc[2*i]), float(corners_disc[2*i + 1]),
-        )
-        check isNear(dot(vertex.toPosition - anchor.get, normal.get), 0)
-        check isNear(float(vertex.alpha), ALPHA_VEIL)
-        # Every fill vertex is either fan's own centre or out at plane's own.
-        #   fixed radius -- flat alpha throughout, so unlike old fading disc there
-        #   is no band strictly between two to rule out.
-        let radius_vertex = norm(vertex.toPosition - anchor.get)
-        check isNear(radius_vertex, 0) or isNear(radius_vertex, EXTENT_PLANE_F)
+      # Disc is spanned over view box of its sphere and filled by fragment's own ray:
+      #   `viewBoxOfDisc` and `hitDiscAlong` -- its references -- are what is read here.
+      #   Every rim point in front of eye projects inside box, clamped to view as box is;
+      #   ray through centre lands at centre's depth; alpha is veil's, flat.
+      let
+        record = MESHES.discs.records[0]
+        (eye, right, up, forward) =
+          (SCALE_TEST.eye, SCALE_TEST.axisRight, SCALE_TEST.axisUp, SCALE_TEST.forward)
+        tangent = SCALE_TEST.tangentHalfView
+        box = viewBoxOfDisc(record, eye, right, up, forward, tangent, 1.0)
+      check isNear(float(record.fill_alpha), ALPHA_VEIL)
+      for i in 0 .. SEGMENTS_CIRCLE_HORIZON:
+        let
+          (cos_angle, sin_angle) = (UNIT_CIRCLE_RIM[i].cos_angle, UNIT_CIRCLE_RIM[i].sin_angle)
+          on_rim = Direction(
+            x: float(record.centre_x) + cos_angle*float(record.arm_first_x) +
+              sin_angle*float(record.arm_second_x) - eye.x,
+            y: float(record.centre_y) + cos_angle*float(record.arm_first_y) +
+              sin_angle*float(record.arm_second_y) - eye.y,
+            z: float(record.centre_z) + cos_angle*float(record.arm_first_z) +
+              sin_angle*float(record.arm_second_z) - eye.z,
+          )
+          depth = dot(on_rim, forward)
+        if depth <= SCALE_TEST.depthNear: continue
+        let
+          across = clamp(dot(on_rim, right)/(depth*tangent), -1.0, 1.0)
+          rise = clamp(dot(on_rim, up)/(depth*tangent), -1.0, 1.0)
+        check across >= box.lo[0] - 1.0e-9 and across <= box.hi[0] + 1.0e-9
+        check rise >= box.lo[1] - 1.0e-9 and rise <= box.hi[1] + 1.0e-9
+      let
+        to_centre = anchor.get - eye
+        depth_centre = dot(to_centre, forward)
+      let ray = rayThroughView(
+        dot(to_centre, right)/(depth_centre*tangent), dot(to_centre, up)/(depth_centre*tangent),
+        right, up, forward, tangent, 1.0,
+      )
+      # Record's floats are narrowed, and ray grazing plane multiplies that into depth,
+      #   so plane met under six degrees is left to its box check alone.
+      if depth_centre > SCALE_TEST.depthNear and
+          abs(dot(ray, normal.get)) > 0.1*norm(ray)*norm(normal.get):
+        let hit = hitDiscAlong(record, eye, ray)
+        check hit.isSome and isNear(hit.get, depth_centre)
       # Rim is drawn as line is, so its own *corners* stand half line width off.
       #   plane -- step sideways is perpendicular to segment and to sight
       #   ray, which is only in plane when eye happens to lie in it. What is still
@@ -1270,13 +1461,19 @@ suite "Mesh":
         arm_second = radius*axes.get.axis_second
         arm_first_point = wedge(radius, toMultivector(axes.get.axis_first))
         arm_second_point = wedge(radius, toMultivector(axes.get.axis_second))
-      # Record's own expansion beside plain stepping: `expandDiscVertex` is.
-      #   reference both disc-fill vertex shaders are held to, so it too must land on
-      #   multivector sums, corner for corner, through record's narrowed floats.
+      # Record's own rim beside plain stepping: arms `hitDiscAlong` reads are what both
+      #   disc fragment shaders bound by, so record's narrowed floats too must land on
+      #   multivector sums, corner for corner, and ray from ten radii above cast at point
+      #   just inside each corner lands on disc where one just outside misses.
       MESHES.clearMeshes
       MESHES.addDisc(
         anchor.get, axes.get.axis_first, axes.get.axis_second, radius, Ink.Olive.colour
       )
+      let
+        record = MESHES.discs.records[0]
+        normal = directionNormal(plane)
+      check normal.isSome
+      let above = anchor.get + 10.0*radius*normal.get
       for i in 0 ..< SEGMENTS_CIRCLE_HORIZON:
         let
           angle = (2.0*PI * float(i)) / float(SEGMENTS_CIRCLE_HORIZON)
@@ -1284,9 +1481,20 @@ suite "Mesh":
           assembled = pointFrom(add(centre_point, add(
             wedge(cos(angle), arm_first_point), wedge(sin(angle), arm_second_point),
           )))
-          expanded = expandDiscVertex(MESHES.discs.records[0], cos(angle), sin(angle))
+          on_record = Position(
+            x: float(record.centre_x) + cos(angle)*float(record.arm_first_x) +
+              sin(angle)*float(record.arm_second_x),
+            y: float(record.centre_y) + cos(angle)*float(record.arm_first_y) +
+              sin(angle)*float(record.arm_second_y),
+            z: float(record.centre_z) + cos(angle)*float(record.arm_first_z) +
+              sin(angle)*float(record.arm_second_z),
+          )
+          spoke = assembled - anchor.get
+          inside = hitDiscAlong(record, above, (anchor.get + 0.999*spoke) - above)
         check stepped =~ assembled
-        check isNear(expanded.toPosition, assembled)
+        check isNear(on_record, assembled)
+        check inside.isSome and isNear(inside.get, 1.0)
+        check hitDiscAlong(record, above, (anchor.get + 1.001*spoke) - above).isNone
 
 
   test "horizon point becomes a star fixed at eye plus its own direction":
@@ -4591,9 +4799,9 @@ suite "Picking":
       abs(anchor_far.get.at.z) < 1.0e-6
 
   test "a point drawn wide is picked anywhere on its disc, over the plane behind it":
-    # Pick radius follows drawn disc: Sol at 0.6 units from 1.2 units away spans about.
+    # Pick radius follows drawn disc: Sol seen from two of its own radii away spans about.
     #   360 pixels of radius on 600-pixel frame, and cursor anywhere inside picks Sol,
-    #   not ecliptic disc it stands on.
+    #   not ecliptic disc it stands on. Two radii, since Sol is its real size, 0.00465.
     # Smallest arrangement; reduced-capacity build cannot hold it and skips whole.
     if OBJECTS_MAX < objectsOf(ScaleOrrery.Nearest):
       skip()
@@ -4605,7 +4813,8 @@ suite "Picking":
         if scene.isAlive(handle) and toText(scene.labelAt(handle)) == "sol": handle_sol = handle
       check handle_sol >= 0
       let camera = initCamera(
-        pivot = Position(x: 0, y: 0, z: 0), distance = 1.2, azimuth = 0.9, elevation = 0.4
+        pivot = Position(x: 0, y: 0, z: 0), distance = 2.0*scene.radiusAt(handle_sol),
+        azimuth = 0.9, elevation = 0.4,
       )
       let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
       let scale = camera.drawExtentFor(HEIGHT_PICK)
@@ -7176,6 +7385,26 @@ suite "Marker":
       check room > 0.5*MARGIN_LABEL_VIEW - 1.0
 
 
+  test "label is held wholly inside view, and centred where its box cannot fit":
+    # Page 393 wide, 560 tall, label 80 wide: right edge, top edge, both corners, and free.
+    const (WIDTH_PAGE, HEIGHT_PAGE, HALF) = (393.0, 560.0, 40.0)
+    let
+      half_height = 0.5*HEIGHT_MARKER_LABEL
+      (lo_x, hi_x) = (MARGIN_LABEL_EDGE + HALF, WIDTH_PAGE - MARGIN_LABEL_EDGE - HALF)
+      (lo_y, hi_y) =
+        (MARGIN_LABEL_EDGE + half_height, HEIGHT_PAGE - MARGIN_LABEL_EDGE - half_height)
+    check labelInView(390.0, 505.0, HALF, WIDTH_PAGE, HEIGHT_PAGE) == (hi_x, 505.0)
+    check labelInView(100.0, 3.0, HALF, WIDTH_PAGE, HEIGHT_PAGE) == (100.0, lo_y)
+    check labelInView(-20.0, 700.0, HALF, WIDTH_PAGE, HEIGHT_PAGE) == (lo_x, hi_y)
+    check labelInView(100.0, 100.0, HALF, WIDTH_PAGE, HEIGHT_PAGE) == (100.0, 100.0)
+    # Held box's edges: halo's stroke and one pixel of air stay inside.
+    check hi_x + HALF == WIDTH_PAGE - MARGIN_LABEL_EDGE
+    check MARGIN_LABEL_EDGE > WIDTH_MARKER_LABEL_HALO
+    # Wider than view, or taller: centred on that axis.
+    check labelInView(100.0, 100.0, 300.0, WIDTH_PAGE, HEIGHT_PAGE) == (0.5*WIDTH_PAGE, 100.0)
+    check labelInView(100.0, 100.0, HALF, WIDTH_PAGE, 10.0) == (100.0, 5.0)
+
+
   test "a label pushed beside a line clears it by its own box":
     # Clearance is rail, gap, and box's half-extent along push: flat line uses half height,.
     #   vertical one half width.
@@ -7577,7 +7806,8 @@ suite "Marker":
 when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
   suite "Orrery":
     ## Check demo preset, heaviest scene this build draws, against world it claims.
-    ##   Real solar neighbourhood: these stars stand where they really stand.
+    ##   Real solar neighbourhood to scale: these bodies stand where they really stand, as
+    ##   large as they really are, one unit one astronomical unit.
     ##   That claim needs checking as much as counting does, and it is one thing no
     ##   amount of looking at picture would catch.
 
@@ -7589,6 +7819,19 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       for scale in ScaleOrrery:
         if OBJECTS_MAX >= objectsOf(scale): held.add(scale)
       held
+
+    proc placesOf(scene: var Scene): Table[string, Position] =
+      ## Read every finite point of scene by label, as position.
+      for handle in 0 ..< scene.bound:
+        if not scene.isAlive(handle): continue
+        let geometry = scene.geometryOf(handle)
+        if kindOf(geometry) != some(Kind.Point) or isHorizon(geometry): continue
+        result[toText(scene.labelAt(handle))] = position(geometry).get
+
+    proc isClose(a, b: float; parts: float = 1.0e-9): bool =
+      ## Compare to relative tolerance, since radii here run down to hundredths of metres.
+      ##   `=~` widens to absolute tolerance under one, which is every size in this scene.
+      abs(a - b) <= parts*max(abs(a), abs(b))
 
     test "every size fills its own target exactly, and the largest leaves two handles":
       # **Walk lands on count rather than near it.** It passes over system too.
@@ -7662,24 +7905,27 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
         check counted[larger].points > counted[smaller].points
         check counted[larger].planes > counted[smaller].planes
 
-    test "the stars stand where the catalogue says they stand":
+    test "the stars stand where the catalogue says they stand, turned into the ecliptic":
       # **Claim this arrangement makes about world.** Every object after Sol is real.
       #   star placed from its real right ascension, declination and distance, so thing
       #   worth checking is conversion -- not that layout looks spread out. Measured
       #   against `starfield.STARS` itself, which is shipped snapshot and one layer
       #   that says where anything is.
+      #   Distance is parsecs into astronomical units, nothing else. Direction is
+      #   catalogue's equatorial one turned about equinox by obliquity, so ecliptic lands on
+      #   ground grid: read straight, every star stood 23 degrees off against Sol's planets.
+      #   Turn is redone here from its definition rather than through module's own.
       #   Run at largest size this build holds, which is only one that reaches far
       #   enough into catalogue for claim to be worth much.
       let scale = SCALES_HELD[^1]
       var scene = initScene()
       constructOrrery(scene, scale)
-      var placed: Table[string, Multivector]
-      for handle in 0 ..< scene.bound:
-        if not scene.isAlive(handle): continue
-        placed[toText(scene.labelAt(handle))] = scene.geometryOf(handle)
+      let placed = placesOf(scene)
       let sol = placed[SOL[0].name]
+      let obliquity = degToRad(23.4392911)
       var worst = 0.0
       var worst_name = ""
+      var worst_turn = 0.0
       var seen = 0
       # Catalogue carries more stars than scene has room for, so what is checked is.
       #   every star that *was* placed -- and, below, that ones placed are nearest.
@@ -7687,20 +7933,37 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
         if star.name notin placed: continue
         inc seen
         let
-          drawn = distanceBetween(placed[star.name], sol)
-          wanted = star.parsecs*UNITS_PER_PARSEC
-          off = abs(drawn - wanted)
+          apart = placed[star.name] - sol
+          drawn = norm(apart)
+          wanted = star.parsecs*AU_PER_PARSEC
+          off = abs(drawn - wanted)/wanted
         if off > worst:
           worst = off
           worst_name = star.name
+        let
+          along = degToRad(star.ascension)
+          up = degToRad(star.declination)
+          equatorial = Direction(x: cos(up)*cos(along), y: cos(up)*sin(along), z: sin(up))
+          ecliptic = Direction(
+            x: equatorial.x,
+            y: equatorial.y*cos(obliquity) + equatorial.z*sin(obliquity),
+            z: -equatorial.y*sin(obliquity) + equatorial.z*cos(obliquity),
+          )
+          heading = (1.0/drawn)*apart
+        worst_turn = max(worst_turn, norm(heading + (-ecliptic)))
       checkpoint(&"{scale}: {seen} stars placed; worst is `{worst_name}`, " &
-        &"off by {worst:.6f} units")
+        &"off by {worst:.3e} of its distance; worst direction off by {worst_turn:.3e}")
       # Most of what size spends goes on stars, so most of what it holds should be one.
       #   Folded from size rather than written down, so it survives next one.
       check seen > (objectsOf(scale) - OBJECTS_FIXED_ORRERY) div 2
-      check worst <= TOLERANCE_SINGLE
-      # And they really are ordered outward, which is what both `RADIUS_ORRERY` and.
-      #   nearest-first fill rely on.
+      check worst <= 1.0e-12
+      check worst_turn <= 1.0e-9
+      # Turn is real one: Proxima's ecliptic latitude, -44.8 degrees, is well north of its
+      #   declination, -62.7.
+      let proxima = (1.0/norm(placed[STARS[0].name] - sol))*(placed[STARS[0].name] - sol)
+      check arcsin(proxima.z) > degToRad(STARS[0].declination) + degToRad(10.0)
+      check abs(radToDeg(arcsin(proxima.z)) + 44.8) < 0.5
+      # And they really are ordered outward, which is what nearest-first fill relies on.
       for index in 1 ..< len(STARS):
         check STARS[index].parsecs >= STARS[index - 1].parsecs
       # **Nearest-first, and no longer strict prefix -- by bounded amount.** Walk.
@@ -7788,38 +8051,110 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       checkpoint(&"worst point is `{worst_label}`, carrying {worst} lines and planes")
       check worst <= 6
 
-    test "every body is drawn at its real radius on the square-root scale, clear of its moons":
-      # Sizes are what reader compares by eye, so what is pinned is order and ratio.
-      #   Sol over Earth compresses from 109 to about ten, and every moon ring starts
-      #   outside its planet's drawn disc.
+    test "every body is drawn at its real radius, one unit one astronomical unit":
+      # Sizes are real, so what is pinned is conversion and nothing else: Sol over Earth
+      #   is 109, as it is, and every body stays above what editor accepts.
       var scene = initScene()
       constructOrrery(scene)
       var radii: Table[string, float]
-      var places: Table[string, Multivector]
       for handle in 0 ..< scene.bound:
         if not scene.isAlive(handle): continue
         radii[toText(scene.labelAt(handle))] = scene.radiusAt(handle)
-        places[toText(scene.labelAt(handle))] = scene.geometryOf(handle)
-      check radii["sol"] =~ 0.6
+      check isClose(radii["sol"], 695_700.0/149_597_870.7)
+      check isClose(radii["sol"]/radii["earth"], 695_700.0/6_371.0)
       check radii["sol"] > radii["jupiter"]
       check radii["jupiter"] > radii["saturn"]
       check radii["saturn"] > radii["earth"]
       check radii["earth"] > radii["luna"]
       check radii["luna"] > radii["phobos"]
-      check abs(radii["sol"]/radii["earth"] - sqrt(695_700.0/6_371.0)) < 1.0e-9
-      for body in SOL: check radii[body.name] =~ radiusDrawnOf(body.kilometres_radius)
-      # Every body stays above what editor accepts, so none is pinned at least dot for good.
+      for body in SOL: check isClose(radii[body.name], radiusDrawnOf(body.kilometres_radius))
+      for moon in MOONS: check isClose(radii[moon.name], radiusDrawnOf(moon.kilometres_radius))
+      # Smallest body stays above what editor accepts, so none is pinned at least dot for good.
       for moon in MOONS: check radii[moon.name] >= RADIUS_OBJECT_LEAST
-      # Moon's ring clears planet's disc and its own: two discs never overlap.
-      for moon in MOONS:
-        let parent = SOL[moon.parent].name
-        let apart = distanceBetween(places[moon.name], places[parent])
-        check apart > radii[parent] + radii[moon.name]
-      # Neighbour suns and planets take Sol's and Earth's, having no radii of their own.
-      check radii[STARS[0].name] =~ radii["sol"]
+      # Neighbour suns and planets claim no size, having none on record: least, and stated.
+      check radii[STARS[0].name] == RADIUS_OBJECT_LEAST
       for planet in PLANETS:
-        if planet.name in radii: check radii[planet.name] =~ radii["earth"]
+        if planet.name in radii: check radii[planet.name] == RADIUS_OBJECT_LEAST
 
+    test "every planet rings Sol at its real semi-major axis, in the ecliptic":
+      # Distances are real, so what is pinned is that table's astronomical units are.
+      #   radii ring is drawn at, unsquashed, and that ring lies in z = 0 ground grid is
+      #   ruled on, which is what makes ecliptic ground.
+      var scene = initScene()
+      constructOrrery(scene)
+      let placed = placesOf(scene)
+      let sol = placed["sol"]
+      for body in SOL:
+        if body.role != Role.Planet: continue
+        check isClose(norm(placed[body.name] - sol), body.distance)
+        check abs(placed[body.name].z) <= 1.0e-12
+      check norm(placed["neptune"] - sol) =~ RADIUS_ORRERY
+
+    test "every moon rings its planet at its real distance, in its real orbit plane":
+      # Orientation is one thing tables carry that picture cannot be trusted to show.
+      #   Luna leans its real 5.16 degrees from ecliptic; Triton rings Neptune backwards;
+      #   Uranus's family is tipped nearly onto its side. Each pinned against
+      #   `normalOfMoon`, and every moon's place pinned perpendicular to it.
+      var scene = initScene()
+      constructOrrery(scene)
+      let placed = placesOf(scene)
+      var normals: Table[string, Direction]
+      for moon in MOONS:
+        let
+          parent = SOL[moon.parent].name
+          apart = placed[moon.name] - placed[parent]
+          normal = normalOfMoon(moon)
+        normals[moon.name] = normal
+        check isClose(norm(apart), moon.kilometres_orbit/149_597_870.7)
+        check norm(normal) =~ 1.0
+        check abs(dot(apart, normal)) <= 1.0e-9*norm(apart)
+        # Ring clears both discs: bodies never overlap.
+        check norm(apart) > radiusDrawnOf(SOL[moon.parent].kilometres_radius) +
+          radiusDrawnOf(moon.kilometres_radius)
+      checkpoint(&"luna leans {radToDeg(arccos(normals[\"luna\"].z)):.2f} degrees, triton's " &
+        &"normal z {normals[\"triton\"].z:.3f}, miranda's {normals[\"miranda\"].z:.3f}")
+      check abs(radToDeg(arccos(normals["luna"].z)) - 5.16) <= 1.0e-6
+      check normals["triton"].z < 0.0
+      for name in ["miranda", "ariel", "umbriel", "titania", "oberon"]:
+        check abs(normals[name].z) < 0.3
+      for name in ["io", "europa", "ganymede", "callisto"]:
+        check radToDeg(arccos(normals[name].z)) < 3.0
+      # Luna's direction from Earth is off ecliptic: horizon plane stands on this.
+      check abs((placed["luna"] - placed["earth"]).z) > 1.0e-6
+
+    test "every neighbour planet rings its star at its real axis, and one without is left out":
+      # Archive stores missing semi-major axis as zero; such planet is left out rather
+      #   than placed by order among siblings, since distance is whole of claim. Counted
+      #   from table, so figure is catalogue's own.
+      #   Neighbour's plane is flat, stated: every placed planet shares its star's height.
+      let scale = SCALES_HELD[^1]
+      var scene = initScene()
+      constructOrrery(scene, scale)
+      let placed = placesOf(scene)
+      var left_out, checked = 0
+      for star in STARS:
+        if star.name notin placed or star.planets == 0: continue
+        for which in star.first ..< star.first + star.planets:
+          let planet = PLANETS[which]
+          if planet.au <= 0.0:
+            check planet.name notin placed
+            inc left_out
+            continue
+          check planet.name in placed
+          let apart = placed[planet.name] - placed[star.name]
+          check abs(norm(apart) - planet.au) <= 1.0e-7
+          check abs(apart.z) <= 1.0e-7
+          inc checked
+      var without = 0
+      for planet in PLANETS:
+        if planet.au <= 0.0: inc without
+      checkpoint(&"{checked} planets placed at their axes, {left_out} of {without} " &
+        &"without one left out")
+      check checked > 0
+      check without == 49
+      # Count each star comes to says same: placed planets, not archive's.
+      for star in STARS:
+        check objectsOf(star) == 1 + placedOf(star) + (if placedOf(star) >= 2: 1 else: 0)
 
     test "every object wears its own type's colour, and no two types share one":
       # Moon and planet are two identical dots and hue is only thing separating.
@@ -7918,21 +8253,18 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       check kindOf(line ∧ off_it) == some(Kind.Plane)
       check isHorizon(line ∧ off_it)
 
-    test "the framing radius holds the systems it claims, and the rest run past it":
-      var scene = initScene()
-      constructOrrery(scene)
-      # `RADIUS_ORRERY` is fitted to Sol and nearest few, and claim worth checking.
-      #   is not exact count -- handful of real stars happen to fall inside radius
-      #   fitted to their neighbours -- but that overwhelming majority lie *beyond* it.
-      #   That is what makes crossing neighbourhood journey rather than nudge.
-      var held, beyond = 0
-      for star in STARS:
-        if star.parsecs*UNITS_PER_PARSEC > RADIUS_ORRERY: inc beyond else: inc held
-      checkpoint(&"{held} stars inside the opening frame, {beyond} beyond it")
-      check held >= FRAMED_ORRERY - 1 # Sol is framed too, and is not in this table.
-      check beyond >= 9*len(STARS) div 10
-      check RADIUS_ORRERY > 0.0
-
+    test "the opening frame holds Sol's system to Neptune, and every star stands far beyond":
+      # `RADIUS_ORRERY` is Neptune's own axis, and claim worth checking is that nothing
+      #   else comes near it: nearest star stands thousands of that radius out, so frame
+      #   fitted to our system shows one system and crossing neighbourhood is journey.
+      check RADIUS_ORRERY =~ 30.05
+      var nearest = STARS[0].parsecs*AU_PER_PARSEC
+      for star in STARS: nearest = min(nearest, star.parsecs*AU_PER_PARSEC)
+      checkpoint(&"nearest star at {nearest:.0f} units, {nearest/RADIUS_ORRERY:.0f} " &
+        &"opening radii out")
+      check nearest > 1000.0*RADIUS_ORRERY
+      check AU_PER_PARSEC =~ 206_264.806
+      check KILOMETRES_PER_AU =~ 149_597_870.7
 
     test "the preset both front-ends open on is one preset":
       # `showOrrery` is whole thing demo button loads -- arrangement, its replayed.

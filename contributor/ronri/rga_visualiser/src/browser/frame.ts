@@ -125,6 +125,7 @@ function renderFrame(now_seconds: number) {
   // Furniture fog's two radii, for fragment stage's fade of fogged records.
   gl.uniform1f(ribbon_uniforms.fog_full, data.fog_radius_full);
   gl.uniform1f(ribbon_uniforms.fog_gone, data.fog_radius_gone);
+  gl.uniform1f(ribbon_uniforms.depth_log, data.camera_depth_log);
 
   // World furniture first, with normal depth test/write.
   //   One record segment now -- kept rather than re-uploaded where bridge says furniture is
@@ -158,6 +159,7 @@ function renderFrame(now_seconds: number) {
   gl.uniform1f(ring_uniforms.depth_near, data.camera_depth_near);
   gl.uniform1f(ring_uniforms.tangent, data.camera_tangent_half_view);
   gl.uniform1f(ring_uniforms.height, data.camera_height_pixels);
+  gl.uniform1f(ring_uniforms.depth_log, data.camera_depth_log);
   if (!data.is_scene_held) count_ring_held = uploadBuffer(data.ring_records, vbo.ring, 14);
   const count_ring = count_ring_held;
   drawRings(count_ring, data.ring_over, false);
@@ -176,6 +178,7 @@ function renderFrame(now_seconds: number) {
   gl.uniform1f(point_uniforms.height, data.camera_height_pixels);
   gl.uniform1f(point_uniforms.diameter_least, DIAMETER_POINT_LEAST * ratio_pixel);
   gl.uniform1f(point_uniforms.ambient, AMBIENT_SHADE);
+  gl.uniform1f(point_uniforms.depth_log, data.camera_depth_log);
   if (!data.is_scene_held) count_point_held = uploadBuffer(data.point_verts, vbo.point, 8);
   const count_point = count_point_held;
   drawPoints(count_point, data.point_over, false);
@@ -183,10 +186,23 @@ function renderFrame(now_seconds: number) {
   //   one record disc or dome, fanned out by their own vertex shaders and walked in scene order
   //   through run list.
   //   Both programs get this frame's matrix before walk, which switches between them per run.
+  //   Disc program takes camera too: its box is spanned in view and its fragments cast
+  //   rays from eye.
   gl.useProgram(program_disc);
   gl.uniformMatrix4fv(uniform_disc_mvp, false, data.view_projection);
+  gl.uniform1f(uniform_disc_depth_near, data.camera_depth_near);
+  gl.uniform1f(uniform_disc_depth_log, data.camera_depth_log);
+  gl.uniform3f(uniform_disc_eye, data.camera_eye_x, data.camera_eye_y, data.camera_eye_z);
+  gl.uniform3f(uniform_disc_forward,
+    data.camera_forward_x, data.camera_forward_y, data.camera_forward_z);
+  gl.uniform3f(uniform_disc_right, data.camera_right_x, data.camera_right_y, data.camera_right_z);
+  gl.uniform3f(uniform_disc_up, data.camera_up_x, data.camera_up_y, data.camera_up_z);
+  gl.uniform1f(uniform_disc_tangent, data.camera_tangent_half_view);
+  gl.uniform1f(uniform_disc_aspect, aspect);
   gl.useProgram(program_dome);
   gl.uniformMatrix4fv(uniform_dome_mvp, false, data.view_projection);
+  gl.uniform1f(uniform_dome_depth_near, data.camera_depth_near);
+  gl.uniform1f(uniform_dome_depth_log, data.camera_depth_log);
   if (!data.is_scene_held) {
     uploadBuffer(data.disc_records, vbo.disc, 13);
     uploadBuffer(data.dome_records, vbo.dome, 8);

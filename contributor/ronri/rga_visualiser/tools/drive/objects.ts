@@ -488,10 +488,21 @@ export async function driveReconcile(page: Page): Promise<void> {
 
     // List at rest first. Row's height is read frame after it is built or changes size, and
     //   window's far edge follows on next render: form check before this closed is 530 px
-    //   shorter as row, so refresh read as idle here would extend window by nine rows.
+    //   shorter as row, so refresh read as idle here would extend window by nine rows, and
+    //   rows built at that edge are measured frame later still, so rest arrives over several
+    //   frames. Settled by identity, refresh per frame until one keeps every element, rather
+    //   than by fixed two frames, which slower runner overran once rows wrapped long
+    //   coefficients; bound is many times what fast container needs.
     refreshObjectsUI();
-    await settle();
-    await settle();
+    let rows_last = rowsNow();
+    let frames_settling = 0;
+    for (; frames_settling < 40; frames_settling += 1) {
+      await settle();
+      refreshObjectsUI();
+      const rows_now = rowsNow();
+      if (isSame(rows_now, rows_last)) break;
+      rows_last = rows_now;
+    }
     const before_idle = rowsNow();
     refreshObjectsUI();
     const after_idle = rowsNow();
@@ -509,14 +520,14 @@ export async function driveReconcile(page: Page): Promise<void> {
     refreshObjectsUI();
     return {
       is_idle_kept: isSame(before_idle, after_idle), touched_by_hide: moved,
-      rows: after_hide.length,
+      rows: after_hide.length, frames_settling,
     };
   });
   report(
     'an unchanged refresh writes nothing, and a hide rebuilds one row alone',
     reconciled.is_idle_kept && reconciled.touched_by_hide === 1,
-    `idle kept every element: ${reconciled.is_idle_kept}; a hide rebuilt ` +
-      `${reconciled.touched_by_hide} of ${reconciled.rows} rows`,
+    `idle kept every element: ${reconciled.is_idle_kept} after ${reconciled.frames_settling} ` +
+      `settling frame(s); a hide rebuilt ${reconciled.touched_by_hide} of ${reconciled.rows} rows`,
   );
 }
 

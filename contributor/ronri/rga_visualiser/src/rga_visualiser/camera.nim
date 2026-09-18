@@ -42,17 +42,21 @@ const
     ## Fix world's up direction, which azimuth turns about and elevation rises from.
   ELEVATION_LIMIT* = 0.5*PI - 0.02
     ## Bound elevation short of pole, where sight axis would run along `UP_WORLD`.
-  DISTANCE_LIMIT_NEAR* = 0.05
+  DISTANCE_LIMIT_NEAR* = 1.0e-9
     ## Bound how close eye may orbit to pivot, through `distanceHeld`.
     ##   Only bound on where camera may stand.
     ##     At orbit distance zero eye coincides with pivot, sight axis is undefined, and
     ##     every direction `frame` derives collapses.
+    ##   Tiny, not small: demo's moons ring their planets at thousandths of unit and are
+    ##   millionths wide, and floor of twentieth kept camera outside every one of them.
+    ##     Records are stored about pivot (`mesh.MeshSet.origin`), so float32 holds this
+    ##     close-up wherever pivot stands; see `initMatrixViewProjection`.
     ##   No far bound: nothing downstream needs ceiling.
     ##     Clip planes are fractions of orbit distance (`FACTOR_CLIP_NEAR`,
     ##     `FACTOR_CLIP_FAR`), so frustum keeps shape, and grid bounds own line count
     ##     (`tessellate.CELLS_GRID_HALF_MAX`).
-    ##     What degrades far out is `Vertex`'s float32 storage: past roughly million
-    ##     units coordinate carries under tenth of unit.
+    ##     What degrades far out is float32 in what stands far from pivot: object million
+    ##     units from it carries under tenth of unit, which is invisible at that reach.
   MARGIN_REACH_FAR* = 1.05
     ## Widen far clip past scene's reach by this, so farthest object never sits on plane.
   FACTOR_CLIP_FAR* = 20.0
@@ -77,17 +81,10 @@ const
     ##   solve how far back eye must stand (`distanceFitting`), and `picking` imports this.
   FACTOR_CLIP_NEAR* = 1.0/400.0
     ## Set near clip plane this fraction of orbit distance out.
-    ##   Scaled beside `FACTOR_CLIP_FAR` so frustum stays same shape at every distance,
-    ##   holding depth-buffer precision, function of far-to-near ratio, constant.
-  RATIO_CLIP_MAX* = 100_000.0
-    ## Bound far-to-near ratio, by raising near where far plane reaches scene.
-    ##   Far plane at scene's reach over orbit of 0.7 units put ratio at 1.8 million:
-    ##   24-bit depth then resolves 3 units at depth 300 and 34 at 1,000, and stars
-    ##   quantised behind translucent discs and dome striped and faded on device. At
-    ##   this bound depth 300 resolves to 0.17 units.
-  FRACTION_NEAR_OF_ORBIT* = 0.5
-    ## Bound how far out ratio may push near plane, as fraction of orbit distance.
-    ##   Pivot itself must never clip, whatever scene's reach asks.
+    ##   Scaled beside `FACTOR_CLIP_FAR` so frustum stays same shape at every distance.
+    ##   Never raised: depth is logarithmic (`depthOf`), so far plane reaching scene
+    ##   millions of units out costs near end nothing, where linear depth had near raised
+    ##   to half orbit distance to hold ratio and still lost far field on device.
 
 const
   ## Fix rates held key moves camera at, per second of holding.
@@ -120,7 +117,11 @@ const
 
 type
   Matrix4* = object ## Define 4x4 transform in column-major order, as OpenGL expects.
-    elements: array[16, float32]
+    ## Double precision: picking reads it against world coordinates of millions of units,
+    ## where float32 translation column carried tenths of unit of error. GPU takes float32
+    ## copy through `flattened`, of transform about frame's origin, whose translation is
+    ## small; see `initMatrixViewProjection`.
+    elements: array[16, float]
 
   Camera* = object ## Define stance of eye about pivot, and lens it looks through.
     pivot*: Position ## Point orbit turns about.
@@ -143,20 +144,20 @@ type
 
 #[ Matrix Arithmetic ]#
 
-func at*(matrix: Matrix4; row, column: int): float32 = matrix.elements[4*column + row]
+func at*(matrix: Matrix4; row, column: int): float = matrix.elements[4*column + row]
   ## Read element of matrix, addressed as reader writes it rather than as GPU stores it.
 
 
-func elementsAddress*(matrix: Matrix4): ptr float32 =
-  ## Point at first element, for handing whole matrix to OpenGL.
-  unsafeAddr matrix.elements[0]
+func flattened*(matrix: Matrix4): array[16, float32] =
+  ## Copy matrix into float32 in GPU's own order, for uniform upload on either front-end.
+  for index in 0 .. 15: result[index] = float32(matrix.elements[index])
 
 
 func `*`*(a, b: Matrix4): Matrix4 =
   ## Compose transforms, applying `b` before `a`.
   for row in 0 .. 3:
     for column in 0 .. 3:
-      var sum = 0.0'f32
+      var sum = 0.0
       for i in 0 .. 3:
         sum += a.at(row, i) * b.at(i, column)
       result.elements[4*column + row] = sum
@@ -170,11 +171,11 @@ func initMatrixProjection*(
   let
     focal = 1.0 / tan(0.5 * degToRad(degrees_field_of_view))
     span = distance_near - distance_far
-  result.elements[0] = float32(focal / aspect)
-  result.elements[5] = float32(focal)
-  result.elements[10] = float32((distance_far + distance_near) / span)
+  result.elements[0] = focal / aspect
+  result.elements[5] = focal
+  result.elements[10] = (distance_far + distance_near) / span
   result.elements[11] = -1.0
-  result.elements[14] = float32(2.0 * distance_far * distance_near / span)
+  result.elements[14] = 2.0 * distance_far * distance_near / span
 
 
 func initMatrixView*(eye: Position, frame: FrameCamera): Matrix4 =
@@ -183,10 +184,10 @@ func initMatrixView*(eye: Position, frame: FrameCamera): Matrix4 =
   let (right, up, forward) = (frame.axis_right, frame.axis_up, frame.forward)
   let offset = eye - Position(x: 0, y: 0, z: 0)
   result.elements = [
-    float32(right.x), float32(up.x), float32(-forward.x), 0.0,
-    float32(right.y), float32(up.y), float32(-forward.y), 0.0,
-    float32(right.z), float32(up.z), float32(-forward.z), 0.0,
-    float32(-dot(right, offset)), float32(-dot(up, offset)), float32(dot(forward, offset)),
+    right.x, up.x, -forward.x, 0.0,
+    right.y, up.y, -forward.y, 0.0,
+    right.z, up.z, -forward.z, 0.0,
+    -dot(right, offset), -dot(up, offset), dot(forward, offset),
     1.0,
   ]
 
@@ -228,9 +229,7 @@ func distanceFar*(camera: Camera): float =
   ## Read farthest depth clip volume keeps; see `distanceNear` for why derived.
   ##   Twenty orbit distances, or eye's distance to origin plus scene's reach where that
   ##   is farther, so no zoom clips scene away; see `FACTOR_CLIP_FAR`.
-  ##   Near stays scaled, so ratio rises at close zoom over wide scene: three thousand
-  ##   units over orbit of twelve is ratio of hundred thousand, inside 24-bit depth for
-  ##   points and lines.
+  ##   Ratio to near is unbounded; `depthOf` is what makes that affordable.
   let eye = camera.eye
   let away = sqrt(eye.x*eye.x + eye.y*eye.y + eye.z*eye.z)
   max(camera.distance*FACTOR_CLIP_FAR, away + camera.reach_scene*MARGIN_REACH_FAR)
@@ -239,11 +238,34 @@ func distanceFar*(camera: Camera): float =
 func distanceNear*(camera: Camera): float =
   ## Read nearest depth clip volume keeps.
   ##   Derived from orbit distance rather than stored, so it cannot go stale through dolly.
-  ##   One four-hundredth of orbit distance, raised where far plane reaching scene would
-  ##   put far-to-near ratio past `RATIO_CLIP_MAX`, and never past half orbit distance.
-  let near_scaled = camera.distance*FACTOR_CLIP_NEAR
-  let near_bounded = min(camera.distanceFar/RATIO_CLIP_MAX, camera.distance*FRACTION_NEAR_OF_ORBIT)
-  max(near_scaled, near_bounded)
+  ##   One four-hundredth of orbit distance; see `FACTOR_CLIP_NEAR`.
+  camera.distance*FACTOR_CLIP_NEAR
+
+
+func depthLogScale*(camera: Camera): float =
+  ## Read scale depth's logarithm is mapped by this frame; see `depthOf`.
+  2.0/log2(camera.distanceFar/camera.distanceNear)
+
+
+func depthOf*(camera: Camera, depth: float): float =
+  ## Map view depth to clip depth, in -1 .. 1, as every shader does.
+  ##   Logarithmic: `log2(depth/near)` over `log2(far/near)`, so buffer's steps are spread
+  ##   evenly over decades and resolution is fixed fraction of distance at every distance.
+  ##     Linear depth spends nearly all of its steps inside first few orbit distances:
+  ##     with far at scene's reach millions of units out, whole star field and sky dome
+  ##     fell into buffer's last steps, and on device with coarse depth every object past
+  ##     few hundred thousand units failed test and vanished, while sixteen-bit buffer
+  ##     could not hold moon before its planet at same time.
+  ##   Reference of every fragment shader on both front-ends: each writes this of its own
+  ##   view depth, through `EXT_frag_depth` or GL 3.3's `gl_FragDepth`. Page without
+  ##   extension keeps linear depth. Suite pins this against sixteen-bit step for moon
+  ##   before planet, star before sky, and monotone across every decade scene spans.
+  ##   Fragment only, never clip position: clipper interpolates clip coordinates linearly
+  ##   and cuts where interpolated depth meets plane, so corner behind eye mapped far past
+  ##   far plane had its triangle cut beside its front corner, and plane's disc ended at
+  ##   hard chord under camera standing inside it. Projective clip depth keeps near and far
+  ##   cuts where they belong; driven check reads disc under camera.
+  log2(depth/camera.distanceNear)*camera.depthLogScale - 1.0
 
 
 func eye*(camera: Camera): Position =
@@ -460,7 +482,8 @@ func drawExtentFor*(camera: Camera, height_pixels: int): DrawExtent =
   #   One derivation point shared with every hand-built extent.
   algebraFilled(DrawExtent(
     scale: DrawScale(
-      extent_furniture: extentFurnitureFor(camera.distanceFar),
+      # Furniture follows orbit distance, not scene's reach; see `mesh.extentFurnitureFor`.
+      extent_furniture: extentFurnitureFor(camera.distance*FACTOR_CLIP_FAR),
       eye: eye,
       radius_horizon: radiusHorizonFor(camera.distanceFar),
       forward: frame.forward,
@@ -469,6 +492,7 @@ func drawExtentFor*(camera: Camera, height_pixels: int): DrawExtent =
       tangent_half_view: tan(0.5*degToRad(camera.degrees_field_of_view)),
       height_pixels: height_pixels,
       depth_near: camera.distanceNear,
+      depth_log: camera.depthLogScale,
     ),
   ))
 
@@ -494,12 +518,20 @@ func viewBoundsFor*(camera: Camera, scale: DrawExtent, aspect: float): ViewBound
   )
 
 
-func initMatrixViewProjection*(camera: Camera, aspect: float): Matrix4 =
+func initMatrixViewProjection*(
+  camera: Camera, aspect: float, origin: Position = Position(x: 0, y: 0, z: 0)
+): Matrix4 =
   ## Compose whole transform from world space to clip space.
+  ##   `origin` is point coordinates handed to transform are measured from: world origin
+  ##   for picking and markers, which read world coordinates; frame's own origin,
+  ##   `mesh.MeshSet.origin`, for GPU, whose records are stored about it. Same transform
+  ##   either way, translated: only translation column moves, by eye's offset from origin.
+  ##     Point stored as float32 million units from world origin carries tenth of unit;
+  ##     stored about pivot it carries what pivot's own close-up needs.
   let eye = camera.eye
   initMatrixProjection(
     camera.degrees_field_of_view, aspect, camera.distanceNear, camera.distanceFar
-  ) * initMatrixView(eye, camera.frame(eye))
+  ) * initMatrixView(eye - (origin - Position(x: 0, y: 0, z: 0)), camera.frame(eye))
 
 
 

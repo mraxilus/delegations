@@ -309,6 +309,7 @@ var
   FLAT_PIVOT = initFlatFloats(3)
   FLAT_EYE = initFlatFloats(3)
   FLAT_LABEL = initFlatFloats(6)
+  FLAT_LABEL_HELD = initFlatFloats(2)
   FLAT_ANCHOR_WORLD = initFlatFloats(3)
   FLAT_MENU = initFlatFloats(3*(ord(DragChoice.high) + 1))
   FLAT_MENU_CENTRE = initFlatFloats(2)
@@ -1945,6 +1946,14 @@ proc nimLabelClearance(away_x, away_y, half_width: cfloat): cfloat {.exportc.} =
   cfloat(clearanceBeside(float(away_x), float(away_y), float(half_width)))
 
 
+proc nimLabelInView(x, y, half_width, width, height: cfloat): FlatBuffer {.exportc.} =
+  ## Report where label centred at `x, y` stands with its box wholly inside `width` x
+  ##   `height` view, over `FLAT_LABEL_HELD`; see `marker.labelInView`.
+  ##   Two floats, `[x, y]`. `half_width` is glue's measured text, half.
+  let held = labelInView(float(x), float(y), float(half_width), float(width), float(height))
+  FLAT_LABEL_HELD.fill2(float32(held[0]), float32(held[1]))
+
+
 proc nimSelectionPulse(
   handle, width, height: cint; progress: cfloat; is_touch: bool; swell: cfloat = 0.0
 ): seq[float32] {.exportc.} =
@@ -2119,6 +2128,8 @@ type FrameData = object
     ## Carry what ribbon vertex shader needs of camera.
     ##   Exactly `mesh.DrawScale`'s same-named fields.
     ##   Widening, near clip and screen-constant width run on GPU.
+  camera_depth_log: float32
+    ## Carry scale every shader maps depth's logarithm by; see `camera.depthOf`.
   camera_right_x, camera_right_y, camera_right_z: float32
   camera_up_x, camera_up_y, camera_up_z: float32
     ## Carry camera's screen axes, point vertex shader spans each disc across.
@@ -2305,7 +2316,7 @@ proc nimBuildFrame(
     ms_axes = 0.0
   if not is_furniture_held:
     SETTINGS_FURNITURE_HELD = some(settings_furniture)
-    clearMeshes(MESHES_FURNITURE)
+    clearMeshes(MESHES_FURNITURE, CAMERA.pivot)
     # Clock grid and axes apart: axes are three lines, grid is however many ground reaches.
     let ms_before_grid = performanceNow()
     if is_grid_shown:
@@ -2356,7 +2367,8 @@ proc nimBuildFrame(
   ensurePlacement()
 
   if not is_scene_held:
-    clearMeshes(MESHES)
+    # About pivot, as furniture is; hold tuple carries pivot, so held frame keeps its origin.
+    clearMeshes(MESHES, CAMERA.pivot)
     cost.openTally()
     # Emit horizon plane's dome first, before anything sharing translucent veil pass.
     #   Veil runs draw in append order, unsorted by depth, so dome first guarantees every
@@ -2445,10 +2457,9 @@ proc nimBuildFrame(
     ms_after_scene = performanceNow()
     COUNTS_SCENE = cost
 
-  let vp = CAMERA.initMatrixViewProjection(float(aspect))
-  for row in 0 .. 3:
-    for column in 0 .. 3:
-      FLAT_VIEW[4*column + row] = vp.at(row, column)
+  # About records' own origin; overlay's matrix stays about world, for picking.
+  let flat_view = CAMERA.initMatrixViewProjection(float(aspect), MESHES.origin).flattened
+  for index in 0 .. 15: FLAT_VIEW[index] = flat_view[index]
 
   # Flatten into locals rather than in constructor.
   #   Pack phase then has start and end clock can bracket.
@@ -2479,11 +2490,14 @@ proc nimBuildFrame(
     furn_ribbon_verts: FLAT_FURNITURE.view,
     is_scene_held: is_scene_held,
     is_furniture_held: is_furniture_held,
-    camera_eye_x: float32(scale.eye.x), camera_eye_y: float32(scale.eye.y),
-    camera_eye_z: float32(scale.eye.z),
+    # Eye about records' origin, frame shaders measure depth in.
+    camera_eye_x: float32(scale.eye.x - MESHES.origin.x),
+    camera_eye_y: float32(scale.eye.y - MESHES.origin.y),
+    camera_eye_z: float32(scale.eye.z - MESHES.origin.z),
     camera_forward_x: float32(scale.forward.x), camera_forward_y: float32(scale.forward.y),
     camera_forward_z: float32(scale.forward.z),
     camera_depth_near: float32(scale.depthNear),
+    camera_depth_log: float32(scale.depthLog),
     camera_tangent_half_view: float32(scale.tangentHalfView),
     camera_height_pixels: float32(scale.heightPixels),
     camera_right_x: float32(scale.axisRight.x), camera_right_y: float32(scale.axisRight.y),

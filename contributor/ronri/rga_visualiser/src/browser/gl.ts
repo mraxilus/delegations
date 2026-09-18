@@ -45,10 +45,12 @@ const SOURCE_VERTEX_POINT = `
   uniform float uTangentHalfView;
   uniform float uHeightPixels;
   uniform float uDiameterLeast;
+  uniform float uDepthLog;
   varying vec4 vColor;
   varying vec2 vCorner;
   varying float vRadiusPixels;
   varying vec3 vLight;
+  varying float vDepth;
   void main() {
     float depth = dot(aCentre - uEye, uForward);
     if (depth < uDepthNear) {
@@ -57,12 +59,14 @@ const SOURCE_VERTEX_POINT = `
       vCorner = vec2(0.0);
       vRadiusPixels = 0.0;
       vLight = vec3(0.0);
+      vDepth = 1.0;
       return;
     }
     float world_per_pixel = 2.0*depth*uTangentHalfView/uHeightPixels;
     float radius = max(aRadius, 0.5*uDiameterLeast*world_per_pixel);
     vec3 at = aCentre + aCorner.x*radius*uRight + aCorner.y*radius*uUp;
     gl_Position = uMVP*vec4(at, 1.0);
+    vDepth = gl_Position.w;
     vColor = aColor;
     vCorner = aCorner;
     vRadiusPixels = radius/world_per_pixel;
@@ -75,7 +79,11 @@ const SOURCE_VERTEX_POINT = `
 //   toward world's up, turned into camera's basis by vertex stage, over `uAmbient` floor.
 //   Sibling of GLSL 3.30 source in `renderer.nim`.
 const SOURCE_FRAGMENT_POINT = `
+  #extension GL_EXT_frag_depth : enable
   precision mediump float;
+  varying highp float vDepth;
+  uniform highp float uDepthNear;
+  uniform highp float uDepthLog;
   varying vec4 vColor;
   varying vec2 vCorner;
   varying float vRadiusPixels;
@@ -84,6 +92,9 @@ const SOURCE_FRAGMENT_POINT = `
   void main() {
     float reach = length(vCorner);
     if (reach > 1.0) discard;
+  #ifdef GL_EXT_frag_depth
+    gl_FragDepthEXT = 0.5*log2(vDepth/uDepthNear)*uDepthLog;
+  #endif
     float edge = clamp((1.0 - reach)*vRadiusPixels, 0.0, 1.0);
     vec3 normal = vec3(vCorner, sqrt(max(0.0, 1.0 - reach*reach)));
     float shade = uAmbient + (1.0 - uAmbient)*max(0.0, dot(normal, vLight));
@@ -92,9 +103,16 @@ const SOURCE_FRAGMENT_POINT = `
 `;
 // Plain colour pass-through, every veil program's fragment stage.
 const SOURCE_FRAGMENT = `
+  #extension GL_EXT_frag_depth : enable
   precision mediump float;
+  varying highp float vDepth;
+  uniform highp float uDepthNear;
+  uniform highp float uDepthLog;
   varying vec4 vColor;
   void main() {
+  #ifdef GL_EXT_frag_depth
+    gl_FragDepthEXT = 0.5*log2(vDepth/uDepthNear)*uDepthLog;
+  #endif
     gl_FragColor = vColor;
   }
 `;
@@ -124,6 +142,13 @@ function createdBuffer(): WebGLBuffer {
   if (made === null) throw new Error('Buffer not created.');
   return made;
 }
+// Ask for per-fragment depth before any shader compiles, so `#extension` in each fragment
+//   source finds it. Without it depth stays what clip position gives, linear in projective
+//   depth, and far field's fault returns; see `camera.depthOf`.
+//   Clip position itself is never rewritten with logarithm: clipper interpolates clip
+//   coordinates linearly, so fan corner behind eye, mapped far past far plane, had its
+//   triangle cut beside its centre and plane's disc ended at hard chord under camera.
+gl.getExtension('EXT_frag_depth');
 const program = createdProgram();
 gl.attachShader(program, compileShader(gl.VERTEX_SHADER, SOURCE_VERTEX_POINT));
 gl.attachShader(program, compileShader(gl.FRAGMENT_SHADER, SOURCE_FRAGMENT_POINT));
@@ -150,6 +175,7 @@ const point_uniforms = {
   height: gl.getUniformLocation(program, 'uHeightPixels'),
   diameter_least: gl.getUniformLocation(program, 'uDiameterLeast'),
   ambient: gl.getUniformLocation(program, 'uAmbient'),
+  depth_log: gl.getUniformLocation(program, 'uDepthLog'),
 };
 
 // Read from renderer.nim's own constants via nimRenderLineWidths.
@@ -183,9 +209,11 @@ const SOURCE_VERTEX_RIBBON = `
   uniform float uDepthNear;
   uniform float uTangentHalfView;
   uniform float uHeightPixels;
+  uniform float uDepthLog;
   varying vec4 vColor;
   varying vec3 vWorld;
   varying float vFog;
+  varying float vDepth;
   void main() {
     vFog = aFog;
     float depth_tail = dot(aTail - uEye, uForward);
@@ -196,6 +224,7 @@ const SOURCE_VERTEX_RIBBON = `
       gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
       vColor = vec4(0.0);
       vWorld = aTail;
+      vDepth = 1.0;
       return;
     }
     vec3 near_end = aTail;
@@ -217,6 +246,7 @@ const SOURCE_VERTEX_RIBBON = `
     float world_per_pixel = 2.0*depth_at*uTangentHalfView/uHeightPixels;
     at += aCorner.y*0.5*aWidth*world_per_pixel*across;
     gl_Position = uMVP*vec4(at, 1.0);
+    vDepth = gl_Position.w;
     vWorld = at;
     vColor = mix(tint_near, tint_far, aCorner.x);
   }
@@ -229,7 +259,11 @@ const SOURCE_VERTEX_RIBBON = `
 //   which is what lets lattice line be one record instead of chain of fade pieces.
 //   Record with fog zero passes through untouched, which is every scene ribbon.
 const SOURCE_FRAGMENT_RIBBON = `
+  #extension GL_EXT_frag_depth : enable
   precision mediump float;
+  varying highp float vDepth;
+  uniform highp float uDepthNear;
+  uniform highp float uDepthLog;
   varying vec4 vColor;
   varying highp vec3 vWorld;
   varying highp float vFog;
@@ -237,6 +271,9 @@ const SOURCE_FRAGMENT_RIBBON = `
   uniform highp float uFogFull;
   uniform highp float uFogGone;
   void main() {
+  #ifdef GL_EXT_frag_depth
+    gl_FragDepthEXT = 0.5*log2(vDepth/uDepthNear)*uDepthLog;
+  #endif
     highp float fade = 1.0 - clamp(
       (distance(vWorld, uEye) - uFogFull)/(uFogGone - uFogFull), 0.0, 1.0
     );
@@ -276,6 +313,7 @@ const ribbon_uniforms = {
   height: gl.getUniformLocation(program_ribbon, 'uHeightPixels'),
   fog_full: gl.getUniformLocation(program_ribbon, 'uFogFull'),
   fog_gone: gl.getUniformLocation(program_ribbon, 'uFogGone'),
+  depth_log: gl.getUniformLocation(program_ribbon, 'uDepthLog'),
 };
 // Six (end, side) corners of one ribbon instance, in `expandRibbon`'s own winding.
 const buffer_ribbon_corners = createdBuffer();
@@ -283,12 +321,18 @@ gl.bindBuffer(gl.ARRAY_BUFFER, buffer_ribbon_corners);
 gl.bufferData(gl.ARRAY_BUFFER,
   new Float32Array([0, -1, 1, -1, 1, 1, 0, -1, 1, 1, 0, 1]), gl.STATIC_DRAW);
 
-// Fan one 13-float disc record over static corner buffer.
-//   Sibling copy of `mesh.expandDiscVertex`, reference suite pins, and of GLSL 3.30
-//   source in `renderer.nim`; change to any one of three is not finished until other
-//   two are checked.
-//   Each corner is centre plus two radius-scaled arms weighted by its own cosine and
-//   sine, with `(0, 0)` landing centre corner on centre exactly.
+// Span one 13-float disc record over view box of its sphere, and cast ray per fragment.
+//   Sibling copy of `mesh.viewBoxOfDisc`, `mesh.expandDiscCorner` and
+//   `mesh.hitDiscAlong`, references suite pins, and of GLSL 3.30 source in
+//   `renderer.nim`; change to any one of three is not finished until other two are
+//   checked.
+//   Each axis is bounded by sphere's limb in that axis's plane with sight axis, centre's
+//   bearing plus and minus half-angle sphere subtends, tangent bounded past quarter turn;
+//   whole view where sphere holds eye. Corner is box's middle plus corner scaled by root
+//   two of half extents, so fan covers box. Depth is fragment's own; without
+//   `EXT_frag_depth` disc rests at its centre's, `uMVP`'s only use here.
+//   Not fan of corners on plane itself: corner behind eye left sliver for clipper that
+//   rasterised to nothing under grazing camera, and disc ended at hard chord.
 const SOURCE_VERTEX_DISC = `
   attribute vec2 aCorner;
   attribute vec3 aCentre;
@@ -296,11 +340,93 @@ const SOURCE_VERTEX_DISC = `
   attribute vec3 aArmSecond;
   attribute vec4 aFill;
   uniform mat4 uMVP;
+  uniform vec3 uEye;
+  uniform vec3 uForward;
+  uniform vec3 uRight;
+  uniform vec3 uUp;
+  uniform float uTangentHalfView;
+  uniform float uAspect;
   varying vec4 vColor;
+  varying vec2 vView;
+  varying vec3 vToCentre;
+  varying vec3 vArmFirst;
+  varying vec3 vArmSecond;
+  float tanBounded(float angle) {
+    if (angle >= 0.5*3.14159265) return 1.0e6;
+    if (angle <= -0.5*3.14159265) return -1.0e6;
+    return tan(angle);
+  }
   void main() {
-    vec3 at = aCentre + aCorner.x*aArmFirst + aCorner.y*aArmSecond;
-    gl_Position = uMVP*vec4(at, 1.0);
+    vec3 to_centre = aCentre - uEye;
+    float radius = length(aArmFirst);
+    float across = dot(to_centre, uRight);
+    float up = dot(to_centre, uUp);
+    float depth = dot(to_centre, uForward);
+    float reach_across = length(vec2(across, depth));
+    float reach_up = length(vec2(up, depth));
+    vec2 lo = vec2(-1.0);
+    vec2 hi = vec2(1.0);
+    if (min(reach_across, reach_up) > radius) {
+      float bearing_across = atan(across, depth);
+      float spread_across = asin(radius/reach_across);
+      float bearing_up = atan(up, depth);
+      float spread_up = asin(radius/reach_up);
+      float wide = uTangentHalfView*uAspect;
+      float tall = uTangentHalfView;
+      lo = clamp(vec2(tanBounded(bearing_across - spread_across)/wide,
+        tanBounded(bearing_up - spread_up)/tall), -1.0, 1.0);
+      hi = clamp(vec2(tanBounded(bearing_across + spread_across)/wide,
+        tanBounded(bearing_up + spread_up)/tall), -1.0, 1.0);
+    }
+    vView = 0.5*(lo + hi) + 1.41421356*aCorner*0.5*(hi - lo);
+    vec4 centre_clip = uMVP*vec4(aCentre, 1.0);
+    float centre_depth = clamp(centre_clip.z/max(centre_clip.w, 1.0e-30), -1.0, 1.0);
+    gl_Position = vec4(vView, centre_depth, 1.0);
     vColor = aFill;
+    vToCentre = to_centre;
+    vArmFirst = aArmFirst;
+    vArmSecond = aArmSecond;
+  }
+`;
+// Fill disc's box by casting each fragment's own ray at plane; see `SOURCE_VERTEX_DISC`.
+//   Ray is sight axis plus lateral step for fragment's view fraction, so distance along
+//   it is view depth. Discarded where ray runs along plane, meets it behind eye, or lands
+//   past rim. Nearer than near plane is still drawn, at buffer's floor.
+const SOURCE_FRAGMENT_DISC = `
+  #extension GL_EXT_frag_depth : enable
+  #ifdef GL_FRAGMENT_PRECISION_HIGH
+  precision highp float;
+  #else
+  precision mediump float;
+  #endif
+  uniform vec3 uForward;
+  uniform vec3 uRight;
+  uniform vec3 uUp;
+  uniform float uTangentHalfView;
+  uniform float uAspect;
+  uniform float uDepthNear;
+  uniform float uDepthLog;
+  varying vec4 vColor;
+  varying vec2 vView;
+  varying vec3 vToCentre;
+  varying vec3 vArmFirst;
+  varying vec3 vArmSecond;
+  void main() {
+    vec3 ray = uForward + (vView.x*uAspect*uTangentHalfView)*uRight
+      + (vView.y*uTangentHalfView)*uUp;
+    vec3 normal = cross(vArmFirst, vArmSecond);
+    float rate = dot(ray, normal);
+    if (rate == 0.0) discard;
+    float depth = dot(vToCentre, normal)/rate;
+    if (depth <= 0.0) discard;
+    vec3 hit = depth*ray - vToCentre;
+    float first = dot(hit, vArmFirst)/dot(vArmFirst, vArmFirst);
+    float second = dot(hit, vArmSecond)/dot(vArmSecond, vArmSecond);
+    if (first*first + second*second > 1.0) discard;
+  #ifdef GL_EXT_frag_depth
+    gl_FragDepthEXT = clamp(0.5*log2(max(depth, uDepthNear)/uDepthNear)*uDepthLog, 0.0, 1.0);
+  #endif
+    gl_FragColor = vColor;
   }
 `;
 // Sibling copy of `mesh.expandDomeVertex`, under same three-way rule:
@@ -310,10 +436,14 @@ const SOURCE_VERTEX_DOME = `
   attribute vec4 aCentreRadius;
   attribute vec4 aTint;
   uniform mat4 uMVP;
+  uniform float uDepthNear;
+  uniform float uDepthLog;
   varying vec4 vColor;
+  varying float vDepth;
   void main() {
     vec3 at = aCentreRadius.xyz + aCentreRadius.w*aUnit;
     gl_Position = uMVP*vec4(at, 1.0);
+    vDepth = gl_Position.w;
     vColor = aTint;
   }
 `;
@@ -324,7 +454,7 @@ const SOURCE_VERTEX_DOME = `
 //   Static corner buffer carries every segment of closed walk, so this one instance
 //   draws all `SEGMENTS_CIRCLE_HORIZON` of them.
 //   Two steps, and second is not new.
-//     Place segment's ends on circle exactly as disc source places its fan corners,
+//     Place segment's ends on circle, as `mesh.expandRingVertex` steps them,
 //     `centre + cos*arm_first + sin*arm_second`, then widen that pair by ribbon
 //     source's own body, verbatim: near clip, across join reduces to, and half width
 //     of this end's world-per-pixel.
@@ -345,7 +475,9 @@ const SOURCE_VERTEX_RING = `
   uniform float uDepthNear;
   uniform float uTangentHalfView;
   uniform float uHeightPixels;
+  uniform float uDepthLog;
   varying vec4 vColor;
+  varying float vDepth;
   void main() {
     vec3 tail = aCentre + aArc.x*aArmFirst + aArc.y*aArmSecond;
     vec3 head = aCentre + aArc.z*aArmFirst + aArc.w*aArmSecond;
@@ -356,6 +488,7 @@ const SOURCE_VERTEX_RING = `
     if (max(depth_tail, depth_head) < uDepthNear || across_length < 1e-12) {
       gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
       vColor = vec4(0.0);
+      vDepth = 1.0;
       return;
     }
     vec3 near_end = tail;
@@ -373,20 +506,23 @@ const SOURCE_VERTEX_RING = `
     float world_per_pixel = 2.0*depth_at*uTangentHalfView/uHeightPixels;
     at += aCorner.y*0.5*aWidth*world_per_pixel*across;
     gl_Position = uMVP*vec4(at, 1.0);
+    vDepth = gl_Position.w;
     vColor = aFill;
   }
 `;
-function linkVeilProgram(source_vertex: string): WebGLProgram {
+function linkVeilProgram(
+  source_vertex: string, source_fragment: string = SOURCE_FRAGMENT,
+): WebGLProgram {
   const handle = createdProgram();
   gl.attachShader(handle, compileShader(gl.VERTEX_SHADER, source_vertex));
-  gl.attachShader(handle, compileShader(gl.FRAGMENT_SHADER, SOURCE_FRAGMENT));
+  gl.attachShader(handle, compileShader(gl.FRAGMENT_SHADER, source_fragment));
   gl.linkProgram(handle);
   if (!gl.getProgramParameter(handle, gl.LINK_STATUS)) {
     throw new Error(gl.getProgramInfoLog(handle) ?? 'Program failed to link.');
   }
   return handle;
 }
-const program_disc = linkVeilProgram(SOURCE_VERTEX_DISC);
+const program_disc = linkVeilProgram(SOURCE_VERTEX_DISC, SOURCE_FRAGMENT_DISC);
 const program_dome = linkVeilProgram(SOURCE_VERTEX_DOME);
 const disc_attribs = {
   corner: gl.getAttribLocation(program_disc, 'aCorner'),
@@ -418,9 +554,21 @@ const ring_uniforms = {
   depth_near: gl.getUniformLocation(program_ring, 'uDepthNear'),
   tangent: gl.getUniformLocation(program_ring, 'uTangentHalfView'),
   height: gl.getUniformLocation(program_ring, 'uHeightPixels'),
+  depth_log: gl.getUniformLocation(program_ring, 'uDepthLog'),
 };
 const uniform_disc_mvp = gl.getUniformLocation(program_disc, 'uMVP');
 const uniform_dome_mvp = gl.getUniformLocation(program_dome, 'uMVP');
+// Veil programs take depth mapping too, having no camera of their own otherwise.
+const uniform_disc_depth_near = gl.getUniformLocation(program_disc, 'uDepthNear');
+const uniform_disc_depth_log = gl.getUniformLocation(program_disc, 'uDepthLog');
+const uniform_disc_eye = gl.getUniformLocation(program_disc, 'uEye');
+const uniform_disc_forward = gl.getUniformLocation(program_disc, 'uForward');
+const uniform_disc_right = gl.getUniformLocation(program_disc, 'uRight');
+const uniform_disc_up = gl.getUniformLocation(program_disc, 'uUp');
+const uniform_disc_tangent = gl.getUniformLocation(program_disc, 'uTangentHalfView');
+const uniform_disc_aspect = gl.getUniformLocation(program_disc, 'uAspect');
+const uniform_dome_depth_near = gl.getUniformLocation(program_dome, 'uDepthNear');
+const uniform_dome_depth_log = gl.getUniformLocation(program_dome, 'uDepthLog');
 // Hold static corner geometry both veil shaders fan records over.
 //   Read from mesh.nim's own generators rather than hand-copied table that could drift
 //   from references.

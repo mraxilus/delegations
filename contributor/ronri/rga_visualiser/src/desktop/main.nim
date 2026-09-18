@@ -471,13 +471,13 @@ proc assembleMeshes(
   )
   if SETTINGS_FURNITURE_HELD.isNone or SETTINGS_FURNITURE_HELD.get != settings_furniture:
     SETTINGS_FURNITURE_HELD = some(settings_furniture)
-    MESHES_FURNITURE.clearMeshes
+    MESHES_FURNITURE.clearMeshes(camera.pivot)
     if panel.is_grid_shown:
       MESHES_FURNITURE.addGrid(scratch[0], scale.extentFurniture, scale)
     if panel.is_axes_shown:
       MESHES_FURNITURE.addAxes(scratch[0], scale.extentFurniture, scale)
 
-  MESHES.clearMeshes
+  MESHES.clearMeshes(camera.pivot) # About pivot; see `mesh.clearMeshes`.
   # Emit horizon plane's dome first, before anything sharing translucent veil pass.
   #   Veil runs draw in append order, unsorted by depth, so dome first guarantees every
   #   ordinary plane's fill blends over it whatever handle either occupies.
@@ -651,16 +651,16 @@ proc drawSelectionMarker(
     if marker.has_label:
       let (fill, halo) = (one.ink.colour, Ink.Backdrop.colour)
       # Push line's label off its anchor by its own measured box; see `is_label_beside`.
+      #   Then hold every label wholly inside window; see `labelInView`.
       var at = marker.label_at
+      let half_width = 0.5*float(gui.labelWidth(toCstring(one.label)))
       if marker.is_label_beside:
-        let clearance = clearanceBeside(
-          marker.label_away_x, marker.label_away_y,
-          0.5*float(gui.labelWidth(toCstring(one.label))),
-        )
+        let clearance = clearanceBeside(marker.label_away_x, marker.label_away_y, half_width)
         at.x += clearance*marker.label_away_x
         at.y += clearance*marker.label_away_y
+      let held = labelInView(at.x, at.y, half_width, float(width), float(height))
       gui.overlayLabel(
-        cfloat(at.x), cfloat(at.y),
+        cfloat(held[0]), cfloat(held[1]),
         fill.red, fill.green, fill.blue, halo.red, halo.green, halo.blue,
         ALPHA_MARKER_LABEL_HALO, toCstring(one.label),
       )
@@ -890,8 +890,11 @@ proc renderFrame(
     panel, scene, interaction, camera, now, scale, int(width), int(height), are_dimmed
   )
   clearFrame(int(width), int(height))
-  renderer.drawMeshes(MESHES_FURNITURE, view_projection, scale)
-  renderer.drawMeshes(MESHES, view_projection, scale)
+  # GPU takes transform about records' origin; `view_projection` above stays about world,
+  #   for hover, menu and markers, which read world coordinates.
+  let view_projection_drawn = camera.initMatrixViewProjection(width / height, MESHES.origin)
+  renderer.drawMeshes(MESHES_FURNITURE, view_projection_drawn, scale, width / height)
+  renderer.drawMeshes(MESHES, view_projection_drawn, scale, width / height)
 
   # Take one reading per frame, before any handle advances.
   #   Every selected object's comet then moves by same step.

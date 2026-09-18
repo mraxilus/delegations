@@ -159,7 +159,11 @@ export async function driveOccluded(page: Page): Promise<void> {
     nimSetCameraPivot(at_planet[0] ?? 0, at_planet[1] ?? 0, at_planet[2] ?? 0);
     nimSetCameraAzimuth(Math.atan2(heading[1] ?? 0, heading[0] ?? 0));
     nimSetCameraElevation(Math.asin((heading[2] ?? 0) / span));
-    nimSetCameraDistance(span * 6);
+    // Stand where planet's disc is sixty pixels wide, and never short of moon: bodies are
+    //   their real size, and fixed six spans out put Jupiter's disc at thirty pixels.
+    const tall = (document.getElementById('gl') as HTMLCanvasElement).clientHeight;
+    const per_radian = (tall / 2) / Math.tan(((nimCameraFov() * Math.PI) / 180) / 2);
+    nimSetCameraDistance(Math.max((nimObjectRadius(planet) * per_radian) / 60, span * 1.5));
     await wait(500);
 
     const canvas = document.getElementById('gl') as HTMLCanvasElement;
@@ -243,6 +247,126 @@ export async function driveOccluded(page: Page): Promise<void> {
       `${JSON.stringify(both.slice(0, 3))} with its planet selected too`,
   );
   await page.keyboard.press('Home');
+  await settleCamera(page);
+}
+
+/** Drive camera to far star, and assert sky dome is drawn behind it.
+ *
+ *  Dome stands at nine tenths of far plane, which reaches whole star field; linear depth put
+ *  it and every far star in buffer's last steps, and coarse buffer dropped them all from
+ *  beside far star. Read as tint of background pixels clear of any dot: page's darkest
+ *  surface is what canvas shows where nothing draws.
+ */
+export async function driveFarSky(page: Page): Promise<void> {
+  // Whole camera put back after, as occlusion check does: zoom check following reads its
+  //   bound off wherever camera stands.
+  const before = await page.evaluate(() => ({
+    pivot: Array.from(nimCameraPivot()), distance: nimCameraDistance(),
+    azimuth: nimCameraAzimuth(), elevation: nimCameraElevation(),
+  }));
+  const far = await page.evaluate(() => {
+    const star = nimSceneHandles().find((one) => nimObjectLabel(one) === 'NAME Proxima Centauri');
+    if (star === undefined) return null;
+    nimSelectClear();
+    nimSelectToggle(star);
+    return star;
+  });
+  if (far === null) {
+    report('the sky is drawn behind a far star', false, 'no Proxima in the loaded demo');
+    return;
+  }
+  await settleCamera(page);
+  await page.waitForTimeout(400);
+  const stance = await page.evaluate(() => ({
+    distance: nimCameraDistance(), reach: Math.hypot(...Array.from(nimCameraPivot())),
+  }));
+  // Four spots well off centre; sample darkest, so single dot on one cannot pass check.
+  const spots: [number, number][] = [[200, 200], [1000, 200], [200, 700], [1000, 700]];
+  const reading = await readCanvas(page, spots);
+  const luminance = (rgba: number[]): number =>
+    0.2126 * (rgba[0] ?? 0) + 0.7152 * (rgba[1] ?? 0) + 0.0722 * (rgba[2] ?? 0);
+  const readings = reading.spots.map((one) => luminance(one ?? []));
+  const darkest = Math.min(...readings);
+  // Darkest surface is rgb(16, 19, 24), luminance 18; sky tint over it reads well above.
+  report(
+    'the sky is drawn behind a far star',
+    darkest > 24,
+    `darkest of four background spots ${darkest.toFixed(1)} beside a star ` +
+      `${stance.reach.toFixed(0)} units out, camera ${stance.distance.toFixed(1)} off it; ` +
+      `page's darkest surface reads 18`,
+  );
+  await page.evaluate((given) => {
+    nimSelectClear();
+    nimSetCameraPivot(given.pivot[0] ?? 0, given.pivot[1] ?? 0, given.pivot[2] ?? 0);
+    nimSetCameraDistance(given.distance);
+    nimSetCameraAzimuth(given.azimuth);
+    nimSetCameraElevation(given.elevation);
+  }, before);
+  await settleCamera(page);
+}
+
+/** Stand camera inside plane's disc, low over it, and assert disc reaches under camera.
+ *
+ *  Vertex stage used to rewrite clip depth with logarithm for buffer's sake, and clipper,
+ *  interpolating clip coordinates linearly, cut every fan triangle whose rim corner lay
+ *  behind eye against far plane beside disc's centre: disc ended at hard chord below its
+ *  centre wherever camera stood inside it, as it does after any click on body in it.
+ *  Clip position keeps projective depth now; logarithm is written per fragment only.
+ */
+export async function driveDiscUnderfoot(page: Page): Promise<void> {
+  const before = await page.evaluate(() => ({
+    pivot: Array.from(nimCameraPivot()), distance: nimCameraDistance(),
+    azimuth: nimCameraAzimuth(), elevation: nimCameraElevation(),
+  }));
+  // Ecliptic's disc reaches `EXTENT_PLANE` units from Sol; eye 1.5 units off Sol and 0.3 rad
+  //   up stands well inside, so half of rim lies behind eye and plane runs on under camera.
+  await page.evaluate(() => {
+    nimSelectClear();
+    nimSetCameraPivot(0, 0, 0);
+    nimSetCameraDistance(1.5);
+    nimSetCameraAzimuth(0);
+    nimSetCameraElevation(0.3);
+  });
+  await settleCamera(page);
+  await page.waitForTimeout(400);
+  // One spot past Sol, on disc's far half; three below, where disc runs under camera toward
+  //   near plane. All clear of world axes through centre and of demo's dots.
+  const spots: [number, number][] = [[500, 400], [450, 650], [350, 800], [750, 750]];
+  const reading = await readCanvas(page, spots);
+  const luminance = (rgba: number[]): number =>
+    0.2126 * (rgba[0] ?? 0) + 0.7152 * (rgba[1] ?? 0) + 0.0722 * (rgba[2] ?? 0);
+  const readings = reading.spots.map((one) => luminance(one ?? []));
+  const past = readings[0] ?? 0;
+  const under = readings.slice(1);
+  const gap = Math.max(...under.map((one) => Math.abs(one - past)));
+  // Disc's veil lifts luminance well over bare backdrop's 19; chord cut left every spot under
+  //   camera at backdrop.
+  report(
+    "the plane's disc reaches under a camera standing inside it",
+    gap <= 3,
+    `disc past Sol reads ${past.toFixed(1)}, under camera ` +
+      `${under.map((one) => one.toFixed(1)).join(', ')}; bare backdrop reads 19`,
+  );
+  // Second stance grazes plane, 0.0003 rad up: eye stands one eighth of near plane's
+  //   distance off it, where fan's own near cut ended disc one third of way down.
+  await page.evaluate(() => { nimSetCameraElevation(0.0003); });
+  await settleCamera(page);
+  await page.waitForTimeout(400);
+  const grazing = (await readCanvas(page, spots.slice(1))).spots
+    .map((one) => luminance(one ?? []));
+  const gap_grazing = Math.max(...grazing.map((one) => Math.abs(one - past)));
+  report(
+    "the plane's disc holds under a grazing camera",
+    gap_grazing <= 3,
+    `under camera 0.0003 rad over plane ${grazing.map((one) => one.toFixed(1)).join(', ')}, ` +
+      `against ${past.toFixed(1)} past Sol`,
+  );
+  await page.evaluate((given) => {
+    nimSetCameraPivot(given.pivot[0] ?? 0, given.pivot[1] ?? 0, given.pivot[2] ?? 0);
+    nimSetCameraDistance(given.distance);
+    nimSetCameraAzimuth(given.azimuth);
+    nimSetCameraElevation(given.elevation);
+  }, before);
   await settleCamera(page);
 }
 
