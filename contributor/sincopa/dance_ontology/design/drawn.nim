@@ -90,8 +90,14 @@ func litAt*(fore: Seen; s: float): float =
 
 func lightAcross*(fore, axis: Seen): Seen =
   ## Facing's image on screen as light runs across one piece whose screen
-  ## axis is `axis`: as it fell, for now.
-  fore
+  ## axis is `axis`: its part along piece dropped, so gradient runs square to
+  ## piece and one piece meets next without seam.  Lit along facing as it
+  ## fell, torso showed bands, each piece's gradient centred on its own
+  ## middle.  Sphere has no axis and takes facing whole.
+  let long = axis.x * axis.x + axis.y * axis.y
+  if long < 1e-12: return fore
+  let t = (fore.x * axis.x + fore.y * axis.y) / long
+  (x: fore.x - axis.x * t, y: fore.y - axis.y * t, d: fore.d)
 
 func mixHex*(dark, light: string; t: float): string =
   ## Colour `t` of way from `dark` to `light`, each `#rrggbb`, as `rgb(r, g, b)`.
