@@ -728,9 +728,53 @@ func risen*(c: Couple): float =
   if c.restTwist != 0.0: 1.0 else: min(1.0, c.wound / RAISE)
 
 func up*(c: Couple): float =
-  ## How far joined hands are from resting toward being over their band, nought
-  ## to one: `risen` by another name, until it is keyed to something else.
-  c.risen
+  ## How far joined hands are from resting at mid torso toward being over
+  ## crown, nought to one, by how far couple are from face to face: whole by
+  ## `RAISE` of turn away, whole turns folding away.
+  ##   Architect: relaxed position facing is hands at mid torso; pillion or back
+  ##     to back they have to be above; facing, arms come down.  Couple wound
+  ##     whole turn face each other again and their hands are down again,
+  ##     which `risen` keyed to wind from rest never let them be: A9 stood
+  ##     facing with hands over heads.
+  if c.band != Band.Crown: return c.risen
+  min(1.0, c.awayFrom / RAISE)
+
+func leaving*(c: Couple): bool =
+  ## Whether couple are winding away from face to face rather than back toward
+  ## it: hands go up and over her head one way, and come down in front of her
+  ## other way.
+  ##   Let down straight from over her crown as she came back to face to face,
+  ##     hands passed through her head; coming back they first come forward
+  ##     off her crown to between two bodies, at crown height, then down.
+  var t = (twist(c.stance) / (2.0 * PI)) mod 1.0
+  if t < 0.0: t += 1.0
+  let dir = twist(c.stance) - c.restTwist
+  if dir == 0.0: return true
+  (t < 0.5) == (dir > 0.0)
+
+func over*(c: Couple): float =
+  ## How far joined hands are carried from between two bodies toward over crown
+  ## of dancer who turns, nought to one: all way while going up, and coming
+  ## back, first half of way down.
+  if c.band != Band.Crown or c.leaving: 1.0
+  else: clamp((c.up - 0.5) / 0.5, 0.0, 1.0)
+
+func height*(c: Couple): float =
+  ## How far joined hands are from torso band toward crown band, nought to one:
+  ## with `up` going up, and coming back, over second half of way down.
+  if c.band != Band.Crown: c.risen
+  elif c.leaving: c.up
+  else: clamp(c.up / 0.5, 0.0, 1.0)
+
+func bandNow*(c: Couple): tuple[lo, hi: float] =
+  ## Band joined hands are held to here: asked over crown, torso band facing,
+  ## crown band away, and between by `height`.
+  if c.band != Band.Crown: return c.rig.band[c.band]
+  let
+    low = c.rig.band[Band.Torso]
+    high = c.rig.band[Band.Crown]
+    h = c.height
+  (lo: low.lo + (high.lo - low.lo) * h, hi: low.hi + (high.hi - low.hi) * h)
 
 func tipOf(c: Couple; a: ArmRig): Vec =
   ## Fingertip, which band is asked of.
@@ -780,21 +824,23 @@ proc carry(c: Couple) =
   ##     Without it grip floats off sideways and arms trail away behind, which
   ##     reads as shoulder giving out when it is only hands left unheld.
   let
-    band = c.rig.band[c.band]
-    # Height is asked of couple only as they leave face to face.  Architect:
-    # face to face arms may be at any height, and it is once they are no longer
-    # face to face that hands must actually be above -- which is clearance,
-    # since only then would arm have to pass through body to stay low.  Lower
-    # edge rises as couple wind from rest, from where hand settled at rest to
-    # where band puts it, and is there by `RAISE` (`risen`); nothing is asked
-    # until rest has settled and been read.  Hold resting pillion is not face
-    # to face, and its hands are above from its rest on, as its card draws
-    # them.
-    risen = c.risen
+    band = c.bandNow
+    # Asked over crown, hands rest at mid torso facing and are over crown away
+    # (`up`).  Going up, lower edge rises as couple wind from rest, from where
+    # hand settled to where crown band puts it, by `RAISE`, and hands are drawn
+    # over her head as they rise; coming back, they come forward off her crown
+    # first and then down, both edges of band let down with them (`over`,
+    # `height`).  Asked lower, lower edge rises from where hand settled by
+    # `RAISE` of wind (`risen`) and stays up.  Nothing is asked until rest has
+    # settled and been read.
+    crown = (c.band == Band.Crown)
+    leaving = c.leaving
+    risen = c.height
     one = axesOf(c.stance[Body.One]).origin
     two = axesOf(c.stance[Body.Two]).origin
-    mid = (if c.band == Band.Crown: axesOf(c.stance[c.turning]).origin
-           else: (one + two) * 0.5)
+    between = (one + two) * 0.5
+    mid = (if crown: between + (axesOf(c.stance[c.turning]).origin - between) * c.over
+           else: between)
       ## Over crown, hands go over head of dancer who turns, not between two:
       ## couple setting hold up put them there, and pulling them to midpoint
       ## instead makes both reach across their own body and spends adduction
@@ -811,18 +857,21 @@ proc carry(c: Couple) =
       # inside it, hands pressed back toward whichever edge they left, and
       # left alone between them.
       var off = 0.0
-      if risen >= 1.0:
+      if risen >= 1.0 or risen <= 0.0 or (crown and not leaving):
         if tip.z < band.lo: off = band.lo - tip.z
         elif tip.z > band.hi: off = band.hi - tip.z
       elif c.restTip.len > 0:
-        let lo = c.restTip[i][k] + (band.lo - c.restTip[i][k]) * risen
+        # Going up, ramp is to crown band's edge, as it always was.
+        let
+          top = (if crown: c.rig.band[Band.Crown].lo else: band.lo)
+          lo = c.restTip[i][k] + (top - c.restTip[i][k]) * risen
         off = lo - tip.z
       let
         lift = LIFT * off - FALL * drift.z
         # Drawn toward mid only as they rise, as lift is: face to face nothing
         # is asked.  Drawn at rest, over crown her hand was pulled to her own
         # axis before any turn, and her wrist sat at its cone from first moment.
-        pull = risen * DRAW[ord(c.band)]
+        pull = (if crown and not leaving: 1.0 else: risen) * DRAW[ord(c.band)]
         wanted: Vec = ((mid.x - tip.x) * pull - drift.x * FALL,
                        (mid.y - tip.y) * pull - drift.y * FALL, lift)
         want = norm(wanted)
@@ -1199,6 +1248,13 @@ proc stoppedBy*(c: Couple; i: int): tuple[why: Stop, k: int] =
 proc stopOf*(c: Couple; i: int): Stop = stoppedBy(c, i).why
   ## What stops this connection here, if anything does.
 
+const FACING* = 0.05 ## Of way up (`up`), within which couple count as facing and
+                     ## hands are asked into torso band: wound whole turn, couple
+                     ## come back within float of face to face, not to it.
+const OVER* = 0.05 ## Metres joined hand may sit over torso band's top facing: wound
+                   ## arms press hands up against lift's forty newtons, and same-name
+                   ## chain come round to face to face sat at 1.37 to 1.39 m against
+                   ## 1.35, mid torso by any reading and hold at no other height.
 const SAG* = 0.03 ## Metres joined hand may sit under its band's edge, once
   ## risen, lift being spring against comfort and not wall.
 
@@ -1218,11 +1274,16 @@ proc gives*(c: Couple): Stop =
     if why != Stop.None: return why
   let deep = deepest(c, -1)
   if deep.depth > THROUGH: return deep.met
-  if c.risen >= 1.0:
+  let facing = c.band == Band.Crown and c.up <= FACING
+  if c.height >= 1.0 or facing:
+    let band = c.bandNow
     for ln in c.links:
       for h in ln.ends:
-        if tipOf(c, c.who[h.body].arm[h.arm]).z < c.rig.band[c.band].lo - SAG:
-          return Stop.Reach
+        let z = tipOf(c, c.who[h.body].arm[h.arm]).z
+        if z < band.lo - SAG: return Stop.Reach
+        # Facing, hands over crown are hold at some other height too: A9 stood
+        # facing with every hand at 1.90 m and read as holding.
+        if facing and z > band.hi + OVER: return Stop.Reach
   Stop.None
 
 

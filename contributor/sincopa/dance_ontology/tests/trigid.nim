@@ -810,11 +810,15 @@ suite "every still stands at ease":
       check abs(c.wound - w) < 1e-9
       let away = min(w mod 1.0, 1.0 - w mod 1.0)
       check abs(c.up - min(1.0, away / 0.25)) < 1e-6
+      if away > 1e-6 and away < 0.5 - 1e-6: check c.leaving == (w < 0.5)
+      check c.height >= c.up
+      if c.leaving: check c.over == 1.0
     c.free()
     var p = build(HUMAN, restStance(HUMAN, 0.44, away = true), Band.Crown, CHAIN, Body.Two,
                   away = true)
     check p.wound == 0.0
     check p.up == 1.0
+    check p.height == 1.0
     p.free()
 
   test "facing couple rest their joined hands at mid torso":
