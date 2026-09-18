@@ -31,8 +31,8 @@ import { driveCreep, drivePlaneBuilt, driveRuler } from './finger';
 import { driveHoldScene } from './hold';
 import { driveDrawerCost, drivePlacementHeld } from './pool';
 import {
-  driveCulling, driveDemo, driveFarSky, driveOccluded, driveZoomLoaded, loadDemo, objectsDefault,
-  objectsLargest,
+  driveCulling, driveDemo, driveDiscUnderfoot, driveFarSky, driveOccluded, driveZoomLoaded,
+  loadDemo, objectsDefault, objectsLargest,
 } from './demo';
 import {
   driveLoadedAccounting, drivePinPickLoaded, drivePlacingCost, driveTimelineCost,
@@ -208,6 +208,7 @@ async function main(): Promise<void> {
   await driveCulling(page);
   await driveOccluded(page);
   await driveFarSky(page);
+  await driveDiscUnderfoot(page);
   await driveZoomLoaded(page);
   await driveTimelineCost(page, objects_largest);
   await drivePlacingCost(page, objects_largest);

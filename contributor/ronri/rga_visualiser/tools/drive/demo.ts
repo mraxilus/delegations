@@ -305,6 +305,57 @@ export async function driveFarSky(page: Page): Promise<void> {
   await settleCamera(page);
 }
 
+/** Stand camera inside plane's disc, low over it, and assert disc reaches under camera.
+ *
+ *  Vertex stage used to rewrite clip depth with logarithm for buffer's sake, and clipper,
+ *  interpolating clip coordinates linearly, cut every fan triangle whose rim corner lay
+ *  behind eye against far plane beside disc's centre: disc ended at hard chord below its
+ *  centre wherever camera stood inside it, as it does after any click on body in it.
+ *  Clip position keeps projective depth now; logarithm is written per fragment only.
+ */
+export async function driveDiscUnderfoot(page: Page): Promise<void> {
+  const before = await page.evaluate(() => ({
+    pivot: Array.from(nimCameraPivot()), distance: nimCameraDistance(),
+    azimuth: nimCameraAzimuth(), elevation: nimCameraElevation(),
+  }));
+  // Ecliptic's disc reaches `EXTENT_PLANE` units from Sol; eye 1.5 units off Sol and 0.3 rad
+  //   up stands well inside, so half of rim lies behind eye and plane runs on under camera.
+  await page.evaluate(() => {
+    nimSelectClear();
+    nimSetCameraPivot(0, 0, 0);
+    nimSetCameraDistance(1.5);
+    nimSetCameraAzimuth(0);
+    nimSetCameraElevation(0.3);
+  });
+  await settleCamera(page);
+  await page.waitForTimeout(400);
+  // One spot past Sol, on disc's far half; three below, where disc runs under camera toward
+  //   near plane. All clear of world axes through centre and of demo's dots.
+  const spots: [number, number][] = [[500, 400], [450, 650], [350, 800], [750, 750]];
+  const reading = await readCanvas(page, spots);
+  const luminance = (rgba: number[]): number =>
+    0.2126 * (rgba[0] ?? 0) + 0.7152 * (rgba[1] ?? 0) + 0.0722 * (rgba[2] ?? 0);
+  const readings = reading.spots.map((one) => luminance(one ?? []));
+  const past = readings[0] ?? 0;
+  const under = readings.slice(1);
+  const gap = Math.max(...under.map((one) => Math.abs(one - past)));
+  // Disc's veil lifts luminance well over bare backdrop's 19; chord cut left every spot under
+  //   camera at backdrop.
+  report(
+    "the plane's disc reaches under a camera standing inside it",
+    gap <= 3,
+    `disc past Sol reads ${past.toFixed(1)}, under camera ` +
+      `${under.map((one) => one.toFixed(1)).join(', ')}; bare backdrop reads 19`,
+  );
+  await page.evaluate((given) => {
+    nimSetCameraPivot(given.pivot[0] ?? 0, given.pivot[1] ?? 0, given.pivot[2] ?? 0);
+    nimSetCameraDistance(given.distance);
+    nimSetCameraAzimuth(given.azimuth);
+    nimSetCameraElevation(given.elevation);
+  }, before);
+  await settleCamera(page);
+}
+
 /** Drive six wheel notches at centre and off centre, and assert what each keeps.
  *
  *  Far clip used to sit at fixed multiple of orbit distance whatever scene held, so notches in
