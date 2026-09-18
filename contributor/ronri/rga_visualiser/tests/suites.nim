@@ -7417,7 +7417,7 @@ suite "Marker":
         for side in 0 .. 1:
           for i in 0 ..< bands.get.counts_band[side]:
             check bands.get.points_band[side][i].x >=
-              at.x - 0.5 - TOLERANCE_TEST
+              at.x - PIXELS_TIE_LEFTMOST - TOLERANCE_TEST
         if at_before.isSome:
           check hypot(at.x - at_before.get.x, at.y - at_before.get.y) < 40.0
         at_before = some(at)
@@ -7526,11 +7526,11 @@ suite "Marker":
     for side in 0 .. 1:
       for i in 0 ..< bands.counts_band[side]:
         check bands.points_band[side][i].x >=
-          bands.label_at.x - 0.5 - TOLERANCE_TEST
+          bands.label_at.x - PIXELS_TIE_LEFTMOST - TOLERANCE_TEST
     let frame = markerOf(PLANE_HORIZON).get
     check frame.kind == MarkerKind.Frame and frame.has_label and frame.is_label_beside
     check frame.label_at.x =~ GAP_MARKER
-    check frame.label_at.y =~ float(HEIGHT_MARK) - 40.0 - 0.5*HEIGHT_MARKER_LABEL
+    check frame.label_at.y =~ float(HEIGHT_MARK) - MARGIN_LABEL_FOOT - 0.5*HEIGHT_MARKER_LABEL
     check frame.label_away_x =~ 1.0 and frame.label_away_y =~ 0.0
 
 
