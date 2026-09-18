@@ -74,6 +74,14 @@ const
   MARGIN_LABEL_EDGE* = 4.0
     ## Keep label's whole box this far inside view's edge, in pixels; see `labelInView`.
     ##   Room for halo's stroke, `WIDTH_MARKER_LABEL_HALO`, and one pixel of air.
+  GAP_LABEL_APART* = 2.0
+    ## Keep two selected labels' boxes this far apart, in pixels, once settled; see
+    ##   `settleLabels`. Halo's stroke each side and nothing more: labels stacked up column
+    ##   read as list, and wider gap read as two objects.
+  PASSES_LABEL_SETTLE* = 4
+    ## Settle labels this many rounds at most; see `settleLabels`.
+    ##   Clearing one box can land on another, and holding box in view can land it back;
+    ##   four rounds settle six labels on one spot, and round moving nothing ends early.
   MARGIN_LABEL_FOOT* = 40.0
     ## Stand frame's label's box this far above view's bottom edge, in pixels.
     ##   Page's scale bar sits in that corner, 14 in from edge and 19 tall, so its top is 33
@@ -269,6 +277,9 @@ type
       ## Line's own left, from its direction as projected: side fixed by geometry, not by
       ## screen, which is what makes it continuous through every turn; see
       ## `placeLabelBesideLine`. Frame: screen's right, off its left edge.
+    label_slide_x*, label_slide_y*: float ## Unit axis label slides along to clear another.
+      ## Its own freedom: up ring's or loop's column, along rails' line, up bands' edge,
+      ## along frame's foot. Read by `settleLabels`, through `LabelBox`.
     pulses*: array[
       RUNS_MARKER_PULSE, array[POINTS_MARKER_PULSE, ScreenPosition]
     ] ## Short runs travelling along marker's outline, in screen space.
@@ -626,7 +637,9 @@ func clearanceTouch*(swell: float, is_touch: bool): float =
 
 func placeLabelAbove(marker: var Marker, x, top: float) =
   ## Place name label centred `GAP_MARKER` and half its height above outline's top at `x`.
+  ##   Slides up its column to clear another label; see `settleLabels`.
   marker.has_label = true
+  (marker.label_slide_x, marker.label_slide_y) = (0.0, -1.0)
   marker.label_at = ScreenPosition(
     x: x, y: top - GAP_MARKER - 0.5*HEIGHT_MARKER_LABEL, depth: 1.0
   )
@@ -656,6 +669,72 @@ func labelInView*(x, y, half_width, width, height: float): (float, float) =
     held_x = if lo_x > hi_x: 0.5*width else: clamp(x, lo_x, hi_x)
     held_y = if lo_y > hi_y: 0.5*height else: clamp(y, lo_y, hi_y)
   (held_x, held_y)
+
+
+type LabelBox* = object ## Describe one selected label's box on screen, and axis it may slide along.
+  x*, y*: float ## Centre, in pixels.
+  half_width*, half_height*: float ## Front-end's measured text box, half each way.
+    ## Height measured too, unlike `labelInView`'s nominal one: page's box stands 22 px
+    ## tall on 16 px face, and boxes stacked at nominal pitch overlapped by 4 px.
+    ## Desktop, measuring no height, passes half `HEIGHT_MARKER_LABEL`.
+  slide_x*, slide_y*: float ## Unit axis box slides along; see `Marker.label_slide_x`.
+
+
+func overlapsLabel(a, b: LabelBox): bool =
+  ## Say whether two boxes stand nearer than `GAP_LABEL_APART` on both axes.
+  abs(a.x - b.x) < a.half_width + b.half_width + GAP_LABEL_APART and
+    abs(a.y - b.y) < a.half_height + b.half_height + GAP_LABEL_APART
+
+
+func shiftsClearing(mover, fixed: LabelBox): (float, float) =
+  ## Measure least shifts along `mover`'s axis, forward and back, that part it from `fixed`.
+  ##   Parting on either screen axis parts boxes, so each axis gives two candidates, one
+  ##   past each side of `fixed`; least forward and least back are reported, `Inf` where
+  ##   axis reaches no side. Hair past touching, so parted boxes do not read as overlapping.
+  let
+    reach_x = mover.half_width + fixed.half_width + GAP_LABEL_APART + 1.0e-6
+    reach_y = mover.half_height + fixed.half_height + GAP_LABEL_APART + 1.0e-6
+  var (forward, back) = (Inf, -Inf)
+  template consider(t: float) =
+    if t >= 0.0 and t < forward: forward = t
+    if t < 0.0 and t > back: back = t
+  if abs(mover.slide_x) > 1.0e-9:
+    consider((fixed.x + reach_x - mover.x)/mover.slide_x)
+    consider((fixed.x - reach_x - mover.x)/mover.slide_x)
+  if abs(mover.slide_y) > 1.0e-9:
+    consider((fixed.y + reach_y - mover.y)/mover.slide_y)
+    consider((fixed.y - reach_y - mover.y)/mover.slide_y)
+  (forward, back)
+
+
+func settleLabels*(boxes: var openArray[LabelBox], width, height: float) =
+  ## Slide each label along its own axis by least that parts it from every label before it.
+  ##   Order is selection order, so earliest selection stays put and later ones yield.
+  ##   Nearer of forward and back is tried first, forward on tie; box is then held in
+  ##   view by `labelInView`, and one held back into overlap takes other sense instead.
+  ##   `PASSES_LABEL_SETTLE` rounds, ending early once round moves nothing.
+  ##   Rule lives here once, and each front-end brings its own measured widths, as with
+  ##   `labelInView`. Not placement alone, which stacked six labels into one heap where
+  ##   inner planets align.
+  for pass in 0 ..< PASSES_LABEL_SETTLE:
+    var moved = false
+    for i in 1 ..< boxes.len:
+      for j in 0 ..< i:
+        if not overlapsLabel(boxes[i], boxes[j]): continue
+        let (forward, back) = shiftsClearing(boxes[i], boxes[j])
+        var senses: array[2, float]
+        if forward <= -back: senses = [forward, back] else: senses = [back, forward]
+        let before = boxes[i]
+        for t in senses:
+          if t == Inf or t == -Inf: continue
+          boxes[i] = before
+          boxes[i].x += t*boxes[i].slide_x
+          boxes[i].y += t*boxes[i].slide_y
+          let held = labelInView(boxes[i].x, boxes[i].y, boxes[i].half_width, width, height)
+          (boxes[i].x, boxes[i].y) = held
+          moved = true
+          if not overlapsLabel(boxes[i], boxes[j]): break
+    if not moved: break
 
 
 func clipToView(tail, head: ScreenPosition; width, height: int): Option[(float, float)] =
@@ -732,6 +811,7 @@ func placeLabelBesideLine(
   marker.is_label_beside = true
   marker.label_at = ScreenPosition(x: a.x + f*dx, y: a.y + f*dy, depth: 1.0)
   (marker.label_away_x, marker.label_away_y) = (dy/length, -dx/length)
+  (marker.label_slide_x, marker.label_slide_y) = (dx/length, dy/length)
 
 
 func placeLabelAboveTopmost(
@@ -1413,6 +1493,7 @@ func markerFrame(width, height: int; progress, clearance: float; marker: var Mar
   marker.has_label = true
   marker.is_label_beside = true
   (marker.label_away_x, marker.label_away_y) = (1.0, 0.0)
+  (marker.label_slide_x, marker.label_slide_y) = (1.0, 0.0)
   marker.label_at = ScreenPosition(
     x: inset, y: float(height) - MARGIN_LABEL_FOOT - 0.5*HEIGHT_MARKER_LABEL, depth: 1.0,
   )

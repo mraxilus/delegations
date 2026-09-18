@@ -630,6 +630,11 @@ proc drawSelectionMarker(
   ##   Unconditional, unlike hover/drag: storyboard step uses this marker to show what it
   ##   built, with interaction disabled.
   let tint = Ink.Outline.colour
+  # Labels are staged and drawn after every marker, slid apart by `settleLabels` with
+  #   widths measured here; see `marker.LabelBox`.
+  var
+    boxes: seq[LabelBox]
+    texts: seq[(Rgba, Rgba, cstring)]
   for position in 0 ..< selection.len:
     let handle = selection.at(position)
     if not (scene.isAlive(handle) and scene[handle].isVisible): continue
@@ -659,12 +664,20 @@ proc drawSelectionMarker(
         at.x += clearance*marker.label_away_x
         at.y += clearance*marker.label_away_y
       let held = labelInView(at.x, at.y, half_width, float(width), float(height))
-      gui.overlayLabel(
-        cfloat(held[0]), cfloat(held[1]),
-        fill.red, fill.green, fill.blue, halo.red, halo.green, halo.blue,
-        ALPHA_MARKER_LABEL_HALO, toCstring(one.label),
-      )
+      boxes.add(LabelBox(
+        x: held[0], y: held[1], half_width: half_width, half_height: 0.5*HEIGHT_MARKER_LABEL,
+        slide_x: marker.label_slide_x, slide_y: marker.label_slide_y,
+      ))
+      texts.add((fill, halo, toCstring(one.label)))
     result.inc
+  settleLabels(boxes, float(width), float(height))
+  for i in 0 ..< boxes.len:
+    let (fill, halo, text) = texts[i]
+    gui.overlayLabel(
+      cfloat(boxes[i].x), cfloat(boxes[i].y),
+      fill.red, fill.green, fill.blue, halo.red, halo.green, halo.blue,
+      ALPHA_MARKER_LABEL_HALO, text,
+    )
 
 
 const

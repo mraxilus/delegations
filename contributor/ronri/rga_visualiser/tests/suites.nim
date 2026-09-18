@@ -7428,8 +7428,12 @@ suite "Marker":
     # Rule lives once in marker.nim and both front-ends bring their own measured widths.
     #   Later selection yields to earlier: point's label climbs its column, line's slides
     #   along its line, each by least that clears, nearer sense first, and stays in view.
+    let (WIDTH_PAGE, HEIGHT_PAGE) = (393.0, 560.0) ## Phone-width view every case is held in.
     proc box(x, y, half_width, slide_x, slide_y: float): LabelBox =
-      LabelBox(x: x, y: y, half_width: half_width, slide_x: slide_x, slide_y: slide_y)
+      LabelBox(
+        x: x, y: y, half_width: half_width, half_height: 0.5*HEIGHT_MARKER_LABEL,
+        slide_x: slide_x, slide_y: slide_y,
+      )
     let lift = HEIGHT_MARKER_LABEL + GAP_LABEL_APART
     # Two point labels on one spot: second climbs exactly one box and gap, first stays.
     var pair = [box(300.0, 200.0, 30.0, 0.0, -1.0), box(300.0, 200.0, 30.0, 0.0, -1.0)]
@@ -7459,11 +7463,14 @@ suite "Marker":
     settleLabels(edge, WIDTH_PAGE, HEIGHT_PAGE)
     check abs(edge[1].y - (top + lift)) < 1.0e-3
     # Settled set has no overlapping pair, whatever route it took.
-    for boxes in [pair, beside, three, edge]:
+    proc standApart(boxes: openArray[LabelBox]): bool =
+      result = true
       for i in 0 ..< boxes.len:
         for j in 0 ..< i:
-          check abs(boxes[i].x - boxes[j].x) >= boxes[i].half_width + boxes[j].half_width or
-            abs(boxes[i].y - boxes[j].y) >= HEIGHT_MARKER_LABEL
+          if abs(boxes[i].x - boxes[j].x) < boxes[i].half_width + boxes[j].half_width and
+              abs(boxes[i].y - boxes[j].y) < HEIGHT_MARKER_LABEL:
+            result = false
+    check standApart(pair) and standApart(beside) and standApart(three) and standApart(edge)
 
 
   test "a line's label stays in view when its support leaves it":

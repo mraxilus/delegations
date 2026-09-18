@@ -145,7 +145,8 @@ function appendMarkerPulse(
 //   Line's label comes as anchor on line plus direction to push it: text is measured
 //   here, where its face is, and pushed by `nimLabelClearance` so its own box clears
 //   line at any angle; see `marker.Marker.is_label_beside`. Every label is then held
-//   wholly inside canvas by `nimLabelInView`, with same measured text.
+//   wholly inside canvas by `nimLabelInView`, with same measured text, and staged in
+//   `labels_staged` for `settleLabels` to slide apart once every selected label is in.
 function appendLabel(handle: number) {
   const width = canvas.clientWidth, height = canvas.clientHeight;
   const at = nimSelectionLabelAt(handle, width, height);
@@ -167,6 +168,46 @@ function appendLabel(handle: number) {
   const held = nimLabelInView(x, y, half, width, height);
   element.setAttribute('x', String(flatAt(held, 0)));
   element.setAttribute('y', String(flatAt(held, 1)));
+  labels_staged.push({
+    element, x: flatAt(held, 0), y: flatAt(held, 1), half,
+    // Height measured as well: box stands taller than face size, and settling at nominal
+    //   height left stacked names 4 px into each other.
+    half_height: (element as SVGTextElement).getBBox().height / 2,
+    slide_x: flatAt(at, 6), slide_y: flatAt(at, 7),
+  });
+}
+
+/** One label staged this refresh: its element, where it stands, and how it may slide. */
+interface LabelStaged {
+  element: SVGElement;
+  x: number;
+  y: number;
+  half: number;
+  half_height: number;
+  slide_x: number;
+  slide_y: number;
+}
+
+// Every label staged this refresh, in selection order, for settling apart at its end.
+const labels_staged: LabelStaged[] = [];
+
+// Slide staged labels apart along their own axes, and clear stage.
+//   Rule is marker.nim's (`settleLabels`), reached through `nimLabelsSettled` with widths
+//   measured here; one label alone has nothing to clear and skips call.
+function settleLabels(width: number, height: number) {
+  if (labels_staged.length > 1) {
+    const settled = nimLabelsSettled(
+      labels_staged.map((one) => one.x), labels_staged.map((one) => one.y),
+      labels_staged.map((one) => one.half), labels_staged.map((one) => one.half_height),
+      labels_staged.map((one) => one.slide_x), labels_staged.map((one) => one.slide_y),
+      width, height,
+    );
+    labels_staged.forEach((one, index) => {
+      one.element.setAttribute('x', String(settled[2*index] ?? one.x));
+      one.element.setAttribute('y', String(settled[2*index + 1] ?? one.y));
+    });
+  }
+  labels_staged.length = 0;
 }
 
 function appendMarker(
@@ -282,6 +323,7 @@ function refreshOverlay(cursor: PointLocal | null) {
     // Name rides up with swollen marker, once hold has selected it.
     if (handles_selection.includes(handle_hold)) appendLabel(handle_hold);
   }
+  settleLabels(w, h);
 
   // Hover and keyboard focus wear same marker at same weight:
   //   reader driving by key sees exactly what reader driving by pointer sees, and focus indicator

@@ -119,6 +119,19 @@ template fill3(flat: var FlatFloats, a, b, c: float32): FlatBuffer =
   flat.used = 3
   flat.view
 
+template fill8(flat: var FlatFloats, a, b, c, d, e, f, g, h: float32): FlatBuffer =
+  ## Replace contents with eight floats, and report them as view.
+  flat[0] = a
+  flat[1] = b
+  flat[2] = c
+  flat[3] = d
+  flat[4] = e
+  flat[5] = f
+  flat[6] = g
+  flat[7] = h
+  flat.used = 8
+  flat.view
+
 template fill6(flat: var FlatFloats, a, b, c, d, e, f: float32): FlatBuffer =
   ## Replace contents with six floats, and report them as view.
   flat[0] = a
@@ -308,7 +321,7 @@ var
   FLAT_GRID = initFlatFloats(2)
   FLAT_PIVOT = initFlatFloats(3)
   FLAT_EYE = initFlatFloats(3)
-  FLAT_LABEL = initFlatFloats(6)
+  FLAT_LABEL = initFlatFloats(8)
   FLAT_LABEL_HELD = initFlatFloats(2)
   FLAT_ANCHOR_WORLD = initFlatFloats(3)
   FLAT_MENU = initFlatFloats(3*(ord(DragChoice.high) + 1))
@@ -1905,7 +1918,7 @@ proc nimTickPulse(now: cfloat) {.exportc.} =
 
 proc nimSelectionLabelAt(handle, width, height: cint): FlatBuffer {.exportc.} =
   ## Report where this object's name label goes, over `FLAT_LABEL`.
-  ##   Six floats: `[x, y, is_shown, is_beside, away_x, away_y]`.
+  ##   Eight floats: `[x, y, is_shown, is_beside, away_x, away_y, slide_x, slide_y]`.
   ##   Place is marker's own (`marker.Marker.label_at`), so label sits above outline
   ##   actually drawn, swollen or not. Reads marker `nimSelectionMarker` just shaped for
   ##   this handle wherever it stands in `MARKER_SHAPED`, and shapes plain one otherwise.
@@ -1914,7 +1927,7 @@ proc nimSelectionLabelAt(handle, width, height: cint): FlatBuffer {.exportc.} =
   ##   `away` by `nimLabelClearance`, measured with its own text; see
   ##   `marker.Marker.is_label_beside`.
   if not SCENE.isAlive(int(handle)):
-    return FLAT_LABEL.fill6(0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32)
+    return FLAT_LABEL.fill8(0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32)
   ensureViewOverlay(int(width), int(height))
   let at = int(handle) ## Handle as scene indexes it, read once for every reader below.
   var held = (ref Marker)(nil)
@@ -1932,11 +1945,11 @@ proc nimSelectionLabelAt(handle, width, height: cint): FlatBuffer {.exportc.} =
     ): return FLAT_LABEL.fill6(0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32)
   template marker: Marker = held[]
   if not marker.has_label:
-    return FLAT_LABEL.fill6(0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32)
-  FLAT_LABEL.fill6(
+    return FLAT_LABEL.fill8(0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32, 0.0'f32)
+  FLAT_LABEL.fill8(
     float32(marker.label_at.x), float32(marker.label_at.y), 1.0'f32,
     float32(ord(marker.is_label_beside)), float32(marker.label_away_x),
-    float32(marker.label_away_y),
+    float32(marker.label_away_y), float32(marker.label_slide_x), float32(marker.label_slide_y),
   )
 
 
@@ -1944,6 +1957,26 @@ proc nimLabelClearance(away_x, away_y, half_width: cfloat): cfloat {.exportc.} =
   ## Report how far label centre stands off line along `away`; see `marker.clearanceBeside`.
   ##   `half_width` is glue's measured text, half.
   cfloat(clearanceBeside(float(away_x), float(away_y), float(half_width)))
+
+
+proc nimLabelsSettled(
+  xs, ys, half_widths, half_heights, slide_xs, slide_ys: seq[float], width, height: cfloat
+): seq[float32] {.exportc.} =
+  ## Report where selected labels stand once slid apart, `[x, y]` per label in given order.
+  ##   Inputs are each label's centre after its push and hold, its measured half width and
+  ##   half height, and its slide axis, in selection order; see `marker.settleLabels`.
+  ##   Fresh sequence per call: handful of floats, once per overlay refresh.
+  var boxes = newSeq[LabelBox](xs.len)
+  for i in 0 ..< xs.len:
+    boxes[i] = LabelBox(
+      x: xs[i], y: ys[i], half_width: half_widths[i], half_height: half_heights[i],
+      slide_x: slide_xs[i], slide_y: slide_ys[i],
+    )
+  settleLabels(boxes, float(width), float(height))
+  result = newSeq[float32](2*xs.len)
+  for i in 0 ..< xs.len:
+    result[2*i] = float32(boxes[i].x)
+    result[2*i + 1] = float32(boxes[i].y)
 
 
 proc nimLabelInView(x, y, half_width, width, height: cfloat): FlatBuffer {.exportc.} =
