@@ -706,20 +706,9 @@
   }
 
   /* ---- Sections (collapsing headers, matching panel.nim's own structure) ---- */
-  /* `relative` for sentinel below, and for nothing else: no `z-index`, so section starts no
-     stacking context and heading's own `z-index: 1` goes on winning over rows. */
-  .section { position: relative; border-bottom: 1px solid var(--border); padding: 10px 0; }
-  /* One pixel marking where heading's own top edge lands, since heading's negative top margin
-     pulls it to section's edge. Watched by `drawer.ts`: when this leaves scrollport upward,
-     heading is pinned, and band it wears is drawn only then.
-     Observer rather than scroll handler, for reason `sizes.ts` gives at length -- read after
-     write lays whole document out inside frame. */
-  .section-edge {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    pointer-events: none;
-  }
+  /* No `z-index`, so section starts no stacking context and heading's own `z-index: 1` goes
+     on winning over rows. */
+  .section { border-bottom: 1px solid var(--border); padding: 10px 0; }
   .section:last-child { border-bottom: none; }
   .section-header {
     appearance: none;
@@ -741,31 +730,31 @@
        down -- one clearance twice -- with gap above it. Clearance is why that padding is
        on `.drawer` instead: heading pinned at `0` cannot cover padding of scroller it is
        pinned inside, and rows rode up through that band in plain sight.
-       Solid rather than transparent *while pinned*: rows pass under this band, and
-       transparent one would let them draw through it. Desktop's own header is filled bar, so
-       two front-ends read same way (`panel.layoutObjects`).
-       At rest it carries no fill at all. Band that is always on is slab on every section,
-       announcing covering it is not doing; `.stuck` is put on by `drawer.ts` exactly while
-       rows are passing under, and wears drawer's own ground so that arrival is not itself
-       something to look at -- see `.stuck` below.
-       Pinned, it wears pill rest of page's floating controls wear -- same radius, same 1px
-       `--border` -- so heading that has lifted off list reads as same kind of thing as brand
-       and toggle chips do. Box is one `.object-row.selected` already uses, `0 -10px`, so it
-       bleeds 10px into each gutter: rows span content box, so pill at that width covers them
-       outright, and its 10px padding still lands text on column rows below start on.
-       Border is here rather than on `.stuck`, transparent, because border arriving on pin
-       would widen box by 2px and shove text sideways -- `.toggles button` holds transparent
-       one for same reason. Only its colour moves. */
+       Solid, at rest and pinned alike: rows pass under this band, and transparent one would
+       let them draw through it. Desktop's own header is filled bar throughout, so two
+       front-ends read same way (`panel.layoutObjects`).
+       Wears pill rest of page's floating controls wear -- same radius, same 1px `--border`
+       -- so heading reads as same kind of thing as brand and toggle chips do, still or
+       scrolling. Not band only while pinned, which changed heading's look between list at
+       rest and list moving.
+       Box is one `.object-row.selected` already uses, `0 -10px`, so it bleeds 10px into
+       each gutter: rows span content box, so pill at that width covers them outright, and
+       its 10px padding still lands text on column rows below start on.
+       Fill is drawer's own ground, arrived at same way drawer arrives at it, rather than tone
+       picked to sit near it: `--surface` over `--bg` at 82% is exactly what `.drawer`
+       paints, and `--bg` is written by `gl.ts` from clear colour, so this tracks scene rather
+       than guessing at it. Opaque, although pills it borrows shape from are `--surface` over
+       blur: rows pass under this one, and heading asked to hide them cannot be seen through.
+       No shadow, which read as *floating* in way nothing else on page did. */
     position: sticky;
     top: 0;
     z-index: 1;
     margin: -10px -10px 0 -10px;
     padding: 10px 10px;
-    background: transparent;
-    border: 1px solid transparent;
+    background: color-mix(in srgb, rgb(22 27 34) 82%, var(--bg));
+    border: 1px solid var(--border);
     border-radius: 999px;
     color: var(--ink);
-    transition: background var(--anim) var(--ease), border-color var(--anim) var(--ease);
     /* Title role: heading naming section takes serif face, which is only role it is
        drawn in (see type roles above). Weight stays 600, and serif ships at 600 for it:
        serif at 13px against dark ground thins, and heading has to hold its row. */
@@ -774,24 +763,6 @@
     font-weight: 600;
     letter-spacing: 0.02em;
     cursor: pointer;
-  }
-  /* Fill is drawer's own ground, arrived at same way drawer arrives at it, rather than tone
-     picked to sit near it. `--surface` over `--bg` at 82% is exactly what `.drawer` paints, and
-     `--bg` is written by `gl.ts` from clear colour, so this tracks scene rather than guessing at
-     it. Named `--surface-solid` sits only ~1.4/255 off that composite at present clear colour,
-     so it was not what made pinning show -- shadow below was -- but it is fixed tone, and gap
-     opens as clear colour moves, so deriving fill keeps match at colours page has not seen.
-     What it cannot match, and no opaque fill can: drawer also blurs what is behind it, so where
-     star or grid line sits under drawer its ground picks up that smear. Over open scene, which
-     is most of drawer's own width, blur is no-op and match is exact.
-     No shadow. Shadow is what made pinning read as *floating* in way nothing else on page did;
-     row passing under simply clips at pill's edge, as it does under any solid heading.
-     Opaque, although pills it borrows shape from are `--surface` over blur: rows pass under
-     this one, and heading asked to hide them cannot be seen through. Shape is what is shared;
-     fill stays what covering costs. */
-  .section-header.stuck {
-    background: color-mix(in srgb, rgb(22 27 34) 82%, var(--bg));
-    border-color: var(--border);
   }
   /* Solid triangle, not U+25B8's small one: at sizes these rows are read at
      small glyph is speck that reads as punctuation rather than as control. Shared with
@@ -1289,7 +1260,6 @@
   <div class="drawer-scroll">
     <!-- Apply -->
     <div class="section" data-section="apply">
-      <div class="section-edge"></div>
       <button
         class="section-header"
         type="button"
@@ -1322,7 +1292,6 @@
 
     <!-- Diagnostics -->
     <div class="section" data-section="diagnostics">
-      <div class="section-edge"></div>
       <button
         class="section-header"
         type="button"
@@ -1544,7 +1513,6 @@
 
     <!-- Objects -->
     <div class="section open" data-section="objects">
-      <div class="section-edge"></div>
       <button class="section-header" type="button"
         ><span class="chev">&#9654;</span><span>@WORD:NameHeadObjects@</span><span
           class="objects-count" id="objects-count">&mdash;</span></button>
@@ -1555,7 +1523,6 @@
 
     <!-- View -->
     <div class="section" data-section="view">
-      <div class="section-edge"></div>
       <button
         class="section-header"
         type="button"

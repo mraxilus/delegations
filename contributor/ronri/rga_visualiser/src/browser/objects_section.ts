@@ -163,6 +163,8 @@ const spacer_bottom = document.createElement('div');
 spacer_top.className = 'object-spacer';
 spacer_bottom.className = 'object-spacer';
 list_objects.append(spacer_top, spacer_bottom);
+// Drawer's one scroller, which window below is measured against.
+const scroller = document.querySelector('.drawer-scroll');
 // Set by scroll and resize, cleared by render, read by frame loop.
 let is_window_stale = false;
 if (scroller !== null) {
