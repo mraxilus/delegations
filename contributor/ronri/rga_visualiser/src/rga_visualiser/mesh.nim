@@ -456,6 +456,7 @@ type
     depth_near*: float ## Camera's near clip distance, depth is clamped at.
       ## Nothing nearer is drawn, and without clamp segment past eye reads negative depth
       ## and turns ribbon inside out.
+    depth_log*: float ## Scale depth's logarithm maps by; see `camera.depthOf`.
 
 
 

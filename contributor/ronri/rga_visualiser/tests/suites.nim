@@ -336,12 +336,12 @@ suite "Camera":
     camera.reach_scene = 3000.0
     let eye = camera.eye
     check camera.distanceFar >= norm(eye - Position(x: 0, y: 0, z: 0)) + 3000.0
-    # Near rises with far, holding ratio, and never past half orbit distance.
-    check camera.distanceFar/camera.distanceNear <= RATIO_CLIP_MAX*(1.0 + 1.0e-9)
-    check camera.distanceNear <= 0.5*camera.distance
+    # Near stays scaled whatever far reaches: depth is logarithmic, so ratio costs nothing.
+    check camera.distanceNear =~ camera.distance*FACTOR_CLIP_NEAR
     var close = initCamera(Position(x: 0, y: 0, z: 0), 0.05, 0.0, 0.0)
     close.reach_scene = 3000.0
-    check close.distanceNear <= 0.5*close.distance
+    check close.distanceNear =~ close.distance*FACTOR_CLIP_NEAR
+    check close.distanceFar/close.distanceNear > 1.0e6
     # Reach is measured from what scene holds, point's own radius included.
     var scene = initScene()
     scene.addObject(toMultivector(Position(x: 300, y: 0, z: 0)), "p", Ink.Rose, radius = 2.5)
@@ -531,6 +531,38 @@ suite "Camera":
     # Scale together, so frustum keeps its shape and depth buffer its precision.
     #   Precision is function of far-to-near ratio, however far camera stands.
     check camera.distanceFar/camera.distanceNear =~ far_opened/near_opened
+
+
+  test "depth is logarithmic, so a moon before its planet and the sky behind a star stay apart":
+    # Linear depth spent nearly all of buffer inside first few orbit distances, and with.
+    #   far at star field's reach whole field and sky fell into its last steps: on device
+    #   with coarse depth every star past few hundred thousand units failed test and
+    #   vanished from beside far star. Pinned against sixteen-bit step, coarsest buffer
+    #   WebGL may hand out, at demo's own camera and at moon's.
+    const STEP_SIXTEEN_BIT = 2.0/65535.0
+    var camera = initCamera(pivot = ORIGIN, distance = 122.0, azimuth = 1.0, elevation = 0.95)
+    camera.reach_scene = 6.5e6
+    check camera.depthOf(camera.distanceNear) =~ -1.0
+    check camera.depthOf(camera.distanceFar) =~ 1.0
+    # Star at million units stands clear of sky dome at nine tenths of far, and of star.
+    #   at fifth of its distance.
+    check camera.depthOf(0.9*camera.distanceFar) - camera.depthOf(1.0e6) > STEP_SIXTEEN_BIT
+    check camera.depthOf(1.0e6) - camera.depthOf(2.0e5) > STEP_SIXTEEN_BIT
+    # Io before Jupiter, from where occlusion check stands: three spans out, moon one in.
+    var near = initCamera(pivot = ORIGIN, distance = 0.0085, azimuth = 1.0, elevation = 0.3)
+    near.reach_scene = 6.5e6
+    check near.depthOf(0.0085) - near.depthOf(0.0085 - 0.0028) > STEP_SIXTEEN_BIT
+    # Monotone across every decade scene spans, and clipping planes still clip.
+    var last = -2.0
+    for exponent in -8 .. 6:
+      let depth = pow(10.0, float(exponent))
+      if depth <= camera.distanceNear or depth >= camera.distanceFar: continue
+      let z = camera.depthOf(depth)
+      check z > last and z > -1.0 and z < 1.0
+      last = z
+    check camera.depthOf(0.5*camera.distanceNear) < -1.0
+    check camera.depthOf(2.0*camera.distanceFar) > 1.0
+    check camera.depthLogScale =~ 2.0/log2(camera.distanceFar/camera.distanceNear)
 
 
   test "an orbit distance has a floor and no ceiling":

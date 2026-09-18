@@ -81,17 +81,10 @@ const
     ##   solve how far back eye must stand (`distanceFitting`), and `picking` imports this.
   FACTOR_CLIP_NEAR* = 1.0/400.0
     ## Set near clip plane this fraction of orbit distance out.
-    ##   Scaled beside `FACTOR_CLIP_FAR` so frustum stays same shape at every distance,
-    ##   holding depth-buffer precision, function of far-to-near ratio, constant.
-  RATIO_CLIP_MAX* = 100_000.0
-    ## Bound far-to-near ratio, by raising near where far plane reaches scene.
-    ##   Far plane at scene's reach over orbit of 0.7 units put ratio at 1.8 million:
-    ##   24-bit depth then resolves 3 units at depth 300 and 34 at 1,000, and stars
-    ##   quantised behind translucent discs and dome striped and faded on device. At
-    ##   this bound depth 300 resolves to 0.17 units.
-  FRACTION_NEAR_OF_ORBIT* = 0.5
-    ## Bound how far out ratio may push near plane, as fraction of orbit distance.
-    ##   Pivot itself must never clip, whatever scene's reach asks.
+    ##   Scaled beside `FACTOR_CLIP_FAR` so frustum stays same shape at every distance.
+    ##   Never raised: depth is logarithmic (`depthOf`), so far plane reaching scene
+    ##   millions of units out costs near end nothing, where linear depth had near raised
+    ##   to half orbit distance to hold ratio and still lost far field on device.
 
 const
   ## Fix rates held key moves camera at, per second of holding.
@@ -236,9 +229,7 @@ func distanceFar*(camera: Camera): float =
   ## Read farthest depth clip volume keeps; see `distanceNear` for why derived.
   ##   Twenty orbit distances, or eye's distance to origin plus scene's reach where that
   ##   is farther, so no zoom clips scene away; see `FACTOR_CLIP_FAR`.
-  ##   Near stays scaled, so ratio rises at close zoom over wide scene: three thousand
-  ##   units over orbit of twelve is ratio of hundred thousand, inside 24-bit depth for
-  ##   points and lines.
+  ##   Ratio to near is unbounded; `depthOf` is what makes that affordable.
   let eye = camera.eye
   let away = sqrt(eye.x*eye.x + eye.y*eye.y + eye.z*eye.z)
   max(camera.distance*FACTOR_CLIP_FAR, away + camera.reach_scene*MARGIN_REACH_FAR)
@@ -247,11 +238,30 @@ func distanceFar*(camera: Camera): float =
 func distanceNear*(camera: Camera): float =
   ## Read nearest depth clip volume keeps.
   ##   Derived from orbit distance rather than stored, so it cannot go stale through dolly.
-  ##   One four-hundredth of orbit distance, raised where far plane reaching scene would
-  ##   put far-to-near ratio past `RATIO_CLIP_MAX`, and never past half orbit distance.
-  let near_scaled = camera.distance*FACTOR_CLIP_NEAR
-  let near_bounded = min(camera.distanceFar/RATIO_CLIP_MAX, camera.distance*FRACTION_NEAR_OF_ORBIT)
-  max(near_scaled, near_bounded)
+  ##   One four-hundredth of orbit distance; see `FACTOR_CLIP_NEAR`.
+  camera.distance*FACTOR_CLIP_NEAR
+
+
+func depthLogScale*(camera: Camera): float =
+  ## Read scale depth's logarithm is mapped by this frame; see `depthOf`.
+  2.0/log2(camera.distanceFar/camera.distanceNear)
+
+
+func depthOf*(camera: Camera, depth: float): float =
+  ## Map view depth to clip depth, in -1 .. 1, as every shader does.
+  ##   Logarithmic: `log2(depth/near)` over `log2(far/near)`, so buffer's steps are spread
+  ##   evenly over decades and resolution is fixed fraction of distance at every distance.
+  ##     Linear depth spends nearly all of its steps inside first few orbit distances:
+  ##     with far at scene's reach millions of units out, whole star field and sky dome
+  ##     fell into buffer's last steps, and on device with coarse depth every object past
+  ##     few hundred thousand units failed test and vanished, while sixteen-bit buffer
+  ##     could not hold moon before its planet at same time.
+  ##   Reference of every vertex and fragment shader on both front-ends: each writes
+  ##   this of its own view depth, per fragment where `EXT_frag_depth` or GL 3.3 lets
+  ##   it, per vertex where not. Suite pins this against sixteen-bit step for moon before
+  ##   planet, star before sky, and monotone across every decade scene spans.
+  ##   Below near maps under -1 and past far over 1, so both planes still clip.
+  log2(depth/camera.distanceNear)*camera.depthLogScale - 1.0
 
 
 func eye*(camera: Camera): Position =
@@ -478,6 +488,7 @@ func drawExtentFor*(camera: Camera, height_pixels: int): DrawExtent =
       tangent_half_view: tan(0.5*degToRad(camera.degrees_field_of_view)),
       height_pixels: height_pixels,
       depth_near: camera.distanceNear,
+      depth_log: camera.depthLogScale,
     ),
   ))
 

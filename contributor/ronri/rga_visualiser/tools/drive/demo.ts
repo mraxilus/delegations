@@ -250,6 +250,61 @@ export async function driveOccluded(page: Page): Promise<void> {
   await settleCamera(page);
 }
 
+/** Drive camera to far star, and assert sky dome is drawn behind it.
+ *
+ *  Dome stands at nine tenths of far plane, which reaches whole star field; linear depth put
+ *  it and every far star in buffer's last steps, and coarse buffer dropped them all from
+ *  beside far star. Read as tint of background pixels clear of any dot: page's darkest
+ *  surface is what canvas shows where nothing draws.
+ */
+export async function driveFarSky(page: Page): Promise<void> {
+  // Whole camera put back after, as occlusion check does: zoom check following reads its
+  //   bound off wherever camera stands.
+  const before = await page.evaluate(() => ({
+    pivot: Array.from(nimCameraPivot()), distance: nimCameraDistance(),
+    azimuth: nimCameraAzimuth(), elevation: nimCameraElevation(),
+  }));
+  const far = await page.evaluate(() => {
+    const star = nimSceneHandles().find((one) => nimObjectLabel(one) === 'NAME Proxima Centauri');
+    if (star === undefined) return null;
+    nimSelectClear();
+    nimSelectToggle(star);
+    return star;
+  });
+  if (far === null) {
+    report('the sky is drawn behind a far star', false, 'no Proxima in the loaded demo');
+    return;
+  }
+  await settleCamera(page);
+  await page.waitForTimeout(400);
+  const stance = await page.evaluate(() => ({
+    distance: nimCameraDistance(), reach: Math.hypot(...Array.from(nimCameraPivot())),
+  }));
+  // Four spots well off centre; sample darkest, so single dot on one cannot pass check.
+  const spots: [number, number][] = [[200, 200], [1000, 200], [200, 700], [1000, 700]];
+  const reading = await readCanvas(page, spots);
+  const luminance = (rgba: number[]): number =>
+    0.2126 * (rgba[0] ?? 0) + 0.7152 * (rgba[1] ?? 0) + 0.0722 * (rgba[2] ?? 0);
+  const readings = reading.spots.map((one) => luminance(one ?? []));
+  const darkest = Math.min(...readings);
+  // Darkest surface is rgb(16, 19, 24), luminance 18; sky tint over it reads well above.
+  report(
+    'the sky is drawn behind a far star',
+    darkest > 24,
+    `darkest of four background spots ${darkest.toFixed(1)} beside a star ` +
+      `${stance.reach.toFixed(0)} units out, camera ${stance.distance.toFixed(1)} off it; ` +
+      `page's darkest surface reads 18`,
+  );
+  await page.evaluate((given) => {
+    nimSelectClear();
+    nimSetCameraPivot(given.pivot[0] ?? 0, given.pivot[1] ?? 0, given.pivot[2] ?? 0);
+    nimSetCameraDistance(given.distance);
+    nimSetCameraAzimuth(given.azimuth);
+    nimSetCameraElevation(given.elevation);
+  }, before);
+  await settleCamera(page);
+}
+
 /** Drive six wheel notches at centre and off centre, and assert what each keeps.
  *
  *  Far clip used to sit at fixed multiple of orbit distance whatever scene held, so notches in

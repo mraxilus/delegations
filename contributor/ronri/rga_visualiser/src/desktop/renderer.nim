@@ -47,10 +47,12 @@ uniform float depth_near;
 uniform float tangent_half_view;
 uniform float height_pixels;
 uniform float diameter_least;
+uniform float depth_log;
 out vec4 vertex_colour;
 out vec2 vertex_corner;
 out float vertex_radius_pixels;
 out vec3 vertex_light;
+out float vertex_depth;
 void main() {
   float depth = dot(in_centre - eye, forward);
   if (depth < depth_near) {
@@ -59,12 +61,15 @@ void main() {
     vertex_corner = vec2(0.0);
     vertex_radius_pixels = 0.0;
     vertex_light = vec3(0.0);
+    vertex_depth = 1.0;
     return;
   }
   float world_per_pixel = 2.0*depth*tangent_half_view/height_pixels;
   float radius = max(in_radius, 0.5*diameter_least*world_per_pixel);
   vec3 at = in_centre + in_corner.x*radius*axis_right + in_corner.y*radius*axis_up;
   gl_Position = view_projection*vec4(at, 1.0);
+  vertex_depth = gl_Position.w;
+  gl_Position.z = (log2(max(gl_Position.w, 1e-30)/depth_near)*depth_log - 1.0)*gl_Position.w;
   vertex_colour = in_colour;
   vertex_corner = in_corner;
   vertex_radius_pixels = radius/world_per_pixel;
@@ -87,11 +92,15 @@ in vec4 vertex_colour;
 in vec2 vertex_corner;
 in float vertex_radius_pixels;
 in vec3 vertex_light;
+in float vertex_depth;
+uniform float depth_near;
+uniform float depth_log;
 uniform float ambient;
 out vec4 out_colour;
 void main() {
   float reach = length(vertex_corner);
   if (reach > 1.0) discard;
+  gl_FragDepth = 0.5*log2(vertex_depth/depth_near)*depth_log;
   float edge = clamp((1.0 - reach)*vertex_radius_pixels, 0.0, 1.0);
   vec3 normal = vec3(vertex_corner, sqrt(max(0.0, 1.0 - reach*reach)));
   float shade = ambient + (1.0 - ambient)*max(0.0, dot(normal, vertex_light));
@@ -108,8 +117,12 @@ void main() {
 const SOURCE_FRAGMENT = """
 #version 330 core
 in vec4 vertex_colour;
+in float vertex_depth;
+uniform float depth_near;
+uniform float depth_log;
 out vec4 out_colour;
 void main() {
+  gl_FragDepth = 0.5*log2(vertex_depth/depth_near)*depth_log;
   out_colour = vertex_colour;
 }
 """ ## Write interpolated vertex colour, every veil program's fragment stage.
@@ -131,9 +144,11 @@ uniform vec3 forward;
 uniform float depth_near;
 uniform float tangent_half_view;
 uniform float height_pixels;
+uniform float depth_log;
 out vec4 vertex_colour;
 out vec3 vertex_world;
 out float vertex_fog;
+out float vertex_depth;
 void main() {
   vertex_fog = in_fog;
   float depth_tail = dot(in_tail - eye, forward);
@@ -144,6 +159,7 @@ void main() {
     gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
     vertex_colour = vec4(0.0);
     vertex_world = in_tail;
+    vertex_depth = 1.0;
     return;
   }
   vec3 near_end = in_tail;
@@ -165,6 +181,8 @@ void main() {
   float world_per_pixel = 2.0*depth_at*tangent_half_view/height_pixels;
   at += in_corner.y*0.5*in_width*world_per_pixel*across;
   gl_Position = view_projection*vec4(at, 1.0);
+  vertex_depth = gl_Position.w;
+  gl_Position.z = (log2(max(gl_Position.w, 1e-30)/depth_near)*depth_log - 1.0)*gl_Position.w;
   vertex_world = at;
   vertex_colour = mix(tint_near, tint_far, in_corner.x);
 }
@@ -184,11 +202,15 @@ const SOURCE_FRAGMENT_RIBBON = """
 in vec4 vertex_colour;
 in vec3 vertex_world;
 in float vertex_fog;
+in float vertex_depth;
+uniform float depth_near;
+uniform float depth_log;
 uniform vec3 eye;
 uniform float fog_radius_full;
 uniform float fog_radius_gone;
 out vec4 out_colour;
 void main() {
+  gl_FragDepth = 0.5*log2(vertex_depth/depth_near)*depth_log;
   float fade = 1.0 - clamp(
     (distance(vertex_world, eye) - fog_radius_full)/(fog_radius_gone - fog_radius_full),
     0.0, 1.0
@@ -218,10 +240,15 @@ layout (location = 2) in vec3 in_arm_first;
 layout (location = 3) in vec3 in_arm_second;
 layout (location = 4) in vec4 in_fill;
 uniform mat4 view_projection;
+uniform float depth_near;
+uniform float depth_log;
 out vec4 vertex_colour;
+out float vertex_depth;
 void main() {
   vec3 at = in_centre + in_corner.x*in_arm_first + in_corner.y*in_arm_second;
   gl_Position = view_projection*vec4(at, 1.0);
+  vertex_depth = gl_Position.w;
+  gl_Position.z = (log2(max(gl_Position.w, 1e-30)/depth_near)*depth_log - 1.0)*gl_Position.w;
   vertex_colour = in_fill;
 }
 """ ## Fan one disc record over static corner buffer, on GPU.
@@ -237,10 +264,15 @@ layout (location = 0) in vec3 in_unit;
 layout (location = 1) in vec4 in_centre_radius;
 layout (location = 2) in vec4 in_tint;
 uniform mat4 view_projection;
+uniform float depth_near;
+uniform float depth_log;
 out vec4 vertex_colour;
+out float vertex_depth;
 void main() {
   vec3 at = in_centre_radius.xyz + in_centre_radius.w*in_unit;
   gl_Position = view_projection*vec4(at, 1.0);
+  vertex_depth = gl_Position.w;
+  gl_Position.z = (log2(max(gl_Position.w, 1e-30)/depth_near)*depth_log - 1.0)*gl_Position.w;
   vertex_colour = in_tint;
 }
 """ ## Widen one dome record over static unit sphere, on GPU.
@@ -263,7 +295,9 @@ uniform vec3 forward;
 uniform float depth_near;
 uniform float tangent_half_view;
 uniform float height_pixels;
+uniform float depth_log;
 out vec4 vertex_colour;
+out float vertex_depth;
 void main() {
   vec3 tail = in_centre + in_arc.x*in_arm_first + in_arc.y*in_arm_second;
   vec3 head = in_centre + in_arc.z*in_arm_first + in_arc.w*in_arm_second;
@@ -274,6 +308,7 @@ void main() {
   if (max(depth_tail, depth_head) < depth_near || across_length < 1e-12) {
     gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
     vertex_colour = vec4(0.0);
+    vertex_depth = 1.0;
     return;
   }
   vec3 near_end = tail;
@@ -291,6 +326,8 @@ void main() {
   float world_per_pixel = 2.0*depth_at*tangent_half_view/height_pixels;
   at += in_corner.y*0.5*in_width*world_per_pixel*across;
   gl_Position = view_projection*vec4(at, 1.0);
+  vertex_depth = gl_Position.w;
+  gl_Position.z = (log2(max(gl_Position.w, 1e-30)/depth_near)*depth_log - 1.0)*gl_Position.w;
   vertex_colour = in_fill;
 }
 """ ## Widen one ring record into whole plane rim, on GPU.
@@ -334,6 +371,7 @@ type
     location_point_height: gl.Int
     location_point_diameter_least: gl.Int
     location_point_ambient: gl.Int
+    location_point_depth_log: gl.Int
     array_points: gl.Uint
     buffer_point_corners: gl.Uint
     buffer_points: gl.Uint
@@ -346,16 +384,21 @@ type
     location_ribbon_height: gl.Int
     location_ribbon_fog_full: gl.Int
     location_ribbon_fog_gone: gl.Int
+    location_ribbon_depth_log: gl.Int
     array_ribbon: gl.Uint
     buffer_ribbon_corners: gl.Uint
     buffer_ribbon_records: gl.Uint
     program_disc: gl.Uint
     location_disc_view_projection: gl.Int
+    location_disc_depth_near: gl.Int
+    location_disc_depth_log: gl.Int
     array_disc: gl.Uint
     buffer_disc_corners: gl.Uint
     buffer_disc_records: gl.Uint
     program_dome: gl.Uint
     location_dome_view_projection: gl.Int
+    location_dome_depth_near: gl.Int
+    location_dome_depth_log: gl.Int
     array_dome: gl.Uint
     buffer_dome_corners: gl.Uint
     buffer_dome_records: gl.Uint
@@ -366,6 +409,7 @@ type
     location_ring_depth_near: gl.Int
     location_ring_tangent: gl.Int
     location_ring_height: gl.Int
+    location_ring_depth_log: gl.Int
     array_ring: gl.Uint
     buffer_ring_corners: gl.Uint
     buffer_ring_records: gl.Uint
@@ -485,6 +529,7 @@ proc initPointProgram(renderer: var Renderer) =
   renderer.location_point_diameter_least =
     gl.getUniformLocation(renderer.program, "diameter_least")
   renderer.location_point_ambient = gl.getUniformLocation(renderer.program, "ambient")
+  renderer.location_point_depth_log = gl.getUniformLocation(renderer.program, "depth_log")
   gl.genVertexArrays(1, addr renderer.array_points)
   gl.genBuffers(1, addr renderer.buffer_point_corners)
   gl.genBuffers(1, addr renderer.buffer_points)
@@ -517,6 +562,8 @@ proc initRibbonProgram(renderer: var Renderer) =
     gl.getUniformLocation(renderer.program_ribbon, "fog_radius_full")
   renderer.location_ribbon_fog_gone =
     gl.getUniformLocation(renderer.program_ribbon, "fog_radius_gone")
+  renderer.location_ribbon_depth_log =
+    gl.getUniformLocation(renderer.program_ribbon, "depth_log")
   gl.genVertexArrays(1, addr renderer.array_ribbon)
   gl.genBuffers(1, addr renderer.buffer_ribbon_corners)
   gl.genBuffers(1, addr renderer.buffer_ribbon_records)
@@ -533,6 +580,8 @@ proc initDiscProgram(renderer: var Renderer) =
   renderer.program_disc = linkProgram(SOURCE_VERTEX_DISC, SOURCE_FRAGMENT)
   renderer.location_disc_view_projection =
     gl.getUniformLocation(renderer.program_disc, "view_projection")
+  renderer.location_disc_depth_near = gl.getUniformLocation(renderer.program_disc, "depth_near")
+  renderer.location_disc_depth_log = gl.getUniformLocation(renderer.program_disc, "depth_log")
   gl.genVertexArrays(1, addr renderer.array_disc)
   gl.genBuffers(1, addr renderer.buffer_disc_corners)
   gl.genBuffers(1, addr renderer.buffer_disc_records)
@@ -561,6 +610,7 @@ proc initRingProgram(renderer: var Renderer) =
     gl.getUniformLocation(renderer.program_ring, "tangent_half_view")
   renderer.location_ring_height =
     gl.getUniformLocation(renderer.program_ring, "height_pixels")
+  renderer.location_ring_depth_log = gl.getUniformLocation(renderer.program_ring, "depth_log")
   gl.genVertexArrays(1, addr renderer.array_ring)
   gl.genBuffers(1, addr renderer.buffer_ring_corners)
   gl.genBuffers(1, addr renderer.buffer_ring_records)
@@ -580,6 +630,8 @@ proc initDomeProgram(renderer: var Renderer) =
   renderer.program_dome = linkProgram(SOURCE_VERTEX_DOME, SOURCE_FRAGMENT)
   renderer.location_dome_view_projection =
     gl.getUniformLocation(renderer.program_dome, "view_projection")
+  renderer.location_dome_depth_near = gl.getUniformLocation(renderer.program_dome, "depth_near")
+  renderer.location_dome_depth_log = gl.getUniformLocation(renderer.program_dome, "depth_log")
   gl.genVertexArrays(1, addr renderer.array_dome)
   gl.genBuffers(1, addr renderer.buffer_dome_corners)
   gl.genBuffers(1, addr renderer.buffer_dome_records)
@@ -862,6 +914,7 @@ proc drawMeshes*(
   let fog = fogFurnitureFor(scale.extentFurniture)
   gl.uniform1f(renderer.location_ribbon_fog_full, gl.Float(fog.radius_full))
   gl.uniform1f(renderer.location_ribbon_fog_gone, gl.Float(fog.radius_gone))
+  gl.uniform1f(renderer.location_ribbon_depth_log, gl.Float(scale.depthLog))
   renderer.uploadRibbons(meshes)
 
   # Give point program ribbon program's camera and both screen axes.
@@ -883,6 +936,7 @@ proc drawMeshes*(
   gl.uniform1f(renderer.location_point_height, gl.Float(scale.heightPixels))
   gl.uniform1f(renderer.location_point_diameter_least, gl.Float(DIAMETER_POINT_LEAST))
   gl.uniform1f(renderer.location_point_ambient, gl.Float(FRACTION_AMBIENT_SHADE))
+  gl.uniform1f(renderer.location_point_depth_log, gl.Float(scale.depthLog))
   renderer.uploadPoints(meshes)
 
   # Give both veil programs this frame's matrix before run walk.
@@ -891,10 +945,14 @@ proc drawMeshes*(
   gl.uniformMatrix4fv(
     renderer.location_disc_view_projection, 1, gl.FALSE, unsafeAddr flat[0]
   )
+  gl.uniform1f(renderer.location_disc_depth_near, gl.Float(scale.depthNear))
+  gl.uniform1f(renderer.location_disc_depth_log, gl.Float(scale.depthLog))
   gl.useProgram(renderer.program_dome)
   gl.uniformMatrix4fv(
     renderer.location_dome_view_projection, 1, gl.FALSE, unsafeAddr flat[0]
   )
+  gl.uniform1f(renderer.location_dome_depth_near, gl.Float(scale.depthNear))
+  gl.uniform1f(renderer.location_dome_depth_log, gl.Float(scale.depthLog))
   # Give ring program ribbon program's whole camera.
   #   Rim is widened in screen space by very rule line is.
   gl.useProgram(renderer.program_ring)
@@ -908,6 +966,7 @@ proc drawMeshes*(
   gl.uniform1f(renderer.location_ring_depth_near, gl.Float(scale.depthNear))
   gl.uniform1f(renderer.location_ring_tangent, gl.Float(scale.tangentHalfView))
   gl.uniform1f(renderer.location_ring_height, gl.Float(scale.heightPixels))
+  gl.uniform1f(renderer.location_ring_depth_log, gl.Float(scale.depthLog))
   renderer.uploadVeils(meshes)
 
   # Draw opaque kinds first, so they own depth buffer.

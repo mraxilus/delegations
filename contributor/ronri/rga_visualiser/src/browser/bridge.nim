@@ -2119,6 +2119,8 @@ type FrameData = object
     ## Carry what ribbon vertex shader needs of camera.
     ##   Exactly `mesh.DrawScale`'s same-named fields.
     ##   Widening, near clip and screen-constant width run on GPU.
+  camera_depth_log: float32
+    ## Carry scale every shader maps depth's logarithm by; see `camera.depthOf`.
   camera_right_x, camera_right_y, camera_right_z: float32
   camera_up_x, camera_up_y, camera_up_z: float32
     ## Carry camera's screen axes, point vertex shader spans each disc across.
@@ -2486,6 +2488,7 @@ proc nimBuildFrame(
     camera_forward_x: float32(scale.forward.x), camera_forward_y: float32(scale.forward.y),
     camera_forward_z: float32(scale.forward.z),
     camera_depth_near: float32(scale.depthNear),
+    camera_depth_log: float32(scale.depthLog),
     camera_tangent_half_view: float32(scale.tangentHalfView),
     camera_height_pixels: float32(scale.heightPixels),
     camera_right_x: float32(scale.axisRight.x), camera_right_y: float32(scale.axisRight.y),

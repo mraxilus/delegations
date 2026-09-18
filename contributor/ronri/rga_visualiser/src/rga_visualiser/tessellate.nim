@@ -77,6 +77,9 @@ func heightPixels*(d: DrawExtent): int = d.scale.height_pixels
 func depthNear*(d: DrawExtent): float = d.scale.depth_near
   ## Read near clip depth.
 
+func depthLog*(d: DrawExtent): float = d.scale.depth_log
+  ## Read scale depth's logarithm maps by; see `camera.depthOf`.
+
 # Convert whole half implicitly, so extent hands to any of `mesh`'s procs unwrapped.
 #   Extent *is* scale with algebra's reading beside it, conversion runs one way, and no
 #   second type could be confused for it.
