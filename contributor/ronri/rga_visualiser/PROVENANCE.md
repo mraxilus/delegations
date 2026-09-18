@@ -779,7 +779,7 @@ furniture lines; `marker` derives every clearance from them.
 **Every point has a radius, in world units, and is drawn in perspective.** `Scene.radii`
 holds one per handle, `RADIUS_OBJECT_DEFAULT` = 0.08 — what a nine-pixel sprite spans at the
 opening camera, so old scenes open looking as they did. Both editors carry a `size` field,
-bounded below at `RADIUS_OBJECT_LEAST` 0.001 because the model refuses zero outright;
+bounded below at `RADIUS_OBJECT_LEAST` 10⁻⁹ because the model refuses zero outright;
 `RADIUS_OBJECT_MOST` 1e6 exists because ImGui's drag widget reads *no upper bound* as *no
 bounds*. A point crosses the wire as one record (`Vertex`) and is drawn as an **instanced
 camera-facing quad** from `mesh.pointCorners` on both front-ends: the vertex shader takes
@@ -814,8 +814,11 @@ one more thing the demo's astronomy had written into a visualiser of an algebra,
 read the same under it but the sun itself, which drew flat. Cost: three floats fewer per point
 record, and no per-edit relighting pass.
 
-**Furniture** (ground grid, world axes) reaches `extent_furniture`, from the far clip, and is
-drawn as **fog about the eye**, not a halo about the origin: full strength within
+**Furniture** (ground grid, world axes) reaches `extent_furniture`, `FACTOR_CLIP_FAR` orbit
+distances, and is drawn as **fog about the eye**, not a halo about the origin. Not the far
+clip, which also reaches the scene's farthest object: the demo reaches millions of units, and
+a grid sized to that put its cell at a hundred thousand with no line under any camera inside
+Sol's system. Lines and the horizon still reach the far clip. The fog holds full strength within
 `FRACTION_GRID_FADE_START` = 0.06 × extent, gone by `FRACTION_GRID_FADE_END` = 0.20 × extent
 — 1.14 and 3.8 orbit distances; at 0.03/0.12 the ground at the pivot read as absent. A halo
 makes the origin a place the reader may not leave. The fade runs in the fragment shader
@@ -866,12 +869,25 @@ be tolerable, not measured.
 = π/2 − 0.02. The opening placement is `initCameraDefault`, read by both entry points and
 by `home`.
 
-**An orbit distance has a floor and no ceiling.** `DISTANCE_LIMIT_NEAR` = 0.05 is geometry:
+**An orbit distance has a floor and no ceiling.** `DISTANCE_LIMIT_NEAR` = 10⁻⁹ is geometry:
 at zero the eye coincides with its pivot and every direction `camera.frame` derives
-collapses; `distanceHeld` is the one statement of it. Not a ceiling, which reads as the
-camera being bounded to a region and which nothing downstream needs. What degrades far out
-is `Vertex`'s float32 storage, past roughly 10⁶ units; wheeled out to 3 × 10¹⁹ the view
-empties to a speck rather than breaking, and `home` returns.
+collapses; `distanceHeld` is the one statement of it. Tiny rather than small, because the
+demo's moons ring their planets at thousandths of a unit and are millionths wide, and a
+floor of a twentieth kept the camera outside every one of them. Not a ceiling, which reads
+as the camera being bounded to a region and which nothing downstream needs.
+
+**Every record is stored about the pivot.** `mesh.clearMeshes` takes the frame's origin,
+both front-ends pass the camera's pivot, and each of the five record writers subtracts it at
+the float32 write, so what the camera looks at is exact wherever it stands: a moon a
+thousandth of a unit from its planet a million units out, where float32 about the world
+origin steps by a sixteenth and loses the whole offset. The GPU's transform is
+`initMatrixViewProjection` about the same origin, only its translation column moved; picking,
+hover and every marker keep the transform about the world. `Matrix4` is double precision for
+the same reason: a float32 translation column carried tenths of a unit that far out, into
+every pick. Not a moving world origin, which would rewrite every stored multivector per frame.
+What degrades far out is float32 in what stands far from the pivot, past roughly 10⁶ units
+from it, invisible at that reach; wheeled out to 3 × 10¹⁹ the view empties to a speck rather
+than breaking, and `home` returns.
 
 **Clip planes follow orbit distance, and the far plane never comes inside the scene** —
 `FACTOR_CLIP_NEAR` 1/400 of the orbit distance and `FACTOR_CLIP_FAR` 20 times it, or the eye's
@@ -963,6 +979,9 @@ would have been, so a rim is widened by the one rule every line is. The rim step
 time, whose evaluator need not agree with each backend's libm in the last bit. The rim as
 one record is what the demo frame turns on: 96 ribbon records per plane were 99.2% of ribbon
 traffic on 132 planes, and the demo's median frame went 239 → 84 ms under SwiftShader.
+
+**Every record's position is stored about the frame's origin**, the camera's pivot (see
+Camera); the suite pins the five writers against an origin a million units off.
 
 **Veil order is kept, not assumed away**: two translucent veils still blend in scene
 order, so every append extends or opens a `VeilRun` and both render paths walk the runs in
@@ -1527,28 +1546,32 @@ same construction truncated at a different depth, so a cost can be read as a slo
 walk passes over a system too large for the room left and keeps walking. `orrery.showOrrery`
 is the one copy, reached by the bridge and by the desktop's `--demo`.
 
-**Sol at the origin, its ecliptic flat in the ground grid's own plane**, every star, known
-planet and major moon that fits at its real distance. `sol` is `1 𝐞₄`; `ecliptic sol` is
-`−89.11 𝐞₄₁₂`, the z = 0 plane; every planet has z exactly 0, Neptune at 12.000 units. `SOL`
-names its bodies with real distances in AU; `radiusOfSolBody` compresses them by a
-**logarithm**, lifted by `SHIFT_SOL` = 1.0 so Mercury stands clear and normalised so Neptune
-sits at `SYSTEM_SOL.radius` = 12 — a 77× range squashed to under 10×. The tail indices are
-named constants held to their bodies at compile time, since a positional index once put the
-ecliptic's furthest distance on a comet rather than Neptune. `TILT_MOON` = 0.0897 rad carries
-Luna's real inclination; the horizon plane is `att(ecliptic) ∧ att(earth ∧ luna)` and exists
-only because the two differ. Moons map their real semi-major axes onto
-`RADIUS_MOON_NEAREST` 0.08 to `RADIUS_MOON_FURTHEST` 0.32 by the same logarithm, **measured
-from the parent's drawn rim**, since Io's ring measured from Jupiter's centre lay inside
-Jupiter's disc.
+**To scale: one world unit is one astronomical unit**, `KILOMETRES_PER_AU` = 149,597,870.7,
+and a parsec is `AU_PER_PARSEC` = 206,264.806 of them. Every distance is the real one and
+every drawn radius the real radius: `radiusDrawnOf` divides kilometres by the unit and does
+nothing else, so Sol is 0.00465 units wide, Earth 0.0000426, Phobos 0.000000074. Sol stands at
+the origin with its ecliptic flat in the ground grid's own plane; `sol` is `1 𝐞₄`, every planet
+has z exactly 0, Neptune 30.05 units out, and Proxima 268,000. Not compressed, as before: a
+picture scaled to preference is a picture of the preference. The price is that from the
+opening camera every body is the least dot and
+Jupiter's moons lie inside its dot; the reader dollies in, and each body is its real size when
+the camera arrives, which `camera.DISTANCE_LIMIT_NEAR` and `mesh.RADIUS_OBJECT_LEAST`, both
+10⁻⁹, and the pivot-relative record (see Camera) let it do.
 
-**Every body is drawn at its real radius on a square-root scale** (`radiusDrawnOf`):
-`RADIUS_SOL_DRAWN` = 0.6 × √(km / 695,700 km). Sol 0.6, Jupiter 0.19, Earth 0.057, Luna 0.03
-— order kept, the Sol-to-Earth ratio compressed from 109 to 10.4 so four sizes read as four.
-Not true scale, which puts every body under the least dot; not linear scale anchored at Sol,
-which puts Earth at 0.006. The anchor 0.6 is under a quarter of Mercury's ring so the
-innermost planet stands clear, and wider than the opening camera's least dot so Sol reads as
-a sun among stars. Neighbour suns take Sol's radius and neighbour planets Earth's: neither
-catalogue carries radii.
+**Every moon rings its planet in its real orbit plane.** `MOONS` carries JPL's mean orbital
+elements, fetched 2026-09-18 from https://ssd.jpl.nasa.gov/sats/elem/: an inclination and a
+node against the moon's reference plane, named by its pole in J2000 right ascension and
+declination — the ecliptic for Luna and Nereid, Uranus's equator for its five, a local Laplace
+plane for the rest. `normalOfMoon` turns the equator's node about the pole by the node angle,
+the pole about that line by the inclination, then the whole into the ecliptic frame by the
+J2000 obliquity 23.4392911°. Uranus's pole is the spin pole (RA 77.311°, Dec 15.175°), the
+antipode of the IAU north, so the elements' small inclinations read prograde about it as JPL
+states them. Read off the built scene: Luna's normal leans 5.16° from +z, Io's 2.2°, Miranda's
+has z = 0.155 and Triton's z = −0.646, a ring run backwards. The horizon plane is
+`att(ecliptic) ∧ att(earth ∧ luna)` and exists only because Luna's ring leaves the ecliptic.
+**Stated simplifications**: planets ring Sol in the ecliptic itself, inclinations dropped
+(Mercury's 7° the largest), since Earth in the spanned plane is what the horizon block turns
+on; a body's place on its ring is the golden angle, not a date; neighbour systems lie flat.
 
 **Two shipped catalogues, data only, generated.** `neighbourhood.nim` is a snapshot of the
 NASA Exoplanet Archive taken 2026-08-31 from its TAP service (`select hostname, pl_name,
@@ -1561,33 +1584,38 @@ planet host was matched to exactly one star **by sky position alone**, worst sep
 arcseconds — Barnard's and Kapteyn's stars, the two highest proper motions known, are the
 two worst matches. Distance is not used to match because it is what the two archives
 disagree about, so the star layer supplies every position and distance and the archive only
-which planets exist. **Nothing is generated**: a star with no known planet is a star; each
-neighbour's disc orientation is spread from its coordinates so discs do not stack, and 49
-of 544 planets with no recorded semi-major axis are placed by their order among siblings.
+which planets exist. **Both catalogues are equatorial and the scene is ecliptic**: `systemAt`
+turns every star's direction by the same obliquity the moons are turned by, so the star field
+and Sol's planets share one frame; read straight, every star stood 23° off against them.
+**Nothing is generated**: a star with no known planet is a star, and the 49 of 544 planets
+with no recorded semi-major axis are left out rather than placed by their order among
+siblings, `placedOf` counting what a star places and `objectsOf` folding it. Neighbour suns
+and planets are drawn at `RADIUS_OBJECT_LEAST`, a dot claiming no size, since neither
+catalogue carries radii. A neighbour's plane is joined as `star ∧ along ∧ across`, a point and
+two directions: three of its points a million units out cancel to noise, a tenth of the normal.
 
-**`UNITS_PER_PARSEC` = 100.** At 18 the nearest neighbour stood 24 units out against systems
-9 units wide, and thousands piled into one frame; Proxima stands 130 units out and the
-outermost catalogue star 3,153. **The price lands on the opening camera**: `RADIUS_ORRERY`
-fits the view to Sol and `FRAMED_ORRERY − 1` = 1 nearest neighbour, about 139 units, so Sol
-is a twenty-pixel smudge until a reader dollies in; fitted to four, the camera stood 273
-units off with nothing left to go and find. The camera is pitched to
-`ELEVATION_ORRERY_SHOWN` = 0.95 rad (at 0.42 every ring collapses to a line) and pulled back
-by `camera.distanceFitting`. `FACTOR_ISOLATION_ORRERY` = 2.0 floors the tightest pair's
-separation against their combined reach. **Colour says what a thing is, not which system
-it belongs to**: `lut_role_to_ink` maps a `Role` to an `Ink`, four kinds of body on four
-handles and everything derived on the fifth, `Olive`, the darkest.
+**The opening camera frames Sol's system to Neptune**: `RADIUS_ORRERY` is Neptune's own
+semi-major axis, fitted by `camera.distanceFitting` at `ELEVATION_ORRERY_SHOWN` = 0.95 rad
+(at 0.42 every ring collapses to a line) with `INSET_ORRERY_SHOWN` = 24 px. Not the nearest
+neighbour: Proxima stands nine thousand opening radii out, and a frame holding it shows one
+dot. The neighbourhood is reached by zooming out, and the crossing is the journey it really
+is. **Colour says what a thing is, not which system it belongs to**: `lut_role_to_ink` maps a
+`Role` to an `Ink`, four kinds of body on four handles and everything derived on the fifth,
+`Olive`, the darkest.
 
-*Checked.* Verified by `suites.nim` at every size: every star at the distance its table gives it,
-the table ordered outward, the count exact, the camera solve, every object against the role
-table with four distinct body inks; the planets run strictly outward, the squash is real, the
-horizon line is proportional to `attitude` of the scene's own `ecliptic sol`, no point is a
-hub (lines and planes through any point ≤ 6), three collinear points never wedge to nothing,
-and every moon's ring clears its planet's disc and its own. Verified by reading the built
-scene: the multivectors quoted above and the moons' order (Phobos 0.080 to Callisto 0.279).
-Verified by looking: Sol at 14 units is a disc among dots, Jupiter's four moons are discs
-about its disc at 1.2 units, and the desktop draws the same frame. Verified by measuring:
-the page grew 2.17 → 3.64 MB for the star catalogue. Assumed: the archive snapshots
-themselves. **Neither table is checked against its archive**: no tool re-derives them.
+*Checked.* Verified by `suites.nim` at every size: every star at the distance its table gives it
+and in the direction its coordinates give once turned into the ecliptic, the table ordered
+outward, the count exact, the camera solve, every object against the role table with four
+distinct body inks; every planet at its real axis with z = 0, every moon at its real axis
+perpendicular to `normalOfMoon` with the leans quoted above pinned; every neighbour planet at
+its real axis at its star's height and every planet without an axis absent, 49 counted from
+the table; every body's radius the conversion of its kilometres; no point a hub (lines and
+planes through any point ≤ 6); the two horizon points' difference. Verified
+by reading the built scene: the normals quoted above. Verified by driven check: the demo
+button stands the camera back past 40 units, and the occlusion check stands its own camera by
+Jupiter's real radius for a sixty-pixel disc with Io in front of it. Assumed: the archive
+snapshots themselves, and the JPL elements transcribed by hand. **No table is checked
+against its source by any tool.**
 
 ## Operation Notation
 
@@ -1935,6 +1963,10 @@ the suite itself.
 - Conformal metric (`IS_CONFORMAL`) is unfinished in the library; this build is rigid 4D.
 - `.rgascene` is little-endian by rule, but only a little-endian host has ever written or
   read one; the byte-swapping path is unexercised.
+- Depth collapses far out at an extreme zoom: near at half the orbit distance and far at the
+  star field's reach leave a 24-bit depth buffer nothing between objects millions of units
+  off, so from a moon of ours a neighbour's star and its plane's veil draw in either order.
+- The demo's planet inclinations, ring phases and neighbour planes are stated simplifications.
 
 ## Open questions
 
