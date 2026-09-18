@@ -58,9 +58,19 @@ const
     ##     What degrades far out is float32 in what stands far from pivot: object million
     ##     units from it carries under tenth of unit, which is invisible at that reach.
   MARGIN_REACH_FAR* = 1.05
-    ## Widen far clip past scene's reach by this, so farthest object never sits on plane.
+    ## Widen far bound past scene's reach by this, so farthest object never sits on it.
+  SLACK_CLIP_FAR* = 1.0/1024.0
+    ## Hold projective depth this far under far plane at any depth: `initMatrixProjection`
+    ##   sends depth toward `1 - SLACK_CLIP_FAR` rather than 1, so nothing far clips.
+    ##   Depth buffer takes fragment's logarithm (`depthOf`), so projective depth only
+    ##   clips, and slack costs nothing.
+    ##   Not `(far + near)/(far - near)` with far at star field's reach: farthest stars and
+    ##   sky dome then sat within two float32 ulps of far plane, and Android GPU's rounding
+    ##   clipped them, points flickering as camera moved and dome drawn in patches.
+    ##   Suite reads flattened float32 matrix for farthest star and dome at four orbit
+    ##   distances and holds margin over half of this.
   FACTOR_CLIP_FAR* = 20.0
-    ## Set far clip plane this many orbit distances out, or at scene's reach where farther.
+    ## Set far bound this many orbit distances out, or at scene's reach where farther.
     ##   Scaled alone clipped field away as zoom carried orbit distance down to foreground
     ##   star: twenty of thirty units is six hundred, and field is three thousand across.
     ##   See `distanceFar` and `Camera.reach_scene`.
@@ -163,19 +173,18 @@ func `*`*(a, b: Matrix4): Matrix4 =
       result.elements[4*column + row] = sum
 
 
-func initMatrixProjection*(
-  degrees_field_of_view, aspect, distance_near, distance_far: float
-): Matrix4 =
-  ## Construct perspective projection onto OpenGL's clip volume.
-  ##   Depth maps to -1 .. 1, and camera looks along its own -z, as pipeline expects.
-  let
-    focal = 1.0 / tan(0.5 * degToRad(degrees_field_of_view))
-    span = distance_near - distance_far
+func initMatrixProjection*(degrees_field_of_view, aspect, distance_near: float): Matrix4 =
+  ## Construct perspective projection onto OpenGL's clip volume, with no far plane.
+  ##   Camera looks along its own -z, as pipeline expects. Depth `D` maps to
+  ##   `(1 - slack) - (2 - slack)*near/D`: -1 at near plane, toward `1 - SLACK_CLIP_FAR`
+  ##   as depth grows, never reaching 1, so far plane clips nothing at any depth; see
+  ##   `SLACK_CLIP_FAR`. Depth buffer itself takes `depthOf` per fragment.
+  let focal = 1.0 / tan(0.5 * degToRad(degrees_field_of_view))
   result.elements[0] = focal / aspect
   result.elements[5] = focal
-  result.elements[10] = (distance_far + distance_near) / span
+  result.elements[10] = -(1.0 - SLACK_CLIP_FAR)
   result.elements[11] = -1.0
-  result.elements[14] = 2.0 * distance_far * distance_near / span
+  result.elements[14] = -(2.0 - SLACK_CLIP_FAR) * distance_near
 
 
 func initMatrixView*(eye: Position, frame: FrameCamera): Matrix4 =
@@ -226,9 +235,10 @@ func initCameraDefault*(): Camera =
 
 
 func distanceFar*(camera: Camera): float =
-  ## Read farthest depth clip volume keeps; see `distanceNear` for why derived.
+  ## Read far bound depth's logarithm spans and horizon stands within; see `distanceNear`
+  ##   for why derived. Nothing clips at it: see `initMatrixProjection`.
   ##   Twenty orbit distances, or eye's distance to origin plus scene's reach where that
-  ##   is farther, so no zoom clips scene away; see `FACTOR_CLIP_FAR`.
+  ##   is farther, so logarithm spans whole scene; see `FACTOR_CLIP_FAR`.
   ##   Ratio to near is unbounded; `depthOf` is what makes that affordable.
   let eye = camera.eye
   let away = sqrt(eye.x*eye.x + eye.y*eye.y + eye.z*eye.z)
@@ -263,8 +273,8 @@ func depthOf*(camera: Camera, depth: float): float =
   ##   Fragment only, never clip position: clipper interpolates clip coordinates linearly
   ##   and cuts where interpolated depth meets plane, so corner behind eye mapped far past
   ##   far plane had its triangle cut beside its front corner, and plane's disc ended at
-  ##   hard chord under camera standing inside it. Projective clip depth keeps near and far
-  ##   cuts where they belong; driven check reads disc under camera.
+  ##   hard chord under camera standing inside it. Projective clip depth keeps near cut
+  ##   where it belongs and never far clips; driven check reads disc under camera.
   log2(depth/camera.distanceNear)*camera.depthLogScale - 1.0
 
 
@@ -529,9 +539,8 @@ func initMatrixViewProjection*(
   ##     Point stored as float32 million units from world origin carries tenth of unit;
   ##     stored about pivot it carries what pivot's own close-up needs.
   let eye = camera.eye
-  initMatrixProjection(
-    camera.degrees_field_of_view, aspect, camera.distanceNear, camera.distanceFar
-  ) * initMatrixView(eye - (origin - Position(x: 0, y: 0, z: 0)), camera.frame(eye))
+  initMatrixProjection(camera.degrees_field_of_view, aspect, camera.distanceNear) *
+    initMatrixView(eye - (origin - Position(x: 0, y: 0, z: 0)), camera.frame(eye))
 
 
 

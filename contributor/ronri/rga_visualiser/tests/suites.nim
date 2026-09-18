@@ -453,13 +453,18 @@ suite "Camera":
     check isNear(at_pivot[2], -camera.distance)
 
 
-  test "projection carries clip planes to depth bounds":
-    const (NEAR, FAR) = (0.25, 60.0)
-    let projection = initMatrixProjection(45.0, 1.6, NEAR, FAR)
-    for (depth, expected) in [(NEAR, -1.0), (FAR, 1.0)]:
+  test "projection carries near plane to -1 and every depth beyond it under far plane":
+    const NEAR = 0.25
+    let projection = initMatrixProjection(45.0, 1.6, NEAR)
+    let at_near = transform(projection, Position(x: 0, y: 0, z: -NEAR), 1.0)
+    check isNear(at_near[3], NEAR) and isNear(at_near[2]/at_near[3], -1.0)
+    # No far plane: depth climbs toward `1 - SLACK_CLIP_FAR` and never reaches it.
+    var below = -1.0
+    for depth in [1.0, 60.0, 1.0e3, 1.0e6, 1.0e9, 1.0e12]:
       let clipped = transform(projection, Position(x: 0, y: 0, z: -depth), 1.0)
-      check isNear(clipped[3], depth)
-      check isNear(clipped[2]/clipped[3], expected)
+      let mapped = clipped[2]/clipped[3]
+      check mapped > below and mapped < 1.0 - 0.5*SLACK_CLIP_FAR
+      below = mapped
 
 
   test "nothing far clips: the farthest star and the sky dome keep a float32 margin":
@@ -489,8 +494,7 @@ suite "Camera":
           z += flat[14]
           w += flat[15]
           check w > 0.0'f32
-          # Half of `SLACK_CLIP_FAR`, which fix names; projection before it left two ulps.
-          check w - z > float32(1.0/2048.0)*w
+          check w - z > float32(0.5*SLACK_CLIP_FAR)*w
 
 
   test "whole transform carries pivot to centre of view":

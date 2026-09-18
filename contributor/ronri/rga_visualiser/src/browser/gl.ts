@@ -330,7 +330,7 @@ gl.bufferData(gl.ARRAY_BUFFER,
 //   bearing plus and minus half-angle sphere subtends, tangent bounded past quarter turn;
 //   whole view where sphere holds eye. Corner is box's middle plus corner scaled by root
 //   two of half extents, so fan covers box. Depth is fragment's own; without
-//   `EXT_frag_depth` disc rests at its centre's, `uMVP`'s only use here.
+//   `EXT_frag_depth` disc rests at its centre's logarithmic depth.
 //   Not fan of corners on plane itself: corner behind eye left sliver for clipper that
 //   rasterised to nothing under grazing camera, and disc ended at hard chord.
 const SOURCE_VERTEX_DISC = `
@@ -339,13 +339,14 @@ const SOURCE_VERTEX_DISC = `
   attribute vec3 aArmFirst;
   attribute vec3 aArmSecond;
   attribute vec4 aFill;
-  uniform mat4 uMVP;
   uniform vec3 uEye;
   uniform vec3 uForward;
   uniform vec3 uRight;
   uniform vec3 uUp;
   uniform float uTangentHalfView;
   uniform float uAspect;
+  uniform float uDepthNear;
+  uniform float uDepthLog;
   varying vec4 vColor;
   varying vec2 vView;
   varying vec3 vToCentre;
@@ -379,8 +380,8 @@ const SOURCE_VERTEX_DISC = `
         tanBounded(bearing_up + spread_up)/tall), -1.0, 1.0);
     }
     vView = 0.5*(lo + hi) + 1.41421356*aCorner*0.5*(hi - lo);
-    vec4 centre_clip = uMVP*vec4(aCentre, 1.0);
-    float centre_depth = clamp(centre_clip.z/max(centre_clip.w, 1.0e-30), -1.0, 1.0);
+    float centre_depth = clamp(log2(max(depth, uDepthNear)/uDepthNear)*uDepthLog - 1.0,
+      -1.0, 1.0);
     gl_Position = vec4(vView, centre_depth, 1.0);
     vColor = aFill;
     vToCentre = to_centre;
@@ -556,7 +557,6 @@ const ring_uniforms = {
   height: gl.getUniformLocation(program_ring, 'uHeightPixels'),
   depth_log: gl.getUniformLocation(program_ring, 'uDepthLog'),
 };
-const uniform_disc_mvp = gl.getUniformLocation(program_disc, 'uMVP');
 const uniform_dome_mvp = gl.getUniformLocation(program_dome, 'uMVP');
 // Veil programs take depth mapping too, having no camera of their own otherwise.
 const uniform_disc_depth_near = gl.getUniformLocation(program_disc, 'uDepthNear');
