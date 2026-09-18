@@ -7424,6 +7424,48 @@ suite "Marker":
       check count_labelled > 0
 
 
+  test "labels of several selected objects settle apart along their own axes":
+    # Rule lives once in marker.nim and both front-ends bring their own measured widths.
+    #   Later selection yields to earlier: point's label climbs its column, line's slides
+    #   along its line, each by least that clears, nearer sense first, and stays in view.
+    proc box(x, y, half_width, slide_x, slide_y: float): LabelBox =
+      LabelBox(x: x, y: y, half_width: half_width, slide_x: slide_x, slide_y: slide_y)
+    let lift = HEIGHT_MARKER_LABEL + GAP_LABEL_APART
+    # Two point labels on one spot: second climbs exactly one box and gap, first stays.
+    var pair = [box(300.0, 200.0, 30.0, 0.0, -1.0), box(300.0, 200.0, 30.0, 0.0, -1.0)]
+    settleLabels(pair, WIDTH_PAGE, HEIGHT_PAGE)
+    check pair[0].x =~ 300.0 and pair[0].y =~ 200.0
+    check pair[1].x =~ 300.0 and abs(pair[1].y - (200.0 - lift)) < 1.0e-3
+    # Already apart: nothing moves.
+    var apart = [box(100.0, 100.0, 30.0, 0.0, -1.0), box(300.0, 100.0, 30.0, 0.0, -1.0)]
+    settleLabels(apart, WIDTH_PAGE, HEIGHT_PAGE)
+    check apart[1].x =~ 300.0 and apart[1].y =~ 100.0
+    # Line's label slides along its line, forward being nearer here than back.
+    var beside = [box(300.0, 200.0, 30.0, 0.0, -1.0), box(310.0, 205.0, 20.0, 1.0, 0.0)]
+    settleLabels(beside, WIDTH_PAGE, HEIGHT_PAGE)
+    check beside[1].y =~ 205.0
+    check abs(beside[1].x - (300.0 + 30.0 + 20.0 + GAP_LABEL_APART)) < 1.0e-3
+    # Three on one spot stack up column, each clear of both below.
+    var three = [
+      box(300.0, 200.0, 30.0, 0.0, -1.0), box(300.0, 200.0, 30.0, 0.0, -1.0),
+      box(300.0, 200.0, 30.0, 0.0, -1.0),
+    ]
+    settleLabels(three, WIDTH_PAGE, HEIGHT_PAGE)
+    check abs(three[1].y - (200.0 - lift)) < 1.0e-3
+    check abs(three[2].y - (200.0 - 2.0*lift)) < 1.0e-3
+    # Held at top edge, second cannot climb, so it takes other sense and drops below.
+    let top = MARGIN_LABEL_EDGE + 0.5*HEIGHT_MARKER_LABEL
+    var edge = [box(300.0, top, 30.0, 0.0, -1.0), box(300.0, top, 30.0, 0.0, -1.0)]
+    settleLabels(edge, WIDTH_PAGE, HEIGHT_PAGE)
+    check abs(edge[1].y - (top + lift)) < 1.0e-3
+    # Settled set has no overlapping pair, whatever route it took.
+    for boxes in [pair, beside, three, edge]:
+      for i in 0 ..< boxes.len:
+        for j in 0 ..< i:
+          check abs(boxes[i].x - boxes[j].x) >= boxes[i].half_width + boxes[j].half_width or
+            abs(boxes[i].y - boxes[j].y) >= HEIGHT_MARKER_LABEL
+
+
   test "a line's label stays in view when its support leaves it":
     # Camera looks twelve units along line from support: support projects off screen, or.
     #   behind eye, while line still crosses view. Anchor slides to visible stretch,

@@ -247,6 +247,104 @@ export async function driveFrameLabelCorner(page: Page): Promise<void> {
   await page.evaluate(() => clearSelection());
 }
 
+/** Read every overlay label's box, with its text, in document order. */
+async function labelBoxes(page: Page): Promise<{ text: string; box: Box }[]> {
+  return page.evaluate(() => {
+    const rect = (document.getElementById('gl') as HTMLElement).getBoundingClientRect();
+    return Array.from(document.querySelectorAll('#overlay text')).map((node) => {
+      const box = (node as SVGTextElement).getBBox();
+      return {
+        text: node.textContent ?? '',
+        box: {
+          left: box.x, top: box.y, right: box.x + box.width, bottom: box.y + box.height,
+          width: rect.width, height: rect.height,
+        },
+      };
+    });
+  });
+}
+
+/** Frames walked with six labels up, one orbit. */
+const STEPS_APART = 48;
+
+/** Drive orbit with six close objects selected, and assert no two labels overlap in any frame.
+ *
+ *  Each label was placed from its own marker alone, and where inner planets align their
+ *  names stacked into one heap. Sun and five planets: six rings whose labels climb their
+ *  columns. Camera is put back after, as far-sky check does.
+ */
+export async function driveLabelsApart(page: Page): Promise<void> {
+  await clearTheGlass(page);
+  await page.evaluate(() => clearSelection());
+  const before = await page.evaluate(() => ({
+    pivot: Array.from(nimCameraPivot()), distance: nimCameraDistance(),
+    azimuth: nimCameraAzimuth(), elevation: nimCameraElevation(),
+  }));
+  const chosen = await page.evaluate(() => {
+    const handles = nimSceneHandles();
+    return ['sol', 'mercury', 'venus', 'earth', 'mars', 'jupiter'].map((name) =>
+      handles.find((one) => String(nimObjectLabel(one)).toLowerCase() === name) ?? -1);
+  });
+  if (chosen.some((one) => one < 0)) {
+    report('the demo holds the sun and five planets to select', false, chosen.join(' '));
+    return;
+  }
+  await page.evaluate((given) => {
+    selectOnly(given[0] ?? 0, null);
+    for (const one of given.slice(1)) toggleSelection(one, null);
+  }, chosen);
+  await settleCamera(page);
+  let frames = 0, overlapping = 0, cut = 0, fewer = 0;
+  let worst = '';
+  for (let i = 0; i < STEPS_APART; i += 1) {
+    await page.evaluate((given) => {
+      nimSetCameraPivot(0, 0, 0);
+      nimSetCameraDistance(19);
+      nimSetCameraAzimuth(given.azimuth);
+      nimSetCameraElevation(0.4);
+    }, { azimuth: (i / STEPS_APART) * 2 * Math.PI });
+    await waitFrames(page, 2);
+    const labels = await labelBoxes(page);
+    frames += 1;
+    if (labels.length < chosen.length) fewer += 1;
+    for (const one of labels) {
+      const over = Math.max(
+        -one.box.left, one.box.right - one.box.width, -one.box.top,
+        one.box.bottom - one.box.height,
+      );
+      if (over > 0) cut += 1;
+    }
+    for (let a = 0; a < labels.length; a += 1) {
+      for (let b = 0; b < a; b += 1) {
+        const first = labels[a]?.box, second = labels[b]?.box;
+        if (first === undefined || second === undefined) continue;
+        const crosses = first.left < second.right && second.left < first.right
+          && first.top < second.bottom && second.top < first.bottom;
+        if (crosses) {
+          overlapping += 1;
+          if (worst === '') {
+            worst = `; first ${labels[a]?.text} over ${labels[b]?.text} at step ${i}`;
+          }
+        }
+      }
+    }
+  }
+  report(
+    'labels of six selected objects stay apart and whole through an orbit',
+    frames >= STEPS_APART && overlapping === 0 && cut === 0 && fewer === 0,
+    `${frames} frames, ${overlapping} overlapping pairs, ${cut} boxes past an edge, `
+      + `${fewer} frames short of six labels${worst}`,
+  );
+  await page.evaluate(() => clearSelection());
+  await page.evaluate((given) => {
+    nimSetCameraPivot(given.pivot[0] ?? 0, given.pivot[1] ?? 0, given.pivot[2] ?? 0);
+    nimSetCameraDistance(given.distance);
+    nimSetCameraAzimuth(given.azimuth);
+    nimSetCameraElevation(given.elevation);
+  }, before);
+  await settleCamera(page);
+}
+
 /** Drive two picks, and assert each wears its own name above its marker. */
 export async function driveLabelWorn(page: Page): Promise<void> {
   const points = await page.evaluate(

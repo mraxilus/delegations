@@ -25,7 +25,7 @@ import {
   drivePanWhileSelected, drivePickOrbit, drivePlanePick, drivePointerPick,
 } from './framing';
 import {
-  driveFrameLabelCorner, driveLabelGlide, driveLabelHeldInView, driveLabelWorn,
+  driveFrameLabelCorner, driveLabelGlide, driveLabelHeldInView, driveLabelWorn, driveLabelsApart,
 } from './label';
 import { driveChipRowFits, driveHelp, driveHoverDuringGesture } from './chrome';
 import { driveTypeDrawn, driveTypeLigatures, driveTypeRoles } from './type';
@@ -213,6 +213,7 @@ async function main(): Promise<void> {
   await driveDiscUnderfoot(page);
   await driveLabelHeldInView(page);
   await driveFrameLabelCorner(page);
+  await driveLabelsApart(page);
   await driveZoomLoaded(page);
   await driveTimelineCost(page, objects_largest);
   await drivePlacingCost(page, objects_largest);
