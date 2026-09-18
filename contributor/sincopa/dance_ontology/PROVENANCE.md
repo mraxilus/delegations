@@ -449,7 +449,14 @@ spring that gives twist next to nothing, an arm being thin about its own length,
 hanging arm forty degrees and swung it forward twenty, forearm pointing at the partner, so a free
 couple at rest stood with arms crossed between them. Verified by `trigid.nim`: a free couple at rest
 hang every arm near plumb, elbow near straight, untwisted, no arm within its own thickness of the
-other's, red first. The wrist's own spring is five hertz (`WRIST_EASE`), the passive stiffness of a
+other's, red first. A free arm's shoulder spring is five hertz (`HANG_HZ`, assumed), standing in for
+the weight that holds a hanging arm plumb, about seventeen newton metres per radian for five
+kilograms of arm at a third of a metre: at one hertz the spring gave about two, and the flank's
+friction dragged her arms behind her slow half turn by forty nine degrees, creeping back to thirty
+three through the settle, so A2 stood with her hand 413 mm off plumb; measured at two hertz, twenty
+four and eight; at three, thirteen and five; at five, five and four. Verified by `trigid.nim`: a
+free couple wound half a turn either way hang every arm within ten degrees of plumb, hand within 0.2
+m of it, red first. The wrist's own spring is five hertz (`WRIST_EASE`), the passive stiffness of a
 wrist, since at one hertz the wrists sat at their cone at rest once the elbow was turned down.
 Friction where arm meets body is 0.2 (`FRICTION`), cloth on cloth: at the engine's 0.6 an arm lying
 over a head was dragged round with it as she turned under, winding her shoulder to its end.
