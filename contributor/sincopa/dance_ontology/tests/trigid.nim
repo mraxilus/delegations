@@ -552,6 +552,7 @@ const
   SLOP = 0.005 ## Engine's own linear slop, metres: overlap it never resolves.
   AT_EASE = 0.1 ## Strain no dancer feels: two degrees of twenty into ease that is
                 ## assumed to begin there, under what its own start is known to.
+  RAD = PI / 180.0 ## One degree.
   JOINED = 0.005 ## Metres joined hands may sit apart and still be joined: slop.
   PART = 0.002 ## Metres any joint of any arm may be pulled apart: dislocation past this.
   FREE: seq[Link] = @[] ## No hands joined.
@@ -622,6 +623,41 @@ suite "every still stands at ease":
         &"at {where.strain.what} {where.strain.whose.body} {where.strain.whose.arm}"
       check where.holds
       check where.strain.most <= AT_EASE
+
+  test "free couple at rest hang their arms by their sides":
+    ## Architect: with nothing held, arms are down by sides and look joined to
+    ## nothing.  Every arm hangs near plumb, out by what its own flank pushes it,
+    ## elbow near straight, untwisted, and no arm comes within its own thickness
+    ## of other dancer's arms.  Before this, hanging arms were twisted forty degrees and
+    ## swung forward twenty by fixed elbow moment, forearms pointing at partner,
+    ## and free couple at rest stood with arms crossed between them.
+    let (holds, c) = stood(HUMAN, Band.Crown, FREE, 0.0, false, Body.Two, 0.36)
+    check holds
+    var nearest = Inf
+    for who in Body:
+      for arm in Arm:
+        let
+          (j, tw, bd, wr) = c.jointsOf(who, arm)
+          p = c.armPoseOf(who, arm)
+          hang = p.g - p.s
+        echo &"    {who} {arm}: extend {j.extend * 180.0 / PI:.1f}, across " &
+          &"{j.across * 180.0 / PI:.1f}, twist {tw * 180.0 / PI:.1f}, bend " &
+          &"{bd * 180.0 / PI:.1f}, wrist {wr * 180.0 / PI:.1f}, hand " &
+          &"{sqrt(hang.x * hang.x + hang.y * hang.y) * 1000:.0f} mm off plumb"
+        check abs(j.extend) <= 10.0 * RAD
+        check abs(tw) <= 15.0 * RAD
+        check bd <= 20.0 * RAD
+        check wr <= 10.0 * RAD
+        check sqrt(hang.x * hang.x + hang.y * hang.y) <= 0.2
+    for a in c.shapes:
+      for b in c.shapes:
+        if a.who == b.who or a.mark notin {Mark.Upper, Mark.Fore, Mark.Palm} or
+           b.mark notin {Mark.Upper, Mark.Fore, Mark.Palm}: continue
+        let (ea, eb) = (c.endsOf(a), c.endsOf(b))
+        nearest = min(nearest, between(ea.a, ea.z, eb.a, eb.z) - a.r - b.r)
+    echo &"    nearest two arms of different dancers come: {nearest * 1000:.0f} mm"
+    check nearest >= 2.0 * HUMAN.limb
+    c.free()
 
   test "no capsule of any arm sits in any other, hands joined, no joint parted":
     ## Read against every capsule engine collides, with distance worked out here
