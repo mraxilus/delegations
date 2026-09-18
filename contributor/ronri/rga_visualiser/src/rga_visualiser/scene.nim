@@ -270,22 +270,93 @@ func notationNamed*(operation: Operation): string =
   lut_operation_split[operation].name
 
 
+const
+  SYMBOLS_OPERATOR_BINARY = ["∧", "∨", "⟑", "⟇", "∙", "∘", "+", "-"]
+    ## List binary operators as templates write them, one token between spaces.
+  SYMBOLS_OPERATOR_ASSOCIATIVE = ["∧", "∨", "+"]
+    ## List binary operators whose chain reads one way however it is bracketed.
+    ##   Products are associative too, but chain of them is rare and brackets cost nothing.
+  SYMBOLS_OPERATOR_POSTFIX = ["⊖", "★", "☆", "¯", "˜", "˷", "ˆ", "ˍ"]
+    ## List unary operators templates write after operand, binding tighter than any binary.
+  SYMBOL_NEGATE = "−"
+    ## Unary operator templates write before operand, U+2212.
+
+
+func operatorsOutermost(name: string): seq[string] =
+  ## List operators standing at name's top level, outside every parenthesis.
+  ##   Binary symbols between spaces, and negation leading name. Empty for atomic name,
+  ##   and for one whose only operators are postfix, `L⊖`.
+  if name.startsWith(SYMBOL_NEGATE): result.add(SYMBOL_NEGATE)
+  var depth = 0
+  for token in name.split(' '):
+    if depth == 0 and token in SYMBOLS_OPERATOR_BINARY and token notin result:
+      result.add(token)
+    depth += token.count('(') - token.count(')')
+
+
+func isParenthesised(name: string): bool =
+  ## Report whether one pair of parentheses encloses whole name.
+  if name.len < 2 or name[0] != '(' or name[^1] != ')': return false
+  var depth = 0
+  for i, c in name:
+    if c == '(': inc depth
+    elif c == ')':
+      dec depth
+      if depth == 0 and i < name.high: return false
+  depth == 0
+
+
+func nameInContext(name, operator_binding: string; is_unary: bool): string =
+  ## Wrap composite operand name in parentheses where template binds it tighter than its
+  ##   own outermost operator; leave atomic or already wrapped name alone.
+  ##   Under postfix or negation, every composite is wrapped: `(a ∧ b)★`. Under binary
+  ##   operator, composite whose only outermost operator is that same associative one
+  ##   stays flat, `a ∧ b ∧ c`; any other is wrapped, `(a ∧ b) ∨ c`, `a - (b - c)`.
+  ##   Not bare substitution, which read `a ∧ b ∨ c` and named another object.
+  if isParenthesised(name): return name
+  let outer = operatorsOutermost(name)
+  if outer.len == 0: return name
+  if not is_unary and outer.len == 1 and outer[0] == operator_binding and
+      operator_binding in SYMBOLS_OPERATOR_ASSOCIATIVE:
+    return name
+  "(" & name & ")"
+
+
 func notationSubstituted*(operation: Operation; name_first, name_second: string): string =
   ## Build label text applied operation reads as, with real operand names in place.
   ##   Substitutes template's `𝐦`/`𝐧`: `Operation.Wedge` with `a`/`b` gives `a ∧ b`.
   ##   Matches bold operands, not plain ASCII `m`/`n`: English description after symbols
   ##   contains ordinary `m` and `n` constantly.
-  ##   Swaps through two passes via sentinel bytes no label contains.
-  ##     Operand name containing placeholder is never re-touched, and template where `𝐧`
-  ##     appears twice (ProjectCentral/ProjectOrthogonal) substitutes both.
+  ##   Walks template token by token, so operand name is inserted once and never rescanned
+  ##   (name containing placeholder survives), and template where `𝐧` appears twice
+  ##   (ProjectCentral/ProjectOrthogonal) substitutes both. Each occurrence is wrapped for
+  ##   its own binding, `nameInContext`: postfix symbol right after it or negation right
+  ##   before it is unary; otherwise binary operator token beside it binds it.
   const
     OPERAND_FIRST = "𝐦"
     OPERAND_SECOND = "𝐧"
-    SENTINEL_M = "\x01"
-    SENTINEL_N = "\x02"
-  let staged = notationSymbolic(operation)
-    .replace(OPERAND_FIRST, SENTINEL_M).replace(OPERAND_SECOND, SENTINEL_N)
-  result = staged.replace(SENTINEL_M, name_first).replace(SENTINEL_N, name_second)
+  var tokens = notationSymbolic(operation).split(' ')
+  for i in 0 ..< tokens.len:
+    let token = tokens[i]
+    let (placeholder, name) =
+      if OPERAND_FIRST in token: (OPERAND_FIRST, name_first)
+      elif OPERAND_SECOND in token: (OPERAND_SECOND, name_second)
+      else: continue
+    let
+      at = token.find(placeholder)
+      before = token[0 ..< at]
+      after = token[at + placeholder.len .. ^1]
+    var is_unary = before.endsWith(SYMBOL_NEGATE)
+    for symbol in SYMBOLS_OPERATOR_POSTFIX:
+      if after.startsWith(symbol): is_unary = true
+    var binding = ""
+    if not is_unary:
+      if i + 1 < tokens.len and tokens[i + 1] in SYMBOLS_OPERATOR_BINARY:
+        binding = tokens[i + 1]
+      elif i > 0 and tokens[i - 1] in SYMBOLS_OPERATOR_BINARY:
+        binding = tokens[i - 1]
+    tokens[i] = before & nameInContext(name, binding, is_unary) & after
+  tokens.join(" ")
 
 
 func applyOperation*(operation: Operation; m, n: Multivector): Multivector =
