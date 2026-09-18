@@ -87,11 +87,12 @@ proc auditTree*(tree: Tree): seq[Finding] =
   ## Run every static check over tree.
   result = tree.checkLayout
 
-  # Driver version is derived from driver project's pin, so it is never stated twice.
+  # Driver version is derived from driver project's pin, so it is never stated twice. Every
+  #   workflow installing compiler, not driver's alone: second one drifts unwatched otherwise.
   let driver = tree.pinOf(DRIVER_DIR)
   if driver.isSome:
     for e in tree:
-      if e.path == WORKFLOW_PATH: result.add checkDriver(e.content, driver.get)
+      if e.path.startsWith(WORKFLOW_DIR): result.add checkDriver(e.path, e.content, driver.get)
 
   # Every workflow, not just driver's: grant its steps outrun is `403` on runner and nothing
   #   readable here.

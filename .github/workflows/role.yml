@@ -1,0 +1,54 @@
+# Hold every pull request to role line and label its branch names, before it can merge.
+#   Rule is first of CONTRIBUTOR.md's carried seven, and it was breaking in ordinary way: of
+#   eleven pull requests opened in day after label rule landed, three carried label their
+#   delegate applied and six opened with no role line at all. `ledger.yml` reads same two
+#   facts, but daily and over open items only: 14 of 123 pull requests merged in week were
+#   open when it sampled, since half of them live under half hour. Sample reports after merge;
+#   this gates before it.
+#
+#   Separate workflow rather than job in `check.yml`, for one reason: this must fire when
+#   label changes, and label is applied after opening. Widening that workflow's types would
+#   re-run its nine jobs on every label event, where this runs one. Cost is that its name is
+#   new, so branch protection needs it added by hand, and until then it reports without
+#   gating (CURATOR.md, repository settings section).
+#   `ready_for_review` is here because draft is where delegate fixes this, and flipping to
+#   ready must re-ask rather than carry draft's verdict.
+#
+#   Body and label names reach koch through environment, never interpolated into script, as
+#   `check.yml` does with branch and event kind: body is whatever somebody typed, and label
+#   names are theirs too. Labels arrive as JSON array, which is what `toJSON` emits and what
+#   koch parses; `join` cannot emit newline, having no escapes.
+#   `permissions` block is whole grant: `contents` is what checkout uses, and nothing else is
+#   needed, since every fact this reads is in event payload already.
+#   Version is driver's pin, as `check.yml` states it, and `toolchain.nim` holds both to it.
+
+name: role
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize, labeled, unlabeled, ready_for_review]
+
+permissions:
+  contents: read
+
+env:
+  NIM_VERSION: '2.2.12'
+
+concurrency:
+  group: role-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  role:
+    runs-on: ubuntu-latest
+    env:
+      BRANCH: ${{ github.head_ref }}
+      ROLE_BODY: ${{ github.event.pull_request.body }}
+      ROLE_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: ${{ env.NIM_VERSION }}
+          parent-nim-install-directory: ${{ runner.temp }}
+      - run: nim r koch role

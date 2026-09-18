@@ -44,7 +44,7 @@ const
   DRIVER_DIR* = "curator/audit"
     ## Project whose pin is driver version, since koch compiles its modules.
   WORKFLOW_PATH* = ".github/workflows/check.yml"
-    ## Workflow naming driver version once.
+    ## Driver's own workflow, which must name driver version; others must agree where they do.
   VERSION_KEY* = "NIM_VERSION:"
     ## Key workflow states driver version under.
   HASH_KEY = "git hash:"
@@ -109,9 +109,14 @@ func workflowVersion*(workflow: string): Option[string] =
   none(string)
 
 
-func checkDriver*(workflow, pin: string): seq[Finding] =
+func checkDriver*(path, workflow, pin: string): seq[Finding] =
   ## Report driver pinned by commit, or workflow version disagreeing with driver's pin.
+  ##   Every workflow installing compiler states version, and each must agree: second copy
+  ##   drifts, which is why `layout.nim` holds README tables to `DOMAINS` as well.
+  ##   Pin itself and absent key are named against driver's own workflow alone, however many
+  ##   state version: both are one fault, and reporting it per file would multiply it.
   if pin.isCommit:
+    if path != WORKFLOW_PATH: return
     return @[finding(
       DRIVER_DIR & "/" & DRIVER_DIR.split('/')[^1] & ".nimble", 0,
       "Driver project pins version, never commit: setup action installs releases only, and " &
@@ -119,13 +124,14 @@ func checkDriver*(workflow, pin: string): seq[Finding] =
     )]
   let stated = workflow.workflowVersion
   if stated.isNone:
+    if path != WORKFLOW_PATH: return
     result.add finding(
-      WORKFLOW_PATH, 0,
+      path, 0,
       "Workflow must state driver version as `" & VERSION_KEY & " '<version>'`; got nothing.",
     )
   elif stated.get != pin:
     result.add finding(
-      WORKFLOW_PATH, 0,
+      path, 0,
       "Driver version must equal `" & DRIVER_DIR & "` pin `" & pin & "`; got `" & stated.get &
         "`.",
     )

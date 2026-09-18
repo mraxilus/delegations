@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | a83bbdc1c17d9788 |
+| Rules   | 6e80b1a8de3ee978 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the Architect's brief, the constitution, the Nim style guide and the provenance
@@ -359,6 +359,34 @@ ladder the rule describes.
   test after its fix, another scope's test, a second fix on one test, a commit between them and
   a revert between them each report one finding.
 
+## Role
+
+**A pull request's opening line and its labels are the role its branch names, and the runner
+holds it to that before the merge.** The role line says who speaks and the label says whose
+work it is; on a pull request both are the branch's own role, so `parseBranch` derives one
+string through `roleName` and the check is equality rather than presence. The two facts arrive
+from the event payload through `ROLE_BODY` and `ROLE_LABELS`, so the job needs no token scope
+and makes no API call, and `role.yml` is separate from `check.yml` because it must fire on a
+label event, which would otherwise re-run nine jobs. An unfilled template opens
+`**Role:** <!-- … -->`, so the line is read with any trailing comment dropped and then fails
+equality rather than passing as a line that names nothing.
+
+- Rejected: the daily read alone. `ledger.yml` sees the same two facts, but samples open items
+  once a day and reports after the merge: of 123 pull requests merged in the week to
+  2026-09-14, 14 were open at any of its runs, since half live under half an hour.
+- Cost: an issue carries no branch, so which label it needs stays a judgement and stays the
+  ledger's; a comment is unreachable, and that is what remains of the first carried rule.
+- Cost: the labels are searched for the expected string rather than compared whole, since a
+  label joins when work hands across and labels are never removed.
+- Cost: `ci` cannot run this verb, having no pull request to read, so it is the one check a
+  delegate meets on the runner rather than before pushing.
+- The echoed line is cut at `ECHO_MAX` runes, since a body may open with a whole paragraph and
+  did: the finding is meant to be read in a log.
+- Verified by `trole.nim` on the line reader, the cut and each arm of the grammar, and by
+  driven check on this repository: two pull requests replayed as they stood before they were
+  mended, with neither line nor label, report both findings each, while four as they stand,
+  two of each role, report none.
+
 ## Assets
 
 **One declaration of every file fetched at build time, in `assets.nim`.** CONTRIBUTOR.md already
@@ -506,8 +534,11 @@ loses.
 **The driver version is derived, never a second pin.** `NIM_VERSION` in `check.yml` builds koch
 and runs the whole-tree pass, and `checkDriver` fails the audit unless it equals
 `curator/audit`'s pin, because koch compiles that project's modules — the same derived-view rule
-`layout.nim` applies to the domain table. Verified by driven check: `NIM_VERSION` of `2.2.6`
-against a `2.2.4` pin reports one finding at the workflow, and restoring it clears.
+`layout.nim` applies to the domain table. Every workflow installing a compiler is held to it,
+not `check.yml` alone, since a second copy drifts; `check.yml` alone must state it, and the
+commit-pin fault is named once however many workflows state a version. Verified by
+`ttoolchain.nim` over both paths, and by driven check: `NIM_VERSION` of `2.2.6` against a
+`2.2.4` pin reports one finding at the workflow, and restoring it clears.
 
 **A pin moves on evidence, and the evidence is a run rather than a release note.** The curator
 projects moved `2.2.4` → `2.2.12` on 2026-09-09, five patch releases and seventeen months, after
