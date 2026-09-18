@@ -61,6 +61,11 @@ type
     restHolds*: bool
     neg*, pos*: Walk
 
+  Carry* = tuple[apart, got, leap: float]
+    ## One walked distance summed up: metres apart couple stood, turns carried
+    ## (`Inf` running free), and furthest any point of held arm moved between
+    ## two moments.
+
 
 iterator stands*(rig: Rig): float =
   ## Every distance couple may stand at, from clear of each other outward.
@@ -232,6 +237,16 @@ func leapOf*(w: Walk): float =
         for (p, q) in [(a.s, b.s), (a.e, b.e), (a.w, b.w), (a.g, b.g)]:
           result = max(result, dist(p, q))
 
+func chosen*(walks: openArray[Carry]): int =
+  ## Which of walked distances couple stand at, -1 for none: one carrying
+  ## furthest, and among those carrying as far, one moving arms least between
+  ## moments, within `SMOOTH`, nearer keeping tie.
+  result = -1
+  for i, c in walks:
+    if result < 0 or c.got > walks[result].got or
+       (c.got == walks[result].got and c.leap < walks[result].leap - SMOOTH):
+      result = i
+
 proc furthest(rig: Rig; band: Band; links: seq[Link]; who: Body;
               most, step: float; away: bool; head: Body): Walk =
   ## Walk one way from whichever distance carries it furthest, and among
@@ -246,20 +261,16 @@ proc furthest(rig: Rig; band: Band; links: seq[Link]; who: Body;
   ##     under arm at.  Couple stand where move is smooth.  Search steps out
   ##     while that improves and stops when it does not, since walking every
   ##     distance that carries free turn costs fifty walks where one did.
-  var far = -Inf
-  var smooth = Inf
+  var
+    walks: seq[Walk]
+    carries: seq[Carry]
   for apart in stands(rig):
     let w = walked(rig, band, links, who, apart, most, step, away, head)
     if not w.restHolds: continue
-    let
-      got = (if w.stopped: w.at else: Inf)
-      leap = leapOf(w)
-    if got > far or (got == far and leap < smooth - SMOOTH):
-      far = got
-      smooth = leap
-      result = w
-    elif got == Inf:
-      break
+    walks.add w
+    carries.add (apart, (if w.stopped: w.at else: Inf), leapOf(w))
+    if carries[^1].got == Inf and chosen(carries) != carries.high: break
+  if carries.len > 0: result = walks[chosen(carries)]
 
 proc swept*(rig: Rig; band: Band; links: seq[Link]; who = Body.Two;
             most = MOST; step = STEP; apart = 0.0; away = false;
