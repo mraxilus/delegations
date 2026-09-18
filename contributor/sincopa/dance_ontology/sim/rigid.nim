@@ -240,6 +240,8 @@ func trunkCapsules*(rig: Rig): seq[tuple[a, z: Vec, r: float]] =
         break
 
 const
+  HANG_BEND = 10.0 * PI / 180.0 ## Elbow of arm hanging free at side: relaxed arm
+                   ## hangs near straight.  Assumed.
   GIRDLE_R = 0.06  ## Radius of shoulder's capsule, neck's side to shoulder joint:
                    ## deltoid and trapezius, estimate and not tape.  Architect's
                    ## to measure.
@@ -296,6 +298,13 @@ func ownGroup(who: Body): cint =
   ##   Engine skips pairs in one negative group.  Arms keep groups of their own,
   ##     so arm still meets its own trunk and other dancer's girdle meets both.
   -(100 + ord(who)).cint
+
+func isHeld(c: Couple; who: Body; arm: Arm): bool =
+  ## Whether this arm's hand is joined to any other.
+  for ln in c.links:
+    for h in ln.ends:
+      if h == (who, arm): return true
+  false
 
 proc capsule(c: var Couple; b: eng.BodyId; who: Body; arm: Arm; mark: Mark;
              a, z: eng.Vec; r, density: float; group: cint) =
@@ -551,7 +560,11 @@ proc armOf(c: var Couple; who: Body; arm: Arm; group: cint): ArmRig =
   hinge.enableSpring = true
   hinge.hertz = EASE.cfloat
   hinge.dampingRatio = EASE_DAMP.cfloat
-  hinge.targetAngle = c.rig.range[Dof.Bend].neutral.cfloat
+  # Held arm rests at soft elbow, rig's neutral; free arm hangs, elbow near
+  # straight, as relaxed arm at side does.  Hanging at thirty, forearm pointed
+  # at partner and free couple at rest stood with arms crossed between them.
+  hinge.targetAngle = (if c.isHeld(who, arm): c.rig.range[Dof.Bend].neutral
+                       else: HANG_BEND).cfloat
   hinge.enableLimit = true
   hinge.lowerAngle = c.rig.range[Dof.Bend].lo.cfloat
   hinge.upperAngle = c.rig.range[Dof.Bend].hi.cfloat
@@ -859,6 +872,10 @@ proc elbowDown(c: Couple) =
   ##     nothing else weight does -- it neither loads raise nor pulls hand down.
   for who in Body:
     for arm in Arm:
+      # Held arm alone: free arm hangs, and fixed newton metre about its near
+      # vertical line twisted it forty degrees and swung it forward twenty,
+      # forearm pointing at partner.
+      if not c.isHeld(who, arm): continue
       let
         a = c.who[who].arm[arm]
         s = asWorld(eng.pointOf(a.link[Limb.Upper], eng.vec(0, 0, 0)))
