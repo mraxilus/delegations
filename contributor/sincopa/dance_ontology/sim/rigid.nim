@@ -30,10 +30,18 @@
 
 {.experimental: "strictFuncs".}
 
-import std/math
+import std/[locks, math]
 
 import ./[body, hold, limb, rig, vec]
 from ./engine as eng import nil
+
+
+var worlds: Lock
+  ## Engine keeps its worlds in one table and makes and destroys them without
+  ## locking, so two threads building couples at once took one slot for two
+  ## worlds and died of illegal instruction inside engine.  Stepping is each
+  ## world's own and needs no lock.
+initLock(worlds)
 
 
 const
@@ -575,7 +583,8 @@ proc build*(rig: Rig; stance: array[Body, Stance]; band: Band;
   wd.contactHertz = CONTACT.cfloat
   wd.enableSleep = false
   wd.enableContinuous = true
-  result.world = eng.createWorld(addr wd)
+  withLock worlds:
+    result.world = eng.createWorld(addr wd)
   result.rig = rig
   result.stance = stance
   # Rest is face to face, or pillion for hold built so, whatever stance couple
@@ -622,8 +631,10 @@ proc chestStance*(c: Couple; who: Body): Stance =
 proc chestStances*(c: Couple): array[Body, Stance] =
   for who in Body: result[who] = c.chestStance(who)
 
-proc free*(c: Couple) = eng.destroyWorld(c.world)
+proc free*(c: Couple) =
   ## Give engine its world back.
+  withLock worlds:
+    eng.destroyWorld(c.world)
 
 
 #[ Turning, and reading what came of it ]#
