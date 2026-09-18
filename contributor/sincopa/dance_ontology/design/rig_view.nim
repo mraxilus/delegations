@@ -24,6 +24,8 @@
 
 import std/[dom, jsffi, math, strutils]
 
+import ./drawn
+
 
 func rig(): JsObject {.importjs: "RIG@".}
 func ctxOf(id: cstring): JsObject {.importjs:
@@ -65,7 +67,6 @@ const
   EL = 0.18     ## And tilt above floor.
 
 type
-  Spot = tuple[x, y, z: float] ## One point in world, metres, z up.
   Framing = tuple[mid: array[3, float], reach: float]
     ## Middle of what one entry covers, and half of how far it spreads.
 
@@ -170,13 +171,21 @@ proc paintOn(cv: JsObject; e: JsObject; at: int; az, el, zoom: float;
       pa = seen(a, az, el, f)
       pz = seen(z, az, el, f)
       r = num(e.rad[i])
-    ctx.lineWidth = (2.0 * r * scale).toJs
-    ctx.strokeStyle = (if mark == 0 or mark == 4: styleOf("--rule-strong")
-                       else: inkOf(num(tag[1]).int, num(tag[0]).int)).toJs
-    discard ctx.beginPath()
-    discard ctx.moveTo(cx + pa.x * scale, cy + pa.y * scale)
-    discard ctx.lineTo(cx + pz.x * scale, cy + pz.y * scale)
-    discard ctx.stroke()
+      ink = (if mark == 0 or mark == 4: styleOf("--rule-strong")
+             else: inkOf(num(tag[1]).int, num(tag[0]).int))
+    case drawnAs(a, z)
+    of Drawn.Stroke:
+      ctx.lineWidth = (2.0 * r * scale).toJs
+      ctx.strokeStyle = ink.toJs
+      discard ctx.beginPath()
+      discard ctx.moveTo(cx + pa.x * scale, cy + pa.y * scale)
+      discard ctx.lineTo(cx + pz.x * scale, cy + pz.y * scale)
+      discard ctx.stroke()
+    of Drawn.Disc:
+      ctx.fillStyle = ink.toJs
+      discard ctx.beginPath()
+      discard ctx.arc(cx + pa.x * scale, cy + pa.y * scale, r * scale, 0.0, 2.0 * PI)
+      discard ctx.fill()
 
   # Which way each dancer looks.  Capsules cannot say: torso's section is
   # symmetric front to back and head is sphere, so without this nothing on
