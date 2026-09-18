@@ -108,6 +108,92 @@ export async function driveLabelGlide(page: Page): Promise<void> {
   await page.evaluate(() => clearSelection());
 }
 
+/** Where first overlay label's box stands, and window it must stay inside. */
+interface Box {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+  width: number;
+  height: number;
+}
+
+/** Read first overlay label's box, or nothing where overlay carries none. */
+async function labelBox(page: Page): Promise<Box | null> {
+  return page.evaluate(() => {
+    const text = document.querySelector('#overlay text') as SVGTextElement | null;
+    const rect = (document.getElementById('gl') as HTMLElement).getBoundingClientRect();
+    if (text === null) return null;
+    const box = text.getBBox();
+    return {
+      left: box.x, top: box.y, right: box.x + box.width, bottom: box.y + box.height,
+      width: rect.width, height: rect.height,
+    };
+  });
+}
+
+/** Drive orbit at phone width with horizon line selected, and assert its label stays whole.
+ *
+ *  Horizon line's label stands above its band's topmost point wherever that falls, and on
+ *  narrow page it fell at right edge, name cut. Two elevations, since band's top wanders
+ *  across whole width as camera rises. Runs over demo, whose ecliptic gives horizon line;
+ *  whole camera is put back after, as far-sky check does, since zoom check following
+ *  reads its opening distance off wherever camera stands.
+ */
+export async function driveLabelHeldInView(page: Page): Promise<void> {
+  await clearTheGlass(page);
+  await page.evaluate(() => clearSelection());
+  const before = await page.evaluate(() => ({
+    pivot: Array.from(nimCameraPivot()), distance: nimCameraDistance(),
+    azimuth: nimCameraAzimuth(), elevation: nimCameraElevation(),
+  }));
+  const line = await page.evaluate(
+    () => nimSceneHandles().find((one) => nimObjectKindWord(one) === 'horizon line') ?? -1,
+  );
+  if (line < 0) {
+    report('the scene holds a horizon line to select', false, 'none');
+    return;
+  }
+  await page.setViewportSize({ width: 393, height: 560 });
+  await page.evaluate((one) => selectOnly(one, null), line);
+  await settleCamera(page);
+  let frames = 0, cut = 0, worst = 0;
+  for (const elevation of [0.2, 0.9]) {
+    for (let i = 0; i < 48; i += 1) {
+      await page.evaluate((given) => {
+        nimSetCameraPivot(0, 0, 0);
+        nimSetCameraDistance(19);
+        nimSetCameraAzimuth(given.azimuth);
+        nimSetCameraElevation(given.elevation);
+      }, { azimuth: (i / 48) * 2 * Math.PI, elevation });
+      await waitFrames(page, 2);
+      const box = await labelBox(page);
+      if (box === null) continue;
+      frames += 1;
+      const over = Math.max(
+        -box.left, box.right - box.width, -box.top, box.bottom - box.height,
+      );
+      if (over > 0) cut += 1;
+      worst = Math.max(worst, over);
+    }
+  }
+  report(
+    "a horizon line's label stays whole inside a phone-width page through two orbits",
+    frames >= 48 && cut === 0,
+    `${frames} frames with a label, ${cut} with its box past an edge, worst ` +
+      `${worst.toFixed(1)} px over`,
+  );
+  await page.evaluate(() => clearSelection());
+  await page.setViewportSize({ width: 1200, height: 900 });
+  await page.evaluate((given) => {
+    nimSetCameraPivot(given.pivot[0] ?? 0, given.pivot[1] ?? 0, given.pivot[2] ?? 0);
+    nimSetCameraDistance(given.distance);
+    nimSetCameraAzimuth(given.azimuth);
+    nimSetCameraElevation(given.elevation);
+  }, before);
+  await settleCamera(page);
+}
+
 /** Drive two picks, and assert each wears its own name above its marker. */
 export async function driveLabelWorn(page: Page): Promise<void> {
   const points = await page.evaluate(

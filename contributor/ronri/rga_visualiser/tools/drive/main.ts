@@ -24,7 +24,7 @@ import { driveMessageGoes } from './message';
 import {
   drivePanWhileSelected, drivePickOrbit, drivePlanePick, drivePointerPick,
 } from './framing';
-import { driveLabelGlide, driveLabelWorn } from './label';
+import { driveLabelGlide, driveLabelHeldInView, driveLabelWorn } from './label';
 import { driveChipRowFits, driveHelp, driveHoverDuringGesture } from './chrome';
 import { driveTypeDrawn, driveTypeLigatures, driveTypeRoles } from './type';
 import { driveCreep, drivePlaneBuilt, driveRuler } from './finger';
@@ -209,6 +209,7 @@ async function main(): Promise<void> {
   await driveOccluded(page);
   await driveFarSky(page);
   await driveDiscUnderfoot(page);
+  await driveLabelHeldInView(page);
   await driveZoomLoaded(page);
   await driveTimelineCost(page, objects_largest);
   await drivePlacingCost(page, objects_largest);
