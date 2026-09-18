@@ -132,13 +132,15 @@ async function labelBox(page: Page): Promise<Box | null> {
   });
 }
 
-/** Drive orbit at phone width with horizon line selected, and assert its label stays whole.
+/** Drive orbit at phone width with horizon line selected, and assert its label stays whole,
+ *  at its left, and never swaps sides.
  *
- *  Horizon line's label stands above its band's topmost point wherever that falls, and on
- *  narrow page it fell at right edge, name cut. Two elevations, since band's top wanders
- *  across whole width as camera rises. Runs over demo, whose ecliptic gives horizon line;
- *  whole camera is put back after, as far-sky check does, since zoom check following
- *  reads its opening distance off wherever camera stands.
+ *  Horizon line's label stood above its band's topmost point wherever that fell: on narrow
+ *  page it fell at right edge, name cut, and on level horizon it hopped between two side
+ *  edges frame to frame. It now rides band's crossing of left edge. Two elevations, since
+ *  band's crossing wanders down whole height as camera rises. Runs over demo, whose
+ *  ecliptic gives horizon line; whole camera is put back after, as far-sky check does,
+ *  since zoom check following reads its opening distance off wherever camera stands.
  */
 export async function driveLabelHeldInView(page: Page): Promise<void> {
   await clearTheGlass(page);
@@ -157,8 +159,9 @@ export async function driveLabelHeldInView(page: Page): Promise<void> {
   await page.setViewportSize({ width: 393, height: 560 });
   await page.evaluate((one) => selectOnly(one, null), line);
   await settleCamera(page);
-  let frames = 0, cut = 0, worst = 0;
+  let frames = 0, cut = 0, worst = 0, swaps = 0, right = 0;
   for (const elevation of [0.2, 0.9]) {
+    let centre_before: number | null = null;
     for (let i = 0; i < 48; i += 1) {
       await page.evaluate((given) => {
         nimSetCameraPivot(0, 0, 0);
@@ -168,20 +171,31 @@ export async function driveLabelHeldInView(page: Page): Promise<void> {
       }, { azimuth: (i / 48) * 2 * Math.PI, elevation });
       await waitFrames(page, 2);
       const box = await labelBox(page);
-      if (box === null) continue;
+      if (box === null) {
+        centre_before = null;
+        continue;
+      }
       frames += 1;
       const over = Math.max(
         -box.left, box.right - box.width, -box.top, box.bottom - box.height,
       );
       if (over > 0) cut += 1;
       worst = Math.max(worst, over);
+      // Side swap is centre crossing quarter of width in one frame; glide never does.
+      const centre = 0.5*(box.left + box.right);
+      if (centre > 0.5*box.width) right += 1;
+      if (centre_before !== null && Math.abs(centre - centre_before) > 0.25*box.width) {
+        swaps += 1;
+      }
+      centre_before = centre;
     }
   }
   report(
-    "a horizon line's label stays whole inside a phone-width page through two orbits",
-    frames >= 48 && cut === 0,
+    "a horizon line's label stays whole inside a phone-width page, on its left, through" +
+      " two orbits without swapping sides",
+    frames >= 48 && cut === 0 && swaps === 0 && right === 0,
     `${frames} frames with a label, ${cut} with its box past an edge, worst ` +
-      `${worst.toFixed(1)} px over`,
+      `${worst.toFixed(1)} px over, ${swaps} side swaps, ${right} on the right`,
   );
   await page.evaluate(() => clearSelection());
   await page.setViewportSize({ width: 1200, height: 900 });
@@ -192,6 +206,45 @@ export async function driveLabelHeldInView(page: Page): Promise<void> {
     nimSetCameraElevation(given.elevation);
   }, before);
   await settleCamera(page);
+}
+
+/** How far in from view's left and bottom edges frame's label box may stand, in pixels. */
+const PIXELS_CORNER_LABEL = 56;
+
+/** Drive horizon plane's selection, and assert its label stands inside frame's bottom-left corner.
+ *
+ *  Frame is whole view, so label has no top to sit above; it stood centred inside top
+ *  edge, under chip row's controls. Anchor is on frame's left edge, pushed rightward by
+ *  page's own measured text, `MARGIN_LABEL_FOOT` up, clear of scale bar in that corner.
+ */
+export async function driveFrameLabelCorner(page: Page): Promise<void> {
+  await clearTheGlass(page);
+  await page.evaluate(() => clearSelection());
+  const plane = await page.evaluate(
+    () => nimSceneHandles().find((one) => nimObjectKindWord(one) === 'horizon plane') ?? -1,
+  );
+  if (plane < 0) {
+    report('the scene holds a horizon plane to select', false, 'none');
+    return;
+  }
+  await page.evaluate((one) => selectOnly(one, null), plane);
+  await settleCamera(page);
+  await waitFrames(page, 2);
+  const box = await labelBox(page);
+  const ruler = await page.evaluate(() => {
+    const bar = document.querySelector('.ruler');
+    return bar === null ? null : bar.getBoundingClientRect().top;
+  });
+  report(
+    "a horizon plane's label stands inside the frame's bottom-left corner, above the scale bar",
+    box !== null && box.left > 0 && box.left < PIXELS_CORNER_LABEL
+      && box.bottom < box.height && box.bottom > box.height - PIXELS_CORNER_LABEL
+      && (ruler === null || box.bottom <= ruler),
+    box === null ? 'no label' : `box ${box.left.toFixed(0)}..${box.right.toFixed(0)} across,`
+      + ` ${box.top.toFixed(0)}..${box.bottom.toFixed(0)} down, in ${box.width} by`
+      + ` ${box.height}; scale bar's top at ${ruler === null ? 'none' : ruler.toFixed(0)}`,
+  );
+  await page.evaluate(() => clearSelection());
 }
 
 /** Drive two picks, and assert each wears its own name above its marker. */

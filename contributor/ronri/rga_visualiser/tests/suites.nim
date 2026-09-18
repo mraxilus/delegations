@@ -7389,6 +7389,41 @@ suite "Marker":
         azimuth += 0.002
 
 
+  test "a horizon line's label rides its band's left edge crossing through an orbit":
+    # Highest point of either band hopped between view's two side edges, whose crossings.
+    #   stand within pixel in height on level horizon, so label swapped sides frame to
+    #   frame. Leftmost point is crossing on left edge itself, which glides.
+    for elevation in [0.2, 0.4]:
+      var
+        at_before = none(ScreenPosition)
+        count_labelled = 0
+        azimuth = 0.0
+      while azimuth < 2.0*PI:
+        let (placement, view_projection, scale) = setUpAt(azimuth, elevation, 19.0)
+        let bands = shapedMarkerFor(
+          LINE_HORIZON, none(Position), scale, placement, view_projection, WIDTH_MARK,
+          HEIGHT_MARK,
+        )
+        azimuth += 0.02
+        if bands.isNone or not bands.get.has_label:
+          at_before = none(ScreenPosition)
+          continue
+        inc count_labelled
+        let at = bands.get.label_at
+        # Margin right of leftmost point either band shows, and in view. Not left half of
+        #   view: tilted horizon here leaves through top or bottom edge on right at some
+        #   azimuths, and whole visible stretch stands right of centre.
+        check at.x >= 12.0 - TOLERANCE_TEST and at.x <= float(WIDTH_MARK)
+        for side in 0 .. 1:
+          for i in 0 ..< bands.get.counts_band[side]:
+            check bands.get.points_band[side][i].x >=
+              at.x - 12.0 - 0.5 - TOLERANCE_TEST
+        if at_before.isSome:
+          check hypot(at.x - at_before.get.x, at.y - at_before.get.y) < 40.0
+        at_before = some(at)
+      check count_labelled > 0
+
+
   test "a line's label stays in view when its support leaves it":
     # Camera looks twelve units along line from support: support projects off screen, or.
     #   behind eye, while line still crosses view. Anchor slides to visible stretch,
@@ -7452,9 +7487,9 @@ suite "Marker":
 
   test "every marker places its name label above its own top, clear of the outline":
     # Where label sits is marker's decision, so both front-ends agree by construction.
-    #   Ring: above its top. Rails: on line at support, pushed to line's left. Loop and
-    #   bands: above highest outline point. Frame is whole view, so label sits just inside
-    #   top edge.
+    #   Ring: above its top. Rails: on line at support, pushed to line's left. Loop: above
+    #   highest outline point. Bands: above leftmost, pushed in from edge. Frame is whole
+    #   view, so label stands inside its bottom-left corner, in from edge, pushed rightward.
     let lift = GAP_MARKER + 0.5*HEIGHT_MARKER_LABEL
     let ring = markerOf(POINT_A).get
     check ring.has_label
@@ -7486,10 +7521,19 @@ suite "Marker":
     )
     check abs((along.x - support.x)*rails.label_away_x + (along.y - support.y)*rails.label_away_y) <
       1.0e-6*hypot(along.x - support.x, along.y - support.y)
+    let bands = markerOf(LINE_HORIZON).get
+    check bands.kind == MarkerKind.Bands and bands.has_label and bands.is_label_beside
+    check bands.label_away_x =~ 1.0 and bands.label_away_y =~ 0.0
+    for side in 0 .. 1:
+      for i in 0 ..< bands.counts_band[side]:
+        check bands.points_band[side][i].x >=
+          bands.label_at.x - 12.0 - 0.5 - TOLERANCE_TEST
     let frame = markerOf(PLANE_HORIZON).get
-    check frame.kind == MarkerKind.Frame and frame.has_label
-    check frame.label_at.x =~ 0.5*float(WIDTH_MARK)
-    check frame.label_at.y > 0.0 and frame.label_at.y < 3.0*lift
+    check frame.kind == MarkerKind.Frame and frame.has_label and frame.is_label_beside
+    check frame.label_at.x =~ GAP_MARKER + 12.0
+    check frame.label_at.y =~
+      float(HEIGHT_MARK) - 40.0 - 12.0 - 0.5*HEIGHT_MARKER_LABEL
+    check frame.label_away_x =~ 1.0 and frame.label_away_y =~ 0.0
 
 
   test "a marker at full progress is exactly the marker drawn with no progress asked for":
