@@ -69,7 +69,6 @@ void main() {
   vec3 at = in_centre + in_corner.x*radius*axis_right + in_corner.y*radius*axis_up;
   gl_Position = view_projection*vec4(at, 1.0);
   vertex_depth = gl_Position.w;
-  gl_Position.z = (log2(max(gl_Position.w, 1e-30)/depth_near)*depth_log - 1.0)*gl_Position.w;
   vertex_colour = in_colour;
   vertex_corner = in_corner;
   vertex_radius_pixels = radius/world_per_pixel;
@@ -182,7 +181,6 @@ void main() {
   at += in_corner.y*0.5*in_width*world_per_pixel*across;
   gl_Position = view_projection*vec4(at, 1.0);
   vertex_depth = gl_Position.w;
-  gl_Position.z = (log2(max(gl_Position.w, 1e-30)/depth_near)*depth_log - 1.0)*gl_Position.w;
   vertex_world = at;
   vertex_colour = mix(tint_near, tint_far, in_corner.x);
 }
@@ -248,7 +246,6 @@ void main() {
   vec3 at = in_centre + in_corner.x*in_arm_first + in_corner.y*in_arm_second;
   gl_Position = view_projection*vec4(at, 1.0);
   vertex_depth = gl_Position.w;
-  gl_Position.z = (log2(max(gl_Position.w, 1e-30)/depth_near)*depth_log - 1.0)*gl_Position.w;
   vertex_colour = in_fill;
 }
 """ ## Fan one disc record over static corner buffer, on GPU.
@@ -272,7 +269,6 @@ void main() {
   vec3 at = in_centre_radius.xyz + in_centre_radius.w*in_unit;
   gl_Position = view_projection*vec4(at, 1.0);
   vertex_depth = gl_Position.w;
-  gl_Position.z = (log2(max(gl_Position.w, 1e-30)/depth_near)*depth_log - 1.0)*gl_Position.w;
   vertex_colour = in_tint;
 }
 """ ## Widen one dome record over static unit sphere, on GPU.
@@ -327,7 +323,6 @@ void main() {
   at += in_corner.y*0.5*in_width*world_per_pixel*across;
   gl_Position = view_projection*vec4(at, 1.0);
   vertex_depth = gl_Position.w;
-  gl_Position.z = (log2(max(gl_Position.w, 1e-30)/depth_near)*depth_log - 1.0)*gl_Position.w;
   vertex_colour = in_fill;
 }
 """ ## Widen one ring record into whole plane rim, on GPU.

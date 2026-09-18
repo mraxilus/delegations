@@ -67,7 +67,6 @@ const SOURCE_VERTEX_POINT = `
     vec3 at = aCentre + aCorner.x*radius*uRight + aCorner.y*radius*uUp;
     gl_Position = uMVP*vec4(at, 1.0);
     vDepth = gl_Position.w;
-    gl_Position.z = (log2(max(gl_Position.w, 1e-30)/uDepthNear)*uDepthLog - 1.0)*gl_Position.w;
     vColor = aColor;
     vCorner = aCorner;
     vRadiusPixels = radius/world_per_pixel;
@@ -144,8 +143,11 @@ function createdBuffer(): WebGLBuffer {
   return made;
 }
 // Ask for per-fragment depth before any shader compiles, so `#extension` in each fragment
-//   source finds it. Without it every fragment stage falls back to depth interpolated from
-//   its vertices, exact for point and disc and off along long ribbon; see `camera.depthOf`.
+//   source finds it. Without it depth stays what clip position gives, linear in projective
+//   depth, and far field's fault returns; see `camera.depthOf`.
+//   Clip position itself is never rewritten with logarithm: clipper interpolates clip
+//   coordinates linearly, so fan corner behind eye, mapped far past far plane, had its
+//   triangle cut beside its centre and plane's disc ended at hard chord under camera.
 gl.getExtension('EXT_frag_depth');
 const program = createdProgram();
 gl.attachShader(program, compileShader(gl.VERTEX_SHADER, SOURCE_VERTEX_POINT));
@@ -245,7 +247,6 @@ const SOURCE_VERTEX_RIBBON = `
     at += aCorner.y*0.5*aWidth*world_per_pixel*across;
     gl_Position = uMVP*vec4(at, 1.0);
     vDepth = gl_Position.w;
-    gl_Position.z = (log2(max(gl_Position.w, 1e-30)/uDepthNear)*uDepthLog - 1.0)*gl_Position.w;
     vWorld = at;
     vColor = mix(tint_near, tint_far, aCorner.x);
   }
@@ -341,7 +342,6 @@ const SOURCE_VERTEX_DISC = `
     vec3 at = aCentre + aCorner.x*aArmFirst + aCorner.y*aArmSecond;
     gl_Position = uMVP*vec4(at, 1.0);
     vDepth = gl_Position.w;
-    gl_Position.z = (log2(max(gl_Position.w, 1e-30)/uDepthNear)*uDepthLog - 1.0)*gl_Position.w;
     vColor = aFill;
   }
 `;
@@ -360,7 +360,6 @@ const SOURCE_VERTEX_DOME = `
     vec3 at = aCentreRadius.xyz + aCentreRadius.w*aUnit;
     gl_Position = uMVP*vec4(at, 1.0);
     vDepth = gl_Position.w;
-    gl_Position.z = (log2(max(gl_Position.w, 1e-30)/uDepthNear)*uDepthLog - 1.0)*gl_Position.w;
     vColor = aTint;
   }
 `;
@@ -424,7 +423,6 @@ const SOURCE_VERTEX_RING = `
     at += aCorner.y*0.5*aWidth*world_per_pixel*across;
     gl_Position = uMVP*vec4(at, 1.0);
     vDepth = gl_Position.w;
-    gl_Position.z = (log2(max(gl_Position.w, 1e-30)/uDepthNear)*uDepthLog - 1.0)*gl_Position.w;
     vColor = aFill;
   }
 `;

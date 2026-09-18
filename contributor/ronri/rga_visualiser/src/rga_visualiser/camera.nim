@@ -256,11 +256,15 @@ func depthOf*(camera: Camera, depth: float): float =
   ##     fell into buffer's last steps, and on device with coarse depth every object past
   ##     few hundred thousand units failed test and vanished, while sixteen-bit buffer
   ##     could not hold moon before its planet at same time.
-  ##   Reference of every vertex and fragment shader on both front-ends: each writes
-  ##   this of its own view depth, per fragment where `EXT_frag_depth` or GL 3.3 lets
-  ##   it, per vertex where not. Suite pins this against sixteen-bit step for moon before
-  ##   planet, star before sky, and monotone across every decade scene spans.
-  ##   Below near maps under -1 and past far over 1, so both planes still clip.
+  ##   Reference of every fragment shader on both front-ends: each writes this of its own
+  ##   view depth, through `EXT_frag_depth` or GL 3.3's `gl_FragDepth`. Page without
+  ##   extension keeps linear depth. Suite pins this against sixteen-bit step for moon
+  ##   before planet, star before sky, and monotone across every decade scene spans.
+  ##   Fragment only, never clip position: clipper interpolates clip coordinates linearly
+  ##   and cuts where interpolated depth meets plane, so corner behind eye mapped far past
+  ##   far plane had its triangle cut beside its front corner, and plane's disc ended at
+  ##   hard chord under camera standing inside it. Projective clip depth keeps near and far
+  ##   cuts where they belong; driven check reads disc under camera.
   log2(depth/camera.distanceNear)*camera.depthLogScale - 1.0
 
 
