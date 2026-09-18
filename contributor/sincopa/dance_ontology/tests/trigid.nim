@@ -719,6 +719,28 @@ suite "every still stands at ease":
     check nearest >= 2.0 * HUMAN.limb
     c.free()
 
+  test "free couple wound half a turn hang their arms by their sides":
+    ## Same, wound to A2: her arms come along with her turn and hang again once
+    ## it stops.  Before this, shoulder's spring at one hertz held hanging arm
+    ## with two newton metres per radian, and her arms lagged her slow half
+    ## turn by twenty five and forty nine degrees, then crept back through
+    ## settle to eighteen and thirty three, hand 413 mm off plumb -- flank's
+    ## friction against spring nothing like weight of arm.
+    for turns in [-0.5, 0.5]:
+      let (holds, c) = stood(HUMAN, Band.Crown, FREE, turns, false, Body.Two, 0.48)
+      check holds
+      for who in Body:
+        for arm in Arm:
+          let
+            j = c.jointsOf(who, arm).j
+            p = c.armPoseOf(who, arm)
+            hang = p.g - p.s
+          echo &"    wound {turns:+.1f} {who} {arm}: extend {j.extend * 180.0 / PI:.1f}, " &
+            &"hand {sqrt(hang.x * hang.x + hang.y * hang.y) * 1000:.0f} mm off plumb"
+          check abs(j.extend) <= 10.0 * RAD
+          check sqrt(hang.x * hang.x + hang.y * hang.y) <= 0.2
+      c.free()
+
   test "no capsule of any arm sits in any other, hands joined, no joint parted":
     ## Read against every capsule engine collides, with distance worked out here
     ## and not engine's manifolds, so engine is not asked to mark its own work.
