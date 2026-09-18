@@ -551,27 +551,39 @@ couple walked straight out of it: the rest-chosen distance turned 0.22 where 0.3
 Every distance from clear of each other (`CLEAR`) outward over a metre (`ROOM`), two centimetres
 apart (`SEEK`, since the measured landscape is plateaus four centimetres wide), is swept whole; a
 card that asks whether the couple carry a turn (`reaches`) is answered at the first distance that
-does, and a sweep shown for its own sake (`furthest`) stands where the turn carries furthest, ties
-broken toward the stance whose arms move least between moments, within five millimetres (`SMOOTH`,
-the engine not being exactly mirror symmetric), nearer keeping the tie -- since the nearest distance
-that carried a turn was chest to chest, with joined hands pinned between the torsos and popping up
-between the heads. A still stands where its pose sits easiest: every distance is wound to it and the
-one nearest to ease is kept, a distance at ease outright ending the search and the nearer keeping a
-tie, since the first distance that held was chest to chest and a couple asked pillion there had her
-free arm crushed between two torsos, shoulder at its rope's end, twist at its end, waist at forty,
-with nothing held. Strain is read as the worst over every joint of every arm, both waists and every
-collarbone's two swings (`strainOf`, `Strain`): nought outside every ease, one at some end, more
-past it, a stop with no ease costing nothing to lean on and counting only past half a degree
-(`SLACK`, the engine solving its limits rather than clamping them). A still whose card fixes no way
-about -- the standard diagram's frames turned half a turn, which draw the same picture turned either
-way -- is wound either way at every distance and takes whichever way sits easier (`either`), since
-the card claims a position and not a path: the single hold wound the way asked stood at 0.48 m with
-her twist a third of the way into its ease, and the other way about at 0.36 m at ease outright.
+does, and a sweep shown for its own sake (`furthest`) stands at the nearest distance that carries
+the turn as far as any to one step (`chosen`), stepping out only for a stance whose arms move less
+than half as far between moments (`SMOOTHER`), and looking a tenth of a metre on once the turn runs
+free (`LOOK`) -- since the nearest distance that carried a turn was chest to chest, with joined
+hands pinned between the torsos and popping up between the heads: 189 mm in one moment at 0.36 m
+over the crown against 86 mm at 0.42, measured 2026-09-18. To one step, since a stop is decided at
+the moment something gives and mirror-image holds give a moment apart from the same distance: exact,
+L-l stood at 0.42 m for 1.00 of a turn at the neck and R-r at 0.38 m for 0.98. The tie had been
+broken toward the stance whose arms moved least, within five millimetres, and the largest leap of a
+walk is chaotic: seen in mirror it differs by up to a fifth, and built from the same source by
+another compiler by up to thirty five per cent (125 and 114 mm from one distance, 121 and 163 from
+another), the last bits of two binaries differing and the engine amplifying them. Five millimetres
+stood L-l at 0.44 m and R-r at 0.48 for one hold seen in mirror, and would have stood one hold two
+steps apart built twice. Verified by `trigid.nim`: the sums measured that day, put to `chosen`,
+stand within one step for the mirror pair, for the pair built twice and for the neck pair whose turn
+reached differs by a step, and the stance over the crown steps out from the pinned hands to under
+half their leap; red first. A still stands where its pose sits easiest: every distance is wound to
+it and the one nearest to ease is kept, a distance at ease outright ending the search and the nearer
+keeping a tie, since the first distance that held was chest to chest and a couple asked pillion
+there had her free arm crushed between two torsos, shoulder at its rope's end, twist at its end,
+waist at forty, with nothing held. Strain is read as the worst over every joint of every arm, both
+waists and every collarbone's two swings (`strainOf`, `Strain`): nought outside every ease, one at
+some end, more past it, a stop with no ease costing nothing to lean on and counting only past half a
+degree (`SLACK`, the engine solving its limits rather than clamping them). A still whose card fixes
+no way about -- the standard diagram's frames turned half a turn, which draw the same picture turned
+either way -- is wound either way at every distance and takes whichever way sits easier (`either`),
+since the card claims a position and not a path: the single hold wound the way asked stood at 0.48 m
+with her twist a third of the way into its ease, and the other way about at 0.36 m at ease outright.
 Verified by `trigid.nim`: the free way is never worse than the way asked, and is at ease, red first.
 Rejected: ranking distances on a cheaper physics and sweeping only the winner, which costs a fifth
-as much and does not rank them the same. Verified by `trigid.nim`: no distance carries a turn
-further than the one chosen, the couple are never offered a place inside each other, and the mirror
-law holds turn reached within one step and what stopped it exact.
+as much and does not rank them the same. Verified by `trigid.nim`: no distance carries a turn more
+than one step further than the one chosen, the couple are never offered a place inside each other,
+and the mirror law holds turn reached within one step and what stopped it exact.
 
 **A still is wound, not built.** A card that draws the couple at half a turn or a turn and a half
 draws a winding of the arms, and no facing says that: built at the facing, the couple at a whole
