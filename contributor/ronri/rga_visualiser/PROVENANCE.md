@@ -902,13 +902,11 @@ that replaces the camera value would drop a stored one.
 `camera.depthOf` of its own view depth, `log2(D / near) / log2(far / near)` scaled to clip depth,
 through `EXT_frag_depth` or GL 3.3's `gl_FragDepth`, so resolution is a fixed fraction of distance
 at every distance. Not linear depth with the near plane raised to hold the ratio at 100,000: that
-spent nearly every step inside the first orbit distances, and with the far plane at a star field
-millions of units out the field and the dome fell into the last steps, where an Android GPU dropped
-the whole field from beside a far star. Not the logarithm in the clip position either: the clipper
-interpolates clip coordinates linearly, so a fan corner behind the eye, mapped far past the far
-plane, had its triangle cut beside the disc's centre, and the disc ended at a hard chord under a
-camera standing inside it. The near plane stays at 1/400 of the orbit distance whatever the far
-plane reaches, so nothing between eye and pivot clips.
+spent nearly every step inside the first orbit distances, and an Android GPU dropped the whole star
+field from beside a far star. Never in the clip position: the clipper interpolates clip coordinates
+linearly and cut a corner behind the eye beside its front corner, the disc ending at a hard chord.
+The near plane stays at 1/400 of the orbit distance whatever the far plane reaches, so nothing
+between eye and pivot clips.
 
 **The wheel zooms toward what the pointer is over** — the map reading of a zoom.
 `picking.anchorZoomAt` solves the anchor in three answers, in order: the finite object under
@@ -950,14 +948,15 @@ work in fractions of canvas width.
 *Checked.* Verified by `suites.nim`: the logarithmic depth maps near to −1 and far to +1, is
 monotone across every decade the demo spans, and keeps Io before Jupiter and a star before the dome
 by more than a 16-bit step. Verified by driven checks: the sky is drawn behind a far star, and the
-ecliptic's disc reaches under a camera 1.5 units off Sol. Verified by driven wheel events: an object
-under the pointer drifts 0.000 px across a 3.2× zoom against 1.957 px with the pivot-level anchor,
-and wheeling back out returns to distance 19.000 and pivot (0, 0, 1). Verified by driven drags:
-1.000 to 1.000 of height, mouse and two-finger alike. Verified by `suites.nim`: `norm(eye − pivot)`
-equals the held distance after a floored dolly; the pan's height invariance; the clamp's continuity;
-the reach stamped at every derivation point, which the undo-while-held check caught missing.
-Verified by driven keys: 500 ms of `w` moved the pivot 12.8 units with z unchanged to four decimals,
-shift 49.3. Assumed: that no ceiling is wanted by any reader.
+ecliptic's disc reaches under a camera 1.5 units off Sol, 0.3 and 0.0003 rad up. Verified by driven
+wheel events: an object under the pointer drifts 0.000 px across a 3.2× zoom against 1.957 px with
+the pivot-level anchor, and wheeling back out returns to distance 19.000 and pivot (0, 0, 1).
+Verified by driven drags: 1.000 to 1.000 of height, mouse and two-finger alike. Verified by
+`suites.nim`: `norm(eye − pivot)` equals the held distance after a floored dolly; the pan's height
+invariance; the clamp's continuity; the reach stamped at every derivation point, which the
+undo-while-held check caught missing. Verified by driven keys: 500 ms of `w` moved the pivot 12.8
+units with z unchanged to four decimals, shift 49.3. Assumed: that no ceiling is wanted by any
+reader.
 
 ## Records And Shaders
 
@@ -977,18 +976,22 @@ is its reference in Nim (sibling-marked with both shader sources), and the suite
 reference to the algebra — the near clip equal to `clipToEyeSide`, the across equal to the
 join `directionNormal(tail ∧ head ∧ eye)`, sign included.
 
-**A plane's fill, its rim and the sky are one record each.** A 13-float `DiscRecord` fans
-over a static unit-circle corner buffer; an 8-float `DomeRecord` widens over a static unit
-sphere, which has no orientation; a 14-float `RingRecord` is a disc's thirteen plus a width,
-one instance drawing the whole circle. The static corner tables come from one generator each
-in `mesh`, read by the desktop directly and by the browser through `nim*Corners`, so neither
-front-end holds a table that could drift from the references, which the suite pins to the
-multivector sums they replaced. `ribbonOfRing` derives the very `RibbonRecord` a rim segment
-would have been, so a rim is widened by the one rule every line is. The rim steps off
-`UNIT_CIRCLE_RIM`, resolved at start-up with the runtime's own `cos`/`sin`, not at compile
-time, whose evaluator need not agree with each backend's libm in the last bit. The rim as
-one record is what the demo frame turns on: 96 ribbon records per plane were 99.2% of ribbon
-traffic on 132 planes, and the demo's median frame went 239 → 84 ms under SwiftShader.
+**A plane's fill, its rim and the sky are one record each.** A 13-float `DiscRecord` is spanned over
+the view box of its bounding sphere, `viewBoxOfDisc`, on the static unit-circle corner buffer, and
+every fragment casts its own ray at the plane, `hitDiscAlong`, so the disc is exact at any grazing
+angle and agrees with `picking.rayPlaneHit`. Not a fan of corners on the plane: a corner behind the
+eye left the clipper a sliver that rasterised to nothing under a camera within 0.06° of the plane,
+and the disc ended at a hard chord. An 8-float `DomeRecord` widens over a static unit sphere, which
+has no orientation; a 14-float `RingRecord` is a disc's thirteen plus a width, one instance drawing
+the whole circle. The static corner tables come from one generator each in `mesh`, read by the
+desktop directly and by the browser through `nim*Corners`, so neither front-end holds a table that
+could drift from the references, which the suite pins to the multivector sums they replaced.
+`ribbonOfRing` derives the very `RibbonRecord` a rim segment would have been, so a rim is widened by
+the one rule every line is. The rim steps off `UNIT_CIRCLE_RIM`, resolved at start-up with the
+runtime's own `cos`/`sin`, not at compile time, whose evaluator need not agree with each backend's
+libm in the last bit. The rim as one record is what the demo frame turns on: 96 ribbon records per
+plane were 99.2% of ribbon traffic on 132 planes, and the demo's median frame went 239 → 84 ms under
+SwiftShader.
 
 **Every record's position is stored about the frame's origin**, the camera's pivot (see
 Camera); the suite pins the five writers against an origin a million units off.
@@ -1020,9 +1023,11 @@ behind three `importjs` lines, allocated once at its mesh's cap and never grown;
 hands back a `subarray` view, no copy. Measured at 0.1 ms a frame. Draw order in the
 browser scripts mirrors `renderer.nim` and is kept in step by hand.
 
-*Checked.* Verified by `suites.nim`: the widening reference against the algebra; every stepped disc,
-dome and ring corner against the sum it replaced; all ninety-six rim segments on the plane
-at its radius; the capacity assertions, by building the binding scenes. Verified by desktop
+*Checked.* Verified by `suites.nim`: the widening reference against the algebra; every stepped dome
+and ring corner against the sum it replaced; the disc's box against its rim's projection, its ray
+landing inside the rim and missing outside it, and a hit under a grazing eye nearer than the near
+plane; all ninety-six rim segments on the plane at its radius; the capacity assertions, by building
+the binding scenes. Verified by desktop
 A/B under Xvfb: 0 of 1,296,000 pixels for the ribbon move, at most 38 per storyboard frame
 (channel delta ≤ 12) for the disc and dome move, where the record narrows its arms to
 float32. Verified by driven check: the demo's ribbon records under 64 against a ring count
@@ -1123,6 +1128,9 @@ top, and for the sky's frame just inside the top edge; each front-end centres it
   the clearance along the push. The anchor is the support's projection while in view, held
   `MARGIN_LABEL_VIEW` = 40 px inside the edge; past that it slides along the visible stretch.
   Not the upward side, which hopped five times on a 24 s camera path where this hopped none.
+  **Every label is then held wholly inside the view**: `labelInView` clamps the measured box
+  `MARGIN_LABEL_EDGE` = 4 px in from each edge on both front-ends, since the horizon line's
+  label, placed above its band's topmost point wherever that falls, ran off a phone's right edge.
   **A plane's label stands on the disc's column at the height of its circle's true top.**
   `marker.topmostOnCircle` solves the top of the projected circle in closed form (screen y
   is stationary where `(b·d − a·e) + (c·d − a·f)·sin + (b·f − c·e)·cos = 0`) rather than
@@ -1548,85 +1556,77 @@ never exercised (see Known Limitations).
 ## Demo: The Solar Neighbourhood
 
 The demo preset is the build's own load case, in three sizes: `ScaleOrrery.Nearest` (60),
-`Neighbourhood` (360, the default everywhere) and `Catalogue` (5038, two handles short of the
-pool, the smallest margin that still proves the point of leaving one). Every size is the
-same construction truncated at a different depth, so a cost can be read as a slope: 60 / 360
-/ 5038 objects cost 1.3 / 1.7 / 3.0 s to build, a frame build 3.1 / 4.6 / 12.8 ms, an edit
-9.1 / 8.5 / 8.0 ms under SwiftShader. **Each size lands on its count exactly**: the star
-walk passes over a system too large for the room left and keeps walking. `orrery.showOrrery`
-is the one copy, reached by the bridge and by the desktop's `--demo`.
+`Neighbourhood` (360, the default everywhere) and `Catalogue` (5038, two handles short of the pool,
+the smallest margin that still proves the point of leaving one). Every size is the same construction
+truncated at a different depth, so a cost can be read as a slope: 60 / 360 / 5038 objects cost 1.3 /
+1.7 / 3.0 s to build, a frame build 3.1 / 4.6 / 12.8 ms, an edit 9.1 / 8.5 / 8.0 ms under
+SwiftShader. **Each size lands on its count exactly**: the star walk passes over a system too large
+for the room left and keeps walking.
 
-**To scale: one world unit is one astronomical unit**, `KILOMETRES_PER_AU` = 149,597,870.7,
-and a parsec is `AU_PER_PARSEC` = 206,264.806 of them. Every distance is the real one and
-every drawn radius the real radius: `radiusDrawnOf` divides kilometres by the unit and does
-nothing else, so Sol is 0.00465 units wide, Earth 0.0000426, Phobos 0.000000074. Sol stands at
-the origin with its ecliptic flat in the ground grid's own plane; `sol` is `1 𝐞₄`, every planet
-has z exactly 0, Neptune 30.05 units out, and Proxima 268,000. Not compressed, as before: a
-picture scaled to preference is a picture of the preference. The price is that from the
-opening camera every body is the least dot and
-Jupiter's moons lie inside its dot; the reader dollies in, and each body is its real size when
-the camera arrives, which `camera.DISTANCE_LIMIT_NEAR` and `mesh.RADIUS_OBJECT_LEAST`, both
-10⁻⁹, and the pivot-relative record (see Camera) let it do.
+**To scale: one world unit is one astronomical unit**, `KILOMETRES_PER_AU` = 149,597,870.7, and a
+parsec is `AU_PER_PARSEC` = 206,264.806 of them. Every distance is the real one and every drawn
+radius the real radius: `radiusDrawnOf` divides kilometres by the unit and does nothing else, so Sol
+is 0.00465 units wide, Earth 0.0000426, Phobos 0.000000074. Sol stands at the origin with its
+ecliptic flat in the ground grid's own plane; `sol` is `1 𝐞₄`, every planet has z exactly 0, Neptune
+30.05 units out, and Proxima 268,000. The price is that from the opening camera every body is the
+least dot and Jupiter's moons lie inside its dot; the reader dollies in, and each body is its real
+size when the camera arrives, which `camera.DISTANCE_LIMIT_NEAR` and `mesh.RADIUS_OBJECT_LEAST`,
+both 10⁻⁹, and the pivot-relative record (see Camera) let it do.
 
 **Every moon rings its planet in its real orbit plane.** `MOONS` carries JPL's mean orbital
-elements, fetched 2026-09-18 from https://ssd.jpl.nasa.gov/sats/elem/: an inclination and a
-node against the moon's reference plane, named by its pole in J2000 right ascension and
-declination — the ecliptic for Luna and Nereid, Uranus's equator for its five, a local Laplace
-plane for the rest. `normalOfMoon` turns the equator's node about the pole by the node angle,
-the pole about that line by the inclination, then the whole into the ecliptic frame by the
-J2000 obliquity 23.4392911°. Uranus's pole is the spin pole (RA 77.311°, Dec 15.175°), the
-antipode of the IAU north, so the elements' small inclinations read prograde about it as JPL
-states them. Read off the built scene: Luna's normal leans 5.16° from +z, Io's 2.2°, Miranda's
-has z = 0.155 and Triton's z = −0.646, a ring run backwards. The horizon plane is
-`att(ecliptic) ∧ att(earth ∧ luna)` and exists only because Luna's ring leaves the ecliptic.
-**Stated simplifications**: planets ring Sol in the ecliptic itself, inclinations dropped
-(Mercury's 7° the largest), since Earth in the spanned plane is what the horizon block turns
-on; a body's place on its ring is the golden angle, not a date; neighbour systems lie flat.
+elements, fetched 2026-09-18 from https://ssd.jpl.nasa.gov/sats/elem/: an inclination and a node
+against the moon's reference plane, named by its pole in J2000 right ascension and declination — the
+ecliptic for Luna and Nereid, Uranus's equator for its five, a local Laplace plane for the rest.
+`normalOfMoon` turns the equator's node about the pole by the node angle, the pole about that line
+by the inclination, then the whole into the ecliptic frame by the J2000 obliquity 23.4392911°.
+Uranus's pole is the spin pole (RA 77.311°, Dec 15.175°), the antipode of the IAU north, so the
+elements' small inclinations read prograde about it as JPL states them. Read off the built scene:
+Luna's normal leans 5.16° from +z, Io's 2.2°, Miranda's has z = 0.155 and Triton's z = −0.646, a
+ring run backwards. The horizon plane is `att(ecliptic) ∧ att(earth ∧ luna)` and exists only because
+Luna's ring leaves the ecliptic. **Stated simplifications**: planets ring Sol in the ecliptic
+itself, inclinations dropped (Mercury's 7° the largest), since Earth in the spanned plane is what
+the horizon block turns on; a body's place on its ring is the golden angle, not a date; neighbour
+systems lie flat.
 
-**Two shipped catalogues, data only, generated.** `neighbourhood.nim` is a snapshot of the
-NASA Exoplanet Archive taken 2026-08-31 from its TAP service (`select hostname, pl_name,
-sy_dist, ra, dec, pl_orbsmax from ps where sy_dist < 35 and default_flag = 1`): 331 planet
-hosts out to 31.5 parsecs. This research has made use of the NASA Exoplanet Archive, which
-is operated by the California Institute of Technology under contract with NASA under the
-Exoplanet Exploration Program. `starfield.nim` is a snapshot of SIMBAD, every star within
-the same 31.53 parsecs, with the query recorded in the file: 11,252 kept of 11,432. Each
-planet host was matched to exactly one star **by sky position alone**, worst separation 161
-arcseconds — Barnard's and Kapteyn's stars, the two highest proper motions known, are the
-two worst matches. Distance is not used to match because it is what the two archives
-disagree about, so the star layer supplies every position and distance and the archive only
-which planets exist. **Both catalogues are equatorial and the scene is ecliptic**: `systemAt`
-turns every star's direction by the same obliquity the moons are turned by, so the star field
-and Sol's planets share one frame; read straight, every star stood 23° off against them.
-**Nothing is generated**: a star with no known planet is a star, and the 49 of 544 planets
-with no recorded semi-major axis are left out rather than placed by their order among
-siblings, `placedOf` counting what a star places and `objectsOf` folding it. Neighbour suns
-and planets are drawn at `RADIUS_OBJECT_LEAST`, a dot claiming no size, since neither
-catalogue carries radii. A neighbour's plane is joined as `star ∧ along ∧ across`, a point and
-two directions: three of its points a million units out cancel to noise, a tenth of the normal.
+**Two shipped catalogues, data only, generated.** `neighbourhood.nim` is a snapshot of the NASA
+Exoplanet Archive taken 2026-08-31 from its TAP service (`select hostname, pl_name, sy_dist, ra,
+dec, pl_orbsmax from ps where sy_dist < 35 and default_flag = 1`): 331 planet hosts out to 31.5
+parsecs. This research has made use of the NASA Exoplanet Archive, which is operated by the
+California Institute of Technology under contract with NASA under the Exoplanet Exploration Program.
+`starfield.nim` is a snapshot of SIMBAD, every star within the same 31.53 parsecs, with the query
+recorded in the file: 11,252 kept of 11,432. Each planet host was matched to exactly one star **by
+sky position alone**, worst separation 161 arcseconds — Barnard's and Kapteyn's stars, the two
+highest proper motions known, are the two worst matches. Distance is not used to match because it is
+what the two archives disagree about, so the star layer supplies every position and distance and the
+archive only which planets exist. **Both catalogues are equatorial and the scene is ecliptic**:
+`systemAt` turns every star's direction by the same obliquity the moons are turned by, so the star
+field and Sol's planets share one frame; read straight, every star stood 23° off against them.
+**Nothing is generated**: a star with no known planet is a star, and the 49 of 544 planets with no
+recorded semi-major axis are left out rather than placed by their order among siblings, `placedOf`
+counting what a star places and `objectsOf` folding it. Neighbour suns and planets are drawn at
+`RADIUS_OBJECT_LEAST`, a dot claiming no size, since neither catalogue carries radii. A neighbour's
+plane is joined as `star ∧ along ∧ across`, a point and two directions: three of its points a
+million units out cancel to noise, a tenth of the normal.
 
-**The opening camera frames Sol's system to Neptune**: `RADIUS_ORRERY` is Neptune's own
-semi-major axis, fitted by `camera.distanceFitting` at `ELEVATION_ORRERY_SHOWN` = 0.95 rad
-(at 0.42 every ring collapses to a line) with `INSET_ORRERY_SHOWN` = 24 px. Not the nearest
-neighbour: Proxima stands nine thousand opening radii out, and a frame holding it shows one
-dot. The neighbourhood is reached by zooming out, and the crossing is the journey it really
-is. **Colour says what a thing is, not which system it belongs to**: `lut_role_to_ink` maps a
-`Role` to an `Ink`, four kinds of body on four handles and everything derived on the fifth,
-`Olive`, the darkest.
+**The opening camera frames Sol's system to Neptune**: `RADIUS_ORRERY` is Neptune's own semi-major
+axis, fitted by `camera.distanceFitting` at `ELEVATION_ORRERY_SHOWN` = 0.95 rad (at 0.42 every ring
+collapses to a line) with `INSET_ORRERY_SHOWN` = 24 px. Not the nearest neighbour: Proxima stands
+nine thousand opening radii out, and a frame holding it shows one dot. **Colour says what a thing
+is, not which system it belongs to**: `lut_role_to_ink` maps a `Role` to an `Ink`, four kinds of
+body on four handles and everything derived on the fifth, `Olive`, the darkest.
 
-*Checked.* Verified by `suites.nim` at every size: every star at the distance its table gives it
-and in the direction its coordinates give once turned into the ecliptic, the table ordered
-outward, the count exact, the camera solve, every object against the role table with four
-distinct body inks; every planet at its real axis with z = 0, every moon at its real axis
-perpendicular to `normalOfMoon` with the leans quoted above pinned; every neighbour planet at
-its real axis at its star's height and every planet without an axis absent, 49 counted from
-the table; every body's radius the conversion of its kilometres; no point a hub (lines and
-planes through any point ≤ 6); the two horizon points' difference. Verified
-by reading the built scene: the normals quoted above. Verified by driven check: the demo
-button stands the camera back past 40 units, and the occlusion check stands its own camera by
-Jupiter's real radius for a sixty-pixel disc with Io in front of it. Assumed: the archive
-snapshots themselves, and the JPL elements transcribed by hand. **No table is checked
-against its source by any tool.**
-
+*Checked.* Verified by `suites.nim` at every size: every star at the distance its table gives it and
+in the direction its coordinates give once turned into the ecliptic, the table ordered outward, the
+count exact, the camera solve, every object against the role table with four distinct body inks;
+every planet at its real axis with z = 0, every moon at its real axis perpendicular to
+`normalOfMoon` with the leans quoted above pinned; every neighbour planet at its real axis at its
+star's height and every planet without an axis absent, 49 counted from the table; every body's
+radius the conversion of its kilometres; no point a hub (lines and planes through any point ≤ 6);
+the two horizon points' difference. Verified by reading the built scene: the normals quoted above.
+Verified by driven check: the demo button stands the camera back past 40 units, and the occlusion
+check stands its own camera by Jupiter's real radius for a sixty-pixel disc with Io in front of it.
+Assumed: the archive snapshots themselves, and the JPL elements transcribed by hand. **No table is
+checked against its source by any tool.**
 ## Operation Notation
 
 **One table, `scene.lut_operation_to_notation`, read by both builds**, each entry Lengyel's
@@ -1962,7 +1962,7 @@ the suite itself.
 
 ## Known Limitations
 
-- No human has run either build. Every result here is software-rendered and machine-driven.
+- Every result is software-rendered and machine-driven; the page has run on one Android phone.
 - Tab landing on a desktop widget is unverified (see Hold Feedback, Help And Keys).
 - Two crossing translucent veils blend order-dependently.
 - A camera move is not undoable on its own.
@@ -1973,7 +1973,8 @@ the suite itself.
 - Conformal metric (`IS_CONFORMAL`) is unfinished in the library; this build is rigid 4D.
 - `.rgascene` is little-endian by rule, but only a little-endian host has ever written or
   read one; the byte-swapping path is unexercised.
-- A page whose WebGL lacks `EXT_frag_depth` keeps linear depth, and the far field's fault with it.
+- A page whose WebGL lacks `EXT_frag_depth` keeps linear depth, the far field's fault with it,
+  and every plane's disc at its centre's depth.
 - The demo's planet inclinations, ring phases and neighbour planes are stated simplifications.
 
 ## Open questions
