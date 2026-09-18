@@ -517,39 +517,62 @@ one the engine was given.
 
 **Turning is a path, walked a fiftieth of a turn at a time.** One dancer's hips are spun for 200
 engine steps per moment (`walk.BEATS`, `STEP`), slow enough to stay quasi-static, and the arms are
-carried on by the engine: a pose at each moment is the pose before it carried on, so an arm that
-has gone round a body stays round it. Joined hands rise from where each settled at rest along a
-ramp over the first quarter turn of wind (`RAISE`) to their band's lower edge, held to the ramp from
-both sides, since asked for the band outright a weightless hand crossed 359 mm in one moment;
-risen, the band's two edges are held (`LIFT` 400 newtons per metre, `FALL` 40 damping it) and
-everything between them is free -- the band is a bound, not a preference, and face to face at rest
-nothing is asked. The rise is keyed to how far the couple have wound from their rest (`wound`,
-`risen`), whole turns and all, and to the rest itself for a hold that rests pillion, which is not
-face to face: keyed to the distance from face to face instead, which folds whole turns away, the
-lift let the hands down onto her head through the second half of every whole turn, and every
-diamond and swan was wound with hands at shoulder height; keyed to the hold's own rest, every
-same-name still was wound from hands at the hip. Verified by `trigid.nim`: hands are risen through
-the second half of a whole turn and from rest pillion, red first. The lift and the draw are put on
-as muscle, torque at the shoulder and at the elbow carrying the wrist, with the equal and opposite
-torque on the link inside and the shoulder's on the girdle (`muscle`), and never as force on a
-hand: force on links alone pulled the whole chain up through the shoulder and dragged every girdle
-to its rope's end, and torque at the wrist too bent every wrist to its cone in the first moments of
-a rise, the hand being the lightest link. What one arm carries its wrist with is capped at forty
-newtons (`MUSCLE`, the arm's own weight, which a dancer lifts an arm against and plainly can;
-assumed): uncapped, a hand twenty centimetres under its rise pulled with eighty. Hands are drawn
-toward a point as they rise, weakly (`DRAW`, 40 newtons per metre at the torso and neck, 10 over
-the crown): between the two bodies below the crown, and over the crown to the axis of whoever
-turns, since couple setting a hold up put them there and pulling both to the midpoint spends the
-adduction the turn wants. What stops a turn is one thing, asked in order over every arm, held or
-free: swing past its range by more than `GIVE`; an arm through a body or an arm (`Stop.Through`,
-`Stop.Arms`), a free arm crushed between two torsos being as much a stop as a held one; then, and
-only once the hands have parted by `PARTED`, which of twist, elbow or wrist sits at its end, what
-the arm was against, or reach; and, once risen, any joined hand further under its band's edge than
-the lift's own slack (`SAG`, `Stop.Reach`), since a hold whose hands never rose is a hold at some
-other height. Verified by `trigid.nim`: hands that are joined stay joined, no joint goes past what
-the rig allows while the hold stands, capsules move where the couple move, and no point of any held
-arm leaps more than an arm's reach plus its own move between two moments, 193 mm on the laws'
-corpus.
+carried on by the engine: a pose at each moment is the pose before it carried on, so an arm that has
+gone round a body stays round it. Joined hands rise from where each settled at rest along a ramp
+over the first quarter turn of wind (`RAISE`) to their band's lower edge, held to the ramp from both
+sides, since asked for the band outright a weightless hand crossed 359 mm in one moment; risen, the
+band's two edges are held (`LIFT` 400 newtons per metre, `FALL` 40 damping it) and everything
+between them is free -- the band is a bound, not a preference. Asked over the crown, the hands are
+held to the torso band while the couple face each other and to the crown band from a quarter turn
+away, blended between (`up`, `bandNow`, `height`): the Architect, on A9, the same-name chain wound
+half a turn from its pillion rest to face to face with the hands still over the heads, ruled it
+modelled but unnatural -- the relaxed position facing is hands at mid torso, pillion or back to back
+are where they have to be above, facing the arms naturally come down, and the swan may be reached
+only so, one connection straightening out as the arms come down. `up` is how far the couple are from
+face to face with whole turns folded away, so a couple wound a whole turn have their hands down
+again. Going up, the hands rise over her head as they always did; coming back they come forward off
+her crown first, to between the two bodies, and then down (`leaving`, `over`), since let down
+straight from over the crown they passed through her head, which is what the first lift keyed to
+facing did through the second half of every whole turn and why the rise had been keyed to the wind
+from rest (`wound`, `risen`) until now. Facing, a hand over the crown is a hold at some other
+height, as a hand under its band always was (`FACING`), with five centimetres of slack over the
+torso band's top (`OVER`, assumed), since wound arms press the hands up against the lift's forty
+newtons and the same-name chain come round to face to face sat at 1.37 to 1.39 m against 1.35. Asked
+at a lower band, the rise from where the hands settled over the first quarter turn of wind stands as
+it was, and whole from the rest for a hold that rests pillion. Verified by `trigid.nim`: `up` is
+nought face to face and one from a quarter turn away at every wind of a turn and a half, and the
+cross-name chain at rest and the same-name chain wound to face to face hold with every joined hand
+in the torso band -- A9 at 0.76 m with every hand between 1.23 and 1.35 m, where it stood at 0.60 m
+with every hand at 1.73 to 1.76 -- red first. Under this rule the diamonds no longer stand: with the
+hands asked to mid torso after a whole turn they hold at no distance, the wind giving at a wrist, a
+twist or a hand under the crown band before it comes round, and where it comes round the pose left
+to stand giving too, where with the hands left over the crown they stood at 0.48 m; six centimetres
+of sag under the crown band instead of three stood neither (measured), so that margin is not it; the
+same-name chain come round to face to face stands one way about at ease and the other way about a
+third of the way into a wrist's ease at best, so the corpus asks it either way, as its cards do, and
+the law that a diamond's connections cross twice where an open hold's run clear now winds the couple
+there whether or not the pose holds, since what it claims is the path. What the Architect describes,
+one connection straightening out as the arms come down, is nothing the hold can do yet, and is the
+next question. The lift and the draw are put on as muscle, torque at the shoulder and at the elbow
+carrying the wrist, with the equal and opposite torque on the link inside and the shoulder's on the
+girdle (`muscle`), and never as force on a hand: force on links alone pulled the whole chain up
+through the shoulder and dragged every girdle to its rope's end, and torque at the wrist too bent
+every wrist to its cone in the first moments of a rise, the hand being the lightest link. What one
+arm carries its wrist with is capped at forty newtons (`MUSCLE`, the arm's own weight, which a
+dancer lifts an arm against and plainly can; assumed): uncapped, a hand twenty centimetres under its
+rise pulled with eighty. Hands are drawn toward a point as they rise, weakly (`DRAW`, 40 newtons per
+metre at the torso and neck, 10 over the crown): between the two bodies below the crown, and over
+the crown to the axis of whoever turns, since couple setting a hold up put them there and pulling
+both to the midpoint spends the adduction the turn wants. What stops a turn is one thing, asked in
+order over every arm, held or free: swing past its range by more than `GIVE`; an arm through a body
+or an arm (`Stop.Through`, `Stop.Arms`), a free arm crushed between two torsos being as much a stop
+as a held one; then, and only once the hands have parted by `PARTED`, which of twist, elbow or wrist
+sits at its end, what the arm was against, or reach; and, once risen, any joined hand further under
+its band's edge than the lift's own slack (`SAG`, `Stop.Reach`), since a hold whose hands never rose
+is a hold at some other height. Verified by `trigid.nim`: hands that are joined stay joined, no
+joint goes past what the rig allows while the hold stands, capsules move where the couple move, and
+no point of any held arm leaps more than an arm's reach plus its own move between two moments, 193
+mm on the laws' corpus.
 
 **Where the couple stand is chosen for the turn, and every distance is tried.** The Architect's
 ruling: stand for the turn, hand height for the turn, everything for the turn; nothing is fixed but
