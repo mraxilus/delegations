@@ -678,6 +678,22 @@ func awayFrom*(c: Couple): float =
   elif t <= -PI: t += 2.0 * PI
   abs(t) / (2.0 * PI)
 
+func wound*(c: Couple): float =
+  ## How far couple have wound from their rest, in turns, whole turns and all.
+  abs(twist(c.stance) - c.restTwist) / (2.0 * PI)
+
+func risen*(c: Couple): float =
+  ## How far joined hands have risen from where they rest toward their band,
+  ## nought to one.
+  ##   Whole from rest for hold that rests pillion, which is not face to face.
+  ##     Otherwise hands rise over first `RAISE` of wind and stay up: head that
+  ##     passes under them is under them at every wind past that, whole turns
+  ##     and all.  Keyed to distance from face to face instead, which folds
+  ##     whole turns away, hands were let down onto her head through second
+  ##     half of every whole turn, and every diamond and swan was wound with
+  ##     hands at shoulder.
+  if c.restTwist != 0.0: 1.0 else: min(1.0, c.wound / RAISE)
+
 func tipOf(c: Couple; a: ArmRig): Vec =
   ## Fingertip, which band is asked of.
   ##   Fingertip alone, forearm's lower end not too: asked of elbow as well over
@@ -731,13 +747,12 @@ proc carry(c: Couple) =
     # face to face arms may be at any height, and it is once they are no longer
     # face to face that hands must actually be above -- which is clearance,
     # since only then would arm have to pass through body to stay low.  Lower
-    # edge rises as couple turn from face to face, from where hand settled at
-    # rest to where band puts it, and is there by `RAISE`; nothing is asked
-    # until rest has settled and been read.  Face to face, not hold's own
-    # rest: hold resting pillion is not face to face, and its hands are above
-    # from its rest on, as its card draws them.  Keyed to rest, every
-    # same-name still was wound from hold at hip.
-    risen = min(1.0, c.awayFrom / RAISE)
+    # edge rises as couple wind from rest, from where hand settled at rest to
+    # where band puts it, and is there by `RAISE` (`risen`); nothing is asked
+    # until rest has settled and been read.  Hold resting pillion is not face
+    # to face, and its hands are above from its rest on, as its card draws
+    # them.
+    risen = c.risen
     one = axesOf(c.stance[Body.One]).origin
     two = axesOf(c.stance[Body.Two]).origin
     mid = (if c.band == Band.Crown: axesOf(c.stance[c.turning]).origin
@@ -1158,7 +1173,7 @@ proc gives*(c: Couple): Stop =
     if why != Stop.None: return why
   let deep = deepest(c, -1)
   if deep.depth > THROUGH: return deep.met
-  if c.awayFrom >= RAISE:
+  if c.risen >= 1.0:
     for ln in c.links:
       for h in ln.ends:
         if tipOf(c, c.who[h.body].arm[h.arm]).z < c.rig.band[c.band].lo - SAG:
