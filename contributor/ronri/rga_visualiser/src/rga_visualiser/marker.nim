@@ -74,6 +74,18 @@ const
   MARGIN_LABEL_EDGE* = 4.0
     ## Keep label's whole box this far inside view's edge, in pixels; see `labelInView`.
     ##   Room for halo's stroke, `WIDTH_MARKER_LABEL_HALO`, and one pixel of air.
+  MARGIN_LABEL_FOOT* = 40.0
+    ## Stand frame's label's box this far above view's bottom edge, in pixels.
+    ##   Page's scale bar sits in that corner, 14 in from edge and 19 tall, so its top is 33
+    ##   up; `GAP_MARKER` of air over it. Desktop draws no bar and wears same lift, so two
+    ##   front-ends put one label in one place.
+  MARGIN_LABEL_HORIZON* = 12.0
+    ## Stand horizon line's and horizon plane's labels this far in from view's edge, in
+    ##   pixels, beyond push `clearanceBeside` gives off their anchor. Name flush against
+    ##   edge or corner read as cut off.
+  PIXELS_TIE_LEFTMOST* = 0.5
+    ## Treat outline points this close in x as one column, and take higher; see
+    ##   `placeLabelAboveLeftmost`. Under what any screen draws.
   WIDTH_MARKER_COMET* = 3.5'f32
     ## Widen comet to this thickness at head, in pixels, tapering to `WIDTH_MARKER`.
     ##   Thicker than `WIDTH_MARKER`, whole of how it reads: weight separates lit part
@@ -244,19 +256,24 @@ type
       ## False where outline has no top to sit above: rails with both supports cut away.
     label_at*: ScreenPosition ## Where name label is centred, in screen space.
       ## `GAP_MARKER` plus half `HEIGHT_MARKER_LABEL` above outline's top at object's own
-      ## place: ring's top, loop's true top on disc's column, bands' highest point. Frame
-      ## is whole view, so its label sits just inside top edge instead.
-      ## Rails: anchor *on* line instead, with label pushed off it; see `is_label_beside`.
+      ## place: ring's top, loop's true top on disc's column, bands' leftmost point, which
+      ## is where band leaves view through its left edge. Frame is whole view, so its label
+      ## stands inside its bottom-left corner instead, `MARGIN_LABEL_FOOT` up. Both horizon
+      ## labels stand `MARGIN_LABEL_HORIZON` in from edge.
+      ## Rails, bands and frame: anchor *on* outline instead, with label pushed off it; see
+      ## `is_label_beside`.
       ## Decided here with rest of marker so both front-ends agree by construction; each
       ## centres its own text on it.
     is_label_beside*: bool ## Whether `label_at` is anchor on outline, label pushed off it.
       ## Rails: `label_at` lies on line at its support, clamped into view, and front-end
       ## sets centre `clearanceBeside` along `label_away_x`/`label_away_y`, measured with
-      ## its own text box. False elsewhere: `label_at` is centre itself.
+      ## its own text box. Bands and frame: `label_at` lies `MARGIN_LABEL_HORIZON` in from
+      ## view's left edge, pushed rightward same way, so text starts clear of edge whatever
+      ## its width. False elsewhere: `label_at` is centre itself.
     label_away_x*, label_away_y*: float ## Unit direction label is pushed along, on screen.
       ## Line's own left, from its direction as projected: side fixed by geometry, not by
       ## screen, which is what makes it continuous through every turn; see
-      ## `placeLabelBesideLine`.
+      ## `placeLabelBesideLine`. Bands and frame: screen's right, off view's left edge.
     pulses*: array[
       RUNS_MARKER_PULSE, array[POINTS_MARKER_PULSE, ScreenPosition]
     ] ## Short runs travelling along marker's outline, in screen space.
@@ -635,8 +652,8 @@ func labelInView*(x, y, half_width, width, height: float): (float, float) =
   ##   `HEIGHT_MARKER_LABEL` tall. Applied by both front-ends after any push beside line,
   ##   each with its own measured text; page reaches it through `nimLabelInView`.
   ##   Box wider or taller than view is centred.
-  ##   Every placement lands label where geometry puts it: horizon line's above its band's
-  ##   topmost point wherever that falls, so on narrow page its name ran off right edge.
+  ##   Every placement lands label where geometry puts it, and geometry alone can put it
+  ##   past edge: bands' label is centred on view's left edge itself.
   let
     half_height = 0.5*HEIGHT_MARKER_LABEL
     (lo_x, hi_x) = (MARGIN_LABEL_EDGE + half_width, width - MARGIN_LABEL_EDGE - half_width)
@@ -730,6 +747,24 @@ func placeLabelAboveTopmost(
   for i in 0 ..< count:
     if not marker.has_label or
         points[i].y < marker.label_at.y + GAP_MARKER + 0.5*HEIGHT_MARKER_LABEL:
+      marker.placeLabelAbove(points[i].x, points[i].y)
+
+
+func placeLabelAboveLeftmost(
+  marker: var Marker, points: openArray[ScreenPosition], count: int
+) =
+  ## Place name label centred above leftmost of `count` outline points, keeping any further left.
+  ##   Called once per run, so bands' two runs settle on further left of their two ends.
+  ##   Run leaving view through its left edge ends exactly on that edge (`placeCrossing`),
+  ##   so label rides crossing as camera turns, and `labelInView` then holds its box in.
+  ##   Tie within `PIXELS_TIE_LEFTMOST` goes to higher point: both bands leave through one
+  ##   edge, one above other, and label stands above upper.
+  ##   Not highest point: on level horizon two side crossings stand within pixel in height,
+  ##   and highest hopped between edges frame to frame.
+  for i in 0 ..< count:
+    let top = marker.label_at.y + GAP_MARKER + 0.5*HEIGHT_MARKER_LABEL
+    if not marker.has_label or points[i].x < marker.label_at.x - PIXELS_TIE_LEFTMOST or
+        (abs(points[i].x - marker.label_at.x) <= PIXELS_TIE_LEFTMOST and points[i].y < top):
       marker.placeLabelAbove(points[i].x, points[i].y)
 
 
@@ -1313,7 +1348,14 @@ proc markerBands(
       )
   if marker.counts_band[0] == 0 and marker.counts_band[1] == 0: return
   for side in 0 .. 1:
-    marker.placeLabelAboveTopmost(marker.points_band[side], marker.counts_band[side])
+    marker.placeLabelAboveLeftmost(marker.points_band[side], marker.counts_band[side])
+  # Pushed off its band and `MARGIN_LABEL_HORIZON` in from edge, by rule rails' label is
+  #   pushed off its rail; see `is_label_beside`. Not centred on crossing itself, which
+  #   `labelInView` held flush against edge, name reading as cut off.
+  if marker.has_label:
+    marker.is_label_beside = true
+    (marker.label_away_x, marker.label_away_y) = (1.0, 0.0)
+    marker.label_at.x += MARGIN_LABEL_HORIZON
   true
 
 
@@ -1376,10 +1418,18 @@ func markerFrame(width, height: int; progress, clearance: float; marker: var Mar
   while next_corner < CORNERS_MARKER_FRAME:
     emit(turns_corner[next_corner])
     inc next_corner
-  # Inside top edge: frame is whole view, and above it is off screen.
+  # Inside bottom-left corner: frame is whole view, and above it is off screen. Anchor
+  #   `MARGIN_LABEL_HORIZON` in from frame's left edge, `MARGIN_LABEL_FOOT` and that margin
+  #   up, pushed rightward by front-end's own measured text as line's label is pushed off
+  #   its rail; see `is_label_beside`. Not inside top edge, centred, where it stood under
+  #   chip row's controls; not in corner itself, where name read as cut off.
   marker.has_label = true
+  marker.is_label_beside = true
+  (marker.label_away_x, marker.label_away_y) = (1.0, 0.0)
   marker.label_at = ScreenPosition(
-    x: centre_x, y: inset + GAP_MARKER + 0.5*HEIGHT_MARKER_LABEL, depth: 1.0,
+    x: inset + MARGIN_LABEL_HORIZON,
+    y: float(height) - MARGIN_LABEL_FOOT - MARGIN_LABEL_HORIZON - 0.5*HEIGHT_MARKER_LABEL,
+    depth: 1.0,
   )
   true
 

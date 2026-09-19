@@ -850,17 +850,15 @@ in CSS pixels. **The drawer draws over it** (`z-index` 3 under the drawer's 4) r
 hiding it: a bar a panel sits on can be read by closing the panel.
 
 *Checked.* Verified by `suites.nim`: a meet far outside the drawn disc, from both sides of one
-plane; both halves of a line pickable; the horizon plane's dome inserted first; the great
-circle's segment count after the eye cut; the fog radii at an eye inside its own fog; a star
-behind a wider disc unpicked with one rival and a moon in front of it picked with two.
-Verified by driven checks: the plane pick
-from either side, sweeping the canvas for a pixel picking a plane the gesture itself built;
-the scale bar's length against its label at two distances a decade apart, layered under the
-open drawer; forty-eight hover samples across Jupiter's disc finding nothing deeper.
-Verified by rendering: the fade fractions, the cell size, the grid alpha, the axis dimming.
-Verified by driven check: a wide disc's upper half brighter than its lower on the page, which
-is world-up on screen from the opening camera. The far-end occlusion error is assumed to
-be tolerable, not measured.
+plane; both halves of a line pickable; the horizon plane's dome inserted first; the great circle's
+segment count after the eye cut; the fog radii at an eye inside its own fog; a star behind a wider
+disc unpicked with one rival and a moon in front of it picked with two. Verified by driven checks:
+the plane pick from either side, sweeping the canvas for a pixel picking a plane the gesture itself
+built; the scale bar's length against its label at two distances a decade apart, layered under the
+open drawer; forty-eight hover samples across Jupiter's disc finding nothing deeper. Verified by
+rendering: the fade fractions, the cell size, the grid alpha, the axis dimming. Verified by driven
+check: a wide disc's upper half brighter than its lower on the page, which is world-up on screen
+from the opening camera. The far-end occlusion error is assumed to be tolerable, not measured.
 
 ## Camera
 
@@ -1115,32 +1113,42 @@ it marks. Markers are stroked by each render path's foreground layer, never as s
 geometry: a loop on a plane would z-fight its fill, and a marker the object can occlude is
 not a marker. Not a 3D-modelling-style outline; do not reintroduce it without being asked.
 
-**A selected object wears its name above its marker**, filled in the object's own ink and outlined
-in the marker's stroke; hover and focus wear none. Where it sits is `marker.nim`'s decision: centred
-`GAP_MARKER` plus half `HEIGHT_MARKER_LABEL` (16 px) above the outline's top, and for the sky's
-frame just inside the top edge; each front-end centres its own text. **A line's label keeps to the
-line's own left, beside its support clamped into view.** "Above the line" cannot be continuous,
-since which side is up flips as the line passes vertical; the side of the line's *own* direction is.
-So `marker.placeLabelBesideLine` pushes the label to that left, and each front-end, which alone
-measures its text, sets the clearance along the push. The anchor is the support's projection while
-in view, held `MARGIN_LABEL_VIEW` = 40 px inside the edge; past that it slides along the visible
-stretch. Not the upward side, which hopped five times on a 24 s camera path where this hopped none.
-**Every label is then held wholly inside the view**: `labelInView` clamps the measured box
-`MARGIN_LABEL_EDGE` = 4 px in from each edge on both front-ends, since a horizon line's label, above
-its band's top wherever that fell, ran off a phone's right edge. **A plane's label stands on the
-disc's column at the height of its circle's true top.** `marker.topmostOnCircle` solves the top of
-the projected circle in closed form (screen y is stationary where `(b·d − a·e) + (c·d − a·f)·sin +
-(b·f − c·e)·cos = 0`) rather than taking the highest of 64 projected vertices, which hops a segment
-at a time. Its **height** alone is used and the label's x is the disc centre's column, which is what
-makes the flip invisible: at the edge-on moment the far and near rims' tops part in x while both go
-to the plane's horizon in y. Not the top's own x, which pops at the flip. **The halo is the
-backdrop's colour, not the marker's white**, since a halo blends with the background to knock the
-surroundings out of the letters while a contrasting halo dominates them (Peterson, *Cartographer's
-Toolkit*; Dawson, *About label halos*): `WIDTH_MARKER_LABEL_HALO` = 2 px of `Ink.Backdrop` at
-`ALPHA_MARKER_LABEL_HALO` = 0.85, a 16 px face at weight 600. The desktop sets the label in
-`PATH_FONT_LABEL` with the math and symbol faces merged in, so `G = L ∧ c` keeps its wedge, and
-draws it at eight one-pixel offsets in the halo colour, having no stroked text; the browser stages
-one SVG `<text>` per selected handle with `paint-order: stroke`.
+**A selected object wears its name above its marker**, filled in the object's own ink and
+outlined in the marker's stroke; hover and focus wear none. Where it sits is `marker.nim`'s
+decision: centred `GAP_MARKER` plus half `HEIGHT_MARKER_LABEL` (16 px) above the outline's
+top; each front-end centres its own text.
+  **A line's label keeps to the line's own left, beside its support clamped into view.**
+  "Above the line" cannot be continuous, since which side is up flips as the line passes
+  vertical; the side of the line's *own* direction is. So `marker.placeLabelBesideLine`
+  pushes the label to that left, and each front-end, which alone measures its text, sets
+  the clearance along the push. The anchor is the support's projection while in view, held
+  `MARGIN_LABEL_VIEW` = 40 px inside the edge; past that it slides along the visible stretch.
+  Not the upward side, which hopped five times on a 24 s camera path where this hopped none.
+  **The horizon line's label stands above the leftmost point of either band**, its left-edge
+  crossing, pushed `MARGIN_LABEL_HORIZON` = 12 px in from the edge and off the band by the rule a
+  line's label is pushed off its rail; not the highest point, which on a level horizon hopped
+  between the two side crossings, within a pixel in height: 46 swaps of 1,070 px in 97 frames at
+  elevation 0.2; not flush against the edge, where the name read as cut off. **The sky's frame's
+  label stands inside the bottom-left corner**, `MARGIN_LABEL_HORIZON` in from the frame's left edge
+  and `MARGIN_LABEL_FOOT` = 40 px and that margin up, clear of the page's scale bar (top 33 px up),
+  pushed rightward the same way; not centred inside the top edge, under the chip row, nor in the
+  corner itself. **Every label is then held wholly inside the view**: `labelInView` clamps the
+  measured box `MARGIN_LABEL_EDGE` = 4 px in from each edge on both front-ends.
+  **A plane's label stands on the disc's column at the height of its circle's true top.**
+  `marker.topmostOnCircle` solves the top of the projected circle in closed form (screen y
+  is stationary where `(b·d − a·e) + (c·d − a·f)·sin + (b·f − c·e)·cos = 0`) rather than
+  taking the highest of 64 projected vertices, which hops a segment at a time. Its
+  **height** alone is used and the label's x is the disc centre's column, which is what
+  makes the flip invisible: at the edge-on moment the far and near rims' tops part in x
+  while both go to the plane's horizon in y. Not the top's own x, which pops at the flip.
+  **The halo is the backdrop's colour, not the marker's white**, since a halo blends with
+  the background to knock the surroundings out of the letters while a contrasting halo
+  dominates them (Peterson, *Cartographer's Toolkit*; Dawson, *About label halos*):
+  `WIDTH_MARKER_LABEL_HALO` = 2 px of `Ink.Backdrop` at `ALPHA_MARKER_LABEL_HALO` = 0.85, a
+  16 px face at weight 600. The desktop sets the label in `PATH_FONT_LABEL` with the math
+  and symbol faces merged in, so `G = L ∧ c` keeps its wedge, and draws it at eight
+  one-pixel offsets in the halo colour, having no stroked text; the browser stages one SVG
+  `<text>` per selected handle with `paint-order: stroke`.
 
 **A plane's loop lies on the plane**, traced from the plane's frame about the same anchor
 `addPlane` centres its disc on; its clearance is a world distance sized through
@@ -1197,18 +1205,20 @@ longer than `SECONDS_STEP_PULSE_MAX` = 0.1 s is an absence, not a frame. The des
 needs a **fixed winding** (`gui_shim.guiOverlayRibbon` imposes it). **A drag band swells
 into its head** (`marker.cometFor`), because `a ∨ b` and `b ∨ a` are different operations.
 
-*Checked.* Verified by `suites.nim`: the loop's points on the plane (1.1e-15 on the
-antiscalar); the rails' straightness and widest reading over an orientation sweep; the
-frame's 68 points at 296.8 px flat at half progress; the head sitting its carried travel at
-45 placements; a matured hold taken once; a full orbit at two elevations in 0.002 rad steps
-with no isolated label step, and a plane's label a milliradian either side of the flip
-standing under a pixel apart. Verified by driven check: 402 frames with 0 label hops; a
-720-step orbit with the rail gap changing at most 0.103 px between frames; two crossing
-planes selected changing 15,668 canvas pixels against a 0-pixel noise floor. Verified on the
-shipped browser: the comet's advance at 62.4 to 63.3 px/s across four orbit rates — the
-residual at faster rates, a tenth of frames stepping 236–388 px/s at laps and clip
-transitions, is **not explained** to the standard the medians are. Verified on the desktop:
-the selected line's pure-ink pixels 2,626 with the second pass against 1,106 with the tail.
+*Checked.* Verified by `suites.nim`: the loop's points on the plane (1.1e-15 on the antiscalar); the
+rails' straightness and widest reading over an orientation sweep; the frame's 68 points at 296.8 px
+flat at half progress; the head sitting its carried travel at 45 placements; a matured hold taken
+once; a full orbit at two elevations in 0.002 rad steps with no isolated label step, two more with
+the horizon line's label on the leftmost band point in the left half, the frame's label on its left
+edge at its foot, and a plane's label a milliradian either side of the flip standing under a pixel
+apart. Verified by driven check: 402 frames with 0 label hops, 48 at phone width with 0 side swaps
+and none on the right, the frame's label box in its corner above the scale bar; a 720-step orbit
+with the rail gap changing at most 0.103 px between frames; two crossing planes selected changing
+15,668 canvas pixels against a 0-pixel noise floor. Verified on the shipped browser: the comet's
+advance at 62.4 to 63.3 px/s across four orbit rates — the residual at faster rates, a tenth of
+frames stepping 236–388 px/s at laps and clip transitions, is **not explained** to the standard the
+medians are. Verified on the desktop: the selected line's pure-ink pixels 2,626 with the second pass
+against 1,106 with the tail.
 
 ## Picking
 
@@ -1727,26 +1737,24 @@ of something plainly visible pulled the view about; otherwise it builds the full
 `ROUNDS_PLACEMENT_LEAST` = 5 halvings. Distance grows, never shrinks; a finite pick never
 changes azimuth or elevation.
 
-**A pointer pick keeps its object under the pointer and comes in to it.** The centring rule
-above is for picks with no pointer (objects list, keyboard, a shift-added group). A click or
-tap on a point or a line records a `framing.PointerPick`, which `offerAim` consumes on the
-next frame. The destination is the wheel's own move (`stanceUnderPointer`): the eye comes in
-along its line to where the object stands under the pointer, the angles never change, and
-the pivot lands on the sight line at the object's depth. **How far in depends on the shape
-and on what the reader could see**, sized on the frame's height by
-`camera.depthSpanning(diameter, fraction)`: a point drawn at the floor dot is only a place,
-so the camera comes in until its disc spans `FRACTION_HEIGHT_APPROACH_POINT` = 0.01 of the
-frame's height (a sixth was too close; chosen by eye); a point seen at its size, and a line,
-come in no further than the orbit distance; a plane is framed **both ways**, its disc's
-centre brought to the depth where the disc's diameter spans
-`FRACTION_HEIGHT_APPROACH_PLANE` = 0.40 while the crossing under the pointer stays the held
-anchor, falling back to `stanceFor` where that has no positive solution. Not the centring
-rule for a plane, which never pulls in. **The ease holds the pixel too**:
-`CameraTween.anchor_held` switches `advance` to `towardHoldingAnchor`, where the eye's depth
-to the anchor moves geometrically along the eye–anchor line, since `toward` takes the eye off
-that line mid-ease. **A pick renews a held goal**: `aimAt`'s `is_renewed` re-arms the ease
-for a pointer pick whatever the tween holds, or the same object picked again after the
-wheel had taken the reader out goes nowhere.
+**A pointer pick keeps its object under the pointer and comes in to it.** The centring rule above is
+for picks with no pointer (objects list, keyboard, a shift-added group). A click or tap on a point
+or a line records a `framing.PointerPick`, which `offerAim` consumes on the next frame. The
+destination is the wheel's own move (`stanceUnderPointer`): the eye comes in along its line to where
+the object stands under the pointer, the angles never change, and the pivot lands on the sight line
+at the object's depth. **How far in depends on the shape and on what the reader could see**, sized
+on the frame's height by `camera.depthSpanning(diameter, fraction)`: a point drawn at the floor dot
+is only a place, so the camera comes in until its disc spans `FRACTION_HEIGHT_APPROACH_POINT` = 0.01
+of the frame's height (a sixth was too close; chosen by eye); a point seen at its size, and a line,
+come in no further than the orbit distance; a plane is framed **both ways**, its disc's centre
+brought to the depth where the disc's diameter spans `FRACTION_HEIGHT_APPROACH_PLANE` = 0.40 while
+the crossing under the pointer stays the held anchor, falling back to `stanceFor` where that has no
+positive solution. Not the centring rule for a plane, which never pulls in. **The ease holds the
+pixel too**: `CameraTween.anchor_held` switches `advance` to `towardHoldingAnchor`, where the eye's
+depth to the anchor moves geometrically along the eye–anchor line, since `toward` takes the eye off
+that line mid-ease. **A pick renews a held goal**: `aimAt`'s `is_renewed` re-arms the ease for a
+pointer pick whatever the tween holds, or the same object picked again after the wheel had taken the
+reader out goes nowhere.
 
 *Checked.* Verified by `suites.nim`: the pixel stays within 0.01 px through five steps of the ease
 and the arrival distance equals the fit; a near point and a line keep the orbit distance; a
@@ -1977,9 +1985,6 @@ the suite itself.
 
 ## Open questions
 
-Recorded here and in the pull request body, per CONTRIBUTOR.md: a contributor neither works
-around a rule nor edits it.
-
 **The drawer's `backdrop-filter` costs about 12 ms of every frame at the largest scene, and is
 the whole of what an open drawer costs.** Measured with the drawer open over 5,040 objects: 59 ms
 per frame against 47 ms with the filter forced off, where the drawer closed is 47 ms and the page
@@ -1989,10 +1994,5 @@ plainly the wrong trade; the figure is recorded so the question can be asked wit
 about it. Software rendering inflates a blur far more than it inflates the rest, so the share is
 an upper bound on hardware. The choices are to keep it, to drop it, or to drop it only while the
 frame runs slow.
-
-**A two-finger pan check has failed once and has not been reproduced.** Raised as `#153` with
-what was tried. The harness now gives every finger a fresh id and asserts no pointer is down
-before each gesture (see Driven Checks), so a stale finger is named rather than masked; the
-question stays open until a run reproduces it or names what it was.
 
 [replications]: https://gitlab.com/mraxilus/replications
