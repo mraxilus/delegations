@@ -174,6 +174,8 @@ proc place*(b: BodyId; at: Pos; turn: Quat) {.importc: "b3Body_SetTransform".}
 proc setDrift*(b: BodyId; drift: Vec) {.importc: "b3Body_SetLinearVelocity".}
 proc driftOf*(b: BodyId): Vec {.importc: "b3Body_GetLinearVelocity".}
 proc bodyOf*(s: ShapeId): BodyId {.importc: "b3Shape_GetBody".}
+proc touchRoom*(b: BodyId): cint {.importc: "b3Body_GetContactCapacity".}
+  ## How many contacts body may have now: room `touches` needs to report all.
 proc touches*(b: BodyId; into: ptr Touch;
               room: cint): cint {.importc: "b3Body_GetContactData".}
 proc partedBy*(j: JointId): cfloat {.importc: "b3Joint_GetLinearSeparation".}

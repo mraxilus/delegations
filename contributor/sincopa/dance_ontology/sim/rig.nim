@@ -16,7 +16,11 @@
 ##         past wrist crease;  forearm round 0.27 -> limb radius 0.045.
 ##       Shoulder extension 50-60 degrees and horizontal abduction 40-45 are
 ##         held to 45 behind frontal plane; adduction across body to
-##         45 past sagittal plane; humeral rotation 70 in and 90 out;
+##         45 past sagittal plane; humeral rotation 90 in and 105 out, with
+##         ease of 25 at either end, so that rotation costs nothing to 65 in
+##         and 80 out (AAOS: 70 and 90) and is refused past 90 and 105 (AMA
+##         Guides: 90 in; Boone and Azen 1979: 104 out) -- tables disagree by
+##         about ease's width, and ease is where they disagree;
 ##         elbow flexion 140-150 held to 140; wrist flexion 75 and extension
 ##         70 taken as one 60 degree cone, since forearm's own rotation
 ##         can turn plane it bends in.
@@ -58,6 +62,10 @@ type
     Bend,   ## Elbow, nought when straight.
     Wrist   ## Hand off line of forearm, whichever way.
 
+  Collar* {.pure.} = enum ## Freedoms of shoulder girdle on its collarbone, at breastbone.
+    Fore, ## Girdle swung about trunk's up: protraction positive, retraction negative.
+    Up    ## Girdle swung about trunk's fore: elevation positive, depression negative.
+
   Range* = object ## How far one freedom goes, and where it starts to strain.
     lo*, hi*: float     ## Ends, radians.  Past either is refused.
     easeLo*, easeHi*: float ## How far short of each end strain begins;
@@ -77,6 +85,9 @@ type
     upper*, fore*, hand*: float ## Shoulder to elbow, elbow to wrist, wrist to grip.
     limb*: float               ## Half of arm's thickness.
     range*: array[Dof, Range]
+    waist*: Range              ## Thoracic rotation: shoulders yawing on hips.
+    collar*: array[Collar, Range] ## Girdle's two swings about where collarbone
+                               ## meets breastbone, each with its ease.
     band*: array[Band, tuple[lo, hi: float]] ## Hand heights offered per band.
 
 
@@ -111,12 +122,26 @@ const HUMAN* = Rig(
   range: [
     Range(lo: deg(-90), hi: deg(45), easeLo: 0.0, easeHi: deg(20), neutral: 0.0),
     Range(lo: deg(-90), hi: ACROSS_HI, easeLo: 0.0, easeHi: deg(20), neutral: 0.0),
-    Range(lo: deg(-70), hi: deg(90), easeLo: deg(25), easeHi: deg(25), neutral: 0.0),
+    Range(lo: deg(-90), hi: deg(105), easeLo: deg(25), easeHi: deg(25), neutral: 0.0),
     Range(lo: 0.0, hi: deg(140), easeLo: 0.0, easeHi: deg(35), neutral: deg(30)),
     Range(lo: 0.0, hi: WRIST_HI, easeLo: 0.0, easeHi: deg(20), neutral: 0.0)],
+  waist: Range(lo: deg(-40), hi: deg(40), easeLo: deg(15), easeHi: deg(15), neutral: 0.0),
+  collar: [
+    Range(lo: deg(-25), hi: deg(25), easeLo: deg(10), easeHi: deg(10), neutral: 0.0),
+    Range(lo: deg(-10), hi: deg(40), easeLo: deg(5), easeHi: deg(10), neutral: 0.0)],
   band: [(1.00, 1.35), (1.40, 1.50), (1.735, 2.00)])
   ## Average adult.  Crown band starts limb's radius over head
   ## so hand carried there clears it by construction.
+  ##   Waist is thoracic rotation, forty degrees each way, clinical; its ease is
+  ##     assumed at fifteen, since tables give end and not where end starts to
+  ##     cost.
+  ##   Collar is shoulder girdle swinging on collarbone about its joint at
+  ##     breastbone (Kapandji): protraction and retraction about twenty five
+  ##     degrees each way, elevation forty and depression ten.  Twelve
+  ##     centimetres out from that joint, twenty five degrees carries shoulder
+  ##     five centimetres fore or aft and forty carries it eight up: shrug and
+  ##     roll of shoulder that tape does not have and dancer does.  Eases
+  ##     assumed, as waist's is.
 
 
 func halfBreadth*(rig: Rig; part: Part): float =
@@ -144,6 +169,28 @@ func reach*(rig: Rig): float = rig.upper + rig.fore + rig.hand
 
 func touching*(rig: Rig): float = 2.0 * halfDepth(rig, Part.Torso)
   ## Closest two bodies stand: chest to chest.
+
+const SLACK* = deg(0.5)
+  ## Past stop that has no ease by less than this is at that stop: engine solves
+  ## its limits rather than clamping them, so joint leant on its stop reads hair
+  ## past it.
+
+func strainOf*(range: Range; value: float): float =
+  ## How far into ease before either end `value` sits: nought outside every
+  ## ease, one at end, more past it.  Stop with no ease costs nothing to lean
+  ## on, and counts only once value is past it by more than `SLACK`, in units of
+  ## whole range.
+  let span = range.hi - range.lo
+  var worst = 0.0
+  if range.easeHi > 0.0:
+    worst = max(worst, 1.0 - (range.hi - value) / range.easeHi)
+  elif value > range.hi + SLACK:
+    worst = max(worst, 1.0 + (value - range.hi) / span)
+  if range.easeLo > 0.0:
+    worst = max(worst, 1.0 - (value - range.lo) / range.easeLo)
+  elif value < range.lo - SLACK:
+    worst = max(worst, 1.0 + (range.lo - value) / span)
+  max(0.0, worst)
 
 func margin*(range: Range; value: float): float =
   ## How far `value` is inside range, in units of ease at nearer

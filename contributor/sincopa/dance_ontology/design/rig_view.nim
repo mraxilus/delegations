@@ -4,14 +4,9 @@
 ##     world ends engine reports, at radius engine collides on.  Nothing is added
 ##     for looks and nothing is left out: arm that is not holding is still drawn,
 ##     because arm that is not holding is still in room.
-##   Projection is orthographic on purpose.  Under it capsule's outline is exactly
-##     stadium -- round capped line from one end to other, as wide as twice its
-##     radius -- so line drawn with round cap *is* shape, not likeness of it.
-##     Under perspective it is not, and drawing would quietly stop being true at
-##     angles where it mattered most.
-##   Painter's order by depth of far end.  Two capsules that run through each
-##     other can still come out wrong way round; they are drawn at half weight
-##     where they overlap rather than pretending otherwise.
+##   Projection, painter's order and what each capsule is put down as are
+##     `drawn`'s, pure and held to laws natively; this file only puts ink on
+##     canvas in that order.
 ##   One list of entries: every still of reference first, in page's order, then
 ##     every sweep.  Stage shows one; every still is also drawn small beside its
 ##     own cell of reference, and clicking cell puts it on stage.  Architect: lay
@@ -23,6 +18,8 @@
 {.experimental: "strictFuncs".}
 
 import std/[dom, jsffi, math, strutils]
+
+import ./drawn
 
 
 func rig(): JsObject {.importjs: "RIG@".}
@@ -64,11 +61,6 @@ const
   AZ = 0.6      ## Camera round world's up at start, radians.
   EL = 0.18     ## And tilt above floor.
 
-type
-  Spot = tuple[x, y, z: float] ## One point in world, metres, z up.
-  Framing = tuple[mid: array[3, float], reach: float]
-    ## Middle of what one entry covers, and half of how far it spreads.
-
 var
   az = AZ
   el = EL
@@ -89,22 +81,6 @@ proc sweep(): JsObject = entry(pick)
 proc momentsOf(e: JsObject): int = (if has(e, "at"): count(e.at) else: 0)
 proc moments(): int = momentsOf(sweep())
 proc isStill(e: JsObject): bool = has(e, "key")
-
-
-proc seen(p: Spot; az, el: float; f: Framing): tuple[x, y, d: float] =
-  ## Project one world point: screen across, screen down, and depth toward eye.
-  ##   Orthographic, so scale does not fall off with depth and capsule's outline
-  ##     stays exactly stadium however far away it is.
-  ##   Screen's down is world's up negated: canvas counts y downward, so point
-  ##     higher off floor has to come out smaller.  Signed other way, floor grid
-  ##     draws above dancers standing on it.
-  let
-    (ca, sa) = (cos(az), sin(az))
-    (ce, se) = (cos(el), sin(el))
-    (x, y, z) = (p.x - f.mid[0], p.y - f.mid[1], p.z - f.mid[2])
-  (x: -sa * x + ca * y,
-   y: ca * se * x + sa * se * y - ce * z,
-   d: ca * ce * x + sa * ce * y + se * z)
 
 
 proc ends(e: JsObject; i, at: int): tuple[a, z: Spot] =
@@ -150,65 +126,70 @@ proc paintOn(cv: JsObject; e: JsObject; at: int; az, el, zoom: float;
       discard ctx.stroke()
     g += 0.5
 
-  # Capsules, furthest first.  Order is by far end's depth: near enough for
-  # bodies that do not pass through one another, and they are filtered not to.
-  var order: seq[(float, int)]
-  for i in 0 ..< count(e.rad):
-    let (a, z) = ends(e, i, at)
-    order.add (max(seen(a, az, el, f).d, seen(z, az, el, f).d), i)
-  for pass in 0 ..< order.len:
-    for i in 0 ..< order.len - 1 - pass:
-      if order[i][0] > order[i + 1][0]:
-        swap(order[i], order[i + 1])
-
-  ctx.lineCap = cstring("round").toJs
-  for (_, i) in order:
-    let
-      tag = e.tag[i]
-      mark = num(tag[2]).int
-      (a, z) = ends(e, i, at)
-      pa = seen(a, az, el, f)
-      pz = seen(z, az, el, f)
-      r = num(e.rad[i])
-    ctx.lineWidth = (2.0 * r * scale).toJs
-    ctx.strokeStyle = (if mark == 0 or mark == 4: styleOf("--rule-strong")
-                       else: inkOf(num(tag[1]).int, num(tag[0]).int)).toJs
-    discard ctx.beginPath()
-    discard ctx.moveTo(cx + pa.x * scale, cy + pa.y * scale)
-    discard ctx.lineTo(cx + pz.x * scale, cy + pz.y * scale)
-    discard ctx.stroke()
-
-  # Which way each dancer looks.  Capsules cannot say: torso's section is
-  # symmetric front to back and head is sphere, so without this nothing on
-  # screen tells face to face from pillion.
+  # Where each dancer faces, on screen: body is lit from its own front, since
+  # capsule cannot say -- torso's section is symmetric front to back and head
+  # is sphere.  Facing is unit vector, and projection is linear, so its screen
+  # image is difference of two projected points.
   let look = e.f[at]
+  var facing: array[2, Seen]
   for who in 0 .. 1:
     let
       k = who * 4
       here: Spot = (num(look[k]), num(look[k + 1]), 0.0)
-      fore = (x: num(look[k + 2]), y: num(look[k + 3]))
-      side = (x: -fore.y, y: fore.x)
-    ctx.strokeStyle = styleOf("--ink").toJs
-    ctx.lineWidth = 4.0.toJs
-    # Chevron on floor, pointing where they look.
-    let nose: Spot = (here.x + fore.x * 0.30, here.y + fore.y * 0.30, 0.0)
-    for wing in [-1.0, 1.0]:
-      let tail: Spot = (nose.x - fore.x * 0.22 + side.x * 0.16 * wing,
-                        nose.y - fore.y * 0.22 + side.y * 0.16 * wing, 0.0)
-      let (pn, pt) = (seen(nose, az, el, f), seen(tail, az, el, f))
-      discard ctx.beginPath()
-      discard ctx.moveTo(cx + pt.x * scale, cy + pt.y * scale)
-      discard ctx.lineTo(cx + pn.x * scale, cy + pn.y * scale)
-      discard ctx.stroke()
-    # And same again at shoulder height, where figures actually are.
+      ahead: Spot = (here.x + num(look[k + 2]), here.y + num(look[k + 3]), 0.0)
+      (ph, pf) = (seen(here, az, el, f), seen(ahead, az, el, f))
+    facing[who] = (x: pf.x - ph.x, y: pf.y - ph.y, d: pf.d - ph.d)
+  let
+    shade = $styleOf("--body-shade")
+    lit = $styleOf("--body-lit")
+
+  # Capsules, furthest first, in order `drawn` gives.
+  var caps: seq[tuple[a, z: Spot]]
+  for i in 0 ..< count(e.rad):
+    caps.add ends(e, i, at)
+  ctx.lineCap = cstring("round").toJs
+  for piece in drawOrder(caps, az, el, f):
     let
-      a: Spot = (here.x, here.y, 1.40)
-      b: Spot = (here.x + fore.x * 0.46, here.y + fore.y * 0.46, 1.40)
-      (pa, pb) = (seen(a, az, el, f), seen(b, az, el, f))
-    discard ctx.beginPath()
-    discard ctx.moveTo(cx + pa.x * scale, cy + pa.y * scale)
-    discard ctx.lineTo(cx + pb.x * scale, cy + pb.y * scale)
-    discard ctx.stroke()
+      i = piece.cap
+      tag = e.tag[i]
+      mark = num(tag[2]).int
+      (a, z) = (piece.a, piece.z)
+      pa = seen(a, az, el, f)
+      pz = seen(z, az, el, f)
+      r = num(e.rad[i])
+    var ink: JsObject
+    if mark == 0 or mark == 4:
+      # Trunk and girdle: light across from back edge to front edge, along
+      # facing's image on screen, through piece's middle.
+      let
+        axis: Seen = (x: pz.x - pa.x, y: pz.y - pa.y, d: 0.0)
+        fore = lightAcross(facing[num(tag[0]).int], axis)
+        across = sqrt(fore.x * fore.x + fore.y * fore.y)
+        (mx, my) = (cx + (pa.x + pz.x) / 2.0 * scale, cy + (pa.y + pz.y) / 2.0 * scale)
+      if across < 0.02:
+        ink = cstring(mixHex(shade, lit, litAt(fore, 0.0))).toJs
+      else:
+        let
+          (ux, uy) = (fore.x / across * r * scale, fore.y / across * r * scale)
+          grad = ctx.createLinearGradient(mx - ux, my - uy, mx + ux, my + uy)
+        for (stop, s) in [(0.0, -1.0), (0.5, 0.0), (1.0, 1.0)]:
+          discard grad.addColorStop(stop, cstring(mixHex(shade, lit, litAt(fore, s))))
+        ink = grad
+    else:
+      ink = inkOf(num(tag[1]).int, num(tag[0]).int).toJs
+    case drawnAs(a, z)
+    of Drawn.Stroke:
+      ctx.lineWidth = (2.0 * r * scale).toJs
+      ctx.strokeStyle = ink
+      discard ctx.beginPath()
+      discard ctx.moveTo(cx + pa.x * scale, cy + pa.y * scale)
+      discard ctx.lineTo(cx + pz.x * scale, cy + pz.y * scale)
+      discard ctx.stroke()
+    of Drawn.Disc:
+      ctx.fillStyle = ink
+      discard ctx.beginPath()
+      discard ctx.arc(cx + pa.x * scale, cy + pa.y * scale, r * scale, 0.0, 2.0 * PI)
+      discard ctx.fill()
 
   # Where hands are joined, and how far engine has pulled them apart.
   let grip = e.g[at]

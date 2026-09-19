@@ -28,11 +28,16 @@ const
     ## over one; finer than that buys under twentieth of turn, which is below
     ## anything any card asks.
   ROOM* = 1.0    ## And how far out from clear air search looks.
-  SMOOTH* = 0.005 ## Leaps within this of each other, metres, count as one: engine
-                  ## is not exactly mirror symmetric, and leaps of mirror-image
-                  ## holds differ by up to three millimetres, which chose stances
-                  ## two search steps apart for what should be one hold seen in
-                  ## mirror.  Nearer stance keeps tie.
+  SMOOTHER* = 2.0 ## Stance further out takes tie from nearer only for arms moving
+                  ## this many times less between moments.  Largest leap of walk is
+                  ## chaotic: seen in mirror it differs by up to fifth, and built
+                  ## from same source by another compiler by up to thirty five per
+                  ## cent, last bits amplified.  Tie broken within five millimetres
+                  ## chose stances two steps apart for one hold seen in mirror, and
+                  ## again for one hold built twice.
+  LOOK* = 0.1    ## Metres further out looked once turn runs free, for stance
+                 ## moving arms less: free way is not walked over whole `ROOM`,
+                 ## fifty walks where one did.
 
 
 type
@@ -60,6 +65,11 @@ type
     apart*: float
     restHolds*: bool
     neg*, pos*: Walk
+
+  Carry* = tuple[apart, got, leap: float]
+    ## One walked distance summed up: metres apart couple stood, turns carried
+    ## (`Inf` running free), and furthest any point of held arm moved between
+    ## two moments.
 
 
 iterator stands*(rig: Rig): float =
@@ -138,10 +148,7 @@ proc stood*(rig: Rig; band: Band; links: seq[Link]; turns: float;
   ##     exists only where some winding gets there.
   result.c = build(rig, restStance(rig, apart, away), band, links, head, away)
   result.c.settle()
-  result.holds = true
-  for i in 0 ..< links.len:
-    if result.c.stopOf(i) != Stop.None:
-      result.holds = false
+  result.holds = result.c.gives == Stop.None
   if not result.holds:
     return
   let step = (if turns >= 0.0: STEP else: -STEP)
@@ -149,39 +156,63 @@ proc stood*(rig: Rig; band: Band; links: seq[Link]; turns: float;
   while abs(at) + 1e-9 < abs(turns):
     result.c.turn(Body.Two, step, BEATS)
     at += step
-    for i in 0 ..< links.len:
-      if result.c.stopOf(i) != Stop.None:
-        result.holds = false
-        return
+    if result.c.gives != Stop.None:
+      result.holds = false
+      return
   # Left to stand: turn has stopped, and hold is asked of couple at rest there.
   result.c.advance(SETTLE)
-  for i in 0 ..< links.len:
-    if result.c.stopOf(i) != Stop.None:
-      result.holds = false
+  result.holds = result.c.gives == Stop.None
+
+type Stood* = object ## Where couple stand for one still, and how it sits.
+  holds*: bool
+  apart*: float  ## Distance chosen, metres axis to axis.
+  turns*: float  ## Way couple were wound there, signed: their own where still
+                 ## fixes neither.
+  strain*: Strain ## How near pose there is to any end.
 
 proc standsAt(rig: Rig; band: Band; links: seq[Link]; turns: float;
-              away: bool; head: Body; apart: float): bool =
-  ## Whether pose holds at this facing from this one distance.
+              away: bool; head: Body; apart: float): Stood =
+  ## Whether pose holds at this facing from this one distance, and how it sits.
   let (holds, c) = stood(rig, band, links, turns, away, head, apart)
+  result = Stood(holds: holds, apart: apart, turns: turns, strain: c.strainOf)
   c.free()
-  holds
 
-proc holdsAt*(rig: Rig; band: Band; links: seq[Link]; turns: float;
-              away = false; head = Body.Two; apart = 0.0): bool =
-  ## Whether any pose holds at this facing, from any distance couple may stand at.
+proc standing*(rig: Rig; band: Band; links: seq[Link]; turns: float;
+               away = false; head = Body.Two; either = false): Stood =
+  ## Where couple stand for this still: distance whose pose holds nearest to
+  ## ease, of every distance couple may stand at.
   ##   Still card claims position exists; moving one claims couple can carry to
   ##     it under one manner.  They are not same question, and `sim/verdicts`
   ##     keeps them apart.  Still is wound there all same, as `stood` says why:
   ##     what is asked once there is whether it holds standing, not whether
   ##     that way in was one card meant.
-  ##   Card claims pose exists, so one distance holding it is enough: answer comes
-  ##     as soon as one does, and only pose nothing holds pays for whole search.
-  if apart > 0.0:
-    return standsAt(rig, band, links, turns, away, head, apart)
+  ##   Every distance is asked, and one at ease is taken over one that merely
+  ##     holds.  First distance that held was taken before, and first is chest to
+  ##     chest: couple asked pillion there had her free arm crushed between two
+  ##     torsos, shoulder at its rope's end, twist at its end, waist at forty,
+  ##     with nothing held -- couple would stand anywhere else.  Ties go to
+  ##     nearer distance, as before.
+  ##   Distance at ease outright ends search: no distance further out is nearer
+  ##     to ease than nought, and nearer distance keeps tie, so first at ease is
+  ##     couple's choice.  Only still no distance eases pays for whole search.
+  ##   Still that fixes no way about (`either`) is wound either way at every
+  ##     distance, and way asked keeps tie: card claims position, and couple
+  ##     take whichever way there sits easier.
+  result = Stood(holds: false, strain: Strain(most: Inf))
   for far in stands(rig):
-    if standsAt(rig, band, links, turns, away, head, far):
-      return true
-  false
+    for way in (if either: @[turns, -turns] else: @[turns]):
+      let got = standsAt(rig, band, links, way, away, head, far)
+      if not got.holds: continue
+      if not result.holds or got.strain.most < result.strain.most:
+        result = got
+      if result.strain.most <= 0.0: return
+
+proc holdsAt*(rig: Rig; band: Band; links: seq[Link]; turns: float;
+              away = false; head = Body.Two; apart = 0.0; either = false): bool =
+  ## Whether any pose holds at this facing, from any distance couple may stand at.
+  if apart > 0.0:
+    return standsAt(rig, band, links, turns, away, head, apart).holds
+  standing(rig, band, links, turns, away, head, either).holds
 
 proc reaches*(rig: Rig; band: Band; links: seq[Link]; turns: float;
               away = false; who = Body.Two; head = Body.Two): bool =
@@ -211,6 +242,20 @@ func leapOf*(w: Walk): float =
         for (p, q) in [(a.s, b.s), (a.e, b.e), (a.w, b.w), (a.g, b.g)]:
           result = max(result, dist(p, q))
 
+func chosen*(walks: openArray[Carry]): int =
+  ## Which of walked distances couple stand at, -1 for none: nearest carrying
+  ## turn as far as any to one step, unless one further out moves arms less
+  ## than `SMOOTHER` times as far between moments.
+  ##   To one step: stop is decided at moment something gives, and mirror-image
+  ##     holds give one moment apart from same distance.  Furthest to last bit
+  ##     stood L-l at 0.42 for 1.00 and R-r at 0.38 for 0.98, two steps apart.
+  result = -1
+  var far = -Inf
+  for c in walks: far = max(far, c.got)
+  for i, c in walks:
+    if c.got != far and far - c.got > STEP + 1e-9: continue
+    if result < 0 or c.leap * SMOOTHER < walks[result].leap: result = i
+
 proc furthest(rig: Rig; band: Band; links: seq[Link]; who: Body;
               most, step: float; away: bool; head: Body): Walk =
   ## Walk one way from whichever distance carries it furthest, and among
@@ -222,23 +267,21 @@ proc furthest(rig: Rig; band: Band; links: seq[Link]; who: Body;
   ##   Nearest distance that carried turn was taken before, and nearest is
   ##     chest to chest: joined hands pinned between two torsos, then popping up
   ##     between heads 300 mm in one moment, at distance no couple would turn
-  ##     under arm at.  Couple stand where move is smooth.  Search steps out
-  ##     while that improves and stops when it does not, since walking every
-  ##     distance that carries free turn costs fifty walks where one did.
-  var far = -Inf
-  var smooth = Inf
+  ##     under arm at.  Couple stand where move is smooth.  Once turn runs free
+  ##     search looks `LOOK` further out for that and no further, since walking
+  ##     every distance that carries free turn costs fifty walks where one did.
+  var
+    walks: seq[Walk]
+    carries: seq[Carry]
+    free = Inf ## First distance turn ran free from.
   for apart in stands(rig):
+    if apart > free + LOOK + SEEK / 2.0: break
     let w = walked(rig, band, links, who, apart, most, step, away, head)
     if not w.restHolds: continue
-    let
-      got = (if w.stopped: w.at else: Inf)
-      leap = leapOf(w)
-    if got > far or (got == far and leap < smooth - SMOOTH):
-      far = got
-      smooth = leap
-      result = w
-    elif got == Inf:
-      break
+    walks.add w
+    carries.add (apart, (if w.stopped: w.at else: Inf), leapOf(w))
+    if carries[^1].got == Inf: free = min(free, apart)
+  if carries.len > 0: result = walks[chosen(carries)]
 
 proc swept*(rig: Rig; band: Band; links: seq[Link]; who = Body.Two;
             most = MOST; step = STEP; apart = 0.0; away = false;
