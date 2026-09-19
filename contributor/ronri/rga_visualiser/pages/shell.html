@@ -707,9 +707,10 @@
 
   /* ---- Sections (collapsing headers, matching panel.nim's own structure) ---- */
   /* No `z-index`, so section starts no stacking context and heading's own `z-index: 1` goes
-     on winning over rows. */
-  .section { border-bottom: 1px solid var(--border); padding: 10px 0; }
-  .section:last-child { border-bottom: none; }
+     on winning over rows.
+     No rule under section: pills part sections by themselves, and rule beside them stood as
+     residual line over next pill at rest. */
+  .section { padding: 10px 0; }
   .section-header {
     appearance: none;
     /* Width carries side margins, not `100%`: percentage measures content box margins shift
