@@ -615,3 +615,38 @@ suite "Gaps":
     check wrap("aa bb cc", 5) == @["aa bb", "cc"]  # fits, then breaks
     check wrap("aa bb cc", 5, "  ") == @["aa bb", "  cc"]  # continuation indented
     check wrap("∧∧∧ ∧∧∧", 3) == @["∧∧∧", "∧∧∧"]  # runes, not bytes
+
+
+suite "Driver":
+  const DRIVER = staticRead("../tools/build.nim")
+
+  func dispatched(source: string): seq[string] =
+    ## Read verbs driver's dispatch answers to: quoted labels of `of` branches after case.
+    let start = source.find("case paramStr(1)")
+    for line in source[start ..< source.len].splitLines:
+      let s = line.strip
+      if s.startsWith("of \""):
+        result.add s[4 ..< s.find('"', 4)]
+
+  func taught(source: string): seq[string] =
+    ## Read verbs usage string teaches, between its angle brackets.
+    let open = source.find("\"<")
+    let close = source.find(">", open)
+    source[open + 2 ..< close].split('|')
+
+  func tabled(source: string): seq[string] =
+    ## Read verbs header table rows, first cell of each row naming one.
+    for line in source.splitLines:
+      if not line.startsWith("##   | "): continue
+      let cell = line[7 ..< line.find('|', 7)].strip
+      if cell.len > 0 and cell != "Command" and not cell.startsWith("-"): result.add cell
+
+  test "dispatch answers to every verb usage and header teach, and no other":
+    check dispatched(DRIVER).sorted == taught(DRIVER).sorted  # usage string
+    check dispatched(DRIVER).sorted == tabled(DRIVER).sorted  # header table
+    check "inspect" in dispatched(DRIVER) and "bench" in dispatched(DRIVER)  # README's verbs
+
+  test "header table names files verbs write":
+    check "`baseline/runtime_<algebra>.json`" in DRIVER  # what `bench` records
+    check "`baseline/static_<algebra>.json`" in DRIVER  # what `baseline` records
+    check "| drive    | inspect, guard," in DRIVER  # drive runs guard, not retired check
