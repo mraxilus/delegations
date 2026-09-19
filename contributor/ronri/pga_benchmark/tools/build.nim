@@ -5,14 +5,16 @@
 ##   |----------|-----------------------------------------------------------------------|
 ##   | Command  | Effect                                                                |
 ##   |----------|-----------------------------------------------------------------------|
-##   | inspect  | compile bench entry per algebra, read its emitted C, write counts     |
+##   | inspect  | compile bench entry per algebra to C, read it, write static           |
+##   |          | measurements as `build/static_<algebra>.json`                         |
 ##   | bench    | compile and run bench per algebra, plain then instrumented, record    |
-##   |          | measurements as `baseline/bench_<algebra>.json`                            |
-##   | baseline | inspect, then record counts as `baseline/<algebra>.json`              |
+##   |          | runtime measurements as `baseline/runtime_<algebra>.json`             |
+##   | baseline | inspect, then record static measurements as                           |
+##   |          | `baseline/static_<algebra>.json`                                      |
 ##   | guard    | compare last inspect against baseline; any count grown is finding     |
-##   | drive    | inspect, check, and hold committed `gaps.md` to regeneration          |
+##   | drive    | inspect, guard, and hold committed `gaps.md` to regeneration          |
 ##   | gaps     | regenerate `gaps.md` and docket from committed baselines              |
-##   | sweep    | time general measurands at two to six dimensions, rigid; never in CI      |
+##   | sweep    | time general measurands at two to six dimensions, rigid; never in CI  |
 ##   | system   | print system packages build needs, one per line, for caller          |
 ##   | clean    | remove `build`                                                        |
 ##   |----------|-----------------------------------------------------------------------|
@@ -300,8 +302,8 @@ when isMainModule:
     quit 2
   try:
     case paramStr(1)
-    of "static": inspect()
-    of "runtime": bench()
+    of "inspect": inspect()
+    of "bench": bench()
     of "baseline": baseline()
     of "guard": guard()
     of "drive": drive()
