@@ -219,7 +219,11 @@ export async function driveHeaderStyled(page: Page): Promise<void> {
         colour: style.borderTopColor,
       };
     };
-    return { heading: shapeOf(heading), pill: shapeOf(pill) };
+    // Pills part sections by themselves; rule under each section beside them read as
+    //   residual line over next pill, so none may stand.
+    const rules = Array.from(document.querySelectorAll('.section'))
+      .map((section) => getComputedStyle(section).borderBottomWidth);
+    return { heading: shapeOf(heading), pill: shapeOf(pill), rules };
   });
   report(
     'a heading that has lifted off its list wears the pill the page\'s own controls wear',
@@ -233,6 +237,12 @@ export async function driveHeaderStyled(page: Page): Promise<void> {
         + ` with ${worn.heading.width} ${worn.heading.style} ${worn.heading.colour};`
         + ` the chip row's pill wears ${worn.pill.radius} with ${worn.pill.width}`
         + ` ${worn.pill.style} ${worn.pill.colour}`,
+  );
+  report(
+    'and nothing but the pills parts one section from the next',
+    worn !== null && worn.rules.length > 0 && worn.rules.every((rule) => rule === '0px'),
+    worn === null ? 'no drawer to scroll'
+      : `${worn.rules.length} sections wear rules of ${worn.rules.join(', ')} under them`,
   );
 }
 
