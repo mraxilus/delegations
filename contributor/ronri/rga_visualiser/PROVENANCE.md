@@ -363,7 +363,8 @@ the pills it borrows its shape from are `--surface` over a blur: a heading asked
 be seen through. That fill is the drawer's own ground, arrived at the way the drawer arrives at it —
 `color-mix(in srgb, rgb(22 27 34) 82%, var(--bg))`, where `--bg` is written at runtime by `gl.ts`
 from the clear colour — where a named tone drifts. Not a shadow, which made pinning read as
-*floating*.
+*floating*. No rule under a section: the pills part sections by themselves, and a rule beside them
+stood as a residual line over the next pill at rest.
 
 **Only the rows near the viewport exist.** The list is a window over its keys: two spacers stand
 in for the rows above and below at the heights those rows measured, or 61 px until they have, and
