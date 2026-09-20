@@ -192,9 +192,10 @@ const AMBIENT_SHADE = nimShadeAmbient();
 //   Sibling copy of `mesh.expandRibbon`, reference suite pins to algebra, and of GLSL
 //   3.30 source in `renderer.nim`; change to any one of three is not finished until
 //   other two are checked.
-//   Clip to near plane, blend clipped end's tint by same fraction, derive across as
-//   cross join reduces to, and step off by half width of this end's own
-//   world-per-pixel.
+//   Clip to near plane, stepping crossing from end it stands nearer (see
+//   `mesh.expandRibbon` for what steps from far end cost), blend cut end's tint by same
+//   step, derive across as cross join reduces to, and step off by half width of this
+//   end's own world-per-pixel.
 const SOURCE_VERTEX_RIBBON = `
   attribute vec2 aCorner;
   attribute vec3 aTail;
@@ -231,14 +232,14 @@ const SOURCE_VERTEX_RIBBON = `
     vec3 far_end = aHead;
     vec4 tint_near = aTintTail;
     vec4 tint_far = aTintHead;
-    if (depth_tail < uDepthNear) {
-      float fraction = (uDepthNear - depth_tail)/(depth_head - depth_tail);
-      near_end = aTail + fraction*(aHead - aTail);
-      tint_near = mix(aTintTail, aTintHead, fraction);
-    } else if (depth_head < uDepthNear) {
-      float fraction = (uDepthNear - depth_head)/(depth_tail - depth_head);
-      far_end = aHead + fraction*(aTail - aHead);
-      tint_far = mix(aTintHead, aTintTail, fraction);
+    if (min(depth_tail, depth_head) < uDepthNear) {
+      float toward_head = (uDepthNear - depth_tail)/(depth_head - depth_tail);
+      vec3 crossing;
+      if (toward_head < 0.5) crossing = aTail + toward_head*(aHead - aTail);
+      else crossing = aHead + (toward_head - 1.0)*(aHead - aTail);
+      vec4 tint_crossing = mix(aTintTail, aTintHead, toward_head);
+      if (depth_tail < uDepthNear) { near_end = crossing; tint_near = tint_crossing; }
+      else { far_end = crossing; tint_far = tint_crossing; }
     }
     vec3 across = across_raw/across_length;
     vec3 at = mix(near_end, far_end, aCorner.x);
@@ -494,12 +495,13 @@ const SOURCE_VERTEX_RING = `
     }
     vec3 near_end = tail;
     vec3 far_end = head;
-    if (depth_tail < uDepthNear) {
-      float fraction = (uDepthNear - depth_tail)/(depth_head - depth_tail);
-      near_end = tail + fraction*(head - tail);
-    } else if (depth_head < uDepthNear) {
-      float fraction = (uDepthNear - depth_head)/(depth_tail - depth_head);
-      far_end = head + fraction*(tail - head);
+    if (min(depth_tail, depth_head) < uDepthNear) {
+      float toward_head = (uDepthNear - depth_tail)/(depth_head - depth_tail);
+      vec3 crossing;
+      if (toward_head < 0.5) crossing = tail + toward_head*(head - tail);
+      else crossing = head + (toward_head - 1.0)*(head - tail);
+      if (depth_tail < uDepthNear) near_end = crossing;
+      else far_end = crossing;
     }
     vec3 across = across_raw/across_length;
     vec3 at = mix(near_end, far_end, aCorner.x);

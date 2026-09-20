@@ -834,6 +834,10 @@ func expandRibbon*(record: RibbonRecord, scale: DrawScale): array[6, Vertex] =
   ##     World offset proportional to depth gives constant screen width only while quad's
   ##     edges interpolate depth linear along segment, false once one end stands behind
   ##     eye; unclipped world axis drew twenty pixels wide near origin.
+  ##     Crossing is stepped from end it stands nearer, never from end cut away: line
+  ##     reaches its vanishing point half million units out, so step from far end is
+  ##     difference of two places decades apart, which float32 cancels to whole units at
+  ##     plane whose own pixel spans billionths.
   ##   Segment entirely behind eye, or one eye stands on, comes back as six coincident
   ##   zero-alpha vertices: quad rasterising nothing, as shader leaves it.
   let
@@ -852,14 +856,17 @@ func expandRibbon*(record: RibbonRecord, scale: DrawScale): array[6, Vertex] =
   var
     (near, far) = (tail, head)
     (tint_near, tint_far) = (tint_tail, tint_head)
-  if depth_tail < scale.depthNear:
-    let fraction = (scale.depthNear - depth_tail)/(depth_head - depth_tail)
-    near = tail + fraction*(head - tail)
-    tint_near = blend(tint_tail, tint_head, fraction)
-  elif depth_head < scale.depthNear:
-    let fraction = (scale.depthNear - depth_head)/(depth_tail - depth_head)
-    far = head + fraction*(tail - head)
-    tint_far = blend(tint_head, tint_tail, fraction)
+  if min(depth_tail, depth_head) < scale.depthNear:
+    let
+      toward_head = (scale.depthNear - depth_tail)/(depth_head - depth_tail)
+      crossing =
+        if toward_head < 0.5: tail + toward_head*(head - tail)
+        else: head + (toward_head - 1.0)*(head - tail)
+      tint_crossing = blend(tint_tail, tint_head, toward_head)
+    if depth_tail < scale.depthNear:
+      (near, tint_near) = (crossing, tint_crossing)
+    else:
+      (far, tint_far) = (crossing, tint_crossing)
 
   let
     offset_near = 0.5*float(record.width)*worldPerPixelAt(near, scale)*across.get
