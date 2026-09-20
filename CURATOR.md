@@ -192,11 +192,14 @@ way — at the start, on each resolution, at handover.
    and `ledger`, opening or extending one issue per workflow.
 
 10. **Opening prompts.** `CURATOR.md` and `CONTRIBUTOR.md` are pasted into new delegates as
-    their first message. Keep each self-contained and short: every paragraph is read on every
-    start. State the rule and its cost; the incident that produced it goes in
+    their first message, so every paragraph is read on every start. Keep each self-contained,
+    and cut what is dated or written twice rather than what is merely long: a prompt cut short
+    is answered from the model's own defaults instead, which is a failure no ceiling can see.
+    State the rule and its cost; the incident that produced it goes in
     `curator/audit/PROVENANCE.md` or stays in the log. A rule written in both prompts is a
-    copy that drifts, so write it once and point at it. Remember `CONTRIBUTOR.md` is stamped:
-    any edit, even a typo, re-stamps every project (duty 1).
+    copy that drifts, so write it once and point at it. `PROMPT_BYTES` guards runaway growth
+    and nothing finer. Remember `CONTRIBUTOR.md` is stamped: any edit, even a typo, re-stamps
+    every project (duty 1).
 
 11. **Never** write contributor project code, create a contributor project, or resolve a
     contributor's open question by editing their project. Answer it by changing a rule, a
@@ -242,11 +245,8 @@ thread with it, while an issue outlives the branch that prompted it.
 ## Before opening a pull request
 
 `nim r koch ci` at the repository root passes on the exact commit you push, and again before
-every later push. Open every pull request **as a draft**; mark it ready only when CI is green
-on the runner, every review comment is answered and nothing is left to change; put it back to
-draft the moment you intend another commit. The Architect merges what is green and ready,
-promptly and correctly, and an unpushed commit is invisible: push before you mark ready, or
-draft while you finish. `CONTRIBUTOR.md` says the rest, and it binds you.
+every later push. `CONTRIBUTOR.md`'s section of this name holds the rest — draft and ready,
+the backoff, the page linked, the change shown — and it binds you.
 
 ## Repository settings the Architect applies
 
@@ -316,6 +316,11 @@ something already writes down: a run's own conclusion is such a fact, so `watch.
 it; a glossary term's agreement is not. Each addition dilutes the others, since a document
 whose rules are mostly unenforced trains its readers to skim. Prefer a check wherever one can
 be written, and say plainly in the rule when none can.
+
+The test for taking one off is that same fact read the other way. When the platform gains a
+way to read what a rule asks about, that rule leaves the list and becomes a check in the same
+pull request. So re-read all seven whenever a check is added or an API is found: a rule left
+here after it became checkable is the one that teaches the skimming.
 
 ## Output contract
 

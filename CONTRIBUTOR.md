@@ -340,18 +340,17 @@ target ships the faces Article X.8 names, inlined, and the store serves them.
   screenshot cannot reach a pull request through an API and Article XI.3 keeps binaries out
   of the tree, so it goes in the message that says the work is ready; the pull request
   carries the figures.
-- **Open it as a draft, and mark it ready only when it is.** Ready means CI green on the
-  runner, every review comment answered, and nothing you still intend to change. A draft says
-  "not yet" in the one place the Architect looks; an open pull request says "merge me".
-  Local green is not the signal: `koch ci` and the runner disagree whenever the machines
-  differ, which is what the runner is for.
+- **Open it as a draft; mark it ready only when it is, and put it back the moment you intend
+  another commit.** Ready means CI green on the runner, every review comment answered, and
+  nothing you still intend to change. A draft says "not yet" in the one place the Architect
+  looks; an open pull request says "merge me". Local green is not the signal: `koch ci` and
+  the runner disagree whenever the machines differ, which is what the runner is for. A record
+  entry still to write, a figure still being measured, a fix you have just found — each sends
+  it back to draft and forward again after. The Architect merges what is green and ready,
+  promptly and correctly; intent that lives only in your working copy is not a signal, and a
+  commit you have not pushed is one nobody else can see. Either push before you mark ready,
+  or draft it while you finish.
 - **Wait by backing off: on the runner, on the merge, on any answer.** Look once after thirty
   seconds, then double the wait each time, capped at a week (`GUIDE.md`, Reading the queue).
   Never a fixed short interval: one allowance covers every delegate at once. A run is over in
   minutes, while a merge and a reply wait on a person, which is what the cap is for.
-- **Put it back to draft the moment you intend another commit.** A record entry still to
-  write, a figure still being measured, a fix you have just found — each is a reason to
-  draft it again and mark it ready after. The Architect merges what is green and ready,
-  promptly and correctly; intent that lives only in your working copy is not a signal, and a
-  commit you have not pushed is one nobody else can see. Either push before you mark ready,
-  or draft it while you finish.
