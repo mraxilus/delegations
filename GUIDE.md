@@ -32,6 +32,12 @@ tool's name does not say which one a call takes; the measurement is in
   are for a merge and a reply, which wait on a person, and that is what the cap is for. Where
   it will not clear before you hand over, say what you were waiting on and leave it; a
   conversation held open to poll spends its own run too.
+- **Nothing found is not the same as not yet.** A run appears within seconds of a push and a
+  pull request exists from the moment it is opened, so an empty answer on the second look is a
+  fault in the question rather than progress to wait out. These filters are exact: a commit
+  hash abbreviated where forty characters are wanted matches nothing, however long you wait.
+  Read what you asked before you double again, because a backoff hides a wrong question where
+  a drumbeat would have shown it.
 
 ## Toolchain
 
