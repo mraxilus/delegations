@@ -33,15 +33,9 @@ nim r tools/build.nim driven                     # this project: drive the deskt
 nim r tools/build.nim system                     # this project: what to install first
 ```
 
-It builds on **Nim at commit `27763495b`**, and nothing has to be installed for it. Koch resolves
-the pin itself. It takes the compiler on `PATH` where that one already serves. Else it takes one
-cached under `~/.cache/koch/nim/<pin>/`, or a clone of `nim-lang/Nim` built at that commit and
-cached. That is paid once for each machine (`GUIDE.md`, Toolchain). CI resolves the same pin the
-same way.
-
-No release will do. The `pga` library spells its operators with seven characters that Nim learned to
-lex in that commit, and no release carries it yet. The pin is exact. A pin that nothing can serve is
-a finding, which names the pin and the cache tried, and never a fallback to another compiler.
+It builds on **Nim at commit `27763495b`**, and not on a release. Nothing has to be installed,
+because koch resolves the pin (`GUIDE.md`, Toolchain). See Dependencies and vendoring in
+`PROVENANCE.md` for why a release will not serve.
 
 System packages are declared in `tools/build.nim`, and printed by its `system` verb. So this README
 names no list that could drift from the one the build reads (issue 60):
