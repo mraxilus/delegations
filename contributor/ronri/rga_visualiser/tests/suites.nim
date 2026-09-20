@@ -1124,7 +1124,9 @@ suite "Mesh":
     )
 
 
-  proc ribbonEnds(meshes: MeshSet, index: int): (Position, Position) =
+  proc ribbonEnds(
+    meshes: MeshSet, index: int, scale: DrawExtent = SCALE_TEST
+  ): (Position, Position) =
     ## Recover segment `index`-th ribbon was built around.
     ##   Each end's own two corners sit equal step either side of it, so their midpoint
     ##   is endpoint again.
@@ -1138,7 +1140,7 @@ suite "Mesh":
       )
     # Read through `expandRibbon`, reference of shader that does widening.
     #   What is read back is then clipped ends, as expanded storage holds them.
-    let corners = expandRibbon(meshes.ribbons.records[index], toScale(SCALE_TEST))
+    let corners = expandRibbon(meshes.ribbons.records[index], toScale(scale))
     (
       midpoint(corners[0], corners[5]),
       midpoint(corners[1], corners[2]),
@@ -1270,6 +1272,61 @@ suite "Mesh":
         let (fx, fy) = screen(far_end)
         # Perpendicular screen distance of drawn end from true line's own ray.
         check abs((fx - ax)*uy - (fy - ay)*ux) < 1e-9
+
+
+  test "a line's near crossing holds its place with the camera close on the line":
+    # Crossing was stepped from end being cut away -- `head + fraction*(tail - head)`,
+    #   fraction hair under one where head is far end -- so difference of two places
+    #   decades apart carried whole rounding of far one. Line is drawn out to its
+    #   vanishing point, `radius_horizon` away, which orrery puts half million units
+    #   off, and near plane is four-hundredth of orbit distance: camera close on moon
+    #   leaves that difference carrying hundreds of pixels at plane it lands on.
+    #   Stepping from end crossing stands nearer keeps rounding proportional to short step.
+    #   Holds reference alone; shaders carry same arithmetic and are read by driven check
+    #   `driveLineCrossing`.
+    const
+      REACH_VANISHING = 530_000.0
+        ## Reach orrery draws line to, its farthest star's own distance.
+      DISTANCE_CLOSE = 1.0e-7
+        ## Orbit distance of close-up on moon, well over `camera.DISTANCE_LIMIT_NEAR`.
+    let
+      eye_close = ORIGIN
+      forward_close = Direction(x: 1.0, y: 0.0, z: 0.0)
+      # Unit by construction, and slanted across sight axis so eye stands off line.
+      along = Direction(x: 0.6, y: 0.8, z: 0.0)
+      # Line runs through what camera looks at, and its anchor is unit out along it,
+      #   which is where support point lands in orrery.
+      through = eye_close + DISTANCE_CLOSE*forward_close
+      SCALE_CLOSE = algebraFilled(DrawExtent(scale: DrawScale(
+        extent_furniture: 30.0,
+        eye: eye_close, radius_horizon: REACH_VANISHING,
+        forward: forward_close,
+        tangent_half_view: tan(0.5*degToRad(45.0)),
+        height_pixels: HEIGHT_SCALE_TEST,
+        depth_near: DISTANCE_CLOSE*FACTOR_CLIP_NEAR,
+      )))
+    MESHES.clearMeshes
+    MESHES.addSegment(
+      through + 1.0*along, eye_close - REACH_VANISHING*along, Ink.Jade.colour,
+      WIDTH_LINE_OBJECT,
+    )
+    let corners = expandRibbon(MESHES.ribbons.records[0], toScale(SCALE_CLOSE))
+    check isRibbonDrawn(corners)
+    # Crossing as record itself stores its ends, stepped from end it stands nearer:
+    #   what is under test is which end is stepped from, not what float32 storage kept.
+    let
+      record = MESHES.ribbons.records[0]
+      stored_tail = Position(
+        x: float(record.tail_x), y: float(record.tail_y), z: float(record.tail_z))
+      stored_head = Position(
+        x: float(record.head_x), y: float(record.head_y), z: float(record.head_z))
+      depth_tail = dot(stored_tail - eye_close, forward_close)
+      depth_head = dot(stored_head - eye_close, forward_close)
+      toward_head = (SCALE_CLOSE.depthNear - depth_tail)/(depth_head - depth_tail)
+      crossing = stored_tail + toward_head*(stored_head - stored_tail)
+      (_, far_drawn) = ribbonEnds(MESHES, 0, SCALE_CLOSE)
+    # Within one pixel of where it stands, measured at plane it lands on.
+    check norm(far_drawn - crossing) <= worldPerPixelAt(far_drawn, toScale(SCALE_CLOSE))
 
 
   test "line's own far end coincides exactly with where its attitude is drawn":

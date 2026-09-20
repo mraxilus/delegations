@@ -10,7 +10,7 @@
 
 import type { Page } from '@playwright/test';
 import { settleCamera } from './camera';
-import { readCanvas, settleCanvas } from './canvas';
+import { readCanvas, settleCanvas, type Spot } from './canvas';
 import { report } from './report';
 
 /** Kinds preset must carry, each of which draws something. */
@@ -369,6 +369,111 @@ export async function driveDiscUnderfoot(page: Page): Promise<void> {
   }, before);
   await settleCamera(page);
 }
+
+/** Ring of spots read about point, in pixels off it and in spots around. */
+const RADIUS_CROSSING = 100, SPOTS_CROSSING = 720;
+
+/** How far spot's colour may stand off line's own ink, per channel, and still read as it. */
+const TOLERANCE_INK = 12;
+
+/** How far crossing's opposite may stand off half turn, in degrees. */
+const DEGREES_OPPOSITE = 4;
+
+/** Stand camera close on point two lines join, and assert both still run through it.
+ *
+ *  Every ribbon crossing near plane was cut by stepping from end being cut away --
+ *  `head + fraction*(tail - head)`, `fraction` hair under one where head is far end. Line is
+ *  drawn out to its vanishing point, `radius_horizon` away, which this scene puts 530,000
+ *  units off; that difference cancels in float32 and leaves crossing carrying tenths of unit
+ *  where near plane's own pixel spans billionths. At orbit distance 0.01 `earth ∧ luna` was
+ *  drawn 406 pixels off Earth and `sol ∧ earth` stopped dead on it, crossing pinned to pivot;
+ *  at 0.001, 1,538 pixels off. Both ends of line through point are read here: ring of
+ *  spots about it reads one crossing per half of each line, and each crossing has its
+ *  opposite only while line runs through point rather than past it.
+ */
+export async function driveLineCrossing(
+  page: Page, width: number, height: number,
+): Promise<void> {
+  const before = await page.evaluate(() => ({
+    pivot: Array.from(nimCameraPivot()), distance: nimCameraDistance(),
+    azimuth: nimCameraAzimuth(), elevation: nimCameraElevation(),
+  }));
+  // Earth is point orrery joins by both of its finite lines, at every size it comes in.
+  const joined = await page.evaluate(() => {
+    const handles = nimSceneHandles();
+    const point = handles.find((one) => nimObjectLabel(one) === 'earth');
+    const line = handles.find((one) => nimObjectKindWord(one) === 'line');
+    if (point === undefined || line === undefined) return null;
+    const c = nimObjectCoefficients(point);
+    const weight = c[4] ?? 1;
+    return {
+      point,
+      place: [(c[1] ?? 0)/weight, (c[2] ?? 0)/weight, (c[3] ?? 0)/weight],
+      ink: Array.from(nimInkColor(nimObjectInk(line))).map((one) => Math.round(one*255)),
+    };
+  });
+  if (joined === null) {
+    report('the scene holds a point two lines join', false, 'no earth, or no line, in scene');
+    return;
+  }
+  // Pivot rather than pick: selection's own pulse never settles, and ring is read off still
+  //   canvas. Camera lands where framing pick lands it either way.
+  await page.evaluate((given) => {
+    nimSelectClear();
+    nimSetCameraPivot(given[0] ?? 0, given[1] ?? 0, given[2] ?? 0);
+  }, joined.place);
+
+  for (const distance of [0.01, 0.001]) {
+    await page.evaluate((one) => { nimSetCameraDistance(one); }, distance);
+    await settleCamera(page);
+    await page.waitForTimeout(400);
+    const at = await page.evaluate(
+      (given) => Array.from(nimAnchorScreen(given.point, given.width, given.height)),
+      { point: joined.point, width, height },
+    );
+    const spots: Spot[] = [];
+    for (let step = 0; step < SPOTS_CROSSING; step += 1) {
+      const angle = 2*Math.PI*step/SPOTS_CROSSING;
+      spots.push([
+        (at[0] ?? 0) + RADIUS_CROSSING*Math.cos(angle),
+        (at[1] ?? 0) + RADIUS_CROSSING*Math.sin(angle),
+      ]);
+    }
+    const reading = await readCanvas(page, spots);
+    // Ink rather than brightness: planet's own dot is bright too, and carries other hue.
+    const lit = reading.spots.map((rgba) => [0, 1, 2].every(
+      (channel) => Math.abs((rgba?.[channel] ?? 0) - (joined.ink[channel] ?? 0)) <=
+        TOLERANCE_INK));
+    // One crossing per run of lit spots, read at run's middle; ring closes, so run may wrap.
+    const crossings: number[] = [];
+    for (let step = 0; step < SPOTS_CROSSING; step += 1) {
+      if (!(lit[step] ?? false) ||
+          (lit[(step + SPOTS_CROSSING - 1) % SPOTS_CROSSING] ?? false)) continue;
+      let run = 1;
+      while (run < SPOTS_CROSSING && (lit[(step + run) % SPOTS_CROSSING] ?? false)) run += 1;
+      crossings.push((step + (run - 1)/2)%SPOTS_CROSSING*360/SPOTS_CROSSING);
+    }
+    const apart = (one: number, other: number): number =>
+      Math.abs(((other - one)%360 + 360)%360 - 180);
+    const paired = crossings.every(
+      (one) => crossings.some((other) => apart(one, other) <= DEGREES_OPPOSITE));
+    report(
+      `both lines run through the point they join, camera ${distance} out`,
+      crossings.length >= 4 && paired,
+      `ring ${RADIUS_CROSSING} px out reads ${crossings.length} crossings at ` +
+        `${crossings.map((one) => one.toFixed(1)).join(', ')}; four wanted, opposite in pairs`,
+    );
+  }
+
+  await page.evaluate((given) => {
+    nimSetCameraPivot(given.pivot[0] ?? 0, given.pivot[1] ?? 0, given.pivot[2] ?? 0);
+    nimSetCameraDistance(given.distance);
+    nimSetCameraAzimuth(given.azimuth);
+    nimSetCameraElevation(given.elevation);
+  }, before);
+  await settleCamera(page);
+}
+
 
 /** Drive six wheel notches at centre and off centre, and assert what each keeps.
  *
