@@ -6,7 +6,8 @@
 ##   Paths are data in `ENGLISH_PATHS`, governed documents alone, so no contributor record
 ##     reddens for rule whose writer has not read it yet. Widening check is one row.
 ##   Block is bullet, numbered item or run of plain lines, each read alone: list of six
-##     bullets is six blocks rather than one paragraph of six sentences.
+##     bullets is six blocks rather than one paragraph of six sentences. Quote marker is
+##     dropped, so quoted example counts words it holds rather than markers before them.
 ##   Backticked span counts as one word, since reader takes `nim r koch ci` as one name.
 ##
 ##   Cost: finding names line block opens on, never line sentence opens on; block is short
@@ -150,7 +151,10 @@ func blocks*(markdown: string): seq[Block] =
   var opened = 0
   let lines = markdown.fencedOut.matterOut.splitLines
   for i, line in lines:
-    let s = line.strip.multiReplace(("<!--", " "), ("-->", " ")).strip
+    let s = line.strip
+      .multiReplace(("<!--", " "), ("-->", " "))
+      .strip(trailing = false, chars = {'>', ' '})
+      .strip
     if not line.isCarrying or s.len == 0:
       if words.len > 0:
         result.add Block(text: words.join(" "), line: opened)

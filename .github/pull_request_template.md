@@ -1,33 +1,36 @@
-**Role:** <!-- curator, or contributor/<domain>/<project>. Label this pull request with that
-same string, copied from the branch grammar, as every issue is labelled. -->
+**Role:** <!-- Write curator, or contributor/<domain>/<project>. Label this pull request with
+that same string. Copy it from the branch grammar, as you label every issue. -->
 
 ## Intent
 
-<!-- One paragraph: what changes and why. Title follows `type(scope): summary`. -->
+<!-- One paragraph: what changes, and why. The title follows `type(scope): summary`. -->
 
 ## Scope
 
 - Branch: `contributor/<domain>/<project>/<name>`, `curator/<project>/<name>` or `curator/<name>`
-- Anything the `scope` job would allow but a reader would not expect
+- Anything that the `scope` job allows and a reader would not expect
 
 ## Verification
 
-<!-- What ran, on which build: `nim r koch ci` result, sample counts, figures with their pair.
-     End by showing it: a screenshot where visual, a worked example where not, or one line saying
-     why neither fits. A screenshot goes in the message to the Architect, not here -- GitHub takes
-     no image from an API.
-     Link every page this change republished; a page is opened, not described. -->
+<!-- What ran, and on which build: the result of `nim r koch ci`, the sample counts, and
+     every figure with its pair.
+     Then show the change. Give a screenshot where it is visual, a worked example where it is
+     not, and one line that says why where neither one fits. The screenshot goes in the
+     message to the Architect and not here, because GitHub takes no image from an API.
+     Link every page that this change published again. A reader opens a page, and a
+     description of one is not a page. -->
 
 ## Record
 
-<!-- These are about this change. The standing list of what nothing checks is carried in the
-     conversation, not here -- see "Carry the unchecked list in the open". -->
+<!-- These boxes are about this change. The standing list of what nothing checks belongs in
+     the conversation and not here. See "Carry the unchecked list in the open". -->
 
-- [ ] PROVENANCE.md updated in its own commit, design by subsystem, verified or assumed marked
-- [ ] GLOSSARY.md updated for every term resolved
-- [ ] Every mistake found earned a test that fails without the fix, not one written to pass
-- [ ] Assumptions, trade-offs and open questions listed below
+- [ ] PROVENANCE.md holds the design by subsystem, in a commit of its own, each claim marked
+- [ ] GLOSSARY.md holds every term that resolved
+- [ ] Every mistake found earned a test that fails without the fix, and not one written to pass
+- [ ] The assumptions, the trade-offs and the open questions are below
 
 ## Notes
 
-<!-- Material assumptions, representation and staging choices, unresolved questions. -->
+<!-- The material assumptions, the choices of representation and staging, and the questions
+     still open. -->

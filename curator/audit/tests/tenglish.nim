@@ -32,6 +32,7 @@ suite "Article VI.8":
     check found.mapIt(it.line) == @[3, 6, 7]
     check found[1].text == "First item."  # marker dropped
     check markerLen("1. Numbered.") == 3
+    check "> One quoted line.\n> And second.".blocks[0].text == "One quoted line. And second." 
 
   test "fenced code, table row, heading and front matter carry no prose":
     let document = "---\nname: Queued work\n---\n\n| a | b |\n\n```\nutilise this\n```\n"
