@@ -2,24 +2,24 @@
 ##   Build once with `nim c koch`, then `./koch <command>`; or `nim r koch <command>`, which
 ##   rebuilds when sources changed, then runs (Article IX.6); warm run costs ~0.1 s.
 ##
-##   |---------|-------------------------------------------------------------------------|
-##   | Command | Effect                                                                  |
-##   |---------|-------------------------------------------------------------------------|
-##   | tree    | layout, form, comments, records, glossary, prompts, copies, faces       |
-##   | deps    | `atlas --noexec rep` in every project holding atlas.lock, or in one     |
-##   | types   | restore node tools, then type-check scripts, projects one change asks   |
-##   | driven  | restore, build page, drive it through real events, on that project's pin|
-##   | system  | print packages projects with `system` verb declare, one per line        |
-##   | assets  | fetch files named into store, print path of each; name none to declare  |
-##   | tests   | restore, then testament over tests/t*.nim, every project or one         |
-##   | plan    | projects one change asks to compile, as JSON for CI matrix              |
-##   | scope   | changed paths against branch prefix           (--branch, --base)        |
-##   | commits | commit subjects against branch scope          (--branch, --base)        |
-##   | base    | paths branch gained against base's own rules  (--base)                  |
-##   | role    | pull request's role line and labels against branch  (--branch)          |
-##   | stamp   | print rules stamp for PROVENANCE.md; --write sets every Rules row       |
-##   | ci      | fetch origin/main, then every check but `deps` and `role`, as it scopes |
-##   |---------|-------------------------------------------------------------------------|
+##   |---------|----------------------------------------------------------------------------------|
+##   | Command | Effect                                                                           |
+##   |---------|----------------------------------------------------------------------------------|
+##   | tree    | layout, form, comments, records, glossary, prompts, copies, faces, english       |
+##   | deps    | `atlas --noexec rep` in every project holding atlas.lock, or in one              |
+##   | types   | restore node tools, then type-check scripts, projects one change asks            |
+##   | driven  | restore, build page, drive it through real events, on that project's pin         |
+##   | system  | print packages projects with `system` verb declare, one per line                 |
+##   | assets  | fetch files named into store, print path of each; name none to declare           |
+##   | tests   | restore, then testament over tests/t*.nim, every project or one                  |
+##   | plan    | projects one change asks to compile, as JSON for CI matrix                       |
+##   | scope   | changed paths against branch prefix           (--branch, --base)                 |
+##   | commits | commit subjects against branch scope          (--branch, --base)                 |
+##   | base    | paths branch gained against base's own rules  (--base)                           |
+##   | role    | pull request's role line and labels against branch  (--branch)                   |
+##   | stamp   | print rules stamp for PROVENANCE.md; --write sets every Rules row                |
+##   | ci      | fetch origin/main, then every check but `deps` and `role`, as it scopes          |
+##   |---------|----------------------------------------------------------------------------------|
 ##   Verb of one project is that project's own, in its `tools/build.nim`; koch names verb and
 ##     selects projects carrying it, and holds none of what it does. `types`, `drive` and
 ##     `system` are those, and koch learns which projects carry each by reading that driver's

@@ -1,9 +1,9 @@
 # rga_visualiser
 
-The words this project uses for itself: the parts of a drawn object, the states a pointer
-can put it in, and the machinery that decides where each mark goes. Terms specific to this
-visualiser only — the algebra's own vocabulary belongs to the `pga` library, and the
-repository's words are in the top-level `GLOSSARY.md`.
+The words that this project uses for itself. They are the parts of a drawn object, the
+states a pointer can put it in, and the machinery that decides where each mark goes. Only
+terms specific to this visualiser belong here. The vocabulary of the algebra itself belongs to
+the `pga` library, and the words of the repository are in the top-level `GLOSSARY.md`.
 
 ## Language
 
@@ -29,9 +29,9 @@ meaning.
 _Avoid_: variant, tag, kind
 
 **Placement**:
-What the algebra alone says about one object: its kind, where it stands, which way it
-points, and the arms its disc is spanned by. The camera is not in it, which is why a
-placement survives an orbit and is computed once rather than every frame.
+What the algebra alone says about one object. That is its kind, where it stands, which way
+it points, and the arms that its disc is spanned by. The camera is not in it, which is why a
+placement survives an orbit, and is computed once rather than every frame.
 _Avoid_: placed, derivation, resolution, geometry
 
 **Revision**:
@@ -53,8 +53,8 @@ a mark, which is a line on a diagnostics chart.
 _Avoid_: highlight, halo, indicator, selection ring
 
 **Preview**:
-Anything drawn before it is committed: the object being edited, at the size it is being
-edited, or the object an operation would produce from its operands.
+Anything drawn before it is committed. That is the object under edit, at the size it is
+edited at, or the object that an operation would produce from its operands.
 _Avoid_: ghost, phantom, provisional, staged
 
 **Outcome**:
@@ -102,12 +102,12 @@ and the faces.
 _Avoid_: bundle, artefact, output, document
 
 **Drawer**:
-The sliding container of chrome: in from the right on a wide screen, up from the bottom on a
-phone.
+The sliding container of chrome. It comes in from the right on a wide screen, and up from
+the bottom on a phone.
 _Avoid_: panel, sidebar, sheet, tray
 
 **Section**:
-One collapsible part of the drawer — apply, objects, view, or diagnostics.
+One collapsible part of the drawer: apply, objects, view, or diagnostics.
 _Avoid_: panel, tab, pane, accordion
 
 ### Editing
@@ -142,13 +142,13 @@ can be looked at under load.
 _Avoid_: demo, sample scene, stress scene, fixture
 
 **Tick**:
-The diagnostics panel's periodic refresh of its readings, deliberately slower than the frame
-and split by averaging window.
+The periodic refresh by the diagnostics panel of its readings. It is deliberately slower
+than the frame, and split by the window it averages over.
 _Avoid_: update, poll, refresh, sample
 
 **Band**:
-The colour step a diagnostics row takes according to its share of the frame, from cyan at
-nothing to orange at half a frame or more.
+The colour step that a diagnostics row takes, by its share of the frame. It runs from cyan
+at nothing to orange at half a frame or more.
 _Avoid_: bucket, tier, level, zone
 
 **Exceedance**:

@@ -16,6 +16,7 @@ import std/[options, os, sequtils, sets, strutils]
 import ./[
   findings, kinds, prose, form, justification, checker, layout, provenance, glossary,
   dependencies, toolchain, plan, workflows, record, prompts, duplicates, tree, domains, faces,
+  english,
 ]
 
 export layout.Tree, layout.Entry, layout.projectDirs
@@ -127,6 +128,7 @@ proc auditTree*(tree: Tree): seq[Finding] =
     result.add checkJustification(e.path, e.content, rule)
     if e.kind.get == Kind.Markdown:
       documents.add (e.path, e.content)
+      result.add checkEnglish(e.path, e.content)
       # Root files and curator records are held to glossary's people words; contributor
       #   prose is its own, and glossary itself lists words it avoids.
       let is_governed = '/' notin e.path or e.path.startsWith(CURATOR & "/")

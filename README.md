@@ -1,12 +1,12 @@
 # Delegations
 
-Third repository in a chain. [explorations](https://gitlab.com/mraxilus/explorations) tries
-ideas, [replications](https://gitlab.com/mraxilus/replications) rebuilds work worth
+The third repository in a chain. [explorations](https://gitlab.com/mraxilus/explorations)
+tries ideas, [replications](https://gitlab.com/mraxilus/replications) rebuilds work worth
 understanding, and delegations makes quick progress on prototypes without the Architect
-writing code directly. The Architect decides every design; language models write every line,
-under [CONSTITUTION.md](CONSTITUTION.md) and [STYLE.md](STYLE.md), and record what was
-decided, what was rejected and what it costs in each project's `PROVENANCE.md`. The words the
-repository uses for itself are in [GLOSSARY.md](GLOSSARY.md).
+writing code directly. The Architect decides every design, and language models write every
+line, under [CONSTITUTION.md](CONSTITUTION.md) and [STYLE.md](STYLE.md). They record what was
+decided, what was rejected and what it costs, in the `PROVENANCE.md` of each project. The
+words that the repository uses for itself are in [GLOSSARY.md](GLOSSARY.md).
 
 Overarching theme: methods of communication.
 
@@ -36,75 +36,83 @@ contributor/<domain>/<project>/          same shape as a curator project
 
 ## Roles
 
-- A **curator** delegate maintains the rules, the root files and the curator projects, and
-  never writes contributor project code. It starts from [CURATOR.md](CURATOR.md).
+- A **curator** delegate keeps the rules, the root files and the curator projects, and never
+  writes code inside a contributor project. It starts from [CURATOR.md](CURATOR.md).
 - A **contributor** delegate builds one project and touches nothing outside its folder. It
   starts from [CONTRIBUTOR.md](CONTRIBUTOR.md).
-- Both then read [GUIDE.md](GUIDE.md), the how-to they share.
+- Both then read [GUIDE.md](GUIDE.md), the how-to that they share. Every word they write for
+  a person is Simplified Technical English, and the guide gives the rules.
 
 ## Issues
 
 Issues carry what the two roles say to each other, in both directions, without the Architect
-standing between them. A contributor blocked by a rule opens one asking for the rule to
-change; a curator who reads a project and finds something opens one saying what they found,
-since they may not edit a contributor's source. Either way the answer is written on the
-issue, and the Architect decides.
+standing between them. A contributor blocked by a rule opens one to ask for the rule to
+change. A curator who reads a project and finds something opens one to say what it found. It
+may not edit the source of a contributor. Either way the answer is written on the issue, and
+the Architect decides.
 
-They also carry each delegate's own queue, since a delegate ends and takes its intentions with
-it. The record says what **is**; an issue says what is **queued**, and links the record rather
-than restating it.
+They also carry the queue of each delegate, because a delegate ends and takes its intentions
+with it. The record says what **is**, and an issue says what is **queued**. An issue links
+the record rather than restates it.
 
-Every delegate posts as the same account, so each issue carries a label saying whose it is,
-spelled exactly as the branch prefix: `curator` for the rules, the checks, the merge process
-and the root files; `curator/<project>` or `contributor/<domain>/<project>` for one project.
-A delegate finds its work by filtering on its own label. Labels are added and never removed,
-so when an answer hands work across, the other role's label joins the first.
+Every delegate posts as the same account, so each issue carries a label that says whose it
+is. The label is spelled exactly as the branch prefix. It is `curator` for the rules, the
+checks, the merge process and the root files. It is `curator/<project>` or
+`contributor/<domain>/<project>` for one project. A delegate finds its work by a filter on
+its own label. Labels are added and never removed, so when an answer hands work across, the
+label of the other role joins the first.
 
 ## Branches and checks
 
-`main` is protected; the Architect merges pull requests by hand. Branches mirror paths:
+`main` is protected, and the Architect merges pull requests by hand. Branches mirror paths.
 `contributor/<domain>/<project>/<name>` and `curator/<project>/<name>` may change only that
-project; `curator/<name>` is rules and root work. Every pull request runs:
+project, and `curator/<name>` is rules and root work. Every pull request runs these jobs:
 
-- `static`: layout, form, telegraphic comments, records with their headers and stamps,
-  glossary shape, the prompts, copied paragraphs, shipped faces, workflow grants and each
-  project's compiler pin, over the whole tree.
-- `project`: one job per project whose code changed, on a pull request, on the push to
-  `main` and in the weekly run alike, each installing that project's own pinned compiler,
-  restoring its dependencies from its lock file and running its tests. Nothing compiles
-  every project.
-  These run in parallel, so wall time follows the slowest changed project rather than the
-  number of projects in the repository.
-- `types`: `npm ci` then that project's own `types` verb, for every changed project carrying
-  a node manifest. One job on the driver's compiler, since type-checking compiles no project
+- `static`: layout, form, telegraphic comments, and records with their headers and stamps.
+  It also reads glossary shape, the prompts, and the Simplified Technical English of the
+  governed documents. It reads copied paragraphs, shipped faces, workflow grants, and the
+  compiler pin of each project. It runs over the whole tree.
+- `project`: one job for each project whose code changed, on a pull request, on the push to
+  `main`, and in the weekly run alike. Each one installs that project's own pinned compiler,
+  restores its dependencies from its lock file, and runs its tests. Nothing compiles every
+  project. These jobs run in parallel, so the wall time follows the slowest changed project
+  rather than the number of projects in the repository.
+- `types`: `npm ci`, then that project's own `types` verb, for every changed project that
+  carries a node manifest. It is one job on the compiler of the driver, because a type check
+  compiles no project code.
+- `driven`: that project's own `drive` verb, for every changed project that carries one. The
+  page is built and driven through real keys, wheels, pointers and touches. It is a matrix
+  like `project`, and on the same pins, because a build of the page does compile project
   code.
-- `driven`: that project's own `drive` verb, for every changed project carrying one — the
-  page built and driven through real keys, wheels, pointers and touches. A matrix like
-  `project` and on the same pins, because building the page does compile project code.
-- `scope`: every changed path lies inside the branch's folder.
+- `scope`: every changed path lies inside the folder of the branch.
 - `commits`: every subject is a Conventional Commit whose scope matches the branch.
-- `base`: the branch carries the rules and the checker as `main` now holds them, so a stamp
-  falsified by a rules change that merged after the branch forked is caught before merging.
-- `audit`: the gate the other jobs report to, and one of the required checks.
+- `base`: the branch carries the rules and the checker as `main` now holds them. A stamp that
+  a rules change falsified after the branch forked is then caught before the merge.
+- `audit`: the gate that the other jobs report to, and one of the required checks.
 
-A ninth job, `plan`, runs first and computes the matrices `project` and `driven` fan out over;
-it names projects rather than checking them. Weekly, the same workflow compiles the projects
-whose code merged that week. `role.yml` runs beside it on every pull request, and again
-whenever a label changes, holding the opening role line and the labels to the role the branch
-names. Two more workflows watch the rest: `watch.yml` opens an issue
-labelled `curator` when a run on `main` concludes failure, and `ledger.yml` reads daily what
-GitHub records of the rules no check reaches — a pull request ready without a green run, a
-`Closes #N` that never fired, an issue or pull request without its role line or label — into
-one issue.
+A ninth job, `plan`, runs first and computes the matrices that `project` and `driven` fan out
+over. It names projects rather than checks them. Weekly, the same workflow compiles the
+projects whose code merged that week.
 
-Everything is driven by `koch.nim`, a compiled Nim program as in Nim's own repository:
-`nim r koch ci` runs the same checks locally against a fresh `origin/main`, and every pull
-request passes it before it is opened. `nim r koch system` prints what a machine needs
-installed before any of it runs — koch's own packages and every project's, one per line, so it
-pipes straight into a package manager; any Nim that builds koch is the only thing it cannot
-name for you. Each project's pinned compiler is resolved from `PATH`, a cache or a download,
-so one machine runs every project's suites whatever they pin. Dependencies are per project
-with Atlas; lock files are committed, checkouts never.
+`role.yml` runs beside it on every pull request, and again whenever a label changes. It holds
+the opening role line and the labels to the role that the branch names. Two more workflows
+watch the rest. `watch.yml` opens an issue labelled `curator` when a run on `main` concludes
+failure. `ledger.yml` reads daily what GitHub records of the rules that no check reaches:
+
+- a pull request ready without a green run;
+- a `Closes #N` that never fired;
+- an issue or pull request without its role line or label.
+
+`koch.nim` drives everything, as a compiled Nim program, in the shape that the repository of
+Nim itself uses. `nim r koch ci` runs the same checks locally against a fresh `origin/main`,
+and every pull request passes it before somebody opens it. `nim r koch system` prints what a
+machine needs installed before any of it runs. That is the packages of koch itself and of
+every project, one to a line, so it pipes straight into a package manager. Any Nim that
+builds koch is the only thing it cannot name for you.
+
+The pinned compiler of each project is resolved from `PATH`, from a cache, or from a
+download. So one machine runs the suites of every project, whatever they pin. Dependencies
+are held for each project with Atlas. Lock files are committed, and checkouts never are.
 
 ## Licence
 

@@ -1,100 +1,105 @@
 # pga_benchmark
 
-Benchmark and gap list holding `pga` to Lengyel's typed reference: what is measured, on what,
-and how far each measurement sits from its target. The repository's own words are in the root
-glossary; only what is specific to this project is defined here.
+Benchmark and gap list that holds `pga` to Lengyel's typed reference: what is measured, on
+what, and how far each measurement sits from its target. The words of the repository itself
+are in the root glossary. Only what is specific to this project is defined here.
 
 ## Language
 
 **Measurand**:
-One catalogued operation on stated operand kinds, e.g. `∧` on Point and Point; the unit
-everything here measures.
+One catalogued operation on stated operand kinds, such as `∧` on Point and Point. It is the
+unit that everything here measures.
 _Avoid_: probe, case, operation, op, benchmark case
 
 **Catalogue**:
-The compile-time list of every measurand for one algebra, walked by every instrument so
+The compile-time list of every measurand for one algebra. Every instrument walks it, so
 nothing is benchmarked by hand.
 _Avoid_: table, manifest, inventory, list
 
 **Expression**:
-The library code a measurand evaluates over `m` and `n`, e.g. `(m ∧ n)`.
+The library code that a measurand evaluates over `m` and `n`, such as `(m ∧ n)`.
 _Avoid_: spell, formula, call, form
 
 **Reference**:
-Lengyel's hand-rolled typed form a measurand is measured against, written in Nim here from
-the book.
+The hand-rolled typed form of Lengyel that a measurand is measured against, written here in
+Nim from the book.
 _Avoid_: typed form, optimal form, oracle, ground truth
 
 **Kind**:
-What a measurand's operand is: General (dense, mixed grade), Scalar, or one typed object
-such as Point.
+What the operand of a measurand is: General (dense, mixed grade), Scalar, or one typed
+object such as Point.
 _Avoid_: type, shape, class
 
 **Implementation**:
-Which of the two is measured: the library's dense operator, or the reference.
+Which of the two is measured: the dense operator of the library, or the reference.
 _Avoid_: side, party, subject, control
 
 **Widen / narrow**:
-Putting a typed object into the dense multivector's basis slots, and reading it back out;
-narrowing asserts the other slots are zero.
+To put a typed object into the basis slots of the dense multivector, and to read it back
+out. A narrow asserts that the other slots are zero.
 _Avoid_: bridge, embed, extract, lift, convert
 
 **Measurement**:
-One timing or count of a measurand, with its taking: machine, method, date.
+One timing or count of a measurand, with how it was taken: machine, method, date.
 _Avoid_: figure, reading, sample, result
 
 **Static measurement**:
-A count read from the C the compiler emits: multiplies, adds, subtractions, divides, zero
-fills, intermediates, copies, error checks, calls, and the bytes moved modelled from them.
+A count read from the C that the compiler emits. It covers multiplies, adds, subtractions,
+divides, zero fills, intermediates, copies, error checks and calls, and the bytes moved that
+are modelled from them.
 _Avoid_: inspect document, counts, static analysis
 
 **Runtime measurement**:
-A timing, allocation count or NaN share taken by running the measurand over its pool.
+A timing, an allocation count or a NaN share, taken by a run of the measurand over its
+pool.
 _Avoid_: bench document, timing, benchmark result
 
 **Movement**:
-The bytes one call moves, modelled from static measurements: operands read, result written,
-zero fills, whole-object copies, intermediates. Named bytes, never cache traffic.
+The bytes that one call moves, modelled from static measurements: operands read, result
+written, zero fills, whole-object copies, intermediates. It is named bytes, and never cache
+traffic.
 _Avoid_: traffic, footprint, memory cost
 
 **Intermediate**:
-A local full-width multivector a library function declares and zero-fills mid-chain.
+A local full-width multivector that a library function declares and zero-fills
+mid-chain.
 _Avoid_: temporary, scratch, local
 
 **Baseline**:
-The committed static measurements the guard compares a fresh reading against; moved only by
-the `baseline` verb after an intended change.
+The committed static measurements that the guard compares a fresh reading against. Only the
+`baseline` verb moves it, after an intended change.
 _Avoid_: snapshot, golden, expected, recorded
 
 **Guard**:
-The verb that fails on any static measurement or bytes moved grown against the baseline;
-what `drive` runs in CI.
+The verb that fails on any static measurement or bytes moved that grew against the
+baseline. It is what `drive` runs in CI.
 _Avoid_: gate, check, regression test
 
 **Gap**:
-One measurand of one algebra, with both implementations' measurements and a stable `G`
-number.
+One measurand of one algebra, with the measurements of both implementations and a stable
+`G` number.
 _Avoid_: row, finding, entry
 
 **Cause**:
-One design-level reason many gaps are over, decided by a rule over the documents with its
-evidence, and carrying a `D` number.
+One design-level reason that many gaps are over, decided by a rule over the documents with
+its evidence, and carrying a `D` number.
 _Avoid_: design gap, theme, issue, root cause
 
 **Over / met / unmeasured**:
-A gap's or cause's verdict: the library exceeds a target, meets every target, or has
+The verdict of a gap or a cause. The library exceeds a target, meets every target, or has
 nothing to decide on.
 _Avoid_: open, closed, failing, passing
 
 **Tolerance**:
-The factor a runtime measurement may exceed its reference by before a gap is over on time.
+The factor that a runtime measurement may exceed its reference by, before a gap is over on
+time.
 _Avoid_: time band, slack, margin, noise band
 
 **Docket**:
-The committed map from a gap's key to its number, allotting the next number to a new key
-and reusing none.
+The committed map from the key of a gap to its number. It allots the next number to a new
+key, and reuses none.
 _Avoid_: ledger, register, index, roll, numbering
 
 **Algebra**:
-One measured setting, a dimension count and a metric, e.g. `rga4d`.
+One measured setting, a dimension count and a metric, such as `rga4d`.
 _Avoid_: configuration, config, target, signature

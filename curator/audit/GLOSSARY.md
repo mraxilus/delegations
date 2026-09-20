@@ -1,6 +1,6 @@
 # audit
 
-Words this project uses for itself. None is agreed yet: each is proposed to the Architect as
-it resolves, and written only once selected.
+The words that `audit` uses for itself. None is agreed yet. Each one is proposed to the
+Architect as it resolves, and written only after the Architect selects it.
 
 ## Language
