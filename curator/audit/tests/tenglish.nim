@@ -17,6 +17,7 @@ suite "Article VI.8":
     check isSentenceEnd("ready?")
     check isSentenceEnd("**now.**")
     check isSentenceEnd("**now**.")  # stop outside emphasis
+    check isSentenceEnd("551.")  # figure closes sentence
     check not isSentenceEnd("2.2.12")  # version carries no stop
     check not isSentenceEnd("word")
     check not isSentenceEnd("VI.5")  # clause number inside sentence

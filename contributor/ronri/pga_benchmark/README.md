@@ -1,22 +1,24 @@
 # pga_benchmark
 
-Benchmark and standing gap list for `pga`, the projective geometric algebra library
-replicated from Eric Lengyel's *Projective Geometric Algebra Illuminated* and developed in
-[replications][replications]. Every operation the library exports is a measurand, measured
-against a hand-rolled typed reference derived from Lengyel's own optimal forms, on four
-axes: allocations, bytes moved, multiply, divide and add counts, and time. The static
-measurements are read out of the C the compiler emits, so any that grew is a deterministic
-finding; the runtime measurements are taken by hand on a named machine.
+The benchmark and standing gap list for `pga`. That library is projective geometric algebra,
+replicated from *Projective Geometric Algebra Illuminated* by Eric Lengyel, and developed in
+[replications][replications].
 
-The library is a pinned dependency restored by Atlas, never a copy. The reference is Nim
-written here in 64-bit floats, so both implementations run the same scalar; Lengyel's
+Every operation that the library exports is a measurand. Each one is measured against a
+hand-rolled typed reference, which is derived from Lengyel's own optimal forms. The four axes
+are allocations, bytes moved, counts of multiply, divide and add, and time. The static
+measurements are read out of the C that the compiler emits, so any one that grew is a
+deterministic finding. The runtime measurements are taken by hand on a named machine.
+
+The library is a pinned dependency that Atlas restores, and never a copy. The reference is
+Nim, written here in 64-bit floats, so both implementations run the same scalar. Lengyel's
 Terathon Math Library (MIT) was read to cross-check the forms and their counts, and nothing
 from it is copied.
 
-The list is [`gaps.md`](gaps.md): the causes, each decided by a rule with its evidence, then
-one gap per measurand per algebra with both implementations' measurements and a stable
-identifier from the docket. It is generated from `baseline/` and never edited by hand. The
-words are in [`GLOSSARY.md`](GLOSSARY.md).
+The list is [`gaps.md`](gaps.md). It holds the causes, each one decided by a rule with its
+evidence. It then holds one gap for each measurand of each algebra, with the measurements of
+both implementations and a stable identifier from the docket. It is generated from
+`baseline/`, and never edited by hand. The words are in [`GLOSSARY.md`](GLOSSARY.md).
 
 ## Build and test
 
@@ -31,13 +33,16 @@ nim r tools/build.nim gaps      # regenerate gaps.md and the docket from baselin
 nim r tools/build.nim sweep     # dense timings at two to six dimensions, never in CI
 ```
 
-Builds on **Nim at commit `27763495b`**, and nothing has to be installed for it: koch resolves
-the pin itself, from the compiler on `PATH` where it already serves, else one cached under
-`~/.cache/koch/nim/<pin>/`, else a clone of `nim-lang/Nim` built at that commit and cached,
-paid once per machine (`GUIDE.md`, Toolchain). CI resolves the same pin the same way. No
-release will do: the `pga` library spells its operators with seven characters Nim learned to
-lex in that commit, and no release carries it yet. The pin is exact, and a pin nothing can
-serve is a finding naming the pin and the cache tried, never a fallback to another compiler.
+It builds on **Nim at commit `27763495b`**, and nothing has to be installed for it. Koch
+resolves the pin itself. It takes the compiler on `PATH` where that one already serves. Else
+it takes one cached under `~/.cache/koch/nim/<pin>/`, or a clone of `nim-lang/Nim` built at
+that commit and cached. That is paid once for each machine (`GUIDE.md`, Toolchain). CI
+resolves the same pin the same way.
+
+No release will do. The `pga` library spells its operators with seven characters that Nim
+learned to lex in that commit, and no release carries it yet. The pin is exact. A pin that
+nothing can serve is a finding, which names the pin and the cache tried, and never a fallback
+to another compiler.
 
 ## Layout
 
@@ -61,9 +66,9 @@ tests/                             suites, and the testament stubs that run them
 
 ## Status
 
-Measured on the pinned compiler and library head `0bc4655`: one gap per measurand per
-algebra, and the causes above them, every one over but the last, which nothing here can
-read; `gaps.md` counts them. Unreviewed by a human. See `PROVENANCE.md` for the figures and
-what each subsystem was checked against.
+Measured on the pinned compiler and on library head `0bc4655`. There is one gap for each
+measurand of each algebra, with the causes above them. Every cause is over but the last,
+which nothing here can read. `gaps.md` counts them. Unreviewed by a human. See
+`PROVENANCE.md` for the figures, and for what each subsystem was checked against.
 
 [replications]: https://gitlab.com/mraxilus/replications
