@@ -22,9 +22,10 @@ suite "Article VI.8":
     check not isSentenceEnd("word")
     check not isSentenceEnd("VI.5")  # clause number inside sentence
 
-  test "backticked span counts as one word":
+  test "backticked span counts as one word, however it wraps":
     check "run `nim r koch ci` now".spansCollapsed == "run name now"
     check "run `nim r koch ci` now".spansCollapsed.splitWhitespace.len == 3
+    check "Run `nim r\nkoch ci` now.".blocks[0].text == "Run name now."  # span over line end
 
   test "list item and run of plain lines are separate blocks":
     let document = "# H\n\nOne line.\nSame block.\n\n- First item.\n- Second item.\n"
