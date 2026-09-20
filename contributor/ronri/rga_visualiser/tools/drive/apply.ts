@@ -81,6 +81,103 @@ export async function driveApply(page: Page): Promise<void> {
   await driveApplyPair(page);
 }
 
+/** Ordinal of operation whose symbols read as given, or -1. */
+async function operationNamed(page: Page, symbols: string): Promise<number> {
+  return page.evaluate((given) => {
+    for (let i = 0; i < nimOperationCount(); i += 1) {
+      if (nimOperationNotation(i) === given) return i;
+    }
+    return -1;
+  }, symbols);
+}
+
+/** Apply one operation through bridge and return handle it added. */
+async function applied(
+  page: Page, operation: number, first: number, second: number,
+): Promise<number> {
+  const before = await page.evaluate(() => nimSceneHandles());
+  await page.evaluate((given) => {
+    nimApplyOperation(given.operation, given.first, given.second, performance.now() / 1000);
+  }, { operation, first, second });
+  await settleCount(page, before.length + 1);
+  return addedHandle(before, await page.evaluate(() => nimSceneHandles())) ?? -1;
+}
+
+/** Objects naming check builds: four points, two lines, two planes and their meet. */
+const COUNT_NAMED = 9;
+
+/** Drive two planes built by joins, then their meet, and assert names stay valid formulas.
+ *
+ *  Name used to substitute operand names bare, so meet of two joined planes read
+ *  `a ∧ b ∧ c ∨ d ∧ e ∧ f`, naming another object than one built.
+ *  Brings its own four points, one-letter named and off any common plane: scene's own
+ *  points are planets on one ecliptic, whose planes meet in noise, and carry names long
+ *  enough for meet's name to hit label's cap.
+ */
+export async function driveApplyNamed(page: Page): Promise<void> {
+  const wedge = await operationNamed(page, '𝐦 ∧ 𝐧');
+  const meet = await operationNamed(page, '𝐦 ∨ 𝐧');
+  if (wedge < 0 || meet < 0) {
+    report(
+      'the catalogue holds join and meet, for naming', false, `join ${wedge}, meet ${meet}`,
+    );
+    return;
+  }
+  const count_found = await page.evaluate(() => nimSceneCount());
+  const capacity = await page.evaluate(() => nimSceneCapacity());
+  if (count_found + COUNT_NAMED > capacity) {
+    report(
+      'the scene has room for the objects the naming check builds', false,
+      `${count_found} of ${capacity} held, ${COUNT_NAMED} wanted`,
+    );
+    return;
+  }
+  const points = await page.evaluate(() => {
+    const corners: [string, number, number, number][] =
+      [['p', 0, 0, 0], ['q', 1, 0, 0], ['r', 0, 1, 0], ['s', 0, 0, 1]];
+    const added = corners.map(([label, x, y, z]) => {
+      const model = new Array<number>(nimBasisCount()).fill(0);
+      model[1] = x;
+      model[2] = y;
+      model[3] = z;
+      model[4] = 1;
+      return nimAddObject(
+        model, label, nimDefaultInk(), nimDefaultRadius(), performance.now() / 1000,
+      );
+    });
+    nimSelectClear();
+    return added;
+  });
+  const [a, b, c, d] = points as [number, number, number, number];
+  const line_first = await applied(page, wedge, a, b);
+  const plane_first = await applied(page, wedge, line_first, c);
+  const line_second = await applied(page, wedge, b, c);
+  const plane_second = await applied(page, wedge, line_second, d);
+  const met = await applied(page, meet, plane_first, plane_second);
+  const names = await page.evaluate((given) => given.map((one) => nimObjectLabel(one)), [
+    a, b, c, d, plane_first, plane_second, met,
+  ]);
+  const [name_a, name_b, name_c, name_d, name_plane_first, name_plane_second, name_met] =
+    names as [string, string, string, string, string, string, string];
+  const wanted_first = `${name_a} ∧ ${name_b} ∧ ${name_c}`;
+  const wanted_second = `${name_b} ∧ ${name_c} ∧ ${name_d}`;
+  const wanted_met = `(${wanted_first}) ∨ (${wanted_second})`;
+  report(
+    'a join of joins stays flat and a meet of joins is parenthesised, so names stay formulas',
+    name_plane_first === wanted_first && name_plane_second === wanted_second &&
+      name_met === wanted_met,
+    `planes ${name_plane_first} and ${name_plane_second}, meet ${name_met}`,
+  );
+  // Leave scene as found, deleting way reader deletes: later checks count its objects.
+  await page.evaluate((given) => {
+    selectOnly(given[0] ?? 0, null);
+    for (const one of given.slice(1)) toggleSelection(one, null);
+    refreshSelectionMenu(null);
+    document.getElementById('selection-menu-delete')?.click();
+  }, [met, plane_second, line_second, plane_first, line_first, d, c, b, a]);
+  await settleCount(page, count_found);
+}
+
 /** Apply same pair twice, through picker and through bridge, and compare what came out. */
 async function driveApplyPair(page: Page): Promise<void> {
   const before_picker = await page.evaluate(() => nimSceneHandles());

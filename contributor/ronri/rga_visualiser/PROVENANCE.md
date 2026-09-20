@@ -850,17 +850,15 @@ in CSS pixels. **The drawer draws over it** (`z-index` 3 under the drawer's 4) r
 hiding it: a bar a panel sits on can be read by closing the panel.
 
 *Checked.* Verified by `suites.nim`: a meet far outside the drawn disc, from both sides of one
-plane; both halves of a line pickable; the horizon plane's dome inserted first; the great
-circle's segment count after the eye cut; the fog radii at an eye inside its own fog; a star
-behind a wider disc unpicked with one rival and a moon in front of it picked with two.
-Verified by driven checks: the plane pick
-from either side, sweeping the canvas for a pixel picking a plane the gesture itself built;
-the scale bar's length against its label at two distances a decade apart, layered under the
-open drawer; forty-eight hover samples across Jupiter's disc finding nothing deeper.
-Verified by rendering: the fade fractions, the cell size, the grid alpha, the axis dimming.
-Verified by driven check: a wide disc's upper half brighter than its lower on the page, which
-is world-up on screen from the opening camera. The far-end occlusion error is assumed to
-be tolerable, not measured.
+plane; both halves of a line pickable; the horizon plane's dome inserted first; the great circle's
+segment count after the eye cut; the fog radii at an eye inside its own fog; a star behind a wider
+disc unpicked with one rival and a moon in front of it picked with two. Verified by driven checks:
+the plane pick from either side, sweeping the canvas for a pixel picking a plane the gesture itself
+built; the scale bar's length against its label at two distances a decade apart, layered under the
+open drawer; forty-eight hover samples across Jupiter's disc finding nothing deeper. Verified by
+rendering: the fade fractions, the cell size, the grid alpha, the axis dimming. Verified by driven
+check: a wide disc's upper half brighter than its lower on the page, which is world-up on screen
+from the opening camera. The far-end occlusion error is assumed to be tolerable, not measured.
 
 ## Camera
 
@@ -978,19 +976,18 @@ join `directionNormal(tail ∧ head ∧ eye)`, sign included.
 **A plane's fill, its rim and the sky are one record each.** A 13-float `DiscRecord` is spanned over
 the view box of its bounding sphere, `viewBoxOfDisc`, on the static unit-circle corner buffer, and
 every fragment casts its own ray at the plane, `hitDiscAlong`, so the disc is exact at any grazing
-angle and agrees with `picking.rayPlaneHit`. Not a fan of corners on the plane: a corner behind the
-eye left the clipper a sliver that rasterised to nothing under a camera within 0.06° of the plane,
-and the disc ended at a hard chord. An 8-float `DomeRecord` widens over a static unit sphere, which
-has no orientation; a 14-float `RingRecord` is a disc's thirteen plus a width, one instance drawing
-the whole circle. The static corner tables come from one generator each in `mesh`, read by the
-desktop directly and by the browser through `nim*Corners`, so neither front-end holds a table that
-could drift from the references, which the suite pins to the multivector sums they replaced.
-`ribbonOfRing` derives the very `RibbonRecord` a rim segment would have been, so a rim is widened by
-the one rule every line is. The rim steps off `UNIT_CIRCLE_RIM`, resolved at start-up with the
-runtime's own `cos`/`sin`, not at compile time, whose evaluator need not agree with each backend's
-libm in the last bit. The rim as one record is what the demo frame turns on: 96 ribbon records per
-plane were 99.2% of ribbon traffic on 132 planes, and the demo's median frame went 239 → 84 ms under
-SwiftShader.
+angle and agrees with `picking.rayPlaneHit`. Not a fan of corners on the plane, whose corner behind
+the eye left the clipper a sliver that rasterised to nothing under a grazing camera, the disc ending
+at a hard chord. An 8-float `DomeRecord` widens over a static unit sphere, which has no orientation;
+a 14-float `RingRecord` is a disc's thirteen plus a width, one instance drawing the whole circle.
+The static corner tables come from one generator each in `mesh`, read by the desktop directly and by
+the browser through `nim*Corners`, so neither front-end holds a table that could drift from the
+references, which the suite pins to the multivector sums they replaced. `ribbonOfRing` derives the
+very `RibbonRecord` a rim segment would have been, so a rim is widened by the one rule every line
+is. The rim steps off `UNIT_CIRCLE_RIM`, resolved at start-up with the runtime's own `cos`/`sin`,
+not at compile time, whose evaluator need not agree with each backend's libm in the last bit. The
+rim as one record is what the demo frame turns on: 96 ribbon records per plane were 99.2% of ribbon
+traffic on 132 planes, and the demo's median frame went 239 → 84 ms under SwiftShader.
 
 **Every record's position is stored about the frame's origin**, the camera's pivot (see
 Camera); the suite pins the five writers against an origin a million units off.
@@ -1612,9 +1609,9 @@ field and Sol's planets share one frame; read straight, every star stood 23° of
 **Nothing is generated**: a star with no known planet is a star, and the 49 of 544 planets with no
 recorded semi-major axis are left out rather than placed by their order among siblings, `placedOf`
 counting what a star places and `objectsOf` folding it. Neighbour suns and planets are drawn at
-`RADIUS_OBJECT_LEAST`, a dot claiming no size, since neither catalogue carries radii. A neighbour's
-plane is joined as `star ∧ along ∧ across`, a point and two directions: three of its points a
-million units out cancel to noise, a tenth of the normal.
+`RADIUS_OBJECT_LEAST`, since neither catalogue carries radii. A neighbour's plane is joined as `star
+∧ along ∧ across`, a point and two directions: three of its points a million units out cancel to
+noise, a tenth of the normal.
 
 **The opening camera frames Sol's system to Neptune**: `RADIUS_ORRERY` is Neptune's own semi-major
 axis, fitted by `camera.distanceFitting` at `ELEVATION_ORRERY_SHOWN` = 0.95 rad (at 0.42 every ring
@@ -1630,26 +1627,28 @@ every planet at its real axis with z = 0, every moon at its real axis perpendicu
 `normalOfMoon` with the leans quoted above pinned; every neighbour planet at its real axis at its
 star's height and every planet without an axis absent, 49 counted from the table; every body's
 radius the conversion of its kilometres; no point a hub (lines and planes through any point ≤ 6);
-the two horizon points' difference. Verified by reading the built scene: the normals quoted above.
-Verified by driven check: the demo button stands the camera back past 40 units, and the occlusion
-check stands its own camera by Jupiter's real radius for a sixty-pixel disc with Io in front of it.
-Assumed: the archive snapshots themselves, and the JPL elements transcribed by hand. **No table is
-checked against its source by any tool.**
-## Operation Notation
+the two horizon points' difference. Verified by driven check: the demo button stands the camera back
+past 40 units, and the occlusion check stands its own camera by Jupiter's real radius for a
+sixty-pixel disc with Io in front of it. Assumed: the archive snapshots themselves, and the JPL
+elements transcribed by hand. **No table is checked against its source by any tool.** ## Operation
+Notation
 
-**One table, `scene.lut_operation_to_notation`, read by both builds**, each entry Lengyel's
-bold notation, two spaces, the English name (`𝐦⊖  attitude`); `notationSymbolic` and
-`notationNamed` are its two halves. `notationSubstituted` swaps `𝐦`/`𝐧` for real operand
-names through two sentinel passes, so an operand whose name contains a placeholder is never
-re-touched and a template with `𝐧` twice substitutes both.
+**One table, `scene.lut_operation_to_notation`, read by both builds**, each entry Lengyel's bold
+notation, two spaces, the English name (`𝐦⊖  attitude`); `notationSymbolic` and `notationNamed` are
+its two halves. `notationSubstituted` walks the template token by token, inserting each operand name
+once, so a name containing a placeholder is never re-touched and a template with `𝐧` twice
+substitutes both. A composite name is parenthesised where the template binds it tighter than its own
+outermost operator, always under a postfix or a negation and under a binary operator unless that is
+its own associative one: `(a ∧ b)★`, `a ∧ b ∧ c`, `(a ∧ b) ∨ c`. Not bare substitution, which read
+`a ∧ b ∨ c`.
 
 **Every glyph and its placement comes from that operator's own declaration doc comment in
-`pga/operators.nim`/`pga/multivectors.nim`** — never from `pga.nim`'s summary table, whose
-"Lengyel" column renders several unary operators in a functional shorthand the declarations
-do not use, and which has carried prefix glyphs where the declaration says postfix. Verify by
-extracting codepoints, not by eye; U+2212 minus is invisible against a hyphen. One deliberate
-exception: `Attitude` reads prefix in its doc comment and is placed postfix (`𝐦⊖`) on explicit
-request, for consistency with every other unary entry.
+`pga/operators.nim`/`pga/multivectors.nim`** — never from `pga.nim`'s summary table, whose "Lengyel"
+column renders several unary operators in a functional shorthand the declarations do not use, and
+which has carried prefix glyphs where the declaration says postfix. Verify by codepoint, not by eye:
+U+2212 minus looks like a hyphen. One deliberate exception: `Attitude` reads prefix in its doc
+comment and is placed postfix (`𝐦⊖`) on explicit request, for consistency with every other unary
+entry.
 
 The five accented operands use **spacing modifier letters** (`ˆ` U+02C6, `ˍ` U+02CD, `¯`
 U+00AF, `˜` U+02DC, `˷` U+02F7), not combining marks: Dear ImGui has no shaper, so a
@@ -1657,9 +1656,10 @@ combining form landed to the right of its operand, and antireverse's tilde-below
 left complement's low line. Of the four compound operators only the `★` pair works infix;
 `m ∧☆ n` must be written `` m.`∧ ☆`n ``.
 
-*Checked.* Verified by rendering all 27 entries at once and reading them; by suite, every
-entry non-empty and the substitution's placeholder rules. Verified then, by the prototype's
-`check_atlas`, that every glyph is in the atlas; nothing here re-checks it.
+*Checked.* Verified by rendering all 27 entries at once and reading them; by suite, every entry
+non-empty, the substitution's placeholder rules and every parenthesis case; by driven check, a join
+of joins flat and a meet of joins parenthesised on the page. Nothing here re-checks that every glyph
+is in the atlas.
 
 ## Naming And Number Formatting
 
@@ -1737,26 +1737,24 @@ of something plainly visible pulled the view about; otherwise it builds the full
 `ROUNDS_PLACEMENT_LEAST` = 5 halvings. Distance grows, never shrinks; a finite pick never
 changes azimuth or elevation.
 
-**A pointer pick keeps its object under the pointer and comes in to it.** The centring rule
-above is for picks with no pointer (objects list, keyboard, a shift-added group). A click or
-tap on a point or a line records a `framing.PointerPick`, which `offerAim` consumes on the
-next frame. The destination is the wheel's own move (`stanceUnderPointer`): the eye comes in
-along its line to where the object stands under the pointer, the angles never change, and
-the pivot lands on the sight line at the object's depth. **How far in depends on the shape
-and on what the reader could see**, sized on the frame's height by
-`camera.depthSpanning(diameter, fraction)`: a point drawn at the floor dot is only a place,
-so the camera comes in until its disc spans `FRACTION_HEIGHT_APPROACH_POINT` = 0.01 of the
-frame's height (a sixth was too close; chosen by eye); a point seen at its size, and a line,
-come in no further than the orbit distance; a plane is framed **both ways**, its disc's
-centre brought to the depth where the disc's diameter spans
-`FRACTION_HEIGHT_APPROACH_PLANE` = 0.40 while the crossing under the pointer stays the held
-anchor, falling back to `stanceFor` where that has no positive solution. Not the centring
-rule for a plane, which never pulls in. **The ease holds the pixel too**:
-`CameraTween.anchor_held` switches `advance` to `towardHoldingAnchor`, where the eye's depth
-to the anchor moves geometrically along the eye–anchor line, since `toward` takes the eye off
-that line mid-ease. **A pick renews a held goal**: `aimAt`'s `is_renewed` re-arms the ease
-for a pointer pick whatever the tween holds, or the same object picked again after the
-wheel had taken the reader out goes nowhere.
+**A pointer pick keeps its object under the pointer and comes in to it.** The centring rule above is
+for picks with no pointer (objects list, keyboard, a shift-added group). A click or tap on a point
+or a line records a `framing.PointerPick`, which `offerAim` consumes on the next frame. The
+destination is the wheel's own move (`stanceUnderPointer`): the eye comes in along its line to where
+the object stands under the pointer, the angles never change, and the pivot lands on the sight line
+at the object's depth. **How far in depends on the shape and on what the reader could see**, sized
+on the frame's height by `camera.depthSpanning(diameter, fraction)`: a point drawn at the floor dot
+is only a place, so the camera comes in until its disc spans `FRACTION_HEIGHT_APPROACH_POINT` = 0.01
+of the frame's height (a sixth was too close; chosen by eye); a point seen at its size, and a line,
+come in no further than the orbit distance; a plane is framed **both ways**, its disc's centre
+brought to the depth where the disc's diameter spans `FRACTION_HEIGHT_APPROACH_PLANE` = 0.40 while
+the crossing under the pointer stays the held anchor, falling back to `stanceFor` where that has no
+positive solution. Not the centring rule for a plane, which never pulls in. **The ease holds the
+pixel too**: `CameraTween.anchor_held` switches `advance` to `towardHoldingAnchor`, where the eye's
+depth to the anchor moves geometrically along the eye–anchor line, since `toward` takes the eye off
+that line mid-ease. **A pick renews a held goal**: `aimAt`'s `is_renewed` re-arms the ease for a
+pointer pick whatever the tween holds, or the same object picked again after the wheel had taken the
+reader out goes nowhere.
 
 *Checked.* Verified by `suites.nim`: the pixel stays within 0.01 px through five steps of the ease
 and the arrival distance equals the fit; a near point and a line keep the orbit distance; a
