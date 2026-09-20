@@ -364,11 +364,10 @@ be seen through. That fill is the drawer's own ground, arrived at as the drawer 
 srgb, rgb(22 27 34) 82%, var(--bg))`, where `--bg` is written at runtime by `gl.ts` from the clear
 colour — where a named tone drifts. Not a shadow, which made pinning read as *floating*. No rule
 under a section: the pills part sections by themselves, and a rule beside them stood as a residual
-line over the next pill at rest. The box itself is **square**, and `.section-header::before` draws
-the pill over it: a radius clips the fill it rounds, so a box that *was* the pill left four corners
-bare for rows to draw through, past the heading's ends. Not a backing inside the pill: `position:
-sticky` opens a stacking context whatever its `z-index`, and a negative child paints over that
-context's own border. `border: 0` is written out against the button's own.
+line over the next pill at rest. The box is **square**, with `.section-header::before` drawing the
+pill over it: a radius clips the fill it rounds, so a box that *was* the pill left four corners bare
+for rows. Not a backing inside it — `position: sticky` opens a stacking context whatever its
+`z-index`, so a negative child paints over its own border. `border: 0`, or the button's own stands.
 
 **Only the rows near the viewport exist.** The list is a window over its keys: two spacers stand
 in for the rows above and below at the heights those rows measured, or 61 px until they have, and
