@@ -145,9 +145,15 @@ func isCarrying(line: string): bool =
   s.len > 0 and not s.startsWith("|") and not s.startsWith("#") and not s.startsWith("---")
 
 
+func gathered(fragments: seq[string]): string =
+  ## Join lines of block, then collapse spans, so span is read whole however it wraps.
+  fragments.join(" ").spansCollapsed.splitWhitespace.join(" ")
+
+
 func blocks*(markdown: string): seq[Block] =
   ## Collect prose blocks, each list item and each run of plain lines standing alone.
-  var words: seq[string]
+  ##   Spans collapse over whole block, since span wrapped over line end is still one name.
+  var carried: seq[string]
   var opened = 0
   let lines = markdown.fencedOut.matterOut.splitLines
   for i, line in lines:
@@ -156,17 +162,17 @@ func blocks*(markdown: string): seq[Block] =
       .strip(trailing = false, chars = {'>', ' '})
       .strip
     if not line.isCarrying or s.len == 0:
-      if words.len > 0:
-        result.add Block(text: words.join(" "), line: opened)
-        words = @[]
+      if carried.len > 0:
+        result.add Block(text: carried.gathered, line: opened)
+        carried = @[]
       continue
     let marker = s.markerLen
-    if marker > 0 and words.len > 0:
-      result.add Block(text: words.join(" "), line: opened)
-      words = @[]
-    if words.len == 0: opened = i + 1
-    words.add s[marker .. ^1].spansCollapsed.splitWhitespace
-  if words.len > 0: result.add Block(text: words.join(" "), line: opened)
+    if marker > 0 and carried.len > 0:
+      result.add Block(text: carried.gathered, line: opened)
+      carried = @[]
+    if carried.len == 0: opened = i + 1
+    carried.add s[marker .. ^1]
+  if carried.len > 0: result.add Block(text: carried.gathered, line: opened)
 
 
 func isSentenceEnd*(word: string): bool =
