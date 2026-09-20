@@ -230,6 +230,9 @@ export async function driveHeaderBanded(page: Page): Promise<void> {
  *  opaque, because rows pass under it and heading asked to hide them cannot be seen through.
  *  `driveHeaderBanded` holds that opacity; this holds shape. Read while pinned, where shape
  *  matters most; heading wears same pill at rest.
+ *  Shape is read off `.section-header::before`, which draws pill. Heading's own box is square,
+ *  and deliberately: radius clips fill it hides rows with, which left rows showing through four
+ *  corners that radius cut away. Box hides, pill is seen; sameness asserted is still pill's.
  */
 export async function driveHeaderStyled(page: Page): Promise<void> {
   await openObjects(page);
@@ -243,8 +246,11 @@ export async function driveHeaderStyled(page: Page): Promise<void> {
     // Read while pinned: shape is what heading wears once it has lifted off list.
     scroller.scrollTop = scroller.scrollHeight - scroller.clientHeight;
     await new Promise((done) => { requestAnimationFrame(() => done(null)); });
-    const shapeOf = (node: HTMLElement) => {
-      const style = getComputedStyle(node);
+    // Heading's own box is square -- it is what hides rows, and radius would clip fill it
+    //   hides them with -- so pill is drawn over that box by `::before`, and that is what is
+    //   read here. Reading heading itself would report `0px none`, which is box, not pill.
+    const shapeOf = (node: HTMLElement, part?: string) => {
+      const style = getComputedStyle(node, part);
       return {
         radius: style.borderTopLeftRadius,
         width: style.borderTopWidth,
@@ -256,7 +262,7 @@ export async function driveHeaderStyled(page: Page): Promise<void> {
     //   residual line over next pill, so none may stand.
     const rules = Array.from(document.querySelectorAll('.section'))
       .map((section) => getComputedStyle(section).borderBottomWidth);
-    return { heading: shapeOf(heading), pill: shapeOf(pill), rules };
+    return { heading: shapeOf(heading, '::before'), pill: shapeOf(pill), rules };
   });
   report(
     'a heading that has lifted off its list wears the pill the page\'s own controls wear',

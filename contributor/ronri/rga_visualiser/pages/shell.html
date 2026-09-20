@@ -746,15 +746,27 @@
        paints, and `--bg` is written by `gl.ts` from clear colour, so this tracks scene rather
        than guessing at it. Opaque, although pills it borrows shape from are `--surface` over
        blur: rows pass under this one, and heading asked to hide them cannot be seen through.
-       No shadow, which read as *floating* in way nothing else on page did. */
+       No shadow, which read as *floating* in way nothing else on page did.
+       Box is square and pill is drawn over it by `::before`, rather than box being pill
+       itself. Radius clips background it rounds, so pill drew nothing in four corners its own
+       radius cuts away, and rows ran on under those and poked past its ends while list moved.
+       Square fill covers whole box, so no row survives anywhere inside it; corners it adds are
+       drawer's own ground over drawer's own ground, so reader sees pill and nothing else.
+       Backing cannot sit inside pill instead: `position: sticky` opens stacking context
+       whatever its `z-index`, and negative child of that context still paints over context's
+       own background and border -- first form did exactly that and squared off pill's ends.
+       Text now starts 10px in rather than 11, since border no longer holds its 1px: that is
+       column rows below start on, which padding was chosen for.
+       `border: 0` is written out. `appearance: none` does not take button's own border with
+       it, so box left without one falls back on user agent's -- which drew light square ring
+       right round this pill. */
     position: sticky;
     top: 0;
     z-index: 1;
     margin: -10px -10px 0 -10px;
     padding: 10px 10px;
     background: color-mix(in srgb, rgb(22 27 34) 82%, var(--bg));
-    border: 1px solid var(--border);
-    border-radius: 999px;
+    border: 0;
     color: var(--ink);
     /* Title role: heading naming section takes serif face, which is only role it is
        drawn in (see type roles above). Weight stays 600, and serif ships at 600 for it:
@@ -764,6 +776,22 @@
     font-weight: 600;
     letter-spacing: 0.02em;
     cursor: pointer;
+  }
+  /* Pill reader sees. Same radius and same 1px `--border` heading wore itself until corners
+     that radius cuts away were found to let rows through; only thing that moved is what draws
+     it. Fill is left to square behind it, which is same colour, so pill states outline alone.
+     `inset: 0` is that square's own box: heading carries no border now, so its padding box and
+     its border box are one, and outline lands exactly where heading's own border stood.
+     `z-index: -1` holds pill over heading's fill and under heading's words: negative child
+     paints after background of context it is in and before that context's own content.
+     `driveHeaderStyled` reads shape off this, and compares it against chip row's pill. */
+  .section-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border: 1px solid var(--border);
+    border-radius: 999px;
   }
   /* Solid triangle, not U+25B8's small one: at sizes these rows are read at
      small glyph is speck that reads as punctuation rather than as control. Shared with
