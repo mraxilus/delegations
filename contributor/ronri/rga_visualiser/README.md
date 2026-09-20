@@ -94,7 +94,7 @@ merged by unicode-range in the page, and into one atlas on the desktop.
 
 Commit Mono splits its ligatures. Most ride on `calt` and draw unasked. The arrows and comparisons
 come from `ss01` and `ss02`, which the page asks for by name. The desktop draws none of them,
-because Dear ImGui shapes no text. See Type roles in `PROVENANCE.md`.
+because Dear ImGui shapes no text. See Browser front-end in `PROVENANCE.md`.
 
 Tests run as three configurations of one shared suite. `t4d` runs at shipped capacities on the C
 backend. `t4d_small` runs at capacities small enough that the tests of the suite reach them.
