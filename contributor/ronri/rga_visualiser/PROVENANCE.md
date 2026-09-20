@@ -142,13 +142,13 @@ token naming an absent key fails the build with the line that carries it.
 
 ## Driven Checks
 
-**Suites test rules; this layer tests wiring.** Nothing in the suite presses a key, turns a
-wheel or puts two fingers on the canvas, so nothing in it catches a rule wired to the wrong
-event. `tools/drive/` does, through Playwright, against the page `tools/build.nim web`
-assembles; `nim r tools/build.nim drive` runs both front-ends.
+**Suites test rules; this layer tests wiring.** Nothing in the suite presses a key, turns a wheel or
+puts two fingers on the canvas, so nothing in it catches a rule wired to the wrong event.
+`tools/drive/` does, through Playwright, against the page `tools/build.nim web` assembles;
+`nim r tools/build.nim drive` runs both front-ends.
 
-**Every check passes**, one module per section of what the page does. `drive` counts them
-and this file does not:
+**Every check passes**, one module per section of what the page does. `drive` counts them and this
+file does not:
 
 | Module | Covers |
 |--------|--------|
@@ -159,67 +159,66 @@ and this file does not:
 | `frame`, `diagnostics`, `ramp` | frame's own clocks, tree, colour each row wears |
 | `exceedance`, `rings` | distribution curve, its axis, rings each reading is taken over |
 | `scenery`, `pins`, `hold`, `pool` | what scene costs, repaired faults, scene hold, drawer |
-| `demo`, `loaded`, `objects` | preset, culling, occlusion, and what all of it costs loaded |
+| `demo`, `loaded`, `objects` | preset, culling, occlusion, a line through a point, loaded |
 | `message`, `style`, `type`, `canvas` | outcome fade, declared CSS, faces in roles, blank refused |
 
-**Timing-dependent quantities are asserted as bands, never figures.** How far a held key
-travels depends on frames drawn while it was down. A band that will not settle is widened
-with its reason recorded, never deleted and never narrowed to fit one lucky run.
+**Timing-dependent quantities are asserted as bands, never figures.** How far a held key travels
+depends on frames drawn while it was down. A band that will not settle is widened with its reason
+recorded, never deleted and never narrowed to fit one lucky run.
 
 **Accounting allows two frames of its sample to miss, as a count rather than a share.**
-`ceil(0.995n)` equals `n` for every `n` under 200, so a share demanded every frame at
-`loaded`'s 49-frame sample; one definition, exported from `scenery` (repository issue 47).
-Per-frame tolerances are untouched: a real accounting fault misses on every frame.
+`ceil(0.995n)` equals `n` for every `n` under 200, so a share demanded every frame at `loaded`'s
+49-frame sample; one definition, exported from `scenery` (repository issue 47). Per-frame tolerances
+are untouched: a real accounting fault misses on every frame.
 
-**Count the mechanism the claim names.** The panel's cadence check counts `askSlowPass`,
-the tick's own entry (asks are `ceil(ticks/5)`), not calls to `drawExceedance`, which the
-axis switch and the gliding axis reach too — 138 of 138 on one run, 137 on the next,
-identical code. Verified by breaking on purpose: four axis presses in the window.
+**Count the mechanism the claim names.** The panel's cadence check counts `askSlowPass`, the tick's
+own entry (asks are `ceil(ticks/5)`), not calls to `drawExceedance`, which the axis switch and the
+gliding axis reach too — 138 of 138 on one run, 137 on the next, identical code. Verified by
+breaking on purpose: four axis presses in the window.
 
-**Waits are conditions the page reports, not spans of clock.** Camera ease and settling
-after a click are `waitForFunction` over what the page says (`settleCamera`, `settleCount`,
-`settleSelection`, `settleDrawer`, `settleHelp`, `settleBranch`, `settleReading`); pacing
-inside drag loops is `waitFrames`. The 16 fixed waits that remain are measurement windows,
-each saying so at its site. `settleReading` waits on `ms_refresh_ui`, the tick's own clock,
-never on a row that tick writes, or the wait would assert what the check goes on to ask.
+**Waits are conditions the page reports, not spans of clock.** Camera ease and settling after a
+click are `waitForFunction` over what the page says (`settleCamera`, `settleCount`,
+`settleSelection`, `settleDrawer`, `settleHelp`, `settleBranch`, `settleReading`); pacing inside
+drag loops is `waitFrames`. The 16 fixed waits that remain are measurement windows, each saying so
+at its site. `settleReading` waits on `ms_refresh_ui`, the tick's own clock, never on a row that
+tick writes, or the wait would assert what the check goes on to ask.
 
-**Settle on what moves, not on what has stopped changing.** Two polls of an unmoving stance
-agree before an ease has begun, so `settleCamera` asks the ease — `nimCameraCarrying`
-reports `goal.isSome and not is_arrived` — and waits one draw first, since that draw arms it
-(repository issue 73). Verified by breaking on purpose: returning at once, every loss is
-framing.
+**Settle on what moves, not on what has stopped changing.** Two polls of an unmoving stance agree
+before an ease has begun, so `settleCamera` asks the ease — `nimCameraCarrying` reports
+`goal.isSome and not is_arrived` — and waits one draw first, since that draw arms it (repository
+issue 73). Verified by breaking on purpose: returning at once, every loss is framing.
 
-**Pixels are read through the compositor, and a reading carrying no picture is refused.**
-The context keeps no drawing buffer (`gl.ts` says why), so `readPixels` is sound only from
-inside the frame that drew, and checks comparing one such reading against another pass on
-a canvas reading back all zero. The reading is `page.locator('#gl').screenshot()`, decoded
-in the page, through one `tools/drive/canvas.ts`; it raises rather than reports, since a
-canvas nobody can read is the instrument lost. **Refusal is of one colour, not of black**:
-the runner has answered a sheet of white as readily as one of zero, so the fixture drives
-both. Every sibling of the canvas is hidden by `opacity` for the capture, and the reading
-is taken again until it carries a picture, up to ten times, since hiding chrome forces a
-recomposite a software rasteriser does not finish inside one frame. Costs about 0.49 s per
-reading, about 19 times a run. **Unexplained**: why the runner read blank through
-`readPixels` and white through the compositor; neither Chromium here reproduces either.
+**Pixels are read through the compositor, and a reading carrying no picture is refused.** The
+context keeps no drawing buffer (`gl.ts` says why), so `readPixels` is sound only from inside the
+frame that drew, and checks comparing one such reading against another pass on a canvas reading back
+all zero. The reading is `page.locator('#gl').screenshot()`, decoded in the page, through one
+`tools/drive/canvas.ts`; it raises rather than reports, since a canvas nobody can read is the
+instrument lost. **Refusal is of one colour, not of black**: the runner has answered a sheet of
+white as readily as one of zero, so the fixture drives both. Every sibling of the canvas is hidden
+by `opacity` for the capture, and the reading is taken again until it carries a picture, up to ten
+times, since hiding chrome forces a recomposite a software rasteriser does not finish inside one
+frame. Costs about 0.49 s per reading, about 19 times a run. **Unexplained**: why the runner read
+blank through `readPixels` and white through the compositor; neither Chromium here reproduces
+either.
 
-**The harness resolves its own browser, and drives Playwright's pinned build by default.**
-What `RGA_CHROMIUM` names, else the build `package-lock.json` pins, else `chromium` on
-`PATH`, which on Ubuntu 24.04 is the snap shim alone (repository issue 77). The lock fixes
-`@playwright/test` at 1.63.0 and that fixes the browser revision, so this machine and the
-runner drive one binary, and `check.yml` caches `~/.cache/ms-playwright` on that same lock.
-The pin is a version, not a digest: Playwright publishes no checksum.
+**The harness resolves its own browser, and drives Playwright's pinned build by default.** What
+`RGA_CHROMIUM` names, else the build `package-lock.json` pins, else `chromium` on `PATH`, which on
+Ubuntu 24.04 is the snap shim alone (repository issue 77). The lock fixes `@playwright/test` at
+1.63.0 and that fixes the browser revision, so this machine and the runner drive one binary, and
+`check.yml` caches `~/.cache/ms-playwright` on that same lock. The pin is a version, not a digest:
+Playwright publishes no checksum.
 
-**TypeScript rather than Nim, argued rather than assumed.** The harness's calls are
-overwhelmingly `page.evaluate` bodies naming the bridge's exports, which
-`build/bridge.d.ts` types; through Nim's foreign-function glue each is an unchecked string
-(repository issue 48). Page-script names the harness drives are hand-declared in
-`tools/drive/page.d.ts`, so renaming one breaks the harness rather than the page.
+**TypeScript rather than Nim, argued rather than assumed.** The harness's calls are overwhelmingly
+`page.evaluate` bodies naming the bridge's exports, which `build/bridge.d.ts` types; through Nim's
+foreign-function glue each is an unchecked string (repository issue 48). Page-script names the
+harness drives are hand-declared in `tools/drive/page.d.ts`, so renaming one breaks the harness
+rather than the page.
 
-**A dropped CSS declaration is invisible to the CSSOM, so the check reads authored text.**
-A parser discards a declaration whose property it does not know, so a sweep over `cssRules`
-passes on the very page the check exists for. `driveStyleDeclared` scans the `<style>`
-element's own `textContent` and asks the browser whether each property name is one it
-knows, with a fixture asking whether it can tell `align-items` from `align-objects`.
+**A dropped CSS declaration is invisible to the CSSOM, so the check reads authored text.** A parser
+discards a declaration whose property it does not know, so a sweep over `cssRules` passes on the
+very page the check exists for. `driveStyleDeclared` scans the `<style>` element's own `textContent`
+and asks the browser whether each property name is one it knows, with a fixture asking whether it
+can tell `align-items` from `align-objects`.
 
 **The heading checks hold geometry, paint and shape separately.** `driveHeaderPinned` sweeps
 `elementFromPoint` across the full band width, since the midline alone passed while rows showed in a
@@ -228,40 +227,37 @@ rather than a notation, since a `color-mix` fill computes to `color(srgb …)`. 
 compares radius and border against `.toggles`; not `.brand`, which takes an accent border whenever
 the drawer is open.
 
-**The list is held to a window, never to a fill.** `driveListWindowed` shuts the objects
-section and opens it again, and reads the rows standing before the click returns: they stand
-for every object and number no more than three screens of 40 px rows, which is loose where it
-must be and still tens against thousands. It then scrolls to either end and finds that end's
-row on screen within the same bound. The bound is stated in the check as well as in the page,
-since a check reading the window out of the page passes whatever the page does. Time is
-reported and never asserted — 3 ms here, with 27 rows standing for 5,040 objects —
-since how long tens of rows take is the runner's business, and the count holds on every
-runner. `driveEditFromMenu` opens the panel onto the 41st object created, near the far end of
-the list, and reads its row as standing before the call returns and as lying under the pinned
-heading with its whole form above the scroller's floor.
+**The list is held to a window, never to a fill.** `driveListWindowed` shuts the objects section and
+opens it again, and reads the rows standing before the click returns: they stand for every object
+and number no more than three screens of 40 px rows, which is loose where it must be and still tens
+against thousands. It then scrolls to either end and finds that end's row on screen within the same
+bound. The bound is stated in the check as well as in the page, since a check reading the window out
+of the page passes whatever the page does. Time is reported and never asserted — 3 ms here, with 27
+rows standing for 5,040 objects — since how long tens of rows take is the runner's business, and the
+count holds on every runner. `driveEditFromMenu` opens the panel onto the 41st object created, near
+the far end of the list, and reads its row as standing before the call returns and as lying under
+the pinned heading with its whole form above the scroller's floor.
 
-**A touch id is never reused across gestures, and every gesture starts by asking the page
-whether any pointer is still down.** The page keys live pointers by id, so an id reused
-from the gesture before overwrites a finger left standing by a dropped or reordered lift in
-silence, and the pair the page reads is not the pair the harness sent — which is the one
-mechanism found for a two-finger pan reading as a pinch (repository issues 153 and 154). A
-fresh id per finger leaves a stale one standing where the guard names it and the gesture's
-own check fails on it. The guard reads events the browser delivered, through a listener the
-harness installs on `window`, never the page's own bookkeeping: the page's surface is not
-widened for a test, and what is asserted is what the page received. It is silent when
-clean and reports the stale ids when not, and one positive check stands before the pan,
-which follows a tap.
+**A touch id is never reused across gestures, and every gesture starts by asking the page whether
+any pointer is still down.** The page keys live pointers by id, so an id reused from the gesture
+before overwrites a finger left standing by a dropped or reordered lift in silence, and the pair the
+page reads is not the pair the harness sent — which is the one mechanism found for a two-finger pan
+reading as a pinch (repository issues 153 and 154). A fresh id per finger leaves a stale one
+standing where the guard names it and the gesture's own check fails on it. The guard reads events
+the browser delivered, through a listener the harness installs on `window`, never the page's own
+bookkeeping: the page's surface is not widened for a test, and what is asserted is what the page
+received. It is silent when clean and reports the stale ids when not, and one positive check stands
+before the pan, which follows a tap.
 
-**The chip row's check asserts reach beside fit.** `driveChipRowFits` requires exactly two
-toggles wherever they stand alongside zero overflow, since a row that fits because two
-controls were dropped is broken more quietly, and sweeps 396, 395 and 394, because a rule
-written one pixel out passes every sweep that never lands on it.
+**The chip row's check asserts reach beside fit.** `driveChipRowFits` requires exactly two toggles
+wherever they stand alongside zero overflow, since a row that fits because two controls were dropped
+is broken more quietly, and sweeps 396, 395 and 394, because a rule written one pixel out passes
+every sweep that never lands on it.
 
 *Checked.* Verified by running: every check through `tools/build.nim drive`, both front-ends,
-software-rendered, here and on the runner — `driven` gates `audit`, so a green push run is
-the runner's own word (repository issues 47 and 91). **Unmeasured**: the figures are this
-container's and say more about SwiftShader than about any GPU; bands are what the checks
-assert.
+software-rendered, here and on the runner — `driven` gates `audit`, so a green push run is the
+runner's own word (repository issues 47 and 91). **Unmeasured**: the figures are this container's
+and say more about SwiftShader than about any GPU; bands are what the checks assert.
 
 ## Browser Front-End
 
@@ -957,21 +953,23 @@ reader.
 
 ## Records And Shaders
 
-**Every line is a quad, never `GL_LINES`.** A line width is a hint most WebGL targets clamp
-to one pixel. Each end is offset half a width along `directionAcross` — the normal of the
-plane joining the segment with the eye — scaled by `worldPerPixelAt` at *that end's own
-depth*, which keeps the on-screen width constant along a receding line. **The near plane is
-clipped against first**: a depth clamped at the near plane breaks the proportionality and
-draws a world axis twenty pixels wide near the origin.
+**Every line is a quad, never `GL_LINES`.** A line width is a hint most WebGL targets clamp to one
+pixel. Each end is offset half a width along `directionAcross` — the normal of the plane joining the
+segment with the eye — scaled by `worldPerPixelAt` at *that end's own depth*, which keeps the
+on-screen width constant along a receding line. **The near plane is clipped against first**: a depth
+clamped at it breaks the proportionality and draws a world axis twenty pixels wide near the origin.
+**The crossing is stepped from the end it stands nearer**, never from the end cut away: a line
+reaches its vanishing point 530,000 units out, so that step is the difference of two places decades
+apart, which in float32 drew `earth ∧ luna` 406 px off Earth at an orbit distance of 0.01, 1,538 px
+at 0.001, and rounded `sol ∧ earth`'s own crossing onto the pivot, so half of it went.
 
-**The widening runs in the vertex shader on both front-ends.** One fifteen-float
-`RibbonRecord` per segment (sixteen with the `fog` flag) crosses the wire against the
-forty-two floats six CPU vertices cost, expanded by an instanced draw — GL 3.3 core on the
-desktop, `ANGLE_instanced_arrays` on WebGL1 — the across derived per vertex as
-`cross(head − tail, eye − tail)`. **Chain of custody**: the GLSL ships, `mesh.expandRibbon`
-is its reference in Nim (sibling-marked with both shader sources), and the suite holds the
-reference to the algebra — the near clip equal to `clipToEyeSide`, the across equal to the
-join `directionNormal(tail ∧ head ∧ eye)`, sign included.
+**The widening runs in the vertex shader on both front-ends.** One fifteen-float `RibbonRecord` per
+segment (sixteen with the `fog` flag) crosses the wire against the forty-two floats six CPU vertices
+cost, expanded by an instanced draw — GL 3.3 core on the desktop, `ANGLE_instanced_arrays` on WebGL1
+— the across derived per vertex as `cross(head − tail, eye − tail)`. **Chain of custody**: the GLSL
+ships, `mesh.expandRibbon` is its reference in Nim (sibling-marked with both shader sources), and
+the suite holds the reference to the algebra — the near clip equal to `clipToEyeSide`, the across
+equal to the join `directionNormal(tail ∧ head ∧ eye)`, sign included.
 
 **A plane's fill, its rim and the sky are one record each.** A 13-float `DiscRecord` is spanned over
 the view box of its bounding sphere, `viewBoxOfDisc`, on the static unit-circle corner buffer, and
@@ -989,16 +987,16 @@ not at compile time, whose evaluator need not agree with each backend's libm in 
 rim as one record is what the demo frame turns on: 96 ribbon records per plane were 99.2% of ribbon
 traffic on 132 planes, and the demo's median frame went 239 → 84 ms under SwiftShader.
 
-**Every record's position is stored about the frame's origin**, the camera's pivot (see
-Camera); the suite pins the five writers against an origin a million units off.
+**Every record's position is stored about the frame's origin**, the camera's pivot (see Camera); the
+suite pins the five writers against an origin a million units off.
 
-**Veil order is kept, not assumed away**: two translucent veils still blend in scene
-order, so every append extends or opens a `VeilRun` and both render paths walk the runs in
-sequence. `markOverlay` seals the current run. `RingMesh` carries its own `index_overlay`,
-or a selected plane's second rim would draw depth-tested behind the fill it highlights.
+**Veil order is kept, not assumed away**: two translucent veils still blend in scene order, so every
+append extends or opens a `VeilRun` and both render paths walk the runs in sequence. `markOverlay`
+seals the current run. `RingMesh` carries its own `index_overlay`, or a selected plane's second rim
+would draw depth-tested behind the fill it highlights.
 
-**Capacities** are asserted in `scene.nim`, the one module that can see both sides, so
-raising `OBJECTS_MAX` fails to *compile* rather than `doAssert` at draw time (a dead page):
+**Capacities** are asserted in `scene.nim`, the one module that can see both sides, so raising
+`OBJECTS_MAX` fails to *compile* rather than `doAssert` at draw time (a dead page):
 
 | Cap | Value | Binding case |
 |---|---|---|
@@ -1007,35 +1005,37 @@ raising `OBJECTS_MAX` fails to *compile* rather than `doAssert` at draw time (a 
 |  |  | every one selected, plus a preview |
 | `RIBBONS_MAX` | 20161 = 4 × `OBJECTS_MAX` + 1 | every handle a line, two segments, drawn twice |
 
-The desktop asks for a `SAMPLES_MULTISAMPLE` = 4 framebuffer and **falls back to none if no
-visual offers it**: `llvmpipe` under `xvfb` refuses the window outright rather than
-downgrading, and a visualiser that will not start is worse than one whose thinnest lines
-alias. The browser context asks for `antialias: true`.
+The desktop asks for a `SAMPLES_MULTISAMPLE` = 4 framebuffer and **falls back to none if no visual
+offers it**: `llvmpipe` under `xvfb` refuses the window outright rather than downgrading, and a
+visualiser that will not start is worse than one whose thinnest lines alias. The browser context
+asks for `antialias: true`.
 
-**The flat buffers are the page's own typed arrays, filled in place.** A `seq[float32]` on
-the JS backend is an `Array` of boxed doubles converted element by element into a staging
-`Float32Array`, a fourth pass over bytes nothing else read. `FlatBuffer` is a `Float32Array`
-behind three `importjs` lines, allocated once at its mesh's cap and never grown; each frame
-hands back a `subarray` view, no copy. Measured at 0.1 ms a frame. Draw order in the
-browser scripts mirrors `renderer.nim` and is kept in step by hand.
+**The flat buffers are the page's own typed arrays, filled in place.** A `seq[float32]` on the JS
+backend is an `Array` of boxed doubles converted element by element into a staging `Float32Array`, a
+fourth pass over bytes nothing else read. `FlatBuffer` is a `Float32Array` behind three `importjs`
+lines, allocated once at its mesh's cap and never grown; each frame hands back a `subarray` view, no
+copy. Measured at 0.1 ms a frame. Draw order in the browser scripts mirrors `renderer.nim` and is
+kept in step by hand.
 
-*Checked.* Verified by `suites.nim`: the widening reference against the algebra; every stepped dome
-and ring corner against the sum it replaced; the disc's box against its rim's projection, its ray
-landing inside the rim and missing outside it, and a hit under a grazing eye nearer than the near
-plane; all ninety-six rim segments on the plane at its radius; the capacity assertions, by building
-the binding scenes. Verified by desktop
-A/B under Xvfb: 0 of 1,296,000 pixels for the ribbon move, at most 38 per storyboard frame
-(channel delta ≤ 12) for the disc and dome move, where the record narrows its arms to
-float32. Verified by driven check: the demo's ribbon records under 64 against a ring count
-over 120. Assumed: that the 0.1 ms flat-buffer figure holds at the current caps; it was
-measured at 1,024 objects.
+*Checked.* Verified by `suites.nim`: the widening reference against the algebra, and its near
+crossing within a pixel of where the record's own ends put it at a four-hundredth of a moon's
+close-up; every stepped dome and ring corner against the sum it replaced; the disc's box against its
+rim's projection, its ray landing inside the rim and missing outside it, and a hit under a grazing
+eye nearer than the near plane; all ninety-six rim segments on the plane at its radius; the capacity
+assertions, by building the binding scenes. Verified by desktop A/B under Xvfb: 0 of 1,296,000
+pixels for the ribbon move, at most 38 per storyboard frame (channel delta ≤ 12) for the disc and
+dome move, where the record narrows its arms to float32. Verified by driven check: the demo's ribbon
+records under 64 against a ring count over 120, and both of the orrery's lines crossing a ring of
+spots about the point they join, opposite in pairs, with the camera 0.01 and then 0.001 units off
+it. Assumed: that the 0.1 ms flat-buffer figure holds at the current caps; it was measured at 1,024
+objects.
 
 ## Algebra Boundary
 
-The **algebra owns geometry** — what a thing is and where it stands: construction,
-incidence, meets, joins, projections, nearest points, side tests; the world-space camera;
-rays cast from the screen; the lattice lines and axes, which are lines; everything at the
-horizon. The **picture owns representation** — how geometry becomes GPU primitives: a
+The **algebra owns geometry** — what a thing is and where it stands: construction, incidence, meets,
+joins, projections, nearest points, side tests; the world-space camera; rays cast from the screen;
+the lattice lines and axes, which are lines; everything at the horizon. The **picture owns
+representation** — how geometry becomes GPU primitives: a
 plane's disc and rim, a ribbon's across-vector — built with whatever arithmetic is quickest.
 
 **The boundary is enforced by the compiler.** `mesh.nim` imports `euclid.nim` and nothing
