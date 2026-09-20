@@ -33,16 +33,9 @@ nim r tools/build.nim gaps      # regenerate gaps.md and the docket from baselin
 nim r tools/build.nim sweep     # dense timings at two to six dimensions, never in CI
 ```
 
-It builds on **Nim at commit `27763495b`**, and nothing has to be installed for it. Koch
-resolves the pin itself. It takes the compiler on `PATH` where that one already serves. Else
-it takes one cached under `~/.cache/koch/nim/<pin>/`, or a clone of `nim-lang/Nim` built at
-that commit and cached. That is paid once for each machine (`GUIDE.md`, Toolchain). CI
-resolves the same pin the same way.
-
-No release will do. The `pga` library spells its operators with seven characters that Nim
-learned to lex in that commit, and no release carries it yet. The pin is exact. A pin that
-nothing can serve is a finding, which names the pin and the cache tried, and never a fallback
-to another compiler.
+The pin is **Nim at commit `27763495b`**, and no release serves it. Koch fetches and builds it
+once for each machine (`GUIDE.md`, Toolchain). The record says which characters of `pga` need
+it.
 
 ## Layout
 
