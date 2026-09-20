@@ -170,11 +170,11 @@ func blocks*(markdown: string): seq[Block] =
 
 
 func isSentenceEnd*(word: string): bool =
-  ## Decide whether word closes sentence, i.e. stop after letter or closing bracket.
+  ## Decide whether word closes sentence, i.e. stop after letter, bracket or emphasis mark.
   var i = word.high
   while i >= 0 and word[i] in {'"', '*', '_', '\''}: dec i
   if i < 1 or word[i] notin {'.', '!', '?'}: return false
-  word[i - 1] in Letters or word[i - 1] in {')', ']', '"', '%'}
+  word[i - 1] in Letters or word[i - 1] in {')', ']', '"', '%', '*', '_'}
 
 
 func sentences*(text: string): seq[string] =
