@@ -222,11 +222,11 @@ element's own `textContent` and asks the browser whether each property name is o
 knows, with a fixture asking whether it can tell `align-items` from `align-objects`.
 
 **The heading checks hold geometry, paint and shape separately.** `driveHeaderPinned` sweeps
-`elementFromPoint` across the full band width, since the midline alone passed while rows
-showed in a 28 px strip. `driveHeaderBanded` reads the computed fill's *opacity* rather than
-a notation, since the pinned fill computes to `color(srgb …)` and the resting one to
-`oklab(0 0 0 / 0)`. `driveHeaderStyled` compares radius and border against `.toggles`; not
-`.brand`, which takes an accent border whenever the drawer is open.
+`elementFromPoint` across the full band width, since the midline alone passed while rows showed in a
+28 px strip. `driveHeaderBanded` reads every heading's computed fill *opacity* at rest and pinned
+rather than a notation, since a `color-mix` fill computes to `color(srgb …)`. `driveHeaderStyled`
+compares radius and border against `.toggles`; not `.brand`, which takes an accent border whenever
+the drawer is open.
 
 **The list is held to a window, never to a fill.** `driveListWindowed` shuts the objects
 section and opens it again, and reads the rows standing before the click returns: they stand
@@ -349,25 +349,25 @@ at 394, 75 at 320). Moved rather than copied: a second pair of buttons would be 
 `on` state to keep in step with the scene's own. `#top-menu-show[hidden]` spells out
 `display: none`, since an author `display` beats the user-agent rule for the attribute.
 
-**A section's heading holds its place while that section's list scrolls under it.**
-`position: sticky; top: 0` against `.drawer-scroll`, with the clearance the floating row needs
-sitting on `.drawer`, outside what scrolls, since a sticky offset is inset by its scroller's
-own padding. Pinning is watched rather than measured: one `IntersectionObserver` over a 1 px
-`.section-edge` sentinel per section, because a sticky element never leaves the scrollport.
-The entry is a signal and nothing more — `rootBounds` arrives null, `boundingClientRect` is
-a stale snapshot — so `settleBands` reads live geometry for every heading on any signal.
-Half a pixel of real scroll before a heading counts as pinned, never none: the topmost
-sentinel sits *exactly* at the scroller's edge when nothing has scrolled. Not a scroll
-handler: a read after a write lays the whole document out inside that event.
+**A section's heading holds its place while that section's list scrolls under it.** `position:
+sticky; top: 0` against `.drawer-scroll`, with the clearance the floating row needs sitting on
+`.drawer`, outside what scrolls, since a sticky offset is inset by its scroller's own padding. The
+heading wears its pill at rest and pinned alike, so a list moving and a list still show one heading.
+Not a band only while pinned, watched through a sentinel and an `IntersectionObserver`: a heading
+then changed its look between a list moving and one at rest, and the desktop's bar is filled
+throughout.
 
-**Pinned, a heading wears the pill the chip row's own controls wear.** Same radius, same 1 px
-`--border`, and the box `.object-row.selected` already uses. The fill is **opaque**, although
-the pills it borrows its shape from are `--surface` over a blur: a heading asked to hide rows
-cannot be seen through. That fill is the drawer's own ground, arrived at the way the drawer
-arrives at it — `color-mix(in srgb, rgb(22 27 34) 82%, var(--bg))`, where `--bg` is written
-at runtime by `gl.ts` from the clear colour — where a named tone drifts. The border is
-`transparent` at rest rather than added by `.stuck`, since a border arriving on pin would
-widen the box by 2 px. Not a shadow, which made pinning read as *floating*.
+**A heading wears the pill the chip row's own controls wear**, still or scrolling. Same radius, same
+1 px `--border`, and the box `.object-row.selected` already uses. The fill is **opaque**, although
+the pills it borrows its shape from are `--surface` over a blur: a heading asked to hide rows cannot
+be seen through. That fill is the drawer's own ground, arrived at as the drawer does — `color-mix(in
+srgb, rgb(22 27 34) 82%, var(--bg))`, where `--bg` is written at runtime by `gl.ts` from the clear
+colour — where a named tone drifts. Not a shadow, which made pinning read as *floating*. No rule
+under a section: the pills part sections by themselves, and a rule beside them stood as a residual
+line over the next pill at rest. The box is **square**, with `.section-header::before` drawing the
+pill over it: a radius clips the fill it rounds, so a box that *was* the pill left four corners bare
+for rows. Not a backing inside it — `position: sticky` opens a stacking context whatever its
+`z-index`, so a negative child paints over its own border. `border: 0`, or the button's own stands.
 
 **Only the rows near the viewport exist.** The list is a window over its keys: two spacers stand
 in for the rows above and below at the heights those rows measured, or 61 px until they have, and
