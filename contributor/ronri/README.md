@@ -2,6 +2,6 @@
 
 Computing.
 
-One folder per project directly under this one; each carries README.md, PROVENANCE.md,
-GLOSSARY.md, `<project>.nimble` and `tests/`. Start one by following
+One folder for each project sits directly under this one. Each one carries README.md,
+PROVENANCE.md, GLOSSARY.md, `<project>.nimble` and `tests/`. To start one, follow
 [CONTRIBUTOR.md](../../CONTRIBUTOR.md) on branch `contributor/ronri/<project>/<name>`.

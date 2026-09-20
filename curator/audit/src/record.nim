@@ -17,8 +17,12 @@ import ./[findings, markdown, provenance]
 
 
 const
-  RECORD_LINES* = 2000
+  RECORD_LINES* = 2500
     ## Lines record may hold before prune to log is asked.
+    ##   Was 2,000 while records were written in ordinary English. Simplified Technical English
+    ##     (Article VI.8) costs about 20% more lines, measured over five records, since one long
+    ##     sentence becomes two short ones. Number is old one scaled by that, so threshold still
+    ##     asks for prune where it asked before, and rewrite alone moves no record over.
   OPEN_QUESTIONS* = "## Open questions"
     ## Heading of section that must come last; matched without case.
   PRUNED* = "Pruned"

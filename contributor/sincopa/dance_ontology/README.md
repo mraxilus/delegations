@@ -1,14 +1,14 @@
 # dance_ontology
 
-An executable ontology of the frames a couple can hold in partner dance, and the moves
-between them. Written for salsa, but nothing in it is salsa-specific: it is two humanoid
-bodies, four hands and the geometry of facing each other.
+An executable ontology of the frames that a couple can hold in partner dance, and the moves
+between them. It is written for salsa, but nothing in it is specific to salsa. It is two
+humanoid bodies, four hands, and the geometry of a face-to-face position.
 
-The model has one state and one relation. A **frame** is what each of the lead's hands
-holds and how the arms lie where they overlap. A **move** exists between two frames exactly
-when the difference between them is one primitive. Everything else, the names, the routes,
-the audit of the source workbook, the drawings and the browser validator, is derived from
-those two things.
+The model has one state and one relation. A **frame** is what each hand of the lead holds,
+and how the arms lie where they overlap. A **move** exists between two frames exactly when
+the difference between them is one primitive. Everything else is derived from those two
+things: the names, the routes, the audit of the source workbook, the drawings and the browser
+validator.
 
 ```
                    Right to left               Right-to-right over Left-to-left
@@ -18,40 +18,43 @@ those two things.
 free ── collect ──> Left to left ── collect ──> Left-to-left over Right-to-right
 ```
 
-The drawings stack this as a tower: `free` at the foot, both hands held at the head, so a
-collect climbs and a drop falls. `free` is the frame with nothing held, four free hands,
-which is where the name comes from. It is deliberately **not** called `open`: dancers use
-"open position" for the hand-to-hand frame, which this ontology calls `Left-to-right and
-Right-to-left`, so naming the empty frame `open` would put the two of them under one word.
-Nothing else here is named for what a dance calls it; a frame is named for the hands it
-holds.
+The drawings stack this as a tower. `free` is at the foot, and both hands held at the head,
+so a collect climbs and a drop falls. `free` is the frame with nothing held, four free hands,
+which is where the name comes from.
 
-Hands only. A hand resting on a partner's body is real and deliberately absent: it adds no
-frame, it takes a turn away, and it is where a wound arm lands, so it belongs with rotation
-rather than here.
+It is deliberately **not** called `open`. Dancers use "open position" for the hand-to-hand
+frame, which this ontology calls `Left-to-right and Right-to-left`. To name the empty frame
+`open` would put the two of them under one word. Nothing else here is named for what a dance
+calls it, and a frame is named for the hands it holds.
 
-Beside the ontology stands a body simulator (`sim/`): two bodies of the average adult's
-measurements with jointed arms, sharing no code with the ontology on purpose. The notation is
-a shorthand for two people with arms of a length, and a shorthand cannot check itself, so the
-sim is the thing it is a shorthand *for*, kept apart in code so that what it says is evidence
-rather than an echo. It is not kept apart in concepts: it reuses this project's agreed words
-wherever one fits and coins its own only where none does, because sharing a word costs the
-witness nothing where sharing an assumption would cost it everything. The sim is a witness,
-never an authority: where its answers meet the ontology's words (`sim/verdicts.md`) the
-translation is printed in one table and nothing is tuned to make them agree.
+Hands only. A hand that rests on the body of a partner is real, and deliberately absent. It
+adds no frame, it takes a turn away, and it is where a wound arm lands. So it belongs with
+rotation rather than here.
+
+Beside the ontology stands a body simulator (`sim/`). It is two bodies of the measurements of
+the average adult, with jointed arms, and it shares no code with the ontology on purpose. The
+notation is a shorthand for two people with arms of a length, and a shorthand cannot check
+itself. So the sim is the thing that the notation is a shorthand *for*. It is kept apart in
+code, so that what it says is evidence rather than an echo.
+
+It is not kept apart in concepts. It reuses the agreed words of this project wherever one
+fits, and coins its own only where none does. To share a word costs the witness nothing,
+where to share an assumption would cost it everything. The sim is a witness, and never an
+authority. Where its answers meet the words of the ontology (`sim/verdicts.md`), the
+translation is printed in one table, and nothing is tuned to make them agree.
 
 ## Authority replicated
 
-- The Architect's workbook `ontology.partnerwork.xlsx`, sheets `base` and `vocabulary`, held
-  as data in `src/dance_ontology/workbook.nim` and audited against the derived model by
-  `tests/tworkbook.nim`. **Superseded.** The Architect has replaced it with a newer sheet
-  this project has not been given, so what the audit reports, and the sheet-facing half of the
-  review page, are findings about a document no longer in use. Both stay running until the
-  new sheet arrives and replaces the transcription.
-- The Architect's forty drawing rules as given, held as data in `design/rules.nim` and
-  mirrored entry for entry in `design/README.md`; `design/checks.nim` holds the pages to them.
-- For the body sim, the ANSUR II medians with the AAOS and NASA-STD-3000 joint ranges,
-  every one in `sim/rig.nim` with its derivation; `tests/trigid.nim`, `tlimb.nim` and
+- The workbook of the Architect, `ontology.partnerwork.xlsx`, sheets `base` and
+  `vocabulary`. It is held as data in `src/dance_ontology/workbook.nim`, and audited against
+  the derived model by `tests/tworkbook.nim`. **Superseded.** The Architect has replaced it
+  with a newer sheet that this project has not been given. So what the audit reports, and the
+  sheet-facing half of the review page, are findings about a document no longer in use. Both
+  stay running until the new sheet arrives and replaces the transcription.
+- The forty drawing rules of the Architect as given, held as data in `design/rules.nim`, and
+  mirrored entry for entry in `design/README.md`. `design/checks.nim` holds the pages to them.
+- For the body sim, the ANSUR II medians with the AAOS and NASA-STD-3000 joint ranges. Every
+  one is in `sim/rig.nim` with its derivation, and `tests/trigid.nim`, `tlimb.nim` and
   `tread.nim` hold the sim to them.
 
 ## Build and test
@@ -65,20 +68,21 @@ nim r tools/build.nim verdicts                         # rewrite sim/verdicts.md
 nim r tools/build.nim shot                             # screenshot helper, for node and Playwright
 ```
 
-The first two run from the repository root, the rest from this directory. Needs git and the
-compiler this project pins in `dance_ontology.nimble`. Hand-written pages are committed
-files: the shells and the review page's prose live
-under `pages/`, the one hand-drawn proposal under `mockups/`, and `tools/build.nim pages`
-copies, fills and splices them under `build/` beside the scripts compiled for them. What a
-build emits is never committed, its lines running far past any width a file may have.
-Publishing a page is republishing its built file to the URL it already has, listed below.
+The first two run from the repository root, and the rest from this directory. This needs
+git, and the compiler that this project pins in `dance_ontology.nimble`.
+
+Hand-written pages are committed files. The shells and the prose of the review page live
+under `pages/`, and the one hand-drawn proposal under `mockups/`. `tools/build.nim pages`
+copies, fills and splices them under `build/`, beside the scripts compiled for them. What a
+build emits is never committed, because its lines run far past any width a file may have. To
+publish a page is to republish its built file to the URL it already has, listed below.
 
 ## Published pages
 
-The validator is the page the project stands behind; every other is a mock-up or an
+The validator is the page that the project stands behind. Every other one is a mock-up or an
 instrument, kept for reference. `CONTRIBUTOR.md` draws the same line between `pages/` and
-`mockups/`, and every published title carries it, so a gallery holding both says which is
-which before either is opened.
+`mockups/`, and every published title carries it. A gallery that holds both then says which
+is which before either one is opened.
 
 What the project stands behind:
 
@@ -99,8 +103,8 @@ Mock-ups and instruments:
 | design/wholecloth.html | https://claude.ai/code/artifact/9440ffbc-93be-4634-a3ce-dd17d7b33c6c |
 | review/review.html | https://claude.ai/code/artifact/61c41287-0a91-4fb9-9b15-622a5fd7db43 |
 
-A page taken out of use keeps whatever URL it was last published at and is not listed here.
-The repository does not rely on a published copy as its record: what a retired page claimed
+A page taken out of use keeps whatever URL it was last published at, and is not listed here.
+The repository does not rely on a published copy as its record. What a retired page claimed
 is in the log, and in `PROVENANCE.md` where it still bears on the design.
 
 ## Layout
@@ -138,42 +142,50 @@ build/                             every page, picture and script; ignored by gi
 
 ## The validator
 
-`build/app/index.html` (and `artifact.html`, the same page as one self-contained file) shows
-the frame you are in, every frame one primitive away with the phrase that leads it, and
-every frame that is *not*, with the way there spelled out a move at a time. Only what is
-offered can be clicked, so a move the ontology does not derive cannot be danced. Three
-views: **Atlas** is every frame there is, drawn, named and counted; **Dance** walks the
-state machine from `free`; **Matrix** is every move there is at once. The page is usable
-from the keyboard, and a live region says what was danced for a reader who cannot see the
-drawing. What the model has to say about the spreadsheet is not in the app: it is a finding
-about a document, and it lives in the review page (`build/review/review.html`) and in
+`build/app/index.html` shows three things, and so does `artifact.html`, which is the same
+page as one self-contained file. It shows the frame you are in, and every frame one primitive
+away with the phrase that leads it. It also shows every frame that is *not*, with the way
+there spelled out a move at a time. Only what is offered can be clicked, so a move that the
+ontology does not derive cannot be danced.
+
+There are three views. **Atlas** is every frame there is, drawn, named and counted. **Dance**
+walks the state machine from `free`. **Matrix** is every move there is at once. The page is
+usable from the keyboard, and a live region says what was danced, for a reader who cannot see
+the drawing.
+
+What the model has to say about the spreadsheet is not in the app. It is a finding about a
+document, and it lives in the review page (`build/review/review.html`) and in
 `tools/audit.nim`.
 
-The rotation half (`rotation.nim`, `axle.nim`, `tests/trotation.nim`) is on the bench and
-not in the app: 148 postures render as 16 distinct pictures, because level, contact and
-twist beyond its parity have no marks yet. The marks are being worked out on the workbench
-pages (`design/`), and the views wait until they are decided.
+The rotation half (`rotation.nim`, `axle.nim`, `tests/trotation.nim`) is on the bench, and
+not in the app. 148 postures render as 16 distinct pictures. Level, contact and twist beyond
+its parity have no marks yet. The workbench pages (`design/`) are where those marks get
+worked out, and the views wait until they are decided.
 
 ## What it says
 
-Eight frames exist and twenty moves join them, each adding or removing one connection. Two
-named compounds, `place` and `cut`, the two the vocabulary marks with an asterisk, are pairs
-of those moves that a lead thinks of as one. The `base` sheet names nine states, seven of
-them hand-to-hand, and eighteen of its twenty-seven cells hold between those seven. All
-eighteen name the same primitive the model derives independently, and they are every move
-that exists between those seven states: nothing missing, nothing spare.
+Eight frames exist, and twenty moves join them, each one adding or removing one connection.
+Two named compounds, `place` and `cut`, are pairs of those moves that a lead thinks of as
+one. They are the two that the vocabulary marks with an asterisk.
 
-Three things are outstanding, set out in the review page: `free` has no row, `closed` and
-`half-closed` need a vocabulary for places on the body, and two words have drifted between
-the `base` and `vocabulary` sheets. Rotation is not modelled beyond what the hand-to-hand
-model forces; what it forces is in the review page, along with the four cells worth dancing
-to settle the rest.
+The `base` sheet names nine states, seven of them hand-to-hand, and eighteen of its
+twenty-seven cells hold between those seven. All eighteen name the same primitive that the
+model derives independently. They are every move that exists between those seven states:
+nothing missing, and nothing spare.
+
+Three things are outstanding, and the review page sets them out. `free` has no row. `closed`
+and `half-closed` need a vocabulary for places on the body. Two words have drifted between
+the `base` and `vocabulary` sheets.
+
+Rotation is not modelled beyond what the hand-to-hand model forces. What it forces is in the
+review page, along with the four cells worth dancing to settle the rest.
 
 ## Status
 
-Every law under test through testament on this project's pinned compiler: the frame and
-transition laws over
-every pair of frames, the workbook audit cell by cell, the drawings against the model, the
-sim's laws over every moment of every sweep, and the workbench's gates on every page.
-Unreviewed by a human. Design decisions, what was rejected and what each costs are in
-`PROVENANCE.md`; the project's language is in `GLOSSARY.md`.
+Every law is under test through testament, on the compiler that this project pins. Those are
+the frame and transition laws over every pair of frames, the workbook audit cell by cell, and
+the drawings against the model. They are also the laws of the sim over every moment of every
+sweep, and the gates of the workbench on every page.
+
+Unreviewed by a human. The design decisions, what was rejected and what each one costs are in
+`PROVENANCE.md`. The language of the project is in `GLOSSARY.md`.

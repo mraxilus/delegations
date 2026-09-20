@@ -6,68 +6,72 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 0bbac90808d8b78b |
+| Rules   | 874ef979b21fbc1e |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
-Origin: curator test project replacing `abstand/intervals`, which lived in a real domain;
-the Architect asked for a domain-neutral project serving the same testing function. No authority
-replicated; the laws tested are the ring's own. No vendored source.
+Origin: a curator test project that replaced `abstand/intervals`, which lived in a real
+domain. The Architect asked for a domain-neutral project that serves the same testing
+function. No authority is replicated, and the laws tested are the ring's own. There is no
+vendored source.
 
-This project exists to be checked rather than to be used. Every mechanism the audit enforces
-appears here once, so a change to the checker has something minimal to fail against.
+This project exists to be checked rather than to be used. Every mechanism that the audit
+enforces appears here once, so a change to the checker has something minimal to fail against.
 
 ## Representation
 
-**Steps are a distinct range; the ring size is a build-time define.** `Step = distinct
-range[0 .. MODULUS - 1]` makes an out-of-range literal a compile-time error and lets plain
-`+` be poisoned in favour of `⊕`. `MODULUS` defaults to 4 and is validated statically in
-2 .. 16, echoing the value. Rejected: a plain `int` with runtime checks, which would exercise
-none of the compile-time mechanisms the project exists to probe. Cost: two ring sizes mean
-two builds, which the test matrix covers.
+**Steps are a distinct range, and the ring size is a build-time define.**
+`Step = distinct range[0 .. MODULUS - 1]` makes an out-of-range literal a compile-time error.
+It also lets plain `+` be poisoned in favour of `⊕`. `MODULUS` defaults to 4, and a static
+check validates it in 2 .. 16 and echoes the value. Rejected: a plain `int` with runtime
+checks, which would exercise none of the compile-time mechanisms that the project exists to
+probe. Cost: two ring sizes mean two builds, which the test matrix covers.
 
-Trap, and it is why the poison test reads as it does: `not compiles(Step(MODULUS))` is
-**false**. Only an out-of-range *literal* is rejected at compile time, while a constant
-expression compiles and fails at runtime. The test uses the literal 16, beyond every allowed
-ring. Verified by hand on 2026-09-05 rather than by a suite, since a build that must fail
-cannot sit in one.
+Here is a trap, and it is why the poison test reads as it does.
+`not compiles(Step(MODULUS))` is **false**. Only an out-of-range literal is rejected at
+compile time, while a constant expression compiles and then fails at runtime. The test uses
+the literal 16, which is beyond every allowed ring. Verified by hand on 2026-09-05 rather
+than by a suite, because a build that must fail cannot sit in one.
 
 ## Operations
 
-**Advance is `⊕` with alias `advance`; inversion and identity are named.** `𝟎` is a Unicode
-identifier on purpose: it exercises rune-counted line width and the prose scanner, not
-notation from an authority — Article III.1 asks for canonical notation where a domain has
-one, and a probe has none. Verified by `tprobe.nim`, exhaustively over every pair and triple
-in both ring sizes: commutativity, associativity, identity, inverse, involution, and
-positions inside the ring.
+**Advance is `⊕` with the alias `advance`, and inversion and identity are named.** `𝟎` is a
+Unicode identifier on purpose. It exercises rune-counted line width and the prose scanner,
+rather than notation from an authority. Article III.1 asks for canonical notation where a
+domain has one, and a probe has none. Verified by `tprobe.nim`, exhaustively over every pair
+and triple in both ring sizes: commutativity, associativity, identity, inverse, involution,
+and positions inside the ring.
 
 ## Tests
 
-**One testament stub with a matrix header**, suites named after the header table's subject
-since no external authority exists. Verified by `tprobe.nim`: 2 matrix rows, 4 tests each.
+**One testament stub with a matrix header**, with suites named after the subject of the
+header table, because no external authority exists. Verified by `tprobe.nim`: 2 matrix rows,
+and 4 tests in each.
 
 ## Toolchain
 
-**Compiler pinned exactly, at the version this project was verified on**:
-`requires "nim == 2.2.12"` in `probe.nimble`. An exact pin rather than a lower bound, because
-no single compiler serves every project here and a range cannot say which one a suite passed
-on. Moved from 2.2.4 with `curator/audit` when a sweep found that pin seventeen months and
-five patch releases stale; the two suites were run on 2.2.12 before it moved, in 10.0 s. CI
+**The compiler is pinned exactly, at the version this project was verified on**:
+`requires "nim == 2.2.12"` in `probe.nimble`. It is an exact pin rather than a lower bound.
+No single compiler serves every project here, and a range cannot say which one a suite passed
+on. The pin moved from 2.2.4 with `curator/audit`, when a sweep found it seventeen months and
+five patch releases stale. Both suites were run on 2.2.12 before it moved, in 10.0 s. CI
 installs it for this project alone, in its own job.
 
 ## Figures
 
-Unmeasured. No hot path exists; each operation is one addition and one modulo.
+Unmeasured. No hot path exists, and each operation is one addition and one modulo.
 
 ## Rules audits
 
-Every rules change is audited against this project in the pull request that makes it, which
-is why the `Rules` row above moves. None has yet required a change here: the project carries
-Nim, Markdown and a nimble file, no target-language source, no node manifest, and no system
-dependency beyond the compiler, so the rules governing those bind nothing in this tree today.
-Its suites enumerate both rings exhaustively rather than sampling, and nothing in them reads a
-clock, so the rule that a check gives the same verdict on the same code is satisfied by
-construction rather than by seeding. Each binds the moment that changes. What each audit found
-is in the log rather than restated here (Article XI.2).
+Every rules change is audited against this project, in the pull request that makes it, which
+is why the `Rules` row above moves. Article VI.8 binds the prose: this record and the README
+are written in Simplified Technical English. The project carries Nim, Markdown and a nimble
+file, and no target-language source, node manifest or system dependency beyond the compiler.
+So the rules that govern those bind nothing in this tree today.
+
+Its suites enumerate both rings exhaustively rather than sample them, and nothing in them
+reads a clock. So the rule that a check gives the same verdict on the same code is satisfied
+by construction rather than by a seed. Each rule binds the moment that changes. What each
+audit found is in the log rather than restated here (Article XI.2).
 
 ## Open questions
 

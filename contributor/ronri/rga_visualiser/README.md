@@ -1,25 +1,24 @@
 # rga_visualiser
 
-An interactive visualiser of rigid geometric algebra: points, lines and planes in a
-four-dimensional projective algebra with a rigid (degenerate) metric, and the operations
-that join, meet, project and expand them. Pick two objects, apply an operation, and the
-object it derives is drawn where the algebra puts it — including in the horizon, where a
-line's attitude and a plane's direction live.
+An interactive visualiser of rigid geometric algebra. It holds points, lines and planes in a
+four-dimensional projective algebra with a rigid, degenerate metric. It holds the operations that
+join, meet, project and expand them. Pick two objects and apply an operation, and the object it
+derives is drawn where the algebra puts it. That includes the horizon, where the attitude of a line
+and the direction of a plane live.
 
-It is a testbed rather than a replication. The algebra itself is the `pga` library, derived
-from Eric Lengyel's *Projective Geometric Algebra Illuminated* and developed in
-[replications][replications]; this project depends on that library and never reimplements
-it (Article II.8). What is replicated here is nothing: the visualiser exists to make the
-library's objects visible and its operations checkable by eye.
+It is a testbed rather than a replication. The algebra itself is the `pga` library, derived from
+*Projective Geometric Algebra Illuminated* by Eric Lengyel, and developed in
+[replications][replications]. This project depends on that library, and never reimplements it
+(Article II.8). Nothing is replicated here. The visualiser exists to make the objects of the
+library visible, and its operations checkable by eye.
 
-The same geometry code compiles to two front-ends — a desktop application and a browser
-page — so that a rule stated once is reached through two mechanisms rather than asked to
-agree with itself.
+The same geometry code compiles to two front-ends: a desktop application and a browser page. A rule
+stated once is then reached through two mechanisms, rather than asked to agree with itself.
 
 ## Authority replicated
 
-None directly. The `pga` library it depends on replicates Lengyel's book; this project
-replicates no published source and derives no algebra of its own.
+None directly. The `pga` library that it depends on replicates the book of Lengyel. This project
+replicates no published source, and derives no algebra of its own.
 
 ## Build and test
 
@@ -34,68 +33,73 @@ nim r tools/build.nim driven                     # this project: drive the deskt
 nim r tools/build.nim system                     # this project: what to install first
 ```
 
-Builds on **Nim at commit `27763495b`**, and nothing has to be installed for it: koch resolves
-the pin itself — the compiler on `PATH` where it already serves, else one cached under
-`~/.cache/koch/nim/<pin>/`, else a clone of `nim-lang/Nim` built at that commit and cached,
-paid once per machine (`GUIDE.md`, Toolchain). CI resolves the same pin the same way. No
-release will do: the `pga` library spells its operators with seven characters Nim learned to
-lex in that commit, and no release carries it yet. The pin is exact, and a pin nothing can
-serve is a finding naming the pin and the cache tried, never a fallback to another compiler.
+It builds on **Nim at commit `27763495b`**, and not on a release. Nothing has to be installed,
+because koch resolves the pin (`GUIDE.md`, Toolchain). See Dependencies and vendoring in
+`PROVENANCE.md` for why a release will not serve.
 
-System packages are declared in `tools/build.nim` and printed by its `system` verb, so this
-README names no list that could drift from the one the build reads (issue 60):
+System packages are declared in `tools/build.nim`, and printed by its `system` verb. So this README
+names no list that could drift from the one the build reads (issue 60):
 
 ```sh
 nim r tools/build.nim system | xargs sudo apt-get install -y
 ```
 
-The browser front-end needs nothing beyond that compiler and Node. The **desktop** front-end
-links against SDL3, OpenGL and zlib, and its headless runs need Xvfb and a software GL.
+The browser front-end needs nothing beyond that compiler and Node. The **desktop** front-end links
+against SDL3, OpenGL and zlib. Its headless runs need Xvfb and a software GL.
 
-Two of its dependencies arrive as no package, so the build fetches both itself and refuses
-either when its pin misses. **SDL3** has no `libsdl3-dev` on Ubuntu 24.04 — that release carries
-SDL2 only — so `desktop` clones `release-3.2.30` into `deps/sdl3`, holds it at the commit that
-tag names, and builds it into `build/sdl3`, a prefix inside the tree that needs no root.
-**Dear ImGui** is compiled from source into the binary rather than linked, and is cloned to
-`deps/imgui` at its pinned commit. Both are held at a commit rather than at a name that could
-move, and both are kept locally and never committed, as the Atlas checkouts are.
+Two of its dependencies arrive as no package. So the build fetches both itself, and refuses either
+one when its pin misses.
 
-Nothing has to be run by hand for either. Where a machine already carries SDL3 at the pinned
+**SDL3** has no `libsdl3-dev` on Ubuntu 24.04, because that release carries SDL2 only. So `desktop`
+clones `release-3.2.30` into `deps/sdl3`, and holds it at the commit that the tag names. It builds
+it into `build/sdl3`, which is a prefix inside the tree that needs no root.
+
+**Dear ImGui** is compiled from source into the binary, rather than linked. It is cloned to
+`deps/imgui` at its pinned commit. Both are held at a commit rather than at a name that could move.
+Both are kept locally and never committed, as the Atlas checkouts are.
+
+Nothing has to be run by hand for either one. Where a machine already carries SDL3 at the pinned
 version, that one is used and nothing is built:
 
 ```sh
 nim r tools/build.nim desktop
 ```
 
-The `pga` library is restored by Atlas from `atlas.lock` into `deps/` and is never committed;
-`nim r koch deps contributor/ronri/rga_visualiser` restores it alone. It is pinned at
-`295bafc`, which is that library's head. Four projection operations are withdrawn at head
-while the library rebuilds them, and `src/rga_visualiser/projections.nim` stands in for them
-until they return — see Dependencies / Vendoring in `PROVENANCE.md`. The algebra every target
-builds against — four dimensions, rigid metric — is set once in `nim.cfg`, so no entry point
-repeats it.
+Atlas restores the `pga` library from `atlas.lock` into `deps/`, and it is never committed.
+`nim r koch deps contributor/ronri/rga_visualiser` restores it alone. It is pinned at `295bafc`,
+which is the head of that library.
 
-The browser page is assembled by `tools/build.nim`, which compiles the bridge through the JS
-backend, type-checks and emits the TypeScript glue, inlines the font faces, and folds all of it
-into one self-contained `build/rga_visualiser.html` that opens from `file://`. That needs Node
-and npm alongside Nim: `npm ci` restores the pinned dev dependencies into `node_modules/`, which
-is never committed. `assets` copies every face both front-ends draw with — those the page embeds
-and those the desktop binary loads — out of the repository's shared asset store, which `koch
-assets` fills and checks against `curator/audit/src/assets.nim`. Which faces this project wants
-is in `tools/build.nim`; what bytes each one is belongs to the store.
+Four projection operations are withdrawn at head while the library rebuilds them.
+`src/rga_visualiser/projections.nim` stands in for them until they return. See Dependencies and
+vendoring in `PROVENANCE.md`. The algebra that every target builds against is four dimensions with a
+rigid metric. It is set once in `nim.cfg`, so no entry point repeats it.
 
-Both front-ends draw three roles from three families: **Noto Serif** for titles, **Noto Sans**
-for body and controls, **Commit Mono** for code and for text whose columns carry meaning. Two
-Noto faces supply the operators and symbols neither of the other two carries, merged by
-unicode-range in the page and into one atlas on the desktop. Commit Mono splits its ligatures:
-most ride on `calt` and draw unasked, while the arrows and comparisons come from `ss01` and
-`ss02`, which the page asks for by name. The desktop draws none of them, since Dear ImGui shapes
-no text. See Type Roles in `PROVENANCE.md`.
+`tools/build.nim` assembles the browser page. It compiles the bridge through the JS backend,
+type-checks and emits the TypeScript glue, and inlines the font faces. It folds all of it into one
+self-contained `build/rga_visualiser.html` that opens from `file://`.
 
-Tests run as three configurations of one shared suite: `t4d` at shipped capacities on the C
-backend, `t4d_small` at capacities small enough that the suite's tests reach them, and
-`t4d_browser` on the JS backend, which is the one that holds the two backends' formatting
-to the same rule.
+That needs Node and npm alongside Nim. `npm ci` restores the pinned dev dependencies into
+`node_modules/`, which is never committed.
+
+`assets` copies every face that the two front-ends draw with out of the shared asset store of the
+repository. Those are the faces the page embeds, and the faces the desktop binary loads.
+`koch assets` fills that store, and checks it against `curator/audit/src/assets.nim`. Which faces
+this project wants is in `tools/build.nim`, and what bytes each one is belongs to the store.
+
+Both front-ends draw three roles from three families. **Noto Serif** takes titles, **Noto Sans**
+takes body and controls, and **Commit Mono** takes code and any text whose columns carry meaning.
+
+Two Noto faces supply the operators and symbols that neither of the other two carries. They are
+merged by unicode-range in the page, and into one atlas on the desktop.
+
+Commit Mono splits its ligatures. Most ride on `calt` and draw unasked. The arrows and comparisons
+come from `ss01` and `ss02`, which the page asks for by name. The desktop draws none of them,
+because Dear ImGui shapes no text. See Browser front-end in `PROVENANCE.md`.
+
+Tests run as three configurations of one shared suite. `t4d` runs at shipped capacities on the C
+backend. `t4d_small` runs at capacities small enough that the tests of the suite reach them.
+`t4d_browser` runs on the JS backend, and it is the one that holds the formatting of the two
+backends to the same rule.
 
 ## Layout
 
@@ -128,35 +132,38 @@ deps/                         PGA library, restored by Atlas; never committed
 
 ## Published
 
-The browser front-end is published, so it can be opened rather than rebuilt. Republish it from
-`build/rga_visualiser.html` after any change that alters what the page shows, and put the URL
-in the pull request and in the message that says the work is ready.
+The browser front-end is published, so it can be opened rather than rebuilt. Publish it again from
+`build/rga_visualiser.html` after any change that alters what the page shows. Put the URL in the
+pull request, and in the message that says the work is ready.
 
 | built file, under `build/` | published at |
 | --- | --- |
 | rga_visualiser.html | https://claude.ai/code/artifact/a523f27b-d74e-4987-9b6e-7b1680e469a6 |
 
-The URL is written here because it was not written anywhere: the page existed and three
-changes to it merged without a republish, because nobody reading this repository could find
-where it was published. The desktop front-end has no entry — it is a binary, and Article XI.3
-keeps binaries out of the tree, so it is shown as a screenshot instead.
+The URL is written here because it was written nowhere. The page existed, and three changes to it
+merged without a republish, because nobody who read this repository could find where it was
+published.
+
+The desktop front-end has no entry. It is a binary, and Article XI.3 keeps binaries out of the tree,
+so it is shown as a screenshot instead.
 
 ## Status
 
-Ported from a working prototype; see `PROVENANCE.md` for what is verified and what is
-assumed, and for the open questions this port raised. Both front-ends are here and build:
-the browser page through `web`, the desktop application through `desktop`.
+Ported from a working prototype. See `PROVENANCE.md` for what is verified and what is assumed, and
+for the open questions this port raised. Both front-ends are here and build: the browser page
+through `web`, and the desktop application through `desktop`.
 
-Every law under test through testament on the pinned commit, in three configurations. The page
-has been built and looked at, its type surface is checked, and a Playwright harness drives its
-checks over held keys, the wheel, mouse pan and touch — see Driven Checks in `PROVENANCE.md`. The
-desktop application has been built, one frame of it looked at, and its own scripted runs driven
-headless under Xvfb, all passing, one of them driven with no face installed at all and one with
-the scene filled to capacity. SDL3 arrives as a source build rather than a package, and `drive`
-fetches and builds it rather than skipping the runs that need it.
+Every law is under test through testament, on the pinned commit, in three configurations.
 
-Unreviewed by a human: nothing here has been
-read line by line, and no human has driven either front-end or seen it on real graphics
-hardware.
+The page has been built and looked at, and its type surface is checked. A Playwright harness drives
+its checks over held keys, the wheel, mouse pan and touch. See Driven checks in `PROVENANCE.md`.
+
+The desktop application has been built, and one frame of it looked at. Its own scripted runs are
+driven headless under Xvfb, and all pass. One of them is driven with no face installed at all, and
+one with the scene filled to capacity. SDL3 arrives as a source build rather than a package, and
+`drive` fetches and builds it rather than skips the runs that need it.
+
+Unreviewed by a human. Nothing here has been read line by line. No human has driven either
+front-end, or seen it on real graphics hardware.
 
 [replications]: https://gitlab.com/mraxilus/replications

@@ -17,8 +17,9 @@ import ./[findings, markdown, provenance, record]
 const
   PROMPT_PATHS* = ["CONTRIBUTOR.md", "CURATOR.md"]
     ## Files pasted as opening prompts.
-  PROMPT_BYTES* = 24_000
-    ## Bytes prompt may hold; adding rule past it pays with prune. Number is Architect's.
+  PROMPT_BYTES* = 40_000
+    ## Bytes prompt may hold; ceiling guards runaway growth, never trims by length alone.
+    ## Number is Architect's.
   DIARY_WORDS* = ["issue", "issues", "pull request", "pull requests", "run", "runs"]
     ## Words that, followed by number, name one incident rather than rule.
 
