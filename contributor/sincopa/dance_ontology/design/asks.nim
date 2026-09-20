@@ -12,8 +12,10 @@
 import std/[options, strformat]
 
 import ../sim/[body, hold]
+import ../src/dance_ontology/diagram
 import ../src/dance_ontology/draw/terms
 import ../src/dance_ontology/frame
+from ../src/dance_ontology/rotation import HalfTurns
 import ./parts
 
 
@@ -23,6 +25,8 @@ type StillAsk* = object ## One still card, as sim is asked it.
   turns*: float   ## Facing, in turns from where hold rests.
   away*: bool     ## Whether hold rests pillion lead rather than face to face.
   head*: Body     ## Whose crown joined hands go over.
+  either*: bool   ## Whether couple may be wound to this facing either way about:
+                  ## card that draws same picture turned either way fixes neither.
 
 
 func bodyOf*(who: terms.Dancer): Body =
@@ -53,6 +57,13 @@ func holdsOf*(target: Frame): Holds =
                   else: terms.Arm.R)
       result[lead] = some follow
 
+func asked*(wind: float): float = -wind
+  ## Page's turn as sim's.  Page counts clockwise seen from above
+  ## (`rotation.wayOf`, "how drawings see couple"); sim counts anticlockwise
+  ## (`body.turned`).  Every wind is flipped here, in one place, before it is
+  ## asked: flipped for chains alone, A16 was stood in C3's pose and A17 in
+  ## C5's, mirror of what each card draws, and every single-hand card likewise.
+
 func restsFacing*(target: Frame): bool =
   ## Whether frame rests face to face rather than pillion lead.  Same reading
   ## `review_page` makes, by `phaseOf`, and never written down.
@@ -69,17 +80,24 @@ func stillAsks*(): seq[StillAsk] =
   #     and A12 read "at rest" for that reason, and asking them for half turn
   #     called them unreachable.
   #   A17 is last frame drawn turned other way about, and is asked so.
+  #   Card whose picture is same turned either way fixes neither way, and is
+  #     asked either way (`either`): half turn from rest is half turn whichever
+  #     way couple took it.  Same reading page makes when it decides whether to
+  #     draw frame turned other way at all (A17).
   func amountFor(target: Frame; twist: int): float =
     if (twist == 0) == restsFacing(target): 0.0 else: 0.5
+  func eitherWay(target: Frame): bool =
+    renderFrame(target, HalfTurns(1)) == renderFrame(target, HalfTurns(-1))
   for i, target in FRAMES:
     for twist in [0, 1]:
+      let amount = amountFor(target, twist)
       result.add StillAsk(key: &"A{i * 2 + twist + 1}", links: linksOf(holdsOf(target)),
-                          turns: amountFor(target, twist),
-                          away: not restsFacing(target), head: Body.Two)
+                          turns: asked(amount), away: not restsFacing(target),
+                          head: Body.Two, either: amount != 0.0 and eitherWay(target))
   block:
     let target = FRAMES[^1]
     result.add StillAsk(key: "A17", links: linksOf(holdsOf(target)),
-                        turns: -amountFor(target, 1),
+                        turns: asked(-amountFor(target, 1)),
                         away: not restsFacing(target), head: Body.Two)
   # `B`: four single-hand holds, four manners, four quarters.  Hands go over
   # crown of dancer who walks under, which follows manner.
@@ -89,12 +107,10 @@ func stillAsks*(): seq[StillAsk] =
       for q in 0 ..< QUARTERS_ROUND:
         result.add StillAsk(key: &"st_{MANNERS[manner].tag}_{c}_{q}",
                             links: linksOf(single.holds),
-                            turns: sense * q.float / QUARTERS_ROUND.float,
+                            turns: asked(sense * q.float / QUARTERS_ROUND.float),
                             away: false, head: bodyOf(MANNERS[manner].who))
   # `C` and `D`: two chains, seven positions each, half turn apart.
-  #   Their captions count *clockwise seen from above*, which is turn's negative
-  #   way, so wind's sign is flipped before it is asked.
   for (tag, arms, away) in [("C", HAND_TO_HAND, false), ("D", PAIRED, true)]:
     for i, w in STEPS:
-      result.add StillAsk(key: tag & $(i + 1), links: linksOf(arms), turns: -w,
+      result.add StillAsk(key: tag & $(i + 1), links: linksOf(arms), turns: asked(w),
                           away: away, head: Body.Two)

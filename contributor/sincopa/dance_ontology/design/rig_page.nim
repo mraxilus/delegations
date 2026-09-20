@@ -33,9 +33,10 @@ const HEAD_BODY = """
       engine reports, at the radius it collides on. Nothing is drawn that is not
       simulated, and nothing simulated is left out &mdash; including the gap under
       the hips, because the rig is trunk upward and has no legs. Drag to turn the
-      view, scroll to zoom. A chevron on the floor and a line at shoulder height
-      say which way each dancer looks, since a capsule cannot: the torso's
-      section is symmetric front to back and the head is a sphere.</p>
+      view, scroll to zoom. Each body is lit from its own front, so the lighter
+      side of a torso or a head is the side that dancer faces, since a capsule
+      cannot say: the torso's section is symmetric front to back and the head
+      is a sphere.</p>
     <p class="lede">Below the stage, every still cell of the reference page is laid
       out as it is there, with the sim's own still of it beside the drawing: the
       couple wound to that facing from the first standing distance that holds it,

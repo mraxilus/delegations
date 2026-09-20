@@ -75,3 +75,39 @@ suite "the engine this project turns couples with":
     checkpoint("centres ended " & $apart & " m apart")
     # Two radii is where they touch; anything less is one standing inside other.
     check apart >= 2.0 * 0.045
+
+  test "body touched by more things than eight reports every one":
+    ## Contacts are read into room caller gives, and rest are dropped unsaid.
+    ##   Forearm wound into chain touches nine things at once, and asked with room
+    ##   for eight it lost its deepest: two forearms stood 22 mm through each other
+    ##   with nothing said.  Engine says how much room body needs, and that is what
+    ##   is asked for.
+    let w = world()
+    var bd = defaultBody()
+    bd.kind = Dynamic
+    bd.position = Pos(x: 0.0, y: 0.0, z: 0.0)
+    let centre = createBody(w, addr bd)
+    var sd = defaultShape()
+    var big = Capsule(center1: vec(0, -0.3, 0), center2: vec(0, 0.3, 0), radius: 0.2)
+    discard createCapsule(centre, addr sd, addr big)
+    const AROUND = 10
+    var around: seq[BodyId]
+    for i in 0 ..< AROUND:
+      # Ring of thin capsules, each poking into big one from its own side.
+      let angle = 2.0 * PI * i.float / AROUND.float
+      var od = defaultBody()
+      od.kind = Dynamic
+      od.position = Pos(x: 0.22 * cos(angle), y: 0.0, z: 0.22 * sin(angle))
+      let b = createBody(w, addr od)
+      var thin = Capsule(center1: vec(0, -0.02, 0), center2: vec(0, 0.02, 0), radius: 0.02)
+      discard createCapsule(b, addr sd, addr thin)
+      around.add b
+    step(w, (1.0 / 240.0).cfloat, 8)
+    let room = touchRoom(centre)
+    check room >= AROUND
+    var seen = newSeq[Touch](max(1, room.int))
+    let n = touches(centre, addr seen[0], seen.len.cint)
+    checkpoint("room " & $room & ", contacts reported " & $n)
+    check n == AROUND
+    var eight: array[8, Touch]
+    check touches(centre, addr eight[0], 8) == 8

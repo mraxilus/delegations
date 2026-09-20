@@ -1120,7 +1120,7 @@ not a marker. Not a 3D-modelling-style outline; do not reintroduce it without be
 **A selected object wears its name above its marker**, filled in the object's own ink and
 outlined in the marker's stroke; hover and focus wear none. Where it sits is `marker.nim`'s
 decision: centred `GAP_MARKER` plus half `HEIGHT_MARKER_LABEL` (16 px) above the outline's
-top, and for the sky's frame just inside the top edge; each front-end centres its own text.
+top; each front-end centres its own text.
   **A line's label keeps to the line's own left, beside its support clamped into view.**
   "Above the line" cannot be continuous, since which side is up flips as the line passes
   vertical; the side of the line's *own* direction is. So `marker.placeLabelBesideLine`
@@ -1128,9 +1128,16 @@ top, and for the sky's frame just inside the top edge; each front-end centres it
   the clearance along the push. The anchor is the support's projection while in view, held
   `MARGIN_LABEL_VIEW` = 40 px inside the edge; past that it slides along the visible stretch.
   Not the upward side, which hopped five times on a 24 s camera path where this hopped none.
-  **Every label is then held wholly inside the view**: `labelInView` clamps the measured box
-  `MARGIN_LABEL_EDGE` = 4 px in from each edge on both front-ends, since the horizon line's
-  label, placed above its band's topmost point wherever that falls, ran off a phone's right edge.
+  **The horizon line's label stands above the leftmost point of either band**, its left-edge
+  crossing, pushed `MARGIN_LABEL_HORIZON` = 12 px in from the edge and off the band by the rule a
+  line's label is pushed off its rail; not the highest point, which on a level horizon hopped
+  between the two side crossings, within a pixel in height: 46 swaps of 1,070 px in 97 frames at
+  elevation 0.2; not flush against the edge, where the name read as cut off. **The sky's frame's
+  label stands inside the bottom-left corner**, `MARGIN_LABEL_HORIZON` in from the frame's left edge
+  and `MARGIN_LABEL_FOOT` = 40 px and that margin up, clear of the page's scale bar (top 33 px up),
+  pushed rightward the same way; not centred inside the top edge, under the chip row, nor in the
+  corner itself. **Every label is then held wholly inside the view**: `labelInView` clamps the
+  measured box `MARGIN_LABEL_EDGE` = 4 px in from each edge on both front-ends.
   **A plane's label stands on the disc's column at the height of its circle's true top.**
   `marker.topmostOnCircle` solves the top of the projected circle in closed form (screen y
   is stationary where `(b·d − a·e) + (c·d − a·f)·sin + (b·f − c·e)·cos = 0`) rather than
@@ -1202,18 +1209,20 @@ longer than `SECONDS_STEP_PULSE_MAX` = 0.1 s is an absence, not a frame. The des
 needs a **fixed winding** (`gui_shim.guiOverlayRibbon` imposes it). **A drag band swells
 into its head** (`marker.cometFor`), because `a ∨ b` and `b ∨ a` are different operations.
 
-*Checked.* Verified by `suites.nim`: the loop's points on the plane (1.1e-15 on the
-antiscalar); the rails' straightness and widest reading over an orientation sweep; the
-frame's 68 points at 296.8 px flat at half progress; the head sitting its carried travel at
-45 placements; a matured hold taken once; a full orbit at two elevations in 0.002 rad steps
-with no isolated label step, and a plane's label a milliradian either side of the flip
-standing under a pixel apart. Verified by driven check: 402 frames with 0 label hops; a
-720-step orbit with the rail gap changing at most 0.103 px between frames; two crossing
-planes selected changing 15,668 canvas pixels against a 0-pixel noise floor. Verified on the
-shipped browser: the comet's advance at 62.4 to 63.3 px/s across four orbit rates — the
-residual at faster rates, a tenth of frames stepping 236–388 px/s at laps and clip
-transitions, is **not explained** to the standard the medians are. Verified on the desktop:
-the selected line's pure-ink pixels 2,626 with the second pass against 1,106 with the tail.
+*Checked.* Verified by `suites.nim`: the loop's points on the plane (1.1e-15 on the antiscalar); the
+rails' straightness and widest reading over an orientation sweep; the frame's 68 points at 296.8 px
+flat at half progress; the head sitting its carried travel at 45 placements; a matured hold taken
+once; a full orbit at two elevations in 0.002 rad steps with no isolated label step, two more with
+the horizon line's label on the leftmost band point in the left half, the frame's label on its left
+edge at its foot, and a plane's label a milliradian either side of the flip standing under a pixel
+apart. Verified by driven check: 402 frames with 0 label hops, 48 at phone width with 0 side swaps
+and none on the right, the frame's label box in its corner above the scale bar; a 720-step orbit
+with the rail gap changing at most 0.103 px between frames; two crossing planes selected changing
+15,668 canvas pixels against a 0-pixel noise floor. Verified on the shipped browser: the comet's
+advance at 62.4 to 63.3 px/s across four orbit rates — the residual at faster rates, a tenth of
+frames stepping 236–388 px/s at laps and clip transitions, is **not explained** to the standard the
+medians are. Verified on the desktop: the selected line's pure-ink pixels 2,626 with the second pass
+against 1,106 with the tail.
 
 ## Picking
 
@@ -1979,9 +1988,6 @@ the suite itself.
 
 ## Open questions
 
-Recorded here and in the pull request body, per CONTRIBUTOR.md: a contributor neither works
-around a rule nor edits it.
-
 **The drawer's `backdrop-filter` costs about 12 ms of every frame at the largest scene, and is
 the whole of what an open drawer costs.** Measured with the drawer open over 5,040 objects: 59 ms
 per frame against 47 ms with the filter forced off, where the drawer closed is 47 ms and the page
@@ -1991,10 +1997,5 @@ plainly the wrong trade; the figure is recorded so the question can be asked wit
 about it. Software rendering inflates a blur far more than it inflates the rest, so the share is
 an upper bound on hardware. The choices are to keep it, to drop it, or to drop it only while the
 frame runs slow.
-
-**A two-finger pan check has failed once and has not been reproduced.** Raised as `#153` with
-what was tried. The harness now gives every finger a fresh id and asserts no pointer is down
-before each gesture (see Driven Checks), so a stale finger is named rather than masked; the
-question stays open until a run reproduces it or names what it was.
 
 [replications]: https://gitlab.com/mraxilus/replications

@@ -22,7 +22,7 @@ words are in [`GLOSSARY.md`](GLOSSARY.md).
 
 ```sh
 nim r koch ci                                     # repository root: audit, scope, commits
-nim r koch tests contributor/ronri/pga_benchmark  # this project alone, every algebra
+nim r koch tests contributor/ronri/pga_benchmark  # this project alone, on the pinned compiler
 nim r tools/build.nim drive     # project directory: inspect, guard, hold gaps.md; what CI runs
 nim r tools/build.nim bench     # runtime measurements into baseline/runtime_<algebra>.json
 nim r tools/build.nim baseline  # re-record static measurements after an intended change
@@ -31,12 +31,13 @@ nim r tools/build.nim gaps      # regenerate gaps.md and the docket from baselin
 nim r tools/build.nim sweep     # dense timings at two to six dimensions, never in CI
 ```
 
-Needs **Nim built from commit `27763495b`** on `PATH`, and git. No release will do: the
-`pga` library spells its operators with seven characters Nim learned to lex in that commit,
-and no release carries it yet. Build it with `git clone https://github.com/nim-lang/Nim &&
-git checkout 27763495b && sh build_all.sh`; koch and CI do the same and cache the result
-per commit. The pin is exact and the audit enforces it: running the suites on any other
-compiler is a finding, not a warning.
+Builds on **Nim at commit `27763495b`**, and nothing has to be installed for it: koch resolves
+the pin itself, from the compiler on `PATH` where it already serves, else one cached under
+`~/.cache/koch/nim/<pin>/`, else a clone of `nim-lang/Nim` built at that commit and cached,
+paid once per machine (`GUIDE.md`, Toolchain). CI resolves the same pin the same way. No
+release will do: the `pga` library spells its operators with seven characters Nim learned to
+lex in that commit, and no release carries it yet. The pin is exact, and a pin nothing can
+serve is a finding naming the pin and the cache tried, never a fallback to another compiler.
 
 ## Layout
 
@@ -55,7 +56,7 @@ src/pga_benchmark/guard.nim        compare static measurements against the basel
 src/pga_benchmark/gaps.nim         gaps, causes, docket, rendering
 tools/build.nim                    driver verbs
 baseline/                          committed measurements and docket
-tests/                             suites and one testament stub per algebra
+tests/                             suites, and the testament stubs that run them
 ```
 
 ## Status
