@@ -10,5 +10,6 @@ Every line here is model-written under the Architect's direction. Before any cha
    to one inside it.
 3. Run `nim r koch ci` at the repository root before every push. It must pass.
 4. Never commit to `main`. Never write outside your scope. Never weaken a test to pass.
-5. Comments are telegraphic; Markdown keeps its articles. A glossary term is proposed, never
-   written on sight. A record describes what is, and never narrates what happened.
+5. Comments are telegraphic. Markdown, issues, pull requests and messages are Simplified
+   Technical English; `GUIDE.md` gives the rules. A glossary term is proposed, never written
+   on sight. A record describes what is, and never narrates what happened.

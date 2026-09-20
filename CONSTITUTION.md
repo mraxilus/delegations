@@ -228,6 +228,13 @@ CAYLEYS_WEDGE               # module constant
 7. A doc asserting a global property (no allocation, no exceptions, a complexity, "runs once
    per save") names what enforces it: a test, a pragma, the generated output. Where nothing
    does, it says unverified.
+8. Prose outside comments is Simplified Technical English, which the ASD-STE100 specification
+   defines. Use the approved word, one meaning for each word, the active voice, and the simple
+   tenses. Write one instruction in one sentence, and keep it to 20 words; a description may
+   hold 25. Keep a paragraph to 6 sentences. `GUIDE.md` gives the rules, and a checker holds
+   the three that a machine can read. The rule binds every Markdown file, issue, pull request,
+   comment, and message to the Architect; it does not bind a comment, which keeps VI.5's
+   telegraphic register, the same English with the articles removed.
 
 ```nim
 func unitize*(m: Multivector): Multivector {.inline.} = ^m
@@ -399,4 +406,4 @@ docs(pga): add operator documentation and conformal aliases
 
 Return the implementation first. Report only material assumptions, representation and
 staging choices, non-obvious trade-offs, unresolved questions, and verification performed:
-what ran, on which build.
+what ran, on which build. Write the answer in Simplified Technical English (VI.8).

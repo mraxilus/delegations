@@ -5,6 +5,48 @@ is in `CONSTITUTION.md`, `STYLE.md` and `CONTRIBUTOR.md`, which the stamp covers
 `CURATOR.md`. This file is stamped into nothing, so a wording change here re-audits no
 project, which is why it is a file of its own.
 
+## Simplified Technical English
+
+Every word you write for a person follows ASD-STE100, the Simplified Technical English
+specification. Issue 9 holds 53 writing rules and about 900 approved words. ASD gives the
+specification away, so ask for a copy at `asd-ste100.org` and read it. The rules below are
+the working subset. They bind Markdown, issues, pull requests, comments and messages. They
+leave a comment in code alone, which drops its articles and keeps the rest (Article VI.5).
+
+- **Use the approved word.** Write `start` and not `commence`, `do` and not `perform`,
+  `make sure` and not `ensure`, `about` and not `approximately`, `use` and not `utilise`.
+  The dictionary belongs to ASD, so no check holds all of it. The `english` check holds a
+  short table of the words that turned up here, and your reading holds the rest.
+- **Give each word one meaning.** Use the same word for the same thing every time. A
+  synonym written for variety reads as a new term. A word that names a thing does not also
+  name an action.
+- **Take the glossary's word first.** Where `GLOSSARY.md` gives a word, that word wins over
+  any other, approved or not.
+- **Write in the active voice.** "The check reads the tree" beats "the tree is read by the
+  check". The passive voice hides who acts, and then the reader must guess.
+- **Use the simple tenses.** Write "the run failed" and not "the run has failed".
+- **Write one instruction in one sentence.** Keep an instruction to 20 words. Keep a
+  description to 25.
+- **Keep a paragraph to 6 sentences.** Open it with the sentence that says the topic.
+- **Put the condition before the instruction.** Write "If the run is red, read the log
+  first".
+- **Leave out the -ing form.** Write "How to read the queue" and not "Reading the queue". A
+  technical name keeps the form it has.
+- **Keep a noun cluster to 3 words.** Break a longer one apart with "of" and "for".
+- **Write the articles.** A comment drops "a", "an" and "the". Prose keeps them, and a
+  record written without them is wrong in the other direction.
+- **Keep the punctuation simple.** The full stop and the comma carry almost everything.
+  Leave out the dash and the slash. A colon may open a list. Brackets hold a reference, such
+  as (Article VI.5), and little else.
+- **Write an abbreviation out.** Write `for example` and not `e.g.`, and `that is` and not
+  `i.e.`. Name the thing you mean rather than close a list with `etc.`.
+- **Set a list out vertically** where it holds more than two items, or where each item is a
+  step.
+
+The `english` check reads three things: sentence length, paragraph length and that short
+table of words. It reads the charter, the two prompts, this file, the root `README.md` and
+the four templates, and no other file. Every other rule above holds because you read it.
+
 ## Reading the queue without spending the shared allowance
 
 Every delegate posts as one GitHub account, so one hourly allowance covers every delegate

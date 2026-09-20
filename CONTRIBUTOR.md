@@ -138,6 +138,9 @@ and that reader is the enforcement.
   audit reads comments in Nim, NimScript, nimble files, cfg files, YAML, `.gitignore`,
   `.gitattributes`, TypeScript, C++, C, HTML and SVG. Markdown is prose and keeps its
   articles: a record or a README written without them is wrong in the other direction.
+- **Prose is Simplified Technical English** (Article VI.8). Every Markdown file, every issue,
+  every pull request, every comment and every message to the Architect follows it. `GUIDE.md`
+  gives the rules, and the `english` check holds the three a machine can read.
 
 ## Branch and commits
 
