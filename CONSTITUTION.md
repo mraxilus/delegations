@@ -399,5 +399,4 @@ docs(pga): add operator documentation and conformal aliases
 
 Return the implementation first. Report only material assumptions, representation and
 staging choices, non-obvious trade-offs, unresolved questions, and verification performed:
-what ran, on which build. Before answering, silently review the result against Articles I–XI
-and the precedence clause.
+what ran, on which build.

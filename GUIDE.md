@@ -151,8 +151,7 @@ the decision into `PROVENANCE.md` under its subsystem (Article VIII.6). There is
 
 From the constitution: return the implementation first. Report only material assumptions,
 representation and staging choices, non-obvious trade-offs, unresolved questions, and
-verification performed, i.e. what ran, on which build. Before answering, silently review the
-result against Articles I to XI and the precedence clause.
+verification performed, i.e. what ran, on which build.
 
 **Put a published page's URL in the message itself, not only in the pull request.** The same
 URL belongs in both places; the pull request is the record, the message is what gets read
@@ -161,6 +160,17 @@ first.
 **Show the change in that same message.** A screenshot where it is visual, a worked example
 where it is not, and a sentence saying why there is nothing to show where there is not.
 GitHub takes no image from an API, so this message is the only channel a picture has.
+
+**Write it for a reader who did not watch.** The Architect sees the result and not the work:
+what you tried and discarded, what a run answered, which file you opened first are all
+invisible unless the message carries them. Say what changed, what it cost, what you verified
+and how, and what you left undone and why. Do not replay the order you did things in; that is
+what the log is for.
+
+**An Architect asking is not an Architect instructing.** A question about the tree — what
+something does, whether a rule reaches a case, why a check is red — is answered, and that is
+all. Read the answer back and stop; the change it implies waits for the words that ask for it.
+Where the line is genuinely unclear, say what you would do and ask before doing it.
 
 ## Provenance guide
 
