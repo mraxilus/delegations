@@ -28,8 +28,10 @@ tool's name does not say which one a call takes; the measurement is in
   Fifteen waits reach it, spanning eleven days. Anything that moves starts the doubling again,
   since what you were waiting on has changed. A fixed short interval is the failure this
   replaces: a run takes minutes, so a check every thirty seconds spends one shared allowance
-  many times over to learn nothing. Where it will not clear before you hand over, say what you
-  were waiting on and leave it; a conversation held open to poll spends its own run too.
+  many times over to learn nothing. A run is over inside the first few waits; the long ones
+  are for a merge and a reply, which wait on a person, and that is what the cap is for. Where
+  it will not clear before you hand over, say what you were waiting on and leave it; a
+  conversation held open to poll spends its own run too.
 
 ## Toolchain
 
