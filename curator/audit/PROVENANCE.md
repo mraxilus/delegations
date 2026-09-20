@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 0bbac90808d8b78b |
+| Rules   | 874ef979b21fbc1e |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from the brief of the Architect, the constitution, the Nim style guide and the
@@ -224,8 +224,12 @@ the guide states.** No heading carries a date. `## Open questions` is the last `
 No heading text appears twice. No title is underlined, because every reader here sees `#`
 lines, and an underlined title is invisible to all of them.
 
-A record over 2,000 lines is a finding, and its remedy is the prune that the guide already
-asks for. The header may carry a `Pruned` row that names the commit before that prune. The
+A record over 2,500 lines is a finding, and its remedy is the prune that the guide already
+asks for. The ceiling was 2,000 while records were written in ordinary English. Simplified
+Technical English costs about a fifth more lines, measured over five records. The number was
+scaled by that, so the threshold still asks for a prune at the same point.
+
+The header may carry a `Pruned` row that names the commit before that prune. The
 check reads the form of that row, and koch reads its existence from `git log` on the record
 itself, under `tree` and `ci`. That needs a full clone. A shallow one has no such log, so the
 static job fetches every commit.
