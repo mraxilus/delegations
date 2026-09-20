@@ -61,6 +61,9 @@ function rowsMost(height_scroller: number): number {
  *  what is asserted is what reader sees: nothing of list drawn above heading.
  *  Scroll itself is asserted, not only where heading ended: check reading stuck heading while
  *  nothing moved passes on page with no stickiness in it at all.
+ *  Band above heading is not whole of it. Pill is round-ended, and radius cuts four notches out
+ *  of box heading occupies; rows ran on under those and poked past pill's ends while list moved.
+ *  So box itself is swept too, and nothing out of any section's body may answer inside it.
  *  Desktop answers same rule by bounding its list in its own scrolling region, so heading sits
  *  outside what moves; see `panel.layoutObjects`. One rule, two mechanisms.
  */
@@ -95,6 +98,25 @@ export async function driveHeaderPinned(page: Page): Promise<void> {
         if (hit !== null && hit.closest('.object-row') !== null) bled += 1;
       }
     }
+    // Sweep heading's own box, which sweep above stops at and which pill does not fill. Pill
+    //   is round-ended, so its four corners are cut away from box it occupies, and rows ran on
+    //   under those notches and showed past its ends. Hit test honours that radius, so point
+    //   in notch answers with row rather than with heading -- which is what reader sees there.
+    //   Stepped pixel at time, not in fours: notch is about 3 px deep where rows reach it, and
+    //   coarser step walks straight over it. Whole box, rather than four corners alone: rule
+    //   is that nothing of list draws inside pill's own box, and corners are only where it
+    //   broke.
+    //   Far edges are left out, and have to be: box covers `[top, bottom)`, so point at
+    //   `bottom` belongs to row under heading rather than to heading, and sweep closing on it
+    //   counted whole row below as bleed -- hundreds of points, on fixed page and broken one
+    //   alike, wherever box's own height landed on whole pixel.
+    let poked = 0;
+    for (let x = Math.ceil(held.left); x < held.right; x += 1) {
+      for (let y = Math.ceil(held.top); y < held.bottom; y += 1) {
+        const hit = document.elementFromPoint(x, y);
+        if (hit !== null && hit.closest('.section-body') !== null) poked += 1;
+      }
+    }
     return {
       moved: scroller.scrollTop,
       room,
@@ -104,6 +126,9 @@ export async function driveHeaderPinned(page: Page): Promise<void> {
       edge: box.top,
       floor: box.bottom,
       bled,
+      poked,
+      width: held.width,
+      height: held.height,
     };
   });
   report(
@@ -122,6 +147,14 @@ export async function driveHeaderPinned(page: Page): Promise<void> {
     pinned === null ? 'no drawer to scroll'
       : `${pinned.bled} of the sampled points between the scroller's edge and the heading's`
         + ` underside answered with a row`,
+  );
+  report(
+    "nor through the corners its pill's own radius cuts away",
+    pinned !== null && pinned.poked === 0,
+    pinned === null ? 'no drawer to scroll'
+      : `${pinned.poked} of the points inside that heading's own`
+        + ` ${pinned.width.toFixed(0)} by ${pinned.height.toFixed(0)} px box answered with`
+        + ` something out of a section's body`,
   );
 }
 
