@@ -22,6 +22,14 @@ tool's name does not say which one a call takes; the measurement is in
   concluding GitHub is shut.
 - **On a refusal, wait and retry, never hammer.** If it will not clear before you hand over,
   the item stays unticked on the carried list with its reason.
+- **Waiting is a backoff, never a drumbeat.** For a run to finish, a pull request to merge, an
+  answer to arrive: look once after thirty seconds, then double the wait each time — a minute,
+  two, four, on through the hours and the days — and stop doubling at a week, which is the cap.
+  Fifteen waits reach it, spanning eleven days. Anything that moves starts the doubling again,
+  since what you were waiting on has changed. A fixed short interval is the failure this
+  replaces: a run takes minutes, so a check every thirty seconds spends one shared allowance
+  many times over to learn nothing. Where it will not clear before you hand over, say what you
+  were waiting on and leave it; a conversation held open to poll spends its own run too.
 
 ## Toolchain
 

@@ -345,6 +345,9 @@ target ships the faces Article X.8 names, inlined, and the store serves them.
   "not yet" in the one place the Architect looks; an open pull request says "merge me".
   Local green is not the signal: `koch ci` and the runner disagree whenever the machines
   differ, which is what the runner is for.
+- **Wait on the runner by backing off.** Look once after thirty seconds, then double the wait
+  each time, capped at a week (`GUIDE.md`, Reading the queue). Never a fixed short interval:
+  one allowance covers every delegate at once, and a run takes minutes.
 - **Put it back to draft the moment you intend another commit.** A record entry still to
   write, a figure still being measured, a fix you have just found — each is a reason to
   draft it again and mark it ready after. The Architect merges what is green and ready,
