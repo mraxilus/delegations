@@ -1975,6 +1975,8 @@ the suite itself.
 - The comet's residual steps at fast orbit rates are unexplained (see Selection And Markers).
 - Neither catalogue is checked against its archive by any tool.
 - No tool in this repository re-measures the palette floors (see Colour Palette).
+- `koch ci`'s scope check reads this project's own paths as out of scope where the branch
+  and main share two merge bases; git's warning joins the first path (repository issue 202).
 - The frame-time tail on real hardware is undiagnosed; this container cannot see it.
 - Conformal metric (`IS_CONFORMAL`) is unfinished in the library; this build is rigid 4D.
 - `.rgascene` is little-endian by rule, but only a little-endian host has ever written or
