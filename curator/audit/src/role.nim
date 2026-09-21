@@ -15,6 +15,9 @@
 ##   Cost: comment is unreachable, and is what remains of CONTRIBUTOR.md's first carried rule.
 ##   Cost: labels are searched for expected string rather than compared whole, since label is
 ##     added when work hands across and never removed.
+##   Empty label list is opening's own state, never delegate's mistake: no API call creates
+##     pull request and its label together, so run at `opened` reads none and `labeled` event
+##     clears it. Message says so, and one naming wrong label does not.
 
 {.experimental: "strictFuncs".}
 
@@ -62,8 +65,11 @@ func checkRole*(branch, body: string, labels: openArray[string]): seq[Finding] =
         "`, which its branch names; got `" & opening.shortened & "`.",
     )
   if expected notin labels:
-    result.add finding(
-      "", 0,
-      "Pull request must carry label `" & expected & "`, copied from branch grammar; got `" &
-        labels.join(", ") & "`.",
-    )
+    let message =
+      if labels.len == 0:
+        "Pull request carries no label; one is applied after it opens, so the `labeled` " &
+          "event clears this. Add `" & expected & "`, copied from branch grammar; got ``."
+      else:
+        "Pull request must carry label `" & expected & "`, copied from branch grammar; got `" &
+          labels.join(", ") & "`."
+    result.add finding("", 0, message)
