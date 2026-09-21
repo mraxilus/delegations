@@ -434,6 +434,9 @@ then fails equality rather than passes as a line that names nothing.
   creates a pull request and its label together. A run on `opened` therefore reads none, and
   the `labeled` event clears it seconds later. Whether that first run fails or is cancelled
   turns only on whether the label lands before it finishes.
+- A cancelled first run may report nothing at all. One cancelled three seconds in died at
+  `Getting action download info`, before its checkout, so neither message reached its log.
+  Read the run that the `labeled` event started, and never the first one.
 - So the two states carry two messages. The empty one names the event that clears it, and the
   one that names a wrong label does not. The finding stays red either way. A green run at
   `opened` would let a pull request opened and merged in one go carry no label. Half of them
