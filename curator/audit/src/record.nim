@@ -17,12 +17,16 @@ import ./[findings, markdown, provenance]
 
 
 const
-  RECORD_LINES* = 2500
+  RECORD_LINES* = 3000
     ## Lines record may hold before prune to log is asked.
     ##   Was 2,000 while records were written in ordinary English. Simplified Technical English
     ##     (Article VI.8) costs about 20% more lines, measured over five records, since one long
-    ##     sentence becomes two short ones. Number is old one scaled by that, so threshold still
-    ##     asks for prune where it asked before, and rewrite alone moves no record over.
+    ##     sentence becomes two short ones.
+    ##   2,500 scaled old number by that cost and kept old headroom, which was none: largest
+    ##     record stood at ceiling before and after. Two merges spent 17 lines of margin inside
+    ##     one day, and next sentence anybody wrote reddened `main`. Backstop that fires on
+    ##     ordinary work reports growth rather than narration, so this one carries 20% clear.
+    ##   `SECTION_LINES` is instrument that reads narration. This is only backstop.
   OPEN_QUESTIONS* = "## Open questions"
     ## Heading of section that must come last; matched without case.
   PRUNED* = "Pruned"

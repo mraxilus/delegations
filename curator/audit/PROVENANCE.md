@@ -259,10 +259,17 @@ the guide states.** No heading carries a date. `## Open questions` is the last `
 No heading text appears twice. No title is underlined, because every reader here sees `#`
 lines, and an underlined title is invisible to all of them.
 
-A record over 2,500 lines is a finding, and its remedy is the prune that the guide already
+A record over 3,000 lines is a finding, and its remedy is the prune that the guide already
 asks for. The ceiling was 2,000 while records were written in ordinary English. Simplified
-Technical English costs about a fifth more lines, measured over five records. The number was
-scaled by that, so the threshold still asks for a prune at the same point.
+Technical English costs about a fifth more lines, measured over five records.
+
+2,500 scaled the old number by that cost and kept the old headroom, which was none. The largest
+record stood at the ceiling before the rewrite and at the ceiling after it. Two merges then
+spent 17 lines of margin inside one day, and the next sentence anybody wrote would have
+reddened `main`.
+
+A backstop that fires on ordinary work reports growth, and not narration. This one carries 20%
+clear of the largest record. `SECTION_LINES` is the instrument that reads narration.
 
 The header may carry a `Pruned` row that names the commit before that prune. The
 check reads the form of that row, and koch reads its existence from `git log` on the record

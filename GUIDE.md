@@ -299,7 +299,7 @@ open, and it is the last section. A rules audit that binds nothing writes nothin
 sections it binds.
 
 No section is headed by a date. Where the file starts to read as a diary of what happened,
-prune it until it reads as a description of what is. A record over 2,500 lines is a finding,
+prune it until it reads as a description of what is. A record over 3,000 lines is a finding,
 and the remedy is that same prune. Git keeps what came out, and the `Pruned` row says where.
 
 ### What a good entry looks like
