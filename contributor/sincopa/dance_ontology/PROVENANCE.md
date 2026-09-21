@@ -7,6 +7,7 @@
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | 874ef979b21fbc1e |
+| Pruned  | bba4c7f8fc306df2a89d81ea3e8e42620d235486 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: built from three sources.
@@ -455,7 +456,7 @@ drew it. Verified by the tally being counted off the built page, rather than kep
 What the page says of itself cannot then drift from what it holds. The page prints that tally where
 a reader sees it, which is why no number of it is written here.
 
-## Body sim
+## Body rig
 
 **Two bodies of the average adult and their arms, and they share no code with the ontology.** The
 rig (`rig.nim`) is mixed-sex midpoints of ANSUR II medians, with AAOS and NASA-STD-3000 joint
@@ -487,6 +488,8 @@ Rejected: to import anything from `src/`, because a shorthand cannot check itsel
 what a shorthand is for. Not rejected, and reversed since: to share vocabulary. Verified by
 `tlimb.nim`: the tape and the forward kinematics of one arm over seeded random arms, and the contact
 test against a sampled truth.
+
+## Rigid body engine
 
 **A rigid body engine is cloned, and not vendored, and Nim alone speaks to it.** `tools/build.nim`
 declares `box3d` in `SOURCES`, with its repository, its commit
@@ -537,6 +540,32 @@ the physics.
 
 The stance travels with the turn step by step. Swing read against a frame that the dancer has
 already left judges every arm wrongly. Rejected: to fit a cone to the pair of swing ranges.
+
+**Bodies are solid.** Contact is held at the cap of the engine itself, an eighth of the substep rate
+(`CONTACT`, 240 hertz at `HERTZ` 240 and `SUBSTEPS` 8). At the default thirty, the forces of the sim
+itself pressed arms through bodies by 45 mm.
+
+The upper arm collides with the chest it hangs from. The engine lets bodies that one joint connects
+pass through each other, unless told otherwise. The arm sank 67 mm into its own head unseen.
+
+Every joint but the grip holds at the cap of the engine (`HOLD`, 480 hertz). The grip alone holds at
+thirty (`GRIP`), which makes it the softest thing in the couple. A hold forced past what arms can do
+then gives at the hands, in life as here. At fifteen it fixed one law and cost every still card.
+
+An arm deeper than a centimetre (`THROUGH`) in a body or in another arm is a stop. That is read off
+the manifolds of the engine every moment. Before, only the hands parting said so, and a hold stood
+with an arm through a torso.
+
+The manifolds are read into the room that the engine says a body needs (`touchRoom`). Read into room
+for eight, a forearm wound into a chain and touching nine things dropped its deepest unseen. Two
+forearms then stood 22 mm through each other with nothing said. Verified by `tengine.nim`: a body
+touched by ten things reports every one, and eight when given room for eight.
+
+The capsules of the trunk and both girdles are recorded where the engine has them, so a law reads
+the engine and never a copy. Verified by `trigid.nim`. No arm sits inside any body in any moment of
+the corpus of the laws. Every capsule that the page draws is one that the engine was given.
+
+## Joints that give
 
 **Comfort is a slope inside a range, and not a wall at its end.** The limits of the engine are
 walls, and its springs, at one hertz (`EASE`), are nothing. So every joint ran to an end and stayed.
@@ -638,29 +667,7 @@ A girdle squeezed between two torsos is a shoulder through a body, and stops the
 would. Verified by `trigid.nim`: every shoulder joint lies inside some capsule of its own body. Red
 first at 90 mm outside.
 
-**Bodies are solid.** Contact is held at the cap of the engine itself, an eighth of the substep rate
-(`CONTACT`, 240 hertz at `HERTZ` 240 and `SUBSTEPS` 8). At the default thirty, the forces of the sim
-itself pressed arms through bodies by 45 mm.
-
-The upper arm collides with the chest it hangs from. The engine lets bodies that one joint connects
-pass through each other, unless told otherwise. The arm sank 67 mm into its own head unseen.
-
-Every joint but the grip holds at the cap of the engine (`HOLD`, 480 hertz). The grip alone holds at
-thirty (`GRIP`), which makes it the softest thing in the couple. A hold forced past what arms can do
-then gives at the hands, in life as here. At fifteen it fixed one law and cost every still card.
-
-An arm deeper than a centimetre (`THROUGH`) in a body or in another arm is a stop. That is read off
-the manifolds of the engine every moment. Before, only the hands parting said so, and a hold stood
-with an arm through a torso.
-
-The manifolds are read into the room that the engine says a body needs (`touchRoom`). Read into room
-for eight, a forearm wound into a chain and touching nine things dropped its deepest unseen. Two
-forearms then stood 22 mm through each other with nothing said. Verified by `tengine.nim`: a body
-touched by ten things reports every one, and eight when given room for eight.
-
-The capsules of the trunk and both girdles are recorded where the engine has them, so a law reads
-the engine and never a copy. Verified by `trigid.nim`. No arm sits inside any body in any moment of
-the corpus of the laws. Every capsule that the page draws is one that the engine was given.
+## Walk and lift
 
 **Turning is a path, walked a fiftieth of a turn at a time.** The hips of one dancer are spun for
 200 engine steps in each moment (`walk.BEATS`, `STEP`), which is slow enough to stay quasi-static.
@@ -686,11 +693,11 @@ straightening out as the arms come down.
 `up` is how far the couple are from face to face, with whole turns folded away. So a couple wound a
 whole turn have their hands down again.
 
-Going up, the hands rise over her head as they always did. Coming back, they come forward off her
-crown first, to between the two bodies, and then down (`leaving`, `over`). Let down straight from
-over the crown they passed through her head. That is what the first lift keyed to facing did,
-through the second half of every whole turn. It is why the rise had been keyed to the wind from rest
-(`wound`, `risen`) until now.
+Going up, the hands rise over her head. Coming back, they come forward off her crown first, to
+between the two bodies, and then down (`leaving`, `over`). Let down straight from over the crown
+they pass through her head. The rise from rest keeps a key of its own, which is the wind (`wound`,
+`risen`). Rejected: that rise keyed to facing too. It let the hands down onto her head through the
+second half of every whole turn.
 
 Facing, a hand over the crown is a hold at some other height, as a hand under its band always was
 (`FACING`). It has five centimetres of slack over the top of the torso band (`OVER`, assumed). Wound
@@ -751,12 +758,14 @@ while the hold stands. Capsules move where the couple move. Between two moments,
 held arm leaps more than the reach of an arm plus its own move. That is 193 mm on the corpus of the
 laws.
 
+## Stance and strain
+
 **Where the couple stand is chosen for the turn, and every distance is tried.** The ruling of the
 Architect: stand for the turn, hand height for the turn, everything for the turn. Nothing is fixed
 but to keep the bodies apart.
 
-Standing had been chosen at rest, wherever the joints were freest, and the couple walked straight
-out of it. The rest-chosen distance turned 0.22, where 0.36 m turned 1.12.
+Rejected: a stance chosen at rest, wherever the joints sit freest. The couple walk straight out of
+it, and that stance turned 0.22, where 0.36 m turned 1.12.
 
 Every distance from clear of each other (`CLEAR`) outward over a metre (`ROOM`) is swept whole, two
 centimetres apart (`SEEK`). The measured landscape is plateaus four centimetres wide.
@@ -775,14 +784,14 @@ To one step, because a stop is decided at the moment something gives, and mirror
 moment apart from the same distance. Exact: L-l stood at 0.42 m for 1.00 of a turn at the neck, and
 R-r at 0.38 m for 0.98.
 
-The tie had been broken toward the stance whose arms moved least, within five millimetres. The
+Rejected: a tie broken toward the stance whose arms move least, within five millimetres. The
 largest leap of a walk is chaotic. Seen in mirror it differs by up to a fifth. Built from the same
 source by another compiler, it differs by up to thirty five per cent. That is 125 and 114 mm from
 one distance, and 121 and 163 from another.
 
 The last bits of two binaries differ, and the engine amplifies them. Five millimetres stood L-l at
-0.44 m and R-r at 0.48 for one hold seen in mirror. It would have stood one hold two steps apart,
-built twice.
+0.44 m and R-r at 0.48 for one hold seen in mirror. That rule stands one hold two steps apart, built
+twice.
 
 Verified by `trigid.nim`. The sums measured that day, put to `chosen`, stand within one step in
 three cases. Those are the mirror pair, the pair built twice, and the neck pair whose turn reached
@@ -822,6 +831,8 @@ Every joined hand hung at hip height, because the lift had never started.
 as they leave face to face. It then lets them stand, from the distance that sits easiest. Verified
 by `trigid.nim`. A still asked past face to face has every joined hand in its band. The diamond
 crosses where the open does not. Both red first.
+
+## Asks of the reference
 
 **The reference is asked of the model cell by cell, and the answer is a claim until the Architect
 confirms it.** `design/asks.nim` is one list of what every still card asks: which hands, how far
@@ -863,6 +874,8 @@ Sections B and E being whole is a weak result. Every card in them is over the cr
 hold sweeps free past two turns, so they test the model hardly at all. The cards that discriminate
 are the chains under wind.
 
+## Rig viewer
+
 **The viewer draws what the engine collides, beside the cell it answers.** `design/rig` records
 every still and eight sweeps as capsule ends that the engine reports, at the radius it collides on.
 `design/rig_page` lays every still cell of the built reference page beside the still of the sim for
@@ -895,6 +908,8 @@ Verified by `tdrawn.nim`. A capsule of no length is a disc. An arm hanging besid
 behind it where it is behind. The front of each body is lighter than its back. Light runs across
 each piece and never along it. The first two and the last were red first.
 
+## Against the floor
+
 **Against the floor, which is the Architect's.** The floor says that everything gets a whole turn
 before it blocks, except a low wrap, which gets half. Nothing is tuned to it. Every change is argued
 from the rig or from a ruling of the Architect. `sim/verdicts.md` prints what came out beside each
@@ -915,15 +930,26 @@ wrapped at 100 columns. The chain rungs there are wound to, as stills are.
 No test compares the committed record with the model. So it is current as of its last run, and stale
 until it is run again. It is run again in the same delivery as any change to the model.
 
-**The swan is the position the model does not reach, and its cause is measured this far.** With the
-lift keyed to the wind, both diamonds stand. C2 and C6 stand at 0.48 m, with her wrist a fifth of
-the way into its ease. Before, they wound with hands at shoulder height and failed. The four swans
-are the only stills of the reference that no distance holds.
+**Known and not mended: the crossing reader is a knife edge where two arms lie along each other.**
+`read.crossings` counts where two connections cross in plan, by a segment intersection. Two poses
+differing by less than the precision of a float have read as four crossings, and as one. That
+happens when a crossing sits at a vertex of both polylines.
 
-Every other still stands at ease, or within a degree of it. The corpus law in `trigid.nim` holds
-four things to a strain of 0.05. Those are both chains from cross to cross, the free frame pillion,
-and the single hold at quarter and half. That is one degree of a twenty degree ease. It stops at the
-cross until the model reaches further.
+The verdicts tables and the diamond law read it on poses well away from that edge. To loosen its
+tolerance six orders of magnitude changed no count on any kept chain card. A law that samples arms
+laid along each other on purpose is owed, and the fold rule is repository issue 88.
+
+## The swan
+
+**The swan is the position the model does not reach, and its cause is measured this far.** No
+distance holds a swan. The diamonds now stand nowhere either. That follows the rule that rests the
+hands at mid torso facing, which the walk and lift section records.
+
+The corpus law in `trigid.nim` holds every still it walks to a strain of 0.1 (`AT_EASE`). That is
+two degrees of a twenty degree ease. It walks both chains from cross to cross, and the same-name
+chain either way about at half. It walks the free frame pillion too, and the single hold at quarter
+and half. It stops at the cross until the model reaches further. Every other still that holds stands
+at ease, or within a fifth of an ease band at its worst joint, measured 2026-09-18.
 
 They wind from every distance and give short. The cross-name gives at 0.74 to 0.88 of a turn, with
 hands under their band or an arm against an arm. The same-name gives at 1.22 to 1.26, with an arm
@@ -951,15 +977,6 @@ What the swan is in the body stays the open question below. The drawing of the r
 both joins at one point, with the right-over-left connection under. It reads as the extra turn
 beyond the cross, which lives between two stacked pairs of hands that turn about each other. The
 model has no hold that turns so.
-
-**Known and not mended: the crossing reader is a knife edge where two arms lie along each other.**
-`read.crossings` counts where two connections cross in plan, by a segment intersection. Two poses
-differing by less than the precision of a float have read as four crossings, and as one. That
-happens when a crossing sits at a vertex of both polylines.
-
-The verdicts tables and the diamond law read it on poses well away from that edge. To loosen its
-tolerance six orders of magnitude changed no count on any kept chain card. A law that samples arms
-laid along each other on purpose is owed, and the fold rule is repository issue 88.
 
 ## Pages and build
 
