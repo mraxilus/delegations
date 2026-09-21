@@ -70,5 +70,5 @@ suite "Article VI.8":
 
   test "document outside governed list passes":
     let prose = "Ensure " & "word ".repeat(SENTENCE_WORDS + 1) & "end."
-    check checkEnglish("contributor/ronri/rga_visualiser/PROVENANCE.md", prose).len == 0
+    check checkEnglish("contributor/ronri/pga_benchmark/gaps.md", prose).len == 0  # generated
     check checkEnglish("LICENSE.md", prose).len == 0
