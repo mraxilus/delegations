@@ -1254,8 +1254,8 @@ hand.
 *Checked.* Verified by `suites.nim`:
 
 - the widening reference against the algebra;
-- the near crossing of a line within one pixel of where the ends of its own record put it, at a
-  near plane a four-hundredth of a close-up on a moon;
+- the near crossing of a line within a pixel of its recorded place, at the near plane of a
+  close-up on a moon;
 - every stepped dome corner and ring corner against the sum it replaced;
 - the box of the disc against the projection of its rim;
 - the ray of the disc landing inside the rim and missing outside it;
@@ -1266,10 +1266,10 @@ hand.
 Verified by a desktop A/B under Xvfb: 0 of 1,296,000 pixels changed for the move of the ribbon. At
 most 38 changed for each storyboard frame, at a channel delta of 12 or less, for the move of the
 disc and dome. The record narrows its arms to float32 there. Verified by driven check: the ribbon
-records of the demo under 64, against a ring count over 120. Both lines of the orrery cross a ring
-of spots about the point that they join, opposite in pairs, with the camera 0.01 and then 0.001
-units off it. Assumed: that the figure of 0.1 ms
-for the flat buffer holds at the current caps, because it was measured at 1,024 objects.
+records of the demo under 64, against a ring count over 120. Both lines cross a ring of spots about
+the point they join, opposite in pairs, with the camera 0.01 then 0.001 units off it. Assumed: that
+the figure of 0.1 ms for the flat buffer holds at the current caps, because it was measured at 1,024
+objects.
 
 ## Algebra boundary
 
@@ -2481,7 +2481,7 @@ passing proves that the runner carries that library. Assumed: nothing about the 
 - A line drawn with the camera inside the body that it frames stands a few pixels off the point
   that it joins. The error is 0.4 px at an orbit distance of 0.0001, and 3.2 px at 0.00001.
   Float32 holds about 0.06 of a unit at 530,000 units, and the record stores the vanishing point
-  in it, so the near crossing is not the cause (see Records and shaders).
+  in it. The near crossing is not the cause (see Records and shaders).
 
 ## Open questions
 
