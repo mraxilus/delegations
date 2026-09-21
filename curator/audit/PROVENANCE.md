@@ -149,6 +149,11 @@ word: 28 words, and not ours to shorten.
   that follows is a long sentence rather than a missed one.
 - Verified by `tenglish.nim`: the three finding kinds, the sentence-end cases and the block
   split. It also covers the collapsed span, the skipped quotation, and a path outside the set.
+  That path is `gaps.md`, which a generator writes and no delegate may rewrite by hand.
+- Cost, found by pushing a red branch: testament keys its cache on the test file. A change to
+  a source module alone then reuses the binary linked against the module before it.
+  `koch ci` then passes on a tree that a fresh checkout fails. Remove `nimcache` where a check
+  changed and its suite did not.
 
 ## Form
 
