@@ -3,9 +3,11 @@
 ##     states: no section is headed by date, `## Open questions` is last section, no heading
 ##     appears twice, and headings are ATX, since every reader here sees `#` lines only and
 ##     underlined title is invisible to all of them.
-##   Length: record over `RECORD_LINES` is finding asking for prune to log (curator review,
-##     C8). Header may carry `Pruned` row naming commit before last prune; its form is checked
-##     here and its existence by koch against file's own log, since git is outside pure check.
+##   Length: record over `RECORD_LINES`, or `##` section over `SECTION_LINES`, is finding
+##     asking for prune to log (curator review, C8). Section catches narration that whole-file
+##     ceiling misses, since one long section hides inside short record. Header may carry
+##     `Pruned` row naming commit before last prune; its form is checked here and its existence
+##     by koch against file's own log, since git is outside pure check.
 ##
 ##   Cost: rules are line forms, never Markdown parse: heading inside HTML comment counts,
 ##     and front matter is not skipped; governed record carries neither.
@@ -17,6 +19,14 @@ import ./[findings, markdown, provenance]
 
 
 const
+  SECTION_LINES* = 200
+    ## Lines one `##` section may hold before prune to log is asked.
+    ##   Record's own ceiling is crude: it punishes wide project and lets narrow one narrate
+    ##     freely. Measured over 93 sections of five records, median is 34 lines and p90 is
+    ##     137, while longest is 505 and holds 39% of its record. Section is where narration
+    ##     collects, so section is where it is caught.
+    ##   200 rather than 150: 150 flags three sections of three projects, 200 flags one, and
+    ##     both flag same narration. Tighten once that one is pruned.
   RECORD_LINES* = 3000
     ## Lines record may hold before prune to log is asked.
     ##   Was 2,000 while records were written in ordinary English. Simplified Technical English
@@ -100,6 +110,25 @@ func checkLength*(path, source: string): seq[Finding] =
     )
 
 
+func checkSections*(path, source: string): seq[Finding] =
+  ## Report `##` section over `SECTION_LINES`, since narration collects inside one section.
+  let lines = source.fencedOut.splitLines
+  # Final newline leaves empty last element; counting it would charge last section one line.
+  let body = if lines.len > 0 and lines[^1].len == 0: lines.len - 1 else: lines.len
+  var opened: seq[int]
+  for i, line in lines:
+    if line.startsWith("## "): opened.add i
+  for k, start in opened:
+    let stop = if k + 1 < opened.len: opened[k + 1] else: body
+    let count = stop - start - 1
+    if count > SECTION_LINES:
+      result.add finding(
+        path, start + 1,
+        "Section over " & $SECTION_LINES & " lines; prune to log or split it (provenance " &
+          "guide); got " & $count & ".",
+      )
+
+
 func isCommitId*(s: string): bool =
   ## Decide whether `s` is 7 to 40 lowercase hex digits, as git abbreviates commits.
   s.len in 7 .. 40 and s.allCharsInSet({'0' .. '9', 'a' .. 'f'})
@@ -125,4 +154,5 @@ func checkRecord*(path, source: string): seq[Finding] =
   ## Run every body-shape check over one record.
   result = checkHeadings(path, source)
   result.add checkLength(path, source)
+  result.add checkSections(path, source)
   result.add checkPrunedRow(path, source)

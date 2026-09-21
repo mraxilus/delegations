@@ -271,6 +271,19 @@ reddened `main`.
 A backstop that fires on ordinary work reports growth, and not narration. This one carries 20%
 clear of the largest record. `SECTION_LINES` is the instrument that reads narration.
 
+**A `##` section over 200 lines is the same finding, on the unit where narration collects.**
+The whole-file ceiling is crude. It punishes a wide project and lets a narrow one narrate
+freely. Measured over the 93 sections of the five records, the median section is 34 lines and
+the ninetieth percentile is 137.
+
+The longest is 505 lines and holds 39% of its record, inside a record the whole-file ceiling
+never touches. The widest record, at 2,484 lines, has no section over 194. Length alone does
+not say which one is narrating, and the section does.
+
+200 rather than 150: 150 flags three sections across three projects, 200 flags one, and both
+flag the same narration. Tighten it once that one is pruned. A record that ends in a newline
+leaves an empty last line, which is not charged to the section it falls in.
+
 The header may carry a `Pruned` row that names the commit before that prune. The
 check reads the form of that row, and koch reads its existence from `git log` on the record
 itself, under `tree` and `ci`. That needs a full clone. A shallow one has no such log, so the
