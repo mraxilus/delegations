@@ -1987,8 +1987,10 @@ of the NASA Exoplanet Archive, taken 2026-08-31 from its TAP service (`select ho
 sy_dist, ra, dec, pl_orbsmax from ps where sy_dist < 35 and default_flag = 1`). It holds 331
 planet hosts out to 31.5 parsecs.
 
-This research has made use of the NASA Exoplanet Archive, which is operated by the California
-Institute of Technology under contract with NASA under the Exoplanet Exploration Program.
+The archive asks for this acknowledgement, word for word:
+
+> This research has made use of the NASA Exoplanet Archive, which is operated by the California
+> Institute of Technology under contract with NASA under the Exoplanet Exploration Program.
 
 `starfield.nim` is a snapshot of SIMBAD, of every star within the same 31.53 parsecs, with the
 query recorded in the file. It keeps 11,252 of 11,432.

@@ -35,7 +35,13 @@ suite "Article VI.8":
     check found.mapIt(it.line) == @[3, 6, 7]
     check found[1].text == "First item."  # marker dropped
     check markerLen("1. Numbered.") == 3
-    check "> One quoted line.\n> And second.".blocks[0].text == "One quoted line. And second."
+
+  test "quotation is skipped whole":
+    check "> One quoted line.\n> And second.".blocks.len == 0  # another author's words
+    let cited = "> " & "word ".repeat(SENTENCE_WORDS + 1) & "end."
+    check checkEnglish("GUIDE.md", cited).len == 0
+    check checkEnglish("GUIDE.md", "> Ensure it passes.").len == 0
+    check checkEnglish("GUIDE.md", "Ensure it passes.").len == 1  # same words, unquoted
 
   test "fenced code, table row, heading and front matter carry no prose":
     let document = "---\nname: Queued work\n---\n\n| a | b |\n\n```\nutilise this\n```\n"
@@ -64,5 +70,5 @@ suite "Article VI.8":
 
   test "document outside governed list passes":
     let prose = "Ensure " & "word ".repeat(SENTENCE_WORDS + 1) & "end."
-    check checkEnglish("contributor/ronri/rga_visualiser/PROVENANCE.md", prose).len == 0
+    check checkEnglish("contributor/ronri/pga_benchmark/gaps.md", prose).len == 0  # generated
     check checkEnglish("LICENSE.md", prose).len == 0

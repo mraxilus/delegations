@@ -120,6 +120,41 @@ whitespace-split, punctuation-stripped and lowercased, after the backtick spans 
   sampled corpus in this project, and that seed is why its verdict does not vary
   (CONTRIBUTOR.md, "Tests are paramount").
 
+## English
+
+**Three rules of ASD-STE100 are mechanical, and the rest hold by reading.** Those three are a
+sentence of at most 25 words, and a paragraph of at most 6 sentences. The third is a table of 42
+words, each with one approved replacement. The dictionary of about 900 words belongs to ASD, so no
+check can hold all of it. `GUIDE.md` carries the other eleven rules.
+
+**The governed set is data, in `ENGLISH_PATHS`.** It opened as the charter, the two prompts,
+the guide, the root `README.md` and the four templates. No project then reddened for a rule that
+its writer had not read. The five records joined once every one of them was written in the
+register. That was the cheapest moment, and it does not come again. Widening costs one finding
+for every line of prose written between the rewrite and the widening.
+
+The widening found one word that the rewrite itself had missed, `attempt` in this record. That
+is the argument for the check over reading alone, made against the reader who wrote the rewrite.
+
+**A quotation is skipped whole.** Quoted text comes from outside this repository, and a delegate
+may not rewrite it. A finding on it could never be fixed. The case that settled it sits in the
+record of `rga_visualiser`. The NASA Exoplanet Archive asks for its acknowledgement word for
+word: 28 words, and not ours to shorten.
+
+- Cost: the worked example inside the quotation in `GUIDE.md` goes unchecked. It holds by
+  reading, as the rest of the guide does. The alternative was an allowlist of exact sentences,
+  which is the grandfathering that curator duty 3 forbids.
+- Cost: a sentence ends at a stop after a letter, a digit or a closing bracket. A stop after a
+  degree sign or a superscript does not end one. Two sentences then read as one, and the finding
+  that follows is a long sentence rather than a missed one.
+- Verified by `tenglish.nim`: the three finding kinds, the sentence-end cases and the block
+  split. It also covers the collapsed span, the skipped quotation, and a path outside the set.
+  That path is `gaps.md`, which a generator writes and no delegate may rewrite by hand.
+- Cost, found by pushing a red branch: testament keys its cache on the test file. A change to
+  a source module alone then reuses the binary linked against the module before it.
+  `koch ci` then passes on a tree that a fresh checkout fails. Remove `nimcache` where a check
+  changed and its suite did not.
+
 ## Form
 
 **Width is counted in runes. Any tab, any CR, and any ending but exactly one newline is a
@@ -224,10 +259,17 @@ the guide states.** No heading carries a date. `## Open questions` is the last `
 No heading text appears twice. No title is underlined, because every reader here sees `#`
 lines, and an underlined title is invisible to all of them.
 
-A record over 2,500 lines is a finding, and its remedy is the prune that the guide already
+A record over 3,000 lines is a finding, and its remedy is the prune that the guide already
 asks for. The ceiling was 2,000 while records were written in ordinary English. Simplified
-Technical English costs about a fifth more lines, measured over five records. The number was
-scaled by that, so the threshold still asks for a prune at the same point.
+Technical English costs about a fifth more lines, measured over five records.
+
+2,500 scaled the old number by that cost and kept the old headroom, which was none. The largest
+record stood at the ceiling before the rewrite and at the ceiling after it. Two merges then
+spent 17 lines of margin inside one day, and the next sentence anybody wrote would have
+reddened `main`.
+
+A backstop that fires on ordinary work reports growth, and not narration. This one carries 20%
+clear of the largest record. `SECTION_LINES` is the instrument that reads narration.
 
 The header may carry a `Pruned` row that names the commit before that prune. The
 check reads the form of that row, and koch reads its existence from `git log` on the record
@@ -1160,9 +1202,9 @@ the figure behind the ruling that `system` stays per project.
 
 **The caching pair is settled, and it is not the pair expected.** Four caches restore on the
 driven job: the store of npm, the Atlas checkouts, the commit-pinned compiler, and the faces.
-The compiler is the whole figure. To restore it is seconds, where a build from source is the
-fifteen minutes that the first attempt would have cost. Every other cache is noise beside it:
-`npm ci` runs in 2 s cached, and six faces are 1.5 s uncached.
+The compiler is the whole figure. To restore it is seconds, where a build from source is fifteen
+minutes. That is what an uncached `driven` run would have cost. Every other cache is noise beside
+it: `npm ci` runs in 2 s cached, and six faces are 1.5 s uncached.
 
 A cold half for npm and faces was never taken under runner conditions, and cannot be taken now
 without a key deliberately poisoned. That measurement is dropped, rather than left owed.

@@ -6,8 +6,9 @@
 ##   Paths are data in `ENGLISH_PATHS`, governed documents alone, so no contributor record
 ##     reddens for rule whose writer has not read it yet. Widening check is one row.
 ##   Block is bullet, numbered item or run of plain lines, each read alone: list of six
-##     bullets is six blocks rather than one paragraph of six sentences. Quote marker is
-##     dropped, so quoted example counts words it holds rather than markers before them.
+##     bullets is six blocks rather than one paragraph of six sentences.
+##   Quotation is skipped whole: quoted text comes from outside this repository, so delegate may
+##     not rewrite it, and finding on it could never be fixed.
 ##   Backticked span counts as one word, since reader takes `nim r koch ci` as one name.
 ##
 ##   Cost: finding names line block opens on, never line sentence opens on; block is short
@@ -20,6 +21,8 @@
 ##     cannot tell instruction from description.
 ##   Cost: front matter and fenced code are skipped, so `about:` line of issue template holds
 ##     by reading.
+##   Cost: worked example inside quotation goes unchecked, such as one `GUIDE.md` carries; it
+##     holds by reading, as rest of guide does.
 
 {.experimental: "strictFuncs".}
 
@@ -41,8 +44,25 @@ const
     "GUIDE.md",
     "README.md",
     "STYLE.md",
+    "contributor/ronri/pga_benchmark/GLOSSARY.md",
+    "contributor/ronri/pga_benchmark/PROVENANCE.md",
+    "contributor/ronri/pga_benchmark/README.md",
+    "contributor/ronri/rga_visualiser/GLOSSARY.md",
+    "contributor/ronri/rga_visualiser/PROVENANCE.md",
+    "contributor/ronri/rga_visualiser/README.md",
+    "contributor/sincopa/dance_ontology/GLOSSARY.md",
+    "contributor/sincopa/dance_ontology/PROVENANCE.md",
+    "contributor/sincopa/dance_ontology/README.md",
+    "curator/audit/GLOSSARY.md",
+    "curator/audit/PROVENANCE.md",
+    "curator/audit/README.md",
+    "curator/probe/GLOSSARY.md",
+    "curator/probe/PROVENANCE.md",
+    "curator/probe/README.md",
   ]
     ## Documents this check reads; every other prose file holds rule by reading alone.
+    ## Records joined governed set once every one was written in this register, which was
+    ## cheapest moment: widening costs more with every line of prose written after it.
   SENTENCE_WORDS* = 25
     ## Words one sentence may hold, which is STE's limit for descriptive writing.
   PARAGRAPH_SENTENCES* = 6
@@ -140,9 +160,10 @@ func matterOut(markdown: string): string =
 
 
 func isCarrying(line: string): bool =
-  ## Decide whether line carries prose, i.e. is neither blank, rule, table row nor heading.
+  ## Decide whether line carries prose, i.e. is none of blank, rule, table row, heading, quote.
   let s = line.strip
-  s.len > 0 and not s.startsWith("|") and not s.startsWith("#") and not s.startsWith("---")
+  s.len > 0 and not s.startsWith("|") and not s.startsWith("#") and
+    not s.startsWith("---") and not s.startsWith(">")
 
 
 func gathered(fragments: seq[string]): string =
@@ -157,10 +178,7 @@ func blocks*(markdown: string): seq[Block] =
   var opened = 0
   let lines = markdown.fencedOut.matterOut.splitLines
   for i, line in lines:
-    let s = line.strip
-      .multiReplace(("<!--", " "), ("-->", " "))
-      .strip(trailing = false, chars = {'>', ' '})
-      .strip
+    let s = line.strip.multiReplace(("<!--", " "), ("-->", " ")).strip
     if not line.isCarrying or s.len == 0:
       if carried.len > 0:
         result.add Block(text: carried.gathered, line: opened)
