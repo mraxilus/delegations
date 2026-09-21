@@ -430,6 +430,18 @@ then fails equality rather than passes as a line that names nothing.
   joins when work hands across, and labels are never removed.
 - Cost: `ci` cannot run this verb, because it has no pull request to read. It is the one check
   that a delegate meets on the runner rather than before a push.
+- An empty label list is the state a pull request opens in, and not a mistake. No API call
+  creates a pull request and its label together. A run on `opened` therefore reads none, and
+  the `labeled` event clears it seconds later. Whether that first run fails or is cancelled
+  turns only on whether the label lands before it finishes.
+- So the two states carry two messages. The empty one names the event that clears it, and the
+  one that names a wrong label does not. The finding stays red either way. A green run at
+  `opened` would let a pull request opened and merged in one go carry no label. Half of them
+  live under half an hour.
+- Rejected: reading the current labels through the API. It would end the red run, and it costs
+  the `pull-requests` scope and a call for every run, against a job that holds neither today.
+- Rejected: dropping `opened` from the trigger. The check then says nothing to a delegate who
+  opened a pull request wrongly, which is the reason it was written.
 - The echoed line is cut at `ECHO_MAX` runes, because a body may open with a whole paragraph,
   and one did. The finding is meant to be read in a log.
 - Verified by `trole.nim` on the line reader, the cut, and each arm of the grammar. Verified
