@@ -165,14 +165,14 @@ void main() {
   vec3 far_end = in_head;
   vec4 tint_near = in_tint_tail;
   vec4 tint_far = in_tint_head;
-  if (depth_tail < depth_near) {
-    float fraction = (depth_near - depth_tail)/(depth_head - depth_tail);
-    near_end = in_tail + fraction*(in_head - in_tail);
-    tint_near = mix(in_tint_tail, in_tint_head, fraction);
-  } else if (depth_head < depth_near) {
-    float fraction = (depth_near - depth_head)/(depth_tail - depth_head);
-    far_end = in_head + fraction*(in_tail - in_head);
-    tint_far = mix(in_tint_head, in_tint_tail, fraction);
+  if (min(depth_tail, depth_head) < depth_near) {
+    float toward_head = (depth_near - depth_tail)/(depth_head - depth_tail);
+    vec3 crossing;
+    if (toward_head < 0.5) crossing = in_tail + toward_head*(in_head - in_tail);
+    else crossing = in_head + (toward_head - 1.0)*(in_head - in_tail);
+    vec4 tint_crossing = mix(in_tint_tail, in_tint_head, toward_head);
+    if (depth_tail < depth_near) { near_end = crossing; tint_near = tint_crossing; }
+    else { far_end = crossing; tint_far = tint_crossing; }
   }
   vec3 across = across_raw/across_length;
   vec3 at = mix(near_end, far_end, in_corner.x);
@@ -188,8 +188,10 @@ void main() {
   ##   Sibling copy of `mesh.expandRibbon`, reference suite pins to algebra, and of WebGL
   ##   source in `glue.js`; change to any one is not finished until other two are checked.
   ##   Line for line: reject segment wholly behind near plane (six coincident clipped
-  ##   corners), clip end crossing it and blend tint by same fraction, derive across as
-  ##   cross join reduces to, step corner off by half width of its end's world-per-pixel.
+  ##   corners), clip end crossing it by stepping from end crossing stands nearer (see
+  ##   `mesh.expandRibbon` for what steps from far end cost) and blend tint by same step,
+  ##   derive across as cross join reduces to, step corner off by half width of its end's
+  ##   world-per-pixel.
   ##   `in_corner` is (end, side).
   ##   `in_fog` and world position pass through for fragment stage's fog; see
   ##   `SOURCE_FRAGMENT_RIBBON`.
@@ -384,12 +386,13 @@ void main() {
   }
   vec3 near_end = tail;
   vec3 far_end = head;
-  if (depth_tail < depth_near) {
-    float fraction = (depth_near - depth_tail)/(depth_head - depth_tail);
-    near_end = tail + fraction*(head - tail);
-  } else if (depth_head < depth_near) {
-    float fraction = (depth_near - depth_head)/(depth_tail - depth_head);
-    far_end = head + fraction*(tail - head);
+  if (min(depth_tail, depth_head) < depth_near) {
+    float toward_head = (depth_near - depth_tail)/(depth_head - depth_tail);
+    vec3 crossing;
+    if (toward_head < 0.5) crossing = tail + toward_head*(head - tail);
+    else crossing = head + (toward_head - 1.0)*(head - tail);
+    if (depth_tail < depth_near) near_end = crossing;
+    else far_end = crossing;
   }
   vec3 across = across_raw/across_length;
   vec3 at = mix(near_end, far_end, in_corner.x);

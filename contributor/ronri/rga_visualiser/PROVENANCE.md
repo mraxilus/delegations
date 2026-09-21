@@ -179,7 +179,7 @@ and this file does not:
 | `frame`, `diagnostics`, `ramp` | frame's own clocks, tree, colour each row wears |
 | `exceedance`, `rings` | distribution curve, its axis, rings each reading is taken over |
 | `scenery`, `pins`, `hold`, `pool` | what scene costs, repaired faults, scene hold, drawer |
-| `demo`, `loaded`, `objects` | preset, culling, occlusion, and what all of it costs loaded |
+| `demo`, `loaded`, `objects` | preset, culling, occlusion, a line through a point, loaded |
 | `message`, `style`, `type`, `canvas` | outcome fade, declared CSS, faces in roles, blank refused |
 
 **A timing-dependent quantity is asserted as a band, and never as a figure.** How far a held key
@@ -897,8 +897,10 @@ vanishing points of the line, `eye ± radius_horizon*axis`. A vanishing point is
 it, by about 6.7° for a support 40 units out.
 
 Each segment lies in the plane through the eye that contains the line. The pair therefore draws
-over the true projection of the line, within 1e-16 of screen skew. The far ends sit off the line
-along the view ray, so occlusion is approximate there. `picking` tests both halves through
+over the true projection of the line, within 1e-16 of screen skew. That skew holds only while the
+near-plane crossing is stepped from the end that it stands nearer (see Records and shaders).
+Stepped from the far end, the two halves part on screen. The far ends sit off the line along the
+view ray, so occlusion is approximate there. `picking` tests both halves through
 `clipToEyeSide`, which is a near-plane clip written by hand, because this reach puts an endpoint
 behind the eye.
 
@@ -1171,6 +1173,13 @@ depth of *that end*, which keeps the on-screen width constant along a receding l
 plane is clipped against first.** A depth clamped at the near plane breaks the proportionality,
 and draws a world axis twenty pixels wide near the origin.
 
+**The crossing is stepped from the end that it stands nearer.** A line reaches its vanishing point
+at `radius_horizon`, which the orrery puts 530,000 units out. A step from the far end is therefore
+the difference of two places decades apart, and float32 cancels it. The crossing then carries tenths
+of a unit, at a near plane whose own pixel spans billionths of one. At orbit distance 0.01 the page
+drew `earth ∧ luna` 406 px off Earth, and 1,538 px off at 0.001. It rounded the crossing of
+`sol ∧ earth` onto the pivot, so half of that line drew onto the dot of Earth itself.
+
 **The widening runs in the vertex shader on both front-ends.** One `RibbonRecord` of fifteen
 floats crosses the wire for each segment, or sixteen with the `fog` flag. Six CPU vertices cost
 forty-two floats. An instanced draw expands it: GL 3.3 core on the desktop, and
@@ -1245,6 +1254,8 @@ hand.
 *Checked.* Verified by `suites.nim`:
 
 - the widening reference against the algebra;
+- the near crossing of a line within one pixel of where the ends of its own record put it, at a
+  near plane a four-hundredth of a close-up on a moon;
 - every stepped dome corner and ring corner against the sum it replaced;
 - the box of the disc against the projection of its rim;
 - the ray of the disc landing inside the rim and missing outside it;
@@ -1255,7 +1266,9 @@ hand.
 Verified by a desktop A/B under Xvfb: 0 of 1,296,000 pixels changed for the move of the ribbon. At
 most 38 changed for each storyboard frame, at a channel delta of 12 or less, for the move of the
 disc and dome. The record narrows its arms to float32 there. Verified by driven check: the ribbon
-records of the demo under 64, against a ring count over 120. Assumed: that the figure of 0.1 ms
+records of the demo under 64, against a ring count over 120. Both lines of the orrery cross a ring
+of spots about the point that they join, opposite in pairs, with the camera 0.01 and then 0.001
+units off it. Assumed: that the figure of 0.1 ms
 for the flat buffer holds at the current caps, because it was measured at 1,024 objects.
 
 ## Algebra boundary
