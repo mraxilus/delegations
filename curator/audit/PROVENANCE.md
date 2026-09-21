@@ -1145,9 +1145,9 @@ the figure behind the ruling that `system` stays per project.
 
 **The caching pair is settled, and it is not the pair expected.** Four caches restore on the
 driven job: the store of npm, the Atlas checkouts, the commit-pinned compiler, and the faces.
-The compiler is the whole figure. To restore it is seconds, where a build from source is the
-fifteen minutes that the first attempt would have cost. Every other cache is noise beside it:
-`npm ci` runs in 2 s cached, and six faces are 1.5 s uncached.
+The compiler is the whole figure. To restore it is seconds, where a build from source is fifteen
+minutes. That is what an uncached `driven` run would have cost. Every other cache is noise beside
+it: `npm ci` runs in 2 s cached, and six faces are 1.5 s uncached.
 
 A cold half for npm and faces was never taken under runner conditions, and cannot be taken now
 without a key deliberately poisoned. That measurement is dropped, rather than left owed.
