@@ -62,12 +62,32 @@ suite "Article VIII":
     check messages(provenanceText("d") & "\n| a | b |\n|---|---|\n").len == 0  # table rule
 
   test "VIII.6 record over ceiling asks for prune and Pruned row":
-    let long = provenanceText("d") & "\n## Design\n" & "line\n".repeat(RECORD_LINES)
+    # Spread body over sections short enough that section ceiling stays quiet.
+    var body = ""
+    for i in 0 ..< RECORD_LINES div SECTION_LINES + 1:
+      body.add "\n## Design " & $i & "\n" & "line\n".repeat(SECTION_LINES - 1)
+    let long = provenanceText("d") & body
     let found = checkRecord("p", long)
     check found.len == 1
     check found[0].message.startsWith("Record over " & $RECORD_LINES & " lines; prune to log")
     check found[0].message.endsWith("got " & $(long.count('\n')) & ".")  # as wc -l counts
-    check messages(provenanceText("d") & "line\n".repeat(RECORD_LINES - 10)).len == 0
+    check messages(provenanceText("d") & "line\n".repeat(SECTION_LINES - 10)).len == 0
+
+  test "VIII.6 section over ceiling asks for prune or split":
+    let wide = provenanceText("d") & "\n## Body sim\n" & "line\n".repeat(SECTION_LINES + 1)
+    let found = checkSections("p", wide)
+    check found.len == 1
+    check found[0].message ==
+      "Section over " & $SECTION_LINES & " lines; prune to log or split it (provenance " &
+        "guide); got " & $(SECTION_LINES + 1) & "."
+    check found[0].line == wide.splitLines.find("## Body sim") + 1  # heading, not overflow
+    # Same body, split in two, passes: ceiling is on section and not on record.
+    let split = provenanceText("d") & "\n## One\n" & "line\n".repeat(SECTION_LINES - 1) &
+      "\n## Two\n" & "line\n".repeat(SECTION_LINES - 1)
+    check checkSections("p", split).len == 0
+    let fenced = provenanceText("d") & "\n## Listing\n```\n" &
+      "## Design\n".repeat(SECTION_LINES + 1) & "```\n"
+    check checkSections("p", fenced).len == 1  # heading inside fence opens no section
 
   test "VIII.6 Pruned row names commit as hex":
     let with_row = provenanceText("d").replace(

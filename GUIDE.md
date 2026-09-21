@@ -300,7 +300,8 @@ sections it binds.
 
 No section is headed by a date. Where the file starts to read as a diary of what happened,
 prune it until it reads as a description of what is. A record over 3,000 lines is a finding,
-and the remedy is that same prune. Git keeps what came out, and the `Pruned` row says where.
+and so is one `##` section over 200. The remedy is that same prune, or a split of the section
+into the two subjects it grew into. Git keeps what came out, and the `Pruned` row says where.
 
 ### What a good entry looks like
 
