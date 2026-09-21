@@ -120,6 +120,36 @@ whitespace-split, punctuation-stripped and lowercased, after the backtick spans 
   sampled corpus in this project, and that seed is why its verdict does not vary
   (CONTRIBUTOR.md, "Tests are paramount").
 
+## English
+
+**Three rules of ASD-STE100 are mechanical, and the rest hold by reading.** Those three are a
+sentence of at most 25 words, and a paragraph of at most 6 sentences. The third is a table of 42
+words, each with one approved replacement. The dictionary of about 900 words belongs to ASD, so no
+check can hold all of it. `GUIDE.md` carries the other eleven rules.
+
+**The governed set is data, in `ENGLISH_PATHS`.** It opened as the charter, the two prompts,
+the guide, the root `README.md` and the four templates. No project then reddened for a rule that
+its writer had not read. The five records joined once every one of them was written in the
+register. That was the cheapest moment, and it does not come again. Widening costs one finding
+for every line of prose written between the rewrite and the widening.
+
+The widening found one word that the rewrite itself had missed, `attempt` in this record. That
+is the argument for the check over reading alone, made against the reader who wrote the rewrite.
+
+**A quotation is skipped whole.** Quoted text comes from outside this repository, and a delegate
+may not rewrite it. A finding on it could never be fixed. The case that settled it sits in the
+record of `rga_visualiser`. The NASA Exoplanet Archive asks for its acknowledgement word for
+word: 28 words, and not ours to shorten.
+
+- Cost: the worked example inside the quotation in `GUIDE.md` goes unchecked. It holds by
+  reading, as the rest of the guide does. The alternative was an allowlist of exact sentences,
+  which is the grandfathering that curator duty 3 forbids.
+- Cost: a sentence ends at a stop after a letter, a digit or a closing bracket. A stop after a
+  degree sign or a superscript does not end one. Two sentences then read as one, and the finding
+  that follows is a long sentence rather than a missed one.
+- Verified by `tenglish.nim`: the three finding kinds, the sentence-end cases and the block
+  split. It also covers the collapsed span, the skipped quotation, and a path outside the set.
+
 ## Form
 
 **Width is counted in runes. Any tab, any CR, and any ending but exactly one newline is a
