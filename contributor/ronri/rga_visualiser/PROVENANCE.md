@@ -2478,6 +2478,10 @@ passing proves that the runner carries that library. Assumed: nothing about the 
   field with it, and the disc of every plane at the depth of its centre.
 - The planet inclinations, ring phases and neighbour planes of the demo are stated
   simplifications.
+- A line drawn with the camera inside the body that it frames stands a few pixels off the point
+  that it joins. The error is 0.4 px at an orbit distance of 0.0001, and 3.2 px at 0.00001.
+  Float32 holds about 0.06 of a unit at 530,000 units, and the record stores the vanishing point
+  in it, so the near crossing is not the cause (see Records and shaders).
 
 ## Open questions
 
