@@ -58,8 +58,13 @@ suite "Role":
     let unlabelled = checkRole("curator/mend-it", "**Role:** curator\n", newSeq[string]())
     check unlabelled.len == 1
     check unlabelled[0].message.endsWith("got ``.")  # nothing to echo
-    check checkRole("curator/mend-it", "**Role:** curator\n", ["curator/audit"]).len ==
-      1  # near miss is miss
+    # No label at all is opening's own state, so message names race rather than fault.
+    check unlabelled[0].message.startsWith("Pull request carries no label")
+    check "`labeled` event" in unlabelled[0].message
+    let wrong = checkRole("curator/mend-it", "**Role:** curator\n", ["curator/audit"])
+    check wrong.len == 1  # near miss is miss
+    check wrong[0].message.startsWith("Pull request must carry label")  # fault, not race
+    check "`labeled` event" notin wrong[0].message
 
   test "branch outside grammar reports nothing, since scope already fails it":
     check checkRole("claude/setup-5uk08q", "", newSeq[string]()).len == 0
