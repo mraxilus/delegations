@@ -717,7 +717,18 @@ func showOrrery*(
   scene.restoreFrom(initScene())
   constructOrrery(scene, scale, now)
   scene.replayFrom(now)
-  camera.pivot = POSITION_ORRERY
-  camera.elevation = ELEVATION_ORRERY_SHOWN
-  camera.distance =
-    distanceFitting(RADIUS_ORRERY, camera, width, height, INSET_ORRERY_SHOWN)
+  # Place camera through one stance, since pivot and both angles are read-outs now.
+  #   Pitched camera is what solve reads, as before: it is handed camera already carrying
+  #   new pivot and elevation, and distance it still carries does not reach solve.
+  let pitched = camera.placed(CameraStance(
+    pivot: POSITION_ORRERY,
+    distance: camera.distance,
+    azimuth: camera.azimuth,
+    elevation: ELEVATION_ORRERY_SHOWN,
+  ))
+  camera = camera.placed(CameraStance(
+    pivot: POSITION_ORRERY,
+    distance: distanceFitting(RADIUS_ORRERY, pitched, width, height, INSET_ORRERY_SHOWN),
+    azimuth: camera.azimuth,
+    elevation: ELEVATION_ORRERY_SHOWN,
+  ))

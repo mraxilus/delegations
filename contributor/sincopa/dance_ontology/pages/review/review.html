@@ -312,9 +312,9 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
     <p class="eyebrow">Ontology review &middot; dance ontology</p>
     <h1>{{frames}} frames, {{moves}} moves, and three things left to settle</h1>
   </div>
-  <p class="lede">Your <code>base</code> sheet was rebuilt from first principles
-  and then checked against itself. The hand-to-hand half of it is complete and
-  correct &mdash; every cell, the right primitive, and no move missing.</p>
+  <p class="lede">This project rebuilt your <code>base</code> sheet from first principles, and
+  then checked the sheet against it. The hand-to-hand half of your sheet is complete and correct:
+  every cell names the right primitive, and no move is missing.</p>
   <div class="rule"></div>
   {{stats}}
 </header>
@@ -324,10 +324,10 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
     <p class="eyebrow">The state space</p>
     <h2>Every frame two facing bodies can hold, hand to hand</h2>
   </div>
-  <p>A <strong>frame</strong> is what each of the lead's hands holds, plus which
-  arm lies on top where the forearms overlap. Two laws close it: a hand of the
-  follow is held by at most one hand of the lead, and an arm order is recorded
-  exactly where the forearms overlap. That is the whole state space.</p>
+  <p>A <strong>frame</strong> is what each hand of the lead holds, and which arm lies on top
+  where the forearms overlap. Two laws close it. One hand of the lead holds a hand of the follow
+  at most once, and an arm order is recorded exactly where the forearms overlap. That is the
+  whole state space.</p>
   {{gallery}}
   <div class="legend">
     <span class="swatch"><i style="background: var(--left-deep)"></i> lead&rsquo;s Left arm</span>
@@ -337,15 +337,14 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
     &middot; a connection goes <em>round</em> a body rather than through one,
     so a crossed hold is drawn crossing</span>
   </div>
-  <p><strong>Crossing is derived, not listed.</strong> Facing partners are in
-  mirror, so the lead's Left faces the follow's <em>right</em>. A connection is
-  parallel when it joins opposite-named hands and crossed when it joins
-  same-named hands. Two connections overlap only when both cross &mdash; which
-  happens for exactly one pair of holds. That is why
-  <em class="term">Left-to-left and Right-to-right</em> has an over/under
-  distinction and <em class="term">Left-to-right and Right-to-left</em> does not,
-  and your sheet already has it exactly that way. Nothing has to remember the
-  rule; it falls out of who faces whom.</p>
+  <p><strong>The model derives a crossing rather than lists it.</strong> Partners who face each
+  other stand in mirror, so the Left of the lead faces the right of the follow. A connection runs
+  parallel where it joins hands of opposite name, and it crosses where it joins hands of the same
+  name. Two connections overlap only where both cross, which happens for one pair of holds. </p>
+  <p>So <em class="term">Left-to-left and Right-to-right</em> carries an over and under
+  distinction. <em
+  class="term">Left-to-right and Right-to-left</em> does not. Your sheet
+  already has it that way, and the rule follows from who faces whom.</p>
 </section>
 
 <section>
@@ -353,32 +352,28 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
     <p class="eyebrow">The shape of it</p>
     <h2>Every frame, and every move between them</h2>
   </div>
-  <p>Each row holds one more connection than the row below, so the direction of
-  a move is readable from the drawing: a step up the page is a
-  <code>collect</code> and a step down is a <code>drop</code>. The tower is
-  built upwards &mdash; <code>free</code> at its foot, both hands held at its
-  head &mdash; because a collect builds the frame up and a drop lets it fall.
-  So a line says three things and no more: the direction, in which way up it
-  runs; the hand of the follow it takes or lets go of, in the word written on
-  it &mdash; and that word is in the follow's own colour, the plain shade; and
-  which of the lead's arms does it, in the ink the line and the rest of the name
-  are written in &mdash; the deep shade, because the lead is the one acting. So
-  a name runs deep into plain, the same way the connection it makes does.
-  Where a name lies across its own line the line is cut for it, round-ended
-  either side, so the break reads as a name put there rather than as a line
-  stopping.</p>
+  <p>Each row holds one more connection than the row below it, so the drawing says which way a
+  move goes. A step up the page is a <code>collect</code>, and a step down is a <code>drop</code>.
+  The tower is built upward, with <code>free</code> at its foot and both hands held at its head. A
+  collect builds the frame up, and a drop lets it fall.</p>
+  <p>A line then says three things, and no more. The way up it runs says the direction. The word
+  written on it names the hand of the follow that the move takes or lets go, in the plain shade of
+  the follow. The ink of the line and the rest of the name say which arm of the lead acts, in the
+  deep shade. So a name runs deep into plain, as the connection it makes does.</p>
+  <p>Where a name
+  lies across its own line, the line is cut for it and rounded at both ends. So the break reads as
+  a name
+  rather than as a line that stops.</p>
   {{arms}}
   <div class="scroll">
     {{map}}
   </div>
-  <p>One line stands for two moves, because every move reverses; twenty moves
-  are ten lines. The dashed curves are the compounds, drawn apart from the lines
-  because they are not moves &mdash; a <code>place</code> is the two ways in and
-  out of <em class="term">free</em> taken together, and a <code>cut</code> is the
-  two ways in and out of a single hold.</p>
-  <p>The picture also shows the ontology has no dead ends and no islands: from
-  any frame you can reach any other, and the longest way round is
-  {{diameter}} moves.</p>
+  <p>One line stands for two moves, because every move reverses, so twenty moves are ten lines.
+  The dashed curves are the compounds, drawn apart from the lines because they are not moves. A
+  <code>place</code> is the two ways in and out of <em class="term">free</em> taken together. A
+  <code>cut</code> is the two ways in and out of a single hold.</p>
+  <p>The picture also shows that the ontology has no dead end and no island. Every frame reaches
+  every other frame, and the longest way round is {{diameter}} moves.</p>
 </section>
 
 <section>
@@ -386,44 +381,40 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
     <p class="eyebrow">The verdict</p>
     <h2>Every cell you filled in is the right one</h2>
   </div>
-  <p>{{checkable}} of your {{cells}} cells hold between two hand-to-hand frames.
-  All {{checkable}} name exactly what the model derives independently &mdash;
-  {{primitive_cells}} of them a primitive, {{compound_cells}} of them one of the
-  two compounds &mdash; and together they are <em>every</em> move that exists
-  between the {{named}} states they name. Nothing missing, nothing spare. For a
-  hand-written 9&times;9 matrix that is not a small thing.</p>
+  <p>{{checkable}} of your {{cells}} cells hold between two hand-to-hand frames. All
+  {{checkable}} name what the model derives on its own: {{primitive_cells}} of them a primitive,
+  and {{compound_cells}} of them one of the two compounds. Together they are <em>every</em> move
+  between the {{named}} states they name. Nothing is missing, and nothing is spare.</p>
   <div class="scroll">
     {{matrix}}
   </div>
-  <p class="dim" style="font-size: .85rem">Rows are the frame danced from,
-  columns the frame danced to. {{legend}}.
-  Outlined cells are moves the model derives that your sheet has no row for
-  &mdash; every one of them touches <em class="term">free</em>. Faded cells are
-  the compounds.</p>
+  <p class="dim" style="font-size: .85rem">Rows are the frame danced from, and columns the frame
+  danced to. {{legend}}. An outlined cell is a move that the model derives and your sheet has no
+  row for, and every one of them touches <em class="term">free</em>. A faded cell is a
+  compound.</p>
 
   <h3>{{primitive_count}} primitives, not six</h3>
   {{primitives}}
-  <p>Your vocabulary marks two of its six helpers with an asterisk, and gives
-  each the same shape: <em class="term">place*</em> is &ldquo;collect then
-  drop&rdquo;, <em class="term">cut*</em> is &ldquo;drop then collect&rdquo;,
-  both keeping contact through a trace &mdash; <code>cut</code> with an
-  obstruction in the way, <code>place</code> without. The asterisks are right. Neither is a
-  unit &mdash; each is two moves that a lead thinks of as one, which is worth a
-  name but not a place in the alphabet.</p>
-  <p>Of the four left, <code>flick</code> changes no frame, so it is a manner of
-  <code>drop</code> rather than a helper of its own; and
-  <code>trace</code>/<code>slide</code> has nothing to do here at all, because it
-  slides a hand <em>along</em> the partner and the space between the follow's two
-  hands is empty air. It comes back with the body, below. Two primitives are
-  left, and they are the two that change what is held.</p>
+  <p>Your vocabulary marks two of its six helpers with an asterisk, and gives each the same
+  shape. A <em class="term">place*</em> is a collect and then a drop, and a
+  <em class="term">cut*</em> is a drop and then a collect. Both keep contact through a trace, the
+  cut with an arm in the way and the place without one. The asterisks are right, and neither one
+  is a unit. Each is two moves that a lead thinks of as one, which earns a name and not a place in
+  the alphabet.</p>
+  <p>Two of the four that are left do no work here. A <code>flick</code> changes no frame, so it
+  is a manner of <code>drop</code> rather than a helper of its own. A <code>trace</code>, which your
+  <code>base</code> sheet calls a <code>slide</code>, slides a hand along the partner. The space
+  between the two hands of the follow is empty air, so no trace can run there. A trace returns
+  with the body vocabulary, below.
+  The two primitives that are left are the two that change what is held.</p>
 
   <h3>{{compound_count}} compounds worth naming</h3>
   {{compounds}}
-  <p>The difference between them is only whether the other arm is in the way. A
-  <code>place</code> has a clear path, so the hands can overlap on the way past
-  and the couple never quite lets go. A <code>cut</code> does not, so the arm
-  must be released and re-taken on the far side of the one obstructing it
-  &mdash; which is why it is the only way between the two crossing orders.</p>
+  <p>The two differ in one thing, which is whether the other arm stands in the way. A
+  <code>place</code> has a clear path, so the hands overlap on the way past and the couple never
+  quite lets go. A <code>cut</code> has no clear path, so the arm lets go and takes hold again on
+  the far side of the arm in the way. That is why a cut is the one way between the two crossing
+  orders.</p>
 </section>
 
 <section>
@@ -435,26 +426,22 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
 
     <div class="finding add">
       <div class="head">
-        <h3>1. There is no <em class="term">free</em> &mdash; and it is
+        <h3>1. There is no <em class="term">free</em>, and it is
         {{free_moves}} of the {{moves}} moves</h3>
         <span class="chip">add a row</span>
       </div>
-      <p><em class="term">free</em> is the frame with nothing held: four free
-      hands, which is where the name comes from. It is deliberately
-      <em>not</em> called <em class="term">open</em>, because you and every
-      other dancer already use &ldquo;open position&rdquo; for something else
-      &mdash; the hand-to-hand frame, which this ontology calls
-      <em class="term">Left-to-right and Right-to-left</em>. Naming the empty
-      frame <em class="term">open</em> would have put the two under one word.</p>
-      <p>Every single-hold state in your sheet has a <code>drop</code> that leads
-      nowhere, because a frame with no connection is not in the sheet. Without it
-      the matrix is not closed under <code>drop</code>, which means the sheet
-      cannot express &ldquo;let go&rdquo;.</p>
-      <p>It matters more now that <code>place</code> is two moves rather than
-      one: every hand-off in your sheet &mdash; all four <em
-      class="term">pass</em> cells &mdash; is a drop and a collect, and the frame
-      in between the two is precisely <em class="term">free</em>. The sheet
-      names four routes through a state it does not have.</p>
+      <p><em class="term">free</em> is the frame with nothing held, which is four free hands, and
+      that is where the name comes from. This ontology does not call it <em class="term">open</em>,
+      because you and every other dancer already use open position for the hand-to-hand frame.
+      That frame is <em class="term">Left-to-right and Right-to-left</em> here, so one word would
+      have carried both.</p>
+      <p>Every single-hold state in your sheet has a <code>drop</code> that leads nowhere, because
+      the sheet holds no frame with nothing connected. So the matrix does not close under
+      <code>drop</code>, and the sheet cannot say that the couple let go.</p>
+      <p>It matters more now that a <code>place</code> is two moves rather than one. Every hand-off
+      in your sheet is a drop and then a collect, which is all four <em class="term">pass</em>
+      cells. The frame between the two is <em class="term">free</em>. So the sheet names four
+      routes through a state that it does not hold.</p>
       <p class="do"><b>Do:</b> add one row and one column. Four collects out,
       four drops in, and the graph closes.</p>
     </div>
@@ -469,20 +456,18 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
       and the cells reaching them say what they are:</p>
       <blockquote>half-closed &mdash;slide&rarr; Right to left<br>
       closed &mdash;slide&rarr; Left-to-right and Right-to-left</blockquote>
-      <p>A <code>slide</code> keeps contact, and contact can only travel along a
-      body &mdash; there is no path from one of the follow's hands to the other.
-      So in both cells the lead's right hand must <em>start on the follow's
-      body</em> and slide down the arm it is already touching to reach the
-      follow's left hand. That is the classic closed hold: left hand to the follow's right,
-      right hand on the follow's back.</p>
-      <p>Reading them the way <code>vocabulary</code> does instead &mdash;
-      <em class="term">half-closed</em> = <em class="term">Left to right</em>,
-      <em class="term">closed</em> = <em class="term">Left-to-left and
-      Right-to-right</em> &mdash; makes them duplicates of rows you already have,
-      and contradicts six of your own cells.</p>
-      <p class="do"><b>Do:</b> hold them out until the body vocabulary lands with
-      rotation. They are not lost, they are queued &mdash; along with
-      <code>trace</code>, which needs the same thing.</p>
+      <p>A <code>slide</code> keeps contact, and contact travels along a body alone. No path runs
+      from one hand of the follow to the other. So in both cells the right hand of the lead starts
+      on the body of the follow. It slides down the arm it already touches to reach their left
+      hand. That is the classic closed hold: the left hand to the right of the follow, and the
+      right hand on their back.</p>
+      <p>Your <code>vocabulary</code> sheet reads them another way, with
+      <em class="term">half-closed</em> as <em class="term">Left to right</em> and
+      <em class="term">closed</em> as <em class="term">Left-to-left and Right-to-right</em>. That
+      reading makes them duplicates of rows you already have, and it contradicts six of your own
+      cells.</p>
+      <p class="do"><b>Do:</b> hold them out until the body vocabulary lands with rotation. They
+      are queued rather than lost, with <code>trace</code>, which waits on the same thing.</p>
     </div>
 
     <div class="finding tidy">
@@ -490,16 +475,15 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
         <h3>3. Two words have drifted between the sheets</h3>
         <span class="chip">naming</span>
       </div>
-      <p><code>base</code> uses <em class="term">slide</em> and
-      <em class="term">pass</em>. <code>vocabulary</code> defines
-      <em class="term">trace</em> and <em class="term">place</em>, and never uses
-      the other two. They are the same pairs &mdash; pick one word each.</p>
-      <p>Separately: <em class="term">Left-to-left around Right-to-right</em>
-      sits in the same variant list as <em class="term">&hellip; over
-      &hellip;</em>. <strong>Over</strong> is part of the state &mdash; which arm
-      is on top. <strong>Around</strong> is a wrap, a modifier that rotation
-      produces. Keep them in one list and the position list grows every time an
-      arm does something.</p>
+      <p><code>base</code> uses <em class="term">slide</em> and <em class="term">pass</em>. Your
+      <code>vocabulary</code> sheet defines <em class="term">trace</em> and
+      <em class="term">place</em>, and never uses the other two. They are the same pairs, so each
+      one needs one word.</p>
+      <p><em class="term">Left-to-left around Right-to-right</em> also sits in the same variant
+      list as <em class="term">&hellip; over &hellip;</em>. <strong>Over</strong> is part of the
+      state, which is the arm on top. <strong>Around</strong> is a wrap, which is a modifier that
+      rotation produces. While the two stay in one list, the position list grows every time an arm
+      does something.</p>
       <p class="do"><b>Do:</b> one word per primitive, and move
       <em class="term">around</em> out of the position variants and into the
       modifiers.</p>
@@ -522,26 +506,25 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
       positions? I'm leaning heavily towards them being the same thing. Perhaps I
       need a clearer definition of what a frame position is.</blockquote>
       <p class="answer">One position, two states. Keep both readings.</p>
-      <p>A <strong>frame position</strong> is which hands hold what &mdash;
-      <em class="term">Left-to-left and Right-to-right</em>. It is what you call
-      out on the floor. A <strong>frame</strong> is a position plus the arm
-      order. It is what the state machine moves between.</p>
-      <p>The test is whether a dancer can pass between them for free. They
-      cannot: going from over-Left to over-Right takes a <code>cut</code>. Merge
-      them and the machine offers a move the arms forbid; name them separately
-      everywhere and you report a new position every time an arm changes height.
-      In the code this costs one function &mdash; <code>describe</code> gives the
-      state, <code>position</code> gives the class.</p>
+      <p>A <strong>frame position</strong> is which hands hold what, such as
+      <em class="term">Left-to-left and Right-to-right</em>. It is what you call out on the floor.
+      A <strong>frame</strong> is a position and the arm order together, and it is what the state
+      machine moves between.</p>
+      <p>The test is whether a dancer passes between the two for free, and they cannot. A move from
+      over-Left to over-Right takes a <code>cut</code>. Merge them, and the machine offers a move
+      that the arms forbid. Name them apart everywhere, and you report a new position every time an
+      arm changes height. In the code that costs one function: <code>describe</code> gives the
+      state, and <code>position</code> gives the class.</p>
     </div>
 
     <div>
       <blockquote>Technically you can wrap around neck or torso&hellip; possibly
       can have lower and upper wrap as separate frame modifiers?</blockquote>
-      <p class="answer">No &mdash; the level you already record does it.</p>
-      <p>Your own definitions say a low lock is behind the back and a high lock
-      is at the shoulder of the same arm; a low wrap crosses under the other arm
-      and a high wrap over it. So the place on the body is <em>derived</em> from
-      modifier and level rather than named separately:</p>
+      <p class="answer">No. The level you already record does it.</p>
+      <p>Your own definitions say that a low lock sits behind the back, and that a high lock sits
+      at the shoulder of the same arm. A low wrap crosses under the other arm, and a high wrap
+      crosses over it. So the modifier and the level together give the place on the body, and
+      nothing needs a name of its own:</p>
       <table class="plain">
         <thead><tr><th>Modifier</th><th>Level</th><th>Lands on</th></tr></thead>
         <tbody>
@@ -551,26 +534,24 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
           <tr><td>lock</td><td>high</td><td>shoulder</td></tr>
         </tbody>
       </table>
-      <p>Two modifiers &times; two levels, not four modifiers. The same
-      vocabulary of body places also serves the <code>cut</code> variants you
-      already list &mdash; wrist, torso, neck.</p>
+      <p>That is two modifiers at two levels, and not four modifiers. The same words for places on
+      the body also serve the <code>cut</code> variants you already list, which are the wrist, the
+      torso and the neck.</p>
     </div>
 
     <div>
       <blockquote>Technically there's also Left-to-all and Right-to-all; I think
       I'll leave them out of this ontology.</blockquote>
-      <p class="answer">Agreed &mdash; and the ambiguity cuts both ways.</p>
-      <p>One lead hand holding both of the follow's hands is a hand joined to two
-      things, which is an ambiguous lead and is also what would make the state
-      space stop being countable. The law that rules it out is symmetric, so it
-      rules out the mirrored case too: two lead hands holding one hand of the
-      follow.</p>
-      <p>That second case is not hypothetical &mdash; it is the moment a
-      <code>place</code> passes through if the couple never lets go. So the model
-      routes a hand-off through <em class="term">free</em> instead: let go, take
-      again. Keeping contact through it is a quality of the leading, which is
-      exactly what your note means by &ldquo;maintaining a connection via a
-      trace&rdquo;. The frames either side are the same either way.</p>
+      <p class="answer">Agreed, and the ambiguity cuts both ways.</p>
+      <p>One hand of the lead that holds both hands of the follow is one hand joined to two things.
+      That is an ambiguous lead, and it would also make the state space uncountable.
+      The law that rules it out is symmetric, so it rules out the mirror of it too. That mirror is
+      two hands of the lead on one hand of the follow.</p>
+      <p>That second case is real. It is the moment a <code>place</code> passes through where the
+      couple never let go. So the model routes a hand-off through <em class="term">free</em>
+      instead: let go, and take hold again. To keep contact through it is a quality of the lead's
+      work, which is what your note means by a connection maintained through a trace. The frames on
+      either side are the same either way.</p>
     </div>
 
   </div>
@@ -581,22 +562,23 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
     <p class="eyebrow">Per your call</p>
     <h2>The body enters once, and it enters at rotation</h2>
   </div>
-  <p>A hand resting on the partner is now out of the frame entirely. It earns its
-  place in exactly two ways, and both of them are about turning:</p>
+  <p>A hand that rests on the partner stands outside the frame. It earns its place in two ways,
+  and both of them are about a turn:</p>
   <table class="plain">
     <thead><tr><th>What it does</th><th>Why</th></tr></thead>
     <tbody>
-      <tr><td><strong>Blocks the turn</strong></td><td>an arm already around a
-      partner has no twist left to give &mdash; which is precisely why a turn out
-      of closed position needs the right hand to leave the back first</td></tr>
+      <tr><td><strong>It blocks the turn</strong></td><td>an arm already round a partner has no
+      twist left to give, which is why a turn out of closed position needs the right hand to leave
+      the back first</td></tr>
       <tr><td><strong>Catches a wound arm</strong></td><td>waist, torso,
       shoulder, neck: the places a <code>wrap</code> or a <code>lock</code> is
       named by, per the table above</td></tr>
     </tbody>
   </table>
-  <p>So one body vocabulary, introduced once in the rotation layer, serves the
-  two deferred states, the wraps, the locks, and the <code>cut</code> variants at
-  the same time. Nothing about it touches the eight frames.</p>
+  <p>One set of words for the body, brought in once at the rotation layer, serves four things
+  together. They are the two states held out, the wraps, the locks and the <code>cut</code>
+  variants. None of it
+  touches the eight frames.</p>
 </section>
 
 <section>
@@ -604,25 +586,24 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
     <p class="eyebrow">Rotation</p>
     <h2>What follows for free, and what needs measuring</h2>
   </div>
-  <p>The twelve turn sheets are empty, so this is a proposal rather than a
-  reading. The quantity a turn adds is <strong>twist</strong>: how far the
-  follow's body has turned relative to the lead's. It is one number for the
-  couple, not one per arm, because both bodies are rigid and both arms see the
-  same relative rotation.</p>
+  <p>The twelve turn sheets are empty, so this is a proposal rather than a reading. A turn adds
+  one quantity, which is <strong>twist</strong>: how far the body of the follow has turned against
+  the body of the lead. It is one number for the couple rather than one for each arm. Both bodies
+  are rigid, and both arms see the same relative rotation.</p>
 
   <h3>Two things that need no measurement at all</h3>
-  <p><strong>A rotation of the whole couple stores no twist.</strong> It is why
-  you can travel round the floor without unwinding &mdash; and why a model that
-  added up each dancer's turns separately would be wrong.</p>
-  <p><strong>The parity of the twist re-reads the whole base matrix.</strong> At
-  half a turn the follow's back is to the lead, the follow's left hand is now on
-  the lead's left, and every connection that was crossed is parallel. The frames do
+  <p><strong>A rotation of the whole couple stores no twist.</strong> That is why a couple travel
+  round the floor without unwinding. A model that added up the turns of each dancer on their own
+  would be wrong.</p>
+  <p><strong>The parity of the twist re-reads the whole base matrix.</strong> At half a turn the
+  back of the follow is to the lead. Their left hand now stands on the left of the lead, and every
+  connection that was crossed runs parallel. The frames do
   not change; the way they are read does. That is one function, not a second
   matrix.</p>
 
   <h3>Three numbers that do</h3>
-  <p>From the one datum available &mdash; <em>&ldquo;if you're hand to hand you
-  can only do 1 full rotation comfortably&rdquo;</em>:</p>
+  <p>One datum is available, which is your own: <em>&ldquo;if you're hand to hand you can only do
+  1 full rotation comfortably&rdquo;</em>. From it:</p>
   <table class="plain">
     <thead><tr><th>What joins the bodies</th><th>Capacity</th><th>Why</th></tr></thead>
     <tbody>
@@ -634,21 +615,19 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
         <td>the arm is already around the partner</td></tr>
     </tbody>
   </table>
-  <p>Three numbers, and they already predict three things that match the floor: a
-  wrap is led from a two-hand hold and a lock from a one-hand hold; a turn out of
-  closed needs the back hand to leave first; and a full turn on two hands is not
-  comfortable.</p>
+  <p>Those three numbers already predict three things that match the floor. A wrap is led from a
+  two-hand hold, and a lock from a one-hand hold. A turn out of closed position needs the back hand
+  to leave first. A full turn on two hands is not comfortable.</p>
 
   <h3>The four cells worth dancing</h3>
   <p>Your <code>rotations</code> sheet has two filled cells, both for
-  <em class="term">Left to left</em> held low: half a turn left gives a
-  <em class="term">wrap</em>, a full turn right gives a
-  <em class="term">lock</em>. Two different rules fit both cells &mdash;
-  <span style="color: var(--left)">magnitude only</span> (one half-turn wraps,
-  two lock) and <span style="color: var(--right)">direction decides</span> (one
-  way carries the arm across the front and wraps, the other behind the back and
-  locks, at either size). They disagree about exactly four cells nobody has
-  filled in:</p>
+  <em class="term">Left to left</em> held low. Half a turn left gives a <em class="term">wrap</em>,
+  and a full turn right gives a <em class="term">lock</em>.</p>
+  <p>Two rules fit both cells.
+  <span style="color: var(--left)">Size alone</span> says that one half turn wraps and two lock.
+  <span style="color: var(--right)">The way round</span> says that one way carries the arm
+  across the front and wraps. The other carries it behind the back and locks, at either size.
+  The two rules disagree about four cells that nobody has filled in:</p>
   <div class="experiment">
     <div class="cell"><span class="label">left@0.5</span>
       <span class="a">magnitude &rarr; wrap</span><span class="b">direction &rarr; wrap</span></div>
@@ -659,10 +638,9 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
     <div class="cell"><span class="label">right@1</span>
       <span class="a">magnitude &rarr; lock</span><span class="b">direction &rarr; lock</span></div>
   </div>
-  <p>All four are <em class="term">Left to left</em>, held low. Dance them, write
-  down what the arm does, and the twelve turn sheets stop being twelve matrices
-  to fill in and become one function of three numbers. That is worth more than
-  the other 760 empty cells put together.</p>
+  <p>All four are <em class="term">Left to left</em>, held low. Dance them, and write down what
+  the arm does. Then the twelve turn sheets stop being twelve matrices to fill in, and become one
+  function of three numbers.</p>
 </section>
 
 <section>
@@ -673,22 +651,22 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
   <div class="build">
     <div>
       <h3>One state, one relation</h3>
-      <p>A move exists between two frames exactly when the difference between
-      them is one primitive. The names, the routes, the app and the audit are all
-      derived from that &mdash; there is no table of moves to maintain.</p>
+      <p>A move exists between two frames exactly where one primitive is the difference between
+      them. The names, the routes, the app and the audit all derive from that, so no table of moves
+      is kept by hand.</p>
     </div>
     <div>
       <h3>A validator, not a toy</h3>
-      <p>The browser app shows the frame you are in, every frame one move away,
-      and every frame that is not &mdash; with how far away it is. Only what is
-      offered can be clicked, so a move the ontology does not derive cannot be
-      danced.</p>
+      <p>The browser app shows the frame you stand in, and every frame one move away. It shows every
+      frame that is further, with how far away it is. Only what the app offers can be clicked, so
+      a move
+      that the ontology does not derive cannot be danced.</p>
     </div>
     <div>
       <h3>Laws, not examples</h3>
-      <p>{{laws}} tests over all {{pairs}} ordered pairs of frames:
-      reversibility, mirror symmetry, one law per primitive, full connectivity,
-      and every cell of your sheet checked against the model.</p>
+      <p>{{laws}} tests run over all {{pairs}} ordered pairs of frames. They hold
+      reversibility, mirror symmetry, one law for each primitive, and full connectivity. They
+      check every cell of your sheet against the model.</p>
     </div>
   </div>
   <pre>sincopa/dance_ontology/
@@ -696,7 +674,7 @@ footer { border-top: 1px solid var(--rule-strong); padding-top: 1.25rem;
   src/dance_ontology/transition.nim  the two primitives and the routes between frames
   src/dance_ontology/diagram.nim     one drawing of a frame, for everything that shows one
   src/dance_ontology/workbook.nim    your base sheet as data, and the audit against it
-  src/dance_ontology/rotation.nim    twist, capacity, wraps and locks &mdash; provisional
+  src/dance_ontology/rotation.nim    twist, capacity, wraps and locks, provisional
   app/app.nim                        the validator's script
   pages/app/index.html               its page shell
   pages/review/review.html           the prose of this page; every number is a marker
@@ -711,8 +689,8 @@ nim r tools/build.nim pages                           # rebuild this page and th
 </section>
 
 <footer>
-  Every number on this page is also a test, and the page is rebuilt from the
-  model by <code>make pages</code>.
+  Every number on this page is a test as well, and
+  <code>nim r tools/build.nim pages</code> rebuilds the page from the model.
 </footer>
 
 </div>

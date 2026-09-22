@@ -55,7 +55,7 @@ type
     Left, Right
 
   Dancer {.pure.} = enum
-    ## Define who: lead (him, square marks, deep ink) or follow (her, round, plain).
+    ## Define who: lead (square marks, deep ink) or follow (round marks, plain ink).
     Lead, Follow
 
   Hold {.pure.} = enum
@@ -74,7 +74,7 @@ type
     ## Define projections: from above onto page, and from side along couple's line.
     Above, Side
 
-  Rope = tuple[his, hers: Arm]
+  Rope = tuple[lead, follow: Arm]
     ## Define one connection: lead's arm to follow's arm.
 
   HoldSpec = object
@@ -116,8 +116,8 @@ type
 
   Connection = object
     ## Define one rope at one moment: four joints each side, and sim's words.
-    him, her: array[4, Vec3]
-    him_says, her_says: cstring
+    lead, follow: array[4, Vec3]
+    lead_says, follow_says: cstring
     cross: JsObject         ## Crossings from data, `undefined` where none; read in place.
 
   Scene = object
@@ -153,21 +153,21 @@ const
   CHEVRON: array[3, Vec2] = [[-5.0, -4.0], [0.0, 4.0], [5.0, -4.0]]
     ## Chevron's three points about body centre, before turning to facing.
   HOLDS: array[Hold, HoldSpec] = [
-    Hold.LtoL: holdSpec("L-l", "Left to left", "face-to-face", [(Arm.Left, Arm.Left)], -0.5),
-    Hold.RtoR: holdSpec("R-r", "Right to right", "face-to-face", [(Arm.Right, Arm.Right)], -0.5),
-    Hold.LtoR: holdSpec("L-r", "Left to right", "face-to-face", [(Arm.Left, Arm.Right)], 0.0),
-    Hold.RtoL: holdSpec("R-l", "Right to left", "face-to-face", [(Arm.Right, Arm.Left)], 0.0),
+    Hold.LtoL: holdSpec("L-l", "Left to left", "Face-to-face", [(Arm.Left, Arm.Left)], -0.5),
+    Hold.RtoR: holdSpec("R-r", "Right to right", "Face-to-face", [(Arm.Right, Arm.Right)], -0.5),
+    Hold.LtoR: holdSpec("L-r", "Left to right", "Face-to-face", [(Arm.Left, Arm.Right)], 0.0),
+    Hold.RtoL: holdSpec("R-l", "Right to left", "Face-to-face", [(Arm.Right, Arm.Left)], 0.0),
     Hold.LlRr: holdSpec(
       "L-l.R-r",
       "Left to left · Right to right",
-      "pillion lead",
+      "Pillion",
       [(Arm.Left, Arm.Left), (Arm.Right, Arm.Right)],
       0.0,
     ),
     Hold.LrRl: holdSpec(
       "L-r.R-l",
       "Left to right · Right to left",
-      "face-to-face",
+      "Face-to-face",
       [(Arm.Left, Arm.Right), (Arm.Right, Arm.Left)],
       0.0,
     ),
@@ -420,10 +420,10 @@ func sceneOf(scene: var Scene, frames: JsObject, turn: float): bool =
       cn_b = b.cn[i]
       cn_near = near.cn[i]
     for k in 0 ..< 4:
-      lerp(scene.cn[i].him[k], cn_a.him[k], cn_b.him[k], u)
-      lerp(scene.cn[i].her[k], cn_a.her[k], cn_b.her[k], u)
-    scene.cn[i].him_says = cn_near.himSays.to(cstring)
-    scene.cn[i].her_says = cn_near.herSays.to(cstring)
+      lerp(scene.cn[i].lead[k], cn_a.lead[k], cn_b.lead[k], u)
+      lerp(scene.cn[i].follow[k], cn_a.follow[k], cn_b.follow[k], u)
+    scene.cn[i].lead_says = cn_near.leadSays.to(cstring)
+    scene.cn[i].follow_says = cn_near.followSays.to(cstring)
     scene.cn[i].cross = cn_near.cross
   true
 
@@ -447,50 +447,51 @@ func sceneSvg(hold: Hold, level: Level, scene: Scene): cstring =
   for i in 0 ..< scene.cn_count:
     template c: untyped = scene.cn[i]
     let
-      deep = INKS[HOLDS[hold].ropes[i].his] & "-deep"
-      plain = INKS[HOLDS[hold].ropes[i].hers]
-    result.add "<path d=\"" & pathOf(c.him, View.Above) & "\" class=\"" & cls &
+      deep = INKS[HOLDS[hold].ropes[i].lead] & "-deep"
+      plain = INKS[HOLDS[hold].ropes[i].follow]
+    result.add "<path d=\"" & pathOf(c.lead, View.Above) & "\" class=\"" & cls &
       "\" style=\"stroke:var(--" & deep & ")\"/>"
-    result.add "<path d=\"" & pathOf(c.her, View.Above) & "\" class=\"" & cls &
+    result.add "<path d=\"" & pathOf(c.follow, View.Above) & "\" class=\"" & cls &
       "\" style=\"stroke:var(--" & plain & ")\"/>"
     for k in 1 .. 2:
-      let q = page(c.him[k][0], c.him[k][1])
+      let q = page(c.lead[k][0], c.lead[k][1])
       result.add "<circle cx=\"" & q[0].toFixed(1) & "\" cy=\"" & q[1].toFixed(1) &
         "\" r=\"1.6\" style=\"fill:var(--mark-bg);stroke:var(--" & deep &
         ");stroke-width:0.8\"/>"
     for k in 1 .. 2:
-      let q = page(c.her[k][0], c.her[k][1])
+      let q = page(c.follow[k][0], c.follow[k][1])
       result.add "<circle cx=\"" & q[0].toFixed(1) & "\" cy=\"" & q[1].toFixed(1) &
         "\" r=\"1.6\" style=\"fill:var(--mark-bg);stroke:var(--" & plain &
         ");stroke-width:0.8\"/>"
 
   # Marks at every shoulder, filled where that arm is held.
   var
-    held_his: array[Arm, bool]
-    held_hers: array[Arm, bool]
+    held_lead: array[Arm, bool]
+    held_follow: array[Arm, bool]
   for i in 0 ..< scene.cn_count:
-    held_his[HOLDS[hold].ropes[i].his] = true
-    held_hers[HOLDS[hold].ropes[i].hers] = true
+    held_lead[HOLDS[hold].ropes[i].lead] = true
+    held_follow[HOLDS[hold].ropes[i].follow] = true
   for arm in Arm:
     let
-      his = shoulderOf(scene.bodies[Dancer.Lead].centre, scene.bodies[Dancer.Lead].facing, arm)
-      hers = shoulderOf(
+      at_lead = shoulderOf(scene.bodies[Dancer.Lead].centre, scene.bodies[Dancer.Lead].facing, arm)
+      at_follow = shoulderOf(
         scene.bodies[Dancer.Follow].centre, scene.bodies[Dancer.Follow].facing, arm)
-    result.add markSvg(page(his[0] * 1000.0, his[1] * 1000.0), Dancer.Lead, arm, level,
-      held_his[arm])
-    result.add markSvg(page(hers[0] * 1000.0, hers[1] * 1000.0), Dancer.Follow, arm, level,
-      held_hers[arm])
+    result.add markSvg(page(at_lead[0] * 1000.0, at_lead[1] * 1000.0), Dancer.Lead, arm, level,
+      held_lead[arm])
+    result.add markSvg(page(at_follow[0] * 1000.0, at_follow[1] * 1000.0), Dancer.Follow, arm,
+      level,
+      held_follow[arm])
 
   # Same moment from side, looking along couple's line, lead on left.
   result.add "<g class=\"side\">" & sideBodies(scene)
   for i in 0 ..< scene.cn_count:
     template c: untyped = scene.cn[i]
     let
-      deep = INKS[HOLDS[hold].ropes[i].his] & "-deep"
-      plain = INKS[HOLDS[hold].ropes[i].hers]
-    result.add "<path d=\"" & pathOf(c.him, View.Side) & "\" class=\"" & cls &
+      deep = INKS[HOLDS[hold].ropes[i].lead] & "-deep"
+      plain = INKS[HOLDS[hold].ropes[i].follow]
+    result.add "<path d=\"" & pathOf(c.lead, View.Side) & "\" class=\"" & cls &
       "\" style=\"stroke:var(--" & deep & ")\"/>"
-    result.add "<path d=\"" & pathOf(c.her, View.Side) & "\" class=\"" & cls &
+    result.add "<path d=\"" & pathOf(c.follow, View.Side) & "\" class=\"" & cls &
       "\" style=\"stroke:var(--" & plain & ")\"/>"
   result.add "</g>"
 
@@ -572,7 +573,7 @@ proc renderStage() =
     readout.innerHTML = head & "<br>no pose holds at the rest"
     return
 
-  # One line per rope: her arm's word, his where not open, crossings where any.
+  # One line per rope: follow's arm word, lead's where not open, crossings where any.
   let
     is_at_neg = turn <= -limits.neg + 1e-6 and limits.is_stopped_neg
     is_at_pos = turn >= limits.pos - 1e-6 and limits.is_stopped_pos
@@ -581,7 +582,7 @@ proc renderStage() =
     template c: untyped = scene.cn[i]
     template rope: untyped = HOLDS[hold].ropes[i]
     let name =
-      if HOLDS[hold].is_pair: ARM_WORDS[rope.his] & " to " & INKS[rope.hers] & ": "
+      if HOLDS[hold].is_pair: ARM_WORDS[rope.lead] & " to " & INKS[rope.follow] & ": "
       else: cstring("")
     var crossing: cstring = ""
     if not c.cross.isUndefined:
@@ -591,8 +592,9 @@ proc renderStage() =
         crossing.add (if c.cross[k].over.to(int) == 0: cstring("the first") else: "the second") &
           " over"
       crossing.add ")</span>"
-    lines.add "<br>" & name & "her arm <b>" & c.her_says & "</b>" &
-      (if c.him_says != "open": ", his arm <b>" & c.him_says & "</b>" else: cstring("")) &
+    lines.add "<br>" & name & "the follow's arm <b>" & c.follow_says & "</b>" &
+      (if c.lead_says != "open": ", the lead's arm <b>" & c.lead_says & "</b>"
+       else: cstring("")) &
       crossing
 
   # Then strain, then both blocks, flagged where turn stands on one.
@@ -653,7 +655,7 @@ proc renderStrip() =
     var words: cstring = ""
     for k in 0 ..< scene.cn_count:
       if k > 0: words.add " · "
-      words.add scene.cn[k].her_says
+      words.add scene.cn[k].follow_says
     let
       is_rest = abs(t - HOLDS[hold].rest) < 1e-6
       is_limit = not is_half

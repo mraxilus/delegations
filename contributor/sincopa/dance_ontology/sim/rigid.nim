@@ -72,7 +72,7 @@ const
   FRICTION = 0.2      ## Coulomb friction where arm meets body.  Engine's default
                       ## of 0.6 is rubber on road; cloth on cloth is nearer this,
                       ## and arm lying over head at 0.6 was dragged round with it
-                      ## as dancer turned under, winding her shoulder to its end by
+                      ## as dancer turned under, winding follow's shoulder to its end by
                       ## 1.24 turns.  Measured: cross-name crown hold stops at 1.24
                       ## at 0.6, at 1.46 at nought, and turns free at this.
   THROUGH* = 0.01     ## Overlap this deep, in metres, is arm through body: twice
@@ -104,7 +104,7 @@ const
                       ## in for weight that holds hanging arm plumb: five kilograms
                       ## of arm at third of metre is seventeen newton metres per
                       ## radian.  At one hertz, spring is about two, and flank's
-                      ## friction dragged her arms behind her slow half turn by
+                      ## friction dragged follow's arms behind follow's slow half turn by
                       ## forty nine degrees, creeping back to thirty three through
                       ## settle; at two, twenty four and eight; three, thirteen and
                       ## five; here, five and four.  Assumed.
@@ -327,10 +327,10 @@ proc capsule(c: var Couple; b: eng.BodyId; who: Body; arm: Arm; mark: Mark;
   sd.filter.groupIndex = group
   sd.filter.categoryBits = (if mark == Mark.Trunk: TRUNK_BIT else: ARM_BIT[who])
   # Everything meets everything, arms of two dancers included.  Letting lead's
-  # arms pass through follow's was tried, on Architect's point that lead gets his
+  # arms pass through follow's was tried, on Architect's point that lead gets lead's
   # own arm out of way, and it reached swan -- by letting arms occupy same place,
   # which no couple does.  Architect: it made sim worse.  Reverted.  Point stands
-  # and wants real answer: lead who *moves* his arm, not one whose arm is absent.
+  # and wants real answer: lead who *moves* lead's arm, not one whose arm is absent.
   sd.filter.maskBits = EVERY
   discard eng.createCapsule(b, addr sd, addr cap)
   c.shapes.add Shape(body: b, who: who, arm: arm, mark: mark, a: a, z: z, r: r)
@@ -699,8 +699,8 @@ const
     ## plane at head's height, where going over top costs nothing.  Architect:
     ## no one would let their arm wrap behind their head like this.  Comfort is
     ## slope inside range, and this is that slope for swing.  Measured at ten,
-    ## three and half newton metres at ease's end: hold carried her arm to wall
-    ## at 0.24 of cross-name crown turn and stopped there; at this, her
+    ## three and half newton metres at ease's end: hold carried follow's arm to wall
+    ## at 0.24 of cross-name crown turn and stopped there; at this, follow's
     ## extension peaks at 27 and turn is free.
 
 func awayFrom*(c: Couple): float =
@@ -722,7 +722,7 @@ func risen*(c: Couple): float =
   ##     Otherwise hands rise over first `RAISE` of wind and stay up: head that
   ##     passes under them is under them at every wind past that, whole turns
   ##     and all.  Keyed to distance from face to face instead, which folds
-  ##     whole turns away, hands were let down onto her head through second
+  ##     whole turns away, hands were let down onto follow's head through second
   ##     half of every whole turn, and every diamond and swan was wound with
   ##     hands at shoulder.
   if c.restTwist != 0.0: 1.0 else: min(1.0, c.wound / RAISE)
@@ -741,11 +741,11 @@ func up*(c: Couple): float =
 
 func leaving*(c: Couple): bool =
   ## Whether couple are winding away from face to face rather than back toward
-  ## it: hands go up and over her head one way, and come down in front of her
+  ## it: hands go up and over follow's head one way, and come down in front of follow's
   ## other way.
-  ##   Let down straight from over her crown as she came back to face to face,
-  ##     hands passed through her head; coming back they first come forward
-  ##     off her crown to between two bodies, at crown height, then down.
+  ##   Let down straight from over follow's crown as follow came back to face to face,
+  ##     hands passed through follow's head; coming back they first come forward
+  ##     off follow's crown to between two bodies, at crown height, then down.
   var t = (twist(c.stance) / (2.0 * PI)) mod 1.0
   if t < 0.0: t += 1.0
   let dir = twist(c.stance) - c.restTwist
@@ -828,7 +828,7 @@ proc carry(c: Couple) =
     # Asked over crown, hands rest at mid torso facing and are over crown away
     # (`up`).  Going up, lower edge rises as couple wind from rest, from where
     # hand settled to where crown band puts it, by `RAISE`, and hands are drawn
-    # over her head as they rise; coming back, they come forward off her crown
+    # over follow's head as they rise; coming back, they come forward off follow's crown
     # first and then down, both edges of band let down with them (`over`,
     # `height`).  Asked lower, lower edge rises from where hand settled by
     # `RAISE` of wind (`risen`) and stays up.  Nothing is asked until rest has
@@ -869,8 +869,8 @@ proc carry(c: Couple) =
       let
         lift = LIFT * off - FALL * drift.z
         # Drawn toward mid only as they rise, as lift is: face to face nothing
-        # is asked.  Drawn at rest, over crown her hand was pulled to her own
-        # axis before any turn, and her wrist sat at its cone from first moment.
+        # is asked.  Drawn at rest, over crown follow's hand was pulled to follow's own
+        # axis before any turn, and follow's wrist sat at its cone from first moment.
         pull = (if crown and not leaving: 1.0 else: risen) * DRAW[ord(c.band)]
         wanted: Vec = ((mid.x - tip.x) * pull - drift.x * FALL,
                        (mid.y - tip.y) * pull - drift.y * FALL, lift)
@@ -1263,7 +1263,7 @@ proc gives*(c: Couple): Stop =
   ## gives, any arm through body or arm, or joined hands that never reached
   ## their band once couple are no longer face to face.
   ##   Couple with nothing held were never asked: two free frames stood pillion
-  ##     chest to back with her arm crushed between two torsos, and read as
+  ##     chest to back with follow's arm crushed between two torsos, and read as
   ##     holding since no connection could give.
   ##   Hands under their band are hold at some other height, not this one:
   ##     before this, still whose hands never rose read as holding, and card

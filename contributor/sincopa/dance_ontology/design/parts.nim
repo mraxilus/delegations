@@ -22,10 +22,10 @@ type Parts* = OrderedTable[string, string]
 
 
 const ORIENTATIONS* = [
-  (name: "face-to-face", lead_turn: 0.0, follow_turn: 0.0),
-  (name: "pillion lead", lead_turn: 0.0, follow_turn: 180.0),
-  (name: "pillion follow", lead_turn: 180.0, follow_turn: 0.0),
-  (name: "back-to-back", lead_turn: 180.0, follow_turn: 180.0),
+  (name: "Face-to-face", lead_turn: 0.0, follow_turn: 0.0),
+  (name: "Pillion", lead_turn: 0.0, follow_turn: 180.0),
+  (name: "pillion", lead_turn: 180.0, follow_turn: 0.0),
+  (name: "Back-to-back", lead_turn: 180.0, follow_turn: 180.0),
 ] ## Four ways couple can face, as pages walk them.
 
 const HOLD*: Holds = [some Arm.L, none Arm]
@@ -35,13 +35,13 @@ const SETTLINGS* = [
   (level: none Level, way: none Way, follow_turn: 0.0,
    caption: "no way said<br>— it stays at its side"),
   (level: some Level.Low, way: some Way.Lock, follow_turn: 0.0,
-   caption: "<em>low</em> lock<br>face-to-face"),
+   caption: "<em>low</em> lock<br>Face-to-face"),
   (level: some Level.High, way: some Way.Lock, follow_turn: 0.0,
-   caption: "<em>high</em> lock<br>face-to-face"),
+   caption: "<em>high</em> lock<br>Face-to-face"),
   (level: some Level.Low, way: some Way.Wrap, follow_turn: 180.0,
-   caption: "<em>low</em> wrap<br>pillion lead"),
+   caption: "<em>low</em> wrap<br>Pillion"),
   (level: some Level.High, way: some Way.Wrap, follow_turn: 180.0,
-   caption: "<em>high</em> wrap<br>pillion lead"),
+   caption: "<em>high</em> wrap<br>Pillion"),
 ] ## Each settling drawn in orientation that admits it, because most do
   ## not: lock or wrap only exists where line really goes round.
 
@@ -333,34 +333,34 @@ type
 const MANNERS*: array[Manner, tuple[
     tag, title, blurb: string; who: Dancer; about: About]] = [
   (tag: "fa", title: "The follow turns on the spot",
-   blurb: "The follow turns on their own axis and nobody travels. What " &
-     "comes round is their <b>chevron</b>, and with it which of their " &
-     "hands is nearer. The lead stands still, facing up, so there is " &
-     "nothing to reorient afterwards: one stage, and it is over.",
+   blurb: "The follow turns on their own axis, and nobody travels. Their " &
+     "<b>chevron</b> comes round, and with it the hand that stands nearer. " &
+     "The lead stands still and faces up, so nothing needs to come back " &
+     "afterward. One stage, and it is over.",
    who: Dancer.Follow, about: About.Axis),
   (tag: "la", title: "The lead turns on the spot",
-   blurb: "The lead turns on their own axis, and this is where the two " &
-     "stages matter. <b>Stage one</b>: the lead turns and the room holds " &
-     "still, so the picture leans off upright. <b>Stage two</b>: the " &
-     "picture turns back until the lead faces up, which swings the follow " &
-     "round them. Same turn, told in the order it is danced.",
+   blurb: "The lead turns on their own axis, and here the two stages " &
+     "matter. <b>Stage one</b>: the lead turns, the room holds still, and " &
+     "the picture leans off upright. <b>Stage two</b>: the picture turns " &
+     "back until the lead faces up, which swings the follow round them. It " &
+     "is one turn, told in the order it is danced.",
    who: Dancer.Lead, about: About.Axis),
   (tag: "fo", title: "The follow orbits the lead",
-   blurb: "The follow walks the ring round the lead, who stands still — " &
-     "the dashed ring says so, and says who is standing. <b>Whatever side " &
-     "of them faced the lead goes on facing them</b>, so they turn as far " &
-     "as they travel (rule 32). The lead never moves and never turns, so " &
-     "there is no second stage at all: what you see is the walk — and it " &
-     "lands on the very pictures the <em>lead's own axis turn</em> lands " &
-     "on, measured and asserted on every build.",
+   blurb: "The follow walks the ring round the lead, who stands still. The " &
+     "dashed ring says so, and says who stands. <b>Whichever side of them " &
+     "faced the lead goes on facing them</b>, so they turn as far as they " &
+     "travel (rule 32). The lead never moves and never turns, so there is " &
+     "no second stage: the walk is the whole figure. It lands on the " &
+     "pictures the <em>axis turn of the lead</em> reaches, and every " &
+     "build measures that.",
    who: Dancer.Follow, about: About.Orbit),
   (tag: "lo", title: "The lead orbits the follow",
-   blurb: "The lead walks the ring round the follow, facing the centre the " &
-     "same way. It is the one manner of the four that takes the lead off " &
-     "their spot, so it is the one whose second stage has anything to do. " &
-     "It lands where the <em>follow's own axis turn</em> lands. Which " &
-     "dancer walked is not something the drawing can say; only the path " &
-     "can, which is why all four are animated.",
+   blurb: "The lead walks the ring round the follow, and faces the centre " &
+     "the same way. It is the one manner of the four that takes the lead " &
+     "off their spot. Its second stage has something to do. It lands " &
+     "where the <em>axis turn of the follow</em> lands. The drawing cannot " &
+     "say which dancer walked, and only the path says that, so all four " &
+     "are drawn in motion.",
    who: Dancer.Lead, about: About.Orbit),
 ] ## What each manner of turn is called on pages, who dances it, and
   ## about what.  Which round it walks is not restated here: `FAMILY_OF`
@@ -582,7 +582,7 @@ func windTwist*(wind: float): Twists =
 
 func posedAt*(wind, phase: float): Pose =
   ## Get pose hold stands in when it is wound this far from its own
-  ## parallel state, that state being `phase` turns off face-to-face.
+  ## parallel state, that state being `phase` turns off Face-to-face.
   ##   Follow's own axis turn is what poses are built from, so
   ##     half turn faces them away where they stand and whole turn brings
   ##     everything back.  Which dancer did turning is not something
@@ -593,14 +593,14 @@ func posedAt*(wind, phase: float): Pose =
 
 
 func phaseOf*(holds: Holds): float =
-  ## Say how far off face-to-face this hold's two connections run parallel:
+  ## Say how far off Face-to-face this hold's two connections run parallel:
   ## phase of chain it sits on (rule 31).
   ##   Measured, in rule 28's habit: hold is parallel where angle
   ##     its two ends make with pair's axis agree, and `windOf` is
   ##     already thing that measures that.
   ##   Two candidates and no more, because chain steps by half turns:
-  ##     hand to hand runs parallel with partners face-to-face,
-  ##     crossed pair pillion lead, and those are
+  ##     hand to hand runs parallel with partners Face-to-face,
+  ##     crossed pair Pillion, and those are
   ##     same chain read half turn apart.
   for phase in [0.0, 0.5]:
     let put = settled(posedAt(0.0, phase), holds, ABOVE_BOTH, default(Ways))
@@ -635,8 +635,8 @@ func chainFor*(holds: Holds): seq[Position] =
             else: "a turn and a half"
     # Which way partners face is pose's business and follows from
     # wind, so page says rule of it once in prose rather than
-    # every caption saying it over: face-to-face at whole number of
-    # turns, pillion lead at half.  It is also whole of offset
+    # every caption saying it over: Face-to-face at whole number of
+    # turns, Pillion at half.  It is also whole of offset
     # between this hold and its dual (rule 31).
     result.add (wind,
       # Middle of chain is glossary's **open**, and it alone says which
@@ -699,7 +699,7 @@ func windSense*(manner: Manner): float =
 const PAIRED*: Holds = [some Arm.L, some Arm.R]
   ## Same-name chain: lead's left to follow's left, right to right.  Index is
   ## lead's arm and value is follow's it joins, as `HAND_TO_HAND` is read.
-  ##   Rests pillion lead rather than face to face, since face to face its two
+  ##   Rests Pillion rather than Face-to-face, since Face-to-face its two
   ##     connections lie through each other (rule 31).
 
 

@@ -124,6 +124,30 @@ func reachOf*(placed: openArray[Placement], scene: Scene): float =
     result = max(result, reachOfPlacement(placed[handle], scene.radiusAt(handle)))
 
 
+func reachNearOf*(
+  placed: openArray[Placement], scene: Scene; eye: Position, forward: Direction
+): float =
+  ## Measure how near nearest drawn object stands ahead of eye, along sight.
+  ##   For `Camera.reach_near`, from placements caller already holds.
+  ##   Depth along sight, never distance, and never behind eye.
+  ##     What reader turned away from is not drawn, and scale read off it would follow
+  ##     that.
+  ##   Object's own middle, with no drawn radius taken off: camera at planet's surface
+  ##   then reads that planet's radius rather than zero, and near clip of one
+  ##   four-hundredth of it still holds whole planet.
+  ##   Horizon kinds answer nothing, as they do for `reachOfPlacement`: neither stands
+  ##   anywhere.
+  ##   Zero where nothing is drawn ahead, which hands scale back to separation.
+  result = 0.0
+  for handle in 0 ..< scene.bound:
+    if not scene.isAlive(handle) or not scene.isVisible(handle): continue
+    let place = placed[handle]
+    if place.kind notin {Case.PointAt, Case.LineThrough, Case.PlaneOn}: continue
+    let depth = dot(place.at - eye, forward)
+    if depth <= 0.0: continue
+    if result <= 0.0 or depth < result: result = depth
+
+
 proc reachOf*(scene: Scene): float =
   ## Measure how far scene's farthest visible finite object stands from origin.
   ##   For `Camera.reach_scene` on path holding no placements; desktop, once per scene
@@ -285,7 +309,7 @@ func stanceUnderPointer*(
   ##   crossing than its depth to be, leaving caller `stanceFor`.
   let
     eye = camera.eye
-    forward = camera.frame(eye).forward
+    forward = camera.frame.forward
     depth_now = dot(anchor - eye, forward)
   if depth_now <= 1.0e-6: return
   var depth_end = min(depth_now, camera.distance)

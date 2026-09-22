@@ -10,6 +10,7 @@ joinable: true
 import std/[os, strutils, unittest]
 
 import ../design/marks
+import ../design/plain
 import ../design/rig_page
 import ../tools/title
 
@@ -62,9 +63,32 @@ suite "mark workbench":
       # reset all read at one speed.  Every animated element carries its own
       # clock, on every page, or none of that ranking survives being written out.
       check written.count("<animate") == written.count("keyTimes=")
+      # Prose on every page follows Simplified Technical English (Article VI.8), and two of
+      # its rules can be counted: sentence's words and paragraph's sentences.  Read here
+      # because page's prose is written by hand, so nothing else can hold it.  Failure names
+      # sentence to split, since rule is about that sentence and not about page.
+      for said in written.longSentences:
+        checkpoint "sentence over " & $WORDS & " words: " & said
+        fail()
+      for said in written.longParagraphs:
+        checkpoint "paragraph over " & $SENTENCES & " sentences, opening: " & said
+        fail()
 
 suite "every page this project publishes":
   test "viewer's title reads in title case, as every other does":
     ## Viewer is written by its own module rather than by workbench above, so its title is
     ## held here against same reading rather than left as only one nothing checks.
     check titleCased(TITLE)
+
+  test "committed markup says its prose plainly too":
+    ## Whole-cloth mock-up is hand-authored file rather than page workbench renders, so its
+    ## prose is held here.  Reference page's own markup is held by `treview.nim`, beside
+    ## build that fills it.
+    let markup = readFile("mockups" / "wholecloth.html")
+    check markup.prose.len > 0
+    for said in markup.longSentences:
+      checkpoint "sentence over " & $WORDS & " words: " & said
+      fail()
+    for said in markup.longParagraphs:
+      checkpoint "paragraph over " & $SENTENCES & " sentences, opening: " & said
+      fail()

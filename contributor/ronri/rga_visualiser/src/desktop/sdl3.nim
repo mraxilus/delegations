@@ -65,6 +65,8 @@ type
       ##   Dear ImGui's keyboard navigation owns it, and rebinding it inside view would
       ##   risk keyboard trap WCAG 2.1.2 rules out.
       ##   Declared so `--drive-keys` can synthesise one and prove nav has it.
+    Space = 44,
+      ## Raise camera along its own up, in free flight.
     Minus = 45,
     Equals = 46,
     BracketLeft = 47,
@@ -74,7 +76,12 @@ type
     Left = 80,
     Down = 81,
     Up = 82,
+    ControlLeft = 224,
     ShiftLeft = 225,
+    ControlRight = 228,
+      ## Bind both control keys to same thing, as both shift keys are bound.
+      ##   Lowers camera in free flight. Accelerators read modifier bitmask instead, so
+      ##   binding press and release here takes nothing from them.
     ShiftRight = 229,
       ## Bind both shift keys to same thing.
       ##   Reader holds whichever their other hand is nearer.
@@ -241,6 +248,9 @@ const lut_mirror_to_symbol = [
   (int(Scancode.Q), "SDL_SCANCODE_Q"),
   (int(Scancode.Return), "SDL_SCANCODE_RETURN"),
   (int(Scancode.Tab), "SDL_SCANCODE_TAB"),
+  (int(Scancode.Space), "SDL_SCANCODE_SPACE"),
+  (int(Scancode.ControlLeft), "SDL_SCANCODE_LCTRL"),
+  (int(Scancode.ControlRight), "SDL_SCANCODE_RCTRL"),
   (int(Scancode.Minus), "SDL_SCANCODE_MINUS"),
   (int(Scancode.Equals), "SDL_SCANCODE_EQUALS"),
   (int(Scancode.BracketLeft), "SDL_SCANCODE_LEFTBRACKET"),

@@ -1,22 +1,34 @@
 ## Orbit camera about pivot, and assemble transforms OpenGL draws through.
 ##
-## Camera's own frame is derived through RGA, exactly as objects it looks at are:
+## Stance is one rigid motion. `Camera.motor` carries reference stance to where camera
+## stands, and everything below is read off it:
 ##
-##   |-------------|---------------|-------------------------------------------------|
-##   | Identifier  | Construction  | Meaning                                         |
-##   |-------------|---------------|-------------------------------------------------|
-##   | axis_sight  | 𝐞 ∧ 𝐭         | Line joining eye to pivot.                     |
-##   | forward     | att(𝐋)        | Unit direction eye looks along.                 |
-##   | axis_right  | -(𝐋 ∧ 𝐮)☆     | Unit direction of view's +x.                    |
-##   | axis_up     | -(𝐋 ∧ 𝐫)☆     | Unit direction of view's +y.                    |
-##   |-------------|---------------|-------------------------------------------------|
+##   |-------------|------------------------|--------------------------------------------|
+##   | Identifier  | Construction           | Meaning                                    |
+##   |-------------|------------------------|--------------------------------------------|
+##   | eye         | 𝐐 ⟇ 𝐨 ⟇ ~∘𝐐            | Point eye stands at.                       |
+##   | forward     | 𝐐 ⟇ 𝐟 ⟇ ~∘𝐐            | Unit direction eye looks along.            |
+##   | axis_right  | 𝐐 ⟇ 𝐫 ⟇ ~∘𝐐            | Unit direction of view's +x.               |
+##   | axis_up     | 𝐐 ⟇ 𝐮 ⟇ ~∘𝐐            | Unit direction of view's +y.               |
+##   | pivot       | eye + depth * forward   | Point orbit turns about.                   |
+##   | azimuth     | arctan2(-fʸ, -fˣ)       | Angle about world up.                      |
+##   | elevation   | arcsin(-fᶻ)             | Angle above horizon.                       |
+##   |-------------|------------------------|--------------------------------------------|
 ##
+##   `𝐨`, `𝐟`, `𝐫` and `𝐮` are `EYE_REFERENCE`, `FORWARD_REFERENCE`, `RIGHT_REFERENCE` and
+##   `UP_REFERENCE`. Motion itself is `motors.nim`, which stands in until library writes it.
+##
+## Pivot and both angles are read out rather than stored.
+##   They named stance before, and one of them could go stale against another: dolly wrote
+##   distance while pivot stood, and pivot could sit where no angle pointed.
+##   Rotor has no pole, so `frame` needs no clamp. `ELEVATION_LIMIT` is bound `orbit`
+##   applies to hold turntable's own reading, and nothing derives through it.
 ## Only projection is left to convention.
 ##   Perspective divide, depth range and clip volume belong to graphics pipeline rather
 ##   than to geometry, so they are written out directly.
-## Stance is spherical about pivot, since that is what mouse drag turns.
-##   Elevation is clamped short of poles, where up direction would run along sight axis
-##   and joins above would collapse.
+## Stance is turntable, since that is what mouse drag turns.
+##   `orbit` rebuilds motion from four turntable numbers, so no roll creeps in. Every other
+##   verb composes motion directly, because none of them turns.
 ##
 ## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
 
@@ -25,10 +37,10 @@
 {.experimental: "codeReordering".}
 {.experimental: "strictFuncs".}
 
-import std/[math, options, strformat]
+import std/[math, options]
 
 import pga
-import ./[boundary, tessellate]
+import ./[boundary, motors, tessellate]
 
 
 
@@ -40,6 +52,17 @@ const
     ##   Rounding then never culls point GPU would draw; see `viewBoundsFor`.
   UP_WORLD* = Direction(x: 0.0, y: 0.0, z: 1.0)
     ## Fix world's up direction, which azimuth turns about and elevation rises from.
+  EYE_REFERENCE* = Position(x: 0.0, y: 0.0, z: 0.0)
+    ## Place reference stance's eye, which `Camera.motor` carries to where eye stands.
+  RIGHT_REFERENCE* = Direction(x: 0.0, y: 1.0, z: 0.0)
+    ## Fix reference stance's +x across, which motor carries to `FrameCamera.axis_right`.
+  UP_REFERENCE* = Direction(x: 0.0, y: 0.0, z: 1.0)
+    ## Fix reference stance's +y up, which motor carries to `FrameCamera.axis_up`.
+  FORWARD_REFERENCE* = Direction(x: -1.0, y: 0.0, z: 0.0)
+    ## Fix reference stance's sight direction, which motor carries to `FrameCamera.forward`.
+    ##   Three above are turntable's own axes at azimuth 0 and elevation 0, and not OpenGL's
+    ##   reference triple. Taking OpenGL's would put fixed 120 degree turn in every
+    ##   construction, for no reader's benefit: `initMatrixView` reads axes, never motor.
   ELEVATION_LIMIT* = 0.5*PI - 0.02
     ## Bound elevation short of pole, where sight axis would run along `UP_WORLD`.
   DISTANCE_LIMIT_NEAR* = 1.0e-9
@@ -80,6 +103,14 @@ const
     ##   Fixed plane cannot: view's extent grows with distance while plane does not, so
     ##   dollying out brings line's far end inside frame, and clips pivot away once eye
     ##   orbits past it.
+  STEP_SINGLE* = 1.0/16_777_216.0
+    ## Fix float32's own relative step, which is two to power of minus twenty-four.
+    ##   Position stored `r` from records' origin carries about `r*STEP_SINGLE` of error.
+  FRACTION_ORIGIN_HOLD* = 0.25
+    ## Spend at most this fraction of near clip on float32 error about records' origin.
+    ##   Nothing nearer than near clip is drawn, so near clip is finest thing on screen,
+    ##   and quarter of it is error no reader resolves.
+    ##   Sets how far camera travels before origin follows; see `originHeld`.
   FRACTION_VIEW_CENTRED* = 2.0/3.0
     ## Fix fraction of frame that counts as being looked at.
     ##   This much of height, and this much of width *or height, whichever is less*;
@@ -120,6 +151,39 @@ const
   FACTOR_HASTE* = 4.0 ## Multiply every rate above by this while shift is held.
     ## Shift means *faster* on every movement key rather than something different on
     ## each: what Blender, Unity, Unreal and Godot all do.
+  ROLL_SECOND* = 1.4 ## Angle held roll key turns sight axis through per second, in radians.
+    ## Same rate as `TURN_SECOND`: both are turns of whole view, and reader learns one feel.
+
+const
+  ## Fix speed curve free flight accelerates along while movement key is held.
+  ##   Held key climbs toward cap and never reaches it, so reader crosses decades of scale
+  ##   with one key rather than reaching for haste at every one.
+  ##   Cap is smaller of two figures, and `capTravelling` takes that minimum.
+  SECONDS_SPEED_RISE* = 0.6
+    ## Set time constant of climb toward cap, in seconds of holding.
+    ##   Speed reaches 63 percent of cap at this, 95 percent at three of these.
+    ##   Sized so tap of quarter second still moves camera about third of cap's rate,
+    ##   while hold of two seconds is at full rate.
+  FACTOR_SPEED_LOCAL* = 1.2
+    ## Cap speed at this many depths under pointer per second.
+    ##   Reader pointing at moon crosses moon's own distance in same time as one pointing
+    ##   at star crosses star's, so one key serves every scale in orrery.
+    ##   Equals `SLIDE_SECOND`, which was flat rate ground slide ran at, so long hold
+    ##   settles on speed that build already had.
+  SPEED_CEILING* = 300_000.0
+    ## Cap speed at this many units per second, whatever pointer reports.
+    ##   Reached where pointer is over empty sky, which has no depth to scale by.
+    ##   Crosses star field's reach of about 6.5 million units in about 22 seconds, so
+    ##   farthest catalogued star is minute away and nothing is unreachable.
+    ##   Fixed rather than read from scene: `reach_scene` is stamped by whoever owns scene,
+    ##   and speed that changed as objects were added would be speed nobody learns.
+  SPEED_LIGHT* = 1.0/499.0
+    ## Fix speed of light in this world's own units, at one unit one astronomical unit.
+    ##   Light crosses astronomical unit in 499 seconds; see `orrery.nim`.
+    ##   Reporting unit alone. Panel divides speed by this, so reader reads multiple of
+    ##   `c` rather than units per second, which matches scale bar's own reading.
+    ##   Never cap: `SPEED_CEILING` is about 1.5e8 of these, and camera held to `c` would
+    ##   take two and half hours to cross opening view of 19 units.
 
 
 
@@ -134,11 +198,31 @@ type
     elements: array[16, float]
 
   Camera* = object ## Define stance of eye about pivot, and lens it looks through.
-    pivot*: Position ## Point orbit turns about.
-    distance*: float ## Separation of eye from pivot.
-    azimuth*: float ## Angle about world up, in radians.
-    elevation*: float ## Angle above horizon, in radians.
+    ## Stance is one rigid motion and one depth. Where eye stands and which way it faces are
+    ## `motor` alone; pivot is read off sight line at `depth_pivot`.
+    ##   Orbit angles are read out rather than stored; see `azimuth` and `elevation`.
+    ##   Rotor has no pole, so `ELEVATION_LIMIT` is bound `orbit` applies rather than bound
+    ##   any derivation needs.
+    motor*: Motor ## Rigid motion carrying reference stance to this one.
+      ## Reference stance places eye at world origin, facing `FORWARD_REFERENCE`, with
+      ## `RIGHT_REFERENCE` across and `UP_REFERENCE` up. Turntable at azimuth 0, elevation
+      ## 0, distance 0, pivot at origin, which is why `initCamera` reads as two turns.
+    depth_pivot: float ## How far along sight line pivot stands from eye.
+      ## Private, and read through `distance`.
+      ##   Pivot is derived here where it was stored before, so assignment to it would move
+      ##   pivot while eye stood, where it once moved eye while pivot stood. Opposite
+      ##   readings of one spelling, so spelling is withdrawn and `dolly`, `dollyTo` and
+      ##   `repivotToDepth` say which is meant.
     degrees_field_of_view*: float ## Vertical field of view, in degrees.
+    reach_near*: float ## How far nearest drawn object stands ahead of eye, along sight.
+      ## Scale frustum and furniture take, in place of separation from pivot; see
+      ## `scaleLocal`.
+      ##   Zero where nothing is drawn ahead, which hands scale back to separation.
+      ##   Stamped by whoever owns scene, as `reach_scene` is, and once for each frame
+      ##   rather than for each overlay call: it reads every placement, and
+      ##   `ensureViewOverlay` runs many times over one frame.
+      ##   Depth along sight rather than distance, and never behind eye: what reader turned
+      ##   away from is not drawn, and scale read off it would follow that.
     reach_scene*: float ## How far farthest finite object stands from world origin.
       ## Disc's own reach included; zero for empty scene, which leaves far clip scaled alone.
       ## Stamped by whoever owns scene at each derivation point, from `framing.reachOf`;
@@ -212,13 +296,42 @@ func distanceHeld*(distance: float): float = max(distance, DISTANCE_LIMIT_NEAR)
   ##   Replaced `clamp` written at each site, shape limit takes when site is missed.
 
 
+func motorTurntable*(pivot: Position; distance, azimuth, elevation: float): Motor =
+  ## Build rigid motion carrying reference stance to turntable stance named.
+  ##   Three motions, rightmost first, since motors compose right to left.
+  ##     Slide reference eye to `pivot` plus `distance` along +x, where reference faces -x.
+  ##     Turn by `-elevation` about line through pivot along +y, which raises eye.
+  ##     Turn by `azimuth` about line through pivot along world up, which swings it round.
+  ##   Every axis is line through pivot, so neither turn moves pivot, and `distance` and
+  ##   pivot survive both.
+  ##   Held equal to `eye` and `frame` of stance built from same four numbers, by suite case.
+  let
+    pivot_point = toMultivector(pivot)
+    axis_azimuth = pivot_point ∧ toMultivector(UP_WORLD)
+    axis_elevation = pivot_point ∧ toMultivector(RIGHT_REFERENCE)
+    slid = motorSliding(toMultivector(Direction(
+      x: pivot.x + distance, y: pivot.y, z: pivot.z
+    )))
+  # Fall back to slide alone where pivot lies on either axis line.
+  #   Cannot happen: axis is join of pivot with direction, so it always carries that
+  #   direction, and `turnAbout` refuses only line with none.
+  let turn_azimuth = turnAbout(axis_azimuth, azimuth)
+  let turn_elevation = turnAbout(axis_elevation, -elevation)
+  if turn_azimuth.isNone or turn_elevation.isNone: return motorOf(slid)
+  motorOf(wedgeDotAnti(
+    wedgeDotAnti(turn_azimuth.get, turn_elevation.get), slid
+  ))
+
+
 func initCamera*(pivot: Position; distance, azimuth, elevation: float): Camera =
   ## Construct camera orbiting `pivot` at given separation and angles.
+  ##   Angles are parametrisation of one stance, and not what stance holds; see `Camera`.
+  let settled = distanceHeld(distance)
   Camera(
-    pivot: pivot,
-    distance: distanceHeld(distance),
-    azimuth: azimuth,
-    elevation: clamp(elevation, -ELEVATION_LIMIT, ELEVATION_LIMIT),
+    motor: motorTurntable(
+      pivot, settled, azimuth, clamp(elevation, -ELEVATION_LIMIT, ELEVATION_LIMIT)
+    ),
+    depth_pivot: settled,
     degrees_field_of_view: 45.0,
   )
 
@@ -234,6 +347,20 @@ func initCameraDefault*(): Camera =
   )
 
 
+func scaleLocal*(camera: Camera): float =
+  ## Read distance frustum and furniture take their scale from.
+  ##   Reach to nearest drawn object where one is stamped, and separation from pivot where
+  ##   none is.
+  ##     Separation alone kept scale of stance reader set off from: near clip is one
+  ##     four-hundredth of it, and camera flying from opening stance at planet met that
+  ##     plane long before planet.
+  ##     Never pointer's own depth, which `capTravelling` reads: `SettingsFurniture`
+  ##     compares exactly, so pointer figure would rebuild grid at every pointer move, and
+  ##     would move `depthLogScale` while camera stood still.
+  ##   Held off zero, since every reader divides or scales by it.
+  if camera.reach_near > 0.0: camera.reach_near else: max(camera.distance, DISTANCE_LIMIT_NEAR)
+
+
 func distanceFar*(camera: Camera): float =
   ## Read far bound depth's logarithm spans and horizon stands within; see `distanceNear`
   ##   for why derived. Nothing clips at it: see `initMatrixProjection`.
@@ -242,14 +369,14 @@ func distanceFar*(camera: Camera): float =
   ##   Ratio to near is unbounded; `depthOf` is what makes that affordable.
   let eye = camera.eye
   let away = sqrt(eye.x*eye.x + eye.y*eye.y + eye.z*eye.z)
-  max(camera.distance*FACTOR_CLIP_FAR, away + camera.reach_scene*MARGIN_REACH_FAR)
+  max(camera.scaleLocal*FACTOR_CLIP_FAR, away + camera.reach_scene*MARGIN_REACH_FAR)
 
 
 func distanceNear*(camera: Camera): float =
   ## Read nearest depth clip volume keeps.
-  ##   Derived from orbit distance rather than stored, so it cannot go stale through dolly.
-  ##   One four-hundredth of orbit distance; see `FACTOR_CLIP_NEAR`.
-  camera.distance*FACTOR_CLIP_NEAR
+  ##   Derived from local scale rather than stored, so it cannot go stale through dolly.
+  ##   One four-hundredth of that scale; see `FACTOR_CLIP_NEAR` and `scaleLocal`.
+  camera.scaleLocal*FACTOR_CLIP_NEAR
 
 
 func depthLogScale*(camera: Camera): float =
@@ -278,24 +405,55 @@ func depthOf*(camera: Camera, depth: float): float =
   log2(depth/camera.distanceNear)*camera.depthLogScale - 1.0
 
 
+func distance*(camera: Camera): float = camera.depth_pivot
+  ## Read separation of eye from pivot.
+  ##   Read-only: see `Camera.depth_pivot` for why no spelling assigns to it.
+
+
 func eye*(camera: Camera): Position =
-  ## Place eye on sphere about pivot, from azimuth and elevation.
-  ##   Angles are parametrization (trig scalars are ground field), and *point* they place
-  ##   is assembled through algebra: pivot plus one spherical offset direction, read
-  ##   back at end.
-  ##   Held equal to spherical closed form by suite case.
-  let
-    radius = camera.distance * cos(camera.elevation)
-    offset = toMultivector(Direction(
-      x: radius * cos(camera.azimuth),
-      y: radius * sin(camera.azimuth),
-      z: camera.distance * sin(camera.elevation),
-    ))
-    placed = position(add(toMultivector(camera.pivot), offset))
-  # Fall back to pivot only in name.
-  #   Unit-weight point plus weightless direction is unit-weight point, so read cannot
-  #   refuse.
-  if placed.isSome: placed.get else: camera.pivot
+  ## Place eye by carrying reference stance's own eye through camera's motion.
+  ##   Held equal to spherical closed form by suite case, which is what `motorTurntable`
+  ##   reproduces.
+  let placed = position(
+    toMultivector(EYE_REFERENCE).carried(toMultivector(camera.motor))
+  )
+  # Fall back to reference eye only in name.
+  #   Unit motor carries unit-weight point to unit-weight point, so read cannot refuse.
+  if placed.isSome: placed.get else: EYE_REFERENCE
+
+
+func frame*(camera: Camera): FrameCamera =
+  ## Derive camera's orthonormal axes by carrying reference stance's three through motion.
+  ##   Motor is rigid, so three carried directions stay orthonormal and stay weightless:
+  ##   no join to refuse, no antidual sign to pin, and no clamp to keep them defined.
+  ##   Replaced joins and antiduals of sight axis against world up. Those collapsed as sight
+  ##   axis neared world up, which is why elevation was clamped short of pole. Rotor has no
+  ##   pole, so bound is `orbit`'s alone.
+  let motion = toMultivector(camera.motor)
+  func borne(d: Direction): Direction =
+    ## Read carried direction back, which keeps weight of zero it went in with.
+    let carried_direction = toMultivector(d).carried(motion)
+    Direction(
+      x: carried_direction[Basis.E1],
+      y: carried_direction[Basis.E2],
+      z: carried_direction[Basis.E3],
+    )
+  FrameCamera(
+    axis_right: borne(RIGHT_REFERENCE),
+    axis_up: borne(UP_REFERENCE),
+    forward: borne(FORWARD_REFERENCE),
+  )
+
+
+func pivot*(camera: Camera): Position =
+  ## Place point orbit turns about, on sight line at `distance` from eye.
+  ##   Derived where it was stored before, so dolly cannot leave it stale.
+  let (eye, forward) = (camera.eye, camera.frame.forward)
+  Position(
+    x: eye.x + camera.depth_pivot*forward.x,
+    y: eye.y + camera.depth_pivot*forward.y,
+    z: eye.z + camera.depth_pivot*forward.z,
+  )
 
 
 func azimuthElevationFor*(heading: Direction): (float, float) =
@@ -309,15 +467,62 @@ func azimuthElevationFor*(heading: Direction): (float, float) =
   (azimuth, elevation)
 
 
+func azimuth*(camera: Camera): float = camera.frame.forward.azimuthElevationFor[0]
+  ## Read angle about world up, in radians.
+  ##   Read off sight direction rather than stored; see `Camera`.
+
+
+func elevation*(camera: Camera): float = camera.frame.forward.azimuthElevationFor[1]
+  ## Read angle above horizon, in radians.
+  ##   Read off sight direction rather than stored; see `Camera`.
+
+
+func slideBy*(camera: var Camera, offset: Multivector) =
+  ## Slide whole camera by weightless `offset` point, leaving which way it faces alone.
+  ##   World slide composed on left, so it moves eye and leaves every axis: slide carries
+  ##   weightless direction unchanged.
+  ##   Every caller assembles its offset as multivector sum, so nothing reads coefficients
+  ##   out and back in on this path.
+  camera.motor = motorOf(wedgeDotAnti(
+    motorSliding(offset), toMultivector(camera.motor)
+  ))
+
+
 func orbit*(camera: var Camera; turn, rise: float) =
   ## Turn eye about pivot by given angles, keeping elevation short of poles.
-  camera.azimuth += turn
-  camera.elevation = clamp(camera.elevation + rise, -ELEVATION_LIMIT, ELEVATION_LIMIT)
+  ##   Rebuilt from four turntable numbers rather than composed on top of motion standing.
+  ##     Rebuild lands on stance those four name, so no roll can creep in over many events.
+  ##     Stage that frees roll replaces this with composition, and drops clamp with it.
+  ##   Pivot and distance both survive, because every axis `motorTurntable` turns about runs
+  ##   through pivot.
+  ##   Per event, not per frame. Derives frame four times, once for each read-out it asks;
+  ##   cost unmeasured, and one hoisted read would cost one statement of pivot's own rule.
+  camera.motor = motorTurntable(
+    camera.pivot,
+    camera.depth_pivot,
+    camera.azimuth + turn,
+    clamp(camera.elevation + rise, -ELEVATION_LIMIT, ELEVATION_LIMIT),
+  )
 
 
 func dolly*(camera: var Camera, factor: float) =
   ## Scale separation of eye from pivot, holding it off near bound.
-  camera.distance = distanceHeld(camera.distance * factor)
+  ##   Eye slides along sight line and pivot stands, which is what dolly means.
+  ##     Pivot is derived now, so holding it means sliding eye by what separation gave up,
+  ##     then naming new separation.
+  let settled = distanceHeld(camera.depth_pivot*factor)
+  camera.slideBy(wedge(
+    camera.depth_pivot - settled, toMultivector(camera.frame.forward)
+  ))
+  camera.depth_pivot = settled
+
+
+func dollyTo*(camera: var Camera, distance: float) =
+  ## Set separation of eye from pivot outright, holding it off near bound.
+  ##   For reader typing figure into numeric field, where `dolly` takes factor.
+  ##   Through `dolly`, so one statement says what holding pivot means.
+  if camera.depth_pivot <= 0.0: return
+  camera.dolly(distanceHeld(distance)/camera.depth_pivot)
 
 
 func dollyToward*(camera: var Camera, factor: float, anchor: Position) =
@@ -329,22 +534,20 @@ func dollyToward*(camera: var Camera, factor: float, anchor: Position) =
   ##   it afterwards.
   ##   Scale applied is read back from `distanceHeld` rather than assumed, so zoom
   ##   stopped by near floor moves eye by exactly as much as distance allowed.
+  ##   Pivot needs no arithmetic of its own: it is read off sight line at separation, so
+  ##   naming new separation lands it where old body assembled it by hand.
+  if camera.depth_pivot <= 0.0: return
   let
-    eye_point = toMultivector(camera.eye)
-    pivot_point = toMultivector(camera.pivot)
-    anchor_point = toMultivector(anchor)
-    distance_settled = distanceHeld(camera.distance*factor)
-    scale = distance_settled/camera.distance
-    # Assemble new pivot as one multivector expression.
-    #   Anchor plus old offset scaled, walked back along pivot-to-eye direction.
-    #   Every difference of unit-weight points is direction, so sum stays unit-weight
-    #   point throughout.
-    settled = position(subtract(
-      add(anchor_point, wedge(scale, subtract(eye_point, anchor_point))),
-      wedge(distance_settled/camera.distance, subtract(eye_point, pivot_point)),
+    distance_settled = distanceHeld(camera.depth_pivot*factor)
+    scale = distance_settled/camera.depth_pivot
+    # Step eye along its own line to anchor, as one multivector expression.
+    #   Difference of two unit-weight points is direction, and scaling one leaves it
+    #   direction, so this is weightless throughout.
+    step = wedge(scale - 1.0, subtract(
+      toMultivector(camera.eye), toMultivector(anchor)
     ))
-  if settled.isSome: camera.pivot = settled.get
-  camera.distance = distance_settled
+  camera.slideBy(step)
+  camera.depth_pivot = distance_settled
 
 
 func repivotToDepth*(camera: var Camera, depth: float) =
@@ -354,36 +557,32 @@ func repivotToDepth*(camera: var Camera, depth: float) =
   ##   then follows what reader looks at: zoom that carried eye up to planet while pivot
   ##   stayed on Sol far behind left every orbit swinging planet across frame.
   ##   Held off near floor as every distance is.
-  let
-    eye = camera.eye
-    forward = camera.frame(eye).forward
-    settled = distanceHeld(depth)
-  camera.pivot = Position(
-    x: eye.x + settled*forward.x, y: eye.y + settled*forward.y, z: eye.z + settled*forward.z
-  )
-  camera.distance = settled
+  ##   One assignment now: pivot is read off sight line at this depth, so naming depth moves
+  ##   it and moves nothing else. Eye and every axis live in `motor`, which stands.
+  camera.depth_pivot = distanceHeld(depth)
 
 
 func pan*(camera: var Camera; across, up: float) =
   ## Slide pivot within plane facing eye, so whole view shifts with it.
   ##   Slide is multivector sum along frame's own two axes.
-  let
-    axes = camera.frame(camera.eye)
-    slid = position(add(toMultivector(camera.pivot), add(
-      wedge(across * camera.distance, toMultivector(axes.axis_right)),
-      wedge(up * camera.distance, toMultivector(axes.axis_up)),
-    )))
-  if slid.isSome: camera.pivot = slid.get
+  ##   Whole camera slides, eye with it. Pivot moved and eye followed before; same picture
+  ##   either way, because eye stood at fixed offset from pivot and stands there still.
+  let axes = camera.frame
+  camera.slideBy(add(
+    wedge(across*camera.depth_pivot, toMultivector(axes.axis_right)),
+    wedge(up*camera.depth_pivot, toMultivector(axes.axis_up)),
+  ))
 
 
 func headingGround*(camera: Camera): Direction =
   ## Read way camera faces, flattened onto ground.
   ##   Direction reader means by forward, looking at scene standing on ground plane.
-  ##   Solved from azimuth rather than by flattening `frame.forward` and normalising.
-  ##     At elevation limit sight direction is within 0.02 radians of `UP_WORLD`, so
-  ##     horizontal part is rounding error scaled to unit length.
-  ##     `eye` puts eye at `pivot + radius*(cos azimuth, sin azimuth, ...)`, so way back
-  ##     is negation, elevation dropping out.
+  ##   Solved from azimuth, which `azimuth` reads off sight direction. So this *is* sight
+  ##   direction flattened and normalised, by way of two trig calls that cancel.
+  ##     Conditioning is what that costs. At elevation limit horizontal part of sight
+  ##     direction is about 0.02 of unit length, which `arctan2` still resolves to about
+  ##     five parts in 1e15. Clamp is what keeps it there, and stage that drops clamp owes
+  ##     this rule another source.
   Direction(x: -cos(camera.azimuth), y: -sin(camera.azimuth), z: 0.0)
 
 
@@ -396,58 +595,174 @@ func slideGround*(camera: var Camera; ahead, across, rise: float) =
   ##     instead of diving into it.
   ##     What Supreme Commander and Google Maps do, and reading that goes with
   ##     cursor-aimed zoom.
-  ##   `across` reuses frame's `axis_right`, already horizontal (join of sight line and
-  ##   world up, dualised), rather than second side direction that could disagree in sign
+  ##   `across` reuses frame's `axis_right`, which stays horizontal at every stance
+  ##   turntable reaches, rather than second side direction that could disagree in sign
   ##   with mouse pan.
+  ##     Reference stance's own across is `RIGHT_REFERENCE`, and neither turn tips it off
+  ##     ground: azimuth turns about world up, and elevation turns about that across itself.
   ##   All three are fractions of orbit distance, as `pan`'s arguments are.
+  let axes = camera.frame
+  camera.slideBy(add(
+    add(
+      wedge(ahead*camera.depth_pivot, toMultivector(camera.headingGround)),
+      wedge(across*camera.depth_pivot, toMultivector(axes.axis_right)),
+    ),
+    wedge(rise*camera.depth_pivot, toMultivector(UP_WORLD)),
+  ))
+
+
+
+#[ Camera Flight ]#
+
+func turnedAboutEye(camera: Camera; along: Direction, radians: float): Motor =
+  ## Turn stance about line through eye along `along`, leaving eye where it stands.
+  ##   Axis is join of eye with direction, so turn fixes eye and carries every axis.
+  ##     Same construction `motorTurntable` turns about, with eye where pivot was.
+  ##   Composed on left, so angle is read in world rather than in reference stance.
+  ##   Falls back to stance standing where direction is weightless, which carried axis
+  ##   never is.
+  let axis = toMultivector(camera.eye) ∧ toMultivector(along)
+  let turn = turnAbout(axis, radians)
+  if turn.isNone: return camera.motor
+  motorOf(wedgeDotAnti(turn.get, toMultivector(camera.motor)))
+
+
+func look*(camera: var Camera; turn, rise: float) =
+  ## Turn which way eye faces, leaving eye where it stands.
+  ##   Arguments read as `orbit`'s do, so one drag feeds either verb unchanged: `turn`
+  ##   swings sight as azimuth does, `rise` raises eye's own reading as elevation does.
+  ##     Signs match `motorTurntable`, which turns by `+azimuth` about up and `-elevation`
+  ##     about across.
+  ##   Axes are camera's own, never world's, so there is no pole and no clamp.
+  ##     Yaw about world up would tip sight as roll accumulated, and would stall at pole.
+  ##   Pivot rides along, since it is read off sight line: free flight turns about eye, and
+  ##   nothing anchors what `distance` separates from.
+  ##   Frame is read again between two turns. Across axis after yaw is not across axis
+  ##   before it, and pitching about stale one tips up axis off sight: that is roll nobody
+  ##   asked for.
+  camera.motor = camera.turnedAboutEye(camera.frame.axis_up, turn)
+  camera.motor = camera.turnedAboutEye(camera.frame.axis_right, -rise)
+
+
+func roll*(camera: var Camera, radians: float) =
+  ## Turn camera about its own sight axis, leaving eye and sight direction alone.
+  ##   Positive tips up axis toward across axis, which reader reads as clockwise roll.
+  ##   Only verb reaching sixth degree of freedom. Turntable had none: `motorTurntable`
+  ##   rebuilds from four numbers, and roll is not one of them.
+  camera.motor = camera.turnedAboutEye(camera.frame.forward, radians)
+
+
+func travel*(camera: var Camera; ahead, across, rise: float) =
+  ## Slide camera along its own three axes, leaving which way it faces alone.
+  ##   World units, unlike `slideGround` and `pan`, which take fractions of separation.
+  ##     Caller scales: free flight reads its own speed curve, which has no separation in
+  ##     it; see `speedTravelling`.
+  ##   `ahead` dives where sight dives, unlike `slideGround`, which skims ground.
+  let axes = camera.frame
+  camera.slideBy(add(
+    add(
+      wedge(ahead, toMultivector(axes.forward)),
+      wedge(across, toMultivector(axes.axis_right)),
+    ),
+    wedge(rise, toMultivector(axes.axis_up)),
+  ))
+
+
+func travelAlong*(camera: var Camera; step: float; heading: Direction) =
+  ## Slide camera by `step` units along `heading`, leaving which way it faces alone.
+  ##   For wheel travelling pointer's own ray, which is no axis of camera's frame.
+  ##   Caller hands unit direction; length of one passed in scales step with it.
+  camera.slideBy(wedge(step, toMultivector(heading)))
+
+
+func travelToward*(camera: var Camera; factor: float; anchor: Position; floor_reach: float) =
+  ## Carry eye along its own line to `anchor`, scaling what separates them by `factor`.
+  ##   Whatever stands at `anchor` keeps its pixel, on same reading `dollyToward` holds:
+  ##   sight direction never moves, so point on view ray is still on it afterwards.
+  ##   Floor is reach caller names, object's own drawn radius where object stands there,
+  ##   so wheel stops at its surface rather than carrying eye through it.
+  ##     Floor never pushes eye out: it applies only where eye is already further out.
+  ##   Separation from pivot is left to caller, which knows anchor's own depth.
   let
-    axes = camera.frame(camera.eye)
-    slid = position(add(toMultivector(camera.pivot), add(
-      add(
-        wedge(ahead * camera.distance, toMultivector(camera.headingGround)),
-        wedge(across * camera.distance, toMultivector(axes.axis_right)),
-      ),
-      wedge(rise * camera.distance, toMultivector(UP_WORLD)),
-    )))
-  if slid.isSome: camera.pivot = slid.get
+    offset = anchor - camera.eye
+    reach = norm(offset)
+  if reach <= 0.0: return
+  let settled = max(reach*factor, min(max(floor_reach, DISTANCE_LIMIT_NEAR), reach))
+  camera.slideBy(wedge((reach - settled)/reach, toMultivector(offset)))
+
+
+func flyAhead*(camera: var Camera, step: float) =
+  ## Travel `step` units along sight, holding pivot where it stands in world.
+  ##   Separation follows, so frustum's scale and furniture's extent track flight.
+  ##     Sliding whole camera keeps separation, and near clip of stance reader set off
+  ##     from then ate planet before eye reached it: near is one four-hundredth of
+  ##     separation, which is fortieth of unit at opening stance, and planet is
+  ##     millionths wide.
+  ##   Same motion `dolly` makes, named in units rather than as factor: speed curve
+  ##   reports units, and factor would have to be read back out of them.
+  ##   Floored as every separation is; see `distanceHeld`.
+  ##   Strafe and rise carry pivot along instead, because what stands ahead keeps its
+  ##   depth as camera steps sideways.
+  camera.travel(step, 0.0, 0.0)
+  camera.depth_pivot = distanceHeld(camera.depth_pivot - step)
+
+
+func originHeld*(camera: Camera, origin: Position): Position =
+  ## Say where records are stored from, given where they were stored from last.
+  ##   Eye, held where it stands until travel spends float32's precision about it.
+  ##     Eye rather than pivot: free flight turns about eye, so pivot swings through whole
+  ##     arc while eye stands, and what reader is about to reach stands near eye.
+  ##     Records are float32, and one stored `r` out carries about `r*STEP_SINGLE`.
+  ##   Held rather than followed: origin that moved every frame rebuilt every record of
+  ##   every held frame, which is what those holds exist to skip.
+  ##   Bound is `FRACTION_ORIGIN_HOLD` of near clip, divided by float32's step: about 199
+  ##   thousand units at opening stance, and less as close work draws near clip in.
+  ##   One origin for both mesh sets, since one transform draws them; see
+  ##   `initMatrixViewProjection`.
+  let
+    eye = camera.eye
+    reach = norm(eye - origin)
+  if reach*STEP_SINGLE <= FRACTION_ORIGIN_HOLD*camera.distanceNear: origin else: eye
+
+
+func capTravelling*(depth_pointer: Option[float]; scale_local, haste: float): float =
+  ## Read fastest free flight may travel right now, in units per second.
+  ##   Smaller of two figures, as `SPEED_CEILING` says: local scale, and fixed ceiling.
+  ##   Haste scales both, so shift is still one multiplier on every rate.
+  ##   Local scale is depth under pointer where pointer is over something, and camera's
+  ##   own scale where it is over empty sky.
+  ##     Ceiling alone over empty sky threw reader out of solar system in half second:
+  ##     ceiling bounds local reading, and is no reading of its own.
+  ##   Depths held off negative: pointer behind eye is no reading, and camera at floor
+  ##   would otherwise freeze rather than crawl.
+  let reach =
+    if depth_pointer.isSome: max(depth_pointer.get, 0.0) else: max(scale_local, 0.0)
+  min(FACTOR_SPEED_LOCAL*reach*haste, SPEED_CEILING*haste)
+
+
+func speedTravelling*(seconds_held, cap: float): float =
+  ## Read speed hold of `seconds_held` has climbed to, in units per second.
+  ##   Cap times `1 - exp(-t/SECONDS_SPEED_RISE)`, so cap is approached and never reached.
+  ##   Panel's reading, and nothing else: `distanceTravelled` is what moves camera.
+  cap*(1.0 - exp(-max(seconds_held, 0.0)/SECONDS_SPEED_RISE))
+
+
+func distanceTravelled*(seconds_before, seconds_after, cap: float): float =
+  ## Read distance one hold covers between two of its own ages, in units.
+  ##   Integral of `speedTravelling` across that span, written out rather than sampled.
+  ##     Speed at one end times frame's length is wrong by square of frame's length, so
+  ##     144 Hz reader would part from 60 Hz one over same hold. Same rule `dolly`
+  ##     compounds under; see `FACTOR_DOLLY_SECOND`.
+  ##   Suite holds sum of halves equal to whole, and holds long hold to cap times span
+  ##   less cap times time constant.
+  let (before, after) = (max(seconds_before, 0.0), max(seconds_after, 0.0))
+  cap*((after - before) + SECONDS_SPEED_RISE*(
+    exp(-after/SECONDS_SPEED_RISE) - exp(-before/SECONDS_SPEED_RISE)
+  ))
 
 
 
 #[ Camera Frame ]#
-
-func frame*(camera: Camera, eye: Position): FrameCamera =
-  ## Derive camera's orthonormal axes from its stance, through joins and antiduals.
-  ##   Elevation clamp keeps sight axis off world up, so every join below stays defined.
-  ##   Takes eye explicitly, so caller already holding it, or calling once per frame
-  ##   across many objects, need not pay same trig again.
-  let
-    axis_sight = toMultivector(eye) ∧ toMultivector(camera.pivot)
-    forward = direction(axis_sight)
-  doAssert forward.isSome,
-    &"Camera eye and pivot must differ, orbit distance is bounded away from zero; got " &
-      &"`{eye}` and `{camera.pivot}`."
-
-  let axis_right = directionNormal(axis_sight ∧ toMultivector(UP_WORLD))
-  doAssert axis_right.isSome,
-    &"Camera sight axis must not run along world up, elevation is clamped short of " &
-      &"poles; got `{axis_sight}`."
-
-  let axis_up = directionNormal(axis_sight ∧ toMultivector(axis_right.get))
-  doAssert axis_up.isSome,
-    &"Camera sight axis and right direction must span plane, being perpendicular; got " &
-      &"`{axis_right.get}`."
-
-  # Pin view's +y to world up, as antidual fixes axis only up to sign.
-  #   Alignment is library's inner product of two directions, read at scalar.
-  let orientation =
-    if dot(toMultivector(axis_up.get), toMultivector(UP_WORLD))[Basis.scalar] < 0: -1.0
-    else: 1.0
-  FrameCamera(
-    axis_right: axis_right.get,
-    axis_up: orientation * axis_up.get,
-    forward: forward.get,
-  )
-
 
 type SettingsFurniture* = tuple
   ## Define everything ground grid and world axes are built from.
@@ -458,8 +773,13 @@ type SettingsFurniture* = tuple
   ##     frame holds furniture no longer matching view.
   ##   Here rather than in each front-end: two private copies would be drift sibling rule
   ##   warns about.
-  pivot_x, pivot_y, pivot_z: float
-  distance, azimuth, elevation, degrees_field_of_view, reach_scene: float
+  ##   Keyed on what camera *holds*, and never on what it reads out.
+  ##     Motor and depth are stance itself, so two frames agreeing on them agree on eye,
+  ##     every axis, pivot and both angles, which is stronger than keying on those.
+  ##     Reading pivot and both angles out to key on them costs eighteen sandwiches, and
+  ##     hold exists to save less work than that; see `drivePinAnchor`.
+  motor: Motor
+  distance, degrees_field_of_view, reach_near, reach_scene: float
   height_pixels: int
   is_axes_shown, is_grid_shown: bool
 
@@ -469,10 +789,10 @@ func settingsFurnitureFor*(
 ): SettingsFurniture =
   ## Read furniture's inputs off this camera and frame, for hold comparison.
   ##   Compared exactly by callers: question is whether anything moved at all.
+  ##   Every field is plain read, so key costs nothing to build.
   (
-    camera.pivot.x, camera.pivot.y, camera.pivot.z, camera.distance,
-    camera.azimuth, camera.elevation, camera.degrees_field_of_view, camera.reach_scene,
-    height_pixels, is_axes_shown, is_grid_shown,
+    camera.motor, camera.distance, camera.degrees_field_of_view, camera.reach_near,
+    camera.reach_scene, height_pixels, is_axes_shown, is_grid_shown,
   )
 
 
@@ -487,13 +807,13 @@ func drawExtentFor*(camera: Camera, height_pixels: int): DrawExtent =
   ##   pixels actually drawn.
   let
     eye = camera.eye
-    frame = camera.frame(eye)
+    frame = camera.frame
   # Derive four multivector twins through `algebraFilled`.
   #   One derivation point shared with every hand-built extent.
   algebraFilled(DrawExtent(
     scale: DrawScale(
-      # Furniture follows orbit distance, not scene's reach; see `mesh.extentFurnitureFor`.
-      extent_furniture: extentFurnitureFor(camera.distance*FACTOR_CLIP_FAR),
+      # Furniture follows local scale, not scene's reach; see `mesh.extentFurnitureFor`.
+      extent_furniture: extentFurnitureFor(camera.scaleLocal*FACTOR_CLIP_FAR),
       eye: eye,
       radius_horizon: radiusHorizonFor(camera.distanceFar),
       forward: frame.forward,
@@ -514,7 +834,7 @@ func viewBoundsFor*(camera: Camera, scale: DrawExtent, aspect: float): ViewBound
   ##   just outside; point's own radius is added per point by `isPointInView`.
   ##   `aspect` is framebuffer's width over height, which `drawExtentFor` never needs.
   let eye = camera.eye
-  let frame = camera.frame(eye)
+  let frame = camera.frame
   let margin = (0.5*float(DIAMETER_POINT_LEAST) + 1.0)*scale.scale.radiansPerPixel
   ViewBounds(
     eye: eye,
@@ -540,7 +860,7 @@ func initMatrixViewProjection*(
   ##     stored about pivot it carries what pivot's own close-up needs.
   let eye = camera.eye
   initMatrixProjection(camera.degrees_field_of_view, aspect, camera.distanceNear) *
-    initMatrixView(eye - (origin - Position(x: 0, y: 0, z: 0)), camera.frame(eye))
+    initMatrixView(eye - (origin - Position(x: 0, y: 0, z: 0)), camera.frame)
 
 
 
@@ -852,11 +1172,44 @@ func stanceOf*(camera: Camera): CameraStance =
 
 func placed*(camera: Camera, stance: CameraStance): Camera =
   ## Put copy of `camera` at `stance`, lens untouched.
+  ##   Rebuilds motion from stance's four numbers, as `initCamera` does, so stance still
+  ##   names turntable placement and nothing carries roll across.
   result = camera
-  result.pivot = stance.pivot
-  result.distance = stance.distance
-  result.azimuth = stance.azimuth
-  result.elevation = stance.elevation
+  let settled = distanceHeld(stance.distance)
+  result.motor = motorTurntable(stance.pivot, settled, stance.azimuth, stance.elevation)
+  result.depth_pivot = settled
+
+
+func placedAtPivot*(camera: Camera, pivot: Position): Camera =
+  ## Put copy of `camera` at same stance but this pivot, eye following as it always did.
+  ##   Four of these stand where assignment to field stood, because pivot and both angles
+  ##   are read-outs now; see `Camera`. Written as calls rather than setters, so reader
+  ##   sees that whole motion is rebuilt rather than one number written (Article VII.1).
+  var stance = camera.stanceOf
+  stance.pivot = pivot
+  camera.placed(stance)
+
+
+func placedAtDistance*(camera: Camera, distance: float): Camera =
+  ## Put copy of `camera` at same stance but this separation, pivot standing.
+  ##   Same reading as `dolly`, which reaches it by factor.
+  var stance = camera.stanceOf
+  stance.distance = distance
+  camera.placed(stance)
+
+
+func placedAtAzimuth*(camera: Camera, azimuth: float): Camera =
+  ## Put copy of `camera` at same stance but this azimuth.
+  var stance = camera.stanceOf
+  stance.azimuth = azimuth
+  camera.placed(stance)
+
+
+func placedAtElevation*(camera: Camera, elevation: float): Camera =
+  ## Put copy of `camera` at same stance but this elevation, held short of poles.
+  var stance = camera.stanceOf
+  stance.elevation = clamp(elevation, -ELEVATION_LIMIT, ELEVATION_LIMIT)
+  camera.placed(stance)
 
 
 func toward*(from_stance, to_stance: CameraStance; progress: float): CameraStance =
@@ -896,7 +1249,7 @@ func towardHoldingAnchor*(
   ##   Distance still geometric, pivot read back as eye plus distance along sight.
   ##   `camera` lends its lens and angles: eye of each stance needs them.
   let
-    forward = camera.placed(from_stance).frame(camera.placed(from_stance).eye).forward
+    forward = camera.placed(from_stance).frame.forward
     eye_from = camera.placed(from_stance).eye
     eye_to = camera.placed(to_stance).eye
     depth_from = max(dot(anchor - eye_from, forward), 1.0e-6)
