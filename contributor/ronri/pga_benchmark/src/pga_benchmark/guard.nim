@@ -14,6 +14,11 @@ import std/[json, strutils]
 import ./report
 
 
+const FLOORED* = ["multiplies", "adds", "divides", "roots", "bytes_moved"]
+  ## Floor fields gate holds. Floor is derived rather than measured, so it is held to
+  ##   equality: it moves only where derivation moves, which is change to read and not drift.
+
+
 type
   Finding* = object
     ## Define one gate failure, located at baseline file.
@@ -107,3 +112,25 @@ func compare*(baseline, current: JsonNode; path: string): Verdict =
           "Total `" & metric & "` of `" & key & "` shrank; got `" & $now & "`, baseline `" &
             $was & "`."
         )
+  # Floors are derived, so they never drift: any move means derivation itself changed.
+  let floors_before = baseline{"measurands"}
+  let floors_after = current{"measurands"}
+  if not floors_before.isNil and not floors_after.isNil:
+    for id, node in floors_before.pairs:
+      let was = node{"bound"}
+      if was.isNil: continue
+      let now = floors_after{id, "bound"}
+      if now.isNil:
+        result.findings.add Finding(
+          path: path, message: "Floor absent now; got `" & id & "`."
+        )
+        continue
+      for metric in FLOORED:
+        let a = was{metric}.getInt
+        let b = now{metric}.getInt
+        if a != b:
+          result.findings.add Finding(
+            path: path,
+            message: "Floor `" & metric & "` of `" & id & "` moved; got `" & $b &
+              "`, baseline `" & $a & "`.",
+          )

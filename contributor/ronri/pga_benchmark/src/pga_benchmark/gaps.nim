@@ -48,6 +48,9 @@ type
       ## Algebra name and measurand id.
     library*, reference*: Values
       ## Both implementations.
+    bound*: Values
+      ## Floor of dense representation, derived from algebra and never measured.
+      ##   Absent where no rule is derived for measurand's shape.
     over_on*: seq[string]
       ## Metrics library exceeds target on.
     status*: Status
@@ -195,6 +198,20 @@ func decide*(gap: var Gap) =
     else: Status.Met
 
 
+func boundValuesOf(node: JsonNode): Values =
+  ## Read derived floor of one measurand; every field absent where document carries none.
+  ##   Floor spends no fill, no intermediate, no error check and no allocation by
+  ##   construction, so those stand at zero rather than absent.
+  if node.isNil or node.kind != JObject: return
+  result.multiplies = some(node{"multiplies"}.getInt)
+  result.divides = some(node{"divides"}.getInt)
+  result.bytes = some(node{"bytes_moved"}.getInt)
+  result.zero_fills = some(0)
+  result.intermediates = some(0)
+  result.checks = some(0)
+  result.allocations = some(0)
+
+
 func gapsOf*(a: Algebra): seq[Gap] =
   ## Read one gap per catalogued measurand of algebra, decided.
   let measurands = a.static_measurements.at("measurands")
@@ -208,6 +225,7 @@ func gapsOf*(a: Algebra): seq[Gap] =
     gap.reference = valuesOf(
       functions, measurement.at("reference"), p{"reference"}.getStr, measured
     )
+    gap.bound = boundValuesOf(p.at("bound"))
     gap.decide
     result.add gap
 
@@ -419,6 +437,32 @@ func cell(l, r: Option[int]): string =
   (if l.isSome: $l.get else: "–") & "/" & (if r.isSome: $r.get else: "–")
 
 
+func floorRows*(a: Algebra; gaps: openArray[Gap]): seq[string] =
+  ## Render floor of each operation once, keyed by symbol and shape.
+  ##   Floor rests on symbol, shape and arity, and never on operand kinds, so one row
+  ##   serves every measurand that spells same operation. Row also carries what library
+  ##   spends on that operation's general measurand, so distance reads across.
+  let measurands = a.static_measurements.at("measurands")
+  let functions = a.static_measurements.at("functions")
+  if measurands.isNil: return
+  var seen: seq[string]
+  for id, p in measurands.pairs:
+    let b = p.at("bound")
+    if b.isNil or b.kind != JObject: continue
+    let symbol = p{"symbol"}.getStr
+    let shape = b{"shape"}.getStr
+    let key = symbol & " " & shape
+    if key in seen: continue
+    seen.add key
+    var spent = "–"
+    let fn = functions.at(p{"library"}.getStr)
+    if not fn.isNil:
+      spent = $fn{"total", "multiplies"}.getInt & "/" & $fn{"movement", "bytes_moved"}.getInt
+    result.add "| `" & (if symbol.len > 0: symbol else: id) & "` | " & shape & " | " &
+      $b{"multiplies"}.getInt & " | " & $b{"divides"}.getInt & " | " &
+      $b{"roots"}.getInt & " | " & $b{"bytes_moved"}.getInt & " | " & spent & " |"
+
+
 func cellNs(l, r: Option[float]): string =
   ## Render timing cell to one decimal, dash where absent.
   if l.isNone and r.isNone: return "–"
@@ -507,6 +551,20 @@ func render*(
         cell(gap.library.intermediates, gap.reference.intermediates) & " | " &
         cell(gap.library.checks, gap.reference.checks) & " | " &
         cellNs(gap.library.ns, gap.reference.ns) & " | " & gap.status.word & " |"
+    let floors = floorRows(a, own)
+    if floors.len > 0:
+      lines.add ""
+      lines.add wrap(
+        "Floor of each operation over this dense representation, derived from axioms of " &
+        "algebra and never measured. Floor spends no zero fill, no intermediate, no error " &
+        "check and no allocation, and moves operands read once plus result written once. " &
+        "Floor rests on operation alone, so one row serves every measurand spelling it. " &
+        "Last column is what library spends on that operation, as multiplies over bytes."
+      )
+      lines.add ""
+      lines.add "| Op | Shape | Mul | Div | Roots | Bytes | Library mul/bytes |"
+      lines.add "|----|-------|-----|-----|-------|-------|-------------------|"
+      for row in floors: lines.add row
   for line in lines:
     if line.runeLen > WIDTH:
       raise newException(ValueError, "Rendered line outruns width; got `" & line & "`.")

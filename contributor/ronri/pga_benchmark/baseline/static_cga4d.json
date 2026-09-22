@@ -2365,7 +2365,15 @@
       "expression": "(m ∧ n)",
       "library": "∧(Multivector,Multivector)",
       "reference": "",
-      "cite": "2.17"
+      "cite": "2.17",
+      "bound": {
+        "shape": "Wedge",
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "wedge_anti": {
       "symbol": "∨",
@@ -2374,7 +2382,15 @@
       "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "",
-      "cite": "2.29"
+      "cite": "2.29",
+      "bound": {
+        "shape": "Wedge",
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "wedge_dot": {
       "symbol": "⟑",
@@ -2383,7 +2399,15 @@
       "expression": "(m ⟑ n)",
       "library": "⟑(Multivector,Multivector)",
       "reference": "",
-      "cite": "wiki:Geometric_product"
+      "cite": "wiki:Geometric_product",
+      "bound": {
+        "shape": "Geometric",
+        "multiplies": 256,
+        "adds": 240,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "wedge_dot_anti": {
       "symbol": "⟇",
@@ -2392,7 +2416,15 @@
       "expression": "(m ⟇ n)",
       "library": "⟇(Multivector,Multivector)",
       "reference": "",
-      "cite": "wiki:Geometric_product"
+      "cite": "wiki:Geometric_product",
+      "bound": {
+        "shape": "Geometric",
+        "multiplies": 256,
+        "adds": 240,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "dot": {
       "symbol": "∙",
@@ -2401,7 +2433,15 @@
       "expression": "(m ∙ n)",
       "library": "∙(Multivector,Multivector)",
       "reference": "",
-      "cite": "2.76"
+      "cite": "2.76",
+      "bound": {
+        "shape": "ScalarForm",
+        "multiplies": 16,
+        "adds": 15,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 264
+      }
     },
     "dot_anti": {
       "symbol": "∘",
@@ -2410,7 +2450,15 @@
       "expression": "(m ∘ n)",
       "library": "∘(Multivector,Multivector)",
       "reference": "",
-      "cite": "2.76"
+      "cite": "2.76",
+      "bound": {
+        "shape": "ScalarForm",
+        "multiplies": 16,
+        "adds": 15,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 264
+      }
     },
     "contract_bulk": {
       "symbol": "∨★",
@@ -2455,7 +2503,15 @@
       "expression": "(m + n)",
       "library": "+(Multivector,Multivector)",
       "reference": "",
-      "cite": "2.24"
+      "cite": "2.24",
+      "bound": {
+        "shape": "Componentwise",
+        "multiplies": 0,
+        "adds": 16,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "subtract": {
       "symbol": "-",
@@ -2464,7 +2520,15 @@
       "expression": "(m - n)",
       "library": "-(Multivector,Multivector)",
       "reference": "",
-      "cite": "2.24"
+      "cite": "2.24",
+      "bound": {
+        "shape": "Componentwise",
+        "multiplies": 0,
+        "adds": 16,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "project_central": {
       "symbol": "",
@@ -2509,7 +2573,15 @@
       "expression": "(m ∧ n)",
       "library": "∧(float,Multivector)",
       "reference": "",
-      "cite": "2.24"
+      "cite": "2.24",
+      "bound": {
+        "shape": "Scale",
+        "multiplies": 16,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 264
+      }
     },
     "bulk": {
       "symbol": "∙",
@@ -2518,7 +2590,15 @@
       "expression": "(∙ m)",
       "library": "∙(Multivector)",
       "reference": "",
-      "cite": "2.68"
+      "cite": "2.68",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "weight": {
       "symbol": "∘",
@@ -2527,7 +2607,15 @@
       "expression": "(∘ m)",
       "library": "∘(Multivector)",
       "reference": "",
-      "cite": "2.68"
+      "cite": "2.68",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "complement_right": {
       "symbol": "/",
@@ -2536,7 +2624,15 @@
       "expression": "(/ m)",
       "library": "/(Multivector)",
       "reference": "",
-      "cite": "2.19"
+      "cite": "2.19",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "complement_left": {
       "symbol": "\\",
@@ -2545,7 +2641,15 @@
       "expression": "(\\ m)",
       "library": "\\(Multivector)",
       "reference": "",
-      "cite": "2.20"
+      "cite": "2.20",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "reverse": {
       "symbol": "~",
@@ -2554,7 +2658,15 @@
       "expression": "(~ m)",
       "library": "~(Multivector)",
       "reference": "",
-      "cite": "wiki:Reverses"
+      "cite": "wiki:Reverses",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "reverse_anti": {
       "symbol": "~∘",
@@ -2563,7 +2675,15 @@
       "expression": "(~∘ m)",
       "library": "~∘(Multivector)",
       "reference": "",
-      "cite": "wiki:Reverses"
+      "cite": "wiki:Reverses",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "dual_bulk": {
       "symbol": "★",
@@ -2572,7 +2692,15 @@
       "expression": "(★ m)",
       "library": "★(Multivector)",
       "reference": "",
-      "cite": "2.103"
+      "cite": "2.103",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "dual_weight": {
       "symbol": "☆",
@@ -2581,7 +2709,15 @@
       "expression": "(☆ m)",
       "library": "☆(Multivector)",
       "reference": "",
-      "cite": "2.103"
+      "cite": "2.103",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "negate": {
       "symbol": "-",
@@ -2590,7 +2726,15 @@
       "expression": "(- m)",
       "library": "-(Multivector)",
       "reference": "",
-      "cite": "2.24"
+      "cite": "2.24",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "norm_bulk": {
       "symbol": "|∙",
@@ -2599,7 +2743,15 @@
       "expression": "(|∙ m)",
       "library": "|∙(Multivector)",
       "reference": "",
-      "cite": "2.87"
+      "cite": "2.87",
+      "bound": {
+        "shape": "Norm",
+        "multiplies": 16,
+        "adds": 15,
+        "divides": 0,
+        "roots": 1,
+        "bytes_moved": 136
+      }
     },
     "norm_weight": {
       "symbol": "|∘",
@@ -2608,7 +2760,15 @@
       "expression": "(|∘ m)",
       "library": "|∘(Multivector)",
       "reference": "",
-      "cite": "2.88"
+      "cite": "2.88",
+      "bound": {
+        "shape": "Norm",
+        "multiplies": 16,
+        "adds": 15,
+        "divides": 0,
+        "roots": 1,
+        "bytes_moved": 136
+      }
     },
     "norm_bulk_squared": {
       "symbol": "|∙²",
@@ -2617,7 +2777,15 @@
       "expression": "(`|∙²`(m))",
       "library": "|∙²(Multivector)",
       "reference": "",
-      "cite": "2.87"
+      "cite": "2.87",
+      "bound": {
+        "shape": "SquaredNorm",
+        "multiplies": 16,
+        "adds": 15,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 136
+      }
     },
     "norm_weight_squared": {
       "symbol": "|∘²",
@@ -2626,7 +2794,15 @@
       "expression": "(`|∘²`(m))",
       "library": "|∘²(Multivector)",
       "reference": "",
-      "cite": "2.88"
+      "cite": "2.88",
+      "bound": {
+        "shape": "SquaredNorm",
+        "multiplies": 16,
+        "adds": 15,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 136
+      }
     },
     "norm": {
       "symbol": "|",
@@ -2644,7 +2820,15 @@
       "expression": "(^∙ m)",
       "library": "^∙(Multivector)",
       "reference": "",
-      "cite": "2.89"
+      "cite": "2.89",
+      "bound": {
+        "shape": "Unitize",
+        "multiplies": 32,
+        "adds": 15,
+        "divides": 1,
+        "roots": 1,
+        "bytes_moved": 256
+      }
     },
     "normalize_weight": {
       "symbol": "^∘",
@@ -2653,7 +2837,15 @@
       "expression": "(^∘ m)",
       "library": "^∘(Multivector)",
       "reference": "",
-      "cite": "2.89"
+      "cite": "2.89",
+      "bound": {
+        "shape": "Unitize",
+        "multiplies": 32,
+        "adds": 15,
+        "divides": 1,
+        "roots": 1,
+        "bytes_moved": 256
+      }
     },
     "unitize": {
       "symbol": "^",
@@ -2662,7 +2854,15 @@
       "expression": "(^ m)",
       "library": "^∘(Multivector)",
       "reference": "",
-      "cite": "2.89"
+      "cite": "2.89",
+      "bound": {
+        "shape": "Unitize",
+        "multiplies": 32,
+        "adds": 15,
+        "divides": 1,
+        "roots": 1,
+        "bytes_moved": 256
+      }
     },
     "attitude": {
       "symbol": "⊖",
@@ -2671,7 +2871,15 @@
       "expression": "(⊖ m)",
       "library": "⊖(Multivector)",
       "reference": "",
-      "cite": "2.73"
+      "cite": "2.73",
+      "bound": {
+        "shape": "Attitude",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "select_grade": {
       "symbol": "{}",
@@ -2680,7 +2888,15 @@
       "expression": "(m{Grade(1)})",
       "library": "{}(Multivector,int)",
       "reference": "",
-      "cite": "2.17"
+      "cite": "2.17",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "select_grade_anti": {
       "symbol": "{}",
@@ -2689,7 +2905,15 @@
       "expression": "(m{GradeAnti(1)})",
       "library": "{}(Multivector,int)#u1",
       "reference": "",
-      "cite": "2.29"
+      "cite": "2.29",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "select_part": {
       "symbol": "[]",
@@ -2707,7 +2931,15 @@
       "expression": "(■ m)",
       "library": "■(Multivector)",
       "reference": "",
-      "cite": "wiki:Flat_bulk"
+      "cite": "wiki:Flat_bulk",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "weight_flat": {
       "symbol": "□",
@@ -2716,7 +2948,15 @@
       "expression": "(□ m)",
       "library": "□(Multivector)",
       "reference": "",
-      "cite": "wiki:Flat_weight"
+      "cite": "wiki:Flat_weight",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "norm_bulk_flat": {
       "symbol": "|■",

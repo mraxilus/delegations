@@ -19,12 +19,14 @@ import std/[algorithm, json, os, strutils, tables]
 
 import pga
 
-import ./[catalogue, inspector, kinds, report]
+import ./[bound, catalogue, inspector, kinds, report]
 
 
 const
   ALGEBRA_NAME = (if IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"
     ## Name of algebra this build inspects; umbrella spells same, kept here to stay entry.
+  METRIC = Metric(dimensions: DIMENSIONS, is_conformal: IS_CONFORMAL)
+    ## Algebra floors are derived for, spelled from same build definitions library reads.
   LIBRARY_MARK = "illuminatedZpga"
     ## Substring of module suffix of every library module, from its checkout path.
   REFERENCE_MARK = "referenceZ"
@@ -109,6 +111,16 @@ func measurandsNode(): JsonNode =
       "reference": p.referenceKey,
       "cite": p.cite,
     }
+    let b = boundOf(p.shapeOf, METRIC, p.arity)
+    if b.is_derived:
+      result[p.id]["bound"] = %*{
+        "shape": $p.shapeOf,
+        "multiplies": b.multiplies,
+        "adds": b.adds,
+        "divides": b.divides,
+        "roots": b.roots,
+        "bytes_moved": b.bytesMoved,
+      }
 
 
 func missingNode(): JsonNode =

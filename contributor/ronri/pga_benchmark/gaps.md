@@ -168,6 +168,46 @@ Gaps: 111. Over 110, met 1, unmeasured 0.
 | G102 | unitize_plane | 24/7 | 1/1 | 1152/160 | 2/0 | 18/1 | 30.4/14.8 | over |
 | G103 | attitude_plane | 81/0 | 0/0 | 896/80 | 1/0 | 1/0 | 22.7/2.1 | over |
 
+Floor of each operation over this dense representation, derived from axioms of algebra and never
+measured. Floor spends no zero fill, no intermediate, no error check and no allocation, and moves
+operands read once plus result written once. Floor rests on operation alone, so one row serves every
+measurand spelling it. Last column is what library spends on that operation, as multiplies over
+bytes.
+
+| Op | Shape | Mul | Div | Roots | Bytes | Library mul/bytes |
+|----|-------|-----|-----|-------|-------|-------------------|
+| `∧` | Wedge | 81 | 0 | 0 | 384 | 81/512 |
+| `∨` | Wedge | 81 | 0 | 0 | 384 | 81/512 |
+| `⟑` | Geometric | 192 | 0 | 0 | 384 | 192/512 |
+| `⟇` | Geometric | 192 | 0 | 0 | 384 | 192/512 |
+| `∙` | ScalarForm | 8 | 0 | 0 | 264 | 8/512 |
+| `∘` | ScalarForm | 8 | 0 | 0 | 264 | 8/512 |
+| `∨★` | ContractBulk | 54 | 0 | 0 | 384 | 54/512 |
+| `∨☆` | ContractWeight | 27 | 0 | 0 | 384 | 27/512 |
+| `∧★` | ExpandBulk | 27 | 0 | 0 | 384 | 27/512 |
+| `∧☆` | ExpandWeight | 54 | 0 | 0 | 384 | 54/512 |
+| `+` | Componentwise | 0 | 0 | 0 | 384 | 0/512 |
+| `-` | Componentwise | 0 | 0 | 0 | 384 | 0/512 |
+| `∧` | Scale | 16 | 0 | 0 | 264 | 16/392 |
+| `∙` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
+| `∘` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
+| `/` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
+| `\` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
+| `~` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
+| `~∘` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
+| `★` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
+| `☆` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
+| `-` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
+| `|∙` | Norm | 8 | 0 | 1 | 136 | 8/768 |
+| `|∘` | Norm | 8 | 0 | 1 | 136 | 8/768 |
+| `|∙²` | SquaredNorm | 8 | 0 | 0 | 136 | 8/384 |
+| `|∘²` | SquaredNorm | 8 | 0 | 0 | 136 | 8/384 |
+| `^∙` | Unitize | 24 | 1 | 1 | 256 | 24/1152 |
+| `^∘` | Unitize | 24 | 1 | 1 | 256 | 24/1152 |
+| `^` | Unitize | 24 | 1 | 1 | 256 | 24/1152 |
+| `⊖` | Attitude | 0 | 0 | 0 | 256 | 81/896 |
+| `{}` | Permutation | 0 | 0 | 0 | 256 | 0/392 |
+
 ## cga5d
 
 This algebra has 5 dimensions, a conformal metric and a 256-byte multivector. The inspector took the
@@ -310,6 +350,44 @@ Gaps: 131. Over 130, met 1, unmeasured 0.
 | G231 | container_sphere | 486/5 | 0/0 | 4352/120 | 4/0 | 4/0 | 115.6/2.3 | over |
 | G232 | partner_sphere | 1004/10 | 0/0 | 34560/120 | 10/0 | 273/0 | 278.5/2.1 | over |
 
+Floor of each operation over this dense representation, derived from axioms of algebra and never
+measured. Floor spends no zero fill, no intermediate, no error check and no allocation, and moves
+operands read once plus result written once. Floor rests on operation alone, so one row serves every
+measurand spelling it. Last column is what library spends on that operation, as multiplies over
+bytes.
+
+| Op | Shape | Mul | Div | Roots | Bytes | Library mul/bytes |
+|----|-------|-----|-----|-------|-------|-------------------|
+| `∧` | Wedge | 243 | 0 | 0 | 768 | 243/1024 |
+| `∨` | Wedge | 243 | 0 | 0 | 768 | 243/1024 |
+| `⟑` | Geometric | 1024 | 0 | 0 | 768 | 1024/1024 |
+| `⟇` | Geometric | 1024 | 0 | 0 | 768 | 1024/1024 |
+| `∙` | ScalarForm | 32 | 0 | 0 | 520 | 32/1024 |
+| `∘` | ScalarForm | 32 | 0 | 0 | 520 | 32/1024 |
+| `+` | Componentwise | 0 | 0 | 0 | 768 | 0/1024 |
+| `-` | Componentwise | 0 | 0 | 0 | 768 | 0/1024 |
+| `∧` | Scale | 32 | 0 | 0 | 520 | 32/776 |
+| `∙` | Permutation | 0 | 0 | 0 | 512 | 0/768 |
+| `∘` | Permutation | 0 | 0 | 0 | 512 | 0/768 |
+| `/` | Permutation | 0 | 0 | 0 | 512 | 0/768 |
+| `\` | Permutation | 0 | 0 | 0 | 512 | 0/768 |
+| `~` | Permutation | 0 | 0 | 0 | 512 | 0/768 |
+| `~∘` | Permutation | 0 | 0 | 0 | 512 | 0/768 |
+| `★` | Permutation | 0 | 0 | 0 | 512 | 0/768 |
+| `☆` | Permutation | 0 | 0 | 0 | 512 | 0/768 |
+| `-` | Permutation | 0 | 0 | 0 | 512 | 0/768 |
+| `|∙` | Norm | 32 | 0 | 1 | 264 | 32/1536 |
+| `|∘` | Norm | 32 | 0 | 1 | 264 | 32/1536 |
+| `|∙²` | SquaredNorm | 32 | 0 | 0 | 264 | 32/768 |
+| `|∘²` | SquaredNorm | 32 | 0 | 0 | 264 | 32/768 |
+| `^∙` | Unitize | 64 | 1 | 1 | 512 | 64/2304 |
+| `^∘` | Unitize | 64 | 1 | 1 | 512 | 64/2304 |
+| `^` | Unitize | 64 | 1 | 1 | 512 | 64/2304 |
+| `⊖` | Attitude | 0 | 0 | 0 | 512 | 243/1792 |
+| `{}` | Permutation | 0 | 0 | 0 | 512 | 0/776 |
+| `■` | Permutation | 0 | 0 | 0 | 512 | 0/768 |
+| `□` | Permutation | 0 | 0 | 0 | 512 | 0/768 |
+
 ## rga3d
 
 This algebra has 3 dimensions, a rigid metric and a 64-byte multivector. The inspector took the
@@ -360,6 +438,46 @@ Gaps: 40. Over 39, met 1, unmeasured 0.
 | G268 | select_part | – | – | – | – | – | 0.6/– | met |
 | G269 | support | 54/– | 0/– | 832/– | 3/– | 3/– | 9.6/– | over |
 | G270 | support_anti | 54/– | 0/– | 832/– | 3/– | 3/– | 10.0/– | over |
+
+Floor of each operation over this dense representation, derived from axioms of algebra and never
+measured. Floor spends no zero fill, no intermediate, no error check and no allocation, and moves
+operands read once plus result written once. Floor rests on operation alone, so one row serves every
+measurand spelling it. Last column is what library spends on that operation, as multiplies over
+bytes.
+
+| Op | Shape | Mul | Div | Roots | Bytes | Library mul/bytes |
+|----|-------|-----|-----|-------|-------|-------------------|
+| `∧` | Wedge | 27 | 0 | 0 | 192 | 27/256 |
+| `∨` | Wedge | 27 | 0 | 0 | 192 | 27/256 |
+| `⟑` | Geometric | 48 | 0 | 0 | 192 | 48/256 |
+| `⟇` | Geometric | 48 | 0 | 0 | 192 | 48/256 |
+| `∙` | ScalarForm | 4 | 0 | 0 | 136 | 4/256 |
+| `∘` | ScalarForm | 4 | 0 | 0 | 136 | 4/256 |
+| `∨★` | ContractBulk | 18 | 0 | 0 | 192 | 18/256 |
+| `∨☆` | ContractWeight | 9 | 0 | 0 | 192 | 9/256 |
+| `∧★` | ExpandBulk | 9 | 0 | 0 | 192 | 9/256 |
+| `∧☆` | ExpandWeight | 18 | 0 | 0 | 192 | 18/256 |
+| `+` | Componentwise | 0 | 0 | 0 | 192 | 0/256 |
+| `-` | Componentwise | 0 | 0 | 0 | 192 | 0/256 |
+| `∧` | Scale | 8 | 0 | 0 | 136 | 8/200 |
+| `∙` | Permutation | 0 | 0 | 0 | 128 | 0/192 |
+| `∘` | Permutation | 0 | 0 | 0 | 128 | 0/192 |
+| `/` | Permutation | 0 | 0 | 0 | 128 | 0/192 |
+| `\` | Permutation | 0 | 0 | 0 | 128 | 0/192 |
+| `~` | Permutation | 0 | 0 | 0 | 128 | 0/192 |
+| `~∘` | Permutation | 0 | 0 | 0 | 128 | 0/192 |
+| `★` | Permutation | 0 | 0 | 0 | 128 | 0/192 |
+| `☆` | Permutation | 0 | 0 | 0 | 128 | 0/192 |
+| `-` | Permutation | 0 | 0 | 0 | 128 | 0/192 |
+| `|∙` | Norm | 4 | 0 | 1 | 72 | 4/384 |
+| `|∘` | Norm | 4 | 0 | 1 | 72 | 4/384 |
+| `|∙²` | SquaredNorm | 4 | 0 | 0 | 72 | 4/192 |
+| `|∘²` | SquaredNorm | 4 | 0 | 0 | 72 | 4/192 |
+| `^∙` | Unitize | 12 | 1 | 1 | 128 | 12/576 |
+| `^∘` | Unitize | 12 | 1 | 1 | 128 | 12/576 |
+| `^` | Unitize | 12 | 1 | 1 | 128 | 12/576 |
+| `⊖` | Attitude | 0 | 0 | 0 | 128 | 27/448 |
+| `{}` | Permutation | 0 | 0 | 0 | 128 | 0/200 |
 
 ## cga4d
 
@@ -418,3 +536,41 @@ Gaps: 47. Over 46, met 1, unmeasured 0.
 | G313 | center | 162/– | 0/– | 2176/– | 4/– | 4/– | 64.4/– | over |
 | G314 | container | 162/– | 0/– | 2176/– | 4/– | 4/– | 60.8/– | over |
 | G315 | partner | 340/– | 0/– | 11136/– | 10/– | 145/– | 174.3/– | over |
+
+Floor of each operation over this dense representation, derived from axioms of algebra and never
+measured. Floor spends no zero fill, no intermediate, no error check and no allocation, and moves
+operands read once plus result written once. Floor rests on operation alone, so one row serves every
+measurand spelling it. Last column is what library spends on that operation, as multiplies over
+bytes.
+
+| Op | Shape | Mul | Div | Roots | Bytes | Library mul/bytes |
+|----|-------|-----|-----|-------|-------|-------------------|
+| `∧` | Wedge | 81 | 0 | 0 | 384 | 81/512 |
+| `∨` | Wedge | 81 | 0 | 0 | 384 | 81/512 |
+| `⟑` | Geometric | 256 | 0 | 0 | 384 | 256/512 |
+| `⟇` | Geometric | 256 | 0 | 0 | 384 | 256/512 |
+| `∙` | ScalarForm | 16 | 0 | 0 | 264 | 16/512 |
+| `∘` | ScalarForm | 16 | 0 | 0 | 264 | 16/512 |
+| `+` | Componentwise | 0 | 0 | 0 | 384 | 0/512 |
+| `-` | Componentwise | 0 | 0 | 0 | 384 | 0/512 |
+| `∧` | Scale | 16 | 0 | 0 | 264 | 16/392 |
+| `∙` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
+| `∘` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
+| `/` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
+| `\` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
+| `~` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
+| `~∘` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
+| `★` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
+| `☆` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
+| `-` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
+| `|∙` | Norm | 16 | 0 | 1 | 136 | 16/768 |
+| `|∘` | Norm | 16 | 0 | 1 | 136 | 16/768 |
+| `|∙²` | SquaredNorm | 16 | 0 | 0 | 136 | 16/384 |
+| `|∘²` | SquaredNorm | 16 | 0 | 0 | 136 | 16/384 |
+| `^∙` | Unitize | 32 | 1 | 1 | 256 | 32/1152 |
+| `^∘` | Unitize | 32 | 1 | 1 | 256 | 32/1152 |
+| `^` | Unitize | 32 | 1 | 1 | 256 | 32/1152 |
+| `⊖` | Attitude | 0 | 0 | 0 | 256 | 81/896 |
+| `{}` | Permutation | 0 | 0 | 0 | 256 | 0/392 |
+| `■` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
+| `□` | Permutation | 0 | 0 | 0 | 256 | 0/384 |

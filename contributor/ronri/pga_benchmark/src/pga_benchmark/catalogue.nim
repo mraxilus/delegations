@@ -19,6 +19,7 @@ import std/options
 
 import pga
 
+import ./bound
 import ./kinds
 
 
@@ -471,6 +472,44 @@ const MISSING* = block:
 const TEMPLATES* = [("^", "^∘")]
   ## Symbols library spells as template over another, so C carries only second's function;
   ## suite holds each pair to library source.
+
+const SHAPES* = [
+  ("∧", Shape.Wedge), ("∨", Shape.Wedge),
+  ("⟑", Shape.Geometric), ("⟇", Shape.Geometric),
+  ("∨★", Shape.ContractBulk), ("∨☆", Shape.ContractWeight),
+  ("∧★", Shape.ExpandBulk), ("∧☆", Shape.ExpandWeight),
+  ("+", Shape.Componentwise), ("-", Shape.Componentwise),
+  ("|∙²", Shape.SquaredNorm), ("|∘²", Shape.SquaredNorm),
+  ("|∙", Shape.Norm), ("|∘", Shape.Norm),
+  ("^∙", Shape.Unitize), ("^∘", Shape.Unitize), ("^", Shape.Unitize),
+  ("⊖", Shape.Attitude),
+  ("/", Shape.Permutation), ("\\", Shape.Permutation),
+  ("~", Shape.Permutation), ("~∘", Shape.Permutation),
+  ("★", Shape.Permutation), ("☆", Shape.Permutation),
+  ("■", Shape.Permutation), ("□", Shape.Permutation),
+  ("{}", Shape.Permutation),
+]
+  ## Arithmetic shape of each library symbol, i.e. which rule derives its dense floor.
+  ##   Symbol absent here carries no derived floor, and gap list shows dash rather than
+  ##   number without ground. Binary `∙` and `∘` stand apart, since library spells same
+  ##   symbol for bilinear form and for unary part.
+
+
+func shapeOf*(p: Measurand): Shape =
+  ## Read arithmetic shape of measurand, from its symbol, arity and operand kinds.
+  ##   Unary `∙` and `∘` read bulk and weight parts, which are permutations; binary ones
+  ##   are bilinear forms landing in one slot.
+  # Product against scalar operand scales every slot, whatever symbol spells it.
+  if p.arity == 2 and Kind.Scalar in p.operands: return Shape.Scale
+  if p.symbol in ["∙", "∘"]:
+    return (if p.arity == 2: Shape.ScalarForm else: Shape.Permutation)
+  for (symbol, shape) in SHAPES:
+    if p.symbol == symbol:
+      # Componentwise covers binary sum and difference; unary `-` negates in place.
+      if shape == Shape.Componentwise and p.arity == 1: return Shape.Permutation
+      return shape
+  Shape.Unknown
+
 
 const INLINED* = ["[]"]
   ## Symbols library spells as template over field read, so C carries no function at all.

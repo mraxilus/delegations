@@ -6128,7 +6128,15 @@
       "expression": "(m ∧ n)",
       "library": "∧(Multivector,Multivector)",
       "reference": "",
-      "cite": "2.17"
+      "cite": "2.17",
+      "bound": {
+        "shape": "Wedge",
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "wedge_anti": {
       "symbol": "∨",
@@ -6137,7 +6145,15 @@
       "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "",
-      "cite": "2.29"
+      "cite": "2.29",
+      "bound": {
+        "shape": "Wedge",
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "wedge_dot": {
       "symbol": "⟑",
@@ -6146,7 +6162,15 @@
       "expression": "(m ⟑ n)",
       "library": "⟑(Multivector,Multivector)",
       "reference": "",
-      "cite": "wiki:Geometric_product"
+      "cite": "wiki:Geometric_product",
+      "bound": {
+        "shape": "Geometric",
+        "multiplies": 1024,
+        "adds": 992,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "wedge_dot_anti": {
       "symbol": "⟇",
@@ -6155,7 +6179,15 @@
       "expression": "(m ⟇ n)",
       "library": "⟇(Multivector,Multivector)",
       "reference": "",
-      "cite": "wiki:Geometric_product"
+      "cite": "wiki:Geometric_product",
+      "bound": {
+        "shape": "Geometric",
+        "multiplies": 1024,
+        "adds": 992,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "dot": {
       "symbol": "∙",
@@ -6164,7 +6196,15 @@
       "expression": "(m ∙ n)",
       "library": "∙(Multivector,Multivector)",
       "reference": "",
-      "cite": "2.76"
+      "cite": "2.76",
+      "bound": {
+        "shape": "ScalarForm",
+        "multiplies": 32,
+        "adds": 31,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 520
+      }
     },
     "dot_anti": {
       "symbol": "∘",
@@ -6173,7 +6213,15 @@
       "expression": "(m ∘ n)",
       "library": "∘(Multivector,Multivector)",
       "reference": "",
-      "cite": "2.76"
+      "cite": "2.76",
+      "bound": {
+        "shape": "ScalarForm",
+        "multiplies": 32,
+        "adds": 31,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 520
+      }
     },
     "contract_bulk": {
       "symbol": "∨★",
@@ -6218,7 +6266,15 @@
       "expression": "(m + n)",
       "library": "+(Multivector,Multivector)",
       "reference": "",
-      "cite": "2.24"
+      "cite": "2.24",
+      "bound": {
+        "shape": "Componentwise",
+        "multiplies": 0,
+        "adds": 32,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "subtract": {
       "symbol": "-",
@@ -6227,7 +6283,15 @@
       "expression": "(m - n)",
       "library": "-(Multivector,Multivector)",
       "reference": "",
-      "cite": "2.24"
+      "cite": "2.24",
+      "bound": {
+        "shape": "Componentwise",
+        "multiplies": 0,
+        "adds": 32,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "project_central": {
       "symbol": "",
@@ -6272,7 +6336,15 @@
       "expression": "(m ∧ n)",
       "library": "∧(float,Multivector)",
       "reference": "",
-      "cite": "2.24"
+      "cite": "2.24",
+      "bound": {
+        "shape": "Scale",
+        "multiplies": 32,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 520
+      }
     },
     "bulk": {
       "symbol": "∙",
@@ -6281,7 +6353,15 @@
       "expression": "(∙ m)",
       "library": "∙(Multivector)",
       "reference": "",
-      "cite": "2.68"
+      "cite": "2.68",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "weight": {
       "symbol": "∘",
@@ -6290,7 +6370,15 @@
       "expression": "(∘ m)",
       "library": "∘(Multivector)",
       "reference": "",
-      "cite": "2.68"
+      "cite": "2.68",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "complement_right": {
       "symbol": "/",
@@ -6299,7 +6387,15 @@
       "expression": "(/ m)",
       "library": "/(Multivector)",
       "reference": "",
-      "cite": "2.19"
+      "cite": "2.19",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "complement_left": {
       "symbol": "\\",
@@ -6308,7 +6404,15 @@
       "expression": "(\\ m)",
       "library": "\\(Multivector)",
       "reference": "",
-      "cite": "2.20"
+      "cite": "2.20",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "reverse": {
       "symbol": "~",
@@ -6317,7 +6421,15 @@
       "expression": "(~ m)",
       "library": "~(Multivector)",
       "reference": "",
-      "cite": "wiki:Reverses"
+      "cite": "wiki:Reverses",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "reverse_anti": {
       "symbol": "~∘",
@@ -6326,7 +6438,15 @@
       "expression": "(~∘ m)",
       "library": "~∘(Multivector)",
       "reference": "",
-      "cite": "wiki:Reverses"
+      "cite": "wiki:Reverses",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "dual_bulk": {
       "symbol": "★",
@@ -6335,7 +6455,15 @@
       "expression": "(★ m)",
       "library": "★(Multivector)",
       "reference": "",
-      "cite": "2.103"
+      "cite": "2.103",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "dual_weight": {
       "symbol": "☆",
@@ -6344,7 +6472,15 @@
       "expression": "(☆ m)",
       "library": "☆(Multivector)",
       "reference": "",
-      "cite": "2.103"
+      "cite": "2.103",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "negate": {
       "symbol": "-",
@@ -6353,7 +6489,15 @@
       "expression": "(- m)",
       "library": "-(Multivector)",
       "reference": "",
-      "cite": "2.24"
+      "cite": "2.24",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "norm_bulk": {
       "symbol": "|∙",
@@ -6362,7 +6506,15 @@
       "expression": "(|∙ m)",
       "library": "|∙(Multivector)",
       "reference": "",
-      "cite": "2.87"
+      "cite": "2.87",
+      "bound": {
+        "shape": "Norm",
+        "multiplies": 32,
+        "adds": 31,
+        "divides": 0,
+        "roots": 1,
+        "bytes_moved": 264
+      }
     },
     "norm_weight": {
       "symbol": "|∘",
@@ -6371,7 +6523,15 @@
       "expression": "(|∘ m)",
       "library": "|∘(Multivector)",
       "reference": "",
-      "cite": "2.88"
+      "cite": "2.88",
+      "bound": {
+        "shape": "Norm",
+        "multiplies": 32,
+        "adds": 31,
+        "divides": 0,
+        "roots": 1,
+        "bytes_moved": 264
+      }
     },
     "norm_bulk_squared": {
       "symbol": "|∙²",
@@ -6380,7 +6540,15 @@
       "expression": "(`|∙²`(m))",
       "library": "|∙²(Multivector)",
       "reference": "",
-      "cite": "2.87"
+      "cite": "2.87",
+      "bound": {
+        "shape": "SquaredNorm",
+        "multiplies": 32,
+        "adds": 31,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 264
+      }
     },
     "norm_weight_squared": {
       "symbol": "|∘²",
@@ -6389,7 +6557,15 @@
       "expression": "(`|∘²`(m))",
       "library": "|∘²(Multivector)",
       "reference": "",
-      "cite": "2.88"
+      "cite": "2.88",
+      "bound": {
+        "shape": "SquaredNorm",
+        "multiplies": 32,
+        "adds": 31,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 264
+      }
     },
     "norm": {
       "symbol": "|",
@@ -6407,7 +6583,15 @@
       "expression": "(^∙ m)",
       "library": "^∙(Multivector)",
       "reference": "",
-      "cite": "2.89"
+      "cite": "2.89",
+      "bound": {
+        "shape": "Unitize",
+        "multiplies": 64,
+        "adds": 31,
+        "divides": 1,
+        "roots": 1,
+        "bytes_moved": 512
+      }
     },
     "normalize_weight": {
       "symbol": "^∘",
@@ -6416,7 +6600,15 @@
       "expression": "(^∘ m)",
       "library": "^∘(Multivector)",
       "reference": "",
-      "cite": "2.89"
+      "cite": "2.89",
+      "bound": {
+        "shape": "Unitize",
+        "multiplies": 64,
+        "adds": 31,
+        "divides": 1,
+        "roots": 1,
+        "bytes_moved": 512
+      }
     },
     "unitize": {
       "symbol": "^",
@@ -6425,7 +6617,15 @@
       "expression": "(^ m)",
       "library": "^∘(Multivector)",
       "reference": "",
-      "cite": "2.89"
+      "cite": "2.89",
+      "bound": {
+        "shape": "Unitize",
+        "multiplies": 64,
+        "adds": 31,
+        "divides": 1,
+        "roots": 1,
+        "bytes_moved": 512
+      }
     },
     "attitude": {
       "symbol": "⊖",
@@ -6434,7 +6634,15 @@
       "expression": "(⊖ m)",
       "library": "⊖(Multivector)",
       "reference": "",
-      "cite": "2.73"
+      "cite": "2.73",
+      "bound": {
+        "shape": "Attitude",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "select_grade": {
       "symbol": "{}",
@@ -6443,7 +6651,15 @@
       "expression": "(m{Grade(1)})",
       "library": "{}(Multivector,int)",
       "reference": "",
-      "cite": "2.17"
+      "cite": "2.17",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "select_grade_anti": {
       "symbol": "{}",
@@ -6452,7 +6668,15 @@
       "expression": "(m{GradeAnti(1)})",
       "library": "{}(Multivector,int)#u1",
       "reference": "",
-      "cite": "2.29"
+      "cite": "2.29",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "select_part": {
       "symbol": "[]",
@@ -6470,7 +6694,15 @@
       "expression": "(■ m)",
       "library": "■(Multivector)",
       "reference": "",
-      "cite": "wiki:Flat_bulk"
+      "cite": "wiki:Flat_bulk",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "weight_flat": {
       "symbol": "□",
@@ -6479,7 +6711,15 @@
       "expression": "(□ m)",
       "library": "□(Multivector)",
       "reference": "",
-      "cite": "wiki:Flat_weight"
+      "cite": "wiki:Flat_weight",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "norm_bulk_flat": {
       "symbol": "|■",
@@ -6551,7 +6791,15 @@
       "expression": "(m ∧ n)",
       "library": "∧(Multivector,Multivector)",
       "reference": "wedge(RoundPoint,RoundPoint)",
-      "cite": "2.17"
+      "cite": "2.17",
+      "bound": {
+        "shape": "Wedge",
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "wedge_dipole_round_point": {
       "symbol": "∧",
@@ -6560,7 +6808,15 @@
       "expression": "(m ∧ n)",
       "library": "∧(Multivector,Multivector)",
       "reference": "wedge(Dipole,RoundPoint)",
-      "cite": "2.17"
+      "cite": "2.17",
+      "bound": {
+        "shape": "Wedge",
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "wedge_round_point_dipole": {
       "symbol": "∧",
@@ -6569,7 +6825,15 @@
       "expression": "(m ∧ n)",
       "library": "∧(Multivector,Multivector)",
       "reference": "wedge(RoundPoint,Dipole)",
-      "cite": "2.18"
+      "cite": "2.18",
+      "bound": {
+        "shape": "Wedge",
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "wedge_circle_round_point": {
       "symbol": "∧",
@@ -6578,7 +6842,15 @@
       "expression": "(m ∧ n)",
       "library": "∧(Multivector,Multivector)",
       "reference": "wedge(Circle,RoundPoint)",
-      "cite": "2.17"
+      "cite": "2.17",
+      "bound": {
+        "shape": "Wedge",
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "wedge_round_point_circle": {
       "symbol": "∧",
@@ -6587,7 +6859,15 @@
       "expression": "(m ∧ n)",
       "library": "∧(Multivector,Multivector)",
       "reference": "wedge(RoundPoint,Circle)",
-      "cite": "2.18"
+      "cite": "2.18",
+      "bound": {
+        "shape": "Wedge",
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "wedge_dipole_dipole": {
       "symbol": "∧",
@@ -6596,7 +6876,15 @@
       "expression": "(m ∧ n)",
       "library": "∧(Multivector,Multivector)",
       "reference": "wedge(Dipole,Dipole)",
-      "cite": "2.17"
+      "cite": "2.17",
+      "bound": {
+        "shape": "Wedge",
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "wedge_anti_sphere_sphere": {
       "symbol": "∨",
@@ -6605,7 +6893,15 @@
       "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "wedgeAnti(Sphere,Sphere)",
-      "cite": "2.29"
+      "cite": "2.29",
+      "bound": {
+        "shape": "Wedge",
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "wedge_anti_sphere_circle": {
       "symbol": "∨",
@@ -6614,7 +6910,15 @@
       "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "wedgeAnti(Sphere,Circle)",
-      "cite": "2.29"
+      "cite": "2.29",
+      "bound": {
+        "shape": "Wedge",
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "wedge_anti_circle_sphere": {
       "symbol": "∨",
@@ -6623,7 +6927,15 @@
       "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "wedgeAnti(Circle,Sphere)",
-      "cite": "2.32"
+      "cite": "2.32",
+      "bound": {
+        "shape": "Wedge",
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "wedge_anti_circle_circle": {
       "symbol": "∨",
@@ -6632,7 +6944,15 @@
       "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "wedgeAnti(Circle,Circle)",
-      "cite": "2.29"
+      "cite": "2.29",
+      "bound": {
+        "shape": "Wedge",
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "wedge_anti_sphere_dipole": {
       "symbol": "∨",
@@ -6641,7 +6961,15 @@
       "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "wedgeAnti(Sphere,Dipole)",
-      "cite": "2.29"
+      "cite": "2.29",
+      "bound": {
+        "shape": "Wedge",
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "wedge_anti_dipole_sphere": {
       "symbol": "∨",
@@ -6650,7 +6978,15 @@
       "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "wedgeAnti(Dipole,Sphere)",
-      "cite": "2.32"
+      "cite": "2.32",
+      "bound": {
+        "shape": "Wedge",
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "dot_round_point_round_point": {
       "symbol": "∙",
@@ -6659,7 +6995,15 @@
       "expression": "(m ∙ n)",
       "library": "∙(Multivector,Multivector)",
       "reference": "dot(RoundPoint,RoundPoint)",
-      "cite": "2.76"
+      "cite": "2.76",
+      "bound": {
+        "shape": "ScalarForm",
+        "multiplies": 32,
+        "adds": 31,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 520
+      }
     },
     "dot_dipole_dipole": {
       "symbol": "∙",
@@ -6668,7 +7012,15 @@
       "expression": "(m ∙ n)",
       "library": "∙(Multivector,Multivector)",
       "reference": "dot(Dipole,Dipole)",
-      "cite": "2.76"
+      "cite": "2.76",
+      "bound": {
+        "shape": "ScalarForm",
+        "multiplies": 32,
+        "adds": 31,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 520
+      }
     },
     "dot_circle_circle": {
       "symbol": "∙",
@@ -6677,7 +7029,15 @@
       "expression": "(m ∙ n)",
       "library": "∙(Multivector,Multivector)",
       "reference": "dot(Circle,Circle)",
-      "cite": "2.76"
+      "cite": "2.76",
+      "bound": {
+        "shape": "ScalarForm",
+        "multiplies": 32,
+        "adds": 31,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 520
+      }
     },
     "dot_sphere_sphere": {
       "symbol": "∙",
@@ -6686,7 +7046,15 @@
       "expression": "(m ∙ n)",
       "library": "∙(Multivector,Multivector)",
       "reference": "dot(Sphere,Sphere)",
-      "cite": "2.76"
+      "cite": "2.76",
+      "bound": {
+        "shape": "ScalarForm",
+        "multiplies": 32,
+        "adds": 31,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 520
+      }
     },
     "dot_anti_round_point_round_point": {
       "symbol": "∘",
@@ -6695,7 +7063,15 @@
       "expression": "(m ∘ n)",
       "library": "∘(Multivector,Multivector)",
       "reference": "dotAnti(RoundPoint,RoundPoint)",
-      "cite": "2.76"
+      "cite": "2.76",
+      "bound": {
+        "shape": "ScalarForm",
+        "multiplies": 32,
+        "adds": 31,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 520
+      }
     },
     "dot_anti_dipole_dipole": {
       "symbol": "∘",
@@ -6704,7 +7080,15 @@
       "expression": "(m ∘ n)",
       "library": "∘(Multivector,Multivector)",
       "reference": "dotAnti(Dipole,Dipole)",
-      "cite": "2.76"
+      "cite": "2.76",
+      "bound": {
+        "shape": "ScalarForm",
+        "multiplies": 32,
+        "adds": 31,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 520
+      }
     },
     "dot_anti_circle_circle": {
       "symbol": "∘",
@@ -6713,7 +7097,15 @@
       "expression": "(m ∘ n)",
       "library": "∘(Multivector,Multivector)",
       "reference": "dotAnti(Circle,Circle)",
-      "cite": "2.76"
+      "cite": "2.76",
+      "bound": {
+        "shape": "ScalarForm",
+        "multiplies": 32,
+        "adds": 31,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 520
+      }
     },
     "dot_anti_sphere_sphere": {
       "symbol": "∘",
@@ -6722,7 +7114,15 @@
       "expression": "(m ∘ n)",
       "library": "∘(Multivector,Multivector)",
       "reference": "dotAnti(Sphere,Sphere)",
-      "cite": "2.76"
+      "cite": "2.76",
+      "bound": {
+        "shape": "ScalarForm",
+        "multiplies": 32,
+        "adds": 31,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 520
+      }
     },
     "complement_right_round_point": {
       "symbol": "/",
@@ -6731,7 +7131,15 @@
       "expression": "(/ m)",
       "library": "/(Multivector)",
       "reference": "complementRight(RoundPoint)",
-      "cite": "2.19"
+      "cite": "2.19",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "complement_left_round_point": {
       "symbol": "\\",
@@ -6740,7 +7148,15 @@
       "expression": "(\\ m)",
       "library": "\\(Multivector)",
       "reference": "complementLeft(RoundPoint)",
-      "cite": "2.20"
+      "cite": "2.20",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "reverse_round_point": {
       "symbol": "~",
@@ -6749,7 +7165,15 @@
       "expression": "(~ m)",
       "library": "~(Multivector)",
       "reference": "reverse(RoundPoint)",
-      "cite": "wiki:Reverses"
+      "cite": "wiki:Reverses",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "reverse_anti_round_point": {
       "symbol": "~∘",
@@ -6758,7 +7182,15 @@
       "expression": "(~∘ m)",
       "library": "~∘(Multivector)",
       "reference": "reverseAnti(RoundPoint)",
-      "cite": "wiki:Reverses"
+      "cite": "wiki:Reverses",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "dual_bulk_round_point": {
       "symbol": "★",
@@ -6767,7 +7199,15 @@
       "expression": "(★ m)",
       "library": "★(Multivector)",
       "reference": "dualBulk(RoundPoint)",
-      "cite": "2.103"
+      "cite": "2.103",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "dual_weight_round_point": {
       "symbol": "☆",
@@ -6776,7 +7216,15 @@
       "expression": "(☆ m)",
       "library": "☆(Multivector)",
       "reference": "dualWeight(RoundPoint)",
-      "cite": "2.103"
+      "cite": "2.103",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "bulk_round_point": {
       "symbol": "∙",
@@ -6785,7 +7233,15 @@
       "expression": "(∙ m)",
       "library": "∙(Multivector)",
       "reference": "bulk(RoundPoint)",
-      "cite": "2.68"
+      "cite": "2.68",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "weight_round_point": {
       "symbol": "∘",
@@ -6794,7 +7250,15 @@
       "expression": "(∘ m)",
       "library": "∘(Multivector)",
       "reference": "weight(RoundPoint)",
-      "cite": "2.68"
+      "cite": "2.68",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "bulk_flat_round_point": {
       "symbol": "■",
@@ -6803,7 +7267,15 @@
       "expression": "(■ m)",
       "library": "■(Multivector)",
       "reference": "bulkFlat(RoundPoint)",
-      "cite": "wiki:Flat_bulk"
+      "cite": "wiki:Flat_bulk",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "weight_flat_round_point": {
       "symbol": "□",
@@ -6812,7 +7284,15 @@
       "expression": "(□ m)",
       "library": "□(Multivector)",
       "reference": "weightFlat(RoundPoint)",
-      "cite": "wiki:Flat_weight"
+      "cite": "wiki:Flat_weight",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "attitude_round_point": {
       "symbol": "⊖",
@@ -6821,7 +7301,15 @@
       "expression": "(⊖ m)",
       "library": "⊖(Multivector)",
       "reference": "attitude(RoundPoint)",
-      "cite": "2.73"
+      "cite": "2.73",
+      "bound": {
+        "shape": "Attitude",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "carrier_round_point": {
       "symbol": "⊟",
@@ -6875,7 +7363,15 @@
       "expression": "(/ m)",
       "library": "/(Multivector)",
       "reference": "complementRight(Dipole)",
-      "cite": "2.19"
+      "cite": "2.19",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "complement_left_dipole": {
       "symbol": "\\",
@@ -6884,7 +7380,15 @@
       "expression": "(\\ m)",
       "library": "\\(Multivector)",
       "reference": "complementLeft(Dipole)",
-      "cite": "2.20"
+      "cite": "2.20",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "reverse_dipole": {
       "symbol": "~",
@@ -6893,7 +7397,15 @@
       "expression": "(~ m)",
       "library": "~(Multivector)",
       "reference": "reverse(Dipole)",
-      "cite": "wiki:Reverses"
+      "cite": "wiki:Reverses",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "reverse_anti_dipole": {
       "symbol": "~∘",
@@ -6902,7 +7414,15 @@
       "expression": "(~∘ m)",
       "library": "~∘(Multivector)",
       "reference": "reverseAnti(Dipole)",
-      "cite": "wiki:Reverses"
+      "cite": "wiki:Reverses",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "dual_bulk_dipole": {
       "symbol": "★",
@@ -6911,7 +7431,15 @@
       "expression": "(★ m)",
       "library": "★(Multivector)",
       "reference": "dualBulk(Dipole)",
-      "cite": "2.103"
+      "cite": "2.103",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "dual_weight_dipole": {
       "symbol": "☆",
@@ -6920,7 +7448,15 @@
       "expression": "(☆ m)",
       "library": "☆(Multivector)",
       "reference": "dualWeight(Dipole)",
-      "cite": "2.103"
+      "cite": "2.103",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "bulk_dipole": {
       "symbol": "∙",
@@ -6929,7 +7465,15 @@
       "expression": "(∙ m)",
       "library": "∙(Multivector)",
       "reference": "bulk(Dipole)",
-      "cite": "2.68"
+      "cite": "2.68",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "weight_dipole": {
       "symbol": "∘",
@@ -6938,7 +7482,15 @@
       "expression": "(∘ m)",
       "library": "∘(Multivector)",
       "reference": "weight(Dipole)",
-      "cite": "2.68"
+      "cite": "2.68",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "bulk_flat_dipole": {
       "symbol": "■",
@@ -6947,7 +7499,15 @@
       "expression": "(■ m)",
       "library": "■(Multivector)",
       "reference": "bulkFlat(Dipole)",
-      "cite": "wiki:Flat_bulk"
+      "cite": "wiki:Flat_bulk",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "weight_flat_dipole": {
       "symbol": "□",
@@ -6956,7 +7516,15 @@
       "expression": "(□ m)",
       "library": "□(Multivector)",
       "reference": "weightFlat(Dipole)",
-      "cite": "wiki:Flat_weight"
+      "cite": "wiki:Flat_weight",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "attitude_dipole": {
       "symbol": "⊖",
@@ -6965,7 +7533,15 @@
       "expression": "(⊖ m)",
       "library": "⊖(Multivector)",
       "reference": "attitude(Dipole)",
-      "cite": "2.73"
+      "cite": "2.73",
+      "bound": {
+        "shape": "Attitude",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "carrier_dipole": {
       "symbol": "⊟",
@@ -7019,7 +7595,15 @@
       "expression": "(/ m)",
       "library": "/(Multivector)",
       "reference": "complementRight(Circle)",
-      "cite": "2.19"
+      "cite": "2.19",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "complement_left_circle": {
       "symbol": "\\",
@@ -7028,7 +7612,15 @@
       "expression": "(\\ m)",
       "library": "\\(Multivector)",
       "reference": "complementLeft(Circle)",
-      "cite": "2.20"
+      "cite": "2.20",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "reverse_circle": {
       "symbol": "~",
@@ -7037,7 +7629,15 @@
       "expression": "(~ m)",
       "library": "~(Multivector)",
       "reference": "reverse(Circle)",
-      "cite": "wiki:Reverses"
+      "cite": "wiki:Reverses",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "reverse_anti_circle": {
       "symbol": "~∘",
@@ -7046,7 +7646,15 @@
       "expression": "(~∘ m)",
       "library": "~∘(Multivector)",
       "reference": "reverseAnti(Circle)",
-      "cite": "wiki:Reverses"
+      "cite": "wiki:Reverses",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "dual_bulk_circle": {
       "symbol": "★",
@@ -7055,7 +7663,15 @@
       "expression": "(★ m)",
       "library": "★(Multivector)",
       "reference": "dualBulk(Circle)",
-      "cite": "2.103"
+      "cite": "2.103",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "dual_weight_circle": {
       "symbol": "☆",
@@ -7064,7 +7680,15 @@
       "expression": "(☆ m)",
       "library": "☆(Multivector)",
       "reference": "dualWeight(Circle)",
-      "cite": "2.103"
+      "cite": "2.103",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "bulk_circle": {
       "symbol": "∙",
@@ -7073,7 +7697,15 @@
       "expression": "(∙ m)",
       "library": "∙(Multivector)",
       "reference": "bulk(Circle)",
-      "cite": "2.68"
+      "cite": "2.68",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "weight_circle": {
       "symbol": "∘",
@@ -7082,7 +7714,15 @@
       "expression": "(∘ m)",
       "library": "∘(Multivector)",
       "reference": "weight(Circle)",
-      "cite": "2.68"
+      "cite": "2.68",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "bulk_flat_circle": {
       "symbol": "■",
@@ -7091,7 +7731,15 @@
       "expression": "(■ m)",
       "library": "■(Multivector)",
       "reference": "bulkFlat(Circle)",
-      "cite": "wiki:Flat_bulk"
+      "cite": "wiki:Flat_bulk",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "weight_flat_circle": {
       "symbol": "□",
@@ -7100,7 +7748,15 @@
       "expression": "(□ m)",
       "library": "□(Multivector)",
       "reference": "weightFlat(Circle)",
-      "cite": "wiki:Flat_weight"
+      "cite": "wiki:Flat_weight",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "attitude_circle": {
       "symbol": "⊖",
@@ -7109,7 +7765,15 @@
       "expression": "(⊖ m)",
       "library": "⊖(Multivector)",
       "reference": "attitude(Circle)",
-      "cite": "2.73"
+      "cite": "2.73",
+      "bound": {
+        "shape": "Attitude",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "carrier_circle": {
       "symbol": "⊟",
@@ -7163,7 +7827,15 @@
       "expression": "(/ m)",
       "library": "/(Multivector)",
       "reference": "complementRight(Sphere)",
-      "cite": "2.19"
+      "cite": "2.19",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "complement_left_sphere": {
       "symbol": "\\",
@@ -7172,7 +7844,15 @@
       "expression": "(\\ m)",
       "library": "\\(Multivector)",
       "reference": "complementLeft(Sphere)",
-      "cite": "2.20"
+      "cite": "2.20",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "reverse_sphere": {
       "symbol": "~",
@@ -7181,7 +7861,15 @@
       "expression": "(~ m)",
       "library": "~(Multivector)",
       "reference": "reverse(Sphere)",
-      "cite": "wiki:Reverses"
+      "cite": "wiki:Reverses",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "reverse_anti_sphere": {
       "symbol": "~∘",
@@ -7190,7 +7878,15 @@
       "expression": "(~∘ m)",
       "library": "~∘(Multivector)",
       "reference": "reverseAnti(Sphere)",
-      "cite": "wiki:Reverses"
+      "cite": "wiki:Reverses",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "dual_bulk_sphere": {
       "symbol": "★",
@@ -7199,7 +7895,15 @@
       "expression": "(★ m)",
       "library": "★(Multivector)",
       "reference": "dualBulk(Sphere)",
-      "cite": "2.103"
+      "cite": "2.103",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "dual_weight_sphere": {
       "symbol": "☆",
@@ -7208,7 +7912,15 @@
       "expression": "(☆ m)",
       "library": "☆(Multivector)",
       "reference": "dualWeight(Sphere)",
-      "cite": "2.103"
+      "cite": "2.103",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "bulk_sphere": {
       "symbol": "∙",
@@ -7217,7 +7929,15 @@
       "expression": "(∙ m)",
       "library": "∙(Multivector)",
       "reference": "bulk(Sphere)",
-      "cite": "2.68"
+      "cite": "2.68",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "weight_sphere": {
       "symbol": "∘",
@@ -7226,7 +7946,15 @@
       "expression": "(∘ m)",
       "library": "∘(Multivector)",
       "reference": "weight(Sphere)",
-      "cite": "2.68"
+      "cite": "2.68",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "bulk_flat_sphere": {
       "symbol": "■",
@@ -7235,7 +7963,15 @@
       "expression": "(■ m)",
       "library": "■(Multivector)",
       "reference": "bulkFlat(Sphere)",
-      "cite": "wiki:Flat_bulk"
+      "cite": "wiki:Flat_bulk",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "weight_flat_sphere": {
       "symbol": "□",
@@ -7244,7 +7980,15 @@
       "expression": "(□ m)",
       "library": "□(Multivector)",
       "reference": "weightFlat(Sphere)",
-      "cite": "wiki:Flat_weight"
+      "cite": "wiki:Flat_weight",
+      "bound": {
+        "shape": "Permutation",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "attitude_sphere": {
       "symbol": "⊖",
@@ -7253,7 +7997,15 @@
       "expression": "(⊖ m)",
       "library": "⊖(Multivector)",
       "reference": "attitude(Sphere)",
-      "cite": "2.73"
+      "cite": "2.73",
+      "bound": {
+        "shape": "Attitude",
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "carrier_sphere": {
       "symbol": "⊟",

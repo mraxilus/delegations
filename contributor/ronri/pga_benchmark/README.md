@@ -59,7 +59,9 @@ tests/                             suites, and the testament stubs that run them
 
 ## Status
 
-Measured on the pinned compiler and on library head `9f9019b`. There is one gap for each
+Measured on the pinned compiler and on library head `9f9019b`. Each operation is compared on
+three points: the library, the floor the algebra demands of any dense implementation, and
+Lengyel's typed reference. There is one gap for each
 measurand of each algebra, with the causes above them. Every cause is over but the last,
 which nothing here can read. `gaps.md` counts them. Unreviewed by a human. See
 `PROVENANCE.md` for the figures, and for what each subsystem was checked against.
