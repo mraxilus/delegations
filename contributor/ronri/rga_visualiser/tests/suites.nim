@@ -4212,8 +4212,10 @@ suite "Camera Aim":
         let framed = framedFor(scene, picked, camera)
         check camera.placed(framed).pivot =~ middle
         check framed.distance == camera.distance
-        check camera.placed(framed).azimuth == camera.azimuth
-        check camera.placed(framed).elevation == camera.elevation
+        # Angles are computed floats: they pass through motor and back, so they land
+        #   within ulp or two of what camera stands at rather than on it.
+        check camera.placed(framed).azimuth =~ camera.azimuth
+        check camera.placed(framed).elevation =~ camera.elevation
         # End to end: ease carries pivot there and leaves everything else alone.
         var tween: CameraTween
         tween.offerAim(
@@ -4243,8 +4245,8 @@ suite "Camera Aim":
         )
         check camera.placed(framed).pivot =~ place
         check framed.distance == camera.distance
-        check camera.placed(framed).azimuth == camera.azimuth
-        check camera.placed(framed).elevation == camera.elevation
+        check camera.placed(framed).azimuth =~ camera.azimuth
+        check camera.placed(framed).elevation =~ camera.elevation
 
 
   test "a finite selection never turns the orbit":
@@ -4262,8 +4264,8 @@ suite "Camera Aim":
         for elevation in ELEVATIONS_AIM:
           let camera = stanceAim(azimuth, elevation)
           let framed = framedFor(scene, picked, camera)
-          check camera.placed(framed).azimuth == camera.azimuth
-          check camera.placed(framed).elevation == camera.elevation
+          check camera.placed(framed).azimuth =~ camera.azimuth
+          check camera.placed(framed).elevation =~ camera.elevation
 
 
   test "the camera pulls back only as far as it must, and never pulls in":
@@ -4318,7 +4320,7 @@ suite "Camera Aim":
     check aim.get.sphere.get.radius =~ 0.0
     let framed = framedFor(scene, picked, camera)
     check framed.distance == camera.distance
-    check camera.placed(framed).azimuth == camera.azimuth
+    check camera.placed(framed).azimuth =~ camera.azimuth
     check isShownAll(
       scene, picked, none(Preview), camera.placed(framed), WIDTH_AIM, HEIGHT_AIM
     )
@@ -4349,8 +4351,8 @@ suite "Camera Aim":
       sceneOf(star, toMultivector(Position(x: 3.0, y: -2.0, z: 1.0)))
     let camera = stanceAim(0.7, 0.2)
     let framed = framedFor(scene_both, picked_both, camera)
-    check camera.placed(framed).azimuth == camera.azimuth
-    check camera.placed(framed).elevation == camera.elevation
+    check camera.placed(framed).azimuth =~ camera.azimuth
+    check camera.placed(framed).elevation =~ camera.elevation
 
 
   test "an empty selection withdraws the offer, and so does geometry that draws nothing":
