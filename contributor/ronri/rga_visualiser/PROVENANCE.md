@@ -1320,6 +1320,76 @@ because the ground is that case.
 *Checked.* Verified by `suites.nim`: every moved form is pinned to its algebraic reference.
 Assumed: the figure of µs for each operation, which comes from one profile at 1,024 objects.
 
+## Motors
+
+`motors.nim` holds the rigid motions that `pga` lacks. A motor is one value that carries a turn
+about a line and a slide along that same line.
+
+**The library has the parts, and not the whole.** It carries the geometric antiproduct (`⟑` for the
+base form, `⟇` for this one), the antireverse (`~∘`), the weight and bulk split, and `unitize`. It
+carries no motor type, no `exp` and no `log`.
+
+The library names that gap twice as its own work. `multivectors.nim` asks for an even grade basis,
+and names motors as the reason it wants one. `operators.nim` names motors beside the sandwich macro
+that it leaves commented out. So this module stands in until the library returns, on the pattern of
+`projections.nim`. A compile guard refuses the build once the pinned library carries its own `exp`.
+Nothing here reimplements a library operation, which Article II.8 forbids.
+
+**A motor lives in the antiproduct's algebra, and not the base product's.** A probe read the rows
+below off the pinned tree, and the suite pins every one of them.
+
+- The identity is `𝟙` (`E1234`), because `⟇` is the product that motors compose through.
+- The turn generator is the line direction (`E41`, `E42`, `E43`), which antisquares to `-𝟙`.
+- The slide generator is the line moment (`E23`, `E31`, `E12`), which antisquares to zero.
+- The sandwich is `Q ⟇ m ⟇ ~∘Q`. One form serves a point, a line and a plane alike.
+- A turn by `+θ` about a unit line is `exp(-(θ/2)L)`, and `turnAbout` holds that sign.
+- Motors compose right to left, so `m.carried(a).carried(b)` is `m.carried(b ⟇ a)`.
+
+The base product is not this algebra. Under `⟑` the two halves swap roles: the moment squares to
+`-1`, and the direction squares to zero. A sandwich built there turns about the line at infinity
+rather than about the line meant, and both products compile.
+
+**Neither `exp` nor `log` needs a degenerate branch.** Both read two series of the half-angle:
+`sin(a)/a`, and `(a*cos(a) - sin(a))/a³`. Both series are finite at zero, where they read 1 and
+`-1/3`. A pure slide falls out of the same expression, because its direction is zero. A pure turn
+falls out the same way. No branch means no branch to get wrong.
+
+`ANGLE_SERIES` at 1e-4 chooses the series over the closed form. `a*cos(a) - sin(a)` subtracts two
+values near `a` to reach one near `a³/3`, so it loses about `3ε/a²` of its digits. At an `a` of 1e-6
+the closed form keeps about four. The next term of the series is `a⁴/840`, under 1e-19 at that
+crossing, so the two arms agree there.
+
+**`log` takes the short way round.** A motor and its negation carry every point alike, so `log`
+reads one with a negative antiscalar through its negation. The half-angle then stays at or under
+`π/2`, where `sin(a)/a` stays above 0.63. Without this, `log` of a motor near a full turn divides by
+zero, and a full turn names no axis to return. So `exp(log(Q))` is the same motion as `Q`, and the
+same coefficients only where `Q` turns by less than a half turn.
+
+**Normalisation is the library's `unitize`.** The weight norm of a unit motor reads 1, for a turn, a
+slide and a screw alike. Nothing here normalises, and a finding against `unitize` belongs to the
+library.
+
+**Nothing uses this module yet.** It is the first of six stages that rework the camera (issue #220).
+
+*Checked.* Verified by `suites.nim`:
+
+- the antisquare of each generator, and the swap that the base product makes;
+- a turn about the z axis against `cos` and `sin`, at six angles, the half turn included;
+- a turn about a line off the origin, which carries the origin about that line;
+- a horizon line, which names no axis and turns nothing;
+- a slide that carries every point by one offset, in two terms and no more;
+- `exp(log(Q))` against `Q`, and unit weight, over 64 seeded screws, one in seven of them
+  at a half-angle below `ANGLE_SERIES`;
+- the identity, the inverse through `~∘`, and the grade that survives a sandwich;
+- the distance and the weight that a rigid motion keeps;
+- the order of composition.
+
+Assumed: that `unitize` is the motor norm for any unit motor. The suite reads it back for every
+motor that `exp` builds, and derives nothing about one that drift moved off unit.
+
+Unmeasured: the cost of a sandwich. It is two dense antiproducts. That is about twice the 1 to 2 µs
+that the Algebra boundary section records for one operation on the JS backend.
+
 ## Selection and markers
 
 `selection.nim` is shared. It holds an ordered fixed-capacity list of handles, as a plain value
