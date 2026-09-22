@@ -70,8 +70,8 @@ project, and `curator/<name>` is rules and root work. Every pull request runs th
 
 - `static`: layout, form, telegraphic comments, and records with their headers and stamps.
   It also reads glossary shape, the prompts, and the Simplified Technical English of the
-  governed documents. It reads copied paragraphs, shipped faces, workflow grants, and the
-  compiler pin of each project. It runs over the whole tree.
+  root documents and of every project record. It reads copied paragraphs, shipped faces,
+  workflow grants, and the compiler pin of each project. It runs over the whole tree.
 - `project`: one job for each project whose code changed, on a pull request, on the push to
   `main`, and in the weekly run alike. Each one installs that project's own pinned compiler,
   restores its dependencies from its lock file, and runs its tests. Nothing compiles every
