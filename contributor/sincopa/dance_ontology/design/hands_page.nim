@@ -93,7 +93,7 @@ const BODY = """
   every place back where it was. So the pointing says nothing, and <b>the wind is the state</b>.
   That is a turn and a half each way, by halves, which is seven positions.</p>
   <p class="sibling"><b>The crossed pair comes next</b>, on its own page. It is this chain, read
-  half a turn along, so what is left is to draw it.</p>
+  half a turn along, so only the drawing is left.</p>
 </header>
 
 <section>
@@ -115,29 +115,27 @@ const BODY = """
   crossings enclose the shape that rule 27 named. <b>The two crossings say opposite things.</b>
   Whichever connection lies over at the end of the lead lies under at the end of the follow. That
   is what a wound pair is.</p>
-  <p><b>A turn and a half makes a swan</b>, and there the pair stops being symmetric. Wound that
+  <p><b>A turn and a half makes a swan</b>, and there the pair is no longer symmetric. Wound that
   far, the two arms cannot both go on swinging. One pulls taut and runs straight through the
   middle, and the other wraps it over and under and over, in two long loops. Those are the necks
   of two mating swans round a straight neck between them, which is the picture and the name. It
   crosses three times, and it is not two diamonds stacked, which rule 30 refused.</p>
   <p><b>Nothing here is imposed, and the wind is measured.</b> Each held hand sits on the rim of
-  its own body, and both bodies stand on the axis of the pair. So the angle a hand makes with
-  that axis is what round means, and the difference between the two ends is the wind.</p>
-  <p>A
-  reach is then the shadow of a wound arm from above. Its offset from the axis swings as far round
-  as the
-  pair has. It is straight at none, a cross at a half, and a diamond at a whole, and every
-  frame between follows from the same measure. That is what stops a turn from snapping into its
-  final shape.</p>
+  its own body, and both bodies stand on the axis of the pair. So the angle a hand makes with that
+  axis says how far round it is, and the difference between the two ends is the wind.</p>
+  <p>A reach is then the shadow of a wound arm from above. Its offset from the axis swings as far
+    round as the pair has wound. It is straight at none, a cross at a half, and a diamond at a
+    whole, and every frame between follows from the same measure. That is what stops a turn from
+    jumping into its final shape.</p>
   <p><b>All four manners of turn wind, and by the same half turn.</b> Rule 32 does that. A walker in
   orbit keeps whichever side of them faced the centre facing it. So they turn as far as they travel,
-  and the pair winds with them. A half turn is then a half turn however it is danced, and
-  the four manners can be equated. <b>An orbit lands on the position that the axis turn of the
-  other dancer lands on</b>, measured on every build.</p>
+  and the pair winds with them. A half turn is then a half turn however it is danced, and the four
+  manners can be compared. <b>An orbit lands on the position the axis turn of the other dancer
+  reaches</b>, and every build measures that.</p>
   <p><b>The names are preliminary, and yours.</b> <em>Left over Right</em> is the position where the
   Left connection of the lead passes over the Right at the crossover of the lead. <em>Right over
   Left</em> is its mirror. The cross, the diamond and the swan one step apart
-  share a name, because they are one winding carried further.</p>
+  share a name, because they are one wind carried further.</p>
 </section>
 
 <section>
@@ -151,8 +149,8 @@ const BODY = """
   a turn and a half each way.</p>
   <p><b>The build measures the phase rather than writes it down.</b> It turns the follow to each
   candidate and asks which one leaves the hold unwound, by the measure everything else here uses.
-  This page comes out at nothing. The crossed pair comes out at a half turn, from this code with
-  another hold rather than from a second drawing of one idea.</p>
+  This page comes out at a phase of nothing. The crossed pair comes out at a half turn, from this
+  same code with another hold rather than from a second drawing of one idea.</p>
   <p><b>This settles rule 13</b>, which reads <em>"the two sides with an extra arm twist, in
   either direction"</em>. That extra twist was taken to belong to the crossed pair alone. It does
   not: it is the swan, and hand to hand carries one at each end.</p>
@@ -162,7 +160,7 @@ const BODY = """
   <div class="head"><span class="n">The chain</span><h2>The seven, in
   order</h2></div>
   <p>All four manners of turn reach these same seven, so they are drawn once rather than four
-  times over. A position cannot say which dancer turned, and only the path can, which is why
+  times over. A position cannot say which dancer turned, and only the path says that, which is why
   every manner is drawn in motion below.</p>
   <div class="row mid">
     {chain}
@@ -181,9 +179,9 @@ const BODY = """
   on, and the break appears at a hand and slides inward as the crossing does.</p>
   <p><b>What is not drawn:</b> anything past a turn and a half. The swans are the ends of the
   chain and they hold. No frame of any animation is wound further, and no position draws two
-  diamonds stacked. The build chooses which way a turn goes, which is whichever way walks the
-  chain inward, measured for each manner rather than assumed. The chain runs out where this scope
-  does, and not where the dance does. A pair can keep winding, and what lies past the swan is
+  diamonds stacked. The build chooses which way a turn goes: whichever way walks the chain inward,
+  measured for each manner rather than assumed. The chain runs out where this scope
+  does, and not where the dance does. A pair can wind further, and what lies past the swan is
   yours to settle.</p>
 </div>
 

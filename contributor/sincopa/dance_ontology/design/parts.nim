@@ -351,16 +351,16 @@ const MANNERS*: array[Manner, tuple[
      "faced the lead goes on facing them</b>, so they turn as far as they " &
      "travel (rule 32). The lead never moves and never turns, so there is " &
      "no second stage: the walk is the whole figure. It lands on the " &
-     "pictures that the <em>axis turn of the lead</em> lands on, measured " &
-     "on every build.",
+     "pictures the <em>axis turn of the lead</em> reaches, and every " &
+     "build measures that.",
    who: Dancer.Follow, about: About.Orbit),
   (tag: "lo", title: "The lead orbits the follow",
    blurb: "The lead walks the ring round the follow, and faces the centre " &
      "the same way. It is the one manner of the four that takes the lead " &
      "off their spot. Its second stage has something to do. It lands " &
      "where the <em>axis turn of the follow</em> lands. The drawing cannot " &
-     "say which dancer walked, and only the path can, so all four are " &
-     "drawn in motion.",
+     "say which dancer walked, and only the path says that, so all four " &
+     "are drawn in motion.",
    who: Dancer.Lead, about: About.Orbit),
 ] ## What each manner of turn is called on pages, who dances it, and
   ## about what.  Which round it walks is not restated here: `FAMILY_OF`

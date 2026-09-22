@@ -252,9 +252,9 @@ proc caption() =
     document.getElementById("verdict").innerHTML =
       (if moments() > 0:
          cstring"Holds. The sim wound the couple here from rest, lifted their " &
-           cstring"hands, and let them stand."
+           cstring"joined hands, and let the pose settle."
        else:
-         cstring"No pose holds at any distance the couple may stand at.")
+         cstring"No pose holds, at any distance the couple can stand.")
   else:
     let turned = num(sw.at[frame])
     document.getElementById("where").innerHTML =
@@ -265,7 +265,7 @@ proc caption() =
          cstring"Stops at <b>" & toFixed(num(sw.turns), 2) & cstring"</b> turns: " &
            text(sw.says)
        else:
-         cstring"Nothing stops it inside the turns the sweep tried.")
+         cstring"Nothing stops the turn inside the range this sweep tried.")
 
 
 proc framingOf(e: JsObject): Framing =

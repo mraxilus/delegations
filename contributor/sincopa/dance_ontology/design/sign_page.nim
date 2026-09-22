@@ -35,7 +35,7 @@ const BODY = """
   <p class="kicker">Dance ontology · rotation · the turn sign</p>
   <h1>The turn sign, so far</h1>
   <p class="standfirst">A leaning box holds exactly one full turn. Its rows are <b>quarter
-  turns</b>, packed up from the foot, so an amount reads as fullness before it reads as a count.
+  turns</b>, packed up from the foot, so an amount shows as how full the box is.
   Its columns are the two arms of the lead. The shape of a pip says whose quarter it is, and its
   fill says the level of that arm.</p>
    <p class="standfirst">Two things stay open. One is the mark for <em>any amount</em>.
@@ -48,7 +48,7 @@ const BODY = """
 
 <section>
   <div class="head"><span class="n">Shared</span><h2>The fills it borrows</h2></div>
-  <p>The fill of a pip is the fill that the hand it stands for carries. So a sign and a frame
+  <p>A pip carries the same fill as the hand it stands for. So a sign and a frame
   picture never disagree about a level. The shade of the lead is the deep one, and the shade of
   the follow is the plain one, as on the frame page.</p>
   <div class="plate">
@@ -69,8 +69,8 @@ const BODY = """
   <div class="head"><span class="n">One</span><h2>Quarters, and the sign becomes
   a gauge</h2></div>
   <p>The box holds one full turn in four rows. The rows pack up from the foot, so the amount
-  reads as how full the sign is. The count of pips then confirms that reading rather than
-  carrying it alone. A Laban staff fills upward for the same reason.</p>
+  reads as how full the sign is. The count of pips confirms that reading, and it does not carry
+  the reading alone. A Laban staff fills upward for the same reason.</p>
 
   <div class="plate">
     <h3>A quarter at a time</h3>
@@ -95,8 +95,9 @@ const BODY = """
 
   <div class="plate">
     <h3>The alternative, for comparison</h3>
-    <p>Here the pips spread evenly rather than pack. A spread sign still counts. A quarter and three
-    quarters no longer differ at a glance, because the pip moves and the sign does not fill.</p>
+    <p>Here the pips spread evenly, and they do not pack. A spread sign still counts. A quarter
+      and three quarters no longer differ at a glance, because the pip moves and the sign does not
+      fill.</p>
     <div class="row">
       <figure>{u_lead_1}<figcaption>spread · <b>¼</b></figcaption></figure>
       <figure>{u_lead_3}<figcaption>spread · <b>¾</b></figcaption></figure>
@@ -129,18 +130,18 @@ const BODY = """
     of the lead. The hands of the follow now carry their own sides, so a blue column no longer
     means the Left of the lead alone. It means the arm that carries that connection, which the
     frame picture names from either end.</p>
-    <p><b>One thing to watch at four rows.</b> A column repeats its level fill once for each row. So
-    a full turn on two hands is eight pips that carry two pieces of information. Any single
-    row reads complete, and at four rows that is loud. Where it reads as noise, the mend is to
-    fill the row nearest the foot and leave the rest as plain counters.</p>
+    <p><b>One thing to watch at four rows.</b> A column repeats its level fill once for each row.
+      So a full turn on two hands is eight pips that carry two pieces of information. Each row
+      reads complete on its own, and at four rows that repeat is loud. Where it reads as noise,
+      the mend is to fill the row nearest the foot and leave the rest as plain counters.</p>
   </div>
 </section>
 
 <section>
   <div class="head"><span class="n">Two</span><h2>Mixed, with room to be
   uneven</h2></div>
-  <p>Four rows draw any split between the two dancers. Three slots could not, which is what held
-  a mixed sign at half a turn each. The rows of the follow stay on top.</p>
+  <p>Four rows draw any split between the two dancers. Three slots could not, and that is what
+  held a mixed sign at half a turn each. The rows of the follow stay on top.</p>
   <div class="plate">
     <div class="row">
       <figure>{m_11}<figcaption><b>¼</b> each<br>= ½ turn</figcaption></figure>
@@ -150,7 +151,7 @@ const BODY = """
       <figure>{m_22_small}<figcaption>mixed · small</figcaption></figure>
     </div>
     <p>The rows of the follow always sit on top. So a mixed turn has one picture rather than two,
-    and the order carries nothing to read into.</p>
+    and nothing can be read into the order.</p>
   </div>
 </section>
 
@@ -159,15 +160,15 @@ const BODY = """
   <em>any amount</em></h2></div>
   <p>Three rows now mean three quarters, so <em>any</em> needs a mark of its own. Labanotation
   offers none, because a turn sign there carries a measured degree. So four of these five marks
-  are this project's own, and the fourth takes the <em>repeat ad libitum</em> of music. Each one
+  are this project's own, and the other one takes the <em>repeat ad libitum</em> of music. Each one
   is drawn full size, small, and once for the follow, beside a plain full turn.</p>
 
   <div class="plate pick">
     <h3>One, the box never closes<span class="tag">recommended</span></h3>
-    <p>The lid is not drawn, and the two long edges run on past it. That adds nothing and removes
-    one stroke, and it composes with the gauge. A box that never closes can never be full, so
-    nothing reads it as a count. It is the one candidate that costs nothing at small size. A missing
-    line says it, rather than a new mark inside a busy one.</p>
+    <p>The lid is not drawn, and the two long edges run on past it. It adds nothing, it removes
+    one stroke, and it fits the gauge. A box that never closes can never be full, so
+    nothing reads it as a count. It is the one candidate that costs nothing at small size. A
+    missing line says it, and no new mark goes inside an already busy one.</p>
     <div class="row">
       <figure>{any_full}<figcaption>a plain <b>1</b> turn<br>for comparison</figcaption></figure>
       <figure>{any_open}<figcaption><b>any</b>, open</figcaption></figure>
@@ -178,7 +179,7 @@ const BODY = """
 
   <div class="plate">
     <h3>Two, open with the next one showing</h3>
-    <p>The same open box, and a fifth pip up in the run-on. It says that the count keeps going
+    <p>The same open box, with a fifth pip up in the run-on. It says that the count keeps going
     rather than that the drawing stops. It costs a taller mark and one more thing inside it.</p>
     <div class="row">
       <figure>{any_spill}<figcaption><b>any</b>, spilling</figcaption></figure>
@@ -190,8 +191,8 @@ const BODY = """
   <div class="plate">
     <h3>Three, an ellipsis in the top row</h3>
     <p>The box stays closed, and the fourth row holds three dots for each column rather than a
-    pip. It reads as three quarters, and so on. It is plain at size, and small the three dots
-    merge into one blob, which reads as a fourth pip.</p>
+    pip. It reads as three quarters, and so on. It is plain at full size. At small size the three
+    dots merge into one blob, which then reads as a fourth pip.</p>
     <div class="row">
       <figure>{any_ellipsis}<figcaption><b>any</b>, ellipsis</figcaption></figure>
       <figure>{any_ellipsis_foll}<figcaption>follow · <b>any</b></figcaption></figure>
@@ -203,7 +204,7 @@ const BODY = """
     <h3>Four, the repeat mark of music</h3>
     <p>The ad libitum colon sits in the top row, and it says to play as many times as you like.
     It is a real convention with a long history, and anyone who reads music reads it at once.
-    Those are not the same people as those who dance.</p>
+    Those are not the same people as the ones who dance.</p>
     <div class="row">
       <figure>{any_repeat}<figcaption><b>any</b>, repeat</figcaption></figure>
       <figure>{any_repeat_foll}<figcaption>follow · <b>any</b></figcaption></figure>
@@ -213,8 +214,8 @@ const BODY = """
 
   <div class="plate">
     <h3>Five, the loop drawn on its own label</h3>
-    <p>An arrow curls from the head back to the foot, which is the loop edge of the graph drawn
-    on the label of that edge. It is the most explicit of the five, and the one that says why the
+    <p>An arrow curls from the head back to the foot. That is the loop edge of the graph, drawn on
+    the label of that edge. It is the most explicit of the five, and the one that says why the
     count does not end. It is also the widest, and the curl is the first thing to go at small
     size.</p>
     <div class="row">
@@ -242,10 +243,11 @@ const BODY = """
     </div>
   </div>
   <div class="note">
-    <p><b>The outline still collides with a mixed sign.</b> The outline carries one value, and a
-    mixed sign holds two dancers. A lead who turns on the spot while the follow travels round
-    them is ordinary, and not a corner case. The pips can carry it instead, which costs pulling
-    each fill in off its outline, so that a dashed stroke has something to show against.</p>
+    <p><b>The outline convention breaks down on a mixed sign.</b> The outline carries one value,
+      and a mixed sign holds two dancers. A lead who turns on the spot while the follow travels
+      round them is ordinary, and not a corner case. The pips can carry it instead. That costs one
+      thing: each fill pulls in off its outline, so a dashed stroke has something to show
+      against.</p>
     <div class="row mid">
       <figure>{p_split}<figcaption>follow <b>orbits</b>,
         <br>lead on <b>axis</b></figcaption></figure>
@@ -259,7 +261,7 @@ const BODY = """
   and the ontology is finished.</p>
   <p>Yours to settle on this page:</p>
   <ul>
-    <li>which <em>any</em> mark;</li>
+    <li>which mark says <em>any</em> amount;</li>
     <li>whether the orbit stays on the outline or moves to the pips;</li>
     <li>whether the level fill repeats down every row;</li>
     <li>whether the sign survives at all, now that the frame pictures animate a move;</li>
