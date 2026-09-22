@@ -333,34 +333,34 @@ type
 const MANNERS*: array[Manner, tuple[
     tag, title, blurb: string; who: Dancer; about: About]] = [
   (tag: "fa", title: "The follow turns on the spot",
-   blurb: "The follow turns on their own axis and nobody travels. What " &
-     "comes round is their <b>chevron</b>, and with it which of their " &
-     "hands is nearer. The lead stands still, facing up, so there is " &
-     "nothing to reorient afterwards: one stage, and it is over.",
+   blurb: "The follow turns on their own axis, and nobody travels. Their " &
+     "<b>chevron</b> comes round, and with it the hand that stands nearer. " &
+     "The lead stands still and faces up, so nothing needs to come back " &
+     "afterward. One stage, and it is over.",
    who: Dancer.Follow, about: About.Axis),
   (tag: "la", title: "The lead turns on the spot",
-   blurb: "The lead turns on their own axis, and this is where the two " &
-     "stages matter. <b>Stage one</b>: the lead turns and the room holds " &
-     "still, so the picture leans off upright. <b>Stage two</b>: the " &
-     "picture turns back until the lead faces up, which swings the follow " &
-     "round them. Same turn, told in the order it is danced.",
+   blurb: "The lead turns on their own axis, and here the two stages " &
+     "matter. <b>Stage one</b>: the lead turns, the room holds still, and " &
+     "the picture leans off upright. <b>Stage two</b>: the picture turns " &
+     "back until the lead faces up, which swings the follow round them. It " &
+     "is one turn, told in the order it is danced.",
    who: Dancer.Lead, about: About.Axis),
   (tag: "fo", title: "The follow orbits the lead",
-   blurb: "The follow walks the ring round the lead, who stands still — " &
-     "the dashed ring says so, and says who is standing. <b>Whatever side " &
-     "of them faced the lead goes on facing them</b>, so they turn as far " &
-     "as they travel (rule 32). The lead never moves and never turns, so " &
-     "there is no second stage at all: what you see is the walk — and it " &
-     "lands on the very pictures the <em>lead's own axis turn</em> lands " &
-     "on, measured and asserted on every build.",
+   blurb: "The follow walks the ring round the lead, who stands still. The " &
+     "dashed ring says so, and says who stands. <b>Whichever side of them " &
+     "faced the lead goes on facing them</b>, so they turn as far as they " &
+     "travel (rule 32). The lead never moves and never turns, so there is " &
+     "no second stage: the walk is the whole figure. It lands on the " &
+     "pictures that the <em>axis turn of the lead</em> lands on, measured " &
+     "on every build.",
    who: Dancer.Follow, about: About.Orbit),
   (tag: "lo", title: "The lead orbits the follow",
-   blurb: "The lead walks the ring round the follow, facing the centre the " &
-     "same way. It is the one manner of the four that takes the lead off " &
-     "their spot, so it is the one whose second stage has anything to do. " &
-     "It lands where the <em>follow's own axis turn</em> lands. Which " &
-     "dancer walked is not something the drawing can say; only the path " &
-     "can, which is why all four are animated.",
+   blurb: "The lead walks the ring round the follow, and faces the centre " &
+     "the same way. It is the one manner of the four that takes the lead " &
+     "off their spot. Its second stage has something to do. It lands " &
+     "where the <em>axis turn of the follow</em> lands. The drawing cannot " &
+     "say which dancer walked, and only the path can, so all four are " &
+     "drawn in motion.",
    who: Dancer.Lead, about: About.Orbit),
 ] ## What each manner of turn is called on pages, who dances it, and
   ## about what.  Which round it walks is not restated here: `FAMILY_OF`

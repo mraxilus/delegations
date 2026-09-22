@@ -237,38 +237,24 @@ func sheetOf(P: Parts): string =
 
   # `A`. Standard diagram: eight frames, two twist parities, and that is all of it.
   body.add """<section id="standard"><h2>A &middot; The standard diagram</h2>
-  <p class="lede">Every picture the app, the review page, the frame map and the
-  rotation axle draw is one of these. They are literally a table built at compile
-  time. <b>The 148 rotation postures add no new one</b>: only the frame, whether
-  the twist is odd or even, and &mdash; since this pass &mdash; which way it went
-  reach the drawing, so level and contact are invisible here.</p>
-  <p class="how"><b>It still cannot say which facing.</b> There are four
-  &mdash; face-to-face, back-to-back, pillion lead, pillion follow &mdash; which
-  is two bits, and <code>twist</code> carries one, its parity. So
-  <code>isFacing(twist)</code> cannot tell face-to-face from back-to-back, nor
-  pillion lead from pillion follow. The picture commits to one of each pair
-  anyway: it draws the follow turned, never the lead. Every card below says the
-  facing it draws, not the facing it knows.</p>
-  <p class="how"><b>Each frame is counted from its own rest</b> &mdash; the
-  facing where its connections run parallel and cross nothing. For a same-name
-  pair that is <b>pillion lead</b>, not face to face, which is why A10 and A12
-  read <i>at rest</i> and A9 and A11 read <i>half a turn from pillion lead</i>.
-  The rest is measured by the same <code>phaseOf</code> the chain uses, never
-  written down. A direction is named only where turning the other way draws a
-  different picture, which is A16 and A17 alone.</p>
-  <p class="how"><b>The break, and what it took to get it.</b> A crossing is
-  broken by cutting the under arm at the middle &mdash; A9 does it, running one
-  arm to (4.9,&nbsp;4.9) and resuming at (&minus;4.9,&nbsp;&minus;4.9). Which arm
-  is cut is normally the frame's own <code>over</code> field. <b>A16 was the one
-  picture whose lines crossed with neither of them cut</b>: its frame carries no
-  <code>over</code>, because at rest those two connections run parallel and only
-  turning the follow makes them cross. Which one ends up over depends on
-  <b>which way</b> she turned, and the drawing was reducing the twist to odd or
-  even before it drew &mdash; with a test asserting that a half turn each way
-  drew the same picture. The sign now reaches the drawing, the test claims the
-  opposite and can fail, and A16 carries its break. <b>A17 is what the other way
-  round looks like</b>, and it is the only frame of the eight where turning the
-  other way draws anything different.</p><div class="grid">"""
+  <p class="lede">Every drawing in this project is one of these, and a table built at compile
+  time holds them all. The drawing reads the frame hold, the parity of the twist, and the way
+  the couple turned. It never reads the level of an arm, and it never reads contact.</p>
+  <p class="how"><b>The diagram cannot name the facing.</b> There are four facings, which
+  takes two bits, and the twist carries one of them. So the drawing commits to one facing of
+  each pair: it turns the follow, and never the lead. Every card below names the facing it
+  draws, and not the facing the model knows.</p>
+  <p class="how"><b>Each frame counts from its own rest.</b> Rest is the facing where the
+  connections of that hold run parallel and cross nothing. A same-name pair rests <b>pillion
+  lead</b> rather than face-to-face. So A10 and A12 read <i>at rest</i>, and A9 and A11 read
+  <i>half a turn from pillion lead</i>. A card names a way round only where the other way
+  round draws a different picture, which is A16 and A17 alone.</p>
+  <p class="how"><b>A crossing breaks at the arm that goes under.</b> The drawing cuts that
+  arm at the middle, and the <code>over</code> field of the frame says which arm it is. A16
+  carries no such field: its two connections run parallel at rest, and they cross only once
+  the follow turns. Which arm ends over depends on the way she turned, so A16 and A17 draw the
+  two ways. They are the one frame of the eight where the way round changes the
+  picture.</p><div class="grid">"""
   func armFor(side: Side): Arm =
     ## Say which drawn arm this side of lead is.
     if side == Side.Left: Arm.L else: Arm.R
@@ -327,14 +313,12 @@ func sheetOf(P: Parts): string =
   # `B`. Single-hand turns: what animated page walks through.
   let st = P
   body.add """<section id="single"><h2>B &middot; Single-hand turn positions</h2>
-  <p class="lede">What the single-hand turns page animates between. Sixty-four
-  plates are drawn, but only twenty-eight are distinct pictures: two manners
-  of turn that share a family share all four of their positions, and manners of
-  different families share the one they rest at. Duplicates are folded here, and
-  each card says which manners and quarters land on it. The four manners are the
-  follow turning on the spot, the lead turning on the spot, the follow orbiting
-  the lead, and the lead orbiting the follow; the quarter is how far round that
-  manner has gone.</p>"""
+  <p class="lede">These are the positions that the single-hand turns page walks between. Two
+  manners of one family stand at the same four positions, and manners of two families meet
+  where they rest. So every repeat folds into one card, and each card names the manners and
+  the quarters that land on it. Two manners are axis turns, one of the follow and one of the
+  lead. Two are orbits, the follow round the lead and the lead round the follow. A quarter
+  says how far round that manner has gone.</p>"""
   var n = 0
   for c in 0 ..< SINGLES.len:
     body.add &"""<h3>{esc(SINGLES[c].name)}</h3><div class="grid wide">"""
@@ -386,16 +370,14 @@ func sheetOf(P: Parts): string =
   for position in dualChain:
     half = max(half, extent(posedAt(position.wind, dualPhase), captions = false))
 
-  body.add """<section id="chain"><h2>C &middot; Hand-to-hand chain, face-to-face at rest</h2>
-  <p class="lede">The seven places the two-hand hold stands, half a turn apart,
-  which the hand-to-hand page animates along. These carry a wind as a real
-  number, not a half-turn count, so the standard diagram cannot express any of
-  them. Drawn at the same scale as section D below, so the two chains can be set
-  against each other. The facing alternates along it &mdash; face-to-face at
-  whole turns, pillion lead at halves. Each caption says how far round from the
-  frame the position stands: <b>clockwise seen from above</b>, which is how the drawings see the
-  couple, and which names the same turn whichever of the two dancers walks
-  it.</p><div class="grid wide">"""
+  body.add """<section id="chain"><h2>C &middot; The cross-name chain, face-to-face at rest</h2>
+  <p class="lede">The chain stands in seven places, half a turn apart, and the hand-to-hand page
+  walks along it. Each place carries a wind as a real number rather than a count of half turns,
+  which the standard diagram cannot hold. The facing alternates along the chain: face-to-face at
+  the whole turns, and pillion lead at the halves. Every caption says how far round the place
+  stands from the frame, <b>clockwise seen from above</b>. That is how the drawings see the
+  couple, and it names one turn whichever dancer walks it. Section D is drawn at this scale, so
+  the two chains stand against each other.</p><div class="grid wide">"""
   for i, position in CHAIN:
     body.add card(&"C{i + 1}", position.name, windNote(position.note, position.wind),
       renderFigure("tiny", HAND_TO_HAND, ABOVE_BOTH, captions = false,
@@ -405,14 +387,13 @@ func sheetOf(P: Parts): string =
 
 
   # `D`. Dual chain: same hold, follow starting away.
-  body.add &"""<section id="paired"><h2>D &middot; Hand-to-hand chain, pillion lead at rest</h2>
-  <p class="lede">The dual of section C: lead's left to follow's left, right to
-  right. It walks the same chain read half a turn along, so it runs parallel
-  <b>pillion lead</b> rather than face-to-face &mdash; this hold's phase measures
-  {dualPhase} where the other's measures {HAND_PHASE}. Its facing alternates the
-  other way about: pillion lead at whole turns, face-to-face at halves.
-  No page in the project walks this chain; it is drawn here for the first
-  time.</p><div class="grid wide">"""
+  body.add &"""<section id="paired"><h2>D &middot; The same-name chain, pillion lead at rest</h2>
+  <p class="lede">This hold joins the left of the lead to the left of the follow, and right to
+  right. It walks the chain of section C, read half a turn along. So it runs parallel <b>pillion
+  lead</b> rather than face-to-face, and its phase measures {dualPhase} where the phase of the
+  other chain measures {HAND_PHASE}. Its facing alternates the other way about: pillion lead at
+  the whole turns, and face-to-face at the halves. No page in this project walks this
+  chain.</p><div class="grid wide">"""
   for i, position in dualChain:
     body.add card(&"D{i + 1}", position.name,
       windNote(position.note, position.wind,
@@ -424,29 +405,22 @@ func sheetOf(P: Parts): string =
 
   # `E`. Every single-hand turn animated, edge by edge.
   body.add """<section id="single-moving"><h2>E &middot; Single-hand turns, moving</h2>
-  <p class="lede">Every edge of section B, walked by every manner of turn. Each
-  manner of each hold takes <b>two cells</b>: the whole round in one figure, and
-  the same round a quarter at a time with a button per quarter. Both run at one
-  pace, so the round's loop is simply four times an edge's. Unlike the positions,
-  no two of these walks are the same picture &mdash; the walk differs even where
-  the endpoints agree, and the lead's turns are told in the two stages rule 18
-  asks for.</p>
-  <p class="how"><b>Every walk here turns one way.</b> The page turns by
-  <code>QUARTER</code>, which is a positive ninety degrees, so every walk here is
-  clockwise. The four <i>positions</i> in section B are complete either way
-  &mdash; four quarters is a whole round &mdash; but <b>the anticlockwise walks
-  are not drawn at all</b>, and neither is any edge walked backwards. If this
-  reference is to hold every move, that is a gap in it, not in the model.</p>
-  <p class="how"><b>The chevron bend is a fault here, and nowhere above.</b> A
-  reach is required to keep clear of both chevrons: <code>clearingMarks</code>
-  walks each chevron as fourteen small discs and holds the reach off them by
-  rule 22, so that a line through a mark always means that hand is held. In a
-  still that is the rule doing its job, and every still in section B is right
-  because of it. <b>In these animations it is what makes the motion catch</b>
-  &mdash; the reach detours as it passes a chevron and snaps back after. The
-  stills stay as drawn; the fix belongs to the walk, which makes it a question
-  of how rule 22 should apply while moving rather than a repair to any
-  picture.</p>"""
+  <p class="lede">Every edge of section B, walked by every manner of turn. Each manner of each hold
+  takes <b>two cells</b>. One is the whole round in one figure. The other is the same round a
+  quarter at a time, with a button for each quarter.</p>
+  <p class="lede">Both run at one pace, so
+  the loop of the round is four times the loop of an edge. No two of these walks draw one picture,
+  even where two of them
+  start and end alike. The turn of the lead is told in two stages, as rule 18 asks.</p>
+  <p class="how"><b>Every walk here turns one way.</b> The page turns by a positive quarter, so
+  every walk here is clockwise. The positions in section B are complete either way, because
+  four quarters make a whole round. <b>The anticlockwise walks are not drawn</b>, and neither
+  is any edge run backwards. That is a gap in this reference, and not in the model.</p>
+  <p class="how"><b>The bend at a chevron is a fault here, and nowhere above.</b> A reach keeps
+  clear of both chevrons, so that a line through a chevron always means that hand is held. Rule
+  22 holds it off, and every still in section B is right because of it. <b>In a walk the same
+  rule makes the motion catch</b>: the reach steps round a chevron as it passes, then snaps
+  back. The stills stand as they are drawn, and the mend belongs to the walk.</p>"""
   var m = 0
   for c in 0 ..< SINGLES.len:
     body.add &"""<h3>{esc(SINGLES[c].name)}</h3><div class="grid wide">"""
@@ -485,19 +459,17 @@ func sheetOf(P: Parts): string =
 
 
   # `F`. Every chain edge animated.
-  body.add """<section id="chain-moving"><h2>F &middot; Hand-to-hand chain, moving</h2>
-  <p class="lede">Every edge of section C, walked by every manner of turn. Each
-  manner takes <b>two cells</b>: the whole chain in one figure &mdash; six half
-  turns out from one swan to the other, and back, since the chain has ends and
-  cannot close on itself &mdash; and the same chain an edge at a time with a
-  button per edge. The whole-chain figure runs at the pace of its own edges,
-  which makes it a long loop; say if it wants to be quicker. All four manners
-  walk the same chain, since an orbit keeping its side to the centre winds the
-  pair as far as it carries the walker. <b>They do not all turn the same way
-  round</b>: a positive turn by the lead unwinds what a positive turn by the
-  follow winds, so each manner turns whichever way carries the pair along the
-  chain rather than off the end of it. Each caption says which, measured on the
-  build.</p><div class="grid wide">"""
+  body.add """<section id="chain-moving"><h2>F &middot; The cross-name chain, moving</h2>
+  <p class="lede">Every edge of section C, walked by every manner of turn. Each manner takes <b>two
+  cells</b>. One is the whole chain in one figure. The other is the same chain an edge at a time,
+  with a button for each edge.</p>
+  <p class="lede">The chain has ends and cannot close on itself,
+  so the whole figure runs out from one swan to the other and back. All four manners walk the same
+  chain, because an
+  orbit winds the pair as far as it carries the walker. <b>They do not all turn the same way
+  round</b>: a positive turn by the lead unwinds what a positive turn by the follow winds. So
+  each manner turns the way that carries the pair along the chain, and every caption names that
+  way, measured on the build.</p><div class="grid wide">"""
   var k = 0
   for manner in Manner:
     let
@@ -524,13 +496,11 @@ func sheetOf(P: Parts): string =
   # `G`. Every edge of paired chain animated, as `F` does for section C.
   body.add &"""<section id="paired-moving">
   <h2>G &middot; Hand-to-hand chain, pillion lead, moving</h2>
-  <p class="lede">What <b>F</b> is to <b>C</b>, this is to <b>D</b>: every edge of
-  the same-name chain, walked by every manner of turn. The same two cells per
-  manner &mdash; the whole chain in one figure, and an edge at a time with a
-  button apiece &mdash; and the same reading of which way each manner walks it.
-  This chain rests <b>pillion lead</b> rather than face to face, because face to
-  face its two connections lie through each other (rule 31), so its phase
-  measures {dualPhase} where the hand-to-hand chain's measures {HAND_PHASE}.</p>
+  <p class="lede">Every edge of the same-name chain of section D, walked by every manner of
+  turn. Each manner takes the same two cells that section F uses, and the way each manner walks
+  is read the same. This chain rests <b>pillion lead</b> rather than face-to-face, because
+  face-to-face its two connections lie through each other (rule 31). Its phase measures
+  {dualPhase}, where the phase of the cross-name chain measures {HAND_PHASE}.</p>
   <div class="grid wide">"""
   var g = 0
   for manner in Manner:
@@ -649,19 +619,18 @@ func sheetOf(P: Parts): string =
 
   let sheet = HEAD & """<div class="wrap">
   <h1>Frame positions, drawn</h1>
-  <p class="lede">Every position this project draws today, in one place, so each
-  can be kept or dropped. Each card carries the identifier to quote back.</p>
+  <p class="lede">Every position this project draws, in one place, so that the Architect
+  can keep or drop each one. Every card carries an identifier to quote back.</p>
   <p class="tally">{{tally}}</p>
-  <p class="how"><b>How to read it.</b> Section A is the standard diagram and is
-  complete at sixteen. Sections B and C are drawn by a different chain entirely
-  &mdash; they take a pose, arm levels and a fractional wind, none of which the
-  standard diagram can say. Nothing in A knows what level an arm is held at.</p>
-  <p class="how"><b>Two tags on every cell.</b> <i>Kept</i> is the Architect's ruling
-  on the drawing, by eye on the floor. The second is the body sim's: <i>not
-  modelled</i> where the sim reaches no pose for the card, <i>unconfirmed</i> where
-  it reaches one that the Architect has not yet held against their own body on
-  the viewer page, and <i>modelled</i> only once they have. The sim reaching a
-  card is a claim, not a verdict.</p>
+  <p class="how"><b>How to read it.</b> Section A is the standard diagram. It is a table of
+  frames, and it says no level at all. Sections B to D come from another chain. That chain takes a
+  pose, a level for each arm, and a wind that is not a count of half turns.</p>
+  <p class="how"><b>Every cell carries two tags.</b> <i>Kept</i> is the ruling of the Architect
+  on the drawing, by eye on the floor.</p>
+   <p class="how">The other tag is the body sim's. It reads <i>not modelled</i>
+  where the sim reaches no pose. It reads <i>unconfirmed</i> where the sim reaches one that the
+  Architect has not yet held against their own body on the viewer. It reads <i>modelled</i>
+  once they have. A pose the sim reaches is a claim, and never a verdict.</p>
   """ & body & "</div>"
 
   # Counted off page itself rather than tallied while building it, so

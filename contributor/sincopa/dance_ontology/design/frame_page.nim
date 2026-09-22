@@ -35,57 +35,52 @@ const BODY = """
 <header class="top">
   <p class="kicker">Dance ontology · rotation · the frame</p>
   <h1>The frame, so far</h1>
-  <p class="standfirst">Each dancer is a plain circle with a small chevron at
-  its centre for the facing. A connection runs hand to hand as a taut string
-  that wraps a body rather than crossing it, drawn in <b>its two hands' own
-  colours</b>, meeting at the middle. <b>A settled hand is in one of six
-  places</b> — its own side or the other one, and on each of those where the
-  arm hangs, a little towards the front, or a little towards the back —
-  decided by the hold's level and by whether it locks or wraps, with the place
-  it left drawn as a grey ghost. <b>The hold says which way the line goes
-  round</b> too: wraps round the front, locks round the back. And <b>a lock or
-  wrap only exists where the line really goes round the body</b>, which turns
-  out to rule most of them out most of the time.
-  A move animates in two stages: travel, then turn the world until <b>the lead
-  faces up</b> again. That second stage collapses every pose that is the same
-  configuration onto one picture, and shows that <b>an orbit lands where the
-  other dancer's axis turn lands</b> — while an orbit walked keeping one's own
-  bearing lands somewhere of its own. And <b>only an <em>above</em> connection may
-  ever cross a body</b> — at every instant a moving picture draws, not merely
-  at the frames it is sampled at.</p>
-  <p class="sibling"><b>The turn sign is on its own page.</b> It answers a
-  different question — how to label an <em>edge</em> — and only meets this one
-  at the levels and the arm inks, which the two pages share.</p>
+  <p class="standfirst">Each dancer is a plain circle, with a small chevron at its centre for
+  the facing. A connection runs hand to hand as a taut string, in the colours of its own two hands.
+  It wraps a body rather than crossing it.</p>
+  <p class="standfirst">A settled hand stands in one
+  of six places. The level of
+  the hold, and its lock or wrap, decide which place. The hold also says which way
+  round the line goes: a wrap comes round the front, and a lock goes round the back. A lock or a
+  wrap exists only where the line really goes round a body, which rules most of them out most of
+  the time.</p>
+  <p class="standfirst">A move runs in two stages. The dancers travel, and then the world turns
+  until the lead faces up again. The second stage draws every pose of one arrangement as one
+  picture. So it shows that an orbit lands where the axis turn of the other dancer lands. An orbit
+  walked on the walker's own bearing lands somewhere else. Only an <em>above</em>
+  connection may cross a body, at every instant of a moving picture.</p>
+  <p class="sibling"><b>The turn sign is on its own page.</b> It answers another question, which
+  is how to label an edge. The two pages meet at the levels and the arm inks, which they
+  share.</p>
 </header>
 
 <section>
   <div class="head"><span class="n">Settled</span><h2>Level, and whose hand it
   is</h2></div>
-  <p>The fill says level, and <b>the break in the under-arm stays</b> — it
-  reinforces the shading rather than repeating it, and it is the mark that
-  survives node size when a fill will not. Each hand is in its own side's
-  colour, and in its owner's shade of it: the lead's squares deep, the follow's
-  circles plain. So the swatches come in pairs, and a pair is a whole hold.</p>
+  <p>The fill of a hand says its level, and the break in the arm that goes under says it again.
+  The break survives node size, where a fill does not. Each hand carries the colour of its own side,
+  in the shade of its owner. The squares of the lead are deep, and the circles of the follow are
+  plain. So the swatches come in pairs, and one pair is a whole hold.</p>
   <div class="plate">
     <div class="key">
       {sw_free}
-      <span><b>faded</b> — nobody is holding this hand</span>
+      <span><b>faded</b>: nobody holds this hand</span>
       {sw_none}
-      <span><b>full, hollow</b> — held, level unsaid</span>
+      <span><b>full, hollow</b>: held, with no level said</span>
       {sw_low}
-      <span><b>solid</b> — low, below the shoulder</span>
+      <span><b>solid</b>: low, below the shoulder</span>
       {sw_high}
-      <span><b>dot</b> — high, above the shoulder</span>
+      <span><b>dot</b>: high, above the shoulder</span>
       {sw_above}
-      <span><b>hatched</b> — above, over the head</span>
+      <span><b>hatched</b>: above, over the head</span>
     </div>
     <div class="row">
       <figure>{f_none}<figcaption>held<br><b>no level</b></figcaption></figure>
       <figure>{f_low}<figcaption><b>low</b></figcaption></figure>
       <figure>{f_high}<figcaption><b>high</b></figcaption></figure>
       <figure>{f_above}<figcaption><b>above</b></figcaption></figure>
-      <figure>{f_over}<figcaption>Left <b>high</b>, Right <b>low</b>""" &
-        """<br>and the break says it too</figcaption></figure>
+      <figure>{f_over}<figcaption>Left <b>high</b>, Right <b>low</b>
+        <br>and the break says it too</figcaption></figure>
     </div>
   </div>
 </section>
@@ -93,46 +88,34 @@ const BODY = """
 <section>
   <div class="head"><span class="n">One</span><h2>Circles, and a line that
   wraps</h2></div>
-  <p><b>The body is a plain circle, and the facing is a small chevron at its
-  centre.</b> The rim says nothing but <em>here is a body</em>: it is drawn
-  once, quiet, at one width, and it breaks around every hand mark so nothing on
-  the boundary runs through one. It used to fill up in an arm's colour as that
-  arm wound round — a progress ring going the long way round the outside — and
-  that is gone. <b>The wrap on the connection is the indicator</b>, and one
-  indicator is enough.</p>
-  <p><b>The reach wraps, and by default it takes the short way.</b> It starts
-  on the edge of the hand's own mark, not at its centre, and where the straight
-  way to the partner would pass through a body it runs <em>along the rim</em>
-  instead — to the first place it can leave on a tangent, then straight, then
-  along the other rim to the other hand. That hug <em>is</em> the wrap: the arm
-  going round a body is the thing a lock is made of. Nothing prefers the front
-  any more; with nothing said, the line simply takes the shorter way round.</p>
-  <p><b>A whole move goes one way round.</b> Which side of each body the line
-  passes is settled once, before the first frame is drawn, and every frame of
-  that move uses it — the way that every frame can actually be routed, and the
-  shortest of those. Not a preference: a rule, and the note below says what it
-  is guarding against.</p>
-  <p><b>The line is its two hands' own colours.</b> Each half is exactly the
-  mark it ends on — the lead's in their arm's ink and the deep shade, the
-  follow's in theirs and the plain one, the two meeting at the middle. So
-  <em>Left to right</em> is drawn blue-to-orange along its whole length rather
-  than only at two marks that vanish at node size, and the shade still says
-  which end is the lead's when both hands share a hue.</p>
-  <p><b>The lead always faces up.</b> That is what the second stage of a move
-  aims at — not standing the pair upright, but standing the <em>lead</em>
-  upright. Everything is read from them, so they hold still and where the follow
-  has got to becomes part of what the picture says rather than something the
-  framing throws away.</p>
-  <p>An orbit goes round the <em>other dancer</em>, so a dashed ring appears
-  only while one is happening, centred on whoever is standing still: the lead,
-  the follow, or the midpoint when both travel. Nothing else in the picture is
-  dashed.</p>
+  <p><b>A body is a plain circle, and the chevron at its centre is the facing.</b> The rim says
+  no more than that a body is here. It is drawn once, quiet, at one width, and it breaks around
+  every hand mark, so nothing on the boundary runs through a mark. The wrap on the connection is
+  the one mark of an arm that has wound.</p>
+  <p><b>The reach wraps, and it takes the short way where the hold says nothing.</b> It starts
+  on the edge of the hand's own mark rather than at its centre. Where the straight way to the
+  partner would pass through a body, the reach runs along the rim instead. It leaves at the
+  first tangent, runs straight, and follows the other rim to the other hand. That hug is the
+  wrap, and the arm round a body is what a lock is made of.</p>
+  <p><b>A whole move goes one way round.</b> The build settles which side of each body the line
+  passes before it draws the first frame, and every frame of that move keeps it. It takes the
+  shortest way that every frame of the move can be routed by. The note below says what that
+  guards against.</p>
+  <p><b>The line carries the colours of its own two hands.</b> Each half is exactly the mark it ends
+  on. The half of the lead carries the ink of that arm in the deep shade, and the half of the follow
+  carries the plain one. So <em>Left to right</em> is drawn blue into orange along its whole length.
+  The shade says which end is the lead's where both hands share a hue.</p>
+  <p><b>The lead always faces up.</b> The second stage of a move stands the lead upright, and
+  not the pair. Everything is read from the lead, so the lead holds still, and where the follow
+  stands becomes part of what the picture says.</p>
+  <p>An orbit goes round the other dancer, so a dashed ring appears only while an orbit runs. The
+  ring is centred on whoever stands still: the lead, the follow, or the midpoint where both
+  travel. Nothing else in the picture is dashed.</p>
 
   <div class="plate">
     <h3>At rest, no ring</h3>
-    <p>Which column a hand sits in is decided by which way its owner faces, so
-    a row read across is that dancer's orientation and the four facings are
-    distinct without a new mark.</p>
+    <p>The facing of a dancer decides which column their hand sits in. So a row read across is
+    the orientation of that dancer, and the four facings are distinct with no new mark.</p>
     <div class="row">
       <figure>{or_free_0}<figcaption>face-to-face</figcaption></figure>
       <figure>{or_free_1}<figcaption>pillion<br>lead</figcaption></figure>
@@ -147,139 +130,121 @@ const BODY = """
 
   <div class="plate">
     <h3>A settled hand is in one of six places</h3>
-    <p><b>Nothing is solved and nothing is asked for.</b> A hand at rest sits
-    where the arm hangs, or a little round towards its dancer's <b>front</b>,
-    or a little round towards their <b>back</b> — two sides, three places on
-    each, six in all. Which one is decided by the hand's own side, the hold's
-    level, and whether the hold is a <b>lock</b> or a <b>wrap</b>.</p>
-    <p>They are measured off the dancer's <b>own facing</b>, never off the
-    page — which is what <em>front</em> and <em>back</em> name and what
-    <em>above</em> and <em>below</em> did not. The chart is drawn on a body
-    turned off the vertical, where that is visible rather than merely true.</p>
+    <p><b>Nothing is solved here, and nothing is asked for.</b> A hand at rest sits where the arm
+    hangs. It may also sit a little round toward the front of its dancer, or toward their back.
+    That is two sides, and three places on each. The hand's own side, the level of the hold, and
+    its lock or wrap decide which place it takes.</p>
+    <p>The places are measured off the own facing of the dancer, and never off the page. That is
+    what <em>front</em> and <em>back</em> name. The chart is drawn on a body turned off the
+    vertical, where that is visible rather than merely true.</p>
     <div class="row mid">
-      <figure>{slot_chart}<figcaption>the six, on a turned body""" &
-        """<br>— the four a Left hand uses, in its ink</figcaption></figure>
+      <figure>{slot_chart}<figcaption>the six, on a turned body
+        <br>the four a Left hand uses, in its ink</figcaption></figure>
       <figure><table class="slots">
         <tr><th></th><th>Left hand</th><th>Right hand</th><th>the line goes</th></tr>
-        <tr><td>no level, or no way said</td><td>left · side</td><td>right · side</td>""" &
-        """<td>the short way</td></tr>
-        <tr><td><em>high</em> wrap</td><td>right · front</td><td>left · front</td>""" &
-        """<td>round the front</td></tr>
-        <tr><td><em>low</em> wrap</td><td>right · front</td><td>left · front</td>""" &
-        """<td>round the front</td></tr>
-        <tr><td><em>low</em> lock</td><td>right · back</td><td>left · back</td>""" &
-        """<td>round the back</td></tr>
-        <tr><td><em>high</em> lock</td><td>left · back</td><td>right · back</td>""" &
-        """<td>round the back</td></tr>
-        <tr><td><em>above</em></td><td>left · side</td><td>right · side</td>""" &
-        """<td>straight over</td></tr>
+        <tr><td>no level, or no way said</td><td>left · side</td><td>right · side</td>
+        <td>the short way</td></tr>
+        <tr><td><em>high</em> wrap</td><td>right · front</td><td>left · front</td>
+        <td>round the front</td></tr>
+        <tr><td><em>low</em> wrap</td><td>right · front</td><td>left · front</td>
+        <td>round the front</td></tr>
+        <tr><td><em>low</em> lock</td><td>right · back</td><td>left · back</td>
+        <td>round the back</td></tr>
+        <tr><td><em>high</em> lock</td><td>left · back</td><td>right · back</td>
+        <td>round the back</td></tr>
+        <tr><td><em>above</em></td><td>left · side</td><td>right · side</td>
+        <td>straight over</td></tr>
       </table></figure>
     </div>
-    <p><b>Lock or wrap is state the hold carries</b>, and it has to be: the
-    place cannot be chosen without it. A hold that names a level but not which
-    of the two it is leaves its hands where the arm hangs — the height does not
-    tell you which side the hand went to, so the picture does not guess.</p>
-    <p><b>And where a hand has gone, the place it left is drawn as a grey
-    outline</b>, so a picture says both where the hand is and where it came
-    from. The two wraps share a spot; the fill is what tells them apart.</p>
-    <p>Each of these is drawn in an orientation that admits it, which is not a
-    detail — see the plate after next.</p>
+    <p><b>The hold carries its lock or wrap</b>, and it must, because the place cannot be chosen
+    without it. A hold that names a level, and not which of the two it is, leaves its hands where
+    the arm hangs. The height does not say which side the hand went to, so the picture does not
+    guess.</p>
+    <p><b>Where a hand has gone, the place it left is drawn as a grey outline.</b> So a picture
+    says where the hand is and where it came from. The two wraps share one place, and the fill
+    tells them apart.</p>
+    <p>Each of these is drawn in an orientation that admits it. The plate after next says which
+    orientation admits what.</p>
     <div class="row">{settlings}</div>
-    <p>Discrete at rest, but not discrete in between: a move that changes a
-    hold slides its hands from one spot to the next, so the four are where a
-    picture <em>settles</em>, not a set of places it jumps between.</p>
+    <p>The six places are discrete at rest, and not in between. A move that changes a hold slides
+    its hands from one place to the next, so these are where a picture settles.</p>
   </div>
 
   <div class="plate">
     <h3>And the hold says which way round<span class="tag">a rule</span></h3>
-    <p>The line no longer takes whichever way is shorter when the hold has
-    something to say about it. <b>Both wraps come round the front</b>, to the
-    front of the other hand; <b>both locks go round the back</b> — the low one
-    to the back of the other hand, the high one to the back of its own.</p>
+    <p>Where the hold says which way round, the line no longer takes the shorter way. <b>Both
+    wraps come round the front</b>, to the front of the other hand. <b>Both locks go round the
+    back.</b> The low lock goes to the back of the other hand, and the high lock to the back of its
+    own.</p>
     <div class="row">
-      <figure>{route_wrap}<figcaption><em>low</em> wrap<br>— round the front</figcaption></figure>
-      <figure>{route_low}<figcaption><em>low</em> lock<br>— round the back</figcaption></figure>
-      <figure>{route_high}<figcaption><em>high</em> lock""" &
-        """<br>— round the back, its own side</figcaption></figure>
+      <figure>{route_wrap}<figcaption><em>low</em> wrap<br>round the front</figcaption></figure>
+      <figure>{route_low}<figcaption><em>low</em> lock<br>round the back</figcaption></figure>
+      <figure>{route_high}<figcaption><em>high</em> lock
+        <br>round the back, its own side</figcaption></figure>
     </div>
   </div>
 
   <div class="plate pick">
     <h3>A wrap that does not wrap is not a wrap<span class="tag">the
     consequence</span></h3>
-    <p><b>A lock or a wrap may only be used where the line goes round no less
-    than just under half the circumference.</b> It does not mean anything to
-    have a wrap without the line actually going round the body — and once that
-    is a rule, most of these states stop existing most of the time. Measured,
-    the arc a line hugs comes out quantised: 0°, 51°, 90°, 141°, 180°, so "just
-    under a half" picks out the full half and nothing else.</p>
-    <p>Which leaves this. Every cell the rule allows, drawn; every one it
-    forbids, empty — an edge that is not drawn, the same convention the turn
-    sign uses for a turn that cannot be danced.</p>
+    <p><b>A lock or a wrap holds only where the line goes round no less than just under half the
+    circumference.</b> A wrap with no arm round a body means nothing. Once that is a rule, most
+    of these states stop existing most of the time. Measured, the arc a line hugs comes out in steps
+    of nought, 51, 90, 141 and 180 degrees. So just under a half picks out the full half and nothing
+    else.</p>
+    <p>This is what the rule leaves. Every cell it allows is drawn, and every cell it forbids is
+    empty. The turn sign page draws a turn that cannot be danced the same way.</p>
     {grid}
-    <p><b>Face to face, neither wrap exists and both locks do</b>; turn the
-    follow away and it is the other way about. So whether a hold can be locked
-    or wrapped at all is a property of the orientation, not a free choice — and
-    the build refuses to draw the states that fall short rather than showing a
-    wrap with no wrap in it.</p>
+    <p><b>Face to face, neither wrap exists and both locks do.</b> Turn the follow away and it is
+    the other way about. So the orientation decides whether a hold can be locked or wrapped at
+    all, and the build refuses to draw a state that falls short.</p>
   </div>
 
   <div class="plate">
     <h3><em>Above</em> has no lock and no wrap</h3>
-    <p>A physical restriction rather than a drawing one: an arm over the head
-    has nowhere to be carried to. So an <em>above</em> hold keeps its hands
-    where the arm hangs, and asking it for a wrap changes nothing — the two
-    below are the same picture. From <em>above</em> the only transitions are to
-    an <b>upper wrap</b> or back to <b>default</b>.</p>
+    <p>The body stops this, and not the drawing: an arm over the head has nowhere to be carried
+    to. So an <em>above</em> hold keeps its hands where the arm hangs, and a wrap asked of it
+    changes nothing. The two figures below are one picture. From <em>above</em> the only moves
+    are to an <b>upper wrap</b>, or back to the default.</p>
     <div class="row">
       <figure>{above_plain}<figcaption><em>above</em></figcaption></figure>
-      <figure>{above_asked}<figcaption><em>above</em>, wrap asked for""" &
-        """<br>— the same picture</figcaption></figure>
+      <figure>{above_asked}<figcaption><em>above</em>, wrap asked for
+        <br>the same picture</figcaption></figure>
     </div>
-    <p><em>Upper wrap</em> is read here as the high wrap; that reading is mine
-    and not yours, and it is the one thing in this plate to check.</p>
+    <p>This page reads <em>upper wrap</em> as the high wrap. That reading is the model's rather
+    than the Architect's, and it is the one thing in this plate to check.</p>
   </div>
 
   <div class="note">
-    <p><b>And in a moving picture, at every instant — not just at the frames.</b>
-    A browser draws the states between two sampled frames by blending them
-    point by point, so two neighbouring frames that disagree about which side
-    of a body the line goes round are drawn, in between, as a line sweeping
-    <em>through</em> that body. Which is what was happening: measured, the
-    worst of it reached <b>19.9</b> units into a body of radius <b>20</b> — the
-    line passed through the centre. The routes at each frame were all clean,
-    which is why a check that looked only at those said nothing was wrong.</p>
-    <p>The fix is to settle the way round <em>once for a whole move</em>,
-    before any of it is routed, so no two frames can disagree. That is
-    stronger than the counter-rotation preference it replaces, and the
-    preference, its bias constant and the frame-to-frame hysteresis all came
-    out with it. The check now samples the blend between every pair of frames,
-    with the bodies interpolated too, and the worst incursion anywhere is
-    <b>0.14</b> — under a fifth of a unit, well under a drawn pixel.</p>
+    <p><b>A moving picture keeps the line out of a body at every instant, and not only at the
+    frames it is sampled at.</b> A browser draws the states between two sampled frames point by
+    point. So two frames that disagree about which side of a body the line passes are drawn, in
+    between, as a line through that body. The build settles the way round once for a
+    whole move, before it routes any frame, so no two frames can disagree.</p>
+    <p>The check samples the blend between every pair of frames, with the bodies interpolated
+    too. The worst reach into a body anywhere is 0.14 of a unit, which is well under a drawn
+    pixel.</p>
   </div>
 
   <div class="plate">
     <h3>An orbit, in two stages</h3>
-    <p><b>Stage one</b>: the follow walks the ring round the lead, who stands
-    still — so the pair's axis tilts away from upright, which the old picture
-    could not show at all. <b>Stage two</b>: the whole drawing is brought back
-    until the <em>lead faces up</em> again. The follow does not have to come
-    back overhead; where they have got to is part of what the picture says.</p>
-    <p><b>An orbit faces the centre.</b> Whatever side of the walker faced
-    their partner goes on facing them, so the follow turns as far as they
-    travel — watch their chevron come round with the ring:</p>
+    <p><b>Stage one.</b> The follow walks the ring round the lead, who stands still, so the axis
+    of the pair tilts away from upright. <b>Stage two.</b> The whole drawing comes back until the
+    lead faces up again. The follow need not come back overhead, and where they stand is part of
+    what the picture says.</p>
+    <p><b>An orbit faces the centre.</b> Whichever side of the walker faced their partner goes on
+    facing them. So the follow turns as far as they travel. The chevron of the follow comes round
+    with the ring.</p>
     <div class="row mid">
       <figure>{walk_orbit_0}<figcaption>rest</figcaption></figure>
-      <figure>{walk_orbit_1}<figcaption>stage one —<br>walking round</figcaption></figure>
+      <figure>{walk_orbit_1}<figcaption>stage one,<br>the walk round</figcaption></figure>
       <figure>{walk_orbit_2}<figcaption>a quarter round</figcaption></figure>
-      <figure>{walk_orbit_3}<figcaption>stage two —<br>the world comes back</figcaption></figure>
+      <figure>{walk_orbit_3}<figcaption>stage two,<br>the world comes back</figcaption></figure>
       <figure>{walk_orbit_4}<figcaption>home</figcaption></figure>
     </div>
-    <p>And here the follow keeps their own bearing all the way round
-    instead, arriving facing the way they set off. That is <b>two turns
-    danced at once</b> — the orbit with a counter-turn in it — and it is
-    worth naming as the compound it is, because it lands somewhere else
-    entirely:</p>
+    <p>Here the follow keeps their own bearing instead, and arrives facing the way they set off.
+    That is two turns danced at once, which is the orbit with a counter-turn in it. It lands
+    somewhere else, so it earns the name of the compound it is.</p>
     <div class="row mid">
       <figure>{walk_compound_0}<figcaption>rest</figcaption></figure>
       <figure>{walk_compound_1}<figcaption>stage one</figcaption></figure>
@@ -291,101 +256,80 @@ const BODY = """
 
   <div class="plate pick">
     <h3>What that shows<span class="tag">the point</span></h3>
-    <p>Once stage two has run, the picture holds two numbers and nothing else,
-    both measured against the lead: <em>where</em> the follow is round from
-    them, and <em>how</em> the follow faces. Every rotation moves those two —
-    and two different things collapse onto one picture, which is worth keeping
-    apart.</p>
-    <p><b>The compound by either dancer lands in the same place.</b> The
-    follow walking a quarter round the lead keeping their own bearing, and the
-    lead walking a quarter round the follow keeping theirs, arrive at exactly
-    the same picture: only the pair's axis has swung, and both bearings are
-    where they started. So <b>the drawing cannot say who walked</b> — only the
-    path can.</p>
+    <p>Once stage two has run, the picture holds two numbers and nothing else, both measured
+    against the lead. They are where the follow stands round from them, and how the follow faces.
+    Every rotation moves those two numbers, and two different moves land on one picture.</p>
+    <p><b>The compound by either dancer lands in the same place.</b> The follow walks a quarter
+    round the lead on their own bearing, and the lead walks a quarter round the follow on theirs.
+    Both arrive at one picture: the axis of the pair has swung, and both bearings stand where
+    they started. So <b>the drawing cannot say who walked</b>, and only the path can.</p>
     <div class="row">
-      <figure>{collapse_follow_walked}<figcaption>the follow walked""" &
-        """<br>keeping their bearing</figcaption></figure>
-      <figure>{collapse_lead_walked}<figcaption>the lead walked""" &
-        """<br>keeping their bearing</figcaption></figure>
+      <figure>{collapse_follow_walked}<figcaption>the follow walked
+        <br>keeping their bearing</figcaption></figure>
+      <figure>{collapse_lead_walked}<figcaption>the lead walked
+        <br>keeping their bearing</figcaption></figure>
     </div>
-    <p><b>And an orbit lands where an axis turn lands.</b> A follow who walks
-    a quarter round the lead <em>keeping their side to the centre</em> arrives
-    at exactly the state the lead reaches by turning a quarter on the spot.
-    Not similar: the same drawing, mark for mark.</p>
+    <p><b>An orbit lands where an axis turn lands.</b> A follow walks a quarter round the lead with
+    their side to the centre. They arrive at the state the lead reaches by a quarter axis turn. It
+    is the same drawing, mark for mark.</p>
     <div class="row">
-      <figure>{collapse_orbit}<figcaption>the follow orbited""" &
-        """<br>a quarter round</figcaption></figure>
-      <figure>{collapse_axis}<figcaption>the lead turned""" &
-        """<br>a quarter on the spot</figcaption></figure>
+      <figure>{collapse_orbit}<figcaption>the follow orbited
+        <br>a quarter round</figcaption></figure>
+      <figure>{collapse_axis}<figcaption>the lead turned
+        <br>a quarter on the spot</figcaption></figure>
     </div>
-    <p>Checked rather than claimed — the generator asserts each pair is one
-    drawing, mark for mark, and refuses to build if it is not. It also asserts
-    that the <em>compound</em> does <b>not</b> land on the axis turn, so the
-    two really are two moves.</p>
-    <p><b>So axis against orbit is a property of the move and not of the
-    state</b>, exactly as this page first said. A position cannot tell an
-    orbit from the other dancer's axis turn — they land in the same place —
-    and it cannot tell who did the walking either. The node never needs to
-    know; only the edge does. Which is why the two stages are worth animating:
-    the difference is a path, and only a path can show it. It also settles the
-    turn sign's dash on the other page — the dash is describing an edge, and
-    the sign labels edges, so it survives.</p>
-    <p><b>This page has been corrected twice, and is back where it began.</b>
-    Rule 20 once made an orbit keep its bearing, which put the collapse on the
-    compound instead; rule 32 reverses it, because an orbiter who keeps their
-    bearing never turns relative to their partner and so half a turn of it
-    winds nothing — and then the halves cannot be equated across the ways of
-    turning.</p>
+    <p>The generator checks this rather than claims it. It asserts that each pair is one drawing,
+    mark for mark, and refuses to build where it is not. It asserts that the compound does not
+    land on the axis turn, so the two are two moves.</p>
+    <p><b>So an axis turn against an orbit is a property of the move, and not of the state.</b> A
+    position cannot tell an orbit from the axis turn of the other dancer, because they land in one
+    place. It cannot say who walked either. The node never needs to know, and only the edge
+    does. That is why the two stages are worth animation: the difference is a path.</p>
   </div>
 
   <div class="plate">
-    <h3>Moving<span class="tag">it runs here</span></h3>
-    <p>Four moves, each a full cycle: go, come home, go back, come home — so it
-    returns to exactly where it started rather than snapping. Watch what the new
-    rule does to the first one: <b>a lead turning on the spot now has plenty to
-    bring home</b>, because their facing has to come back up — so stage two
-    swings the follow round them. It is the <em>follow</em> turning that would
-    have nothing to do in stage two. Both dancers going round each other comes
-    home to the picture it left, though on the floor they have travelled.</p>
+    <h3>In motion<span class="tag">it runs here</span></h3>
+    <p>Four moves run here, each one a whole cycle: out, home, back, and home again. So each one
+    returns to where it started rather than snapping. A lead who turns on the spot has plenty to
+    bring home, because their facing must come back up. So stage two swings the follow round them.
+    A follow who turns on the spot leaves stage two nothing to do. Both dancers round each
+    other come home to the picture they left, although on the floor they have travelled.</p>
     <div class="row">
-      <figure>{mv_lead_axis}{mv_lead_axis_still}<figcaption>the lead turns""" &
-        """<br>on their own axis</figcaption></figure>
-      <figure>{mv_follow_orbits_the_lead}{mv_follow_orbits_the_lead_still}""" &
-        """<figcaption>the follow orbits<br>the lead</figcaption></figure>
-      <figure>{mv_the_lead_orbits_the_follow}{mv_the_lead_orbits_the_follow_still}""" &
-        """<figcaption>the lead orbits<br>the follow</figcaption></figure>
-      <figure>{mv_both_round_each_other}{mv_both_round_each_other_still}""" &
-        """<figcaption>both, round each other<br>— a picture no-op</figcaption></figure>
+      <figure>{mv_lead_axis}{mv_lead_axis_still}<figcaption>the lead turns
+        <br>on their own axis</figcaption></figure>
+      <figure>{mv_follow_orbits_the_lead}{mv_follow_orbits_the_lead_still}
+        <figcaption>the follow orbits<br>the lead</figcaption></figure>
+      <figure>{mv_the_lead_orbits_the_follow}{mv_the_lead_orbits_the_follow_still}
+        <figcaption>the lead orbits<br>the follow</figcaption></figure>
+      <figure>{mv_both_round_each_other}{mv_both_round_each_other_still}
+        <figcaption>both, round each other<br>the picture holds still</figcaption></figure>
     </div>
   </div>
 
   <div class="plate">
     <h3>What the pair of colours at the two ends says</h3>
-    <p>The line is now the pair itself: it starts in the lead's hand's ink and
-    ends in the follow's, so it <em>draws</em> <b>which named hands are
-    joined</b> rather than leaving it to two marks. <em>Left to left</em> is
-    blue all the way, <em>Left to right</em> runs blue into orange, whoever
-    faces where — and whether it crosses says whether the hold is crossed now.
-    The deep half is always the lead's, so the reading survives a hold turned
-    round, and survives both hands sharing a hue.</p>
+    <p>The line is the pair itself. It starts in the ink of the lead's hand and ends in the ink of
+    the follow's, so it draws which named hands are joined. <em>Left to left</em> is blue all the
+    way, and <em>Left to right</em> runs blue into orange, whoever faces where. Whether it crosses
+    says whether the hold is crossed now. The deep half is always the lead's, so the reading
+    survives a hold turned round, and survives two hands that share a hue.</p>
     <div class="row">
-      <figure>{pair_ll}<figcaption><b>Left to left</b>""" &
-        """<br>blue to blue · crossed</figcaption></figure>
-      <figure>{pair_ll_turned}<figcaption>follow turned""" &
-        """<br>still blue to blue · not crossed</figcaption></figure>
-      <figure>{pair_lr}<figcaption><b>Left to right</b>""" &
-        """<br>blue to orange · not crossed</figcaption></figure>
-      <figure>{pair_lr_turned}<figcaption>follow turned""" &
-        """<br>still blue to orange · crossed</figcaption></figure>
+      <figure>{pair_ll}<figcaption><b>Left to left</b>
+        <br>blue to blue · crossed</figcaption></figure>
+      <figure>{pair_ll_turned}<figcaption>follow turned
+        <br>still blue to blue · not crossed</figcaption></figure>
+      <figure>{pair_lr}<figcaption><b>Left to right</b>
+        <br>blue to orange · not crossed</figcaption></figure>
+      <figure>{pair_lr_turned}<figcaption>follow turned
+        <br>still blue to orange · crossed</figcaption></figure>
     </div>
   </div>
 
   <div class="plate">
     <h3>A free hand keeps its hue</h3>
-    <p>Grey said <em>not held</em>, but colour carries orientation and the
-    <code>free</code> frame is four free hands — which is where its name comes
-    from. So a free hand fades rather than greying, and there is no line to
-    cover the case grey would have broken.</p>
+    <p>A free hand fades, and it keeps the colour of its own side. The colour carries the
+    orientation, and the <code>free</code> frame is four free hands, which is where its name comes
+    from. A free hand has no line on it, so the fade is the whole mark.</p>
     <div class="row">
       <figure>{free_fade}<figcaption>faded</figcaption></figure>
       <figure>{free_grey}<figcaption>grey</figcaption></figure>
@@ -395,35 +339,34 @@ const BODY = """
   </div>
 
   <div class="note">
-    <p><b>The couple rotation is a picture no-op, and that is correct.</b> Both
-    dancers going round each other changes nothing the drawing holds — which is
-    exactly what the model says: a rotation of the whole couple stores no twist.
-    It is still a real thing on the floor, and the picture is honest about not
-    tracking it: what it draws is the couple, not the room.</p>
-    <p><b>Two dancers turning half a turn each still collides.</b> The four
-    orientations are two bits and <code>twist</code> is one, its parity, so
-    <code>isFacing(twist)</code> cannot tell face-to-face from back-to-back. The
-    two relative facings this picture is now built on are exactly the pair
-    <code>rotation.nim</code> would need.</p>
-    <p><b>Knock-on, flagged not acted on.</b> Static frames keep a square
-    <code>120 × 120</code> box; the moving ones are given a box fitted to
-    everything they touch, which is why they are not all the same size — they
-    are all at the same scale instead. <code>frameHeight</code>, the matrix
-    cells and the map nodes still assume the old <code>100 × 116</code>.</p>
+    <p><b>Both dancers round each other move nothing in the picture, and that is correct.</b> The
+    model stores no twist for a rotation of the whole couple. It is still a real thing on the
+    floor, and the picture draws the couple rather than the room.</p>
+    <p><b>Two dancers who each turn half a turn still collide.</b> The four orientations take two
+    bits, and <code>twist</code> carries one of them, its parity. So the twist cannot tell
+    face-to-face from back-to-back. The two relative facings this picture stands on are the pair
+    that <code>rotation.nim</code> needs.</p>
+    <p><b>Known and not mended.</b> A static frame keeps a square box of 120 by 120. A moving
+    frame takes a box fitted to everything it touches, so the moving frames differ in size and
+    stand at one scale instead. <code>frameHeight</code>, the cells of the matrix and the nodes of
+    the map still assume the old box of 100 by 116.</p>
   </div>
 </section>
 
 <div class="foot">
-  <p><b>Still not in the app.</b> The rotation views came off the page on purpose
-  and go back when the marks are settled and the ontology is finished. The frame
-  pictures are unchanged either way — the break stays, and the hand-to-hand half
-  leaves its levels unsaid.</p>
-  <p>Yours to settle on this page: whether <b>upper wrap</b> means the high
-  wrap, which is the one reading in the rules that is mine rather than yours;
-  <code>SLOT_OFFSET</code>, how far round the rim <em>front</em> and
-  <em>back</em> sit, which is a drawn convention and nothing the dance says;
-  the bow for contact with the body; what an orbit stores; and when an arm
-  above the head blocks.</p>
+  <p><b>Not in the app yet.</b> The rotation views come back to the app once the marks are settled
+  and the ontology is finished. The frame pictures do not change either way: the break stays, and
+  the hand-to-hand half leaves its levels unsaid.</p>
+  <p>Yours to settle on this page:</p>
+  <ul>
+    <li>whether <b>upper wrap</b> means the high wrap, which is the one reading here that is the
+    model's rather than yours;</li>
+    <li><code>SLOT_OFFSET</code>, how far round the rim <em>front</em> and <em>back</em> sit,
+    which is a drawn convention and nothing the dance says;</li>
+    <li>the bow for contact with the body;</li>
+    <li>what an orbit stores;</li>
+    <li>when an arm over the head blocks.</li>
+  </ul>
 </div>
 
 </div>

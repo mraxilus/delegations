@@ -29,20 +29,20 @@ const HEAD_BODY = """
   <header>
     <p class="kicker">Body sim</p>
     <h1>The rig, as the engine holds it</h1>
-    <p class="lede">Every capsule the engine collides, at the world ends the
-      engine reports, at the radius it collides on. Nothing is drawn that is not
-      simulated, and nothing simulated is left out &mdash; including the gap under
-      the hips, because the rig is trunk upward and has no legs. Drag to turn the
-      view, scroll to zoom. Each body is lit from its own front, so the lighter
-      side of a torso or a head is the side that dancer faces, since a capsule
-      cannot say: the torso's section is symmetric front to back and the head
-      is a sphere.</p>
-    <p class="lede">Below the stage, every still cell of the reference page is laid
-      out as it is there, with the sim's own still of it beside the drawing: the
-      couple wound to that facing from the first standing distance that holds it,
-      hands lifted, and left to stand. Click any cell to put it on the stage; the
-      arrows, or the arrow keys, walk from cell to cell. The sweeps come after the
-      stills in the same list.</p>
+    <p class="lede">The stage draws every capsule that the engine collides. Each one
+      stands at the ends the engine reports, at the radius it collides on. The stage
+      draws nothing else, and it leaves nothing out. The gap under the hips is the
+      rig itself: the rig is the trunk upward, and it has no legs.</p>
+    <p class="lede">Each body is lit from its own front. So the lighter side of a
+      torso or a head is the side that dancer faces. The shape alone cannot say it,
+      because a torso is symmetric front to back and a head is a sphere. To turn the
+      view, drag it. To zoom, scroll.</p>
+    <p class="lede">Below the stage, every still cell of the reference page stands as
+      it stands there, with the sim's own still beside the drawing. The sim winds the couple to that
+      facing, lifts their hands, and lets them stand. It keeps the
+      standing distance whose pose sits easiest. To put a cell on the stage, click it.
+      The arrows and the arrow keys walk from cell to cell, and the sweeps follow the
+      stills in one list.</p>
   </header>
 
   <div class="rigwrap">
@@ -61,10 +61,10 @@ const HEAD_BODY = """
       </div>
       <div class="ref" id="ref"></div>
       <div class="reads" id="reads"></div>
-      <p class="note">A joint within five degrees of either end is marked
-        <span class="spent-key">spent</span>. The range shown is the rig's, for
-        that arm: the shoulder's twist is mirrored between left and right, so its
-        two ends are the arm's own rather than the table's.</p>
+      <p class="note">A joint within five degrees of either end reads
+        <span class="spent-key">spent</span>. Each range is the rig's own, for that
+        arm. The twist of a shoulder is mirrored between left and right, so the two
+        ends belong to the arm rather than to the table.</p>
     </aside>
   </div>
 """
@@ -232,12 +232,12 @@ proc cellsBody(review: string; data: JsonNode): string =
   let cells = cellsOf(review)
   const TITLES = [("A", "The standard diagram"),
                   ("B", "Single-hand turn positions"),
-                  ("C", "Hand-to-hand chain, face-to-face at rest"),
-                  ("D", "Hand-to-hand chain, pillion lead at rest")]
-  result.add """<section class="cells"><p class="lede">Each cell below is the
-    reference page's own, badge for badge, with the sim's still of it drawn
-    beside. A cell that folds several questions together shows the first; the
-    list above holds every one.</p>"""
+                  ("C", "The cross-name chain, face-to-face at rest"),
+                  ("D", "The same-name chain, pillion lead at rest")]
+  result.add """<section class="cells"><p class="lede">Every cell here is the
+    reference page's own, badge for badge, with the sim's still beside it. A cell
+    that folds several questions together shows the first of them. The picker above
+    holds every one.</p>"""
   for (letter, title) in TITLES:
     result.add &"<h2>{letter} &middot; {esc(title)}</h2><div class=\"grid wide\">"
     for cell in cells.getOrDefault(letter):

@@ -35,8 +35,8 @@ func plates(P: Parts; manner: Manner): string =
   for c, single in SINGLES:
     result.add &"""<div class="plate"><h3>{single.name}</h3>"""
     result.add """<p>Every position this manner reaches, a quarter turn """ &
-      """apart. The fourth quarter comes back to the first: the round """ &
-      """closes, and nothing is ever refused.</p>"""
+      """apart. The fourth quarter comes back to the first, so the round """ &
+      """closes and nothing is refused.</p>"""
     result.add """<div class="row mid">"""
     for quarter in 0 ..< QUARTERS_ROUND:
       if quarter > 0:
@@ -48,8 +48,8 @@ func plates(P: Parts; manner: Manner): string =
     result.add P["g_quarter"]
     result.add fig(P[&"st_{tag}_{c}_0"], "<b>none</b><br>round again")
     result.add "</div>"
-    result.add """<p>And every transition between them, each rocking """ &
-      """between its two positions so the turn reads both ways:</p>"""
+    result.add """<p>And every transition between them. Each one rocks """ &
+      """between its two positions, so the turn reads both ways:</p>"""
     result.add """<div class="row mid">"""
     for quarter in 0 ..< QUARTERS_ROUND:
       let
@@ -70,90 +70,76 @@ const BODY = """
 <header class="top">
   <p class="kicker">Dance ontology · rotation · single-hand turns</p>
   <h1>Single-hand turns, so far</h1>
-  <p class="standfirst">One kind of turn, on its own. The held arm is
-  carried <b>above</b> — over the head, on the axis the couple turns about
-  — because <em>high</em> and <em>low</em> are the levels a wrap or a lock
-  is made at, and above is the one level that has neither. From there a
-  single-hand connection turns <b>for ever</b> in either direction, so
-  nothing is refused and the round closes. That has a consequence worth
-  saying plainly: <b>how far it has wound is not part of the state</b>. If
-  the turning never ends there is no wound-out end to be at, and what is
-  left is <b>where the pair is pointing</b> — four quarter-turn
-  orientations for each of the app's four single-hand frames.</p>
-  <p class="sibling"><b>Hand to hand and the crossed pair come next</b>,
-  each on its own page, and all of them go together once each is right.</p>
+  <p class="standfirst">One kind of turn, on its own. The held arm is carried <b>above</b>, over
+  the head, on the axis the couple turn about. A wrap or a lock is made at <em>high</em> or
+  <em>low</em>, and above is the one level that has neither. From there a single-hand connection
+  turns for ever either way, so nothing is refused and the round closes.</p>
+  <p
+  class="standfirst"><b>How far it has wound is then no part of the state.</b> A turn that never
+  ends has no wound out end to stand at. What is
+  left is where the pair points, which is four quarter turn orientations for each of
+  the four single-hand frames of the app.</p>
+  <p class="sibling"><b>Hand to hand and the crossed pair come next</b>, each on its own page.
+  They go together once each one is right.</p>
 </header>
 
 <section>
   <div class="head"><span class="n">What is here</span><h2>Four manners of
   turn, and two sets of places they reach</h2></div>
-  <p><b>A position is a frame plus a quarter.</b> Turning does not change
-  which hands are held, so it does not change the frame — it changes which
-  way the pair is pointing. The first cell of every row is the frame
-  exactly as the app draws it; each step is a quarter turn; the fourth
-  brings the round back to the first.</p>
-  <p><b>Four manners of turn, not two.</b> Either dancer can turn on their
-  own axis, and either can orbit the other — so all four are drawn.
-  <b>A dashed ring says an orbit</b>, centred on whoever is standing still;
-  it is the same dash the frame picture uses, and nothing else on this page
-  is dashed.</p>
-  <p><b>An orbit faces the centre.</b> Whatever side of the walker faced
-  their partner goes on facing them the whole way round, so the walker
-  turns as far as they travel and their chevron comes round with the ring.
-  A walker who kept their own bearing instead would be dancing an orbit and
-  a counter-turn at once — the <em>compound</em>, which is a different move
-  and is not what these sections draw.</p>
-  <p><b>Which is what makes the manners comparable.</b> A bearing-keeping
-  walker never turns relative to their partner, so a half turn of that
-  orbit would not be half a turn of anything. Facing the centre, an orbit
-  turns the pair exactly as far as an axis turn does — and lands on the
-  very pictures the <em>other</em> dancer's axis turn reaches.</p>
-  <p><b>The lead is the still point.</b> Every picture here is framed on
-  them: they stand on the same spot in every cell of a row, facing up, and
-  what you watch is the follow going round them. That is not only tidier —
-  it takes the second stage out of three of the four manners of turn. A
-  follow's orbit moves the lead not at all, so there is nothing to bring
-  back and the animation is simply the walk.</p>
-  <p><b>Where a second stage remains, it is danced in two.</b> <b>Stage
-  one</b> is the turn itself, seen from where the room stands: the picture
-  leans off upright, or slides off centre, with the dancers. <b>Stage
-  two</b> brings it back — the lead facing up and on their own spot. A
-  lead's axis turn swings the follow around them; a lead's orbit, the one
-  move that carries the lead off their spot, has both to undo: the
-  travelling and the turning that came with it.</p>
-  <p><b>The two stages do not share the clock.</b> The turn is what the
-  figure is <em>of</em>; the re-framing is the picture catching up with it,
-  and is ranked below it three ways: it runs in well under half the time
-  the turn takes, a beat is held on the turn's landing so the two never
-  blur into one long motion, and it still starts and stops softly, since an
-  abrupt start is the one thing that would pull your eye back to it.</p>
-  <p><b>A settled reach bends round what it does not hold.</b> A line laid
-  across a hand cell says that hand is in the hold, and a line laid across a
-  chevron hides which way its dancer is facing — so a still figure's
-  connection is a band pulled taut <em>past</em> every mark it does not join,
-  bending locally round each and running straight everywhere else. The
-  clearance is measured from what is actually drawn — a square's corner, a
-  circle's edge, a chevron's two strokes — and asserted on every build.
-  <b>It takes the plainest way past them, not merely the shortest</b>: the
-  shortest way weaves, one mark passed on the left and the next on the
-  right, and every change of direction is a turn a reader has to follow. So
-  a bend is priced in line, and the way round that bends once is taken
-  wherever it does not cost more than that — which here is every bending
-  reach on the page, and usually the shorter line as well. <b>And it bends
-  rather than breaks</b>: that single bend is one gentle curve from hand to
-  hand, not a corner turned at a point, so nothing on the page changes
-  direction by more than a few degrees anywhere along it.
-  <b>A moving connection is exempt</b>, and stays straight: passing smoothly
-  across a mark is what a turn does, and a bend that appeared and vanished
-  mid-turn would be a mark of its own.</p>
-  <p><b>Two rounds, not four.</b> Measured, and asserted on every build:
-  <b>each round is reached by one axis turn and by the other dancer's
-  orbit</b> — the follow orbiting the lead arrives at the pictures the
-  lead's own axis turn reaches, and the lead orbiting the follow at the
-  follow's. That is rule 32's doing: an orbit that faces the centre turns
-  the pair as far as it carries the walker, so the two acts come to the
-  same place by different routes. The drawing cannot say <em>which</em> was
-  danced; only the path can, which is why all four are here.</p>
+  <p><b>A position is a frame and a quarter.</b> A turn does not change which hands are held, so
+  it does not change the frame. It changes where the pair points. The first cell of every row is the
+  frame as the app draws it. Each step is a quarter turn, and the fourth brings the round back to
+  the first.</p>
+  <p><b>There are four manners of turn, and not two.</b> Either dancer turns on their own axis,
+  and either orbits the other, so all four are drawn. <b>A dashed ring says an orbit</b>, centred
+  on whoever stands still. It is the dash the frame picture uses, and nothing else here is
+  dashed.</p>
+  <p><b>An orbit faces the centre.</b> Whichever side of the walker faced their partner goes on
+  facing them. So the walker turns as far as they travel, and their chevron comes round with the
+  ring. A walker who keeps their own bearing dances an orbit and a counter-turn at once. That is
+  the <em>compound</em>, which is another move, and these sections do not draw it.</p>
+  <p><b>That is what makes the manners comparable.</b> A walker who keeps their bearing never
+  turns relative to their partner, so half a turn of that orbit is half a turn of nothing. An
+  orbit that faces the centre turns the pair as far as an axis turn does. It lands on the very
+  pictures that the axis turn of the <em>other</em> dancer reaches.</p>
+  <p><b>The lead is the still point.</b> Every picture is framed on the lead. They stand on one
+  spot in every cell of a row, facing up, and the follow goes round them. That takes the second
+  stage out of three of the four manners. An orbit by the follow moves the lead not at all, so
+  nothing comes back and the figure is the walk.</p>
+  <p><b>Where a second stage remains, the figure is danced in two.</b> <b>Stage one</b> is the
+  turn itself, seen from where the room stands, so the picture leans off upright or slides off
+  centre with the dancers. <b>Stage two</b> brings it back, with the lead facing up and on their
+  own spot. An axis turn by the lead swings the follow around them. An orbit by the lead is the one
+  move that carries the lead off their spot. Its second stage undoes the travel and the turn that
+  came with it.</p>
+  <p><b>The two stages do not share the clock.</b> The turn is what the figure shows, and the
+  second stage is the picture as it catches up. So the second stage ranks below the turn three
+  ways. It runs in well under half the time the turn takes. A beat is held on the landing of the
+  turn, so the two never blur into one long motion. It starts and stops softly, because an abrupt
+  start is the one thing that would pull the eye back to it.</p>
+  <p><b>A settled reach bends round what it does not hold.</b> A line laid across a hand cell says
+  that hand is in the hold. A line laid across a chevron hides which way its dancer faces. So the
+  connection of a still figure is a band pulled taut past every mark it does not
+  join. It bends round each mark and runs straight everywhere else.</p>
+  <p>The clearance is
+  measured off what is drawn: the corner of a square, the edge of a circle, and the two strokes of
+  a chevron.
+  Every build asserts it.</p>
+  <p><b>A reach takes the plainest way past a mark, and not the shortest.</b> The shortest way
+  weaves, with one mark passed on the left and the next on the right. Every change of direction is a
+  turn the reader must follow. So a bend costs line, and the way round that bends
+  once wins wherever it costs no more. Here that is every bending reach on the page, and usually
+  the shorter line as well.</p>
+   <p><b>A reach bends rather than breaks.</b> One gentle curve runs from hand
+  to hand, and nothing on the page changes direction by more than a few degrees. <b>A moving
+  connection stays straight</b>, because a smooth pass across a mark is what a turn does. A bend
+  that came and went mid-turn would be a mark of its own.</p>
+  <p><b>Two rounds, and not four.</b> Every build measures this: <b>one axis turn and the orbit
+  of the other dancer reach each round</b>. The follow in orbit of the lead arrives at the pictures
+  that the axis turn of the lead reaches. The lead in orbit of the follow arrives at those of the
+  follow. Rule 32 does that, because an orbit that faces the centre turns the pair as far
+  as it carries the walker. The drawing cannot say which of the two was danced, and only the path
+  can, which is why all four are here.</p>
 </section>
 
 <section>
@@ -181,34 +167,28 @@ const BODY = """
 </section>
 
 <div class="note">
-  <p><b>What the collapse costs, and what it buys.</b> Where two manners reach
-  one round, a position cannot say which of them was danced — only the edge
-  can. That now holds for every manner in pairs, so the state graph underneath
-  these four sections has <b>two rounds</b> in it, not four. Whether the
-  page should be reorganised to say that first — two rounds, four manners of
-  walking them — is yours to call, and the case for it is stronger than it
-  was.</p>
-  <p><b>What it costs is the distinction the frame page once drew.</b> That
-  page said axis against orbit was a property of the move rather than the
-  state, and for a while this page said the opposite. Under rule 32 the
-  frame page was right after all: an orbit lands exactly where the other
-  dancer's axis turn lands, so no <em>position</em> tells them apart. What
-  does land somewhere of its own is the compound — an orbit walked while
-  turning the other way — and both pages now say so.</p>
-  <p><b>What is not drawn:</b> anything that runs out. No refusal appears
-  on this page because above has no ceiling; the moment a level that locks
-  or wraps comes back into scope, ceilings and refusals come with it.</p>
+  <p><b>What the two rounds cost.</b> Where two manners reach one round, a position cannot say
+  which of them was danced, and only the edge can. That holds for every manner in pairs, so the
+  state graph under these four sections holds <b>two rounds</b> rather than four. Whether the
+  page should lead with the two rounds, and put the four manners under them, is yours to call.</p>
+  <p><b>An orbit lands where an axis turn lands.</b> So no position tells an orbit from the axis
+  turn of the other dancer, and the difference belongs to the move. The compound lands somewhere
+  of its own, and it is an orbit walked while the walker turns the other way. The frame page says
+  the same.</p>
+  <p><b>What is not drawn:</b> anything that runs out. No refusal appears here, because above has
+  no ceiling. Ceilings and refusals come back with the first level that locks or wraps.</p>
 </div>
 
 <div class="foot">
-  <p><b>Still not in the app.</b> Same standing as the other pages: the app
-  keeps drawing the eight frames and nothing else until the marks are
-  settled.</p>
-  <p>Yours to settle on this page: whether the two rounds should lead the
-  page rather than the four manners; whether a quarter is the right grain, or
-  whether an eighth is danced; and what mark, if any, the edges themselves
-  should carry — the turn sign was built for exactly this job and these are
-  the first edges it could label.</p>
+  <p><b>Not in the app yet.</b> The app keeps drawing the eight frames and nothing else until the
+  marks are settled.</p>
+  <p>Yours to settle on this page:</p>
+  <ul>
+    <li>whether the two rounds should lead the page rather than the four manners;</li>
+    <li>whether a quarter is the right grain, or whether an eighth is danced;</li>
+    <li>what mark, if any, the edges should carry: the turn sign was built for this job, and
+    these are the first edges it could label.</li>
+  </ul>
 </div>
 
 </div>
