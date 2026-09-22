@@ -3207,6 +3207,26 @@ suite "History":
     true
 
 
+  test "stepping either way restores where the view stood, and never the lens":
+    # `CameraStance` says lens is reader's setting, and that nothing aiming camera may
+    #   rewrite it. Stepping is aiming camera, so it owes that too.
+    #   Field of view is only lens field, and reader reaches it from both front-ends.
+    var scene = initScene()
+    var camera = initCameraDefault()
+    var history: History
+    camera.degrees_field_of_view = 90.0
+    history.initHistory(scene, camera)
+    scene.addObject(toMultivector(PLACES[0]), "a", Ink.Cobalt)
+    history.record(scene, camera)
+    # Reader widens lens, then steps back over edit they made at other lens.
+    camera.degrees_field_of_view = 30.0
+    check history.undo(scene, camera)
+    check camera.degrees_field_of_view =~ 30.0
+    check history.redo(scene, camera)
+    check camera.degrees_field_of_view =~ 30.0
+    # Stance itself still crosses, which is what stepping is for.
+    check camera.pivot =~ initCameraDefault().pivot
+
   test "undo and redo retrace every recorded state exactly, and canUndo/canRedo agree":
     var scene = initScene()
     var camera = initCameraDefault()
