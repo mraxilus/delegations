@@ -3,8 +3,8 @@
 ##     approved words. Dictionary is ASD's and is not copied here. Three rules are mechanical
 ##     enough to check: sentence length, paragraph length, and words outside dictionary that
 ##     have one approved replacement. Rest holds by reading, as `GUIDE.md` sets out.
-##   Paths are data in `ENGLISH_PATHS`, governed documents alone, so no contributor record
-##     reddens for rule whose writer has not read it yet. Widening check is one row.
+##   Paths are data in `ENGLISH_PATHS`: every root document except `LICENSE.md`, four
+##     templates, and three records of every project. Widening check is one row.
 ##   Block is bullet, numbered item or run of plain lines, each read alone: list of six
 ##     bullets is six blocks rather than one paragraph of six sentences.
 ##   Quotation is skipped whole: quoted text comes from outside this repository, so delegate may
