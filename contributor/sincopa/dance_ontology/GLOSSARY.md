@@ -94,7 +94,7 @@ shortest.
 _Avoid_: route, path, sequence, walk
 
 **Level**:
-The height a connection is carried at: low, high or overhead.
+The height a connection is carried at: low, high or above.
 _Avoid_: height, tier, zone
 
 **Modifier**:
@@ -114,10 +114,10 @@ _Avoid_: waist, hip
 A connection held above shoulder level, about the neck.
 _Avoid_: chest, shoulder level
 
-**Overhead**:
+**Above**:
 A connection held above the head, on the axis that the couple turn about. It is the one
 level that carries no modifier, because there is nothing there to wind around.
-_Avoid_: above, upper, top, crown
+_Avoid_: overhead, upper, top, crown
 
 **Wrap**:
 An arm crossed around the front of its own body, under its other arm when low, over it when
