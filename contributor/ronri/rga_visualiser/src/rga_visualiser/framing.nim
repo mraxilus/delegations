@@ -210,23 +210,26 @@ func stanceFor*(
   #   Aim compares equal from next frame on, so ease runs once per pick; see `CameraAim`
   #   and `CameraTween.abandon`.
   if isShownAll(scene, picked, staged, camera, width, height):
-    var held = camera.stanceOf
-    if aim.centroid.isSome: held.pivot = aim.centroid.get
-    return held
+    if aim.centroid.isSome: return camera.stanceRepivoted(aim.centroid.get)
+    return camera.stanceOf
 
-  let angles =
-    if aim.sphere.isSome or aim.heading.isNone: (camera.azimuth, camera.elevation)
-    else: azimuthElevationFor(aim.heading.get)
-  var settled = CameraStance(
-    # Aim at middle of what was picked, not middle of bound holding it.
-    #   Bound still decides *distance*.
-    pivot: if aim.centroid.isSome: aim.centroid.get else: camera.pivot,
-    distance: camera.distance,
-    azimuth: angles[0],
-    # Clamp as orbit drag is.
-    #   Past pole camera's up runs along sight axis and frame collapses.
-    elevation: clamp(angles[1], -ELEVATION_LIMIT, ELEVATION_LIMIT),
-  )
+  # Aim at middle of what was picked, not middle of bound holding it.
+  #   Bound still decides *separation*.
+  let pivot = if aim.centroid.isSome: aim.centroid.get else: camera.pivot
+  var settled =
+    if aim.sphere.isSome or aim.heading.isNone:
+      # Framing something finite turns nothing, so whole motion crosses and roll with it.
+      camera.stanceRepivoted(pivot)
+    else:
+      # Facing horizon object does turn, and turntable rebuild is what names that turn.
+      #   Roll is given up here, because direction alone names no roll to keep.
+      #   Clamped as `placedAtElevation` is: past pole camera's up runs along sight axis
+      #   and rebuilt frame collapses.
+      let angles = azimuthElevationFor(aim.heading.get)
+      stanceTurntable(
+        pivot, camera.distance, angles[0],
+        clamp(angles[1], -ELEVATION_LIMIT, ELEVATION_LIMIT),
+      )
   if aim.sphere.isSome and
       not isShownAll(scene, picked, staged, camera.placed(settled), width, height):
     # Bracket with distance at which whole sphere fits, then halve into it for least.
@@ -239,17 +242,17 @@ func stanceFor*(
         camera.distance,
         distanceFitting(aim.sphere.get.radius, camera, width, height, INSET_POINT_SHOWN),
       )
-    settled.distance = far
+    settled = camera.stanceDollied(settled, far)
     # Halve soundly because test is monotone in distance.
     #   Everything converges on middle of frame as eye pulls back.
     if isShownAll(scene, picked, staged, camera.placed(settled), width, height):
       for _ in 1 .. ROUNDS_DISTANCE_FIT:
         let middle = 0.5*(near + far)
-        settled.distance = middle
+        settled = camera.stanceDollied(settled, middle)
         if isShownAll(scene, picked, staged, camera.placed(settled), width, height):
           far = middle
         else: near = middle
-      settled.distance = far
+      settled = camera.stanceDollied(settled, far)
 
   # Stand whole where even full move shows nothing.
   #   Selection wider than world may be viewed from, or two stars facing opposite ways.
@@ -263,8 +266,7 @@ func stanceFor*(
   # Start from where camera stands but already centred.
   #   Re-centring is not concession to fitting, and in path search would find fraction of
   #   nothing shows everything.
-  var start = camera.stanceOf
-  start.pivot = settled.pivot
+  let start = camera.stanceRepivoted(pivot)
   var (lower, upper) = (0.0, 1.0)
   for step in 1 .. STEPS_PLACEMENT_LEAST:
     let fraction = float(step)/float(STEPS_PLACEMENT_LEAST)
@@ -334,15 +336,14 @@ func stanceUnderPointer*(
     wedge(depth_end/depth_now, subtract(toMultivector(eye), toMultivector(anchor))),
   ))
   if eye_settled.isNone: return
+  # Slide motion camera stands in rather than rebuild one: this aim turns nothing, and
+  #   only eye moves, so roll survives.
   some(CameraStance(
-    pivot: Position(
-      x: eye_settled.get.x + depth_end*forward.x,
-      y: eye_settled.get.y + depth_end*forward.y,
-      z: eye_settled.get.z + depth_end*forward.z,
-    ),
+    motor: motorOf(wedgeDotAnti(
+      motorSliding(subtract(toMultivector(eye_settled.get), toMultivector(eye))),
+      toMultivector(camera.motor),
+    )),
     distance: depth_end,
-    azimuth: camera.azimuth,
-    elevation: camera.elevation,
   ))
 
 

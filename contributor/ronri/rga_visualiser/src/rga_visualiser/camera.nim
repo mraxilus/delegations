@@ -488,21 +488,29 @@ func slideBy*(camera: var Camera, offset: Multivector) =
   ))
 
 
+func turnedAboutPivot(camera: Camera; along: Direction, radians: float): Motor =
+  ## Turn stance about line through pivot along `along`, leaving pivot where it stands.
+  ##   Sibling of `turnedAboutEye`, with pivot where eye was: that is what makes this
+  ##   orbit rather than look.
+  ##   Composed on left, so angle is read in world rather than in reference stance.
+  let axis = toMultivector(camera.pivot) ∧ toMultivector(along)
+  let turn = turnAbout(axis, radians)
+  if turn.isNone: return camera.motor
+  motorOf(wedgeDotAnti(turn.get, toMultivector(camera.motor)))
+
+
 func orbit*(camera: var Camera; turn, rise: float) =
-  ## Turn eye about pivot by given angles, keeping elevation short of poles.
-  ##   Rebuilt from four turntable numbers rather than composed on top of motion standing.
-  ##     Rebuild lands on stance those four name, so no roll can creep in over many events.
-  ##     Stage that frees roll replaces this with composition, and drops clamp with it.
-  ##   Pivot and distance both survive, because every axis `motorTurntable` turns about runs
-  ##   through pivot.
-  ##   Per event, not per frame. Derives frame four times, once for each read-out it asks;
-  ##   cost unmeasured, and one hoisted read would cost one statement of pivot's own rule.
-  camera.motor = motorTurntable(
-    camera.pivot,
-    camera.depth_pivot,
-    camera.azimuth + turn,
-    clamp(camera.elevation + rise, -ELEVATION_LIMIT, ELEVATION_LIMIT),
-  )
+  ## Turn eye about pivot by given angles, about camera's own axes.
+  ##   Composed rather than rebuilt from four turntable numbers.
+  ##     Rebuild carried no roll, so rolling and then orbiting snapped view upright.
+  ##     Sphere about bare point has no pole, so there is no clamp either.
+  ##     `ELEVATION_LIMIT` is left to `placedAtElevation` alone, where turntable is rebuilt
+  ##     from angles and does collapse at pole.
+  ##   Arguments read as `look`'s do, and with same signs, so one drag feeds either verb.
+  ##   Pivot and separation both survive, because both axes run through pivot.
+  ##   Frame is read again between two turns, for reason `look` gives.
+  camera.motor = camera.turnedAboutPivot(camera.frame.axis_up, turn)
+  camera.motor = camera.turnedAboutPivot(camera.frame.axis_right, -rise)
 
 
 func dolly*(camera: var Camera, factor: float) =
@@ -908,9 +916,12 @@ type
   CameraStance* = object ## Define where camera stands: everything ease moves.
     ## Lens is not here: field of view is reader's setting, and nothing aiming camera may
     ## rewrite it.
-    pivot*: Position ## Point orbit turns about.
+    ## Same pair `Camera` holds, so stance crossing ease loses nothing it carried.
+    ##   Four turntable numbers named it before, and roll is not one of them: rolling and
+    ##   then framing snapped view upright. `stanceTurntable` builds one from those four
+    ##   where caller has them.
+    motor*: Motor ## Rigid motion carrying reference stance to this one.
     distance*: float ## Separation of eye from pivot.
-    azimuth*, elevation*: float ## Orbit angles, in radians.
 
   CameraTween* = object ## Define ease carrying camera from where it was toward its goal.
     ## Eased over `duration`, so camera jumping to freshly built object is followed
@@ -1160,24 +1171,51 @@ func isGoalHeld*(tween: CameraTween, goal: CameraAim): bool =
   tween.goal.isSome and tween.goal.get == goal
 
 
+func stanceTurntable*(pivot: Position; distance, azimuth, elevation: float): CameraStance =
+  ## Build stance from four turntable numbers, for caller that has them.
+  ##   Carries no roll, because those four name none; see `CameraStance`.
+  let settled = distanceHeld(distance)
+  CameraStance(
+    motor: motorTurntable(pivot, settled, azimuth, elevation), distance: settled
+  )
+
+
 func stanceOf*(camera: Camera): CameraStance =
   ## Read where `camera` already stands as stance of its own.
+  CameraStance(motor: camera.motor, distance: camera.distance)
+
+
+func stanceDollied*(camera: Camera; stance: CameraStance; distance: float): CameraStance =
+  ## Read `stance` with its separation set to `distance`, pivot standing.
+  ##   Separation is depth of pivot along sight now, so naming it alone moves pivot and
+  ##   leaves eye. Dolly is what moves eye and holds pivot; see `dollyTo`.
+  ##     Four turntable numbers named stance before, and separation was one of them, so
+  ##     writing it rebuilt eye. Whoever wrote it now writes this.
+  var held = camera.placed(stance)
+  held.dollyTo(distance)
+  held.stanceOf
+
+
+func stanceRepivoted*(camera: Camera, pivot: Position): CameraStance =
+  ## Read stance camera would stand at with its pivot moved to `pivot`.
+  ##   Whole camera slides by step between two pivots, so eye follows exactly as far as
+  ##   turntable rebuild moved it, and roll survives.
+  ##   Sight direction and separation both stand, so nothing turns and nothing zooms.
   CameraStance(
-    pivot: camera.pivot,
+    motor: motorOf(wedgeDotAnti(
+      motorSliding(subtract(toMultivector(pivot), toMultivector(camera.pivot))),
+      toMultivector(camera.motor),
+    )),
     distance: camera.distance,
-    azimuth: camera.azimuth,
-    elevation: camera.elevation,
   )
 
 
 func placed*(camera: Camera, stance: CameraStance): Camera =
   ## Put copy of `camera` at `stance`, lens untouched.
-  ##   Rebuilds motion from stance's four numbers, as `initCamera` does, so stance still
-  ##   names turntable placement and nothing carries roll across.
+  ##   Whole motion crosses, so roll crosses with it.
   result = camera
-  let settled = distanceHeld(stance.distance)
-  result.motor = motorTurntable(stance.pivot, settled, stance.azimuth, stance.elevation)
-  result.depth_pivot = settled
+  result.motor = stance.motor
+  result.depth_pivot = distanceHeld(stance.distance)
 
 
 func placedAtPivot*(camera: Camera, pivot: Position): Camera =
@@ -1185,54 +1223,55 @@ func placedAtPivot*(camera: Camera, pivot: Position): Camera =
   ##   Four of these stand where assignment to field stood, because pivot and both angles
   ##   are read-outs now; see `Camera`. Written as calls rather than setters, so reader
   ##   sees that whole motion is rebuilt rather than one number written (Article VII.1).
-  var stance = camera.stanceOf
-  stance.pivot = pivot
-  camera.placed(stance)
+  ##   Slides rather than rebuilds, so roll survives pivot typed into panel's field.
+  camera.placed(camera.stanceRepivoted(pivot))
 
 
 func placedAtDistance*(camera: Camera, distance: float): Camera =
   ## Put copy of `camera` at same stance but this separation, pivot standing.
   ##   Same reading as `dolly`, which reaches it by factor.
-  var stance = camera.stanceOf
-  stance.distance = distance
-  camera.placed(stance)
+  camera.placed(stanceTurntable(
+    camera.pivot, distance, camera.azimuth, camera.elevation
+  ))
 
 
 func placedAtAzimuth*(camera: Camera, azimuth: float): Camera =
   ## Put copy of `camera` at same stance but this azimuth.
-  var stance = camera.stanceOf
-  stance.azimuth = azimuth
-  camera.placed(stance)
+  camera.placed(stanceTurntable(
+    camera.pivot, camera.distance, azimuth, camera.elevation
+  ))
 
 
 func placedAtElevation*(camera: Camera, elevation: float): Camera =
   ## Put copy of `camera` at same stance but this elevation, held short of poles.
-  var stance = camera.stanceOf
-  stance.elevation = clamp(elevation, -ELEVATION_LIMIT, ELEVATION_LIMIT)
-  camera.placed(stance)
+  camera.placed(stanceTurntable(
+    camera.pivot, camera.distance, camera.azimuth,
+    clamp(elevation, -ELEVATION_LIMIT, ELEVATION_LIMIT),
+  ))
 
 
 func toward*(from_stance, to_stance: CameraStance; progress: float): CameraStance =
   ## Step `progress` of way from one stance to another.
-  ##   Distance moves geometrically where everything else moves linearly.
-  ##     Distance is multiplicative, and linear ease from 12 to 300 covers most visible
-  ##     change in first few frames then crawls.
-  # Turn short way round: destination just past -pi is next door to camera short of +pi.
-  var delta = to_stance.azimuth - from_stance.azimuth
-  while delta > PI: delta -= 2.0*PI
-  while delta < -PI: delta += 2.0*PI
-  let (near, far) = (max(from_stance.distance, 1.0e-6), max(to_stance.distance, 1.0e-6))
-  let stepped = position(add(toMultivector(from_stance.pivot), wedge(
-    progress, subtract(
-      toMultivector(to_stance.pivot), toMultivector(from_stance.pivot)
-    )
-  )))
+  ##   Motion eases as one screw, and separation eases geometrically beside it.
+  ##   Screw rather than four numbers eased apart.
+  ##     Roll survives, which four turntable numbers cannot carry: rolling and then
+  ##     framing snapped view upright.
+  ##     Turn takes short way round without being told to. `motors.log` flips sign of
+  ##     motion whose antiscalar is negative, which is same motion by shorter arc, so
+  ##     destination just past -pi stays next door to camera short of +pi.
+  ##     One path, rather than pivot linear and separation geometric pulling apart
+  ##     mid-ease.
+  ##   Separation is multiplicative, and linear ease from 12 to 300 covers most visible
+  ##   change in first few frames then crawls.
+  let
+    (near, far) = (max(from_stance.distance, 1.0e-6), max(to_stance.distance, 1.0e-6))
+    held = toMultivector(from_stance.motor)
+    # Motion carrying one stance to other, logged, scaled, and put back on.
+    step = wedgeDotAnti(toMultivector(to_stance.motor), reverseAnti(held))
+    eased = exp(wedge(progress, log(step)))
   CameraStance(
-    pivot: (if stepped.isSome: stepped.get else: to_stance.pivot),
+    motor: motorOf(wedgeDotAnti(eased, held)),
     distance: near*pow(far/near, progress),
-    azimuth: from_stance.azimuth + progress*delta,
-    elevation: from_stance.elevation +
-      progress*(to_stance.elevation - from_stance.elevation),
   )
 
 
@@ -1246,8 +1285,8 @@ func towardHoldingAnchor*(
   ##   `toward` cannot serve: pivot linear and distance geometric take eye off that line
   ##   mid-ease (168 to 10 puts halfway eye at 41 by one curve, 89 by other), and object
   ##   swung off pointer before swinging back.
-  ##   Distance still geometric, pivot read back as eye plus distance along sight.
-  ##   `camera` lends its lens and angles: eye of each stance needs them.
+  ##   Distance still geometric, and pivot follows eye along sight as it always does.
+  ##   `camera` lends its lens: eye of each stance needs it.
   let
     forward = camera.placed(from_stance).frame.forward
     eye_from = camera.placed(from_stance).eye
@@ -1263,22 +1302,22 @@ func towardHoldingAnchor*(
       wedge(depth/depth_from, subtract(toMultivector(eye_from), toMultivector(anchor))),
     ))
   if eye.isNone: return to_stance
+  # Slide motion camera began with, rather than rebuild one: orientation is what this
+  #   ease holds, roll and all, and only eye moves.
   CameraStance(
-    pivot: Position(
-      x: eye.get.x + distance*forward.x,
-      y: eye.get.y + distance*forward.y,
-      z: eye.get.z + distance*forward.z,
-    ),
+    motor: motorOf(wedgeDotAnti(
+      motorSliding(subtract(toMultivector(eye.get), toMultivector(eye_from))),
+      toMultivector(from_stance.motor),
+    )),
     distance: distance,
-    azimuth: from_stance.azimuth,
-    elevation: from_stance.elevation,
   )
 
 
 func `==`*(a, b: CameraStance): bool =
   ## Compare two stances exactly, for caller asking whether camera would move at all.
-  a.pivot.x == b.pivot.x and a.pivot.y == b.pivot.y and a.pivot.z == b.pivot.z and
-    a.distance == b.distance and a.azimuth == b.azimuth and a.elevation == b.elevation
+  ##   Motor is stored state, so two stances agreeing here agree on eye, every axis,
+  ##   pivot and both angles; same key `SettingsFurniture` holds.
+  a.motor == b.motor and a.distance == b.distance
 
 
 func aimAt*(

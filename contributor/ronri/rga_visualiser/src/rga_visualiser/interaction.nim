@@ -879,10 +879,10 @@ func driveHeld*(
   ##   Two states, and `has_selection` picks between them.
   ##     Empty selection flies: travel and turn are about camera's own axes, and roll is
   ##     reachable.
-  ##     Selection keeps turntable, which stage carrying frame rule replaces. Roll is
-  ##     refused there rather than granted and lost: `camera.orbit` rebuilds stance from
-  ##     four turntable numbers, and rebuild carries no roll, so roll then orbit would
-  ##     snap view upright.
+  ##     Selection keeps turntable's own slide and dolly, which stage carrying whole
+  ##     frame rule replaces.
+  ##     Roll reaches either state, because `camera.orbit` composes motion now and
+  ##     carries roll through.
   # Age travel hold before reading it, so speed climbs across frames, and drop it to zero
   #   frame no travel key is held.
   let age_before = interaction.seconds_travelling
@@ -923,10 +923,8 @@ func driveHeld*(
     of Motion.Up:
       if has_selection: camera.slideGround(0.0, 0.0, slide)
       else: camera.travel(0.0, 0.0, step)
-    of Motion.RollLeft:
-      if not has_selection: camera.roll(-spin)
-    of Motion.RollRight:
-      if not has_selection: camera.roll(spin)
+    of Motion.RollLeft: camera.roll(-spin)
+    of Motion.RollRight: camera.roll(spin)
     of Motion.OrbitLeft:
       if has_selection: camera.orbit(-turn, 0.0) else: camera.look(-turn, 0.0)
     of Motion.OrbitRight:

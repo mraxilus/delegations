@@ -1087,11 +1087,19 @@ replaced collapsed as the sight axis neared world up, which is what the elevatio
 `ELEVATION_LIMIT` is now the bound that `orbit` applies to hold the turntable's own reading, and
 nothing derives through it.
 
-**`orbit` rebuilds the motion from four numbers, and every other verb composes it.** A rebuild lands
-on the stance those four name, so no roll creeps in over many events. A composed turn would need the
-axes to stay exact for the turntable to hold. The stage that frees the roll replaces this and drops
-the clamp with it. The cost is four read-outs for each orbit event, each deriving the frame, which
-is unmeasured.
+**Every verb composes the motion, `orbit` included.** `orbit` turns about two lines through the
+pivot, along the camera's own up and its own across. `look` turns about the same two through the
+eye. A roll survives it, and the elevation clamp goes with the rebuild that needed it.
+
+A rebuild from four turntable numbers cannot carry a roll, so rolling and then orbiting snapped the
+view upright. It also fixed the orbit's axes to world up, which is a pole. `ELEVATION_LIMIT` is left
+to `placedAtElevation` alone, the panel's own field, where the turntable is rebuilt from angles and
+does collapse at the pole.
+
+The axis of each turn is the camera's own, so an orbit reads as a trackball rather than a turntable.
+The azimuth is no longer linear in a horizontal drag once the elevation is off level. Two thousand
+steps of one angle still compose to one turn of their sum, because a turn leaves its own axis
+standing.
 
 **The motor is eight named floats, and not a `Multivector` field.** `Camera` crosses 55 by-value
 parameters, and the JavaScript backend deep-copies every one through `nimCopy`. Eight floats in one
@@ -1257,10 +1265,9 @@ reader selected something.
 The axes are the camera's own and never the world's, so there is no pole and no clamp. Eight pitches
 of a quarter radian compose to exactly two radians, which is past straight down.
 
-**Roll is granted only where it survives.** `orbit` rebuilds the stance from four turntable numbers
-and carries no roll. A roll taken with something selected is wiped by the next orbit event, so Q and
-E do nothing there until the frame rule lands. Nothing is lost by that: the turntable has no sixth
-degree of freedom to lose.
+**Roll reaches either state.** `orbit` composes the motion rather than rebuilding it from four
+turntable numbers. A roll then survives an orbit event, so Q and E work with a selection as without
+one. The rebuild carried no roll, and rolling and then orbiting snapped the view upright.
 
 **The speed climbs toward a cap and never reaches it.** `speedTravelling` is the cap times
 `1 − e^(−t/τ)`. τ is `SECONDS_SPEED_RISE`, 0.6 s: 63 percent of the cap at one τ, and 95 percent at
@@ -2422,6 +2429,21 @@ class is added, rather than from load, so the two stack.
 
 ## Camera aiming and framing
 
+**The stance an ease carries is a motor and a depth**, the same pair that `Camera` holds. Four
+turntable numbers named it before, and a roll is not one of them. Framing a rolled view snapped it
+upright.
+
+`toward` eases that motor as one screw. It takes the motion carrying one stance to the other, logs
+it, scales it by the progress, and puts it back on. `motors.log` flips the sign of a motion whose
+antiscalar is negative. That is the same motion by the shorter arc. A destination just past −π then
+stays next door to a camera short of +π, without being told to. The separation still eases
+geometrically beside it, because it is multiplicative.
+
+The separation is the pivot's own depth along the sight, so writing it moves the pivot and leaves
+the eye. Whoever wrote it now calls `stanceDollied`, which moves the eye and holds the pivot.
+`stanceRepivoted` is the other half. It slides the whole camera between two pivots, which is as far
+as the rebuild moved the eye, and it keeps the roll.
+
 `camera.aimIncluding(aim, geometry, scale)` folds one object into what the camera has been asked
 to show. A horizon point contributes its direction. A horizon line contributes the first axis that
 spans perpendicular to its normal. A horizon plane contributes nothing. Anything finite widens a
@@ -2570,7 +2592,7 @@ rebound**, because that would trap the reader (WCAG 2.1.2). Traversal took the b
 | Key | Does | Kind |
 |---|---|---|
 | `w` `a` `s` `d` | fly the view, or slide it across the ground where something is selected | held |
-| `q` / `e` | roll to either side, where nothing is selected | held |
+| `q` / `e` | roll to either side | held |
 | `space` / `ctrl` | raise / lower it | held |
 | arrows | turn the view, or orbit whatever is selected | held |
 | `-` / `+` | dolly out / in | held |
@@ -2585,9 +2607,9 @@ rebound**, because that would trap the reader (WCAG 2.1.2). Traversal took the b
 Blender: WASD, shift for faster, and F to frame.
 
 **Every motion key reads by state, and an empty selection is what picks the state.** With nothing
-selected the camera flies, and with a selection it drives the turntable that the stage carrying the
-frame rule replaces. `driveHeld` takes the state as a parameter, because the selection belongs to
-each front-end and not to `interaction`.
+selected the camera flies, and with a selection it drives the turntable's own slide and dolly.
+`driveHeld` takes the state as a parameter, because the selection belongs to each front-end and not
+to `interaction`. Roll is the exception, and reaches either state.
 
 Q and E took the roll. That is the sixth degree of freedom free flight opens, and the only pair of
 keys a hand already rests on. Space and control took the raise and the lower that Q and E had.

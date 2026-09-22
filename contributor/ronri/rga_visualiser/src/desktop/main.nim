@@ -2019,11 +2019,8 @@ proc runStoryboard(
     #   wherever construction landed it.
     #   Representative point for line's great circle, since aiming along normal puts ring
     #   at frame's edge; plane at horizon needs no aiming; lens stays default.
-    camera = camera.placed(CameraStance(
-      pivot: camera.pivot,
-      distance: camera.distance,
-      azimuth: azimuth_default,
-      elevation: elevation_default,
+    camera = camera.placed(stanceTurntable(
+      camera.pivot, camera.distance, azimuth_default, elevation_default
     ))
     # Settle instantly, not eased: captured frame must never show half-finished pan.
     #   Same `framing` rule interactive path uses.

@@ -486,22 +486,30 @@ suite "Camera":
     check count == 480
 
   test "an orbit repeated many times lands where the sum of its steps says":
-    # `orbit` rebuilds stance from angles it reads back, so any loss there accumulates.
-    #   Pivot and separation must survive every step, because each axis it turns about
-    #   runs through pivot.
+    # `orbit` composes motion now, so loss accumulates over steps rather than being
+    #   rebuilt away. Pivot and separation must survive every one, because both axes it
+    #   turns about run through pivot.
+    #   Axis is camera's own up, which its own turn leaves standing, so many steps and
+    #   one turn of their sum are one motion.
     const (STEPS, TURN) = (2000, 0.004)
     let pivot = Position(x: 2.0, y: -1.0, z: 0.5)
-    var camera = initCamera(pivot, 19.0, 0.3, 0.2)
-    for _ in 1 .. STEPS: camera.orbit(TURN, 0.0)
-    var wanted = 0.3 + float(STEPS)*TURN
-    while wanted > PI: wanted -= TAU
-    check abs(camera.azimuth - wanted) < 1.0e-9
-    check abs(camera.elevation - 0.2) < 1.0e-9
-    check camera.pivot =~ pivot
-    check abs(camera.distance - 19.0) < 1.0e-9
-    # Up stays up: rebuild carries no roll, which is what holds turntable's own reading.
-    check dot(camera.frame.axis_up, UP_WORLD) > 0
-    check abs(camera.frame.axis_right.z) < 1.0e-9
+    var stepped = initCamera(pivot, 19.0, 0.3, 0.2)
+    for _ in 1 .. STEPS: stepped.orbit(TURN, 0.0)
+    var once = initCamera(pivot, 19.0, 0.3, 0.2)
+    once.orbit(float(STEPS)*TURN, 0.0)
+    check stepped.eye =~ once.eye
+    check stepped.frame.forward =~ once.frame.forward
+    check stepped.frame.axis_up =~ once.frame.axis_up
+    check stepped.pivot =~ pivot
+    check abs(stepped.distance - 19.0) < 1.0e-9
+    # Roll survives orbit now, which four turntable numbers could not carry.
+    var rolled = initCamera(pivot, 19.0, 0.3, 0.2)
+    rolled.roll(0.6)
+    let axis_up_rolled = rolled.frame.axis_up
+    rolled.orbit(0.4, 0.0)
+    check dot(rolled.frame.axis_up, UP_WORLD) < dot(axis_up_rolled, UP_WORLD) + TOLERANCE_TEST
+    check abs(rolled.frame.axis_right.z) > TOLERANCE_TEST
+    check rolled.pivot =~ pivot
 
   test "the flat motor and the multivector say one motion, and it is unit":
     # `Camera` holds eight floats rather than multivector, so crossing must lose nothing.
@@ -537,19 +545,22 @@ suite "Camera":
     check abs(dot(axes_steep.axis_up, axes_steep.forward)) < TOLERANCE_TEST
     check abs(norm(axes_steep.forward) - 1.0) < TOLERANCE_TEST
 
-  test "a look passes the pole that an orbit is clamped short of":
-    # What rotor buys: `orbit` stops at `ELEVATION_LIMIT`, and `look` walks past it.
+  test "a look and an orbit both pass the pole that the panel's own field stops short of":
+    # What rotor buys: neither verb has clamp, because neither rebuilds from angles.
     var flown = initCamera(ORIGIN, 19.0, 0.0, 0.0)
     var orbited = flown
     for _ in 1 .. 8:
       flown.look(0.0, 0.25)
       orbited.orbit(0.0, 0.25)
-    check orbited.elevation =~ ELEVATION_LIMIT
     # Eight quarter-radian pitches compose to exactly two radians of turn, and two radians
     #   is past straight down, where old frame's joins collapsed.
     let forward_start = initCamera(ORIGIN, 19.0, 0.0, 0.0).frame.forward
     check abs(dot(flown.frame.forward, forward_start) - cos(2.0)) < TOLERANCE_TEST
+    check abs(dot(orbited.frame.forward, forward_start) - cos(2.0)) < TOLERANCE_TEST
     check flown.frame.forward.x > 0.0
+    # Panel's own field does rebuild from angles, so it alone is still held short.
+    let typed = initCamera(ORIGIN, 19.0, 0.0, 0.0).placedAtElevation(2.0)
+    check typed.elevation =~ ELEVATION_LIMIT
     check abs(norm(flown.frame.forward) - 1.0) < TOLERANCE_TEST
 
   test "a look and an orbit turn sight the same way, so one drag reads the same in either":
@@ -4118,7 +4129,8 @@ suite "Camera Aim":
     ))
     let framed = framedFor(scene_drawn, picked_drawn, camera)
     check not (framed == camera.stanceOf)
-    check framed.pivot.x > camera.pivot.x # Panned toward circle actually drawn.
+    # Panned toward circle actually drawn.
+    check camera.placed(framed).pivot.x > camera.pivot.x
     check isShownAll(
       scene_drawn, picked_drawn, none(Preview), camera.placed(framed),
       WIDTH_AIM, HEIGHT_AIM,
@@ -4198,10 +4210,10 @@ suite "Camera Aim":
         var camera = stanceAim(azimuth, elevation)
         check isShownAll(scene, picked, none(Preview), camera, WIDTH_AIM, HEIGHT_AIM)
         let framed = framedFor(scene, picked, camera)
-        check framed.pivot =~ middle
+        check camera.placed(framed).pivot =~ middle
         check framed.distance == camera.distance
-        check framed.azimuth == camera.azimuth
-        check framed.elevation == camera.elevation
+        check camera.placed(framed).azimuth == camera.azimuth
+        check camera.placed(framed).elevation == camera.elevation
         # End to end: ease carries pivot there and leaves everything else alone.
         var tween: CameraTween
         tween.offerAim(
@@ -4229,10 +4241,10 @@ suite "Camera Aim":
         check isShownAll(
           scene, picked, none(Preview), camera.placed(framed), WIDTH_AIM, HEIGHT_AIM
         )
-        check framed.pivot =~ place
+        check camera.placed(framed).pivot =~ place
         check framed.distance == camera.distance
-        check framed.azimuth == camera.azimuth
-        check framed.elevation == camera.elevation
+        check camera.placed(framed).azimuth == camera.azimuth
+        check camera.placed(framed).elevation == camera.elevation
 
 
   test "a finite selection never turns the orbit":
@@ -4250,8 +4262,8 @@ suite "Camera Aim":
         for elevation in ELEVATIONS_AIM:
           let camera = stanceAim(azimuth, elevation)
           let framed = framedFor(scene, picked, camera)
-          check framed.azimuth == camera.azimuth
-          check framed.elevation == camera.elevation
+          check camera.placed(framed).azimuth == camera.azimuth
+          check camera.placed(framed).elevation == camera.elevation
 
 
   test "the camera pulls back only as far as it must, and never pulls in":
@@ -4306,7 +4318,7 @@ suite "Camera Aim":
     check aim.get.sphere.get.radius =~ 0.0
     let framed = framedFor(scene, picked, camera)
     check framed.distance == camera.distance
-    check framed.azimuth == camera.azimuth
+    check camera.placed(framed).azimuth == camera.azimuth
     check isShownAll(
       scene, picked, none(Preview), camera.placed(framed), WIDTH_AIM, HEIGHT_AIM
     )
@@ -4325,7 +4337,7 @@ suite "Camera Aim":
       let camera = stanceAim(azimuth, 0.3)
       let framed = framedFor(scene_star, picked_star, camera)
       check isShownCentrally(star, camera.placed(framed), WIDTH_AIM, HEIGHT_AIM)
-      check framed.pivot =~ camera.pivot # Orbit turned; what it turns about did not.
+      check camera.placed(framed).pivot =~ camera.pivot # Orbit turned; what it turns about did not.
       check framed.distance =~ camera.distance
       if isShownCentrally(star, camera, WIDTH_AIM, HEIGHT_AIM): continue
       let short = camera.stanceOf.toward(framed, 0.9)
@@ -4337,8 +4349,8 @@ suite "Camera Aim":
       sceneOf(star, toMultivector(Position(x: 3.0, y: -2.0, z: 1.0)))
     let camera = stanceAim(0.7, 0.2)
     let framed = framedFor(scene_both, picked_both, camera)
-    check framed.azimuth == camera.azimuth
-    check framed.elevation == camera.elevation
+    check camera.placed(framed).azimuth == camera.azimuth
+    check camera.placed(framed).elevation == camera.elevation
 
 
   test "an empty selection withdraws the offer, and so does geometry that draws nothing":
@@ -4618,8 +4630,7 @@ suite "Camera Aim":
 
   proc placeOn(camera: Camera, pivot: Position): CameraStance =
     ## Move camera's placement onto pivot, leaving its orbit exactly as it stands.
-    result = camera.stanceOf
-    result.pivot = pivot
+    camera.stanceRepivoted(pivot)
 
 
   test "a tween eases toward its destination and lands on it exactly at the duration":
@@ -4675,7 +4686,7 @@ suite "Camera Aim":
     # Goal that moves must not snap camera back to where last ease began.
     let second = Position(x: 20.0, y: 0, z: 0)
     tween.aimAt(camera, aimOn(second), camera.placeOn(second), DURATION*0.5, DURATION)
-    check tween.stance_from.pivot.x =~ reached
+    check camera.placed(tween.stance_from).pivot.x =~ reached
     tween.advance(camera, DURATION*0.5 + 0.001, easeOutCubic)
     check camera.pivot.x >= reached # Continues forward, never jumps backward.
 
@@ -4700,8 +4711,7 @@ suite "Camera Aim":
     const DURATION = 0.35
     var camera = initCamera(ORIGIN, 12.0, 3.0, 0.0)
     var tween: CameraTween
-    var arrival = camera.stanceOf
-    arrival.azimuth = -3.0
+    let arrival = stanceTurntable(ORIGIN, 12.0, -3.0, 0.0)
     tween.aimAt(camera, aimOn(Position(x: 1, y: 0, z: 0)), arrival, 0.0, DURATION)
     tween.advance(camera, DURATION*0.5, easeOutCubic)
     # Azimuth wraps to (-pi, pi] now, because it is read off sight direction through
@@ -4715,8 +4725,7 @@ suite "Camera Aim":
   test "settle puts the camera on its destination at once":
     var camera = initCamera(ORIGIN, 12.0, 0.0, 0.4)
     var tween: CameraTween
-    var arrival = camera.stanceOf
-    (arrival.azimuth, arrival.elevation, arrival.distance) = (1.0, 0.5, 30.0)
+    let arrival = stanceTurntable(ORIGIN, 30.0, 1.0, 0.5)
     tween.aimAt(camera, aimOn(ORIGIN, 2.0), arrival, 0.0, 0.35)
     tween.settle(camera)
     check camera.azimuth =~ 1.0
@@ -6988,21 +6997,25 @@ suite "Interaction":
     near_work.releaseKey(Key.W)
     check near_work.seconds_travelling =~ 0.0
 
-  test "roll and free turning reach the camera only when nothing is selected":
-    # Roll is granted where it survives. `camera.orbit` rebuilds stance from four
-    #   turntable numbers and carries no roll, so selection refuses roll rather than
-    #   granting it and losing it at next orbit.
+  test "roll reaches the camera in either state, and free turning in one":
+    # `camera.orbit` composes motion now and carries roll through, so roll is granted
+    #   with selection as without one.
     var interaction = Interaction(is_enabled: true)
     interaction.holdKey(Key.E)
     var flying = initCamera(ORIGIN, 20.0, 0.4, 0.3)
     var held = flying
     interaction.driveHeld(flying, 0.5, has_selection = false)
     interaction.driveHeld(held, 0.5, has_selection = true)
-    check abs(dot(flying.frame.axis_up, held.frame.axis_right)) > TOLERANCE_TEST
-    check held.frame.axis_up =~ initCamera(ORIGIN, 20.0, 0.4, 0.3).frame.axis_up
-    # Sight and eye stand through roll, whatever else moves.
+    let upright = initCamera(ORIGIN, 20.0, 0.4, 0.3)
+    # Both rolled, by exactly as much, and neither turned sight or moved eye.
+    check flying.frame.axis_up =~ held.frame.axis_up
+    check abs(dot(flying.frame.axis_up, upright.frame.axis_right)) > TOLERANCE_TEST
     check flying.eye =~ held.eye
-    check flying.frame.forward =~ held.frame.forward
+    check flying.frame.forward =~ upright.frame.forward
+    check held.frame.forward =~ upright.frame.forward
+    # Roll then orbit keeps that roll, which is what earns it selected state.
+    held.orbit(0.3, 0.1)
+    check abs(dot(held.frame.axis_right, UP_WORLD)) > TOLERANCE_TEST
 
     # Arrows turn in place with no selection, and orbit about pivot with one.
     interaction.releaseKeysAll()
@@ -7064,7 +7077,13 @@ suite "Interaction":
     interaction.driveHeld(turned, 0.25, has_selection = true)
     interaction.holdKey(Key.Shift)
     interaction.driveHeld(turned_fast, 0.25, has_selection = true)
-    check (turned_fast.azimuth - 0.4) =~ FACTOR_HASTE*(turned.azimuth - 0.4)
+    # Read swing of sight itself, not azimuth: orbit turns about camera's own up, which
+    #   is not world up once elevation is off level, so azimuth is no longer linear in it.
+    #   Frame is orthonormal, so sight sweeps exactly angle asked for.
+    let forward_start = initCamera(ORIGIN, 20.0, 0.4, 0.3).frame.forward
+    let swung = arccos(clamp(dot(turned.frame.forward, forward_start), -1.0, 1.0))
+    let swung_fast = arccos(clamp(dot(turned_fast.frame.forward, forward_start), -1.0, 1.0))
+    check swung_fast =~ FACTOR_HASTE*swung
 
 
   test "letting go of everything at once stops the camera, however it lost the release":
