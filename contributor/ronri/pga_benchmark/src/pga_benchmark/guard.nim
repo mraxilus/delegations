@@ -14,9 +14,9 @@ import std/[json, strutils]
 import ./report
 
 
-const FLOORED* = ["multiplies", "adds", "divides", "roots", "bytes_moved"]
-  ## Floor fields gate holds. Floor is derived rather than measured, so it is held to
-  ##   equality: it moves only where derivation moves, which is change to read and not drift.
+const BOUNDED* = ["multiplies", "adds", "divides", "roots", "bytes_moved"]
+  ## Lower bound fields gate holds. Bound is derived rather than measured, so gate holds it
+  ##   to equality: it moves only where derivation moves, which is change to read, not drift.
 
 
 type
@@ -112,25 +112,25 @@ func compare*(baseline, current: JsonNode; path: string): Verdict =
           "Total `" & metric & "` of `" & key & "` shrank; got `" & $now & "`, baseline `" &
             $was & "`."
         )
-  # Floors are derived, so they never drift: any move means derivation itself changed.
-  let floors_before = baseline{"measurands"}
-  let floors_after = current{"measurands"}
-  if not floors_before.isNil and not floors_after.isNil:
-    for id, node in floors_before.pairs:
+  # Bounds are derived, so they never drift: any move means derivation itself changed.
+  let bounds_before = baseline{"measurands"}
+  let bounds_after = current{"measurands"}
+  if not bounds_before.isNil and not bounds_after.isNil:
+    for id, node in bounds_before.pairs:
       let was = node{"bound"}
       if was.isNil: continue
-      let now = floors_after{id, "bound"}
+      let now = bounds_after{id, "bound"}
       if now.isNil:
         result.findings.add Finding(
-          path: path, message: "Floor absent now; got `" & id & "`."
+          path: path, message: "Lower bound absent now; got `" & id & "`."
         )
         continue
-      for metric in FLOORED:
+      for metric in BOUNDED:
         let a = was{metric}.getInt
         let b = now{metric}.getInt
         if a != b:
           result.findings.add Finding(
             path: path,
-            message: "Floor `" & metric & "` of `" & id & "` moved; got `" & $b &
+            message: "Lower bound `" & metric & "` of `" & id & "` moved; got `" & $b &
               "`, baseline `" & $a & "`.",
           )

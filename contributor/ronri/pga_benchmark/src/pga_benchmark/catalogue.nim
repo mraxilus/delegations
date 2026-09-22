@@ -489,8 +489,8 @@ const SHAPES* = [
   ("■", Shape.Permutation), ("□", Shape.Permutation),
   ("{}", Shape.Permutation),
 ]
-  ## Arithmetic shape of each library symbol, i.e. which rule derives its dense floor.
-  ##   Symbol absent here carries no derived floor, and gap list shows dash rather than
+  ## Arithmetic shape of each library symbol, i.e. which rule derives its lower bound.
+  ##   Symbol absent here carries no lower bound, and gap list shows dash rather than
   ##   number without ground. Binary `∙` and `∘` stand apart, since library spells same
   ##   symbol for bilinear form and for unary part.
 

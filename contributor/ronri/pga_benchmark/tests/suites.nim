@@ -208,24 +208,24 @@ suite "Allocation":
           check measurement.allocations == 0  # heap untouched over every round
 
 
-suite "Floor":
+suite "Lower bound":
   test "derived counts reproduce what algebra demands":
     let m = Metric(dimensions: 4, is_conformal: false)
-    check boundOf(Shape.Wedge, m, 2).multiplies == 81  # three states per dimension
-    check boundOf(Shape.Wedge, m, 2).adds == 65  # one add per term past first of each slot
-    check boundOf(Shape.Geometric, m, 2).multiplies == 192  # null vector drops one state
-    check boundOf(Shape.ScalarForm, m, 2).multiplies == 8  # blades carrying metric image
-    check boundOf(Shape.ContractBulk, m, 2).multiplies == 54  # 2.119
-    check boundOf(Shape.ContractWeight, m, 2).multiplies == 27  # 2.120
-    check boundOf(Shape.ExpandBulk, m, 2).multiplies == 27  # wiki:Expansions
-    check boundOf(Shape.ExpandWeight, m, 2).multiplies == 54  # wiki:Expansions
-    check boundOf(Shape.Scale, m, 2).multiplies == 16  # every slot times one scalar
-    check boundOf(Shape.Permutation, m, 1).multiplies == 0  # sign and reorder only
-    check boundOf(Shape.Attitude, m, 1).multiplies == 0  # constant carries one unit part
+    check lowerBoundOf(Shape.Wedge, m, 2).multiplies == 81  # three states per dimension
+    check lowerBoundOf(Shape.Wedge, m, 2).adds == 65  # one add per term past first of each slot
+    check lowerBoundOf(Shape.Geometric, m, 2).multiplies == 192  # null vector drops one state
+    check lowerBoundOf(Shape.ScalarForm, m, 2).multiplies == 8  # blades carrying metric image
+    check lowerBoundOf(Shape.ContractBulk, m, 2).multiplies == 54  # 2.119
+    check lowerBoundOf(Shape.ContractWeight, m, 2).multiplies == 27  # 2.120
+    check lowerBoundOf(Shape.ExpandBulk, m, 2).multiplies == 27  # wiki:Expansions
+    check lowerBoundOf(Shape.ExpandWeight, m, 2).multiplies == 54  # wiki:Expansions
+    check lowerBoundOf(Shape.Scale, m, 2).multiplies == 16  # every slot times one scalar
+    check lowerBoundOf(Shape.Permutation, m, 1).multiplies == 0  # sign and reorder only
+    check lowerBoundOf(Shape.Attitude, m, 1).multiplies == 0  # constant carries one unit part
 
-  test "unitize floor is norm, one reciprocal and one scale of each slot":
+  test "unitize bound is norm, one reciprocal and one scale of each slot":
     let m = Metric(dimensions: 4, is_conformal: false)
-    let b = boundOf(Shape.Unitize, m, 1)
+    let b = lowerBoundOf(Shape.Unitize, m, 1)
     check b.multiplies == 8 + 16  # squared norm, then every slot
     check b.divides == 1 and b.roots == 1  # one reciprocal over one root
 
@@ -235,19 +235,19 @@ suite "Floor":
     check rigid.isNull(3) and not rigid.isNull(0)  # last vector of rigid squares to zero
     check not conformal.isNull(4)  # conformal pairs last two off diagonal
     check conformal.scalarFormTerms == 32 and rigid.scalarFormTerms == 8  # every blade
-    check boundOf(Shape.Geometric, conformal, 2).multiplies == 1024  # four states throughout
+    check lowerBoundOf(Shape.Geometric, conformal, 2).multiplies == 1024  # four states throughout
 
-  test "bulk and weight split needs degenerate vector, so conformal carries no such floor":
+  test "bulk and weight split needs degenerate vector, so conformal carries no such bound":
     let conformal = Metric(dimensions: 5, is_conformal: true)
     for shape in [Shape.ContractBulk, Shape.ContractWeight, Shape.ExpandBulk,
                   Shape.ExpandWeight]:
-      check not boundOf(shape, conformal, 2).is_derived  # rule says nothing here
+      check not lowerBoundOf(shape, conformal, 2).is_derived  # rule says nothing here
 
-  test "floor moves operands read once and result written once":
+  test "bound moves operands read once and result written once":
     let m = Metric(dimensions: 4, is_conformal: false)
-    check boundOf(Shape.Wedge, m, 2).bytesMoved == 128 * 3  # two read, one written
-    check boundOf(Shape.Permutation, m, 1).bytesMoved == 128 * 2  # one read, one written
-    check boundOf(Shape.Unknown, m, 2).bytesMoved == 0  # no rule, so no claim
+    check lowerBoundOf(Shape.Wedge, m, 2).bytesMoved == 128 * 3  # two read, one written
+    check lowerBoundOf(Shape.Permutation, m, 1).bytesMoved == 128 * 2  # one read, one written
+    check lowerBoundOf(Shape.Unknown, m, 2).bytesMoved == 0  # no rule, so no claim
 
 
 const CACHE = querySetting(SingleValueSetting.nimcacheDir)
@@ -446,7 +446,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
     check sizeOfStem("Point", 128) == 32 and sizeOfStem("float", 128) == 8  # typed sizes
     check sizeOfStem("Unknown", 128) == 0  # unknown stems add nothing
 
-  test "no floor outruns what library spends on same operation":
+  test "no lower bound outruns what library spends on same operation":
     let metric = Metric(dimensions: DIMENSIONS, is_conformal: IS_CONFORMAL)
     # Fold only functions law reads: folding whole cache walks every call graph of
     #   unittest itself, which costs minutes (Article IX.8).
@@ -458,7 +458,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
     var compared = 0
     for p in CATALOGUE:
       if p.symbol.len == 0 or p.symbol in INLINED: continue
-      let b = boundOf(p.shapeOf, metric, p.arity)
+      let b = lowerBoundOf(p.shapeOf, metric, p.arity)
       if not b.is_derived: continue
       # Operator carrying scalar overload spells same symbol at same arity, so stems of
       #   parameters are what tells two apart.
@@ -471,8 +471,8 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
         for stem in f.params:
           if stem == "Multivector": inc dense elif stem == "float": inc scalar
         if dense != wants_dense or scalar != wants_scalar: continue
-        # Floor is what algebra demands, so library meets it and never beats it. Totals
-        #   fold callees, since floor of chain counts arithmetic wherever it is spent.
+        # Bound is what algebra demands, so library meets it and never beats it. Totals
+        #   fold callees, since bound of chain counts arithmetic wherever it is spent.
         check b.multiplies <= total[f.name].multiplies  # derivation is sound
         inc compared
     check compared > 0  # law is vacuous where nothing is compared

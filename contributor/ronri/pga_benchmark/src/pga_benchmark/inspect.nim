@@ -26,7 +26,7 @@ const
   ALGEBRA_NAME = (if IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"
     ## Name of algebra this build inspects; umbrella spells same, kept here to stay entry.
   METRIC = Metric(dimensions: DIMENSIONS, is_conformal: IS_CONFORMAL)
-    ## Algebra floors are derived for, spelled from same build definitions library reads.
+    ## Algebra lower bounds are derived for, spelled from same build definitions library reads.
   LIBRARY_MARK = "illuminatedZpga"
     ## Substring of module suffix of every library module, from its checkout path.
   REFERENCE_MARK = "referenceZ"
@@ -111,7 +111,7 @@ func measurandsNode(): JsonNode =
       "reference": p.referenceKey,
       "cite": p.cite,
     }
-    let b = boundOf(p.shapeOf, METRIC, p.arity)
+    let b = lowerBoundOf(p.shapeOf, METRIC, p.arity)
     if b.is_derived:
       result[p.id]["bound"] = %*{
         "shape": $p.shapeOf,

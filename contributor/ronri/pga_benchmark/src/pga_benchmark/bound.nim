@@ -1,8 +1,13 @@
-## Derive arithmetic dense multivector operation must spend, from axioms of algebra itself.
-##   Third comparison point beside library and typed reference: library is what is written,
-##   typed reference is what sparse hand-rolled linear algebra spends, and bound is floor of
-##   dense representation. Bound answers one question neither of those two answers: how much of gap
-##   is representation, and how much is quality of what generator emits.
+## Derive multivector lower bound: arithmetic dense operation must spend, from axioms alone.
+##   Each operation carries two lower bounds, and library stands above both. Multivector
+##   lower bound is this one: what algebra demands of any implementation over dense
+##   multivector, derived here and never measured. Type optimised lower bound is Lengyel's
+##   typed reference, which is measured rather than derived, and which needs representation
+##   this one cannot reach.
+##
+##   Distance between them says how much of gap is representation, and how much is quality
+##   of what generator emits. Work reaching first bound changes no type; work reaching
+##   second changes every one.
 ##
 ##   Blades are bitmasks over dimensions, and metric is derived here rather than read from
 ##   library (Article II.8): rigid algebra's last vector squares to zero, so its metric is
@@ -11,7 +16,7 @@
 ##
 ##   Cost: bound counts arithmetic that survives, and assumes no common subexpression is
 ##     shared between result slots. Geometric-algebra products share almost none, so bound
-##     is tight for products; where factoring would help, true floor sits below bound.
+##     is tight for products; where factoring would help, true minimum sits below it.
 ##   Cost: bound is derived, never measured, and record says so (Article VIII.1). What it
 ##     bounds is arithmetic and movement, never time.
 
@@ -22,7 +27,7 @@ type
   Blade* = uint32
     ## Define basis blade as bitmask, i.e. bit `i` set where basis vector `i` is factor.
   Metric* = object
-    ## Define which algebra bound is derived for.
+    ## Define which algebra lower bound is derived for.
     dimensions*: int
       ## Count of basis vectors.
     is_conformal*: bool
@@ -59,8 +64,8 @@ type
       ## Wedge against bulk dual of second operand.
     ExpandWeight
       ## Wedge against weight dual of second operand.
-  Bound* = object
-    ## Define arithmetic and movement floor of one operation over dense multivectors.
+  LowerBound* = object
+    ## Define multivector lower bound of one operation, i.e. what algebra demands.
     is_derived*: bool
       ## False where shape carries no rule yet; every count below is then meaningless.
     multiplies*, adds*, divides*, roots*: int
@@ -138,8 +143,8 @@ func dualProductTerms*(m: Metric; as_weight, as_expand: bool): int =
     result += 1 shl (if as_expand: grade else: m.dimensions - grade)
 
 
-func boundOf*(shape: Shape; m: Metric; arity: range[1 .. 2]): Bound =
-  ## Derive floor of one operation from its shape and algebra.
+func lowerBoundOf*(shape: Shape; m: Metric; arity: range[1 .. 2]): LowerBound =
+  ## Derive multivector lower bound of one operation from its shape and algebra.
   ##   Movement is operands read once and result written once, since dense operation needs
   ##   no fill, no copy and no intermediate to be correct.
   let size = m.sizeOfMultivector
@@ -185,9 +190,9 @@ func boundOf*(shape: Shape; m: Metric; arity: range[1 .. 2]): Bound =
     discard
   of Shape.ContractBulk, Shape.ContractWeight, Shape.ExpandBulk, Shape.ExpandWeight:
     # Bulk and weight split on degenerate vector, which only rigid metric carries. Conformal
-    #   metric is non-singular, so this rule says nothing there and floor stays absent.
+    #   metric is non-singular, so this rule says nothing there and bound stays absent.
     if m.is_conformal:
-      result = Bound()
+      result = LowerBound()
     else:
       let as_weight = shape in {Shape.ContractWeight, Shape.ExpandWeight}
       let as_expand = shape in {Shape.ExpandBulk, Shape.ExpandWeight}
@@ -195,6 +200,6 @@ func boundOf*(shape: Shape; m: Metric; arity: range[1 .. 2]): Bound =
       result.adds = max(0, result.multiplies - m.slots)
 
 
-func bytesMoved*(b: Bound): int =
-  ## Read bytes floor moves, i.e. operands read plus result written.
+func bytesMoved*(b: LowerBound): int =
+  ## Read bytes bound moves, i.e. operands read plus result written.
   b.bytes_read + b.bytes_written

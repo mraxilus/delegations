@@ -49,7 +49,7 @@ type
     library*, reference*: Values
       ## Both implementations.
     bound*: Values
-      ## Floor of dense representation, derived from algebra and never measured.
+      ## Multivector lower bound, derived from algebra and never measured.
       ##   Absent where no rule is derived for measurand's shape.
     over_on*: seq[string]
       ## Metrics library exceeds target on.
@@ -199,8 +199,8 @@ func decide*(gap: var Gap) =
 
 
 func boundValuesOf(node: JsonNode): Values =
-  ## Read derived floor of one measurand; every field absent where document carries none.
-  ##   Floor spends no fill, no intermediate, no error check and no allocation by
+  ## Read multivector lower bound of one measurand; fields absent where document has none.
+  ##   Bound spends no fill, no intermediate, no error check and no allocation by
   ##   construction, so those stand at zero rather than absent.
   if node.isNil or node.kind != JObject: return
   result.multiplies = some(node{"multiplies"}.getInt)
@@ -437,9 +437,9 @@ func cell(l, r: Option[int]): string =
   (if l.isSome: $l.get else: "–") & "/" & (if r.isSome: $r.get else: "–")
 
 
-func floorRows*(a: Algebra; gaps: openArray[Gap]): seq[string] =
-  ## Render floor of each operation once, keyed by symbol and shape.
-  ##   Floor rests on symbol, shape and arity, and never on operand kinds, so one row
+func lowerBoundRows*(a: Algebra; gaps: openArray[Gap]): seq[string] =
+  ## Render multivector lower bound of each operation once, keyed by symbol and shape.
+  ##   Bound rests on symbol, shape and arity, and never on operand kinds, so one row
   ##   serves every measurand that spells same operation. Row also carries what library
   ##   spends on that operation's general measurand, so distance reads across.
   let measurands = a.static_measurements.at("measurands")
@@ -518,17 +518,21 @@ func render*(
   )
   lines.add ""
   lines.add wrap(
-    "Each algebra below carries a floor table. The floor is what the algebra demands of " &
-    "any dense implementation, and it is derived from the axioms rather than measured. A " &
-    "floor spends no zero fill, no intermediate, no error check and no allocation. It " &
-    "moves its operands read once plus its result written once. The floor rests on the " &
-    "operation alone, so one row serves every measurand that spells that operation."
+    "Each operation carries two lower bounds, and the library stands above both. The " &
+    "multivector lower bound is what the algebra demands of any implementation over a " &
+    "dense multivector. It is derived from the axioms, and it is never measured. The type " &
+    "optimised lower bound is the typed reference, which is measured rather than derived. " &
+    "Work that reaches the first bound changes no type, and work that reaches the second " &
+    "changes every one."
   )
   lines.add ""
   lines.add wrap(
-    "The last column of a floor table is what the library spends on that operation, as " &
-    "multiplies over bytes moved. An operation whose shape carries no rule yet is absent " &
-    "from the table, rather than present with a number that has no ground."
+    "Each algebra below carries a table of multivector lower bounds. That bound spends no " &
+    "zero fill, no intermediate, no error check and no allocation, and it moves its " &
+    "operands read once plus its result written once. It rests on the operation alone, so " &
+    "one row serves every measurand that spells that operation. The last column is what " &
+    "the library spends there, as multiplies over bytes moved. An operation whose shape " &
+    "carries no rule is absent, rather than present without ground."
   )
   lines.add ""
   lines.add "## Causes"
@@ -565,14 +569,14 @@ func render*(
         cell(gap.library.intermediates, gap.reference.intermediates) & " | " &
         cell(gap.library.checks, gap.reference.checks) & " | " &
         cellNs(gap.library.ns, gap.reference.ns) & " | " & gap.status.word & " |"
-    let floors = floorRows(a, own)
-    if floors.len > 0:
+    let bounds = lowerBoundRows(a, own)
+    if bounds.len > 0:
       lines.add ""
-      lines.add "### Floor"
+      lines.add "### Multivector lower bound"
       lines.add ""
       lines.add "| Op | Shape | Mul | Div | Roots | Bytes | Library mul/bytes |"
       lines.add "|----|-------|-----|-----|-------|-------|-------------------|"
-      for row in floors: lines.add row
+      for row in bounds: lines.add row
   for line in lines:
     if line.runeLen > WIDTH:
       raise newException(ValueError, "Rendered line outruns width; got `" & line & "`.")

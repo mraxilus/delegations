@@ -59,9 +59,10 @@ tests/                             suites, and the testament stubs that run them
 
 ## Status
 
-Measured on the pinned compiler and on library head `9f9019b`. Each operation is compared on
-three points: the library, the floor the algebra demands of any dense implementation, and
-Lengyel's typed reference.
+Measured on the pinned compiler and on library head `9f9019b`. Each operation carries two
+lower bounds, and the library stands above both. The multivector lower bound is what the
+algebra demands of any dense implementation. The type optimised lower bound is what
+Lengyel's typed reference spends.
 
 There is one gap for each
 measurand of each algebra, with the causes above them. Every cause is over but the last,
