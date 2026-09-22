@@ -1,10 +1,10 @@
 ## Lay out hand-to-hand turns page: seven positions, half turn apart.
 ##
 ##   Second of one mock-up per kind of turn (rule 15), and dual of
-##     first.  Single hand turns for ever, so its wind is not part of
+## first. Single hand turns for ever, so its twist is not part of
 ##     its state and its orientation is all of it (rule 16); hold both hands
 ##     and whole turn puts every orientation back where it was, so
-##     wind is all of it instead -- turn and half each way, by halves.
+## twist is all of it instead -- turn and half each way, by halves.
 ##   And same chain as crossed pair walks, read half turn along:
 ##     hold is unwound where its two connections run parallel, and that
 ##     falls at different facing for each of those two (rule 31).
@@ -39,7 +39,7 @@ const WINDING: array[Manner, string] = [
     "<em>same</em> step of the chain, the lead turns the other way round. " &
     "<b>Stage one</b> is the turn with the room held still. <b>Stage " &
     "two</b> brings the picture back to the lead facing up. That swings " &
-    "the follow round them, and leaves the wind where the turn put it.",
+    "the follow round them, and leaves the twist where the turn put it.",
   "The follow walks half a circle round the lead, and the dashed ring says " &
     "who stands still. They keep <b>whichever side of them faced the lead " &
     "facing them</b>, so they turn as far as they travel (rule 32). That " &
@@ -88,9 +88,9 @@ const BODY = """
   everything in this scope is.</p>
   <p class="standfirst"><b>This page is the single-hand page
   turned inside out.</b> One
-  hand held above turns for ever, so the wind is no part of the state and where the pair points
+  hand held above turns for ever, so the twist is no part of the state and where the pair points
   is all of it. Hold both hands and it is the other way about. A whole turn puts every facing and
-  every place back where it was. So the pointing says nothing, and <b>the wind is the state</b>.
+  every place back where it was. So the pointing says nothing, and <b>the twist is the state</b>.
   That is a turn and a half each way, by halves, which is seven positions.</p>
   <p class="sibling"><b>The crossed pair comes next</b>, on its own page. It is this chain, read
   half a turn along, so only the drawing is left.</p>
@@ -120,9 +120,9 @@ const BODY = """
   middle, and the other wraps it over and under and over, in two long loops. Those are the necks
   of two mating swans round a straight neck between them, which is the picture and the name. It
   crosses three times, and it is not two diamonds stacked, which rule 30 refused.</p>
-  <p><b>Nothing here is imposed, and the wind is measured.</b> Each held hand sits on the rim of
+  <p><b>Nothing here is imposed, and the twist is measured.</b> Each held hand sits on the rim of
   its own body, and both bodies stand on the axis of the pair. So the angle a hand makes with that
-  axis says how far round it is, and the difference between the two ends is the wind.</p>
+  axis says how far round it is, and the difference between the two ends is the twist.</p>
   <p>A reach is then the shadow of a wound arm from above. Its offset from the axis swings as far
     round as the pair has wound. It is straight at none, a cross at a half, and a diamond at a
     whole, and every frame between follows from the same measure. That is what stops a turn from

@@ -372,7 +372,7 @@ func sheetOf(P: Parts): string =
 
   body.add """<section id="chain"><h2>C &middot; The cross-name chain, Face-to-face at rest</h2>
   <p class="lede">The chain stands in seven places, half a turn apart, and the hand-to-hand page
-  walks along it. Each place carries a wind as a real number rather than a count of half turns,
+  walks along it. Each place carries a twist as a real number rather than a count of half turns,
   which the standard diagram cannot hold. The facing alternates along the chain: Face-to-face at
   the whole turns, and Pillion at the halves. Every caption says how far round the place
   stands from the frame, <b>clockwise seen from above</b>. That is how the drawings see the
@@ -624,7 +624,7 @@ func sheetOf(P: Parts): string =
   <p class="tally">{{tally}}</p>
   <p class="how"><b>How to read it.</b> Section A is the standard diagram. It is a table of
   frames, and it says no level at all. Sections B to D come from another chain. That chain takes a
-  pose, a level for each arm, and a wind that is not a count of half turns.</p>
+  pose, a level for each arm, and a twist that is not a count of half turns.</p>
   <p class="how"><b>Every cell carries two tags.</b> <i>Kept</i> is the ruling of the Architect
   on the drawing, by eye on the floor.</p>
    <p class="how">The other tag is the body sim's. It reads <i>not modelled</i>
