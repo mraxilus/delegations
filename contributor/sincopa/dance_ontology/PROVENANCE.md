@@ -38,13 +38,14 @@ witness is that it imports nothing from `src/` and is told no answer. It is not 
 another language.
 
 Care is needed only where the sim *measures* what the ontology *asserts*. There the translation
-stays visible (`sim/verdicts.nim`), because an assumed identity would be an echo.
+stays visible, in one module that is named for it (`sim/words.nim`), because an assumed identity
+would be an echo.
 
 **`wind` is `twist`, and the workbench still says `wind`.** `GLOSSARY.md` has listed `wind` under
-the _Avoid_ line of Twist all along. The workbench uses it in about fourteen identifiers, and across
-page prose, for the quantity that the model calls twist. The Architect confirmed on 2026-09-07 that
-the two are one. The rename comes after the frame-position review, so that captions do not move
-while they are ruled on.
+the _Avoid_ line of Twist all along. The workbench uses it in about fourteen identifiers for the
+quantity that the model calls twist. The Architect confirmed on 2026-09-07 that the two are one.
+No page says it in that sense now, and the build's own notes still do. The rename comes after the
+frame-position review, so that captions do not move while they are ruled on.
 
 A unit differs where the word does not. The model counts twist in half turns (`HalfTurns`), this
 glossary says quarter turns, and the workbench counts turns as a real number. Which of the three the
@@ -107,10 +108,39 @@ by their own verbs, and the numbers reproduced. The new `turns.json` is the old 
 and two words renamed. Verified by `tglossary.nim`, which now reads `sim` as well as `design` and
 `app`.
 
-**One fault lives in generated output, rather than in a pending rename.** `sim/verdicts.md` prints
-`X`, which sits on an avoid line, where the agreed word is Cross. The translation table stands in
-two copies, `sim/verdicts.nim` and `design/turns.nim`, and the second drops the `elbow forward`
-clause that the first adds (Article II.1).
+**One translation table, because two of them drifted.** The report and the page data each held
+their own copy, so that the translation stayed visible in both. The copies then disagreed. The
+report named an elbow folded forward and the page did not, so one pose carried two answers.
+`sim/words.nim` holds the table now, and both read it (Article II.1).
+
+**The report called a rung `X`, and the glossary calls it Cross.** `design/parts` named the same
+rung correctly, so one chain had two namings and one of them was wrong. Verified by
+`tglossary.nim`, which reads the rungs back out of `sim/verdicts.md`. It failed on all three rows
+before the fix, and the words of the report are now read rather than assumed (Article IX.5).
+
+That law reads the words of the report, and never its numbers. Nothing in the audit runs the
+sweeps again. One run of them takes about nineteen minutes, and a check that slow is a check that
+gets skipped (Article IX.8). So the report can hold a figure that the code no longer writes, and
+only a delegate who runs the verb will see it.
+
+**The table that the report prints was a stale summary, in two rows.** The report opens by printing
+the translation, so a reader knows what each phrase means. That printed table is written out by
+hand, and it is a derived view of `said` (Article I.4). Nothing read it back, so it fell behind the
+code twice: `said` says `elbow forward` and `open`, and the table named neither. `twords.nim` now
+walks every phrase that `said` can return, strikes out each term the table names, and refuses any
+residue.
+
+**`open` carries two meanings, and the glossary allows one.** The chain calls its middle **Open**,
+where the pair is unwound. The sim says `open` for an arm that lies on neither face of its own body,
+which is a different thing at a different scale. Article VI.8 asks for one meaning for each word, so
+one of the two needs another name. The report now names both rows, and which word moves is for the
+Architect to rule.
+
+**An avoid line cannot be held by matching the word.** The glossary rejects `wind` for the quantity
+that Twist names. The pages also use `wind` as a verb, where the arms wind, and that use is right.
+A check that matched the word would refuse both, so the avoid line of Twist holds by reading alone.
+The avoid lines of the chain and of the two dancers hold by law, because every word on them is
+wrong in every use.
 
 ## Model
 
@@ -446,6 +476,21 @@ The page module records three reflow deviations. There are 37 breaks inside `ari
 the accessible names were verified equal. There is one whitespace-free row, with its character
 references decoded. The fonts URL is held as its own constant, joined at compile time. Cost: the
 `doAssert` gates of the workbench are the check, so its tests are a debug build.
+
+**The build dressed a page it did not write, and the page grew by 223 kB each time.** `dress()`
+walks every page under `build/`, and not only the pages the run wrote. `build/sim/artifact.html` is
+written by no verb that this project still holds, so every `pages` run put another block of faces
+into it. It stood at 10.9 MB and reached 11.4 MB in four runs of one session. That climbs toward
+the size a published page must stay under.
+
+The law that covers this was already written, and it could not fail. `tfaces.nim` held a test named
+"dressing is not doubled where it runs twice" that dressed once and counted the faces. It now
+dresses twice, over both shapes of page, and demands the same bytes. `faceStyle` marks its block
+`<style data-faces>`, and `withFaces` takes an earlier block out before it puts the new one in.
+Replaced rather than skipped, so a page dressed before a face changed takes the new bytes.
+
+Verified: two `pages` runs over one tree now give ten pages that compare equal, byte for byte. The
+orphan pages under `build/sim/` are gone, and no verb writes them again.
 
 **The four are a manner of turn, and not a way of turning.** `Manner` and `MANNERS` replace
 `TurnWay` and `WAYS_OF_TURNING` through the workbench. The pages, the checks and the rule ledger say
