@@ -1868,6 +1868,12 @@ same reason.
 view stood when the edit of *that step* was made. Undo reads it off the entry stepped away from,
 and redo off the entry arrived at.
 
+**The stance crosses a step, and the lens does not.** Both steps place the camera at the entry's
+`CameraStance`, which holds the pivot, the separation and the two angles. The field of view is the
+reader's own setting, and `CameraStance` says that nothing aiming the camera may rewrite it. Both
+steps assigned the whole `Camera` before. A reader who widened the lens, then stepped back over an
+edit made at another lens, lost their own setting.
+
 To restore the camera of the state arrived at hands back the view that the *previous* edit was
 made from. An undo of the first construction of a session then teleports to the startup view. Not
 to record an orbit is the accepted cost of not needing a rule for a gesture to settle. **An
@@ -1884,7 +1890,8 @@ refreshed on the low-cadence tick.
 - a record to capacity and past it, with a walk of every retained step forward and back;
 - a comparison of each state by `scenesEqual`, because the `==` of `Multivector` is an intentional
   compile error;
-- camera restoration across two edits from two viewpoints.
+- camera restoration across two edits from two viewpoints;
+- a step either way, which carries the stance across and leaves the field of view alone.
 
 Verified end to end: `--drive-undo` and the browser drive both build, orbit away, undo, and hold
 the view where the construction was made. The figures of 153.5 ms and 11.3 ms were measured on the
