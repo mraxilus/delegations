@@ -65,7 +65,7 @@ and what stops it is one named thing. That thing is decided once in `rigid.stopp
 every sweep, still and page alike (Article II.1). Verified by `trigid.nim`: the turn that a couple
 are said to reach is the turn that some distance carries, and every stop carries its name.
 
-The agreed words disagree with the code in fourteen places, recorded rather than acted on. From the
+The agreed words disagree with the code in thirteen places, recorded rather than acted on. From the
 hand-to-hand half:
 
 - `frame.position` means the opposite of `Frame position`. It strips `over` and returns the frame
@@ -73,17 +73,17 @@ hand-to-hand half:
 - `Frame` and `rotation.Posture` split across the frame state rather than along it.
 - `isFacing` returns the parity of twist, where facing is four-valued.
 - Twist is counted in quarters, where `HalfTurns` is half turns.
-- `Level.Above` is `Overhead`, and `Compound` is `Compound move`.
+- `Compound` is `Compound move`.
 - The `route` and `wind` of the drawing chain are `Transition` and `Twist`.
 
 From the sim:
 
-- `Band` is `Level`, and its members are Low, High and Overhead.
+- `Band` is `Level`, and its members are Low, High and Above.
 - `Body.One` and `.Two` are Lead and Follow.
 - `Aspect.Fore` and `.Aft` are Wrap and Lock.
 - `Link` is `Connection`, and `page.Hold` is `Frame hold`. Both words already sit on avoid lines.
-- `Move`, `Twist`, `Chain`, `Way` and `overhead` each name something in the sim that is unrelated to
-  the agreed term of the same spelling.
+- `Move`, `Twist`, `Chain` and `Way` each name something in the sim that is unrelated to the agreed
+  term of the same spelling.
 
 **The layout block of the review page was stale in five ways, and is corrected.** The curator left
 one line for the hand of this project: the domain folder printed as `síncopa` where it is now
@@ -97,8 +97,8 @@ removed by this project, and the Architect reads the page. Its wording still use
 whole page, and not this fix.
 
 **Two faults live in generated output, rather than merely pending renames.** `sim/verdicts.md`
-prints `above` and `X`, both on avoid lines, where the agreed words are Overhead and Cross. It also
-prints `her arm` and `his arm` in every sweep table, which are avoided for Follow and Lead. The
+prints `X`, which sits on an avoid line, where the agreed word is Cross. It also prints `her arm`
+and `his arm` in every sweep table, which are avoided for Follow and Lead. The
 translation table stands in two copies, `sim/verdicts.nim` and `design/turns.nim`, and the second
 drops the `elbow forward` clause that the first adds (Article II.1).
 
