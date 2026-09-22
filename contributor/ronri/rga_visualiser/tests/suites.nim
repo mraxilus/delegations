@@ -1014,11 +1014,74 @@ suite "Camera":
     interaction.updateCursor(cursor.x, cursor.y)
     interaction.dollyAtCursor(
       camera, scene, 2.0, camera.drawExtentFor(900),
-      camera.initMatrixViewProjection(1440.0/900.0), 1440, 900,
+      camera.initMatrixViewProjection(1440.0/900.0), 1440, 900, has_selection = true,
     )
     check camera.distance =~ 24.0
     check camera.pivot =~ ORIGIN
 
+
+  test "with no selection the wheel travels the pointer's own ray":
+    # Free flight has no pivot to dolly about, so wheel carries eye along ray under
+    #   pointer, whether or not anything stands there.
+    const (WIDE, TALL) = (1440, 900)
+    let cursor = ScreenPosition(x: 260.0, y: 720.0)
+    var camera = initCamera(pivot = ORIGIN, distance = 12.0, azimuth = 0.5, elevation = 0.3)
+    let (eye_start, axes_start) = (camera.eye, camera.frame)
+    let heading = headingThrough(camera, axes_start, WIDE, TALL, cursor)
+    var interaction = Interaction(is_enabled: true)
+    interaction.updateCursor(cursor.x, cursor.y)
+    interaction.dollyAtCursor(
+      camera, initScene(), 0.5, camera.drawExtentFor(TALL),
+      camera.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL,
+      has_selection = false,
+    )
+    # Step lies along that ray, and not along sight: cursor is well off middle.
+    let step = camera.eye - eye_start
+    check dot(step, (1.0/norm(heading))*heading) =~ norm(step)
+    check dot(step, axes_start.forward) < norm(step)
+    # Scale halves with factor, as it does under turntable's own dolly.
+    check camera.distance =~ 6.0
+    # Nothing turned: wheel travels and never turns.
+    check camera.frame.forward =~ axes_start.forward
+
+  test "the wheel comes in to what the pointer is over, and stops at its surface":
+    const (WIDE, TALL) = (1440, 900)
+    let planet = Position(x: 3.0, y: 1.0, z: 0.0)
+    var scene = initScene()
+    scene.addObject(toMultivector(planet), "planet", Ink.Cobalt)
+    let radius = scene.radiusAt(0)
+    check radius > 0.0
+    # Camera aimed straight at it, so middle of frame is over it.
+    var camera = initCamera(pivot = planet, distance = 20.0, azimuth = 0.4, elevation = 0.5)
+    let cursor = ScreenPosition(x: float(WIDE)/2.0, y: float(TALL)/2.0)
+    var interaction = Interaction(is_enabled: true)
+    interaction.updateCursor(cursor.x, cursor.y)
+    # What is under pointer keeps its pixel through notch.
+    let before = projectToScreen(
+      camera.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL, planet,
+    )
+    interaction.dollyAtCursor(
+      camera, scene, 0.5, camera.drawExtentFor(TALL),
+      camera.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL,
+      has_selection = false,
+    )
+    let after = projectToScreen(
+      camera.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL, planet,
+    )
+    check after.isInFront
+    check abs(after.x - before.x) <= 0.5
+    check abs(after.y - before.y) <= 0.5
+    check norm(camera.eye - planet) =~ 10.0
+    # Notch after notch stops at object's own drawn radius, rather than passing through.
+    for _ in 1 .. 40:
+      interaction.dollyAtCursor(
+        camera, scene, 0.5, camera.drawExtentFor(TALL),
+        camera.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL,
+        has_selection = false,
+      )
+    check norm(camera.eye - planet) =~ radius
+    # Floor never pushes eye out again, however many notches follow.
+    check dot(camera.eye - planet, camera.frame.forward) < 0.0
 
   test "a zoom onto a point brings the pivot to its depth, and onto ground or level does not":
     # Turntable follows what reader looks at: eye carried up to planet while pivot.
@@ -1037,6 +1100,7 @@ suite "Camera":
     dollyAtCentre(
       camera, scene, 0.5, camera.drawExtentFor(TALL),
       camera.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL,
+      has_selection = true,
     )
     # Eye moved halfway to planet, and pivot now stands on it.
     check camera.pivot =~ planet
@@ -1049,7 +1113,7 @@ suite "Camera":
     dollyAt(
       level, initScene(), 0.5, level.drawExtentFor(TALL),
       level.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL,
-      ScreenPosition(x: 720.0, y: 200.0),
+      ScreenPosition(x: 720.0, y: 200.0), has_selection = true,
     )
     check abs(level.distance - 6.0) < 1.0e-6
     check abs(level.pivot.z) < 1.0e-6
@@ -1064,6 +1128,7 @@ suite "Camera":
     dollyAt(
       over_ground, initScene(), 0.5, over_ground.drawExtentFor(TALL),
       over_ground.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL, under,
+      has_selection = true,
     )
     check abs(over_ground.distance - 6.0) < 1.0e-6
     check abs(over_ground.pivot.z - 0.5) < 1.0e-6

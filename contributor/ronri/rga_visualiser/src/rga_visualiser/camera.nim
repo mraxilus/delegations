@@ -637,6 +637,29 @@ func travel*(camera: var Camera; ahead, across, rise: float) =
   ))
 
 
+func travelAlong*(camera: var Camera; step: float; heading: Direction) =
+  ## Slide camera by `step` units along `heading`, leaving which way it faces alone.
+  ##   For wheel travelling pointer's own ray, which is no axis of camera's frame.
+  ##   Caller hands unit direction; length of one passed in scales step with it.
+  camera.slideBy(wedge(step, toMultivector(heading)))
+
+
+func travelToward*(camera: var Camera; factor: float; anchor: Position; floor_reach: float) =
+  ## Carry eye along its own line to `anchor`, scaling what separates them by `factor`.
+  ##   Whatever stands at `anchor` keeps its pixel, on same reading `dollyToward` holds:
+  ##   sight direction never moves, so point on view ray is still on it afterwards.
+  ##   Floor is reach caller names, object's own drawn radius where object stands there,
+  ##   so wheel stops at its surface rather than carrying eye through it.
+  ##     Floor never pushes eye out: it applies only where eye is already further out.
+  ##   Separation from pivot is left to caller, which knows anchor's own depth.
+  let
+    offset = anchor - camera.eye
+    reach = norm(offset)
+  if reach <= 0.0: return
+  let settled = max(reach*factor, min(max(floor_reach, DISTANCE_LIMIT_NEAR), reach))
+  camera.slideBy(wedge((reach - settled)/reach, toMultivector(offset)))
+
+
 func capTravelling*(depth_pointer: Option[float]; scale_local, haste: float): float =
   ## Read fastest free flight may travel right now, in units per second.
   ##   Smaller of two figures, as `SPEED_CEILING` says: local scale, and fixed ceiling.

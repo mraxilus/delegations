@@ -220,23 +220,30 @@ func distanceToSegment(point, tail, head: ScreenPosition): float =
 
 #[ Sight Ray ]#
 
-func castRay*(
-  camera: Camera; eye: Position; frame: FrameCamera; width, height: int; cursor: ScreenPosition
-): Multivector =
-  ## Build RGA line running from eye through cursor's pixel, into scene.
+func headingThrough*(
+  camera: Camera; frame: FrameCamera; width, height: int; cursor: ScreenPosition
+): Direction =
+  ## Solve direction running from eye through cursor's pixel, into scene.
   ##   Undoes `initMatrixProjection`'s construction: cursor becomes NDC again, scaled by
   ##   same field-of-view tangent, composed from camera's right/up/forward.
-  ##   Takes eye and frame precomputed.
-  ##     One cursor tests against every object with same ray, and recomputing per object
-  ##     repeats two joins and antiduals up to `OBJECTS_MAX` times.
+  ##   Not unit: one depth along sight, plus what pixel is off middle. `castRay` joins it
+  ##   as it stands, and caller travelling this ray by distance normalises it first.
   let
     half_height = tan(0.5 * degToRad(camera.degrees_field_of_view))
     half_width = half_height * (float(width) / float(height))
     ndc_x = (cursor.x / float(width))*2.0 - 1.0
     ndc_y = 1.0 - (cursor.y / float(height))*2.0
-    heading = (ndc_x*half_width)*frame.axis_right + (ndc_y*half_height)*frame.axis_up +
-      frame.forward
-  toMultivector(eye) ∧ toMultivector(heading)
+  (ndc_x*half_width)*frame.axis_right + (ndc_y*half_height)*frame.axis_up + frame.forward
+
+
+func castRay*(
+  camera: Camera; eye: Position; frame: FrameCamera; width, height: int; cursor: ScreenPosition
+): Multivector =
+  ## Build RGA line running from eye through cursor's pixel, into scene.
+  ##   Takes eye and frame precomputed.
+  ##     One cursor tests against every object with same ray, and recomputing per object
+  ##     repeats two joins and antiduals up to `OBJECTS_MAX` times.
+  toMultivector(eye) ∧ toMultivector(headingThrough(camera, frame, width, height, cursor))
 
 
 func positionUnderCursor*(
@@ -741,6 +748,9 @@ func isAnchorNear(anchor: Position, camera: Camera, scale: DrawExtent): bool =
 
 type AnchorZoom* = object ## Define what zoom holds still, and whether it stands somewhere.
   at*: Position ## World point that keeps its pixel through zoom.
+  floor_reach*: float ## Drawn radius of object anchor stands on; zero for crossing.
+    ## How near free flight's wheel may come, so it stops at surface rather than carrying
+    ## eye through it; see `camera.travelToward`.
   is_standing*: bool ## Whether `at` is where point or line stands, not crossing of ray.
     ## What stands somewhere is what reader looks at, so turntable's pivot follows its
     ## depth (`camera.repivotToDepth`). Plane, ground and level are crossings, met where
@@ -764,6 +774,31 @@ func positionUnderPointerOn*(
   positionOnObjectUnder(scene.geometryOf(handle), ray, scale.plane_eye)
 
 
+proc anchorStandingAt*(
+  scene: Scene; camera: Camera; scale: DrawExtent; view_projection: Matrix4;
+  width, height: int; cursor: ScreenPosition; placed: openArray[Placement] = []
+): Option[AnchorZoom] =
+  ## Solve which object cursor is over, and where on that object cursor stands.
+  ##   Object alone: no ground answer and no level one. Free flight has no ground, and
+  ##   wheel there carries pointer's own ray where nothing stands under it.
+  ##   None where nothing is under cursor, and where what is stands outside depth band;
+  ##   see `FACTOR_ANCHOR_DEPTH`.
+  ##   Takes caller's extent, for reason `anchorZoomAt` gives.
+  let handle = pickNearest(
+    scene, camera, scale, view_projection, width, height, cursor, placed,
+  )
+  if handle.isNone: return
+  let found = positionUnderPointerOn(
+    scene, handle.get, camera, scale, width, height, cursor,
+  )
+  if found.isNone or not isAnchorNear(found.get, camera, scale): return
+  some(AnchorZoom(
+    at: found.get,
+    floor_reach: scene.radiusAt(handle.get),
+    is_standing: kindOf(scene.geometryOf(handle.get)) != some(Kind.Plane),
+  ))
+
+
 proc anchorZoomAt*(
   scene: Scene; camera: Camera; scale: DrawExtent; view_projection: Matrix4;
   width, height: int; cursor: ScreenPosition; placed: openArray[Placement] = []
@@ -785,14 +820,10 @@ proc anchorZoomAt*(
   # Take caller's extent.
   #   Wheel handler holds overlay cache's extent for exactly this camera, and deriving
   #   fresh one ran `algebraFilled` and joins per wheel notch.
-  let handle = pickNearest(
+  let standing = anchorStandingAt(
     scene, camera, scale, view_projection, width, height, cursor, placed,
   )
-  if handle.isSome:
-    let found = positionUnderPointerOn(scene, handle.get, camera, scale, width, height, cursor)
-    if found.isSome and isAnchorNear(found.get, camera, scale):
-      let is_standing = kindOf(scene.geometryOf(handle.get)) != some(Kind.Plane)
-      return some(AnchorZoom(at: found.get, is_standing: is_standing))
+  if standing.isSome: return standing
   let ground = positionOnGround(camera, width, height, cursor)
   if ground.isSome and isAnchorNear(ground.get, camera, scale):
     return some(AnchorZoom(at: ground.get, is_standing: false))

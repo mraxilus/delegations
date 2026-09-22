@@ -1083,7 +1083,7 @@ proc nimCameraDollyCentred(factor: cfloat; width, height: cint) {.exportc.} =
   ensurePlacement()
   dollyAtCentre(
     CAMERA, SCENE, float(factor), SCALE_OVERLAY, VIEW_PROJECTION_OVERLAY,
-    int(width), int(height), PLACEMENTS,
+    int(width), int(height), SELECTION.len > 0, PLACEMENTS,
   )
 
 
@@ -1103,7 +1103,7 @@ proc nimCameraDollyAt(factor: cfloat; width, height: cint) {.exportc.} =
   ensurePlacement()
   INTERACTION.dollyAtCursor(
     CAMERA, SCENE, float(factor), SCALE_OVERLAY, VIEW_PROJECTION_OVERLAY,
-    int(width), int(height), PLACEMENTS,
+    int(width), int(height), SELECTION.len > 0, PLACEMENTS,
   )
 
 

@@ -1160,7 +1160,7 @@ proc handleEvent(
       camera, scene, pow(FACTOR_DOLLY, -float(event.wheel.y)),
       camera.drawExtentFor(height_frame),
       camera.initMatrixViewProjection(float(width_frame)/float(height_frame)),
-      width_frame, height_frame,
+      width_frame, height_frame, selection.len > 0,
     )
   of uint32(EventKind.MouseMotion):
     interaction.updateCursor(float(event.motion.x), float(event.motion.y))

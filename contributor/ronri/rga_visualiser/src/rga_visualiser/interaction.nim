@@ -717,13 +717,41 @@ proc updateHover*(
 proc dollyAt*(
   camera: var Camera; scene: Scene; factor: float; scale: DrawExtent;
   view_projection: Matrix4; width, height: int; cursor: ScreenPosition;
-  placed: openArray[Placement] = []
+  has_selection: bool; placed: openArray[Placement] = []
 ) =
   ## Zoom camera by `factor` toward whatever `cursor` is over; see `dollyAtCursor`.
   ##   Cursor is parameter so pinch, which has no cursor, aims at frame's middle through
   ##   same rule; see `dollyAtCentre`.
+  ##   Two states, as `driveHeld` has.
+  ##     Free flight travels pointer's own ray, always. Object under pointer is what eye
+  ##     comes in to, floored at that object's drawn radius; ray itself carries eye where
+  ##     nothing stands there.
+  ##     Selection keeps turntable's dolly, which stage carrying frame rule replaces.
   # Take caller's extent and matrix, not fresh derivations per notch; see
   #   `picking.anchorZoomAt`.
+  if not has_selection:
+    let standing = anchorStandingAt(
+      scene, camera, scale, view_projection, width, height, cursor, placed,
+    )
+    if standing.isSome:
+      camera.travelToward(factor, standing.get.at, standing.get.floor_reach)
+      # Separation follows anchor's own depth, so frustum's scale tracks flight.
+      #   Crossing as well as standing object: free flight has no orbit for pivot to
+      #   anchor, so depth here is scale and nothing else.
+      let depth = dot(standing.get.at - camera.eye, camera.frame.forward)
+      if depth > 0.0: camera.repivotToDepth(depth)
+      return
+    # Nothing under pointer: same ray carries eye, at camera's own scale, and separation
+    #   scales with it exactly as `dolly` scales it.
+    let heading = headingThrough(camera, camera.frame, width, height, cursor)
+    let reach = norm(heading)
+    if reach <= 0.0: return
+    let settled = distanceHeld(camera.distance*factor)
+    camera.travelAlong(
+      (camera.distance - settled)/reach, heading
+    )
+    camera.repivotToDepth(settled)
+    return
   let anchor = anchorZoomAt(
     scene, camera, scale, view_projection, width, height, cursor, placed,
   )
@@ -740,7 +768,8 @@ proc dollyAt*(
 
 proc dollyAtCentre*(
   camera: var Camera; scene: Scene; factor: float; scale: DrawExtent;
-  view_projection: Matrix4; width, height: int; placed: openArray[Placement] = []
+  view_projection: Matrix4; width, height: int; has_selection: bool;
+  placed: openArray[Placement] = []
 ) =
   ## Zoom camera by `factor` toward whatever middle of frame is over; pinch's zoom.
   ##   Pinch has two fingers and no pointer, and zooming at their midpoint translated
@@ -748,13 +777,13 @@ proc dollyAtCentre*(
   ##   through `dollyAt` so pivot still lands on point or line there.
   dollyAt(
     camera, scene, factor, scale, view_projection, width, height,
-    ScreenPosition(x: float(width)/2.0, y: float(height)/2.0), placed,
+    ScreenPosition(x: float(width)/2.0, y: float(height)/2.0), has_selection, placed,
   )
 
 
 proc dollyAtCursor*(
   interaction: Interaction; camera: var Camera; scene: Scene; factor: float;
-  scale: DrawExtent; view_projection: Matrix4; width, height: int;
+  scale: DrawExtent; view_projection: Matrix4; width, height: int; has_selection: bool;
   placed: openArray[Placement] = []
 ) =
   ## Zoom camera by `factor`, toward whatever cursor is over.
@@ -765,7 +794,7 @@ proc dollyAtCursor*(
   ##   Where anchor is point or line, pivot then follows its depth along sight line; see
   ##   `camera.repivotToDepth` and `picking.AnchorZoom`.
   dollyAt(camera, scene, factor, scale, view_projection, width, height, interaction.cursor,
-    placed)
+    has_selection, placed)
 
 
 func panAcross*(
