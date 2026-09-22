@@ -65,6 +65,11 @@ and what stops it is one named thing. That thing is decided once in `rigid.stopp
 every sweep, still and page alike (Article II.1). Verified by `trigid.nim`: the turn that a couple
 are said to reach is the turn that some distance carries, and every stop carries its name.
 
+**The glossary agrees eight facings, and the model holds four.** The case of a name says which
+dancer it places: `Pillion` stands the Lead behind, and `pillion` stands the Follow there. The four
+the sim and the drawings hold are Face-to-face, Back-to-back and both cases of Pillion. The four
+states of Sidecar are named and not modelled, so nothing draws them and no law reads them.
+
 The agreed words disagree with the code in thirteen places, recorded rather than acted on. From the
 hand-to-hand half:
 
