@@ -637,16 +637,19 @@ func travel*(camera: var Camera; ahead, across, rise: float) =
   ))
 
 
-func capTravelling*(depth_pointer: Option[float], haste: float): float =
+func capTravelling*(depth_pointer: Option[float]; scale_local, haste: float): float =
   ## Read fastest free flight may travel right now, in units per second.
-  ##   Smaller of two figures, as `SPEED_CEILING` says: local scale under pointer, and
-  ##   fixed ceiling. Haste scales both, so shift is still one multiplier on every rate.
-  ##   Ceiling alone where pointer reports no depth, which is pointer over empty sky.
-  ##   Depth held off negative: pointer behind eye reports none, and zero would freeze
-  ##   camera where ceiling should carry it.
-  let ceiling = SPEED_CEILING*haste
-  if depth_pointer.isNone: return ceiling
-  min(FACTOR_SPEED_LOCAL*max(depth_pointer.get, 0.0)*haste, ceiling)
+  ##   Smaller of two figures, as `SPEED_CEILING` says: local scale, and fixed ceiling.
+  ##   Haste scales both, so shift is still one multiplier on every rate.
+  ##   Local scale is depth under pointer where pointer is over something, and camera's
+  ##   own scale where it is over empty sky.
+  ##     Ceiling alone over empty sky threw reader out of solar system in half second:
+  ##     ceiling bounds local reading, and is no reading of its own.
+  ##   Depths held off negative: pointer behind eye is no reading, and camera at floor
+  ##   would otherwise freeze rather than crawl.
+  let reach =
+    if depth_pointer.isSome: max(depth_pointer.get, 0.0) else: max(scale_local, 0.0)
+  min(FACTOR_SPEED_LOCAL*reach*haste, SPEED_CEILING*haste)
 
 
 func speedTravelling*(seconds_held, cap: float): float =

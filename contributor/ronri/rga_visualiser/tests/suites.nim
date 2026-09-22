@@ -632,17 +632,22 @@ suite "Camera":
     ) < 1.0e-6
 
   test "the speed cap is the smaller of the local scale and the ceiling":
-    # Pointer over empty sky has no depth to scale by, so ceiling alone carries.
-    check capTravelling(none(float), 1.0) =~ SPEED_CEILING
+    # Pointer over something takes that depth as its scale.
+    check capTravelling(some(19.0), 999.0, 1.0) =~ FACTOR_SPEED_LOCAL*19.0
+    # Pointer over empty sky falls back to camera's own scale, never to ceiling.
+    #   Ceiling alone there crossed solar system in half second.
+    check capTravelling(none(float), 19.0, 1.0) =~ FACTOR_SPEED_LOCAL*19.0
     # Close work is slow, so reader inside moon's orbit is not thrown across it.
-    check capTravelling(some(0.001), 1.0) =~ FACTOR_SPEED_LOCAL*0.001
+    check capTravelling(some(0.001), 19.0, 1.0) =~ FACTOR_SPEED_LOCAL*0.001
     # Far work is held at ceiling rather than scaled past it.
-    check capTravelling(some(1.0e9), 1.0) =~ SPEED_CEILING
+    check capTravelling(some(1.0e9), 1.0, 1.0) =~ SPEED_CEILING
+    check capTravelling(none(float), 1.0e9, 1.0) =~ SPEED_CEILING
     # Haste multiplies both figures, so shift stays one multiplier on every rate.
-    check capTravelling(some(2.0), FACTOR_HASTE) =~ FACTOR_SPEED_LOCAL*2.0*FACTOR_HASTE
-    check capTravelling(none(float), FACTOR_HASTE) =~ SPEED_CEILING*FACTOR_HASTE
+    check capTravelling(some(2.0), 1.0, FACTOR_HASTE) =~
+      FACTOR_SPEED_LOCAL*2.0*FACTOR_HASTE
+    check capTravelling(some(1.0e9), 1.0, FACTOR_HASTE) =~ SPEED_CEILING*FACTOR_HASTE
     # Depth behind eye is refused rather than freezing camera at zero.
-    check capTravelling(some(-5.0), 1.0) =~ 0.0
+    check capTravelling(some(-5.0), 19.0, 1.0) =~ 0.0
 
   test "the far clip reaches the scene's farthest object however close the orbit is":
     var camera = initCamera(Position(x: 0, y: 0, z: 0), 10.0, 0.0, 0.0)

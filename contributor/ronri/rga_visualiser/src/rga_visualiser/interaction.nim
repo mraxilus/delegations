@@ -870,7 +870,7 @@ func driveHeld*(
     # One step for this frame, integrated across hold's own two ages.
     step = distanceTravelled(
       age_before, interaction.seconds_travelling,
-      capTravelling(interaction.depth_pointer, haste),
+      capTravelling(interaction.depth_pointer, camera.distance, haste),
     )
   for key in interaction.keys_held:
     let motion = motionFor(key)
