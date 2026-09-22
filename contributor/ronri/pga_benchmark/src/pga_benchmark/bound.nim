@@ -1,7 +1,7 @@
 ## Derive arithmetic dense multivector operation must spend, from axioms of algebra itself.
 ##   Third comparison point beside library and typed reference: library is what is written,
 ##   typed reference is what sparse hand-rolled linear algebra spends, and bound is floor of
-##   dense representation. Bound answers one question the other two cannot: how much of gap
+##   dense representation. Bound answers one question neither of those two answers: how much of gap
 ##   is representation, and how much is quality of what generator emits.
 ##
 ##   Blades are bitmasks over dimensions, and metric is derived here rather than read from

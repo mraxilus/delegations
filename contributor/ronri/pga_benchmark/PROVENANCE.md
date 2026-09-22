@@ -188,9 +188,8 @@ and another build or schema is refused.
 **The floor is what the algebra demands, and it is a third comparison point beside the
 library and the typed reference.** The library is what is written. The typed reference is
 what sparse hand-rolled linear algebra spends. The floor is what any dense implementation
-must spend, however well it is written. It answers one question the other two cannot: how
-much of the gap is the representation, and how much is the quality of what the generator
-emits.
+must spend, however well it is written. It answers one question that neither of those two answers.
+How much of the gap is the representation, and how much is the emission?
 
 `src/pga_benchmark/bound.nim` derives it from the axioms, and reads nothing from the library
 (Article II.8). Blades are bitmasks over dimensions. A rigid algebra degenerates its last
@@ -202,29 +201,32 @@ Each operation carries a shape, and the shape carries the rule. An exterior prod
 three raised to the dimensions, because each dimension stands in one of three states for a
 pair of blades. A geometric product loses one of four states for each null dimension. A
 bilinear form landing in one slot spends one term for each blade that carries an image. A
-product against the dual of its second operand spends what the grade of that operand allows,
-and that rule needs a degenerate vector, so a conformal algebra carries no such floor. A
-permutation and a product against a one-component constant spend nothing.
+product against the dual of its second operand spends what the grade of that operand allows.
+A permutation and a product against a one-component constant spend nothing.
+
+That last rule needs a degenerate vector, so a conformal algebra carries no such floor.
 
 The floor spends no zero fill, no intermediate, no error check and no allocation, because a
 dense operation needs none of them to be correct. It moves its operands read once plus its
 result written once. `gaps.md` carries one floor row for each operation of each algebra,
 since the floor rests on the operation and never on the operand kinds.
 
-Verified by `trga4d.nim` and `tcga5d.nim`, suite `Floor`: the derived counts reproduce 81
-for the exterior product, 192 for the geometric product, 8 for the bilinear form, 54 and 27
-for the contractions, 27 and 54 for the expansions, 16 for a scale and 24 for a unitize, all
-at four dimensions with a rigid metric. The conformal metric is held to 1024 and to 32, and
+Verified by `trga4d.nim` and `tcga5d.nim`, suite `Floor`. At four dimensions with a rigid
+metric the derived counts reproduce 81 for the exterior product and 192 for the geometric
+product. They reproduce 8 for the bilinear form, and 54 and 27 for the contractions. They
+reproduce 27 and 54 for the expansions, 16 for a scale and 24 for a unitize. The conformal metric
+is held to 1024 and to 32, and
 to carrying no floor for the four dual products. Suite `Inspector` holds the soundness law:
 no floor outruns what the library spends on the same operation, over every measurand of the
 build's own nimcache.
 
 **What it found.** On multiplies the library already stands at the floor for every dense
-operation except the attitude, where it spends a full product against a constant that
-carries one unit component. On bytes moved it stands at the floor nowhere. At four
-dimensions the exterior product spends the floor's 81 multiplies and moves 512 bytes against
-the floor's 384, and the bulk norm spends the floor's 8 multiplies and moves 768 bytes
-against the floor's 136. The headroom inside this representation is movement, and the rest
+operation but one. The attitude is that one, and it spends a full product against a constant
+that carries one unit component. On bytes moved the library stands at the floor nowhere.
+
+At four dimensions the exterior product spends the floor's 81 multiplies, and moves 512
+bytes against the floor's 384. The bulk norm spends the floor's 8 multiplies, and moves 768
+bytes against the floor's 136. The headroom inside this representation is movement, and the rest
 of the distance to the typed reference is the representation itself.
 
 Cost: the floor is derived, and never measured (Article VIII.1). It bounds arithmetic and

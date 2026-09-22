@@ -517,6 +517,20 @@ func render*(
     "call, and runtime measurements are medians of the last bench that ran by hand."
   )
   lines.add ""
+  lines.add wrap(
+    "Each algebra below carries a floor table. The floor is what the algebra demands of " &
+    "any dense implementation, and it is derived from the axioms rather than measured. A " &
+    "floor spends no zero fill, no intermediate, no error check and no allocation. It " &
+    "moves its operands read once plus its result written once. The floor rests on the " &
+    "operation alone, so one row serves every measurand that spells that operation."
+  )
+  lines.add ""
+  lines.add wrap(
+    "The last column of a floor table is what the library spends on that operation, as " &
+    "multiplies over bytes moved. An operation whose shape carries no rule yet is absent " &
+    "from the table, rather than present with a number that has no ground."
+  )
+  lines.add ""
   lines.add "## Causes"
   lines.add ""
   for d in decided:
@@ -554,13 +568,7 @@ func render*(
     let floors = floorRows(a, own)
     if floors.len > 0:
       lines.add ""
-      lines.add wrap(
-        "Floor of each operation over this dense representation, derived from axioms of " &
-        "algebra and never measured. Floor spends no zero fill, no intermediate, no error " &
-        "check and no allocation, and moves operands read once plus result written once. " &
-        "Floor rests on operation alone, so one row serves every measurand spelling it. " &
-        "Last column is what library spends on that operation, as multiplies over bytes."
-      )
+      lines.add "### Floor"
       lines.add ""
       lines.add "| Op | Shape | Mul | Div | Roots | Bytes | Library mul/bytes |"
       lines.add "|----|-------|-----|-----|-------|-------|-------------------|"

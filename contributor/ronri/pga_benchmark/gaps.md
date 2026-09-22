@@ -12,6 +12,16 @@ library median is more than 1.25 times the reference median. A gap is met in eve
 are modelled movement for each call, and runtime measurements are medians of the last bench that ran
 by hand.
 
+Each algebra below carries a floor table. The floor is what the algebra demands of any dense
+implementation, and it is derived from the axioms rather than measured. A floor spends no zero fill,
+no intermediate, no error check and no allocation. It moves its operands read once plus its result
+written once. The floor rests on the operation alone, so one row serves every measurand that spells
+that operation.
+
+The last column of a floor table is what the library spends on that operation, as multiplies over
+bytes moved. An operation whose shape carries no rule yet is absent from the table, rather than
+present with a number that has no ground.
+
 ## Causes
 
 - **D01, over.** Dense products spend every Cayley-table term where typed forms spend few. Evidence:
@@ -168,11 +178,7 @@ Gaps: 111. Over 110, met 1, unmeasured 0.
 | G102 | unitize_plane | 24/7 | 1/1 | 1152/160 | 2/0 | 18/1 | 30.4/14.8 | over |
 | G103 | attitude_plane | 81/0 | 0/0 | 896/80 | 1/0 | 1/0 | 22.7/2.1 | over |
 
-Floor of each operation over this dense representation, derived from axioms of algebra and never
-measured. Floor spends no zero fill, no intermediate, no error check and no allocation, and moves
-operands read once plus result written once. Floor rests on operation alone, so one row serves every
-measurand spelling it. Last column is what library spends on that operation, as multiplies over
-bytes.
+### Floor
 
 | Op | Shape | Mul | Div | Roots | Bytes | Library mul/bytes |
 |----|-------|-----|-----|-------|-------|-------------------|
@@ -350,11 +356,7 @@ Gaps: 131. Over 130, met 1, unmeasured 0.
 | G231 | container_sphere | 486/5 | 0/0 | 4352/120 | 4/0 | 4/0 | 115.6/2.3 | over |
 | G232 | partner_sphere | 1004/10 | 0/0 | 34560/120 | 10/0 | 273/0 | 278.5/2.1 | over |
 
-Floor of each operation over this dense representation, derived from axioms of algebra and never
-measured. Floor spends no zero fill, no intermediate, no error check and no allocation, and moves
-operands read once plus result written once. Floor rests on operation alone, so one row serves every
-measurand spelling it. Last column is what library spends on that operation, as multiplies over
-bytes.
+### Floor
 
 | Op | Shape | Mul | Div | Roots | Bytes | Library mul/bytes |
 |----|-------|-----|-----|-------|-------|-------------------|
@@ -439,11 +441,7 @@ Gaps: 40. Over 39, met 1, unmeasured 0.
 | G269 | support | 54/– | 0/– | 832/– | 3/– | 3/– | 9.6/– | over |
 | G270 | support_anti | 54/– | 0/– | 832/– | 3/– | 3/– | 10.0/– | over |
 
-Floor of each operation over this dense representation, derived from axioms of algebra and never
-measured. Floor spends no zero fill, no intermediate, no error check and no allocation, and moves
-operands read once plus result written once. Floor rests on operation alone, so one row serves every
-measurand spelling it. Last column is what library spends on that operation, as multiplies over
-bytes.
+### Floor
 
 | Op | Shape | Mul | Div | Roots | Bytes | Library mul/bytes |
 |----|-------|-----|-----|-------|-------|-------------------|
@@ -537,11 +535,7 @@ Gaps: 47. Over 46, met 1, unmeasured 0.
 | G314 | container | 162/– | 0/– | 2176/– | 4/– | 4/– | 60.8/– | over |
 | G315 | partner | 340/– | 0/– | 11136/– | 10/– | 145/– | 174.3/– | over |
 
-Floor of each operation over this dense representation, derived from axioms of algebra and never
-measured. Floor spends no zero fill, no intermediate, no error check and no allocation, and moves
-operands read once plus result written once. Floor rests on operation alone, so one row serves every
-measurand spelling it. Last column is what library spends on that operation, as multiplies over
-bytes.
+### Floor
 
 | Op | Shape | Mul | Div | Roots | Bytes | Library mul/bytes |
 |----|-------|-----|-----|-------|-------|-------------------|
