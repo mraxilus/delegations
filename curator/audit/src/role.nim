@@ -3,8 +3,8 @@
 ##     own role, since branch grammar names role and delegate on it writes under that role. So
 ##     one string, derived by `parseBranch`, answers for both, and check is equality rather
 ##     than presence.
-##   Inputs arrive from event payload through environment: branch, body and label names are
-##     what runner already holds, so check needs no token scope and makes no API call.
+##   Inputs arrive through environment: branch and body from event payload, label names from
+##     API, since payload carries none on event that opens pull request.
 ##   `ledger.yml` reads same two facts daily over open items, which samples rather than gates:
 ##     pull request living half hour is almost never open when it runs, and it reports after
 ##     merge rather than before.
@@ -15,9 +15,9 @@
 ##   Cost: comment is unreachable, and is what remains of CONTRIBUTOR.md's first carried rule.
 ##   Cost: labels are searched for expected string rather than compared whole, since label is
 ##     added when work hands across and never removed.
-##   Empty label list is opening's own state, never delegate's mistake: no API call creates
-##     pull request and its label together, so run at `opened` reads none and `labeled` event
-##     clears it. Message says so, and one naming wrong label does not.
+##   Empty label list can still be opening's own state rather than delegate's mistake: no API
+##     call creates pull request and its label together, so label can land after run reads it,
+##     and `labeled` event clears it. Message says so, and one naming wrong label does not.
 
 {.experimental: "strictFuncs".}
 
