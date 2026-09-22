@@ -45,9 +45,9 @@ worst joint is (1 is the edge).
 
 ### L-l, low
 
-Blocks: -1.58, 0.36 m apart: her wrist; +0.72, 0.44 m apart: her shoulder, twist.
+Blocks: -1.58, 0.36 m apart: follow's wrist; +0.72, 0.44 m apart: follow's shoulder, twist.
 
-| turn | her arm | his arm | strain | hands at |
+| turn | follow's arm | lead's arm | strain | hands at |
 |---|---|---|---|---|
 | -2 | blocked | | | |
 | -1 1/2 | wrap low | open | 0.71 (near it) | 1.32 m |
@@ -61,9 +61,10 @@ Blocks: -1.58, 0.36 m apart: her wrist; +0.72, 0.44 m apart: her shoulder, twist
 
 ### L-l, high
 
-Blocks: -1.62, 0.38 m apart: his arm through a body; +0.98, 0.38 m apart: his arm through a body.
+Blocks: -1.62, 0.38 m apart: lead's arm through a body; +0.98, 0.38 m apart: lead's arm through a
+body.
 
-| turn | her arm | his arm | strain | hands at |
+| turn | follow's arm | lead's arm | strain | hands at |
 |---|---|---|---|---|
 | -2 | blocked | | | |
 | -1 1/2 | wrap high (led) | open | 0.36 | 1.51 m |
@@ -79,7 +80,7 @@ Blocks: -1.62, 0.38 m apart: his arm through a body; +0.98, 0.38 m apart: his ar
 
 Blocks: -: free to 2.50 turns, 0.36 m apart; +: free to 2.50 turns, 0.42 m apart.
 
-| turn | her arm | his arm | strain | hands at |
+| turn | follow's arm | lead's arm | strain | hands at |
 |---|---|---|---|---|
 | -2 | above | above | 1.00 (at edge) | 1.47 m |
 | -1 1/2 | above | above | 0.00 | 1.87 m |
@@ -93,9 +94,9 @@ Blocks: -: free to 2.50 turns, 0.36 m apart; +: free to 2.50 turns, 0.42 m apart
 
 ### R-r, low
 
-Blocks: -0.72, 0.44 m apart: her shoulder, twist; +1.58, 0.36 m apart: her wrist.
+Blocks: -0.72, 0.44 m apart: follow's shoulder, twist; +1.58, 0.36 m apart: follow's wrist.
 
-| turn | her arm | his arm | strain | hands at |
+| turn | follow's arm | lead's arm | strain | hands at |
 |---|---|---|---|---|
 | -2 | blocked | | | |
 | -1 1/2 | blocked | | | |
@@ -109,9 +110,9 @@ Blocks: -0.72, 0.44 m apart: her shoulder, twist; +1.58, 0.36 m apart: her wrist
 
 ### R-r, high
 
-Blocks: -0.98, 0.38 m apart: his arm through a body; +1.64, 0.38 m apart: his wrist.
+Blocks: -0.98, 0.38 m apart: lead's arm through a body; +1.64, 0.38 m apart: lead's wrist.
 
-| turn | her arm | his arm | strain | hands at |
+| turn | follow's arm | lead's arm | strain | hands at |
 |---|---|---|---|---|
 | -2 | blocked | | | |
 | -1 1/2 | blocked | | | |
@@ -127,7 +128,7 @@ Blocks: -0.98, 0.38 m apart: his arm through a body; +1.64, 0.38 m apart: his wr
 
 Blocks: -: free to 2.50 turns, 0.40 m apart; +: free to 2.50 turns, 0.40 m apart.
 
-| turn | her arm | his arm | strain | hands at |
+| turn | follow's arm | lead's arm | strain | hands at |
 |---|---|---|---|---|
 | -2 | above | above | 0.89 (near it) | 1.38 m |
 | -1 1/2 | above | above | 0.16 | 1.73 m |
@@ -141,9 +142,9 @@ Blocks: -: free to 2.50 turns, 0.40 m apart; +: free to 2.50 turns, 0.40 m apart
 
 ### L-r, low
 
-Blocks: -0.86, 0.36 m apart: his arm through a body; +1.34, 0.44 m apart: her wrist.
+Blocks: -0.86, 0.36 m apart: lead's arm through a body; +1.34, 0.44 m apart: follow's wrist.
 
-| turn | her arm | his arm | strain | hands at |
+| turn | follow's arm | lead's arm | strain | hands at |
 |---|---|---|---|---|
 | -2 | blocked | | | |
 | -1 1/2 | blocked | | | |
@@ -157,9 +158,9 @@ Blocks: -0.86, 0.36 m apart: his arm through a body; +1.34, 0.44 m apart: her wr
 
 ### L-r, high
 
-Blocks: -1.12, 0.38 m apart: her shoulder, twist; +1.10, 0.90 m apart: arm through arm.
+Blocks: -1.12, 0.38 m apart: follow's shoulder, twist; +1.10, 0.90 m apart: arm through arm.
 
-| turn | her arm | his arm | strain | hands at |
+| turn | follow's arm | lead's arm | strain | hands at |
 |---|---|---|---|---|
 | -2 | blocked | | | |
 | -1 1/2 | blocked | | | |
@@ -175,7 +176,7 @@ Blocks: -1.12, 0.38 m apart: her shoulder, twist; +1.10, 0.90 m apart: arm throu
 
 Blocks: -: free to 2.50 turns, 0.44 m apart; +: free to 2.50 turns, 0.42 m apart.
 
-| turn | her arm | his arm | strain | hands at |
+| turn | follow's arm | lead's arm | strain | hands at |
 |---|---|---|---|---|
 | -2 | above | above | 1.00 (at edge) | 1.47 m |
 | -1 1/2 | above | above | 0.01 | 1.74 m |
@@ -189,9 +190,9 @@ Blocks: -: free to 2.50 turns, 0.44 m apart; +: free to 2.50 turns, 0.42 m apart
 
 ### R-l, low
 
-Blocks: -1.36, 0.44 m apart: her wrist; +0.86, 0.36 m apart: his arm through a body.
+Blocks: -1.36, 0.44 m apart: follow's wrist; +0.86, 0.36 m apart: lead's arm through a body.
 
-| turn | her arm | his arm | strain | hands at |
+| turn | follow's arm | lead's arm | strain | hands at |
 |---|---|---|---|---|
 | -2 | blocked | | | |
 | -1 1/2 | blocked | | | |
@@ -205,9 +206,9 @@ Blocks: -1.36, 0.44 m apart: her wrist; +0.86, 0.36 m apart: his arm through a b
 
 ### R-l, high
 
-Blocks: -1.10, 0.90 m apart: his arm through a body; +1.14, 0.38 m apart: his wrist.
+Blocks: -1.10, 0.90 m apart: lead's arm through a body; +1.14, 0.38 m apart: lead's wrist.
 
-| turn | her arm | his arm | strain | hands at |
+| turn | follow's arm | lead's arm | strain | hands at |
 |---|---|---|---|---|
 | -2 | blocked | | | |
 | -1 1/2 | blocked | | | |
@@ -223,7 +224,7 @@ Blocks: -1.10, 0.90 m apart: his arm through a body; +1.14, 0.38 m apart: his wr
 
 Blocks: -: free to 2.50 turns, 0.42 m apart; +: free to 2.50 turns, 0.36 m apart.
 
-| turn | her arm | his arm | strain | hands at |
+| turn | follow's arm | lead's arm | strain | hands at |
 |---|---|---|---|---|
 | -2 | above | above | 0.32 | 1.37 m |
 | -1 1/2 | above | above | 0.00 | 1.79 m |
@@ -238,21 +239,21 @@ Blocks: -: free to 2.50 turns, 0.42 m apart; +: free to 2.50 turns, 0.36 m apart
 ## The floor's claim
 
 The floor: *everything gets a full turn before it blocks, except a low wrap, which gets half.*  L-l
-and L-r, turning her, from face-to-face.  For L-l the lock way is negative and the wrap way
+and L-r, turning the follow, from Face-to-face.  For L-l the lock way is negative and the wrap way
 positive; for L-r the wrap way is negative and the lock way positive.
 
 | hold | level | way | floor says | sim says | the sim names |
 |---|---|---|---|---|---|
-| L-l | low | lock way | a whole turn | blocks at 1.58 | her wrist |
-| L-l | low | wrap way | half a turn | blocks at 0.72 | her shoulder, twist |
-| L-l | high | lock way | a whole turn | blocks at 1.62 | his arm through a body |
-| L-l | high | wrap way | a whole turn | blocks at 0.98 | his arm through a body |
+| L-l | low | lock way | a whole turn | blocks at 1.58 | follow's wrist |
+| L-l | low | wrap way | half a turn | blocks at 0.72 | follow's shoulder, twist |
+| L-l | high | lock way | a whole turn | blocks at 1.62 | lead's arm through a body |
+| L-l | high | wrap way | a whole turn | blocks at 0.98 | lead's arm through a body |
 | L-l | above | lock way | no block | no block |  |
 | L-l | above | wrap way | no block | no block |  |
-| L-r | low | lock way | a whole turn | blocks at 1.34 | her wrist |
-| L-r | low | wrap way | half a turn | blocks at 0.86 | his arm through a body |
+| L-r | low | lock way | a whole turn | blocks at 1.34 | follow's wrist |
+| L-r | low | wrap way | half a turn | blocks at 0.86 | lead's arm through a body |
 | L-r | high | lock way | a whole turn | blocks at 1.10 | arm through arm |
-| L-r | high | wrap way | a whole turn | blocks at 1.12 | her shoulder, twist |
+| L-r | high | wrap way | a whole turn | blocks at 1.12 | follow's shoulder, twist |
 | L-r | above | lock way | no block | no block |  |
 | L-r | above | wrap way | no block | no block |  |
 
@@ -263,9 +264,10 @@ each other), and its turns count from there.
 
 ### L-r.R-l, low
 
-Blocks: -0.90, 0.38 m apart: her shoulder, twist; +0.90, 0.38 m apart: her shoulder, twist.
+Blocks: -0.90, 0.38 m apart: follow's shoulder, twist; +0.90, 0.38 m apart: follow's shoulder,
+twist.
 
-| turn | her first arm | her second arm | crossings | strain |
+| turn | follow's first arm | follow's second arm | crossings | strain |
 |---|---|---|---|---|
 | -2 | blocked | | | |
 | -1 1/2 | blocked | | | |
@@ -279,9 +281,9 @@ Blocks: -0.90, 0.38 m apart: her shoulder, twist; +0.90, 0.38 m apart: her shoul
 
 ### L-r.R-l, high
 
-Blocks: -0.90, 0.40 m apart: his arm through a body; +0.90, 0.40 m apart: arm through arm.
+Blocks: -0.90, 0.40 m apart: lead's arm through a body; +0.90, 0.40 m apart: arm through arm.
 
-| turn | her first arm | her second arm | crossings | strain |
+| turn | follow's first arm | follow's second arm | crossings | strain |
 |---|---|---|---|---|
 | -2 | blocked | | | |
 | -1 1/2 | blocked | | | |
@@ -295,9 +297,9 @@ Blocks: -0.90, 0.40 m apart: his arm through a body; +0.90, 0.40 m apart: arm th
 
 ### L-r.R-l, above
 
-Blocks: -1.06, 0.38 m apart: his wrist; +1.34, 0.44 m apart: her shoulder, twist.
+Blocks: -1.06, 0.38 m apart: lead's wrist; +1.34, 0.44 m apart: follow's shoulder, twist.
 
-| turn | her first arm | her second arm | crossings | strain |
+| turn | follow's first arm | follow's second arm | crossings | strain |
 |---|---|---|---|---|
 | -2 | blocked | | | |
 | -1 1/2 | blocked | | | |
@@ -313,7 +315,7 @@ Blocks: -1.06, 0.38 m apart: his wrist; +1.34, 0.44 m apart: her shoulder, twist
 
 Blocks: -0.94, 0.42 m apart: arm through arm; +0.94, 0.42 m apart: arm through arm.
 
-| turn | her first arm | her second arm | crossings | strain |
+| turn | follow's first arm | follow's second arm | crossings | strain |
 |---|---|---|---|---|
 | -2 | blocked | | | |
 | -1 1/2 | blocked | | | |
@@ -327,9 +329,9 @@ Blocks: -0.94, 0.42 m apart: arm through arm; +0.94, 0.42 m apart: arm through a
 
 ### L-l.R-r, from pillion lead, high
 
-Blocks: -0.02, 0.42 m apart: her wrist; +0.70, 0.80 m apart: arm through arm.
+Blocks: -0.02, 0.42 m apart: follow's wrist; +0.70, 0.80 m apart: arm through arm.
 
-| turn | her first arm | her second arm | crossings | strain |
+| turn | follow's first arm | follow's second arm | crossings | strain |
 |---|---|---|---|---|
 | -2 | blocked | | | |
 | -1 1/2 | blocked | | | |
@@ -343,9 +345,9 @@ Blocks: -0.02, 0.42 m apart: her wrist; +0.70, 0.80 m apart: arm through arm.
 
 ### L-l.R-r, from pillion lead, above
 
-Blocks: -1.22, 0.46 m apart: arm through arm; +1.20, 0.42 m apart: her shoulder, twist.
+Blocks: -1.22, 0.46 m apart: arm through arm; +1.20, 0.42 m apart: follow's shoulder, twist.
 
-| turn | her first arm | her second arm | crossings | strain |
+| turn | follow's first arm | follow's second arm | crossings | strain |
 |---|---|---|---|---|
 | -2 | blocked | | | |
 | -1 1/2 | blocked | | | |
@@ -379,7 +381,7 @@ that holds.
 
 ## The states the whole-cloth page draws
 
-| drawn as | turned | holds | her arm | his arm | strain |
+| drawn as | turned | holds | follow's arm | lead's arm | strain |
 |---|---|---|---|---|---|
 | Left to left, open | 0.00 | yes | open | open | 0.00 |
 | Left to right-wrap-low @ 1/2 | -0.50 | yes | wrap low (led) | open | 0.01 |
@@ -387,17 +389,17 @@ that holds.
 | Left to left-lock-low @ -1 | -1.00 | yes | wrap low (led) | open | 0.09 |
 | Left to left-lock-high @ -1 | -1.00 | yes | wrap high (led) | open | 0.13 |
 | Left to left @ above, +1 | 1.00 | yes | above | above | 0.11 |
-| Left-Lock-Low to left, him turned -1 | -1.00 | yes | open | wrap low (led) | 0.09 |
-| Left-Lock-Low to left, him turned +1 | 1.00 | blocked before it | | | |
+| Left-Lock-Low to left, lead turned -1 | -1.00 | yes | open | wrap low (led) | 0.09 |
+| Left-Lock-Low to left, lead turned +1 | 1.00 | blocked before it | | | |
 
 ## Standing closer, and further
 
-L-l low, turning her, at three stances told rather than chosen: what the block does when the couple
-are made to step in or out.  The row above them is where they stand when left to choose.
+L-l low, turning the follow, at three stances told rather than chosen: what the block does when the
+couple are made to step in or out.  The row above them is where they stand when left to choose.
 
 | apart | lock way | wrap way |
 |---|---|---|
-| chosen | -1.58, 0.36 m apart: her wrist | +0.72, 0.44 m apart: her shoulder, twist |
-| 0.36 m | -1.58, 0.36 m apart: her wrist | +0.24, 0.36 m apart: his arm through a body |
-| 0.5 m | -1.34, 0.50 m apart: arm through arm | +0.72, 0.50 m apart: her shoulder, twist |
-| 0.7 m | -1.24, 0.70 m apart: his arm through a body | +0.60, 0.70 m apart: her shoulder, twist |
+| chosen | -1.58, 0.36 m apart: follow's wrist | +0.72, 0.44 m apart: follow's shoulder, twist |
+| 0.36 m | -1.58: follow's wrist | +0.24: lead's arm through a body |
+| 0.5 m | -1.34: arm through arm | +0.72: follow's shoulder, twist |
+| 0.7 m | -1.24: lead's arm through a body | +0.60: follow's shoulder, twist |

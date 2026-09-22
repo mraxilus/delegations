@@ -28,21 +28,22 @@ const HEAD_BODY = """
 <main class="rigview">
   <header>
     <p class="kicker">Body sim</p>
-    <h1>The rig, as the engine holds it</h1>
-    <p class="lede">Every capsule the engine collides, at the world ends the
-      engine reports, at the radius it collides on. Nothing is drawn that is not
-      simulated, and nothing simulated is left out &mdash; including the gap under
-      the hips, because the rig is trunk upward and has no legs. Drag to turn the
-      view, scroll to zoom. Each body is lit from its own front, so the lighter
-      side of a torso or a head is the side that dancer faces, since a capsule
-      cannot say: the torso's section is symmetric front to back and the head
-      is a sphere.</p>
-    <p class="lede">Below the stage, every still cell of the reference page is laid
-      out as it is there, with the sim's own still of it beside the drawing: the
-      couple wound to that facing from the first standing distance that holds it,
-      hands lifted, and left to stand. Click any cell to put it on the stage; the
-      arrows, or the arrow keys, walk from cell to cell. The sweeps come after the
-      stills in the same list.</p>
+    <h1>The rig, drawn from the engine</h1>
+    <p class="lede">The stage draws every capsule the engine tests for contact, and
+      nothing more. Each capsule runs between the two points the engine reports, at
+      the radius the engine gives it. A gap shows below the hips because the rig stops
+      there. It holds the trunk, the head and the arms, and it has no legs.</p>
+    <p class="lede">Each dancer carries their own light, in front of them. So the
+      brighter side of a torso or a head shows which way that dancer faces. The shape
+      cannot show it, because a torso is the same front and back, and a head is a
+      sphere. Drag the stage to turn the view. Scroll to zoom.</p>
+    <p class="lede">Below the stage, each still cell of the reference page appears in
+      that page's order, with the sim's still beside the drawing. For each cell the sim
+      winds the couple into that facing, lifts their joined hands, and then lets the
+      pose settle. It keeps the distance between the dancers where the pose carries the
+      least strain. Click a cell to put it on the stage, and the arrow buttons or the
+      arrow keys step from one cell to the next. One list holds the stills first and
+      the sweeps after them.</p>
   </header>
 
   <div class="rigwrap">
@@ -61,10 +62,10 @@ const HEAD_BODY = """
       </div>
       <div class="ref" id="ref"></div>
       <div class="reads" id="reads"></div>
-      <p class="note">A joint within five degrees of either end is marked
-        <span class="spent-key">spent</span>. The range shown is the rig's, for
-        that arm: the shoulder's twist is mirrored between left and right, so its
-        two ends are the arm's own rather than the table's.</p>
+      <p class="note">A joint within five degrees of either end of its range reads
+        <span class="spent-key">spent</span>. Every range here is the rig's own value
+        for that arm. A shoulder's twist is mirrored between left and right, so its two
+        ends belong to the arm and not to this table.</p>
     </aside>
   </div>
 """
@@ -144,7 +145,7 @@ figure.pic.picked { outline: 2px solid var(--ink); outline-offset: 2px; }
 </style>"""
 
 
-const TITLE* = "The Rig, as the Engine Holds It"
+const TITLE* = "The Rig, Drawn from the Engine"
   ## Page's own name, after work's name: what browser tab and published gallery show.
 
 
@@ -227,17 +228,17 @@ proc cellsBody(review: string; data: JsonNode): string =
     entryOf[key] = i
     let apart = still["apart"].getFloat
     held[key] = (if still.hasKey("at") and still["at"].len > 0:
-                   &"holds, stood {apart:.2f} m apart"
+                   &"holds, {apart:.2f} m apart"
                  else: "no pose holds at any distance")
   let cells = cellsOf(review)
   const TITLES = [("A", "The standard diagram"),
                   ("B", "Single-hand turn positions"),
-                  ("C", "Hand-to-hand chain, face-to-face at rest"),
-                  ("D", "Hand-to-hand chain, pillion lead at rest")]
-  result.add """<section class="cells"><p class="lede">Each cell below is the
-    reference page's own, badge for badge, with the sim's still of it drawn
-    beside. A cell that folds several questions together shows the first; the
-    list above holds every one.</p>"""
+                  ("C", "The cross-name chain, Face-to-face at rest"),
+                  ("D", "The same-name chain, Pillion at rest")]
+  result.add """<section class="cells"><p class="lede">Every cell here comes from the
+    reference page, with the same badges, and the sim's still stands beside it. Where
+    one cell asks more than one question, the badge shows the first. The picker above
+    reaches every cell.</p>"""
   for (letter, title) in TITLES:
     result.add &"<h2>{letter} &middot; {esc(title)}</h2><div class=\"grid wide\">"
     for cell in cells.getOrDefault(letter):

@@ -7,12 +7,14 @@ it is agreed.
 ## Language
 
 **Lead**:
-The dancer whose hands are named first, written capitalised.
-_Avoid_: leader, man, he
+The dancer whose hands are named first, written capitalised. A state named for the Lead is
+written capitalised too, such as `Pillion`.
+_Avoid_: leader, man, he, him, his
 
 **Follow**:
-The dancer whose hands are named second, written in lower case.
-_Avoid_: follower, woman, she
+The dancer whose hands are named second, written in lower case. A state named for the Follow is
+written in lower case too, such as `pillion`.
+_Avoid_: follower, woman, she, her, hers
 
 **Connection**:
 A hand of the Lead that holds a hand of the Follow, named by the two hands, such as
@@ -28,15 +30,16 @@ Which hands are connected.
 _Avoid_: hold, grip, connections
 
 **Frame position**:
-The manner and orientation in which hands are connected. That is facing (face-to-face,
-back-to-back, pillion lead, pillion follow), twist (quarter turns, clockwise or
-anticlockwise), and shorthands such as over and under.
+The manner and orientation in which hands are connected. That is facing, which the entry below
+names, twist in quarter turns clockwise or anticlockwise, and shorthands such as over and
+under.
 _Avoid_: orientation, manner, posture
 
 **Facing**:
-Which way the two dancers are turned with respect to one another. It is one of face-to-face,
-back-to-back, pillion lead and pillion follow. Four states need two bits, so a twist parity
-alone cannot say which of them a frame is in.
+Which way the two dancers are turned with respect to one another, and on which side of the
+other each one stands. Four names cover eight states: Face-to-face, Back-to-back, Pillion and
+Sidecar. Eight states need three bits, so a twist parity alone cannot say which of them a frame
+is in.
 _Avoid_: orientation, direction, front
 
 **Face-to-face**:
@@ -47,15 +50,17 @@ _Avoid_: facing, front-to-front, opposed, closed
 The facing where each dancer has their back to the other.
 _Avoid_: reversed, apart, turned away, back to front
 
-**Pillion lead**:
-The facing where both dancers face one way with the Lead behind, so the Lead looks at the
-Follow's back.
-_Avoid_: face-to-back, same way, lead behind
+**Pillion**:
+The facing where both dancers face one way with one behind the other, who looks at their back.
+The case names the dancer behind: `Pillion` is the Lead there, and `pillion` is the Follow.
+_Avoid_: pillion lead, pillion follow, face-to-back, same way, lead behind
 
-**Pillion follow**:
-The facing where both dancers face one way with the Follow behind, so the Follow looks at the
-Lead's back.
-_Avoid_: back-to-face, same way, follow behind
+**Sidecar**:
+The facing where both dancers face one way, with one at a shoulder of the other rather than
+behind them. The case names the dancer at the shoulder, and the side names whose shoulder it is.
+So `Sidecar left` puts the Lead at the left shoulder of the Follow, and `sidecar Right` puts the
+Follow at the Right shoulder of the Lead.
+_Avoid_: side by side, beside, alongside, shoulder to shoulder
 
 **Frame state**:
 One specific unique instance of a frame hold and a frame position, grip aside.
@@ -94,7 +99,7 @@ shortest.
 _Avoid_: route, path, sequence, walk
 
 **Level**:
-The height a connection is carried at: low, high or overhead.
+The height a connection is carried at: low, high or above.
 _Avoid_: height, tier, zone
 
 **Modifier**:
@@ -102,8 +107,10 @@ What a wound arm ends in: a wrap or a lock.
 _Avoid_: blocker, decoration, variant
 
 **Twist**:
-Stored rotational tension between the pair, counted in quarter turns clockwise or
-anticlockwise.
+Stored rotational tension between the pair, which is the rotation of the Follow less the
+rotation of the Lead. The agreed count is in quarter turns clockwise or anticlockwise, and the
+chain measures the same quantity as a real number of turns. Discrete and continuous are one
+concept at two grains.
 _Avoid_: wind, rotation, tension, turns
 
 **Low**:
@@ -114,10 +121,10 @@ _Avoid_: waist, hip
 A connection held above shoulder level, about the neck.
 _Avoid_: chest, shoulder level
 
-**Overhead**:
+**Above**:
 A connection held above the head, on the axis that the couple turn about. It is the one
 level that carries no modifier, because there is nothing there to wind around.
-_Avoid_: above, upper, top, crown
+_Avoid_: overhead, upper, top, crown
 
 **Wrap**:
 An arm crossed around the front of its own body, under its other arm when low, over it when

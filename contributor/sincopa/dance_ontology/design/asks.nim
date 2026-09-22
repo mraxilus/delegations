@@ -23,7 +23,7 @@ type StillAsk* = object ## One still card, as sim is asked it.
   key*: string    ## Question's key, as page keys its own pictures.
   links*: seq[Link]
   turns*: float   ## Facing, in turns from where hold rests.
-  away*: bool     ## Whether hold rests pillion lead rather than face to face.
+  away*: bool     ## Whether hold rests Pillion rather than Face-to-face.
   head*: Body     ## Whose crown joined hands go over.
   either*: bool   ## Whether couple may be wound to this facing either way about:
                   ## card that draws same picture turned either way fixes neither.
@@ -65,7 +65,7 @@ func asked*(wind: float): float = -wind
   ## C5's, mirror of what each card draws, and every single-hand card likewise.
 
 func restsFacing*(target: Frame): bool =
-  ## Whether frame rests face to face rather than pillion lead.  Same reading
+  ## Whether frame rests Face-to-face rather than Pillion.  Same reading
   ## `review_page` makes, by `phaseOf`, and never written down.
   if target.countHolds < 2: true else: phaseOf(holdsOf(target)) < 1e-9
 
@@ -74,7 +74,7 @@ func stillAsks*(): seq[StillAsk] =
   ## Every still card, in page's own order: standard diagram, single-hand
   ## positions, then both chains.
   # `A`. Standard diagram: eight frames, each drawn at two facings.
-  #   `twist` names facing *drawn* -- nought face to face, one pillion lead --
+  #   `twist` names facing *drawn* -- nought Face-to-face, one Pillion --
   #     and not half turns from frame's own rest.  Frame that rests pillion is
   #     therefore at rest at twist of one, and half turn from it at nought: A10
   #     and A12 read "at rest" for that reason, and asking them for half turn

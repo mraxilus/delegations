@@ -127,6 +127,8 @@ code { font: 0.88em var(--mono); background: var(--wash); padding: 0.1em 0.35em;
 .foot { margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--rule);
   font-size: 0.9rem; color: var(--dim); }
 .foot b { color: var(--ink); }
+.foot ul { margin: .4rem 0 0; padding-left: 1.1rem; }
+.foot li { margin-top: .3rem; }
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <pattern id="hL" width="3" height="3" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">

@@ -13,6 +13,7 @@ joinable: true
 
 import std/[options, os, strutils, unittest]
 
+import ../design/plain
 import ../src/dance_ontology
 import ../tools/review
 import ../tools/title
@@ -27,6 +28,14 @@ suite "the review page":
     let page = renderReview()
     check page.len > 0
     check "{{" notin page  # `renderReview` asserts it too; said here as law
+    # Prose follows Simplified Technical English (Article VI.8), counted as `tmarks.nim`
+    # counts it on every other page: sentence's words, and paragraph's sentences.
+    for said in page.longSentences:
+      checkpoint "sentence over " & $WORDS & " words: " & said
+      fail()
+    for said in page.longParagraphs:
+      checkpoint "paragraph over " & $SENTENCES & " sentences, opening: " & said
+      fail()
     # Review page is exploration, not page project stands behind, and title says so.
     check "<title>" & MOCKUP & " — " in page
     check "<title>" & WORK & " — " notin page
