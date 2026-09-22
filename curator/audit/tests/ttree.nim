@@ -52,5 +52,44 @@ suite "Article IX":
     check root.revBefore(0) == head  # every commit lies before now
     check root.revBefore(3650) == ""  # nothing ten years old, so window holds whole history
 
+  test "IX.5 a warning git writes is never read as a field":
+    # Two merge bases make git warn on `diff base...HEAD`, and the warning ends in a newline
+    # rather than in NUL, so a stream carrying both glues it to first path.
+    let root = tempRepo()
+    defer: removeDir(root)
+    root.writeInto(ALPHA_DIR & "/README.md", "# a\n")
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'feat(alpha): add readme'")
+    discard root.git("checkout -q -b left")
+    root.writeInto(ALPHA_DIR & "/left.nim", "discard\n")
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'feat(alpha): add left'")
+    let left = root.git("rev-parse HEAD").strip
+    discard root.git("checkout -q main")
+    discard root.git("checkout -q -b right")
+    root.writeInto(ALPHA_DIR & "/right.nim", "discard\n")
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'feat(alpha): add right'")
+    let right = root.git("rev-parse HEAD").strip
+    discard root.git("checkout -q left")
+    discard root.git("merge -q --no-edit " & right)
+    discard root.git("checkout -q right")
+    discard root.git("merge -q --no-edit " & left)
+    discard root.git("checkout -q left")
+    root.writeInto(ALPHA_DIR & "/scoped.nim", "discard\n")
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'feat(alpha): add scoped'")
+    for path in changedPaths(root, "right"):
+      check not path.contains("warning")  # warning reaches no field
+      check path.startsWith(ALPHA_DIR)  # every field is still path, and path alone
+    check ALPHA_DIR & "/scoped.nim" in changedPaths(root, "right")
+
   test "IX.5 git failure raises with output":
     expect IOError: discard gitFields("/nonexistent_delegations", ["status"])  # non-zero exit
+    let root = tempRepo()
+    defer: removeDir(root)
+    try:
+      discard gitFields(root, ["cat-file", "-p", "0123456789abcdef0123456789abcdef01234567"])
+      check false  # unreachable: missing object exits non-zero
+    except IOError as failure:
+      check failure.msg.contains("Not a valid object name")  # git's own reason, from stderr
