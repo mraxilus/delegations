@@ -75,10 +75,8 @@ func libraryKey(p: Measurand): string =
   ## Key of library function measurand's expression calls; empty where it composes several.
   if p.symbol == "{}": return KEY_SELECT & (if "Anti" in p.expression: "#u1" else: "")
   if p.symbol == "[]": return KEY_PART
-  let head =
-    if p.symbol.len > 0: p.emitted
-    elif p.alias.len > 0 and p.expression.startsWith(p.alias & "("): p.alias
-    else: return ""
+  let head = p.emittedHead
+  if head.len == 0: return ""
   var stems: seq[string]
   for i in 0 ..< int(p.arity): stems.add libraryStem(p.operands[i])
   head & "(" & stems.join(",") & ")"
@@ -111,10 +109,12 @@ func measurandsNode(): JsonNode =
       "reference": p.referenceKey,
       "cite": p.cite,
     }
-    let b = lowerBoundOf(p.shapeOf, METRIC, p.arity)
+    let b = p.boundOf(METRIC)
     if b.is_derived:
       result[p.id]["bound"] = %*{
-        "shape": $p.shapeOf,
+        "shape": p.shapeNameOf,
+        "is_composed": b.is_composed,
+        "steps": p.stepsOf,
         "multiplies": b.multiplies,
         "adds": b.adds,
         "divides": b.divides,

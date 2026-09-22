@@ -221,7 +221,7 @@ suite "Lower bound":
     check lowerBoundOf(Shape.ExpandWeight, m, 2).multiplies == 54  # wiki:Expansions
     check lowerBoundOf(Shape.Scale, m, 2).multiplies == 16  # every slot times one scalar
     check lowerBoundOf(Shape.Permutation, m, 1).multiplies == 0  # sign and reorder only
-    check lowerBoundOf(Shape.Attitude, m, 1).multiplies == 0  # constant carries one unit part
+    check lowerBoundOf(Shape.ConstantProduct, m, 1).multiplies == 0  # constant carries unit part
 
   test "unitize bound is norm, one reciprocal and one scale of each slot":
     let m = Metric(dimensions: 4, is_conformal: false)
@@ -242,6 +242,18 @@ suite "Lower bound":
     for shape in [Shape.ContractBulk, Shape.ContractWeight, Shape.ExpandBulk,
                   Shape.ExpandWeight]:
       check not lowerBoundOf(shape, conformal, 2).is_derived  # rule says nothing here
+
+  test "chain sums its steps, and step with no rule adds nothing":
+    let rigid = Metric(dimensions: 4, is_conformal: false)
+    let conformal = Metric(dimensions: 5, is_conformal: true)
+    let projection = @[Shape.ExpandWeight, Shape.Wedge]
+    let b = lowerBoundOfChain(projection, rigid, 2)
+    check b.multiplies == 54 + 81  # dual product, then full product
+    check b.is_composed and b.is_derived  # record marks estimate as estimate
+    check b.bytesMoved == 128 * 3  # two read, one written, no intermediate
+    # Dual product carries no rule under conformal metric, so only full product counts.
+    check lowerBoundOfChain(projection, conformal, 2).multiplies == 243  # wiki:Expansions
+    check lowerBoundOfChain([Shape.Unknown], rigid, 1).is_derived == false  # no step, no claim
 
   test "bound moves operands read once and result written once":
     let m = Metric(dimensions: 4, is_conformal: false)
@@ -453,12 +465,13 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
     var roots: seq[string]
     for f in INSPECTED:
       for p in CATALOGUE:
-        if f.symbol == p.emitted and f.name notin roots: roots.add f.name
+        if f.symbol == p.emittedHead and f.name notin roots: roots.add f.name
     let total = totals(INSPECTED, roots)
     var compared = 0
     for p in CATALOGUE:
-      if p.symbol.len == 0 or p.symbol in INLINED: continue
-      let b = lowerBoundOf(p.shapeOf, metric, p.arity)
+      let head = p.emittedHead
+      if head.len == 0 or head in INLINED: continue
+      let b = p.boundOf(metric)
       if not b.is_derived: continue
       # Operator carrying scalar overload spells same symbol at same arity, so stems of
       #   parameters are what tells two apart.
@@ -466,7 +479,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
       for i in 0 ..< int(p.arity):
         if p.operands[i] == Kind.Scalar: inc wants_scalar else: inc wants_dense
       for f in INSPECTED:
-        if f.symbol != p.emitted: continue
+        if f.symbol != head: continue
         var dense, scalar = 0
         for stem in f.params:
           if stem == "Multivector": inc dense elif stem == "float": inc scalar

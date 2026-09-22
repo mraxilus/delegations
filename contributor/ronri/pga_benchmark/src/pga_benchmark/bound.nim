@@ -54,7 +54,7 @@ type
       ## Every slot times one scalar.
     Unitize
       ## Norm, one reciprocal, every slot scaled by it.
-    Attitude
+    ConstantProduct
       ## Product against constant carrying one unit component, i.e. signed reads.
     ContractBulk
       ## Antiwedge against bulk dual of second operand.
@@ -68,6 +68,8 @@ type
     ## Define multivector lower bound of one operation, i.e. what algebra demands.
     is_derived*: bool
       ## False where shape carries no rule yet; every count below is then meaningless.
+    is_composed*: bool
+      ## True where bound sums steps of library's own definition rather than one rule.
     multiplies*, adds*, divides*, roots*: int
       ## Arithmetic that survives.
     bytes_read*, bytes_written*: int
@@ -185,7 +187,7 @@ func lowerBoundOf*(shape: Shape; m: Metric; arity: range[1 .. 2]): LowerBound =
     result.adds = m.scalarFormTerms - 1
     result.roots = 1
     result.divides = 1
-  of Shape.Attitude:
+  of Shape.ConstantProduct:
     # Constant carries one unit component, so every surviving term is signed read.
     discard
   of Shape.ContractBulk, Shape.ContractWeight, Shape.ExpandBulk, Shape.ExpandWeight:
@@ -198,6 +200,31 @@ func lowerBoundOf*(shape: Shape; m: Metric; arity: range[1 .. 2]): LowerBound =
       let as_expand = shape in {Shape.ExpandBulk, Shape.ExpandWeight}
       result.multiplies = m.dualProductTerms(as_weight, as_expand)
       result.adds = max(0, result.multiplies - m.slots)
+
+
+func lowerBoundOfChain*(parts: openArray[Shape]; m: Metric; arity: range[1 .. 2]): LowerBound =
+  ## Sum what each step of operation's own definition demands, where library composes it.
+  ##   Arithmetic is sum over steps, and step carrying no rule adds nothing. Movement stays
+  ##   operands read once and final result written once, since chain needs no intermediate
+  ##   in memory to be correct.
+  ##
+  ##   Cost: sum is estimate of chain, and never proved minimum. Specialised routine may
+  ##     share subexpression between steps, or reach same answer by shorter route, so true
+  ##     minimum sits below this. Record marks every such bound (Article VIII.1).
+  var is_any_derived = false
+  for part in parts:
+    let b = lowerBoundOf(part, m, arity)
+    if not b.is_derived: continue
+    is_any_derived = true
+    result.multiplies += b.multiplies
+    result.adds += b.adds
+    result.divides += b.divides
+    result.roots += b.roots
+    result.bytes_written = b.bytes_written
+  if not is_any_derived: return LowerBound()
+  result.is_derived = true
+  result.is_composed = true
+  result.bytes_read = m.sizeOfMultivector * arity
 
 
 func bytesMoved*(b: LowerBound): int =

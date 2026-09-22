@@ -16,6 +16,7 @@
 {.experimental: "strictFuncs".}
 
 import std/options
+import std/strutils
 
 import pga
 
@@ -481,8 +482,10 @@ const SHAPES* = [
   ("+", Shape.Componentwise), ("-", Shape.Componentwise),
   ("|∙²", Shape.SquaredNorm), ("|∘²", Shape.SquaredNorm),
   ("|∙", Shape.Norm), ("|∘", Shape.Norm),
+  ("|■", Shape.Norm), ("|□", Shape.Norm),
   ("^∙", Shape.Unitize), ("^∘", Shape.Unitize), ("^", Shape.Unitize),
-  ("⊖", Shape.Attitude),
+  ("⊖", Shape.ConstantProduct),
+  ("⊟", Shape.ConstantProduct), ("⊞", Shape.ConstantProduct),
   ("/", Shape.Permutation), ("\\", Shape.Permutation),
   ("~", Shape.Permutation), ("~∘", Shape.Permutation),
   ("★", Shape.Permutation), ("☆", Shape.Permutation),
@@ -493,6 +496,38 @@ const SHAPES* = [
   ##   Symbol absent here carries no lower bound, and gap list shows dash rather than
   ##   number without ground. Binary `∙` and `∘` stand apart, since library spells same
   ##   symbol for bilinear form and for unary part.
+
+
+const CHAINS* = [
+  # Norm reads two slots, each one root over bilinear form, i.e. `‖m‖∙` then `‖m‖∘`.
+  ("(| m)", @[Shape.Norm, Shape.Norm]),
+  # Support wedges against constant, then takes full product, i.e. `m ∨ (𝐞ₙ ∧ m☆)`.
+  ("(∩ m)", @[Shape.Permutation, Shape.ConstantProduct, Shape.Wedge]),
+  ("(∪ m)", @[Shape.Permutation, Shape.ConstantProduct, Shape.Wedge]),
+  # Center, container and partner each wedge against constant, then take full product.
+  ("(⊙ m)", @[Shape.Permutation, Shape.ConstantProduct, Shape.Wedge]),
+  ("(⊡ m)", @[Shape.ConstantProduct, Shape.Permutation, Shape.Wedge]),
+  ("(⊛ m)", @[Shape.Permutation, Shape.ConstantProduct, Shape.Permutation, Shape.Wedge,
+              Shape.ConstantProduct, Shape.Wedge, Shape.Scale]),
+  # Projection takes dual product, then full product, i.e. `n ∨ (m ∧☆ n)`.
+  ("projectCentral(m, n)", @[Shape.ExpandBulk, Shape.Wedge]),
+  ("projectCentralAnti(m, n)", @[Shape.ContractBulk, Shape.Wedge]),
+  ("projectOrthogonal(m, n)", @[Shape.ExpandWeight, Shape.Wedge]),
+  ("projectOrthogonalAnti(m, n)", @[Shape.ContractWeight, Shape.Wedge]),
+  # Sandwich reverses one operand, then takes two geometric antiproducts.
+  ("((n ⟇ m) ⟇ (~∘ n))", @[Shape.Permutation, Shape.Geometric, Shape.Geometric]),
+]
+  ## Steps of each measurand library composes from several operators, keyed by expression.
+  ##   Expression is what distinguishes compound measurand, since such measurand spells no
+  ##   symbol of its own and typed rows repeat general row's expression. Bound of chain is
+  ##   sum over steps, and record marks it as estimate rather than proved minimum.
+
+
+func chainOf*(p: Measurand): seq[Shape] =
+  ## Read steps measurand composes, empty where library spells it with one operator.
+  for (expression, parts) in CHAINS:
+    if p.expression == expression: return parts
+  @[]
 
 
 func shapeOf*(p: Measurand): Shape =
@@ -511,6 +546,38 @@ func shapeOf*(p: Measurand): Shape =
   Shape.Unknown
 
 
+func boundOf*(p: Measurand; m: Metric): LowerBound =
+  ## Derive multivector lower bound of measurand, by chain where library composes it.
+  let parts = p.chainOf
+  if parts.len > 0: return lowerBoundOfChain(parts, m, p.arity)
+  lowerBoundOf(p.shapeOf, m, p.arity)
+
+
+func shapeNameOf*(p: Measurand): string =
+  ## Name shape of measurand: one shape, or steps of chain joined by plus.
+  ##   Repeated step carries its count rather than its name twice, since whole chain of
+  ##   partner outruns width record allows. `stepsOf` carries chain itself.
+  let parts = p.chainOf
+  if parts.len == 0: return $p.shapeOf
+  var steps: seq[string]
+  var counts: seq[int]
+  for part in parts:
+    let at = steps.find($part)
+    if at < 0:
+      steps.add $part
+      counts.add 1
+    else:
+      inc counts[at]
+  for i, step in steps:
+    if result.len > 0: result.add " + "
+    result.add (if counts[i] > 1: $counts[i] & " " else: "") & step
+
+
+func stepsOf*(p: Measurand): seq[string] =
+  ## Name every step of measurand's chain in order, empty where it carries none.
+  for part in p.chainOf: result.add $part
+
+
 const INLINED* = ["[]"]
   ## Symbols library spells as template over field read, so C carries no function at all.
   ##   Head made component accessor template, where it was `func` with `{.inline.}`, so
@@ -523,6 +590,13 @@ func emitted*(p: Measurand): string =
   for (symbol, target) in TEMPLATES:
     if p.symbol == symbol: return target
   p.symbol
+
+
+func emittedHead*(p: Measurand): string =
+  ## Name function library emits for measurand; empty where expression composes several.
+  if p.symbol.len > 0: return p.emitted
+  if p.alias.len > 0 and p.expression.startsWith(p.alias & "("): return p.alias
+  ""
 
 
 func symbolsOf*(measurands: openArray[Measurand]): seq[string] =

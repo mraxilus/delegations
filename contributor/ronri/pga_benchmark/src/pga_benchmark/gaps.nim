@@ -438,10 +438,11 @@ func cell(l, r: Option[int]): string =
 
 
 func lowerBoundRows*(a: Algebra; gaps: openArray[Gap]): seq[string] =
-  ## Render multivector lower bound of each operation once, keyed by symbol and shape.
-  ##   Bound rests on symbol, shape and arity, and never on operand kinds, so one row
-  ##   serves every measurand that spells same operation. Row also carries what library
-  ##   spends on that operation's general measurand, so distance reads across.
+  ## Render multivector lower bound of each operation once, keyed by spelling and shape.
+  ##   Bound rests on operation and arity, and never on operand kinds, so one row serves
+  ##   every measurand that spells same operation. Row also carries what library spends on
+  ##   that operation's general measurand, so distance reads across. Shape of several steps
+  ##   names chain, whose bound sums those steps.
   let measurands = a.static_measurements.at("measurands")
   let functions = a.static_measurements.at("functions")
   if measurands.isNil: return
@@ -450,15 +451,19 @@ func lowerBoundRows*(a: Algebra; gaps: openArray[Gap]): seq[string] =
     let b = p.at("bound")
     if b.isNil or b.kind != JObject: continue
     let symbol = p{"symbol"}.getStr
+    let alias = p{"alias"}.getStr
+    let expression = p{"expression"}.getStr
     let shape = b{"shape"}.getStr
-    let key = symbol & " " & shape
+    let key = symbol & "|" & alias & "|" & expression & "|" & shape
     if key in seen: continue
     seen.add key
+    let spelling =
+      if symbol.len > 0: symbol elif alias.len > 0: alias else: expression
     var spent = "–"
     let fn = functions.at(p{"library"}.getStr)
     if not fn.isNil:
       spent = $fn{"total", "multiplies"}.getInt & "/" & $fn{"movement", "bytes_moved"}.getInt
-    result.add "| `" & (if symbol.len > 0: symbol else: id) & "` | " & shape & " | " &
+    result.add "| `" & spelling & "` | " & shape & " | " &
       $b{"multiplies"}.getInt & " | " & $b{"divides"}.getInt & " | " &
       $b{"roots"}.getInt & " | " & $b{"bytes_moved"}.getInt & " | " & spent & " |"
 
@@ -533,6 +538,14 @@ func render*(
     "one row serves every measurand that spells that operation. The last column is what " &
     "the library spends there, as multiplies over bytes moved. An operation whose shape " &
     "carries no rule is absent, rather than present without ground."
+  )
+  lines.add ""
+  lines.add wrap(
+    "A shape of several steps names a chain, which the library composes from several " &
+    "operators. The bound of a chain sums what each step demands, and a step that carries " &
+    "no rule adds nothing. Such a bound is an estimate of that chain, and never a proved " &
+    "minimum, because a special routine can share work between steps. Every other bound in " &
+    "these tables is derived from the axioms alone."
   )
   lines.add ""
   lines.add "## Causes"

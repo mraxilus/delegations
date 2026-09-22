@@ -6131,6 +6131,8 @@
       "cite": "2.17",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 243,
         "adds": 211,
         "divides": 0,
@@ -6148,6 +6150,8 @@
       "cite": "2.29",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 243,
         "adds": 211,
         "divides": 0,
@@ -6165,6 +6169,8 @@
       "cite": "wiki:Geometric_product",
       "bound": {
         "shape": "Geometric",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 1024,
         "adds": 992,
         "divides": 0,
@@ -6182,6 +6188,8 @@
       "cite": "wiki:Geometric_product",
       "bound": {
         "shape": "Geometric",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 1024,
         "adds": 992,
         "divides": 0,
@@ -6199,6 +6207,8 @@
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 32,
         "adds": 31,
         "divides": 0,
@@ -6216,6 +6226,8 @@
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 32,
         "adds": 31,
         "divides": 0,
@@ -6269,6 +6281,8 @@
       "cite": "2.24",
       "bound": {
         "shape": "Componentwise",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 32,
         "divides": 0,
@@ -6286,6 +6300,8 @@
       "cite": "2.24",
       "bound": {
         "shape": "Componentwise",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 32,
         "divides": 0,
@@ -6300,7 +6316,20 @@
       "expression": "projectCentral(m, n)",
       "library": "projectCentral(Multivector,Multivector)",
       "reference": "",
-      "cite": "wiki:Projections"
+      "cite": "wiki:Projections",
+      "bound": {
+        "shape": "ExpandBulk + Wedge",
+        "is_composed": true,
+        "steps": [
+          "ExpandBulk",
+          "Wedge"
+        ],
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "project_central_anti": {
       "symbol": "",
@@ -6309,7 +6338,20 @@
       "expression": "projectCentralAnti(m, n)",
       "library": "projectCentralAnti(Multivector,Multivector)",
       "reference": "",
-      "cite": "wiki:Projections"
+      "cite": "wiki:Projections",
+      "bound": {
+        "shape": "ContractBulk + Wedge",
+        "is_composed": true,
+        "steps": [
+          "ContractBulk",
+          "Wedge"
+        ],
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "project_orthogonal": {
       "symbol": "",
@@ -6318,7 +6360,20 @@
       "expression": "projectOrthogonal(m, n)",
       "library": "projectOrthogonal(Multivector,Multivector)",
       "reference": "",
-      "cite": "wiki:Projections"
+      "cite": "wiki:Projections",
+      "bound": {
+        "shape": "ExpandWeight + Wedge",
+        "is_composed": true,
+        "steps": [
+          "ExpandWeight",
+          "Wedge"
+        ],
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "project_orthogonal_anti": {
       "symbol": "",
@@ -6327,7 +6382,20 @@
       "expression": "projectOrthogonalAnti(m, n)",
       "library": "projectOrthogonalAnti(Multivector,Multivector)",
       "reference": "",
-      "cite": "wiki:Projections"
+      "cite": "wiki:Projections",
+      "bound": {
+        "shape": "ContractWeight + Wedge",
+        "is_composed": true,
+        "steps": [
+          "ContractWeight",
+          "Wedge"
+        ],
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 768
+      }
     },
     "scale": {
       "symbol": "∧",
@@ -6339,6 +6407,8 @@
       "cite": "2.24",
       "bound": {
         "shape": "Scale",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 32,
         "adds": 0,
         "divides": 0,
@@ -6356,6 +6426,8 @@
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6373,6 +6445,8 @@
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6390,6 +6464,8 @@
       "cite": "2.19",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6407,6 +6483,8 @@
       "cite": "2.20",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6424,6 +6502,8 @@
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6441,6 +6521,8 @@
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6458,6 +6540,8 @@
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6475,6 +6559,8 @@
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6492,6 +6578,8 @@
       "cite": "2.24",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6509,6 +6597,8 @@
       "cite": "2.87",
       "bound": {
         "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 32,
         "adds": 31,
         "divides": 0,
@@ -6526,6 +6616,8 @@
       "cite": "2.88",
       "bound": {
         "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 32,
         "adds": 31,
         "divides": 0,
@@ -6543,6 +6635,8 @@
       "cite": "2.87",
       "bound": {
         "shape": "SquaredNorm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 32,
         "adds": 31,
         "divides": 0,
@@ -6560,6 +6654,8 @@
       "cite": "2.88",
       "bound": {
         "shape": "SquaredNorm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 32,
         "adds": 31,
         "divides": 0,
@@ -6574,7 +6670,20 @@
       "expression": "(| m)",
       "library": "|(Multivector)",
       "reference": "",
-      "cite": "2.90"
+      "cite": "2.90",
+      "bound": {
+        "shape": "2 Norm",
+        "is_composed": true,
+        "steps": [
+          "Norm",
+          "Norm"
+        ],
+        "multiplies": 64,
+        "adds": 62,
+        "divides": 0,
+        "roots": 2,
+        "bytes_moved": 264
+      }
     },
     "normalize_bulk": {
       "symbol": "^∙",
@@ -6586,6 +6695,8 @@
       "cite": "2.89",
       "bound": {
         "shape": "Unitize",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 64,
         "adds": 31,
         "divides": 1,
@@ -6603,6 +6714,8 @@
       "cite": "2.89",
       "bound": {
         "shape": "Unitize",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 64,
         "adds": 31,
         "divides": 1,
@@ -6620,6 +6733,8 @@
       "cite": "2.89",
       "bound": {
         "shape": "Unitize",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 64,
         "adds": 31,
         "divides": 1,
@@ -6636,7 +6751,9 @@
       "reference": "",
       "cite": "2.73",
       "bound": {
-        "shape": "Attitude",
+        "shape": "ConstantProduct",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6654,6 +6771,8 @@
       "cite": "2.17",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6671,6 +6790,8 @@
       "cite": "2.29",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6697,6 +6818,8 @@
       "cite": "wiki:Flat_bulk",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6714,6 +6837,8 @@
       "cite": "wiki:Flat_weight",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6728,7 +6853,17 @@
       "expression": "(|■ m)",
       "library": "|■(Multivector)",
       "reference": "",
-      "cite": "wiki:Flat_bulk"
+      "cite": "wiki:Flat_bulk",
+      "bound": {
+        "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 32,
+        "adds": 31,
+        "divides": 0,
+        "roots": 1,
+        "bytes_moved": 264
+      }
     },
     "norm_weight_flat": {
       "symbol": "|□",
@@ -6737,7 +6872,17 @@
       "expression": "(|□ m)",
       "library": "|□(Multivector)",
       "reference": "",
-      "cite": "wiki:Flat_weight"
+      "cite": "wiki:Flat_weight",
+      "bound": {
+        "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 32,
+        "adds": 31,
+        "divides": 0,
+        "roots": 1,
+        "bytes_moved": 264
+      }
     },
     "carrier": {
       "symbol": "⊟",
@@ -6746,7 +6891,17 @@
       "expression": "(⊟ m)",
       "library": "⊟(Multivector)",
       "reference": "",
-      "cite": "wiki:Carrier"
+      "cite": "wiki:Carrier",
+      "bound": {
+        "shape": "ConstantProduct",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "carrier_co": {
       "symbol": "⊞",
@@ -6755,7 +6910,17 @@
       "expression": "(⊞ m)",
       "library": "⊞(Multivector)",
       "reference": "",
-      "cite": "wiki:Cocarrier"
+      "cite": "wiki:Cocarrier",
+      "bound": {
+        "shape": "ConstantProduct",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "center": {
       "symbol": "⊙",
@@ -6764,7 +6929,21 @@
       "expression": "(⊙ m)",
       "library": "⊙(Multivector)",
       "reference": "",
-      "cite": "wiki:Center"
+      "cite": "wiki:Center",
+      "bound": {
+        "shape": "Permutation + ConstantProduct + Wedge",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "ConstantProduct",
+          "Wedge"
+        ],
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "container": {
       "symbol": "⊡",
@@ -6773,7 +6952,21 @@
       "expression": "(⊡ m)",
       "library": "⊡(Multivector)",
       "reference": "",
-      "cite": "wiki:Container"
+      "cite": "wiki:Container",
+      "bound": {
+        "shape": "ConstantProduct + Permutation + Wedge",
+        "is_composed": true,
+        "steps": [
+          "ConstantProduct",
+          "Permutation",
+          "Wedge"
+        ],
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "partner": {
       "symbol": "⊛",
@@ -6782,7 +6975,25 @@
       "expression": "(⊛ m)",
       "library": "⊛(Multivector)",
       "reference": "",
-      "cite": "wiki:Partner"
+      "cite": "wiki:Partner",
+      "bound": {
+        "shape": "2 Permutation + 2 ConstantProduct + 2 Wedge + Scale",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "ConstantProduct",
+          "Permutation",
+          "Wedge",
+          "ConstantProduct",
+          "Wedge",
+          "Scale"
+        ],
+        "multiplies": 518,
+        "adds": 422,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "wedge_round_point_round_point": {
       "symbol": "∧",
@@ -6794,6 +7005,8 @@
       "cite": "2.17",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 243,
         "adds": 211,
         "divides": 0,
@@ -6811,6 +7024,8 @@
       "cite": "2.17",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 243,
         "adds": 211,
         "divides": 0,
@@ -6828,6 +7043,8 @@
       "cite": "2.18",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 243,
         "adds": 211,
         "divides": 0,
@@ -6845,6 +7062,8 @@
       "cite": "2.17",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 243,
         "adds": 211,
         "divides": 0,
@@ -6862,6 +7081,8 @@
       "cite": "2.18",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 243,
         "adds": 211,
         "divides": 0,
@@ -6879,6 +7100,8 @@
       "cite": "2.17",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 243,
         "adds": 211,
         "divides": 0,
@@ -6896,6 +7119,8 @@
       "cite": "2.29",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 243,
         "adds": 211,
         "divides": 0,
@@ -6913,6 +7138,8 @@
       "cite": "2.29",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 243,
         "adds": 211,
         "divides": 0,
@@ -6930,6 +7157,8 @@
       "cite": "2.32",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 243,
         "adds": 211,
         "divides": 0,
@@ -6947,6 +7176,8 @@
       "cite": "2.29",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 243,
         "adds": 211,
         "divides": 0,
@@ -6964,6 +7195,8 @@
       "cite": "2.29",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 243,
         "adds": 211,
         "divides": 0,
@@ -6981,6 +7214,8 @@
       "cite": "2.32",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 243,
         "adds": 211,
         "divides": 0,
@@ -6998,6 +7233,8 @@
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 32,
         "adds": 31,
         "divides": 0,
@@ -7015,6 +7252,8 @@
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 32,
         "adds": 31,
         "divides": 0,
@@ -7032,6 +7271,8 @@
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 32,
         "adds": 31,
         "divides": 0,
@@ -7049,6 +7290,8 @@
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 32,
         "adds": 31,
         "divides": 0,
@@ -7066,6 +7309,8 @@
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 32,
         "adds": 31,
         "divides": 0,
@@ -7083,6 +7328,8 @@
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 32,
         "adds": 31,
         "divides": 0,
@@ -7100,6 +7347,8 @@
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 32,
         "adds": 31,
         "divides": 0,
@@ -7117,6 +7366,8 @@
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 32,
         "adds": 31,
         "divides": 0,
@@ -7134,6 +7385,8 @@
       "cite": "2.19",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7151,6 +7404,8 @@
       "cite": "2.20",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7168,6 +7423,8 @@
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7185,6 +7442,8 @@
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7202,6 +7461,8 @@
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7219,6 +7480,8 @@
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7236,6 +7499,8 @@
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7253,6 +7518,8 @@
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7270,6 +7537,8 @@
       "cite": "wiki:Flat_bulk",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7287,6 +7556,8 @@
       "cite": "wiki:Flat_weight",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7303,7 +7574,9 @@
       "reference": "attitude(RoundPoint)",
       "cite": "2.73",
       "bound": {
-        "shape": "Attitude",
+        "shape": "ConstantProduct",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7318,7 +7591,17 @@
       "expression": "(⊟ m)",
       "library": "⊟(Multivector)",
       "reference": "carrier(RoundPoint)",
-      "cite": "wiki:Carrier"
+      "cite": "wiki:Carrier",
+      "bound": {
+        "shape": "ConstantProduct",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "carrier_co_round_point": {
       "symbol": "⊞",
@@ -7327,7 +7610,17 @@
       "expression": "(⊞ m)",
       "library": "⊞(Multivector)",
       "reference": "carrierCo(RoundPoint)",
-      "cite": "wiki:Cocarrier"
+      "cite": "wiki:Cocarrier",
+      "bound": {
+        "shape": "ConstantProduct",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "center_round_point": {
       "symbol": "⊙",
@@ -7336,7 +7629,21 @@
       "expression": "(⊙ m)",
       "library": "⊙(Multivector)",
       "reference": "center(RoundPoint)",
-      "cite": "wiki:Center"
+      "cite": "wiki:Center",
+      "bound": {
+        "shape": "Permutation + ConstantProduct + Wedge",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "ConstantProduct",
+          "Wedge"
+        ],
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "container_round_point": {
       "symbol": "⊡",
@@ -7345,7 +7652,21 @@
       "expression": "(⊡ m)",
       "library": "⊡(Multivector)",
       "reference": "container(RoundPoint)",
-      "cite": "wiki:Container"
+      "cite": "wiki:Container",
+      "bound": {
+        "shape": "ConstantProduct + Permutation + Wedge",
+        "is_composed": true,
+        "steps": [
+          "ConstantProduct",
+          "Permutation",
+          "Wedge"
+        ],
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "partner_round_point": {
       "symbol": "⊛",
@@ -7354,7 +7675,25 @@
       "expression": "(⊛ m)",
       "library": "⊛(Multivector)",
       "reference": "partner(RoundPoint)",
-      "cite": "wiki:Partner"
+      "cite": "wiki:Partner",
+      "bound": {
+        "shape": "2 Permutation + 2 ConstantProduct + 2 Wedge + Scale",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "ConstantProduct",
+          "Permutation",
+          "Wedge",
+          "ConstantProduct",
+          "Wedge",
+          "Scale"
+        ],
+        "multiplies": 518,
+        "adds": 422,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "complement_right_dipole": {
       "symbol": "/",
@@ -7366,6 +7705,8 @@
       "cite": "2.19",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7383,6 +7724,8 @@
       "cite": "2.20",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7400,6 +7743,8 @@
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7417,6 +7762,8 @@
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7434,6 +7781,8 @@
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7451,6 +7800,8 @@
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7468,6 +7819,8 @@
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7485,6 +7838,8 @@
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7502,6 +7857,8 @@
       "cite": "wiki:Flat_bulk",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7519,6 +7876,8 @@
       "cite": "wiki:Flat_weight",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7535,7 +7894,9 @@
       "reference": "attitude(Dipole)",
       "cite": "2.73",
       "bound": {
-        "shape": "Attitude",
+        "shape": "ConstantProduct",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7550,7 +7911,17 @@
       "expression": "(⊟ m)",
       "library": "⊟(Multivector)",
       "reference": "carrier(Dipole)",
-      "cite": "wiki:Carrier"
+      "cite": "wiki:Carrier",
+      "bound": {
+        "shape": "ConstantProduct",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "carrier_co_dipole": {
       "symbol": "⊞",
@@ -7559,7 +7930,17 @@
       "expression": "(⊞ m)",
       "library": "⊞(Multivector)",
       "reference": "carrierCo(Dipole)",
-      "cite": "wiki:Cocarrier"
+      "cite": "wiki:Cocarrier",
+      "bound": {
+        "shape": "ConstantProduct",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "center_dipole": {
       "symbol": "⊙",
@@ -7568,7 +7949,21 @@
       "expression": "(⊙ m)",
       "library": "⊙(Multivector)",
       "reference": "center(Dipole)",
-      "cite": "wiki:Center"
+      "cite": "wiki:Center",
+      "bound": {
+        "shape": "Permutation + ConstantProduct + Wedge",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "ConstantProduct",
+          "Wedge"
+        ],
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "container_dipole": {
       "symbol": "⊡",
@@ -7577,7 +7972,21 @@
       "expression": "(⊡ m)",
       "library": "⊡(Multivector)",
       "reference": "container(Dipole)",
-      "cite": "wiki:Container"
+      "cite": "wiki:Container",
+      "bound": {
+        "shape": "ConstantProduct + Permutation + Wedge",
+        "is_composed": true,
+        "steps": [
+          "ConstantProduct",
+          "Permutation",
+          "Wedge"
+        ],
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "partner_dipole": {
       "symbol": "⊛",
@@ -7586,7 +7995,25 @@
       "expression": "(⊛ m)",
       "library": "⊛(Multivector)",
       "reference": "partner(Dipole)",
-      "cite": "wiki:Partner"
+      "cite": "wiki:Partner",
+      "bound": {
+        "shape": "2 Permutation + 2 ConstantProduct + 2 Wedge + Scale",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "ConstantProduct",
+          "Permutation",
+          "Wedge",
+          "ConstantProduct",
+          "Wedge",
+          "Scale"
+        ],
+        "multiplies": 518,
+        "adds": 422,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "complement_right_circle": {
       "symbol": "/",
@@ -7598,6 +8025,8 @@
       "cite": "2.19",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7615,6 +8044,8 @@
       "cite": "2.20",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7632,6 +8063,8 @@
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7649,6 +8082,8 @@
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7666,6 +8101,8 @@
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7683,6 +8120,8 @@
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7700,6 +8139,8 @@
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7717,6 +8158,8 @@
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7734,6 +8177,8 @@
       "cite": "wiki:Flat_bulk",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7751,6 +8196,8 @@
       "cite": "wiki:Flat_weight",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7767,7 +8214,9 @@
       "reference": "attitude(Circle)",
       "cite": "2.73",
       "bound": {
-        "shape": "Attitude",
+        "shape": "ConstantProduct",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7782,7 +8231,17 @@
       "expression": "(⊟ m)",
       "library": "⊟(Multivector)",
       "reference": "carrier(Circle)",
-      "cite": "wiki:Carrier"
+      "cite": "wiki:Carrier",
+      "bound": {
+        "shape": "ConstantProduct",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "carrier_co_circle": {
       "symbol": "⊞",
@@ -7791,7 +8250,17 @@
       "expression": "(⊞ m)",
       "library": "⊞(Multivector)",
       "reference": "carrierCo(Circle)",
-      "cite": "wiki:Cocarrier"
+      "cite": "wiki:Cocarrier",
+      "bound": {
+        "shape": "ConstantProduct",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "center_circle": {
       "symbol": "⊙",
@@ -7800,7 +8269,21 @@
       "expression": "(⊙ m)",
       "library": "⊙(Multivector)",
       "reference": "center(Circle)",
-      "cite": "wiki:Center"
+      "cite": "wiki:Center",
+      "bound": {
+        "shape": "Permutation + ConstantProduct + Wedge",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "ConstantProduct",
+          "Wedge"
+        ],
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "container_circle": {
       "symbol": "⊡",
@@ -7809,7 +8292,21 @@
       "expression": "(⊡ m)",
       "library": "⊡(Multivector)",
       "reference": "container(Circle)",
-      "cite": "wiki:Container"
+      "cite": "wiki:Container",
+      "bound": {
+        "shape": "ConstantProduct + Permutation + Wedge",
+        "is_composed": true,
+        "steps": [
+          "ConstantProduct",
+          "Permutation",
+          "Wedge"
+        ],
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "partner_circle": {
       "symbol": "⊛",
@@ -7818,7 +8315,25 @@
       "expression": "(⊛ m)",
       "library": "⊛(Multivector)",
       "reference": "partner(Circle)",
-      "cite": "wiki:Partner"
+      "cite": "wiki:Partner",
+      "bound": {
+        "shape": "2 Permutation + 2 ConstantProduct + 2 Wedge + Scale",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "ConstantProduct",
+          "Permutation",
+          "Wedge",
+          "ConstantProduct",
+          "Wedge",
+          "Scale"
+        ],
+        "multiplies": 518,
+        "adds": 422,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "complement_right_sphere": {
       "symbol": "/",
@@ -7830,6 +8345,8 @@
       "cite": "2.19",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7847,6 +8364,8 @@
       "cite": "2.20",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7864,6 +8383,8 @@
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7881,6 +8402,8 @@
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7898,6 +8421,8 @@
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7915,6 +8440,8 @@
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7932,6 +8459,8 @@
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7949,6 +8478,8 @@
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7966,6 +8497,8 @@
       "cite": "wiki:Flat_bulk",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7983,6 +8516,8 @@
       "cite": "wiki:Flat_weight",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7999,7 +8534,9 @@
       "reference": "attitude(Sphere)",
       "cite": "2.73",
       "bound": {
-        "shape": "Attitude",
+        "shape": "ConstantProduct",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -8014,7 +8551,17 @@
       "expression": "(⊟ m)",
       "library": "⊟(Multivector)",
       "reference": "carrier(Sphere)",
-      "cite": "wiki:Carrier"
+      "cite": "wiki:Carrier",
+      "bound": {
+        "shape": "ConstantProduct",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "carrier_co_sphere": {
       "symbol": "⊞",
@@ -8023,7 +8570,17 @@
       "expression": "(⊞ m)",
       "library": "⊞(Multivector)",
       "reference": "carrierCo(Sphere)",
-      "cite": "wiki:Cocarrier"
+      "cite": "wiki:Cocarrier",
+      "bound": {
+        "shape": "ConstantProduct",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "center_sphere": {
       "symbol": "⊙",
@@ -8032,7 +8589,21 @@
       "expression": "(⊙ m)",
       "library": "⊙(Multivector)",
       "reference": "center(Sphere)",
-      "cite": "wiki:Center"
+      "cite": "wiki:Center",
+      "bound": {
+        "shape": "Permutation + ConstantProduct + Wedge",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "ConstantProduct",
+          "Wedge"
+        ],
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "container_sphere": {
       "symbol": "⊡",
@@ -8041,7 +8612,21 @@
       "expression": "(⊡ m)",
       "library": "⊡(Multivector)",
       "reference": "container(Sphere)",
-      "cite": "wiki:Container"
+      "cite": "wiki:Container",
+      "bound": {
+        "shape": "ConstantProduct + Permutation + Wedge",
+        "is_composed": true,
+        "steps": [
+          "ConstantProduct",
+          "Permutation",
+          "Wedge"
+        ],
+        "multiplies": 243,
+        "adds": 211,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     },
     "partner_sphere": {
       "symbol": "⊛",
@@ -8050,7 +8635,25 @@
       "expression": "(⊛ m)",
       "library": "⊛(Multivector)",
       "reference": "partner(Sphere)",
-      "cite": "wiki:Partner"
+      "cite": "wiki:Partner",
+      "bound": {
+        "shape": "2 Permutation + 2 ConstantProduct + 2 Wedge + Scale",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "ConstantProduct",
+          "Permutation",
+          "Wedge",
+          "ConstantProduct",
+          "Wedge",
+          "Scale"
+        ],
+        "multiplies": 518,
+        "adds": 422,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 512
+      }
     }
   },
   "missing": {

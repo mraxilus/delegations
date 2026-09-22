@@ -24,6 +24,11 @@ written once. It rests on the operation alone, so one row serves every measurand
 operation. The last column is what the library spends there, as multiplies over bytes moved. An
 operation whose shape carries no rule is absent, rather than present without ground.
 
+A shape of several steps names a chain, which the library composes from several operators. The bound
+of a chain sums what each step demands, and a step that carries no rule adds nothing. Such a bound
+is an estimate of that chain, and never a proved minimum, because a special routine can share work
+between steps. Every other bound in these tables is derived from the axioms alone.
+
 ## Causes
 
 - **D01, over.** Dense products spend every Cayley-table term where typed forms spend few. Evidence:
@@ -196,6 +201,10 @@ Gaps: 111. Over 110, met 1, unmeasured 0.
 | `∧☆` | ExpandWeight | 54 | 0 | 0 | 384 | 54/512 |
 | `+` | Componentwise | 0 | 0 | 0 | 384 | 0/512 |
 | `-` | Componentwise | 0 | 0 | 0 | 384 | 0/512 |
+| `projectCentral` | ExpandBulk + Wedge | 108 | 0 | 0 | 384 | 108/1408 |
+| `projectCentralAnti` | ContractBulk + Wedge | 135 | 0 | 0 | 384 | 135/1408 |
+| `projectOrthogonal` | ExpandWeight + Wedge | 135 | 0 | 0 | 384 | 135/1408 |
+| `projectOrthogonalAnti` | ContractWeight + Wedge | 108 | 0 | 0 | 384 | 108/1408 |
 | `∧` | Scale | 16 | 0 | 0 | 264 | 16/392 |
 | `∙` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
 | `∘` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
@@ -210,11 +219,16 @@ Gaps: 111. Over 110, met 1, unmeasured 0.
 | `|∘` | Norm | 8 | 0 | 1 | 136 | 8/768 |
 | `|∙²` | SquaredNorm | 8 | 0 | 0 | 136 | 8/384 |
 | `|∘²` | SquaredNorm | 8 | 0 | 0 | 136 | 8/384 |
+| `|` | 2 Norm | 16 | 0 | 2 | 136 | 16/1920 |
 | `^∙` | Unitize | 24 | 1 | 1 | 256 | 24/1152 |
 | `^∘` | Unitize | 24 | 1 | 1 | 256 | 24/1152 |
 | `^` | Unitize | 24 | 1 | 1 | 256 | 24/1152 |
-| `⊖` | Attitude | 0 | 0 | 0 | 256 | 81/896 |
+| `⊖` | ConstantProduct | 0 | 0 | 0 | 256 | 81/896 |
 | `{}` | Permutation | 0 | 0 | 0 | 256 | 0/392 |
+| `{}` | Permutation | 0 | 0 | 0 | 256 | 0/392 |
+| `∩` | Permutation + ConstantProduct + Wedge | 81 | 0 | 0 | 256 | 162/1664 |
+| `∪` | Permutation + ConstantProduct + Wedge | 81 | 0 | 0 | 256 | 162/1664 |
+| `((n ⟇ m) ⟇ (~∘ n))` | Permutation + 2 Geometric | 384 | 0 | 0 | 384 | – |
 
 ## cga5d
 
@@ -370,6 +384,10 @@ Gaps: 131. Over 130, met 1, unmeasured 0.
 | `∘` | ScalarForm | 32 | 0 | 0 | 520 | 32/1024 |
 | `+` | Componentwise | 0 | 0 | 0 | 768 | 0/1024 |
 | `-` | Componentwise | 0 | 0 | 0 | 768 | 0/1024 |
+| `projectCentral` | ExpandBulk + Wedge | 243 | 0 | 0 | 768 | 486/2816 |
+| `projectCentralAnti` | ContractBulk + Wedge | 243 | 0 | 0 | 768 | 486/2816 |
+| `projectOrthogonal` | ExpandWeight + Wedge | 243 | 0 | 0 | 768 | 486/2816 |
+| `projectOrthogonalAnti` | ContractWeight + Wedge | 243 | 0 | 0 | 768 | 486/2816 |
 | `∧` | Scale | 32 | 0 | 0 | 520 | 32/776 |
 | `∙` | Permutation | 0 | 0 | 0 | 512 | 0/768 |
 | `∘` | Permutation | 0 | 0 | 0 | 512 | 0/768 |
@@ -384,13 +402,22 @@ Gaps: 131. Over 130, met 1, unmeasured 0.
 | `|∘` | Norm | 32 | 0 | 1 | 264 | 32/1536 |
 | `|∙²` | SquaredNorm | 32 | 0 | 0 | 264 | 32/768 |
 | `|∘²` | SquaredNorm | 32 | 0 | 0 | 264 | 32/768 |
+| `|` | 2 Norm | 64 | 0 | 2 | 264 | 64/3840 |
 | `^∙` | Unitize | 64 | 1 | 1 | 512 | 64/2304 |
 | `^∘` | Unitize | 64 | 1 | 1 | 512 | 64/2304 |
 | `^` | Unitize | 64 | 1 | 1 | 512 | 64/2304 |
-| `⊖` | Attitude | 0 | 0 | 0 | 512 | 243/1792 |
+| `⊖` | ConstantProduct | 0 | 0 | 0 | 512 | 243/1792 |
+| `{}` | Permutation | 0 | 0 | 0 | 512 | 0/776 |
 | `{}` | Permutation | 0 | 0 | 0 | 512 | 0/776 |
 | `■` | Permutation | 0 | 0 | 0 | 512 | 0/768 |
 | `□` | Permutation | 0 | 0 | 0 | 512 | 0/768 |
+| `|■` | Norm | 32 | 0 | 1 | 264 | 32/1536 |
+| `|□` | Norm | 32 | 0 | 1 | 264 | 32/1536 |
+| `⊟` | ConstantProduct | 0 | 0 | 0 | 512 | 243/1792 |
+| `⊞` | ConstantProduct | 0 | 0 | 0 | 512 | 243/2560 |
+| `⊙` | Permutation + ConstantProduct + Wedge | 243 | 0 | 0 | 512 | 486/4352 |
+| `⊡` | ConstantProduct + Permutation + Wedge | 243 | 0 | 0 | 512 | 486/4352 |
+| `⊛` | 2 Permutation + 2 ConstantProduct + 2 Wedge + Scale | 518 | 0 | 0 | 512 | 1004/34560 |
 
 ## rga3d
 
@@ -459,6 +486,10 @@ Gaps: 40. Over 39, met 1, unmeasured 0.
 | `∧☆` | ExpandWeight | 18 | 0 | 0 | 192 | 18/256 |
 | `+` | Componentwise | 0 | 0 | 0 | 192 | 0/256 |
 | `-` | Componentwise | 0 | 0 | 0 | 192 | 0/256 |
+| `projectCentral` | ExpandBulk + Wedge | 36 | 0 | 0 | 192 | 36/704 |
+| `projectCentralAnti` | ContractBulk + Wedge | 45 | 0 | 0 | 192 | 45/704 |
+| `projectOrthogonal` | ExpandWeight + Wedge | 45 | 0 | 0 | 192 | 45/704 |
+| `projectOrthogonalAnti` | ContractWeight + Wedge | 36 | 0 | 0 | 192 | 36/704 |
 | `∧` | Scale | 8 | 0 | 0 | 136 | 8/200 |
 | `∙` | Permutation | 0 | 0 | 0 | 128 | 0/192 |
 | `∘` | Permutation | 0 | 0 | 0 | 128 | 0/192 |
@@ -473,11 +504,15 @@ Gaps: 40. Over 39, met 1, unmeasured 0.
 | `|∘` | Norm | 4 | 0 | 1 | 72 | 4/384 |
 | `|∙²` | SquaredNorm | 4 | 0 | 0 | 72 | 4/192 |
 | `|∘²` | SquaredNorm | 4 | 0 | 0 | 72 | 4/192 |
+| `|` | 2 Norm | 8 | 0 | 2 | 72 | 8/960 |
 | `^∙` | Unitize | 12 | 1 | 1 | 128 | 12/576 |
 | `^∘` | Unitize | 12 | 1 | 1 | 128 | 12/576 |
 | `^` | Unitize | 12 | 1 | 1 | 128 | 12/576 |
-| `⊖` | Attitude | 0 | 0 | 0 | 128 | 27/448 |
+| `⊖` | ConstantProduct | 0 | 0 | 0 | 128 | 27/448 |
 | `{}` | Permutation | 0 | 0 | 0 | 128 | 0/200 |
+| `{}` | Permutation | 0 | 0 | 0 | 128 | 0/200 |
+| `∩` | Permutation + ConstantProduct + Wedge | 27 | 0 | 0 | 128 | 54/832 |
+| `∪` | Permutation + ConstantProduct + Wedge | 27 | 0 | 0 | 128 | 54/832 |
 
 ## cga4d
 
@@ -549,6 +584,10 @@ Gaps: 47. Over 46, met 1, unmeasured 0.
 | `∘` | ScalarForm | 16 | 0 | 0 | 264 | 16/512 |
 | `+` | Componentwise | 0 | 0 | 0 | 384 | 0/512 |
 | `-` | Componentwise | 0 | 0 | 0 | 384 | 0/512 |
+| `projectCentral` | ExpandBulk + Wedge | 81 | 0 | 0 | 384 | 162/1408 |
+| `projectCentralAnti` | ContractBulk + Wedge | 81 | 0 | 0 | 384 | 162/1408 |
+| `projectOrthogonal` | ExpandWeight + Wedge | 81 | 0 | 0 | 384 | 162/1408 |
+| `projectOrthogonalAnti` | ContractWeight + Wedge | 81 | 0 | 0 | 384 | 162/1408 |
 | `∧` | Scale | 16 | 0 | 0 | 264 | 16/392 |
 | `∙` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
 | `∘` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
@@ -563,10 +602,19 @@ Gaps: 47. Over 46, met 1, unmeasured 0.
 | `|∘` | Norm | 16 | 0 | 1 | 136 | 16/768 |
 | `|∙²` | SquaredNorm | 16 | 0 | 0 | 136 | 16/384 |
 | `|∘²` | SquaredNorm | 16 | 0 | 0 | 136 | 16/384 |
+| `|` | 2 Norm | 32 | 0 | 2 | 136 | 32/1920 |
 | `^∙` | Unitize | 32 | 1 | 1 | 256 | 32/1152 |
 | `^∘` | Unitize | 32 | 1 | 1 | 256 | 32/1152 |
 | `^` | Unitize | 32 | 1 | 1 | 256 | 32/1152 |
-| `⊖` | Attitude | 0 | 0 | 0 | 256 | 81/896 |
+| `⊖` | ConstantProduct | 0 | 0 | 0 | 256 | 81/896 |
+| `{}` | Permutation | 0 | 0 | 0 | 256 | 0/392 |
 | `{}` | Permutation | 0 | 0 | 0 | 256 | 0/392 |
 | `■` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
 | `□` | Permutation | 0 | 0 | 0 | 256 | 0/384 |
+| `|■` | Norm | 16 | 0 | 1 | 136 | 16/768 |
+| `|□` | Norm | 16 | 0 | 1 | 136 | 16/768 |
+| `⊟` | ConstantProduct | 0 | 0 | 0 | 256 | 81/896 |
+| `⊞` | ConstantProduct | 0 | 0 | 0 | 256 | 81/1280 |
+| `⊙` | Permutation + ConstantProduct + Wedge | 81 | 0 | 0 | 256 | 162/2176 |
+| `⊡` | ConstantProduct + Permutation + Wedge | 81 | 0 | 0 | 256 | 162/2176 |
+| `⊛` | 2 Permutation + 2 ConstantProduct + 2 Wedge + Scale | 178 | 0 | 0 | 256 | 340/11136 |

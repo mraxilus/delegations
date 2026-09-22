@@ -5364,6 +5364,8 @@
       "cite": "2.17",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 81,
         "adds": 65,
         "divides": 0,
@@ -5381,6 +5383,8 @@
       "cite": "2.29",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 81,
         "adds": 65,
         "divides": 0,
@@ -5398,6 +5402,8 @@
       "cite": "wiki:Geometric_product",
       "bound": {
         "shape": "Geometric",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 192,
         "adds": 176,
         "divides": 0,
@@ -5415,6 +5421,8 @@
       "cite": "wiki:Geometric_product",
       "bound": {
         "shape": "Geometric",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 192,
         "adds": 176,
         "divides": 0,
@@ -5432,6 +5440,8 @@
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -5449,6 +5459,8 @@
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -5466,6 +5478,8 @@
       "cite": "2.119",
       "bound": {
         "shape": "ContractBulk",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 54,
         "adds": 38,
         "divides": 0,
@@ -5483,6 +5497,8 @@
       "cite": "2.120",
       "bound": {
         "shape": "ContractWeight",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 27,
         "adds": 11,
         "divides": 0,
@@ -5500,6 +5516,8 @@
       "cite": "wiki:Expansions",
       "bound": {
         "shape": "ExpandBulk",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 27,
         "adds": 11,
         "divides": 0,
@@ -5517,6 +5535,8 @@
       "cite": "wiki:Expansions",
       "bound": {
         "shape": "ExpandWeight",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 54,
         "adds": 38,
         "divides": 0,
@@ -5534,6 +5554,8 @@
       "cite": "2.24",
       "bound": {
         "shape": "Componentwise",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 16,
         "divides": 0,
@@ -5551,6 +5573,8 @@
       "cite": "2.24",
       "bound": {
         "shape": "Componentwise",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 16,
         "divides": 0,
@@ -5565,7 +5589,20 @@
       "expression": "projectCentral(m, n)",
       "library": "projectCentral(Multivector,Multivector)",
       "reference": "",
-      "cite": "wiki:Projections"
+      "cite": "wiki:Projections",
+      "bound": {
+        "shape": "ExpandBulk + Wedge",
+        "is_composed": true,
+        "steps": [
+          "ExpandBulk",
+          "Wedge"
+        ],
+        "multiplies": 108,
+        "adds": 76,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "project_central_anti": {
       "symbol": "",
@@ -5574,7 +5611,20 @@
       "expression": "projectCentralAnti(m, n)",
       "library": "projectCentralAnti(Multivector,Multivector)",
       "reference": "",
-      "cite": "wiki:Projections"
+      "cite": "wiki:Projections",
+      "bound": {
+        "shape": "ContractBulk + Wedge",
+        "is_composed": true,
+        "steps": [
+          "ContractBulk",
+          "Wedge"
+        ],
+        "multiplies": 135,
+        "adds": 103,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "project_orthogonal": {
       "symbol": "",
@@ -5583,7 +5633,20 @@
       "expression": "projectOrthogonal(m, n)",
       "library": "projectOrthogonal(Multivector,Multivector)",
       "reference": "",
-      "cite": "wiki:Projections"
+      "cite": "wiki:Projections",
+      "bound": {
+        "shape": "ExpandWeight + Wedge",
+        "is_composed": true,
+        "steps": [
+          "ExpandWeight",
+          "Wedge"
+        ],
+        "multiplies": 135,
+        "adds": 103,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "project_orthogonal_anti": {
       "symbol": "",
@@ -5592,7 +5655,20 @@
       "expression": "projectOrthogonalAnti(m, n)",
       "library": "projectOrthogonalAnti(Multivector,Multivector)",
       "reference": "",
-      "cite": "wiki:Projections"
+      "cite": "wiki:Projections",
+      "bound": {
+        "shape": "ContractWeight + Wedge",
+        "is_composed": true,
+        "steps": [
+          "ContractWeight",
+          "Wedge"
+        ],
+        "multiplies": 108,
+        "adds": 76,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "scale": {
       "symbol": "∧",
@@ -5604,6 +5680,8 @@
       "cite": "2.24",
       "bound": {
         "shape": "Scale",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 16,
         "adds": 0,
         "divides": 0,
@@ -5621,6 +5699,8 @@
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -5638,6 +5718,8 @@
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -5655,6 +5737,8 @@
       "cite": "2.19",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -5672,6 +5756,8 @@
       "cite": "2.20",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -5689,6 +5775,8 @@
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -5706,6 +5794,8 @@
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -5723,6 +5813,8 @@
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -5740,6 +5832,8 @@
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -5757,6 +5851,8 @@
       "cite": "2.24",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -5774,6 +5870,8 @@
       "cite": "2.87",
       "bound": {
         "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -5791,6 +5889,8 @@
       "cite": "2.88",
       "bound": {
         "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -5808,6 +5908,8 @@
       "cite": "2.87",
       "bound": {
         "shape": "SquaredNorm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -5825,6 +5927,8 @@
       "cite": "2.88",
       "bound": {
         "shape": "SquaredNorm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -5839,7 +5943,20 @@
       "expression": "(| m)",
       "library": "|(Multivector)",
       "reference": "",
-      "cite": "2.90"
+      "cite": "2.90",
+      "bound": {
+        "shape": "2 Norm",
+        "is_composed": true,
+        "steps": [
+          "Norm",
+          "Norm"
+        ],
+        "multiplies": 16,
+        "adds": 14,
+        "divides": 0,
+        "roots": 2,
+        "bytes_moved": 136
+      }
     },
     "normalize_bulk": {
       "symbol": "^∙",
@@ -5851,6 +5968,8 @@
       "cite": "2.89",
       "bound": {
         "shape": "Unitize",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 24,
         "adds": 7,
         "divides": 1,
@@ -5868,6 +5987,8 @@
       "cite": "2.89",
       "bound": {
         "shape": "Unitize",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 24,
         "adds": 7,
         "divides": 1,
@@ -5885,6 +6006,8 @@
       "cite": "2.89",
       "bound": {
         "shape": "Unitize",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 24,
         "adds": 7,
         "divides": 1,
@@ -5901,7 +6024,9 @@
       "reference": "",
       "cite": "2.73",
       "bound": {
-        "shape": "Attitude",
+        "shape": "ConstantProduct",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -5919,6 +6044,8 @@
       "cite": "2.17",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -5936,6 +6063,8 @@
       "cite": "2.29",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -5959,7 +6088,21 @@
       "expression": "(∩ m)",
       "library": "∩(Multivector)",
       "reference": "",
-      "cite": "wiki:Support"
+      "cite": "wiki:Support",
+      "bound": {
+        "shape": "Permutation + ConstantProduct + Wedge",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "ConstantProduct",
+          "Wedge"
+        ],
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "support_anti": {
       "symbol": "∪",
@@ -5968,7 +6111,21 @@
       "expression": "(∪ m)",
       "library": "∪(Multivector)",
       "reference": "",
-      "cite": "wiki:Support"
+      "cite": "wiki:Support",
+      "bound": {
+        "shape": "Permutation + ConstantProduct + Wedge",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "ConstantProduct",
+          "Wedge"
+        ],
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "wedge_point_point": {
       "symbol": "∧",
@@ -5980,6 +6137,8 @@
       "cite": "2.17",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 81,
         "adds": 65,
         "divides": 0,
@@ -5997,6 +6156,8 @@
       "cite": "2.17",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 81,
         "adds": 65,
         "divides": 0,
@@ -6014,6 +6175,8 @@
       "cite": "2.18",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 81,
         "adds": 65,
         "divides": 0,
@@ -6031,6 +6194,8 @@
       "cite": "2.29",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 81,
         "adds": 65,
         "divides": 0,
@@ -6048,6 +6213,8 @@
       "cite": "2.29",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 81,
         "adds": 65,
         "divides": 0,
@@ -6065,6 +6232,8 @@
       "cite": "2.32",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 81,
         "adds": 65,
         "divides": 0,
@@ -6082,6 +6251,8 @@
       "cite": "2.29",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 81,
         "adds": 65,
         "divides": 0,
@@ -6099,6 +6270,8 @@
       "cite": "2.29",
       "bound": {
         "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 81,
         "adds": 65,
         "divides": 0,
@@ -6116,6 +6289,8 @@
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -6133,6 +6308,8 @@
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -6150,6 +6327,8 @@
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -6167,6 +6346,8 @@
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -6184,6 +6365,8 @@
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -6201,6 +6384,8 @@
       "cite": "2.76",
       "bound": {
         "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -6218,6 +6403,8 @@
       "cite": "wiki:Motor",
       "bound": {
         "shape": "Geometric",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 192,
         "adds": 176,
         "divides": 0,
@@ -6232,7 +6419,21 @@
       "expression": "((n ⟇ m) ⟇ (~∘ n))",
       "library": "",
       "reference": "transform(Point,Motor)",
-      "cite": "wiki:Motor"
+      "cite": "wiki:Motor",
+      "bound": {
+        "shape": "Permutation + 2 Geometric",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "Geometric",
+          "Geometric"
+        ],
+        "multiplies": 384,
+        "adds": 352,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "transform_line_motor": {
       "symbol": "",
@@ -6241,7 +6442,21 @@
       "expression": "((n ⟇ m) ⟇ (~∘ n))",
       "library": "",
       "reference": "transform(Line,Motor)",
-      "cite": "wiki:Motor"
+      "cite": "wiki:Motor",
+      "bound": {
+        "shape": "Permutation + 2 Geometric",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "Geometric",
+          "Geometric"
+        ],
+        "multiplies": 384,
+        "adds": 352,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "transform_plane_motor": {
       "symbol": "",
@@ -6250,7 +6465,21 @@
       "expression": "((n ⟇ m) ⟇ (~∘ n))",
       "library": "",
       "reference": "transform(Plane,Motor)",
-      "cite": "wiki:Motor"
+      "cite": "wiki:Motor",
+      "bound": {
+        "shape": "Permutation + 2 Geometric",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "Geometric",
+          "Geometric"
+        ],
+        "multiplies": 384,
+        "adds": 352,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "project_orthogonal_point_plane": {
       "symbol": "",
@@ -6259,7 +6488,20 @@
       "expression": "projectOrthogonal(m, n)",
       "library": "projectOrthogonal(Multivector,Multivector)",
       "reference": "projectOrthogonal(Point,Plane)",
-      "cite": "wiki:Projections"
+      "cite": "wiki:Projections",
+      "bound": {
+        "shape": "ExpandWeight + Wedge",
+        "is_composed": true,
+        "steps": [
+          "ExpandWeight",
+          "Wedge"
+        ],
+        "multiplies": 135,
+        "adds": 103,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "project_orthogonal_point_line": {
       "symbol": "",
@@ -6268,7 +6510,20 @@
       "expression": "projectOrthogonal(m, n)",
       "library": "projectOrthogonal(Multivector,Multivector)",
       "reference": "projectOrthogonal(Point,Line)",
-      "cite": "wiki:Projections"
+      "cite": "wiki:Projections",
+      "bound": {
+        "shape": "ExpandWeight + Wedge",
+        "is_composed": true,
+        "steps": [
+          "ExpandWeight",
+          "Wedge"
+        ],
+        "multiplies": 135,
+        "adds": 103,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "project_orthogonal_line_plane": {
       "symbol": "",
@@ -6277,7 +6532,20 @@
       "expression": "projectOrthogonal(m, n)",
       "library": "projectOrthogonal(Multivector,Multivector)",
       "reference": "projectOrthogonal(Line,Plane)",
-      "cite": "wiki:Projections"
+      "cite": "wiki:Projections",
+      "bound": {
+        "shape": "ExpandWeight + Wedge",
+        "is_composed": true,
+        "steps": [
+          "ExpandWeight",
+          "Wedge"
+        ],
+        "multiplies": 135,
+        "adds": 103,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "support_line": {
       "symbol": "∩",
@@ -6286,7 +6554,21 @@
       "expression": "(∩ m)",
       "library": "∩(Multivector)",
       "reference": "support(Line)",
-      "cite": "wiki:Support"
+      "cite": "wiki:Support",
+      "bound": {
+        "shape": "Permutation + ConstantProduct + Wedge",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "ConstantProduct",
+          "Wedge"
+        ],
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "support_plane": {
       "symbol": "∩",
@@ -6295,7 +6577,21 @@
       "expression": "(∩ m)",
       "library": "∩(Multivector)",
       "reference": "support(Plane)",
-      "cite": "wiki:Support"
+      "cite": "wiki:Support",
+      "bound": {
+        "shape": "Permutation + ConstantProduct + Wedge",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "ConstantProduct",
+          "Wedge"
+        ],
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "support_anti_point": {
       "symbol": "∪",
@@ -6304,7 +6600,21 @@
       "expression": "(∪ m)",
       "library": "∪(Multivector)",
       "reference": "supportAnti(Point)",
-      "cite": "wiki:Support"
+      "cite": "wiki:Support",
+      "bound": {
+        "shape": "Permutation + ConstantProduct + Wedge",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "ConstantProduct",
+          "Wedge"
+        ],
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "support_anti_line": {
       "symbol": "∪",
@@ -6313,7 +6623,21 @@
       "expression": "(∪ m)",
       "library": "∪(Multivector)",
       "reference": "supportAnti(Line)",
-      "cite": "wiki:Support"
+      "cite": "wiki:Support",
+      "bound": {
+        "shape": "Permutation + ConstantProduct + Wedge",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "ConstantProduct",
+          "Wedge"
+        ],
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "reverse_anti_motor": {
       "symbol": "~∘",
@@ -6325,6 +6649,8 @@
       "cite": "wiki:Motor",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6342,6 +6668,8 @@
       "cite": "wiki:Motor",
       "bound": {
         "shape": "Unitize",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 24,
         "adds": 7,
         "divides": 1,
@@ -6359,6 +6687,8 @@
       "cite": "wiki:Motor",
       "bound": {
         "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -6376,6 +6706,8 @@
       "cite": "wiki:Motor",
       "bound": {
         "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -6393,6 +6725,8 @@
       "cite": "2.19",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6410,6 +6744,8 @@
       "cite": "2.20",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6427,6 +6763,8 @@
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6444,6 +6782,8 @@
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6461,6 +6801,8 @@
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6478,6 +6820,8 @@
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6495,6 +6839,8 @@
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6512,6 +6858,8 @@
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6529,6 +6877,8 @@
       "cite": "2.87",
       "bound": {
         "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -6546,6 +6896,8 @@
       "cite": "2.88",
       "bound": {
         "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -6563,6 +6915,8 @@
       "cite": "2.87",
       "bound": {
         "shape": "SquaredNorm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -6580,6 +6934,8 @@
       "cite": "2.88",
       "bound": {
         "shape": "SquaredNorm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -6597,6 +6953,8 @@
       "cite": "2.89",
       "bound": {
         "shape": "Unitize",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 24,
         "adds": 7,
         "divides": 1,
@@ -6613,7 +6971,9 @@
       "reference": "attitude(Point)",
       "cite": "2.73",
       "bound": {
-        "shape": "Attitude",
+        "shape": "ConstantProduct",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6631,6 +6991,8 @@
       "cite": "2.19",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6648,6 +7010,8 @@
       "cite": "2.20",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6665,6 +7029,8 @@
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6682,6 +7048,8 @@
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6699,6 +7067,8 @@
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6716,6 +7086,8 @@
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6733,6 +7105,8 @@
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6750,6 +7124,8 @@
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6767,6 +7143,8 @@
       "cite": "2.87",
       "bound": {
         "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -6784,6 +7162,8 @@
       "cite": "2.88",
       "bound": {
         "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -6801,6 +7181,8 @@
       "cite": "2.87",
       "bound": {
         "shape": "SquaredNorm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -6818,6 +7200,8 @@
       "cite": "2.88",
       "bound": {
         "shape": "SquaredNorm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -6835,6 +7219,8 @@
       "cite": "2.89",
       "bound": {
         "shape": "Unitize",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 24,
         "adds": 7,
         "divides": 1,
@@ -6851,7 +7237,9 @@
       "reference": "attitude(Line)",
       "cite": "2.73",
       "bound": {
-        "shape": "Attitude",
+        "shape": "ConstantProduct",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6869,6 +7257,8 @@
       "cite": "2.19",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6886,6 +7276,8 @@
       "cite": "2.20",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6903,6 +7295,8 @@
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6920,6 +7314,8 @@
       "cite": "wiki:Reverses",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6937,6 +7333,8 @@
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6954,6 +7352,8 @@
       "cite": "2.103",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6971,6 +7371,8 @@
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -6988,6 +7390,8 @@
       "cite": "2.68",
       "bound": {
         "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
@@ -7005,6 +7409,8 @@
       "cite": "2.87",
       "bound": {
         "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -7022,6 +7428,8 @@
       "cite": "2.88",
       "bound": {
         "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -7039,6 +7447,8 @@
       "cite": "2.87",
       "bound": {
         "shape": "SquaredNorm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -7056,6 +7466,8 @@
       "cite": "2.88",
       "bound": {
         "shape": "SquaredNorm",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 8,
         "adds": 7,
         "divides": 0,
@@ -7073,6 +7485,8 @@
       "cite": "2.89",
       "bound": {
         "shape": "Unitize",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 24,
         "adds": 7,
         "divides": 1,
@@ -7089,7 +7503,9 @@
       "reference": "attitude(Plane)",
       "cite": "2.73",
       "bound": {
-        "shape": "Attitude",
+        "shape": "ConstantProduct",
+        "is_composed": false,
+        "steps": [],
         "multiplies": 0,
         "adds": 0,
         "divides": 0,
