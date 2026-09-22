@@ -153,21 +153,21 @@ const
   CHEVRON: array[3, Vec2] = [[-5.0, -4.0], [0.0, 4.0], [5.0, -4.0]]
     ## Chevron's three points about body centre, before turning to facing.
   HOLDS: array[Hold, HoldSpec] = [
-    Hold.LtoL: holdSpec("L-l", "Left to left", "face-to-face", [(Arm.Left, Arm.Left)], -0.5),
-    Hold.RtoR: holdSpec("R-r", "Right to right", "face-to-face", [(Arm.Right, Arm.Right)], -0.5),
-    Hold.LtoR: holdSpec("L-r", "Left to right", "face-to-face", [(Arm.Left, Arm.Right)], 0.0),
-    Hold.RtoL: holdSpec("R-l", "Right to left", "face-to-face", [(Arm.Right, Arm.Left)], 0.0),
+    Hold.LtoL: holdSpec("L-l", "Left to left", "Face-to-face", [(Arm.Left, Arm.Left)], -0.5),
+    Hold.RtoR: holdSpec("R-r", "Right to right", "Face-to-face", [(Arm.Right, Arm.Right)], -0.5),
+    Hold.LtoR: holdSpec("L-r", "Left to right", "Face-to-face", [(Arm.Left, Arm.Right)], 0.0),
+    Hold.RtoL: holdSpec("R-l", "Right to left", "Face-to-face", [(Arm.Right, Arm.Left)], 0.0),
     Hold.LlRr: holdSpec(
       "L-l.R-r",
       "Left to left · Right to right",
-      "pillion lead",
+      "Pillion",
       [(Arm.Left, Arm.Left), (Arm.Right, Arm.Right)],
       0.0,
     ),
     Hold.LrRl: holdSpec(
       "L-r.R-l",
       "Left to right · Right to left",
-      "face-to-face",
+      "Face-to-face",
       [(Arm.Left, Arm.Right), (Arm.Right, Arm.Left)],
       0.0,
     ),

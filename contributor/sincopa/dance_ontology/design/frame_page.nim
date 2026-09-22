@@ -117,12 +117,12 @@ const BODY = """
   <div class="plate">
     <h3>At rest, no ring</h3>
     <p>The facing of a dancer decides which column their hand sits in. So a row read across holds
-    one orientation, and the four facings stay distinct with no new mark.</p>
+    one facing, and the four this page draws stay distinct with no new mark.</p>
     <div class="row">
-      <figure>{or_free_0}<figcaption>face-to-face</figcaption></figure>
-      <figure>{or_free_1}<figcaption>pillion<br>lead</figcaption></figure>
-      <figure>{or_free_2}<figcaption>pillion<br>follow</figcaption></figure>
-      <figure>{or_free_3}<figcaption>back-to-back</figcaption></figure>
+      <figure>{or_free_0}<figcaption>Face-to-face</figcaption></figure>
+      <figure>{or_free_1}<figcaption>Pillion</figcaption></figure>
+      <figure>{or_free_2}<figcaption>pillion</figcaption></figure>
+      <figure>{or_free_3}<figcaption>Back-to-back</figcaption></figure>
     </div>
     <div class="row">
       <figure>{or_held_0}<figcaption>holding <em>Left to left</em></figcaption></figure>
@@ -347,10 +347,10 @@ const BODY = """
     correct.</b> The
     model stores no twist for a rotation of the whole couple. It is still a real thing on the
     floor, and the picture draws the couple rather than the room.</p>
-    <p><b>Two dancers who each turn half a turn still collide.</b> The four orientations take two
-    bits, and <code>twist</code> carries one of them, its parity. So the twist cannot tell
-    face-to-face from back-to-back. So this picture stands on the two relative facings, which is
-    what <code>rotation.nim</code> needs.</p>
+    <p><b>Two dancers who each turn half a turn still collide.</b> The four facings this page
+      draws take two bits, and <code>twist</code> carries one of them, its parity. So the twist
+      cannot tell Face-to-face from Back-to-back. So this picture stands on the two relative
+      facings, which is what <code>rotation.nim</code> needs.</p>
     <p><b>Known and not mended.</b> A static frame keeps a square box of 120 by 120. A moving
     frame takes a box fitted to everything it touches, so the moving frames differ in size and
     stand at one scale instead. <code>frameHeight</code>, the cells of the matrix and the nodes of
@@ -364,6 +364,8 @@ const BODY = """
   the hand-to-hand half leaves its levels unsaid.</p>
   <p>Yours to settle on this page:</p>
   <ul>
+    <li>how <b>Sidecar</b> stands in these drawings, now that the glossary agrees it and this page
+    draws four facings rather than eight;</li>
     <li>whether <b>upper wrap</b> means the high wrap, which is the one reading here that is the
     model's rather than yours;</li>
     <li><code>SLOT_OFFSET</code>, how far round the rim <em>front</em> and <em>back</em> sit,
@@ -386,8 +388,8 @@ func render*(P: Parts): string =
 
   # Which locks and wraps exist in which orientation: cells left empty
   # by wrap rule are states that cannot be danced.
-  let turned = ["face-to-face", "the follow<br>a quarter turned",
-                "pillion lead", "the follow<br>three quarters"]
+  let turned = ["Face-to-face", "the follow<br>a quarter turned",
+                "Pillion", "the follow<br>three quarters"]
   var grid = """<table class="grid"><tr><th></th>"""
   for s in GRID_STATES:
     grid.add &"<th><em>{word(s.level)}</em> {word(s.way)}</th>"

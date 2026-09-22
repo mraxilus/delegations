@@ -240,14 +240,14 @@ func sheetOf(P: Parts): string =
   <p class="lede">Every drawing in this project is one of these, and a table built at compile
   time holds them all. The drawing reads the frame hold, the parity of the twist, and the way
   the couple turned. It never reads the level of an arm, and it never reads contact.</p>
-  <p class="how"><b>The diagram cannot name the facing.</b> There are four facings, which
+  <p class="how"><b>The diagram cannot name the facing.</b> The model holds four facings, which
   takes two bits, and the twist carries one of them. So the drawing commits to one facing of
   each pair: it turns the follow, and never the lead. Every card below names the facing it
   draws, and not the facing the model knows.</p>
   <p class="how"><b>Each frame counts from its own rest.</b> Rest is the facing where the
-  connections of that hold run parallel and cross nothing. A same-name pair rests <b>pillion
-  lead</b> rather than face-to-face. So A10 and A12 read <i>at rest</i>, and A9 and A11 read
-  <i>half a turn from pillion lead</i>. A card names a way round only where the other way
+  connections of that hold run parallel and cross nothing. A same-name pair rests <b>Pillion</b>
+  rather than Face-to-face. So A10 and A12 read <i>at rest</i>, and A9 and A11 read <i>half a turn
+  from Pillion</i>. A card names a way round only where the other way
   round draws a different picture, which is A16 and A17 alone.</p>
   <p class="how"><b>A crossing breaks at the arm that goes under.</b> The drawing cuts that
   arm at the middle, and the <code>over</code> field of the frame says which arm it is. A16
@@ -264,9 +264,9 @@ func sheetOf(P: Parts): string =
     if site == Site.LeftHand: Arm.L else: Arm.R
 
   func restsFacing(target: Frame): bool =
-    ## Say whether this frame rests face-to-face rather than pillion lead.
+    ## Say whether this frame rests Face-to-face rather than Pillion.
     ##   Hold rests where its two connections run parallel and cross
-    ##     nothing, which for same-name pair is pillion lead and not face to
+    ## nothing, which for same-name pair is Pillion and not Face-to-
     ##     face (rule 31).  Measured by `phaseOf`, never written down.
     ##   Hold with fewer than two connections has no such state to be at, so
     ##     it is counted from face to face like everything else.
@@ -281,8 +281,8 @@ func sheetOf(P: Parts): string =
   proc facingNote(target: Frame; twist: int; way: string): string =
     ## Say which facing this picture draws, and what it is turned from.
     let
-      drawn = if twist == 0: "face-to-face" else: "pillion lead"
-      rest = if restsFacing(target): "face-to-face" else: "pillion lead"
+      drawn = if twist == 0: "Face-to-face" else: "Pillion"
+      rest = if restsFacing(target): "Face-to-face" else: "Pillion"
     if drawn == rest: &"{drawn}, at rest"
     elif way.len > 0: &"{drawn}, half a turn {way} from {rest}"
     else: &"{drawn}, half a turn from {rest}"
@@ -370,11 +370,11 @@ func sheetOf(P: Parts): string =
   for position in dualChain:
     half = max(half, extent(posedAt(position.wind, dualPhase), captions = false))
 
-  body.add """<section id="chain"><h2>C &middot; The cross-name chain, face-to-face at rest</h2>
+  body.add """<section id="chain"><h2>C &middot; The cross-name chain, Face-to-face at rest</h2>
   <p class="lede">The chain stands in seven places, half a turn apart, and the hand-to-hand page
   walks along it. Each place carries a wind as a real number rather than a count of half turns,
-  which the standard diagram cannot hold. The facing alternates along the chain: face-to-face at
-  the whole turns, and pillion lead at the halves. Every caption says how far round the place
+  which the standard diagram cannot hold. The facing alternates along the chain: Face-to-face at
+  the whole turns, and Pillion at the halves. Every caption says how far round the place
   stands from the frame, <b>clockwise seen from above</b>. That is how the drawings see the
   couple, and it names one turn whichever dancer walks it. Section D is drawn at this scale, so
   the two chains stand against each other.</p><div class="grid wide">"""
@@ -387,12 +387,12 @@ func sheetOf(P: Parts): string =
 
 
   # `D`. Dual chain: same hold, follow starting away.
-  body.add &"""<section id="paired"><h2>D &middot; The same-name chain, pillion lead at rest</h2>
+  body.add &"""<section id="paired"><h2>D &middot; The same-name chain, Pillion at rest</h2>
   <p class="lede">This hold joins the left of the lead to the left of the follow, and right to
-  right. It walks the chain of section C, read half a turn along. So it runs parallel <b>pillion
-  lead</b> rather than face-to-face, and its phase measures {dualPhase} where the phase of the
-  other chain measures {HAND_PHASE}. Its facing alternates the other way about: pillion lead at
-  the whole turns, and face-to-face at the halves. No page in this project walks this
+  right. It walks the chain of section C, read half a turn along. So it runs parallel
+  <b>Pillion</b> rather than Face-to-face, and its phase measures {dualPhase} where the phase of
+  the other chain measures {HAND_PHASE}. Its facing alternates the other way about: Pillion at the
+  whole turns, and Face-to-face at the halves. No page in this project walks this
   chain.</p><div class="grid wide">"""
   for i, position in dualChain:
     body.add card(&"D{i + 1}", position.name,
@@ -495,11 +495,11 @@ func sheetOf(P: Parts): string =
 
   # `G`. Every edge of paired chain animated, as `F` does for section C.
   body.add &"""<section id="paired-moving">
-  <h2>G &middot; Hand-to-hand chain, pillion lead, moving</h2>
+  <h2>G &middot; Hand-to-hand chain, Pillion, moving</h2>
   <p class="lede">Every edge of the same-name chain of section D, walked by every manner of
   turn. Each manner takes the same two cells that section F uses, and the way each manner walks
-  is read the same. This chain rests <b>pillion lead</b> rather than face-to-face, because
-  face-to-face its two connections lie through each other (rule 31). Its phase measures
+  is read the same. This chain rests <b>Pillion</b> rather than Face-to-face, because Face-to-face
+  its two connections lie through each other (rule 31). Its phase measures
   {dualPhase}, where the phase of the cross-name chain measures {HAND_PHASE}.</p>
   <div class="grid wide">"""
   var g = 0

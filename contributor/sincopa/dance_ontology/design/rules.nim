@@ -320,7 +320,7 @@ const RULES* = [
   ##     What differs between two holds is only *where chain sits*.
   ##       Hold is unwound where its two connections run parallel, and
   ##       that falls at different facing for each: hand to hand
-  ##       face-to-face, crossed pair pillion lead.  So
+  ##       Face-to-face, crossed pair Pillion.  So
   ##       phase is measured -- turn follow to each candidate and see
   ##       which leaves hold unwound -- and crossed page becomes
   ##       this page's code with different hold rather than rewrite.

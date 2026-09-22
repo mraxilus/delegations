@@ -103,12 +103,12 @@ const BODY = """
   connections run side by side and cross nothing. Each half turn from there winds the pair
   one step further, and the chain runs out at a turn and a half each way.</p>
   <p><b>The wind says which way the partners face</b>, so the captions leave it out and this page
-  says it once. The partners are <b>face-to-face</b> at a whole number of turns, which is the
-  frame and the diamonds. They are <b>pillion lead</b> at a half, which is the crosses and the
-  swans.</p>
-  <p><b>A half turn makes a cross.</b> The partners stand pillion lead, both faced one way with
-  the lead behind, and the two connections cross once above the head. That is the plain crossing the
-  app already draws for a crossed pair, and the break says which arm lies on top.</p>
+  says it once. The partners are <b>Face-to-face</b> at a whole number of turns, which is the
+  frame and the diamonds. They are <b>Pillion</b> at a half, which is the crosses and the swans.</p>
+  <p><b>A half turn makes a cross.</b> The partners stand in <b>Pillion</b>, both faced one way
+    with the lead behind, and the two connections cross once above the head. That is the plain
+    crossing the app already draws for a crossed pair, and the break says which arm lies on
+    top.</p>
   <p><b>A whole
   turn makes a diamond.</b> The pair crosses twice, once at the lead and once at the follow, and
   the two
@@ -143,9 +143,9 @@ const BODY = """
   a turn apart</h2></div>
   <p><b>Hand to hand and the crossed pair are one chain.</b> A hold has one position where its two
   connections run parallel and cross nothing. That position sits at a different facing for each of
-  the two holds. Hand to hand runs parallel with the partners <b>face-to-face</b>. Hold left
-  to left and right to right instead, and it runs parallel <b>pillion lead</b>, which is half a
-  turn along this chain. Every step after that is the same step: cross, diamond and swan, out to
+  the two holds. Hand to hand runs parallel with the partners <b>Face-to-face</b>. Hold left
+  to left and right to right instead, and it runs parallel <b>Pillion</b>, which is half a turn
+  along this chain. Every step after that is the same step: cross, diamond and swan, out to
   a turn and a half each way.</p>
   <p><b>The build measures the phase rather than writes it down.</b> It turns the follow to each
   candidate and asks which one leaves the hold unwound, by the measure everything else here uses.

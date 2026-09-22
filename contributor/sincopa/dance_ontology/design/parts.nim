@@ -22,10 +22,10 @@ type Parts* = OrderedTable[string, string]
 
 
 const ORIENTATIONS* = [
-  (name: "face-to-face", lead_turn: 0.0, follow_turn: 0.0),
-  (name: "pillion lead", lead_turn: 0.0, follow_turn: 180.0),
-  (name: "pillion follow", lead_turn: 180.0, follow_turn: 0.0),
-  (name: "back-to-back", lead_turn: 180.0, follow_turn: 180.0),
+  (name: "Face-to-face", lead_turn: 0.0, follow_turn: 0.0),
+  (name: "Pillion", lead_turn: 0.0, follow_turn: 180.0),
+  (name: "pillion", lead_turn: 180.0, follow_turn: 0.0),
+  (name: "Back-to-back", lead_turn: 180.0, follow_turn: 180.0),
 ] ## Four ways couple can face, as pages walk them.
 
 const HOLD*: Holds = [some Arm.L, none Arm]
@@ -35,13 +35,13 @@ const SETTLINGS* = [
   (level: none Level, way: none Way, follow_turn: 0.0,
    caption: "no way said<br>— it stays at its side"),
   (level: some Level.Low, way: some Way.Lock, follow_turn: 0.0,
-   caption: "<em>low</em> lock<br>face-to-face"),
+   caption: "<em>low</em> lock<br>Face-to-face"),
   (level: some Level.High, way: some Way.Lock, follow_turn: 0.0,
-   caption: "<em>high</em> lock<br>face-to-face"),
+   caption: "<em>high</em> lock<br>Face-to-face"),
   (level: some Level.Low, way: some Way.Wrap, follow_turn: 180.0,
-   caption: "<em>low</em> wrap<br>pillion lead"),
+   caption: "<em>low</em> wrap<br>Pillion"),
   (level: some Level.High, way: some Way.Wrap, follow_turn: 180.0,
-   caption: "<em>high</em> wrap<br>pillion lead"),
+   caption: "<em>high</em> wrap<br>Pillion"),
 ] ## Each settling drawn in orientation that admits it, because most do
   ## not: lock or wrap only exists where line really goes round.
 
@@ -582,7 +582,7 @@ func windTwist*(wind: float): Twists =
 
 func posedAt*(wind, phase: float): Pose =
   ## Get pose hold stands in when it is wound this far from its own
-  ## parallel state, that state being `phase` turns off face-to-face.
+  ## parallel state, that state being `phase` turns off Face-to-face.
   ##   Follow's own axis turn is what poses are built from, so
   ##     half turn faces them away where they stand and whole turn brings
   ##     everything back.  Which dancer did turning is not something
@@ -593,14 +593,14 @@ func posedAt*(wind, phase: float): Pose =
 
 
 func phaseOf*(holds: Holds): float =
-  ## Say how far off face-to-face this hold's two connections run parallel:
+  ## Say how far off Face-to-face this hold's two connections run parallel:
   ## phase of chain it sits on (rule 31).
   ##   Measured, in rule 28's habit: hold is parallel where angle
   ##     its two ends make with pair's axis agree, and `windOf` is
   ##     already thing that measures that.
   ##   Two candidates and no more, because chain steps by half turns:
-  ##     hand to hand runs parallel with partners face-to-face,
-  ##     crossed pair pillion lead, and those are
+  ##     hand to hand runs parallel with partners Face-to-face,
+  ##     crossed pair Pillion, and those are
   ##     same chain read half turn apart.
   for phase in [0.0, 0.5]:
     let put = settled(posedAt(0.0, phase), holds, ABOVE_BOTH, default(Ways))
@@ -635,8 +635,8 @@ func chainFor*(holds: Holds): seq[Position] =
             else: "a turn and a half"
     # Which way partners face is pose's business and follows from
     # wind, so page says rule of it once in prose rather than
-    # every caption saying it over: face-to-face at whole number of
-    # turns, pillion lead at half.  It is also whole of offset
+    # every caption saying it over: Face-to-face at whole number of
+    # turns, Pillion at half.  It is also whole of offset
     # between this hold and its dual (rule 31).
     result.add (wind,
       # Middle of chain is glossary's **open**, and it alone says which
@@ -699,7 +699,7 @@ func windSense*(manner: Manner): float =
 const PAIRED*: Holds = [some Arm.L, some Arm.R]
   ## Same-name chain: lead's left to follow's left, right to right.  Index is
   ## lead's arm and value is follow's it joins, as `HAND_TO_HAND` is read.
-  ##   Rests pillion lead rather than face to face, since face to face its two
+  ##   Rests Pillion rather than Face-to-face, since Face-to-face its two
   ##     connections lie through each other (rule 31).
 
 

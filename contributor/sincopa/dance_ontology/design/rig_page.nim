@@ -233,8 +233,8 @@ proc cellsBody(review: string; data: JsonNode): string =
   let cells = cellsOf(review)
   const TITLES = [("A", "The standard diagram"),
                   ("B", "Single-hand turn positions"),
-                  ("C", "The cross-name chain, face-to-face at rest"),
-                  ("D", "The same-name chain, pillion lead at rest")]
+                  ("C", "The cross-name chain, Face-to-face at rest"),
+                  ("D", "The same-name chain, Pillion at rest")]
   result.add """<section class="cells"><p class="lede">Every cell here comes from the
     reference page, with the same badges, and the sim's still stands beside it. Where
     one cell asks more than one question, the badge shows the first. The picker above
