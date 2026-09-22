@@ -1467,6 +1467,9 @@ func keyFor(code: string): Option[Key] =
   of "KeyE": some(Key.E)
   of "KeyF": some(Key.F)
   of "ShiftLeft", "ShiftRight": some(Key.Shift)
+  of "Space": some(Key.Space)
+  # Take either control key, on same reading as shift.
+  of "ControlLeft", "ControlRight": some(Key.Control)
   of "ArrowLeft": some(Key.Left)
   of "ArrowRight": some(Key.Right)
   of "ArrowUp": some(Key.Up)
@@ -1529,7 +1532,7 @@ proc nimDriveHeld(seconds: cfloat) {.exportc.} =
   ##   Abandons tween only when something is held, so frame with no key down leaves ease
   ##   alone.
   if INTERACTION.keys_held.len == 0: return
-  INTERACTION.driveHeld(CAMERA, float(seconds))
+  INTERACTION.driveHeld(CAMERA, float(seconds), SELECTION.len > 0)
   TWEEN_CAMERA.abandon()
 
 

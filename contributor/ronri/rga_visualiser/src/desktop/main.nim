@@ -961,6 +961,11 @@ func keyFor(scancode: uint32): Option[Key] =
   elif scancode == uint32(Scancode.ShiftLeft) or scancode == uint32(Scancode.ShiftRight):
     # Take either shift key, since reader holds whichever hand is free; see `Scancode`.
     some(Key.Shift)
+  elif scancode == uint32(Scancode.Space): some(Key.Space)
+  elif scancode == uint32(Scancode.ControlLeft) or
+      scancode == uint32(Scancode.ControlRight):
+    # Take either control key, on same reading as shift.
+    some(Key.Control)
   elif scancode == uint32(Scancode.Left): some(Key.Left)
   elif scancode == uint32(Scancode.Right): some(Key.Right)
   elif scancode == uint32(Scancode.Up): some(Key.Up)
@@ -1822,7 +1827,7 @@ proc runInteractive(
     #   anything held has to be let go of here.
     if gui.wantsKeys(): interaction.releaseKeysAll()
     elif interaction.keys_held.len > 0:
-      interaction.driveHeld(camera, seconds_frame)
+      interaction.driveHeld(camera, seconds_frame, selection.len > 0)
       panel.tween_camera.abandon()
 
     let (width, height) =

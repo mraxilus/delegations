@@ -6721,7 +6721,7 @@ suite "Interaction":
     check actionFor(Key.Home) == some(KeyAction.ViewHome)
 
 
-  test "a held key slides the view across the ground, never through it":
+  test "with a selection a held key slides across the ground, never through it":
     # **map** reading of movement key rather than fly one: forward keeps.
     #   camera's height whatever it is looking at. Judged from camera tilted well down,
     #   where slide along raw sight direction would plainly lose height.
@@ -6730,7 +6730,7 @@ suite "Interaction":
       camera = initCamera(pivot = ORIGIN, distance = 20.0, azimuth = 0.4, elevation = 0.9)
     let opening = camera
     interaction.holdKey(Key.W)
-    interaction.driveHeld(camera, 1.0)
+    interaction.driveHeld(camera, 1.0, has_selection = true)
     check camera.pivot.z =~ opening.pivot.z
     check camera.distance =~ opening.distance
     check camera.azimuth =~ opening.azimuth
@@ -6744,15 +6744,15 @@ suite "Interaction":
     interaction.releaseKey(Key.W)
     interaction.holdKey(Key.D)
     var sideways = initCamera(ORIGIN, 20.0, 0.4, 0.9)
-    interaction.driveHeld(sideways, 1.0)
+    interaction.driveHeld(sideways, 1.0, has_selection = true)
     check sideways.pivot.z =~ 0.0
     check abs(dot(sideways.pivot - ORIGIN, sideways.headingGround)) <= TOLERANCE_TEST
 
     # Up and down are world up, and nothing else.
     interaction.releaseKey(Key.D)
-    interaction.holdKey(Key.E)
+    interaction.holdKey(Key.Space)
     var lifted = initCamera(ORIGIN, 20.0, 0.4, 0.9)
-    interaction.driveHeld(lifted, 1.0)
+    interaction.driveHeld(lifted, 1.0, has_selection = true)
     check lifted.pivot.x =~ 0.0
     check lifted.pivot.y =~ 0.0
     check lifted.pivot.z =~ SLIDE_SECOND*lifted.distance
@@ -6763,17 +6763,105 @@ suite "Interaction":
       interaction = Interaction(is_enabled: true)
       camera = initCamera(pivot = ORIGIN, distance = 20.0, azimuth = 0.4, elevation = 0.3)
     interaction.holdKey(Key.W)
-    interaction.holdKey(Key.E)
-    interaction.driveHeld(camera, 1.0)
+    interaction.holdKey(Key.Space)
+    interaction.driveHeld(camera, 1.0, has_selection = true)
     let both = camera.pivot
     check both.z > 0.0
     check norm(Direction(x: both.x, y: both.y, z: 0)) > 0.0
 
-    interaction.releaseKey(Key.E)
-    interaction.driveHeld(camera, 1.0)
+    interaction.releaseKey(Key.Space)
+    interaction.driveHeld(camera, 1.0, has_selection = true)
     check camera.pivot.z =~ both.z # Lift stopped exactly when its key was let go of.
     check norm(camera.pivot - both) > 0.0 # Slide did not.
 
+
+  test "with no selection a held key flies along the camera's own axes":
+    # Fly reading of movement key rather than map one: forward dives where sight dives,
+    #   and up is camera's own up, so rolled camera rises toward its own ceiling.
+    var interaction = Interaction(
+      is_enabled: true, depth_pointer: some(20.0)
+    )
+    var camera = initCamera(ORIGIN, 20.0, 0.4, 0.9)
+    camera.roll(0.7)
+    let (eye_start, axes_start) = (camera.eye, camera.frame)
+    interaction.holdKey(Key.W)
+    interaction.driveHeld(camera, 1.0, has_selection = false)
+    let step = camera.eye - eye_start
+    # Whole step lies along sight, and sight is steeply down, so height is lost.
+    check dot(step, axes_start.forward) =~ norm(step)
+    check step.z < 0.0
+    # Nothing turned: flight slides and never turns.
+    check camera.frame.forward =~ axes_start.forward
+    check camera.frame.axis_up =~ axes_start.axis_up
+
+    # Space rises along camera's own up, which roll has tipped off world up.
+    var lifted = initCamera(ORIGIN, 20.0, 0.4, 0.9)
+    lifted.roll(0.7)
+    let axes_lifted = lifted.frame
+    interaction.releaseKey(Key.W)
+    interaction.holdKey(Key.Space)
+    let eye_lifted = lifted.eye
+    interaction.driveHeld(lifted, 1.0, has_selection = false)
+    check dot(lifted.eye - eye_lifted, axes_lifted.axis_up) =~ norm(lifted.eye - eye_lifted)
+    check abs(dot(lifted.eye - eye_lifted, UP_WORLD)) < norm(lifted.eye - eye_lifted)
+
+  test "flight climbs toward its cap, and the pointer's depth sets that cap":
+    # Two halves of one hold cover more ground than first half twice over, because speed
+    #   is still climbing. What reads as spaceship rather than as constant rate.
+    var interaction = Interaction(is_enabled: true, depth_pointer: some(20.0))
+    interaction.holdKey(Key.W)
+    var camera = initCamera(ORIGIN, 20.0, 0.0, 0.0)
+    let eye_start = camera.eye
+    interaction.driveHeld(camera, 0.5, has_selection = false)
+    let first = norm(camera.eye - eye_start)
+    let eye_middle = camera.eye
+    interaction.driveHeld(camera, 0.5, has_selection = false)
+    let second = norm(camera.eye - eye_middle)
+    check second > first
+    check first + second =~ distanceTravelled(0.0, 1.0, FACTOR_SPEED_LOCAL*20.0)
+
+    # Pointer over something near caps speed low, which is what close work needs.
+    var near_work = Interaction(is_enabled: true, depth_pointer: some(0.002))
+    near_work.holdKey(Key.W)
+    var close = initCamera(ORIGIN, 0.002, 0.0, 0.0)
+    let eye_close = close.eye
+    near_work.driveHeld(close, 1.0, has_selection = false)
+    check norm(close.eye - eye_close) =~ distanceTravelled(
+      0.0, 1.0, FACTOR_SPEED_LOCAL*0.002
+    )
+
+    # Letting go forgets speed reached, so flight taken up again starts from rest.
+    near_work.releaseKey(Key.W)
+    check near_work.seconds_travelling =~ 0.0
+
+  test "roll and free turning reach the camera only when nothing is selected":
+    # Roll is granted where it survives. `camera.orbit` rebuilds stance from four
+    #   turntable numbers and carries no roll, so selection refuses roll rather than
+    #   granting it and losing it at next orbit.
+    var interaction = Interaction(is_enabled: true)
+    interaction.holdKey(Key.E)
+    var flying = initCamera(ORIGIN, 20.0, 0.4, 0.3)
+    var held = flying
+    interaction.driveHeld(flying, 0.5, has_selection = false)
+    interaction.driveHeld(held, 0.5, has_selection = true)
+    check abs(dot(flying.frame.axis_up, held.frame.axis_right)) > TOLERANCE_TEST
+    check held.frame.axis_up =~ initCamera(ORIGIN, 20.0, 0.4, 0.3).frame.axis_up
+    # Sight and eye stand through roll, whatever else moves.
+    check flying.eye =~ held.eye
+    check flying.frame.forward =~ held.frame.forward
+
+    # Arrows turn in place with no selection, and orbit about pivot with one.
+    interaction.releaseKeysAll()
+    interaction.holdKey(Key.Left)
+    var turning = initCamera(ORIGIN, 20.0, 0.4, 0.3)
+    var orbiting = turning
+    let eye_start = turning.eye
+    interaction.driveHeld(turning, 0.5, has_selection = false)
+    interaction.driveHeld(orbiting, 0.5, has_selection = true)
+    check turning.eye =~ eye_start
+    check norm(orbiting.eye - eye_start) > TOLERANCE_TEST
+    # Both swing sight same way, so one key reads same in either state.
+    check dot(turning.frame.forward, orbiting.frame.forward) > 0.0
 
   test "how far a hold travels depends on how long it was held":
     # Whole point of driving movement per frame: rate stated per second, multiplied.
@@ -6783,8 +6871,8 @@ suite "Interaction":
     var
       once = initCamera(ORIGIN, 20.0, 0.0, 0.3)
       twice = initCamera(ORIGIN, 20.0, 0.0, 0.3)
-    interaction.driveHeld(once, 0.5)
-    interaction.driveHeld(twice, 1.0)
+    interaction.driveHeld(once, 0.5, has_selection = true)
+    interaction.driveHeld(twice, 1.0, has_selection = true)
     check norm(twice.pivot - ORIGIN) =~ 2.0*norm(once.pivot - ORIGIN)
 
     # Dolly is one that compounds rather than adding, so it takes rate to.
@@ -6794,9 +6882,9 @@ suite "Interaction":
     var
       halves = initCamera(ORIGIN, 20.0, 0.0, 0.3)
       whole = initCamera(ORIGIN, 20.0, 0.0, 0.3)
-    interaction.driveHeld(halves, 0.5)
-    interaction.driveHeld(halves, 0.5)
-    interaction.driveHeld(whole, 1.0)
+    interaction.driveHeld(halves, 0.5, has_selection = true)
+    interaction.driveHeld(halves, 0.5, has_selection = true)
+    interaction.driveHeld(whole, 1.0, has_selection = true)
     check halves.distance =~ whole.distance
     check whole.distance =~ 20.0*FACTOR_DOLLY_SECOND
 
@@ -6807,9 +6895,9 @@ suite "Interaction":
     var
       plain = initCamera(ORIGIN, 20.0, 0.4, 0.3)
       hastened = initCamera(ORIGIN, 20.0, 0.4, 0.3)
-    interaction.driveHeld(plain, 0.25)
+    interaction.driveHeld(plain, 0.25, has_selection = true)
     interaction.holdKey(Key.Shift)
-    interaction.driveHeld(hastened, 0.25)
+    interaction.driveHeld(hastened, 0.25, has_selection = true)
     check norm(hastened.pivot - ORIGIN) =~ FACTOR_HASTE*norm(plain.pivot - ORIGIN)
     # Same direction, not different binding -- which is what shift+arrow used to mean.
     check dot(hastened.pivot - ORIGIN, plain.headingGround) > 0.0
@@ -6819,9 +6907,9 @@ suite "Interaction":
       turned_fast = initCamera(ORIGIN, 20.0, 0.4, 0.3)
     interaction.releaseKeysAll()
     interaction.holdKey(Key.Left)
-    interaction.driveHeld(turned, 0.25)
+    interaction.driveHeld(turned, 0.25, has_selection = true)
     interaction.holdKey(Key.Shift)
-    interaction.driveHeld(turned_fast, 0.25)
+    interaction.driveHeld(turned_fast, 0.25, has_selection = true)
     check (turned_fast.azimuth - 0.4) =~ FACTOR_HASTE*(turned.azimuth - 0.4)
 
 
@@ -6837,7 +6925,7 @@ suite "Interaction":
     interaction.releaseKeysAll()
     check interaction.keys_held.len == 0
     let standing = camera.pivot
-    interaction.driveHeld(camera, 1.0)
+    interaction.driveHeld(camera, 1.0, has_selection = true)
     check camera.pivot =~ standing
 
 
@@ -6866,7 +6954,7 @@ suite "Interaction":
 
     # And key held down is not action at all, however long it is held.
     interaction.holdKey(Key.F)
-    interaction.driveHeld(camera, 1.0)
+    interaction.driveHeld(camera, 1.0, has_selection = true)
     check camera.pivot =~ opening.pivot
 
 
