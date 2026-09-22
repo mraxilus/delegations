@@ -17,7 +17,7 @@
 ##   Two rests, both page's own choice: cross-name holds rest face to face, and
 ##     same-name holds are also built face to face so turns count as sheet
 ##     counts.  Same-name *pair* is exception: face to face its two connections
-##     lie through each other, so it is built pillion lead -- collected there, as
+##     lie through each other, so it is built Pillion -- collected there, as
 ##     couple would -- and its turns count from it.
 ##   Two ways of one sweep stand where each of them wants, so frame at nought
 ##     turns is reached from two stances and page shows step between them.  That
@@ -53,7 +53,7 @@ func linksOf(hold: string): seq[Link] =
     result.add Link(ends: [(Body.One, a), (Body.Two, b)])
 
 func restsAway(hold: string): bool =
-  ## Same-name pair is built pillion lead; every other hold face to face.
+  ## Same-name pair is built Pillion; every other hold Face-to-face.
   hold.contains('.') and sameName(hold)
 
 
@@ -78,7 +78,7 @@ func dofName(dof: Dof): string =
   of Dof.Wrist: "wrist"
 
 func whose(h: Hand): string =
-  if h.body == Body.One: "his" else: "her"
+  if h.body == Body.One: "lead's" else: "follow's"
 
 func why(w: Walk): string =
   ## Say what refuses, in few words that page can show.
@@ -116,13 +116,13 @@ func frame(m: Moment; band: Band; links: seq[Link]): JsonNode =
   let cross = crossings(m.arms)
   for i in 0 ..< links.len:
     let
-      him = m.arms[i][armOf(links, i, Body.One)]
-      her = m.arms[i][armOf(links, i, Body.Two)]
+      lead = m.arms[i][armOf(links, i, Body.One)]
+      follow = m.arms[i][armOf(links, i, Body.Two)]
     var cj = %*{
-      "him": [mm(him.s), mm(him.e), mm(him.w), mm(him.g)],
-      "her": [mm(her.g), mm(her.w), mm(her.e), mm(her.s)],
-      "himSays": said(lyingOn(HUMAN, band, links, m.stance, m.arms, i, Body.One), band),
-      "herSays": said(lyingOn(HUMAN, band, links, m.stance, m.arms, i, Body.Two), band)}
+      "lead": [mm(lead.s), mm(lead.e), mm(lead.w), mm(lead.g)],
+      "follow": [mm(follow.g), mm(follow.w), mm(follow.e), mm(follow.s)],
+      "leadSays": said(lyingOn(HUMAN, band, links, m.stance, m.arms, i, Body.One), band),
+      "followSays": said(lyingOn(HUMAN, band, links, m.stance, m.arms, i, Body.Two), band)}
     if i == 0 and cross.len > 0:
       var overs = newJArray()
       for c in cross:

@@ -33,12 +33,19 @@ const
     ## Entries naming step of chain, which are only ones position may speak.
     ##   Rest of glossary is held to elsewhere; word another entry rejects is
     ##     no business of position's name.
+  DANCER_TERMS = ["Lead", "Follow"]
+    ## Entries naming dancer, whose rejected words no page may say at all.
+  SAID_IN = ["design", "app", "sim"]
+    ## Directories whose string literals reach reader: page written into markup,
+    ##   element set by browser, or row of `sim/verdicts.md`.
+  DOCUMENTS = ["mockups" / "wholecloth.html", "pages" / "review" / "review.html"]
+    ## Pages this project writes by hand rather than from Nim.
   HOLDS = [HAND_TO_HAND, [some Arm.L, some Arm.R]]
     ## Both holds workbench walks: app's own frame, and its dual (rule 31).
 
 
-func avoided(source: string): Table[string, seq[string]] =
-  ## Collect words each chain entry replaced, by term entry names.
+func avoided(source: string; terms: openArray[string]): Table[string, seq[string]] =
+  ## Collect words each named entry replaced, by term entry names.
   ##   Entry opens `**Term**:` and its rejected words sit on `_Avoid_:` line
   ##     inside same entry, comma separated.
   var term = ""
@@ -46,9 +53,37 @@ func avoided(source: string): Table[string, seq[string]] =
     let bare = line.strip
     if bare.startsWith("**") and bare.endsWith("**:"):
       term = bare[2 ..< bare.len - 3]
-    elif bare.startsWith("_Avoid_:") and term in CHAIN_TERMS:
+    elif bare.startsWith("_Avoid_:") and term in terms:
       for word in bare["_Avoid_:".len .. ^1].split(','):
         result.mgetOrPut(term, @[]).add word.strip.toLowerAscii
+
+
+func literals(source: string): seq[tuple[said: string; next: char]] =
+  ## Every string literal of Nim source, with character that follows it.
+  ##   Follower tells key of object, which is data, from text page shows: writer
+  ##     of sweep data holds `"him":` as key, and browser reads it back by that
+  ##     name.  Cost: gendered word used as key passes this check, and rename of
+  ##     those keys waits on rewrite of recorded sweeps.
+  var i = 0
+  while i < source.len:
+    if source[i] == '#' :
+      while i < source.len and source[i] != '\n': i += 1
+    elif source.continuesWith("\"\"\"", i):
+      let opens = i + 3
+      var shuts = source.find("\"\"\"", opens)
+      if shuts < 0: shuts = source.len
+      result.add (source[opens ..< shuts], (if shuts + 3 < source.len: source[shuts + 3] else: ' '))
+      i = shuts + 3
+    elif source[i] == '\"':
+      var j = i + 1
+      while j < source.len and source[j] != '\"':
+        if source[j] == '\\': j += 1
+        j += 1
+      result.add (source[i + 1 ..< min(j, source.len)],
+                  (if j + 1 < source.len: source[j + 1] else: ' '))
+      i = j + 1
+    else:
+      i += 1
 
 
 func says(text, phrase: string): bool =
@@ -66,7 +101,7 @@ func says(text, phrase: string): bool =
 suite "chain speaks glossary":
   let
     source = readFile(GLOSSARY)
-    rejected = source.avoided
+    rejected = source.avoided(CHAIN_TERMS)
 
   test "glossary still names every step of chain":
     # Laws below are vacuous where entries they read are missing, so entries
@@ -89,3 +124,41 @@ suite "chain speaks glossary":
         let tenths = int(abs(position.wind) * 10)
         if tenths in SHAPE_AT:
           check position.name.toLowerAscii.says(SHAPE_AT[tenths].toLowerAscii)
+
+
+suite "pages speak of the lead and the follow":
+  ## Glossary rejects every gendered word for dancer, and page is where reader
+  ##   meets it.  Readout of whole-cloth panel said `her arm`, and reason turn
+  ##   blocked said `his reach`, while every other law passed.
+  let
+    source = readFile(GLOSSARY)
+    rejected = source.avoided(DANCER_TERMS)
+    root = currentSourcePath().parentDir.parentDir
+
+  test "glossary still rejects a gendered word for each dancer":
+    for term in DANCER_TERMS:
+      check term in rejected
+      check rejected[term].len > 0
+
+  var gendered: seq[string]
+  for _, words in rejected:
+    for word in words: gendered.add word
+
+  test "no string a page shows says a gendered word":
+    for dir in SAID_IN:
+      for path in walkDirRec(root / dir):
+        if path.splitFile.ext != ".nim": continue
+        for (said, next) in readFile(path).literals:
+          if next == ':': continue  # key of object, read back by that name
+          for word in gendered:
+            if said.toLowerAscii.says(word):
+              checkpoint path.extractFilename & " says `" & word & "`: " & said
+              fail()
+
+  test "no page written by hand says a gendered word":
+    for name in DOCUMENTS:
+      let said = readFile(root / name).toLowerAscii
+      for word in gendered:
+        if said.says(word):
+          checkpoint name & " says `" & word & "`"
+          fail()

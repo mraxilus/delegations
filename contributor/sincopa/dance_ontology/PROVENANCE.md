@@ -65,7 +65,12 @@ and what stops it is one named thing. That thing is decided once in `rigid.stopp
 every sweep, still and page alike (Article II.1). Verified by `trigid.nim`: the turn that a couple
 are said to reach is the turn that some distance carries, and every stop carries its name.
 
-The agreed words disagree with the code in fourteen places, recorded rather than acted on. From the
+**The glossary agrees eight facings, and the model holds four.** The case of a name says which
+dancer it places: `Pillion` stands the Lead behind, and `pillion` stands the Follow there. The four
+the sim and the drawings hold are Face-to-face, Back-to-back and both cases of Pillion. The four
+states of Sidecar are named and not modelled, so nothing draws them and no law reads them.
+
+The agreed words disagree with the code in thirteen places, recorded rather than acted on. From the
 hand-to-hand half:
 
 - `frame.position` means the opposite of `Frame position`. It strips `over` and returns the frame
@@ -73,17 +78,17 @@ hand-to-hand half:
 - `Frame` and `rotation.Posture` split across the frame state rather than along it.
 - `isFacing` returns the parity of twist, where facing is four-valued.
 - Twist is counted in quarters, where `HalfTurns` is half turns.
-- `Level.Above` is `Overhead`, and `Compound` is `Compound move`.
+- `Compound` is `Compound move`.
 - The `route` and `wind` of the drawing chain are `Transition` and `Twist`.
 
 From the sim:
 
-- `Band` is `Level`, and its members are Low, High and Overhead.
+- `Band` is `Level`, and its members are Low, High and Above.
 - `Body.One` and `.Two` are Lead and Follow.
 - `Aspect.Fore` and `.Aft` are Wrap and Lock.
 - `Link` is `Connection`, and `page.Hold` is `Frame hold`. Both words already sit on avoid lines.
-- `Move`, `Twist`, `Chain`, `Way` and `overhead` each name something in the sim that is unrelated to
-  the agreed term of the same spelling.
+- `Move`, `Twist`, `Chain` and `Way` each name something in the sim that is unrelated to the agreed
+  term of the same spelling.
 
 **The layout block of the review page was stale in five ways, and is corrected.** The curator left
 one line for the hand of this project: the domain folder printed as `síncopa` where it is now
@@ -96,11 +101,16 @@ removed by this project, and the Architect reads the page. Its wording still use
 `primitives`, where the agreed words are `Reference` and `Move`. That is a vocabulary sweep of the
 whole page, and not this fix.
 
-**Two faults live in generated output, rather than merely pending renames.** `sim/verdicts.md`
-prints `above` and `X`, both on avoid lines, where the agreed words are Overhead and Cross. It also
-prints `her arm` and `his arm` in every sweep table, which are avoided for Follow and Lead. The
-translation table stands in two copies, `sim/verdicts.nim` and `design/turns.nim`, and the second
-drops the `elbow forward` clause that the first adds (Article II.1).
+**No recorded sweep names a dancer with a gendered word.** `design/turns.json` keys each arm
+`lead` and `follow`, and `sim/verdicts.md` heads its tables the same way. Both files were rewritten
+by their own verbs, and the numbers reproduced. The new `turns.json` is the old one with four keys
+and two words renamed. Verified by `tglossary.nim`, which now reads `sim` as well as `design` and
+`app`.
+
+**One fault lives in generated output, rather than in a pending rename.** `sim/verdicts.md` prints
+`X`, which sits on an avoid line, where the agreed word is Cross. The translation table stands in
+two copies, `sim/verdicts.nim` and `design/turns.nim`, and the second drops the `elbow forward`
+clause that the first adds (Article II.1).
 
 ## Model
 
@@ -382,6 +392,50 @@ sweeps of the sim (`turns.nim`) and the panel into one page.
 Verified by `tmarks.nim`, which drives the build of every page under testament. The whole-cloth port
 was verified by a driven comparison under Playwright of the old page against the new: 707 states
 equal. See Figures for what was compared.
+
+**Every page says its prose in Simplified Technical English, and a hand-drawn figure claims nothing
+of the sim.** The Architect ruled that the prose did not read, and asked for it again from the
+charter's subset (`GUIDE.md`, Article VI.8). Two rules of that subset can be counted, and
+`design/plain.nim` counts them off the markup. A sentence of prose holds at most `WORDS` words, and
+a paragraph at most `SENTENCES` sentences. Prose is the text of a `p` or an `li` alone, because a
+caption or a swatch label is a fragment rather than a sentence.
+
+The rest of the subset, from the approved word to the active voice, is read rather than counted.
+
+Verified by `tmarks.nim` over every page the workbench writes and over the committed whole-cloth
+markup, and by `treview.nim` over the reference page. Both laws were proved able to fail. One
+sentence lengthened past the bound reddens the page it sits on. A seventh sentence added to a full
+paragraph reddens the markup that holds it.
+
+**The reader stepped over every paragraph that stands behind a drawing.** A page names each drawn
+element with a tag that opens as `p` or `li` does, such as `path` and `line`. The reader met one,
+then looked for the closing tag of the kind it wanted, which is the next paragraph's own. So it
+skipped that paragraph. The sign page holds 24 blocks of prose and the reader saw 14. Verified by
+`tplain.nim`, which reads prose off markup written for it, where the count is known.
+
+The rig viewer and the Reference are held by reading alone. Each one writes its prose in the
+browser rather than into markup the workbench renders. So no law counts either. The viewer reads
+inside both bounds today, measured by hand over the built page. Nothing measures the Reference,
+because its prose exists only once the browser has run. The law on a gendered word does reach
+them, because it reads the strings rather than the rendered page.
+
+**The two counted rules passed while the prose still did not read.** Every page sat inside both
+bounds while the words were still wrong. One page said that a stage `collides` a capsule. Another
+said that a cell `stands as it stands there`. The bounds are a floor, and nothing but a reading
+catches a word used outside its meaning.
+
+**No string a page shows says a gendered word for a dancer.** The glossary rejects one for each
+dancer, and `tglossary.nim` reads that ruling rather than restates it. It holds every string
+literal of `design` and `app`, and the two pages this project writes by hand. A literal that a
+colon follows is a key of recorded data, so the check steps over it. Verified by `tglossary.nim`,
+and proved able to fail. The readout said `her arm` and a block reason said `his reach` while
+every other law passed.
+
+The hand-drawn dial of the whole-cloth page came out. It stated blocks and turns from a sweep of the
+solver that this project has deleted, and the generated panel below it disagreed. A figure drawn by
+hand cannot follow the sim. The page now points at that panel and at `sim/verdicts.md`, and the
+captions of its hand-drawn plates describe the drawing alone. Rejected: to keep the dial with a note
+that it may lag, which leaves a wrong number on the page.
 
 **That comparison cannot be repeated here.** Playwright, TypeScript and any package manifest are
 absent from this repository, and the date it ran was not recorded. So the 707 figure rests on a

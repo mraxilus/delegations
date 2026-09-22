@@ -320,7 +320,7 @@ const RULES* = [
   ##     What differs between two holds is only *where chain sits*.
   ##       Hold is unwound where its two connections run parallel, and
   ##       that falls at different facing for each: hand to hand
-  ##       face-to-face, crossed pair pillion lead.  So
+  ##       Face-to-face, crossed pair Pillion.  So
   ##       phase is measured -- turn follow to each candidate and see
   ##       which leaves hold unwound -- and crossed page becomes
   ##       this page's code with different hold rather than rewrite.
@@ -444,7 +444,7 @@ const RULES* = [
   ##     independently (`sim/verdicts.md`): from Left to left held low,
   ##     jointed-arm sim reads lock way as row does -- hand led
   ##     behind back, whole turn reached -- and blocks wrap way
-  ##     at three tenths of turn, at his shoulder's twist, short of
+  ##     at three tenths of turn, at lead's shoulder twist, short of
   ##     row's half.  One place row and sim differ, recorded;
   ##     neither was told other's answer.
 
