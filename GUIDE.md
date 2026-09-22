@@ -44,8 +44,10 @@ leave a comment in code alone, which drops its articles and keeps the rest (Arti
   step.
 
 The `english` check reads three things: sentence length, paragraph length and that short
-table of words. It reads the charter, the two prompts, this file, the root `README.md` and
-the four templates, and no other file. Every other rule above holds because you read it.
+table of words. It reads every root document except `LICENSE.md`, the four templates, and
+the three records of every project. `ENGLISH_PATHS` in `curator/audit/src/english.nim`
+holds the list, and the check reads no other file. Every other rule above holds because you
+read it.
 
 ## The queue and the shared allowance
 
