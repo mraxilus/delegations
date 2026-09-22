@@ -477,6 +477,21 @@ the accessible names were verified equal. There is one whitespace-free row, with
 references decoded. The fonts URL is held as its own constant, joined at compile time. Cost: the
 `doAssert` gates of the workbench are the check, so its tests are a debug build.
 
+**The build dressed a page it did not write, and the page grew by 223 kB each time.** `dress()`
+walks every page under `build/`, and not only the pages the run wrote. `build/sim/artifact.html` is
+written by no verb that this project still holds, so every `pages` run put another block of faces
+into it. It stood at 10.9 MB and reached 11.4 MB in four runs of one session. That climbs toward
+the size a published page must stay under.
+
+The law that covers this was already written, and it could not fail. `tfaces.nim` held a test named
+"dressing is not doubled where it runs twice" that dressed once and counted the faces. It now
+dresses twice, over both shapes of page, and demands the same bytes. `faceStyle` marks its block
+`<style data-faces>`, and `withFaces` takes an earlier block out before it puts the new one in.
+Replaced rather than skipped, so a page dressed before a face changed takes the new bytes.
+
+Verified: two `pages` runs over one tree now give ten pages that compare equal, byte for byte. The
+orphan pages under `build/sim/` are gone, and no verb writes them again.
+
 **The four are a manner of turn, and not a way of turning.** `Manner` and `MANNERS` replace
 `TurnWay` and `WAYS_OF_TURNING` through the workbench. The pages, the checks and the rule ledger say
 "manner" wherever they meant one of the four. "Way" is kept for clockwise against anticlockwise,
