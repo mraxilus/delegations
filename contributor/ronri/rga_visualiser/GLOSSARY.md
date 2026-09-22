@@ -69,9 +69,10 @@ The point the camera's orbit turns about.
 _Avoid_: target, focus, centre, look-at
 
 **Stance**:
-Where the camera stands: its pivot, its distance, and its two orbit angles. The lens is not
-part of it, because a reader's field of view is theirs and nothing aiming the camera may
-rewrite it.
+Where the camera stands: one rigid motion, and one depth. The motion carries where the eye
+is and which way it faces. The depth is how far along the sight the pivot stands. The pivot
+and both orbit angles are read out of the pair. The lens is not part of it, because a
+reader's field of view is theirs and nothing aiming the camera may rewrite it.
 _Avoid_: placement, pose, position, state
 
 ### The front-ends
