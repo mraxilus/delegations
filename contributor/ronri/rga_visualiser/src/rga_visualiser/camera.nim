@@ -103,6 +103,14 @@ const
     ##   Fixed plane cannot: view's extent grows with distance while plane does not, so
     ##   dollying out brings line's far end inside frame, and clips pivot away once eye
     ##   orbits past it.
+  STEP_SINGLE* = 1.0/16_777_216.0
+    ## Fix float32's own relative step, which is two to power of minus twenty-four.
+    ##   Position stored `r` from records' origin carries about `r*STEP_SINGLE` of error.
+  FRACTION_ORIGIN_HOLD* = 0.25
+    ## Spend at most this fraction of near clip on float32 error about records' origin.
+    ##   Nothing nearer than near clip is drawn, so near clip is finest thing on screen,
+    ##   and quarter of it is error no reader resolves.
+    ##   Sets how far camera travels before origin follows; see `originHeld`.
   FRACTION_VIEW_CENTRED* = 2.0/3.0
     ## Fix fraction of frame that counts as being looked at.
     ##   This much of height, and this much of width *or height, whichever is less*;
@@ -206,6 +214,15 @@ type
       ##   readings of one spelling, so spelling is withdrawn and `dolly`, `dollyTo` and
       ##   `repivotToDepth` say which is meant.
     degrees_field_of_view*: float ## Vertical field of view, in degrees.
+    reach_near*: float ## How far nearest drawn object stands ahead of eye, along sight.
+      ## Scale frustum and furniture take, in place of separation from pivot; see
+      ## `scaleLocal`.
+      ##   Zero where nothing is drawn ahead, which hands scale back to separation.
+      ##   Stamped by whoever owns scene, as `reach_scene` is, and once for each frame
+      ##   rather than for each overlay call: it reads every placement, and
+      ##   `ensureViewOverlay` runs many times over one frame.
+      ##   Depth along sight rather than distance, and never behind eye: what reader turned
+      ##   away from is not drawn, and scale read off it would follow that.
     reach_scene*: float ## How far farthest finite object stands from world origin.
       ## Disc's own reach included; zero for empty scene, which leaves far clip scaled alone.
       ## Stamped by whoever owns scene at each derivation point, from `framing.reachOf`;
@@ -330,6 +347,20 @@ func initCameraDefault*(): Camera =
   )
 
 
+func scaleLocal*(camera: Camera): float =
+  ## Read distance frustum and furniture take their scale from.
+  ##   Reach to nearest drawn object where one is stamped, and separation from pivot where
+  ##   none is.
+  ##     Separation alone kept scale of stance reader set off from: near clip is one
+  ##     four-hundredth of it, and camera flying from opening stance at planet met that
+  ##     plane long before planet.
+  ##     Never pointer's own depth, which `capTravelling` reads: `SettingsFurniture`
+  ##     compares exactly, so pointer figure would rebuild grid at every pointer move, and
+  ##     would move `depthLogScale` while camera stood still.
+  ##   Held off zero, since every reader divides or scales by it.
+  if camera.reach_near > 0.0: camera.reach_near else: max(camera.distance, DISTANCE_LIMIT_NEAR)
+
+
 func distanceFar*(camera: Camera): float =
   ## Read far bound depth's logarithm spans and horizon stands within; see `distanceNear`
   ##   for why derived. Nothing clips at it: see `initMatrixProjection`.
@@ -338,14 +369,14 @@ func distanceFar*(camera: Camera): float =
   ##   Ratio to near is unbounded; `depthOf` is what makes that affordable.
   let eye = camera.eye
   let away = sqrt(eye.x*eye.x + eye.y*eye.y + eye.z*eye.z)
-  max(camera.distance*FACTOR_CLIP_FAR, away + camera.reach_scene*MARGIN_REACH_FAR)
+  max(camera.scaleLocal*FACTOR_CLIP_FAR, away + camera.reach_scene*MARGIN_REACH_FAR)
 
 
 func distanceNear*(camera: Camera): float =
   ## Read nearest depth clip volume keeps.
-  ##   Derived from orbit distance rather than stored, so it cannot go stale through dolly.
-  ##   One four-hundredth of orbit distance; see `FACTOR_CLIP_NEAR`.
-  camera.distance*FACTOR_CLIP_NEAR
+  ##   Derived from local scale rather than stored, so it cannot go stale through dolly.
+  ##   One four-hundredth of that scale; see `FACTOR_CLIP_NEAR` and `scaleLocal`.
+  camera.scaleLocal*FACTOR_CLIP_NEAR
 
 
 func depthLogScale*(camera: Camera): float =
@@ -676,6 +707,24 @@ func flyAhead*(camera: var Camera, step: float) =
   camera.depth_pivot = distanceHeld(camera.depth_pivot - step)
 
 
+func originHeld*(camera: Camera, origin: Position): Position =
+  ## Say where records are stored from, given where they were stored from last.
+  ##   Eye, held where it stands until travel spends float32's precision about it.
+  ##     Eye rather than pivot: free flight turns about eye, so pivot swings through whole
+  ##     arc while eye stands, and what reader is about to reach stands near eye.
+  ##     Records are float32, and one stored `r` out carries about `r*STEP_SINGLE`.
+  ##   Held rather than followed: origin that moved every frame rebuilt every record of
+  ##   every held frame, which is what those holds exist to skip.
+  ##   Bound is `FRACTION_ORIGIN_HOLD` of near clip, divided by float32's step: about 199
+  ##   thousand units at opening stance, and less as close work draws near clip in.
+  ##   One origin for both mesh sets, since one transform draws them; see
+  ##   `initMatrixViewProjection`.
+  let
+    eye = camera.eye
+    reach = norm(eye - origin)
+  if reach*STEP_SINGLE <= FRACTION_ORIGIN_HOLD*camera.distanceNear: origin else: eye
+
+
 func capTravelling*(depth_pointer: Option[float]; scale_local, haste: float): float =
   ## Read fastest free flight may travel right now, in units per second.
   ##   Smaller of two figures, as `SPEED_CEILING` says: local scale, and fixed ceiling.
@@ -730,7 +779,7 @@ type SettingsFurniture* = tuple
   ##     Reading pivot and both angles out to key on them costs eighteen sandwiches, and
   ##     hold exists to save less work than that; see `drivePinAnchor`.
   motor: Motor
-  distance, degrees_field_of_view, reach_scene: float
+  distance, degrees_field_of_view, reach_near, reach_scene: float
   height_pixels: int
   is_axes_shown, is_grid_shown: bool
 
@@ -742,8 +791,8 @@ func settingsFurnitureFor*(
   ##   Compared exactly by callers: question is whether anything moved at all.
   ##   Every field is plain read, so key costs nothing to build.
   (
-    camera.motor, camera.distance, camera.degrees_field_of_view, camera.reach_scene,
-    height_pixels, is_axes_shown, is_grid_shown,
+    camera.motor, camera.distance, camera.degrees_field_of_view, camera.reach_near,
+    camera.reach_scene, height_pixels, is_axes_shown, is_grid_shown,
   )
 
 
@@ -763,8 +812,8 @@ func drawExtentFor*(camera: Camera, height_pixels: int): DrawExtent =
   #   One derivation point shared with every hand-built extent.
   algebraFilled(DrawExtent(
     scale: DrawScale(
-      # Furniture follows orbit distance, not scene's reach; see `mesh.extentFurnitureFor`.
-      extent_furniture: extentFurnitureFor(camera.distance*FACTOR_CLIP_FAR),
+      # Furniture follows local scale, not scene's reach; see `mesh.extentFurnitureFor`.
+      extent_furniture: extentFurnitureFor(camera.scaleLocal*FACTOR_CLIP_FAR),
       eye: eye,
       radius_horizon: radiusHorizonFor(camera.distanceFar),
       forward: frame.forward,

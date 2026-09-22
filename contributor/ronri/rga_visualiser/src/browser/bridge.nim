@@ -144,7 +144,7 @@ type SettingsOverlay = tuple
   ##     `nimAnchorScreen` runs this for every overlay call, so key built from pivot and
   ##     both angles cost more than derivation it skips: 488 us against 8 us repaired.
   motor: Motor
-  distance, degrees_field_of_view, reach_scene: float
+  distance, degrees_field_of_view, reach_near, reach_scene: float
   width, height: int
 
 type ShapedMarker = tuple
@@ -320,6 +320,18 @@ var
   IS_CULLING = true ## Whether points outside view are skipped before emitting.
     ## Off only through `nimSetCulling`, for check that culling changes no pixel.
   REACH_SCENE = 0.0 ## Scene's reach from origin, refreshed with placements; see `ensurePlacement`.
+  ORIGIN_RECORDS = Position(x: 0.0, y: 0.0, z: 0.0)
+    ## Point every record is stored from; see `camera.originHeld` and `mesh.clearMeshes`.
+    ##   One value for both mesh sets, because one transform draws them.
+    ##   Decided once for each frame, and held across frames that keep their meshes: it
+    ##   moves only once travel has spent float32's precision about it.
+  REACH_NEAR = 0.0 ## Reach to nearest drawn object ahead of eye; see `camera.scaleLocal`.
+    ## Refreshed once for each frame, in frame build, because it reads every placement and
+    ## moves with camera as well as with scene.
+    ##   `ensureViewOverlay` runs many times over one frame, so refreshing it there put
+    ##   whole placement walk in hold that exists to skip one derivation.
+    ##   Overlay call landing between frames reads last frame's figure, as it reads last
+    ##   edit's `REACH_SCENE`.
 
 
 proc flattenRibbonsInto(ribbons: RibbonMesh, dest: var FlatFloats) =
@@ -1050,9 +1062,10 @@ proc ensureViewOverlay(width, height: int) =
   ##   Callers read globals rather than copies: returning pair deep-copies `DrawExtent`
   ##   full of multivectors per call on JS backend, cache hit or not.
   CAMERA.reach_scene = REACH_SCENE # Stamped as frame build does; see `ensurePlacement`.
+  CAMERA.reach_near = REACH_NEAR
   let settings: SettingsOverlay = (
-    CAMERA.motor, CAMERA.distance, CAMERA.degrees_field_of_view, CAMERA.reach_scene,
-    width, height,
+    CAMERA.motor, CAMERA.distance, CAMERA.degrees_field_of_view, CAMERA.reach_near,
+    CAMERA.reach_scene, width, height,
   )
   if SETTINGS_OVERLAY_HELD.isNone or SETTINGS_OVERLAY_HELD.get != settings:
     SETTINGS_OVERLAY_HELD = some(settings)
@@ -1136,6 +1149,11 @@ proc nimCameraElevation(): cfloat {.exportc.} = cfloat(CAMERA.elevation)
 
 proc nimCameraDistance(): cfloat {.exportc.} = cfloat(CAMERA.distance)
   ## Report distance from pivot, in world units.
+
+proc nimCameraScaleLocal(): cfloat {.exportc.} = cfloat(CAMERA.scaleLocal)
+  ## Report distance frustum and furniture take their scale from, in world units.
+  ##   Reach to nearest drawn object ahead of eye, or separation where nothing is drawn
+  ##   there; see `camera.scaleLocal`.
 
 proc nimCameraFov(): cfloat {.exportc.} = cfloat(CAMERA.degrees_field_of_view)
   ## Report vertical field of view, in degrees.
@@ -2296,6 +2314,13 @@ proc nimBuildFrame(
   # Place first, so scene's reach is this frame's before extent reads far clip.
   ensurePlacement()
   CAMERA.reach_scene = REACH_SCENE
+  # Read local scale once for this frame, before extent reads clip planes off it.
+  #   Walks every placement, so here rather than in `ensureViewOverlay`; see `REACH_NEAR`.
+  REACH_NEAR = reachNearOf(PLACEMENTS, SCENE, CAMERA.eye, CAMERA.frame.forward)
+  CAMERA.reach_near = REACH_NEAR
+  # Decide records' origin after scale, since bound is read off near clip.
+  #   Both holds carry motor, so frame moving this origin rebuilds both anyway.
+  ORIGIN_RECORDS = CAMERA.originHeld(ORIGIN_RECORDS)
   let scale = CAMERA.drawExtentFor(int(height_pixels))
   # Derive frustum once, for cull of every point below; see `isPointInView`.
   let bounds = CAMERA.viewBoundsFor(scale, float(aspect))
@@ -2321,7 +2346,7 @@ proc nimBuildFrame(
     ms_axes = 0.0
   if not is_furniture_held:
     SETTINGS_FURNITURE_HELD = some(settings_furniture)
-    clearMeshes(MESHES_FURNITURE, CAMERA.pivot)
+    clearMeshes(MESHES_FURNITURE, ORIGIN_RECORDS)
     # Clock grid and axes apart: axes are three lines, grid is however many ground reaches.
     let ms_before_grid = performanceNow()
     if is_grid_shown:
@@ -2372,8 +2397,8 @@ proc nimBuildFrame(
   ensurePlacement()
 
   if not is_scene_held:
-    # About pivot, as furniture is; hold tuple carries pivot, so held frame keeps its origin.
-    clearMeshes(MESHES, CAMERA.pivot)
+    # About held origin, as furniture is; see `ORIGIN_RECORDS`.
+    clearMeshes(MESHES, ORIGIN_RECORDS)
     cost.openTally()
     # Emit horizon plane's dome first, before anything sharing translucent veil pass.
     #   Veil runs draw in append order, unsorted by depth, so dome first guarantees every

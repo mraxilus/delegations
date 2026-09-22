@@ -13,7 +13,9 @@ export async function driveKeys(page: Page): Promise<void> {
   // Nothing is selected on opening page, so camera flies rather than slides.
   //   Speed climbs toward its cap over hold, so half second covers well under flat rate
   //   map reading used to cover.
+  const scale_before = await page.evaluate(() => nimCameraScaleLocal());
   const slid = await holdKeys(page, ['KeyW'], 500);
+  const scale_after = await page.evaluate(() => nimCameraScaleLocal());
   //   Eye is what moves, not pivot: flight ahead holds pivot where it stands.
   reportWithin(
     'a held key flies the view forward', spanOf(slid.before.eye, slid.after.eye),
@@ -35,6 +37,16 @@ export async function driveKeys(page: Page): Promise<void> {
       Math.abs(closed - spanOf(slid.before.eye, slid.after.eye)) < 1e-3,
     `azimuth unchanged; separation gave up ${closed.toFixed(4)} of ` +
       `${slid.before.distance.toFixed(4)}`,
+  );
+
+  // Frustum and furniture read reach to nearest drawn object ahead, so flying in draws
+  //   that scale in by exactly what eye covered. Separation alone kept scale of stance
+  //   reader set off from, and near clip is one four-hundredth of it.
+  const drawn_in = scale_before - scale_after;
+  report(
+    'flying in draws the frustum scale in with it',
+    scale_after > 0 && Math.abs(drawn_in - spanOf(slid.before.eye, slid.after.eye)) < 1e-2,
+    `scale ${scale_before.toFixed(4)} -> ${scale_after.toFixed(4)}`,
   );
 
   // Release, which key handling must see: held key whose release is missed keeps moving.

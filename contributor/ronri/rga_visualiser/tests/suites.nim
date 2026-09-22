@@ -666,6 +666,74 @@ suite "Camera":
     scene.addObject(toMultivector(Position(x: 300, y: 0, z: 0)), "p", Ink.Rose, radius = 2.5)
     check abs(reachOf(scene) - 302.5) < 1.0e-6
 
+  test "the frustum takes its scale from the nearest drawn object, not from the separation":
+    # Separation alone kept scale of stance reader set off from. Near clip is one
+    #   four-hundredth of it, so camera flying from opening stance at planet met that
+    #   plane long before planet.
+    var camera = initCamera(ORIGIN, 19.0, 0.4, 0.3)
+    check camera.scaleLocal =~ 19.0
+    check camera.distanceNear =~ 19.0*FACTOR_CLIP_NEAR
+    # Stamped reach takes over, and near clip follows it down by four decades.
+    camera.reach_near = 0.002
+    check camera.scaleLocal =~ 0.002
+    check camera.distanceNear =~ 0.002*FACTOR_CLIP_NEAR
+    # Far clip still reaches whole scene, since scene's own reach is its other term.
+    camera.reach_scene = 6.5e6
+    check camera.distanceFar >= norm(camera.eye - ORIGIN) + 6.5e6
+    # Depth stays logarithmic across that range, and both ends still land where they must.
+    check camera.depthOf(camera.distanceNear) =~ -1.0
+    check camera.depthOf(camera.distanceFar) =~ 1.0
+    # Zero hands scale back, so empty scene is unchanged.
+    camera.reach_near = 0.0
+    check camera.scaleLocal =~ 19.0
+    # Floored, since every reader scales by it.
+    var floored = initCamera(ORIGIN, DISTANCE_LIMIT_NEAR, 0.0, 0.0)
+    check floored.scaleLocal > 0.0
+
+  test "the nearest reach is read ahead of the eye, and never behind it":
+    var scene = initScene()
+    # Camera at origin looking along -x; one object ahead, one behind, one further ahead.
+    let camera = initCamera(ORIGIN, 1.0, 0.0, 0.0)
+    check camera.frame.forward =~ Direction(x: -1.0, y: 0.0, z: 0.0)
+    scene.addObject(toMultivector(Position(x: -4.0, y: 0.0, z: 0.0)), "ahead", Ink.Rose)
+    scene.addObject(toMultivector(Position(x: 9.0, y: 0.0, z: 0.0)), "behind", Ink.Jade)
+    scene.addObject(toMultivector(Position(x: -30.0, y: 0.0, z: 0.0)), "far", Ink.Cobalt)
+    var placed = newSeq[Placement](scene.bound)
+    for handle in 0 ..< scene.bound:
+      if scene.isAlive(handle):
+        placed[handle] = placeObject(
+          scene.geometryOf(handle), scene.anchorOverrideAt(handle)
+        )
+    let eye = camera.eye
+    # Nearest ahead answers, and one behind is passed over however near it stands.
+    #   Eye stands one unit out at +x, so depths are five and thirty one.
+    check reachNearOf(placed, scene, eye, camera.frame.forward) =~ 5.0
+    # Hidden objects are not drawn, so they set no scale.
+    scene.setVisible(0, false)
+    check reachNearOf(placed, scene, eye, camera.frame.forward) =~ 31.0
+    # Nothing ahead at all reads zero, which hands scale back to separation.
+    scene.setVisible(2, false)
+    check reachNearOf(placed, scene, eye, camera.frame.forward) =~ 0.0
+
+  test "records' origin holds until travel spends float32's precision about it":
+    var camera = initCamera(ORIGIN, 19.0, 0.0, 0.0)
+    let eye_start = camera.eye
+    # Bound is quarter of near clip, divided by float32's own step.
+    let reach_hold = FRACTION_ORIGIN_HOLD*camera.distanceNear/STEP_SINGLE
+    check reach_hold > 1.0e5
+    check camera.originHeld(eye_start) =~ eye_start
+    # Travel well inside bound keeps origin exactly where it was.
+    camera.travel(0.5*reach_hold, 0.0, 0.0)
+    check camera.originHeld(eye_start) =~ eye_start
+    # Travel past it moves origin onto eye, once.
+    camera.travel(0.6*reach_hold, 0.0, 0.0)
+    let moved = camera.originHeld(eye_start)
+    check moved =~ camera.eye
+    check camera.originHeld(moved) =~ moved
+    # Close work draws bound in with near clip, so origin follows sooner.
+    camera.reach_near = 0.002
+    check FRACTION_ORIGIN_HOLD*camera.distanceNear/STEP_SINGLE < reach_hold
+
   test "a point is culled only where the frustum, sprite margin included, does not reach":
     # Bounds are camera's own frame; what is checked is test against them.
     let camera = initCamera(Position(x: 1, y: 2, z: 3), 10.0, 0.4, 0.3)
