@@ -4,7 +4,7 @@
 |---------|-------|
 | Harness | Claude Code |
 | Author  | Claude Fable 5.1 |
-| Date    | 2026-09-13 |
+| Date    | 2026-09-22 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | 874ef979b21fbc1e |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
@@ -43,6 +43,22 @@ Expressions are strings, fully parenthesised, because the header of the library 
 measurements are emitted. `^` is a template over `^∘` in the library, so the C carries only
 the latter. `TEMPLATES` records the pair, and the suite holds it to the source of the
 library. `MISSING` names the two conformal norms that the library declares as errors.
+
+`INLINED` names the symbols that the library spells as a template over a field read. Head
+made the component accessor `[]` a template, where it was a `func` with `{.inline.}`. The C
+therefore carries no function for it, and the emission suite passes over it. A suite holds
+`INLINED` to the source of the library, as it holds `TEMPLATES`. The gap row for
+`select_part` carries a dash for every count, and its verdict rests on time alone.
+
+The squared norms `|∙²` and `|∘²` are spelled in backticks, as `` (`|∙²`(m)) ``. The
+character `²` is no operator character to the lexer, so the prefix form splits it off as an
+identifier and `parseExpr` fails on it. These two operators carry no alias in the umbrella,
+so their alias field stands empty and the alias suite passes over them.
+
+Their cite is the
+equation that defines the norm. The squared quantity is what stands under its root. The
+suites of the library cite none. The reference returns the weight squared norm as an
+`Antiscalar`, so that widening puts it in the antiscalar slot where the library writes it.
 
 Verified by `trga4d.nim` and `tcga5d.nim`, suite `Catalogue`. Ids are unique. Every
 expression compiles against the library. The set of symbols equals the set of exported
@@ -214,12 +230,23 @@ got `81`, baseline `80`.
 **The PGA library is a pinned dependency, and never a copy.** It lives in [replications],
 which carries no nimble file and holds the library three directories inside it. So the
 requirement in `pga_benchmark.nimble` names the repository by URL and commit. `atlas.lock`
-records the resolved commit `0bc465509d1c93b6bec3ced25aa29f080a2cf110`, and `nim.cfg` names
+records the resolved commit `9f9019b26b46490f79f383eee693b1abc84a4f63`, and `nim.cfg` names
 the subdirectory that Atlas restores it to.
 
-That commit is the head of the library on 2026-09-12, as the standing instruction of the
+That commit is the head of the library on 2026-09-22, as the standing instruction of the
 Architect asks. Both projects are under the Prosperity Public License 3.0.0. Rejected: a copy
 of the library in this tree, which Article XI.3 forbids.
+
+**The bump from `0bc4655` moved the pin over two library changes that this project had to
+follow.** The library made the grade table private and read it from a generic `{}`. The umbrella
+module then failed to compile for every importer. The line `import pga` alone was enough to
+fail.
+
+The library then exported the table in `9f9019b`. The suites of the library did not
+catch this, because they import each module with `{.all.}` and never read the umbrella. The
+library also gained two operators, `|∙²` and `|∘²`, so the catalogue gained a measurand for
+each one. Verified by `trga4d.nim` and `tcga5d.nim`, suite `Catalogue`, which holds the
+catalogue to the exported surface of the library.
 
 **The compiler is pinned by commit**, `27763495bcfe265507ca98aedc1c7064bf1e0e4d`, which is
 the same pin that `rga_visualiser` carries. The library spells seven operators with
@@ -237,57 +264,95 @@ attribution rather than licence.
 
 ## Figures
 
-Every figure below was taken on 2026-09-13, in the container of that session: `linux amd64, 4
-cores`, a shared cloud machine. It ran on the pinned compiler and library head, with
+Every figure below was taken on 2026-09-22, in the container of that session: `linux amd64, 4
+cores`, a shared cloud machine. It ran on the pinned compiler and on library `9f9019b`, with
 `-d:release`. Runtime measurements are medians over 40 rounds of 1024 objects, from
-`nim r tools/build.nim bench`, in nanoseconds for each object. They move by tens of percent
-between runs on this machine. The sweep below timed 4D `∧` at 55 ns where the bench timed 35
-ns, so they rank and do not measure. Static measurements are from
+`nim r tools/build.nim bench`, in nanoseconds for each object. Static measurements are from
 `nim r tools/build.nim inspect`, and are exact for this compiler commit, with loop trips
 weighted.
 
+**The reference side is the drift control.** The bump of the pin does not touch the
+reference, because the reference is the code of this project. The reference medians moved by
+×1.38 at both algebras, between the baselines of 2026-09-13 and of 2026-09-22. The machine therefore
+gave back less than it did nine days before.
+
+Over the same pair the library medians moved by
+×1.15. Divide the drift out, and the library ran at about ×0.83 of its old cost. A
+comparison of raw medians across two days says the opposite. Read the two
+sides together, and never one alone.
+
 | Gap (rga4d) | Library ns | Reference ns | Mul | Div | Bytes moved | Checks |
 |---|---|---|---|---|---|---|
-| `wedge_point_point` (`∧`) | 29.7 | 2.8 | 81 / 12 | 0 / 0 | 512 / 112 | 178 / 0 |
-| `wedge_dot_anti_motor_motor` (`⟇`) | 51.1 | 11.6 | 192 / 48 | 0 / 0 | 512 / 256 | 400 / 0 |
-| `transform_point_motor` (three products) | 113.6 | 5.9 | – / 25 | – / 0 | – / 192 | – / 8 |
-| `norm_bulk_point` (`\|∙`) | 12.1 | 1.8 | 8 / 3 | 0 / 0 | 768 / 40 | 20 / 1 |
-| `unitize_point` (`^`) | 25.0 | 1.2 | 8 / 3 | 16 / 1 | 1152 / 128 | 54 / 0 |
-| `support_line` (`∩`) | 95.3 | 2.1 | 162 / 9 | 0 / 0 | 1664 / 112 | 375 / 1 |
-| `project_orthogonal_point_plane` | 94.9 | 4.8 | 135 / 14 | 0 / 0 | 1408 / 128 | 304 / 0 |
+| `wedge_point_point` (`∧`) | 40.4 | 3.8 | 81 / 12 | 0 / 0 | 512 / 112 | 0 / 0 |
+| `wedge_dot_anti_motor_motor` (`⟇`) | 72.3 | 16.0 | 192 / 48 | 0 / 0 | 512 / 256 | 0 / 0 |
+| `transform_point_motor` (three products) | 156.2 | 7.7 | – / 25 | – / 0 | – / 192 | – / 8 |
+| `norm_bulk_point` (`\|∙`) | 18.2 | 2.1 | 8 / 3 | 0 / 0 | 768 / 40 | 1 / 1 |
+| `norm_bulk_squared_point` (`\|∙²`) | 13.6 | 0.8 | 8 / 3 | 0 / 0 | 384 / 40 | 0 / 0 |
+| `unitize_point` (`^`) | 30.0 | 2.0 | 24 / 3 | 1 / 1 | 1152 / 128 | 18 / 0 |
+| `support_line` (`∩`) | 65.9 | 2.4 | 162 / 9 | 0 / 0 | 1664 / 112 | 3 / 1 |
+| `project_orthogonal_point_plane` | 53.4 | 4.9 | 135 / 14 | 0 / 0 | 1408 / 128 | 2 / 0 |
 
 | Gap (cga5d) | Library ns | Reference ns | Mul | Div | Bytes moved | Checks |
 |---|---|---|---|---|---|---|
-| `wedge_round_point_round_point` (`∧`) | 58.4 | 3.6 | 243 / 20 | 0 / 0 | 1024 / 160 | 518 / 0 |
-| `center_dipole` (`⊙`) | 209.0 | 3.7 | 486 / 16 | 0 / 0 | 4352 / 160 | 1104 / 1 |
-| `partner_circle` (`⊛`) | 399.6 | 4.3 | 1004 / 29 | 0 / 0 | 34560 / 320 | 2569 / 2 |
-| `carrier_sphere` (`■`) | 87.3 | 0.3 | 243 / 0 | 0 / 0 | 1792 / 48 | 519 / 0 |
+| `wedge_round_point_round_point` (`∧`) | 85.1 | 5.0 | 243 / 20 | 0 / 0 | 1024 / 160 | 0 / 0 |
+| `center_dipole` (`⊙`) | 142.3 | 3.5 | 486 / 16 | 0 / 0 | 4352 / 160 | 4 / 1 |
+| `partner_circle` (`⊛`) | 283.6 | 5.1 | 1004 / 29 | 0 / 0 | 34560 / 320 | 273 / 2 |
+| `carrier_sphere` (`■`) | 48.1 | 0.4 | 243 / 0 | 0 / 0 | 1792 / 48 | 1 / 0 |
+
+**What the bump moved, over the functions that both commits hold.** The pair is the static
+baseline of `0bc4655` against the static baseline of `9f9019b`, 118 functions at rga4d and
+138 at cga5d.
+
+| Count (common functions) | rga4d | cga5d |
+|---|---|---|
+| Error-flag checks | 4388 → 173 | 20032 → 683 |
+| Lines of C | 26975 → 2973 | 120745 → 8216 |
+| Divisions | 36 → 6 | 64 → 2 |
+| Calls | 222 → 175 | 842 → 747 |
+| Multiplies | 2154 → 2186 | 9045 → 9109 |
+| Bytes moved | 35600 → 35600 | 113728 → 113728 |
+| Zero fills | 114 → 114 | 362 → 362 |
+| Inline functions | 85 → 104 | 97 → 118 |
+
+The branches and the emitted C fell by an order. The arithmetic did not fall, and it rose by
+a little. Every multiply and every division that moved sits in two functions, `^∙` and `^∘`.
+At rga4d each one goes from 8 multiplies and 16 divisions to 24 multiplies and 1
+division. At cga5d each one goes from 32 and 32 to 64 and 1.
+
+Unitize now takes one reciprocal and
+multiplies, where it divided for each slot. Movement did not move at all. The dense
+representation still carries every byte it carried, and no gap closes on bytes.
 
 The emitted C of the library at 4D:
 
-- `∧` is one function of 1090 lines, 81 multiplies, 65 adds, one full-width zero fill and 178
-  error-flag branches;
-- `|` (norm) spends 16 multiplies, but zero-fills nine times and declares four intermediates,
-  and moves 1920 bytes for two doubles;
-- `^∘` (unitize) spends 8 multiplies and 16 divisions, through a loop that calls `[]` and
-  `/=` for each slot with a branch after each. That is 54 branches in all, where the
-  reference takes one reciprocal and 8 multiplies;
-- `scale` spends 16 multiplies, and `add` spends 48 branches for one loop of sixteen;
-- six of forty library functions are inline.
+- `∧` is one inline function of 17 lines, 81 multiplies, one full-width zero fill and no
+  error-flag branch. It held 1090 lines and 178 branches at `0bc4655`;
+- `|∙²`, which is new, is 2 lines and 8 multiplies, inline, with one zero fill and 384 bytes
+  moved. Its unsquared partner `|∙` is 15 lines and not inline. That partner spends three
+  zero fills and 768 bytes, because it takes a square root through a call;
+- `^∘` (unitize) spends 24 multiplies and 1 division over 83 lines, with 18 branches left,
+  where the reference takes one reciprocal and 8 multiplies;
+- `⊛` at cga5d is the widest function in the tree. It spends 2743 lines, 1004 multiplies,
+  119 zero fills, 273 branches and 34560 bytes moved. Its reference spends 29 multiplies;
+- 104 of 123 library functions at rga4d are inline, where 85 of 118 were.
 
 Allocation is zero on every measurand, in both implementations, with the gauge live.
 
-Scaling comes from `nim r tools/build.nim sweep`, rigid metric, general measurands, same
-method, same day. At two to six dimensions, `∧` is 2.9, 7.8, 55.0, 73.4, 203.4 ns. `⟑` is
-3.8, 14.2, 106.6, 177.1, 1383.4 ns, and `norm` is 4.1, 7.8, 60.2, 50.5, 92.8 ns. The 4D
-column of the sweep ran hot against the bench, so the shape is the figure, and not the
-values.
+Scaling comes from `nim r tools/build.nim sweep`, rigid metric, general measurands. At two to
+six dimensions, `∧` is 2.9, 7.8, 55.0, 73.4, 203.4 ns. `⟑` is 3.8, 14.2, 106.6, 177.1, 1383.4
+ns, and `norm` is 4.1, 7.8, 60.2, 50.5, 92.8 ns. The 4D column of the sweep ran hot against
+the bench, so the shape is the figure, and not the values. These numbers are from library
+`0bc4655` on 2026-09-13. Nobody swept the library again at `9f9019b`, because the sweep runs
+by hand, so read them as the shape alone.
 
-Error checks under `--panics:on` were measured by a compile of the bench entry with
-`--compileOnly`, and a count in its C. `∧` at 4D falls from 178 branches and 1090 lines to 0
-and 551. The `rotate` of the reference falls from 6 branches and one zero fill to none. That
-switch makes defects fatal, so whether the users of the library may take it is the call of
-the Architect. The guard measures the default.
+Error checks under `--panics:on` were measured at library `0bc4655` by a compile of the bench
+entry with `--compileOnly`, and a count in its C. `∧` at 4D fell from 178 branches and 1090
+lines to 0 and 551. That figure is now mostly spent. At `9f9019b` the default build emits no
+branch in `∧`. It emits 173 branches over the whole of rga4d, where it emitted 4388.
+
+The
+switch still makes defects fatal, so whether the users of the library may take it is the call
+of the Architect. The guard measures the default.
 
 A divide against a multiply by a reciprocal was measured on a 16-double array, over 1024
 objects and 40 rounds, as medians. Under `-d:danger` the in-place divide loop ran at 9.7 ns,
