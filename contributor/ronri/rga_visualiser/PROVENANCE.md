@@ -781,8 +781,12 @@ scratch until the fifth one overflows.
 
 **The undo timeline is the largest reservation that the binary makes.** A `Scene` at 5040
 handles is 1.15 MiB as a C struct, which `sizeof` reports as 1,204,616 bytes on the release
-compiler. A `Step` is a `Scene` beside a `Camera` of five floats, and `CAPACITY_HISTORY` is 32 of
-them. They reserve 36.8 MiB, which is 38,549,528 bytes, against 6.2 MiB for both mesh sets.
+compiler. A `Step` is a `Scene` beside a `Camera` of twelve floats, eight of them the motor, and
+`CAPACITY_HISTORY` is 32 of them. They reserve 36.8 MiB, which is 38,549,528 bytes, against 6.2 MiB
+for both mesh sets.
+
+The placing side of every handle is held beside them on both front-ends, so the local scale may be
+read without placing twice. It is 128 bytes for each of 5040 handles, which is 645,120 bytes.
 
 In the browser the same timeline is about 105 MB of JS heap. The live page measured 85 MB at
 load, before the placing stamps for each handle were added, and nothing has measured it again
@@ -1305,10 +1309,43 @@ unit wide.
 A strafe and a rise carry the pivot along instead. What stands ahead keeps its depth as the camera
 steps sideways.
 
-The separation is still one figure doing two jobs, the orbit and the frustum's scale. The design
-separates them, and the reach from the eye to the nearest drawn object is what the frustum and the
-furniture are to read. That waits for the stage that carries the frame rule, where the orbit's own
-reading is rebuilt anyway.
+**The frustum and the furniture read what stands ahead, and never the separation.**
+`Camera.reach_near` is the reach from the eye to the nearest drawn object ahead. `scaleLocal` hands
+it to the near clip, the far clip, the depth mapping and the furniture's extent. The separation
+answers only where nothing is drawn ahead, so an empty scene is unchanged.
+
+It is depth along the sight, and never distance. What a reader turns away from is not drawn, and a
+scale read off it would follow that.
+
+It is the object's own middle, with no drawn radius taken off. A camera at a planet's surface then
+reads that planet's radius rather than zero. A near clip of one four-hundredth of that still holds
+the whole planet.
+
+It is never the pointer's own depth, which `capTravelling` reads. `SettingsFurniture` compares
+exactly, so a pointer figure would rebuild the grid at every pointer move. It also feeds
+`depthLogScale`, so a pointer figure would move the depth mapping while the camera stood still.
+
+**It is read once for each frame, and never for each overlay call.** `reachNearOf` walks every
+placement, and `ensureViewOverlay` runs many times over one frame: the anchor, each marker, each
+pulse and the hover ring. Putting the walk there would have placed it inside a hold that exists to
+skip one derivation. An overlay call landing between frames reads the last frame's figure, as it
+already reads the last edit's `reach_scene`.
+
+The desktop gains the placement cache that the browser already holds, filled on an edit beside
+`reach_scene`. `assembleMeshes` still places as it emits, so neither path places twice for this.
+`BYTES_MEMORY_TOTAL` grows by one placement for each handle.
+
+**Records are stored from the eye, held where it stands.** `originHeld` keeps the origin until
+travel has spent float32's precision about it: `FRACTION_ORIGIN_HOLD` of the near clip, divided by
+`STEP_SINGLE`. That is about 152 thousand units at the opening stance, and less as close work draws
+the near clip in.
+
+The eye rather than the pivot, because free flight turns about the eye. A `look` swings the pivot
+through a whole arc while the eye stands, and what a reader is about to reach stands near the eye.
+
+Held rather than followed. An origin that moved every frame would rebuild every record of every held
+frame, which is what those holds exist to skip. One origin serves both mesh sets, because one
+transform draws them; see `initMatrixViewProjection`.
 
 **The wheel travels the pointer's own ray in free flight.** `anchorStandingAt` is the object answer
 of `anchorZoomAt` on its own. Free flight has no ground, so neither the ground answer nor the level
@@ -1335,7 +1372,12 @@ The separation then scales as the turntable's dolly scales it.
 - a held `w` with nothing selected lies along the sight, and spends the separation it covers;
 - a strafe leaves that separation alone;
 - the wheel with nothing selected travels the ray under the pointer, and not the sight axis;
-- 40 notches onto a point stop at its drawn radius, with the point held on its pixel.
+- 40 notches onto a point stop at its drawn radius, with the point held on its pixel;
+- the frustum takes its scale from the nearest drawn object, and hands it back at zero;
+- the far clip still reaches a scene 6.5 million units across, and both depth ends still land;
+- the nearest reach is read ahead of the eye, never behind it, and never from a hidden object;
+- the origin holds through half the bound, moves onto the eye past it, and then holds again;
+- the bound draws in with the near clip, so close work moves the origin sooner.
 
 Verified by driven checks:
 
@@ -1343,7 +1385,9 @@ Verified by driven checks:
   line;
 - the separation gave up that same 3.455 of 19.000;
 - eight notches low in the frame carried the separation from 19.00 to 4.47;
-- they left the eye 2.228 units off the sight axis, which a straight dolly cannot do.
+- they left the eye 2.228 units off the sight axis, which a straight dolly cannot do;
+- the opening page reads a local scale of 14.5620, and not the separation of 19.000;
+- 3.578 units of flight drew that scale to 10.9839, which is the same 3.578.
 
 ## Records and shaders
 
