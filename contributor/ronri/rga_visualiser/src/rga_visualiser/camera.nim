@@ -660,6 +660,22 @@ func travelToward*(camera: var Camera; factor: float; anchor: Position; floor_re
   camera.slideBy(wedge((reach - settled)/reach, toMultivector(offset)))
 
 
+func flyAhead*(camera: var Camera, step: float) =
+  ## Travel `step` units along sight, holding pivot where it stands in world.
+  ##   Separation follows, so frustum's scale and furniture's extent track flight.
+  ##     Sliding whole camera keeps separation, and near clip of stance reader set off
+  ##     from then ate planet before eye reached it: near is one four-hundredth of
+  ##     separation, which is fortieth of unit at opening stance, and planet is
+  ##     millionths wide.
+  ##   Same motion `dolly` makes, named in units rather than as factor: speed curve
+  ##   reports units, and factor would have to be read back out of them.
+  ##   Floored as every separation is; see `distanceHeld`.
+  ##   Strafe and rise carry pivot along instead, because what stands ahead keeps its
+  ##   depth as camera steps sideways.
+  camera.travel(step, 0.0, 0.0)
+  camera.depth_pivot = distanceHeld(camera.depth_pivot - step)
+
+
 func capTravelling*(depth_pointer: Option[float]; scale_local, haste: float): float =
   ## Read fastest free flight may travel right now, in units per second.
   ##   Smaller of two figures, as `SPEED_CEILING` says: local scale, and fixed ceiling.

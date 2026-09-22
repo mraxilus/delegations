@@ -907,10 +907,10 @@ func driveHeld*(
     case motion.get
     of Motion.Forward:
       if has_selection: camera.slideGround(slide, 0.0, 0.0)
-      else: camera.travel(step, 0.0, 0.0)
+      else: camera.flyAhead(step)
     of Motion.Back:
       if has_selection: camera.slideGround(-slide, 0.0, 0.0)
-      else: camera.travel(-step, 0.0, 0.0)
+      else: camera.flyAhead(-step)
     of Motion.Left:
       if has_selection: camera.slideGround(0.0, -slide, 0.0)
       else: camera.travel(0.0, -step, 0.0)

@@ -6863,6 +6863,22 @@ suite "Interaction":
     # Nothing turned: flight slides and never turns.
     check camera.frame.forward =~ axes_start.forward
     check camera.frame.axis_up =~ axes_start.axis_up
+    # Separation gives up exactly what eye covered, so pivot stands where it stood.
+    #   What keeps near clip and furniture's extent on scale reader flies into: near is
+    #   one four-hundredth of separation, and separation kept would hold that of stance
+    #   camera set off from.
+    check camera.distance =~ 20.0 - norm(step)
+    check camera.pivot =~ initCamera(ORIGIN, 20.0, 0.4, 0.9).pivot
+    check camera.distanceNear =~ camera.distance*FACTOR_CLIP_NEAR
+
+    # Strafe carries pivot along instead: what stands ahead keeps its depth.
+    var strafed = initCamera(ORIGIN, 20.0, 0.4, 0.9)
+    interaction.releaseKey(Key.W)
+    interaction.holdKey(Key.D)
+    interaction.driveHeld(strafed, 1.0, has_selection = false)
+    check strafed.distance =~ 20.0
+    interaction.releaseKey(Key.D)
+    interaction.holdKey(Key.W)
 
     # Space rises along camera's own up, which roll has tipped off world up.
     var lifted = initCamera(ORIGIN, 20.0, 0.4, 0.9)
