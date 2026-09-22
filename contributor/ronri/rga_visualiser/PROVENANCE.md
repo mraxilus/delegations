@@ -1096,6 +1096,18 @@ which is once for each frame rather than once for each object. `picking.pickWalk
 and the frame before its walk, and `drawExtentFor` hands every reader one extent. It is the trade
 that `mesh.directionAcross` already makes.
 
+**The view holds are keyed on what the camera holds, and never on what it reads out.**
+`SettingsFurniture` and the browser's `SettingsOverlay` both take the motor and the depth. Those are
+the stance itself, so two frames that agree on them agree on the eye, every axis, the pivot and both
+angles.
+
+A key built from the pivot and the two angles derives the eye and the frame for each field it reads.
+`CAMERA.pivot.x`, `.y` and `.z` are three derivations on their own. `ensureViewOverlay` runs for
+every overlay call, so such a key cost about eighteen sandwiches to decide whether to skip four.
+
+`drivePinAnchor` caught it. An anchor lookup went from 5.000 µs to 488.250 µs, against a band of
+100 µs. Keyed on the motor it reads 3.750 µs, which is under the 8 µs that the pin was repaired to.
+
 **An orbit distance has a floor and no ceiling.** `DISTANCE_LIMIT_NEAR` at 10⁻⁹ is geometry: at
 zero the eye coincides with its pivot, and every direction that `camera.frame` derives collapses.
 `distanceHeld` is the one statement of it.
@@ -1215,6 +1227,8 @@ Verified by driven checks:
 - the disc of the ecliptic reaches under a camera 1.5 units off Sol, 0.3 and 0.0003 rad up;
 - an object under the pointer drifts 0.000 px across a 3.2× zoom, against 1.957 px with the
   pivot-level anchor;
+- an anchor lookup stays a projection at 3.750 µs, where a key built from the read-out pivot and
+  angles took 488.250 µs;
 - a wheel back out returns to distance 19.000 and pivot (0, 0, 1);
 - a drag holds 1.000 to 1.000 of height, by mouse and by two fingers alike;
 - 500 ms of `w` moved the pivot 12.8 units with z unchanged to four decimals, and 49.3 under shift.
