@@ -18,6 +18,11 @@ const
   BANDS = [("low", Band.Torso), ("high", Band.Neck), ("above", Band.Crown)]
     ## Sheet's word for each band, in order report tabulates them.
   HALVES = [-4, -3, -2, -1, 0, 1, 2, 3, 4] ## Turns asked, in half turns.
+  RUNGS = [(0.5, "cross"), (1.0, "diamond"), (1.5, "swan")]
+    ## Name each rung of chain, in glossary's own words.
+    ##   Once said `X`, which sits on avoid line of **Cross**, while
+    ##     `design/parts` named same rung right: two namings of one chain, and
+    ##     only one of them correct.  `tests/tglossary` now reads both.
   WIDTH = 100 ## Columns report's prose wraps at.
 
 
@@ -282,7 +287,7 @@ proc chain(): string =
     "|---|---|---|---|---|---|\n"
   let links = twoLinks(Arm.Left, Arm.Right, Arm.Right, Arm.Left)
   for (word, band) in BANDS:
-    for (turn, rung) in [(0.5, "X"), (1.0, "diamond"), (1.5, "swan")]:
+    for (turn, rung) in RUNGS:
       var found = false
       for apart in stands(HUMAN):
         let (holds, c) = stood(HUMAN, band, links, turn, false, Body.Two, apart)
