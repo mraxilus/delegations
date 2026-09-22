@@ -16,10 +16,14 @@
 #
 #   Body and label names reach koch through environment, never interpolated into script, as
 #   `check.yml` does with branch and event kind: body is whatever somebody typed, and label
-#   names are theirs too. Labels arrive as JSON array, which is what `toJSON` emits and what
-#   koch parses; `join` cannot emit newline, having no escapes.
-#   `permissions` block is whole grant: `contents` is what checkout uses, and nothing else is
-#   needed, since every fact this reads is in event payload already.
+#   names are theirs too. Labels arrive as JSON array, which is what `--json labels` emits
+#   through `jq` and what koch parses.
+#   Labels are read through API rather than from event payload. Pull request carries no label
+#   at instant it opens, since GitHub sends `opened` before `labeled`, so payload's list was
+#   empty on that event and run reddened for every author whose label came late. API answers
+#   with labels that stand when check runs, and race is then nobody's to win.
+#   `permissions` block is whole grant: `contents` is what checkout uses, and `pull-requests`
+#   is what `gh pr view` uses.
 #   Version is driver's pin, as `check.yml` states it, and `toolchain.nim` holds both to it.
 
 name: role
@@ -30,6 +34,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 env:
   NIM_VERSION: '2.2.12'
@@ -44,11 +49,20 @@ jobs:
     env:
       BRANCH: ${{ github.head_ref }}
       ROLE_BODY: ${{ github.event.pull_request.body }}
-      ROLE_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
     steps:
       - uses: actions/checkout@v7
       - uses: jiro4989/setup-nim-action@v2
         with:
           nim-version: ${{ env.NIM_VERSION }}
           parent-nim-install-directory: ${{ runner.temp }}
-      - run: nim r koch role
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          # Read is its own assignment, since `set -e` takes substitution's exit only where no
+          #   command word follows: `ROLE_LABELS="$(gh ...)" nim ...` would swallow failed read
+          #   and run koch on empty list, which reports as missing label.
+          labels="$(gh pr view "$NUMBER" --repo "$REPO" --json labels --jq '[.labels[].name]')"
+          ROLE_LABELS="$labels" nim r koch role
