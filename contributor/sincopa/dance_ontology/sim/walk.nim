@@ -188,7 +188,7 @@ proc standing*(rig: Rig; band: Band; links: seq[Link]; turns: float;
   ##     that way in was one card meant.
   ##   Every distance is asked, and one at ease is taken over one that merely
   ##     holds.  First distance that held was taken before, and first is chest to
-  ##     chest: couple asked pillion there had her free arm crushed between two
+  ##     chest: couple asked pillion there had follow's free arm crushed between two
   ##     torsos, shoulder at its rope's end, twist at its end, waist at forty,
   ##     with nothing held -- couple would stand anywhere else.  Ties go to
   ##     nearer distance, as before.

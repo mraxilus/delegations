@@ -78,7 +78,7 @@ func dofName(dof: Dof): string =
   of Dof.Wrist: "wrist"
 
 func whose(h: Hand): string =
-  if h.body == Body.One: "the lead's" else: "the follow's"
+  if h.body == Body.One: "lead's" else: "follow's"
 
 func why(w: Walk): string =
   ## Say what refuses, in few words that page can show.
@@ -116,13 +116,13 @@ func frame(m: Moment; band: Band; links: seq[Link]): JsonNode =
   let cross = crossings(m.arms)
   for i in 0 ..< links.len:
     let
-      him = m.arms[i][armOf(links, i, Body.One)]
-      her = m.arms[i][armOf(links, i, Body.Two)]
+      lead = m.arms[i][armOf(links, i, Body.One)]
+      follow = m.arms[i][armOf(links, i, Body.Two)]
     var cj = %*{
-      "him": [mm(him.s), mm(him.e), mm(him.w), mm(him.g)],
-      "her": [mm(her.g), mm(her.w), mm(her.e), mm(her.s)],
-      "himSays": said(lyingOn(HUMAN, band, links, m.stance, m.arms, i, Body.One), band),
-      "herSays": said(lyingOn(HUMAN, band, links, m.stance, m.arms, i, Body.Two), band)}
+      "lead": [mm(lead.s), mm(lead.e), mm(lead.w), mm(lead.g)],
+      "follow": [mm(follow.g), mm(follow.w), mm(follow.e), mm(follow.s)],
+      "leadSays": said(lyingOn(HUMAN, band, links, m.stance, m.arms, i, Body.One), band),
+      "followSays": said(lyingOn(HUMAN, band, links, m.stance, m.arms, i, Body.Two), band)}
     if i == 0 and cross.len > 0:
       var overs = newJArray()
       for c in cross:

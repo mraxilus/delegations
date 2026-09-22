@@ -62,8 +62,8 @@ func dofName(dof: Dof): string =
   of Dof.Wrist: "wrist"
 
 func whose(h: Hand): string =
-  ## Name arm verdict is about: his or hers.
-  if h.body == Body.One: "his" else: "her"
+  ## Name arm verdict is about: lead's or follow's.
+  if h.body == Body.One: "lead's" else: "follow's"
 
 func why(w: Walk): string =
   ## Say what refuses, in words.
@@ -92,12 +92,14 @@ func strainWord(t: Tight): string =
   let s = formatFloat(t.strain, ffDecimal, 2)
   if t.strain >= 1.0: s & " (at edge)" elif t.strain >= 0.7: s & " (near it)" else: s
 
-func blockLine(w: Walk; sign: string): string =
+func blockLine(w: Walk; sign: string; apart = true): string =
   ## Say where sweep blocks one way and why, and how far apart couple stood for it.
   ##   Kept short: two of these sit in one table row under audit's hundred columns.
+  ##   Stance is dropped where row names it, since repeating it there says nothing.
+  let stood = if apart: &", {turns(w.apart)} m apart" else: ""
   if not w.stopped:
-    return &"{sign}: free to {turns(MOST)} turns, {turns(w.apart)} m apart"
-  &"{sign}{turns(w.at)}, {turns(w.apart)} m apart: {why(w)}"
+    return &"{sign}: free to {turns(MOST)} turns{stood}"
+  &"{sign}{turns(w.at)}{stood}: {why(w)}"
 
 func blocks(sw: Swept): string =
   ## Say both blocks of sweep as one wrapped paragraph.
@@ -185,7 +187,8 @@ proc singleHolds(): string =
         result.add "No pose holds at the rest.\n\n"
         continue
       result.add blocks(sw)
-      result.add "| turn | her arm | his arm | strain | hands at |\n|---|---|---|---|---|\n"
+      result.add "| turn | follow's arm | lead's arm | strain | hands at |\n" &
+        "|---|---|---|---|---|\n"
       for h in HALVES:
         let t = h.float / 2.0
         let m = momentAt(sw, t)
@@ -207,9 +210,9 @@ proc floorClaim(): string =
   ## Tabulate floor's claim beside sim's answer.
   result.add "## The floor's claim\n\n"
   result.add prose("The floor: *everything gets a full turn before it blocks, except a low " &
-    "wrap, which gets half.*  L-l and L-r, turning her, from face-to-face.  For L-l the " &
-    "lock way is negative and the wrap way positive; for L-r the wrap way is negative and " &
-    "the lock way positive.")
+    "wrap, which gets half.*  L-l and L-r, turning the follow, from Face-to-face.  For L-l " &
+    "the lock way is negative and the wrap way positive; for L-r the wrap way is negative " &
+    "and the lock way positive.")
   result.add "| hold | level | way | floor says | sim says | the sim names |\n" &
     "|---|---|---|---|---|---|\n"
   for (a, b, name, lockSign) in [(Arm.Left, Arm.Left, "L-l", -1.0),
@@ -244,7 +247,7 @@ proc pairHolds(): string =
         result.add "No pose holds at the rest.\n\n"
         continue
       result.add blocks(sw)
-      result.add "| turn | her first arm | her second arm | crossings | strain |\n" &
+      result.add "| turn | follow's first arm | follow's second arm | crossings | strain |\n" &
         "|---|---|---|---|---|\n"
       for h in HALVES:
         let t = h.float / 2.0
@@ -315,7 +318,7 @@ proc drawnRow(drawn: string; links: seq[Link]; who: Body; turn: float; band: Ban
 proc drawnStates(): string =
   ## Tabulate every state whole-cloth page draws.
   result.add "## The states the whole-cloth page draws\n\n"
-  result.add "| drawn as | turned | holds | her arm | his arm | strain |\n" &
+  result.add "| drawn as | turned | holds | follow's arm | lead's arm | strain |\n" &
     "|---|---|---|---|---|---|\n"
   result.add drawnRow("Left to left, open",
     oneLink(Arm.Left, Arm.Left), Body.Two, 0.0, Band.Torso)
@@ -329,9 +332,9 @@ proc drawnStates(): string =
     oneLink(Arm.Left, Arm.Left), Body.Two, -1.0, Band.Neck)
   result.add drawnRow("Left to left @ above, +1",
     oneLink(Arm.Left, Arm.Left), Body.Two, 1.0, Band.Crown)
-  result.add drawnRow("Left-Lock-Low to left, him turned -1",
+  result.add drawnRow("Left-Lock-Low to left, lead turned -1",
     oneLink(Arm.Left, Arm.Left), Body.One, -1.0, Band.Torso)
-  result.add drawnRow("Left-Lock-Low to left, him turned +1",
+  result.add drawnRow("Left-Lock-Low to left, lead turned +1",
     oneLink(Arm.Left, Arm.Left), Body.One, 1.0, Band.Torso)
   result.add "\n"
 
@@ -339,8 +342,8 @@ proc drawnStates(): string =
 proc standing(): string =
   ## Tabulate block at three stances told, beside one couple choose.
   result.add "## Standing closer, and further\n\n"
-  result.add prose("L-l low, turning her, at three stances told rather than chosen: what " &
-    "the block does when the couple are made to step in or out.  The row above them is " &
+  result.add prose("L-l low, turning the follow, at three stances told rather than chosen: " &
+    "what the block does when the couple are made to step in or out.  The row above them is " &
     "where they stand when left to choose.")
   result.add "| apart | lock way | wrap way |\n|---|---|---|\n"
   let links = oneLink(Arm.Left, Arm.Left)
@@ -351,7 +354,8 @@ proc standing(): string =
     if not sw.restHolds:
       result.add &"| {apart} m | no rest | |\n"
       continue
-    result.add &"| {apart} m | {blockLine(sw.neg, \"-\")} | {blockLine(sw.pos, \"+\")} |\n"
+    result.add &"| {apart} m | {blockLine(sw.neg, \"-\", apart = false)} | " &
+      &"{blockLine(sw.pos, \"+\", apart = false)} |\n"
   result.add "\n"
 
 
