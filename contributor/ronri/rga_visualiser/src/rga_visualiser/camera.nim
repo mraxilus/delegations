@@ -103,6 +103,14 @@ const
     ##   Fixed plane cannot: view's extent grows with distance while plane does not, so
     ##   dollying out brings line's far end inside frame, and clips pivot away once eye
     ##   orbits past it.
+  STEP_SINGLE* = 1.0/16_777_216.0
+    ## Fix float32's own relative step, which is two to power of minus twenty-four.
+    ##   Position stored `r` from records' origin carries about `r*STEP_SINGLE` of error.
+  FRACTION_ORIGIN_HOLD* = 0.25
+    ## Spend at most this fraction of near clip on float32 error about records' origin.
+    ##   Nothing nearer than near clip is drawn, so near clip is finest thing on screen,
+    ##   and quarter of it is error no reader resolves.
+    ##   Sets how far camera travels before origin follows; see `originHeld`.
   FRACTION_VIEW_CENTRED* = 2.0/3.0
     ## Fix fraction of frame that counts as being looked at.
     ##   This much of height, and this much of width *or height, whichever is less*;
@@ -143,6 +151,39 @@ const
   FACTOR_HASTE* = 4.0 ## Multiply every rate above by this while shift is held.
     ## Shift means *faster* on every movement key rather than something different on
     ## each: what Blender, Unity, Unreal and Godot all do.
+  ROLL_SECOND* = 1.4 ## Angle held roll key turns sight axis through per second, in radians.
+    ## Same rate as `TURN_SECOND`: both are turns of whole view, and reader learns one feel.
+
+const
+  ## Fix speed curve free flight accelerates along while movement key is held.
+  ##   Held key climbs toward cap and never reaches it, so reader crosses decades of scale
+  ##   with one key rather than reaching for haste at every one.
+  ##   Cap is smaller of two figures, and `capTravelling` takes that minimum.
+  SECONDS_SPEED_RISE* = 0.6
+    ## Set time constant of climb toward cap, in seconds of holding.
+    ##   Speed reaches 63 percent of cap at this, 95 percent at three of these.
+    ##   Sized so tap of quarter second still moves camera about third of cap's rate,
+    ##   while hold of two seconds is at full rate.
+  FACTOR_SPEED_LOCAL* = 1.2
+    ## Cap speed at this many depths under pointer per second.
+    ##   Reader pointing at moon crosses moon's own distance in same time as one pointing
+    ##   at star crosses star's, so one key serves every scale in orrery.
+    ##   Equals `SLIDE_SECOND`, which was flat rate ground slide ran at, so long hold
+    ##   settles on speed that build already had.
+  SPEED_CEILING* = 300_000.0
+    ## Cap speed at this many units per second, whatever pointer reports.
+    ##   Reached where pointer is over empty sky, which has no depth to scale by.
+    ##   Crosses star field's reach of about 6.5 million units in about 22 seconds, so
+    ##   farthest catalogued star is minute away and nothing is unreachable.
+    ##   Fixed rather than read from scene: `reach_scene` is stamped by whoever owns scene,
+    ##   and speed that changed as objects were added would be speed nobody learns.
+  SPEED_LIGHT* = 1.0/499.0
+    ## Fix speed of light in this world's own units, at one unit one astronomical unit.
+    ##   Light crosses astronomical unit in 499 seconds; see `orrery.nim`.
+    ##   Reporting unit alone. Panel divides speed by this, so reader reads multiple of
+    ##   `c` rather than units per second, which matches scale bar's own reading.
+    ##   Never cap: `SPEED_CEILING` is about 1.5e8 of these, and camera held to `c` would
+    ##   take two and half hours to cross opening view of 19 units.
 
 
 
@@ -173,6 +214,15 @@ type
       ##   readings of one spelling, so spelling is withdrawn and `dolly`, `dollyTo` and
       ##   `repivotToDepth` say which is meant.
     degrees_field_of_view*: float ## Vertical field of view, in degrees.
+    reach_near*: float ## How far nearest drawn object stands ahead of eye, along sight.
+      ## Scale frustum and furniture take, in place of separation from pivot; see
+      ## `scaleLocal`.
+      ##   Zero where nothing is drawn ahead, which hands scale back to separation.
+      ##   Stamped by whoever owns scene, as `reach_scene` is, and once for each frame
+      ##   rather than for each overlay call: it reads every placement, and
+      ##   `ensureViewOverlay` runs many times over one frame.
+      ##   Depth along sight rather than distance, and never behind eye: what reader turned
+      ##   away from is not drawn, and scale read off it would follow that.
     reach_scene*: float ## How far farthest finite object stands from world origin.
       ## Disc's own reach included; zero for empty scene, which leaves far clip scaled alone.
       ## Stamped by whoever owns scene at each derivation point, from `framing.reachOf`;
@@ -297,6 +347,20 @@ func initCameraDefault*(): Camera =
   )
 
 
+func scaleLocal*(camera: Camera): float =
+  ## Read distance frustum and furniture take their scale from.
+  ##   Reach to nearest drawn object where one is stamped, and separation from pivot where
+  ##   none is.
+  ##     Separation alone kept scale of stance reader set off from: near clip is one
+  ##     four-hundredth of it, and camera flying from opening stance at planet met that
+  ##     plane long before planet.
+  ##     Never pointer's own depth, which `capTravelling` reads: `SettingsFurniture`
+  ##     compares exactly, so pointer figure would rebuild grid at every pointer move, and
+  ##     would move `depthLogScale` while camera stood still.
+  ##   Held off zero, since every reader divides or scales by it.
+  if camera.reach_near > 0.0: camera.reach_near else: max(camera.distance, DISTANCE_LIMIT_NEAR)
+
+
 func distanceFar*(camera: Camera): float =
   ## Read far bound depth's logarithm spans and horizon stands within; see `distanceNear`
   ##   for why derived. Nothing clips at it: see `initMatrixProjection`.
@@ -305,14 +369,14 @@ func distanceFar*(camera: Camera): float =
   ##   Ratio to near is unbounded; `depthOf` is what makes that affordable.
   let eye = camera.eye
   let away = sqrt(eye.x*eye.x + eye.y*eye.y + eye.z*eye.z)
-  max(camera.distance*FACTOR_CLIP_FAR, away + camera.reach_scene*MARGIN_REACH_FAR)
+  max(camera.scaleLocal*FACTOR_CLIP_FAR, away + camera.reach_scene*MARGIN_REACH_FAR)
 
 
 func distanceNear*(camera: Camera): float =
   ## Read nearest depth clip volume keeps.
-  ##   Derived from orbit distance rather than stored, so it cannot go stale through dolly.
-  ##   One four-hundredth of orbit distance; see `FACTOR_CLIP_NEAR`.
-  camera.distance*FACTOR_CLIP_NEAR
+  ##   Derived from local scale rather than stored, so it cannot go stale through dolly.
+  ##   One four-hundredth of that scale; see `FACTOR_CLIP_NEAR` and `scaleLocal`.
+  camera.scaleLocal*FACTOR_CLIP_NEAR
 
 
 func depthLogScale*(camera: Camera): float =
@@ -548,6 +612,156 @@ func slideGround*(camera: var Camera; ahead, across, rise: float) =
 
 
 
+#[ Camera Flight ]#
+
+func turnedAboutEye(camera: Camera; along: Direction, radians: float): Motor =
+  ## Turn stance about line through eye along `along`, leaving eye where it stands.
+  ##   Axis is join of eye with direction, so turn fixes eye and carries every axis.
+  ##     Same construction `motorTurntable` turns about, with eye where pivot was.
+  ##   Composed on left, so angle is read in world rather than in reference stance.
+  ##   Falls back to stance standing where direction is weightless, which carried axis
+  ##   never is.
+  let axis = toMultivector(camera.eye) ∧ toMultivector(along)
+  let turn = turnAbout(axis, radians)
+  if turn.isNone: return camera.motor
+  motorOf(wedgeDotAnti(turn.get, toMultivector(camera.motor)))
+
+
+func look*(camera: var Camera; turn, rise: float) =
+  ## Turn which way eye faces, leaving eye where it stands.
+  ##   Arguments read as `orbit`'s do, so one drag feeds either verb unchanged: `turn`
+  ##   swings sight as azimuth does, `rise` raises eye's own reading as elevation does.
+  ##     Signs match `motorTurntable`, which turns by `+azimuth` about up and `-elevation`
+  ##     about across.
+  ##   Axes are camera's own, never world's, so there is no pole and no clamp.
+  ##     Yaw about world up would tip sight as roll accumulated, and would stall at pole.
+  ##   Pivot rides along, since it is read off sight line: free flight turns about eye, and
+  ##   nothing anchors what `distance` separates from.
+  ##   Frame is read again between two turns. Across axis after yaw is not across axis
+  ##   before it, and pitching about stale one tips up axis off sight: that is roll nobody
+  ##   asked for.
+  camera.motor = camera.turnedAboutEye(camera.frame.axis_up, turn)
+  camera.motor = camera.turnedAboutEye(camera.frame.axis_right, -rise)
+
+
+func roll*(camera: var Camera, radians: float) =
+  ## Turn camera about its own sight axis, leaving eye and sight direction alone.
+  ##   Positive tips up axis toward across axis, which reader reads as clockwise roll.
+  ##   Only verb reaching sixth degree of freedom. Turntable had none: `motorTurntable`
+  ##   rebuilds from four numbers, and roll is not one of them.
+  camera.motor = camera.turnedAboutEye(camera.frame.forward, radians)
+
+
+func travel*(camera: var Camera; ahead, across, rise: float) =
+  ## Slide camera along its own three axes, leaving which way it faces alone.
+  ##   World units, unlike `slideGround` and `pan`, which take fractions of separation.
+  ##     Caller scales: free flight reads its own speed curve, which has no separation in
+  ##     it; see `speedTravelling`.
+  ##   `ahead` dives where sight dives, unlike `slideGround`, which skims ground.
+  let axes = camera.frame
+  camera.slideBy(add(
+    add(
+      wedge(ahead, toMultivector(axes.forward)),
+      wedge(across, toMultivector(axes.axis_right)),
+    ),
+    wedge(rise, toMultivector(axes.axis_up)),
+  ))
+
+
+func travelAlong*(camera: var Camera; step: float; heading: Direction) =
+  ## Slide camera by `step` units along `heading`, leaving which way it faces alone.
+  ##   For wheel travelling pointer's own ray, which is no axis of camera's frame.
+  ##   Caller hands unit direction; length of one passed in scales step with it.
+  camera.slideBy(wedge(step, toMultivector(heading)))
+
+
+func travelToward*(camera: var Camera; factor: float; anchor: Position; floor_reach: float) =
+  ## Carry eye along its own line to `anchor`, scaling what separates them by `factor`.
+  ##   Whatever stands at `anchor` keeps its pixel, on same reading `dollyToward` holds:
+  ##   sight direction never moves, so point on view ray is still on it afterwards.
+  ##   Floor is reach caller names, object's own drawn radius where object stands there,
+  ##   so wheel stops at its surface rather than carrying eye through it.
+  ##     Floor never pushes eye out: it applies only where eye is already further out.
+  ##   Separation from pivot is left to caller, which knows anchor's own depth.
+  let
+    offset = anchor - camera.eye
+    reach = norm(offset)
+  if reach <= 0.0: return
+  let settled = max(reach*factor, min(max(floor_reach, DISTANCE_LIMIT_NEAR), reach))
+  camera.slideBy(wedge((reach - settled)/reach, toMultivector(offset)))
+
+
+func flyAhead*(camera: var Camera, step: float) =
+  ## Travel `step` units along sight, holding pivot where it stands in world.
+  ##   Separation follows, so frustum's scale and furniture's extent track flight.
+  ##     Sliding whole camera keeps separation, and near clip of stance reader set off
+  ##     from then ate planet before eye reached it: near is one four-hundredth of
+  ##     separation, which is fortieth of unit at opening stance, and planet is
+  ##     millionths wide.
+  ##   Same motion `dolly` makes, named in units rather than as factor: speed curve
+  ##   reports units, and factor would have to be read back out of them.
+  ##   Floored as every separation is; see `distanceHeld`.
+  ##   Strafe and rise carry pivot along instead, because what stands ahead keeps its
+  ##   depth as camera steps sideways.
+  camera.travel(step, 0.0, 0.0)
+  camera.depth_pivot = distanceHeld(camera.depth_pivot - step)
+
+
+func originHeld*(camera: Camera, origin: Position): Position =
+  ## Say where records are stored from, given where they were stored from last.
+  ##   Eye, held where it stands until travel spends float32's precision about it.
+  ##     Eye rather than pivot: free flight turns about eye, so pivot swings through whole
+  ##     arc while eye stands, and what reader is about to reach stands near eye.
+  ##     Records are float32, and one stored `r` out carries about `r*STEP_SINGLE`.
+  ##   Held rather than followed: origin that moved every frame rebuilt every record of
+  ##   every held frame, which is what those holds exist to skip.
+  ##   Bound is `FRACTION_ORIGIN_HOLD` of near clip, divided by float32's step: about 199
+  ##   thousand units at opening stance, and less as close work draws near clip in.
+  ##   One origin for both mesh sets, since one transform draws them; see
+  ##   `initMatrixViewProjection`.
+  let
+    eye = camera.eye
+    reach = norm(eye - origin)
+  if reach*STEP_SINGLE <= FRACTION_ORIGIN_HOLD*camera.distanceNear: origin else: eye
+
+
+func capTravelling*(depth_pointer: Option[float]; scale_local, haste: float): float =
+  ## Read fastest free flight may travel right now, in units per second.
+  ##   Smaller of two figures, as `SPEED_CEILING` says: local scale, and fixed ceiling.
+  ##   Haste scales both, so shift is still one multiplier on every rate.
+  ##   Local scale is depth under pointer where pointer is over something, and camera's
+  ##   own scale where it is over empty sky.
+  ##     Ceiling alone over empty sky threw reader out of solar system in half second:
+  ##     ceiling bounds local reading, and is no reading of its own.
+  ##   Depths held off negative: pointer behind eye is no reading, and camera at floor
+  ##   would otherwise freeze rather than crawl.
+  let reach =
+    if depth_pointer.isSome: max(depth_pointer.get, 0.0) else: max(scale_local, 0.0)
+  min(FACTOR_SPEED_LOCAL*reach*haste, SPEED_CEILING*haste)
+
+
+func speedTravelling*(seconds_held, cap: float): float =
+  ## Read speed hold of `seconds_held` has climbed to, in units per second.
+  ##   Cap times `1 - exp(-t/SECONDS_SPEED_RISE)`, so cap is approached and never reached.
+  ##   Panel's reading, and nothing else: `distanceTravelled` is what moves camera.
+  cap*(1.0 - exp(-max(seconds_held, 0.0)/SECONDS_SPEED_RISE))
+
+
+func distanceTravelled*(seconds_before, seconds_after, cap: float): float =
+  ## Read distance one hold covers between two of its own ages, in units.
+  ##   Integral of `speedTravelling` across that span, written out rather than sampled.
+  ##     Speed at one end times frame's length is wrong by square of frame's length, so
+  ##     144 Hz reader would part from 60 Hz one over same hold. Same rule `dolly`
+  ##     compounds under; see `FACTOR_DOLLY_SECOND`.
+  ##   Suite holds sum of halves equal to whole, and holds long hold to cap times span
+  ##   less cap times time constant.
+  let (before, after) = (max(seconds_before, 0.0), max(seconds_after, 0.0))
+  cap*((after - before) + SECONDS_SPEED_RISE*(
+    exp(-after/SECONDS_SPEED_RISE) - exp(-before/SECONDS_SPEED_RISE)
+  ))
+
+
+
 #[ Camera Frame ]#
 
 type SettingsFurniture* = tuple
@@ -565,7 +779,7 @@ type SettingsFurniture* = tuple
   ##     Reading pivot and both angles out to key on them costs eighteen sandwiches, and
   ##     hold exists to save less work than that; see `drivePinAnchor`.
   motor: Motor
-  distance, degrees_field_of_view, reach_scene: float
+  distance, degrees_field_of_view, reach_near, reach_scene: float
   height_pixels: int
   is_axes_shown, is_grid_shown: bool
 
@@ -577,8 +791,8 @@ func settingsFurnitureFor*(
   ##   Compared exactly by callers: question is whether anything moved at all.
   ##   Every field is plain read, so key costs nothing to build.
   (
-    camera.motor, camera.distance, camera.degrees_field_of_view, camera.reach_scene,
-    height_pixels, is_axes_shown, is_grid_shown,
+    camera.motor, camera.distance, camera.degrees_field_of_view, camera.reach_near,
+    camera.reach_scene, height_pixels, is_axes_shown, is_grid_shown,
   )
 
 
@@ -598,8 +812,8 @@ func drawExtentFor*(camera: Camera, height_pixels: int): DrawExtent =
   #   One derivation point shared with every hand-built extent.
   algebraFilled(DrawExtent(
     scale: DrawScale(
-      # Furniture follows orbit distance, not scene's reach; see `mesh.extentFurnitureFor`.
-      extent_furniture: extentFurnitureFor(camera.distance*FACTOR_CLIP_FAR),
+      # Furniture follows local scale, not scene's reach; see `mesh.extentFurnitureFor`.
+      extent_furniture: extentFurnitureFor(camera.scaleLocal*FACTOR_CLIP_FAR),
       eye: eye,
       radius_horizon: radiusHorizonFor(camera.distanceFar),
       forward: frame.forward,

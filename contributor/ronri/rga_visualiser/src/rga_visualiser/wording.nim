@@ -112,7 +112,7 @@ type Wording* = enum
   HelpDragEmpty, HelpOrbit, HelpSlideSideways, HelpWheel, HelpMoveToward,
   HelpDragEmptyOrCrowd, HelpPinch, HelpMoveCloser, HelpDragTwoFingers,
   HelpEscape, HelpBackOut, HelpUndoRedoKeys, HelpUndoRedo, HelpTab, HelpMoveFocus,
-  HelpSlideGround, HelpLowerRaise, HelpFurtherCloser, HelpBackIntoView,
+  HelpTravel, HelpRoll, HelpLowerRaise, HelpFurtherCloser, HelpBackIntoView,
   HelpHighlightPrevNext, HelpSelectHighlighted, HelpCameraHome
 
 
@@ -350,7 +350,7 @@ const lut_wording_to_text: array[Wording, cstring] = [
   HelpWriteRead: "write the whole scene to a file, or read one back",
   HelpFurniture: "show or hide the reference furniture, leaving the scene alone",
   HelpDragEmpty: "drag empty space",
-  HelpOrbit: "orbit the view around what you are looking at",
+  HelpOrbit: "turn the view, or orbit whatever is selected",
   HelpSlideSideways: "slide the view sideways and up or down",
   HelpWheel: "wheel",
   HelpMoveToward: "move toward or away from whatever you point at",
@@ -364,7 +364,8 @@ const lut_wording_to_text: array[Wording, cstring] = [
   HelpUndoRedo: "undo, then redo, the last change to the scene",
   HelpTab: "tab",
   HelpMoveFocus: "move focus between the controls and the 3D view",
-  HelpSlideGround: "slide the view across the ground; hold shift to move faster",
+  HelpTravel: "fly the view forward, back and sideways; hold shift to move faster",
+  HelpRoll: "roll the view to either side",
   HelpLowerRaise: "lower or raise the view",
   HelpFurtherCloser: "move further out, or closer in",
   HelpBackIntoView: "bring whatever is selected back into view",

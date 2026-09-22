@@ -1,6 +1,6 @@
 // Page's own script-scope names harness drives; not Nim because these are what browser holds
 //   at run time, and only TypeScript can state them to type-checker.
-//   Bridge's 157 exports are *not* here: they are derived into `build/bridge.d.ts` by
+//   Bridge's exports are *not* here: they are derived into `build/bridge.d.ts` by
 //   `tools/build.nim declare`, so no signature of theirs is written twice.
 //   These are exception, hand-written because nothing derives them: they live in
 //   `src/browser/*.ts` at script scope, which no generator reads yet.

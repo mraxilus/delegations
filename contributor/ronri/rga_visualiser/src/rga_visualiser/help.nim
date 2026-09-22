@@ -148,7 +148,7 @@ const lut_help_entries* = block:
   ##   once in order, so split path renders as two tabs of same name.
   ##   Every cell is `wording`'s key, or composed by `wording`'s func from one; row whose
   ##   action names button or key composes it, so button's name is `interaction`'s alone.
-  var lut: array[39 + COUNT_OPERATION, HelpEntry]
+  var lut: array[40 + COUNT_OPERATION, HelpEntry]
   var count = 0
   proc add(path: HelpPath; action: string; outcome: Wording; is_touch = false) =
     lut[count] = HelpEntry(
@@ -240,9 +240,12 @@ const lut_help_entries* = block:
   add(
     HelpPath.Keys,
     namesJoined([nameOf(Key.W), nameOf(Key.A), nameOf(Key.S), nameOf(Key.D)]),
-    HelpSlideGround,
+    HelpTravel,
   )
-  add(HelpPath.Keys, namesJoined([nameOf(Key.Q), nameOf(Key.E)]), HelpLowerRaise)
+  add(HelpPath.Keys, namesJoined([nameOf(Key.Q), nameOf(Key.E)]), HelpRoll)
+  add(
+    HelpPath.Keys, namesJoined([nameOf(Key.Space), nameOf(Key.Control)]), HelpLowerRaise
+  )
   add(
     HelpPath.Keys,
     namesJoined([nameOf(Key.Left), nameOf(Key.Right), nameOf(Key.Up), nameOf(Key.Down)]),

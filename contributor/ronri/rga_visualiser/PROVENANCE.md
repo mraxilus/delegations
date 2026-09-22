@@ -781,8 +781,12 @@ scratch until the fifth one overflows.
 
 **The undo timeline is the largest reservation that the binary makes.** A `Scene` at 5040
 handles is 1.15 MiB as a C struct, which `sizeof` reports as 1,204,616 bytes on the release
-compiler. A `Step` is a `Scene` beside a `Camera` of five floats, and `CAPACITY_HISTORY` is 32 of
-them. They reserve 36.8 MiB, which is 38,549,528 bytes, against 6.2 MiB for both mesh sets.
+compiler. A `Step` is a `Scene` beside a `Camera` of twelve floats, eight of them the motor, and
+`CAPACITY_HISTORY` is 32 of them. They reserve 36.8 MiB, which is 38,549,528 bytes, against 6.2 MiB
+for both mesh sets.
+
+The placing side of every handle is held beside them on both front-ends, so the local scale may be
+read without placing twice. It is 128 bytes for each of 5040 handles, which is 645,120 bytes.
 
 In the browser the same timeline is about 105 MB of JS heap. The live page measured 85 MB at
 load, before the placing stamps for each handle were added, and nothing has measured it again
@@ -1231,9 +1235,159 @@ Verified by driven checks:
   angles took 488.250 µs;
 - a wheel back out returns to distance 19.000 and pivot (0, 0, 1);
 - a drag holds 1.000 to 1.000 of height, by mouse and by two fingers alike;
-- 500 ms of `w` moved the pivot 12.8 units with z unchanged to four decimals, and 49.3 under shift.
 
-Assumed: that no reader wants a ceiling.
+Assumed: that no reader wants a ceiling on the separation.
+
+## Free flight
+
+**Two states, and an empty selection picks between them.** With nothing selected the camera flies:
+`look`, `roll` and `travel` turn and slide about its own axes. With a selection it keeps the
+turntable.
+
+**Flight turns about a line through the eye.** `turnedAboutEye` joins the eye with a carried axis
+and turns about that line, so the eye stands where it stands and the frame stays orthonormal.
+`look` reads the frame again between its two turns. The across axis after a yaw is not the across
+axis before it. A pitch about the stale one tips the up axis off the sight, which is a roll nobody
+asked for.
+
+`look` takes the two arguments that `orbit` takes, with the same signs, so one drag feeds either
+verb as the selection comes and goes. Signs that disagreed would reverse the gesture the moment a
+reader selected something.
+
+The axes are the camera's own and never the world's, so there is no pole and no clamp. Eight pitches
+of a quarter radian compose to exactly two radians, which is past straight down.
+
+**Roll is granted only where it survives.** `orbit` rebuilds the stance from four turntable numbers
+and carries no roll. A roll taken with something selected is wiped by the next orbit event, so Q and
+E do nothing there until the frame rule lands. Nothing is lost by that: the turntable has no sixth
+degree of freedom to lose.
+
+**The speed climbs toward a cap and never reaches it.** `speedTravelling` is the cap times
+`1 − e^(−t/τ)`. τ is `SECONDS_SPEED_RISE`, 0.6 s: 63 percent of the cap at one τ, and 95 percent at
+three.
+
+`distanceTravelled` integrates that across a frame rather than sampling it. A 144 Hz reader and a
+60 Hz one then cover the same ground over the same hold. It is the rule that `FACTOR_DOLLY_SECOND`
+already compounds under.
+
+The cap is the smaller of a local scale and a fixed ceiling. The local scale is
+`FACTOR_SPEED_LOCAL`, 1.2 depths under the pointer for each second. That is the flat rate the ground
+slide ran at, so a long hold settles on the speed the build already had. A reader pointing at a moon
+crosses the moon's own distance in the time a reader pointing at a star crosses the star's.
+
+Over empty sky the pointer reports no depth, and the camera's own scale answers instead. The ceiling
+alone there threw the reader out of the solar system in half a second. It covered 51 055 units
+against a band of 4 to 25. The ceiling bounds a local reading, and is no reading of its own.
+
+`SPEED_CEILING` is 300 000 units for each second. It crosses the reach of the star field, about 6.5
+million units, in about 22 seconds.
+
+`SPEED_LIGHT` is 1/499 units for each second, because light crosses an astronomical unit in 499
+seconds. It is a reporting unit and never a cap. The ceiling is about 1.5 × 10⁸ of it. A camera held
+to *c* would take two and a half hours to cross the opening view of 19 units.
+
+**The depth under the pointer is stamped in `updateHover`, and stamped through flight.**
+`Interaction.depth_pointer` is none where the pointer is over nothing. The pick runs while a travel
+key is held, as well as while the camera stands. The cap then follows the pointer rather than
+freezing where the key went down. The ring stays off while the camera moves, as it did before. That
+costs one pick for each frame of flight, which is what a still frame already pays.
+
+`seconds_travelling` is one age for the whole travel set, and not one for each key. Releasing `w`
+and pressing `s` keeps the speed up, which is what a reader means by turning round mid-flight.
+`releaseKey` drops it to zero once the last travel key is up, so a flight taken up again after a
+pause starts from rest.
+
+**Flight ahead spends the separation, and a strafe carries it along.** `flyAhead` slides the eye
+along the sight and holds the pivot where it stands, so the separation gives up exactly what the eye
+covered. The frustum and the furniture read that separation, so both track the flight.
+
+Sliding the whole camera instead keeps the separation. The near clip of the stance the reader set
+off from then eats a planet before the eye reaches it. The near plane is one four-hundredth of the
+separation. That is a fortieth of a unit at the opening stance, against a planet millionths of a
+unit wide.
+
+A strafe and a rise carry the pivot along instead. What stands ahead keeps its depth as the camera
+steps sideways.
+
+**The frustum and the furniture read what stands ahead, and never the separation.**
+`Camera.reach_near` is the reach from the eye to the nearest drawn object ahead. `scaleLocal` hands
+it to the near clip, the far clip, the depth mapping and the furniture's extent. The separation
+answers only where nothing is drawn ahead, so an empty scene is unchanged.
+
+It is depth along the sight, and never distance. What a reader turns away from is not drawn, and a
+scale read off it would follow that.
+
+It is the object's own middle, with no drawn radius taken off. A camera at a planet's surface then
+reads that planet's radius rather than zero. A near clip of one four-hundredth of that still holds
+the whole planet.
+
+It is never the pointer's own depth, which `capTravelling` reads. `SettingsFurniture` compares
+exactly, so a pointer figure would rebuild the grid at every pointer move. It also feeds
+`depthLogScale`, so a pointer figure would move the depth mapping while the camera stood still.
+
+**It is read once for each frame, and never for each overlay call.** `reachNearOf` walks every
+placement, and `ensureViewOverlay` runs many times over one frame: the anchor, each marker, each
+pulse and the hover ring. Putting the walk there would have placed it inside a hold that exists to
+skip one derivation. An overlay call landing between frames reads the last frame's figure, as it
+already reads the last edit's `reach_scene`.
+
+The desktop gains the placement cache that the browser already holds, filled on an edit beside
+`reach_scene`. `assembleMeshes` still places as it emits, so neither path places twice for this.
+`BYTES_MEMORY_TOTAL` grows by one placement for each handle.
+
+**Records are stored from the eye, held where it stands.** `originHeld` keeps the origin until
+travel has spent float32's precision about it: `FRACTION_ORIGIN_HOLD` of the near clip, divided by
+`STEP_SINGLE`. That is about 152 thousand units at the opening stance, and less as close work draws
+the near clip in.
+
+The eye rather than the pivot, because free flight turns about the eye. A `look` swings the pivot
+through a whole arc while the eye stands, and what a reader is about to reach stands near the eye.
+
+Held rather than followed. An origin that moved every frame would rebuild every record of every held
+frame, which is what those holds exist to skip. One origin serves both mesh sets, because one
+transform draws them; see `initMatrixViewProjection`.
+
+**The wheel travels the pointer's own ray in free flight.** `anchorStandingAt` is the object answer
+of `anchorZoomAt` on its own. Free flight has no ground, so neither the ground answer nor the level
+one is offered to it.
+
+Where an object stands under the pointer, `travelToward` carries the eye along its line to that
+object and holds it on its pixel. The floor is the object's drawn radius, so a run of notches stops
+at its surface. Where nothing stands there, `headingThrough` gives the ray and the eye travels it.
+The separation then scales as the turntable's dolly scales it.
+
+*Checked.* Verified by `suites.nim`:
+
+- a look turns the sight about the camera's own axes and leaves the eye where it stands;
+- eight pitches of a quarter radian compose to exactly two radians, where `orbit` stops at its
+  clamp;
+- a look and an orbit swing the sight the same way, for both signs of the drag;
+- a roll leaves the eye and the sight alone, and 64 steps of a whole turn return every axis;
+- a travel step reads back along the rolled frame, to each of the three axes it was asked for;
+- the speed is monotone and under its cap over four seconds, at 0.6321 and 0.9502 of it after one
+  and three time constants;
+- 120 frames of one span cover what one frame of it covers, at three spans;
+- the cap takes the depth under the pointer, the camera's own scale where there is none, and the
+  ceiling where either is large;
+- a held `w` with nothing selected lies along the sight, and spends the separation it covers;
+- a strafe leaves that separation alone;
+- the wheel with nothing selected travels the ray under the pointer, and not the sight axis;
+- 40 notches onto a point stop at its drawn radius, with the point held on its pixel;
+- the frustum takes its scale from the nearest drawn object, and hands it back at zero;
+- the far clip still reaches a scene 6.5 million units across, and both depth ends still land;
+- the nearest reach is read ahead of the eye, never behind it, and never from a hidden object;
+- the origin holds through half the bound, moves onto the eye past it, and then holds again;
+- the bound draws in with the near clip, so close work moves the origin sooner.
+
+Verified by driven checks:
+
+- 500 ms of `w` on the opening page moved the eye 3.455 units, 0.000000 of them across the sight
+  line;
+- the separation gave up that same 3.455 of 19.000;
+- eight notches low in the frame carried the separation from 19.00 to 4.47;
+- they left the eye 2.228 units off the sight axis, which a straight dolly cannot do;
+- the opening page reads a local scale of 14.5620, and not the separation of 19.000;
+- 3.578 units of flight drew that scale to 10.9839, which is the same 3.578.
 
 ## Records and shaders
 
@@ -2415,9 +2569,10 @@ rebound**, because that would trap the reader (WCAG 2.1.2). Traversal took the b
 
 | Key | Does | Kind |
 |---|---|---|
-| `w` `a` `s` `d` | slide the view across the ground | held |
-| `q` / `e` | lower / raise it | held |
-| arrows | orbit | held |
+| `w` `a` `s` `d` | fly the view, or slide it across the ground where something is selected | held |
+| `q` / `e` | roll to either side, where nothing is selected | held |
+| `space` / `ctrl` | raise / lower it | held |
+| arrows | turn the view, or orbit whatever is selected | held |
 | `-` / `+` | dolly out / in | held |
 | `shift` | multiply every rate by `FACTOR_HASTE` | held |
 | `[` / `]` | focus the previous / next object | press |
@@ -2427,8 +2582,18 @@ rebound**, because that would trap the reader (WCAG 2.1.2). Traversal took the b
 
 `motionFor` and `actionFor` split by **kind**. A motion runs in every frame that its key is down
 (`driveHeld`), and an action runs once at the press. The bindings follow Unity, Unreal, Godot and
-Blender: WASD, Q/E, shift for faster, and F to frame. The one fork is made the way of a map: the
-view *slides* across the ground, and the height never changes.
+Blender: WASD, shift for faster, and F to frame.
+
+**Every motion key reads by state, and an empty selection is what picks the state.** With nothing
+selected the camera flies, and with a selection it drives the turntable that the stage carrying the
+frame rule replaces. `driveHeld` takes the state as a parameter, because the selection belongs to
+each front-end and not to `interaction`.
+
+Q and E took the roll. That is the sixth degree of freedom free flight opens, and the only pair of
+keys a hand already rests on. Space and control took the raise and the lower that Q and E had.
+
+Both control keys are bound, as both shift keys already were. The accelerators read the modifier
+bitmask instead, so binding the press and the release here takes nothing from them.
 
 `releaseKeysAll` empties the held set on a blur, on the tab being hidden, and when a panel widget
 takes the keyboard (`gui.wantsKeys`). Plain `s` moved to `ctrl+s`. The keyboard navigation of Dear

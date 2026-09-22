@@ -206,12 +206,14 @@ type
     ## `Shift` is key rather than flag threaded through every call.
     ##   Held exactly as movement keys are, so one mechanism carries direction and speed.
     W, A, S, D, Q, E, F,
-    Left, Right, Up, Down, BracketLeft, BracketRight, Minus, Plus, Enter, Home, Shift
+    Left, Right, Up, Down, BracketLeft, BracketRight, Minus, Plus, Enter, Home, Shift,
+    Space, Control
 
   Motion* {.pure.} = enum ## Define way view keeps moving while key is held.
     ## Separate from `KeyAction`: motion is applied every frame its key is down, by
     ## `driveHeld`; action happens once, at press.
     Forward, Back, Left, Right, Down, Up,
+    RollLeft, RollRight,
     OrbitLeft, OrbitRight, OrbitUp, OrbitDown,
     DollyIn, DollyOut
 
@@ -295,6 +297,16 @@ type
       ## Orbit or pan drag, or two fingers on canvas.
       ##   Each render path owns its drag state and says so here.
       ## Distinct from `is_dragging`, construction drag that keeps hovering.
+    depth_pointer*: Option[float] ## Depth of what pointer is over, from eye along sight.
+      ## Local scale free flight caps its speed by; see `camera.capTravelling`.
+      ##   None where pointer is over nothing, which leaves fixed ceiling alone.
+      ## Stamped in `updateHover`, where scene is in hand, and stamped while travel key is
+      ## held as well as while camera stands, so cap follows pointer through flight.
+    seconds_travelling*: float ## How long current travel hold has lasted, in seconds.
+      ## Speed climbs with this, and resets to zero on frame no travel key is held; see
+      ## `driveHeld`.
+      ##   Held here rather than per key, so releasing W and pressing S keeps speed up:
+      ##   what reader means by turning round mid-flight.
     keys_held*: set[Key] ## Physical keys down right now, which `driveHeld` moves camera by
       ## once per frame.
       ## Set so two keys held together compose without enumerating pairs.
@@ -321,9 +333,11 @@ func motionFor*(key: Key): Option[Motion] =
   ## Say which way one key keeps moving view while held, or none where it moves nothing.
   ##   Half of binding table; `actionFor` is other half.
   ##     `help.nim` renders keyboard rows out of both, so rebinding key rewrites help.
-  ##   WASD slides across ground, arrows orbit.
+  ##   WASD travels, arrows orbit.
   ##     Every editor binding WASD (Unity, Unreal, Godot, Blender fly mode) means "move" by
-  ##     it; Q and E lower and raise.
+  ##     it; space and control raise and lower, and Q and E roll.
+  ##     Q and E lowered and raised before roll had key. Roll is sixth degree of freedom
+  ##     free flight opens, and only pair of keys either hand already rests on.
   ##     Shift changes no direction; it multiplies every rate by `FACTOR_HASTE`; see
   ##     `driveHeld`.
   ##   Total by construction: every key answers, so suite can walk whole table.
@@ -332,8 +346,10 @@ func motionFor*(key: Key): Option[Motion] =
   of Key.S: some(Motion.Back)
   of Key.A: some(Motion.Left)
   of Key.D: some(Motion.Right)
-  of Key.Q: some(Motion.Down)
-  of Key.E: some(Motion.Up)
+  of Key.Q: some(Motion.RollLeft)
+  of Key.E: some(Motion.RollRight)
+  of Key.Space: some(Motion.Up)
+  of Key.Control: some(Motion.Down)
   of Key.Left: some(Motion.OrbitLeft)
   of Key.Right: some(Motion.OrbitRight)
   of Key.Up: some(Motion.OrbitUp)
@@ -342,6 +358,14 @@ func motionFor*(key: Key): Option[Motion] =
   of Key.Plus: some(Motion.DollyIn)
   of Key.F, Key.BracketLeft, Key.BracketRight, Key.Enter, Key.Home, Key.Shift:
     none(Motion)
+
+
+const MOTIONS_TRAVEL* = {
+  Motion.Forward, Motion.Back, Motion.Left, Motion.Right, Motion.Up, Motion.Down
+}
+  ## Name every motion speed curve drives, as against turns and dollies at flat rates.
+  ##   Read through `isTravelling`, so binding table above stays only place saying which
+  ##   key is which motion.
 
 
 func actionFor*(key: Key): Option[KeyAction] =
@@ -358,7 +382,7 @@ func actionFor*(key: Key): Option[KeyAction] =
   of Key.F: some(KeyAction.FrameSelection)
   of Key.Home: some(KeyAction.ViewHome)
   of Key.W, Key.A, Key.S, Key.D, Key.Q, Key.E, Key.Left, Key.Right, Key.Up, Key.Down,
-      Key.Minus, Key.Plus, Key.Shift:
+      Key.Minus, Key.Plus, Key.Shift, Key.Space, Key.Control:
     none(KeyAction)
 
 
@@ -383,6 +407,8 @@ func nameOf*(key: Key): string =
   of Key.Plus: "+"
   of Key.Enter: "enter"
   of Key.Home: "home"
+  of Key.Space: "space"
+  of Key.Control: "ctrl"
 
 
 func armingOf*(button: PointerButton): Option[MenuArming] =
@@ -636,6 +662,15 @@ func isMovingCamera*(interaction: Interaction): bool =
   false
 
 
+func isTravelling*(interaction: Interaction): bool =
+  ## Report whether key driving speed curve is held right now.
+  ##   Turns and dollies run at flat rates and are not travel; see `MOTIONS_TRAVEL`.
+  for key in interaction.keys_held:
+    let motion = motionFor(key)
+    if motion.isSome and motion.get in MOTIONS_TRAVEL: return true
+  false
+
+
 proc updateHover*(
   interaction: var Interaction; scene: Scene; camera: Camera; scale: DrawExtent;
   view_projection: Matrix4; width, height: int; placed: openArray[Placement] = []
@@ -645,15 +680,31 @@ proc updateHover*(
   ##     Hover is recomputed every frame, so pan drag would highlight across every object
   ##     it sweeps, and held W would light up whatever slides under still cursor.
   ##     Ring comes back frame move ends.
-  if interaction.is_enabled and not interaction.isMovingCamera:
+  ##   Pick still runs while travel key is held, and its answer is kept as depth alone.
+  ##     Free flight caps its speed by depth under pointer, and cap follows pointer
+  ##     through flight rather than freezing where key went down.
+  ##     Costs one pick per frame of flight, which is what still frame already pays.
+  ##     Ring stays off, so reader sees no highlight sweeping past.
+  let is_standing = not interaction.isMovingCamera
+  if interaction.is_enabled and (is_standing or interaction.isTravelling):
     let report = pickAt(
       scene, camera, scale, view_projection, width, height, interaction.cursor, placed,
     )
-    interaction.index_hover = report.handle
-    interaction.count_hover_rivals = report.count_rivals
+    interaction.index_hover = if is_standing: report.handle else: none(int)
+    interaction.count_hover_rivals = if is_standing: report.count_rivals else: 0
+    interaction.depth_pointer = none(float)
+    if report.handle.isSome:
+      let found = positionUnderPointerOn(
+        scene, report.handle.get, camera, scale, width, height, interaction.cursor,
+      )
+      # Depth along sight, not distance: speed curve travels forward, and that is what
+      #   forward has to cross.
+      if found.isSome:
+        interaction.depth_pointer = some(dot(found.get - scale.eye, scale.forward))
   else:
     interaction.index_hover = none(int)
     interaction.count_hover_rivals = 0
+    interaction.depth_pointer = none(float)
   # Note backdrop here, where scene is in hand; see `is_hover_backdrop`.
   interaction.is_hover_backdrop =
     interaction.index_hover.isSome and
@@ -666,13 +717,41 @@ proc updateHover*(
 proc dollyAt*(
   camera: var Camera; scene: Scene; factor: float; scale: DrawExtent;
   view_projection: Matrix4; width, height: int; cursor: ScreenPosition;
-  placed: openArray[Placement] = []
+  has_selection: bool; placed: openArray[Placement] = []
 ) =
   ## Zoom camera by `factor` toward whatever `cursor` is over; see `dollyAtCursor`.
   ##   Cursor is parameter so pinch, which has no cursor, aims at frame's middle through
   ##   same rule; see `dollyAtCentre`.
+  ##   Two states, as `driveHeld` has.
+  ##     Free flight travels pointer's own ray, always. Object under pointer is what eye
+  ##     comes in to, floored at that object's drawn radius; ray itself carries eye where
+  ##     nothing stands there.
+  ##     Selection keeps turntable's dolly, which stage carrying frame rule replaces.
   # Take caller's extent and matrix, not fresh derivations per notch; see
   #   `picking.anchorZoomAt`.
+  if not has_selection:
+    let standing = anchorStandingAt(
+      scene, camera, scale, view_projection, width, height, cursor, placed,
+    )
+    if standing.isSome:
+      camera.travelToward(factor, standing.get.at, standing.get.floor_reach)
+      # Separation follows anchor's own depth, so frustum's scale tracks flight.
+      #   Crossing as well as standing object: free flight has no orbit for pivot to
+      #   anchor, so depth here is scale and nothing else.
+      let depth = dot(standing.get.at - camera.eye, camera.frame.forward)
+      if depth > 0.0: camera.repivotToDepth(depth)
+      return
+    # Nothing under pointer: same ray carries eye, at camera's own scale, and separation
+    #   scales with it exactly as `dolly` scales it.
+    let heading = headingThrough(camera, camera.frame, width, height, cursor)
+    let reach = norm(heading)
+    if reach <= 0.0: return
+    let settled = distanceHeld(camera.distance*factor)
+    camera.travelAlong(
+      (camera.distance - settled)/reach, heading
+    )
+    camera.repivotToDepth(settled)
+    return
   let anchor = anchorZoomAt(
     scene, camera, scale, view_projection, width, height, cursor, placed,
   )
@@ -689,7 +768,8 @@ proc dollyAt*(
 
 proc dollyAtCentre*(
   camera: var Camera; scene: Scene; factor: float; scale: DrawExtent;
-  view_projection: Matrix4; width, height: int; placed: openArray[Placement] = []
+  view_projection: Matrix4; width, height: int; has_selection: bool;
+  placed: openArray[Placement] = []
 ) =
   ## Zoom camera by `factor` toward whatever middle of frame is over; pinch's zoom.
   ##   Pinch has two fingers and no pointer, and zooming at their midpoint translated
@@ -697,13 +777,13 @@ proc dollyAtCentre*(
   ##   through `dollyAt` so pivot still lands on point or line there.
   dollyAt(
     camera, scene, factor, scale, view_projection, width, height,
-    ScreenPosition(x: float(width)/2.0, y: float(height)/2.0), placed,
+    ScreenPosition(x: float(width)/2.0, y: float(height)/2.0), has_selection, placed,
   )
 
 
 proc dollyAtCursor*(
   interaction: Interaction; camera: var Camera; scene: Scene; factor: float;
-  scale: DrawExtent; view_projection: Matrix4; width, height: int;
+  scale: DrawExtent; view_projection: Matrix4; width, height: int; has_selection: bool;
   placed: openArray[Placement] = []
 ) =
   ## Zoom camera by `factor`, toward whatever cursor is over.
@@ -714,7 +794,7 @@ proc dollyAtCursor*(
   ##   Where anchor is point or line, pivot then follows its depth along sight line; see
   ##   `camera.repivotToDepth` and `picking.AnchorZoom`.
   dollyAt(camera, scene, factor, scale, view_projection, width, height, interaction.cursor,
-    placed)
+    has_selection, placed)
 
 
 func panAcross*(
@@ -769,7 +849,10 @@ func holdKey*(interaction: var Interaction, key: Key) =
 func releaseKey*(interaction: var Interaction, key: Key) =
   ## Note key as let go of.
   ##   Harmless on key not held, which is what release arriving after `releaseKeysAll` is.
+  ##   Drops speed curve's age once last travel key is up, so flight taken up again after
+  ##   pause starts from rest rather than from speed it left off at.
   interaction.keys_held.excl(key)
+  if not interaction.isTravelling: interaction.seconds_travelling = 0.0
 
 
 func releaseKeysAll*(interaction: var Interaction) =
@@ -778,9 +861,12 @@ func releaseKeysAll*(interaction: var Interaction) =
   ##   Not nicety: release of key held at that moment is delivered elsewhere, so without
   ##   this camera moves forever.
   interaction.keys_held = {}
+  interaction.seconds_travelling = 0.0
 
 
-func driveHeld*(interaction: Interaction, camera: var Camera, seconds: float) =
+func driveHeld*(
+  interaction: var Interaction; camera: var Camera; seconds: float; has_selection: bool
+) =
   ## Move camera by every key currently held, for one frame of `seconds`.
   ##   Called once per frame by both render paths rather than at each key event.
   ##     Makes hold read as continuous movement rather than OS auto-repeat, and lets two
@@ -788,28 +874,67 @@ func driveHeld*(interaction: Interaction, camera: var Camera, seconds: float) =
   ##   Every rate is per second, multiplied by `seconds`, so travel depends on how long key
   ##   was held rather than how fast machine draws.
   ##     Dolly compounds, so it takes `FACTOR_DOLLY_SECOND` to power of elapsed seconds.
+  ##     Travel integrates its own speed curve; see `camera.distanceTravelled`.
   ##     Shift multiplies every rate by `FACTOR_HASTE`.
+  ##   Two states, and `has_selection` picks between them.
+  ##     Empty selection flies: travel and turn are about camera's own axes, and roll is
+  ##     reachable.
+  ##     Selection keeps turntable, which stage carrying frame rule replaces. Roll is
+  ##     refused there rather than granted and lost: `camera.orbit` rebuilds stance from
+  ##     four turntable numbers, and rebuild carries no roll, so roll then orbit would
+  ##     snap view upright.
+  # Age travel hold before reading it, so speed climbs across frames, and drop it to zero
+  #   frame no travel key is held.
+  let age_before = interaction.seconds_travelling
+  interaction.seconds_travelling =
+    if interaction.isTravelling: age_before + seconds else: 0.0
   if interaction.keys_held.len == 0: return
   let
     haste = if Key.Shift in interaction.keys_held: FACTOR_HASTE else: 1.0
     turn = TURN_SECOND*haste*seconds
     rise = RISE_SECOND*haste*seconds
+    spin = ROLL_SECOND*haste*seconds
     slide = SLIDE_SECOND*haste*seconds
     dolly = pow(FACTOR_DOLLY_SECOND, haste*seconds)
+    # One step for this frame, integrated across hold's own two ages.
+    step = distanceTravelled(
+      age_before, interaction.seconds_travelling,
+      capTravelling(interaction.depth_pointer, camera.distance, haste),
+    )
   for key in interaction.keys_held:
     let motion = motionFor(key)
     if motion.isNone: continue
     case motion.get
-    of Motion.Forward: camera.slideGround(slide, 0.0, 0.0)
-    of Motion.Back: camera.slideGround(-slide, 0.0, 0.0)
-    of Motion.Left: camera.slideGround(0.0, -slide, 0.0)
-    of Motion.Right: camera.slideGround(0.0, slide, 0.0)
-    of Motion.Down: camera.slideGround(0.0, 0.0, -slide)
-    of Motion.Up: camera.slideGround(0.0, 0.0, slide)
-    of Motion.OrbitLeft: camera.orbit(-turn, 0.0)
-    of Motion.OrbitRight: camera.orbit(turn, 0.0)
-    of Motion.OrbitUp: camera.orbit(0.0, rise)
-    of Motion.OrbitDown: camera.orbit(0.0, -rise)
+    of Motion.Forward:
+      if has_selection: camera.slideGround(slide, 0.0, 0.0)
+      else: camera.flyAhead(step)
+    of Motion.Back:
+      if has_selection: camera.slideGround(-slide, 0.0, 0.0)
+      else: camera.flyAhead(-step)
+    of Motion.Left:
+      if has_selection: camera.slideGround(0.0, -slide, 0.0)
+      else: camera.travel(0.0, -step, 0.0)
+    of Motion.Right:
+      if has_selection: camera.slideGround(0.0, slide, 0.0)
+      else: camera.travel(0.0, step, 0.0)
+    of Motion.Down:
+      if has_selection: camera.slideGround(0.0, 0.0, -slide)
+      else: camera.travel(0.0, 0.0, -step)
+    of Motion.Up:
+      if has_selection: camera.slideGround(0.0, 0.0, slide)
+      else: camera.travel(0.0, 0.0, step)
+    of Motion.RollLeft:
+      if not has_selection: camera.roll(-spin)
+    of Motion.RollRight:
+      if not has_selection: camera.roll(spin)
+    of Motion.OrbitLeft:
+      if has_selection: camera.orbit(-turn, 0.0) else: camera.look(-turn, 0.0)
+    of Motion.OrbitRight:
+      if has_selection: camera.orbit(turn, 0.0) else: camera.look(turn, 0.0)
+    of Motion.OrbitUp:
+      if has_selection: camera.orbit(0.0, rise) else: camera.look(0.0, rise)
+    of Motion.OrbitDown:
+      if has_selection: camera.orbit(0.0, -rise) else: camera.look(0.0, -rise)
     of Motion.DollyIn: camera.dolly(1.0/dolly)
     of Motion.DollyOut: camera.dolly(dolly)
 

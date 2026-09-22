@@ -226,11 +226,12 @@ const
   BYTES_MEMORY_TOTAL* =
     CAPACITY_ARENA_PERMANENT + CAPACITY_ARENA_FRAME + 2*CAPACITY_ARENA_SWAP +
     2*sizeof(MeshSet) + sizeof(Scene) + sizeof(History) + sizeof(Panel) +
-    FRAMES_TIMING_MAX*sizeof(float32)
+    FRAMES_TIMING_MAX*sizeof(float32) + OBJECTS_MAX*sizeof(Placement)
     ## Sum every fixed-size reservation this binary makes.
     ##   Both arenas at full capacity, committed in data segment regardless of use; both
     ##   mesh sets; object pool; undo timeline, `history.CAPACITY_HISTORY` whole copies of
     ##   that pool; panel's state; `--timings` buffer.
+    ##   Placing side of every handle, held on edit for local scale to read.
     ##   Excludes anything Dear ImGui, SDL or driver allocate.
     ##   Timeline is largest term at capacity; figure omitting its biggest entry is worse
     ##   than none.
@@ -294,6 +295,18 @@ var TIMINGS_FRAME_MILLISECONDS: array[FRAMES_TIMING_MAX, float32]
 #   stamped onto camera each frame rather than kept in it: `home` replaces camera value.
 var REVISION_REACH = none(int)
 var REACH_SCENE = 0.0
+# Placing side for every live handle, held as browser holds it; see `bridge.ensurePlacement`.
+#   Filled on edit alone, beside `REACH_SCENE`, and read once per frame by `reachNearOf`.
+#   `assembleMeshes` still places as it emits: this holds no vertices and replaces no walk.
+#   Costs `OBJECTS_MAX` placements of fixed reservation, counted by `BYTES_MEMORY_TOTAL`.
+var PLACEMENTS: array[OBJECTS_MAX, Placement]
+var ORIGIN_RECORDS = Position(x: 0.0, y: 0.0, z: 0.0)
+  ## Point every record is stored from; see `camera.originHeld` and `mesh.clearMeshes`.
+  ##   One value for both mesh sets, because one transform draws them.
+var REACH_NEAR = 0.0
+  ## Reach to nearest drawn object ahead of eye; see `camera.scaleLocal`.
+  ##   Moves with camera as well as with scene, so it is read once for each frame rather
+  ##   than on edit.
 
 
 
@@ -471,13 +484,13 @@ proc assembleMeshes(
   )
   if SETTINGS_FURNITURE_HELD.isNone or SETTINGS_FURNITURE_HELD.get != settings_furniture:
     SETTINGS_FURNITURE_HELD = some(settings_furniture)
-    MESHES_FURNITURE.clearMeshes(camera.pivot)
+    MESHES_FURNITURE.clearMeshes(ORIGIN_RECORDS)
     if panel.is_grid_shown:
       MESHES_FURNITURE.addGrid(scratch[0], scale.extentFurniture, scale)
     if panel.is_axes_shown:
       MESHES_FURNITURE.addAxes(scratch[0], scale.extentFurniture, scale)
 
-  MESHES.clearMeshes(camera.pivot) # About pivot; see `mesh.clearMeshes`.
+  MESHES.clearMeshes(ORIGIN_RECORDS) # About held origin; see `ORIGIN_RECORDS`.
   # Emit horizon plane's dome first, before anything sharing translucent veil pass.
   #   Veil runs draw in append order, unsorted by depth, so dome first guarantees every
   #   ordinary plane's fill blends over it whatever handle either occupies.
@@ -867,8 +880,18 @@ proc renderFrame(
   # Measure scene's reach on edit, so far clip follows; see `camera.distanceFar`.
   if REVISION_REACH != some(scene.revision):
     REACH_SCENE = reachOf(scene)
+    for handle in 0 ..< scene.bound:
+      if scene.isAlive(handle):
+        PLACEMENTS[handle] = placeObject(
+          scene.geometryOf(handle), scene.anchorOverrideAt(handle),
+        )
     REVISION_REACH = some(scene.revision)
   camera.reach_scene = REACH_SCENE
+  # Read local scale once for this frame, before extent reads clip planes off it.
+  REACH_NEAR = reachNearOf(PLACEMENTS, scene, camera.eye, camera.frame.forward)
+  camera.reach_near = REACH_NEAR
+  # Decide records' origin after scale, since bound is read off near clip.
+  ORIGIN_RECORDS = camera.originHeld(ORIGIN_RECORDS)
 
   let scale = camera.drawExtentFor(int(height))
   offerCameraAim(panel, scene, camera, scale, now, int(width), int(height))
@@ -961,6 +984,11 @@ func keyFor(scancode: uint32): Option[Key] =
   elif scancode == uint32(Scancode.ShiftLeft) or scancode == uint32(Scancode.ShiftRight):
     # Take either shift key, since reader holds whichever hand is free; see `Scancode`.
     some(Key.Shift)
+  elif scancode == uint32(Scancode.Space): some(Key.Space)
+  elif scancode == uint32(Scancode.ControlLeft) or
+      scancode == uint32(Scancode.ControlRight):
+    # Take either control key, on same reading as shift.
+    some(Key.Control)
   elif scancode == uint32(Scancode.Left): some(Key.Left)
   elif scancode == uint32(Scancode.Right): some(Key.Right)
   elif scancode == uint32(Scancode.Up): some(Key.Up)
@@ -1155,7 +1183,7 @@ proc handleEvent(
       camera, scene, pow(FACTOR_DOLLY, -float(event.wheel.y)),
       camera.drawExtentFor(height_frame),
       camera.initMatrixViewProjection(float(width_frame)/float(height_frame)),
-      width_frame, height_frame,
+      width_frame, height_frame, panel.selection.len > 0,
     )
   of uint32(EventKind.MouseMotion):
     interaction.updateCursor(float(event.motion.x), float(event.motion.y))
@@ -1822,7 +1850,7 @@ proc runInteractive(
     #   anything held has to be let go of here.
     if gui.wantsKeys(): interaction.releaseKeysAll()
     elif interaction.keys_held.len > 0:
-      interaction.driveHeld(camera, seconds_frame)
+      interaction.driveHeld(camera, seconds_frame, panel.selection.len > 0)
       panel.tween_camera.abandon()
 
     let (width, height) =

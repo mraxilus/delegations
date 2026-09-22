@@ -4,7 +4,7 @@
 //   pointer. Suites reach neither: nothing in them has button or wheel.
 
 import type { Page } from '@playwright/test';
-import { readCamera, settleCamera, spanPivot } from './camera';
+import { readCamera, settleCamera, slideOf, spanPivot } from './camera';
 import { waitFrames } from './frame';
 import { clearTheGlass } from './gestures';
 import { report } from './report';
@@ -51,16 +51,17 @@ export async function drivePan(page: Page): Promise<void> {
   );
 }
 
-/** Drive zoom over ground, and assert pivot comes down onto it.
+/** Drive zoom low in frame, and assert eye follows pointer's own ray.
  *
- *  Anchored on plane through pivot, zoom leaves pivot stranded on level it started at
- *  however far reader goes in; anchored on object or ground under pointer, it comes down.
+ *  Free flight has no ground answer and no level one: ray under pointer is what carries
+ *  eye, so aiming low takes camera down as well as in. Straight dolly would keep eye on
+ *  its own sight axis, and nothing would carry it off that axis.
  */
 export async function driveAim(page: Page, width: number, height: number): Promise<void> {
   await settleHome(page);
   const before = await readCamera(page);
 
-  // Low in frame, where sight ray reaches ground well in front of camera.
+  // Low in frame, where ray under pointer dives well under sight axis.
   await page.mouse.move(width / 2, height - 200);
   for (let notch = 0; notch < 8; notch += 1) {
     await page.mouse.wheel(0, -120);
@@ -69,12 +70,12 @@ export async function driveAim(page: Page, width: number, height: number): Promi
   await settleCamera(page);
   const after = await readCamera(page);
 
-  const height_before = before.pivot[2] ?? 0;
-  const height_after = after.pivot[2] ?? 0;
+  const across = slideOf(before, after);
+  const closed = before.distance - after.distance;
   report(
-    'zooming in over the ground brings the orbit centre down onto it',
-    height_before > 0.9 && height_after < height_before - 0.2 && height_after > -0.5,
-    `pivot height ${height_before.toFixed(2)} -> ${height_after.toFixed(2)}, ` +
-      `distance ${after.distance.toFixed(2)}`,
+    'zooming low in the frame carries the eye down that ray, not straight in',
+    closed > 0.2 * before.distance && across > 0.1,
+    `separation ${before.distance.toFixed(2)} -> ${after.distance.toFixed(2)}, ` +
+      `eye ${across.toFixed(3)} units off the sight axis`,
   );
 }
