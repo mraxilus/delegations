@@ -404,9 +404,22 @@ skipped that paragraph. The sign page holds 24 blocks of prose and the reader sa
 `tplain.nim`, which reads prose off markup written for it, where the count is known.
 
 The rig viewer and the Reference are held by reading alone. Each one writes its prose in the
-browser rather than into markup the workbench renders. So no law reads either. The viewer reads
+browser rather than into markup the workbench renders. So no law counts either. The viewer reads
 inside both bounds today, measured by hand over the built page. Nothing measures the Reference,
-because its prose exists only once the browser has run.
+because its prose exists only once the browser has run. The law on a gendered word does reach
+them, because it reads the strings rather than the rendered page.
+
+**The two counted rules passed while the prose still did not read.** Every page sat inside both
+bounds while the words were still wrong. One page said that a stage `collides` a capsule. Another
+said that a cell `stands as it stands there`. The bounds are a floor, and nothing but a reading
+catches a word used outside its meaning.
+
+**No string a page shows says a gendered word for a dancer.** The glossary rejects one for each
+dancer, and `tglossary.nim` reads that ruling rather than restates it. It holds every string
+literal of `design` and `app`, and the two pages this project writes by hand. A literal that a
+colon follows is a key of recorded data, so the check steps over it. Verified by `tglossary.nim`,
+and proved able to fail. The readout said `her arm` and a block reason said `his reach` while
+every other law passed.
 
 The hand-drawn dial of the whole-cloth page came out. It stated blocks and turns from a sweep of the
 solver that this project has deleted, and the generated panel below it disagreed. A figure drawn by
