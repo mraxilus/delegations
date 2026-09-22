@@ -101,11 +101,16 @@ removed by this project, and the Architect reads the page. Its wording still use
 `primitives`, where the agreed words are `Reference` and `Move`. That is a vocabulary sweep of the
 whole page, and not this fix.
 
-**Two faults live in generated output, rather than merely pending renames.** `sim/verdicts.md`
-prints `X`, which sits on an avoid line, where the agreed word is Cross. It also prints `her arm`
-and `his arm` in every sweep table, which are avoided for Follow and Lead. The
-translation table stands in two copies, `sim/verdicts.nim` and `design/turns.nim`, and the second
-drops the `elbow forward` clause that the first adds (Article II.1).
+**No recorded sweep names a dancer with a gendered word.** `design/turns.json` keys each arm
+`lead` and `follow`, and `sim/verdicts.md` heads its tables the same way. Both files were rewritten
+by their own verbs, and the numbers reproduced. The new `turns.json` is the old one with four keys
+and two words renamed. Verified by `tglossary.nim`, which now reads `sim` as well as `design` and
+`app`.
+
+**One fault lives in generated output, rather than in a pending rename.** `sim/verdicts.md` prints
+`X`, which sits on an avoid line, where the agreed word is Cross. The translation table stands in
+two copies, `sim/verdicts.nim` and `design/turns.nim`, and the second drops the `elbow forward`
+clause that the first adds (Article II.1).
 
 ## Model
 
