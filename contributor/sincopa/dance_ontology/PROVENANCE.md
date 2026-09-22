@@ -413,11 +413,28 @@ then looked for the closing tag of the kind it wanted, which is the next paragra
 skipped that paragraph. The sign page holds 24 blocks of prose and the reader saw 14. Verified by
 `tplain.nim`, which reads prose off markup written for it, where the count is known.
 
-The rig viewer and the Reference are held by reading alone. Each one writes its prose in the
-browser rather than into markup the workbench renders. So no law counts either. The viewer reads
-inside both bounds today, measured by hand over the built page. Nothing measures the Reference,
-because its prose exists only once the browser has run. The law on a gendered word does reach
-them, because it reads the strings rather than the rendered page.
+**The rig viewer and the Reference are counted now, and the Reference was over the bounds.** Each
+one writes its prose in the browser rather than into markup the workbench renders, so `tmarks`
+reaches neither. `tsaid.nim` reaches both, on the JS target, because both pages import `std/dom`.
+
+It reaches them two ways, because they are built two ways. The Reference builds its markup in pure
+functions that return it, so the law calls them and reads what they return (Article IX.5). The
+viewer writes its sentences straight into elements, so they are held in one table,
+`rig_view.VERDICTS`, which the law reads instead.
+
+The Reference held nine long sentences and two long paragraphs when the law first ran. The worst
+sentence held 44 words, in the note of the matrix. The two long paragraphs held 7 and 11 sentences,
+against a bound of 6. Every one is rewritten and the information is kept: the notes of the spokes
+and of the map are now two and three paragraphs. Proved able to fail on both paths, by lengthening
+one sentence of the Reference and one verdict of the viewer past the bound.
+
+The earlier record said that a count for both needed the browser, and that was wrong. Nothing the
+law calls touches the document. It also said that the viewer measured clean by hand, which held,
+and that nothing measured the Reference, which was true and hid nine faults.
+
+One line is counted by nothing still. The fourth verdict of the viewer opens `Stops at N turns:`
+and closes with a reason the sim recorded, so it never stands as one whole string. Those reasons
+come from `hold.says`, and the longest of them holds eight words.
 
 **The two counted rules passed while the prose still did not read.** Every page sat inside both
 bounds while the words were still wrong. One page said that a stage `collides` a capsule. Another
