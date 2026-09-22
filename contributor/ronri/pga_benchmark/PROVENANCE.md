@@ -210,9 +210,20 @@ pair of blades. A geometric product loses one of four states for each null dimen
 bilinear form landing in one slot spends one term for each blade that carries an image.
 
 A product against the dual of its second operand spends what the grade of that operand
-allows. A permutation and a product against a one-component constant spend nothing.
+allows. A permutation and a product against a one-component constant spend nothing. The
+carrier, the cocarrier and the attitude each take that last form, and so spend nothing.
 
-That last rule needs a degenerate vector, so a conformal algebra carries no such bound. The
+The library composes some operations from several operators. A norm reads two slots. A
+support wedges against a constant and then takes a full product. The four projections take a
+dual product and then a full product. Such an operation carries a chain of shapes, and its
+bound sums what each step demands. A step that carries no rule adds nothing to that sum.
+
+A chain bound is an estimate of that chain, and never a proved minimum. A special routine
+can share work between steps, or reach the same answer by a shorter route, so the true
+minimum sits below it. `gaps.md` names the steps in the shape column, so every chain bound
+reads as one. Every other bound in those tables follows from the axioms alone.
+
+The dual product rule needs a degenerate vector, so a conformal algebra carries no such bound. The
 bound spends no zero fill, no intermediate, no error check and no allocation, because a
 dense operation needs none of them to be correct. It moves its operands read once plus its
 result written once. `gaps.md` carries one row for each operation of each algebra, since the
@@ -225,24 +236,41 @@ contractions. They reproduce 27 and 54 for the expansions, 16 for a scale and 24
 unitize.
 
 The conformal metric is held to 1024 and to 32, and to carrying no bound for the four dual
-products. Suite `Inspector` holds the soundness law. No lower bound outruns what the library spends
+products. A chain of an expansion and an exterior product is held to their
+sum. It is also held to dropping the expansion where the metric carries no rule for it.
+Suite `Inspector` holds the soundness law. No lower bound outruns what the library spends
 on the same operation. That law reads every measurand of the build's own nimcache.
 
-**What it found.** On multiplies the library already stands at the multivector lower bound
-for every dense operation but one. The attitude is that one, and it spends a full product
-against a constant that carries one unit component. On bytes moved the library stands at
-that bound nowhere.
+**What it found.** Every primitive product spends what the algebra demands, and the
+operations built on top of them do not. At four dimensions the library stands at the bound
+on multiplies for 97 of the 107 operations that carry one. The attitude and the two supports
+are what stand above it. At five dimensions it stands at the bound for 92 of 126. The
+attitude, the carrier, the cocarrier, the centre, the container, the partner and the four
+projections stand above it.
+
+The carrier reads as the attitude does. It wedges against a constant that carries one unit
+component, so the algebra demands no multiply at all, and the library spends 243. The
+partner spends 1004 multiplies against its chain's 518. On bytes moved the library stands at
+the bound nowhere, in either algebra.
 
 At four dimensions the exterior product spends the bound's 81 multiplies, and moves 512
 bytes against the bound's 384. The bulk norm spends the bound's 8 multiplies, and moves 768
-bytes against the bound's 136. That algebra carries 93 operations with a bound. Reaching it
-closes 59 per cent of the byte distance to the typed reference, and 16 per cent of the
-multiply distance.
+bytes against the bound's 136.
+
+At four dimensions 65 operations carry a library function, a bound and a reference. Over
+those, reaching the bound closes 73 per cent of the byte distance to the reference. It
+closes 27 per cent of the multiply distance. At five dimensions 84 operations carry all
+three, and reaching the bound closes 87 per cent and 51 per cent. Those shares rest on one
+population, so the figures compare.
 
 Cost: the multivector lower bound is derived, and never measured (Article VIII.1). It bounds
 arithmetic and movement, and never time. It assumes that no result slot shares a
 subexpression with another, which holds for these products and would not hold where
 factoring helps.
+
+Cost: a chain bound sums the steps of the library's own definition, so it is an estimate
+rather than a proved minimum. The record marks every such bound, and `gaps.md` names the
+steps.
 
 ## Gap list
 
