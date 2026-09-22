@@ -35,9 +35,9 @@ const
     ##     no business of position's name.
   DANCER_TERMS = ["Lead", "Follow"]
     ## Entries naming dancer, whose rejected words no page may say at all.
-  SAID_IN = ["design", "app"]
-    ## Directories whose string literals reach page, either written into
-    ##   markup or set on element by browser.
+  SAID_IN = ["design", "app", "sim"]
+    ## Directories whose string literals reach reader: page written into markup,
+    ##   element set by browser, or row of `sim/verdicts.md`.
   DOCUMENTS = ["mockups" / "wholecloth.html", "pages" / "review" / "review.html"]
     ## Pages this project writes by hand rather than from Nim.
   HOLDS = [HAND_TO_HAND, [some Arm.L, some Arm.R]]
