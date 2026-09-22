@@ -63,13 +63,17 @@ func prose*(markup: string): seq[string] =
     var at = 0
     while true:
       let opens = body.find("<" & kind, at)
-      if opens < 0: break
+      if opens < 0 or opens + 1 + kind.len >= body.len: break
+      # Element of another kind whose name starts same way, such as `path` or `line`.  Step
+      #   over its opening tag alone: closing tag reader would find is next paragraph's, so
+      #   jumping there skipped every paragraph that stands behind drawing (`tplain.nim`).
+      if body[opens + 1 + kind.len] notin {' ', '>'}:
+        at = opens + 1
+        continue
       let head = body.find('>', opens)
       let shuts = body.find("</" & kind & ">", head)
       if head < 0 or shuts < 0: break
       at = shuts + 1
-      # Element of another kind whose name starts same way, such as `path` or `line`.
-      if body[opens + 1 + kind.len] notin {' ', '>'}: continue
       let said = body[head + 1 ..< shuts].plain.splitWhitespace.join(" ")
       if said.len > 0: result.add said
 
