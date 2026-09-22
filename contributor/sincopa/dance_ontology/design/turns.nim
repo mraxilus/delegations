@@ -78,7 +78,7 @@ func dofName(dof: Dof): string =
   of Dof.Wrist: "wrist"
 
 func whose(h: Hand): string =
-  if h.body == Body.One: "his" else: "her"
+  if h.body == Body.One: "the lead's" else: "the follow's"
 
 func why(w: Walk): string =
   ## Say what refuses, in few words that page can show.

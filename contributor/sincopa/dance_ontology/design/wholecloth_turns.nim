@@ -572,7 +572,7 @@ proc renderStage() =
     readout.innerHTML = head & "<br>no pose holds at the rest"
     return
 
-  # One line per rope: her arm's word, his where not open, crossings where any.
+  # One line per rope: follow's arm word, lead's where not open, crossings where any.
   let
     is_at_neg = turn <= -limits.neg + 1e-6 and limits.is_stopped_neg
     is_at_pos = turn >= limits.pos - 1e-6 and limits.is_stopped_pos
@@ -591,8 +591,9 @@ proc renderStage() =
         crossing.add (if c.cross[k].over.to(int) == 0: cstring("the first") else: "the second") &
           " over"
       crossing.add ")</span>"
-    lines.add "<br>" & name & "her arm <b>" & c.her_says & "</b>" &
-      (if c.him_says != "open": ", his arm <b>" & c.him_says & "</b>" else: cstring("")) &
+    lines.add "<br>" & name & "the follow's arm <b>" & c.her_says & "</b>" &
+      (if c.him_says != "open": ", the lead's arm <b>" & c.him_says & "</b>"
+       else: cstring("")) &
       crossing
 
   # Then strain, then both blocks, flagged where turn stands on one.

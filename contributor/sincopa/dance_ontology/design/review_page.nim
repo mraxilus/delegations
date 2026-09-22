@@ -252,8 +252,8 @@ func sheetOf(P: Parts): string =
   <p class="how"><b>A crossing breaks at the arm that goes under.</b> The drawing cuts that
   arm at the middle, and the <code>over</code> field of the frame says which arm it is. A16
   carries no such field: its two connections run parallel at rest, and they cross only once
-  the follow turns. Which arm ends over depends on the way she turned, so A16 and A17 draw the
-  two ways. They are the one frame of the eight where the way round changes the
+  the follow turns. Which arm ends over depends on the way the follow turned, so A16 and A17 draw
+  the two ways. They are the one frame of the eight where the way round changes the
   picture.</p><div class="grid">"""
   func armFor(side: Side): Arm =
     ## Say which drawn arm this side of lead is.
