@@ -511,6 +511,139 @@ suite "Camera":
       check motorOf(lifted) == camera.motor
       check normWeight(lifted)[Basis.scalarAnti] =~ 1.0
 
+  test "looking turns sight about the camera's own axes, and leaves the eye standing":
+    # Free flight's whole claim: orientation moves and placement does not.
+    let start = initCamera(Position(x: 2.0, y: -1.0, z: 0.5), 19.0, 0.3, 0.0)
+    let (eye_start, axes_start) = (start.eye, start.frame)
+    # Yaw at level horizon turns azimuth by exactly what was asked, since camera's own up
+    #   is world up there.
+    var turned = start
+    turned.look(0.4, 0.0)
+    check turned.eye =~ eye_start
+    check abs(turned.azimuth - 0.7) < TOLERANCE_TEST
+    check abs(turned.elevation) < TOLERANCE_TEST
+    check turned.distance =~ start.distance
+    # Pitch leaves across axis alone, and raises reading `orbit` would raise.
+    var pitched = start
+    pitched.look(0.0, 0.35)
+    check pitched.eye =~ eye_start
+    check pitched.frame.axis_right =~ axes_start.axis_right
+    check abs(pitched.elevation - 0.35) < TOLERANCE_TEST
+    # Frame stays orthonormal through turn no clamp guards.
+    var steep = start
+    steep.look(0.0, 1.5)
+    let axes_steep = steep.frame
+    check abs(dot(axes_steep.axis_right, axes_steep.axis_up)) < TOLERANCE_TEST
+    check abs(dot(axes_steep.axis_up, axes_steep.forward)) < TOLERANCE_TEST
+    check abs(norm(axes_steep.forward) - 1.0) < TOLERANCE_TEST
+
+  test "a look passes the pole that an orbit is clamped short of":
+    # What rotor buys: `orbit` stops at `ELEVATION_LIMIT`, and `look` walks past it.
+    var flown = initCamera(ORIGIN, 19.0, 0.0, 0.0)
+    var orbited = flown
+    for _ in 1 .. 8:
+      flown.look(0.0, 0.25)
+      orbited.orbit(0.0, 0.25)
+    check orbited.elevation =~ ELEVATION_LIMIT
+    # Eight quarter-radian pitches compose to exactly two radians of turn, and two radians
+    #   is past straight down, where old frame's joins collapsed.
+    let forward_start = initCamera(ORIGIN, 19.0, 0.0, 0.0).frame.forward
+    check abs(dot(flown.frame.forward, forward_start) - cos(2.0)) < TOLERANCE_TEST
+    check flown.frame.forward.x > 0.0
+    check abs(norm(flown.frame.forward) - 1.0) < TOLERANCE_TEST
+
+  test "a look and an orbit turn sight the same way, so one drag reads the same in either":
+    # One left drag feeds either verb as selection comes and goes. Signs that disagreed
+    #   would reverse gesture moment reader selected something.
+    let start = initCamera(ORIGIN, 19.0, 0.0, 0.0)
+    for step in [0.2, -0.2]:
+      var looked = start
+      var orbited = start
+      looked.look(step, 0.0)
+      orbited.orbit(step, 0.0)
+      check dot(looked.frame.forward, orbited.frame.forward) > 0.0
+      check dot(looked.frame.axis_right, orbited.frame.axis_right) > 0.0
+      var raised = start
+      var risen = start
+      raised.look(0.0, step)
+      risen.orbit(0.0, step)
+      check raised.elevation =~ risen.elevation
+
+  test "roll turns about the sight axis alone, and a whole turn returns every axis":
+    var camera = initCamera(Position(x: 1.0, y: 2.0, z: -0.5), 7.0, 0.8, -0.3)
+    let (eye_start, axes_start) = (camera.eye, camera.frame)
+    camera.roll(0.5)
+    # Sight and placement stand; only two axes across it move.
+    check camera.eye =~ eye_start
+    check camera.frame.forward =~ axes_start.forward
+    check camera.distance =~ 7.0
+    # Positive roll tips up axis toward across axis, which reads as clockwise.
+    check dot(camera.frame.axis_up, axes_start.axis_right) > 0.0
+    # Whole turn in steps lands back on frame it started from.
+    var whole = initCamera(Position(x: 1.0, y: 2.0, z: -0.5), 7.0, 0.8, -0.3)
+    for _ in 1 .. 64: whole.roll(TAU/64.0)
+    check whole.frame.axis_up =~ axes_start.axis_up
+    check whole.frame.axis_right =~ axes_start.axis_right
+
+  test "travel moves along the camera's own axes, whatever roll it carries":
+    var camera = initCamera(Position(x: -3.0, y: 4.0, z: 2.0), 11.0, 1.2, 0.4)
+    camera.roll(0.9)
+    let (eye_start, axes_start) = (camera.eye, camera.frame)
+    camera.travel(2.0, -0.5, 0.25)
+    # Every axis stands: travel slides and never turns.
+    check camera.frame.forward =~ axes_start.forward
+    check camera.frame.axis_up =~ axes_start.axis_up
+    # Step is exactly sum asked for, read back against rolled frame.
+    let step = camera.eye - eye_start
+    check abs(dot(step, axes_start.forward) - 2.0) < TOLERANCE_TEST
+    check abs(dot(step, axes_start.axis_right) + 0.5) < TOLERANCE_TEST
+    check abs(dot(step, axes_start.axis_up) - 0.25) < TOLERANCE_TEST
+    # Forward dives where sight dives, unlike `slideGround`, which holds height.
+    check abs(step.z) > TOLERANCE_TEST
+
+  test "the speed climbs toward its cap, and never reaches it":
+    const CAP = 12.0
+    check speedTravelling(0.0, CAP) =~ 0.0
+    var before = 0.0
+    for i in 1 .. 40:
+      let speed = speedTravelling(0.1*float(i), CAP)
+      check speed > before
+      check speed < CAP
+      before = speed
+    # One time constant is 63 percent of cap, three are 95 percent.
+    check abs(speedTravelling(SECONDS_SPEED_RISE, CAP)/CAP - 0.6321) < 1.0e-4
+    check abs(speedTravelling(3.0*SECONDS_SPEED_RISE, CAP)/CAP - 0.9502) < 1.0e-4
+
+  test "distance travelled is the integral, so halves sum to the whole":
+    # What keeps 144 Hz reader beside 60 Hz one over one hold.
+    const CAP = 12.0
+    check distanceTravelled(0.0, 0.0, CAP) =~ 0.0
+    for span in [0.5, 1.0, 4.0]:
+      var walked = 0.0
+      var age = 0.0
+      # Same span in 120 frames must equal same span in one.
+      for _ in 1 .. 120:
+        walked += distanceTravelled(age, age + span/120.0, CAP)
+        age += span/120.0
+      check abs(walked - distanceTravelled(0.0, span, CAP)) < TOLERANCE_TEST
+    # Long hold is cap times span, less cap times one time constant of lag.
+    check abs(
+      distanceTravelled(0.0, 20.0, CAP) - CAP*(20.0 - SECONDS_SPEED_RISE)
+    ) < 1.0e-6
+
+  test "the speed cap is the smaller of the local scale and the ceiling":
+    # Pointer over empty sky has no depth to scale by, so ceiling alone carries.
+    check capTravelling(none(float), 1.0) =~ SPEED_CEILING
+    # Close work is slow, so reader inside moon's orbit is not thrown across it.
+    check capTravelling(some(0.001), 1.0) =~ FACTOR_SPEED_LOCAL*0.001
+    # Far work is held at ceiling rather than scaled past it.
+    check capTravelling(some(1.0e9), 1.0) =~ SPEED_CEILING
+    # Haste multiplies both figures, so shift stays one multiplier on every rate.
+    check capTravelling(some(2.0), FACTOR_HASTE) =~ FACTOR_SPEED_LOCAL*2.0*FACTOR_HASTE
+    check capTravelling(none(float), FACTOR_HASTE) =~ SPEED_CEILING*FACTOR_HASTE
+    # Depth behind eye is refused rather than freezing camera at zero.
+    check capTravelling(some(-5.0), 1.0) =~ 0.0
+
   test "the far clip reaches the scene's farthest object however close the orbit is":
     var camera = initCamera(Position(x: 0, y: 0, z: 0), 10.0, 0.0, 0.0)
     check abs(camera.distanceFar - 10.0*FACTOR_CLIP_FAR) < 1.0e-9
