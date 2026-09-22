@@ -20,13 +20,20 @@ export layout.Entry, layout.Tree
 
 proc gitFields*(root: string, args: openArray[string]): seq[string] =
   ## Run git in root, return NUL-separated stdout fields; raise on non-zero exit.
-  let process = startProcess(
-    "git", args = @["-C", root] & @args, options = {poUsePath, poStdErrToStdOut}
-  )
+  ##   Streams are read apart. Git writes warning to stderr, ending it in newline rather
+  ##     than in NUL, so stream carrying both would leave warning glued to first field.
+  ##     `diff base...HEAD` warns whenever branch and base share two merge bases, which is
+  ##     ordinary, and glued field then starts with `warning:` rather than with path.
+  ##   Stderr is kept rather than dropped: it is where git says why it failed, and `IOError`
+  ##     carries it.
+  ##   Both pipes are drained before exit is waited on, since child blocks where either one
+  ##     fills while other is read.
+  let process = startProcess("git", args = @["-C", root] & @args, options = {poUsePath})
   defer: process.close
   let output = process.outputStream.readAll
+  let failure = process.errorStream.readAll
   if process.waitForExit != 0:
-    raise newException(IOError, "git failed; got `" & output.strip & "`.")
+    raise newException(IOError, "git failed; got `" & failure.strip & "`.")
   output.split('\0').filterIt(it.len > 0)
 
 
