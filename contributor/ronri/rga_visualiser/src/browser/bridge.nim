@@ -1166,21 +1166,21 @@ proc nimCameraEye(): FlatBuffer {.exportc.} =
 proc nimSetCameraAzimuth(v: cfloat) {.exportc.} =
   ## Rewrite angle about world up, in radians.
   TWEEN_CAMERA.abandon()
-  CAMERA.azimuth = float(v)
+  CAMERA = CAMERA.placedAtAzimuth(float(v))
 
 
 proc nimSetCameraElevation(v: cfloat) {.exportc.} =
   ## Rewrite angle above horizontal plane, in radians.
   ##   Clamped to bound `panel.layoutView`'s drag widget uses.
   TWEEN_CAMERA.abandon()
-  CAMERA.elevation = clamp(float(v), -ELEVATION_LIMIT, ELEVATION_LIMIT)
+  CAMERA = CAMERA.placedAtElevation(float(v))
 
 
 proc nimSetCameraDistance(v: cfloat) {.exportc.} =
   ## Rewrite distance from pivot, in world units.
   ##   Held off one bound orbit distance has; see `camera.distanceHeld`.
   TWEEN_CAMERA.abandon()
-  CAMERA.distance = distanceHeld(float(v))
+  CAMERA.dollyTo(float(v))
 
 
 proc nimSetCameraFov(v: cfloat) {.exportc.} = CAMERA.degrees_field_of_view = float(v)
@@ -1189,7 +1189,7 @@ proc nimSetCameraFov(v: cfloat) {.exportc.} = CAMERA.degrees_field_of_view = flo
 proc nimSetCameraPivot(x, y, z: cfloat) {.exportc.} =
   ## Rewrite point camera orbits around.
   TWEEN_CAMERA.abandon()
-  CAMERA.pivot = Position(x: float(x), y: float(y), z: float(z))
+  CAMERA = CAMERA.placedAtPivot(Position(x: float(x), y: float(y), z: float(z)))
 
 
 proc nimCameraLimits(): seq[float32] {.exportc.} =

@@ -285,7 +285,7 @@ func stanceUnderPointer*(
   ##   crossing than its depth to be, leaving caller `stanceFor`.
   let
     eye = camera.eye
-    forward = camera.frame(eye).forward
+    forward = camera.frame.forward
     depth_now = dot(anchor - eye, forward)
   if depth_now <= 1.0e-6: return
   var depth_end = min(depth_now, camera.distance)
