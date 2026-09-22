@@ -99,20 +99,20 @@ const CAUSES* = [
   ),
   Cause(
     id: "D03", rule: Rule.ZeroFills,
-    title: "Operators zero-fill their full-width result before writing it.",
+    title: "Operators zero-fill their full-width result before they write it.",
     closes_when: "no library function calls `nimZeroMem`.",
   ),
   Cause(
     id: "D04", rule: Rule.Intermediates,
-    title: "Chains materialise full-width intermediates.",
+    title: "Operator chains build full-width intermediates.",
     closes_when: "no library function declares a local multivector.",
   ),
   Cause(
     id: "D05", rule: Rule.Checks,
     title: "Error-flag checks survive into release builds.",
-    closes_when: "no library function branches on `nimErr_`; `--panics:on` on the pinned " &
-      "compiler already emits none in either implementation, so the library's users must know to " &
-      "pass it.",
+    closes_when: "no library function branches on `nimErr_`. The pinned compiler with " &
+      "`--panics:on` already emits none in either implementation. A user of the library must " &
+      "know to pass it.",
   ),
   Cause(
     id: "D06", rule: Rule.Inline,
@@ -126,19 +126,19 @@ const CAUSES* = [
   ),
   Cause(
     id: "D08", rule: Rule.Compound,
-    title: "Transforms by motor are composed of three products, with no operator of their own.",
+    title: "A transform by motor spells three products, because it has no operator of its own.",
     closes_when: "every catalogued measurand spells one library function.",
   ),
   Cause(
     id: "D09", rule: Rule.Missing,
-    title: "Norms the reference carries and the library refuses.",
+    title: "The library refuses two norms that the reference carries.",
     closes_when: "the catalogue's missing list is empty.",
   ),
   Cause(
     id: "D10", rule: Rule.Cayley,
-    title: "Compile-time Cayley work is computed and discarded, by the audit's reading.",
-    closes_when: "compile-time tables built are measured against tables used; nothing " &
-      "here reads compile time.",
+    title: "The library builds compile-time Cayley tables and drops some, by the audit's reading.",
+    closes_when: "the project measures tables built against tables used. Nothing here " &
+      "reads compile time.",
   ),
 ]
   ## Cause gaps in identifier order; gaps below them are data, these are their causes.
@@ -318,8 +318,9 @@ func decideCause*(d: Cause; algebras: openArray[Algebra]; gaps: openArray[Gap]):
     result.evidence =
       if open.len == 0: "no typed gap spends more than its reference."
       else:
-        $open.len & " gaps; widest " & worst.key & " spends " & $worst.library.multiplies.get &
-          " multiplies against " & $worst.reference.multiplies.get & "."
+        $open.len & " gaps. The widest is " & worst.key & ", which spends " &
+          $worst.library.multiplies.get & " multiplies against " &
+          $worst.reference.multiplies.get & "."
   of Rule.Time:
     var is_any_measured = false
     for a in algebras:
@@ -340,7 +341,7 @@ func decideCause*(d: Cause; algebras: openArray[Algebra]; gaps: openArray[Gap]):
     result.evidence =
       if open.len == 0: "no gap's library median exceeds band."
       else:
-        $open.len & " gaps; worst " & worst.key & " at " &
+        $open.len & " gaps. The worst is " & worst.key & ", at " &
           formatFloat(worst.library.ns.get, ffDecimal, 1) & " ns against " &
           formatFloat(worst.reference.ns.get, ffDecimal, 1) & " ns."
   of Rule.ZeroFills, Rule.Intermediates, Rule.Checks, Rule.Inline:
@@ -355,9 +356,10 @@ func decideCause*(d: Cause; algebras: openArray[Algebra]; gaps: openArray[Gap]):
     result.evidence =
       if count == 0: "no library function of " & $total & "."
       elif d.rule == Rule.Inline:
-        $count & " of " & $total & " library operators, e.g. " & worst & "."
+        $count & " of " & $total & " library operators, for example " & worst & "."
       else:
-        $count & " of " & $total & " library functions; most " & worst & " with " & $value & "."
+        $count & " of " & $total & " library functions. The most is " & worst & " with " &
+          $value & "."
   of Rule.Nan:
     var is_any_measured = false
     var names: seq[string]
@@ -392,7 +394,7 @@ func decideCause*(d: Cause; algebras: openArray[Algebra]; gaps: openArray[Gap]):
     result.evidence = if names.len == 0: "nothing missing." else: named(names) & "."
   of Rule.Cayley:
     result.status = Status.Unmeasured
-    result.evidence = "not reachable from emitted C; the audit read `cayleys.nim`."
+    result.evidence = "no emitted C reaches it. The audit read `cayleys.nim`."
 
 
 
@@ -433,18 +435,19 @@ func headerOf(a: Algebra): string =
   ## Render one paragraph naming what algebra's documents measured, on what, and when.
   let c = a.static_measurements.at("algebra")
   let t = a.static_measurements.at("taken")
-  result = $c{"dimensions"}.getInt & " dimensions, " &
-    (if c{"is_conformal"}.getBool: "conformal" else: "rigid") & " metric, " &
-    $c{"sizeof_multivector"}.getInt & "-byte multivector. Counts: inspect taken " &
-    t{"date"}.getStr & " on " & t{"machine"}.getStr & "; nim `" & t{"nim"}.getStr &
-    "`; pga `" & t{"pga"}.getStr & "`; flags `" & t{"flags"}.getStr & "`."
+  result = "This algebra has " & $c{"dimensions"}.getInt & " dimensions, a " &
+    (if c{"is_conformal"}.getBool: "conformal" else: "rigid") & " metric and a " &
+    $c{"sizeof_multivector"}.getInt & "-byte multivector. The inspector took the counts on " &
+    t{"date"}.getStr & ", on " & t{"machine"}.getStr & ", with nim `" & t{"nim"}.getStr &
+    "`, pga `" & t{"pga"}.getStr & "` and flags `" & t{"flags"}.getStr & "`."
   if a.runtime_measurements.isNil:
-    result.add " Times: unmeasured, no bench recorded."
+    result.add " Nobody measured the times, because no bench ran."
   else:
     let b = a.runtime_measurements.at("taken")
-    result.add " Times: bench taken " & b{"date"}.getStr & " on " & b{"machine"}.getStr & ", " &
-      $b{"rounds"}.getInt & " rounds over " & $b{"objects"}.getInt & " objects, allocation " &
-      "gauge " & (if b{"is_allocation_measured"}.getBool: "live" else: "off") & "."
+    result.add " The bench ran on " & b{"date"}.getStr & ", on " & b{"machine"}.getStr &
+      ", over " & $b{"rounds"}.getInt & " rounds of " & $b{"objects"}.getInt &
+      " objects. The allocation gauge was " &
+      (if b{"is_allocation_measured"}.getBool: "live" else: "off") & "."
 
 
 func render*(
@@ -455,14 +458,19 @@ func render*(
   lines.add "# Gaps"
   lines.add ""
   lines.add wrap(
-    "Generated by `nim r tools/build.nim gaps` from `baseline/*.json`; do not edit by " &
-    "hand. Identifiers are stable: `baseline/docket.json` maps every gap to its number and " &
-    "none is reused. Static measurements are read from the C the pinned compiler emits for " &
-    "the `bench` entry, cells reading `library/reference`; bytes are modelled movement per " &
-    "call; runtime measurements are medians of the last hand-run bench, on the machine each " &
-    "section names. A gap is over where the library exceeds its reference, or spends any " &
-    "zero fill, intermediate, error check, allocation or NaN, or more divisions; time is over " &
-    "beyond a tolerance of " & $TOLERANCE & " times the reference, and met otherwise."
+    "The driver writes this file. To make it again, run `nim r tools/build.nim gaps`, which " &
+    "reads `baseline/*.json`. Do not edit it by hand. Every gap keeps its number, because " &
+    "`baseline/docket.json` holds the numbers and the driver reuses none. The pinned compiler " &
+    "emits C for the `bench` entry, and the inspector counts that C. A cell gives the library " &
+    "value first and the reference value second."
+  )
+  lines.add ""
+  lines.add wrap(
+    "A gap is over where the library spends more than its reference. It is also over where " &
+    "the library spends a zero fill, an intermediate, an error check, an allocation or a NaN. " &
+    "Time is over where the library median is more than " & $TOLERANCE & " times the " &
+    "reference median. A gap is met in every other case. Bytes are modelled movement for each " &
+    "call, and runtime measurements are medians of the last bench that ran by hand."
   )
   lines.add ""
   lines.add "## Causes"
@@ -485,7 +493,7 @@ func render*(
         inc counts[gap.status]
         own.add gap
     lines.add wrap(
-      "Gaps: " & $own.len & "; over " & $counts[Status.Over] & ", met " &
+      "Gaps: " & $own.len & ". Over " & $counts[Status.Over] & ", met " &
       $counts[Status.Met] & ", unmeasured " & $counts[Status.Unmeasured] & "."
     )
     lines.add ""

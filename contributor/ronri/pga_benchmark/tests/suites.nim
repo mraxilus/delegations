@@ -586,12 +586,12 @@ suite "Gaps":
     check checks.status == Status.Over and "1 of 3 library functions" in checks.evidence  # ∧
     check "`" & KEY_WEDGE & "` with 178" in checks.evidence  # most
     check decidedOf(Rule.Inline, ALGEBRAS, gaps).evidence ==
-      "1 of 3 library operators, e.g. rga4d `~(Multivector)`."  # light operator called
+      "1 of 3 library operators, for example rga4d `~(Multivector)`."  # light operator called
     check decidedOf(Rule.ZeroFills, ALGEBRAS, gaps).evidence.startsWith("2 of 3")  # ∧ and ~
     check decidedOf(Rule.Terms, ALGEBRAS, gaps).evidence ==
-      "1 gaps; widest rga4d/wedge_point_point spends 81 multiplies against 12."  # widest
+      "1 gaps. The widest is rga4d/wedge_point_point, which spends 81 multiplies against 12."
     check decidedOf(Rule.Time, ALGEBRAS, gaps).evidence ==
-      "2 gaps; worst rga4d/wedge_point_point at 24.1 ns against 1.3 ns."  # worst ratio
+      "2 gaps. The worst is rga4d/wedge_point_point, at 24.1 ns against 1.3 ns."  # worst ratio
     check decidedOf(Rule.Nan, ALGEBRAS, gaps).status == Status.Met  # every share zero
     check decidedOf(Rule.Compound, ALGEBRAS, gaps).evidence ==
       "rga4d/transform_point_motor."  # composed expression named
@@ -608,7 +608,7 @@ suite "Gaps":
     check "| G004 | transform_point_motor | – | – | – | – | – | 60.0/5.0 | over |" in
       text  # composed expression has no counts
     check "- **D05, over.**" in text and "- **D10, unmeasured.**" in text  # design verdicts
-    check "Gaps: 4; over 3, met 1, unmeasured 0." in text  # summary
+    check "Gaps: 4. Over 3, met 1, unmeasured 0." in text  # summary
     check docket.next == 5  # docket grew with gaps
 
   test "wrap breaks at spaces within width and indents continuation":
