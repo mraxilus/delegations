@@ -903,24 +903,28 @@ proc layoutView*(panel: var Panel, camera: var Camera) =
   ]
   fieldLabel(wordingText(NameViewAzimuth))
   if gui.dragFloat("##azimuth", addr placement[0], 0.01, 0.0, 0.0):
-    camera.azimuth = float(placement[0])
+    camera = camera.placedAtAzimuth(float(placement[0]))
   gui.tooltip(wordingText(TipViewAzimuth))
   fieldLabel(wordingText(NameViewElevation))
   if gui.dragFloat("##elevation", addr placement[1], 0.01,
       cfloat(-ELEVATION_LIMIT), cfloat(ELEVATION_LIMIT)):
-    camera.elevation = float(placement[1])
+    camera = camera.placedAtElevation(float(placement[1]))
   gui.tooltip(wordingText(TipViewElevation))
   fieldLabel(wordingText(NameViewDistance))
   # Leave unbounded at widget, floored by `distanceHeld` on way in.
   #   No ceiling on orbit distance, and one value it may not take is stated in `camera`.
   if gui.dragFloat("##distance", addr placement[2], 0.05, 0.0, 0.0):
-    camera.distance = distanceHeld(float(placement[2]))
+    camera.dollyTo(float(placement[2]))
   gui.tooltip(wordingText(TipViewDistance))
 
-  var pivot = [cfloat(camera.pivot.x), cfloat(camera.pivot.y), cfloat(camera.pivot.z)]
+  # Read pivot once: it is derived now, so three reads derive eye and frame three times.
+  let pivot_held = camera.pivot
+  var pivot = [cfloat(pivot_held.x), cfloat(pivot_held.y), cfloat(pivot_held.z)]
   fieldLabel(wordingText(NameViewPivot))
   if gui.dragFloat3("##pivot", addr pivot[0], SPEED_DRAG*10.0):
-    camera.pivot = Position(x: float(pivot[0]), y: float(pivot[1]), z: float(pivot[2]))
+    camera = camera.placedAtPivot(
+      Position(x: float(pivot[0]), y: float(pivot[1]), z: float(pivot[2]))
+    )
   gui.tooltip(wordingText(TipViewPivot))
 
   var field_of_view = cfloat(camera.degrees_field_of_view)

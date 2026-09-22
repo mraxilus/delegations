@@ -1043,8 +1043,70 @@ occlusion error at the far ends is assumed to be tolerable, and is not measured.
 
 ## Camera
 
-`camera.nim` holds an orbit camera: pivot, distance, azimuth and elevation. `ELEVATION_LIMIT` is
-π/2 − 0.02. The opening placement is `initCameraDefault`, which both entry points and `home` read.
+`camera.nim` holds an orbit camera. `ELEVATION_LIMIT` is π/2 − 0.02. The opening placement is
+`initCameraDefault`, which both entry points and `home` read.
+
+**The stance is one rigid motion and one depth.** `Camera.motor` carries a reference stance to where
+the camera stands, and it holds where the eye is and which way it faces together. `depth_pivot` says
+how far along the sight line the pivot stands. Everything else is read back: the eye, the three
+axes, the pivot, and both orbit angles.
+
+The reference stance is the turntable at azimuth 0, elevation 0, distance 0, with the pivot at the
+world origin. Its axes are `RIGHT_REFERENCE` at +y, `UP_REFERENCE` at +z and `FORWARD_REFERENCE` at
+−x. It is not the reference triple of OpenGL. That would put a fixed 120 degree turn in every
+construction, for no reader's benefit, because `initMatrixView` reads the axes and never the motor.
+
+`motorTurntable` builds it as three motions, and every axis runs through the pivot, so neither turn
+moves it:
+
+- a slide to the pivot, plus the distance along +x;
+- a turn of −elevation about the line through the pivot along +y;
+- a turn of the azimuth about the line through the pivot along world up.
+
+**Pivot and both angles are read out rather than stored, and that closes a hole.** They named the
+stance together before, and one could go stale against another. A dolly wrote the distance while the
+pivot stood, so the pivot could sit where no angle pointed. Now the dolly slides the eye and names
+the new separation, and the pivot follows. `repivotToDepth` is one assignment, and `dollyToward`
+needs no pivot arithmetic at all.
+
+**The azimuth reads back in (−π, π].** It comes off the sight direction through `arctan2`, which
+bounds it. A stored azimuth ran on past π and counted up. The ease is not affected, because
+`CameraTween` drives from stored stances rather than from the camera. But a reader who orbits past π
+sees the panel field wrap.
+
+Both angles also land within an ulp or two of what was asked, rather than on it, because they pass
+through the motor and back. The suite compares them as it compares every other computed float.
+
+**The frame needs no clamp.** Carrying three reference directions through a rigid motion keeps them
+orthonormal and weightless, so no join can refuse and no antidual sign needs pinning. The joins it
+replaced collapsed as the sight axis neared world up, which is what the elevation clamp was for.
+`ELEVATION_LIMIT` is now the bound that `orbit` applies to hold the turntable's own reading, and
+nothing derives through it.
+
+**`orbit` rebuilds the motion from four numbers, and every other verb composes it.** A rebuild lands
+on the stance those four name, so no roll creeps in over many events. A composed turn would need the
+axes to stay exact for the turntable to hold. The stage that frees the roll replaces this and drops
+the clamp with it. The cost is four read-outs for each orbit event, each deriving the frame, which
+is unmeasured.
+
+**The motor is eight named floats, and not a `Multivector` field.** `Camera` crosses 55 by-value
+parameters, and the JavaScript backend deep-copies every one through `nimCopy`. Eight floats in one
+object cost what the three of a `Position` cost. `boundary.nim` lifts them where the algebra runs,
+which is once for each frame rather than once for each object. `picking.pickWalk` derives the eye
+and the frame before its walk, and `drawExtentFor` hands every reader one extent. It is the trade
+that `mesh.directionAcross` already makes.
+
+**The view holds are keyed on what the camera holds, and never on what it reads out.**
+`SettingsFurniture` and the browser's `SettingsOverlay` both take the motor and the depth. Those are
+the stance itself, so two frames that agree on them agree on the eye, every axis, the pivot and both
+angles.
+
+A key built from the pivot and the two angles derives the eye and the frame for each field it reads.
+`CAMERA.pivot.x`, `.y` and `.z` are three derivations on their own. `ensureViewOverlay` runs for
+every overlay call, so such a key cost about eighteen sandwiches to decide whether to skip four.
+
+`drivePinAnchor` caught it. An anchor lookup went from 5.000 µs to 488.250 µs, against a band of
+100 µs. Keyed on the motor it reads 3.750 µs, which is under the 8 µs that the pin was repaired to.
 
 **An orbit distance has a floor and no ceiling.** `DISTANCE_LIMIT_NEAR` at 10⁻⁹ is geometry: at
 zero the eye coincides with its pivot, and every direction that `camera.frame` derives collapses.
@@ -1143,6 +1205,13 @@ scripts work in fractions of the canvas width.
 
 *Checked.* Verified by `suites.nim`:
 
+- the motor stance places the eye and all three axes where the turntable's own trigonometry
+  does;
+- that holds over 480 stances, which span five decades of separation, a whole turn of
+  azimuth, and both elevation clamps;
+- 2,000 orbit steps land where the sum of those steps says, with the pivot, the separation
+  and the level horizon all surviving;
+- the eight floats and the multivector say one motion, which reads unit;
 - the logarithmic depth maps near to −1 and far to +1;
 - it is monotone across every decade that the demo spans;
 - it keeps Io before Jupiter, and a star before the dome, by more than a 16-bit step;
@@ -1158,6 +1227,8 @@ Verified by driven checks:
 - the disc of the ecliptic reaches under a camera 1.5 units off Sol, 0.3 and 0.0003 rad up;
 - an object under the pointer drifts 0.000 px across a 3.2× zoom, against 1.957 px with the
   pivot-level anchor;
+- an anchor lookup stays a projection at 3.750 µs, where a key built from the read-out pivot and
+  angles took 488.250 µs;
 - a wheel back out returns to distance 19.000 and pivot (0, 0, 1);
 - a drag holds 1.000 to 1.000 of height, by mouse and by two fingers alike;
 - 500 ms of `w` moved the pivot 12.8 units with z unchanged to four decimals, and 49.3 under shift.
@@ -1369,7 +1440,9 @@ same coefficients only where `Q` turns by less than a half turn.
 slide and a screw alike. Nothing here normalises, and a finding against `unitize` belongs to the
 library.
 
-**Nothing uses this module yet.** It is the first of six stages that rework the camera (issue #220).
+**The camera's stance is the one caller.** `Camera.motor` is a motor, and `camera.nim` builds it
+with `turnAbout` and `motorSliding`, composes it with `wedgeDotAnti`, and reads every direction back
+with `carried`. Nothing else in the tree names a motor.
 
 *Checked.* Verified by `suites.nim`:
 

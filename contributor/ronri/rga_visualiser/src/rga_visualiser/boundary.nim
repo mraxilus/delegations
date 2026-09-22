@@ -17,6 +17,7 @@
 ##   | directionNormal | -𝐦☆          | Unit direction perpendicular to plane.       |
 ##   | directionHorizon| 𝐩 at pʷ = 0  | Unit direction horizon point stands for.  |
 ##   | frame           | derived      | Orthonormal pair of directions inside plane. |
+##   | motorOf         | 𝐐 even grades| Eight coefficients of rigid motion.          |
 ##   |-----------------|--------------|----------------------------------------------|
 ##
 ## Shared by desktop (`visualiser.nim`) and browser (`bridge.nim`) render paths.
@@ -45,6 +46,59 @@ func toMultivector*(d: Direction): Multivector =
   ## Convert Euclidean direction to grade-1 horizon point.
   ##   Weight is 0, so point stands for direction rather than place.
   d.x.e1 + d.y.e2 + d.z.e3
+
+
+type Motor* = object ## Define rigid motion by its eight coefficients of even grade.
+  ## Turn about line and slide along that same line, held as one value; see `motors.nim`
+  ## for algebra that builds and composes one.
+  ## Eight named floats rather than `Multivector` field.
+  ##   `Camera` holds one and crosses 55 by-value parameters, and JS backend deep-copies
+  ##   every one of them through `nimCopy` (Article VII.1). Eight floats in one object cost
+  ##   what `Position`'s three cost; nested `Multivector` costs sixteen more and one object
+  ##   deeper.
+  ##   Lifted through `toMultivector` where algebra is applied, which is once for each frame
+  ##   rather than once for each object: `picking.pickWalk` derives eye and frame before its
+  ##   walk, and `camera.drawExtentFor` hands every reader one extent.
+  ##   Same trade `mesh.directionAcross` makes, where join per segment became cross product.
+  turn_x*, turn_y*, turn_z*: float
+    ## Hold line direction, which is half that turns (`E41`, `E42`, `E43`).
+  slide_x*, slide_y*, slide_z*: float
+    ## Hold line moment, which is half that slides (`E23`, `E31`, `E12`).
+  scalar*: float
+    ## Hold dual part that pitch of screw writes (`S`).
+  antiscalar*: float = 1.0
+    ## Hold weight, which is 1 where motion is none (`E1234`).
+    ## Default of 1 rather than 0, so zeroed `Camera` carries motion that moves nothing.
+    ##   Zeroed motor would carry no weight at all, which names no motion.
+
+
+func toMultivector*(motor: Motor): Multivector =
+  ## Lift rigid motion into even-grade multivector library operates on.
+  motor.turn_x.e41 + motor.turn_y.e42 + motor.turn_z.e43 +
+    motor.slide_x.e23 + motor.slide_y.e31 + motor.slide_z.e12 +
+    motor.antiscalar.e1234 + initElement(Basis.scalar, motor.scalar)
+
+
+func motorSliding*(offset: Multivector): Multivector =
+  ## Build rigid motion that slides by weightless `offset` point, and turns nothing.
+  ##   Takes multivector rather than `Direction`, so caller assembling offset as sum of
+  ##   points hands that sum straight over, at whatever length it has. Unit direction would
+  ##   throw length away.
+  ##   Moment alone, at half offset negated, beside unit weight. Such bivector antisquares
+  ##   to zero, so its exponential stops at two terms, and this *is* that motor rather than
+  ##   bivector to raise: see `motors.exp`.
+  (-0.5*offset[Basis.E1]).e23 + (-0.5*offset[Basis.E2]).e31 +
+    (-0.5*offset[Basis.E3]).e12 + 1.0.e1234
+
+
+func motorOf*(m: Multivector): Motor =
+  ## Read rigid motion back out of multivector, dropping every odd-grade coefficient.
+  ##   Caller hands motor; odd grades are zero in one, so dropping them loses nothing.
+  Motor(
+    turn_x: m[Basis.E41], turn_y: m[Basis.E42], turn_z: m[Basis.E43],
+    slide_x: m[Basis.E23], slide_y: m[Basis.E31], slide_z: m[Basis.E12],
+    scalar: m[Basis.scalar], antiscalar: m[Basis.E1234],
+  )
 
 
 

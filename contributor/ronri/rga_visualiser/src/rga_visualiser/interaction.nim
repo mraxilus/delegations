@@ -683,7 +683,7 @@ proc dollyAt*(
   if anchor.get.is_standing:
     # Depth from eye where it now stands, along sight direction zoom left unchanged.
     let eye = camera.eye
-    let depth = dot(anchor.get.at - eye, camera.frame(eye).forward)
+    let depth = dot(anchor.get.at - eye, camera.frame.forward)
     if depth > 0.0: camera.repivotToDepth(depth)
 
 
@@ -751,12 +751,10 @@ func panAcross*(
     at_before = heldFoot(positionUnderCursor(camera, width, height, before))
     at_after = heldFoot(positionUnderCursor(camera, width, height, after))
   if at_before.isSome and at_after.isSome:
-    let carried = position(add(
-      pivot_point, subtract(at_before.get, at_after.get)
-    ))
-    if carried.isSome:
-      camera.pivot = carried.get
-      return
+    # Slide whole camera by step between two feet, rather than place pivot at sum.
+    #   Pivot is read off sight line now, so it follows eye and needs no arithmetic here.
+    camera.slideBy(subtract(at_before.get, at_after.get))
+    return
   camera.pan(
     -FRACTION_PAN_PIXEL*(after.x - before.x), FRACTION_PAN_PIXEL*(after.y - before.y)
   )

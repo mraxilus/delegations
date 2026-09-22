@@ -252,7 +252,7 @@ func positionUnderCursor*(
   ##     imports.
   let
     eye = camera.eye
-    frame_camera = camera.frame(eye)
+    frame_camera = camera.frame
     ray = castRay(camera, eye, frame_camera, width, height, cursor)
     # Meet horizontal plane through pivot: `objects.levelPlaneThrough`.
     #   One spelling of what level means to algebra.
@@ -331,7 +331,7 @@ func positionOnGround*(
   ##   where meet lands behind reader.
   let
     eye = camera.eye
-    frame_camera = camera.frame(eye)
+    frame_camera = camera.frame
     ray = castRay(camera, eye, frame_camera, width, height, cursor)
     hit = position(ray ∨ groundPlane())
   if hit.isNone: return
@@ -481,7 +481,7 @@ proc pickWalk(
   #   fresh one here ran `algebraFilled` third time per frame.
   let
     eye = scale.eye
-    frame_camera = camera.frame(eye)
+    frame_camera = camera.frame
     ray = castRay(camera, eye, frame_camera, width, height, cursor)
 
   var
@@ -759,7 +759,7 @@ func positionUnderPointerOn*(
   ##   None for horizon shapes and hits behind eye; see `positionOnObjectUnder`.
   ##   No nearness filter: caller wanting one applies `isAnchorNear`.
   let
-    frame_camera = camera.frame(scale.eye)
+    frame_camera = camera.frame
     ray = castRay(camera, scale.eye, frame_camera, width, height, cursor)
   positionOnObjectUnder(scene.geometryOf(handle), ray, scale.plane_eye)
 
