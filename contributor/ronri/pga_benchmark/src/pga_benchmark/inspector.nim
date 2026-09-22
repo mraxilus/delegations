@@ -403,16 +403,31 @@ func totalOf(
     if callee != name: result = result + totalOf(callee, own, sites, depth + 1)
 
 
+func folded(
+  functions: seq[CFunction]
+): (Table[string, Counts], Table[string, seq[string]]) =
+  ## Read own counts and call sites of each function once, keyed by mangled name.
+  for f in functions:
+    if f.name in result[0]: continue
+    result[0][f.name] = count(f.body)
+    result[1][f.name] = callSites(f.body)
+
+
 func totals*(functions: seq[CFunction]): Table[string, Counts] =
   ## Count each function with its callees folded in, keyed by mangled name.
-  var own: Table[string, Counts]
-  var sites: Table[string, seq[string]]
-  for f in functions:
-    if f.name in own: continue
-    own[f.name] = count(f.body)
-    sites[f.name] = callSites(f.body)
+  let (own, sites) = folded(functions)
   for name in own.keys:
     result[name] = totalOf(name, own, sites, 0)
+
+
+func totals*(functions: seq[CFunction]; roots: openArray[string]): Table[string, Counts] =
+  ## Count named functions only, with their callees folded in; same fold as whole-cache one.
+  ##   Folding one root walks its whole call graph, so cost of folding every function of
+  ##   cache grows past what suite can spend (Article IX.8). Reader wanting few functions
+  ##   asks for those, and gets same counts whole-cache fold would give.
+  let (own, sites) = folded(functions)
+  for name in roots:
+    if name in own: result[name] = totalOf(name, own, sites, 0)
 
 
 

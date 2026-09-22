@@ -447,8 +447,14 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
     check sizeOfStem("Unknown", 128) == 0  # unknown stems add nothing
 
   test "no floor outruns what library spends on same operation":
-    let total = totals(INSPECTED)
     let metric = Metric(dimensions: DIMENSIONS, is_conformal: IS_CONFORMAL)
+    # Fold only functions law reads: folding whole cache walks every call graph of
+    #   unittest itself, which costs minutes (Article IX.8).
+    var roots: seq[string]
+    for f in INSPECTED:
+      for p in CATALOGUE:
+        if f.symbol == p.emitted and f.name notin roots: roots.add f.name
+    let total = totals(INSPECTED, roots)
     var compared = 0
     for p in CATALOGUE:
       if p.symbol.len == 0 or p.symbol in INLINED: continue
