@@ -5,7 +5,7 @@ as git sees it, and it enforces:
 
 - the layout of the two project roots;
 - the form and telegraphic-comment rules of the constitution;
-- the Simplified Technical English of the governed documents;
+- the Simplified Technical English of the root documents and of every project record;
 - the provenance header with its rules stamp, and the shape of a glossary;
 - branch scope and Conventional Commits.
 
