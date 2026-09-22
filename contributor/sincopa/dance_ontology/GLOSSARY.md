@@ -107,8 +107,10 @@ What a wound arm ends in: a wrap or a lock.
 _Avoid_: blocker, decoration, variant
 
 **Twist**:
-Stored rotational tension between the pair, counted in quarter turns clockwise or
-anticlockwise.
+Stored rotational tension between the pair, which is the rotation of the Follow less the
+rotation of the Lead. The agreed count is in quarter turns clockwise or anticlockwise, and the
+chain measures the same quantity as a real number of turns. Discrete and continuous are one
+concept at two grains.
 _Avoid_: wind, rotation, tension, turns
 
 **Low**:
