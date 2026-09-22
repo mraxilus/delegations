@@ -148,6 +148,11 @@ suite "Catalogue":
     ).filterIt(it notin EXCLUDED).deduplicate
     check symbolsOf(CATALOGUE).sorted == exported.sorted  # no exported operator unmeasured
 
+  test "inlined names every symbol library spells as template over field read":
+    for symbol in INLINED:
+      let line = "template `" & symbol & "`*(m: Multivector, b: Basis): float = m.elements[b]"
+      check line in SOURCE_MULTIVECTORS  # template, so C carries no function to inspect
+
   test "templates name every symbol library spells over another":
     for (symbol, target) in TEMPLATES:
       let line = "template `" & symbol & "`*(m: Multivector): Multivector = " & target & " m"
@@ -400,6 +405,7 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
     for f in functions: keys.add f.key
     for p in CATALOGUE:
       if p.symbol.len == 0: continue
+      if p.symbol in INLINED: continue  # template over field read emits no function
       var is_found = false
       for f in functions:
         if f.symbol != p.emitted: continue

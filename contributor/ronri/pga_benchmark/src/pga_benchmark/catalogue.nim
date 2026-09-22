@@ -472,6 +472,12 @@ const TEMPLATES* = [("^", "^∘")]
   ## Symbols library spells as template over another, so C carries only second's function;
   ## suite holds each pair to library source.
 
+const INLINED* = ["[]"]
+  ## Symbols library spells as template over field read, so C carries no function at all.
+  ##   Head made component accessor template, where it was `func` with `{.inline.}`, so
+  ##   emission suite passes over these rather than demanding function that cannot exist.
+  ##   Suite holds each one to library source.
+
 
 func emitted*(p: Measurand): string =
   ## Read symbol of function library emits for measurand: template's target, else own symbol.

@@ -44,6 +44,12 @@ measurements are emitted. `^` is a template over `^∘` in the library, so the C
 the latter. `TEMPLATES` records the pair, and the suite holds it to the source of the
 library. `MISSING` names the two conformal norms that the library declares as errors.
 
+`INLINED` names the symbols that the library spells as a template over a field read. Head
+made the component accessor `[]` a template, where it was a `func` with `{.inline.}`. The C
+therefore carries no function for it, and the emission suite passes over it. A suite holds
+`INLINED` to the source of the library, as it holds `TEMPLATES`. The gap row for
+`select_part` carries a dash for every count, and its verdict rests on time alone.
+
 The squared norms `|∙²` and `|∘²` are spelled in backticks, as `` (`|∙²`(m)) ``. The
 character `²` is no operator character to the lexer, so the prefix form splits it off as an
 identifier and `parseExpr` fails on it. These two operators carry no alias in the umbrella,
