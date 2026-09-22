@@ -140,8 +140,11 @@ template fill6(flat: var FlatFloats, a, b, c, d, e, f: float32): FlatBuffer =
 type SettingsOverlay = tuple
   ## Define everything overlay's shared draw extent and view-projection depend on.
   ##   Camera's whole placement and viewport asked about.
-  pivot_x, pivot_y, pivot_z: float
-  distance, azimuth, elevation, degrees_field_of_view, reach_scene: float
+  ##   Keyed on what camera holds, as `SettingsFurniture` is, and never on read-outs.
+  ##     `nimAnchorScreen` runs this for every overlay call, so key built from pivot and
+  ##     both angles cost more than derivation it skips: 488 us against 8 us repaired.
+  motor: Motor
+  distance, degrees_field_of_view, reach_scene: float
   width, height: int
 
 type ShapedMarker = tuple
@@ -1048,8 +1051,7 @@ proc ensureViewOverlay(width, height: int) =
   ##   full of multivectors per call on JS backend, cache hit or not.
   CAMERA.reach_scene = REACH_SCENE # Stamped as frame build does; see `ensurePlacement`.
   let settings: SettingsOverlay = (
-    CAMERA.pivot.x, CAMERA.pivot.y, CAMERA.pivot.z, CAMERA.distance,
-    CAMERA.azimuth, CAMERA.elevation, CAMERA.degrees_field_of_view, CAMERA.reach_scene,
+    CAMERA.motor, CAMERA.distance, CAMERA.degrees_field_of_view, CAMERA.reach_scene,
     width, height,
   )
   if SETTINGS_OVERLAY_HELD.isNone or SETTINGS_OVERLAY_HELD.get != settings:

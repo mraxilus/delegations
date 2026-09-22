@@ -917,7 +917,9 @@ proc layoutView*(panel: var Panel, camera: var Camera) =
     camera.dollyTo(float(placement[2]))
   gui.tooltip(wordingText(TipViewDistance))
 
-  var pivot = [cfloat(camera.pivot.x), cfloat(camera.pivot.y), cfloat(camera.pivot.z)]
+  # Read pivot once: it is derived now, so three reads derive eye and frame three times.
+  let pivot_held = camera.pivot
+  var pivot = [cfloat(pivot_held.x), cfloat(pivot_held.y), cfloat(pivot_held.z)]
   fieldLabel(wordingText(NameViewPivot))
   if gui.dragFloat3("##pivot", addr pivot[0], SPEED_DRAG*10.0):
     camera = camera.placedAtPivot(

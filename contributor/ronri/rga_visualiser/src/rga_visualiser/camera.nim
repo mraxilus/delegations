@@ -559,8 +559,13 @@ type SettingsFurniture* = tuple
   ##     frame holds furniture no longer matching view.
   ##   Here rather than in each front-end: two private copies would be drift sibling rule
   ##   warns about.
-  pivot_x, pivot_y, pivot_z: float
-  distance, azimuth, elevation, degrees_field_of_view, reach_scene: float
+  ##   Keyed on what camera *holds*, and never on what it reads out.
+  ##     Motor and depth are stance itself, so two frames agreeing on them agree on eye,
+  ##     every axis, pivot and both angles, which is stronger than keying on those.
+  ##     Reading pivot and both angles out to key on them costs eighteen sandwiches, and
+  ##     hold exists to save less work than that; see `drivePinAnchor`.
+  motor: Motor
+  distance, degrees_field_of_view, reach_scene: float
   height_pixels: int
   is_axes_shown, is_grid_shown: bool
 
@@ -570,9 +575,9 @@ func settingsFurnitureFor*(
 ): SettingsFurniture =
   ## Read furniture's inputs off this camera and frame, for hold comparison.
   ##   Compared exactly by callers: question is whether anything moved at all.
+  ##   Every field is plain read, so key costs nothing to build.
   (
-    camera.pivot.x, camera.pivot.y, camera.pivot.z, camera.distance,
-    camera.azimuth, camera.elevation, camera.degrees_field_of_view, camera.reach_scene,
+    camera.motor, camera.distance, camera.degrees_field_of_view, camera.reach_scene,
     height_pixels, is_axes_shown, is_grid_shown,
   )
 
