@@ -41,10 +41,30 @@ needs more verbs carries its own `tools/build.nim`, which `koch types`, `koch dr
 and reads content only for registered kinds. Git runs as a direct process with an argument
 list, and never through a shell.
 
+**The two streams are read apart.** Git writes a warning to stderr and ends it in a newline,
+while the fields it is asked for end in NUL. One stream carrying both would leave the warning
+glued to the first field, because the split never cuts at a newline.
+
+`git diff base...HEAD` warns whenever a branch and its base share two merge bases. That is
+ordinary: a branch merges `main`, and `main` later takes another branch that merged it
+elsewhere. The glued field then opens with `warning:` rather than with a path. The scope check
+then reads a branch's own file as standing outside its own scope.
+
+Stderr is kept rather than dropped, because it is where git says why it failed, and the
+`IOError` carries it. Both pipes are drained before the exit is waited on, since a child blocks
+where one fills while the other is read.
+
 - Rejected: `execCmdEx`, which reads by line and appends a newline to NUL-separated output.
+- Met in `changedPaths`, and every caller of `gitFields` carried the same exposure. `ls-files`
+  and `log` warn on their own occasions, and those warnings would have read as a path or as a
+  commit subject.
+- Cost: a warning is no longer reported anywhere. Git wrote it to be read by a person, and this
+  check reads no person's stream.
 - Cost: git must be on `PATH`.
 - Verified by `ttree.nim` on a throwaway repository: an ignored `bin/` is absent, an untracked
-  file is present, and a rename shows as its destination alone.
+  file is present, and a rename shows as its destination alone. On one built with two merge
+  bases, no field holds the warning and every field is a path. A second case holds that the
+  `IOError` still carries git's own reason.
 
 ## File kinds
 

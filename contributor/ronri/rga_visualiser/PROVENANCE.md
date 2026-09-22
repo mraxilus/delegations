@@ -2470,8 +2470,6 @@ passing proves that the runner carries that library. Assumed: nothing about the 
 - The residual steps of the comet at fast orbit rates are unexplained (see Selection and markers).
 - Neither catalogue is checked against its archive by any tool.
 - No tool in this repository measures the palette floors again (see Colour palette).
-- The scope check of `koch ci` reads this project's own paths as out of scope where the branch and
-  main share two merge bases. The warning of git joins the first path (repository issue 202).
 - The frame-time tail on real hardware is undiagnosed, and this container cannot see it.
 - The conformal metric (`IS_CONFORMAL`) is unfinished in the library, and this build is rigid 4D.
 - `.rgascene` is little-endian by rule, but only a little-endian host has ever written or read

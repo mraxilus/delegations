@@ -53,8 +53,8 @@ suite "Article IX":
     check root.revBefore(3650) == ""  # nothing ten years old, so window holds whole history
 
   test "IX.5 a warning git writes is never read as a field":
-    # Two merge bases make git warn on `diff base...HEAD`, and the warning ends in a newline
-    # rather than in NUL, so a stream carrying both glues it to first path.
+    # Two merge bases make git warn on `diff base...HEAD`, and warning ends in newline
+    # rather than in NUL, so stream carrying both glues it to first path.
     let root = tempRepo()
     defer: removeDir(root)
     root.writeInto(ALPHA_DIR & "/README.md", "# a\n")
