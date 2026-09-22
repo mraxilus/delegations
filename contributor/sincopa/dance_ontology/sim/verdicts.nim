@@ -11,12 +11,10 @@
 
 import std/[math, options, strformat, strutils, tables, wordwrap]
 
-import ./[body, hold, read, rig, rigid, vec, walk]
+import ./[body, hold, read, rig, rigid, vec, walk, words]
 
 
 const
-  BANDS = [("low", Band.Torso), ("high", Band.Neck), ("above", Band.Crown)]
-    ## Sheet's word for each band, in order report tabulates them.
   HALVES = [-4, -3, -2, -1, 0, 1, 2, 3, 4] ## Turns asked, in half turns.
   RUNGS = [(0.5, "cross"), (1.0, "diamond"), (1.5, "swan")]
     ## Name each rung of chain, in glossary's own words.
@@ -39,49 +37,6 @@ func twoLinks(a, b, c, d: Arm): seq[Link] =
 func prose(text: string): string =
   ## Wrap paragraph at `WIDTH` columns, closing it with blank line.
   wrapWords(text, WIDTH, splitLongWords = false) & "\n\n"
-
-func said(lying: Option[Lying]; band: Band): string =
-  ## Write where held arm lies, in sheet's own words.
-  ##   One translation table: across front = wrap, behind back = lock, torso band = low,
-  ##     neck band = high, over crown = above; arm carried there but not pressing body is
-  ##     *led*.
-  if band == Band.Crown:
-    return "above"
-  if lying.isNone:
-    return "open"
-  let
-    way = if lying.get.aspect == Aspect.Fore: "wrap" else: "lock"
-    at = if lying.get.band == Band.Torso: "low" else: "high"
-    held = if lying.get.pressing: "" else: " (led)"
-    elbow =
-      if lying.get.elbowFore and lying.get.aspect == Aspect.Aft: ", elbow forward" else: ""
-  &"{way} {at}{held}{elbow}"
-
-func dofName(dof: Dof): string =
-  ## Name freedom in report's words.
-  case dof
-  of Dof.Extend: "behind"
-  of Dof.Across: "across"
-  of Dof.Twist: "twist"
-  of Dof.Bend: "elbow"
-  of Dof.Wrist: "wrist"
-
-func whose(h: Hand): string =
-  ## Name arm verdict is about: lead's or follow's.
-  if h.body == Body.One: "lead's" else: "follow's"
-
-func why(w: Walk): string =
-  ## Say what refuses, in words.
-  if not w.stopped: return "holds"
-  case w.why
-  of Stop.None: "holds"
-  of Stop.Reach: &"{whose(w.whose)} reach"
-  of Stop.Swing: &"{whose(w.whose)} shoulder, swing"
-  of Stop.Twist: &"{whose(w.whose)} shoulder, twist"
-  of Stop.Elbow: &"{whose(w.whose)} elbow"
-  of Stop.Wrist: &"{whose(w.whose)} wrist"
-  of Stop.Through: &"{whose(w.whose)} arm through a body"
-  of Stop.Arms: "arm through arm"
 
 func turns(x: float): string = formatFloat(x, ffDecimal, 2)
   ## Render turns to two places.
