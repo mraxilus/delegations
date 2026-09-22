@@ -137,8 +137,13 @@ func undo*(history: var History, scene: var Scene, camera: var Camera): bool
   ##     vanished was last visible in.
   ##   Caller holding camera tween abandons it after this, or standing aim carries view
   ##   straight back off restored placement.
+  ##   Stance alone crosses, never whole camera value.
+  ##     Lens is reader's setting, and `camera.CameraStance` says nothing aiming camera may
+  ##     rewrite it. Whole-value assignment handed back lens of step arrived at.
   if not history.canUndo: return false
-  camera = history.entries[history.handleOf(history.cursor)].camera
+  camera = camera.placed(
+    history.entries[history.handleOf(history.cursor)].camera.stanceOf
+  )
   history.cursor.dec
   # Restore through `restoreFrom`, never assignment: revision must pass every one drawn.
   scene.restoreFrom(history.entries[history.handleOf(history.cursor)].scene)
@@ -151,8 +156,11 @@ func redo*(history: var History, scene: var Scene, camera: var Camera): bool
   ##   Reports whether later entry existed. Same tween caveat as `undo`.
   ##   Both come from entry arrived at, same step `undo` reads its camera from, so
   ##   crossing one step either way puts view in same place.
+  ##   Stance alone crosses, as in `undo`.
   if not history.canRedo: return false
   history.cursor.inc
   scene.restoreFrom(history.entries[history.handleOf(history.cursor)].scene)
-  camera = history.entries[history.handleOf(history.cursor)].camera
+  camera = camera.placed(
+    history.entries[history.handleOf(history.cursor)].camera.stanceOf
+  )
   true
