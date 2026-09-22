@@ -383,6 +383,37 @@ Verified by `tmarks.nim`, which drives the build of every page under testament. 
 was verified by a driven comparison under Playwright of the old page against the new: 707 states
 equal. See Figures for what was compared.
 
+**Every page says its prose in Simplified Technical English, and a hand-drawn figure claims nothing
+of the sim.** The Architect ruled that the prose did not read, and asked for it again from the
+charter's subset (`GUIDE.md`, Article VI.8). Two rules of that subset can be counted, and
+`design/plain.nim` counts them off the markup. A sentence of prose holds at most `WORDS` words, and
+a paragraph at most `SENTENCES` sentences. Prose is the text of a `p` or an `li` alone, because a
+caption or a swatch label is a fragment rather than a sentence.
+
+The rest of the subset, from the approved word to the active voice, is read rather than counted.
+
+Verified by `tmarks.nim` over every page the workbench writes and over the committed whole-cloth
+markup, and by `treview.nim` over the reference page. Both laws were proved able to fail. One
+sentence lengthened past the bound reddens the page it sits on. A seventh sentence added to a full
+paragraph reddens the markup that holds it.
+
+**The reader stepped over every paragraph that stands behind a drawing.** A page names each drawn
+element with a tag that opens as `p` or `li` does, such as `path` and `line`. The reader met one,
+then looked for the closing tag of the kind it wanted, which is the next paragraph's own. So it
+skipped that paragraph. The sign page holds 24 blocks of prose and the reader saw 14. Verified by
+`tplain.nim`, which reads prose off markup written for it, where the count is known.
+
+The rig viewer and the Reference are held by reading alone. Each one writes its prose in the
+browser rather than into markup the workbench renders. So no law reads either. The viewer reads
+inside both bounds today, measured by hand over the built page. Nothing measures the Reference,
+because its prose exists only once the browser has run.
+
+The hand-drawn dial of the whole-cloth page came out. It stated blocks and turns from a sweep of the
+solver that this project has deleted, and the generated panel below it disagreed. A figure drawn by
+hand cannot follow the sim. The page now points at that panel and at `sim/verdicts.md`, and the
+captions of its hand-drawn plates describe the drawing alone. Rejected: to keep the dial with a note
+that it may lag, which leaves a wrong number on the page.
+
 **That comparison cannot be repeated here.** Playwright, TypeScript and any package manifest are
 absent from this repository, and the date it ran was not recorded. So the 707 figure rests on a
 session that nobody can re-enter. To restore it means to bring the harness in as a project of its
