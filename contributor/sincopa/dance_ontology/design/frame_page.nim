@@ -231,7 +231,7 @@ const BODY = """
     <h3>An orbit, in two stages</h3>
     <p><b>Stage one.</b> The follow walks the ring round the lead, who stands still, so the axis
     of the pair tilts away from upright. <b>Stage two.</b> The whole drawing comes back until the
-    lead faces up again. The follow need not come back overhead, and where they stand is part of
+    lead faces up again. The follow need not come back to the top, and where they stand is part of
     what the picture says.</p>
     <p><b>An orbit faces the centre.</b> Whichever side of the walker faced their partner goes on
     facing them. So the follow turns as far as they travel. The chevron of the follow comes round

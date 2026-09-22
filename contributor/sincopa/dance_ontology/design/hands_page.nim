@@ -107,7 +107,7 @@ const BODY = """
   frame and the diamonds. They are <b>pillion lead</b> at a half, which is the crosses and the
   swans.</p>
   <p><b>A half turn makes a cross.</b> The partners stand pillion lead, both faced one way with
-  the lead behind, and the two connections cross once overhead. That is the plain crossing the
+  the lead behind, and the two connections cross once above the head. That is the plain crossing the
   app already draws for a crossed pair, and the break says which arm lies on top.</p>
   <p><b>A whole
   turn makes a diamond.</b> The pair crosses twice, once at the lead and once at the follow, and
