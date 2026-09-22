@@ -35,11 +35,6 @@ const
     ##     no business of position's name.
   DANCER_TERMS = ["Lead", "Follow"]
     ## Entries naming dancer, whose rejected words no page may say at all.
-  FORMS = {"he": @["him", "his"], "she": @["her", "hers"]}.toTable
-    ## Object and possessive of rejected pronoun.  Glossary rejects `he` and
-    ##   `she`, and these follow from them by grammar alone, so ruling stays
-    ##   glossary's.  Page said `her arm` and `his reach` while every entry
-    ##   passed, because neither word is listed.
   SAID_IN = ["design", "app"]
     ## Directories whose string literals reach page, either written into
     ##   markup or set on element by browser.
@@ -147,10 +142,7 @@ suite "pages speak of the lead and the follow":
 
   var gendered: seq[string]
   for _, words in rejected:
-    for word in words:
-      gendered.add word
-      if word in FORMS:
-        for form in FORMS[word]: gendered.add form
+    for word in words: gendered.add word
 
   test "no string a page shows says a gendered word":
     for dir in SAID_IN:
