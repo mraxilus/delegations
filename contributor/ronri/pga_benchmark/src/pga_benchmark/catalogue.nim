@@ -148,6 +148,13 @@ const CATALOGUE* = block:
   s.add general("negate", "-", "negate", "(- m)", 1, "2.24")
   s.add general("norm_bulk", "|∙", ALIAS_NORM_BULK, "(|∙ m)", 1, "2.87")
   s.add general("norm_weight", "|∘", ALIAS_NORM_WEIGHT, "(|∘ m)", 1, "2.88")
+  # Squared norms carry no umbrella alias, so alias stands empty and alias suite skips them.
+  #   Cite is equation defining norm, since squared quantity is what stands under its root
+  #   and library's own suites cite none.
+  #   Expression spells operator in backticks: `²` is no operator character to lexer, so
+  #     prefix form splits it off as identifier and `parseExpr` fails.
+  s.add general("norm_bulk_squared", "|∙²", "", "(`|∙²`(m))", 1, "2.87")
+  s.add general("norm_weight_squared", "|∘²", "", "(`|∘²`(m))", 1, "2.88")
   s.add general("norm", "|", "norm", "(| m)", 1, "2.90")
   s.add general("normalize_bulk", "^∙", "normalizeBulk", "(^∙ m)", 1, "2.89")
   s.add general("normalize_weight", "^∘", "normalizeWeight", "(^∘ m)", 1, "2.89")
@@ -314,6 +321,13 @@ const CATALOGUE* = block:
         ("weight", "∘", "weight", "(∘ m)", "weight(m)", "2.68"),
         ("norm_bulk", "|∙", "normBulk", "(|∙ m)", "normBulk(m)", "2.87"),
         ("norm_weight", "|∘", "normWeight", "(|∘ m)", "normWeight(m)", "2.88"),
+        # Weight squared norm lands in antiscalar slot, so reference wears `Antiscalar`;
+        #   conversion is free, since type is distinct float, and widening reads slot from it.
+        ("norm_bulk_squared", "|∙²", "", "(`|∙²`(m))", "normBulkSquared(m)", "2.87"),
+        (
+          "norm_weight_squared", "|∘²", "", "(`|∘²`(m))",
+          "Antiscalar(normWeightSquared(m))", "2.88",
+        ),
         ("unitize", "^", "unitize", "(^ m)", "unitize(m)", "2.89"),
         ("attitude", "⊖", "attitude", "(⊖ m)", "attitude(m)", "2.73"),
       ]:

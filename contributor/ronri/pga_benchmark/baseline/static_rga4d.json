@@ -8,99 +8,451 @@
     "sizeof_multivector": 128
   },
   "taken": {
-    "date": "2026-09-13",
+    "date": "2026-09-22",
     "machine": "linux amd64, 4 cores",
     "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
-    "pga": "0bc465509d1c93b6bec3ced25aa29f080a2cf110",
+    "pga": "9f9019b26b46490f79f383eee693b1abc84a4f63",
     "flags": "-d:release"
   },
   "functions": {
-    "[](Multivector,Basis)": {
-      "symbol": "[]",
-      "module": "pga/multivectors",
+    "∧(Multivector,Multivector)": {
+      "symbol": "∧",
+      "module": "pga/operators",
       "params": [
         "Multivector",
-        "Basis"
+        "Multivector"
       ],
-      "returns": "NF*",
+      "returns": "Multivector",
       "inline": true,
       "own": {
-        "multiplies": 0,
-        "adds": 0,
+        "multiplies": 81,
+        "adds": 65,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 0,
+        "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 3
+        "lines": 17
       },
       "total": {
-        "multiplies": 0,
-        "adds": 0,
+        "multiplies": 81,
+        "adds": 65,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 0,
+        "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 3
+        "lines": 17
       },
       "movement": {
-        "bytes_read": 128,
-        "bytes_written": 0,
-        "bytes_zeroed": 0,
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 128
+        "bytes_moved": 512
       }
     },
-    "[](Multivector,Basis)#u1": {
-      "symbol": "[]",
-      "module": "pga/multivectors",
+    "∨(Multivector,Multivector)": {
+      "symbol": "∨",
+      "module": "pga/operators",
       "params": [
         "Multivector",
-        "Basis"
+        "Multivector"
       ],
-      "returns": "float",
+      "returns": "Multivector",
       "inline": true,
       "own": {
-        "multiplies": 0,
-        "adds": 0,
+        "multiplies": 81,
+        "adds": 65,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 0,
+        "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 3
+        "lines": 17
       },
       "total": {
-        "multiplies": 0,
-        "adds": 0,
+        "multiplies": 81,
+        "adds": 65,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 0,
+        "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 3
+        "lines": 17
       },
       "movement": {
-        "bytes_read": 128,
-        "bytes_written": 8,
-        "bytes_zeroed": 0,
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 136
+        "bytes_moved": 512
+      }
+    },
+    "⟑(Multivector,Multivector)": {
+      "symbol": "⟑",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 192,
+        "adds": 176,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 17
+      },
+      "total": {
+        "multiplies": 192,
+        "adds": 176,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 17
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "⟇(Multivector,Multivector)": {
+      "symbol": "⟇",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 192,
+        "adds": 176,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 17
+      },
+      "total": {
+        "multiplies": 192,
+        "adds": 176,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 17
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "∙(Multivector,Multivector)": {
+      "symbol": "∙",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 8,
+        "adds": 7,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 2
+      },
+      "total": {
+        "multiplies": 8,
+        "adds": 7,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 2
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "∘(Multivector,Multivector)": {
+      "symbol": "∘",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 8,
+        "adds": 7,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 2
+      },
+      "total": {
+        "multiplies": 8,
+        "adds": 7,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 2
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "∨★(Multivector,Multivector)": {
+      "symbol": "∨★",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 54,
+        "adds": 38,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 17
+      },
+      "total": {
+        "multiplies": 54,
+        "adds": 38,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 17
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "∨☆(Multivector,Multivector)": {
+      "symbol": "∨☆",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 27,
+        "adds": 19,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 9
+      },
+      "total": {
+        "multiplies": 27,
+        "adds": 19,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 9
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "∧★(Multivector,Multivector)": {
+      "symbol": "∧★",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 27,
+        "adds": 19,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 9
+      },
+      "total": {
+        "multiplies": 27,
+        "adds": 19,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 9
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
+      }
+    },
+    "∧☆(Multivector,Multivector)": {
+      "symbol": "∧☆",
+      "module": "pga/operators",
+      "params": [
+        "Multivector",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 54,
+        "adds": 38,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 17
+      },
+      "total": {
+        "multiplies": 54,
+        "adds": 38,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 17
+      },
+      "movement": {
+        "bytes_read": 256,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 512
       }
     },
     "projectCentral(Multivector,Multivector)": {
@@ -133,10 +485,10 @@
         "zero_fills": 5,
         "intermediates": 2,
         "copies": 1,
-        "checks": 242,
+        "checks": 2,
         "calls": 2,
         "allocations": 0,
-        "lines": 1495
+        "lines": 45
       },
       "movement": {
         "bytes_read": 256,
@@ -177,10 +529,10 @@
         "zero_fills": 5,
         "intermediates": 2,
         "copies": 1,
-        "checks": 304,
+        "checks": 2,
         "calls": 2,
         "allocations": 0,
-        "lines": 1875
+        "lines": 53
       },
       "movement": {
         "bytes_read": 256,
@@ -221,10 +573,10 @@
         "zero_fills": 5,
         "intermediates": 2,
         "copies": 1,
-        "checks": 304,
+        "checks": 2,
         "calls": 2,
         "allocations": 0,
-        "lines": 1875
+        "lines": 53
       },
       "movement": {
         "bytes_read": 256,
@@ -265,10 +617,10 @@
         "zero_fills": 5,
         "intermediates": 2,
         "copies": 1,
-        "checks": 242,
+        "checks": 2,
         "calls": 2,
         "allocations": 0,
-        "lines": 1495
+        "lines": 45
       },
       "movement": {
         "bytes_read": 256,
@@ -277,6 +629,436 @@
         "bytes_copied": 128,
         "bytes_intermediates": 256,
         "bytes_moved": 1408
+      }
+    },
+    "∙(Multivector)": {
+      "symbol": "∙",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 9
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 9
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 384
+      }
+    },
+    "∘(Multivector)": {
+      "symbol": "∘",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 9
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 9
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 384
+      }
+    },
+    "/(Multivector)": {
+      "symbol": "/",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 17
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 17
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 384
+      }
+    },
+    "\\(Multivector)": {
+      "symbol": "\\",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 17
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 17
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 384
+      }
+    },
+    "~(Multivector)": {
+      "symbol": "~",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 17
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 17
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 384
+      }
+    },
+    "~∘(Multivector)": {
+      "symbol": "~∘",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 17
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 17
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 384
+      }
+    },
+    "★(Multivector)": {
+      "symbol": "★",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 9
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 9
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 384
+      }
+    },
+    "☆(Multivector)": {
+      "symbol": "☆",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 9
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 9
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 384
+      }
+    },
+    "|∙²(Multivector)": {
+      "symbol": "|∙²",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 8,
+        "adds": 7,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 2
+      },
+      "total": {
+        "multiplies": 8,
+        "adds": 7,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 2
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 384
+      }
+    },
+    "|∘²(Multivector)": {
+      "symbol": "|∘²",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 8,
+        "adds": 7,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 2
+      },
+      "total": {
+        "multiplies": 8,
+        "adds": 7,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 1,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 2
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 128,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 384
       }
     },
     "wedge(Point,Point)": {
@@ -2457,6 +3239,49 @@
         "bytes_moved": 40
       }
     },
+    "normWeightSquared(Point)": {
+      "symbol": "normWeightSquared",
+      "module": "reference/rigid3",
+      "params": [
+        "Point"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 1,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 1,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 40
+      }
+    },
     "unitize(Point)": {
       "symbol": "unitize",
       "module": "reference/rigid3",
@@ -3618,6 +4443,49 @@
         "bytes_moved": 40
       }
     },
+    "normBulkSquared(Plane)": {
+      "symbol": "normBulkSquared",
+      "module": "reference/rigid3",
+      "params": [
+        "Plane"
+      ],
+      "returns": "float",
+      "inline": true,
+      "own": {
+        "multiplies": 1,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 1,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 32,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 40
+      }
+    },
     "unitize(Plane)": {
       "symbol": "unitize",
       "module": "reference/rigid3",
@@ -3702,6 +4570,49 @@
         "bytes_copied": 0,
         "bytes_intermediates": 0,
         "bytes_moved": 80
+      }
+    },
+    "grade(Basis)": {
+      "symbol": "grade",
+      "module": "pga/algebra",
+      "params": [
+        "Basis"
+      ],
+      "returns": "int",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "total": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 3
+      },
+      "movement": {
+        "bytes_read": 0,
+        "bytes_written": 8,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 8
       }
     },
     "translator(Vec3)": {
@@ -3791,11 +4702,11 @@
         "bytes_moved": 224
       }
     },
-    "grade(Basis)": {
-      "symbol": "grade",
+    "toBase(int)": {
+      "symbol": "toBase",
       "module": "pga/algebra",
       "params": [
-        "Basis"
+        "int"
       ],
       "returns": "int",
       "inline": false,
@@ -3810,7 +4721,7 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 3
+        "lines": 12
       },
       "total": {
         "multiplies": 0,
@@ -3823,58 +4734,15 @@
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 3
+        "lines": 12
       },
       "movement": {
-        "bytes_read": 0,
+        "bytes_read": 8,
         "bytes_written": 8,
         "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 8
-      }
-    },
-    "gradeAnti(Basis)": {
-      "symbol": "gradeAnti",
-      "module": "pga/algebra",
-      "params": [
-        "Basis"
-      ],
-      "returns": "int",
-      "inline": false,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 0,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 1,
-        "calls": 1,
-        "allocations": 0,
-        "lines": 20
-      },
-      "total": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 0,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 1,
-        "calls": 1,
-        "allocations": 0,
-        "lines": 23
-      },
-      "movement": {
-        "bytes_read": 0,
-        "bytes_written": 8,
-        "bytes_zeroed": 0,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 8
+        "bytes_moved": 16
       }
     },
     "+(Multivector,Multivector)": {
@@ -3894,10 +4762,10 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 48,
+        "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 51
+        "lines": 31
       },
       "total": {
         "multiplies": 0,
@@ -3907,10 +4775,10 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 48,
+        "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 51
+        "lines": 31
       },
       "movement": {
         "bytes_read": 256,
@@ -3938,10 +4806,10 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 48,
+        "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 51
+        "lines": 31
       },
       "total": {
         "multiplies": 0,
@@ -3951,10 +4819,10 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 48,
+        "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 51
+        "lines": 31
       },
       "movement": {
         "bytes_read": 256,
@@ -3981,10 +4849,10 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 32,
+        "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 45
+        "lines": 31
       },
       "total": {
         "multiplies": 0,
@@ -3994,10 +4862,10 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 32,
+        "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 45
+        "lines": 31
       },
       "movement": {
         "bytes_read": 128,
@@ -4025,10 +4893,10 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 64,
-        "calls": 16,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 69
+        "lines": 40
       },
       "total": {
         "multiplies": 0,
@@ -4038,10 +4906,10 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 64,
-        "calls": 16,
+        "checks": 0,
+        "calls": 0,
         "allocations": 0,
-        "lines": 117
+        "lines": 40
       },
       "movement": {
         "bytes_read": 136,
@@ -4069,10 +4937,10 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 64,
-        "calls": 16,
+        "checks": 1,
+        "calls": 1,
         "allocations": 0,
-        "lines": 69
+        "lines": 45
       },
       "total": {
         "multiplies": 0,
@@ -4082,10 +4950,10 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 80,
-        "calls": 32,
+        "checks": 1,
+        "calls": 1,
         "allocations": 0,
-        "lines": 437
+        "lines": 57
       },
       "movement": {
         "bytes_read": 136,
@@ -4094,446 +4962,6 @@
         "bytes_copied": 0,
         "bytes_intermediates": 0,
         "bytes_moved": 392
-      }
-    },
-    "∧(Multivector,Multivector)": {
-      "symbol": "∧",
-      "module": "pga/operators",
-      "params": [
-        "Multivector",
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 81,
-        "adds": 65,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 178,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 1090
-      },
-      "total": {
-        "multiplies": 81,
-        "adds": 65,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 178,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 1090
-      },
-      "movement": {
-        "bytes_read": 256,
-        "bytes_written": 128,
-        "bytes_zeroed": 128,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 512
-      }
-    },
-    "∨(Multivector,Multivector)": {
-      "symbol": "∨",
-      "module": "pga/operators",
-      "params": [
-        "Multivector",
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 81,
-        "adds": 65,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 178,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 1090
-      },
-      "total": {
-        "multiplies": 81,
-        "adds": 65,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 178,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 1090
-      },
-      "movement": {
-        "bytes_read": 256,
-        "bytes_written": 128,
-        "bytes_zeroed": 128,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 512
-      }
-    },
-    "⟑(Multivector,Multivector)": {
-      "symbol": "⟑",
-      "module": "pga/operators",
-      "params": [
-        "Multivector",
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 192,
-        "adds": 176,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 400,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 2422
-      },
-      "total": {
-        "multiplies": 192,
-        "adds": 176,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 400,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 2422
-      },
-      "movement": {
-        "bytes_read": 256,
-        "bytes_written": 128,
-        "bytes_zeroed": 128,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 512
-      }
-    },
-    "⟇(Multivector,Multivector)": {
-      "symbol": "⟇",
-      "module": "pga/operators",
-      "params": [
-        "Multivector",
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 192,
-        "adds": 176,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 400,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 2422
-      },
-      "total": {
-        "multiplies": 192,
-        "adds": 176,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 400,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 2422
-      },
-      "movement": {
-        "bytes_read": 256,
-        "bytes_written": 128,
-        "bytes_zeroed": 128,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 512
-      }
-    },
-    "∙(Multivector,Multivector)": {
-      "symbol": "∙",
-      "module": "pga/operators",
-      "params": [
-        "Multivector",
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 8,
-        "adds": 7,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 17,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 109
-      },
-      "total": {
-        "multiplies": 8,
-        "adds": 7,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 17,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 109
-      },
-      "movement": {
-        "bytes_read": 256,
-        "bytes_written": 128,
-        "bytes_zeroed": 128,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 512
-      }
-    },
-    "∘(Multivector,Multivector)": {
-      "symbol": "∘",
-      "module": "pga/operators",
-      "params": [
-        "Multivector",
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 8,
-        "adds": 7,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 17,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 109
-      },
-      "total": {
-        "multiplies": 8,
-        "adds": 7,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 17,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 109
-      },
-      "movement": {
-        "bytes_read": 256,
-        "bytes_written": 128,
-        "bytes_zeroed": 128,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 512
-      }
-    },
-    "∨★(Multivector,Multivector)": {
-      "symbol": "∨★",
-      "module": "pga/operators",
-      "params": [
-        "Multivector",
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 54,
-        "adds": 38,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 124,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 766
-      },
-      "total": {
-        "multiplies": 54,
-        "adds": 38,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 124,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 766
-      },
-      "movement": {
-        "bytes_read": 256,
-        "bytes_written": 128,
-        "bytes_zeroed": 128,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 512
-      }
-    },
-    "∨☆(Multivector,Multivector)": {
-      "symbol": "∨☆",
-      "module": "pga/operators",
-      "params": [
-        "Multivector",
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 27,
-        "adds": 19,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 62,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 386
-      },
-      "total": {
-        "multiplies": 27,
-        "adds": 19,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 62,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 386
-      },
-      "movement": {
-        "bytes_read": 256,
-        "bytes_written": 128,
-        "bytes_zeroed": 128,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 512
-      }
-    },
-    "∧★(Multivector,Multivector)": {
-      "symbol": "∧★",
-      "module": "pga/operators",
-      "params": [
-        "Multivector",
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 27,
-        "adds": 19,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 62,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 386
-      },
-      "total": {
-        "multiplies": 27,
-        "adds": 19,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 62,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 386
-      },
-      "movement": {
-        "bytes_read": 256,
-        "bytes_written": 128,
-        "bytes_zeroed": 128,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 512
-      }
-    },
-    "∧☆(Multivector,Multivector)": {
-      "symbol": "∧☆",
-      "module": "pga/operators",
-      "params": [
-        "Multivector",
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 54,
-        "adds": 38,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 124,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 766
-      },
-      "total": {
-        "multiplies": 54,
-        "adds": 38,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 124,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 766
-      },
-      "movement": {
-        "bytes_read": 256,
-        "bytes_written": 128,
-        "bytes_zeroed": 128,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 512
       }
     },
     "∧(float,Multivector)": {
@@ -4553,10 +4981,10 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 32,
+        "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 45
+        "lines": 31
       },
       "total": {
         "multiplies": 16,
@@ -4566,10 +4994,10 @@
         "zero_fills": 1,
         "intermediates": 0,
         "copies": 0,
-        "checks": 32,
+        "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 45
+        "lines": 31
       },
       "movement": {
         "bytes_read": 136,
@@ -4578,350 +5006,6 @@
         "bytes_copied": 0,
         "bytes_intermediates": 0,
         "bytes_moved": 392
-      }
-    },
-    "∙(Multivector)": {
-      "symbol": "∙",
-      "module": "pga/operators",
-      "params": [
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 16,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 110
-      },
-      "total": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 16,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 110
-      },
-      "movement": {
-        "bytes_read": 128,
-        "bytes_written": 128,
-        "bytes_zeroed": 128,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 384
-      }
-    },
-    "∘(Multivector)": {
-      "symbol": "∘",
-      "module": "pga/operators",
-      "params": [
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 16,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 110
-      },
-      "total": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 16,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 110
-      },
-      "movement": {
-        "bytes_read": 128,
-        "bytes_written": 128,
-        "bytes_zeroed": 128,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 384
-      }
-    },
-    "/(Multivector)": {
-      "symbol": "/",
-      "module": "pga/operators",
-      "params": [
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 32,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 214
-      },
-      "total": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 32,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 214
-      },
-      "movement": {
-        "bytes_read": 128,
-        "bytes_written": 128,
-        "bytes_zeroed": 128,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 384
-      }
-    },
-    "\\(Multivector)": {
-      "symbol": "\\",
-      "module": "pga/operators",
-      "params": [
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 32,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 214
-      },
-      "total": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 32,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 214
-      },
-      "movement": {
-        "bytes_read": 128,
-        "bytes_written": 128,
-        "bytes_zeroed": 128,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 384
-      }
-    },
-    "~(Multivector)": {
-      "symbol": "~",
-      "module": "pga/operators",
-      "params": [
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 32,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 214
-      },
-      "total": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 32,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 214
-      },
-      "movement": {
-        "bytes_read": 128,
-        "bytes_written": 128,
-        "bytes_zeroed": 128,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 384
-      }
-    },
-    "~∘(Multivector)": {
-      "symbol": "~∘",
-      "module": "pga/operators",
-      "params": [
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 32,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 214
-      },
-      "total": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 32,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 214
-      },
-      "movement": {
-        "bytes_read": 128,
-        "bytes_written": 128,
-        "bytes_zeroed": 128,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 384
-      }
-    },
-    "★(Multivector)": {
-      "symbol": "★",
-      "module": "pga/operators",
-      "params": [
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 16,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 110
-      },
-      "total": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 16,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 110
-      },
-      "movement": {
-        "bytes_read": 128,
-        "bytes_written": 128,
-        "bytes_zeroed": 128,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 384
-      }
-    },
-    "☆(Multivector)": {
-      "symbol": "☆",
-      "module": "pga/operators",
-      "params": [
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 16,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 110
-      },
-      "total": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 16,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 110
-      },
-      "movement": {
-        "bytes_read": 128,
-        "bytes_written": 128,
-        "bytes_zeroed": 128,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 384
       }
     },
     "|∙(Multivector)": {
@@ -4940,10 +5024,10 @@
         "zero_fills": 2,
         "intermediates": 1,
         "copies": 0,
-        "checks": 3,
+        "checks": 1,
         "calls": 1,
         "allocations": 0,
-        "lines": 25
+        "lines": 13
       },
       "total": {
         "multiplies": 8,
@@ -4953,10 +5037,10 @@
         "zero_fills": 3,
         "intermediates": 1,
         "copies": 0,
-        "checks": 20,
+        "checks": 1,
         "calls": 1,
         "allocations": 0,
-        "lines": 134
+        "lines": 15
       },
       "movement": {
         "bytes_read": 128,
@@ -4983,10 +5067,10 @@
         "zero_fills": 2,
         "intermediates": 1,
         "copies": 0,
-        "checks": 3,
+        "checks": 1,
         "calls": 1,
         "allocations": 0,
-        "lines": 25
+        "lines": 13
       },
       "total": {
         "multiplies": 8,
@@ -4996,10 +5080,10 @@
         "zero_fills": 3,
         "intermediates": 1,
         "copies": 0,
-        "checks": 20,
+        "checks": 1,
         "calls": 1,
         "allocations": 0,
-        "lines": 134
+        "lines": 15
       },
       "movement": {
         "bytes_read": 128,
@@ -5026,10 +5110,10 @@
         "zero_fills": 3,
         "intermediates": 2,
         "copies": 0,
-        "checks": 6,
+        "checks": 2,
         "calls": 2,
         "allocations": 0,
-        "lines": 44
+        "lines": 20
       },
       "total": {
         "multiplies": 16,
@@ -5039,10 +5123,10 @@
         "zero_fills": 9,
         "intermediates": 4,
         "copies": 0,
-        "checks": 46,
+        "checks": 4,
         "calls": 4,
         "allocations": 0,
-        "lines": 312
+        "lines": 50
       },
       "movement": {
         "bytes_read": 128,
@@ -5065,27 +5149,27 @@
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
-        "divides": 0,
+        "divides": 1,
         "zero_fills": 1,
         "intermediates": 1,
         "copies": 1,
-        "checks": 34,
+        "checks": 17,
         "calls": 17,
         "allocations": 0,
-        "lines": 59
+        "lines": 52
       },
       "total": {
-        "multiplies": 8,
+        "multiplies": 24,
         "adds": 7,
         "subs": 0,
-        "divides": 16,
+        "divides": 1,
         "zero_fills": 4,
         "intermediates": 2,
         "copies": 1,
-        "checks": 54,
+        "checks": 18,
         "calls": 18,
         "allocations": 0,
-        "lines": 209
+        "lines": 83
       },
       "movement": {
         "bytes_read": 128,
@@ -5108,27 +5192,27 @@
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
-        "divides": 0,
+        "divides": 1,
         "zero_fills": 1,
         "intermediates": 1,
         "copies": 1,
-        "checks": 34,
+        "checks": 17,
         "calls": 17,
         "allocations": 0,
-        "lines": 59
+        "lines": 52
       },
       "total": {
-        "multiplies": 8,
+        "multiplies": 24,
         "adds": 7,
         "subs": 0,
-        "divides": 16,
+        "divides": 1,
         "zero_fills": 4,
         "intermediates": 2,
         "copies": 1,
-        "checks": 54,
+        "checks": 18,
         "calls": 18,
         "allocations": 0,
-        "lines": 209
+        "lines": 83
       },
       "movement": {
         "bytes_read": 128,
@@ -5168,10 +5252,10 @@
         "zero_fills": 3,
         "intermediates": 1,
         "copies": 1,
-        "checks": 179,
+        "checks": 1,
         "calls": 1,
         "allocations": 0,
-        "lines": 1103
+        "lines": 30
       },
       "movement": {
         "bytes_read": 128,
@@ -5211,10 +5295,10 @@
         "zero_fills": 7,
         "intermediates": 3,
         "copies": 1,
-        "checks": 375,
+        "checks": 3,
         "calls": 3,
         "allocations": 0,
-        "lines": 2315
+        "lines": 68
       },
       "movement": {
         "bytes_read": 128,
@@ -5254,10 +5338,10 @@
         "zero_fills": 7,
         "intermediates": 3,
         "copies": 1,
-        "checks": 375,
+        "checks": 3,
         "calls": 3,
         "allocations": 0,
-        "lines": 2315
+        "lines": 68
       },
       "movement": {
         "bytes_read": 128,
@@ -5519,6 +5603,24 @@
       "arity": 1,
       "expression": "(|∘ m)",
       "library": "|∘(Multivector)",
+      "reference": "",
+      "cite": "2.88"
+    },
+    "norm_bulk_squared": {
+      "symbol": "|∙²",
+      "alias": "",
+      "arity": 1,
+      "expression": "(`|∙²`(m))",
+      "library": "|∙²(Multivector)",
+      "reference": "",
+      "cite": "2.87"
+    },
+    "norm_weight_squared": {
+      "symbol": "|∘²",
+      "alias": "",
+      "arity": 1,
+      "expression": "(`|∘²`(m))",
+      "library": "|∘²(Multivector)",
       "reference": "",
       "cite": "2.88"
     },
@@ -5963,6 +6065,24 @@
       "reference": "normWeight(Point)",
       "cite": "2.88"
     },
+    "norm_bulk_squared_point": {
+      "symbol": "|∙²",
+      "alias": "",
+      "arity": 1,
+      "expression": "(`|∙²`(m))",
+      "library": "|∙²(Multivector)",
+      "reference": "normBulkSquared(Point)",
+      "cite": "2.87"
+    },
+    "norm_weight_squared_point": {
+      "symbol": "|∘²",
+      "alias": "",
+      "arity": 1,
+      "expression": "(`|∘²`(m))",
+      "library": "|∘²(Multivector)",
+      "reference": "Antiscalar()",
+      "cite": "2.88"
+    },
     "unitize_point": {
       "symbol": "^",
       "alias": "unitize",
@@ -6071,6 +6191,24 @@
       "reference": "normWeight(Line)",
       "cite": "2.88"
     },
+    "norm_bulk_squared_line": {
+      "symbol": "|∙²",
+      "alias": "",
+      "arity": 1,
+      "expression": "(`|∙²`(m))",
+      "library": "|∙²(Multivector)",
+      "reference": "normBulkSquared(Line)",
+      "cite": "2.87"
+    },
+    "norm_weight_squared_line": {
+      "symbol": "|∘²",
+      "alias": "",
+      "arity": 1,
+      "expression": "(`|∘²`(m))",
+      "library": "|∘²(Multivector)",
+      "reference": "Antiscalar()",
+      "cite": "2.88"
+    },
     "unitize_line": {
       "symbol": "^",
       "alias": "unitize",
@@ -6177,6 +6315,24 @@
       "expression": "(|∘ m)",
       "library": "|∘(Multivector)",
       "reference": "normWeight(Plane)",
+      "cite": "2.88"
+    },
+    "norm_bulk_squared_plane": {
+      "symbol": "|∙²",
+      "alias": "",
+      "arity": 1,
+      "expression": "(`|∙²`(m))",
+      "library": "|∙²(Multivector)",
+      "reference": "normBulkSquared(Plane)",
+      "cite": "2.87"
+    },
+    "norm_weight_squared_plane": {
+      "symbol": "|∘²",
+      "alias": "",
+      "arity": 1,
+      "expression": "(`|∘²`(m))",
+      "library": "|∘²(Multivector)",
+      "reference": "Antiscalar()",
       "cite": "2.88"
     },
     "unitize_plane": {
