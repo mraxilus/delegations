@@ -22,6 +22,21 @@ import std/[dom, jsffi, math, strutils]
 import ./drawn
 
 
+const VERDICTS* = [
+  "Holds. The sim wound the couple here from rest, lifted their joined hands, and let the " &
+    "pose settle.",
+  "No pose holds, at any distance the couple can stand.",
+  "Nothing stops the turn inside the range this sweep tried.",
+]
+  ## Every whole sentence viewer shows as its verdict, in one table.
+  ##   Page is built in browser, so no page on disk carries these sentences and
+  ##     `tmarks` cannot read them.  Table is what `tsaid` counts instead, which
+  ##     holds them to same two rules as prose written into markup (Article VI.8).
+  ##   Fourth verdict is not whole sentence: it opens `Stops at <b>N</b> turns:`
+  ##     and closes with reason recorded by sim, so it is built at reading time
+  ##     and counted by nothing.
+
+
 func rig(): JsObject {.importjs: "RIG@".}
 func ctxOf(id: cstring): JsObject {.importjs:
   "document.getElementById(#).getContext('2d')".}
@@ -250,11 +265,7 @@ proc caption() =
        else:
          cstring"<b>" & toFixed(num(sw.turns), 2) & cstring"</b> turns · no pose holds")
     document.getElementById("verdict").innerHTML =
-      (if moments() > 0:
-         cstring"Holds. The sim wound the couple here from rest, lifted their " &
-           cstring"joined hands, and let the pose settle."
-       else:
-         cstring"No pose holds, at any distance the couple can stand.")
+      (if moments() > 0: cstring(VERDICTS[0]) else: cstring(VERDICTS[1]))
   else:
     let turned = num(sw.at[frame])
     document.getElementById("where").innerHTML =
@@ -265,7 +276,7 @@ proc caption() =
          cstring"Stops at <b>" & toFixed(num(sw.turns), 2) & cstring"</b> turns: " &
            text(sw.says)
        else:
-         cstring"Nothing stops the turn inside the range this sweep tried.")
+         cstring(VERDICTS[2]))
 
 
 proc framingOf(e: JsObject): Framing =

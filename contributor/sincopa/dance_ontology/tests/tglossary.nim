@@ -17,7 +17,7 @@ joinable: true
 ##   Every hold walks same chain (rule 31), so claim is made over both holds
 ##     workbench draws, never over one example (Article IX.2).
 
-import std/[options, os, strutils, tables, unittest]
+import std/[math, options, os, strutils, tables, unittest]
 
 import ../design/parts
 import ../design/rules
@@ -26,6 +26,12 @@ import ../design/rules
 const
   GLOSSARY = currentSourcePath().parentDir.parentDir / "GLOSSARY.md"
     ## Vocabulary this project agreed, beside its code.
+  REPORT = currentSourcePath().parentDir.parentDir / "sim" / "verdicts.md"
+    ## Report sim writes, which is what reader of sim reads.
+  RUNG_AT = {50: "cross", 100: "diamond", 150: "swan"}.toTable
+    ## Glossary's word for each rung of chain, by turns in hundredths.
+    ##   Hundredths because report prints turns to two places, and key must
+    ##     compare exactly.
   SHAPE_AT = {0: "Open", 5: "Cross", 10: "Diamond", 15: "Swan"}.toTable
     ## Glossary's word for each step of chain, by wind in tenths of turn.
     ##   Tenths because wind is float and key must compare exactly.
@@ -84,6 +90,34 @@ func literals(source: string): seq[tuple[said: string; next: char]] =
       i = j + 1
     else:
       i += 1
+
+
+func rungsOf(report: string): seq[tuple[turns: int, said: string]] =
+  ## Read chain table of report: how far each rung is wound, and word report
+  ## gave that rung.
+  ##   Rung cell reads `<word> (<turns>)`, under header that names its columns.
+  var inside = false
+  for line in report.splitLines:
+    let bare = line.strip
+    if bare.startsWith("| level | rung |"):
+      inside = true
+      continue
+    if not inside: continue
+    if not bare.startsWith("|"): break
+    if bare.startsWith("|---"): continue
+    let cells = bare.strip(chars = {'|', ' '}).split('|')
+    if cells.len < 2: continue
+    let
+      cell = cells[1].strip
+      opens = cell.find('(')
+      shuts = cell.find(')')
+    if opens < 0 or shuts < opens: continue
+    var wound: float
+    try:
+      wound = parseFloat(cell[opens + 1 ..< shuts])
+    except ValueError:
+      continue
+    result.add (int(round(wound * 100.0)), cell[0 ..< opens].strip)
 
 
 func says(text, phrase: string): bool =
@@ -162,3 +196,34 @@ suite "pages speak of the lead and the follow":
         if said.says(word):
           checkpoint name & " says `" & word & "`"
           fail()
+
+
+suite "the report speaks glossary":
+  ## Chain table of `sim/verdicts.md` names every rung.  It said `X`, which
+  ##   entry **Cross** rejects, while `design/parts` named same rung right: one
+  ##   chain, two namings, one of them wrong.
+  ##   Report is what reader of sim reads, so law reads written bytes back
+  ##     rather than function that wrote them (Article IX.5).
+  let
+    source = readFile(GLOSSARY)
+    rejected = source.avoided(CHAIN_TERMS)
+    rungs = rungsOf(readFile(REPORT))
+
+  test "report still tabulates every rung of chain":
+    # Laws below say nothing where table is missing or unparsed, so rows are
+    # demanded first.
+    check rungs.len > 0
+    for (wound, _) in rungs:
+      check wound in RUNG_AT
+
+  test "no rung of report is named by word glossary rejects":
+    for (wound, said) in rungs:
+      for _, words in rejected:
+        for word in words:
+          if said.toLowerAscii.says(word):
+            checkpoint "rung at " & $wound & " says `" & word & "`: " & said
+            fail()
+
+  test "every rung of report carries glossary's own word":
+    for (wound, said) in rungs:
+      check said.toLowerAscii.says(RUNG_AT[wound])

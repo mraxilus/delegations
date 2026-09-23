@@ -24,6 +24,11 @@
 #   with labels that stand when check runs, and race is then nobody's to win.
 #   `permissions` block is whole grant: `contents` is what checkout uses, and `pull-requests`
 #   is what `gh pr view` uses.
+#   `concurrency` group carries event's own action, so `opened`, `labeled` and
+#   `ready_for_review` do not cancel each other. They fire from same act of opening pull
+#   request, and cancelled run is not success. Where branch protection requires this check,
+#   cancellation that lands last leaves pull request blocked, and nothing re-fires it. Stale
+#   run of same action still cancels, which is what group is for.
 #   Version is driver's pin, as `check.yml` states it, and `toolchain.nim` holds both to it.
 
 name: role
@@ -40,7 +45,7 @@ env:
   NIM_VERSION: '2.2.12'
 
 concurrency:
-  group: role-${{ github.event.pull_request.number }}
+  group: role-${{ github.event.pull_request.number }}-${{ github.event.action }}
   cancel-in-progress: true
 
 jobs:

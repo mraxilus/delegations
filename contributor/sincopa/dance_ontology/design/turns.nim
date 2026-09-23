@@ -10,10 +10,14 @@
 ##     and folded into page by `pages`.  Couple stand for turn, so each sweep
 ##     searches every distance they may stand at, and eighteen of them cost more
 ##     than every `pages` run should pay.
-##   Words (wrap, lock, low, high) are put on here, as `sim/verdicts` does.  Not
-##     because sim speaks other language -- it reuses agreed words -- but because
-##     here it measures what ontology asserts, and translation kept visible is
-##     evidence where assumed identity is echo.
+##   Words (wrap, lock, low, high) are put on by `sim/words`, which `verdicts`
+##     reads too.  Not because sim speaks other language -- it reuses agreed
+##     words -- but because here it measures what ontology asserts, and
+##     translation kept visible is evidence where assumed identity is echo.
+##     Table was once written out here and again in `verdicts`, to keep it
+##       visible in both.  Two copies drifted instead, so page and report gave
+##       one pose two answers; one table, named for itself, is what keeps it
+##       visible now.
 ##   Two rests, both page's own choice: cross-name holds rest face to face, and
 ##     same-name holds are also built face to face so turns count as sheet
 ##     counts.  Same-name *pair* is exception: face to face its two connections
@@ -27,12 +31,11 @@
 
 import std/[json, math, options, strutils]
 
-import ../sim/[body, hold, limb, read, rig, vec, walk]
+import ../sim/[body, hold, limb, read, rig, vec, walk, words]
 
 
 const
   HOLDS = ["L-l", "R-r", "L-r", "R-l", "L-l.R-r", "L-r.R-l"]
-  BANDS = [("low", Band.Torso), ("high", Band.Neck), ("above", Band.Crown)]
 
 
 func armsOf(hold: string): seq[(Arm, Arm)] =
@@ -55,43 +58,6 @@ func linksOf(hold: string): seq[Link] =
 func restsAway(hold: string): bool =
   ## Same-name pair is built Pillion; every other hold Face-to-face.
   hold.contains('.') and sameName(hold)
-
-
-func said(lying: Option[Lying]; band: Band): string =
-  ## Write where held arm lies, in sheet's words -- only translation.
-  if band == Band.Crown:
-    return "above"
-  if lying.isNone:
-    return "open"
-  let
-    way = if lying.get.aspect == Aspect.Fore: "wrap" else: "lock"
-    at = if lying.get.band == Band.Torso: "low" else: "high"
-    held = if lying.get.pressing: "" else: " (led)"
-  way & " " & at & held
-
-func dofName(dof: Dof): string =
-  case dof
-  of Dof.Extend: "shoulder, behind"
-  of Dof.Across: "shoulder, across"
-  of Dof.Twist: "shoulder, twist"
-  of Dof.Bend: "elbow"
-  of Dof.Wrist: "wrist"
-
-func whose(h: Hand): string =
-  if h.body == Body.One: "lead's" else: "follow's"
-
-func why(w: Walk): string =
-  ## Say what refuses, in few words that page can show.
-  if not w.stopped: return "no block"
-  case w.why
-  of Stop.None: "holds"
-  of Stop.Reach: whose(w.whose) & " reach"
-  of Stop.Twist: whose(w.whose) & " shoulder, twist"
-  of Stop.Elbow: whose(w.whose) & " elbow"
-  of Stop.Wrist: whose(w.whose) & " wrist"
-  of Stop.Swing: whose(w.whose) & " shoulder, swing"
-  of Stop.Through: whose(w.whose) & " arm through body"
-  of Stop.Arms: "arm through arm"
 
 
 func mm(p: Vec): JsonNode =
