@@ -4,7 +4,7 @@
 //   Suites reach `applyOperation`, never gesture that calls it.
 
 import type { CDPSession, Page } from '@playwright/test';
-import { readCamera, settleCamera, spanPivot } from './camera';
+import { readCamera, settleCamera, slideOf, spanOf, spanPivot } from './camera';
 import { waitFrames } from './frame';
 import { report } from './report';
 import { clearTheGlass } from './gestures';
@@ -34,18 +34,20 @@ export async function driveTwoFingerPan(page: Page, cdp: CDPSession): Promise<vo
   const after = await readCamera(page);
 
   report(
-    'two fingers moving together pan without zooming',
-    spanPivot(before, after) > 0.5 && Math.abs(after.distance - before.distance) < 1e-6,
-    `pivot moved ${spanPivot(before, after).toFixed(3)}, ` +
+    'two fingers moving together strafe without zooming',
+    spanOf(before.eye, after.eye) > 0.5 &&
+      Math.abs(after.distance - before.distance) < 1e-6,
+    `eye moved ${spanOf(before.eye, after.eye).toFixed(3)}, ` +
       `distance ${after.distance.toFixed(3)}`,
   );
-  // Pan slides view across level, so pivot keeps its height exactly. Sliding within plane
-  //   facing eye, which is tilted, lifts pivot off ground, and every later orbit then
-  //   swings about point in mid-air.
+  // Nothing is selected here, so two fingers strafe along camera's own axes. Grab
+  //   of level under them went with plane it read.
   report(
-    'and without lifting the orbit centre off the level it was on',
-    Math.abs((after.pivot[2] ?? 0) - (before.pivot[2] ?? 0)) < 1e-6,
-    `pivot height ${(before.pivot[2] ?? 0).toFixed(3)} -> ${(after.pivot[2] ?? 0).toFixed(3)}`,
+    'and wholly across the sight line, turning nothing',
+    Math.abs(slideOf(before, after) - spanOf(before.eye, after.eye)) < 1e-3 &&
+      Math.abs(after.azimuth - before.azimuth) < 1e-6,
+    `${slideOf(before, after).toFixed(3)} of ` +
+      `${spanOf(before.eye, after.eye).toFixed(3)} across the sight line`,
   );
 }
 

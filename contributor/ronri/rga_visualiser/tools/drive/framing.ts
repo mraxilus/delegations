@@ -143,8 +143,9 @@ export async function drivePointerPick(page: Page): Promise<void> {
   await waitFrames(page, 2);
   const opened = await menuAndAnchor(page, picked);
   const near = await readCamera(page);
-  // Any camera move serves: check is that menu's anchor follows camera.
-  await page.evaluate(() => nimCameraOrbit(0.2, 0.1));
+  // Dolly, so object off sight axis travels across frame: orbit about pivot
+  //   pick put on that object's own depth barely moves it at all.
+  await page.evaluate(() => nimCameraDolly(1.8));
   await settleCamera(page);
   const panned = await menuAndAnchor(page, picked);
 
@@ -202,7 +203,7 @@ function reportPointerPick(
       `-> ${camera.near.distance.toFixed(2)}; object at depth ${depth.toFixed(3)}`,
   );
   report(
-    'and keeps its offset from the object as the view pans',
+    'and keeps its offset from the object as the view moves',
     Math.abs((away_panned[0] ?? 0) - (away_opened[0] ?? 0)) < 2 &&
       Math.abs((away_panned[1] ?? 0) - (away_opened[1] ?? 0)) < 2 && moved > 50,
     `offset ${away_opened.map((v) => v.toFixed(0))} at open, ` +
@@ -313,13 +314,16 @@ export async function drivePanWhileSelected(page: Page, cdp: CDPSession): Promis
   await settleCamera(page); // Let framing ease finish before moving by hand.
 
   const before = await readCamera(page);
-  await pinch(page, cdp, { x: 400, y: 400 }, { x: 650, y: 520 }, 80, 80);
+  // Two fingers zoom while selection stands, so read eye rather than pivot: pivot
+  //   sits on what is picked and stays there by design.
+  await pinch(page, cdp, { x: 400, y: 400 }, { x: 400, y: 400 }, 160, 60);
   const at = await readCamera(page);
   await settleCamera(page);
   const after = await readCamera(page);
   report(
-    'a pan while a selection stands is not taken back',
-    spanPivot(before, at) > 0.3 && spanPivot(at, after) < 0.05,
-    `panned ${spanPivot(before, at).toFixed(3)}, then drifted ${spanPivot(at, after).toFixed(4)}`,
+    'a move while a selection stands is not taken back',
+    spanOf(before.eye, at.eye) > 0.3 && spanOf(at.eye, after.eye) < 0.05,
+    `moved ${spanOf(before.eye, at.eye).toFixed(3)}, ` +
+      `then drifted ${spanOf(at.eye, after.eye).toFixed(4)}`,
   );
 }

@@ -4,7 +4,7 @@
 //   pointer. Suites reach neither: nothing in them has button or wheel.
 
 import type { Page } from '@playwright/test';
-import { readCamera, settleCamera, slideOf, spanPivot } from './camera';
+import { readCamera, settleCamera, slideOf, spanOf } from './camera';
 import { waitFrames } from './frame';
 import { clearTheGlass } from './gestures';
 import { report } from './report';
@@ -40,14 +40,17 @@ export async function drivePan(page: Page): Promise<void> {
   await settleCamera(page);
   const after = await readCamera(page);
 
-  const height_before = before.pivot[2] ?? 0;
-  const height_after = after.pivot[2] ?? 0;
+  // Nothing is selected on opening page, so right drag strafes along camera's own axes.
+  //   Grab of level under pointer went with plane it read.
+  const across = slideOf(before, after);
   report(
-    'a right-button drag pans, and keeps the orbit centre on its level',
-    spanPivot(before, after) > 0.5 && Math.abs(height_after - height_before) < 1e-6 &&
+    'a right-button drag strafes across the sight line, and turns nothing',
+    spanOf(before.eye, after.eye) > 0.5 &&
+      Math.abs(across - spanOf(before.eye, after.eye)) < 1e-3 &&
+      Math.abs(after.azimuth - before.azimuth) < 1e-6 &&
       Math.abs(after.distance - before.distance) < 1e-6,
-    `pivot moved ${spanPivot(before, after).toFixed(3)}, ` +
-      `height ${height_before.toFixed(3)} -> ${height_after.toFixed(3)}`,
+    `eye moved ${spanOf(before.eye, after.eye).toFixed(3)}, ` +
+      `${across.toFixed(3)} of it across the sight line`,
   );
 }
 
