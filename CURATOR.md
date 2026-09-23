@@ -342,8 +342,10 @@ only the runner can supply them.
 
 `ci` costs minutes rather than the second that the static pass costs, whenever a changed
 project carries a `drive` verb. It then builds the page of that project and drives a real
-browser, exactly as the runner does. A change to `koch.nim` or to `curator/audit/src/`, even
-to a comment, selects every project. Budget for that before you mark a pull request ready.
+browser, exactly as the runner does. A change to `koch.nim`, to `koch.nim.cfg` or to
+`curator/audit/src/` selects `curator/audit` alone, because its suites are what read them.
+Duty 11 states the same rule from the other side. Budget for the projects your branch
+touches, and for no others.
 
 The checker is held to three rules of its own, in `checker.nim`, because it checks every
 project and nothing checked it. A routine exported and called nowhere is a finding. A check
