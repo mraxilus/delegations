@@ -147,14 +147,33 @@ sentence of at most 25 words, and a paragraph of at most 6 sentences. The third 
 words, each with one approved replacement. The dictionary of about 900 words belongs to ASD, so no
 check can hold all of it. `GUIDE.md` carries the other eleven rules.
 
-**The governed set is data, in `ENGLISH_PATHS`.** It opened as the charter, the two prompts,
-the guide, the root `README.md` and the four templates. No project then reddened for a rule that
-its writer had not read. The five records joined once every one of them was written in the
-register. That was the cheapest moment, and it does not come again. Widening costs one finding
-for every line of prose written between the rewrite and the widening.
+**The governed set is half data and half derivation.** `ENGLISH_PATHS` holds the charter, the
+two prompts, the guide, the root `README.md` and the four templates. No rule can derive those.
+Everything else comes from the layout. That is the README of each project root, the README of
+each registered domain, and the three records directly inside a project directory.
 
-The widening found one word that the rewrite itself had missed, `attempt` in this record. That
-is the argument for the check over reading alone, made against the reader who wrote the rewrite.
+**A row somebody must remember is a row somebody forgets.** The records were listed one row at a
+time, one row for each record of each project. Nothing wrote the row after the last one. A
+project created after the list was last touched carries three records that no check reads. The
+audit then stays green over prose it never looked at. The derivation answers the question from
+the path, so the next project is governed from its first line.
+
+**A README below a project directory is outside the set.** `dance_ontology` keeps prose under
+`sim/` and `design/` in its own register. Add `design/README.md`, `sim/README.md` and
+`sim/verdicts.md` to `ENGLISH_PATHS`, then run `nim r koch tree`: 192 findings, measured
+2026-09-23. Curator duty 3 forbids a check that reddens a project which cannot see it yet.
+Cost: that prose holds Article VI.8 by reading alone.
+
+**Each widening is taken at the first moment it is free.** The set opened as the root documents
+alone, so no project reddened for a rule that its writer had not read. The records of the
+projects joined once every one of them was written in the register. The index READMEs joined
+while they still passed, which was measured before the change rather than after it. Widening
+costs one finding for every line of prose written between a rewrite and the widening that
+follows it.
+
+The record widening found one word that the rewrite itself had missed, `attempt` in this record.
+That is the argument for the check over reading alone, made against the reader who wrote the
+rewrite.
 
 **A quotation is skipped whole.** Quoted text comes from outside this repository, and a delegate
 may not rewrite it. A finding on it could never be fixed. The case that settled it sits in the
@@ -170,6 +189,10 @@ word: 28 words, and not ours to shorten.
 - Verified by `tenglish.nim`: the three finding kinds, the sentence-end cases and the block
   split. It also covers the collapsed span, the skipped quotation, and a path outside the set.
   That path is `gaps.md`, which a generator writes and no delegate may rewrite by hand.
+- Verified by `tenglish.nim`: the derived arms. A project and a domain that do not exist yet
+  are governed. A domain outside the registry is not, and neither is a README below a project
+  directory. That last arm is the one that would redden `dance_ontology`, so it has its own
+  assertion. One more assertion holds that a derived path is read, and not merely listed.
 - Cost, found by pushing a red branch: testament keys its cache on the test file. A change to
   a source module alone then reuses the binary linked against the module before it.
   `koch ci` then passes on a tree that a fresh checkout fails. Remove `nimcache` where a check
