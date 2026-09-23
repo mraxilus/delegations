@@ -3,8 +3,13 @@
 ##     approved words. Dictionary is ASD's and is not copied here. Three rules are mechanical
 ##     enough to check: sentence length, paragraph length, and words outside dictionary that
 ##     have one approved replacement. Rest holds by reading, as `GUIDE.md` sets out.
-##   Paths are data in `ENGLISH_PATHS`: every root document except `LICENSE.md`, four
-##     templates, and three records of every project. Widening check is one row.
+##   Root documents and four templates are data in `ENGLISH_PATHS`, and every other governed
+##     document derives from layout: README of each project root and each domain, and three
+##     records of each project. Project or domain added later is read from its first line,
+##     rather than when curator remembers to widen list.
+##   Record nested below project directory is not governed. Project's prose under `sim/` or
+##     `design/` is its own register, and duty 3 forbids check reddening project that cannot
+##     yet see it.
 ##   Block is bullet, numbered item or run of plain lines, each read alone: list of six
 ##     bullets is six blocks rather than one paragraph of six sentences.
 ##   Quotation is skipped whole: quoted text comes from outside this repository, so delegate may
@@ -26,8 +31,8 @@
 
 {.experimental: "strictFuncs".}
 
-import std/strutils
-import ./[findings, markdown]
+import std/[options, strutils]
+import ./[findings, markdown, domains, layout]
 
 
 const
@@ -44,25 +49,11 @@ const
     "GUIDE.md",
     "README.md",
     "STYLE.md",
-    "contributor/ronri/pga_benchmark/GLOSSARY.md",
-    "contributor/ronri/pga_benchmark/PROVENANCE.md",
-    "contributor/ronri/pga_benchmark/README.md",
-    "contributor/ronri/rga_visualiser/GLOSSARY.md",
-    "contributor/ronri/rga_visualiser/PROVENANCE.md",
-    "contributor/ronri/rga_visualiser/README.md",
-    "contributor/sincopa/dance_ontology/GLOSSARY.md",
-    "contributor/sincopa/dance_ontology/PROVENANCE.md",
-    "contributor/sincopa/dance_ontology/README.md",
-    "curator/audit/GLOSSARY.md",
-    "curator/audit/PROVENANCE.md",
-    "curator/audit/README.md",
-    "curator/probe/GLOSSARY.md",
-    "curator/probe/PROVENANCE.md",
-    "curator/probe/README.md",
   ]
-    ## Documents this check reads; every other prose file holds rule by reading alone.
+    ## Root documents and templates this check reads, which no rule derives.
     ## Records joined governed set once every one was written in this register, which was
-    ## cheapest moment: widening costs more with every line of prose written after it.
+    ## cheapest moment: widening costs more with every line of prose written after it. They
+    ## are derived rather than listed since then, so next project pays that cost at birth.
   SENTENCE_WORDS* = 25
     ## Words one sentence may hold, which is STE's limit for descriptive writing.
   PARAGRAPH_SENTENCES* = 6
@@ -233,9 +224,26 @@ func tokenised*(text: string): string =
   " " & kept.join(" ") & " "
 
 
+func isGoverned*(path: string): bool =
+  ## Decide whether this check reads document at path.
+  ##   Three arms beyond data above: README of project root, README of registered domain,
+  ##     and record sitting directly in project directory. Each derives from layout, so
+  ##     nothing has to be added by hand when project or domain arrives.
+  if path in ENGLISH_PATHS: return true
+  let parts = path.split('/')
+  if parts[^1] == README_FILE:
+    if parts.len == 2 and parts[0] in ROOTS: return true
+    if parts.len == 3 and parts[0] == CONTRIBUTOR and parts[1].findDomain.isSome: return true
+  let dir = parts.projectDir
+  if dir.len == 0: return false
+  for file in PROJECT_FILES:
+    if path == dir & "/" & file: return true
+  false
+
+
 func checkEnglish*(path, source: string): seq[Finding] =
   ## Report long sentence, long paragraph and word outside approved dictionary.
-  if path notin ENGLISH_PATHS: return
+  if not path.isGoverned: return
   for b in source.blocks:
     let found = b.text.sentences
     if found.len > PARAGRAPH_SENTENCES:

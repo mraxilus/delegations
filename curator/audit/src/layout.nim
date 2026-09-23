@@ -41,15 +41,17 @@ type
 
 
 const
+  README_FILE* = "README.md"
+    ## Index every root, every domain and every project carries, named once for all three.
   ROOT_FILES* = [
-    "README.md", "LICENSE.md", "CONSTITUTION.md", "STYLE.md", "CURATOR.md", "CONTRIBUTOR.md",
+    README_FILE, "LICENSE.md", "CONSTITUTION.md", "STYLE.md", "CURATOR.md", "CONTRIBUTOR.md",
     "GUIDE.md", "CLAUDE.md", "GLOSSARY.md", "koch.nim", "koch.nim.cfg", ".gitignore",
     ".gitattributes",
   ]
     ## Files allowed directly at root.
   ROOT_DIRS* = [".github"]
     ## Root directories unchecked inside; project roots are `ROOTS`.
-  PROJECT_FILES* = ["README.md", "PROVENANCE.md", "GLOSSARY.md"]
+  PROJECT_FILES* = [README_FILE, "PROVENANCE.md", "GLOSSARY.md"]
     ## Files every project directory must hold, besides its nimble file.
   TESTS_DIR* = "tests"
     ## Directory every project must populate.
@@ -75,7 +77,7 @@ func dirOf(path: string): string =
   if cut < 0: "" else: path[0 ..< cut]
 
 
-func projectDir(parts: seq[string]): string =
+func projectDir*(parts: seq[string]): string =
   ## Read project directory of path parts; empty when path lies inside no project.
   if parts[0] == CURATOR and parts.len >= 3:
     CURATOR & "/" & parts[1]
@@ -100,7 +102,7 @@ func index(tree: Tree): Table[string, int] =
 
 func checkIndexEntry(path, child, holder, member: string): seq[Finding] =
   ## Report file directly inside folder that holds README.md and member folders only.
-  if child != "README.md":
+  if child != README_FILE:
     result.add finding(
       path, 0, holder & " holds README.md and " & member & " folders only; got `" & child & "`."
     )
@@ -195,7 +197,7 @@ func checkRootViews(tree: Tree, paths: Table[string, int]): seq[Finding] =
   if "GLOSSARY.md" notin paths:
     result.add finding("GLOSSARY.md", 0, "Top-level glossary missing.")
   for root in ROOTS:
-    let path = root & "/README.md"
+    let path = root & "/" & README_FILE
     if path notin paths:
       result.add finding(path, 0, "Root folder README missing.")
       continue
@@ -205,16 +207,16 @@ func checkRootViews(tree: Tree, paths: Table[string, int]): seq[Finding] =
 
 func checkDomainViews(tree: Tree, paths: Table[string, int]): seq[Finding] =
   ## Report root and domain README files disagreeing with `DOMAINS`.
-  if "README.md" in paths:
-    let rows = tree[paths["README.md"]].content.tableRows
+  if README_FILE in paths:
+    let rows = tree[paths[README_FILE]].content.tableRows
     for d in DOMAINS:
       if @[d.folder, d.name, d.theme] notin rows:
         result.add finding(
-          "README.md", 0,
+          README_FILE, 0,
           "Domain table lacks row `| " & d.folder & " | " & d.name & " | " & d.theme & " |`.",
         )
   for d in DOMAINS:
-    let path = CONTRIBUTOR & "/" & d.folder & "/README.md"
+    let path = CONTRIBUTOR & "/" & d.folder & "/" & README_FILE
     if path notin paths:
       result.add finding(path, 0, "Domain README missing.")
       continue
