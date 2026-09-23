@@ -19,7 +19,7 @@ joinable: false
 
 {.experimental: "strictFuncs".}
 
-import std/[math, strformat, unittest]
+import std/[cpuinfo, math, strformat, typedthreads, unittest]
 
 import ../sim/[body, hold, limb, read, rig, rigid, vec, walk]
 
@@ -81,6 +81,64 @@ func carried(w: Walk): float =
   ## How far this walk went, counting one that never stopped as further than any
   ## that did.
   if not w.restHolds: -Inf elif w.stopped: w.at else: Inf
+
+
+#[ Every Core At Once ]#
+
+type
+  Question = tuple[most, step: float]
+    ## One way about, walked no further than this.
+
+  Share = tuple[first, every: int, hold: Link]
+    ## Worker's own share of questions, and hold every one of them is of.
+
+var
+  wanted: seq[Question] ## Questions, set before any thread starts.
+  fars: seq[float]      ## Distances couple may stand at.
+  carries: seq[float]   ## How far each question carried from each distance.
+
+proc walking(share: Share) {.thread.} =
+  ## Walk every `every`th question from `first` on.
+  ##   Hold arrives as single `Link`, which is two bodies and two arms and holds
+  ##     no sequence, and worker makes its own list of it.  Handing list itself
+  ##     to four threads is what `design/modelled.nim` records dying of.  Every
+  ##     other thing crossing here is number, and `HUMAN` is plain arrays of them.
+  {.cast(gcsafe).}:
+    let hold = @[share.hold]
+    var i = share.first
+    while i < carries.len:
+      let q = wanted[i div fars.len]
+      carries[i] = walked(HUMAN, Band.Torso, hold, Body.Two,
+                          fars[i mod fars.len], q.most, q.step,
+                          false, Body.Two).carried
+      i += share.every
+
+proc carriedFrom(hold: Link; every: openArray[Question]): seq[seq[float]] =
+  ## How far each question carries this hold from every distance couple may
+  ## stand at.
+  ##   Answered on every core at once.  Walks are independent: each builds its
+  ##     own world, settles it, reads it and frees it, and no two share
+  ##     anything.  Measured: hundred walks of 1.6 turns and fifty of 0.6, one
+  ##     after another, cost 221.6 s where four cores cost 56.5 s, and not one
+  ##     of hundred and fifty answers differed by bit.  `design/modelled.nim`
+  ##     answers its own questions this way and records fifteen minutes
+  ##     becoming four.
+  ##   Answers are ordered by question and then by distance, whatever order
+  ##     threads found them in, so law reads list it read before.  Each worker
+  ##     writes only its own places, allotted before any thread starts.
+  ##   Cost: law no longer stops at first distance that breaks it, since every
+  ##     distance is walked before any is read.  Verdict is same; report of
+  ##     failing law names every distance rather than first.
+  wanted = @every
+  fars = @[]
+  for far in stands(HUMAN): fars.add far
+  carries = newSeq[float](wanted.len * fars.len)
+  let cores = max(1, countProcessors())
+  var workers = newSeq[Thread[Share]](cores)
+  for w in 0 ..< cores: createThread(workers[w], walking, (w, cores, hold))
+  joinThreads(workers)
+  for k in 0 ..< wanted.len:
+    result.add carries[k * fars.len ..< (k + 1) * fars.len]
 
 
 suite "two dancers in rigid body engine":
@@ -186,25 +244,22 @@ suite "two dancers in rigid body engine":
     ##   nearest keeping tie (`chosen`).  Exact, this law would fail from noise
     ##   fix was for: one build carries one step more from one distance than
     ##   another build does, and neither is wrong.
+    let got = carriedFrom(SHAKE[0], [(1.6, -STEP), (1.6, STEP)])
     for way in 0 .. 1:
-      let
-        step = (if way == 0: -STEP else: STEP)
-        chose = chosen()[way]
+      let chose = chosen()[way]
       check chose.restHolds
-      for apart in stands(HUMAN):
-        let w = walked(HUMAN, Band.Torso, SHAKE, Body.Two, apart, 1.6, step,
-                       false, Body.Two)
-        check w.carried <= chose.carried + STEP + 1e-9
+      for carry in got[way]:
+        check carry <= chose.carried + STEP + 1e-9
 
   test "turn couple are said to reach is turn some distance carries":
     ## `reaches` answers at first distance that carries turn rather than at best of
     ## them, which is same answer for less work only so long as it looks at every
     ## distance before saying no.
+    ##   `Inf` is how `carried` says walk never stopped, which is hold standing
+    ##   at rest there and turn running whole way.
     var any = false
-    for apart in stands(HUMAN):
-      let w = walked(HUMAN, Band.Torso, SHAKE, Body.Two, apart, ASK, -STEP,
-                     false, Body.Two)
-      if w.restHolds and not w.stopped: any = true
+    for carry in carriedFrom(SHAKE[0], [(ASK, -STEP)])[0]:
+      if carry == Inf: any = true
     check any
     check reaches(HUMAN, Band.Torso, SHAKE, -ASK)
     check not reaches(HUMAN, Band.Torso, CHAIN, BEYOND, away = true)
