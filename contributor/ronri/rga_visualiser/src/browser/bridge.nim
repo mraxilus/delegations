@@ -1082,6 +1082,14 @@ proc nimCameraOrbit(turn, rise: cfloat) {.exportc.} =
   camera.orbit(CAMERA, float(turn), float(rise))
 
 
+proc nimCameraRoll(radians: cfloat) {.exportc.} =
+  ## Roll camera about its own sight axis by `radians`.
+  ##   Twist of two fingers, which has no keyboard beside it on touch; see
+  ##   `camera.roll`.
+  TWEEN_CAMERA.abandon()
+  camera.roll(CAMERA, float(radians))
+
+
 proc nimCameraDolly(factor: cfloat) {.exportc.} =
   ## Scale camera's distance from pivot by factor.
   TWEEN_CAMERA.abandon()
