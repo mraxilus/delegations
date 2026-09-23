@@ -147,14 +147,33 @@ sentence of at most 25 words, and a paragraph of at most 6 sentences. The third 
 words, each with one approved replacement. The dictionary of about 900 words belongs to ASD, so no
 check can hold all of it. `GUIDE.md` carries the other eleven rules.
 
-**The governed set is data, in `ENGLISH_PATHS`.** It opened as the charter, the two prompts,
-the guide, the root `README.md` and the four templates. No project then reddened for a rule that
-its writer had not read. The five records joined once every one of them was written in the
-register. That was the cheapest moment, and it does not come again. Widening costs one finding
-for every line of prose written between the rewrite and the widening.
+**The governed set is half data and half derivation.** `ENGLISH_PATHS` holds the charter, the
+two prompts, the guide, the root `README.md` and the four templates. No rule can derive those.
+Everything else comes from the layout. That is the README of each project root, the README of
+each registered domain, and the three records directly inside a project directory.
 
-The widening found one word that the rewrite itself had missed, `attempt` in this record. That
-is the argument for the check over reading alone, made against the reader who wrote the rewrite.
+**A row somebody must remember is a row somebody forgets.** The records were listed one row at a
+time, one row for each record of each project. Nothing wrote the row after the last one. A
+project created after the list was last touched carries three records that no check reads. The
+audit then stays green over prose it never looked at. The derivation answers the question from
+the path, so the next project is governed from its first line.
+
+**A README below a project directory is outside the set.** `dance_ontology` keeps prose under
+`sim/` and `design/` in its own register. Add `design/README.md`, `sim/README.md` and
+`sim/verdicts.md` to `ENGLISH_PATHS`, then run `nim r koch tree`: 192 findings, measured
+2026-09-23. Curator duty 3 forbids a check that reddens a project which cannot see it yet.
+Cost: that prose holds Article VI.8 by reading alone.
+
+**Each widening is taken at the first moment it is free.** The set opened as the root documents
+alone, so no project reddened for a rule that its writer had not read. The records of the
+projects joined once every one of them was written in the register. The index READMEs joined
+while they still passed, which was measured before the change rather than after it. Widening
+costs one finding for every line of prose written between a rewrite and the widening that
+follows it.
+
+The record widening found one word that the rewrite itself had missed, `attempt` in this record.
+That is the argument for the check over reading alone, made against the reader who wrote the
+rewrite.
 
 **A quotation is skipped whole.** Quoted text comes from outside this repository, and a delegate
 may not rewrite it. A finding on it could never be fixed. The case that settled it sits in the
@@ -170,6 +189,10 @@ word: 28 words, and not ours to shorten.
 - Verified by `tenglish.nim`: the three finding kinds, the sentence-end cases and the block
   split. It also covers the collapsed span, the skipped quotation, and a path outside the set.
   That path is `gaps.md`, which a generator writes and no delegate may rewrite by hand.
+- Verified by `tenglish.nim`: the derived arms. A project and a domain that do not exist yet
+  are governed. A domain outside the registry is not, and neither is a README below a project
+  directory. That last arm is the one that would redden `dance_ontology`, so it has its own
+  assertion. One more assertion holds that a derived path is read, and not merely listed.
 - Cost, found by pushing a red branch: testament keys its cache on the test file. A change to
   a source module alone then reuses the binary linked against the module before it.
   `koch ci` then passes on a tree that a fresh checkout fails. Remove `nimcache` where a check
@@ -1208,6 +1231,15 @@ Take the real path rather than a synthetic one. A commit whose only changed path
 plans `[]`, and finishes `nim r koch ci` in 0.721 s, with its `git fetch` included. Re-measure
 when the suites of a project grow. Otherwise treat this as unmeasured.
 
+**A branch that changes the checker costs one project, and not every project.** Warm,
+`nim r koch ci` takes 37.7 s, 37.7 s and 37.6 s over three consecutive runs. The machine is a
+four-core Intel Xeon 2.80 GHz container, on Nim 2.2.12, 2026-09-23. Warm means that every test
+binary was already compiled.
+
+One run with the test binaries deleted first took 57.0 s. `koch plan` holds one row on such a
+branch, so the figure covers the suites of `curator/audit` and the static pass. CURATOR.md said
+that a change here selects every project, and this figure is what said otherwise.
+
 **Matrix jobs do run in parallel**, verified on the runner from the first run of this
 arrangement. Three `project` jobs started within one second, and finished at 16 s, 52 s and
 121 s. So the phase took 121 s rather than the 189 s their sum would be. The saving is the sum
@@ -1300,6 +1332,35 @@ cached. It is larger than either lever that repository issues 79 and 80 were wei
   commit rather than a mutable tag now (repository issue 126, answered by pull request 131).
   So what the cache hides is a rebuild, rather than an upstream that moved underneath it.
 
+**Two caches are deliberately not kept, each measured rather than feared.** A restored
+`nimcache` cannot let a check pass without a compile of what it claims. That was driven over
+an ordinary rebuild, over a cache made six years newer than backdated sources, and over a full
+save, mutate and restore. Nim decides by content rather than by mtime, and every case rebuilt
+correctly.
+
+But it can only skip Nim compilation, at most about 16 s of a 357 s driven job. The modules
+that matter on such a job are exactly the ones it cannot serve. To cache apt archives saves
+the download and not the install. That is 2.8 s of a 357 s job, which is 0.8%, for a
+root-owned directory and one key. Both figures are from one `driven` run on 2026-09-12, and
+they expire with the job they measured.
+
+**Koch declares its own system dependencies, as the rule it enforces asks of every project.**
+`KOCH_SYSTEM` in `projects.nim` pairs each one with its reason. `koch system` with no project
+prints those and every project's, unscoped, so one command answers what a machine needs before
+any of this runs. To name a project keeps the meaning for each job that the runner asks for.
+
+Nim is deliberately absent. It is the toolchain that koch runs under, rather than a package
+that a machine installs, and `compilers.nim` resolves each pin itself. npm is absent
+because it belongs to the project that carries a node manifest, and `restoreNode` reports its
+absence by name. The root `README.md` points at the verb rather than names packages, so the
+declaration is the only statement and nothing can drift from it.
+
+Rejected: an exemption stated in `CONTRIBUTOR.md`, which would have left the rule true and the
+repository still answering its own question in prose. Cost: the packages of koch itself are
+unconditional, so a machine that needs none of them still installs them (repository issue 78).
+
+## The shared allowance
+
 **The allowance of GitHub belongs to one account, and every delegate spends it.** Measured
 2026-09-12, on this repository, after a curator delegate stopped being able to close an issue:
 
@@ -1358,32 +1419,6 @@ could the charter wording derived from them.
   `x-ratelimit-remaining`, so the budget is spent blind. That is the strongest argument for
   asking git first, rather than for tuning page sizes.
 
-**Two caches are deliberately not kept, each measured rather than feared.** A restored
-`nimcache` cannot let a check pass without a compile of what it claims. That was driven over
-an ordinary rebuild, over a cache made six years newer than backdated sources, and over a full
-save, mutate and restore. Nim decides by content rather than by mtime, and every case rebuilt
-correctly.
-
-But it can only skip Nim compilation, at most about 16 s of a 357 s driven job. The modules
-that matter on such a job are exactly the ones it cannot serve. To cache apt archives saves
-the download and not the install. That is 2.8 s of a 357 s job, which is 0.8%, for a
-root-owned directory and one key. Both figures are from one `driven` run on 2026-09-12, and
-they expire with the job they measured.
-
-**Koch declares its own system dependencies, as the rule it enforces asks of every project.**
-`KOCH_SYSTEM` in `projects.nim` pairs each one with its reason. `koch system` with no project
-prints those and every project's, unscoped, so one command answers what a machine needs before
-any of this runs. To name a project keeps the meaning for each job that the runner asks for.
-
-Nim is deliberately absent. It is the toolchain that koch runs under, rather than a package
-that a machine installs, and `compilers.nim` resolves each pin itself. npm is absent
-because it belongs to the project that carries a node manifest, and `restoreNode` reports its
-absence by name. The root `README.md` points at the verb rather than names packages, so the
-declaration is the only statement and nothing can drift from it.
-
-Rejected: an exemption stated in `CONTRIBUTOR.md`, which would have left the rule true and the
-repository still answering its own question in prose. Cost: the packages of koch itself are
-unconditional, so a machine that needs none of them still installs them (repository issue 78).
 
 ## Open questions
 
