@@ -82,6 +82,7 @@ interface MenuStanding {
   distance: number;
   menu: number[];
   anchor: number[];
+  centre: number[];
 }
 
 /** Read menu's corner and its object's anchor together, so they name same frame. */
@@ -96,6 +97,7 @@ async function menuAndAnchor(page: Page, handle: number): Promise<MenuStanding> 
       distance: nimCameraDistance(),
       menu: [box?.left ?? 0, box?.top ?? 0],
       anchor: [rect.left + (at[0] ?? 0), rect.top + (at[1] ?? 0)],
+      centre: [rect.left + rect.width / 2, rect.top + rect.height / 2],
     };
   }, handle);
 }
@@ -103,8 +105,8 @@ async function menuAndAnchor(page: Page, handle: number): Promise<MenuStanding> 
 /** Drive right-click pick from far out, which opens menu and brings camera in.
  *
  *  Wheel out six notches from `Home` so first pickable point is dot far off, then click
- *  6 px off its anchor. Menu is up two frames in, its corner within inset of pointer; that
- *  anchor's pixel is where it was, in flight and settled; distance fell; pivot sits at
+ *  6 px off its anchor. Menu is up two frames in, its corner within inset of pointer; object
+ *  settles in middle of frame however far off it was clicked; distance fell; pivot sits at
  *  object's depth. Glass is cleared first, since drawer standing open would take click.
  */
 export async function drivePointerPick(page: Page): Promise<void> {
@@ -174,9 +176,14 @@ function reportPointerPick(
     (picked.opened.menu[0] ?? 0) - picked.aimed.x, (picked.opened.menu[1] ?? 0) - picked.aimed.y,
   ];
   const away_opened = away(picked.opened), away_panned = away(picked.panned);
-  const drift = (standing: MenuStanding): number => Math.hypot(
-    (standing.anchor[0] ?? 0) - (picked.aimed.anchor[0] ?? 0),
-    (standing.anchor[1] ?? 0) - (picked.aimed.anchor[1] ?? 0),
+  // How far object sits from middle of frame, which is where pick puts it.
+  const offCentre = (standing: MenuStanding): number => Math.hypot(
+    (standing.anchor[0] ?? 0) - (standing.centre[0] ?? 0),
+    (standing.anchor[1] ?? 0) - (standing.centre[1] ?? 0),
+  );
+  const clicked_off = Math.hypot(
+    (picked.aimed.anchor[0] ?? 0) - (picked.opened.centre[0] ?? 0),
+    (picked.aimed.anchor[1] ?? 0) - (picked.opened.centre[1] ?? 0),
   );
   const moved = Math.hypot(
     (picked.panned.anchor[0] ?? 0) - (picked.opened.anchor[0] ?? 0),
@@ -192,13 +199,13 @@ function reportPointerPick(
       `${from_pointer.map((v) => v.toFixed(0))} px from pointer (inset 8)`,
   );
   report(
-    'and keeps the picked object under the pointer as the camera comes in to it',
-    drift(picked.in_flight) < 1.5 && drift(picked.opened) < 1.5 &&
+    'and brings the picked object to the middle of the frame as it comes in to it',
+    clicked_off > 20 && offCentre(picked.opened) < 2 &&
       picked.in_flight.distance < camera.far.distance - 0.01 &&
       camera.near.distance < 0.5 * camera.far.distance &&
       Math.abs(depth - camera.near.distance) < 0.01,
-    `anchor drifted ${drift(picked.in_flight).toFixed(2)} px in flight, ` +
-      `${drift(picked.opened).toFixed(2)} px settled; distance ` +
+    `clicked ${clicked_off.toFixed(0)} px off the middle, settled ` +
+      `${offCentre(picked.opened).toFixed(2)} px from it; distance ` +
       `${camera.far.distance.toFixed(2)} -> ${picked.in_flight.distance.toFixed(2)} in flight ` +
       `-> ${camera.near.distance.toFixed(2)}; object at depth ${depth.toFixed(3)}`,
   );
