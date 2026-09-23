@@ -605,7 +605,7 @@ and on the runner (repository issue 91).
 
 `driven` counts the scripted runs. They cover these cases:
 
-- a held key slides the view and keeps its height;
+- a held key orbits about the pick, and leaves the pivot on it;
 - a drag across bare sky turns the view and builds nothing;
 - undo takes a construction back, and returns the view to where it built from;
 - the choice menu does not swallow the drag after it;
@@ -1907,7 +1907,7 @@ the short deliberate drags between two overlapping objects. A deadline of 0.35 s
 held 600 ms. A right press that never moved is a click too.
 
 **The press target chooses the scheme, and the button chooses whether the reader is asked.** Press
-an object and you construct. Press empty space and you move the camera: left orbits, right pans,
+an object and you construct. Press empty space and you move the camera: left turns, right slides,
 and the wheel zooms. Left takes the own answer of the algebra on release, and right opens the
 four-way wheel.
 
@@ -1949,16 +1949,6 @@ depth under the pointer is not its depth at the middle of the frame.
 
 Measured on the demo: eight wheel notches over Jupiter from 30 units hold its pixel exactly. They
 bring the pivot from Sol to 0.09 units off the plane of Jupiter.
-
-**Two fingers are read once for each frame, and zoom only past the tap slop.** The move of each
-finger arrives as its own `pointermove`. Read there, every step of a pan carried together is a
-zoom in by the step of one finger. It zooms out again by the step of the other. That was harmless
-while a dolly was a pure scale, and became a pivot-moving re-pivot on every one once it was not.
-
-`glue.settleTwoFingers` reads both fingers once for each frame, from the frame loop. Two fingers
-carried together never hold their separation to the pixel. So a pinch zooms only once the
-separation has changed by more than `PIXELS_TAP_SLOP`. It measures from the separation where the
-slop was crossed, and without a jump.
 
 **The edit preview is drawn at the own radius of the session.** Otherwise an edit of a moon of
 0.03 draws a grey disc nearly three times its size over it.
@@ -2035,7 +2025,7 @@ just named. A degenerate construction is **refused**, with the message naming wh
 and so is one on a full scene.
 
 **Touch.** A finger that presses an object constructs, and one that presses empty space moves the
-camera. Two fingers pinch and pan, and cancel any construction. A long press selects.
+camera. Two fingers pinch, strafe and twist, and cancel any construction. A long press selects.
 
 Once a selection exists, a tap (`TAP_MAX_MS` 350) toggles another in or out, and a tap on empty
 space clears. `nimClearHover` runs once the last finger lifts, or the last reading sits stale
@@ -2073,10 +2063,37 @@ Verified by driven checks:
 - the refusal on a full scene;
 - a right-click 6 px off an anchor, with the menu up two frames in, and a pan moving menu and
   anchor by one delta;
-- the two-finger pan moving the pivot across its level, with distance and height unchanged;
 - an emptied list, a deep handle edited, and its form in view.
 
 Assumed: that 0.75 s is the right dwell for any hand.
+
+## Two fingers
+
+**Two fingers are read once for each frame, and zoom only past the tap slop.** The move of each
+finger arrives as its own `pointermove`. Read there, every step of a pan carried together is a
+zoom in by the step of one finger. It zooms out again by the step of the other. That was harmless
+while a dolly was a pure scale, and became a pivot-moving re-pivot on every one once it was not.
+
+`glue.settleTwoFingers` reads both fingers once for each frame, from the frame loop. Two fingers
+carried together never hold their separation to the pixel. So a pinch zooms only once the
+separation has changed by more than `PIXELS_TAP_SLOP`. It measures from the separation where the
+slop was crossed, and without a jump.
+
+**Two fingers turned about each other roll the view.** Roll is the sixth degree of freedom, and a
+touch has no Q and E beside it. The angle of the line through the two fingers is read once for each
+frame. Each reading is a change since the last frame, and it wraps the short way round at π.
+
+The slop is `RADIANS_TWIST_SLOP` 0.21, twelve degrees, and it is not rolled once it is crossed. It
+is the reading the pinch takes of the separation. Two fingers wander a few degrees without meaning
+to, and a reader who means to roll turns much further.
+
+*Checked.* Verified by driven checks:
+
+- two fingers moving together carrying the eye wholly across the sight line, with the separation
+  unchanged and nothing turned;
+- two fingers turned rolling the view, with the eye moved 0.000000 units and the sight left where it
+  was pointing;
+- a pinch zooming with a selection standing, and the move not taken back.
 
 ## Undo/redo
 
@@ -2461,8 +2478,8 @@ offer stands**: the tween keeps its goal after it arrives.
 
 A camera that the user moves calls `abandon`, which keeps the goal and marks it done. `release`
 instead clears it, so the offer is re-made the next frame and the camera is taken straight back. A
-pan is dead while anything stays selected. `advance` eases the pivot and the angles linearly, and
-the **distance geometrically**.
+move made while a selection stands is therefore never taken back. `advance` eases the pivot and the
+angles linearly, and the **distance geometrically**.
 
 **Framing** (`framing.nim`). On a new pick **the orbit pivot comes to the middle of what was
 picked**, by `objects.centroidFolded`. It runs over the same objects that the bound is over, with
@@ -2489,13 +2506,50 @@ screen.
 To hold the rim to the box threw the camera from 19 to 29.9 on the ground plane, where 19 already
 showed the whole circle.
 
-**The cut.** `stanceFor` first asks whether everything is already in view *where the camera
-stands*. Judged at the centred placement, every pick of something plainly visible pulled the view
-about. Otherwise it builds the full placement, a bisected least distance over
-`ROUNDS_DISTANCE_FIT` 8, and searches the least fraction of `camera.toward` that satisfies
-`isShownAll`. That search is `STEPS_PLACEMENT_LEAST` 12 even steps, then `ROUNDS_PLACEMENT_LEAST`
-5 halvings. Distance grows and never shrinks, and a finite pick never changes azimuth or
-elevation.
+**The frame rule is a floor.** `stanceFor` pulls the eye back by the least step that carries it out
+to the fitting reach, and never in. A reader who stands further out keeps their own framing. A
+finite pick still changes neither azimuth nor elevation.
+
+`camera.stepOutTo` solves `|v + r·u| = reach` for `r`, which is one quadratic. The positive root is
+always the answer where the offset falls short. The term under the root is `along² − outside`, and
+`outside` is negative exactly then, so the root is larger than `|along|`. It answers zero where the
+eye already stands far enough, and that zero is what makes the rule a floor.
+
+The closed form replaced two searches. One bisected the separation over `ROUNDS_DISTANCE_FIT` 8
+halvings, and ran `isShownAll` at each one. The other bisected the fraction of the whole move over
+`STEPS_PLACEMENT_LEAST` 12 steps and `ROUNDS_PLACEMENT_LEAST` 5 halvings. Together they cost about
+25 projections of every watched object for each pick. The move is least by construction now. The
+pivot goes to the centroid, and the separation gives up exactly what the rule asks for.
+
+`SLACK_FRAMED` 1e-9 stands in for all three of those constants. A `>=` against a reach that
+`stepOutTo` lands on exactly reported its own answer unframed, one ulp short of it.
+
+**The floor holds while the reader flies.** `offerAim` takes the camera by `var`. Where the reader
+moves it and the rule is broken, `holdFramed` carries the eye straight out from the centre of the
+sphere. Straight out is the least move that restores the rule, and it keeps the bearing the reader
+had reached. The camera then slides along the bound rather than stopping dead against it.
+
+A step back along the reader's own heading lands further out than the rule asks. It also needs that
+heading threaded through every verb. The pivot is re-stamped onto the centre, so the separation
+follows the eye rather than going stale.
+
+**A horizon object binds where it stands, and nothing more.** A star must be on screen, so the
+sight falls within the half-angle of the centred box: two degrees of freedom bound. A horizon line
+must only cross the screen, so the sight falls within that half-angle of its own great circle: one
+degree of freedom. A horizon plane is in view at every orientation, and binds none of them.
+`isBounded` states all three.
+
+`holdHorizon` turns about the sight crossed with what is asked for. That axis is the great circle
+from one to the other, so a turn across the bound survives.
+
+**The finite object wins outright.** `isBounded` and `holdHorizon` both stand aside where anything
+finite is asked for. Two demands can disagree. A star behind the reader, beside a point in front of
+them, has no placement that shows both. The finite selection is the one a reader works on.
+
+**A horizon object already in view keeps the framing of the reader**, as a finite selection that
+already fits does. `stanceFor` turns toward a star only where that star's own bound is broken.
+Without the floor, a pick of something already on screen pulled the view about. The comet drifted
+75.5 px against a band of 5 to 60.
 
 **A pointer pick keeps its object under the pointer, and comes in to it.** The centring rule above
 is for picks with no pointer: the objects list, the keyboard, or a shift-added group. A click or a
@@ -2531,7 +2585,13 @@ reader out, goes nowhere.
   the fit;
 - a near point and a line keep the orbit distance;
 - a re-pick after `abandon` and a dolly re-arms;
-- the arrival of the plane from 12 units and from 1.
+- the arrival of the plane from 12 units and from 1;
+- the step out reaches its own distance, and answers zero from every stance already past it;
+- the floor leaves a camera standing further out alone, and slides the near one out radially with
+  its bearing held;
+- a frame narrowed to half its width asks for more room, and the same floor supplies it;
+- a horizon point is bound to the screen, a horizon line to crossing it, and a horizon plane not at
+  all.
 
 Verified by driven check:
 
@@ -2541,7 +2601,8 @@ Verified by driven check:
 - a right-click on the ground plane from Home settles its centre at 48.28, which is exactly the
   depth wanted for 0.40;
 - the preview framed with its operands;
-- a pan with a selection standing, through `driveTwoFingerPan` and `drivePan`.
+- a move with a selection standing, through `driveTwoFingerPan` and `drivePan`;
+- a comet in view, picked, still pacing the screen at 35.1 px against a band of 5 to 60.
 
 Verified then, by the `verify_touch_pan.js` of the prototype: 63 trials with the orbit turned
 0.000, and the distance never below 12.0. A pan with a selection standing moved 0.21 units,
@@ -2833,5 +2894,16 @@ wrong trade. The figure is recorded so that the question can be asked with it, r
 it. Software rendering inflates a blur far more than it inflates the rest, so the share is an
 upper bound on hardware. The choices are to keep it, to drop it, or to drop it only while the
 frame runs slow.
+
+**A plane the sight nearly lies in is framed by its whole disc, and gains nothing by it.** The
+bound over anything finite is one sphere, and a plane widens it by the whole of its 8-unit disc.
+The rule then stands the eye 30.1 units off the centre of that disc, whatever the reader's scale.
+Where the sight is within a few degrees of the plane, the disc still draws as a sliver, because
+framing something finite turns nothing. The reader pays a zoom out for a picture that did not
+improve.
+
+Turning is the only thing that helps here. The rule that finite framing never turns is what keeps a
+pick from pulling the view about. The choices are to leave it, to bound a plane by its crossing of
+the frame, or to let a plane alone be turned toward.
 
 [replications]: https://gitlab.com/mraxilus/replications
