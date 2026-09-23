@@ -1929,8 +1929,9 @@ the choice wheel. Both render paths and `help.nim` read them.
 
 **The selection menu opens on the click, beside the pointer**, `INSET_MENU_POINTER` 8 px from it.
 It then remembers its offset from the anchor of the object, so an orbit carries it with the
-object. It is not held back until the ease settles: a menu a third of a second after the click
-reads as a missed click. A menu opened with no pointer sits above the anchor.
+object. A pick carries its object to the middle of the frame, so the menu rides in and settles
+beside the middle. It is not held back until the ease settles: a menu a third of a second after
+the click reads as a missed click. A menu opened with no pointer sits above the anchor.
 
 **A click has no time limit.** `isClick` is distance alone, at `PIXELS_CLICK_SLOP` 6 px. It is not
 the 12 px of `PIXELS_TAP_SLOP`. A mouse does not roll, and the allowance of a finger would swallow
@@ -2092,8 +2093,9 @@ Verified by driven checks:
 - a finger dragged from a point with a twin 0.05 units away, which orbits and builds nothing;
 - `more…` landing on `𝐦 ∧ 𝐧` on both builds;
 - the refusal on a full scene;
-- a right-click 6 px off an anchor, with the menu up two frames in, and a pan moving menu and
-  anchor by one delta;
+- a right-click showing the menu two frames in, 14 by 12 px from the anchor, and the same offset
+  once settled;
+- a pivot shift moving that anchor 84 px, with the menu holding the offset;
 - an emptied list, a deep handle edited, and its form in view.
 
 Assumed: that 0.75 s is the right dwell for any hand.
@@ -2602,8 +2604,8 @@ move.
 
 The object was held under the pointer before, on whichever pixel the reader clicked. The pivot then
 stood on the sight line at that object's depth, units away from the object itself. Every orbit then
-swung the object round the screen rather than turning it where it stood. A click 210 px off the
-middle left it 210 px off the middle.
+swung the object round the screen rather than turning it where it stood. A click 155 px off the
+middle left it 155 px off the middle.
 
 **How far in depends on the shape, and on what the reader could see.** It is sized on the height
 of the frame by `camera.depthSpanning(diameter, fraction)`. A point drawn at the floor dot is only
@@ -2644,7 +2646,7 @@ reader out, goes nowhere.
 
 Verified by driven check:
 
-- a right-click 210 px off the middle settles the object 0.00 px from it, with the eye brought in
+- a right-click 155 px off the middle settles the object 0.00 px from it, with the eye brought in
   from 45 units to 19.3;
 - a second pick after a wheel out past 100 comes in to 19.3 again;
 - a right-click on the ground plane from Home settles its centre at 48.28, which is exactly the
