@@ -141,6 +141,43 @@ proc carriedFrom(hold: Link; every: openArray[Question]): seq[seq[float]] =
     result.add carries[k * fars.len ..< (k + 1) * fars.len]
 
 
+type
+  Went = tuple[apart, at: float, stopped: bool, why: Stop]
+    ## One way of one sweep, in numbers alone: where couple stood, how far turn
+    ## went, whether anything gave, and what gave.
+  Ways = tuple[neg, pos: Went]
+    ## Both ways of one sweep, named as `Swept` names them.
+  Turning = tuple[hold: Link, band: Band, most: float]
+    ## One hold, swept both ways at one band, no further than this.
+  Sweeping = tuple[ask: Turning, slot: int]
+    ## Worker's own sweep, and where its answer goes.
+
+var swepts: seq[Ways] ## One per sweep, each worker writing its own place.
+
+func went(w: Walk): Went = (w.apart, w.at, w.stopped, w.why)
+  ## Strip walk to numbers law reads, leaving its moments behind.
+
+proc sweeping(it: Sweeping) {.thread.} =
+  ## Sweep one hold both ways, and put its numbers where they belong.
+  ##   Hold arrives as single `Link` and worker makes its own list of it, for
+  ##     reason `walking` above gives.  Moments of walk stay in this thread,
+  ##     since `Walk` carries them in sequence and only numbers go back.
+  {.cast(gcsafe).}:
+    let sw = swept(HUMAN, it.ask.band, @[it.ask.hold], most = it.ask.most)
+    swepts[it.slot] = (went(sw.neg), went(sw.pos))
+
+proc sweptOn(every: openArray[Turning]): seq[Ways] =
+  ## Sweep each hold on its own core, answered in order asked.
+  ##   One sweep is two searches of every distance couple may stand at.  Law
+  ##     below asks two of them so it may compare, and one after another they
+  ##     cost 133.9 s, measured, which is third largest law of this file.
+  swepts = newSeq[Ways](every.len)
+  var workers = newSeq[Thread[Sweeping]](every.len)
+  for i in 0 ..< every.len: createThread(workers[i], sweeping, (every[i], i))
+  joinThreads(workers)
+  swepts
+
+
 suite "two dancers in rigid body engine":
 
   test "each dancer stands where tape puts them":
@@ -369,11 +406,13 @@ suite "two dancers in rigid body engine":
     ## body's mirrored terms has to say whether it is vector or pseudovector:
     ## torque is pseudovector, and mirroring it as vector turned left arm's own
     ## correction into shove further out.
+    ##   Two sweeps are independent, so each takes its own core (`sweptOn`).
     let
-      same = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Left)])]
-      other = @[Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Right)])]
-      a = swept(HUMAN, Band.Torso, same, most = 0.8)
-      b = swept(HUMAN, Band.Torso, other, most = 0.8)
+      same = Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Left)])
+      other = Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Right)])
+      both = sweptOn([(same, Band.Torso, 0.8), (other, Band.Torso, 0.8)])
+      a = both[0]
+      b = both[1]
     ## Standing distance is chosen per way, so it is compared per way, as every
     ## other figure here is.  `Swept.apart` is whichever way went furthest, and
     ## when both run free they tie and it takes positive way for both -- which
@@ -723,9 +762,30 @@ iterator stills(): Still =
   yield ("left to left at quarter", ONE_L, 0.25, false, false)
   yield ("left to left at half", ONE_L, 0.5, false, false)
 
+type Eased = tuple[holds: bool, apart, turns, most: float, whose: Hand]
+  ## Where couple stand for one still, in numbers alone.
+
 var
   asked: seq[Still]  ## Stills, listed once.
   chose: seq[Stood]  ## And where couple stand for each of them.
+  eased: seq[Eased]  ## What search answered, before name of joint is put back.
+
+proc easing(slice: tuple[first, every: int]) {.thread.} =
+  ## Search for every `every`th still from `first` on.
+  ##   Worker lists corpus itself, as `design/modelled.nim` has its workers do:
+  ##     one list of holds read by four threads is what it records dying of.
+  ##   Only numbers go back.  `Strain` names joint it sits at by string, and
+  ##     string built in one thread and freed in another is same hazard.  Name
+  ##     is put back by `standings`, which stands couple where search chose.
+  {.cast(gcsafe).}:
+    var k = 0
+    for still in stills():
+      if k mod slice.every == slice.first:
+        let got = standing(HUMAN, Band.Crown, still.links, still.turns,
+                           still.away, Body.Two, still.either)
+        eased[k] = (got.holds, got.apart, got.turns, got.strain.most,
+                    got.strain.whose)
+      inc k
 
 proc standings(): tuple[stills: seq[Still], stood: seq[Stood]] =
   ## Where couple stand for every still, found once.
@@ -733,15 +793,32 @@ proc standings(): tuple[stills: seq[Still], stood: seq[Stood]] =
   ##     eases nowhere pays whole walk: three of eight do, at 35 s, 38 s and
   ##     38 s, and eight together cost 125 s, measured.  Two laws below read
   ##     same answers and each searched for itself before.
+  ##   Eight searches are independent, so each runs on its own core.  Each keeps
+  ##     its own stop, which is first distance at ease, so nothing of that rule
+  ##     is written twice here.
+  ##   Search answers in numbers, and couple are then stood again at distance it
+  ##     chose, to read pose whole.  That costs eight poses, and law below asks
+  ##     whether second pose is first one.
   ##   Answers are kept rather than searched again because they are same
   ##     question: law that reads strain and law that reads capsules ask one
   ##     pose two ways.  Law that asks whether search answers same twice is not
   ##     one of them, and searches for itself (`same still from same distance`).
   if chose.len == 0:
-    for still in stills():
-      asked.add still
-      chose.add standing(HUMAN, Band.Crown, still.links, still.turns, still.away,
-                         Body.Two, still.either)
+    for still in stills(): asked.add still
+    eased = newSeq[Eased](asked.len)
+    let cores = max(1, countProcessors())
+    var workers = newSeq[Thread[tuple[first, every: int]]](cores)
+    for w in 0 ..< cores: createThread(workers[w], easing, (w, cores))
+    joinThreads(workers)
+    for i, still in asked:
+      if not eased[i].holds:
+        chose.add Stood(holds: false, strain: Strain(most: Inf))
+        continue
+      let (holds, c) = stood(HUMAN, Band.Crown, still.links, eased[i].turns,
+                             still.away, Body.Two, eased[i].apart)
+      chose.add Stood(holds: holds, apart: eased[i].apart,
+                      turns: eased[i].turns, strain: c.strainOf)
+      c.free()
   (asked, chose)
 
 
@@ -781,6 +858,18 @@ suite "every still stands at ease":
   ## effort or forcing; no clipping, no dislocations, no cheating.  Read where
   ## couple stand for each still: nothing at any end past `AT_EASE`, nothing
   ## through anything, nothing pulled apart, hands joined.
+
+  test "pose search chose is pose couple are stood at again":
+    ## Search answers in numbers so that no string crosses between threads, and
+    ## name of joint comes from standing couple there again (`standings`).  Were
+    ## that second pose not first one, every figure two laws below read would be
+    ## of pose search never chose, and nothing would say so.
+    let (every, stood) = standings()
+    for i in 0 ..< every.len:
+      check stood[i].holds == eased[i].holds
+      if not eased[i].holds: continue
+      check stood[i].strain.most == eased[i].most
+      check stood[i].strain.whose == eased[i].whose
 
   test "still couple stand for has nothing at its end":
     ## Strain is nought outside every ease band, one at some end.  Every arm,
