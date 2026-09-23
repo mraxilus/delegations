@@ -762,8 +762,20 @@ iterator stills(): Still =
   yield ("left to left at quarter", ONE_L, 0.25, false, false)
   yield ("left to left at half", ONE_L, 0.5, false, false)
 
-type Eased = tuple[holds: bool, apart, turns, most: float, whose: Hand]
-  ## Where couple stand for one still, in numbers alone.
+const BOX = 32
+  ## Letters name of strained joint may run to.  Longest `sim/rigid.strainOf`
+  ## writes is `collar Protract`, and law below refuses any that outgrows this.
+
+type Eased = tuple[holds: bool, apart, turns, most: float, whose: Hand,
+                   what: array[BOX, char], long: int]
+  ## Where couple stand for one still, as plain data alone.  Name of joint
+  ## crosses as letters in fixed box rather than as string, since string built
+  ## in one thread and freed in another is hazard `design/modelled.nim` records.
+  ## `long` is name's own length, so law sees name that would not fit.
+
+func nameOf(e: Eased): string =
+  ## Put name of joint back together from its letters.
+  for i in 0 ..< min(e.long, BOX): result.add e.what[i]
 
 var
   asked: seq[Still]  ## Stills, listed once.
@@ -774,9 +786,9 @@ proc easing(slice: tuple[first, every: int]) {.thread.} =
   ## Search for every `every`th still from `first` on.
   ##   Worker lists corpus itself, as `design/modelled.nim` has its workers do:
   ##     one list of holds read by four threads is what it records dying of.
-  ##   Only numbers go back.  `Strain` names joint it sits at by string, and
-  ##     string built in one thread and freed in another is same hazard.  Name
-  ##     is put back by `standings`, which stands couple where search chose.
+  ##   Answer is plain data, name of joint included: its letters are copied into
+  ##     box that no thread allocates, so nothing crosses that one thread made
+  ##     and another must give back.
   {.cast(gcsafe).}:
     var k = 0
     for still in stills():
@@ -784,7 +796,10 @@ proc easing(slice: tuple[first, every: int]) {.thread.} =
         let got = standing(HUMAN, Band.Crown, still.links, still.turns,
                            still.away, Body.Two, still.either)
         eased[k] = (got.holds, got.apart, got.turns, got.strain.most,
-                    got.strain.whose)
+                    got.strain.whose, default(array[BOX, char]),
+                    got.strain.what.len)
+        for i in 0 ..< min(got.strain.what.len, BOX):
+          eased[k].what[i] = got.strain.what[i]
       inc k
 
 proc standings(): tuple[stills: seq[Still], stood: seq[Stood]] =
@@ -796,9 +811,9 @@ proc standings(): tuple[stills: seq[Still], stood: seq[Stood]] =
   ##   Eight searches are independent, so each runs on its own core.  Each keeps
   ##     its own stop, which is first distance at ease, so nothing of that rule
   ##     is written twice here.
-  ##   Search answers in numbers, and couple are then stood again at distance it
-  ##     chose, to read pose whole.  That costs eight poses, and law below asks
-  ##     whether second pose is first one.
+  ##   Whole answer crosses as plain data, so no pose is stood twice.  Standing
+  ##     eight of them again to read name of joint cost 20.7 s on runner and
+  ##     paid for nothing there, measured against same head without it.
   ##   Answers are kept rather than searched again because they are same
   ##     question: law that reads strain and law that reads capsules ask one
   ##     pose two ways.  Law that asks whether search answers same twice is not
@@ -810,15 +825,10 @@ proc standings(): tuple[stills: seq[Still], stood: seq[Stood]] =
     var workers = newSeq[Thread[tuple[first, every: int]]](cores)
     for w in 0 ..< cores: createThread(workers[w], easing, (w, cores))
     joinThreads(workers)
-    for i, still in asked:
-      if not eased[i].holds:
-        chose.add Stood(holds: false, strain: Strain(most: Inf))
-        continue
-      let (holds, c) = stood(HUMAN, Band.Crown, still.links, eased[i].turns,
-                             still.away, Body.Two, eased[i].apart)
-      chose.add Stood(holds: holds, apart: eased[i].apart,
-                      turns: eased[i].turns, strain: c.strainOf)
-      c.free()
+    for e in eased:
+      chose.add Stood(holds: e.holds, apart: e.apart, turns: e.turns,
+                      strain: Strain(most: e.most, whose: e.whose,
+                                     what: nameOf(e)))
   (asked, chose)
 
 
@@ -859,17 +869,14 @@ suite "every still stands at ease":
   ## couple stand for each still: nothing at any end past `AT_EASE`, nothing
   ## through anything, nothing pulled apart, hands joined.
 
-  test "pose search chose is pose couple are stood at again":
-    ## Search answers in numbers so that no string crosses between threads, and
-    ## name of joint comes from standing couple there again (`standings`).  Were
-    ## that second pose not first one, every figure two laws below read would be
-    ## of pose search never chose, and nothing would say so.
+  test "name of every strained joint fits box that crosses threads":
+    ## Name crosses between threads as letters in fixed box (`Eased`), so name
+    ## longer than box would reach report cut short, and reader would read wrong
+    ## joint.  Nothing else says so, since cutting it short is silent.
     let (every, stood) = standings()
     for i in 0 ..< every.len:
-      check stood[i].holds == eased[i].holds
-      if not eased[i].holds: continue
-      check stood[i].strain.most == eased[i].most
-      check stood[i].strain.whose == eased[i].whose
+      check eased[i].long <= BOX
+      check stood[i].strain.what.len == eased[i].long
 
   test "still couple stand for has nothing at its end":
     ## Strain is nought outside every ease band, one at some end.  Every arm,
