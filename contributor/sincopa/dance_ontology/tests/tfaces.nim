@@ -87,7 +87,15 @@ suite "faces":
       discard withFaces("<p>no head here</p>", dir)
 
   test "dressing is not doubled where it runs twice":
-    ## Build dresses every page it wrote, so page must not gather two copies if
-    ## build is rerun over its own output.
-    let once = withFaces(DOCUMENT, dir)
-    check once.count("data:font/woff2;base64,") == faces.FACES.len
+    ## Build dresses every page under `build/`, and not only pages this run wrote,
+    ## so page left there by earlier run is dressed again.  Law is that second
+    ## dressing gives same page, and it was claimed here without ever dressing
+    ## twice: `build/sim/artifact.html` grew 223 kB on every `pages` run, from
+    ## 10.9 MB toward limit published page has to stay under.
+    for page in [DOCUMENT, FRAGMENT]:
+      let
+        once = withFaces(page, dir)
+        twice = withFaces(once, dir)
+      check once.count("data:font/woff2;base64,") == faces.FACES.len
+      check twice.count("data:font/woff2;base64,") == faces.FACES.len
+      check twice == once

@@ -7764,7 +7764,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock low (led)"
+              "followSays": "lock low (led), elbow forward"
             }
           ]
         },
@@ -8360,8 +8360,8 @@
       "pos": 0.98,
       "stoppedNeg": true,
       "stoppedPos": true,
-      "whyNeg": "lead's arm through body",
-      "why": "lead's arm through body",
+      "whyNeg": "lead's arm through a body",
+      "why": "lead's arm through a body",
       "foundNeg": false,
       "foundPos": false,
       "apartNeg": 0.378,
@@ -16028,7 +16028,7 @@
                 ]
               ],
               "leadSays": "wrap high (led)",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -16101,7 +16101,7 @@
                 ]
               ],
               "leadSays": "wrap high (led)",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -16174,7 +16174,7 @@
                 ]
               ],
               "leadSays": "wrap high (led)",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -16247,7 +16247,7 @@
                 ]
               ],
               "leadSays": "wrap high (led)",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -16320,7 +16320,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -16393,7 +16393,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -16904,7 +16904,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -16977,7 +16977,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -17050,7 +17050,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -17123,7 +17123,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -17196,7 +17196,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -17269,7 +17269,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -17342,7 +17342,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -17415,7 +17415,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -17488,7 +17488,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -17561,7 +17561,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -17634,7 +17634,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -17707,7 +17707,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -17780,7 +17780,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         }
@@ -36717,7 +36717,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock low (led)"
+              "followSays": "lock low (led), elbow forward"
             }
           ]
         },
@@ -36790,7 +36790,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock low (led)"
+              "followSays": "lock low (led), elbow forward"
             }
           ]
         },
@@ -44467,7 +44467,7 @@
       "pos": 1.64,
       "stoppedNeg": true,
       "stoppedPos": true,
-      "whyNeg": "lead's arm through body",
+      "whyNeg": "lead's arm through a body",
       "why": "lead's wrist",
       "foundNeg": false,
       "foundPos": false,
@@ -44543,7 +44543,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -44616,7 +44616,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -44689,7 +44689,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -44762,7 +44762,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -44835,7 +44835,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -44908,7 +44908,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -44981,7 +44981,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -45054,7 +45054,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -45127,7 +45127,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -45200,7 +45200,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -45273,7 +45273,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -45346,7 +45346,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -45419,7 +45419,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -45930,7 +45930,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -46003,7 +46003,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -46076,7 +46076,7 @@
                 ]
               ],
               "leadSays": "wrap high (led)",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -46149,7 +46149,7 @@
                 ]
               ],
               "leadSays": "wrap high (led)",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -46222,7 +46222,7 @@
                 ]
               ],
               "leadSays": "wrap high (led)",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -46295,7 +46295,7 @@
                 ]
               ],
               "leadSays": "wrap high (led)",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -72310,7 +72310,7 @@
       "pos": 1.34,
       "stoppedNeg": true,
       "stoppedPos": true,
-      "whyNeg": "lead's arm through body",
+      "whyNeg": "lead's arm through a body",
       "why": "follow's wrist",
       "foundNeg": false,
       "foundPos": false,
@@ -80358,7 +80358,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -80431,7 +80431,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -80504,7 +80504,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -80577,7 +80577,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -80650,7 +80650,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -80723,7 +80723,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -80796,7 +80796,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -80869,7 +80869,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -80942,7 +80942,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -81015,7 +81015,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -81088,7 +81088,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -81161,7 +81161,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -81234,7 +81234,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -81307,7 +81307,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -81380,7 +81380,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -81453,7 +81453,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -81526,7 +81526,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -81672,7 +81672,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -81745,7 +81745,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -106666,7 +106666,7 @@
       "stoppedNeg": true,
       "stoppedPos": true,
       "whyNeg": "follow's wrist",
-      "why": "lead's arm through body",
+      "why": "lead's arm through a body",
       "foundNeg": false,
       "foundPos": false,
       "apartNeg": 0.438,
@@ -114710,7 +114710,7 @@
       "pos": 1.14,
       "stoppedNeg": true,
       "stoppedPos": true,
-      "whyNeg": "lead's arm through body",
+      "whyNeg": "lead's arm through a body",
       "why": "lead's wrist",
       "foundNeg": false,
       "foundPos": false,
@@ -121356,7 +121356,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -121429,7 +121429,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -121502,7 +121502,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -121575,7 +121575,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -121648,7 +121648,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -121721,7 +121721,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -121794,7 +121794,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -121940,7 +121940,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -122013,7 +122013,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -122086,7 +122086,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -122159,7 +122159,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -122232,7 +122232,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -122305,7 +122305,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -122378,7 +122378,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -122451,7 +122451,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -122524,7 +122524,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -122597,7 +122597,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -122670,7 +122670,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -122743,7 +122743,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -122816,7 +122816,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         }
@@ -184118,7 +184118,7 @@
       "pos": 0.9,
       "stoppedNeg": true,
       "stoppedPos": true,
-      "whyNeg": "lead's arm through body",
+      "whyNeg": "lead's arm through a body",
       "why": "arm through arm",
       "foundNeg": false,
       "foundPos": false,
@@ -184194,7 +184194,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)",
+              "followSays": "lock high (led), elbow forward",
               "cross": [
                 {
                   "at": [
@@ -184324,7 +184324,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)",
+              "followSays": "lock high (led), elbow forward",
               "cross": [
                 {
                   "at": [
@@ -184454,7 +184454,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)",
+              "followSays": "lock high (led), elbow forward",
               "cross": [
                 {
                   "at": [
@@ -184584,7 +184584,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)",
+              "followSays": "lock high (led), elbow forward",
               "cross": [
                 {
                   "at": [
@@ -184714,7 +184714,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high",
+              "followSays": "lock high, elbow forward",
               "cross": [
                 {
                   "at": [
@@ -184844,7 +184844,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high",
+              "followSays": "lock high, elbow forward",
               "cross": [
                 {
                   "at": [
@@ -184974,7 +184974,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high",
+              "followSays": "lock high, elbow forward",
               "cross": [
                 {
                   "at": [
@@ -185104,7 +185104,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)",
+              "followSays": "lock high (led), elbow forward",
               "cross": [
                 {
                   "at": [
@@ -185234,7 +185234,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             },
             {
               "lead": [
@@ -185355,7 +185355,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             },
             {
               "lead": [
@@ -185476,7 +185476,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             },
             {
               "lead": [
@@ -185597,7 +185597,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             },
             {
               "lead": [
@@ -193631,7 +193631,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -193752,7 +193752,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -193873,7 +193873,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -194003,7 +194003,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -194133,7 +194133,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -194263,7 +194263,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -194393,7 +194393,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -194523,7 +194523,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -194653,7 +194653,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -194783,7 +194783,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         },
@@ -194913,7 +194913,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high"
+              "followSays": "lock high, elbow forward"
             }
           ]
         },
@@ -195043,7 +195043,7 @@
                 ]
               ],
               "leadSays": "open",
-              "followSays": "lock high (led)"
+              "followSays": "lock high (led), elbow forward"
             }
           ]
         }

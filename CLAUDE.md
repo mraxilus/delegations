@@ -9,7 +9,11 @@ A model writes every line here, under the direction of the Architect. Before any
    then read `GUIDE.md`. A branch that a tool named for you (`claude/...`) is outside the
    grammar, so push to one inside it.
 3. Run `nim r koch ci` at the repository root before every push. It must pass.
-4. Never commit to `main`. Never write outside your scope. Never weaken a test to pass.
-5. Comments are telegraphic. Markdown, issues, pull requests and messages are Simplified
+4. Open your own pull request as a draft when `koch ci` passes, and label it with your role.
+   Drive it green. The Architect merges it.
+5. Never commit to `main`. Never write outside your scope. Never weaken a test to pass.
+6. Comments are telegraphic. Markdown, issues, pull requests and messages are Simplified
    Technical English, and `GUIDE.md` gives the rules. A glossary term is proposed, and never
-   written on sight. A record describes what is, and never narrates what happened.
+   written on sight.
+7. A record describes what is, and never narrates what happened. The reason a design is as
+   it is belongs in the record. A list of events does not.

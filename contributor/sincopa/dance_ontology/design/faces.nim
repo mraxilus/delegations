@@ -37,6 +37,11 @@ const
     ## Each face with family, weight and style it answers to.  Rows match `FACES` in
     ##   `tools/build.nim`, which pins their bytes; that table is what to change to
     ##   add one, and this is what to change to name it.
+  FACES_MARK* = "<style data-faces>"
+    ## Opening tag of face block, which names block so later run can find it.
+    ##   Build dresses every page under `build/`, and not only pages it wrote, so
+    ##     page earlier run left there arrives already dressed.  Marked block is
+    ##     what lets dressing take old one out before it puts new one in.
   SERIF* = "\"Noto Serif\", Georgia, \"Times New Roman\", serif"
     ## Titles.  Fallback is only for face that failed to load, never for one absent.
   SANS* = "\"Noto Sans\", ui-sans-serif, system-ui, sans-serif"
@@ -59,10 +64,29 @@ proc faceStyle*(dir = DIR_FONTS): string =
     rules.add "@font-face{font-family:\"" & family & "\";font-style:" & style &
       ";font-weight:" & weight & ";font-display:block;src:url(data:font/woff2;base64," &
       encode(readFile(path)) & ") format(\"woff2\")}"
-  "<style>" & rules.join("\n") & "\n:root{font-variant-ligatures:contextual}</style>"
+  FACES_MARK & rules.join("\n") & "\n:root{font-variant-ligatures:contextual}</style>"
 
 
-proc withFaces*(html: string; dir = DIR_FONTS): string =
+func withoutFaces*(html: string): string =
+  ## Take every face block earlier dressing put in back out again.
+  ##   Replaces rather than skips, so page dressed before face changed takes new
+  ##     bytes rather than keeping old ones.
+  result = html
+  const SHUT = "</style>"
+  while true:
+    let opens = result.find(FACES_MARK)
+    if opens < 0:
+      break
+    let shuts = result.find(SHUT, opens)
+    if shuts < 0:
+      break
+    var cut_to = shuts + SHUT.len
+    if cut_to < result.len and result[cut_to] == '\n':
+      cut_to += 1
+    result = result[0 ..< opens] & result[cut_to .. ^1]
+
+
+proc withFaces*(raw: string; dir = DIR_FONTS): string =
   ## Put face style sheet last in page's head, so page ships what it draws with.
   ##   Last rather than first for two reasons: root rule keeping ligatures on then
   ##     wins over any page rule that would turn them off, and `bundle` folds head
@@ -72,9 +96,12 @@ proc withFaces*(html: string; dir = DIR_FONTS): string =
   ##     Fragment takes them after its title, since publishing wraps it in head of
   ##     its own and there is none here to put them in; nothing in these pages sets
   ##     `font-variant-ligatures`, so order costs nothing either way.
+  ##   Block earlier run left is taken out first, so dressing twice gives
+  ##     one page and not one that grows by every face on every build.
   const
     SHUT = "</head>"
     TITLE = "</title>"
+  let html = withoutFaces(raw)
   let shuts = html.find(SHUT)
   if shuts >= 0:
     return html[0 ..< shuts] & faceStyle(dir) & "\n" & html[shuts .. ^1]
