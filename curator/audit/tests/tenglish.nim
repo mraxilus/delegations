@@ -72,3 +72,30 @@ suite "Article VI.8":
     let prose = "Ensure " & "word ".repeat(SENTENCE_WORDS + 1) & "end."
     check checkEnglish("contributor/ronri/pga_benchmark/gaps.md", prose).len == 0  # generated
     check checkEnglish("LICENSE.md", prose).len == 0
+
+  test "governed set derives records and index READMEs from layout":
+    check isGoverned("CONSTITUTION.md")  # root document, still data
+    check isGoverned("curator/README.md")  # project root index
+    check isGoverned("contributor/README.md")
+    check isGoverned("contributor/abstand/README.md")  # registered domain index
+    check isGoverned("curator/audit/PROVENANCE.md")  # record of project that exists
+    check isGoverned("contributor/ronri/rga_visualiser/GLOSSARY.md")
+
+  test "project and domain added later are governed from their first line":
+    check isGoverned("curator/newcomer/README.md")  # no such project today
+    check isGoverned("curator/newcomer/PROVENANCE.md")
+    check isGoverned("contributor/abstand/newcomer/GLOSSARY.md")
+    check not isGoverned("contributor/nowhere/README.md")  # domain outside registry
+
+  test "prose below project directory keeps contributor's own register":
+    check not isGoverned("contributor/sincopa/dance_ontology/sim/README.md")  # duty 3
+    check not isGoverned("curator/audit/tests/README.md")
+    check not isGoverned("contributor/ronri/pga_benchmark/gaps.md")  # generated
+    check not isGoverned("LICENSE.md")
+    check not isGoverned("koch.nim")
+
+  test "derived path is read, and not merely listed":
+    let prose = "Ensure " & "word ".repeat(SENTENCE_WORDS + 1) & "end."
+    check checkEnglish("curator/README.md", prose).len == 2  # word, then sentence
+    check checkEnglish("contributor/abstand/newcomer/README.md", prose).len == 2
+    check checkEnglish("contributor/sincopa/dance_ontology/sim/README.md", prose).len == 0
