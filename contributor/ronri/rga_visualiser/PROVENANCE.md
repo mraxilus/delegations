@@ -1252,6 +1252,11 @@ Assumed: that no reader wants a ceiling on the separation.
 `look`, `roll` and `travel` turn and slide about its own axes. With a selection it keeps the
 turntable.
 
+**Every drag reads that state through a verb of its own.** `interaction.turnAcross` is the left
+drag and `panAcross` the right, and each picks between the two states inside itself. Both
+front-ends called `orbit` outright before, so `look` never reached a drag at all. The eye swung
+round the pivot where the reader meant to turn in place.
+
 **Flight turns about a line through the eye.** `turnedAboutEye` joins the eye with a carried axis
 and turns about that line, so the eye stands where it stands and the frame stays orthonormal.
 `look` reads the frame again between its two turns. The across axis after a yaw is not the across
@@ -1268,6 +1273,20 @@ of a quarter radian compose to exactly two radians, which is past straight down.
 **Roll reaches either state.** `orbit` composes the motion rather than rebuilding it from four
 turntable numbers. A roll then survives an orbit event, so Q and E work with a selection as without
 one. The rebuild carried no roll, and rolling and then orbiting snapped the view upright.
+
+**Turning about the camera's own axes carries roll round with it, and a finger puts it back.** The
+roll a closed drag leaves behind is the solid angle that drag encloses. A loop of 0.3 radians
+leaves 0.0813, against 0.0822 enclosed: 4.7 degrees for each loop, and 18.6 over four. That is the
+geometry of transport, not a fault, and no order of the two turns escapes it. `look` and `orbit`
+carry exactly the same amount.
+
+A finger asks for it back. `turnAcross` reads `camera.rollHeld` before the turn and restores it
+after, so a touch drag leaves the horizon where it found it. Touch has no roll key beside it, and a
+finger wanders in curves. A mouse keeps the transport as it is, with Q and E to answer it.
+
+`rollHeld` is the angle of the camera's own up against `UP_WORLD`, across the sight. It reads none
+within `COSINE_POLE_ROLL`, 5 degrees of straight up or down. That reference has nothing left to
+project there, and the reading is noise before it is undefined. The roll simply stands.
 
 **The speed climbs toward a cap and never reaches it.** `speedTravelling` is the cap times
 `1 − e^(−t/τ)`. τ is `SECONDS_SPEED_RISE`, 0.6 s: 63 percent of the cap at one τ, and 95 percent at
@@ -1366,6 +1385,11 @@ The separation then scales as the turntable's dolly scales it.
 *Checked.* Verified by `suites.nim`:
 
 - a look turns the sight about the camera's own axes and leaves the eye where it stands;
+- a left drag looks with nothing picked and orbits with something picked, and the eye or the pivot
+  stands accordingly;
+- one drag loop leaves the solid angle it encloses, and four leave 0.324 radians;
+- a finger's drag leaves none of it, and keeps the roll the reader set;
+- the roll reading is none at the pole, where the turn simply goes through unheld;
 - eight pitches of a quarter radian compose to exactly two radians, where `orbit` stops at its
   clamp;
 - a look and an orbit swing the sight the same way, for both signs of the drag;
@@ -1388,6 +1412,7 @@ The separation then scales as the turntable's dolly scales it.
 
 Verified by driven checks:
 
+- a left drag with nothing picked turned the sight and moved the eye 0.000000 units;
 - 500 ms of `w` on the opening page moved the eye 3.455 units, 0.000000 of them across the sight
   line;
 - the separation gave up that same 3.455 of 19.000;
@@ -1833,8 +1858,12 @@ unpickable with its multivector twins zero.
 
 **The sky is a click and hold target, and never a drag handle. So is a plane that fills the
 view.** With a horizon plane visible the cursor is over *something* almost everywhere. A press on
-empty space becomes an orbit precisely because nothing was hovered. A finite plane whose disc
-spans the longer side of the frame (`picking.coversView`) leaves no empty glass at all.
+empty space becomes a camera move precisely because nothing was hovered. A finite plane whose disc
+reaches every corner of the frame (`picking.coversView`) leaves no empty glass at all.
+
+Every corner is half the diagonal from the middle, which is 750 px on a 1200×900 frame. The rule
+asked for the longer side before, 1200 px, which is 1.6 times as far. A plane covering the whole
+window then still read as a drag handle, and the view could not be moved off it.
 
 `isBackdropUnder` folds both cases into one answer, which `beginDrag`, `destinationOf` and
 `interaction.is_hover_backdrop` read. A click on empty space selects the sky rather than clears
@@ -1872,7 +1901,9 @@ the source and the destination. A removal of an object clears the highlight on b
 - both boundaries of each radius, and all three priority pairings;
 - a horizon point picked;
 - the disc bound sampled from inside the view;
-- the ground hovered from half a unit (backdrop, drag refused) and from forty (drag starts).
+- the ground hovered from half a unit (backdrop, drag refused) and from forty (drag starts);
+- a disc spanning 965.7 px read as backdrop and one spanning 724.3 px did not, against a corner
+  750 px from the middle.
 
 Verified by a handle-for-handle map: 4,914 cursor positions across three cameras over the demo of
 1,024 objects. They answered identically before and after the placement and copy changes. Verified
@@ -2087,12 +2118,21 @@ The slop is `RADIANS_TWIST_SLOP` 0.21, twelve degrees, and it is not rolled once
 is the reading the pinch takes of the separation. Two fingers wander a few degrees without meaning
 to, and a reader who means to roll turns much further.
 
+**The angle is negated on its way in.** A screen angle grows clockwise, because y grows downward,
+and a positive roll carries the picture anticlockwise. Passed through unturned, the twist rolled
+against the fingers.
+
+The reading is dropped whenever a finger lifts, as the pinch's separation is. An angle held from
+two fingers ago is stale. A third finger lifting back to two would roll the view by the whole of
+it in one frame.
+
 *Checked.* Verified by driven checks:
 
 - two fingers moving together carrying the eye wholly across the sight line, with the separation
   unchanged and nothing turned;
 - two fingers turned rolling the view, with the eye moved 0.000000 units and the sight left where it
   was pointing;
+- 0.900 of finger carrying the picture 0.675 the same way round, which is what the sign is for;
 - a pinch zooming with a selection standing, and the move not taken back.
 
 ## Undo/redo
