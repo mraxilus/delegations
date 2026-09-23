@@ -4487,6 +4487,22 @@ suite "Camera Aim":
       check camera.placed(framed).elevation =~
         clamp(angles[1], -ELEVATION_LIMIT, ELEVATION_LIMIT)
 
+    # Star already on screen keeps reader's own framing, as finite selection fitting does.
+    #   Turn is floor like every other part of rule: it fires where bound is broken, and
+    #   stands aside inside it. Re-centring one already in view pulled whole view about.
+    let opening = stanceAim(AZIMUTHS_AIM[0], 0.3)
+    var faced = opening.placed(framedFor(scene_star, picked_star, opening))
+    let aim_faced = aimFor(
+      scene_star, picked_star, none(Preview), faced.drawExtentFor(HEIGHT_AIM)
+    ).get
+    check aim_faced.isBounded(faced, WIDTH_AIM, HEIGHT_AIM)
+    faced.look(0.03, 0.0) # Star stays on screen, so bound still holds.
+    check aim_faced.isBounded(faced, WIDTH_AIM, HEIGHT_AIM)
+    let forward_own = faced.frame.forward
+    check faced.placed(
+      stanceFor(aim_faced, faced, WIDTH_AIM, HEIGHT_AIM)
+    ).frame.forward =~ forward_own
+
     # Beside anything finite, finite framing wins outright and angles stand: star.
     #   behind reader and point in front have no one placement showing both.
     let (scene_both, picked_both) =
