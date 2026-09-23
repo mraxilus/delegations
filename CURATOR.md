@@ -306,7 +306,8 @@ place, under Settings:
 - Under Settings, General, delete the head branch after a merge.
 
 "Require branches to be up to date before a merge" is offered and is not set. It makes every
-open pull request stale on each merge, and this repository merges more than a hundred a week.
+open pull request stale on each merge, which costs more than it saves at this repository's
+merge rate.
 The `base` check is the narrow form of the same rule. It reports only where the base gained a
 charter document or a checker, which is where staleness makes green false. It reaches the
 merge through the `audit` gate.
