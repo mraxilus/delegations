@@ -429,9 +429,10 @@ charter document or the checker. Pull request 11 was green against the `main` of
 merged into a later one. It arrived carrying a stamp that three rules changes had falsified.
 The run failed, and nobody was told.
 
-GitHub prevents this with "require branches to be up to date", which is behind paid rulesets.
-`base` feeds the `audit` gate that branch protection already requires, so no setting
-changed.
+GitHub offers "require branches to be up to date", which prevents this. That setting is
+blanket, and it makes every open pull request stale on each merge. `base` is the narrow form:
+it reports only where the base gained a charter document or a checker. It feeds the `audit`
+gate that branch protection requires, so no setting changed.
 
 Only two kinds of path count. A charter document moves the stamp that every project claims,
 and the checker decides what the audit accepts. Everything else may differ freely. On the
@@ -443,14 +444,14 @@ by construction, and the check would report nothing on every fresh run. `static`
 merge ref is what holds a stale stamp there.
 
 - Cost: a merge of a rules change reddens every open pull request until each one merges the
-  base. That is the cost of the paid setting too, and it fires exactly when the staleness is
+  base. That is the cost of the blanket setting too, and it fires exactly when the staleness is
   real.
 - Verified by a replay of a branch left behind by a week of `main`. At its head, `koch base`
   reports the finding. At a synthetic merge of that head into `main`, with `main` as the first
   parent, it reports nothing.
 - Cost, the honest limit: this reads at pull request time, and never at merge time. So a
   branch green at ten can merge at five past, after another one lands. Only a merge queue
-  closes that, and that is the paid feature again.
+  closes that.
 - Verified by `tbase.nim`, and by a replay of the incident. The branch of pull request 11,
   against the `main` of today, reports the finding, which names `CONTRIBUTOR.md`, five check
   sources and `koch.nim`. Against its own fork point it reports nothing, which is why its run

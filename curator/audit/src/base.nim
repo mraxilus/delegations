@@ -1,8 +1,8 @@
 ## Enforce that branch carries base's rules and checker, i.e. what decides meaning of green.
 ##   Pull request green against yesterday's `main` can merge into today's and be false on
-##   arrival: that happened, and `main` ran red until stamp was corrected. GitHub prevents it
-##   with "require branches to be up to date", which is behind paid rulesets, so process
-##   catches it instead.
+##   arrival: that happened, and `main` ran red until stamp was corrected. GitHub offers
+##   "require branches to be up to date", which prevents it. That setting is blanket, and this
+##   check is narrow form of it.
 ##
 ##   Only two kinds of path matter. Charter (`RULES`) moves stamp every project claims, so
 ##     branch predating it carries claim that is already false. Checker (`isChecker`) decides
@@ -11,10 +11,10 @@
 ##     stamp false, and demanding branch be current with all of it is friction for nothing.
 ##
 ##   Cost: merging rules change reddens every open pull request until each merges base. That
-##     is same cost paid setting carries, and it fires exactly when staleness is real.
+##     is same cost blanket setting carries, and it fires exactly when staleness is real.
 ##   Cost: check reads pull request time, never merge time. Branch green at ten can still
 ##     merge at five past after another lands. Window shrinks from days to minutes; only
-##     merge queue closes it, and that is paid feature again.
+##     merge queue closes it.
 
 {.experimental: "strictFuncs".}
 
