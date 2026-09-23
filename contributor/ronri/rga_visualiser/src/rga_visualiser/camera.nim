@@ -141,9 +141,6 @@ const
   ##   controllable in short taps.
   TURN_SECOND* = 1.4 ## Azimuth held arrow turns through per second, in radians.
   RISE_SECOND* = 1.1 ## Elevation held arrow rises through per second, in radians.
-  SLIDE_SECOND* = 1.2 ## Ground distance held key slides per second, as fraction of orbit.
-    ## Reader zoomed onto one object crosses it at same apparent speed as one viewing
-    ## whole scene.
   FACTOR_DOLLY_SECOND* = 4.0 ## Orbit distance held key scales by per second, dollying out.
     ## Reciprocal dollies in, so second each way returns exactly.
     ## Compounded as power of elapsed seconds, never multiplied per frame: per-frame
@@ -168,8 +165,8 @@ const
     ## Cap speed at this many depths under pointer per second.
     ##   Reader pointing at moon crosses moon's own distance in same time as one pointing
     ##   at star crosses star's, so one key serves every scale in orrery.
-    ##   Equals `SLIDE_SECOND`, which was flat rate ground slide ran at, so long hold
-    ##   settles on speed that build already had.
+    ##   Equals flat rate ground slide ran at before free flight, so long hold settles on
+    ##   speed that build already had.
   SPEED_CEILING* = 300_000.0
     ## Cap speed at this many units per second, whatever pointer reports.
     ##   Reached where pointer is over empty sky, which has no depth to scale by.
@@ -570,56 +567,6 @@ func repivotToDepth*(camera: var Camera, depth: float) =
   camera.depth_pivot = distanceHeld(depth)
 
 
-func pan*(camera: var Camera; across, up: float) =
-  ## Slide pivot within plane facing eye, so whole view shifts with it.
-  ##   Slide is multivector sum along frame's own two axes.
-  ##   Whole camera slides, eye with it. Pivot moved and eye followed before; same picture
-  ##   either way, because eye stood at fixed offset from pivot and stands there still.
-  let axes = camera.frame
-  camera.slideBy(add(
-    wedge(across*camera.depth_pivot, toMultivector(axes.axis_right)),
-    wedge(up*camera.depth_pivot, toMultivector(axes.axis_up)),
-  ))
-
-
-func headingGround*(camera: Camera): Direction =
-  ## Read way camera faces, flattened onto ground.
-  ##   Direction reader means by forward, looking at scene standing on ground plane.
-  ##   Solved from azimuth, which `azimuth` reads off sight direction. So this *is* sight
-  ##   direction flattened and normalised, by way of two trig calls that cancel.
-  ##     Conditioning is what that costs. At elevation limit horizontal part of sight
-  ##     direction is about 0.02 of unit length, which `arctan2` still resolves to about
-  ##     five parts in 1e15. Clamp is what keeps it there, and stage that drops clamp owes
-  ##     this rule another source.
-  Direction(x: -cos(camera.azimuth), y: -sin(camera.azimuth), z: 0.0)
-
-
-func slideGround*(camera: var Camera; ahead, across, rise: float) =
-  ## Slide pivot across world, leaving eye's stance about it alone.
-  ##   Forward along `headingGround`, sideways along camera's right, up along world up,
-  ##   so whole view travels without turning.
-  ##   *Map* reading of movement key rather than *fly* one.
-  ##     Forward keeps camera's height whatever it looks at, so holding W skims ground
-  ##     instead of diving into it.
-  ##     What Supreme Commander and Google Maps do, and reading that goes with
-  ##     cursor-aimed zoom.
-  ##   `across` reuses frame's `axis_right`, which stays horizontal at every stance
-  ##   turntable reaches, rather than second side direction that could disagree in sign
-  ##   with mouse pan.
-  ##     Reference stance's own across is `RIGHT_REFERENCE`, and neither turn tips it off
-  ##     ground: azimuth turns about world up, and elevation turns about that across itself.
-  ##   All three are fractions of orbit distance, as `pan`'s arguments are.
-  let axes = camera.frame
-  camera.slideBy(add(
-    add(
-      wedge(ahead*camera.depth_pivot, toMultivector(camera.headingGround)),
-      wedge(across*camera.depth_pivot, toMultivector(axes.axis_right)),
-    ),
-    wedge(rise*camera.depth_pivot, toMultivector(UP_WORLD)),
-  ))
-
-
-
 #[ Camera Flight ]#
 
 func turnedAboutEye(camera: Camera; along: Direction, radians: float): Motor =
@@ -662,10 +609,10 @@ func roll*(camera: var Camera, radians: float) =
 
 func travel*(camera: var Camera; ahead, across, rise: float) =
   ## Slide camera along its own three axes, leaving which way it faces alone.
-  ##   World units, unlike `slideGround` and `pan`, which take fractions of separation.
+  ##   World units, unlike drag rates, which take fractions of separation.
   ##     Caller scales: free flight reads its own speed curve, which has no separation in
   ##     it; see `speedTravelling`.
-  ##   `ahead` dives where sight dives, unlike `slideGround`, which skims ground.
+  ##   `ahead` dives where sight dives: fly reading, not map one.
   let axes = camera.frame
   camera.slideBy(add(
     add(
@@ -1137,6 +1084,24 @@ func halfAngleCentred*(camera: Camera; width, height: int; inset: float): float 
     tangent_down = max(reach_down/float(height), 1.0e-6)*tangent_half
     tangent_across = max(reach_across/float(height), 1.0e-6)*tangent_half
   arctan(min(tangent_down, tangent_across))
+
+
+func stepOutTo*(offset: Direction; heading: Direction; reach: float): float =
+  ## Solve least step along `heading` carrying `offset` out to `reach` from its origin.
+  ##   `|offset + r*heading| = reach` with unit `heading`, which is one quadratic in `r`:
+  ##   `r² + 2r(offset·heading) + (|offset|² − reach²) = 0`.
+  ##   Positive root is answer, and it always exists where offset falls short: term under
+  ##   root is `along² − outside`, and `outside` is negative exactly then, so root exceeds
+  ##   `|along|` and difference is positive whichever way `along` points.
+  ##   Zero where offset already reaches that far, which is what makes frame rule floor
+  ##   rather than fit.
+  ##   Replaced bisection over `framing.isShownAll`, about 25 projections of every watched
+  ##   object for each pick.
+  let
+    along = dot(offset, heading)
+    outside = dot(offset, offset) - reach*reach
+  if outside >= 0.0: return 0.0
+  sqrt(along*along - outside) - along
 
 
 func distanceFitting*(radius: float; camera: Camera; width, height: int; inset: float): float =

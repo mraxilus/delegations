@@ -447,8 +447,8 @@ proc secondsNow(): float =
 
 
 func offerCameraAim(
-  panel: var Panel; scene: Scene; camera: Camera; scale: DrawExtent; now: float;
-  width, height: int
+  panel: var Panel; scene: Scene; camera: var Camera; scale: DrawExtent; now: float;
+  width, height: int; is_moving_camera: bool
 ) =
   ## Offer camera whatever is being worked on to frame, from one rule.
   ##   Rule is `framing.offerAim`, shared with browser.
@@ -458,7 +458,7 @@ func offerCameraAim(
   ##   Pointer pick recorded since last frame goes with it, and is spent here.
   panel.tween_camera.offerAim(
     camera, scene, panel.selection, panel.staged, scale, width, height, now,
-    ANIMATION_SECONDS, panel.pointer_pick,
+    ANIMATION_SECONDS, panel.pointer_pick, is_moving_camera,
   )
 
 
@@ -894,7 +894,9 @@ proc renderFrame(
   ORIGIN_RECORDS = camera.originHeld(ORIGIN_RECORDS)
 
   let scale = camera.drawExtentFor(int(height))
-  offerCameraAim(panel, scene, camera, scale, now, int(width), int(height))
+  offerCameraAim(
+    panel, scene, camera, scale, now, int(width), int(height), interaction.isMovingCamera
+  )
   # Run hover and drag reading it before meshes are assembled.
   #   Drag's preview is then this frame's.
   #   Transform they pick against needs only camera, already advanced.
@@ -1206,7 +1208,7 @@ proc handleEvent(
           y: float(event.motion.y - event.motion.yrel),
         ),
         ScreenPosition(x: float(event.motion.x), y: float(event.motion.y)),
-        width_frame, height_frame,
+        width_frame, height_frame, panel.selection.len > 0,
       )
   else: discard
 

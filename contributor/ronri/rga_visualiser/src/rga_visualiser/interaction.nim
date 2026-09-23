@@ -76,20 +76,24 @@ const
     ##   Slower than grow: grow is getting out of way, this is marker arriving at what it
     ##   stays as, and outline that snaps reads as second marker replacing first.
 
-  FACTOR_PAN_REACH_MAX* = 4.0
-    ## Bound how far out along its sight ray pan may take hold, as multiple of orbit distance.
-    ##   Level pan grabs is horizontal, so ray aimed near horizon meets it very far off, and
-    ##   one pixel of drag there is hundreds of world units.
-    ##   Hold point is clamped rather than movement, so rule stays continuous.
-    ##     `min(reach, bound)` moves smoothly as cursor crosses bound; switching rule there
-    ##     would jolt mid-drag.
-    ##   Four rather than two: at opening placement, ray well inside window already reaches
-    ##   past two distances, ordinary place to start drag from; figures in `PROVENANCE.md`.
-
   FRACTION_PAN_PIXEL* = 0.0016
-    ## Slide pivot this fraction of orbit distance per dragged pixel, with nothing to grab.
-    ##   Fallback only, for drag whose sight ray never meets level it would grab; see
-    ##   `panAcross`.
+    ## Strafe camera this fraction of separation per dragged pixel, in free flight.
+    ##   Was fallback for drag whose sight ray missed level it grabbed; it is whole rule
+    ##   now, since free flight has no level. See `panAcross`.
+
+  SPEED_ORBIT_PIXEL* = 0.006
+    ## Orbit this many radians per dragged pixel, on right drag with selection.
+    ##   Shared by both front-ends, unlike left drag's own rate: right drag is handed
+    ##   pixels here rather than each build's own reading.
+    ##   Under `visualiser.SPEED_ORBIT` of 0.008, which left drag turns at: right drag
+    ##   carries two readings at once, and reader wants finer hold on each.
+
+  FACTOR_DOLLY_PIXEL* = 1.004
+    ## Scale separation by this per pixel dragged down, on right drag with selection.
+    ##   Compounded per pixel, as `camera.FACTOR_DOLLY_SECOND` compounds per second, so
+    ##   drag out and back returns exactly.
+    ##   Two hundred pixels of drag is about 2.2 times, which is comparable to wheel's own
+    ##   notch band over same sweep.
 
   PIXELS_TAP_SLOP* = 12.0
     ## Move press further than this and it stops being press.
@@ -798,45 +802,30 @@ proc dollyAtCursor*(
 
 
 func panAcross*(
-  camera: var Camera; before, after: ScreenPosition; width, height: int
+  camera: var Camera; before, after: ScreenPosition; width, height: int;
+  has_selection: bool
 ) =
-  ## Slide view so world point under `before` comes to lie under `after`.
-  ##   Grab, not rate.
-  ##     Rate per dragged pixel is right at one depth and tilt and wrong everywhere else.
-  ##     `camera.pan` slides pivot within plane facing eye, which is tilted, so vertical
-  ##     drag lifted pivot off ground, every later orbit swung about point on nothing, and
-  ##     later zoom scaled by distance to nowhere.
-  ##   Both rays meet horizontal plane through pivot, `positionUnderCursor`'s surface, so
-  ##   translation between hits is horizontal by construction.
-  ##     Plane rather than object under pointer because drag needs one surface for its
-  ##     whole length.
-  ##   Falls back to rate where either ray misses that plane: drag beginning or ending on
-  ##   sky above horizon.
+  ## Move camera by right drag, in whichever way its state reads.
+  ##   Free flight strafes along camera's own across and up. Rate for each pixel, not grab:
+  ##   free space holds no surface to take hold of.
+  ##     Level through pivot was surface this grabbed, and camera no longer stands on any
+  ##     plane, so grab had nothing left to mean. Rate was already this verb's fallback
+  ##     wherever that ray missed.
+  ##   Selection zooms on vertical and orbits on horizontal, so one drag reaches both
+  ##   without asking for second button.
+  ##   Scaled by separation, as every drag rate is: one pixel means same apparent step at
+  ##   every reach.
   let
-    eye_point = toMultivector(camera.eye)
-    pivot_point = toMultivector(camera.pivot)
-    level = levelPlaneThrough(pivot_point)
-    reach_max = FACTOR_PAN_REACH_MAX*camera.distance
-  func heldFoot(hit: Option[Position]): Option[Multivector] =
-    ## Draw hold point no further out than bound along its ray, then take its foot on level.
-    ##   Both feet share level by construction, so step between them carries none of
-    ##   clamp's vertical artefact.
-    if hit.isNone: return
-    var held = toMultivector(hit.get)
-    let reach = distanceBetween(held, eye_point)
-    if reach > reach_max and reach > 0.0:
-      held = add(eye_point, wedge(reach_max/reach, subtract(held, eye_point)))
-    some(unitize(projectOrthogonal(held, level)))
-  let
-    at_before = heldFoot(positionUnderCursor(camera, width, height, before))
-    at_after = heldFoot(positionUnderCursor(camera, width, height, after))
-  if at_before.isSome and at_after.isSome:
-    # Slide whole camera by step between two feet, rather than place pivot at sum.
-    #   Pivot is read off sight line now, so it follows eye and needs no arithmetic here.
-    camera.slideBy(subtract(at_before.get, at_after.get))
+    across = after.x - before.x
+    up = after.y - before.y
+  if has_selection:
+    camera.orbit(-SPEED_ORBIT_PIXEL*across, 0.0)
+    camera.dolly(pow(FACTOR_DOLLY_PIXEL, up))
     return
-  camera.pan(
-    -FRACTION_PAN_PIXEL*(after.x - before.x), FRACTION_PAN_PIXEL*(after.y - before.y)
+  camera.travel(
+    0.0,
+    -FRACTION_PAN_PIXEL*camera.distance*across,
+    FRACTION_PAN_PIXEL*camera.distance*up,
   )
 
 
@@ -877,12 +866,13 @@ func driveHeld*(
   ##     Travel integrates its own speed curve; see `camera.distanceTravelled`.
   ##     Shift multiplies every rate by `FACTOR_HASTE`.
   ##   Two states, and `has_selection` picks between them.
-  ##     Empty selection flies: travel and turn are about camera's own axes, and roll is
-  ##     reachable.
-  ##     Selection keeps turntable's own slide and dolly, which stage carrying whole
-  ##     frame rule replaces.
-  ##     Roll reaches either state, because `camera.orbit` composes motion now and
-  ##     carries roll through.
+  ##     Empty selection flies: travel and turn are about camera's own axes.
+  ##     Selection orbits centroid instead. W and space rise over it, S and control fall,
+  ##     and sideways keys swing round it; frame rule holds eye clear either way.
+  ##       Slide across ground stood here, and it had no reading once camera stopped being
+  ##       tied to that plane.
+  ##     Roll reaches either state, because `camera.orbit` composes motion and carries
+  ##     roll through.
   # Age travel hold before reading it, so speed climbs across frames, and drop it to zero
   #   frame no travel key is held.
   let age_before = interaction.seconds_travelling
@@ -894,7 +884,6 @@ func driveHeld*(
     turn = TURN_SECOND*haste*seconds
     rise = RISE_SECOND*haste*seconds
     spin = ROLL_SECOND*haste*seconds
-    slide = SLIDE_SECOND*haste*seconds
     dolly = pow(FACTOR_DOLLY_SECOND, haste*seconds)
     # One step for this frame, integrated across hold's own two ages.
     step = distanceTravelled(
@@ -906,23 +895,18 @@ func driveHeld*(
     if motion.isNone: continue
     case motion.get
     of Motion.Forward:
-      if has_selection: camera.slideGround(slide, 0.0, 0.0)
-      else: camera.flyAhead(step)
+      if has_selection: camera.orbit(0.0, rise) else: camera.flyAhead(step)
     of Motion.Back:
-      if has_selection: camera.slideGround(-slide, 0.0, 0.0)
-      else: camera.flyAhead(-step)
+      if has_selection: camera.orbit(0.0, -rise) else: camera.flyAhead(-step)
     of Motion.Left:
-      if has_selection: camera.slideGround(0.0, -slide, 0.0)
-      else: camera.travel(0.0, -step, 0.0)
+      if has_selection: camera.orbit(-turn, 0.0) else: camera.travel(0.0, -step, 0.0)
     of Motion.Right:
-      if has_selection: camera.slideGround(0.0, slide, 0.0)
-      else: camera.travel(0.0, step, 0.0)
+      if has_selection: camera.orbit(turn, 0.0) else: camera.travel(0.0, step, 0.0)
     of Motion.Down:
-      if has_selection: camera.slideGround(0.0, 0.0, -slide)
-      else: camera.travel(0.0, 0.0, -step)
+      # Control mirrors S, and space mirrors W, so either hand orbits sphere.
+      if has_selection: camera.orbit(0.0, -rise) else: camera.travel(0.0, 0.0, -step)
     of Motion.Up:
-      if has_selection: camera.slideGround(0.0, 0.0, slide)
-      else: camera.travel(0.0, 0.0, step)
+      if has_selection: camera.orbit(0.0, rise) else: camera.travel(0.0, 0.0, step)
     of Motion.RollLeft: camera.roll(-spin)
     of Motion.RollRight: camera.roll(spin)
     of Motion.OrbitLeft:

@@ -1394,77 +1394,65 @@ suite "Camera":
       check answered.get[1] =~ expected_head
 
 
-  test "a pan grabs the level under the pointer and carries it to the cursor":
-    # Fault: pan of so many hundredths of orbit distance per pixel is right at.
-    #   one depth and one tilt and wrong everywhere else -- driven, 200-pixel drag
-    #   carried scene 288 -- and it slid pivot within plane *facing eye*,
-    #   which is tilted, so same drag lifted pivot from z 1.00 to 6.40.
+  test "a right drag strafes along the camera's own axes in free flight":
+    # Grab of level under pointer stood here, and camera stands on no plane now, so there
+    #   was nothing left to take hold of. Rate was already this verb's fallback wherever
+    #   that ray missed.
     const (WIDE, TALL) = (1440, 900)
     var camera = initCamera(
       pivot = Position(x: 0, y: 0, z: 1), distance = 19.0, azimuth = 1.05,
       elevation = 0.42,
     )
+    let (eye_start, axes) = (camera.eye, camera.frame)
     let
       before = ScreenPosition(x: 700.0, y: 560.0)
       after = ScreenPosition(x: 940.0, y: 660.0)
-      grabbed = positionUnderCursor(camera, WIDE, TALL, before)
-      height_opening = camera.pivot.z
-    check grabbed.isSome
-    camera.panAcross(before, after, WIDE, TALL)
-    # Very point that was under pointer is now under where pointer went.
-    let landed = projectToScreen(
-      camera.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL, grabbed.get
-    )
-    check hypot(landed.x - after.x, landed.y - after.y) < 0.5
-    # And orbit centre keeps its height exactly, whatever direction drag went.
-    check camera.pivot.z =~ height_opening
-    for step in [
-      (ScreenPosition(x: 700.0, y: 560.0), ScreenPosition(x: 700.0, y: 260.0)),
-      (ScreenPosition(x: 200.0, y: 800.0), ScreenPosition(x: 1300.0, y: 300.0)),
-    ]:
-      var camera_step = camera
-      camera_step.panAcross(step[0], step[1], WIDE, TALL)
-      check camera_step.pivot.z =~ camera.pivot.z
+    camera.panAcross(before, after, WIDE, TALL, has_selection = false)
+    # Step lies wholly in plane of camera's own across and up: sight gains nothing.
+    let step = camera.eye - eye_start
+    check abs(dot(step, axes.forward)) < TOLERANCE_TEST
+    # Drag right carries eye left, so what is under pointer travels with it.
+    check dot(step, axes.axis_right) < 0.0
+    # Drag down carries eye up, on same reading.
+    check dot(step, axes.axis_up) > 0.0
+    # Scaled by separation, and nothing turns.
+    check abs(dot(step, axes.axis_right)) =~ FRACTION_PAN_PIXEL*19.0*240.0
+    check camera.frame.forward =~ axes.forward
+    check camera.distance =~ 19.0
 
-
-  test "a pan takes hold no further out than its own bound":
-    # Horizontal level meets ray aimed near horizon very long way off, and one.
-    #   pixel of drag there is hundreds of world units. Hold point is clamped, so
-    #   drag high in frame is governed rather than thrown across scene.
+  test "a right drag with a selection zooms down the frame and orbits across it":
     const (WIDE, TALL) = (1440, 900)
-    var camera = initCamera(
-      pivot = ORIGIN, distance = 19.0, azimuth = 0.0, elevation = 0.06
+    let opening = initCamera(ORIGIN, 19.0, 1.05, 0.42)
+    # Vertical alone zooms, and leaves sight where it was.
+    var zoomed = opening
+    zoomed.panAcross(
+      ScreenPosition(x: 700.0, y: 500.0), ScreenPosition(x: 700.0, y: 600.0),
+      WIDE, TALL, has_selection = true,
     )
-    # Walk up middle of frame for first row whose ray grazes level far.
-    #   enough out to be governed, rather than naming pixel that change in field of
-    #   view would quietly move off case being checked.
-    var grazing = none(ScreenPosition)
-    for row in countdown(450, 360):
-      let at = ScreenPosition(x: 720.0, y: float(row))
-      let hit = positionUnderCursor(camera, WIDE, TALL, at)
-      # Four times past bound, not merely over it: at bound itself clamp.
-      #   barely bites and there is no governing to see.
-      if hit.isSome and
-          norm(hit.get - camera.eye) > 4.0*FACTOR_PAN_REACH_MAX*camera.distance:
-        grazing = some(at)
-        break
-    check grazing.isSome
-    let
-      opening = camera
-      lower = ScreenPosition(x: 720.0, y: grazing.get.y + 30.0)
-      unbounded = norm(
-        positionUnderCursor(camera, WIDE, TALL, grazing.get).get -
-        positionUnderCursor(camera, WIDE, TALL, lower).get
-      )
-    camera.panAcross(grazing.get, lower, WIDE, TALL)
-    let moved = norm(camera.pivot - opening.pivot)
-    # It moves -- governed pan is still pan -- but by fraction of what ungoverned.
-    #   grab would have thrown view, and never past what two bounded holds can span.
-    check moved > 0.0
-    check moved < 0.5*unbounded
-    check moved <= 2.0*FACTOR_PAN_REACH_MAX*opening.distance
-    check camera.pivot.z =~ opening.pivot.z
-
+    check zoomed.distance =~ 19.0*pow(FACTOR_DOLLY_PIXEL, 100.0)
+    check zoomed.distance > 19.0
+    check zoomed.frame.forward =~ opening.frame.forward
+    check zoomed.pivot =~ opening.pivot
+    # Drag up zooms in, and drag out and back returns exactly.
+    var returned = zoomed
+    returned.panAcross(
+      ScreenPosition(x: 700.0, y: 600.0), ScreenPosition(x: 700.0, y: 500.0),
+      WIDE, TALL, has_selection = true,
+    )
+    check returned.distance =~ 19.0
+    # Horizontal alone orbits, leaving pivot and separation alone.
+    var orbited = opening
+    orbited.panAcross(
+      ScreenPosition(x: 700.0, y: 500.0), ScreenPosition(x: 940.0, y: 500.0),
+      WIDE, TALL, has_selection = true,
+    )
+    check orbited.pivot =~ opening.pivot
+    check orbited.distance =~ 19.0
+    # Sight swept exactly what pixels asked for, since frame is orthonormal.
+    let swung = arccos(
+      clamp(dot(orbited.frame.forward, opening.frame.forward), -1.0, 1.0)
+    )
+    check swung =~ SPEED_ORBIT_PIXEL*240.0
 
   test "an aimed zoom draws the pivot toward what it aimed at":
     # `dollyToward` scales pivot toward anchor by exactly factor distance.
@@ -3788,7 +3776,7 @@ suite "Camera Aim":
     (scene, picked)
 
   proc offerAim(
-    tween: var CameraTween; camera: Camera; scene: Scene; picked: Selection;
+    tween: var CameraTween; camera: var Camera; scene: Scene; picked: Selection;
     staged: Option[Preview]; scale: DrawExtent; width, height: int; now, duration: float
   ) =
     ## Offer with no pointer pick, as list and keyboard picks do.
@@ -3802,7 +3790,7 @@ suite "Camera Aim":
     ## Resolve where framing rule puts camera for whole selection.
     let aim = aimFor(scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM))
     check aim.isSome
-    stanceFor(aim.get, scene, picked, none(Preview), camera, WIDTH_AIM, HEIGHT_AIM)
+    stanceFor(aim.get, camera, WIDTH_AIM, HEIGHT_AIM)
 
 
   test "on screen is not in view: the box is two thirds of the frame, not all of it":
@@ -3961,9 +3949,7 @@ suite "Camera Aim":
       for elevation in ELEVATIONS_AIM:
         let camera = stanceAim(azimuth, elevation)
         let aim = aimFor(scene, Selection(), staged, camera.drawExtentFor(HEIGHT_AIM))
-        let framed = camera.placed(stanceFor(
-          aim.get, scene, Selection(), staged, camera, WIDTH_AIM, HEIGHT_AIM
-        ))
+        let framed = camera.placed(stanceFor(aim.get, camera, WIDTH_AIM, HEIGHT_AIM))
         check isShownAll(
           scene, Selection(), staged, framed, WIDTH_AIM, HEIGHT_AIM
         )
@@ -3981,9 +3967,7 @@ suite "Camera Aim":
     let alone = some(previewStaging(scene.geometryOf(handle_first), RADIUS_OBJECT_DEFAULT))
     let camera = stanceAim(0.7, 0.2)
     let aim = aimFor(scene, Selection(), alone, camera.drawExtentFor(HEIGHT_AIM))
-    let framed = camera.placed(stanceFor(
-      aim.get, scene, Selection(), alone, camera, WIDTH_AIM, HEIGHT_AIM
-    ))
+    let framed = camera.placed(stanceFor(aim.get, camera, WIDTH_AIM, HEIGHT_AIM))
     check isShownAll(scene, Selection(), alone, framed, WIDTH_AIM, HEIGHT_AIM)
     check framed.distance == camera.distance
     check not isShownCentrally(
@@ -4063,6 +4047,8 @@ suite "Camera Aim":
     # Complaint this rule was rewritten for: disc wide enough to cover box was.
     #   read as in view -- sight axis struck it, so picking it moved camera not at
     #   all -- while reader could see no edge of circle anywhere.
+    # Sized by sphere holding its disc now, so it lands further out than its own pixel
+    #   reading asked: that is what one bounding sphere costs.
     let ground = toMultivector(ORIGIN) ∧ toMultivector(Position(x: 1.0, y: 0.0, z: 0.0)) ∧
       toMultivector(Position(x: 0.0, y: 1.0, z: 0.0))
     let (scene, picked) = sceneOf(ground)
@@ -4080,7 +4066,6 @@ suite "Camera Aim":
         let view_projection =
           framed.initMatrixViewProjection(WIDTH_AIM/HEIGHT_AIM)
         let (margin_x, margin_y) = marginsCentred()
-        var is_past_box = false
         for step in 0 ..< 96:
           let turn = (2.0*PI*float(step))/96.0
           let at = projectToScreen(
@@ -4092,16 +4077,14 @@ suite "Camera Aim":
           check at.isInFront
           check at.x >= 0.0 and at.x <= float(WIDTH_AIM)
           check at.y >= 0.0 and at.y <= float(HEIGHT_AIM)
-          # ... and rim is allowed to reach past *centred box* on way, which is.
-          #   whole of what this rule loosened. Without this case would pass just as
-          #   well under stricter one and say nothing about which is in force.
-          if at.x < margin_x or at.x > float(WIDTH_AIM) - margin_x or
-              at.y < margin_y or at.y > float(HEIGHT_AIM) - margin_y:
-            is_past_box = true
-        check is_past_box
-        # And it costs strictly less than making disc fit that box would have.
-        check framed.distance <
-          distanceFitting(EXTENT_PLANE_F, camera, WIDTH_AIM, HEIGHT_AIM, 0.0)
+          # Whole rim is inside centred box as well, which is price of one bounding
+          #   sphere: plane's own looser reading, rim merely on screen, no longer sizes
+          #   framing. Sphere holding disc from every side is what does.
+          check at.x >= margin_x and at.x <= float(WIDTH_AIM) - margin_x
+          check at.y >= margin_y and at.y <= float(HEIGHT_AIM) - margin_y
+        # It costs exactly what holding that sphere costs, and not step more.
+        check norm(framed.eye - positionAnchor(ground).get) =~
+          distanceFitting(EXTENT_PLANE_F, camera, WIDTH_AIM, HEIGHT_AIM, INSET_POINT_SHOWN)
 
 
   test "a plane is judged by the disc drawn, not by the one its support would carry":
@@ -4278,13 +4261,83 @@ suite "Camera Aim":
         let camera = stanceAim(azimuth, elevation)
         let framed = framedFor(scene, picked, camera)
         check framed.distance >= camera.distance # Never pulls in ...
-        # ... and not step further than it takes, pan and zoom judged together: tenth.
-        #   of way back along very move fails.
-        let short = camera.stanceOf.toward(framed, 0.9)
-        check not isShownAll(
-          scene, picked, none(Preview), camera.placed(short), WIDTH_AIM, HEIGHT_AIM
+        # ... and not one step further than rule in force demands. Judged against that
+        #   rule, and not against pixels: sphere criterion is what framing solves, and it
+        #   is stricter than what each shape's own pixels would accept.
+        let aim = aimFor(scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM))
+        check aim.isSome
+        check aim.get.isFramed(camera.placed(framed), WIDTH_AIM, HEIGHT_AIM)
+        let short = camera.stanceOf.toward(framed, 0.999)
+        check not aim.get.isFramed(camera.placed(short), WIDTH_AIM, HEIGHT_AIM)
+        # Everything picked is on screen all same, which is what reader asked.
+        check isShownAll(
+          scene, picked, none(Preview), camera.placed(framed), WIDTH_AIM, HEIGHT_AIM
         )
 
+
+  test "the step out is the least one that reaches its own distance":
+    # Closed form frame rule solves, and what three searches over projections were doing
+    #   before it. One quadratic, and its positive root is always answer.
+    for reach in [0.002, 1.0, 19.0, 6.5e6]:
+      for i in 0 .. 5:
+        let
+          turn = TAU*float(i)/6.0
+          offset = Direction(x: 0.3*reach*cos(turn), y: 0.3*reach*sin(turn), z: 0.1*reach)
+          heading = Direction(x: cos(turn), y: -sin(turn), z: 0.0)
+        let stepped = stepOutTo(offset, heading, reach)
+        check stepped > 0.0
+        # It lands exactly on that distance, whichever way heading points.
+        check norm(offset + stepped*heading) =~ reach
+        let back = stepOutTo(offset, -heading, reach)
+        check back > 0.0
+        check norm(offset + back*(-heading)) =~ reach
+    # Already out that far costs nothing, which is what makes rule floor.
+    check stepOutTo(Direction(x: 20.0, y: 0.0, z: 0.0), UP_WORLD, 19.0) =~ 0.0
+    check stepOutTo(Direction(x: 19.0, y: 0.0, z: 0.0), UP_WORLD, 19.0) =~ 0.0
+
+  test "the frame rule is a floor, and the camera slides along it":
+    const (WIDE, TALL) = (WIDTH_AIM, HEIGHT_AIM)
+    let (scene, picked) = sceneOf(
+      toMultivector(Position(x: 6.0, y: -4.0, z: 1.0)),
+      toMultivector(Position(x: -3.0, y: 5.0, z: -2.0)),
+    )
+    let opening = stanceAim(0.7, 0.35)
+    let aim = aimFor(scene, picked, none(Preview), opening.drawExtentFor(TALL)).get
+    let centre = aim.sphere.get.centre
+    let reach = distanceFitting(aim.sphere.get.radius, opening, WIDE, TALL, INSET_POINT_SHOWN)
+    # Framed, then flown well inside: rule is broken and floor answers.
+    var camera = opening.placed(stanceFor(aim, opening, WIDE, TALL))
+    check aim.isFramed(camera, WIDE, TALL)
+    let axes_before = camera.frame
+    camera.flyAhead(0.8*reach)
+    check not aim.isFramed(camera, WIDE, TALL)
+    let bearing_inside = (1.0/norm(camera.eye - centre))*(camera.eye - centre)
+    camera.holdFramed(aim, WIDE, TALL)
+    # Back out to exactly that floor, and no further.
+    check norm(camera.eye - centre) =~ reach
+    check aim.isFramed(camera, WIDE, TALL)
+    # On way out it keeps whichever way round it had got to, which is slide: eye goes
+    #   straight out from centre, so its bearing there is untouched.
+    check (1.0/norm(camera.eye - centre))*(camera.eye - centre) =~ bearing_inside
+    # Nothing turns, and pivot is re-stamped onto centre rather than left stale.
+    check camera.frame.forward =~ axes_before.forward
+    check abs(dot(centre - camera.eye, camera.frame.forward) - camera.distance) <
+      TOLERANCE_TEST
+    # Standing further out is left alone: floor, not fit.
+    var far = camera
+    far.flyAhead(-3.0*reach)
+    let eye_far = far.eye
+    far.holdFramed(aim, WIDE, TALL)
+    check far.eye =~ eye_far
+    # Narrower frame asks for more room, and same floor supplies it.
+    let reach_narrow = distanceFitting(
+      aim.sphere.get.radius, opening, TALL div 2, TALL, INSET_POINT_SHOWN
+    )
+    check reach_narrow > reach
+    var resized = opening.placed(stanceFor(aim, opening, WIDE, TALL))
+    check not aim.isFramed(resized, TALL div 2, TALL)
+    resized.holdFramed(aim, TALL div 2, TALL)
+    check norm(resized.eye - centre) =~ reach_narrow
 
   test "a selection tight enough to fit already keeps the reader's own scale":
     # Half of "only when it must" that spread selection cannot show: distance left.
@@ -4341,9 +4394,16 @@ suite "Camera Aim":
       check isShownCentrally(star, camera.placed(framed), WIDTH_AIM, HEIGHT_AIM)
       check camera.placed(framed).pivot =~ camera.pivot # Orbit turned; what it turns about did not.
       check framed.distance =~ camera.distance
-      if isShownCentrally(star, camera, WIDTH_AIM, HEIGHT_AIM): continue
-      let short = camera.stanceOf.toward(framed, 0.9)
-      check not isShownCentrally(star, camera.placed(short), WIDTH_AIM, HEIGHT_AIM)
+      # Turn lands on star's own heading, rather than being searched toward it:
+      #   rebuild names that turn outright, so there is no fraction of it to find.
+      let aim = aimFor(
+        scene_star, picked_star, none(Preview), camera.drawExtentFor(HEIGHT_AIM)
+      )
+      check aim.isSome and aim.get.heading.isSome
+      let angles = azimuthElevationFor(aim.get.heading.get)
+      check camera.placed(framed).azimuth =~ angles[0]
+      check camera.placed(framed).elevation =~
+        clamp(angles[1], -ELEVATION_LIMIT, ELEVATION_LIMIT)
 
     # Beside anything finite, finite framing wins outright and angles stand: star.
     #   behind reader and point in front have no one placement showing both.
@@ -4750,8 +4810,8 @@ suite "Camera Aim":
     check tween.is_arrived
     check camera.pivot =~ arrival
 
-    # User pans, and same goal keeps being offered every frame after.
-    camera.pan(3.0, 2.0)
+    # User moves camera, and same goal keeps being offered every frame after.
+    camera.travel(0.0, 3.0, 2.0)
     let pivot_panned = camera.pivot
     for frame in 1 .. 10:
       let now = 0.35 + 0.016*float(frame)
@@ -4773,7 +4833,7 @@ suite "Camera Aim":
     tween.advance(camera, 0.10, easeOutCubic) # Mid-flight, nowhere near arrival.
     check not tween.is_arrived
 
-    camera.pan(3.0, 2.0)
+    camera.travel(0.0, 3.0, 2.0)
     tween.abandon()
     let pivot_panned = camera.pivot
     for frame in 1 .. 40:
@@ -4792,7 +4852,7 @@ suite "Camera Aim":
     let goal = aimOn(arrival)
     tween.aimAt(camera, goal, camera.placeOn(arrival), 0.0, 0.35)
     tween.advance(camera, 0.35, easeOutCubic)
-    camera.pan(3.0, 2.0)
+    camera.travel(0.0, 3.0, 2.0)
     let pivot_panned = camera.pivot
 
     tween.release()
@@ -6870,41 +6930,44 @@ suite "Interaction":
     check actionFor(Key.Home) == some(KeyAction.ViewHome)
 
 
-  test "with a selection a held key slides across the ground, never through it":
-    # **map** reading of movement key rather than fly one: forward keeps.
-    #   camera's height whatever it is looking at. Judged from camera tilted well down,
-    #   where slide along raw sight direction would plainly lose height.
-    var
-      interaction = Interaction(is_enabled: true)
-      camera = initCamera(pivot = ORIGIN, distance = 20.0, azimuth = 0.4, elevation = 0.9)
-    let opening = camera
+  test "with a selection a held key orbits the sphere, and never slides":
+    # Slide across ground stood here, and it had no reading once camera stopped being tied
+    #   to that plane. W and space rise over what is picked, S and control fall, and
+    #   sideways keys swing round it.
+    var interaction = Interaction(is_enabled: true)
+    let opening = initCamera(pivot = ORIGIN, distance = 20.0, azimuth = 0.4, elevation = 0.3)
+    var risen = opening
     interaction.holdKey(Key.W)
-    interaction.driveHeld(camera, 1.0, has_selection = true)
-    check camera.pivot.z =~ opening.pivot.z
-    check camera.distance =~ opening.distance
-    check camera.azimuth =~ opening.azimuth
-    check camera.elevation =~ opening.elevation
-    # Forward is way camera faces, flattened: move lies along it exactly.
-    let moved = camera.pivot - opening.pivot
-    check norm(moved) =~ SLIDE_SECOND*opening.distance
-    check dot(moved, opening.headingGround) =~ norm(moved)
-
-    # Sideways is perpendicular to that, and level with it.
+    interaction.driveHeld(risen, 1.0, has_selection = true)
+    # Pivot and separation both stand, because both axes run through pivot.
+    check risen.pivot =~ opening.pivot
+    check risen.distance =~ opening.distance
+    # Eye rose over it, by exactly rate asked for.
+    check risen.elevation > opening.elevation
+    check arccos(clamp(dot(risen.frame.forward, opening.frame.forward), -1.0, 1.0)) =~
+      RISE_SECOND
+    # Space mirrors W, so either hand reaches it.
+    var mirrored = opening
     interaction.releaseKey(Key.W)
-    interaction.holdKey(Key.D)
-    var sideways = initCamera(ORIGIN, 20.0, 0.4, 0.9)
-    interaction.driveHeld(sideways, 1.0, has_selection = true)
-    check sideways.pivot.z =~ 0.0
-    check abs(dot(sideways.pivot - ORIGIN, sideways.headingGround)) <= TOLERANCE_TEST
-
-    # Up and down are world up, and nothing else.
-    interaction.releaseKey(Key.D)
     interaction.holdKey(Key.Space)
-    var lifted = initCamera(ORIGIN, 20.0, 0.4, 0.9)
-    interaction.driveHeld(lifted, 1.0, has_selection = true)
-    check lifted.pivot.x =~ 0.0
-    check lifted.pivot.y =~ 0.0
-    check lifted.pivot.z =~ SLIDE_SECOND*lifted.distance
+    interaction.driveHeld(mirrored, 1.0, has_selection = true)
+    check mirrored.frame.forward =~ risen.frame.forward
+    # Control mirrors S, and falls where W rose.
+    var fallen = opening
+    interaction.releaseKey(Key.Space)
+    interaction.holdKey(Key.Control)
+    interaction.driveHeld(fallen, 1.0, has_selection = true)
+    check fallen.elevation < opening.elevation
+    check fallen.pivot =~ opening.pivot
+    # Sideways swings round, and turns by its own rate rather than rise's.
+    var swung = opening
+    interaction.releaseKey(Key.Control)
+    interaction.holdKey(Key.D)
+    interaction.driveHeld(swung, 1.0, has_selection = true)
+    check swung.pivot =~ opening.pivot
+    check swung.distance =~ opening.distance
+    check arccos(clamp(dot(swung.frame.forward, opening.frame.forward), -1.0, 1.0)) =~
+      TURN_SECOND
 
 
   test "held keys compose, and letting one go leaves the other running":
@@ -7067,9 +7130,13 @@ suite "Interaction":
     interaction.driveHeld(plain, 0.25, has_selection = true)
     interaction.holdKey(Key.Shift)
     interaction.driveHeld(hastened, 0.25, has_selection = true)
-    check norm(hastened.pivot - ORIGIN) =~ FACTOR_HASTE*norm(plain.pivot - ORIGIN)
+    # W orbits with selection, so read swing of sight rather than step of pivot.
+    let upright = initCamera(ORIGIN, 20.0, 0.4, 0.3).frame.forward
+    let risen = arccos(clamp(dot(plain.frame.forward, upright), -1.0, 1.0))
+    let risen_fast = arccos(clamp(dot(hastened.frame.forward, upright), -1.0, 1.0))
+    check risen_fast =~ FACTOR_HASTE*risen
     # Same direction, not different binding -- which is what shift+arrow used to mean.
-    check dot(hastened.pivot - ORIGIN, plain.headingGround) > 0.0
+    check hastened.elevation > plain.elevation
 
     var
       turned = initCamera(ORIGIN, 20.0, 0.4, 0.3)
@@ -7113,7 +7180,7 @@ suite "Interaction":
     let opening = camera
 
     # Home returns to placement both builds open at, from wherever reader has gone.
-    camera.slideGround(3.0, 2.0, 1.0)
+    camera.travel(3.0, 2.0, 1.0)
     camera.orbit(0.5, 0.2)
     discard interaction.applyAction(camera, scene, KeyAction.ViewHome)
     check camera.pivot =~ opening.pivot

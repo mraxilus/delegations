@@ -34,18 +34,17 @@ import ./[boundary, camera, tessellate, picking, scene, selection]
 #[ Framing Configuration ]#
 
 const
-  ROUNDS_DISTANCE_FIT* = 8
-    ## Fix halvings run when searching least orbit distance bringing selection into view.
-    ##   Eight lands within 1/256 of bracket, itself distance at which selection exactly
-    ##   fills box, so residue is fraction of percent of spread framed.
-    ##   Finer than reader sees; each halving costs projection of every selected object.
-  STEPS_PLACEMENT_LEAST* = 12
-    ## Fix fractions of full framing move tried, evenly spaced, when cutting it back.
-    ##   Coarse on purpose: they only bracket crossing, which halvings then close on, and
-    ##   each step costs projection of every selected object.
-  ROUNDS_PLACEMENT_LEAST* = 5
-    ## Fix halvings run inside bracketed step.
-    ##   Five puts answer within 1/384 of full move, under pixel of any pan or turn here.
+  SLACK_FRAMED* = 1.0e-9
+    ## Allow eye this fraction of fitting reach inside it, and still count as framed.
+    ##   Frame rule is floor, and `camera.stepOutTo` solves for eye standing exactly on
+    ##   that floor: bare `>=` against figure solver lands on fails by one ulp, and
+    ##   framing then reported its own answer as unframed.
+    ##   Relative, not absolute: reach spans thousandths of unit to millions of them.
+    ##   Round trip is eye to motor to dolly and back, handful of operations on doubles,
+    ##   so about 1e-14 of relative error. This is million times that, and still sixty
+    ##   nanometres at one astronomical unit.
+    ##   Three searches over projections stood here, and `camera.stepOutTo` replaced all
+    ##   of them; their halving counts went with them.
   FRACTION_HEIGHT_APPROACH_POINT* = 0.01
     ## Fix how much of frame's height picked dot's disc spans once pointer pick has come in.
     ##   Chosen by eye: sixth of frame was too close, object filling view with nothing
@@ -185,105 +184,91 @@ func isShownAll*(
 
 #[ Resolving Placement ]#
 
-func stanceFor*(
-  aim: CameraAim; scene: Scene; picked: Selection; staged: Option[Preview];
-  camera: Camera; width, height: int
-): CameraStance =
-  ## Resolve `aim` against camera as it stands into placement ease should end at.
-  ##   Least movement, pan, zoom and orbit together, putting every picked object in view;
-  ##   none at all where they all already are.
-  ##   Full move it is cut back from: pivot to middle of everything finite picked, angles
-  ##   facing horizon objects only where nothing finite was, distance pulled back only as
-  ##   far as fitting demands and never in.
-  ##     Orbit is preferred *against* by construction: finite selection's full move
-  ##     carries no turn, so no fraction of it does; horizon-only selection's move is turn
-  ##     because pan and zoom cannot bring star into view.
-  ##   Finite framing wins outright over facing star, since two can disagree.
-  ##     Star behind reader and point in front have no placement showing both, and
-  ##     selection with something finite is one reader works on.
-  ##     Star picked beside point may stay out of view.
-  # Charge nothing for fitting where everything is already in view, judged where camera is.
-  #   Judging at centred placement pulled view about on every pick of something plainly
-  #   visible.
-  #   Pivot still comes to middle of what was picked: reader who picks object and turns
-  #   means to turn about *it*.
-  #   Aim compares equal from next frame on, so ease runs once per pick; see `CameraAim`
-  #   and `CameraTween.abandon`.
-  if isShownAll(scene, picked, staged, camera, width, height):
-    if aim.centroid.isSome: return camera.stanceRepivoted(aim.centroid.get)
-    return camera.stanceOf
+func isFramed*(aim: CameraAim; camera: Camera; width, height: int): bool =
+  ## Report whether camera already holds every finite object `aim` names.
+  ##   One comparison against one bounding sphere, and no projection of anything.
+  ##   True where `aim` names nothing finite: horizon objects are bound by their own rule,
+  ##   and camera asked to hold no finite object holds them all.
+  if aim.sphere.isNone: return true
+  let reach = distanceFitting(
+    aim.sphere.get.radius, camera, width, height, INSET_POINT_SHOWN
+  )
+  norm(camera.eye - aim.sphere.get.centre) >= reach*(1.0 - SLACK_FRAMED)
 
-  # Aim at middle of what was picked, not middle of bound holding it.
-  #   Bound still decides *separation*.
+
+func holdFramed*(camera: var Camera; aim: CameraAim; width, height: int) =
+  ## Carry eye back out until it holds every finite object `aim` names.
+  ##   Floor, not fit: reader standing further out is left alone, and only nearer than
+  ##   fitting reach is refused.
+  ##   Eye goes straight out from sphere's centre, which is least move restoring rule.
+  ##     That keeps whichever way round reader had got to, so camera slides along bound
+  ##     rather than stopping dead against it.
+  ##     Along their own step instead would land further back than rule asks, and would
+  ##     need step threaded through every verb.
+  ##   Pivot is re-stamped onto centre, so separation follows eye rather than going stale.
+  ##   Nothing finite named means no bound; horizon objects are bound by their own rule.
+  if aim.sphere.isNone: return
+  let
+    reach = distanceFitting(
+      aim.sphere.get.radius, camera, width, height, INSET_POINT_SHOWN
+    )
+    centre = aim.sphere.get.centre
+    offset = camera.eye - centre
+    span = norm(offset)
+  if span >= reach*(1.0 - SLACK_FRAMED): return
+  # Eye sitting on centre has no way out to choose, so back along sight.
+  let heading = if span > 0.0: (1.0/span)*offset else: -camera.frame.forward
+  camera.slideBy(wedge(reach - span, toMultivector(heading)))
+  let depth = dot(centre - camera.eye, camera.frame.forward)
+  if depth > 0.0: camera.repivotToDepth(depth)
+
+
+func stanceFor*(aim: CameraAim; camera: Camera; width, height: int): CameraStance =
+  ## Resolve `aim` against camera as it stands into placement ease should end at.
+  ##   Pivot to middle of everything finite picked, and separation pulled back only as far
+  ##   as frame rule demands. Never in: rule is floor, so reader standing further out
+  ##   keeps their own framing.
+  ##   Angles face horizon objects only where nothing finite was.
+  ##     Finite framing wins outright over facing star, since two can disagree. Star
+  ##     behind reader and point in front have no placement showing both, and selection
+  ##     with something finite is one reader works on.
+  ##   Pivot comes to middle of what was picked even where nothing is pulled back: reader
+  ##   who picks object and turns means to turn about *it*. Bound still decides separation.
+  ##   Two searches stood here, and both are gone.
+  ##     One bisected separation between where camera stood and distance whole sphere fits,
+  ##     running `isShownAll` at each halving. `camera.stepOutTo` answers in closed form.
+  ##     Other bisected fraction of whole move already showing everything. Move is least by
+  ##     construction now: pivot goes to centroid, and separation gives up exactly what
+  ##     rule demands.
+  ##   Price is named in `CameraAim`: one bounding sphere frames line further out than
+  ##   crossing frame would need.
   let pivot = if aim.centroid.isSome: aim.centroid.get else: camera.pivot
-  var settled =
+  let settled =
     if aim.sphere.isSome or aim.heading.isNone:
       # Framing something finite turns nothing, so whole motion crosses and roll with it.
       camera.stanceRepivoted(pivot)
     else:
       # Facing horizon object does turn, and turntable rebuild is what names that turn.
       #   Roll is given up here, because direction alone names no roll to keep.
-      #   Clamped as `placedAtElevation` is: past pole camera's up runs along sight axis
-      #   and rebuilt frame collapses.
+      #   Clamped as `camera.placedAtElevation` is: past pole rebuilt frame collapses.
       let angles = azimuthElevationFor(aim.heading.get)
       stanceTurntable(
         pivot, camera.distance, angles[0],
         clamp(angles[1], -ELEVATION_LIMIT, ELEVATION_LIMIT),
       )
-  if aim.sphere.isSome and
-      not isShownAll(scene, picked, staged, camera.placed(settled), width, height):
-    # Bracket with distance at which whole sphere fits, then halve into it for least.
-    #   Closed form alone over-dollies: line whose support stands hundred units away needs
-    #   no pulling back if it already crosses frame, and flat disc seen at angle needs far
-    #   less room than sphere holding it from every side.
-    var
-      near = camera.distance
-      far = max(
-        camera.distance,
-        distanceFitting(aim.sphere.get.radius, camera, width, height, INSET_POINT_SHOWN),
-      )
-    settled = camera.stanceDollied(settled, far)
-    # Halve soundly because test is monotone in distance.
-    #   Everything converges on middle of frame as eye pulls back.
-    if isShownAll(scene, picked, staged, camera.placed(settled), width, height):
-      for _ in 1 .. ROUNDS_DISTANCE_FIT:
-        let middle = 0.5*(near + far)
-        settled = camera.stanceDollied(settled, middle)
-        if isShownAll(scene, picked, staged, camera.placed(settled), width, height):
-          far = middle
-        else: near = middle
-      settled = camera.stanceDollied(settled, far)
-
-  # Stand whole where even full move shows nothing.
-  #   Selection wider than world may be viewed from, or two stars facing opposite ways.
-  if not isShownAll(scene, picked, staged, camera.placed(settled), width, height):
-    return settled
-
-  # Cut whole move back to least fraction already showing everything.
-  #   Searched along path ease travels (`toward`), each candidate verified at own trial
-  #   placement so partial pan and partial zoom cannot admit fraction that fails.
-  #   Step-then-halve handles path not being strictly monotone.
-  # Start from where camera stands but already centred.
-  #   Re-centring is not concession to fitting, and in path search would find fraction of
-  #   nothing shows everything.
-  let start = camera.stanceRepivoted(pivot)
-  var (lower, upper) = (0.0, 1.0)
-  for step in 1 .. STEPS_PLACEMENT_LEAST:
-    let fraction = float(step)/float(STEPS_PLACEMENT_LEAST)
-    if isShownAll(
-      scene, picked, staged, camera.placed(start.toward(settled, fraction)), width, height
-    ):
-      (lower, upper) = (float(step - 1)/float(STEPS_PLACEMENT_LEAST), fraction)
-      break
-  for _ in 1 .. ROUNDS_PLACEMENT_LEAST:
-    let middle = 0.5*(lower + upper)
-    if isShownAll(
-      scene, picked, staged, camera.placed(start.toward(settled, middle)), width, height
-    ):
-      upper = middle
-    else: lower = middle
-  start.toward(settled, upper)
-
+  if aim.sphere.isNone: return settled
+  # Pull eye back along its own sight, by least step carrying it out to fitting reach.
+  #   Sphere's centre is not pivot, so separation is not that reach; quadratic is what
+  #   accounts for offset between them.
+  let
+    placed = camera.placed(settled)
+    axes = placed.frame
+    reach = distanceFitting(
+      aim.sphere.get.radius, placed, width, height, INSET_POINT_SHOWN
+    )
+    back = stepOutTo(placed.eye - aim.sphere.get.centre, -axes.forward, reach)
+  if back <= 0.0: return settled
+  camera.stanceDollied(settled, settled.distance + back)
 
 
 func stanceUnderPointer*(
@@ -351,9 +336,9 @@ func stanceUnderPointer*(
 #[ Standing Offer ]#
 
 func offerAim*(
-  tween: var CameraTween; camera: Camera; scene: Scene; picked: Selection;
+  tween: var CameraTween; camera: var Camera; scene: Scene; picked: Selection;
   staged: Option[Preview]; scale: DrawExtent; width, height: int; now, duration: float;
-  pointer: var Option[PointerPick]
+  pointer: var Option[PointerPick]; is_moving_camera = false
 ) =
   ## Offer camera whatever is being worked on to look at.
   ##   One call both front-ends and storyboard make, once per frame.
@@ -362,8 +347,8 @@ func offerAim*(
   ##   one continuous chase.
   ##   Anything drawing nothing, empty selection included, aims at nothing and releases,
   ##   which lets picking same object again aim at it afresh.
-  ##   `isGoalHeld` guard keeps `stanceFor`'s search off hot path: offer is re-made
-  ##   every frame selection stands.
+  ##   `isGoalHeld` guard skips re-offering aim already held, and is passed over while
+  ##   frame rule is broken: that is how resize corrects itself.
   ##   `pointer` is pick made since last offer, consumed here whatever comes of it.
   ##     Guard is skipped for it: object already held, picked again, is taken to again.
   ##     Where selection is exactly that object and nothing is staged, destination keeps
@@ -377,7 +362,16 @@ func offerAim*(
   if aim.isNone:
     tween.release()
     return
-  if pick.isNone and tween.isGoalHeld(aim.get): return
+  # Hold frame rule, in whichever way suits what reader is doing.
+  #   Reader moving camera is cut back at once: ease would fight their own drag, and they
+  #   are one in control.
+  #   Still camera eases back in instead, which is what window resized and selection grown
+  #   both get, through same standing offer.
+  let is_framed = aim.get.isFramed(camera, width, height)
+  if not is_framed and is_moving_camera:
+    camera.holdFramed(aim.get, width, height)
+    return
+  if pick.isNone and is_framed and tween.isGoalHeld(aim.get): return
   var
     destination = none(CameraStance)
     anchor = none(Position)
@@ -398,7 +392,7 @@ func offerAim*(
         )
   if destination.isNone:
     anchor = none(Position)
-    destination = some(stanceFor(aim.get, scene, picked, staged, camera, width, height))
+    destination = some(stanceFor(aim.get, camera, width, height))
   tween.aimAt(
     camera, aim.get, destination.get, now, duration, anchor_held = anchor,
     is_renewed = pick.isSome,
@@ -419,7 +413,8 @@ func offerAimAt*(
   ##     Cost is one zeroed `Scene` per capture, storyboard's rather than frame loop's.
   var alone: Scene
   var pointer = none(PointerPick)
+  var held = camera
   offerAim(
-    tween, camera, alone, Selection(), some(previewStaging(m, RADIUS_OBJECT_DEFAULT)),
+    tween, held, alone, Selection(), some(previewStaging(m, RADIUS_OBJECT_DEFAULT)),
     camera.drawExtentFor(height), width, height, now, duration, pointer,
   )

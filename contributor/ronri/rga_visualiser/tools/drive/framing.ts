@@ -143,7 +143,8 @@ export async function drivePointerPick(page: Page): Promise<void> {
   await waitFrames(page, 2);
   const opened = await menuAndAnchor(page, picked);
   const near = await readCamera(page);
-  await page.evaluate(() => nimCameraPan(0.4, 0.2));
+  // Any camera move serves: check is that menu's anchor follows camera.
+  await page.evaluate(() => nimCameraOrbit(0.2, 0.1));
   await settleCamera(page);
   const panned = await menuAndAnchor(page, picked);
 
