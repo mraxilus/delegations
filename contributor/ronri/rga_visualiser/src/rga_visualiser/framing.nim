@@ -312,21 +312,21 @@ func stanceFor*(aim: CameraAim; camera: Camera; width, height: int): CameraStanc
   ##   Price is named in `CameraAim`: one bounding sphere frames line further out than
   ##   crossing frame would need.
   let pivot = if aim.centroid.isSome: aim.centroid.get else: camera.pivot
-  let facing = aim.headingFacing
-  let settled =
-    if aim.sphere.isSome or facing.isNone:
-      # Framing something finite turns nothing, so whole motion crosses and roll with it.
-      camera.stanceRepivoted(pivot)
-    else:
-      # Facing horizon object does turn, and turntable rebuild is what names that turn.
-      #   Roll is given up here, because direction alone names no roll to keep.
-      #   Clamped as `camera.placedAtElevation` is: past pole rebuilt frame collapses.
-      let angles = azimuthElevationFor(facing.get)
-      stanceTurntable(
-        pivot, camera.distance, angles[0],
-        clamp(angles[1], -ELEVATION_LIMIT, ELEVATION_LIMIT),
-      )
-  if aim.sphere.isNone: return settled
+  # Framing something finite turns nothing, so whole motion crosses and roll with it.
+  let settled = camera.stanceRepivoted(pivot)
+  if aim.sphere.isNone:
+    # Horizon object alone, and it turns only where its own bound is broken: one already
+    #   in view keeps reader's own framing, as finite selection already fitting does.
+    let facing = aim.headingFacing
+    if facing.isNone or aim.isBounded(camera, width, height): return settled
+    # Turntable rebuild is what names that turn. Roll is given up here, because direction
+    #   alone names no roll to keep. Clamped as `camera.placedAtElevation` is: past pole
+    #   rebuilt frame collapses.
+    let angles = azimuthElevationFor(facing.get)
+    return stanceTurntable(
+      pivot, camera.distance, angles[0],
+      clamp(angles[1], -ELEVATION_LIMIT, ELEVATION_LIMIT),
+    )
   # Pull eye back along its own sight, by least step carrying it out to fitting reach.
   #   Sphere's centre is not pivot, so separation is not that reach; quadratic is what
   #   accounts for offset between them.
