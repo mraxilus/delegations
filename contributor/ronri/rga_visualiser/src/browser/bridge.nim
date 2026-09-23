@@ -1076,10 +1076,12 @@ proc ensureViewOverlay(width, height: int) =
 
 #[ Camera ]#
 
-proc nimCameraOrbit(turn, rise: cfloat) {.exportc.} =
-  ## Rotate camera about its pivot by turn (azimuth) and rise (elevation), radians.
+proc nimCameraTurn(turn, rise: cfloat; holds_roll: bool) {.exportc.} =
+  ## Turn view by left drag, in whichever way its state reads, in radians.
+  ##   Free flight looks and selection orbits; see `interaction.turnAcross`.
+  ##   `holds_roll` is finger's, never mouse's: touch has no roll key beside it.
   TWEEN_CAMERA.abandon()
-  camera.orbit(CAMERA, float(turn), float(rise))
+  turnAcross(CAMERA, float(turn), float(rise), SELECTION.len > 0, holds_roll)
 
 
 proc nimCameraRoll(radians: cfloat) {.exportc.} =

@@ -211,8 +211,10 @@ canvas.addEventListener('pointermove', (e) => {
     //   press that never moves is click, and click has to know what it came down on.
     if (button_mouse_drag === 'orbit' || button_mouse_drag === 'pan') nimSetCameraDragging(true);
     if (button_mouse_drag === 'orbit') {
-      nimCameraOrbit(
+      // Mouse keeps transport's own roll, with Q and E to answer it; see `turnAcross`.
+      nimCameraTurn(
         -dx / canvas.clientWidth * Math.PI * 1.4, dy / canvas.clientHeight * Math.PI * 1.4,
+        false,
       );
     } else if (button_mouse_drag === 'pan') {
       // Where pointer was and where it is, not how far it moved:
@@ -267,8 +269,11 @@ canvas.addEventListener('pointermove', (e) => {
     if (is_touch_press_constructing) return;
     nimSetCameraDragging(true);
     const dx = current.x - prev.x, dy = current.y - prev.y;
-    nimCameraOrbit(
+    // Finger holds its roll: touch has no roll key, and drag that wanders in curves
+    //   would tilt horizon by solid angle it swept; see `interaction.turnAcross`.
+    nimCameraTurn(
       -dx / canvas.clientWidth * Math.PI * 1.4, dy / canvas.clientHeight * Math.PI * 1.4,
+      true,
     );
   } else if (pointers.size === 2) {
     nimSetCameraDragging(true); // Two fingers pan and pinch; neither points at anything.
@@ -323,7 +328,9 @@ function settleTwoFingers() {
       turned = 0;
     }
     if (is_twisting) {
-      nimCameraRoll(turned);
+      // Negated: screen angle grows clockwise, since y grows down, and positive roll
+      //   carries view anticlockwise. Fingers and picture must turn same way.
+      nimCameraRoll(-turned);
       angle_twist_last = angle;
     }
   }
@@ -416,6 +423,9 @@ function releasePointer(e: PointerEvent) {
   if (pointers.size < 2) {
     separation_pinch_start = null; is_pinch_zooming = false; pan_last = null;
     is_two_fingers_pending = false;
+    // Twist goes with them: angle held from two fingers ago is stale reading, and third
+    //   finger lifting back to two would roll view by whole of it in one frame.
+    angle_twist_last = null; is_twisting = false;
   }
   if (pointers.size === 0) nimSetCameraDragging(false);
   if (pointers.size === 0) nimClearHover(); // No finger left touching canvas -- there's

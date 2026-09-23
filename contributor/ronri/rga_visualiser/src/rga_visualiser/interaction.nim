@@ -801,6 +801,30 @@ proc dollyAtCursor*(
     has_selection, placed)
 
 
+func turnAcross*(
+  camera: var Camera; turn, rise: float; has_selection: bool; holds_roll = false
+) =
+  ## Turn camera by left drag, in whichever way its state reads.
+  ##   Free flight looks: eye stands where it stands, and only sight turns.
+  ##   Selection orbits about what is picked.
+  ##   `look` and `orbit` take same two arguments with same signs, so one drag feeds
+  ##   either verb as selection comes and goes; see `camera.look`.
+  ##   `holds_roll` puts back roll turn would otherwise leave behind.
+  ##     Turning about camera's own axes carries roll round with it, by solid angle drag
+  ##     encloses: loop of 0.3 radians leaves 0.081 behind, which is 4.7 degrees. That is
+  ##     geometry of transport rather than mistake, and no order of two turns escapes it.
+  ##     Asked for by touch alone, which has no roll key beside it, and where finger
+  ##     wanders in curves. Mouse keeps transport as it is, with Q and E to answer it.
+  ##     Roll reader set themselves survives, because reading is restored rather than
+  ##     zeroed. Near pole `rollHeld` reads none and last roll simply stands.
+  let before = if holds_roll: camera.rollHeld else: none(float)
+  if has_selection: camera.orbit(turn, rise) else: camera.look(turn, rise)
+  if before.isNone: return
+  let after = camera.rollHeld
+  if after.isNone: return
+  camera.roll(after.get - before.get)
+
+
 func panAcross*(
   camera: var Camera; before, after: ScreenPosition; width, height: int;
   has_selection: bool

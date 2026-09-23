@@ -1194,8 +1194,10 @@ proc handleEvent(
       interaction.is_dragging_camera = true
     if is_dragging_orbit:
       panel.tween_camera.abandon()
-      camera.orbit(
-        -SPEED_ORBIT*float(event.motion.xrel), SPEED_ORBIT*float(event.motion.yrel)
+      # Free flight looks and selection orbits; see `interaction.turnAcross`.
+      camera.turnAcross(
+        -SPEED_ORBIT*float(event.motion.xrel), SPEED_ORBIT*float(event.motion.yrel),
+        panel.selection.len > 0,
       )
     if is_dragging_pan:
       panel.tween_camera.abandon()

@@ -65,6 +65,11 @@ const
     ##   construction, for no reader's benefit: `initMatrixView` reads axes, never motor.
   ELEVATION_LIMIT* = 0.5*PI - 0.02
     ## Bound elevation short of pole, where sight axis would run along `UP_WORLD`.
+  COSINE_POLE_ROLL* = 0.996
+    ## Bound how near sight may come to `UP_WORLD` and still have roll read off it.
+    ##   Five degrees. Roll against world up is angle between camera's own up and that
+    ##   direction projected across sight, and sight running along it leaves nothing to
+    ##   project: reading is noise before it is undefined. See `rollHeld`.
   DISTANCE_LIMIT_NEAR* = 1.0e-9
     ## Bound how close eye may orbit to pivot, through `distanceHeld`.
     ##   Only bound on where camera may stand.
@@ -342,6 +347,15 @@ func initCameraDefault*(): Camera =
   initCamera(
     pivot = Position(x: 0, y: 0, z: 1), distance = 19.0, azimuth = 1.05, elevation = 0.42
   )
+
+
+func rollHeld*(camera: Camera): Option[float] =
+  ## Read camera's roll about its sight, against `UP_WORLD`, or none near pole.
+  ##   Positive `roll` lowers this reading, so restoring it asks for difference as it
+  ##   stands; see `interaction.turnAcross`.
+  let frame = camera.frame
+  if abs(dot(frame.forward, UP_WORLD)) >= COSINE_POLE_ROLL: return none(float)
+  some(arctan2(dot(frame.axis_right, UP_WORLD), dot(frame.axis_up, UP_WORLD)))
 
 
 func scaleLocal*(camera: Camera): float =
