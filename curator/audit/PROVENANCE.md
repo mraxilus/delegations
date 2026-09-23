@@ -1231,6 +1231,15 @@ Take the real path rather than a synthetic one. A commit whose only changed path
 plans `[]`, and finishes `nim r koch ci` in 0.721 s, with its `git fetch` included. Re-measure
 when the suites of a project grow. Otherwise treat this as unmeasured.
 
+**A branch that changes the checker costs one project, and not every project.** Warm,
+`nim r koch ci` takes 37.7 s, 37.7 s and 37.6 s over three consecutive runs. The machine is a
+four-core Intel Xeon 2.80 GHz container, on Nim 2.2.12, 2026-09-23. Warm means that every test
+binary was already compiled.
+
+One run with the test binaries deleted first took 57.0 s. `koch plan` holds one row on such a
+branch, so the figure covers the suites of `curator/audit` and the static pass. CURATOR.md said
+that a change here selects every project, and this figure is what said otherwise.
+
 **Matrix jobs do run in parallel**, verified on the runner from the first run of this
 arrangement. Three `project` jobs started within one second, and finished at 16 s, 52 s and
 121 s. So the phase took 121 s rather than the 189 s their sum would be. The saving is the sum
@@ -1323,6 +1332,35 @@ cached. It is larger than either lever that repository issues 79 and 80 were wei
   commit rather than a mutable tag now (repository issue 126, answered by pull request 131).
   So what the cache hides is a rebuild, rather than an upstream that moved underneath it.
 
+**Two caches are deliberately not kept, each measured rather than feared.** A restored
+`nimcache` cannot let a check pass without a compile of what it claims. That was driven over
+an ordinary rebuild, over a cache made six years newer than backdated sources, and over a full
+save, mutate and restore. Nim decides by content rather than by mtime, and every case rebuilt
+correctly.
+
+But it can only skip Nim compilation, at most about 16 s of a 357 s driven job. The modules
+that matter on such a job are exactly the ones it cannot serve. To cache apt archives saves
+the download and not the install. That is 2.8 s of a 357 s job, which is 0.8%, for a
+root-owned directory and one key. Both figures are from one `driven` run on 2026-09-12, and
+they expire with the job they measured.
+
+**Koch declares its own system dependencies, as the rule it enforces asks of every project.**
+`KOCH_SYSTEM` in `projects.nim` pairs each one with its reason. `koch system` with no project
+prints those and every project's, unscoped, so one command answers what a machine needs before
+any of this runs. To name a project keeps the meaning for each job that the runner asks for.
+
+Nim is deliberately absent. It is the toolchain that koch runs under, rather than a package
+that a machine installs, and `compilers.nim` resolves each pin itself. npm is absent
+because it belongs to the project that carries a node manifest, and `restoreNode` reports its
+absence by name. The root `README.md` points at the verb rather than names packages, so the
+declaration is the only statement and nothing can drift from it.
+
+Rejected: an exemption stated in `CONTRIBUTOR.md`, which would have left the rule true and the
+repository still answering its own question in prose. Cost: the packages of koch itself are
+unconditional, so a machine that needs none of them still installs them (repository issue 78).
+
+## The shared allowance
+
 **The allowance of GitHub belongs to one account, and every delegate spends it.** Measured
 2026-09-12, on this repository, after a curator delegate stopped being able to close an issue:
 
@@ -1381,32 +1419,6 @@ could the charter wording derived from them.
   `x-ratelimit-remaining`, so the budget is spent blind. That is the strongest argument for
   asking git first, rather than for tuning page sizes.
 
-**Two caches are deliberately not kept, each measured rather than feared.** A restored
-`nimcache` cannot let a check pass without a compile of what it claims. That was driven over
-an ordinary rebuild, over a cache made six years newer than backdated sources, and over a full
-save, mutate and restore. Nim decides by content rather than by mtime, and every case rebuilt
-correctly.
-
-But it can only skip Nim compilation, at most about 16 s of a 357 s driven job. The modules
-that matter on such a job are exactly the ones it cannot serve. To cache apt archives saves
-the download and not the install. That is 2.8 s of a 357 s job, which is 0.8%, for a
-root-owned directory and one key. Both figures are from one `driven` run on 2026-09-12, and
-they expire with the job they measured.
-
-**Koch declares its own system dependencies, as the rule it enforces asks of every project.**
-`KOCH_SYSTEM` in `projects.nim` pairs each one with its reason. `koch system` with no project
-prints those and every project's, unscoped, so one command answers what a machine needs before
-any of this runs. To name a project keeps the meaning for each job that the runner asks for.
-
-Nim is deliberately absent. It is the toolchain that koch runs under, rather than a package
-that a machine installs, and `compilers.nim` resolves each pin itself. npm is absent
-because it belongs to the project that carries a node manifest, and `restoreNode` reports its
-absence by name. The root `README.md` points at the verb rather than names packages, so the
-declaration is the only statement and nothing can drift from it.
-
-Rejected: an exemption stated in `CONTRIBUTOR.md`, which would have left the rule true and the
-repository still answering its own question in prose. Cost: the packages of koch itself are
-unconditional, so a machine that needs none of them still installs them (repository issue 78).
 
 ## Open questions
 
