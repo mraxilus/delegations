@@ -286,19 +286,30 @@ binds you. It covers draft and ready, the backoff, the page linked, and the chan
 ## Repository settings the Architect applies
 
 These cannot be set from inside the repository. Ask the Architect to confirm that they are in
-place on `main`, under Settings, Branches, branch protection or a ruleset:
+place, under Settings:
 
 - Require a pull request before a merge, with no direct pushes.
 - Require these status checks to pass: `audit`, `scope`, `commits`, `role`. `audit` is the
   gate job that stands for every other one, whose names vary with the change and so can never
   be required checks themselves. `role` is its own workflow, because it fires on a label
-  event and the rest do not. Until it is required, it reports without a gate.
+  event and the rest do not.
 - Block force pushes and deletions.
-- Optionally include administrators, so that the Architect's own merges see the same red.
+- Require every conversation to be resolved before a merge. Rule 3 of the carried seven says
+  that a request answered is complete and silence is not, and this is its only mechanical
+  form.
+- Include administrators. The Architect merges every pull request, so without this the gate
+  binds everyone except the one person who merges.
+- Require no approvals. GitHub refuses an approval from whoever opened the pull request, and
+  the Architect opens every one, so a single required approval stops every merge.
+- Under Settings, General, allow the merge commit alone. A squash collapses the `test` before
+  `fix` ladder into one subject, which is the evidence `commits` exists to create.
+- Under Settings, General, delete the head branch after a merge.
 
-To require a branch to be up to date before a merge needs a paid ruleset. Its absence is
-what let a stale pull request redden `main`. The `base` check does the same job, and reaches
-the merge through the `audit` gate.
+"Require branches to be up to date before a merge" is offered and is not set. It makes every
+open pull request stale on each merge, and this repository merges more than a hundred a week.
+The `base` check is the narrow form of the same rule. It reports only where the base gained a
+charter document or a checker, which is where staleness makes green false. It reaches the
+merge through the `audit` gate.
 
 ## Checks reference
 
