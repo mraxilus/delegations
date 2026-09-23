@@ -24,7 +24,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/options
+import std/[math, options]
 
 import pga
 import ./[boundary, camera, tessellate, picking, scene, selection]
@@ -196,6 +196,75 @@ func isFramed*(aim: CameraAim; camera: Camera; width, height: int): bool =
   norm(camera.eye - aim.sphere.get.centre) >= reach*(1.0 - SLACK_FRAMED)
 
 
+func headingFacing*(aim: CameraAim): Option[Direction] =
+  ## Read direction camera should face to show horizon objects `aim` names, or none.
+  ##   Horizon point is faced along its own direction. Where only lines were asked for,
+  ##   first axis spanning perpendicular to their circle's normal is faced, which puts some
+  ##   of that circle in view.
+  ##   Point wins where both were asked for, because point is stricter.
+  if aim.heading.isSome: return aim.heading
+  if aim.normal_crossing.isNone: return none(Direction)
+  let axes = spanPerpendicular(ORIGIN_WORLD, aim.normal_crossing.get)
+  if axes.isNone: return none(Direction)
+  some(axes.get[0])
+
+
+func isBounded*(aim: CameraAim; camera: Camera; width, height: int): bool =
+  ## Report whether camera already satisfies every horizon bound `aim` names.
+  ##   True where anything finite was asked for: finite framing wins outright, and horizon
+  ##   object then stays selected with its own demand unmet. Two can disagree, and star
+  ##   behind reader beside point in front has no placement showing both.
+  ##   True where no horizon object was asked for, and for horizon plane, which is in view
+  ##   at every orientation.
+  if aim.sphere.isSome: return true
+  let
+    forward = camera.frame.forward
+    half = halfAngleCentred(camera, width, height, INSET_POINT_SHOWN)
+  # Star has to be on screen: sight within box's half-angle of it. Two freedoms bound.
+  if aim.heading.isSome:
+    return dot(forward, aim.heading.get) >= cos(half) - SLACK_FRAMED
+  if aim.normal_crossing.isNone: return true
+  # Circle has to cross screen: sight within that half-angle of circle's own plane. One.
+  abs(dot(forward, aim.normal_crossing.get)) <= sin(half) + SLACK_FRAMED
+
+
+func holdHorizon*(camera: var Camera; aim: CameraAim; width, height: int) =
+  ## Turn camera least it takes to satisfy every horizon bound `aim` names.
+  ##   Turn about line through eye, because horizon object is direction and eye stands.
+  ##   Least turn is along great circle from sight toward what is demanded, so whatever
+  ##   reader turned across bound survives, and only part through it is given
+  ##   up: camera slides along bound rather than stopping dead.
+  ##   Refuses outright where finite framing is also asked for; see `isBounded`.
+  if aim.sphere.isSome: return
+  if aim.isBounded(camera, width, height): return
+  let
+    forward = camera.frame.forward
+    half = halfAngleCentred(camera, width, height, INSET_POINT_SHOWN)
+  let toward =
+    if aim.heading.isSome: aim.heading.get
+    elif aim.normal_crossing.isSome: aim.normal_crossing.get
+    else: return
+  # Axis is sight crossed with what is demanded, which is what turns one into other.
+  #   Parallel pair names no axis, and none is needed: sight already points at it.
+  let axis = normalize(Direction(
+    x: forward.y*toward.z - forward.z*toward.y,
+    y: forward.z*toward.x - forward.x*toward.z,
+    z: forward.x*toward.y - forward.y*toward.x,
+  ))
+  if axis.isNone: return
+  let angle_now = arccos(clamp(dot(forward, toward), -1.0, 1.0))
+  let angle_held =
+    if aim.heading.isSome: half
+    # Circle's plane is what sight must come near, so target is quarter turn off normal,
+    #   on whichever side sight already stands.
+    else: (
+      if dot(forward, toward) >= 0.0: 0.5*PI - half else: 0.5*PI + half
+    )
+  # Positive turn about sight crossed with what is demanded carries sight toward it, so
+  #   overshoot is what is given back.
+  camera.turnAboutEye(axis.get, angle_now - angle_held)
+
+
 func holdFramed*(camera: var Camera; aim: CameraAim; width, height: int) =
   ## Carry eye back out until it holds every finite object `aim` names.
   ##   Floor, not fit: reader standing further out is left alone, and only nearer than
@@ -243,15 +312,16 @@ func stanceFor*(aim: CameraAim; camera: Camera; width, height: int): CameraStanc
   ##   Price is named in `CameraAim`: one bounding sphere frames line further out than
   ##   crossing frame would need.
   let pivot = if aim.centroid.isSome: aim.centroid.get else: camera.pivot
+  let facing = aim.headingFacing
   let settled =
-    if aim.sphere.isSome or aim.heading.isNone:
+    if aim.sphere.isSome or facing.isNone:
       # Framing something finite turns nothing, so whole motion crosses and roll with it.
       camera.stanceRepivoted(pivot)
     else:
       # Facing horizon object does turn, and turntable rebuild is what names that turn.
       #   Roll is given up here, because direction alone names no roll to keep.
       #   Clamped as `camera.placedAtElevation` is: past pole rebuilt frame collapses.
-      let angles = azimuthElevationFor(aim.heading.get)
+      let angles = azimuthElevationFor(facing.get)
       stanceTurntable(
         pivot, camera.distance, angles[0],
         clamp(angles[1], -ELEVATION_LIMIT, ELEVATION_LIMIT),
@@ -367,9 +437,11 @@ func offerAim*(
   #   are one in control.
   #   Still camera eases back in instead, which is what window resized and selection grown
   #   both get, through same standing offer.
-  let is_framed = aim.get.isFramed(camera, width, height)
+  let is_framed = aim.get.isFramed(camera, width, height) and
+    aim.get.isBounded(camera, width, height)
   if not is_framed and is_moving_camera:
     camera.holdFramed(aim.get, width, height)
+    camera.holdHorizon(aim.get, width, height)
     return
   if pick.isNone and is_framed and tween.isGoalHeld(aim.get): return
   var

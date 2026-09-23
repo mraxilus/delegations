@@ -4379,6 +4379,88 @@ suite "Camera Aim":
     )
 
 
+  test "a horizon point is bound to the screen, and a horizon line to crossing it":
+    # Star binds two freedoms: it has to be somewhere on screen. Horizon line binds one:
+    #   its whole great circle has only to cross frame. Plane binds none.
+    const (WIDE, TALL) = (WIDTH_AIM, HEIGHT_AIM)
+    let star = attitude(
+      toMultivector(Position(x: 4.0, y: 4.0, z: 1.0)) ∧
+        toMultivector(Position(x: 5.0, y: 4.5, z: 1.4))
+    )
+    let (scene_star, picked_star) = sceneOf(star)
+    let opening = stanceAim(0.5, 0.2)
+    let aim_star = aimFor(
+      scene_star, picked_star, none(Preview), opening.drawExtentFor(TALL)
+    ).get
+    check aim_star.heading.isSome
+    check aim_star.normal_crossing.isNone
+    # Faced, then turned well off: bound breaks, and least turn brings it back on screen.
+    var camera = opening.placed(stanceFor(aim_star, opening, WIDE, TALL))
+    check aim_star.isBounded(camera, WIDE, TALL)
+    camera.look(1.1, 0.0)
+    check not aim_star.isBounded(camera, WIDE, TALL)
+    let axes_off = camera.frame
+    camera.holdHorizon(aim_star, WIDE, TALL)
+    check aim_star.isBounded(camera, WIDE, TALL)
+    # It lands on that bound and no further in, which is what least turn means.
+    let half = halfAngleCentred(camera, WIDE, TALL, INSET_POINT_SHOWN)
+    check arccos(clamp(dot(camera.frame.forward, aim_star.heading.get), -1.0, 1.0)) =~ half
+    # Eye stands: horizon object is direction, so bound turns and never moves.
+    check camera.eye =~ opening.placed(stanceFor(aim_star, opening, WIDE, TALL)).eye
+    # Turn is in plane of sight and star, so whatever crossed bound survives it.
+    check abs(dot(camera.frame.forward, axes_off.axis_up)) < 1.0 + TOLERANCE_TEST
+    # Already on screen costs nothing, which makes it bound rather than aim.
+    let eye_held = camera.eye
+    let forward_held = camera.frame.forward
+    camera.holdHorizon(aim_star, WIDE, TALL)
+    check camera.frame.forward =~ forward_held
+    check camera.eye =~ eye_held
+
+    # Horizon line keeps its circle's normal, and is bound to crossing frame alone.
+    #   Attitude of plane is line at horizon; attitude of line is point at one.
+    let along = attitude(
+      toMultivector(ORIGIN) ∧ toMultivector(Position(x: 1.0, y: 0.0, z: 0.0)) ∧
+        toMultivector(Position(x: 0.0, y: 1.0, z: 0.0))
+    )
+    check isHorizon(along)
+    check kindOf(along) == some(Kind.Line)
+    let (scene_line, picked_line) = sceneOf(along)
+    let aim_line = aimFor(
+      scene_line, picked_line, none(Preview), opening.drawExtentFor(TALL)
+    ).get
+    check aim_line.heading.isNone
+    check aim_line.normal_crossing.isSome
+    # Sight turned onto that circle's own normal is as far off as it gets.
+    var turned = opening
+    turned = turned.placed(stanceTurntable(
+      turned.pivot, turned.distance,
+      azimuthElevationFor(aim_line.normal_crossing.get)[0],
+      clamp(
+        azimuthElevationFor(aim_line.normal_crossing.get)[1],
+        -ELEVATION_LIMIT, ELEVATION_LIMIT,
+      ),
+    ))
+    check not aim_line.isBounded(turned, WIDE, TALL)
+    turned.holdHorizon(aim_line, WIDE, TALL)
+    check aim_line.isBounded(turned, WIDE, TALL)
+    # It lands one box half-angle off that circle's plane, and not facing along it:
+    #   crossing is all that is asked, so one freedom is bound and one is free.
+    check abs(dot(turned.frame.forward, aim_line.normal_crossing.get)) =~ sin(half)
+
+    # Anything finite wins outright: horizon demand goes unmet rather than fighting it.
+    let (scene_both, picked_both) =
+      sceneOf(star, toMultivector(Position(x: 3.0, y: -2.0, z: 1.0)))
+    let aim_both = aimFor(
+      scene_both, picked_both, none(Preview), opening.drawExtentFor(TALL)
+    ).get
+    check aim_both.sphere.isSome and aim_both.heading.isSome
+    var pair = opening
+    pair.look(2.6, 0.0) # Star well behind reader now.
+    check aim_both.isBounded(pair, WIDE, TALL)
+    let forward_pair = pair.frame.forward
+    pair.holdHorizon(aim_both, WIDE, TALL)
+    check pair.frame.forward =~ forward_pair
+
   test "a horizon object is turned toward only as far as it takes":
     # Star is drawn fixed to eye, so pan and zoom cannot bring it into view and.
     #   move is turn -- one place orbit is allowed, cut short like every other move.

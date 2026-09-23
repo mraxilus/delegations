@@ -582,6 +582,13 @@ func turnedAboutEye(camera: Camera; along: Direction, radians: float): Motor =
   motorOf(wedgeDotAnti(turn.get, toMultivector(camera.motor)))
 
 
+func turnAboutEye*(camera: var Camera; along: Direction, radians: float) =
+  ## Turn camera about line through eye along `along`, leaving eye where it stands.
+  ##   For caller whose axis is neither of camera's own: horizon bounds turn about axis
+  ##   solved from where star stands, and nothing about frame names it.
+  camera.motor = camera.turnedAboutEye(along, radians)
+
+
 func look*(camera: var Camera; turn, rise: float) =
   ## Turn which way eye faces, leaving eye where it stands.
   ##   Arguments read as `orbit`'s do, so one drag feeds either verb unchanged: `turn`
@@ -845,9 +852,18 @@ type
       ## Whatever has to fit is what camera centres and sizes on; otherwise line whose
       ## support stands hundred units away drags view off point beside it.
       ## Where nothing has to fit (lines alone) sphere falls back to their support points.
-    heading*: Option[Direction] ## Direction of horizon objects to face, or none.
+    heading*: Option[Direction] ## Direction of horizon points to face, or none.
       ## Merged where several were asked for: sum of unit directions is nearest thing to
       ## one facing two stars.
+      ## Binds two degrees of freedom: star has to be on screen, so sight has to come
+      ## within centred box's own half-angle of it.
+    normal_crossing*: Option[Direction] ## Normal of horizon lines' great circle, or none.
+      ## Horizon line is drawn as whole great circle, and seeing it means that circle
+      ## crossing frame, which binds one degree of freedom rather than two.
+      ##   Circle crosses centred box exactly where sight stands within that box's
+      ## half-angle of that circle's own plane; see `framing.holdHorizon`.
+      ## Merged as headings are, and kept apart from them: point is stricter, so where
+      ## both were asked for point is what binds.
     centroid_sum*: Option[Multivector] ## Middle of same finite objects `sphere` is over.
       ## Carried as sum algebra makes it out of, rather than as place.
       ##   Sum's weight is how many places it is middle of, and `centroid` reads mean
@@ -931,10 +947,13 @@ func `==`*(a, b: CameraAim): bool =
     let (m, n) = (a.centroid_sum.get, b.centroid_sum.get)
     for handle in [Basis.E1, Basis.E2, Basis.E3, Basis.E4]:
       if m[handle] != n[handle]: return false
-  if a.heading.isSome != b.heading.isSome: return false
-  if a.heading.isNone: return true
-  let (d, e) = (a.heading.get, b.heading.get)
-  d.x == e.x and d.y == e.y and d.z == e.z
+  func sameWay(one, other: Option[Direction]): bool =
+    ## Compare two optional directions coefficient by coefficient.
+    if one.isSome != other.isSome: return false
+    if one.isNone: return true
+    let (d, e) = (one.get, other.get)
+    d.x == e.x and d.y == e.y and d.z == e.z
+  sameWay(a.heading, b.heading) and sameWay(a.normal_crossing, b.normal_crossing)
 
 
 func widened*(bound: SphereWorld, place: Position, reach: float): SphereWorld =
@@ -975,8 +994,8 @@ func aimIncluding*(
   ##   Unchanged by geometry drawing nothing, and by horizon plane, in view from every
   ##   camera.
   ##   Horizon point is fixed star, faced along own direction.
-  ##   Horizon line is whole great circle, so first axis spanning perpendicular to its
-  ##   normal is picked, putting some of circle in view.
+  ##   Horizon line keeps its circle's normal instead, because crossing frame is what
+  ##   seeing it means; `framing.headingFacing` reads which way to face from either.
   ##   Everything finite widens sphere about `anchorFor`'s point; finite plane widens it
   ##   by whole disc round that point.
   ##     Except first object that has to *fit* throws away whatever lines contributed,
@@ -993,25 +1012,28 @@ func aimIncluding*(
   var grown = if aim.isSome: aim.get else: CameraAim()
 
   if isHorizon(m):
-    var heading = none(Direction)
-    case shape_m.get
-    of Kind.Point: heading = directionHorizon(m)
-    of Kind.Line:
-      let normal = directionNormalHorizon(m)
-      if normal.isSome:
-        let axes = spanPerpendicular(ORIGIN_WORLD, normal.get)
-        if axes.isSome: heading = some(axes.get[0])
-    of Kind.Plane: discard
-    if heading.isNone: return aim
-    let merged =
-      if grown.heading.isNone: heading
-      # Merge headings as sum of horizon points, read back through horizon reader.
-      #   Reader also refuses cancelling pair.
-      else: directionHorizon(add(
-        toMultivector(grown.heading.get), toMultivector(heading.get)
+    # Merge directions as sum of horizon points, read back through horizon reader.
+    #   Reader also refuses cancelling pair, and first one standing is kept then: neither
+    #   turn shows both.
+    func folded(held, one: Option[Direction]): Option[Direction] =
+      if one.isNone: return held
+      if held.isNone: return one
+      let merged = directionHorizon(add(
+        toMultivector(held.get), toMultivector(one.get)
       ))
-    # Leave first heading standing where two cancel outright: neither turn shows both.
-    grown.heading = if merged.isSome: merged else: grown.heading
+      if merged.isSome: merged else: held
+    case shape_m.get
+    of Kind.Point:
+      let heading = directionHorizon(m)
+      if heading.isNone: return aim
+      grown.heading = folded(grown.heading, heading)
+    of Kind.Line:
+      # Line's own normal, and not one axis of its circle: circle crossing frame is what
+      #   seeing it means, and only normal states that.
+      let normal = directionNormalHorizon(m)
+      if normal.isNone: return aim
+      grown.normal_crossing = folded(grown.normal_crossing, normal)
+    of Kind.Plane: discard
     return some(grown)
 
   let is_plane = shape_m.get == Kind.Plane
