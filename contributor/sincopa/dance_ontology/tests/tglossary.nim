@@ -32,10 +32,10 @@ const
     ## Glossary's word for each rung of chain, by turns in hundredths.
     ##   Hundredths because report prints turns to two places, and key must
     ##     compare exactly.
-  SHAPE_AT = {0: "Open", 5: "Cross", 10: "Diamond", 15: "Swan"}.toTable
+  SHAPE_AT = {0: "Neutral", 5: "Cross", 10: "Diamond", 15: "Swan"}.toTable
     ## Glossary's word for each step of chain, by wind in tenths of turn.
     ##   Tenths because wind is float and key must compare exactly.
-  CHAIN_TERMS = ["Open", "Cross", "Diamond", "Swan"]
+  CHAIN_TERMS = ["Neutral", "Cross", "Diamond", "Swan"]
     ## Entries naming step of chain, which are only ones position may speak.
     ##   Rest of glossary is held to elsewhere; word another entry rejects is
     ##     no business of position's name.
