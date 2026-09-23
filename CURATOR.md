@@ -297,8 +297,9 @@ place, under Settings:
 - Require every conversation to be resolved before a merge. Rule 3 of the carried seven says
   that a request answered is complete and silence is not, and this is its only mechanical
   form.
-- Include administrators. The Architect merges every pull request, so without this the gate
-  binds everyone except the one person who merges.
+- Let nobody bypass. A ruleset spells this as an empty bypass list. Branch protection spells
+  it as "Do not allow bypassing the above settings". The Architect merges every pull request,
+  so otherwise the gate binds everyone except the one person who merges.
 - Require no approvals. GitHub refuses an approval from whoever opened the pull request, and
   the Architect opens every one, so a single required approval stops every merge.
 - Under Settings, General, allow the merge commit alone. A squash collapses the `test` before
