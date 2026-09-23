@@ -12,7 +12,7 @@ import { delimiter, join } from 'node:path';
 import { countFailed, countRun, report } from './report';
 import { focusCanvas } from './gestures';
 import { driveKeys } from './keys';
-import { driveAim, drivePan } from './pan';
+import { driveAim, driveLook, drivePan } from './pan';
 import { driveWheel } from './wheel';
 import { driveTouchSelect, drivePinch, openTouch } from './touch';
 import {
@@ -136,6 +136,7 @@ async function main(): Promise<void> {
   await driveKeys(page);
   await driveWheel(page);
   await drivePan(page);
+  await driveLook(page);
   await driveAim(page, SIZE_VIEW.width, SIZE_VIEW.height);
 
   // Two fingers go through Chrome's own protocol, so channel opens once here.

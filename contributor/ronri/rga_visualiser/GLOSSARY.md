@@ -64,15 +64,32 @@ _Avoid_: placement, result, status, disposition
 
 ### Camera
 
+**Motor**:
+One rigid motion: a turn and a slide together, held as eight coefficients of even grade. A
+motor carries a point, a direction or another motor, and two motors compose into one.
+_Avoid_: transform, rotor, matrix, screw
+
 **Pivot**:
 The point the camera's orbit turns about.
 _Avoid_: target, focus, centre, look-at
 
 **Stance**:
-Where the camera stands: its pivot, its distance, and its two orbit angles. The lens is not
-part of it, because a reader's field of view is theirs and nothing aiming the camera may
-rewrite it.
+Where the camera stands: one rigid motion, and one depth. The motion carries where the eye
+is and which way it faces. The depth is how far along the sight the pivot stands. The pivot
+and both orbit angles are read out of the pair. The lens is not part of it, because a
+reader's field of view is theirs and nothing aiming the camera may rewrite it.
 _Avoid_: placement, pose, position, state
+
+**Free flight**:
+How the camera reads with nothing selected. It turns about its own eye and travels along its
+own axes, in six degrees of freedom. With a selection it orbits instead.
+_Avoid_: fly mode, first person, free camera, unconstrained
+
+**Local scale**:
+The distance the frustum, the depth mapping and the furniture take their size from. It is the
+reach from the eye to the nearest drawn object ahead, and the separation from the pivot where
+nothing is drawn there.
+_Avoid_: near reach, working distance, world scale, zoom level
 
 ### The front-ends
 
