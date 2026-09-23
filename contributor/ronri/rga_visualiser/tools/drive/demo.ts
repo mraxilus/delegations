@@ -111,7 +111,10 @@ export async function driveCulling(page: Page): Promise<void> {
     await page.evaluate((given) => {
       // Demo's own camera first, then closer, then round: each shows different share of scene.
       if (given === 1) nimCameraDolly(0.3);
-      else if (given === 2) nimCameraOrbit(0.9, 0.3);
+      else if (given === 2) {
+        nimSetCameraAzimuth(nimCameraAzimuth() + 0.9);
+        nimSetCameraElevation(nimCameraElevation() + 0.3);
+      }
     }, move);
     await page.evaluate(() => nimSetCulling(true));
     const shown_on = await settleCanvas(page);

@@ -24,6 +24,44 @@ async function settleHome(page: Page): Promise<void> {
   await settleCamera(page);
 }
 
+/** Drive left-button drag with nothing picked, and assert it looks rather than orbits.
+ *
+ *  Both front-ends called `orbit` outright, whatever was picked, so free flight's own
+ *  `look` never reached drag: eye swung round pivot where reader meant to turn in place.
+ */
+export async function driveLook(page: Page): Promise<void> {
+  await clearTheGlass(page);
+  await settleHome(page);
+
+  const before = await readCamera(page);
+  // Start well clear of every object, so press moves camera rather than arming drag.
+  await page.mouse.move(160, 170);
+  await page.mouse.down({ button: 'left' });
+  await page.mouse.move(360, 300, { steps: 12 });
+  await page.mouse.up({ button: 'left' });
+  await settleCamera(page);
+  const after = await readCamera(page);
+
+  report(
+    'a left drag with nothing picked turns the sight and leaves the eye standing',
+    spanOf(before.eye, after.eye) < 1e-6 &&
+      Math.abs(after.azimuth - before.azimuth) > 1e-3,
+    `eye moved ${spanOf(before.eye, after.eye).toFixed(6)} units, ` +
+      `azimuth ${before.azimuth.toFixed(4)} -> ${after.azimuth.toFixed(4)}`,
+  );
+  // Pivot is what moves instead: it rides ahead of eye on sight, at same separation.
+  report(
+    'and it carries the orbit centre round instead, at the separation it had',
+    spanOf(before.pivot, after.pivot) > 0.5 &&
+      Math.abs(after.distance - before.distance) < 1e-6,
+    `pivot moved ${spanOf(before.pivot, after.pivot).toFixed(3)}, ` +
+      `separation ${after.distance.toFixed(3)}`,
+  );
+  // Put view back: a look swings sight right off scene, and checks after this one read
+  //   what is drawn rather than press their own Home first.
+  await settleHome(page);
+}
+
 /** Drive right-button pan, and assert it keeps pivot on its level. */
 export async function drivePan(page: Page): Promise<void> {
   // Clear glass first, or this measures section swallowing press: drag below starts where

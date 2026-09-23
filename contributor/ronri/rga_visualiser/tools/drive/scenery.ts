@@ -146,7 +146,8 @@ export async function driveSceneryBound(page: Page): Promise<void> {
     const milliseconds: number[] = [];
     let segments = 0;
     for (let i = 0; i < 9; i += 1) {
-      nimCameraOrbit(0.005, 0); // Move, so furniture cache cannot hold and it rebuilds.
+      // Turned outright, not by drag's rule; see `drivePinGrid`.
+      nimSetCameraAzimuth(nimCameraAzimuth() + 0.005);
       const data = nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true);
       milliseconds.push(data.ms_grid);
       segments = data.count_grid_segments;
@@ -213,16 +214,22 @@ export async function driveMoving(page: Page, width: number): Promise<void> {
  */
 function reportSceneryAccounts(phases: Phase[]): void {
   const offOf = (one: Phase): number => one.grid + one.axes - one.furniture;
-  const sane = phases.filter((one) =>
+  // Frame that laid no segment has no grid to account for, so it is no evidence either
+  //   way and is left out of both counts rather than only out of one.
+  //   Drag swings sight far enough to carry ground off screen now it looks rather than
+  //   orbits, and those frames were failing claim they say nothing about.
+  const drawn = phases.filter((one) => one.segments > 0);
+  const sane = drawn.filter((one) =>
     offOf(one) <= Math.max(0.6, 0.08 * one.furniture) &&
-    offOf(one) >= -Math.max(1.0, 0.12 * one.furniture) && one.segments > 0);
+    offOf(one) >= -Math.max(1.0, 0.12 * one.furniture));
   // Worst frame, not last: bare count says nothing about what went wrong.
-  const worst = phases.length === 0 ? undefined
-    : phases.reduce((a, b) => (Math.abs(offOf(b)) > Math.abs(offOf(a)) ? b : a));
+  const worst = drawn.length === 0 ? undefined
+    : drawn.reduce((a, b) => (Math.abs(offOf(b)) > Math.abs(offOf(a)) ? b : a));
   report(
     'the scenery is accounted for by the grid and the axes it is drawn from',
-    phases.length > 3 && sane.length === phases.length,
-    `${sane.length} of ${phases.length} rebuilt frames account` +
+    drawn.length > 3 && sane.length === drawn.length,
+    `${sane.length} of ${drawn.length} rebuilt frames account, ` +
+      `${phases.length - drawn.length} laid no segment` +
       (worst === undefined ? '' :
         `, worst ${worst.grid.toFixed(1)} + ${worst.axes.toFixed(1)} of ` +
         `${worst.furniture.toFixed(1)} ms (off by ${offOf(worst).toFixed(2)}) over ` +
@@ -253,7 +260,7 @@ export async function driveHold(page: Page): Promise<void> {
     const aspect = canvas.width / canvas.height;
     const once = (): FrameData =>
       nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true);
-    nimCameraOrbit(0.05, 0.0);
+    nimSetCameraAzimuth(nimCameraAzimuth() + 0.05);
     const first = once();
     const second = once();
     return {
@@ -274,7 +281,7 @@ export async function driveHold(page: Page): Promise<void> {
     const canvas = document.getElementById('gl') as HTMLCanvasElement;
     const aspect = canvas.width / canvas.height;
     nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true);
-    nimCameraOrbit(0.3, 0.0);
+    nimSetCameraAzimuth(nimCameraAzimuth() + 0.3);
     const after = nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true);
     return { is_held: after.is_furniture_held, floats: after.furn_ribbon_verts.length };
   });

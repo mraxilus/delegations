@@ -59,8 +59,12 @@ export async function driveHoverDuringGesture(
     hovered_moving < 0, `handle hovered mid-gesture: ${hovered_moving}`,
   );
 
-  // Aim at where that object stands *now*: gesture moved world under pointer, so its old
-  //   pixel holds nothing, and asking there would say nothing about rule.
+  // Home first, then aim at where that object stands: claim is that release lets hover
+  //   read again, and not that sweep left anything in view. Drag looks now rather than
+  //   orbiting, so sight swings far enough to carry swept object off screen, and asking
+  //   at its pixel there would read -1 for reason this rule is not about.
+  await page.keyboard.press('Home');
+  await settleCamera(page);
   const settled = await pixelOf(page, swept);
   if (settled === null) return;
   await page.mouse.move(settled[0] ?? 0, settled[1] ?? 0);

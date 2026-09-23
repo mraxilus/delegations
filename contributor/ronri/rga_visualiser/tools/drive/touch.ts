@@ -228,6 +228,33 @@ export async function drivePinch(page: Page, cdp: CDPSession): Promise<void> {
     Math.abs(rolled.azimuth - upright.azimuth) < 1e-3,
     `azimuth ${upright.azimuth.toFixed(4)} -> ${rolled.azimuth.toFixed(4)}`,
   );
+
+  // Direction, read off screen: picture must turn whichever way fingers turned, and
+  //   sign went through unturned, so twist rolled against them.
+  await page.keyboard.press('Home');
+  await settleCamera(page);
+  const handle = await page.evaluate(() => nimSceneHandles()[0] ?? 0);
+  const seen = async (): Promise<number[]> => page.evaluate((one) => Array.from(
+    nimAnchorScreen(one, window.innerWidth, window.innerHeight),
+  ), handle);
+  const centre = await page.evaluate(
+    () => [window.innerWidth / 2, window.innerHeight / 2],
+  );
+  const start = await seen();
+  // Fingers turned clockwise on screen, since y grows down and this angle grows.
+  await twist(page, cdp, { x: 400, y: 400 }, 120, 0.9);
+  const swung = await seen();
+  const angleOf = (at: number[]): number => Math.atan2(
+    (at[1] ?? 0) - (centre[1] ?? 0), (at[0] ?? 0) - (centre[0] ?? 0),
+  );
+  let carried = angleOf(swung) - angleOf(start);
+  if (carried > Math.PI) carried -= 2 * Math.PI;
+  if (carried < -Math.PI) carried += 2 * Math.PI;
+  report(
+    'and a twist carries the picture the way the fingers turned',
+    carried > 0.2,
+    `fingers turned +0.900, picture turned ${carried.toFixed(3)} about the frame's middle`,
+  );
 }
 
 /** Drive long press and tap, which is how finger selects. */

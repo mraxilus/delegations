@@ -4087,6 +4087,42 @@ suite "Camera Aim":
           distanceFitting(EXTENT_PLANE_F, camera, WIDTH_AIM, HEIGHT_AIM, INSET_POINT_SHOWN)
 
 
+  test "a plane reaching every corner of the frame is backdrop, and a lesser one is not":
+    # Backdrop is what press falls through to camera on, so view can be moved off plane
+    #   filling it. Rule asked disc to span frame's longer side, 1200 px, where reach to
+    #   furthest corner is 750: plane covering every pixel still read as drag handle.
+    const (WIDE, TALL) = (1200, 900)
+    let corner = 0.5*hypot(float(WIDE), float(TALL))
+    check corner =~ 750.0
+    var scene = initScene()
+    let ground = scene.addObject(
+      toMultivector(ORIGIN) ∧ toMultivector(Position(x: 1.0, y: 0.0, z: 0.0)) ∧
+        toMultivector(Position(x: 0.0, y: 1.0, z: 0.0)),
+      "ground", inkCycled(0),
+    )
+    proc scaleAt(distance: float): DrawExtent =
+      initCamera(
+        pivot = ORIGIN, distance = distance, azimuth = 0.0, elevation = 0.9
+      ).drawExtentFor(TALL)
+    proc spanAt(distance: float): float =
+      ## Read drawn disc's radius in pixels, as `isBackdropUnder` reads it.
+      let scale = scaleAt(distance)
+      let anchor = anchorFor(
+        scene.geometryOf(ground), scene.anchorOverrideAt(ground), scale
+      )
+      check anchor.isSome
+      EXTENT_PLANE_F/worldPerPixelAt(anchor.get, scale.scale)
+
+    # Nine units off, disc spans 965.7 px: every pixel covered, and short of longer side.
+    #   That band is whole of what was refused before.
+    check spanAt(9.0) >= corner
+    check spanAt(9.0) < float(max(WIDE, TALL))
+    check scene.isBackdropUnder(ground, scaleAt(9.0), WIDE, TALL)
+    # Twelve units off, disc spans 724.3 px and leaves corners bare, so it stays handle.
+    check spanAt(12.0) < corner
+    check not scene.isBackdropUnder(ground, scaleAt(12.0), WIDE, TALL)
+
+
   test "a plane is judged by the disc drawn, not by the one its support would carry":
     # `mesh.addPlane` centres disc on object's own creation anchor where it has one,
     #   and on demo scene's own planes two stand as far as 3.7 units apart against
@@ -7066,6 +7102,98 @@ suite "Interaction":
     check swung.distance =~ opening.distance
     check arccos(clamp(dot(swung.frame.forward, opening.frame.forward), -1.0, 1.0)) =~
       TURN_SECOND
+
+
+  test "a left drag looks with nothing picked, and orbits with something picked":
+    # Both front-ends called `orbit` outright, so free flight's own `look` never reached
+    #   drag at all: eye swung round pivot where reader meant to turn in place.
+    let opening = initCamera(
+      pivot = ORIGIN, distance = 20.0, azimuth = 0.4, elevation = 0.3
+    )
+    # Nothing picked: eye stands exactly, and sight turns by what was asked for.
+    var flying = opening
+    flying.turnAcross(0.25, 0.1, has_selection = false)
+    check flying.eye =~ opening.eye
+    check not (flying.frame.forward =~ opening.frame.forward)
+    var looked = opening
+    looked.look(0.25, 0.1)
+    check flying.frame.forward =~ looked.frame.forward
+    # Something picked: pivot and separation stand, and eye is what swings.
+    var orbiting = opening
+    orbiting.turnAcross(0.25, 0.1, has_selection = true)
+    check orbiting.pivot =~ opening.pivot
+    check orbiting.distance =~ opening.distance
+    check not (orbiting.eye =~ opening.eye)
+    var turned = opening
+    turned.orbit(0.25, 0.1)
+    check orbiting.eye =~ turned.eye
+
+
+  test "a finger's drag holds its roll, where a mouse keeps what transport leaves":
+    # Turning about camera's own axes carries roll round by solid angle drag encloses.
+    #   That is geometry rather than mistake, and touch asks for it to be put back:
+    #   finger wanders in curves, and has no roll key beside it.
+    const LOOP = [(0.3, 0.0), (0.0, 0.3), (-0.3, 0.0), (0.0, -0.3)]
+    for picked in [false, true]:
+      # One loop leaves solid angle it encloses, which is what says this is geometry.
+      var once = initCameraDefault()
+      for (turn, rise) in LOOP: once.turnAcross(turn, rise, has_selection = picked)
+      check once.rollHeld.isSome
+      let enclosed = 0.3*0.3*cos(initCameraDefault().elevation)
+      check abs(once.rollHeld.get - enclosed) < 0.02*enclosed
+      # Four of them leave four times as much: 0.324 radians, 18.6 degrees of tilt.
+      var carried = initCameraDefault()
+      for round in 1 .. 4:
+        for (turn, rise) in LOOP:
+          carried.turnAcross(turn, rise, has_selection = picked)
+      check abs(carried.rollHeld.get - 0.3242) < 1.0e-3
+      var held = initCameraDefault()
+      for round in 1 .. 4:
+        for (turn, rise) in LOOP:
+          held.turnAcross(turn, rise, has_selection = picked, holds_roll = true)
+      check held.rollHeld.isSome
+      check abs(held.rollHeld.get) < TOLERANCE_TEST
+    # Roll reader set themselves is restored, never zeroed.
+    var own = initCameraDefault()
+    own.roll(0.5)
+    let set_to = own.rollHeld
+    check set_to.isSome
+    for (turn, rise) in LOOP:
+      own.turnAcross(turn, rise, has_selection = false, holds_roll = true)
+    check own.rollHeld.get =~ set_to.get
+    # Reading has no meaning along world up, so camera at pole reads none and roll stands.
+    let overhead = initCamera(
+      pivot = ORIGIN, distance = 10.0, azimuth = 0.0, elevation = ELEVATION_LIMIT
+    )
+    check abs(dot(overhead.frame.forward, UP_WORLD)) >= COSINE_POLE_ROLL
+    check overhead.rollHeld.isNone
+    var stuck = overhead
+    stuck.turnAcross(0.2, 0.0, has_selection = false, holds_roll = true)
+    var plain = overhead
+    plain.look(0.2, 0.0)
+    check stuck.frame.forward =~ plain.frame.forward
+
+
+  test "a roll carries the picture the way the reader turns":
+    # Sign is about what reader sees, so it is read off screen rather than off axes.
+    #   Twist sent its screen angle through unturned, and picture rolled against
+    #   fingers.
+    const (WIDE, TALL) = (1200, 900)
+    var camera = initCameraDefault()
+    let above = camera.pivot + 3.0*camera.frame.axis_up
+    proc seenAt(c: Camera): float =
+      projectToScreen(
+        c.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL, above
+      ).x
+    let before = seenAt(camera)
+    check before =~ float(WIDE)/2.0 # Straight above middle, so any swing is roll's.
+    camera.roll(0.2)
+    # Point above middle swings left, which reads anticlockwise: positive roll is
+    #   anticlockwise, and pointer negates its clockwise screen angle to match.
+    check seenAt(camera) < before
+    # Eye and sight are untouched by it, which is what makes roll sixth freedom.
+    check camera.eye =~ initCameraDefault().eye
+    check camera.frame.forward =~ initCameraDefault().frame.forward
 
 
   test "held keys compose, and letting one go leaves the other running":
