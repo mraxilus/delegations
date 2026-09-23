@@ -44,10 +44,14 @@ leave a comment in code alone, which drops its articles and keeps the rest (Arti
   step.
 
 The `english` check reads three things: sentence length, paragraph length and that short
-table of words. It reads every root document except `LICENSE.md`, the four templates, and
-the three records of every project. `ENGLISH_PATHS` in `curator/audit/src/english.nim`
-holds the list, and the check reads no other file. Every other rule above holds because you
-read it.
+table of words. It reads every root document except `LICENSE.md`, and the four templates. It
+also reads the README of each project root and of each domain, and the three records of every
+project.
+
+`ENGLISH_PATHS` in `curator/audit/src/english.nim` holds the root documents alone. The check
+derives every other path from the layout, so a new project or a new domain is read from its
+first line. A file below a project directory stays outside the set, and so does any other file.
+Every other rule above holds because you read it.
 
 ## The queue and the shared allowance
 
