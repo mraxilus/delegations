@@ -4627,7 +4627,7 @@ suite "Camera Aim":
         )
         var
           tween: CameraTween
-          pointer = some(PointerPick(handle: picked.at(0), cursor: pixel))
+          pointer = some(PointerPick(handle: picked.at(0)))
         tween.offerAim(
           camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM),
           WIDTH_AIM, HEIGHT_AIM, 0.0, DURATION, pointer,
@@ -4710,14 +4710,10 @@ suite "Camera Aim":
     for distance in [12.0, 1.0]:
       var camera = initCamera(pivot = ORIGIN, distance = distance, azimuth = 0.7, elevation = 0.5)
       var (scene, picked) = sceneOf(ground)
-      let cursor = ScreenPosition(x: 0.62*float(WIDTH_AIM), y: 0.58*float(HEIGHT_AIM))
       let scale = camera.drawExtentFor(HEIGHT_AIM)
-      let crossing =
-        positionUnderPointerOn(scene, picked.at(0), camera, scale, WIDTH_AIM, HEIGHT_AIM, cursor)
-      check crossing.isSome
       var
         tween: CameraTween
-        pointer = some(PointerPick(handle: picked.at(0), cursor: cursor))
+        pointer = some(PointerPick(handle: picked.at(0)))
       tween.offerAim(
         camera, scene, picked, none(Preview), scale, WIDTH_AIM, HEIGHT_AIM, 0.0, DURATION,
         pointer,
@@ -4749,9 +4745,7 @@ suite "Camera Aim":
     )
     var
       tween_two: CameraTween
-      pointer = some(PointerPick(
-        handle: picked_two.at(1), cursor: ScreenPosition(x: 700.0, y: 450.0)
-      ))
+      pointer = some(PointerPick(handle: picked_two.at(1)))
     tween_two.offerAim(
       camera, scene_two, picked_two, none(Preview), camera.drawExtentFor(HEIGHT_AIM),
       WIDTH_AIM, HEIGHT_AIM, 0.0, DURATION, pointer,
@@ -4787,11 +4781,7 @@ suite "Camera Aim":
       WIDTH_AIM, HEIGHT_AIM, 1.0, DURATION, pointer,
     )
     check tween.is_arrived # Same goal, no pointer: nothing re-armed.
-    let pixel = projectToScreen(
-      camera.initMatrixViewProjection(float(WIDTH_AIM)/float(HEIGHT_AIM)),
-      WIDTH_AIM, HEIGHT_AIM, place,
-    )
-    pointer = some(PointerPick(handle: picked.at(0), cursor: pixel))
+    pointer = some(PointerPick(handle: picked.at(0)))
     tween.offerAim(
       camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM),
       WIDTH_AIM, HEIGHT_AIM, 2.0, DURATION, pointer,

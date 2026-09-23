@@ -107,7 +107,7 @@ async function menuAndAnchor(page: Page, handle: number): Promise<MenuStanding> 
  *  Wheel out six notches from `Home` so first pickable point is dot far off, then click
  *  6 px off its anchor. Menu is up two frames in and keeps its inset from that object's own
  *  anchor; object settles in middle of frame however far off it was clicked; distance fell;
- *  pivot sits at object's depth. Glass is cleared first, since drawer open would take click.
+ *  pivot is object itself. Glass is cleared first, since drawer open would take click.
  */
 export async function drivePointerPick(page: Page): Promise<void> {
   await clearTheGlass(page);
@@ -176,9 +176,6 @@ interface Picked {
 function reportPointerPick(
   picked: Picked, camera: { far: Stance; near: Stance }, depth: number,
 ): void {
-  const away = (standing: MenuStanding): number[] =>
-    [(standing.menu[0] ?? 0) - (standing.anchor[0] ?? 0),
-      (standing.menu[1] ?? 0) - (standing.anchor[1] ?? 0)];
   // Menu keeps its offset from its object's anchor, not from where pointer clicked: pick
   //   carries object to middle of frame and menu rides with it. Offset is inset plus
   //   menu's own box, so it is read as held rather than against `INSET_MENU_POINTER`.
@@ -189,7 +186,7 @@ function reportPointerPick(
       (standing.menu[1] ?? 0) - (standing.anchor[1] ?? 0)];
   const inset_flight = from_anchor(picked.in_flight);
   const inset_opened = from_anchor(picked.opened);
-  const away_opened = away(picked.opened), away_panned = away(picked.panned);
+  const inset_panned = from_anchor(picked.panned);
   // How far object sits from middle of frame, which is where pick puts it.
   const offCentre = (standing: MenuStanding): number => Math.hypot(
     (standing.anchor[0] ?? 0) - (standing.centre[0] ?? 0),
@@ -227,10 +224,10 @@ function reportPointerPick(
   );
   report(
     'and keeps its offset from the object as the object moves',
-    Math.abs((away_panned[0] ?? 0) - (away_opened[0] ?? 0)) < 2 &&
-      Math.abs((away_panned[1] ?? 0) - (away_opened[1] ?? 0)) < 2 && moved > 50,
-    `offset ${away_opened.map((v) => v.toFixed(0))} at open, ` +
-      `${away_panned.map((v) => v.toFixed(0))} after the anchor moved ${moved.toFixed(0)} px`,
+    Math.abs((inset_panned[0] ?? 0) - (inset_opened[0] ?? 0)) < 2 &&
+      Math.abs((inset_panned[1] ?? 0) - (inset_opened[1] ?? 0)) < 2 && moved > 50,
+    `offset ${inset_opened.map((v) => v.toFixed(0))} at open, ` +
+      `${inset_panned.map((v) => v.toFixed(0))} after the anchor moved ${moved.toFixed(0)} px`,
   );
 }
 

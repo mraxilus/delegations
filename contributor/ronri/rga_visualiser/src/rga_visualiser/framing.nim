@@ -59,8 +59,8 @@ const
 type PointerPick* = object ## Define pick made by pointer, awaiting camera's aim.
   ## Front-end records it beside selection change; `offerAim` consumes it next frame.
   ## What pointer picked is centred as camera comes in; see `stanceApproaching`.
+  ##   Where pointer stood is not held: aim reads object's own anchor, not clicked pixel.
   handle*: int ## Object clicked or tapped.
-  cursor*: ScreenPosition ## Where pointer stood, window pixels.
 
 
 
