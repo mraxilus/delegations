@@ -14,6 +14,8 @@
 ##   | guard    | compare last inspect against baseline; any count grown is finding     |
 ##   | drive    | inspect, guard, and hold committed `gaps.md` to regeneration          |
 ##   | gaps     | regenerate `gaps.md` and docket from committed baselines              |
+##   | show     | print one function's emitted C, its counts, its movement and its      |
+##   |          | machine code, e.g. `show ∧` or `show ⟇ cga5d`                         |
 ##   | sweep    | time general measurands at two to six dimensions, rigid; never in CI  |
 ##   | system   | print system packages build needs, one per line, for caller          |
 ##   | clean    | remove `build`                                                        |
@@ -30,7 +32,7 @@
 
 import std/[json, os, osproc, strutils]
 
-import ../src/pga_benchmark/[gaps, guard]
+import ../src/pga_benchmark/[gaps, guard, inspector, model]
 
 
 const
@@ -58,8 +60,13 @@ const
     ## System packages build needs beyond compiler: none. Compiler is toolchain, pinned in
     ## nimble file; library is Atlas checkout, pinned in lock; nothing else is fetched.
   USAGE = "Usage: nim r tools/build.nim " &
-    "<inspect|bench|baseline|guard|drive|gaps|sweep|system|clean>\n"
-    ## Text printed on usage error.
+    "<inspect|bench|baseline|guard|drive|gaps|show|sweep|system|clean>" &
+    " [symbol] [algebra]\n"
+    ## Text printed on usage error; trailing words serve `show` alone.
+  SHOWN_LINES = 40
+    ## Lines of one function this driver prints before naming file rest sits in.
+  SHOWN_WIDTH = 150
+    ## Characters of one line this driver prints before cutting it.
 
 
 
@@ -282,6 +289,130 @@ proc sweep() =
     echo line
 
 
+func shortened(text, stem, plain: string): string =
+  ## Replace mangled type name and its hash with plain one, wherever stem appears.
+  var i = 0
+  while true:
+    let at = text.find(stem & "__", i)
+    if at < 0:
+      result.add text[i .. ^1]
+      break
+    result.add text[i ..< at]
+    result.add plain
+    var j = at + stem.len + 2
+    while j < text.len and (text[j].isAlphaNumeric or text[j] == '_'): inc j
+    i = j
+
+
+func unindexed(text: string): string =
+  ## Replace `(((Basis) n) - 0)` with `n`, which is what compiler spells there.
+  const OPEN = "(((Basis) "
+  const CLOSE = ") - 0)"
+  var i = 0
+  while true:
+    let at = text.find(OPEN, i)
+    if at < 0:
+      result.add text[i .. ^1]
+      break
+    let close = text.find(CLOSE, at)
+    if close < 0:
+      result.add text[i .. ^1]
+      break
+    result.add text[i ..< at]
+    result.add text[at + OPEN.len ..< close]
+    i = close + CLOSE.len
+
+
+func readable(text: string): string =
+  ## Rewrite emitted C so reader sees types and slots rather than hashes.
+  ##   Reading aid alone: cache holds exact text every count is read from.
+  text.shortened(MULTIVECTOR, "Multivector").shortened("tyEnum_Basis", "Basis").unindexed
+
+
+proc disassembled(cache, name: string): seq[string] =
+  ## Read machine code of one function from whichever object file in cache holds it.
+  for path in walkFiles(cache / "*.o"):
+    let (text, code) = execCmdEx("objdump -d --no-show-raw-insn " & quoteShell(path))
+    if code != 0: continue
+    var inside = false
+    for line in text.splitLines:
+      if line.contains("<" & name & ">:"): inside = true
+      if not inside: continue
+      result.add line
+      if line.contains("\tret"): return
+    if result.len > 0: return
+
+
+proc showFunction(symbol, algebra: string) =
+  ## Print one emitted function: what it is, what it spends, what it moves, what it becomes.
+  ##   Compiles bench entry whole rather than to C alone, so cache holds object file and
+  ##   machine code can be read beside C. Reads that cache with same inspector every
+  ##   measurement uses, so figures here and figures in `gaps.md` come from one reading.
+  var found = false
+  for (name, dimensions, is_conformal) in CONFIGS:
+    if name != algebra: continue
+    found = true
+    let nim = nimCommit()
+    let pga = pgaCommit()
+    createDir BUILD
+    let cache = BUILD / "cache_show_" & name
+    compile(ENTRY_BENCH, BUILD / "show_" & name, cache, dimensions, is_conformal, nim, pga)
+    let size = 8 shl dimensions
+    var seen = 0
+    for f in inspectCache(cache):
+      if f.symbol != symbol: continue
+      inc seen
+      let c = f.body.count
+      let m = movement(f, c, size)
+      echo ""
+      echo "── ", f.symbol, "(", f.params.join(","), ") → ", f.result_stem,
+        "   ", algebra, ", ", size, "-byte multivector"
+      echo "   emitted as ", (if f.is_inline: "static N_INLINE" else: "N_NIMCALL"),
+        " `", f.name, "`"
+      echo ""
+      echo "   counts, callees folded in"
+      echo "     multiplies    ", c.multiplies
+      echo "     divides       ", c.divides
+      echo "     zero fills    ", c.zero_fills, "   × ", size, " bytes"
+      echo "     intermediates ", c.intermediates, "   × ", size, " bytes"
+      echo "     copies        ", c.copies, "   × ", size, " bytes"
+      echo "     error checks  ", c.checks
+      echo "     lines of C    ", c.lines
+      echo ""
+      echo "   bytes moved = operands read + result written"
+      echo "               + (zero fills + intermediates + copies) × width"
+      echo "     operands read     ", m.bytes_read
+      echo "     result written    ", m.bytes_written
+      echo "     zero fills        ", m.bytes_zeroed
+      echo "     intermediates     ", m.bytes_intermediates
+      echo "     copies            ", m.bytes_copied
+      echo "     ───────────────── ", m.bytes_moved
+      echo ""
+      echo "   emitted C"
+      var printed = 0
+      for line in f.body.readable.splitLines:
+        if printed >= SHOWN_LINES:
+          echo "     … ", c.lines - printed, " more lines; whole body is in ", cache
+          break
+        echo "     ", (if line.len > SHOWN_WIDTH: line[0 ..< SHOWN_WIDTH] & " …" else: line)
+        inc printed
+      echo ""
+      echo "   machine code"
+      let lines = disassembled(cache, f.name)
+      if lines.len == 0:
+        echo "     no symbol of its own, since it is inline; read its caller instead."
+        continue
+      for i, line in lines:
+        if i >= SHOWN_LINES:
+          echo "     … ", lines.len - i, " more instructions."
+          break
+        echo "     ", line
+    if seen == 0:
+      echo "No function spells `", symbol, "` in ", algebra, "."
+  if not found:
+    raise newException(ValueError, "No algebra named `" & algebra & "`.")
+
+
 proc system() =
   ## Print every system package this build needs, one per line and nothing else.
   for (package, _) in SYSTEM: echo package
@@ -297,11 +428,16 @@ proc clean() =
 #[ Entry Point ]#
 
 when isMainModule:
-  if paramCount() != 1:
+  if paramCount() notin 1 .. 3 or (paramStr(1) == "show" and paramCount() < 2):
+    stderr.write USAGE
+    quit 2
+  if paramStr(1) != "show" and paramCount() != 1:
     stderr.write USAGE
     quit 2
   try:
     case paramStr(1)
+    of "show":
+      showFunction(paramStr(2), if paramCount() >= 3: paramStr(3) else: CONFIGS[0][0])
     of "inspect": inspect()
     of "bench": bench()
     of "baseline": baseline()
