@@ -430,9 +430,12 @@ merged into a later one. It arrived carrying a stamp that three rules changes ha
 The run failed, and nobody was told.
 
 GitHub offers "require branches to be up to date", which prevents this. That setting is
-blanket, and it makes every open pull request stale on each merge. `base` is the narrow form:
-it reports only where the base gained a charter document or a checker. It feeds the `audit`
-gate that branch protection requires, so no setting changed.
+blanket, and it makes every open pull request stale on each merge. The merge rate is what
+makes it the wrong trade. 48 pull requests merged in the week to 2026-09-23, and 16 in its
+last day.
+
+`base` is the narrow form: it reports only where the base gained a charter document or a
+checker. It feeds the `audit` gate that branch protection requires, so no setting changed.
 
 Only two kinds of path count. A charter document moves the stamp that every project claims,
 and the checker decides what the audit accepts. Everything else may differ freely. On the
