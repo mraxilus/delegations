@@ -57,7 +57,7 @@ export async function driveLook(page: Page): Promise<void> {
     `pivot moved ${spanOf(before.pivot, after.pivot).toFixed(3)}, ` +
       `separation ${after.distance.toFixed(3)}`,
   );
-  // Put view back: a look swings sight right off scene, and checks after this one read
+  // Put view back: look swings sight right off scene, and checks after this one read
   //   what is drawn rather than press their own Home first.
   await settleHome(page);
 }
