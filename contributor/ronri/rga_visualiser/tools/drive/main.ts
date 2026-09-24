@@ -64,6 +64,7 @@ import {
 import { driveGround } from './ground';
 import { driveBlankRefused } from './canvas';
 import { driveFrameWork } from './frame';
+import { driveHostSave } from './host';
 
 /** Viewport every check below is written against. */
 const SIZE_VIEW = { width: 1200, height: 900 };
@@ -238,6 +239,8 @@ async function main(): Promise<void> {
   await driveTickWrites(page);
   await driveTickCadence(page);
   await drivePerFrame(page);
+  // Page of its own, since host it stands in has to be there before page's script runs.
+  await driveHostSave(browser, `file://${PATH_PAGE}`, SIZE_VIEW);
 
   // Page erroring at all is failure, whatever every check above said.
   report('the page raised no error', errors_page.length === 0, errors_page.join(' | '));
