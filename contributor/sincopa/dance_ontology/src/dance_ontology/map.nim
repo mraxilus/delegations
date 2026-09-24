@@ -66,7 +66,7 @@ const NODE_ORDER* = ["--.", "-r.", "l-.", "-l.", "r-.", "lrL", "lrR", "rl."]
   ## Order frames along their rows, left to right.
   ##   Drawing decision rather than fact about dancing: order is
   ##     one that leaves fewest lines crossing.
-  ##   `tests/joined/tmap.nim` holds it to naming every frame exactly once, so
+  ##   `tests/suites/tmap.nim` holds it to naming every frame exactly once, so
   ##     frame cannot be added to ontology and quietly left out of
   ##     picture.
 

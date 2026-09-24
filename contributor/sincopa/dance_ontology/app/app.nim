@@ -306,7 +306,7 @@ func renderElsewhere(source: Frame): string =
     # frame it is move out of.  It happens to read same named from here --
     # drop is only phrase that looks at frame it leaves, and no
     # shortest route drops hand it collected, so hand route drops was held
-    # before route began.  `tests/joined/ttransition.nim` holds both of those, so
+    # before route began.  `tests/suites/ttransition.nim` holds both of those, so
     # this is written way it is true rather than way it is convenient.
     var standing = source
     for step in route(source, target):

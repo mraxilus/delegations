@@ -6,7 +6,7 @@ joinable: false
 """
 ## Run every suite that needs neither engine nor browser, as one binary.
 ##
-##   Each suite under `joined/` was its own binary, and each paid its own compile of
+##   Each suite under `suites/` was its own binary, and each paid its own compile of
 ##     standard library and of whatever it imports.  Nineteen binaries took 62.4 s under
 ##     testament, measured on this container; this one took 18.5 s, 11.1 s of it compile.
 ##     Each suite still runs as it did, at import, under its own `suite` name.
@@ -18,6 +18,6 @@ joinable: false
 ##     binary, and `tsaid` is compiled to JavaScript, so those stay binaries of their own.
 
 import
-  ./joined/[tasks, taxle, tdiagram, tdrawn, tfaces, tframe, tglossary, tlimb, tmap,
+  ./suites/[tasks, taxle, tdiagram, tdrawn, tfaces, tframe, tglossary, tlimb, tmap,
             tmarks, tplain, treadme, treview, trotation, troute, tspokes, ttransition,
             twords, tworkbook]

@@ -8,7 +8,7 @@
 ##     registered file kinds.  Each is published at fixed URL listed in `../README.md`;
 ##     republishing rebuilt files to those URLs is whole release step.
 ##     Every one is mock-up rather than page project stands behind, and its title says so.
-##   `tests/joined/tmarks.nim` drives `buildPage` for every page, so every gate runs under
+##   `tests/suites/tmarks.nim` drives `buildPage` for every page, so every gate runs under
 ##     `nim r koch test` (Article IX.6).
 ##   Every page's parts are built once in process and kept (`made`).  Page's checks read
 ##     what page placed, and review page places both walked pages' figures again, so
