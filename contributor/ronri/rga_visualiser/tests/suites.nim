@@ -7273,17 +7273,77 @@ suite "Interaction":
     for (turn, rise) in LOOP:
       own.turnAcross(turn, rise, has_selection = false, holds_roll = true)
     check own.rollHeld.get =~ set_to.get
-    # Reading has no meaning along world up, so camera at pole reads none and roll stands.
-    let overhead = initCamera(
-      pivot = ORIGIN, distance = 10.0, azimuth = 0.0, elevation = ELEVATION_LIMIT
-    )
-    check abs(dot(overhead.frame.forward, UP_WORLD)) >= COSINE_POLE_ROLL
-    check overhead.rollHeld.isNone
-    var stuck = overhead
-    stuck.turnAcross(0.2, 0.0, has_selection = false, holds_roll = true)
-    var plain = overhead
-    plain.look(0.2, 0.0)
-    check stuck.frame.forward =~ plain.frame.forward
+
+
+  test "a finger's drag moves one turntable angle each way, however it is cut":
+    # Roll put back after turn about camera's own axes levelled horizon and left sight
+    #   sunk, and by more as steps grew. Level axes move azimuth alone and elevation
+    #   alone, so nothing needs putting back and step size cannot matter.
+    let opening = initCameraDefault()
+    for picked in [false, true]:
+      for steps in [1, 8, 64]:
+        var cut = opening
+        for step in 1 .. steps:
+          cut.turnAcross(
+            1.2/float(steps), 0.3/float(steps), has_selection = picked, holds_roll = true
+          )
+        check cut.azimuth =~ opening.azimuth + 1.2
+        check cut.elevation =~ opening.elevation + 0.3
+        check abs(cut.rollHeld.get) < TOLERANCE_TEST
+        if picked: check cut.pivot =~ opening.pivot
+        else: check cut.eye =~ opening.eye
+      # Drag that comes back to where it began leaves camera where it began.
+      var round_trip = opening
+      for (turn, rise) in [(0.3, 0.0), (0.0, 0.3), (-0.3, 0.0), (0.0, -0.3)]:
+        round_trip.turnAcross(turn, rise, has_selection = picked, holds_roll = true)
+      check round_trip.eye =~ opening.eye
+      check round_trip.frame.forward =~ opening.frame.forward
+      check round_trip.frame.axis_up =~ opening.frame.axis_up
+
+
+  test "a finger's drag passes over the top, and carries the picture the same way past it":
+    # Across axis stays level through pole, so sight turns in its own upright plane and
+    #   camera comes down far side upside down, keeping its across.
+    const (WIDE, TALL) = (390, 844)
+    proc sweptBy(camera: Camera; picked: bool): float =
+      # Read how far finger's rightward drag carries, across screen, what it turns about.
+      #   Orbit's near side lies between eye and pivot, and follows finger. Look's point
+      #   lies straight ahead and slides against finger, since sight turns toward it.
+      let near_side =
+        if picked: camera.eye + 0.4*camera.distance*camera.frame.forward
+        else: camera.eye + 5.0*camera.frame.forward
+      var swung = camera
+      swung.turnAcross(-0.05, 0.0, has_selection = picked, holds_roll = true)
+      let aspect = float(WIDE)/float(TALL)
+      projectToScreen(swung.initMatrixViewProjection(aspect), WIDE, TALL, near_side).x -
+        projectToScreen(camera.initMatrixViewProjection(aspect), WIDE, TALL, near_side).x
+    let opening = initCameraDefault()
+    for picked in [false, true]:
+      var over = opening
+      let climb = 0.5*PI - opening.elevation + 0.4
+      for step in 1 .. 40:
+        over.turnAcross(0.0, climb/40.0, has_selection = picked, holds_roll = true)
+      check dot(over.frame.forward, opening.frame.forward) =~ cos(climb)
+      check over.frame.axis_right =~ opening.frame.axis_right
+      check dot(over.frame.axis_up, UP_WORLD) < 0.0
+      if picked: check over.pivot =~ opening.pivot
+      else: check over.eye =~ opening.eye
+      let way = if picked: 1.0 else: -1.0
+      check way*sweptBy(opening, picked) > 0.0
+      check way*sweptBy(over, picked) > 0.0
+      # Sight exactly along world up names no level across, and camera's own stands in.
+      var pole = opening
+      pole.turnAcross(0.0, 0.5*PI - opening.elevation, has_selection = picked,
+        holds_roll = true)
+      check abs(dot(pole.frame.forward, UP_WORLD)) =~ 1.0
+      var spun = pole
+      spun.turnAcross(0.2, 0.0, has_selection = picked, holds_roll = true)
+      check spun.frame.forward =~ pole.frame.forward
+      check dot(spun.frame.axis_right, pole.frame.axis_right) =~ cos(0.2)
+      var past = pole
+      past.turnAcross(0.0, 0.3, has_selection = picked, holds_roll = true)
+      check abs(dot(past.frame.forward, UP_WORLD)) =~ cos(0.3)
+      check past.frame.axis_right =~ pole.frame.axis_right
 
 
   test "a roll carries the picture the way the reader turns":
