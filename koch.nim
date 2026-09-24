@@ -37,9 +37,9 @@
 ##     and `plan`, which then drop their scoping; `ci` passes it to `types` alone; `assets`
 ##     reads every argument as file; other verbs ignore it.
 ##     Exit: 0 clean, 1 findings, 2 usage error.
-##   `role` reads pull request rather than tree, so its two inputs come from event payload
-##     through env `ROLE_BODY` and `ROLE_LABELS`, latter as JSON array of label names. That is
-##     why `ci` leaves it out: local run has no pull request to read.
+##   `role` reads pull request rather than tree, so runner hands it two inputs through env:
+##     `ROLE_BODY` from event payload, and `ROLE_LABELS` from API as JSON array of label
+##     names. That is why `ci` leaves it out: local run has no pull request to read.
 ##
 ##   `ci` compiles only projects whose code changed, since static pass costs tenths of
 ##     second and suites cost minutes; push run on `main` and weekly run do same against
