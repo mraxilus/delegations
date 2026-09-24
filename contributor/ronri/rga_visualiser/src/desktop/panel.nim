@@ -1130,14 +1130,14 @@ func stepHistory*(
   ##   Reports whether anything moved.
   ##   One proc for buttons and keys: restored snapshot's handle numbers need not match ones
   ##   session or selection held, easy to forget in second place.
-  ##   Abandons standing tween, aiming at whatever was last selected: left running it
+  ##   Halts standing tween, aiming at whatever was last selected: left running it
   ##   drags view off placement just restored.
   result = if is_undo: history.undo(scene, camera) else: history.redo(scene, camera)
   if result:
     panel.selection.clear()
     panel.session = none(EditSession)
     panel.hideSelectionMenu()
-    panel.tween_camera.abandon()
+    panel.tween_camera.halt()
 
 
 

@@ -925,6 +925,11 @@ type
     started*: float ## Clock reading `goal` was last set or repivoted at.
     duration*: float ## Seconds ease takes, end to end.
     stance_from*: CameraStance ## Where current ease began.
+    progress_last*: float ## Eased progress `advance` last carried camera to.
+      ## What next step is measured from once reader holds camera; see `is_yielded`.
+    is_yielded*: bool ## Whether reader has taken camera mid-ease; see `abandon`.
+      ## Ease then carries pivot alone, by each frame's own share of its path, and way
+      ## round and distance stay reader's.
 
 
 func `==`*(a, b: SphereWorld): bool =
@@ -1304,6 +1309,18 @@ func aimAt*(
   tween.started = now
   tween.duration = duration
   tween.stance_from = camera.stanceOf
+  tween.progress_last = 0.0
+  tween.is_yielded = false
+
+
+func slideOwed(tween: CameraTween; camera: Camera; progress: float): Multivector =
+  ## Read slide carrying pivot from where ease last stood it to where `progress` stands it.
+  ##   Both read off ease's own path, so pivot held by reader follows same track ease
+  ##   would have, and lands where it would have.
+  let
+    was = camera.placed(tween.stance_from.toward(tween.destination, tween.progress_last))
+    now_at = camera.placed(tween.stance_from.toward(tween.destination, progress))
+  subtract(toMultivector(now_at.pivot), toMultivector(was.pivot))
 
 
 func advance*(
@@ -1315,9 +1332,13 @@ func advance*(
   ##   project keeps easing curve.
   ##     Callers hand `tessellate.easeOutCubic`, same curve and duration freshly added
   ##     object grows in with.
+  ##   Held by reader, it slides camera by this frame's share of pivot's path and does
+  ##   nothing else, so their turn and their distance stand; see `abandon`.
   if tween.goal.isNone or tween.is_arrived: return
   let progress = ease(clamp((now - tween.started) / max(tween.duration, 1.0e-6), 0.0, 1.0))
-  camera = camera.placed(tween.stance_from.toward(tween.destination, progress))
+  if tween.is_yielded: camera.slideBy(tween.slideOwed(camera, progress))
+  else: camera = camera.placed(tween.stance_from.toward(tween.destination, progress))
+  tween.progress_last = progress
   if now - tween.started >= tween.duration: tween.is_arrived = true
 
 
@@ -1325,8 +1346,11 @@ func settle*(tween: var CameraTween, camera: var Camera) =
   ## Put camera on destination at once.
   ##   For caller that must not show half-finished pan, such as storyboard frame about to
   ##   be captured.
+  ##   Held by reader, only pivot's remaining slide is put on, as `advance` would.
   if tween.goal.isNone or tween.is_arrived: return
-  camera = camera.placed(tween.destination)
+  if tween.is_yielded: camera.slideBy(tween.slideOwed(camera, 1.0))
+  else: camera = camera.placed(tween.destination)
+  tween.progress_last = 1.0
   tween.is_arrived = true
 
 
@@ -1341,11 +1365,24 @@ func release*(tween: var CameraTween) =
 
 
 func abandon*(tween: var CameraTween) =
-  ## Stop carrying camera, but remember what it was carrying it toward.
-  ##   For every path moving camera on user's own instruction: orbit, pan or dolly half
-  ##   second into ease should win outright.
+  ## Hand camera to reader mid-ease, and let pivot alone finish arriving.
+  ##   For path turning or scaling camera about pivot it already has: orbit, look, roll,
+  ##   plain dolly and keys. Reader wins way round and distance outright, and `advance`
+  ##   carries pivot rest of its path underneath, so what they turn about is still what
+  ##   was picked. Path placing pivot itself halts instead; see `halt`.
+  ##     Stopping outright left pivot partway, and nothing aimed again: reader who added
+  ##     object and turned at once turned about empty point short of group's middle.
   ##   Deliberately not `release`.
   ##     Aim is standing offer re-made every frame, so goal cleared here is offered again
   ##     next frame and camera is taken straight back off user.
-  ##     Keeping goal and marking it done makes standing offer read as already answered.
+  ##     Keeping goal makes standing offer read as already answered.
+  if tween.goal.isSome and not tween.is_arrived: tween.is_yielded = true
+
+
+func halt*(tween: var CameraTween) =
+  ## Stop carrying camera where it stands, and remember what it was carrying it toward.
+  ##   For path placing pivot itself: pan, zoom landing pivot on what pointer or frame's
+  ##   middle is over, figure typed into view fields, and placement undo restores. Pivot
+  ##   still arriving would slide camera off what reader set.
+  ##   Not `release`, for reason `abandon` gives.
   if tween.goal.isSome: tween.is_arrived = true

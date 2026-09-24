@@ -4352,10 +4352,11 @@ suite "Camera Aim":
     # Back out to exactly that floor, and no further.
     check norm(camera.eye - centre) =~ reach
     check aim.isFramed(camera, WIDE, TALL)
-    # On way out it keeps whichever way round it had got to, which is slide: eye goes
-    #   straight out from centre, so its bearing there is untouched.
+    # On way out it keeps whichever way round it had got to: eye goes back along its own
+    #   sight, which passes through centre here, so its bearing there is untouched.
     check (1.0/norm(camera.eye - centre))*(camera.eye - centre) =~ bearing_inside
-    # Nothing turns, and pivot is re-stamped onto centre rather than left stale.
+    # Nothing turns, and pivot is re-stamped at middle rather than left stale. Two points'
+    #   middle is their sphere's centre; three that part them are case below.
     check camera.frame.forward =~ axes_before.forward
     check abs(dot(centre - camera.eye, camera.frame.forward) - camera.distance) <
       TOLERANCE_TEST
@@ -5064,8 +5065,9 @@ suite "Camera Aim":
     check camera.pivot =~ pivot_panned
 
 
-  test "abandon hands the camera to the user without re-arming the standing offer":
-    # `release` here would be actively wrong, and was: it clears goal, so aim.
+  test "halt hands the camera to the user without re-arming the standing offer":
+    # Pan places pivot itself, so ease stops outright and pivot stays where reader put it.
+    #   `release` here would be actively wrong, and was: it clears goal, so aim.
     #   rule's own standing offer is seen as new on very next frame and takes
     #   camera straight back. Keeping goal and marking it done is what makes that
     #   offer read as already answered.
@@ -5078,7 +5080,7 @@ suite "Camera Aim":
     check not tween.is_arrived
 
     camera.travel(0.0, 3.0, 2.0)
-    tween.abandon()
+    tween.halt()
     let pivot_panned = camera.pivot
     for frame in 1 .. 40:
       let now = 0.10 + 0.016*float(frame)

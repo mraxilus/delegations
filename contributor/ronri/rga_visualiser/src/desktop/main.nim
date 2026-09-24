@@ -1178,7 +1178,7 @@ proc handleEvent(
     if event.button.button == uint8(MouseButton.Right): is_dragging_pan = false
   of uint32(EventKind.MouseWheel):
     if gui.wantsMouse(): return
-    panel.tween_camera.abandon()
+    panel.tween_camera.halt() # Zoom lands pivot on what cursor is over; see `halt`.
     # Zoom toward whatever cursor is over; see `interaction.dollyAtCursor`.
     #   Frame's size is passed because sight ray needs it before frame reports it again.
     interaction.dollyAtCursor(
@@ -1200,7 +1200,7 @@ proc handleEvent(
         panel.selection.len > 0,
       )
     if is_dragging_pan:
-      panel.tween_camera.abandon()
+      panel.tween_camera.halt() # Pan places pivot itself; see `halt`.
       # Pass where pointer was and is, rather than how far it moved.
       #   Pan grabs level under it and needs both ends of step; see
       #   `interaction.panAcross`.
