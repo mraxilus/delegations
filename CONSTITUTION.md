@@ -34,7 +34,10 @@ use the mechanism is cargo cult.
    tables in its header. They map the code names to the notation of the authority, so that
    book and code read side by side. A table is a derived view of the declarations. Verify the
    table against them, and where the two disagree the declaration wins.
-5. The header of the umbrella module states the bootstrap order as a `->` diagram.
+5. The header of the umbrella module states the bootstrap order as a `->` diagram. The diagram
+   is many to one. Each definition is the target of one line alone, and that line names
+   everything that the definition needs. Definitions that need exactly the same things may
+   share one line.
 6. Provide a façade of documented one-line forwarders. It is the API reference that is also
    source, and the source of truth for the public names.
 7. A comment states the decision and its cost, and never the path to it. A superseded design,
@@ -54,7 +57,9 @@ use the mechanism is cargo cult.
 
 ## Order of compile-time type bootstrapping:
 ##   [Algebra, BasisDigits, BasisFlags] -> Basis
-##   Basis -> BasisSigned -> [Cayley1D, Cayley2D]
+##   Basis -> BasisSigned
+##         -> Multivector
+##   BasisSigned -> [Cayley1D, Cayley2D]
 ```
 
 ## Article II: Derive, never transcribe
