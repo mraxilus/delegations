@@ -1239,20 +1239,30 @@ a hand-written copy drifts from it. So `audit.nim` names no module order.
 
 ## Figures
 
-**The static pass costs seconds.** `nim r koch tree`, warm: 2.76 s, 2.76 s and 2.66 s over
-three consecutive runs. The machine is a four-core Intel Xeon 2.80 GHz container, on Nim 2.2.12,
-2026-09-24, timed with `date +%s.%N`. Warm means that koch was already compiled.
+The machine for these figures is a four-core Intel Xeon 2.10 GHz container, on Nim 2.2.12,
+2026-09-24, timed with `date +%s.%N`. Warm means that koch and the test binaries were already
+compiled. Each "before" figure is `origin/main` at `8a05673`, on the same machine and date.
+
+**The static pass costs about a second.** `nim r koch tree`, warm: 1.11 s, 1.15 s and 0.98 s
+over three consecutive runs. Before, it took 1.97 s, 1.96 s and 1.82 s. Inside koch, the old
+dead-export rule took 1.1 s of a 2.07 s pass, because it scanned every source once for each
+export.
 
 **A branch that changes the checker costs one project, and not every project.** Warm,
-`nim r koch ci` takes 37.7 s, 37.7 s and 37.6 s over three consecutive runs. The machine is a
-four-core Intel Xeon 2.80 GHz container, on Nim 2.2.12, 2026-09-23. Warm means that every test
-binary was already compiled. One run with the test binaries deleted first took 57.0 s.
-`koch plan` holds one row on such a branch, so the figure covers the suites of `curator/audit`
-and the static pass.
+`nim r koch ci` takes 5.07 s, 5.07 s and 4.99 s over three consecutive runs. With the suite
+build of `curator/audit` removed first, it took 8.1 s. Before, with one comment added to a check
+module, it took 32.9 s and 32.6 s warm, and 49.2 s cold. `koch plan` holds one row on such a
+branch, so the figure covers the suites of `curator/audit` and the static pass.
+
+**The suites of `curator/audit` cost their compile, and almost nothing to run.** Each suite
+compiled alone in 0.8 s to 1.2 s warm, and the run of all 30 binaries took 2.1 s. Joined,
+`nim r koch tests curator/audit` takes 3.8 s to 4.2 s warm, against 31.9 s before.
 
 These two are the pair for scoping. A change to records alone costs the static pass, and a
-change to one project adds the suites of that project. Unmeasured on the current pin:
-`nim r koch tests` over every project, which is what an unscoped run pays.
+change to one project adds the suites of that project. An unscoped run pays every project.
+On the same machine and date, `nim r koch tests <project>` took 627.5 s for `dance_ontology`
+and 236.6 s for `rga_visualiser`. It took 18.2 s cold for `pga_benchmark`, and 2.8 s for
+`curator/probe`.
 
 **Matrix jobs run in parallel.** Verified on the runner, 2026-09-06: three `project` jobs
 started within one second, and finished at 16 s, 52 s and 121 s. So the phase took 121 s
