@@ -14,12 +14,15 @@
 ##     definitions, one hop away.  Accepted -- index comments below name that
 ##     hop, and forwarder layer would restate every signature to say it.
 ##
-## Order of module bootstrapping, each stage importing only earlier ones:
-##   [frame, motion]
+## Order of module bootstrapping, each module on one line naming all it imports:
 ##   frame -> [transition, rotation]
 ##   [frame, transition] -> workbook
-##   draw/geometry -> draw/terms -> draw/style -> draw/[body, pose]
-##   draw/[body, pose] -> draw/route -> draw/figure -> draw/scene
+##   draw/terms -> draw/style
+##   draw/[geometry, terms] -> draw/pose
+##   draw/[geometry, pose, style, terms] -> draw/body
+##   draw/[body, geometry, style, terms] -> draw/route
+##   draw/[body, geometry, pose, route, style, terms] -> draw/figure
+##   [draw/[figure, pose, route, terms], frame] -> draw/scene
 ##   [draw/scene, frame, rotation] -> diagram
 ##   [diagram, draw/[style, terms], frame, motion, transition] -> map
 ##   [diagram, frame, map, motion, transition] -> spokes
