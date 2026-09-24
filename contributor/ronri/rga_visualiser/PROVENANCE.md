@@ -1096,7 +1096,7 @@ view upright. It also fixed the orbit's axes to world up, which is a pole. `ELEV
 to `placedAtElevation` alone, the panel's own field, where the turntable is rebuilt from angles and
 does collapse at the pole.
 
-The axis of each turn is the camera's own, so an orbit reads as a trackball rather than a turntable.
+The axis of each turn is the camera's own, so a mouse's orbit reads as a trackball, not a turntable.
 The azimuth is no longer linear in a horizontal drag once the elevation is off level. Two thousand
 steps of one angle still compose to one turn of their sum, because a turn leaves its own axis
 standing.
@@ -1252,10 +1252,9 @@ Assumed: that no reader wants a ceiling on the separation.
 `look`, `roll` and `travel` turn and slide about its own axes. With a selection it keeps the
 turntable.
 
-**Every drag reads that state through a verb of its own.** `interaction.turnAcross` is the left
-drag and `panAcross` the right, and each picks between the two states inside itself. Both
-front-ends called `orbit` outright before, so `look` never reached a drag at all. The eye swung
-round the pivot where the reader meant to turn in place.
+**Every drag reads that state through a verb of its own.** `interaction.turnAcross` is the left drag
+and `panAcross` the right, and each picks between the two states inside itself. Not `orbit` for
+every drag, which swings the eye round the pivot where a reader means to turn in place.
 
 **Flight turns about a line through the eye.** `turnedAboutEye` joins the eye with a carried axis
 and turns about that line, so the eye stands where it stands and the frame stays orthonormal.
@@ -1263,30 +1262,41 @@ and turns about that line, so the eye stands where it stands and the frame stays
 axis before it. A pitch about the stale one tips the up axis off the sight, which is a roll nobody
 asked for.
 
-`look` takes the two arguments that `orbit` takes, with the same signs, so one drag feeds either
-verb as the selection comes and goes. Signs that disagreed would reverse the gesture the moment a
-reader selected something.
+`look` takes the two arguments that `orbit` takes, with the same signs, so a mouse drag feeds either
+verb as the selection comes and goes. A finger's `lookLevel` takes them negated, so the picture
+follows the finger in either state: the sky moves as orbit's near side does. The cost is that a
+selection made mid-drag reverses which way the far scene moves.
 
 The axes are the camera's own and never the world's, so there is no pole and no clamp. Eight pitches
 of a quarter radian compose to exactly two radians, which is past straight down.
 
-**Roll reaches either state.** `orbit` composes the motion rather than rebuilding it from four
-turntable numbers. A roll then survives an orbit event, so Q and E work with a selection as without
-one. The rebuild carried no roll, and rolling and then orbiting snapped the view upright.
+**Turning about the camera's own axes carries roll round with it, so a finger turns about level
+axes.** The roll a closed drag leaves behind is the solid angle that drag encloses. A loop of 0.3
+radians leaves 0.0813, against 0.0822 enclosed: 4.7 degrees for each loop, and 18.6 over four. That
+is the geometry of transport, not a fault, and no order of the two turns escapes it. `look` and
+`orbit` carry exactly the same amount. A mouse keeps it, with Q and E to answer it.
 
-**Turning about the camera's own axes carries roll round with it, and a finger puts it back.** The
-roll a closed drag leaves behind is the solid angle that drag encloses. A loop of 0.3 radians
-leaves 0.0813, against 0.0822 enclosed: 4.7 degrees for each loop, and 18.6 over four. That is the
-geometry of transport, not a fault, and no order of the two turns escapes it. `look` and `orbit`
-carry exactly the same amount.
+A finger has no roll key beside it, and it wanders in curves. So `turnAcross` sends a touch drag to
+`orbitLevel` or `lookLevel`. A sideways drag turns about world up, and a drag up or down turns about
+the level axis across the sight. Each turn moves one turntable angle alone. So a drag leaves no
+roll, holds its height, and lands in one place however it is cut into steps.
 
-A finger asks for it back. `turnAcross` reads `camera.rollHeld` before the turn and restores it
-after, so a touch drag leaves the horizon where it found it. Touch has no roll key beside it, and a
-finger wanders in curves. A mouse keeps the transport as it is, with Q and E to answer it.
+Each axis is the world axis nearest the camera's own, signed from the camera. So the camera passes
+over the top, upside down on the far side, and a sideways drag still moves the picture as it did.
+A roll set by a twist survives, because neither turn changes it.
 
-`rollHeld` is the angle of the camera's own up against `UP_WORLD`, across the sight. It reads none
-within `COSINE_POLE_ROLL`, 5 degrees of straight up or down. That reference has nothing left to
-project there, and the reading is noise before it is undefined. The roll simply stands.
+Not the roll put back after each turn about the camera's own axes. That levels the horizon but
+leaves the sight sunk, more as steps grow. One fast 300 px swipe on a phone took 24.06 degrees to
+14.56. Not a turntable bounded short of the pole, which stops every orbit at straight down.
+
+The cost is at the pole. There a sideways drag spins the picture about the sight, 9.2 degrees for
+each 20 px on a phone. The spin reverses as the camera passes over. A roll set by a twist tips a
+sideways drag off the screen's across.
+
+The finger turns half a turn for each short side of the canvas, on both axes, so a diagonal drag
+turns along its own slant. Not one rate for width and one for height: those gave 0.65 and 0.30
+degrees for each pixel on a 390 by 844 phone. On 2026-09-24, in Chromium on the build container,
+2,000 touch turns took 0.44 to 0.47 ms each. With the roll put back they took 0.75 to 0.95 ms.
 
 **The speed climbs toward a cap and never reaches it.** `speedTravelling` is the cap times
 `1 − e^(−t/τ)`. τ is `SECONDS_SPEED_RISE`, 0.6 s: 63 percent of the cap at one τ, and 95 percent at
@@ -1389,9 +1399,10 @@ The separation then scales as the turntable's dolly scales it.
   stands accordingly;
 - one drag loop leaves the solid angle it encloses, and four leave 0.324 radians;
 - a finger's drag leaves none of it, and keeps the roll the reader set;
-- the roll reading is none at the pole, where the turn simply goes through unheld;
-- eight pitches of a quarter radian compose to exactly two radians, where `orbit` stops at its
-  clamp;
+- a finger's drag moves the azimuth and the elevation by what it asked, in 1, 8 or 64 steps, and a
+  loop of it closes;
+- the picture follows the finger in both states and past the top, and a drag goes through the pole;
+- eight quarter-radian pitches make two radians in `look` and `orbit`, past the panel field's clamp;
 - a look and an orbit swing the sight the same way, for both signs of the drag;
 - a roll leaves the eye and the sight alone, and 64 steps of a whole turn return every axis;
 - a travel step reads back along the rolled frame, to each of the three axes it was asked for;
@@ -1413,6 +1424,9 @@ The separation then scales as the turntable's dolly scales it.
 Verified by driven checks:
 
 - a left drag with nothing picked turned the sight and moved the eye 0.000000 units;
+- a 600 px finger swipe held the elevation at 0.420000, where the roll put back ended at 0.325250;
+- a finger moved 60 and 40 px with nothing picked carried what stood ahead 217.9 and 145.0 px;
+- a finger dragged down with an object picked carried the eye over the top, and the pivot 0.000000;
 - 500 ms of `w` on the opening page moved the eye 3.455 units, 0.000000 of them across the sight
   line;
 - the separation gave up that same 3.455 of 19.000;
@@ -1644,7 +1658,8 @@ with `carried`. Nothing else in the tree names a motor.
 - the order of composition.
 
 Assumed: that `unitize` is the motor norm for any unit motor. The suite reads it back for every
-motor that `exp` builds, and derives nothing about one that drift moved off unit.
+motor that `exp` builds. Nothing renormalises a composed stance. Natively on 2026-09-24, 10^6 turns
+of up to 0.05 radians left its weight 8e-14 off unit and its pivot 5e-12 off.
 
 Unmeasured: the cost of a sandwich. It is two dense antiproducts. That is about twice the 1 to 2 µs
 that the Algebra boundary section records for one operation on the JS backend.

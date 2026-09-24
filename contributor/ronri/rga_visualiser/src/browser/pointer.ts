@@ -269,12 +269,12 @@ canvas.addEventListener('pointermove', (e) => {
     if (is_touch_press_constructing) return;
     nimSetCameraDragging(true);
     const dx = current.x - prev.x, dy = current.y - prev.y;
-    // Finger holds its roll: touch has no roll key, and drag that wanders in curves
-    //   would tilt horizon by solid angle it swept; see `interaction.turnAcross`.
-    nimCameraTurn(
-      -dx / canvas.clientWidth * Math.PI * 1.4, dy / canvas.clientHeight * Math.PI * 1.4,
-      true,
-    );
+    // Finger turns as turntable does: touch has no roll key, and drag that wanders in
+    //   curves would tilt horizon by solid angle it swept; see `interaction.turnAcross`.
+    //   One rate for both axes, half turn per short side of canvas, so drag turns along
+    //   its own slant. Picture follows finger with or without selection.
+    const rate = Math.PI / Math.min(canvas.clientWidth, canvas.clientHeight);
+    nimCameraTurn(-dx * rate, dy * rate, true);
   } else if (pointers.size === 2) {
     nimSetCameraDragging(true); // Two fingers pan and pinch; neither points at anything.
     is_two_fingers_pending = true; // Read by frame loop; see `settleTwoFingers`.
