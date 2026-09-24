@@ -63,7 +63,7 @@ func headingText(line: string): string =
   line.strip(chars = {'#', ' '})
 
 
-func checkHeadings*(path, source: string): seq[Finding] =
+func checkHeadings(path, source: string): seq[Finding] =
   ## Report dated heading, `## Open questions` not last, heading twice, and underlined title.
   let lines = source.fencedOut.splitLines
   var seen: seq[string]
@@ -99,7 +99,7 @@ func checkHeadings*(path, source: string): seq[Finding] =
     )
 
 
-func checkLength*(path, source: string): seq[Finding] =
+func checkLength(path, source: string): seq[Finding] =
   ## Report record over `RECORD_LINES`, lines counted as `wc -l` counts them.
   let count = source.count('\n') + (if source.len > 0 and source[^1] != '\n': 1 else: 0)
   if count > RECORD_LINES:
@@ -140,7 +140,7 @@ func prunedOf*(source: string): string =
   if PRUNED in fields: fields[PRUNED] else: ""
 
 
-func checkPrunedRow*(path, source: string): seq[Finding] =
+func checkPrunedRow(path, source: string): seq[Finding] =
   ## Report `Pruned` row whose value is not commit id.
   let value = source.prunedOf
   if value.len > 0 and not value.isCommitId:
