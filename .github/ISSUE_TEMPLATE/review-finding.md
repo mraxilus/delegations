@@ -14,15 +14,16 @@ or `curator/<project>`. Copy it, and never compose it: to apply a label creates 
 misspelling makes a second label that nobody filters on. That label is how the delegate who
 can act on this finds it. -->
 
-## What was read
+## What you read
 
 <!-- The paths and lines, and the command whose output is quoted below. A finding that nobody
 can retrace is a hunch. -->
 
-## What was found
+## What you found
 
 <!-- One claim, stated so that a reader can disagree with it. Write "`render` is exported and
-called nowhere in the project" and not "the module feels tangled". -->
+called nowhere in the project" and not "the module feels tangled". That claim is also the title
+of this issue, with no `type(scope):` prefix, which belongs to commits. -->
 
 ## Why it matters
 
@@ -34,7 +35,7 @@ say so. A preference labelled honestly is easier to weigh than one dressed as a 
 <!-- Honestly. "Little today, more at scale" is a real answer, and a better one than urgency
 that you manufactured. -->
 
-## What is not being asked
+## What you do not ask for
 
 <!-- The scope that this does not extend to, so that a small finding does not read as a
 demand to redesign. -->

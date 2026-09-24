@@ -13,7 +13,7 @@
 //     is what page received.
 
 import type { CDPSession, Page } from '@playwright/test';
-import { readCamera, settleCamera } from './camera';
+import { readCamera, settleCamera, slideOf, spanOf } from './camera';
 import { waitFrames } from './frame';
 import { report } from './report';
 import { pixelOf } from './wheel';
@@ -121,6 +121,24 @@ export async function pinch(
   await settleCamera(page);
 }
 
+/** Turn two fingers about their own midpoint, holding their separation. */
+export async function twist(
+  page: Page, cdp: CDPSession, mid: Finger, spread: number, radians: number,
+): Promise<void> {
+  await ensureLifted(page, 'a twist');
+  const at = (turn: number) => [
+    { x: mid.x - spread*Math.cos(turn), y: mid.y - spread*Math.sin(turn) },
+    { x: mid.x + spread*Math.cos(turn), y: mid.y + spread*Math.sin(turn) },
+  ];
+  await touchAt(cdp, 'touchStart', at(0));
+  for (let step = 1; step <= 8; step += 1) {
+    await touchAt(cdp, 'touchMove', at((radians*step)/8));
+    await waitFrames(page, 2);
+  }
+  await touchAt(cdp, 'touchEnd', []);
+  await settleCamera(page);
+}
+
 /** Put one finger down for however long, then lift it. */
 export async function tapAt(
   page: Page, cdp: CDPSession, x: number, y: number, milliseconds = 60,
@@ -189,6 +207,53 @@ export async function drivePinch(page: Page, cdp: CDPSession): Promise<void> {
     'a pinch leaves the orbit alone',
     Math.abs(after.azimuth - before.azimuth) < 1e-3,
     `azimuth ${before.azimuth.toFixed(4)} -> ${after.azimuth.toFixed(4)}`,
+  );
+
+  // Twist rolls, which is sixth degree of freedom and has no keyboard beside it on touch.
+  //   Read against eye and sight, which roll leaves exactly alone.
+  await page.keyboard.press('Home');
+  await settleCamera(page);
+  const upright = await readCamera(page);
+  await twist(page, cdp, { x: 400, y: 400 }, 120, 0.9);
+  const rolled = await readCamera(page);
+  const across = slideOf(upright, rolled);
+  report(
+    'a twist rolls, and moves the eye no distance at all',
+    across < 1e-3 && spanOf(upright.eye, rolled.eye) < 1e-3 &&
+      Math.abs(rolled.distance - upright.distance) < 1e-6,
+    `eye moved ${spanOf(upright.eye, rolled.eye).toFixed(6)} units`,
+  );
+  report(
+    'and a twist leaves the sight where it was pointing',
+    Math.abs(rolled.azimuth - upright.azimuth) < 1e-3,
+    `azimuth ${upright.azimuth.toFixed(4)} -> ${rolled.azimuth.toFixed(4)}`,
+  );
+
+  // Direction, read off screen: picture must turn whichever way fingers turned, and
+  //   sign went through unturned, so twist rolled against them.
+  await page.keyboard.press('Home');
+  await settleCamera(page);
+  const handle = await page.evaluate(() => nimSceneHandles()[0] ?? 0);
+  const seen = async (): Promise<number[]> => page.evaluate((one) => Array.from(
+    nimAnchorScreen(one, window.innerWidth, window.innerHeight),
+  ), handle);
+  const centre = await page.evaluate(
+    () => [window.innerWidth / 2, window.innerHeight / 2],
+  );
+  const start = await seen();
+  // Fingers turned clockwise on screen, since y grows down and this angle grows.
+  await twist(page, cdp, { x: 400, y: 400 }, 120, 0.9);
+  const swung = await seen();
+  const angleOf = (at: number[]): number => Math.atan2(
+    (at[1] ?? 0) - (centre[1] ?? 0), (at[0] ?? 0) - (centre[0] ?? 0),
+  );
+  let carried = angleOf(swung) - angleOf(start);
+  if (carried > Math.PI) carried -= 2 * Math.PI;
+  if (carried < -Math.PI) carried += 2 * Math.PI;
+  report(
+    'and a twist carries the picture the way the fingers turned',
+    carried > 0.2,
+    `fingers turned +0.900, picture turned ${carried.toFixed(3)} about the frame's middle`,
   );
 }
 

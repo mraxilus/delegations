@@ -1,6 +1,6 @@
 # probe
 
-The words that `probe` uses for itself. None is agreed yet. Each one is proposed to the
-Architect as it resolves, and written only after the Architect selects it.
+The domain-neutral worked example of the project shape: a ring of steps that exists to be
+checked. No term is agreed yet, and each one waits for the Architect to select it.
 
 ## Language

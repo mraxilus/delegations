@@ -1,4 +1,4 @@
-## Probe every mechanism audit enforces, on domain-neutral ring of steps modulo `MODULUS`.
+## Probe compile-time mechanisms constitution asks for, on ring of steps modulo `MODULUS`.
 ##   Project exists to be checked, not used: build-time configuration validated statically,
 ##   distinct type over range, symbolic operator with named alias, poisoned operator,
 ##   Unicode identifier, banner, matrix test.
@@ -12,8 +12,13 @@
 ##   | 𝟎        | 0        | identity step                         |
 ##   |----------|----------|---------------------------------------|
 ##
-##   Cost: `+` on steps is poisoned, so plain integer arithmetic never leaks modulus.
-##   Cost model unread: no hot path exists; every operation is one addition (unmeasured).
+##   Cost: ring size is build-time define, so each size is its own build; matrix pays that.
+##   Cost: distinct range grants nothing unasked, so `==` is borrowed and `position` reads
+##     value back as `int`.
+##   Cost: `+` on steps is poisoned, so every sum is spelled `⊕` or `advance`; in return plain
+##     integer arithmetic never ignores modulus.
+##   Cost model unread: no hot path exists; every operation is one addition and one modulo
+##     (unmeasured).
 
 {.experimental: "strictFuncs".}
 

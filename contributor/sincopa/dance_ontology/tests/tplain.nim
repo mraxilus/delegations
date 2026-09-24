@@ -66,3 +66,36 @@ suite "prose off markup":
     let markup = "<p>One sentence here. Two sentences now!  Three?</p>"
     check markup.prose[0].sentences.len == 3
     check markup.prose[0].sentences[0] == "One sentence here."
+
+
+suite "prose off Markdown":
+  ## Reader copies repository's `english` check rather than importing it (`markdownProse`), so
+  ## each way it could part from that check is pinned here.  Checked against that check on
+  ## nine documents of repository, 1158 blocks and 2746 sentences, every one same.
+
+  test "fenced code is not read, however long its lines":
+    let doc = "Before.\n\n```\n" & "word ".repeat(WORDS + 10) & "\n```\n\nAfter."
+    check doc.markdownProse == @["Before.", "After."]
+
+  test "quotation, table row, heading and rule carry no prose":
+    let doc = "# Heading\n\n> Quoted words of somebody else.\n\n| a | b |\n\n---\n\nProse."
+    check doc.markdownProse == @["Prose."]
+
+  test "each list item is its own block, and blank line ends one":
+    let doc = "- First item.\n- Second item,\n  wrapped.\n\nPlain line one.\nPlain line two."
+    check doc.markdownProse ==
+      @["First item.", "Second item, wrapped.", "Plain line one. Plain line two."]
+
+  test "numbered item loses its number and keeps its words":
+    check "12. Twelfth item.".markdownProse == @["Twelfth item."]
+
+  test "backticked span is one word, however many it holds":
+    let said = "Run `nim r tools/build.nim pages` now.".markdownProse[0]
+    check said.splitWhitespace.len == 3
+
+  test "sentence ends inside closing quote and emphasis, where page reader runs on":
+    ## `**"Stop here."** Next.` is two sentences.  `sentences`, which reads pages, sees one,
+    ## so seven sentences behind quoted rules would pass as six.
+    let text = "**\"Stop here.\"** Next one."
+    check text.markdownSentences.len == 2
+    check text.sentences.len == 1

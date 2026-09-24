@@ -12,7 +12,7 @@ import { delimiter, join } from 'node:path';
 import { countFailed, countRun, report } from './report';
 import { focusCanvas } from './gestures';
 import { driveKeys } from './keys';
-import { driveAim, drivePan } from './pan';
+import { driveAim, driveLook, drivePan } from './pan';
 import { driveWheel } from './wheel';
 import { driveTouchSelect, drivePinch, openTouch } from './touch';
 import {
@@ -22,7 +22,8 @@ import {
 import { driveApply, driveApplyNamed, driveReachable, driveUndo } from './apply';
 import { driveMessageGoes } from './message';
 import {
-  drivePanWhileSelected, drivePickOrbit, drivePlanePick, drivePointerPick,
+  driveGroupTurnedAtOnce, drivePanWhileSelected, drivePickOrbit, drivePlanePick,
+  drivePointerPick,
 } from './framing';
 import {
   driveFrameLabelCorner, driveLabelGlide, driveLabelHeldInView, driveLabelWorn,
@@ -136,6 +137,7 @@ async function main(): Promise<void> {
   await driveKeys(page);
   await driveWheel(page);
   await drivePan(page);
+  await driveLook(page);
   await driveAim(page, SIZE_VIEW.width, SIZE_VIEW.height);
 
   // Two fingers go through Chrome's own protocol, so channel opens once here.
@@ -158,6 +160,7 @@ async function main(): Promise<void> {
   await driveLabelWorn(page);
   await driveBackdropPlane(page, SIZE_VIEW.width, SIZE_VIEW.height);
   await drivePanWhileSelected(page, cdp);
+  await driveGroupTurnedAtOnce(page, cdp);
   await driveUndo(page);
   await driveReachable(page);
 

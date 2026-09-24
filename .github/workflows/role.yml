@@ -1,35 +1,29 @@
 # Hold every pull request to role line and label its branch names, before it can merge.
-#   Rule is first of CONTRIBUTOR.md's carried seven, and it was breaking in ordinary way: of
-#   eleven pull requests opened in day after label rule landed, three carried label their
-#   delegate applied and six opened with no role line at all. `ledger.yml` reads same two
-#   facts, but daily and over open items only: 14 of 123 pull requests merged in week were
-#   open when it sampled, since half of them live under half hour. Sample reports after merge;
-#   this gates before it.
+#   Rule is first of CONTRIBUTOR.md's carried list. `ledger.yml` reads same two facts, but
+#   daily and over open items only, so it reports after merge; this gates before it.
 #
 #   Separate workflow rather than job in `check.yml`, for one reason: this must fire when
 #   label changes, and label is applied after opening. Widening that workflow's types would
-#   re-run its nine jobs on every label event, where this runs one. Cost is that its name is
-#   new, so branch protection needs it added by hand, and until then it reports without
-#   gating (CURATOR.md, repository settings section).
+#   re-run all of its jobs on every label event, where this runs one. Cost: its name is its own,
+#   so branch protection lists `role` by hand (CURATOR.md, repository settings section).
 #   `ready_for_review` is here because draft is where delegate fixes this, and flipping to
 #   ready must re-ask rather than carry draft's verdict.
 #
 #   Body and label names reach koch through environment, never interpolated into script, as
 #   `check.yml` does with branch and event kind: body is whatever somebody typed, and label
-#   names are theirs too. Labels arrive as JSON array, which is what `--json labels` emits
-#   through `jq` and what koch parses.
-#   Labels are read through API rather than from event payload. Pull request carries no label
-#   at instant it opens, since GitHub sends `opened` before `labeled`, so payload's list was
-#   empty on that event and run reddened for every author whose label came late. API answers
-#   with labels that stand when check runs, and race is then nobody's to win.
+#   names are theirs too. Labels arrive as JSON array, which `--json labels` emits through
+#   `jq` and koch parses.
+#   Labels are read through API rather than from event payload: GitHub sends `opened` before
+#   `labeled`, so payload's list is empty on `opened`. API answers with labels that stand when
+#   check runs. Cost: `pull-requests: read`.
 #   `permissions` block is whole grant: `contents` is what checkout uses, and `pull-requests`
 #   is what `gh pr view` uses.
 #   `concurrency` group carries event's own action, so `opened`, `labeled` and
 #   `ready_for_review` do not cancel each other. They fire from same act of opening pull
-#   request, and cancelled run is not success. Where branch protection requires this check,
-#   cancellation that lands last leaves pull request blocked, and nothing re-fires it. Stale
-#   run of same action still cancels, which is what group is for.
-#   Version is driver's pin, as `check.yml` states it, and `toolchain.nim` holds both to it.
+#   request, and cancelled run is not success: where branch protection requires this check,
+#   cancellation that lands last leaves pull request blocked. Stale run of same action still
+#   cancels, which is what group is for.
+#   Version is koch's, as `check.yml` states it, and `toolchain.nim` holds both to it.
 
 name: role
 

@@ -16,7 +16,9 @@ creates it, so a misspelling makes a second label that nobody filters on. -->
 
 ## The work
 
-<!-- One line. What would be true afterwards that is not true now. -->
+<!-- One line. What would be true afterwards that is not true now. The title says the work as
+an imperative, with no `type(scope):` prefix, which belongs to commits. One example is "Agree
+the vocabulary the project already speaks". -->
 
 ## Why not now
 

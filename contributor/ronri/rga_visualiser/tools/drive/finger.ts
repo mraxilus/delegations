@@ -139,14 +139,33 @@ export async function drivePlaneBuilt(page: Page, cdp: CDPSession): Promise<void
       if (nimObjectKindWord(one) === 'line') nimRemoveObject(one);
     }
   });
+  // Stand three points of this check's own, and span plane from those rather than from
+  //   whichever points earlier checks left.
+  //   Claim below is about pixels disc covers, and plane sight nearly lies in says nothing
+  //   about picking: it draws sliver whatever picking does, and frame rule turns nothing
+  //   for anything finite. Points scene happened to carry spanned exactly such plane.
+  //   `x + y + z = 3` faces opening sight within twenty degrees. Each point stands about
+  //   170 px from every seed and from other two, well clear of `RADIUS_CROWD_TOUCH`.
+  const spanning = await page.evaluate(() => [[3, 0, 0], [0, 3, 0], [0, 0, 3]].map((at) => {
+    const model = new Array(16).fill(0);
+    model[1] = at[0] ?? 0;
+    model[2] = at[1] ?? 0;
+    model[3] = at[2] ?? 0;
+    model[4] = 1;
+    return nimAddObject(model, 'span', nimDefaultInk(), nimDefaultRadius(), 0);
+  }));
   await page.keyboard.press('Home');
   await settleCamera(page);
   await page.evaluate(() => nimSelectClear());
 
-  const points = await pointsLive(page);
-  const from = await pixelOf(page, points[0] ?? 0);
-  const onto = await pixelOf(page, points[1] ?? 0);
-  const third = await pixelOf(page, points[2] ?? 0);
+  // Name planes standing before drag, so plane read back below is one drag built rather
+  //   than any plane earlier check left.
+  const planes_before = await page.evaluate(() => nimSceneHandles().filter(
+    (one) => nimObjectKindWord(one) === 'plane',
+  ));
+  const from = await pixelOf(page, spanning[0] ?? 0);
+  const onto = await pixelOf(page, spanning[1] ?? 0);
+  const third = await pixelOf(page, spanning[2] ?? 0);
   if (from === null || onto === null || third === null) return;
 
   await touchAt(cdp, 'touchStart', [{ x: from[0] ?? 0, y: from[1] ?? 0 }]);
@@ -177,22 +196,22 @@ export async function drivePlaneBuilt(page: Page, cdp: CDPSession): Promise<void
   //   tween, and over this drag it carries that point far enough that drag aimed where it
   //   stood at press lets go over empty glass and builds nothing.
   for (let step = 1; step <= 8; step += 1) {
-    const live = (await pixelOf(page, points[2] ?? 0)) ?? third;
+    const live = (await pixelOf(page, spanning[2] ?? 0)) ?? third;
     await page.mouse.move(
       (on_line[0] ?? 0) + (((live[0] ?? 0) - (on_line[0] ?? 0)) * step) / 8,
       (on_line[1] ?? 0) + (((live[1] ?? 0) - (on_line[1] ?? 0)) * step) / 8,
     );
     await waitFrames(page, 2);
   }
-  const dropped = (await pixelOf(page, points[2] ?? 0)) ?? third;
+  const dropped = (await pixelOf(page, spanning[2] ?? 0)) ?? third;
   await page.mouse.move(dropped[0] ?? 0, dropped[1] ?? 0);
   await waitFrames(page, 2);
   await page.mouse.up({ button: 'left' });
   await settleCamera(page);
 
-  const plane = await page.evaluate(() => nimSceneHandles().find(
-    (one) => nimObjectKindWord(one) === 'plane' && nimObjectLabel(one) !== 'ground',
-  ) ?? -1);
+  const plane = await page.evaluate((standing) => nimSceneHandles().find(
+    (one) => nimObjectKindWord(one) === 'plane' && !standing.includes(one),
+  ) ?? -1, planes_before);
   // Sweep canvas for pixel that picks it: disc this size covers good part of view, so finding
   //   none at all is fault this guards against.
   const found = plane < 0 ? 0 : await pixelsPicking(page, plane);

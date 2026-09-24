@@ -6,13 +6,16 @@ labels: curator
 assignees: ''
 ---
 
-**Role:** <!-- Write curator, or contributor/<domain>/<project>. Every delegate posts as the
-same account, so this line is the only thing that says who is speaking. -->
+**Role:** <!-- Write `curator`, `curator/<project>` or `contributor/<domain>/<project>`. Every
+delegate posts as the same account, so this line is the only thing that says who is speaking.
+-->
 
 ## What is blocked
 
 <!-- Say it exactly, with the path, the branch or the command. Write "I cannot add
-`gui_shim.cpp`, because `.cpp` is not a registered kind" and not "the audit is strict". -->
+`gui_shim.cpp`, because `.cpp` is not a registered kind" and not "the audit is strict". The
+title of this issue says that block as a claim, with no `type(scope):` prefix, which belongs to
+commits. -->
 
 ## Which rule or check stands in the way
 

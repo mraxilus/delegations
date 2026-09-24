@@ -4,7 +4,7 @@
 //   pointer. Suites reach neither: nothing in them has button or wheel.
 
 import type { Page } from '@playwright/test';
-import { readCamera, settleCamera, slideOf, spanPivot } from './camera';
+import { readCamera, settleCamera, slideOf, spanOf } from './camera';
 import { waitFrames } from './frame';
 import { clearTheGlass } from './gestures';
 import { report } from './report';
@@ -24,6 +24,44 @@ async function settleHome(page: Page): Promise<void> {
   await settleCamera(page);
 }
 
+/** Drive left-button drag with nothing picked, and assert it looks rather than orbits.
+ *
+ *  Both front-ends called `orbit` outright, whatever was picked, so free flight's own
+ *  `look` never reached drag: eye swung round pivot where reader meant to turn in place.
+ */
+export async function driveLook(page: Page): Promise<void> {
+  await clearTheGlass(page);
+  await settleHome(page);
+
+  const before = await readCamera(page);
+  // Start well clear of every object, so press moves camera rather than arming drag.
+  await page.mouse.move(160, 170);
+  await page.mouse.down({ button: 'left' });
+  await page.mouse.move(360, 300, { steps: 12 });
+  await page.mouse.up({ button: 'left' });
+  await settleCamera(page);
+  const after = await readCamera(page);
+
+  report(
+    'a left drag with nothing picked turns the sight and leaves the eye standing',
+    spanOf(before.eye, after.eye) < 1e-6 &&
+      Math.abs(after.azimuth - before.azimuth) > 1e-3,
+    `eye moved ${spanOf(before.eye, after.eye).toFixed(6)} units, ` +
+      `azimuth ${before.azimuth.toFixed(4)} -> ${after.azimuth.toFixed(4)}`,
+  );
+  // Pivot is what moves instead: it rides ahead of eye on sight, at same separation.
+  report(
+    'and it carries the orbit centre round instead, at the separation it had',
+    spanOf(before.pivot, after.pivot) > 0.5 &&
+      Math.abs(after.distance - before.distance) < 1e-6,
+    `pivot moved ${spanOf(before.pivot, after.pivot).toFixed(3)}, ` +
+      `separation ${after.distance.toFixed(3)}`,
+  );
+  // Put view back: look swings sight right off scene, and checks after this one read
+  //   what is drawn rather than press their own Home first.
+  await settleHome(page);
+}
+
 /** Drive right-button pan, and assert it keeps pivot on its level. */
 export async function drivePan(page: Page): Promise<void> {
   // Clear glass first, or this measures section swallowing press: drag below starts where
@@ -40,14 +78,17 @@ export async function drivePan(page: Page): Promise<void> {
   await settleCamera(page);
   const after = await readCamera(page);
 
-  const height_before = before.pivot[2] ?? 0;
-  const height_after = after.pivot[2] ?? 0;
+  // Nothing is selected on opening page, so right drag strafes along camera's own axes.
+  //   Grab of level under pointer went with plane it read.
+  const across = slideOf(before, after);
   report(
-    'a right-button drag pans, and keeps the orbit centre on its level',
-    spanPivot(before, after) > 0.5 && Math.abs(height_after - height_before) < 1e-6 &&
+    'a right-button drag strafes across the sight line, and turns nothing',
+    spanOf(before.eye, after.eye) > 0.5 &&
+      Math.abs(across - spanOf(before.eye, after.eye)) < 1e-3 &&
+      Math.abs(after.azimuth - before.azimuth) < 1e-6 &&
       Math.abs(after.distance - before.distance) < 1e-6,
-    `pivot moved ${spanPivot(before, after).toFixed(3)}, ` +
-      `height ${height_before.toFixed(3)} -> ${height_after.toFixed(3)}`,
+    `eye moved ${spanOf(before.eye, after.eye).toFixed(3)}, ` +
+      `${across.toFixed(3)} of it across the sight line`,
   );
 }
 

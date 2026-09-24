@@ -7,9 +7,9 @@
 ##   range nobody tried.
 ##
 ##   Driver version, which builds koch and runs static checks, is not second pin: it is
-##     `curator/audit`'s pin, since koch compiles that project's modules. Workflow names it
-##     once as `NIM_VERSION`, and check below demands agreement, as `layout.nim` demands
-##     agreement between `DOMAINS` and README tables.
+##     `curator/audit`'s pin, since koch compiles that project's modules. Every workflow
+##     installing compiler names it as `NIM_VERSION`, and check below demands agreement, as
+##     `layout.nim` demands agreement between `DOMAINS` and README tables.
 ##   Running compiler is one testament will invoke, so version comes from `nim --version`
 ##     rather than from `NimVersion` koch was built with; prebuilt `./koch` and newer `nim`
 ##     on PATH would otherwise disagree silently.

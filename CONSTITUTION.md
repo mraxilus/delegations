@@ -34,7 +34,10 @@ use the mechanism is cargo cult.
    tables in its header. They map the code names to the notation of the authority, so that
    book and code read side by side. A table is a derived view of the declarations. Verify the
    table against them, and where the two disagree the declaration wins.
-5. The header of the umbrella module states the bootstrap order as a `->` diagram.
+5. The header of the umbrella module states the bootstrap order as a `->` diagram. The diagram
+   is many to one. Each definition is the target of one line alone, and that line names
+   everything that the definition needs. Definitions that need exactly the same things may
+   share one line.
 6. Provide a façade of documented one-line forwarders. It is the API reference that is also
    source, and the source of truth for the public names.
 7. A comment states the decision and its cost, and never the path to it. A superseded design,
@@ -54,7 +57,9 @@ use the mechanism is cargo cult.
 
 ## Order of compile-time type bootstrapping:
 ##   [Algebra, BasisDigits, BasisFlags] -> Basis
-##   Basis -> BasisSigned -> [Cayley1D, Cayley2D]
+##   Basis -> BasisSigned
+##         -> Multivector
+##   BasisSigned -> [Cayley1D, Cayley2D]
 ```
 
 ## Article II: Derive, never transcribe
@@ -242,8 +247,8 @@ CAYLEYS_WEDGE               # module constant
    simple tenses. Write one instruction in one sentence, and keep it to 20 words; a
    description may hold 25, and a paragraph 6 sentences. `GUIDE.md` gives the rules, and a
    checker holds the three that a machine can read. The rule binds every Markdown file, issue,
-   pull request, comment, and message to the Architect. It does not bind a comment, which
-   keeps VI.5's telegraphic register, the same English with the articles removed.
+   pull request, GitHub comment, and message to the Architect. It does not bind a comment in
+   code, which keeps VI.5's telegraphic register, the same English with the articles removed.
 
 ```nim
 func unitize*(m: Multivector): Multivector {.inline.} = ^m
@@ -338,7 +343,7 @@ if is_tallying: cost.mark = performanceNow()  # instrument runs only while panel
 5. Test a law where its mechanism runs: real events through real wiring, rendered output read
    back, written bytes read again. A test that calls a handler directly proves the handler,
    and not the wiring.
-6. A check that drives a built artefact is evidence only for the build that it drove. One
+6. A check that drives a built artifact is evidence only for the build that it drove. One
    command rebuilds, then drives. An ad-hoc run does the same or proves nothing.
 7. A parameterised configuration runs as a matrix. The file for each configuration is a
    minimal stub that includes one shared suite.

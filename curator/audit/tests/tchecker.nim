@@ -7,6 +7,7 @@ joinable: true
 ## Replicate rules checker holds itself to, from `checker.nim` header.
 ##   Each rule here is one curator pass of 2026-09-06 found by reading, so each fixture
 ##   is that fault written down: dead routine, module without suite, verb set drifting.
+##   Option drift is fourth: usage text leaving out option parser takes, as `--driven` was.
 
 import std/[strutils, unittest]
 import ../src/[markdown, checker]
@@ -95,6 +96,19 @@ when isMainModule:
     let stale = table & "| `audit` | retired |\n"
     check checkVerbs(KOCH & usage, stale).len == 1  # table keeps row for retired verb
     check checkVerbs(KOCH & usage, stale)[0].path == CURATOR_PATH
+
+  test "usage text must print every option parser takes, and no other":
+    let usage = "Usage: koch <ci|tree>\n            [--root:<dir>] [--all]\n\"\"\"\n"
+    check KOCH.optionLabels == @["all", "root"]  # parser's branches, never dispatch's
+    check (KOCH & usage).usageOptions == @["all", "root"]
+    check checkOptions(KOCH & usage).len == 0  # two statements, one set
+    let short = "Usage: koch <ci|tree>\n            [--root:<dir>]\n\"\"\"\n"
+    check checkOptions(KOCH & short).len == 1  # option parsed and never printed
+    check checkOptions(KOCH & short)[0].path == KOCH_PATH
+    let retired = "Usage: koch <ci|tree>\n  [--root:<dir>] [--all] [--gone]\n\"\"\"\n"
+    check checkOptions(KOCH & retired).len == 1  # option printed and never parsed
+    # Text after usage block is not usage: header prose names options too.
+    check (KOCH & usage & "## `--later` is prose\n").usageOptions == @["all", "root"]
 
   test "only checks-reference table is read, since document tables others":
     # Repository map rows open with backticked paths and would otherwise read as verbs.
