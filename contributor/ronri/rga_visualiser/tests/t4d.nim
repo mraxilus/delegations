@@ -1,8 +1,6 @@
 discard """
 action: run
-cmd: "nim c --hints:on -d:testing -d:nimUnittestAbortOnError:on $options -r $file"
-batchable: true
-joinable: true
+cmd: "nim c --hints:on -d:testing -d:nimUnittestAbortOnError:on $options $file"
 """
 ## Run shared suite at shipped capacities, on C backend desktop entry point uses.
 ##

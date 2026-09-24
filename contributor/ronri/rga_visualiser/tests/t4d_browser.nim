@@ -2,8 +2,6 @@ discard """
 action: run
 targets: "js"
 matrix: "-d:nimUnittestAbortOnError:on"
-batchable: true
-joinable: true
 """
 ## Run shared suite as browser build compiles it, on JS backend.
 ##
