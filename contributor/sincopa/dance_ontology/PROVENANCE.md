@@ -1640,6 +1640,10 @@ Cost: a suite under `tests/joined/` is not run alone by testament. It runs as pa
 or alone by name as an argument to that binary. And a failing check stops the joined run, so the
 suites after it give no verdict until it passes.
 
+**The review page counts the laws of every suite, joined or not.** It reads every `t*.nim` under
+`tests/`, so a suite that moves into a folder is still counted. Verified by `joined/treview.nim`,
+which counts the laws of each stub and of the suites it imports, and reads the page against them.
+
 Test binaries inherit the working directory of testament. So `build/review`, `build/design` and
 `walkFiles("tests/t*.nim")` resolve only when testament runs from the project directory, as the
 runner of koch does. To run it from the repository root breaks them.
