@@ -1,9 +1,3 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Test that picture of frame says what frame is, at any size.
 ##
 ## Every view is built on this drawing, and most of them draw it small: as
@@ -15,7 +9,7 @@ joinable: true
 
 import std/[options, sequtils, strutils, unittest]
 
-import ../src/dance_ontology
+import ../../src/dance_ontology
 
 
 suite "the picture":

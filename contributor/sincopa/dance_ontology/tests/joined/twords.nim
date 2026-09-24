@@ -1,9 +1,3 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Hold table report shows to words report can say.
 ##   `sim/words` is one translation table, and `sim/verdicts.md` opens by
 ##     printing it, so reader knows what each phrase means.  Printed table is
@@ -16,10 +10,10 @@ joinable: true
 
 import std/[algorithm, options, os, strutils, unittest]
 
-import ../sim/[read, rig, words]
+import ../../sim/[read, rig, words]
 
 
-const REPORT = currentSourcePath().parentDir.parentDir / "sim" / "verdicts.md"
+const REPORT = currentSourcePath().parentDir.parentDir.parentDir / "sim" / "verdicts.md"
   ## Report sim writes, which opens by printing its translation table.
 
 

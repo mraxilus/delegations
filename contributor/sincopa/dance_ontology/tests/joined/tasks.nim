@@ -1,9 +1,3 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on -d:danger $options $file"
-batchable: true
-joinable: true
-"""
 ## What reference's cards ask of body sim, held to being one question wherever one
 ## picture is drawn.
 
@@ -11,8 +5,8 @@ joinable: true
 
 import std/[tables, unittest]
 
-import ../design/[asks, parts]
-import ../src/dance_ontology/rotation
+import ../../design/[asks, parts]
+import ../../src/dance_ontology/rotation
 
 
 suite "what each card asks of sim":

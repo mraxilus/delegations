@@ -1,9 +1,3 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Hold reader of prose to markup pages are really written in.
 ##   `plain.nim` reads prose off markup by line forms, so every element whose name opens same
 ##     way as `p` or `li` is one it must step over: `path`, `polyline`, `pattern` and
@@ -17,7 +11,7 @@ joinable: true
 
 import std/[strutils, unittest]
 
-import ../design/plain
+import ../../design/plain
 
 
 suite "prose off markup":

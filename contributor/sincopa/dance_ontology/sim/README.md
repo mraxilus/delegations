@@ -67,7 +67,7 @@ words.nim    what the sim reads, said in the agreed words, in one table
 verdicts.nim the sim run as an instrument against the ontology's sheet
 verdicts.md  what it said, translated once and generated, not edited
 ../tests/trigid.nim  the rig held to tape, geometry and the Architect's floor
-../tests/tlimb.nim   the tape's numbers and one arm's kinematics
+../tests/joined/tlimb.nim  the tape's numbers and one arm's kinematics
 ../tests/tread.nim   crossings read off the drawn arms, not assumed
 ../design/rig_view.nim  the rig viewer, compiled to JS: every capsule the
              engine collides, and every joint beside its range

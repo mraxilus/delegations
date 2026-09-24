@@ -1,9 +1,3 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Hold chain's names to glossary they are meant to speak.
 ##   `GLOSSARY.md` is agreed vocabulary, and every entry carries `_Avoid_` line
 ##     naming words that entry replaced.  Nothing in project read that line, so
@@ -19,14 +13,14 @@ joinable: true
 
 import std/[math, options, os, strutils, tables, unittest]
 
-import ../design/parts
-import ../design/rules
+import ../../design/parts
+import ../../design/rules
 
 
 const
-  GLOSSARY = currentSourcePath().parentDir.parentDir / "GLOSSARY.md"
+  GLOSSARY = currentSourcePath().parentDir.parentDir.parentDir / "GLOSSARY.md"
     ## Vocabulary this project agreed, beside its code.
-  REPORT = currentSourcePath().parentDir.parentDir / "sim" / "verdicts.md"
+  REPORT = currentSourcePath().parentDir.parentDir.parentDir / "sim" / "verdicts.md"
     ## Report sim writes, which is what reader of sim reads.
   RUNG_AT = {50: "cross", 100: "diamond", 150: "swan"}.toTable
     ## Glossary's word for each rung of chain, by turns in hundredths.
@@ -167,7 +161,7 @@ suite "pages speak of the lead and the follow":
   let
     source = readFile(GLOSSARY)
     rejected = source.avoided(DANCER_TERMS)
-    root = currentSourcePath().parentDir.parentDir
+    root = currentSourcePath().parentDir.parentDir.parentDir
 
   test "glossary still rejects a gendered word for each dancer":
     for term in DANCER_TERMS:
