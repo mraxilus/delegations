@@ -1607,6 +1607,11 @@ Cost: a change to any `sim/*.nim`, words included, asks for the answers again. T
 four cores, compile included, on 2026-09-24. A digest of every file is one rule. A list of the
 files that move the answers would be a second thing to keep true.
 
+A change to comments alone gives the same answers and a new stamp. Two comments in
+`sim/verdicts.nim` and `sim/words.nim` changed, and every answer came back the same number. Of the
+last 40 commits to `sim/*.nim` on 2026-09-24, two changed comments alone. So a stamp that skips
+comments would rarely save a run.
+
 **The replay is exact on the runner too.** Its law passed there on `5975d93`, on 2026-09-24, so the
 runner walks every kept sweep and both drawn walks to the numbers this container kept.
 
@@ -1649,6 +1654,9 @@ reddens a law.
   compile included, and the whole of `koch ci` took 110 s.
 - `trigid.nim` on the runner, under testament, compile included: 43.71 s on `5975d93`, against
   503.91 s and 504.66 s with every search. The project job took 2 min 29 s in all.
+- The whole of `nim r koch ci`, with the kept answers and the joined suites: 57 s and 66 s, in two
+  runs on 2026-09-24. `trigid.nim` took 30.4 s and 30.5 s of it, `tjoined.nim` 10.7 s and 12.8 s,
+  and `tread.nim` 9.3 s and 9.2 s.
 - `trigid.nim`, danger build, under `nim r koch ci`: 331 s wall. That is four Xeon cores shared with
   nothing else, on a Linux amd64 container, Nim 2.2.12, 2026-09-13. `tmarks` takes 12.6 s, `tread`
   7.9 s, and `tengine` 3.3 s. Every other suite is under 2 s. It is a single figure with no pair, so
