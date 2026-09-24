@@ -1262,8 +1262,8 @@ and turns about that line, so the eye stands where it stands and the frame stays
 axis before it. A pitch about the stale one tips the up axis off the sight, which is a roll nobody
 asked for.
 
-`look` takes the two arguments that `orbit` takes, with the same signs, so a mouse drag feeds either
-verb as the selection comes and goes.
+`look` takes the two arguments that `orbit` takes, with the same signs. So one desktop mouse drag
+feeds either verb as the selection comes and goes.
 
 The axes are the camera's own and never the world's, so there is no pole and no clamp. Eight pitches
 of a quarter radian compose to exactly two radians, which is past straight down.
@@ -1272,7 +1272,7 @@ of a quarter radian compose to exactly two radians, which is past straight down.
 axes.** The roll a closed drag leaves behind is the solid angle that drag encloses. A loop of 0.3
 radians leaves 0.0813, against 0.0822 enclosed: 4.7 degrees for each loop, and 18.6 over four. That
 is the geometry of transport, not a fault, and no order of the two turns escapes it. `look` and
-`orbit` carry exactly the same amount. A mouse keeps it, with Q and E to answer it.
+`orbit` carry exactly the same amount. The desktop's mouse keeps it, with Q and E to answer it.
 
 **A finger carries what it holds, one pixel for one.** `turnsCarrying` pitches about the level axis
 until one direction has the height of the other, then yaws about world up until their bearings meet.
@@ -1288,14 +1288,14 @@ than a third of the short side at the pivot's depth, and inside the eye's separa
 
 Not a rate: it turned the sight by an angle the screen does not show. On a phone, a 60 by 40 px drag
 carried free aim's picture 542.4 by 411.8 px, and now 60.4 by 41.0. Not the roll put back after each
-turn about the camera's own axes, which left the sight sunk. Not a turntable bounded short of the
-pole, which stops every orbit at straight down.
+turn about the camera's own axes, which left the sight sunk.
 
-A finger has no roll key beside it, and it wanders in curves. So `turnFollowing` turns about world
-up and the level axis across the sight, and keeps any roll a twist set. Each axis is the world axis
-nearest the camera's own, signed from the camera. So the camera passes over the top, upside down on
-the far side, and the picture still follows the finger. Over 2,000 finger turns at 390 by 844 in
-Chromium, on 2026-09-24, free aim took 0.45 to 0.48 ms each. Orbit took 0.63 to 0.72 ms.
+A finger has no roll key beside it and wanders in curves, and the page's mouse drags as a finger
+does. So `turnFollowing` turns about world up and the level axis across the sight, and keeps any
+roll a twist or Q and E set. Each axis is the world axis nearest the camera's own, signed from the
+camera. So the camera passes over the top, upside down on the far side, and the picture still
+follows the drag. On a 390 by 844 page in Chromium on 2026-09-24, a free-aim turn took 0.45 to 0.48
+ms. An orbit turn took 0.63 to 0.72 ms, over 2,000 turns of each.
 
 **The speed climbs toward a cap and never reaches it.** `speedTravelling` is the cap times
 `1 − e^(−t/τ)`. τ is `SECONDS_SPEED_RISE`, 0.6 s: 63 percent of the cap at one τ, and 95 percent at
@@ -1423,6 +1423,7 @@ The separation then scales as the turntable's dolly scales it.
 Verified by driven checks:
 
 - a left drag with nothing picked turned the sight and moved the eye 0.000000 units;
+- a left drag of 60 and 40 px carried the object beside the cursor 59.1 and 40.7 px;
 - a 600 px finger swipe away and back brought the azimuth back to 1.0500 and elevation to 0.420000;
 - a finger moved 60 and 40 px with nothing picked carried the object beside it 59.1 and 40.7 px;
 - a finger dragged down with an object picked carried the eye over the top, and the pivot 0.000000;

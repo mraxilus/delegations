@@ -1076,19 +1076,12 @@ proc ensureViewOverlay(width, height: int) =
 
 #[ Camera ]#
 
-proc nimCameraTurn(turn, rise: cfloat) {.exportc.} =
-  ## Turn view by mouse's left drag, in whichever way its state reads, in radians.
-  ##   Free flight looks and selection orbits; see `interaction.turnAcross`.
-  TWEEN_CAMERA.abandon()
-  turnAcross(CAMERA, float(turn), float(rise), SELECTION.len > 0)
-
-
 proc nimCameraTurnAt(
   before_x, before_y, after_x, after_y: cfloat; width, height: cint
 ) {.exportc.} =
-  ## Turn view by finger's drag, in whichever way its state reads.
-  ##   See `interaction.turnFollowing`. Both ends of finger's step, since what finger holds
-  ##   under one end is carried to other.
+  ## Turn view by drag of finger or left mouse button, in whichever way its state reads.
+  ##   See `interaction.turnFollowing`. Both ends of step, since what drag holds under one
+  ##   end is carried to other.
   ##   Selection's reach from pivot is read off aim standing offer framed it with, so sphere
   ##   orbit holds spans what is picked.
   TWEEN_CAMERA.abandon()

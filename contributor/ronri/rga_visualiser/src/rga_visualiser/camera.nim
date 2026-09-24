@@ -359,7 +359,7 @@ func initCameraDefault*(): Camera =
 func rollHeld*(camera: Camera): Option[float] =
   ## Read camera's roll about its sight, against `UP_WORLD`, or none near pole.
   ##   Positive `roll` lowers this reading.
-  ##   Read by suite, which holds finger's drag in `interaction.turnAcross` to leaving it.
+  ##   Read by suite, which holds page's drag in `interaction.turnFollowing` to leaving it.
   let frame = camera.frame
   if abs(dot(frame.forward, UP_WORLD)) >= COSINE_POLE_ROLL: return none(float)
   some(arctan2(dot(frame.axis_right, UP_WORLD), dot(frame.axis_up, UP_WORLD)))
