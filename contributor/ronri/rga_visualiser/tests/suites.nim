@@ -8006,6 +8006,10 @@ suite "Interaction":
 
 suite "Marker":
   const (WIDTH_MARK, HEIGHT_MARK) = (800, 600)
+  const STEP_GLIDE = 0.005
+    ## Azimuth between samples of glide law: 1257 in each orbit.
+    ##   Coarse enough to run in seconds on JS; fine enough that line's push turns through
+    ##   third of what its law allows in one step, and plane's sampled top still hops.
 
   proc setUpAt(
     azimuth, elevation, distance: float
@@ -8566,7 +8570,7 @@ suite "Marker":
         if step_label > 2.0*step_label_before + 1.0: inc hops_label
         (step_sampled_before, step_label_before) = (step_sampled, step_label)
       (x_sampled_before, x_label_before) = (some(x_sampled), some(loop.label_at.x))
-      azimuth += 0.002
+      azimuth += STEP_GLIDE
     check hops_label == 0
     check hops_sampled > 0 # Failure this replaces, pinned.
 
@@ -8641,7 +8645,7 @@ suite "Marker":
           step_before = step
         at_before = some(rails.label_at)
         away_before = (rails.label_away_x, rails.label_away_y)
-        azimuth += 0.002
+        azimuth += STEP_GLIDE
 
 
   test "a horizon line's label rides its band's left edge crossing through an orbit":
