@@ -60,8 +60,8 @@ translation is printed in one table, and nothing is tuned to make them agree.
 ## Build and test
 
 ```sh
-nim r koch ci                                          # root: tree, tests, scope, commits
-nim r koch tests contributor/sincopa/dance_ontology    # this project alone, every suite of it
+nim r koch check                                   # root: every check a pull request runs
+nim r koch test contributor/sincopa/dance_ontology  # this project alone, every suite of it
 nim r tools/build.nim assets                           # faces every page ships, into build/fonts
 nim r tools/build.nim pages                            # every page, picture and script, into build/
 nim r tools/build.nim verdicts                         # rewrite sim/verdicts.md from the model
