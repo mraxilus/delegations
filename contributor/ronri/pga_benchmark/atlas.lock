@@ -3,7 +3,7 @@
     "replications.mraxilus.gitlab.com": {
       "dir": "$deps/replications.mraxilus.gitlab.com",
       "url": "https://gitlab.com/mraxilus/replications",
-      "commit": "9f9019b26b46490f79f383eee693b1abc84a4f63",
+      "commit": "6a91c3f00abbf0c2e8584d5459c3b2da9f4df8e3",
       "version": ""
     }
   },
@@ -48,7 +48,7 @@
       "#   with characters no release lexes. Same commit `rga_visualiser` pins, so one cached",
       "#   build serves both projects; see PROVENANCE.md, Dependencies.",
       "requires \"nim == 27763495bcfe265507ca98aedc1c7064bf1e0e4d\"",
-      "requires \"https://gitlab.com/mraxilus/replications#9f9019b\"",
+      "requires \"https://gitlab.com/mraxilus/replications#6a91c3f\"",
       ""
     ]
   },
