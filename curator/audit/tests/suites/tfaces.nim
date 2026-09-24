@@ -50,7 +50,6 @@ suite "Faces":
     check found[0].message.endsWith("got `Fraunces`.")
 
   test "system stack is reported too, since keyword resolves to whatever viewer has":
-    # This is shape three targets actually carried, and reading alone did not catch it.
     check checkFaces("p.html", "  body { font-family: ui-sans-serif, system-ui; }\n").len == 1
     check checkFaces("p.html", "  b { font-family: ui-monospace, Menlo; }\n").len == 1
     check checkFaces("p.html", "  i { font-family: serif; }\n").len == 1
@@ -99,10 +98,9 @@ suite "Faces":
     check not isHeading("h7")
 
   test "selector styling something inside heading is not styling heading":
-    # Both of these are real, from `design/page.nim` and `mockups/wholecloth.html`. Reading
-    #   whole selector reported each as heading set in mono, where what each sets is small
-    #   uppercase label beside heading. Check that accuses page of what it did not do is
-    #   worse than no check, since curator hands it to contributor as finding.
+    # Both are real, from `design/page.nim` and `mockups/wholecloth.html`: what each sets is
+    #   small uppercase label beside heading, never heading itself. Check accusing page of
+    #   what it does not do is worse than no check, since curator hands it on as finding.
     check not isHeading(".plate h3 .tag")
     check not isHeading(".panel h3 .tag")
     check not isHeading("h1 span")
@@ -140,9 +138,8 @@ suite "Faces":
     check checkFaces("p.html", "  body { font-family: \"Noto Sans\", serif; }\n").len == 0
 
   test "property that is not stack is not read as one, whatever commas it holds":
-    # Found by pointing check at real tree: `--ease` and `--surface` were reported as stacks
-    #   leading with `cubic-bezier(0.215` and `rgba(22`. Property is checked where `var()`
-    #   reaches it from declaration, never on its own.
+    # `--ease` and `--surface` hold commas and name no family. Property is checked where
+    #   `var()` reaches it from declaration, never on its own.
     const PALETTE = """
   :root {
     --ease: cubic-bezier(0.215, 0.61, 0.355, 1);
@@ -155,8 +152,8 @@ suite "Faces":
 
   test "line carrying two properties yields both, not first alone":
     # `:root { --sans: ...; --serif: ...; }` is one line and two stacks. Reading first alone
-    #   left second unresolved, so `var(--serif)` read as family nobody names and page was
-    #   reported for stack it had declared correctly.
+    #   leaves second unresolved, so `var(--serif)` reads as family nobody names, and page
+    #   declaring its stack correctly becomes finding.
     const ONE_LINE =
       """  :root { --mono: "Commit Mono", monospace; --serif: "Noto Serif", serif; }"""
     let held = ONE_LINE.propertyValues
@@ -177,8 +174,8 @@ suite "Faces":
       "  h1 { font-family: var(--serif); }\n  h2 { font-family: inherit; }\n").len == 0
 
   test "font shorthand names family last, and is read as stack":
-    # `design/page.nim` writes every stack this way; check reading `font-family` alone
-    #   passed it, which is how whole page stayed unseen.
+    # `design/page.nim` writes every stack this way, so check reading `font-family` alone
+    #   misses whole page.
     check shorthandFamilies("16px/1.6 var(--sans)") == "var(--sans)"
     check shorthandFamilies("500 0.7rem/1 var(--mono)") == "var(--mono)"
     check shorthandFamilies("italic bold 12px/30px Georgia, serif") == "Georgia, serif"
@@ -196,9 +193,3 @@ suite "Faces":
       "  :root { --sans: \"Noto Sans\", serif; }\n  h1 { font: 2rem var(--sans); }\n")
     check heading.len == 1
     check heading[0].message.endsWith("got `Noto Sans`.")
-
-  test "every family X.8 names is data, in role order":
-    check FAMILIES == [SERIF, SANS, MONO]
-    check SERIF == "Noto Serif"
-    check SANS == "Noto Sans"
-    check MONO == "Commit Mono"

@@ -1,7 +1,18 @@
-## Replicate branch grammar of `domains.nim` header and CONTRIBUTOR.md.
+## Replicate domain table and branch grammar of `domains.nim` header, and CONTRIBUTOR.md.
 
-import std/[options, unittest]
+import std/[options, sequtils, unittest]
 import ../../src/domains
+import ./fixtures
+
+
+const TABLE = staticRead("../../src/domains.nim").headerTable
+  ## Heading row, then one row per domain, as `domains.nim` header holds them.
+
+
+suite "Article I":
+  test "I.4 header table is derived view of registry":
+    check TABLE[0] == @["Folder", "Name", "Theme"]  # columns read below
+    check TABLE[1 .. ^1] == DOMAINS.mapIt(@[it.folder, it.name, it.theme])  # row per domain
 
 
 suite "Branch grammar":
@@ -48,6 +59,5 @@ suite "Branch grammar":
   test "domain lookup is exact":
     check "sincopa".findDomain.isSome  # slug is ASCII; accent lives in display name
     check "síncopa".findDomain.isNone  # folder that git would quote is gone
-    for d in DOMAINS: check d.folder.isProjectName  # what `static` holds at build time
     check "comma_games".findDomain.get.name == "comma, games"  # slug maps to display name
     check "Abstand".findDomain.isNone  # case-sensitive

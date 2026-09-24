@@ -24,7 +24,7 @@ suite "Toolchain":
     check not isCommit("295BAFC0D7E9A0C9A3BA0D9B39B5B0B6A4C1D2E3")  # uppercase
     check not isCommit("295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2eg")  # not hex
     check not isCommit("2.2.4")  # version
-    check isPin("2.2.4") and isPin("295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3")
+    check isPin("2.2.4") and isPin(COMMIT)
     check not isPin("devel")  # moving target records nothing
 
   test "pin is read only when exact":
@@ -35,8 +35,7 @@ suite "Toolchain":
     check nimPin("requires \"nim >= 2.2.4\"\n").isNone  # lower bound is not pin
     check nimPin("requires \"nim\"\n").isNone  # bare name names no version
     check nimPin("requires \"malebolgia\"\n").isNone  # no compiler requirement
-    check nimPin("requires \"nim == 295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3\"\n") ==
-      some("295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3")  # commit, for devel dependency
+    check nimPin("requires \"nim == " & COMMIT & "\"\n") == some(COMMIT)  # devel dependency
     check nimPin("requires \"nim == devel\"\n").isNone  # label, not pin
 
   test "project without exact pin is finding, naming what it holds":
@@ -53,34 +52,24 @@ suite "Toolchain":
     check workflowVersion("name: check\n").isNone  # absent
 
   test "driver pins version, never commit":
-    let commit = "295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3"
-    let found = checkDriver(WORKFLOW_PATH, WORKFLOW_TEXT, commit)
+    let found = checkDriver(WORKFLOW_PATH, WORKFLOW_TEXT, COMMIT)
     check found.len == 1  # setup action installs releases; every job waits on driver
-    check found[0].message.endsWith("got `" & commit & "`.")
-    check checkDriver(OTHER_PATH, WORKFLOW_TEXT, commit).len == 0  # named once, not per file
+    check found[0].message.endsWith("got `" & COMMIT & "`.")
+    check checkDriver(OTHER_PATH, WORKFLOW_TEXT, COMMIT).len == 0  # named once, not per file
 
-  test "driver version must equal driver project pin":
-    check checkDriver(WORKFLOW_PATH, WORKFLOW_TEXT, PIN).len == 0  # agreement
-    check checkDriver(WORKFLOW_PATH, WORKFLOW_TEXT, "2.2.6").len == 1  # drift
+  test "every workflow stating version must equal driver project pin":
+    for path in [WORKFLOW_PATH, OTHER_PATH]:  # driver's own, and second installing compiler
+      check checkDriver(path, WORKFLOW_TEXT, PIN).len == 0  # agreement
+      let drifted = checkDriver(path, WORKFLOW_TEXT, "2.2.6")
+      check drifted.len == 1  # drift
+      check drifted[0].path == path  # points at file that drifted
+    # Absent key: driver's own must state version; workflow installing no compiler states none.
     check checkDriver(WORKFLOW_PATH, "name: check\n", PIN).len == 1  # unstated
-    check checkDriver(WORKFLOW_PATH, WORKFLOW_TEXT, "2.2.6")[0].path ==
-      WORKFLOW_PATH  # points at workflow
-
-  test "every workflow stating version is held to same pin":
-    check checkDriver(OTHER_PATH, WORKFLOW_TEXT, PIN).len == 0  # second workflow agrees
-    let drifted = checkDriver(OTHER_PATH, WORKFLOW_TEXT, "2.2.6")
-    check drifted.len == 1
-    check drifted[0].path == OTHER_PATH  # points at file that drifted
-    # Workflow installing no compiler states no version, and is left alone.
-    check checkDriver(OTHER_PATH, "name: role\n", PIN).len == 0
-
+    check checkDriver(OTHER_PATH, "name: role\n", PIN).len == 0  # left alone
 
   test "pin is served by commit for commit, by version otherwise":
-    # Replaces `checkRunning`, which resolution retired: nothing called it once each pin got
-    #   its own toolchain, and rule with no caller enforces nothing.
-    let commit = "295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3"
-    let running = Compiler(version: PIN, commit: commit)
+    let running = Compiler(version: PIN, commit: COMMIT)
     check PIN.serves(running)  # version pin reads version
-    check commit.serves(running)  # commit pin reads hash
+    check COMMIT.serves(running)  # commit pin reads hash
     check not "2.2.6".serves(running)  # another version does not
-    check not commit.serves(Compiler(version: PIN))  # compiler reporting no hash serves none
+    check not COMMIT.serves(Compiler(version: PIN))  # compiler reporting no hash serves none

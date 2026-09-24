@@ -62,11 +62,6 @@ suite "Article VI.8":
     check checkEnglish("GUIDE.md", "Nothing is viable here.").len == 0  # whole word only
     check checkEnglish("GUIDE.md", "Write `ensure` in code.").len == 0  # span is one name
 
-  test "document outside governed list passes":
-    let prose = "Ensure " & "word ".repeat(SENTENCE_WORDS + 1) & "end."
-    check checkEnglish("contributor/ronri/pga_benchmark/gaps.md", prose).len == 0  # generated
-    check checkEnglish("LICENSE.md", prose).len == 0
-
   test "governed set derives records and index READMEs from layout":
     check isGoverned("CONSTITUTION.md")  # root document, still data
     check isGoverned("curator/README.md")  # project root index

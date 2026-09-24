@@ -1,4 +1,4 @@
-## Replicate grant `permissions` block actually makes, from 403 that taught it.
+## Replicate grant `permissions` block makes: scope left out is `none`, never left alone.
 
 import std/[options, strutils, unittest]
 import ../../src/workflows
@@ -16,8 +16,8 @@ jobs:
     steps:
       - run: gh api "repos/$REPO/actions/runs/$RUN_ID"
 """
-  ## Workflow as written when its first firing got 403: it reads runs and grants no
-  ## `actions`, which block naming any scope sets to `none` rather than leaving alone.
+  ## Workflow reading runs and granting no `actions`, which block naming any scope sets to
+  ## `none` rather than leaving alone, so read gets 403.
 
 
 suite "Workflows":
@@ -65,10 +65,8 @@ jobs:
     check NESTED.permissionScopes.isNone
 
   test "listing pull requests wants `pull-requests`, which no other mark reaches":
-    # Second workflow here sweeps pull requests, and `gh pr` is its own reach: `issues`
-    #   does not cover it, so block granting only that loses it to `none` and sweep gets
-    #   403 on its first firing -- same failure `watch.yml` met, unseen because no
-    #   workflow had used `gh pr` before.
+    # `gh pr` is its own reach: `issues` does not cover it, so block granting only that
+    #   loses it to `none`, and workflow listing pull requests gets 403.
     const LISTS_PRS = """
 name: sweep
 

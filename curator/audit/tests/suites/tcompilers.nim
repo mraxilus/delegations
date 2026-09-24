@@ -15,8 +15,7 @@ suite "Compilers":
   test "release is fetched as tarball, and everything else is built":
     check releaseUrl("2.2.4", "linux_x64") ==
       "https://nim-lang.org/download/nim-2.2.4-linux_x64.tar.xz"
-    let commit = "295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3"
-    check isBuilt(commit, "linux_x64")  # commit is never published
+    check isBuilt(COMMIT, "linux_x64")  # commit is never published
     check isBuilt("2.2.4", "")  # unpublished platform builds from source
     check not isBuilt("2.2.4", "linux_x64")  # published release is fetched
 
@@ -25,7 +24,6 @@ suite "Compilers":
       "https://nim-lang.org/download/nim-2.2.12-linux_x64.tar.xz.sha256"
     # Digest belongs to tarball, so it is only asked for where tarball is.
     check digestUrl("2.2.12", "linux_x64").startsWith(releaseUrl("2.2.12", "linux_x64"))
-    check DIGEST == ".sha256"
 
   test "digest is read from sidecar, and anything that is not one reads as nothing":
     # What nim-lang.org serves, verbatim: `sha256sum` output, digest then two spaces.

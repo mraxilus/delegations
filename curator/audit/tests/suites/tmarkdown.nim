@@ -1,6 +1,6 @@
 ## Replicate Markdown shapes of `markdown.nim` header, and costs it states.
-##   Layout, provenance and glossary all read documents through these three, and each was
-##   covered only through those checks until this file.
+##   Layout, provenance and glossary all read documents through these three, so each is held
+##   here directly, not only through those checks.
 
 import std/unittest
 import ../../src/markdown

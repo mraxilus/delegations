@@ -12,13 +12,8 @@ const OUTSIDE = @[
 
 
 suite "Scope":
-  test "main passes every path; curator root passes every path but contributor code":
+  test "main passes every path":
     check checkScope(MAIN, OUTSIDE).len == 0  # main is merge target
-    # Curator root owns empty prefix, so nothing is out of scope for it...
-    check checkScope("curator/rules", ["README.md", CURATOR & "/audit/src/audit.nim"]).len == 0
-    # ...but its reach into contributor projects stops at their records.
-    check checkScope("curator/rules", OUTSIDE).mapIt(it.path) ==
-      @["contributor/ronri/beta/x.nim", "contributor/bangu/other/x.nim"]  # code, not records
 
   test "contributor branch confined to project prefix":
     for d in DOMAINS:  # 5 domains, exhaustive
@@ -77,3 +72,14 @@ suite "Scope":
     check checkScope(
       "contributor/ronri/alpha/work", [CONTRIBUTOR & "/ronri/alpha/src/alpha.nim"]
     ).len == 0
+
+  test "content-preserving move is exempt for curator root alone":
+    let alpha = CONTRIBUTOR & "/ronri/alpha/src/alpha.nim"
+    let beta = CONTRIBUTOR & "/ronri/alpha/src/beta.nim"
+    check checkScope("curator/rules", [alpha]).len == 1  # edit to contributor code is finding
+    check checkScope("curator/rules", [alpha], [alpha]).len == 0  # same path moved is not
+    check checkScope("curator/rules", [alpha, beta], [alpha]).mapIt(it.path) ==
+      @[beta]  # exemption covers moved path alone
+    # Move never widens project branch: its prefix decides before exemption is read.
+    check checkScope("contributor/ronri/beta/work", [alpha], [alpha]).len == 1  # other project
+    check checkScope("curator/audit/work", [alpha], [alpha]).len == 1  # curator project

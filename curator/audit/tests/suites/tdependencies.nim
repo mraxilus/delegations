@@ -26,8 +26,9 @@ suite "Dependencies":
     check lockDirs("{\"items\": {}}").len == 0  # empty items
 
   test "checkout absent after restore is finding":
-    # Regression: `atlas changed` exits 0 while warning `repo missing!`, so restore that
-    #   fetched nothing reported success (Atlas 0.9.0, measured 2026-09-06).
+    # `atlas changed` exits 0 while warning `repo missing!`, so restore fetching nothing
+    #   reports success. Measured on Atlas 0.9.0, 2026-09-06; 0.14.7, which pinned toolchain
+    #   ships, is unmeasured.
     let root = createTempDir("delegations_", "_lock")
     defer: removeDir(root)
     root.writeInto("curator/probe/atlas.lock", LOCK_TEXT)
@@ -53,9 +54,9 @@ suite "Dependencies":
     check lockNimble(LOCK_TEXT).isNone  # lock storing no copy names none
 
   test "stored nimble differing from committed one is finding, naming line about to be lost":
-    # Regression: `atlas rep` writes lock's copy back over nimble file, so pin edited without
+    # `atlas rep` writes lock's copy back over nimble file, so pin edited without
     #   regenerating lock is reverted silently; failure then surfaces as later finding on file
-    #   contributor never touched (reported by contributor/ronri/rga_visualiser, issue 25).
+    #   contributor never touched.
     let stale = NIMBLE_TEXT.replace("nim == " & PIN, "nim >= " & PIN)
     let found = checkLockNimble("p/p.nimble", "p/atlas.lock", lockWith(stale), NIMBLE_TEXT)
     check found.len == 1

@@ -1,29 +1,38 @@
-## Replicate kind registry of `kinds.nim` header table.
+## Replicate kind registry of `kinds.nim` header table, read from header rather than restated.
 
-import std/[options, unittest]
+import std/[options, sequtils, strutils, unittest]
 import ../../src/kinds
+import ./fixtures
+
+
+const TABLE = staticRead("../../src/kinds.nim").headerTable
+  ## Heading row, then one row per kind, as `kinds.nim` header holds them.
+
+
+func yesNo(is_set: bool): string =
+  ## Render flag as header spells it.
+  if is_set: "yes" else: "no"
+
+
+suite "Article I":
+  test "I.4 header table is derived view of registry":
+    check TABLE[0] == @["Kind", "Match", "Syntax", "Prose", "Gate"]  # columns read below
+    let rows = TABLE[1 .. ^1]
+    check rows.mapIt(it[0]) == Kind.toSeq.mapIt($it)  # every kind once, in enum order
+    for (row, kind) in zip(rows, Kind.toSeq):
+      for match in row[1].splitWhitespace:
+        for prefix in ["", "d/"]:  # root and nested
+          # Leading dot is extension or dotfile basename; one spelling of two classifies.
+          let spellings = if match.startsWith("."): @[match, "x" & match] else: @[match]
+          check spellings.anyIt(kindOf(prefix & it) == some(kind))  # VI.5 match classifies
+      check row[2] == $kind.rule.syntax  # Syntax column
+      check row[3] == kind.rule.is_prose.yesNo  # Prose column
+      check row[4] == kind.rule.is_gated.yesNo  # Gate column
 
 
 suite "Article VI":
-  test "VI.5 every registered match classifies":
-    check kindOf("a/b.nim").get == Kind.Nim  # .nim
-    check kindOf("config.nims").get == Kind.NimScript  # .nims
-    check kindOf("curator/audit/audit.nimble").get == Kind.Nimble  # .nimble
-    check kindOf("koch.nim.cfg").get == Kind.Cfg and kindOf("x/nim.cfg").get == Kind.Cfg  # .cfg
-    check kindOf("README.md").get == Kind.Markdown  # .md
-    check kindOf("a.yml").get == Kind.Yaml and kindOf("a.yaml").get == Kind.Yaml  # yaml
-    check kindOf(".gitignore").get == Kind.GitIgnore  # basename
-    check kindOf(".gitattributes").get == Kind.GitAttributes  # basename
-    check kindOf("x/app.ts").get == Kind.TypeScript  # .ts
-    check kindOf("x/src/shim.cpp").get == Kind.Cpp  # .cpp
-    check kindOf("x/src/shim.hpp").get == Kind.Cpp  # .hpp, C++ header by extension
-    check kindOf("x/src/glue.c").get == Kind.C  # .c
-    check kindOf("x/src/glue.h").get == Kind.C  # .h reads as C, since name cannot tell
-    check kindOf("x/pages/index.html").get == Kind.Html  # .html
-    check kindOf("x/pages/frame.svg").get == Kind.Svg  # .svg
-    check kindOf("package.json").get == Kind.Json  # .json
-    check kindOf("x/atlas.config").get == Kind.Json  # atlas basename
-    check kindOf("atlas.lock").get == Kind.Json  # atlas basename
+  test "VI.5 last extension decides":
+    check kindOf("koch.nim.cfg") == some(Kind.Cfg)  # driver flags read as cfg, never Nim
 
   test "VI.5 unregistered kinds are none":
     for path in ["Makefile", "x.mk", "data.csv", "nimble.paths", "a.txt"]:  # 5 cases

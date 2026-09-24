@@ -1,12 +1,12 @@
-## Replicate Article IX.5 for git enumeration: real repository, real git, paths read back.
+## Replicate git enumeration of `tree.nim` header: real repository, real git, paths read back.
 
 import std/[os, options, sequtils, strutils, unittest]
 import ../../src/tree
 import ./fixtures
 
 
-suite "Article IX":
-  test "IX.5 git lists tracked and untracked files, never ignored ones":
+suite "Tree":
+  test "git lists tracked and untracked files, never ignored ones":
     let root = tempRepo()
     defer: removeDir(root)
     root.writeInto(".gitignore", "bin/\n")
@@ -21,7 +21,7 @@ suite "Article IX":
     check entries[1].kind.isSome and entries[1].content == "discard\n"  # registered kind read
     check entries[2].kind.isNone and entries[2].content.len == 0  # unregistered kind unread
 
-  test "IX.5 changed paths and subjects since base":
+  test "changed paths and subjects since base":
     let root = tempRepo()
     defer: removeDir(root)
     root.writeInto(ALPHA_DIR & "/README.md", "# a\n")
@@ -39,14 +39,14 @@ suite "Article IX":
     check subjects(root, "main") ==
       @["refactor(alpha): rename x", "feat(alpha): add x"]  # newest first, base excluded
 
-  test "IX.5 newest commit outside window, empty when none is that old":
+  test "newest commit outside window, empty when none is that old":
     let root = tempRepo()
     defer: removeDir(root)
     let head = root.git("rev-parse HEAD").strip
     check root.revBefore(0) == head  # every commit lies before now
     check root.revBefore(3650) == ""  # nothing ten years old, so window holds whole history
 
-  test "IX.5 a warning git writes is never read as a field":
+  test "a warning git writes is never read as a field":
     # Two merge bases make git warn on `diff base...HEAD`, and warning ends in newline
     # rather than in NUL, so stream carrying both glues it to first path.
     let root = tempRepo()
@@ -78,7 +78,31 @@ suite "Article IX":
       check path.startsWith(ALPHA_DIR)  # every field is still path, and path alone
     check ALPHA_DIR & "/scoped.nim" in changedPaths(root, "right")
 
-  test "IX.5 git failure raises with output":
+  test "exact rename alone is move, and what base gained is read apart":
+    let root = tempRepo()
+    defer: removeDir(root)
+    root.writeInto("a.nim", "discard 1\n")
+    root.writeInto("b.nim", "discard 2\n")
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'feat(x): add a and b'")
+    discard root.git("checkout -q -b work")
+    discard root.git("mv a.nim c.nim")
+    discard root.git("mv b.nim d.nim")
+    root.writeInto("d.nim", "discard 2\ndiscard 3\n")
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'refactor(x): move a, move and edit b'")
+    discard root.git("checkout -q main")
+    root.writeInto("NEW.md", "# New\n")
+    discard root.git("add -A")
+    discard root.git("commit -q -m 'docs(x): add new'")
+    discard root.git("checkout -q work")
+    check movedPaths(root, "main") == @["a.nim", "c.nim"]  # edited rename absent
+    check gainedPaths(root, "main") == @["NEW.md"]  # base's own commit, never branch's
+    let changed = changedPaths(root, "main")
+    check changed == @["a.nim", "b.nim", "c.nim", "d.nim"]  # both sides of every rename
+    check "NEW.md" notin changed  # base's gain is no change of branch
+
+  test "git failure raises with output":
     expect IOError: discard gitFields("/nonexistent_delegations", ["status"])  # non-zero exit
     let root = tempRepo()
     defer: removeDir(root)

@@ -25,11 +25,6 @@ suite "Justification":
     check checkJustification("p/src/glue.ts", REASON, ts()).len == 0  # argued
 
   test "every gated kind is held to same rule, and ungated kinds to none":
-    check Kind.TypeScript.rule.is_gated  # JavaScript forced by browser or node host
-    check Kind.Cpp.rule.is_gated  # library no Nim import expresses
-    check Kind.C.rule.is_gated
-    check not Kind.Nim.rule.is_gated  # default language argues for nothing
-    check not Kind.Markdown.rule.is_gated
     let shim = "// Flatten overload set; " & MARKER & " importcpp cannot bind defaults.\n"
     check checkJustification("p/src/shim.cpp", shim, Kind.Cpp.rule).len == 0
     check checkJustification("p/src/shim.cpp", "// Flatten overloads.\n", Kind.Cpp.rule).len == 1

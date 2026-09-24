@@ -16,7 +16,7 @@ suite "Article IX":
     check runIn(root, "true", []) == 0  # success
     check runIn(root, "false", []) == 1  # failure
 
-  test "IX.6 declared packages are read as lines, and only bare names count":
+  test "declared packages are read as lines, and only bare names count":
     # `system` verb's contract is one bare name per line. Only other thing reaching that
     #   stream is compiler complaining, which always spells position before its message, so
     #   line carrying whitespace is dropped rather than installed.
@@ -36,9 +36,9 @@ suite "Article IX":
     # Empty `bin` names compiler on PATH, which is what CI already installs per job.
     let pass = Target(dir: "contributor/ronri/pass")
     let fail = Target(dir: "contributor/ronri/fail")
-    check runTests(root, [pass]).len == 0  # passing project is clean
     let found = runTests(root, [pass, fail])
-    check found.len == 1 and found[0].path == "contributor/ronri/fail/tests"  # failing named
+    check found.len == 1  # one finding: passing project clean
+    check found[0].path == "contributor/ronri/fail/tests"  # failing named
     check found[0].message.endsWith("got exit `1`.")  # testament exits 1 on failure
 
   test "IX.6 named toolchain is what runs, never whatever PATH holds":
