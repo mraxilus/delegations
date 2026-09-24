@@ -26,10 +26,10 @@ None. The checker publishes no page.
 
 ## Where to start
 
-Read the modules in the order that their `import` lines give, then `koch.nim` at the root.
-`src/audit.nim` is the umbrella, and it does not restate that order, because a second copy
-drifts. The rules are data at the top of each module, and `PROVENANCE.md` records why each one
-is shaped as it is.
+`src/audit.nim` is the umbrella, and it opens with the bootstrap diagram. Read the modules in
+the order that it gives, then `koch.nim` at the root. The checker holds the diagram to the
+`import` line of each module, so it cannot drift in silence. The rules are data at the top of
+each module, and `PROVENANCE.md` records why each one is shaped as it is.
 
 ## Status
 

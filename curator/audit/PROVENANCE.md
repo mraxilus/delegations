@@ -1168,6 +1168,8 @@ the runner rather than by a curator who reads.
 - Verbs are read from the command dispatch alone, bounded between `case options.command` and
   its `else`. The option parser cases over labels a few lines above. Without that bound,
   `root`, `all`, `branch` and `sweep` would read as verbs.
+- **Bootstrap drift**: the diagram of the umbrella against the import line of each module,
+  as the last section of this subsystem says.
 - **Option drift**: one set named twice. The names are the options that koch parses, and the
   `--` options that its usage text prints. Options are read from the one-line branches under
   `case key`, and the read stops at the first line that is not a branch. Usage is read from
@@ -1188,8 +1190,30 @@ the runner rather than by a curator who reads.
   verb dropped from the usage line is one finding that names what usage prints. An option
   parsed and not printed, or printed and not parsed, is one finding on `koch.nim`.
 
-**No copy of the module graph is written.** The `import` line of each module is the graph, and
-a hand-written copy drifts from it. So `audit.nim` names no module order.
+**The umbrella draws the module graph, and the checker holds the drawing to the graph.** The
+`import` line of each module is the graph. The `->` diagram in the header of `audit.nim` is a
+view of it that Article I.5 asks for, and a hand-written copy drifts. So `checkBootstrap`
+reads both, as Article I.4 holds a table to its declarations.
+
+- Each chain is one line, and each member of a group comes before each member of the next.
+  A module may appear in several chains, so the diagram reads by subject. Findings and text
+  come first, then comments, records, branch rules, toolchain, layout, and the plan.
+- Each module appears in the diagram, and each name there is a module. Each import is
+  reached along the chains, from the module imported to the module that imports it. The
+  chains form no cycle.
+- A module absent from the diagram is one finding, and its imports are not reported again.
+  A cycle is one finding that names each module on it.
+- Rejected: no diagram, with the imports as the only order. That broke Article I.5, and a
+  reader had to derive the order from many files.
+- Rejected: one layer for each depth of the graph. It is complete by construction, but the
+  wide layers group modules that share no subject.
+- Cost: a new module or a new import edits the diagram in the same change. An extra edge that
+  no import asks for passes, because it only orders the reading more strictly.
+- Verified by `tchecker.nim`, over a missing module, an unknown name, an unordered import, a
+  cycle, and an umbrella with no diagram. Verified by a break of the real diagram,
+  2026-09-24. One chain dropped `assets`, and another dropped `provenance`. `koch tree` named
+  `assets` as missing, and it named each import left unordered. Restored, and 0 findings
+  returned.
 
 ## Figures
 
