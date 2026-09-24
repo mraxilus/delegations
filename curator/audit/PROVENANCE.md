@@ -1113,7 +1113,9 @@ mistake is easy to make and impossible to see afterwards.
 - `check.yml` declares `permissions: contents: read`, because checkout is the only use of the
   token and nothing in it writes. The caches take their own runtime token, and no step calls
   `gh`. Cost: a step that later reaches the API needs its scope named, which `workflows.nim`
-  reports for the steps that it can read. Unverified on the runner until this branch runs.
+  reports for the steps that it can read. Verified on the runner, 2026-09-24, for `plan`,
+  `static`, `types`, `scope`, `commits`, `base` and `audit`. A change that touched no project
+  code skipped `project` and `driven`, so the grant is unverified for those two jobs.
 - Verified on the runner, recorded 2026-09-08: a record-only change emits `[]`, `project` is
   skipped, and the gate passes on a skipped dependency. The gate passes on `skipped`, and fails
   on `failure` or `cancelled`.
@@ -1267,7 +1269,8 @@ SDL3, so `sdl3` clones, configures and builds it from source. That is 55.8 s of 
 - Rejected: a key without the project directory. Its restore key then matched the prefix of
   another project. So a driven project that builds no SDL3 restored one, and saved it again
   under its own key. The path is made before the step, so such a project saves an empty entry
-  rather than a warning about an absent path.
+  rather than a warning about an absent path. Unverified on the runner until a `driven` job
+  runs with this key.
 - Verified on the runner, 2026-09-12. The job restored from a key other than the one it saved
   under, and printed `Kept SDL3 3.2.30, already reported by pkg-config`. The SDL3 phase ran in
   about 20 ms, against 55.8 s built, at a restore cost of about 1 s.
