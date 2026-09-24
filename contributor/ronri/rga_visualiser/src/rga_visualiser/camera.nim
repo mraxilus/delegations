@@ -649,12 +649,57 @@ func look*(camera: var Camera; turn, rise: float) =
   camera.motor = camera.turnedAboutEye(camera.frame.axis_right, -rise)
 
 
-func lookLevel*(camera: var Camera; turn, rise: float) =
-  ## Turn which way eye faces as turntable does, eye standing; see `orbitLevel`.
-  ##   Past top, sight looks back over reader's head and picture stands upside down: that
-  ##   is what passing over top means for eye that stands.
-  camera.motor = camera.turnedAboutEye(camera.upwardHeld, turn)
-  camera.motor = camera.turnedAboutEye(camera.acrossLevel, -rise)
+func wrapAngle(radians: float): float =
+  ## Bring angle into half-open turn about zero, so smaller of two turns reads smaller.
+  floorMod(radians + PI, 2.0*PI) - PI
+
+
+func lookCarrying*(camera: var Camera; held, under: Direction) =
+  ## Turn which way eye faces as turntable does, so `held` comes to be seen where `under` is.
+  ##   Finger's free aim: `held` runs through pixel finger left, `under` through pixel it
+  ##   reached, both read off this frame. So sky under finger moves with finger, pixel for
+  ##   pixel, and drag that comes back brings camera back.
+  ##   Pitch about level across axis first, by what lifts `under` to `held`'s height; then
+  ##   yaw about world up, by what closes their bearings. Neither changes roll.
+  ##     Two pitches reach that height, and each has its yaw. Pair that turns least is
+  ##     taken: other one flips sight half turn about world up, and lands sky under finger
+  ##     just as exactly.
+  ##   Height out of pitch's reach, as for pixel far off middle near pole, takes nearest
+  ##   height it reaches, and sky slips under finger there.
+  ##   Neither direction needs to be unit.
+  let
+    level = camera.acrossLevel
+    across = (1.0/norm(level))*level
+    ahead = cross(UP_WORLD, across)
+    toward = (1.0/norm(under))*under
+    target = (1.0/norm(held))*held
+    along_ahead = dot(toward, ahead)
+    along_up = dot(toward, UP_WORLD)
+    reach = hypot(along_ahead, along_up)
+  func lifted(pitch: float): Direction =
+    ## Carry `toward` about `across` by `pitch`, as right hand turns.
+    cos(pitch)*toward + sin(pitch)*cross(across, toward) +
+      ((1.0 - cos(pitch))*dot(across, toward))*across
+  func bearing(pitch: float): float =
+    ## Solve yaw about world up that closes bearing of lifted `toward` on `target`'s.
+    let raised = lifted(pitch)
+    if hypot(raised.x, raised.y) <= 1.0e-12 or hypot(target.x, target.y) <= 1.0e-12:
+      return 0.0
+    wrapAngle(arctan2(target.y, target.x) - arctan2(raised.y, raised.x))
+  # Turning by `pitch` about `across` takes `ahead` toward `UP_WORLD`, so height becomes
+  #   `reach*cos(pitch - phase)`.
+  var pitch = 0.0
+  if reach > 1.0e-12:
+    let
+      phase = arctan2(along_ahead, along_up)
+      spread = arccos(clamp(dot(target, UP_WORLD)/reach, -1.0, 1.0))
+      rising = wrapAngle(phase + spread)
+      falling = wrapAngle(phase - spread)
+    pitch =
+      if rising^2 + bearing(rising)^2 <= falling^2 + bearing(falling)^2: rising
+      else: falling
+  camera.motor = camera.turnedAboutEye(across, pitch)
+  camera.motor = camera.turnedAboutEye(UP_WORLD, bearing(pitch))
 
 
 func roll*(camera: var Camera, radians: float) =
