@@ -1,22 +1,38 @@
 ## Audit repository against CONSTITUTION.md, STYLE.md and CONTRIBUTOR.md; library umbrella.
 ##   Command line lives in root `koch.nim`, as Nim's own koch drives its repository; this
 ##   module composes static checks so koch holds dispatch only.
-##   Module order is read from each module's own `import` line, never restated here: copy of
-##     graph drifts from graph. Breaks Article I.5, which asks umbrella for `->` diagram.
-##     Cost: reader derives order from imports rather than reading it in one place.
+##   Diagram below is derived view of every module's `import` line, read by subject: one
+##     chain per concern, each module after every module it imports. `checkBootstrap` holds
+##     it to imports, so copy that drifts is finding (Article I.4, I.5).
 ##
 ##   Cost: tool runs once per check, so no hot path exists and Article VII figures stay
 ##     unmeasured by design; whole-tree audit time is recorded in PROVENANCE.md.
 ##   Cost: composition is `proc`, never `func`, since lock is read as JSON and Nim marks
 ##     `parseJson` effectful; every rule it composes stays pure.
+##   Cost: new module or new import edits diagram in same change.
+
+## Order of module bootstrapping:
+##   findings -> [kinds, markdown, domains, projects]
+##   kinds -> comments -> [prose, justification]
+##   [kinds, markdown] -> form
+##   markdown -> [provenance, glossary, duplicates, checker]
+##   provenance -> record -> prompts
+##   findings -> [faces, workflows, assets]
+##   domains -> [commits, role, scope]
+##   projects -> dependencies -> toolchain -> [compilers, layout]
+##   [kinds, markdown, domains] -> layout -> [english, scope, tree]
+##   [checker, compilers, tree] -> plan -> [audit, base]
+##   provenance -> base
+##   [prose, justification, form, faces, workflows] -> audit
+##   [glossary, duplicates, prompts, english] -> audit
 
 {.experimental: "strictFuncs".}
 
 import std/[options, os, sequtils, sets, strutils]
 import ./[
-  findings, kinds, prose, form, justification, checker, layout, provenance, glossary,
-  dependencies, toolchain, plan, workflows, record, prompts, duplicates, tree, domains, faces,
-  english,
+  findings, kinds, domains, prose, justification, form, provenance, glossary, duplicates,
+  checker, record, prompts, faces, workflows, dependencies, toolchain, layout, english, tree,
+  plan,
 ]
 
 export layout.Tree, layout.Entry, layout.projectDirs
@@ -113,6 +129,7 @@ proc auditTree*(tree: Tree): seq[Finding] =
   result.add checkSuites(tree.mapIt(it.path))
   result.add checkVerbs(koch_source, curator_source)
   result.add checkOptions(koch_source)
+  result.add checkBootstrap(check_paths, check_sources)
 
   let stamp_now = tree.rulesStamp
   let dirs = tree.projectDirs
