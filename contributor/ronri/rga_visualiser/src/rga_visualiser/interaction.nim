@@ -802,7 +802,7 @@ proc dollyAtCursor*(
 
 
 func turnAcross*(camera: var Camera; turn, rise: float; has_selection: bool) =
-  ## Turn camera by mouse's left drag, in whichever way its state reads.
+  ## Turn camera by desktop mouse's left drag, in whichever way its state reads.
   ##   Free flight looks: eye stands where it stands, and only sight turns.
   ##   Selection orbits about what is picked.
   ##   `look` and `orbit` take same two arguments with same signs, so one drag feeds
@@ -810,7 +810,8 @@ func turnAcross*(camera: var Camera; turn, rise: float; has_selection: bool) =
   ##   Turning about camera's own axes carries roll round with it, by solid angle drag
   ##   encloses: loop of 0.3 radians leaves 0.081 behind, which is 4.7 degrees. That is
   ##   geometry of transport rather than mistake, and no order of two turns escapes it.
-  ##   Mouse keeps it, with Q and E to answer it; finger does not, see `turnFollowing`.
+  ##   Desktop keeps it, with Q and E to answer it; page's drags do not, see
+  ##   `turnFollowing`.
   if has_selection: camera.orbit(turn, rise) else: camera.look(turn, rise)
 
 
@@ -818,10 +819,10 @@ func turnFollowing*(
   camera: var Camera; before, after: ScreenPosition; width, height: int;
   has_selection: bool; reach_selection = 0.0
 ) =
-  ## Turn camera by finger's drag, from pixel it left to pixel it reached.
+  ## Turn camera by page's drag, finger's or mouse's, from pixel it left to pixel it reached.
   ##   Both turn as turntable does, about world up and level across, so neither leaves roll:
-  ##   touch has no roll key beside it, and finger wanders in curves. Roll reader set by
-  ##   twist survives.
+  ##   touch has no roll key beside it, finger wanders in curves, and page's mouse drags as
+  ##   finger does. Roll reader set by twist or by Q and E survives.
   ##   Both carry what finger holds with finger, pixel for pixel, and drag that comes back
   ##   brings camera back. Not rate: no rate matches field of view at every pixel.
   ##   Free flight holds sky; see `camera.lookCarrying`.

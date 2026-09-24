@@ -57,6 +57,35 @@ export async function driveLook(page: Page): Promise<void> {
     `pivot moved ${spanOf(before.pivot, after.pivot).toFixed(3)}, ` +
       `separation ${after.distance.toFixed(3)}`,
   );
+  // Mouse holds what is under it, as finger does: object beside cursor moves with it, one
+  //   for one. Aim by rate slid it several times as far, and against cursor.
+  //   Pressed 40 px left of object, on nothing it would build from, so press turns view.
+  await settleHome(page);
+  const seenBeside = async (): Promise<number[]> => page.evaluate(() => Array.from(
+    nimAnchorScreen(nimSceneHandles()[0] ?? 0, window.innerWidth, window.innerHeight),
+  ));
+  const seen_before = await seenBeside();
+  const press = { x: (seen_before[0] ?? 0) - 40, y: seen_before[1] ?? 0 };
+  const is_open = await page.evaluate(({ x, y }) => {
+    nimUpdateCursor(x, y);
+    nimUpdateHover(window.innerWidth, window.innerHeight);
+    return nimHoverHandle() < 0 || nimIsHoverBackdrop();
+  }, press);
+  await page.mouse.move(press.x, press.y);
+  await page.mouse.down({ button: 'left' });
+  await page.mouse.move(press.x + 60, press.y + 40, { steps: 10 });
+  await page.mouse.up({ button: 'left' });
+  await settleCamera(page);
+  const seen_after = await seenBeside();
+  const across = (seen_after[0] ?? 0) - (seen_before[0] ?? 0);
+  const down = (seen_after[1] ?? 0) - (seen_before[1] ?? 0);
+  report(
+    'and a left drag carries the picture with the cursor, one for one',
+    is_open && Math.abs(across / 60 - 1) < 0.05 && Math.abs(down / 40 - 1) < 0.05,
+    `pressed on ${is_open ? 'open sky' : 'an object'}; object beside cursor moved ` +
+      `${across.toFixed(1)} px across and ${down.toFixed(1)} px down, for a cursor moved 60 and 40`,
+  );
+
   // Put view back: look swings sight right off scene, and checks after this one read
   //   what is drawn rather than press their own Home first.
   await settleHome(page);

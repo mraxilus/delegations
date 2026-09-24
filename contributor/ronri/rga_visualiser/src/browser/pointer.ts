@@ -206,14 +206,14 @@ canvas.addEventListener('pointermove', (e) => {
     if (prev === undefined) return;
     const current = { x: e.clientX, y: e.clientY };
     pointers.set(e.pointerId, current);
-    const dx = current.x - prev.x, dy = current.y - prev.y;
     // Camera gesture is not hover, said at *move* rather than at press:
     //   press that never moves is click, and click has to know what it came down on.
     if (button_mouse_drag === 'orbit' || button_mouse_drag === 'pan') nimSetCameraDragging(true);
     if (button_mouse_drag === 'orbit') {
-      // Mouse keeps transport's own roll, with Q and E to answer it; see `turnAcross`.
-      nimCameraTurn(
-        -dx / canvas.clientWidth * Math.PI * 1.4, dy / canvas.clientHeight * Math.PI * 1.4,
+      // Mouse holds what is under it, as finger does; see `interaction.turnFollowing`.
+      nimCameraTurnAt(
+        prev.x - rect.left, prev.y - rect.top, current.x - rect.left, current.y - rect.top,
+        canvas.clientWidth, canvas.clientHeight,
       );
     } else if (button_mouse_drag === 'pan') {
       // Where pointer was and where it is, not how far it moved:
