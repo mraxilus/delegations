@@ -1274,28 +1274,28 @@ radians leaves 0.0813, against 0.0822 enclosed: 4.7 degrees for each loop, and 1
 is the geometry of transport, not a fault, and no order of the two turns escapes it. `look` and
 `orbit` carry exactly the same amount. A mouse keeps it, with Q and E to answer it.
 
-A finger has no roll key beside it, and it wanders in curves. So `turnFollowing` turns from the
-pixel it left to the pixel it reached, about world up and the level axis across the sight. Neither
-turn changes roll, so a roll set by a twist survives. With a selection, `orbitLevel` turns half a
-turn for each short side of the canvas on both axes. Each turn moves one turntable angle alone, so a
-drag holds its height however it is cut into steps.
+**A finger carries what it holds, one pixel for one.** `turnsCarrying` pitches about the level axis
+until one direction has the height of the other, then yaws about world up until their bearings meet.
+Of the two pitches that reach that height, it takes the pair that turns least, so a drag that comes
+back brings the camera back. Free aim holds the sky, and `lookCarrying` turns about the eye. Near
+the pole, a height out of reach lets what the finger holds slip.
 
-**A finger's free aim carries the sky under it, one pixel for one.** `lookCarrying` pitches about
-the level axis until the sight through the new pixel has the height of the sight through the old
-one. Then it yaws about world up until their bearings meet. Of the two pitches that reach that
-height, it takes the pair that turns least, so a drag that comes back brings the camera back. Near
-the pole, a height out of reach lets the sky slip under the finger.
+Orbit holds a point on a sphere about the pivot, since the pivot itself never moves under orbit.
+`pointHeld` places it on the ray, on the sphere's near side while the ray passes within
+`radius/sqrt(2)` of the pivot. Beyond, a sheet of the same slope carries on, so a finger off the
+sphere still turns the view. `radiusHeld` takes the selection's reach from the pivot. It is no less
+than a third of the short side at the pivot's depth, and inside the eye's separation.
 
-Not a rate for free aim: it turned the sight by an angle the screen does not show. On a 390 by 844
-phone, a 60 by 40 px drag carried the picture 542.4 by 411.8 px, and now 60.4 by 41.0. Not the roll
-put back after each turn about the camera's own axes, which left the sight sunk. Not a turntable
-bounded short of the pole, which stops every orbit at straight down.
+Not a rate: it turned the sight by an angle the screen does not show. On a phone, a 60 by 40 px drag
+carried free aim's picture 542.4 by 411.8 px, and now 60.4 by 41.0. Not the roll put back after each
+turn about the camera's own axes, which left the sight sunk. Not a turntable bounded short of the
+pole, which stops every orbit at straight down.
 
-Each axis is the world axis nearest the camera's own, signed from the camera. So the camera passes
-over the top, upside down on the far side, and the picture still follows the finger. In orbit, a
-sideways drag at the pole spins the picture about the sight, 9.2 degrees for each 20 px on a phone.
-The spin reverses as the camera passes over. Over 2,000 finger turns at 390 by 844 in Chromium, on
-2026-09-24, free aim took 0.47 to 0.53 ms each. Orbit took 0.63 to 0.64 ms.
+A finger has no roll key beside it, and it wanders in curves. So `turnFollowing` turns about world
+up and the level axis across the sight, and keeps any roll a twist set. Each axis is the world axis
+nearest the camera's own, signed from the camera. So the camera passes over the top, upside down on
+the far side, and the picture still follows the finger. Over 2,000 finger turns at 390 by 844 in
+Chromium, on 2026-09-24, free aim took 0.45 to 0.48 ms each. Orbit took 0.63 to 0.72 ms.
 
 **The speed climbs toward a cap and never reaches it.** `speedTravelling` is the cap times
 `1 − e^(−t/τ)`. τ is `SECONDS_SPEED_RISE`, 0.6 s: 63 percent of the cap at one τ, and 95 percent at
@@ -1398,7 +1398,7 @@ The separation then scales as the turntable's dolly scales it.
   stands accordingly;
 - one drag loop leaves the solid angle it encloses, and four leave 0.324 radians;
 - a finger's loop of pixels leaves none of it in either state, keeps the reader's roll, and closes;
-- a finger's orbit moves the azimuth and the elevation by what it asked, in 1, 8 or 64 steps;
+- a finger's orbit keeps the point on its sphere under it, from three stances and two reaches;
 - a finger's free aim keeps the sky it took under it, from three stances, in 1 step or 16;
 - an orbit passes over the top and a look under its feet, and a drag goes through the pole;
 - eight quarter-radian pitches make two radians in `look` and `orbit`, past the panel field's clamp;
