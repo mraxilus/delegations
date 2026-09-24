@@ -64,9 +64,9 @@ Every rule below serves it:
 | `CONTRIBUTOR.md` | Opening prompt for project delegates: what binds, stamped | curator |
 | `GUIDE.md` | How-to that both roles share, stamped into nothing | curator |
 | `CLAUDE.md` | Short pointer that Claude Code loads on its own | curator |
-| `koch.nim`, `koch.nim.cfg` | Entry point of every check; `nim r koch <command>` | curator |
+| `koch.nim`, `koch.nim.cfg` | Entry point of every check; `nim r koch <verb>` | curator |
 | `.gitignore`, `.gitattributes` | Artifacts and checkouts out, LF endings | curator |
-| `.github/workflows/check.yml` | Every job of `check`, and the `audit` gate | curator |
+| `.github/workflows/check.yml` | Every job of `check`, and the `summary` gate | curator |
 | `.github/workflows/role.yml` | Role line and label of a pull request, on each event | curator |
 | `.github/workflows/watch.yml` | Issue opened when a run goes red on `main` | curator |
 | `.github/workflows/ledger.yml` | Daily read of what GitHub records, into one issue | curator |
@@ -88,12 +88,13 @@ Every rule below serves it:
   `[a-z0-9][a-z0-9_-]*`. Every path is allowed, because a rules change must reach every
   project. Inside a contributor project you may write only its three records (duty 11). The
   commit scope is `curator` for a root file, and the project's own scope for a commit inside
-  a project. `commits` accepts any valid scope on this branch form.
+  a project. `check-commits` accepts any valid scope on this branch form.
 - **One curator project.** Branch `curator/<project>/<name>`, confined to
   `curator/<project>/`, with commit scope `<project>`, exactly like a contributor branch.
 - The commit types and the regression rule are those of `CONTRIBUTOR.md` (Branch and
   commits; Tests are paramount). Duty 4 says where a regression test of the checker lives.
-- A branch that a tool named for you (`claude/...`) is outside the grammar and fails `scope`.
+- A branch that a tool named for you (`claude/...`) is outside the grammar and fails
+  `check-scope`.
   Push to a branch inside it, and where the tool decides the name, ask the Architect.
 
 ## Every delegate begins here
@@ -127,7 +128,7 @@ This section adds only what differs for a curator.
    against each changed rule. Apply what the rule now demands in the records, which duty 11
    lets you write. Where it demands a change to code, follow duty 3. Then run
    `nim r koch stamp --write` for every `Rules` row, in a commit of its own. Finish with
-   `nim r koch ci` green, because nothing merges half-propagated.
+   `nim r koch check` green, because nothing merges half-propagated.
 
    An audit that binds nothing writes nothing but the row (`GUIDE.md`, Prune, never
    narrate). `CURATOR.md` is not stamped. Two stamped changes in flight produce a third stamp
@@ -137,11 +138,11 @@ This section adds only what differs for a curator.
 2. **Merge-process change.** Anything that a pull request passes through is the merge
    process. That is the workflows, `koch.nim`, `.gitignore`, `.gitattributes`,
    `curator/audit/src/`, the branch grammar in `domains.nim`, the stamp, and the matrices
-   that `plan` emits.
+   that `list-projects` emits.
 
    Test it on the process itself, in three legs:
 
-   - `nim r koch ci` on the branch;
+   - `nim r koch check` on the branch;
    - every job of its pull request green on a runner, which differs from this machine;
    - the `push` run on `main` green after the merge.
 
@@ -183,17 +184,17 @@ This section adds only what differs for a curator.
    that project. `NIM_VERSION` in each workflow that installs a compiler is the version that
    builds koch, and not a second pin. It must equal the pin of `curator/audit`, because koch
    compiles the modules of that project. `toolchain.nim` fails the audit where any workflow
-   disagrees. So bump the pin and every workflow together, with `nim r koch ci` on the new
+   disagrees. So bump the pin and every workflow together, with `nim r koch check` on the new
    version.
 
    `GUIDE.md`, Toolchain, says how koch serves every other pin. What koch does not serve,
-   `nim r koch system` prints: the packages of koch itself, and those that each project
+   `nim r koch list-packages` prints: the packages of koch itself, and those that each project
    declares through its `system` verb. Where a tool is absent, the check that needs it
    reports a finding rather than a skip. A check that quietly does nothing reports green for
    work it never did.
 
 9. **The weekly run and the ledger.** The weekly run of `check.yml` compiles the projects
-   whose code merged inside `SWEEP_DAYS` (`plan.nim`). Its window is named twice, as that
+   whose code merged inside `RECENT_DAYS` (`plan.nim`). Its window is named twice, as that
    constant and as the cron, so change both together.
 
    `ledger.yml` is a different mechanism: a daily read of what GitHub records, into one issue
@@ -224,7 +225,8 @@ This section adds only what differs for a curator.
     are theirs to run as well, and a change to the checker never compiles them (Checks
     reference).
 
-    The static pass reads every project whatever changed. The `scope` job holds this duty. On
+    The static pass reads every project whatever changed. The `check-scope` job holds this
+    duty. On
     `curator/<name>` the only writable paths inside a contributor project are its
     `README.md`, `PROVENANCE.md` and `GLOSSARY.md`. Those carry the stamp row, the agreed
     terms, and the prose that a rule change invalidated, which is what propagation is. The
@@ -260,7 +262,7 @@ takes its thread with it, while an issue outlives the branch that prompted it.
 
 ## Before you open a pull request
 
-`nim r koch ci` at the repository root passes on the exact commit you push, and again before
+`nim r koch check` at the repository root passes on the exact commit you push, and again before
 every later push. The section of `CONTRIBUTOR.md` with this name holds the rest, and it
 binds you. It covers draft and ready, the backoff, the page linked, and the change shown.
 
@@ -270,10 +272,10 @@ These cannot be set from inside the repository. Ask the Architect to confirm tha
 place, under Settings:
 
 - Require a pull request before a merge, with no direct pushes.
-- Require these status checks to pass: `audit`, `scope`, `commits`, `role`. `audit` is the
-  gate for the jobs whose names vary with the change, since those names can never be
-  required checks themselves. `role` is its own workflow, because it fires on a label event
-  and the rest do not.
+- Require these status checks to pass: `summary`, `check-scope`, `check-commits`,
+  `check-role`. `summary` is the gate for the jobs whose names vary with the change, since
+  those names can never be required checks themselves. `check-role` is its own workflow,
+  because it fires on a label event and the rest do not.
 - Block force pushes and deletions.
 - Require every conversation to be resolved before a merge. `CONTRIBUTOR.md`, Before you
   open a pull request, asks that every review comment is answered. This setting is the only
@@ -284,46 +286,52 @@ place, under Settings:
 - Require no approvals. GitHub refuses an approval from whoever opened the pull request, and
   the Architect opens every one, so a single required approval stops every merge.
 - Under Settings, General, allow the merge commit alone. A squash collapses the `test` before
-  `fix` ladder into one subject, which is the evidence `commits` exists to create.
+  `fix` ladder into one subject, which is the evidence `check-commits` exists to create.
 - Under Settings, General, delete the head branch after a merge.
 
 "Require branches to be up to date before a merge" is offered and is not set. It makes every
 open pull request stale on each merge, which costs more than it saves at this repository's
 merge rate.
 
-The `base` check is the narrow form of the same rule. It reports only where the base gained a
-charter document or a checker, which is where staleness makes green false. It reaches the
-merge through the `audit` gate.
+The `check-drift` check is the narrow form of the same rule. It reports only where the base
+gained a charter document or a checker, which is where staleness makes green false. It
+reaches the merge through the `summary` gate.
 
 ## Checks reference
 
-`koch.nim` at the root is the entry point of every check. Run it as `nim r koch <command>`,
-or build it once with `nim c koch` and then run `./koch <command>`. Every check is a module
+`koch.nim` at the root is the entry point of every check. Run it as `nim r koch <verb>`, or
+build it once with `nim c koch` and then run `./koch <verb>`. `./koch` alone lists every
+verb and option with its effect. Every check is a module
 under `curator/audit/src/`, tested under `curator/audit/tests/`. Koch holds the dispatch
 alone.
 
-| Command | Reads | Enforces |
-|---------|-------|----------|
-| `tree` | git's view | every static check `auditTree` composes; `Pruned` rows against the log |
-| `deps` | every project's `atlas.lock` | checkouts restored and matching the lock |
-| `types` | projects with `package.json` and its lock | `npm ci`, then that project's `types` verb |
-| `driven` | projects with a `drive` verb | restore, then that verb, on that project's pin |
-| `system` | koch, and projects with a `system` verb | prints what they need installed, one a line |
-| `assets` | files named, against the store | fetches and checks each, prints its path |
-| `tests` | every project, or one | restore, then testament, on that project's pin |
-| `plan` | changed paths, pins | projects whose code changed, as JSON; `--sweep` for the week |
-| `scope` | changed paths | branch grammar; project paths inside scope |
-| `commits` | commit subjects | Conventional Commits; scope equals branch scope |
-| `base` | paths base gained | branch carries base's rules and checker |
-| `role` | a pull request's body and labels | opening line and label are the branch's role |
+| Verb | Reads | Does |
+|------|-------|------|
+| `check` | fresh `origin/main` | all below but `check-role`; quick ones first, stop on a finding |
+| `check-files` | git's view | every static check `auditTree` runs; `Pruned` rows against the log |
+| `check-types` | projects with `package.json` and lock | `npm ci`, then that project's `types` |
+| `check-scope` | changed paths | branch grammar; project paths inside scope |
+| `check-commits` | commit subjects | Conventional Commits; scope equals branch scope |
+| `check-drift` | paths base gained | branch carries base's charter and checker |
+| `check-role` | a pull request's body and labels | opening line and label are the branch's role |
+| `test` | changed projects, or one | fetch deps, then testament, on that project's pin |
+| `drive` | changed projects with a `drive` verb | fetch deps, then that verb, on project's pin |
+| `fetch-deps` | changed projects' `atlas.lock` | checkouts made and matching the lock |
+| `fetch-assets` | files named, against the store | fetches and checks each, prints its path |
+| `list-packages` | koch, and projects with a `system` verb | prints OS packages to install |
+| `list-projects` | changed paths, pins | projects whose code changed, as JSON for the matrix |
 | `stamp` | charter documents | prints the stamp; `--write` sets every `Rules` row to it |
-| `ci` | fresh `origin/main` | tree, scope, commits, base; when clean, types, tests, driven |
 
-`ci` leaves out `role`, because `role` reads a pull request rather than the tree. Its body
-arrives from the event payload as `ROLE_BODY`, and its labels from the API as `ROLE_LABELS`.
-So only the runner can supply them.
+Every verb that takes projects reads the one named, else `--recent`, else `--all`, else the
+projects whose code changed. A verb refuses an option or an argument that it does not read.
+`fetch-assets` also answers to its old name, `assets`, until the two contributor drivers
+that call it switch.
 
-`ci` costs minutes rather than the second that the static pass costs, whenever a changed
+`check` leaves out `check-role`, because `check-role` reads a pull request rather than the
+tree. Its body arrives from the event payload as `ROLE_BODY`, and its labels from the API as
+`ROLE_LABELS`. So only the runner can supply them.
+
+`check` costs minutes rather than the second that the static pass costs, whenever a changed
 project carries a `drive` verb. It then builds the page of that project and drives a real
 browser, exactly as the runner does. A change to `koch.nim`, to `koch.nim.cfg` or to
 `curator/audit/src/` selects `curator/audit` alone, because its suites are what read them.
@@ -335,10 +343,12 @@ project and nothing checked it:
 
 - A routine exported and named by no other module and no suite is a finding.
 - A check module without `tests/suites/t<module>.nim` is a finding.
-- The verbs that koch dispatches, the verbs that its usage text prints, and the rows of the
+- The verbs that koch dispatches, the verbs that its usage text lists, and the rows of the
   table above are one set named three times. Any two that differ are a finding.
 - The options that koch parses and the options that its usage text prints are one set named
   twice. A difference is a finding.
+- A `koch <verb>` written as a command, outside contributor code, must name a verb that koch
+  dispatches. A stale one is a finding.
 
 A finding prints in one form, and the exit code is 1:
 

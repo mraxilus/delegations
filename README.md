@@ -66,35 +66,37 @@ label of the other role joins the first.
 
 `main` is protected, and the Architect merges pull requests by hand. Branches mirror paths.
 `contributor/<domain>/<project>/<name>` and `curator/<project>/<name>` may change only that
-project, and `curator/<name>` is rules and root work. Every pull request runs these jobs:
+project, and `curator/<name>` is rules and root work. Every pull request runs these jobs, and
+each job carries the name of the koch verb that it runs:
 
-- `static`: layout, form, telegraphic comments, and records with their headers and stamps.
+- `check-files`: layout, form, telegraphic comments, and records with their headers and stamps.
   It also reads glossary shape, the prompts, and the Simplified Technical English of the
   root documents and of every project record. It reads copied paragraphs, shipped faces,
   workflow grants, the compiler pin of each project, and each lock against its nimble file.
   It reads the reason that a file not in Nim gives, and the rules that the checker holds
   itself to. It runs over the whole tree.
-- `project`: one job for each project whose code changed, on a pull request, on the push to
+- `test`: one job for each project whose code changed, on a pull request, on the push to
   `main`, and in the weekly run alike. Each one installs that project's own pinned compiler,
   restores its dependencies from its lock file, and runs its tests. Nothing compiles every
   project. These jobs run in parallel, so the wall time follows the slowest changed project
   rather than the number of projects in the repository.
-- `types`: `npm ci`, then that project's own `types` verb, for every changed project that
+- `check-types`: `npm ci`, then that project's own `types` verb, for every changed project that
   carries a node manifest beside its lock. It is one job on the compiler that builds koch,
   because a type check compiles no project code.
-- `driven`: that project's own `drive` verb, for every changed project that carries one. The
+- `drive`: that project's own `drive` verb, for every changed project that carries one. The
   page is built and driven through real keys, wheels, pointers and touches. It is a matrix
-  like `project`, and on the same pins, because a build of the page does compile project
+  like `test`, and on the same pins, because a build of the page does compile project
   code.
-- `scope`: every changed path lies inside the folder of the branch.
-- `commits`: every subject is a Conventional Commit whose scope matches the branch.
-- `base`: the branch carries the charter and the checker as `main` now holds them. A stamp
+- `check-scope`: every changed path lies inside the folder of the branch.
+- `check-commits`: every subject is a Conventional Commit whose scope matches the branch.
+- `check-drift`: the branch carries the charter and the checker as `main` now holds them. A stamp
   that a charter change falsified after the branch forked is then caught before the merge.
-- `audit`: the gate that `static`, `project`, `types`, `driven` and `base` report to, and one
-  of the required checks. `scope` and `commits` are required checks of their own.
+- `summary`: the gate that `check-files`, `test`, `check-types`, `drive` and `check-drift`
+  report to, and one of the required checks. `check-scope` and `check-commits` are required
+  checks of their own.
 
-One more job, `plan`, runs first and computes the matrices that `project` and `driven` fan
-out over. It names projects rather than checks them, and it also reports to `audit`. Weekly,
+One more job, `list-projects`, runs first and computes the matrices that `test` and `drive`
+fan out over. It names projects rather than checks them, and it also reports to `summary`. Weekly,
 the same workflow compiles the projects whose code merged that week.
 
 `role.yml` runs beside it on every pull request, and again whenever a label changes. It holds
@@ -108,9 +110,10 @@ failure. `ledger.yml` reads daily what GitHub records of the rules that no check
 - an issue whose title opens with a commit prefix.
 
 `koch.nim` drives everything, as a compiled Nim program, in the shape that the repository of
-Nim itself uses. `nim r koch ci` runs the same checks locally against a fresh `origin/main`,
-and every pull request passes it before somebody opens it. `nim r koch system` prints what a
-machine needs installed before any of it runs. That is the packages of koch itself and of
+Nim itself uses. `nim r koch check` runs the same checks locally against a fresh
+`origin/main`, and every pull request passes it before somebody opens it. `./koch` alone lists
+every verb with its effect. `nim r koch list-packages` prints what a machine needs installed
+before any of it runs. That is the packages of koch itself and of
 every project, one to a line, so it pipes straight into a package manager. Any Nim that
 builds koch is the only thing it cannot name for you.
 
