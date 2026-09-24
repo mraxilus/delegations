@@ -208,11 +208,12 @@ carries it in the open the same way: at the start, on each resolution, and at ha
    constant and as the cron, so change both together.
 
    `ledger.yml` is a different mechanism: a daily read of what GitHub records, into one issue
-   labelled `curator`. It reads three things:
+   labelled `curator`. It reads four things:
 
    - a pull request ready without a green run;
    - a `Closes #N` that never fired;
-   - an issue or pull request that opens with no role line, or carries no label.
+   - an issue or pull request that opens with no role line, or carries no label;
+   - an issue whose title opens with a commit prefix, which each issue template forbids.
 
    `watch.yml` watches both `check` and `ledger`, and opens or extends one issue for each
    workflow.

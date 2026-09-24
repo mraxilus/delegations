@@ -22,7 +22,8 @@ can retrace is a hunch. -->
 ## What was found
 
 <!-- One claim, stated so that a reader can disagree with it. Write "`render` is exported and
-called nowhere in the project" and not "the module feels tangled". -->
+called nowhere in the project" and not "the module feels tangled". That claim is also the title
+of this issue, with no `type(scope):` prefix, which belongs to commits. -->
 
 ## Why it matters
 

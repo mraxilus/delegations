@@ -639,11 +639,12 @@ for a second case.
 that a contributor may write is a scope boundary the branch grammar cannot check.
 
 **A ledger reads what GitHub records, so three carried rules stopped being only read.**
-`ledger.yml` runs daily and writes one issue. It names three things:
+`ledger.yml` runs daily and writes one issue. It names four things:
 
 - a pull request left ready without a green run;
 - a `Closes #N` that never fired;
-- an issue or pull request that opens with no role line, or carries no label.
+- an issue or pull request that opens with no role line, or carries no label;
+- an issue whose title opens with a commit prefix.
 
 Its shape is the shape of `watch.yml`: one issue found again by a marker, `gh issue list`
 rather than search, and the label as a hardcoded literal. Its schedule idiom is the one in
@@ -691,6 +692,27 @@ rather than search, and the label as a hardcoded literal. Its schedule idiom is 
   repository rather than of the account. It should, and that would keep the sweep off the
   budget that every delegate shares. Nothing here has measured it, and this delegate has twice
   found a belief about GitHub metering wrong.
+
+**The fourth read was never a carried rule. It names an issue titled as a commit.** A title is a
+fact that GitHub records, so the rule arrived as a check. The convention itself sits in the
+three issue templates, beside the section that each title comes from.
+
+- **Issues alone, and not pull requests.** A pull request title takes the commit form by rule,
+  because the merge commit takes the title as its subject. An issue is no change, and its label
+  and its template already say whose it is and what kind.
+- **The shape is read, and not the list of commit types.** `^[a-z]+(\([^)]*\))?!?: ` names
+  `bug:` and `koch:` as well as `feat(audit):`. Each one is a prefix, and the convention asks
+  for none.
+- **Case is kept.** A title in sentence case that holds a colon passes, such as
+  `Rework the camera: free flight with no selection`. Cost: `Feat(audit): …` passes too, and
+  holds by reading, as the positive half of the convention does.
+- **Verified against fixtures, through a stub for `gh`, as the first three reads were.** The
+  stub serves fixture JSON through real `jq` 1.7, and the step runs as the workflow holds it.
+  Over 30 titles, exactly the 8 expected are named. Those are the four titles under the label
+  of `dance_ontology` as they stood before they were fixed, `fix:`, `feat(audit)!:`, `bug:` and
+  `koch:`. Over the 18 real titles of today alone, the step reports nothing. Verified by hand,
+  2026-09-24.
+- Cost: the pattern is `jq` inside shell, as the role-line pattern is, so no suite drives it.
 
 ## Toolchain
 
