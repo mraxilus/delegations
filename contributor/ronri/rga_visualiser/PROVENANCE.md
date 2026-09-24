@@ -1263,9 +1263,7 @@ axis before it. A pitch about the stale one tips the up axis off the sight, whic
 asked for.
 
 `look` takes the two arguments that `orbit` takes, with the same signs, so a mouse drag feeds either
-verb as the selection comes and goes. A finger's `lookLevel` takes them negated, so the picture
-follows the finger in either state: the sky moves as orbit's near side does. The cost is that a
-selection made mid-drag reverses which way the far scene moves.
+verb as the selection comes and goes.
 
 The axes are the camera's own and never the world's, so there is no pole and no clamp. Eight pitches
 of a quarter radian compose to exactly two radians, which is past straight down.
@@ -1276,27 +1274,28 @@ radians leaves 0.0813, against 0.0822 enclosed: 4.7 degrees for each loop, and 1
 is the geometry of transport, not a fault, and no order of the two turns escapes it. `look` and
 `orbit` carry exactly the same amount. A mouse keeps it, with Q and E to answer it.
 
-A finger has no roll key beside it, and it wanders in curves. So `turnAcross` sends a touch drag to
-`orbitLevel` or `lookLevel`. A sideways drag turns about world up, and a drag up or down turns about
-the level axis across the sight. Each turn moves one turntable angle alone. So a drag leaves no
-roll, holds its height, and lands in one place however it is cut into steps.
+A finger has no roll key beside it, and it wanders in curves. So `turnFollowing` turns from the
+pixel it left to the pixel it reached, about world up and the level axis across the sight. Neither
+turn changes roll, so a roll set by a twist survives. With a selection, `orbitLevel` turns half a
+turn for each short side of the canvas on both axes. Each turn moves one turntable angle alone, so a
+drag holds its height however it is cut into steps.
+
+**A finger's free aim carries the sky under it, one pixel for one.** `lookCarrying` pitches about
+the level axis until the sight through the new pixel has the height of the sight through the old
+one. Then it yaws about world up until their bearings meet. Of the two pitches that reach that
+height, it takes the pair that turns least, so a drag that comes back brings the camera back. Near
+the pole, a height out of reach lets the sky slip under the finger.
+
+Not a rate for free aim: it turned the sight by an angle the screen does not show. On a 390 by 844
+phone, a 60 by 40 px drag carried the picture 542.4 by 411.8 px, and now 60.4 by 41.0. Not the roll
+put back after each turn about the camera's own axes, which left the sight sunk. Not a turntable
+bounded short of the pole, which stops every orbit at straight down.
 
 Each axis is the world axis nearest the camera's own, signed from the camera. So the camera passes
-over the top, upside down on the far side, and a sideways drag still moves the picture as it did.
-A roll set by a twist survives, because neither turn changes it.
-
-Not the roll put back after each turn about the camera's own axes. That levels the horizon but
-leaves the sight sunk, more as steps grow. One fast 300 px swipe on a phone took 24.06 degrees to
-14.56. Not a turntable bounded short of the pole, which stops every orbit at straight down.
-
-The cost is at the pole. There a sideways drag spins the picture about the sight, 9.2 degrees for
-each 20 px on a phone. The spin reverses as the camera passes over. A roll set by a twist tips a
-sideways drag off the screen's across.
-
-The finger turns half a turn for each short side of the canvas, on both axes, so a diagonal drag
-turns along its own slant. Not one rate for width and one for height: those gave 0.65 and 0.30
-degrees for each pixel on a 390 by 844 phone. On 2026-09-24, in Chromium on the build container,
-2,000 touch turns took 0.44 to 0.47 ms each. With the roll put back they took 0.75 to 0.95 ms.
+over the top, upside down on the far side, and the picture still follows the finger. In orbit, a
+sideways drag at the pole spins the picture about the sight, 9.2 degrees for each 20 px on a phone.
+The spin reverses as the camera passes over. Over 2,000 finger turns at 390 by 844 in Chromium, on
+2026-09-24, free aim took 0.47 to 0.53 ms each. Orbit took 0.63 to 0.64 ms.
 
 **The speed climbs toward a cap and never reaches it.** `speedTravelling` is the cap times
 `1 − e^(−t/τ)`. τ is `SECONDS_SPEED_RISE`, 0.6 s: 63 percent of the cap at one τ, and 95 percent at
@@ -1398,10 +1397,10 @@ The separation then scales as the turntable's dolly scales it.
 - a left drag looks with nothing picked and orbits with something picked, and the eye or the pivot
   stands accordingly;
 - one drag loop leaves the solid angle it encloses, and four leave 0.324 radians;
-- a finger's drag leaves none of it, and keeps the roll the reader set;
-- a finger's drag moves the azimuth and the elevation by what it asked, in 1, 8 or 64 steps, and a
-  loop of it closes;
-- the picture follows the finger in both states and past the top, and a drag goes through the pole;
+- a finger's loop of pixels leaves none of it in either state, keeps the reader's roll, and closes;
+- a finger's orbit moves the azimuth and the elevation by what it asked, in 1, 8 or 64 steps;
+- a finger's free aim keeps the sky it took under it, from three stances, in 1 step or 16;
+- an orbit passes over the top and a look under its feet, and a drag goes through the pole;
 - eight quarter-radian pitches make two radians in `look` and `orbit`, past the panel field's clamp;
 - a look and an orbit swing the sight the same way, for both signs of the drag;
 - a roll leaves the eye and the sight alone, and 64 steps of a whole turn return every axis;
@@ -1424,8 +1423,8 @@ The separation then scales as the turntable's dolly scales it.
 Verified by driven checks:
 
 - a left drag with nothing picked turned the sight and moved the eye 0.000000 units;
-- a 600 px finger swipe held the elevation at 0.420000, where the roll put back ended at 0.325250;
-- a finger moved 60 and 40 px with nothing picked carried what stood ahead 217.9 and 145.0 px;
+- a 600 px finger swipe away and back brought the azimuth back to 1.0500 and elevation to 0.420000;
+- a finger moved 60 and 40 px with nothing picked carried the object beside it 59.1 and 40.7 px;
 - a finger dragged down with an object picked carried the eye over the top, and the pivot 0.000000;
 - 500 ms of `w` on the opening page moved the eye 3.455 units, 0.000000 of them across the sight
   line;
