@@ -86,7 +86,7 @@ _Avoid_: docs, metadata
 **Role**:
 The string that says who is speaking: `curator`, `curator/<project>` or
 `contributor/<domain>/<project>`. It opens every issue, pull request and comment, and it
-labels every issue.
+labels every issue and pull request.
 _Avoid_: identity, persona
 
 **Queue**:

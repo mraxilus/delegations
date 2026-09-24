@@ -1,19 +1,17 @@
 # probe
 
-The domain-neutral test project under the curator root. It carries the full project shape,
-and it exercises every mechanism that the audit enforces:
+The domain-neutral worked example under the curator root. It carries the full project
+shape, and it exercises the compile-time mechanisms that the constitution asks for:
 
 - a build-time configuration validated statically;
 - a distinct type over a range;
 - a symbolic operator with a named alias, and a poisoned operator;
 - a Unicode identifier, and a section banner;
-- a two-row test matrix;
+- a test matrix over two ring sizes;
 - a nimble file, provenance and glossary.
 
-It is also the standing target for a merge-process change (CURATOR.md duty 2). It is the
-smallest project that the matrix can plan. This paragraph once described a throwaway pull
-request, opened only to be closed once the jobs reported. The same duty rejected that. It
-tested nothing that the change's own pull request and the later `push` run had not tested.
+It replicates no authority, and it publishes no page. The static pass reads it on every run,
+and `koch plan` names it when its own code changes.
 
 ## Build and test
 

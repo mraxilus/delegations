@@ -142,12 +142,13 @@ Escalate only on need.
 ## 6. Test harness
 
 - Put a testament matrix header on the stub for each configuration. Each stub does `include`
-  of one shared suite:
+  of one shared suite. Leave `-r` out of `cmd`, because testament runs the binary itself,
+  and `-r` then runs every test twice:
 
   ```nim
   discard """
   action: run
-  cmd: "nim c --hints:on -d:testing -d:nimUnittestAbortOnError:on $options -r $file"
+  cmd: "nim c --hints:on -d:testing -d:nimUnittestAbortOnError:on $options $file"
   matrix: "-d:pga.dimensions=3 -d:pga.is_conformal=false"
   batchable: true
   joinable: true

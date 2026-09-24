@@ -2,8 +2,8 @@
 ##   Command line lives in root `koch.nim`, as Nim's own koch drives its repository; this
 ##   module composes static checks so koch holds dispatch only.
 ##   Module order is read from each module's own `import` line, never restated here: copy of
-##     graph drifts from graph, and this one had, naming dependencies four modules did not
-##     have and omitting `base` entirely.
+##     graph drifts from graph. Breaks Article I.5, which asks umbrella for `->` diagram.
+##     Cost: reader derives order from imports rather than reading it in one place.
 ##
 ##   Cost: tool runs once per check, so no hot path exists and Article VII figures stay
 ##     unmeasured by design; whole-tree audit time is recorded in PROVENANCE.md.
@@ -112,6 +112,7 @@ proc auditTree*(tree: Tree): seq[Finding] =
   result.add checkDeadExports(check_paths, check_sources)
   result.add checkSuites(tree.mapIt(it.path))
   result.add checkVerbs(koch_source, curator_source)
+  result.add checkOptions(koch_source)
 
   let stamp_now = tree.rulesStamp
   let dirs = tree.projectDirs

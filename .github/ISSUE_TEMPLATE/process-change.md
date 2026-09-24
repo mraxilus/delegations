@@ -6,8 +6,9 @@ labels: curator
 assignees: ''
 ---
 
-**Role:** <!-- Write curator, or contributor/<domain>/<project>. Every delegate posts as the
-same account, so this line is the only thing that says who is speaking. -->
+**Role:** <!-- Write `curator`, `curator/<project>` or `contributor/<domain>/<project>`. Every
+delegate posts as the same account, so this line is the only thing that says who is speaking.
+-->
 
 ## What is blocked
 

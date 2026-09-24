@@ -13,6 +13,9 @@
 ##     table, with no suite between them.
 ##   Verb drift: verbs koch dispatches, verbs its usage text prints, and verbs CURATOR.md
 ##     tables are one set named three times. `koch audit` was retired and its row stayed.
+##   Option drift: options koch parses and options its usage text prints are one set named
+##     twice. `--driven` was parsed, documented in header and used by `check.yml`, and usage
+##     never printed it.
 ##
 ##   Rules apply to checker alone, never to contributor project: one suite per module suits
 ##     library of small checks and suits nothing else, and projects here group tests by
@@ -55,9 +58,15 @@ const
     ## workflow rather than reading whole file.
   DRIVER_CASE* = "case paramStr(1)"
     ## Line opening project driver's own dispatch. Same shape one level down, and koch reads
-    ## it to learn which verbs that project carries (`plan.nim`, `drivenDirs`).
+    ## it to learn which verbs that project carries (`plan.nim`, `verbDirs`).
   CASE_END* = "else:"
     ## Line closing dispatch, after which branches belong to something else.
+  OPTION_CASE* = "case key"
+    ## Line opening driver's option parser, whose branches name one option each, one to line.
+  USAGE_END* = "\"\"\""
+    ## Line closing driver's usage text, after which `--` names prose rather than usage.
+  OPTION_MARK* = "--"
+    ## Opening of option usage text prints.
   TABLE_HEADING* = "## Checks reference"
     ## Heading above table naming verbs; other tables in same document name other things.
   IDENT_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_'}
@@ -147,7 +156,7 @@ func dispatchVerbs*(source: string, opening = COMMAND_CASE): seq[string] =
   ##   Line opening dispatch is given rather than fixed, since koch and project driver hold
   ##   same shape under different case: koch cases over parsed options, project driver over
   ##   its first argument. One parser reads both, so koch learns what verbs project carries
-  ##   by reading it (`plan.nim`, `drivenDirs`).
+  ##   by reading it (`plan.nim`, `verbDirs`).
   var is_inside = false
   for line in source.splitLines:
     let s = line.strip
@@ -160,6 +169,53 @@ func dispatchVerbs*(source: string, opening = COMMAND_CASE): seq[string] =
     let verb = s.between("\"", "\"")
     if verb.len > 0 and verb notin result: result.add verb
   result.sort
+
+
+func optionLabels*(koch: string): seq[string] =
+  ## Read options driver parses, i.e. quoted labels of option parser's one-line branches.
+  ##   Read stops at first line not opening branch, since parser's `else` returns early and
+  ##   command dispatch below it names verbs rather than options.
+  var is_inside = false
+  for line in koch.splitLines:
+    let s = line.strip
+    if s.startsWith(OPTION_CASE):
+      is_inside = true
+      continue
+    if not is_inside: continue
+    if not s.startsWith(DISPATCH_MARK): break
+    let option = s.between("\"", "\"")
+    if option.len > 0 and option notin result: result.add option
+  result.sort
+
+
+func usageOptions*(koch: string): seq[string] =
+  ## Read options driver's usage text prints, i.e. `--name` from usage mark to its close.
+  var is_inside = false
+  for line in koch.splitLines:
+    if USAGE_MARK in line: is_inside = true
+    if not is_inside: continue
+    if line.strip == USAGE_END: break
+    var i = line.find(OPTION_MARK)
+    while i >= 0:
+      var j = i + OPTION_MARK.len
+      while j < line.len and line[j] in IDENT_CHARS: inc j
+      let option = line[i + OPTION_MARK.len ..< j]
+      if option.len > 0 and option notin result: result.add option
+      i = line.find(OPTION_MARK, j)
+  result.sort
+
+
+func checkOptions*(koch: string): seq[Finding] =
+  ## Report driver's option parser and its usage text disagreeing.
+  let parsed = koch.optionLabels
+  if parsed.len == 0: return
+  let printed = koch.usageOptions
+  if printed != parsed:
+    result.add finding(
+      KOCH_PATH, 0,
+      "Usage text must print every option parser takes, and no other; expected `" &
+        parsed.join(", ") & "`; got `" & printed.join(", ") & "`.",
+    )
 
 
 func section*(markdown, heading: string): string =
