@@ -1,65 +1,47 @@
 # Run repository checks on pull requests, on main, and weekly over what merged that week.
-#   Nine jobs. `plan` names projects one change asks to compile, and names again which of
-#   those carry driven checks; `static` runs whole-tree checks, which cost tenths of second
-#   and so stay unscoped; `scope` and `commits` read branch; `project` is one matrix job per
-#   named project, each installing that project's own pin; `driven` is second matrix over
-#   subset of same plan, building each page and driving it through real events; `types`
-#   type-checks scripts of every changed project carrying node manifest, on driver's own
-#   compiler rather than through matrix, since `tools/build.nim` compiles no project code
-#   and building commit-pinned compiler to run build script would cost minutes for no
-#   checking; `base` refuses branch predating base's rules or checker; `audit` reads their
-#   verdicts and is gate branch protection requires, so required names stay `audit`, `scope`,
-#   `commits` while matrix names vary. `base`, `types` and `driven` reach merge through that
-#   gate, which is why requiring branches up to date needs no paid ruleset here.
-#   Weekly sweep scopes against its window rather than base commit, so `types` takes
-#   `--sweep` there, as `plan` does; `driven` needs neither, since it filters plan's own
-#   selection.
+#   `plan` names projects one change asks to compile, and again those of them carrying driven
+#   checks. `static` runs whole-tree checks, which cost seconds and so stay unscoped. `scope`
+#   and `commits` read branch. `project` is one matrix job per named project, each installing
+#   that project's own pin. `driven` is second matrix over subset of same plan, building each
+#   page and driving it through real events. `types` type-checks scripts of every changed
+#   project carrying node manifest beside its lock. `base` refuses branch predating base's
+#   charter or checker. `audit` reads verdicts of `plan`, `static`, `project`, `driven`,
+#   `types` and `base`, and is gate branch protection requires, since matrix job names vary;
+#   `scope` and `commits` are required by name (CURATOR.md, repository settings section).
 #
 #   `driven` is matrix where `types` is one job, and difference is what each verb compiles.
-#   Type check derives declarations by reading source as text; driven check builds page
-#   through JS backend, which compiles project code, so it needs that project's pin exactly
-#   as `project` does. That is cost `plan.nim` recorded against `typeJobs` when it was
-#   written, arriving as predicted. Its own system packages come from project's declaration
-#   read through `koch system`, never from names written into this file, so project gains
-#   what it needs by declaring it (CONTRIBUTOR.md, "System dependencies").
+#   Type check derives declarations by reading source as text, so koch's compiler serves it;
+#   driven check builds page through JS backend, which compiles project code, so it needs
+#   that project's pin exactly as `project` does. Its system packages come from project's
+#   declaration read through `koch system`, never from names written here (CONTRIBUTOR.md,
+#   System dependencies).
 #   Matrix runs in parallel, so wall time is slowest changed project, never sum of all.
-#   `nim r koch ci` at root runs same checks locally, before any pull request is opened;
-#   runner confirms, never discovers.
+#   `nim r koch ci` runs same checks locally before pull request opens; runner confirms,
+#   never discovers.
 #
-#   Driver version builds koch and runs whole-tree checks; it is `curator/audit`'s pin,
-#   never second pin, and `toolchain.nim` fails audit when this file disagrees with it.
-#   Every project pins its own compiler in its nimble file, since no single version serves
-#   all: `rga_visualiser` pins compiler commit no release carries, so one version cannot.
-#   Pin is release version, installed by setup action, or full commit, which no action
-#   installs: those are built from source here and cached by commit, so bootstrap is paid
-#   once. Commit pin exists for project following dependency onto devel; driver pin never
-#   is one, since every job waits on driver job.
-#   Compiler built from commit lives under runner temp, never in workspace, for same reason
-#   installed one does: audit reads untracked files.
-#   Nim installs under runner temp, never into workspace: audit reads untracked files, so
-#   toolchain inside checkout would be audited (first run on main proved it).
+#   `NIM_VERSION` builds koch and runs whole-tree checks. It is `curator/audit`'s pin, never
+#   second pin, and `toolchain.nim` fails audit when any workflow disagrees with it. Every
+#   project pins its own compiler: release version, which setup action installs, or full
+#   commit, which is built from source here and cached by commit, so bootstrap is paid once.
+#   Every compiler installs under runner temp, never in workspace: audit reads untracked
+#   files, so toolchain inside checkout would be audited.
+#
 #   What runner fetches or builds is cached on thing that pins it, never on run: commit for
 #   compiler built from source, `atlas.lock` for that project's checkouts, every
-#   `package-lock.json` for npm's own store and Playwright's browsers. Key is pin itself, so
-#   cache cannot serve tree lock would not have fetched; changing lock changes key, and stale
-#   entry is unreachable rather than wrong. Store and SDL3 checkout are keyed loosely, with
-#   `restore-keys`, since each entry there is named by digest or commit and verified on
-#   restore, so stale entry heals rather than ships; their steps say why. Rejected for now:
-#   caching apt archives, which saves
-#   download and not install, and `nimcache`, which would be largest saving and whose
-#   staleness is exactly failure repository refuses elsewhere -- check passing without
-#   compiling what it claims. It needs driving against deliberately stale cache first.
-#   Actions are pinned to majors running node24, since node20 runtime is being retired and
-#   runner forces every node20 action onto node24 while warning on each job. `checkout@v7` and
-#   `cache@v6` declare `runs.using: node24`; `@v4` of each declared node20, which is what
-#   warning named. `cache@v5` and later want runner 2.327.1 or newer, and runners here report
-#   2.337.0. Only breaking change either carries is `allow-unsafe-pr-checkout`, which is about
-#   `pull_request_target` defaults; this workflow triggers on `pull_request`, so it does not
-#   reach here.
+#   `package-lock.json` for npm's own store and Playwright's browsers. Changing lock changes
+#   key, so stale entry is unreachable rather than wrong. Store and SDL3 prefix are keyed
+#   loosely, with `restore-keys`, since each entry there is named by digest or commit and
+#   checked on restore, so stale entry heals rather than ships; their steps say why.
+#   Rejected: caching apt archives and `nimcache`, each small beside driven job's total
+#   (curator/audit/PROVENANCE.md, Runner caches).
+#   Actions are pinned to majors running node24, since runner retires node20. `cache@v5` and
+#   later want runner 2.327.1 or newer. `checkout@v7` breaks only `pull_request_target`
+#   defaults, and this workflow does not trigger on that event.
+#   `permissions` block is whole grant: `contents: read` is what checkout uses, and nothing
+#   here writes.
 #   Branch names and event kind reach koch through environment, never interpolated into
-#   script. Weekly sweep compiles projects whose code merged inside its window and nothing
-#   in week nobody merged code, because rot arrives with merges; every run, push and
-#   schedule alike, covers what changed and nothing else. Cron here and `SWEEP_DAYS` in
+#   script. Weekly run compiles projects whose code merged inside its window and nothing in
+#   week nobody merged code, because rot arrives with merges. Cron here and `SWEEP_DAYS` in
 #   `plan.nim` are one window named twice: change both together.
 
 name: check
@@ -70,6 +52,9 @@ on:
     branches: [main]
   schedule:
     - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
 
 env:
   NIM_VERSION: '2.2.12'
@@ -187,10 +172,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # Same two compiler arms as `project`, and for same reason: driven verb builds page
-      #   through JS backend, which compiles project code, so it needs that project's own pin
-      #   rather than driver's. `types` needs neither, which is why it is one job and this is
-      #   matrix.
+      # Same two compiler arms as `project`, for reason header gives.
       - if: matrix.kind == 'version'
         uses: jiro4989/setup-nim-action@v2
         with:
@@ -213,9 +195,7 @@ jobs:
       - if: matrix.kind == 'commit'
         run: echo "$RUNNER_TEMP/nim-commit/bin" >> "$GITHUB_PATH"
 
-      # Packages come from project's own declaration, never from names written here: workflow
-      #   knows no project, exactly as it names none for matrix above (CONTRIBUTOR.md, "System
-      #   dependencies"). Project declaring none installs none.
+      # Packages come from project's own declaration; project declaring none installs none.
       - env:
           PROJECT: ${{ matrix.dir }}
         run: |
@@ -242,15 +222,12 @@ jobs:
           path: ~/.npm
           key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
 
-      # Browser Playwright pins: `drive` fetches it, since nothing on runner installs one now
-      #   that this job stopped naming `chromium`. Same lock is key, and not by convenience --
-      #   `package-lock.json` fixes `@playwright/test`, and that version fixes browser revision
-      #   it installs, so tree lock names is tree this restores.
+      # Browser Playwright pins: `drive` fetches it, and nothing on runner installs one. Same
+      #   lock is key: `package-lock.json` fixes `@playwright/test`, and that version fixes
+      #   browser revision it installs, so tree lock names is tree this restores.
       #   Made before caching for reason npm's store is: run driving nothing never invokes it
       #   and leaves path absent, and `actions/cache` warns on absent path.
-      #   Cost this replaces was snap install of `chromium`, which was slowest item in apt step
-      #   (repository issue 79). Whether that trade is net gain is unmeasured until both have
-      #   run; figure belongs on that issue rather than asserted here.
+      #   Gain over apt install of `chromium` is unmeasured.
       - run: mkdir -p ~/.cache/ms-playwright
       - uses: actions/cache@v6
         with:
@@ -259,16 +236,14 @@ jobs:
 
       # Store `koch assets` fills is repository's rather than one project's, so key is its
       #   declaration and one entry serves every project's job. `assets.nim` says which bytes
-      #   each name is; project's driver says only which names it wants, so keying on driver
-      #   cached copy that costs milliseconds and missed fetch that costs 6.6 s -- cheap half,
-      #   keyed on file that moves most weeks (repository issue 132).
+      #   each name is; project's driver says only which names it wants, and moves most weeks.
       #   Made before caching, as npm's store and Playwright's are: job fetching nothing leaves
       #   path absent, and `actions/cache` warns on absent path.
       #   `restore-keys` is safe here by construction rather than by check: store names entries
-      #   by digest, so entry no row declares is unreachable rather than wrong, and `koch
-      #   assets` fetches what older restore lacks.
-      #   `build/fonts` is no longer cached: with store warm, `assets` copies twelve faces into
-      #   it in milliseconds, and second key over same bytes is one more thing to disagree.
+      #   by digest, so entry no row declares is unreachable rather than wrong, and
+      #   `koch assets` fetches what older restore lacks.
+      #   Rejected: caching `build/fonts`; with store warm, `assets` copies faces into it in
+      #   milliseconds, and second key over same bytes is one more thing to disagree.
       - run: mkdir -p ~/.cache/koch/assets
       - uses: actions/cache@v6
         with:
@@ -277,28 +252,28 @@ jobs:
           restore-keys: assets-${{ runner.os }}-
 
       # SDL3 is cloned, configured and built from source, and no package carries it, so cold
-      #   job paid 55.8 s of run 214's 357 s for it -- largest single step nothing cached
-      #   (repository issues 79 and 80, both of which named smaller levers).
-      #   Install prefix alone is cached, never cmake build tree beside it: `versionSdl3`
-      #   reads prefix's own `.pc`, so prefix is what makes `sdl3` return early, and build
-      #   tree is what makes stale restore dangerous. Measured rather than feared: cmake tree
-      #   carried from configure that found no X11 kept saying so after headers arrived, and
-      #   cost hour on container that had them. Product caches; build tree does not.
-      #   `restore-keys` is what makes this cache hit at all, and that is measured rather than
-      #   predicted: keyed on exact hash of driver alone it missed twice running, runs 221 and
-      #   226, printing `Built SDL3` both times. Driver holds `COMMIT_SDL3` and `SYSTEM`, which
-      #   made exact key correct, and it also holds everything else that file does, which made
-      #   it miss whenever project was worked on -- which is when CI runs.
-      #   Older prefix is safe for same reason build tree is not: `versionSdl3` reads restored
-      #   `.pc` and rebuilds where version misses pin, so wrong restore costs build already due.
-      #   Cost: most runs stop exercising SDL3 build. Every cache here trades that, and pin is
-      #   commit rather than tag now (repository issue 126, answered by #131), so what cache
-      #   hides is rebuild rather than upstream that moved under it.
+      #   build is largest step nothing else caches (curator/audit/PROVENANCE.md, Runner
+      #   caches). Install prefix alone is cached, never cmake build tree beside it:
+      #   `versionSdl3` reads prefix's own `.pc`, so prefix is what makes `sdl3` return early,
+      #   and stale build tree keeps what configure decided about machine that has changed.
+      #   Key holds driver's hash, since driver holds `COMMIT_SDL3` and `SYSTEM`; `restore-keys`
+      #   lets older prefix hit, since driver moves whenever project is worked on. Older prefix
+      #   is safe: `versionSdl3` reads restored `.pc` and rebuilds where version misses pin.
+      #   Key and restore key both carry project directory, so project that builds no SDL3
+      #   never restores another project's prefix. Path is made first, as for other caches, so
+      #   such project saves empty entry rather than warning.
+      #   Cost: most runs stop exercising SDL3 build; pin is commit, so cache hides rebuild
+      #   rather than upstream that moved.
+      - env:
+          PROJECT: ${{ matrix.dir }}
+        run: mkdir -p "$PROJECT/build/sdl3"
       - uses: actions/cache@v6
         with:
           path: ${{ matrix.dir }}/build/sdl3
-          key: sdl3-${{ runner.os }}-${{ hashFiles(format('{0}/tools/build.nim', matrix.dir)) }}
-          restore-keys: sdl3-${{ runner.os }}-
+          key: >-
+            sdl3-${{ runner.os }}-${{ matrix.dir }}-${{
+            hashFiles(format('{0}/tools/build.nim', matrix.dir)) }}
+          restore-keys: sdl3-${{ runner.os }}-${{ matrix.dir }}-
 
       - env:
           PROJECT: ${{ matrix.dir }}

@@ -630,6 +630,10 @@ is the failure it exists to catch.
 - **The unbolded form passes deliberately.** Issue bodies open `**Role:**`, but a comment is
   written loose, and the Architect writes `Role: architect`. A check that demanded bold would
   name whoever wrote the rule.
+- **The role line may follow HTML comments.** An issue that `watch.yml` or the ledger opens
+  carries its marker first, and a marker renders as nothing. Rejected: the pattern that read
+  from the first character, which named each such issue as having no role line. The same
+  pattern still names an unfilled template, whose role line opens `**Role:** <!--`.
 - The `permissions` block of `ledger.yml` names `actions: read`, `issues: write` and
   `pull-requests: read`, and nothing else. `workflows.nim` marks `gh pr` as a use of
   `pull-requests`, so a block that leaves that scope out is a finding.
@@ -641,6 +645,10 @@ is the failure it exists to catch.
 - Verified by hand through a stub for `gh`, recorded 2026-09-12. `gh` is not installed here,
   and a scheduled workflow runs only from the default branch. A draft, a green head and a head
   whose run is still `in_progress` are skipped, and a red head is named.
+- The list asks for 200 merged pull requests, newest first, because the window of 14 days
+  must fit inside it. Fourteen days held under a hundred merges, counted by
+  `git log --first-parent --merges` on 2026-09-24. Rejected: a limit of 60, which the same
+  count showed to end inside the window.
 - A merged pull request that names an issue still open is named with its base. One outside the
   window is not. A body that opens `**Role:**` and one that opens
   `Role:` unbolded both pass, while a null body and a missing label are named. A red `ledger`
@@ -662,6 +670,9 @@ beside the section that each title comes from.
 - **Case is kept.** A title in sentence case that holds a colon passes, such as
   `Rework the camera: free flight with no selection`. Cost: `Feat(audit): …` passes too, and
   holds by reading, as the positive half of the convention does.
+- The role-line pattern, verified by hand through real `jq` 1.7 on 2026-09-24. The program was
+  read from the workflow file, and it was run over fixture bodies. A marker before the role
+  line passes, and an unfilled template, a missing role line and a null body are named.
 - Verified by hand through a stub for `gh` that serves fixture JSON through real `jq` 1.7,
   2026-09-24. The step runs as the workflow holds it. Over the fixture titles, each expected
   title is named and no other, among them `fix:`, `feat(audit)!:`, `bug:` and `koch:`. Over
@@ -1019,9 +1030,9 @@ inside `pga`.
 
 **A red `main` opens its own issue, because a duty to remember to look fails in silence.**
 `watch.yml` reads each finished run of `check` and `ledger` on `main`. It opens an issue
-labelled `curator` when the run concludes failure. That issue is the first read of the opening
-duty in CURATOR.md, so no new rule exists. An existing rule produces an artefact that the rule
-already asks the next delegate to read.
+labelled `curator` when the run concludes failure. That issue lands in the queue that CURATOR.md
+asks every delegate to read first, so no new rule exists. An existing rule produces an issue
+that the rule already asks the next delegate to read.
 
 It is a separate workflow, because a run cannot watch its own outcome. `workflow_run` fires
 only from the copy on the default branch, so it cannot be driven from a branch at all. That is
@@ -1032,6 +1043,22 @@ issue for each run trains its reader to skim, which is the failure it exists to 
 marker in the body is what makes a later red comment on the first. Open issues are read
 directly rather than searched, because a cold search index would produce exactly the duplicate
 being avoided.
+
+**Only a red run of `main` itself is reported, and two of them never race.**
+
+- `branches: [main]` matches the head branch of the run. A pull request from the `main` of a
+  fork carries that name as well. So the job also asks that the run did not come from
+  `pull_request`. Rejected: the branch filter alone, which lets a red fork run open a false
+  issue with `issues: write`.
+- The job carries a `concurrency` group named after the workflow that it reads, and it never
+  cancels in progress. Two red runs of one workflow that finish together could each list the
+  open issues, find none, and open two. The group sits on the job rather than on the workflow,
+  so that only red runs queue in it. A group on the workflow would let a green completion
+  replace a red one that still waits.
+- Cost: a third red run that arrives while a second waits replaces it. The issue then gains
+  comments for the first and the third, and none for the second.
+- Unverified on the runner: the guard and the group take effect only from the default branch,
+  so they are read, and not yet driven.
 
 **A rule leaves the list of what no check can reach when it turns on a fact that something
 already writes down.** The conclusion of a run is such a fact, so `watch.yml` holds it. The
@@ -1071,7 +1098,8 @@ run only on pull requests, with full history. `audit` is a gate that reads the r
 The gate exists because matrix job names vary with the change, and can never be required
 checks. The required checks are `audit`, `scope`, `commits` and `role` (CURATOR.md, "Repository
 settings the Architect applies"). Every job added to `check.yml` is named in the `needs` of the
-gate as well as declared. A job outside it is a red check that cannot block a merge. That
+gate, or it is a required check by name. `scope` and `commits` take the second way. A job that is
+neither is a red check that cannot block a merge. That
 mistake is easy to make and impossible to see afterwards.
 
 - Rejected: a rename of the required checks, which would make the Architect reconfigure
@@ -1082,6 +1110,12 @@ mistake is easy to make and impossible to see afterwards.
   the workspace, and `.gitignore` lists `.nim_runtime/`.
 - Rejected: a toolchain inside the checkout. The audit reads untracked files, so it reads that
   toolchain as source, with a finding on each file that breaks a rule.
+- `check.yml` declares `permissions: contents: read`, because checkout is the only use of the
+  token and nothing in it writes. The caches take their own runtime token, and no step calls
+  `gh`. Cost: a step that later reaches the API needs its scope named, which `workflows.nim`
+  reports for the steps that it can read. Verified on the runner, 2026-09-24, for `plan`,
+  `static`, `types`, `scope`, `commits`, `base` and `audit`. A change that touched no project
+  code skipped `project` and `driven`, so the grant is unverified for those two jobs.
 - Verified on the runner, recorded 2026-09-08: a record-only change emits `[]`, `project` is
   skipped, and the gate passes on a skipped dependency. The gate passes on `skipped`, and fails
   on `failure` or `cancelled`.
@@ -1225,13 +1259,18 @@ SDL3, so `sdl3` clones, configures and builds it from source. That is 55.8 s of 
   headers arrive. Verified by hand on a container, recorded 2026-09-10.
 - A product caches. A build tree remembers what it decided about a machine that has since
   changed.
-- The key holds the hash of the `tools/build.nim` of the project, with
-  `restore-keys: sdl3-<os>-`. That file carries `COMMIT_SDL3` and `SYSTEM`, so a moved pin or a
-  changed package list misses the exact key. The partial key then restores an older entry, and
-  `versionSdl3` reads the restored `.pc` and returns early.
+- The key holds the project directory and the hash of the `tools/build.nim` of the project,
+  with `restore-keys: sdl3-<os>-<project>-`. That file carries `COMMIT_SDL3` and `SYSTEM`, so
+  a moved pin or a changed package list misses the exact key. The partial key then restores
+  an older entry, and `versionSdl3` reads the restored `.pc` and returns early.
 - Rejected: the exact key alone. The file carries everything else that a project driver
   carries, so it changes often, and the exact key misses on each change. A key has to be
   specific enough to be correct and stable enough to hit.
+- Rejected: a key without the project directory. Its restore key then matched the prefix of
+  another project. So a driven project that builds no SDL3 restored one, and saved it again
+  under its own key. The path is made before the step, so such a project saves an empty entry
+  rather than a warning about an absent path. Unverified on the runner until a `driven` job
+  runs with this key.
 - Verified on the runner, 2026-09-12. The job restored from a key other than the one it saved
   under, and printed `Kept SDL3 3.2.30, already reported by pkg-config`. The SDL3 phase ran in
   about 20 ms, against 55.8 s built, at a restore cost of about 1 s.
