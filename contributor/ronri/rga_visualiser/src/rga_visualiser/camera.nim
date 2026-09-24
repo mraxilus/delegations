@@ -125,6 +125,13 @@ const
     ##   Not exact middle: selection is *framed* inside box, spread across it.
     ##   Here rather than beside pixel test in `picking` because camera needs it too, to
     ##   solve how far back eye must stand (`distanceFitting`), and `picking` imports this.
+  FRACTION_HELD_CANVAS* = 1.0/3.0
+    ## Fix smallest sphere finger's orbit holds, as share of canvas's short side at pivot.
+    ##   Centre of it then turns about as fast as half turn per short side did, which
+    ##   Architect found almost right; see `radiusHeld`.
+  FRACTION_HELD_INSIDE* = 0.9
+    ## Bound sphere finger's orbit holds to this share of eye's separation from pivot.
+    ##   Eye inside sphere would meet it from behind, and hold point it cannot see.
   FACTOR_CLIP_NEAR* = 1.0/400.0
     ## Set near clip plane this fraction of orbit distance out.
     ##   Scaled beside `FACTOR_CLIP_FAR` so frustum stays same shape at every distance.
@@ -524,13 +531,6 @@ func orbit*(camera: var Camera; turn, rise: float) =
   camera.motor = camera.turnedAboutPivot(camera.frame.axis_right, -rise)
 
 
-func upwardHeld(camera: Camera): Direction =
-  ## Read world up as camera stands to it: downward once camera has passed over top.
-  ##   World axis nearest camera's own up, so sideways drag carries picture same way on
-  ##   both sides of pole.
-  if dot(camera.frame.axis_up, UP_WORLD) >= 0.0: UP_WORLD else: -UP_WORLD
-
-
 func acrossLevel(camera: Camera): Direction =
   ## Read level axis at right angles to sight, signed to agree with camera's own across.
   ##   Camera's own across where sight runs along world up and names no level axis.
@@ -538,19 +538,6 @@ func acrossLevel(camera: Camera): Direction =
   let level = cross(camera.frame.forward, UP_WORLD)
   if norm(level) < 1.0e-9: return camera.frame.axis_right
   if dot(level, camera.frame.axis_right) >= 0.0: level else: -level
-
-
-func orbitLevel*(camera: var Camera; turn, rise: float) =
-  ## Turn eye about pivot as turntable does, passing over top rather than stopping short.
-  ##   Arguments read as `orbit`'s do. Sideways turns about world up, taken downward past
-  ##   top; up and down turns about level across axis.
-  ##   Each turn moves one turntable angle alone. So neither sinks sight nor leaves roll,
-  ##   and drag lands same however it is cut into steps.
-  ##   Both axes are world's nearest to camera's own, so picture moves as `orbit`'s does.
-  ##   Cost: near pole, sideways drag spins picture about sight, and spin reverses as
-  ##   camera passes top. Roll set by twist tips sideways drag off screen's across.
-  camera.motor = camera.turnedAboutPivot(camera.upwardHeld, turn)
-  camera.motor = camera.turnedAboutPivot(camera.acrossLevel, -rise)
 
 
 func dolly*(camera: var Camera, factor: float) =
@@ -654,19 +641,16 @@ func wrapAngle(radians: float): float =
   floorMod(radians + PI, 2.0*PI) - PI
 
 
-func lookCarrying*(camera: var Camera; held, under: Direction) =
-  ## Turn which way eye faces as turntable does, so `held` comes to be seen where `under` is.
-  ##   Finger's free aim: `held` runs through pixel finger left, `under` through pixel it
-  ##   reached, both read off this frame. So sky under finger moves with finger, pixel for
-  ##   pixel, and drag that comes back brings camera back.
+func turnsCarrying(camera: Camera; held, under: Direction): (Direction, float, float) =
+  ## Solve turntable's turn that carries `under` onto `held`: level axis, pitch, yaw.
   ##   Pitch about level across axis first, by what lifts `under` to `held`'s height; then
   ##   yaw about world up, by what closes their bearings. Neither changes roll.
   ##     Two pitches reach that height, and each has its yaw. Pair that turns least is
-  ##     taken: other one flips sight half turn about world up, and lands sky under finger
-  ##     just as exactly.
+  ##     taken: other one flips sight half turn about world up, and carries just as
+  ##     exactly.
   ##   Height out of pitch's reach, as for pixel far off middle near pole, takes nearest
-  ##   height it reaches, and sky slips under finger there.
-  ##   Neither direction needs to be unit.
+  ##   height it reaches, and what finger holds slips under it there.
+  ##   Neither direction needs to be unit. Directions only: where turn stands is caller's.
   let
     level = camera.acrossLevel
     across = (1.0/norm(level))*level
@@ -698,8 +682,62 @@ func lookCarrying*(camera: var Camera; held, under: Direction) =
     pitch =
       if rising^2 + bearing(rising)^2 <= falling^2 + bearing(falling)^2: rising
       else: falling
+  (across, pitch, bearing(pitch))
+
+
+func lookCarrying*(camera: var Camera; held, under: Direction) =
+  ## Turn which way eye faces as turntable does, so `held` comes to be seen where `under` is.
+  ##   Finger's free aim: `held` runs through pixel finger left, `under` through pixel it
+  ##   reached, both read off this frame. So sky under finger moves with finger, pixel for
+  ##   pixel, and drag that comes back brings camera back. See `turnsCarrying`.
+  let (across, pitch, bearing) = camera.turnsCarrying(held, under)
   camera.motor = camera.turnedAboutEye(across, pitch)
-  camera.motor = camera.turnedAboutEye(UP_WORLD, bearing(pitch))
+  camera.motor = camera.turnedAboutEye(UP_WORLD, bearing)
+
+
+func radiusHeld*(camera: Camera; width, height: int; reach_selection: float): float =
+  ## Size sphere about pivot that finger's orbit holds.
+  ##   Selection's own reach from pivot, so what is picked follows finger over its extent;
+  ##   no smaller than `FRACTION_HELD_CANVAS` of short side at pivot's depth, so single
+  ##   point still gives finger something to hold; inside `FRACTION_HELD_INSIDE` of
+  ##   separation, so eye stays outside it.
+  let
+    half_height = tan(0.5*degToRad(camera.degrees_field_of_view))
+    per_pixel = 2.0*camera.distance*half_height/float(height)
+    least = FRACTION_HELD_CANVAS*per_pixel*float(min(width, height))
+  min(max(reach_selection, least), FRACTION_HELD_INSIDE*camera.distance)
+
+
+func pointHeld*(eye, pivot: Position; heading: Direction; radius: float): Position =
+  ## Place point finger's orbit holds along sight `heading` from `eye`.
+  ##   On sphere of `radius` about `pivot`, nearer side, where ray passes within
+  ##   `radius/sqrt(2)` of pivot. Beyond, on sheet that ray's miss sets: lifted toward eye
+  ##   by `radius^2/(2*miss)`, which meets sphere at that bound with same slope.
+  ##     Sphere alone runs out at its rim, where tiny drag asks for whole quarter turn;
+  ##     sheet carries on past it, and finger off sphere still turns view.
+  ##   Always on ray, so point held is under pixel exactly; only its distance from pivot
+  ##   leaves sphere, and there turn carries direction and lets distance slip.
+  ##   Eye and pivot passed in, not camera: per finger event, twice, and each is sandwich.
+  let
+    along = (1.0/norm(heading))*heading
+    toward_pivot = pivot - eye
+    nearest = dot(toward_pivot, along)
+    miss = norm(toward_pivot + (-nearest)*along)
+    back =
+      if miss <= radius/sqrt(2.0): sqrt(radius*radius - miss*miss)
+      else: radius*radius/(2.0*miss)
+  eye + (nearest - back)*along
+
+
+func orbitCarrying*(camera: var Camera; held, under: Direction) =
+  ## Turn eye about pivot as turntable does, so point `held` off pivot comes to be seen
+  ## where point `under` off pivot is seen now.
+  ##   Finger's orbit: both are points `pointHeld` places under pixel finger left and pixel
+  ##   it reached, less pivot. Turn about pivot keeps sphere they lie on, so point finger
+  ##   took moves with finger, pixel for pixel. See `turnsCarrying`.
+  let (across, pitch, bearing) = camera.turnsCarrying(held, under)
+  camera.motor = camera.turnedAboutPivot(across, pitch)
+  camera.motor = camera.turnedAboutPivot(UP_WORLD, bearing)
 
 
 func roll*(camera: var Camera, radians: float) =

@@ -816,24 +816,32 @@ func turnAcross*(camera: var Camera; turn, rise: float; has_selection: bool) =
 
 func turnFollowing*(
   camera: var Camera; before, after: ScreenPosition; width, height: int;
-  has_selection: bool
+  has_selection: bool; reach_selection = 0.0
 ) =
   ## Turn camera by finger's drag, from pixel it left to pixel it reached.
   ##   Both turn as turntable does, about world up and level across, so neither leaves roll:
-  ##   touch has no roll key beside it, and finger wanders in curves.
-  ##   Selection orbits by rate, half turn per short side of canvas on both axes, so drag
-  ##   turns along its own slant; see `camera.orbitLevel`.
-  ##   Free flight carries sky under finger with finger, pixel for pixel; see
-  ##   `camera.lookCarrying`. Not rate: no rate matches field of view at every pixel.
-  ##   Roll reader set by twist survives, since neither level turn changes it.
-  if has_selection:
-    let rate = PI/float(min(width, height))
-    camera.orbitLevel(-(after.x - before.x)*rate, (after.y - before.y)*rate)
+  ##   touch has no roll key beside it, and finger wanders in curves. Roll reader set by
+  ##   twist survives.
+  ##   Both carry what finger holds with finger, pixel for pixel, and drag that comes back
+  ##   brings camera back. Not rate: no rate matches field of view at every pixel.
+  ##   Free flight holds sky; see `camera.lookCarrying`.
+  ##   Selection holds point on sphere about pivot, of selection's `reach_selection` or
+  ##   more; see `camera.radiusHeld`, `camera.pointHeld` and `camera.orbitCarrying`.
+  ##     Pivot itself never moves under orbit, so point there is nothing to hold.
+  let
+    frame = camera.frame
+    left = camera.headingThrough(frame, width, height, before)
+    reached = camera.headingThrough(frame, width, height, after)
+  if not has_selection:
+    camera.lookCarrying(held = left, under = reached)
     return
-  let frame = camera.frame
-  camera.lookCarrying(
-    held = camera.headingThrough(frame, width, height, before),
-    under = camera.headingThrough(frame, width, height, after),
+  let
+    radius = camera.radiusHeld(width, height, reach_selection)
+    eye = camera.eye
+    pivot = eye + camera.distance*frame.forward
+  camera.orbitCarrying(
+    held = pointHeld(eye, pivot, left, radius) - pivot,
+    under = pointHeld(eye, pivot, reached, radius) - pivot,
   )
 
 
