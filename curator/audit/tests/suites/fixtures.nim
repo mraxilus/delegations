@@ -6,7 +6,7 @@
 ##     and `taudit` proves they still agree.
 
 import std/[json, os, osproc, strutils, tempfiles]
-import ../../src/[domains, kinds, layout, provenance, dependencies]
+import ../../src/[domains, kinds, markdown, layout, provenance, dependencies]
 
 
 func entry*(path, content: string): Entry =
@@ -26,6 +26,8 @@ const
     ## Minimal glossary passing shape check.
   PIN* = "2.2.4"
     ## Compiler version fixture projects pin, and driver version fixture workflow states.
+  COMMIT* = "295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3"
+    ## Compiler commit, forty lowercase hex, standing where test pins commit, not version.
   NIMBLE_TEXT* = "# Package description; requirements live here.\n\nversion = \"0.1.0\"\n" &
     "srcDir = \"src\"\n\nrequires \"nim == " & PIN & "\"\n"
     ## Minimal nimble file pinning compiler exactly and requiring no package.
@@ -43,6 +45,16 @@ const
     ## Contributor project in fixture tree.
   AUDIT_DIR* = CURATOR & "/audit"
     ## Curator project in fixture tree.
+
+
+func headerTable*(source: string): seq[seq[string]] =
+  ## Read pipe table of module header, i.e. `##   |` lines with prefix cut, heading row first.
+  ##   Suites read it from `staticRead` source, so table is checked against declarations it
+  ##   describes (Article I.4) without src exporting reader nothing else needs.
+  var table: string
+  for line in source.splitLines:
+    if line.startsWith("##   |"): table.add line["##   ".len .. ^1] & "\n"
+  table.tableRows
 
 
 func readmeText*(): string =

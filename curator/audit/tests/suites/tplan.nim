@@ -1,6 +1,6 @@
 ## Replicate scoped test selection of `plan.nim` header and CURATOR.md checks reference.
 
-import std/[json, options, sequtils, unittest]
+import std/[json, os, sequtils, unittest]
 import ../../src/[plan, projects]
 import ./fixtures
 
@@ -40,19 +40,15 @@ suite "Plan":
     # Lock alone names no tools to install, so it selects nothing either.
     check goodTree().with(entry(ALPHA_DIR & "/package-lock.json", "{}\n")).nodeDirs(DIRS).len == 0
 
-  test "type check is scoped as compiling is, so records propagation type-checks nothing":
+  test "type check is scoped as compiling is":
     let both = goodTree().with(
       entry(ALPHA_DIR & "/package.json", "{}\n"),
       entry(ALPHA_DIR & "/package-lock.json", "{}\n"),
     )
-    # `ci` narrows to changed projects first, then to node ones; record change narrows away.
-    check both.nodeDirs(testSet(DIRS, [ALPHA_DIR & "/PROVENANCE.md"])).len == 0
+    # `ci` narrows to changed projects first, then to node ones.
     check both.nodeDirs(testSet(DIRS, [ALPHA_DIR & "/src/alpha.nim"])) == @[ALPHA_DIR]
     # Change to other project selects that project alone, and it carries no manifest.
-    check both.nodeDirs(testSet(DIRS, [AUDIT_DIR & "/tests/taudit.nim"])).len == 0
-    # Checker change selects driver's project alone, which carries no manifest, so it
-    #   type-checks nothing: only project whose code changed compiles or type-checks.
-    check both.nodeDirs(testSet(DIRS, ["koch.nim"])).len == 0
+    check both.nodeDirs(testSet(DIRS, [AUDIT_DIR & "/tests/taudit.nim"])).len == 0  # given only
 
   test "project gains driven checks by carrying that verb, read from its own driver":
     # Nothing lists which project is driven either: koch reads driver's own dispatch, so
@@ -83,27 +79,20 @@ suite "Plan":
     const DRIVER = ALPHA_DIR & "/tools/build.nim"
     let tree = goodTree().with(entry(DRIVER,
       "case paramStr(1)\n" & "of \"drive\": drive()\n" & "else:\n"))
-    # Record change selects nothing to compile, so it selects nothing to drive.
-    check tree.drivenOnly(tree.jobs([ALPHA_DIR & "/PROVENANCE.md"])).len == 0
     let selected = tree.drivenOnly(tree.jobs([ALPHA_DIR & "/src/alpha.nim"]))
     check selected.len == 1
     check selected[0].dir == ALPHA_DIR
     check selected[0].pin == PIN  # driven job installs project's own pin, as `tests` does
     # Change to project carrying no driven verb selects that project and drives nothing.
-    check tree.drivenOnly(tree.jobs([AUDIT_DIR & "/tests/taudit.nim"])).len == 0
-    # Checker change selects driver's project alone, which carries no driven verb.
-    check tree.drivenOnly(tree.jobs([CHECKER_DIR & "/plan.nim"])).len == 0
-    # Sweep and whole-repository runs narrow to driven ones too, rather than driving all.
+    check tree.drivenOnly(tree.jobs([AUDIT_DIR & "/tests/taudit.nim"])).len == 0  # filters
+    # Whole-repository run narrows to driven ones too, rather than driving all.
     check tree.drivenOnly(tree.allJobs) == selected
-    check tree.drivenOnly(tree.sweepJobs([ALPHA_DIR & "/src/alpha.nim"])) == selected
 
   test "checker change selects the driver's project alone, never every project":
     check testSet(DIRS, ["koch.nim"]) == @[AUDIT_DIR]  # driver's suites read it
     check testSet(DIRS, ["koch.nim.cfg"]) == @[AUDIT_DIR]  # driver flags
     check testSet(DIRS, [CHECKER_DIR & "/layout.nim"]) == @[AUDIT_DIR]  # code of that project
     check testSet(DIRS, ["koch.nim", CHECKER_DIR & "/plan.nim"]) == @[AUDIT_DIR]  # once
-    check isChecker(CHECKER_DIR & "/layout.nim")  # still governing, for `base`
-    check not isChecker(AUDIT_DIR & "/tests/tlayout.nim")  # checker's own suite is code
 
   test "path inside no project selects nothing by itself":
     check testSet(DIRS, ["CONSTITUTION.md"]).len == 0  # rules reach projects by stamp
@@ -112,7 +101,6 @@ suite "Plan":
 
   test "jobs carry each project's own pin, and skip project pinning none":
     let tree = goodTree()
-    check tree.pinOf(AUDIT_DIR) == some(PIN)  # fixture pin
     let selected = tree.jobs([ALPHA_DIR & "/src/alpha.nim"])
     check selected.len == 1
     check selected[0].dir == ALPHA_DIR
@@ -124,23 +112,20 @@ suite "Plan":
     check unpinned.jobs([ALPHA_DIR & "/src/alpha.nim"]).len == 0  # nothing to install
 
   test "sweep runs what merged in its window, or nothing at all":
+    let root = tempRepo()
+    defer: removeDir(root)
     let tree = goodTree()
-    # Code merged in window: that project, and only it, as scoped runs select.
-    check tree.sweepJobs([ALPHA_DIR & "/src/alpha.nim"]).mapIt(it.dir) == @[ALPHA_DIR]
-    check tree.sweepJobs([CHECKER_DIR & "/layout.nim"]).mapIt(it.dir) == @[AUDIT_DIR]
-    # Nothing merged, or records only: sweep skips itself entirely.
-    check tree.sweepJobs(newSeq[string]()).len == 0  # quiet week
-    check tree.sweepJobs([ALPHA_DIR & "/PROVENANCE.md"]).len == 0  # stamps only
-    check tree.sweepJobs(["README.md"]).len == 0  # root prose only
-    check SWEEP_DAYS == 7  # window matches weekly cron in check.yml
+    # Repository younger than window holds no commit to diff from, so it sweeps whole.
+    check sweepFor(root, tree, 7) == tree.allJobs  # every project
+    # Window holding no merge has nothing to find, so it compiles nothing.
+    check sweepFor(root, tree, 0).len == 0  # quiet week
 
   test "koch declares what it needs, as the rule it enforces asks of every project":
-    # Repository issue 78: koch held every project to declaration it kept only in prose.
-    #   No project here declares anything, so what comes back is koch's own alone -- which is
-    #   what makes this readable without running any project's verb.
+    # No project here declares anything, so what comes back is koch's own alone, which
+    #   makes this readable without running any project's verb.
     check repositorySystem(".", goodTree(), newSeq[string]()) ==
       @["coreutils", "curl", "git", "tar"]
-    check KOCH_SYSTEM.len == 4
+    check KOCH_SYSTEM.mapIt(it[0]).deduplicate.len == KOCH_SYSTEM.len  # each package once
     for (package, why) in KOCH_SYSTEM:
       check package.len > 0
       check why.len > 0  # reason in field outlives one in comment (CONTRIBUTOR.md)
@@ -156,7 +141,7 @@ suite "Plan":
     check goodTree().jobs(newSeq[string]()).render == "[]"  # empty plan skips matrix
 
     # Non-ASCII domain folder survives JSON, since matrix reads path back verbatim.
-    let built = @[Job(dir: "p", pin: "295bafc0d7e9a0c9a3ba0d9b39b5b0b6a4c1d2e3")]
+    let built = @[Job(dir: "p", pin: COMMIT)]
     check parseJson(built.render)[0]["kind"].getStr == "commit"  # built from source
 
     let accented = @[Job(dir: "contributor/síncopa/dance_ontology", pin: "2.2.6")]

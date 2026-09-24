@@ -194,7 +194,7 @@ proc run(options: Options): int =
     for file in wanted:
       let path = assetIn(root, file)
       if path.len == 0:
-        found.add(if file.digestOf.len == 0: unknown(file) else: @[finding(
+        found.add(if file.declaredDigest.len == 0: unknown(file) else: @[finding(
           "curator/audit/src/assets.nim", 0,
           "Asset is declared but could not be fetched or checked; got `" & file & "`.",
         )])
