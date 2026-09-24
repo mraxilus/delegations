@@ -338,6 +338,8 @@ project and nothing checked it:
   table above are one set named three times. Any two that differ are a finding.
 - The options that koch parses and the options that its usage text prints are one set named
   twice. A difference is a finding.
+- The bootstrap diagram of `audit.nim` names each module, and orders each module after each
+  module that it imports. A difference from the imports is a finding.
 
 A finding prints in one form, and the exit code is 1:
 
