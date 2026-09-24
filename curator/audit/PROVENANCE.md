@@ -461,7 +461,7 @@ falsified.
 
 Only two kinds of path count. A charter document moves the stamp that every project claims,
 and the checker decides what the audit accepts. Everything else may differ freely.
-`check-drift` feeds the `summary` gate that branch protection requires, so no setting
+`check-drift` feeds the `summarize` gate that branch protection requires, so no setting
 changes.
 
 On the runner the job checks out the branch head, and never the merge ref that a pull request
@@ -1160,11 +1160,11 @@ locally.
 `list-projects` emits the matrices, and `check-files` runs the static pass. `test` is one matrix
 job for each listed project, on its own pin. `drive` is a second matrix over the subset that
 carries that verb, and `check-types` is one plain job on the compiler of koch. `check-scope`,
-`check-commits` and `check-drift` run only on pull requests, with full history. `summary` is a
+`check-commits` and `check-drift` run only on pull requests, with full history. `summarize` is a
 gate that reads the rest.
 
 The gate exists because matrix job names vary with the change, and can never be required
-checks. The required checks are `summary`, `check-scope`, `check-commits` and `check-role`
+checks. The required checks are `summarize`, `check-scope`, `check-commits` and `check-role`
 (CURATOR.md, "Repository settings the Architect applies"). Every job added to `check.yml` is
 named in the `needs` of the gate, or it is a required check by name. `check-scope` and
 `check-commits` take the second way. A job that is
