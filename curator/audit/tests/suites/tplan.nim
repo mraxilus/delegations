@@ -45,7 +45,7 @@ suite "Plan":
       entry(ALPHA_DIR & "/package.json", "{}\n"),
       entry(ALPHA_DIR & "/package-lock.json", "{}\n"),
     )
-    # `ci` narrows to changed projects first, then to node ones.
+    # `check` narrows to changed projects first, then to node ones.
     check both.nodeDirs(testSet(DIRS, [ALPHA_DIR & "/src/alpha.nim"])) == @[ALPHA_DIR]
     # Change to other project selects that project alone, and it carries no manifest.
     check both.nodeDirs(testSet(DIRS, [AUDIT_DIR & "/tests/taudit.nim"])).len == 0  # given only
@@ -82,7 +82,7 @@ suite "Plan":
     let selected = tree.drivenOnly(tree.jobs([ALPHA_DIR & "/src/alpha.nim"]))
     check selected.len == 1
     check selected[0].dir == ALPHA_DIR
-    check selected[0].pin == PIN  # driven job installs project's own pin, as `tests` does
+    check selected[0].pin == PIN  # drive job installs project's own pin, as `test` does
     # Change to project carrying no driven verb selects that project and drives nothing.
     check tree.drivenOnly(tree.jobs([AUDIT_DIR & "/tests/taudit.nim"])).len == 0  # filters
     # Whole-repository run narrows to driven ones too, rather than driving all.
@@ -111,14 +111,14 @@ suite "Plan":
     )
     check unpinned.jobs([ALPHA_DIR & "/src/alpha.nim"]).len == 0  # nothing to install
 
-  test "sweep runs what merged in its window, or nothing at all":
+  test "recent window runs what merged in it, or nothing at all":
     let root = tempRepo()
     defer: removeDir(root)
     let tree = goodTree()
     # Repository younger than window holds no commit to diff from, so it sweeps whole.
-    check sweepFor(root, tree, 7) == tree.allJobs  # every project
+    check recentFor(root, tree, 7) == tree.allJobs  # every project
     # Window holding no merge has nothing to find, so it compiles nothing.
-    check sweepFor(root, tree, 0).len == 0  # quiet week
+    check recentFor(root, tree, 0).len == 0  # quiet week
 
   test "koch declares what it needs, as the rule it enforces asks of every project":
     # No project here declares anything, so what comes back is koch's own alone, which

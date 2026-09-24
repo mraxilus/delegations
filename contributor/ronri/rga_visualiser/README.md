@@ -23,8 +23,8 @@ replicates no published source, and derives no algebra of its own.
 ## Build and test
 
 ```sh
-nim r koch ci                                    # repository root: every check but deps, scoped
-nim r koch tests contributor/ronri/rga_visualiser  # this project alone, three configurations
+nim r koch check                                 # repository root: every check a pull request runs
+nim r koch test contributor/ronri/rga_visualiser  # this project alone, three configurations
 nim r tools/build.nim assets                     # this project: fetch every face, once
 nim r tools/build.nim web                        # this project: build/rga_visualiser.html
 nim r tools/build.nim drive                      # this project: drive both front-ends
@@ -66,8 +66,8 @@ nim r tools/build.nim desktop
 ```
 
 Atlas restores the `pga` library from `atlas.lock` into `deps/`, and it is never committed.
-`nim r koch deps contributor/ronri/rga_visualiser` restores it alone. It is pinned at `295bafc`,
-which is the head of that library.
+`nim r koch fetch-deps contributor/ronri/rga_visualiser` restores it alone. It is pinned at
+`295bafc`, which is the head of that library.
 
 Four projection operations are withdrawn at head while the library rebuilds them.
 `src/rga_visualiser/projections.nim` stands in for them until they return. See Dependencies and
@@ -81,10 +81,11 @@ self-contained `build/rga_visualiser.html` that opens from `file://`.
 That needs Node and npm alongside Nim. `npm ci` restores the pinned dev dependencies into
 `node_modules/`, which is never committed.
 
-`assets` copies every face that the two front-ends draw with out of the shared asset store of the
-repository. Those are the faces the page embeds, and the faces the desktop binary loads.
-`koch assets` fills that store, and checks it against `curator/audit/src/assets.nim`. Which faces
-this project wants is in `tools/build.nim`, and what bytes each one is belongs to the store.
+`assets` copies every face that the two front-ends draw with out of the shared asset store of
+the repository. Those are the faces the page embeds, and the faces the desktop binary loads.
+`koch fetch-assets` fills that store, and checks it against `curator/audit/src/assets.nim`.
+Which faces this project wants is in `tools/build.nim`, and what bytes each one is belongs to
+the store.
 
 Both front-ends draw three roles from three families. **Noto Serif** takes titles, **Noto Sans**
 takes body and controls, and **Commit Mono** takes code and any text whose columns carry meaning.

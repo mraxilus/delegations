@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | c73f63e83992089d |
+| Rules   | be54792c5171ff9d |
 | Pruned  | bba4c7f8fc306df2a89d81ea3e8e42620d235486 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -1428,8 +1428,8 @@ installed. Absent Playwright stops with a finding that names the verb that says 
 rather than as a missing file.
 
 Rejected: to pin Playwright itself. It is a node package, and that would mean a `package.json`
-beside its lock. That enrols the project in `koch types` and demands a `types` verb. The Architect
-has asked not to have that work built while this half of the project may go.
+beside its lock. That enrols the project in `koch check-types` and demands a `types` verb. The
+Architect has asked not to have that work built while this half of the project may go.
 
 Cost, stated rather than implied: **Playwright carries no pin here at all**, and the system packages
 carry whatever version the machine has. Verified by a run of all four routes on this machine,
@@ -1514,7 +1514,7 @@ The origin of all seven is `@fontsource` 5.3.0, by way of `cdn.jsdelivr.net`. Al
 
 Their addresses and checksums are no longer this project's to hold. They are the `ASSETS` table in
 `curator/audit/src/assets.nim`, which is the shared store of the repository. `assets` here names the
-seven files it wants, and `koch assets` answers with their paths.
+seven files it wants, and `koch fetch-assets` answers with their paths.
 
 That is the settlement of repository issue 116, which this project raised as its second consumer.
 Four of these seven were already pinned byte for byte by `rga_visualiser`. Article II.9 calls two
@@ -1650,17 +1650,17 @@ reddens a law.
 ## Figures
 
 - `trigid.nim`, danger build, on 2026-09-24, in one session on four cores. Its run took 385.1 s with
-  every search, and takes 28.6 s reading kept answers. Under `nim r koch ci` it took 40.76 s,
-  compile included, and the whole of `koch ci` took 110 s.
+  every search, and takes 28.6 s reading kept answers. Under `nim r koch check` it took 40.76 s,
+  compile included, and the whole of `koch check` took 110 s.
 - `trigid.nim` on the runner, under testament, compile included: 43.71 s on `5975d93`, against
   503.91 s and 504.66 s with every search. The project job took 2 min 29 s in all.
-- The whole of `nim r koch ci`, with the kept answers and the joined suites: 57 s and 66 s, in two
-  runs on 2026-09-24. `trigid.nim` took 30.4 s and 30.5 s of it, `tjoined.nim` 10.7 s and 12.8 s,
-  and `tread.nim` 9.3 s and 9.2 s.
-- `trigid.nim`, danger build, under `nim r koch ci`: 331 s wall. That is four Xeon cores shared with
-  nothing else, on a Linux amd64 container, Nim 2.2.12, 2026-09-13. `tmarks` takes 12.6 s, `tread`
-  7.9 s, and `tengine` 3.3 s. Every other suite is under 2 s. It is a single figure with no pair, so
-  it is unmeasured as an optimisation.
+- The whole of `nim r koch check`, with the kept answers and the joined suites: 57 s and 66 s, in
+  two runs on 2026-09-24. `trigid.nim` took 30.4 s and 30.5 s of it, `tjoined.nim` 10.7 s and
+  12.8 s, and `tread.nim` 9.3 s and 9.2 s.
+- `trigid.nim`, danger build, under `nim r koch check`: 331 s wall. That is four Xeon cores
+  shared with nothing else, on a Linux amd64 container, Nim 2.2.12, 2026-09-13. `tmarks` takes
+  12.6 s, `tread` 7.9 s, and `tengine` 3.3 s. Every other suite is under 2 s. It is a single
+  figure with no pair, so it is unmeasured as an optimisation.
 - `tools/build.nim modelled`: 913 s wall, on the same machine and day, with two other recordings
   sharing its cores. Unmeasured alone.
 - `tools/build.nim rig`: 523 s wall, on the same day, sharing cores with the suite. Unmeasured

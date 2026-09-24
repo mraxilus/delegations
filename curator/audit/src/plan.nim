@@ -10,7 +10,7 @@
 ##     verifies every stamp; README describes project and runs nothing, by same reasoning.
 ##   Change to `koch.nim` or `koch.nim.cfg` selects driver's project, whose suites read them;
 ##     check sources are that project's code and select it as any code does. Nothing selects
-##     every project: push run on `main` plans against push's own base and weekly sweep
+##     every project: push run on `main` plans against push's own base and weekly run
 ##     against its window, so each compiles what changed and nothing else (CURATOR.md duty
 ##     11). Contributor suite is contributor's to run, and static pass reads every project
 ##     regardless.
@@ -21,7 +21,7 @@
 ##     since version is installed by setup action and commit is built from source.
 ##   Cost: rot checker change brings to unchanged project is unseen until that project next
 ##     changes, and so is rot from outside repository, such as runner image moving under
-##     pinned compiler; weekly sweep compiles what merged inside its window, nothing more.
+##     pinned compiler; weekly run compiles what merged inside its window, nothing more.
 
 {.experimental: "strictFuncs".}
 
@@ -32,8 +32,8 @@ import ./[findings, checker, layout, toolchain, compilers, dependencies, project
 const
   CHECKER_FILES* = ["koch.nim", "koch.nim.cfg"]
     ## Root files driving every project's checks.
-  SWEEP_DAYS* = 7
-    ## Window sweep looks back over, matching weekly cron in `check.yml`. Both are named
+  RECENT_DAYS* = 7
+    ## Window `--recent` looks back over, matching weekly cron in `check.yml`. Both are named
     ## once; changing one means changing other, which CURATOR.md duty 9 says.
   CHECKER_DIR* = DRIVER_DIR & "/src"
     ## Check sources driving every project; same folder as driver project, by coincidence
@@ -138,7 +138,7 @@ proc typeJobs*(root: string, tree: Tree, dirs: openArray[string]): seq[Finding] 
   ##   nothing and building commit-pinned compiler to run build script costs minutes for
   ##   no checking. Driver's compiler runs it, as it runs whole-tree checks.
   ##   Cost: this holds only while that verb compiles no project code. One that did would
-  ##   need its pin, and this would become matrix job like `project`.
+  ##   need its pin, and this would become matrix job like `test`.
   ##   Restore failing short-circuits, since type check without installed tools fails again
   ##   for second reason and reports neither clearly.
   var targets: seq[Target]
@@ -176,12 +176,12 @@ func jobs*(tree: Tree, paths: openArray[string]): seq[Job] =
 
 
 func allJobs*(tree: Tree): seq[Job] =
-  ## Build jobs for every project, for scheduled sweep rather than for one change.
+  ## Build jobs for every project, for `--all` rather than for one change.
   tree.jobsFor(tree.projectDirs)
 
 
-proc sweepFor*(root: string, tree: Tree, days: int): seq[Job] =
-  ## Build sweep against window ending now; repository younger than window sweeps whole.
+proc recentFor*(root: string, tree: Tree, days: int): seq[Job] =
+  ## Build jobs for window ending now; repository younger than window runs whole.
   ##   Projects whose code merged in window, none when nothing did. Rot arrives with merges,
   ##   so week nobody merged code has nothing to find, and week somebody did has that project
   ##   to compile. Record-only merge counts as nothing, by same rule scoped runs use.
@@ -233,8 +233,8 @@ proc runJobs*(root: string, jobs: openArray[Job]): seq[Finding] =
 
 func drivenOnly*(tree: Tree, jobs: openArray[Job]): seq[Job] =
   ## Keep planned jobs of projects carrying driven checks.
-  ##   Filter over what `plan` already selected rather than second selection of its own, so
-  ##   driven set inherits scoping, `--all` and sweep without restating any of it.
+  ##   Filter over what `list-projects` already selected rather than second selection of its
+  ##   own, so driven set inherits scoping, `--all` and `--recent` without restating any of it.
   var dirs: seq[string]
   for job in jobs: dirs.add job.dir
   let driven = tree.verbDirs(dirs, DRIVEN_VERB)

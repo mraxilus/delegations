@@ -8,8 +8,8 @@ A model writes every line here, under the direction of the Architect. Before any
    follows `CONTRIBUTOR.md`, and writes only under `contributor/<domain>/<project>/`. Both
    then read `GUIDE.md`. A branch that a tool named for you (`claude/...`) is outside the
    grammar, so push to one inside it.
-3. Run `nim r koch ci` at the repository root before every push. It must pass.
-4. Open your own pull request as a draft when `koch ci` passes, and label it with your role.
+3. Run `nim r koch check` at the repository root before every push. It must pass.
+4. Open your own pull request as a draft when `koch check` passes, and label it with your role.
    Drive it green. The Architect merges it.
 5. Never commit to `main`. Never write outside your scope. Never weaken a test to pass.
 6. Comments are telegraphic. Markdown, issues, pull requests and messages are Simplified

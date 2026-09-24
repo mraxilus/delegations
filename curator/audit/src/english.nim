@@ -14,7 +14,7 @@
 ##     bullets is six blocks rather than one paragraph of six sentences.
 ##   Quotation is skipped whole: quoted text comes from outside this repository, so delegate may
 ##     not rewrite it, and finding on it could never be fixed.
-##   Backticked span counts as one word, since reader takes `nim r koch ci` as one name.
+##   Backticked span counts as one word, since reader takes `nim r koch check` as one name.
 ##
 ##   Cost: finding names line block opens on, never line sentence opens on; block is short
 ##     by rule this check enforces, so distance is small.
