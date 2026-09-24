@@ -1,9 +1,3 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Hold READMEs this project writes to two countable rules its pages are held to.
 ##   Article VI.8 binds every Markdown file (`CONTRIBUTOR.md`, Boundaries).  Repository's
 ##     `english` check reads three records at project's root and nothing nested below it, so
@@ -18,7 +12,7 @@ joinable: true
 
 import std/[os, sequtils, strutils, unittest]
 
-import ../design/[plain, rules]
+import ../../design/[plain, rules]
 
 
 const
@@ -54,7 +48,7 @@ suite "this project's own Markdown":
   test "every README held keeps each sentence and each paragraph to its bound":
     ## Failure names file and sentence, so it says what to split.
     for doc in WRITTEN:
-      for said in readFile(currentSourcePath.parentDir / ".." / doc).markdownProse:
+      for said in readFile(currentSourcePath.parentDir / ".." / ".." / doc).markdownProse:
         let found = said.markdownSentences
         if found.len > SENTENCES:
           echo "    ", doc, ": paragraph of ", found.len, " sentences, from: ", found[0]
@@ -67,7 +61,7 @@ suite "this project's own Markdown":
   test "design README quotes every rule of ledger once, in order, word for word":
     ## Failure names rule and both wordings, so it says which copy moved.
     var numbers: seq[int]
-    for (rule, words) in readFile(currentSourcePath.parentDir / ".." / RULED).quoted:
+    for (rule, words) in readFile(currentSourcePath.parentDir / ".." / ".." / RULED).quoted:
       numbers.add rule
       let ledger = (if rule in 1 .. RULES.len: RULES[rule - 1] else: "")
       if words != ledger:

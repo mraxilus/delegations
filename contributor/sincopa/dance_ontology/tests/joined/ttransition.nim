@@ -1,9 +1,3 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Test laws of transition relation over every pair of frames.
 ##
 ## State space is small enough to check exhaustively, so nothing here is
@@ -13,8 +7,8 @@ joinable: true
 
 import std/[options, strutils, unittest]
 
-import ../src/dance_ontology/frame
-import ../src/dance_ontology/transition
+import ../../src/dance_ontology/frame
+import ../../src/dance_ontology/transition
 
 
 suite "the relation":

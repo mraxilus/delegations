@@ -6,7 +6,7 @@
 ##     Fallback used to be left off, on grounds that these pictures
 ##       only ever appeared on workbench's own pages.  They do not:
 ##       app writes each frame out as standalone file for `doc/frames/`, to
-##       be shown on grounds this module cannot see, and `tests/treview`
+##       be shown on grounds this module cannot see, and `tests/joined/treview`
 ##       holds every colour to naming property *and* fallback.
 ##     Cost of fallback: on its own picture is tuned to neither ground,
 ##       only readable on either.  Accepted -- standalone file cannot know

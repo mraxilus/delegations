@@ -1,9 +1,3 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Hold axle drawing to its own claims.
 ##
 ## Axle has no page yet -- app's Dance view is graph-first and
@@ -15,7 +9,7 @@ joinable: true
 
 import std/[options, strutils, unittest]
 
-import ../src/dance_ontology
+import ../../src/dance_ontology
 
 suite "the axle":
   test "the axle is one line: a twist's place is affine in the twist":

@@ -47,15 +47,15 @@ translation is printed in one table, and nothing is tuned to make them agree.
 
 - The workbook of the Architect, `ontology.partnerwork.xlsx`, sheets `base` and
   `vocabulary`. It is held as data in `src/dance_ontology/workbook.nim`, and audited against
-  the derived model by `tests/tworkbook.nim`. **Superseded.** The Architect has replaced it
+  the derived model by `tests/joined/tworkbook.nim`. **Superseded.** The Architect has replaced it
   with a newer sheet that this project has not been given. So what the audit reports, and the
   sheet-facing half of the review page, are findings about a document no longer in use. Both
   stay running until the new sheet arrives and replaces the transcription.
 - The forty drawing rules of the Architect as given, held as data in `design/rules.nim`, and
   mirrored entry for entry in `design/README.md`. `design/checks.nim` holds the pages to them.
 - For the body sim, the ANSUR II medians with the AAOS and NASA-STD-3000 joint ranges. Every
-  one is in `sim/rig.nim` with its derivation, and `tests/trigid.nim`, `tlimb.nim` and
-  `tread.nim` hold the sim to them.
+  one is in `sim/rig.nim` with its derivation, and `tests/trigid.nim`, `tests/tread.nim` and
+  `tests/joined/tlimb.nim` hold the sim to them.
 
 ## Build and test
 
@@ -133,10 +133,12 @@ tools/review.nim                   fills the review page's markers from the mode
 tools/pages.nim, tools/bundle.nim  copy the shells in; fold a page into one file
 tools/build.nim                    this project's verbs: pages, modelled, rig, turns,
                                    verdicts, shot, clean
-tests/                             the laws, over every pair of frames; the sim's laws
-                                   (trigid, tlimb, tread); the workbench's gates (tmarks);
-                                   the review
-                                   page rendered whole (treview)
+tests/                             the sim's laws (trigid, tread) and the engine's
+                                   (tengine); tsaid, in JavaScript; tjoined, which runs
+                                   every other suite as one binary from joined/: the laws
+                                   over every pair of frames, the tape's (tlimb), the
+                                   workbench's gates (tmarks) and the review page
+                                   rendered whole (treview)
 build/                             every page, picture and script; ignored by git
 ```
 
@@ -157,7 +159,7 @@ What the model has to say about the spreadsheet is not in the app. It is a findi
 document, and it lives in the review page (`build/review/review.html`) and in
 `tools/audit.nim`.
 
-The rotation half (`rotation.nim`, `axle.nim`, `tests/trotation.nim`) is on the bench, and
+The rotation half (`rotation.nim`, `axle.nim`, `tests/joined/trotation.nim`) is on the bench, and
 not in the app. 148 postures render as 16 distinct pictures. Level, contact and twist beyond
 its parity have no marks yet. The workbench pages (`design/`) are where those marks get
 worked out, and the views wait until they are decided.

@@ -1,9 +1,3 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Test laws of finding where reaches cross, of breaking one under other,
 ## and of length drawn run reports.
 ##   Break says which connection is under (rule 14), and it is only
@@ -20,8 +14,8 @@ joinable: true
 
 import std/[math, sequtils, unittest]
 
-import ../src/dance_ontology/draw/geometry
-import ../src/dance_ontology/draw/route
+import ../../src/dance_ontology/draw/geometry
+import ../../src/dance_ontology/draw/route
 
 
 const

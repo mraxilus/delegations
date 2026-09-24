@@ -1,9 +1,3 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Test model against workbook it was read from.
 ##
 ## Workbook is independent reference: it was written by hand, before
@@ -16,7 +10,7 @@ joinable: true
 
 import std/[options, unittest]
 
-import ../src/dance_ontology
+import ../../src/dance_ontology
 
 
 suite "the base sheet":
