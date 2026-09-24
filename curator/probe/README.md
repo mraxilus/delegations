@@ -11,13 +11,13 @@ shape, and it exercises the compile-time mechanisms that the constitution asks f
 - a nimble file, provenance and glossary.
 
 It replicates no authority, and it publishes no page. The static pass reads it on every run,
-and `koch plan` names it when its own code changes.
+and `koch list-projects` names it when its own code changes.
 
 ## Build and test
 
 ```sh
-nim r koch ci                   # from repository root: every check a pull request runs
-nim r koch tests curator/probe  # this project alone, both ring sizes
+nim r koch check               # from repository root: every check a pull request runs
+nim r koch test curator/probe  # this project alone, both ring sizes
 ```
 
 This needs the compiler that the project pins in `probe.nimble`, and git. The tests run as a

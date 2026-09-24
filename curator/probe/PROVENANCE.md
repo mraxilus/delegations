@@ -46,7 +46,7 @@ and positions inside the ring.
 
 **One testament stub with a matrix header**, with suites named after the subject of the
 header table, because no external authority exists. The matrix runs every test in each ring
-size. Verified by `tprobe.nim`, and `nim r koch tests curator/probe` lists each row.
+size. Verified by `tprobe.nim`, and `nim r koch test curator/probe` lists each row.
 
 ## Toolchain
 
