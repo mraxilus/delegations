@@ -818,8 +818,11 @@ func turnAcross*(
   ##     Level axes leave no roll to put back. Rolling back after own-axes turn levels
   ##     horizon and leaves sight sunk.
   ##     Roll reader set by twist survives, since neither level turn changes it.
+  ##     Finger's look takes drag negated, so picture follows finger in either state: sky
+  ##     moves as orbit's near side does, where mouse aims. Cost: selection made mid-drag
+  ##     reverses which way far scene moves.
   if holds_roll:
-    if has_selection: camera.orbitLevel(turn, rise) else: camera.lookLevel(turn, rise)
+    if has_selection: camera.orbitLevel(turn, rise) else: camera.lookLevel(-turn, -rise)
   elif has_selection: camera.orbit(turn, rise)
   else: camera.look(turn, rise)
 

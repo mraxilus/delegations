@@ -272,7 +272,7 @@ canvas.addEventListener('pointermove', (e) => {
     // Finger turns as turntable does: touch has no roll key, and drag that wanders in
     //   curves would tilt horizon by solid angle it swept; see `interaction.turnAcross`.
     //   One rate for both axes, half turn per short side of canvas, so drag turns along
-    //   its own slant.
+    //   its own slant. Picture follows finger with or without selection.
     const rate = Math.PI / Math.min(canvas.clientWidth, canvas.clientHeight);
     nimCameraTurn(-dx * rate, dy * rate, true);
   } else if (pointers.size === 2) {
