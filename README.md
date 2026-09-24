@@ -91,12 +91,12 @@ each job carries the name of the koch verb that it runs:
 - `check-commits`: every subject is a Conventional Commit whose scope matches the branch.
 - `check-drift`: the branch carries the charter and the checker as `main` now holds them. A stamp
   that a charter change falsified after the branch forked is then caught before the merge.
-- `summary`: the gate that `check-files`, `test`, `check-types`, `drive` and `check-drift`
+- `summarize`: the gate that `check-files`, `test`, `check-types`, `drive` and `check-drift`
   report to, and one of the required checks. `check-scope` and `check-commits` are required
   checks of their own.
 
 One more job, `list-projects`, runs first and computes the matrices that `test` and `drive`
-fan out over. It names projects rather than checks them, and it also reports to `summary`. Weekly,
+fan out over. It names projects rather than checks them, and it also reports to `summarize`. Weekly,
 the same workflow compiles the projects whose code merged that week.
 
 `role.yml` runs beside it on every pull request, and again whenever a label changes. It holds

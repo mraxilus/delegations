@@ -6,7 +6,7 @@
 #   per named project, each installing that project's own pin. `drive` is second matrix over
 #   subset of same list, building each page and driving it through real events.
 #   `check-types` type-checks scripts of every changed project carrying node manifest beside
-#   its lock. `check-drift` refuses branch predating base's charter or checker. `summary`
+#   its lock. `check-drift` refuses branch predating base's charter or checker. `summarize`
 #   reads verdicts of `list-projects`, `check-files`, `test`, `drive`, `check-types` and
 #   `check-drift`, and is gate branch protection requires, since matrix job names vary;
 #   `check-scope` and `check-commits` are required by name (CURATOR.md, repository settings
@@ -362,7 +362,7 @@ jobs:
           parent-nim-install-directory: ${{ runner.temp }}
       - run: nim r koch check-drift
 
-  summary:
+  summarize:
     needs: [list-projects, check-files, test, drive, check-types, check-drift]
     if: always()
     runs-on: ubuntu-latest

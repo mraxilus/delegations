@@ -66,7 +66,7 @@ Every rule below serves it:
 | `CLAUDE.md` | Short pointer that Claude Code loads on its own | curator |
 | `koch.nim`, `koch.nim.cfg` | Entry point of every check; `nim r koch <verb>` | curator |
 | `.gitignore`, `.gitattributes` | Artifacts and checkouts out, LF endings | curator |
-| `.github/workflows/check.yml` | Every job of `check`, and the `summary` gate | curator |
+| `.github/workflows/check.yml` | Every job of `check`, and the `summarize` gate | curator |
 | `.github/workflows/role.yml` | Role line and label of a pull request, on each event | curator |
 | `.github/workflows/watch.yml` | Issue opened when a run goes red on `main` | curator |
 | `.github/workflows/ledger.yml` | Daily read of what GitHub records, into one issue | curator |
@@ -272,8 +272,8 @@ These cannot be set from inside the repository. Ask the Architect to confirm tha
 place, under Settings:
 
 - Require a pull request before a merge, with no direct pushes.
-- Require these status checks to pass: `summary`, `check-scope`, `check-commits`,
-  `check-role`. `summary` is the gate for the jobs whose names vary with the change, since
+- Require these status checks to pass: `summarize`, `check-scope`, `check-commits`,
+  `check-role`. `summarize` is the gate for the jobs whose names vary with the change, since
   those names can never be required checks themselves. `check-role` is its own workflow,
   because it fires on a label event and the rest do not.
 - Block force pushes and deletions.
@@ -295,7 +295,7 @@ merge rate.
 
 The `check-drift` check is the narrow form of the same rule. It reports only where the base
 gained a charter document or a checker, which is where staleness makes green false. It
-reaches the merge through the `summary` gate.
+reaches the merge through the `summarize` gate.
 
 ## Checks reference
 
