@@ -12,7 +12,7 @@ import {
 import { clearTheGlass } from './gestures';
 import { waitFrames } from './frame';
 import { report } from './report';
-import { pinch } from './touch';
+import { pinch, tapAt, touchAt } from './touch';
 
 /** Plane's drawn diameter, from `mesh.EXTENT_PLANE_F`, and share of frame it is brought to,
  *  from `framing.FRACTION_HEIGHT_APPROACH_PLANE`. */
@@ -346,4 +346,96 @@ export async function drivePanWhileSelected(page: Page, cdp: CDPSession): Promis
     `moved ${spanOf(before.eye, at.eye).toFixed(3)}, ` +
       `then drifted ${spanOf(at.eye, after.eye).toFixed(4)}`,
   );
+}
+
+
+/** Drive finger adding second object and turning at once, while pick still eases.
+ *
+ *  Long press picks one point, tap adds second, and turn starts before ease has carried
+ *  pivot to their middle. Middle is where orbit turns about, so it is where pivot has to
+ *  end, and middle of frame is where it has to stand. Turn used to stop ease wherever it
+ *  was, which left pivot partway and every turn after swinging group about empty point.
+ *  Turn goes in through `nimCameraTurn`, what finger's own move calls, in same task that
+ *  reads ease still carrying. Touch dispatched through protocol took about 100 ms each on
+ *  this harness, so drag's first move reached page 285 ms into 350 ms ease, with one
+ *  hundredth of it left: timing, not rule, decided what that measured.
+ *  Two points of check's own, undone after rather than removed: removal is edit of its own,
+ *  and would stand on timeline where next check's undo expects edit that check made.
+ */
+export async function driveGroupTurnedAtOnce(page: Page, cdp: CDPSession): Promise<void> {
+  await clearTheGlass(page);
+  await page.keyboard.press('Home');
+  await settleCamera(page);
+  const count_found = await page.evaluate(() => nimSceneCount());
+  const [one, two] = await page.evaluate(() => [[2, 1, 0.5], [0, 3, 1.5]].map((at) => {
+    const model = new Array(16).fill(0);
+    model[1] = at[0] ?? 0;
+    model[2] = at[1] ?? 0;
+    model[3] = at[2] ?? 0;
+    model[4] = 1;
+    return nimAddObject(model, 'turned', nimDefaultInk(), nimDefaultRadius(), 0);
+  }));
+  if (one === undefined || two === undefined) return;
+  await page.evaluate(() => nimSelectClear());
+  await settleCamera(page);
+  const pixelOn = (handle: number): Promise<number[]> => page.evaluate((each) => {
+    const at = Array.from(nimAnchorScreen(each, window.innerWidth, window.innerHeight));
+    return [at[0] ?? 0, at[1] ?? 0];
+  }, handle);
+
+  // Hold past hold-to-select on first, then settle, as reader does before adding more.
+  const at_one = await pixelOn(one);
+  await tapAt(page, cdp, at_one[0] ?? 0, at_one[1] ?? 0, 1400);
+  await settleCamera(page);
+  // Tap second, and let one frame arm ease toward their middle.
+  const at_two = await pixelOn(two);
+  await touchAt(cdp, 'touchStart', [{ x: at_two[0] ?? 0, y: at_two[1] ?? 0 }]);
+  await touchAt(cdp, 'touchEnd', []);
+  await waitFrames(page, 1);
+  const count = await page.evaluate(() => nimSelectionCount());
+  const held = await readCamera(page);
+  // First turn in same task that reads ease, so it lands mid-ease on any runner.
+  const middle_and_short = await page.evaluate(([a, b]) => {
+    const p = Array.from(nimAnchorWorld(a ?? 0)), q = Array.from(nimAnchorWorld(b ?? 0));
+    const middle = p.map((v, i) => 0.5*(v + (q[i] ?? 0)));
+    const is_easing = nimCameraCarrying();
+    const pivot = Array.from(nimCameraPivot());
+    const short = Math.hypot(...pivot.map((v, i) => v - (middle[i] ?? 0)));
+    nimSetCameraDragging(true);
+    nimCameraTurn(-0.05, 0.0, true);
+    return { middle, is_easing, short };
+  }, [one, two]);
+  for (let step = 1; step < 10; step += 1) {
+    await waitFrames(page, 1);
+    await page.evaluate(() => nimCameraTurn(-0.05, 0.0, true));
+  }
+  await page.evaluate(() => nimSetCameraDragging(false));
+  await settleCamera(page);
+
+  const after = await readCamera(page);
+  const { middle, is_easing, short } = middle_and_short;
+  // Pivot always stands at middle of frame, so pivot on their middle puts it there too.
+  const span = spanOf(after.pivot, middle);
+  report(
+    'a finger that adds an object and turns at once turns about their middle',
+    count === 2 && is_easing && short > 0.05 &&
+      Math.abs(after.azimuth - held.azimuth) > 0.05 && span < 1e-3,
+    `${count} picked; turn began with ease ${is_easing ? 'still carrying' : 'done'} and ` +
+      `pivot ${short.toFixed(3)} short of their middle; turned ` +
+      `${Math.abs(after.azimuth - held.azimuth).toFixed(3)} rad; pivot ended ` +
+      `${span.toFixed(4)} from their middle`,
+  );
+  const count_left = await page.evaluate(() => {
+    nimSelectClear();
+    nimUndo();
+    nimUndo();
+    return nimSceneCount();
+  });
+  if (count_left !== count_found) {
+    report(
+      'the group turn leaves the scene as it found it', false,
+      `${count_left} objects, found ${count_found}`,
+    );
+  }
+  await settleCamera(page);
 }

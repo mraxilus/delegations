@@ -269,12 +269,14 @@ func holdFramed*(camera: var Camera; aim: CameraAim; width, height: int) =
   ## Carry eye back out until it holds every finite object `aim` names.
   ##   Floor, not fit: reader standing further out is left alone, and only nearer than
   ##   fitting reach is refused.
-  ##   Eye goes straight out from sphere's centre, which is least move restoring rule.
-  ##     That keeps whichever way round reader had got to, so camera slides along bound
-  ##     rather than stopping dead against it.
-  ##     Along their own step instead would land further back than rule asks, and would
-  ##     need step threaded through every verb.
-  ##   Pivot is re-stamped onto centre, so separation follows eye rather than going stale.
+  ##   Eye goes back along its own sight, by closed form `stanceFor` pulls back with, so
+  ##   nothing turns and nothing slides across: whichever way round reader had got to is
+  ##   kept, and camera slides along bound rather than stopping dead against it.
+  ##     Straight out from sphere's centre was least move. But sphere's centre is not
+  ##     middle of what is picked once three objects part them, so that slid view sideways
+  ##     and carried pivot off middle that orbit turns about.
+  ##   Pivot is re-stamped at middle's depth, so separation follows eye rather than going
+  ##   stale. Middle stands on sight line after any pick, so there pivot is middle itself.
   ##   Nothing finite named means no bound; horizon objects are bound by their own rule.
   if aim.sphere.isNone: return
   let
@@ -282,13 +284,11 @@ func holdFramed*(camera: var Camera; aim: CameraAim; width, height: int) =
       aim.sphere.get.radius, camera, width, height, INSET_POINT_SHOWN
     )
     centre = aim.sphere.get.centre
-    offset = camera.eye - centre
-    span = norm(offset)
-  if span >= reach*(1.0 - SLACK_FRAMED): return
-  # Eye sitting on centre has no way out to choose, so back along sight.
-  let heading = if span > 0.0: (1.0/span)*offset else: -camera.frame.forward
-  camera.slideBy(wedge(reach - span, toMultivector(heading)))
-  let depth = dot(centre - camera.eye, camera.frame.forward)
+  if norm(camera.eye - centre) >= reach*(1.0 - SLACK_FRAMED): return
+  let back = stepOutTo(camera.eye - centre, -camera.frame.forward, reach)
+  camera.slideBy(wedge(back, toMultivector(-camera.frame.forward)))
+  let middle = if aim.centroid.isSome: aim.centroid.get else: centre
+  let depth = dot(middle - camera.eye, camera.frame.forward)
   if depth > 0.0: camera.repivotToDepth(depth)
 
 

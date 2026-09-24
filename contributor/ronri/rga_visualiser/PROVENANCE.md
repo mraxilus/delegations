@@ -2172,7 +2172,7 @@ made from. An undo of the first construction of a session then teleports to the 
 to record an orbit is the accepted cost of not needing a rule for a gesture to settle. **An
 accidental orbit is still not undoable on its own.**
 
-Both front-ends abandon their camera tween on a successful step. The timeline is seeded wherever
+Both front-ends halt their camera tween on a successful step. The timeline is seeded wherever
 the scene is initialised or re-initialised, and a successful step clears the selection and any
 preview. It is bound to Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z and Ctrl+Y on both builds, through one
 function for each build rather than the button. The `disabled` attribute of that button is
@@ -2518,10 +2518,17 @@ Both builds aim from **one rule**, `framing.offerAim`, once for each frame. It t
 multivector of an open session where there is one, and every selected object otherwise. **The
 offer stands**: the tween keeps its goal after it arrives.
 
-A camera that the user moves calls `abandon`, which keeps the goal and marks it done. `release`
-instead clears it, so the offer is re-made the next frame and the camera is taken straight back. A
-move made while a selection stands is therefore never taken back. `advance` eases the pivot and the
-angles linearly, and the **distance geometrically**.
+A camera that the user moves keeps the goal, so the offer reads as answered. `release` instead
+clears it, so the offer is re-made the next frame and the camera is taken straight back. A move made
+while a selection stands is therefore never taken back. `advance` eases the motion as one screw, and
+the **distance geometrically**.
+
+**A move that turns lets the pivot finish, and a move that places the pivot stops the ease.** A
+turn, roll, plain dolly or key calls `abandon`. The reader then owns the way round and the distance,
+and `advance` carries the pivot the rest of its own path underneath. `slideOwed` reads each frame's
+share off `toward`, so the pivot lands where the ease would have put it. Pan, wheel, pinch, typed
+view fields, undo and redo call `halt`, which marks the ease done where it stands. Each of those
+sets the pivot itself, and a pivot still arriving would slide the camera off it.
 
 **Framing** (`framing.nim`). On a new pick **the orbit pivot comes to the middle of what was
 picked**, by `objects.centroidFolded`. It runs over the same objects that the bound is over, with
@@ -2566,14 +2573,18 @@ pivot goes to the centroid, and the separation gives up exactly what the rule as
 `SLACK_FRAMED` 1e-9 stands in for all three of those constants. A `>=` against a reach that
 `stepOutTo` lands on exactly reported its own answer unframed, one ulp short of it.
 
-**The floor holds while the reader flies.** `offerAim` takes the camera by `var`. Where the reader
-moves it and the rule is broken, `holdFramed` carries the eye straight out from the centre of the
-sphere. Straight out is the least move that restores the rule, and it keeps the bearing the reader
-had reached. The camera then slides along the bound rather than stopping dead against it.
+**The floor holds while the reader flies.** Where the reader moves the camera and breaks the rule,
+`holdFramed` backs the eye out along its own sight. It uses the closed form that `stanceFor` pulls
+back with, on a camera that `offerAim` takes by `var`. Nothing turns, so the camera slides along
+the bound rather than stopping dead against it. The pivot is re-stamped at the depth of the middle,
+so the separation follows the eye. After any pick the middle stands on the sight line, so the pivot
+is the middle itself.
 
-A step back along the reader's own heading lands further out than the rule asks. It also needs that
-heading threaded through every verb. The pivot is re-stamped onto the centre, so the separation
-follows the eye rather than going stale.
+Not straight out from the centre of the sphere, though that is the least move. The centre of the
+sphere is not the middle once three objects part them. That push slid the view sideways and the
+pivot with it. On a 390 by 844 phone, one 60 px orbit of three points left the pivot 0.095 units,
+or 3.1 px, off their middle. Not along the reader's own heading either,
+which lands further out than the rule asks and needs that heading threaded through every verb.
 
 **A horizon object binds where it stands, and nothing more.** A star must be on screen, so the
 sight falls within the half-angle of the centred box: two degrees of freedom bound. A horizon line
@@ -2628,6 +2639,12 @@ there is no anchor left to keep in place.
 whatever the tween holds. Without it, the same object picked again, after the wheel had taken the
 reader out, goes nowhere.
 
+**A turn inside the ease still turns about the middle of what is picked.** A finger that adds an
+object and turns at once lands inside the 0.35 s ease. The turn used to mark the ease done, and the
+standing offer then read the group as answered, so the pivot stayed partway. On a 390 by 844 phone
+it stopped 0.44 units short of the middle of two points, 23.2 px off the middle of the frame. It now
+arrives at 0.000, and the turn the reader made stands.
+
 *Checked.* Verified by `suites.nim`:
 
 - a pointer pick lands the object within 0.01 px of the middle of the frame, from every angle
@@ -2638,8 +2655,14 @@ reader out, goes nowhere.
 - a re-pick after `abandon` and a dolly re-arms;
 - the arrival of the plane from 12 units and from 1;
 - the step out reaches its own distance, and answers zero from every stance already past it;
-- the floor leaves a camera standing further out alone, and slides the near one out radially with
-  its bearing held;
+- the floor leaves a camera standing further out alone, and backs the near one out along its
+  sight with its bearing held;
+- a pinch past the floor, over three points whose middle is off their sphere's centre, backs out
+  along the sight;
+- the pivot stays on their middle there, and through sixty orbit steps after it;
+- a turn at a fifth of the ease still lands the pivot on the middle of two points, and keeps the
+  turn, as `settle` does;
+- a pan mid-ease halts it, and the pivot stays where the reader put it;
 - a frame narrowed to half its width asks for more room, and the same floor supplies it;
 - a horizon point is bound to the screen, a horizon line to crossing it, and a horizon plane not at
   all.
@@ -2653,6 +2676,8 @@ Verified by driven check:
   depth wanted for 0.40;
 - the preview framed with its operands;
 - a move with a selection standing, through `driveTwoFingerPan` and `drivePan`;
+- a finger adds a second point and turns one frame in, with the pivot 0.27 to 0.35 short; it ends
+  0.0000 from their middle;
 - a comet in view, picked, still pacing the screen at 35.1 px against a band of 5 to 60.
 
 Verified then, by the `verify_touch_pan.js` of the prototype: 63 trials with the orbit turned
