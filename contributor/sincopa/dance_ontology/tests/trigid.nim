@@ -1,8 +1,6 @@
 discard """
 action: run
 cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on -d:danger $options $file"
-batchable: true
-joinable: false
 """
 ## Hold rig built on engine to what tape and clinical tables say, and to geometry.
 ##
@@ -15,7 +13,6 @@ joinable: false
 ##     every other law may ask engine rather than measure pose again.
 ##     Law itself was wrong first time it ran, and rig was right: `angleBetween` takes
 ##     units, and raw vectors gave it constant eighty-nine degrees whatever pose was.
-##   Not joinable: it links C archive, which testament's joined binary cannot share.
 ##   Where couple stand is read from `sim/answers.json` (`sim/answers.nim`), not searched
 ##     for here.  Suite took 545 s under testament, and its twenty laws that search for
 ##     nothing took 22.8 s, each run alone, measured 2026-09-24 on four cores; answers
