@@ -112,6 +112,7 @@ proc auditTree*(tree: Tree): seq[Finding] =
   result.add checkDeadExports(check_paths, check_sources)
   result.add checkSuites(tree.mapIt(it.path))
   result.add checkVerbs(koch_source, curator_source)
+  result.add checkOptions(koch_source)
 
   let stamp_now = tree.rulesStamp
   let dirs = tree.projectDirs
