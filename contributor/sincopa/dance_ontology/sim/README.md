@@ -74,7 +74,7 @@ verdicts.md  what it said, translated once and generated, not edited
 ```
 
 ```
-nim r koch tests contributor/sincopa/dance_ontology  # the laws, with every other suite
+nim r koch test contributor/sincopa/dance_ontology  # the laws, with every other suite
 nim r tools/build.nim pages       # every page, the rig viewer among them
 nim r tools/build.nim modelled    # rewrite design/modelled.json: cards reached
 nim r tools/build.nim rig         # rewrite design/rig.json: sweeps the viewer plays

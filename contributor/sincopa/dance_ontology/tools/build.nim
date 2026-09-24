@@ -74,7 +74,7 @@ const
     ##   Playwright is deliberately absent, and is this declaration's one gap. It is node
     ##   package rather than system one, so no installer reading these names serves it, and
     ##   pinning it would mean `package.json` beside its lock -- which enrols project in
-    ##   `koch types` and demands `types` verb, work Architect has asked not be built while
+    ##   `koch check-types` and demands `types` verb, work Architect has asked not be built while
     ##   this half of project may go. `design/shot.nim` therefore takes it from environment
     ##   and stops naming this verb where it is absent, rather than failing as missing file.
     ##   Flag says whether runner installs it: it installs what `system` prints, and opens
@@ -149,7 +149,7 @@ proc assets() =
   for (file, _, _, _) in FACES:
     wanted.add file
   let (written, code) = execCmdEx(
-    "nim r --hints:off koch assets " & wanted.join(" "), workingDir = rootOf())
+    "nim r --hints:off koch fetch-assets " & wanted.join(" "), workingDir = rootOf())
   if code != 0:
     raise newException(OSError,
       "Shared store did not serve every face asked for; got:\n" & written)
