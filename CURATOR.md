@@ -316,7 +316,7 @@ alone.
 | `base` | paths base gained | branch carries base's rules and checker |
 | `role` | a pull request's body and labels | opening line and label are the branch's role |
 | `stamp` | charter documents | prints the stamp; `--write` sets every `Rules` row to it |
-| `ci` | fresh `origin/main` | tree, types, changed projects, driven, scope, commits, base |
+| `ci` | fresh `origin/main` | tree, scope, commits, base; when clean, types, tests, driven |
 
 `ci` leaves out `role`, because `role` reads a pull request rather than the tree. Its body
 arrives from the event payload as `ROLE_BODY`, and its labels from the API as `ROLE_LABELS`.
