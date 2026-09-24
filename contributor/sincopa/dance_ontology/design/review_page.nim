@@ -126,11 +126,13 @@ proc checkReview*() =
       &"A dropped card carries no pin; run `tools/build.nim pins`: got `{id}`."
 
 
-proc reviewParts*(): Parts =
+func reviewParts*(single, hand: Parts): Parts =
   ## Collect every figure this page places: both walked pages' own parts,
-  ## which it draws again at its own size.
-  result = singleTurnParts()
-  for key, svg in handTurnParts():
+  ## which it draws again at its own size, and crossed pair's.
+  ##   Walked pages' parts are handed in, as their pages built them, rather
+  ##     than routed again here.
+  result = single
+  for key, svg in hand:
     result[key] = svg
   for key, svg in pairTurnParts():
     result[key] = svg

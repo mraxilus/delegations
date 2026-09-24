@@ -396,10 +396,12 @@ proc checkRules*() =
 
 #[ Single-Hand Turns ]#
 
-proc checkSingleTurns*() =
+proc checkSingleTurns*(built: Parts) =
   ## Verify single-hand turns page's rules as given, one line each.
+  ##   Reads figures page placed (`singleTurnParts`), never builds its own:
+  ##     check holds what was drawn, and building same figures twice cost
+  ##     every page build second routing of every reach.
   var told: seq[string]
-  let built = singleTurnParts()
 
   # RULE 17.  `"all turns should be in the \"above\" position, not the high.`
   # `high/low causes wraps/locks, so we're currently making the assumption`
@@ -954,10 +956,10 @@ func inkOf(figure, ink: string): float =
 
 #[ Hand-to-Hand Turns ]#
 
-proc checkHandTurns*() =
+proc checkHandTurns*(built: Parts) =
   ## Verify hand-to-hand turns page's rules as given, one line each.
+  ##   Reads figures page placed (`handTurnParts`), as single-hand check does.
   var told: seq[string]
-  let built = handTurnParts()
 
   func pairOf(wind: float): array[Arm, seq[Point]] =
     ## Pair as this position draws it, both reaches at once.

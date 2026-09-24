@@ -1,9 +1,3 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Test part of rotation axis that does not need measurement.
 ##
 ## Calibrated numbers are hypotheses and are checked only against two
@@ -14,8 +8,8 @@ joinable: true
 
 import std/[options, unittest]
 
-import ../src/dance_ontology/frame
-import ../src/dance_ontology/rotation
+import ../../src/dance_ontology/frame
+import ../../src/dance_ontology/rotation
 
 
 suite "twist":

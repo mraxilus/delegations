@@ -1,9 +1,3 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Test review page renders whole from model, and is written and read back.
 ##
 ##   Page is build product, never committed, so no staleness law exists: this suite drives
@@ -13,10 +7,10 @@ joinable: true
 
 import std/[options, os, strutils, unittest]
 
-import ../design/plain
-import ../src/dance_ontology
-import ../tools/review
-import ../tools/title
+import ../../design/plain
+import ../../src/dance_ontology
+import ../../tools/review
+import ../../tools/title
 
 
 const OUT = "build/review"
