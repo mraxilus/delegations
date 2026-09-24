@@ -1566,6 +1566,55 @@ The change worth naming is the one that is not visible in a diff. Those labels u
 whatever sans the machine of the reader carried. A card approved on one machine was a different
 picture on another, which is the thing X.8 exists to stop.
 
+## Kept answers
+
+**The rig suite reads where the couple stand, and searches for nothing.** Each sweep, still and
+`reaches` that a law asks is a search over every distance the couple may stand at. Its answer
+changes only when the sim changes. So `sim/answers.nim` answers each search once, on every core,
+and writes `sim/answers.json`, and `nim r tools/build.nim answers` runs it. The questions live in
+`sim/answers.nim` too, so what is asked and what is answered are one list.
+
+**Every pose and walk that a law holds is still made live.** Only where to stand is kept. A law
+walks or stands the couple at the kept distance, with the code of the tree, and checks what the
+sim does there. `walked` builds its own world, so it walks exactly what the search walked from that
+distance.
+
+**The kept answers are held to the tree in two ways.** The stamp is a digest of every `sim/*.nim`
+and of the pinned commit of the engine. A law fails when the answers carry another stamp, so a sim
+that changed and was not answered again cannot pass. And a law walks every kept sweep and two drawn
+walks again, live, and asks for the same numbers. Verified by `trigid.nim`, suite "answers".
+
+Each of those three laws failed on a break made on purpose. The breaks were a comment added to
+`sim/vec.nim`, a distance moved off the grid by 1 mm, and a kept turn changed by one step.
+
+**The laws that read answers fail when the answers are wrong.** Five breaks were made on purpose,
+and each failed the law that reads it. A chosen turn was cut to 0.10, and a `reaches` was flipped.
+A still was marked as not holding, a mirror distance was moved by 4 cm, and an answer was deleted.
+Verified by `trigid.nim`, on 2026-09-24.
+
+**The version of Nim is not stamped.** The verbs of `tools/build.nim` run the `nim` on the path,
+and the suite runs the one that koch pins. A stamp with the version would agree on no machine
+where the two differ. Answers from Nim 2.2.4 walked the same under 2.2.12, number for number, on
+2026-09-24.
+
+**The live walks run on every core at once.** They are the twelve ways of six sweeps and two drawn
+walks. Each worker reads the holds as constants and gives back numbers alone (`Went`). A list of
+strings and sequences read by four threads is what `design/modelled.nim` records dying of. Every
+line the suite prints is the same as when they ran one after another. That run took 38.7 s, and
+this one takes 28.6 s.
+
+Cost: a change to any `sim/*.nim`, words included, asks for the answers again. That took 140 s on
+four cores, compile included, on 2026-09-24. A digest of every file is one rule. A list of the
+files that move the answers would be a second thing to keep true.
+
+A change to comments alone gives the same answers and a new stamp. Two comments in
+`sim/verdicts.nim` and `sim/words.nim` changed, and every answer came back the same number. Of the
+last 40 commits to `sim/*.nim` on 2026-09-24, two changed comments alone. So a stamp that skips
+comments would rarely save a run.
+
+**The replay is exact on the runner too.** Its law passed there on `5975d93`, on 2026-09-24, so the
+runner walks every kept sweep and both drawn walks to the numbers this container kept.
+
 ## Tests
 
 **Testament over `tests/t*.nim` from the project directory, with five binaries.** `tengine.nim`,
@@ -1595,11 +1644,19 @@ Test binaries inherit the working directory of testament. So `build/review`, `bu
 `walkFiles("tests/t*.nim")` resolve only when testament runs from the project directory, as the
 runner of koch does. To run it from the repository root breaks them.
 
-Cost: `trigid` is nearly the whole of the wall time of the suite. A model change that leaves a sweep
-with no moments crashes a danger build, rather than reddens a law.
+Cost: a model change that leaves a sweep with no moments crashes a danger build, rather than
+reddens a law.
 
 ## Figures
 
+- `trigid.nim`, danger build, on 2026-09-24, in one session on four cores. Its run took 385.1 s with
+  every search, and takes 28.6 s reading kept answers. Under `nim r koch check` it took 40.76 s,
+  compile included, and the whole of `koch check` took 110 s.
+- `trigid.nim` on the runner, under testament, compile included: 43.71 s on `5975d93`, against
+  503.91 s and 504.66 s with every search. The project job took 2 min 29 s in all.
+- The whole of `nim r koch check`, with the kept answers and the joined suites: 57 s and 66 s, in
+  two runs on 2026-09-24. `trigid.nim` took 30.4 s and 30.5 s of it, `tjoined.nim` 10.7 s and
+  12.8 s, and `tread.nim` 9.3 s and 9.2 s.
 - `trigid.nim`, danger build, under `nim r koch check`: 331 s wall. That is four Xeon cores
   shared with nothing else, on a Linux amd64 container, Nim 2.2.12, 2026-09-13. `tmarks` takes
   12.6 s, `tread` 7.9 s, and `tengine` 3.3 s. Every other suite is under 2 s. It is a single

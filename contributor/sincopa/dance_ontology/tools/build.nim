@@ -19,6 +19,7 @@
 ##   | rig      | rewrite design/rig.json: sweeps rig viewer plays, and every still      |
 ##   | turns    | rewrite design/turns.json: sweeps whole-cloth page plays              |
 ##   | verdicts | instrument run, not build: answers land in sim/verdicts.md            |
+##   | answers  | rewrite sim/answers.json: where couple stand for rig's laws, stamped  |
 ##   | shot     | screenshot helper, for node and Playwright                            |
 ##   | clean    | remove bin, build, nimcache, testresults and testament binaries       |
 ##   |----------|-----------------------------------------------------------------------|
@@ -57,7 +58,7 @@ const
     ## Directory faces land in.  Never committed: fonts are unregistered kind, so
     ##   lock is committed and checkout is not, as Atlas does for packages.
   USAGE = "Usage: nim r tools/build.nim " &
-    "<pages|assets|pins|modelled|rig|turns|verdicts|engine|shot|system|clean>\n"
+    "<pages|assets|pins|modelled|rig|turns|verdicts|answers|engine|shot|system|clean>\n"
     ## Text printed on usage error.
   SYSTEM = [
     ("git", true, "clone engine's source at its pinned commit; `engine` shells out to it"),
@@ -296,6 +297,16 @@ proc verdicts() =
   nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "sim/verdicts.nim"])
 
 
+proc answers() =
+  ## Rewrite `sim/answers.json`: every search rig's laws read, and stamp of sim that
+  ## answered them.
+  ##   Own verb, as `rig` is, and for like reason: searches cost minutes, and suite
+  ##     that read them from here would otherwise pay for them on every run.  Run
+  ##     whenever any `sim/*.nim` changes, since law refuses answers whose stamp is
+  ##     not that of tree.
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "sim/answers.nim"])
+
+
 func helpers(): seq[string] =
   ## Packages only hand-run helper needs, which runner is never asked to install.
   for (package, installed, _) in SYSTEM:
@@ -349,6 +360,7 @@ proc main(): int =
     of "rig": rig()
     of "turns": turns()
     of "verdicts": verdicts()
+    of "answers": answers()
     of "engine": engine()
     of "shot": shot()
     of "system": system()
