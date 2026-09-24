@@ -25,8 +25,8 @@ const
     ##     freely. Measured over 93 sections of five records, median is 34 lines and p90 is
     ##     137, while longest is 505 and holds 39% of its record. Section is where narration
     ##     collects, so section is where it is caught.
-    ##   200 rather than 150: 150 flags three sections of three projects, 200 flags one, and
-    ##     both flag same narration. Tighten once that one is pruned.
+    ##   200 rather than 150: measured then, 150 flagged three sections of three projects and
+    ##     200 flagged one, and both flagged same narration.
   RECORD_LINES* = 3000
     ## Lines record may hold before prune to log is asked.
     ##   Was 2,000 while records were written in ordinary English. Simplified Technical English
