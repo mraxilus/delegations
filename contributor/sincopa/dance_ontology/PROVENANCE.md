@@ -492,6 +492,26 @@ bounds while the words were still wrong. One page said that a stage `collides` a
 said that a cell `stands as it stands there`. The bounds are a floor, and nothing but a reading
 catches a word used outside its meaning.
 
+**The READMEs of the project are counted as its pages are, one at a time.** Article VI.8 binds every
+Markdown file, and the `english` check of the repository reads only the three records at the root
+of a project. So `sim/README.md` and `design/README.md` were read by nothing, and 192 findings stood
+in them (issue #239). `design/plain.nim` now reads Markdown as that check does, and `treadme.nim`
+holds each README with the two numbers the pages keep. `WRITTEN` names the files held so far, and
+it grows as each is written again.
+
+**The reader of Markdown is copied from the check, and not imported.** A suite compiled against the
+check of the curator would break whenever the curator changed that check. Duty 3 forbids the
+curator to do that to a project. The cost is two copies that must agree. Verified against the check
+on nine documents of the repository: the two agree on all 1158 blocks and all 2746 sentences. Six
+laws in `tplain.nim` pin the copy, and each was broken on purpose and caught its own break.
+
+**`sim/README.md` described a solver that was gone, because it said the model a second time.** It
+said that a pattern search from seeds finds each pose, and that each moment seeks the pose again.
+Both were `solve.nim` and `sweep.nim`, which 4d5241a removed. It also said that a joint past its
+range is refused, and that the girdle has no range. When the design moved only this record
+followed, so a README points at it and at `rig.nim`, and does not say the model again.
+Verified by reading each claim that `sim/README.md` keeps against the code or this record.
+
 **No string a page shows says a gendered word for a dancer.** The glossary rejects one for each
 dancer, and `tglossary.nim` reads that ruling rather than restates it. It holds every string
 literal of `design` and `app`, and the two pages this project writes by hand. A literal that a
