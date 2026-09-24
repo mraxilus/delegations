@@ -355,7 +355,7 @@ export async function drivePanWhileSelected(page: Page, cdp: CDPSession): Promis
  *  pivot to their middle. Middle is where orbit turns about, so it is where pivot has to
  *  end, and middle of frame is where it has to stand. Turn used to stop ease wherever it
  *  was, which left pivot partway and every turn after swinging group about empty point.
- *  Turn goes in through `nimCameraTurn`, what finger's own move calls, in same task that
+ *  Turn goes in through `nimCameraTurnAt`, what finger's own move calls, in same task that
  *  reads ease still carrying. Touch dispatched through protocol took about 100 ms each on
  *  this harness, so drag's first move reached page 285 ms into 350 ms ease, with one
  *  hundredth of it left: timing, not rule, decided what that measured.
@@ -402,12 +402,21 @@ export async function driveGroupTurnedAtOnce(page: Page, cdp: CDPSession): Promi
     const pivot = Array.from(nimCameraPivot());
     const short = Math.hypot(...pivot.map((v, i) => v - (middle[i] ?? 0)));
     nimSetCameraDragging(true);
-    nimCameraTurn(-0.05, 0.0, true);
+    // Finger's step right that turns orbit by 0.05, at half turn per short side.
+    const canvas = document.getElementById('gl');
+    const [wide, tall] = [canvas?.clientWidth ?? 0, canvas?.clientHeight ?? 0];
+    const reach = 0.05 * Math.min(wide, tall) / Math.PI;
+    nimCameraTurnAt(wide / 2, tall / 2, wide / 2 + reach, tall / 2, wide, tall);
     return { middle, is_easing, short };
   }, [one, two]);
   for (let step = 1; step < 10; step += 1) {
     await waitFrames(page, 1);
-    await page.evaluate(() => nimCameraTurn(-0.05, 0.0, true));
+    await page.evaluate(() => {
+      const canvas = document.getElementById('gl');
+      const [wide, tall] = [canvas?.clientWidth ?? 0, canvas?.clientHeight ?? 0];
+      const reach = 0.05 * Math.min(wide, tall) / Math.PI;
+      nimCameraTurnAt(wide / 2, tall / 2, wide / 2 + reach, tall / 2, wide, tall);
+    });
   }
   await page.evaluate(() => nimSetCameraDragging(false));
   await settleCamera(page);
