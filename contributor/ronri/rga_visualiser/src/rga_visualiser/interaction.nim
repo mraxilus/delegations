@@ -809,20 +809,22 @@ func turnAcross*(
   ##   Selection orbits about what is picked.
   ##   `look` and `orbit` take same two arguments with same signs, so one drag feeds
   ##   either verb as selection comes and goes; see `camera.look`.
-  ##   `holds_roll` puts back roll turn would otherwise leave behind.
+  ##   `holds_roll` turns about world up and level across; see `camera.orbitLevel`.
   ##     Turning about camera's own axes carries roll round with it, by solid angle drag
   ##     encloses: loop of 0.3 radians leaves 0.081 behind, which is 4.7 degrees. That is
   ##     geometry of transport rather than mistake, and no order of two turns escapes it.
   ##     Asked for by touch alone, which has no roll key beside it, and where finger
   ##     wanders in curves. Mouse keeps transport as it is, with Q and E to answer it.
-  ##     Roll reader set themselves survives, because reading is restored rather than
-  ##     zeroed. Near pole `rollHeld` reads none and last roll simply stands.
-  let before = if holds_roll: camera.rollHeld else: none(float)
-  if has_selection: camera.orbit(turn, rise) else: camera.look(turn, rise)
-  if before.isNone: return
-  let after = camera.rollHeld
-  if after.isNone: return
-  camera.roll(after.get - before.get)
+  ##     Level axes leave no roll to put back. Rolling back after own-axes turn levels
+  ##     horizon and leaves sight sunk.
+  ##     Roll reader set by twist survives, since neither level turn changes it.
+  ##     Finger's look takes drag negated, so picture follows finger in either state: sky
+  ##     moves as orbit's near side does, where mouse aims. Cost: selection made mid-drag
+  ##     reverses which way far scene moves.
+  if holds_roll:
+    if has_selection: camera.orbitLevel(turn, rise) else: camera.lookLevel(-turn, -rise)
+  elif has_selection: camera.orbit(turn, rise)
+  else: camera.look(turn, rise)
 
 
 func panAcross*(
