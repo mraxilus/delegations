@@ -925,10 +925,6 @@ type
     started*: float ## Clock reading `goal` was last set or repivoted at.
     duration*: float ## Seconds ease takes, end to end.
     stance_from*: CameraStance ## Where current ease began.
-    anchor_held*: Option[Position] ## World point ease keeps on its pixel, or none.
-      ## Set by pointer pick: object clicked stays under pointer while camera comes in.
-      ## Ease then runs `towardHoldingAnchor` rather than `toward`; see `advance`.
-      ## Meaningless while `goal` is none; set beside it and cleared with it.
 
 
 func `==`*(a, b: SphereWorld): bool =
@@ -1160,7 +1156,7 @@ func depthSpanning*(diameter, fraction: float; camera: Camera): float =
   ##   (`mesh.worldPerPixelAt`), and disc's projected major axis is its diameter whatever
   ##   its tilt, so one formula sizes point's ball and plane's disc alike.
   ##   Held off near floor as every depth is.
-  ##   For pointer pick's approach; see `framing.stanceUnderPointer`.
+  ##   For pointer pick's approach; see `framing.stanceApproaching`.
   let tangent_half = tan(0.5*degToRad(camera.degrees_field_of_view))
   distanceHeld(diameter/(2.0*max(fraction, 1.0e-6)*max(tangent_half, 1.0e-6)))
 
@@ -1276,44 +1272,6 @@ func toward*(from_stance, to_stance: CameraStance; progress: float): CameraStanc
   )
 
 
-func towardHoldingAnchor*(
-  from_stance, to_stance: CameraStance; anchor: Position; camera: Camera;
-  progress: float
-): CameraStance =
-  ## Step `progress` of way between stances sharing angles, keeping `anchor` on its pixel.
-  ##   Eye stays on line from where it began to `anchor`, its depth to anchor moving
-  ##   geometrically, so anchor's direction from eye never changes and nor does its pixel.
-  ##   `toward` cannot serve: pivot linear and distance geometric take eye off that line
-  ##   mid-ease (168 to 10 puts halfway eye at 41 by one curve, 89 by other), and object
-  ##   swung off pointer before swinging back.
-  ##   Distance still geometric, and pivot follows eye along sight as it always does.
-  ##   `camera` lends its lens: eye of each stance needs it.
-  let
-    forward = camera.placed(from_stance).frame.forward
-    eye_from = camera.placed(from_stance).eye
-    eye_to = camera.placed(to_stance).eye
-    depth_from = max(dot(anchor - eye_from, forward), 1.0e-6)
-    depth_to = max(dot(anchor - eye_to, forward), 1.0e-6)
-    depth = depth_from*pow(depth_to/depth_from, progress)
-    (near, far) = (max(from_stance.distance, 1.0e-6), max(to_stance.distance, 1.0e-6))
-    distance = near*pow(far/near, progress)
-    # Assemble eye as anchor plus scaled offset back toward where eye began.
-    eye = position(add(
-      toMultivector(anchor),
-      wedge(depth/depth_from, subtract(toMultivector(eye_from), toMultivector(anchor))),
-    ))
-  if eye.isNone: return to_stance
-  # Slide motion camera began with, rather than rebuild one: orientation is what this
-  #   ease holds, roll and all, and only eye moves.
-  CameraStance(
-    motor: motorOf(wedgeDotAnti(
-      motorSliding(subtract(toMultivector(eye.get), toMultivector(eye_from))),
-      toMultivector(from_stance.motor),
-    )),
-    distance: distance,
-  )
-
-
 func `==`*(a, b: CameraStance): bool =
   ## Compare two stances exactly, for caller asking whether camera would move at all.
   ##   Motor is stored state, so two stances agreeing here agree on eye, every axis,
@@ -1323,7 +1281,7 @@ func `==`*(a, b: CameraStance): bool =
 
 func aimAt*(
   tween: var CameraTween; camera: Camera; goal: CameraAim; destination: CameraStance;
-  now, duration: float; anchor_held = none(Position); is_renewed = false
+  now, duration: float; is_renewed = false
 ) =
   ## Set camera watching `goal` and ease it to `destination`, from where it stands now.
   ##   Requirement and stance, not one thing twice: `goal` is what re-offer is
@@ -1336,11 +1294,9 @@ func aimAt*(
   ##     each frame. `release` withdraws offer; only then does same goal aim camera again.
   ##     `is_renewed` overrides: pointer pick of object already held aims afresh, since
   ##     reader who clicks again means to be taken there again.
-  ##   `anchor_held` asks ease to keep that world point on its pixel; see `anchor_held`.
   if tween.isGoalHeld(goal) and not is_renewed: return
   tween.goal = some(goal)
   tween.destination = destination
-  tween.anchor_held = anchor_held
   # Mark arrived outright where camera already stands on destination.
   #   Easing through whole duration would write reading it holds and fight user who
   #   orbits.
@@ -1361,13 +1317,7 @@ func advance*(
   ##     object grows in with.
   if tween.goal.isNone or tween.is_arrived: return
   let progress = ease(clamp((now - tween.started) / max(tween.duration, 1.0e-6), 0.0, 1.0))
-  camera = camera.placed(
-    if tween.anchor_held.isSome:
-      towardHoldingAnchor(
-        tween.stance_from, tween.destination, tween.anchor_held.get, camera, progress
-      )
-    else: tween.stance_from.toward(tween.destination, progress)
-  )
+  camera = camera.placed(tween.stance_from.toward(tween.destination, progress))
   if now - tween.started >= tween.duration: tween.is_arrived = true
 
 
@@ -1388,7 +1338,6 @@ func release*(tween: var CameraTween) =
   ##   Not for camera *user* just moved: see `abandon`.
   tween.goal = none(CameraAim)
   tween.is_arrived = false
-  tween.anchor_held = none(Position)
 
 
 func abandon*(tween: var CameraTween) =

@@ -27,9 +27,9 @@
 ##     so `calt` never runs there. Exemption belongs in rule rather than in this file, and
 ##     nothing here reads desktop source, which declares no CSS.
 ##
-##   Cost: source is scanned only where it declares `font-family`, so registry of kinds is not
-##     consulted; page emitted from Nim is read exactly as `.html` is, which is what
-##     `design/page.nim` needed.
+##   Cost: source is scanned only where it declares `font-family` or `font` shorthand, so
+##     registry of kinds is not consulted; page emitted from Nim is read exactly as `.html`
+##     is, which is what `design/page.nim` needed.
 ##   Cost: checker's own sources name these families as data and would report themselves, so
 ##     they are exempt -- same exemption `checkDeadExports` needs and for same reason.
 ##   Cost: declarations are read, expressions are not. Source assembling font string through

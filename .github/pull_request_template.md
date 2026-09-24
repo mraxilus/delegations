@@ -1,5 +1,6 @@
-**Role:** <!-- Write curator, or contributor/<domain>/<project>. Label this pull request with
-that same string. Copy it from the branch grammar, as you label every issue. -->
+**Role:** <!-- Write `curator`, `curator/<project>` or `contributor/<domain>/<project>`, the
+role that your branch names. Label this pull request with that same string. Copy it, and never
+compose it. -->
 
 ## Intent
 

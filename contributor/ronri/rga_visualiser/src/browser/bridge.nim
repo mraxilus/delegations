@@ -1315,10 +1315,10 @@ proc nimSelectToggle(handle: cint) {.exportc.} = SELECTION.toggle(int(handle))
 
 proc nimPickByPointer(handle: cint) {.exportc.} =
   ## Note that `handle` was just picked by pointer standing at `INTERACTION.cursor`.
-  ##   Camera then keeps it under pointer as it comes in; see `framing.PointerPick`.
+  ##   Camera then centres it as it comes in; see `framing.PointerPick`.
   ##   Beside `nimSelectOnly`/`nimSelectToggle` rather than folded into them: list and
   ##   keyboard pick through those too, with no pointer to hold.
-  POINTER_PICK = some(PointerPick(handle: int(handle), cursor: INTERACTION.cursor))
+  POINTER_PICK = some(PointerPick(handle: int(handle)))
 
 
 proc nimSelectClear() {.exportc.} = SELECTION.clear()

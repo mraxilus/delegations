@@ -4600,10 +4600,14 @@ suite "Camera Aim":
     check isShownAll(scene, picked, none(Preview), camera, WIDTH_AIM, HEIGHT_AIM)
 
 
-  test "a pointer pick keeps the object's pixel through the ease and ends at its fit":
-    # What right-click promises: object clicked stays under pointer while camera comes.
-    #   in, and dot (two pixels of radius, forty units out) comes in until its disc
-    #   spans `FRACTION_HEIGHT_APPROACH_POINT` of frame's height.
+  test "a pointer pick centres the object and ends at its fit":
+    # What right-click promises: object clicked comes to middle of frame and becomes
+    #   pivot, so orbit turns it where it stands, and dot (two pixels of radius, forty
+    #   units out) comes in until its disc spans `FRACTION_HEIGHT_APPROACH_POINT` of
+    #   frame's height.
+    #   Held under pointer before, on whichever pixel was clicked. Pivot then stood on
+    #   sight line at object's depth, units off object itself, and orbit swung object
+    #   round screen.
     const
       DURATION = 0.35
       ASPECT = float(WIDTH_AIM)/float(HEIGHT_AIM)
@@ -4623,36 +4627,45 @@ suite "Camera Aim":
         )
         var
           tween: CameraTween
-          pointer = some(PointerPick(handle: picked.at(0), cursor: pixel))
+          pointer = some(PointerPick(handle: picked.at(0)))
         tween.offerAim(
           camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM),
           WIDTH_AIM, HEIGHT_AIM, 0.0, DURATION, pointer,
         )
         check pointer.isNone # Spent by offer.
-        check tween.anchor_held.isSome
+        check pixel.x != float(WIDTH_AIM)/2.0 # Clicked well off middle.
         for step in 1 .. 5:
           tween.advance(camera, DURATION*float(step)/5.0, easeOutCubic)
-          let now_at = projectToScreen(
-            camera.initMatrixViewProjection(ASPECT), WIDTH_AIM, HEIGHT_AIM, place
-          )
-          check abs(now_at.x - pixel.x) < 0.01
-          check abs(now_at.y - pixel.y) < 0.01
         check tween.is_arrived
+        # Object ends dead centre, whatever pixel was clicked.
+        let settled_at = projectToScreen(
+          camera.initMatrixViewProjection(ASPECT), WIDTH_AIM, HEIGHT_AIM, place
+        )
+        check abs(settled_at.x - float(WIDTH_AIM)/2.0) < 0.01
+        check abs(settled_at.y - float(HEIGHT_AIM)/2.0) < 0.01
+        # Pivot is object itself, so orbit turns it where it stands.
+        check camera.pivot =~ place
+        var turned = camera
+        turned.orbit(0.7, 0.3)
+        let after_turn = projectToScreen(
+          turned.initMatrixViewProjection(ASPECT), WIDTH_AIM, HEIGHT_AIM, place
+        )
+        check abs(after_turn.x - float(WIDTH_AIM)/2.0) < 0.01
+        check abs(after_turn.y - float(HEIGHT_AIM)/2.0) < 0.01
         # Angles are read off sight direction now, so they land within ulp or two of
         #   what was asked rather than on it. Claim is that framing turned nothing.
         check camera.azimuth =~ stanceAim(azimuth, elevation).azimuth
         check camera.elevation =~ stanceAim(azimuth, elevation).elevation
         let fit = depthSpanning(2.0*RADIUS, FRACTION_HEIGHT_APPROACH_POINT, camera)
         check abs(camera.distance - fit) < 1.0e-9
-        # Pivot at anchor's depth: point and pivot equally far along sight.
-        let eye_settled = camera.eye
-        check abs(dot(place - eye_settled, camera.frame.forward) - fit) < 1.0e-6
+        # Separation is reach to object, because object is what pivot stands on.
+        check abs(norm(place - camera.eye) - fit) < 1.0e-6
 
 
   test "a pointer pick never moves the eye further off than the object stands":
-    # Object already nearer than its fit leaves picture as it is: pivot alone comes to.
-    #   its depth. Point seen at its size, and line, come in to orbit distance and no
-    #   further; only floor dot comes in to its fit.
+    # Object already nearer than its fit leaves reader's own scale alone: separation
+    #   becomes its own reach and no more. Point seen at its size, and line, come in to
+    #   orbit distance and no further; only floor dot comes in to its fit.
     let camera = stanceAim(0.7, 0.2)
     let
       eye = camera.eye
@@ -4660,19 +4673,22 @@ suite "Camera Aim":
       scale = camera.drawExtentFor(HEIGHT_AIM)
       near = eye + 0.3*axes.forward + 0.02*axes.axis_right
       far = eye + 40.0*axes.forward + 3.0*axes.axis_up
-    let placement_near = stanceUnderPointer(near, Kind.Point, 0.08, near, camera, scale)
+    let placement_near = stanceApproaching(Kind.Point, 0.08, near, camera, scale)
     check placement_near.isSome
-    check abs(placement_near.get.distance - 0.3) < 1.0e-9
-    check camera.placed(placement_near.get).eye =~ eye
+    check abs(placement_near.get.distance - norm(near - eye)) < 1.0e-9
+    # Pivot is object, and it is centred: that is whole of what pick promises.
+    check camera.placed(placement_near.get).pivot =~ near
     # Radius half unit stands forty out at thirteen pixels, plainly seen: orbit distance.
-    let placement_seen = stanceUnderPointer(far, Kind.Point, 0.5, far, camera, scale)
+    let placement_seen = stanceApproaching(Kind.Point, 0.5, far, camera, scale)
     check placement_seen.isSome
     check abs(placement_seen.get.distance - camera.distance) < 1.0e-9
-    let placement_line = stanceUnderPointer(far, Kind.Line, 0.0, far, camera, scale)
+    let placement_line = stanceApproaching(Kind.Line, 0.0, far, camera, scale)
     check placement_line.isSome
     check abs(placement_line.get.distance - camera.distance) < 1.0e-9
+    # Object behind reader is left to frame rule: centring it would slide camera back
+    #   past it rather than turn.
     let behind = eye - 2.0*axes.forward
-    let placement_behind = stanceUnderPointer(behind, Kind.Point, 0.08, behind, camera, scale)
+    let placement_behind = stanceApproaching(Kind.Point, 0.08, behind, camera, scale)
     check placement_behind.isNone
 
 
@@ -4683,10 +4699,10 @@ suite "Camera Aim":
     check depthSpanning(0.0, 0.5, camera) == DISTANCE_LIMIT_NEAR
 
 
-  test "a plane picked by pointer is brought to its size both ways, crossing held":
-    # Disc's centre comes to depth where its diameter spans.
-    #   `FRACTION_HEIGHT_APPROACH_PLANE` of frame, from too far and from too near alike,
-    #   while place under pointer keeps its pixel and angles stand.
+  test "a plane picked by pointer is brought to its size, centred both ways":
+    # Disc's centre comes to middle of frame, at reach where its diameter spans.
+    #   `FRACTION_HEIGHT_APPROACH_PLANE` of that frame, from too far and from too near
+    #   alike, with angles standing.
     const
       DURATION = 0.35
       ASPECT = float(WIDTH_AIM)/float(HEIGHT_AIM)
@@ -4694,36 +4710,33 @@ suite "Camera Aim":
     for distance in [12.0, 1.0]:
       var camera = initCamera(pivot = ORIGIN, distance = distance, azimuth = 0.7, elevation = 0.5)
       var (scene, picked) = sceneOf(ground)
-      let cursor = ScreenPosition(x: 0.62*float(WIDTH_AIM), y: 0.58*float(HEIGHT_AIM))
       let scale = camera.drawExtentFor(HEIGHT_AIM)
-      let crossing =
-        positionUnderPointerOn(scene, picked.at(0), camera, scale, WIDTH_AIM, HEIGHT_AIM, cursor)
-      check crossing.isSome
       var
         tween: CameraTween
-        pointer = some(PointerPick(handle: picked.at(0), cursor: cursor))
+        pointer = some(PointerPick(handle: picked.at(0)))
       tween.offerAim(
         camera, scene, picked, none(Preview), scale, WIDTH_AIM, HEIGHT_AIM, 0.0, DURATION,
         pointer,
       )
-      check tween.anchor_held.isSome
       tween.settle(camera)
-      let eye = camera.eye
-      let depth_centre = dot(ORIGIN - eye, camera.frame.forward)
+      let seat = anchorFor(ground, none(Position), scale)
+      check seat.isSome
       let wanted = depthSpanning(2.0*EXTENT_PLANE_F, FRACTION_HEIGHT_APPROACH_PLANE, camera)
-      check abs(depth_centre - wanted) < 1.0e-6
+      check abs(camera.distance - wanted) < 1.0e-6
+      # Disc's own centre is pivot, and pivot is middle of frame.
+      check camera.pivot =~ seat.get
+      let pixel = projectToScreen(
+        camera.initMatrixViewProjection(ASPECT), WIDTH_AIM, HEIGHT_AIM, seat.get
+      )
+      check abs(pixel.x - float(WIDTH_AIM)/2.0) < 0.01
+      check abs(pixel.y - float(HEIGHT_AIM)/2.0) < 0.01
       # Read off sight direction, so within ulp of what was asked; see above.
       check camera.azimuth =~ 0.7
       check camera.elevation =~ 0.5
-      let pixel = projectToScreen(
-        camera.initMatrixViewProjection(ASPECT), WIDTH_AIM, HEIGHT_AIM, crossing.get
-      )
-      check abs(pixel.x - cursor.x) < 0.01
-      check abs(pixel.y - cursor.y) < 0.01
 
 
   test "a group picked by pointer frames as ever":
-    # Group has to fit, which holding one pixel cannot promise: `stanceFor`, no anchor.
+    # Group has to fit, which one object's reach cannot promise: `stanceFor`.
     const DURATION = 0.35
     var camera = stanceAim(1.6, 0.2)
     let (scene_two, picked_two) = sceneOf(
@@ -4732,15 +4745,12 @@ suite "Camera Aim":
     )
     var
       tween_two: CameraTween
-      pointer = some(PointerPick(
-        handle: picked_two.at(1), cursor: ScreenPosition(x: 700.0, y: 450.0)
-      ))
+      pointer = some(PointerPick(handle: picked_two.at(1)))
     tween_two.offerAim(
       camera, scene_two, picked_two, none(Preview), camera.drawExtentFor(HEIGHT_AIM),
       WIDTH_AIM, HEIGHT_AIM, 0.0, DURATION, pointer,
     )
     check tween_two.goal.isSome
-    check tween_two.anchor_held.isNone
     check tween_two.destination ==
       framedFor(scene_two, picked_two, camera)
 
@@ -4771,11 +4781,7 @@ suite "Camera Aim":
       WIDTH_AIM, HEIGHT_AIM, 1.0, DURATION, pointer,
     )
     check tween.is_arrived # Same goal, no pointer: nothing re-armed.
-    let pixel = projectToScreen(
-      camera.initMatrixViewProjection(float(WIDTH_AIM)/float(HEIGHT_AIM)),
-      WIDTH_AIM, HEIGHT_AIM, place,
-    )
-    pointer = some(PointerPick(handle: picked.at(0), cursor: pixel))
+    pointer = some(PointerPick(handle: picked.at(0)))
     tween.offerAim(
       camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM),
       WIDTH_AIM, HEIGHT_AIM, 2.0, DURATION, pointer,

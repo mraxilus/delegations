@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 874ef979b21fbc1e |
+| Rules   | 89050d6476b15f47 |
 | Pruned  | ca56fd4f8b61f44d3b38f3533ba0f177c4cc27b8 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -1929,8 +1929,9 @@ the choice wheel. Both render paths and `help.nim` read them.
 
 **The selection menu opens on the click, beside the pointer**, `INSET_MENU_POINTER` 8 px from it.
 It then remembers its offset from the anchor of the object, so an orbit carries it with the
-object. It is not held back until the ease settles: a menu a third of a second after the click
-reads as a missed click. A menu opened with no pointer sits above the anchor.
+object. A pick carries its object to the middle of the frame, so the menu rides in and settles
+beside the middle. It is not held back until the ease settles: a menu a third of a second after
+the click reads as a missed click. A menu opened with no pointer sits above the anchor.
 
 **A click has no time limit.** `isClick` is distance alone, at `PIXELS_CLICK_SLOP` 6 px. It is not
 the 12 px of `PIXELS_TAP_SLOP`. A mouse does not roll, and the allowance of a finger would swallow
@@ -2092,8 +2093,9 @@ Verified by driven checks:
 - a finger dragged from a point with a twin 0.05 units away, which orbits and builds nothing;
 - `more…` landing on `𝐦 ∧ 𝐧` on both builds;
 - the refusal on a full scene;
-- a right-click 6 px off an anchor, with the menu up two frames in, and a pan moving menu and
-  anchor by one delta;
+- a right-click showing the menu two frames in, 14 by 12 px from the anchor, and the same offset
+  once settled;
+- a pivot shift moving that anchor 84 px, with the menu holding the offset;
 - an emptied list, a deep handle edited, and its form in view.
 
 Assumed: that 0.75 s is the right dwell for any hand.
@@ -2591,14 +2593,19 @@ already fits does. `stanceFor` turns toward a star only where that star's own bo
 Without the floor, a pick of something already on screen pulled the view about. The comet drifted
 75.5 px against a band of 5 to 60.
 
-**A pointer pick keeps its object under the pointer, and comes in to it.** The centring rule above
-is for picks with no pointer: the objects list, the keyboard, or a shift-added group. A click or a
-tap on a point or a line records a `framing.PointerPick`, which `offerAim` consumes on the next
-frame.
+**A pointer pick centres its object, and comes in to it.** A click or a tap on a point or a line
+records a `framing.PointerPick`, which `offerAim` consumes on the next frame. The destination is
+`stanceApproaching`, which puts the pivot on the object's own anchor. Every pick therefore centres,
+whether a pointer made it or the objects list did.
 
-The destination is the own move of the wheel (`stanceUnderPointer`). The eye comes in along its
-line to where the object stands under the pointer. The angles never change, and the pivot lands on
-the sight line at the depth of the object.
+The camera slides and never turns, so the angles and the roll both survive. `stanceRepivoted`
+carries the pivot onto the object and `stanceDollied` sets the reach, which is the whole of the
+move.
+
+The object was held under the pointer before, on whichever pixel the reader clicked. The pivot then
+stood on the sight line at that object's depth, units away from the object itself. Every orbit then
+swung the object round the screen rather than turning it where it stood. A click 155 px off the
+middle left it 155 px off the middle.
 
 **How far in depends on the shape, and on what the reader could see.** It is sized on the height
 of the frame by `camera.depthSpanning(diameter, fraction)`. A point drawn at the floor dot is only
@@ -2606,14 +2613,16 @@ a place. The camera comes in until its disc spans `FRACTION_HEIGHT_APPROACH_POIN
 height of the frame. A sixth was too close, and 0.01 was chosen by eye. A point seen at its size,
 and a line, come in no further than the orbit distance.
 
-A plane is framed **both ways**. The centre of its disc is brought to the depth where the diameter
-of the disc spans `FRACTION_HEIGHT_APPROACH_PLANE` 0.40. The crossing under the pointer stays the
-held anchor. It falls back to `stanceFor` where that has no positive solution. It is not the
-centring rule for a plane, which never pulls in.
+A plane comes in until the diameter of its whole disc spans `FRACTION_HEIGHT_APPROACH_PLANE` 0.40.
+That is the reach its own centre asks for, and no crossing enters it. It is not the centring rule
+for a plane, which never pulls in.
 
-**The ease holds the pixel too.** `CameraTween.anchor_held` switches `advance` to
-`towardHoldingAnchor`, where the depth of the eye to the anchor moves geometrically along the
-eye-anchor line. `toward` takes the eye off that line mid-ease.
+**An object behind the reader is left to the frame rule.** Centring one would slide the camera back
+past it rather than turn, which is a jump nobody asked for. `stanceApproaching` answers none there,
+and `stanceFor` takes it by its own bound.
+
+The ease holds no pixel now. `toward` runs for every pick, because the destination is centred and
+there is no anchor left to keep in place.
 
 **A pick renews a held goal.** The `is_renewed` of `aimAt` re-arms the ease for a pointer pick
 whatever the tween holds. Without it, the same object picked again, after the wheel had taken the
@@ -2621,9 +2630,11 @@ reader out, goes nowhere.
 
 *Checked.* Verified by `suites.nim`:
 
-- the pixel stays within 0.01 px through five steps of the ease, and the arrival distance equals
-  the fit;
-- a near point and a line keep the orbit distance;
+- a pointer pick lands the object within 0.01 px of the middle of the frame, from every angle
+  swept;
+- an orbit of 0.7 by 0.3 then leaves it there;
+- the arrival distance equals the fit, and the reach to the object equals it too;
+- a near point and a line keep the orbit distance, and one behind the reader is refused;
 - a re-pick after `abandon` and a dolly re-arms;
 - the arrival of the plane from 12 units and from 1;
 - the step out reaches its own distance, and answers zero from every stance already past it;
@@ -2635,8 +2646,8 @@ reader out, goes nowhere.
 
 Verified by driven check:
 
-- from 45 units a right-click brings the eye to 19.3, with the anchor drifting 0.00 px in flight
-  and settled;
+- a right-click 155 px off the middle settles the object 0.00 px from it, with the eye brought in
+  from 45 units to 19.3;
 - a second pick after a wheel out past 100 comes in to 19.3 again;
 - a right-click on the ground plane from Home settles its centre at 48.28, which is exactly the
   depth wanted for 0.40;

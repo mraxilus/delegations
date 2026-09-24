@@ -1137,7 +1137,7 @@ proc handleEvent(
           else: panel.selection.selectOnly(outcome.index_clicked.get)
           # Note pick for camera: what was clicked stays under pointer as view comes in.
           panel.pointer_pick =
-            some(PointerPick(handle: outcome.index_clicked.get, cursor: interaction.cursor))
+            some(PointerPick(handle: outcome.index_clicked.get))
           if revealsMenuFor(event.button.button):
             panel.showSelectionMenuAt(interaction.cursor)
           else: panel.hideSelectionMenu()
@@ -1166,7 +1166,7 @@ proc handleEvent(
         else:
           if is_shifted: panel.selection.toggle(handle)
           else: panel.selection.selectOnly(handle)
-          panel.pointer_pick = some(PointerPick(handle: handle, cursor: interaction.cursor))
+          panel.pointer_pick = some(PointerPick(handle: handle))
           if revealsMenuFor(event.button.button):
             panel.showSelectionMenuAt(interaction.cursor)
           else: panel.hideSelectionMenu()

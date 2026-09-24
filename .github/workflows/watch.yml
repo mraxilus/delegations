@@ -1,34 +1,30 @@
 # Open issue when workflow goes red on main, so nobody has to be awake for it.
-#   CURATOR.md's first read, Every delegate begins here, has curator read latest `push` run:
-#   subscriptions do not cover `main`, and duty 2 has curator watch only their own merge.
-#   Twice that has failed silently -- contributor's merge red with nobody looking, found by
-#   accident twenty-four minutes later; and driven job red on two `main` runs while curator who
-#   named that run as leg still to read did not read it. Both times enforcement was somebody
-#   remembering, and failure was quiet.
-#   So red run becomes issue labelled `curator`, which is that same first read and repository's
-#   own answer to delegate ending and taking its intentions with it. No new rule: existing rule
-#   now produces artefact rule already asks next delegate to read.
+#   CURATOR.md, Every delegate begins here, has curator read latest `push` run: subscriptions
+#   do not cover `main`, and duty 2 has curator watch only their own merge. Reading is memory,
+#   and memory fails quietly. So red run becomes issue labelled `curator`, which is queue
+#   every delegate reads first: existing rule produces artifact rule already asks next delegate
+#   to read, and no new rule is written.
 #
 #   Separate workflow because run cannot watch its own outcome, and `workflow_run` fires only
-#   from copy of this file on default branch -- which is why it cannot be driven from branch,
-#   and why `workflow_dispatch` takes run to read: that is how it is driven against real red
-#   run rather than against manufactured one.
-#   One issue, not one per run: watcher opening issue per red run trains its reader to skim,
-#   which is failure it exists to prevent. Marker in body is what makes second red comment on
-#   first issue instead.
-#   Marker carries workflow's own name rather than being one literal, so red `ledger` cannot be
-#   closed by somebody answering red `check`. `ledger` reads what nothing else here reads, and
-#   sweep that quietly stopped running while documents say runner holds half of three rules is
-#   worse than no sweep -- so it is watched exactly as `check` is.
-#   Issue opens with role line as every issue does, and says workflow wrote it, so nobody reads
-#   it as session having judged anything.
-#   Cost: `issues: write`, which `ledger.yml` holds as well. Neither runs on event pull request
-#   can reach, and that is what keeps grant narrow -- never count of files holding it.
+#   from copy of this file on default branch -- which is why `workflow_dispatch` takes run to
+#   read: that is how it is driven against real red run rather than against manufactured one.
+#   `branches: [main]` matches head branch of run, and fork's pull request from its own `main`
+#   carries that name too; so run that `pull_request` triggered is skipped by event, never by
+#   branch.
+#   One issue per workflow, not one per run: watcher opening issue per red run trains its reader
+#   to skim. Marker in body carries workflow's own name, so red `ledger` never hides behind
+#   issue somebody closed because `check` went green; later red run of same workflow comments
+#   on open issue.
+#   `concurrency` group is workflow run read, so two red runs of one workflow finishing
+#   together cannot both list issues, find none, and open two. Queued run waits rather than
+#   cancels. Cost: third red run arriving while second waits replaces it, so issue gains
+#   first and third comments and never second.
+#   Issue opens with role line after marker, as every issue does, and says workflow wrote it,
+#   so nobody reads it as delegate having judged anything.
+#   Cost: `issues: write`, which `ledger.yml` holds as well. Neither runs on event that pull
+#   request can reach, which is what keeps grant narrow.
 #   `permissions` block is whole grant, never addition to default: scope left out of it is set
-#   to `none`, not left alone. Written here without `actions: read` first, and first firing got
-#   403 reading run it was pointed at -- from block that named neither `actions` nor anything
-#   else it did not need. So every scope this needs is listed, and list is exactly what token
-#   gets.
+#   to `none`. Every scope steps use is listed, and `workflows.nim` holds that.
 
 name: watch
 
@@ -51,10 +47,16 @@ permissions:
 jobs:
   red:
     # Dispatch names run deliberately, so it reports whatever that run concluded; `workflow_run`
-    #   fires on every completion, and only failure is worth reporting.
+    #   fires on every completion, and only failure of run on `main` itself is worth reporting.
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'failure'
+      (github.event.workflow_run.conclusion == 'failure' &&
+       github.event.workflow_run.event != 'pull_request')
+    # On job rather than workflow, so only red runs queue here: green completion arriving
+    #   later can never replace pending red one.
+    concurrency:
+      group: watch-${{ github.event.workflow_run.name || inputs.run_id }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     steps:
       - name: Read run, then open or add to issue standing for red main
@@ -84,10 +86,8 @@ jobs:
           failed="$(gh api "repos/$REPO/actions/runs/$RUN_ID/jobs" --paginate \
             --jq '.jobs[] | select(.conclusion == "failure") | "- `" + .name + "`"')"
 
-          # Paragraphs are built by appending rather than written whole: heredoc wants its
-          #   terminator at column zero, which no line inside block scalar may reach, and `<<-`
-          #   strips tabs alone. Measured, not assumed -- written as heredoc first and it would
-          #   not parse.
+          # Paragraphs appended rather than written as heredoc: issue body renders each newline
+          #   as line break, so paragraph wrapped to width here would break mid-sentence there.
           said="Opened by the \`watch\` workflow rather than by a delegate, so nothing here"
           said="$said has been read or judged yet. Workflow red on \`main\` is first work of"
           said="$said a delegate (CURATOR.md, Every delegate begins here)."
