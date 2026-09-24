@@ -12,7 +12,7 @@
 ##     wrapping body, not by second arc filling up around it.
 ##     Cost of quiet rim: arm carried past full turn looks like one
 ##       carried less.  Accepted while nothing on bench stores more than
-##       one turn; README keeps question open.
+##       one turn; `PROVENANCE.md` keeps question open.
 ##   Hands sit on rim, each in its own side's colour, lead's one shade
 ##     deeper than follow's.
 ##     Cost of hands on rim: hand cannot be drawn reaching across
@@ -52,8 +52,8 @@ const SLOT_OFFSET* = 44.0
   ## How far round rim `front` and `back` sit from side.
   ##   Wide enough that no two marks ever touch -- two need 34.9 degrees on
   ##     this rim -- and narrow enough that spot still belongs to its own
-  ##     side.  Drawn convention, not something dance says; README
-  ##     keeps it on open list.
+  ##     side.  Drawn convention, not something dance says;
+  ##     `PROVENANCE.md` keeps it on open list.
 
 const HAND_GAP* = radToDeg(arcsin((HAND_R + CAP) / BODY_R))
   ## Rim's clearance around hand mark: same reach connection

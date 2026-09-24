@@ -1,10 +1,10 @@
 ## Hold every rule mock-ups were given, in words it arrived in.
 ##
-##   This module is authority workbench replicates: ledger
-##     README mirrors entry for entry, and checks cite by number.
-##     Cost of keeping it as data nothing loads: copies can drift, and
-##       only reader diffing them would notice.  Accepted for now --
-##       checks' printed lines are worded for what was measured, not for
+##   This module is authority workbench replicates: README quotes each
+##     entry, and checks cite by number.
+##     README's quotations are held to this word for word by
+##       `tests/treadme.nim`, so that copy cannot drift.  Checks' printed
+##       lines are not: they are worded for what was measured, not for
 ##       rule's own phrasing, and rewording them to quote this ledger
 ##       would change what every build prints.
 ##   Vocabulary rules speak in -- sides, levels, holds, settle
@@ -22,11 +22,11 @@
 ##     never that couple can dance it.  Workbench is mock-up.  Only
 ##     reference cell kept, modelled and confirmed is trusted.
 
-# TODO: Make ledger load-bearing.
-#   Checks could assert their rule numbers against `RULES`, or
-#   README's ledger section could be generated from it.  Either buys
-#   drift-proofing at cost of freezing wordings into build's
-#   output; needs decision on what printed lines should say.
+# TODO: Make ledger load-bearing for checks.
+#   README half is done: its quotations are held to `RULES`.  Checks
+#   could assert their rule numbers against `RULES` too, at cost of
+#   freezing wordings into build's output; needs decision on what
+#   printed lines should say.
 
 {.experimental: "strictFuncs".}
 
@@ -446,7 +446,7 @@ const RULES* = [
   ##     each.  Drawing model holds level and way per *connection*
   ##     and settles only follow, which covers sheet's validated
   ##     rows but not its enumeration; widening it is restructure, noted
-  ##     in README's open questions rather than done quietly here.
+  ##     in `PROVENANCE.md`'s open questions rather than done quietly here.
   ##   Rule 40 is sheet's one filled rotation row, and sim asks it
   ##     independently (`sim/verdicts.md`): from Left to left held low,
   ##     jointed-arm sim reads lock way as row does -- hand led
