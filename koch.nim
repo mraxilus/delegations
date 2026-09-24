@@ -5,7 +5,7 @@
 ##   |---------|----------------------------------------------------------------------------------|
 ##   | Command | Effect                                                                           |
 ##   |---------|----------------------------------------------------------------------------------|
-##   | tree    | layout, form, comments, records, glossary, prompts, copies, faces, english       |
+##   | tree    | every static check `auditTree` composes, then `Pruned` rows against git log      |
 ##   | deps    | `atlas --noexec rep` in every project holding atlas.lock, or in one              |
 ##   | types   | restore node tools, then type-check scripts, projects one change asks            |
 ##   | driven  | restore, build page, drive it through real events, on that project's pin         |
@@ -22,8 +22,9 @@
 ##   |---------|----------------------------------------------------------------------------------|
 ##   Verb of one project is that project's own, in its `tools/build.nim`; koch names verb and
 ##     selects projects carrying it, and holds none of what it does. `types`, `drive` and
-##     `system` are those, and koch learns which projects carry each by reading that driver's
-##     own dispatch, never from list.
+##     `system` are those. Koch learns which projects carry `drive` and `system` by reading
+##     that driver's own dispatch, and which carry `types` by node manifest beside its lock;
+##     never from list.
 ##   `types` runs on driver's compiler and `driven` on project's own, because type check
 ##     compiles no project code and driven check does: it builds page through JS backend.
 ##     So `driven` is planned like `tests`, through `plan --driven`, and reaches CI as matrix.
@@ -32,15 +33,17 @@
 ##     makes `plan` name every project; `--sweep` names projects whose code merged within
 ##     window; `--driven` keeps only those carrying driven checks;
 ##     `--write` makes `stamp` set every record's Rules row rather than print stamp. Second
-##     argument names one project directory, and every verb given one drops its scoping.
+##     argument names one project directory for `deps`, `types`, `driven`, `system`, `tests`
+##     and `plan`, which then drop their scoping; `ci` passes it to `types` alone; `assets`
+##     reads every argument as file; other verbs ignore it.
 ##     Exit: 0 clean, 1 findings, 2 usage error.
 ##   `role` reads pull request rather than tree, so its two inputs come from event payload
 ##     through env `ROLE_BODY` and `ROLE_LABELS`, latter as JSON array of label names. That is
 ##     why `ci` leaves it out: local run has no pull request to read.
 ##
 ##   `ci` compiles only projects whose code changed, since static pass costs tenths of
-##     second and suites cost minutes; push run on `main` and weekly sweep do same against
-##     their own base, so nothing compiles every project (CURATOR.md duty 9). Matrix runs
+##     second and suites cost minutes; push run on `main` and weekly run do same against
+##     their own base, so nothing compiles every project (CURATOR.md duty 11). Matrix runs
 ##     each on its own pin, as `ci` does locally: `compilers.nim` serves each changed project's
 ##     pin from PATH, cache or fetch, so which compiler PATH holds decides nothing.
 ##
@@ -61,7 +64,8 @@ import ./curator/audit/src/[
 const USAGE = """
 Usage: koch <tree|deps|types|driven|system|assets|tests|plan|scope|commits|base|role|stamp|ci>
             [project|asset...]
-            [--root:<dir>] [--branch:<name>] [--base:<ref>] [--all] [--sweep] [--write]
+            [--root:<dir>] [--branch:<name>] [--base:<ref>] [--all] [--sweep] [--driven]
+            [--write]
 """
   ## Text printed on usage error.
 
