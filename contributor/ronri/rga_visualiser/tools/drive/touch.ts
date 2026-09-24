@@ -270,7 +270,7 @@ async function isOpenSky(page: Page, at: Finger): Promise<boolean> {
   }, at);
 }
 
-/** Drive one finger's turn as turntable, which holds height and passes over top.
+/** Drive one finger's turn as turntable, which holds height, follows finger, and passes over top.
  *
  *  Sideways swipe with nothing picked is where turning about camera's own axes, with roll
  *  put back after, sank sight: each step tipped it down and roll put back only horizon.
@@ -299,6 +299,26 @@ export async function driveFingerTurntable(page: Page, cdp: CDPSession): Promise
       spanOf(standing.eye, swung.eye) < 1e-6,
     `azimuth ${standing.azimuth.toFixed(4)} -> ${swung.azimuth.toFixed(4)}, ` +
       `elevation ${level.toFixed(6)} -> ${swept.toFixed(6)}`,
+  );
+
+  // Picture follows finger with nothing picked, as it does under any finger: swipe right
+  //   and down carries what stands ahead right and down. Mouse aims instead.
+  await page.keyboard.press('Home');
+  await settleCamera(page);
+  const ahead = await page.evaluate(() => nimSceneHandles()[0] ?? -1);
+  const seenAhead = async (): Promise<number[]> => page.evaluate((one) => Array.from(
+    nimAnchorScreen(one, window.innerWidth, window.innerHeight),
+  ), ahead);
+  const seen_before = await seenAhead();
+  await dragFinger(page, cdp, [sky.x, sky.y], [sky.x + 60, sky.y + 40]);
+  const seen_after = await seenAhead();
+  const across = (seen_after[0] ?? 0) - (seen_before[0] ?? 0);
+  const down = (seen_after[1] ?? 0) - (seen_before[1] ?? 0);
+  report(
+    'and the picture follows a finger with nothing picked, across and down',
+    across > 10 && down > 10,
+    `what stands ahead moved ${across.toFixed(1)} px across and ${down.toFixed(1)} px down, ` +
+      'for a finger moved 60 and 40',
   );
 
   // Picked object anchors orbit, and ease has to finish before drag reads anything.

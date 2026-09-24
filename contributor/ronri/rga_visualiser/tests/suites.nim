@@ -7279,14 +7279,16 @@ suite "Interaction":
     # Roll put back after turn about camera's own axes levelled horizon and left sight
     #   sunk, and by more as steps grew. Level axes move azimuth alone and elevation
     #   alone, so nothing needs putting back and step size cannot matter.
+    #   Finger's look carries sky with it, so one drag turns it against orbit; `way` asks
+    #   both for one motion.
     let opening = initCameraDefault()
     for picked in [false, true]:
+      let way = if picked: 1.0 else: -1.0
       for steps in [1, 8, 64]:
         var cut = opening
         for step in 1 .. steps:
-          cut.turnAcross(
-            1.2/float(steps), 0.3/float(steps), has_selection = picked, holds_roll = true
-          )
+          cut.turnAcross(way*1.2/float(steps), way*0.3/float(steps), has_selection = picked,
+            holds_roll = true)
         check cut.azimuth =~ opening.azimuth + 1.2
         check cut.elevation =~ opening.elevation + 0.3
         check abs(cut.rollHeld.get) < TOLERANCE_TEST
@@ -7301,39 +7303,44 @@ suite "Interaction":
       check round_trip.frame.axis_up =~ opening.frame.axis_up
 
 
-  test "a finger's drag passes over the top, and carries the picture the same way past it":
+  test "a finger's drag passes over the top, and the picture follows the finger past it":
     # Across axis stays level through pole, so sight turns in its own upright plane and
     #   camera comes down far side upside down, keeping its across.
     const (WIDE, TALL) = (390, 844)
-    proc sweptBy(camera: Camera; picked: bool): float =
-      # Read how far finger's rightward drag carries, across screen, what it turns about.
-      #   Orbit's near side lies between eye and pivot, and follows finger. Look's point
-      #   lies straight ahead and slides against finger, since sight turns toward it.
+    proc sweptBy(camera: Camera; picked: bool; turn, rise: float): (float, float) =
+      # Read how far finger's drag carries, across and down screen, what it turns about.
+      #   Orbit's near side lies between eye and pivot; look's point lies straight ahead.
+      #   Pointer hands rightward finger negative turn, and downward finger positive rise.
       let near_side =
         if picked: camera.eye + 0.4*camera.distance*camera.frame.forward
         else: camera.eye + 5.0*camera.frame.forward
       var swung = camera
-      swung.turnAcross(-0.05, 0.0, has_selection = picked, holds_roll = true)
-      let aspect = float(WIDE)/float(TALL)
-      projectToScreen(swung.initMatrixViewProjection(aspect), WIDE, TALL, near_side).x -
-        projectToScreen(camera.initMatrixViewProjection(aspect), WIDE, TALL, near_side).x
+      swung.turnAcross(turn, rise, has_selection = picked, holds_roll = true)
+      let
+        aspect = float(WIDE)/float(TALL)
+        was = projectToScreen(camera.initMatrixViewProjection(aspect), WIDE, TALL, near_side)
+        now_at = projectToScreen(swung.initMatrixViewProjection(aspect), WIDE, TALL, near_side)
+      (now_at.x - was.x, now_at.y - was.y)
     let opening = initCameraDefault()
     for picked in [false, true]:
+      # Finger's look carries sky with it, so one drag turns it against orbit.
+      let way = if picked: 1.0 else: -1.0
       var over = opening
       let climb = 0.5*PI - opening.elevation + 0.4
       for step in 1 .. 40:
-        over.turnAcross(0.0, climb/40.0, has_selection = picked, holds_roll = true)
+        over.turnAcross(0.0, way*climb/40.0, has_selection = picked, holds_roll = true)
       check dot(over.frame.forward, opening.frame.forward) =~ cos(climb)
       check over.frame.axis_right =~ opening.frame.axis_right
       check dot(over.frame.axis_up, UP_WORLD) < 0.0
       if picked: check over.pivot =~ opening.pivot
       else: check over.eye =~ opening.eye
-      let way = if picked: 1.0 else: -1.0
-      check way*sweptBy(opening, picked) > 0.0
-      check way*sweptBy(over, picked) > 0.0
+      # Picture follows finger across and down, on both sides of top, in either state.
+      for camera in [opening, over]:
+        check sweptBy(camera, picked, -0.05, 0.0)[0] > 0.0
+        check sweptBy(camera, picked, 0.0, 0.05)[1] > 0.0
       # Sight exactly along world up names no level across, and camera's own stands in.
       var pole = opening
-      pole.turnAcross(0.0, 0.5*PI - opening.elevation, has_selection = picked,
+      pole.turnAcross(0.0, way*(0.5*PI - opening.elevation), has_selection = picked,
         holds_roll = true)
       check abs(dot(pole.frame.forward, UP_WORLD)) =~ 1.0
       var spun = pole
@@ -7341,7 +7348,7 @@ suite "Interaction":
       check spun.frame.forward =~ pole.frame.forward
       check dot(spun.frame.axis_right, pole.frame.axis_right) =~ cos(0.2)
       var past = pole
-      past.turnAcross(0.0, 0.3, has_selection = picked, holds_roll = true)
+      past.turnAcross(0.0, way*0.3, has_selection = picked, holds_roll = true)
       check abs(dot(past.frame.forward, UP_WORLD)) =~ cos(0.3)
       check past.frame.axis_right =~ pole.frame.axis_right
 
