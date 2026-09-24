@@ -101,15 +101,16 @@ proc auditTree*(tree: Tree): seq[Finding] =
     if e.path.startsWith(WORKFLOW_DIR): result.add checkScopes(e.path, e.content)
 
   # Checker holds itself to rules it holds everything else to, from tree as git shows it.
-  var check_paths, check_sources: seq[string]
+  var check_paths, check_sources, suite_sources: seq[string]
   var koch_source, curator_source: string
   for e in tree:
     if e.path.startsWith(CHECK_DIR) or e.path == KOCH_PATH:
       check_paths.add e.path
       check_sources.add e.content
+    if e.path.startsWith(SUITE_DIR): suite_sources.add e.content
     if e.path == KOCH_PATH: koch_source = e.content
     if e.path == CURATOR_PATH: curator_source = e.content
-  result.add checkDeadExports(check_paths, check_sources)
+  result.add checkDeadExports(check_paths, check_sources, suite_sources)
   result.add checkSuites(tree.mapIt(it.path))
   result.add checkVerbs(koch_source, curator_source)
   result.add checkOptions(koch_source)

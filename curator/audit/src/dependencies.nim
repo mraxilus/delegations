@@ -143,7 +143,7 @@ proc checkCheckouts*(root, dir: string): seq[Finding] =
       result.add finding(lock_path, 0, "Checkout absent after restore; got `" & checkout & "`.")
 
 
-proc restoreDependencies*(root: string, target: Target): seq[Finding] =
+proc restoreDependencies(root: string, target: Target): seq[Finding] =
   ## Restore project's checkouts from lock through Atlas, judged by presence then `changed`.
   ##   Atlas comes from same toolchain as compiler, since it records compiler it ran under
   ##   and warns of environment mismatch when lock was written by another.

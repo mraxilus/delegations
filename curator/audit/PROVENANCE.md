@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | fc1fcfd7a2dddcb6 |
+| Rules   | c73f63e83992089d |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 | Pruned  | ab8fb063b62bb03ba9fd7f2964a1866b3862909b |
 
@@ -58,9 +58,9 @@ where one fills while the other is read.
 - Cost: no warning of git is reported anywhere. Git writes it for a person to read, and this
   check reads no person's stream.
 - Cost: git must be on `PATH`.
-- Verified by `ttree.nim` on a throwaway repository: an ignored `bin/` is absent, an untracked
-  file is present, and a rename shows as its destination alone. On one built with two merge
-  bases, no field holds the warning and every field is a path. A second case holds that the
+- Verified by `suites/ttree.nim` on a throwaway repository: an ignored `bin/` is absent, an
+  untracked file is present, and a rename shows as its destination alone. On one built with two
+  merge bases, no field holds the warning and every field is a path. A second case holds that the
   `IOError` still carries git's own reason.
 
 ## File kinds
@@ -78,8 +78,11 @@ Html and Svg carry hand-written pages, which the layout check confines to `pages
   exempt, and any tab is a finding.
 - Rejected: content sniffing, which lets an unknown kind in silently.
 - Cost: matching is by basename or extension only, so `nimble.paths` or `.mk` is unread.
-- Verified by `tkinds.nim` over every match and a set of unregistered names. `tlayout.nim`
-  yields one finding on `data.csv`, which names `curator/audit/src/kinds.nim`.
+- Verified by `suites/tkinds.nim`, which reads the header table from the source and holds each
+  row to the registry. Every match classifies at the root and in a folder, and the Syntax,
+  Prose and Gate cells equal the rule of the kind. It also covers the last extension of
+  `koch.nim.cfg`, and a set of unregistered names. `tlayout.nim` yields one finding on
+  `data.csv`, which names `curator/audit/src/kinds.nim`.
 
 **A gated kind argues for itself in its header, and the gate is checked rather than trusted.**
 `Cpp` and `C` join TypeScript as languages admitted only where Nim cannot serve. `.hpp` reads
@@ -96,7 +99,7 @@ so an include guard above the block, and a blank line inside it, both keep the r
   that it is true. A curator still weighs the claim.
 - Cost: the one-line gap can reach a comment on the first line of code. That is deliberate,
   because the alternative is a finding on a correct header.
-- Verified by `tjustification.nim` and `tkinds.nim`. Verified by hand over real files,
+- Verified by `suites/tjustification.nim` and `tkinds.nim`. Verified by hand over real files,
   2026-09-06. An unjustified `shim.cpp` and an unjustified `glue.ts` each yield one finding at
   line 1. Each falls silent once the phrase is added.
 
@@ -118,7 +121,7 @@ Whitespace runs collapse, so texts compare stably.
 - Cost, assumed: a TypeScript regex literal that holds `//` opens a false comment.
 - Cost: the markup scanner reads `<!-- -->` only, so comments inside `<script>` and `<style>`
   stay unread. Markup inside a Nim string has the same blind spot.
-- Verified by `tcomments.nim` across the syntaxes, including the testament header string and
+- Verified by `suites/tcomments.nim` across the syntaxes, including the testament header string and
   markup comments that span lines.
 
 ## Prose
@@ -128,7 +131,7 @@ whitespace-split, punctuation-stripped and lowercased, after the backtick spans 
 
 - Cost: the label `A`, as in "Appendix A", is flagged. So a label goes in backticks, as
   `prose.nim` writes its own example.
-- Verified by `tprose.nim`: 300 seeded random telegraphic comments pass, and each one with an
+- Verified by `suites/tprose.nim`: 300 seeded random telegraphic comments pass, and each one with an
   inserted article fails. The citation `2.2a`, a URL and an underscored name pass. The corpus
   is seeded with `randomize(0)`, so the 300 are the same 300 on every run. It is the only
   sampled corpus in this project, and that seed is why its verdict does not vary
@@ -174,10 +177,10 @@ word, and it is longer than 25 words.
 - Cost: a sentence ends at a stop after a letter, a digit or a closing bracket. A stop after a
   degree sign or a superscript does not end one. Two sentences then read as one, and the finding
   that follows is a long sentence rather than a missed one.
-- Verified by `tenglish.nim`: each finding kind, the sentence-end cases and the block
+- Verified by `suites/tenglish.nim`: each finding kind, the sentence-end cases and the block
   split. It also covers the collapsed span, the skipped quotation, and a path outside the set.
   That path is `gaps.md`, which a generator writes and no delegate may rewrite by hand.
-- Verified by `tenglish.nim`: the derived arms. A project and a domain that do not exist yet
+- Verified by `suites/tenglish.nim`: the derived arms. A project and a domain that do not exist yet
   are governed. A domain outside the registry is not, and neither is a README below a project
   directory. That last arm is the one that would redden `dance_ontology`, so it has its own
   assertion. One more assertion holds that a derived path is read, and not merely listed.
@@ -200,8 +203,8 @@ banner.
 - Cost: a long identifier gets the same exemption that a URL does, because neither one breaks
   at whitespace. `LICENSE.md` is width-exempt, so third-party text stays verbatim.
 - Assumed, and not checked: a two-space indent.
-- Verified by `tform.nim`: 100 runes pass, and 101 breakable runes fail. A 202-character fonts
-  link passes, while 207 of prose and 400 of minified markup do not. A tab in Nim and in cfg
+- Verified by `suites/tform.nim`: 100 runes pass, and 101 breakable runes fail. A 202-character
+  fonts link passes, while 207 of prose and 400 of minified markup do not. A tab in Nim and in cfg
   fails, and every ending case is covered.
 - Verified by hand on real pages, 2026-09-05: hand-written markup and a fonts link whose
   longest token is 179 runes audit clean. A generated drawing of 1,407 characters does not.
@@ -235,7 +238,7 @@ are findings, and are never skipped.
   Rejected: an inference of mock-up from generated, which makes the distinction an accident of
   formatting.
 - Cost: empty directories are invisible to git, so `tests/` must hold a file.
-- Verified by `tlayout.nim` over a fixture tree that the tests build. The project list is
+- Verified by `suites/tlayout.nim` over a fixture tree that the tests build. The project list is
   pinned, and the unknown-domain case asserts both the finding and the unchanged list.
   `taudit.nim` proves that fixture clean under every static check.
 
@@ -250,8 +253,8 @@ citation that points at nothing.
   ``atlas changed``; the `.nim` ending is the guard.
 - Cost, the honest limit: a delegate can cite a real test beside a claim that it does not
   make. That gap closes by reading.
-- Verified by `tprovenance.nim`. A citation renamed to an absent file, to a source file, or to
-  the test of another project reports one finding. `koch tree` resolves every citation on each
+- Verified by `suites/tprovenance.nim`. A citation renamed to an absent file, to a source file, or
+  to the test of another project reports one finding. `koch tree` resolves every citation on each
   run.
 
 ## Provenance stamp
@@ -264,8 +267,8 @@ touches no project.
   `checksums` package, a nimble install in CI for one digest. Rejected: `std/hashes`, unstable
   across Nim versions.
 - Cost: it is a change detector and not a signature, so a collision needs an adversary.
-- Verified by `tprovenance.nim` for determinism, one-byte, order and boundary sensitivity, and
-  CRLF invariance. Verified by `taudit.nim`: one byte in any rules document goes stale in
+- Verified by `suites/tprovenance.nim` for determinism, one-byte, order and boundary sensitivity,
+  and CRLF invariance. Verified by `suites/taudit.nim`: one byte in any rules document goes stale in
   every project, and one byte in CURATOR.md in none.
 
 **`koch stamp --write` sets the `Rules` row of every provenance file itself.** `withRulesRow`
@@ -276,7 +279,7 @@ C10).
 
 - Rejected: a write of the whole header back, which would reformat a table that its writer
   padded.
-- Verified by `tprovenance.nim`. The new stamp lands, and the padding and every other byte
+- Verified by `suites/tprovenance.nim`. The new stamp lands, and the padding and every other byte
   stay. A second write is a no-op, and an absent row leaves the source untouched. Only the
   first `Rules` row moves.
 
@@ -316,7 +319,8 @@ the static job fetches every commit.
   the row says where.
 - Cost: line forms, and never a Markdown parse. A heading inside an HTML comment counts, and
   front matter is not skipped. No governed provenance file carries either.
-- Verified by `trecord.nim`, each form by line. `fencedOut` is verified by `tmarkdown.nim`.
+- Verified by `suites/trecord.nim`, each form by line. `fencedOut` is verified by
+  `suites/tmarkdown.nim`.
 
 ## Glossary
 
@@ -324,7 +328,7 @@ the static job fetches every commit.
 content is the contributor's and the Architect's, and a term enters only when the Architect
 selects it. The check cannot know what was agreed, so agreement holds by reading. It runs on
 the top-level `GLOSSARY.md` too. Zero terms pass, because the format creates entries lazily.
-Verified by `tglossary.nim`.
+Verified by `suites/tglossary.nim`.
 
 **The people words that the glossary avoids are held out of the root Markdown files and the
 Markdown under `curator/`.** `PEOPLE_WORDS` is the avoid list under Architect, Delegate,
@@ -334,7 +338,7 @@ the words it avoids.
 
 - Rejected: the full avoid list, which holds build, rules and version, plain words everywhere.
 - `identity` is left out, as the word of algebra in `curator/probe`.
-- Contributor prose is not read. Verified by `tglossary.nim`.
+- Contributor prose is not read. Verified by `suites/tglossary.nim`.
 
 ## Prompts
 
@@ -345,7 +349,7 @@ belongs in this file or in the log, and only the rule belongs in a prompt. A pro
 not. Code spans and fences pass, which keeps the carried-list example legal.
 
 - Cost: `II.9`, `duty 10` and a bare year pass by shape, so only a whole date is diary here.
-- Verified by `tprompts.nim`.
+- Verified by `suites/tprompts.nim`.
 
 ## Copies
 
@@ -356,7 +360,7 @@ Two copies of one rule drift.
 
 - Cost: a paragraph reworded by one word passes. The check catches a copy, and never a
   paraphrase.
-- Verified by `tduplicates.nim`.
+- Verified by `suites/tduplicates.nim`.
 
 ## Faces
 
@@ -376,7 +380,7 @@ ligatures live.
 - Cost: declarations are read and expressions are not. So a stack assembled through `&` is
   unseen, and so is a heading styled through a class alone. The desktop atlas is outside the
   ligature rule by X.8 itself, because Dear ImGui shapes no text, and it declares no CSS.
-- Verified by `tfaces.nim`, each rule by line, and the label beside a heading among them.
+- Verified by `suites/tfaces.nim`, each rule by line, and the label beside a heading among them.
 
 ## Branch scope
 
@@ -389,8 +393,8 @@ passes, because a push to it is a merge that the Architect approved.
   one mechanism reads it.
 - Cost: fixed segment counts reject a nested branch name. The Architect may merge red
   deliberately, so this is a guard and not a gate.
-- Verified by `tscope.nim` over each branch form and rejected forms. `tdomains.nim` covers the
-  rejected forms of the branch grammar.
+- Verified by `suites/tscope.nim` over each branch form and rejected forms. `tdomains.nim` covers
+  the rejected forms of the branch grammar.
 
 **The reach of a curator into a contributor project stops at its records.** Under
 `contributor/`, the only writable paths on a curator branch are `README.md`, `PROVENANCE.md`
@@ -401,8 +405,8 @@ Without this, duty 11 holds by reading alone, on the role that runs most often.
   project false, for example where it names a pin, and that set blocks the fix.
 - Cost: the README stays writable. So restraint about a rewrite of a project's prose is duty
   11's to govern by reading, and never the check's.
-- Verified by `tscope.nim`: a curator branch that writes contributor code is a finding, and one
-  that writes the records of that project is not.
+- Verified by `suites/tscope.nim`: a curator branch that writes contributor code is a finding, and
+  one that writes the records of that project is not.
 
 **A curator may move the files of a contributor, and never edit them.** `tree.movedPaths`
 reads `--name-status --find-renames=100%`, and `checkScope` exempts exactly those paths on a
@@ -412,6 +416,10 @@ files is the consequence, and never authorship.
 
 Cost: a curator may reorder the files of a contributor without asking. Content cannot change
 and the move is visible in review, so the cost is disorder rather than damage.
+
+- Verified by `suites/tscope.nim`: a moved path is exempt on the curator root alone, and a move
+  never widens a project branch. `suites/ttree.nim` holds on a throwaway repository that only
+  an exact rename is a move.
 
 **Domain folders are ASCII slugs, and the accent lives in the display name.** The folder is
 `sincopa` and the name is `síncopa`, the split that `comma_games` and `comma, games` use too.
@@ -446,19 +454,18 @@ same merge ref is what holds a stale stamp there.
 - Cost, the honest limit: this reads at pull request time, and never at merge time. So a
   branch green at ten can merge at five past, after another one lands. Only a merge queue
   closes that.
-- Verified by `tbase.nim`. Verified by hand with `nim r koch base`, recorded 2026-09-14. A
+- Verified by `suites/tbase.nim`. Verified by hand with `nim r koch base`, recorded 2026-09-14. A
   branch a week behind `main` reports the finding at its head, which names `CONTRIBUTOR.md`,
   check sources and `koch.nim`. At a synthetic merge of that head into `main`, with `main` as
   the first parent, it reports nothing.
 
 ## Commits
 
-**`type(scope)!?: summary`, with the commit types as data. On a project branch the scope must
-equal the project.** The curator root accepts any valid scope, because a rules change
-propagates under the scope of each project. A branch outside the grammar still gets format
-checking. Cost: the imperative mood is unverified. Verified by `tcommits.nim`: every type with
-several scopes, the breaking marker, rejected forms, and scope enforcement on both project
-branch forms.
+**`type(scope)!?: summary`, with the commit types as data. On a project branch the scope must equal
+the project.** The curator root accepts any valid scope, because a rules change propagates under the
+scope of each project. A branch outside the grammar still gets format checking. Cost: the imperative
+mood is unverified. Verified by `suites/tcommits.nim`: every type with several scopes, the breaking
+marker, rejected forms, and scope enforcement on both project branch forms.
 
 **The regression rule is enforced, and not hoped for.** `commits` reads the subjects newest
 first. It demands that the commit immediately before every `fix` is a `test` of the same
@@ -473,7 +480,7 @@ scope, one test to one fix, with nothing between them. So the priority of the Ar
   is honest, because a change that needs no new test is not a `fix`.
 - Cost: a `revert` or a `docs` between the pair breaks it, and so does a second fix on one
   test. Three tests and then one fix pass, because only the commit before is read.
-- Verified by `tcommits.nim`. The pair passes, and tests before the test pass. One finding
+- Verified by `suites/tcommits.nim`. The pair passes, and tests before the test pass. One finding
   comes from a fix alone, from a test after its fix, and from the test of another scope. One
   comes from a second fix on one test, and from a commit or a revert between them.
 
@@ -524,7 +531,7 @@ may open with a whole paragraph, and the finding is read in a log.
   joins when work hands across, and labels are never removed.
 - Cost: `ci` cannot run this verb, because it has no pull request to read. It is the one check
   that a delegate meets on the runner rather than before a push.
-- Verified by `trole.nim` on the line reader, the cut, and each arm of the grammar.
+- Verified by `suites/trole.nim` on the line reader, the cut, and each arm of the grammar.
 - Verified by hand with `nim r koch role`, recorded 2026-09-14. Pull requests replayed as they
   stood before they were mended, with neither line nor label, report both findings each. Pull
   requests of each role, as they stand, report none.
@@ -565,7 +572,9 @@ a copy from two different faces.
   checkout, because the audit reads untracked files.
 - The rows hold `woff2` faces for pages, and TrueType or OpenType faces for the desktop atlas,
   which `@fontsource` does not ship. Where two projects pin one file, they pin one digest.
-- Verified by `tassets.nim`. Verified by hand with `nim r koch assets`, recorded 2026-09-10,
+- One digest reader serves both fetches. `fetchAsset` reads the bytes that it fetched through
+  `compilers.digestOf`, so the parse that `tcompilers.nim` tests also guards the store.
+- Verified by `suites/tassets.nim`. Verified by hand with `nim r koch assets`, recorded 2026-09-10,
   machine unrecorded. A cold store fills with three faces in **1.0 s**, two of them shared by
   two projects. The same call warm takes **0.117 s**, and fetches nothing.
 - Verified by a break of it, on the same date. A face that nobody declares is a finding, which
@@ -716,7 +725,7 @@ derived-view rule that `layout.nim` applies to the domain table.
 
 Every workflow that installs a compiler is held to it, and not `check.yml` alone, because a
 second copy drifts. `check.yml` must state it, and a commit pin is one finding, however many
-workflows state a version. Verified by `ttoolchain.nim` over both paths.
+workflows state a version. Verified by `suites/ttoolchain.nim` over both paths.
 
 **A pin moves on evidence, and the evidence is a run rather than a release note.** Nim assigns
 no CVE, so no release in the 2.2 series carries one. So the reason to move is what the release
@@ -779,7 +788,7 @@ hold here.
 - Honest limit of that test: the exit-code check of `sha256sum` is belt-and-braces, because
   the parse already rejects the error text, so no test distinguishes it. It is kept for saying
   what it means.
-- Verified by `ttoolchain.nim`, `tcompilers.nim` and `tprojects.nim`. Verified by hand,
+- Verified by `suites/ttoolchain.nim`, `tcompilers.nim` and `tprojects.nim`. Verified by hand,
   2026-09-06: `curator/probe`, pinned to a release that nothing local served, fetched the
   tarball and ran. One command over projects on two pins gave **0 findings**, and its log held
   no Atlas mismatch warning.
@@ -801,7 +810,7 @@ runs `atlas --noexec rep` in every project that holds a lock. It judges success 
   project skips it. `atlas rep` exits 1 after a restore, because its submodule step fails, and
   that is why `atlas changed` gives the verdict. A dependency used by two projects is cloned
   twice.
-- Verified by `tdependencies.nim` for the parser and the lock-less skip. The Atlas command
+- Verified by `suites/tdependencies.nim` for the parser and the lock-less skip. The Atlas command
   flow was verified by hand on a throwaway project, 2026-09-05. Assumed, and not verified here:
   the same flow on the runner.
 
@@ -809,7 +818,7 @@ runs `atlas --noexec rep` in every project that holds a lock. It judges success 
 `repo missing!`, so a restore that fetches nothing reports success. `checkCheckouts` reads
 the `dir` of every lock item, resolves `$deps`, and demands that the directory exists before
 `atlas changed` is consulted. Measured on Atlas 0.9.0 by a delete of `deps/` and a re-run.
-Cost: the lock is parsed twice for each restore. Verified by `tdependencies.nim` over a
+Cost: the lock is parsed twice for each restore. Verified by `suites/tdependencies.nim` over a
 project with and without the directory, and over a lock that is not JSON.
 
 **The lock silently reverts an edit to the nimble file.** `atlas.lock` stores a whole copy of
@@ -830,7 +839,7 @@ against the committed file, and reports the first differing line.
   is compared against nothing.
 - `auditTree` is a `proc`, because it composes a check that reads JSON, which Nim marks
   effectful. Every rule it composes stays pure, and `layout.nim` still reads paths only.
-- Verified by `tdependencies.nim`. Verified by hand against the real lock, recorded
+- Verified by `suites/tdependencies.nim`. Verified by hand against the real lock, recorded
   2026-09-06: a stored copy that holds `nim >= 2.2.6` names `rga_visualiser.nimble:13`, and
   the restored lock is silent.
 
@@ -846,9 +855,9 @@ window. So every run compiles what changed and nothing else (CURATOR.md duty 11)
 a contributor is the contributor's to run. A path inside no project selects nothing by itself.
 So rules propagation compiles nothing, while every stamp is still checked.
 
-- Rejected: a scope on the static pass. The static pass costs seconds, against tens of seconds
-  for the suites of one project (Figures). A scope buys nothing measurable there, and costs a
-  second code path and the whole-tree layout and stamp guarantees.
+- Rejected: a scope on the static pass. The static pass costs about a second, against seconds to
+  minutes for the suites of one project (Figures). A scope buys nothing measurable there, and costs
+  a second code path and the whole-tree layout and stamp guarantees.
 - Cost: a change to the checker can leave an unchanged project red until it next changes, and
   nothing compiles it sooner. To run that suite is the work of that project, which is the
   point of the rule.
@@ -858,9 +867,10 @@ So rules propagation compiles nothing, while every stamp is still checked.
 - Rejected: that comment detector, because it errs toward compiling too little. A wrong
   "comments only" reports green for work it never did, which is the failure this repository
   refuses everywhere else.
-- Verified by `tplan.nim`: a README-only change plans `[]`, and a one-line source change plans
-  that project alone. A change to `koch.nim` plans `curator/audit` alone, and `--sweep` plans
-  what merged in its window.
+- Verified by `suites/tplan.nim`: a README-only change plans `[]`, and a one-line source change
+  plans that project alone. A change to `koch.nim` plans `curator/audit` alone. `--sweep` plans
+  every project in a repository younger than its window, and nothing over a window without a
+  commit.
 
 **The weekly run fires, and it promises a day rather than an hour.** Verified on the runner,
 2026-09-07: every project planned, each on its own pin, and its jobs started within one second.
@@ -880,8 +890,9 @@ to compile a project that nothing touched is runner time for no information.
 - Cost: the window is named twice, as the cron and as `SWEEP_DAYS`. Nothing checks that they
   agree, so CURATOR.md duty 9 says to change them together.
 - A repository younger than the window has every commit inside it. So the skip is verified by
-  suite rather than by a live Monday. `tplan.nim` drives the decision over code, record-only
-  and empty changes, and `ttree.nim` drives `revBefore` at both ends.
+  suite rather than by a live Monday. `tplan.nim` drives `sweepFor` on a throwaway repository,
+  and drives the decision of `jobs` over code, record-only and empty changes. `ttree.nim` drives
+  `revBefore` at both ends.
 
 ## Project runner
 
@@ -893,9 +904,14 @@ exit code.
 
 Each project carries a `Target`: its directory, and the `bin` of the toolchain that serves its
 pin. Tools come from that `bin` rather than from `PATH`, because two projects on two pins
-would otherwise share one compiler in silence. Cost: it is serial, and a project in another
-language needs its own runner arm. Verified by `tprojects.nim` with a passing and a failing
-fixture, driven through real testament.
+would otherwise share one compiler in silence. Verified by `suites/tprojects.nim` with a
+passing and a failing fixture, driven through real testament.
+
+- Cost: projects and their stubs run one at a time. A project in another language needs its
+  own runner arm.
+- Rejected: one testament for each stub, four at a time. It took `dance_ontology` without
+  `trigid` from 52 s to 17 s, measured 2026-09-24 on the Figures machine. But concurrent runs
+  share `testresults/` and interleave their output, and the slowest stub bounds each project.
 
 ## System packages
 
@@ -927,25 +943,50 @@ is the only statement and nothing can drift from it.
   repository still answering its own question in prose.
 - Cost: the packages of koch itself are unconditional, so a machine that needs none of them
   still installs them.
-- Verified by `tplan.nim`: koch declares what it needs, as the rule asks of every project.
+- Verified by `suites/tplan.nim`: koch declares what it needs, as the rule asks of every project.
 
 ## Tests
 
 **Testament over `tests/t*.nim`, with each stub carrying the header from STYLE.md §6, and
 without `-r`.** `-r` would run every test twice, and `--outdir` breaks the search of testament
 for the binary. So binaries sit beside sources, and git ignores them everywhere
-(`**/tests/t*`). Suites are named after an article of the constitution where one fits, else
-after the module. Every assertion carries a citation. Fixtures are built by `fixtures.nim`: a
-smallest clean tree with a project under each root, and throwaway git repositories.
+(`**/tests/t*`).
 
-`git ls-files '*/tests/t*.nim'` counts the suites. No count is written here, because a
-written count goes stale. The suites of `dance_ontology` dominate every whole-tree run.
-Verified by hand, 2026-09-08: `nim r koch tests` over every project passes with 0 findings.
-Each project ran on the compiler that it pins, with one pin alone on `PATH`.
+Suites are named after an article of the constitution where one fits, else after the module.
+The suite or test name cites the clause that it replicates. A trailing comment labels the case
+that one assertion separates. `suites/fixtures.nim` builds the fixtures: a smallest clean tree
+with a project under each root, and throwaway git repositories. It also reads the table in the
+header of a module.
 
-**Trap: testament keys its cache on the test file.** A change to a source module alone then
-reuses the binary linked against the module before it. `koch ci` then passes on a tree that a
-fresh checkout fails. Remove `nimcache` where a check changed and its suite did not.
+**The suites of this project compile as one program.** Each suite is a module under
+`tests/suites/`, and `tests/tsuites.nim` is the one stub. It imports every suite, so the
+compiler reads the standard library and `std/unittest` once, and not once for each suite. The
+import list is read from the directory at compile time, so a suite that is added also runs.
+The stub leaves out `-d:nimUnittestAbortOnError:on`, so every failure shows in one run.
+
+- Rejected: one stub for each suite. Almost all of their time was compile time, because each
+  suite compiled the same standard library again. The run of all binaries took 2.1 s (Figures).
+- Rejected: one testament for each suite, four at a time. It took twice as long as the joined
+  program on four cores, and its output interleaves.
+- Rejected: the `joinable` megatest of testament. `pattern` never reads that key, and
+  `testament all` reports "output different" for passing `std/unittest` suites.
+- Rejected: `-d:nimBetterRun`, which skips a compile whose inputs did not change. The import
+  list read from the directory is not such an input, so a new suite would not run.
+- Cost: a compile error in one suite, or an exception outside a `test`, stops every suite.
+- Verified by hand, 2026-09-24: two failures put in two suites both show, with file and line,
+  and the other suites still run. The exit is 1.
+
+`git ls-files '*/tests/t*.nim' '*/tests/suites/t*.nim'` counts the suites. No count is written
+here, because a written count goes stale. The suites of `dance_ontology` dominate every
+whole-tree run. Verified by hand, 2026-09-08: `nim r koch tests` over every project passes with
+0 findings. Each project ran on the compiler that it pins, with one pin alone on `PATH`.
+
+**Trap: `koch ci` selects suites from committed paths.** `changedPaths` reads
+`git diff <base>...HEAD`, so a change that is not committed selects no project. `koch ci` then
+passes on a tree that a fresh checkout fails. Commit before `koch ci`, or run
+`nim r koch tests <project>`, which runs that project whatever changed. Testament itself
+rebuilds a suite whose source module changed, with a warm `nimcache`. Verified by hand,
+2026-09-24: a change to `src/findings.nim` alone is compiled into the next run.
 
 ## Type checking
 
@@ -1077,7 +1118,7 @@ because to take the default of the repository is somebody's decision rather than
 the marks are text, so a step that reaches the same endpoint by another spelling goes unseen.
 That is a floor rather than a ceiling, and the module says so.
 
-- Verified by `tworkflows.nim`. Verified by a break of it: delete `actions: read` from
+- Verified by `suites/tworkflows.nim`. Verified by a break of it: delete `actions: read` from
   `watch.yml`, and `koch tree` reports it by name and by what was granted. Restore it, and 0
   findings return.
 - Verified on the runner, 2026-09-09, against real red runs rather than a manufactured one.
@@ -1159,10 +1200,14 @@ Traps of the merge process:
 nothing else checks it. `checker.nim` makes each of these a rule, so the next case is caught by
 the runner rather than by a curator who reads.
 
-- **Dead export**: a routine exported from a check module and named nowhere in the checker.
-  Mentions are counted as identifier runs rather than as whitespace words, because
-  `tree.auditTree` is a call exactly as `auditTree(tree)` is.
-- **Missing suite**: a check module without `tests/t<module>.nim`.
+- **Dead export**: a routine exported from a check module that no other module and no suite
+  names. STYLE.md §5 puts `*` on an intentional export alone, and a routine that only its own
+  module calls is not one. A suite counts as a caller, because the pure rules here are covered
+  by calls from their suites. Mentions are counted as identifier runs rather than as
+  whitespace words, because `tree.auditTree` is a call exactly as `auditTree(tree)` is.
+- Each source is counted once, and every export reads those counts. A scan of every source for
+  each export took half of the static pass (Figures).
+- **Missing suite**: a check module without `tests/suites/t<module>.nim`.
 - **Verb drift**: one set named three times. The names are the verbs that koch dispatches, the
   verbs that its usage prints, and the rows of the checks table in CURATOR.md.
 - Verbs are read from the command dispatch alone, bounded between `case options.command` and
@@ -1183,30 +1228,41 @@ the runner rather than by a curator who reads.
   hides it. That is paid to keep the rule free of false findings. An exported operator is
   skipped, because it is spelled at call sites rather than named. The other columns of the
   table stay prose that no check reads.
-- Verified by `tchecker.nim`, and driven. A routine added and never called is one finding that
-  names it. A row deleted from the checks table is one finding that names the missing verb. A
-  verb dropped from the usage line is one finding that names what usage prints. An option
-  parsed and not printed, or printed and not parsed, is one finding on `koch.nim`.
+- Verified by `suites/tchecker.nim`, and driven. A routine added and never called is one finding
+  that names it, and so is one that only its own module calls. One that a suite alone names is
+  not a finding. A row deleted from the checks table is one finding that names the missing verb. A
+  verb dropped from the usage line is one finding that names what usage prints. An option parsed and
+  not printed, or printed and not parsed, is one finding on `koch.nim`.
 
 **No copy of the module graph is written.** The `import` line of each module is the graph, and
 a hand-written copy drifts from it. So `audit.nim` names no module order.
 
 ## Figures
 
-**The static pass costs seconds.** `nim r koch tree`, warm: 2.76 s, 2.76 s and 2.66 s over
-three consecutive runs. The machine is a four-core Intel Xeon 2.80 GHz container, on Nim 2.2.12,
-2026-09-24, timed with `date +%s.%N`. Warm means that koch was already compiled.
+The machine for these figures is a four-core Intel Xeon 2.10 GHz container, on Nim 2.2.12,
+2026-09-24, timed with `date +%s.%N`. Warm means that koch and the test binaries were already
+compiled. Each "before" figure is `origin/main` at `8a05673`, on the same machine and date.
+
+**The static pass costs about a second.** `nim r koch tree`, warm: 1.11 s, 1.15 s and 0.98 s
+over three consecutive runs. Before, it took 1.97 s, 1.96 s and 1.82 s. Inside koch, the old
+dead-export rule took 1.1 s of a 2.07 s pass, because it scanned every source once for each
+export.
 
 **A branch that changes the checker costs one project, and not every project.** Warm,
-`nim r koch ci` takes 37.7 s, 37.7 s and 37.6 s over three consecutive runs. The machine is a
-four-core Intel Xeon 2.80 GHz container, on Nim 2.2.12, 2026-09-23. Warm means that every test
-binary was already compiled. One run with the test binaries deleted first took 57.0 s.
-`koch plan` holds one row on such a branch, so the figure covers the suites of `curator/audit`
-and the static pass.
+`nim r koch ci` takes 5.07 s, 5.07 s and 4.99 s over three consecutive runs. With the suite
+build of `curator/audit` removed first, it took 8.1 s. Before, with one comment added to a check
+module, it took 32.9 s and 32.6 s warm, and 49.2 s cold. `koch plan` holds one row on such a
+branch, so the figure covers the suites of `curator/audit` and the static pass.
+
+**The suites of `curator/audit` cost their compile, and almost nothing to run.** Each suite
+compiled alone in 0.8 s to 1.2 s warm, and the run of all 30 binaries took 2.1 s. Joined,
+`nim r koch tests curator/audit` takes 3.8 s to 4.2 s warm, against 31.9 s before.
 
 These two are the pair for scoping. A change to records alone costs the static pass, and a
-change to one project adds the suites of that project. Unmeasured on the current pin:
-`nim r koch tests` over every project, which is what an unscoped run pays.
+change to one project adds the suites of that project. An unscoped run pays every project.
+On the same machine and date, `nim r koch tests <project>` took 627.5 s for `dance_ontology`
+and 236.6 s for `rga_visualiser`. It took 18.2 s cold for `pga_benchmark`, and 2.8 s for
+`curator/probe`.
 
 **Matrix jobs run in parallel.** Verified on the runner, 2026-09-06: three `project` jobs
 started within one second, and finished at 16 s, 52 s and 121 s. So the phase took 121 s

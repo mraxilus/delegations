@@ -12,7 +12,9 @@
 ##   Testament and Atlas come from same `bin` as compiler, since each Nim ships its own and
 ##     Atlas records compiler it ran under; mixing them reports environment mismatch.
 ##
-##   Cost: projects run serially; parallelism waits until it costs minutes, unmeasured.
+##   Cost: projects and their stubs run serially. One testament per stub, four at once, cut
+##     `dance_ontology` less `trigid` from 52 s to 17 s; not adopted, since concurrent runs
+##     share `testresults/` and interleave output, and slowest stub bounds project anyway.
 ##   Cost: project in other language needs its own runner arm here (none exists yet).
 
 {.experimental: "strictFuncs".}
