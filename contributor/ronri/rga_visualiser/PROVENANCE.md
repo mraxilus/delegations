@@ -971,12 +971,9 @@ floor, `FRACTION_AMBIENT_SHADE` at 0.25, a quarter. The underside then still rea
 its own hue, rather than a hole in the field.
 
 Nothing in the scene carries a light. Shading is presentation that gives a disc its sphere, and
-not a property of any object. It is not a point that shines on the others. The scene format
-carried such a point from version 5 to version 6, and the record kept it as a *sun*.
-
-That was one more thing that the astronomy of the demo had written into a visualiser of an
-algebra. Every point read the same under it but the sun itself, which drew flat. The cost is three
-floats fewer for each point record, and no relighting pass for each edit.
+not a property of any object. Rejected: a point that shines on the others, which format versions 5
+and 6 carried. Every point read the same under it but that point itself, which drew flat. The
+saving is three floats fewer for each point record, and no relighting pass for each edit.
 
 **Furniture** (the ground grid and the world axes) reaches `extent_furniture`, which is
 `FACTOR_CLIP_FAR` orbit distances. It is drawn as **fog about the eye**, and not as a halo about
@@ -2915,8 +2912,7 @@ were asked and none does, which dates the claim rather than proves it.
 
 ## Testing
 
-One file, `tests/suites.nim`, is run from three thin entry points that `koch` runs through
-testament:
+One suite is run from three thin entry points that `koch` runs through testament:
 
 | Entry point | Backend | Capacities | Why |
 |-------------|---------|-----------|-----|
@@ -2933,7 +2929,10 @@ arena, and save and load — guard themselves with `when not defined(js)`.
 
 A case that walks every pair of handles at 10,000 objects runs ten minutes without output, so the
 suite gathers the joiners once instead. The JS entry point declares `targets: "js"` and no command
-of its own. So `koch test` compiles it with the JS backend and runs the result through node.
+of its own. So `koch test` compiles it with the JS backend and runs the result through node. Its
+file, `tests/suites.nim`, imports one module for each suite from `tests/suites/`. Top-level tests
+compile into the init function of their module, so one module made the suite one C function. Cold on
+four cores, `gcc` took 122 s on it, and the split `t4d` compiles in 12.6 s (2026-09-24).
 
 **The suites test rules, and a second layer drives events.** A rule bug earns a suite case, and a
 wiring bug earns a driven check, at the layer that the bug lived at. That is `tools/drive/` for
