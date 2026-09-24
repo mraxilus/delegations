@@ -846,9 +846,9 @@ window. So every run compiles what changed and nothing else (CURATOR.md duty 11)
 a contributor is the contributor's to run. A path inside no project selects nothing by itself.
 So rules propagation compiles nothing, while every stamp is still checked.
 
-- Rejected: a scope on the static pass. The static pass costs seconds, against tens of seconds
-  for the suites of one project (Figures). A scope buys nothing measurable there, and costs a
-  second code path and the whole-tree layout and stamp guarantees.
+- Rejected: a scope on the static pass. The static pass costs about a second, against seconds to
+  minutes for the suites of one project (Figures). A scope buys nothing measurable there, and costs
+  a second code path and the whole-tree layout and stamp guarantees.
 - Cost: a change to the checker can leave an unchanged project red until it next changes, and
   nothing compiles it sooner. To run that suite is the work of that project, which is the
   point of the rule.
@@ -893,9 +893,14 @@ exit code.
 
 Each project carries a `Target`: its directory, and the `bin` of the toolchain that serves its
 pin. Tools come from that `bin` rather than from `PATH`, because two projects on two pins
-would otherwise share one compiler in silence. Cost: it is serial, and a project in another
-language needs its own runner arm. Verified by `suites/tprojects.nim` with a passing and a failing
-fixture, driven through real testament.
+would otherwise share one compiler in silence. Verified by `suites/tprojects.nim` with a
+passing and a failing fixture, driven through real testament.
+
+- Cost: projects and their stubs run one at a time. A project in another language needs its
+  own runner arm.
+- Rejected: one testament for each stub, four at a time. It took `dance_ontology` without
+  `trigid` from 52 s to 17 s, measured 2026-09-24 on the Figures machine. But concurrent runs
+  share `testresults/` and interleave their output, and the slowest stub bounds each project.
 
 ## System packages
 
@@ -935,17 +940,40 @@ is the only statement and nothing can drift from it.
 without `-r`.** `-r` would run every test twice, and `--outdir` breaks the search of testament
 for the binary. So binaries sit beside sources, and git ignores them everywhere
 (`**/tests/t*`). Suites are named after an article of the constitution where one fits, else
-after the module. Every assertion carries a citation. Fixtures are built by `fixtures.nim`: a
-smallest clean tree with a project under each root, and throwaway git repositories.
+after the module. The suite or test name cites the clause that it replicates. A trailing
+comment labels the case that one assertion separates. Fixtures are built by
+`suites/fixtures.nim`: a smallest clean tree with a project under each root, and throwaway git
+repositories.
 
-`git ls-files '*/tests/t*.nim'` counts the suites. No count is written here, because a
-written count goes stale. The suites of `dance_ontology` dominate every whole-tree run.
-Verified by hand, 2026-09-08: `nim r koch tests` over every project passes with 0 findings.
-Each project ran on the compiler that it pins, with one pin alone on `PATH`.
+**The suites of this project compile as one program.** Each suite is a module under
+`tests/suites/`, and `tests/tsuites.nim` is the one stub. It imports every suite, so the
+compiler reads the standard library and `std/unittest` once, and not once for each suite. The
+import list is read from the directory at compile time, so a suite that is added also runs.
+The stub leaves out `-d:nimUnittestAbortOnError:on`, so every failure shows in one run.
 
-**Trap: testament keys its cache on the test file.** A change to a source module alone then
-reuses the binary linked against the module before it. `koch ci` then passes on a tree that a
-fresh checkout fails. Remove `nimcache` where a check changed and its suite did not.
+- Rejected: one stub for each suite. Almost all of their time was compile time: each suite
+  compiled the same standard library again, and the run of all binaries took 2.1 s (Figures).
+- Rejected: one testament for each suite, four at a time. It took twice as long as the joined
+  program on four cores, and its output interleaves.
+- Rejected: the `joinable` megatest of testament. `pattern` never reads that key, and
+  `testament all` reports "output different" for passing `std/unittest` suites.
+- Rejected: `-d:nimBetterRun`, which skips a compile whose inputs did not change. The import
+  list read from the directory is not such an input, so a new suite would not run.
+- Cost: a compile error in one suite, or an exception outside a `test`, stops every suite.
+- Verified by hand, 2026-09-24: two failures put in two suites both show, with file and line,
+  and the other suites still run. The exit is 1.
+
+`git ls-files '*/tests/t*.nim' '*/tests/suites/t*.nim'` counts the suites. No count is written
+here, because a written count goes stale. The suites of `dance_ontology` dominate every
+whole-tree run. Verified by hand, 2026-09-08: `nim r koch tests` over every project passes with
+0 findings. Each project ran on the compiler that it pins, with one pin alone on `PATH`.
+
+**Trap: `koch ci` selects suites from committed paths.** `changedPaths` reads
+`git diff <base>...HEAD`, so a change that is not committed selects no project. `koch ci` then
+passes on a tree that a fresh checkout fails. Commit before `koch ci`, or run
+`nim r koch tests <project>`, which runs that project whatever changed. Testament itself
+rebuilds a suite whose source module changed, with a warm `nimcache`. Verified by hand,
+2026-09-24: a change to `src/findings.nim` alone is compiled into the next run.
 
 ## Type checking
 
@@ -1159,10 +1187,14 @@ Traps of the merge process:
 nothing else checks it. `checker.nim` makes each of these a rule, so the next case is caught by
 the runner rather than by a curator who reads.
 
-- **Dead export**: a routine exported from a check module and named nowhere in the checker.
-  Mentions are counted as identifier runs rather than as whitespace words, because
-  `tree.auditTree` is a call exactly as `auditTree(tree)` is.
-- **Missing suite**: a check module without `tests/t<module>.nim`.
+- **Dead export**: a routine exported from a check module that no other module and no suite
+  names. STYLE.md §5 puts `*` on an intentional export alone, and a routine that only its own
+  module calls is not one. A suite counts as a caller, because the pure rules here are covered
+  by calls from their suites. Mentions are counted as identifier runs rather than as
+  whitespace words, because `tree.auditTree` is a call exactly as `auditTree(tree)` is.
+- Each source is counted once, and every export reads those counts. A scan of every source for
+  each export took half of the static pass (Figures).
+- **Missing suite**: a check module without `tests/suites/t<module>.nim`.
 - **Verb drift**: one set named three times. The names are the verbs that koch dispatches, the
   verbs that its usage prints, and the rows of the checks table in CURATOR.md.
 - Verbs are read from the command dispatch alone, bounded between `case options.command` and
@@ -1184,7 +1216,8 @@ the runner rather than by a curator who reads.
   skipped, because it is spelled at call sites rather than named. The other columns of the
   table stay prose that no check reads.
 - Verified by `suites/tchecker.nim`, and driven. A routine added and never called is one finding
-  that names it. A row deleted from the checks table is one finding that names the missing verb. A
+  that names it, and so is one that only its own module calls. One that a suite alone names is
+  not a finding. A row deleted from the checks table is one finding that names the missing verb. A
   verb dropped from the usage line is one finding that names what usage prints. An option parsed and
   not printed, or printed and not parsed, is one finding on `koch.nim`.
 
