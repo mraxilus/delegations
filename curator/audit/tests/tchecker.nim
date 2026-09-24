@@ -8,6 +8,8 @@ joinable: true
 ##   Each rule here is one curator pass of 2026-09-06 found by reading, so each fixture
 ##   is that fault written down: dead routine, module without suite, verb set drifting.
 ##   Option drift is fourth: usage text leaving out option parser takes, as `--driven` was.
+##   Bootstrap drift is fifth: umbrella's `->` diagram disagreeing with module imports, which
+##     is why diagram was once deleted rather than kept (Article I.5).
 
 import std/[strutils, unittest]
 import ../src/[markdown, checker]
@@ -119,3 +121,51 @@ when isMainModule:
     #   separates verb rows from it.
     check document.section("## Checks reference").tableRows.len == 2
     check document.section("## Absent").len == 0
+
+  test "bootstrap diagram orders every module after each module it imports":
+    let umbrella = "## Umbrella.\n##\n" & BOOTSTRAP_MARK & "\n" &
+      "##   findings -> [kinds, form]\n##   kinds -> form -> audit\n##\n\n" &
+      "import ./[\n  findings, kinds, form,\n]\n"
+    let paths = @[
+      CHECK_DIR & "audit.nim", CHECK_DIR & "findings.nim", CHECK_DIR & "kinds.nim",
+      CHECK_DIR & "form.nim",
+    ]
+    let sources = @[
+      umbrella, "## Findings.\n", "## Kinds.\n", "import ./[findings, kinds]\n",
+    ]
+    check umbrella.localImports == @["findings", "form", "kinds"]  # bracket spans lines
+    check umbrella.bootstrapChains.len == 2  # one chain to line, block ends at bare `##`
+    check checkBootstrap(paths, sources).len == 0  # every import ordered, every module named
+
+    # Module absent from diagram is one finding; its own imports are not reported again.
+    var short = sources
+    short[0] = umbrella.replace("findings -> [kinds, form]", "findings -> kinds")
+      .replace("kinds -> form -> audit", "kinds -> audit")
+    check checkBootstrap(paths, short).len == 1
+    check "form" in checkBootstrap(paths, short)[0].message
+
+    # Name no module carries.
+    var unknown = sources
+    unknown[0] = umbrella.replace("findings -> [kinds, form]", "findings -> [kinds, fonts]")
+    check checkBootstrap(paths, unknown).len == 1
+    check "fonts" in checkBootstrap(paths, unknown)[0].message
+
+    # Import diagram never orders: `form` reads `kinds`, but no chain leads there.
+    var loose = sources
+    loose[0] = umbrella.replace("##   kinds -> form -> audit", "##   [kinds, form] -> audit")
+    check checkBootstrap(paths, loose).len == 1
+    check "kinds" in checkBootstrap(paths, loose)[0].message
+
+    # Cycle orders nothing, so it is one finding naming every module on it.
+    var cyclic = sources
+    cyclic[0] = umbrella.replace("kinds -> form -> audit", "kinds -> form -> audit -> kinds")
+    check checkBootstrap(paths, cyclic).len == 1
+    check "audit, form, kinds" in checkBootstrap(paths, cyclic)[0].message
+
+    # Umbrella without diagram breaks Article I.5 outright.
+    var bare = sources
+    bare[0] = "## Umbrella.\n\nimport ./[findings, kinds, form]\n"
+    check checkBootstrap(paths, bare).len == 1
+
+    # Tree without umbrella, as other suites build, is not this rule's business.
+    check checkBootstrap(paths[1 .. ^1], sources[1 .. ^1]).len == 0
