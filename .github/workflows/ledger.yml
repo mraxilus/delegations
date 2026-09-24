@@ -8,6 +8,9 @@
 #   closing pull request to find, which is how 116 failed; ledger reads no comment and cannot
 #   tell copied label from composed one; and it cannot see pull request green now and about
 #   to move. Each rule is narrowed to what is still only read, never struck.
+#   Fourth read never sat on that list: issue titled as commit. Title is fact GitHub records,
+#   so rule arrived as check rather than as carried line. Pull request title is skipped, since
+#   merge commit takes it as subject and so it takes that shape by rule.
 #
 #   Daily rather than weekly, unlike `check.yml`: pull request ready and red for week is failure
 #   this exists to catch, and week is too long to hold it.
@@ -113,6 +116,16 @@ jobs:
             --jq '.[] | select(.labels | length == 0)
                   | "- Issue #\(.number) carries no label, so no role filter finds it"')"
           [ -z "$unlabelled" ] || found="$found$unlabelled"$'\n'
+
+          # Issue titled as commit. Shape is read rather than type list, since `bug:` is prefix
+          #   too, and case is kept, so sentence opening `Rework the camera:` passes. Label and
+          #   template already say whose issue is and what kind. Double backticks hold title
+          #   whole, since title may carry backtick of its own.
+          commit_titled="$(gh issue list --repo "$REPO" --state open --limit 100 \
+            --json number,title \
+            --jq '.[] | select(.title | test("^[a-z]+(\\([^)]*\\))?!?: "))
+                  | "- Issue #\(.number) is titled as commit: `` \(.title) ``"')"
+          [ -z "$commit_titled" ] || found="$found$commit_titled"$'\n'
           bare_prs="$(gh pr list --repo "$REPO" --state open --limit 100 \
             --json number,body \
             --jq '.[] | select((.body // "")
@@ -136,9 +149,9 @@ jobs:
           #   that rather than assumed it.
           said="Opened by \`ledger\` workflow rather than by delegate, so nothing here has been"
           said="$said read or judged yet. Each line is fact GitHub records, not opinion."
-          note="None of these rules left CONTRIBUTOR.md's carried list when this workflow landed:"
+          note="Role, label, closing and readiness rules stayed on CONTRIBUTOR.md's carried list:"
           note="$note each has half GitHub does not record, and that half is still carried by"
-          note="$note hand. Lines above are only what runner can see."
+          note="$note hand. Title rule never sat there. Lines above are only what runner can see."
           next="Close this once every line is answered. Later run comments here rather than"
           next="$next opening second issue."
           # Trailing newline trimmed off list, so paragraph after it is one blank line away
