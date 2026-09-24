@@ -29,7 +29,7 @@ const
     ## stopping before anything needing browser. Named here and in CONTRIBUTOR.md.
   DRIVEN_VERB* = "drive"
     ## Verb building project's page and driving it through real events. Project gains driven
-    ## checks by carrying this verb and nothing else (`plan.nim`, `drivenDirs`).
+    ## checks by carrying this verb and nothing else (`plan.nim`, `verbDirs`).
   SYSTEM_VERB* = "system"
     ## Verb printing system packages project needs, one bare name per line, for caller to
     ## install. Named here and in CONTRIBUTOR.md, "System dependencies".

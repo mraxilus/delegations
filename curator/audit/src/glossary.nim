@@ -2,7 +2,7 @@
 ##   Shape: `# <Name>` heading, description, `## Language` heading, then entries of form
 ##     `**Term**:` line, definition line(s), optional `_Avoid_:` line.
 ##   Check demands heading, `## Language`, and definition after every term; it never judges
-##     content, which is contributor's and owner's work.
+##     content, which is contributor's and Architect's work.
 ##
 ##   Cost: zero terms pass; format creates entries lazily as terms resolve.
 ##

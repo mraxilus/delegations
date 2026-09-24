@@ -55,7 +55,7 @@ const
     ## workflow rather than reading whole file.
   DRIVER_CASE* = "case paramStr(1)"
     ## Line opening project driver's own dispatch. Same shape one level down, and koch reads
-    ## it to learn which verbs that project carries (`plan.nim`, `drivenDirs`).
+    ## it to learn which verbs that project carries (`plan.nim`, `verbDirs`).
   CASE_END* = "else:"
     ## Line closing dispatch, after which branches belong to something else.
   TABLE_HEADING* = "## Checks reference"
@@ -147,7 +147,7 @@ func dispatchVerbs*(source: string, opening = COMMAND_CASE): seq[string] =
   ##   Line opening dispatch is given rather than fixed, since koch and project driver hold
   ##   same shape under different case: koch cases over parsed options, project driver over
   ##   its first argument. One parser reads both, so koch learns what verbs project carries
-  ##   by reading it (`plan.nim`, `drivenDirs`).
+  ##   by reading it (`plan.nim`, `verbDirs`).
   var is_inside = false
   for line in source.splitLines:
     let s = line.strip
