@@ -428,12 +428,11 @@ colour of its own, slugs are unique, and stale pictures are removed.
 
 ## Design workbench
 
-**Rules are data, and the pages are held to them.** The forty rules as given live in
-`design/rules.nim`, in the words they arrived in, and are mirrored entry for entry in
-`design/README.md`. `checks.nim` asserts what each page claims, between the build of its parts and
-the write. The build refuses to write a page whose claims fail. Rejected: rules that are implemented
-and not asserted, which quietly stop being true. That happened here more than once, and is recorded
-beside the rules.
+**Rules are data, and the pages are held to them.** The forty-one rules as given live in
+`design/rules.nim`, in the words they arrived in, and `design/README.md` quotes each one.
+`checks.nim` asserts what each page claims, between the build of its parts and the write. The build
+refuses to write a page whose claims fail. Rejected: rules that are implemented and not asserted,
+which quietly stop being true. The section on the rules of the drawing gives the check of each.
 
 The five generated pages and the hand-drawn whole-cloth page are build products under
 `build/design/`. The whole-cloth markup is the committed file `mockups/wholecloth.html`. Its turns
@@ -492,12 +491,18 @@ bounds while the words were still wrong. One page said that a stage `collides` a
 said that a cell `stands as it stands there`. The bounds are a floor, and nothing but a reading
 catches a word used outside its meaning.
 
-**The READMEs of the project are counted as its pages are, one at a time.** Article VI.8 binds every
-Markdown file, and the `english` check of the repository reads only the three records at the root
-of a project. So `sim/README.md` and `design/README.md` were read by nothing, and 192 findings stood
-in them (issue #239). `design/plain.nim` now reads Markdown as that check does, and `treadme.nim`
-holds each README with the two numbers the pages keep. `WRITTEN` names the files held so far, and
-it grows as each is written again.
+**The READMEs of the project are counted as its pages are.** Article VI.8 binds every Markdown
+file, and the `english` check of the repository reads only the three records at the root of a
+project. So that check reads neither `sim/README.md` nor `design/README.md` (issue #239).
+`design/plain.nim` reads Markdown as that check does, and `treadme.nim` holds both READMEs with the
+two numbers the pages keep. `WRITTEN` names the files held, and a README joins it when it is written
+again.
+
+**The rules that `design/README.md` quotes are held to the ledger, and not to the two numbers.**
+They are the words of the Architect, so a quotation is never rewritten. A `>` quotation carries no
+prose, so neither check counts it. `treadme.nim` holds each one to its entry in `RULES` instead,
+word for word, once each and in order. Verified by `treadme.nim`, which fails on a changed word, a
+missing rule and a missing quotation.
 
 **The reader of Markdown is copied from the check, and not imported.** A suite compiled against the
 check of the curator would break whenever the curator changed that check. Duty 3 forbids the
@@ -612,6 +617,242 @@ identical in content when the page moved into the workbench from the scratch gen
 drew it. Verified by the tally being counted off the built page, rather than kept while it is built.
 What the page says of itself cannot then drift from what it holds. The page prints that tally where
 a reader sees it, which is why no number of it is written here.
+
+## Rules of the drawing
+
+**The workbench is a mock-up, and its checks hold a drawing to a rule as written.**
+`design/rules.nim` holds every rule the drawing was given, in the words it arrived in, and
+`design/README.md` quotes each one. `design/checks.nim` checks each standing rule on every build and
+prints one line for it. A check verifies that a drawing follows a rule as it is written. It never
+verifies that a couple can dance what the drawing shows. The Architect trusts only a reference cell
+that is kept, modelled and confirmed, and `CONFIRMED` in `design/review_page.nim` holds none yet.
+
+**A rule that is implemented and not checked stops being true, so each rule drawn has a check.** A
+check names its rules in a comment in `checks.nim` that opens `RULE`. Nothing in the workbench
+checks rules 36 to 40, and the sim reports in their words. Nothing checks rule 41.
+`tests/treadme.nim` holds every quotation in the README to `RULES` word for word, so the two copies
+cannot drift. The checks do not quote `RULES`, because their printed lines say what was measured.
+
+**A moving picture is checked where it is drawn, and not only at its frames (rule 1).** A browser
+blends two frames point by point. So two frames that disagree about which side of a body a line
+passes are drawn, between them, as a line through that body. `oneWayRound` in `route.nim` chooses
+the way round once for a whole move, and every frame of the move uses it. Verified by `checkRules`,
+which samples each blend part way between two frames.
+
+**A hand leaves its side only when its hold names a level and a way (rules 2 to 6).** A level alone
+does not say which side a hand goes to, so the hold must say lock or wrap as well. A hand settles in
+one of six places, each a bearing off its own dancer's facing (rule 3). `SLOT_OFFSET` in `body.nim`
+sets them 44 degrees apart, and two marks need 34.9 degrees, so no two marks touch.
+
+Both wraps go round the front to the front of the other hand, and both locks go round the back
+(rules 4 to 6). A high lock goes round to the back of its own shoulder, which is a hammerlock (rule
+37). Verified by `checkRules`, which checks where each hold settles and which way its route sets
+off.
+
+**A lock or a wrap needs its line to go round the body (rule 7), except a high lock (rule 41).** The
+arc a drawn line hugs takes one of five values: 0, 51, 90, 141 and 180 degrees. So `WRAP_MIN`, at
+170 degrees, admits 180 alone, and the build refuses to draw a lock or a wrap that falls short.
+Verified by `checkRules`, which checks that `danceable` agrees with the measured arc.
+
+The drawing does not follow rule 41. It holds a high lock to `WRAP_MIN` too. So it refuses a high
+lock with the follow a quarter turned, where the arc is 141 degrees. The workbench is a mock-up, so
+that is left as it is.
+
+**Above takes no lock and no wrap, and its line passes over the body (rule 8).** Above is over the
+head, so from overhead nothing is under it, and `straightReach` draws its line straight. Verified by
+`checkRules` for that half. `FROM_ABOVE` in `rules.nim` holds where above may go next, and nothing
+checks it. Assumed: the "upper wrap" of rule 8 is the high wrap. That is a reading, and not the
+words of the rule.
+
+**A connection is drawn in the colours of its two hands, which meet at its middle (rule 9).** So the
+line says which named hands are joined, where two marks at node size could not. The half of the
+lead is in the deep shade, so the line says which end is the lead's when both hands share a hue.
+Verified by `checkRules`.
+
+**Every level is a height (rule 36).** Low is below the shoulder, high is above it, and above is
+over the head. Which arm lies over which is part of what a wrap is (rule 38), and not part of the
+level. Assumed, and read by the sim rather than by the workbench.
+
+**Rules 10 to 14 were given for a rotation page that is gone.** Where a later rule replaces one of
+them, the README says which. Rule 11 stands on the turn pages, whose positions are frames of the app
+in their four orientations. Rule 14 stands as far as nothing wraps a body at high. Its pigtail is
+gone, because rule 16 removed the limit the pigtail marked. Both are verified by
+`checkSingleTurns`.
+
+**A turn page shows each position it derives, and each move between two of them (rules 15 and
+16).** The counts are checked against the graph of states, and not against a number typed in. A
+single hand held high turns without end either way (rule 16). So how far it has turned is not part
+of its state, and only its orientation is. Verified by `checkSingleTurns`.
+
+**Every turn is drawn above (rules 17 and 21).** Above is the one level rule 8 gives no lock and no
+wrap, and the one whose line runs straight over everything. A moving hand carries the above hatch,
+as a still one does. Verified by `checkSingleTurns` and `checkHandTurns`, which count the hatch on
+every move.
+
+**A turn by the lead is drawn in two stages (rule 18).** The room holds still while the lead turns.
+Then the picture turns back so that the lead faces up. A turn by the follow leaves the lead facing
+up already, so it needs one stage, and that is measured. Verified by `checkSingleTurns`.
+
+**Four manners of turn: each dancer turns on their own axis, or goes round the other (rule 19).** An
+orbit is marked by a dashed ring while it happens, and nothing else is dashed. An orbiter keeps
+their side to the centre (rule 32). So an orbit winds the pair as far as it carries them, and every
+manner steps one position for each half turn. Rule 32 replaces rule 20, under which an orbit wound
+nothing and two manners did not walk the chain at all. Verified by `checkSingleTurns` and
+`checkHandTurns`.
+
+An orbit lands where the axis turn of the other dancer lands. So the four manners walk two rounds of
+positions, and not three. All four are drawn, because which dancer walked is a fact about the path,
+and only the path can show it.
+
+**A settled reach passes clear of every mark it does not join (rule 22).** It is a line pulled taut
+past both chevrons and every hand but its own two, bent round each and straight elsewhere. The gap
+is taken from what is drawn, with half the width of the line added. A moving reach may pass a mark,
+as the rule allows. Verified by `checkSingleTurns`, which checks both halves. The frame page does
+not follow rule 22 yet, because its figures do not pass `clear_marks`.
+
+**A reach is judged on its length and its bends together (rule 23).** The shortest way past the
+marks weaves, and a reader must follow each change of way. So a bend costs `BEND_COST` of length,
+and the taut line held to each side of the chord is tried as well. Each of those bends once, by
+construction. A route that bends once or not at all is left alone. Verified by `checkSingleTurns`,
+which checks that no reach bends three times.
+
+**A route that bends is drawn as one smooth curve (rule 24).** The hull of the marks shows where the
+bulge goes and how far out it must reach. The line over it is one quadratic curve, widened until it
+clears every mark. A curve of that kind turns one way only, so the route still bends once, with no
+corner in it. Verified by `checkSingleTurns`, which checks the corner of the stored line.
+
+**A reach is drawn as curves through its sampled points (rule 35).** A reach is held as `ROUTE_N`
+points, so that it can move from one shape to the next. Drawn with straight pieces, a swan turns
+back inside a few points and shows its facets. So `route.smoothed` makes each sampled point a
+control point and draws through the midpoints between them. The ends stay on their hands, and the
+checks measure the lengths they measured before. Verified by `checkHandTurns`.
+
+**How wide the swan swings is set by eye, and not by a check (rules 33 to 35).** `SWAN_SWING` in
+`route.nim` holds it. Rule 34 took back the width that rule 33 asked for, and rule 35 set it again.
+The check on it is a backstop: the snake goes round something and stays inside its figure.
+
+**The turn pages frame on the place of the lead (rule 25).** `canonicalise` turns the world about an
+`Anchor`, and the turn pages use `Anchor.Lead`. So the lead holds one spot, and an orbit by the
+follow needs no second stage. Only an orbit by the lead has anything to bring back. Verified by
+`checkSingleTurns`. The frame page still frames on the middle of the couple, and does not follow
+rule 25 yet.
+
+**The turn back to the lead is quicker and quieter than the turn itself (rule 26).** A `Walk`
+carries the time each frame is due, and the markup says so in `keyTimes`. So how long a stage lasts
+is a choice of the drawing. The turn back is paced at `RE_FRAME_PACE` of the turn, and
+`ARRIVAL_HOLD` holds a beat where the turn lands. Verified by `checkSingleTurns`, which reads the
+clock in the markup and checks that the turn back takes less than half the turn.
+
+**A hatched mark moves with its hand (rule 33).** An above fill is a pattern fixed to the drawing,
+and not to the shape. So a moving hand is drawn once and carried by a transform, as a body is, and
+the hatch travels with the mark. Verified by `checkSingleTurns` and `checkHandTurns`, which check
+that a hatched mark moves nothing of its own.
+
+**The holds of two hands walk a chain of seven positions, a half turn apart (rules 28, 30 and 31).**
+The seven are swan, diamond, X, the frame, X, diamond and swan. The chain has ends, and is not a
+cycle (rule 30). Hand to hand and the crossed pair walk the same chain, and differ only in the
+facing where the hold is unwound (rule 31). `parts.phaseOf` finds that facing, and `parts.chainFor`
+lays the seven out from it. Verified by `checkHandTurns`.
+
+**The wind is measured from the pose, and is not told (rule 28).** Each held hand sits on the rim of
+its body, and both bodies stand on the axis of the pair. So the angle a hand makes with that axis
+says how far round it has gone. The difference between the two ends is the wind. A reach is the
+shadow of a wound arm from above: straight at no wind, an X at a half, a diamond at a whole.
+Verified by `checkHandTurns`.
+
+**The crossings alternate, so a connection over at one crossing is under at the next (rule 27).**
+That is what being wound together means. Rule 28 measures the diamond that rule 27 drew. Verified by
+`checkHandTurns`.
+
+**A moving reach shows its breaks as the still does (rule 29).** A still reach is cut where it dives
+under its partner. A moving reach keeps one path, and shows the break as a dash that travels with
+its crossing. The crossings are found segment against segment, as the stills find them. Verified by
+`checkHandTurns`, which checks that a moving figure and the still it lands on break the same arm.
+
+**Each way of turning finds its own sense, so no move walks off the end of the chain (rule 30).**
+The sim turns a quarter from the frame, and reads the wind at the furthest pose the walk reaches.
+Verified by `checkHandTurns`, which reads the wind on every frame of every move.
+
+**Past a whole turn, one connection runs straight and the other goes round it (rule 31).** That is
+the swan. `route.windShare` gives the swing of the straight one to the snake. So at a turn and a
+half, one reach is the plain chord between its hands. The straight one is on top at the first
+crossing, so it dives once. Verified by `checkHandTurns`.
+
+**The sheet of the Architect gives rules 36 to 40, and the workbench checks none of them.** The sim
+reports in their words, through `sim/words.nim`, and that is not a check. Rule 37 says what a lock
+is, and makes a high lock a hammerlock. Rule 38 says a wrap crosses the other arm of its
+dancer. The drawing does not show that crossing yet, because rule 22 keeps a settled reach away from
+that hand.
+
+Rule 39 makes modifiers belong to each arm, for either dancer. The drawing holds one level and one
+way for each connection. Rule 40 is the one filled rotation row of the sheet. `sim/verdicts.md`
+gives what the sim finds for Left to left held low, turned from face to face.
+
+## The frame picture
+
+**Each hand is drawn in the colour of its side and the shade of its dancer.** Left is blue and right
+is orange, for both dancers. The lead's hands are in the deep shade, and the follow's in the plain
+one. Each of the four is a named colour with a fallback. So a picture follows the page it is on, and
+draws in its own ink when opened alone, as the app's figures in `doc/frames/` are. Verified by
+`treview.nim`, which checks that every ink is a named colour with a fallback.
+
+**The shape of a mark says whose hand it is.** The lead's hands are squares, and the follow's are
+circles. The mark carries this itself, so it holds at any size. Which column a hand sits in follows
+from the way its dancer faces. So the four facings are distinct without a new mark.
+
+**A level is a fill on both ends of a connection.** Hollow is no level, solid is low, a dot at the
+centre is high, and hatched is above. A crossed hold keeps its drawn break as well, because the
+break still shows at node size. A hand that nobody holds fades to half strength and keeps its hue.
+The free frame is four free hands, and to grey them would hide the one thing that shows orientation.
+
+**A body is a plain circle, with a small chevron at its centre for its facing.** The centre is the
+one part of a dancer that nothing else uses. `outlineR` in `body.nim` is the one function for the
+edge, so the routing and the drawing agree on it. The rim says only that a body is there. It is one
+quiet stroke, broken round each hand by `HAND_GAP`, and it carries no colour of a side. Verified by
+`checkFrame`.
+
+**The rim shows no progress.** The connection shows the wrap already, so a ring that filled in the
+colour of an arm would say the same thing twice. One sign is enough.
+
+**A reach is a taut string.** It starts on the edge of its own hand's mark, and it hugs the rim only
+where a straight line would cross a body. Everywhere else it is straight. With nothing said, it
+takes the short way, and there is no standing preference for the front of a dancer. Verified by
+`checkFrame`, which checks that no reach enters a body and that each ends on its hand.
+
+**Where a hand has left its place, the place it left is drawn as a grey outline.** So a picture
+shows both where a hand is and where it came from (`figure.ghosts`). No check holds this, and none
+holds that a mark stays clear of the outline it left.
+
+**The lead always faces up.** A pose lives in world coordinates, and `canonicalise` turns the world
+until the lead faces up. So every pose of the same shape is the same picture. The whole state is two
+numbers: where the follow stands round from the lead, and how the follow faces. Verified by
+`checkFrame`.
+
+**A move is drawn in two stages: the travel, and then the turn back to the lead.** A cycle of go,
+home, back and home closes exactly, so a moving picture loops without a jump. Bodies are rigid and
+are carried by transforms, on a facing that does not wrap (`geometry.continuous`). A facing that
+steps from 179 to minus 179 degrees would be drawn as most of a turn backwards. Verified by
+`checkFrame`.
+
+**A position cannot tell an orbit from an axis turn.** A quarter orbit lands on the picture that the
+quarter axis turn of the other dancer lands on. So which of the two was danced belongs to the move,
+and not to the position. An orbit walked while turning back, so that the walker keeps their bearing,
+lands on one picture whichever dancer walks it. It lands apart from the axis turn, so those two are
+two moves. Verified by `checkFrame`.
+
+## The turn sign
+
+**A turn is shown as a leaning box that holds exactly one full turn.** Its rows are quarter turns,
+packed up from the foot. So an amount reads as how full the box is, before it reads as a count. The
+columns are the lead's two arms, in the order and the inks of the frame picture.
+
+**A pip says whose quarter it is twice, by its shape and by its shade.** A leaning square is the
+lead, and a circle is the follow. The fill of a pip is the level of its arm, as a hand's fill is.
+Rows may mix the two dancers, with the follow's rows on top, so a turn they share is one sign.
+
+**A dashed outline marks a turn that goes round the couple.** It labels a move and not a position,
+as the frame picture does. There is no sign for a turn that is refused. A turn that cannot be danced
+is a move that is not drawn. Verified by `checkSign`, for the geometry of the sign alone.
 
 ## Body rig
 
@@ -1455,3 +1696,29 @@ and not urgent.
 - **Whether the cards of section A are a question a body can be asked.** A9 and A11 draw the
   same-name pair face to face, which rule 31 says has its connections lying through each other. The
   model refusing them agrees with the rule.
+
+**Open in the workbench, and on the side of the Architect.** Each one waits on a ruling, and the
+workbench draws the current reading meanwhile.
+
+- **Whether the "upper wrap" of rule 8 is the high wrap.** It is the one reading in the ledger that
+  is not the words of a rule.
+- **How far round the rim `SLOT_OFFSET` sets front and back from a side.** It is a drawn convention,
+  and not something the dance says.
+- **The mark for any amount of turn.** The sign page draws the candidates, and none is chosen.
+- **Whether the turn sign is kept at all.** An orbit and an axis turn now differ as moves, and the
+  frame pictures can show that as they move.
+- **Whether `rotation.nim` holds a facing for each dancer.** `isFacing` reads only whether `twist`
+  is even, so it cannot tell face to face from back to back. The two relative facings the drawing is
+  built on are the pair the model would need.
+- **Whether an arm carried past some limit is marked at all.** Nothing on the rim counts now, and
+  the amount is where the hand sits.
+- **The bow for contact with the body, the staff for sequences, what an orbit stores, and when an
+  arm above the head blocks.**
+- **How the crossing of a wrap with its dancer's other arm is drawn (rule 38).** Rule 22 keeps a
+  settled reach away from that hand. So to draw it needs the other arm in the picture, and a ruling
+  on how far rule 22 reaches. Until then a low wrap and a high one differ only by their fill.
+- **Whether the model holds a modifier for each arm (rule 39).** The sheet gives either dancer up to
+  one modified arm. The drawing holds one level and one way for each connection, and settles only
+  the follow. That waits on whether the list in the sheet is the shape wanted. It is the same
+  question as whether the variants of `Left to left` and `Right to right` that differ in which arm
+  is over merge.
