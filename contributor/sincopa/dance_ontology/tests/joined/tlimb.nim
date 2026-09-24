@@ -1,9 +1,3 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on -d:danger $options $file"
-batchable: true
-joinable: true
-"""
 ## Rig's tape and one arm's geometry, held to what they claim.
 ##
 ##   Two suites kept from `tlaws.nim` when solver it tested was retired: neither
@@ -15,7 +9,7 @@ joinable: true
 
 import std/[math, random, unittest]
 
-import ../sim/[body, contact, limb, rig, vec]
+import ../../sim/[body, contact, limb, rig, vec]
 
 
 const

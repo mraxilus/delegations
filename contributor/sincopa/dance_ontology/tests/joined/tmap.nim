@@ -1,9 +1,3 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Test picture of whole ontology against ontology.
 ##
 ## Map is drawing, so most of it is matter of taste; what is tested is
@@ -14,7 +8,7 @@ joinable: true
 
 import std/[options, strutils, unittest]
 
-import ../src/dance_ontology
+import ../../src/dance_ontology
 
 
 func spoken(picture: string): string =

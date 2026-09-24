@@ -351,8 +351,8 @@ func initCameraDefault*(): Camera =
 
 func rollHeld*(camera: Camera): Option[float] =
   ## Read camera's roll about its sight, against `UP_WORLD`, or none near pole.
-  ##   Positive `roll` lowers this reading, so restoring it asks for difference as it
-  ##   stands; see `interaction.turnAcross`.
+  ##   Positive `roll` lowers this reading.
+  ##   Read by suite, which holds finger's drag in `interaction.turnAcross` to leaving it.
   let frame = camera.frame
   if abs(dot(frame.forward, UP_WORLD)) >= COSINE_POLE_ROLL: return none(float)
   some(arctan2(dot(frame.axis_right, UP_WORLD), dot(frame.axis_up, UP_WORLD)))
@@ -524,6 +524,35 @@ func orbit*(camera: var Camera; turn, rise: float) =
   camera.motor = camera.turnedAboutPivot(camera.frame.axis_right, -rise)
 
 
+func upwardHeld(camera: Camera): Direction =
+  ## Read world up as camera stands to it: downward once camera has passed over top.
+  ##   World axis nearest camera's own up, so sideways drag carries picture same way on
+  ##   both sides of pole.
+  if dot(camera.frame.axis_up, UP_WORLD) >= 0.0: UP_WORLD else: -UP_WORLD
+
+
+func acrossLevel(camera: Camera): Direction =
+  ## Read level axis at right angles to sight, signed to agree with camera's own across.
+  ##   Camera's own across where sight runs along world up and names no level axis.
+  ##   Left unscaled: `turnAbout` unitizes axis it turns about.
+  let level = cross(camera.frame.forward, UP_WORLD)
+  if norm(level) < 1.0e-9: return camera.frame.axis_right
+  if dot(level, camera.frame.axis_right) >= 0.0: level else: -level
+
+
+func orbitLevel*(camera: var Camera; turn, rise: float) =
+  ## Turn eye about pivot as turntable does, passing over top rather than stopping short.
+  ##   Arguments read as `orbit`'s do. Sideways turns about world up, taken downward past
+  ##   top; up and down turns about level across axis.
+  ##   Each turn moves one turntable angle alone. So neither sinks sight nor leaves roll,
+  ##   and drag lands same however it is cut into steps.
+  ##   Both axes are world's nearest to camera's own, so picture moves as `orbit`'s does.
+  ##   Cost: near pole, sideways drag spins picture about sight, and spin reverses as
+  ##   camera passes top. Roll set by twist tips sideways drag off screen's across.
+  camera.motor = camera.turnedAboutPivot(camera.upwardHeld, turn)
+  camera.motor = camera.turnedAboutPivot(camera.acrossLevel, -rise)
+
+
 func dolly*(camera: var Camera, factor: float) =
   ## Scale separation of eye from pivot, holding it off near bound.
   ##   Eye slides along sight line and pivot stands, which is what dolly means.
@@ -618,6 +647,14 @@ func look*(camera: var Camera; turn, rise: float) =
   ##   asked for.
   camera.motor = camera.turnedAboutEye(camera.frame.axis_up, turn)
   camera.motor = camera.turnedAboutEye(camera.frame.axis_right, -rise)
+
+
+func lookLevel*(camera: var Camera; turn, rise: float) =
+  ## Turn which way eye faces as turntable does, eye standing; see `orbitLevel`.
+  ##   Past top, sight looks back over reader's head and picture stands upside down: that
+  ##   is what passing over top means for eye that stands.
+  camera.motor = camera.turnedAboutEye(camera.upwardHeld, turn)
+  camera.motor = camera.turnedAboutEye(camera.acrossLevel, -rise)
 
 
 func roll*(camera: var Camera, radians: float) =

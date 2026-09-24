@@ -1,16 +1,10 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Test laws of frame: validity, naming, keys and reflection.
 
 {.experimental: "strictFuncs".}
 
 import std/[options, strutils, unittest]
 
-import ../src/dance_ontology/frame
+import ../../src/dance_ontology/frame
 
 
 suite "frames":

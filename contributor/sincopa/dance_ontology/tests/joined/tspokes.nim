@@ -1,9 +1,3 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Test that close drawing shows where couple are and nothing further.
 ##
 ## Map of everything can afford to be wrong about detail and still be
@@ -14,7 +8,7 @@ joinable: true
 
 import std/[math, options, strutils, unittest]
 
-import ../src/dance_ontology
+import ../../src/dance_ontology
 
 
 suite "the spokes":

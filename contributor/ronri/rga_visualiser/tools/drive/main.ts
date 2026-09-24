@@ -14,7 +14,7 @@ import { focusCanvas } from './gestures';
 import { driveKeys } from './keys';
 import { driveAim, driveLook, drivePan } from './pan';
 import { driveWheel } from './wheel';
-import { driveTouchSelect, drivePinch, openTouch } from './touch';
+import { driveFingerTurntable, driveTouchSelect, drivePinch, openTouch } from './touch';
 import {
   driveBackdropPlane, driveCrowd, driveEmptyRelease, drivePausedDrag, driveTouchConstruct,
   driveTwoFingerPan,
@@ -143,6 +143,7 @@ async function main(): Promise<void> {
   // Two fingers go through Chrome's own protocol, so channel opens once here.
   const cdp = await openTouch(page);
   await drivePinch(page, cdp);
+  await driveFingerTurntable(page, cdp);
   await driveTouchSelect(page, cdp);
   await driveTwoFingerPan(page, cdp);
   await driveTouchConstruct(page, cdp);

@@ -1,9 +1,3 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options -r $file"
-batchable: true
-joinable: true
-"""
 ## Hold faces every page ships to what they claim.
 ##
 ##   Faces themselves are fetched, so nothing here reaches network or reads one:
@@ -16,7 +10,7 @@ joinable: true
 
 import std/[os, strutils, unittest]
 
-import ../design/faces
+import ../../design/faces
 
 
 const

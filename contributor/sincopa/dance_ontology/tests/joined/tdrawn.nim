@@ -1,9 +1,3 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Viewer puts each capsule on canvas by what `drawn` says, and this is where that
 ## is held to what browsers do.
 
@@ -11,7 +5,7 @@ joinable: true
 
 import std/unittest
 
-import ../design/drawn
+import ../../design/drawn
 
 
 suite "capsule on canvas":
