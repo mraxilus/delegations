@@ -180,14 +180,14 @@ proc run(options: Options): int =
     for package in named: echo package
     return 0
   of "assets":
-    # Fetched file is repository's, never one project's: two targets pinned four of same
-    #   files byte for byte before this (repository issue 116). Store holds digest; caller
-    #   names which files it wants, so what is shared is bytes rather than choice.
+    # Fetched file is repository's, never one project's: two targets pinning one file would
+    #   hold two copies of one digest. Store holds digest; caller names which files it wants,
+    #   so what is shared is bytes rather than choice.
     let root = storeRoot(getEnv(ASSETS_KEY))
     var wanted = options.rest
     if options.project.len > 0: wanted.insert(options.project, 0)
     # Naming no file asks for declaration rather than for bytes: consumer checking whether
-    #   name is declared reads published rows, never this module's source (issue 134).
+    #   name is declared reads published rows, never this module's source.
     if wanted.len == 0:
       stdout.write declaration()
       return 0

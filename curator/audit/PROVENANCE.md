@@ -78,8 +78,11 @@ Html and Svg carry hand-written pages, which the layout check confines to `pages
   exempt, and any tab is a finding.
 - Rejected: content sniffing, which lets an unknown kind in silently.
 - Cost: matching is by basename or extension only, so `nimble.paths` or `.mk` is unread.
-- Verified by `suites/tkinds.nim` over every match and a set of unregistered names. `tlayout.nim`
-  yields one finding on `data.csv`, which names `curator/audit/src/kinds.nim`.
+- Verified by `suites/tkinds.nim`, which reads the header table from the source and holds each
+  row to the registry. Every match classifies at the root and in a folder, and the Syntax,
+  Prose and Gate cells equal the rule of the kind. It also covers the last extension of
+  `koch.nim.cfg`, and a set of unregistered names. `tlayout.nim` yields one finding on
+  `data.csv`, which names `curator/audit/src/kinds.nim`.
 
 **A gated kind argues for itself in its header, and the gate is checked rather than trusted.**
 `Cpp` and `C` join TypeScript as languages admitted only where Nim cannot serve. `.hpp` reads
@@ -414,6 +417,10 @@ files is the consequence, and never authorship.
 Cost: a curator may reorder the files of a contributor without asking. Content cannot change
 and the move is visible in review, so the cost is disorder rather than damage.
 
+- Verified by `suites/tscope.nim`: a moved path is exempt on the curator root alone, and a move
+  never widens a project branch. `suites/ttree.nim` holds on a throwaway repository that only
+  an exact rename is a move.
+
 **Domain folders are ASCII slugs, and the accent lives in the display name.** The folder is
 `sincopa` and the name is `síncopa`, the split that `comma_games` and `comma, games` use too.
 Git quotes a non-ASCII path by default, so `git ls-files` piped into any shell tool fails on
@@ -565,6 +572,8 @@ a copy from two different faces.
   checkout, because the audit reads untracked files.
 - The rows hold `woff2` faces for pages, and TrueType or OpenType faces for the desktop atlas,
   which `@fontsource` does not ship. Where two projects pin one file, they pin one digest.
+- One digest reader serves both fetches. `fetchAsset` reads the bytes that it fetched through
+  `compilers.digestOf`, so the parse that `tcompilers.nim` tests also guards the store.
 - Verified by `suites/tassets.nim`. Verified by hand with `nim r koch assets`, recorded 2026-09-10,
   machine unrecorded. A cold store fills with three faces in **1.0 s**, two of them shared by
   two projects. The same call warm takes **0.117 s**, and fetches nothing.
@@ -859,8 +868,9 @@ So rules propagation compiles nothing, while every stamp is still checked.
   "comments only" reports green for work it never did, which is the failure this repository
   refuses everywhere else.
 - Verified by `suites/tplan.nim`: a README-only change plans `[]`, and a one-line source change
-  plans that project alone. A change to `koch.nim` plans `curator/audit` alone, and `--sweep` plans
-  what merged in its window.
+  plans that project alone. A change to `koch.nim` plans `curator/audit` alone. `--sweep` plans
+  every project in a repository younger than its window, and nothing over a window without a
+  commit.
 
 **The weekly run fires, and it promises a day rather than an hour.** Verified on the runner,
 2026-09-07: every project planned, each on its own pin, and its jobs started within one second.
@@ -880,8 +890,9 @@ to compile a project that nothing touched is runner time for no information.
 - Cost: the window is named twice, as the cron and as `SWEEP_DAYS`. Nothing checks that they
   agree, so CURATOR.md duty 9 says to change them together.
 - A repository younger than the window has every commit inside it. So the skip is verified by
-  suite rather than by a live Monday. `tplan.nim` drives the decision over code, record-only
-  and empty changes, and `ttree.nim` drives `revBefore` at both ends.
+  suite rather than by a live Monday. `tplan.nim` drives `sweepFor` on a throwaway repository,
+  and drives the decision of `jobs` over code, record-only and empty changes. `ttree.nim` drives
+  `revBefore` at both ends.
 
 ## Project runner
 
@@ -939,11 +950,13 @@ is the only statement and nothing can drift from it.
 **Testament over `tests/t*.nim`, with each stub carrying the header from STYLE.md §6, and
 without `-r`.** `-r` would run every test twice, and `--outdir` breaks the search of testament
 for the binary. So binaries sit beside sources, and git ignores them everywhere
-(`**/tests/t*`). Suites are named after an article of the constitution where one fits, else
-after the module. The suite or test name cites the clause that it replicates. A trailing
-comment labels the case that one assertion separates. Fixtures are built by
-`suites/fixtures.nim`: a smallest clean tree with a project under each root, and throwaway git
-repositories.
+(`**/tests/t*`).
+
+Suites are named after an article of the constitution where one fits, else after the module.
+The suite or test name cites the clause that it replicates. A trailing comment labels the case
+that one assertion separates. `suites/fixtures.nim` builds the fixtures: a smallest clean tree
+with a project under each root, and throwaway git repositories. It also reads the table in the
+header of a module.
 
 **The suites of this project compile as one program.** Each suite is a module under
 `tests/suites/`, and `tests/tsuites.nim` is the one stub. It imports every suite, so the
@@ -951,8 +964,8 @@ compiler reads the standard library and `std/unittest` once, and not once for ea
 import list is read from the directory at compile time, so a suite that is added also runs.
 The stub leaves out `-d:nimUnittestAbortOnError:on`, so every failure shows in one run.
 
-- Rejected: one stub for each suite. Almost all of their time was compile time: each suite
-  compiled the same standard library again, and the run of all binaries took 2.1 s (Figures).
+- Rejected: one stub for each suite. Almost all of their time was compile time, because each
+  suite compiled the same standard library again. The run of all binaries took 2.1 s (Figures).
 - Rejected: one testament for each suite, four at a time. It took twice as long as the joined
   program on four cores, and its output interleaves.
 - Rejected: the `joinable` megatest of testament. `pattern` never reads that key, and

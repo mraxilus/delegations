@@ -166,13 +166,14 @@ This section adds only what differs for a curator.
 
 5. **New file kind.** Register it in `curator/audit/src/kinds.nim` with its comment syntax,
    extend `comments.nim` where the syntax is new, update the header table, and add fixtures.
-   Until then the kind does not exist (Article VI.5), and the audit rejects it.
+   `tkinds.nim` holds the header table to the registry. Until then the kind does not exist
+   (Article VI.5), and the audit rejects it.
 
 6. **New domain.** This is the decision of the Architect alone. Add it to `DOMAINS` in
    `curator/audit/src/domains.nim`, to its header table, and to the table in the root
    `README.md`. Create `contributor/<domain>/README.md`, with the name as the heading and the
    theme as a line. The layout check verifies that `DOMAINS`, the table and the domain README
-   agree. Nothing checks the header table, so keep it by hand.
+   agree. `tdomains.nim` holds the header table to `DOMAINS`.
 
 7. **New curator project.** Any name matching `[a-z][a-z0-9_]*`, on branch
    `curator/<project>/<name>`, with the full project shape from `CONTRIBUTOR.md`.
