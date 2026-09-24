@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate role rule of CONTRIBUTOR.md, Say which role you are, over pull request bodies.
 
 import std/[strutils, unicode, unittest]
-import ../src/role
+import ../../src/role
 
 
 suite "Role":

@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate Article VI.5: comments are telegraphic, i.e. hold no articles.
 
 import std/[random, sequtils, strutils, unittest]
-import ../src/[kinds, prose]
+import ../../src/[kinds, prose]
 
 
 const

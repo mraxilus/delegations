@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate Article XI.1: Conventional Commits with stable scope.
 
 import std/[options, sequtils, strutils, unittest]
-import ../src/commits
+import ../../src/commits
 
 
 suite "Article XI":

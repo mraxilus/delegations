@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate provenance guide's body shape and Article VIII.6: record describes what is.
 
 import std/[sequtils, strutils, unittest]
-import ../src/record
+import ../../src/record
 import ./fixtures
 
 

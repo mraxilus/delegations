@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate CURATOR.md duty 10: rule written once, so no copy drifts.
 
 import std/[sequtils, strutils, unittest]
-import ../src/duplicates
+import ../../src/duplicates
 
 
 const LONG = "one two three four five six seven eight nine ten eleven twelve thirteen " &

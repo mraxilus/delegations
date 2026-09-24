@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate branch grammar of `domains.nim` header and CONTRIBUTOR.md.
 
 import std/[options, unittest]
-import ../src/domains
+import ../../src/domains
 
 
 suite "Branch grammar":

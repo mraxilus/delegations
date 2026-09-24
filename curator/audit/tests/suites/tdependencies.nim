@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate nimble requirement reading of `dependencies.nim` header and CONTRIBUTOR.md.
 
 import std/[options, os, strutils, tempfiles, unittest]
-import ../src/[projects, dependencies]
+import ../../src/[projects, dependencies]
 import ./fixtures
 
 

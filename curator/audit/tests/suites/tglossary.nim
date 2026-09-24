@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate glossary shape: Matt Pocock's CONTEXT.md format, checked structurally.
 
 import std/[sequtils, strutils, unittest]
-import ../src/glossary
+import ../../src/glossary
 import ./fixtures
 
 

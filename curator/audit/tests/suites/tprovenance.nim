@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate Article VIII.6 and provenance guide: header table and rules stamp.
 
 import std/[sequtils, sets, strutils, tables, unittest]
-import ../src/[provenance]
+import ../../src/[provenance]
 import ./fixtures
 
 

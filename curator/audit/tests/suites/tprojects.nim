@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate Article IX.6 for project runner: real testament, real exit codes.
 
 import std/[os, strutils, tempfiles, unittest]
-import ../src/projects
+import ../../src/projects
 import ./fixtures
 
 

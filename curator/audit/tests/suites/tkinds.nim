@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate kind registry of `kinds.nim` header table.
 
 import std/[options, unittest]
-import ../src/kinds
+import ../../src/kinds
 
 
 suite "Article VI":

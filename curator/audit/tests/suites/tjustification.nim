@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate gated-language rule of `justification.nim` header and CONTRIBUTOR.md Language.
 
 import std/unittest
-import ../src/[kinds, comments, justification]
+import ../../src/[kinds, comments, justification]
 
 
 const

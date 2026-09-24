@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate grant `permissions` block actually makes, from 403 that taught it.
 
 import std/[options, strutils, unittest]
-import ../src/workflows
+import ../../src/workflows
 
 
 const READS_RUNS = """

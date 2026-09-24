@@ -1,14 +1,8 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate finding record of `findings.nim` header: its order, and how it renders.
 ##   Every check reports through these two, and nothing covered them until this file.
 
 import std/[algorithm, unittest]
-import ../src/findings
+import ../../src/findings
 
 
 suite "Findings":

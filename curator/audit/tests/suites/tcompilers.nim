@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate compiler acquisition of `compilers.nim` header: what is fetched, what is built.
 
 import std/[os, strutils, tempfiles, unittest]
-import ../src/[toolchain, compilers]
+import ../../src/compilers
 import ./fixtures
 
 

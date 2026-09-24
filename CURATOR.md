@@ -333,7 +333,7 @@ The checker holds itself to rules of its own, in `checker.nim`, because it check
 project and nothing checked it:
 
 - A routine exported and called nowhere is a finding.
-- A check module without `tests/t<module>.nim` is a finding.
+- A check module without `tests/suites/t<module>.nim` is a finding.
 - The verbs that koch dispatches, the verbs that its usage text prints, and the rows of the
   table above are one set named three times. Any two that differ are a finding.
 - The options that koch parses and the options that its usage text prints are one set named

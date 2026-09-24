@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate scoped test selection of `plan.nim` header and CURATOR.md checks reference.
 
 import std/[json, options, sequtils, unittest]
-import ../src/[plan, projects]
+import ../../src/[plan, projects]
 import ./fixtures
 
 

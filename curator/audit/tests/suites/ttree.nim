@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate Article IX.5 for git enumeration: real repository, real git, paths read back.
 
 import std/[os, options, sequtils, strutils, unittest]
-import ../src/tree
+import ../../src/tree
 import ./fixtures
 
 

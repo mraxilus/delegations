@@ -1,15 +1,9 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate Markdown shapes of `markdown.nim` header, and costs it states.
 ##   Layout, provenance and glossary all read documents through these three, and each was
 ##   covered only through those checks until this file.
 
-import std/[strutils, unittest]
-import ../src/markdown
+import std/unittest
+import ../../src/markdown
 
 
 suite "Markdown":

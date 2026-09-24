@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate face rules of `faces.nim` header, i.e. Article X.8 over sources declaring stacks.
 
 import std/[strutils, unittest]
-import ../src/faces
+import ../../src/faces
 
 
 const KEEPING = """

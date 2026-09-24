@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate comment extraction claims of `comments.nim` header, per syntax.
 
 import std/[sequtils, unittest]
-import ../src/[kinds, comments]
+import ../../src/[kinds, comments]
 
 
 func texts(source: string, syntax: Syntax): seq[string] =

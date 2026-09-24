@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate staleness rule of `base.nim` header and CURATOR.md settings section.
 
 import std/[strutils, unittest]
-import ../src/[base, plan, provenance]
+import ../../src/[base, plan, provenance]
 
 
 suite "Base":

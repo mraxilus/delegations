@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate umbrella: whole static audit over fixture tree, and stamp derivation.
 
 import std/[algorithm, sequtils, strutils, unittest]
-import ../src/[audit, provenance]
+import ../../src/[audit, provenance]
 import ./fixtures
 
 

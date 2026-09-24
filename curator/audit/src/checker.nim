@@ -8,7 +8,7 @@
 ##     so coverage looked like use. Test proves routine works, never that anything wants it.
 ##     Mention anywhere in checker counts, comment included, so rule reports only routines
 ##     nothing names at all.
-##   Missing suite: check module without `tests/t<module>.nim`. `findings.nim` carried render
+##   Missing suite: check module without `tests/suites/t<module>.nim`. `findings.nim` carried render
 ##     and order every finding passes through, and `markdown.nim` parsed every governed
 ##     table, with no suite between them.
 ##   Verb drift: verbs koch dispatches, verbs its usage text prints, and verbs CURATOR.md
@@ -42,8 +42,8 @@ const
     ## Document tabling verbs for curator sessions.
   CHECK_DIR* = "curator/audit/src/"
     ## Modules these rules cover.
-  SUITE_DIR* = "curator/audit/tests/"
-    ## Where each module's suite lives.
+  SUITE_DIR* = "curator/audit/tests/suites/"
+    ## Where each module's suite lives; `tests/tsuites.nim` runs them as one program.
   NIM_EXT* = ".nim"
     ## Extension of module and suite alike.
   ROUTINES* = ["func", "proc", "template", "macro", "iterator", "converter"]

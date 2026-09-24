@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate Article VI.8: governed prose is Simplified Technical English.
 
 import std/[sequtils, strutils, unittest]
-import ../src/english
+import ../../src/english
 
 
 suite "Article VI.8":

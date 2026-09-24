@@ -6,7 +6,7 @@
 ##     and `taudit` proves they still agree.
 
 import std/[json, os, osproc, strutils, tempfiles]
-import ../src/[domains, kinds, layout, provenance, dependencies]
+import ../../src/[domains, kinds, layout, provenance, dependencies]
 
 
 func entry*(path, content: string): Entry =

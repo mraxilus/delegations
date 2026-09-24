@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate layout rules of `layout.nim` header, CURATOR.md and CONTRIBUTOR.md.
 
 import std/[sequtils, strutils, unittest]
-import ../src/[domains, layout, dependencies]
+import ../../src/[domains, layout, dependencies]
 import ./fixtures
 
 

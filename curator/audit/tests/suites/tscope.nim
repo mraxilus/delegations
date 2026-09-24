@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate scope rules of `scope.nim` header and CONTRIBUTOR.md boundaries.
 
 import std/[sequtils, strutils, unittest]
-import ../src/[domains, scope]
+import ../../src/[domains, scope]
 
 
 const OUTSIDE = @[

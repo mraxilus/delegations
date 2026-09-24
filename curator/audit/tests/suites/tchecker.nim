@@ -1,16 +1,10 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate rules checker holds itself to, from `checker.nim` header.
 ##   Each rule here is one curator pass of 2026-09-06 found by reading, so each fixture
 ##   is that fault written down: dead routine, module without suite, verb set drifting.
 ##   Option drift is fourth: usage text leaving out option parser takes, as `--driven` was.
 
 import std/[strutils, unittest]
-import ../src/[markdown, checker]
+import ../../src/[markdown, checker]
 
 
 const KOCH = """
@@ -57,11 +51,13 @@ suite "Checker":
     check found[0].message.endsWith("got `gone`.")
 
   test "every check module carries suite named after it":
-    let paired = ["curator/audit/src/form.nim", "curator/audit/tests/tform.nim"]
+    let paired = ["curator/audit/src/form.nim", "curator/audit/tests/suites/tform.nim"]
     check checkSuites(paired).len == 0
     let alone = ["curator/audit/src/form.nim"]
     check checkSuites(alone).len == 1
-    check checkSuites(alone)[0].message.endsWith("`curator/audit/tests/tform.nim`; got nothing.")
+    check checkSuites(alone)[0].message.endsWith(
+      "`curator/audit/tests/suites/tform.nim`; got nothing."
+    )
     check checkSuites(["koch.nim", "README.md"]).len == 0  # rule covers check modules only
     check moduleOf("curator/audit/src/form.nim") == "form"
     check moduleOf("curator/probe/src/probe.nim").len == 0  # other projects group differently

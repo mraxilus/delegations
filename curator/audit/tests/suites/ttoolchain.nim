@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate per-project pin and driver version rules of CURATOR.md duty 8.
 
 import std/[options, strutils, unittest]
-import ../src/toolchain
+import ../../src/toolchain
 import ./fixtures
 
 

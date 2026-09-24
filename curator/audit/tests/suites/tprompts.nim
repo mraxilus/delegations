@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate CURATOR.md duty 10: prompts are short, and state rules rather than incidents.
 
 import std/[sequtils, strutils, unittest]
-import ../src/prompts
+import ../../src/prompts
 
 
 suite "Duty 10":

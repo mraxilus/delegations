@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate shared store of `assets.nim` header, i.e. one declaration, keyed by digest.
 
 import std/[os, strutils, tempfiles, unittest]
-import ../src/assets
+import ../../src/assets
 
 
 suite "Assets":

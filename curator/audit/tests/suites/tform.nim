@@ -1,13 +1,7 @@
-discard """
-action: run
-cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: true
-"""
 ## Replicate Article X.1, X.2 and VIII.5: form of source.
 
 import std/[sequtils, strutils, unittest]
-import ../src/[kinds, form]
+import ../../src/[kinds, form]
 
 
 func messages(path, source: string, kind: Kind): seq[string] =
