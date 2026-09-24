@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | c73f63e83992089d |
+| Rules   | be54792c5171ff9d |
 | Pruned  | ca56fd4f8b61f44d3b38f3533ba0f177c4cc27b8 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -41,7 +41,7 @@ Six tools that the prototype carried are not in this repository. They are `check
 one of them held is marked as held by that tool then, and re-verified by nothing here.
 
 **Verification practice, applies throughout.** Every change is rebuilt, and the full suite is run
-again through `koch tests`. That runs on the C backend at two capacities, and on the JS backend.
+again through `koch test`. That runs on the C backend at two capacities, and on the JS backend.
 Both front-ends are driven through `tools/build.nim drive`. **No human has driven either front-end,
 clicked a button, or seen this on real GPU hardware.** Every figure in this file was
 software-rendered.
@@ -82,9 +82,9 @@ renamed variable. It is `PREVIEW_EDIT`, beside `PREVIEW_APPLY`.
 belongs to that library. An ideal object does not sit *at* the horizon. It lies *in* it, so the kind
 words that a reader sees are `horizon point`, `horizon line` and `horizon plane`.
 
-*Checked.* Verified after every rename. Every suite is unchanged, case for case, which is what says
-that no behaviour moved. `tsc` is clean after `bridge.d.ts` is derived again. `koch tree` reports 0
-findings. Both front-ends are built and driven.
+*Checked.* Verified after every rename. Every suite is unchanged, case for case, which is what
+says that no behaviour moved. `tsc` is clean after `bridge.d.ts` is derived again.
+`koch check-files` reports 0 findings. Both front-ends are built and driven.
 
 ## Wording catalogue
 
@@ -293,9 +293,9 @@ toggles wherever they stand alongside zero overflow. A row that fits because two
 dropped is broken more quietly. It sweeps 396, 395 and 394, because a rule written one pixel out
 passes every sweep that never lands on it.
 
-*Checked.* Verified by a run. Every check goes through `tools/build.nim drive`, on both front-ends,
-software-rendered, here and on the runner. `driven` gates `audit`, so a green push run is the word
-of the runner itself (repository issues 47 and 91).
+*Checked.* Verified by a run. Every check goes through `tools/build.nim drive`, on both
+front-ends, software-rendered, here and on the runner. `drive` gates `summarize`, so a green
+push run is the word of the runner itself (repository issues 47 and 91).
 
 **Unmeasured**: the figures are this container's, and say more about SwiftShader than about any GPU.
 Bands are what the checks assert.
@@ -344,9 +344,9 @@ issue 60). No package version is pinned or invented.
 **`drive` fetches faces, and `web` refuses without them.** A caller who reaches for `web` directly
 is building, rather than being given.
 
-**Faces come from the store of the repository, and which faces is this project's.** `koch assets`
-holds any file fetched at build time: the names, the digests and the fetch, in
-`curator/audit/src/assets.nim`. The `assets` verb of this project copies the faces of both
+**Faces come from the store of the repository, and which faces is this project's.**
+`koch fetch-assets` holds any file fetched at build time: the names, the digests and the fetch,
+in `curator/audit/src/assets.nim`. The `assets` verb of this project copies the faces of both
 front-ends out of it (repository issues 116 and 124).
 
 Those are the `@fontsource` `woff2` of the page, and the desktop's own, which `FACES_DESKTOP` names.
@@ -1263,9 +1263,7 @@ axis before it. A pitch about the stale one tips the up axis off the sight, whic
 asked for.
 
 `look` takes the two arguments that `orbit` takes, with the same signs, so a mouse drag feeds either
-verb as the selection comes and goes. A finger's `lookLevel` takes them negated, so the picture
-follows the finger in either state: the sky moves as orbit's near side does. The cost is that a
-selection made mid-drag reverses which way the far scene moves.
+verb as the selection comes and goes.
 
 The axes are the camera's own and never the world's, so there is no pole and no clamp. Eight pitches
 of a quarter radian compose to exactly two radians, which is past straight down.
@@ -1276,27 +1274,28 @@ radians leaves 0.0813, against 0.0822 enclosed: 4.7 degrees for each loop, and 1
 is the geometry of transport, not a fault, and no order of the two turns escapes it. `look` and
 `orbit` carry exactly the same amount. A mouse keeps it, with Q and E to answer it.
 
-A finger has no roll key beside it, and it wanders in curves. So `turnAcross` sends a touch drag to
-`orbitLevel` or `lookLevel`. A sideways drag turns about world up, and a drag up or down turns about
-the level axis across the sight. Each turn moves one turntable angle alone. So a drag leaves no
-roll, holds its height, and lands in one place however it is cut into steps.
+**A finger carries what it holds, one pixel for one.** `turnsCarrying` pitches about the level axis
+until one direction has the height of the other, then yaws about world up until their bearings meet.
+Of the two pitches that reach that height, it takes the pair that turns least, so a drag that comes
+back brings the camera back. Free aim holds the sky, and `lookCarrying` turns about the eye. Near
+the pole, a height out of reach lets what the finger holds slip.
 
-Each axis is the world axis nearest the camera's own, signed from the camera. So the camera passes
-over the top, upside down on the far side, and a sideways drag still moves the picture as it did.
-A roll set by a twist survives, because neither turn changes it.
+Orbit holds a point on a sphere about the pivot, since the pivot itself never moves under orbit.
+`pointHeld` places it on the ray, on the sphere's near side while the ray passes within
+`radius/sqrt(2)` of the pivot. Beyond, a sheet of the same slope carries on, so a finger off the
+sphere still turns the view. `radiusHeld` takes the selection's reach from the pivot. It is no less
+than a third of the short side at the pivot's depth, and inside the eye's separation.
 
-Not the roll put back after each turn about the camera's own axes. That levels the horizon but
-leaves the sight sunk, more as steps grow. One fast 300 px swipe on a phone took 24.06 degrees to
-14.56. Not a turntable bounded short of the pole, which stops every orbit at straight down.
+Not a rate: it turned the sight by an angle the screen does not show. On a phone, a 60 by 40 px drag
+carried free aim's picture 542.4 by 411.8 px, and now 60.4 by 41.0. Not the roll put back after each
+turn about the camera's own axes, which left the sight sunk. Not a turntable bounded short of the
+pole, which stops every orbit at straight down.
 
-The cost is at the pole. There a sideways drag spins the picture about the sight, 9.2 degrees for
-each 20 px on a phone. The spin reverses as the camera passes over. A roll set by a twist tips a
-sideways drag off the screen's across.
-
-The finger turns half a turn for each short side of the canvas, on both axes, so a diagonal drag
-turns along its own slant. Not one rate for width and one for height: those gave 0.65 and 0.30
-degrees for each pixel on a 390 by 844 phone. On 2026-09-24, in Chromium on the build container,
-2,000 touch turns took 0.44 to 0.47 ms each. With the roll put back they took 0.75 to 0.95 ms.
+A finger has no roll key beside it, and it wanders in curves. So `turnFollowing` turns about world
+up and the level axis across the sight, and keeps any roll a twist set. Each axis is the world axis
+nearest the camera's own, signed from the camera. So the camera passes over the top, upside down on
+the far side, and the picture still follows the finger. Over 2,000 finger turns at 390 by 844 in
+Chromium, on 2026-09-24, free aim took 0.45 to 0.48 ms each. Orbit took 0.63 to 0.72 ms.
 
 **The speed climbs toward a cap and never reaches it.** `speedTravelling` is the cap times
 `1 − e^(−t/τ)`. τ is `SECONDS_SPEED_RISE`, 0.6 s: 63 percent of the cap at one τ, and 95 percent at
@@ -1398,10 +1397,10 @@ The separation then scales as the turntable's dolly scales it.
 - a left drag looks with nothing picked and orbits with something picked, and the eye or the pivot
   stands accordingly;
 - one drag loop leaves the solid angle it encloses, and four leave 0.324 radians;
-- a finger's drag leaves none of it, and keeps the roll the reader set;
-- a finger's drag moves the azimuth and the elevation by what it asked, in 1, 8 or 64 steps, and a
-  loop of it closes;
-- the picture follows the finger in both states and past the top, and a drag goes through the pole;
+- a finger's loop of pixels leaves none of it in either state, keeps the reader's roll, and closes;
+- a finger's orbit keeps the point on its sphere under it, from three stances and two reaches;
+- a finger's free aim keeps the sky it took under it, from three stances, in 1 step or 16;
+- an orbit passes over the top and a look under its feet, and a drag goes through the pole;
 - eight quarter-radian pitches make two radians in `look` and `orbit`, past the panel field's clamp;
 - a look and an orbit swing the sight the same way, for both signs of the drag;
 - a roll leaves the eye and the sight alone, and 64 steps of a whole turn return every axis;
@@ -1424,8 +1423,8 @@ The separation then scales as the turntable's dolly scales it.
 Verified by driven checks:
 
 - a left drag with nothing picked turned the sight and moved the eye 0.000000 units;
-- a 600 px finger swipe held the elevation at 0.420000, where the roll put back ended at 0.325250;
-- a finger moved 60 and 40 px with nothing picked carried what stood ahead 217.9 and 145.0 px;
+- a 600 px finger swipe away and back brought the azimuth back to 1.0500 and elevation to 0.420000;
+- a finger moved 60 and 40 px with nothing picked carried the object beside it 59.1 and 40.7 px;
 - a finger dragged down with an object picked carried the eye over the top, and the pivot 0.000000;
 - 500 ms of `w` on the opening page moved the eye 3.455 units, 0.000000 of them across the sight
   line;
@@ -2799,10 +2798,10 @@ eleven articles over exposition, derivation, notation, build-time safety, naming
 cost, honesty, tests, form and the record. It carries a precedence clause and three gated
 mechanisms. `STYLE.md` is the Nim expression guide.
 
-Every comment is in the register of the `pga` library. That is a one-line imperative summary that
-ends in a period, then elaboration as a hanging outline, one claim to a line. It carries no
-articles, no history and no figures, and the history and the figures live here. `koch tree` holds
-that register mechanically over every authored language.
+Every comment is in the register of the `pga` library. That is a one-line imperative summary
+that ends in a period, then elaboration as a hanging outline, one claim to a line. It carries
+no articles, no history and no figures, and the history and the figures live here.
+`koch check-files` holds that register mechanically over every authored language.
 
 **Foreign bindings are marked `sideEffect`, and that is what makes `func` mean anything here.**
 Nim assumes that an imported body is pure, so without the mark every GL draw and every Dear ImGui
@@ -2832,10 +2831,10 @@ The `pga` library is unmodified by request. There is one substantive deviation. 
 asserts that its own module doc is the source of truth for names. That is what makes the notation
 trap easy to fall into (see Operation notation).
 
-*Checked.* Verified: `koch tree` reports 0 findings. The demotion and the revert were decided by
-the compiler, and not by reading. The six per-frame exports allocate nothing, read off the emitted
-JS, and the gain is **unmeasured**, an allocation count rather than a millisecond. **Unverified**:
-no human has read the result.
+*Checked.* Verified: `koch check-files` reports 0 findings. The demotion and the revert were
+decided by the compiler, and not by reading. The six per-frame exports allocate nothing, read
+off the emitted JS, and the gain is **unmeasured**, an allocation count rather than a
+millisecond. **Unverified**: no human has read the result.
 
 ## Dependencies and vendoring
 
@@ -2845,9 +2844,9 @@ inside it. So the requirement in `rga_visualiser.nimble` names the repository by
 `atlas.lock` records the resolved commit, and `nim.cfg` names the subdirectory that Atlas restores
 it to.
 
-`koch deps` replays that lock, and nothing is committed (Article XI.3). Both projects are under
-the Prosperity Public License 3.0.0. It is not a project verb that clones it, because CI runs
-`tree`, `deps` and `tests`, and never the own build driver of a project.
+`koch fetch-deps` replays that lock, and nothing is committed (Article XI.3). Both projects are
+under the Prosperity Public License 3.0.0. It is not a project verb that clones it, because CI
+runs `check-files`, `fetch-deps` and `test`, and never the own build driver of a project.
 
 **This project tracks the head of pga, and says so when it cannot.** The standing instruction from
 the Architect is this. Take the latest pga. Where the latest does not work, pin the most recent
@@ -2898,7 +2897,7 @@ The stored nimble of the lock must equal the committed one exactly, or `rep` rev
 silently (repository issue 25). The static pass refuses the difference, so the hand-patch is
 checked rather than trusted.
 
-*Checked.* Verified by a run on the pinned commit, through `koch tests`. It ran every suite on the
+*Checked.* Verified by a run on the pinned commit, through `koch test`. It ran every suite on the
 C backend, on JS, and at reduced capacities, at the same case counts that the previous pin
 produced. That is what says the stand-ins behave as the own ones of the library did.
 
@@ -2931,7 +2930,7 @@ the arena, and save and load — guard themselves with `when not defined(js)`.
 
 A case that walks every pair of handles at 10,000 objects runs ten minutes without output, so the
 suite gathers the joiners once instead. The JS entry point declares `targets: "js"`, rather than
-overrides the command of testament. So under `koch tests` testament compiles with the JS backend
+overrides the command of testament. So under `koch test` testament compiles with the JS backend
 and runs the result through node. That is what makes the row real rather than a claim that nothing
 checks.
 
@@ -2945,7 +2944,7 @@ Timing-dependent quantities are asserted as **bands**. Identical code has measur
 29.8 ms hours apart on a shared runner. A flat ±1 ms band failed one frame in a hundred and
 twenty.
 
-*Checked.* Verified on the pinned commit through `koch tests`: every suite on the C backend, on JS
+*Checked.* Verified on the pinned commit through `koch test`: every suite on the C backend, on JS
 and at reduced capacities. The JS count is lower because the C-only cases skip themselves.
 Verified on the runner as well as locally: the C suites bind zlib for the PNG encoder. Their
 passing proves that the runner carries that library. Assumed: nothing about the suite itself.

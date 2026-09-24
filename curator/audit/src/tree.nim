@@ -3,7 +3,7 @@
 ##   never reach checks and every file that would commit does. Paths arrive NUL-separated
 ##   (`-z`), so no path is ever quoted, whatever it holds.
 ##   Same door serves branch context: changed paths, paths base gained, commit subjects since
-##   base, and oldest commit outside sweep window.
+##   base, and oldest commit outside `--recent` window.
 ##
 ##   Git runs as direct process with argument list, never through shell: no quoting, and
 ##     `execCmdEx` is rejected because it reads by line and appends newline to NUL output.

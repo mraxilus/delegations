@@ -102,7 +102,7 @@ pin is served, installed and moved.
   `nim-lang/Nim` and built in minutes. Either fetch is paid once for each pin.
 - **One toolchain serves the whole run.** `$KOCH_NIM_DIR` moves the cache. Testament and
   Atlas come from the toolchain that serves the pin, and its `bin/` leads `PATH`. So a lock
-  is never replayed against another compiler. That is why `koch ci` and `koch tests` stay
+  is never replayed against another compiler. That is why `koch check` and `koch test` stay
   green as one command over projects that pin different compilers.
 - **A pin that nothing can serve is a finding.** It names the pin and the cache that was
   tried. The network may be unreachable, or the version may not exist. Neither is a reason to
@@ -129,11 +129,11 @@ Use Atlas, once for each project, inside your project directory.
    in the module header that uses it (Article II.8). Record the origin, the commit and the
    licence in `PROVENANCE.md` (Article XI.3).
 
-`nim r koch deps` restores the checkouts of every project from its lock, and `koch tests`
-restores before it runs. The lock stores a copy of your nimble file, and `atlas rep` writes
-that copy back. So a requirement edited without a regenerated lock is reverted, and the
-static pass reports the difference before that happens. Atlas needs the network for every
-command, so a project with no packages carries no lock and skips this step.
+`nim r koch fetch-deps --all` restores the checkouts of every project from its lock, and
+`koch test` restores before it runs. The lock stores a copy of your nimble file, and
+`atlas rep` writes that copy back. So a requirement edited without a regenerated lock is
+reverted, and the static pass reports the difference before that happens. Atlas needs the
+network for every command, so a project with no packages carries no lock and skips this step.
 
 ## How to build on a project
 
@@ -141,11 +141,11 @@ Every later delegate:
 
 1. Read `PROVENANCE.md` in full, then `GLOSSARY.md`, then the code. Take the code in the
    order that the bootstrap diagram of the umbrella module gives.
-2. `nim r koch tests contributor/<domain>/<project>` must be green before you start.
+2. `nim r koch test contributor/<domain>/<project>` must be green before you start.
 3. `Rules stamp stale` means that the charter changed after the last audit of this project.
    The curator re-audits every project in the same pull request as a charter change, so this
    appears only where your branch is older than one. `CONTRIBUTOR.md`, Before you open a
-   pull request, gives the steps under `base`. Paste the new stamp in a `docs` commit of its
+   pull request, gives the steps under `check-drift`. Paste the new stamp in a `docs` commit of its
    own.
 4. Work in small commits. Update `PROVENANCE.md` in the same delivery as each design change,
    and prune what the change replaced.

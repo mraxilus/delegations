@@ -5,7 +5,7 @@
 #   Separate workflow rather than job in `check.yml`, for one reason: this must fire when
 #   label changes, and label is applied after opening. Widening that workflow's types would
 #   re-run all of its jobs on every label event, where this runs one. Cost: its name is its own,
-#   so branch protection lists `role` by hand (CURATOR.md, repository settings section).
+#   so branch protection lists `check-role` by hand (CURATOR.md, repository settings section).
 #   `ready_for_review` is here because draft is where delegate fixes this, and flipping to
 #   ready must re-ask rather than carry draft's verdict.
 #
@@ -43,7 +43,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  role:
+  check-role:
     runs-on: ubuntu-latest
     env:
       BRANCH: ${{ github.head_ref }}
@@ -64,4 +64,4 @@ jobs:
           #   command word follows: `ROLE_LABELS="$(gh ...)" nim ...` would swallow failed read
           #   and run koch on empty list, which reports as missing label.
           labels="$(gh pr view "$NUMBER" --repo "$REPO" --json labels --jq '[.labels[].name]')"
-          ROLE_LABELS="$labels" nim r koch role
+          ROLE_LABELS="$labels" nim r koch check-role

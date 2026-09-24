@@ -85,24 +85,26 @@ when isMainModule:
     check dispatchVerbs("", DRIVER_CASE).len == 0  # project carrying no driver at all
 
   test "usage text and checks table must name what dispatch names":
-    let usage = "Usage: koch <ci|tree> [project]\n"
+    let usage = "Usage: koch <verb>\n\nVerbs:\n  ci    every check\n  tree  files\n\nOptions:\n"
     let table = "## Checks reference\n\n| Command | Reads |\n|---|---|\n| `ci` | x |\n" &
       "| `tree` | y |\n"
+    check (KOCH & usage).usageVerbs == @["ci", "tree"]  # first word of each indented line
     check checkVerbs(KOCH & usage, table).len == 0  # three statements, one set
-    check checkVerbs(KOCH & "Usage: koch <ci> [project]\n", table).len == 1  # usage short
+    let short = "Usage: koch <verb>\n\nVerbs:\n  ci    every check\n\nOptions:\n"
+    check checkVerbs(KOCH & short, table).len == 1  # usage short
     let stale = table & "| `audit` | retired |\n"
     check checkVerbs(KOCH & usage, stale).len == 1  # table keeps row for retired verb
     check checkVerbs(KOCH & usage, stale)[0].path == CURATOR_PATH
 
   test "usage text must print every option parser takes, and no other":
-    let usage = "Usage: koch <ci|tree>\n            [--root:<dir>] [--all]\n\"\"\"\n"
+    let usage = "Usage: koch <verb>\n\nOptions:\n  --root:<dir>  root\n  --all  every\n\"\"\"\n"
     check KOCH.optionLabels == @["all", "root"]  # parser's branches, never dispatch's
     check (KOCH & usage).usageOptions == @["all", "root"]
     check checkOptions(KOCH & usage).len == 0  # two statements, one set
-    let short = "Usage: koch <ci|tree>\n            [--root:<dir>]\n\"\"\"\n"
+    let short = "Usage: koch <verb>\n\nOptions:\n  --root:<dir>  root\n\"\"\"\n"
     check checkOptions(KOCH & short).len == 1  # option parsed and never printed
     check checkOptions(KOCH & short)[0].path == KOCH_PATH
-    let retired = "Usage: koch <ci|tree>\n  [--root:<dir>] [--all] [--gone]\n\"\"\"\n"
+    let retired = "Usage: koch <verb>\n  --root:<dir> --all --gone\n\"\"\"\n"
     check checkOptions(KOCH & retired).len == 1  # option printed and never parsed
     # Text after usage block is not usage: header prose names options too.
     check (KOCH & usage & "## `--later` is prose\n").usageOptions == @["all", "root"]
@@ -116,3 +118,20 @@ when isMainModule:
     #   separates verb rows from it.
     check document.section("## Checks reference").tableRows.len == 2
     check document.section("## Absent").len == 0
+
+  test "mention of koch run as command names verb koch dispatches":
+    # Fixture builds each mention from `KOCH_MARK`, so this file writes none it would report.
+    let run = "`nim r " & KOCH_MARK & "tree`"
+    check run.mentionedVerbs == @[(1, "tree")]  # compile-and-run form
+    check ("x\n./" & KOCH_MARK & "ci --all").mentionedVerbs == @[(2, "ci")]  # built form, line 2
+    check ("`" & KOCH_MARK & "tree <project>`").mentionedVerbs == @[(1, "tree")]  # code span
+    check ("nim r --hints:off " & KOCH_MARK & "ci").mentionedVerbs == @[(1, "ci")]  # options
+    # Prose naming koch itself is no command, nor is placeholder.
+    check "Nim's own `koch` holds dispatch; koch reads it.".mentionedVerbs.len == 0
+    check ("`" & KOCH_MARK & "<verb>`").mentionedVerbs.len == 0  # placeholder
+    check ("nim r x " & KOCH_MARK & "ci").mentionedVerbs.len == 0  # word between is no option
+    let stale = checkMentions("GUIDE.md", "a\n" & run.replace("tree", "gone"), ["ci", "tree"])
+    check stale.len == 1  # verb koch does not dispatch
+    check stale[0].path == "GUIDE.md" and stale[0].line == 2
+    check stale[0].message.endsWith("got `gone`.")
+    check checkMentions("GUIDE.md", run, ["ci", "tree"]).len == 0  # dispatched verb passes

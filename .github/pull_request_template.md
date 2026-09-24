@@ -9,11 +9,11 @@ compose it. -->
 ## Scope
 
 - Branch: `contributor/<domain>/<project>/<name>`, `curator/<project>/<name>` or `curator/<name>`
-- Anything that the `scope` job allows and a reader would not expect
+- Anything that the `check-scope` job allows and a reader would not expect
 
 ## Verification
 
-<!-- What ran, and on which build: the result of `nim r koch ci`, the sample counts, and
+<!-- What ran, and on which build: the result of `nim r koch check`, the sample counts, and
      every figure with its pair.
      Then show the change. Give a screenshot where it is visual, a worked example where it is
      not, and one line that says why where neither one fits. The screenshot goes in the

@@ -8,10 +8,14 @@
 ##     it, yet pure rules here are covered by calling them directly. Mention anywhere counts,
 ##     comment included, so rule reports only routines nothing outside their module names.
 ##   Missing suite: check module without `tests/suites/t<module>.nim`.
-##   Verb drift: verbs koch dispatches, verbs its usage text prints, and verbs CURATOR.md
+##   Verb mismatch: verbs koch dispatches, verbs its usage text lists, and verbs CURATOR.md
 ##     tables are one set named three times.
-##   Option drift: options koch parses and options its usage text prints are one set named
+##   Option mismatch: options koch parses and options its usage text prints are one set named
 ##     twice.
+##   Stale mention: `koch <verb>` written where verb is not one koch dispatches. Mention is
+##     read in forms that run command, i.e. `nim r koch <verb>`, `./koch <verb>` and code span
+##     opening `koch <verb>`, so prose naming koch itself passes. Contributor code is not read,
+##     since curator cannot write it; its records are, since curator can.
 ##
 ##   Rules apply to checker alone, never to contributor project: one suite per module suits
 ##     library of small checks and suits nothing else, and projects here group tests by
@@ -46,8 +50,10 @@ const
     ## Extension of module and suite alike.
   ROUTINES* = ["func", "proc", "template", "macro", "iterator", "converter"]
     ## Keywords opening routine definition; exported one ends its name with asterisk.
-  USAGE_MARK* = "Usage: koch <"
-    ## Opening of driver's usage text, whose angle brackets hold verbs.
+  USAGE_MARK* = "Usage: koch"
+    ## Opening of driver's usage text.
+  VERBS_MARK* = "Verbs:"
+    ## Line opening usage text's verb list: one indented line per verb, verb first.
   DISPATCH_MARK* = "of \""
     ## Opening of dispatch branch naming one verb.
   COMMAND_CASE* = "case options.command"
@@ -65,6 +71,12 @@ const
     ## Line closing driver's usage text, after which `--` names prose rather than usage.
   OPTION_MARK* = "--"
     ## Opening of option usage text prints.
+  KOCH_MARK* = "koch "
+    ## Command name as mention writes it, followed by verb.
+  RUN_MARK* = "nim r "
+    ## Compile-and-run form mention may open with, options between it and `koch`.
+  VERB_CHARS = {'a'..'z', '-'}
+    ## Characters verb is spelled with.
   TABLE_HEADING* = "## Checks reference"
     ## Heading above table naming verbs; other tables in same document name other things.
   IDENT_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_'}
@@ -144,12 +156,18 @@ func between(line, opening, closing: string): string =
   if stop < 0: "" else: rest[0 ..< stop]
 
 
-func usageVerbs(koch: string): seq[string] =
-  ## Read verbs driver's usage text prints, in its angle brackets.
+func usageVerbs*(koch: string): seq[string] =
+  ## Read verbs driver's usage text lists: first word of each indented line under verb mark,
+  ##   up to first line that is not indented.
+  var is_inside = false
   for line in koch.splitLines:
-    if USAGE_MARK notin line: continue
-    return line.between("<", ">").split('|').mapIt(it.strip).sorted
-  @[]
+    if line.strip == VERBS_MARK:
+      is_inside = true
+      continue
+    if not is_inside: continue
+    if not line.startsWith("  ") or line.strip.len == 0: break
+    result.add line.splitWhitespace[0]
+  result.sort
 
 
 func dispatchVerbs*(source: string, opening = COMMAND_CASE): seq[string] =
@@ -257,4 +275,39 @@ func checkVerbs*(koch, curator: string): seq[Finding] =
       CURATOR_PATH, 0,
       "Checks table must row every verb koch dispatches, and no other; expected `" &
         dispatched.join(", ") & "`; got `" & curator.tableVerbs.join(", ") & "`.",
+    )
+
+
+func runPrefix(text: string, at: int): bool =
+  ## Decide whether `koch` at index is run as command: after `./`, after code span's opening
+  ##   backtick, or after `nim r` and options only.
+  if at >= 2 and text[at - 2 .. at - 1] == "./": return true
+  if at >= 1 and text[at - 1] == '`': return true
+  let run = text.rfind(RUN_MARK, last = at - 1)
+  if run < 0: return false
+  text[run + RUN_MARK.len ..< at].splitWhitespace.allIt(it.startsWith(OPTION_MARK))
+
+
+func mentionedVerbs*(source: string): seq[(int, string)] =
+  ## Collect line and verb of every `koch <verb>` source writes as command, in order.
+  var number = 0
+  for line in source.splitLines:
+    inc number
+    var at = line.find(KOCH_MARK)
+    while at >= 0:
+      var j = at + KOCH_MARK.len
+      while j < line.len and line[j] in VERB_CHARS: inc j
+      let verb = line[at + KOCH_MARK.len ..< j]
+      if verb.len > 0 and verb[0] in {'a'..'z'} and line.runPrefix(at):
+        result.add (number, verb)
+      at = line.find(KOCH_MARK, j)
+
+
+func checkMentions*(path, source: string, verbs: openArray[string]): seq[Finding] =
+  ## Report `koch <verb>` whose verb koch does not dispatch.
+  for (line, verb) in source.mentionedVerbs:
+    if verb in verbs: continue
+    result.add finding(
+      path, line, "Mention names verb koch does not dispatch; write one `./koch` lists; got `" &
+        verb & "`.",
     )
