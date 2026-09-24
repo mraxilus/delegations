@@ -14,9 +14,13 @@
 ##     drawing, and argument for them belongs here.
 ##   Rule that is only implemented and not asserted quietly stops being
 ##     true; checkers in `checks.nim` verify standing ones on every
-##     build -- twenty-nine lines for forty rules, superseded six living
-##     here with their corrections and sheet's five (36 to 40) checked
-##     by sim's instrument rather than workbench's.
+##     build -- twenty-nine lines for forty-one rules, superseded six
+##     living here with their corrections, sheet's five (36 to 40)
+##     checked by nothing here -- sim reports in their words, which is
+##     not check -- and rule 41 checked by nothing.
+##   What these checks verify is that drawing follows rule as written,
+##     never that couple can dance it.  Workbench is mock-up.  Only
+##     reference cell kept, modelled and confirmed is trusted.
 
 # TODO: Make ledger load-bearing.
 #   Checks could assert their rule numbers against `RULES`, or
@@ -43,7 +47,9 @@ const RULES* = [
   "low lock goes around the back to the back of the other hand",
   "in high lock the line goes around the back of the modified body",
   "lock/wrap positions can only be used when the connecting line goes " &
-    "around no less than just under 1/2 of the circumference",
+    "around no less than just under 1/2 of the circumference. it doesn't " &
+    "make sense to have a wrap or a lock without the line actually going " &
+    "around the body",
   "above has no locks/wraps and can only transition to upper wrap or back " &
     "to default (physical restrictions)",
   "the connection is drawn in its two hands' own colours, meeting at its " &
@@ -144,6 +150,7 @@ const RULES* = [
     "(maximum 2 total across all 4 hands); permutations with 2 modifiers " &
     "for a single person are excluded, until deemed necessary",
   "half-closed, Left to left held low: wrap at left@0.5, lock at right@1",
+  "that applies to everything but high lock",
 ] ## Each rule verbatim, one-indexed in prose as `RULES[i - 1]`.
   ##   Rules 10 to 14 govern rotation page: rotation as edges over
   ##     app's eight frames, everything held high.
@@ -447,6 +454,13 @@ const RULES* = [
   ##     at three tenths of turn, at lead's shoulder twist, short of
   ##     row's half.  One place row and sim differ, recorded;
   ##     neither was told other's answer.
+  ##   Rule 41 answers rule 7: its second sentence, that lock or wrap
+  ##     means nothing unless line goes round body, holds for every
+  ##     hold but high lock.  Rule 37 says why: high lock is hammerlock,
+  ##     hand brought round back to its own shoulder, so line going
+  ##     round body is not what makes it.  Nothing checks rule 41, and
+  ##     drawing still holds high lock to `WRAP_MIN`; workbench is
+  ##     mock-up, trusted by nobody, so drawing is left as it is.
 
 
 const FROM_ABOVE*: array[2, tuple[level: Option[Level], way: Option[Way]]] = [
