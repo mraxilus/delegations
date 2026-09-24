@@ -1600,8 +1600,8 @@ Cost: a change to any `sim/*.nim`, words included, asks for the answers again. T
 four cores, compile included, on 2026-09-24. A digest of every file is one rule. A list of the
 files that move the answers would be a second thing to keep true.
 
-Assumed: the runner rounds as this container does, so the replay is exact there too. The first run
-of the runner on this change decides it.
+**The replay is exact on the runner too.** Its law passed there on `5975d93`, on 2026-09-24, so the
+runner walks every kept sweep and both drawn walks to the numbers this container kept.
 
 ## Tests
 
@@ -1622,6 +1622,8 @@ reddens a law.
 - `trigid.nim`, danger build, on 2026-09-24, in one session on four cores. Its run took 385.1 s with
   every search, and takes 28.6 s reading kept answers. Under `nim r koch ci` it took 40.76 s,
   compile included, and the whole of `koch ci` took 110 s.
+- `trigid.nim` on the runner, under testament, compile included: 43.71 s on `5975d93`, against
+  503.91 s and 504.66 s with every search. The project job took 2 min 29 s in all.
 - `trigid.nim`, danger build, under `nim r koch ci`: 331 s wall. That is four Xeon cores shared with
   nothing else, on a Linux amd64 container, Nim 2.2.12, 2026-09-13. `tmarks` takes 12.6 s, `tread`
   7.9 s, and `tengine` 3.3 s. Every other suite is under 2 s. It is a single figure with no pair, so
