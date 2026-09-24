@@ -270,10 +270,11 @@ async function isOpenSky(page: Page, at: Finger): Promise<boolean> {
   }, at);
 }
 
-/** Drive one finger's turn as turntable, which holds height, follows finger, and passes over top.
+/** Drive one finger's turn as turntable, which follows finger and passes over top.
  *
  *  Sideways swipe with nothing picked is where turning about camera's own axes, with roll
  *  put back after, sank sight: each step tipped it down and roll put back only horizon.
+ *  Free aim now carries sky under finger, one for one, so swipe back undoes swipe.
  *  Downward drag with object picked climbs past straight down onto far side, which is
  *  what bounded turntable refused.
  */
@@ -288,37 +289,49 @@ export async function driveFingerTurntable(page: Page, cdp: CDPSession): Promise
     report('a finger starts its turn on open sky', false, `(${sky.x}, ${sky.y}) is not sky`);
     return;
   }
-  const level = await page.evaluate(() => nimCameraElevation());
+  // Free aim carries sky under finger with it, so drag that comes back brings sight back.
+  //   Rate turned sight by angle screen does not show, and drift of its steps stayed.
   const standing = await readCamera(page);
+  const level = await page.evaluate(() => nimCameraElevation());
   await dragFinger(page, cdp, [sky.x, sky.y], [sky.x + 600, sky.y]);
-  const swept = await page.evaluate(() => nimCameraElevation());
   const swung = await readCamera(page);
+  await dragFinger(page, cdp, [sky.x + 600, sky.y], [sky.x, sky.y]);
+  const back = await readCamera(page);
+  const level_back = await page.evaluate(() => nimCameraElevation());
   report(
-    'a finger swiped sideways turns the sight and keeps its height',
-    Math.abs(swung.azimuth - standing.azimuth) > 1.0 && Math.abs(swept - level) < 1e-6 &&
-      spanOf(standing.eye, swung.eye) < 1e-6,
-    `azimuth ${standing.azimuth.toFixed(4)} -> ${swung.azimuth.toFixed(4)}, ` +
-      `elevation ${level.toFixed(6)} -> ${swept.toFixed(6)}`,
+    'a finger swiped away and back turns the sight and brings it back',
+    Math.abs(swung.azimuth - standing.azimuth) > 0.3 &&
+      Math.abs(back.azimuth - standing.azimuth) < 1e-5 && Math.abs(level_back - level) < 1e-5 &&
+      spanOf(standing.eye, back.eye) < 1e-6,
+    `azimuth ${standing.azimuth.toFixed(4)} -> ${swung.azimuth.toFixed(4)} -> ` +
+      `${back.azimuth.toFixed(4)}, elevation ${level.toFixed(6)} -> ${level_back.toFixed(6)}`,
   );
 
-  // Picture follows finger with nothing picked, as it does under any finger: swipe right
-  //   and down carries what stands ahead right and down. Mouse aims instead.
+  // Picture follows finger one for one with nothing picked: swipe right and down carries
+  //   object beside finger right and down by as much. Mouse aims instead.
+  //   Finger lands 40 px left of object, which is nearest open sky reaches it, so what it
+  //   carries and what is read stand close enough on screen to move alike.
   await page.keyboard.press('Home');
   await settleCamera(page);
-  const ahead = await page.evaluate(() => nimSceneHandles()[0] ?? -1);
-  const seenAhead = async (): Promise<number[]> => page.evaluate((one) => Array.from(
+  const beside = await page.evaluate(() => nimSceneHandles()[0] ?? -1);
+  const seenBeside = async (): Promise<number[]> => page.evaluate((one) => Array.from(
     nimAnchorScreen(one, window.innerWidth, window.innerHeight),
-  ), ahead);
-  const seen_before = await seenAhead();
-  await dragFinger(page, cdp, [sky.x, sky.y], [sky.x + 60, sky.y + 40]);
-  const seen_after = await seenAhead();
+  ), beside);
+  const seen_before = await seenBeside();
+  const landing = { x: (seen_before[0] ?? 0) - 40, y: seen_before[1] ?? 0 };
+  if (!(await isOpenSky(page, landing))) {
+    report('a finger lands on open sky beside an object', false, 'no sky 40 px left of it');
+    return;
+  }
+  await dragFinger(page, cdp, [landing.x, landing.y], [landing.x + 60, landing.y + 40]);
+  const seen_after = await seenBeside();
   const across = (seen_after[0] ?? 0) - (seen_before[0] ?? 0);
   const down = (seen_after[1] ?? 0) - (seen_before[1] ?? 0);
   report(
-    'and the picture follows a finger with nothing picked, across and down',
-    across > 10 && down > 10,
-    `what stands ahead moved ${across.toFixed(1)} px across and ${down.toFixed(1)} px down, ` +
-      'for a finger moved 60 and 40',
+    'and the picture follows a finger with nothing picked, one for one',
+    Math.abs(across / 60 - 1) < 0.05 && Math.abs(down / 40 - 1) < 0.05,
+    `object beside finger moved ${across.toFixed(1)} px across and ${down.toFixed(1)} px ` +
+      'down, for a finger moved 60 and 40',
   );
 
   // Picked object anchors orbit, and ease has to finish before drag reads anything.
@@ -331,20 +344,21 @@ export async function driveFingerTurntable(page: Page, cdp: CDPSession): Promise
   }
   await page.evaluate((one) => nimSelectOnly(one), handle);
   await settleCamera(page);
-  if (!(await isOpenSky(page, sky))) {
-    report('a finger starts its orbit on open sky', false, `(${sky.x}, ${sky.y}) is not sky`);
-    await page.evaluate(() => nimSelectClear());
-    return;
-  }
+  // Finger holds point on sphere about pivot, so it lands just above pivot, on open sky,
+  //   and drags down through middle; two such drags climb past straight down.
+  const middle = await page.evaluate((one) => Array.from(
+    nimAnchorScreen(one, window.innerWidth, window.innerHeight),
+  ), handle);
+  const above = { x: middle[0] ?? 0, y: (middle[1] ?? 0) - 40 };
   const before = await readCamera(page);
-  // Far enough to climb 0.4 radians past straight down, at finger's half turn per short
-  //   side of canvas.
-  const reach = await page.evaluate(() => {
-    const canvas = document.getElementById('gl');
-    const short = Math.min(canvas?.clientWidth ?? 0, canvas?.clientHeight ?? 0);
-    return (0.5 * Math.PI - nimCameraElevation() + 0.4) * short / Math.PI;
-  });
-  await dragFinger(page, cdp, [sky.x, sky.y], [sky.x, sky.y + reach]);
+  for (let drag = 0; drag < 2; drag += 1) {
+    if (!(await isOpenSky(page, above))) {
+      report('a finger starts its orbit on open sky', false, `(${above.x}, ${above.y}) is not sky`);
+      await page.evaluate(() => nimSelectClear());
+      return;
+    }
+    await dragFinger(page, cdp, [above.x, above.y], [above.x, above.y + 240]);
+  }
   const after = await readCamera(page);
   const outward = (camera: typeof before): number[] => [
     (camera.eye[0] ?? 0) - (camera.pivot[0] ?? 0), (camera.eye[1] ?? 0) - (camera.pivot[1] ?? 0),
