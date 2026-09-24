@@ -4375,6 +4375,48 @@ suite "Camera Aim":
     resized.holdFramed(aim, TALL div 2, TALL)
     check norm(resized.eye - centre) =~ reach_narrow
 
+  test "the floor backs out along the sight, and keeps the pivot on the middle of three":
+    # Orbit turns about middle of what is picked, so floor must not carry pivot off it.
+    #   Two close together and one far off: sphere's centre lies well off their middle.
+    #   Floor used to push eye straight out from sphere's centre, which slid view
+    #   sideways and pivot with it, once sphere's centre and middle parted.
+    const (WIDE, TALL) = (WIDTH_AIM, HEIGHT_AIM)
+    let (scene, picked) = sceneOf(
+      toMultivector(Position(x: 0.0, y: 0.0, z: 0.0)),
+      toMultivector(Position(x: 0.5, y: 0.2, z: 0.0)),
+      toMultivector(Position(x: 6.0, y: -1.0, z: 1.0)),
+    )
+    # Near enough that group does not fit, so rule pulls back and stands eye on floor.
+    var camera = stanceAim(0.7, 0.35)
+    camera.dollyTo(3.0)
+    let aim = aimFor(scene, picked, none(Preview), camera.drawExtentFor(TALL)).get
+    let middle = aim.centroid.get
+    check norm(aim.sphere.get.centre - middle) > 0.5 # What this case is about.
+    camera = camera.placed(stanceFor(aim, camera, WIDE, TALL))
+    check camera.pivot =~ middle
+    check camera.distance > 3.0 # Rule pulled back.
+    # Reader pinches in past floor, so rule is broken and floor has to answer.
+    camera.dolly(0.6)
+    check not aim.isFramed(camera, WIDE, TALL)
+    let forward = camera.frame.forward
+    camera.holdFramed(aim, WIDE, TALL)
+    check aim.isFramed(camera, WIDE, TALL)
+    # Nothing turns, eye went back along its own sight, and pivot stayed on middle.
+    check camera.frame.forward =~ forward
+    check camera.pivot =~ middle
+    let at = projectToScreen(
+      camera.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL, middle
+    )
+    check abs(at.x - float(WIDE)/2.0) < 0.01
+    check abs(at.y - float(TALL)/2.0) < 0.01
+    # Same through orbit, whenever object leaves box as reader goes round.
+    for step in 0 ..< 60:
+      camera.orbit(0.05, 0.03)
+      if not aim.isFramed(camera, WIDE, TALL): camera.holdFramed(aim, WIDE, TALL)
+      check aim.isFramed(camera, WIDE, TALL)
+      check camera.pivot =~ middle
+
+
   test "a selection tight enough to fit already keeps the reader's own scale":
     # Half of "only when it must" that spread selection cannot show: distance left.
     #   exactly alone, not merely one that did not grow much.
@@ -4753,6 +4795,68 @@ suite "Camera Aim":
     check tween_two.goal.isSome
     check tween_two.destination ==
       framedFor(scene_two, picked_two, camera)
+
+
+  test "a drag inside the ease still lands the pivot on the group's middle":
+    # Reader who adds object and turns at once turns about middle of what is picked.
+    #   Drag used to mark ease arrived where it stood, and standing offer read held goal
+    #   as answered, so pivot stopped partway and orbit swung about empty point.
+    const DURATION = 0.35
+    let
+      one = Position(x: 2.0, y: 1.0, z: 0.5)
+      two = Position(x: 0.0, y: 3.0, z: 1.5)
+      middle = Position(x: 1.0, y: 2.0, z: 1.0)
+    var camera = stanceAim(0.7, 0.3).placedAtPivot(one)
+    let (scene, picked) = sceneOf(toMultivector(one), toMultivector(two))
+    var tween: CameraTween
+    tween.offerAim(
+      camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM),
+      WIDTH_AIM, HEIGHT_AIM, 0.0, DURATION,
+    )
+    check not (tween.destination.motor == camera.motor) # Ease armed toward middle.
+    tween.advance(camera, 0.2*DURATION, easeOutCubic)
+    check norm(camera.pivot - middle) > 0.1 # Partway, not there yet.
+    # Reader turns now, as drag does: every camera verb gives up ease first.
+    tween.abandon()
+    # Same turns on camera no ease carries, to read way round reader alone would face.
+    var turned_alone = camera
+    camera.orbit(0.4, 0.1)
+    turned_alone.orbit(0.4, 0.1)
+    for step in 3 .. 5:
+      # Frame loop's order: ease first, then same standing offer, which must not re-arm.
+      let now = DURATION*float(step)/5.0
+      tween.advance(camera, now, easeOutCubic)
+      tween.offerAim(
+        camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM),
+        WIDTH_AIM, HEIGHT_AIM, now, DURATION,
+      )
+      camera.orbit(0.05, 0.0) # Drag goes on through rest of ease.
+      turned_alone.orbit(0.05, 0.0)
+    check tween.is_arrived
+    check camera.pivot =~ middle
+    # Turn stays reader's: ease carries pivot alone, never way round they faced.
+    check camera.frame.forward =~ turned_alone.frame.forward
+    check camera.frame.axis_up =~ turned_alone.frame.axis_up
+    # Middle stands at middle of frame once pivot is there.
+    let at = projectToScreen(
+      camera.initMatrixViewProjection(float(WIDTH_AIM)/float(HEIGHT_AIM)),
+      WIDTH_AIM, HEIGHT_AIM, middle,
+    )
+    check abs(at.x - float(WIDTH_AIM)/2.0) < 0.01
+    check abs(at.y - float(HEIGHT_AIM)/2.0) < 0.01
+    # Settling drag-held ease slides pivot home too, rather than undoing turn.
+    var settled = stanceAim(0.7, 0.3).placedAtPivot(one)
+    var held: CameraTween
+    held.offerAim(
+      settled, scene, picked, none(Preview), settled.drawExtentFor(HEIGHT_AIM),
+      WIDTH_AIM, HEIGHT_AIM, 0.0, DURATION,
+    )
+    held.abandon()
+    settled.orbit(0.4, 0.1)
+    let forward_held = settled.frame.forward
+    held.settle(settled)
+    check settled.pivot =~ middle
+    check settled.frame.forward =~ forward_held
 
 
   test "a pointer re-pick of an object the camera already holds aims afresh":

@@ -22,7 +22,8 @@ import {
 import { driveApply, driveApplyNamed, driveReachable, driveUndo } from './apply';
 import { driveMessageGoes } from './message';
 import {
-  drivePanWhileSelected, drivePickOrbit, drivePlanePick, drivePointerPick,
+  driveGroupTurnedAtOnce, drivePanWhileSelected, drivePickOrbit, drivePlanePick,
+  drivePointerPick,
 } from './framing';
 import {
   driveFrameLabelCorner, driveLabelGlide, driveLabelHeldInView, driveLabelWorn,
@@ -159,6 +160,7 @@ async function main(): Promise<void> {
   await driveLabelWorn(page);
   await driveBackdropPlane(page, SIZE_VIEW.width, SIZE_VIEW.height);
   await drivePanWhileSelected(page, cdp);
+  await driveGroupTurnedAtOnce(page, cdp);
   await driveUndo(page);
   await driveReachable(page);
 
