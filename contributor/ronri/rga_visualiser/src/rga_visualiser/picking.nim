@@ -721,10 +721,17 @@ proc pickNearest*(
 func coversView*(
   centre: Position, radius: float, scale: DrawExtent, width, height: int
 ): bool =
-  ## Report whether disc of `radius` about `centre` spans at least frame's longer side.
+  ## Report whether disc of `radius` about `centre` reaches every corner of frame.
   ##   Cursor over such disc has no empty glass beside it to press instead, so it is
   ##   treated as backdrop; see `isBackdropUnder`.
-  radius/worldPerPixelAt(centre, scale.scale) >= float(max(width, height))
+  ##   Half of diagonal is reach from middle of frame to furthest corner, which is what
+  ##   covering every pixel asks for. Longer side was asked for before, which is 1.6 times
+  ##   that on 4:3 frame: plane covering whole window still read as drag handle, and view
+  ##   could not be moved off it.
+  ##   Measured about middle, so disc whose own centre stands well off screen is judged
+  ##   by reach it has rather than by where it sits.
+  radius/worldPerPixelAt(centre, scale.scale) >=
+    0.5*hypot(float(width), float(height))
 
 
 func isBackdropUnder*(

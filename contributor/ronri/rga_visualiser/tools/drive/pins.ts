@@ -109,7 +109,9 @@ export async function drivePinGrid(page: Page): Promise<void> {
     nimSetCameraDistance(300);
     const grid: number[] = [], emitting: number[] = [];
     for (let i = 0; i < 9; i += 1) {
-      nimCameraOrbit(0.005, 0); // Move, so furniture cache cannot hold.
+      // Turned outright, not by drag's rule: this wants view moved, and that rule
+      //   looks rather than orbits wherever nothing is picked.
+      nimSetCameraAzimuth(nimCameraAzimuth() + 0.005);
       const data = nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true);
       grid.push(data.ms_grid);
       emitting.push(data.ms_emitting);

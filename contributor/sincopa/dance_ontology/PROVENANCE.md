@@ -130,11 +130,32 @@ code twice: `said` says `elbow forward` and `open`, and the table named neither.
 walks every phrase that `said` can return, strikes out each term the table names, and refuses any
 residue.
 
-**`open` carries two meanings, and the glossary allows one.** The chain calls its middle **Open**,
-where the pair is unwound. The sim says `open` for an arm that lies on neither face of its own body,
-which is a different thing at a different scale. Article VI.8 asks for one meaning for each word, so
-one of the two needs another name. The report now names both rows, and which word moves is for the
-Architect to rule.
+**`open` is what one arm is, and the middle of the chain is a neutral twist.** The word named two
+things. One is the middle of the chain, where the pair carries no twist. The other is an arm that
+lies on neither face of its own body. Article VI.8 asks for one meaning for each word. The
+Architect ruled that `open` keeps the arm, and named the middle of the chain **Neutral**.
+
+The ruling first read that the two were one concept, because an open twist means both arms are
+open. The recorded sweeps refuse that, in both directions, and the ruling followed the measurement.
+
+**Measured** over all 1,233 moments of the twelve low and high sweeps in `design/turns.json`. The
+six `above` sweeps are left out, because `said` answers with the band there. 147 moments have every
+held arm saying `open`, and 139 of them stand at a turn that is not nought. `R-r` low reads open out
+to +0.40 turns, and `L-l` high reads open again at -1.60. At nought turns, four of the twelve sweeps
+carry arms that are not open. `L-l` high and `R-r` high read `wrap high (led)`, and the same-name
+pair reads `lock` on the arms of the Follow.
+
+A pair holds four arms, and they disagree, which is what breaks the equivalence rather than a
+threshold set a little wrong. The same-name pair rests Pillion, so the Lead reaches forward while
+the Follow reaches behind their own back. One moment of it reads `open`, `lock low (led)`, `open`,
+`lock low (led)`.
+
+The ruling also overrides an earlier choice of words. `neutral` sat on the avoid line of Open, and
+it is now half of the agreed term. Verified by `tglossary.nim`, which reads the ruling from
+`GLOSSARY.md` rather than restating it. The old name fails both of its laws: the position says a
+word the glossary rejects, and it carries no word the glossary agrees.
+
+Issue #235 holds the whole table of where every arm reads open, sweep by sweep.
 
 **An avoid line cannot be held by matching the word.** The glossary rejects `wind` for the quantity
 that Twist names. The pages also use `wind` as a verb, where the arms wind, and that use is right.

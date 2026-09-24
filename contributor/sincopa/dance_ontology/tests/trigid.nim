@@ -19,7 +19,7 @@ joinable: false
 
 {.experimental: "strictFuncs".}
 
-import std/[math, strformat, unittest]
+import std/[cpuinfo, math, strformat, typedthreads, unittest]
 
 import ../sim/[body, hold, limb, read, rig, rigid, vec, walk]
 
@@ -59,17 +59,86 @@ const
             Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Left)])]
     ## Cross-name chain, whose stills reference draws wound to turn and half.
 
-let CHOSEN = block:
+var
+  turned: array[2, Walk] ## Where that hold stands to turn each way at torso height.
+  turned_found = false
+
+proc chosen(): array[2, Walk] =
   ## Where that hold stands to turn each way at torso height, and how far it
-  ## carries from there.  Found once: laws below want it, and finding it sweeps
-  ## every distance couple may stand at.
-  let sw = swept(HUMAN, Band.Torso, SHAKE, most = 1.6)
-  [sw.neg, sw.pos]
+  ## carries from there.
+  ##   Found once, on first law that wants it.  Finding it sweeps every distance
+  ##     couple may stand at, measured at 101 s; as module's own `let` every run
+  ##     paid that before its first law, so running one law alone cost 101 s
+  ##     before it could start.  Suite is asked one law at time while it is
+  ##     worked on, which `unittest` takes as argument.
+  if not turned_found:
+    let sw = swept(HUMAN, Band.Torso, SHAKE, most = 1.6)
+    turned = [sw.neg, sw.pos]
+    turned_found = true
+  turned
 
 func carried(w: Walk): float =
   ## How far this walk went, counting one that never stopped as further than any
   ## that did.
   if not w.restHolds: -Inf elif w.stopped: w.at else: Inf
+
+
+#[ Every Core At Once ]#
+
+type
+  Question = tuple[most, step: float]
+    ## One way about, walked no further than this.
+
+  Share = tuple[first, every: int, hold: Link]
+    ## Worker's own share of questions, and hold every one of them is of.
+
+var
+  wanted: seq[Question] ## Questions, set before any thread starts.
+  fars: seq[float]      ## Distances couple may stand at.
+  carries: seq[float]   ## How far each question carried from each distance.
+
+proc walking(share: Share) {.thread.} =
+  ## Walk every `every`th question from `first` on.
+  ##   Hold arrives as single `Link`, which is two bodies and two arms and holds
+  ##     no sequence, and worker makes its own list of it.  Handing list itself
+  ##     to four threads is what `design/modelled.nim` records dying of.  Every
+  ##     other thing crossing here is number, and `HUMAN` is plain arrays of them.
+  {.cast(gcsafe).}:
+    let hold = @[share.hold]
+    var i = share.first
+    while i < carries.len:
+      let q = wanted[i div fars.len]
+      carries[i] = walked(HUMAN, Band.Torso, hold, Body.Two,
+                          fars[i mod fars.len], q.most, q.step,
+                          false, Body.Two).carried
+      i += share.every
+
+proc carriedFrom(hold: Link; every: openArray[Question]): seq[seq[float]] =
+  ## How far each question carries this hold from every distance couple may
+  ## stand at.
+  ##   Answered on every core at once.  Walks are independent: each builds its
+  ##     own world, settles it, reads it and frees it, and no two share
+  ##     anything.  Measured: hundred walks of 1.6 turns and fifty of 0.6, one
+  ##     after another, cost 221.6 s where four cores cost 56.5 s, and not one
+  ##     of hundred and fifty answers differed by bit.  `design/modelled.nim`
+  ##     answers its own questions this way and records fifteen minutes
+  ##     becoming four.
+  ##   Answers are ordered by question and then by distance, whatever order
+  ##     threads found them in, so law reads list it read before.  Each worker
+  ##     writes only its own places, allotted before any thread starts.
+  ##   Cost: law no longer stops at first distance that breaks it, since every
+  ##     distance is walked before any is read.  Verdict is same; report of
+  ##     failing law names every distance rather than first.
+  wanted = @every
+  fars = @[]
+  for far in stands(HUMAN): fars.add far
+  carries = newSeq[float](wanted.len * fars.len)
+  let cores = max(1, countProcessors())
+  var workers = newSeq[Thread[Share]](cores)
+  for w in 0 ..< cores: createThread(workers[w], walking, (w, cores, hold))
+  joinThreads(workers)
+  for k in 0 ..< wanted.len:
+    result.add carries[k * fars.len ..< (k + 1) * fars.len]
 
 
 suite "two dancers in rigid body engine":
@@ -175,25 +244,22 @@ suite "two dancers in rigid body engine":
     ##   nearest keeping tie (`chosen`).  Exact, this law would fail from noise
     ##   fix was for: one build carries one step more from one distance than
     ##   another build does, and neither is wrong.
+    let got = carriedFrom(SHAKE[0], [(1.6, -STEP), (1.6, STEP)])
     for way in 0 .. 1:
-      let
-        step = (if way == 0: -STEP else: STEP)
-        chose = CHOSEN[way]
+      let chose = chosen()[way]
       check chose.restHolds
-      for apart in stands(HUMAN):
-        let w = walked(HUMAN, Band.Torso, SHAKE, Body.Two, apart, 1.6, step,
-                       false, Body.Two)
-        check w.carried <= chose.carried + STEP + 1e-9
+      for carry in got[way]:
+        check carry <= chose.carried + STEP + 1e-9
 
   test "turn couple are said to reach is turn some distance carries":
     ## `reaches` answers at first distance that carries turn rather than at best of
     ## them, which is same answer for less work only so long as it looks at every
     ## distance before saying no.
+    ##   `Inf` is how `carried` says walk never stopped, which is hold standing
+    ##   at rest there and turn running whole way.
     var any = false
-    for apart in stands(HUMAN):
-      let w = walked(HUMAN, Band.Torso, SHAKE, Body.Two, apart, ASK, -STEP,
-                     false, Body.Two)
-      if w.restHolds and not w.stopped: any = true
+    for carry in carriedFrom(SHAKE[0], [(ASK, -STEP)])[0]:
+      if carry == Inf: any = true
     check any
     check reaches(HUMAN, Band.Torso, SHAKE, -ASK)
     check not reaches(HUMAN, Band.Torso, CHAIN, BEYOND, away = true)
@@ -204,7 +270,7 @@ suite "two dancers in rigid body engine":
     ## straight elbow reads perfectly comfortable and every moment page draws
     ## reports room it does not have.
     for way in 0 .. 1:
-      let c = rest(Band.Torso, CHOSEN[way].apart)
+      let c = rest(Band.Torso, chosen()[way].apart)
       check roomAt(c, c.poseOf(0), 0) > 0.0
       c.free()
 
@@ -480,15 +546,23 @@ func linkCapsules(rig: Rig; a: ArmPose): seq[tuple[p, q: Vec, r: float]] =
     else:
       result.add ((s + e) * 0.5, (s + e) * 0.5, long / 2.0)
 
-iterator corpus(): tuple[name: string, band: Band, links: seq[Link], w: Walk] =
+type Walked = tuple[name: string, band: Band, links: seq[Link], w: Walk]
+
+var walks: seq[Walked] ## Corpus, swept once.
+
+proc corpus(): seq[Walked] =
   ## Two single holds walked one way from where couple choose to stand, which
   ## is what pages draw: crown is where arm goes over head, torso is where arms
   ## lie against bodies.
-  for (name, band, arms) in [("L-l above", Band.Crown, [Arm.Left, Arm.Left]),
-                             ("L-r low", Band.Torso, [Arm.Left, Arm.Right])]:
-    let links = @[Link(ends: [(Body.One, arms[0]), (Body.Two, arms[1])])]
-    let sw = swept(HUMAN, band, links, most = 1.0)
-    yield (name, band, links, sw.pos)
+  ##   Swept once and kept.  Each sweep walks every distance couple may stand
+  ##     at, measured at 17 s over crown and 48 s at torso, and two laws below
+  ##     read same walks; as iterator it swept both again for second law.
+  if walks.len == 0:
+    for (name, band, arms) in [("L-l above", Band.Crown, [Arm.Left, Arm.Left]),
+                               ("L-r low", Band.Torso, [Arm.Left, Arm.Right])]:
+      let links = @[Link(ends: [(Body.One, arms[0]), (Body.Two, arms[1])])]
+      walks.add (name, band, links, swept(HUMAN, band, links, most = 1.0).pos)
+  walks
 
 suite "arms move as arms do":
   ## Architect, watching viewer: bodies too rigid, arms crushed and passing
@@ -627,8 +701,10 @@ const
   ONE_R = @[Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Left)])]
     ## Single hold over crown, right to left: standard diagram's A4 wound half.
 
-iterator stills(): tuple[name: string, links: seq[Link], turns: float, away: bool,
-                         either: bool] =
+type Still = tuple[name: string, links: seq[Link], turns: float, away: bool,
+                   either: bool]
+
+iterator stills(): Still =
   ## Corpus of stills: both chains from cross to cross, free frame stood pillion,
   ## and single hold at quarter and half.
   ##   Chains are what reference draws wound: cross-name rests face to face,
@@ -646,6 +722,28 @@ iterator stills(): tuple[name: string, links: seq[Link], turns: float, away: boo
   yield ("free, pillion", FREE, 0.5, false, false)
   yield ("left to left at quarter", ONE_L, 0.25, false, false)
   yield ("left to left at half", ONE_L, 0.5, false, false)
+
+var
+  asked: seq[Still]  ## Stills, listed once.
+  chose: seq[Stood]  ## And where couple stand for each of them.
+
+proc standings(): tuple[stills: seq[Still], stood: seq[Stood]] =
+  ## Where couple stand for every still, found once.
+  ##   Each search walks every distance couple may stand at, and still that
+  ##     eases nowhere pays whole walk: three of eight do, at 35 s, 38 s and
+  ##     38 s, and eight together cost 125 s, measured.  Two laws below read
+  ##     same answers and each searched for itself before.
+  ##   Answers are kept rather than searched again because they are same
+  ##     question: law that reads strain and law that reads capsules ask one
+  ##     pose two ways.  Law that asks whether search answers same twice is not
+  ##     one of them, and searches for itself (`same still from same distance`).
+  if chose.len == 0:
+    for still in stills():
+      asked.add still
+      chose.add standing(HUMAN, Band.Crown, still.links, still.turns, still.away,
+                         Body.Two, still.either)
+  (asked, chose)
+
 
 proc overlapOf(c: Couple): tuple[depth: float, pair: string] =
   ## Deepest any two capsules engine collides sit in each other, by geometry
@@ -688,8 +786,9 @@ suite "every still stands at ease":
     ## Strain is nought outside every ease band, one at some end.  Every arm,
     ## held or free, both waists, every collarbone: free arm shoved to its end
     ## by partner's trunk is strain couple feel, as much as held one's.
-    for (name, links, turns, away, either) in stills():
-      let where = standing(HUMAN, Band.Crown, links, turns, away, Body.Two, either)
+    let (every, stood) = standings()
+    for i, (name, links, turns, away, either) in every:
+      let where = stood[i]
       echo &"    {name}: stood {where.apart:.2f}, strain {where.strain.most:.2f} " &
         &"at {where.strain.what} {where.strain.whose.body} {where.strain.whose.arm}"
       check where.holds
@@ -757,8 +856,9 @@ suite "every still stands at ease":
     ## and not engine's manifolds, so engine is not asked to mark its own work.
     ## Deeper than slop is one thing in another; hands further apart than slop
     ## are not joined; joint pulled further than `PART` is dislocation.
-    for (name, links, turns, away, either) in stills():
-      let where = standing(HUMAN, Band.Crown, links, turns, away, Body.Two, either)
+    let (every, stood) = standings()
+    for i, (name, links, turns, away, either) in every:
+      let where = stood[i]
       check where.holds
       if not where.holds: continue
       let (holds, c) = stood(HUMAN, Band.Crown, links, where.turns, away, Body.Two,

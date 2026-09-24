@@ -136,6 +136,12 @@ An arm bent behind its own back when low, or to the shoulder of the same arm whe
 low lock is entered only from a low position, for safety.
 _Avoid_: pin, twist, hammerlock
 
+**Open**:
+An arm that lies on neither face of its own body, so it carries no modifier. It says nothing
+about the twist. An arm is open at many twists, and a pair in a neutral twist may carry two
+wrapped arms.
+_Avoid_: free, clear, straight, unwound
+
 **Turn**:
 A dancer who rotates, about their own axis or round their partner.
 _Avoid_: rotation, spin, revolution
@@ -174,25 +180,26 @@ _Avoid_: compound, bearing-keeping orbit, locked orbit
 
 **Chain**:
 The seven arrangements that two held hands pass through under whole turns, a half turn
-apart: swan, diamond, cross, open, cross, diamond, swan. It is a chain with ends, and never a
-cycle.
+apart: swan, diamond, cross, neutral, cross, diamond, swan. It is a chain with ends, and
+never a cycle.
 _Avoid_: cycle, ring, ladder
 
-**Open**:
-The middle of the chain, where the pair is unwound.
-_Avoid_: unwound, neutral, rest
+**Neutral**:
+The twist where nothing is wound, which is the middle of the chain. The pair stands in a neutral
+twist, as it stands in a cross twist or a diamond twist.
+_Avoid_: open, unwound, rest, zero, twist neutral
 
 **Cross**:
-Half a turn from open, where the pair crosses once and the partners face the same way.
+Half a turn from neutral, where the pair crosses once and the partners face the same way.
 _Avoid_: x, half box
 
 **Diamond**:
-A whole turn from open, where the pair crosses twice with a diamond between.
+A whole turn from neutral, where the pair crosses twice with a diamond between.
 _Avoid_: box, double cross
 
 **Swan**:
-A turn and a half from open, at either end of the chain. One connection is straight, and the
-other snakes around it.
+A turn and a half from neutral, at either end of the chain. One connection is straight,
+and the other snakes around it.
 _Avoid_: double box, triple cross, coil
 
 **Reference**:
