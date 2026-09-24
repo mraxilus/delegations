@@ -57,7 +57,7 @@ func isChecker*(path: string): bool =
   path in CHECKER_FILES or path.startsWith(CHECKER_DIR & "/")
 
 
-func isCode*(dir, path: string): bool =
+func isCode(dir, path: string): bool =
   ## Decide whether changed path is code of project, i.e. inside it and not its record.
   ##   Records are `PROJECT_FILES`, same three `layout.nim` demands: README, provenance and
   ##   glossary describe project and run nothing, so changing one compiles nothing.
@@ -93,7 +93,7 @@ func nodeDirs*(tree: Tree, dirs: openArray[string]): seq[string] =
     if tree.holds(dir, NODE_MANIFEST) and tree.holds(dir, NODE_LOCK): result.add dir
 
 
-func driverOf*(tree: Tree, dir: string): string =
+func driverOf(tree: Tree, dir: string): string =
   ## Read project's build driver from tree; empty when project carries none.
   let path = dir & "/" & DRIVER_FILE
   for e in tree:
@@ -151,7 +151,7 @@ proc typeJobs*(root: string, tree: Tree, dirs: openArray[string]): seq[Finding] 
   result.add runTypes(root, targets)
 
 
-func nimbleOf*(tree: Tree, dir: string): string =
+func nimbleOf(tree: Tree, dir: string): string =
   ## Read project's nimble text from tree; empty when file is absent.
   let path = dir.nimblePath
   for e in tree:
@@ -204,7 +204,7 @@ proc render*(jobs: openArray[Job]): string =
   $node
 
 
-proc targetsFor*(jobs: openArray[Job]): (seq[Target], seq[Finding]) =
+proc targetsFor(jobs: openArray[Job]): (seq[Target], seq[Finding]) =
   ## Resolve each job's pin to toolchain serving it, reporting pins nothing serves.
   ##   Pins differ between projects and one machine has one compiler on PATH, so each pin
   ##   is resolved rather than assumed: PATH when it already serves, else cache, else

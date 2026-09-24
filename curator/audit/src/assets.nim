@@ -180,7 +180,7 @@ proc readDigest*(path: string): string =
   candidate
 
 
-proc fetchAsset*(root, file: string): bool =
+proc fetchAsset(root, file: string): bool =
   ## Fetch asset into store and keep it only when its bytes carry declared digest.
   ##   Downloaded beside destination and moved in once checked, so half-written file is never
   ##   read as verified one.

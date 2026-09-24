@@ -1,7 +1,6 @@
 ## Replicate rules checker holds itself to, from `checker.nim` header.
-##   Each rule here is one curator pass of 2026-09-06 found by reading, so each fixture
-##   is that fault written down: dead routine, module without suite, verb set drifting.
-##   Option drift is fourth: usage text leaving out option parser takes, as `--driven` was.
+##   Each fixture is one fault written down: dead routine, module without suite, verb set
+##   drifting, and usage text leaving out option parser takes.
 
 import std/[strutils, unittest]
 import ../../src/[markdown, checker]
@@ -38,15 +37,17 @@ suite "Checker":
     # Operator is spelled where used, never named, so counting identifiers cannot find it.
     check exportedRoutines("func `<`*(a, b: Finding): bool =\n").len == 0
 
-  test "routine nothing names is dead, however it is called":
+  test "routine no other module and no suite names is dead, however it is called":
     let dead = "func gone*(): int = 1\n"
-    check checkDeadExports(["m.nim"], [dead]).len == 1
+    check checkDeadExports(["m.nim"], [dead], []).len == 1
+    # Own module's call is no reason to export: `*` marks intentional export alone.
+    check checkDeadExports(["m.nim"], [dead & "let x = gone()\n"], []).len == 1
     # Call written either way counts, which is why identifier runs are scanned, not words.
-    check checkDeadExports(["m.nim"], [dead & "let x = gone()\n"]).len == 0
-    check checkDeadExports(["m.nim"], [dead & "let x = tree.gone\n"]).len == 0
-    # Caller may sit in another module of checker.
-    check checkDeadExports(["m.nim", "n.nim"], [dead, "let x = gone()\n"]).len == 0
-    let found = checkDeadExports(["m.nim"], [dead])
+    check checkDeadExports(["m.nim", "n.nim"], [dead, "let x = gone()\n"], []).len == 0
+    check checkDeadExports(["m.nim", "n.nim"], [dead, "let x = tree.gone\n"], []).len == 0
+    # Suite alone naming it keeps it: pure rules are covered by calling them directly.
+    check checkDeadExports(["m.nim"], [dead], ["check gone() == 1\n"]).len == 0
+    let found = checkDeadExports(["m.nim"], [dead], [])
     check found[0].path == "m.nim"
     check found[0].message.endsWith("got `gone`.")
 
