@@ -1840,7 +1840,9 @@ operations.
 - the 68 points of the frame at 296.8 px flat at half progress;
 - the head sitting its carried travel at 45 placements;
 - a matured hold taken once;
-- a full orbit at two elevations in steps of 0.002 rad, with no isolated label step;
+- a line's label over two orbits of 1,257 steps each, with no isolated step;
+- the push of that label turning at most 0.017 in one step, against the 0.05 its law allows;
+- a plane's label over one such orbit, with no hop where its sampled top hops 29 times;
 - two more orbits: the label of the horizon line on the leftmost band point in the left half;
 - the label of the frame on its left edge at its foot;
 - the label of a plane a milliradian either side of the flip, standing under a pixel apart.
@@ -2117,10 +2119,9 @@ Assumed: that 0.75 s is the right dwell for any hand.
 
 ## Two fingers
 
-**Two fingers are read once for each frame, and zoom only past the tap slop.** The move of each
-finger arrives as its own `pointermove`. Read there, every step of a pan carried together is a
-zoom in by the step of one finger. It zooms out again by the step of the other. That was harmless
-while a dolly was a pure scale, and became a pivot-moving re-pivot on every one once it was not.
+**Two fingers are read once for each frame, and zoom only past the tap slop.** Each finger's move
+arrives as its own `pointermove`. Read there, a pan carried by two fingers zooms in by one finger's
+step and out by the other's, and each zoom moves the pivot.
 
 `glue.settleTwoFingers` reads both fingers once for each frame, from the frame loop. Two fingers
 carried together never hold their separation to the pixel. So a pinch zooms only once the
@@ -2655,10 +2656,9 @@ whatever the tween holds. Without it, the same object picked again, after the wh
 reader out, goes nowhere.
 
 **A turn inside the ease still turns about the middle of what is picked.** A finger that adds an
-object and turns at once lands inside the 0.35 s ease. The turn used to mark the ease done, and the
-standing offer then read the group as answered, so the pivot stayed partway. On a 390 by 844 phone
-it stopped 0.44 units short of the middle of two points, 23.2 px off the middle of the frame. It now
-arrives at 0.000, and the turn the reader made stands.
+object and turns at once lands inside the 0.35 s ease. `CameraTween.abandon` gives the turn to the
+reader, and the pivot still arrives, 0.000 units from the middle. Rejected: stopping the ease, which
+left the pivot 23.2 px off the middle of two points on a 390 by 844 phone.
 
 *Checked.* Verified by `suites.nim`:
 
@@ -2921,19 +2921,19 @@ testament:
 | Entry point | Backend | Capacities | Why |
 |-------------|---------|-----------|-----|
 | `t4d.nim` | C | Default | The desktop build, as shipped |
-| `t4d_browser.nim` | JS | Default | The browser build's own backend |
+| `t4d_browser.nim` | JS | Default, 4 history steps | The browser build's own backend |
 | `t4d_small.nim` | C | 12 objects, 12-char labels, 4 steps | Boundaries a test reaches |
 
 The JS row is not a formality: a rule reached through two mechanisms is held together only where
-both run. The reduced row makes any constant tuned to the default fail here, and `LABEL_MAX` at 12
-is under several labels that the suite constructs. Cases that need C — `snprintf`, the encoders,
-the arena, and save and load — guard themselves with `when not defined(js)`.
+both run. It keeps 4 history steps, because the History laws say nothing of the backend. Measured
+on Node 22 on 2026-09-24, its run takes 48 s against 162 s at the default, and the orrery still
+runs. The reduced row makes any constant tuned to the default fail here, and `LABEL_MAX` at 12 is
+under several labels that the suite constructs. Cases that need C — `snprintf`, the encoders, the
+arena, and save and load — guard themselves with `when not defined(js)`.
 
 A case that walks every pair of handles at 10,000 objects runs ten minutes without output, so the
-suite gathers the joiners once instead. The JS entry point declares `targets: "js"`, rather than
-overrides the command of testament. So under `koch test` testament compiles with the JS backend
-and runs the result through node. That is what makes the row real rather than a claim that nothing
-checks.
+suite gathers the joiners once instead. The JS entry point declares `targets: "js"` and no command
+of its own. So `koch test` compiles it with the JS backend and runs the result through node.
 
 **The suites test rules, and a second layer drives events.** A rule bug earns a suite case, and a
 wiring bug earns a driven check, at the layer that the bug lived at. That is `tools/drive/` for
