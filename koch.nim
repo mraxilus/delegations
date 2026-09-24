@@ -18,7 +18,7 @@
 ##   | base    | paths branch gained against base's own rules  (--base)                           |
 ##   | role    | pull request's role line and labels against branch  (--branch)                   |
 ##   | stamp   | print rules stamp for PROVENANCE.md; --write sets every Rules row                |
-##   | ci      | fetch origin/main, then every check but `deps` and `role`, as it scopes          |
+##   | ci      | fetch origin/main; tree, scope, commits, base; if clean, types, tests, driven    |
 ##   |---------|----------------------------------------------------------------------------------|
 ##   Verb of one project is that project's own, in its `tools/build.nim`; koch names verb and
 ##     selects projects carrying it, and holds none of what it does. `types`, `drive` and
@@ -41,11 +41,12 @@
 ##     `ROLE_BODY` from event payload, and `ROLE_LABELS` from API as JSON array of label
 ##     names. That is why `ci` leaves it out: local run has no pull request to read.
 ##
-##   `ci` compiles only projects whose code changed, since static pass costs tenths of
-##     second and suites cost minutes; push run on `main` and weekly run do same against
-##     their own base, so nothing compiles every project (CURATOR.md duty 11). Matrix runs
-##     each on its own pin, as `ci` does locally: `compilers.nim` serves each changed project's
-##     pin from PATH, cache or fetch, so which compiler PATH holds decides nothing.
+##   `ci` compiles only projects whose code changed, since static pass costs about second
+##     and suites cost minutes (`curator/audit/PROVENANCE.md`, Figures); push run on `main`
+##     and weekly run do same against their own base, so nothing compiles every project
+##     (CURATOR.md duty 11). Matrix runs each on its own pin, as `ci` does locally:
+##     `compilers.nim` serves each changed project's pin from PATH, cache or fetch, so which
+##     compiler PATH holds decides nothing.
 ##
 ##   Rejected: make (second toolchain, recipe tabs, untested glue); NimScript tasks (compiler
 ##     VM subset, script loaded on every compile, task names shadow compiler commands,
@@ -179,21 +180,21 @@ proc run(options: Options): int =
     for package in named: echo package
     return 0
   of "assets":
-    # Fetched file is repository's, never one project's: two targets pinned four of same
-    #   files byte for byte before this (repository issue 116). Store holds digest; caller
-    #   names which files it wants, so what is shared is bytes rather than choice.
+    # Fetched file is repository's, never one project's: two targets pinning one file would
+    #   hold two copies of one digest. Store holds digest; caller names which files it wants,
+    #   so what is shared is bytes rather than choice.
     let root = storeRoot(getEnv(ASSETS_KEY))
     var wanted = options.rest
     if options.project.len > 0: wanted.insert(options.project, 0)
     # Naming no file asks for declaration rather than for bytes: consumer checking whether
-    #   name is declared reads published rows, never this module's source (issue 134).
+    #   name is declared reads published rows, never this module's source.
     if wanted.len == 0:
       stdout.write declaration()
       return 0
     for file in wanted:
       let path = assetIn(root, file)
       if path.len == 0:
-        found.add(if file.digestOf.len == 0: unknown(file) else: @[finding(
+        found.add(if file.declaredDigest.len == 0: unknown(file) else: @[finding(
           "curator/audit/src/assets.nim", 0,
           "Asset is declared but could not be fetched or checked; got `" & file & "`.",
         )])
@@ -233,16 +234,23 @@ proc run(options: Options): int =
     else: echo tree.rulesStamp
     return 0
   of "ci":
+    # Checks costing about second run first, and any finding among them stops run before
+    #   types, suites and drive, which cost minutes and run again once finding is fixed.
+    #   Cost: suite failure shows only after static pass is clean.
     discard gitFields(options.root, ["fetch", "-q", "origin", MAIN])
     let tree = options.root.readTree
     let (branch, base) = (options.branchOrDefault, options.baseOrDefault)
     found = tree.auditTree
     found.add prunedFindings(options.root, tree)
-    found.add typeJobs(options.root, tree, options.scopedDirsOf(tree))
-    found.add ciJobs(options.root, tree, tree.jobs(changedPaths(options.root, base)))
     found.add checkScope(branch, changedPaths(options.root, base), movedPaths(options.root, base))
     found.add checkCommits(branch, subjects(options.root, base))
     found.add checkBase(gainedPaths(options.root, base))
+    if found.len > 0:
+      found.report
+      echo "Types, suites and drive not run; fix findings above, then run again."
+      return 1
+    found.add typeJobs(options.root, tree, options.scopedDirsOf(tree))
+    found.add ciJobs(options.root, tree, tree.jobs(changedPaths(options.root, base)))
   else:
     stderr.write USAGE
     return 2

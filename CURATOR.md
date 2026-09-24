@@ -166,13 +166,14 @@ This section adds only what differs for a curator.
 
 5. **New file kind.** Register it in `curator/audit/src/kinds.nim` with its comment syntax,
    extend `comments.nim` where the syntax is new, update the header table, and add fixtures.
-   Until then the kind does not exist (Article VI.5), and the audit rejects it.
+   `tkinds.nim` holds the header table to the registry. Until then the kind does not exist
+   (Article VI.5), and the audit rejects it.
 
 6. **New domain.** This is the decision of the Architect alone. Add it to `DOMAINS` in
    `curator/audit/src/domains.nim`, to its header table, and to the table in the root
    `README.md`. Create `contributor/<domain>/README.md`, with the name as the heading and the
    theme as a line. The layout check verifies that `DOMAINS`, the table and the domain README
-   agree. Nothing checks the header table, so keep it by hand.
+   agree. `tdomains.nim` holds the header table to `DOMAINS`.
 
 7. **New curator project.** Any name matching `[a-z][a-z0-9_]*`, on branch
    `curator/<project>/<name>`, with the full project shape from `CONTRIBUTOR.md`.
@@ -316,7 +317,7 @@ alone.
 | `base` | paths base gained | branch carries base's rules and checker |
 | `role` | a pull request's body and labels | opening line and label are the branch's role |
 | `stamp` | charter documents | prints the stamp; `--write` sets every `Rules` row to it |
-| `ci` | fresh `origin/main` | tree, types, changed projects, driven, scope, commits, base |
+| `ci` | fresh `origin/main` | tree, scope, commits, base; when clean, types, tests, driven |
 
 `ci` leaves out `role`, because `role` reads a pull request rather than the tree. Its body
 arrives from the event payload as `ROLE_BODY`, and its labels from the API as `ROLE_LABELS`.
@@ -332,8 +333,8 @@ branch touches, and for no others.
 The checker holds itself to rules of its own, in `checker.nim`, because it checks every
 project and nothing checked it:
 
-- A routine exported and called nowhere is a finding.
-- A check module without `tests/t<module>.nim` is a finding.
+- A routine exported and named by no other module and no suite is a finding.
+- A check module without `tests/suites/t<module>.nim` is a finding.
 - The verbs that koch dispatches, the verbs that its usage text prints, and the rows of the
   table above are one set named three times. Any two that differ are a finding.
 - The options that koch parses and the options that its usage text prints are one set named
