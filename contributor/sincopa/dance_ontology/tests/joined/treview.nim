@@ -17,6 +17,33 @@ const OUT = "build/review"
   ## Where page and pictures land; ignored by git, created here.
 
 
+func importsOf(source: string): seq[string] =
+  ## Each `import` statement of source, with lines that continue it.
+  var going = false
+  for line in source.splitLines:
+    if line.startsWith("import"):
+      result.add line
+      going = true
+    elif going and line.startsWith(" "):
+      result[^1].add line
+    else:
+      going = false
+
+
+func suitesOf(stub: string): seq[string] =
+  ## Suites stub imports as `./<dir>/[...]`, as paths under `tests/`.
+  for statement in stub.importsOf:
+    var at = statement.find("./")
+    while at >= 0:
+      let open = statement.find("/[", at)
+      let shut = statement.find(']', at)
+      if statement[at - 1] != '.' and open > at and shut > open and
+          statement[at + 2 ..< open].allCharsInSet(IdentChars):
+        for name in statement[open + 2 ..< shut].split(','):
+          result.add "tests" / statement[at + 2 ..< open] / name.strip & ".nim"
+      at = statement.find("./", at + 2)
+
+
 suite "the review page":
   test "the page renders with every marker filled":
     let page = renderReview()
@@ -33,6 +60,18 @@ suite "the review page":
     # Review page is exploration, not page project stands behind, and title says so.
     check "<title>" & MOCKUP & " — " in page
     check "<title>" & WORK & " — " notin page
+
+  test "the page counts the laws of every suite a stub runs":
+    # Laws live in stubs and in suites stubs import, so count is taken from stubs
+    # themselves, rather than from where page's count looks.
+    var laws = 0
+    for stub in walkFiles("tests/t*.nim"):
+      for path in @[stub] & readFile(stub).suitesOf:
+        for line in readFile(path).splitLines:
+          if line.strip.startsWith("test \""):
+            inc laws
+    check laws > 0
+    check $laws & " tests run over all " in renderReview()
 
   test "the page and every picture are written and read back":
     createDir(OUT)
