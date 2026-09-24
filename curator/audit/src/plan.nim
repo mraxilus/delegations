@@ -1,9 +1,8 @@
 ## Select projects worth compiling for one change, and render them for CI matrix.
 ##   Static checks are cheap and stay whole-tree; compiling and running suites is not, and
 ##   it is only cost that grows as projects arrive. So test set is scoped and static pass is
-##   not. Pair backing that is in PROVENANCE.md Figures and is not copied here: figures this
-##   header carried were retired there as taken on another machine, and went on being cited
-##   from here for whole day after.
+##   not. Pair backing that is in PROVENANCE.md Figures and is not copied here, so figure
+##   retired there leaves no stale copy behind.
 ##
 ##   Project enters test set when changed path under it is code, i.e. anything but its three
 ##     records, `PROJECT_FILES`: rules propagation rewrites provenance and glossary in every
@@ -57,7 +56,7 @@ func isChecker*(path: string): bool =
   path in CHECKER_FILES or path.startsWith(CHECKER_DIR & "/")
 
 
-func isCode*(dir, path: string): bool =
+func isCode(dir, path: string): bool =
   ## Decide whether changed path is code of project, i.e. inside it and not its record.
   ##   Records are `PROJECT_FILES`, same three `layout.nim` demands: README, provenance and
   ##   glossary describe project and run nothing, so changing one compiles nothing.
@@ -93,7 +92,7 @@ func nodeDirs*(tree: Tree, dirs: openArray[string]): seq[string] =
     if tree.holds(dir, NODE_MANIFEST) and tree.holds(dir, NODE_LOCK): result.add dir
 
 
-func driverOf*(tree: Tree, dir: string): string =
+func driverOf(tree: Tree, dir: string): string =
   ## Read project's build driver from tree; empty when project carries none.
   let path = dir & "/" & DRIVER_FILE
   for e in tree:
@@ -122,8 +121,7 @@ proc systemPackages*(root: string, tree: Tree, dirs: openArray[string]): seq[str
 proc repositorySystem*(root: string, tree: Tree, dirs: openArray[string]): seq[string] =
   ## Read what whole machine needs: koch's own packages, plus every named project's, sorted.
   ##   Answer to "what must be installed before any of this runs" is one command rather than
-  ##   prose somewhere, which is what rule koch enforces asks of every project and what koch
-  ##   itself did not keep (repository issue 78).
+  ##   prose somewhere, which is what rule koch enforces asks of every project, koch included.
   ##   koch's own are unconditional; project's arrive by that project declaring them, so caller
   ##   naming one project gets that project's alone and is served by `systemPackages`.
   var names: seq[string]
@@ -151,7 +149,7 @@ proc typeJobs*(root: string, tree: Tree, dirs: openArray[string]): seq[Finding] 
   result.add runTypes(root, targets)
 
 
-func nimbleOf*(tree: Tree, dir: string): string =
+func nimbleOf(tree: Tree, dir: string): string =
   ## Read project's nimble text from tree; empty when file is absent.
   let path = dir.nimblePath
   for e in tree:
@@ -182,19 +180,14 @@ func allJobs*(tree: Tree): seq[Job] =
   tree.jobsFor(tree.projectDirs)
 
 
-func sweepJobs*(tree: Tree, paths: openArray[string]): seq[Job] =
-  ## Build sweep: projects whose code merged in window, none when nothing did.
-  ##   Rot arrives with merges, so week nobody merged code has nothing to find, and week
-  ##   somebody did has that project to compile. Record-only merges count as nothing, by same
-  ##   rule scoped runs use.
-  tree.jobs(paths)
-
-
 proc sweepFor*(root: string, tree: Tree, days: int): seq[Job] =
   ## Build sweep against window ending now; repository younger than window sweeps whole.
+  ##   Projects whose code merged in window, none when nothing did. Rot arrives with merges,
+  ##   so week nobody merged code has nothing to find, and week somebody did has that project
+  ##   to compile. Record-only merge counts as nothing, by same rule scoped runs use.
   let base = revBefore(root, days)
   if base.len == 0: return tree.allJobs
-  tree.sweepJobs(changedPaths(root, base))
+  tree.jobs(changedPaths(root, base))
 
 
 proc render*(jobs: openArray[Job]): string =
@@ -204,7 +197,7 @@ proc render*(jobs: openArray[Job]): string =
   $node
 
 
-proc targetsFor*(jobs: openArray[Job]): (seq[Target], seq[Finding]) =
+proc targetsFor(jobs: openArray[Job]): (seq[Target], seq[Finding]) =
   ## Resolve each job's pin to toolchain serving it, reporting pins nothing serves.
   ##   Pins differ between projects and one machine has one compiler on PATH, so each pin
   ##   is resolved rather than assumed: PATH when it already serves, else cache, else
@@ -271,9 +264,9 @@ proc drivenJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
 
 proc ciJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
   ## Restore each planned project once, test it, then drive those carrying driven checks.
-  ##   `ci` once ran `runJobs` then `drivenJobs`, and each restored driven project's
-  ##   checkouts: second restore was Atlas confirming nothing moved, seconds per project, and
-  ##   work nobody asked for is still work. Restore failing still stops driving alone, as
+  ##   One restore serves both, rather than `runJobs` then `drivenJobs` each restoring driven
+  ##   project: second restore is Atlas confirming nothing moved, seconds per project, and
+  ##   work nobody asked for is still work. Restore failing stops driving alone, as
   ##   `drivenJobs` stops, since driving unrestored project fails again for second reason.
   let (targets, found) = jobs.targetsFor
   result = found

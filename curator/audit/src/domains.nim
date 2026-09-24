@@ -91,7 +91,7 @@ static:
     doAssert d.folder.isProjectName, "Domain folder must be slug; got `" & d.folder & "`."
 
 
-func isBranchTail*(s: string): bool =
+func isBranchTail(s: string): bool =
   ## Decide whether `s` is valid free part of branch, i.e. `[a-z0-9][a-z0-9_-]*`.
   s.len > 0 and s[0] in {'a'..'z', '0'..'9'} and
     s.allCharsInSet({'a'..'z', '0'..'9', '_', '-'})

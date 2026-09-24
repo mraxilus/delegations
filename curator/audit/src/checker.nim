@@ -1,28 +1,26 @@
 ## Hold checker to rules it holds everything else to (Article IX.8, Article I.4).
-##   Checker checks every project and nothing checked checker, so three faults it would
-##   report elsewhere lived in it until curator pass of 2026-09-06 found them by reading.
-##   Each is now rule rather than one-off correction.
+##   Checker checks every project and nothing else checks checker, so each fault it would
+##   report elsewhere is rule here rather than one-off correction.
 ##
-##   Dead export: routine exported from check module and called from nowhere in checker.
-##     `checkRunning` outlived its callers by one change, and its own test kept it compiling,
-##     so coverage looked like use. Test proves routine works, never that anything wants it.
-##     Mention anywhere in checker counts, comment included, so rule reports only routines
-##     nothing names at all.
-##   Missing suite: check module without `tests/t<module>.nim`. `findings.nim` carried render
-##     and order every finding passes through, and `markdown.nim` parsed every governed
-##     table, with no suite between them.
+##   Dead export: routine exported from check module that no other module and no suite names.
+##     STYLE.md §5 puts `*` on intentional export alone, and routine only its own module calls
+##     is none. Suite counts as caller: test proves routine works, never that anything wants
+##     it, yet pure rules here are covered by calling them directly. Mention anywhere counts,
+##     comment included, so rule reports only routines nothing outside their module names.
+##   Missing suite: check module without `tests/suites/t<module>.nim`.
 ##   Verb drift: verbs koch dispatches, verbs its usage text prints, and verbs CURATOR.md
-##     tables are one set named three times. `koch audit` was retired and its row stayed.
+##     tables are one set named three times.
 ##   Option drift: options koch parses and options its usage text prints are one set named
-##     twice. `--driven` was parsed, documented in header and used by `check.yml`, and usage
-##     never printed it.
+##     twice.
 ##
 ##   Rules apply to checker alone, never to contributor project: one suite per module suits
 ##     library of small checks and suits nothing else, and projects here group tests by
 ##     subject rather than by file.
 ##   Rejected: flagging export only tests use, which is how pure rules are covered here and
 ##     would need exemption list, second place for truth to live; warning rather than
-##     finding, since every finding fails and warning nobody must act on is read by nobody.
+##     finding, since every finding fails and warning nobody must act on is read by nobody;
+##     rescanning every source once per export, i.e. exports times sources, which was half of
+##     static pass. Identifiers are counted once per source, and every export reads counts.
 ##   Cost: routine named in prose is not dead, so comment mentioning retired routine hides
 ##     it; cost is paid to keep rule free of false findings.
 ##   Cost: exported operator is skipped, since it is spelled at call sites rather than named.
@@ -31,7 +29,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, sequtils, strutils]
+import std/[algorithm, sequtils, strutils, tables]
 import ./[findings, markdown]
 
 
@@ -42,8 +40,8 @@ const
     ## Document tabling verbs for curator sessions.
   CHECK_DIR* = "curator/audit/src/"
     ## Modules these rules cover.
-  SUITE_DIR* = "curator/audit/tests/"
-    ## Where each module's suite lives.
+  SUITE_DIR* = "curator/audit/tests/suites/"
+    ## Where each module's suite lives; `tests/tsuites.nim` runs them as one program.
   NIM_EXT* = ".nim"
     ## Extension of module and suite alike.
   ROUTINES* = ["func", "proc", "template", "macro", "iterator", "converter"]
@@ -85,32 +83,35 @@ func exportedRoutines*(source: string): seq[string] =
     if words[1].len > name.len and words[1][name.len] == '*': result.add name
 
 
-func mentions*(sources: openArray[string], name: string): int =
-  ## Count times checker names routine, its own definition included.
-  ##   Identifier runs are counted rather than whitespace words, since call is written
-  ##   `tree.auditTree` as often as `auditTree(tree)` and word would hide first form.
-  for source in sources:
-    var i = 0
-    while i < source.len:
-      if source[i] notin IDENT_CHARS:
-        inc i
-        continue
-      var j = i
-      while j < source.len and source[j] in IDENT_CHARS: inc j
-      if source[i ..< j] == name: inc result
-      i = j
+func identifiers(source: string): CountTable[string] =
+  ## Count identifier runs source spells, comments included.
+  ##   Runs rather than whitespace words, since call is written `tree.auditTree` as often as
+  ##   `auditTree(tree)` and word would hide first form.
+  var i = 0
+  while i < source.len:
+    if source[i] notin IDENT_CHARS:
+      inc i
+      continue
+    var j = i
+    while j < source.len and source[j] in IDENT_CHARS: inc j
+    result.inc source[i ..< j]
+    i = j
 
 
-func checkDeadExports*(paths, sources: openArray[string]): seq[Finding] =
-  ## Report routine exported from checker that nothing in checker names.
-  ##   One mention is its own definition, so anything above one has caller or reader.
+func checkDeadExports*(paths, sources, suites: openArray[string]): seq[Finding] =
+  ## Report routine exported from checker that no other module and no suite names.
+  ##   Exports are read from `sources` alone; suites call, and export nothing checker owns.
+  let counts = sources.mapIt(it.identifiers)
+  var total = initCountTable[string]()
+  for count in counts: total.merge count
+  for suite in suites: total.merge suite.identifiers
   for i, source in sources:
     for name in source.exportedRoutines:
-      if sources.mentions(name) > 1: continue
+      if total[name] > counts[i][name]: continue
       result.add finding(
         paths[i], 0,
-        "Routine is exported and called nowhere in checker; delete it, or call it; got `" &
-          name & "`.",
+        "Routine is exported and named by no other module and no suite; drop its `*`, or " &
+          "delete it; got `" & name & "`.",
       )
 
 
@@ -143,7 +144,7 @@ func between(line, opening, closing: string): string =
   if stop < 0: "" else: rest[0 ..< stop]
 
 
-func usageVerbs*(koch: string): seq[string] =
+func usageVerbs(koch: string): seq[string] =
   ## Read verbs driver's usage text prints, in its angle brackets.
   for line in koch.splitLines:
     if USAGE_MARK notin line: continue

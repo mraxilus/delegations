@@ -340,11 +340,11 @@ serves them.
 ## Before you open a pull request
 
 - `nim r koch ci` at the repository root passes on the exact commit you push. It fetches
-  `origin/main`, then runs what CI runs: the whole-tree static pass and `types`. It then runs
-  the suites and driven checks of every project whose code changed, which is yours, and
-  after them `scope`, `commits` and `base`. A pull request opened before it passes breaks
-  the process, whatever CI later says: the runner confirms, and it never discovers. Run it
-  again before every later push to the same pull request.
+  `origin/main`, then runs what CI runs. First come the checks that cost about a second, and
+  a finding there stops the run: the whole-tree static pass, `scope`, `commits` and `base`.
+  Then come `types`, and the suites and driven checks of every project whose code changed,
+  which is yours. A pull request opened before it passes breaks the process, whatever CI later
+  says: the runner confirms, and it never discovers. Run it again before every later push.
 - **A change that touches only your three records compiles nothing**, and the static pass
   still checks every stamp. A change that a curator makes to the checker compiles the
   project of the checker, and never yours. The push to `main` and the weekly run compile what

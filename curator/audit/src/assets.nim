@@ -8,11 +8,9 @@
 ##     something this shape already answers. Said here so next reader does not assume it does.
 ##
 ##   Reason it exists at all: Article X.8 gives three families to every presentation target, so
-##     second target repeats first target's pins. That happened -- `rga_visualiser` and
-##     `dance_ontology` each pinned four of same files, byte for byte, in their own
-##     `tools/build.nim`. Article II.9 calls that copy real constraint does not force, and asks
-##     each copy name its siblings; neither did, and nothing could have told them apart from
-##     two different files (repository issue 116).
+##     second target repeats first target's pins. Two pins of one file, each in its own
+##     `tools/build.nim`, are copy no real constraint forces (Article II.9), and nothing tells
+##     such copy apart from two different files.
 ##
 ##   Digest is curator's, choice is project's. Store says what bytes `noto-sans-latin-400`
 ##     is; it never says which files target wants, and targets differ -- one draws maths and
@@ -32,8 +30,9 @@
 ##   Fetched file is checked before it is kept, and kept by moving into place, so half-written
 ##     download is never mistaken for verified one -- same shape `fetchRelease` uses.
 ##
-##   Cost: `sha256sum` and `curl` are shelled out to, as `compilers.nim` does; `koch system`
-##     declares both.
+##   Cost: `sha256sum` and `curl` are shelled out to; `koch system` declares both. Digest is
+##     read by `compilers.digestOf`, not copied here, so one reader serves both fetches and
+##     store imports compiler module for it.
 ##   Nim tarball is not here, deliberately: its digest comes from upstream sidecar at fetch
 ##     time rather than from table here, and it is stored unpacked by pin because rest of koch
 ##     resolves toolchains by pin. Different trust and different key, so `compilers.nim` keeps
@@ -45,8 +44,8 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[os, osproc, strutils]
-import ./findings
+import std/[os, osproc]
+import ./[findings, compilers]
 
 
 const
@@ -130,7 +129,7 @@ func addressOf*(file: string): string =
   ""
 
 
-func digestOf*(file: string): string =
+func declaredDigest*(file: string): string =
   ## Read digest declared for asset; empty when store declares no such asset.
   for (name, _, digest) in ASSETS:
     if name == file: return digest
@@ -139,9 +138,9 @@ func digestOf*(file: string): string =
 
 func declaration*(): string =
   ## Render every declared asset as `<file> <digest>`, one per line, ending in newline.
-  ##   Published so no consumer parses this source. Project holding law that its faces are
-  ##     declared read `assets.nim` as text -- second parser for format only this module
-  ##     owns, which is duplication store exists to end, one layer up (repository issue 134).
+  ##   Published so no consumer parses this source. Project reading `assets.nim` as text to
+  ##     hold law that its faces are declared is second parser for format only this module
+  ##     owns, which is duplication store exists to end, one layer up.
   ##   Two columns rather than three: address is fetcher's business, digest is what consumer
   ##     checks bytes against. Neither column can hold space, so `split` reads row.
   ##   Row never reads as path, and suite holds it so: verb prints paths when files are named
@@ -154,7 +153,7 @@ func pathOf*(root, file: string): string =
   ## Read path asset takes in store, which is its digest; empty when none is declared.
   ##   Digest names file rather than its name doing so, since two projects asking for one
   ##   asset then share one entry, and moved pin is different entry rather than stale one.
-  let digest = file.digestOf
+  let digest = file.declaredDigest
   if digest.len == 0: "" else: root / digest
 
 
@@ -167,24 +166,11 @@ func unknown*(file: string): seq[Finding] =
   )]
 
 
-proc readDigest*(path: string): string =
-  ## Read file's SHA-256 as `sha256sum` writes it; empty when it cannot be read.
-  let (written, code) = execCmdEx("sha256sum " & quoteShell(path))
-  if code != 0: return ""
-  let first = written.strip.split(Whitespace)
-  if first.len == 0: return ""
-  let candidate = first[0]
-  if candidate.len != 64: return ""
-  for c in candidate:
-    if c notin {'0' .. '9', 'a' .. 'f'}: return ""
-  candidate
-
-
-proc fetchAsset*(root, file: string): bool =
+proc fetchAsset(root, file: string): bool =
   ## Fetch asset into store and keep it only when its bytes carry declared digest.
   ##   Downloaded beside destination and moved in once checked, so half-written file is never
   ##   read as verified one.
-  let (address, digest) = (file.addressOf, file.digestOf)
+  let (address, digest) = (file.addressOf, file.declaredDigest)
   if address.len == 0 or digest.len == 0: return false
   createDir(root)
   let landing = root / digest & ".fetching"
@@ -192,7 +178,7 @@ proc fetchAsset*(root, file: string): bool =
   defer: removeFile(landing)
   if execCmdEx("curl -sSLf -o " & quoteShell(landing) & " " & quoteShell(address))[1] != 0:
     return false
-  let got = landing.readDigest
+  let got = landing.digestOf
   if got != digest:
     echo "Asset does not carry digest declared for it; wanted `" & digest & "`, got `" &
       got & "`."
