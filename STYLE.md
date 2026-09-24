@@ -12,18 +12,20 @@ Map the callable ladder of the constitution onto `func → proc → iterator →
 Escalate only on need.
 
 - `func` is the default for a deterministic transformation of a value.
-- `proc` only for an effect, for randomness, or for `var` access. Where both mutable and
-  immutable access matter, define the overload pair:
+- `proc` only for an effect, for randomness, or for `var` access.
+- Where both mutable and immutable access matter, define an overload pair. Raw access into
+  storage is a `template` pair, and an accessor that does work is a `proc` and `func` pair:
 
   ```nim
-  proc `[]`*(m: var Multivector, b: Basis): var float {.inline.} = m.elements[b]
-  func `[]`*(m: Multivector, b: Basis): float {.inline.} = m.elements[b]
+  template `[]`*(m: var Multivector, b: Basis): var float = m.elements[b]
+  template `[]`*(m: Multivector, b: Basis): float = m.elements[b]
   ```
 
 - `iterator` only where lazy enumeration is the concept you expose. Yield `lent` from a
   stored pool, so that the walk never copies.
-- `template` only for a zero-cost substitution that a function cannot express. That covers
-  operand reversal, a typedesc alias, and an alias to an element inside a loop where a `let`
+- `template` only for a zero-cost substitution that a function cannot express, or where the
+  measured cost of a call is too high. That covers operand reversal, a typedesc alias and raw
+  access into storage. It also covers an alias to an element inside a loop, where a `let`
   would copy (§7):
 
   ```nim
@@ -47,8 +49,8 @@ Escalate only on need.
 
 - `{.experimental: "strictFuncs".}`: this exact form, before the imports, in every production
   module. Never as a pushed ordinary pragma.
-- `{.experimental: "codeReordering".}`: only where the reading order of a human should beat
-  the declaration order. Const initialisation stays in dependency order in either case.
+- `{.experimental: "codeReordering".}`: the mechanism that lets Nim follow the reading order
+  of Article I.1. Use it wherever that order puts a use before its definition.
 - `{.compileTime.}`: applied the same way across a whole compile-time family. Never rely on
   incidental const evaluation where the staging is part of the contract.
 - `{.inline.}`: for a deliberate thin wrapper and a tiny hot accessor only.
@@ -79,7 +81,7 @@ Escalate only on need.
   result:
 
   ```nim
-  const lut_basis_to_grade = block:
+  const lut_grade_by_basis = block:
     var lut: array[Basis, Grade]
     for b in Basis: lut[b] = Grade(b.toFlags.countSetBits)
     lut
