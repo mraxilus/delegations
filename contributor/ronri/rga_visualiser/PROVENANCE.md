@@ -1252,10 +1252,9 @@ Assumed: that no reader wants a ceiling on the separation.
 `look`, `roll` and `travel` turn and slide about its own axes. With a selection it keeps the
 turntable.
 
-**Every drag reads that state through a verb of its own.** `interaction.turnAcross` is the left
-drag and `panAcross` the right, and each picks between the two states inside itself. Both
-front-ends called `orbit` outright before, so `look` never reached a drag at all. The eye swung
-round the pivot where the reader meant to turn in place.
+**Every drag reads that state through a verb of its own.** `interaction.turnAcross` is the left drag
+and `panAcross` the right, and each picks between the two states inside itself. Not `orbit` for
+every drag, which swings the eye round the pivot where a reader means to turn in place.
 
 **Flight turns about a line through the eye.** `turnedAboutEye` joins the eye with a carried axis
 and turns about that line, so the eye stands where it stands and the frame stays orthonormal.
@@ -1263,9 +1262,10 @@ and turns about that line, so the eye stands where it stands and the frame stays
 axis before it. A pitch about the stale one tips the up axis off the sight, which is a roll nobody
 asked for.
 
-`look` takes the two arguments that `orbit` takes, with the same signs, so one drag feeds either
-verb as the selection comes and goes. Signs that disagreed would reverse the gesture the moment a
-reader selected something.
+`look` takes the two arguments that `orbit` takes, with the same signs, so a mouse drag feeds either
+verb as the selection comes and goes. A finger's `lookLevel` takes them negated, so the picture
+follows the finger in either state: the sky moves as orbit's near side does. The cost is that a
+selection made mid-drag reverses which way the far scene moves.
 
 The axes are the camera's own and never the world's, so there is no pole and no clamp. Eight pitches
 of a quarter radian compose to exactly two radians, which is past straight down.
@@ -1401,7 +1401,7 @@ The separation then scales as the turntable's dolly scales it.
 - a finger's drag leaves none of it, and keeps the roll the reader set;
 - a finger's drag moves the azimuth and the elevation by what it asked, in 1, 8 or 64 steps, and a
   loop of it closes;
-- it passes over the top, moves the picture one way on both sides, and goes through the pole itself;
+- the picture follows the finger in both states and past the top, and a drag goes through the pole;
 - eight quarter-radian pitches make two radians in `look` and `orbit`, past the panel field's clamp;
 - a look and an orbit swing the sight the same way, for both signs of the drag;
 - a roll leaves the eye and the sight alone, and 64 steps of a whole turn return every axis;
@@ -1424,8 +1424,8 @@ The separation then scales as the turntable's dolly scales it.
 Verified by driven checks:
 
 - a left drag with nothing picked turned the sight and moved the eye 0.000000 units;
-- a 600 px finger swipe with nothing picked held the elevation at 0.420000, where the roll put
-  back ended at 0.325250;
+- a 600 px finger swipe held the elevation at 0.420000, where the roll put back ended at 0.325250;
+- a finger moved 60 and 40 px with nothing picked carried what stood ahead 217.9 and 145.0 px;
 - a finger dragged down with an object picked carried the eye over the top, and the pivot 0.000000;
 - 500 ms of `w` on the opening page moved the eye 3.455 units, 0.000000 of them across the sight
   line;
