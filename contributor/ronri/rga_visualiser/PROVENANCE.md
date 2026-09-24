@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | c73f63e83992089d |
+| Rules   | be54792c5171ff9d |
 | Pruned  | ca56fd4f8b61f44d3b38f3533ba0f177c4cc27b8 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -41,7 +41,7 @@ Six tools that the prototype carried are not in this repository. They are `check
 one of them held is marked as held by that tool then, and re-verified by nothing here.
 
 **Verification practice, applies throughout.** Every change is rebuilt, and the full suite is run
-again through `koch tests`. That runs on the C backend at two capacities, and on the JS backend.
+again through `koch test`. That runs on the C backend at two capacities, and on the JS backend.
 Both front-ends are driven through `tools/build.nim drive`. **No human has driven either front-end,
 clicked a button, or seen this on real GPU hardware.** Every figure in this file was
 software-rendered.
@@ -82,9 +82,9 @@ renamed variable. It is `PREVIEW_EDIT`, beside `PREVIEW_APPLY`.
 belongs to that library. An ideal object does not sit *at* the horizon. It lies *in* it, so the kind
 words that a reader sees are `horizon point`, `horizon line` and `horizon plane`.
 
-*Checked.* Verified after every rename. Every suite is unchanged, case for case, which is what says
-that no behaviour moved. `tsc` is clean after `bridge.d.ts` is derived again. `koch tree` reports 0
-findings. Both front-ends are built and driven.
+*Checked.* Verified after every rename. Every suite is unchanged, case for case, which is what
+says that no behaviour moved. `tsc` is clean after `bridge.d.ts` is derived again.
+`koch check-files` reports 0 findings. Both front-ends are built and driven.
 
 ## Wording catalogue
 
@@ -293,9 +293,9 @@ toggles wherever they stand alongside zero overflow. A row that fits because two
 dropped is broken more quietly. It sweeps 396, 395 and 394, because a rule written one pixel out
 passes every sweep that never lands on it.
 
-*Checked.* Verified by a run. Every check goes through `tools/build.nim drive`, on both front-ends,
-software-rendered, here and on the runner. `driven` gates `audit`, so a green push run is the word
-of the runner itself (repository issues 47 and 91).
+*Checked.* Verified by a run. Every check goes through `tools/build.nim drive`, on both
+front-ends, software-rendered, here and on the runner. `drive` gates `summarize`, so a green
+push run is the word of the runner itself (repository issues 47 and 91).
 
 **Unmeasured**: the figures are this container's, and say more about SwiftShader than about any GPU.
 Bands are what the checks assert.
@@ -344,9 +344,9 @@ issue 60). No package version is pinned or invented.
 **`drive` fetches faces, and `web` refuses without them.** A caller who reaches for `web` directly
 is building, rather than being given.
 
-**Faces come from the store of the repository, and which faces is this project's.** `koch assets`
-holds any file fetched at build time: the names, the digests and the fetch, in
-`curator/audit/src/assets.nim`. The `assets` verb of this project copies the faces of both
+**Faces come from the store of the repository, and which faces is this project's.**
+`koch fetch-assets` holds any file fetched at build time: the names, the digests and the fetch,
+in `curator/audit/src/assets.nim`. The `assets` verb of this project copies the faces of both
 front-ends out of it (repository issues 116 and 124).
 
 Those are the `@fontsource` `woff2` of the page, and the desktop's own, which `FACES_DESKTOP` names.
@@ -2798,10 +2798,10 @@ eleven articles over exposition, derivation, notation, build-time safety, naming
 cost, honesty, tests, form and the record. It carries a precedence clause and three gated
 mechanisms. `STYLE.md` is the Nim expression guide.
 
-Every comment is in the register of the `pga` library. That is a one-line imperative summary that
-ends in a period, then elaboration as a hanging outline, one claim to a line. It carries no
-articles, no history and no figures, and the history and the figures live here. `koch tree` holds
-that register mechanically over every authored language.
+Every comment is in the register of the `pga` library. That is a one-line imperative summary
+that ends in a period, then elaboration as a hanging outline, one claim to a line. It carries
+no articles, no history and no figures, and the history and the figures live here.
+`koch check-files` holds that register mechanically over every authored language.
 
 **Foreign bindings are marked `sideEffect`, and that is what makes `func` mean anything here.**
 Nim assumes that an imported body is pure, so without the mark every GL draw and every Dear ImGui
@@ -2831,10 +2831,10 @@ The `pga` library is unmodified by request. There is one substantive deviation. 
 asserts that its own module doc is the source of truth for names. That is what makes the notation
 trap easy to fall into (see Operation notation).
 
-*Checked.* Verified: `koch tree` reports 0 findings. The demotion and the revert were decided by
-the compiler, and not by reading. The six per-frame exports allocate nothing, read off the emitted
-JS, and the gain is **unmeasured**, an allocation count rather than a millisecond. **Unverified**:
-no human has read the result.
+*Checked.* Verified: `koch check-files` reports 0 findings. The demotion and the revert were
+decided by the compiler, and not by reading. The six per-frame exports allocate nothing, read
+off the emitted JS, and the gain is **unmeasured**, an allocation count rather than a
+millisecond. **Unverified**: no human has read the result.
 
 ## Dependencies and vendoring
 
@@ -2844,9 +2844,9 @@ inside it. So the requirement in `rga_visualiser.nimble` names the repository by
 `atlas.lock` records the resolved commit, and `nim.cfg` names the subdirectory that Atlas restores
 it to.
 
-`koch deps` replays that lock, and nothing is committed (Article XI.3). Both projects are under
-the Prosperity Public License 3.0.0. It is not a project verb that clones it, because CI runs
-`tree`, `deps` and `tests`, and never the own build driver of a project.
+`koch fetch-deps` replays that lock, and nothing is committed (Article XI.3). Both projects are
+under the Prosperity Public License 3.0.0. It is not a project verb that clones it, because CI
+runs `check-files`, `fetch-deps` and `test`, and never the own build driver of a project.
 
 **This project tracks the head of pga, and says so when it cannot.** The standing instruction from
 the Architect is this. Take the latest pga. Where the latest does not work, pin the most recent
@@ -2897,7 +2897,7 @@ The stored nimble of the lock must equal the committed one exactly, or `rep` rev
 silently (repository issue 25). The static pass refuses the difference, so the hand-patch is
 checked rather than trusted.
 
-*Checked.* Verified by a run on the pinned commit, through `koch tests`. It ran every suite on the
+*Checked.* Verified by a run on the pinned commit, through `koch test`. It ran every suite on the
 C backend, on JS, and at reduced capacities, at the same case counts that the previous pin
 produced. That is what says the stand-ins behave as the own ones of the library did.
 
@@ -2930,7 +2930,7 @@ the arena, and save and load — guard themselves with `when not defined(js)`.
 
 A case that walks every pair of handles at 10,000 objects runs ten minutes without output, so the
 suite gathers the joiners once instead. The JS entry point declares `targets: "js"`, rather than
-overrides the command of testament. So under `koch tests` testament compiles with the JS backend
+overrides the command of testament. So under `koch test` testament compiles with the JS backend
 and runs the result through node. That is what makes the row real rather than a claim that nothing
 checks.
 
@@ -2944,7 +2944,7 @@ Timing-dependent quantities are asserted as **bands**. Identical code has measur
 29.8 ms hours apart on a shared runner. A flat ±1 ms band failed one frame in a hundred and
 twenty.
 
-*Checked.* Verified on the pinned commit through `koch tests`: every suite on the C backend, on JS
+*Checked.* Verified on the pinned commit through `koch test`: every suite on the C backend, on JS
 and at reduced capacities. The JS count is lower because the C-only cases skip themselves.
 Verified on the runner as well as locally: the C suites bind zlib for the PNG encoder. Their
 passing proves that the runner carries that library. Assumed: nothing about the suite itself.

@@ -30,7 +30,7 @@
 ##   Fetched file is checked before it is kept, and kept by moving into place, so half-written
 ##     download is never mistaken for verified one -- same shape `fetchRelease` uses.
 ##
-##   Cost: `sha256sum` and `curl` are shelled out to; `koch system` declares both. Digest is
+##   Cost: `sha256sum` and `curl` are shelled out to; `koch list-packages` declares both. Digest is
 ##     read by `compilers.digestOf`, not copied here, so one reader serves both fetches and
 ##     store imports compiler module for it.
 ##   Nim tarball is not here, deliberately: its digest comes from upstream sidecar at fetch

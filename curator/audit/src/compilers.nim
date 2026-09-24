@@ -1,5 +1,5 @@
 ## Obtain compiler serving pin, fetching or building one when machine has none.
-##   Every project pins its own compiler and one machine has one `nim` on PATH, so `koch ci`
+##   Every project pins its own compiler and one machine has one `nim` on PATH, so `koch check`
 ##   could not be green as one command whenever changed set spanned two pins. Resolution
 ##   removes that: PATH when it already serves, else cache, else fetch.
 ##

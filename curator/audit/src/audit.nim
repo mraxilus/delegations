@@ -51,8 +51,9 @@ proc writeRulesRows*(root: string, tree: Tree): seq[string] =
 proc prunedFindings*(root: string, tree: Tree): seq[Finding] =
   ## Report `Pruned` row naming commit that never touched its record, read from git log.
   ##   Lives beside static pass rather than in it, since form of row is pure check's and
-  ##   existence of commit is git's; koch runs both under `tree` and `ci`.
-  ##   Needs full log: shallow clone reports true row as missing, so static job fetches depth 0.
+  ##   existence of commit is git's; koch runs both under `check-files` and `check`.
+  ##   Needs full log: shallow clone reports true row as missing, so `check-files` job fetches
+  ##   depth 0.
   for dir in tree.projectDirs:
     let path = dir & "/PROVENANCE.md"
     for e in tree:
@@ -65,6 +66,14 @@ proc prunedFindings*(root: string, tree: Tree): seq[Finding] =
           path, 0,
           "`" & PRUNED & "` must name commit that touched this record; got `" & named & "`.",
         )
+
+
+func isContributorCode(path: string, dirs: openArray[string]): bool =
+  ## Decide whether path is contributor's own code: inside contributor project, and not one of
+  ##   its records, which curator may write too.
+  for dir in dirs:
+    if dir.startsWith(CONTRIBUTOR & "/") and path.startsWith(dir & "/"):
+      return path[dir.len + 1 .. ^1] notin PROJECT_FILES
 
 
 proc lockFindings(tree: Tree, dirs: openArray[string]): seq[Finding] =
@@ -114,6 +123,11 @@ proc auditTree*(tree: Tree): seq[Finding] =
   result.add checkSuites(tree.mapIt(it.path))
   result.add checkVerbs(koch_source, curator_source)
   result.add checkOptions(koch_source)
+  let verbs = koch_source.dispatchVerbs
+  if verbs.len > 0:
+    for e in tree:
+      if e.kind.isSome and not e.path.isContributorCode(tree.projectDirs):
+        result.add checkMentions(e.path, e.content, verbs)
 
   let stamp_now = tree.rulesStamp
   let dirs = tree.projectDirs

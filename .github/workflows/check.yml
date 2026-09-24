@@ -1,22 +1,25 @@
 # Run repository checks on pull requests, on main, and weekly over what merged that week.
-#   `plan` names projects one change asks to compile, and again those of them carrying driven
-#   checks. `static` runs whole-tree checks, which cost seconds and so stay unscoped. `scope`
-#   and `commits` read branch. `project` is one matrix job per named project, each installing
-#   that project's own pin. `driven` is second matrix over subset of same plan, building each
-#   page and driving it through real events. `types` type-checks scripts of every changed
-#   project carrying node manifest beside its lock. `base` refuses branch predating base's
-#   charter or checker. `audit` reads verdicts of `plan`, `static`, `project`, `driven`,
-#   `types` and `base`, and is gate branch protection requires, since matrix job names vary;
-#   `scope` and `commits` are required by name (CURATOR.md, repository settings section).
+#   Each job carries name of koch verb it runs, so red job names command to run locally.
+#   `list-projects` names projects one change asks to compile, and again those of them
+#   carrying driven checks. `check-files` runs whole-tree checks, which cost about second and
+#   so stay unscoped. `check-scope` and `check-commits` read branch. `test` is one matrix job
+#   per named project, each installing that project's own pin. `drive` is second matrix over
+#   subset of same list, building each page and driving it through real events.
+#   `check-types` type-checks scripts of every changed project carrying node manifest beside
+#   its lock. `check-drift` refuses branch predating base's charter or checker. `summarize`
+#   reads verdicts of `list-projects`, `check-files`, `test`, `drive`, `check-types` and
+#   `check-drift`, and is gate branch protection requires, since matrix job names vary;
+#   `check-scope` and `check-commits` are required by name (CURATOR.md, repository settings
+#   section).
 #
-#   `driven` is matrix where `types` is one job, and difference is what each verb compiles.
+#   `drive` is matrix where `check-types` is one job, and difference is what each compiles.
 #   Type check derives declarations by reading source as text, so koch's compiler serves it;
 #   driven check builds page through JS backend, which compiles project code, so it needs
-#   that project's pin exactly as `project` does. Its system packages come from project's
-#   declaration read through `koch system`, never from names written here (CONTRIBUTOR.md,
+#   that project's pin exactly as `test` does. Its system packages come from project's
+#   declaration read through `koch list-packages`, never from names written here (CONTRIBUTOR.md,
 #   System dependencies).
 #   Matrix runs in parallel, so wall time is slowest changed project, never sum of all.
-#   `nim r koch ci` runs same checks locally before pull request opens; runner confirms,
+#   `nim r koch check` runs same checks locally before pull request opens; runner confirms,
 #   never discovers.
 #
 #   `NIM_VERSION` builds koch and runs whole-tree checks. It is `curator/audit`'s pin, never
@@ -32,7 +35,7 @@
 #   key, so stale entry is unreachable rather than wrong. Store and SDL3 prefix are keyed
 #   loosely, with `restore-keys`, since each entry there is named by digest or commit and
 #   checked on restore, so stale entry heals rather than ships; their steps say why.
-#   Rejected: caching apt archives and `nimcache`, each small beside driven job's total
+#   Rejected: caching apt archives and `nimcache`, each small beside `drive` job's total
 #   (curator/audit/PROVENANCE.md, Runner caches).
 #   Actions are pinned to majors running node24, since runner retires node20. `cache@v5` and
 #   later want runner 2.327.1 or newer. `checkout@v7` breaks only `pull_request_target`
@@ -41,7 +44,7 @@
 #   here writes.
 #   Branch names and event kind reach koch through environment, never interpolated into
 #   script. Weekly run compiles projects whose code merged inside its window and nothing in
-#   week nobody merged code, because rot arrives with merges. Cron here and `SWEEP_DAYS` in
+#   week nobody merged code, because rot arrives with merges. Cron here and `RECENT_DAYS` in
 #   `plan.nim` are one window named twice: change both together.
 
 name: check
@@ -60,17 +63,17 @@ env:
   NIM_VERSION: '2.2.12'
 
 jobs:
-  plan:
+  list-projects:
     runs-on: ubuntu-latest
     outputs:
       projects: ${{ steps.select.outputs.projects }}
-      driven: ${{ steps.select.outputs.driven }}
+      drive: ${{ steps.select.outputs.drive }}
     env:
       BASE: >-
         ${{ github.event_name == 'pull_request'
             && format('origin/{0}', github.base_ref)
             || github.event.before }}
-      SWEEP: ${{ github.event_name == 'schedule' && '--sweep' || '' }}
+      RECENT: ${{ github.event_name == 'schedule' && '--recent' || '' }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -81,33 +84,33 @@ jobs:
           parent-nim-install-directory: ${{ runner.temp }}
       - id: select
         # Assigned before echoed: substitution inside `echo` argument cannot fail step, so
-        #   crashing `plan` would hand empty matrices on and fail at `project` instead.
+        #   crashing `list-projects` would hand empty matrices on and fail at `test` instead.
         run: |
-          projects="$(nim r koch plan $SWEEP)"
-          driven="$(nim r koch plan $SWEEP --driven)"
+          projects="$(nim r koch list-projects $RECENT)"
+          drive="$(nim r koch list-projects $RECENT --drive)"
           echo "projects=$projects" >> "$GITHUB_OUTPUT"
-          echo "driven=$driven" >> "$GITHUB_OUTPUT"
+          echo "drive=$drive" >> "$GITHUB_OUTPUT"
 
-  static:
+  check-files:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0  # `koch tree` reads each record's `Pruned` row against its own log
+          fetch-depth: 0  # `koch check-files` reads each record's `Pruned` row against its log
       - uses: jiro4989/setup-nim-action@v2
         with:
           nim-version: ${{ env.NIM_VERSION }}
           parent-nim-install-directory: ${{ runner.temp }}
-      - run: nim r koch tree
+      - run: nim r koch check-files
 
-  project:
-    needs: plan
-    if: needs.plan.outputs.projects != '[]'
+  test:
+    needs: list-projects
+    if: needs.list-projects.outputs.projects != '[]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(needs.plan.outputs.projects) }}
+        include: ${{ fromJSON(needs.list-projects.outputs.projects) }}
     steps:
       - uses: actions/checkout@v7
 
@@ -136,7 +139,7 @@ jobs:
       - if: matrix.kind == 'commit'
         run: echo "$RUNNER_TEMP/nim-commit/bin" >> "$GITHUB_PATH"
 
-      # Atlas checkouts: `koch tests` restores them from lock on every run, and lock names
+      # Atlas checkouts: `koch test` restores them from lock on every run, and lock names
       #   exact commit each time, so cache keyed on that lock returns same tree it would
       #   have fetched. Key carries no project name: two projects sharing lock share tree it
       #   names, so entry either restores what that lock says or misses. Projects holding no
@@ -155,11 +158,11 @@ jobs:
 
       - env:
           PROJECT: ${{ matrix.dir }}
-        run: nim r koch tests "$PROJECT"
+        run: nim r koch test "$PROJECT"
 
-  driven:
-    needs: plan
-    if: needs.plan.outputs.driven != '[]'
+  drive:
+    needs: list-projects
+    if: needs.list-projects.outputs.drive != '[]'
     runs-on: ubuntu-latest
     # Whole suite drives real browser over thousands of objects under software rendering, so
     #   it is minutes rather than seconds. Ceiling is far above measured run and far below
@@ -168,11 +171,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(needs.plan.outputs.driven) }}
+        include: ${{ fromJSON(needs.list-projects.outputs.drive) }}
     steps:
       - uses: actions/checkout@v7
 
-      # Same two compiler arms as `project`, for reason header gives.
+      # Same two compiler arms as `test`, for reason header gives.
       - if: matrix.kind == 'version'
         uses: jiro4989/setup-nim-action@v2
         with:
@@ -199,7 +202,7 @@ jobs:
       - env:
           PROJECT: ${{ matrix.dir }}
         run: |
-          PACKAGES="$(nim r koch system "$PROJECT")"
+          PACKAGES="$(nim r koch list-packages "$PROJECT")"
           if [ -n "$PACKAGES" ]; then
             sudo apt-get update -qq
             echo "$PACKAGES" | xargs sudo apt-get install -y --no-install-recommends
@@ -234,15 +237,15 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
 
-      # Store `koch assets` fills is repository's rather than one project's, so key is its
+      # Store `koch fetch-assets` fills is repository's rather than one project's, so key is its
       #   declaration and one entry serves every project's job. `assets.nim` says which bytes
       #   each name is; project's driver says only which names it wants, and moves most weeks.
       #   Made before caching, as npm's store and Playwright's are: job fetching nothing leaves
       #   path absent, and `actions/cache` warns on absent path.
       #   `restore-keys` is safe here by construction rather than by check: store names entries
       #   by digest, so entry no row declares is unreachable rather than wrong, and
-      #   `koch assets` fetches what older restore lacks.
-      #   Rejected: caching `build/fonts`; with store warm, `assets` copies faces into it in
+      #   `koch fetch-assets` fetches what older restore lacks.
+      #   Rejected: caching `build/fonts`; with store warm, project's `assets` copies faces in
       #   milliseconds, and second key over same bytes is one more thing to disagree.
       - run: mkdir -p ~/.cache/koch/assets
       - uses: actions/cache@v6
@@ -277,16 +280,16 @@ jobs:
 
       - env:
           PROJECT: ${{ matrix.dir }}
-        run: nim r koch driven "$PROJECT"
+        run: nim r koch drive "$PROJECT"
 
-  types:
+  check-types:
     runs-on: ubuntu-latest
     env:
       BASE: >-
         ${{ github.event_name == 'pull_request'
             && format('origin/{0}', github.base_ref)
             || github.event.before }}
-      SWEEP: ${{ github.event_name == 'schedule' && '--sweep' || '' }}
+      RECENT: ${{ github.event_name == 'schedule' && '--recent' || '' }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -307,9 +310,9 @@ jobs:
         with:
           path: ~/.npm
           key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
-      - run: nim r koch types $SWEEP
+      - run: nim r koch check-types $RECENT
 
-  scope:
+  check-scope:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     env:
@@ -323,9 +326,9 @@ jobs:
         with:
           nim-version: ${{ env.NIM_VERSION }}
           parent-nim-install-directory: ${{ runner.temp }}
-      - run: nim r koch scope
+      - run: nim r koch check-scope
 
-  commits:
+  check-commits:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     env:
@@ -339,9 +342,9 @@ jobs:
         with:
           nim-version: ${{ env.NIM_VERSION }}
           parent-nim-install-directory: ${{ runner.temp }}
-      - run: nim r koch commits
+      - run: nim r koch check-commits
 
-  base:
+  check-drift:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     env:
@@ -357,22 +360,22 @@ jobs:
         with:
           nim-version: ${{ env.NIM_VERSION }}
           parent-nim-install-directory: ${{ runner.temp }}
-      - run: nim r koch base
+      - run: nim r koch check-drift
 
-  audit:
-    needs: [plan, static, project, driven, types, base]
+  summarize:
+    needs: [list-projects, check-files, test, drive, check-types, check-drift]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Read verdict of every job this gate stands for
         env:
           VERDICTS: >-
-            plan=${{ needs.plan.result }}
-            static=${{ needs.static.result }}
-            project=${{ needs.project.result }}
-            driven=${{ needs.driven.result }}
-            types=${{ needs.types.result }}
-            base=${{ needs.base.result }}
+            list-projects=${{ needs.list-projects.result }}
+            check-files=${{ needs.check-files.result }}
+            test=${{ needs.test.result }}
+            drive=${{ needs.drive.result }}
+            check-types=${{ needs.check-types.result }}
+            check-drift=${{ needs.check-drift.result }}
         run: |
           echo "$VERDICTS"
           case "$VERDICTS" in

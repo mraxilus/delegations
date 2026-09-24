@@ -13,9 +13,9 @@ book, paper or standard.
 ## Build and test
 
 ```sh
-nim r koch tests curator/audit             # this project alone: every suite, as one program
+nim r koch test curator/audit             # this project alone: every suite, as one program
 nim r curator/audit/tests/suites/tform.nim # one suite, while you change its module
-nim r koch ci                              # every check a pull request runs
+nim r koch check                              # every check a pull request runs
 ```
 
 This needs the compiler that the project pins in `audit.nimble`, and git. Atlas and testament
