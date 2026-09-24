@@ -402,7 +402,7 @@ export async function driveGroupTurnedAtOnce(page: Page, cdp: CDPSession): Promi
     const pivot = Array.from(nimCameraPivot());
     const short = Math.hypot(...pivot.map((v, i) => v - (middle[i] ?? 0)));
     nimSetCameraDragging(true);
-    // Finger's step right that turns orbit by 0.05, at half turn per short side.
+    // Finger's step right from middle of canvas, where orbit holds front of its sphere.
     const canvas = document.getElementById('gl');
     const [wide, tall] = [canvas?.clientWidth ?? 0, canvas?.clientHeight ?? 0];
     const reach = 0.05 * Math.min(wide, tall) / Math.PI;

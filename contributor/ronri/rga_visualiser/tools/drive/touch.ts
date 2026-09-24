@@ -344,20 +344,21 @@ export async function driveFingerTurntable(page: Page, cdp: CDPSession): Promise
   }
   await page.evaluate((one) => nimSelectOnly(one), handle);
   await settleCamera(page);
-  if (!(await isOpenSky(page, sky))) {
-    report('a finger starts its orbit on open sky', false, `(${sky.x}, ${sky.y}) is not sky`);
-    await page.evaluate(() => nimSelectClear());
-    return;
-  }
+  // Finger holds point on sphere about pivot, so it lands just above pivot, on open sky,
+  //   and drags down through middle; two such drags climb past straight down.
+  const middle = await page.evaluate((one) => Array.from(
+    nimAnchorScreen(one, window.innerWidth, window.innerHeight),
+  ), handle);
+  const above = { x: middle[0] ?? 0, y: (middle[1] ?? 0) - 40 };
   const before = await readCamera(page);
-  // Far enough to climb 0.4 radians past straight down, at finger's half turn per short
-  //   side of canvas.
-  const reach = await page.evaluate(() => {
-    const canvas = document.getElementById('gl');
-    const short = Math.min(canvas?.clientWidth ?? 0, canvas?.clientHeight ?? 0);
-    return (0.5 * Math.PI - nimCameraElevation() + 0.4) * short / Math.PI;
-  });
-  await dragFinger(page, cdp, [sky.x, sky.y], [sky.x, sky.y + reach]);
+  for (let drag = 0; drag < 2; drag += 1) {
+    if (!(await isOpenSky(page, above))) {
+      report('a finger starts its orbit on open sky', false, `(${above.x}, ${above.y}) is not sky`);
+      await page.evaluate(() => nimSelectClear());
+      return;
+    }
+    await dragFinger(page, cdp, [above.x, above.y], [above.x, above.y + 240]);
+  }
   const after = await readCamera(page);
   const outward = (camera: typeof before): number[] => [
     (camera.eye[0] ?? 0) - (camera.pivot[0] ?? 0), (camera.eye[1] ?? 0) - (camera.pivot[1] ?? 0),

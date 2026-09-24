@@ -7263,8 +7263,8 @@ suite "Interaction":
     #   and brings camera back where it began.
     const (WIDE, TALL) = (390, 844)
     let corners = [
-      ScreenPosition(x: 150.0, y: 400.0), ScreenPosition(x: 250.0, y: 400.0),
-      ScreenPosition(x: 250.0, y: 500.0), ScreenPosition(x: 150.0, y: 500.0),
+      ScreenPosition(x: 160.0, y: 390.0), ScreenPosition(x: 230.0, y: 390.0),
+      ScreenPosition(x: 230.0, y: 460.0), ScreenPosition(x: 160.0, y: 460.0),
     ]
     for picked in [false, true]:
       for set_roll in [0.0, 0.5]:
@@ -7281,32 +7281,67 @@ suite "Interaction":
         check held.frame.axis_up =~ opening.frame.axis_up
 
 
-  test "a finger's orbit moves one turntable angle each way, however it is cut":
-    # Roll put back after turn about camera's own axes levelled horizon and left sight
-    #   sunk, and by more as steps grew. Level axes move azimuth alone and elevation
-    #   alone, so nothing needs putting back and step size cannot matter.
-    #   Half turn for each short side of canvas, so these pixels ask 1.2 and 0.3 radians.
+  test "a finger's orbit keeps the point it took hold of under it, pixel for pixel":
+    # Rate turned orbit by angle that moved nothing under finger at its own pace: only
+    #   what stood at one depth in front of pivot kept up. Point held on sphere about
+    #   pivot is carried from pixel finger left to pixel it reached instead.
     const (WIDE, TALL) = (390, 844)
-    let
-      opening = initCameraDefault()
-      rate = PI/float(min(WIDE, TALL))
-      start = ScreenPosition(x: 300.0, y: 300.0)
-      finish = ScreenPosition(x: start.x - 1.2/rate, y: start.y + 0.3/rate)
-    for steps in [1, 8, 64]:
-      var
-        cut = opening
-        at = start
-      for step in 1 .. steps:
-        let reached = float(step)/float(steps)
-        let next = ScreenPosition(
-          x: start.x + reached*(finish.x - start.x), y: start.y + reached*(finish.y - start.y)
-        )
-        cut.turnFollowing(at, next, WIDE, TALL, has_selection = true)
-        at = next
-      check cut.azimuth =~ opening.azimuth + 1.2
-      check cut.elevation =~ opening.elevation + 0.3
-      check abs(cut.rollHeld.get) < TOLERANCE_TEST
-      check cut.pivot =~ opening.pivot
+    proc heldUnder(camera: Camera; at: ScreenPosition; radius: float): Position =
+      # Place point finger holds under pixel.
+      pointHeld(camera.eye, camera.pivot, camera.headingThrough(camera.frame, WIDE, TALL, at),
+        radius)
+    var rolled = initCameraDefault()
+    rolled.roll(0.5)
+    let steep = initCamera(pivot = ORIGIN, distance = 19.0, azimuth = 1.05, elevation = -0.7)
+    for opening in [initCameraDefault(), rolled, steep]:
+      # Single point, held by least sphere; and wide selection, held by its own reach.
+      for reach_selection in [0.0, 6.0]:
+        let radius = opening.radiusHeld(WIDE, TALL, reach_selection)
+        for (start, finish) in [
+          (ScreenPosition(x: 195.0, y: 422.0), ScreenPosition(x: 250.0, y: 422.0)),
+          (ScreenPosition(x: 170.0, y: 380.0), ScreenPosition(x: 220.0, y: 470.0)),
+          (ScreenPosition(x: 240.0, y: 470.0), ScreenPosition(x: 160.0, y: 390.0)),
+        ]:
+          let taken = opening.heldUnder(start, radius)
+          for steps in [1, 16]:
+            var
+              carried = opening
+              at = start
+            for step in 1 .. steps:
+              let reached = float(step)/float(steps)
+              let next = ScreenPosition(
+                x: start.x + reached*(finish.x - start.x),
+                y: start.y + reached*(finish.y - start.y),
+              )
+              carried.turnFollowing(at, next, WIDE, TALL, has_selection = true,
+                reach_selection = reach_selection)
+              at = next
+            check carried.heldUnder(finish, radius) =~ taken
+            check carried.pivot =~ opening.pivot
+            check carried.distance =~ opening.distance
+            check carried.rollHeld.get =~ opening.rollHeld.get
+          # Drag that comes back brings camera back.
+          var back = opening
+          back.turnFollowing(start, finish, WIDE, TALL, has_selection = true,
+            reach_selection = reach_selection)
+          back.turnFollowing(finish, start, WIDE, TALL, has_selection = true,
+            reach_selection = reach_selection)
+          check back.eye =~ opening.eye
+          check back.frame.axis_up =~ opening.frame.axis_up
+    # Least sphere spans third of short side on screen; eye stays outside every one.
+    let least = initCameraDefault().radiusHeld(WIDE, TALL, 0.0)
+    let rim = projectToScreen(
+      initCameraDefault().initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL,
+      initCameraDefault().pivot + least*initCameraDefault().frame.axis_right,
+    )
+    check abs((rim.x - float(WIDE)/2.0) - float(WIDE)/3.0) < 1.0
+    check initCameraDefault().radiusHeld(WIDE, TALL, 100.0) < initCameraDefault().distance
+    # Finger off sphere still turns view, with pivot standing.
+    var outside = initCameraDefault()
+    outside.turnFollowing(ScreenPosition(x: 20.0, y: 100.0), ScreenPosition(x: 60.0, y: 140.0),
+      WIDE, TALL, has_selection = true)
+    check not (outside.eye =~ initCameraDefault().eye)
+    check outside.pivot =~ initCameraDefault().pivot
 
 
   test "a finger's free aim keeps what it took hold of under it, pixel for pixel":
@@ -7354,7 +7389,6 @@ suite "Interaction":
     # Across axis stays level through pole, so sight turns in its own upright plane and
     #   camera comes down far side upside down, keeping its across.
     const (WIDE, TALL) = (390, 844)
-    let rate = PI/float(min(WIDE, TALL))
     proc dragged(camera: Camera; picked: bool; across, down: float): Camera =
       # Drag finger from middle of canvas by these pixels, in one step.
       let middle = ScreenPosition(x: float(WIDE)/2.0, y: float(TALL)/2.0)
@@ -7371,13 +7405,12 @@ suite "Interaction":
         now_at = projectToScreen(swung.initMatrixViewProjection(aspect), WIDE, TALL, near_side)
       (now_at.x - was.x, now_at.y - was.y)
     let opening = initCameraDefault()
-    # Orbit climbs past straight down in 40 drags, and near side follows finger both sides.
+    # Orbit climbs past straight down in drags down from middle, and near side follows
+    #   finger on both sides.
     var over = opening
-    let climb = 0.5*PI - opening.elevation + 0.4
-    for step in 1 .. 40: over = over.dragged(true, 0.0, climb/40.0/rate)
-    check dot(over.frame.forward, opening.frame.forward) =~ cos(climb)
-    check over.frame.axis_right =~ opening.frame.axis_right
+    for step in 1 .. 4: over = over.dragged(true, 0.0, 80.0)
     check dot(over.frame.axis_up, UP_WORLD) < 0.0
+    check over.frame.axis_right =~ opening.frame.axis_right
     check over.pivot =~ opening.pivot
     for camera in [opening, over]:
       check camera.sweptBy(20.0, 0.0)[0] > 0.0
@@ -7391,14 +7424,17 @@ suite "Interaction":
     check under.frame.axis_right =~ opening.frame.axis_right
     check under.eye =~ opening.eye
     # Sight exactly along world up names no level across, and camera's own stands in.
-    var pole = opening.dragged(true, 0.0, (0.5*PI - opening.elevation)/rate)
+    var pole = opening
+    pole.orbitCarrying(held = UP_WORLD, under = opening.eye - opening.pivot)
     check abs(dot(pole.frame.forward, UP_WORLD)) =~ 1.0
-    let spun = pole.dragged(true, -0.2/rate, 0.0)
-    check spun.frame.forward =~ pole.frame.forward
-    check dot(spun.frame.axis_right, pole.frame.axis_right) =~ cos(0.2)
-    let past = pole.dragged(true, 0.0, 0.3/rate)
-    check abs(dot(past.frame.forward, UP_WORLD)) =~ cos(0.3)
+    let past = pole.dragged(true, 0.0, 60.0)
+    check abs(dot(past.frame.forward, UP_WORLD)) < 1.0 - 1.0e-3
     check past.frame.axis_right =~ pole.frame.axis_right
+    check past.pivot =~ pole.pivot
+    let spun = pole.dragged(true, 60.0, 0.0)
+    check spun.pivot =~ pole.pivot
+    check abs(dot(spun.frame.axis_right, spun.frame.forward)) < TOLERANCE_TEST
+    check abs(norm(spun.frame.forward) - 1.0) < TOLERANCE_TEST
 
 
   test "a roll carries the picture the way the reader turns":
