@@ -173,7 +173,7 @@ const
     "noto-serif-latin-600-normal.woff2",
   ]
     ## Faces page embeds. Names alone: what bytes each name is, and where they come from, is
-    ##   `curator/audit/src/assets.nim`, and `koch assets` fetches and checks them.
+    ##   `curator/audit/src/assets.nim`, and `koch fetch-assets` fetches and checks them.
     ##   **Choice is this project's; digest is repository's.** These six are what this page
     ##   draws -- three of Article X.8's families, plus maths and symbols no other target
     ##   asks for -- and that stays here because it differs per target. What left is version
@@ -196,7 +196,7 @@ const
     ##   reads outlines and cannot read `woff2`, so what each front-end wants is not what
     ##   other does even where family is same.
   SYSTEM = [
-    ("curl", "fetch faces asked of shared store, one level down through `koch assets`"),
+    ("curl", "fetch faces asked of shared store, one level down through `koch fetch-assets`"),
     ("coreutils", "`base64` inlining those faces, and `sha256sum` store checks them with"),
     ("nodejs", "run type-checker `types` drives and harness `drive` runs"),
     ("git", "clone Dear ImGui and SDL3, and read commit `desktop` holds each of them at"),
@@ -526,8 +526,8 @@ proc system() =
 
 
 proc facesFromStore(names: openArray[string]): seq[string] =
-  ## Ask `koch assets` for each face named, and read back path it holds in shared store.
-  ##   Repository's verb is `assets` and this project's own verb below is also `assets`; they
+  ## Ask `koch fetch-assets` for each face named, and read back path it holds in shared store.
+  ##   Repository's verb is `fetch-assets` and this project's own verb below is `assets`; they
   ##   are different drivers, and one asks other. Store serves any file fetched at build time,
   ##   of which faces are only instances today.
   ##   Store is repository's (`curator/audit/src/assets.nim`), keyed by digest, and verb
@@ -538,26 +538,26 @@ proc facesFromStore(names: openArray[string]): seq[string] =
   ##   copy below pairing wrong bytes with right name.
   ##   Compiler chatter is turned off rather than filtered, since paths are what is parsed.
   let (written, code) = execCmdEx(
-    "nim r --hints:off --warnings:off " & quoteShell(PATH_KOCH) & " assets " &
+    "nim r --hints:off --warnings:off " & quoteShell(PATH_KOCH) & " fetch-assets " &
       names.quoteShellCommand
   )
   if code != 0:
     raise newException(OSError,
-      "`koch assets` would not serve every face; got exit `" & $code & "` --\n" & written)
+      "`koch fetch-assets` would not serve every face; got exit `" & $code & "` --\n" & written)
   for line in written.strip.splitLines:
     let path = line.strip
     if path.len > 0 and fileExists(path): result.add path
   if result.len != names.len:
     raise newException(OSError,
-      "`koch assets` named " & $result.len & " paths for " & $names.len & " faces asked for.")
+      "`koch fetch-assets` named " & $result.len & " paths for " & $names.len & " faces asked for.")
 
 
 proc assets() =
   ## Copy every face both front-ends draw with out of shared store into `build/fonts`.
   ##   Faces are binary, which audit cannot read, so they are never committed and this verb
   ##   is how contributor gets them (CONTRIBUTOR.md, "Pages and assets").
-  ##   Fetching and checking is `koch assets`, not this: digest belongs to repository now that
-  ##   two projects draw same files, and this verb names which faces rather than what bytes
+  ##   Fetching and checking is `koch fetch-assets`, not this: digest belongs to repository,
+  ##   since two projects draw same files, and this verb names which faces rather than what bytes
   ##   they are (repository issues 116 and 124).
   ##   Copied rather than read from store where they sit: desktop binary finds its faces beside
   ##   itself, and page's build reads them from one directory whether store is warm or cold.
