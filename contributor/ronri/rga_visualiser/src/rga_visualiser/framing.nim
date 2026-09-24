@@ -58,9 +58,9 @@ const
 
 type PointerPick* = object ## Define pick made by pointer, awaiting camera's aim.
   ## Front-end records it beside selection change; `offerAim` consumes it next frame.
-  ## What pointer picked stays under pointer as camera comes in; see `stanceUnderPointer`.
+  ## What pointer picked is centred as camera comes in; see `stanceApproaching`.
+  ##   Where pointer stood is not held: aim reads object's own anchor, not clicked pixel.
   handle*: int ## Object clicked or tapped.
-  cursor*: ScreenPosition ## Where pointer stood, window pixels.
 
 
 
@@ -341,65 +341,46 @@ func stanceFor*(aim: CameraAim; camera: Camera; width, height: int): CameraStanc
   camera.stanceDollied(settled, settled.distance + back)
 
 
-func stanceUnderPointer*(
-  anchor: Position; shaped: Kind; radius: float; centre: Position; camera: Camera;
-  scale: DrawExtent
+func stanceApproaching*(
+  shaped: Kind; radius: float; centre: Position; camera: Camera; scale: DrawExtent
 ): Option[CameraStance] =
-  ## Resolve where camera ends after pointer pick, `anchor` kept on its pixel.
-  ##   Wheel's own move (`camera.dollyToward` then `repivotToDepth`): eye comes in along
-  ##   its line to anchor, angles untouched, pivot set on sight line at anchor's depth.
+  ## Resolve where camera ends after pointer pick: object centred, and come in to.
+  ##   Pivot goes onto object's own anchor, so it sits at middle of frame and orbit turns
+  ##   about it rather than about empty point beside it.
+  ##     Held under pointer before, on whichever pixel reader clicked. Pivot then stood on
+  ##     sight line at that object's depth, units away from object itself, and every orbit
+  ##     swung object round screen rather than turning it where it stood.
+  ##   Camera slides rather than turns, so angles and roll both survive; see
+  ##   `camera.stanceRepivoted`.
   ##   How far in depends on shape and on what reader could see.
   ##     Point drawn at floor dot (`DIAMETER_POINT_LEAST`) is only place, so camera comes
   ##     in until its disc spans `FRACTION_HEIGHT_APPROACH_POINT` of frame's height: moon
   ##     picked from 168 units out becomes moon.
   ##     Point seen at its size, and line, come in no further than orbit distance: reader
   ##     at working scale picking operands keeps that scale, as ever.
-  ##     Neither moves eye further off than anchor already stands: pick of object already
-  ##     close leaves picture as it is, pivot alone moving to its depth.
-  ##     Plane is framed both ways, disc's `centre` brought to depth where its diameter
-  ##     spans `FRACTION_HEIGHT_APPROACH_PLANE`, crossing under pointer held meanwhile.
-  ##       Eye moving along its line to anchor by factor `s` puts centre at depth
-  ##       `d_c - d_a + s*d_a`, so anchor ends at `D - d_c + d_a`.
-  ##   Written out rather than through `dollyToward`, whose near floor scales eye's move
-  ##   by less than factor asked and would leave pivot short of anchor's depth.
-  ##   None where anchor is not ahead of eye, or plane's centre stands further behind
-  ##   crossing than its depth to be, leaving caller `stanceFor`.
-  let
-    eye = camera.eye
-    forward = camera.frame.forward
-    depth_now = dot(anchor - eye, forward)
-  if depth_now <= 1.0e-6: return
-  var depth_end = min(depth_now, camera.distance)
+  ##     Neither moves eye further off than object already stands: pick of one already
+  ##     close leaves reader's own scale alone.
+  ##     Plane comes in until its whole disc spans `FRACTION_HEIGHT_APPROACH_PLANE`, which
+  ##     is reach its own centre asks for rather than one any crossing does.
+  ##   None where object is not ahead of eye, leaving caller `stanceFor`. Centring one
+  ##   behind reader would slide camera back past it rather than turn, which is jump
+  ##   nobody asked for; frame rule turns nothing and handles it by its own bound.
+  let reach_now = norm(centre - camera.eye)
+  if dot(centre - camera.eye, camera.frame.forward) <= 1.0e-6: return
+  var depth_end = min(reach_now, camera.distance)
   case shaped
   of Kind.Point:
     let is_dot =
-      radius < 0.5*float(DIAMETER_POINT_LEAST)*worldPerPixelAt(anchor, scale.scale)
+      radius < 0.5*float(DIAMETER_POINT_LEAST)*worldPerPixelAt(centre, scale.scale)
     if is_dot:
       depth_end = min(
-        depth_now, depthSpanning(2.0*radius, FRACTION_HEIGHT_APPROACH_POINT, camera)
+        reach_now, depthSpanning(2.0*radius, FRACTION_HEIGHT_APPROACH_POINT, camera)
       )
   of Kind.Plane:
-    let depth_centre = dot(centre - eye, forward)
-    depth_end = depthSpanning(2.0*EXTENT_PLANE_F, FRACTION_HEIGHT_APPROACH_PLANE, camera) -
-      depth_centre + depth_now
+    depth_end = depthSpanning(2.0*EXTENT_PLANE_F, FRACTION_HEIGHT_APPROACH_PLANE, camera)
     if depth_end <= 1.0e-6: return
   of Kind.Line: discard
-  depth_end = distanceHeld(depth_end)
-  # Assemble eye as anchor plus offset back toward where it stood, scaled by depths.
-  let eye_settled = position(add(
-    toMultivector(anchor),
-    wedge(depth_end/depth_now, subtract(toMultivector(eye), toMultivector(anchor))),
-  ))
-  if eye_settled.isNone: return
-  # Slide motion camera stands in rather than rebuild one: this aim turns nothing, and
-  #   only eye moves, so roll survives.
-  some(CameraStance(
-    motor: motorOf(wedgeDotAnti(
-      motorSliding(subtract(toMultivector(eye_settled.get), toMultivector(eye))),
-      toMultivector(camera.motor),
-    )),
-    distance: depth_end,
-  ))
+  some(camera.stanceDollied(camera.stanceRepivoted(centre), distanceHeld(depth_end)))
 
 
 
@@ -421,9 +402,9 @@ func offerAim*(
   ##   frame rule is broken: that is how resize corrects itself.
   ##   `pointer` is pick made since last offer, consumed here whatever comes of it.
   ##     Guard is skipped for it: object already held, picked again, is taken to again.
-  ##     Where selection is exactly that object and nothing is staged, destination keeps
-  ##     it under pointer (`stanceUnderPointer`); group and horizon shape frame as
-  ##     ever, since group has to fit, which holding one pixel cannot promise.
+  ##     Where selection is exactly that object and nothing is staged, destination centres
+  ##     it and comes in to it (`stanceApproaching`); group and horizon shape frame as
+  ##     ever, since group has to fit, which one object's reach cannot promise.
   # Take caller's extent, not second derivation.
   #   Building another here ran `algebraFilled` and `camera.frame`'s joins twice per frame.
   let aim = aimFor(scene, picked, staged, scale)
@@ -444,9 +425,7 @@ func offerAim*(
     camera.holdHorizon(aim.get, width, height)
     return
   if pick.isNone and is_framed and tween.isGoalHeld(aim.get): return
-  var
-    destination = none(CameraStance)
-    anchor = none(Position)
+  var destination = none(CameraStance)
   if pick.isSome and staged.isNone and picked.len == 1 and picked.at(0) == pick.get.handle and
       scene.isAlive(pick.get.handle):
     let
@@ -455,19 +434,13 @@ func offerAim*(
       # Size plane by disc it is drawn as, about its stored anchor.
       centre = anchorFor(m, scene.anchorOverrideAt(pick.get.handle), scale)
     if shaped.isSome and not isHorizon(m) and centre.isSome:
-      anchor = positionUnderPointerOn(
-        scene, pick.get.handle, camera, scale, width, height, pick.get.cursor
+      destination = stanceApproaching(
+        shaped.get, scene.radiusAt(pick.get.handle), centre.get, camera, scale
       )
-      if anchor.isSome:
-        destination = stanceUnderPointer(
-          anchor.get, shaped.get, scene.radiusAt(pick.get.handle), centre.get, camera, scale
-        )
   if destination.isNone:
-    anchor = none(Position)
     destination = some(stanceFor(aim.get, camera, width, height))
   tween.aimAt(
-    camera, aim.get, destination.get, now, duration, anchor_held = anchor,
-    is_renewed = pick.isSome,
+    camera, aim.get, destination.get, now, duration, is_renewed = pick.isSome,
   )
 
 
