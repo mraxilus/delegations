@@ -293,9 +293,9 @@ toggles wherever they stand alongside zero overflow. A row that fits because two
 dropped is broken more quietly. It sweeps 396, 395 and 394, because a rule written one pixel out
 passes every sweep that never lands on it.
 
-*Checked.* Verified by a run. Every check goes through `tools/build.nim drive`, on both front-ends,
-software-rendered, here and on the runner. `drive` gates `summary`, so a green push run is the word
-of the runner itself (repository issues 47 and 91).
+*Checked.* Verified by a run. Every check goes through `tools/build.nim drive`, on both
+front-ends, software-rendered, here and on the runner. `drive` gates `summarize`, so a green
+push run is the word of the runner itself (repository issues 47 and 91).
 
 **Unmeasured**: the figures are this container's, and say more about SwiftShader than about any GPU.
 Bands are what the checks assert.
