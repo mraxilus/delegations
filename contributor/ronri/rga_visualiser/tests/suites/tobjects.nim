@@ -11,6 +11,26 @@ suite "Objects":
       check recovered.get =~ place
 
 
+  test "every lift writes the coefficients its sum of blades names":
+    # Lifts write one result rather than sum one blade for each term (see `boundary`).
+    #   Sum is reference they are held to: point, horizon point, motor and slide.
+    for i in 0 ..< SAMPLES:
+      let (p, q) = (PLACES[i], PLACES[(i + 1) mod SAMPLES])
+      check toMultivector(p) =~ p.x.e1 + p.y.e2 + p.z.e3 + 1.0.e4
+      let d = Direction(x: q.x, y: q.y, z: q.z)
+      check toMultivector(d) =~ d.x.e1 + d.y.e2 + d.z.e3
+      let motor = Motor(
+        turn_x: p.x, turn_y: p.y, turn_z: p.z, slide_x: q.x, slide_y: q.y, slide_z: q.z,
+        scalar: 0.1*float(i), antiscalar: 1.0 + 0.01*float(i),
+      )
+      check toMultivector(motor) =~ motor.turn_x.e41 + motor.turn_y.e42 + motor.turn_z.e43 +
+        motor.slide_x.e23 + motor.slide_y.e31 + motor.slide_z.e12 +
+        motor.antiscalar.e1234 + initElement(Basis.scalar, motor.scalar)
+      let offset = toMultivector(d)
+      check motorSliding(offset) =~ (-0.5*offset[Basis.E1]).e23 +
+        (-0.5*offset[Basis.E2]).e31 + (-0.5*offset[Basis.E3]).e12 + 1.0.e1234
+
+
   test "position ignores scale of homogeneous point":
     for point in POINTS:
       for scale in [-7.5, -1.0, 0.25, 3.0]:

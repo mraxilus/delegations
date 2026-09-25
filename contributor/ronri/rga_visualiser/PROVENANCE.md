@@ -567,9 +567,8 @@ assertions that release removes.
 where they went with it when it collapsed. They are one line in a `windowBeginPinned` overlay,
 which is the door that `?` uses, top right, because the panel opens at the top left.
 
-The menu hangs by its **right** edge. Anchored by its left it opened past the window and was
-clipped, and no check caught it, because the verdict asks what the menu *offered*. A change that
-alters what a window shows ends with a picture, for that reason.
+The menu hangs by its **right** edge, since anchored by its left it opens past the window. No check
+sees that, because the verdict asks what the menu *offered*, so such a change ends with a picture.
 
 **Both front-ends offer the same three menu groups, and the demo group is built rather than
 written.** It walks `orrery.ScaleOrrery` and labels each button with `objectsOf`, as the page
@@ -1099,9 +1098,8 @@ world up, a pole. `ELEVATION_LIMIT` bounds only a stance rebuilt from angles, wh
 the pole: `initCamera`, `placedAtElevation` and a view framed along a facing.
 
 The axis of each turn is the camera's own, so a mouse's orbit reads as a trackball, not a turntable.
-The azimuth is no longer linear in a horizontal drag once the elevation is off level. Two thousand
-steps of one angle still compose to one turn of their sum, because a turn leaves its own axis
-standing.
+The azimuth is not linear in a horizontal drag off level. Two thousand steps of one angle still
+compose to one turn of their sum, because a turn leaves its own axis standing.
 
 **The motor is eight named floats, and not a `Multivector` field.** `Camera` crosses 55 by-value
 parameters, and the JavaScript backend deep-copies every one through `nimCopy`. Eight floats in one
@@ -1117,10 +1115,9 @@ angles.
 
 A key built from the pivot and the two angles derives the eye and the frame for each field it reads.
 `CAMERA.pivot.x`, `.y` and `.z` are three derivations on their own. `ensureViewOverlay` runs for
-every overlay call, so such a key cost about eighteen sandwiches to decide whether to skip four.
-
-`drivePinAnchor` caught it. An anchor lookup went from 5.000 µs to 488.250 µs, against a band of
-100 µs. Keyed on the motor it reads 3.750 µs, which is under the 8 µs that the pin was repaired to.
+every overlay call, so such a key costs about eighteen sandwiches to decide whether to skip four.
+One anchor lookup then takes 488 µs. Keyed on the motor, it takes 3.750 µs, under the 8 µs that
+`drivePinAnchor` allows.
 
 **An orbit distance has a floor and no ceiling.** `DISTANCE_LIMIT_NEAR` at 10⁻⁹ is geometry: at
 zero the eye coincides with its pivot, and every direction that `camera.frame` derives collapses.
@@ -1487,9 +1484,8 @@ widens a rim and every line alike. The rim steps off `UNIT_CIRCLE_RIM`, resolved
 the `cos` and `sin` of the runtime itself. It is not resolved at compile time, because that
 evaluator need not agree with the libm of each backend in the last bit.
 
-The rim as one record is what the demo frame turns on. 96 ribbon records for each plane were 99.2%
-of the ribbon traffic on 132 planes. The median frame of the demo went from 239 to 84 ms under
-SwiftShader.
+The rim as one record is what the demo frame turns on. A plane's 96 ribbon records made 99.2% of
+ribbon traffic on 132 planes, and a 239 ms median frame under SwiftShader against 84 ms.
 
 **Every position of a record is stored about the origin of the frame**, which is the pivot of the
 camera (see Camera). The suite pins the five writers against an origin a million units off.
@@ -1571,8 +1567,12 @@ the shipped form is proved against. The cross product of the across-vector is he
 triple join, and every stepped disc point to the multivector sum.
 
 The horizon shapes, the lattice lines and the axes stay in the algebra. The dense `Multivector` of
-16 coefficients is copied by value through every operation, at about 1 to 2 µs on the JS backend.
-It stays, because a change to its storage would change the thing that is measured.
+16 coefficients stays, because a change to its storage would change the thing that is measured. On
+JS it is a 128-byte `Float64Array` that V8 allocates outside its heap, a microsecond each.
+
+**A lift writes its coefficients, and a read-out reads them.** Geometry goes through the operators,
+and the crossing is the coefficient table. A motor's sum of blades made 23 arrays, and a write makes
+one. **`sight` reads the stance once for each event**, off one lift and one antireverse.
 
 **The tessellation assembles before it emits.** Each loop resolves its places through the algebra
 into a `DrawScratch`, and emits after. For the grid and the axes the seam is between two procs.
@@ -1590,8 +1590,11 @@ gone with its two modules, its palette slot, its `nimBuildFrame` flag, its diagn
 four driven checks. `addGridFamily` and `radiusOnPlaneFor` still lay a lattice on any plane,
 because the ground is that case.
 
-*Checked.* Verified by `suites.nim`: every moved form is pinned to its algebraic reference.
-Assumed: the figure of µs for each operation, which comes from one profile at 1,024 objects.
+*Checked.* Verified by `suites.nim`: every moved form is pinned to its reference, a lift to its sum
+of blades, and `sight` to the reads it replaces. Verified by a 400-step camera trace: 230 read-outs
+equal to 17 digits on both backends. Verified in Chromium at 390 by 844 on 2026-09-25, best of seven
+runs. A finger's turn takes 108 µs in free aim and 86 µs in orbit, against 365 and 559. A turn and a
+frame build take 0.64 ms against 1.42, and 3.65 against 4.20 at 360 objects.
 
 ## Motors
 
@@ -2562,13 +2565,10 @@ moved the camera, while the same pick on a phone did.
 `halfAngleCentred` derives the cone that `distanceFitting` solves.
 
 **Three readings, each following what its shape is drawn at.** The dot of a point fits inside the
-centred box, inset by half of `DIAMETER_POINT_LEAST`. That is the least dot, and not the own disc
-of the point. A disc filling half the frame would otherwise push the camera out to hold its rim. A
-line merely crosses the box. The **centre** of a plane is in the centred box, and its **rim** on
-screen.
-
-To hold the rim to the box threw the camera from 19 to 29.9 on the ground plane, where 19 already
-showed the whole circle.
+centred box, inset by half of `DIAMETER_POINT_LEAST`, the least dot rather than the point's own
+disc. A disc filling half the frame would otherwise push the camera out to hold its rim. A line
+merely crosses the box. The **centre** of a plane is in the centred box, and its **rim** on screen.
+Rejected: the rim held to the box, which throws the camera from 19 to 29.9 on the ground plane.
 
 **The frame rule is a floor.** `stanceFor` pulls the eye back by the least step that carries it out
 to the fitting reach, and never in. A reader who stands further out keeps their own framing. A
