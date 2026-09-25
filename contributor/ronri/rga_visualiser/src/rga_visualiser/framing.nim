@@ -418,6 +418,13 @@ func offerAim*(
   if aim.isNone:
     tween.release()
     return
+  # Aim met after history step is taken as delivered, so frame rule alone can move camera.
+  if tween.is_adopting:
+    tween.is_adopting = false
+    tween.goal = aim
+    tween.destination = camera.stanceOf
+    tween.is_arrived = true
+    tween.is_yielded = false
   # Hold frame rule, in whichever way suits what reader is doing.
   #   Reader moving camera is cut back at once: ease would fight their own drag, and they
   #   are one in control.
@@ -444,8 +451,11 @@ func offerAim*(
       )
   if destination.isNone:
     destination = some(stanceFor(aim.get, camera, width, height))
+  # Frame broken under arrived ease re-arms it: goal held is no answer while rule fails.
+  #   Ease still running is left to land, or re-arming each frame restarts it forever.
   tween.aimAt(
-    camera, aim.get, destination.get, now, duration, is_renewed = pick.isSome,
+    camera, aim.get, destination.get, now, duration,
+    is_renewed = pick.isSome or (not is_framed and tween.is_arrived),
   )
 
 
@@ -468,3 +478,21 @@ func offerAimAt*(
     tween, held, alone, Selection(), some(previewStaging(m, RADIUS_OBJECT_DEFAULT)),
     camera.drawExtentFor(height), width, height, now, duration, pointer,
   )
+
+
+
+#[ Furniture Picked ]#
+
+proc addLatticesPicked*(
+  meshes: var MeshSet; scratch: var DrawScratch; scale: DrawExtent; scene: Scene;
+  picked: Selection
+) =
+  ## Rule lattice on every visible finite plane picked; see `tessellate.addLattice`.
+  ##   One loop both front-ends' furniture runs, so which plane is ruled is decided once.
+  ##   Here rather than in `tessellate`, which holds no scene: selection is what asks.
+  for position in 0 ..< picked.len:
+    let handle = picked.at(position)
+    if not scene.isAlive(handle) or not scene.isVisible(handle): continue
+    let m = scene.geometryOf(handle)
+    if kindOf(m) != some(Kind.Plane) or isHorizon(m): continue
+    meshes.addLattice(scratch, scale.extentFurniture, scale, m)

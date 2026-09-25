@@ -1459,13 +1459,16 @@ suite "Interaction":
     let opening = camera
 
     # Home returns to placement both builds open at, from wherever reader has gone.
+    #   Stance alone: lens reader set stays theirs.
     camera.travel(3.0, 2.0, 1.0)
     camera.orbit(0.5, 0.2)
+    camera.degrees_field_of_view = 70.0
     discard interaction.applyAction(camera, scene, KeyAction.ViewHome)
     check camera.pivot =~ opening.pivot
     check camera.distance =~ opening.distance
     check camera.azimuth =~ opening.azimuth
     check camera.elevation =~ opening.elevation
+    check camera.degrees_field_of_view =~ 70.0
 
     # Framing is standing offer's own job, so key itself moves nothing: each front.
     #   end releases its tween's goal and `framing.offerAim` aims afresh next frame.
@@ -1792,3 +1795,16 @@ suite "Interaction":
     interaction.cancelHold()
     check swellHold(interaction, 1000.0 + SECONDS_SWELL_GROW) =~ 0.0
     check not isHoldSpent(interaction, 1000.0 + 10.0)
+
+
+  test "the panel's speed is the one flight steps by, and none while nothing is held":
+    var interaction = Interaction(is_enabled: true)
+    let camera = initCameraDefault()
+    check interaction.speedFlying(camera) == 0.0
+    interaction.keys_held = {Key.W}
+    interaction.seconds_travelling = SECONDS_SPEED_RISE
+    let cap = capTravelling(interaction.depth_pointer, camera.distance, 1.0)
+    check interaction.speedFlying(camera) =~ speedTravelling(SECONDS_SPEED_RISE, cap)
+    # Shift is one multiplier on every rate, speed included.
+    interaction.keys_held = {Key.W, Key.Shift}
+    check interaction.speedFlying(camera) =~ FACTOR_HASTE*speedTravelling(SECONDS_SPEED_RISE, cap)

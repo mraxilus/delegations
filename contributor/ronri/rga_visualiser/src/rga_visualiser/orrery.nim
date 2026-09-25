@@ -238,7 +238,7 @@ const
     ## Place Sol.
     ##   At `POSITION_ORRERY` itself, reach zero: Sol is origin every other system is
     ##   measured from, so it is one system not placed at all.
-    ##   Its ecliptic lies flat on ground grid, plane z = 0 grid is ruled on; every other
+    ##   Its ecliptic lies flat on plane z = 0, which world axes x and y span; every other
     ##   direction in scene is measured against it.
 
   RADIUS_ORRERY* = SOL[INDEX_SOL_NEPTUNE].distance
@@ -289,7 +289,7 @@ func directionEquatorial(ascension, declination: float): Direction =
 func toEcliptic(d: Direction): Direction =
   ## Turn equatorial direction into ecliptic frame, scene's own.
   ##   Rotation about shared x axis, vernal equinox, by `OBLIQUITY_ECLIPTIC`: ecliptic's
-  ##   pole lands on +z, where ground grid's normal is.
+  ##   pole lands on +z, world axis z.
   Direction(
     x: d.x,
     y: d.y*cos(OBLIQUITY_ECLIPTIC) + d.z*sin(OBLIQUITY_ECLIPTIC),
@@ -551,7 +551,7 @@ const
     ##   Opening camera at 0.42 is nearly edge-on to systems on planes: every ring collapses
     ##   to line and arrangement reads as starburst.
     ##   Steeper also makes sphere fit honest.
-    ##   Not overhead: at `TAU/4` ground grid disappears into own horizon.
+    ##   Not overhead: at `TAU/4` plane of ecliptic disappears into own horizon.
     ##   Azimuth is left where reader had it.
 
   INSET_ORRERY_SHOWN* = 24.0

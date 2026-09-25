@@ -900,6 +900,17 @@ func releaseKeysAll*(interaction: var Interaction) =
   interaction.seconds_travelling = 0.0
 
 
+func speedFlying*(interaction: Interaction, camera: Camera): float =
+  ## Read speed free flight carries camera at right now, in units per second.
+  ##   Panel's reading: same cap and same age `driveHeld` steps by, so figure shown is
+  ##   figure flown. Zero while no travel key is held, since age is.
+  let haste = if Key.Shift in interaction.keys_held: FACTOR_HASTE else: 1.0
+  speedTravelling(
+    interaction.seconds_travelling,
+    capTravelling(interaction.depth_pointer, camera.distance, haste),
+  )
+
+
 func driveHeld*(
   interaction: var Interaction; camera: var Camera; seconds: float; has_selection: bool
 ) =
@@ -995,7 +1006,8 @@ func applyAction*(
   of KeyAction.FrameSelection: discard
   of KeyAction.ViewHome:
     # Return to placement both builds open at, so "home" means same as starting again.
-    camera = initCameraDefault()
+    #   Stance alone: lens is reader's setting, as history's step keeps it.
+    camera = camera.placed(initCameraDefault().stanceOf)
   none(int)
 
 

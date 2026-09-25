@@ -65,6 +65,7 @@ import { driveGround } from './ground';
 import { driveBlankRefused } from './canvas';
 import { driveFrameWork } from './frame';
 import { driveHostSave } from './host';
+import { driveViewSection } from './view';
 
 /** Viewport every check below is written against. */
 const SIZE_VIEW = { width: 1200, height: 900 };
@@ -165,6 +166,7 @@ async function main(): Promise<void> {
   await driveGroupTurnedAtOnce(page, cdp);
   await driveUndo(page);
   await driveReachable(page);
+  await driveViewSection(page);
 
   await driveHoverDuringGesture(page, SIZE_VIEW.width, SIZE_VIEW.height);
   await driveHelp(page, SIZE_VIEW.width, SIZE_VIEW.height);

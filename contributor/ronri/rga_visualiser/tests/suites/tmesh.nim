@@ -716,7 +716,7 @@ suite "Mesh":
   test "world furniture stays inside the fog it is drawn in":
     MESHES.clearMeshes
     MESHES.addAxes(SCRATCH, SCALE_FOG.extentFurniture, SCALE_FOG)
-    MESHES.addGrid(SCRATCH, SCALE_FOG.extentFurniture, SCALE_FOG)
+    MESHES.addLattice(SCRATCH, SCALE_FOG.extentFurniture, SCALE_FOG, groundPlane())
     check 6*MESHES.ribbons.count > 0
     let fog = fogFurnitureFor(SCALE_FOG.extentFurniture)
     for i in 0 ..< MESHES.ribbons.count:
@@ -734,7 +734,7 @@ suite "Mesh":
     #   since either alone passes under old behaviour.
     let scale_afar = scaleFurnitureAt(Position(x: 1000, y: -700, z: 6), 300.0)
     MESHES.clearMeshes
-    MESHES.addGrid(SCRATCH, scale_afar.extentFurniture, scale_afar)
+    MESHES.addLattice(SCRATCH, scale_afar.extentFurniture, scale_afar, groundPlane())
     check 6*MESHES.ribbons.count > 0
     let fog = fogFurnitureFor(scale_afar.extentFurniture)
     for i in 0 ..< MESHES.ribbons.count:
@@ -745,13 +745,13 @@ suite "Mesh":
         check norm(vertex.toPosition - ORIGIN) > fog.radius_gone
 
 
-  test "ground grid holds full alpha near the camera and fades to nothing at its reach":
+  test "a lattice holds full alpha near the camera and fades to nothing at its reach":
     # Fade runs per fragment in shaders now, so what records carry is.
     #   grid's own full tint with fog *flag* set, and drawn alpha is that tint
     #   times `alphaGridFade` -- reference both fragment shaders are held to --
     #   evaluated here at each corner's own distance from eye, exactly as they do.
     MESHES.clearMeshes
-    MESHES.addGrid(SCRATCH, SCALE_FOG.extentFurniture, SCALE_FOG)
+    MESHES.addLattice(SCRATCH, SCALE_FOG.extentFurniture, SCALE_FOG, groundPlane())
     let fog = fogFurnitureFor(SCALE_FOG.extentFurniture)
     var
       alpha_near_min = 1.0
@@ -855,7 +855,7 @@ suite "Mesh":
         #   through origin that coincides with world axis.
         lines = 4*int(floor(radius/SIZE_CELL_GRID))
       MESHES.clearMeshes
-      MESHES.addGrid(SCRATCH, extent, scale_above)
+      MESHES.addLattice(SCRATCH, extent, scale_above, groundPlane())
       # One record per lattice line, since fog fade moved to fragment shader.
       check MESHES.ribbons.count == lines
       for i in 0 ..< MESHES.ribbons.count:
@@ -900,12 +900,12 @@ suite "Mesh":
     ]:
       let scale_afar = scaleFurnitureAt(Position(x: 0, y: 0, z: height), extent)
       MESHES.clearMeshes
-      MESHES.addGrid(SCRATCH, extent, scale_afar)
+      MESHES.addLattice(SCRATCH, extent, scale_afar, groundPlane())
       check MESHES.ribbons.count <= 2*LINES_GRID_MAX
       check MESHES.ribbons.count > 0
 
 
-  test "a camera dollied far out still has ground under it, at a coarser cell":
+  test "a camera dollied far out still has lattice under it, at a coarser cell":
     # Fault: fog's reach was capped at `CELLS_GRID_HALF_MAX` cells, so past 1,200.
     #   units ground stopped reaching what camera was looking at, and past twice
     #   that there was nothing drawn at all -- black void, axes included. Bound now
@@ -933,7 +933,7 @@ suite "Mesh":
     for (extent, height) in [(1.0e4, 5.0e2), (1.0e6, 5.0e4), (1.0e9, 5.0e7)]:
       let scale_afar = scaleFurnitureAt(Position(x: 0, y: 0, z: height), extent)
       MESHES.clearMeshes
-      MESHES.addGrid(SCRATCH, extent, scale_afar)
+      MESHES.addLattice(SCRATCH, extent, scale_afar, groundPlane())
       check MESHES.ribbons.count > 0
       check MESHES.ribbons.count <= RIBBONS_MAX
       # Laid on world multiples of cell this reach asked for, so lattice is still.
@@ -954,6 +954,55 @@ suite "Mesh":
           #   lattice line, which in world units grows with distance it is drawn at.
           #   Measured at 0.005 of cell across all three reaches.
           check min(off_x, off_y) <= 0.02*size_cell
+
+
+  test "a picked plane is ruled on itself, in its own frame, and nothing else is":
+    # World rules no ground: lattice lies on plane picked, so tilted plane's lines lie in
+    #   it, stepped by cell from its anchor along its own two axes.
+    let
+      normal = normalize(Direction(x: 1.0, y: 2.0, z: 2.0)).get
+      through = Position(x: 2.0, y: -1.0, z: 3.0)
+      plane = planeThrough(toMultivector(through), toMultivector(normal))
+      scale_near = scaleFurnitureAt(through + 3.0*normal, 300.0)
+    MESHES.clearMeshes
+    MESHES.addLattice(SCRATCH, scale_near.extentFurniture, scale_near, plane)
+    check MESHES.ribbons.count > 0
+    let
+      anchor = positionAnchor(plane).get
+      axes = frame(plane).get
+      fog = fogFurnitureFor(scale_near.extentFurniture)
+      height = abs(depthAgainst(plane, toMultivector(scale_near.eye)))
+      size_cell = sizeCellGridFor(sqrt(fog.radius_gone*fog.radius_gone - height*height))
+    for i in 0 ..< MESHES.ribbons.count:
+      let record = MESHES.ribbons.records[i]
+      for at in [
+        Position(x: record.tail_x, y: record.tail_y, z: record.tail_z),
+        Position(x: record.head_x, y: record.head_y, z: record.head_z),
+      ]:
+        check abs(depthAgainst(plane, toMultivector(at))) < 1.0e-3
+        # One of two plane coordinates sits on multiple of cell: line's own step.
+        let
+          first = dot(at - anchor, axes.axis_first)/size_cell
+          second = dot(at - anchor, axes.axis_second)/size_cell
+        check min(abs(first - round(first)), abs(second - round(second))) < 1.0e-3
+    # Plane in horizon has no finite point to rule about.
+    MESHES.clearMeshes
+    MESHES.addLattice(SCRATCH, scale_near.extentFurniture, scale_near, 1.0.e321)
+    check MESHES.ribbons.count == 0
+    # Picked visible plane alone is ruled: point, and plane hidden, draw no lattice.
+    var scene = initScene()
+    var picked: Selection
+    picked.toggle(scene.addObject(toMultivector(through), "p", Ink.Rose))
+    picked.toggle(scene.addObject(plane, "shown", Ink.Rose))
+    let hidden = scene.addObject(groundPlane(), "hidden", Ink.Rose)
+    scene.setVisible(hidden, false)
+    picked.toggle(hidden)
+    MESHES.clearMeshes
+    MESHES.addLatticesPicked(SCRATCH, scale_near, scene, picked)
+    let count_picked = MESHES.ribbons.count
+    MESHES.clearMeshes
+    MESHES.addLattice(SCRATCH, scale_near.extentFurniture, scale_near, plane)
+    check count_picked == MESHES.ribbons.count
 
 
   test "the axes fog too: the one the camera stands by is drawn, the far ones are not":

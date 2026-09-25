@@ -42,6 +42,45 @@ suite "History":
     # Stance itself still crosses, which is what stepping is for.
     check camera.pivot =~ initCameraDefault().pivot
 
+  test "a step either way keeps each pick that still names the object it named":
+    # Frame rule binds only while something is picked, so step must not drop picks it
+    #   need not. Handle alone is no name: freed handle is refilled by next add.
+    var scene = initScene()
+    var camera = initCameraDefault()
+    var history: History
+    let (a, b) = (scene.addObject(POINTS[0], "a", Ink.Cobalt), scene.addObject(POINTS[1], "b",
+      Ink.Rose))
+    history.initHistory(scene, camera)
+    let c = scene.addObject(POINTS[2], "c", Ink.Olive)
+    history.record(scene, camera)
+    var picked: Selection
+    picked.toggle(b)
+    picked.toggle(c)
+    picked.toggle(a)
+    # Undo takes `c` away and keeps rest, in order picked.
+    check history.undo(scene, camera, picked)
+    check picked.len == 2
+    check picked.at(0) == b and picked.at(1) == a
+    # Redo brings `c` back, but reader had let it go: nothing re-picks it.
+    check history.redo(scene, camera, picked)
+    check picked.len == 2
+    # Remove `a`, add `d` into its freed handle, and pick `d` alone.
+    scene.removeObject(a)
+    history.record(scene, camera)
+    let d = scene.addObject(POINTS[3], "d", Ink.Cobalt)
+    history.record(scene, camera)
+    check d == a
+    picked.clear()
+    picked.toggle(d)
+    # Undo empties that handle; second undo refills it with `a`, which is not `d`.
+    check history.undo(scene, camera, picked)
+    check picked.len == 0
+    picked.toggle(d)
+    check history.undo(scene, camera, picked)
+    check scene.isAlive(d)
+    check picked.len == 0
+
+
   test "undo and redo retrace every recorded state exactly, and canUndo/canRedo agree":
     var scene = initScene()
     var camera = initCameraDefault()

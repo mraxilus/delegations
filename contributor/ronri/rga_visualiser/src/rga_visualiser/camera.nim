@@ -928,7 +928,7 @@ func distanceTravelled*(seconds_before, seconds_after, cap: float): float =
 #[ Camera Frame ]#
 
 type SettingsFurniture* = tuple
-  ## Define everything ground grid and world axes are built from.
+  ## Define everything picked planes' lattices and world axes are built from.
   ##   `drawExtentFor` derives every field furniture reads from exactly these, so two
   ##   frames agreeing here draw same furniture, vertex for vertex: what lets front-end
   ##   keep last frame's meshes.
@@ -941,22 +941,40 @@ type SettingsFurniture* = tuple
   ##     every axis, pivot and both angles, which is stronger than keying on those.
   ##     Reading pivot and both angles out to key on them costs eighteen sandwiches, and
   ##     hold exists to save less work than that; see `drivePinAnchor`.
+  ##   Lattice lies on planes picked, so what scene holds and what is picked key it too:
+  ##   two revision counters, which move on every edit and every pick.
   motor: Motor
   distance, degrees_field_of_view, reach_near, reach_scene: float
   height_pixels: int
   is_axes_shown, is_grid_shown: bool
+  revision_scene, revision_selection: int
 
 
 func settingsFurnitureFor*(
-  camera: Camera; height_pixels: int; is_axes_shown, is_grid_shown: bool
+  camera: Camera; height_pixels: int; is_axes_shown, is_grid_shown: bool;
+  revision_scene, revision_selection: int
 ): SettingsFurniture =
   ## Read furniture's inputs off this camera and frame, for hold comparison.
   ##   Compared exactly by callers: question is whether anything moved at all.
   ##   Every field is plain read, so key costs nothing to build.
   (
     camera.motor, camera.distance, camera.degrees_field_of_view, camera.reach_near,
-    camera.reach_scene, height_pixels, is_axes_shown, is_grid_shown,
+    camera.reach_scene, height_pixels, is_axes_shown, is_grid_shown, revision_scene,
+    revision_selection,
   )
+
+
+func rulerFor*(camera: Camera, scale: DrawExtent): tuple[span, pixels: float] =
+  ## Choose scale bar for this frame: world length it claims, and pixels it is drawn over.
+  ##   Measured at depth of `scaleLocal`, what frustum and furniture take their scale from:
+  ##   nearest drawn object ahead, or separation where none is. Not pointer's depth, which
+  ##   would change what bar claims as pointer moved over still view.
+  ##   Zero span where nothing is measured, which each front-end reads as no bar.
+  let
+    world_per_pixel = worldPerPixelAt(scale.eye + camera.scaleLocal*scale.forward, scale)
+    span = spanRulerFor(world_per_pixel)
+  if span <= 0.0: return (0.0, 0.0)
+  (span, span/world_per_pixel)
 
 
 func drawExtentFor*(camera: Camera, height_pixels: int): DrawExtent =
@@ -1117,6 +1135,7 @@ type
     is_yielded*: bool ## Whether reader has taken camera mid-ease; see `abandon`.
       ## Ease then carries pivot alone, by each frame's own share of its path, and way
       ## round and distance stay reader's.
+    is_adopting*: bool ## Whether next offer takes its aim as delivered; see `adoptNext`.
 
 
 func `==`*(a, b: SphereWorld): bool =
@@ -1420,6 +1439,25 @@ func placedAtPivot*(camera: Camera, pivot: Position): Camera =
   camera.placed(camera.stanceRepivoted(pivot))
 
 
+func motorRigid*(m: Multivector): Option[Motor] =
+  ## Read rigid motion `m` names, for coefficients reader types into panel.
+  ##   Odd grades name no rigid motion, and drop. Even part is unitized, then carried
+  ##   through `log` and `exp`, whose round trip lands on unit motor meeting rigid
+  ##   condition whatever was typed: its turn, and slide consistent with that turn.
+  ##     `unitize` alone leaves slide that turn does not allow, which carries eye off
+  ##     orthonormal frame rather than moving it.
+  ##   Library's own `unitize`, `log` and `exp` throughout; nothing here normalises.
+  ##   None where even part carries no weight, i.e. names no motion at all.
+  let even = toMultivector(motorOf(m))
+  if normWeight(even)[Basis.scalarAnti] <= TOLERANCE_ABS: return
+  some(motorOf(exp(log(unitize(even)))))
+
+
+func placedAtMotor*(camera: Camera, motor: Motor): Camera =
+  ## Put copy of `camera` at rigid motion `motor`, keeping its separation and its lens.
+  camera.placed(CameraStance(motor: motor, distance: camera.distance))
+
+
 func placedAtDistance*(camera: Camera, distance: float): Camera =
   ## Put copy of `camera` at same stance but this separation, pivot standing.
   ##   Same reading as `dolly`, which reaches it by factor.
@@ -1553,6 +1591,7 @@ func release*(tween: var CameraTween) =
   ##   Not for camera *user* just moved: see `abandon`.
   tween.goal = none(CameraAim)
   tween.is_arrived = false
+  tween.is_adopting = false
 
 
 func abandon*(tween: var CameraTween) =
@@ -1577,3 +1616,14 @@ func halt*(tween: var CameraTween) =
   ##   still arriving would slide camera off what reader set.
   ##   Not `release`, for reason `abandon` gives.
   if tween.goal.isSome: tween.is_arrived = true
+
+
+func adoptNext*(tween: var CameraTween) =
+  ## Halt, and take whatever next offer aims at as delivered where camera then stands.
+  ##   For placement undo and redo restore, along with selection kept across it. Aim that
+  ##   restored scene reads is new wherever step changed what is picked, and new aim eases
+  ##   camera off stance just restored, framed or not.
+  ##   Frame rule alone moves camera then: restored stance that breaks it eases back into
+  ##   range, as resized window does; see `framing.offerAim`.
+  tween.halt()
+  tween.is_adopting = true

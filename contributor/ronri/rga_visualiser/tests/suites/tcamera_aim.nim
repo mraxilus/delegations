@@ -1159,6 +1159,86 @@ suite "Camera Aim":
     check tween.destination.distance < camera.distance
 
 
+  test "a still camera a resize leaves out of frame eases back, though its goal is held":
+    # Standing offer skips goal it holds, and was skipping it while frame rule was broken:
+    #   narrowed window left camera unframed, since nothing moving it meant nothing held it.
+    const (WIDE, TALL, DURATION) = (WIDTH_AIM, HEIGHT_AIM, 0.35)
+    var camera = stanceAim(0.7, 0.35)
+    let (scene, picked) = sceneOf(
+      toMultivector(Position(x: 6.0, y: -4.0, z: 1.0)),
+      toMultivector(Position(x: -3.0, y: 5.0, z: -2.0)),
+    )
+    var
+      tween: CameraTween
+      pointer = none(PointerPick)
+    tween.offerAim(
+      camera, scene, picked, none(Preview), camera.drawExtentFor(TALL),
+      WIDE, TALL, 0.0, DURATION, pointer,
+    )
+    tween.settle(camera)
+    let aim = tween.goal.get
+    check aim.isFramed(camera, WIDE, TALL)
+    check not aim.isFramed(camera, TALL div 2, TALL)
+    tween.offerAim(
+      camera, scene, picked, none(Preview), camera.drawExtentFor(TALL),
+      TALL div 2, TALL, 1.0, DURATION, pointer,
+    )
+    check not tween.is_arrived
+    tween.settle(camera)
+    check aim.isFramed(camera, TALL div 2, TALL)
+    # Once back in frame, same offer is answered again rather than re-armed.
+    tween.offerAim(
+      camera, scene, picked, none(Preview), camera.drawExtentFor(TALL),
+      TALL div 2, TALL, 2.0, DURATION, pointer,
+    )
+    check tween.is_arrived
+
+
+  test "a stance history restores stays while framed, and eases back where it is not":
+    # Aim restored scene reads can be new, and new aim eases camera wherever it stands.
+    #   Step has tween adopt it as delivered, so frame rule alone moves camera then.
+    const (WIDE, TALL, DURATION) = (WIDTH_AIM, HEIGHT_AIM, 0.35)
+    let (scene, picked) = sceneOf(
+      toMultivector(Position(x: 6.0, y: -4.0, z: 1.0)),
+      toMultivector(Position(x: -3.0, y: 5.0, z: -2.0)),
+    )
+    let opening = stanceAim(0.7, 0.35)
+    let aim = aimFor(scene, picked, none(Preview), opening.drawExtentFor(TALL)).get
+    var
+      tween: CameraTween
+      pointer = none(PointerPick)
+    # Framed from further out than fit asks: nothing moves it.
+    var camera = opening.placed(stanceFor(aim, opening, WIDE, TALL))
+    camera.flyAhead(-5.0)
+    let stance_far = camera.stanceOf
+    check aim.isFramed(camera, WIDE, TALL)
+    tween.adoptNext()
+    tween.offerAim(
+      camera, scene, picked, none(Preview), camera.drawExtentFor(TALL),
+      WIDE, TALL, 0.0, DURATION, pointer,
+    )
+    check tween.is_arrived
+    check camera.stanceOf == stance_far
+    # Restored well inside fit: rule is broken, so ease backs camera out to it.
+    camera.flyAhead(12.0)
+    check not aim.isFramed(camera, WIDE, TALL)
+    tween.adoptNext()
+    tween.offerAim(
+      camera, scene, picked, none(Preview), camera.drawExtentFor(TALL),
+      WIDE, TALL, 1.0, DURATION, pointer,
+    )
+    check not tween.is_arrived
+    tween.settle(camera)
+    check aim.isFramed(camera, WIDE, TALL)
+    # Nothing picked: adoption lapses with goal, so later pick aims afresh.
+    tween.adoptNext()
+    tween.offerAim(
+      camera, scene, Selection(), none(Preview), camera.drawExtentFor(TALL),
+      WIDE, TALL, 2.0, DURATION, pointer,
+    )
+    check tween.goal.isNone and not tween.is_adopting
+
+
   test "an aim widens by exactly the objects folded into it":
     let (a, b) = (Position(x: 3.0, y: 0.0, z: 0.0), Position(x: -3.0, y: 0.0, z: 0.0))
     let aim_one = none(CameraAim).aimIncluding(toMultivector(a), SCALE_AIM)

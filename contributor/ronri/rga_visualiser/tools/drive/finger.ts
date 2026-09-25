@@ -260,12 +260,12 @@ async function drivePlaneSides(page: Page): Promise<void> {
   );
 }
 
-/** Drive camera out by decade, and assert scale bar measures what it says.
+/** Drive camera out by decades, and assert scale bar measures what it says.
  *
  *  Bar drawn from one derivation and labelled from another is classic way map scale goes
- *  quietly wrong, so both halves are checked against bridge's own metrics -- and at two
- *  distances decade apart, since grid's cell steps by decades and bar that ignored step would
- *  still pass at single distance.
+ *  quietly wrong, so both halves are checked against bridge's own ruler -- and at two
+ *  distances apart, since span steps 1-2-5 by decade and bar that ignored step would still
+ *  pass at single distance.
  */
 export async function driveRuler(page: Page): Promise<void> {
   const rulers = [];
@@ -274,31 +274,33 @@ export async function driveRuler(page: Page): Promise<void> {
     await settleCamera(page);
     await settleReading(page);
     rulers.push(await page.evaluate((given) => {
-      const metrics = nimGridMetrics(window.innerWidth, window.innerHeight);
-      const cell = metrics[0] ?? 0, world_per_pixel = metrics[1] ?? 1;
-      const label = document.getElementById('ruler-label')?.textContent ?? '';
-      const width = document.getElementById('ruler-bar')?.getBoundingClientRect().width ?? 0;
-      // Span label claims, read back out of label itself, thin spaces and all.
-      const span = Number(label.split(' units')[0]?.replace(/ /g, ''));
+      const metrics = nimRuler(window.innerWidth, window.innerHeight);
+      const span = metrics[0] ?? 0, pixels = metrics[1] ?? 0;
       return {
-        distance: given, cell, world_per_pixel, label, width, span,
+        distance: given, span, pixels,
+        label: document.getElementById('ruler-label')?.textContent ?? '',
+        reading: nimRulerReading(span),
+        width: document.getElementById('ruler-bar')?.getBoundingClientRect().width ?? 0,
         is_hidden: document.getElementById('ruler')?.hidden ?? true,
       };
     }, distance));
   }
   await page.evaluate(() => nimSetCameraDistance(19));
 
-  const named = (cell: number): string =>
-    cell >= 1000 ? cell.toLocaleString('en-US').replace(/,/g, ' ') : String(cell);
+  // Largest 1-2-5 step at or under 130 px lands no shorter than two fifths of it.
+  const isStep = (span: number): boolean => {
+    const lead = span / Math.pow(10, Math.floor(Math.log10(span)));
+    return [1, 2, 5].some((step) => Math.abs(lead - step) < 1e-9);
+  };
   const true_ones = rulers.filter((one) =>
-    !one.is_hidden && Number.isFinite(one.span) && one.span > 0 &&
-    Math.abs(one.width - one.span / one.world_per_pixel) <= 1.5 &&
-    one.label.includes(named(one.cell)));
+    !one.is_hidden && one.span > 0 && isStep(one.span) &&
+    Math.abs(one.width - one.pixels) <= 1.5 && one.pixels <= 130 && one.pixels >= 52 &&
+    one.label === one.reading);
   report(
-    'the scale bar is as long as the distance it claims, and names the grid it measures',
-    true_ones.length === rulers.length && rulers[0]?.cell !== rulers[1]?.cell,
+    'the scale bar is as long as the distance it claims, at every reach',
+    true_ones.length === rulers.length && rulers[0]?.span !== rulers[1]?.span,
     rulers.map((one) => `at ${one.distance}: "${one.label}" over ${one.width.toFixed(1)}px ` +
-      `(claims ${(one.span / one.world_per_pixel).toFixed(1)}px)`).join('; '),
+      `(claims ${one.pixels.toFixed(1)}px)`).join('; '),
   );
 
   // Bar belongs to view it measures, so it stays put and drawer is simply drawn over it. It

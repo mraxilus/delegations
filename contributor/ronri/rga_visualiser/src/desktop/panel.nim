@@ -64,6 +64,9 @@ const
     ## Bound one item's shape-and-coefficient line in bytes, redrawn every frame.
     ##   Sized from what two printers filling it declare: shape word then whole
     ##   multivector, and mixed-grade object prints every basis term.
+  WIDTH_READING = 32
+    ## Bound one reading view section writes, in bytes: magnitude, space and unit.
+    ##   `%.4g` writes at most ten bytes, `-1.235e+100`, and unit is one word.
   COEFFICIENTS_PER_ROW = 6
     ## Wrap grade's elements after this many.
     ##   In 4D metric largest grade holds exactly six, so every grade fits one line and
@@ -228,7 +231,7 @@ type
     index_operation_menu*: cint ## Operation picked in that menu.
       ## Own reading: section's list is indexed per arity reader chose there, menu's is
       ## always arity selection implies.
-    is_grid_shown*: bool ## Whether ground reference grid is drawn.
+    is_grid_shown*: bool ## Whether each picked plane is ruled with lattice.
     is_axes_shown*: bool ## Whether world axes are drawn.
     is_export_requested*: bool ## Whether frame should be written out after drawing.
     is_undo_requested*, is_redo_requested*: bool ## Whether key asked to step timeline.
@@ -892,40 +895,52 @@ proc layoutApply*(
 
 #[ View Panel ]#
 
-proc layoutView*(panel: var Panel, camera: var Camera) =
-  ## Lay out camera placement and frame export.
+proc layoutView*(panel: var Panel, camera: var Camera, speed: float) =
+  ## Lay out camera's placement: motor as value, readings derived from it, and lens.
+  ##   Motor is value, in grid object's own coefficients stand in. `motorRigid` settles
+  ##   typed one on motion it names, so no field can carry camera off rigid.
+  ##   Angles are read off motor, and never typed: two numbers name no roll.
+  ##   Distance shows only with selection, which frame rule measures it from; speed only
+  ##   without, which is when camera flies. `speed` is in units per second.
+  ##   Typed placement halts standing tween, as page's own fields do; see `halt`.
   ##   World furniture toggles live in `layoutTopBar`, flipped constantly while orbiting.
   if not gui.header(wordingText(NameHeadView), is_open_first = false): return
-  widthPushField()
+  gui.textTinted(wordingText(NameViewMotor), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue)
+  gui.tooltip(wordingText(TipViewMotor))
+  # Changed coefficient alone is written into live motor: fields hold `cfloat`, and
+  #   writing all sixteen back would round fifteen nobody touched.
+  var typed = toMultivector(camera.motor)
+  var staged: array[Basis, cfloat]
+  for b in Basis: staged[b] = cfloat(typed[b])
+  let changed = layoutCoefficientGrid(staged)
+  if changed.isSome:
+    typed[changed.get] = float(staged[changed.get])
+    let settled = motorRigid(typed)
+    if settled.isSome:
+      camera = camera.placedAtMotor(settled.get)
+      panel.tween_camera.halt()
 
-  var placement = [
-    cfloat(camera.azimuth), cfloat(camera.elevation), cfloat(camera.distance)
-  ]
+  widthPushField()
+  var line: array[WIDTH_READING, char]
   fieldLabel(wordingText(NameViewAzimuth))
-  if gui.dragFloat("##azimuth", addr placement[0], 0.01, 0.0, 0.0):
-    camera = camera.placedAtAzimuth(float(placement[0]))
+  gui.text(buildChars(line, appendDegrees(line, cursor, camera.azimuth)))
   gui.tooltip(wordingText(TipViewAzimuth))
   fieldLabel(wordingText(NameViewElevation))
-  if gui.dragFloat("##elevation", addr placement[1], 0.01,
-      cfloat(-ELEVATION_LIMIT), cfloat(ELEVATION_LIMIT)):
-    camera = camera.placedAtElevation(float(placement[1]))
+  gui.text(buildChars(line, appendDegrees(line, cursor, camera.elevation)))
   gui.tooltip(wordingText(TipViewElevation))
-  fieldLabel(wordingText(NameViewDistance))
-  # Leave unbounded at widget, floored by `distanceHeld` on way in.
-  #   No ceiling on orbit distance, and one value it may not take is stated in `camera`.
-  if gui.dragFloat("##distance", addr placement[2], 0.05, 0.0, 0.0):
-    camera.dollyTo(float(placement[2]))
-  gui.tooltip(wordingText(TipViewDistance))
-
-  # Read pivot once: it is derived now, so three reads derive eye and frame three times.
-  let pivot_held = camera.pivot
-  var pivot = [cfloat(pivot_held.x), cfloat(pivot_held.y), cfloat(pivot_held.z)]
-  fieldLabel(wordingText(NameViewPivot))
-  if gui.dragFloat3("##pivot", addr pivot[0], SPEED_DRAG*10.0):
-    camera = camera.placedAtPivot(
-      Position(x: float(pivot[0]), y: float(pivot[1]), z: float(pivot[2]))
-    )
-  gui.tooltip(wordingText(TipViewPivot))
+  if panel.selection.len > 0:
+    var distance = cfloat(camera.distance)
+    fieldLabel(wordingText(NameViewDistance))
+    # Leave unbounded at widget, floored by `distanceHeld` on way in.
+    #   No ceiling on orbit distance, and one value it may not take is stated in `camera`.
+    if gui.dragFloat("##distance", addr distance, 0.05, 0.0, 0.0):
+      camera.dollyTo(float(distance))
+      panel.tween_camera.halt()
+    gui.tooltip(wordingText(TipViewDistance))
+  else:
+    fieldLabel(wordingText(NameViewSpeed))
+    gui.text(buildChars(line, appendSpeedLight(line, cursor, speed/SPEED_LIGHT)))
+    gui.tooltip(wordingText(TipViewSpeed))
 
   var field_of_view = cfloat(camera.degrees_field_of_view)
   fieldLabel(wordingText(NameViewLens))
@@ -1129,15 +1144,17 @@ func stepHistory*(
   ##   Drops whatever open edit was staged against.
   ##   Reports whether anything moved.
   ##   One proc for buttons and keys: restored snapshot's handle numbers need not match ones
-  ##   session or selection held, easy to forget in second place.
-  ##   Halts standing tween, aiming at whatever was last selected: left running it
-  ##   drags view off placement just restored.
-  result = if is_undo: history.undo(scene, camera) else: history.redo(scene, camera)
+  ##   session held, easy to forget in second place.
+  ##   Keeps every pick that still names its object, so frame rule still binds.
+  ##   Tween adopts next aim as delivered: left running it drags view off placement just
+  ##   restored; see `CameraTween.adoptNext`.
+  result =
+    if is_undo: history.undo(scene, camera, panel.selection)
+    else: history.redo(scene, camera, panel.selection)
   if result:
-    panel.selection.clear()
     panel.session = none(EditSession)
     panel.hideSelectionMenu()
-    panel.tween_camera.halt()
+    panel.tween_camera.adoptNext()
 
 
 
@@ -1570,11 +1587,13 @@ proc layoutChipRow*(
 #[ Whole Panel ]#
 
 proc layoutPanel*(
-  panel: var Panel, scene: var Scene, camera: var Camera, history: var History, now: float
+  panel: var Panel; scene: var Scene; camera: var Camera; history: var History;
+  speed, now: float
 ) =
   ## Lay out every panel inside one window.
   ##   `now` is this frame's clock reading, passed to whichever construct control adds
   ##   item, so it animates in.
+  ##   `speed` is free flight's own, in units per second, for view's reading of it.
   # Drop last frame's apply preview, so only control on screen this frame can put one back.
   #   Closed section never writes; no flag says whether section is open.
   panel.preview = none(Preview)
@@ -1593,7 +1612,7 @@ proc layoutPanel*(
     layoutApply(panel, scene, camera, history, now)
     layoutDiagnostics(panel, scene)
     layoutObjects(panel, scene, camera, history, now)
-    layoutView(panel, camera)
+    layoutView(panel, camera, speed)
     # Read what every section left, which is figure verdict about long list asks for.
     panel.room_under_sections = gui.contentHeight()
   gui.windowEnd()
