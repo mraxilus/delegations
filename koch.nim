@@ -24,9 +24,6 @@
 ##   `check-role` reads pull request rather than tree, so runner hands it two inputs through
 ##     env: `ROLE_BODY` from event payload, and `ROLE_LABELS` from API as JSON array of label
 ##     names. That is why `check` leaves it out: local run has no pull request to read.
-##   `fetch-assets` answers to `assets` too, old name two contributor drivers call at run
-##     time. Alias sits on dispatch line, so verb set counts it once; it goes once both
-##     drivers switch.
 ##
 ##   `check` compiles only projects whose code changed, since static pass costs about second
 ##     and suites cost minutes (`curator/audit/PROVENANCE.md`, Figures); push run on `main`
@@ -112,7 +109,7 @@ proc parseOptions(): Option[Options] =
       #   and accepting them everywhere would let typo pass as argument nothing reads.
       if options.command.len == 0: options.command = key
       elif options.project.len == 0: options.project = key
-      elif options.command in ["fetch-assets", "assets"]: options.rest.add key
+      elif options.command == "fetch-assets": options.rest.add key
       else: return none(Options)
     of cmdLongOption, cmdShortOption:
       case key
@@ -256,7 +253,7 @@ proc run(options: Options): int =
       return options.refused
     let tree = options.root.readTree
     found = restoreJobs(options.root, options.plannedJobs(tree))
-  of "fetch-assets", "assets":
+  of "fetch-assets":
     # Fetched file is repository's, never one project's: two targets pinning one file would
     #   hold two copies of one digest. Store holds digest; caller names which files it wants,
     #   so what is shared is bytes rather than choice.
