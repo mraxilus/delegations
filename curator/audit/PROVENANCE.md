@@ -43,16 +43,13 @@ carries the name of the verb that it runs, so a red job names the command to run
   projects whose code changed. One rule serves all of them.
 - A verb refuses an option or an argument that it does not read, with usage and exit 2. So a
   typo never passes as an input that nothing reads.
-- `fetch-assets` also answers to its old name, `assets`. The drivers of `rga_visualiser` and
-  `dance_ontology` call that name at run time, and the alias goes when both switch.
 - Rejected: a verb and its object as two words, such as `koch check files`. That puts a second
   dispatch inside the first, and makes the project the third argument.
 - Rejected: `lint` for `check-files`, because the glossary avoids that word for Audit.
 - Cost: the required checks carry the names of verbs. So a rename of a checking verb is also
   a change that the Architect makes to branch protection.
 - Verified by hand, 2026-09-24: `koch check-scope contributor/x`, `koch stamp --drive` and
-  `koch check-commits --all` each print usage and exit 2. The old name `assets` prints the
-  same table as `koch fetch-assets`.
+  `koch check-commits --all` each print usage and exit 2.
 
 ## Enumeration
 
@@ -1245,8 +1242,8 @@ the runner rather than by a curator who reads.
   indented line.
 - Verbs are read from the command dispatch alone, bounded between `case options.command` and
   its `else`. The option parser cases over labels a few lines above. Without that bound,
-  `root`, `all`, `branch` and `recent` would read as verbs. Only the first label of a branch
-  counts, so the old name `assets` on the line of `fetch-assets` is not a second verb.
+  `root`, `all`, `branch` and `recent` would read as verbs. Cost: only the first label of a
+  branch counts, so a second label on the same line is a verb that no rule sees.
 - **Option mismatch**: one set named twice. The names are the options that koch parses, and the
   `--` options that its usage text prints. Options are read from the one-line branches under
   `case key`, and the read stops at the first line that is not a branch. Usage is read from

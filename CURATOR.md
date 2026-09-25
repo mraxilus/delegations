@@ -324,8 +324,6 @@ alone.
 
 Every verb that takes projects reads the one named, else `--recent`, else `--all`, else the
 projects whose code changed. A verb refuses an option or an argument that it does not read.
-`fetch-assets` also answers to its old name, `assets`, until the two contributor drivers
-that call it switch.
 
 `check` leaves out `check-role`, because `check-role` reads a pull request rather than the
 tree. Its body arrives from the event payload as `ROLE_BODY`, and its labels from the API as
