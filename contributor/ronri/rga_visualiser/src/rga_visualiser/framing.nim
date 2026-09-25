@@ -478,3 +478,22 @@ func offerAimAt*(
     tween, held, alone, Selection(), some(previewStaging(m, RADIUS_OBJECT_DEFAULT)),
     camera.drawExtentFor(height), width, height, now, duration, pointer,
   )
+
+
+
+#[ Furniture Picked ]#
+
+proc addLatticesPicked*(
+  meshes: var MeshSet; scratch: var DrawScratch; scale: DrawExtent; scene: Scene;
+  picked: Selection
+) =
+  ## Rule lattice on every visible finite plane picked; see `tessellate.addLattice`.
+  ##   One loop both front-ends' furniture runs, so which plane is ruled is decided once.
+  ##   Here rather than in `tessellate`, which holds no scene: selection is what asks.
+  for position in 0 ..< picked.len:
+    let handle = picked.at(position)
+    if not scene.isAlive(handle) or not scene.isVisible(handle): continue
+    let m = scene.geometryOf(handle)
+    if kindOf(m) != some(Kind.Plane) or isHorizon(m): continue
+    meshes.addLattice(scratch, scale.extentFurniture, scale, m)
+

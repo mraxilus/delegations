@@ -200,7 +200,7 @@ const lut_wording_to_text: array[Wording, cstring] = [
     "Step back through scene-content edits, view and all; an orbit on its own is not a step.",
   TipChipRedo: "Step forward again; a fresh edit discards whatever was ahead.",
   TipChipAxes: "Toggle the red/green/blue x/y/z axis lines through the origin.",
-  TipChipGrid: "Toggle the reference grid at z = 0.",
+  TipChipGrid: "Rule a grid on each selected plane, or stop.",
 
   # Section headings.
   NameHeadObjects: "objects",
@@ -579,3 +579,12 @@ func appendSpeedLight*(storage: var openArray[char], cursor: var int, multiple: 
   ##   Unit is glue this composer owns, as `objectsCounted` owns its noun.
   appendMagnitude(storage, cursor, multiple)
   appendChars(storage, cursor, " c")
+
+
+func appendRuler*(storage: var openArray[char], cursor: var int, span: float) =
+  ## Write length scale bar claims, in world units, straight into `storage`.
+  ##   Noun is glue this composer owns, as `appendSpeedLight` owns its unit.
+  ##   Singular at one, which 1-2-5 step lands on once in each ten decades.
+  appendMagnitude(storage, cursor, span)
+  appendChars(storage, cursor, if span == 1.0: " unit" else: " units")
+

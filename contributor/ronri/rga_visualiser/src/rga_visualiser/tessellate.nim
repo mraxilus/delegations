@@ -3,7 +3,7 @@
 ## Reads what object is through algebra, places every point of its drawing through
 ## algebra, and hands places to `mesh` to pack into vertices.
 ## Geometry side of drawing.
-##   Owns what thing is and where it stands: scene object, lattice line of ground grid,
+##   Owns what thing is and where it stands: scene object, lattice line of picked plane,
 ##   world axis, and everything in horizon, where point becomes star, line becomes great
 ##   circle of directions it stands for, and plane becomes whole sky.
 ##   Those are geometric objects placed through library, which project exists to exercise.
@@ -91,7 +91,7 @@ func algebraFilled*(scale: DrawExtent): DrawExtent =
   ##   One derivation point: `camera.drawExtentFor` goes through here, and so must any
   ##   hand-built extent (test fixture, partial one).
   ##     Otherwise twins are zero multivectors and everything algebraic downstream silently
-  ##     draws nothing; suite's fixtures once built extents fieldwise and lost ground grid.
+  ##     draws nothing; suite's fixtures once built extents fieldwise and lost lattice.
   result = scale
   result.eye_point = toMultivector(scale.eye)
   result.forward_point = toMultivector(scale.forward)
@@ -197,7 +197,7 @@ func placeAxes(scratch: var DrawScratch, extent: float, scale: DrawExtent): int 
   ##   One through origin along each of x, y and z (x red, y green, z blue), so
   ##   orientation reads at glance.
   ##   Draws nothing; algebra's half of seam, as `placeGridFamily` is.
-  ##   Faded out and cut off in ground grid's own fog, rather than running full furniture
+  ##   Faded out and cut off in lattice's own fog, rather than running full furniture
   ##   extent at flat alpha.
   ##     Axis reaching horizon at full strength was longest, brightest mark in frame, and
   ##     readers took them for drawn lines.
@@ -266,25 +266,6 @@ func radiusOnPlaneFor*(extent: float, scale: DrawExtent, plane: Multivector): Op
   some(sqrt(radius_squared))
 
 
-func radiusGroundFor*(extent: float, scale: DrawExtent): Option[float] =
-  ## Solve how far ground grid reaches from point directly below eye, in world units.
-  ##   For camera whose furniture extends `extent`.
-  ##   Disc fog sphere leaves on ground, height read as eye's depth against
-  ##   `objects.groundPlane`. None where eye stands higher than fog reaches.
-  ##   Stated here rather than inside `addGrid` because cell size shown on scale bar has to
-  ##   be cell grid was drawn with; two derivations of same disc are two chances to
-  ##   disagree.
-  radiusOnPlaneFor(extent, scale, groundPlane())
-
-
-func sizeCellGridAt*(extent: float, scale: DrawExtent): Option[float] =
-  ## Report cell size ground grid is laid on for this camera, in world units.
-  ##   None where no ground is drawn. One answer both grid and scale bar read.
-  let radius_ground = radiusGroundFor(extent, scale)
-  if radius_ground.isNone: return
-  some(sizeCellGridFor(radius_ground.get))
-
-
 func placeGridFamily(
   scratch: var DrawScratch; scale: DrawExtent; tint: Rgba;
   radius_ground, size_cell: float; along, across: Direction; origin: Position
@@ -295,8 +276,8 @@ func placeGridFamily(
   ##   Draws nothing: algebra's half of seam, all multivector work.
   ##     Per-piece fade colours moved to fragment shader with fog (`mesh.alphaGridFade`),
   ##     taking family from boundary sum per fade piece to two per line.
-  ##   Lattice is laid on any plane through `origin` spanned by `along` and `across`;
-  ##     ground is that case with `origin` at world origin and two world axes for span.
+  ##   Lattice is laid on any plane through `origin` spanned by `along` and `across`; see
+  ##   `addLattice`, which lays one on each selected plane.
   ##   Cell is passed in rather than read from `SIZE_CELL_GRID`, so both families lie on
   ##   one `sizeCellGridFor` answered for this frame's disc.
   ##   Lines sit on *world* multiples of cell size, not offsets from camera.
@@ -312,12 +293,13 @@ func placeGridFamily(
     centre_along = depthAgainst(planeThrough(origin_point, along_point), scale.eye_point)
     first = int(ceil((centre_across - radius_ground)/size_cell))
     last = int(floor((centre_across + radius_ground)/size_cell))
+    # Line through origin lies on world axis where origin is world's and `along` is axis.
+    #   It would fight that axis for depth, or hide its colour under grid grey.
+    is_on_axis = norm(origin - ORIGIN_WORLD) <= TOLERANCE_ABS and
+      max(abs(along.x), max(abs(along.y), abs(along.z))) >= 1.0 - TOLERANCE_ABS
   var count_assembled = 0
   for i in first .. last:
-    # Skip lattice line through world origin.
-    #   It coincides with world axis, and would fight it for depth or hide its colour
-    #   under grid grey.
-    if i == 0: continue
+    if i == 0 and is_on_axis: continue
     let
       offset = float(i)*size_cell
       reach_squared = radius_ground*radius_ground -
@@ -357,42 +339,46 @@ proc addGridFamily*(
     )
 
 
-proc addGrid*(
-  meshes: var MeshSet, scratch: var DrawScratch, extent: float, scale: DrawExtent
+proc addLattice*(
+  meshes: var MeshSet; scratch: var DrawScratch; extent: float; scale: DrawExtent;
+  plane: Multivector
 ) =
-  ## Append reference grid on ground, so distance and direction stay judgeable.
-  ##   Laid at `sizeCellGridFor` cells around wherever camera stands.
+  ## Append lattice on `plane`, so distance and direction on it stay judgeable.
+  ##   For each selected plane; world itself carries no ground, since its origin is Sol
+  ##   and no plane through it is anybody's floor.
+  ##   Laid on plane's own frame from its anchor, world origin's foot on it, so lines
+  ##   stand on world's multiples of cell rather than following camera. Plane whose normal
+  ##   is world axis is ruled along other two world axes; see `boundary.frame`.
   ##   Fog, not halo.
   ##     Every line is faded by its endpoints' distance from eye and cut off at
-  ##     `fogFurnitureFor`'s outer radius, so ground is solid underfoot and gone in
-  ##     distance.
+  ##     `fogFurnitureFor`'s outer radius, so plane is solid near eye and gone in distance.
   ##     Cutting geometry rather than drawing ever-fainter alpha: past that radius cells
   ##     crowd into so few pixels that even faint line aliases.
-  ##   Disc fog sphere leaves about point below eye, of radius
-  ##   `sqrt(radius_gone^2 - height^2)`.
-  ##     Camera high above ground sees less of it, and eye higher than fog reaches sees
-  ##     none.
-  ##   Dimmed by `ALPHA_GRID` on top of fade, so ruled ground reads as reference rather
-  ##   than content; see that constant.
+  ##   Disc fog sphere leaves about eye's foot on plane; see `radiusOnPlaneFor`.
+  ##     Eye further off than fog reaches sees none.
+  ##   Dimmed by `ALPHA_GRID` on top of fade, so ruling reads as reference rather than
+  ##   content; see that constant.
+  ##   Nothing for plane in horizon, which has no finite point to rule about.
+  let
+    axes = frame(plane)
+    anchor = positionAnchor(plane)
+    reach = radiusOnPlaneFor(extent, scale, plane)
+  if axes.isNone or anchor.isNone or reach.isNone: return
   let
     base = Ink.Grid.colour
     tint = base.fade(base.alpha*ALPHA_GRID)
-    # Take disc and cell both through `radiusGroundFor`.
-    #   What reader is told cell is and what grid is drawn with cannot come apart.
-    reach = radiusGroundFor(extent, scale)
-  if reach.isNone: return
-  let
-    radius_ground = reach.get
-    size_cell = sizeCellGridFor(radius_ground)
+    radius = reach.get
+    size_cell = sizeCellGridFor(radius)
+    (first, second) = (axes.get.axis_first, axes.get.axis_second)
   # Lay one family at time through one scratch.
   #   Buffer is sized for larger family rather than both.
   meshes.addGridFamily(
-    scratch, scale, tint, radius_ground, size_cell,
-    along = Direction(x: 0, y: 1, z: 0), across = Direction(x: 1, y: 0, z: 0),
+    scratch, scale, tint, radius, size_cell, along = first, across = second,
+    origin = anchor.get,
   )
   meshes.addGridFamily(
-    scratch, scale, tint, radius_ground, size_cell,
-    along = Direction(x: 1, y: 0, z: 0), across = Direction(x: 0, y: 1, z: 0),
+    scratch, scale, tint, radius, size_cell, along = second, across = first,
+    origin = anchor.get,
   )
 
 

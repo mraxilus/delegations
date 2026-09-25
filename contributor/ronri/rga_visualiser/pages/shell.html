@@ -321,7 +321,7 @@
      44px minimum, which is touch-pivot size Apple's guidelines ask for and comfortably
      over 24px WCAG 2.5.8 requires -- control reader reaches for when they are
      already lost is last one to make them aim. */
-  /* ---- Scale bar: what one cell of ground grid measures ----     */
+  /* ---- Scale bar: length of world at its true screen length ---- */
   .ruler {
     position: fixed;
     left: max(14px, env(safe-area-inset-left));
@@ -1430,12 +1430,13 @@
                 ><span><span class="chev">&#9654;</span>scenery</span
                 ><b id="diagnostic-furniture">&mdash;</b></button>
               <!-- Two halves are not same size of thing: axes are three lines
-                   however far camera stands, while grid is however many ground
-                   reach asks for -- so scenery figure that rose could not say which of
-                   them rose. Grid carries its record count -- one per lattice line
-                   -- since its cost *is* that count, bounded by `LINES_GRID_MAX`. -->
+                   however far camera stands, while lattices are however many lines
+                   fog reaches on each plane picked -- so scenery figure that rose could
+                   not say which of them rose. Lattices carry their record count -- one
+                   per line -- since their cost *is* that count, bounded by
+                   `LINES_GRID_MAX` for each family. -->
               <div class="diagnostic-children">
-                <div class="diagnostic-line"><span>ground grid<span
+                <div class="diagnostic-line"><span>plane lattices<span
                   class="diagnostic-tally"></span></span
                   ><b id="diagnostic-grid">&mdash;</b></div>
                 <div class="diagnostic-line"><span>world axes</span

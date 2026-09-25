@@ -9,6 +9,7 @@ import type { Page } from '@playwright/test';
 import { settleCamera } from './camera';
 import { settleBranch } from './diagnostics';
 import { countFrames, readPhases, type Phase } from './frame';
+import { pickPlane } from './ground';
 import { report, reportWithin } from './report';
 
 /** Bound scenery holds itself to: two families of lattice lines, from `mesh.LINES_GRID_MAX`. */
@@ -138,6 +139,8 @@ export async function driveKinds(page: Page): Promise<void> {
  *  decade and drops it back -- so worst frame is not farthest one but one just before step.
  */
 export async function driveSceneryBound(page: Page): Promise<void> {
+  // Lattice lies on plane picked, so one is picked: world rules no ground of its own.
+  await pickPlane(page);
   const far = await page.evaluate(() => {
     const canvas = document.getElementById('gl') as HTMLCanvasElement;
     const aspect = canvas.width / canvas.height;
@@ -153,6 +156,7 @@ export async function driveSceneryBound(page: Page): Promise<void> {
       segments = data.count_grid_segments;
     }
     nimSetCameraDistance(distance_before);
+    nimSelectClear();
     milliseconds.sort((a, b) => a - b);
     return { median: milliseconds[4] ?? 0, segments };
   });
@@ -166,11 +170,13 @@ export async function driveSceneryBound(page: Page): Promise<void> {
 
 /** Drive real drag, and assert what frame costs while camera moves.
  *
- *  Moving camera rebuilds ground grid every frame, and per-segment churn once put that rebuild
- *  at three times still frame's whole build. Drag is real one, from empty sky, so frames
- *  sampled are frames hand would feel.
+ *  Moving camera rebuilds picked plane's lattice every frame, and per-segment churn once put
+ *  that rebuild at three times still frame's whole build. Drag is real one, from empty sky,
+ *  so frames sampled are frames hand would feel; plane is picked so there is lattice to
+ *  rebuild, and drag then orbits it.
  */
 export async function driveMoving(page: Page, width: number): Promise<void> {
+  await pickPlane(page);
   const from = await countFrames(page);
   await page.mouse.move(width / 2, 60);
   await page.mouse.down();
@@ -180,6 +186,7 @@ export async function driveMoving(page: Page, width: number): Promise<void> {
     );
   }
   await page.mouse.up();
+  await page.evaluate(() => nimSelectClear());
 
   const moving = await page.evaluate((given) => {
     const sorted = (window.__work_frame ?? []).slice(given).sort((a, b) => a - b);
@@ -207,7 +214,7 @@ export async function driveMoving(page: Page, width: number): Promise<void> {
 
 /** Assert scenery's two halves account for scenery itself, frame by frame.
  *
- *  Axes are three lines however far camera stands; grid is however many ground reach asks for,
+ *  Axes are three lines however far camera stands; lattice is however many fog reach asks for,
  *  and its cost *is* its segment count. Slack is proportional: bracket around two halves also
  *  spans mesh clear and loop between them, and on frame scheduler interrupts that gap grows
  *  with frame rather than by fixed amount.
@@ -216,8 +223,8 @@ function reportSceneryAccounts(phases: Phase[]): void {
   const offOf = (one: Phase): number => one.grid + one.axes - one.furniture;
   // Frame that laid no segment has no grid to account for, so it is no evidence either
   //   way and is left out of both counts rather than only out of one.
-  //   Drag swings sight far enough to carry ground off screen now it looks rather than
-  //   orbits, and those frames were failing claim they say nothing about.
+  //   Drag can swing plane off screen, and those frames were failing claim they say nothing
+  //   about.
   const drawn = phases.filter((one) => one.segments > 0);
   const sane = drawn.filter((one) =>
     offOf(one) <= Math.max(0.6, 0.08 * one.furniture) &&
@@ -237,7 +244,7 @@ function reportSceneryAccounts(phases: Phase[]): void {
   );
 }
 
-/** Assert still camera holds its ground and axes rather than rebuilding them. */
+/** Assert still camera holds its scenery rather than rebuilding it. */
 export async function driveHold(page: Page): Promise<void> {
   await page.keyboard.press('Home');
   await settleCamera(page);
@@ -248,7 +255,7 @@ export async function driveHold(page: Page): Promise<void> {
   const still = await readPhases(page, from);
   const held = still.filter((one) => one.is_held).length;
   report(
-    'a still camera holds its ground and axes rather than rebuilding them',
+    'a still camera holds its scenery rather than rebuilding it',
     still.length > 10 && held > 0.8 * still.length,
     `${held} of ${still.length} frames held`,
   );
@@ -269,14 +276,14 @@ export async function driveHold(page: Page): Promise<void> {
     };
   });
   report(
-    'a still camera builds its ground and axes once and holds them',
+    'a still camera builds its scenery once and holds it',
     twice.first.floats > 0 && !twice.first.is_held &&
       twice.second.is_held && twice.second.floats === 0,
     `first ${twice.first.floats} floats (held ${twice.first.is_held}), ` +
       `second ${twice.second.floats} (held ${twice.second.is_held})`,
   );
 
-  // Camera that has moved rebuilds them, or view would keep grid it has left.
+  // Camera that has moved rebuilds them, or view would keep scenery it has left.
   const rebuilt = await page.evaluate(() => {
     const canvas = document.getElementById('gl') as HTMLCanvasElement;
     const aspect = canvas.width / canvas.height;

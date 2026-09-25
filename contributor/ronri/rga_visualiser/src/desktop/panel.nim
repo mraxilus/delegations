@@ -231,7 +231,7 @@ type
     index_operation_menu*: cint ## Operation picked in that menu.
       ## Own reading: section's list is indexed per arity reader chose there, menu's is
       ## always arity selection implies.
-    is_grid_shown*: bool ## Whether ground reference grid is drawn.
+    is_grid_shown*: bool ## Whether each picked plane is ruled with lattice.
     is_axes_shown*: bool ## Whether world axes are drawn.
     is_export_requested*: bool ## Whether frame should be written out after drawing.
     is_undo_requested*, is_redo_requested*: bool ## Whether key asked to step timeline.

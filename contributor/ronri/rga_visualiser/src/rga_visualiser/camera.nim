@@ -928,7 +928,7 @@ func distanceTravelled*(seconds_before, seconds_after, cap: float): float =
 #[ Camera Frame ]#
 
 type SettingsFurniture* = tuple
-  ## Define everything ground grid and world axes are built from.
+  ## Define everything picked planes' lattices and world axes are built from.
   ##   `drawExtentFor` derives every field furniture reads from exactly these, so two
   ##   frames agreeing here draw same furniture, vertex for vertex: what lets front-end
   ##   keep last frame's meshes.
@@ -941,22 +941,40 @@ type SettingsFurniture* = tuple
   ##     every axis, pivot and both angles, which is stronger than keying on those.
   ##     Reading pivot and both angles out to key on them costs eighteen sandwiches, and
   ##     hold exists to save less work than that; see `drivePinAnchor`.
+  ##   Lattice lies on planes picked, so what scene holds and what is picked key it too:
+  ##   two revision counters, which move on every edit and every pick.
   motor: Motor
   distance, degrees_field_of_view, reach_near, reach_scene: float
   height_pixels: int
   is_axes_shown, is_grid_shown: bool
+  revision_scene, revision_selection: int
 
 
 func settingsFurnitureFor*(
-  camera: Camera; height_pixels: int; is_axes_shown, is_grid_shown: bool
+  camera: Camera; height_pixels: int; is_axes_shown, is_grid_shown: bool;
+  revision_scene, revision_selection: int
 ): SettingsFurniture =
   ## Read furniture's inputs off this camera and frame, for hold comparison.
   ##   Compared exactly by callers: question is whether anything moved at all.
   ##   Every field is plain read, so key costs nothing to build.
   (
     camera.motor, camera.distance, camera.degrees_field_of_view, camera.reach_near,
-    camera.reach_scene, height_pixels, is_axes_shown, is_grid_shown,
+    camera.reach_scene, height_pixels, is_axes_shown, is_grid_shown, revision_scene,
+    revision_selection,
   )
+
+
+func rulerFor*(camera: Camera, scale: DrawExtent): tuple[span, pixels: float] =
+  ## Choose scale bar for this frame: world length it claims, and pixels it is drawn over.
+  ##   Measured at depth of `scaleLocal`, what frustum and furniture take their scale from:
+  ##   nearest drawn object ahead, or separation where none is. Not pointer's depth, which
+  ##   would change what bar claims as pointer moved over still view.
+  ##   Zero span where nothing is measured, which each front-end reads as no bar.
+  let
+    world_per_pixel = worldPerPixelAt(scale.eye + camera.scaleLocal*scale.forward, scale)
+    span = spanRulerFor(world_per_pixel)
+  if span <= 0.0: return (0.0, 0.0)
+  (span, span/world_per_pixel)
 
 
 func drawExtentFor*(camera: Camera, height_pixels: int): DrawExtent =

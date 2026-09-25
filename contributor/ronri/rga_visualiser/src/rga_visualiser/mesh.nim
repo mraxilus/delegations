@@ -15,7 +15,7 @@
 ##   horizon is, becomes dome over entire sky.
 ##   Fixed to eye rather than origin, so orbiting or dollying leaves each in same apparent
 ##   direction, as real stars would.
-## World furniture (ground grid, world axes) reaches `DrawExtent.extentFurniture`.
+## World furniture (picked planes' lattices, world axes) reaches `DrawExtent.extentFurniture`.
 ##   Tied to far clip distance rather than orbit distance (`extentFurnitureFor`), so it
 ##   reads as extending indefinitely.
 ##   Drawn as fog about eye (`fogFurnitureFor`): solid nearby, faded to nothing at that
@@ -28,7 +28,7 @@
 ##   | Kind   | Crosses wire as       | Carries                                      |
 ##   |--------|-----------------------|----------------------------------------------|
 ##   | Ribbon | `RibbonRecord` x1     | Lines, plane rims, horizon circles, axes,    |
-##   |        |                       | ground grid.                                 |
+##   |        |                       | lattices.                                    |
 ##   | Disc   | `DiscRecord` x1       | Finite plane's translucent fill.             |
 ##   | Dome   | `DomeRecord` x1       | Horizon plane's whole-sky veil.              |
 ##   | Point  | `Vertex` per point    | Points, stars.                               |
@@ -69,18 +69,18 @@ const
     ##   Star, great circle, whole sky.
     ##   Reads as farthest thing without being clipped away.
   FRACTION_FURNITURE* = 0.95
-    ## Reach world axes, ground grid and every finite line this far toward far clip plane.
+    ## Reach world axes, lattices and every finite line this far toward far clip plane.
     ##   Tied to that depth rather than orbit distance, so all three read as extending
     ##   indefinitely.
   FRACTION_GRID_FADE_START* = 0.06
-    ## Hold ground grid lines at full alpha out to this fraction of reach.
+    ## Hold lattice lines at full alpha out to this fraction of reach.
     ##   Rest fades toward `FRACTION_GRID_FADE_END`: past that, cells crowd into few
     ##   pixels under perspective and read as aliasing noise.
     ##   Measured by rendering: fog is about eye, which stands whole orbit distance from
-    ##   content, and smaller fraction left ground under pivot already fading.
+    ##   content, and smaller fraction left lattice under pivot already fading.
     ##     0.06 of reach is 1.14 orbit distances, pivot inside solid core.
   FRACTION_GRID_FADE_END* = 0.20
-    ## Cut ground grid lines off entirely at this fraction of reach.
+    ## Cut lattice lines off entirely at this fraction of reach.
     ##   Faint line still aliases, so fix is to stop drawing it, not dim it further.
     ##   0.20 of reach is 3.8 orbit distances, fog's edge about 2.8 distances beyond
     ##   pivot.
@@ -141,7 +141,7 @@ const
     ##   Desktop's drag widget takes no upper bound as no bounds at all, so one is named;
     ##   far past any scene here, which spans about 3,000 units.
   WIDTH_LINE_FURNITURE* = 1.5'f32
-    ## Set width of ground grid and world axes, in pixels.
+    ## Set width of lattices and world axes, in pixels.
     ##   Thinner than scene line object (`WIDTH_LINE_OBJECT`), so reference recedes
     ##   behind content.
   WIDTH_LINE_OBJECT* = 2.5'f32
@@ -178,30 +178,30 @@ const
 
 const
   SIZE_CELL_GRID* = 10.0
-    ## Set ground grid's cell size, in world units, at every reach.
-    ##   One size: grid stepping its cell with reach re-scaled ground silently under
+    ## Set lattice's cell size, in world units, at every reach.
+    ##   One size: grid stepping its cell with reach re-scaled plane silently under
     ##   reader, so no distance read off it was comparable with last.
     ##     Fixed cell is ruler; stepping one is not.
-    ##   `sizeCellGridFor` steps it by decades past 1,200 units of ground reach, where
-    ##   alternative is no ground at all.
+    ##   `sizeCellGridFor` steps it by decades past 1,200 units of lattice reach, where
+    ##   alternative is no lattice at all.
     ##   Ten rather than hundred, measured by rendering both: at opening placement
     ##   hundred-unit cell put at most one line in view.
   CELLS_GRID_HALF_MAX* = 120
-    ## Bound how many cells ground grid lays between camera and edge of reach, each way.
+    ## Bound how many cells lattice lays between camera and edge of reach, each way.
     ##   Reach follows far clip plane, which follows orbit distance, so unbounded reach
     ##   multiplies lines without limit as camera pulls back.
     ##   `sizeCellGridFor` spends this on cell, not reach.
-    ##     Cutting *reach* against it left camera past 1,200 units with ground stopping
+    ##     Cutting *reach* against it left camera past 1,200 units with lattice stopping
     ##     short, and past twice that with black void.
     ##     Stepping cell keeps same line count across reach camera has.
     ##   Sized by rendering: fewer cells left grid patch floating in near field at orbit
     ##   distance 300.
   ALPHA_GRID* = 0.75'f32
-    ## Scale ground grid's opacity by this, on top of `alphaGridFade`.
+    ## Scale lattice's opacity by this, on top of `alphaGridFade`.
     ##   Width alone was not carrying difference from drawn line; readers read ruled
-    ##   ground as content.
+    ##   plane as content.
     ##   Quarter off rather than half: grid colour already sits close to backdrop, and
-    ##   half off rendered ground that read as absent.
+    ##   half off rendered lattice that read as absent.
     ##   Applied where grid is built rather than to `Ink.Grid`, which is also
     ##   `INK_POOL_FREE`; dimming entry would make that object translucent.
   LINES_GRID_MAX* = 2*CELLS_GRID_HALF_MAX + 1
@@ -241,7 +241,7 @@ const
   SCALE_AXIS_LUMINANCE* = 0.50'f32
     ## Scale world axis's blended colour down by this, after grey blend.
     ##   Desaturating alone leaves three mid-grey lines as conspicuous as objects;
-    ##   together these put axes between ground grid and drawn object in weight.
+    ##   together these put axes between lattice and drawn object in weight.
 
 static:
   doAssert SIZE_CELL_GRID > 0, &"Grid cell size must be positive; got `{SIZE_CELL_GRID}`."
@@ -269,7 +269,7 @@ type
     AxisX, ## World x axis through origin; standard convention is red.
     AxisY, ## World y axis through origin; standard convention is green.
     AxisZ, ## World z axis through origin; standard convention is blue.
-    Grid, ## World reference grid on ground.
+    Grid, ## Lattice ruled on picked plane.
     Guide, ## Construction helper, e.g. plane normal.
     Outline, ## Selection outline drawn around highlighted object.
       ## Never cycled to, only drawn where caller names slot as highlighted (see
@@ -442,7 +442,7 @@ type
     ##   Algebra's reading of same camera lives beside it in `tessellate.DrawExtent`,
     ##   which carries this whole record and adds multivector twins; this module cannot
     ##   name those, point of split.
-    extent_furniture*: float ## How far ground grid and world axes extend.
+    extent_furniture*: float ## How far lattices and world axes extend.
       ## Tied to orbit distance via `extentFurnitureFor`, twenty of them, so furniture
       ## reads as reaching indefinitely at any zoom and its cell follows reader, not scene.
     eye*: Position ## Camera's eye position, horizon geometry is anchored to.
@@ -480,6 +480,30 @@ func worldPerPixelAt*(place: Position, scale: DrawScale): float =
   ##   folds ribbon over on itself.
   let depth = max(dot(place - scale.eye, scale.forward), scale.depthNear)
   2.0*depth*scale.tangentHalfView/float(max(scale.heightPixels, 1))
+
+
+const
+  PIXELS_RULER_WANTED* = 130.0
+    ## Aim scale bar at about this length on screen, in pixels.
+    ##   Span is stepped 1-2-5 by decade to land near it, way every map scale is stepped:
+    ##   bar tied to one length runs off screen close in and shrinks to nothing far out,
+    ##   since length steps by decades while projection does not.
+  STEPS_RULER = [1.0, 2.0, 5.0]
+    ## Name steps within each decade scale bar may claim.
+
+
+func spanRulerFor*(world_per_pixel: float): float =
+  ## Choose length scale bar claims, in world units, for pixel spanning `world_per_pixel`.
+  ##   Largest 1-2-5 step at or under what `PIXELS_RULER_WANTED` spans: bar that overshoots
+  ##   crowds corner it sits in, and one that undershoots is only harder to read against.
+  ##   One rule both front-ends draw by. Zero where pixel spans nothing to measure.
+  if not (world_per_pixel > 0.0) or world_per_pixel == Inf: return 0.0
+  let
+    wanted = PIXELS_RULER_WANTED*world_per_pixel
+    decade = pow(10.0, floor(log10(wanted)))
+  result = decade
+  for step in STEPS_RULER:
+    if step*decade <= wanted: result = step*decade
 
 
 func radiusDrawnAt*(radius: float, place: Position, scale: DrawScale): float =
@@ -547,16 +571,16 @@ func fogFurnitureFor*(extent: float): tuple[radius_full, radius_gone: float] =
 
 
 func sizeCellGridFor*(radius_ground: float): float =
-  ## Choose ground grid's cell size for ground disc of `radius_ground`.
+  ## Choose lattice's cell size for disc fog leaves on its plane, of `radius_ground`.
   ##   `SIZE_CELL_GRID` wherever that lays no more than `CELLS_GRID_HALF_MAX` cells
   ##   across radius, ten times it for every further factor of ten needed.
   ##   Stepping cell, which `SIZE_CELL_GRID` argues against, and argument holds where
   ##   made.
   ##     Answered here is case that rule left with nothing: reach past which fixed cell
-  ##     lays tens of thousands of lines, choice being stepped cell or no ground.
+  ##     lays tens of thousands of lines, choice being stepped cell or no lattice.
   ##   Decades, so coarser grid's lines are finer grid's lines: step coarsens without
   ##   moving anything. 1-2-5 sequence does not nest.
-  ##   First step at 1,200 units of ground reach, about orbit distance 316, far past
+  ##   First step at 1,200 units of lattice reach, about orbit distance 316, far past
   ##   anything reader reads distances off.
   ##   `SIZE_CELL_GRID` itself for disc of no radius.
   let radius_cells = float(CELLS_GRID_HALF_MAX)*SIZE_CELL_GRID
@@ -565,7 +589,7 @@ func sizeCellGridFor*(radius_ground: float): float =
 
 
 func extentFurnitureFor*(distance_scaled: float): float =
-  ## Compute how far ground grid and world axes reach this frame.
+  ## Compute how far lattices and world axes reach this frame.
   ##   Given far clip's scaled half, `FACTOR_CLIP_FAR` orbit distances, not far clip
   ##   itself: far clip also reaches scene's farthest object, and scene reaching millions
   ##   of units pushed grid's cell to hundred thousand and left no line under any camera

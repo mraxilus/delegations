@@ -200,7 +200,7 @@ var
   SETTINGS_FURNITURE_HELD = none(SettingsFurniture) ## What furniture standing in
     ## `MESHES_FURNITURE` was built from, or none before first build.
     ## See `FrameData.is_furniture_held`.
-  COUNT_GRID_SEGMENTS = 0 ## How many ribbon segments ground grid alone was last built
+  COUNT_GRID_SEGMENTS = 0 ## How many ribbon segments picked planes' lattices were last built
     ## from, axes' fixed share excluded.
     ## Kept beside furniture rather than recounted: held frame draws grid it had and
     ## should report that grid's count rather than zero.
@@ -308,7 +308,7 @@ var
   FLAT_ANCHOR = initFlatFloats(3)
   FLAT_TINT = initFlatFloats(3)
   FLAT_COMET = initFlatFloats(2*POINTS_MARKER_PULSE)
-  FLAT_GRID = initFlatFloats(2)
+  FLAT_RULER = initFlatFloats(2)
   FLAT_PIVOT = initFlatFloats(3)
   FLAT_EYE = initFlatFloats(3)
   FLAT_MOTOR = initFlatFloats(ord(Basis.high) + 1)
@@ -1824,31 +1824,20 @@ proc nimEndDrag(now: cfloat): DragResult {.exportc.} =
   )
 
 
-proc nimGridMetrics(width, height: cint): FlatBuffer {.exportc.} =
-  ## Report `[size_cell, world_per_pixel]` for ground grid as drawn right now.
-  ##   View over `FLAT_GRID`, refilled per frame.
-  ##   Cell's size in world units, and how much world one screen pixel spans at height
-  ##   grid is laid at.
-  ##   `[0, 0]` where no ground is drawn (eye above fog's reach), read as "no scale to
-  ##   show".
-  ##   Exported as `nimRenderLineWidths` is: number reader is shown has to be number grid
-  ##   was built with; both from `mesh.sizeCellGridAt`, which `addGrid` reads.
-  ##   Through `ensureViewOverlay`, so extent is overlay's own, built at CSS height.
-  ##     Scale bar is drawn in pixels pointer works in; see browser scripts.
+proc nimRuler(width, height: cint): FlatBuffer {.exportc.} =
+  ## Report `[span, pixels]` of scale bar right now; see `camera.rulerFor`.
+  ##   View over `FLAT_RULER`, refilled per call. `[0, 0]` where nothing is measured.
+  ##   Through `ensureViewOverlay`, so extent is overlay's own, built at CSS height:
+  ##   bar is drawn in pixels pointer works in; see browser scripts.
   ensureViewOverlay(int(width), int(height))
-  template scale: DrawExtent = SCALE_OVERLAY
-  let size_cell = sizeCellGridAt(scale.extentFurniture, scale)
-  if size_cell.isNone: return FLAT_GRID.fill2(0.0'f32, 0.0'f32)
-  # Measure at ground point below eye, where reported cell is laid.
-  #   Pixel spans more world further away.
-  let below = position(wedgeAnti(
-    wedge(scale.eye_point, toMultivector(Direction(x: 0, y: 0, z: -1))), groundPlane()
-  ))
-  # Pass place straight through, since `Position` bound to `let` is `nimCopy` per frame.
-  #   Read in emitted JS.
-  let world_per_pixel =
-    if below.isSome: worldPerPixelAt(below.get, scale) else: worldPerPixelAt(scale.eye, scale)
-  FLAT_GRID.fill2(float32(size_cell.get), float32(world_per_pixel))
+  let (span, pixels) = CAMERA.rulerFor(SCALE_OVERLAY)
+  FLAT_RULER.fill2(float32(span), float32(pixels))
+
+
+proc nimRulerReading(span: cfloat): cstring {.exportc.} =
+  ## Report what scale bar claims, as its label reads; see `wording.appendRuler`.
+  readingText(proc(line: var openArray[char], cursor: var int) =
+    appendRuler(line, cursor, float(span)))
 
 
 proc nimAnchorScreen(handle, width, height: cint): FlatBuffer {.exportc.} =
@@ -2181,7 +2170,7 @@ type FrameData = object
     ## Walked in sequence so two veils blend in order scene emitted them; see
     ## `mesh.VeilRuns`.
   view_projection: seq[float32]
-  furn_ribbon_verts: FlatBuffer ## Ground grid and world axes alone, drawn first.
+  furn_ribbon_verts: FlatBuffer ## Lattices and world axes alone, drawn first.
     ## Built at own thinner width (`mesh.WIDTH_LINE_FURNITURE`), since ribbon carries
     ## width as geometry.
     ## Empty where `is_furniture_held`, meaning "furniture you already have".
@@ -2238,7 +2227,7 @@ type FrameData = object
     ##   Axes are three lines however far camera stands; grid is however many ground reach
     ##   asks for.
   count_grid_segments: int
-    ## Count ribbon records ground grid is drawn from, one per lattice line.
+    ## Count ribbon records lattices are drawn from, one per lattice line.
     ##   Bounded per family by `mesh.LINES_GRID_MAX`.
     ##   Axes excluded, so budgeted number matches its budget.
   ms_points, ms_lines, ms_planes, ms_sky, ms_preview, ms_selected: float32
@@ -2392,8 +2381,10 @@ proc nimBuildFrame(
   #   Everything `drawExtentFor` reads, and two toggles: frame whose settings match is
   #   drawing same vertices and may keep them.
   #   Compared exactly: question is "did anything move at all".
-  let settings_furniture =
-    settingsFurnitureFor(CAMERA, int(height_pixels), is_axes_shown, is_grid_shown)
+  let settings_furniture = settingsFurnitureFor(
+    CAMERA, int(height_pixels), is_axes_shown, is_grid_shown, SCENE.revision,
+    SELECTION.revision,
+  )
   let is_furniture_held =
     SETTINGS_FURNITURE_HELD.isSome and SETTINGS_FURNITURE_HELD.get == settings_furniture
   let ms_after_camera = performanceNow()
@@ -2404,11 +2395,12 @@ proc nimBuildFrame(
   if not is_furniture_held:
     SETTINGS_FURNITURE_HELD = some(settings_furniture)
     clearMeshes(MESHES_FURNITURE, ORIGIN_RECORDS)
-    # Clock grid and axes apart: axes are three lines, grid is however many ground reaches.
+    # Clock lattice and axes apart: axes are three lines, lattice is however many fog
+    #   reaches on each plane picked.
     let ms_before_grid = performanceNow()
     if is_grid_shown:
-      addGrid(MESHES_FURNITURE, SCRATCH, scale.extentFurniture, scale)
-    # Count between two, so figure is grid's own; see `mesh.addSegmentAcross`.
+      addLatticesPicked(MESHES_FURNITURE, SCRATCH, scale, SCENE, SELECTION)
+    # Count between two, so figure is lattice's own; see `mesh.addSegmentAcross`.
     COUNT_GRID_SEGMENTS = MESHES_FURNITURE.ribbons.count
     let ms_before_axes = performanceNow()
     if is_axes_shown:

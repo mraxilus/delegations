@@ -12,6 +12,7 @@
 import type { Page } from '@playwright/test';
 import { settleCamera } from './camera';
 import { waitFrames } from './frame';
+import { pickPlane } from './ground';
 import { report, reportWithin } from './report';
 import { pixelOf } from './wheel';
 
@@ -102,6 +103,8 @@ export async function drivePinMarker(page: Page): Promise<void> {
  *  line count and nothing else now, fog fade having moved into fragment shader.
  */
 export async function drivePinGrid(page: Page): Promise<void> {
+  // Lattice lies on plane picked, so one is picked: world rules no ground of its own.
+  await pickPlane(page);
   const pinned = await page.evaluate(() => {
     const canvas = document.getElementById('gl') as HTMLCanvasElement;
     const aspect = canvas.width / canvas.height;
@@ -117,6 +120,7 @@ export async function drivePinGrid(page: Page): Promise<void> {
       emitting.push(data.ms_emitting);
     }
     nimSetCameraDistance(distance_before);
+    nimSelectClear();
     grid.sort((a, b) => a - b);
     emitting.sort((a, b) => a - b);
     return { grid: grid[4] ?? -1, emitting: emitting[4] ?? -1 };

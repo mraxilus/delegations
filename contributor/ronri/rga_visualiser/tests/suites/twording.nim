@@ -121,4 +121,10 @@ suite "Wording":
     appendSpeedLight(line, cursor, 0.0)
     finishChars(line, cursor)
     check toText(line) == "0 c"
+    # Scale bar's claim, singular at one.
+    for (span, text) in [(1.0, "1 unit"), (2.0, "2 units"), (500.0, "500 units")]:
+      cursor = 0
+      appendRuler(line, cursor, span)
+      finishChars(line, cursor)
+      check toText(line) == text
 
