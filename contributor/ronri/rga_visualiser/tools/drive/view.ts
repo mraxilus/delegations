@@ -1,6 +1,6 @@
 // Checks for view section of drawer; not Nim because they read page's own fields, which
 //   exist only in browser.
-//   Suites test what a typed motor settles on. Nothing in them types into page, so nothing
+//   Suites test what typed motor settles on. Nothing in them types into page, so nothing
 //   in them catches field wired to wrong coefficient, or row shown in wrong state.
 
 import type { Page } from '@playwright/test';

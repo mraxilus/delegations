@@ -496,4 +496,3 @@ proc addLatticesPicked*(
     let m = scene.geometryOf(handle)
     if kindOf(m) != some(Kind.Plane) or isHorizon(m): continue
     meshes.addLattice(scratch, scale.extentFurniture, scale, m)
-

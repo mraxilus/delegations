@@ -1,4 +1,4 @@
-// Check a picked plane's lattice reaches camera wherever it has dollied to; not Nim because
+// Check picked plane's lattice reaches camera wherever it has dollied to; not Nim because
 //   crossing forfeits check compiler makes over its `page.evaluate` bodies, which name
 //   `nimBuildFrame` and read `FrameData`'s own fields -- both derived into
 //   `build/bridge.d.ts` and checked there.

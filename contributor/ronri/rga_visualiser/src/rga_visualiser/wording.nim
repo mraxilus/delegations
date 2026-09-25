@@ -588,4 +588,3 @@ func appendRuler*(storage: var openArray[char], cursor: var int, span: float) =
   ##   Singular at one, which 1-2-5 step lands on once in each ten decades.
   appendMagnitude(storage, cursor, span)
   appendChars(storage, cursor, if span == 1.0: " unit" else: " units")
-

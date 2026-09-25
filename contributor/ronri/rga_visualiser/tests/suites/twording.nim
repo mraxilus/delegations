@@ -127,4 +127,3 @@ suite "Wording":
       appendRuler(line, cursor, span)
       finishChars(line, cursor)
       check toText(line) == text
-

@@ -1808,4 +1808,3 @@ suite "Interaction":
     # Shift is one multiplier on every rate, speed included.
     interaction.keys_held = {Key.W, Key.Shift}
     check interaction.speedFlying(camera) =~ FACTOR_HASTE*speedTravelling(SECONDS_SPEED_RISE, cap)
-
