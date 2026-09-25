@@ -768,6 +768,8 @@ func orderOf*(scene: Scene, handle: int): uint32 =
   ## Read where object stands in order this scene's objects were created, by handle.
   ##   Comparable only within one scene: counts additions to this arena, says nothing
   ##   about wall-clock time or another scene's ordinals.
+  ##   Snapshots of one undo timeline count as one scene: each restores count beside its
+  ##   objects, and edit after undo truncates future that held any ordinal it reuses.
   doAssert scene.isAlive(handle), &"Object handle must be alive; got `{handle}`."
   scene.orders[handle]
 

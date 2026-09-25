@@ -1459,13 +1459,16 @@ suite "Interaction":
     let opening = camera
 
     # Home returns to placement both builds open at, from wherever reader has gone.
+    #   Stance alone: lens reader set stays theirs.
     camera.travel(3.0, 2.0, 1.0)
     camera.orbit(0.5, 0.2)
+    camera.degrees_field_of_view = 70.0
     discard interaction.applyAction(camera, scene, KeyAction.ViewHome)
     check camera.pivot =~ opening.pivot
     check camera.distance =~ opening.distance
     check camera.azimuth =~ opening.azimuth
     check camera.elevation =~ opening.elevation
+    check camera.degrees_field_of_view =~ 70.0
 
     # Framing is standing offer's own job, so key itself moves nothing: each front.
     #   end releases its tween's goal and `framing.offerAim` aims afresh next frame.

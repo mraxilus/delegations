@@ -1117,6 +1117,7 @@ type
     is_yielded*: bool ## Whether reader has taken camera mid-ease; see `abandon`.
       ## Ease then carries pivot alone, by each frame's own share of its path, and way
       ## round and distance stay reader's.
+    is_adopting*: bool ## Whether next offer takes its aim as delivered; see `adoptNext`.
 
 
 func `==`*(a, b: SphereWorld): bool =
@@ -1553,6 +1554,7 @@ func release*(tween: var CameraTween) =
   ##   Not for camera *user* just moved: see `abandon`.
   tween.goal = none(CameraAim)
   tween.is_arrived = false
+  tween.is_adopting = false
 
 
 func abandon*(tween: var CameraTween) =
@@ -1577,3 +1579,14 @@ func halt*(tween: var CameraTween) =
   ##   still arriving would slide camera off what reader set.
   ##   Not `release`, for reason `abandon` gives.
   if tween.goal.isSome: tween.is_arrived = true
+
+
+func adoptNext*(tween: var CameraTween) =
+  ## Halt, and take whatever next offer aims at as delivered where camera then stands.
+  ##   For placement undo and redo restore, along with selection kept across it. Aim that
+  ##   restored scene reads is new wherever step changed what is picked, and new aim eases
+  ##   camera off stance just restored, framed or not.
+  ##   Frame rule alone moves camera then: restored stance that breaks it eases back into
+  ##   range, as resized window does; see `framing.offerAim`.
+  tween.halt()
+  tween.is_adopting = true

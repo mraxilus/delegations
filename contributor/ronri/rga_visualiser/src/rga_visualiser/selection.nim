@@ -4,8 +4,7 @@
 ##   Operation reads operands positionally, so first handle picked is `m` and second is `n`.
 ## Selection is deliberately not part of `Scene`: view of scene, not content.
 ##   Never saved to `.rgascene`, never recorded on undo timeline.
-##   Restored snapshot clears it outright, since snapshot's handle numbers need not match
-##   what was picked.
+##   Step across timeline keeps each pick that still names same object; see `keepNaming`.
 ## Plain fixed-size value type with no refs, like `History` beside it.
 ##   Copying one is value copy, so it can live in GUI's own state struct without allocator.
 ##
@@ -122,6 +121,24 @@ func pruneDead*(selection: var Selection, scene: Scene) =
   for position in 0 ..< selection.count:
     if not scene.isAlive(selection.handles[position]): continue
     selection.handles[kept] = selection.handles[position]
+    kept.inc
+  if kept == selection.count: return
+  selection.count = kept
+  inc selection.count_changes
+
+
+func keepNaming*(selection: var Selection; before, after: Scene) =
+  ## Drop every pick `after` holds as other object than `before` did, or not at all.
+  ##   For step across undo timeline, from scene `before` to restored `after`.
+  ##   Handle alone does not say: freed handle is refilled by next add, so step across
+  ##   remove and add hands one handle two objects. Creation ordinal does, since no two
+  ##   objects along one timeline share one.
+  var kept = 0
+  for position in 0 ..< selection.count:
+    let handle = selection.handles[position]
+    if not (before.isAlive(handle) and after.isAlive(handle)): continue
+    if before.orderOf(handle) != after.orderOf(handle): continue
+    selection.handles[kept] = handle
     kept.inc
   if kept == selection.count: return
   selection.count = kept

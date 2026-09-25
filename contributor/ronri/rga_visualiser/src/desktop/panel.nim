@@ -1129,15 +1129,17 @@ func stepHistory*(
   ##   Drops whatever open edit was staged against.
   ##   Reports whether anything moved.
   ##   One proc for buttons and keys: restored snapshot's handle numbers need not match ones
-  ##   session or selection held, easy to forget in second place.
-  ##   Halts standing tween, aiming at whatever was last selected: left running it
-  ##   drags view off placement just restored.
-  result = if is_undo: history.undo(scene, camera) else: history.redo(scene, camera)
+  ##   session held, easy to forget in second place.
+  ##   Keeps every pick that still names its object, so frame rule still binds.
+  ##   Tween adopts next aim as delivered: left running it drags view off placement just
+  ##   restored; see `CameraTween.adoptNext`.
+  result =
+    if is_undo: history.undo(scene, camera, panel.selection)
+    else: history.redo(scene, camera, panel.selection)
   if result:
-    panel.selection.clear()
     panel.session = none(EditSession)
     panel.hideSelectionMenu()
-    panel.tween_camera.halt()
+    panel.tween_camera.adoptNext()
 
 
 

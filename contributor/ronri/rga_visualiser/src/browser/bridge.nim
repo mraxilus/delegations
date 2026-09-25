@@ -1350,22 +1350,18 @@ proc nimAnimationMilliseconds(): cint {.exportc.} = cint(ANIMATION_MILLISECONDS)
 proc nimUndo(): bool {.exportc.} =
   ## Move scene back one step on its edit timeline; report whether there was earlier step.
   ##   Puts view back where that step was made from.
-  ##   Clears selection on success, since restored snapshot's handle numbers may not match.
-  ##   Halts standing camera tween too, or aim it carried drags view off placement just
-  ##   restored; same pairing `panel.stepHistory` makes.
-  result = HISTORY.undo(SCENE, CAMERA)
-  if result:
-    SELECTION.clear()
-    TWEEN_CAMERA.halt()
+  ##   Keeps every pick that still names its object, and tween adopts next aim as
+  ##   delivered, or aim it carried drags view off placement just restored; same pairing
+  ##   `panel.stepHistory` makes.
+  result = HISTORY.undo(SCENE, CAMERA, SELECTION)
+  if result: TWEEN_CAMERA.adoptNext()
 
 
 proc nimRedo(): bool {.exportc.} =
   ## Move scene forward one step on its edit timeline; report whether there was later step.
-  ##   View and all; clears selection and halts tween as `nimUndo` does.
-  result = HISTORY.redo(SCENE, CAMERA)
-  if result:
-    SELECTION.clear()
-    TWEEN_CAMERA.halt()
+  ##   View and all; keeps selection and adopts next aim as `nimUndo` does.
+  result = HISTORY.redo(SCENE, CAMERA, SELECTION)
+  if result: TWEEN_CAMERA.adoptNext()
 
 
 proc nimCanUndo(): bool {.exportc.} =

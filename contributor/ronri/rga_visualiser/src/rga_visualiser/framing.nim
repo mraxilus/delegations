@@ -418,6 +418,13 @@ func offerAim*(
   if aim.isNone:
     tween.release()
     return
+  # Aim met after history step is taken as delivered, so frame rule alone can move camera.
+  if tween.is_adopting:
+    tween.is_adopting = false
+    tween.goal = aim
+    tween.destination = camera.stanceOf
+    tween.is_arrived = true
+    tween.is_yielded = false
   # Hold frame rule, in whichever way suits what reader is doing.
   #   Reader moving camera is cut back at once: ease would fight their own drag, and they
   #   are one in control.

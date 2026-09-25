@@ -995,7 +995,8 @@ func applyAction*(
   of KeyAction.FrameSelection: discard
   of KeyAction.ViewHome:
     # Return to placement both builds open at, so "home" means same as starting again.
-    camera = initCameraDefault()
+    #   Stance alone: lens is reader's setting, as history's step keeps it.
+    camera = camera.placed(initCameraDefault().stanceOf)
   none(int)
 
 
