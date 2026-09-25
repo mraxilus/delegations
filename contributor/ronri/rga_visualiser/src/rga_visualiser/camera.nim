@@ -39,7 +39,8 @@
 
 import std/[math, options]
 
-import pga
+# `pga` arrives through `projections`, which stands in for four it has withdrawn.
+import ./projections
 import ./[boundary, motors, tessellate]
 
 
@@ -496,6 +497,14 @@ func pivot*(camera: Camera): Position =
   )
 
 
+func depthAlong*(eye: Position; forward: Direction; place: Position): float =
+  ## Measure signed depth of `place` along sight: its height over plane through eye square
+  ##   to `forward`, positive ahead. `objects.depthAgainst` on `objects.planeThrough`.
+  ##   For camera's own geometry: which way it turns, how far it repivots, what it frames.
+  ##   Depth that only clips or sizes picture is picture's, and stays there.
+  depthAgainst(planeThrough(toMultivector(eye), toMultivector(forward)), toMultivector(place))
+
+
 func azimuthElevationFor*(heading: Direction): (float, float) =
   ## Solve orbit angles camera needs to look along `heading`.
   ##   Regardless of pivot or distance: `eye`'s formula cancels pivot out of `forward`
@@ -562,11 +571,14 @@ func orbit*(camera: var Camera; turn, rise: float) =
 
 func acrossLevel(frame: FrameCamera): Direction =
   ## Read level axis at right angles to sight, signed to agree with camera's own across.
-  ##   Camera's own across where sight runs along world up and names no level axis.
-  ##   Left unscaled: `turnAbout` unitizes axis it turns about.
-  let level = cross(frame.forward, UP_WORLD)
-  if norm(level) < 1.0e-9: return frame.axis_right
-  if dot(level, frame.axis_right) >= 0.0: level else: -level
+  ##   Normal to pencil sight and world up span: their join is horizon line, and
+  ##   `directionNormalHorizon` reads its normal. Unit.
+  ##   Camera's own across where sight runs along world up, pencil collapses, and no level
+  ##   axis is named.
+  let level = directionNormalHorizon(toMultivector(frame.forward) ∧ toMultivector(UP_WORLD))
+  if level.isNone: return frame.axis_right
+  if innerOf(toMultivector(level.get), toMultivector(frame.axis_right)) >= 0.0: level.get
+  else: -level.get
 
 
 func dolly*(camera: var Camera, factor: float) =
@@ -680,38 +692,47 @@ func turnsCarrying(frame: FrameCamera; held, under: Direction): (Direction, floa
   ##   Height out of pitch's reach, as for pixel far off middle near pole, takes nearest
   ##   height it reaches, and what finger holds slips under it there.
   ##   Neither direction needs to be unit. Directions only: where turn stands is caller's.
+  ##   Geometry is algebra's: directions are weightless points, `ahead` is normal to pencil
+  ##   of world up and `across`, heights are inner products, and lift is sandwich through
+  ##   `turnAbout`'s motor. Angles are read out of what those return.
   let
-    level = frame.acrossLevel
-    across = (1.0/norm(level))*level
-    ahead = cross(UP_WORLD, across)
-    toward = (1.0/norm(under))*under
-    target = (1.0/norm(held))*held
-    along_ahead = dot(toward, ahead)
-    along_up = dot(toward, UP_WORLD)
+    across = frame.acrossLevel
+    up = toMultivector(UP_WORLD)
+    level = toMultivector(across)
+    ahead = toMultivector(directionNormalHorizon(up ∧ level).get(frame.forward))
+    toward = ^∙ toMultivector(under)
+    target = ^∙ toMultivector(held)
+    along_ahead = innerOf(toward, ahead)
+    along_up = innerOf(toward, up)
     reach = hypot(along_ahead, along_up)
-  func lifted(pitch: float): Direction =
+    axis = 1.0.e4 ∧ level
+  func lifted(pitch: float): Multivector =
     ## Carry `toward` about `across` by `pitch`, as right hand turns.
-    cos(pitch)*toward + sin(pitch)*cross(across, toward) +
-      ((1.0 - cos(pitch))*dot(across, toward))*across
+    let turn = turnAbout(axis, pitch)
+    if turn.isNone: toward else: toward.carried(turn.get)
   func bearing(pitch: float): float =
     ## Solve yaw about world up that closes bearing of lifted `toward` on `target`'s.
     let raised = lifted(pitch)
-    if hypot(raised.x, raised.y) <= 1.0e-12 or hypot(target.x, target.y) <= 1.0e-12:
+    let
+      (raised_x, raised_y) = (raised[Basis.E1], raised[Basis.E2])
+      (target_x, target_y) = (target[Basis.E1], target[Basis.E2])
+    if hypot(raised_x, raised_y) <= 1.0e-12 or hypot(target_x, target_y) <= 1.0e-12:
       return 0.0
-    wrapAngle(arctan2(target.y, target.x) - arctan2(raised.y, raised.x))
+    wrapAngle(arctan2(target_y, target_x) - arctan2(raised_y, raised_x))
   # Turning by `pitch` about `across` takes `ahead` toward `UP_WORLD`, so height becomes
   #   `reach*cos(pitch - phase)`.
-  var pitch = 0.0
-  if reach > 1.0e-12:
-    let
-      phase = arctan2(along_ahead, along_up)
-      spread = arccos(clamp(dot(target, UP_WORLD)/reach, -1.0, 1.0))
-      rising = wrapAngle(phase + spread)
-      falling = wrapAngle(phase - spread)
-    pitch =
-      if rising^2 + bearing(rising)^2 <= falling^2 + bearing(falling)^2: rising
-      else: falling
-  (across, pitch, bearing(pitch))
+  #   Each pitch's bearing is one sandwich, so each is taken once and kept.
+  if reach <= 1.0e-12: return (across, 0.0, bearing(0.0))
+  let
+    phase = arctan2(along_ahead, along_up)
+    spread = arccos(clamp(innerOf(target, up)/reach, -1.0, 1.0))
+    rising = wrapAngle(phase + spread)
+    falling = wrapAngle(phase - spread)
+    (bearing_rising, bearing_falling) = (bearing(rising), bearing(falling))
+  if rising^2 + bearing_rising^2 <= falling^2 + bearing_falling^2:
+    (across, rising, bearing_rising)
+  else:
+    (across, falling, bearing_falling)
 
 
 func lookCarrying*(camera: var Camera; held, under: Direction) =
@@ -747,15 +768,20 @@ func pointHeld*(eye, pivot: Position; heading: Direction; radius: float): Positi
   ##   Always on ray, so point held is under pixel exactly; only its distance from pivot
   ##   leaves sphere, and there turn carries direction and lets distance slip.
   ##   Eye and pivot passed in, not camera: per finger event, twice, and each is sandwich.
+  ##   Algebra's: ray is join of eye with heading, `nearest` is pivot's depth over plane
+  ##   through eye square to it, and `miss` is pivot's distance from its orthogonal
+  ##   projection onto ray. Point held is eye plus weightless heading, scaled.
   let
-    along = (1.0/norm(heading))*heading
-    toward_pivot = pivot - eye
-    nearest = dot(toward_pivot, along)
-    miss = norm(toward_pivot + (-nearest)*along)
+    place_eye = toMultivector(eye)
+    place_pivot = toMultivector(pivot)
+    along = ^∙ toMultivector(heading)
+    ray = place_eye ∧ along
+    nearest = depthAgainst(planeThrough(place_eye, along), place_pivot)
+    miss = distanceBetween(^ projectOrthogonal(place_pivot, ray), place_pivot)
     back =
       if miss <= radius/sqrt(2.0): sqrt(radius*radius - miss*miss)
       else: radius*radius/(2.0*miss)
-  eye + (nearest - back)*along
+  position(place_eye + (nearest - back)*along).get(eye)
 
 
 func orbitCarrying*(camera: var Camera; held, under: Direction) =
@@ -820,11 +846,12 @@ func travelToward*(camera: var Camera; factor: float; anchor: Position; floor_re
   ##     Floor never pushes eye out: it applies only where eye is already further out.
   ##   Separation from pivot is left to caller, which knows anchor's own depth.
   let
-    offset = anchor - camera.eye
-    reach = norm(offset)
+    (place_anchor, place_eye) = (toMultivector(anchor), toMultivector(camera.eye))
+    reach = distanceBetween(place_anchor, place_eye)
   if reach <= 0.0: return
   let settled = max(reach*factor, min(max(floor_reach, DISTANCE_LIMIT_NEAR), reach))
-  camera.slideBy(wedge((reach - settled)/reach, toMultivector(offset)))
+  # Difference of two unit points is weightless point running from one to other.
+  camera.slideBy(wedge((reach - settled)/reach, place_anchor - place_eye))
 
 
 func flyAhead*(camera: var Camera, step: float) =
@@ -1283,10 +1310,12 @@ func halfAngleCentred*(camera: Camera; width, height: int; inset: float): float 
   arctan(min(tangent_down, tangent_across))
 
 
-func stepOutTo*(offset: Direction; heading: Direction; reach: float): float =
-  ## Solve least step along `heading` carrying `offset` out to `reach` from its origin.
-  ##   `|offset + r*heading| = reach` with unit `heading`, which is one quadratic in `r`:
-  ##   `r² + 2r(offset·heading) + (|offset|² − reach²) = 0`.
+func stepOutTo*(eye, centre: Position; heading: Direction; reach: float): float =
+  ## Solve least step along `heading` carrying `eye` out to `reach` from `centre`.
+  ##   `|offset + r*heading| = reach` with `offset` from centre to eye and unit `heading`,
+  ##   which is one quadratic in `r`: `r² + 2r(offset·heading) + (|offset|² − reach²) = 0`.
+  ##   Both coefficients are algebra's: `offset·heading` is eye's depth over plane through
+  ##   centre square to heading, and `|offset|` is distance between them.
   ##   Positive root is answer, and it always exists where offset falls short: term under
   ##   root is `along² − outside`, and `outside` is negative exactly then, so root exceeds
   ##   `|along|` and difference is positive whichever way `along` points.
@@ -1295,8 +1324,10 @@ func stepOutTo*(offset: Direction; heading: Direction; reach: float): float =
   ##   Replaced bisection over `framing.isShownAll`, about 25 projections of every watched
   ##   object for each pick.
   let
-    along = dot(offset, heading)
-    outside = dot(offset, offset) - reach*reach
+    (place_eye, place_centre) = (toMultivector(eye), toMultivector(centre))
+    along = depthAgainst(planeThrough(place_centre, toMultivector(heading)), place_eye)
+    gap = distanceBetween(place_eye, place_centre)
+    outside = gap*gap - reach*reach
   if outside >= 0.0: return 0.0
   sqrt(along*along - outside) - along
 

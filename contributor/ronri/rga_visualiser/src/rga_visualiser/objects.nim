@@ -92,6 +92,13 @@ func centroidFolded*(centroid: Multivector, place: Multivector): Multivector =
   add(centroid, place)
 
 
+func innerOf*(m, n: Multivector): float =
+  ## Read scalar of inner product between bulks, `𝐦 ∙ 𝐧`.
+  ##   For two weightless points, i.e. directions, their lengths times cosine of angle between
+  ##   them: sign says which side of each other they stand, and unit pair reads cosine alone.
+  (m ∙ n)[Basis.scalar]
+
+
 func distanceBetween*(p, q: Multivector): float =
   ## Measure distance between two unit-weight points.
   ##   Weight norm of joining line, i.e. `‖p ∧ q‖∘`, read from norm's `scalarAnti` handle.
