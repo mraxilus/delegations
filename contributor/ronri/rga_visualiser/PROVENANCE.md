@@ -90,9 +90,8 @@ says that no behaviour moved. `tsc` is clean after `bridge.d.ts` is derived agai
 
 **Every word that either front-end shows has one name in `wording.nim`, and neither writes a
 literal.** Shown text written where it is drawn puts one sentence in two places, and two places
-drift. The window and the page had said different things about the same wedge, the same coefficient
-grid and the same outcome. The catalogue is a `Wording` enum and a table indexed by it, so a key
-renamed there fails to compile, rather than fails to match.
+drift. The catalogue is a `Wording` enum and a table indexed by it, so a key renamed there fails to
+compile, rather than fails to match.
 
 **The page fills its markup at build time, rather than at load.** Its labels live in markup, and not
 in TypeScript: 44 static text nodes against 6 written from scripts. To strip an attribute and set it
@@ -147,18 +146,17 @@ A row that names a button or a key composes it through the funcs of the catalogu
 button and its words is the catalogue's, as much as the words are. The menu tab names each button by
 the key of the button, so a renamed button is renamed in its row.
 
-Outcome sentences are composed here as well, `derivedMessage` among them, which four sites had each
-written out. `message.nim` keeps how long an outcome stands. The guard sweeps `help.nim` for any
-quoted letter, because a word quoted there is a copy that the catalogue cannot see.
+Outcome sentences are composed here as well, `derivedMessage` among them. `message.nim` keeps how
+long an outcome stands. The guard sweeps `help.nim` for any quoted letter, because a word quoted
+there is a copy that the catalogue cannot see.
 
 Not here: the words of the algebra itself. Those are operation names and notation from the
 declarations of `pga`, kind words, and key and button names. Help composes with them, rather than
 copies them.
 
 *Checked.* Verified by build and by driven check. `declare` reports **173 wording keys**. A literal
-put back at a label call is refused, which is how three page-only strings in `state.ts` were found.
-A key named only inside the catalogue is refused as shown by nobody. A `@WORD:` token that names an
-absent key fails the build, with the line that carries it.
+put back at a label call is refused. A key named only inside the catalogue is refused as shown by
+nobody. A `@WORD:` token that names an absent key fails the build, with the line that carries it.
 
 ## Driven checks
 
@@ -758,8 +756,7 @@ so the loops that run for each frame use the accessors that take a handle instea
 - a label cut never splits a character, at any buffer size.
 
 Verified by driven check: undo while the frame is held redraws the current scene, and not the
-previous one. The figures 13.3 ms, 42 ms and 12.7 million were read during a fix, and nothing
-has measured them again since.
+previous one. The figures 13.3 ms, 42 ms and 12.7 million are unmeasured since a fix.
 
 ## Memory and allocation
 
@@ -874,9 +871,8 @@ and not documentation of literals applied by hand. The floors settled them, and 
 luminance of 0.62 read well and *failed*, because the dimming had walked the green and blue axes
 onto the luminance of `Rose`. That is 3.5 and 3.3 ΔE under red-green, against the floor of 4.0.
 
-`Ink.Outline` is kept although nothing draws with it. To remove an entry next to the categorical
-run shifts every later ordinal and corrupts the colours of a saved `.rgascene`. The `Ink.Algebra`
-of the debug layer *was* removed, and the file format went to version 6 to carry the shift.
+`Ink.Outline` is kept although nothing draws with it. To remove an entry next to the categorical run
+shifts every later ordinal and corrupts the colours of a saved `.rgascene`.
 
 **Seed hues**: `ground` keeps the olive of `INK_SEED_GROUND`, and `o` keeps the copper of
 `INK_SEED_ORIGIN`. Those two seeds are not arbitrary.
@@ -1194,12 +1190,11 @@ scale applied is read back from `distanceHeld`, so a zoom stopped by the floor m
 exactly what it was allowed. **A pinch stays centred**, because the two-finger gesture already
 pans by the travel of its midpoint.
 
-**A drag pan grabs the level under the pointer and carries it.** `interaction.panAcross` meets
-both ends of the step of the pointer with the horizontal plane through the pivot, and translates
-by the difference. It is not a rate for each pixel (`FRACTION_PAN_PIXEL` at 0.0016 of the
-distance), which slid within the plane *facing the eye*. That took the pivot from z 1.00 to 6.40,
-so every later orbit swung about a point in mid-air. The rate survives only where a ray misses the
-level.
+**A drag pan grabs the level under the pointer and carries it.** `interaction.panAcross` meets both
+ends of the step of the pointer with the horizontal plane through the pivot, and translates by the
+difference. Rejected: a rate for each pixel, `FRACTION_PAN_PIXEL` at 0.0016 of the distance. It
+slides within the plane *facing the eye*, and carries the pivot off the level into mid-air. The rate
+survives only where a ray misses the level.
 
 **The hold point is bounded at `FACTOR_PAN_REACH_MAX` 4 orbit distances**, because a level meets a
 ray aimed near the horizon a long way off. The *point* is clamped rather than the movement, so the
@@ -1574,6 +1569,13 @@ JS it is a 128-byte `Float64Array` that V8 allocates outside its heap, a microse
 and the crossing is the coefficient table. A motor's sum of blades made 23 arrays, and a write makes
 one. **`sight` reads the stance once for each event**, off one lift and one antireverse.
 
+**The camera's own geometry goes through the algebra, and what only sizes or clips the picture does
+not.** A finger's pitch carries its direction through the motor of `turnAbout`. The level axis is
+the normal of the pencil that the sight and world up span. A held point stands on the finger's ray,
+a step short of the pivot's orthogonal projection onto it. Depths along the sight are heights over
+the plane through the eye, distances are `distanceBetween`, and sides are `innerOf`. The near clip,
+a pixel's world size and the culling of chords are the picture's.
+
 **The tessellation assembles before it emits.** Each loop resolves its places through the algebra
 into a `DrawScratch`, and emits after. For the grid and the axes the seam is between two procs.
 `placeObject` answers what a drawable is and where, from the multivector alone, so the answer
@@ -1590,11 +1592,12 @@ gone with its two modules, its palette slot, its `nimBuildFrame` flag, its diagn
 four driven checks. `addGridFamily` and `radiusOnPlaneFor` still lay a lattice on any plane,
 because the ground is that case.
 
-*Checked.* Verified by `suites.nim`: every moved form is pinned to its reference, a lift to its sum
-of blades, and `sight` to the reads it replaces. Verified by a 400-step camera trace: 230 read-outs
-equal to 17 digits on both backends. Verified in Chromium at 390 by 844 on 2026-09-25, best of seven
-runs. A finger's turn takes 108 µs in free aim and 86 µs in orbit, against 365 and 559. A turn and a
-frame build take 0.64 ms against 1.42, and 3.65 against 4.20 at 360 objects.
+*Checked.* Verified by `suites.nim`: each moved form, lift, `sight`, depth and held point is pinned
+to its reference. Verified by a 400-step camera trace: read-outs within 1e-13 of the vector forms on
+both backends. Verified in Chromium at 390 by 844 on 2026-09-25 against the vector forms, in four
+interleaved pairs, each the best of seven runs. A finger's turn takes 223 to 251 µs in free aim and
+247 to 283 in orbit, against 144 to 158 and 113 to 122. A turn and a frame build take 0.93 to 0.94
+ms, against 0.86 to 0.94.
 
 ## Motors
 
@@ -2973,27 +2976,25 @@ passing proves that the runner carries that library. Assumed: nothing about the 
 
 ## Open questions
 
-**The `backdrop-filter` of the drawer costs about 12 ms of every frame at the largest scene.** It
-is the whole of what an open drawer costs. It was measured with the drawer open over 5,040
-objects: 59 ms for each frame, against 47 ms with the filter forced off. The drawer closed is
-47 ms, and the page carries about 860 elements. A scroll of the list at 300 px a frame holds
-62 ms, with 0.8 ms of it in the `ui` phase.
+**The `backdrop-filter` of the drawer costs about 12 ms of every frame at the largest scene**, which
+is the whole cost of an open drawer. Over 5,040 objects a frame takes 59 ms with it, 47 ms with it
+forced off, and 47 ms with the drawer closed. A scroll of the list at 300 px a frame holds 62 ms,
+0.8 ms of it in the `ui` phase.
 
-The blur is what makes the drawer read as glass over a live 3D view, so it is not plainly the
-wrong trade. The figure is recorded so that the question can be asked with it, rather than about
-it. Software rendering inflates a blur far more than it inflates the rest, so the share is an
-upper bound on hardware. The choices are to keep it, to drop it, or to drop it only while the
-frame runs slow.
+The blur makes the drawer read as glass over a live view, so it is not plainly the wrong trade.
+Software rendering inflates a blur more than the rest, so the share is an upper bound on hardware.
+The choices are to keep it, to drop it, or to drop it only while the frame runs slow.
 
-**A plane the sight nearly lies in is framed by its whole disc, and gains nothing by it.** The
-bound over anything finite is one sphere, and a plane widens it by the whole of its 8-unit disc.
-The rule then stands the eye 30.1 units off the centre of that disc, whatever the reader's scale.
-Where the sight is within a few degrees of the plane, the disc still draws as a sliver, because
-framing something finite turns nothing. The reader pays a zoom out for a picture that did not
-improve.
+**A plane the sight nearly lies in is framed by its whole disc, and gains nothing by it.** The bound
+over anything finite is one sphere, which a plane widens by its whole 8-unit disc. The rule then
+stands the eye 30.1 units off its centre at any scale. Within a few degrees of the plane the disc
+still draws as a sliver, because framing something finite turns nothing. Only a turn helps, and the
+rule that finite framing never turns keeps a pick from pulling the view about. The choices are to
+leave it, to bound a plane by its crossing of the frame, or to let a plane alone be turned toward.
 
-Turning is the only thing that helps here. The rule that finite framing never turns is what keeps a
-pick from pulling the view about. The choices are to leave it, to bound a plane by its crossing of
-the frame, or to let a plane alone be turned toward.
+**Two sites may still do geometry in vector arithmetic.** `tessellate.placeChord` tests each chord
+against the near plane with dot products, in each frame, and the orrery builds its orbit planes with
+cross products. The first only clips, so it may be the picture's; the second is construction, which
+the algebra owns. The choices are to move them into the algebra, or to leave them.
 
 [replications]: https://gitlab.com/mraxilus/replications
