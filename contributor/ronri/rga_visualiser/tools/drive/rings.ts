@@ -163,7 +163,7 @@ async function driveExperiments(page: Page): Promise<void> {
  *
  *  Frames rather than clock, which is second attempt and worth recording: first slept
  *  1200 ms and then asked for twenty, so how many arrived was how fast machine was. It drew
- *  27 idle and 19 with `koch ci` running beside it -- same code, two verdicts, which is what
+ *  27 idle and 19 with `koch check` running beside it -- same code, two verdicts, which is what
  *  this repository says makes check wrong rather than machine. Waiting on count takes load
  *  out of verdict: loaded machine takes longer to reach twenty and still reaches it.
  *  Ceiling is what remains for page that draws nothing, and is far enough above worst
