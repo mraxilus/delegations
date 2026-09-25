@@ -1159,6 +1159,41 @@ suite "Camera Aim":
     check tween.destination.distance < camera.distance
 
 
+  test "a still camera a resize leaves out of frame eases back, though its goal is held":
+    # Standing offer skips goal it holds, and was skipping it while frame rule was broken:
+    #   narrowed window left camera unframed, since nothing moving it meant nothing held it.
+    const (WIDE, TALL, DURATION) = (WIDTH_AIM, HEIGHT_AIM, 0.35)
+    var camera = stanceAim(0.7, 0.35)
+    let (scene, picked) = sceneOf(
+      toMultivector(Position(x: 6.0, y: -4.0, z: 1.0)),
+      toMultivector(Position(x: -3.0, y: 5.0, z: -2.0)),
+    )
+    var
+      tween: CameraTween
+      pointer = none(PointerPick)
+    tween.offerAim(
+      camera, scene, picked, none(Preview), camera.drawExtentFor(TALL),
+      WIDE, TALL, 0.0, DURATION, pointer,
+    )
+    tween.settle(camera)
+    let aim = tween.goal.get
+    check aim.isFramed(camera, WIDE, TALL)
+    check not aim.isFramed(camera, TALL div 2, TALL)
+    tween.offerAim(
+      camera, scene, picked, none(Preview), camera.drawExtentFor(TALL),
+      TALL div 2, TALL, 1.0, DURATION, pointer,
+    )
+    check not tween.is_arrived
+    tween.settle(camera)
+    check aim.isFramed(camera, TALL div 2, TALL)
+    # Once back in frame, same offer is answered again rather than re-armed.
+    tween.offerAim(
+      camera, scene, picked, none(Preview), camera.drawExtentFor(TALL),
+      TALL div 2, TALL, 2.0, DURATION, pointer,
+    )
+    check tween.is_arrived
+
+
   test "an aim widens by exactly the objects folded into it":
     let (a, b) = (Position(x: 3.0, y: 0.0, z: 0.0), Position(x: -3.0, y: 0.0, z: 0.0))
     let aim_one = none(CameraAim).aimIncluding(toMultivector(a), SCALE_AIM)
