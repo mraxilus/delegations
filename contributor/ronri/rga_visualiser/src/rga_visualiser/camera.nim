@@ -19,10 +19,10 @@
 ##   `UP_REFERENCE`. Motion itself is `motors.nim`, which stands in until library writes it.
 ##
 ## Pivot and both angles are read out rather than stored.
-##   They named stance before, and one of them could go stale against another: dolly wrote
-##   distance while pivot stood, and pivot could sit where no angle pointed.
-##   Rotor has no pole, so `frame` needs no clamp. `ELEVATION_LIMIT` is bound `orbit`
-##   applies to hold turntable's own reading, and nothing derives through it.
+##   Stored beside stance, one could go stale against another: dolly left pivot where no
+##   angle pointed.
+##   Rotor has no pole, so `frame` needs no clamp. `ELEVATION_LIMIT` bounds only stance
+##   rebuilt from angles, and nothing derives through it.
 ## Only projection is left to convention.
 ##   Perspective divide, depth range and clip volume belong to graphics pipeline rather
 ##   than to geometry, so they are written out directly.
@@ -210,8 +210,8 @@ type
     ## Stance is one rigid motion and one depth. Where eye stands and which way it faces are
     ## `motor` alone; pivot is read off sight line at `depth_pivot`.
     ##   Orbit angles are read out rather than stored; see `azimuth` and `elevation`.
-    ##   Rotor has no pole, so `ELEVATION_LIMIT` is bound `orbit` applies rather than bound
-    ##   any derivation needs.
+    ##   Rotor has no pole, so `ELEVATION_LIMIT` bounds only stance rebuilt from angles, never
+    ##   derivation.
     motor*: Motor ## Rigid motion carrying reference stance to this one.
       ## Reference stance places eye at world origin, facing `FORWARD_REFERENCE`, with
       ## `RIGHT_REFERENCE` across and `UP_REFERENCE` up. Turntable at azimuth 0, elevation
@@ -542,11 +542,9 @@ func turnedAboutPivot(camera: Camera; pivot: Position; along: Direction, radians
 
 func orbit*(camera: var Camera; turn, rise: float) =
   ## Turn eye about pivot by given angles, about camera's own axes.
-  ##   Composed rather than rebuilt from four turntable numbers.
-  ##     Rebuild carried no roll, so rolling and then orbiting snapped view upright.
+  ##   Composed rather than rebuilt from four turntable numbers, which carry no roll.
   ##     Sphere about bare point has no pole, so there is no clamp either.
-  ##     `ELEVATION_LIMIT` is left to `placedAtElevation` alone, where turntable is rebuilt
-  ##     from angles and does collapse at pole.
+  ##     `ELEVATION_LIMIT` is left to stances rebuilt from angles, which do collapse at pole.
   ##   Arguments read as `look`'s do, and with same signs, so one drag feeds either verb.
   ##   Pivot and separation both survive, because both axes run through pivot.
   ##   Frame is read again between two turns, for reason `look` gives.
