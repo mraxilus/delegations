@@ -1,5 +1,4 @@
 ## Drive mark workbench's build under testament: every gate, every page written and read back.
-##   Debug build on purpose: workbench's `doAssert` gates are check (Article IX.6).
 
 import std/[os, strutils, unittest]
 

@@ -1,8 +1,6 @@
 discard """
 action: run
 cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on -d:danger $options $file"
-batchable: true
-joinable: false
 """
 ## What pose says about itself, held to poses engine actually holds.
 ##
@@ -11,7 +9,6 @@ joinable: false
 ##     plan and name which is higher there, read off arms as drawn and not
 ##     assumed.  Corpus is both two-hand holds at every band over five turns,
 ##     settled where engine settles them.
-##   Not joinable: it links C archive, which testament's joined binary cannot share.
 
 {.experimental: "strictFuncs".}
 
