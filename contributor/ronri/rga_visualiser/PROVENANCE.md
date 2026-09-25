@@ -412,9 +412,8 @@ sits on `.drawer`, outside what scrolls. A sticky offset is inset by the padding
 scroller.
 
 The heading wears its pill at rest and pinned alike, so a list moving and a list still show one
-heading. Rejected: a band only while pinned, watched through a sentinel and an
-`IntersectionObserver`. A heading then changed its look between a list moving and one at rest, and
-the bar of the desktop is filled throughout.
+heading. The desktop bar is filled throughout. Rejected: a band only while pinned, watched through
+a sentinel and an `IntersectionObserver`.
 
 **A heading wears the pill that the controls of the chip row wear**, still or scrolling. It has the
 same radius, the same 1 px `--border`, and the box that `.object-row.selected` already uses.
@@ -464,6 +463,15 @@ estimated offset, with nothing but a spacer in view, adjusts nothing.
 the spot, and the prose after it parses as CSS. That was enough to swallow 141 of the 150 rules of
 the page, with the page still drawing. Delimiters are named rather than quoted.
 
+**On an artefact host, a file saves through the host's own save.** The claude.ai viewer never lets
+frame code download directly, and offers `claude.use("downloads")` instead. `deliverFile` tries it
+first where the host answered at load, and the reader confirms the file. A reader's "no", or a
+prompt already open, ends the save; any other refusal falls through to the page's own routes.
+
+**A scene goes to the host as `scene.zip`, which holds `scene.rgascene` unchanged and stored.**
+The host saves only the extensions on its list, and `.rgascene` is not one. Loading opens the first
+`.rgascene` entry of a zip, stored or deflated. Rejected: a JSON scene, a second format to read.
+
 *Checked.* Verified by a cold run. `clean` removes `build`, `bin` and `nimcache`. Then `drive`
 fetches every face, builds both front-ends, and drives them with no step run by hand, which is the
 case of the runner itself. A second run fetches nothing.
@@ -472,8 +480,9 @@ Verified by type-checker: every script is clean under the three flags above, wit
 non-null assertion. Verified by driven check: `driveTypeRoles`, `driveTypeDrawn` and
 `driveTypeLigatures`.
 
-Scene save and load remain **untested** here, because nothing drives the file picker.
-**Unverified**: no human has driven this page.
+Verified by driven check against a stand-in host: a scene saves as a zip and loads back, and a PNG
+saves as itself. A declined save offers no link. Verified by `unzip -t`: the zip is sound.
+**Untested**: the real host. **Unverified**: no human has driven this page.
 
 ## Desktop front-end
 
@@ -1067,11 +1076,10 @@ moves it:
 - a turn of −elevation about the line through the pivot along +y;
 - a turn of the azimuth about the line through the pivot along world up.
 
-**Pivot and both angles are read out rather than stored, and that closes a hole.** They named the
-stance together before, and one could go stale against another. A dolly wrote the distance while the
-pivot stood, so the pivot could sit where no angle pointed. Now the dolly slides the eye and names
-the new separation, and the pivot follows. `repivotToDepth` is one assignment, and `dollyToward`
-needs no pivot arithmetic at all.
+**Pivot and both angles are read out rather than stored, and that closes a hole.** Stored beside
+the stance, one could go stale against another, and a dolly left the pivot where no angle pointed.
+The dolly slides the eye and names the new separation, and the pivot follows. `repivotToDepth` is
+one assignment, and `dollyToward` needs no pivot arithmetic at all.
 
 **The azimuth reads back in (−π, π].** It comes off the sight direction through `arctan2`, which
 bounds it. A stored azimuth ran on past π and counted up. The ease is not affected, because
@@ -1082,19 +1090,16 @@ Both angles also land within an ulp or two of what was asked, rather than on it,
 through the motor and back. The suite compares them as it compares every other computed float.
 
 **The frame needs no clamp.** Carrying three reference directions through a rigid motion keeps them
-orthonormal and weightless, so no join can refuse and no antidual sign needs pinning. The joins it
-replaced collapsed as the sight axis neared world up, which is what the elevation clamp was for.
-`ELEVATION_LIMIT` is now the bound that `orbit` applies to hold the turntable's own reading, and
-nothing derives through it.
+orthonormal and weightless, so no join can refuse and no antidual sign needs pinning. Rejected:
+joins against world up, which collapse as the sight axis nears it.
 
 **Every verb composes the motion, `orbit` included.** `orbit` turns about two lines through the
 pivot, along the camera's own up and its own across. `look` turns about the same two through the
 eye. A roll survives it, and the elevation clamp goes with the rebuild that needed it.
 
-A rebuild from four turntable numbers cannot carry a roll, so rolling and then orbiting snapped the
-view upright. It also fixed the orbit's axes to world up, which is a pole. `ELEVATION_LIMIT` is left
-to `placedAtElevation` alone, the panel's own field, where the turntable is rebuilt from angles and
-does collapse at the pole.
+Rejected: a rebuild from four turntable numbers, which carries no roll and fixes the orbit's axes to
+world up, a pole. `ELEVATION_LIMIT` bounds only a stance rebuilt from angles, which does collapse at
+the pole: `initCamera`, `placedAtElevation` and a view framed along a facing.
 
 The axis of each turn is the camera's own, so a mouse's orbit reads as a trackball, not a turntable.
 The azimuth is no longer linear in a horizontal drag once the elevation is off level. Two thousand
@@ -1876,9 +1881,8 @@ view.** With a horizon plane visible the cursor is over *something* almost every
 empty space becomes a camera move precisely because nothing was hovered. A finite plane whose disc
 reaches every corner of the frame (`picking.coversView`) leaves no empty glass at all.
 
-Every corner is half the diagonal from the middle, which is 750 px on a 1200×900 frame. The rule
-asked for the longer side before, 1200 px, which is 1.6 times as far. A plane covering the whole
-window then still read as a drag handle, and the view could not be moved off it.
+Every corner is half the diagonal from the middle, which is 750 px on a 1200×900 frame. Rejected:
+the longer side, 1200 px, under which a plane covering the whole window still reads as a handle.
 
 `isBackdropUnder` folds both cases into one answer, which `beginDrag`, `destinationOf` and
 `interaction.is_hover_backdrop` read. A click on empty space selects the sky rather than clears
@@ -2178,9 +2182,8 @@ and redo off the entry arrived at.
 
 **The stance crosses a step, and the lens does not.** Both steps place the camera at the entry's
 `CameraStance`, which holds the pivot, the separation and the two angles. The field of view is the
-reader's own setting, and `CameraStance` says that nothing aiming the camera may rewrite it. Both
-steps assigned the whole `Camera` before. A reader who widened the lens, then stepped back over an
-edit made at another lens, lost their own setting.
+reader's own setting, and `CameraStance` says that nothing aiming the camera may rewrite it.
+Rejected: assigning the whole `Camera`, which puts the lens of the edit over the reader's own.
 
 To restore the camera of the state arrived at hands back the view that the *previous* edit was
 made from. An undo of the first construction of a session then teleports to the startup view. Not
@@ -2503,9 +2506,8 @@ class is added, rather than from load, so the two stack.
 
 ## Camera aiming and framing
 
-**The stance an ease carries is a motor and a depth**, the same pair that `Camera` holds. Four
-turntable numbers named it before, and a roll is not one of them. Framing a rolled view snapped it
-upright.
+**The stance an ease carries is a motor and a depth**, the same pair that `Camera` holds.
+Rejected: four turntable numbers, which carry no roll and stand a rolled view upright.
 
 `toward` eases that motor as one screw. It takes the motion carrying one stance to the other, logs
 it, scales it by the progress, and puts it back on. `motors.log` flips the sign of a motion whose
@@ -2628,10 +2630,8 @@ The camera slides and never turns, so the angles and the roll both survive. `sta
 carries the pivot onto the object and `stanceDollied` sets the reach, which is the whole of the
 move.
 
-The object was held under the pointer before, on whichever pixel the reader clicked. The pivot then
-stood on the sight line at that object's depth, units away from the object itself. Every orbit then
-swung the object round the screen rather than turning it where it stood. A click 155 px off the
-middle left it 155 px off the middle.
+Rejected: holding the object under the pixel clicked. The pivot then stands units from the object,
+and every orbit swings the object round the screen.
 
 **How far in depends on the shape, and on what the reader could see.** It is sized on the height
 of the frame by `camera.depthSpanning(diameter, fraction)`. A point drawn at the floor dot is only
