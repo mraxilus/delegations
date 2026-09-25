@@ -56,10 +56,10 @@ The case names the dancer behind: `Pillion` is the Lead there, and `pillion` is 
 _Avoid_: pillion lead, pillion follow, face-to-back, same way, lead behind
 
 **Sidecar**:
-The facing where both dancers face one way, with one at a shoulder of the other rather than
-behind them. The case names the dancer at the shoulder, and the side names whose shoulder it is.
-So `Sidecar left` puts the Lead at the left shoulder of the Follow, and `sidecar Right` puts the
-Follow at the Right shoulder of the Lead.
+The facing where one dancer looks at a shoulder of the other, at right angles to them. One quarter
+turn on the spot from Face-to-face makes it. The case names the dancer at the shoulder, and the
+side names whose shoulder it is. So `Sidecar left` puts the Lead at the left shoulder of the
+Follow, and `sidecar Right` puts the Follow at the Right shoulder of the Lead.
 _Avoid_: side by side, beside, alongside, shoulder to shoulder
 
 **Frame state**:
