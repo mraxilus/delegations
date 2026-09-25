@@ -704,7 +704,7 @@ proc updateHover*(
       # Depth along sight, not distance: speed curve travels forward, and that is what
       #   forward has to cross.
       if found.isSome:
-        interaction.depth_pointer = some(dot(found.get - scale.eye, scale.forward))
+        interaction.depth_pointer = some(depthAlong(scale.eye, scale.forward, found.get))
   else:
     interaction.index_hover = none(int)
     interaction.count_hover_rivals = 0
@@ -742,13 +742,15 @@ proc dollyAt*(
       # Separation follows anchor's own depth, so frustum's scale tracks flight.
       #   Crossing as well as standing object: free flight has no orbit for pivot to
       #   anchor, so depth here is scale and nothing else.
-      let depth = dot(standing.get.at - camera.eye, camera.frame.forward)
+      let (eye, frame) = camera.sight
+      let depth = depthAlong(eye, frame.forward, standing.get.at)
       if depth > 0.0: camera.repivotToDepth(depth)
       return
     # Nothing under pointer: same ray carries eye, at camera's own scale, and separation
     #   scales with it exactly as `dolly` scales it.
     let heading = headingThrough(camera, camera.frame, width, height, cursor)
-    let reach = norm(heading)
+    # Length of heading is bulk norm of weightless point it lifts to.
+    let reach = ( |∙ toMultivector(heading))[Basis.scalar]
     if reach <= 0.0: return
     let settled = distanceHeld(camera.distance*factor)
     camera.travelAlong(
@@ -765,8 +767,8 @@ proc dollyAt*(
   camera.dollyToward(factor, anchor.get.at)
   if anchor.get.is_standing:
     # Depth from eye where it now stands, along sight direction zoom left unchanged.
-    let eye = camera.eye
-    let depth = dot(anchor.get.at - eye, camera.frame.forward)
+    let (eye, frame) = camera.sight
+    let depth = depthAlong(eye, frame.forward, anchor.get.at)
     if depth > 0.0: camera.repivotToDepth(depth)
 
 

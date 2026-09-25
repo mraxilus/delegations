@@ -65,6 +65,33 @@ suite "Camera":
       check eye + camera.distance*frame.forward =~ camera.pivot
 
 
+  test "the camera's depths and held points agree with their classical forms":
+    # Camera reads depth over plane through eye and projects onto finger's ray in algebra.
+    #   Dot products and Pythagoras are reference it is held to, here and nowhere else.
+    for i in 0 ..< COUNT_GENERAL:
+      let
+        eye = PLACES[i]
+        pivot = PLACES[(i + 3) mod SAMPLES]
+        toward = PLACES[(i + 5) mod SAMPLES]
+        forward = normalize(Direction(x: toward.x, y: toward.y, z: toward.z)).get
+        place = PLACES[(i + 7) mod SAMPLES]
+      let reference_depth =
+        (place.x - eye.x)*forward.x + (place.y - eye.y)*forward.y + (place.z - eye.z)*forward.z
+      check depthAlong(eye, forward, place) =~ reference_depth
+      # Held point: on ray, `back` short of foot of pivot, whichever branch radius takes.
+      for radius in [0.5, 3.0, 40.0]:
+        let
+          heading = Direction(x: forward.x + 0.1, y: forward.y - 0.2, z: forward.z)
+          along = normalize(heading).get
+          offset = Direction(x: pivot.x - eye.x, y: pivot.y - eye.y, z: pivot.z - eye.z)
+          nearest = offset.x*along.x + offset.y*along.y + offset.z*along.z
+          miss = sqrt(max(offset.x^2 + offset.y^2 + offset.z^2 - nearest^2, 0.0))
+          back =
+            if miss <= radius/sqrt(2.0): sqrt(radius*radius - miss*miss)
+            else: radius*radius/(2.0*miss)
+        check pointHeld(eye, pivot, heading, radius) =~ eye + (nearest - back)*along
+
+
   test "an orbit repeated many times lands where the sum of its steps says":
     # `orbit` composes motion now, so loss accumulates over steps rather than being
     #   rebuilt away. Pivot and separation must survive every one, because both axes it

@@ -193,7 +193,8 @@ func isFramed*(aim: CameraAim; camera: Camera; width, height: int): bool =
   let reach = distanceFitting(
     aim.sphere.get.radius, camera, width, height, INSET_POINT_SHOWN
   )
-  norm(camera.eye - aim.sphere.get.centre) >= reach*(1.0 - SLACK_FRAMED)
+  distanceBetween(toMultivector(camera.eye), toMultivector(aim.sphere.get.centre)) >=
+    reach*(1.0 - SLACK_FRAMED)
 
 
 func headingFacing*(aim: CameraAim): Option[Direction] =
@@ -218,14 +219,15 @@ func isBounded*(aim: CameraAim; camera: Camera; width, height: int): bool =
   ##   at every orientation.
   if aim.sphere.isSome: return true
   let
-    forward = camera.frame.forward
+    sight = toMultivector(camera.frame.forward)
     half = halfAngleCentred(camera, width, height, INSET_POINT_SHOWN)
   # Star has to be on screen: sight within box's half-angle of it. Two freedoms bound.
+  #   Unit directions both, so inner product reads cosine of angle between them.
   if aim.heading.isSome:
-    return dot(forward, aim.heading.get) >= cos(half) - SLACK_FRAMED
+    return innerOf(sight, toMultivector(aim.heading.get)) >= cos(half) - SLACK_FRAMED
   if aim.normal_crossing.isNone: return true
   # Circle has to cross screen: sight within that half-angle of circle's own plane. One.
-  abs(dot(forward, aim.normal_crossing.get)) <= sin(half) + SLACK_FRAMED
+  abs(innerOf(sight, toMultivector(aim.normal_crossing.get))) <= sin(half) + SLACK_FRAMED
 
 
 func holdHorizon*(camera: var Camera; aim: CameraAim; width, height: int) =
@@ -244,21 +246,20 @@ func holdHorizon*(camera: var Camera; aim: CameraAim; width, height: int) =
     if aim.heading.isSome: aim.heading.get
     elif aim.normal_crossing.isSome: aim.normal_crossing.get
     else: return
-  # Axis is sight crossed with what is demanded, which is what turns one into other.
+  # Axis is normal to pencil sight and what is demanded span, which turns one into other:
+  #   their join is horizon line, and `directionNormalHorizon` reads its normal.
   #   Parallel pair names no axis, and none is needed: sight already points at it.
-  let axis = normalize(Direction(
-    x: forward.y*toward.z - forward.z*toward.y,
-    y: forward.z*toward.x - forward.x*toward.z,
-    z: forward.x*toward.y - forward.y*toward.x,
-  ))
+  let (sight, demanded) = (toMultivector(forward), toMultivector(toward))
+  let axis = directionNormalHorizon(sight ∧ demanded)
   if axis.isNone: return
-  let angle_now = arccos(clamp(dot(forward, toward), -1.0, 1.0))
+  let cosine = innerOf(sight, demanded)
+  let angle_now = arccos(clamp(cosine, -1.0, 1.0))
   let angle_held =
     if aim.heading.isSome: half
     # Circle's plane is what sight must come near, so target is quarter turn off normal,
     #   on whichever side sight already stands.
     else: (
-      if dot(forward, toward) >= 0.0: 0.5*PI - half else: 0.5*PI + half
+      if cosine >= 0.0: 0.5*PI - half else: 0.5*PI + half
     )
   # Positive turn about sight crossed with what is demanded carries sight toward it, so
   #   overshoot is what is given back.
@@ -284,11 +285,14 @@ func holdFramed*(camera: var Camera; aim: CameraAim; width, height: int) =
       aim.sphere.get.radius, camera, width, height, INSET_POINT_SHOWN
     )
     centre = aim.sphere.get.centre
-  if norm(camera.eye - centre) >= reach*(1.0 - SLACK_FRAMED): return
-  let back = stepOutTo(camera.eye - centre, -camera.frame.forward, reach)
+  if distanceBetween(toMultivector(camera.eye), toMultivector(centre)) >=
+      reach*(1.0 - SLACK_FRAMED):
+    return
+  let back = stepOutTo(camera.eye, centre, -camera.frame.forward, reach)
   camera.slideBy(wedge(back, toMultivector(-camera.frame.forward)))
   let middle = if aim.centroid.isSome: aim.centroid.get else: centre
-  let depth = dot(middle - camera.eye, camera.frame.forward)
+  let (eye, frame) = camera.sight
+  let depth = depthAlong(eye, frame.forward, middle)
   if depth > 0.0: camera.repivotToDepth(depth)
 
 
@@ -336,7 +340,7 @@ func stanceFor*(aim: CameraAim; camera: Camera; width, height: int): CameraStanc
     reach = distanceFitting(
       aim.sphere.get.radius, placed, width, height, INSET_POINT_SHOWN
     )
-    back = stepOutTo(placed.eye - aim.sphere.get.centre, -axes.forward, reach)
+    back = stepOutTo(placed.eye, aim.sphere.get.centre, -axes.forward, reach)
   if back <= 0.0: return settled
   camera.stanceDollied(settled, settled.distance + back)
 
@@ -365,8 +369,9 @@ func stanceApproaching*(
   ##   None where object is not ahead of eye, leaving caller `stanceFor`. Centring one
   ##   behind reader would slide camera back past it rather than turn, which is jump
   ##   nobody asked for; frame rule turns nothing and handles it by its own bound.
-  let reach_now = norm(centre - camera.eye)
-  if dot(centre - camera.eye, camera.frame.forward) <= 1.0e-6: return
+  let (eye, frame) = camera.sight
+  let reach_now = distanceBetween(toMultivector(centre), toMultivector(eye))
+  if depthAlong(eye, frame.forward, centre) <= 1.0e-6: return
   var depth_end = min(reach_now, camera.distance)
   case shaped
   of Kind.Point:

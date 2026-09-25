@@ -582,16 +582,18 @@ suite "Camera Aim":
           turn = TAU*float(i)/6.0
           offset = Direction(x: 0.3*reach*cos(turn), y: 0.3*reach*sin(turn), z: 0.1*reach)
           heading = Direction(x: cos(turn), y: -sin(turn), z: 0.0)
-        let stepped = stepOutTo(offset, heading, reach)
+          centre = Position(x: 1.5, y: -2.0, z: 0.5)
+          eye = centre + offset
+        let stepped = stepOutTo(eye, centre, heading, reach)
         check stepped > 0.0
         # It lands exactly on that distance, whichever way heading points.
         check norm(offset + stepped*heading) =~ reach
-        let back = stepOutTo(offset, -heading, reach)
+        let back = stepOutTo(eye, centre, -heading, reach)
         check back > 0.0
         check norm(offset + back*(-heading)) =~ reach
     # Already out that far costs nothing, which is what makes rule floor.
-    check stepOutTo(Direction(x: 20.0, y: 0.0, z: 0.0), UP_WORLD, 19.0) =~ 0.0
-    check stepOutTo(Direction(x: 19.0, y: 0.0, z: 0.0), UP_WORLD, 19.0) =~ 0.0
+    check stepOutTo(Position(x: 20.0, y: 0.0, z: 0.0), ORIGIN, UP_WORLD, 19.0) =~ 0.0
+    check stepOutTo(Position(x: 19.0, y: 0.0, z: 0.0), ORIGIN, UP_WORLD, 19.0) =~ 0.0
 
   test "the frame rule is a floor, and the camera slides along it":
     const (WIDE, TALL) = (WIDTH_AIM, HEIGHT_AIM)

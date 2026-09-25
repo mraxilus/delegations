@@ -31,6 +31,14 @@ suite "Objects":
         (-0.5*offset[Basis.E2]).e31 + (-0.5*offset[Basis.E3]).e12 + 1.0.e1234
 
 
+  test "the inner product of two directions is their classical dot product":
+    # `innerOf` is how camera reads sides and cosines; classical form is reference.
+    for i in 0 ..< SAMPLES:
+      let (p, q) = (PLACES[i], PLACES[(i + 1) mod SAMPLES])
+      let (d, e) = (Direction(x: p.x, y: p.y, z: p.z), Direction(x: q.x, y: q.y, z: q.z))
+      check innerOf(toMultivector(d), toMultivector(e)) =~ d.x*e.x + d.y*e.y + d.z*e.z
+
+
   test "position ignores scale of homogeneous point":
     for point in POINTS:
       for scale in [-7.5, -1.0, 0.25, 3.0]:
