@@ -19,7 +19,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[strformat, tables]
+import std/[math, options, strformat, tables]
 
 import ./[page, parts, rules]
 
@@ -116,13 +116,12 @@ const BODY = """
 
   <div class="plate">
     <h3>At rest, no ring</h3>
-    <p>The facing of a dancer decides which column their hand sits in. So a row read across holds
-    one facing, and the four this page draws stay distinct with no new mark.</p>
+    <p>The facing of a dancer decides where their two hands sit on the rim. So the hands say which
+    way each dancer faces, and the eight facings stay distinct with no new mark. The first row holds
+    the four that half turns make. The second holds the four of Sidecar, which one quarter turn on
+    the spot makes. The dancer who turned shows their shoulder.</p>
     <div class="row">
-      <figure>{or_free_0}<figcaption>Face-to-face</figcaption></figure>
-      <figure>{or_free_1}<figcaption>Pillion</figcaption></figure>
-      <figure>{or_free_2}<figcaption>pillion</figcaption></figure>
-      <figure>{or_free_3}<figcaption>Back-to-back</figcaption></figure>
+      {facings}
     </div>
     <div class="row">
       <figure>{or_held_0}<figcaption>holding <em>Left to left</em></figcaption></figure>
@@ -347,10 +346,10 @@ const BODY = """
     correct.</b> The
     model stores no twist for a rotation of the whole couple. It is still a real thing on the
     floor, and the picture draws the couple rather than the room.</p>
-    <p><b>Two dancers who each turn half a turn still collide.</b> The four facings this page
-      draws take two bits, and <code>twist</code> carries one of them, its parity. So the twist
-      cannot tell Face-to-face from Back-to-back. So this picture stands on the two relative
-      facings, which is what <code>rotation.nim</code> needs.</p>
+    <p><b>Two dancers who each turn half a turn still collide.</b> The <code>twist</code> is the
+      turn of the follow less the turn of the lead. So it is the same for Face-to-face and
+      Back-to-back. This picture stands on where each dancer sees the other, and
+      <code>rotation.nim</code> reads a facing the same way.</p>
     <p><b>Known and not mended.</b> A static frame keeps a square box of 120 by 120. A moving
     frame takes a box fitted to everything it touches, so the moving frames differ in size and
     stand at one scale instead. <code>frameHeight</code>, the cells of the matrix and the nodes of
@@ -364,8 +363,6 @@ const BODY = """
   the hand-to-hand half leaves its levels unsaid.</p>
   <p>Yours to settle on this page:</p>
   <ul>
-    <li>how <b>Sidecar</b> stands in these drawings, now that the glossary agrees it and this page
-    draws four facings rather than eight;</li>
     <li>whether <b>upper wrap</b> means the high wrap, which is the one reading here that is the
     model's rather than yours;</li>
     <li><code>SLOT_OFFSET</code>, how far round the rim <em>front</em> and <em>back</em> sit,
@@ -388,21 +385,33 @@ func render*(P: Parts): string =
 
   # Which locks and wraps exist in which orientation: cells left empty
   # by wrap rule are states that cannot be danced.
-  let turned = ["Face-to-face", "the follow<br>a quarter turned",
-                "Pillion", "the follow<br>three quarters"]
+  var turned: seq[string]
+  for turn in GRID_TURNS:
+    turned.add turnedFacing(0.0, turn).get.name
   var grid = """<table class="grid"><tr><th></th>"""
   for s in GRID_STATES:
     grid.add &"<th><em>{word(s.level)}</em> {word(s.way)}</th>"
   grid.add "</tr>"
   for i, turn in GRID_TURNS:
-    grid.add &"<tr><th>{turned[i]}</th>"
+    # Case of facing's name says whom it places, so header keeps it.
+    grid.add &"<tr><th style=\"text-transform: none\">{turned[i]}</th>"
     for s in GRID_STATES:
       let cell = P[&"grid_{word(s.level)}_{word(s.way)}_{int(turn)}"]
       grid.add "<td>" & (if cell.len > 0: cell else: "&mdash;") & "</td>"
     grid.add "</tr>"
   grid.add "</table>"
 
+  # Eight facings in two rows: four that half turns make, then four that one
+  # quarter turn makes, each named by model.
+  var halves, quarters: string
+  for named, o in ORIENTATIONS:
+    let drawn = fig(P[&"or_free_{ord(named)}"], o.name)
+    if floorMod(o.lead_turn + o.follow_turn, 180.0) == 0.0: halves.add drawn
+    else: quarters.add drawn
+  let facings = halves & "\n    </div>\n    <div class=\"row\">\n      " & quarters
+
   var fills = @[
+    ("facings", facings),
     ("sw_free", swatch(Swatch.Free)), ("sw_none", swatch(Swatch.Unsaid)),
     ("sw_low", swatch(Swatch.Low)), ("sw_high", swatch(Swatch.High)),
     ("sw_above", swatch(Swatch.Above)),
@@ -416,7 +425,6 @@ func render*(P: Parts): string =
       "class=\"mv\"", "class=\"mv moving\""))
     fills.add (&"mv_{m}_still", P[&"mv_{m}_still"])
   for key in ["f_none", "f_low", "f_high", "f_above", "f_over",
-              "or_free_0", "or_free_1", "or_free_2", "or_free_3",
               "or_held_0", "or_tiny_1", "slot_chart",
               "route_wrap", "route_low", "route_high",
               "above_plain", "above_asked",

@@ -15,18 +15,60 @@ import std/[algorithm, math, options, sequtils, sets, strformat, strutils,
 
 import ./[rules, sign]
 import ../src/dance_ontology/draw/[body, figure, geometry, pose, route, style]
+from ../src/dance_ontology/rotation import Facing, Seen, facing, seenAfter, name
+  # Rotation's `Dancer` would meet drawing's, so only facing's words come in.
+export Facing, name
 
 
 type Parts* = OrderedTable[string, string]
   ## Every placed figure, in order it was built.
 
 
-const ORIENTATIONS* = [
-  (name: "Face-to-face", lead_turn: 0.0, follow_turn: 0.0),
-  (name: "Pillion", lead_turn: 0.0, follow_turn: 180.0),
-  (name: "pillion", lead_turn: 180.0, follow_turn: 0.0),
-  (name: "Back-to-back", lead_turn: 180.0, follow_turn: 180.0),
-] ## Four ways couple can face, as pages walk them.
+func onQuarter(degrees: float): Option[int] =
+  ## Get bearing as whole quarters clockwise, none where it falls between.
+  let quarters = floorMod(degrees, 360.0) / 90.0
+  if abs(quarters - round(quarters)) < 1e-6: some(int(round(quarters)) mod 4)
+  else: none(int)
+
+
+func facingOf*(pose: Pose): Option[Facing] =
+  ## Name facing drawn pose stands in, read off where each dancer sees other.
+  ##   `relative` holds follow's place and facing against lead.  Follow sees
+  ##     lead back across that axis: half turn round, less follow's own facing.
+  ##   None between quarters, and none where glossary names no state.
+  let
+    r = relative(pose)
+    lead = onQuarter(r.axis)
+    follow = onQuarter(r.axis + 180.0 - r.facing)
+  if lead.isNone or follow.isNone: none(Facing)
+  else: facing([Seen(lead.get), Seen(follow.get)])
+
+
+func turnedFacing*(lead_turn, follow_turn: float): Option[Facing] =
+  ## Name facing each dancer's turn on spot from Face-to-face draws, in degrees.
+  facingOf(canonicalise(spinAbout(spinAbout(rest(), Dancer.Lead, lead_turn),
+                                  Dancer.Follow, follow_turn)))
+
+
+const ORIENTATIONS*: array[Facing, tuple[name: string; lead_turn, follow_turn: float]] =
+  block:
+    var found: array[Facing, Option[tuple[lead, follow: int]]]
+    for movers in 0 .. 2:
+      for lead in [0, 1, -1, 2]:
+        for follow in [0, 1, -1, 2]:
+          let named = facing(seenAfter([lead, follow]))
+          if ord(lead != 0) + ord(follow != 0) == movers and named.isSome and
+              found[named.get].isNone:
+            found[named.get] = some((lead, follow))
+    var each: array[Facing, tuple[name: string; lead_turn, follow_turn: float]]
+    for named in Facing:
+      doAssert found[named].isSome, &"No turn on the spot reaches `{named.name}`."
+      each[named] = (named.name, 90.0 * float(found[named].get.lead),
+                     90.0 * float(found[named].get.follow))
+    each
+  ## Eight ways couple can face, each reached by fewest dancers turning on spot.
+  ##   Derived from model's facings (`rotation.Facing`), not listed: quarter
+  ##     turn is 90 degrees, clockwise, as drawing counts its bearings.
 
 const HOLD*: Holds = [some Arm.L, none Arm]
   ## Workhorse hold: lead's Left to follow's left.
@@ -128,10 +170,14 @@ func frameParts*(): Parts =
                            [some Level.High, some Level.Low],
                            over = some Arm.L)
 
-  # Four orientations, twice: with nothing held, where only colours
-  # and chevrons can say it, and holding, where line is there too.
+  # Eight orientations, twice: with nothing held, where only colours
+  # and chevrons can say it, and holding, where line is there too.  Each
+  # drawn pose must read back as facing it is named for.
   var seen: HashSet[string]
-  for i, o in ORIENTATIONS:
+  for named, o in ORIENTATIONS:
+    doAssert turnedFacing(o.lead_turn, o.follow_turn) == some(named),
+      &"Orientation `{o.name}` draws another facing."
+    let i = ord(named)
     result[&"or_free_{i}"] = renderFigure("f", default(Holds),
                                    lead_turn = o.lead_turn,
                                    follow_turn = o.follow_turn)
