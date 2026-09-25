@@ -91,6 +91,15 @@ suite "Motors":
         # Grade survives, so one sandwich serves point, line and plane alike.
         check grade(m.carried(turn)) == grade(m)
 
+  test "a carry through an antireverse held aside is the sandwich":
+    # Caller carrying several operands through one motor takes `~∘𝐐` once and hands it in.
+    #   Named sandwich is reference it is held to.
+    for i in 0 ..< COUNT_GENERAL:
+      let turn = turnAbout(LINES[i], 0.5 + 0.1*float(i)).get
+      for m in [POINTS[i], LINES[i], PLANES[i]]:
+        check m.carried(turn, reverseAnti(turn)) =~
+          wedgeDotAnti(wedgeDotAnti(turn, m), reverseAnti(turn))
+
   test "a motor is rigid: it keeps every distance and every weight":
     for i in 0 ..< COUNT_GENERAL:
       let turn = turnAbout(LINES[i], 0.7 + 0.2*float(i)).get

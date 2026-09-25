@@ -49,6 +49,22 @@ suite "Camera":
             inc count
     check count == 480
 
+  test "one read of the stance gives the eye, the frame and the pivot that three reads give":
+    # `sight` lifts motor and takes its antireverse once for eye and frame together.
+    #   `eye`, `frame` and `pivot` read apart are reference; stances rolled and steep.
+    for i in 0 ..< COUNT_GENERAL:
+      var camera = initCamera(
+        PLACES[i], 0.5 + 3.0*float(i), -PI + 0.5*float(i), -1.2 + 0.2*float(i)
+      )
+      camera.roll(0.3*float(i) - 1.0)
+      let (eye, frame) = camera.sight
+      check eye =~ camera.eye
+      check frame.axis_right =~ camera.frame.axis_right
+      check frame.axis_up =~ camera.frame.axis_up
+      check frame.forward =~ camera.frame.forward
+      check eye + camera.distance*frame.forward =~ camera.pivot
+
+
   test "an orbit repeated many times lands where the sum of its steps says":
     # `orbit` composes motion now, so loss accumulates over steps rather than being
     #   rebuilt away. Pivot and separation must survive every one, because both axes it
