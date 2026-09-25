@@ -1101,3 +1101,44 @@ suite "Camera":
     #   frame could hold at that distance was framed by giving up rather than by moving.
     let camera = initCamera(pivot = ORIGIN, distance = 19.0, azimuth = 1.0, elevation = 0.4)
     check distanceFitting(4_000.0, camera, 1440, 900, 0.0) > 500.0
+
+
+  test "a typed motor settles on the rigid motion it names":
+    # Panel shows motor as whole multivector, and every coefficient is typed.
+    #   Whatever is typed, camera stands on rigid motion: eye and orthonormal frame.
+    let camera = initCamera(
+      pivot = Position(x: 1.0, y: -2.0, z: 0.5), distance = 7.0, azimuth = 0.9, elevation = 0.3
+    )
+    var rolled = camera
+    rolled.roll(0.4)
+    for held in [camera, rolled]:
+      let motor = toMultivector(held.motor)
+      # Unit motor lands on same motion: every coefficient, since it turns under half turn.
+      let settled = motorRigid(motor)
+      check settled.isSome
+      check toMultivector(settled.get) =~ motor
+      # Weight scaled, odd grades typed: both drop away, and same motion is named.
+      var typed = 3.0*motor
+      typed[Basis.E1] = 0.7
+      typed[Basis.E423] = -0.2
+      let rescaled = held.placedAtMotor(motorRigid(typed).get)
+      check rescaled.eye =~ held.eye
+      check rescaled.frame.forward =~ held.frame.forward
+      check rescaled.frame.axis_up =~ held.frame.axis_up
+      # One slide coefficient pushed off: turn stands, and frame stays orthonormal.
+      var pushed = motor
+      pushed[Basis.E23] = pushed[Basis.E23] + 1.5
+      let moved = held.placedAtMotor(motorRigid(pushed).get)
+      let axes = moved.frame
+      check moved.frame.forward =~ held.frame.forward
+      check abs(dot(axes.forward, axes.axis_up)) < TOLERANCE_TEST
+      check abs(dot(axes.forward, axes.axis_right)) < TOLERANCE_TEST
+      check norm(axes.axis_up) =~ 1.0 and norm(axes.axis_right) =~ 1.0
+      check not (moved.eye =~ held.eye)
+      # Separation and lens are camera's, and motor names neither.
+      check moved.distance =~ held.distance
+      check moved.degrees_field_of_view =~ held.degrees_field_of_view
+    # Weight zero names no motion: camera stays where it stood.
+    var weightless = toMultivector(camera.motor)
+    for basis in [Basis.E41, Basis.E42, Basis.E43, Basis.E1234]: weightless[basis] = 0.0
+    check motorRigid(weightless).isNone

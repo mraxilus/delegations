@@ -1795,3 +1795,17 @@ suite "Interaction":
     interaction.cancelHold()
     check swellHold(interaction, 1000.0 + SECONDS_SWELL_GROW) =~ 0.0
     check not isHoldSpent(interaction, 1000.0 + 10.0)
+
+
+  test "the panel's speed is the one flight steps by, and none while nothing is held":
+    var interaction = Interaction(is_enabled: true)
+    let camera = initCameraDefault()
+    check interaction.speedFlying(camera) == 0.0
+    interaction.keys_held = {Key.W}
+    interaction.seconds_travelling = SECONDS_SPEED_RISE
+    let cap = capTravelling(interaction.depth_pointer, camera.distance, 1.0)
+    check interaction.speedFlying(camera) =~ speedTravelling(SECONDS_SPEED_RISE, cap)
+    # Shift is one multiplier on every rate, speed included.
+    interaction.keys_held = {Key.W, Key.Shift}
+    check interaction.speedFlying(camera) =~ FACTOR_HASTE*speedTravelling(SECONDS_SPEED_RISE, cap)
+

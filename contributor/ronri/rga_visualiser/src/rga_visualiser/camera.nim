@@ -1421,6 +1421,25 @@ func placedAtPivot*(camera: Camera, pivot: Position): Camera =
   camera.placed(camera.stanceRepivoted(pivot))
 
 
+func motorRigid*(m: Multivector): Option[Motor] =
+  ## Read rigid motion `m` names, for coefficients reader types into panel.
+  ##   Odd grades name no rigid motion, and drop. Even part is unitized, then carried
+  ##   through `log` and `exp`, whose round trip lands on unit motor meeting rigid
+  ##   condition whatever was typed: its turn, and slide consistent with that turn.
+  ##     `unitize` alone leaves slide that turn does not allow, which carries eye off
+  ##     orthonormal frame rather than moving it.
+  ##   Library's own `unitize`, `log` and `exp` throughout; nothing here normalises.
+  ##   None where even part carries no weight, i.e. names no motion at all.
+  let even = toMultivector(motorOf(m))
+  if normWeight(even)[Basis.scalarAnti] <= TOLERANCE_ABS: return
+  some(motorOf(exp(log(unitize(even)))))
+
+
+func placedAtMotor*(camera: Camera, motor: Motor): Camera =
+  ## Put copy of `camera` at rigid motion `motor`, keeping its separation and its lens.
+  camera.placed(CameraStance(motor: motor, distance: camera.distance))
+
+
 func placedAtDistance*(camera: Camera, distance: float): Camera =
   ## Put copy of `camera` at same stance but this separation, pivot standing.
   ##   Same reading as `dolly`, which reaches it by factor.

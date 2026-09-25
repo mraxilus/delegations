@@ -44,7 +44,9 @@
 
 {.experimental: "strictFuncs".}
 
-import std/strutils
+import std/[math, strutils]
+
+import ./format
 
 const RUNES_LABEL_MOST* = 24
   ## Bound how long word on control may be, in runes.
@@ -70,7 +72,7 @@ type Wording* = enum
   TipRowSelect, TipRowCommit, TipRowEdit, TipRowDiscardNew, TipRowDiscardEdit,
   TipRowVisible, TipRowRemove, TipRowRadius,
   TipApplyArity, TipApplyOperation, TipApplyFirst, TipApplySecond,
-  TipViewAzimuth, TipViewElevation, TipViewDistance, TipViewPivot, TipViewLens,
+  TipViewMotor, TipViewAzimuth, TipViewElevation, TipViewDistance, TipViewSpeed, TipViewLens,
   TipDiagFrames, TipDiagVsync, TipDiagPermanent, TipDiagFrame, TipDiagPool, TipDiagScene,
   TipPickApply, TipPickOperation, TipPickBack, TipPickEdit, TipPickVisible, TipPickDelete,
   TipPickClose,
@@ -82,7 +84,8 @@ type Wording* = enum
   NameRowLabel, NameRowInk, NameRowSize, NameRowCoefficients,
   NameApplyArity, NameApplyUnary, NameApplyBinary, NameApplyOperation, NameApplyFirst,
   NameApplySecond, NameApplyAct,
-  NameViewAzimuth, NameViewElevation, NameViewDistance, NameViewPivot, NameViewLens,
+  NameViewMotor, NameViewAzimuth, NameViewElevation, NameViewDistance, NameViewSpeed,
+  NameViewLens,
   NameDiagFrame, NameDiagVsync, NameDiagMemory, NameDiagPermanent, NameDiagFrameArena,
   NameDiagPool, NameDiagTotal,
   NamePickApply, NamePickEdit, NamePickBack, NamePickHide, NamePickShow, NamePickDelete,
@@ -140,10 +143,15 @@ const lut_wording_to_text: array[Wording, cstring] = [
   TipApplySecond: "Second operand -- `n` above -- this operation combines with `m`.",
 
   # View section: where camera stands and what it sees.
-  TipViewAzimuth: "Spin the camera around its pivot.",
-  TipViewElevation: "Tilt the camera up or down; clamped short of looking straight up or down.",
-  TipViewDistance: "Move the camera toward or away from its pivot.",
-  TipViewPivot: "World point the camera looks at and orbits around.",
+  TipViewMotor:
+    "Where the camera stands and faces, as one rigid motion; a typed value settles on the " &
+    "motion it names.",
+  TipViewAzimuth: "Which way the camera faces round world up, read off its motor.",
+  TipViewElevation: "How far the camera looks above or below level, read off its motor.",
+  TipViewDistance:
+    "How far the camera stands from the middle of the selection; it stays far enough out to " &
+    "fit it.",
+  TipViewSpeed: "How fast the camera flies right now, as a multiple of the speed of light.",
   TipViewLens: "Lens angle; smaller looks through a telephoto, larger through a wide angle.",
 
   # Diagnostics: what this frame cost and what storage it stands in.
@@ -222,10 +230,11 @@ const lut_wording_to_text: array[Wording, cstring] = [
   NameApplyAct: "apply",
 
   # View section.
+  NameViewMotor: "motor",
   NameViewAzimuth: "azimuth",
   NameViewElevation: "elevation",
   NameViewDistance: "distance",
-  NameViewPivot: "pivot",
+  NameViewSpeed: "speed",
   NameViewLens: "field of view",
 
   # Diagnostics.
@@ -555,3 +564,18 @@ func orreryMessage*(count, capacity: int): string =
   ## Report demo scene replacing whatever stood before it.
   "Loaded the orrery: " & objectsCounted(count) & ", " & $(capacity - count) &
     " handles free."
+
+
+func appendDegrees*(storage: var openArray[char], cursor: var int, radians: float) =
+  ## Write angle panel reads off camera, in degrees, straight into `storage`.
+  ##   Degrees rather than radians: reading is for eye, and nothing types it back.
+  appendMagnitude(storage, cursor, radToDeg(radians))
+  appendChars(storage, cursor, "°")
+
+
+func appendSpeedLight*(storage: var openArray[char], cursor: var int, multiple: float) =
+  ## Write speed panel reads, as multiple of speed of light, straight into `storage`.
+  ##   Caller divides by `camera.SPEED_LIGHT`, which is this build's reporting unit.
+  ##   Unit is glue this composer owns, as `objectsCounted` owns its noun.
+  appendMagnitude(storage, cursor, multiple)
+  appendChars(storage, cursor, " c")

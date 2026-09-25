@@ -866,7 +866,7 @@ proc renderFrame(
     #   either button greys out where its side of timeline is empty.
     if not stepHistory(panel, scene, camera, HISTORY, is_undo):
       panel.say(stepMessage(is_undo), now)
-  layoutPanel(panel, scene, camera, HISTORY, now)
+  layoutPanel(panel, scene, camera, HISTORY, interaction.speedFlying(camera), now)
   # Row of constant controls floats over scene beside panel, as browser's chip row does.
   layoutChipRow(panel, scene, camera, HISTORY, now)
   layoutHelp(panel, path_help)

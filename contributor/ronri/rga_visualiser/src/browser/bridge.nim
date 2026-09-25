@@ -311,6 +311,7 @@ var
   FLAT_GRID = initFlatFloats(2)
   FLAT_PIVOT = initFlatFloats(3)
   FLAT_EYE = initFlatFloats(3)
+  FLAT_MOTOR = initFlatFloats(ord(Basis.high) + 1)
   FLAT_LABEL = initFlatFloats(6)
   FLAT_LABEL_HELD = initFlatFloats(2)
   FLAT_ANCHOR_WORLD = initFlatFloats(3)
@@ -1199,6 +1200,56 @@ proc nimCameraEye(): FlatBuffer {.exportc.} =
   FLAT_EYE.fill3(cfloat(eye.x), cfloat(eye.y), cfloat(eye.z))
 
 
+proc nimCameraMotor(): FlatBuffer {.exportc.} =
+  ## Report camera's motor as every basis coefficient in basis order, over `FLAT_MOTOR`.
+  ##   Whole multivector, odd grades and all, since view shows it in grid objects use.
+  let m = toMultivector(CAMERA.motor)
+  for b in Basis: FLAT_MOTOR[ord(b)] = cfloat(m[b])
+  FLAT_MOTOR.used = ord(Basis.high) + 1
+  FLAT_MOTOR.view
+
+
+proc nimSetCameraMotorAt(basis: cint, value: cfloat): bool {.exportc.} =
+  ## Rewrite one coefficient of camera's motor, settling it on motion it then names.
+  ##   One coefficient into live motor, not all sixteen from fields: field shows four
+  ##   digits, and writing all back would round fifteen nobody touched.
+  ##   Reports whether coefficients name motion; where not, camera stands.
+  var typed = toMultivector(CAMERA.motor)
+  typed[Basis(basis)] = float(value)
+  let settled = motorRigid(typed)
+  if settled.isNone: return false
+  TWEEN_CAMERA.halt()
+  CAMERA = CAMERA.placedAtMotor(settled.get)
+  true
+
+
+proc readingText(write: proc(line: var openArray[char], cursor: var int)): cstring =
+  ## Run one reading's appender into fresh line, and hand back text it wrote.
+  var line: array[32, char]
+  var cursor = 0
+  write(line, cursor)
+  finishChars(line, cursor)
+  cstring(toText(line))
+
+
+proc nimCameraAzimuthReading(): cstring {.exportc.} =
+  ## Report angle about world up, in degrees with its unit, as view section reads it.
+  readingText(proc(line: var openArray[char], cursor: var int) =
+    appendDegrees(line, cursor, CAMERA.azimuth))
+
+
+proc nimCameraElevationReading(): cstring {.exportc.} =
+  ## Report angle above level, in degrees with its unit, as view section reads it.
+  readingText(proc(line: var openArray[char], cursor: var int) =
+    appendDegrees(line, cursor, CAMERA.elevation))
+
+
+proc nimCameraSpeedReading(): cstring {.exportc.} =
+  ## Report free flight's speed right now, as multiple of speed of light with its unit.
+  readingText(proc(line: var openArray[char], cursor: var int) =
+    appendSpeedLight(line, cursor, INTERACTION.speedFlying(CAMERA)/SPEED_LIGHT))
+
+
 proc nimSetCameraAzimuth(v: cfloat) {.exportc.} =
   ## Rewrite angle about world up, in radians.
   TWEEN_CAMERA.halt()
@@ -1227,13 +1278,6 @@ proc nimSetCameraPivot(x, y, z: cfloat) {.exportc.} =
   TWEEN_CAMERA.halt()
   CAMERA = CAMERA.placedAtPivot(Position(x: float(x), y: float(y), z: float(z)))
 
-
-proc nimCameraLimits(): seq[float32] {.exportc.} =
-  ## Report bounds camera placement is held to, for caller offering numeric input.
-  ##   Elevation either side of horizon, and one floor orbit distance has.
-  ##   No third entry: nothing bounds how far out camera may orbit; see
-  ##   `camera.DISTANCE_LIMIT_NEAR`.
-  @[cfloat(ELEVATION_LIMIT), cfloat(DISTANCE_LIMIT_NEAR)]
 
 
 

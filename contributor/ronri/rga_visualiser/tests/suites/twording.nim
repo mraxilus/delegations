@@ -105,3 +105,20 @@ suite "Wording":
     check "The size everything opens on." notin told
     check demoWording(33, is_default = true).endsWith("The size everything opens on.")
     check told.endsWith(".")
+
+
+  test "the view's readings write degrees and multiples of light, as both builds show them":
+    var line: array[32, char]
+    var cursor = 0
+    appendDegrees(line, cursor, PI/3.0)
+    finishChars(line, cursor)
+    check toText(line) == "60°"
+    cursor = 0
+    appendSpeedLight(line, cursor, 3712.84)
+    finishChars(line, cursor)
+    check toText(line) == "3713 c"
+    cursor = 0
+    appendSpeedLight(line, cursor, 0.0)
+    finishChars(line, cursor)
+    check toText(line) == "0 c"
+
