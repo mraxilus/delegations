@@ -14,7 +14,7 @@
 ##     bullets is six blocks rather than one paragraph of six sentences.
 ##   Quotation is skipped whole: quoted text comes from outside this repository, so delegate may
 ##     not rewrite it, and finding on it could never be fixed.
-##   Backticked span counts as one word, since reader takes `nim r koch ci` as one name.
+##   Backticked span counts as one word, since reader takes `nim r koch check` as one name.
 ##
 ##   Cost: finding names line block opens on, never line sentence opens on; block is short
 ##     by rule this check enforces, so distance is small.
@@ -192,7 +192,7 @@ func isSentenceEnd*(word: string): bool =
   word[i - 1] in Letters + Digits or word[i - 1] in {')', ']', '"', '%', '*', '_'}
 
 
-func sentences*(text: string): seq[string] =
+func sentences(text: string): seq[string] =
   ## Split block into sentences at every word that closes one.
   var words: seq[string]
   for word in text.splitWhitespace:
@@ -210,7 +210,7 @@ func opening(sentence: string): string =
   words[0 ..< ECHO_WORDS].join(" ") & " ..."
 
 
-func tokenised*(text: string): string =
+func tokenised(text: string): string =
   ## Reduce prose to lowercase words joined by single space, period kept inside word.
   var plain = ""
   for c in text:

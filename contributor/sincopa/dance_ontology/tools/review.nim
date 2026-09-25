@@ -10,7 +10,7 @@
 ##       Cost: template path is relative to project directory, so renderer runs from there,
 ##         as testament and build driver both do.
 ##   Page and pictures are build products under `build/review/`, never committed:
-##     repository reads only registered file kinds.  `tests/treview.nim` renders page,
+##     repository reads only registered file kinds.  `tests/suites/treview.nim` renders page,
 ##     writes it and reads it back, so model change that breaks page fails suite.
 ##     Cost of build product: nothing in tree shows page's history, and published copy is
 ##       not record either, since it can be deleted -- log is.  Page is republished from
@@ -73,15 +73,13 @@ func countNamedStates(): int =
 
 proc countLaws(): int =
   ## Count tests, by reading suite rather than remembering number.
-  ##   Reads `tests/t*.nim` relative to project directory, where testament and `make`
-  ##     run; run from elsewhere it counts nothing.
-  var paths: seq[string] = @[]
-  for path in walkFiles("tests/t*.nim"):
-    paths.add path
-  for path in paths:
-    for line in readFile(path).splitLines:
-      if line.strip().startsWith("test \""):
-        inc result
+  ##   Reads every `t*.nim` under `tests/`, stubs and suites they import alike, relative
+  ##     to project directory, where testament runs; run from elsewhere it counts nothing.
+  for path in walkDirRec("tests"):
+    if path.endsWith(".nim") and path.extractFilename.startsWith('t'):
+      for line in readFile(path).splitLines:
+        if line.strip().startsWith("test \""):
+          inc result
 
 
 

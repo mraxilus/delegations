@@ -1,33 +1,29 @@
 # Ledger of rules GitHub already records, so remembering them is not their only enforcement.
-#   CONTRIBUTOR.md keeps list of rules holding by reading alone, and CURATOR.md sets test for
-#   what belongs on it: whether what rule asks about is fact something already writes down.
-#   Three sat there while GitHub recorded them, behind premise that no check reads what was
-#   posted there -- premise `watch.yml` had already made false.
-#   None of three leaves that list when this lands, and saying so is half of point: each has
-#   half GitHub does not record. Issue answered by ruling in comment and left open has no
-#   closing pull request to find, which is how 116 failed; ledger reads no comment and cannot
-#   tell copied label from composed one; and it cannot see pull request green now and about
-#   to move. Each rule is narrowed to what is still only read, never struck.
+#   CONTRIBUTOR.md keeps carried list of rules holding by reading alone, and CURATOR.md sets
+#   test for what belongs on it: whether what rule asks about is fact something already writes
+#   down. Role line and label, closing by hand, and readiness each have half GitHub records;
+#   ledger reads that half, and other half stays carried. Issue answered by ruling in comment
+#   has no closing pull request to find; copied label and composed one look alike; pull
+#   request green now and about to move shows nothing yet.
+#   Issue titled as commit is fact GitHub records and never sat on carried list, so it is
+#   ledger read rather than carried line. Pull request title is skipped, since merge commit
+#   takes it as subject and so it takes that shape by rule.
 #
-#   Daily rather than weekly, unlike `check.yml`: pull request ready and red for week is failure
-#   this exists to catch, and week is too long to hold it.
-#   One issue, not one per finding, and marker in body is what makes second run comment on
-#   first issue -- `watch.yml`'s reason, which is about reader: issue per finding trains its
-#   reader to skim, and skimming is failure both workflows exist to prevent.
-#   Bodies only, never comments. Rule covers comments too, but role line in comment is written
-#   loose where issue bodies write it bold, so check over comments would spend first run naming
-#   whoever wrote rule. Comment half stays carried with third rule.
+#   Daily rather than weekly: pull request ready and red for week is failure this exists to
+#   catch.
+#   One issue, not one per finding: issue per finding trains reader to skim. Marker in body is
+#   what makes later run comment on open issue.
+#   Bodies only, never comments: role line in comment is written loose, so check over comments
+#   would name loose style rather than missing role. Comment half stays carried with first
+#   rule.
+#   Role line may follow leading HTML comment, since issue that `watch.yml` or this file opens
+#   carries its marker first, and marker renders as nothing.
 #
 #   `permissions` block is whole grant, never addition: scope left out is set to `none`. Ledger
 #   reads runs, reads pull requests, writes issues, and names those three and nothing else.
-#   `pull-requests` is why `workflows.nim` gained mark for `gh pr` in same change -- no workflow
-#   had read pull requests before, so check meant to stop this 403 could not see it.
-#   Cost: `issues: write`, as `watch.yml` holds. Both run on events no pull request can reach,
-#     and that is what keeps grant narrow rather than only one file having held it.
-#   Cost: runner minutes, about minute per run, daily. Public repository draws on no allowance;
-#     private one would, and 1909 of 2000 free minutes were measured while this was private.
-#   `concurrency` because dispatch can meet schedule. `watch.yml` carries same race unremarked,
-#     between listing issues and creating one, where both runs can open second issue.
+#   Cost: `issues: write`, as `watch.yml` holds. Both run on events no pull request can reach.
+#   Cost: runner minutes, about minute per run, daily; free while repository is public.
+#   `concurrency` because dispatch can meet schedule; queued run waits rather than cancels.
 
 name: ledger
 
@@ -80,10 +76,12 @@ jobs:
 
           # `Closes #N` that never fired. Merge into branch other than default closes nothing,
           #   and this repository stacks pull requests, so that is likeliest cause here.
+          #   Limit covers window with headroom: list is newest first, and fourteen days held
+          #   under hundred merges when last counted with `git log --first-parent --merges`.
           since="$(date -u -d "$SINCE_DAYS days ago" +%Y-%m-%dT%H:%M:%SZ)"
           still_open="$(gh issue list --repo "$REPO" --state open --limit 100 \
             --json number --jq '[.[].number] | map(tostring) | join(" ")')"
-          linked="$(gh pr list --repo "$REPO" --state merged --limit 60 \
+          linked="$(gh pr list --repo "$REPO" --state merged --limit 200 \
             --json number,mergedAt,baseRefName,closingIssuesReferences \
             --jq '.[] as $pr | $pr.closingIssuesReferences[]?
                   | "\($pr.mergedAt)\t\($pr.number)\t\(.number)\t\($pr.baseRefName)"')"
@@ -105,7 +103,8 @@ jobs:
           bare="$(gh issue list --repo "$REPO" --state open --limit 100 \
             --json number,body,labels \
             --jq '.[] | select((.body // "")
-                  | test("^\\s*\\*{0,2}role:\\*{0,2}\\s*`?(curator|contributor/)"; "i") | not)
+                  | test("^\\s*(<!--[^>]*-->\\s*)*"
+                    + "\\*{0,2}role:\\*{0,2}\\s*`?(curator|contributor/)"; "i") | not)
                   | "- Issue #\(.number) opens with no role line"')"
           [ -z "$bare" ] || found="$found$bare"$'\n'
           unlabelled="$(gh issue list --repo "$REPO" --state open --limit 100 \
@@ -113,10 +112,21 @@ jobs:
             --jq '.[] | select(.labels | length == 0)
                   | "- Issue #\(.number) carries no label, so no role filter finds it"')"
           [ -z "$unlabelled" ] || found="$found$unlabelled"$'\n'
+
+          # Issue titled as commit. Shape is read rather than type list, since `bug:` is prefix
+          #   too, and case is kept, so sentence opening `Rework the camera:` passes. Label and
+          #   template already say whose issue is and what kind. Double backticks hold title
+          #   whole, since title may carry backtick of its own.
+          commit_titled="$(gh issue list --repo "$REPO" --state open --limit 100 \
+            --json number,title \
+            --jq '.[] | select(.title | test("^[a-z]+(\\([^)]*\\))?!?: "))
+                  | "- Issue #\(.number) is titled as commit: `` \(.title) ``"')"
+          [ -z "$commit_titled" ] || found="$found$commit_titled"$'\n'
           bare_prs="$(gh pr list --repo "$REPO" --state open --limit 100 \
             --json number,body \
             --jq '.[] | select((.body // "")
-                  | test("^\\s*\\*{0,2}role:\\*{0,2}\\s*`?(curator|contributor/)"; "i") | not)
+                  | test("^\\s*(<!--[^>]*-->\\s*)*"
+                    + "\\*{0,2}role:\\*{0,2}\\s*`?(curator|contributor/)"; "i") | not)
                   | "- Pull request #\(.number) opens with no role line"')"
           [ -z "$bare_prs" ] || found="$found$bare_prs"$'\n'
           unlabelled_prs="$(gh pr list --repo "$REPO" --state open --limit 100 \
@@ -131,14 +141,13 @@ jobs:
           fi
           echo "$found"
 
-          # Paragraphs appended rather than written whole: heredoc wants its terminator at
-          #   column zero, which no line inside block scalar may reach. `watch.yml` measured
-          #   that rather than assumed it.
+          # Paragraphs appended rather than written as heredoc: issue body renders each newline
+          #   as line break, so paragraph wrapped to width here would break mid-sentence there.
           said="Opened by \`ledger\` workflow rather than by delegate, so nothing here has been"
           said="$said read or judged yet. Each line is fact GitHub records, not opinion."
-          note="None of these rules left CONTRIBUTOR.md's carried list when this workflow landed:"
+          note="Role, label, closing and readiness rules stayed on CONTRIBUTOR.md's carried list:"
           note="$note each has half GitHub does not record, and that half is still carried by"
-          note="$note hand. Lines above are only what runner can see."
+          note="$note hand. Title rule never sat there. Lines above are only what runner can see."
           next="Close this once every line is answered. Later run comments here rather than"
           next="$next opening second issue."
           # Trailing newline trimmed off list, so paragraph after it is one blank line away

@@ -12,7 +12,7 @@
 ##       word of dance on anything it measures.  Accepted -- translation is
 ##       still visible, in one file that names itself, and evidence is that
 ##       both readers quote same table rather than that each writes one.
-##   Words are `GLOSSARY.md`'s, and `tests/tglossary` holds every string here
+##   Words are `GLOSSARY.md`'s, and `tests/suites/tglossary` holds every string here
 ##     to it.
 ##
 ##   |---------------------------|------------------|

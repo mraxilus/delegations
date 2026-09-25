@@ -1,133 +1,49 @@
 # The body sim
 
-Two bodies and their arms, and nothing else. This directory shares no code with
-the ontology next door: it has its own `Arm` and `Body` enums, its own vector
-type, and it imports nothing from `../src`. That is the point of it. The
-notation is a shorthand for two people with arms of a length, and a shorthand
-cannot check itself — so this is the thing it is a shorthand *for*, kept apart
-so that what it says is evidence rather than an echo.
+Two bodies and their arms in a rigid body engine, and nothing else. This directory shares no code
+with the ontology. It has its own `Arm` and `Body`, its own vector type, and it imports nothing
+from `../src`. The notation is a shorthand for two people with arms of a given length, and a
+shorthand cannot check itself. The sim is what the notation is a shorthand for. It is kept apart so
+that what it says is evidence, and not an echo.
 
-It is not kept apart in its concepts. It reuses the project's agreed words
-wherever one fits, and coins its own only where none does — the glossary holds
-four that are its: rig, pose, strain and block. What makes it a witness is that
-it imports no code and is told no answer, never that it speaks a different
-language. The care needed is narrow: where the sim *measures* what the ontology
-*asserts*, the translation is evidence, not identity, which is why
-`verdicts.nim` still translates in one visible table rather than assuming.
+It is not kept apart in its words. It uses the agreed words of the project where one fits, and
+`GLOSSARY.md` holds the four that are its own: rig, pose, strain and block. It is a witness because
+it imports no code and is told no answer. Where the sim measures what the ontology states, the
+translation is evidence and not identity. So `words.nim` holds that translation in one table, and
+`verdicts.nim` uses it.
 
-## What it models
+## What it is
 
-A body is a stack of three cylinders on one vertical axis — torso, neck, head
-— each of the average adult's round, standing somewhere and facing some way.
-The torso's section is an ellipse of its round, three quarters as deep as it
-is broad, because a round section of a chest's girth stands three centimetres
-too far out at the front, and the first thing a crossed hold does is lay a
-forearm across a belly. The neck and head are round.
+The rig is two bodies of the average adult, with the joint ranges that a dancer uses without pain.
+Every number is in `rig.nim`, with its source. Each body and each arm is a set of capsules in Box3D,
+a rigid body engine that `tools/build.nim` clones at a fixed commit. There is no gravity, and the
+arms weigh nothing. The question is where arms can be, and not what they weigh.
 
-An arm is three rigid links — upper arm, forearm, hand to the grip — on a
-shoulder that swings and twists, an elbow that bends, and a wrist that bends
-any way. Every joint has the range a dancer will use without pain, cited to
-the clinical tables, and **past a range is refused, with the joint named.**
-The stretch before an edge is reported as *strain*, nought well inside and
-one at the edge, so a pose near its limit is seen coming.
+A joint resists as it comes near the end of its range, and does not stop at a wall. A turn is walked
+a fiftieth of a turn at a time, and the engine carries the arms on. So an arm that has gone round a
+body stays round it. Where the couple stand is chosen for each turn, and nothing is fixed except
+that the two bodies stay apart.
 
-A connection is a grip: two hands at one point, which may be anywhere in the
-band the hands are carried in — about the chest, about the neck, or over the
-crown. Every link is a capsule as thick as an arm, and no link may pass
-through either body nor through another arm; an arm may press on its own
-body, as arms do.
+`PROVENANCE.md` records the design and the reason for each part of it. See Body rig, Rigid body
+engine, Joints that give, Walk and lift, and Stance and strain.
 
-**A pose is found, not drawn.** Given the shoulders and the grip, an arm has
-three freedoms — which way the hand points off the wrist, and where the elbow
-sits on the circle a two-link chain leaves it — and the sim searches them,
-and the grip, for the most comfortable pose that holds: every joint nearest
-its rest, the arms lowest, the grip between the two bodies on the line
-between their centrelines, and at whatever height within its band leaves
-the joints least constrained — the band is a bound, not a preference. The
-search is a pattern search from a grid of seeds, and it is deterministic: the
-same question gets the same answer.
+## What it answers
 
-**Turning is a path, not a pose.** From a rest that holds, a body is turned a
-fiftieth of a turn at a time and the arms are carried on by small moves —
-what a dancer's arms do. At every moment the pose is also sought afresh, and
-taken where it is enough more comfortable to be worth the move *and the arms
-can get there*: they go round the bodies the same way as before (read off how
-far each arm sweeps round each body, below the crown) and cross each other the
-same way. An arm that has gone round a body cannot get to a pose that has
-not, however comfortable; that is what being wound is. Where no small move
-holds and no reachable pose does, the turn is **blocked**, and the sim names
-what fails a step beyond and whether a pose exists there that the arms
-cannot reach.
+- **How far a hold turns, and what stops it.** The sim turns the hold until something gives, so the
+  answer moves when the rig moves. No number is set by hand.
+- **The pose at each moment of a turn.** It gives each joint, where the hands are, and which way
+  each arm lies on its own body.
+- **Which of two crossing arms is over.** It reads this from the drawn arms and does not assume it.
+- **Whether a still holds, and where the couple stand for it.**
 
-**A still is wound, not built.** A card that draws the couple at half a turn,
-or at a turn and a half, draws a winding of the arms, and no facing says
-that: built at the facing, the couple at a whole turn stand exactly as at
-none, and the swan reads as the cross. So a still is asked by turning the
-couple there from rest, at the walk's own pace, with the hands lifted as they
-leave face to face, and then letting them stand; what is asked once there is
-whether the hold stands still, from the first standing distance that lets it.
-The viewer draws each such still beside the reference's own cell of it.
+`verdicts.md` is the record of what it answered. It prints each claim of the floor beside what the
+sim said, and nothing is tuned to make them agree.
 
-A couple set a hold up for the turn they are about to do: of the few distinct
-rests the search settles on, the sweep starts from the one that turns furthest
-in a short trial each way, and a hand held over a head is held over the
-turning partner's head.
+## What it does not model
 
-## The numbers
-
-Mixed-sex midpoints of ANSUR II medians, with the AAOS and NASA-STD-3000
-ranges for the joints; every one is in `rig.nim` with its derivation.
-
-| measure | value |
-|---|---|
-| torso round | 0.95 m: an ellipse 0.34 across, 0.26 deep; hip 0.80 to 1.36 m |
-| neck round | 0.37 m; to 1.50 m |
-| head round | 0.56 m; to 1.69 m |
-| shoulders | 0.18 m out from the axis, 1.40 m up |
-| arm | upper 0.31, forearm 0.25, wrist to grip 0.08: reach 0.64 m; radius 0.045 |
-| shoulder | 45° behind the frontal plane; 45° across past the sagittal; twist 70° in, 90° out |
-| elbow | 0 to 140° |
-| wrist | a 60° cone |
-| hands | chest 1.00–1.35, neck 1.40–1.50, crown 1.735–2.00 m |
-
-The torso stops four centimetres under the shoulder joints, by the slope of
-the shoulders, so a raised arm clears it. The crown band starts a limb's radius
-over the head, so a hand there clears the head by construction.
-
-## What comes out of it, rather than going in
-
-- **Where a turn runs out**, and which joint or body stops it. Found by
-  turning until something gives, so it moves when the arm or the torso does.
-  Nothing holds the number.
-- **The pose at every moment of the turn**: each joint's reading, where the
-  hands are, which way each arm lies on its own body — across the front or
-  behind the back, pressing it or merely carried there.
-- **Which of two crossing arms is over**, read off the heights where the
-  drawn arms cross in plan.
-- **That a pair of hands binds at the half turn** at the chest and at the
-  neck, and that one hand over the head turns without end either way.
-
-`sim/verdicts.md` is the record, and it says where the sim agrees with the
-floor and where it does not; the floor's claims are printed beside the sim's
-answers and nothing is tuned to make them agree.
-
-## What it will not say
-
-The shoulder girdle is a spring: each shoulder joint sits on its own girdle,
-welded to the chest at three hertz, so a pull of forty newtons moves it five
-centimetres in any direction, about what a scapula gives; it has no range of
-its own and no muscle to lift it unasked. The trunk twists at the waist, forty degrees
-each way and sprung to square, and does not bend. The arms weigh nothing; what
-weight does to an elbow about the line from shoulder to wrist is put back as a
-torque, and nothing else weight does is. The couple stand for each turn
-wherever it carries furthest and, among distances carrying it as far, wherever
-the arms move least between moments, so a stance is found rather than given
-and two ways of one turn may stand at two distances; what they cannot do is
-step as they turn, or take a hammerlock's own footwork. Every arm is there,
-held or free, and every capsule of every arm meets every other body's, so a
-wrap going under or over the *other* arm is what the engine says it is. The
-bodies are one stature. And a torso is a stadium of its round, which is a
-tape's shape and not a chest's.
+The two bodies are of one stature. The couple stand at one distance for all of a turn, so they do
+not step as they turn. The arms weigh nothing. `PROVENANCE.md` gives the limits of the rig, joint by
+joint.
 
 ## Reading it
 
@@ -147,17 +63,18 @@ seen.nim     one sweep recorded whole -- every capsule, every joint -- for
              the rig viewer to draw
 read.nim     what a pose says about itself, still in body words: crossings,
              lying, the tightest joint
-../tests/trigid.nim  the rig held to tape, geometry and the Architect's floor
-../tests/tlimb.nim   the tape's numbers and one arm's kinematics
-../tests/tread.nim   crossings read off the drawn arms, not assumed
+words.nim    what the sim reads, said in the agreed words, in one table
 verdicts.nim the sim run as an instrument against the ontology's sheet
 verdicts.md  what it said, translated once and generated, not edited
+../tests/trigid.nim  the rig held to tape, geometry and the Architect's floor
+../tests/suites/tlimb.nim  the tape's numbers and one arm's kinematics
+../tests/tread.nim   crossings read off the drawn arms, not assumed
 ../design/rig_view.nim  the rig viewer, compiled to JS: every capsule the
              engine collides, and every joint beside its range
 ```
 
 ```
-nim r koch tests contributor/sincopa/dance_ontology  # the laws, with every other suite
+nim r koch test contributor/sincopa/dance_ontology  # the laws, with every other suite
 nim r tools/build.nim pages       # every page, the rig viewer among them
 nim r tools/build.nim modelled    # rewrite design/modelled.json: cards reached
 nim r tools/build.nim rig         # rewrite design/rig.json: sweeps the viewer plays
@@ -165,30 +82,23 @@ nim r tools/build.nim turns       # rewrite design/turns.json: whole-cloth sweep
 nim r tools/build.nim verdicts    # rewrite verdicts.md from the current model
 ```
 
-`verdicts.nim` is where the sim's measurements meet the ontology's claims —
-wrap, lock, low, high — and the translation happens in its report, in one
-visible table. Not because the sim speaks a different language: it reuses the
-agreed words. Because here it *measures* what the ontology *asserts*, and a
-translation kept visible is evidence, where an assumed identity would be an
-echo. The laws run under `nim r koch tests`; run them before
-`nim r tools/build.nim pages`, because a page drawing a model that has stopped
-holding is worse than no page. The floor's claims are read beside the sim's
-answers in `verdicts.md`, and nothing is tuned to make them agree; where they
-disagree the record says which, and `PROVENANCE.md` says what was done about
-it.
+## Running it
 
-What costs is the search for where to stand. A sweep is run whole at every
-distance the couple may stand at, two centimetres apart from clear of each
-other outward, and only the one that carries furthest is kept; a card asking
-whether a turn is reached is answered at the first distance that reaches it,
-so an easy card costs one sweep and only a card nothing reaches pays for the
-whole search. Ranking distances on a coarser physics and sweeping only the
-winner at full resolution was measured and rejected: it does not rank them
-the same. The three recorders -- `modelled`, `rig`, `turns` -- are their own
-verbs for that reason, and their answers are committed, so `pages` folds what
-was last recorded rather than paying for it again.
+Run the laws before `nim r tools/build.nim pages`. A page that draws a model which has stopped
+holding is worse than no page.
 
-The rig viewer is one of two pages the project stands behind, rather than a
-mock-up: `design/rig_page.nim` writes `build/design/rig.html` from
-`design/rig.json`, and its URL is listed with every other published page in
-`../README.md`.
+The search for where to stand costs the most time. The sim walks the turn again from many
+distances, two centimetres apart. A card that asks whether a turn is reached stops at the first
+distance that reaches it. So an easy card costs one sweep, and only a card that nothing reaches pays
+for the whole search.
+
+For that reason `modelled`, `rig` and `turns` each have a verb of their own, and their answers are
+committed. So `pages` uses what was last recorded, and does not pay for it again. A coarser physics
+does not rank the distances in the same order, so it cannot choose them.
+
+## The rig viewer
+
+The rig viewer plays the sweeps that `nim r tools/build.nim rig` records to `design/rig.json`.
+`design/rig_page.nim` writes it to `build/design/rig.html`. It is an instrument, and not a page that
+the project stands behind. Its address is in `../README.md`, with every other page the project
+publishes.

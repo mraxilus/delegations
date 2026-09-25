@@ -14,7 +14,7 @@ import { focusCanvas } from './gestures';
 import { driveKeys } from './keys';
 import { driveAim, driveLook, drivePan } from './pan';
 import { driveWheel } from './wheel';
-import { driveTouchSelect, drivePinch, openTouch } from './touch';
+import { driveFingerTurntable, driveTouchSelect, drivePinch, openTouch } from './touch';
 import {
   driveBackdropPlane, driveCrowd, driveEmptyRelease, drivePausedDrag, driveTouchConstruct,
   driveTwoFingerPan,
@@ -22,7 +22,8 @@ import {
 import { driveApply, driveApplyNamed, driveReachable, driveUndo } from './apply';
 import { driveMessageGoes } from './message';
 import {
-  drivePanWhileSelected, drivePickOrbit, drivePlanePick, drivePointerPick,
+  driveGroupTurnedAtOnce, drivePanWhileSelected, drivePickOrbit, drivePlanePick,
+  drivePointerPick,
 } from './framing';
 import {
   driveFrameLabelCorner, driveLabelGlide, driveLabelHeldInView, driveLabelWorn,
@@ -63,6 +64,7 @@ import {
 import { driveGround } from './ground';
 import { driveBlankRefused } from './canvas';
 import { driveFrameWork } from './frame';
+import { driveHostSave } from './host';
 
 /** Viewport every check below is written against. */
 const SIZE_VIEW = { width: 1200, height: 900 };
@@ -142,6 +144,7 @@ async function main(): Promise<void> {
   // Two fingers go through Chrome's own protocol, so channel opens once here.
   const cdp = await openTouch(page);
   await drivePinch(page, cdp);
+  await driveFingerTurntable(page, cdp);
   await driveTouchSelect(page, cdp);
   await driveTwoFingerPan(page, cdp);
   await driveTouchConstruct(page, cdp);
@@ -159,6 +162,7 @@ async function main(): Promise<void> {
   await driveLabelWorn(page);
   await driveBackdropPlane(page, SIZE_VIEW.width, SIZE_VIEW.height);
   await drivePanWhileSelected(page, cdp);
+  await driveGroupTurnedAtOnce(page, cdp);
   await driveUndo(page);
   await driveReachable(page);
 
@@ -235,6 +239,8 @@ async function main(): Promise<void> {
   await driveTickWrites(page);
   await driveTickCadence(page);
   await drivePerFrame(page);
+  // Page of its own, since host it stands in has to be there before page's script runs.
+  await driveHostSave(browser, `file://${PATH_PAGE}`, SIZE_VIEW);
 
   // Page erroring at all is failure, whatever every check above said.
   report('the page raised no error', errors_page.length === 0, errors_page.join(' | '));

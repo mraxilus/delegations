@@ -1137,7 +1137,7 @@ proc handleEvent(
           else: panel.selection.selectOnly(outcome.index_clicked.get)
           # Note pick for camera: what was clicked stays under pointer as view comes in.
           panel.pointer_pick =
-            some(PointerPick(handle: outcome.index_clicked.get, cursor: interaction.cursor))
+            some(PointerPick(handle: outcome.index_clicked.get))
           if revealsMenuFor(event.button.button):
             panel.showSelectionMenuAt(interaction.cursor)
           else: panel.hideSelectionMenu()
@@ -1166,7 +1166,7 @@ proc handleEvent(
         else:
           if is_shifted: panel.selection.toggle(handle)
           else: panel.selection.selectOnly(handle)
-          panel.pointer_pick = some(PointerPick(handle: handle, cursor: interaction.cursor))
+          panel.pointer_pick = some(PointerPick(handle: handle))
           if revealsMenuFor(event.button.button):
             panel.showSelectionMenuAt(interaction.cursor)
           else: panel.hideSelectionMenu()
@@ -1178,7 +1178,7 @@ proc handleEvent(
     if event.button.button == uint8(MouseButton.Right): is_dragging_pan = false
   of uint32(EventKind.MouseWheel):
     if gui.wantsMouse(): return
-    panel.tween_camera.abandon()
+    panel.tween_camera.halt() # Zoom lands pivot on what cursor is over; see `halt`.
     # Zoom toward whatever cursor is over; see `interaction.dollyAtCursor`.
     #   Frame's size is passed because sight ray needs it before frame reports it again.
     interaction.dollyAtCursor(
@@ -1200,7 +1200,7 @@ proc handleEvent(
         panel.selection.len > 0,
       )
     if is_dragging_pan:
-      panel.tween_camera.abandon()
+      panel.tween_camera.halt() # Pan places pivot itself; see `halt`.
       # Pass where pointer was and is, rather than how far it moved.
       #   Pan grabs level under it and needs both ends of step; see
       #   `interaction.panAcross`.
@@ -1662,19 +1662,22 @@ proc verdictDriven(
       &"focus {interaction.index_focus}, selected {len(panel.selection)}, " &
         &"azimuth {camera.azimuth:.4f}, distance {camera.distance:.4f}",
     )
+    # Where pick put pivot is read off ease's own destination, not where slide started.
+    #   First held key can land while ease still carries, and ease then finishes carrying
+    #   pivot onto what was picked underneath orbit; see `camera.abandon`.
+    let pivot_picked = camera.placed(panel.tween_camera.destination).pivot
     report(
       "a held key orbited the view, and left the pivot where the pick put it",
       # Script selects before it holds anything, so every held key here orbits.
       #   Both axes are asked for: `w` raises and sideways key turns, and one alone would
       #   pass on camera that had lost other.
-      #   Pivot is compared against where slide started rather than where run opened: pick
-      #   moves it onto what was picked, and orbit after that must not move it at all.
+      #   Orbit after pick must not move pivot off what was picked at all.
       abs(camera.azimuth - camera_before_slide.azimuth) > 1.0e-6 and
         abs(camera.elevation - camera_before_slide.elevation) > 1.0e-6 and
-        norm(camera.pivot - camera_before_slide.pivot) < 1.0e-6,
+        norm(camera.pivot - pivot_picked) < 1.0e-6,
       &"azimuth {camera_before_slide.azimuth:.4f} -> {camera.azimuth:.4f}, " &
       &"elevation {camera_before_slide.elevation:.4f} -> {camera.elevation:.4f}, " &
-      &"pivot moved {norm(camera.pivot - camera_before_slide.pivot):.6f}",
+      &"pivot {norm(camera.pivot - pivot_picked):.6f} from where pick put it",
     )
     report(
       "every scripted key was let go of again", interaction.keys_held.len == 0,
@@ -1778,7 +1781,7 @@ proc runInteractive(
     # Record camera as first held motion key found it.
     #   Picking turns orbit about what was picked, and script selects before it slides, so
     #   opening placement is not what slide starts from.
-    #   Ease is abandoned by first held frame, so from there height is slide's own doing.
+    #   Ease gives way round up by first held frame, so from there height is slide's own.
     camera_before_slide = camera_opened
     is_slide_started = false
     # Record scene as gestures found it, after drives' setup frame.
@@ -1869,8 +1872,8 @@ proc runInteractive(
     if options.isDriven:
       if not is_slide_started and interaction.isMovingCamera:
         # Record first frame key that moves camera is held, not merely any bound key.
-        #   Taken after this frame's motion and `abandon`, so ease cannot still be
-        #   writing.
+        #   Taken after this frame's motion and `abandon`. Ease may still carry pivot, but
+        #   never way round, so angles from here are slide's own doing.
         is_slide_started = true
         camera_before_slide = camera
       found_dragging = found_dragging or interaction.is_dragging

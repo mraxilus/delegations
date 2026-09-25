@@ -1,5 +1,5 @@
-## Demand each file of gated kind argue for itself in its header (CONTRIBUTOR.md Language).
-##   Owner admits TypeScript where JavaScript is forced, and C++ or C where no Nim import
+## Demand each file of gated kind argue for itself in its header (CONTRIBUTOR.md Boundaries).
+##   Architect admits TypeScript where JavaScript is forced, and C++ or C where no Nim import
 ##   expresses library. That gate lived in prose alone: registry admitted `.ts` on extension
 ##   and asked nothing, so "only where unavoidable" bound nobody. Check reads gate instead.
 ##

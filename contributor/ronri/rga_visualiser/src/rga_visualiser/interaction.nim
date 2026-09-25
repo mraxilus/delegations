@@ -801,28 +801,49 @@ proc dollyAtCursor*(
     has_selection, placed)
 
 
-func turnAcross*(
-  camera: var Camera; turn, rise: float; has_selection: bool; holds_roll = false
-) =
-  ## Turn camera by left drag, in whichever way its state reads.
+func turnAcross*(camera: var Camera; turn, rise: float; has_selection: bool) =
+  ## Turn camera by desktop mouse's left drag, in whichever way its state reads.
   ##   Free flight looks: eye stands where it stands, and only sight turns.
   ##   Selection orbits about what is picked.
   ##   `look` and `orbit` take same two arguments with same signs, so one drag feeds
   ##   either verb as selection comes and goes; see `camera.look`.
-  ##   `holds_roll` puts back roll turn would otherwise leave behind.
-  ##     Turning about camera's own axes carries roll round with it, by solid angle drag
-  ##     encloses: loop of 0.3 radians leaves 0.081 behind, which is 4.7 degrees. That is
-  ##     geometry of transport rather than mistake, and no order of two turns escapes it.
-  ##     Asked for by touch alone, which has no roll key beside it, and where finger
-  ##     wanders in curves. Mouse keeps transport as it is, with Q and E to answer it.
-  ##     Roll reader set themselves survives, because reading is restored rather than
-  ##     zeroed. Near pole `rollHeld` reads none and last roll simply stands.
-  let before = if holds_roll: camera.rollHeld else: none(float)
+  ##   Turning about camera's own axes carries roll round with it, by solid angle drag
+  ##   encloses: loop of 0.3 radians leaves 0.081 behind, which is 4.7 degrees. That is
+  ##   geometry of transport rather than mistake, and no order of two turns escapes it.
+  ##   Desktop keeps it, with Q and E to answer it; page's drags do not, see
+  ##   `turnFollowing`.
   if has_selection: camera.orbit(turn, rise) else: camera.look(turn, rise)
-  if before.isNone: return
-  let after = camera.rollHeld
-  if after.isNone: return
-  camera.roll(after.get - before.get)
+
+
+func turnFollowing*(
+  camera: var Camera; before, after: ScreenPosition; width, height: int;
+  has_selection: bool; reach_selection = 0.0
+) =
+  ## Turn camera by page's drag, finger's or mouse's, from pixel it left to pixel it reached.
+  ##   Both turn as turntable does, about world up and level across, so neither leaves roll:
+  ##   touch has no roll key beside it, finger wanders in curves, and page's mouse drags as
+  ##   finger does. Roll reader set by twist or by Q and E survives.
+  ##   Both carry what finger holds with finger, pixel for pixel, and drag that comes back
+  ##   brings camera back. Not rate: no rate matches field of view at every pixel.
+  ##   Free flight holds sky; see `camera.lookCarrying`.
+  ##   Selection holds point on sphere about pivot, of selection's `reach_selection` or
+  ##   more; see `camera.radiusHeld`, `camera.pointHeld` and `camera.orbitCarrying`.
+  ##     Pivot itself never moves under orbit, so point there is nothing to hold.
+  let
+    frame = camera.frame
+    left = camera.headingThrough(frame, width, height, before)
+    reached = camera.headingThrough(frame, width, height, after)
+  if not has_selection:
+    camera.lookCarrying(held = left, under = reached)
+    return
+  let
+    radius = camera.radiusHeld(width, height, reach_selection)
+    eye = camera.eye
+    pivot = eye + camera.distance*frame.forward
+  camera.orbitCarrying(
+    held = pointHeld(eye, pivot, left, radius) - pivot,
+    under = pointHeld(eye, pivot, reached, radius) - pivot,
+  )
 
 
 func panAcross*(

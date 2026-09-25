@@ -20,7 +20,7 @@
 ##   Citation not ending `.nim` is left alone, so backticked command such as
 ##     `atlas changed` passes.
 ##   Cost: claim verified by hand, in browser, or by tool absent from repository cannot be
-##     checked at all; CONTRIBUTOR.md asks such claim to name its tool and date instead.
+##     checked at all; GUIDE.md asks such claim to name its tool and date instead.
 
 {.experimental: "strictFuncs".}
 

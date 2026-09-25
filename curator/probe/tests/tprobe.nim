@@ -40,4 +40,7 @@ suite "Ring":
 
   test "poisons fail to compile":
     check not compiles(Step(0) + Step(1))  # plain sum poisoned
-    check not compiles(Step(16))  # literal beyond every ring; const expression compiles
+    check not compiles(Step(16))  # literal beyond every ring
+    # Trap: `compiles` admits conversion of constant at bound, which build itself rejects,
+    #   so poison test above uses literal. Fails once compiler agrees with its own build.
+    check compiles(Step(MODULUS))  # false positive; `let s = Step(MODULUS)` fails to build

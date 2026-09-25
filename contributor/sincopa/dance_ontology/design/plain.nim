@@ -101,3 +101,73 @@ func longParagraphs*(markup: string): seq[string] =
   for paragraph in markup.prose:
     let said = paragraph.sentences
     if said.len > SENTENCES: result.add said[0]
+
+
+#[ Markdown ]#
+
+func closes(word: string): bool =
+  ## Whether word closes sentence of Markdown: stop after letter, digit, bracket or mark,
+  ## with closing quote and emphasis stepped over first.
+  ##   Test repository's `english` check makes (`isSentenceEnd`), so `**"Stop."**` closes
+  ##     sentence here as there.  `sentences` above ends only at bare stop, and read so, two
+  ##     sentences run together and paragraph of seven passes as six.
+  var i = word.high
+  while i >= 0 and word[i] in {'"', '*', '_', '\''}: dec i
+  if i < 1 or word[i] notin {'.', '!', '?'}: return false
+  word[i - 1] in Letters + Digits or word[i - 1] in {')', ']', '"', '%', '*', '_'}
+
+func markerLen(line: string): int =
+  ## Length of list marker line opens with; nought where it opens none.
+  if line.len > 1 and line[0] in {'-', '*', '+'} and line[1] == ' ': return 2
+  var i = 0
+  while i < line.len and line[i] in Digits: inc i
+  if i > 0 and i + 1 < line.len and line[i] in {'.', ')'} and line[i + 1] == ' ': return i + 2
+  0
+
+func gathered(fragments: openArray[string]): string =
+  ## Lines of one block as one text, each backticked span one word, since reader takes
+  ## `nim r koch check` as one name.
+  var inSpan = false
+  var text = ""
+  for c in fragments.join(" "):
+    if c == '`':
+      if not inSpan: text.add "name"
+      inSpan = not inSpan
+    elif not inSpan: text.add c
+  text.splitWhitespace.join(" ")
+
+func markdownProse*(document: string): seq[string] =
+  ## Every block of prose in Markdown document, as text.
+  ##   Read as repository's `english` check reads documents it governs
+  ##     (`curator/audit/src/english.nim`), so document passing here passes there too.
+  ##     Fenced code, table row, heading, rule and `>` quotation carry no prose; blank line
+  ##     ends block; list item opens one.  Front matter is not stepped over: no README
+  ##     carries it.
+  ##   Rule is copied rather than imported.  Suite compiled against curator's own check would
+  ##     break whenever curator changed that check, which duty 3 forbids curator to do to
+  ##     project.  Cost is two copies to keep agreeing, and `tplain.nim` pins this one.
+  var carried: seq[string]
+  var fenced = false
+  for raw in document.splitLines:
+    let line = raw.strip.multiReplace(("<!--", " "), ("-->", " ")).strip
+    let fence = raw.strip.startsWith("```")
+    if fence: fenced = not fenced
+    let carries = not fence and not fenced and line.len > 0 and
+                  not line.startsWith("|") and not line.startsWith("#") and
+                  not line.startsWith("---") and not line.startsWith(">")
+    let marker = (if carries: line.markerLen else: 0)
+    if carried.len > 0 and (not carries or marker > 0):
+      result.add carried.gathered
+      carried = @[]
+    if carries: carried.add line[marker .. ^1]
+  if carried.len > 0: result.add carried.gathered
+
+func markdownSentences*(text: string): seq[string] =
+  ## Sentences of one block of Markdown, split where `closes` says.
+  var words: seq[string]
+  for word in text.splitWhitespace:
+    words.add word
+    if word.closes:
+      result.add words.join(" ")
+      words = @[]
+  if words.len > 0: result.add words.join(" ")

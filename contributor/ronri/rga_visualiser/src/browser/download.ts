@@ -72,10 +72,132 @@ async function shareFile(file: File, filename: string): Promise<boolean> {
   }
 }
 
+/* ---------------------------------------------------------------------- */
+/* Artifact host's own save.                                              */
+/*                                                                        */
+/* Viewer that frames this page on claude.ai grants no download, share    */
+/* sheet or pop-up, so every route below it is refused in silence. It     */
+/* offers its own save instead, behind `claude.use("downloads")`, which   */
+/* asks reader to confirm file and saves it for them.                     */
+/* ---------------------------------------------------------------------- */
+
+// Namespace host hands page that may save files; only call this page makes on it.
+interface HostDownloads {
+  save(request: { filename: string; data: Blob }): Promise<{ status: string }>;
+}
+
+// Host's save once it has answered, and `null` until then or where there is none.
+//   Asked at load and read at delivery, never awaited there: host that never answers
+//   resolves only after ten seconds, and waiting that long would spend transient
+//   activation share sheet below needs.
+let host_downloads: HostDownloads | null = null;
+{
+  const claude = (window as Window & {
+    claude?: { use?: (name: string) => Promise<unknown> };
+  }).claude;
+  if (claude !== undefined && typeof claude.use === 'function') {
+    claude.use('downloads').then(
+      (namespace) => { host_downloads = (namespace ?? null) as HostDownloads | null; },
+      () => { host_downloads = null; },
+    );
+  }
+}
+
+// Extensions host's save takes. Anything else goes inside zip of one entry, so file itself
+//   travels unchanged; `scene_file.loadSceneFile` opens that zip again.
+const EXTENSIONS_HOST = new Set([
+  'gif', 'png', 'jpg', 'jpeg', 'webp', 'mp4', 'webm', 'txt', 'json', 'md', 'docx', 'pptx',
+  'epub', 'csv', 'ttf', 'html', 'svg', 'pdf', 'xlsx', 'zip',
+]);
+
+// CRC-32 of zip format, one entry for each byte value, built once.
+const TABLE_CRC = (() => {
+  const table = new Uint32Array(256);
+  for (let value = 0; value < 256; value += 1) {
+    let crc = value;
+    for (let bit = 0; bit < 8; bit += 1) crc = crc & 1 ? 0xEDB88320 ^ (crc >>> 1) : crc >>> 1;
+    table[value] = crc >>> 0;
+  }
+  return table;
+})();
+
+function crcOf(bytes: Uint8Array): number {
+  let crc = 0xFFFFFFFF;
+  for (const byte of bytes) crc = (TABLE_CRC[(crc ^ byte) & 0xFF] ?? 0) ^ (crc >>> 8);
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+async function zipOne(filename: string, blob: Blob): Promise<Blob> {
+  // Pack one file, stored rather than compressed, into zip every system opens.
+  //   Stored: scene is small, and no deflate stream means nothing to get wrong here.
+  const data = new Uint8Array(await blob.arrayBuffer());
+  const name = new TextEncoder().encode(filename);
+  const crc = crcOf(data);
+  const local = new DataView(new ArrayBuffer(30));
+  local.setUint32(0, 0x04034B50, true);
+  local.setUint16(4, 20, true);
+  local.setUint16(6, 0x0800, true); // Name is UTF-8.
+  local.setUint16(12, 0x21, true); // 1980-01-01, zip's own zero date.
+  local.setUint32(14, crc, true);
+  local.setUint32(18, data.length, true);
+  local.setUint32(22, data.length, true);
+  local.setUint16(26, name.length, true);
+  const central = new DataView(new ArrayBuffer(46));
+  central.setUint32(0, 0x02014B50, true);
+  central.setUint16(4, 20, true);
+  central.setUint16(6, 20, true);
+  central.setUint16(8, 0x0800, true);
+  central.setUint16(14, 0x21, true);
+  central.setUint32(16, crc, true);
+  central.setUint32(20, data.length, true);
+  central.setUint32(24, data.length, true);
+  central.setUint16(28, name.length, true);
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054B50, true);
+  end.setUint16(8, 1, true);
+  end.setUint16(10, 1, true);
+  end.setUint32(12, 46 + name.length, true);
+  end.setUint32(16, 30 + name.length + data.length, true);
+  return new Blob([local, name, data, central, name, end], { type: 'application/zip' });
+}
+
+async function saveThroughHost(
+  host: HostDownloads, blob: Blob, filename: string,
+): Promise<boolean> {
+  // Offer file through host's save, and report whether that settled delivery.
+  //   Reader's "no" settles it, as does prompt already open; any other refusal leaves
+  //   routes below to try.
+  const extension = (filename.split('.').pop() ?? '').toLowerCase();
+  const [data, name] = EXTENSIONS_HOST.has(extension)
+    ? [blob, filename]
+    : [await zipOne(filename, blob), filename.replace(/\.[^.]*$/, '') + '.zip'];
+  try {
+    await host.save({ filename: name, data });
+    report_delivery.push('host: saved');
+    toast('Saved `' + name + '`.');
+    return true;
+  } catch (err) {
+    const code = (err as { code?: unknown } | null)?.code;
+    report_delivery.push('host: ' + (typeof code === 'string' ? code : 'failed'));
+    if (code === 'declined') {
+      toast('Not saved.');
+      return true;
+    }
+    if (code === 'rate_limited') {
+      toast('A save is already waiting for an answer.');
+      return true;
+    }
+    return false;
+  }
+}
+
 async function deliverFile(
   blob: Blob, filename: string, mime: string, described: string,
 ) {
   report_delivery = describeEnvironment();
+  // 0. Host's own save, where host offers one. Only route viewer that frames this page
+  //    on claude.ai permits.
+  if (host_downloads !== null && await saveThroughHost(host_downloads, blob, filename)) return;
   const file = new File([blob], filename, { type: mime });
 
   // 1. Share sheet, where platform has one. Route that actually works on.

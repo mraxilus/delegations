@@ -31,7 +31,7 @@ const
     ## Root paths whose width goes unchecked: third-party text kept verbatim.
 
 
-func isBanner*(line: string): bool =
+func isBanner(line: string): bool =
   ## Decide whether line is section banner, i.e. `#[ Title ]#` alone on line.
   line.len > 6 and line.startsWith("#[ ") and line.endsWith(" ]#")
 

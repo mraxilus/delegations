@@ -9,9 +9,12 @@ bin/
 .nim_runtime/
 
 # Testament test binaries sit beside their sources, in every project; leading `**/` keeps
-# pattern with inner slash unanchored.
+# pattern with inner slash unanchored. Suites one entry joins sit in `suites/`, and binary of
+# one built alone lands beside it.
 **/tests/t*
 !**/tests/*.nim
+**/tests/suites/t*
+!**/tests/suites/*.nim
 
 # Pages, pictures and scripts projects build; pattern without slash matches at any depth.
 build/

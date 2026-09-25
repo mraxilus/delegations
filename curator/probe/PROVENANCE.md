@@ -6,31 +6,32 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 874ef979b21fbc1e |
+| Rules   | be54792c5171ff9d |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
-Origin: a curator test project that replaced `abstand/intervals`, which lived in a real
-domain. The Architect asked for a domain-neutral project that serves the same testing
-function. No authority is replicated, and the laws tested are the ring's own. There is no
-vendored source.
+Origin: a curator project, from the brief of the Architect. It is domain-neutral, so that
+the worked example of the project shape depends on no real domain. No authority is
+replicated, and the laws tested are the ring's own. There is no vendored source.
 
-This project exists to be checked rather than to be used. Every mechanism that the audit
-enforces appears here once, so a change to the checker has something minimal to fail against.
+This project exists to be checked rather than to be used. It shows the compile-time
+mechanisms that the constitution asks for, each one once, in the smallest project shape that
+the audit accepts.
 
 ## Representation
 
 **Steps are a distinct range, and the ring size is a build-time define.**
 `Step = distinct range[0 .. MODULUS - 1]` makes an out-of-range literal a compile-time error.
 It also lets plain `+` be poisoned in favour of `⊕`. `MODULUS` defaults to 4, and a static
-check validates it in 2 .. 16 and echoes the value. Rejected: a plain `int` with runtime
-checks, which would exercise none of the compile-time mechanisms that the project exists to
-probe. Cost: two ring sizes mean two builds, which the test matrix covers.
+check validates it in 2 .. 16 and names the value when it fails. Rejected: a plain `int`
+with runtime checks, which would exercise none of the compile-time mechanisms that the
+project exists to probe. Cost: two ring sizes mean two builds, which the test matrix covers.
 
-Here is a trap, and it is why the poison test reads as it does.
-`not compiles(Step(MODULUS))` is **false**. Only an out-of-range literal is rejected at
-compile time, while a constant expression compiles and then fails at runtime. The test uses
-the literal 16, which is beyond every allowed ring. Verified by hand on 2026-09-05 rather
-than by a suite, because a build that must fail cannot sit in one.
+Here is a trap, and it is why the poison test reads as it does. `compiles(Step(MODULUS))`
+is **true**, but `let s = Step(MODULUS)` fails to build, because the conversion is invalid.
+So `compiles` cannot hold the poison for a constant at the bound. The test uses the literal
+16, which `compiles` rejects, and it pins the false positive as a check of its own. That
+check fails once the compiler agrees with its own build. Verified by `tprobe.nim` on Nim
+2.2.12.
 
 ## Operations
 
@@ -44,17 +45,16 @@ and positions inside the ring.
 ## Tests
 
 **One testament stub with a matrix header**, with suites named after the subject of the
-header table, because no external authority exists. Verified by `tprobe.nim`: 2 matrix rows,
-and 4 tests in each.
+header table, because no external authority exists. The matrix runs every test in each ring
+size. Verified by `tprobe.nim`, and `nim r koch test curator/probe` lists each row.
 
 ## Toolchain
 
 **The compiler is pinned exactly, at the version this project was verified on**:
 `requires "nim == 2.2.12"` in `probe.nimble`. It is an exact pin rather than a lower bound.
 No single compiler serves every project here, and a range cannot say which one a suite passed
-on. The pin moved from 2.2.4 with `curator/audit`, when a sweep found it seventeen months and
-five patch releases stale. Both suites were run on 2.2.12 before it moved, in 10.0 s. CI
-installs it for this project alone, in its own job.
+on. The pin moves with `curator/audit`, which holds the version that builds koch. CI installs
+it for this project alone, in its own job.
 
 ## Figures
 

@@ -86,7 +86,7 @@ _Avoid_: docs, metadata
 **Role**:
 The string that says who is speaking: `curator`, `curator/<project>` or
 `contributor/<domain>/<project>`. It opens every issue, pull request and comment, and it
-labels every issue.
+labels every issue and pull request.
 _Avoid_: identity, persona
 
 **Queue**:
@@ -99,7 +99,7 @@ The `tools/build.nim` of a project. It holds every verb that the project answers
 _Avoid_: script, makefile, build file
 
 **Verb**:
-One command that a driver or `koch` dispatches, such as `tests` or `assets`.
+One command that a driver or `koch` dispatches, such as `test` or `fetch-assets`.
 _Avoid_: task, target, subcommand
 
 **Pin**:
@@ -108,7 +108,7 @@ it.
 _Avoid_: version, requirement
 
 **Store**:
-The shared cache of fetched files, keyed by digest. `koch assets` fills it, and every
+The shared cache of fetched files, keyed by digest. `koch fetch-assets` fills it, and every
 project reads it.
 _Avoid_: asset store, cache, vault
 

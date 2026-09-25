@@ -1,5 +1,6 @@
-**Role:** <!-- Write curator, or contributor/<domain>/<project>. Label this pull request with
-that same string. Copy it from the branch grammar, as you label every issue. -->
+**Role:** <!-- Write `curator`, `curator/<project>` or `contributor/<domain>/<project>`, the
+role that your branch names. Label this pull request with that same string. Copy it, and never
+compose it. -->
 
 ## Intent
 
@@ -8,11 +9,11 @@ that same string. Copy it from the branch grammar, as you label every issue. -->
 ## Scope
 
 - Branch: `contributor/<domain>/<project>/<name>`, `curator/<project>/<name>` or `curator/<name>`
-- Anything that the `scope` job allows and a reader would not expect
+- Anything that the `check-scope` job allows and a reader would not expect
 
 ## Verification
 
-<!-- What ran, and on which build: the result of `nim r koch ci`, the sample counts, and
+<!-- What ran, and on which build: the result of `nim r koch check`, the sample counts, and
      every figure with its pair.
      Then show the change. Give a screenshot where it is visual, a worked example where it is
      not, and one line that says why where neither one fits. The screenshot goes in the

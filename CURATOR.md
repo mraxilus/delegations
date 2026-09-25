@@ -18,14 +18,12 @@ Every rule below serves it:
 - Every line follows `CONSTITUTION.md` and `STYLE.md` strictly. Every project records what
   was decided, what was rejected and what it costs in `PROVENANCE.md`, and its language in
   `GLOSSARY.md`.
-- A term enters a glossary only when the Architect selects it. Propose the concept with
-  candidate names, and stop. The audit checks the shape of a glossary, and never its
-  agreement.
-- Two mirrored project roots. `contributor/<domain>/<project>/` holds the life areas of the
-  Architect under one theme, the methods of communication. Those domains are `abstand`
-  (music), `bangu` (language), `ronri` (computing), `sincopa` (dance and movement), and
-  `comma_games` (game development across every other domain). `curator/<project>/` holds
-  `audit`, `probe`, and any other project the curator needs.
+- A term enters a glossary only when the Architect selects it (`GUIDE.md`, Glossary
+  process). The audit checks the shape of a glossary, and never its agreement.
+- Two mirrored project roots. `contributor/<domain>/<project>/` holds the domains of the
+  Architect under one theme, the methods of communication. The Domains table of `README.md`
+  names each domain and its theme. `curator/<project>/` holds `audit`, `probe`, and any other
+  project the curator needs.
 - Branches mirror paths, and one delegate works in one folder. `main` is protected, and the
   Architect merges pull requests. The Architect may merge red deliberately, and the checks
   still run.
@@ -39,8 +37,8 @@ Every rule below serves it:
 - A change to the merge process is tested on the merge process itself, and not only on its
   code.
 - The tooling is Nim, in the shape that the repository of Nim itself uses: `koch`, one
-  compiled driver, and Atlas for dependencies. TypeScript only where JavaScript is forced. No
-  Python, and no make.
+  compiled program, and Atlas for dependencies. TypeScript only where JavaScript is forced.
+  No Python, and no make.
 - Each project pins its own compiler. The checks run for the projects that a change touches,
   in parallel, so the cost to the runner does not grow as projects arrive.
 
@@ -66,9 +64,10 @@ Every rule below serves it:
 | `CONTRIBUTOR.md` | Opening prompt for project delegates: what binds, stamped | curator |
 | `GUIDE.md` | How-to that both roles share, stamped into nothing | curator |
 | `CLAUDE.md` | Short pointer that Claude Code loads on its own | curator |
-| `koch.nim`, `koch.nim.cfg` | Driver of every check; `nim r koch <command>` | curator |
-| `.gitignore`, `.gitattributes` | Build products and checkouts out, LF endings | curator |
-| `.github/workflows/check.yml` | Every CI job, and the `audit` gate they report to | curator |
+| `koch.nim`, `koch.nim.cfg` | Entry point of every check; `nim r koch <verb>` | curator |
+| `.gitignore`, `.gitattributes` | Artifacts and checkouts out, LF endings | curator |
+| `.github/workflows/check.yml` | Every job of `check`, and the `summarize` gate | curator |
+| `.github/workflows/role.yml` | Role line and label of a pull request, on each event | curator |
 | `.github/workflows/watch.yml` | Issue opened when a run goes red on `main` | curator |
 | `.github/workflows/ledger.yml` | Daily read of what GitHub records, into one issue | curator |
 | `.github/pull_request_template.md` | Body that every pull request follows | curator |
@@ -77,7 +76,7 @@ Every rule below serves it:
 | `.github/ISSUE_TEMPLATE/queued-work.md` | Body that every queued-work issue follows | curator |
 | `curator/README.md` | Curator root index | curator |
 | `curator/audit/` | The checker: every check, tested against its own fixtures | curator |
-| `curator/probe/` | Domain-neutral test project and merge-process probe target | curator |
+| `curator/probe/` | Domain-neutral worked example of the project shape | curator |
 | `curator/<project>/` | Any other curator project, same shape | curator |
 | `contributor/README.md` | Contributor root index | curator |
 | `contributor/<domain>/README.md` | Domain name and theme | curator |
@@ -87,87 +86,75 @@ Every rule below serves it:
 
 - **Rules and root work.** Branch `curator/<name>` from `main`, with `<name>` matching
   `[a-z0-9][a-z0-9_-]*`. Every path is allowed, because a rules change must reach every
-  project. Inside a contributor project you may write only its `README.md`, `PROVENANCE.md`
-  and `GLOSSARY.md`, which `scope` enforces (duty 11). The commit scope is `curator` for a
-  root file, and the project's own scope for a commit inside a project. `commits` accepts any
-  valid scope on this branch form.
+  project. Inside a contributor project you may write only its three records (duty 11). The
+  commit scope is `curator` for a root file, and the project's own scope for a commit inside
+  a project. `check-commits` accepts any valid scope on this branch form.
 - **One curator project.** Branch `curator/<project>/<name>`, confined to
   `curator/<project>/`, with commit scope `<project>`, exactly like a contributor branch.
-- Conventional Commits throughout: `feat(audit): register json kind`. The `commits` job
-  enforces the regression rule (duty 4): the commit immediately before every `fix` is a
-  `test` of the same scope, one to one. A change that needs no new test is a `refactor`, a
-  `chore` or a `docs`.
-- A branch that a tool named for you (`claude/...`) is outside the grammar and fails `scope`.
+- The commit types and the regression rule are those of `CONTRIBUTOR.md` (Branch and
+  commits; Tests are paramount). Duty 4 says where a regression test of the checker lives.
+- A branch that a tool named for you (`claude/...`) is outside the grammar and fails
+  `check-scope`.
   Push to a branch inside it, and where the tool decides the name, ask the Architect.
 
 ## Every delegate begins here
 
-Three reads, before any other work, and the carried list.
+The reads of `CONTRIBUTOR.md`, Every delegate begins here, bind you on the label `curator`.
+So do its carried list and the guidance of `GUIDE.md` on the queue and the shared allowance.
+This section adds only what differs for a curator.
 
-**Open issues labelled `curator`.** Where the `**Role:**` line of the issue differs from the
-label, somebody is **asking**. That is a contributor blocked by a rule, through the
-process-change template, or the Architect. Where it reads `curator`, the work is **your own
-queue**, which an earlier delegate left. Judge each request **as a comment on the issue**:
-what is asked, why, whether it is a good idea, and what it costs either way. The reasoning
-then outlives the conversation, and you report the same to the Architect, who decides.
-
-Where your answer hands work to a project, add the label of that project beside `curator`
-first. Labels are added and never removed. Take the requests first, since somebody is
-waiting. Close what you no longer intend to do.
-
-**Answered issues still open.** Where the pull request that answers one has merged, **close
-each by hand**. Add a comment that names that pull request, what shipped, and where the
-result differs from what was asked. Do not rely on `Closes #N`. An issue you would decline
-stays open, with your reasoning on it, because to decline is the Architect's act and not
-yours.
-
-**`main` is green.** Read the latest `push` run. `watch.yml` opens an issue labelled
-`curator` when `check` or `ledger` concludes failure on `main`, so a red `main` reaches the
-first read above. Read the run anyway, since a run cancelled, still queued or never triggered
-concludes nothing. A red `main` is the first work of the delegate.
-
-Two things bind a curator exactly as they bind a contributor. The first is the guidance of
-`GUIDE.md` on the queue and the shared allowance. The second is the list of seven rules in
-`CONTRIBUTOR.md` that no check reaches. That list is written once, there. A curator
-carries it in the open the same way: at the start, on each resolution, and at handover.
+- **A request** on the `curator` label comes from a contributor that a rule blocks, through
+  the process-change template, or from the Architect. Judge it as `CONTRIBUTOR.md` says, and
+  report the same to the Architect, who decides.
+- **Work handed to a project.** Where your answer hands work to a project, add the label of
+  that project beside `curator` first. Labels are added and never removed.
+- **An issue you would decline** stays open, with your reasoning on it, because to decline
+  is the Architect's act and not yours. Close only work of your own queue that you no longer
+  intend to do.
+- **An answered issue that you close by hand** also says where the result differs from what
+  was asked.
+- **`main` is green.** Read the latest `push` run. `watch.yml` opens an issue labelled
+  `curator` when `check` or `ledger` concludes failure on `main`, so a red `main` reaches
+  the queue. Read the run anyway, since a run cancelled, still queued or never triggered
+  concludes nothing. A red `main` is the first work of the delegate.
 
 ## Duties
 
-1. **Rules change.** `CONSTITUTION.md`, `STYLE.md` and `CONTRIBUTOR.md` are stamped into the
-   `PROVENANCE.md` of every project, in the `Rules` row. Change one, and the audit fails on
-   every project until you re-stamp.
+1. **Rules change.** `CONSTITUTION.md`, `STYLE.md` and `CONTRIBUTOR.md` form the charter,
+   which is stamped into the `PROVENANCE.md` of every project, in the `Rules` row. Change
+   one, and the audit fails on every project until you re-stamp.
 
-   Do all of this in the same pull request. Read the diff, re-audit every project against
-   each changed rule, and apply what the rule now demands. Update each project's
-   `PROVENANCE.md`: the sections the rule binds, then `nim r koch stamp --write` for every
-   `Rules` row, in a commit of its own. Finish with `nim r koch ci` green, because nothing
-   merges half-propagated.
+   Do all of this in the same pull request. Read the diff, and re-audit every project
+   against each changed rule. Apply what the rule now demands in the records, which duty 11
+   lets you write. Where it demands a change to code, follow duty 3. Then run
+   `nim r koch stamp --write` for every `Rules` row, in a commit of its own. Finish with
+   `nim r koch check` green, because nothing merges half-propagated.
 
-   An audit that binds nothing writes nothing but the row. The log records that it happened,
-   and a dated section in a record is narration. `CURATOR.md` is not stamped. Two stamped
-   changes in flight produce a third stamp that neither one carries. So stack them: merge the
-   earlier branch into the later, and re-stamp once for the merged rules.
+   An audit that binds nothing writes nothing but the row (`GUIDE.md`, Prune, never
+   narrate). `CURATOR.md` is not stamped. Two stamped changes in flight produce a third stamp
+   that neither one carries. So stack them: merge the earlier branch into the later, and
+   re-stamp once for the merged rules.
 
 2. **Merge-process change.** Anything that a pull request passes through is the merge
    process. That is the workflows, `koch.nim`, `.gitignore`, `.gitattributes`,
    `curator/audit/src/`, the branch grammar in `domains.nim`, the stamp, and the matrices
-   that `plan` emits.
+   that `list-projects` emits.
 
    Test it on the process itself, in three legs:
 
-   - `nim r koch ci` on the branch;
+   - `nim r koch check` on the branch;
    - every job of its pull request green on a runner, which differs from this machine;
    - the `push` run on `main` green after the merge.
 
-   Branch protection guarantees the first two, and not the third. What a later curator would
-   otherwise find out again goes in `curator/audit/PROVENANCE.md`, in the same pull request.
-   Run numbers are not recorded. A re-run reuses its original merge commit and workflow file.
-   So a fix on `main` reaches an open pull request only through a new head: merge `main` into
-   the branch.
+   Branch protection guarantees the second leg alone. The first is yours to run, and the
+   third is yours to read. What a later curator would otherwise find out again goes in
+   `curator/audit/PROVENANCE.md`, in the same pull request. Record no run number. A re-run
+   reuses its original merge commit and workflow file. So a fix on `main` reaches an open
+   pull request only through a new head: merge `main` into the branch.
 
-3. **A check that reddens a project.** A new or tightened check that finds existing
-   violations in a contributor project cannot merge. The static pass runs over the whole
-   tree, and the contributor cannot see the check until it merges.
+3. **A check that reddens a project.** A new or tightened check that reports findings in a
+   contributor project cannot merge. The static pass runs over the whole tree, and the
+   contributor cannot see the check until it merges.
 
    Order it this way. Open the pull request of the check as a draft, with the findings it
    reports. Open a review-finding issue on each project that it reddens, and quote them. That
@@ -175,44 +162,48 @@ carries it in the open the same way: at the start, on each resolution, and at ha
    into the check, and never fix the project yourself.
 
 4. **Regression.** Every mistake that slipped past the audit becomes a fixture-driven test in
-   `curator/audit/tests/`, before the fix. The suites are named after the articles of the
-   constitution, and the assertions cite them.
+   `curator/audit/tests/`, before the fix. A suite takes the name of the article that it
+   replicates, or of its module where no article fits. The assertions cite the rule.
 
 5. **New file kind.** Register it in `curator/audit/src/kinds.nim` with its comment syntax,
    extend `comments.nim` where the syntax is new, update the header table, and add fixtures.
-   Until then the kind does not exist (Article VI.5), and the audit rejects it.
+   `tkinds.nim` holds the header table to the registry. Until then the kind does not exist
+   (Article VI.5), and the audit rejects it.
 
 6. **New domain.** This is the decision of the Architect alone. Add it to `DOMAINS` in
    `curator/audit/src/domains.nim`, to its header table, and to the table in the root
    `README.md`. Create `contributor/<domain>/README.md`, with the name as the heading and the
-   theme as a line. The layout check verifies that all three agree.
+   theme as a line. The layout check verifies that `DOMAINS`, the table and the domain README
+   agree. `tdomains.nim` holds the header table to `DOMAINS`.
 
 7. **New curator project.** Any name matching `[a-z][a-z0-9_]*`, on branch
    `curator/<project>/<name>`, with the full project shape from `CONTRIBUTOR.md`.
    `curator/probe` is the worked example.
 
 8. **Toolchain.** Each project pins its own compiler, and a bump of that pin is the work of
-   that project. `NIM_VERSION` in `check.yml` is the version of the driver, and not a second
-   pin. It must equal the pin of `curator/audit`, because koch compiles the modules of that
-   project, and `toolchain.nim` fails the audit when the two disagree. So bump both together,
-   with `nim r koch ci` on the new version.
+   that project. `NIM_VERSION` in each workflow that installs a compiler is the version that
+   builds koch, and not a second pin. It must equal the pin of `curator/audit`, because koch
+   compiles the modules of that project. `toolchain.nim` fails the audit where any workflow
+   disagrees. So bump the pin and every workflow together, with `nim r koch check` on the new
+   version.
 
-   Koch resolves every other pin itself (`compilers.nim`: `PATH`, then
-   `~/.cache/koch/nim/<pin>/`, then a fetch or a build from source; `$KOCH_NIM_DIR` moves the
-   cache). What koch does not resolve, `nim r koch system` prints: npm, a browser, and the
-   declared packages of each driven project. Where one is absent, it reports a finding rather
-   than a skip. A check that quietly does nothing reports green for work it never did.
+   `GUIDE.md`, Toolchain, says how koch serves every other pin. What koch does not serve,
+   `nim r koch list-packages` prints: the packages of koch itself, and those that each project
+   declares through its `system` verb. Where a tool is absent, the check that needs it
+   reports a finding rather than a skip. A check that quietly does nothing reports green for
+   work it never did.
 
 9. **The weekly run and the ledger.** The weekly run of `check.yml` compiles the projects
-   whose code merged inside `SWEEP_DAYS` (`plan.nim`). Its window is named twice, as that
+   whose code merged inside `RECENT_DAYS` (`plan.nim`). Its window is named twice, as that
    constant and as the cron, so change both together.
 
    `ledger.yml` is a different mechanism: a daily read of what GitHub records, into one issue
-   labelled `curator`. It reads three things:
+   labelled `curator`. It reads four things:
 
    - a pull request ready without a green run;
    - a `Closes #N` that never fired;
-   - an issue or pull request that opens with no role line, or carries no label.
+   - an issue or pull request that opens with no role line, or carries no label;
+   - an issue whose title opens with a commit prefix, which each issue template forbids.
 
    `watch.yml` watches both `check` and `ledger`, and opens or extends one issue for each
    workflow.
@@ -231,11 +222,11 @@ carries it in the open the same way: at the start, on each resolution, and at ha
 11. **Never** write code inside a contributor project, create a contributor project, or
     resolve a contributor's open question by an edit to their project. Answer it by a change
     to a rule, to a check, or to this file, and let the contributor apply it. Their suites
-    are theirs to run as well. Every run compiles the projects whose code changed and nothing
-    else, on a branch, on the push to `main`, and weekly. So a change to the checker compiles
-    the project of the checker, and leaves theirs until their code moves.
+    are theirs to run as well, and a change to the checker never compiles them (Checks
+    reference).
 
-    The static pass reads every project whatever changed. The `scope` job holds this duty. On
+    The static pass reads every project whatever changed. The `check-scope` job holds this
+    duty. On
     `curator/<name>` the only writable paths inside a contributor project are its
     `README.md`, `PROVENANCE.md` and `GLOSSARY.md`. Those carry the stamp row, the agreed
     terms, and the prose that a rule change invalidated, which is what propagation is. The
@@ -260,18 +251,10 @@ evidence from their tree is a hunch, so keep it, or go and get the evidence.
 
 ## Say which role you are
 
-Every delegate posts to GitHub as the same account, so the account says nothing about who is
-speaking. Open every issue, pull request and comment with `**Role:** curator`. Nothing checks
-the comments, so it holds because you write it.
-
-The label on every issue and pull request is that same string. It is `curator` for the rules,
-the checks, the merge process and the root files. It is `curator/<project>` or
-`contributor/<domain>/<project>` for one project. The set is the branch grammar, so nothing
-writes it down twice.
-
-To apply a label creates it. That is how the label of a new project comes to exist, and it is
-also the one hazard. A misspelling does not fail, and instead makes a second label that
-nobody filters on. Copy the role string, and never compose one.
+`CONTRIBUTOR.md`, Say which role you are, binds you, and `GLOSSARY.md`, Role, holds the set
+of role strings. Your role is `curator` for the rules, the checks, the merge process and the
+root files. It is `curator/<project>` on a branch of one curator project. A finding carries
+the label of the project that it is about.
 
 To comment on a contributor's pull request, to give context or to answer a question, is a
 welcome second channel. It is not where a process request lives. A pull request closes and
@@ -279,7 +262,7 @@ takes its thread with it, while an issue outlives the branch that prompted it.
 
 ## Before you open a pull request
 
-`nim r koch ci` at the repository root passes on the exact commit you push, and again before
+`nim r koch check` at the repository root passes on the exact commit you push, and again before
 every later push. The section of `CONTRIBUTOR.md` with this name holds the rest, and it
 binds you. It covers draft and ready, the backoff, the page linked, and the change shown.
 
@@ -289,69 +272,83 @@ These cannot be set from inside the repository. Ask the Architect to confirm tha
 place, under Settings:
 
 - Require a pull request before a merge, with no direct pushes.
-- Require these status checks to pass: `audit`, `scope`, `commits`, `role`. `audit` is the
-  gate job that stands for every other one, whose names vary with the change and so can never
-  be required checks themselves. `role` is its own workflow, because it fires on a label
-  event and the rest do not.
+- Require these status checks to pass: `summarize`, `check-scope`, `check-commits`,
+  `check-role`. `summarize` is the gate for the jobs whose names vary with the change, since
+  those names can never be required checks themselves. `check-role` is its own workflow,
+  because it fires on a label event and the rest do not.
 - Block force pushes and deletions.
-- Require every conversation to be resolved before a merge. Rule 3 of the carried seven says
-  that a request answered is complete and silence is not, and this is its only mechanical
-  form.
+- Require every conversation to be resolved before a merge. `CONTRIBUTOR.md`, Before you
+  open a pull request, asks that every review comment is answered. This setting is the only
+  mechanical form of that rule.
 - Let nobody bypass. A ruleset spells this as an empty bypass list. Branch protection spells
   it as "Do not allow bypassing the above settings". The Architect merges every pull request,
   so otherwise the gate binds everyone except the one person who merges.
 - Require no approvals. GitHub refuses an approval from whoever opened the pull request, and
   the Architect opens every one, so a single required approval stops every merge.
 - Under Settings, General, allow the merge commit alone. A squash collapses the `test` before
-  `fix` ladder into one subject, which is the evidence `commits` exists to create.
+  `fix` ladder into one subject, which is the evidence `check-commits` exists to create.
 - Under Settings, General, delete the head branch after a merge.
 
 "Require branches to be up to date before a merge" is offered and is not set. It makes every
 open pull request stale on each merge, which costs more than it saves at this repository's
 merge rate.
-The `base` check is the narrow form of the same rule. It reports only where the base gained a
-charter document or a checker, which is where staleness makes green false. It reaches the
-merge through the `audit` gate.
+
+The `check-drift` check is the narrow form of the same rule. It reports only where the base
+gained a charter document or a checker, which is where staleness makes green false. It
+reaches the merge through the `summarize` gate.
 
 ## Checks reference
 
-`koch.nim` at the root is the driver, built by `nim r koch <command>` (or `nim c koch` once,
-then `./koch <command>`). Every check is a module under `curator/audit/src/`, tested under
-`curator/audit/tests/`. Koch holds the dispatch alone.
+`koch.nim` at the root is the entry point of every check. Run it as `nim r koch <verb>`, or
+build it once with `nim c koch` and then run `./koch <verb>`. `./koch` alone lists every
+verb and option with its effect. Every check is a module
+under `curator/audit/src/`, tested under `curator/audit/tests/`. Koch holds the dispatch
+alone.
 
-| Command | Reads | Enforces |
-|---------|-------|----------|
-| `tree` | git's view | layout, form, comments, records, prompts, glossary, copies, faces, english |
-| `deps` | every project's `atlas.lock` | checkouts restored and matching the lock |
-| `types` | projects with `package.json` | `npm ci`, then that project's own `types` verb |
-| `driven` | projects with a `drive` verb | restore, then that verb, on that project's pin |
-| `system` | projects with a `system` verb | prints what they need installed, one per line |
-| `assets` | files named, against the store | fetches and checks each, prints its path |
-| `tests` | every project, or one | restore, then testament, on that project's pin |
-| `plan` | changed paths, pins | projects whose code changed, as JSON; `--sweep` for the week |
-| `scope` | changed paths | branch grammar; project paths inside prefix |
-| `commits` | commit subjects | Conventional Commits; scope equals branch scope |
-| `base` | paths base gained | branch carries base's rules and checker |
-| `role` | a pull request's body and labels | opening line and label are the branch's role |
-| `stamp` | rules documents | prints the stamp; `--write` sets every `Rules` row to it |
-| `ci` | fresh `origin/main` | tree, types, changed projects, driven, scope, commits, base |
+| Verb | Reads | Does |
+|------|-------|------|
+| `check` | fresh `origin/main` | all below but `check-role`; quick ones first, stop on a finding |
+| `check-files` | git's view | every static check `auditTree` runs; `Pruned` rows against the log |
+| `check-types` | projects with `package.json` and lock | `npm ci`, then that project's `types` |
+| `check-scope` | changed paths | branch grammar; project paths inside scope |
+| `check-commits` | commit subjects | Conventional Commits; scope equals branch scope |
+| `check-drift` | paths base gained | branch carries base's charter and checker |
+| `check-role` | a pull request's body and labels | opening line and label are the branch's role |
+| `test` | changed projects, or one | fetch deps, then testament, on that project's pin |
+| `drive` | changed projects with a `drive` verb | fetch deps, then that verb, on project's pin |
+| `fetch-deps` | changed projects' `atlas.lock` | checkouts made and matching the lock |
+| `fetch-assets` | files named, against the store | fetches and checks each, prints its path |
+| `list-packages` | koch, and projects with a `system` verb | prints OS packages to install |
+| `list-projects` | changed paths, pins | projects whose code changed, as JSON for the matrix |
+| `stamp` | charter documents | prints the stamp; `--write` sets every `Rules` row to it |
 
-`role` is the one verb that `ci` leaves out, because it reads a pull request rather than the
-tree. Its body and labels arrive from the event payload as `ROLE_BODY` and `ROLE_LABELS`, so
-only the runner can supply them.
+Every verb that takes projects reads the one named, else `--recent`, else `--all`, else the
+projects whose code changed. A verb refuses an option or an argument that it does not read.
+`fetch-assets` also answers to its old name, `assets`, until the two contributor drivers
+that call it switch.
 
-`ci` costs minutes rather than the second that the static pass costs, whenever a changed
+`check` leaves out `check-role`, because `check-role` reads a pull request rather than the
+tree. Its body arrives from the event payload as `ROLE_BODY`, and its labels from the API as
+`ROLE_LABELS`. So only the runner can supply them.
+
+`check` costs minutes rather than the second that the static pass costs, whenever a changed
 project carries a `drive` verb. It then builds the page of that project and drives a real
 browser, exactly as the runner does. A change to `koch.nim`, to `koch.nim.cfg` or to
 `curator/audit/src/` selects `curator/audit` alone, because its suites are what read them.
-Duty 11 states the same rule from the other side. Budget for the projects your branch
-touches, and for no others.
+So a change to the checker never compiles a contributor project. Budget for the projects your
+branch touches, and for no others.
 
-The checker is held to three rules of its own, in `checker.nim`, because it checks every
-project and nothing checked it. A routine exported and called nowhere is a finding. A check
-module without `tests/t<module>.nim` is a finding. The verbs that koch dispatches, the verbs
-that its usage text prints, and the rows of the table above are one set named three times.
-Any two that differ are a finding.
+The checker holds itself to rules of its own, in `checker.nim`, because it checks every
+project and nothing checked it:
+
+- A routine exported and named by no other module and no suite is a finding.
+- A check module without `tests/suites/t<module>.nim` is a finding.
+- The verbs that koch dispatches, the verbs that its usage text lists, and the rows of the
+  table above are one set named three times. Any two that differ are a finding.
+- The options that koch parses and the options that its usage text prints are one set named
+  twice. A difference is a finding.
+- A `koch <verb>` written as a command, outside contributor code, must name a verb that koch
+  dispatches. A stale one is a finding.
 
 A finding prints in one form, and the exit code is 1:
 
@@ -364,19 +361,19 @@ top of their modules. Change the data, and never a special case.
 
 ## What no check can reach
 
-Seven rules hold by reading and nothing else. `CONTRIBUTOR.md` lists them once, under "Carry
-the unchecked list in the open", and a curator carries the same list. The test for the
-addition of an eighth is not whether a check would be awkward. It is whether the thing the
-rule asks about is a fact that something already writes down. The conclusion of a run is such
-a fact, so `watch.yml` holds it; the agreement of a glossary term is not. Each addition
+The carried list holds the rules that only reading holds. `CONTRIBUTOR.md` lists them once,
+under "Carry the unchecked list in the open", and a curator carries the same list. The test
+for the addition of a rule is not whether a check would be awkward. It is whether the thing
+the rule asks about is a fact that something already writes down. The conclusion of a run is
+such a fact, so `watch.yml` holds it; the agreement of a glossary term is not. Each addition
 dilutes the others, because a document whose rules are mostly unenforced trains its readers
 to skim.
 
 Prefer a check wherever one can be written, and say plainly in the rule where none can. The
 test for taking one off is that same fact read the other way. When the platform gains a way
 to read what a rule asks about, that rule leaves the list. It becomes a check, in the same
-pull request. So re-read all seven whenever a check is added or an API is found. A rule left
-here after it became checkable is the one that teaches the skimming.
+pull request. So re-read the whole list whenever a check is added or an API is found. A rule
+left there after it became checkable is the one that teaches the skimming.
 
 ## Output contract
 

@@ -1,36 +1,41 @@
 # audit
 
-The library of checks for the repository, driven by `koch.nim` at the root. It reads the tree
-as git sees it, and it enforces:
+The checker of the repository, driven by `koch.nim` at the root. It reads the tree as git sees
+it, and reports each broken rule as a finding. It also restores dependencies through Atlas,
+and runs the suites of every project through testament.
 
-- the layout of the two project roots;
-- the form and telegraphic-comment rules of the constitution;
-- the Simplified Technical English of the root documents and of every project record;
-- the provenance header with its rules stamp, and the shape of a glossary;
-- branch scope and Conventional Commits.
+What it enforces is listed once, in `CURATOR.md` under "Checks reference", and in the root
+`README.md` under "Branches and checks".
 
-It also restores dependencies through Atlas, and drives the tests of every project through
-testament.
+Authority replicated: none. The checker holds the rules of this repository, and mirrors no
+book, paper or standard.
 
 ## Build and test
 
 ```sh
-nim r koch ci                  # from repository root: every check a pull request runs
-nim r koch tests curator/audit # this project alone: testament over tests/t*.nim
+nim r koch test curator/audit             # this project alone: every suite, as one program
+nim r curator/audit/tests/suites/tform.nim # one suite, while you change its module
+nim r koch check                              # every check a pull request runs
 ```
 
 This needs the compiler that the project pins in `audit.nimble`, and git. Atlas and testament
-ship with Nim.
+ship with Nim, and koch fetches the pinned compiler where nothing on the machine serves it.
+
+## Published pages
+
+None. The checker publishes no page.
 
 ## Where to start
 
-`src/audit.nim` opens with the bootstrap diagram. Read the modules in the order that it
-gives, then `koch.nim` at the root. The order is not repeated here, because a second copy
-drifts. This one had already lost `toolchain` and `plan` within a day of their arrival. The
-rules are data at the top of each module, and `PROVENANCE.md` records why each one is shaped
-as it is.
+Read the modules in the order that their `import` lines give, then `koch.nim` at the root.
+`src/audit.nim` is the umbrella, and it does not restate that order, because a second copy
+drifts. The rules are data at the top of each module, and `PROVENANCE.md` records why each one
+is shaped as it is.
 
 ## Status
 
-Every check is verified by its suite under `tests/`, run through testament on the compiler
-that this project pins. Unreviewed by a human.
+Each check module has its suite under `tests/suites/`, and `checker.nim` reports a module
+without one. `tests/tsuites.nim` imports every suite, so testament compiles them as one
+program on the compiler that this project pins. The shell steps of
+`ledger.yml` and `watch.yml` have no suite. They are verified by hand through a stub for `gh`,
+as `PROVENANCE.md` records. Unreviewed by a human.

@@ -2,8 +2,9 @@
 
 How-to for every delegate, curator or contributor. Nothing here binds on its own. What binds
 is in `CONSTITUTION.md`, `STYLE.md` and `CONTRIBUTOR.md`, which the stamp covers, and in
-`CURATOR.md`. This file is stamped into nothing, so a change of wording here re-audits no
-project. That is why it is a file of its own.
+`CURATOR.md`. A section here binds where one of those documents points at it. This file is
+stamped into nothing, so a change of wording here re-audits no project. That is why it is a
+file of its own.
 
 ## Simplified Technical English
 
@@ -13,8 +14,9 @@ specification away, so ask for a copy at `asd-ste100.org` and read it. The rules
 the working subset. They bind Markdown, issues, pull requests, comments and messages. They
 leave a comment in code alone, which drops its articles and keeps the rest (Article VI.5).
 
-- **Use the approved word.** Write `start` and not `commence`, `do` and not `perform`,
-  `make sure` and not `ensure`, `about` and not `approximately`, `use` and not `utilise`.
+- **Use the approved word.** Write `start` and not `commence`, and `do` and not `perform`.
+  Write `make sure` and not `ensure`, `about` and not `approximately`, and `use` and not
+  `utilise`.
   The dictionary belongs to ASD, so no check holds all of it. The `english` check holds a
   short table of the words that turned up here, and your reading holds the rest.
 - **Give each word one meaning.** Use the same word for the same thing every time. A
@@ -48,15 +50,15 @@ table of words. It reads every root document except `LICENSE.md`, and the four t
 also reads the README of each project root and of each domain, and the three records of every
 project.
 
-`ENGLISH_PATHS` in `curator/audit/src/english.nim` holds the root documents alone. The check
-derives every other path from the layout, so a new project or a new domain is read from its
-first line. A file below a project directory stays outside the set, and so does any other file.
-Every other rule above holds because you read it.
+`ENGLISH_PATHS` in `curator/audit/src/english.nim` holds the root documents and the templates.
+The check derives every other path from the layout, so a new project or a new domain is read
+from its first line. A file below a project directory stays outside the set, and so does any
+other file. Every other rule above holds because you read it.
 
 ## The queue and the shared allowance
 
 Every delegate posts as one GitHub account. One hourly allowance covers every delegate that
-runs at once, and it has run out in the middle of work. GitHub meters two APIs separately,
+runs at once, and it can run out in the middle of work. GitHub meters two APIs separately,
 and the name of a tool does not say which one a call takes. The measurement is in
 `curator/audit/PROVENANCE.md`. What follows from it:
 
@@ -100,7 +102,7 @@ pin is served, installed and moved.
   `nim-lang/Nim` and built in minutes. Either fetch is paid once for each pin.
 - **One toolchain serves the whole run.** `$KOCH_NIM_DIR` moves the cache. Testament and
   Atlas come from the toolchain that serves the pin, and its `bin/` leads `PATH`. So a lock
-  is never replayed against another compiler. That is why `koch ci` and `koch tests` stay
+  is never replayed against another compiler. That is why `koch check` and `koch test` stay
   green as one command over projects that pin different compilers.
 - **A pin that nothing can serve is a finding.** It names the pin and the cache that was
   tried. The network may be unreachable, or the version may not exist. Neither is a reason to
@@ -127,11 +129,11 @@ Use Atlas, once for each project, inside your project directory.
    in the module header that uses it (Article II.8). Record the origin, the commit and the
    licence in `PROVENANCE.md` (Article XI.3).
 
-`nim r koch deps` restores the checkouts of every project from its lock, and `koch tests`
-restores before it runs. The lock stores a copy of your nimble file, and `atlas rep` writes
-that copy back. So a requirement edited without a regenerated lock is reverted, and the
-static pass reports the difference before that happens. Atlas needs the network for every
-command, so a project with no packages carries no lock and skips this step.
+`nim r koch fetch-deps --all` restores the checkouts of every project from its lock, and
+`koch test` restores before it runs. The lock stores a copy of your nimble file, and
+`atlas rep` writes that copy back. So a requirement edited without a regenerated lock is
+reverted, and the static pass reports the difference before that happens. Atlas needs the
+network for every command, so a project with no packages carries no lock and skips this step.
 
 ## How to build on a project
 
@@ -139,13 +141,12 @@ Every later delegate:
 
 1. Read `PROVENANCE.md` in full, then `GLOSSARY.md`, then the code. Take the code in the
    order that the bootstrap diagram of the umbrella module gives.
-2. `nim r koch tests contributor/<domain>/<project>` must be green before you start.
-3. `Rules stamp stale` means that the governing documents changed after the last audit of
-   this project. The curator re-audits every project in the same pull request as a rules
-   change, so this appears only where your branch is older than one. Merge `origin/main` and
-   read the diff of `CONSTITUTION.md`, `STYLE.md` and `CONTRIBUTOR.md`. Re-audit the project
-   against each changed rule and fix what it asks. Then paste the new stamp in a `docs`
-   commit of its own.
+2. `nim r koch test contributor/<domain>/<project>` must be green before you start.
+3. `Rules stamp stale` means that the charter changed after the last audit of this project.
+   The curator re-audits every project in the same pull request as a charter change, so this
+   appears only where your branch is older than one. `CONTRIBUTOR.md`, Before you open a
+   pull request, gives the steps under `check-drift`. Paste the new stamp in a `docs` commit of its
+   own.
 4. Work in small commits. Update `PROVENANCE.md` in the same delivery as each design change,
    and prune what the change replaced.
 
@@ -202,9 +203,7 @@ writes the decision into `PROVENANCE.md`, under its subsystem (Article VIII.6). 
 
 ## Output contract
 
-From the constitution: return the implementation first. Report only what is material: an
-assumption, a choice of representation or staging, or a trade-off that is not obvious. Report
-a question left open, and the verification you did, which is what ran and on which build.
+The output contract of `CONSTITUTION.md` binds every delegate. What follows adds to it.
 
 **Put the URL of a published page in the message itself, and not only in the pull request.**
 The same URL belongs in both places. The pull request is the record, and the message is what
@@ -238,7 +237,7 @@ Header table for `PROVENANCE.md`:
 ```md
 | Field   | Value |
 |---------|-------|
-| Harness | <tool you run in, e.g. Claude Code> |
+| Harness | <tool you run in, for example Claude Code> |
 | Author  | <model> |
 | Date    | <YYYY-MM-DD> |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |

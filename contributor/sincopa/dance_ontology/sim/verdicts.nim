@@ -20,7 +20,7 @@ const
     ## Name each rung of chain, in glossary's own words.
     ##   Once said `X`, which sits on avoid line of **Cross**, while
     ##     `design/parts` named same rung right: two namings of one chain, and
-    ##     only one of them correct.  `tests/tglossary` now reads both.
+    ##     only one of them correct.  `tests/suites/tglossary` now reads both.
   WIDTH = 100 ## Columns report's prose wraps at.
 
 

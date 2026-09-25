@@ -1076,12 +1076,25 @@ proc ensureViewOverlay(width, height: int) =
 
 #[ Camera ]#
 
-proc nimCameraTurn(turn, rise: cfloat; holds_roll: bool) {.exportc.} =
-  ## Turn view by left drag, in whichever way its state reads, in radians.
-  ##   Free flight looks and selection orbits; see `interaction.turnAcross`.
-  ##   `holds_roll` is finger's, never mouse's: touch has no roll key beside it.
+proc nimCameraTurnAt(
+  before_x, before_y, after_x, after_y: cfloat; width, height: cint
+) {.exportc.} =
+  ## Turn view by drag of finger or left mouse button, in whichever way its state reads.
+  ##   See `interaction.turnFollowing`. Both ends of step, since what drag holds under one
+  ##   end is carried to other.
+  ##   Selection's reach from pivot is read off aim standing offer framed it with, so sphere
+  ##   orbit holds spans what is picked.
   TWEEN_CAMERA.abandon()
-  turnAcross(CAMERA, float(turn), float(rise), SELECTION.len > 0, holds_roll)
+  let reach_selection =
+    if TWEEN_CAMERA.goal.isSome and TWEEN_CAMERA.goal.get.sphere.isSome:
+      let bound = TWEEN_CAMERA.goal.get.sphere.get
+      norm(bound.centre - CAMERA.pivot) + bound.radius
+    else: 0.0
+  turnFollowing(
+    CAMERA, ScreenPosition(x: float(before_x), y: float(before_y)),
+    ScreenPosition(x: float(after_x), y: float(after_y)), int(width), int(height),
+    SELECTION.len > 0, reach_selection,
+  )
 
 
 proc nimCameraRoll(radians: cfloat) {.exportc.} =
@@ -1101,7 +1114,7 @@ proc nimCameraDolly(factor: cfloat) {.exportc.} =
 proc nimCameraDollyCentred(factor: cfloat; width, height: cint) {.exportc.} =
   ## Scale camera's distance from pivot by factor, toward whatever frame's middle is over.
   ##   Pinch's zoom; see `interaction.dollyAtCentre`. Reads caches as `nimCameraDollyAt`.
-  TWEEN_CAMERA.abandon()
+  TWEEN_CAMERA.halt()
   ensureViewOverlay(int(width), int(height))
   ensurePlacement()
   dollyAtCentre(
@@ -1116,7 +1129,7 @@ proc nimCameraDollyAt(factor: cfloat; width, height: cint) {.exportc.} =
   ##   Reads cursor this build tracks (`nimUpdateCursor`), so caller aiming zoom (wheel at
   ##   pointer, pinch at midpoint) says where by moving cursor there first, as picking
   ##   does.
-  TWEEN_CAMERA.abandon()
+  TWEEN_CAMERA.halt()
   # Read through overlay cache.
   #   Wheel arrives in bursts, and each notch would derive fresh extent and matrix for
   #   camera that only changes as result of notch.
@@ -1136,7 +1149,7 @@ proc nimCameraPanAt(
   ## Move view by right drag, in whichever way its state reads.
   ##   See `interaction.panAcross`.
   ##   Both ends of pointer's step rather than its length, as every rate here takes.
-  TWEEN_CAMERA.abandon()
+  TWEEN_CAMERA.halt()
   panAcross(
     CAMERA, ScreenPosition(x: float(before_x), y: float(before_y)),
     ScreenPosition(x: float(after_x), y: float(after_y)), int(width), int(height),
@@ -1188,21 +1201,21 @@ proc nimCameraEye(): FlatBuffer {.exportc.} =
 
 proc nimSetCameraAzimuth(v: cfloat) {.exportc.} =
   ## Rewrite angle about world up, in radians.
-  TWEEN_CAMERA.abandon()
+  TWEEN_CAMERA.halt()
   CAMERA = CAMERA.placedAtAzimuth(float(v))
 
 
 proc nimSetCameraElevation(v: cfloat) {.exportc.} =
   ## Rewrite angle above horizontal plane, in radians.
   ##   Clamped to bound `panel.layoutView`'s drag widget uses.
-  TWEEN_CAMERA.abandon()
+  TWEEN_CAMERA.halt()
   CAMERA = CAMERA.placedAtElevation(float(v))
 
 
 proc nimSetCameraDistance(v: cfloat) {.exportc.} =
   ## Rewrite distance from pivot, in world units.
   ##   Held off one bound orbit distance has; see `camera.distanceHeld`.
-  TWEEN_CAMERA.abandon()
+  TWEEN_CAMERA.halt()
   CAMERA.dollyTo(float(v))
 
 
@@ -1211,7 +1224,7 @@ proc nimSetCameraFov(v: cfloat) {.exportc.} = CAMERA.degrees_field_of_view = flo
 
 proc nimSetCameraPivot(x, y, z: cfloat) {.exportc.} =
   ## Rewrite point camera orbits around.
-  TWEEN_CAMERA.abandon()
+  TWEEN_CAMERA.halt()
   CAMERA = CAMERA.placedAtPivot(Position(x: float(x), y: float(y), z: float(z)))
 
 
@@ -1315,10 +1328,10 @@ proc nimSelectToggle(handle: cint) {.exportc.} = SELECTION.toggle(int(handle))
 
 proc nimPickByPointer(handle: cint) {.exportc.} =
   ## Note that `handle` was just picked by pointer standing at `INTERACTION.cursor`.
-  ##   Camera then keeps it under pointer as it comes in; see `framing.PointerPick`.
+  ##   Camera then centres it as it comes in; see `framing.PointerPick`.
   ##   Beside `nimSelectOnly`/`nimSelectToggle` rather than folded into them: list and
   ##   keyboard pick through those too, with no pointer to hold.
-  POINTER_PICK = some(PointerPick(handle: int(handle), cursor: INTERACTION.cursor))
+  POINTER_PICK = some(PointerPick(handle: int(handle)))
 
 
 proc nimSelectClear() {.exportc.} = SELECTION.clear()
@@ -1338,21 +1351,21 @@ proc nimUndo(): bool {.exportc.} =
   ## Move scene back one step on its edit timeline; report whether there was earlier step.
   ##   Puts view back where that step was made from.
   ##   Clears selection on success, since restored snapshot's handle numbers may not match.
-  ##   Abandons standing camera tween too, or aim it carried drags view off placement just
+  ##   Halts standing camera tween too, or aim it carried drags view off placement just
   ##   restored; same pairing `panel.stepHistory` makes.
   result = HISTORY.undo(SCENE, CAMERA)
   if result:
     SELECTION.clear()
-    TWEEN_CAMERA.abandon()
+    TWEEN_CAMERA.halt()
 
 
 proc nimRedo(): bool {.exportc.} =
   ## Move scene forward one step on its edit timeline; report whether there was later step.
-  ##   View and all; clears selection and abandons tween as `nimUndo` does.
+  ##   View and all; clears selection and halts tween as `nimUndo` does.
   result = HISTORY.redo(SCENE, CAMERA)
   if result:
     SELECTION.clear()
-    TWEEN_CAMERA.abandon()
+    TWEEN_CAMERA.halt()
 
 
 proc nimCanUndo(): bool {.exportc.} =

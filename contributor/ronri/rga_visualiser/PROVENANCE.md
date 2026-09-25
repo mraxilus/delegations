@@ -8,7 +8,7 @@ _Who made this, from what, and how far it has been checked._
 | Author  | Claude Opus 5 and Claude Sonnet 5 |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 874ef979b21fbc1e |
+| Rules   | be54792c5171ff9d |
 | Pruned  | ca56fd4f8b61f44d3b38f3533ba0f177c4cc27b8 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -41,7 +41,7 @@ Six tools that the prototype carried are not in this repository. They are `check
 one of them held is marked as held by that tool then, and re-verified by nothing here.
 
 **Verification practice, applies throughout.** Every change is rebuilt, and the full suite is run
-again through `koch tests`. That runs on the C backend at two capacities, and on the JS backend.
+again through `koch test`. That runs on the C backend at two capacities, and on the JS backend.
 Both front-ends are driven through `tools/build.nim drive`. **No human has driven either front-end,
 clicked a button, or seen this on real GPU hardware.** Every figure in this file was
 software-rendered.
@@ -82,9 +82,9 @@ renamed variable. It is `PREVIEW_EDIT`, beside `PREVIEW_APPLY`.
 belongs to that library. An ideal object does not sit *at* the horizon. It lies *in* it, so the kind
 words that a reader sees are `horizon point`, `horizon line` and `horizon plane`.
 
-*Checked.* Verified after every rename. Every suite is unchanged, case for case, which is what says
-that no behaviour moved. `tsc` is clean after `bridge.d.ts` is derived again. `koch tree` reports 0
-findings. Both front-ends are built and driven.
+*Checked.* Verified after every rename. Every suite is unchanged, case for case, which is what
+says that no behaviour moved. `tsc` is clean after `bridge.d.ts` is derived again.
+`koch check-files` reports 0 findings. Both front-ends are built and driven.
 
 ## Wording catalogue
 
@@ -293,9 +293,9 @@ toggles wherever they stand alongside zero overflow. A row that fits because two
 dropped is broken more quietly. It sweeps 396, 395 and 394, because a rule written one pixel out
 passes every sweep that never lands on it.
 
-*Checked.* Verified by a run. Every check goes through `tools/build.nim drive`, on both front-ends,
-software-rendered, here and on the runner. `driven` gates `audit`, so a green push run is the word
-of the runner itself (repository issues 47 and 91).
+*Checked.* Verified by a run. Every check goes through `tools/build.nim drive`, on both
+front-ends, software-rendered, here and on the runner. `drive` gates `summarize`, so a green
+push run is the word of the runner itself (repository issues 47 and 91).
 
 **Unmeasured**: the figures are this container's, and say more about SwiftShader than about any GPU.
 Bands are what the checks assert.
@@ -344,9 +344,9 @@ issue 60). No package version is pinned or invented.
 **`drive` fetches faces, and `web` refuses without them.** A caller who reaches for `web` directly
 is building, rather than being given.
 
-**Faces come from the store of the repository, and which faces is this project's.** `koch assets`
-holds any file fetched at build time: the names, the digests and the fetch, in
-`curator/audit/src/assets.nim`. The `assets` verb of this project copies the faces of both
+**Faces come from the store of the repository, and which faces is this project's.**
+`koch fetch-assets` holds any file fetched at build time: the names, the digests and the fetch,
+in `curator/audit/src/assets.nim`. The `assets` verb of this project copies the faces of both
 front-ends out of it (repository issues 116 and 124).
 
 Those are the `@fontsource` `woff2` of the page, and the desktop's own, which `FACES_DESKTOP` names.
@@ -412,9 +412,8 @@ sits on `.drawer`, outside what scrolls. A sticky offset is inset by the padding
 scroller.
 
 The heading wears its pill at rest and pinned alike, so a list moving and a list still show one
-heading. Rejected: a band only while pinned, watched through a sentinel and an
-`IntersectionObserver`. A heading then changed its look between a list moving and one at rest, and
-the bar of the desktop is filled throughout.
+heading. The desktop bar is filled throughout. Rejected: a band only while pinned, watched through
+a sentinel and an `IntersectionObserver`.
 
 **A heading wears the pill that the controls of the chip row wear**, still or scrolling. It has the
 same radius, the same 1 px `--border`, and the box that `.object-row.selected` already uses.
@@ -464,6 +463,15 @@ estimated offset, with nothing but a spacer in view, adjusts nothing.
 the spot, and the prose after it parses as CSS. That was enough to swallow 141 of the 150 rules of
 the page, with the page still drawing. Delimiters are named rather than quoted.
 
+**On an artefact host, a file saves through the host's own save.** The claude.ai viewer never lets
+frame code download directly, and offers `claude.use("downloads")` instead. `deliverFile` tries it
+first where the host answered at load, and the reader confirms the file. A reader's "no", or a
+prompt already open, ends the save; any other refusal falls through to the page's own routes.
+
+**A scene goes to the host as `scene.zip`, which holds `scene.rgascene` unchanged and stored.**
+The host saves only the extensions on its list, and `.rgascene` is not one. Loading opens the first
+`.rgascene` entry of a zip, stored or deflated. Rejected: a JSON scene, a second format to read.
+
 *Checked.* Verified by a cold run. `clean` removes `build`, `bin` and `nimcache`. Then `drive`
 fetches every face, builds both front-ends, and drives them with no step run by hand, which is the
 case of the runner itself. A second run fetches nothing.
@@ -472,8 +480,9 @@ Verified by type-checker: every script is clean under the three flags above, wit
 non-null assertion. Verified by driven check: `driveTypeRoles`, `driveTypeDrawn` and
 `driveTypeLigatures`.
 
-Scene save and load remain **untested** here, because nothing drives the file picker.
-**Unverified**: no human has driven this page.
+Verified by driven check against a stand-in host: a scene saves as a zip and loads back, and a PNG
+saves as itself. A declined save offers no link. Verified by `unzip -t`: the zip is sound.
+**Untested**: the real host. **Unverified**: no human has driven this page.
 
 ## Desktop front-end
 
@@ -971,12 +980,9 @@ floor, `FRACTION_AMBIENT_SHADE` at 0.25, a quarter. The underside then still rea
 its own hue, rather than a hole in the field.
 
 Nothing in the scene carries a light. Shading is presentation that gives a disc its sphere, and
-not a property of any object. It is not a point that shines on the others. The scene format
-carried such a point from version 5 to version 6, and the record kept it as a *sun*.
-
-That was one more thing that the astronomy of the demo had written into a visualiser of an
-algebra. Every point read the same under it but the sun itself, which drew flat. The cost is three
-floats fewer for each point record, and no relighting pass for each edit.
+not a property of any object. Rejected: a point that shines on the others, which format versions 5
+and 6 carried. Every point read the same under it but that point itself, which drew flat. The
+saving is three floats fewer for each point record, and no relighting pass for each edit.
 
 **Furniture** (the ground grid and the world axes) reaches `extent_furniture`, which is
 `FACTOR_CLIP_FAR` orbit distances. It is drawn as **fog about the eye**, and not as a halo about
@@ -1067,11 +1073,10 @@ moves it:
 - a turn of −elevation about the line through the pivot along +y;
 - a turn of the azimuth about the line through the pivot along world up.
 
-**Pivot and both angles are read out rather than stored, and that closes a hole.** They named the
-stance together before, and one could go stale against another. A dolly wrote the distance while the
-pivot stood, so the pivot could sit where no angle pointed. Now the dolly slides the eye and names
-the new separation, and the pivot follows. `repivotToDepth` is one assignment, and `dollyToward`
-needs no pivot arithmetic at all.
+**Pivot and both angles are read out rather than stored, and that closes a hole.** Stored beside
+the stance, one could go stale against another, and a dolly left the pivot where no angle pointed.
+The dolly slides the eye and names the new separation, and the pivot follows. `repivotToDepth` is
+one assignment, and `dollyToward` needs no pivot arithmetic at all.
 
 **The azimuth reads back in (−π, π].** It comes off the sight direction through `arctan2`, which
 bounds it. A stored azimuth ran on past π and counted up. The ease is not affected, because
@@ -1082,21 +1087,18 @@ Both angles also land within an ulp or two of what was asked, rather than on it,
 through the motor and back. The suite compares them as it compares every other computed float.
 
 **The frame needs no clamp.** Carrying three reference directions through a rigid motion keeps them
-orthonormal and weightless, so no join can refuse and no antidual sign needs pinning. The joins it
-replaced collapsed as the sight axis neared world up, which is what the elevation clamp was for.
-`ELEVATION_LIMIT` is now the bound that `orbit` applies to hold the turntable's own reading, and
-nothing derives through it.
+orthonormal and weightless, so no join can refuse and no antidual sign needs pinning. Rejected:
+joins against world up, which collapse as the sight axis nears it.
 
 **Every verb composes the motion, `orbit` included.** `orbit` turns about two lines through the
 pivot, along the camera's own up and its own across. `look` turns about the same two through the
 eye. A roll survives it, and the elevation clamp goes with the rebuild that needed it.
 
-A rebuild from four turntable numbers cannot carry a roll, so rolling and then orbiting snapped the
-view upright. It also fixed the orbit's axes to world up, which is a pole. `ELEVATION_LIMIT` is left
-to `placedAtElevation` alone, the panel's own field, where the turntable is rebuilt from angles and
-does collapse at the pole.
+Rejected: a rebuild from four turntable numbers, which carries no roll and fixes the orbit's axes to
+world up, a pole. `ELEVATION_LIMIT` bounds only a stance rebuilt from angles, which does collapse at
+the pole: `initCamera`, `placedAtElevation` and a view framed along a facing.
 
-The axis of each turn is the camera's own, so an orbit reads as a trackball rather than a turntable.
+The axis of each turn is the camera's own, so a mouse's orbit reads as a trackball, not a turntable.
 The azimuth is no longer linear in a horizontal drag once the elevation is off level. Two thousand
 steps of one angle still compose to one turn of their sum, because a turn leaves its own axis
 standing.
@@ -1252,10 +1254,9 @@ Assumed: that no reader wants a ceiling on the separation.
 `look`, `roll` and `travel` turn and slide about its own axes. With a selection it keeps the
 turntable.
 
-**Every drag reads that state through a verb of its own.** `interaction.turnAcross` is the left
-drag and `panAcross` the right, and each picks between the two states inside itself. Both
-front-ends called `orbit` outright before, so `look` never reached a drag at all. The eye swung
-round the pivot where the reader meant to turn in place.
+**Every drag reads that state through a verb of its own.** `interaction.turnAcross` is the left drag
+and `panAcross` the right, and each picks between the two states inside itself. Not `orbit` for
+every drag, which swings the eye round the pivot where a reader means to turn in place.
 
 **Flight turns about a line through the eye.** `turnedAboutEye` joins the eye with a carried axis
 and turns about that line, so the eye stands where it stands and the frame stays orthonormal.
@@ -1263,30 +1264,40 @@ and turns about that line, so the eye stands where it stands and the frame stays
 axis before it. A pitch about the stale one tips the up axis off the sight, which is a roll nobody
 asked for.
 
-`look` takes the two arguments that `orbit` takes, with the same signs, so one drag feeds either
-verb as the selection comes and goes. Signs that disagreed would reverse the gesture the moment a
-reader selected something.
+`look` takes the two arguments that `orbit` takes, with the same signs. So one desktop mouse drag
+feeds either verb as the selection comes and goes.
 
 The axes are the camera's own and never the world's, so there is no pole and no clamp. Eight pitches
 of a quarter radian compose to exactly two radians, which is past straight down.
 
-**Roll reaches either state.** `orbit` composes the motion rather than rebuilding it from four
-turntable numbers. A roll then survives an orbit event, so Q and E work with a selection as without
-one. The rebuild carried no roll, and rolling and then orbiting snapped the view upright.
+**Turning about the camera's own axes carries roll round with it, so a finger turns about level
+axes.** The roll a closed drag leaves behind is the solid angle that drag encloses. A loop of 0.3
+radians leaves 0.0813, against 0.0822 enclosed: 4.7 degrees for each loop, and 18.6 over four. That
+is the geometry of transport, not a fault, and no order of the two turns escapes it. `look` and
+`orbit` carry exactly the same amount. The desktop's mouse keeps it, with Q and E to answer it.
 
-**Turning about the camera's own axes carries roll round with it, and a finger puts it back.** The
-roll a closed drag leaves behind is the solid angle that drag encloses. A loop of 0.3 radians
-leaves 0.0813, against 0.0822 enclosed: 4.7 degrees for each loop, and 18.6 over four. That is the
-geometry of transport, not a fault, and no order of the two turns escapes it. `look` and `orbit`
-carry exactly the same amount.
+**A finger carries what it holds, one pixel for one.** `turnsCarrying` pitches about the level axis
+until one direction has the height of the other, then yaws about world up until their bearings meet.
+Of the two pitches that reach that height, it takes the pair that turns least, so a drag that comes
+back brings the camera back. Free aim holds the sky, and `lookCarrying` turns about the eye. Near
+the pole, a height out of reach lets what the finger holds slip.
 
-A finger asks for it back. `turnAcross` reads `camera.rollHeld` before the turn and restores it
-after, so a touch drag leaves the horizon where it found it. Touch has no roll key beside it, and a
-finger wanders in curves. A mouse keeps the transport as it is, with Q and E to answer it.
+Orbit holds a point on a sphere about the pivot, since the pivot itself never moves under orbit.
+`pointHeld` places it on the ray, on the sphere's near side while the ray passes within
+`radius/sqrt(2)` of the pivot. Beyond, a sheet of the same slope carries on, so a finger off the
+sphere still turns the view. `radiusHeld` takes the selection's reach from the pivot. It is no less
+than a third of the short side at the pivot's depth, and inside the eye's separation.
 
-`rollHeld` is the angle of the camera's own up against `UP_WORLD`, across the sight. It reads none
-within `COSINE_POLE_ROLL`, 5 degrees of straight up or down. That reference has nothing left to
-project there, and the reading is noise before it is undefined. The roll simply stands.
+Not a rate: it turned the sight by an angle the screen does not show. On a phone, a 60 by 40 px drag
+carried free aim's picture 542.4 by 411.8 px, and now 60.4 by 41.0. Not the roll put back after each
+turn about the camera's own axes, which left the sight sunk.
+
+A finger has no roll key beside it and wanders in curves, and the page's mouse drags as a finger
+does. So `turnFollowing` turns about world up and the level axis across the sight, and keeps any
+roll a twist or Q and E set. Each axis is the world axis nearest the camera's own, signed from the
+camera. So the camera passes over the top, upside down on the far side, and the picture still
+follows the drag. On a 390 by 844 page in Chromium on 2026-09-24, a free-aim turn took 0.45 to 0.48
+ms. An orbit turn took 0.63 to 0.72 ms, over 2,000 turns of each.
 
 **The speed climbs toward a cap and never reaches it.** `speedTravelling` is the cap times
 `1 − e^(−t/τ)`. τ is `SECONDS_SPEED_RISE`, 0.6 s: 63 percent of the cap at one τ, and 95 percent at
@@ -1388,10 +1399,11 @@ The separation then scales as the turntable's dolly scales it.
 - a left drag looks with nothing picked and orbits with something picked, and the eye or the pivot
   stands accordingly;
 - one drag loop leaves the solid angle it encloses, and four leave 0.324 radians;
-- a finger's drag leaves none of it, and keeps the roll the reader set;
-- the roll reading is none at the pole, where the turn simply goes through unheld;
-- eight pitches of a quarter radian compose to exactly two radians, where `orbit` stops at its
-  clamp;
+- a finger's loop of pixels leaves none of it in either state, keeps the reader's roll, and closes;
+- a finger's orbit keeps the point on its sphere under it, from three stances and two reaches;
+- a finger's free aim keeps the sky it took under it, from three stances, in 1 step or 16;
+- an orbit passes over the top and a look under its feet, and a drag goes through the pole;
+- eight quarter-radian pitches make two radians in `look` and `orbit`, past the panel field's clamp;
 - a look and an orbit swing the sight the same way, for both signs of the drag;
 - a roll leaves the eye and the sight alone, and 64 steps of a whole turn return every axis;
 - a travel step reads back along the rolled frame, to each of the three axes it was asked for;
@@ -1413,6 +1425,10 @@ The separation then scales as the turntable's dolly scales it.
 Verified by driven checks:
 
 - a left drag with nothing picked turned the sight and moved the eye 0.000000 units;
+- a left drag of 60 and 40 px carried the object beside the cursor 59.1 and 40.7 px;
+- a 600 px finger swipe away and back brought the azimuth back to 1.0500 and elevation to 0.420000;
+- a finger moved 60 and 40 px with nothing picked carried the object beside it 59.1 and 40.7 px;
+- a finger dragged down with an object picked carried the eye over the top, and the pivot 0.000000;
 - 500 ms of `w` on the opening page moved the eye 3.455 units, 0.000000 of them across the sight
   line;
 - the separation gave up that same 3.455 of 19.000;
@@ -1644,7 +1660,8 @@ with `carried`. Nothing else in the tree names a motor.
 - the order of composition.
 
 Assumed: that `unitize` is the motor norm for any unit motor. The suite reads it back for every
-motor that `exp` builds, and derives nothing about one that drift moved off unit.
+motor that `exp` builds. Nothing renormalises a composed stance. Natively on 2026-09-24, 10^6 turns
+of up to 0.05 radians left its weight 8e-14 off unit and its pivot 5e-12 off.
 
 Unmeasured: the cost of a sandwich. It is two dense antiproducts. That is about twice the 1 to 2 µs
 that the Algebra boundary section records for one operation on the JS backend.
@@ -1825,7 +1842,9 @@ operations.
 - the 68 points of the frame at 296.8 px flat at half progress;
 - the head sitting its carried travel at 45 placements;
 - a matured hold taken once;
-- a full orbit at two elevations in steps of 0.002 rad, with no isolated label step;
+- a line's label over two orbits of 1,257 steps each, with no isolated step;
+- the push of that label turning at most 0.017 in one step, against the 0.05 its law allows;
+- a plane's label over one such orbit, with no hop where its sampled top hops 29 times;
 - two more orbits: the label of the horizon line on the leftmost band point in the left half;
 - the label of the frame on its left edge at its foot;
 - the label of a plane a milliradian either side of the flip, standing under a pixel apart.
@@ -1861,9 +1880,8 @@ view.** With a horizon plane visible the cursor is over *something* almost every
 empty space becomes a camera move precisely because nothing was hovered. A finite plane whose disc
 reaches every corner of the frame (`picking.coversView`) leaves no empty glass at all.
 
-Every corner is half the diagonal from the middle, which is 750 px on a 1200×900 frame. The rule
-asked for the longer side before, 1200 px, which is 1.6 times as far. A plane covering the whole
-window then still read as a drag handle, and the view could not be moved off it.
+Every corner is half the diagonal from the middle, which is 750 px on a 1200×900 frame. Rejected:
+the longer side, 1200 px, under which a plane covering the whole window still reads as a handle.
 
 `isBackdropUnder` folds both cases into one answer, which `beginDrag`, `destinationOf` and
 `interaction.is_hover_backdrop` read. A click on empty space selects the sky rather than clears
@@ -1929,8 +1947,9 @@ the choice wheel. Both render paths and `help.nim` read them.
 
 **The selection menu opens on the click, beside the pointer**, `INSET_MENU_POINTER` 8 px from it.
 It then remembers its offset from the anchor of the object, so an orbit carries it with the
-object. It is not held back until the ease settles: a menu a third of a second after the click
-reads as a missed click. A menu opened with no pointer sits above the anchor.
+object. A pick carries its object to the middle of the frame, so the menu rides in and settles
+beside the middle. It is not held back until the ease settles: a menu a third of a second after
+the click reads as a missed click. A menu opened with no pointer sits above the anchor.
 
 **A click has no time limit.** `isClick` is distance alone, at `PIXELS_CLICK_SLOP` 6 px. It is not
 the 12 px of `PIXELS_TAP_SLOP`. A mouse does not roll, and the allowance of a finger would swallow
@@ -2092,18 +2111,18 @@ Verified by driven checks:
 - a finger dragged from a point with a twin 0.05 units away, which orbits and builds nothing;
 - `more…` landing on `𝐦 ∧ 𝐧` on both builds;
 - the refusal on a full scene;
-- a right-click 6 px off an anchor, with the menu up two frames in, and a pan moving menu and
-  anchor by one delta;
+- a right-click showing the menu two frames in, 14 by 12 px from the anchor, and the same offset
+  once settled;
+- a pivot shift moving that anchor 84 px, with the menu holding the offset;
 - an emptied list, a deep handle edited, and its form in view.
 
 Assumed: that 0.75 s is the right dwell for any hand.
 
 ## Two fingers
 
-**Two fingers are read once for each frame, and zoom only past the tap slop.** The move of each
-finger arrives as its own `pointermove`. Read there, every step of a pan carried together is a
-zoom in by the step of one finger. It zooms out again by the step of the other. That was harmless
-while a dolly was a pure scale, and became a pivot-moving re-pivot on every one once it was not.
+**Two fingers are read once for each frame, and zoom only past the tap slop.** Each finger's move
+arrives as its own `pointermove`. Read there, a pan carried by two fingers zooms in by one finger's
+step and out by the other's, and each zoom moves the pivot.
 
 `glue.settleTwoFingers` reads both fingers once for each frame, from the frame loop. Two fingers
 carried together never hold their separation to the pixel. So a pinch zooms only once the
@@ -2161,16 +2180,15 @@ and redo off the entry arrived at.
 
 **The stance crosses a step, and the lens does not.** Both steps place the camera at the entry's
 `CameraStance`, which holds the pivot, the separation and the two angles. The field of view is the
-reader's own setting, and `CameraStance` says that nothing aiming the camera may rewrite it. Both
-steps assigned the whole `Camera` before. A reader who widened the lens, then stepped back over an
-edit made at another lens, lost their own setting.
+reader's own setting, and `CameraStance` says that nothing aiming the camera may rewrite it.
+Rejected: assigning the whole `Camera`, which puts the lens of the edit over the reader's own.
 
 To restore the camera of the state arrived at hands back the view that the *previous* edit was
 made from. An undo of the first construction of a session then teleports to the startup view. Not
 to record an orbit is the accepted cost of not needing a rule for a gesture to settle. **An
 accidental orbit is still not undoable on its own.**
 
-Both front-ends abandon their camera tween on a successful step. The timeline is seeded wherever
+Both front-ends halt their camera tween on a successful step. The timeline is seeded wherever
 the scene is initialised or re-initialised, and a successful step clears the selection and any
 preview. It is bound to Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z and Ctrl+Y on both builds, through one
 function for each build rather than the button. The `disabled` attribute of that button is
@@ -2486,9 +2504,8 @@ class is added, rather than from load, so the two stack.
 
 ## Camera aiming and framing
 
-**The stance an ease carries is a motor and a depth**, the same pair that `Camera` holds. Four
-turntable numbers named it before, and a roll is not one of them. Framing a rolled view snapped it
-upright.
+**The stance an ease carries is a motor and a depth**, the same pair that `Camera` holds.
+Rejected: four turntable numbers, which carry no roll and stand a rolled view upright.
 
 `toward` eases that motor as one screw. It takes the motion carrying one stance to the other, logs
 it, scales it by the progress, and puts it back on. `motors.log` flips the sign of a motion whose
@@ -2516,10 +2533,17 @@ Both builds aim from **one rule**, `framing.offerAim`, once for each frame. It t
 multivector of an open session where there is one, and every selected object otherwise. **The
 offer stands**: the tween keeps its goal after it arrives.
 
-A camera that the user moves calls `abandon`, which keeps the goal and marks it done. `release`
-instead clears it, so the offer is re-made the next frame and the camera is taken straight back. A
-move made while a selection stands is therefore never taken back. `advance` eases the pivot and the
-angles linearly, and the **distance geometrically**.
+A camera that the user moves keeps the goal, so the offer reads as answered. `release` instead
+clears it, so the offer is re-made the next frame and the camera is taken straight back. A move made
+while a selection stands is therefore never taken back. `advance` eases the motion as one screw, and
+the **distance geometrically**.
+
+**A move that turns lets the pivot finish, and a move that places the pivot stops the ease.** A
+turn, roll, plain dolly or key calls `abandon`. The reader then owns the way round and the distance,
+and `advance` carries the pivot the rest of its own path underneath. `slideOwed` reads each frame's
+share off `toward`, so the pivot lands where the ease would have put it. Pan, wheel, pinch, typed
+view fields, undo and redo call `halt`, which marks the ease done where it stands. Each of those
+sets the pivot itself, and a pivot still arriving would slide the camera off it.
 
 **Framing** (`framing.nim`). On a new pick **the orbit pivot comes to the middle of what was
 picked**, by `objects.centroidFolded`. It runs over the same objects that the bound is over, with
@@ -2564,14 +2588,18 @@ pivot goes to the centroid, and the separation gives up exactly what the rule as
 `SLACK_FRAMED` 1e-9 stands in for all three of those constants. A `>=` against a reach that
 `stepOutTo` lands on exactly reported its own answer unframed, one ulp short of it.
 
-**The floor holds while the reader flies.** `offerAim` takes the camera by `var`. Where the reader
-moves it and the rule is broken, `holdFramed` carries the eye straight out from the centre of the
-sphere. Straight out is the least move that restores the rule, and it keeps the bearing the reader
-had reached. The camera then slides along the bound rather than stopping dead against it.
+**The floor holds while the reader flies.** Where the reader moves the camera and breaks the rule,
+`holdFramed` backs the eye out along its own sight. It uses the closed form that `stanceFor` pulls
+back with, on a camera that `offerAim` takes by `var`. Nothing turns, so the camera slides along
+the bound rather than stopping dead against it. The pivot is re-stamped at the depth of the middle,
+so the separation follows the eye. After any pick the middle stands on the sight line, so the pivot
+is the middle itself.
 
-A step back along the reader's own heading lands further out than the rule asks. It also needs that
-heading threaded through every verb. The pivot is re-stamped onto the centre, so the separation
-follows the eye rather than going stale.
+Not straight out from the centre of the sphere, though that is the least move. The centre of the
+sphere is not the middle once three objects part them. That push slid the view sideways and the
+pivot with it. On a 390 by 844 phone, one 60 px orbit of three points left the pivot 0.095 units,
+or 3.1 px, off their middle. Not along the reader's own heading either,
+which lands further out than the rule asks and needs that heading threaded through every verb.
 
 **A horizon object binds where it stands, and nothing more.** A star must be on screen, so the
 sight falls within the half-angle of the centred box: two degrees of freedom bound. A horizon line
@@ -2591,14 +2619,17 @@ already fits does. `stanceFor` turns toward a star only where that star's own bo
 Without the floor, a pick of something already on screen pulled the view about. The comet drifted
 75.5 px against a band of 5 to 60.
 
-**A pointer pick keeps its object under the pointer, and comes in to it.** The centring rule above
-is for picks with no pointer: the objects list, the keyboard, or a shift-added group. A click or a
-tap on a point or a line records a `framing.PointerPick`, which `offerAim` consumes on the next
-frame.
+**A pointer pick centres its object, and comes in to it.** A click or a tap on a point or a line
+records a `framing.PointerPick`, which `offerAim` consumes on the next frame. The destination is
+`stanceApproaching`, which puts the pivot on the object's own anchor. Every pick therefore centres,
+whether a pointer made it or the objects list did.
 
-The destination is the own move of the wheel (`stanceUnderPointer`). The eye comes in along its
-line to where the object stands under the pointer. The angles never change, and the pivot lands on
-the sight line at the depth of the object.
+The camera slides and never turns, so the angles and the roll both survive. `stanceRepivoted`
+carries the pivot onto the object and `stanceDollied` sets the reach, which is the whole of the
+move.
+
+Rejected: holding the object under the pixel clicked. The pivot then stands units from the object,
+and every orbit swings the object round the screen.
 
 **How far in depends on the shape, and on what the reader could see.** It is sized on the height
 of the frame by `camera.depthSpanning(diameter, fraction)`. A point drawn at the floor dot is only
@@ -2606,42 +2637,59 @@ a place. The camera comes in until its disc spans `FRACTION_HEIGHT_APPROACH_POIN
 height of the frame. A sixth was too close, and 0.01 was chosen by eye. A point seen at its size,
 and a line, come in no further than the orbit distance.
 
-A plane is framed **both ways**. The centre of its disc is brought to the depth where the diameter
-of the disc spans `FRACTION_HEIGHT_APPROACH_PLANE` 0.40. The crossing under the pointer stays the
-held anchor. It falls back to `stanceFor` where that has no positive solution. It is not the
-centring rule for a plane, which never pulls in.
+A plane comes in until the diameter of its whole disc spans `FRACTION_HEIGHT_APPROACH_PLANE` 0.40.
+That is the reach its own centre asks for, and no crossing enters it. It is not the centring rule
+for a plane, which never pulls in.
 
-**The ease holds the pixel too.** `CameraTween.anchor_held` switches `advance` to
-`towardHoldingAnchor`, where the depth of the eye to the anchor moves geometrically along the
-eye-anchor line. `toward` takes the eye off that line mid-ease.
+**An object behind the reader is left to the frame rule.** Centring one would slide the camera back
+past it rather than turn, which is a jump nobody asked for. `stanceApproaching` answers none there,
+and `stanceFor` takes it by its own bound.
+
+The ease holds no pixel now. `toward` runs for every pick, because the destination is centred and
+there is no anchor left to keep in place.
 
 **A pick renews a held goal.** The `is_renewed` of `aimAt` re-arms the ease for a pointer pick
 whatever the tween holds. Without it, the same object picked again, after the wheel had taken the
 reader out, goes nowhere.
 
+**A turn inside the ease still turns about the middle of what is picked.** A finger that adds an
+object and turns at once lands inside the 0.35 s ease. `CameraTween.abandon` gives the turn to the
+reader, and the pivot still arrives, 0.000 units from the middle. Rejected: stopping the ease, which
+left the pivot 23.2 px off the middle of two points on a 390 by 844 phone.
+
 *Checked.* Verified by `suites.nim`:
 
-- the pixel stays within 0.01 px through five steps of the ease, and the arrival distance equals
-  the fit;
-- a near point and a line keep the orbit distance;
+- a pointer pick lands the object within 0.01 px of the middle of the frame, from every angle
+  swept;
+- an orbit of 0.7 by 0.3 then leaves it there;
+- the arrival distance equals the fit, and the reach to the object equals it too;
+- a near point and a line keep the orbit distance, and one behind the reader is refused;
 - a re-pick after `abandon` and a dolly re-arms;
 - the arrival of the plane from 12 units and from 1;
 - the step out reaches its own distance, and answers zero from every stance already past it;
-- the floor leaves a camera standing further out alone, and slides the near one out radially with
-  its bearing held;
+- the floor leaves a camera standing further out alone, and backs the near one out along its
+  sight with its bearing held;
+- a pinch past the floor, over three points whose middle is off their sphere's centre, backs out
+  along the sight;
+- the pivot stays on their middle there, and through sixty orbit steps after it;
+- a turn at a fifth of the ease still lands the pivot on the middle of two points, and keeps the
+  turn, as `settle` does;
+- a pan mid-ease halts it, and the pivot stays where the reader put it;
 - a frame narrowed to half its width asks for more room, and the same floor supplies it;
 - a horizon point is bound to the screen, a horizon line to crossing it, and a horizon plane not at
   all.
 
 Verified by driven check:
 
-- from 45 units a right-click brings the eye to 19.3, with the anchor drifting 0.00 px in flight
-  and settled;
+- a right-click 155 px off the middle settles the object 0.00 px from it, with the eye brought in
+  from 45 units to 19.3;
 - a second pick after a wheel out past 100 comes in to 19.3 again;
 - a right-click on the ground plane from Home settles its centre at 48.28, which is exactly the
   depth wanted for 0.40;
 - the preview framed with its operands;
 - a move with a selection standing, through `driveTwoFingerPan` and `drivePan`;
+- a finger adds a second point and turns one frame in, with the pivot 0.27 to 0.35 short; it ends
+  0.0000 from their middle;
 - a comet in view, picked, still pacing the screen at 35.1 px against a band of 5 to 60.
 
 Verified then, by the `verify_touch_pan.js` of the prototype: 63 trials with the orbit turned
@@ -2748,10 +2796,10 @@ eleven articles over exposition, derivation, notation, build-time safety, naming
 cost, honesty, tests, form and the record. It carries a precedence clause and three gated
 mechanisms. `STYLE.md` is the Nim expression guide.
 
-Every comment is in the register of the `pga` library. That is a one-line imperative summary that
-ends in a period, then elaboration as a hanging outline, one claim to a line. It carries no
-articles, no history and no figures, and the history and the figures live here. `koch tree` holds
-that register mechanically over every authored language.
+Every comment is in the register of the `pga` library. That is a one-line imperative summary
+that ends in a period, then elaboration as a hanging outline, one claim to a line. It carries
+no articles, no history and no figures, and the history and the figures live here.
+`koch check-files` holds that register mechanically over every authored language.
 
 **Foreign bindings are marked `sideEffect`, and that is what makes `func` mean anything here.**
 Nim assumes that an imported body is pure, so without the mark every GL draw and every Dear ImGui
@@ -2781,10 +2829,10 @@ The `pga` library is unmodified by request. There is one substantive deviation. 
 asserts that its own module doc is the source of truth for names. That is what makes the notation
 trap easy to fall into (see Operation notation).
 
-*Checked.* Verified: `koch tree` reports 0 findings. The demotion and the revert were decided by
-the compiler, and not by reading. The six per-frame exports allocate nothing, read off the emitted
-JS, and the gain is **unmeasured**, an allocation count rather than a millisecond. **Unverified**:
-no human has read the result.
+*Checked.* Verified: `koch check-files` reports 0 findings. The demotion and the revert were
+decided by the compiler, and not by reading. The six per-frame exports allocate nothing, read
+off the emitted JS, and the gain is **unmeasured**, an allocation count rather than a
+millisecond. **Unverified**: no human has read the result.
 
 ## Dependencies and vendoring
 
@@ -2794,9 +2842,9 @@ inside it. So the requirement in `rga_visualiser.nimble` names the repository by
 `atlas.lock` records the resolved commit, and `nim.cfg` names the subdirectory that Atlas restores
 it to.
 
-`koch deps` replays that lock, and nothing is committed (Article XI.3). Both projects are under
-the Prosperity Public License 3.0.0. It is not a project verb that clones it, because CI runs
-`tree`, `deps` and `tests`, and never the own build driver of a project.
+`koch fetch-deps` replays that lock, and nothing is committed (Article XI.3). Both projects are
+under the Prosperity Public License 3.0.0. It is not a project verb that clones it, because CI
+runs `check-files`, `fetch-deps` and `test`, and never the own build driver of a project.
 
 **This project tracks the head of pga, and says so when it cannot.** The standing instruction from
 the Architect is this. Take the latest pga. Where the latest does not work, pin the most recent
@@ -2847,7 +2895,7 @@ The stored nimble of the lock must equal the committed one exactly, or `rep` rev
 silently (repository issue 25). The static pass refuses the difference, so the hand-patch is
 checked rather than trusted.
 
-*Checked.* Verified by a run on the pinned commit, through `koch tests`. It ran every suite on the
+*Checked.* Verified by a run on the pinned commit, through `koch test`. It ran every suite on the
 C backend, on JS, and at reduced capacities, at the same case counts that the previous pin
 produced. That is what says the stand-ins behave as the own ones of the library did.
 
@@ -2864,25 +2912,27 @@ were asked and none does, which dates the claim rather than proves it.
 
 ## Testing
 
-One file, `tests/suites.nim`, is run from three thin entry points that `koch` runs through
-testament:
+One suite is run from three thin entry points that `koch` runs through testament:
 
 | Entry point | Backend | Capacities | Why |
 |-------------|---------|-----------|-----|
 | `t4d.nim` | C | Default | The desktop build, as shipped |
-| `t4d_browser.nim` | JS | Default | The browser build's own backend |
+| `t4d_browser.nim` | JS | Default, 4 history steps | The browser build's own backend |
 | `t4d_small.nim` | C | 12 objects, 12-char labels, 4 steps | Boundaries a test reaches |
 
 The JS row is not a formality: a rule reached through two mechanisms is held together only where
-both run. The reduced row makes any constant tuned to the default fail here, and `LABEL_MAX` at 12
-is under several labels that the suite constructs. Cases that need C — `snprintf`, the encoders,
-the arena, and save and load — guard themselves with `when not defined(js)`.
+both run. It keeps 4 history steps, because the History laws say nothing of the backend. Measured
+on Node 22 on 2026-09-24, its run takes 48 s against 162 s at the default, and the orrery still
+runs. The reduced row makes any constant tuned to the default fail here, and `LABEL_MAX` at 12 is
+under several labels that the suite constructs. Cases that need C — `snprintf`, the encoders, the
+arena, and save and load — guard themselves with `when not defined(js)`.
 
 A case that walks every pair of handles at 10,000 objects runs ten minutes without output, so the
-suite gathers the joiners once instead. The JS entry point declares `targets: "js"`, rather than
-overrides the command of testament. So under `koch tests` testament compiles with the JS backend
-and runs the result through node. That is what makes the row real rather than a claim that nothing
-checks.
+suite gathers the joiners once instead. The JS entry point declares `targets: "js"` and no command
+of its own. So `koch test` compiles it with the JS backend and runs the result through node. Its
+file, `tests/suites.nim`, imports one module for each suite from `tests/suites/`. Top-level tests
+compile into the init function of their module, so one module made the suite one C function. Cold on
+four cores, `gcc` took 122 s on it, and the split `t4d` compiles in 12.6 s (2026-09-24).
 
 **The suites test rules, and a second layer drives events.** A rule bug earns a suite case, and a
 wiring bug earns a driven check, at the layer that the bug lived at. That is `tools/drive/` for
@@ -2894,7 +2944,7 @@ Timing-dependent quantities are asserted as **bands**. Identical code has measur
 29.8 ms hours apart on a shared runner. A flat ±1 ms band failed one frame in a hundred and
 twenty.
 
-*Checked.* Verified on the pinned commit through `koch tests`: every suite on the C backend, on JS
+*Checked.* Verified on the pinned commit through `koch test`: every suite on the C backend, on JS
 and at reduced capacities. The JS count is lower because the C-only cases skip themselves.
 Verified on the runner as well as locally: the C suites bind zlib for the PNG encoder. Their
 passing proves that the runner carries that library. Assumed: nothing about the suite itself.

@@ -125,6 +125,13 @@ const
     ##   Not exact middle: selection is *framed* inside box, spread across it.
     ##   Here rather than beside pixel test in `picking` because camera needs it too, to
     ##   solve how far back eye must stand (`distanceFitting`), and `picking` imports this.
+  FRACTION_HELD_CANVAS* = 1.0/3.0
+    ## Fix smallest sphere finger's orbit holds, as share of canvas's short side at pivot.
+    ##   Centre of it then turns about as fast as half turn per short side did, which
+    ##   Architect found almost right; see `radiusHeld`.
+  FRACTION_HELD_INSIDE* = 0.9
+    ## Bound sphere finger's orbit holds to this share of eye's separation from pivot.
+    ##   Eye inside sphere would meet it from behind, and hold point it cannot see.
   FACTOR_CLIP_NEAR* = 1.0/400.0
     ## Set near clip plane this fraction of orbit distance out.
     ##   Scaled beside `FACTOR_CLIP_FAR` so frustum stays same shape at every distance.
@@ -351,8 +358,8 @@ func initCameraDefault*(): Camera =
 
 func rollHeld*(camera: Camera): Option[float] =
   ## Read camera's roll about its sight, against `UP_WORLD`, or none near pole.
-  ##   Positive `roll` lowers this reading, so restoring it asks for difference as it
-  ##   stands; see `interaction.turnAcross`.
+  ##   Positive `roll` lowers this reading.
+  ##   Read by suite, which holds page's drag in `interaction.turnFollowing` to leaving it.
   let frame = camera.frame
   if abs(dot(frame.forward, UP_WORLD)) >= COSINE_POLE_ROLL: return none(float)
   some(arctan2(dot(frame.axis_right, UP_WORLD), dot(frame.axis_up, UP_WORLD)))
@@ -524,6 +531,15 @@ func orbit*(camera: var Camera; turn, rise: float) =
   camera.motor = camera.turnedAboutPivot(camera.frame.axis_right, -rise)
 
 
+func acrossLevel(camera: Camera): Direction =
+  ## Read level axis at right angles to sight, signed to agree with camera's own across.
+  ##   Camera's own across where sight runs along world up and names no level axis.
+  ##   Left unscaled: `turnAbout` unitizes axis it turns about.
+  let level = cross(camera.frame.forward, UP_WORLD)
+  if norm(level) < 1.0e-9: return camera.frame.axis_right
+  if dot(level, camera.frame.axis_right) >= 0.0: level else: -level
+
+
 func dolly*(camera: var Camera, factor: float) =
   ## Scale separation of eye from pivot, holding it off near bound.
   ##   Eye slides along sight line and pivot stands, which is what dolly means.
@@ -618,6 +634,110 @@ func look*(camera: var Camera; turn, rise: float) =
   ##   asked for.
   camera.motor = camera.turnedAboutEye(camera.frame.axis_up, turn)
   camera.motor = camera.turnedAboutEye(camera.frame.axis_right, -rise)
+
+
+func wrapAngle(radians: float): float =
+  ## Bring angle into half-open turn about zero, so smaller of two turns reads smaller.
+  floorMod(radians + PI, 2.0*PI) - PI
+
+
+func turnsCarrying(camera: Camera; held, under: Direction): (Direction, float, float) =
+  ## Solve turntable's turn that carries `under` onto `held`: level axis, pitch, yaw.
+  ##   Pitch about level across axis first, by what lifts `under` to `held`'s height; then
+  ##   yaw about world up, by what closes their bearings. Neither changes roll.
+  ##     Two pitches reach that height, and each has its yaw. Pair that turns least is
+  ##     taken: other one flips sight half turn about world up, and carries just as
+  ##     exactly.
+  ##   Height out of pitch's reach, as for pixel far off middle near pole, takes nearest
+  ##   height it reaches, and what finger holds slips under it there.
+  ##   Neither direction needs to be unit. Directions only: where turn stands is caller's.
+  let
+    level = camera.acrossLevel
+    across = (1.0/norm(level))*level
+    ahead = cross(UP_WORLD, across)
+    toward = (1.0/norm(under))*under
+    target = (1.0/norm(held))*held
+    along_ahead = dot(toward, ahead)
+    along_up = dot(toward, UP_WORLD)
+    reach = hypot(along_ahead, along_up)
+  func lifted(pitch: float): Direction =
+    ## Carry `toward` about `across` by `pitch`, as right hand turns.
+    cos(pitch)*toward + sin(pitch)*cross(across, toward) +
+      ((1.0 - cos(pitch))*dot(across, toward))*across
+  func bearing(pitch: float): float =
+    ## Solve yaw about world up that closes bearing of lifted `toward` on `target`'s.
+    let raised = lifted(pitch)
+    if hypot(raised.x, raised.y) <= 1.0e-12 or hypot(target.x, target.y) <= 1.0e-12:
+      return 0.0
+    wrapAngle(arctan2(target.y, target.x) - arctan2(raised.y, raised.x))
+  # Turning by `pitch` about `across` takes `ahead` toward `UP_WORLD`, so height becomes
+  #   `reach*cos(pitch - phase)`.
+  var pitch = 0.0
+  if reach > 1.0e-12:
+    let
+      phase = arctan2(along_ahead, along_up)
+      spread = arccos(clamp(dot(target, UP_WORLD)/reach, -1.0, 1.0))
+      rising = wrapAngle(phase + spread)
+      falling = wrapAngle(phase - spread)
+    pitch =
+      if rising^2 + bearing(rising)^2 <= falling^2 + bearing(falling)^2: rising
+      else: falling
+  (across, pitch, bearing(pitch))
+
+
+func lookCarrying*(camera: var Camera; held, under: Direction) =
+  ## Turn which way eye faces as turntable does, so `held` comes to be seen where `under` is.
+  ##   Finger's free aim: `held` runs through pixel finger left, `under` through pixel it
+  ##   reached, both read off this frame. So sky under finger moves with finger, pixel for
+  ##   pixel, and drag that comes back brings camera back. See `turnsCarrying`.
+  let (across, pitch, bearing) = camera.turnsCarrying(held, under)
+  camera.motor = camera.turnedAboutEye(across, pitch)
+  camera.motor = camera.turnedAboutEye(UP_WORLD, bearing)
+
+
+func radiusHeld*(camera: Camera; width, height: int; reach_selection: float): float =
+  ## Size sphere about pivot that finger's orbit holds.
+  ##   Selection's own reach from pivot, so what is picked follows finger over its extent;
+  ##   no smaller than `FRACTION_HELD_CANVAS` of short side at pivot's depth, so single
+  ##   point still gives finger something to hold; inside `FRACTION_HELD_INSIDE` of
+  ##   separation, so eye stays outside it.
+  let
+    half_height = tan(0.5*degToRad(camera.degrees_field_of_view))
+    per_pixel = 2.0*camera.distance*half_height/float(height)
+    least = FRACTION_HELD_CANVAS*per_pixel*float(min(width, height))
+  min(max(reach_selection, least), FRACTION_HELD_INSIDE*camera.distance)
+
+
+func pointHeld*(eye, pivot: Position; heading: Direction; radius: float): Position =
+  ## Place point finger's orbit holds along sight `heading` from `eye`.
+  ##   On sphere of `radius` about `pivot`, nearer side, where ray passes within
+  ##   `radius/sqrt(2)` of pivot. Beyond, on sheet that ray's miss sets: lifted toward eye
+  ##   by `radius^2/(2*miss)`, which meets sphere at that bound with same slope.
+  ##     Sphere alone runs out at its rim, where tiny drag asks for whole quarter turn;
+  ##     sheet carries on past it, and finger off sphere still turns view.
+  ##   Always on ray, so point held is under pixel exactly; only its distance from pivot
+  ##   leaves sphere, and there turn carries direction and lets distance slip.
+  ##   Eye and pivot passed in, not camera: per finger event, twice, and each is sandwich.
+  let
+    along = (1.0/norm(heading))*heading
+    toward_pivot = pivot - eye
+    nearest = dot(toward_pivot, along)
+    miss = norm(toward_pivot + (-nearest)*along)
+    back =
+      if miss <= radius/sqrt(2.0): sqrt(radius*radius - miss*miss)
+      else: radius*radius/(2.0*miss)
+  eye + (nearest - back)*along
+
+
+func orbitCarrying*(camera: var Camera; held, under: Direction) =
+  ## Turn eye about pivot as turntable does, so point `held` off pivot comes to be seen
+  ## where point `under` off pivot is seen now.
+  ##   Finger's orbit: both are points `pointHeld` places under pixel finger left and pixel
+  ##   it reached, less pivot. Turn about pivot keeps sphere they lie on, so point finger
+  ##   took moves with finger, pixel for pixel. See `turnsCarrying`.
+  let (across, pitch, bearing) = camera.turnsCarrying(held, under)
+  camera.motor = camera.turnedAboutPivot(across, pitch)
+  camera.motor = camera.turnedAboutPivot(UP_WORLD, bearing)
 
 
 func roll*(camera: var Camera, radians: float) =
@@ -925,10 +1045,11 @@ type
     started*: float ## Clock reading `goal` was last set or repivoted at.
     duration*: float ## Seconds ease takes, end to end.
     stance_from*: CameraStance ## Where current ease began.
-    anchor_held*: Option[Position] ## World point ease keeps on its pixel, or none.
-      ## Set by pointer pick: object clicked stays under pointer while camera comes in.
-      ## Ease then runs `towardHoldingAnchor` rather than `toward`; see `advance`.
-      ## Meaningless while `goal` is none; set beside it and cleared with it.
+    progress_last*: float ## Eased progress `advance` last carried camera to.
+      ## What next step is measured from once reader holds camera; see `is_yielded`.
+    is_yielded*: bool ## Whether reader has taken camera mid-ease; see `abandon`.
+      ## Ease then carries pivot alone, by each frame's own share of its path, and way
+      ## round and distance stay reader's.
 
 
 func `==`*(a, b: SphereWorld): bool =
@@ -1160,7 +1281,7 @@ func depthSpanning*(diameter, fraction: float; camera: Camera): float =
   ##   (`mesh.worldPerPixelAt`), and disc's projected major axis is its diameter whatever
   ##   its tilt, so one formula sizes point's ball and plane's disc alike.
   ##   Held off near floor as every depth is.
-  ##   For pointer pick's approach; see `framing.stanceUnderPointer`.
+  ##   For pointer pick's approach; see `framing.stanceApproaching`.
   let tangent_half = tan(0.5*degToRad(camera.degrees_field_of_view))
   distanceHeld(diameter/(2.0*max(fraction, 1.0e-6)*max(tangent_half, 1.0e-6)))
 
@@ -1276,44 +1397,6 @@ func toward*(from_stance, to_stance: CameraStance; progress: float): CameraStanc
   )
 
 
-func towardHoldingAnchor*(
-  from_stance, to_stance: CameraStance; anchor: Position; camera: Camera;
-  progress: float
-): CameraStance =
-  ## Step `progress` of way between stances sharing angles, keeping `anchor` on its pixel.
-  ##   Eye stays on line from where it began to `anchor`, its depth to anchor moving
-  ##   geometrically, so anchor's direction from eye never changes and nor does its pixel.
-  ##   `toward` cannot serve: pivot linear and distance geometric take eye off that line
-  ##   mid-ease (168 to 10 puts halfway eye at 41 by one curve, 89 by other), and object
-  ##   swung off pointer before swinging back.
-  ##   Distance still geometric, and pivot follows eye along sight as it always does.
-  ##   `camera` lends its lens: eye of each stance needs it.
-  let
-    forward = camera.placed(from_stance).frame.forward
-    eye_from = camera.placed(from_stance).eye
-    eye_to = camera.placed(to_stance).eye
-    depth_from = max(dot(anchor - eye_from, forward), 1.0e-6)
-    depth_to = max(dot(anchor - eye_to, forward), 1.0e-6)
-    depth = depth_from*pow(depth_to/depth_from, progress)
-    (near, far) = (max(from_stance.distance, 1.0e-6), max(to_stance.distance, 1.0e-6))
-    distance = near*pow(far/near, progress)
-    # Assemble eye as anchor plus scaled offset back toward where eye began.
-    eye = position(add(
-      toMultivector(anchor),
-      wedge(depth/depth_from, subtract(toMultivector(eye_from), toMultivector(anchor))),
-    ))
-  if eye.isNone: return to_stance
-  # Slide motion camera began with, rather than rebuild one: orientation is what this
-  #   ease holds, roll and all, and only eye moves.
-  CameraStance(
-    motor: motorOf(wedgeDotAnti(
-      motorSliding(subtract(toMultivector(eye.get), toMultivector(eye_from))),
-      toMultivector(from_stance.motor),
-    )),
-    distance: distance,
-  )
-
-
 func `==`*(a, b: CameraStance): bool =
   ## Compare two stances exactly, for caller asking whether camera would move at all.
   ##   Motor is stored state, so two stances agreeing here agree on eye, every axis,
@@ -1323,7 +1406,7 @@ func `==`*(a, b: CameraStance): bool =
 
 func aimAt*(
   tween: var CameraTween; camera: Camera; goal: CameraAim; destination: CameraStance;
-  now, duration: float; anchor_held = none(Position); is_renewed = false
+  now, duration: float; is_renewed = false
 ) =
   ## Set camera watching `goal` and ease it to `destination`, from where it stands now.
   ##   Requirement and stance, not one thing twice: `goal` is what re-offer is
@@ -1336,11 +1419,9 @@ func aimAt*(
   ##     each frame. `release` withdraws offer; only then does same goal aim camera again.
   ##     `is_renewed` overrides: pointer pick of object already held aims afresh, since
   ##     reader who clicks again means to be taken there again.
-  ##   `anchor_held` asks ease to keep that world point on its pixel; see `anchor_held`.
   if tween.isGoalHeld(goal) and not is_renewed: return
   tween.goal = some(goal)
   tween.destination = destination
-  tween.anchor_held = anchor_held
   # Mark arrived outright where camera already stands on destination.
   #   Easing through whole duration would write reading it holds and fight user who
   #   orbits.
@@ -1348,6 +1429,18 @@ func aimAt*(
   tween.started = now
   tween.duration = duration
   tween.stance_from = camera.stanceOf
+  tween.progress_last = 0.0
+  tween.is_yielded = false
+
+
+func slideOwed(tween: CameraTween; camera: Camera; progress: float): Multivector =
+  ## Read slide carrying pivot from where ease last stood it to where `progress` stands it.
+  ##   Both read off ease's own path, so pivot held by reader follows same track ease
+  ##   would have, and lands where it would have.
+  let
+    was = camera.placed(tween.stance_from.toward(tween.destination, tween.progress_last))
+    now_at = camera.placed(tween.stance_from.toward(tween.destination, progress))
+  subtract(toMultivector(now_at.pivot), toMultivector(was.pivot))
 
 
 func advance*(
@@ -1359,15 +1452,13 @@ func advance*(
   ##   project keeps easing curve.
   ##     Callers hand `tessellate.easeOutCubic`, same curve and duration freshly added
   ##     object grows in with.
+  ##   Held by reader, it slides camera by this frame's share of pivot's path and does
+  ##   nothing else, so their turn and their distance stand; see `abandon`.
   if tween.goal.isNone or tween.is_arrived: return
   let progress = ease(clamp((now - tween.started) / max(tween.duration, 1.0e-6), 0.0, 1.0))
-  camera = camera.placed(
-    if tween.anchor_held.isSome:
-      towardHoldingAnchor(
-        tween.stance_from, tween.destination, tween.anchor_held.get, camera, progress
-      )
-    else: tween.stance_from.toward(tween.destination, progress)
-  )
+  if tween.is_yielded: camera.slideBy(tween.slideOwed(camera, progress))
+  else: camera = camera.placed(tween.stance_from.toward(tween.destination, progress))
+  tween.progress_last = progress
   if now - tween.started >= tween.duration: tween.is_arrived = true
 
 
@@ -1375,8 +1466,11 @@ func settle*(tween: var CameraTween, camera: var Camera) =
   ## Put camera on destination at once.
   ##   For caller that must not show half-finished pan, such as storyboard frame about to
   ##   be captured.
+  ##   Held by reader, only pivot's remaining slide is put on, as `advance` would.
   if tween.goal.isNone or tween.is_arrived: return
-  camera = camera.placed(tween.destination)
+  if tween.is_yielded: camera.slideBy(tween.slideOwed(camera, 1.0))
+  else: camera = camera.placed(tween.destination)
+  tween.progress_last = 1.0
   tween.is_arrived = true
 
 
@@ -1388,15 +1482,27 @@ func release*(tween: var CameraTween) =
   ##   Not for camera *user* just moved: see `abandon`.
   tween.goal = none(CameraAim)
   tween.is_arrived = false
-  tween.anchor_held = none(Position)
 
 
 func abandon*(tween: var CameraTween) =
-  ## Stop carrying camera, but remember what it was carrying it toward.
-  ##   For every path moving camera on user's own instruction: orbit, pan or dolly half
-  ##   second into ease should win outright.
+  ## Hand camera to reader mid-ease, and let pivot alone finish arriving.
+  ##   For path turning or scaling camera about pivot it already has: orbit, look, roll,
+  ##   plain dolly and keys. Reader wins way round and distance outright, and `advance`
+  ##   carries pivot rest of its path underneath, so what they turn about is still what
+  ##   was picked. Path placing pivot itself halts instead; see `halt`.
+  ##     Stopping outright left pivot partway, and nothing aimed again: reader who added
+  ##     object and turned at once turned about empty point short of group's middle.
   ##   Deliberately not `release`.
   ##     Aim is standing offer re-made every frame, so goal cleared here is offered again
   ##     next frame and camera is taken straight back off user.
-  ##     Keeping goal and marking it done makes standing offer read as already answered.
+  ##     Keeping goal makes standing offer read as already answered.
+  if tween.goal.isSome and not tween.is_arrived: tween.is_yielded = true
+
+
+func halt*(tween: var CameraTween) =
+  ## Stop carrying camera where it stands, and remember what it was carrying it toward.
+  ##   For path placing pivot itself: pan, zoom landing pivot on what pointer or frame's
+  ##   middle is over, figure typed into view fields, and placement undo restores. Pivot
+  ##   still arriving would slide camera off what reader set.
+  ##   Not `release`, for reason `abandon` gives.
   if tween.goal.isSome: tween.is_arrived = true

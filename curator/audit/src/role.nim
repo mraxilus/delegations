@@ -9,7 +9,7 @@
 ##     pull request living half hour is almost never open when it runs, and it reports after
 ##     merge rather than before.
 ##
-##   Branch outside grammar reports nothing here: `scope` already fails it, and expected role
+##   Branch outside grammar reports nothing here: `check-scope` already fails it, and expected role
 ##     cannot be derived from name grammar rejects.
 ##   Cost: issue carries no branch, so which label it needs is judgement, and stays ledger's.
 ##   Cost: comment is unreachable, and is what remains of CONTRIBUTOR.md's first carried rule.

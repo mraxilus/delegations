@@ -23,8 +23,8 @@ both implementations and a stable identifier from the docket. It is generated fr
 ## Build and test
 
 ```sh
-nim r koch ci                                     # repository root: audit, scope, commits
-nim r koch tests contributor/ronri/pga_benchmark  # this project alone, on the pinned compiler
+nim r koch check                                # repository root: every check a pull request runs
+nim r koch test contributor/ronri/pga_benchmark  # this project alone, on the pinned compiler
 nim r tools/build.nim drive     # project directory: inspect, guard, hold gaps.md; what CI runs
 nim r tools/build.nim bench     # runtime measurements into baseline/runtime_<algebra>.json
 nim r tools/build.nim baseline  # re-record static measurements after an intended change

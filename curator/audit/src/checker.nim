@@ -1,25 +1,30 @@
 ## Hold checker to rules it holds everything else to (Article IX.8, Article I.4).
-##   Checker checks every project and nothing checked checker, so three faults it would
-##   report elsewhere lived in it until curator pass of 2026-09-06 found them by reading.
-##   Each is now rule rather than one-off correction.
+##   Checker checks every project and nothing else checks checker, so each fault it would
+##   report elsewhere is rule here rather than one-off correction.
 ##
-##   Dead export: routine exported from check module and called from nowhere in checker.
-##     `checkRunning` outlived its callers by one change, and its own test kept it compiling,
-##     so coverage looked like use. Test proves routine works, never that anything wants it.
-##     Mention anywhere in checker counts, comment included, so rule reports only routines
-##     nothing names at all.
-##   Missing suite: check module without `tests/t<module>.nim`. `findings.nim` carried render
-##     and order every finding passes through, and `markdown.nim` parsed every governed
-##     table, with no suite between them.
-##   Verb drift: verbs koch dispatches, verbs its usage text prints, and verbs CURATOR.md
-##     tables are one set named three times. `koch audit` was retired and its row stayed.
+##   Dead export: routine exported from check module that no other module and no suite names.
+##     STYLE.md §5 puts `*` on intentional export alone, and routine only its own module calls
+##     is none. Suite counts as caller: test proves routine works, never that anything wants
+##     it, yet pure rules here are covered by calling them directly. Mention anywhere counts,
+##     comment included, so rule reports only routines nothing outside their module names.
+##   Missing suite: check module without `tests/suites/t<module>.nim`.
+##   Verb mismatch: verbs koch dispatches, verbs its usage text lists, and verbs CURATOR.md
+##     tables are one set named three times.
+##   Option mismatch: options koch parses and options its usage text prints are one set named
+##     twice.
+##   Stale mention: `koch <verb>` written where verb is not one koch dispatches. Mention is
+##     read in forms that run command, i.e. `nim r koch <verb>`, `./koch <verb>` and code span
+##     opening `koch <verb>`, so prose naming koch itself passes. Contributor code is not read,
+##     since curator cannot write it; its records are, since curator can.
 ##
 ##   Rules apply to checker alone, never to contributor project: one suite per module suits
 ##     library of small checks and suits nothing else, and projects here group tests by
 ##     subject rather than by file.
 ##   Rejected: flagging export only tests use, which is how pure rules are covered here and
 ##     would need exemption list, second place for truth to live; warning rather than
-##     finding, since every finding fails and warning nobody must act on is read by nobody.
+##     finding, since every finding fails and warning nobody must act on is read by nobody;
+##     rescanning every source once per export, i.e. exports times sources, which was half of
+##     static pass. Identifiers are counted once per source, and every export reads counts.
 ##   Cost: routine named in prose is not dead, so comment mentioning retired routine hides
 ##     it; cost is paid to keep rule free of false findings.
 ##   Cost: exported operator is skipped, since it is spelled at call sites rather than named.
@@ -28,7 +33,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[algorithm, sequtils, strutils]
+import std/[algorithm, sequtils, strutils, tables]
 import ./[findings, markdown]
 
 
@@ -39,14 +44,16 @@ const
     ## Document tabling verbs for curator sessions.
   CHECK_DIR* = "curator/audit/src/"
     ## Modules these rules cover.
-  SUITE_DIR* = "curator/audit/tests/"
-    ## Where each module's suite lives.
+  SUITE_DIR* = "curator/audit/tests/suites/"
+    ## Where each module's suite lives; `tests/tsuites.nim` runs them as one program.
   NIM_EXT* = ".nim"
     ## Extension of module and suite alike.
   ROUTINES* = ["func", "proc", "template", "macro", "iterator", "converter"]
     ## Keywords opening routine definition; exported one ends its name with asterisk.
-  USAGE_MARK* = "Usage: koch <"
-    ## Opening of driver's usage text, whose angle brackets hold verbs.
+  USAGE_MARK* = "Usage: koch"
+    ## Opening of driver's usage text.
+  VERBS_MARK* = "Verbs:"
+    ## Line opening usage text's verb list: one indented line per verb, verb first.
   DISPATCH_MARK* = "of \""
     ## Opening of dispatch branch naming one verb.
   COMMAND_CASE* = "case options.command"
@@ -55,9 +62,21 @@ const
     ## workflow rather than reading whole file.
   DRIVER_CASE* = "case paramStr(1)"
     ## Line opening project driver's own dispatch. Same shape one level down, and koch reads
-    ## it to learn which verbs that project carries (`plan.nim`, `drivenDirs`).
+    ## it to learn which verbs that project carries (`plan.nim`, `verbDirs`).
   CASE_END* = "else:"
     ## Line closing dispatch, after which branches belong to something else.
+  OPTION_CASE* = "case key"
+    ## Line opening driver's option parser, whose branches name one option each, one to line.
+  USAGE_END* = "\"\"\""
+    ## Line closing driver's usage text, after which `--` names prose rather than usage.
+  OPTION_MARK* = "--"
+    ## Opening of option usage text prints.
+  KOCH_MARK* = "koch "
+    ## Command name as mention writes it, followed by verb.
+  RUN_MARK* = "nim r "
+    ## Compile-and-run form mention may open with, options between it and `koch`.
+  VERB_CHARS = {'a'..'z', '-'}
+    ## Characters verb is spelled with.
   TABLE_HEADING* = "## Checks reference"
     ## Heading above table naming verbs; other tables in same document name other things.
   IDENT_CHARS = {'a'..'z', 'A'..'Z', '0'..'9', '_'}
@@ -76,32 +95,35 @@ func exportedRoutines*(source: string): seq[string] =
     if words[1].len > name.len and words[1][name.len] == '*': result.add name
 
 
-func mentions*(sources: openArray[string], name: string): int =
-  ## Count times checker names routine, its own definition included.
-  ##   Identifier runs are counted rather than whitespace words, since call is written
-  ##   `tree.auditTree` as often as `auditTree(tree)` and word would hide first form.
-  for source in sources:
-    var i = 0
-    while i < source.len:
-      if source[i] notin IDENT_CHARS:
-        inc i
-        continue
-      var j = i
-      while j < source.len and source[j] in IDENT_CHARS: inc j
-      if source[i ..< j] == name: inc result
-      i = j
+func identifiers(source: string): CountTable[string] =
+  ## Count identifier runs source spells, comments included.
+  ##   Runs rather than whitespace words, since call is written `tree.auditTree` as often as
+  ##   `auditTree(tree)` and word would hide first form.
+  var i = 0
+  while i < source.len:
+    if source[i] notin IDENT_CHARS:
+      inc i
+      continue
+    var j = i
+    while j < source.len and source[j] in IDENT_CHARS: inc j
+    result.inc source[i ..< j]
+    i = j
 
 
-func checkDeadExports*(paths, sources: openArray[string]): seq[Finding] =
-  ## Report routine exported from checker that nothing in checker names.
-  ##   One mention is its own definition, so anything above one has caller or reader.
+func checkDeadExports*(paths, sources, suites: openArray[string]): seq[Finding] =
+  ## Report routine exported from checker that no other module and no suite names.
+  ##   Exports are read from `sources` alone; suites call, and export nothing checker owns.
+  let counts = sources.mapIt(it.identifiers)
+  var total = initCountTable[string]()
+  for count in counts: total.merge count
+  for suite in suites: total.merge suite.identifiers
   for i, source in sources:
     for name in source.exportedRoutines:
-      if sources.mentions(name) > 1: continue
+      if total[name] > counts[i][name]: continue
       result.add finding(
         paths[i], 0,
-        "Routine is exported and called nowhere in checker; delete it, or call it; got `" &
-          name & "`.",
+        "Routine is exported and named by no other module and no suite; drop its `*`, or " &
+          "delete it; got `" & name & "`.",
       )
 
 
@@ -135,11 +157,17 @@ func between(line, opening, closing: string): string =
 
 
 func usageVerbs*(koch: string): seq[string] =
-  ## Read verbs driver's usage text prints, in its angle brackets.
+  ## Read verbs driver's usage text lists: first word of each indented line under verb mark,
+  ##   up to first line that is not indented.
+  var is_inside = false
   for line in koch.splitLines:
-    if USAGE_MARK notin line: continue
-    return line.between("<", ">").split('|').mapIt(it.strip).sorted
-  @[]
+    if line.strip == VERBS_MARK:
+      is_inside = true
+      continue
+    if not is_inside: continue
+    if not line.startsWith("  ") or line.strip.len == 0: break
+    result.add line.splitWhitespace[0]
+  result.sort
 
 
 func dispatchVerbs*(source: string, opening = COMMAND_CASE): seq[string] =
@@ -147,7 +175,7 @@ func dispatchVerbs*(source: string, opening = COMMAND_CASE): seq[string] =
   ##   Line opening dispatch is given rather than fixed, since koch and project driver hold
   ##   same shape under different case: koch cases over parsed options, project driver over
   ##   its first argument. One parser reads both, so koch learns what verbs project carries
-  ##   by reading it (`plan.nim`, `drivenDirs`).
+  ##   by reading it (`plan.nim`, `verbDirs`).
   var is_inside = false
   for line in source.splitLines:
     let s = line.strip
@@ -160,6 +188,53 @@ func dispatchVerbs*(source: string, opening = COMMAND_CASE): seq[string] =
     let verb = s.between("\"", "\"")
     if verb.len > 0 and verb notin result: result.add verb
   result.sort
+
+
+func optionLabels*(koch: string): seq[string] =
+  ## Read options driver parses, i.e. quoted labels of option parser's one-line branches.
+  ##   Read stops at first line not opening branch, since parser's `else` returns early and
+  ##   command dispatch below it names verbs rather than options.
+  var is_inside = false
+  for line in koch.splitLines:
+    let s = line.strip
+    if s.startsWith(OPTION_CASE):
+      is_inside = true
+      continue
+    if not is_inside: continue
+    if not s.startsWith(DISPATCH_MARK): break
+    let option = s.between("\"", "\"")
+    if option.len > 0 and option notin result: result.add option
+  result.sort
+
+
+func usageOptions*(koch: string): seq[string] =
+  ## Read options driver's usage text prints, i.e. `--name` from usage mark to its close.
+  var is_inside = false
+  for line in koch.splitLines:
+    if USAGE_MARK in line: is_inside = true
+    if not is_inside: continue
+    if line.strip == USAGE_END: break
+    var i = line.find(OPTION_MARK)
+    while i >= 0:
+      var j = i + OPTION_MARK.len
+      while j < line.len and line[j] in IDENT_CHARS: inc j
+      let option = line[i + OPTION_MARK.len ..< j]
+      if option.len > 0 and option notin result: result.add option
+      i = line.find(OPTION_MARK, j)
+  result.sort
+
+
+func checkOptions*(koch: string): seq[Finding] =
+  ## Report driver's option parser and its usage text disagreeing.
+  let parsed = koch.optionLabels
+  if parsed.len == 0: return
+  let printed = koch.usageOptions
+  if printed != parsed:
+    result.add finding(
+      KOCH_PATH, 0,
+      "Usage text must print every option parser takes, and no other; expected `" &
+        parsed.join(", ") & "`; got `" & printed.join(", ") & "`.",
+    )
 
 
 func section*(markdown, heading: string): string =
@@ -200,4 +275,39 @@ func checkVerbs*(koch, curator: string): seq[Finding] =
       CURATOR_PATH, 0,
       "Checks table must row every verb koch dispatches, and no other; expected `" &
         dispatched.join(", ") & "`; got `" & curator.tableVerbs.join(", ") & "`.",
+    )
+
+
+func runPrefix(text: string, at: int): bool =
+  ## Decide whether `koch` at index is run as command: after `./`, after code span's opening
+  ##   backtick, or after `nim r` and options only.
+  if at >= 2 and text[at - 2 .. at - 1] == "./": return true
+  if at >= 1 and text[at - 1] == '`': return true
+  let run = text.rfind(RUN_MARK, last = at - 1)
+  if run < 0: return false
+  text[run + RUN_MARK.len ..< at].splitWhitespace.allIt(it.startsWith(OPTION_MARK))
+
+
+func mentionedVerbs*(source: string): seq[(int, string)] =
+  ## Collect line and verb of every `koch <verb>` source writes as command, in order.
+  var number = 0
+  for line in source.splitLines:
+    inc number
+    var at = line.find(KOCH_MARK)
+    while at >= 0:
+      var j = at + KOCH_MARK.len
+      while j < line.len and line[j] in VERB_CHARS: inc j
+      let verb = line[at + KOCH_MARK.len ..< j]
+      if verb.len > 0 and verb[0] in {'a'..'z'} and line.runPrefix(at):
+        result.add (number, verb)
+      at = line.find(KOCH_MARK, j)
+
+
+func checkMentions*(path, source: string, verbs: openArray[string]): seq[Finding] =
+  ## Report `koch <verb>` whose verb koch does not dispatch.
+  for (line, verb) in source.mentionedVerbs:
+    if verb in verbs: continue
+    result.add finding(
+      path, line, "Mention names verb koch does not dispatch; write one `./koch` lists; got `" &
+        verb & "`.",
     )

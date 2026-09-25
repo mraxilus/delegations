@@ -12,7 +12,7 @@ import {
 import { clearTheGlass } from './gestures';
 import { waitFrames } from './frame';
 import { report } from './report';
-import { pinch } from './touch';
+import { pinch, tapAt, touchAt } from './touch';
 
 /** Plane's drawn diameter, from `mesh.EXTENT_PLANE_F`, and share of frame it is brought to,
  *  from `framing.FRACTION_HEIGHT_APPROACH_PLANE`. */
@@ -82,6 +82,7 @@ interface MenuStanding {
   distance: number;
   menu: number[];
   anchor: number[];
+  centre: number[];
 }
 
 /** Read menu's corner and its object's anchor together, so they name same frame. */
@@ -96,6 +97,7 @@ async function menuAndAnchor(page: Page, handle: number): Promise<MenuStanding> 
       distance: nimCameraDistance(),
       menu: [box?.left ?? 0, box?.top ?? 0],
       anchor: [rect.left + (at[0] ?? 0), rect.top + (at[1] ?? 0)],
+      centre: [rect.left + rect.width / 2, rect.top + rect.height / 2],
     };
   }, handle);
 }
@@ -103,9 +105,9 @@ async function menuAndAnchor(page: Page, handle: number): Promise<MenuStanding> 
 /** Drive right-click pick from far out, which opens menu and brings camera in.
  *
  *  Wheel out six notches from `Home` so first pickable point is dot far off, then click
- *  6 px off its anchor. Menu is up two frames in, its corner within inset of pointer; that
- *  anchor's pixel is where it was, in flight and settled; distance fell; pivot sits at
- *  object's depth. Glass is cleared first, since drawer standing open would take click.
+ *  6 px off its anchor. Menu is up two frames in and keeps its inset from that object's own
+ *  anchor; object settles in middle of frame however far off it was clicked; distance fell;
+ *  pivot is object itself. Glass is cleared first, since drawer open would take click.
  */
 export async function drivePointerPick(page: Page): Promise<void> {
   await clearTheGlass(page);
@@ -143,9 +145,16 @@ export async function drivePointerPick(page: Page): Promise<void> {
   await waitFrames(page, 2);
   const opened = await menuAndAnchor(page, picked);
   const near = await readCamera(page);
-  // Dolly, so object off sight axis travels across frame: orbit about pivot
-  //   pick put on that object's own depth barely moves it at all.
-  await page.evaluate(() => nimCameraDolly(1.8));
+  // Shift pivot off object, so object's own anchor travels across frame.
+  //   No camera gesture can move it now: pick made it pivot, and orbit, dolly and zoom
+  //   all hold pivot at middle of frame. That is what centring buys, and it leaves
+  //   moving pivot as only way to shift what menu follows.
+  //   Shifted 1.5 units, about 80 px at this reach: far enough to prove menu followed,
+  //   and short of frame's edge, where menu flips side to stay on screen.
+  await page.evaluate(() => {
+    const at = Array.from(nimCameraPivot());
+    nimSetCameraPivot((at[0] ?? 0) + 1.2, (at[1] ?? 0) - 0.8, (at[2] ?? 0) + 0.4);
+  });
   await settleCamera(page);
   const panned = await menuAndAnchor(page, picked);
 
@@ -163,20 +172,29 @@ interface Picked {
   panned: MenuStanding;
 }
 
-/** Report three checks one pointer pick answers: menu, anchor, and offset under pan. */
+/** Report three checks one pointer pick answers: menu, centring, and offset as object moves. */
 function reportPointerPick(
   picked: Picked, camera: { far: Stance; near: Stance }, depth: number,
 ): void {
-  const away = (standing: MenuStanding): number[] =>
+  // Menu keeps its offset from its object's anchor, not from where pointer clicked: pick
+  //   carries object to middle of frame and menu rides with it. Offset is inset plus
+  //   menu's own box, so it is read as held rather than against `INSET_MENU_POINTER`.
+  //   Beside pointer holds at instant of click alone, which no frame can sample: ease has
+  //   already carried object by two frames in.
+  const from_anchor = (standing: MenuStanding): number[] =>
     [(standing.menu[0] ?? 0) - (standing.anchor[0] ?? 0),
       (standing.menu[1] ?? 0) - (standing.anchor[1] ?? 0)];
-  const from_pointer = [
-    (picked.opened.menu[0] ?? 0) - picked.aimed.x, (picked.opened.menu[1] ?? 0) - picked.aimed.y,
-  ];
-  const away_opened = away(picked.opened), away_panned = away(picked.panned);
-  const drift = (standing: MenuStanding): number => Math.hypot(
-    (standing.anchor[0] ?? 0) - (picked.aimed.anchor[0] ?? 0),
-    (standing.anchor[1] ?? 0) - (picked.aimed.anchor[1] ?? 0),
+  const inset_flight = from_anchor(picked.in_flight);
+  const inset_opened = from_anchor(picked.opened);
+  const inset_panned = from_anchor(picked.panned);
+  // How far object sits from middle of frame, which is where pick puts it.
+  const offCentre = (standing: MenuStanding): number => Math.hypot(
+    (standing.anchor[0] ?? 0) - (standing.centre[0] ?? 0),
+    (standing.anchor[1] ?? 0) - (standing.centre[1] ?? 0),
+  );
+  const clicked_off = Math.hypot(
+    (picked.aimed.anchor[0] ?? 0) - (picked.opened.centre[0] ?? 0),
+    (picked.aimed.anchor[1] ?? 0) - (picked.opened.centre[1] ?? 0),
   );
   const moved = Math.hypot(
     (picked.panned.anchor[0] ?? 0) - (picked.opened.anchor[0] ?? 0),
@@ -184,30 +202,32 @@ function reportPointerPick(
   );
 
   report(
-    'a pointer pick opens the menu at once beside the pointer',
+    'a pointer pick opens the menu at once, and it rides its object in',
     picked.aimed.is_in_front && picked.in_flight.shown && picked.opened.shown &&
-      Math.abs((from_pointer[0] ?? 0) - 8) < 2 && Math.abs((from_pointer[1] ?? 0) - 8) < 2,
-    `two frames in: menu ${picked.in_flight.shown ? 'shown' : 'hidden'}; settled: menu ` +
+      Math.abs((inset_flight[0] ?? 0) - (inset_opened[0] ?? 0)) < 2 &&
+      Math.abs((inset_flight[1] ?? 0) - (inset_opened[1] ?? 0)) < 2,
+    `two frames in: menu ${picked.in_flight.shown ? 'shown' : 'hidden'}, corner ` +
+      `${inset_flight.map((v) => v.toFixed(0))} px from the anchor; settled: menu ` +
       `${picked.opened.shown ? 'shown' : 'hidden'}, corner ` +
-      `${from_pointer.map((v) => v.toFixed(0))} px from pointer (inset 8)`,
+      `${inset_opened.map((v) => v.toFixed(0))} px from it`,
   );
   report(
-    'and keeps the picked object under the pointer as the camera comes in to it',
-    drift(picked.in_flight) < 1.5 && drift(picked.opened) < 1.5 &&
+    'and brings the picked object to the middle of the frame as it comes in to it',
+    clicked_off > 20 && offCentre(picked.opened) < 2 &&
       picked.in_flight.distance < camera.far.distance - 0.01 &&
       camera.near.distance < 0.5 * camera.far.distance &&
       Math.abs(depth - camera.near.distance) < 0.01,
-    `anchor drifted ${drift(picked.in_flight).toFixed(2)} px in flight, ` +
-      `${drift(picked.opened).toFixed(2)} px settled; distance ` +
+    `clicked ${clicked_off.toFixed(0)} px off the middle, settled ` +
+      `${offCentre(picked.opened).toFixed(2)} px from it; distance ` +
       `${camera.far.distance.toFixed(2)} -> ${picked.in_flight.distance.toFixed(2)} in flight ` +
       `-> ${camera.near.distance.toFixed(2)}; object at depth ${depth.toFixed(3)}`,
   );
   report(
-    'and keeps its offset from the object as the view moves',
-    Math.abs((away_panned[0] ?? 0) - (away_opened[0] ?? 0)) < 2 &&
-      Math.abs((away_panned[1] ?? 0) - (away_opened[1] ?? 0)) < 2 && moved > 50,
-    `offset ${away_opened.map((v) => v.toFixed(0))} at open, ` +
-      `${away_panned.map((v) => v.toFixed(0))} after pan moved anchor ${moved.toFixed(0)} px`,
+    'and keeps its offset from the object as the object moves',
+    Math.abs((inset_panned[0] ?? 0) - (inset_opened[0] ?? 0)) < 2 &&
+      Math.abs((inset_panned[1] ?? 0) - (inset_opened[1] ?? 0)) < 2 && moved > 50,
+    `offset ${inset_opened.map((v) => v.toFixed(0))} at open, ` +
+      `${inset_panned.map((v) => v.toFixed(0))} after the anchor moved ${moved.toFixed(0)} px`,
   );
 }
 
@@ -326,4 +346,105 @@ export async function drivePanWhileSelected(page: Page, cdp: CDPSession): Promis
     `moved ${spanOf(before.eye, at.eye).toFixed(3)}, ` +
       `then drifted ${spanOf(at.eye, after.eye).toFixed(4)}`,
   );
+}
+
+
+/** Drive finger adding second object and turning at once, while pick still eases.
+ *
+ *  Long press picks one point, tap adds second, and turn starts before ease has carried
+ *  pivot to their middle. Middle is where orbit turns about, so it is where pivot has to
+ *  end, and middle of frame is where it has to stand. Turn used to stop ease wherever it
+ *  was, which left pivot partway and every turn after swinging group about empty point.
+ *  Turn goes in through `nimCameraTurnAt`, what finger's own move calls, in same task that
+ *  reads ease still carrying. Touch dispatched through protocol took about 100 ms each on
+ *  this harness, so drag's first move reached page 285 ms into 350 ms ease, with one
+ *  hundredth of it left: timing, not rule, decided what that measured.
+ *  Two points of check's own, undone after rather than removed: removal is edit of its own,
+ *  and would stand on timeline where next check's undo expects edit that check made.
+ */
+export async function driveGroupTurnedAtOnce(page: Page, cdp: CDPSession): Promise<void> {
+  await clearTheGlass(page);
+  await page.keyboard.press('Home');
+  await settleCamera(page);
+  const count_found = await page.evaluate(() => nimSceneCount());
+  const [one, two] = await page.evaluate(() => [[2, 1, 0.5], [0, 3, 1.5]].map((at) => {
+    const model = new Array(16).fill(0);
+    model[1] = at[0] ?? 0;
+    model[2] = at[1] ?? 0;
+    model[3] = at[2] ?? 0;
+    model[4] = 1;
+    return nimAddObject(model, 'turned', nimDefaultInk(), nimDefaultRadius(), 0);
+  }));
+  if (one === undefined || two === undefined) return;
+  await page.evaluate(() => nimSelectClear());
+  await settleCamera(page);
+  const pixelOn = (handle: number): Promise<number[]> => page.evaluate((each) => {
+    const at = Array.from(nimAnchorScreen(each, window.innerWidth, window.innerHeight));
+    return [at[0] ?? 0, at[1] ?? 0];
+  }, handle);
+
+  // Hold past hold-to-select on first, then settle, as reader does before adding more.
+  const at_one = await pixelOn(one);
+  await tapAt(page, cdp, at_one[0] ?? 0, at_one[1] ?? 0, 1400);
+  await settleCamera(page);
+  // Tap second, and let one frame arm ease toward their middle.
+  const at_two = await pixelOn(two);
+  await touchAt(cdp, 'touchStart', [{ x: at_two[0] ?? 0, y: at_two[1] ?? 0 }]);
+  await touchAt(cdp, 'touchEnd', []);
+  await waitFrames(page, 1);
+  const count = await page.evaluate(() => nimSelectionCount());
+  const held = await readCamera(page);
+  // First turn in same task that reads ease, so it lands mid-ease on any runner.
+  const middle_and_short = await page.evaluate(([a, b]) => {
+    const p = Array.from(nimAnchorWorld(a ?? 0)), q = Array.from(nimAnchorWorld(b ?? 0));
+    const middle = p.map((v, i) => 0.5*(v + (q[i] ?? 0)));
+    const is_easing = nimCameraCarrying();
+    const pivot = Array.from(nimCameraPivot());
+    const short = Math.hypot(...pivot.map((v, i) => v - (middle[i] ?? 0)));
+    nimSetCameraDragging(true);
+    // Finger's step right from middle of canvas, where orbit holds front of its sphere.
+    const canvas = document.getElementById('gl');
+    const [wide, tall] = [canvas?.clientWidth ?? 0, canvas?.clientHeight ?? 0];
+    const reach = 0.05 * Math.min(wide, tall) / Math.PI;
+    nimCameraTurnAt(wide / 2, tall / 2, wide / 2 + reach, tall / 2, wide, tall);
+    return { middle, is_easing, short };
+  }, [one, two]);
+  for (let step = 1; step < 10; step += 1) {
+    await waitFrames(page, 1);
+    await page.evaluate(() => {
+      const canvas = document.getElementById('gl');
+      const [wide, tall] = [canvas?.clientWidth ?? 0, canvas?.clientHeight ?? 0];
+      const reach = 0.05 * Math.min(wide, tall) / Math.PI;
+      nimCameraTurnAt(wide / 2, tall / 2, wide / 2 + reach, tall / 2, wide, tall);
+    });
+  }
+  await page.evaluate(() => nimSetCameraDragging(false));
+  await settleCamera(page);
+
+  const after = await readCamera(page);
+  const { middle, is_easing, short } = middle_and_short;
+  // Pivot always stands at middle of frame, so pivot on their middle puts it there too.
+  const span = spanOf(after.pivot, middle);
+  report(
+    'a finger that adds an object and turns at once turns about their middle',
+    count === 2 && is_easing && short > 0.05 &&
+      Math.abs(after.azimuth - held.azimuth) > 0.05 && span < 1e-3,
+    `${count} picked; turn began with ease ${is_easing ? 'still carrying' : 'done'} and ` +
+      `pivot ${short.toFixed(3)} short of their middle; turned ` +
+      `${Math.abs(after.azimuth - held.azimuth).toFixed(3)} rad; pivot ended ` +
+      `${span.toFixed(4)} from their middle`,
+  );
+  const count_left = await page.evaluate(() => {
+    nimSelectClear();
+    nimUndo();
+    nimUndo();
+    return nimSceneCount();
+  });
+  if (count_left !== count_found) {
+    report(
+      'the group turn leaves the scene as it found it', false,
+      `${count_left} objects, found ${count_found}`,
+    );
+  }
+  await settleCamera(page);
 }
