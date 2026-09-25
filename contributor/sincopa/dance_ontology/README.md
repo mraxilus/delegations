@@ -88,20 +88,23 @@ What the project stands behind:
 
 | built file, under `build/` | published at |
 | --- | --- |
-| app/artifact.html | https://claude.ai/code/artifact/a447cf22-a71a-4416-a905-ae4999d7284c |
+| app/artifact.html | https://claude.ai/artifact/3skKNwADdEG256v9ucpnvt |
 
 Mock-ups and instruments:
 
 | built file, under `build/` | published at |
 | --- | --- |
-| design/frames.html | https://claude.ai/code/artifact/8420edce-fff2-4cd9-b56c-3dcf5029922b |
-| design/signs.html | https://claude.ai/code/artifact/153dee12-0829-4c04-ad01-72fe96f7607e |
-| design/turns-single.html | https://claude.ai/code/artifact/a2dce7eb-7a87-4575-a1c8-ce8d488a6530 |
-| design/turns-hands.html | https://claude.ai/code/artifact/9c4d89c1-8b72-4574-8051-c41e130148f1 |
-| design/review.html | https://claude.ai/code/artifact/f02b7b94-3b57-4442-abdd-f544d7911a21 |
-| design/rig.html | https://claude.ai/code/artifact/1ca8be4e-d66f-45d7-ba16-bd7875eb0fbf |
-| design/wholecloth.html | https://claude.ai/code/artifact/9440ffbc-93be-4634-a3ce-dd17d7b33c6c |
-| review/review.html | https://claude.ai/code/artifact/61c41287-0a91-4fb9-9b15-622a5fd7db43 |
+| design/frames.html | https://claude.ai/artifact/TuDxCFEpKGQBpsLdWvTEq1 |
+| design/signs.html | https://claude.ai/artifact/2KCtSbNHhpUwncJRj8Nf9y |
+| design/turns-single.html | https://claude.ai/artifact/3DavQ5JHpEPEirY9Xqyb1R |
+| design/turns-hands.html | https://claude.ai/artifact/2A95Vd5ydYYX52bQY26owy |
+| design/review.html | https://claude.ai/artifact/8dpKVyaBu9qJnXg3hsUyRe |
+| design/rig.html | https://claude.ai/artifact/MARvX6rpxW4NQvvvi2xHJa |
+| design/wholecloth.html | https://claude.ai/artifact/46HxPCET9ne8c1UNXCKPMb |
+| review/review.html | https://claude.ai/artifact/D5D4b2nVNpDFShggYkqi8S |
+
+An old link can refuse a publish until the whole of its live page is read back, and a page then
+takes a new link. The change that publishes a page to a new link puts that link in this list.
 
 A page taken out of use keeps whatever URL it was last published at, and is not listed here.
 The repository does not rely on a published copy as its record. What a retired page claimed
