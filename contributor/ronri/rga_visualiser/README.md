@@ -126,6 +126,7 @@ tools/build.nim               the build driver: declare, types, web, drive, desk
                               assets, system, clean
 tools/drive/                  the Playwright harness the drive verb runs
 tests/suites.nim              every law, over one seeded pool of objects
+tests/suites/                 one module for each suite, and the pool they share
 tests/t4d.nim t4d_small.nim   C backend, shipped and small capacities
 tests/t4d_browser.nim         JS backend, same suite
 deps/                         PGA library, restored by Atlas; never committed
