@@ -444,8 +444,11 @@ func offerAim*(
       )
   if destination.isNone:
     destination = some(stanceFor(aim.get, camera, width, height))
+  # Frame broken under arrived ease re-arms it: goal held is no answer while rule fails.
+  #   Ease still running is left to land, or re-arming each frame restarts it forever.
   tween.aimAt(
-    camera, aim.get, destination.get, now, duration, is_renewed = pick.isSome,
+    camera, aim.get, destination.get, now, duration,
+    is_renewed = pick.isSome or (not is_framed and tween.is_arrived),
   )
 
 
