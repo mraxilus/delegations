@@ -19,10 +19,10 @@
 ##   `UP_REFERENCE`. Motion itself is `motors.nim`, which stands in until library writes it.
 ##
 ## Pivot and both angles are read out rather than stored.
-##   They named stance before, and one of them could go stale against another: dolly wrote
-##   distance while pivot stood, and pivot could sit where no angle pointed.
-##   Rotor has no pole, so `frame` needs no clamp. `ELEVATION_LIMIT` is bound `orbit`
-##   applies to hold turntable's own reading, and nothing derives through it.
+##   Stored beside stance, one could go stale against another: dolly left pivot where no
+##   angle pointed.
+##   Rotor has no pole, so `frame` needs no clamp. `ELEVATION_LIMIT` bounds only stance
+##   rebuilt from angles, and nothing derives through it.
 ## Only projection is left to convention.
 ##   Perspective divide, depth range and clip volume belong to graphics pipeline rather
 ##   than to geometry, so they are written out directly.
@@ -210,8 +210,8 @@ type
     ## Stance is one rigid motion and one depth. Where eye stands and which way it faces are
     ## `motor` alone; pivot is read off sight line at `depth_pivot`.
     ##   Orbit angles are read out rather than stored; see `azimuth` and `elevation`.
-    ##   Rotor has no pole, so `ELEVATION_LIMIT` is bound `orbit` applies rather than bound
-    ##   any derivation needs.
+    ##   Rotor has no pole, so `ELEVATION_LIMIT` bounds only stance rebuilt from angles, never
+    ##   derivation.
     motor*: Motor ## Rigid motion carrying reference stance to this one.
       ## Reference stance places eye at world origin, facing `FORWARD_REFERENCE`, with
       ## `RIGHT_REFERENCE` across and `UP_REFERENCE` up. Turntable at azimuth 0, elevation
@@ -428,45 +428,67 @@ func distance*(camera: Camera): float = camera.depth_pivot
   ##   Read-only: see `Camera.depth_pivot` for why no spelling assigns to it.
 
 
-func eye*(camera: Camera): Position =
-  ## Place eye by carrying reference stance's own eye through camera's motion.
-  ##   Held equal to spherical closed form by suite case, which is what `motorTurntable`
-  ##   reproduces.
-  let placed = position(
-    toMultivector(EYE_REFERENCE).carried(toMultivector(camera.motor))
-  )
+func eyeCarried(motion, motion_reversed: Multivector): Position =
+  ## Carry reference stance's own eye through lifted motion and its antireverse.
+  let placed = position(toMultivector(EYE_REFERENCE).carried(motion, motion_reversed))
   # Fall back to reference eye only in name.
   #   Unit motor carries unit-weight point to unit-weight point, so read cannot refuse.
   if placed.isSome: placed.get else: EYE_REFERENCE
 
 
-func frame*(camera: Camera): FrameCamera =
-  ## Derive camera's orthonormal axes by carrying reference stance's three through motion.
+func borne(motion, motion_reversed: Multivector; d: Direction): Direction =
+  ## Carry reference direction through lifted motion, and read back weightless result.
+  let carried_direction = toMultivector(d).carried(motion, motion_reversed)
+  Direction(
+    x: carried_direction[Basis.E1],
+    y: carried_direction[Basis.E2],
+    z: carried_direction[Basis.E3],
+  )
+
+
+func frameCarried(motion, motion_reversed: Multivector): FrameCamera =
+  ## Carry reference stance's three axes through lifted motion and its antireverse.
   ##   Motor is rigid, so three carried directions stay orthonormal and stay weightless:
   ##   no join to refuse, no antidual sign to pin, and no clamp to keep them defined.
-  ##   Replaced joins and antiduals of sight axis against world up. Those collapsed as sight
-  ##   axis neared world up, which is why elevation was clamped short of pole. Rotor has no
-  ##   pole, so bound is `orbit`'s alone.
-  let motion = toMultivector(camera.motor)
-  func borne(d: Direction): Direction =
-    ## Read carried direction back, which keeps weight of zero it went in with.
-    let carried_direction = toMultivector(d).carried(motion)
-    Direction(
-      x: carried_direction[Basis.E1],
-      y: carried_direction[Basis.E2],
-      z: carried_direction[Basis.E3],
-    )
   FrameCamera(
-    axis_right: borne(RIGHT_REFERENCE),
-    axis_up: borne(UP_REFERENCE),
-    forward: borne(FORWARD_REFERENCE),
+    axis_right: borne(motion, motion_reversed, RIGHT_REFERENCE),
+    axis_up: borne(motion, motion_reversed, UP_REFERENCE),
+    forward: borne(motion, motion_reversed, FORWARD_REFERENCE),
   )
+
+
+func eye*(camera: Camera): Position =
+  ## Place eye by carrying reference stance's own eye through camera's motion.
+  ##   Held equal to spherical closed form by suite case, which is what `motorTurntable`
+  ##   reproduces.
+  let motion = toMultivector(camera.motor)
+  eyeCarried(motion, ~∘ motion)
+
+
+func frame*(camera: Camera): FrameCamera =
+  ## Derive camera's orthonormal axes by carrying reference stance's three through motion.
+  let motion = toMultivector(camera.motor)
+  frameCarried(motion, ~∘ motion)
+
+
+func sight*(camera: Camera): (Position, FrameCamera) =
+  ## Read eye and frame together, off one lift of motor and one antireverse.
+  ##   Caller wanting both reads this rather than `eye` and `frame`, which lift motor and
+  ##   take its antireverse once each. Per event on finger's and mouse's turn.
+  let motion = toMultivector(camera.motor)
+  let motion_reversed = ~∘ motion
+  (eyeCarried(motion, motion_reversed), frameCarried(motion, motion_reversed))
 
 
 func pivot*(camera: Camera): Position =
   ## Place point orbit turns about, on sight line at `distance` from eye.
   ##   Derived where it was stored before, so dolly cannot leave it stale.
-  let (eye, forward) = (camera.eye, camera.frame.forward)
+  ##   Carries eye and forward alone: other two axes do not place it.
+  let motion = toMultivector(camera.motor)
+  let motion_reversed = ~∘ motion
+  let (eye, forward) = (
+    eyeCarried(motion, motion_reversed), borne(motion, motion_reversed, FORWARD_REFERENCE)
+  )
   Position(
     x: eye.x + camera.depth_pivot*forward.x,
     y: eye.y + camera.depth_pivot*forward.y,
@@ -506,12 +528,13 @@ func slideBy*(camera: var Camera, offset: Multivector) =
   ))
 
 
-func turnedAboutPivot(camera: Camera; along: Direction, radians: float): Motor =
-  ## Turn stance about line through pivot along `along`, leaving pivot where it stands.
+func turnedAboutPivot(camera: Camera; pivot: Position; along: Direction, radians: float): Motor =
+  ## Turn stance about line through `pivot` along `along`, leaving pivot where it stands.
   ##   Sibling of `turnedAboutEye`, with pivot where eye was: that is what makes this
   ##   orbit rather than look.
   ##   Composed on left, so angle is read in world rather than in reference stance.
-  let axis = toMultivector(camera.pivot) ∧ toMultivector(along)
+  ##   Pivot comes from caller, which has read it off this same stance with frame it needs.
+  let axis = toMultivector(pivot) ∧ toMultivector(along)
   let turn = turnAbout(axis, radians)
   if turn.isNone: return camera.motor
   motorOf(wedgeDotAnti(turn.get, toMultivector(camera.motor)))
@@ -519,25 +542,31 @@ func turnedAboutPivot(camera: Camera; along: Direction, radians: float): Motor =
 
 func orbit*(camera: var Camera; turn, rise: float) =
   ## Turn eye about pivot by given angles, about camera's own axes.
-  ##   Composed rather than rebuilt from four turntable numbers.
-  ##     Rebuild carried no roll, so rolling and then orbiting snapped view upright.
+  ##   Composed rather than rebuilt from four turntable numbers, which carry no roll.
   ##     Sphere about bare point has no pole, so there is no clamp either.
-  ##     `ELEVATION_LIMIT` is left to `placedAtElevation` alone, where turntable is rebuilt
-  ##     from angles and does collapse at pole.
+  ##     `ELEVATION_LIMIT` is left to stances rebuilt from angles, which do collapse at pole.
   ##   Arguments read as `look`'s do, and with same signs, so one drag feeds either verb.
   ##   Pivot and separation both survive, because both axes run through pivot.
   ##   Frame is read again between two turns, for reason `look` gives.
-  camera.motor = camera.turnedAboutPivot(camera.frame.axis_up, turn)
-  camera.motor = camera.turnedAboutPivot(camera.frame.axis_right, -rise)
+  block:
+    let (eye, frame) = camera.sight
+    camera.motor = camera.turnedAboutPivot(
+      eye + camera.depth_pivot*frame.forward, frame.axis_up, turn
+    )
+  block:
+    let (eye, frame) = camera.sight
+    camera.motor = camera.turnedAboutPivot(
+      eye + camera.depth_pivot*frame.forward, frame.axis_right, -rise
+    )
 
 
-func acrossLevel(camera: Camera): Direction =
+func acrossLevel(frame: FrameCamera): Direction =
   ## Read level axis at right angles to sight, signed to agree with camera's own across.
   ##   Camera's own across where sight runs along world up and names no level axis.
   ##   Left unscaled: `turnAbout` unitizes axis it turns about.
-  let level = cross(camera.frame.forward, UP_WORLD)
-  if norm(level) < 1.0e-9: return camera.frame.axis_right
-  if dot(level, camera.frame.axis_right) >= 0.0: level else: -level
+  let level = cross(frame.forward, UP_WORLD)
+  if norm(level) < 1.0e-9: return frame.axis_right
+  if dot(level, frame.axis_right) >= 0.0: level else: -level
 
 
 func dolly*(camera: var Camera, factor: float) =
@@ -641,7 +670,7 @@ func wrapAngle(radians: float): float =
   floorMod(radians + PI, 2.0*PI) - PI
 
 
-func turnsCarrying(camera: Camera; held, under: Direction): (Direction, float, float) =
+func turnsCarrying(frame: FrameCamera; held, under: Direction): (Direction, float, float) =
   ## Solve turntable's turn that carries `under` onto `held`: level axis, pitch, yaw.
   ##   Pitch about level across axis first, by what lifts `under` to `held`'s height; then
   ##   yaw about world up, by what closes their bearings. Neither changes roll.
@@ -652,7 +681,7 @@ func turnsCarrying(camera: Camera; held, under: Direction): (Direction, float, f
   ##   height it reaches, and what finger holds slips under it there.
   ##   Neither direction needs to be unit. Directions only: where turn stands is caller's.
   let
-    level = camera.acrossLevel
+    level = frame.acrossLevel
     across = (1.0/norm(level))*level
     ahead = cross(UP_WORLD, across)
     toward = (1.0/norm(under))*under
@@ -690,7 +719,7 @@ func lookCarrying*(camera: var Camera; held, under: Direction) =
   ##   Finger's free aim: `held` runs through pixel finger left, `under` through pixel it
   ##   reached, both read off this frame. So sky under finger moves with finger, pixel for
   ##   pixel, and drag that comes back brings camera back. See `turnsCarrying`.
-  let (across, pitch, bearing) = camera.turnsCarrying(held, under)
+  let (across, pitch, bearing) = camera.frame.turnsCarrying(held, under)
   camera.motor = camera.turnedAboutEye(across, pitch)
   camera.motor = camera.turnedAboutEye(UP_WORLD, bearing)
 
@@ -735,9 +764,20 @@ func orbitCarrying*(camera: var Camera; held, under: Direction) =
   ##   Finger's orbit: both are points `pointHeld` places under pixel finger left and pixel
   ##   it reached, less pivot. Turn about pivot keeps sphere they lie on, so point finger
   ##   took moves with finger, pixel for pixel. See `turnsCarrying`.
-  let (across, pitch, bearing) = camera.turnsCarrying(held, under)
-  camera.motor = camera.turnedAboutPivot(across, pitch)
-  camera.motor = camera.turnedAboutPivot(UP_WORLD, bearing)
+  let (eye, frame) = camera.sight
+  camera.orbitCarrying(held, under, frame, eye + camera.depth_pivot*frame.forward)
+
+
+func orbitCarrying*(
+  camera: var Camera; held, under: Direction; frame: FrameCamera; pivot: Position
+) =
+  ## Turn as `orbitCarrying` above, with frame and pivot caller has already read off stance.
+  ##   Finger's turn reads them once for both pixels it maps, so stance is read once per event.
+  ##   Second turn reads pivot again rather than reuse it: turn about pivot leaves pivot, but
+  ##   only to rounding, and one read keeps result bit for bit what it was.
+  let (across, pitch, bearing) = frame.turnsCarrying(held, under)
+  camera.motor = camera.turnedAboutPivot(pivot, across, pitch)
+  camera.motor = camera.turnedAboutPivot(camera.pivot, UP_WORLD, bearing)
 
 
 func roll*(camera: var Camera, radians: float) =

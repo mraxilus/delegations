@@ -830,7 +830,7 @@ func turnFollowing*(
   ##   more; see `camera.radiusHeld`, `camera.pointHeld` and `camera.orbitCarrying`.
   ##     Pivot itself never moves under orbit, so point there is nothing to hold.
   let
-    frame = camera.frame
+    (eye, frame) = camera.sight
     left = camera.headingThrough(frame, width, height, before)
     reached = camera.headingThrough(frame, width, height, after)
   if not has_selection:
@@ -838,11 +838,11 @@ func turnFollowing*(
     return
   let
     radius = camera.radiusHeld(width, height, reach_selection)
-    eye = camera.eye
     pivot = eye + camera.distance*frame.forward
   camera.orbitCarrying(
     held = pointHeld(eye, pivot, left, radius) - pivot,
     under = pointHeld(eye, pivot, reached, radius) - pivot,
+    frame = frame, pivot = pivot,
   )
 
 
