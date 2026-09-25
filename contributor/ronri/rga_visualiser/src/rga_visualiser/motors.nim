@@ -179,8 +179,16 @@ func turnAbout*(axis: Multivector, radians: float): Option[Multivector] =
   some(exp(wedge(-0.5*radians, unitize(axis))))
 
 
+func carried*(m, motor, motor_reversed: Multivector): Multivector =
+  ## Carry `m` through rigid motion `motor`, whose antireverse caller already holds.
+  ##   Lets caller carrying several operands through one motor take `~∘𝐐` once.
+  ##   Spelled with operators: JS backend inlines neither `wedgeDotAnti` nor `reverseAnti`,
+  ##   so each named call allocates and copies one more result (read in emitted JS).
+  (motor ⟇ m) ⟇ motor_reversed
+
+
 func carried*(m, motor: Multivector): Multivector =
   ## Carry `m` through rigid motion `motor`, i.e. 𝐐 ⟇ 𝐦 ⟇ ~∘𝐐.
   ##   One form for point, line and plane alike, since sandwich reads grade from `m`.
   ##   Expects unit motor: antireverse is inverse only there.
-  wedgeDotAnti(wedgeDotAnti(motor, m), reverseAnti(motor))
+  carried(m, motor, ~∘ motor)
