@@ -3,6 +3,15 @@
 import ./fixtures
 
 
+func pointOnRay(camera: Camera; width, height: int; cursor: ScreenPosition): Position =
+  ## Place point on cursor's sight ray at camera's own separation along sight.
+  ##   Stand-in for something under cursor, where case asks only that zoom hold it.
+  let
+    heading = headingThrough(camera, camera.frame, width, height, cursor)
+    along = dot(heading, camera.frame.forward)
+  camera.eye + (camera.distance/along)*heading
+
+
 suite "Camera":
   test "the motor stance places the eye and the frame where the turntable does":
     # Whole claim of stance held as rigid motion: every placement that four turntable
@@ -645,16 +654,15 @@ suite "Camera":
     ]:
       for factor in [0.5, 2.0]:
         var camera = initCameraDefault()
-        let anchor = positionUnderCursor(camera, WIDTH_ZOOM, HEIGHT_ZOOM, cursor)
-        check anchor.isSome
+        let anchor = pointOnRay(camera, WIDTH_ZOOM, HEIGHT_ZOOM, cursor)
         let before = projectToScreen(
           camera.initMatrixViewProjection(float(WIDTH_ZOOM)/float(HEIGHT_ZOOM)),
-          WIDTH_ZOOM, HEIGHT_ZOOM, anchor.get,
+          WIDTH_ZOOM, HEIGHT_ZOOM, anchor,
         )
-        camera.dollyToward(factor, anchor.get)
+        camera.dollyToward(factor, anchor)
         let after = projectToScreen(
           camera.initMatrixViewProjection(float(WIDTH_ZOOM)/float(HEIGHT_ZOOM)),
-          WIDTH_ZOOM, HEIGHT_ZOOM, anchor.get,
+          WIDTH_ZOOM, HEIGHT_ZOOM, anchor,
         )
         check after.isInFront
         check abs(after.x - before.x) <= 0.5 # Half pixel: what reader could not see.
@@ -671,28 +679,22 @@ suite "Camera":
     #   distance, so there is more to come back to than there used to be.
     var camera = initCameraDefault()
     let opening = camera
-    let anchor = positionUnderCursor(camera, 1440, 900, ScreenPosition(x: 300.0, y: 640.0))
-    check anchor.isSome
-    camera.dollyToward(0.5, anchor.get)
+    let anchor = pointOnRay(camera, 1440, 900, ScreenPosition(x: 300.0, y: 640.0))
+    camera.dollyToward(0.5, anchor)
     check not (camera.pivot =~ opening.pivot) # It really did move view, not just in.
-    camera.dollyToward(2.0, anchor.get)
+    camera.dollyToward(2.0, anchor)
     check camera.pivot =~ opening.pivot
     check camera.distance =~ opening.distance
 
 
   test "a zoom with nothing under the cursor falls back to zooming at the middle":
-    # Over sky there is no object, no ground ahead and no level to meet, so there is.
-    #   no point to aim at. Answer is plain dolly wheel did before any of this,
-    #   not refusal to zoom.
+    # Over sky there is no object, so there is no point to aim at. Answer is plain.
+    #   dolly, not refusal to zoom.
     var
       interaction = Interaction(is_enabled: true)
       camera = initCamera(pivot = ORIGIN, distance = 12.0, azimuth = 0.5, elevation = 0.05)
       scene = initScene()
-    let cursor = ScreenPosition(x: 720.0, y: 60.0) # High in frame, from camera barely
-      # above level it is looking at:
-      #   that ray tilts up into sky and comes back down to neither ground nor pivot's own level.
-    check positionUnderCursor(camera, 1440, 900, cursor).isNone
-    check positionOnGround(camera, 1440, 900, cursor).isNone
+    let cursor = ScreenPosition(x: 720.0, y: 60.0) # High in frame, on empty sky.
     interaction.updateCursor(cursor.x, cursor.y)
     interaction.dollyAtCursor(
       camera, scene, 2.0, camera.drawExtentFor(900, 0.0),
@@ -765,11 +767,10 @@ suite "Camera":
     # Floor never pushes eye out again, however many notches follow.
     check dot(camera.eye - planet, camera.frame.forward) < 0.0
 
-  test "a zoom onto a point brings the pivot to its depth, and onto ground or level does not":
+  test "a zoom onto a point brings the pivot to its depth, and over nothing the pivot stands":
     # Turntable follows what reader looks at: eye carried up to planet while pivot.
-    #   stayed far behind left every orbit swinging planet across frame. Ground and
-    #   level are fallbacks, and following either drifted pivot's height with every
-    #   notch and moved it where pan and slide expect it held.
+    #   stayed far behind left every orbit swinging planet across frame. Over nothing
+    #   wheel dollies about middle of frame, which leaves pivot where it stands.
     const (WIDE, TALL) = (1440, 900)
     let planet = Position(x: 3.0, y: 1.0, z: 0.0)
     var scene = initScene()
@@ -788,7 +789,7 @@ suite "Camera":
     check camera.pivot =~ planet
     check abs(camera.distance - 10.0) < 1.0e-6
     check camera.eye =~ (planet + 0.5*(eye_before - planet))
-    # Over empty sky, level answers and pivot keeps its height: distance scales alone.
+    # Over empty sky nothing answers: distance scales alone.
     var level = initCamera(pivot = ORIGIN, distance = 12.0, azimuth = 0.5, elevation = 0.05)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(720.0, 200.0)
@@ -799,27 +800,26 @@ suite "Camera":
     )
     check abs(level.distance - 6.0) < 1.0e-6
     check abs(level.pivot.z) < 1.0e-6
-    # Over ground below raised pivot, ground answers and pivot slides halfway toward.
-    #   it by map rule alone, not to ground's depth along sight line.
+    # Low in frame, where ground stood under raised pivot, nothing answers either: world.
+    #   has no ground, so pivot stands and distance scales alone.
     var over_ground = initCamera(
       pivot = Position(x: 0.0, y: 0.0, z: 1.0), distance = 12.0, azimuth = 0.5,
       elevation = 0.5,
     )
     let under = ScreenPosition(x: 720.0, y: 700.0)
-    check positionOnGround(over_ground, WIDE, TALL, under).isSome
     dollyAt(
       over_ground, initScene(), 0.5, over_ground.drawExtentFor(TALL, 0.0),
       over_ground.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL, under,
       has_selection = true,
     )
     check abs(over_ground.distance - 6.0) < 1.0e-6
-    check abs(over_ground.pivot.z - 0.5) < 1.0e-6
+    check over_ground.pivot =~ Position(x: 0.0, y: 0.0, z: 1.0)
 
 
-  test "a zoom aims at the object under the cursor, then the ground, then the level":
-    # Order is rule: reader pointing at object means that object, at depth.
-    #   it actually stands at. Anchored on plane through pivot instead, zoom crept
-    #   past or short of it and what was under cursor slid away as wheel turned.
+  test "a zoom aims at the object under the cursor, and at nothing else":
+    # Reader pointing at object means that object, at depth it actually stands at.
+    #   Anchored on plane through pivot instead, zoom crept past or short of it and
+    #   what was under cursor slid away as wheel turned.
     const (WIDE, TALL) = (1440, 900)
     let
       camera = initCamera(pivot = ORIGIN, distance = 20.0, azimuth = 0.4, elevation = 0.5)
@@ -840,50 +840,17 @@ suite "Camera":
     check at_object.get.at =~ raised
     check at_object.get.is_standing
 
-    # Cursor little off it falls through to ground, which is `z = 0` itself rather.
-    #   than level pivot happens to sit on. Lower in frame, where ground stands within
-    #   `FACTOR_ANCHOR_DEPTH` of orbit distance.
+    # Cursor little off it finds nothing: no ground below it and no level through pivot.
+    #   Lower in frame and toward horizon alike.
     var camera_raised = camera
     camera_raised = camera_raised.placedAtPivot(Position(x: 0.0, y: 0.0, z: 5.0))
-    let
-      elsewhere = ScreenPosition(x: on_screen.x + 200.0, y: on_screen.y + 400.0)
-      at_ground = anchorZoomAt(
+    let elsewhere = ScreenPosition(x: on_screen.x + 200.0, y: on_screen.y + 400.0)
+    for cursor in [elsewhere, ScreenPosition(x: on_screen.x + 200.0, y: on_screen.y + 60.0)]:
+      check anchorZoomAt(
         scene, camera_raised, camera_raised.drawExtentFor(TALL, 0.0),
         camera_raised.initMatrixViewProjection(float(WIDE)/float(TALL)),
-        WIDE, TALL, elsewhere,
-      )
-    check at_ground.isSome
-    check abs(at_ground.get.at.z) <= 1.0e-6
-    check not at_ground.get.is_standing
-    # Cursor toward horizon finds ground too far to zoom toward, and takes level.
-    #   through pivot instead: zoom aimed there flew camera off across ground.
-    let
-      toward_horizon = ScreenPosition(x: on_screen.x + 200.0, y: on_screen.y + 60.0)
-      at_level = anchorZoomAt(
-        scene, camera_raised, camera_raised.drawExtentFor(TALL, 0.0),
-        camera_raised.initMatrixViewProjection(float(WIDE)/float(TALL)),
-        WIDE, TALL, toward_horizon,
-      )
-    check at_level.isSome
-    check abs(at_level.get.at.z - 5.0) <= 1.0e-6
-    check not at_level.get.is_standing
-    # And it is ground *cursor* is over, not ground below eye.
-    check at_ground.get.at =~ positionOnGround(camera_raised, WIDE, TALL, elsewhere).get
-
-    # Cursor whose ray reaches no ground still meets level through pivot, which.
-    #   is last answer rather than first.
-    let
-      level = initCamera(pivot = ORIGIN, distance = 12.0, azimuth = 0.5, elevation = -0.4)
-      upward = ScreenPosition(x: 720.0, y: 40.0)
-    if positionOnGround(level, WIDE, TALL, upward).isNone:
-      let at_level = anchorZoomAt(
-        initScene(), level, level.drawExtentFor(TALL, 0.0),
-        level.initMatrixViewProjection(float(WIDE)/float(TALL)),
-        WIDE, TALL, upward,
-      )
-      let at_pivot = positionUnderCursor(level, WIDE, TALL, upward)
-      check at_level.isSome == at_pivot.isSome
-      if at_level.isSome: check at_level.get.at =~ at_pivot.get
+        WIDE, TALL, cursor,
+      ).isNone
 
     # Plane under cursor is crossing, not place: anchored where ray meets it, but not.
     #   followed to depth, which is not plane's depth at middle of frame.
@@ -1084,10 +1051,9 @@ suite "Camera":
     # `dollyToward` reads back what `distanceHeld` allowed rather than assuming its own.
     #   factor took, so zoom stopped by floor still describes where eye is.
     var camera = initCamera(pivot = ORIGIN, distance = 0.1, azimuth = 0.4, elevation = 0.5)
-    let anchor = positionUnderCursor(camera, 1440, 900, ScreenPosition(x: 400.0, y: 600.0))
-    check anchor.isSome
+    let anchor = pointOnRay(camera, 1440, 900, ScreenPosition(x: 400.0, y: 600.0))
     # Factor far past floor, which is tiny; see `DISTANCE_LIMIT_NEAR`.
-    camera.dollyToward(1.0e-12, anchor.get)
+    camera.dollyToward(1.0e-12, anchor)
     check camera.distance =~ DISTANCE_LIMIT_NEAR
     check norm(camera.eye - camera.pivot) =~ camera.distance
 

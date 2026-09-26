@@ -2223,8 +2223,8 @@ type FrameData = object
     ##   Carried on `timings.FrameRecord`.
   ms_grid, ms_axes: float32
     ## Record what two halves of scenery cost, inside `ms_furniture`.
-    ##   Axes are three lines however far camera stands; grid is however many ground reach
-    ##   asks for.
+    ##   Axes are three lines however far camera stands; lattices are however many lines
+    ##   selected planes ask for.
   count_grid_segments: int
     ## Count ribbon records lattices are drawn from, one per lattice line.
     ##   Bounded per family by `mesh.LINES_GRID_MAX`.

@@ -19,8 +19,8 @@ suite "Picking":
 
   test "a zoom anchors on what is under the cursor only near the depth being looked at":
     # Camera tilted down at origin from ten units.
-    #   Point on sight line below ground at one and half orbit distances is anchor; point
-    #   eight off is passed over, and ground under cursor -- origin itself -- answers instead.
+    #   Point on sight line at one and half orbit distances is anchor; point eight off is
+    #   passed over, and nothing else answers: world has no ground to fall back on.
     let camera = initCamera(
       pivot = Position(x: 0, y: 0, z: 0), distance = 10.0, azimuth = 0.0, elevation = 0.3
     )
@@ -38,8 +38,7 @@ suite "Picking":
     let anchor_far = anchorZoomAt(
       far, camera, scale, view_projection, WIDTH_PICK, HEIGHT_PICK, CENTRE,
     )
-    check anchor_far.isSome and abs(anchor_far.get.at.x) < 1.0e-6 and
-      abs(anchor_far.get.at.z) < 1.0e-6
+    check anchor_far.isNone
 
   test "a point drawn wide is picked anywhere on its disc, over the plane behind it":
     # Pick radius follows drawn disc: Sol seen from two of its own radii away spans about.
