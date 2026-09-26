@@ -1703,6 +1703,12 @@ runner walks every kept sweep and both drawn walks to the numbers this container
 its own suite name. `trigid.nim` and `tread.nim` add `-d:danger`, because the sweeps are the slow
 part and `doAssert` survives it.
 
+**`tread.nim` settles its thirty couples on every core at once.** Each worker builds and settles
+its own couple, and gives back the arm poses alone. The law reads them on one thread, as before.
+Its run took 8.1 s with the couples settled one after another, and takes 2.3 s, on four cores on
+2026-09-26. It prints the same lines. It failed on three breaks made on purpose: the reader of the
+arm over turned round, one connection given back twice, and no couple settled.
+
 **The suites that need no engine and no browser compile once.** Each binary compiled the standard
 library and its own imports again. Sixteen of them compiled for 31.4 s and ran for 0.8 s, and all
 nineteen took 62.4 s under testament. The one binary passes 209 laws, which is the sum that the

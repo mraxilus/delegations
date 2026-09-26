@@ -12,12 +12,19 @@ cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on -d:danger $opti
 
 {.experimental: "strictFuncs".}
 
-import std/[math, random, strformat, tables, unittest]
+import std/[atomics, cpuinfo, math, random, strformat, tables, typedthreads, unittest]
 
 import ../sim/[body, hold, limb, read, rig, rigid, vec]
 
 
-const APART = 0.40
+const
+  APART = 0.40
+  PAIRS = [([Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)]),
+             Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Left)])], false),
+           ([Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Left)]),
+             Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Right)])], true)]
+    ## Both two-hand holds, and whether each rests with follow turned away.
+  TURNS = [0.0, 0.25, 0.5, 0.75, 1.0] ## Turns each hold is settled at.
 
 func nearestOn(line: array[7, Vec]; p: Vec): tuple[off, z: float] =
   ## How far `p` lies off polyline in plan, and how high polyline is there.
@@ -40,35 +47,65 @@ func nearestOn(line: array[7, Vec]; p: Vec): tuple[off, z: float] =
       result = (off, a.z + (b.z - a.z) * u)
 
 
+#[ Settled couples, every core at once ]#
+
+var
+  settles: seq[tuple[pair: int, band: Band, turn: float]]
+    ## Every couple to settle, set before any thread starts.
+  nextSettle: Atomic[int] ## Next couple not yet taken.
+  settledArms: seq[array[2, array[2, ArmPose]]] ## Each couple's arms, at its own index.
+
+proc settling(id: int) {.thread.} =
+  ## Take couples until none is left, and give back arm poses alone.
+  ##   Holds are constants, so each worker reads its own copy, and each couple
+  ##     builds its own world.  Poses are plain numbers, each written to place
+  ##     allotted before any thread starts.
+  {.cast(gcsafe).}:
+    while true:
+      let i = nextSettle.fetchAdd(1)
+      if i >= settles.len: return
+      let
+        s = settles[i]
+        links = @(PAIRS[s.pair][0])
+        away = PAIRS[s.pair][1]
+      var c = build(HUMAN, turned(restStance(HUMAN, APART, away), Body.Two, s.turn),
+                    s.band, links, away = away)
+      c.settle()
+      for k in 0 ..< links.len: settledArms[i][k] = c.poseOf(k).arms
+      c.free()
+
+proc settleAll() =
+  ## Settle both holds at every band and turn, on every core at once.
+  ##   Thirty couples settled one after another cost 8.1 s of suite's run, measured
+  ##     2026-09-26 on four cores.
+  for pair in 0 ..< PAIRS.len:
+    for band in Band:
+      for turn in TURNS: settles.add (pair, band, turn)
+  settledArms = newSeq[array[2, array[2, ArmPose]]](settles.len)
+  nextSettle.store(0)
+  var workers = newSeq[Thread[int]](max(1, countProcessors()))
+  for w in 0 ..< workers.len: createThread(workers[w], settling, w)
+  joinThreads(workers)
+
+
 suite "two hands":
   test "crossings are counted off drawn arms, not assumed":
+    settleAll()
     var seen = 0
-    for (links, away) in [
-        (@[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Right)]),
-           Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Left)])], false),
-        (@[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Left)]),
-           Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Right)])], true)]:
-      for band in Band:
-        for turn in [0.0, 0.25, 0.5, 0.75, 1.0]:
-          var c = build(HUMAN, turned(restStance(HUMAN, APART, away), Body.Two, turn),
-                        band, links, away = away)
-          c.settle()
-          var arms: Arms
-          for i in 0 ..< links.len:
-            arms.add c.poseOf(i).arms
-          let
-            p = polyline(arms, 0)
-            q = polyline(arms, 1)
-          for x in crossings(arms):
-            inc seen
-            let
-              i = int(x.along)
-              on = p[i] + (p[i + 1] - p[i]) * (x.along - i.float)
-              other = nearestOn(q, x.at)
-            check abs(x.at.x - on.x) < 1e-9 and abs(x.at.y - on.y) < 1e-9
-            check other.off < 1e-9
-            check (x.over == 0) == (x.at.z >= other.z)
-          c.free()
+    for i in 0 ..< settles.len:
+      let
+        arms: Arms = @[settledArms[i][0], settledArms[i][1]]
+        p = polyline(arms, 0)
+        q = polyline(arms, 1)
+      for x in crossings(arms):
+        inc seen
+        let
+          k = int(x.along)
+          on = p[k] + (p[k + 1] - p[k]) * (x.along - k.float)
+          other = nearestOn(q, x.at)
+        check abs(x.at.x - on.x) < 1e-9 and abs(x.at.y - on.y) < 1e-9
+        check other.off < 1e-9
+        check (x.over == 0) == (x.at.z >= other.z)
     echo &"    {seen} crossings read off two holds, three bands, five turns"
     check seen > 0
 
