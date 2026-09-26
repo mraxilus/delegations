@@ -22,6 +22,10 @@ const
     ##     `design/parts` named same rung right: two namings of one chain, and
     ##     only one of them correct.  `tests/suites/tglossary` now reads both.
   WIDTH = 100 ## Columns report's prose wraps at.
+  SEEN = ["ahead", "at their right", "at their back", "at their left"]
+    ## Say where one has other, by quarters clockwise (`body.quartersTo`).
+    ##   Never `behind` after dancer's name: `lead behind` is phrase entry
+    ##     **Pillion** rejects.
 
 
 func oneLink(a, b: Arm): seq[Link] =
@@ -64,6 +68,11 @@ func blockLine(w: Walk; sign: string; apart = true): string =
 func blocks(sw: Swept): string =
   ## Say both blocks of sweep as one wrapped paragraph.
   prose(&"Blocks: {blockLine(sw.neg, \"-\")}; {blockLine(sw.pos, \"+\")}.")
+
+func restName(away: bool): string =
+  ## Name facing couple rest at, read off stance sim stands them in.
+  ##   Distance puts no one at other side of other, so any distance names it.
+  facingName(restStance(HUMAN, 1.0, away)).get
 
 
 #[ Sweeps, Once ]#
@@ -134,7 +143,7 @@ proc rigTable(): string =
 proc singleHolds(): string =
   ## Tabulate every one-hand hold at every band, follow turned.
   result.add "## One hand held, the follow turned\n\n"
-  result.add prose("Counted from face-to-face, in turns, anticlockwise seen from above " &
+  result.add prose(&"Counted from {restName(false)}, in turns, anticlockwise seen from above " &
     "positive.  Each row is the pose the arms carry to that turn; *strain* is how far " &
     "into the last stretch before a joint's edge the worst joint is (1 is the edge).")
   for (a, b, name) in [(Arm.Left, Arm.Left, "L-l"), (Arm.Right, Arm.Right, "R-r"),
@@ -170,7 +179,7 @@ proc floorClaim(): string =
   ## Tabulate floor's claim beside sim's answer.
   result.add "## The floor's claim\n\n"
   result.add prose("The floor: *everything gets a full turn before it blocks, except a low " &
-    "wrap, which gets half.*  L-l and L-r, turning the follow, from Face-to-face.  For L-l " &
+    &"wrap, which gets half.*  L-l and L-r, turning the follow, from {restName(false)}.  For L-l " &
     "the lock way is negative and the wrap way positive; for L-r the wrap way is negative " &
     "and the lock way positive.")
   result.add "| hold | level | way | floor says | sim says | the sim names |\n" &
@@ -193,13 +202,13 @@ proc floorClaim(): string =
 proc pairHolds(): string =
   ## Tabulate both two-hand holds at every band, follow turned.
   result.add "## Both hands held\n\n"
-  result.add prose("L-r.R-l rests face-to-face; L-l.R-r rests pillion lead " &
-    "(face-to-face its two connections lie through each other), and its turns count " &
+  result.add prose(&"L-r.R-l rests {restName(false)}; L-l.R-r rests {restName(true)} " &
+    &"({restName(false)} its two connections lie through each other), and its turns count " &
     "from there.")
   for (links, away, name) in [
       (twoLinks(Arm.Left, Arm.Right, Arm.Right, Arm.Left), false, "L-r.R-l"),
       (twoLinks(Arm.Left, Arm.Left, Arm.Right, Arm.Right), true,
-       "L-l.R-r, from pillion lead")]:
+       "L-l.R-r, from " & restName(true))]:
     for (word, band) in BANDS:
       let sw = sweepOf(band, links, away = away)
       result.add &"### {name}, {word}\n\n"
@@ -238,11 +247,13 @@ proc chain(): string =
     "above say.  Wound, not built there: a rung is a winding of the arms, which no facing " &
     "says, so the couple are turned to it with the hands lifted and then left to stand.  " &
     "Asked from every distance the couple may stand at, and shown from first that holds.")
-  result.add "| level | rung | holds | strain | crossings | standing |\n" &
-    "|---|---|---|---|---|---|\n"
+  result.add "| level | rung | facing | holds | strain | crossings | standing |\n" &
+    "|---|---|---|---|---|---|---|\n"
   let links = twoLinks(Arm.Left, Arm.Right, Arm.Right, Arm.Left)
   for (word, band) in BANDS:
     for (turn, rung) in RUNGS:
+      # Read off stance rung winds couple to, whether pose holds there or not.
+      let facing = facingName(turned(restStance(HUMAN, 1.0), Body.Two, turn)).get
       var found = false
       for apart in stands(HUMAN):
         let (holds, c) = stood(HUMAN, band, links, turn, false, Body.Two, apart)
@@ -251,13 +262,13 @@ proc chain(): string =
           arms.add c.poseOf(i).arms
         if holds:
           let tight = tightest(HUMAN, c.stance, links, arms)
-          result.add &"| {word} | {rung} ({turns(turn)}) | yes | {strainWord(tight)} | " &
-            &"{crossings(arms).len} | {turns(apart)} m |\n"
+          result.add &"| {word} | {rung} ({turns(turn)}) | {facing} | yes | " &
+            &"{strainWord(tight)} | {crossings(arms).len} | {turns(apart)} m |\n"
           found = true
         c.free()
         if found: break
       if not found:
-        result.add &"| {word} | {rung} ({turns(turn)}) | no | | | no pose holds |\n"
+        result.add &"| {word} | {rung} ({turns(turn)}) | {facing} | no | | | no pose holds |\n"
   result.add "\n"
 
 
@@ -334,7 +345,11 @@ proc report(): string =
   result.add "| the hands in the neck band | high |\n"
   result.add "| the hands over the crown | above |\n"
   result.add "| the arm carried there but not pressing the body | led |\n"
-  result.add "| the elbow in front of the body, on an arm behind the back | elbow forward |\n\n"
+  result.add "| the elbow in front of the body, on an arm behind the back | elbow forward |\n"
+  for (seen, name) in FACINGS:
+    result.add &"| the lead has the follow {SEEN[seen[0]]}, and the follow has the lead " &
+      &"{SEEN[seen[1]]} | {name} |\n"
+  result.add "\n"
   result.add prose("Read with the model's limits in mind: the shoulder girdle is rigid, so " &
     "a reach a dancer gets by rolling a shoulder forward is refused here; the trunk twists " &
     "at the waist and does not bend; a torso is a stadium of its round; and the couple " &
