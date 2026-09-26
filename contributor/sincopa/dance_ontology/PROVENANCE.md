@@ -85,8 +85,21 @@ Verified by `suites/trotation.nim`, suite "facings". Each law failed on a break 
 The breaks were two names swapped, a name in the wrong case, and a name given to a state without
 one. The last two were a turn counted the wrong way, and a word that is not in the glossary.
 
-The sim and the drawings hold four of the eight: Face-to-face, Back-to-back and both cases of
-Pillion. No drawing places a dancer at a shoulder yet, so no page draws a Sidecar.
+**The drawings hold all eight facings, each read back through the model.** `ORIENTATIONS` in
+`parts.nim` finds, in the model, the turns on the spot that reach each facing from Face-to-face.
+`facingOf` reads a drawn pose back as a facing, from where each dancer sees the other. The build
+stops where a drawn pose reads as a facing other than its name. The single-hand page names the
+facing of each quarter it draws, read off the drawn pose.
+
+Verified by `suites/tmarks.nim`, suite "the eight facings, drawn". Each law failed on a break made
+on purpose. The breaks dropped the Sidecar row, and set a grid header in capitals. The other two
+gave a turn the wrong sign, and swapped the names of two quarters.
+
+The law on the single-hand page reads each name in the section and the place of its quarter. The
+manners share names, so a name found anywhere on the page would stand in for one that is missing
+or swapped.
+
+The sim holds four of the eight: Face-to-face, Back-to-back and both cases of Pillion.
 
 The agreed words disagree with the code in thirteen places, recorded rather than acted on. From the
 hand-to-hand half:
@@ -821,8 +834,8 @@ draws in its own ink when opened alone, as the app's figures in `doc/frames/` ar
 `treview.nim`, which checks that every ink is a named colour with a fallback.
 
 **The shape of a mark says whose hand it is.** The lead's hands are squares, and the follow's are
-circles. The mark carries this itself, so it holds at any size. Which column a hand sits in follows
-from the way its dancer faces. So the four facings are distinct without a new mark.
+circles. The mark carries this itself, so it holds at any size. Where a hand sits on the rim follows
+from the way its dancer faces. So the eight facings are distinct without a new mark.
 
 **A level is a fill on both ends of a connection.** Hollow is no level, solid is low, a dot at the
 centre is high, and hatched is above. A crossed hold keeps its drawn break as well, because the

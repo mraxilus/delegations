@@ -317,7 +317,7 @@ suite "facings":
     check facing(seenAfter([0, 1])).get.name == "Sidecar left"
     check facing(seenAfter([-1, 0])).get.name == "sidecar Right"
 
-  test "half turns on the spot land on the four facings drawn today, each as named":
+  test "half turns on the spot land on the four facings with no quarter, each as named":
     check facing(seenAfter([0, 0])) == some(Facing.FaceToFace)
     check facing(seenAfter([2, 2])) == some(Facing.BackToBack)
     for who in Dancer:
