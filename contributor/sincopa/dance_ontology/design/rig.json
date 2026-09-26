@@ -1,4 +1,5 @@
-{"upper":0.31,
+{"stamp":"d85b30d6cae08258",
+"upper":0.31,
 "fore":0.25,
 "hand":0.08,
 "dofs":["extend","across","twist","bend","wrist"],
