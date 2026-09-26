@@ -88,15 +88,35 @@ suite "every page this project publishes":
       fail()
 
 
-suite "the eight facings, drawn":
-  # Glossary agrees eight facings, and model holds them (`rotation.Facing`).  Pages draw
+suite "the sixteen facings, drawn":
+  # Glossary agrees sixteen facings, and model holds them (`rotation.Facing`).  Pages draw
   # them from model, so every name below comes from model, never from page it checks.
   test "the frame page draws each facing once, under its own name":
     let page = readFile(OUT / "frames.html")
     for named in Facing:
       check page.count("<figcaption>" & named.name & "</figcaption>") == 1
-      # Case of name says whom it places, so no header that capitalises names one.
+      # Name capitalises lead's side alone, so no header that capitalises names one.
       check page.count("<th>" & named.name) == 0
+
+  test "the frame page gives each side of the lead a row, in the glossary's order":
+    # Name gives lead's side first, so row for each side reads down page as names do.
+    let page = readFile(OUT / "frames.html")
+    var at = page.find("<h3>At rest, no ring</h3>")
+    check at >= 0
+    if at >= 0:
+      for side in ["Face", "Starboard", "Back", "Port"]:
+        at = page.find("<div class=\"row\">", at)
+        let shuts = page.find("</div>", at)
+        var captions: seq[string]
+        var c = page.find("<figcaption>", at)
+        while c >= 0 and c < shuts:
+          let start = c + "<figcaption>".len
+          captions.add page[start ..< page.find("</figcaption>", start)]
+          c = page.find("<figcaption>", start)
+        check captions.len == 4
+        for caption in captions:
+          check caption.startsWith(side & "-to-")
+        at = shuts
 
   test "each drawn facing reads back as the facing it is named for":
     for named, o in ORIENTATIONS:

@@ -23,7 +23,7 @@ type StillAsk* = object ## One still card, as sim is asked it.
   key*: string    ## Question's key, as page keys its own pictures.
   links*: seq[Link]
   turns*: float   ## Facing, in turns from where hold rests.
-  rest*: Facing   ## Facing hold rests at, among eight (`parts.restOf`).
+  rest*: Facing   ## Facing hold rests at (`parts.restOf`).
   head*: Body     ## Whose crown joined hands go over.
   either*: bool   ## Whether couple may be wound to this facing either way about:
                   ## card that draws same picture turned either way fixes neither.
@@ -70,11 +70,11 @@ func restOf*(target: Frame): Facing = restOf(holdsOf(target))
 
 func awayFor*(rest: Facing): bool =
   ## Say rest as sim is told it: Face-to-face, or follow turned half, which is
-  ## `Pillion` and which sim calls `away`.
+  ## Face-to-back and which sim calls `away`.
   ##   Sim stands couple at no other rest, and no card asks one.
   case rest
   of Facing.FaceToFace: false
-  of Facing.LeadBehind: true
+  of Facing.FaceToBack: true
   else: raise newException(Defect, &"Sim rests couple at no `{rest.name}`.")
 
 func away*(a: StillAsk): bool = awayFor(a.rest)
@@ -85,8 +85,8 @@ func stillAsks*(): seq[StillAsk] =
   ## Every still card, in page's own order: standard diagram, single-hand
   ## positions, then both chains.
   # `A`. Standard diagram: eight frames, each drawn at two facings.
-  #   `twist` names facing *drawn* -- nought Face-to-face, one Pillion --
-  #     and not half turns from frame's own rest.  Frame that rests Pillion is
+  #   `twist` names facing *drawn* -- nought Face-to-face, one Face-to-back --
+  #     and not half turns from frame's own rest.  Frame that rests Face-to-back is
   #     therefore at rest at twist of one, and half turn from it at nought: A10
   #     and A12 read "at rest" for that reason, and asking them for half turn
   #     called them unreachable.

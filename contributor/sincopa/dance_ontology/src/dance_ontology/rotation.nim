@@ -165,52 +165,37 @@ type
     ## Quarter turns clockwise, so turning on spot steps through them in order.
     Ahead, Right, Behind, Left
 
-  Facing* {.pure.} = enum ## Name eight states two dancers stand in to one another.
-    ## One is read off where each sees other (`facing`): two of four places each
-    ##   make sixteen states, and glossary names eight -- every state where at
-    ##   least one dancer sees other ahead, and Back-to-back.
-    ##   Case of name says whom it places (`Lead`, `Follow` in `GLOSSARY.md`),
-    ##     so `Pillion` and `pillion` are two states; `name` spells each.
-    FaceToFace,   ## Each sees other ahead.
-    BackToBack,   ## Each has other behind.
-    LeadBehind,   ## `Pillion`: Lead sees Follow's back.
-    FollowBehind, ## `pillion`: Follow sees Lead's back.
-    LeadAtLeft,   ## `Sidecar left`: Lead sees Follow's left shoulder.
-    LeadAtRight,  ## `Sidecar right`: Lead sees Follow's right shoulder.
-    FollowAtLeft, ## `sidecar Left`: Follow sees Lead's left shoulder.
-    FollowAtRight ## `sidecar Right`: Follow sees Lead's right shoulder.
+  Facing* {.pure.} = enum ## Name sixteen states two dancers stand in to one another.
+    ## One is read off where each sees other (`facing`), which is side each turns
+    ##   to other: face, starboard, back or port.  Name gives Lead's side, then
+    ##   Follow's (`name`), as `GLOSSARY.md` does.
+    ##   Lead's side runs slowest, each in order `Seen` runs, so state is its index.
+    FaceToFace, FaceToStarboard, FaceToBack, FaceToPort,
+    StarboardToFace, StarboardToStarboard, StarboardToBack, StarboardToPort,
+    BackToFace, BackToStarboard, BackToBack, BackToPort,
+    PortToFace, PortToStarboard, PortToBack, PortToPort
 
 
-const NAMES: array[Facing, string] = ["Face-to-face", "Back-to-back", "Pillion",
-  "pillion", "Sidecar left", "Sidecar right", "sidecar Left", "sidecar Right"]
-  ## Glossary's spelling of each facing, case and all.
+const SIDES: array[Seen, string] = ["Face", "Starboard", "Back", "Port"]
+  ## Glossary's word for side dancer turns to other, by where they see other.
+  ##   Port and starboard name sides of body, so facing never reads as hold,
+  ##     such as `Right-to-left`.
 
 
-func name*(facing: Facing): string = NAMES[facing]
-  ## Spell facing as glossary does.
+func sides*(facing: Facing): array[Dancer, Seen] =
+  ## Get where each dancer sees other in this facing.
+  [Seen(ord(facing) div 4), Seen(ord(facing) mod 4)]
 
 
-func facing*(seen: array[Dancer, Seen]): Option[Facing] =
+func name*(facing: Facing): string =
+  ## Spell facing as glossary does: Lead's side capitalised, then Follow's.
+  let seen = sides(facing)
+  SIDES[seen[Dancer.Lead]] & "-to-" & SIDES[seen[Dancer.Follow]].toLowerAscii
+
+
+func facing*(seen: array[Dancer, Seen]): Facing =
   ## Name state two dancers stand in, from where each sees other.
-  ##   None where neither sees other ahead and their backs are not both
-  ##     turned: glossary names no such state, and nothing here invents one.
-  let (lead, follow) = (seen[Dancer.Lead], seen[Dancer.Follow])
-  if lead == Seen.Ahead:
-    case follow
-    of Seen.Ahead: some(Facing.FaceToFace)
-    of Seen.Behind: some(Facing.LeadBehind)
-    of Seen.Left: some(Facing.LeadAtLeft)
-    of Seen.Right: some(Facing.LeadAtRight)
-  elif follow == Seen.Ahead:
-    case lead
-    of Seen.Behind: some(Facing.FollowBehind)
-    of Seen.Left: some(Facing.FollowAtLeft)
-    of Seen.Right: some(Facing.FollowAtRight)
-    of Seen.Ahead: some(Facing.FaceToFace)
-  elif lead == Seen.Behind and follow == Seen.Behind:
-    some(Facing.BackToBack)
-  else:
-    none(Facing)
+  Facing(ord(seen[Dancer.Lead]) * 4 + ord(seen[Dancer.Follow]))
 
 
 func seenAfter*(turned: array[Dancer, QuarterTurns]): array[Dancer, Seen] =
