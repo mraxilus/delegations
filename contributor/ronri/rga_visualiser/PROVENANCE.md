@@ -1719,8 +1719,7 @@ out from the drawn size. A ring of a point then hugs a wide disc and a dot alike
 
 Each render path strokes the markers in its foreground layer, and never as scene geometry. A loop
 on a plane would z-fight its fill, and a marker that the object can occlude is not a marker. It is
-not an outline in the style of 3D modelling, and nobody is to reintroduce that without an
-instruction.
+not an outline in the style of 3D modelling, and nobody is to reintroduce that without instruction.
 
 **A selected object wears its name above its marker**, filled in the own ink of the object and
 outlined in the stroke of the marker. Hover and focus wear none. Where it sits is the decision of
@@ -1752,7 +1751,8 @@ the outline. Each front-end centres its own text.
   in the corner itself.
 
   **Every label is then held wholly inside the view.** `labelInView` clamps the measured box
-  `MARGIN_LABEL_EDGE` 4 px in from each edge, on both front-ends.
+  `MARGIN_LABEL_EDGE` 4 px in from each edge, on both front-ends. The page measures its text on
+  the overlay layer, because text off the document has no length, and the hold then has no box.
 
   **The label of a plane stands on the column of the disc, at the height of the true top of its
   circle.** `marker.topmostOnCircle` solves the top of the projected circle in closed form. Screen
@@ -1839,9 +1839,8 @@ a one-percent lap change by the laps accumulated.
 ran 156 px/s along a rail against 348 round a circle. A gap longer than `SECONDS_STEP_PULSE_MAX`
 0.1 s is an absence, and not a frame.
 
-The desktop fill needs a **fixed winding**, which `gui_shim.guiOverlayRibbon` imposes. **A drag
-band swells into its head** (`marker.cometFor`), because `a ∨ b` and `b ∨ a` are different
-operations.
+The desktop fill needs a **fixed winding**, which `gui_shim.guiOverlayRibbon` imposes. **A drag band
+swells into its head** (`marker.cometFor`), because `a ∨ b` and `b ∨ a` are different operations.
 
 *Checked.* Verified by `suites.nim`:
 
@@ -1861,6 +1860,7 @@ Verified by driven check:
 
 - 402 frames with 0 label hops;
 - 48 frames at phone width with 0 side swaps, and none on the right;
+- the label of the horizon line whole in its first frame at phone width, at four bearings;
 - the label box of the frame in its corner above the scale bar;
 - a 720-step orbit with the rail gap changing at most 0.103 px between frames;
 - two crossing planes selected changing 15,668 canvas pixels, against a noise floor of 0 pixels.
