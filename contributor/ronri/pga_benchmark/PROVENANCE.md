@@ -484,31 +484,39 @@ Under `-d:release` the two write-once forms ran three times slower than the in-p
 The reason sits in the emitted C, and is not yet pinned down. The reciprocal pays where a unitize
 sits on a critical path, and not in a throughput loop.
 
-**The norms of the library write their zeros with a loop, and the loop stays.** A compiler
-turns a loop that stores a constant into a bulk fill, and that fill costs more than straight
-stores. To unroll the loop at build time takes a macro. The Architect declined it, because the
-library is about PGA and not about micro-optimisation, and accepts the cost below.
+**The library writes no zero by hand, and leaves each zero element to the default fill.** No
+norm and no generated operator writes a zero element. The Architect decided this, because the
+library is about PGA and not about micro-optimisation, and that work belongs to the compiler.
+The cost below is accepted. The pin `6a91c3f` predates the decision.
 
 The cost was measured at library `181c8d8`, with the sign of `merge` fixed, on 2026-09-25.
-That commit is not the pin. Each norm was called through a volatile procedure pointer, so its
-body compiled alone and wrote to memory that it could not see. Each cell is the lower of two
-passes, and each pass is the median of nine runs of 41 rounds over 1024 objects. Functions
-that did not change varied by ±3%. A cell gives nanoseconds with the loop, then with straight
-stores that write the zeros first:
+Each function was called through a volatile procedure pointer, so its body compiled alone and
+wrote to memory that it could not see. Each figure comes from two passes, and each pass is the
+median of nine runs of 41 rounds over 1024 objects. Functions that did not change varied by
+±3%. For the generated operators, each ratio is the default fill against written zeros:
+
+| Generated operators | rga2d | rga3d | rga4d | rga5d | cga4d | cga5d | cga6d |
+|---------------------|-------|-------|-------|-------|-------|-------|-------|
+| Geometric mean | ×0.99 | ×0.98 | ×1.20 | ×1.23 | ×1.12 | ×1.14 | ×1.07 |
+| Slower than ×1.05 | 5 of 24 | 0 of 24 | 10 of 24 | 10 of 24 | 8 of 26 | 8 of 26 | 7 of 26 |
+| Worst | ×1.14 | ×1.01 | ×1.73 | ×2.45 | ×1.75 | ×2.25 | ×1.69 |
+
+For the norms, a cell gives nanoseconds with the default fill, then with straight stores that
+write the zeros first. The cell is the lower of the two passes:
 
 | Norm | rga2d | rga3d | rga4d | rga5d | cga4d | cga5d | cga6d |
 |------|-------|-------|-------|-------|-------|-------|-------|
-| `|∙` | 4.1 / 2.6 | 6.2 / 3.9 | 21 / 7 | 41 / 12 | 23 / 9 | 62 / 24 | 105 / 76 |
-| `|■` | | | | | 23 / 9 | 63 / 25 | 105 / 76 |
-| `|∘` | 2.6 / 2.6 | 4.7 / 4.6 | 13 / 7 | 35 / 12 | 17 / 10 | 56 / 26 | 103 / 90 |
-| `|□` | | | | | 17 / 10 | 56 / 26 | 104 / 90 |
-| `|` | 3.7 / 3.7 | 5.6 / 5.6 | 25 / 15 | 51 / 46 | 32 / 22 | 74 / 74 | 159 / 150 |
+| `|∙` | 2.6 / 2.6 | 3.9 / 3.9 | 13 / 7.0 | 34 / 12 | 16 / 9.4 | 53 / 24 | 109 / 76 |
+| `|■` | | | | | 16 / 9.3 | 53 / 25 | 109 / 76 |
+| `|∘` | 2.6 / 2.6 | 4.6 / 4.6 | 14 / 7.2 | 34 / 12 | 17 / 9.7 | 55 / 26 | 114 / 90 |
+| `|□` | | | | | 17 / 9.7 | 55 / 26 | 105 / 90 |
+| `|` | 4.0 / 3.7 | 5.9 / 5.6 | 24 / 15 | 58 / 46 | 31 / 22 | 86 / 74 | 163 / 150 |
 
-Two changes need no macro, and recover part of the cost. A default fill in place of the loop
-in `|∙` and `|■` runs at ×0.63 to ×0.84 of the loop from two to five dimensions. At cga6d it
-runs at ×1.03. `^∙` and `^∘` can take the root of `|∙²` or `|∘²`, and not build the norm.
-They then run at ×0.55 to ×0.93 in all seven algebras. Issue #285 proposes the rule for
-Article VII that this measurement supports.
+The fill loses from four dimensions up, where a result holds 128 bytes or more. There gcc
+emits the fill as `rep stos` under its generic tuning for x86-64. One change writes no zero,
+so it fits the decision. `^∙` and `^∘` can take the root of `|∙²` or `|∘²`, and not build the
+norm. They then run at ×0.55 to ×0.93 in all seven algebras. Issue #285 proposes a rule for
+Article VII from these measurements.
 
 ## Known limitations
 
