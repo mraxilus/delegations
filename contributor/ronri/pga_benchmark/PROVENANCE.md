@@ -484,22 +484,23 @@ Under `-d:release` the two write-once forms ran three times slower than the in-p
 The reason sits in the emitted C, and is not yet pinned down. The reciprocal pays where a unitize
 sits on a critical path, and not in a throughput loop.
 
-**The library writes no zero by hand, and leaves each zero element to the default fill.** No
-norm and no generated operator writes a zero element. The Architect decided this, because the
-library is about PGA and not about micro-optimisation, and that work belongs to the compiler.
-The cost below is accepted. The pin `6a91c3f` predates the decision.
+**Generated operators write each zero element, and hand-written functions leave theirs to the
+default fill.** A generated operator writes every element as a straight statement, zeros
+included, because generation lowers a Cayley table and nobody writes the zeros by hand. The
+default fill there would cost a geometric mean of ×1.07 to ×1.23 from four dimensions up. A
+hand-written function, such as a norm, writes no zero. The Architect decided this, because the
+library is about PGA and not about micro-optimisation.
+
+Each function that a Cayley table can express moves to generation, and so gets its zeros
+unrolled at no cost. At the pin `6a91c3f` the library already works this way. Head `181c8d8`
+zeroes the norms with loops, against the decision. The cost that stays is what the
+hand-written norms pay.
 
 The cost was measured at library `181c8d8`, with the sign of `merge` fixed, on 2026-09-25.
 Each function was called through a volatile procedure pointer, so its body compiled alone and
 wrote to memory that it could not see. Each figure comes from two passes, and each pass is the
 median of nine runs of 41 rounds over 1024 objects. Functions that did not change varied by
-±3%. For the generated operators, each ratio is the default fill against written zeros:
-
-| Generated operators | rga2d | rga3d | rga4d | rga5d | cga4d | cga5d | cga6d |
-|---------------------|-------|-------|-------|-------|-------|-------|-------|
-| Geometric mean | ×0.99 | ×0.98 | ×1.20 | ×1.23 | ×1.12 | ×1.14 | ×1.07 |
-| Slower than ×1.05 | 5 of 24 | 0 of 24 | 10 of 24 | 10 of 24 | 8 of 26 | 8 of 26 | 7 of 26 |
-| Worst | ×1.14 | ×1.01 | ×1.73 | ×2.45 | ×1.75 | ×2.25 | ×1.69 |
+±3%.
 
 For the norms, a cell gives nanoseconds with the default fill, then with straight stores that
 write the zeros first. The cell is the lower of the two passes:
