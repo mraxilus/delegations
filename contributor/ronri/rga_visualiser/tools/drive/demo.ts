@@ -348,10 +348,9 @@ export async function driveDiscUnderfoot(page: Page): Promise<void> {
 
 /** Rings of spots read about point, in pixels off it, and spots around each.
  *
- *  Two rings, since line is two pixels wide and ring meets it in two spots: pair of pixels off
- *  ink on one ring hides that half. `sol ∧ earth` carries such pair at one camera 0.001 out;
- *  see PROVENANCE.md, "Open questions". Half line missing, or line run past point, reads so on
- *  both rings, and inner ring pairs crossings more strictly than outer.
+ *  Two rings, and both must read whole: line is two pixels wide and ring meets it in two spots,
+ *  so one ring rests each half on two pixels. Half line missing, line run past point, or pair
+ *  of pixels off ink reads on either ring; inner ring pairs crossings more strictly than outer.
  */
 const RADII_CROSSING = [100, 80], SPOTS_CROSSING = 720;
 
@@ -360,6 +359,14 @@ const TOLERANCE_INK = 12;
 
 /** How far crossing's opposite may stand off half turn, in degrees. */
 const DEGREES_OPPOSITE = 4;
+
+/** Heading, azimuth and elevation of eye about point, check also reads from, whatever sight
+ *  earlier checks leave.
+ *  There, 0.001 out, record of `sol ∧ earth` reaches from near plane to Sol, 1.15 million
+ *  pixels across. Uncut, GPU's interpolation over it leaves pair of pixels 100 px out off ink;
+ *  shader cuts it to guard pyramid first (`mesh.FACTOR_GUARD`).
+ */
+const HEADING_CROSSING = [2.4145937359945924, 0.714183349338042];
 
 /** Stand camera close on point two lines join, and assert both still run through it.
  *
@@ -397,63 +404,72 @@ export async function driveLineCrossing(
   }
   // Pivot rather than pick: selection's own pulse never settles, and ring is read off still
   //   canvas. Camera lands where framing pick lands it either way.
-  // Whole camera slides, so pivot lands on point and sight stands.
-  await page.evaluate((given) => {
-    nimSelectClear();
-    const eye = nimCameraEye(), pivot = nimCameraPivot();
-    const slid = [0, 1, 2].map((i) => (eye[i] ?? 0) + (given[i] ?? 0) - (pivot[i] ?? 0));
-    nimPlaceCamera(
-      slid[0] ?? 0, slid[1] ?? 0, slid[2] ?? 0, given[0] ?? 0, given[1] ?? 0, given[2] ?? 0,
-    );
-  }, joined.place);
+  // First sight: whole camera slides, so pivot lands on point and sight stands. Second: fixed
+  //   heading, so one known stretched record is read on every run.
+  for (const sight of ['', ' along one fixed heading']) {
+    await page.evaluate((given) => {
+      nimSelectClear();
+      const eye = nimCameraEye(), pivot = nimCameraPivot();
+      const azimuth = given.heading[0] ?? 0, elevation = given.heading[1] ?? 0;
+      const out = given.is_fixed
+        ? [Math.cos(elevation)*Math.cos(azimuth), Math.cos(elevation)*Math.sin(azimuth),
+          Math.sin(elevation)]
+        : [0, 1, 2].map((i) => (eye[i] ?? 0) - (pivot[i] ?? 0));
+      nimPlaceCamera(
+        (given.place[0] ?? 0) + (out[0] ?? 0), (given.place[1] ?? 0) + (out[1] ?? 0),
+        (given.place[2] ?? 0) + (out[2] ?? 0),
+        given.place[0] ?? 0, given.place[1] ?? 0, given.place[2] ?? 0,
+      );
+    }, { place: joined.place, heading: HEADING_CROSSING, is_fixed: sight !== '' });
 
-  for (const distance of [0.01, 0.001]) {
-    await page.evaluate((one) => { nimSetCameraDistance(one); }, distance);
-    await settleCamera(page);
-    await page.waitForTimeout(400);
-    const at = await page.evaluate(
-      (given) => Array.from(nimAnchorScreen(given.point, given.width, given.height)),
-      { point: joined.point, width, height },
-    );
-    // One capture for both rings, so both read same frame.
-    const spots: Spot[] = [];
-    for (const radius of RADII_CROSSING) {
-      for (let step = 0; step < SPOTS_CROSSING; step += 1) {
-        const angle = 2*Math.PI*step/SPOTS_CROSSING;
-        spots.push([
-          (at[0] ?? 0) + radius*Math.cos(angle), (at[1] ?? 0) + radius*Math.sin(angle),
-        ]);
+    for (const distance of [0.01, 0.001]) {
+      await page.evaluate((one) => { nimSetCameraDistance(one); }, distance);
+      await settleCamera(page);
+      await page.waitForTimeout(400);
+      const at = await page.evaluate(
+        (given) => Array.from(nimAnchorScreen(given.point, given.width, given.height)),
+        { point: joined.point, width, height },
+      );
+      // One capture for both rings, so both read same frame.
+      const spots: Spot[] = [];
+      for (const radius of RADII_CROSSING) {
+        for (let step = 0; step < SPOTS_CROSSING; step += 1) {
+          const angle = 2*Math.PI*step/SPOTS_CROSSING;
+          spots.push([
+            (at[0] ?? 0) + radius*Math.cos(angle), (at[1] ?? 0) + radius*Math.sin(angle),
+          ]);
+        }
       }
+      const reading = await readCanvas(page, spots);
+      // Ink rather than brightness: planet's own dot is bright too, and carries other hue.
+      const lit_all = reading.spots.map((rgba) => [0, 1, 2].every(
+        (channel) => Math.abs((rgba?.[channel] ?? 0) - (joined.ink[channel] ?? 0)) <=
+          TOLERANCE_INK));
+      const apart = (one: number, other: number): number =>
+        Math.abs(((other - one)%360 + 360)%360 - 180);
+      const rings = RADII_CROSSING.map((radius, ring) => {
+        const lit = lit_all.slice(ring*SPOTS_CROSSING, (ring + 1)*SPOTS_CROSSING);
+        // One crossing per run of lit spots, read at run's middle; ring closes, so run may wrap.
+        const crossings: number[] = [];
+        for (let step = 0; step < SPOTS_CROSSING; step += 1) {
+          if (!(lit[step] ?? false) ||
+              (lit[(step + SPOTS_CROSSING - 1) % SPOTS_CROSSING] ?? false)) continue;
+          let run = 1;
+          while (run < SPOTS_CROSSING && (lit[(step + run) % SPOTS_CROSSING] ?? false)) run += 1;
+          crossings.push((step + (run - 1)/2)%SPOTS_CROSSING*360/SPOTS_CROSSING);
+        }
+        const paired = crossings.every(
+          (one) => crossings.some((other) => apart(one, other) <= DEGREES_OPPOSITE));
+        return { radius, crossings, is_whole: crossings.length >= 4 && paired };
+      });
+      report(
+        `both lines run through the point they join${sight}, camera ${distance} out`,
+        rings.every((one) => one.is_whole),
+        rings.map((one) => `ring ${one.radius} px out reads ${one.crossings.length} crossings ` +
+          `at ${one.crossings.map((angle) => angle.toFixed(1)).join(', ')}`).join('; ') +
+          '; four wanted on each, opposite in pairs',
+      );
     }
-    const reading = await readCanvas(page, spots);
-    // Ink rather than brightness: planet's own dot is bright too, and carries other hue.
-    const lit_all = reading.spots.map((rgba) => [0, 1, 2].every(
-      (channel) => Math.abs((rgba?.[channel] ?? 0) - (joined.ink[channel] ?? 0)) <=
-        TOLERANCE_INK));
-    const apart = (one: number, other: number): number =>
-      Math.abs(((other - one)%360 + 360)%360 - 180);
-    const rings = RADII_CROSSING.map((radius, ring) => {
-      const lit = lit_all.slice(ring*SPOTS_CROSSING, (ring + 1)*SPOTS_CROSSING);
-      // One crossing per run of lit spots, read at run's middle; ring closes, so run may wrap.
-      const crossings: number[] = [];
-      for (let step = 0; step < SPOTS_CROSSING; step += 1) {
-        if (!(lit[step] ?? false) ||
-            (lit[(step + SPOTS_CROSSING - 1) % SPOTS_CROSSING] ?? false)) continue;
-        let run = 1;
-        while (run < SPOTS_CROSSING && (lit[(step + run) % SPOTS_CROSSING] ?? false)) run += 1;
-        crossings.push((step + (run - 1)/2)%SPOTS_CROSSING*360/SPOTS_CROSSING);
-      }
-      const paired = crossings.every(
-        (one) => crossings.some((other) => apart(one, other) <= DEGREES_OPPOSITE));
-      return { radius, crossings, is_whole: crossings.length >= 4 && paired };
-    });
-    report(
-      `both lines run through the point they join, camera ${distance} out`,
-      rings.some((one) => one.is_whole),
-      rings.map((one) => `ring ${one.radius} px out reads ${one.crossings.length} crossings ` +
-        `at ${one.crossings.map((angle) => angle.toFixed(1)).join(', ')}`).join('; ') +
-        '; four wanted on either, opposite in pairs',
-    );
   }
 
   await placeCamera(page, before);

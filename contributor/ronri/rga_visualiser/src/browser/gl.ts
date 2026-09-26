@@ -187,6 +187,8 @@ const point_uniforms = {
 const DIAMETER_POINT_LEAST = flatAt(nimRenderLineWidths(), 0);
 // Night side of lit point, as fraction of its colour; `mesh.FRACTION_AMBIENT_SHADE`.
 const AMBIENT_SHADE = nimShadeAmbient();
+// Half-views wide guard pyramid ribbon is cut to; `mesh.FACTOR_GUARD`.
+const FACTOR_GUARD = nimFactorGuard();
 
 // Widen one 16-float ribbon record into corner this invocation is.
 //   Sibling copy of `mesh.expandRibbon`, reference suite pins to algebra, and of GLSL
@@ -194,8 +196,9 @@ const AMBIENT_SHADE = nimShadeAmbient();
 //   other two are checked.
 //   Clip to near plane, stepping crossing from end it stands nearer (see
 //   `mesh.expandRibbon` for what steps from far end cost), blend cut end's tint by same
-//   step, derive across as cross join reduces to, and step off by half width of this
-//   end's own world-per-pixel.
+//   step, cut to guard pyramid `mesh.FACTOR_GUARD` half-views wide same way, derive
+//   across as cross join reduces to, and step off by half width of this end's own
+//   world-per-pixel.
 const SOURCE_VERTEX_RIBBON = `
   attribute vec2 aCorner;
   attribute vec3 aTail;
@@ -211,10 +214,22 @@ const SOURCE_VERTEX_RIBBON = `
   uniform float uTangentHalfView;
   uniform float uHeightPixels;
   uniform float uDepthLog;
+  uniform vec3 uRight;
+  uniform vec3 uUp;
+  uniform float uFactorGuard;
   varying vec4 vColor;
   varying vec3 vWorld;
   varying float vFog;
   varying float vDepth;
+  void cutGuard(float room_near, float room_far, inout vec2 kept) {
+    if (room_near < 0.0 && room_far < 0.0) kept = vec2(1.0, 0.0);
+    else if (room_near < 0.0) kept.x = max(kept.x, room_near/(room_near - room_far));
+    else if (room_far < 0.0) kept.y = min(kept.y, room_near/(room_near - room_far));
+  }
+  vec3 steppedFrom(vec3 near_end, vec3 far_end, float fraction) {
+    if (fraction < 0.5) return near_end + fraction*(far_end - near_end);
+    return far_end + (fraction - 1.0)*(far_end - near_end);
+  }
   void main() {
     vFog = aFog;
     float depth_tail = dot(aTail - uEye, uForward);
@@ -241,6 +256,31 @@ const SOURCE_VERTEX_RIBBON = `
       if (depth_tail < uDepthNear) { near_end = crossing; tint_near = tint_crossing; }
       else { far_end = crossing; tint_far = tint_crossing; }
     }
+    float slope = uFactorGuard*uTangentHalfView;
+    vec3 off_near = near_end - uEye;
+    vec3 off_far = far_end - uEye;
+    float reach_near = slope*dot(off_near, uForward);
+    float reach_far = slope*dot(off_far, uForward);
+    vec2 kept = vec2(0.0, 1.0);
+    cutGuard(reach_near - dot(off_near, uRight), reach_far - dot(off_far, uRight), kept);
+    cutGuard(reach_near + dot(off_near, uRight), reach_far + dot(off_far, uRight), kept);
+    cutGuard(reach_near - dot(off_near, uUp), reach_far - dot(off_far, uUp), kept);
+    cutGuard(reach_near + dot(off_near, uUp), reach_far + dot(off_far, uUp), kept);
+    if (kept.x >= kept.y) {
+      gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
+      vColor = vec4(0.0);
+      vWorld = aTail;
+      vDepth = 1.0;
+      return;
+    }
+    vec3 cut_in = steppedFrom(near_end, far_end, kept.x);
+    vec3 cut_out = steppedFrom(near_end, far_end, kept.y);
+    vec4 tint_in = mix(tint_near, tint_far, kept.x);
+    vec4 tint_out = mix(tint_near, tint_far, kept.y);
+    near_end = cut_in;
+    far_end = cut_out;
+    tint_near = tint_in;
+    tint_far = tint_out;
     vec3 across = across_raw/across_length;
     vec3 at = mix(near_end, far_end, aCorner.x);
     float depth_at = max(dot(at - uEye, uForward), uDepthNear);
@@ -315,6 +355,9 @@ const ribbon_uniforms = {
   fog_full: gl.getUniformLocation(program_ribbon, 'uFogFull'),
   fog_gone: gl.getUniformLocation(program_ribbon, 'uFogGone'),
   depth_log: gl.getUniformLocation(program_ribbon, 'uDepthLog'),
+  right: gl.getUniformLocation(program_ribbon, 'uRight'),
+  up: gl.getUniformLocation(program_ribbon, 'uUp'),
+  factor_guard: gl.getUniformLocation(program_ribbon, 'uFactorGuard'),
 };
 // Six (end, side) corners of one ribbon instance, in `expandRibbon`'s own winding.
 const buffer_ribbon_corners = createdBuffer();
@@ -458,8 +501,8 @@ const SOURCE_VERTEX_DOME = `
 //   Two steps, and second is not new.
 //     Place segment's ends on circle, as `mesh.expandRingVertex` steps them,
 //     `centre + cos*arm_first + sin*arm_second`, then widen that pair by ribbon
-//     source's own body, verbatim: near clip, across join reduces to, and half width
-//     of this end's world-per-pixel.
+//     source's own body, verbatim: near clip, guard cut, across join reduces to, and
+//     half width of this end's world-per-pixel.
 //     Rim is line, and there is one rule for how wide line is drawn.
 //   Tint is flat, so ribbon's blend between two ends collapses to `aFill`, and fog is
 //   always zero, so this shares plain fragment stage rather than ribbon's fading one.
@@ -478,8 +521,20 @@ const SOURCE_VERTEX_RING = `
   uniform float uTangentHalfView;
   uniform float uHeightPixels;
   uniform float uDepthLog;
+  uniform vec3 uRight;
+  uniform vec3 uUp;
+  uniform float uFactorGuard;
   varying vec4 vColor;
   varying float vDepth;
+  void cutGuard(float room_near, float room_far, inout vec2 kept) {
+    if (room_near < 0.0 && room_far < 0.0) kept = vec2(1.0, 0.0);
+    else if (room_near < 0.0) kept.x = max(kept.x, room_near/(room_near - room_far));
+    else if (room_far < 0.0) kept.y = min(kept.y, room_near/(room_near - room_far));
+  }
+  vec3 steppedFrom(vec3 near_end, vec3 far_end, float fraction) {
+    if (fraction < 0.5) return near_end + fraction*(far_end - near_end);
+    return far_end + (fraction - 1.0)*(far_end - near_end);
+  }
   void main() {
     vec3 tail = aCentre + aArc.x*aArmFirst + aArc.y*aArmSecond;
     vec3 head = aCentre + aArc.z*aArmFirst + aArc.w*aArmSecond;
@@ -503,6 +558,26 @@ const SOURCE_VERTEX_RING = `
       if (depth_tail < uDepthNear) near_end = crossing;
       else far_end = crossing;
     }
+    float slope = uFactorGuard*uTangentHalfView;
+    vec3 off_near = near_end - uEye;
+    vec3 off_far = far_end - uEye;
+    float reach_near = slope*dot(off_near, uForward);
+    float reach_far = slope*dot(off_far, uForward);
+    vec2 kept = vec2(0.0, 1.0);
+    cutGuard(reach_near - dot(off_near, uRight), reach_far - dot(off_far, uRight), kept);
+    cutGuard(reach_near + dot(off_near, uRight), reach_far + dot(off_far, uRight), kept);
+    cutGuard(reach_near - dot(off_near, uUp), reach_far - dot(off_far, uUp), kept);
+    cutGuard(reach_near + dot(off_near, uUp), reach_far + dot(off_far, uUp), kept);
+    if (kept.x >= kept.y) {
+      gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
+      vColor = vec4(0.0);
+      vDepth = 1.0;
+      return;
+    }
+    vec3 cut_in = steppedFrom(near_end, far_end, kept.x);
+    vec3 cut_out = steppedFrom(near_end, far_end, kept.y);
+    near_end = cut_in;
+    far_end = cut_out;
     vec3 across = across_raw/across_length;
     vec3 at = mix(near_end, far_end, aCorner.x);
     float depth_at = max(dot(at - uEye, uForward), uDepthNear);
@@ -558,6 +633,9 @@ const ring_uniforms = {
   tangent: gl.getUniformLocation(program_ring, 'uTangentHalfView'),
   height: gl.getUniformLocation(program_ring, 'uHeightPixels'),
   depth_log: gl.getUniformLocation(program_ring, 'uDepthLog'),
+  right: gl.getUniformLocation(program_ring, 'uRight'),
+  up: gl.getUniformLocation(program_ring, 'uUp'),
+  factor_guard: gl.getUniformLocation(program_ring, 'uFactorGuard'),
 };
 const uniform_dome_mvp = gl.getUniformLocation(program_dome, 'uMVP');
 // Veil programs take depth mapping too, having no camera of their own otherwise.
