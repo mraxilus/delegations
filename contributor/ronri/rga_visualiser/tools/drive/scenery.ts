@@ -150,7 +150,7 @@ export async function driveSceneryBound(page: Page): Promise<void> {
     let segments = 0;
     for (let i = 0; i < 9; i += 1) {
       // Turned outright, not by drag's rule; see `drivePinGrid`.
-      nimSetCameraAzimuth(nimCameraAzimuth() + 0.005);
+      nimCameraOrbit(0.005, 0);
       const data = nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true);
       milliseconds.push(data.ms_grid);
       segments = data.count_grid_segments;
@@ -267,7 +267,7 @@ export async function driveHold(page: Page): Promise<void> {
     const aspect = canvas.width / canvas.height;
     const once = (): FrameData =>
       nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true);
-    nimSetCameraAzimuth(nimCameraAzimuth() + 0.05);
+    nimCameraOrbit(0.05, 0);
     const first = once();
     const second = once();
     return {
@@ -288,7 +288,7 @@ export async function driveHold(page: Page): Promise<void> {
     const canvas = document.getElementById('gl') as HTMLCanvasElement;
     const aspect = canvas.width / canvas.height;
     nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true);
-    nimSetCameraAzimuth(nimCameraAzimuth() + 0.3);
+    nimCameraOrbit(0.3, 0);
     const after = nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true);
     return { is_held: after.is_furniture_held, floats: after.furn_ribbon_verts.length };
   });

@@ -241,12 +241,23 @@ async function drivePlaneSides(page: Page): Promise<void> {
     return away;
   }, ground);
 
-  const seenAt = async (elevation: number): Promise<number> => {
-    await page.evaluate((rise) => nimSetCameraElevation(rise), elevation);
+  // Eye stays on its own bearing and separation, and rises or falls by `rise` over run.
+  const seenAt = async (rise: number): Promise<number> => {
+    await page.evaluate((given) => {
+      const eye = nimCameraEye(), pivot = nimCameraPivot(), distance = nimCameraDistance();
+      const across = (eye[0] ?? 0) - (pivot[0] ?? 0), along = (eye[1] ?? 0) - (pivot[1] ?? 0);
+      const run = Math.hypot(across, along);
+      const out = [across / run, along / run, given];
+      const scale = distance / Math.hypot(...out);
+      nimPlaceCamera(
+        (pivot[0] ?? 0) + scale * (out[0] ?? 0), (pivot[1] ?? 0) + scale * (out[1] ?? 0),
+        (pivot[2] ?? 0) + scale * (out[2] ?? 0), pivot[0] ?? 0, pivot[1] ?? 0, pivot[2] ?? 0,
+      );
+    }, rise);
     return pixelsPicking(page, ground);
   };
-  const above = await seenAt(0.9);
-  const below = await seenAt(-0.9);
+  const above = await seenAt(1.26);
+  const below = await seenAt(-1.26);
   const edge_on = await seenAt(0.0);
   await page.evaluate((away) => {
     for (const one of away) nimSetVisible(one, true);

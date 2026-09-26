@@ -26,7 +26,8 @@ import {
   drivePointerPick,
 } from './framing';
 import {
-  driveFrameLabelCorner, driveLabelGlide, driveLabelHeldInView, driveLabelWorn,
+  driveFrameLabelCorner, driveLabelFirstFrame, driveLabelGlide, driveLabelHeldInView,
+  driveLabelWorn,
 } from './label';
 import { driveChipRowFits, driveHelp, driveHoverDuringGesture } from './chrome';
 import { driveTypeDrawn, driveTypeLigatures, driveTypeRoles } from './type';
@@ -222,6 +223,7 @@ async function main(): Promise<void> {
   await driveDiscUnderfoot(page);
   await driveLineCrossing(page, SIZE_VIEW.width, SIZE_VIEW.height);
   await driveLabelHeldInView(page);
+  await driveLabelFirstFrame(page);
   await driveFrameLabelCorner(page);
   await driveZoomLoaded(page);
   await driveTimelineCost(page, objects_largest);

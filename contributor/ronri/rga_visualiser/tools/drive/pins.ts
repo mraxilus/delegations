@@ -114,7 +114,7 @@ export async function drivePinGrid(page: Page): Promise<void> {
     for (let i = 0; i < 9; i += 1) {
       // Turned outright, not by drag's rule: this wants view moved, and that rule
       //   looks rather than orbits wherever nothing is picked.
-      nimSetCameraAzimuth(nimCameraAzimuth() + 0.005);
+      nimCameraOrbit(0.005, 0);
       const data = nimBuildFrame(aspect, performance.now() / 1000, canvas.height, true, true);
       grid.push(data.ms_grid);
       emitting.push(data.ms_emitting);

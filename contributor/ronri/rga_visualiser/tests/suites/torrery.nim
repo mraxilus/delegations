@@ -477,12 +477,14 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       #   was untested on either side.
       var scene = initScene()
       var camera = initCameraDefault()
-      camera = camera.placedAtAzimuth(1.25) # Left alone by preset, so it has to survive it.
+      # Bearing is left alone by preset, so it has to survive it.
+      camera = camera.placed(stanceAround(camera.pivot, 19.0, Direction(x: 1, y: 3, z: 1)))
+      let bearing = camera.azimuth
       showOrrery(scene, camera, 1440, 900)
       check scene.len == objectsOf(SCALE_ORRERY_DEFAULT)
       check camera.pivot =~ POSITION_ORRERY
-      check camera.elevation =~ ELEVATION_ORRERY_SHOWN
-      check camera.azimuth =~ 1.25
+      check camera.elevation =~ arctan(RISE_ORRERY_SHOWN)
+      check camera.azimuth =~ bearing
       # Standing back far enough to hold arrangement is point of solve, and.
       #   standing *inside* it is failure it exists to prevent -- opening camera,
       #   placed for seed scene, sits within this one.

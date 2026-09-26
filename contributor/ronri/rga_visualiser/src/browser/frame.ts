@@ -79,8 +79,8 @@ function renderFrame(now_seconds: number) {
   recordPhaseTime('hover', data.ms_hover_pick);
   recordPhaseTime('furniture', data.ms_furniture);
   // Scenery's own two halves, which bridge has clocked apart since grid's.
-  //   segment budget went in: axes are three lines at any distance, grid however
-  //   many ground reach asks for, and only split says which of them moved.
+  //   segment budget went in: axes are three lines at any distance, lattices however
+  //   many lines selected planes ask for, and only split says which of them moved.
   recordPhaseTime('grid', data.ms_grid);
   recordPhaseTime('axes', data.ms_axes);
   recordPhaseTime('scene', data.ms_scene);
