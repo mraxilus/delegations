@@ -127,8 +127,9 @@ proc restoreFrom*(scene: var Scene; snapshot: Scene) =
 ## Article III: Notation is the surface
 
 1. **Notation gate.** Where the domain has canonical notation, that notation is the canonical
-   spelling. Use Unicode identifiers and operators where the language allows them, and the
-   closest faithful rendering otherwise. Where no notation exists, use plain names only.
+   spelling. Use Unicode for operators, and for a variable that an equation names, where the
+   language allows it, and the closest faithful rendering otherwise. Every other identifier
+   is ASCII. Where no notation exists, use plain names only.
 2. Every symbolic operator has exactly one named alias: a verb for an operation, and the bare
    domain noun for a property. The alias forwards, and never reimplements. Symbols are for
    equations, and names are for callers. A second common name for the operation goes in the
@@ -165,20 +166,24 @@ func wedge*(m, n: Multivector): Multivector {.inline.} = m ∧ n
    syntactic substitution → generation`. Declare purity with the strictest mechanism
    available, enabled globally.
 4. Detect each error at its earliest boundary, and by distinct mechanisms. An invalid
-   configuration fails statically. Expected absence is a typed Option or an empty value, and
-   never an in-range sentinel. An internal impossibility is an assertion. A message ends by
-   echoing the value: ``"…; got `{value}`."`` An expensive check runs under the assertions
-   flag.
+   configuration fails statically, and an internal impossibility is an assertion. Expected
+   absence is a typed Option or an empty value, and never an in-range sentinel. Where a failed
+   case still carries a meaningful value, return that value beside a named flag. A message
+   ends by echoing the value: ``"…; got `{value}`."`` An expensive check runs under the
+   assertions flag.
 5. Decide the boundary policy and the numeric policy in writing: zero, empty, NaN, overflow,
    and the normalisation of a zero norm. To return the input unchanged on degenerate input
    wears the type of success. Where you choose that, the doc says so and a caller can detect
-   it. Compare computed floats only through `abs(a - b) <= TOL * max(1, abs(a), abs(b))`.
-   Derive `TOL` from a build-configurable count of decimal places, and poison exact equality
-   on those types.
+   it. Compare computed floats only through a relative tolerance with an absolute floor, and
+   poison exact equality on those types. Derive the tolerance from a build-configurable count
+   of decimal places. Compare against zero at the scale of what you test, and exactly only
+   where no scale is in hand.
 6. **Storage gate.** A small, closed, statically known domain gets fixed enum-indexed storage
-   that carries a live bound. Genuinely dynamic data gets a dynamic structure. Every walk
-   runs to the bound, and never to the capacity. Prefer a flat value over a reference, so
-   that the caller controls the memory, at the copy cost that Article VII makes visible.
+   that carries a live bound. At runtime, use no growing heap structure: dynamic data takes an
+   arena that owns its lifetime, and a temporary takes a scratch arena. Every walk runs to
+   the bound, and never to the capacity. Prefer a flat value over a reference, so that the
+   caller controls the memory, at the copy cost that Article VII makes visible. Where
+   identity is needed, hold a handle into an arena, and never a reference.
 7. Before you merge several states or paths into one, enumerate every behaviour that the old
    design carried for each state: visibility, enablement, position, timing. Read the old code
    to do it. A request that names one behaviour to keep is not a licence to drop the rest.
@@ -227,6 +232,9 @@ for slot in 0 ..< scene.bound:  # bound, never ITEMS_MAX
    types carry is a small generic wrapper, named by its axis (`Chiral[T]`, `Spatial[T]`).
    Wrappers compose as `Spatial[Chiral[T]]`, and never multiply into new names. An axis that
    code walks over is an array indexed by an enum (`array[Order, Cayley2D]`).
+8. Name every landmark index of a domain as an alias on its type (`Basis.origin`,
+   `Grade.high`), and never write a bare index. Where the landmark depends on the
+   configuration, the alias resolves it, so that no caller branches.
 
 ```nim
 BasisDigits                 # type

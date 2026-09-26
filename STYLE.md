@@ -53,7 +53,11 @@ Escalate only on need.
   of Article I.1. Use it wherever that order puts a use before its definition.
 - `{.compileTime.}`: applied the same way across a whole compile-time family. Never rely on
   incidental const evaluation where the staging is part of the contract.
-- `{.inline.}`: for a deliberate thin wrapper and a tiny hot accessor only.
+- `{.inline.}`: for a deliberate thin wrapper and a tiny hot accessor. Inline a larger body
+  only where a measurement shows the gain.
+- `{.noinit.}`: only on a routine that writes every field of `result` by construction, such
+  as an emitted kernel or a loop over the whole domain. A partial write under it leaves
+  memory undefined.
 - `{.borrow.}`: enumerate the minimal operations for each distinct type. Annotate a consumer
   that is not obvious at the use site (`{.borrow, compileTime, used.} # Used in cayleys.nim.`).
   Define a repeated mechanical borrow family once, through a documented template:
@@ -88,6 +92,8 @@ Escalate only on need.
   ```
 
 - Validate a static configuration in `static: doAssert`, with ``&"…; got `{X}`."``.
+- Write `{x=}` in a message where the value alone would not say which binding it is
+  (`{digits=}`).
 - Put an expensive check under `when compileOption("assertions"):`. Put the profiler import
   under `when compileOption("profiler"): import std/nimprof`, in an entry module.
 - Use `when` for a configuration branch and a typedesc branch
@@ -108,6 +114,11 @@ Escalate only on need.
 - Use an enum-indexed fixed array for a closed static domain (`array[Basis, float]`), and a
   `range` type for a bounded index. A fixed pool carries its live extent as a field
   (`bound`), and every walk is `for slot in 0 ..< pool.bound`.
+- Give a distinct type whose domain you walk an `items` iterator over its typedesc, so that
+  `for k in Order:` reads as the domain.
+- Define `=~` as `abs(a - b) <= TOL * max(1, abs(a), abs(b))`, with `TOL` derived from the
+  count of places. Near zero, that form falls to its absolute floor, so a zero test takes the
+  scale of what it tests (Article IV.5).
 - Give an object field its default inline (`is_negated*: bool = false`).
 - Use `seq`, `Table` and `string` as data structures only at compile time, or in a tool that
   a shell runs once. At runtime, use `string` only for display (`$`, messages).
