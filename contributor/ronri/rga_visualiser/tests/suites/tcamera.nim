@@ -605,6 +605,38 @@ suite "Camera":
     check camera.distance > 5_000.0
 
 
+  test "the opening shows every seed object whole, on a phone as on a desktop":
+    # Bug this guards: opening stood 19 units out on every screen, and upright phone cut
+    #   ground's disc off both sides, point `a` with it.
+    #   Six frames, upright phones through wide desktop; rim sampled as picking samples it.
+    var scene = initScene()
+    constructSeeds(scene)
+    for (width, height) in [
+      (393, 852), (360, 780), (768, 1024), (1200, 800), (1920, 1080), (852, 393)
+    ]:
+      let
+        camera = initCameraDefault()
+        view_projection = initMatrixViewProjection(camera, float(width)/float(height))
+      proc isInFrame(at: Position): bool =
+        let seen = projectToScreen(view_projection, width, height, at)
+        seen.isInFront and seen.x in 0.0 .. float(width) and seen.y in 0.0 .. float(height)
+      for handle, one in scene.pairs:
+        let placed = placeObject(one.geometry, one.anchorOverride)
+        case placed.kind
+        of Case.PointAt:
+          check isInFrame(placed.at)
+        of Case.PlaneOn:
+          let
+            centre = toMultivector(placed.at)
+            arm_first = wedge(EXTENT_PLANE_F, toMultivector(placed.axes.axis_first))
+            arm_second = wedge(EXTENT_PLANE_F, toMultivector(placed.axes.axis_second))
+          for i in 0 ..< SEGMENTS_CIRCLE_HORIZON:
+            let turn = (2.0*PI*float(i))/float(SEGMENTS_CIRCLE_HORIZON)
+            check isInFrame(pointFrom(add(centre,
+              add(wedge(cos(turn), arm_first), wedge(sin(turn), arm_second)))))
+        else: discard
+
+
   test "the camera still derives a frame and a transform a thousand kilometres out":
     # Nothing downstream of distance has ceiling of its own: both clip planes are.
     #   fractions of it, so frustum keeps its shape however far eye stands.
