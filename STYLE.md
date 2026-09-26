@@ -182,6 +182,18 @@ Escalate only on need.
       (lent Multivector, lent Multivector, lent Multivector) = ...
   ```
 
+- A placeholder test calls `skip()`, and never `discard`, so that the run prints `[SKIPPED]`.
+  `skip()` does not stop the body. A test that cannot run under a configuration therefore
+  puts its body in the other branch of `when`:
+
+  ```nim
+  test "Equation 2.87-89":
+    when IS_CONFORMAL: skip()  # TODO: Enable when conformal dot product fixed.
+    else:
+      for 𝐦, _, _ in randMultivectors():
+        check |∙𝐦 =~ sqrt(𝐦 ∙ 𝐦)  # 2.87
+  ```
+
 - Compare floats through `=~`, with the build-configurable tolerance. `==` on those types is
   poisoned, and must not compile.
 

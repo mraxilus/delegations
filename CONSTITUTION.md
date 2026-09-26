@@ -340,7 +340,10 @@ if is_tallying: cost.mark = performanceNow()  # instrument runs only while panel
    guaranteed by types or layout, then measured, then expected, then intended, then
    unresolved. A claimed property names what enforces it, or admits that it is unverified.
 2. An open question lives in the code, as a question, where it arises. Where the authority
-   itself is silent or unclear, say so at the line where the replication stops.
+   itself is silent or unclear, say so at the line where the replication stops. Where the
+   replication adopts a convention of the authority over a simpler one, give the choice, the
+   reason and the cost at its definition. Name the convention again at each place where it
+   forces a special case, in the library and in the tests.
 3. A TODO is a compact design journal: the question, the candidate approaches, the expected
    benefits, the likely costs, and the evidence needed. Where the next action is obvious, one
    line is enough.
@@ -368,28 +371,40 @@ if is_tallying: cost.mark = performanceNow()  # instrument runs only while panel
 ## Article IX: Tests replicate the authority
 
 1. Where an authoritative source exists, the suite mirrors it. Suites are named after its
-   chapters, and tests after its equations or claims. Every assertion carries a trailing
-   citation comment, with two spaces before the `#`. A failing test names the page to reopen.
-   An empty placeholder suite keeps a gap in the coverage visible. Without an authority,
-   name suites and tests by the behaviour that they hold.
+   chapters, and tests after its equations or claims. A test that covers several equations
+   names the range (`Equation 2.2-4`). Every assertion carries a trailing citation comment to
+   its line, with two spaces before the `#`. A failing test names the page to reopen. Without
+   an authority, name suites and tests by the behaviour that they hold.
 2. Test laws, and not examples. Those laws are antisymmetry, round trips, inverses, ordering,
    conservation, idempotence, intended non-commutativity, degenerate cases, and the
    equivalence of an optimised implementation against a reference one.
-3. Enumerate a small finite domain exhaustively. Property-check a large one over a few
-   hundred seeded random samples, which are deterministic and reproducible. Bias the corpus
-   towards structured cases: basis elements first, then mostly single-grade objects, with
-   mixed grade rarer.
+3. Enumerate a small finite domain exhaustively. Property-check a large one over seeded
+   random samples, which are deterministic and reproducible. Bias the corpus towards
+   structured cases: basis elements first, then mostly single-grade objects, with mixed grade
+   rarer. Skip a sample that the law does not apply to with a guard over the shared corpus.
+   Check the count that passed against a named floor, so that a guard which filters out
+   nearly every sample fails.
 4. Sample beyond what a caller usually supplies: outside the view, near a singularity, and at
-   the extremes of a parameter. Record the sample count beside the claim.
+   the extremes of a parameter. Record the sample count beside the claim, as a named
+   constant. Where the corpus is built, record what it does not cover yet.
 5. Test a law where its mechanism runs: real events through real wiring, rendered output read
    back, written bytes read again. A test that calls a handler directly proves the handler,
    and not the wiring.
 6. A check that drives a built artifact is evidence only for the build that it drove. One
    command rebuilds, then drives. An ad-hoc run does the same or proves nothing.
 7. A parameterised configuration runs as a matrix. The file for each configuration is a
-   minimal stub that includes one shared suite.
+   minimal stub that includes one shared suite. A configuration is its own compile, so its
+   stub fails by name and runs alone.
 8. A checker is tested against the fixtures that it writes itself, and its own cost is
    bounded. A check slow enough to be skipped is a check that does not run.
+9. A gap in the coverage is a placeholder test that calls `skip()`, so that the run reports
+   it. A test that cannot run under a configuration stays in the run, and calls `skip()`
+   there with its reason. Never remove such a test with a bare `when`.
+10. Code that the authority does not cover is tested in a suite named `Internal`, and its
+    tests are named by behaviour. Where the authority states a law without a number, name the
+    test by its behaviour, and cite the section or the page. Never invent a number.
+11. A test helper that the library does not need lives in the suite, and not in the library.
+    Test code follows the same rules as library code.
 
 ```nim
 suite "Chapter 2":
