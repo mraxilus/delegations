@@ -218,16 +218,23 @@ for slot in 0 ..< scene.bound:  # bound, never ITEMS_MAX
    `parity_a`/`parity_b`, `b_from`/`b_to`. This holds even against the word order of the
    domain (`carrierCo`, `scalarAnti`), and the doc keeps the spelling of the domain.
 3. An action is an imperative verb (`constructTable`, `emitOperator`). A property is the bare
-   domain noun (`grade`, `norm`, `centroid`), and never `getGrade` or `computeNorm`.
+   domain noun (`grade`, `norm`, `centroid`), and never `getGrade` or `computeNorm`. A
+   recurring kind of action keeps one verb. `define…` names a macro that declares from data,
+   and `construct…` a table built and returned. `emit…` names a function that returns AST,
+   and `init…` a constructor of a value. `to<Target>` names a change of representation, and
+   takes its subject first.
 4. A boolean is a proposition or a mode. Write `is_` for state, `as_` for interpretation,
    `should_` for policy, and `found_` for a search outcome. `has_` and `can_` cover the rest.
-   A mode boolean passes as a named argument (`as_weight = true`).
+   A mode boolean passes as a named argument (`as_weight = true`). A predicate callable is
+   `is…` in camel case (`isMixed`), the callable twin of `is_`.
 5. A lookup table is `lut_<value>_by_<key>`, so that it reads as the access it does:
    `lut_grade_by_basis[b]` is the grade of `b`.
 6. Use a single letter only where an equation or a tiny index scope gives it meaning (`m`,
    `n`, `a`, `b`, `i`). Use a descriptive name at a representation boundary, and across a
-   derivation of several stages. Coin no abbreviation (`ctx`, `tmp`, `buf`, `cfg`).
-   Established jargon (`lut`, `min`, `src`) is not truncation.
+   derivation of several stages. Coin no abbreviation (`ctx`, `tmp`, `buf`, `cfg`). Only a
+   closed list of jargon is exempt: `lut`, `min`, `max`, `src`, `prev`, `curr`, and the
+   symbols of the source (`mu`, `sigma`). The Architect alone adds to that list. A plural
+   holds a collection, and its singular holds one member (`for term in terms`).
 7. Name each distinction, then choose its form by what the code does with it. An axis that
    code selects between at compile time is a closed enum (`Chirality`). A pair that several
    types carry is a small generic wrapper, named by its axis (`Chiral[T]`, `Spatial[T]`).
