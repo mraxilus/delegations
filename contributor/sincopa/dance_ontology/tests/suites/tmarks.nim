@@ -123,3 +123,21 @@ suite "the eight facings, drawn":
         got.add section[start ..< section.find("</figcaption>", start)]
         at = section.find(" turn<br>", start)
       check got == want
+
+
+suite "the rests and the chains, named by model":
+  ## Each page names chain's rest and facings through `parts.restOf` and
+  ##   `parts.facingAt`, and law reads written page back (Article IX.5).
+
+  test "the review page heads each chain with the facing it rests at":
+    let page = readFile(OUT / "review.html")
+    check page.contains("<h2>C &middot; The cross-name chain, " &
+                        restOf(HAND_TO_HAND).name & " at rest</h2>")
+    check page.contains("<h2>D &middot; The same-name chain, " &
+                        restOf(PAIRED).name & " at rest</h2>")
+
+  test "the hand-to-hand page names each facing its chain stands at":
+    let page = readFile(OUT / "turns-hands.html")
+    check page.contains("<b>" & facingAt(HAND_TO_HAND, 1.0).get.name &
+                        "</b> at a whole number of turns")
+    check page.contains("<b>" & facingAt(HAND_TO_HAND, 0.5).get.name & "</b> at a half")

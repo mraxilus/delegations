@@ -78,15 +78,19 @@ func questions(): seq[Question] =
         tag = MANNERS[manner].tag
         sense = windSense(manner)
       for q in 0 ..< QUARTERS_ROUND:
-        result.add moving(&"tr_{tag}_{c}_{q}_{(q + 1) mod QUARTERS_ROUND}", links, false,
-                          manner, asked(sense * (q + 1).float / QUARTERS_ROUND.float))
-      result.add moving(&"rd_{tag}_{c}", links, false, manner, asked(sense))
+        result.add moving(&"tr_{tag}_{c}_{q}_{(q + 1) mod QUARTERS_ROUND}", links,
+                          awayFor(restOf(single.holds)), manner,
+                          asked(sense * (q + 1).float / QUARTERS_ROUND.float))
+      result.add moving(&"rd_{tag}_{c}", links, awayFor(restOf(single.holds)), manner,
+                        asked(sense))
 
   # `F` and `G`: each chain under each manner, whole chain and each half of it.
   #   These are moving cards, so they are asked whether couple carry along them
   #   rather than whether pose stands there.
-  for (key, arms, away) in [("h", HAND_TO_HAND, false), ("p", PAIRED, true)]:
-    let links = linksOf(arms)
+  for (key, arms) in [("h", HAND_TO_HAND), ("p", PAIRED)]:
+    let
+      links = linksOf(arms)
+      away = awayFor(restOf(arms))
     for manner in Manner:
       let
         tag = MANNERS[manner].tag

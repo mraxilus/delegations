@@ -8,17 +8,31 @@
 ##     names, and demands nothing is left over.  Residue is word reader meets
 ##     with no entry to read it by.
 
-import std/[algorithm, options, os, strutils, unittest]
+import std/[algorithm, options, os, strformat, strutils, unittest]
 
-import ../../sim/[read, rig, words]
+import ../../sim/[body, read, rig, words]
+from ../../src/dance_ontology/rotation import Dancer, facing, name, seenAfter
 
 
 const REPORT = currentSourcePath().parentDir.parentDir.parentDir / "sim" / "verdicts.md"
   ## Report sim writes, which opens by printing its translation table.
 
 
+func turnedOn(by_lead, by_follow: int; lap = 0.0): array[Body, Stance] =
+  ## Stand two face to face, then turn each on spot this many quarters to own
+  ## right, as model counts, and follow `lap` whole turns more.
+  ##   Sim turns anticlockwise seen from above, so turn to right is negative.
+  turned(turned(facing(HUMAN, 1.0), Body.One, -by_lead.float / 4.0),
+         Body.Two, -by_follow.float / 4.0 + lap)
+
+
 iterator phrases(): string =
-  ## Every phrase `said` can return, over every reading pose can carry.
+  ## Every phrase `said` and `facingName` can return, over every reading pose
+  ## can carry and every state on quarter.
+  for by_lead in 0 .. 3:
+    for by_follow in 0 .. 3:
+      let named = facingName(turnedOn(by_lead, by_follow))
+      if named.isSome: yield named.get
   for band in Band:
     yield said(none(Lying), band)
     for aspect in Aspect:
@@ -72,3 +86,23 @@ suite "the report shows every word it says":
       if left.len > 0:
         checkpoint "table names no `" & left & "`, said in: " & phrase
         fail()
+
+
+suite "the sim names each facing as the model does":
+  ## `words.FACINGS` names state two stand in from where each body sees other,
+  ##   and `rotation.facing` names it from each dancer's turn on spot.  Neither
+  ##   reads other, so agreement here is evidence and not echo.
+
+  test "each of sixteen states on quarter carries model's name, or none":
+    for by_lead in 0 .. 3:
+      for by_follow in 0 .. 3:
+        let want = facing(seenAfter([Dancer.Lead: by_lead, Dancer.Follow: by_follow]))
+        for lap in [-1.0, 0.0, 2.0]:
+          let got = facingName(turnedOn(by_lead, by_follow, lap))
+          checkpoint &"lead {by_lead}, follow {by_follow}, lap {lap}"
+          check got.isSome == want.isSome
+          if want.isSome and got.isSome: check got.get == want.get.name
+
+  test "no state between quarters carries name":
+    for turn in [0.1, 0.2, 0.3, 0.45]:
+      check facingName(turned(facing(HUMAN, 1.0), Body.Two, turn)).isNone
