@@ -10,7 +10,8 @@
 
 import std/[algorithm, options, os, strformat, strutils, unittest]
 
-import ../../sim/[body, read, rig, words]
+import std/[json, jsonutils]
+import ../../sim/[body, read, readings, rig, verdicts, words]
 from ../../src/dance_ontology/rotation import Dancer, facing, name, seenAfter
 
 
@@ -104,3 +105,16 @@ suite "the sim names each facing as the model does":
   test "no state between quarters carries name":
     for turn in [0.1, 0.2, 0.3, 0.45]:
       check facingName(turned(facing(HUMAN, 1.0), Body.Two, turn)).isNone
+
+
+suite "the report renders from its kept readings":
+  ## Report is words over readings kept in `sim/verdicts.json` (`sim/readings`).
+  ##   Law renders report from those readings and demands written one, byte for
+  ##   byte, so words changed and not rendered again cannot pass.  Stamp is not
+  ##   read here: readings of older physics still render report they gave.
+
+  test "the report is what its kept readings render":
+    kept = parseFile(KEPT_READINGS).jsonTo(Readings)
+    let text = render()
+    check lacking() == 0
+    check text == readFile(REPORT)
