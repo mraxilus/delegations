@@ -135,14 +135,14 @@ proc restoreFrom*(scene: var Scene; snapshot: Scene) =
    equations, and names are for callers. A second common name for the operation goes in the
    doc, and never in a second alias.
 3. Where the authority lacks a glyph, coin one systematically and register it in the operator
-   table of the header. Keep the visual duality: filled glyphs for the base and bulk forms,
-   hollow glyphs for the anti and weight forms (∙/∘, ★/☆, ■/□, ⟑/⟇, 𝟏/𝟙). A compound
+   table of the header. Where coined glyphs name related concepts, the glyphs show the
+   relation, so a reader who knows one member of a family reads the others. A compound
    operator concatenates its parts (∨★, |∙, ^∘, ~∘).
 4. The doc of the symbol states what the operation is and what it is called. The doc of the
    alias states what it means and when to reach for it.
 5. A mathematical variable takes the notation of the source (𝐦, 𝐧, 𝟏) where that is
-   representable, so that the code collates visually against the equations. This holds at
-   module scope too, over the casing of Article V.
+   representable, so that the code collates visually against the equations. At module scope,
+   that notation holds over the casing of Article V, but only for an immutable global.
 6. Where the precedence of the host disagrees with the precedence of the notation, document
    the hazard. Require parentheses or the named alias.
 
@@ -208,10 +208,11 @@ for slot in 0 ..< scene.bound:  # bound, never ITEMS_MAX
 
 1. Casing encodes the kind of symbol, one convention for each kind, with no exception.
    Visibility never changes the case. Types are `PascalCase`, callables are `lowerCamelCase`,
-   and a local, a parameter and a field are `snake_case`. A module-level binding of any kind
-   is `SCREAMING_SNAKE_CASE`, because the case marks reach and not mutability. So keep such
-   bindings rare, and prefer `const`. Adopt this even where the community of the host
-   language differs, because a mixed scheme destroys the signal.
+   and a local, a parameter and a field are `snake_case`. A global, which is a binding at
+   module level of any kind, is `SCREAMING_SNAKE_CASE`, because the case marks reach and not
+   mutability. So keep globals rare and prefer `const`, and give a mutable global a comment
+   that says why. Adopt this even where the community of the host language differs, because
+   a mixed scheme destroys the signal.
 2. Compose a name head first, with the qualifiers last, from general to specific, so that
    families sort and align: `wedge`/`wedgeAnti`, `norm`/`normBulk`/`normWeight`,
    `parity_a`/`parity_b`, `b_from`/`b_to`. This holds even against the word order of the
