@@ -266,26 +266,20 @@ func sheetOf(P: Parts): string =
     ## Same for hand of follow.
     if site == Site.LeftHand: Arm.L else: Arm.R
 
-  func restsFacing(target: Frame): bool =
-    ## Say whether this frame rests Face-to-face rather than Pillion.
-    ##   Hold rests where its two connections run parallel and cross
-    ## nothing, which for same-name pair is Pillion and not Face-to-
-    ##     face (rule 31).  Measured by `phaseOf`, never written down.
-    ##   Hold with fewer than two connections has no such state to be at, so
-    ##     it is counted from face to face like everything else.
-    if target.countHolds < 2:
-      return true
+  func restOf(target: Frame): Facing =
+    ## Name facing this frame rests at, by `parts.restOf`, never written down.
     var holds: Holds
     for side in Side:
       if target.hold[side].isSome:
         holds[armFor(side)] = some armFor(target.hold[side].get)
-    phaseOf(holds) < 1e-9
+    restOf(holds)
 
   proc facingNote(target: Frame; twist: int; way: string): string =
     ## Say which facing this picture draws, and what it is turned from.
+    ##   Standard diagram turns follow alone, by half turns (`twist`).
     let
-      drawn = if twist == 0: "Face-to-face" else: "Pillion"
-      rest = if restsFacing(target): "Face-to-face" else: "Pillion"
+      drawn = turnedFacing(0.0, 180.0 * twist.float).get.name
+      rest = restOf(target).name
     if drawn == rest: &"{drawn}, at rest"
     elif way.len > 0: &"{drawn}, half a turn {way} from {rest}"
     else: &"{drawn}, half a turn from {rest}"
@@ -373,11 +367,16 @@ func sheetOf(P: Parts): string =
   for position in dualChain:
     half = max(half, extent(posedAt(position.wind, dualPhase), captions = false))
 
-  body.add """<section id="chain"><h2>C &middot; The cross-name chain, Face-to-face at rest</h2>
+  # Each facing named here is read off pose through model, never written down.
+  let
+    handRest = restOf(HAND_TO_HAND).name
+    whole = facingAt(HAND_TO_HAND, 1.0).get.name
+    halves = facingAt(HAND_TO_HAND, 0.5).get.name
+  body.add &"""<section id="chain"><h2>C &middot; The cross-name chain, {handRest} at rest</h2>
   <p class="lede">The chain stands in seven places, half a turn apart, and the hand-to-hand page
   walks along it. Each place carries a twist as a real number rather than a count of half turns,
-  which the standard diagram cannot hold. The facing alternates along the chain: Face-to-face at
-  the whole turns, and Pillion at the halves. Every caption says how far round the place
+  which the standard diagram cannot hold. The facing alternates along the chain: {whole} at
+  the whole turns, and {halves} at the halves. Every caption says how far round the place
   stands from the frame, <b>clockwise seen from above</b>. That is how the drawings see the
   couple, and it names one turn whichever dancer walks it. Section D is drawn at this scale, so
   the two chains stand against each other.</p><div class="grid wide">"""
@@ -390,12 +389,16 @@ func sheetOf(P: Parts): string =
 
 
   # `D`. Dual chain: same hold, follow starting away.
-  body.add &"""<section id="paired"><h2>D &middot; The same-name chain, Pillion at rest</h2>
+  let  # `p` for paired, which is this section's hold.
+    pRest = restOf(PAIRED).name
+    pWhole = facingAt(PAIRED, 1.0).get.name
+    pHalf = facingAt(PAIRED, 0.5).get.name
+  body.add &"""<section id="paired"><h2>D &middot; The same-name chain, {pRest} at rest</h2>
   <p class="lede">This hold joins the left of the lead to the left of the follow, and right to
   right. It walks the chain of section C, read half a turn along. So it runs parallel
-  <b>Pillion</b> rather than Face-to-face, and its phase measures {dualPhase} where the phase of
-  the other chain measures {HAND_PHASE}. Its facing alternates the other way about: Pillion at the
-  whole turns, and Face-to-face at the halves. No page in this project walks this
+  <b>{pRest}</b> rather than {handRest}, and its phase measures {dualPhase} where the phase of
+  the other chain measures {HAND_PHASE}. Its facing alternates the other way about: {pWhole} at the
+  whole turns, and {pHalf} at the halves. No page in this project walks this
   chain.</p><div class="grid wide">"""
   for i, position in dualChain:
     body.add card(&"D{i + 1}", position.name,

@@ -15,6 +15,7 @@ import std/[math, options, os, strutils, tables, unittest]
 
 import ../../design/parts
 import ../../design/rules
+from ../../src/dance_ontology/rotation import nil
 
 
 const
@@ -33,6 +34,11 @@ const
     ## Entries naming step of chain, which are only ones position may speak.
     ##   Rest of glossary is held to elsewhere; word another entry rejects is
     ##     no business of position's name.
+  FACING_TERMS = ["Pillion", "Sidecar"]
+    ## Entries naming facing whose rejected words name facing and nothing else.
+    ##   Face-to-face and Back-to-back are left out: they reject `facing` and
+    ##     `apart`, which report says in own sense, of what no facing says and
+    ##     of distance couple stand at.
   DANCER_TERMS = ["Lead", "Follow"]
     ## Entries naming dancer, whose rejected words no page may say at all.
   SAID_IN = ["design", "app", "sim"]
@@ -86,10 +92,11 @@ func literals(source: string): seq[tuple[said: string; next: char]] =
       i += 1
 
 
-func rungsOf(report: string): seq[tuple[turns: int, said: string]] =
-  ## Read chain table of report: how far each rung is wound, and word report
-  ## gave that rung.
-  ##   Rung cell reads `<word> (<turns>)`, under header that names its columns.
+func rungsOf(report: string): seq[tuple[turns: int, said, facing: string]] =
+  ## Read chain table of report: how far each rung is wound, word report gave
+  ## that rung, and facing it stands at.
+  ##   Rung cell reads `<word> (<turns>)`, under header that names its columns,
+  ##     and facing cell follows it.
   var inside = false
   for line in report.splitLines:
     let bare = line.strip
@@ -100,7 +107,7 @@ func rungsOf(report: string): seq[tuple[turns: int, said: string]] =
     if not bare.startsWith("|"): break
     if bare.startsWith("|---"): continue
     let cells = bare.strip(chars = {'|', ' '}).split('|')
-    if cells.len < 2: continue
+    if cells.len < 3: continue
     let
       cell = cells[1].strip
       opens = cell.find('(')
@@ -111,7 +118,7 @@ func rungsOf(report: string): seq[tuple[turns: int, said: string]] =
       wound = parseFloat(cell[opens + 1 ..< shuts])
     except ValueError:
       continue
-    result.add (int(round(wound * 100.0)), cell[0 ..< opens].strip)
+    result.add (int(round(wound * 100.0)), cell[0 ..< opens].strip, cells[2].strip)
 
 
 func says(text, phrase: string): bool =
@@ -201,17 +208,18 @@ suite "the report speaks glossary":
   let
     source = readFile(GLOSSARY)
     rejected = source.avoided(CHAIN_TERMS)
-    rungs = rungsOf(readFile(REPORT))
+    report = readFile(REPORT)
+    rungs = rungsOf(report)
 
   test "report still tabulates every rung of chain":
     # Laws below say nothing where table is missing or unparsed, so rows are
     # demanded first.
     check rungs.len > 0
-    for (wound, _) in rungs:
+    for (wound, _, _) in rungs:
       check wound in RUNG_AT
 
   test "no rung of report is named by word glossary rejects":
-    for (wound, said) in rungs:
+    for (wound, said, _) in rungs:
       for _, words in rejected:
         for word in words:
           if said.toLowerAscii.says(word):
@@ -219,5 +227,28 @@ suite "the report speaks glossary":
             fail()
 
   test "every rung of report carries glossary's own word":
-    for (wound, said) in rungs:
+    for (wound, said, _) in rungs:
       check said.toLowerAscii.says(RUNG_AT[wound])
+
+  test "every rung of report stands at facing model gives its turn":
+    ## Report reads facing off stance sim winds couple to (`words.facingName`),
+    ##   and model reads it off turn each dancer takes on spot (`rotation.facing`).
+    ##   Chain rests Face-to-face and sim turns follow, anticlockwise positive,
+    ##     where model counts quarters to dancer's right.
+    for (wound, _, said) in rungs:
+      let
+        turned = [rotation.Dancer.Lead: 0, rotation.Dancer.Follow: -(wound div 25)]
+        want = rotation.facing(rotation.seenAfter(turned))
+      check want.isSome
+      if want.isSome: check said == want.get.name
+
+  test "no facing of report is named by word glossary rejects":
+    ## Report named rest of same-name pair `pillion lead`, which entry
+    ##   **Pillion** rejects, while every page named it `Pillion`.
+    let faced = source.avoided(FACING_TERMS)
+    check faced.len == FACING_TERMS.len
+    for _, words in faced:
+      for word in words:
+        if report.toLowerAscii.says(word):
+          checkpoint "report says `" & word & "`"
+          fail()

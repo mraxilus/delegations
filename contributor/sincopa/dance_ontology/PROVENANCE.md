@@ -99,7 +99,37 @@ The law on the single-hand page reads each name in the section and the place of 
 manners share names, so a name found anywhere on the page would stand in for one that is missing
 or swapped.
 
-The sim holds four of the eight: Face-to-face, Back-to-back and both cases of Pillion.
+**The rests and the chain name their facing among the eight.** A hold rests where its two
+connections run parallel and cross nothing (rule 31). `parts.restOf` names that facing, read off
+the pose through the model: Face-to-face for hand to hand, and `Pillion` for the crossed pair.
+`parts.facingAt` names the facing of each step of the chain in the same way. The review page and
+the hand-to-hand page take each name from there, and write none by hand. Each card of the review
+page carries its rest as a `Facing`.
+
+**The sim reads its own facing, and `sim/words.nim` names it.** The sim imports nothing from the
+model, so it cannot be told a facing. `body.quartersTo` reads where each body sees the other, in
+quarter turns clockwise from its own front. `words.FACINGS` names each state, as the glossary
+does. The report names each rest and each rung of the chain through that table, and prints the
+table with the rest of the translation.
+
+**The sim rests a couple at two of the eight.** It stands them Face-to-face, or with the follow
+turned half, which is `Pillion`. Where the hands rest is keyed to twist alone (`up`), and twist
+does not tell Back-to-back from Face-to-face. So `asks.awayFor` refuses every other rest, and no
+card asks one. Where the hands rest at Sidecar is not ruled.
+
+Verified by `suites/twords.nim`. In each of the sixteen states on a quarter, the name the sim
+gives is the name the model gives, or neither gives one. Verified by `suites/tasks.nim`: each
+chain rests where rule 31 says, and the sim stands each card at the rest that the card names.
+Verified by `suites/tglossary.nim`: each rung of the report stands at the facing that the model
+gives its turn. Verified by `suites/tmarks.nim`: the two pages print the names that the model
+gives.
+
+**The report names no facing by a word that the glossary rejects.** The entry for Pillion lists
+`pillion lead` under _Avoid_. The report gave the rest of the crossed pair that name, and every
+page named it `Pillion`. No law read the facings of the report. `suites/tglossary.nim` reads
+the whole report for each word that the entries for Pillion and Sidecar reject. The entries for
+Face-to-face and Back-to-back are left out, because the report says `facing` and `apart` in their
+own sense.
 
 The agreed words disagree with the code in thirteen places, recorded rather than acted on. From the
 hand-to-hand half:
@@ -788,7 +818,7 @@ that a hatched mark moves nothing of its own.
 **The holds of two hands walk a chain of seven positions, a half turn apart (rules 28, 30 and 31).**
 The seven are swan, diamond, X, the frame, X, diamond and swan. The chain has ends, and is not a
 cycle (rule 30). Hand to hand and the crossed pair walk the same chain, and differ only in the
-facing where the hold is unwound (rule 31). `parts.phaseOf` finds that facing, and `parts.chainFor`
+facing where the hold is unwound (rule 31). `parts.restOf` names that facing, and `parts.chainFor`
 lays the seven out from it. Verified by `checkHandTurns`.
 
 **The wind is measured from the pose, and is not told (rule 28).** Each held hand sits on the rim of
@@ -1119,7 +1149,7 @@ Asked over the crown, the hands are held to the torso band while the couple face
 are held to the crown band from a quarter turn away, and blended between (`up`, `bandNow`,
 `height`).
 
-The Architect ruled on A9. That is the same-name chain wound half a turn from its pillion rest to
+The Architect ruled on A9. That is the same-name chain wound half a turn from its `Pillion` rest to
 face to face, with the hands still over the heads. It was modelled but unnatural. The relaxed
 position facing is hands at mid torso. Pillion or back to back are where they have to be above.
 Facing, the arms naturally come down, and the swan may be reached only so, with one connection
@@ -1140,7 +1170,7 @@ arms press the hands up against the forty newtons of the lift. The same-name cha
 face to face sat at 1.37 to 1.39 m, against 1.35.
 
 Asked at a lower band, the rise from where the hands settled over the first quarter turn of wind
-stands as it was. It stands whole from the rest for a hold that rests pillion.
+stands as it was. It stands whole from the rest for a hold that rests `Pillion`.
 
 Verified by `trigid.nim`. `up` is nought face to face, and one from a quarter turn away, at every
 wind of a turn and a half. The cross-name chain at rest and the same-name chain wound to face to

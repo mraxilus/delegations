@@ -655,6 +655,22 @@ func phaseOf*(holds: Holds): float =
   raise newException(Defect, &"A hold runs parallel at neither phase; got `{holds}`.")
 
 
+func facingAt*(holds: Holds; wind: float): Option[Facing] =
+  ## Name facing hold's chain stands at `wind` turns from its rest, read off
+  ## pose through model.
+  facingOf(posedAt(wind, phaseOf(holds)))
+
+
+func restOf*(holds: Holds): Facing =
+  ## Name facing hold rests at, among eight (rule 31).
+  ##   Hold rests where its two connections run parallel and cross nothing,
+  ##     which `phaseOf` measures: Face-to-face for hand to hand, Pillion for
+  ##     crossed pair.  Hold with fewer than two connections has no such state,
+  ##     and rests Face-to-face.
+  if holds.countIt(it.isSome) < 2: Facing.FaceToFace
+  else: facingAt(holds, 0.0).get
+
+
 func chainFor*(holds: Holds): seq[Position] =
   ## Lay out chain one hold walks: every step of it, named and noted.
   ##   Shape is glossary's word for that step of chain -- **neutral**,

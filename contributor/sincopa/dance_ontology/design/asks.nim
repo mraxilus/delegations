@@ -23,7 +23,7 @@ type StillAsk* = object ## One still card, as sim is asked it.
   key*: string    ## Question's key, as page keys its own pictures.
   links*: seq[Link]
   turns*: float   ## Facing, in turns from where hold rests.
-  away*: bool     ## Whether hold rests Pillion rather than Face-to-face.
+  rest*: Facing   ## Facing hold rests at, among eight (`parts.restOf`).
   head*: Body     ## Whose crown joined hands go over.
   either*: bool   ## Whether couple may be wound to this facing either way about:
                   ## card that draws same picture turned either way fixes neither.
@@ -64,10 +64,21 @@ func asked*(wind: float): float = -wind
   ## asked: flipped for chains alone, A16 was stood in C3's pose and A17 in
   ## C5's, mirror of what each card draws, and every single-hand card likewise.
 
-func restsFacing*(target: Frame): bool =
-  ## Whether frame rests Face-to-face rather than Pillion.  Same reading
-  ## `review_page` makes, by `phaseOf`, and never written down.
-  if target.countHolds < 2: true else: phaseOf(holdsOf(target)) < 1e-9
+func restOf*(target: Frame): Facing = restOf(holdsOf(target))
+  ## Name facing frame rests at.  Same reading `review_page` makes, by
+  ## `parts.restOf`, and never written down.
+
+func awayFor*(rest: Facing): bool =
+  ## Say rest as sim is told it: Face-to-face, or follow turned half, which is
+  ## `Pillion` and which sim calls `away`.
+  ##   Sim stands couple at no other rest, and no card asks one.
+  case rest
+  of Facing.FaceToFace: false
+  of Facing.LeadBehind: true
+  else: raise newException(Defect, &"Sim rests couple at no `{rest.name}`.")
+
+func away*(a: StillAsk): bool = awayFor(a.rest)
+  ## Say card's rest as sim is told it.
 
 
 func stillAsks*(): seq[StillAsk] =
@@ -75,7 +86,7 @@ func stillAsks*(): seq[StillAsk] =
   ## positions, then both chains.
   # `A`. Standard diagram: eight frames, each drawn at two facings.
   #   `twist` names facing *drawn* -- nought Face-to-face, one Pillion --
-  #     and not half turns from frame's own rest.  Frame that rests pillion is
+  #     and not half turns from frame's own rest.  Frame that rests Pillion is
   #     therefore at rest at twist of one, and half turn from it at nought: A10
   #     and A12 read "at rest" for that reason, and asking them for half turn
   #     called them unreachable.
@@ -85,20 +96,20 @@ func stillAsks*(): seq[StillAsk] =
   #     way couple took it.  Same reading page makes when it decides whether to
   #     draw frame turned other way at all (A17).
   func amountFor(target: Frame; twist: int): float =
-    if (twist == 0) == restsFacing(target): 0.0 else: 0.5
+    if turnedFacing(0.0, 180.0 * twist.float) == some(restOf(target)): 0.0 else: 0.5
   func eitherWay(target: Frame): bool =
     renderFrame(target, HalfTurns(1)) == renderFrame(target, HalfTurns(-1))
   for i, target in FRAMES:
     for twist in [0, 1]:
       let amount = amountFor(target, twist)
       result.add StillAsk(key: &"A{i * 2 + twist + 1}", links: linksOf(holdsOf(target)),
-                          turns: asked(amount), away: not restsFacing(target),
+                          turns: asked(amount), rest: restOf(target),
                           head: Body.Two, either: amount != 0.0 and eitherWay(target))
   block:
     let target = FRAMES[^1]
     result.add StillAsk(key: "A17", links: linksOf(holdsOf(target)),
                         turns: asked(-amountFor(target, 1)),
-                        away: not restsFacing(target), head: Body.Two)
+                        rest: restOf(target), head: Body.Two)
   # `B`: four single-hand holds, four manners, four quarters.  Hands go over
   # crown of dancer who walks under, which follows manner.
   for c, single in SINGLES:
@@ -108,9 +119,9 @@ func stillAsks*(): seq[StillAsk] =
         result.add StillAsk(key: &"st_{MANNERS[manner].tag}_{c}_{q}",
                             links: linksOf(single.holds),
                             turns: asked(sense * q.float / QUARTERS_ROUND.float),
-                            away: false, head: bodyOf(MANNERS[manner].who))
+                            rest: restOf(single.holds), head: bodyOf(MANNERS[manner].who))
   # `C` and `D`: two chains, seven positions each, half turn apart.
-  for (tag, arms, away) in [("C", HAND_TO_HAND, false), ("D", PAIRED, true)]:
+  for (tag, arms) in [("C", HAND_TO_HAND), ("D", PAIRED)]:
     for i, w in STEPS:
       result.add StillAsk(key: tag & $(i + 1), links: linksOf(arms), turns: asked(w),
-                          away: away, head: Body.Two)
+                          rest: restOf(arms), head: Body.Two)

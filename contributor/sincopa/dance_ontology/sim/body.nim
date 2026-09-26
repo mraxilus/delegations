@@ -11,7 +11,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/math
+import std/[math, options]
 
 import ./[rig, vec]
 
@@ -76,5 +76,18 @@ func turned*(st: array[Body, Stance]; who: Body; turns: float): array[Body, Stan
   ## anticlockwise seen from above.
   result = st
   result[who].facing = result[who].facing + turns * 2.0 * PI
+
+func quartersTo*(st: array[Body, Stance]; who: Body): Option[int] =
+  ## Where this body sees other, in whole quarter turns clockwise from its own
+  ## front: nought ahead, one at its right, two behind, three at its left.
+  ##   Clockwise, so turning on spot to right steps through them in order.
+  ##   None between quarters: body there sees other at no one side.
+  let
+    here = st[who]
+    there = st[if who == Body.One: Body.Two else: Body.One]
+    bearing = arctan2(there.centre.y - here.centre.y, there.centre.x - here.centre.x)
+    quarters = floorMod(here.facing - bearing, 2.0 * PI) / (PI / 2.0)
+  if abs(quarters - round(quarters)) < 1e-6: some(int(round(quarters)) mod 4)
+  else: none(int)
 
 func lifted*(p: Vec; dz: float): Vec = (p.x, p.y, p.z + dz)

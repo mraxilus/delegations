@@ -28,6 +28,7 @@
 ##   | elbow fore, aspect aft    | , elbow forward  |
 ##   | Body.One                  | lead's           |
 ##   | Body.Two                  | follow's         |
+##   | quarters each sees other  | facing           |
 ##   |---------------------------|------------------|
 
 {.experimental: "strictFuncs".}
@@ -40,6 +41,18 @@ import ./[body, hold, read, rig, walk]
 const BANDS* = [("low", Band.Torso), ("high", Band.Neck), ("above", Band.Crown)]
   ## Name each band, in order report and page tabulate them.
 
+const FACINGS* = [((0, 0), "Face-to-face"), ((2, 2), "Back-to-back"),
+                  ((0, 2), "Pillion"), ((2, 0), "pillion"),
+                  ((0, 3), "Sidecar left"), ((0, 1), "Sidecar right"),
+                  ((3, 0), "sidecar Left"), ((1, 0), "sidecar Right")]
+  ## Name each state two stand in to one another: where lead sees follow, then
+  ## where follow sees lead, in quarters clockwise from own front
+  ## (`body.quartersTo`).
+  ##   Glossary names each state where one or both see other ahead, and state
+  ##     where each has other behind.  Other seven it leaves unnamed.
+  ##   Case of name says whom it places, capital for lead: `Pillion` stands lead
+  ##     behind, and `sidecar Left` stands follow at lead's left shoulder.
+
 
 func bandName*(band: Band): string =
   ## Name band as dance names height arm is carried at.
@@ -47,6 +60,17 @@ func bandName*(band: Band): string =
     if which == band:
       return word
   raise newException(Defect, "No word names band; got `" & $band & "`.")
+
+
+func facingName*(st: array[Body, Stance]): Option[string] =
+  ## Name state two stand in to one another, as dance names it (`FACINGS`).
+  ##   None between quarters, and none where glossary names no state.
+  let (lead, follow) = (quartersTo(st, Body.One), quartersTo(st, Body.Two))
+  if lead.isSome and follow.isSome:
+    for (seen, name) in FACINGS:
+      if seen == (lead.get, follow.get):
+        return some(name)
+  none(string)
 
 
 func whose*(h: Hand): string =
