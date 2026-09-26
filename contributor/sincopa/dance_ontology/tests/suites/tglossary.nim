@@ -34,11 +34,10 @@ const
     ## Entries naming step of chain, which are only ones position may speak.
     ##   Rest of glossary is held to elsewhere; word another entry rejects is
     ##     no business of position's name.
-  FACING_TERMS = ["Pillion", "Sidecar"]
-    ## Entries naming facing whose rejected words name facing and nothing else.
-    ##   Face-to-face and Back-to-back are left out: they reject `facing` and
-    ##     `apart`, which report says in own sense, of what no facing says and
-    ##     of distance couple stand at.
+  FACING_TERM = "Facing"
+    ## Entry naming facing.  Its capitalised rejected words are names facing
+    ##   once carried, which no reader may meet; lower-case ones, such as
+    ##   `front`, are common words page and report say in own sense.
   DANCER_TERMS = ["Lead", "Follow"]
     ## Entries naming dancer, whose rejected words no page may say at all.
   SAID_IN = ["design", "app", "sim"]
@@ -48,6 +47,20 @@ const
     ## Pages this project writes by hand rather than from Nim.
   HOLDS = [HAND_TO_HAND, [some Arm.L, some Arm.R]]
     ## Both holds workbench walks: app's own frame, and its dual (rule 31).
+
+
+func replaced(source, term: string): seq[string] =
+  ## Collect capitalised words entry `term` rejects, in lower case: names that
+  ## thing once carried, and not common words it also rejects.
+  var inside = false
+  for line in source.splitLines:
+    let bare = line.strip
+    if bare.startsWith("**") and bare.endsWith("**:"):
+      inside = bare[2 ..< bare.len - 3] == term
+    elif bare.startsWith("_Avoid_:") and inside:
+      for word in bare["_Avoid_:".len .. ^1].split(','):
+        let w = word.strip
+        if w.len > 0 and w[0].isUpperAscii: result.add w.toLowerAscii
 
 
 func avoided(source: string; terms: openArray[string]): Table[string, seq[string]] =
@@ -190,6 +203,26 @@ suite "pages speak of the lead and the follow":
               checkpoint path.extractFilename & " says `" & word & "`: " & said
               fail()
 
+  test "no string a page shows names a facing by name glossary replaced":
+    ## Glossary replaced Pillion and Sidecar (issue #289), and they stood on
+    ##   six pages.  `sim/rigid.nim` quotes Architect's own word in comment,
+    ##     which no page shows.
+    let names = source.replaced(FACING_TERM)
+    check names.len > 0
+    for dir in SAID_IN:
+      for path in walkDirRec(root / dir):
+        if path.splitFile.ext != ".nim": continue
+        for (said, _) in readFile(path).literals:
+          for word in names:
+            if said.toLowerAscii.says(word):
+              checkpoint path.extractFilename & " says `" & word & "`: " & said
+              fail()
+    for name in DOCUMENTS:
+      for word in names:
+        if readFile(root / name).toLowerAscii.says(word):
+          checkpoint name & " says `" & word & "`"
+          fail()
+
   test "no page written by hand says a gendered word":
     for name in DOCUMENTS:
       let said = readFile(root / name).toLowerAscii
@@ -239,16 +272,14 @@ suite "the report speaks glossary":
       let
         turned = [rotation.Dancer.Lead: 0, rotation.Dancer.Follow: -(wound div 25)]
         want = rotation.facing(rotation.seenAfter(turned))
-      check want.isSome
-      if want.isSome: check said == want.get.name
+      check said == want.name
 
-  test "no facing of report is named by word glossary rejects":
-    ## Report named rest of same-name pair `pillion lead`, which entry
-    ##   **Pillion** rejects, while every page named it `Pillion`.
-    let faced = source.avoided(FACING_TERMS)
-    check faced.len == FACING_TERMS.len
-    for _, words in faced:
-      for word in words:
-        if report.toLowerAscii.says(word):
-          checkpoint "report says `" & word & "`"
-          fail()
+  test "no facing of report is named by name glossary replaced":
+    ## Report named rest of same-name pair `pillion lead`, while every page
+    ##   named it otherwise.  Entry **Facing** rejects each name it replaced.
+    let names = source.replaced(FACING_TERM)
+    check names.len > 0
+    for word in names:
+      if report.toLowerAscii.says(word):
+        checkpoint "report says `" & word & "`"
+        fail()

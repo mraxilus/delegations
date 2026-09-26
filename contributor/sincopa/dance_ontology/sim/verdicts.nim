@@ -22,10 +22,8 @@ const
     ##     `design/parts` named same rung right: two namings of one chain, and
     ##     only one of them correct.  `tests/suites/tglossary` now reads both.
   WIDTH = 100 ## Columns report's prose wraps at.
-  SEEN = ["ahead", "at their right", "at their back", "at their left"]
+  SEEN = ["ahead", "at right", "behind", "at left"]
     ## Say where one has other, by quarters clockwise (`body.quartersTo`).
-    ##   Never `behind` after dancer's name: `lead behind` is phrase entry
-    ##     **Pillion** rejects.
 
 
 func oneLink(a, b: Arm): seq[Link] =
@@ -347,7 +345,7 @@ proc report(): string =
   result.add "| the arm carried there but not pressing the body | led |\n"
   result.add "| the elbow in front of the body, on an arm behind the back | elbow forward |\n"
   for (seen, name) in FACINGS:
-    result.add &"| the lead has the follow {SEEN[seen[0]]}, and the follow has the lead " &
+    result.add &"| the lead has the follow {SEEN[seen[0]]}, the follow has the lead " &
       &"{SEEN[seen[1]]} | {name} |\n"
   result.add "\n"
   result.add prose("Read with the model's limits in mind: the shoulder girdle is rigid, so " &

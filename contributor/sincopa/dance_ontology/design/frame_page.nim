@@ -19,7 +19,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[math, options, strformat, tables]
+import std/[math, options, strformat, strutils, tables]
 
 import ./[page, parts, rules]
 
@@ -117,9 +117,9 @@ const BODY = """
   <div class="plate">
     <h3>At rest, no ring</h3>
     <p>The facing of a dancer decides where their two hands sit on the rim. So the hands say which
-    way each dancer faces, and the eight facings stay distinct with no new mark. The first row holds
-    the four that half turns make. The second holds the four of Sidecar, which one quarter turn on
-    the spot makes. The dancer who turned shows their shoulder.</p>
+    way each dancer faces, and the sixteen facings stay distinct with no new mark. Each row turns
+    one side of the lead to the follow: face, starboard, back, then port. Each column does the same
+    for the follow, so each name gives the side of the lead first.</p>
     <div class="row">
       {facings}
     </div>
@@ -393,7 +393,7 @@ func render*(P: Parts): string =
     grid.add &"<th><em>{word(s.level)}</em> {word(s.way)}</th>"
   grid.add "</tr>"
   for i, turn in GRID_TURNS:
-    # Case of facing's name says whom it places, so header keeps it.
+    # Facing's name capitalises lead's side alone, so header keeps its case.
     grid.add &"<tr><th style=\"text-transform: none\">{turned[i]}</th>"
     for s in GRID_STATES:
       let cell = P[&"grid_{word(s.level)}_{word(s.way)}_{int(turn)}"]
@@ -401,14 +401,12 @@ func render*(P: Parts): string =
     grid.add "</tr>"
   grid.add "</table>"
 
-  # Eight facings in two rows: four that half turns make, then four that one
-  # quarter turn makes, each named by model.
-  var halves, quarters: string
+  # Sixteen facings in four rows, one for each side lead turns to follow, each
+  # named by model.  `Facing` runs lead's side slowest, four to each side.
+  var rows: array[4, string]
   for named, o in ORIENTATIONS:
-    let drawn = fig(P[&"or_free_{ord(named)}"], o.name)
-    if floorMod(o.lead_turn + o.follow_turn, 180.0) == 0.0: halves.add drawn
-    else: quarters.add drawn
-  let facings = halves & "\n    </div>\n    <div class=\"row\">\n      " & quarters
+    rows[ord(named) div 4].add fig(P[&"or_free_{ord(named)}"], o.name)
+  let facings = rows.join("\n    </div>\n    <div class=\"row\">\n      ")
 
   var fills = @[
     ("facings", facings),

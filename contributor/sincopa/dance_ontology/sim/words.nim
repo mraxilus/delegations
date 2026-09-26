@@ -33,7 +33,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/options
+import std/[options, strutils]
 
 import ./[body, hold, read, rig, walk]
 
@@ -41,17 +41,22 @@ import ./[body, hold, read, rig, walk]
 const BANDS* = [("low", Band.Torso), ("high", Band.Neck), ("above", Band.Crown)]
   ## Name each band, in order report and page tabulate them.
 
-const FACINGS* = [((0, 0), "Face-to-face"), ((2, 2), "Back-to-back"),
-                  ((0, 2), "Pillion"), ((2, 0), "pillion"),
-                  ((0, 3), "Sidecar left"), ((0, 1), "Sidecar right"),
-                  ((3, 0), "sidecar Left"), ((1, 0), "sidecar Right")]
+const SIDES = ["Face", "Starboard", "Back", "Port"]
+  ## Name side each dancer turns to other, by quarters clockwise from own front
+  ## at which they see other (`body.quartersTo`).
+  ##   Port and starboard name sides of body, so facing never reads as hold.
+
+const FACINGS* =
+  block:
+    var each: array[16, ((int, int), string)]
+    for by_lead in 0 .. 3:
+      for by_follow in 0 .. 3:
+        each[by_lead * 4 + by_follow] = ((by_lead, by_follow),
+          SIDES[by_lead] & "-to-" & SIDES[by_follow].toLowerAscii)
+    each
   ## Name each state two stand in to one another: where lead sees follow, then
-  ## where follow sees lead, in quarters clockwise from own front
-  ## (`body.quartersTo`).
-  ##   Glossary names each state where one or both see other ahead, and state
-  ##     where each has other behind.  Other seven it leaves unnamed.
-  ##   Case of name says whom it places, capital for lead: `Pillion` stands lead
-  ##     behind, and `sidecar Left` stands follow at lead's left shoulder.
+  ## where follow sees lead.  Name gives lead's side, then follow's, as
+  ## glossary does, such as `Face-to-port`.
 
 
 func bandName*(band: Band): string =
@@ -64,7 +69,7 @@ func bandName*(band: Band): string =
 
 func facingName*(st: array[Body, Stance]): Option[string] =
   ## Name state two stand in to one another, as dance names it (`FACINGS`).
-  ##   None between quarters, and none where glossary names no state.
+  ##   None between quarters, where body sees other at no one side.
   let (lead, follow) = (quartersTo(st, Body.One), quartersTo(st, Body.Two))
   if lead.isSome and follow.isSome:
     for (seen, name) in FACINGS:

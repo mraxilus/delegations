@@ -231,16 +231,23 @@ proc cellsBody(review: string; data: JsonNode): string =
                    &"holds, {apart:.2f} m apart"
                  else: "no pose holds at any distance")
   let cells = cellsOf(review)
-  const TITLES = [("A", "The standard diagram"),
-                  ("B", "Single-hand turn positions"),
-                  ("C", "The cross-name chain, Face-to-face at rest"),
-                  ("D", "The same-name chain, Pillion at rest")]
+  # Each heading is read off reference page, which names each chain's rest
+  # through model, so two pages cannot name one section two ways.
+  var titles: seq[tuple[letter, title: string]]
+  for letter in ["A", "B", "C", "D"]:
+    let
+      head = &"<h2>{letter} &middot; "
+      opens = review.find(head)
+      start = opens + head.len
+    if opens < 0:
+      quit(&"Reference page has no section `{letter}`; run `pages` first.", 1)
+    titles.add (letter, review[start ..< review.find("</h2>", start)])
   result.add """<section class="cells"><p class="lede">Every cell here comes from the
     reference page, with the same badges, and the sim's still stands beside it. Where
     one cell asks more than one question, the badge shows the first. The picker above
     reaches every cell.</p>"""
-  for (letter, title) in TITLES:
-    result.add &"<h2>{letter} &middot; {esc(title)}</h2><div class=\"grid wide\">"
+  for (letter, title) in titles:
+    result.add &"<h2>{letter} &middot; {title}</h2><div class=\"grid wide\">"
     for cell in cells.getOrDefault(letter):
       var entries: seq[string]
       for key in cell.asks:

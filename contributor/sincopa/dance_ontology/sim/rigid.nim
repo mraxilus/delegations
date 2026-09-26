@@ -609,7 +609,7 @@ proc build*(rig: Rig; stance: array[Body, Stance]; band: Band;
     result.world = eng.createWorld(addr wd)
   result.rig = rig
   result.stance = stance
-  # Rest is face to face, or pillion for hold built so, whatever stance couple
+  # Rest is Face-to-face, or Face-to-back for hold built so, whatever stance couple
   # are built at: still card built already wound is wound from that rest and
   # asks what turning does, and built as its own rest it asked for nothing --
   # no lift, no draw -- and four chain cards Architect keeps were lost.
@@ -718,7 +718,7 @@ func wound*(c: Couple): float =
 func risen*(c: Couple): float =
   ## How far joined hands have risen from where they rest toward their band,
   ## nought to one.
-  ##   Whole from rest for hold that rests pillion, which is not face to face.
+  ##   Whole from rest for hold that rests Face-to-back, which is not Face-to-face.
   ##     Otherwise hands rise over first `RAISE` of wind and stay up: head that
   ##     passes under them is under them at every wind past that, whole turns
   ##     and all.  Keyed to distance from face to face instead, which folds
@@ -1207,7 +1207,7 @@ func roomAt*(c: Couple; p: Pose; i: int): float =
     result = min(result, freedom(c.rig.range[Dof.Wrist], p.wrist[k], false))
 
 func restStance*(rig: Rig; apart: float; away = false): array[Body, Stance] =
-  ## Where couple start.  Same-name pair is built pillion: face to face its two
+  ## Where couple start.  Same-name pair is built Face-to-back: face to face its two
   ## connections lie through each other, so couple would not collect it there.
   result = facing(rig, apart)
   if away: result = turned(result, Body.Two, 0.5)
@@ -1262,7 +1262,7 @@ proc gives*(c: Couple): Stop =
   ## What stops couple's pose here, if anything does: first connection that
   ## gives, any arm through body or arm, or joined hands that never reached
   ## their band once couple are no longer face to face.
-  ##   Couple with nothing held were never asked: two free frames stood pillion
+  ##   Couple with nothing held were never asked: two free frames stood Face-to-back
   ##     chest to back with follow's arm crushed between two torsos, and read as
   ##     holding since no connection could give.
   ##   Hands under their band are hold at some other height, not this one:

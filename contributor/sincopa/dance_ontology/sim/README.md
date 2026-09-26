@@ -36,7 +36,7 @@ engine, Joints that give, Walk and lift, and Stance and strain.
 - **Which of two crossing arms is over.** It reads this from the drawn arms and does not assume it.
 - **Whether a still holds, and where the couple stand for it.**
 - **How the couple stand to each other.** It reads where each body sees the other, and `words.nim`
-  names that facing among the eight.
+  names that facing among the sixteen.
 
 `verdicts.md` is the record of what it answered. It prints each claim of the floor beside what the
 sim said, and nothing is tuned to make them agree.
