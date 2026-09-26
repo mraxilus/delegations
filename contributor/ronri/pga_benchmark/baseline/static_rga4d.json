@@ -8,10 +8,10 @@
     "sizeof_multivector": 128
   },
   "taken": {
-    "date": "2026-09-22",
+    "date": "2026-09-24",
     "machine": "linux amd64, 4 cores",
     "nim": "27763495bcfe265507ca98aedc1c7064bf1e0e4d",
-    "pga": "9f9019b26b46490f79f383eee693b1abc84a4f63",
+    "pga": "6a91c3f00abbf0c2e8584d5459c3b2da9f4df8e3",
     "flags": "-d:release"
   },
   "functions": {
@@ -29,34 +29,34 @@
         "adds": 65,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 17
+        "lines": 16
       },
       "total": {
         "multiplies": 81,
         "adds": 65,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 17
+        "lines": 16
       },
       "movement": {
         "bytes_read": 256,
         "bytes_written": 128,
-        "bytes_zeroed": 128,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 512
+        "bytes_moved": 384
       }
     },
     "∨(Multivector,Multivector)": {
@@ -73,34 +73,34 @@
         "adds": 65,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 17
+        "lines": 16
       },
       "total": {
         "multiplies": 81,
         "adds": 65,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 17
+        "lines": 16
       },
       "movement": {
         "bytes_read": 256,
         "bytes_written": 128,
-        "bytes_zeroed": 128,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 512
+        "bytes_moved": 384
       }
     },
     "⟑(Multivector,Multivector)": {
@@ -117,34 +117,34 @@
         "adds": 176,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 17
+        "lines": 16
       },
       "total": {
         "multiplies": 192,
         "adds": 176,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 17
+        "lines": 16
       },
       "movement": {
         "bytes_read": 256,
         "bytes_written": 128,
-        "bytes_zeroed": 128,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 512
+        "bytes_moved": 384
       }
     },
     "⟇(Multivector,Multivector)": {
@@ -161,34 +161,34 @@
         "adds": 176,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 17
+        "lines": 16
       },
       "total": {
         "multiplies": 192,
         "adds": 176,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 17
+        "lines": 16
       },
       "movement": {
         "bytes_read": 256,
         "bytes_written": 128,
-        "bytes_zeroed": 128,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 512
+        "bytes_moved": 384
       }
     },
     "∙(Multivector,Multivector)": {
@@ -205,34 +205,34 @@
         "adds": 7,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 2
+        "lines": 16
       },
       "total": {
         "multiplies": 8,
         "adds": 7,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 2
+        "lines": 16
       },
       "movement": {
         "bytes_read": 256,
         "bytes_written": 128,
-        "bytes_zeroed": 128,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 512
+        "bytes_moved": 384
       }
     },
     "∘(Multivector,Multivector)": {
@@ -249,34 +249,34 @@
         "adds": 7,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 2
+        "lines": 16
       },
       "total": {
         "multiplies": 8,
         "adds": 7,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 2
+        "lines": 16
       },
       "movement": {
         "bytes_read": 256,
         "bytes_written": 128,
-        "bytes_zeroed": 128,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 512
+        "bytes_moved": 384
       }
     },
     "∨★(Multivector,Multivector)": {
@@ -293,34 +293,34 @@
         "adds": 38,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 17
+        "lines": 16
       },
       "total": {
         "multiplies": 54,
         "adds": 38,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 17
+        "lines": 16
       },
       "movement": {
         "bytes_read": 256,
         "bytes_written": 128,
-        "bytes_zeroed": 128,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 512
+        "bytes_moved": 384
       }
     },
     "∨☆(Multivector,Multivector)": {
@@ -337,34 +337,34 @@
         "adds": 19,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 9
+        "lines": 16
       },
       "total": {
         "multiplies": 27,
         "adds": 19,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 9
+        "lines": 16
       },
       "movement": {
         "bytes_read": 256,
         "bytes_written": 128,
-        "bytes_zeroed": 128,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 512
+        "bytes_moved": 384
       }
     },
     "∧★(Multivector,Multivector)": {
@@ -381,34 +381,34 @@
         "adds": 19,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 9
+        "lines": 16
       },
       "total": {
         "multiplies": 27,
         "adds": 19,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 9
+        "lines": 16
       },
       "movement": {
         "bytes_read": 256,
         "bytes_written": 128,
-        "bytes_zeroed": 128,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 512
+        "bytes_moved": 384
       }
     },
     "∧☆(Multivector,Multivector)": {
@@ -425,34 +425,34 @@
         "adds": 38,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 17
+        "lines": 16
       },
       "total": {
         "multiplies": 54,
         "adds": 38,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 17
+        "lines": 16
       },
       "movement": {
         "bytes_read": 256,
         "bytes_written": 128,
-        "bytes_zeroed": 128,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 512
+        "bytes_moved": 384
       }
     },
     "projectCentral(Multivector,Multivector)": {
@@ -482,21 +482,21 @@
         "adds": 84,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 5,
+        "zero_fills": 3,
         "intermediates": 2,
         "copies": 1,
         "checks": 2,
         "calls": 2,
         "allocations": 0,
-        "lines": 45
+        "lines": 51
       },
       "movement": {
         "bytes_read": 256,
         "bytes_written": 128,
-        "bytes_zeroed": 640,
+        "bytes_zeroed": 384,
         "bytes_copied": 128,
         "bytes_intermediates": 256,
-        "bytes_moved": 1408
+        "bytes_moved": 1152
       }
     },
     "projectCentralAnti(Multivector,Multivector)": {
@@ -526,21 +526,21 @@
         "adds": 103,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 5,
+        "zero_fills": 3,
         "intermediates": 2,
         "copies": 1,
         "checks": 2,
         "calls": 2,
         "allocations": 0,
-        "lines": 53
+        "lines": 51
       },
       "movement": {
         "bytes_read": 256,
         "bytes_written": 128,
-        "bytes_zeroed": 640,
+        "bytes_zeroed": 384,
         "bytes_copied": 128,
         "bytes_intermediates": 256,
-        "bytes_moved": 1408
+        "bytes_moved": 1152
       }
     },
     "projectOrthogonal(Multivector,Multivector)": {
@@ -570,21 +570,21 @@
         "adds": 103,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 5,
+        "zero_fills": 3,
         "intermediates": 2,
         "copies": 1,
         "checks": 2,
         "calls": 2,
         "allocations": 0,
-        "lines": 53
+        "lines": 51
       },
       "movement": {
         "bytes_read": 256,
         "bytes_written": 128,
-        "bytes_zeroed": 640,
+        "bytes_zeroed": 384,
         "bytes_copied": 128,
         "bytes_intermediates": 256,
-        "bytes_moved": 1408
+        "bytes_moved": 1152
       }
     },
     "projectOrthogonalAnti(Multivector,Multivector)": {
@@ -614,21 +614,65 @@
         "adds": 84,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 5,
+        "zero_fills": 3,
         "intermediates": 2,
         "copies": 1,
         "checks": 2,
         "calls": 2,
         "allocations": 0,
-        "lines": 45
+        "lines": 51
       },
       "movement": {
         "bytes_read": 256,
         "bytes_written": 128,
-        "bytes_zeroed": 640,
+        "bytes_zeroed": 384,
         "bytes_copied": 128,
         "bytes_intermediates": 256,
-        "bytes_moved": 1408
+        "bytes_moved": 1152
+      }
+    },
+    "∧(float,Multivector)": {
+      "symbol": "∧",
+      "module": "pga/operators",
+      "params": [
+        "float",
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 16,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 30
+      },
+      "total": {
+        "multiplies": 16,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 0,
+        "intermediates": 0,
+        "copies": 0,
+        "checks": 0,
+        "calls": 0,
+        "allocations": 0,
+        "lines": 30
+      },
+      "movement": {
+        "bytes_read": 136,
+        "bytes_written": 128,
+        "bytes_zeroed": 0,
+        "bytes_copied": 0,
+        "bytes_intermediates": 0,
+        "bytes_moved": 264
       }
     },
     "∙(Multivector)": {
@@ -644,34 +688,34 @@
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 9
+        "lines": 16
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 9
+        "lines": 16
       },
       "movement": {
         "bytes_read": 128,
         "bytes_written": 128,
-        "bytes_zeroed": 128,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 384
+        "bytes_moved": 256
       }
     },
     "∘(Multivector)": {
@@ -687,34 +731,34 @@
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 9
+        "lines": 16
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 9
+        "lines": 16
       },
       "movement": {
         "bytes_read": 128,
         "bytes_written": 128,
-        "bytes_zeroed": 128,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 384
+        "bytes_moved": 256
       }
     },
     "/(Multivector)": {
@@ -730,34 +774,34 @@
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 17
+        "lines": 16
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 17
+        "lines": 16
       },
       "movement": {
         "bytes_read": 128,
         "bytes_written": 128,
-        "bytes_zeroed": 128,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 384
+        "bytes_moved": 256
       }
     },
     "\\(Multivector)": {
@@ -773,34 +817,34 @@
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 17
+        "lines": 16
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 17
+        "lines": 16
       },
       "movement": {
         "bytes_read": 128,
         "bytes_written": 128,
-        "bytes_zeroed": 128,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 384
+        "bytes_moved": 256
       }
     },
     "~(Multivector)": {
@@ -816,34 +860,34 @@
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 17
+        "lines": 16
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 17
+        "lines": 16
       },
       "movement": {
         "bytes_read": 128,
         "bytes_written": 128,
-        "bytes_zeroed": 128,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 384
+        "bytes_moved": 256
       }
     },
     "~∘(Multivector)": {
@@ -859,34 +903,34 @@
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 17
+        "lines": 16
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 17
+        "lines": 16
       },
       "movement": {
         "bytes_read": 128,
         "bytes_written": 128,
-        "bytes_zeroed": 128,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 384
+        "bytes_moved": 256
       }
     },
     "★(Multivector)": {
@@ -902,34 +946,34 @@
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 9
+        "lines": 16
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 9
+        "lines": 16
       },
       "movement": {
         "bytes_read": 128,
         "bytes_written": 128,
-        "bytes_zeroed": 128,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 384
+        "bytes_moved": 256
       }
     },
     "☆(Multivector)": {
@@ -945,34 +989,34 @@
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 9
+        "lines": 16
       },
       "total": {
         "multiplies": 0,
         "adds": 0,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 9
+        "lines": 16
       },
       "movement": {
         "bytes_read": 128,
         "bytes_written": 128,
-        "bytes_zeroed": 128,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 384
+        "bytes_moved": 256
       }
     },
     "|∙²(Multivector)": {
@@ -988,34 +1032,77 @@
         "adds": 7,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 2
+        "lines": 16
       },
       "total": {
         "multiplies": 8,
         "adds": 7,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 2
+        "lines": 16
       },
       "movement": {
         "bytes_read": 128,
         "bytes_written": 128,
-        "bytes_zeroed": 128,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 384
+        "bytes_moved": 256
+      }
+    },
+    "|∙(Multivector)": {
+      "symbol": "|∙",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 1,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 13
+      },
+      "total": {
+        "multiplies": 8,
+        "adds": 7,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 1,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 29
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 128,
+        "bytes_moved": 640
       }
     },
     "|∘²(Multivector)": {
@@ -1031,34 +1118,335 @@
         "adds": 7,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 2
+        "lines": 16
       },
       "total": {
         "multiplies": 8,
         "adds": 7,
         "subs": 0,
         "divides": 0,
-        "zero_fills": 1,
+        "zero_fills": 0,
         "intermediates": 0,
         "copies": 0,
         "checks": 0,
         "calls": 0,
         "allocations": 0,
-        "lines": 2
+        "lines": 16
       },
       "movement": {
         "bytes_read": 128,
         "bytes_written": 128,
-        "bytes_zeroed": 128,
+        "bytes_zeroed": 0,
         "bytes_copied": 0,
         "bytes_intermediates": 0,
-        "bytes_moved": 384
+        "bytes_moved": 256
+      }
+    },
+    "|∘(Multivector)": {
+      "symbol": "|∘",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 1,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 13
+      },
+      "total": {
+        "multiplies": 8,
+        "adds": 7,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 1,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 29
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 256,
+        "bytes_copied": 0,
+        "bytes_intermediates": 128,
+        "bytes_moved": 640
+      }
+    },
+    "|(Multivector)": {
+      "symbol": "|",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 3,
+        "intermediates": 2,
+        "copies": 0,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 20
+      },
+      "total": {
+        "multiplies": 16,
+        "adds": 14,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 7,
+        "intermediates": 4,
+        "copies": 0,
+        "checks": 4,
+        "calls": 4,
+        "allocations": 0,
+        "lines": 78
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 896,
+        "bytes_copied": 0,
+        "bytes_intermediates": 512,
+        "bytes_moved": 1664
+      }
+    },
+    "^∙(Multivector)": {
+      "symbol": "^∙",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 16,
+        "adds": 0,
+        "subs": 0,
+        "divides": 1,
+        "zero_fills": 1,
+        "intermediates": 1,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 59
+      },
+      "total": {
+        "multiplies": 24,
+        "adds": 7,
+        "subs": 0,
+        "divides": 1,
+        "zero_fills": 3,
+        "intermediates": 2,
+        "copies": 0,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 88
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 384,
+        "bytes_copied": 0,
+        "bytes_intermediates": 256,
+        "bytes_moved": 896
+      }
+    },
+    "^∘(Multivector)": {
+      "symbol": "^∘",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 16,
+        "adds": 0,
+        "subs": 0,
+        "divides": 1,
+        "zero_fills": 1,
+        "intermediates": 1,
+        "copies": 0,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 59
+      },
+      "total": {
+        "multiplies": 24,
+        "adds": 7,
+        "subs": 0,
+        "divides": 1,
+        "zero_fills": 3,
+        "intermediates": 2,
+        "copies": 0,
+        "checks": 2,
+        "calls": 2,
+        "allocations": 0,
+        "lines": 88
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 384,
+        "bytes_copied": 0,
+        "bytes_intermediates": 256,
+        "bytes_moved": 896
+      }
+    },
+    "⊖(Multivector)": {
+      "symbol": "⊖",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 1,
+        "copies": 1,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 13
+      },
+      "total": {
+        "multiplies": 81,
+        "adds": 65,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 2,
+        "intermediates": 1,
+        "copies": 1,
+        "checks": 1,
+        "calls": 1,
+        "allocations": 0,
+        "lines": 29
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 256,
+        "bytes_copied": 128,
+        "bytes_intermediates": 128,
+        "bytes_moved": 768
+      }
+    },
+    "∩(Multivector)": {
+      "symbol": "∩",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 4,
+        "intermediates": 3,
+        "copies": 1,
+        "checks": 3,
+        "calls": 3,
+        "allocations": 0,
+        "lines": 25
+      },
+      "total": {
+        "multiplies": 162,
+        "adds": 130,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 4,
+        "intermediates": 3,
+        "copies": 1,
+        "checks": 3,
+        "calls": 3,
+        "allocations": 0,
+        "lines": 73
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 512,
+        "bytes_copied": 128,
+        "bytes_intermediates": 384,
+        "bytes_moved": 1280
+      }
+    },
+    "∪(Multivector)": {
+      "symbol": "∪",
+      "module": "pga/operators",
+      "params": [
+        "Multivector"
+      ],
+      "returns": "Multivector",
+      "inline": true,
+      "own": {
+        "multiplies": 0,
+        "adds": 0,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 4,
+        "intermediates": 3,
+        "copies": 1,
+        "checks": 3,
+        "calls": 3,
+        "allocations": 0,
+        "lines": 25
+      },
+      "total": {
+        "multiplies": 162,
+        "adds": 130,
+        "subs": 0,
+        "divides": 0,
+        "zero_fills": 4,
+        "intermediates": 3,
+        "copies": 1,
+        "checks": 3,
+        "calls": 3,
+        "allocations": 0,
+        "lines": 73
+      },
+      "movement": {
+        "bytes_read": 128,
+        "bytes_written": 128,
+        "bytes_zeroed": 512,
+        "bytes_copied": 128,
+        "bytes_intermediates": 384,
+        "bytes_moved": 1280
       }
     },
     "wedge(Point,Point)": {
@@ -4963,394 +5351,6 @@
         "bytes_intermediates": 0,
         "bytes_moved": 392
       }
-    },
-    "∧(float,Multivector)": {
-      "symbol": "∧",
-      "module": "pga/operators",
-      "params": [
-        "float",
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 16,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 31
-      },
-      "total": {
-        "multiplies": 16,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 1,
-        "intermediates": 0,
-        "copies": 0,
-        "checks": 0,
-        "calls": 0,
-        "allocations": 0,
-        "lines": 31
-      },
-      "movement": {
-        "bytes_read": 136,
-        "bytes_written": 128,
-        "bytes_zeroed": 128,
-        "bytes_copied": 0,
-        "bytes_intermediates": 0,
-        "bytes_moved": 392
-      }
-    },
-    "|∙(Multivector)": {
-      "symbol": "|∙",
-      "module": "pga/operators",
-      "params": [
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 2,
-        "intermediates": 1,
-        "copies": 0,
-        "checks": 1,
-        "calls": 1,
-        "allocations": 0,
-        "lines": 13
-      },
-      "total": {
-        "multiplies": 8,
-        "adds": 7,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 3,
-        "intermediates": 1,
-        "copies": 0,
-        "checks": 1,
-        "calls": 1,
-        "allocations": 0,
-        "lines": 15
-      },
-      "movement": {
-        "bytes_read": 128,
-        "bytes_written": 128,
-        "bytes_zeroed": 384,
-        "bytes_copied": 0,
-        "bytes_intermediates": 128,
-        "bytes_moved": 768
-      }
-    },
-    "|∘(Multivector)": {
-      "symbol": "|∘",
-      "module": "pga/operators",
-      "params": [
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 2,
-        "intermediates": 1,
-        "copies": 0,
-        "checks": 1,
-        "calls": 1,
-        "allocations": 0,
-        "lines": 13
-      },
-      "total": {
-        "multiplies": 8,
-        "adds": 7,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 3,
-        "intermediates": 1,
-        "copies": 0,
-        "checks": 1,
-        "calls": 1,
-        "allocations": 0,
-        "lines": 15
-      },
-      "movement": {
-        "bytes_read": 128,
-        "bytes_written": 128,
-        "bytes_zeroed": 384,
-        "bytes_copied": 0,
-        "bytes_intermediates": 128,
-        "bytes_moved": 768
-      }
-    },
-    "|(Multivector)": {
-      "symbol": "|",
-      "module": "pga/operators",
-      "params": [
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 3,
-        "intermediates": 2,
-        "copies": 0,
-        "checks": 2,
-        "calls": 2,
-        "allocations": 0,
-        "lines": 20
-      },
-      "total": {
-        "multiplies": 16,
-        "adds": 14,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 9,
-        "intermediates": 4,
-        "copies": 0,
-        "checks": 4,
-        "calls": 4,
-        "allocations": 0,
-        "lines": 50
-      },
-      "movement": {
-        "bytes_read": 128,
-        "bytes_written": 128,
-        "bytes_zeroed": 1152,
-        "bytes_copied": 0,
-        "bytes_intermediates": 512,
-        "bytes_moved": 1920
-      }
-    },
-    "^∙(Multivector)": {
-      "symbol": "^∙",
-      "module": "pga/operators",
-      "params": [
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 1,
-        "zero_fills": 1,
-        "intermediates": 1,
-        "copies": 1,
-        "checks": 17,
-        "calls": 17,
-        "allocations": 0,
-        "lines": 52
-      },
-      "total": {
-        "multiplies": 24,
-        "adds": 7,
-        "subs": 0,
-        "divides": 1,
-        "zero_fills": 4,
-        "intermediates": 2,
-        "copies": 1,
-        "checks": 18,
-        "calls": 18,
-        "allocations": 0,
-        "lines": 83
-      },
-      "movement": {
-        "bytes_read": 128,
-        "bytes_written": 128,
-        "bytes_zeroed": 512,
-        "bytes_copied": 128,
-        "bytes_intermediates": 256,
-        "bytes_moved": 1152
-      }
-    },
-    "^∘(Multivector)": {
-      "symbol": "^∘",
-      "module": "pga/operators",
-      "params": [
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 1,
-        "zero_fills": 1,
-        "intermediates": 1,
-        "copies": 1,
-        "checks": 17,
-        "calls": 17,
-        "allocations": 0,
-        "lines": 52
-      },
-      "total": {
-        "multiplies": 24,
-        "adds": 7,
-        "subs": 0,
-        "divides": 1,
-        "zero_fills": 4,
-        "intermediates": 2,
-        "copies": 1,
-        "checks": 18,
-        "calls": 18,
-        "allocations": 0,
-        "lines": 83
-      },
-      "movement": {
-        "bytes_read": 128,
-        "bytes_written": 128,
-        "bytes_zeroed": 512,
-        "bytes_copied": 128,
-        "bytes_intermediates": 256,
-        "bytes_moved": 1152
-      }
-    },
-    "⊖(Multivector)": {
-      "symbol": "⊖",
-      "module": "pga/operators",
-      "params": [
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 2,
-        "intermediates": 1,
-        "copies": 1,
-        "checks": 1,
-        "calls": 1,
-        "allocations": 0,
-        "lines": 13
-      },
-      "total": {
-        "multiplies": 81,
-        "adds": 65,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 3,
-        "intermediates": 1,
-        "copies": 1,
-        "checks": 1,
-        "calls": 1,
-        "allocations": 0,
-        "lines": 30
-      },
-      "movement": {
-        "bytes_read": 128,
-        "bytes_written": 128,
-        "bytes_zeroed": 384,
-        "bytes_copied": 128,
-        "bytes_intermediates": 128,
-        "bytes_moved": 896
-      }
-    },
-    "∩(Multivector)": {
-      "symbol": "∩",
-      "module": "pga/operators",
-      "params": [
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 4,
-        "intermediates": 3,
-        "copies": 1,
-        "checks": 3,
-        "calls": 3,
-        "allocations": 0,
-        "lines": 25
-      },
-      "total": {
-        "multiplies": 162,
-        "adds": 130,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 7,
-        "intermediates": 3,
-        "copies": 1,
-        "checks": 3,
-        "calls": 3,
-        "allocations": 0,
-        "lines": 68
-      },
-      "movement": {
-        "bytes_read": 128,
-        "bytes_written": 128,
-        "bytes_zeroed": 896,
-        "bytes_copied": 128,
-        "bytes_intermediates": 384,
-        "bytes_moved": 1664
-      }
-    },
-    "∪(Multivector)": {
-      "symbol": "∪",
-      "module": "pga/operators",
-      "params": [
-        "Multivector"
-      ],
-      "returns": "Multivector",
-      "inline": false,
-      "own": {
-        "multiplies": 0,
-        "adds": 0,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 4,
-        "intermediates": 3,
-        "copies": 1,
-        "checks": 3,
-        "calls": 3,
-        "allocations": 0,
-        "lines": 25
-      },
-      "total": {
-        "multiplies": 162,
-        "adds": 130,
-        "subs": 0,
-        "divides": 0,
-        "zero_fills": 7,
-        "intermediates": 3,
-        "copies": 1,
-        "checks": 3,
-        "calls": 3,
-        "allocations": 0,
-        "lines": 68
-      },
-      "movement": {
-        "bytes_read": 128,
-        "bytes_written": 128,
-        "bytes_zeroed": 896,
-        "bytes_copied": 128,
-        "bytes_intermediates": 384,
-        "bytes_moved": 1664
-      }
     }
   },
   "measurands": {
@@ -5361,7 +5361,17 @@
       "expression": "(m ∧ n)",
       "library": "∧(Multivector,Multivector)",
       "reference": "",
-      "cite": "2.17"
+      "cite": "2.17",
+      "bound": {
+        "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "wedge_anti": {
       "symbol": "∨",
@@ -5370,7 +5380,17 @@
       "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "",
-      "cite": "2.29"
+      "cite": "2.29",
+      "bound": {
+        "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "wedge_dot": {
       "symbol": "⟑",
@@ -5379,7 +5399,17 @@
       "expression": "(m ⟑ n)",
       "library": "⟑(Multivector,Multivector)",
       "reference": "",
-      "cite": "wiki:Geometric_product"
+      "cite": "wiki:Geometric_product",
+      "bound": {
+        "shape": "Geometric",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 192,
+        "adds": 176,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "wedge_dot_anti": {
       "symbol": "⟇",
@@ -5388,7 +5418,17 @@
       "expression": "(m ⟇ n)",
       "library": "⟇(Multivector,Multivector)",
       "reference": "",
-      "cite": "wiki:Geometric_product"
+      "cite": "wiki:Geometric_product",
+      "bound": {
+        "shape": "Geometric",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 192,
+        "adds": 176,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "dot": {
       "symbol": "∙",
@@ -5397,7 +5437,17 @@
       "expression": "(m ∙ n)",
       "library": "∙(Multivector,Multivector)",
       "reference": "",
-      "cite": "2.76"
+      "cite": "2.76",
+      "bound": {
+        "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 264
+      }
     },
     "dot_anti": {
       "symbol": "∘",
@@ -5406,7 +5456,17 @@
       "expression": "(m ∘ n)",
       "library": "∘(Multivector,Multivector)",
       "reference": "",
-      "cite": "2.76"
+      "cite": "2.76",
+      "bound": {
+        "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 264
+      }
     },
     "contract_bulk": {
       "symbol": "∨★",
@@ -5415,7 +5475,17 @@
       "expression": "(m ∨★ n)",
       "library": "∨★(Multivector,Multivector)",
       "reference": "",
-      "cite": "2.119"
+      "cite": "2.119",
+      "bound": {
+        "shape": "ContractBulk",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 54,
+        "adds": 38,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "contract_weight": {
       "symbol": "∨☆",
@@ -5424,7 +5494,17 @@
       "expression": "(m ∨☆ n)",
       "library": "∨☆(Multivector,Multivector)",
       "reference": "",
-      "cite": "2.120"
+      "cite": "2.120",
+      "bound": {
+        "shape": "ContractWeight",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 27,
+        "adds": 11,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "expand_bulk": {
       "symbol": "∧★",
@@ -5433,7 +5513,17 @@
       "expression": "(m ∧★ n)",
       "library": "∧★(Multivector,Multivector)",
       "reference": "",
-      "cite": "wiki:Expansions"
+      "cite": "wiki:Expansions",
+      "bound": {
+        "shape": "ExpandBulk",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 27,
+        "adds": 11,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "expand_weight": {
       "symbol": "∧☆",
@@ -5442,7 +5532,17 @@
       "expression": "(m ∧☆ n)",
       "library": "∧☆(Multivector,Multivector)",
       "reference": "",
-      "cite": "wiki:Expansions"
+      "cite": "wiki:Expansions",
+      "bound": {
+        "shape": "ExpandWeight",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 54,
+        "adds": 38,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "add": {
       "symbol": "+",
@@ -5451,7 +5551,17 @@
       "expression": "(m + n)",
       "library": "+(Multivector,Multivector)",
       "reference": "",
-      "cite": "2.24"
+      "cite": "2.24",
+      "bound": {
+        "shape": "Componentwise",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 16,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "subtract": {
       "symbol": "-",
@@ -5460,7 +5570,17 @@
       "expression": "(m - n)",
       "library": "-(Multivector,Multivector)",
       "reference": "",
-      "cite": "2.24"
+      "cite": "2.24",
+      "bound": {
+        "shape": "Componentwise",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 16,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "project_central": {
       "symbol": "",
@@ -5469,7 +5589,20 @@
       "expression": "projectCentral(m, n)",
       "library": "projectCentral(Multivector,Multivector)",
       "reference": "",
-      "cite": "wiki:Projections"
+      "cite": "wiki:Projections",
+      "bound": {
+        "shape": "ExpandBulk + Wedge",
+        "is_composed": true,
+        "steps": [
+          "ExpandBulk",
+          "Wedge"
+        ],
+        "multiplies": 108,
+        "adds": 76,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "project_central_anti": {
       "symbol": "",
@@ -5478,7 +5611,20 @@
       "expression": "projectCentralAnti(m, n)",
       "library": "projectCentralAnti(Multivector,Multivector)",
       "reference": "",
-      "cite": "wiki:Projections"
+      "cite": "wiki:Projections",
+      "bound": {
+        "shape": "ContractBulk + Wedge",
+        "is_composed": true,
+        "steps": [
+          "ContractBulk",
+          "Wedge"
+        ],
+        "multiplies": 135,
+        "adds": 103,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "project_orthogonal": {
       "symbol": "",
@@ -5487,7 +5633,20 @@
       "expression": "projectOrthogonal(m, n)",
       "library": "projectOrthogonal(Multivector,Multivector)",
       "reference": "",
-      "cite": "wiki:Projections"
+      "cite": "wiki:Projections",
+      "bound": {
+        "shape": "ExpandWeight + Wedge",
+        "is_composed": true,
+        "steps": [
+          "ExpandWeight",
+          "Wedge"
+        ],
+        "multiplies": 135,
+        "adds": 103,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "project_orthogonal_anti": {
       "symbol": "",
@@ -5496,7 +5655,20 @@
       "expression": "projectOrthogonalAnti(m, n)",
       "library": "projectOrthogonalAnti(Multivector,Multivector)",
       "reference": "",
-      "cite": "wiki:Projections"
+      "cite": "wiki:Projections",
+      "bound": {
+        "shape": "ContractWeight + Wedge",
+        "is_composed": true,
+        "steps": [
+          "ContractWeight",
+          "Wedge"
+        ],
+        "multiplies": 108,
+        "adds": 76,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "scale": {
       "symbol": "∧",
@@ -5505,7 +5677,17 @@
       "expression": "(m ∧ n)",
       "library": "∧(float,Multivector)",
       "reference": "",
-      "cite": "2.24"
+      "cite": "2.24",
+      "bound": {
+        "shape": "Scale",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 16,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 264
+      }
     },
     "bulk": {
       "symbol": "∙",
@@ -5514,7 +5696,17 @@
       "expression": "(∙ m)",
       "library": "∙(Multivector)",
       "reference": "",
-      "cite": "2.68"
+      "cite": "2.68",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "weight": {
       "symbol": "∘",
@@ -5523,7 +5715,17 @@
       "expression": "(∘ m)",
       "library": "∘(Multivector)",
       "reference": "",
-      "cite": "2.68"
+      "cite": "2.68",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "complement_right": {
       "symbol": "/",
@@ -5532,7 +5734,17 @@
       "expression": "(/ m)",
       "library": "/(Multivector)",
       "reference": "",
-      "cite": "2.19"
+      "cite": "2.19",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "complement_left": {
       "symbol": "\\",
@@ -5541,7 +5753,17 @@
       "expression": "(\\ m)",
       "library": "\\(Multivector)",
       "reference": "",
-      "cite": "2.20"
+      "cite": "2.20",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "reverse": {
       "symbol": "~",
@@ -5550,7 +5772,17 @@
       "expression": "(~ m)",
       "library": "~(Multivector)",
       "reference": "",
-      "cite": "wiki:Reverses"
+      "cite": "wiki:Reverses",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "reverse_anti": {
       "symbol": "~∘",
@@ -5559,7 +5791,17 @@
       "expression": "(~∘ m)",
       "library": "~∘(Multivector)",
       "reference": "",
-      "cite": "wiki:Reverses"
+      "cite": "wiki:Reverses",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "dual_bulk": {
       "symbol": "★",
@@ -5568,7 +5810,17 @@
       "expression": "(★ m)",
       "library": "★(Multivector)",
       "reference": "",
-      "cite": "2.103"
+      "cite": "2.103",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "dual_weight": {
       "symbol": "☆",
@@ -5577,7 +5829,17 @@
       "expression": "(☆ m)",
       "library": "☆(Multivector)",
       "reference": "",
-      "cite": "2.103"
+      "cite": "2.103",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "negate": {
       "symbol": "-",
@@ -5586,7 +5848,17 @@
       "expression": "(- m)",
       "library": "-(Multivector)",
       "reference": "",
-      "cite": "2.24"
+      "cite": "2.24",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "norm_bulk": {
       "symbol": "|∙",
@@ -5595,7 +5867,17 @@
       "expression": "(|∙ m)",
       "library": "|∙(Multivector)",
       "reference": "",
-      "cite": "2.87"
+      "cite": "2.87",
+      "bound": {
+        "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 1,
+        "bytes_moved": 136
+      }
     },
     "norm_weight": {
       "symbol": "|∘",
@@ -5604,7 +5886,17 @@
       "expression": "(|∘ m)",
       "library": "|∘(Multivector)",
       "reference": "",
-      "cite": "2.88"
+      "cite": "2.88",
+      "bound": {
+        "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 1,
+        "bytes_moved": 136
+      }
     },
     "norm_bulk_squared": {
       "symbol": "|∙²",
@@ -5613,7 +5905,17 @@
       "expression": "(`|∙²`(m))",
       "library": "|∙²(Multivector)",
       "reference": "",
-      "cite": "2.87"
+      "cite": "2.87",
+      "bound": {
+        "shape": "SquaredNorm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 136
+      }
     },
     "norm_weight_squared": {
       "symbol": "|∘²",
@@ -5622,7 +5924,17 @@
       "expression": "(`|∘²`(m))",
       "library": "|∘²(Multivector)",
       "reference": "",
-      "cite": "2.88"
+      "cite": "2.88",
+      "bound": {
+        "shape": "SquaredNorm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 136
+      }
     },
     "norm": {
       "symbol": "|",
@@ -5631,7 +5943,20 @@
       "expression": "(| m)",
       "library": "|(Multivector)",
       "reference": "",
-      "cite": "2.90"
+      "cite": "2.90",
+      "bound": {
+        "shape": "2 Norm",
+        "is_composed": true,
+        "steps": [
+          "Norm",
+          "Norm"
+        ],
+        "multiplies": 16,
+        "adds": 14,
+        "divides": 0,
+        "roots": 2,
+        "bytes_moved": 136
+      }
     },
     "normalize_bulk": {
       "symbol": "^∙",
@@ -5640,7 +5965,17 @@
       "expression": "(^∙ m)",
       "library": "^∙(Multivector)",
       "reference": "",
-      "cite": "2.89"
+      "cite": "2.89",
+      "bound": {
+        "shape": "Unitize",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 24,
+        "adds": 7,
+        "divides": 1,
+        "roots": 1,
+        "bytes_moved": 256
+      }
     },
     "normalize_weight": {
       "symbol": "^∘",
@@ -5649,7 +5984,17 @@
       "expression": "(^∘ m)",
       "library": "^∘(Multivector)",
       "reference": "",
-      "cite": "2.89"
+      "cite": "2.89",
+      "bound": {
+        "shape": "Unitize",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 24,
+        "adds": 7,
+        "divides": 1,
+        "roots": 1,
+        "bytes_moved": 256
+      }
     },
     "unitize": {
       "symbol": "^",
@@ -5658,7 +6003,17 @@
       "expression": "(^ m)",
       "library": "^∘(Multivector)",
       "reference": "",
-      "cite": "2.89"
+      "cite": "2.89",
+      "bound": {
+        "shape": "Unitize",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 24,
+        "adds": 7,
+        "divides": 1,
+        "roots": 1,
+        "bytes_moved": 256
+      }
     },
     "attitude": {
       "symbol": "⊖",
@@ -5667,7 +6022,17 @@
       "expression": "(⊖ m)",
       "library": "⊖(Multivector)",
       "reference": "",
-      "cite": "2.73"
+      "cite": "2.73",
+      "bound": {
+        "shape": "ConstantProduct",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "select_grade": {
       "symbol": "{}",
@@ -5676,7 +6041,17 @@
       "expression": "(m{Grade(1)})",
       "library": "{}(Multivector,int)",
       "reference": "",
-      "cite": "2.17"
+      "cite": "2.17",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "select_grade_anti": {
       "symbol": "{}",
@@ -5685,7 +6060,17 @@
       "expression": "(m{GradeAnti(1)})",
       "library": "{}(Multivector,int)#u1",
       "reference": "",
-      "cite": "2.29"
+      "cite": "2.29",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "select_part": {
       "symbol": "[]",
@@ -5703,7 +6088,21 @@
       "expression": "(∩ m)",
       "library": "∩(Multivector)",
       "reference": "",
-      "cite": "wiki:Support"
+      "cite": "wiki:Support",
+      "bound": {
+        "shape": "Permutation + ConstantProduct + Wedge",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "ConstantProduct",
+          "Wedge"
+        ],
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "support_anti": {
       "symbol": "∪",
@@ -5712,7 +6111,21 @@
       "expression": "(∪ m)",
       "library": "∪(Multivector)",
       "reference": "",
-      "cite": "wiki:Support"
+      "cite": "wiki:Support",
+      "bound": {
+        "shape": "Permutation + ConstantProduct + Wedge",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "ConstantProduct",
+          "Wedge"
+        ],
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "wedge_point_point": {
       "symbol": "∧",
@@ -5721,7 +6134,17 @@
       "expression": "(m ∧ n)",
       "library": "∧(Multivector,Multivector)",
       "reference": "wedge(Point,Point)",
-      "cite": "2.17"
+      "cite": "2.17",
+      "bound": {
+        "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "wedge_line_point": {
       "symbol": "∧",
@@ -5730,7 +6153,17 @@
       "expression": "(m ∧ n)",
       "library": "∧(Multivector,Multivector)",
       "reference": "wedge(Line,Point)",
-      "cite": "2.17"
+      "cite": "2.17",
+      "bound": {
+        "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "wedge_point_line": {
       "symbol": "∧",
@@ -5739,7 +6172,17 @@
       "expression": "(m ∧ n)",
       "library": "∧(Multivector,Multivector)",
       "reference": "wedge(Point,Line)",
-      "cite": "2.18"
+      "cite": "2.18",
+      "bound": {
+        "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "wedge_anti_plane_plane": {
       "symbol": "∨",
@@ -5748,7 +6191,17 @@
       "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "wedgeAnti(Plane,Plane)",
-      "cite": "2.29"
+      "cite": "2.29",
+      "bound": {
+        "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "wedge_anti_plane_line": {
       "symbol": "∨",
@@ -5757,7 +6210,17 @@
       "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "wedgeAnti(Plane,Line)",
-      "cite": "2.29"
+      "cite": "2.29",
+      "bound": {
+        "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "wedge_anti_line_plane": {
       "symbol": "∨",
@@ -5766,7 +6229,17 @@
       "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "wedgeAnti(Line,Plane)",
-      "cite": "2.32"
+      "cite": "2.32",
+      "bound": {
+        "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "wedge_anti_line_line": {
       "symbol": "∨",
@@ -5775,7 +6248,17 @@
       "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "wedgeAnti(Line,Line)",
-      "cite": "2.29"
+      "cite": "2.29",
+      "bound": {
+        "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "wedge_anti_point_plane": {
       "symbol": "∨",
@@ -5784,7 +6267,17 @@
       "expression": "(m ∨ n)",
       "library": "∨(Multivector,Multivector)",
       "reference": "wedgeAnti(Point,Plane)",
-      "cite": "2.29"
+      "cite": "2.29",
+      "bound": {
+        "shape": "Wedge",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "dot_point_point": {
       "symbol": "∙",
@@ -5793,7 +6286,17 @@
       "expression": "(m ∙ n)",
       "library": "∙(Multivector,Multivector)",
       "reference": "dot(Point,Point)",
-      "cite": "2.76"
+      "cite": "2.76",
+      "bound": {
+        "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 264
+      }
     },
     "dot_line_line": {
       "symbol": "∙",
@@ -5802,7 +6305,17 @@
       "expression": "(m ∙ n)",
       "library": "∙(Multivector,Multivector)",
       "reference": "dot(Line,Line)",
-      "cite": "2.76"
+      "cite": "2.76",
+      "bound": {
+        "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 264
+      }
     },
     "dot_plane_plane": {
       "symbol": "∙",
@@ -5811,7 +6324,17 @@
       "expression": "(m ∙ n)",
       "library": "∙(Multivector,Multivector)",
       "reference": "dot(Plane,Plane)",
-      "cite": "2.76"
+      "cite": "2.76",
+      "bound": {
+        "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 264
+      }
     },
     "dot_anti_point_point": {
       "symbol": "∘",
@@ -5820,7 +6343,17 @@
       "expression": "(m ∘ n)",
       "library": "∘(Multivector,Multivector)",
       "reference": "dotAnti(Point,Point)",
-      "cite": "2.76"
+      "cite": "2.76",
+      "bound": {
+        "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 264
+      }
     },
     "dot_anti_line_line": {
       "symbol": "∘",
@@ -5829,7 +6362,17 @@
       "expression": "(m ∘ n)",
       "library": "∘(Multivector,Multivector)",
       "reference": "dotAnti(Line,Line)",
-      "cite": "2.76"
+      "cite": "2.76",
+      "bound": {
+        "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 264
+      }
     },
     "dot_anti_plane_plane": {
       "symbol": "∘",
@@ -5838,7 +6381,17 @@
       "expression": "(m ∘ n)",
       "library": "∘(Multivector,Multivector)",
       "reference": "dotAnti(Plane,Plane)",
-      "cite": "2.76"
+      "cite": "2.76",
+      "bound": {
+        "shape": "ScalarForm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 264
+      }
     },
     "wedge_dot_anti_motor_motor": {
       "symbol": "⟇",
@@ -5847,7 +6400,17 @@
       "expression": "(m ⟇ n)",
       "library": "⟇(Multivector,Multivector)",
       "reference": "wedgeDotAnti(Motor,Motor)",
-      "cite": "wiki:Motor"
+      "cite": "wiki:Motor",
+      "bound": {
+        "shape": "Geometric",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 192,
+        "adds": 176,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "transform_point_motor": {
       "symbol": "",
@@ -5856,7 +6419,21 @@
       "expression": "((n ⟇ m) ⟇ (~∘ n))",
       "library": "",
       "reference": "transform(Point,Motor)",
-      "cite": "wiki:Motor"
+      "cite": "wiki:Motor",
+      "bound": {
+        "shape": "Permutation + 2 Geometric",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "Geometric",
+          "Geometric"
+        ],
+        "multiplies": 384,
+        "adds": 352,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "transform_line_motor": {
       "symbol": "",
@@ -5865,7 +6442,21 @@
       "expression": "((n ⟇ m) ⟇ (~∘ n))",
       "library": "",
       "reference": "transform(Line,Motor)",
-      "cite": "wiki:Motor"
+      "cite": "wiki:Motor",
+      "bound": {
+        "shape": "Permutation + 2 Geometric",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "Geometric",
+          "Geometric"
+        ],
+        "multiplies": 384,
+        "adds": 352,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "transform_plane_motor": {
       "symbol": "",
@@ -5874,7 +6465,21 @@
       "expression": "((n ⟇ m) ⟇ (~∘ n))",
       "library": "",
       "reference": "transform(Plane,Motor)",
-      "cite": "wiki:Motor"
+      "cite": "wiki:Motor",
+      "bound": {
+        "shape": "Permutation + 2 Geometric",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "Geometric",
+          "Geometric"
+        ],
+        "multiplies": 384,
+        "adds": 352,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "project_orthogonal_point_plane": {
       "symbol": "",
@@ -5883,7 +6488,20 @@
       "expression": "projectOrthogonal(m, n)",
       "library": "projectOrthogonal(Multivector,Multivector)",
       "reference": "projectOrthogonal(Point,Plane)",
-      "cite": "wiki:Projections"
+      "cite": "wiki:Projections",
+      "bound": {
+        "shape": "ExpandWeight + Wedge",
+        "is_composed": true,
+        "steps": [
+          "ExpandWeight",
+          "Wedge"
+        ],
+        "multiplies": 135,
+        "adds": 103,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "project_orthogonal_point_line": {
       "symbol": "",
@@ -5892,7 +6510,20 @@
       "expression": "projectOrthogonal(m, n)",
       "library": "projectOrthogonal(Multivector,Multivector)",
       "reference": "projectOrthogonal(Point,Line)",
-      "cite": "wiki:Projections"
+      "cite": "wiki:Projections",
+      "bound": {
+        "shape": "ExpandWeight + Wedge",
+        "is_composed": true,
+        "steps": [
+          "ExpandWeight",
+          "Wedge"
+        ],
+        "multiplies": 135,
+        "adds": 103,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "project_orthogonal_line_plane": {
       "symbol": "",
@@ -5901,7 +6532,20 @@
       "expression": "projectOrthogonal(m, n)",
       "library": "projectOrthogonal(Multivector,Multivector)",
       "reference": "projectOrthogonal(Line,Plane)",
-      "cite": "wiki:Projections"
+      "cite": "wiki:Projections",
+      "bound": {
+        "shape": "ExpandWeight + Wedge",
+        "is_composed": true,
+        "steps": [
+          "ExpandWeight",
+          "Wedge"
+        ],
+        "multiplies": 135,
+        "adds": 103,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 384
+      }
     },
     "support_line": {
       "symbol": "∩",
@@ -5910,7 +6554,21 @@
       "expression": "(∩ m)",
       "library": "∩(Multivector)",
       "reference": "support(Line)",
-      "cite": "wiki:Support"
+      "cite": "wiki:Support",
+      "bound": {
+        "shape": "Permutation + ConstantProduct + Wedge",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "ConstantProduct",
+          "Wedge"
+        ],
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "support_plane": {
       "symbol": "∩",
@@ -5919,7 +6577,21 @@
       "expression": "(∩ m)",
       "library": "∩(Multivector)",
       "reference": "support(Plane)",
-      "cite": "wiki:Support"
+      "cite": "wiki:Support",
+      "bound": {
+        "shape": "Permutation + ConstantProduct + Wedge",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "ConstantProduct",
+          "Wedge"
+        ],
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "support_anti_point": {
       "symbol": "∪",
@@ -5928,7 +6600,21 @@
       "expression": "(∪ m)",
       "library": "∪(Multivector)",
       "reference": "supportAnti(Point)",
-      "cite": "wiki:Support"
+      "cite": "wiki:Support",
+      "bound": {
+        "shape": "Permutation + ConstantProduct + Wedge",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "ConstantProduct",
+          "Wedge"
+        ],
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "support_anti_line": {
       "symbol": "∪",
@@ -5937,7 +6623,21 @@
       "expression": "(∪ m)",
       "library": "∪(Multivector)",
       "reference": "supportAnti(Line)",
-      "cite": "wiki:Support"
+      "cite": "wiki:Support",
+      "bound": {
+        "shape": "Permutation + ConstantProduct + Wedge",
+        "is_composed": true,
+        "steps": [
+          "Permutation",
+          "ConstantProduct",
+          "Wedge"
+        ],
+        "multiplies": 81,
+        "adds": 65,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "reverse_anti_motor": {
       "symbol": "~∘",
@@ -5946,7 +6646,17 @@
       "expression": "(~∘ m)",
       "library": "~∘(Multivector)",
       "reference": "reverseAnti(Motor)",
-      "cite": "wiki:Motor"
+      "cite": "wiki:Motor",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "unitize_motor": {
       "symbol": "^",
@@ -5955,7 +6665,17 @@
       "expression": "(^ m)",
       "library": "^∘(Multivector)",
       "reference": "unitize(Motor)",
-      "cite": "wiki:Motor"
+      "cite": "wiki:Motor",
+      "bound": {
+        "shape": "Unitize",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 24,
+        "adds": 7,
+        "divides": 1,
+        "roots": 1,
+        "bytes_moved": 256
+      }
     },
     "norm_weight_motor": {
       "symbol": "|∘",
@@ -5964,7 +6684,17 @@
       "expression": "(|∘ m)",
       "library": "|∘(Multivector)",
       "reference": "normWeight(Motor)",
-      "cite": "wiki:Motor"
+      "cite": "wiki:Motor",
+      "bound": {
+        "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 1,
+        "bytes_moved": 136
+      }
     },
     "norm_bulk_motor": {
       "symbol": "|∙",
@@ -5973,7 +6703,17 @@
       "expression": "(|∙ m)",
       "library": "|∙(Multivector)",
       "reference": "normBulk(Motor)",
-      "cite": "wiki:Motor"
+      "cite": "wiki:Motor",
+      "bound": {
+        "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 1,
+        "bytes_moved": 136
+      }
     },
     "complement_right_point": {
       "symbol": "/",
@@ -5982,7 +6722,17 @@
       "expression": "(/ m)",
       "library": "/(Multivector)",
       "reference": "complementRight(Point)",
-      "cite": "2.19"
+      "cite": "2.19",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "complement_left_point": {
       "symbol": "\\",
@@ -5991,7 +6741,17 @@
       "expression": "(\\ m)",
       "library": "\\(Multivector)",
       "reference": "complementLeft(Point)",
-      "cite": "2.20"
+      "cite": "2.20",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "reverse_point": {
       "symbol": "~",
@@ -6000,7 +6760,17 @@
       "expression": "(~ m)",
       "library": "~(Multivector)",
       "reference": "reverse(Point)",
-      "cite": "wiki:Reverses"
+      "cite": "wiki:Reverses",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "reverse_anti_point": {
       "symbol": "~∘",
@@ -6009,7 +6779,17 @@
       "expression": "(~∘ m)",
       "library": "~∘(Multivector)",
       "reference": "reverseAnti(Point)",
-      "cite": "wiki:Reverses"
+      "cite": "wiki:Reverses",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "dual_bulk_point": {
       "symbol": "★",
@@ -6018,7 +6798,17 @@
       "expression": "(★ m)",
       "library": "★(Multivector)",
       "reference": "dualBulk(Point)",
-      "cite": "2.103"
+      "cite": "2.103",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "dual_weight_point": {
       "symbol": "☆",
@@ -6027,7 +6817,17 @@
       "expression": "(☆ m)",
       "library": "☆(Multivector)",
       "reference": "dualWeight(Point)",
-      "cite": "2.103"
+      "cite": "2.103",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "bulk_point": {
       "symbol": "∙",
@@ -6036,7 +6836,17 @@
       "expression": "(∙ m)",
       "library": "∙(Multivector)",
       "reference": "bulk(Point)",
-      "cite": "2.68"
+      "cite": "2.68",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "weight_point": {
       "symbol": "∘",
@@ -6045,7 +6855,17 @@
       "expression": "(∘ m)",
       "library": "∘(Multivector)",
       "reference": "weight(Point)",
-      "cite": "2.68"
+      "cite": "2.68",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "norm_bulk_point": {
       "symbol": "|∙",
@@ -6054,7 +6874,17 @@
       "expression": "(|∙ m)",
       "library": "|∙(Multivector)",
       "reference": "normBulk(Point)",
-      "cite": "2.87"
+      "cite": "2.87",
+      "bound": {
+        "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 1,
+        "bytes_moved": 136
+      }
     },
     "norm_weight_point": {
       "symbol": "|∘",
@@ -6063,7 +6893,17 @@
       "expression": "(|∘ m)",
       "library": "|∘(Multivector)",
       "reference": "normWeight(Point)",
-      "cite": "2.88"
+      "cite": "2.88",
+      "bound": {
+        "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 1,
+        "bytes_moved": 136
+      }
     },
     "norm_bulk_squared_point": {
       "symbol": "|∙²",
@@ -6072,7 +6912,17 @@
       "expression": "(`|∙²`(m))",
       "library": "|∙²(Multivector)",
       "reference": "normBulkSquared(Point)",
-      "cite": "2.87"
+      "cite": "2.87",
+      "bound": {
+        "shape": "SquaredNorm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 136
+      }
     },
     "norm_weight_squared_point": {
       "symbol": "|∘²",
@@ -6081,7 +6931,17 @@
       "expression": "(`|∘²`(m))",
       "library": "|∘²(Multivector)",
       "reference": "Antiscalar()",
-      "cite": "2.88"
+      "cite": "2.88",
+      "bound": {
+        "shape": "SquaredNorm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 136
+      }
     },
     "unitize_point": {
       "symbol": "^",
@@ -6090,7 +6950,17 @@
       "expression": "(^ m)",
       "library": "^∘(Multivector)",
       "reference": "unitize(Point)",
-      "cite": "2.89"
+      "cite": "2.89",
+      "bound": {
+        "shape": "Unitize",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 24,
+        "adds": 7,
+        "divides": 1,
+        "roots": 1,
+        "bytes_moved": 256
+      }
     },
     "attitude_point": {
       "symbol": "⊖",
@@ -6099,7 +6969,17 @@
       "expression": "(⊖ m)",
       "library": "⊖(Multivector)",
       "reference": "attitude(Point)",
-      "cite": "2.73"
+      "cite": "2.73",
+      "bound": {
+        "shape": "ConstantProduct",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "complement_right_line": {
       "symbol": "/",
@@ -6108,7 +6988,17 @@
       "expression": "(/ m)",
       "library": "/(Multivector)",
       "reference": "complementRight(Line)",
-      "cite": "2.19"
+      "cite": "2.19",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "complement_left_line": {
       "symbol": "\\",
@@ -6117,7 +7007,17 @@
       "expression": "(\\ m)",
       "library": "\\(Multivector)",
       "reference": "complementLeft(Line)",
-      "cite": "2.20"
+      "cite": "2.20",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "reverse_line": {
       "symbol": "~",
@@ -6126,7 +7026,17 @@
       "expression": "(~ m)",
       "library": "~(Multivector)",
       "reference": "reverse(Line)",
-      "cite": "wiki:Reverses"
+      "cite": "wiki:Reverses",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "reverse_anti_line": {
       "symbol": "~∘",
@@ -6135,7 +7045,17 @@
       "expression": "(~∘ m)",
       "library": "~∘(Multivector)",
       "reference": "reverseAnti(Line)",
-      "cite": "wiki:Reverses"
+      "cite": "wiki:Reverses",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "dual_bulk_line": {
       "symbol": "★",
@@ -6144,7 +7064,17 @@
       "expression": "(★ m)",
       "library": "★(Multivector)",
       "reference": "dualBulk(Line)",
-      "cite": "2.103"
+      "cite": "2.103",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "dual_weight_line": {
       "symbol": "☆",
@@ -6153,7 +7083,17 @@
       "expression": "(☆ m)",
       "library": "☆(Multivector)",
       "reference": "dualWeight(Line)",
-      "cite": "2.103"
+      "cite": "2.103",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "bulk_line": {
       "symbol": "∙",
@@ -6162,7 +7102,17 @@
       "expression": "(∙ m)",
       "library": "∙(Multivector)",
       "reference": "bulk(Line)",
-      "cite": "2.68"
+      "cite": "2.68",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "weight_line": {
       "symbol": "∘",
@@ -6171,7 +7121,17 @@
       "expression": "(∘ m)",
       "library": "∘(Multivector)",
       "reference": "weight(Line)",
-      "cite": "2.68"
+      "cite": "2.68",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "norm_bulk_line": {
       "symbol": "|∙",
@@ -6180,7 +7140,17 @@
       "expression": "(|∙ m)",
       "library": "|∙(Multivector)",
       "reference": "normBulk(Line)",
-      "cite": "2.87"
+      "cite": "2.87",
+      "bound": {
+        "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 1,
+        "bytes_moved": 136
+      }
     },
     "norm_weight_line": {
       "symbol": "|∘",
@@ -6189,7 +7159,17 @@
       "expression": "(|∘ m)",
       "library": "|∘(Multivector)",
       "reference": "normWeight(Line)",
-      "cite": "2.88"
+      "cite": "2.88",
+      "bound": {
+        "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 1,
+        "bytes_moved": 136
+      }
     },
     "norm_bulk_squared_line": {
       "symbol": "|∙²",
@@ -6198,7 +7178,17 @@
       "expression": "(`|∙²`(m))",
       "library": "|∙²(Multivector)",
       "reference": "normBulkSquared(Line)",
-      "cite": "2.87"
+      "cite": "2.87",
+      "bound": {
+        "shape": "SquaredNorm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 136
+      }
     },
     "norm_weight_squared_line": {
       "symbol": "|∘²",
@@ -6207,7 +7197,17 @@
       "expression": "(`|∘²`(m))",
       "library": "|∘²(Multivector)",
       "reference": "Antiscalar()",
-      "cite": "2.88"
+      "cite": "2.88",
+      "bound": {
+        "shape": "SquaredNorm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 136
+      }
     },
     "unitize_line": {
       "symbol": "^",
@@ -6216,7 +7216,17 @@
       "expression": "(^ m)",
       "library": "^∘(Multivector)",
       "reference": "unitize(Line)",
-      "cite": "2.89"
+      "cite": "2.89",
+      "bound": {
+        "shape": "Unitize",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 24,
+        "adds": 7,
+        "divides": 1,
+        "roots": 1,
+        "bytes_moved": 256
+      }
     },
     "attitude_line": {
       "symbol": "⊖",
@@ -6225,7 +7235,17 @@
       "expression": "(⊖ m)",
       "library": "⊖(Multivector)",
       "reference": "attitude(Line)",
-      "cite": "2.73"
+      "cite": "2.73",
+      "bound": {
+        "shape": "ConstantProduct",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "complement_right_plane": {
       "symbol": "/",
@@ -6234,7 +7254,17 @@
       "expression": "(/ m)",
       "library": "/(Multivector)",
       "reference": "complementRight(Plane)",
-      "cite": "2.19"
+      "cite": "2.19",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "complement_left_plane": {
       "symbol": "\\",
@@ -6243,7 +7273,17 @@
       "expression": "(\\ m)",
       "library": "\\(Multivector)",
       "reference": "complementLeft(Plane)",
-      "cite": "2.20"
+      "cite": "2.20",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "reverse_plane": {
       "symbol": "~",
@@ -6252,7 +7292,17 @@
       "expression": "(~ m)",
       "library": "~(Multivector)",
       "reference": "reverse(Plane)",
-      "cite": "wiki:Reverses"
+      "cite": "wiki:Reverses",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "reverse_anti_plane": {
       "symbol": "~∘",
@@ -6261,7 +7311,17 @@
       "expression": "(~∘ m)",
       "library": "~∘(Multivector)",
       "reference": "reverseAnti(Plane)",
-      "cite": "wiki:Reverses"
+      "cite": "wiki:Reverses",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "dual_bulk_plane": {
       "symbol": "★",
@@ -6270,7 +7330,17 @@
       "expression": "(★ m)",
       "library": "★(Multivector)",
       "reference": "dualBulk(Plane)",
-      "cite": "2.103"
+      "cite": "2.103",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "dual_weight_plane": {
       "symbol": "☆",
@@ -6279,7 +7349,17 @@
       "expression": "(☆ m)",
       "library": "☆(Multivector)",
       "reference": "dualWeight(Plane)",
-      "cite": "2.103"
+      "cite": "2.103",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "bulk_plane": {
       "symbol": "∙",
@@ -6288,7 +7368,17 @@
       "expression": "(∙ m)",
       "library": "∙(Multivector)",
       "reference": "bulk(Plane)",
-      "cite": "2.68"
+      "cite": "2.68",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "weight_plane": {
       "symbol": "∘",
@@ -6297,7 +7387,17 @@
       "expression": "(∘ m)",
       "library": "∘(Multivector)",
       "reference": "weight(Plane)",
-      "cite": "2.68"
+      "cite": "2.68",
+      "bound": {
+        "shape": "Permutation",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     },
     "norm_bulk_plane": {
       "symbol": "|∙",
@@ -6306,7 +7406,17 @@
       "expression": "(|∙ m)",
       "library": "|∙(Multivector)",
       "reference": "normBulk(Plane)",
-      "cite": "2.87"
+      "cite": "2.87",
+      "bound": {
+        "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 1,
+        "bytes_moved": 136
+      }
     },
     "norm_weight_plane": {
       "symbol": "|∘",
@@ -6315,7 +7425,17 @@
       "expression": "(|∘ m)",
       "library": "|∘(Multivector)",
       "reference": "normWeight(Plane)",
-      "cite": "2.88"
+      "cite": "2.88",
+      "bound": {
+        "shape": "Norm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 1,
+        "bytes_moved": 136
+      }
     },
     "norm_bulk_squared_plane": {
       "symbol": "|∙²",
@@ -6324,7 +7444,17 @@
       "expression": "(`|∙²`(m))",
       "library": "|∙²(Multivector)",
       "reference": "normBulkSquared(Plane)",
-      "cite": "2.87"
+      "cite": "2.87",
+      "bound": {
+        "shape": "SquaredNorm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 136
+      }
     },
     "norm_weight_squared_plane": {
       "symbol": "|∘²",
@@ -6333,7 +7463,17 @@
       "expression": "(`|∘²`(m))",
       "library": "|∘²(Multivector)",
       "reference": "Antiscalar()",
-      "cite": "2.88"
+      "cite": "2.88",
+      "bound": {
+        "shape": "SquaredNorm",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 8,
+        "adds": 7,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 136
+      }
     },
     "unitize_plane": {
       "symbol": "^",
@@ -6342,7 +7482,17 @@
       "expression": "(^ m)",
       "library": "^∘(Multivector)",
       "reference": "unitize(Plane)",
-      "cite": "2.89"
+      "cite": "2.89",
+      "bound": {
+        "shape": "Unitize",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 24,
+        "adds": 7,
+        "divides": 1,
+        "roots": 1,
+        "bytes_moved": 256
+      }
     },
     "attitude_plane": {
       "symbol": "⊖",
@@ -6351,7 +7501,17 @@
       "expression": "(⊖ m)",
       "library": "⊖(Multivector)",
       "reference": "attitude(Plane)",
-      "cite": "2.73"
+      "cite": "2.73",
+      "bound": {
+        "shape": "ConstantProduct",
+        "is_composed": false,
+        "steps": [],
+        "multiplies": 0,
+        "adds": 0,
+        "divides": 0,
+        "roots": 0,
+        "bytes_moved": 256
+      }
     }
   },
   "missing": {}

@@ -19,12 +19,14 @@ import std/[algorithm, json, os, strutils, tables]
 
 import pga
 
-import ./[catalogue, inspector, kinds, report]
+import ./[bound, catalogue, inspector, kinds, report]
 
 
 const
   ALGEBRA_NAME = (if IS_CONFORMAL: "cga" else: "rga") & $DIMENSIONS & "d"
     ## Name of algebra this build inspects; umbrella spells same, kept here to stay entry.
+  METRIC = Metric(dimensions: DIMENSIONS, is_conformal: IS_CONFORMAL)
+    ## Algebra lower bounds are derived for, spelled from same build definitions library reads.
   LIBRARY_MARK = "illuminatedZpga"
     ## Substring of module suffix of every library module, from its checkout path.
   REFERENCE_MARK = "referenceZ"
@@ -73,10 +75,8 @@ func libraryKey(p: Measurand): string =
   ## Key of library function measurand's expression calls; empty where it composes several.
   if p.symbol == "{}": return KEY_SELECT & (if "Anti" in p.expression: "#u1" else: "")
   if p.symbol == "[]": return KEY_PART
-  let head =
-    if p.symbol.len > 0: p.emitted
-    elif p.alias.len > 0 and p.expression.startsWith(p.alias & "("): p.alias
-    else: return ""
+  let head = p.emittedHead
+  if head.len == 0: return ""
   var stems: seq[string]
   for i in 0 ..< int(p.arity): stems.add libraryStem(p.operands[i])
   head & "(" & stems.join(",") & ")"
@@ -109,6 +109,18 @@ func measurandsNode(): JsonNode =
       "reference": p.referenceKey,
       "cite": p.cite,
     }
+    let b = p.boundOf(METRIC)
+    if b.is_derived:
+      result[p.id]["bound"] = %*{
+        "shape": p.shapeNameOf,
+        "is_composed": b.is_composed,
+        "steps": p.stepsOf,
+        "multiplies": b.multiplies,
+        "adds": b.adds,
+        "divides": b.divides,
+        "roots": b.roots,
+        "bytes_moved": b.bytesMoved,
+      }
 
 
 func missingNode(): JsonNode =

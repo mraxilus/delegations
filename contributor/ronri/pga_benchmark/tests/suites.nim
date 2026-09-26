@@ -7,7 +7,7 @@ import std/[algorithm, compilesettings, json, macros, options, sequtils, strutil
 from std/unicode import runeLen
 
 import ../src/pga_benchmark
-import ../src/pga_benchmark/[gaps, guard, inspector, measurements, model, report]
+import ../src/pga_benchmark/[bound, gaps, guard, inspector, measurements, model, report]
 
 
 const
@@ -208,6 +208,66 @@ suite "Allocation":
           check measurement.allocations == 0  # heap untouched over every round
 
 
+suite "Lower bound":
+  test "derived counts reproduce what algebra demands":
+    let m = Metric(dimensions: 4, is_conformal: false)
+    check lowerBoundOf(Shape.Wedge, m, 2).multiplies == 81  # three states per dimension
+    check lowerBoundOf(Shape.Wedge, m, 2).adds == 65  # one add per term past first of each slot
+    check lowerBoundOf(Shape.Geometric, m, 2).multiplies == 192  # null vector drops one state
+    check lowerBoundOf(Shape.ScalarForm, m, 2).multiplies == 8  # blades carrying metric image
+    check lowerBoundOf(Shape.ContractBulk, m, 2).multiplies == 54  # 2.119
+    check lowerBoundOf(Shape.ContractWeight, m, 2).multiplies == 27  # 2.120
+    check lowerBoundOf(Shape.ExpandBulk, m, 2).multiplies == 27  # wiki:Expansions
+    check lowerBoundOf(Shape.ExpandWeight, m, 2).multiplies == 54  # wiki:Expansions
+    check lowerBoundOf(Shape.Scale, m, 2).multiplies == 16  # every slot times one scalar
+    check lowerBoundOf(Shape.Permutation, m, 1).multiplies == 0  # sign and reorder only
+    check lowerBoundOf(Shape.ConstantProduct, m, 1).multiplies == 0  # constant carries unit part
+
+  test "unitize bound is norm, one reciprocal and one scale of each slot":
+    let m = Metric(dimensions: 4, is_conformal: false)
+    let b = lowerBoundOf(Shape.Unitize, m, 1)
+    check b.multiplies == 8 + 16  # squared norm, then every slot
+    check b.divides == 1 and b.roots == 1  # one reciprocal over one root
+
+  test "conformal metric is not singular, so every blade carries image":
+    let rigid = Metric(dimensions: 4, is_conformal: false)
+    let conformal = Metric(dimensions: 5, is_conformal: true)
+    check rigid.isNull(3) and not rigid.isNull(0)  # last vector of rigid squares to zero
+    check not conformal.isNull(4)  # conformal pairs last two off diagonal
+    check conformal.scalarFormTerms == 32 and rigid.scalarFormTerms == 8  # every blade
+    check lowerBoundOf(Shape.Geometric, conformal, 2).multiplies == 1024  # four states throughout
+
+  test "bulk and weight split needs degenerate vector, so conformal carries no such bound":
+    let conformal = Metric(dimensions: 5, is_conformal: true)
+    for shape in [Shape.ContractBulk, Shape.ContractWeight, Shape.ExpandBulk,
+                  Shape.ExpandWeight]:
+      check not lowerBoundOf(shape, conformal, 2).is_derived  # rule says nothing here
+
+  test "chain sums its steps, and step with no rule adds nothing":
+    let rigid = Metric(dimensions: 4, is_conformal: false)
+    let conformal = Metric(dimensions: 5, is_conformal: true)
+    let projection = @[Shape.ExpandWeight, Shape.Wedge]
+    let b = lowerBoundOfChain(projection, rigid, 2)
+    check b.multiplies == 54 + 81  # dual product, then full product
+    check b.is_composed and b.is_derived  # record marks estimate as estimate
+    check b.bytesMoved == 128 * 3  # two read, one written, no intermediate
+    # Dual product carries no rule under conformal metric, so only full product counts.
+    check lowerBoundOfChain(projection, conformal, 2).multiplies == 243  # wiki:Expansions
+    check lowerBoundOfChain([Shape.Unknown], rigid, 1).is_derived == false  # no step, no claim
+
+  test "bound moves operands read once and result written once":
+    let m = Metric(dimensions: 4, is_conformal: false)
+    check lowerBoundOf(Shape.Wedge, m, 2).bytesMoved == 128 * 3  # two read, one written
+    check lowerBoundOf(Shape.Permutation, m, 1).bytesMoved == 128 * 2  # one read, one written
+    check lowerBoundOf(Shape.Unknown, m, 2).bytesMoved == 0  # no rule, so no claim
+
+
+const CACHE = querySetting(SingleValueSetting.nimcacheDir)
+  ## Nimcache of this test binary, which inspector suites read back.
+let INSPECTED = inspectCache(CACHE)
+  ## Read once: walking cache costs seconds, and two suites read same functions.
+
+
 suite "Inspector":
   test "mangled names demangle to symbols":
     check demangle("XE2X88XA7__u0__OOZdepsZpgaZoperators") == "∧"  # non-ASCII bytes
@@ -398,9 +458,40 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
     check sizeOfStem("Point", 128) == 32 and sizeOfStem("float", 128) == 8  # typed sizes
     check sizeOfStem("Unknown", 128) == 0  # unknown stems add nothing
 
+  test "no lower bound outruns what library spends on same operation":
+    let metric = Metric(dimensions: DIMENSIONS, is_conformal: IS_CONFORMAL)
+    # Fold only functions law reads: folding whole cache walks every call graph of
+    #   unittest itself, which costs minutes (Article IX.8).
+    var roots: seq[string]
+    for f in INSPECTED:
+      for p in CATALOGUE:
+        if f.symbol == p.emittedHead and f.name notin roots: roots.add f.name
+    let total = totals(INSPECTED, roots)
+    var compared = 0
+    for p in CATALOGUE:
+      let head = p.emittedHead
+      if head.len == 0 or head in INLINED: continue
+      let b = p.boundOf(metric)
+      if not b.is_derived: continue
+      # Operator carrying scalar overload spells same symbol at same arity, so stems of
+      #   parameters are what tells two apart.
+      var wants_dense, wants_scalar = 0
+      for i in 0 ..< int(p.arity):
+        if p.operands[i] == Kind.Scalar: inc wants_scalar else: inc wants_dense
+      for f in INSPECTED:
+        if f.symbol != head: continue
+        var dense, scalar = 0
+        for stem in f.params:
+          if stem == "Multivector": inc dense elif stem == "float": inc scalar
+        if dense != wants_dense or scalar != wants_scalar: continue
+        # Bound is what algebra demands, so library meets it and never beats it. Totals
+        #   fold callees, since bound of chain counts arithmetic wherever it is spent.
+        check b.multiplies <= total[f.name].multiplies  # derivation is sound
+        inc compared
+    check compared > 0  # law is vacuous where nothing is compared
+
   test "own nimcache holds every catalogued symbol at its arity":
-    const CACHE = querySetting(SingleValueSetting.nimcacheDir)
-    let functions = inspectCache(CACHE)
+    let functions = INSPECTED
     var keys: seq[string]
     for f in functions: keys.add f.key
     for p in CATALOGUE:

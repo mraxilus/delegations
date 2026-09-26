@@ -48,6 +48,9 @@ type
       ## Algebra name and measurand id.
     library*, reference*: Values
       ## Both implementations.
+    bound*: Values
+      ## Multivector lower bound, derived from algebra and never measured.
+      ##   Absent where no rule is derived for measurand's shape.
     over_on*: seq[string]
       ## Metrics library exceeds target on.
     status*: Status
@@ -195,6 +198,20 @@ func decide*(gap: var Gap) =
     else: Status.Met
 
 
+func boundValuesOf(node: JsonNode): Values =
+  ## Read multivector lower bound of one measurand; fields absent where document has none.
+  ##   Bound spends no fill, no intermediate, no error check and no allocation by
+  ##   construction, so those stand at zero rather than absent.
+  if node.isNil or node.kind != JObject: return
+  result.multiplies = some(node{"multiplies"}.getInt)
+  result.divides = some(node{"divides"}.getInt)
+  result.bytes = some(node{"bytes_moved"}.getInt)
+  result.zero_fills = some(0)
+  result.intermediates = some(0)
+  result.checks = some(0)
+  result.allocations = some(0)
+
+
 func gapsOf*(a: Algebra): seq[Gap] =
   ## Read one gap per catalogued measurand of algebra, decided.
   let measurands = a.static_measurements.at("measurands")
@@ -208,6 +225,7 @@ func gapsOf*(a: Algebra): seq[Gap] =
     gap.reference = valuesOf(
       functions, measurement.at("reference"), p{"reference"}.getStr, measured
     )
+    gap.bound = boundValuesOf(p.at("bound"))
     gap.decide
     result.add gap
 
@@ -419,6 +437,37 @@ func cell(l, r: Option[int]): string =
   (if l.isSome: $l.get else: "–") & "/" & (if r.isSome: $r.get else: "–")
 
 
+func lowerBoundRows*(a: Algebra; gaps: openArray[Gap]): seq[string] =
+  ## Render multivector lower bound of each operation once, keyed by spelling and shape.
+  ##   Bound rests on operation and arity, and never on operand kinds, so one row serves
+  ##   every measurand that spells same operation. Row also carries what library spends on
+  ##   that operation's general measurand, so distance reads across. Shape of several steps
+  ##   names chain, whose bound sums those steps.
+  let measurands = a.static_measurements.at("measurands")
+  let functions = a.static_measurements.at("functions")
+  if measurands.isNil: return
+  var seen: seq[string]
+  for id, p in measurands.pairs:
+    let b = p.at("bound")
+    if b.isNil or b.kind != JObject: continue
+    let symbol = p{"symbol"}.getStr
+    let alias = p{"alias"}.getStr
+    let expression = p{"expression"}.getStr
+    let shape = b{"shape"}.getStr
+    let key = symbol & "|" & alias & "|" & expression & "|" & shape
+    if key in seen: continue
+    seen.add key
+    let spelling =
+      if symbol.len > 0: symbol elif alias.len > 0: alias else: expression
+    var spent = "–"
+    let fn = functions.at(p{"library"}.getStr)
+    if not fn.isNil:
+      spent = $fn{"total", "multiplies"}.getInt & "/" & $fn{"movement", "bytes_moved"}.getInt
+    result.add "| `" & spelling & "` | " & shape & " | " &
+      $b{"multiplies"}.getInt & " | " & $b{"divides"}.getInt & " | " &
+      $b{"roots"}.getInt & " | " & $b{"bytes_moved"}.getInt & " | " & spent & " |"
+
+
 func cellNs(l, r: Option[float]): string =
   ## Render timing cell to one decimal, dash where absent.
   if l.isNone and r.isNone: return "–"
@@ -473,6 +522,32 @@ func render*(
     "call, and runtime measurements are medians of the last bench that ran by hand."
   )
   lines.add ""
+  lines.add wrap(
+    "Each operation carries two lower bounds, and the library stands above both. The " &
+    "multivector lower bound is what the algebra demands of any implementation over a " &
+    "dense multivector. It is derived from the axioms, and it is never measured. The type " &
+    "optimised lower bound is the typed reference, which is measured rather than derived. " &
+    "Work that reaches the first bound changes no type, and work that reaches the second " &
+    "changes every one."
+  )
+  lines.add ""
+  lines.add wrap(
+    "Each algebra below carries a table of multivector lower bounds. That bound spends no " &
+    "zero fill, no intermediate, no error check and no allocation, and it moves its " &
+    "operands read once plus its result written once. It rests on the operation alone, so " &
+    "one row serves every measurand that spells that operation. The last column is what " &
+    "the library spends there, as multiplies over bytes moved. An operation whose shape " &
+    "carries no rule is absent, rather than present without ground."
+  )
+  lines.add ""
+  lines.add wrap(
+    "A shape of several steps names a chain, which the library composes from several " &
+    "operators. The bound of a chain sums what each step demands, and a step that carries " &
+    "no rule adds nothing. Such a bound is an estimate of that chain, and never a proved " &
+    "minimum, because a special routine can share work between steps. Every other bound in " &
+    "these tables is derived from the axioms alone."
+  )
+  lines.add ""
   lines.add "## Causes"
   lines.add ""
   for d in decided:
@@ -507,6 +582,14 @@ func render*(
         cell(gap.library.intermediates, gap.reference.intermediates) & " | " &
         cell(gap.library.checks, gap.reference.checks) & " | " &
         cellNs(gap.library.ns, gap.reference.ns) & " | " & gap.status.word & " |"
+    let bounds = lowerBoundRows(a, own)
+    if bounds.len > 0:
+      lines.add ""
+      lines.add "### Multivector lower bound"
+      lines.add ""
+      lines.add "| Op | Shape | Mul | Div | Roots | Bytes | Library mul/bytes |"
+      lines.add "|----|-------|-----|-----|-------|-------|-------------------|"
+      for row in bounds: lines.add row
   for line in lines:
     if line.runeLen > WIDTH:
       raise newException(ValueError, "Rendered line outruns width; got `" & line & "`.")
