@@ -296,8 +296,8 @@ function settleTwoFingers() {
   //   centre slides scene while it scales it.
   //   Wheel has no pan beside it, which is why aiming at pointer is right there.
   //   Through anchor at middle rather than plain dolly, so pivot lands on planet
-  //   pinch arrives at and orbit turns about it; plane, ground and level under middle
-  //   leave pivot on its level. See `interaction.dollyAtCentre`.
+  //   pinch arrives at and orbit turns about it; plane or empty sky under middle leaves
+  //   pivot on sight line. See `interaction.dollyAtCentre`.
   if (separation_pinch_start !== null && !is_pinch_zooming &&
       Math.abs(separation - separation_pinch_start) > TAP_MAX_MOVE) {
     is_pinch_zooming = true;

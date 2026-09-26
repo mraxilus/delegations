@@ -66,10 +66,40 @@ and what stops it is one named thing. That thing is decided once in `rigid.stopp
 every sweep, still and page alike (Article II.1). Verified by `trigid.nim`: the turn that a couple
 are said to reach is the turn that some distance carries, and every stop carries its name.
 
-**The glossary agrees eight facings, and the model holds four.** The case of a name says which
-dancer it places: `Pillion` stands the Lead behind, and `pillion` stands the Follow there. The four
-the sim and the drawings hold are Face-to-face, Back-to-back and both cases of Pillion. The four
-states of Sidecar are named and not modelled, so nothing draws them and no law reads them.
+**The model holds the eight facings that the glossary agrees.** `rotation.Facing` names them, and
+`facing` reads one off where each dancer sees the other: ahead, right, behind or left. That makes
+sixteen states. A name goes to each state where one dancer sees the other ahead, and to
+Back-to-back. The case of a name says which dancer it places: `Pillion` stands the Lead behind, and
+`pillion` stands the Follow there.
+
+**A facing needs the turn of each dancer, and not twist alone.** A dancer who turns on the spot
+changes what they see, and nothing that the other sees. Twist is the Follow's turn less the Lead's,
+so it is the same for Face-to-face and Back-to-back. That is why the glossary counts three bits.
+
+**Sidecar is what one quarter turn on the spot makes from Face-to-face.** The Architect ruled so.
+One dancer looks at a shoulder of the other, at right angles to them. The dancer who turned shows
+their shoulder. So a quarter turn by the Follow to their right is `Sidecar left`, and a quarter turn
+by the Lead to their left is `sidecar Right`.
+
+Verified by `suites/trotation.nim`, suite "facings". Each law failed on a break made on purpose.
+The breaks were two names swapped, a name in the wrong case, and a name given to a state without
+one. The last two were a turn counted the wrong way, and a word that is not in the glossary.
+
+**The drawings hold all eight facings, each read back through the model.** `ORIENTATIONS` in
+`parts.nim` finds, in the model, the turns on the spot that reach each facing from Face-to-face.
+`facingOf` reads a drawn pose back as a facing, from where each dancer sees the other. The build
+stops where a drawn pose reads as a facing other than its name. The single-hand page names the
+facing of each quarter it draws, read off the drawn pose.
+
+Verified by `suites/tmarks.nim`, suite "the eight facings, drawn". Each law failed on a break made
+on purpose. The breaks dropped the Sidecar row, and set a grid header in capitals. The other two
+gave a turn the wrong sign, and swapped the names of two quarters.
+
+The law on the single-hand page reads each name in the section and the place of its quarter. The
+manners share names, so a name found anywhere on the page would stand in for one that is missing
+or swapped.
+
+The sim holds four of the eight: Face-to-face, Back-to-back and both cases of Pillion.
 
 The agreed words disagree with the code in thirteen places, recorded rather than acted on. From the
 hand-to-hand half:
@@ -77,7 +107,7 @@ hand-to-hand half:
 - `frame.position` means the opposite of `Frame position`. It strips `over` and returns the frame
   hold said aloud.
 - `Frame` and `rotation.Posture` split across the frame state rather than along it.
-- `isFacing` returns the parity of twist, where facing is four-valued.
+- `isFacing` returns the parity of twist, where facing has eight values, as `Facing` holds it.
 - Twist is counted in quarters, where `HalfTurns` is half turns.
 - `Compound` is `Compound move`.
 - The `route` and `wind` of the drawing chain are `Transition` and `Twist`.
@@ -804,8 +834,8 @@ draws in its own ink when opened alone, as the app's figures in `doc/frames/` ar
 `treview.nim`, which checks that every ink is a named colour with a fallback.
 
 **The shape of a mark says whose hand it is.** The lead's hands are squares, and the follow's are
-circles. The mark carries this itself, so it holds at any size. Which column a hand sits in follows
-from the way its dancer faces. So the four facings are distinct without a new mark.
+circles. The mark carries this itself, so it holds at any size. Where a hand sits on the rim follows
+from the way its dancer faces. So the eight facings are distinct without a new mark.
 
 **A level is a fill on both ends of a connection.** Hollow is no level, solid is low, a dot at the
 centre is high, and hatched is above. A crossed hold keeps its drawn break as well, because the
@@ -1802,9 +1832,6 @@ workbench draws the current reading meanwhile.
 - **The mark for any amount of turn.** The sign page draws the candidates, and none is chosen.
 - **Whether the turn sign is kept at all.** An orbit and an axis turn now differ as moves, and the
   frame pictures can show that as they move.
-- **Whether `rotation.nim` holds a facing for each dancer.** `isFacing` reads only whether `twist`
-  is even, so it cannot tell face to face from back to back. The two relative facings the drawing is
-  built on are the pair the model would need.
 - **Whether an arm carried past some limit is marked at all.** Nothing on the rim counts now, and
   the amount is where the hand sits.
 - **The bow for contact with the body, the staff for sequences, what an orbit stores, and when an

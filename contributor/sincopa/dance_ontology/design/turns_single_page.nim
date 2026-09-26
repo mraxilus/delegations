@@ -15,7 +15,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[strformat, tables]
+import std/[options, strformat, tables]
 
 import ./[page, parts]
 
@@ -43,7 +43,8 @@ func plates(P: Parts; manner: Manner): string =
         result.add P["g_quarter"]
       let caption =
         if quarter == 0: "<b>none</b><br>the app's frame"
-        else: &"<b>{QUARTER_NAMES[quarter]}</b> turn"
+        else: &"<b>{QUARTER_NAMES[quarter]}</b> turn<br>" &
+          facingOf(quarterPose(manner, quarter)).get.name
       result.add fig(P[&"st_{tag}_{c}_{quarter}"], caption)
     result.add P["g_quarter"]
     result.add fig(P[&"st_{tag}_{c}_0"], "<b>none</b><br>round again")

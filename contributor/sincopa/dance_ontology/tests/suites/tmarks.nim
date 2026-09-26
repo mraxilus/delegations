@@ -1,8 +1,9 @@
 ## Drive mark workbench's build under testament: every gate, every page written and read back.
 
-import std/[os, strutils, unittest]
+import std/[options, os, strutils, unittest]
 
 import ../../design/marks
+import ../../design/parts
 import ../../design/plain
 import ../../design/rig_page
 import ../../tools/title
@@ -85,3 +86,40 @@ suite "every page this project publishes":
     for said in markup.longParagraphs:
       checkpoint "paragraph over " & $SENTENCES & " sentences, opening: " & said
       fail()
+
+
+suite "the eight facings, drawn":
+  # Glossary agrees eight facings, and model holds them (`rotation.Facing`).  Pages draw
+  # them from model, so every name below comes from model, never from page it checks.
+  test "the frame page draws each facing once, under its own name":
+    let page = readFile(OUT / "frames.html")
+    for named in Facing:
+      check page.count("<figcaption>" & named.name & "</figcaption>") == 1
+      # Case of name says whom it places, so no header that capitalises names one.
+      check page.count("<th>" & named.name) == 0
+
+  test "each drawn facing reads back as the facing it is named for":
+    for named, o in ORIENTATIONS:
+      check turnedFacing(o.lead_turn, o.follow_turn) == some(named)
+
+  test "every quarter the single-hand page draws names its facing, in its own place":
+    # Read within each manner's section, in order: manners share names, so name found
+    # anywhere on page would stand in for one missing or swapped.
+    let page = readFile(OUT / "turns-single.html")
+    for manner in Manner:
+      let opens = page.find("<h2>" & MANNERS[manner].title & "</h2>")
+      check opens >= 0
+      if opens < 0: continue
+      let section = page[opens ..< page.find("</section>", opens)]
+      var want, got: seq[string]
+      for _ in SINGLES:
+        for quarter in 1 ..< QUARTERS_ROUND:
+          let named = facingOf(quarterPose(manner, quarter))
+          check named.isSome
+          want.add (if named.isSome: named.get.name else: "")
+      var at = section.find(" turn<br>")
+      while at >= 0:
+        let start = at + " turn<br>".len
+        got.add section[start ..< section.find("</figcaption>", start)]
+        at = section.find(" turn<br>", start)
+      check got == want

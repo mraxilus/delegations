@@ -1047,8 +1047,8 @@ proc ensurePlacement() =
         SCENE.geometryOf(handle), SCENE.anchorOverrideAt(handle),
       )
   # Scene's reach moves with same edits, so far clip follows; see `camera.distanceFar`.
-  #   Held here and stamped onto camera at each derivation point, never kept in camera:
-  #   `home` and every path replacing camera value would drop it.
+  #   Held here and passed to each extent, never kept in camera: `home` and every path
+  #   replacing camera value would drop it.
   REACH_SCENE = reachOf(PLACEMENTS, SCENE)
   REVISION_PLACEMENT = some(SCENE.revision)
 
@@ -1062,15 +1062,14 @@ proc ensureViewOverlay(width, height: int) =
   ##     which is what key holds.
   ##   Callers read globals rather than copies: returning pair deep-copies `DrawExtent`
   ##   full of multivectors per call on JS backend, cache hit or not.
-  CAMERA.reach_scene = REACH_SCENE # Stamped as frame build does; see `ensurePlacement`.
   CAMERA.reach_near = REACH_NEAR
   let settings: SettingsOverlay = (
     CAMERA.motor, CAMERA.distance, CAMERA.degrees_field_of_view, CAMERA.reach_near,
-    CAMERA.reach_scene, width, height,
+    REACH_SCENE, width, height,
   )
   if SETTINGS_OVERLAY_HELD.isNone or SETTINGS_OVERLAY_HELD.get != settings:
     SETTINGS_OVERLAY_HELD = some(settings)
-    SCALE_OVERLAY = CAMERA.drawExtentFor(height)
+    SCALE_OVERLAY = CAMERA.drawExtentFor(height, REACH_SCENE)
     VIEW_PROJECTION_OVERLAY = CAMERA.initMatrixViewProjection(float(width)/float(height))
 
 
@@ -1096,6 +1095,14 @@ proc nimCameraTurnAt(
     ScreenPosition(x: float(after_x), y: float(after_y)), int(width), int(height),
     SELECTION.len > 0, reach_selection,
   )
+
+
+proc nimCameraOrbit(turn, rise: cfloat) {.exportc.} =
+  ## Turn eye about pivot by `turn` and `rise` radians, about camera's own axes.
+  ##   Motion outright, not drag's rule, which looks where nothing is picked; see
+  ##   `camera.orbit`. For checks that move view and ask what it rebuilt.
+  TWEEN_CAMERA.abandon()
+  camera.orbit(CAMERA, float(turn), float(rise))
 
 
 proc nimCameraRoll(radians: cfloat) {.exportc.} =
@@ -1250,17 +1257,14 @@ proc nimCameraSpeedReading(): cstring {.exportc.} =
     appendSpeedLight(line, cursor, INTERACTION.speedFlying(CAMERA)/SPEED_LIGHT))
 
 
-proc nimSetCameraAzimuth(v: cfloat) {.exportc.} =
-  ## Rewrite angle about world up, in radians.
+proc nimPlaceCamera(eye_x, eye_y, eye_z, pivot_x, pivot_y, pivot_z: cfloat) {.exportc.} =
+  ## Stand camera at eye, facing pivot, level; lens untouched. See `camera.stanceFacing`.
+  ##   One place names stance whole, since angles name none and pivot alone names half.
   TWEEN_CAMERA.halt()
-  CAMERA = CAMERA.placedAtAzimuth(float(v))
-
-
-proc nimSetCameraElevation(v: cfloat) {.exportc.} =
-  ## Rewrite angle above horizontal plane, in radians.
-  ##   Clamped to bound `panel.layoutView`'s drag widget uses.
-  TWEEN_CAMERA.halt()
-  CAMERA = CAMERA.placedAtElevation(float(v))
+  CAMERA = CAMERA.placed(stanceFacing(
+    Position(x: float(eye_x), y: float(eye_y), z: float(eye_z)),
+    Position(x: float(pivot_x), y: float(pivot_y), z: float(pivot_z)),
+  ))
 
 
 proc nimSetCameraDistance(v: cfloat) {.exportc.} =
@@ -1272,12 +1276,6 @@ proc nimSetCameraDistance(v: cfloat) {.exportc.} =
 
 proc nimSetCameraFov(v: cfloat) {.exportc.} = CAMERA.degrees_field_of_view = float(v)
   ## Rewrite vertical field of view, in degrees.
-
-proc nimSetCameraPivot(x, y, z: cfloat) {.exportc.} =
-  ## Rewrite point camera orbits around.
-  TWEEN_CAMERA.halt()
-  CAMERA = CAMERA.placedAtPivot(Position(x: float(x), y: float(y), z: float(z)))
-
 
 
 
@@ -2224,8 +2222,8 @@ type FrameData = object
     ##   Carried on `timings.FrameRecord`.
   ms_grid, ms_axes: float32
     ## Record what two halves of scenery cost, inside `ms_furniture`.
-    ##   Axes are three lines however far camera stands; grid is however many ground reach
-    ##   asks for.
+    ##   Axes are three lines however far camera stands; lattices are however many lines
+    ##   selected planes ask for.
   count_grid_segments: int
     ## Count ribbon records lattices are drawn from, one per lattice line.
     ##   Bounded per family by `mesh.LINES_GRID_MAX`.
@@ -2358,7 +2356,6 @@ proc nimBuildFrame(
   #   device-pixel-ratio multiple.
   # Place first, so scene's reach is this frame's before extent reads far clip.
   ensurePlacement()
-  CAMERA.reach_scene = REACH_SCENE
   # Read local scale once for this frame, before extent reads clip planes off it.
   #   Walks every placement, so here rather than in `ensureViewOverlay`; see `REACH_NEAR`.
   REACH_NEAR = reachNearOf(PLACEMENTS, SCENE, CAMERA.eye, CAMERA.frame.forward)
@@ -2366,9 +2363,9 @@ proc nimBuildFrame(
   # Decide records' origin after scale, since bound is read off near clip.
   #   Both holds carry motor, so frame moving this origin rebuilds both anyway.
   ORIGIN_RECORDS = CAMERA.originHeld(ORIGIN_RECORDS)
-  let scale = CAMERA.drawExtentFor(int(height_pixels))
+  let scale = CAMERA.drawExtentFor(int(height_pixels), REACH_SCENE)
   # Derive frustum once, for cull of every point below; see `isPointInView`.
-  let bounds = CAMERA.viewBoundsFor(scale, float(aspect))
+  let bounds = CAMERA.viewBoundsFor(scale, float(aspect), REACH_SCENE)
   # Recover width of centred box from aspect, since this build is handed that.
   let preview = staged()
   TWEEN_CAMERA.offerAim(
@@ -2382,7 +2379,7 @@ proc nimBuildFrame(
   #   drawing same vertices and may keep them.
   #   Compared exactly: question is "did anything move at all".
   let settings_furniture = settingsFurnitureFor(
-    CAMERA, int(height_pixels), is_axes_shown, is_grid_shown, SCENE.revision,
+    CAMERA, int(height_pixels), REACH_SCENE, is_axes_shown, is_grid_shown, SCENE.revision,
     SELECTION.revision,
   )
   let is_furniture_held =

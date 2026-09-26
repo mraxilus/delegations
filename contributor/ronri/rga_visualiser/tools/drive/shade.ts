@@ -44,8 +44,15 @@ export async function driveShadedFromAbove(page: Page): Promise<void> {
     //   moved disc between pixel read and capture. Cleared at once, and pivot put on disc,
     //   so it stands mid-frame at opening distance, whole and in front of everything.
     nimSelectClear();
+    // Whole camera slides onto disc, so sight stands.
     const at = Array.from(nimAnchorWorld(added));
-    nimSetCameraPivot(at[0] ?? 0, at[1] ?? 0, at[2] ?? 0);
+    const eye = nimCameraEye(), pivot = nimCameraPivot();
+    nimPlaceCamera(
+      (eye[0] ?? 0) + (at[0] ?? 0) - (pivot[0] ?? 0),
+      (eye[1] ?? 0) + (at[1] ?? 0) - (pivot[1] ?? 0),
+      (eye[2] ?? 0) + (at[2] ?? 0) - (pivot[2] ?? 0),
+      at[0] ?? 0, at[1] ?? 0, at[2] ?? 0,
+    );
     return added;
   }, RADIUS_SAMPLED);
   if (handle < 0) {

@@ -9,7 +9,7 @@ _Who made this, from what, and how far it has been checked._
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | be54792c5171ff9d |
-| Pruned  | 1a68f696a181a3e27315169b1968713315e8613f |
+| Pruned  | 70ced35ec366aee22cbe207185a75f4a2de440b0 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 An interactive visualiser of rigid geometric algebra objects, built as a testbed for the `pga`
@@ -153,7 +153,7 @@ Not here: the words of the algebra itself. Those are operation names and notatio
 declarations of `pga`, kind words, and key and button names. Help composes with them, rather than
 copies them.
 
-*Checked.* Verified by build and by driven check. `declare` reports **176 wording keys**. A literal
+*Checked.* Verified by build and by driven check. `declare` reports **177 wording keys**. A literal
 put back at a label call is refused. A key named only inside the catalogue is refused as shown by
 nobody. A `@WORD:` token that names an absent key fails the build, with the line that carries it.
 
@@ -903,13 +903,12 @@ vanishing points of the line, `eye ± radius_horizon*axis`. A vanishing point is
 *eye*, which forces this shape. An end anchored at a fixed reach from the support stops short of
 it, by about 6.7° for a support 40 units out.
 
-Each segment lies in the plane through the eye that contains the line. The pair therefore draws
-over the true projection of the line, within 1e-16 of screen skew. That skew holds only while the
-near-plane crossing is stepped from the end that it stands nearer (see Records and shaders).
-Stepped from the far end, the two halves part on screen. The far ends sit off the line along the
-view ray, so occlusion is approximate there. `picking` tests both halves through
-`clipToEyeSide`, which is a near-plane clip written by hand, because this reach puts an endpoint
-behind the eye.
+Each segment lies in the plane through the eye that contains the line. The pair therefore draws over
+the true projection of the line, within 1e-16 of screen skew. That skew holds only while the
+near-plane crossing is stepped from the end that it stands nearer (see Records and shaders). Stepped
+from the far end, the two halves part on screen. The far ends sit off the line along the view ray,
+so occlusion is approximate there. `picking` tests both halves through `clipToEyeSide`, which is a
+near-plane clip written by hand, because this reach puts an endpoint behind the eye.
 
 **Horizon objects are drawn as sky.** A horizon point is a fixed star at
 `eye + radius_horizon*heading`. A horizon line is a great circle about the eye. A horizon plane is
@@ -1014,8 +1013,8 @@ family. It is **spent on the cell, and not on the reach**: `sizeCellGridFor` ste
 was measuring against. The first step is at 1,200 units of reach.
 
 To cut the *reach* instead leaves a camera past 1,200 units with the lattice stopping short.
-`driveGround` selects the scene's first plane. In Chromium on 2026-09-25 it counts 6,096, 2,048,
-1,008, 800 and 2,048 lattice vertices at orbit distance 300, 1,000, 5,000, 40,000 and 10⁶.
+`driveGround` selects the scene's first plane. In Chromium on 2026-09-26 it counts 6,112, 2,032,
+992, 784 and 2,032 lattice vertices at orbit distance 300, 1,000, 5,000, 40,000 and 10⁶.
 
 `addLattice` dims the lattice by `ALPHA_GRID` at 0.75, and 0.55 read as absent. **The world axes
 are reference**: they fade and cut off on the schedule of the lattice itself, so all the furniture
@@ -1059,25 +1058,33 @@ occlusion error at the far ends is assumed to be tolerable, and is not measured.
 
 ## Camera
 
-`camera.nim` holds an orbit camera. `ELEVATION_LIMIT` is π/2 − 0.02. The opening placement is
-`initCameraDefault`, which both entry points and `home` read.
+`camera.nim` holds an orbit camera. The opening placement is `initCameraDefault`, which both entry
+points and `home` read. Its eye stands at (10, 15, 7), 19 units off the pivot at (0, 0, 1).
 
 **The stance is one rigid motion and one depth.** `Camera.motor` carries a reference stance to where
 the camera stands, and it holds where the eye is and which way it faces together. `depth_pivot` says
 how far along the sight line the pivot stands. Everything else is read back: the eye, the three
 axes, the pivot, and both orbit angles.
 
-The reference stance is the turntable at azimuth 0, elevation 0, distance 0, with the pivot at the
-world origin. Its axes are `RIGHT_REFERENCE` at +y, `UP_REFERENCE` at +z and `FORWARD_REFERENCE` at
-−x. It is not the reference triple of OpenGL. That would put a fixed 120 degree turn in every
-construction, for no reader's benefit, because `initMatrixView` reads the axes and never the motor.
+The reference stance puts the eye at the world origin. Its axes are `RIGHT_REFERENCE` at +y,
+`UP_REFERENCE` at +z and `FORWARD_REFERENCE` at −x. It is not the reference triple of OpenGL. That
+would put a fixed 120 degree turn in every construction, for no reader's benefit, because
+`initMatrixView` reads the axes and never the motor.
 
-`motorTurntable` builds it as three motions, and every axis runs through the pivot, so neither turn
-moves it:
+**An eye and a pivot name a stance, and no angle does.** `motorFacing` builds the motion as three
+motions, and the first two turn about lines through the reference eye, so neither moves it:
 
-- a slide to the pivot, plus the distance along +x;
-- a turn of −elevation about the line through the pivot along +y;
-- a turn of the azimuth about the line through the pivot along world up.
+- a turn about the line along +y, by the rise of the heading;
+- a turn about the line along world up, by its bearing;
+- a slide of the reference eye to the eye.
+
+The heading is the difference of the two points. Its rise and its bearing are read out of its inner
+products with the reference axes. The stance is level, with its across axis horizontal. A heading
+along world up has no bearing and turns by none, so the frame stays orthonormal, and nothing
+clamps. `stanceFacing` adds the separation, which is `distanceBetween` the two points.
+
+Rejected: a stance named by pivot, distance, azimuth and elevation. It carries no roll, and it
+collapses at the pole, so it needed a clamp, `ELEVATION_LIMIT`, that the motor never needs.
 
 **Pivot and both angles are read out rather than stored, and that closes a hole.** Stored beside
 the stance, one could go stale against another, and a dolly left the pivot where no angle pointed.
@@ -1088,20 +1095,13 @@ one assignment, and `dollyToward` needs no pivot arithmetic at all.
 bounds it, and the panel's reading wraps there too. The ease is not affected, because `CameraTween`
 drives from stored stances rather than from the camera.
 
-Both angles also land within an ulp or two of what was asked, rather than on it, because they pass
-through the motor and back. The suite compares them as it compares every other computed float.
-
 **The frame needs no clamp.** Carrying three reference directions through a rigid motion keeps them
 orthonormal and weightless, so no join can refuse and no antidual sign needs pinning. Rejected:
 joins against world up, which collapse as the sight axis nears it.
 
 **Every verb composes the motion, `orbit` included.** `orbit` turns about two lines through the
 pivot, along the camera's own up and its own across. `look` turns about the same two through the
-eye. A roll survives it, and the elevation clamp goes with the rebuild that needed it.
-
-Rejected: a rebuild from four turntable numbers, which carries no roll and fixes the orbit's axes to
-world up, a pole. `ELEVATION_LIMIT` bounds only a stance rebuilt from angles, which does collapse at
-the pole: `initCamera`, `placedAtElevation` and a view framed along a facing.
+eye. A roll survives it.
 
 The axis of each turn is the camera's own, so a mouse's orbit reads as a trackball, not a turntable.
 The azimuth is not linear in a horizontal drag off level. Two thousand steps of one angle still
@@ -1127,10 +1127,9 @@ decide whether to skip four. `drivePinAnchor` allows an anchor lookup 8 µs.
 zero the eye coincides with its pivot, and every direction that `camera.frame` derives collapses.
 `distanceHeld` is the one statement of it.
 
-It is tiny rather than small. The moons of the demo ring their planets at thousandths of a unit,
-and are millionths wide. A floor of a twentieth kept the camera outside every one of them. There
-is no ceiling, which would read as a camera bounded to a region, and which nothing downstream
-needs.
+It is tiny rather than small. The moons of the demo ring their planets at thousandths of a unit, and
+are millionths wide. A floor of a twentieth kept the camera outside every one of them. There is no
+ceiling, which would read as a camera bounded to a region, and which nothing downstream needs.
 
 **Every record is stored about the origin of the frame.** `mesh.clearMeshes` takes that origin,
 and both front-ends pass the one that `originHeld` keeps. Each of the five record writers subtracts
@@ -1149,8 +1148,8 @@ reach. Wheeled out to 3 × 10¹⁹ the view empties to a speck, and `home` retur
 
 **Clip planes follow the orbit distance, and nothing clips at the far bound.** `FACTOR_CLIP_NEAR`
 is 1/400 of the orbit distance, and `FACTOR_CLIP_FAR` is 20 times it. Where the eye's distance to
-the origin plus the reach of the scene is farther, that answers instead (`Camera.reach_scene`,
-times `MARGIN_REACH_FAR` at 1.05). Both are derived, and never stored.
+the origin plus the reach of the scene is farther, that answers instead, times
+`MARGIN_REACH_FAR` at 1.05. Both are derived, and never stored.
 
 The projection has no far plane. Its depth climbs toward 1 − `SLACK_CLIP_FAR`, which is 1/1024,
 and never reaches it.
@@ -1161,9 +1160,11 @@ Android GPU clipped them, so points flickered as the camera moved, and the dome 
 along its cells.
 
 It is not twenty orbit distances alone. With the starfield 3,000 units across, six notches in at
-the centre of the demo leave 49 of 4,938 points drawn that way. The reach leaves 367. The reach
-(`framing.reachOf`) is stamped onto the camera at every derivation point, rather than kept in it.
-`home` and every path that replaces the camera value would drop a stored one.
+the centre of the demo leave 49 of 4,938 points drawn that way. The reach leaves 367.
+
+**The scene's reach is the caller's, and never the camera's.** Each front-end measures it on an
+edit (`framing.reachOf`), and hands it to `drawExtentFor`, `viewBoundsFor` and the furniture key.
+A field on the camera is dropped by `home`, and by every path that replaces the camera value.
 
 **Depth is logarithmic, and written for each fragment.** Every fragment shader on both front-ends
 writes `camera.depthOf` of its own view depth, which is `log2(D / near) / log2(far / near)` scaled
@@ -1176,21 +1177,17 @@ beside a far star. It is never written in the clip position. The clipper interpo
 coordinates linearly. It cut a corner behind the eye beside its front corner, and the disc ended
 at a hard chord.
 
-**The wheel zooms toward what the pointer is over**, which is the map reading of a zoom.
-`picking.anchorZoomAt` solves the anchor in three answers, in order. They are the finite object
-under the pointer, the ground at `z = 0`, and the level through the pivot. Where none answers, the
-wheel falls back to a centred dolly.
+**The wheel zooms toward the object the pointer is over**, which is the map reading of a zoom.
+`picking.anchorZoomAt` answers that object alone, in both states. Where none answers, the wheel
+dollies about the middle of the frame, or travels the pointer's own ray in free flight. To point at
+something means *that thing, at the depth it stands at*. Rejected: the ground at `z = 0`, which
+the world does not have, and the level through the pivot, which names no place a reader points at.
 
-**The object or the ground is taken only where its depth is within `FACTOR_ANCHOR_DEPTH` 2 of the
-orbit distance, either way.** Otherwise the level through the pivot answers. An anchor on a star a
-thousand units off slides the eye 38% of the way toward it for each notch. Six off-centre notches
-carried the pivot 1,737 units, against 5 with the window.
-
-A cursor toward the horizon finds ground beyond the window and takes the level. That is what stops
-a zoom near the horizon flying off across the ground. The object comes first, because to point at
-something means *that thing, at the depth it stands at*. Horizon objects are refused, because they
-are at no place. The price is the jump: two notches taken either side of the edge of an object
-converge on different depths.
+**The object is taken only where its depth is within `FACTOR_ANCHOR_DEPTH` 2 of the orbit
+distance, either way.** An anchor on a star a thousand units off slides the eye 38% of the way
+toward it for each notch. Six off-centre notches carried the pivot 1,737 units, against 5 with the
+window. Horizon objects are refused, because they are at no place. The price is the jump: two
+notches taken either side of the edge of an object converge on different depths.
 
 `camera.dollyToward` moves the eye along its own line to the anchor, and scales the pivot toward
 the anchor by the same factor. The orbit centre then settles onto what the reader zooms into. The
@@ -1212,16 +1209,15 @@ typed on the rigid motion it names. Odd grades drop, and the even part passes th
 carries the eye off an orthonormal frame. Only the changed coefficient is written into the live
 motor, so the four digits of a field never round the other fifteen.
 
-Azimuth and elevation stand beside it as readings in degrees, and are never typed: two numbers
-name no roll. The separation shows only with a selection, which the frame rule measures it from.
-The speed of flight shows only without one, as a multiple of `SPEED_LIGHT`
-(`interaction.speedFlying`).
+Azimuth and elevation stand beside it as readings in degrees, and are never typed: two numbers name
+no roll. The separation shows only with a selection, which the frame rule measures it from. The
+speed of flight shows only without one, as a multiple of `SPEED_LIGHT` (`interaction.speedFlying`).
 
 *Checked.* Verified by `suites.nim`:
 
-- the motor stance places the eye and all three axes where the turntable's trigonometry does;
-- that holds over 480 stances, which span five decades of separation, a whole turn of
-  azimuth, and both elevation clamps;
+- a stance named by eye and pivot stands at the eye, faces the pivot, and is level and
+  orthonormal. That holds over 416 stances, from 26 directions and over five decades, both poles
+  among them;
 - 2,000 orbit steps land where the sum of those steps says, with the pivot, the separation
   and the level horizon all surviving;
 - the eight floats and the multivector say one motion, which reads unit;
@@ -1233,7 +1229,7 @@ The speed of flight shows only without one, as a multiple of `SPEED_LIGHT`
 - `norm(eye − pivot)` equals the held distance after a floored dolly;
 - a typed motor settles on the rigid motion it names, with the frame orthonormal after any typed
   slide, and a weightless one refused;
-- the reach is stamped at every derivation point, which the undo-while-held check caught missing.
+- the far bound reaches the scene's reach that its caller passes, however close the orbit is.
 
 Verified by driven checks:
 
@@ -1366,9 +1362,9 @@ exactly, so a pointer figure would rebuild the furniture at every pointer move. 
 placement, and `ensureViewOverlay` runs many times over one frame: the anchor, each marker, each
 pulse and the hover ring. Putting the walk there would have placed it inside a hold that exists to
 skip one derivation. An overlay call landing between frames reads the last frame's figure, as it
-already reads the last edit's `reach_scene`.
+reads the last edit's reach of the scene.
 
-Both front-ends hold a placement cache, filled on an edit beside `reach_scene`, and
+Both front-ends hold a placement cache, filled on an edit beside the reach of the scene, and
 `BYTES_MEMORY_TOTAL` counts one placement for each handle. `assembleMeshes` places as it emits.
 
 **Records are stored from the eye, held where it stands.** `originHeld` keeps the origin until
@@ -1383,9 +1379,8 @@ Held rather than followed. An origin that moved every frame would rebuild every 
 frame, which is what those holds exist to skip. One origin serves both mesh sets, because one
 transform draws them; see `initMatrixViewProjection`.
 
-**The wheel travels the pointer's own ray in free flight.** `anchorStandingAt` is the object answer
-of `anchorZoomAt` on its own. Free flight has no ground, so neither the ground answer nor the level
-one is offered to it.
+**The wheel travels the pointer's own ray in free flight.** `anchorZoomAt` answers the object under
+the pointer, as it does with a selection.
 
 Where an object stands under the pointer, `travelToward` carries the eye along its line to that
 object and holds it on its pixel. The floor is the object's drawn radius, so a run of notches stops
@@ -1402,7 +1397,7 @@ The separation then scales as the turntable's dolly scales it.
 - a finger's orbit keeps the point on its sphere under it, from three stances and two reaches;
 - a finger's free aim keeps the sky it took under it, from three stances, in 1 step or 16;
 - an orbit passes over the top and a look under its feet, and a drag goes through the pole;
-- eight quarter-radian pitches make two radians in `look` and `orbit`, past `ELEVATION_LIMIT`;
+- eight quarter-radian pitches make two radians in `look` and `orbit`, past straight down;
 - a look and an orbit swing the sight the same way, for both signs of the drag;
 - a roll leaves the eye and the sight alone, and 64 steps of a whole turn return every axis;
 - a travel step reads back along the rolled frame, to each of the three axes it was asked for;
@@ -1421,19 +1416,19 @@ The separation then scales as the turntable's dolly scales it.
 - the origin holds through half the bound, moves onto the eye past it, and then holds again;
 - the bound draws in with the near clip, so close work moves the origin sooner.
 
-Verified by driven checks:
+Verified by driven checks, in Chromium on 2026-09-26:
 
 - a left drag with nothing picked turned the sight and moved the eye 0.000000 units;
 - a left drag, and a finger with nothing picked, of 60 and 40 px carried the object beside them
-  59.1 and 40.7 px;
-- a 600 px finger swipe away and back brought the azimuth back to 1.0500 and elevation to 0.420000;
+  59.1 and 40.5 px;
+- a 600 px finger swipe away and back brought the azimuth back to 0.9828 and elevation to 0.321289;
 - a finger dragged down with an object picked carried the eye over the top, and the pivot 0.000000;
-- 500 ms of `w` on the opening page moved the eye 3.455 units, 0.000000 across the sight line;
-- the separation gave up that same 3.455 of 19.000;
-- eight notches low in the frame carried the separation from 19.00 to 4.47;
-- they left the eye 2.228 units off the sight axis, which a straight dolly cannot do;
-- the opening page reads a local scale of 14.5620, and not the separation of 19.000;
-- 3.578 units of flight drew that scale to 10.9839, which is the same 3.578.
+- 500 ms of `w` on the opening page moved the eye 5.020 units, 0.000000 across the sight line.
+  The separation gave up that same 5.020 of 19.000;
+- eight notches low in the frame carried the separation from 19.00 to 4.14. They left the eye
+  2.063 units off the sight axis, which a straight dolly cannot do;
+- the opening page reads a local scale of 14.6842, not the separation of 19.000, and 5.020 units
+  of flight drew it to 9.6647.
 
 ## Records and shaders
 
@@ -1451,11 +1446,10 @@ of a unit, at a near plane whose own pixel spans billionths of one. At orbit dis
 drew `earth ∧ luna` 406 px off Earth, and 1,538 px off at 0.001. It rounded the crossing of
 `sol ∧ earth` onto the pivot, so half of that line drew onto the dot of Earth itself.
 
-**The widening runs in the vertex shader on both front-ends.** One `RibbonRecord` of fifteen
-floats crosses the wire for each segment, or sixteen with the `fog` flag. Six CPU vertices cost
-forty-two floats. An instanced draw expands it: GL 3.3 core on the desktop, and
-`ANGLE_instanced_arrays` on WebGL1. Each vertex derives the across as
-`cross(head − tail, eye − tail)`.
+**The widening runs in the vertex shader on both front-ends.** One `RibbonRecord` of fifteen floats
+crosses the wire for each segment, or sixteen with the `fog` flag. Six CPU vertices cost forty-two
+floats. An instanced draw expands it: GL 3.3 core on the desktop, and `ANGLE_instanced_arrays` on
+WebGL1. Each vertex derives the across as `cross(head − tail, eye − tail)`.
 
 **Chain of custody.** The GLSL ships, `mesh.expandRibbon` is its reference in Nim, and it is
 sibling-marked with both shader sources. The suite holds the reference to the algebra: the near
@@ -1497,8 +1491,7 @@ every append extends or opens a `VeilRun`, and both render paths walk the runs i
 of a selected plane would draw depth-tested behind the fill that it highlights.
 
 **Capacities are asserted in `scene.nim`**, the one module that can see both sides. To raise
-`OBJECTS_MAX` then fails to *compile*, rather than to `doAssert` at draw time, which is a dead
-page.
+`OBJECTS_MAX` then fails to *compile*, rather than to `doAssert` at draw time, which is a dead page.
 
 | Cap | Value | Binding case |
 |---|---|---|
@@ -1535,10 +1528,10 @@ hand.
 Verified by a desktop A/B under Xvfb: 0 of 1,296,000 pixels changed for the move of the ribbon. At
 most 38 changed for each storyboard frame, at a channel delta of 12 or less, for the move of the
 disc and dome. The record narrows its arms to float32 there. Verified by driven check: the ribbon
-records of the demo under 64, against a ring count over 120. Both lines cross a ring of spots about
-the point they join, opposite in pairs, with the camera 0.01 then 0.001 units off it. Assumed: that
-the figure of 0.1 ms for the flat buffer holds at the current caps, because it was measured at 1,024
-objects.
+records of the demo under 64, against a ring count over 120. Both lines cross one of two rings, 100
+and 80 px about their point, in opposite pairs, with the camera 0.01 then 0.001 units off. Assumed:
+that the figure of 0.1 ms for the flat buffer holds at the current caps, because it was measured at
+1,024 objects.
 
 ## Algebra boundary
 
@@ -1717,9 +1710,9 @@ out from the drawn size. A ring of a point then hugs a wide disc and a dot alike
 `OFFSET_MARKER_RAIL` is `WIDTH_LINE_OBJECT`/2 plus the gap, which is 7.25 px. `WIDTH_MARKER` is
 1.5 px, asserted thinner than the line that it marks.
 
-Each render path strokes the markers in its foreground layer, and never as scene geometry. A loop
-on a plane would z-fight its fill, and a marker that the object can occlude is not a marker. It is
-not an outline in the style of 3D modelling, and nobody is to reintroduce that without instruction.
+Each render path strokes the markers in its foreground layer, and never as scene geometry. A loop on
+a plane would z-fight its fill, and a marker that the object can occlude is not a marker. It is not
+an outline in the style of 3D modelling, and nobody is to reintroduce that without an instruction.
 
 **A selected object wears its name above its marker**, filled in the own ink of the object and
 outlined in the stroke of the marker. Hover and focus wear none. Where it sits is the decision of
@@ -1905,8 +1898,7 @@ of picking. Three paths pick inside their handler because they must answer befor
 
 **The pick ranks what was drawn.** It takes the placements of the frame and dispatches on
 `Placement.kind`, rather than asks `position`, `direction`, `frame` and `spanPerpendicular` again
-for each handle. Empty means derive for each handle, which is the desktop path and every suite
-case.
+for each handle. Empty means derive for each handle, which is the desktop path and every suite case.
 
 **The pick rejects a plane before it meets it.** `isBeyondDisc` bounds the screen extent of the
 disc by the silhouette of the sphere that contains it. It is conservative in the depth and
@@ -2001,9 +1993,8 @@ crossing (`AnchorZoom.is_standing`). `interaction.dollyAt` re-pivots along the s
 depth of a standing anchor after the zoom, through `camera.repivotToDepth`, which leaves the
 picture unchanged. The pinch goes through the same rule, aimed at the middle of the frame.
 
-Crossings are followed by the map rule alone. It is not the ground crossing too, which moves the
-pivot off its level with every notch and fells five driven pins at once. It is not a plane, whose
-depth under the pointer is not its depth at the middle of the frame.
+A plane is a crossing, and the map rule alone follows it. Its depth under the pointer is not its
+depth at the middle of the frame.
 
 Measured on the demo: eight wheel notches over Jupiter from 30 units hold its pixel exactly. They
 bring the pivot from Sol to 0.09 units off the plane of Jupiter.
@@ -2065,8 +2056,7 @@ of the selection menu, moved.
 **A wedge says what the picker says.** `labelOf` returns `notationSymbolic` (`𝐦 ∧ 𝐧`, `𝐦 ∨ 𝐧`,
 `𝐧 ∨ (𝐦 ∧ 𝐧☆)`), and `More` returns a bare `…`. A release commits whatever is under the cursor,
 resolved by `endDrag` through `choiceAt`, so the two paths cannot disagree. The centre
-(`PIXELS_MENU_DEADZONE` 26 px) commits nothing, which is why an unasked dwell wheel is safe to
-open.
+(`PIXELS_MENU_DEADZONE` 26 px) commits nothing, which is why an unasked dwell wheel is safe to open.
 
 The wheel **latches its destination** when it opens, and **lets go when the cursor leaves it**
 past `PIXELS_MENU_DISENGAGE` 150 px, sited off `PIXELS_MENU_CORNER_FURTHEST` 103.9 px. Travel on
@@ -2414,9 +2404,10 @@ radii. The plane of a neighbour is joined as `star ∧ along ∧ across`, which 
 directions. Three of its points a million units out cancel to noise, a tenth of the normal.
 
 **The opening camera frames the system of Sol to Neptune.** `RADIUS_ORRERY` is the own semi-major
-axis of Neptune, fitted by `camera.distanceFitting` at `ELEVATION_ORRERY_SHOWN` 0.95 rad, with
-`INSET_ORRERY_SHOWN` 24 px. At 0.42 rad every ring collapses to a line. It is not the nearest
-neighbour: Proxima stands nine thousand opening radii out, and a frame that held it shows one dot.
+axis of Neptune, fitted by `camera.distanceFitting` with `INSET_ORRERY_SHOWN` 24 px. The eye stands
+on the reader's own bearing, `RISE_ORRERY_SHOWN` 1.4 over its run, about 54 degrees up. At the
+opening's 18 degrees every ring collapses to a line. It is not the nearest neighbour: Proxima
+stands nine thousand opening radii out, and a frame that held it shows one dot.
 
 **Colour says what a thing is, and not which system it belongs to.** `lut_role_to_ink` maps a
 `Role` to an `Ink`: four kinds of body on four handles, and everything derived on the fifth,
@@ -2619,16 +2610,20 @@ degree of freedom. A horizon plane is in view at every orientation, and binds no
 `isBounded` states all three.
 
 `holdHorizon` turns about the sight crossed with what is asked for. That axis is the great circle
-from one to the other, so a turn across the bound survives.
+from one to the other, so a turn across the bound survives. A sight parallel to what is asked for,
+straight down onto the ecliptic's normal, spans no pencil, and the camera's own across stands in.
+The angle is `arctan2` of the pencil's bulk norm and the inner product. `arccos` of the product
+alone reads 2e-8 rad off a parallel pair, twenty times `SLACK_FRAMED`.
 
 **The finite object wins outright.** `isBounded` and `holdHorizon` both stand aside where anything
 finite is asked for. Two demands can disagree. A star behind the reader, beside a point in front of
 them, has no placement that shows both. The finite selection is the one a reader works on.
 
 **A horizon object already in view keeps the framing of the reader**, as a finite selection that
-already fits does. `stanceFor` turns toward a star only where that star's own bound is broken.
-Without the floor, a pick of something already on screen pulled the view about. The comet drifted
-75.5 px against a band of 5 to 60.
+already fits does. `stanceFor` turns toward a star only where that star's own bound is broken. It
+stands the level stance facing it about the pivot (`camera.stanceFacing`): a least turn off a steep
+sight leaves the view rolled. Without the floor, a pick of something already on screen pulled the
+view about. The comet drifted 75.5 px against a band of 5 to 60.
 
 **A pointer pick centres its object, and comes in to it.** A click or a tap on a point or a line
 records a `framing.PointerPick`, which `offerAim` consumes on the next frame. The destination is
@@ -2944,9 +2939,8 @@ the page, and the `--drive-*` runs for the desktop.
 
 A driven check is evidence only for the page just built, so one command rebuilds before it drives
 (Article IX.6). A check that leaves state behind taxes every check after it, and says so.
-Timing-dependent quantities are asserted as **bands**. Identical code has measured 25.0 and
-29.8 ms hours apart on a shared runner. A flat ±1 ms band failed one frame in a hundred and
-twenty.
+Timing-dependent quantities are asserted as **bands**. Identical code has measured 25.0 and 29.8 ms
+hours apart on a shared runner. A flat ±1 ms band failed one frame in a hundred and twenty.
 
 *Checked.* Verified on the pinned commit through `koch test`: every suite on the C backend, on JS
 and at reduced capacities. The JS count is lower because the C-only cases skip themselves.
@@ -2996,5 +2990,11 @@ leave it, to bound a plane by its crossing of the frame, or to let a plane alone
 against the near plane with dot products, in each frame, and the orrery builds its orbit planes with
 cross products. The first only clips, so it may be the picture's; the second is construction, which
 the algebra owns. The choices are to move them into the algebra, or to leave them.
+
+**One ribbon can drift off its ink.** At azimuth 2.4146 and elevation 0.7142, 0.001 units off
+Earth, one record of `sol ∧ earth` spans from the near plane to Sol. Its `w` runs from 2.56e-6 to
+0.345, over 1.15 million px. The line runs whole, but two pixels 100 px out read 121/178/0 and
+68/18/0 against its ink of 87/110/0. The cause is not explained, so the line check reads two rings.
+The choices are to split such a record where it passes the eye, or to leave it.
 
 [replications]: https://gitlab.com/mraxilus/replications
