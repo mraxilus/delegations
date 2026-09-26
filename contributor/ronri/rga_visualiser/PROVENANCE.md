@@ -1744,7 +1744,8 @@ the outline. Each front-end centres its own text.
   in the corner itself.
 
   **Every label is then held wholly inside the view.** `labelInView` clamps the measured box
-  `MARGIN_LABEL_EDGE` 4 px in from each edge, on both front-ends.
+  `MARGIN_LABEL_EDGE` 4 px in from each edge, on both front-ends. The page measures its text on
+  the overlay layer, because text off the document has no length, and the hold then has no box.
 
   **The label of a plane stands on the column of the disc, at the height of the true top of its
   circle.** `marker.topmostOnCircle` solves the top of the projected circle in closed form. Screen
@@ -1831,9 +1832,8 @@ a one-percent lap change by the laps accumulated.
 ran 156 px/s along a rail against 348 round a circle. A gap longer than `SECONDS_STEP_PULSE_MAX`
 0.1 s is an absence, and not a frame.
 
-The desktop fill needs a **fixed winding**, which `gui_shim.guiOverlayRibbon` imposes. **A drag
-band swells into its head** (`marker.cometFor`), because `a ∨ b` and `b ∨ a` are different
-operations.
+The desktop fill needs a **fixed winding**, which `gui_shim.guiOverlayRibbon` imposes. **A drag band
+swells into its head** (`marker.cometFor`), because `a ∨ b` and `b ∨ a` are different operations.
 
 *Checked.* Verified by `suites.nim`:
 
@@ -1853,6 +1853,7 @@ Verified by driven check:
 
 - 402 frames with 0 label hops;
 - 48 frames at phone width with 0 side swaps, and none on the right;
+- the label of the horizon line whole in its first frame at phone width, at four bearings;
 - the label box of the frame in its corner above the scale bar;
 - a 720-step orbit with the rail gap changing at most 0.103 px between frames;
 - two crossing planes selected changing 15,668 canvas pixels, against a noise floor of 0 pixels.
@@ -2055,8 +2056,7 @@ of the selection menu, moved.
 **A wedge says what the picker says.** `labelOf` returns `notationSymbolic` (`𝐦 ∧ 𝐧`, `𝐦 ∨ 𝐧`,
 `𝐧 ∨ (𝐦 ∧ 𝐧☆)`), and `More` returns a bare `…`. A release commits whatever is under the cursor,
 resolved by `endDrag` through `choiceAt`, so the two paths cannot disagree. The centre
-(`PIXELS_MENU_DEADZONE` 26 px) commits nothing, which is why an unasked dwell wheel is safe to
-open.
+(`PIXELS_MENU_DEADZONE` 26 px) commits nothing, which is why an unasked dwell wheel is safe to open.
 
 The wheel **latches its destination** when it opens, and **lets go when the cursor leaves it**
 past `PIXELS_MENU_DISENGAGE` 150 px, sited off `PIXELS_MENU_CORNER_FURTHEST` 103.9 px. Travel on
