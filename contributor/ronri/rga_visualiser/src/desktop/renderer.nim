@@ -144,10 +144,22 @@ uniform float depth_near;
 uniform float tangent_half_view;
 uniform float height_pixels;
 uniform float depth_log;
+uniform vec3 axis_right;
+uniform vec3 axis_up;
+uniform float factor_guard;
 out vec4 vertex_colour;
 out vec3 vertex_world;
 out float vertex_fog;
 out float vertex_depth;
+void cutGuard(float room_near, float room_far, inout vec2 kept) {
+  if (room_near < 0.0 && room_far < 0.0) kept = vec2(1.0, 0.0);
+  else if (room_near < 0.0) kept.x = max(kept.x, room_near/(room_near - room_far));
+  else if (room_far < 0.0) kept.y = min(kept.y, room_near/(room_near - room_far));
+}
+vec3 steppedFrom(vec3 near_end, vec3 far_end, float fraction) {
+  if (fraction < 0.5) return near_end + fraction*(far_end - near_end);
+  return far_end + (fraction - 1.0)*(far_end - near_end);
+}
 void main() {
   vertex_fog = in_fog;
   float depth_tail = dot(in_tail - eye, forward);
@@ -174,6 +186,31 @@ void main() {
     if (depth_tail < depth_near) { near_end = crossing; tint_near = tint_crossing; }
     else { far_end = crossing; tint_far = tint_crossing; }
   }
+  float slope = factor_guard*tangent_half_view;
+  vec3 off_near = near_end - eye;
+  vec3 off_far = far_end - eye;
+  float reach_near = slope*dot(off_near, forward);
+  float reach_far = slope*dot(off_far, forward);
+  vec2 kept = vec2(0.0, 1.0);
+  cutGuard(reach_near - dot(off_near, axis_right), reach_far - dot(off_far, axis_right), kept);
+  cutGuard(reach_near + dot(off_near, axis_right), reach_far + dot(off_far, axis_right), kept);
+  cutGuard(reach_near - dot(off_near, axis_up), reach_far - dot(off_far, axis_up), kept);
+  cutGuard(reach_near + dot(off_near, axis_up), reach_far + dot(off_far, axis_up), kept);
+  if (kept.x >= kept.y) {
+    gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
+    vertex_colour = vec4(0.0);
+    vertex_world = in_tail;
+    vertex_depth = 1.0;
+    return;
+  }
+  vec3 cut_in = steppedFrom(near_end, far_end, kept.x);
+  vec3 cut_out = steppedFrom(near_end, far_end, kept.y);
+  vec4 tint_in = mix(tint_near, tint_far, kept.x);
+  vec4 tint_out = mix(tint_near, tint_far, kept.y);
+  near_end = cut_in;
+  far_end = cut_out;
+  tint_near = tint_in;
+  tint_far = tint_out;
   vec3 across = across_raw/across_length;
   vec3 at = mix(near_end, far_end, in_corner.x);
   float depth_at = max(dot(at - eye, forward), depth_near);
@@ -190,8 +227,8 @@ void main() {
   ##   Line for line: reject segment wholly behind near plane (six coincident clipped
   ##   corners), clip end crossing it by stepping from end crossing stands nearer (see
   ##   `mesh.expandRibbon` for what steps from far end cost) and blend tint by same step,
-  ##   derive across as cross join reduces to, step corner off by half width of its end's
-  ##   world-per-pixel.
+  ##   cut to guard pyramid `mesh.FACTOR_GUARD` half-views wide same way, derive across as
+  ##   cross join reduces to, step corner off by half width of its end's world-per-pixel.
   ##   `in_corner` is (end, side).
   ##   `in_fog` and world position pass through for fragment stage's fog; see
   ##   `SOURCE_FRAGMENT_RIBBON`.
@@ -369,8 +406,20 @@ uniform float depth_near;
 uniform float tangent_half_view;
 uniform float height_pixels;
 uniform float depth_log;
+uniform vec3 axis_right;
+uniform vec3 axis_up;
+uniform float factor_guard;
 out vec4 vertex_colour;
 out float vertex_depth;
+void cutGuard(float room_near, float room_far, inout vec2 kept) {
+  if (room_near < 0.0 && room_far < 0.0) kept = vec2(1.0, 0.0);
+  else if (room_near < 0.0) kept.x = max(kept.x, room_near/(room_near - room_far));
+  else if (room_far < 0.0) kept.y = min(kept.y, room_near/(room_near - room_far));
+}
+vec3 steppedFrom(vec3 near_end, vec3 far_end, float fraction) {
+  if (fraction < 0.5) return near_end + fraction*(far_end - near_end);
+  return far_end + (fraction - 1.0)*(far_end - near_end);
+}
 void main() {
   vec3 tail = in_centre + in_arc.x*in_arm_first + in_arc.y*in_arm_second;
   vec3 head = in_centre + in_arc.z*in_arm_first + in_arc.w*in_arm_second;
@@ -394,6 +443,26 @@ void main() {
     if (depth_tail < depth_near) near_end = crossing;
     else far_end = crossing;
   }
+  float slope = factor_guard*tangent_half_view;
+  vec3 off_near = near_end - eye;
+  vec3 off_far = far_end - eye;
+  float reach_near = slope*dot(off_near, forward);
+  float reach_far = slope*dot(off_far, forward);
+  vec2 kept = vec2(0.0, 1.0);
+  cutGuard(reach_near - dot(off_near, axis_right), reach_far - dot(off_far, axis_right), kept);
+  cutGuard(reach_near + dot(off_near, axis_right), reach_far + dot(off_far, axis_right), kept);
+  cutGuard(reach_near - dot(off_near, axis_up), reach_far - dot(off_far, axis_up), kept);
+  cutGuard(reach_near + dot(off_near, axis_up), reach_far + dot(off_far, axis_up), kept);
+  if (kept.x >= kept.y) {
+    gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
+    vertex_colour = vec4(0.0);
+    vertex_depth = 1.0;
+    return;
+  }
+  vec3 cut_in = steppedFrom(near_end, far_end, kept.x);
+  vec3 cut_out = steppedFrom(near_end, far_end, kept.y);
+  near_end = cut_in;
+  far_end = cut_out;
   vec3 across = across_raw/across_length;
   vec3 at = mix(near_end, far_end, in_corner.x);
   float depth_at = max(dot(at - eye, forward), depth_near);
@@ -458,6 +527,9 @@ type
     location_ribbon_fog_full: gl.Int
     location_ribbon_fog_gone: gl.Int
     location_ribbon_depth_log: gl.Int
+    location_ribbon_right: gl.Int
+    location_ribbon_up: gl.Int
+    location_ribbon_factor_guard: gl.Int
     array_ribbon: gl.Uint
     buffer_ribbon_corners: gl.Uint
     buffer_ribbon_records: gl.Uint
@@ -488,6 +560,9 @@ type
     location_ring_tangent: gl.Int
     location_ring_height: gl.Int
     location_ring_depth_log: gl.Int
+    location_ring_right: gl.Int
+    location_ring_up: gl.Int
+    location_ring_factor_guard: gl.Int
     array_ring: gl.Uint
     buffer_ring_corners: gl.Uint
     buffer_ring_records: gl.Uint
@@ -642,6 +717,12 @@ proc initRibbonProgram(renderer: var Renderer) =
     gl.getUniformLocation(renderer.program_ribbon, "fog_radius_gone")
   renderer.location_ribbon_depth_log =
     gl.getUniformLocation(renderer.program_ribbon, "depth_log")
+  renderer.location_ribbon_right =
+    gl.getUniformLocation(renderer.program_ribbon, "axis_right")
+  renderer.location_ribbon_up =
+    gl.getUniformLocation(renderer.program_ribbon, "axis_up")
+  renderer.location_ribbon_factor_guard =
+    gl.getUniformLocation(renderer.program_ribbon, "factor_guard")
   gl.genVertexArrays(1, addr renderer.array_ribbon)
   gl.genBuffers(1, addr renderer.buffer_ribbon_corners)
   gl.genBuffers(1, addr renderer.buffer_ribbon_records)
@@ -694,6 +775,10 @@ proc initRingProgram(renderer: var Renderer) =
   renderer.location_ring_height =
     gl.getUniformLocation(renderer.program_ring, "height_pixels")
   renderer.location_ring_depth_log = gl.getUniformLocation(renderer.program_ring, "depth_log")
+  renderer.location_ring_right = gl.getUniformLocation(renderer.program_ring, "axis_right")
+  renderer.location_ring_up = gl.getUniformLocation(renderer.program_ring, "axis_up")
+  renderer.location_ring_factor_guard =
+    gl.getUniformLocation(renderer.program_ring, "factor_guard")
   gl.genVertexArrays(1, addr renderer.array_ring)
   gl.genBuffers(1, addr renderer.buffer_ring_corners)
   gl.genBuffers(1, addr renderer.buffer_ring_records)
@@ -1000,6 +1085,12 @@ proc drawMeshes*(
   gl.uniform1f(renderer.location_ribbon_fog_full, gl.Float(fog.radius_full))
   gl.uniform1f(renderer.location_ribbon_fog_gone, gl.Float(fog.radius_gone))
   gl.uniform1f(renderer.location_ribbon_depth_log, gl.Float(scale.depthLog))
+  # Camera's own axes and guard's width, which ribbon is cut to; see `mesh.FACTOR_GUARD`.
+  gl.uniform3f(renderer.location_ribbon_right, gl.Float(scale.axis_right.x),
+    gl.Float(scale.axis_right.y), gl.Float(scale.axis_right.z))
+  gl.uniform3f(renderer.location_ribbon_up, gl.Float(scale.axis_up.x),
+    gl.Float(scale.axis_up.y), gl.Float(scale.axis_up.z))
+  gl.uniform1f(renderer.location_ribbon_factor_guard, gl.Float(FACTOR_GUARD))
   renderer.uploadRibbons(meshes)
 
   # Give point program ribbon program's camera and both screen axes.
@@ -1058,6 +1149,11 @@ proc drawMeshes*(
   gl.uniform1f(renderer.location_ring_tangent, gl.Float(scale.tangentHalfView))
   gl.uniform1f(renderer.location_ring_height, gl.Float(scale.heightPixels))
   gl.uniform1f(renderer.location_ring_depth_log, gl.Float(scale.depthLog))
+  gl.uniform3f(renderer.location_ring_right, gl.Float(scale.axis_right.x),
+    gl.Float(scale.axis_right.y), gl.Float(scale.axis_right.z))
+  gl.uniform3f(renderer.location_ring_up, gl.Float(scale.axis_up.x),
+    gl.Float(scale.axis_up.y), gl.Float(scale.axis_up.z))
+  gl.uniform1f(renderer.location_ring_factor_guard, gl.Float(FACTOR_GUARD))
   renderer.uploadVeils(meshes)
 
   # Draw opaque kinds first, so they own depth buffer.

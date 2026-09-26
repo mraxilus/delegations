@@ -979,6 +979,11 @@ proc nimShadeAmbient(): cfloat {.exportc.} = cfloat(FRACTION_AMBIENT_SHADE)
   ## Report lit point's night-side brightness, for point fragment shader's uniform.
 
 
+proc nimFactorGuard(): cfloat {.exportc.} = cfloat(FACTOR_GUARD)
+  ## Report how many half-views wide ribbon's guard pyramid is, for ribbon vertex shader's
+  ##   uniform; see `mesh.FACTOR_GUARD`.
+
+
 proc nimRampTree(): seq[float32] {.exportc.} =
   ## Report diagnostics tree's colour ramp, six floats per step.
   ##   Row's label rgb then value rgb, `STEPS_RAMP_TREE` steps from sliver of frame to

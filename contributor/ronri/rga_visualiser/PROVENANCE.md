@@ -716,9 +716,8 @@ write with nothing recorded. Undo, redo, clear and every load replace the whole 
 `restoreFrom`. That call issues a revision **newer than every revision it ever handed out**,
 which is `max(live, snapshot) + 1`.
 
-It is not the count of the snapshot plus one. A state between the two had already worn that
-number. A placement cache keyed on it then drew six objects of the previous demo over the new
-one.
+It is not the count of the snapshot plus one. A state between the two had already worn that number.
+A placement cache keyed on it then drew six objects of the previous demo over the new one.
 
 **A placement falls out of date one handle at a time.** `Scene.revisions_placing` stamps each
 handle at the edit that last changed it, and `restoreFrom` stamps every live handle of the
@@ -1442,9 +1441,17 @@ and draws a world axis twenty pixels wide near the origin.
 **The crossing is stepped from the end that it stands nearer.** A line reaches its vanishing point
 at `radius_horizon`, which the orrery puts 530,000 units out. A step from the far end is therefore
 the difference of two places decades apart, and float32 cancels it. The crossing then carries tenths
-of a unit, at a near plane whose own pixel spans billionths of one. At orbit distance 0.01 the page
-drew `earth ∧ luna` 406 px off Earth, and 1,538 px off at 0.001. It rounded the crossing of
-`sol ∧ earth` onto the pivot, so half of that line drew onto the dot of Earth itself.
+of a unit, at a near plane whose own pixel spans billionths of one: 1,538 px, 0.001 units off Earth.
+
+**Every ribbon is then cut to a guard pyramid.** Its four sides pass through the eye, `FACTOR_GUARD`
+of 8 half-views off the sight axis. Each cut steps from its nearer end, and a rim segment is cut as
+a ribbon is. Uncut, a ribbon crossing the near plane by the eye reaches far off screen: 1.15 million
+px for `sol ∧ earth`, 0.001 units off Earth. The GPU then interpolates its colour to 121/178/0
+against an ink of 87/110/0, and its depth 55% too near or invalid.
+
+Verified by renders of 54 headings about Earth at 0.001 units: 11 pixels off ink uncut, and none
+cut. The drawn line stands 0.466 px off the exact line either way, and the written depth within
+0.02% of exact. Rejected: one split of the record, which moves the fault to the edge of the frame.
 
 **The widening runs in the vertex shader on both front-ends.** One `RibbonRecord` of fifteen floats
 crosses the wire for each segment, or sixteen with the `fog` flag. Six CPU vertices cost forty-two
@@ -1452,8 +1459,8 @@ floats. An instanced draw expands it: GL 3.3 core on the desktop, and `ANGLE_ins
 WebGL1. Each vertex derives the across as `cross(head − tail, eye − tail)`.
 
 **Chain of custody.** The GLSL ships, `mesh.expandRibbon` is its reference in Nim, and it is
-sibling-marked with both shader sources. The suite holds the reference to the algebra: the near
-clip equals `clipToEyeSide`, and the across equals the join
+sibling-marked with both shader sources. The suite holds the reference to the algebra. The near clip
+and the four guard cuts equal `clipToEyeSide`, and the across equals the join
 `directionNormal(tail ∧ head ∧ eye)`, sign included.
 
 **A fill of a plane, its rim and the sky are one record each.** A `DiscRecord` of 13 floats spans
@@ -1528,10 +1535,9 @@ hand.
 Verified by a desktop A/B under Xvfb: 0 of 1,296,000 pixels changed for the move of the ribbon. At
 most 38 changed for each storyboard frame, at a channel delta of 12 or less, for the move of the
 disc and dome. The record narrows its arms to float32 there. Verified by driven check: the ribbon
-records of the demo under 64, against a ring count over 120. Both lines cross one of two rings, 100
-and 80 px about their point, in opposite pairs, with the camera 0.01 then 0.001 units off. Assumed:
-that the figure of 0.1 ms for the flat buffer holds at the current caps, because it was measured at
-1,024 objects.
+records of the demo under 64, against a ring count over 120. Both lines cross two rings, 100 and 80
+px out, in opposite pairs, 0.01 and 0.001 units off, along two headings. Assumed: that the figure of
+0.1 ms for the flat buffer holds at current caps, because it was measured at 1,024 objects.
 
 ## Algebra boundary
 
@@ -2990,11 +2996,5 @@ leave it, to bound a plane by its crossing of the frame, or to let a plane alone
 against the near plane with dot products, in each frame, and the orrery builds its orbit planes with
 cross products. The first only clips, so it may be the picture's; the second is construction, which
 the algebra owns. The choices are to move them into the algebra, or to leave them.
-
-**One ribbon can drift off its ink.** At azimuth 2.4146 and elevation 0.7142, 0.001 units off
-Earth, one record of `sol ∧ earth` spans from the near plane to Sol. Its `w` runs from 2.56e-6 to
-0.345, over 1.15 million px. The line runs whole, but two pixels 100 px out read 121/178/0 and
-68/18/0 against its ink of 87/110/0. The cause is not explained, so the line check reads two rings.
-The choices are to split such a record where it passes the eye, or to leave it.
 
 [replications]: https://gitlab.com/mraxilus/replications
