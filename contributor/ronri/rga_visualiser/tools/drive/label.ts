@@ -208,6 +208,75 @@ export async function driveLabelHeldInView(page: Page): Promise<void> {
   await settleCamera(page);
 }
 
+/** Drive label's first frame at phone width, and assert its box is whole inside view.
+ *
+ *  Label appears on frame after one without any. Its `<text>` is then staged off document,
+ *  and text measured off document has no length, so hold kept centre alone inside view
+ *  and half of name hung past edge for that frame. Horizon line's label rides left edge,
+ *  so its hold always has work to do there. Read in same frame that draws it: page's own
+ *  loop asks for its frame before this check asks for one, so it draws first.
+ */
+export async function driveLabelFirstFrame(page: Page): Promise<void> {
+  await clearTheGlass(page);
+  const before = await page.evaluate(() => ({
+    pivot: Array.from(nimCameraPivot()), distance: nimCameraDistance(),
+    azimuth: nimCameraAzimuth(), elevation: nimCameraElevation(),
+  }));
+  const line = await page.evaluate(
+    () => nimSceneHandles().find((one) => nimObjectKindWord(one) === 'horizon line') ?? -1,
+  );
+  if (line < 0) {
+    report('the scene holds a horizon line whose label to read', false, 'none');
+    return;
+  }
+  await page.setViewportSize({ width: 393, height: 560 });
+  let read = 0, cut = 0, worst = 0;
+  for (const azimuth of [0.0, 1.5, 3.0, 4.5]) {
+    await page.evaluate((given) => {
+      clearSelection();
+      nimSetCameraPivot(0, 0, 0);
+      nimSetCameraDistance(19);
+      nimSetCameraAzimuth(given);
+      nimSetCameraElevation(0.2);
+    }, azimuth);
+    await waitFrames(page, 2);
+    const box = await page.evaluate((one) => {
+      selectOnly(one, null);
+      return new Promise<{ over: number } | null>((done) => requestAnimationFrame(() => {
+        const text = document.querySelector('#overlay text') as SVGTextElement | null;
+        const rect = (document.getElementById('gl') as HTMLElement).getBoundingClientRect();
+        if (text === null) { done(null); return; }
+        const drawn = text.getBBox();
+        done({
+          over: Math.max(
+            -drawn.x, drawn.x + drawn.width - rect.width,
+            -drawn.y, drawn.y + drawn.height - rect.height,
+          ),
+        });
+      }));
+    }, line);
+    if (box === null) continue;
+    read += 1;
+    if (box.over > 0) cut += 1;
+    worst = Math.max(worst, box.over);
+  }
+  report(
+    "a label's first frame holds its whole box inside a phone-width page",
+    read === 4 && cut === 0,
+    `${read} of 4 first frames read, ${cut} with the box past an edge, worst ` +
+      `${worst.toFixed(1)} px over`,
+  );
+  await page.evaluate(() => clearSelection());
+  await page.setViewportSize({ width: 1200, height: 900 });
+  await page.evaluate((given) => {
+    nimSetCameraPivot(given.pivot[0] ?? 0, given.pivot[1] ?? 0, given.pivot[2] ?? 0);
+    nimSetCameraDistance(given.distance);
+    nimSetCameraAzimuth(given.azimuth);
+    nimSetCameraElevation(given.elevation);
+  }, before);
+  await settleCamera(page);
+}
+
 /** How far in from view's left and bottom edges frame's label box may stand, in pixels. */
 const PIXELS_CORNER_LABEL = 56;
 
