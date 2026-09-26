@@ -704,7 +704,7 @@ proc updateHover*(
       # Depth along sight, not distance: speed curve travels forward, and that is what
       #   forward has to cross.
       if found.isSome:
-        interaction.depth_pointer = some(dot(found.get - scale.eye, scale.forward))
+        interaction.depth_pointer = some(depthAlong(scale.eye, scale.forward, found.get))
   else:
     interaction.index_hover = none(int)
     interaction.count_hover_rivals = 0
@@ -742,13 +742,15 @@ proc dollyAt*(
       # Separation follows anchor's own depth, so frustum's scale tracks flight.
       #   Crossing as well as standing object: free flight has no orbit for pivot to
       #   anchor, so depth here is scale and nothing else.
-      let depth = dot(standing.get.at - camera.eye, camera.frame.forward)
+      let (eye, frame) = camera.sight
+      let depth = depthAlong(eye, frame.forward, standing.get.at)
       if depth > 0.0: camera.repivotToDepth(depth)
       return
     # Nothing under pointer: same ray carries eye, at camera's own scale, and separation
     #   scales with it exactly as `dolly` scales it.
     let heading = headingThrough(camera, camera.frame, width, height, cursor)
-    let reach = norm(heading)
+    # Length of heading is bulk norm of weightless point it lifts to.
+    let reach = ( |∙ toMultivector(heading))[Basis.scalar]
     if reach <= 0.0: return
     let settled = distanceHeld(camera.distance*factor)
     camera.travelAlong(
@@ -765,8 +767,8 @@ proc dollyAt*(
   camera.dollyToward(factor, anchor.get.at)
   if anchor.get.is_standing:
     # Depth from eye where it now stands, along sight direction zoom left unchanged.
-    let eye = camera.eye
-    let depth = dot(anchor.get.at - eye, camera.frame.forward)
+    let (eye, frame) = camera.sight
+    let depth = depthAlong(eye, frame.forward, anchor.get.at)
     if depth > 0.0: camera.repivotToDepth(depth)
 
 
@@ -801,28 +803,49 @@ proc dollyAtCursor*(
     has_selection, placed)
 
 
-func turnAcross*(
-  camera: var Camera; turn, rise: float; has_selection: bool; holds_roll = false
-) =
-  ## Turn camera by left drag, in whichever way its state reads.
+func turnAcross*(camera: var Camera; turn, rise: float; has_selection: bool) =
+  ## Turn camera by desktop mouse's left drag, in whichever way its state reads.
   ##   Free flight looks: eye stands where it stands, and only sight turns.
   ##   Selection orbits about what is picked.
   ##   `look` and `orbit` take same two arguments with same signs, so one drag feeds
   ##   either verb as selection comes and goes; see `camera.look`.
-  ##   `holds_roll` puts back roll turn would otherwise leave behind.
-  ##     Turning about camera's own axes carries roll round with it, by solid angle drag
-  ##     encloses: loop of 0.3 radians leaves 0.081 behind, which is 4.7 degrees. That is
-  ##     geometry of transport rather than mistake, and no order of two turns escapes it.
-  ##     Asked for by touch alone, which has no roll key beside it, and where finger
-  ##     wanders in curves. Mouse keeps transport as it is, with Q and E to answer it.
-  ##     Roll reader set themselves survives, because reading is restored rather than
-  ##     zeroed. Near pole `rollHeld` reads none and last roll simply stands.
-  let before = if holds_roll: camera.rollHeld else: none(float)
+  ##   Turning about camera's own axes carries roll round with it, by solid angle drag
+  ##   encloses: loop of 0.3 radians leaves 0.081 behind, which is 4.7 degrees. That is
+  ##   geometry of transport rather than mistake, and no order of two turns escapes it.
+  ##   Desktop keeps it, with Q and E to answer it; page's drags do not, see
+  ##   `turnFollowing`.
   if has_selection: camera.orbit(turn, rise) else: camera.look(turn, rise)
-  if before.isNone: return
-  let after = camera.rollHeld
-  if after.isNone: return
-  camera.roll(after.get - before.get)
+
+
+func turnFollowing*(
+  camera: var Camera; before, after: ScreenPosition; width, height: int;
+  has_selection: bool; reach_selection = 0.0
+) =
+  ## Turn camera by page's drag, finger's or mouse's, from pixel it left to pixel it reached.
+  ##   Both turn as turntable does, about world up and level across, so neither leaves roll:
+  ##   touch has no roll key beside it, finger wanders in curves, and page's mouse drags as
+  ##   finger does. Roll reader set by twist or by Q and E survives.
+  ##   Both carry what finger holds with finger, pixel for pixel, and drag that comes back
+  ##   brings camera back. Not rate: no rate matches field of view at every pixel.
+  ##   Free flight holds sky; see `camera.lookCarrying`.
+  ##   Selection holds point on sphere about pivot, of selection's `reach_selection` or
+  ##   more; see `camera.radiusHeld`, `camera.pointHeld` and `camera.orbitCarrying`.
+  ##     Pivot itself never moves under orbit, so point there is nothing to hold.
+  let
+    (eye, frame) = camera.sight
+    left = camera.headingThrough(frame, width, height, before)
+    reached = camera.headingThrough(frame, width, height, after)
+  if not has_selection:
+    camera.lookCarrying(held = left, under = reached)
+    return
+  let
+    radius = camera.radiusHeld(width, height, reach_selection)
+    pivot = eye + camera.distance*frame.forward
+  camera.orbitCarrying(
+    held = pointHeld(eye, pivot, left, radius) - pivot,
+    under = pointHeld(eye, pivot, reached, radius) - pivot,
+    frame = frame, pivot = pivot,
+  )
 
 
 func panAcross*(
@@ -875,6 +898,17 @@ func releaseKeysAll*(interaction: var Interaction) =
   ##   this camera moves forever.
   interaction.keys_held = {}
   interaction.seconds_travelling = 0.0
+
+
+func speedFlying*(interaction: Interaction, camera: Camera): float =
+  ## Read speed free flight carries camera at right now, in units per second.
+  ##   Panel's reading: same cap and same age `driveHeld` steps by, so figure shown is
+  ##   figure flown. Zero while no travel key is held, since age is.
+  let haste = if Key.Shift in interaction.keys_held: FACTOR_HASTE else: 1.0
+  speedTravelling(
+    interaction.seconds_travelling,
+    capTravelling(interaction.depth_pointer, camera.distance, haste),
+  )
 
 
 func driveHeld*(
@@ -972,7 +1006,8 @@ func applyAction*(
   of KeyAction.FrameSelection: discard
   of KeyAction.ViewHome:
     # Return to placement both builds open at, so "home" means same as starting again.
-    camera = initCameraDefault()
+    #   Stance alone: lens is reader's setting, as history's step keeps it.
+    camera = camera.placed(initCameraDefault().stanceOf)
   none(int)
 
 

@@ -13,8 +13,9 @@ book, paper or standard.
 ## Build and test
 
 ```sh
-nim r koch tests curator/audit # this project alone: testament over tests/t*.nim
-nim r koch ci                  # from repository root: every check a pull request runs
+nim r koch test curator/audit             # this project alone: every suite, as one program
+nim r curator/audit/tests/suites/tform.nim # one suite, while you change its module
+nim r koch check                              # every check a pull request runs
 ```
 
 This needs the compiler that the project pins in `audit.nimble`, and git. Atlas and testament
@@ -33,7 +34,8 @@ is shaped as it is.
 
 ## Status
 
-Each check module has its suite under `tests/`, run through testament on the compiler that
-this project pins, and `checker.nim` reports a module without one. The shell steps of
+Each check module has its suite under `tests/suites/`, and `checker.nim` reports a module
+without one. `tests/tsuites.nim` imports every suite, so testament compiles them as one
+program on the compiler that this project pins. The shell steps of
 `ledger.yml` and `watch.yml` have no suite. They are verified by hand through a stub for `gh`,
 as `PROVENANCE.md` records. Unreviewed by a human.

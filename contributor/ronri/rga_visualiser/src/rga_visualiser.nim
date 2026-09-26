@@ -7,13 +7,25 @@
 ##   Facade re-exports coherent surface, so caller writes `import rga_visualiser` rather
 ##   than naming modules it happens to need today (Article I.6).
 ##
-## Order of bootstrapping, by what each module needs before it:
-##   [euclid, objects, projections, format, message, ramp, neighbourhood, starfield,
-##    timings, wording]
-##     -> [boundary, mesh] -> tessellate
-##     -> [camera, scene]
-##     -> [history, orrery, picking, storyboard]
-##     -> [interaction, marker] -> [help, selection] -> framing
+## Order of bootstrapping, by what each module needs before it, one line for each module:
+##   Need nothing here: euclid, format, message, motors, neighbourhood, objects, projections,
+##   ramp, starfield, timings, wording.
+##   [euclid, objects] -> boundary
+##   euclid -> mesh
+##   [boundary, mesh, projections, timings] -> tessellate
+##   [boundary, motors, projections, tessellate] -> camera
+##   [boundary, format, projections, tessellate] -> scene
+##   [camera, scene] -> history
+##   [boundary, camera, euclid, neighbourhood, objects, scene, starfield, tessellate]
+##     -> orrery
+##   [boundary, camera, euclid, scene, tessellate] -> picking
+##   [boundary, scene, tessellate] -> storyboard
+##   [boundary, camera, format, picking, projections, scene, tessellate, wording]
+##     -> interaction
+##   [boundary, camera, picking, tessellate] -> marker
+##   [interaction, scene, wording] -> help
+##   [marker, scene] -> selection
+##   [boundary, camera, picking, scene, selection, tessellate] -> framing
 ##
 ##   |------------------|--------------------------------------------------------------|
 ##   | Module           | Holds                                                        |
@@ -31,6 +43,7 @@
 ##   | `boundary`       | Grid, axes and horizon that frame scene                      |
 ##   | `mesh`           | Records front-end uploads: ribbons, discs, domes, rings      |
 ##   | `tessellate`     | Objects into those records, at drawn extent                  |
+##   | `motors`         | Rigid motions: turn, slide, screw, and their exp and log     |
 ##   | `camera`         | Orbit, dolly, pan, projection, screen placement              |
 ##   | `scene`          | Handles, labels, operations catalogue, save and load           |
 ##   | `history`        | Undo and redo over scene content                             |

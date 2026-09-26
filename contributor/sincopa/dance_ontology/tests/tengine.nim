@@ -1,8 +1,6 @@
 discard """
 action: run
 cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: false
 """
 ## Hold rigid body engine to what this project needs of it, before anything is built on it.
 ##
@@ -12,7 +10,6 @@ joinable: false
 ##     checked rather than assumed.
 ##   Suite drives build that makes library it links (Article IX.6): importing module runs
 ##     `tools/build.nim engine` at compile time, so no machine needs verb run by hand.
-##   Not joinable: it links C archive, which testament's joined binary cannot share.
 
 {.experimental: "strictFuncs".}
 

@@ -2,8 +2,6 @@ discard """
 action: run
 targets: "js"
 cmd: "nim $target --hints:off -d:testing -d:nodejs -d:nimUnittestAbortOnError:on $options $file"
-batchable: true
-joinable: false
 """
 ## Hold prose browser writes to same two rules as prose written into markup.
 ##   Reference and rig viewer build their pages in browser, so no page on disk

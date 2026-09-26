@@ -40,9 +40,9 @@ verb that writes one is run by hand.
 ## Rules
 
 Each rule the drawing was given is quoted here, in the words it arrived in. Each quotation is a copy
-of its entry in `rules.nim`, and `../tests/treadme.nim` holds the two copies the same. Under each is
-the check in `checks.nim` that holds the drawing to it. Where there is none, it says so, or names
-the rule that replaces it. A replaced rule stays in the list, so its number does not move.
+of its entry in `rules.nim`, and `../tests/suites/treadme.nim` holds the two copies the same. Under
+each is the check in `checks.nim` that holds the drawing to it. Where there is none, it says so, or
+names the rule that replaces it. A replaced rule stays in the list, so its number does not move.
 
 ### Rule 1
 

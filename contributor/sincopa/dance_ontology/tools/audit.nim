@@ -8,7 +8,7 @@
 ##       derives, so frame it has no row for and move it has no cell for are carried
 ##       under `*` mark instead of name.
 ##     Cost of comparing by eye: nothing here fails when two drift;
-##       agreement is enforced by `tests/tworkbook.nim`, and this only makes it
+##       agreement is enforced by `tests/suites/tworkbook.nim`, and this only makes it
 ##       readable.
 
 {.experimental: "strictFuncs".}

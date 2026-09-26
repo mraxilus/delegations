@@ -8,25 +8,32 @@
 /* View panel: camera numeric fields, mirroring panel.layoutView exactly. */
 /* ---------------------------------------------------------------------- */
 
+// Motor is value, in grid objects' own coefficients stand in.
+//   Each field commits its own coefficient into live motor, which bridge settles on motion
+//   it names; see `nimSetCameraMotorAt`.
+elementById('cam-motor-name').title = nimWording(Wording.TipViewMotor);
+const fields_motor = buildGradedCoefficientGrid(elementById('cam-motor'), () => '');
 const fields_camera = {
-  azimuth: elementById<HTMLInputElement>('cam-azimuth'),
-  elevation: elementById<HTMLInputElement>('cam-elevation'),
   distance: elementById<HTMLInputElement>('cam-distance'),
   fov: elementById<HTMLInputElement>('cam-fov'),
-  tx: elementById<HTMLInputElement>('cam-pivot-x'),
-  ty: elementById<HTMLInputElement>('cam-pivot-y'),
-  tz: elementById<HTMLInputElement>('cam-pivot-z'),
 };
-// Same sentences window's view section hangs on same fields; pivot's three share one.
-fields_camera.azimuth.title = nimWording(Wording.TipViewAzimuth);
-fields_camera.elevation.title = nimWording(Wording.TipViewElevation);
+// Readings are read off state, and never typed.
+const readings_camera = {
+  azimuth: elementById<HTMLOutputElement>('cam-azimuth'),
+  elevation: elementById<HTMLOutputElement>('cam-elevation'),
+  speed: elementById<HTMLOutputElement>('cam-speed'),
+};
+// Distance shows only with selection, speed only without; see `panel.layoutView`.
+const field_distance = elementById('cam-distance-field');
+const field_speed = elementById('cam-speed-field');
+// Same sentences window's view section hangs on same fields.
+readings_camera.azimuth.title = nimWording(Wording.TipViewAzimuth);
+readings_camera.elevation.title = nimWording(Wording.TipViewElevation);
+readings_camera.speed.title = nimWording(Wording.TipViewSpeed);
 fields_camera.distance.title = nimWording(Wording.TipViewDistance);
 fields_camera.fov.title = nimWording(Wording.TipViewLens);
-for (const field of [fields_camera.tx, fields_camera.ty, fields_camera.tz]) {
-  field.title = nimWording(Wording.TipViewPivot);
-}
 let are_fields_camera_focused = false;
-Object.values(fields_camera).forEach((element) => {
+[...Object.values(fields_camera), ...fields_motor].forEach((element) => {
   element.addEventListener('focus', () => { are_fields_camera_focused = true; });
   element.addEventListener('blur', () => { are_fields_camera_focused = false; });
 });
@@ -38,47 +45,57 @@ function commitCameraField(
 ) {
   field.addEventListener('change', () => apply(parseFloat(field.value) || fallback));
 }
-commitCameraField(fields_camera.azimuth, nimSetCameraAzimuth, 0);
-commitCameraField(fields_camera.elevation, nimSetCameraElevation, 0);
 commitCameraField(fields_camera.distance, nimSetCameraDistance, 0.1);
 commitCameraField(fields_camera.fov, nimSetCameraFov, 45);
-
-function commitPivot() {
-  nimSetCameraPivot(
-    parseFloat(fields_camera.tx.value) || 0,
-    parseFloat(fields_camera.ty.value) || 0,
-    parseFloat(fields_camera.tz.value) || 0,
-  );
-}
-fields_camera.tx.addEventListener('change', commitPivot);
-fields_camera.ty.addEventListener('change', commitPivot);
-fields_camera.tz.addEventListener('change', commitPivot);
+// Coefficient left empty reads as zero, as construct grid's own do.
+//   Field is rewritten from motor at once, so value settled on shows where typed one stood.
+fields_motor.forEach((field, basis) => {
+  field.addEventListener('change', () => {
+    nimSetCameraMotorAt(basis, parseFloat(field.value) || 0);
+    motor_written.fill(NaN);
+    writeMotorFields();
+  });
+});
 
 // Each field's last written value, so still camera formats and writes nothing.
-//   Seven `nimFormatNumber` calls and seven input writes ran five times second for
-//   numbers that had not moved. `NaN` before first tick: equal to nothing, so first
-//   comparison always writes.
-const camera_written = {
-  azimuth: NaN, elevation: NaN, distance: NaN, fov: NaN, tx: NaN, ty: NaN, tz: NaN,
-};
+//   Formatting and input writes ran five times second for numbers that had not moved.
+//   `NaN` before first tick: equal to nothing, so first comparison always writes.
+const camera_written = { distance: NaN, fov: NaN };
+const motor_written = new Array<number>(fields_motor.length).fill(NaN);
+const readings_written = { azimuth: '', elevation: '', speed: '' };
 function writeCameraField(name: keyof typeof camera_written, value: number) {
   if (camera_written[name] === value) return;
   camera_written[name] = value;
-  // `nimFormatNumber`, not `toFixed` here: angle of 1.05 should read `1.05` rather.
-  //   than `1.050`, and desktop draws every one of these with same widget.
+  // `nimFormatNumber`, not `toFixed` here: 1.05 should read `1.05` rather than `1.050`,
+  //   and desktop draws every one of these with same widget.
   fields_camera[name].value = nimFormatNumber(value);
+}
+function writeMotorFields() {
+  const motor = nimCameraMotor();
+  fields_motor.forEach((field, basis) => {
+    const value = motor[basis] ?? 0;
+    if (motor_written[basis] === value) return;
+    motor_written[basis] = value;
+    field.value = nimFormatNumber(value);
+  });
+}
+function writeReading(name: keyof typeof readings_written, text: string) {
+  if (readings_written[name] === text) return;
+  readings_written[name] = text;
+  readings_camera[name].value = text;
 }
 
 function refreshCameraFields() {
+  const has_selection = nimSelectionCount() > 0;
+  field_distance.hidden = !has_selection;
+  field_speed.hidden = has_selection;
+  writeReading('azimuth', nimCameraAzimuthReading());
+  writeReading('elevation', nimCameraElevationReading());
+  if (!has_selection) writeReading('speed', nimCameraSpeedReading());
   if (are_fields_camera_focused) return; // Don't fight value user is mid-typing.
-  writeCameraField('azimuth', nimCameraAzimuth());
-  writeCameraField('elevation', nimCameraElevation());
+  writeMotorFields();
   writeCameraField('distance', nimCameraDistance());
   writeCameraField('fov', nimCameraFov());
-  const pivot = nimCameraPivot();
-  writeCameraField('tx', pivot[0] ?? 0);
-  writeCameraField('ty', pivot[1] ?? 0);
-  writeCameraField('tz', pivot[2] ?? 0);
 }
 
 // **Asked for here, taken inside frame that draws it.** Context is created without.

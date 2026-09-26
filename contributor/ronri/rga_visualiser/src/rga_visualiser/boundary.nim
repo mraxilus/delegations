@@ -4,8 +4,14 @@
 ## and nowhere else.
 ##   Reader asking where project leaves algebra opens one file.
 ##   Reader adding conversion has one place to put it.
-## Quantities are read through library's own operators rather than out of coefficient
-## table, so renderer exercises algebra it exists to show.
+## Geometry goes through library's own operators, so renderer exercises algebra it exists to
+## show: support, attitude, normal, every join and meet. Crossing itself goes through
+## coefficient table, which is what crossing is: lift writes coefficients, and read-out
+## reads them.
+##   Lift writes into one result, not sum of one blade for each term. On JS each blade and
+##   each sum allocates 16-float array outside V8's own heap, about 1 µs apiece, so motor's
+##   lift made 23 where it now makes one (read in emitted JS). Suite holds each lift equal
+##   to its sum.
 ##
 ##   |-----------------|--------------|----------------------------------------------|
 ##   | Identifier      | Lengyel      | Meaning                                      |
@@ -39,13 +45,18 @@ export euclid, objects
 
 func toMultivector*(p: Position): Multivector =
   ## Convert Euclidean position to unit-weight grade-1 point.
-  p.x.e1 + p.y.e2 + p.z.e3 + 1.0.e4
+  result[Basis.E1] = p.x
+  result[Basis.E2] = p.y
+  result[Basis.E3] = p.z
+  result[Basis.E4] = 1.0
 
 
 func toMultivector*(d: Direction): Multivector =
   ## Convert Euclidean direction to grade-1 horizon point.
   ##   Weight is 0, so point stands for direction rather than place.
-  d.x.e1 + d.y.e2 + d.z.e3
+  result[Basis.E1] = d.x
+  result[Basis.E2] = d.y
+  result[Basis.E3] = d.z
 
 
 type Motor* = object ## Define rigid motion by its eight coefficients of even grade.
@@ -74,9 +85,14 @@ type Motor* = object ## Define rigid motion by its eight coefficients of even gr
 
 func toMultivector*(motor: Motor): Multivector =
   ## Lift rigid motion into even-grade multivector library operates on.
-  motor.turn_x.e41 + motor.turn_y.e42 + motor.turn_z.e43 +
-    motor.slide_x.e23 + motor.slide_y.e31 + motor.slide_z.e12 +
-    motor.antiscalar.e1234 + initElement(Basis.scalar, motor.scalar)
+  result[Basis.E41] = motor.turn_x
+  result[Basis.E42] = motor.turn_y
+  result[Basis.E43] = motor.turn_z
+  result[Basis.E23] = motor.slide_x
+  result[Basis.E31] = motor.slide_y
+  result[Basis.E12] = motor.slide_z
+  result[Basis.E1234] = motor.antiscalar
+  result[Basis.scalar] = motor.scalar
 
 
 func motorSliding*(offset: Multivector): Multivector =
@@ -87,8 +103,10 @@ func motorSliding*(offset: Multivector): Multivector =
   ##   Moment alone, at half offset negated, beside unit weight. Such bivector antisquares
   ##   to zero, so its exponential stops at two terms, and this *is* that motor rather than
   ##   bivector to raise: see `motors.exp`.
-  (-0.5*offset[Basis.E1]).e23 + (-0.5*offset[Basis.E2]).e31 +
-    (-0.5*offset[Basis.E3]).e12 + 1.0.e1234
+  result[Basis.E23] = -0.5*offset[Basis.E1]
+  result[Basis.E31] = -0.5*offset[Basis.E2]
+  result[Basis.E12] = -0.5*offset[Basis.E3]
+  result[Basis.E1234] = 1.0
 
 
 func motorOf*(m: Multivector): Motor =

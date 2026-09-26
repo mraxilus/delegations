@@ -126,7 +126,7 @@ func markerLen(line: string): int =
 
 func gathered(fragments: openArray[string]): string =
   ## Lines of one block as one text, each backticked span one word, since reader takes
-  ## `nim r koch ci` as one name.
+  ## `nim r koch check` as one name.
   var inSpan = false
   var text = ""
   for c in fragments.join(" "):

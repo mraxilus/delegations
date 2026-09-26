@@ -156,18 +156,22 @@ Escalate only on need.
 
 - Put a testament matrix header on the stub for each configuration. Each stub does `include`
   of one shared suite. Leave `-r` out of `cmd`, because testament runs the binary itself,
-  and `-r` then runs every test twice:
+  and `-r` then runs every test twice. Leave out `batchable` and `joinable`, because koch
+  runs `testament pattern`, which reads neither:
 
   ```nim
   discard """
   action: run
   cmd: "nim c --hints:on -d:testing -d:nimUnittestAbortOnError:on $options $file"
   matrix: "-d:pga.dimensions=3 -d:pga.is_conformal=false"
-  batchable: true
-  joinable: true
   """
   include "../suites.nim"
   ```
+
+- A project with one configuration and many suite modules keeps them in `tests/suites/`. One
+  stub imports each of them, so the compiler reads the standard library once and not once for
+  each suite. That stub leaves out `-d:nimUnittestAbortOnError:on`, so that every failure
+  shows in one run. `curator/audit/tests/tsuites.nim` is the worked example.
 
 - Use `std/unittest` suites and `check`, with `randomize(0)`, and a preallocated sample pool
   that `lent` iterators serve:

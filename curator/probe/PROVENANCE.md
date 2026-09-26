@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 1abefadbf5e9d179 |
+| Rules   | be54792c5171ff9d |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It is domain-neutral, so that
@@ -46,7 +46,7 @@ and positions inside the ring.
 
 **One testament stub with a matrix header**, with suites named after the subject of the
 header table, because no external authority exists. The matrix runs every test in each ring
-size. Verified by `tprobe.nim`, and `nim r koch tests curator/probe` lists each row.
+size. Verified by `tprobe.nim`, and `nim r koch test curator/probe` lists each row.
 
 ## Toolchain
 

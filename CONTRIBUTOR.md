@@ -55,7 +55,7 @@ after somebody breaks it. So you carry them as a list in the conversation, where
 sees where you are. This is the only copy, and `CURATOR.md` binds a curator to the same seven.
 
 1. **Role line on every issue and comment**, and the label on every issue, **copied and never
-   composed** (Boundaries, Say which role you are). The `role` job holds a pull request to
+   composed** (Boundaries, Say which role you are). The `check-role` job holds a pull request to
    both, against the role that its branch names. An issue has no branch, so its label is a
    judgement. `ledger.yml` reads only whether the body opens with a role, and whether the
    issue or pull request carries any label. No check reads a comment at all.
@@ -91,8 +91,8 @@ and that reader is the enforcement.
 
 ## Boundaries
 
-- **Scope.** Only paths under `contributor/<domain>/<project>/`. The CI job `scope` fails on
-  any other path. The root files, `koch.nim`, `curator/`, the root and domain READMEs, and
+- **Scope.** Only paths under `contributor/<domain>/<project>/`. The CI job `check-scope` fails
+  on any other path. The root files, `koch.nim`, `curator/`, the root and domain READMEs, and
   other projects are not yours, even to fix a typo. The Architect may merge a red check
   deliberately, but never count on it.
 - **Blocked by a rule or a check.** Do not work around it, and do not edit the rule. **Open
@@ -103,7 +103,7 @@ and that reader is the enforcement.
   faster, and nothing depends on it.
 - **The answer arrives as a changed rule or check**, for you to apply, and never as an edit
   to your source. A curator branch may write only your `README.md`, `PROVENANCE.md` and
-  `GLOSSARY.md`, and the `scope` job holds it to that.
+  `GLOSSARY.md`, and the `check-scope` job holds it to that.
 - **When a curator raises something.** It arrives as an issue labelled with your role, and it
   carries the finding, its evidence, why it matters, and what it costs to leave. Weigh it as
   your own design question, and answer on the issue. You and the Architect settle it, and
@@ -163,14 +163,14 @@ git checkout -b contributor/<domain>/<project>/<name> origin/main
 - Exactly four segments, which mirror the path. `<domain>` is a folder that the Domains
   table of `README.md` names. `<project>` matches `[a-z][a-z0-9_]*`, and `<name>` matches
   `[a-z0-9][a-z0-9_-]*`. A branch that a tool named for you (`claude/...`) is outside
-  the grammar and fails `scope`, so push to a branch inside it.
+  the grammar and fails `check-scope`, so push to a branch inside it.
 - Conventional Commits, with the project folder as the scope: `feat(<project>): add parser`.
   The summary is lowercase and imperative, with no final period. The types are `build`,
   `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `style`, `test`. One
   intention to a commit. An update to `PROVENANCE.md` and `GLOSSARY.md` travels in its own
   `docs(<project>)` commit, in the same delivery as the change it describes.
 - Never rewrite pushed history. The log is part of the document (Article XI.2).
-- `nim r koch ci` at the repository root passes on the exact commit you are about to push.
+- `nim r koch check` at the repository root passes on the exact commit you are about to push.
   Only then push with `git push -u origin <branch>`, and open a draft pull request from the
   template. Never merge, and never ask for a merge.
 
@@ -191,7 +191,7 @@ Before any code:
    the folder, with an exact pin (see Toolchain).
 6. Create `src/` and `tests/`, with at least one test, in the testament stub shape of
    `STYLE.md` §6. `curator/probe/tests/tprobe.nim` is a worked example with a matrix.
-   `nim r koch tests contributor/<domain>/<project>` runs your tests alone.
+   `nim r koch test contributor/<domain>/<project>` runs your tests alone.
 
 The directories inside your project are yours. Nest `src/`, `app/`, `design/` or anything
 else that the work wants. Koch runs your tests and reaches three verbs of your own, and holds
@@ -204,9 +204,10 @@ logic in the virtual machine of the compiler. Run it from the project directory,
 `nim r tools/build.nim <command>`.
 
 The verbs that koch reaches are `types`, `drive` and `system`, and each one is described
-below. Koch learns whether your project carries `drive` or `system` by a read of the dispatch
-of the driver itself. It runs `types` for every project that carries `package.json` beside
-its lock. A verb spelled any other way is one that the runner passes by in silence.
+below. Koch runs them as `koch check-types`, `koch drive` and `koch list-packages`. Koch
+learns whether your project carries `drive` or `system` by a read of the dispatch of the
+driver itself. It runs `types` for every project that carries `package.json` beside its
+lock. A verb spelled any other way is one that the runner passes by in silence.
 
 ## Toolchain
 
@@ -278,9 +279,9 @@ API of a test driver.
   unbreakable tokens. Never reformat one.
 - **`web` builds it, `types` type-checks it, and `drive` drives it**, as three verbs of
   `tools/build.nim`. To carry `package.json` beside its lock enrols your project in
-  `koch types`, which runs on the compiler that builds koch. A type check compiles no project
-  code. To dispatch `drive` enrols it in `koch driven`, which runs on your own pin, because a
-  build of the page does compile project code.
+  `koch check-types`, which runs on the compiler that builds koch. A type check compiles no
+  project code. To dispatch `drive` enrols it in `koch drive`, which runs on your own pin,
+  because a build of the page does compile project code.
 - **`types` derives whatever your scripts read**, type-checks every configuration, and stops
   there: no browser, no fetched asset, and nothing that needs a display. `web` and `drive`
   call `types` rather than repeat it, and `drive` fetches and builds everything it needs
@@ -297,15 +298,15 @@ long URL or another single token, and nothing else. Everything that a build emit
 artifact under `build/`, and is never committed. Generated markup is one long line, and fails
 the width rule on its own.
 
-Binaries are never committed, and neither are fonts, images, or any file that the audit
-cannot read. Every such file fetched at build time is declared once, for the store of the
-repository (`curator/audit/src/assets.nim`: name, address, digest). `koch assets <file>`
-fetches it into `~/.cache/koch/assets`, checks it, and prints its path; `koch assets` alone
-prints every row that it declares. Your `tools/build.nim` names the files it wants and copies
-them into `build/`, and `PROVENANCE.md` records the origin, version and licence of each one.
-A file that `assets.nim` does not declare is a process-change issue for the curator, who
-adds the row. A presentation target ships the faces that Article X.8 names, inlined, and the store
-serves them.
+Binaries are never committed, and neither are fonts, images, or any file that the audit cannot
+read. Every such file fetched at build time is declared once, for the store of the repository
+(`curator/audit/src/assets.nim`: name, address, digest). `koch fetch-assets <file>` fetches it
+into `~/.cache/koch/assets`, checks it, and prints its path; `koch fetch-assets` alone prints
+every row that it declares. Your `tools/build.nim` names the files it wants and copies them
+into `build/`, and `PROVENANCE.md` records the origin, version and licence of each one. A file
+that `assets.nim` does not declare is a process-change issue for the curator, who adds the row.
+A presentation target ships the faces that Article X.8 names, inlined, and the store serves
+them.
 
 ## Tests are paramount
 
@@ -313,9 +314,9 @@ serves them.
   chapters, and every assertion cites it in a trailing comment.
 - **Regression rule.** Every mistake found, by anyone, earns a test that fails before the fix
   and passes after it, committed first: `test(<project>): cover <mistake>`, then
-  `fix(<project>): <fix>`. Never delete, weaken or skip a test to get green. The `commits`
-  job enforces it: the commit immediately before every `fix` is a `test` of the same scope.
-  One test answers one fix, with nothing between them, or the `fix` is a finding.
+  `fix(<project>): <fix>`. Never delete, weaken or skip a test to get green. The
+  `check-commits` job enforces it: the commit immediately before every `fix` is a `test` of the
+  same scope. One test answers one fix, with nothing between them, or the `fix` is a finding.
 - **A change that needs no new test is not a `fix`.** It is a `refactor`, a `chore` or a
   `docs`, and to say so is honest rather than evasive.
 - Test laws, and not examples. Enumerate a small domain exhaustively, and sample a large one
@@ -332,28 +333,29 @@ serves them.
   deterministic, say what varies and how often, measured. The Architect then decides whether
   the check earns its place.
 - `koch` runs testament over `tests/t*.nim` in your project directory, and there is no build
-  file for each project. `nim r koch tree` is the static audit alone.
-  `nim r koch tests contributor/<domain>/<project>` restores the dependencies of one project
-  and runs its suites.
-  `nim r koch ci` is the one to run before a push.
+  file for each project. `nim r koch check-files` is the static audit alone.
+  `nim r koch test contributor/<domain>/<project>` fetches the dependencies of one project
+  and runs its suites. `./koch` alone lists every verb with its effect.
+  `nim r koch check` is the one to run before a push.
 
 ## Before you open a pull request
 
-- `nim r koch ci` at the repository root passes on the exact commit you push. It fetches
-  `origin/main`, then runs what CI runs: the whole-tree static pass and `types`. It then runs
-  the suites and driven checks of every project whose code changed, which is yours, and
-  after them `scope`, `commits` and `base`. A pull request opened before it passes breaks
-  the process, whatever CI later says: the runner confirms, and it never discovers. Run it
-  again before every later push to the same pull request.
+- `nim r koch check` at the repository root passes on the exact commit you push. It fetches
+  `origin/main`, then runs what CI runs. First come the checks that cost about a second, and
+  a finding there stops the run: `check-files`, `check-scope`, `check-commits` and
+  `check-drift`. Then come `check-types`, and the suites and driven checks of every project
+  whose code changed, which is yours. A pull request opened before it passes breaks the
+  process, whatever CI later says: the runner confirms, and it never discovers. Run it again
+  before every later push.
 - **A change that touches only your three records compiles nothing**, and the static pass
   still checks every stamp. A change that a curator makes to the checker compiles the
   project of the checker, and never yours. The push to `main` and the weekly run compile what
   changed as well, so your suites run when your code moves.
-- **`base` fails where the rules or the checker moved on `main` after you branched.** Your
-  stamp then claims a charter that no longer exists, and a merge would redden `main`. Merge
-  `origin/main`, read the diff of the charter, re-audit your project against each change,
-  re-stamp, and push. Only the charter and the checker count, so another project's
-  code that moves underneath you will not stop you.
+- **`check-drift` fails where the rules or the checker moved on `main` after you branched.**
+  Your stamp then claims a charter that no longer exists, and a merge would redden `main`.
+  Merge `origin/main`, read the diff of the charter, re-audit your project against each change,
+  re-stamp, and push. Only the charter and the checker count, so another project's code that
+  moves underneath you will not stop you.
 - `PROVENANCE.md` describes the design as it now is, with each claim marked verified or
   assumed, and each figure carrying its pair. Nothing narrates. `GLOSSARY.md` holds every
   term that resolved.
@@ -379,7 +381,7 @@ serves them.
   another commit.** Ready means CI green on the runner, every review comment answered, and
   nothing you still intend to change. A draft says "not yet" in the one place the Architect
   looks, and an open pull request says "merge me". Local green is not the signal, because
-  `koch ci` and the runner disagree whenever the machines differ, which is what the runner is
+  `koch check` and the runner disagree whenever the machines differ, which is what the runner is
   for. A record entry still to write, a figure under measurement, or a fix you just found
   each sends it back to draft. Mark it ready again after.
 - **The Architect merges what is green and ready**, promptly and correctly. Intent that

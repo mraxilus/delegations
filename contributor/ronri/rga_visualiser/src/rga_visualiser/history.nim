@@ -8,9 +8,13 @@
 ##     Fresh edit truncates redo-able future before appending.
 ##   `handleOf` is only place timeline position becomes array index.
 ##   Cost: `CAPACITY_HISTORY` whole scenes of fixed reservation; see that constant.
-## Camera rides along, never moves timeline by itself.
+## Camera's stance rides along, never moves timeline by itself.
 ##   Each step records where camera stood when its edit was made, so undoing construction
 ##   puts view back where it was made from.
+##   Stance alone, never whole camera value: lens is reader's setting, and speed is no part
+##   of camera at all.
+## Selection rides across step where caller hands it over, kept wherever it names same
+## object; see `keepNaming` in `selection.nim`.
 ##   Step's camera belongs to *edit*, not state: stepping off step and stepping back onto
 ##   it restore that one camera.
 ##     Restoring camera of state arrived at hands back view *previous* edit was made from.
@@ -30,7 +34,7 @@
 
 import std/strformat
 
-import ./[camera, scene]
+import ./[camera, scene, selection]
 
 
 
@@ -59,8 +63,8 @@ static:
 type
   Step* = object ## Define one committed edit: scene it produced, and where camera stood.
     scene*: Scene
-    camera*: Camera ## Where view stood as *this* step's edit was made.
-      ## Camera to restore in either direction across this step, not on arriving at its
+    stance*: CameraStance ## Where view stood as *this* step's edit was made.
+      ## Stance to restore in either direction across this step, not on arriving at its
       ## scene. First entry's is never restored: no edit leads into it.
 
   History* = object ## Define fixed-capacity timeline of steps, with cursor onto live one.
@@ -94,9 +98,9 @@ func initHistory*(history: var History, scene: Scene, camera: Camera) =
   ##   Fills timeline caller holds, field by field.
   ##     Returning `History` deep-copies every retained scene on JS backend, and `Step`
   ##     literal copies scene twice; caller owning storage is Art. IV.6.
-  ##   `camera` completes entry rather than being read back; see `Step.camera`.
+  ##   `camera` completes entry rather than being read back; see `Step.stance`.
   history.entries[0].scene = scene
-  history.entries[0].camera = camera
+  history.entries[0].stance = camera.stanceOf
   history.first = 0
   history.count = 1
   history.cursor = 0
@@ -115,7 +119,7 @@ func record*(history: var History, scene: Scene, camera: Camera) =
   # Copy scene once, field by field; see `initHistory`.
   let handle = history.handleOf(history.cursor)
   history.entries[handle].scene = scene
-  history.entries[handle].camera = camera
+  history.entries[handle].stance = camera.stanceOf
   history.count = history.cursor + 1
 
 
@@ -135,15 +139,13 @@ func undo*(history: var History, scene: var Scene, camera: var Camera): bool
   ##   Scene and camera come from *different* entries on purpose.
   ##     Scene is earlier state; camera belongs to step being stepped off, view whatever
   ##     vanished was last visible in.
-  ##   Caller holding camera tween abandons it after this, or standing aim carries view
-  ##   straight back off restored placement.
+  ##   Caller holding camera tween has it adopt next aim as delivered, or standing aim
+  ##   carries view straight back off restored placement; see `CameraTween.adoptNext`.
   ##   Stance alone crosses, never whole camera value.
   ##     Lens is reader's setting, and `camera.CameraStance` says nothing aiming camera may
   ##     rewrite it. Whole-value assignment handed back lens of step arrived at.
   if not history.canUndo: return false
-  camera = camera.placed(
-    history.entries[history.handleOf(history.cursor)].camera.stanceOf
-  )
+  camera = camera.placed(history.entries[history.handleOf(history.cursor)].stance)
   history.cursor.dec
   # Restore through `restoreFrom`, never assignment: revision must pass every one drawn.
   scene.restoreFrom(history.entries[history.handleOf(history.cursor)].scene)
@@ -160,7 +162,24 @@ func redo*(history: var History, scene: var Scene, camera: var Camera): bool
   if not history.canRedo: return false
   history.cursor.inc
   scene.restoreFrom(history.entries[history.handleOf(history.cursor)].scene)
-  camera = camera.placed(
-    history.entries[history.handleOf(history.cursor)].camera.stanceOf
-  )
+  camera = camera.placed(history.entries[history.handleOf(history.cursor)].stance)
   true
+
+
+func undo*(
+  history: var History; scene: var Scene; camera: var Camera; picked: var Selection
+): bool {.discardable.} =
+  ## Undo, keeping every pick that still names object it named.
+  ##   Entry left is live scene as it stood, so it says what each pick named.
+  let left = history.handleOf(history.cursor)
+  result = history.undo(scene, camera)
+  if result: picked.keepNaming(history.entries[left].scene, scene)
+
+
+func redo*(
+  history: var History; scene: var Scene; camera: var Camera; picked: var Selection
+): bool {.discardable.} =
+  ## Redo, keeping every pick that still names object it named; see `undo`.
+  let left = history.handleOf(history.cursor)
+  result = history.redo(scene, camera)
+  if result: picked.keepNaming(history.entries[left].scene, scene)

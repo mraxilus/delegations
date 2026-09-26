@@ -57,7 +57,7 @@ func diaryReference*(line: string): string =
   ""
 
 
-func checkDiary*(path, source: string): seq[Finding] =
+func checkDiary(path, source: string): seq[Finding] =
   ## Report prose line of prompt naming date, issue, pull request or run.
   let lines = source.fencedOut.splitLines
   for i, line in lines:
@@ -70,7 +70,7 @@ func checkDiary*(path, source: string): seq[Finding] =
       )
 
 
-func checkPromptSize*(path, source: string): seq[Finding] =
+func checkPromptSize(path, source: string): seq[Finding] =
   ## Report prompt over `PROMPT_BYTES`.
   if source.len > PROMPT_BYTES:
     result.add finding(

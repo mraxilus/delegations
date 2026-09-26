@@ -257,6 +257,126 @@ export async function drivePinch(page: Page, cdp: CDPSession): Promise<void> {
   );
 }
 
+/** Read whether finger landing at `at` would turn camera rather than start construction.
+ *
+ *  Asks same question press asks, through same two bridge calls, before any finger lands:
+ *  press over object would build rather than turn, and check would then read nothing.
+ */
+async function isOpenSky(page: Page, at: Finger): Promise<boolean> {
+  return page.evaluate(({ x, y }) => {
+    nimUpdateCursor(x, y);
+    nimUpdateHover(window.innerWidth, window.innerHeight);
+    return !nimCanTouchConstruct();
+  }, at);
+}
+
+/** Drive one finger's turn as turntable, which follows finger and passes over top.
+ *
+ *  Sideways swipe with nothing picked is where turning about camera's own axes, with roll
+ *  put back after, sank sight: each step tipped it down and roll put back only horizon.
+ *  Free aim now carries sky under finger, one for one, so swipe back undoes swipe.
+ *  Downward drag with object picked climbs past straight down onto far side, which is
+ *  what bounded turntable refused.
+ */
+export async function driveFingerTurntable(page: Page, cdp: CDPSession): Promise<void> {
+  await page.keyboard.press('Home');
+  await settleCamera(page);
+  await page.evaluate(() => nimSelectClear());
+  await settleCamera(page);
+
+  const sky = { x: 160, y: 170 };
+  if (!(await isOpenSky(page, sky))) {
+    report('a finger starts its turn on open sky', false, `(${sky.x}, ${sky.y}) is not sky`);
+    return;
+  }
+  // Free aim carries sky under finger with it, so drag that comes back brings sight back.
+  //   Rate turned sight by angle screen does not show, and drift of its steps stayed.
+  const standing = await readCamera(page);
+  const level = await page.evaluate(() => nimCameraElevation());
+  await dragFinger(page, cdp, [sky.x, sky.y], [sky.x + 600, sky.y]);
+  const swung = await readCamera(page);
+  await dragFinger(page, cdp, [sky.x + 600, sky.y], [sky.x, sky.y]);
+  const back = await readCamera(page);
+  const level_back = await page.evaluate(() => nimCameraElevation());
+  report(
+    'a finger swiped away and back turns the sight and brings it back',
+    Math.abs(swung.azimuth - standing.azimuth) > 0.3 &&
+      Math.abs(back.azimuth - standing.azimuth) < 1e-5 && Math.abs(level_back - level) < 1e-5 &&
+      spanOf(standing.eye, back.eye) < 1e-6,
+    `azimuth ${standing.azimuth.toFixed(4)} -> ${swung.azimuth.toFixed(4)} -> ` +
+      `${back.azimuth.toFixed(4)}, elevation ${level.toFixed(6)} -> ${level_back.toFixed(6)}`,
+  );
+
+  // Picture follows finger one for one with nothing picked: swipe right and down carries
+  //   object beside finger right and down by as much. Mouse aims instead.
+  //   Finger lands 40 px left of object, which is nearest open sky reaches it, so what it
+  //   carries and what is read stand close enough on screen to move alike.
+  await page.keyboard.press('Home');
+  await settleCamera(page);
+  const beside = await page.evaluate(() => nimSceneHandles()[0] ?? -1);
+  const seenBeside = async (): Promise<number[]> => page.evaluate((one) => Array.from(
+    nimAnchorScreen(one, window.innerWidth, window.innerHeight),
+  ), beside);
+  const seen_before = await seenBeside();
+  const landing = { x: (seen_before[0] ?? 0) - 40, y: seen_before[1] ?? 0 };
+  if (!(await isOpenSky(page, landing))) {
+    report('a finger lands on open sky beside an object', false, 'no sky 40 px left of it');
+    return;
+  }
+  await dragFinger(page, cdp, [landing.x, landing.y], [landing.x + 60, landing.y + 40]);
+  const seen_after = await seenBeside();
+  const across = (seen_after[0] ?? 0) - (seen_before[0] ?? 0);
+  const down = (seen_after[1] ?? 0) - (seen_before[1] ?? 0);
+  report(
+    'and the picture follows a finger with nothing picked, one for one',
+    Math.abs(across / 60 - 1) < 0.05 && Math.abs(down / 40 - 1) < 0.05,
+    `object beside finger moved ${across.toFixed(1)} px across and ${down.toFixed(1)} px ` +
+      'down, for a finger moved 60 and 40',
+  );
+
+  // Picked object anchors orbit, and ease has to finish before drag reads anything.
+  await page.keyboard.press('Home');
+  await settleCamera(page);
+  const handle = await page.evaluate(() => nimSceneHandles()[1] ?? -1);
+  if (handle < 0) {
+    report('the scene holds an object to orbit', false, 'no second object');
+    return;
+  }
+  await page.evaluate((one) => nimSelectOnly(one), handle);
+  await settleCamera(page);
+  // Finger holds point on sphere about pivot, so it lands just above pivot, on open sky,
+  //   and drags down through middle; two such drags climb past straight down.
+  const middle = await page.evaluate((one) => Array.from(
+    nimAnchorScreen(one, window.innerWidth, window.innerHeight),
+  ), handle);
+  const above = { x: middle[0] ?? 0, y: (middle[1] ?? 0) - 40 };
+  const before = await readCamera(page);
+  for (let drag = 0; drag < 2; drag += 1) {
+    if (!(await isOpenSky(page, above))) {
+      report('a finger starts its orbit on open sky', false, `(${above.x}, ${above.y}) is not sky`);
+      await page.evaluate(() => nimSelectClear());
+      return;
+    }
+    await dragFinger(page, cdp, [above.x, above.y], [above.x, above.y + 240]);
+  }
+  const after = await readCamera(page);
+  const outward = (camera: typeof before): number[] => [
+    (camera.eye[0] ?? 0) - (camera.pivot[0] ?? 0), (camera.eye[1] ?? 0) - (camera.pivot[1] ?? 0),
+  ];
+  const [was, now_at] = [outward(before), outward(after)];
+  const facing = (was[0] ?? 0) * (now_at[0] ?? 0) + (was[1] ?? 0) * (now_at[1] ?? 0);
+  report(
+    'a finger dragged down orbits over the top and onto the far side',
+    facing < 0 && spanOf(before.pivot, after.pivot) < 1e-6 &&
+      Math.abs(after.distance - before.distance) < 1e-6,
+    `eye's level offset turned ${facing < 0 ? 'round' : 'back'}, ` +
+      `pivot moved ${spanOf(before.pivot, after.pivot).toFixed(6)}`,
+  );
+  await page.evaluate(() => nimSelectClear());
+  await page.keyboard.press('Home');
+  await settleCamera(page);
+}
+
 /** Drive long press and tap, which is how finger selects. */
 export async function driveTouchSelect(page: Page, cdp: CDPSession): Promise<void> {
   await page.keyboard.press('Home');

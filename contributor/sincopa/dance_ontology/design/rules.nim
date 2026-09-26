@@ -3,7 +3,7 @@
 ##   This module is authority workbench replicates: README quotes each
 ##     entry, and checks cite by number.
 ##     README's quotations are held to this word for word by
-##       `tests/treadme.nim`, so that copy cannot drift.  Checks' printed
+##       `tests/suites/treadme.nim`, so that copy cannot drift.  Checks' printed
 ##       lines are not: they are worded for what was measured, not for
 ##       rule's own phrasing, and rewording them to quote this ledger
 ##       would change what every build prints.

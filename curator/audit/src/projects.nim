@@ -12,7 +12,9 @@
 ##   Testament and Atlas come from same `bin` as compiler, since each Nim ships its own and
 ##     Atlas records compiler it ran under; mixing them reports environment mismatch.
 ##
-##   Cost: projects run serially; parallelism waits until it costs minutes, unmeasured.
+##   Cost: projects and their stubs run serially. One testament per stub, four at once, cut
+##     `dance_ontology` less `trigid` from 52 s to 17 s; not adopted, since concurrent runs
+##     share `testresults/` and interleave output, and slowest stub bounds project anyway.
 ##   Cost: project in other language needs its own runner arm here (none exists yet).
 
 {.experimental: "strictFuncs".}
@@ -34,14 +36,14 @@ const
     ## Verb printing system packages project needs, one bare name per line, for caller to
     ## install. Named here and in CONTRIBUTOR.md, "System dependencies".
   KOCH_SYSTEM* = [
-    ("git", "tree is what git lists, and `ci` fetches base to compare against"),
+    ("git", "tree is what git lists, and `check` fetches base to compare against"),
     ("curl", "compiler pin nothing on machine serves is downloaded"),
     ("tar", "that download is archive, and unpacking it is what makes it toolchain"),
     ("coreutils", "`sha256sum` checking it against digest published beside it"),
   ]
     ## System packages koch itself needs, whatever any project declares. Same shape rule asks
     ## of every project, kept by driver that enforces it: declaration is data carrying its
-    ## reason, and `koch system` prints it (repository issue 78).
+    ## reason, and `koch list-packages` prints it.
     ##   Nim is not here: it is toolchain koch runs under rather than package machine installs,
     ##   and `compilers.nim` resolves each pin itself. npm is not here either -- it is needed
     ##   where project carries node manifest, so it belongs to that project rather than to
@@ -61,8 +63,8 @@ func toolOf*(bin, tool: string): string =
 
 proc toolIn*(bin, tool: string): string =
   ## Read program to run for tool, falling back to PATH when toolchain carries none.
-  ##   Source build carries whatever `koch tools` produced, and that set moves between
-  ##   Nim versions; naming absent file would raise rather than report, and PATH tool
+  ##   Source build carries whatever tools Nim's own `koch` produced, and that set moves
+  ##   between Nim versions; naming absent file would raise rather than report, and PATH tool
   ##   still works, announcing its own mismatch where one matters.
   let path = bin.toolOf(tool)
   if bin.len == 0 or fileExists(path): path else: tool

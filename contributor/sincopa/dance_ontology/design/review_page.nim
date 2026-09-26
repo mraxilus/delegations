@@ -126,11 +126,13 @@ proc checkReview*() =
       &"A dropped card carries no pin; run `tools/build.nim pins`: got `{id}`."
 
 
-proc reviewParts*(): Parts =
+func reviewParts*(single, hand: Parts): Parts =
   ## Collect every figure this page places: both walked pages' own parts,
-  ## which it draws again at its own size.
-  result = singleTurnParts()
-  for key, svg in handTurnParts():
+  ## which it draws again at its own size, and crossed pair's.
+  ##   Walked pages' parts are handed in, as their pages built them, rather
+  ##     than routed again here.
+  result = single
+  for key, svg in hand:
     result[key] = svg
   for key, svg in pairTurnParts():
     result[key] = svg
@@ -240,10 +242,11 @@ func sheetOf(P: Parts): string =
   <p class="lede">Every drawing in this project is one of these, and a table built at compile
   time holds them all. The drawing reads the frame hold, the parity of the twist, and the way
   the couple turned. It never reads the level of an arm, and it never reads contact.</p>
-  <p class="how"><b>The diagram cannot name the facing.</b> The model holds four facings, which
-  takes two bits, and the twist carries one of them. So the drawing commits to one facing of
-  each pair: it turns the follow, and never the lead. Every card below names the facing it
-  draws, and not the facing the model knows.</p>
+  <p class="how"><b>The diagram cannot name the facing.</b> The model holds eight facings, which
+  take three bits. The diagram draws only half turns, which reach four of them, and it reads one
+  bit: the parity of the twist. So the drawing commits to one facing of each pair: it turns the
+  follow, and never the lead. Every card below names the facing it draws, and not the facing the
+  model knows.</p>
   <p class="how"><b>Each frame counts from its own rest.</b> Rest is the facing where the
   connections of that hold run parallel and cross nothing. A same-name pair rests <b>Pillion</b>
   rather than Face-to-face. So A10 and A12 read <i>at rest</i>, and A9 and A11 read <i>half a turn

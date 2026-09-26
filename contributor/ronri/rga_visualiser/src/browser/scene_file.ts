@@ -75,11 +75,11 @@ function saveScene() {
 
 function loadSceneFile(file: File) {
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = async () => {
     try {
       const read = reader.result;
       if (!(read instanceof ArrayBuffer)) throw new Error('Scene file unread.');
-      const outcome = parseAndLoadScene(read);
+      const outcome = parseAndLoadScene(isZip(read) ? await sceneInZip(read) : read);
       toast(outcome);
       adoptConstructionSelection(); // nimSceneClear() inside already cleared hover.
     } catch (err) {
@@ -88,6 +88,49 @@ function loadSceneFile(file: File) {
   };
   reader.onerror = () => toast('Could not read `' + file.name + '`.');
   reader.readAsArrayBuffer(file);
+}
+
+// Signature every zip opens with, and no scene file does: scene's own magic comes first there.
+const SIGNATURE_ZIP_LOCAL = 0x04034B50;
+const SIGNATURE_ZIP_CENTRAL = 0x02014B50;
+const SIGNATURE_ZIP_END = 0x06054B50;
+
+function isZip(buffer: ArrayBuffer): boolean {
+  return buffer.byteLength >= 4 && new DataView(buffer).getUint32(0, true) === SIGNATURE_ZIP_LOCAL;
+}
+
+async function sceneInZip(buffer: ArrayBuffer): Promise<ArrayBuffer> {
+  // First scene file inside zip: host's save wraps scene in one (`download.saveThroughHost`),
+  //   and reader's own system may pack it again, compressed.
+  //   Central directory is read, not local headers: local header may leave its sizes to
+  //   descriptor after data, and central one never does.
+  const view = new DataView(buffer);
+  let end = buffer.byteLength - 22;
+  while (end >= 0 && view.getUint32(end, true) !== SIGNATURE_ZIP_END) end -= 1;
+  if (end < 0) throw new Error('File is a zip with no directory.');
+  const count = view.getUint16(end + 10, true);
+  let entry = view.getUint32(end + 16, true);
+  for (let i = 0; i < count && entry + 46 <= buffer.byteLength; i += 1) {
+    if (view.getUint32(entry, true) !== SIGNATURE_ZIP_CENTRAL) break;
+    const method = view.getUint16(entry + 10, true);
+    const size_packed = view.getUint32(entry + 20, true);
+    const length_name = view.getUint16(entry + 28, true);
+    const local = view.getUint32(entry + 42, true);
+    const name = new TextDecoder().decode(new Uint8Array(buffer, entry + 46, length_name));
+    entry += 46 + length_name + view.getUint16(entry + 30, true) + view.getUint16(entry + 32, true);
+    if (!name.toLowerCase().endsWith('.rgascene')) continue;
+    if (local + 30 > buffer.byteLength) break;
+    const start = local + 30 + view.getUint16(local + 26, true) + view.getUint16(local + 28, true);
+    const packed = buffer.slice(start, start + size_packed);
+    if (method === 0) return packed;
+    if (method === 8 && typeof DecompressionStream !== 'undefined') {
+      const stream = new Blob([packed]).stream()
+        .pipeThrough(new DecompressionStream('deflate-raw'));
+      return new Response(stream).arrayBuffer();
+    }
+    throw new Error('File is a zip that packs its scene in a way this browser cannot open.');
+  }
+  throw new Error('File is a zip that holds no scene file.');
 }
 
 function parseAndLoadScene(buffer: ArrayBuffer) {

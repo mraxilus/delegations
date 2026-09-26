@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | 1abefadbf5e9d179 |
+| Rules   | be54792c5171ff9d |
 | Pruned  | bba4c7f8fc306df2a89d81ea3e8e42620d235486 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
@@ -66,10 +66,40 @@ and what stops it is one named thing. That thing is decided once in `rigid.stopp
 every sweep, still and page alike (Article II.1). Verified by `trigid.nim`: the turn that a couple
 are said to reach is the turn that some distance carries, and every stop carries its name.
 
-**The glossary agrees eight facings, and the model holds four.** The case of a name says which
-dancer it places: `Pillion` stands the Lead behind, and `pillion` stands the Follow there. The four
-the sim and the drawings hold are Face-to-face, Back-to-back and both cases of Pillion. The four
-states of Sidecar are named and not modelled, so nothing draws them and no law reads them.
+**The model holds the eight facings that the glossary agrees.** `rotation.Facing` names them, and
+`facing` reads one off where each dancer sees the other: ahead, right, behind or left. That makes
+sixteen states. A name goes to each state where one dancer sees the other ahead, and to
+Back-to-back. The case of a name says which dancer it places: `Pillion` stands the Lead behind, and
+`pillion` stands the Follow there.
+
+**A facing needs the turn of each dancer, and not twist alone.** A dancer who turns on the spot
+changes what they see, and nothing that the other sees. Twist is the Follow's turn less the Lead's,
+so it is the same for Face-to-face and Back-to-back. That is why the glossary counts three bits.
+
+**Sidecar is what one quarter turn on the spot makes from Face-to-face.** The Architect ruled so.
+One dancer looks at a shoulder of the other, at right angles to them. The dancer who turned shows
+their shoulder. So a quarter turn by the Follow to their right is `Sidecar left`, and a quarter turn
+by the Lead to their left is `sidecar Right`.
+
+Verified by `suites/trotation.nim`, suite "facings". Each law failed on a break made on purpose.
+The breaks were two names swapped, a name in the wrong case, and a name given to a state without
+one. The last two were a turn counted the wrong way, and a word that is not in the glossary.
+
+**The drawings hold all eight facings, each read back through the model.** `ORIENTATIONS` in
+`parts.nim` finds, in the model, the turns on the spot that reach each facing from Face-to-face.
+`facingOf` reads a drawn pose back as a facing, from where each dancer sees the other. The build
+stops where a drawn pose reads as a facing other than its name. The single-hand page names the
+facing of each quarter it draws, read off the drawn pose.
+
+Verified by `suites/tmarks.nim`, suite "the eight facings, drawn". Each law failed on a break made
+on purpose. The breaks dropped the Sidecar row, and set a grid header in capitals. The other two
+gave a turn the wrong sign, and swapped the names of two quarters.
+
+The law on the single-hand page reads each name in the section and the place of its quarter. The
+manners share names, so a name found anywhere on the page would stand in for one that is missing
+or swapped.
+
+The sim holds four of the eight: Face-to-face, Back-to-back and both cases of Pillion.
 
 The agreed words disagree with the code in thirteen places, recorded rather than acted on. From the
 hand-to-hand half:
@@ -77,7 +107,7 @@ hand-to-hand half:
 - `frame.position` means the opposite of `Frame position`. It strips `over` and returns the frame
   hold said aloud.
 - `Frame` and `rotation.Posture` split across the frame state rather than along it.
-- `isFacing` returns the parity of twist, where facing is four-valued.
+- `isFacing` returns the parity of twist, where facing has eight values, as `Facing` holds it.
 - Twist is counted in quarters, where `HalfTurns` is half turns.
 - `Compound` is `Compound move`.
 - The `route` and `wind` of the drawing chain are `Transition` and `Twist`.
@@ -102,10 +132,10 @@ removed by this project, and the Architect reads the page. Its wording still use
 `primitives`, where the agreed words are `Reference` and `Move`. That is a vocabulary sweep of the
 whole page, and not this fix.
 
-**No recorded sweep names a dancer with a gendered word.** `design/turns.json` keys each arm
-`lead` and `follow`, and `sim/verdicts.md` heads its tables the same way. Both files were rewritten
-by their own verbs, and the numbers reproduced. The new `turns.json` is the old one with four keys
-and two words renamed. Verified by `tglossary.nim`, which now reads `sim` as well as `design` and
+**No recorded sweep names a dancer with a gendered word.** `design/turns.json` keys each arm `lead`
+and `follow`, and `sim/verdicts.md` heads its tables the same way. Both files were rewritten by
+their own verbs, and the numbers reproduced. The new `turns.json` is the old one with four keys and
+two words renamed. Verified by `suites/tglossary.nim`, which now reads `sim` as well as `design` and
 `app`.
 
 **One translation table, because two of them drifted.** The report and the page data each held
@@ -151,7 +181,7 @@ the Follow reaches behind their own back. One moment of it reads `open`, `lock l
 `lock low (led)`.
 
 The ruling also overrides an earlier choice of words. `neutral` sat on the avoid line of Open, and
-it is now half of the agreed term. Verified by `tglossary.nim`, which reads the ruling from
+it is now half of the agreed term. Verified by `suites/tglossary.nim`, which reads the ruling from
 `GLOSSARY.md` rather than restating it. The old name fails both of its laws: the position says a
 word the glossary rejects, and it carries no word the glossary agrees.
 
@@ -175,18 +205,18 @@ Rejected: to name frames for what a dance calls them, which puts the hand-to-han
 empty frame under one word (`open`). The empty frame is `free`. Cost: `closed` and `half-closed`,
 which rest a hand on a body, have no frame here, and wait on a vocabulary for places on the body.
 
-Verified by `tframe.nim` and `ttransition.nim` over every pair of the eight frames, which is 64
-pairs, exhaustive. They cover validity, naming round trips, reversibility, mirror symmetry, one law
-for each primitive, and full connectivity.
+Verified by `suites/tframe.nim` and `suites/ttransition.nim` over every pair of the eight frames,
+which is 64 pairs, exhaustive. They cover validity, naming round trips, reversibility, mirror
+symmetry, one law for each primitive, and full connectivity.
 
 **The workbook is data, audited, and never trusted.** `workbook.nim` holds the states and cells of
 the `base` sheet, and the words of the `vocabulary` sheet, as constants. It derives findings by
 kind. A cell names a move the model lacks, or the model has a move the sheet lacks. A helper word
 differs, or a cell waits on the body.
 
-Verified by `tworkbook.nim`. Eighteen of twenty-seven cells are checkable today, and all eighteen
-name the primitive that the model derives, with nothing missing and nothing spare. The nine deferred
-cells are counted, and not hidden.
+Verified by `suites/tworkbook.nim`. Eighteen of twenty-seven cells are checkable today, and all
+eighteen name the primitive that the model derives, with nothing missing and nothing spare. The nine
+deferred cells are counted, and not hidden.
 
 **Rotation is provisional and off the page.** `rotation.nim` holds twist, the three arm heights, the
 two ceilings, blockers, wraps and locks. It also holds the measured fact that a low wrap holds half
@@ -195,8 +225,8 @@ by the twist itself.
 
 The views do not show it. 148 postures render as 16 distinct pictures, because level, contact and
 twist beyond its parity have no marks. A validator whose picture cannot tell two states apart is not
-validating. Verified by `trotation.nim` and `taxle.nim`. The capacity constants are witnessed by the
-sim (`sim/verdicts.md`), which is evidence, and not authority.
+validating. Verified by `suites/trotation.nim` and `suites/taxle.nim`. The capacity constants are
+witnessed by the sim (`sim/verdicts.md`), which is evidence, and not authority.
 
 ## Drawing chain
 
@@ -222,8 +252,8 @@ has left its default leaves a grey ghost. The lead always faces up, because pose
 coordinates and are drawn through `canonicalise`, so every equal configuration is one picture.
 
 Cost: the picture of every frame is built at compile time. The browser then ships finished markup
-and none of the routing, at the price of compile time. Verified by `tdiagram.nim`, where every
-picture says what its frame is, at any size. Verified by the gates of the workbench
+and none of the routing, at the price of compile time. Verified by `suites/tdiagram.nim`, where
+every picture says what its frame is, at any size. Verified by the gates of the workbench
 (`design/checks.nim`), with 102 assertions on the pages.
 
 **Rule 24 was measured at the corner, and a kink walked through it.** A settled reach picks its way
@@ -298,9 +328,9 @@ than the line it hides. The dash pattern gives any shorter piece at a seam to th
 a stroke past the end of the polyline.
 
 Rejected: to widen the suppression threshold. That would have drawn more crossings with no break at
-all, which is the opposite of what rule 14 asks. Verified by `tmarks.nim`, which drives the build.
-Every piece that a break leaves is now nothing at all, or at least `SEEN_RUN`, over every frame of
-every edge of every manner.
+all, which is the opposite of what rule 14 asks. Verified by `suites/tmarks.nim`, which drives the
+build. Every piece that a break leaves is now nothing at all, or at least `SEEN_RUN`, over every
+frame of every edge of every manner.
 
 Cost: breaks near a hand are shorter than breaks in the middle, where before they were all one
 length. The fix moved 12 of the 99 cards. Those are the four swan stills, whose straight connection
@@ -334,8 +364,8 @@ Cost: the snake gains 0.16 of its swing over the last hundredth of a turn, which
 Looked at frame by frame, 1.43 to 1.50, it reads as loops opening rather than as a jump. That was
 verified by looking, 2026-09-08, and not by test.
 
-Verified by `tmarks.nim`, which drives the build. A gate walks the stretch every hundredth of a
-turn, and fails if the count ever falls, or rises other than once. Two more hold the snake to
+Verified by `suites/tmarks.nim`, which drives the build. A gate walks the stretch every hundredth of
+a turn, and fails if the count ever falls, or rises other than once. Two more hold the snake to
 drawing in before it opens. The swan bows 22 round its straight connection, which is the width
 before this stretch was mended.
 
@@ -422,9 +452,9 @@ the test drives the build instead (Article IX.6).
 Cost: nothing in the tree shows the history of the page. The published copy is not the record
 either, because it can be deleted, and seven were on 2026-09-06. The log is the record.
 
-Verified by `treview.nim`. Every marker is filled. The page and the pictures are written and read
-back. Every frame is named, and every move and compound is counted in the matrix. No picture fixes a
-colour of its own, slugs are unique, and stale pictures are removed.
+Verified by `suites/treview.nim`. Every marker is filled. The page and the pictures are written and
+read back. Every frame is named, and every move and compound is counted in the matrix. No picture
+fixes a colour of its own, slugs are unique, and stale pictures are removed.
 
 ## Design workbench
 
@@ -434,14 +464,20 @@ colour of its own, slugs are unique, and stale pictures are removed.
 refuses to write a page whose claims fail. Rejected: rules that are implemented and not asserted,
 which quietly stop being true. The section on the rules of the drawing gives the check of each.
 
+**Each page's parts are built once, and a check reads what its page placed.** A page, its check and
+the review page all need the parts of the two walked pages. Routing is most of what the build costs,
+so `marks.nim` keeps the parts of every page it has built. The page suite ran for 14.05 s with each
+built three times, and runs for 7.11 s now, debug build, on 2026-09-24. Verified by the five pages,
+which are the same byte for byte by sha256, and by every line the checks print, which is the same.
+
 The five generated pages and the hand-drawn whole-cloth page are build products under
 `build/design/`. The whole-cloth markup is the committed file `mockups/wholecloth.html`. Its turns
 panel is `wholecloth_turns.nim`, compiled to JavaScript, and `wholecloth.nim` splices markup, the
 sweeps of the sim (`turns.nim`) and the panel into one page.
 
-Verified by `tmarks.nim`, which drives the build of every page under testament. The whole-cloth port
-was verified by a driven comparison under Playwright of the old page against the new: 707 states
-equal. See Figures for what was compared.
+Verified by `suites/tmarks.nim`, which drives the build of every page under testament. The
+whole-cloth port was verified by a driven comparison under Playwright of the old page against the
+new: 707 states equal. See Figures for what was compared.
 
 **Every page says its prose in Simplified Technical English, and a hand-drawn figure claims nothing
 of the sim.** The Architect ruled that the prose did not read, and asked for it again from the
@@ -452,10 +488,10 @@ caption or a swatch label is a fragment rather than a sentence.
 
 The rest of the subset, from the approved word to the active voice, is read rather than counted.
 
-Verified by `tmarks.nim` over every page the workbench writes and over the committed whole-cloth
-markup, and by `treview.nim` over the reference page. Both laws were proved able to fail. One
-sentence lengthened past the bound reddens the page it sits on. A seventh sentence added to a full
-paragraph reddens the markup that holds it.
+Verified by `suites/tmarks.nim` over every page the workbench writes and over the committed
+whole-cloth markup, and by `suites/treview.nim` over the reference page. Both laws were proved able
+to fail. One sentence lengthened past the bound reddens the page it sits on. A seventh sentence
+added to a full paragraph reddens the markup that holds it.
 
 **The reader stepped over every paragraph that stands behind a drawing.** A page names each drawn
 element with a tag that opens as `p` or `li` does, such as `path` and `line`. The reader met one,
@@ -501,8 +537,8 @@ again.
 **The rules that `design/README.md` quotes are held to the ledger, and not to the two numbers.**
 They are the words of the Architect, so a quotation is never rewritten. A `>` quotation carries no
 prose, so neither check counts it. `treadme.nim` holds each one to its entry in `RULES` instead,
-word for word, once each and in order. Verified by `treadme.nim`, which fails on a changed word, a
-missing rule and a missing quotation.
+word for word, once each and in order. Verified by `suites/treadme.nim`, which fails on a changed
+word, a missing rule and a missing quotation.
 
 **The reader of Markdown is copied from the check, and not imported.** A suite compiled against the
 check of the curator would break whenever the curator changed that check. Duty 3 forbids the
@@ -518,11 +554,11 @@ followed, so a README points at it and at `rig.nim`, and does not say the model 
 Verified by reading each claim that `sim/README.md` keeps against the code or this record.
 
 **No string a page shows says a gendered word for a dancer.** The glossary rejects one for each
-dancer, and `tglossary.nim` reads that ruling rather than restates it. It holds every string
-literal of `design` and `app`, and the two pages this project writes by hand. A literal that a
-colon follows is a key of recorded data, so the check steps over it. Verified by `tglossary.nim`,
-and proved able to fail. The readout said `her arm` and a block reason said `his reach` while
-every other law passed.
+dancer, and `tglossary.nim` reads that ruling rather than restates it. It holds every string literal
+of `design` and `app`, and the two pages this project writes by hand. A literal that a colon follows
+is a key of recorded data, so the check steps over it. Verified by `suites/tglossary.nim`, and
+proved able to fail. The readout said `her arm` and a block reason said `his reach` while every
+other law passed.
 
 The hand-drawn dial of the whole-cloth page came out. It stated blocks and turns from a sweep of the
 solver that this project has deleted, and the generated panel below it disagreed. A figure drawn by
@@ -589,10 +625,10 @@ Every animation runs at one pace (`WALK_SECONDS`), so the length of a loop says 
 rather than how fast. The whole chain is six times an edge, which is a long loop. The page flags it
 as something to shorten if it reads as slow.
 
-Verified by `tmarks.nim`, which drives the build and so the gates. The 16 rounds are counted, and
-each one is asserted to close where it set off. The whole-walk figures are held to the same hatch
-laws as the edges. Verified again by every drawing on all five pages coming out byte-identical when
-`steps` and `back` took their defaults.
+Verified by `suites/tmarks.nim`, which drives the build and so the gates. The 16 rounds are counted,
+and each one is asserted to close where it set off. The whole-walk figures are held to the same
+hatch laws as the edges. Verified again by every drawing on all five pages coming out byte-identical
+when `steps` and `back` took their defaults.
 
 **A verdict is given on a picture, so the picture is pinned.** `review_page.nim` lays out every
 position that the project draws as a card. Those are the standard diagrams and the one anticlockwise
@@ -612,11 +648,11 @@ Pins are rewritten only by `tools/build.nim pins`, which is a deliberate second 
 its pin are added together or not at all. To run it to quiet a complaint would hand the approval to
 the new picture. Cost: the verdicts live in the module, so every ruling is a commit.
 
-Verified by `tmarks.nim`, which builds the page under testament. Verified by every pin regenerating
-identical in content when the page moved into the workbench from the scratch generator that first
-drew it. Verified by the tally being counted off the built page, rather than kept while it is built.
-What the page says of itself cannot then drift from what it holds. The page prints that tally where
-a reader sees it, which is why no number of it is written here.
+Verified by `suites/tmarks.nim`, which builds the page under testament. Verified by every pin
+regenerating identical in content when the page moved into the workbench from the scratch generator
+that first drew it. Verified by the tally being counted off the built page, rather than kept while
+it is built. What the page says of itself cannot then drift from what it holds. The page prints that
+tally where a reader sees it, which is why no number of it is written here.
 
 ## Rules of the drawing
 
@@ -630,8 +666,9 @@ that is kept, modelled and confirmed, and `CONFIRMED` in `design/review_page.nim
 **A rule that is implemented and not checked stops being true, so each rule drawn has a check.** A
 check names its rules in a comment in `checks.nim` that opens `RULE`. Nothing in the workbench
 checks rules 36 to 40, and the sim reports in their words. Nothing checks rule 41.
-`tests/treadme.nim` holds every quotation in the README to `RULES` word for word, so the two copies
-cannot drift. The checks do not quote `RULES`, because their printed lines say what was measured.
+`tests/suites/treadme.nim` holds every quotation in the README to `RULES` word for word, so the two
+copies cannot drift. The checks do not quote `RULES`, because their printed lines say what was
+measured.
 
 **A moving picture is checked where it is drawn, and not only at its frames (rule 1).** A browser
 blends two frames point by point. So two frames that disagree about which side of a body a line
@@ -797,8 +834,8 @@ draws in its own ink when opened alone, as the app's figures in `doc/frames/` ar
 `treview.nim`, which checks that every ink is a named colour with a fallback.
 
 **The shape of a mark says whose hand it is.** The lead's hands are squares, and the follow's are
-circles. The mark carries this itself, so it holds at any size. Which column a hand sits in follows
-from the way its dancer faces. So the four facings are distinct without a new mark.
+circles. The mark carries this itself, so it holds at any size. Where a hand sits on the rim follows
+from the way its dancer faces. So the eight facings are distinct without a new mark.
 
 **A level is a fill on both ends of a connection.** Hollow is no level, solid is low, a dot at the
 centre is high, and hatched is above. A crossed hold keeps its drawn break as well, because the
@@ -1246,8 +1283,8 @@ one place before it is asked (`asked`). Flipped for the chains alone, A16 was st
 C5, and A17 in that of C3. That is the mirror of what each card draws.
 
 Every single-hand and moving card was flipped likewise. The recorded stills showed it, because the
-joint points of A16 matched those of C3 byte for byte. Verified by `tasks.nim`: one picture is one
-question whichever section draws it, A16 being C5 and A17 C3, red first.
+joint points of A16 matched those of C3 byte for byte. Verified by `suites/tasks.nim`: one picture
+is one question whichever section draws it, A16 being C5 and A17 C3, red first.
 
 The questions are answered on every core at once. Each worker lists the questions for itself and
 builds its own worlds. The engine keeps its worlds in one table that it neither locks nor guards, so
@@ -1302,9 +1339,9 @@ a line of no length (`drawn`), because browsers disagree on what that is. Chromi
 caps as a disc, and WebKit draws nothing. On the phone of the Architect every hand vanished, and
 each forearm ended 118 mm short of the grip it was joined at. That was seen on A7 on 2026-09-18.
 
-Verified by `tdrawn.nim`. A capsule of no length is a disc. An arm hanging beside a torso is painted
-behind it where it is behind. The front of each body is lighter than its back. Light runs across
-each piece and never along it. The first two and the last were red first.
+Verified by `suites/tdrawn.nim`. A capsule of no length is a disc. An arm hanging beside a torso is
+painted behind it where it is behind. The front of each body is lighter than its back. Light runs
+across each piece and never along it. The first two and the last were red first.
 
 ## Against the floor
 
@@ -1390,13 +1427,13 @@ The name is spelt once, in `tools/title.nim`, and the mock-up form is derived fr
 II.1). `design/page.nim`, `tools/bundle.nim`, `tools/review.nim` and `design/wholecloth.nim` all
 read it. Before this it was written twice, and drifting.
 
-`tests/tmarks.nim` and `tests/treview.nim` assert that the built pages carry the mock-up form and
-never the plain one. They assert it against the constant, rather than against a repeated literal.
-**Verified**, by a break of the constant, and a watch of both suites failing.
+`tests/suites/tmarks.nim` and `tests/suites/treview.nim` assert that the built pages carry the
+mock-up form and never the plain one. They assert it against the constant, rather than against a
+repeated literal. **Verified**, by a break of the constant, and a watch of both suites failing.
 
-Every title reads in title case, which `tests/tmarks.nim` holds each page to. It reads the title
-that the page was written with, rather than a list. Red first on the viewer, which shipped with a
-sentence for a title while every page beside it was cased.
+Every title reads in title case, which `tests/suites/tmarks.nim` holds each page to. It reads the
+title that the page was written with, rather than a list. Red first on the viewer, which shipped
+with a sentence for a title while every page beside it was cased.
 
 Rejected: to agree a project term for the two categories. That would have overloaded the `Artifact`
 of the charter, which is a file a build writes under `build/`. It would otherwise have coined a word
@@ -1421,8 +1458,8 @@ installed. Absent Playwright stops with a finding that names the verb that says 
 rather than as a missing file.
 
 Rejected: to pin Playwright itself. It is a node package, and that would mean a `package.json`
-beside its lock. That enrols the project in `koch types` and demands a `types` verb. The Architect
-has asked not to have that work built while this half of the project may go.
+beside its lock. That enrols the project in `koch check-types` and demands a `types` verb. The
+Architect has asked not to have that work built while this half of the project may go.
 
 Cost, stated rather than implied: **Playwright carries no pin here at all**, and the system packages
 carry whatever version the machine has. Verified by a run of all four routes on this machine,
@@ -1507,7 +1544,7 @@ The origin of all seven is `@fontsource` 5.3.0, by way of `cdn.jsdelivr.net`. Al
 
 Their addresses and checksums are no longer this project's to hold. They are the `ASSETS` table in
 `curator/audit/src/assets.nim`, which is the shared store of the repository. `assets` here names the
-seven files it wants, and `koch assets` answers with their paths.
+seven files it wants, and `koch fetch-assets` answers with their paths.
 
 That is the settlement of repository issue 116, which this project raised as its second consumer.
 Four of these seven were already pinned byte for byte by `rga_visualiser`. Article II.9 calls two
@@ -1559,26 +1596,114 @@ The change worth naming is the one that is not visible in a diff. Those labels u
 whatever sans the machine of the reader carried. A card approved on one machine was a different
 picture on another, which is the thing X.8 exists to stop.
 
+## Kept answers
+
+**The rig suite reads where the couple stand, and searches for nothing.** Each sweep, still and
+`reaches` that a law asks is a search over every distance the couple may stand at. Its answer
+changes only when the sim changes. So `sim/answers.nim` answers each search once, on every core,
+and writes `sim/answers.json`, and `nim r tools/build.nim answers` runs it. The questions live in
+`sim/answers.nim` too, so what is asked and what is answered are one list.
+
+**Every pose and walk that a law holds is still made live.** Only where to stand is kept. A law
+walks or stands the couple at the kept distance, with the code of the tree, and checks what the
+sim does there. `walked` builds its own world, so it walks exactly what the search walked from that
+distance.
+
+**The kept answers are held to the tree in two ways.** The stamp is a digest of every `sim/*.nim`
+and of the pinned commit of the engine. A law fails when the answers carry another stamp, so a sim
+that changed and was not answered again cannot pass. And a law walks every kept sweep and two drawn
+walks again, live, and asks for the same numbers. Verified by `trigid.nim`, suite "answers".
+
+Each of those three laws failed on a break made on purpose. The breaks were a comment added to
+`sim/vec.nim`, a distance moved off the grid by 1 mm, and a kept turn changed by one step.
+
+**The laws that read answers fail when the answers are wrong.** Five breaks were made on purpose,
+and each failed the law that reads it. A chosen turn was cut to 0.10, and a `reaches` was flipped.
+A still was marked as not holding, a mirror distance was moved by 4 cm, and an answer was deleted.
+Verified by `trigid.nim`, on 2026-09-24.
+
+**The version of Nim is not stamped.** The verbs of `tools/build.nim` run the `nim` on the path,
+and the suite runs the one that koch pins. A stamp with the version would agree on no machine
+where the two differ. Answers from Nim 2.2.4 walked the same under 2.2.12, number for number, on
+2026-09-24.
+
+**The live walks run on every core at once.** They are the twelve ways of six sweeps and two drawn
+walks. Each worker reads the holds as constants and gives back numbers alone (`Went`). A list of
+strings and sequences read by four threads is what `design/modelled.nim` records dying of. Every
+line the suite prints is the same as when they ran one after another. That run took 38.7 s, and
+this one takes 28.6 s.
+
+Cost: a change to any `sim/*.nim`, words included, asks for the answers again. That took 140 s on
+four cores, compile included, on 2026-09-24. A digest of every file is one rule. A list of the
+files that move the answers would be a second thing to keep true.
+
+A change to comments alone gives the same answers and a new stamp. Two comments in
+`sim/verdicts.nim` and `sim/words.nim` changed, and every answer came back the same number. Of the
+last 40 commits to `sim/*.nim` on 2026-09-24, two changed comments alone. So a stamp that skips
+comments would rarely save a run.
+
+**The replay is exact on the runner too.** Its law passed there on `5975d93`, on 2026-09-24, so the
+runner walks every kept sweep and both drawn walks to the numbers this container kept.
+
 ## Tests
 
-**Testament over `tests/t*.nim` from the project directory, with one stub for each suite.** Each
-stub carries the header of the curator. `trigid.nim` adds `-d:danger`, because the sweeps are the
-slow part and `doAssert` survives it. It is not joinable, because it links the C archive of the
-engine, which the joined binary of testament cannot share.
+**Testament over `tests/t*.nim` from the project directory, with five binaries.** `tengine.nim`,
+`tread.nim` and `trigid.nim` link the C archive of the engine. `tsaid.nim` compiles to JavaScript.
+`tsuites.nim` imports every other suite from `tests/suites/`, and each of them runs at import under
+its own suite name. `trigid.nim` and `tread.nim` add `-d:danger`, because the sweeps are the slow
+part and `doAssert` survives it.
+
+**The suites that need no engine and no browser compile once.** Each binary compiled the standard
+library and its own imports again. Sixteen of them compiled for 31.4 s and ran for 0.8 s, and all
+nineteen took 62.4 s under testament. The one binary passes 209 laws, which is the sum that the
+nineteen passed.
+
+Joined, and with the pages built once, they take 18.5 s cold. That is 11.1 s of compile and 7.4 s of
+running, and 7.1 s of the running is the page suite. Measured on 2026-09-24, on four cores of a
+Linux amd64 container, with Nim 2.2.12.
+
+**It builds in debug, because compile is most of a cold run.** The runner keeps no cache, so each
+run compiles cold. Cold, on four cores on 2026-09-24, the debug build took 14.1 s to 16.4 s. A
+`-d:release` build took 20.8 s, of which 19.1 s was compile. A release build keeps `doAssert`,
+`assert`, bounds and overflow checks too, so the choice is about time alone.
+
+`tasks` and `tlimb` were `-d:danger`, which drops bounds, overflow and `assert` checks. Here they
+keep all three.
+
+Not taken: to turn stack traces off. That took 11.2 s to 11.8 s cold, and it keeps every check. But
+a test that fails on an exception it did not expect then prints no trace of where it came from.
+
+**Every failure shows in one run.** `tsuites.nim` leaves out `-d:nimUnittestAbortOnError:on`, as
+STYLE.md §6 asks, so a failing check does not stop the suites after it.
+
+Cost: a suite under `tests/suites/` is not run alone by testament. It runs as part of `tsuites.nim`,
+or alone by name as an argument to that binary.
+
+**The review page counts the laws of every suite, joined or not.** It reads every `t*.nim` under
+`tests/`, so a suite that moves into a folder is still counted. Verified by `suites/treview.nim`,
+which counts the laws of each stub and of the suites it imports, and reads the page against them.
 
 Test binaries inherit the working directory of testament. So `build/review`, `build/design` and
-`walkFiles("tests/t*.nim")` resolve only when testament runs from the project directory, as the
-runner of koch does. To run it from the repository root breaks them.
+the `tests/` of the review page's count resolve only from the project directory. The runner of
+koch runs testament there, and to run it from the repository root breaks them.
 
-Cost: `trigid` is nearly the whole of the wall time of the suite. A model change that leaves a sweep
-with no moments crashes a danger build, rather than reddens a law.
+Cost: a model change that leaves a sweep with no moments crashes a danger build, rather than
+reddens a law.
 
 ## Figures
 
-- `trigid.nim`, danger build, under `nim r koch ci`: 331 s wall. That is four Xeon cores shared with
-  nothing else, on a Linux amd64 container, Nim 2.2.12, 2026-09-13. `tmarks` takes 12.6 s, `tread`
-  7.9 s, and `tengine` 3.3 s. Every other suite is under 2 s. It is a single figure with no pair, so
-  it is unmeasured as an optimisation.
+- `trigid.nim`, danger build, on 2026-09-24, in one session on four cores. Its run took 385.1 s with
+  every search, and takes 28.6 s reading kept answers. Under `nim r koch check` it took 40.76 s,
+  compile included, and the whole of `koch check` took 110 s.
+- `trigid.nim` on the runner, under testament, compile included: 43.71 s on `5975d93`, against
+  503.91 s and 504.66 s with every search. The project job took 2 min 29 s in all.
+- The whole of `nim r koch check`, with the kept answers and the joined suites: 57 s and 66 s, in
+  two runs on 2026-09-24. `trigid.nim` took 30.4 s and 30.5 s of it, `tsuites.nim` 10.7 s and
+  12.8 s, and `tread.nim` 9.3 s and 9.2 s.
+- `trigid.nim`, danger build, under `nim r koch check`: 331 s wall. That is four Xeon cores
+  shared with nothing else, on a Linux amd64 container, Nim 2.2.12, 2026-09-13. `tmarks` takes
+  12.6 s, `tread` 7.9 s, and `tengine` 3.3 s. Every other suite is under 2 s. It is a single
+  figure with no pair, so it is unmeasured as an optimisation.
 - `tools/build.nim modelled`: 913 s wall, on the same machine and day, with two other recordings
   sharing its cores. Unmeasured alone.
 - `tools/build.nim rig`: 523 s wall, on the same day, sharing cores with the suite. Unmeasured
@@ -1638,9 +1763,9 @@ Behaviour is unchanged, and that is measured rather than argued. Every one of th
 `tools/build.nim pages` writes is byte-identical built with the line and without it. So no page
 changes, and none is republished.
 
-Verified by `troute.nim`, which takes the length of a run in a `const`, so the compile-time path has
-a law that names it. Without that, to tidy the line away would show up only as six suites failing to
-build.
+Verified by `suites/troute.nim`, which takes the length of a run in a `const`, so the compile-time
+path has a law that names it. Without that, to tidy the line away would show up only as six suites
+failing to build.
 
 The diagnosis came from a sweep by a curator for stale versions, issue 106. Rejected: to stay on
 2.2.4, which kept a bound whose reason lived in one sentence of this file. `result +=` on a float
@@ -1707,9 +1832,6 @@ workbench draws the current reading meanwhile.
 - **The mark for any amount of turn.** The sign page draws the candidates, and none is chosen.
 - **Whether the turn sign is kept at all.** An orbit and an axis turn now differ as moves, and the
   frame pictures can show that as they move.
-- **Whether `rotation.nim` holds a facing for each dancer.** `isFacing` reads only whether `twist`
-  is even, so it cannot tell face to face from back to back. The two relative facings the drawing is
-  built on are the pair the model would need.
 - **Whether an arm carried past some limit is marked at all.** Nothing on the rim counts now, and
   the amount is where the hand sits.
 - **The bow for contact with the body, the staff for sequences, what an orbit stores, and when an

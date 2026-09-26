@@ -749,7 +749,7 @@ func isBackdropUnder*(
 
 func isAnchorNear(anchor: Position, camera: Camera, scale: DrawExtent): bool =
   ## Report whether anchor's depth is within `FACTOR_ANCHOR_DEPTH` of orbit distance.
-  let depth = dot(anchor - scale.eye, scale.forward)
+  let depth = depthAlong(scale.eye, scale.forward, anchor)
   depth >= camera.distance/FACTOR_ANCHOR_DEPTH and depth <= camera.distance*FACTOR_ANCHOR_DEPTH
 
 
