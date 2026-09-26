@@ -93,15 +93,13 @@ suite "the sim names each facing as the model does":
   ##   and `rotation.facing` names it from each dancer's turn on spot.  Neither
   ##   reads other, so agreement here is evidence and not echo.
 
-  test "each of sixteen states on quarter carries model's name, or none":
+  test "each of sixteen states on quarter carries model's name":
     for by_lead in 0 .. 3:
       for by_follow in 0 .. 3:
         let want = facing(seenAfter([Dancer.Lead: by_lead, Dancer.Follow: by_follow]))
         for lap in [-1.0, 0.0, 2.0]:
-          let got = facingName(turnedOn(by_lead, by_follow, lap))
           checkpoint &"lead {by_lead}, follow {by_follow}, lap {lap}"
-          check got.isSome == want.isSome
-          if want.isSome and got.isSome: check got.get == want.get.name
+          check facingName(turnedOn(by_lead, by_follow, lap)) == some(want.name)
 
   test "no state between quarters carries name":
     for turn in [0.1, 0.2, 0.3, 0.45]:

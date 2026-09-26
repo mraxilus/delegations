@@ -238,19 +238,20 @@ func sheetOf(P: Parts): string =
   var body = ""
 
   # `A`. Standard diagram: eight frames, two twist parities, and that is all of it.
-  body.add """<section id="standard"><h2>A &middot; The standard diagram</h2>
+  let aRest = restOf(PAIRED).name  # Same-name pair's rest, read through model.
+  body.add &"""<section id="standard"><h2>A &middot; The standard diagram</h2>
   <p class="lede">Every drawing in this project is one of these, and a table built at compile
   time holds them all. The drawing reads the frame hold, the parity of the twist, and the way
   the couple turned. It never reads the level of an arm, and it never reads contact.</p>
-  <p class="how"><b>The diagram cannot name the facing.</b> The model holds eight facings, which
-  take three bits. The diagram draws only half turns, which reach four of them, and it reads one
+  <p class="how"><b>The diagram cannot name the facing.</b> The model holds sixteen facings, which
+  take four bits. The diagram draws only half turns, which reach four of them, and it reads one
   bit: the parity of the twist. So the drawing commits to one facing of each pair: it turns the
   follow, and never the lead. Every card below names the facing it draws, and not the facing the
   model knows.</p>
   <p class="how"><b>Each frame counts from its own rest.</b> Rest is the facing where the
-  connections of that hold run parallel and cross nothing. A same-name pair rests <b>Pillion</b>
+  connections of that hold run parallel and cross nothing. A same-name pair rests <b>{aRest}</b>
   rather than Face-to-face. So A10 and A12 read <i>at rest</i>, and A9 and A11 read <i>half a turn
-  from Pillion</i>. A card names a way round only where the other way
+  from {aRest}</i>. A card names a way round only where the other way
   round draws a different picture, which is A16 and A17 alone.</p>
   <p class="how"><b>A crossing breaks at the arm that goes under.</b> The drawing cuts that
   arm at the middle, and the <code>over</code> field of the frame says which arm it is. A16
@@ -501,10 +502,10 @@ func sheetOf(P: Parts): string =
 
   # `G`. Every edge of paired chain animated, as `F` does for section C.
   body.add &"""<section id="paired-moving">
-  <h2>G &middot; Hand-to-hand chain, Pillion, moving</h2>
+  <h2>G &middot; Hand-to-hand chain, {pRest}, moving</h2>
   <p class="lede">Every edge of the same-name chain of section D, walked by every manner of
   turn. Each manner takes the same two cells that section F uses, and the way each manner walks
-  is read the same. This chain rests <b>Pillion</b> rather than Face-to-face, because Face-to-face
+  is read the same. This chain rests <b>{pRest}</b> rather than {handRest}, because {handRest}
   its two connections lie through each other (rule 31). Its phase measures
   {dualPhase}, where the phase of the cross-name chain measures {HAND_PHASE}.</p>
   <div class="grid wide">"""

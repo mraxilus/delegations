@@ -143,8 +143,8 @@ const BODY = """
   a turn apart</h2></div>
   <p><b>Hand to hand and the crossed pair are one chain.</b> A hold has one position where its two
   connections run parallel and cross nothing. That position sits at a different facing for each of
-  the two holds. Hand to hand runs parallel with the partners <b>Face-to-face</b>. Hold left
-  to left and right to right instead, and it runs parallel <b>Pillion</b>, which is half a turn
+  the two holds. Hand to hand runs parallel with the partners <b>{handRest}</b>. Hold left
+  to left and right to right instead, and it runs parallel <b>{pairRest}</b>, which is half a turn
   along this chain. Every step after that is the same step: cross, diamond and swan, out to
   a turn and a half each way.</p>
   <p><b>The build measures the phase rather than writes it down.</b> It turns the follow to each
@@ -211,4 +211,5 @@ func render*(P: Parts): string =
   # Chain's two facings are read off pose through model, never written down.
   document(TITLE, BODY.filled(@[("chain", chain), ("plates", plates(P)),
     ("whole", facingAt(HAND_TO_HAND, 1.0).get.name),
-    ("half", facingAt(HAND_TO_HAND, 0.5).get.name)]))
+    ("half", facingAt(HAND_TO_HAND, 0.5).get.name),
+    ("handRest", restOf(HAND_TO_HAND).name), ("pairRest", restOf(PAIRED).name)]))
