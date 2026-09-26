@@ -12,18 +12,21 @@ Map the callable ladder of the constitution onto `func → proc → iterator →
 Escalate only on need.
 
 - `func` is the default for a deterministic transformation of a value.
-- `proc` only for an effect, for randomness, or for `var` access. Where both mutable and
-  immutable access matter, define the overload pair:
+- `proc` only for an effect beyond its parameters, or for randomness. A `func` may take a
+  `var` parameter, because `strictFuncs` does not count a write to it as a side effect.
+- Where both mutable and immutable access matter, define an overload pair. Raw access into
+  storage is a `template` pair, and an accessor that does work is a `proc` and `func` pair:
 
   ```nim
-  proc `[]`*(m: var Multivector, b: Basis): var float {.inline.} = m.elements[b]
-  func `[]`*(m: Multivector, b: Basis): float {.inline.} = m.elements[b]
+  template `[]`*(m: var Multivector, b: Basis): var float = m.elements[b]
+  template `[]`*(m: Multivector, b: Basis): float = m.elements[b]
   ```
 
 - `iterator` only where lazy enumeration is the concept you expose. Yield `lent` from a
   stored pool, so that the walk never copies.
-- `template` only for a zero-cost substitution that a function cannot express. That covers
-  operand reversal, a typedesc alias, and an alias to an element inside a loop where a `let`
+- `template` only for a zero-cost substitution that a function cannot express, or where the
+  measured cost of a call is too high. That covers operand reversal, a typedesc alias and raw
+  access into storage. It also covers an alias to an element inside a loop, where a `let`
   would copy (§7):
 
   ```nim
@@ -47,11 +50,15 @@ Escalate only on need.
 
 - `{.experimental: "strictFuncs".}`: this exact form, before the imports, in every production
   module. Never as a pushed ordinary pragma.
-- `{.experimental: "codeReordering".}`: only where the reading order of a human should beat
-  the declaration order. Const initialisation stays in dependency order in either case.
+- `{.experimental: "codeReordering".}`: the mechanism that lets Nim follow the reading order
+  of Article I.1. Use it wherever that order puts a use before its definition.
 - `{.compileTime.}`: applied the same way across a whole compile-time family. Never rely on
   incidental const evaluation where the staging is part of the contract.
-- `{.inline.}`: for a deliberate thin wrapper and a tiny hot accessor only.
+- `{.inline.}`: for a deliberate thin wrapper and a tiny hot accessor. Inline a larger body
+  only where a measurement shows the gain.
+- `{.noinit.}`: only on a routine that writes every field of `result` by construction, such
+  as an emitted kernel or a loop over the whole domain. A partial write under it leaves
+  memory undefined.
 - `{.borrow.}`: enumerate the minimal operations for each distinct type. Annotate a consumer
   that is not obvious at the use site (`{.borrow, compileTime, used.} # Used in cayleys.nim.`).
   Define a repeated mechanical borrow family once, through a documented template:
@@ -79,13 +86,15 @@ Escalate only on need.
   result:
 
   ```nim
-  const lut_basis_to_grade = block:
+  const lut_grade_by_basis = block:
     var lut: array[Basis, Grade]
     for b in Basis: lut[b] = Grade(b.toFlags.countSetBits)
     lut
   ```
 
 - Validate a static configuration in `static: doAssert`, with ``&"…; got `{X}`."``.
+- Write `{x=}` in a message where the value alone would not say which binding it is
+  (`{digits=}`).
 - Put an expensive check under `when compileOption("assertions"):`. Put the profiler import
   under `when compileOption("profiler"): import std/nimprof`, in an entry module.
 - Use `when` for a configuration branch and a typedesc branch
@@ -106,6 +115,11 @@ Escalate only on need.
 - Use an enum-indexed fixed array for a closed static domain (`array[Basis, float]`), and a
   `range` type for a bounded index. A fixed pool carries its live extent as a field
   (`bound`), and every walk is `for slot in 0 ..< pool.bound`.
+- Give a distinct type whose domain you walk an `items` iterator over its typedesc, so that
+  `for k in Order:` reads as the domain.
+- Define `=~` as `abs(a - b) <= TOL * max(1, abs(a), abs(b))`, with `TOL` derived from the
+  count of places. Near zero, that form falls to its absolute floor, so a zero test takes the
+  scale of what it tests (Article IV.5).
 - Give an object field its default inline (`is_negated*: bool = false`).
 - Use `seq`, `Table` and `string` as data structures only at compile time, or in a tool that
   a shell runs once. At runtime, use `string` only for display (`$`, messages).
