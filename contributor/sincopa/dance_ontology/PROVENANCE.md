@@ -66,10 +66,27 @@ and what stops it is one named thing. That thing is decided once in `rigid.stopp
 every sweep, still and page alike (Article II.1). Verified by `trigid.nim`: the turn that a couple
 are said to reach is the turn that some distance carries, and every stop carries its name.
 
-**The glossary agrees eight facings, and the model holds four.** The case of a name says which
-dancer it places: `Pillion` stands the Lead behind, and `pillion` stands the Follow there. The four
-the sim and the drawings hold are Face-to-face, Back-to-back and both cases of Pillion. The four
-states of Sidecar are named and not modelled, so nothing draws them and no law reads them.
+**The model holds the eight facings that the glossary agrees.** `rotation.Facing` names them, and
+`facing` reads one off where each dancer sees the other: ahead, right, behind or left. That makes
+sixteen states. A name goes to each state where one dancer sees the other ahead, and to
+Back-to-back. The case of a name says which dancer it places: `Pillion` stands the Lead behind, and
+`pillion` stands the Follow there.
+
+**A facing needs the turn of each dancer, and not twist alone.** A dancer who turns on the spot
+changes what they see, and nothing that the other sees. Twist is the Follow's turn less the Lead's,
+so it is the same for Face-to-face and Back-to-back. That is why the glossary counts three bits.
+
+**Sidecar is what one quarter turn on the spot makes from Face-to-face.** The Architect ruled so.
+One dancer looks at a shoulder of the other, at right angles to them. The dancer who turned shows
+their shoulder. So a quarter turn by the Follow to their right is `Sidecar left`, and a quarter turn
+by the Lead to their left is `sidecar Right`.
+
+Verified by `suites/trotation.nim`, suite "facings". Each law failed on a break made on purpose.
+The breaks were two names swapped, a name in the wrong case, and a name given to a state without
+one. The last two were a turn counted the wrong way, and a word that is not in the glossary.
+
+The sim and the drawings hold four of the eight: Face-to-face, Back-to-back and both cases of
+Pillion. No drawing places a dancer at a shoulder yet, so no page draws a Sidecar.
 
 The agreed words disagree with the code in thirteen places, recorded rather than acted on. From the
 hand-to-hand half:
@@ -77,7 +94,7 @@ hand-to-hand half:
 - `frame.position` means the opposite of `Frame position`. It strips `over` and returns the frame
   hold said aloud.
 - `Frame` and `rotation.Posture` split across the frame state rather than along it.
-- `isFacing` returns the parity of twist, where facing is four-valued.
+- `isFacing` returns the parity of twist, where facing has eight values, as `Facing` holds it.
 - Twist is counted in quarters, where `HalfTurns` is half turns.
 - `Compound` is `Compound move`.
 - The `route` and `wind` of the drawing chain are `Transition` and `Twist`.
@@ -1802,9 +1819,6 @@ workbench draws the current reading meanwhile.
 - **The mark for any amount of turn.** The sign page draws the candidates, and none is chosen.
 - **Whether the turn sign is kept at all.** An orbit and an axis turn now differ as moves, and the
   frame pictures can show that as they move.
-- **Whether `rotation.nim` holds a facing for each dancer.** `isFacing` reads only whether `twist`
-  is even, so it cannot tell face to face from back to back. The two relative facings the drawing is
-  built on are the pair the model would need.
 - **Whether an arm carried past some limit is marked at all.** Nothing on the rim counts now, and
   the amount is where the hand sits.
 - **The bow for contact with the body, the staff for sequences, what an orbit stores, and when an

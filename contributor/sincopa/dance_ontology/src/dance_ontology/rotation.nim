@@ -35,7 +35,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, strutils]
+import std/[math, options, strutils]
 
 import ./frame
 
@@ -153,6 +153,73 @@ func crossedSite*(side: Side; twist: HalfTurns): Site =
 func parallelSite*(side: Side; twist: HalfTurns): Site =
   ## Get follow hand this lead hand reaches without crossing, after rotation.
   if isFacing(twist): parallelSite(side) else: crossedSite(side)
+
+
+
+#[ Facings ]#
+
+type
+  QuarterTurns* = int ## Count rotation in quarter turns, grain facing needs.
+
+  Seen* {.pure.} = enum ## Name where dancer sees other, from their own front.
+    ## Quarter turns clockwise, so turning on spot steps through them in order.
+    Ahead, Right, Behind, Left
+
+  Facing* {.pure.} = enum ## Name eight states two dancers stand in to one another.
+    ## One is read off where each sees other (`facing`): two of four places each
+    ##   make sixteen states, and glossary names eight -- every state where at
+    ##   least one dancer sees other ahead, and Back-to-back.
+    ##   Case of name says whom it places (`Lead`, `Follow` in `GLOSSARY.md`),
+    ##     so `Pillion` and `pillion` are two states; `name` spells each.
+    FaceToFace,   ## Each sees other ahead.
+    BackToBack,   ## Each has other behind.
+    LeadBehind,   ## `Pillion`: Lead sees Follow's back.
+    FollowBehind, ## `pillion`: Follow sees Lead's back.
+    LeadAtLeft,   ## `Sidecar left`: Lead sees Follow's left shoulder.
+    LeadAtRight,  ## `Sidecar right`: Lead sees Follow's right shoulder.
+    FollowAtLeft, ## `sidecar Left`: Follow sees Lead's left shoulder.
+    FollowAtRight ## `sidecar Right`: Follow sees Lead's right shoulder.
+
+
+const NAMES: array[Facing, string] = ["Face-to-face", "Back-to-back", "Pillion",
+  "pillion", "Sidecar left", "Sidecar right", "sidecar Left", "sidecar Right"]
+  ## Glossary's spelling of each facing, case and all.
+
+
+func name*(facing: Facing): string = NAMES[facing]
+  ## Spell facing as glossary does.
+
+
+func facing*(seen: array[Dancer, Seen]): Option[Facing] =
+  ## Name state two dancers stand in, from where each sees other.
+  ##   None where neither sees other ahead and their backs are not both
+  ##     turned: glossary names no such state, and nothing here invents one.
+  let (lead, follow) = (seen[Dancer.Lead], seen[Dancer.Follow])
+  if lead == Seen.Ahead:
+    case follow
+    of Seen.Ahead: some(Facing.FaceToFace)
+    of Seen.Behind: some(Facing.LeadBehind)
+    of Seen.Left: some(Facing.LeadAtLeft)
+    of Seen.Right: some(Facing.LeadAtRight)
+  elif follow == Seen.Ahead:
+    case lead
+    of Seen.Behind: some(Facing.FollowBehind)
+    of Seen.Left: some(Facing.FollowAtLeft)
+    of Seen.Right: some(Facing.FollowAtRight)
+    of Seen.Ahead: some(Facing.FaceToFace)
+  elif lead == Seen.Behind and follow == Seen.Behind:
+    some(Facing.BackToBack)
+  else:
+    none(Facing)
+
+
+func seenAfter*(turned: array[Dancer, QuarterTurns]): array[Dancer, Seen] =
+  ## Get where each sees other after each turns on spot from Face-to-face.
+  ##   Turns count quarter turns to that dancer's right.  Dancer turning on
+  ##     spot moves nobody, so what each sees follows from own turn alone:
+  ##     quarter to right puts other at left.
+  for who in Dancer:
+    result[who] = Seen(floorMod(-turned[who], 4))
 
 
 

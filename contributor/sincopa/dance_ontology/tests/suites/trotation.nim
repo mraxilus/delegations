@@ -6,7 +6,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, unittest]
+import std/[options, os, sequtils, strutils, unittest]
 
 import ../../src/dance_ontology/frame
 import ../../src/dance_ontology/rotation
@@ -244,3 +244,98 @@ suite "what there is":
     for offer in turnsOf(low):
       if abs(offer.to.twist) == 3:
         check offer.refused == some(Refusal.Hold)
+
+
+proc glossaryFacings(): seq[string] =
+  ## Names glossary's entry `Facing` says cover eight states, in its own words.
+  let
+    said = readFile(currentSourcePath().parentDir.parentDir.parentDir /
+                    "GLOSSARY.md").replace('\n', ' ')
+    opens = said.find("names cover eight states:") + "names cover eight states:".len
+  for word in said[opens ..< said.find('.', opens)].replace(" and ", ", ").split(','):
+    result.add word.strip
+
+
+func placed(named: Facing): tuple[who, other: Dancer] =
+  ## Get dancer name's case places, and other: capital is Lead, lower case Follow.
+  if named.name[0].isUpperAscii: (Dancer.Lead, Dancer.Follow)
+  else: (Dancer.Follow, Dancer.Lead)
+
+
+suite "facings":
+  test "each of the sixteen states has one name at most, and each name one state":
+    var states: array[Facing, int]
+    for lead in Seen:
+      for follow in Seen:
+        let named = facing([lead, follow])
+        if named.isSome:
+          inc states[named.get]
+    for named in Facing:
+      check states[named] == 1
+
+  test "a state where neither sees the other ahead has no name but Back-to-back":
+    for lead in Seen.Right .. Seen.Left:
+      for follow in Seen.Right .. Seen.Left:
+        let named = facing([lead, follow])
+        check named.isSome == (lead == Seen.Behind and follow == Seen.Behind)
+
+  test "the names are the glossary's, and cover the eight states it counts":
+    let words = glossaryFacings()
+    check words.len == 4
+    var covered: seq[string] = @[]
+    for named in Facing:
+      let head = named.name.split(' ')[0].toLowerAscii
+      check words.anyIt(it.toLowerAscii == head)
+      if head notin covered:
+        covered.add head
+    check covered.len == words.len
+    check Facing.high.ord + 1 == 8
+
+  test "a quarter turn on the spot by either dancer is a Sidecar, at the shoulder named":
+    # Architect's ruling: one quarter turn on spot from Face-to-face makes Sidecar.
+    # Case of first word names dancer at shoulder; case of side names whose it is.
+    for who in Dancer:
+      for way in [-1, 1]:
+        var turned: array[Dancer, QuarterTurns]
+        turned[who] = way
+        let
+          seen = seenAfter(turned)
+          named = facing(seen)
+        check named.isSome
+        let words = named.get.name.split(' ')
+        check words.len == 2
+        check words[0].toLowerAscii == "sidecar"
+        let (atShoulder, other) = named.get.placed
+        check other == who  # One who turned shows their shoulder.
+        check (if words[1][0].isUpperAscii: Dancer.Lead else: Dancer.Follow) == other
+        check seen[atShoulder] == Seen.Ahead
+        check seen[other] == (if words[1].toLowerAscii == "left": Seen.Left
+                              else: Seen.Right)
+        # Quarter to one's right puts what was ahead at one's left.
+        check seen[who] == (if way > 0: Seen.Left else: Seen.Right)
+    # Ruling's own two examples: follow turned to their right, lead to their left.
+    check facing(seenAfter([0, 1])).get.name == "Sidecar left"
+    check facing(seenAfter([-1, 0])).get.name == "sidecar Right"
+
+  test "half turns on the spot land on the four facings drawn today, each as named":
+    check facing(seenAfter([0, 0])) == some(Facing.FaceToFace)
+    check facing(seenAfter([2, 2])) == some(Facing.BackToBack)
+    for who in Dancer:
+      var turned: array[Dancer, QuarterTurns]
+      turned[who] = 2
+      let
+        seen = seenAfter(turned)
+        named = facing(seen)
+      check named.isSome
+      check named.get.name.toLowerAscii == "pillion"
+      # Case places dancer behind, who sees other's back.
+      let (behind, ahead) = named.get.placed
+      check seen[behind] == Seen.Ahead
+      check seen[ahead] == Seen.Behind
+      check ahead == who  # One who turned has their back to other.
+
+  test "twist cannot tell Face-to-face from Back-to-back, so a facing needs both turns":
+    # Twist is follow's turn less lead's: same for both states below.
+    let (face, back) = ([0, 0], [2, 2])
+    check face[1] - face[0] == back[1] - back[0]
+    check facing(seenAfter(face)) != facing(seenAfter(back))
