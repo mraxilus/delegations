@@ -97,10 +97,11 @@ distance that reaches it. So an easy card costs one sweep, and only a card that 
 for the whole search.
 
 For that reason `modelled`, `rig` and `turns` each have a verb of their own, and their answers are
-committed. So `pages` uses what was last recorded, and does not pay for it again. `verdicts` keeps
-its readings in `verdicts.json`, with a stamp of the physics. So a change to words renders the
-report again in seconds, and a change to the physics reads it again on every core. A coarser physics
-does not rank the distances in the same order, so it cannot choose them.
+committed. So `pages` uses what was last recorded, and does not pay for it again. `modelled` and
+`rig` keep a stamp of the physics with what they record, and record nothing again when it is the
+same. `verdicts` keeps its readings in `verdicts.json`, with a stamp of the physics. So a change to
+words renders the report again in seconds, and a change to the physics reads it again on every core.
+A coarser physics does not rank the distances in the same order, so it cannot choose them.
 
 ## The rig viewer
 
