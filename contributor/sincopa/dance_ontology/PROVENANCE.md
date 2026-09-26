@@ -181,9 +181,9 @@ rung correctly, so one chain had two namings and one of them was wrong. Verified
 before the fix, and the words of the report are now read rather than assumed (Article IX.5).
 
 That law reads the words of the report, and never its numbers. Nothing in the audit runs the
-sweeps again. One run of them takes about nineteen minutes, and a check that slow is a check that
-gets skipped (Article IX.8). So the report can hold a figure that the code no longer writes, and
-only a delegate who runs the verb will see it.
+sweeps again, and the numbers come from readings kept in `sim/verdicts.json` (Kept answers). So
+the report can hold a figure that the physics no longer gives, and only a delegate who runs the
+verb will see it.
 
 **The table that the report prints was a stale summary, in two rows.** The report opens by printing
 the translation, so a reader knows what each phrase means. That printed table is written out by
@@ -1394,8 +1394,9 @@ twist or his wrist. Each disagreement is printed, and is the Architect's to rule
 asks. It writes `sim/verdicts.md` in the words of the sheet, through one visible translation table,
 wrapped at 100 columns. The chain rungs there are wound to, as stills are.
 
-No test compares the committed record with the model. So it is current as of its last run, and stale
-until it is run again. It is run again in the same delivery as any change to the model.
+No test compares the kept readings with the physics. So the report is current as of its last run,
+and stale until it is run again. It is run again in the same delivery as any change to the model.
+A law holds the report to the readings that it renders from (Kept answers).
 
 **Known and not mended: the crossing reader is a knife edge where two arms lie along each other.**
 `read.crossings` counts where two connections cross in plan, by a segment intersection. Two poses
@@ -1674,6 +1675,23 @@ A change to comments alone gives the same answers and a new stamp. Two comments 
 last 40 commits to `sim/*.nim` on 2026-09-24, two changed comments alone. So a stamp that skips
 comments would rarely save a run.
 
+**The report keeps its readings, and renders its words from them.** `sim/readings.nim` reads
+each sweep and each rung that the report asks for into plain numbers. It keeps them in
+`sim/verdicts.json`, with a stamp of the physics. The stamp leaves out the files that only say
+words or ask the questions of the laws (`LEAVING`). The report renders its words from the
+readings, and it asks for a reading by rendering. So the list of what it asks is written once.
+
+A change to words alone renders the report again in 1.4 s, compile included. A change to the
+physics reads every sweep again, on every core. That took 409 s on four cores, where one core took
+1973 to 2059 s, on 2026-09-26. The report from the readings is the same, byte for byte, as the
+report the sweeps wrote directly. Each worker writes plain values into a place allotted before any
+thread starts, as `answers` does.
+
+Verified by `suites/twords.nim`: the report is what its kept readings render. The law failed on
+three breaks made on purpose. One changed a word of the renderer, one deleted a reading, and one
+changed a number that the report prints. The law does not read the stamp, so readings of older
+physics still render the report they gave.
+
 **The replay is exact on the runner too.** Its law passed there on `5975d93`, on 2026-09-24, so the
 runner walks every kept sweep and both drawn walks to the numbers this container kept.
 
@@ -1740,9 +1758,9 @@ reddens a law.
   sharing its cores. Unmeasured alone.
 - `tools/build.nim rig`: 523 s wall, on the same day, sharing cores with the suite. Unmeasured
   alone.
-- `tools/build.nim verdicts`: 1079 s wall, on the same day, sharing cores with two other recordings.
-  It took 50.2 s on 2026-09-10 with the pose search that preceded the engine. That is a pair across
-  two models, and not an optimisation.
+- `tools/build.nim verdicts`: 1973 to 2059 s wall on one core, over four runs on 2026-09-26. With
+  its readings read on four cores: 409 s, the same day. With its readings kept: 1.4 s after a
+  change to words, compile included.
 - `tools/build.nim pages`, every page with faces from the shared store: 26 s wall, same day.
 - `tools/build.nim engine`: 24 s cold, and at once where the archive stands.
 - Whole-cloth port parity, driven under Chromium with fonts stubbed and `requestAnimationFrame`

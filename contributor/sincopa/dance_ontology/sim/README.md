@@ -66,7 +66,9 @@ seen.nim     one sweep recorded whole -- every capsule, every joint -- for
 read.nim     what a pose says about itself, still in body words: crossings,
              lying, the tightest joint
 words.nim    what the sim reads, said in the agreed words, in one table
+readings.nim what the report reads off the sim, as plain numbers, on every core
 verdicts.nim the sim run as an instrument against the ontology's sheet
+verdicts.json the readings it renders from, kept with a stamp of the physics
 verdicts.md  what it said, translated once and generated, not edited
 ../tests/trigid.nim  the rig held to tape, geometry and the Architect's floor
 ../tests/suites/tlimb.nim  the tape's numbers and one arm's kinematics
@@ -81,7 +83,7 @@ nim r tools/build.nim pages       # every page, the rig viewer among them
 nim r tools/build.nim modelled    # rewrite design/modelled.json: cards reached
 nim r tools/build.nim rig         # rewrite design/rig.json: sweeps the viewer plays
 nim r tools/build.nim turns       # rewrite design/turns.json: whole-cloth sweeps
-nim r tools/build.nim verdicts    # rewrite verdicts.md from the current model
+nim r tools/build.nim verdicts    # rewrite verdicts.md: seconds for words, minutes for physics
 ```
 
 ## Running it
@@ -95,7 +97,9 @@ distance that reaches it. So an easy card costs one sweep, and only a card that 
 for the whole search.
 
 For that reason `modelled`, `rig` and `turns` each have a verb of their own, and their answers are
-committed. So `pages` uses what was last recorded, and does not pay for it again. A coarser physics
+committed. So `pages` uses what was last recorded, and does not pay for it again. `verdicts` keeps
+its readings in `verdicts.json`, with a stamp of the physics. So a change to words renders the
+report again in seconds, and a change to the physics reads it again on every core. A coarser physics
 does not rank the distances in the same order, so it cannot choose them.
 
 ## The rig viewer
