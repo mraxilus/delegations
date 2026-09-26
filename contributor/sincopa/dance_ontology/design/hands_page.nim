@@ -20,7 +20,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[strformat, tables]
+import std/[options, strformat, tables]
 
 import ./[page, parts]
 
@@ -103,9 +103,9 @@ const BODY = """
   connections run side by side and cross nothing. Each half turn from there winds the pair
   one step further, and the chain runs out at a turn and a half each way.</p>
   <p><b>The wind says which way the partners face</b>, so the captions leave it out and this page
-  says it once. The partners are <b>Face-to-face</b> at a whole number of turns, which is the
-  frame and the diamonds. They are <b>Pillion</b> at a half, which is the crosses and the swans.</p>
-  <p><b>A half turn makes a cross.</b> The partners stand in <b>Pillion</b>, both faced one way
+  says it once. The partners are <b>{whole}</b> at a whole number of turns, which is the
+  frame and the diamonds. They are <b>{half}</b> at a half, which is the crosses and the swans.</p>
+  <p><b>A half turn makes a cross.</b> The partners stand in <b>{half}</b>, both faced one way
     with the lead behind, and the two connections cross once above the head. That is the plain
     crossing the app already draws for a crossed pair, and the break says which arm lies on
     top.</p>
@@ -208,4 +208,7 @@ func render*(P: Parts): string =
     if i > 0:
       chain.add P["g_half"]
     chain.add fig(P[&"hh_{i}"], &"<b>{position.name}</b><br>{position.note}")
-  document(TITLE, BODY.filled(@[("chain", chain), ("plates", plates(P))]))
+  # Chain's two facings are read off pose through model, never written down.
+  document(TITLE, BODY.filled(@[("chain", chain), ("plates", plates(P)),
+    ("whole", facingAt(HAND_TO_HAND, 1.0).get.name),
+    ("half", facingAt(HAND_TO_HAND, 0.5).get.name)]))
