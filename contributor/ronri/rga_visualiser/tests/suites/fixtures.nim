@@ -41,6 +41,9 @@ const
     ## Widen tolerance for values that passed through 32-bit storage.
     ##   Matrices and vertices are single precision, as that is what GPU consumes,
     ##   so comparing them against double-precision geometry at full tolerance is wrong.
+  WIDTH_OPENED* = 1200
+  HEIGHT_OPENED* = 800
+    ## Frame most suites open camera on: wide enough that opening stands its least, 19 units.
 
 
 let ORIGIN* = Position(x: 0, y: 0, z: 0)

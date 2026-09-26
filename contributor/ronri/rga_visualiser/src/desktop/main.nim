@@ -1126,7 +1126,9 @@ proc handleEvent(
         interaction.holdKey(key.get)
         let action = actionFor(key.get)
         if action.isSome:
-          let index_selected = interaction.applyAction(camera, scene, action.get)
+          let index_selected = interaction.applyAction(
+            camera, scene, action.get, width_frame, height_frame
+          )
           if index_selected.isSome:
             # Add rather than replace under shift, as shift-click does.
             if is_shifted: panel.selection.toggle(index_selected.get)
@@ -2192,7 +2194,7 @@ proc main() =
   let renderer = initRenderer()
   var
     scene = initScene()
-    camera = initCameraDefault()
+    camera = initCameraDefault(PIXELS_WIDTH, PIXELS_HEIGHT)
     panel = initPanel(
       if len(options.path_screenshot) > 0: options.path_screenshot
       else: PATH_EXPORT_DEFAULT
