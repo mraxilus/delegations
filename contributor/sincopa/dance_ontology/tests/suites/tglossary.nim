@@ -33,6 +33,11 @@ const
     ## Entries naming step of chain, which are only ones position may speak.
     ##   Rest of glossary is held to elsewhere; word another entry rejects is
     ##     no business of position's name.
+  FACING_TERMS = ["Pillion", "Sidecar"]
+    ## Entries naming facing whose rejected words name facing and nothing else.
+    ##   Face-to-face and Back-to-back are left out: they reject `facing` and
+    ##     `apart`, which report says in own sense, of what no facing says and
+    ##     of distance couple stand at.
   DANCER_TERMS = ["Lead", "Follow"]
     ## Entries naming dancer, whose rejected words no page may say at all.
   SAID_IN = ["design", "app", "sim"]
@@ -201,7 +206,8 @@ suite "the report speaks glossary":
   let
     source = readFile(GLOSSARY)
     rejected = source.avoided(CHAIN_TERMS)
-    rungs = rungsOf(readFile(REPORT))
+    report = readFile(REPORT)
+    rungs = rungsOf(report)
 
   test "report still tabulates every rung of chain":
     # Laws below say nothing where table is missing or unparsed, so rows are
@@ -221,3 +227,14 @@ suite "the report speaks glossary":
   test "every rung of report carries glossary's own word":
     for (wound, said) in rungs:
       check said.toLowerAscii.says(RUNG_AT[wound])
+
+  test "no facing of report is named by word glossary rejects":
+    ## Report named rest of same-name pair `pillion lead`, which entry
+    ##   **Pillion** rejects, while every page named it `Pillion`.
+    let faced = source.avoided(FACING_TERMS)
+    check faced.len == FACING_TERMS.len
+    for _, words in faced:
+      for word in words:
+        if report.toLowerAscii.says(word):
+          checkpoint "report says `" & word & "`"
+          fail()
