@@ -30,8 +30,9 @@ use the mechanism is cargo cult.
 2. Organise by domain concept (`multivectors`, `grammar`, `intervals`), and never by
    architectural role (`ParserManager`, `MultivectorFactory`). Machinery that belongs to no
    concept of the subject is named for what it does, and stays off the exported surface.
-3. Every module opens with a header: its purpose, its design decisions, and the cost of each
-   decision. A decision without its cost is incomplete.
+3. Every module opens with a header. Its first line states the purpose, and the lines after
+   it give the design decisions and the cost of each. A decision without its cost is
+   incomplete.
 4. A module that implements an authority (a book, a paper, an RFC) carries aligned plain-text
    tables in its header. They map the code names to the notation of the authority, so that
    book and code read side by side. A table is a derived view of the declarations. Verify the
@@ -47,7 +48,8 @@ use the mechanism is cargo cult.
    source, and the source of truth for the public names.
 7. A comment states the decision and its cost, and never the path to it. A superseded design,
    an old figure and a fixed bug go to the log (XI) and to the provenance file (VIII.6). A
-   live trap earns one line.
+   live trap earns one line, and a test that trips on it. Where no test can reach the trap,
+   the line says why.
 
 ```nim
 ## Construct specific PGA's `Basis` enum and related types/procedures.
@@ -337,13 +339,14 @@ if is_tallying: cost.mark = performanceNow()  # instrument runs only while panel
 1. Keep the epistemic register explicit, and never promote between registers in silence:
    guaranteed by types or layout, then measured, then expected, then intended, then
    unresolved. A claimed property names what enforces it, or admits that it is unverified.
-2. An open question lives in the code, as a question, where it arises.
+2. An open question lives in the code, as a question, where it arises. Where the authority
+   itself is silent or unclear, say so at the line where the replication stops.
 3. A TODO is a compact design journal: the question, the candidate approaches, the expected
    benefits, the likely costs, and the evidence needed. Where the next action is obvious, one
    line is enough.
 4. Work in progress may stay in the tree, commented out, while its research value is greater
    than its maintenance cost. Never manufacture commented code as a substitute for version
-   history.
+   history. A commented-out block keeps its docs and its TODOs, so that it stays readable.
 5. Honesty is about knowledge, and not about sloppiness. Leave no typo, no debug output, no
    trailing whitespace and no stale summary. Do not imitate the accidents of a reference
    snapshot.
@@ -367,7 +370,8 @@ if is_tallying: cost.mark = performanceNow()  # instrument runs only while panel
 1. Where an authoritative source exists, the suite mirrors it. Suites are named after its
    chapters, and tests after its equations or claims. Every assertion carries a trailing
    citation comment, with two spaces before the `#`. A failing test names the page to reopen.
-   An empty placeholder suite keeps a gap in the coverage visible.
+   An empty placeholder suite keeps a gap in the coverage visible. Without an authority,
+   name suites and tests by the behaviour that they hold.
 2. Test laws, and not examples. Those laws are antisymmetry, round trips, inverses, ordering,
    conservation, idempotence, intended non-commutativity, degenerate cases, and the
    equivalence of an optimised implementation against a reference one.

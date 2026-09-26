@@ -12,7 +12,8 @@ Map the callable ladder of the constitution onto `func → proc → iterator →
 Escalate only on need.
 
 - `func` is the default for a deterministic transformation of a value.
-- `proc` only for an effect, for randomness, or for `var` access.
+- `proc` only for an effect beyond its parameters, or for randomness. A `func` may take a
+  `var` parameter, because `strictFuncs` does not count a write to it as a side effect.
 - Where both mutable and immutable access matter, define an overload pair. Raw access into
   storage is a `template` pair, and an accessor that does work is a `proc` and `func` pair:
 
