@@ -1,5 +1,5 @@
 {
-  "stamp": "18ddd6f1f22c8e51",
+  "stamp": "4a75d2c9f1a6c2b3",
   "sweeps": {
     "shake at torso": {
       "neg": {
@@ -1036,7 +1036,7 @@
       "apart": 0.7578778074486122,
       "turns": -0.5
     },
-    "free, pillion": {
+    "free, Face-to-back": {
       "holds": true,
       "apart": 0.45787780744861195,
       "turns": 0.5
