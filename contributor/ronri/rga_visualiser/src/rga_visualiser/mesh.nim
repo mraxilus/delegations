@@ -209,6 +209,13 @@ const
     ##   Line is one record spanning whole chord of fog disc, faded per fragment.
     ##   Per-fragment fade needs no piece boundaries and is exact, where cutting each
     ##   line into pieces to sample fade cost boundary sums per moving frame.
+  FACTOR_GUARD* = 8.0
+    ## Cut every ribbon to pyramid through eye this many half-views wide, across and up alike.
+    ##   Ribbon crossing near plane close by eye projects its cut end million pixels off
+    ##   screen. Uncut, GPU's interpolation over so stretched quad runs colour off ink and puts
+    ##   depth 55% too near; end cut here stands few thousand pixels out, where both are exact.
+    ##   Across reads vertical half-view too, so frame up to eight times wider than tall lies
+    ##   inside, and nothing inside frame moves.
   SEGMENTS_CIRCLE_HORIZON* = 96
     ## Set segment count in horizon line's great circle, or finite plane's rim.
     ##   Dense enough to read as circular.
@@ -790,6 +797,13 @@ func addMarker*(
   meshes.points.count_vertices = count + 1
 
 
+func steppedFrom(near, far: Position; fraction: float): Position =
+  ## Place point `fraction` of way from `near` to `far`, stepping from end it stands nearer.
+  ##   Step from far end is difference of two places decades apart where end is horizon's,
+  ##   which float32 cancels; see `expandRibbon`.
+  if fraction < 0.5: near + fraction*(far - near) else: far + (fraction - 1.0)*(far - near)
+
+
 func blend(first, second: Rgba; fraction: float): Rgba =
   ## Read colour fraction of way between two tints, for ribbon end near clip has moved.
   ##   At module scope rather than nested in `addSegment`: JS backend materialises nested
@@ -862,8 +876,11 @@ func expandRibbon*(record: RibbonRecord, scale: DrawScale): array[6, Vertex] =
   ##     reaches its vanishing point half million units out, so step from far end is
   ##     difference of two places decades apart, which float32 cancels to whole units at
   ##     plane whose own pixel spans billionths.
-  ##   Segment entirely behind eye, or one eye stands on, comes back as six coincident
-  ##   zero-alpha vertices: quad rasterising nothing, as shader leaves it.
+  ##   Then cut to guard pyramid, `FACTOR_GUARD` half-views wide, for reason that constant
+  ##   gives.
+  ##   Segment entirely behind eye, one eye stands on, or one wholly outside guard pyramid,
+  ##   comes back as six coincident zero-alpha vertices: quad rasterising nothing, as shader
+  ##   leaves it.
   let
     tail = Position(x: record.tail_x, y: record.tail_y, z: record.tail_z)
     head = Position(x: record.head_x, y: record.head_y, z: record.head_z)
@@ -891,6 +908,25 @@ func expandRibbon*(record: RibbonRecord, scale: DrawScale): array[6, Vertex] =
       (near, tint_near) = (crossing, tint_crossing)
     else:
       (far, tint_far) = (crossing, tint_crossing)
+
+  # Cut to guard pyramid, stepping each cut from end it stands nearer, as near crossing is.
+  let
+    slope = FACTOR_GUARD*scale.tangentHalfView
+    (off_near, off_far) = (near - scale.eye, far - scale.eye)
+  var (fraction_in, fraction_out) = (0.0, 1.0)
+  for normal in [
+    slope*scale.forward + -scale.axis_right, slope*scale.forward + scale.axis_right,
+    slope*scale.forward + -scale.axis_up, slope*scale.forward + scale.axis_up,
+  ]:
+    let (room_near, room_far) = (dot(off_near, normal), dot(off_far, normal))
+    if room_near < 0.0 and room_far < 0.0: return
+    if room_near < 0.0: fraction_in = max(fraction_in, room_near/(room_near - room_far))
+    elif room_far < 0.0: fraction_out = min(fraction_out, room_near/(room_near - room_far))
+  if fraction_in >= fraction_out: return
+  (near, far) = (steppedFrom(near, far, fraction_in), steppedFrom(near, far, fraction_out))
+  (tint_near, tint_far) = (
+    blend(tint_near, tint_far, fraction_in), blend(tint_near, tint_far, fraction_out)
+  )
 
   let
     offset_near = 0.5*float(record.width)*worldPerPixelAt(near, scale)*across.get

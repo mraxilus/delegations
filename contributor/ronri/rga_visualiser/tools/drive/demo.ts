@@ -363,7 +363,8 @@ const DEGREES_OPPOSITE = 4;
 /** Heading, azimuth and elevation of eye about point, check also reads from, whatever sight
  *  earlier checks leave.
  *  There, 0.001 out, record of `sol ∧ earth` reaches from near plane to Sol, 1.15 million
- *  pixels across, and GPU's interpolation over it leaves pair of pixels 100 px out off ink.
+ *  pixels across. Uncut, GPU's interpolation over it leaves pair of pixels 100 px out off ink;
+ *  shader cuts it to guard pyramid first (`mesh.FACTOR_GUARD`).
  */
 const HEADING_CROSSING = [2.4145937359945924, 0.714183349338042];
 
