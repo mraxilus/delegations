@@ -27,7 +27,7 @@ suite "History":
     #   rewrite it. Stepping is aiming camera, so it owes that too.
     #   Field of view is only lens field, and reader reaches it from both front-ends.
     var scene = initScene()
-    var camera = initCameraDefault()
+    var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     var history: History
     camera.degrees_field_of_view = 90.0
     history.initHistory(scene, camera)
@@ -40,13 +40,13 @@ suite "History":
     check history.redo(scene, camera)
     check camera.degrees_field_of_view =~ 30.0
     # Stance itself still crosses, which is what stepping is for.
-    check camera.pivot =~ initCameraDefault().pivot
+    check camera.pivot =~ initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED).pivot
 
   test "a step either way keeps each pick that still names the object it named":
     # Frame rule binds only while something is picked, so step must not drop picks it
     #   need not. Handle alone is no name: freed handle is refilled by next add.
     var scene = initScene()
-    var camera = initCameraDefault()
+    var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     var history: History
     let (a, b) = (scene.addObject(POINTS[0], "a", Ink.Cobalt), scene.addObject(POINTS[1], "b",
       Ink.Rose))
@@ -83,7 +83,7 @@ suite "History":
 
   test "undo and redo retrace every recorded state exactly, and canUndo/canRedo agree":
     var scene = initScene()
-    var camera = initCameraDefault()
+    var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     var history: History
     history.initHistory(scene, camera)
     var snapshots = @[scene] # Index 0 is seeded initial state.
@@ -118,7 +118,7 @@ suite "History":
 
   test "recording past capacity drops the oldest entry instead of growing":
     var scene = initScene()
-    var camera = initCameraDefault()
+    var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     var history: History
     history.initHistory(scene, camera)
     var snapshots = @[scene]
@@ -153,7 +153,7 @@ suite "History":
 
   test "a fresh record after undo truncates the redo-able future":
     var scene = initScene()
-    var camera = initCameraDefault()
+    var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     var history: History
     history.initHistory(scene, camera)
     scene.addObject(POINTS[0], "a", Ink.Rose)
@@ -188,7 +188,7 @@ suite "History":
       check taken.distance =~ wanted.distance
 
     var scene = initScene()
-    var camera = initCameraDefault()
+    var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     var history: History
     history.initHistory(scene, camera)
 
@@ -223,14 +223,14 @@ suite "History":
     check history.undo(scene, camera)
     checkAimedLike(camera, camera_a)
     check scene.len == 0
-    check not (camera.azimuth =~ initCameraDefault().azimuth)
+    check not (camera.azimuth =~ initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED).azimuth)
 
 
   test "undo and redo each advance the revision past every one the timeline has seen":
     # Front-end holds meshes and placements on revision; step that landed on.
     #   number it had already drawn showed nothing until camera moved.
     var scene = initScene()
-    var camera = initCameraDefault()
+    var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     var history: History
     history.initHistory(scene, camera)
     var seen = @[scene.revision]
