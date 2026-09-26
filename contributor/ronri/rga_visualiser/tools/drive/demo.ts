@@ -9,7 +9,7 @@
 //   band that only ever runs at default cannot see regression that shows under load.
 
 import type { Page } from '@playwright/test';
-import { settleCamera } from './camera';
+import { placeCamera, readPlaced, settleCamera } from './camera';
 import { readCanvas, settleCanvas, type Spot } from './canvas';
 import { report } from './report';
 
@@ -111,10 +111,7 @@ export async function driveCulling(page: Page): Promise<void> {
     await page.evaluate((given) => {
       // Demo's own camera first, then closer, then round: each shows different share of scene.
       if (given === 1) nimCameraDolly(0.3);
-      else if (given === 2) {
-        nimSetCameraAzimuth(nimCameraAzimuth() + 0.9);
-        nimSetCameraElevation(nimCameraElevation() + 0.3);
-      }
+      else if (given === 2) nimCameraOrbit(0.9, 0.3);
     }, move);
     await page.evaluate(() => nimSetCulling(true));
     const shown_on = await settleCanvas(page);
@@ -156,17 +153,19 @@ export async function driveOccluded(page: Page): Promise<void> {
     const span = Math.hypot(...heading);
     // Put whole camera back after: later checks zoom at this sky from where it stood.
     const before = {
-      pivot: Array.from(nimCameraPivot()), distance: nimCameraDistance(),
-      azimuth: nimCameraAzimuth(), elevation: nimCameraElevation(),
+      eye: Array.from(nimCameraEye()), pivot: Array.from(nimCameraPivot()),
     };
-    nimSetCameraPivot(at_planet[0] ?? 0, at_planet[1] ?? 0, at_planet[2] ?? 0);
-    nimSetCameraAzimuth(Math.atan2(heading[1] ?? 0, heading[0] ?? 0));
-    nimSetCameraElevation(Math.asin((heading[2] ?? 0) / span));
-    // Stand where planet's disc is sixty pixels wide, and never short of moon: bodies are
-    //   their real size, and fixed six spans out put Jupiter's disc at thirty pixels.
+    // Stand on moon's side of planet, where planet's disc is sixty pixels wide, and never
+    //   short of moon: bodies are their real size, and fixed six spans out put Jupiter's
+    //   disc at thirty pixels.
     const tall = (document.getElementById('gl') as HTMLCanvasElement).clientHeight;
     const per_radian = (tall / 2) / Math.tan(((nimCameraFov() * Math.PI) / 180) / 2);
-    nimSetCameraDistance(Math.max((nimObjectRadius(planet) * per_radian) / 60, span * 1.5));
+    const out = Math.max((nimObjectRadius(planet) * per_radian) / 60, span * 1.5) / span;
+    nimPlaceCamera(
+      (at_planet[0] ?? 0) + out*(heading[0] ?? 0), (at_planet[1] ?? 0) + out*(heading[1] ?? 0),
+      (at_planet[2] ?? 0) + out*(heading[2] ?? 0),
+      at_planet[0] ?? 0, at_planet[1] ?? 0, at_planet[2] ?? 0,
+    );
     await wait(500);
 
     const canvas = document.getElementById('gl') as HTMLCanvasElement;
@@ -220,13 +219,8 @@ export async function driveOccluded(page: Page): Promise<void> {
   await page.evaluate((given) => nimSelectToggle(given), occluded.planet);
   await page.waitForTimeout(400);
   const both = (await readCanvas(page, [occluded.spot])).spots[0] ?? [];
-  await page.evaluate((given) => {
-    nimSelectClear();
-    nimSetCameraPivot(given.pivot[0] ?? 0, given.pivot[1] ?? 0, given.pivot[2] ?? 0);
-    nimSetCameraDistance(given.distance);
-    nimSetCameraAzimuth(given.azimuth);
-    nimSetCameraElevation(given.elevation);
-  }, occluded.before);
+  await page.evaluate(() => nimSelectClear());
+  await placeCamera(page, occluded.before);
   await page.waitForTimeout(200);
 
   report(
@@ -263,10 +257,7 @@ export async function driveOccluded(page: Page): Promise<void> {
 export async function driveFarSky(page: Page): Promise<void> {
   // Whole camera put back after, as occlusion check does: zoom check following reads its
   //   bound off wherever camera stands.
-  const before = await page.evaluate(() => ({
-    pivot: Array.from(nimCameraPivot()), distance: nimCameraDistance(),
-    azimuth: nimCameraAzimuth(), elevation: nimCameraElevation(),
-  }));
+  const before = await readPlaced(page);
   const far = await page.evaluate(() => {
     const star = nimSceneHandles().find((one) => nimObjectLabel(one) === 'NAME Proxima Centauri');
     if (star === undefined) return null;
@@ -298,13 +289,8 @@ export async function driveFarSky(page: Page): Promise<void> {
       `${stance.reach.toFixed(0)} units out, camera ${stance.distance.toFixed(1)} off it; ` +
       `page's darkest surface reads 18`,
   );
-  await page.evaluate((given) => {
-    nimSelectClear();
-    nimSetCameraPivot(given.pivot[0] ?? 0, given.pivot[1] ?? 0, given.pivot[2] ?? 0);
-    nimSetCameraDistance(given.distance);
-    nimSetCameraAzimuth(given.azimuth);
-    nimSetCameraElevation(given.elevation);
-  }, before);
+  await page.evaluate(() => nimSelectClear());
+  await placeCamera(page, before);
   await settleCamera(page);
 }
 
@@ -317,19 +303,11 @@ export async function driveFarSky(page: Page): Promise<void> {
  *  Clip position keeps projective depth now; logarithm is written per fragment only.
  */
 export async function driveDiscUnderfoot(page: Page): Promise<void> {
-  const before = await page.evaluate(() => ({
-    pivot: Array.from(nimCameraPivot()), distance: nimCameraDistance(),
-    azimuth: nimCameraAzimuth(), elevation: nimCameraElevation(),
-  }));
+  const before = await readPlaced(page);
   // Ecliptic's disc reaches `EXTENT_PLANE` units from Sol; eye 1.5 units off Sol and 0.3 rad
   //   up stands well inside, so half of rim lies behind eye and plane runs on under camera.
-  await page.evaluate(() => {
-    nimSelectClear();
-    nimSetCameraPivot(0, 0, 0);
-    nimSetCameraDistance(1.5);
-    nimSetCameraAzimuth(0);
-    nimSetCameraElevation(0.3);
-  });
+  await page.evaluate(() => nimSelectClear());
+  await placeCamera(page, { eye: [1.433, 0, 0.443], pivot: [0, 0, 0] });
   await settleCamera(page);
   await page.waitForTimeout(400);
   // One spot past Sol, on disc's far half; three below, where disc runs under camera toward
@@ -352,7 +330,7 @@ export async function driveDiscUnderfoot(page: Page): Promise<void> {
   );
   // Second stance grazes plane, 0.0003 rad up: eye stands one eighth of near plane's
   //   distance off it, where fan's own near cut ended disc one third of way down.
-  await page.evaluate(() => { nimSetCameraElevation(0.0003); });
+  await placeCamera(page, { eye: [1.5, 0, 0.00045], pivot: [0, 0, 0] });
   await settleCamera(page);
   await page.waitForTimeout(400);
   const grazing = (await readCanvas(page, spots.slice(1))).spots
@@ -364,12 +342,7 @@ export async function driveDiscUnderfoot(page: Page): Promise<void> {
     `under camera 0.0003 rad over plane ${grazing.map((one) => one.toFixed(1)).join(', ')}, ` +
       `against ${past.toFixed(1)} past Sol`,
   );
-  await page.evaluate((given) => {
-    nimSetCameraPivot(given.pivot[0] ?? 0, given.pivot[1] ?? 0, given.pivot[2] ?? 0);
-    nimSetCameraDistance(given.distance);
-    nimSetCameraAzimuth(given.azimuth);
-    nimSetCameraElevation(given.elevation);
-  }, before);
+  await placeCamera(page, before);
   await settleCamera(page);
 }
 
@@ -397,10 +370,7 @@ const DEGREES_OPPOSITE = 4;
 export async function driveLineCrossing(
   page: Page, width: number, height: number,
 ): Promise<void> {
-  const before = await page.evaluate(() => ({
-    pivot: Array.from(nimCameraPivot()), distance: nimCameraDistance(),
-    azimuth: nimCameraAzimuth(), elevation: nimCameraElevation(),
-  }));
+  const before = await readPlaced(page);
   // Earth is point orrery joins by both of its finite lines, at every size it comes in.
   const joined = await page.evaluate(() => {
     const handles = nimSceneHandles();
@@ -421,9 +391,14 @@ export async function driveLineCrossing(
   }
   // Pivot rather than pick: selection's own pulse never settles, and ring is read off still
   //   canvas. Camera lands where framing pick lands it either way.
+  // Whole camera slides, so pivot lands on point and sight stands.
   await page.evaluate((given) => {
     nimSelectClear();
-    nimSetCameraPivot(given[0] ?? 0, given[1] ?? 0, given[2] ?? 0);
+    const eye = nimCameraEye(), pivot = nimCameraPivot();
+    const slid = [0, 1, 2].map((i) => (eye[i] ?? 0) + (given[i] ?? 0) - (pivot[i] ?? 0));
+    nimPlaceCamera(
+      slid[0] ?? 0, slid[1] ?? 0, slid[2] ?? 0, given[0] ?? 0, given[1] ?? 0, given[2] ?? 0,
+    );
   }, joined.place);
 
   for (const distance of [0.01, 0.001]) {
@@ -468,12 +443,7 @@ export async function driveLineCrossing(
     );
   }
 
-  await page.evaluate((given) => {
-    nimSetCameraPivot(given.pivot[0] ?? 0, given.pivot[1] ?? 0, given.pivot[2] ?? 0);
-    nimSetCameraDistance(given.distance);
-    nimSetCameraAzimuth(given.azimuth);
-    nimSetCameraElevation(given.elevation);
-  }, before);
+  await placeCamera(page, before);
   await settleCamera(page);
 }
 

@@ -193,24 +193,19 @@ suite "History":
     history.initHistory(scene, camera)
 
     # Two edits, each made from its own distinctly different viewpoint.
-    camera = camera.placedAtAzimuth(0.25)
-    camera = camera.placedAtDistance(11.0)
+    camera = camera.placed(stanceAround(camera.pivot, 11.0, Direction(x: 9, y: 2, z: 3)))
     scene.addObject(POINTS[0], "a", Ink.Rose)
     history.record(scene, camera)
     let camera_a = camera
 
-    camera = camera.placedAtAzimuth(1.75)
-    camera = camera.placedAtDistance(29.0)
-    camera = camera.placedAtElevation(-0.4)
+    camera = camera.placed(stanceAround(camera.pivot, 29.0, Direction(x: -1, y: 5, z: -2)))
     scene.addObject(POINTS[1], "b", Ink.Rose)
     history.record(scene, camera)
     let camera_b = camera
 
     # Orbiting after fact records nothing of its own, so step ignores wherever.
     #   camera has drifted to since.
-    camera = camera.placedAtAzimuth(-2.5)
-    camera = camera.placedAtDistance(3.0)
-    camera = camera.placedAtElevation(1.1)
+    camera = camera.placed(stanceAround(camera.pivot, 3.0, Direction(x: -4, y: -3, z: 9)))
 
     # Undoing `b` takes scene back to one object and view back to where `b` was.
     #   built -- `b` is what vanishes, so `b`'s own view is one to watch it from.

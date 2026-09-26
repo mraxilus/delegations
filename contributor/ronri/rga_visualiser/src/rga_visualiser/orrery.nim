@@ -546,13 +546,13 @@ static:
         &"block in horizon and the nearest neighbour; got `{objectsOf(scale)}`."
 
 const
-  ELEVATION_ORRERY_SHOWN* = 0.95
-    ## Fix how far above horizontal demo's camera stands, in radians.
-    ##   Opening camera at 0.42 is nearly edge-on to systems on planes: every ring collapses
-    ##   to line and arrangement reads as starburst.
+  RISE_ORRERY_SHOWN* = 1.4
+    ## Fix how steeply demo's eye stands over Sol: its height over its run across.
+    ##   About 54 degrees up. Opening camera, at third of that, is nearly edge-on to
+    ##   systems on planes: every ring collapses to line and arrangement reads as starburst.
     ##   Steeper also makes sphere fit honest.
-    ##   Not overhead: at `TAU/4` plane of ecliptic disappears into own horizon.
-    ##   Azimuth is left where reader had it.
+    ##   Not overhead: straight down, plane of ecliptic disappears into own horizon.
+    ##   Bearing is left where reader had it.
 
   INSET_ORRERY_SHOWN* = 24.0
     ## Fix how many pixels of margin arrangement is framed with, per side.
@@ -710,21 +710,28 @@ func showOrrery*(
   ##   Camera stands back far enough to hold Neptune's ring, aims at Sol, pitches up over
   ##   it.
   ##     Solved: `distanceFitting` is same sphere-tangent solve framed selection uses.
-  ##     Pitched first, since solve reads camera handed; azimuth is left where reader had
+  ##     Pitched first, since solve reads camera handed; bearing is left where reader had
   ##     it.
   ##   Not here: anything either front-end keeps of own (born stamps, selection, undo
   ##   timeline), bookkeeping about scene rather than part of it.
   scene.restoreFrom(initScene())
   constructOrrery(scene, scale, now)
   scene.replayFrom(now)
-  # Place camera through one stance, since pivot and both angles are read-outs now.
-  #   Pitched camera is what solve reads, as before: it is handed camera already carrying
-  #   new pivot and elevation, and distance it still carries does not reach solve.
-  let pitched = camera.placed(stanceTurntable(
-    POSITION_ORRERY, camera.distance, camera.azimuth, ELEVATION_ORRERY_SHOWN
-  ))
-  camera = camera.placed(stanceTurntable(
-    POSITION_ORRERY,
-    distanceFitting(RADIUS_ORRERY, pitched, width, height, INSET_ORRERY_SHOWN),
-    camera.azimuth, ELEVATION_ORRERY_SHOWN,
-  ))
+  # Stand eye on reader's own bearing: sight less its height is its run, and eye goes back
+  #   along that run and up by `RISE_ORRERY_SHOWN` of it. Heights are inner products.
+  #   Sight straight up or down has no bearing, and reference sight stands in for it.
+  let
+    forward = camera.frame.forward
+    flat = forward + (-innerOf(toMultivector(forward), toMultivector(UP_WORLD)))*UP_WORLD
+    run = sqrt(innerOf(toMultivector(flat), toMultivector(flat)))
+    bearing = if run > TOLERANCE_ABS: (1.0/run)*flat else: FORWARD_REFERENCE
+    away = (1.0/sqrt(1.0 + RISE_ORRERY_SHOWN*RISE_ORRERY_SHOWN))*(
+      -bearing + RISE_ORRERY_SHOWN*UP_WORLD
+    )
+  # Pitched camera is what solve reads: it carries new pivot and sight, and distance it
+  #   carries does not reach solve.
+  let pitched = camera.placed(
+    stanceFacing(POSITION_ORRERY + camera.distance*away, POSITION_ORRERY)
+  )
+  let fitted = distanceFitting(RADIUS_ORRERY, pitched, width, height, INSET_ORRERY_SHOWN)
+  camera = camera.placed(stanceFacing(POSITION_ORRERY + fitted*away, POSITION_ORRERY))

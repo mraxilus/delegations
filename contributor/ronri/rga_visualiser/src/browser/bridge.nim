@@ -1097,6 +1097,14 @@ proc nimCameraTurnAt(
   )
 
 
+proc nimCameraOrbit(turn, rise: cfloat) {.exportc.} =
+  ## Turn eye about pivot by `turn` and `rise` radians, about camera's own axes.
+  ##   Motion outright, not drag's rule, which looks where nothing is picked; see
+  ##   `camera.orbit`. For checks that move view and ask what it rebuilt.
+  TWEEN_CAMERA.abandon()
+  camera.orbit(CAMERA, float(turn), float(rise))
+
+
 proc nimCameraRoll(radians: cfloat) {.exportc.} =
   ## Roll camera about its own sight axis by `radians`.
   ##   Twist of two fingers, which has no keyboard beside it on touch; see
@@ -1249,17 +1257,14 @@ proc nimCameraSpeedReading(): cstring {.exportc.} =
     appendSpeedLight(line, cursor, INTERACTION.speedFlying(CAMERA)/SPEED_LIGHT))
 
 
-proc nimSetCameraAzimuth(v: cfloat) {.exportc.} =
-  ## Rewrite angle about world up, in radians.
+proc nimPlaceCamera(eye_x, eye_y, eye_z, pivot_x, pivot_y, pivot_z: cfloat) {.exportc.} =
+  ## Stand camera at eye, facing pivot, level; lens untouched. See `camera.stanceFacing`.
+  ##   One place names stance whole, since angles name none and pivot alone names half.
   TWEEN_CAMERA.halt()
-  CAMERA = CAMERA.placedAtAzimuth(float(v))
-
-
-proc nimSetCameraElevation(v: cfloat) {.exportc.} =
-  ## Rewrite angle above horizontal plane, in radians.
-  ##   Clamped to bound `panel.layoutView`'s drag widget uses.
-  TWEEN_CAMERA.halt()
-  CAMERA = CAMERA.placedAtElevation(float(v))
+  CAMERA = CAMERA.placed(stanceFacing(
+    Position(x: float(eye_x), y: float(eye_y), z: float(eye_z)),
+    Position(x: float(pivot_x), y: float(pivot_y), z: float(pivot_z)),
+  ))
 
 
 proc nimSetCameraDistance(v: cfloat) {.exportc.} =
@@ -1271,12 +1276,6 @@ proc nimSetCameraDistance(v: cfloat) {.exportc.} =
 
 proc nimSetCameraFov(v: cfloat) {.exportc.} = CAMERA.degrees_field_of_view = float(v)
   ## Rewrite vertical field of view, in degrees.
-
-proc nimSetCameraPivot(x, y, z: cfloat) {.exportc.} =
-  ## Rewrite point camera orbits around.
-  TWEEN_CAMERA.halt()
-  CAMERA = CAMERA.placedAtPivot(Position(x: float(x), y: float(y), z: float(z)))
-
 
 
 

@@ -2048,9 +2048,7 @@ proc runStoryboard(
   #   step creating it and one after, and grays out once two steps have passed.
   #   Only step's real operands count: unary operation's second index is placeholder (see
   #   `Step.index_second`).
-  let
-    azimuth_default = camera.azimuth
-    elevation_default = camera.elevation
+  let heading_default = camera.frame.forward
   # Hold which handles this step and one before read or wrote, as flags per handle.
   #   Same fixed-capacity kind `are_dimmed` has, so loop allocates nothing.
   var are_operative_previous: array[OBJECTS_MAX, bool]
@@ -2069,12 +2067,12 @@ proc runStoryboard(
     are_operative_previous = are_operative
 
     # Aim capture at horizon object, then restore default after.
-    #   Finite object is anchored where fixed demo angle frames it; horizon object stands
+    #   Finite object is anchored where default heading frames it; horizon object stands
     #   wherever construction landed it.
     #   Representative point for line's great circle, since aiming along normal puts ring
     #   at frame's edge; plane at horizon needs no aiming; lens stays default.
-    camera = camera.placed(stanceTurntable(
-      camera.pivot, camera.distance, azimuth_default, elevation_default
+    camera = camera.placed(stanceFacing(
+      camera.pivot + (-camera.distance)*heading_default, camera.pivot
     ))
     # Settle instantly, not eased: captured frame must never show half-finished pan.
     #   Same `framing` rule interactive path uses.

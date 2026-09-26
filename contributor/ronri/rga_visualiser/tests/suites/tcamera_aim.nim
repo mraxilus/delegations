@@ -12,11 +12,43 @@ suite "Camera Aim":
 
   const
     (WIDTH_AIM, HEIGHT_AIM) = (1440, 900) ## Frame centred box is measured in.
-    AZIMUTHS_AIM = [0.0, 0.7, 1.6, 2.4, 3.1]
-    ELEVATIONS_AIM = [-0.6, 0.2, 0.9]
-      ## Sweep framing rule over these orientations.
+    OUT_TO_AIM = [
+      Direction(x: 3, y: 0, z: -2),
+      Direction(x: 5, y: 0, z: 1),
+      Direction(x: 4, y: 0, z: 5),
+      Direction(x: 17, y: 14, z: -15),
+      Direction(x: 12, y: 10, z: 3),
+      Direction(x: 6, y: 5, z: 10),
+      Direction(x: -1, y: 25, z: -17),
+      Direction(x: -1, y: 25, z: 5),
+      Direction(x: -1, y: 22, z: 28),
+      Direction(x: -10, y: 9, z: -9),
+      Direction(x: -11, y: 10, z: 3),
+      Direction(x: -9, y: 8, z: 15),
+      Direction(x: -19, y: 1, z: -13),
+      Direction(x: -19, y: 1, z: 4),
+      Direction(x: -18, y: 1, z: 23),
+    ]
+      ## Sweep framing rule over eyes standing off origin along these directions.
       ##   Swept, not sampled at one camera: rule about screen geometry passing
       ##   single-orientation check can be plainly wrong from camera nobody looked from.
+      ##   Five bearings round world up, each from below, just above and steeply above.
+    OUT_TO_AIM_LOW = [
+      Direction(x: 5, y: 0, z: 1),
+      Direction(x: 12, y: 10, z: 3),
+      Direction(x: -1, y: 25, z: 5),
+      Direction(x: -11, y: 10, z: 3),
+      Direction(x: -19, y: 1, z: 4),
+    ]
+      ## Same five bearings, from just above.
+    OUT_TO_AIM_RAISED = [
+      Direction(x: 10, y: 0, z: 3),
+      Direction(x: 12, y: 10, z: 5),
+      Direction(x: -1, y: 26, z: 8),
+      Direction(x: -12, y: 11, z: 5),
+      Direction(x: -19, y: 1, z: 6),
+    ]
+      ## Same five bearings, from little higher.
 
   proc marginsCentred(): (float, float) =
     ## Measure how far in centred box begins, across and down, in this suite's frame.
@@ -26,9 +58,9 @@ suite "Camera Aim":
     (0.5*(float(WIDTH_AIM) - reach_across), 0.5*(float(HEIGHT_AIM) - reach_down))
 
 
-  proc stanceAim(azimuth, elevation: float): Camera =
-    ## Build camera orbiting origin at given angles, for sweeps below.
-    initCamera(pivot = ORIGIN, distance = 12.0, azimuth = azimuth, elevation = elevation)
+  proc stanceAim(out_to: Direction): Camera =
+    ## Build camera 12 units off origin along `out_to`, facing it, for sweeps below.
+    cameraAround(ORIGIN, 12.0, out_to)
 
   proc sceneOf(objects: varargs[Multivector]): (Scene, Selection) =
     ## Build scene holding exactly these objects, with every one of them picked.
@@ -59,7 +91,7 @@ suite "Camera Aim":
     # What whole rule rests on. Object clinging to edge is visible without.
     #   being what view is about, and this is case that says so.
     let point = toMultivector(Position(x: 9.0, y: -7.0, z: 4.0))
-    let camera = stanceAim(1.6, 0.2)
+    let camera = stanceAim(Direction(x: -1, y: 25, z: 5))
     let at = projectToScreen(
       camera.initMatrixViewProjection(WIDTH_AIM/HEIGHT_AIM), WIDTH_AIM, HEIGHT_AIM,
       anchorFor(point, camera.drawExtentFor(HEIGHT_AIM, 0.0)).get,
@@ -89,9 +121,8 @@ suite "Camera Aim":
     #   against 15.4 down, and 7.3 across 390x844 phone. Picking object on desktop
     #   therefore almost never moved camera, which is whole complaint. Every width
     #   from square to twice height now returns one verdict.
-    for azimuth in AZIMUTHS_AIM:
-      for elevation in ELEVATIONS_AIM:
-        let camera = stanceAim(azimuth, elevation)
+    for out_to in OUT_TO_AIM:
+        let camera = stanceAim(out_to)
         for step in 1 .. 12:
           let place = offsetFromPivot(camera, 0.06*float(step), 0.0)
           let verdict = isShownCentrally(place, camera, HEIGHT_AIM, HEIGHT_AIM)
@@ -104,8 +135,8 @@ suite "Camera Aim":
     #   only: tall frame keeps its own narrower reach across -- phone held upright is
     #   deliberately left as it was -- so rule is implication, not equality.
     for (width, height) in [(HEIGHT_AIM, HEIGHT_AIM), (WIDTH_AIM, HEIGHT_AIM), (390, 844)]:
-      for azimuth in AZIMUTHS_AIM:
-        let camera = stanceAim(azimuth, 0.2)
+      for out_to in OUT_TO_AIM_LOW:
+        let camera = stanceAim(out_to)
         for step in 1 .. 14:
           let reach = 0.06*float(step)
           if isShownCentrally(offsetFromPivot(camera, reach, 0.0), camera, width, height):
@@ -119,7 +150,7 @@ suite "Camera Aim":
     #   leaves box and check where it went. Edge stands at frame's *height*,
     #   not its width -- 300 px from middle of 1440x900 frame rather than 480 -- less
     #   room drawn dot takes.
-    let camera = stanceAim(0.0, 0.0)
+    let camera = stanceAim(Direction(x: 1, y: 0, z: 0))
     let
       edge_measured = 0.5*FRACTION_VIEW_CENTRED*float(HEIGHT_AIM) - INSET_POINT_SHOWN
       edge_by_width = 0.5*FRACTION_VIEW_CENTRED*float(WIDTH_AIM) - INSET_POINT_SHOWN
@@ -142,7 +173,7 @@ suite "Camera Aim":
     #   Line runs out to horizon, which moves with camera, so demanding it fit
     #   would demand camera pulled back until it was speck. Plane's disc is fixed
     #   `EXTENT_PLANE_F` across whatever camera does, so it is thing frame can hold.
-    let camera = stanceAim(0.0, 0.2)
+    let camera = stanceAim(Direction(x: 5, y: 0, z: 1))
     let
       far_away = Position(x: 26.0, y: 0.0, z: 0.0)
       near_middle = Position(x: 0.0, y: 0.0, z: 0.4)
@@ -207,9 +238,8 @@ suite "Camera Aim":
       )
     let staged = scene.previewApplying(Operation.Wedge, handle_first, handle_second)
     check staged.isSome
-    for azimuth in AZIMUTHS_AIM:
-      for elevation in ELEVATIONS_AIM:
-        let camera = stanceAim(azimuth, elevation)
+    for out_to in OUT_TO_AIM:
+        let camera = stanceAim(out_to)
         let aim = aimFor(scene, Selection(), staged, camera.drawExtentFor(HEIGHT_AIM, 0.0))
         let framed = camera.placed(stanceFor(aim.get, camera, WIDTH_AIM, HEIGHT_AIM))
         check isShownAll(
@@ -227,7 +257,7 @@ suite "Camera Aim":
     # Edit-session case, over same pair: staging one of those points names no.
     #   operands, so other is left out and no pull-back is owed.
     let alone = some(previewStaging(scene.geometryOf(handle_first), RADIUS_OBJECT_DEFAULT))
-    let camera = stanceAim(0.7, 0.2)
+    let camera = stanceAim(Direction(x: 12, y: 10, z: 3))
     let aim = aimFor(scene, Selection(), alone, camera.drawExtentFor(HEIGHT_AIM, 0.0))
     let framed = camera.placed(stanceFor(aim.get, camera, WIDTH_AIM, HEIGHT_AIM))
     check isShownAll(scene, Selection(), alone, framed, WIDTH_AIM, HEIGHT_AIM)
@@ -268,7 +298,7 @@ suite "Camera Aim":
 
     # Standing where rim reaches past centred box and stays on screen: in view, and.
     #   *because* rim is only held to frame. Both halves asserted, neither assumed.
-    var camera = stanceAim(0.0, 0.42)
+    var camera = stanceAim(Direction(x: 9, y: 0, z: 4))
     camera = camera.placedAtDistance(19.0)
     let spread = rimAt(camera, positionAnchor(ground).get)
     check spread.is_past_box
@@ -314,10 +344,9 @@ suite "Camera Aim":
     let ground = toMultivector(ORIGIN) ∧ toMultivector(Position(x: 1.0, y: 0.0, z: 0.0)) ∧
       toMultivector(Position(x: 0.0, y: 1.0, z: 0.0))
     let (scene, picked) = sceneOf(ground)
-    for azimuth in AZIMUTHS_AIM:
-      for elevation in ELEVATIONS_AIM:
+    for out_to in OUT_TO_AIM:
         # Close in, where disc of radius `EXTENT_PLANE_F` cannot fit at all.
-        var camera = stanceAim(azimuth, elevation)
+        var camera = stanceAim(out_to)
         camera = camera.placedAtDistance(6.0)
         check not isShownCentrally(ground, camera, WIDTH_AIM, HEIGHT_AIM)
         let framed = camera.placed(framedFor(scene, picked, camera))
@@ -363,9 +392,7 @@ suite "Camera Aim":
       "ground", inkCycled(0),
     )
     proc scaleAt(distance: float): DrawExtent =
-      initCamera(
-        pivot = ORIGIN, distance = distance, azimuth = 0.0, elevation = 0.9
-      ).drawExtentFor(TALL, 0.0)
+      cameraAround(ORIGIN, distance, Direction(x: 4, y: 0, z: 5)).drawExtentFor(TALL, 0.0)
     proc spanAt(distance: float): float =
       ## Read drawn disc's radius in pixels, as `isBackdropUnder` reads it.
       let scale = scaleAt(distance)
@@ -391,7 +418,7 @@ suite "Camera Aim":
     #   radius of 8 -- so test ringing support would frame circle nobody sees.
     let ground = toMultivector(ORIGIN) ∧ toMultivector(Position(x: 1.0, y: 0.0, z: 0.0)) ∧
       toMultivector(Position(x: 0.0, y: 1.0, z: 0.0))
-    var camera = stanceAim(0.0, 0.9)
+    var camera = stanceAim(Direction(x: 4, y: 0, z: 5))
     camera = camera.placedAtDistance(32.0)
     # Fits about its own support at this distance, and does not once disc is drawn.
     #   long way off along plane instead.
@@ -402,7 +429,7 @@ suite "Camera Aim":
     # And framing rule follows same anchor, object by object: same plane in.
     #   same scene at same camera costs nothing without one and moves view with it.
     let (scene_support, picked_support) = sceneOf(ground)
-    check framedFor(scene_support, picked_support, camera) == camera.stanceOf
+    check framedFor(scene_support, picked_support, camera) =~ camera.stanceOf
 
     var (scene_drawn, picked_drawn) = (initScene(), Selection())
     picked_drawn.toggle(scene_drawn.addObject(
@@ -439,7 +466,7 @@ suite "Camera Aim":
   test "a point fits with its drawn dot inside the box, not only its middle":
     # `INSET_POINT_SHOWN`, stated as property it exists for: point whose centre lands.
     #   pixel inside box is not in view, because half its dot is not.
-    let camera = stanceAim(0.0, 0.0)
+    let camera = stanceAim(Direction(x: 1, y: 0, z: 0))
     let margin_y = 0.5*(1.0 - FRACTION_VIEW_CENTRED)*float(HEIGHT_AIM)
     var found_edge = false
     # Walk point down frame until it crosses inset edge, then check that bare.
@@ -463,9 +490,8 @@ suite "Camera Aim":
       toMultivector(Position(x: 14.0, y: -11.0, z: 3.0)),
       toMultivector(Position(x: -9.0, y: 12.0, z: -5.0)),
     )
-    for azimuth in AZIMUTHS_AIM:
-      for elevation in ELEVATIONS_AIM:
-        let camera = stanceAim(azimuth, elevation)
+    for out_to in OUT_TO_AIM:
+        let camera = stanceAim(out_to)
         let framed = camera.placed(framedFor(scene, picked, camera))
         check isShownAll(scene, picked, none(Preview), framed, WIDTH_AIM, HEIGHT_AIM)
         check framed.distance > camera.distance # Panning alone could not have done it.
@@ -486,9 +512,8 @@ suite "Camera Aim":
     # Mean of three, computed here classical way: algebra's answer is what.
     #   is under test, so arithmetic it is held against lives in test.
     let middle = Position(x: (2.0 - 2.0 + 0.0)/3.0, y: (0.0 + 0.0 + 2.0)/3.0, z: 0.0)
-    for azimuth in AZIMUTHS_AIM:
-      for elevation in ELEVATIONS_AIM:
-        var camera = stanceAim(azimuth, elevation)
+    for out_to in OUT_TO_AIM:
+        var camera = stanceAim(out_to)
         check isShownAll(scene, picked, none(Preview), camera, WIDTH_AIM, HEIGHT_AIM)
         let framed = framedFor(scene, picked, camera)
         check camera.placed(framed).pivot =~ middle
@@ -505,10 +530,10 @@ suite "Camera Aim":
         )
         tween.settle(camera)
         check camera.pivot =~ middle
-        check camera.distance == stanceAim(azimuth, elevation).distance
+        check camera.distance == stanceAim(out_to).distance
         # Angles are read off sight direction now, so they land within ulp or two of
         #   what was asked rather than on it. Claim is that framing turned nothing.
-        check camera.azimuth =~ stanceAim(azimuth, elevation).azimuth
+        check camera.azimuth =~ stanceAim(out_to).azimuth
 
 
   test "an object picked on its own is carried to the middle, and nothing else moves":
@@ -517,9 +542,8 @@ suite "Camera Aim":
     #   fix, which is least-movement rule holding over everything reader set.
     let place = Position(x: 9.0, y: -7.0, z: 4.0)
     let (scene, picked) = sceneOf(toMultivector(place))
-    for azimuth in AZIMUTHS_AIM:
-      for elevation in ELEVATIONS_AIM:
-        let camera = stanceAim(azimuth, elevation)
+    for out_to in OUT_TO_AIM:
+        let camera = stanceAim(out_to)
         let framed = framedFor(scene, picked, camera)
         check isShownAll(
           scene, picked, none(Preview), camera.placed(framed), WIDTH_AIM, HEIGHT_AIM
@@ -541,9 +565,8 @@ suite "Camera Aim":
       ),
     ]
     for (scene, picked) in scenes:
-      for azimuth in AZIMUTHS_AIM:
-        for elevation in ELEVATIONS_AIM:
-          let camera = stanceAim(azimuth, elevation)
+      for out_to in OUT_TO_AIM:
+          let camera = stanceAim(out_to)
           let framed = framedFor(scene, picked, camera)
           check camera.placed(framed).azimuth =~ camera.azimuth
           check camera.placed(framed).elevation =~ camera.elevation
@@ -554,9 +577,8 @@ suite "Camera Aim":
       toMultivector(Position(x: 14.0, y: -11.0, z: 3.0)),
       toMultivector(Position(x: -9.0, y: 12.0, z: -5.0)),
     )
-    for azimuth in AZIMUTHS_AIM:
-      for elevation in ELEVATIONS_AIM:
-        let camera = stanceAim(azimuth, elevation)
+    for out_to in OUT_TO_AIM:
+        let camera = stanceAim(out_to)
         let framed = framedFor(scene, picked, camera)
         check framed.distance >= camera.distance # Never pulls in ...
         # ... and not one step further than rule in force demands. Judged against that
@@ -601,7 +623,7 @@ suite "Camera Aim":
       toMultivector(Position(x: 6.0, y: -4.0, z: 1.0)),
       toMultivector(Position(x: -3.0, y: 5.0, z: -2.0)),
     )
-    let opening = stanceAim(0.7, 0.35)
+    let opening = stanceAim(Direction(x: 13, y: 11, z: 6))
     let aim = aimFor(scene, picked, none(Preview), opening.drawExtentFor(TALL, 0.0)).get
     let centre = aim.sphere.get.centre
     let reach = distanceFitting(aim.sphere.get.radius, opening, WIDE, TALL, INSET_POINT_SHOWN)
@@ -652,7 +674,7 @@ suite "Camera Aim":
       toMultivector(Position(x: 6.0, y: -1.0, z: 1.0)),
     )
     # Near enough that group does not fit, so rule pulls back and stands eye on floor.
-    var camera = stanceAim(0.7, 0.35)
+    var camera = stanceAim(Direction(x: 13, y: 11, z: 6))
     camera.dollyTo(3.0)
     let aim = aimFor(scene, picked, none(Preview), camera.drawExtentFor(TALL, 0.0)).get
     let middle = aim.centroid.get
@@ -689,9 +711,8 @@ suite "Camera Aim":
       toMultivector(Position(x: 0.7, y: 0.4, z: 0.2)),
       toMultivector(Position(x: -0.6, y: -0.3, z: 0.5)),
     )
-    for azimuth in AZIMUTHS_AIM:
-      for elevation in ELEVATIONS_AIM:
-        let camera = stanceAim(azimuth, elevation)
+    for out_to in OUT_TO_AIM:
+        let camera = stanceAim(out_to)
         let framed = framedFor(scene, picked, camera)
         check framed.distance == camera.distance
 
@@ -706,7 +727,7 @@ suite "Camera Aim":
       toMultivector(place),
       toMultivector(support) ∧ toMultivector(Position(x: 1.0, y: 0.3, z: 40.0)),
     )
-    let camera = stanceAim(0.0, 0.0)
+    let camera = stanceAim(Direction(x: 1, y: 0, z: 0))
     # Picked beside point, point alone decides where to look and what it costs:
     #   aim's sphere collapses onto it, so move is pan toward point, cut short
     #   moment its dot fits -- no dolly toward that distant support, ever.
@@ -731,7 +752,7 @@ suite "Camera Aim":
         toMultivector(Position(x: 5.0, y: 4.5, z: 1.4))
     )
     let (scene_star, picked_star) = sceneOf(star)
-    let opening = stanceAim(0.5, 0.2)
+    let opening = stanceAim(Direction(x: 9, y: 5, z: 2))
     let aim_star = aimFor(
       scene_star, picked_star, none(Preview), opening.drawExtentFor(TALL, 0.0)
     ).get
@@ -774,14 +795,8 @@ suite "Camera Aim":
     check aim_line.heading.isNone
     check aim_line.normal_crossing.isSome
     # Sight turned onto that circle's own normal is as far off as it gets.
-    var turned = opening
-    turned = turned.placed(stanceTurntable(
-      turned.pivot, turned.distance,
-      azimuthElevationFor(aim_line.normal_crossing.get)[0],
-      clamp(
-        azimuthElevationFor(aim_line.normal_crossing.get)[1],
-        -ELEVATION_LIMIT, ELEVATION_LIMIT,
-      ),
+    var turned = opening.placed(stanceFacing(
+      opening.pivot + (-opening.distance)*aim_line.normal_crossing.get, opening.pivot
     ))
     check not aim_line.isBounded(turned, WIDE, TALL)
     turned.holdHorizon(aim_line, WIDE, TALL)
@@ -813,27 +828,24 @@ suite "Camera Aim":
     )
     check isHorizon(star)
     let (scene_star, picked_star) = sceneOf(star)
-    for azimuth in AZIMUTHS_AIM:
-      let camera = stanceAim(azimuth, 0.3)
+    for out_to in OUT_TO_AIM_RAISED:
+      let camera = stanceAim(out_to)
       let framed = framedFor(scene_star, picked_star, camera)
       check isShownCentrally(star, camera.placed(framed), WIDTH_AIM, HEIGHT_AIM)
       check camera.placed(framed).pivot =~ camera.pivot # Orbit turned; what it turns about did not.
       check framed.distance =~ camera.distance
       # Turn lands on star's own heading, rather than being searched toward it:
-      #   rebuild names that turn outright, so there is no fraction of it to find.
+      #   least turn names that turn outright, so there is no fraction of it to find.
       let aim = aimFor(
         scene_star, picked_star, none(Preview), camera.drawExtentFor(HEIGHT_AIM, 0.0)
       )
       check aim.isSome and aim.get.heading.isSome
-      let angles = azimuthElevationFor(aim.get.heading.get)
-      check camera.placed(framed).azimuth =~ angles[0]
-      check camera.placed(framed).elevation =~
-        clamp(angles[1], -ELEVATION_LIMIT, ELEVATION_LIMIT)
+      check camera.placed(framed).frame.forward =~ aim.get.heading.get
 
     # Star already on screen keeps reader's own framing, as finite selection fitting does.
     #   Turn is floor like every other part of rule: it fires where bound is broken, and
     #   stands aside inside it. Re-centring one already in view pulled whole view about.
-    let opening = stanceAim(AZIMUTHS_AIM[0], 0.3)
+    let opening = stanceAim(OUT_TO_AIM_RAISED[0])
     var faced = opening.placed(framedFor(scene_star, picked_star, opening))
     let aim_faced = aimFor(
       scene_star, picked_star, none(Preview), faced.drawExtentFor(HEIGHT_AIM, 0.0)
@@ -850,14 +862,14 @@ suite "Camera Aim":
     #   behind reader and point in front have no one placement showing both.
     let (scene_both, picked_both) =
       sceneOf(star, toMultivector(Position(x: 3.0, y: -2.0, z: 1.0)))
-    let camera = stanceAim(0.7, 0.2)
+    let camera = stanceAim(Direction(x: 12, y: 10, z: 3))
     let framed = framedFor(scene_both, picked_both, camera)
     check camera.placed(framed).azimuth =~ camera.azimuth
     check camera.placed(framed).elevation =~ camera.elevation
 
 
   test "an empty selection withdraws the offer, and so does geometry that draws nothing":
-    var camera = stanceAim(0.0, 0.2)
+    var camera = stanceAim(Direction(x: 5, y: 0, z: 1))
     var tween: CameraTween
     let (scene, picked) = sceneOf(toMultivector(Position(x: 3.0, y: -2.0, z: 1.5)))
     tween.offerAim(
@@ -884,7 +896,7 @@ suite "Camera Aim":
     # Driving rule way front-end does, rather than calling `stanceFor`.
     #   directly: offer, ease, and arrival, over whole animation.
     const DURATION = 0.35
-    var camera = stanceAim(1.6, 0.2)
+    var camera = stanceAim(Direction(x: -1, y: 25, z: 5))
     var tween: CameraTween
     let (scene, picked) = sceneOf(
       toMultivector(Position(x: 14.0, y: -11.0, z: 3.0)),
@@ -919,9 +931,8 @@ suite "Camera Aim":
       DURATION = 0.35
       ASPECT = float(WIDTH_AIM)/float(HEIGHT_AIM)
       RADIUS = 0.08
-    for azimuth in AZIMUTHS_AIM:
-      for elevation in ELEVATIONS_AIM:
-        var camera = stanceAim(azimuth, elevation)
+    for out_to in OUT_TO_AIM:
+        var camera = stanceAim(out_to)
         # Stand point forty units ahead and well off sight axis, so pixel is not middle.
         let
           eye = camera.eye
@@ -961,8 +972,8 @@ suite "Camera Aim":
         check abs(after_turn.y - float(HEIGHT_AIM)/2.0) < 0.01
         # Angles are read off sight direction now, so they land within ulp or two of
         #   what was asked rather than on it. Claim is that framing turned nothing.
-        check camera.azimuth =~ stanceAim(azimuth, elevation).azimuth
-        check camera.elevation =~ stanceAim(azimuth, elevation).elevation
+        check camera.azimuth =~ stanceAim(out_to).azimuth
+        check camera.elevation =~ stanceAim(out_to).elevation
         let fit = depthSpanning(2.0*RADIUS, FRACTION_HEIGHT_APPROACH_POINT, camera)
         check abs(camera.distance - fit) < 1.0e-9
         # Separation is reach to object, because object is what pivot stands on.
@@ -973,7 +984,7 @@ suite "Camera Aim":
     # Object already nearer than its fit leaves reader's own scale alone: separation
     #   becomes its own reach and no more. Point seen at its size, and line, come in to
     #   orbit distance and no further; only floor dot comes in to its fit.
-    let camera = stanceAim(0.7, 0.2)
+    let camera = stanceAim(Direction(x: 12, y: 10, z: 3))
     let
       eye = camera.eye
       axes = camera.frame
@@ -1001,7 +1012,7 @@ suite "Camera Aim":
 
   test "a depth spanning a fraction of the frame is read off the lens":
     # Two units across at half of 45-degree frame: 2/(2*0.5*tan 22.5) = 4.83.
-    let camera = stanceAim(0.0, 0.0)
+    let camera = stanceAim(Direction(x: 1, y: 0, z: 0))
     check abs(depthSpanning(2.0, 0.5, camera) - 2.0/(2.0*0.5*tan(degToRad(22.5)))) < 1.0e-9
     check depthSpanning(0.0, 0.5, camera) == DISTANCE_LIMIT_NEAR
 
@@ -1015,7 +1026,8 @@ suite "Camera Aim":
       ASPECT = float(WIDTH_AIM)/float(HEIGHT_AIM)
     let ground = planeThrough(toMultivector(ORIGIN), toMultivector(UP_WORLD))
     for distance in [12.0, 1.0]:
-      var camera = initCamera(pivot = ORIGIN, distance = distance, azimuth = 0.7, elevation = 0.5)
+      var camera = cameraAround(ORIGIN, distance, Direction(x: 7, y: 6, z: 5))
+      let (azimuth, elevation) = (camera.azimuth, camera.elevation)
       var (scene, picked) = sceneOf(ground)
       let scale = camera.drawExtentFor(HEIGHT_AIM, 0.0)
       var
@@ -1038,14 +1050,14 @@ suite "Camera Aim":
       check abs(pixel.x - float(WIDTH_AIM)/2.0) < 0.01
       check abs(pixel.y - float(HEIGHT_AIM)/2.0) < 0.01
       # Read off sight direction, so within ulp of what was asked; see above.
-      check camera.azimuth =~ 0.7
-      check camera.elevation =~ 0.5
+      check camera.azimuth =~ azimuth
+      check camera.elevation =~ elevation
 
 
   test "a group picked by pointer frames as ever":
     # Group has to fit, which one object's reach cannot promise: `stanceFor`.
     const DURATION = 0.35
-    var camera = stanceAim(1.6, 0.2)
+    var camera = stanceAim(Direction(x: -1, y: 25, z: 5))
     let (scene_two, picked_two) = sceneOf(
       toMultivector(Position(x: 14.0, y: -11.0, z: 3.0)),
       toMultivector(Position(x: -9.0, y: 12.0, z: -5.0)),
@@ -1071,7 +1083,8 @@ suite "Camera Aim":
       one = Position(x: 2.0, y: 1.0, z: 0.5)
       two = Position(x: 0.0, y: 3.0, z: 1.5)
       middle = Position(x: 1.0, y: 2.0, z: 1.0)
-    var camera = stanceAim(0.7, 0.3).placedAtPivot(one)
+    var camera = stanceAim(Direction(x: 12, y: 10, z: 5))
+    camera = camera.placed(camera.stanceRepivoted(one))
     let (scene, picked) = sceneOf(toMultivector(one), toMultivector(two))
     var tween: CameraTween
     tween.offerAim(
@@ -1110,7 +1123,8 @@ suite "Camera Aim":
     check abs(at.x - float(WIDTH_AIM)/2.0) < 0.01
     check abs(at.y - float(HEIGHT_AIM)/2.0) < 0.01
     # Settling drag-held ease slides pivot home too, rather than undoing turn.
-    var settled = stanceAim(0.7, 0.3).placedAtPivot(one)
+    var settled = stanceAim(Direction(x: 12, y: 10, z: 5))
+    settled = settled.placed(settled.stanceRepivoted(one))
     var held: CameraTween
     held.offerAim(
       settled, scene, picked, none(Preview), settled.drawExtentFor(HEIGHT_AIM, 0.0),
@@ -1128,7 +1142,7 @@ suite "Camera Aim":
     # Standing offer ignores goal it holds, so same object picked again after wheel took.
     #   reader off went nowhere: "sometimes it doesn't zoom in".
     const DURATION = 0.35
-    var camera = stanceAim(0.7, 0.2)
+    var camera = stanceAim(Direction(x: 12, y: 10, z: 3))
     let
       eye = camera.eye
       axes = camera.frame
@@ -1163,7 +1177,7 @@ suite "Camera Aim":
     # Standing offer skips goal it holds, and was skipping it while frame rule was broken:
     #   narrowed window left camera unframed, since nothing moving it meant nothing held it.
     const (WIDE, TALL, DURATION) = (WIDTH_AIM, HEIGHT_AIM, 0.35)
-    var camera = stanceAim(0.7, 0.35)
+    var camera = stanceAim(Direction(x: 13, y: 11, z: 6))
     let (scene, picked) = sceneOf(
       toMultivector(Position(x: 6.0, y: -4.0, z: 1.0)),
       toMultivector(Position(x: -3.0, y: 5.0, z: -2.0)),
@@ -1202,7 +1216,7 @@ suite "Camera Aim":
       toMultivector(Position(x: 6.0, y: -4.0, z: 1.0)),
       toMultivector(Position(x: -3.0, y: 5.0, z: -2.0)),
     )
-    let opening = stanceAim(0.7, 0.35)
+    let opening = stanceAim(Direction(x: 13, y: 11, z: 6))
     let aim = aimFor(scene, picked, none(Preview), opening.drawExtentFor(TALL, 0.0)).get
     var
       tween: CameraTween
@@ -1286,7 +1300,7 @@ suite "Camera Aim":
 
   test "a tween eases toward its destination and lands on it exactly at the duration":
     const DURATION = 0.35
-    var camera = initCamera(ORIGIN, 12.0, 0.0, 0.4)
+    var camera = cameraAround(ORIGIN, 12.0, Direction(x: 7, y: 0, z: 3))
     var tween: CameraTween
     let arrival = Position(x: 10.0, y: 0.0, z: 0.0)
     tween.aimAt(camera, aimOn(arrival), camera.placeOn(arrival), 0.0, DURATION)
@@ -1312,7 +1326,7 @@ suite "Camera Aim":
     # Distance is multiplicative quantity -- wheel and `FACTOR_DOLLY_PRESS` scale it.
     #   -- so midpoint of ease from 10 to 40 is 20, not 25.
     const DURATION = 0.35
-    var camera = initCamera(ORIGIN, 10.0, 0.0, 0.4)
+    var camera = cameraAround(ORIGIN, 10.0, Direction(x: 7, y: 0, z: 3))
     var tween: CameraTween
     var arrival = camera.stanceOf
     arrival.distance = 40.0
@@ -1326,7 +1340,7 @@ suite "Camera Aim":
 
   test "repivoting mid-flight continues from where the camera reached":
     const DURATION = 0.35
-    var camera = initCamera(ORIGIN, 12.0, 0.0, 0.4)
+    var camera = cameraAround(ORIGIN, 12.0, Direction(x: 7, y: 0, z: 3))
     var tween: CameraTween
     let first = Position(x: 10.0, y: 0, z: 0)
     tween.aimAt(camera, aimOn(first), camera.placeOn(first), 0.0, DURATION)
@@ -1344,7 +1358,7 @@ suite "Camera Aim":
 
   test "offering the goal it already holds does not restart the ease":
     const DURATION = 0.35
-    var camera = initCamera(ORIGIN, 12.0, 0.0, 0.4)
+    var camera = cameraAround(ORIGIN, 12.0, Direction(x: 7, y: 0, z: 3))
     var tween: CameraTween
     let arrival = Position(x: 10.0, y: 0, z: 0)
     tween.aimAt(camera, aimOn(arrival), camera.placeOn(arrival), 0.0, DURATION)
@@ -1360,9 +1374,9 @@ suite "Camera Aim":
   test "a tween turns the short way round the azimuth circle":
     # Angle just past -pi is next door to one just short of +pi, not most of turn.
     const DURATION = 0.35
-    var camera = initCamera(ORIGIN, 12.0, 3.0, 0.0)
+    var camera = cameraAround(ORIGIN, 12.0, Direction(x: -7, y: 1, z: 0))
     var tween: CameraTween
-    let arrival = stanceTurntable(ORIGIN, 12.0, -3.0, 0.0)
+    let arrival = stanceAround(ORIGIN, 12.0, Direction(x: -7, y: -1, z: 0))
     tween.aimAt(camera, aimOn(Position(x: 1, y: 0, z: 0)), arrival, 0.0, DURATION)
     tween.advance(camera, DURATION*0.5, easeOutCubic)
     # Azimuth wraps to (-pi, pi] now, because it is read off sight direction through
@@ -1374,13 +1388,13 @@ suite "Camera Aim":
 
 
   test "settle puts the camera on its destination at once":
-    var camera = initCamera(ORIGIN, 12.0, 0.0, 0.4)
+    var camera = cameraAround(ORIGIN, 12.0, Direction(x: 7, y: 0, z: 3))
     var tween: CameraTween
-    let arrival = stanceTurntable(ORIGIN, 30.0, 1.0, 0.5)
+    let arrival = stanceAround(ORIGIN, 30.0, Direction(x: 7, y: 11, z: 7))
     tween.aimAt(camera, aimOn(ORIGIN, 2.0), arrival, 0.0, 0.35)
     tween.settle(camera)
-    check camera.azimuth =~ 1.0
-    check camera.elevation =~ 0.5
+    check camera.azimuth =~ camera.placed(arrival).azimuth
+    check camera.elevation =~ camera.placed(arrival).elevation
     check camera.distance =~ 30.0
     check tween.is_arrived
 
@@ -1390,7 +1404,7 @@ suite "Camera Aim":
     #   tween cleared its goal on arrival, that standing offer re-armed ease each frame
     #   from wherever user had just panned to, and dragged camera straight back --
     #   panning was dead for as long as anything stayed selected.
-    var camera = initCamera(ORIGIN, 12.0, 0.0, 0.4)
+    var camera = cameraAround(ORIGIN, 12.0, Direction(x: 7, y: 0, z: 3))
     var tween: CameraTween
     let arrival = Position(x: 4, y: 1, z: 2)
     let goal = aimOn(arrival)
@@ -1415,7 +1429,7 @@ suite "Camera Aim":
     #   rule's own standing offer is seen as new on very next frame and takes
     #   camera straight back. Keeping goal and marking it done is what makes that
     #   offer read as already answered.
-    var camera = initCamera(ORIGIN, 12.0, 0.0, 0.4)
+    var camera = cameraAround(ORIGIN, 12.0, Direction(x: 7, y: 0, z: 3))
     var tween: CameraTween
     let arrival = Position(x: 4, y: 1, z: 2)
     let goal = aimOn(arrival)
@@ -1436,7 +1450,7 @@ suite "Camera Aim":
   test "release lets the same goal aim the camera again":
     # Withdrawing offer is what makes picking same object twice work: second.
     #   pick must aim afresh, not be recognised as one already delivered.
-    var camera = initCamera(ORIGIN, 12.0, 0.0, 0.4)
+    var camera = cameraAround(ORIGIN, 12.0, Direction(x: 7, y: 0, z: 3))
     var tween: CameraTween
     let arrival = Position(x: 4, y: 1, z: 2)
     let goal = aimOn(arrival)

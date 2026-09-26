@@ -13,57 +13,51 @@ func pointOnRay(camera: Camera; width, height: int; cursor: ScreenPosition): Pos
 
 
 suite "Camera":
-  test "the motor stance places the eye and the frame where the turntable does":
-    # Whole claim of stance held as rigid motion: every placement that four turntable
-    #   numbers name lands where trig and joins put it before.
-    #   480 cases. Separation spans five decades, azimuth spans whole turn, and elevation
-    #   reaches both clamps, which is where old joins were worst conditioned.
+  test "a stance named by eye and pivot stands at the eye, faces the pivot, and is level":
+    # Whole claim of stance held as rigid motion: eye and pivot name it, and nothing else.
+    #   416 cases. Separation spans five decades, and eye stands off pivot along every one
+    #   of 26 lattice directions, straight above and straight below included: no pole.
     var count = 0
     for i_pivot in 0 .. 3:
       for distance in [0.001, 1.0, 19.0, 4000.0]:
-        for i_azimuth in 0 .. 5:
-          for i_elevation in 0 .. 4:
-            let
-              pivot = Position(
-                x: -7.0 + 5.0*float(i_pivot),
-                y: 2.0*float(i_pivot) - 3.0,
-                z: 1.5*float(i_pivot),
-              )
-              azimuth = -PI + TAU*float(i_azimuth)/6.0
-              elevation = -ELEVATION_LIMIT + 2.0*ELEVATION_LIMIT*float(i_elevation)/4.0
-              camera = initCamera(pivot, distance, azimuth, elevation)
-              radius = distance*cos(elevation)
-            # Eye against spherical closed form, which is what `eye` read before.
-            check camera.eye =~ Position(
-              x: pivot.x + radius*cos(azimuth),
-              y: pivot.y + radius*sin(azimuth),
-              z: pivot.z + distance*sin(elevation),
-            )
-            # Three axes against what turntable's own frame is at those two angles.
-            let axes = camera.frame
-            check axes.axis_right =~ Direction(x: -sin(azimuth), y: cos(azimuth), z: 0.0)
-            check axes.axis_up =~ Direction(
-              x: -cos(azimuth)*sin(elevation),
-              y: -sin(azimuth)*sin(elevation),
-              z: cos(elevation),
-            )
-            check axes.forward =~ Direction(
-              x: -cos(elevation)*cos(azimuth),
-              y: -cos(elevation)*sin(azimuth),
-              z: -sin(elevation),
-            )
-            # Pivot and separation come back out of what carried them in.
-            check camera.pivot =~ pivot
-            check camera.distance =~ max(distance, DISTANCE_LIMIT_NEAR)
-            inc count
-    check count == 480
+        for i in -1 .. 1:
+          for j in -1 .. 1:
+            for k in -1 .. 1:
+              if i == 0 and j == 0 and k == 0: continue
+              let
+                pivot = Position(
+                  x: -7.0 + 5.0*float(i_pivot),
+                  y: 2.0*float(i_pivot) - 3.0,
+                  z: 1.5*float(i_pivot),
+                )
+                out_to = Direction(x: float(i), y: float(j), z: float(k))
+                eye = pivot + (distance/norm(out_to))*out_to
+                camera = initCamera(eye = eye, pivot = pivot)
+                axes = camera.frame
+              check camera.eye =~ eye
+              check axes.forward =~ (-1.0/norm(out_to))*out_to
+              # Level: across axis horizontal, up on world up's side of it.
+              check abs(axes.axis_right.z) <= TOLERANCE_TEST
+              check axes.axis_up.z >= -TOLERANCE_TEST
+              # Orthonormal, and right-handed as reference stance is.
+              check norm(axes.axis_right) =~ 1.0
+              check norm(axes.axis_up) =~ 1.0
+              check abs(dot(axes.axis_right, axes.axis_up)) <= TOLERANCE_TEST
+              check abs(dot(axes.axis_up, axes.forward)) <= TOLERANCE_TEST
+              check cross(axes.axis_right, axes.axis_up) =~ -axes.forward
+              # Pivot and separation come back out of what carried them in.
+              check camera.pivot =~ pivot
+              check camera.distance =~ max(distance, DISTANCE_LIMIT_NEAR)
+              inc count
+    check count == 416
 
   test "one read of the stance gives the eye, the frame and the pivot that three reads give":
     # `sight` lifts motor and takes its antireverse once for eye and frame together.
     #   `eye`, `frame` and `pivot` read apart are reference; stances rolled and steep.
     for i in 0 ..< COUNT_GENERAL:
-      var camera = initCamera(
-        PLACES[i], 0.5 + 3.0*float(i), -PI + 0.5*float(i), -1.2 + 0.2*float(i)
+      var camera = cameraAround(
+        PLACES[i], 0.5 + 3.0*float(i),
+        Direction(x: 1.0, y: 0.3*float(i) - 1.5, z: 0.4*float(i) - 2.2),
       )
       camera.roll(0.3*float(i) - 1.0)
       let (eye, frame) = camera.sight
@@ -109,9 +103,9 @@ suite "Camera":
     #   one turn of their sum are one motion.
     const (STEPS, TURN) = (2000, 0.004)
     let pivot = Position(x: 2.0, y: -1.0, z: 0.5)
-    var stepped = initCamera(pivot, 19.0, 0.3, 0.2)
+    var stepped = cameraAround(pivot, 19.0, Direction(x: 19, y: 6, z: 4))
     for _ in 1 .. STEPS: stepped.orbit(TURN, 0.0)
-    var once = initCamera(pivot, 19.0, 0.3, 0.2)
+    var once = cameraAround(pivot, 19.0, Direction(x: 19, y: 6, z: 4))
     once.orbit(float(STEPS)*TURN, 0.0)
     check stepped.eye =~ once.eye
     check stepped.frame.forward =~ once.frame.forward
@@ -119,7 +113,7 @@ suite "Camera":
     check stepped.pivot =~ pivot
     check abs(stepped.distance - 19.0) < 1.0e-9
     # Roll survives orbit now, which four turntable numbers could not carry.
-    var rolled = initCamera(pivot, 19.0, 0.3, 0.2)
+    var rolled = cameraAround(pivot, 19.0, Direction(x: 19, y: 6, z: 4))
     rolled.roll(0.6)
     let axis_up_rolled = rolled.frame.axis_up
     rolled.orbit(0.4, 0.0)
@@ -130,21 +124,23 @@ suite "Camera":
   test "the flat motor and the multivector say one motion, and it is unit":
     # `Camera` holds eight floats rather than multivector, so crossing must lose nothing.
     for i in 0 ..< COUNT_GENERAL:
-      let camera = initCamera(PLACES[i], 1.0 + float(i), 0.2*float(i) - 1.0, 0.1*float(i))
+      let camera = cameraAround(
+        PLACES[i], 1.0 + float(i), Direction(x: 1.0, y: 0.2*float(i) - 1.0, z: 0.1*float(i))
+      )
       let lifted = toMultivector(camera.motor)
       check motorOf(lifted) == camera.motor
       check normWeight(lifted)[Basis.scalarAnti] =~ 1.0
 
   test "looking turns sight about the camera's own axes, and leaves the eye standing":
     # Free flight's whole claim: orientation moves and placement does not.
-    let start = initCamera(Position(x: 2.0, y: -1.0, z: 0.5), 19.0, 0.3, 0.0)
+    let start = cameraAround(Position(x: 2.0, y: -1.0, z: 0.5), 19.0, Direction(x: 10, y: 3, z: 0))
     let (eye_start, axes_start) = (start.eye, start.frame)
     # Yaw at level horizon turns azimuth by exactly what was asked, since camera's own up
     #   is world up there.
     var turned = start
     turned.look(0.4, 0.0)
     check turned.eye =~ eye_start
-    check abs(turned.azimuth - 0.7) < TOLERANCE_TEST
+    check abs(turned.azimuth - (start.azimuth + 0.4)) < TOLERANCE_TEST
     check abs(turned.elevation) < TOLERANCE_TEST
     check turned.distance =~ start.distance
     # Pitch leaves across axis alone, and raises reading `orbit` would raise.
@@ -163,26 +159,23 @@ suite "Camera":
 
   test "a look and an orbit both pass the pole that the panel's own field stops short of":
     # What rotor buys: neither verb has clamp, because neither rebuilds from angles.
-    var flown = initCamera(ORIGIN, 19.0, 0.0, 0.0)
+    var flown = cameraAround(ORIGIN, 19.0, Direction(x: 1, y: 0, z: 0))
     var orbited = flown
     for _ in 1 .. 8:
       flown.look(0.0, 0.25)
       orbited.orbit(0.0, 0.25)
     # Eight quarter-radian pitches compose to exactly two radians of turn, and two radians
     #   is past straight down, where old frame's joins collapsed.
-    let forward_start = initCamera(ORIGIN, 19.0, 0.0, 0.0).frame.forward
+    let forward_start = cameraAround(ORIGIN, 19.0, Direction(x: 1, y: 0, z: 0)).frame.forward
     check abs(dot(flown.frame.forward, forward_start) - cos(2.0)) < TOLERANCE_TEST
     check abs(dot(orbited.frame.forward, forward_start) - cos(2.0)) < TOLERANCE_TEST
     check flown.frame.forward.x > 0.0
-    # Panel's own field does rebuild from angles, so it alone is still held short.
-    let typed = initCamera(ORIGIN, 19.0, 0.0, 0.0).placedAtElevation(2.0)
-    check typed.elevation =~ ELEVATION_LIMIT
     check abs(norm(flown.frame.forward) - 1.0) < TOLERANCE_TEST
 
   test "a look and an orbit turn sight the same way, so one drag reads the same in either":
     # One left drag feeds either verb as selection comes and goes. Signs that disagreed
     #   would reverse gesture moment reader selected something.
-    let start = initCamera(ORIGIN, 19.0, 0.0, 0.0)
+    let start = cameraAround(ORIGIN, 19.0, Direction(x: 1, y: 0, z: 0))
     for step in [0.2, -0.2]:
       var looked = start
       var orbited = start
@@ -197,7 +190,9 @@ suite "Camera":
       check raised.elevation =~ risen.elevation
 
   test "roll turns about the sight axis alone, and a whole turn returns every axis":
-    var camera = initCamera(Position(x: 1.0, y: 2.0, z: -0.5), 7.0, 0.8, -0.3)
+    var camera = cameraAround(
+      Position(x: 1.0, y: 2.0, z: -0.5), 7.0, Direction(x: 18, y: 19, z: -8)
+    )
     let (eye_start, axes_start) = (camera.eye, camera.frame)
     camera.roll(0.5)
     # Sight and placement stand; only two axes across it move.
@@ -207,13 +202,13 @@ suite "Camera":
     # Positive roll tips up axis toward across axis, which reads as clockwise.
     check dot(camera.frame.axis_up, axes_start.axis_right) > 0.0
     # Whole turn in steps lands back on frame it started from.
-    var whole = initCamera(Position(x: 1.0, y: 2.0, z: -0.5), 7.0, 0.8, -0.3)
+    var whole = cameraAround(Position(x: 1.0, y: 2.0, z: -0.5), 7.0, Direction(x: 18, y: 19, z: -8))
     for _ in 1 .. 64: whole.roll(TAU/64.0)
     check whole.frame.axis_up =~ axes_start.axis_up
     check whole.frame.axis_right =~ axes_start.axis_right
 
   test "travel moves along the camera's own axes, whatever roll it carries":
-    var camera = initCamera(Position(x: -3.0, y: 4.0, z: 2.0), 11.0, 1.2, 0.4)
+    var camera = cameraAround(Position(x: -3.0, y: 4.0, z: 2.0), 11.0, Direction(x: 5, y: 13, z: 6))
     camera.roll(0.9)
     let (eye_start, axes_start) = (camera.eye, camera.frame)
     camera.travel(2.0, -0.5, 0.25)
@@ -277,13 +272,13 @@ suite "Camera":
     check capTravelling(some(-5.0), 19.0, 1.0) =~ 0.0
 
   test "the far clip reaches the scene's farthest object however close the orbit is":
-    var camera = initCamera(Position(x: 0, y: 0, z: 0), 10.0, 0.0, 0.0)
+    var camera = cameraAround(Position(x: 0, y: 0, z: 0), 10.0, Direction(x: 1, y: 0, z: 0))
     check abs(camera.distanceFar(0.0) - 10.0*FACTOR_CLIP_FAR) < 1.0e-9
     let eye = camera.eye
     check camera.distanceFar(3000.0) >= norm(eye - Position(x: 0, y: 0, z: 0)) + 3000.0
     # Near stays scaled whatever far reaches: depth is logarithmic, so ratio costs nothing.
     check camera.distanceNear =~ camera.distance*FACTOR_CLIP_NEAR
-    var close = initCamera(Position(x: 0, y: 0, z: 0), 0.05, 0.0, 0.0)
+    var close = cameraAround(Position(x: 0, y: 0, z: 0), 0.05, Direction(x: 1, y: 0, z: 0))
     check close.distanceNear =~ close.distance*FACTOR_CLIP_NEAR
     check close.distanceFar(3000.0)/close.distanceNear > 1.0e6
     # Reach is measured from what scene holds, point's own radius included.
@@ -295,7 +290,7 @@ suite "Camera":
     # Separation alone kept scale of stance reader set off from. Near clip is one
     #   four-hundredth of it, so camera flying from opening stance at planet met that
     #   plane long before planet.
-    var camera = initCamera(ORIGIN, 19.0, 0.4, 0.3)
+    var camera = cameraAround(ORIGIN, 19.0, Direction(x: 12, y: 5, z: 4))
     check camera.scaleLocal =~ 19.0
     check camera.distanceNear =~ 19.0*FACTOR_CLIP_NEAR
     # Stamped reach takes over, and near clip follows it down by four decades.
@@ -311,13 +306,13 @@ suite "Camera":
     camera.reach_near = 0.0
     check camera.scaleLocal =~ 19.0
     # Floored, since every reader scales by it.
-    var floored = initCamera(ORIGIN, DISTANCE_LIMIT_NEAR, 0.0, 0.0)
+    var floored = cameraAround(ORIGIN, DISTANCE_LIMIT_NEAR, Direction(x: 1, y: 0, z: 0))
     check floored.scaleLocal > 0.0
 
   test "the nearest reach is read ahead of the eye, and never behind it":
     var scene = initScene()
     # Camera at origin looking along -x; one object ahead, one behind, one further ahead.
-    let camera = initCamera(ORIGIN, 1.0, 0.0, 0.0)
+    let camera = cameraAround(ORIGIN, 1.0, Direction(x: 1, y: 0, z: 0))
     check camera.frame.forward =~ Direction(x: -1.0, y: 0.0, z: 0.0)
     scene.addObject(toMultivector(Position(x: -4.0, y: 0.0, z: 0.0)), "ahead", Ink.Rose)
     scene.addObject(toMultivector(Position(x: 9.0, y: 0.0, z: 0.0)), "behind", Ink.Jade)
@@ -340,7 +335,7 @@ suite "Camera":
     check reachNearOf(placed, scene, eye, camera.frame.forward) =~ 0.0
 
   test "records' origin holds until travel spends float32's precision about it":
-    var camera = initCamera(ORIGIN, 19.0, 0.0, 0.0)
+    var camera = cameraAround(ORIGIN, 19.0, Direction(x: 1, y: 0, z: 0))
     let eye_start = camera.eye
     # Bound is quarter of near clip, divided by float32's own step.
     let reach_hold = FRACTION_ORIGIN_HOLD*camera.distanceNear/STEP_SINGLE
@@ -360,7 +355,7 @@ suite "Camera":
 
   test "a point is culled only where the frustum, sprite margin included, does not reach":
     # Bounds are camera's own frame; what is checked is test against them.
-    let camera = initCamera(Position(x: 1, y: 2, z: 3), 10.0, 0.4, 0.3)
+    let camera = cameraAround(Position(x: 1, y: 2, z: 3), 10.0, Direction(x: 12, y: 5, z: 4))
     let scale = camera.drawExtentFor(900, 0.0)
     let bounds = camera.viewBoundsFor(scale, 16.0/9.0, 0.0)
     const RADIUS = RADIUS_OBJECT_DEFAULT
@@ -399,9 +394,9 @@ suite "Camera":
     )
     check isPointInView(Placement(kind: Case.LineThrough), RADIUS, bounds)
 
-  test "the eye assembled through the algebra is the eye the trig names":
-    # `camera.eye` places point as multivector sum; spherical closed form lives.
-    #   HERE. Angles are parametrization -- what is checked is placement.
+  test "the angles read off the sight name the eye's own place about the pivot":
+    # `camera.eye` places point as multivector sum; spherical closed form of readings.
+    #   lives HERE. Readings are parametrization -- what is checked is placement.
     var seed = 27.0
     proc pseudo(): float =
       seed = (seed*97.31 + 33.77) mod 41.0
@@ -410,9 +405,8 @@ suite "Camera":
       let
         pivot = Position(x: pseudo(), y: pseudo(), z: pseudo())
         distance = 1.0 + abs(pseudo())
-        azimuth = pseudo()/7.0
-        elevation = pseudo()/20.0
-        camera = initCamera(pivot, distance, azimuth, elevation)
+        out_to = Direction(x: pseudo(), y: pseudo(), z: pseudo()/3.0)
+        camera = cameraAround(pivot, distance, out_to)
         radius = distance*cos(camera.elevation)
         classical = pivot + Direction(
           x: radius*cos(camera.azimuth),
@@ -424,12 +418,7 @@ suite "Camera":
 
   test "frame is orthonormal and perpendicular to sight axis":
     for i in 0 ..< SAMPLES:
-      let camera = initCamera(
-        pivot = PLACES[i],
-        distance = 2.0 + rand(20.0),
-        azimuth = rand(2.0*PI),
-        elevation = rand(-1.4 .. 1.4),
-      )
+      let camera = cameraAround(PLACES[i], 2.0 + rand(20.0), randOutTo())
       let axes = camera.frame
       check norm(axes.axis_right) =~ 1.0
       check norm(axes.axis_up) =~ 1.0
@@ -442,9 +431,7 @@ suite "Camera":
 
   test "eye stands at orbit distance from pivot, and looks back at it":
     for i in 0 ..< SAMPLES:
-      let camera = initCamera(
-        pivot = PLACES[i], distance = 7.0, azimuth = rand(2.0*PI), elevation = rand(-1.4 .. 1.4)
-      )
+      let camera = cameraAround(PLACES[i], 7.0, randOutTo())
       check norm(camera.eye - camera.pivot) =~ camera.distance
       let heading = normalize(camera.pivot - camera.eye)
       check heading.isSome
@@ -452,9 +439,7 @@ suite "Camera":
 
 
   test "view transform carries eye to origin and pivot down its own negative z":
-    let camera = initCamera(
-      pivot = Position(x: 1, y: -2, z: 0.5), distance = 9.0, azimuth = 0.7, elevation = 0.3
-    )
+    let camera = cameraAround(Position(x: 1, y: -2, z: 0.5), 9.0, Direction(x: 12, y: 10, z: 5))
     let view = initMatrixView(camera.eye, camera.frame)
     let (at_eye, at_pivot) = (
       transform(view, camera.eye, 1.0), transform(view, camera.pivot, 1.0)
@@ -487,9 +472,8 @@ suite "Camera":
     when not defined(js):
       const REACH = 268557.0
       for distance in [122.0, 36.6, 5.0, 1.0]:
-        var camera = initCamera(
-          pivot = Position(x: 0, y: 0, z: 0), distance = distance, azimuth = 0.4,
-          elevation = 0.3,
+        var camera = cameraAround(
+          Position(x: 0, y: 0, z: 0), distance, Direction(x: 12, y: 5, z: 4)
         )
         let
           flat = camera.initMatrixViewProjection(1.6).flattened
@@ -509,9 +493,7 @@ suite "Camera":
 
   test "whole transform carries pivot to centre of view":
     for i in 0 ..< SAMPLES:
-      let camera = initCamera(
-        pivot = PLACES[i], distance = 11.0, azimuth = rand(2.0*PI), elevation = rand(-1.2 .. 1.2)
-      )
+      let camera = cameraAround(PLACES[i], 11.0, randOutTo())
       let clipped = transform(camera.initMatrixViewProjection(1.6), camera.pivot, 1.0)
       check clipped[3] > 0
       check isNear(clipped[0]/clipped[3], 0)
@@ -523,9 +505,7 @@ suite "Camera":
     #   built about same point, so position about origin lands where world transform puts
     #   world position: storing relative to pivot is invisible on screen.
     for i in 0 ..< SAMPLES:
-      let camera = initCamera(
-        pivot = PLACES[i], distance = 3.0, azimuth = rand(2.0*PI), elevation = rand(-1.2 .. 1.2)
-      )
+      let camera = cameraAround(PLACES[i], 3.0, randOutTo())
       let place = camera.pivot +
         Direction(x: rand(-1.0 .. 1.0), y: rand(-1.0 .. 1.0), z: rand(-1.0 .. 1.0))
       let about_world = transform(camera.initMatrixViewProjection(1.6), place, 1.0)
@@ -539,9 +519,8 @@ suite "Camera":
     #   moon's whole offset is lost; float32 about pivot carries what close-up needs, and
     #   double matrix keeps translation column of world transform, which picking reads,
     #   exact too.
-    let far = initCamera(
-      pivot = Position(x: 1.0e6, y: -2.0e6, z: 3.0e5), distance = 0.004, azimuth = 0.3,
-      elevation = 0.4,
+    let far = cameraAround(
+      Position(x: 1.0e6, y: -2.0e6, z: 3.0e5), 0.004, Direction(x: 16, y: 5, z: 7)
     )
     let moon = far.pivot + Direction(x: 0.001, y: 0.0, z: 0.0)
     let stored_world = Position(
@@ -586,7 +565,7 @@ suite "Camera":
     #   WebGL may hand out, at demo's own camera and at moon's.
     const STEP_SIXTEEN_BIT = 2.0/65535.0
     const REACH = 6.5e6
-    var camera = initCamera(pivot = ORIGIN, distance = 122.0, azimuth = 1.0, elevation = 0.95)
+    var camera = cameraAround(ORIGIN, 122.0, Direction(x: 2, y: 3, z: 5))
     let far = camera.distanceFar(REACH)
     check camera.depthOf(camera.distanceNear, REACH) =~ -1.0
     check camera.depthOf(far, REACH) =~ 1.0
@@ -595,7 +574,7 @@ suite "Camera":
     check camera.depthOf(0.9*far, REACH) - camera.depthOf(1.0e6, REACH) > STEP_SIXTEEN_BIT
     check camera.depthOf(1.0e6, REACH) - camera.depthOf(2.0e5, REACH) > STEP_SIXTEEN_BIT
     # Io before Jupiter, from where occlusion check stands: three spans out, moon one in.
-    var near = initCamera(pivot = ORIGIN, distance = 0.0085, azimuth = 1.0, elevation = 0.3)
+    var near = cameraAround(ORIGIN, 0.0085, Direction(x: 7, y: 11, z: 4))
     check near.depthOf(0.0085, REACH) - near.depthOf(0.0085 - 0.0028, REACH) > STEP_SIXTEEN_BIT
     # Monotone across every decade scene spans, and clipping planes still clip.
     var last = -2.0
@@ -618,7 +597,7 @@ suite "Camera":
     check distanceHeld(-5.0) =~ DISTANCE_LIMIT_NEAR
     for distance in [1.0, 500.0, 5_000.0, 1.0e6]:
       check distanceHeld(distance) =~ distance
-      check initCamera(ORIGIN, distance, 0.7, 0.3).distance =~ distance
+      check cameraAround(ORIGIN, distance, Direction(x: 12, y: 10, z: 5)).distance =~ distance
 
     # Holding dolly out walks straight past where limit used to sit.
     var camera = initCameraDefault()
@@ -629,7 +608,7 @@ suite "Camera":
   test "the camera still derives a frame and a transform a thousand kilometres out":
     # Nothing downstream of distance has ceiling of its own: both clip planes are.
     #   fractions of it, so frustum keeps its shape however far eye stands.
-    let camera = initCamera(pivot = ORIGIN, distance = 1.0e6, azimuth = 0.9, elevation = 0.4)
+    let camera = cameraAround(ORIGIN, 1.0e6, Direction(x: 12, y: 15, z: 8))
     check camera.distance =~ 1.0e6
     let axes = camera.frame
     check isNear(norm(axes.axis_right), 1.0)
@@ -692,7 +671,7 @@ suite "Camera":
     #   dolly, not refusal to zoom.
     var
       interaction = Interaction(is_enabled: true)
-      camera = initCamera(pivot = ORIGIN, distance = 12.0, azimuth = 0.5, elevation = 0.05)
+      camera = cameraAround(ORIGIN, 12.0, Direction(x: 18, y: 10, z: 1))
       scene = initScene()
     let cursor = ScreenPosition(x: 720.0, y: 60.0) # High in frame, on empty sky.
     interaction.updateCursor(cursor.x, cursor.y)
@@ -709,7 +688,7 @@ suite "Camera":
     #   pointer, whether or not anything stands there.
     const (WIDE, TALL) = (1440, 900)
     let cursor = ScreenPosition(x: 260.0, y: 720.0)
-    var camera = initCamera(pivot = ORIGIN, distance = 12.0, azimuth = 0.5, elevation = 0.3)
+    var camera = cameraAround(ORIGIN, 12.0, Direction(x: 11, y: 6, z: 4))
     let (eye_start, axes_start) = (camera.eye, camera.frame)
     let heading = headingThrough(camera, axes_start, WIDE, TALL, cursor)
     var interaction = Interaction(is_enabled: true)
@@ -736,7 +715,7 @@ suite "Camera":
     let radius = scene.radiusAt(0)
     check radius > 0.0
     # Camera aimed straight at it, so middle of frame is over it.
-    var camera = initCamera(pivot = planet, distance = 20.0, azimuth = 0.4, elevation = 0.5)
+    var camera = cameraAround(planet, 20.0, Direction(x: 12, y: 5, z: 7))
     let cursor = ScreenPosition(x: float(WIDE)/2.0, y: float(TALL)/2.0)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(cursor.x, cursor.y)
@@ -776,9 +755,9 @@ suite "Camera":
     var scene = initScene()
     scene.addObject(toMultivector(planet), "planet", Ink.Cobalt)
     # Middle of frame over planet, camera aimed at it from afar: pinch's case.
-    var camera = initCamera(pivot = planet, distance = 20.0, azimuth = 0.4, elevation = 0.5)
-    camera = camera.placedAtPivot(Position(x: 3.0, y: 1.0, z: 0.0) + 10.0*camera.frame.forward)
-    camera = camera.placedAtDistance(30.0) # Eye where it was, pivot ten units past planet.
+    let aimed = cameraAround(planet, 20.0, Direction(x: 12, y: 5, z: 7))
+    # Eye twenty units off planet, pivot ten units past it.
+    var camera = initCamera(eye = aimed.eye, pivot = planet + 10.0*aimed.frame.forward)
     let eye_before = camera.eye
     dollyAtCentre(
       camera, scene, 0.5, camera.drawExtentFor(TALL, 0.0),
@@ -790,7 +769,7 @@ suite "Camera":
     check abs(camera.distance - 10.0) < 1.0e-6
     check camera.eye =~ (planet + 0.5*(eye_before - planet))
     # Over empty sky nothing answers: distance scales alone.
-    var level = initCamera(pivot = ORIGIN, distance = 12.0, azimuth = 0.5, elevation = 0.05)
+    var level = cameraAround(ORIGIN, 12.0, Direction(x: 18, y: 10, z: 1))
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(720.0, 200.0)
     dollyAt(
@@ -802,9 +781,8 @@ suite "Camera":
     check abs(level.pivot.z) < 1.0e-6
     # Low in frame, where ground stood under raised pivot, nothing answers either: world.
     #   has no ground, so pivot stands and distance scales alone.
-    var over_ground = initCamera(
-      pivot = Position(x: 0.0, y: 0.0, z: 1.0), distance = 12.0, azimuth = 0.5,
-      elevation = 0.5,
+    var over_ground = cameraAround(
+      Position(x: 0.0, y: 0.0, z: 1.0), 12.0, Direction(x: 11, y: 6, z: 7)
     )
     let under = ScreenPosition(x: 720.0, y: 700.0)
     dollyAt(
@@ -822,7 +800,7 @@ suite "Camera":
     #   what was under cursor slid away as wheel turned.
     const (WIDE, TALL) = (1440, 900)
     let
-      camera = initCamera(pivot = ORIGIN, distance = 20.0, azimuth = 0.4, elevation = 0.5)
+      camera = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 7))
       view_projection = camera.initMatrixViewProjection(float(WIDE)/float(TALL))
       # Point standing well above ground, so aiming at *it* and aiming at ground.
       #   under cursor are different answers and test can tell them apart.
@@ -842,8 +820,7 @@ suite "Camera":
 
     # Cursor little off it finds nothing: no ground below it and no level through pivot.
     #   Lower in frame and toward horizon alike.
-    var camera_raised = camera
-    camera_raised = camera_raised.placedAtPivot(Position(x: 0.0, y: 0.0, z: 5.0))
+    let camera_raised = camera.placed(camera.stanceRepivoted(Position(x: 0.0, y: 0.0, z: 5.0)))
     let elsewhere = ScreenPosition(x: on_screen.x + 200.0, y: on_screen.y + 400.0)
     for cursor in [elsewhere, ScreenPosition(x: on_screen.x + 200.0, y: on_screen.y + 60.0)]:
       check anchorZoomAt(
@@ -969,10 +946,7 @@ suite "Camera":
     #   was nothing left to take hold of. Rate was already this verb's fallback wherever
     #   that ray missed.
     const (WIDE, TALL) = (1440, 900)
-    var camera = initCamera(
-      pivot = Position(x: 0, y: 0, z: 1), distance = 19.0, azimuth = 1.05,
-      elevation = 0.42,
-    )
+    var camera = cameraAround(Position(x: 0, y: 0, z: 1), 19.0, Direction(x: 8, y: 14, z: 7))
     let (eye_start, axes) = (camera.eye, camera.frame)
     let
       before = ScreenPosition(x: 700.0, y: 560.0)
@@ -992,7 +966,7 @@ suite "Camera":
 
   test "a right drag with a selection zooms down the frame and orbits across it":
     const (WIDE, TALL) = (1440, 900)
-    let opening = initCamera(ORIGIN, 19.0, 1.05, 0.42)
+    let opening = cameraAround(ORIGIN, 19.0, Direction(x: 8, y: 14, z: 7))
     # Vertical alone zooms, and leaves sight where it was.
     var zoomed = opening
     zoomed.panAcross(
@@ -1031,9 +1005,7 @@ suite "Camera":
     #   rather than staying stranded on level it started at -- driven in shipped
     #   browser, eight notches over ground carried it from z 1.00 to 0.32, where before
     #   this it held at 1.00 however far in reader went.
-    var camera = initCamera(
-      pivot = Position(x: 0, y: 0, z: 4), distance = 20.0, azimuth = 0.3, elevation = 0.5
-    )
+    var camera = cameraAround(Position(x: 0, y: 0, z: 4), 20.0, Direction(x: 16, y: 5, z: 9))
     let
       opening = camera
       anchor = Position(x: 3.0, y: -2.0, z: 0.0)
@@ -1050,7 +1022,7 @@ suite "Camera":
   test "an aimed zoom is held off the near floor, and stays a placement while it is":
     # `dollyToward` reads back what `distanceHeld` allowed rather than assuming its own.
     #   factor took, so zoom stopped by floor still describes where eye is.
-    var camera = initCamera(pivot = ORIGIN, distance = 0.1, azimuth = 0.4, elevation = 0.5)
+    var camera = cameraAround(ORIGIN, 0.1, Direction(x: 12, y: 5, z: 7))
     let anchor = pointOnRay(camera, 1440, 900, ScreenPosition(x: 400.0, y: 600.0))
     # Factor far past floor, which is tiny; see `DISTANCE_LIMIT_NEAR`.
     camera.dollyToward(1.0e-12, anchor)
@@ -1061,16 +1033,14 @@ suite "Camera":
   test "framing a selection wider than the old ceiling pulls back past it":
     # `distanceFitting` used to be clamped to same 500, so anything larger than.
     #   frame could hold at that distance was framed by giving up rather than by moving.
-    let camera = initCamera(pivot = ORIGIN, distance = 19.0, azimuth = 1.0, elevation = 0.4)
+    let camera = cameraAround(ORIGIN, 19.0, Direction(x: 5, y: 8, z: 4))
     check distanceFitting(4_000.0, camera, 1440, 900, 0.0) > 500.0
 
 
   test "a typed motor settles on the rigid motion it names":
     # Panel shows motor as whole multivector, and every coefficient is typed.
     #   Whatever is typed, camera stands on rigid motion: eye and orthonormal frame.
-    let camera = initCamera(
-      pivot = Position(x: 1.0, y: -2.0, z: 0.5), distance = 7.0, azimuth = 0.9, elevation = 0.3
-    )
+    let camera = cameraAround(Position(x: 1.0, y: -2.0, z: 0.5), 7.0, Direction(x: 4, y: 5, z: 2))
     var rolled = camera
     rolled.roll(0.4)
     for held in [camera, rolled]:

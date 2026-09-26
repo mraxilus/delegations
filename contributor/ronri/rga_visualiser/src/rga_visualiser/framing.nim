@@ -248,12 +248,16 @@ func holdHorizon*(camera: var Camera; aim: CameraAim; width, height: int) =
     else: return
   # Axis is normal to pencil sight and what is demanded span, which turns one into other:
   #   their join is horizon line, and `directionNormalHorizon` reads its normal.
-  #   Parallel pair names no axis, and none is needed: sight already points at it.
+  #   Parallel pair names no axis. Every axis square to sight turns it same way off,
+  #   so camera's own across stands in: sight straight down onto ecliptic, its circle's
+  #   normal, has whole bound to turn through, and nothing clamps it off pole.
   let (sight, demanded) = (toMultivector(forward), toMultivector(toward))
-  let axis = directionNormalHorizon(sight ∧ demanded)
-  if axis.isNone: return
+  let pencil = sight ∧ demanded
+  let axis = directionNormalHorizon(pencil).get(camera.frame.axis_right)
   let cosine = innerOf(sight, demanded)
-  let angle_now = arccos(clamp(cosine, -1.0, 1.0))
+  # Angle off inner product and pencil's bulk norm, which is its sine: `arccos` alone
+  #   reads 2e-8 radians off parallel pair, twenty times `SLACK_FRAMED`.
+  let angle_now = arctan2(( |∙ pencil)[Basis.scalar], cosine)
   let angle_held =
     if aim.heading.isSome: half
     # Circle's plane is what sight must come near, so target is quarter turn off normal,
@@ -263,7 +267,7 @@ func holdHorizon*(camera: var Camera; aim: CameraAim; width, height: int) =
     )
   # Positive turn about sight crossed with what is demanded carries sight toward it, so
   #   overshoot is what is given back.
-  camera.turnAboutEye(axis.get, angle_now - angle_held)
+  camera.turnAboutEye(axis, angle_now - angle_held)
 
 
 func holdFramed*(camera: var Camera; aim: CameraAim; width, height: int) =
@@ -301,7 +305,7 @@ func stanceFor*(aim: CameraAim; camera: Camera; width, height: int): CameraStanc
   ##   Pivot to middle of everything finite picked, and separation pulled back only as far
   ##   as frame rule demands. Never in: rule is floor, so reader standing further out
   ##   keeps their own framing.
-  ##   Angles face horizon objects only where nothing finite was.
+  ##   Turn faces horizon objects only where nothing finite was.
   ##     Finite framing wins outright over facing star, since two can disagree. Star
   ##     behind reader and point in front have no placement showing both, and selection
   ##     with something finite is one reader works on.
@@ -323,14 +327,11 @@ func stanceFor*(aim: CameraAim; camera: Camera; width, height: int): CameraStanc
     #   in view keeps reader's own framing, as finite selection already fitting does.
     let facing = aim.headingFacing
     if facing.isNone or aim.isBounded(camera, width, height): return settled
-    # Turntable rebuild is what names that turn. Roll is given up here, because direction
-    #   alone names no roll to keep. Clamped as `camera.placedAtElevation` is: past pole
-    #   rebuilt frame collapses.
-    let angles = azimuthElevationFor(facing.get)
-    return stanceTurntable(
-      pivot, camera.distance, angles[0],
-      clamp(angles[1], -ELEVATION_LIMIT, ELEVATION_LIMIT),
-    )
+    # Level stance facing that way names that turn, about pivot and at reader's separation:
+    #   direction alone names no roll, and least turn off steep sight leaves view rolled.
+    #   Eye and pivot name it, so no pole collapses.
+    let length = sqrt(innerOf(toMultivector(facing.get), toMultivector(facing.get)))
+    return stanceFacing(pivot + (-camera.distance/length)*facing.get, pivot)
   # Pull eye back along its own sight, by least step carrying it out to fitting reach.
   #   Sphere's centre is not pivot, so separation is not that reach; quadratic is what
   #   accounts for offset between them.

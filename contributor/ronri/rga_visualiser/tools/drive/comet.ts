@@ -48,9 +48,12 @@ export async function driveComet(page: Page): Promise<void> {
     //   directions lying in it — line in horizon.
     nimApplyOperation(0, plane, plane, performance.now() / 1000);
     const built = nimSceneHandles().find((one) => !before.includes(one));
-    // Stand level with ground, so sky bands wrap in front of camera rather than above
+    // Stand level with pivot, so sky bands wrap in front of camera rather than above
     //   its top edge.
-    nimSetCameraElevation(0.0);
+    const eye = nimCameraEye(), pivot = nimCameraPivot();
+    nimPlaceCamera(
+      eye[0] ?? 0, eye[1] ?? 0, pivot[2] ?? 0, pivot[0] ?? 0, pivot[1] ?? 0, pivot[2] ?? 0,
+    );
     // Page's own pick path, not `nimSelectOnly`: overlay draws from snapshot that only
     //   this refreshes, and comet advances once per marker overlay strokes.
     nimSelectClear();
