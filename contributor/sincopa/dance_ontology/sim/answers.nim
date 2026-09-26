@@ -165,11 +165,12 @@ func engineCommit*(build: string): string =
     if quoted.len == 40 and quoted.allCharsInSet(HexDigits): return quoted
     opens = build.find('"', shut + 1)
 
-proc stamp*(dir = HERE): string =
+proc stamp*(dir = HERE; leaving: openArray[string] = []): string =
   ## Digest of what answers depend on: every `sim/*.nim` by name, in name order, and
-  ## engine's pinned commit.
+  ## engine's pinned commit.  `leaving` names files it passes over.
   var files: seq[string]
-  for f in walkFiles(dir / "sim" / "*.nim"): files.add f
+  for f in walkFiles(dir / "sim" / "*.nim"):
+    if f.extractFilename notin leaving: files.add f
   files.sort
   var h = FNV_OFFSET
   for f in files:
