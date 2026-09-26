@@ -211,7 +211,7 @@ suite "Mesh":
     let
       eye = camera.eye
       frame_camera = camera.frame
-      radius = radiusHorizonFor(camera.distanceFar)
+      radius = radiusHorizonFor(camera.distanceFar(0.0))
     proc screen(p: Position): (float, float) =
       let v = p - eye
       (dot(v, frame_camera.axis_right)/dot(v, frame_camera.forward),

@@ -1047,8 +1047,8 @@ proc ensurePlacement() =
         SCENE.geometryOf(handle), SCENE.anchorOverrideAt(handle),
       )
   # Scene's reach moves with same edits, so far clip follows; see `camera.distanceFar`.
-  #   Held here and stamped onto camera at each derivation point, never kept in camera:
-  #   `home` and every path replacing camera value would drop it.
+  #   Held here and passed to each extent, never kept in camera: `home` and every path
+  #   replacing camera value would drop it.
   REACH_SCENE = reachOf(PLACEMENTS, SCENE)
   REVISION_PLACEMENT = some(SCENE.revision)
 
@@ -1062,15 +1062,14 @@ proc ensureViewOverlay(width, height: int) =
   ##     which is what key holds.
   ##   Callers read globals rather than copies: returning pair deep-copies `DrawExtent`
   ##   full of multivectors per call on JS backend, cache hit or not.
-  CAMERA.reach_scene = REACH_SCENE # Stamped as frame build does; see `ensurePlacement`.
   CAMERA.reach_near = REACH_NEAR
   let settings: SettingsOverlay = (
     CAMERA.motor, CAMERA.distance, CAMERA.degrees_field_of_view, CAMERA.reach_near,
-    CAMERA.reach_scene, width, height,
+    REACH_SCENE, width, height,
   )
   if SETTINGS_OVERLAY_HELD.isNone or SETTINGS_OVERLAY_HELD.get != settings:
     SETTINGS_OVERLAY_HELD = some(settings)
-    SCALE_OVERLAY = CAMERA.drawExtentFor(height)
+    SCALE_OVERLAY = CAMERA.drawExtentFor(height, REACH_SCENE)
     VIEW_PROJECTION_OVERLAY = CAMERA.initMatrixViewProjection(float(width)/float(height))
 
 
@@ -2358,7 +2357,6 @@ proc nimBuildFrame(
   #   device-pixel-ratio multiple.
   # Place first, so scene's reach is this frame's before extent reads far clip.
   ensurePlacement()
-  CAMERA.reach_scene = REACH_SCENE
   # Read local scale once for this frame, before extent reads clip planes off it.
   #   Walks every placement, so here rather than in `ensureViewOverlay`; see `REACH_NEAR`.
   REACH_NEAR = reachNearOf(PLACEMENTS, SCENE, CAMERA.eye, CAMERA.frame.forward)
@@ -2366,9 +2364,9 @@ proc nimBuildFrame(
   # Decide records' origin after scale, since bound is read off near clip.
   #   Both holds carry motor, so frame moving this origin rebuilds both anyway.
   ORIGIN_RECORDS = CAMERA.originHeld(ORIGIN_RECORDS)
-  let scale = CAMERA.drawExtentFor(int(height_pixels))
+  let scale = CAMERA.drawExtentFor(int(height_pixels), REACH_SCENE)
   # Derive frustum once, for cull of every point below; see `isPointInView`.
-  let bounds = CAMERA.viewBoundsFor(scale, float(aspect))
+  let bounds = CAMERA.viewBoundsFor(scale, float(aspect), REACH_SCENE)
   # Recover width of centred box from aspect, since this build is handed that.
   let preview = staged()
   TWEEN_CAMERA.offerAim(
@@ -2382,7 +2380,7 @@ proc nimBuildFrame(
   #   drawing same vertices and may keep them.
   #   Compared exactly: question is "did anything move at all".
   let settings_furniture = settingsFurnitureFor(
-    CAMERA, int(height_pixels), is_axes_shown, is_grid_shown, SCENE.revision,
+    CAMERA, int(height_pixels), REACH_SCENE, is_axes_shown, is_grid_shown, SCENE.revision,
     SELECTION.revision,
   )
   let is_furniture_held =

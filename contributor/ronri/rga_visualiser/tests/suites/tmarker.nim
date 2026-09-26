@@ -25,7 +25,7 @@ suite "Marker":
       pivot = Position(x: 0, y: 0, z: 0), distance = distance, azimuth = azimuth,
       elevation = elevation,
     )
-    let scale = placement.drawExtentFor(HEIGHT_MARK)
+    let scale = placement.drawExtentFor(HEIGHT_MARK, 0.0)
     (placement, placement.initMatrixViewProjection(WIDTH_MARK/HEIGHT_MARK), scale)
 
   proc setUp(distance = 19.0): (Camera, Matrix4, DrawExtent) =
@@ -530,7 +530,7 @@ suite "Marker":
         pivot = Position(x: 0, y: 0, z: 0), distance = 19.0, azimuth = azimuth,
         elevation = 0.4,
       )
-      let scale = placement.drawExtentFor(HEIGHT_MARK)
+      let scale = placement.drawExtentFor(HEIGHT_MARK, 0.0)
       shapedMarkerFor(
         attitude(LINE), none(Position), scale, placement,
         placement.initMatrixViewProjection(WIDTH_MARK/HEIGHT_MARK), WIDTH_MARK, HEIGHT_MARK,
@@ -699,7 +699,7 @@ suite "Marker":
         pivot = support + (sign*12.0)*axis, distance = 8.0,
         azimuth = arctan2(axis.y, axis.x) + 0.5*PI, elevation = 0.35,
       )
-      let scale = placement.drawExtentFor(HEIGHT_MARK)
+      let scale = placement.drawExtentFor(HEIGHT_MARK, 0.0)
       let view_projection = placement.initMatrixViewProjection(WIDTH_MARK/HEIGHT_MARK)
       let projected = projectToScreen(view_projection, WIDTH_MARK, HEIGHT_MARK, support)
       check not projected.isWithinView(WIDTH_MARK, HEIGHT_MARK)

@@ -292,7 +292,7 @@ var GIF_FRAMES =
 var TIMINGS_FRAME_MILLISECONDS: array[FRAMES_TIMING_MAX, float32]
 # Scene revision camera's reach was last measured at, and reach itself; none before first.
 #   Reach is one placement per object, so it is measured on edit rather than per frame, and
-#   stamped onto camera each frame rather than kept in it: `home` replaces camera value.
+#   passed to each extent rather than kept in camera: `home` replaces camera value.
 var REVISION_REACH = none(int)
 var REACH_SCENE = 0.0
 # Placing side for every live handle, held as browser holds it; see `bridge.ensurePlacement`.
@@ -477,10 +477,12 @@ proc assembleMeshes(
   #   frame.
   let scratch = ARENA_SWAP.current.push[:DrawScratch](1)
   # Derive frustum once, for cull of every point below; see `tessellate.isPointInView`.
-  let bounds = some(camera.viewBoundsFor(scale, float(width)/float(max(height, 1))))
+  let bounds = some(
+    camera.viewBoundsFor(scale, float(width)/float(max(height, 1)), REACH_SCENE)
+  )
   # Hold furniture on unchanged frames, by same rule and tuple as browser.
   let settings_furniture = settingsFurnitureFor(
-    camera, height, panel.is_axes_shown, panel.is_grid_shown, scene.revision,
+    camera, height, REACH_SCENE, panel.is_axes_shown, panel.is_grid_shown, scene.revision,
     panel.selection.revision,
   )
   if SETTINGS_FURNITURE_HELD.isNone or SETTINGS_FURNITURE_HELD.get != settings_furniture:
@@ -926,14 +928,13 @@ proc renderFrame(
           scene.geometryOf(handle), scene.anchorOverrideAt(handle),
         )
     REVISION_REACH = some(scene.revision)
-  camera.reach_scene = REACH_SCENE
   # Read local scale once for this frame, before extent reads clip planes off it.
   REACH_NEAR = reachNearOf(PLACEMENTS, scene, camera.eye, camera.frame.forward)
   camera.reach_near = REACH_NEAR
   # Decide records' origin after scale, since bound is read off near clip.
   ORIGIN_RECORDS = camera.originHeld(ORIGIN_RECORDS)
 
-  let scale = camera.drawExtentFor(int(height))
+  let scale = camera.drawExtentFor(int(height), REACH_SCENE)
   offerCameraAim(
     panel, scene, camera, scale, now, int(width), int(height), interaction.isMovingCamera
   )
@@ -1225,7 +1226,7 @@ proc handleEvent(
     #   Frame's size is passed because sight ray needs it before frame reports it again.
     interaction.dollyAtCursor(
       camera, scene, pow(FACTOR_DOLLY, -float(event.wheel.y)),
-      camera.drawExtentFor(height_frame),
+      camera.drawExtentFor(height_frame, REACH_SCENE),
       camera.initMatrixViewProjection(float(width_frame)/float(height_frame)),
       width_frame, height_frame, panel.selection.len > 0,
     )
@@ -1565,7 +1566,7 @@ proc positionOverSky(
   ##   Scanned rather than hard-coded: which patch is bare sky depends on scene and camera,
   ##   and fixed pixel would quietly start testing something else.
   const STEP_SCAN = 40
-  let scale = camera.drawExtentFor(height)
+  let scale = camera.drawExtentFor(height, REACH_SCENE)
   for y in countup(STEP_SCAN, height - STEP_SCAN, STEP_SCAN):
     for x in countup(STEP_SCAN, width - STEP_SCAN, STEP_SCAN):
       let at = ScreenPosition(x: float(x), y: float(y))
@@ -1871,7 +1872,7 @@ proc runInteractive(
     if options.is_sky_driven:
       driveSky(scene, camera, PIXELS_WIDTH, PIXELS_HEIGHT, count_drawn, now)
     if options.is_drag_driven or options.is_select_driven or options.is_undo_driven:
-      let scale_driven = camera.drawExtentFor(PIXELS_HEIGHT)
+      let scale_driven = camera.drawExtentFor(PIXELS_HEIGHT, REACH_SCENE)
       if options.is_drag_driven:
         driveDrag(
           scene, interaction, camera, PIXELS_WIDTH, PIXELS_HEIGHT, count_drawn,

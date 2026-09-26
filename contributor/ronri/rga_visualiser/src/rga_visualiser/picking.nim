@@ -1036,8 +1036,9 @@ func isShownCentrally*(
   ##   False where `m` draws nothing at all.
   let shape_m = kindOf(m)
   if shape_m.isNone: return false
+  # Outside any scene, so scene's reach is empty scene's: zero.
   let
-    scale = camera.drawExtentFor(height)
+    scale = camera.drawExtentFor(height, 0.0)
     view_projection = camera.initMatrixViewProjection(float(width)/float(height))
   case shape_m.get
   of Kind.Point:

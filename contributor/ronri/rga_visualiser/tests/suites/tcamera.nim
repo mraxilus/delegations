@@ -269,16 +269,14 @@ suite "Camera":
 
   test "the far clip reaches the scene's farthest object however close the orbit is":
     var camera = initCamera(Position(x: 0, y: 0, z: 0), 10.0, 0.0, 0.0)
-    check abs(camera.distanceFar - 10.0*FACTOR_CLIP_FAR) < 1.0e-9
-    camera.reach_scene = 3000.0
+    check abs(camera.distanceFar(0.0) - 10.0*FACTOR_CLIP_FAR) < 1.0e-9
     let eye = camera.eye
-    check camera.distanceFar >= norm(eye - Position(x: 0, y: 0, z: 0)) + 3000.0
+    check camera.distanceFar(3000.0) >= norm(eye - Position(x: 0, y: 0, z: 0)) + 3000.0
     # Near stays scaled whatever far reaches: depth is logarithmic, so ratio costs nothing.
     check camera.distanceNear =~ camera.distance*FACTOR_CLIP_NEAR
     var close = initCamera(Position(x: 0, y: 0, z: 0), 0.05, 0.0, 0.0)
-    close.reach_scene = 3000.0
     check close.distanceNear =~ close.distance*FACTOR_CLIP_NEAR
-    check close.distanceFar/close.distanceNear > 1.0e6
+    check close.distanceFar(3000.0)/close.distanceNear > 1.0e6
     # Reach is measured from what scene holds, point's own radius included.
     var scene = initScene()
     scene.addObject(toMultivector(Position(x: 300, y: 0, z: 0)), "p", Ink.Rose, radius = 2.5)
@@ -296,11 +294,10 @@ suite "Camera":
     check camera.scaleLocal =~ 0.002
     check camera.distanceNear =~ 0.002*FACTOR_CLIP_NEAR
     # Far clip still reaches whole scene, since scene's own reach is its other term.
-    camera.reach_scene = 6.5e6
-    check camera.distanceFar >= norm(camera.eye - ORIGIN) + 6.5e6
+    check camera.distanceFar(6.5e6) >= norm(camera.eye - ORIGIN) + 6.5e6
     # Depth stays logarithmic across that range, and both ends still land where they must.
-    check camera.depthOf(camera.distanceNear) =~ -1.0
-    check camera.depthOf(camera.distanceFar) =~ 1.0
+    check camera.depthOf(camera.distanceNear, 6.5e6) =~ -1.0
+    check camera.depthOf(camera.distanceFar(6.5e6), 6.5e6) =~ 1.0
     # Zero hands scale back, so empty scene is unchanged.
     camera.reach_near = 0.0
     check camera.scaleLocal =~ 19.0
@@ -355,8 +352,8 @@ suite "Camera":
   test "a point is culled only where the frustum, sprite margin included, does not reach":
     # Bounds are camera's own frame; what is checked is test against them.
     let camera = initCamera(Position(x: 1, y: 2, z: 3), 10.0, 0.4, 0.3)
-    let scale = camera.drawExtentFor(900)
-    let bounds = camera.viewBoundsFor(scale, 16.0/9.0)
+    let scale = camera.drawExtentFor(900, 0.0)
+    let bounds = camera.viewBoundsFor(scale, 16.0/9.0, 0.0)
     const RADIUS = RADIUS_OBJECT_DEFAULT
     check isPointInView(placeObject(toMultivector(camera.pivot)), RADIUS, bounds)
     check not isPointInView(
@@ -485,12 +482,11 @@ suite "Camera":
           pivot = Position(x: 0, y: 0, z: 0), distance = distance, azimuth = 0.4,
           elevation = 0.3,
         )
-        camera.reach_scene = REACH
         let
           flat = camera.initMatrixViewProjection(1.6).flattened
           eye = camera.eye
           forward = camera.frame.forward
-        for (depth, name) in [(REACH, "star"), (0.9*camera.distanceFar, "dome")]:
+        for (depth, name) in [(REACH, "star"), (0.9*camera.distanceFar(REACH), "dome")]:
           let at = eye + depth*forward
           var (z, w) = (0.0'f32, 0.0'f32)
           for (column, coordinate) in [(0, at.x), (1, at.y), (2, at.z)]:
@@ -564,13 +560,13 @@ suite "Camera":
     #   end came back inside frame and read as stopping in mid-air. Deriving both is
     #   also what let orbit ceiling go, so this is load-bearing twice over.
     var camera = initCameraDefault()
-    let (near_opened, far_opened) = (camera.distanceNear, camera.distanceFar)
+    let (near_opened, far_opened) = (camera.distanceNear, camera.distanceFar(0.0))
     camera.dolly(4.0)
     check camera.distanceNear =~ 4.0*near_opened
-    check camera.distanceFar =~ 4.0*far_opened
+    check camera.distanceFar(0.0) =~ 4.0*far_opened
     # Scale together, so frustum keeps its shape and depth buffer its precision.
     #   Precision is function of far-to-near ratio, however far camera stands.
-    check camera.distanceFar/camera.distanceNear =~ far_opened/near_opened
+    check camera.distanceFar(0.0)/camera.distanceNear =~ far_opened/near_opened
 
 
   test "depth is logarithmic, so a moon before its planet and the sky behind a star stay apart":
@@ -580,29 +576,29 @@ suite "Camera":
     #   vanished from beside far star. Pinned against sixteen-bit step, coarsest buffer
     #   WebGL may hand out, at demo's own camera and at moon's.
     const STEP_SIXTEEN_BIT = 2.0/65535.0
+    const REACH = 6.5e6
     var camera = initCamera(pivot = ORIGIN, distance = 122.0, azimuth = 1.0, elevation = 0.95)
-    camera.reach_scene = 6.5e6
-    check camera.depthOf(camera.distanceNear) =~ -1.0
-    check camera.depthOf(camera.distanceFar) =~ 1.0
+    let far = camera.distanceFar(REACH)
+    check camera.depthOf(camera.distanceNear, REACH) =~ -1.0
+    check camera.depthOf(far, REACH) =~ 1.0
     # Star at million units stands clear of sky dome at nine tenths of far, and of star.
     #   at fifth of its distance.
-    check camera.depthOf(0.9*camera.distanceFar) - camera.depthOf(1.0e6) > STEP_SIXTEEN_BIT
-    check camera.depthOf(1.0e6) - camera.depthOf(2.0e5) > STEP_SIXTEEN_BIT
+    check camera.depthOf(0.9*far, REACH) - camera.depthOf(1.0e6, REACH) > STEP_SIXTEEN_BIT
+    check camera.depthOf(1.0e6, REACH) - camera.depthOf(2.0e5, REACH) > STEP_SIXTEEN_BIT
     # Io before Jupiter, from where occlusion check stands: three spans out, moon one in.
     var near = initCamera(pivot = ORIGIN, distance = 0.0085, azimuth = 1.0, elevation = 0.3)
-    near.reach_scene = 6.5e6
-    check near.depthOf(0.0085) - near.depthOf(0.0085 - 0.0028) > STEP_SIXTEEN_BIT
+    check near.depthOf(0.0085, REACH) - near.depthOf(0.0085 - 0.0028, REACH) > STEP_SIXTEEN_BIT
     # Monotone across every decade scene spans, and clipping planes still clip.
     var last = -2.0
     for exponent in -8 .. 6:
       let depth = pow(10.0, float(exponent))
-      if depth <= camera.distanceNear or depth >= camera.distanceFar: continue
-      let z = camera.depthOf(depth)
+      if depth <= camera.distanceNear or depth >= far: continue
+      let z = camera.depthOf(depth, REACH)
       check z > last and z > -1.0 and z < 1.0
       last = z
-    check camera.depthOf(0.5*camera.distanceNear) < -1.0
-    check camera.depthOf(2.0*camera.distanceFar) > 1.0
-    check camera.depthLogScale =~ 2.0/log2(camera.distanceFar/camera.distanceNear)
+    check camera.depthOf(0.5*camera.distanceNear, REACH) < -1.0
+    check camera.depthOf(2.0*far, REACH) > 1.0
+    check camera.depthLogScale(REACH) =~ 2.0/log2(far/camera.distanceNear)
 
 
   test "an orbit distance has a floor and no ceiling":
@@ -631,7 +627,7 @@ suite "Camera":
     check isNear(norm(axes.axis_up), 1.0)
     check isNear(norm(axes.forward), 1.0)
     check camera.distanceNear > 0.0
-    check camera.distanceFar > camera.distanceNear
+    check camera.distanceFar(0.0) > camera.distanceNear
     let clipped = transform(camera.initMatrixViewProjection(1.6), camera.pivot, 1.0)
     check clipped[3] > 0
     check isNear(clipped[0]/clipped[3], 0)
@@ -699,7 +695,7 @@ suite "Camera":
     check positionOnGround(camera, 1440, 900, cursor).isNone
     interaction.updateCursor(cursor.x, cursor.y)
     interaction.dollyAtCursor(
-      camera, scene, 2.0, camera.drawExtentFor(900),
+      camera, scene, 2.0, camera.drawExtentFor(900, 0.0),
       camera.initMatrixViewProjection(1440.0/900.0), 1440, 900, has_selection = true,
     )
     check camera.distance =~ 24.0
@@ -717,7 +713,7 @@ suite "Camera":
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(cursor.x, cursor.y)
     interaction.dollyAtCursor(
-      camera, initScene(), 0.5, camera.drawExtentFor(TALL),
+      camera, initScene(), 0.5, camera.drawExtentFor(TALL, 0.0),
       camera.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL,
       has_selection = false,
     )
@@ -747,7 +743,7 @@ suite "Camera":
       camera.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL, planet,
     )
     interaction.dollyAtCursor(
-      camera, scene, 0.5, camera.drawExtentFor(TALL),
+      camera, scene, 0.5, camera.drawExtentFor(TALL, 0.0),
       camera.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL,
       has_selection = false,
     )
@@ -761,7 +757,7 @@ suite "Camera":
     # Notch after notch stops at object's own drawn radius, rather than passing through.
     for _ in 1 .. 40:
       interaction.dollyAtCursor(
-        camera, scene, 0.5, camera.drawExtentFor(TALL),
+        camera, scene, 0.5, camera.drawExtentFor(TALL, 0.0),
         camera.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL,
         has_selection = false,
       )
@@ -784,7 +780,7 @@ suite "Camera":
     camera = camera.placedAtDistance(30.0) # Eye where it was, pivot ten units past planet.
     let eye_before = camera.eye
     dollyAtCentre(
-      camera, scene, 0.5, camera.drawExtentFor(TALL),
+      camera, scene, 0.5, camera.drawExtentFor(TALL, 0.0),
       camera.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL,
       has_selection = true,
     )
@@ -797,7 +793,7 @@ suite "Camera":
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(720.0, 200.0)
     dollyAt(
-      level, initScene(), 0.5, level.drawExtentFor(TALL),
+      level, initScene(), 0.5, level.drawExtentFor(TALL, 0.0),
       level.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL,
       ScreenPosition(x: 720.0, y: 200.0), has_selection = true,
     )
@@ -812,7 +808,7 @@ suite "Camera":
     let under = ScreenPosition(x: 720.0, y: 700.0)
     check positionOnGround(over_ground, WIDE, TALL, under).isSome
     dollyAt(
-      over_ground, initScene(), 0.5, over_ground.drawExtentFor(TALL),
+      over_ground, initScene(), 0.5, over_ground.drawExtentFor(TALL, 0.0),
       over_ground.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL, under,
       has_selection = true,
     )
@@ -837,7 +833,7 @@ suite "Camera":
 
     # Over point: its own place, not ground below it nor pivot's level.
     let at_object = anchorZoomAt(
-      scene, camera, camera.drawExtentFor(TALL), view_projection, WIDE, TALL,
+      scene, camera, camera.drawExtentFor(TALL, 0.0), view_projection, WIDE, TALL,
       ScreenPosition(x: on_screen.x, y: on_screen.y),
     )
     check at_object.isSome
@@ -852,7 +848,7 @@ suite "Camera":
     let
       elsewhere = ScreenPosition(x: on_screen.x + 200.0, y: on_screen.y + 400.0)
       at_ground = anchorZoomAt(
-        scene, camera_raised, camera_raised.drawExtentFor(TALL),
+        scene, camera_raised, camera_raised.drawExtentFor(TALL, 0.0),
         camera_raised.initMatrixViewProjection(float(WIDE)/float(TALL)),
         WIDE, TALL, elsewhere,
       )
@@ -864,7 +860,7 @@ suite "Camera":
     let
       toward_horizon = ScreenPosition(x: on_screen.x + 200.0, y: on_screen.y + 60.0)
       at_level = anchorZoomAt(
-        scene, camera_raised, camera_raised.drawExtentFor(TALL),
+        scene, camera_raised, camera_raised.drawExtentFor(TALL, 0.0),
         camera_raised.initMatrixViewProjection(float(WIDE)/float(TALL)),
         WIDE, TALL, toward_horizon,
       )
@@ -881,7 +877,7 @@ suite "Camera":
       upward = ScreenPosition(x: 720.0, y: 40.0)
     if positionOnGround(level, WIDE, TALL, upward).isNone:
       let at_level = anchorZoomAt(
-        initScene(), level, level.drawExtentFor(TALL),
+        initScene(), level, level.drawExtentFor(TALL, 0.0),
         level.initMatrixViewProjection(float(WIDE)/float(TALL)),
         WIDE, TALL, upward,
       )
@@ -897,7 +893,7 @@ suite "Camera":
       "floor", inkCycled(1),
     )
     let at_plane = anchorZoomAt(
-      scene_floor, camera_raised, camera_raised.drawExtentFor(TALL),
+      scene_floor, camera_raised, camera_raised.drawExtentFor(TALL, 0.0),
       camera_raised.initMatrixViewProjection(float(WIDE)/float(TALL)),
       WIDE, TALL, elsewhere,
     )

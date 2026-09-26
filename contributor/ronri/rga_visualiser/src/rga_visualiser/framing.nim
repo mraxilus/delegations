@@ -115,7 +115,7 @@ func reachOfPlacement(placed: Placement, radius: float): float =
 
 func reachOf*(placed: openArray[Placement], scene: Scene): float =
   ## Measure how far scene's farthest visible finite object stands from origin.
-  ##   For `Camera.reach_scene`, from placements caller already holds; browser path.
+  ##   For `camera.distanceFar`, from placements caller already holds; browser path.
   ##   Sibling of `reachOf(scene)`, which places for itself.
   result = 0.0
   for handle in 0 ..< scene.bound:
@@ -149,7 +149,7 @@ func reachNearOf*(
 
 proc reachOf*(scene: Scene): float =
   ## Measure how far scene's farthest visible finite object stands from origin.
-  ##   For `Camera.reach_scene` on path holding no placements; desktop, once per scene
+  ##   For `camera.distanceFar` on path holding no placements; desktop, once per scene
   ##   change. Sibling of `reachOf(placed, scene)`.
   result = 0.0
   for handle, one in scene.pairs:
@@ -469,14 +469,14 @@ func offerAimAt*(
   ##   Same rule, so captured frame and interactive one agree on where object is worth
   ##   looking from.
   ##   Empty scene and selection are never read: `previewStaging` names no operands, so
-  ##   `watched` yields one object and stops.
+  ##   `watched` yields one object and stops. Empty scene's reach is zero.
   ##     Cost is one zeroed `Scene` per capture, storyboard's rather than frame loop's.
   var alone: Scene
   var pointer = none(PointerPick)
   var held = camera
   offerAim(
     tween, held, alone, Selection(), some(previewStaging(m, RADIUS_OBJECT_DEFAULT)),
-    camera.drawExtentFor(height), width, height, now, duration, pointer,
+    camera.drawExtentFor(height, 0.0), width, height, now, duration, pointer,
   )
 
 

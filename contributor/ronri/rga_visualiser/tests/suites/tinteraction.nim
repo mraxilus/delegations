@@ -93,7 +93,7 @@ suite "Interaction":
       var over = Interaction(is_enabled: true)
       over.updateCursor(400.0, 300.0)
       over.updateHover(
-        floor, close, close.drawExtentFor(600), close.initMatrixViewProjection(800.0/600.0),
+        floor, close, close.drawExtentFor(600, 0.0), close.initMatrixViewProjection(800.0/600.0),
         800, 600,
       )
       check over.index_hover == some(0)
@@ -1520,7 +1520,7 @@ suite "Interaction":
     let view_projection = camera.initMatrixViewProjection(800.0/600.0)
     proc hovering(interaction: var Interaction): Option[int] =
       interaction.updateHover(
-        scene, camera, camera.drawExtentFor(600), view_projection, 800, 600,
+        scene, camera, camera.drawExtentFor(600, 0.0), view_projection, 800, 600,
       )
       interaction.index_hover
     interaction.updateCursor(400.0, 300.0) # Straight at object.
@@ -1559,7 +1559,7 @@ suite "Interaction":
     check interaction.index_focus == some(0)
     interaction.updateCursor(799.0, 1.0) # Corner, away from everything.
     interaction.updateHover(
-      scene, camera, camera.drawExtentFor(600),
+      scene, camera, camera.drawExtentFor(600, 0.0),
       camera.initMatrixViewProjection(800.0/600.0), 800, 600,
     )
     check interaction.index_hover != interaction.index_focus
@@ -1657,7 +1657,7 @@ suite "Interaction":
     let camera = initCamera(pivot = PLACES[0], distance = 10.0, azimuth = 0.0, elevation = 0.0)
     interaction.updateCursor(400.0, 300.0)
     interaction.updateHover(
-      scene, camera, camera.drawExtentFor(600),
+      scene, camera, camera.drawExtentFor(600, 0.0),
       camera.initMatrixViewProjection(800.0/600.0), 800, 600,
     )
     check interaction.index_hover.isNone
@@ -1671,7 +1671,7 @@ suite "Interaction":
     let camera = initCamera(pivot = pivot, distance = 10.0, azimuth = 0.0, elevation = 0.0)
     interaction.updateCursor(400.0, 300.0)
     interaction.updateHover(
-      scene, camera, camera.drawExtentFor(600),
+      scene, camera, camera.drawExtentFor(600, 0.0),
       camera.initMatrixViewProjection(800.0/600.0), 800, 600,
     )
     check interaction.index_hover == some(0)

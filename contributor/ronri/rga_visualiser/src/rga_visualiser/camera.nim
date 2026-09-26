@@ -102,7 +102,7 @@ const
     ## Set far bound this many orbit distances out, or at scene's reach where farther.
     ##   Scaled alone clipped field away as zoom carried orbit distance down to foreground
     ##   star: twenty of thirty units is six hundred, and field is three thousand across.
-    ##   See `distanceFar` and `Camera.reach_scene`.
+    ##   See `distanceFar`, which takes scene's reach from whoever owns scene.
     ##   Scaled rather than fixed so everything meant to read in horizon
     ##   (`tessellate.radiusHorizonFor`, `tessellate.extentFurnitureFor`, far end of
     ##   every drawn line) stays past what frame shows at any orbit distance.
@@ -185,8 +185,8 @@ const
     ##   Reached where pointer is over empty sky, which has no depth to scale by.
     ##   Crosses star field's reach of about 6.5 million units in about 22 seconds, so
     ##   farthest catalogued star is minute away and nothing is unreachable.
-    ##   Fixed rather than read from scene: `reach_scene` is stamped by whoever owns scene,
-    ##   and speed that changed as objects were added would be speed nobody learns.
+    ##   Fixed rather than read from scene: scene's reach moves as objects are added, and
+    ##   speed that changed with it would be speed nobody learns.
   SPEED_LIGHT* = 1.0/499.0
     ## Fix speed of light in this world's own units, at one unit one astronomical unit.
     ##   Light crosses astronomical unit in 499 seconds; see `orrery.nim`.
@@ -228,16 +228,11 @@ type
       ## Scale frustum and furniture take, in place of separation from pivot; see
       ## `scaleLocal`.
       ##   Zero where nothing is drawn ahead, which hands scale back to separation.
-      ##   Stamped by whoever owns scene, as `reach_scene` is, and once for each frame
-      ##   rather than for each overlay call: it reads every placement, and
+      ##   Stamped by whoever owns scene, once for each frame rather than for each overlay
+      ##   call: it reads every placement, and
       ##   `ensureViewOverlay` runs many times over one frame.
       ##   Depth along sight rather than distance, and never behind eye: what reader turned
       ##   away from is not drawn, and scale read off it would follow that.
-    reach_scene*: float ## How far farthest finite object stands from world origin.
-      ## Disc's own reach included; zero for empty scene, which leaves far clip scaled alone.
-      ## Stamped by whoever owns scene at each derivation point, from `framing.reachOf`;
-      ## `distanceFar` reads it so far clip never cuts scene away. Never trusted across
-      ## replacement of camera value: `home` builds fresh camera carrying zero.
 
   FrameCamera* = object ## Define orthonormal directions of camera's own axes.
     axis_right*: Direction ## Unit direction of view's +x.
@@ -380,15 +375,19 @@ func scaleLocal*(camera: Camera): float =
   if camera.reach_near > 0.0: camera.reach_near else: max(camera.distance, DISTANCE_LIMIT_NEAR)
 
 
-func distanceFar*(camera: Camera): float =
+func distanceFar*(camera: Camera, reach_scene: float): float =
   ## Read far bound depth's logarithm spans and horizon stands within; see `distanceNear`
   ##   for why derived. Nothing clips at it: see `initMatrixProjection`.
   ##   Twenty orbit distances, or eye's distance to origin plus scene's reach where that
   ##   is farther, so logarithm spans whole scene; see `FACTOR_CLIP_FAR`.
+  ##     `reach_scene` is how far farthest finite object stands from world origin, disc's
+  ##     own reach included: `framing.reachOf`, zero for empty scene.
+  ##     Caller's rather than camera's: every path replacing camera value dropped field
+  ##     stamped on it, and far clip then cut scene away.
   ##   Ratio to near is unbounded; `depthOf` is what makes that affordable.
   let eye = camera.eye
   let away = sqrt(eye.x*eye.x + eye.y*eye.y + eye.z*eye.z)
-  max(camera.scaleLocal*FACTOR_CLIP_FAR, away + camera.reach_scene*MARGIN_REACH_FAR)
+  max(camera.scaleLocal*FACTOR_CLIP_FAR, away + reach_scene*MARGIN_REACH_FAR)
 
 
 func distanceNear*(camera: Camera): float =
@@ -398,12 +397,16 @@ func distanceNear*(camera: Camera): float =
   camera.scaleLocal*FACTOR_CLIP_NEAR
 
 
-func depthLogScale*(camera: Camera): float =
+func scaleLogOver(far, near: float): float = 2.0/log2(far/near)
+  ## Scale depth's logarithm by span from `near` to `far`; see `depthOf`.
+
+
+func depthLogScale*(camera: Camera, reach_scene: float): float =
   ## Read scale depth's logarithm is mapped by this frame; see `depthOf`.
-  2.0/log2(camera.distanceFar/camera.distanceNear)
+  scaleLogOver(camera.distanceFar(reach_scene), camera.distanceNear)
 
 
-func depthOf*(camera: Camera, depth: float): float =
+func depthOf*(camera: Camera; depth, reach_scene: float): float =
   ## Map view depth to clip depth, in -1 .. 1, as every shader does.
   ##   Logarithmic: `log2(depth/near)` over `log2(far/near)`, so buffer's steps are spread
   ##   evenly over decades and resolution is fixed fraction of distance at every distance.
@@ -421,7 +424,7 @@ func depthOf*(camera: Camera, depth: float): float =
   ##   far plane had its triangle cut beside its front corner, and plane's disc ended at
   ##   hard chord under camera standing inside it. Projective clip depth keeps near cut
   ##   where it belongs and never far clips; driven check reads disc under camera.
-  log2(depth/camera.distanceNear)*camera.depthLogScale - 1.0
+  log2(depth/camera.distanceNear)*camera.depthLogScale(reach_scene) - 1.0
 
 
 func distance*(camera: Camera): float = camera.depth_pivot
@@ -951,7 +954,7 @@ type SettingsFurniture* = tuple
 
 
 func settingsFurnitureFor*(
-  camera: Camera; height_pixels: int; is_axes_shown, is_grid_shown: bool;
+  camera: Camera; height_pixels: int; reach_scene: float; is_axes_shown, is_grid_shown: bool;
   revision_scene, revision_selection: int
 ): SettingsFurniture =
   ## Read furniture's inputs off this camera and frame, for hold comparison.
@@ -959,7 +962,7 @@ func settingsFurnitureFor*(
   ##   Every field is plain read, so key costs nothing to build.
   (
     camera.motor, camera.distance, camera.degrees_field_of_view, camera.reach_near,
-    camera.reach_scene, height_pixels, is_axes_shown, is_grid_shown, revision_scene,
+    reach_scene, height_pixels, is_axes_shown, is_grid_shown, revision_scene,
     revision_selection,
   )
 
@@ -977,7 +980,7 @@ func rulerFor*(camera: Camera, scale: DrawExtent): tuple[span, pixels: float] =
   (span, span/world_per_pixel)
 
 
-func drawExtentFor*(camera: Camera, height_pixels: int): DrawExtent =
+func drawExtentFor*(camera: Camera; height_pixels: int; reach_scene: float): DrawExtent =
   ## Derive this frame's draw scale from camera.
   ##   How far geometry reaches, where from, and everything ribbon needs to hold constant
   ##   width on screen.
@@ -986,9 +989,11 @@ func drawExtentFor*(camera: Camera, height_pixels: int): DrawExtent =
   ##     `tessellate`.
   ##   `height_pixels` is framebuffer's, not window's: ribbon's width is measured in
   ##   pixels actually drawn.
+  ##   `reach_scene` is scene's, and only far bound reads it; see `distanceFar`.
   let
     eye = camera.eye
     frame = camera.frame
+    far = camera.distanceFar(reach_scene)
   # Derive four multivector twins through `algebraFilled`.
   #   One derivation point shared with every hand-built extent.
   algebraFilled(DrawExtent(
@@ -996,19 +1001,19 @@ func drawExtentFor*(camera: Camera, height_pixels: int): DrawExtent =
       # Furniture follows local scale, not scene's reach; see `mesh.extentFurnitureFor`.
       extent_furniture: extentFurnitureFor(camera.scaleLocal*FACTOR_CLIP_FAR),
       eye: eye,
-      radius_horizon: radiusHorizonFor(camera.distanceFar),
+      radius_horizon: radiusHorizonFor(far),
       forward: frame.forward,
       axis_right: frame.axis_right,
       axis_up: frame.axis_up,
       tangent_half_view: tan(0.5*degToRad(camera.degrees_field_of_view)),
       height_pixels: height_pixels,
       depth_near: camera.distanceNear,
-      depth_log: camera.depthLogScale,
+      depth_log: scaleLogOver(far, camera.distanceNear),
     ),
   ))
 
 
-func viewBoundsFor*(camera: Camera, scale: DrawExtent, aspect: float): ViewBounds =
+func viewBoundsFor*(camera: Camera; scale: DrawExtent; aspect, reach_scene: float): ViewBounds =
   ## Derive frustum points are culled against, once per frame; see `tessellate.isPointInView`.
   ##   Margin is least on-screen radius and one pixel more, as tangent per unit of depth,
   ##   so smallest disc straddling edge is still emitted whatever GPU does with centre
@@ -1023,7 +1028,7 @@ func viewBoundsFor*(camera: Camera, scale: DrawExtent, aspect: float): ViewBound
     right: frame.axis_right,
     up: frame.axis_up,
     depth_near: camera.distanceNear*(1.0 - TOLERANCE_CULL_CLIP),
-    depth_far: camera.distanceFar*(1.0 + TOLERANCE_CULL_CLIP),
+    depth_far: camera.distanceFar(reach_scene)*(1.0 + TOLERANCE_CULL_CLIP),
     bound_width: scale.tangentHalfView*aspect + margin,
     bound_height: scale.tangentHalfView + margin,
   )

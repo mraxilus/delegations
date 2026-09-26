@@ -50,7 +50,7 @@ suite "Camera Aim":
     scene: Scene, picked: Selection, camera: Camera
   ): CameraStance =
     ## Resolve where framing rule puts camera for whole selection.
-    let aim = aimFor(scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM))
+    let aim = aimFor(scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM, 0.0))
     check aim.isSome
     stanceFor(aim.get, camera, WIDTH_AIM, HEIGHT_AIM)
 
@@ -62,7 +62,7 @@ suite "Camera Aim":
     let camera = stanceAim(1.6, 0.2)
     let at = projectToScreen(
       camera.initMatrixViewProjection(WIDTH_AIM/HEIGHT_AIM), WIDTH_AIM, HEIGHT_AIM,
-      anchorFor(point, camera.drawExtentFor(HEIGHT_AIM)).get,
+      anchorFor(point, camera.drawExtentFor(HEIGHT_AIM, 0.0)).get,
     )
     check at.isInFront
     check at.x >= 0.0 and at.x <= float(WIDTH_AIM) # On screen ...
@@ -210,7 +210,7 @@ suite "Camera Aim":
     for azimuth in AZIMUTHS_AIM:
       for elevation in ELEVATIONS_AIM:
         let camera = stanceAim(azimuth, elevation)
-        let aim = aimFor(scene, Selection(), staged, camera.drawExtentFor(HEIGHT_AIM))
+        let aim = aimFor(scene, Selection(), staged, camera.drawExtentFor(HEIGHT_AIM, 0.0))
         let framed = camera.placed(stanceFor(aim.get, camera, WIDTH_AIM, HEIGHT_AIM))
         check isShownAll(
           scene, Selection(), staged, framed, WIDTH_AIM, HEIGHT_AIM
@@ -228,7 +228,7 @@ suite "Camera Aim":
     #   operands, so other is left out and no pull-back is owed.
     let alone = some(previewStaging(scene.geometryOf(handle_first), RADIUS_OBJECT_DEFAULT))
     let camera = stanceAim(0.7, 0.2)
-    let aim = aimFor(scene, Selection(), alone, camera.drawExtentFor(HEIGHT_AIM))
+    let aim = aimFor(scene, Selection(), alone, camera.drawExtentFor(HEIGHT_AIM, 0.0))
     let framed = camera.placed(stanceFor(aim.get, camera, WIDTH_AIM, HEIGHT_AIM))
     check isShownAll(scene, Selection(), alone, framed, WIDTH_AIM, HEIGHT_AIM)
     check framed.distance == camera.distance
@@ -365,7 +365,7 @@ suite "Camera Aim":
     proc scaleAt(distance: float): DrawExtent =
       initCamera(
         pivot = ORIGIN, distance = distance, azimuth = 0.0, elevation = 0.9
-      ).drawExtentFor(TALL)
+      ).drawExtentFor(TALL, 0.0)
     proc spanAt(distance: float): float =
       ## Read drawn disc's radius in pixels, as `isBackdropUnder` reads it.
       let scale = scaleAt(distance)
@@ -448,7 +448,7 @@ suite "Camera Aim":
       let place = toMultivector(Position(x: 0.0, y: 0.0, z: 0.02*float(step)))
       let at = projectToScreen(
         camera.initMatrixViewProjection(WIDTH_AIM/HEIGHT_AIM), WIDTH_AIM, HEIGHT_AIM,
-        anchorFor(place, camera.drawExtentFor(HEIGHT_AIM)).get,
+        anchorFor(place, camera.drawExtentFor(HEIGHT_AIM, 0.0)).get,
       )
       if at.y > margin_y and at.y < margin_y + INSET_POINT_SHOWN:
         check not isShownCentrally(place, camera, WIDTH_AIM, HEIGHT_AIM)
@@ -500,7 +500,7 @@ suite "Camera Aim":
         # End to end: ease carries pivot there and leaves everything else alone.
         var tween: CameraTween
         tween.offerAim(
-          camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM),
+          camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM, 0.0),
       WIDTH_AIM, HEIGHT_AIM, 0.0, 0.35
         )
         tween.settle(camera)
@@ -562,7 +562,7 @@ suite "Camera Aim":
         # ... and not one step further than rule in force demands. Judged against that
         #   rule, and not against pixels: sphere criterion is what framing solves, and it
         #   is stricter than what each shape's own pixels would accept.
-        let aim = aimFor(scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM))
+        let aim = aimFor(scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM, 0.0))
         check aim.isSome
         check aim.get.isFramed(camera.placed(framed), WIDTH_AIM, HEIGHT_AIM)
         let short = camera.stanceOf.toward(framed, 0.999)
@@ -602,7 +602,7 @@ suite "Camera Aim":
       toMultivector(Position(x: -3.0, y: 5.0, z: -2.0)),
     )
     let opening = stanceAim(0.7, 0.35)
-    let aim = aimFor(scene, picked, none(Preview), opening.drawExtentFor(TALL)).get
+    let aim = aimFor(scene, picked, none(Preview), opening.drawExtentFor(TALL, 0.0)).get
     let centre = aim.sphere.get.centre
     let reach = distanceFitting(aim.sphere.get.radius, opening, WIDE, TALL, INSET_POINT_SHOWN)
     # Framed, then flown well inside: rule is broken and floor answers.
@@ -654,7 +654,7 @@ suite "Camera Aim":
     # Near enough that group does not fit, so rule pulls back and stands eye on floor.
     var camera = stanceAim(0.7, 0.35)
     camera.dollyTo(3.0)
-    let aim = aimFor(scene, picked, none(Preview), camera.drawExtentFor(TALL)).get
+    let aim = aimFor(scene, picked, none(Preview), camera.drawExtentFor(TALL, 0.0)).get
     let middle = aim.centroid.get
     check norm(aim.sphere.get.centre - middle) > 0.5 # What this case is about.
     camera = camera.placed(stanceFor(aim, camera, WIDE, TALL))
@@ -711,7 +711,7 @@ suite "Camera Aim":
     #   aim's sphere collapses onto it, so move is pan toward point, cut short
     #   moment its dot fits -- no dolly toward that distant support, ever.
     let (scene, picked) = sceneOf(point, line)
-    let aim = aimFor(scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM))
+    let aim = aimFor(scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM, 0.0))
     check aim.get.is_bound_by_fitted
     check aim.get.sphere.get.radius =~ 0.0
     let framed = framedFor(scene, picked, camera)
@@ -733,7 +733,7 @@ suite "Camera Aim":
     let (scene_star, picked_star) = sceneOf(star)
     let opening = stanceAim(0.5, 0.2)
     let aim_star = aimFor(
-      scene_star, picked_star, none(Preview), opening.drawExtentFor(TALL)
+      scene_star, picked_star, none(Preview), opening.drawExtentFor(TALL, 0.0)
     ).get
     check aim_star.heading.isSome
     check aim_star.normal_crossing.isNone
@@ -769,7 +769,7 @@ suite "Camera Aim":
     check kindOf(along) == some(Kind.Line)
     let (scene_line, picked_line) = sceneOf(along)
     let aim_line = aimFor(
-      scene_line, picked_line, none(Preview), opening.drawExtentFor(TALL)
+      scene_line, picked_line, none(Preview), opening.drawExtentFor(TALL, 0.0)
     ).get
     check aim_line.heading.isNone
     check aim_line.normal_crossing.isSome
@@ -794,7 +794,7 @@ suite "Camera Aim":
     let (scene_both, picked_both) =
       sceneOf(star, toMultivector(Position(x: 3.0, y: -2.0, z: 1.0)))
     let aim_both = aimFor(
-      scene_both, picked_both, none(Preview), opening.drawExtentFor(TALL)
+      scene_both, picked_both, none(Preview), opening.drawExtentFor(TALL, 0.0)
     ).get
     check aim_both.sphere.isSome and aim_both.heading.isSome
     var pair = opening
@@ -822,7 +822,7 @@ suite "Camera Aim":
       # Turn lands on star's own heading, rather than being searched toward it:
       #   rebuild names that turn outright, so there is no fraction of it to find.
       let aim = aimFor(
-        scene_star, picked_star, none(Preview), camera.drawExtentFor(HEIGHT_AIM)
+        scene_star, picked_star, none(Preview), camera.drawExtentFor(HEIGHT_AIM, 0.0)
       )
       check aim.isSome and aim.get.heading.isSome
       let angles = azimuthElevationFor(aim.get.heading.get)
@@ -836,7 +836,7 @@ suite "Camera Aim":
     let opening = stanceAim(AZIMUTHS_AIM[0], 0.3)
     var faced = opening.placed(framedFor(scene_star, picked_star, opening))
     let aim_faced = aimFor(
-      scene_star, picked_star, none(Preview), faced.drawExtentFor(HEIGHT_AIM)
+      scene_star, picked_star, none(Preview), faced.drawExtentFor(HEIGHT_AIM, 0.0)
     ).get
     check aim_faced.isBounded(faced, WIDTH_AIM, HEIGHT_AIM)
     faced.look(0.03, 0.0) # Star stays on screen, so bound still holds.
@@ -861,13 +861,13 @@ suite "Camera Aim":
     var tween: CameraTween
     let (scene, picked) = sceneOf(toMultivector(Position(x: 3.0, y: -2.0, z: 1.5)))
     tween.offerAim(
-      camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM),
+      camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM, 0.0),
       WIDTH_AIM, HEIGHT_AIM, 0.0, 0.35
     )
     check tween.goal.isSome
 
     tween.offerAim(
-      camera, scene, Selection(), none(Preview), camera.drawExtentFor(HEIGHT_AIM),
+      camera, scene, Selection(), none(Preview), camera.drawExtentFor(HEIGHT_AIM, 0.0),
       WIDTH_AIM, HEIGHT_AIM, 0.1, 0.35
     )
     check tween.goal.isNone
@@ -875,7 +875,7 @@ suite "Camera Aim":
     var empty: Multivector
     tween.offerAim(
       camera, scene, Selection(), some(previewStaging(empty, RADIUS_OBJECT_DEFAULT)),
-      camera.drawExtentFor(HEIGHT_AIM), WIDTH_AIM, HEIGHT_AIM, 0.2, 0.35,
+      camera.drawExtentFor(HEIGHT_AIM, 0.0), WIDTH_AIM, HEIGHT_AIM, 0.2, 0.35,
     )
     check tween.goal.isNone
 
@@ -893,13 +893,13 @@ suite "Camera Aim":
     check not isShownAll(scene, picked, none(Preview), camera, WIDTH_AIM, HEIGHT_AIM)
 
     tween.offerAim(
-      camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM),
+      camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM, 0.0),
       WIDTH_AIM, HEIGHT_AIM, 0.0, DURATION
     )
     for frame in 1 .. 30:
       let now = DURATION*float(frame)/20.0
       tween.offerAim( # Re-offered every frame, exactly as front-end re-offers it.
-        camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM),
+        camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM, 0.0),
       WIDTH_AIM, HEIGHT_AIM, now, DURATION
       )
       tween.advance(camera, now, easeOutCubic)
@@ -936,7 +936,7 @@ suite "Camera Aim":
           tween: CameraTween
           pointer = some(PointerPick(handle: picked.at(0)))
         tween.offerAim(
-          camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM),
+          camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM, 0.0),
           WIDTH_AIM, HEIGHT_AIM, 0.0, DURATION, pointer,
         )
         check pointer.isNone # Spent by offer.
@@ -977,7 +977,7 @@ suite "Camera Aim":
     let
       eye = camera.eye
       axes = camera.frame
-      scale = camera.drawExtentFor(HEIGHT_AIM)
+      scale = camera.drawExtentFor(HEIGHT_AIM, 0.0)
       near = eye + 0.3*axes.forward + 0.02*axes.axis_right
       far = eye + 40.0*axes.forward + 3.0*axes.axis_up
     let placement_near = stanceApproaching(Kind.Point, 0.08, near, camera, scale)
@@ -1017,7 +1017,7 @@ suite "Camera Aim":
     for distance in [12.0, 1.0]:
       var camera = initCamera(pivot = ORIGIN, distance = distance, azimuth = 0.7, elevation = 0.5)
       var (scene, picked) = sceneOf(ground)
-      let scale = camera.drawExtentFor(HEIGHT_AIM)
+      let scale = camera.drawExtentFor(HEIGHT_AIM, 0.0)
       var
         tween: CameraTween
         pointer = some(PointerPick(handle: picked.at(0)))
@@ -1054,7 +1054,7 @@ suite "Camera Aim":
       tween_two: CameraTween
       pointer = some(PointerPick(handle: picked_two.at(1)))
     tween_two.offerAim(
-      camera, scene_two, picked_two, none(Preview), camera.drawExtentFor(HEIGHT_AIM),
+      camera, scene_two, picked_two, none(Preview), camera.drawExtentFor(HEIGHT_AIM, 0.0),
       WIDTH_AIM, HEIGHT_AIM, 0.0, DURATION, pointer,
     )
     check tween_two.goal.isSome
@@ -1075,7 +1075,7 @@ suite "Camera Aim":
     let (scene, picked) = sceneOf(toMultivector(one), toMultivector(two))
     var tween: CameraTween
     tween.offerAim(
-      camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM),
+      camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM, 0.0),
       WIDTH_AIM, HEIGHT_AIM, 0.0, DURATION,
     )
     check not (tween.destination.motor == camera.motor) # Ease armed toward middle.
@@ -1092,7 +1092,7 @@ suite "Camera Aim":
       let now = DURATION*float(step)/5.0
       tween.advance(camera, now, easeOutCubic)
       tween.offerAim(
-        camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM),
+        camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM, 0.0),
         WIDTH_AIM, HEIGHT_AIM, now, DURATION,
       )
       camera.orbit(0.05, 0.0) # Drag goes on through rest of ease.
@@ -1113,7 +1113,7 @@ suite "Camera Aim":
     var settled = stanceAim(0.7, 0.3).placedAtPivot(one)
     var held: CameraTween
     held.offerAim(
-      settled, scene, picked, none(Preview), settled.drawExtentFor(HEIGHT_AIM),
+      settled, scene, picked, none(Preview), settled.drawExtentFor(HEIGHT_AIM, 0.0),
       WIDTH_AIM, HEIGHT_AIM, 0.0, DURATION,
     )
     held.abandon()
@@ -1138,7 +1138,7 @@ suite "Camera Aim":
       tween: CameraTween
       pointer = none(PointerPick)
     tween.offerAim(
-      camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM),
+      camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM, 0.0),
       WIDTH_AIM, HEIGHT_AIM, 0.0, DURATION, pointer,
     )
     tween.settle(camera)
@@ -1146,13 +1146,13 @@ suite "Camera Aim":
     camera.dolly(8.0) # Reader wheels out; offer stands answered.
     tween.abandon()
     tween.offerAim(
-      camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM),
+      camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM, 0.0),
       WIDTH_AIM, HEIGHT_AIM, 1.0, DURATION, pointer,
     )
     check tween.is_arrived # Same goal, no pointer: nothing re-armed.
     pointer = some(PointerPick(handle: picked.at(0)))
     tween.offerAim(
-      camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM),
+      camera, scene, picked, none(Preview), camera.drawExtentFor(HEIGHT_AIM, 0.0),
       WIDTH_AIM, HEIGHT_AIM, 2.0, DURATION, pointer,
     )
     check not tween.is_arrived
@@ -1172,7 +1172,7 @@ suite "Camera Aim":
       tween: CameraTween
       pointer = none(PointerPick)
     tween.offerAim(
-      camera, scene, picked, none(Preview), camera.drawExtentFor(TALL),
+      camera, scene, picked, none(Preview), camera.drawExtentFor(TALL, 0.0),
       WIDE, TALL, 0.0, DURATION, pointer,
     )
     tween.settle(camera)
@@ -1180,7 +1180,7 @@ suite "Camera Aim":
     check aim.isFramed(camera, WIDE, TALL)
     check not aim.isFramed(camera, TALL div 2, TALL)
     tween.offerAim(
-      camera, scene, picked, none(Preview), camera.drawExtentFor(TALL),
+      camera, scene, picked, none(Preview), camera.drawExtentFor(TALL, 0.0),
       TALL div 2, TALL, 1.0, DURATION, pointer,
     )
     check not tween.is_arrived
@@ -1188,7 +1188,7 @@ suite "Camera Aim":
     check aim.isFramed(camera, TALL div 2, TALL)
     # Once back in frame, same offer is answered again rather than re-armed.
     tween.offerAim(
-      camera, scene, picked, none(Preview), camera.drawExtentFor(TALL),
+      camera, scene, picked, none(Preview), camera.drawExtentFor(TALL, 0.0),
       TALL div 2, TALL, 2.0, DURATION, pointer,
     )
     check tween.is_arrived
@@ -1203,7 +1203,7 @@ suite "Camera Aim":
       toMultivector(Position(x: -3.0, y: 5.0, z: -2.0)),
     )
     let opening = stanceAim(0.7, 0.35)
-    let aim = aimFor(scene, picked, none(Preview), opening.drawExtentFor(TALL)).get
+    let aim = aimFor(scene, picked, none(Preview), opening.drawExtentFor(TALL, 0.0)).get
     var
       tween: CameraTween
       pointer = none(PointerPick)
@@ -1214,7 +1214,7 @@ suite "Camera Aim":
     check aim.isFramed(camera, WIDE, TALL)
     tween.adoptNext()
     tween.offerAim(
-      camera, scene, picked, none(Preview), camera.drawExtentFor(TALL),
+      camera, scene, picked, none(Preview), camera.drawExtentFor(TALL, 0.0),
       WIDE, TALL, 0.0, DURATION, pointer,
     )
     check tween.is_arrived
@@ -1224,7 +1224,7 @@ suite "Camera Aim":
     check not aim.isFramed(camera, WIDE, TALL)
     tween.adoptNext()
     tween.offerAim(
-      camera, scene, picked, none(Preview), camera.drawExtentFor(TALL),
+      camera, scene, picked, none(Preview), camera.drawExtentFor(TALL, 0.0),
       WIDE, TALL, 1.0, DURATION, pointer,
     )
     check not tween.is_arrived
@@ -1233,7 +1233,7 @@ suite "Camera Aim":
     # Nothing picked: adoption lapses with goal, so later pick aims afresh.
     tween.adoptNext()
     tween.offerAim(
-      camera, scene, Selection(), none(Preview), camera.drawExtentFor(TALL),
+      camera, scene, Selection(), none(Preview), camera.drawExtentFor(TALL, 0.0),
       WIDE, TALL, 2.0, DURATION, pointer,
     )
     check tween.goal.isNone and not tween.is_adopting

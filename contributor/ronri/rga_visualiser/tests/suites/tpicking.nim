@@ -25,7 +25,7 @@ suite "Picking":
       pivot = Position(x: 0, y: 0, z: 0), distance = 10.0, azimuth = 0.0, elevation = 0.3
     )
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
-    let scale = camera.drawExtentFor(HEIGHT_PICK)
+    let scale = camera.drawExtentFor(HEIGHT_PICK, 0.0)
     let eye = camera.eye
     var near = initScene()
     near.addObject(toMultivector(Position(x: -0.5*eye.x, y: 0, z: -0.5*eye.z)), "p", Ink.Rose)
@@ -60,7 +60,7 @@ suite "Picking":
         azimuth = 0.9, elevation = 0.4,
       )
       let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
-      let scale = camera.drawExtentFor(HEIGHT_PICK)
+      let scale = camera.drawExtentFor(HEIGHT_PICK, 0.0)
       let pixels_sol =
         radiusPixelsAt(scene.radiusAt(handle_sol), Position(x: 0, y: 0, z: 0), scale.scale)
       check pixels_sol > 300.0
@@ -85,7 +85,7 @@ suite "Picking":
       pivot = Position(x: 0, y: 0, z: 0), distance = 2.0, azimuth = 0.0, elevation = 0.5
     )
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
-    let scale = camera.drawExtentFor(HEIGHT_PICK)
+    let scale = camera.drawExtentFor(HEIGHT_PICK, 0.0)
     let frame_camera = camera.frame
     let planet = Position(x: 0, y: 0, z: 0)
     check radiusPixelsAt(0.3, planet, scale.scale) > 60.0
@@ -172,7 +172,7 @@ suite "Picking":
       pivot = Position(x: 0, y: 0, z: 0), distance = 10.0, azimuth = 0.0, elevation = 0.5
     )
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
-    let scale = camera.drawExtentFor(HEIGHT_PICK)
+    let scale = camera.drawExtentFor(HEIGHT_PICK, 0.0)
     var alone = initScene()
     alone.addObject(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
     alone.addObject(groundPlane(), "ground", Ink.Grid)
@@ -237,7 +237,7 @@ suite "Picking":
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, CENTRE
     ) == some(0)
 
@@ -249,7 +249,7 @@ suite "Picking":
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     let corner = ScreenPosition(x: 5.0, y: 5.0, depth: 0.0)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, corner
     ).isNone
 
@@ -261,7 +261,7 @@ suite "Picking":
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, CENTRE
     ).isNone
 
@@ -274,7 +274,7 @@ suite "Picking":
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, CENTRE
     ) == some(0)
 
@@ -299,7 +299,7 @@ suite "Picking":
     check isHorizon(star)
 
     # Where star is actually drawn, asked of same proc drawing asks.
-    let place = anchorFor(star, camera.drawExtentFor(HEIGHT_PICK))
+    let place = anchorFor(star, camera.drawExtentFor(HEIGHT_PICK, 0.0))
     check place.isSome
     let screen = projectToScreen(view_projection, WIDTH_PICK, HEIGHT_PICK, place.get)
     check screen.isInFront
@@ -310,7 +310,7 @@ suite "Picking":
     var scene_line = initScene()
     scene_line.addObject(line, "L", Ink.Jade)
     check pickNearest(
-      scene_line, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene_line, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, at
     ) ==
       some(0)
@@ -320,7 +320,7 @@ suite "Picking":
     scene.addObject(line, "L", Ink.Jade)
     scene.addObject(star, "att", Ink.Cobalt)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, at
     ) == some(1)
 
@@ -335,11 +335,11 @@ suite "Picking":
     let near = ScreenPosition(x: CENTRE.x + RADIUS_PICK_POINT - 1.0, y: CENTRE.y, depth: 0.0)
     let far = ScreenPosition(x: CENTRE.x + RADIUS_PICK_POINT + 1.0, y: CENTRE.y, depth: 0.0)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, near
     ) == some(0)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, far
     ).isNone
 
@@ -354,11 +354,11 @@ suite "Picking":
     let near = ScreenPosition(x: CENTRE.x + RADIUS_PICK_LINE - 1.0, y: CENTRE.y, depth: 0.0)
     let far = ScreenPosition(x: CENTRE.x + RADIUS_PICK_LINE + 1.0, y: CENTRE.y, depth: 0.0)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, near
     ) == some(0)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, far
     ).isNone
 
@@ -372,7 +372,7 @@ suite "Picking":
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, CENTRE
     ) == some(1)
 
@@ -391,7 +391,7 @@ suite "Picking":
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, CENTRE
     ) == some(1)
 
@@ -408,7 +408,7 @@ suite "Picking":
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, CENTRE
     ) == some(1)
 
@@ -429,7 +429,7 @@ suite "Picking":
     let camera = cameraFacingOrigin(distance = 30.0)
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, CENTRE
     ) == some(0)
     for (label, cx, cy) in [
@@ -438,7 +438,7 @@ suite "Picking":
     ]:
       let cursor = ScreenPosition(x: cx, y: cy, depth: 0.0)
       check pickNearest(
-        scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+        scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
         WIDTH_PICK, HEIGHT_PICK, cursor
       ).isNone
 
@@ -454,7 +454,7 @@ suite "Picking":
         elevation = elevation,
       )
       let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
-      let tangent = camera.drawExtentFor(HEIGHT_PICK).tangent_half_view
+      let tangent = camera.drawExtentFor(HEIGHT_PICK, 0.0).tangent_half_view
       for i in 0 ..< 24:
         for j in 0 .. 12:
           let (theta, phi) = (float(i)*TAU/24.0, float(j)*PI/12.0)
@@ -500,7 +500,7 @@ suite "Picking":
       let camera = cameraFacingOrigin()
       let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
       check pickNearest(
-        scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+        scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
         WIDTH_PICK, HEIGHT_PICK, CENTRE,
       ) == some(0)
 
@@ -524,6 +524,6 @@ suite "Picking":
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, CENTRE
     ) == some(1)
