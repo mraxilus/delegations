@@ -152,8 +152,12 @@ export async function drivePointerPick(page: Page): Promise<void> {
   //   Shifted 1.5 units, about 80 px at this reach: far enough to prove menu followed,
   //   and short of frame's edge, where menu flips side to stay on screen.
   await page.evaluate(() => {
-    const at = Array.from(nimCameraPivot());
-    nimSetCameraPivot((at[0] ?? 0) + 1.2, (at[1] ?? 0) - 0.8, (at[2] ?? 0) + 0.4);
+    const [eye, at] = [nimCameraEye(), nimCameraPivot()];
+    const shift = [1.2, -0.8, 0.4];
+    const [e, p] = [eye, at].map((one) => [0, 1, 2].map((i) => (one[i] ?? 0) + (shift[i] ?? 0)));
+    nimPlaceCamera(
+      e?.[0] ?? 0, e?.[1] ?? 0, e?.[2] ?? 0, p?.[0] ?? 0, p?.[1] ?? 0, p?.[2] ?? 0,
+    );
   });
   await settleCamera(page);
   const panned = await menuAndAnchor(page, picked);

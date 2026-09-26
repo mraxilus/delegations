@@ -10,27 +10,28 @@ import ../../src/rga_visualiser/marker {.all.}
 suite "Marker":
   const (WIDTH_MARK, HEIGHT_MARK) = (800, 600)
   const STEP_GLIDE = 0.005
-    ## Azimuth between samples of glide law: 1257 in each orbit.
+    ## Bearing between samples of glide law: 1257 in each orbit.
     ##   Coarse enough to run in seconds on JS; fine enough that line's push turns through
     ##   third of what its law allows in one step, and plane's sampled top still hops.
 
+  func outToward(bearing, rise: float): Direction =
+    ## Name direction from origin out to eye: `bearing` round world up, `rise` over unit run.
+    Direction(x: cos(bearing), y: sin(bearing), z: rise)
+
   proc setUpAt(
-    azimuth, elevation, distance: float
+    out_to: Direction, distance: float
   ): (Camera, Matrix4, DrawExtent) =
     ## Build camera looking at origin from one placement, with transform and extent frame carries.
     ##   Orientation is parameter because marker's own worst case can lie along it:
-    ##   line's rails flared threefold at one azimuth while reading true at another, and
+    ##   line's rails flared threefold at one bearing while reading true at another, and
     ##   round that shipped that swept distance alone.
-    let placement = initCamera(
-      pivot = Position(x: 0, y: 0, z: 0), distance = distance, azimuth = azimuth,
-      elevation = elevation,
-    )
-    let scale = placement.drawExtentFor(HEIGHT_MARK)
+    let placement = cameraAround(ORIGIN, distance, out_to)
+    let scale = placement.drawExtentFor(HEIGHT_MARK, 0.0)
     (placement, placement.initMatrixViewProjection(WIDTH_MARK/HEIGHT_MARK), scale)
 
   proc setUp(distance = 19.0): (Camera, Matrix4, DrawExtent) =
     ## Hold placement most of these cases read, at one orientation they were written against.
-    setUpAt(azimuth = 0.9, elevation = 0.4, distance = distance)
+    setUpAt(outToward(0.9, 0.42), distance)
 
   proc shapedMarkerFor(
     geometry: Multivector; anchor: Option[Position]; scale: DrawExtent;
@@ -154,10 +155,11 @@ suite "Marker":
     #   rather than at one point on them. `OFFSET_MARKER_RAIL` is now ceiling on what
     #   reader ever sees rather than gap at support, so this is assertion
     #   that constant is defined by rather than one it happens to satisfy.
-    for azimuth in [0.2, 0.6, 1.6, 2.4, 4.0]:
-      for elevation in [0.05, 0.4, 0.9]:
+    for bearing in [0.2, 0.6, 1.6, 2.4, 4.0]:
+      for rise in [0.05, 0.42, 1.26]:
         for distance in [8.0, 19.0, 30.0]:
-          let (placement, view_projection, scale) = setUpAt(azimuth, elevation, distance)
+          let (placement, view_projection, scale) =
+            setUpAt(outToward(bearing, rise), distance)
           let marker = shapedMarkerFor(
             LINE, none(Position), scale, placement, view_projection, WIDTH_MARK,
             HEIGHT_MARK, progress = 1.0, is_touch = false, travel = none(float),
@@ -184,9 +186,9 @@ suite "Marker":
     #   Straight is structural rather than lucky: rail's two halves run from one offset
     #   support to two vanishing points line shares with it, so they are two parts
     #   of one world line.
-    for azimuth in [0.2, 0.6, 1.6, 2.4, 4.0]:
-      for elevation in [0.05, 0.4, 0.9]:
-        let (placement, view_projection, scale) = setUpAt(azimuth, elevation, 19.0)
+    for bearing in [0.2, 0.6, 1.6, 2.4, 4.0]:
+      for rise in [0.05, 0.42, 1.26]:
+        let (placement, view_projection, scale) = setUpAt(outToward(bearing, rise), 19.0)
         let marker = shapedMarkerFor(
           LINE, none(Position), scale, placement, view_projection, WIDTH_MARK,
           HEIGHT_MARK, progress = 1.0, is_touch = false, travel = none(float),
@@ -205,8 +207,8 @@ suite "Marker":
     #   is now settled until *widest* reading is stated gap, so what oblique
     #   view takes is gap at narrow end -- pair closing on its own line -- and
     #   never marker itself.
-    proc apartAtSupport(azimuth, elevation, distance: float): float =
-      let (placement, view_projection, scale) = setUpAt(azimuth, elevation, distance)
+    proc apartAtSupport(out_to: Direction, distance: float): float =
+      let (placement, view_projection, scale) = setUpAt(out_to, distance)
       let marker = shapedMarkerFor(
         LINE, none(Position), scale, placement, view_projection, WIDTH_MARK, HEIGHT_MARK,
         progress = 1.0, is_touch = false, travel = none(float),
@@ -218,8 +220,8 @@ suite "Marker":
       )
     # Support is where world offset states its gap, and it is exactly what oblique.
     #   view now gives up: 4.5 px at camera below against 13.1 at squarer one.
-    check apartAtSupport(0.2, 0.05, 12.0) < apartAtSupport(1.6, 0.9, 19.0)
-    check apartAtSupport(0.2, 0.05, 12.0) < 2.0*OFFSET_MARKER_RAIL
+    check apartAtSupport(outToward(0.2, 0.05), 12.0) < apartAtSupport(outToward(1.6, 1.26), 19.0)
+    check apartAtSupport(outToward(0.2, 0.05), 12.0) < 2.0*OFFSET_MARKER_RAIL
     # And marker is still there to be seen, which sweep above holds everywhere: it.
     #   is *widest* reading that is pinned, so pair is that far apart somewhere by
     #   construction. No floor under narrowing is needed, and one tried at four tenths
@@ -525,12 +527,9 @@ suite "Marker":
     # Its own star stands one horizon radius along its direction, so it is markable only.
     #   while camera is turned toward it -- behind eye it reports same
     #   "nothing to draw" every other unmarkable case does.
-    proc ringAt(azimuth: float): Option[Marker] =
-      let placement = initCamera(
-        pivot = Position(x: 0, y: 0, z: 0), distance = 19.0, azimuth = azimuth,
-        elevation = 0.4,
-      )
-      let scale = placement.drawExtentFor(HEIGHT_MARK)
+    proc ringAt(bearing: float): Option[Marker] =
+      let placement = cameraAround(ORIGIN, 19.0, outToward(bearing, 0.42))
+      let scale = placement.drawExtentFor(HEIGHT_MARK, 0.0)
       shapedMarkerFor(
         attitude(LINE), none(Position), scale, placement,
         placement.initMatrixViewProjection(WIDTH_MARK/HEIGHT_MARK), WIDTH_MARK, HEIGHT_MARK,
@@ -552,9 +551,9 @@ suite "Marker":
       x_label_before = none(float)
       step_sampled_before = 0.0
       step_label_before = 0.0
-    var azimuth = 0.0
-    while azimuth < 2.0*PI:
-      let (placement, view_projection, scale) = setUpAt(azimuth, 0.4, 19.0)
+    var bearing = 0.0
+    while bearing < 2.0*PI:
+      let (placement, view_projection, scale) = setUpAt(outToward(bearing, 0.42), 19.0)
       let loop = shapedMarkerFor(
         PLANE, none(Position), scale, placement, view_projection, WIDTH_MARK, HEIGHT_MARK
       ).get
@@ -573,7 +572,7 @@ suite "Marker":
         if step_label > 2.0*step_label_before + 1.0: inc hops_label
         (step_sampled_before, step_label_before) = (step_sampled, step_label)
       (x_sampled_before, x_label_before) = (some(x_sampled), some(loop.label_at.x))
-      azimuth += STEP_GLIDE
+      bearing += STEP_GLIDE
     check hops_label == 0
     check hops_sampled > 0 # Failure this replaces, pinned.
 
@@ -586,8 +585,8 @@ suite "Marker":
     let ground = planeThrough(toMultivector(ORIGIN), toMultivector(UP_WORLD))
     for anchor in [none(Position), some(Position(x: 3.0, y: -4.0, z: 0.0))]:
       var labels: seq[ScreenPosition]
-      for elevation in [0.001, -0.001]:
-        let (placement, view_projection, scale) = setUpAt(0.9, elevation, 19.0)
+      for rise in [0.001, -0.001]:
+        let (placement, view_projection, scale) = setUpAt(outToward(0.9, rise), 19.0)
         let loop = shapedMarkerFor(
           ground, anchor, scale, placement, view_projection, WIDTH_MARK, HEIGHT_MARK
         ).get
@@ -622,17 +621,17 @@ suite "Marker":
 
   test "a line's label keeps to the line's own left and glides through every turn":
     # Side of unoriented line flips at vertical, so old rule hopped rail to rail there.
-    #   Side of line's own direction does not. Over full orbit at two elevations, second
+    #   Side of line's own direction does not. Over full orbit at two heights, second
     #   carrying line through vertical twice, anchor never takes isolated step and push
     #   direction turns steadily.
-    for elevation in [0.4, 1.25]:
+    for rise in [0.42, 3.0]:
       var
         at_before = none(ScreenPosition)
         away_before = (0.0, 0.0)
         step_before = 0.0
-      var azimuth = 0.0
-      while azimuth < 2.0*PI:
-        let (placement, view_projection, scale) = setUpAt(azimuth, elevation, 19.0)
+      var bearing = 0.0
+      while bearing < 2.0*PI:
+        let (placement, view_projection, scale) = setUpAt(outToward(bearing, rise), 19.0)
         let rails = shapedMarkerFor(
           LINE, none(Position), scale, placement, view_projection, WIDTH_MARK, HEIGHT_MARK
         ).get
@@ -648,25 +647,25 @@ suite "Marker":
           step_before = step
         at_before = some(rails.label_at)
         away_before = (rails.label_away_x, rails.label_away_y)
-        azimuth += STEP_GLIDE
+        bearing += STEP_GLIDE
 
 
   test "a horizon line's label rides its band's left edge crossing through an orbit":
     # Highest point of either band hopped between view's two side edges, whose crossings.
     #   stand within pixel in height on level horizon, so label swapped sides frame to
     #   frame. Leftmost point is crossing on left edge itself, which glides.
-    for elevation in [0.2, 0.4]:
+    for rise in [0.2, 0.42]:
       var
         at_before = none(ScreenPosition)
         count_labelled = 0
-        azimuth = 0.0
-      while azimuth < 2.0*PI:
-        let (placement, view_projection, scale) = setUpAt(azimuth, elevation, 19.0)
+        bearing = 0.0
+      while bearing < 2.0*PI:
+        let (placement, view_projection, scale) = setUpAt(outToward(bearing, rise), 19.0)
         let bands = shapedMarkerFor(
           LINE_HORIZON, none(Position), scale, placement, view_projection, WIDTH_MARK,
           HEIGHT_MARK,
         )
-        azimuth += 0.02
+        bearing += 0.02
         if bands.isNone or not bands.get.has_label:
           at_before = none(ScreenPosition)
           continue
@@ -674,7 +673,7 @@ suite "Marker":
         let at = bands.get.label_at
         # Margin right of leftmost point either band shows, and in view. Not left half of
         #   view: tilted horizon here leaves through top or bottom edge on right at some
-        #   azimuths, and whole visible stretch stands right of centre.
+        #   bearings, and whole visible stretch stands right of centre.
         check at.x >= MARGIN_LABEL_HORIZON - TOLERANCE_TEST and at.x <= float(WIDTH_MARK)
         for side in 0 .. 1:
           for i in 0 ..< bands.get.counts_band[side]:
@@ -695,11 +694,11 @@ suite "Marker":
       axis = direction(LINE).get
     for sign in [1.0, -1.0]:
       # Eye square to line, so support stands twelve units aside at eight of depth.
-      let placement = initCamera(
-        pivot = support + (sign*12.0)*axis, distance = 8.0,
-        azimuth = arctan2(axis.y, axis.x) + 0.5*PI, elevation = 0.35,
+      let placement = cameraAround(
+        support + (sign*12.0)*axis, 8.0,
+        Direction(x: -axis.y, y: axis.x, z: 0.36*hypot(axis.x, axis.y)),
       )
-      let scale = placement.drawExtentFor(HEIGHT_MARK)
+      let scale = placement.drawExtentFor(HEIGHT_MARK, 0.0)
       let view_projection = placement.initMatrixViewProjection(WIDTH_MARK/HEIGHT_MARK)
       let projected = projectToScreen(view_projection, WIDTH_MARK, HEIGHT_MARK, support)
       check not projected.isWithinView(WIDTH_MARK, HEIGHT_MARK)
@@ -1021,11 +1020,11 @@ suite "Marker":
     #   plane would be measuring circle, not comet.
     const TRAVEL_CASE = 37.0
     var count_checked = 0
-    for azimuth in [0.2, 0.9, 1.7, 2.6, 3.4]:
-      for elevation in [-0.5, 0.4, 1.0]:
+    for bearing in [0.2, 0.9, 1.7, 2.6, 3.4]:
+      for rise in [-0.55, 0.42, 1.56]:
         for distance in [9.0, 19.0, 34.0]:
           let (placement, view_projection, scale) =
-            setUpAt(azimuth = azimuth, elevation = elevation, distance = distance)
+            setUpAt(outToward(bearing, rise), distance)
           let shaped = shapedMarkerFor(
             LINE, none(Position), scale, placement, view_projection,
             WIDTH_MARK, HEIGHT_MARK, 1.0, is_touch = false, travel = some(TRAVEL_CASE),

@@ -6,7 +6,9 @@
 //   and never tells page, so overlay would carry no label at all to read.
 
 import type { Page } from '@playwright/test';
-import { settleCamera } from './camera';
+import {
+  eyeAround, outToward, placeCamera, readPlaced, settleCamera, type Placed,
+} from './camera';
 import { waitFrames } from './frame';
 import { clearTheGlass } from './gestures';
 import { report } from './report';
@@ -44,16 +46,17 @@ interface Walked {
   step_most: number;
 }
 
-/** Walk camera round one orbit at this elevation, watching label step by step. */
-async function walkOrbit(page: Page, elevation: number, walked: Walked): Promise<void> {
+/** Stand camera 19 units off origin, facing it, along this bearing and rise. */
+function placedAround(bearing: number, rise: number): Placed {
+  const pivot = [0, 0, 0];
+  return { eye: eyeAround(pivot, 19, outToward(bearing, rise)), pivot };
+}
+
+/** Walk camera round one orbit at this rise, watching label step by step. */
+async function walkOrbit(page: Page, rise: number, walked: Walked): Promise<void> {
   let before: Standing | null = null, step_before = 0;
   for (let i = 0; i <= STEPS_ORBIT; i += 1) {
-    await page.evaluate((given) => {
-      nimSetCameraPivot(0, 0, 0);
-      nimSetCameraDistance(19);
-      nimSetCameraAzimuth(given.azimuth);
-      nimSetCameraElevation(given.elevation);
-    }, { azimuth: (i / STEPS_ORBIT) * 2 * Math.PI, elevation });
+    await placeCamera(page, placedAround((i / STEPS_ORBIT) * 2 * Math.PI, rise));
     await waitFrames(page, 2);
 
     const at = await labelStanding(page);
@@ -76,10 +79,10 @@ async function walkOrbit(page: Page, elevation: number, walked: Walked): Promise
   }
 }
 
-/** Drive full orbit at two elevations, and assert line's label glides through both.
+/** Drive full orbit at two heights, and assert line's label glides through both.
  *
- *  Second elevation carries line through vertical on screen, which is where label's own
- *  placement used to jump from one end of it to other.
+ *  Second height carries line through vertical on screen, which is where label's own
+ *  placement would jump from one end of it to other.
  */
 export async function driveLabelGlide(page: Page): Promise<void> {
   await clearTheGlass(page);
@@ -98,7 +101,7 @@ export async function driveLabelGlide(page: Page): Promise<void> {
   await settleCamera(page);
 
   const walked: Walked = { frames: 0, hops: 0, out_of_view: 0, step_most: 0 };
-  for (const elevation of [0.4, 1.25]) await walkOrbit(page, elevation, walked);
+  for (const rise of [0.42, 3.0]) await walkOrbit(page, rise, walked);
   report(
     "a line's label glides through a full orbit and a vertical crossing, staying in view",
     walked.frames >= FRAMES_WANTED && walked.hops === 0 && walked.out_of_view === 0,
@@ -137,7 +140,7 @@ async function labelBox(page: Page): Promise<Box | null> {
  *
  *  Horizon line's label stood above its band's topmost point wherever that fell: on narrow
  *  page it fell at right edge, name cut, and on level horizon it hopped between two side
- *  edges frame to frame. It now rides band's crossing of left edge. Two elevations, since
+ *  edges frame to frame. It now rides band's crossing of left edge. Two heights, since
  *  band's crossing wanders down whole height as camera rises. Runs over demo, whose
  *  ecliptic gives horizon line; whole camera is put back after, as far-sky check does,
  *  since zoom check following reads its opening distance off wherever camera stands.
@@ -145,10 +148,7 @@ async function labelBox(page: Page): Promise<Box | null> {
 export async function driveLabelHeldInView(page: Page): Promise<void> {
   await clearTheGlass(page);
   await page.evaluate(() => clearSelection());
-  const before = await page.evaluate(() => ({
-    pivot: Array.from(nimCameraPivot()), distance: nimCameraDistance(),
-    azimuth: nimCameraAzimuth(), elevation: nimCameraElevation(),
-  }));
+  const before = await readPlaced(page);
   const line = await page.evaluate(
     () => nimSceneHandles().find((one) => nimObjectKindWord(one) === 'horizon line') ?? -1,
   );
@@ -160,15 +160,10 @@ export async function driveLabelHeldInView(page: Page): Promise<void> {
   await page.evaluate((one) => selectOnly(one, null), line);
   await settleCamera(page);
   let frames = 0, cut = 0, worst = 0, swaps = 0, right = 0;
-  for (const elevation of [0.2, 0.9]) {
+  for (const rise of [0.2, 1.26]) {
     let centre_before: number | null = null;
     for (let i = 0; i < 48; i += 1) {
-      await page.evaluate((given) => {
-        nimSetCameraPivot(0, 0, 0);
-        nimSetCameraDistance(19);
-        nimSetCameraAzimuth(given.azimuth);
-        nimSetCameraElevation(given.elevation);
-      }, { azimuth: (i / 48) * 2 * Math.PI, elevation });
+      await placeCamera(page, placedAround((i / 48) * 2 * Math.PI, rise));
       await waitFrames(page, 2);
       const box = await labelBox(page);
       if (box === null) {
@@ -199,12 +194,63 @@ export async function driveLabelHeldInView(page: Page): Promise<void> {
   );
   await page.evaluate(() => clearSelection());
   await page.setViewportSize({ width: 1200, height: 900 });
-  await page.evaluate((given) => {
-    nimSetCameraPivot(given.pivot[0] ?? 0, given.pivot[1] ?? 0, given.pivot[2] ?? 0);
-    nimSetCameraDistance(given.distance);
-    nimSetCameraAzimuth(given.azimuth);
-    nimSetCameraElevation(given.elevation);
-  }, before);
+  await placeCamera(page, before);
+  await settleCamera(page);
+}
+
+/** Drive label's first frame at phone width, and assert its box is whole inside view.
+ *
+ *  Label appears on frame after one without any. Its `<text>` is then staged off document,
+ *  and text measured off document has no length, so hold kept centre alone inside view
+ *  and half of name hung past edge for that frame. Horizon line's label rides left edge,
+ *  so its hold always has work to do there. Read in same frame that draws it: page's own
+ *  loop asks for its frame before this check asks for one, so it draws first.
+ */
+export async function driveLabelFirstFrame(page: Page): Promise<void> {
+  await clearTheGlass(page);
+  const before = await readPlaced(page);
+  const line = await page.evaluate(
+    () => nimSceneHandles().find((one) => nimObjectKindWord(one) === 'horizon line') ?? -1,
+  );
+  if (line < 0) {
+    report('the scene holds a horizon line whose label to read', false, 'none');
+    return;
+  }
+  await page.setViewportSize({ width: 393, height: 560 });
+  let read = 0, cut = 0, worst = 0;
+  for (const bearing of [0.0, 1.5, 3.0, 4.5]) {
+    await page.evaluate(() => clearSelection());
+    await placeCamera(page, placedAround(bearing, 0.2));
+    await waitFrames(page, 2);
+    const box = await page.evaluate((one) => {
+      selectOnly(one, null);
+      return new Promise<{ over: number } | null>((done) => requestAnimationFrame(() => {
+        const text = document.querySelector('#overlay text') as SVGTextElement | null;
+        const rect = (document.getElementById('gl') as HTMLElement).getBoundingClientRect();
+        if (text === null) { done(null); return; }
+        const drawn = text.getBBox();
+        done({
+          over: Math.max(
+            -drawn.x, drawn.x + drawn.width - rect.width,
+            -drawn.y, drawn.y + drawn.height - rect.height,
+          ),
+        });
+      }));
+    }, line);
+    if (box === null) continue;
+    read += 1;
+    if (box.over > 0) cut += 1;
+    worst = Math.max(worst, box.over);
+  }
+  report(
+    "a label's first frame holds its whole box inside a phone-width page",
+    read === 4 && cut === 0,
+    `${read} of 4 first frames read, ${cut} with the box past an edge, worst ` +
+      `${worst.toFixed(1)} px over`,
+  );
+  await page.evaluate(() => clearSelection());
+  await page.setViewportSize({ width: 1200, height: 900 });
+  await placeCamera(page, before);
   await settleCamera(page);
 }
 

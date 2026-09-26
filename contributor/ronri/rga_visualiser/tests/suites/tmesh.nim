@@ -207,11 +207,11 @@ suite "Mesh":
     #   plane through eye containing line. That plane projects to single
     #   screen line, which is what lets far ends sit well off line in world
     #   space -- displaced along view ray -- without drawing showing it.
-    let camera = initCamera(Position(x: 0, y: 0, z: 1), 19.0, 1.05, 0.42)
+    let camera = cameraAround(Position(x: 0, y: 0, z: 1), 19.0, Direction(x: 8, y: 14, z: 7))
     let
       eye = camera.eye
       frame_camera = camera.frame
-      radius = radiusHorizonFor(camera.distanceFar)
+      radius = radiusHorizonFor(camera.distanceFar(0.0))
     proc screen(p: Position): (float, float) =
       let v = p - eye
       (dot(v, frame_camera.axis_right)/dot(v, frame_camera.forward),
