@@ -122,6 +122,14 @@ const
     ##   Not exact middle: selection is *framed* inside box, spread across it.
     ##   Here rather than beside pixel test in `picking` because camera needs it too, to
     ##   solve how far back eye must stand (`distanceFitting`), and `picking` imports this.
+  RADIUS_OPENING* = 8.6
+    ## Bound seed scene by sphere this wide about opening's pivot; see `initCameraDefault`.
+    ##   Ground's rim reaches 8.53 of it: disc of `mesh.EXTENT_PLANE` centred third of unit
+    ##   off origin along x and y, and pivot one unit above origin. Points stand within 5.6.
+    ##   Suite holds every seed inside frame that opening solves, so drift here fails there.
+  FRACTION_OPENING* = 0.92
+    ## Fit that sphere across this fraction of frame's width at opening.
+    ##   Margin keeps ground's rim off frame's edge.
   FRACTION_HELD_CANVAS* = 1.0/3.0
     ## Fix smallest sphere finger's orbit holds, as share of canvas's short side at pivot.
     ##   Centre of it then turns about as fast as half turn per short side did, which
@@ -334,14 +342,33 @@ func initCamera*(eye, pivot: Position): Camera =
   Camera(motor: stance.motor, depth_pivot: stance.distance, degrees_field_of_view: 45.0)
 
 
-func initCameraDefault*(): Camera =
-  ## Place camera where both front-ends open, and where `home` puts it back.
+func initCameraDefault*(width, height: int): Camera =
+  ## Place camera where both front-ends open on `width` x `height` frame, and where `home`
+  ##   puts it back.
   ##   One statement: stance written out in each front-end and key returning to it
   ##   would be three copies.
   ##   Shows seed scene whole, from above its plane, so plane reads as plane rather than
-  ##   line. Eye stands 19 units from pivot, since 10² + 15² + 6² is 19².
-  let pivot = Position(x: 0, y: 0, z: 1)
-  initCamera(eye = pivot + Direction(x: 10, y: 15, z: 6), pivot = pivot)
+  ##   line. Eye stands 19 units from pivot on frame wide enough, since 10² + 15² + 6²
+  ##   is 19².
+  ##   Frame narrower than that stands eye farther out along same line, until sphere of
+  ##   `RADIUS_OPENING` spans `FRACTION_OPENING` of width: upright phone opens about 50
+  ##   units out.
+  ##     Across alone: field of view is vertical, so frame narrower than tall is what cuts
+  ##     scene off. Seed scene is flat and seen from above, so it fits down at 19 units on
+  ##     every frame suite tries.
+  ##     Sphere's tangent condition, `sin`, as `distanceFitting` solves it.
+  ##   Frame is read at open and at `home`, never between; frame with no size keeps 19.
+  let
+    pivot = Position(x: 0, y: 0, z: 1)
+    out_to = Direction(x: 10, y: 15, z: 6)
+    least = initCamera(eye = pivot + out_to, pivot = pivot)
+  if width <= 0 or height <= 0: return least
+  let
+    tangent_across = FRACTION_OPENING*tan(0.5*degToRad(least.degrees_field_of_view))*
+      float(width)/float(height)
+    reach = RADIUS_OPENING/sin(arctan(tangent_across))
+  if reach <= least.distance: return least
+  initCamera(eye = pivot + (reach/least.distance)*out_to, pivot = pivot)
 
 
 func rollHeld*(camera: Camera): Option[float] =

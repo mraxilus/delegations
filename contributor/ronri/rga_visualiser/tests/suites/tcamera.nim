@@ -547,7 +547,7 @@ suite "Camera":
     #   dollying past it clipped whole scene away, and well before that line's own far
     #   end came back inside frame and read as stopping in mid-air. Deriving both is
     #   also what let orbit ceiling go, so this is load-bearing twice over.
-    var camera = initCameraDefault()
+    var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     let (near_opened, far_opened) = (camera.distanceNear, camera.distanceFar(0.0))
     camera.dolly(4.0)
     check camera.distanceNear =~ 4.0*near_opened
@@ -600,9 +600,44 @@ suite "Camera":
       check cameraAround(ORIGIN, distance, Direction(x: 12, y: 10, z: 5)).distance =~ distance
 
     # Holding dolly out walks straight past where limit used to sit.
-    var camera = initCameraDefault()
+    var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     for _ in 1 .. 6: camera.dolly(FACTOR_DOLLY_SECOND)
     check camera.distance > 5_000.0
+
+
+  test "the opening shows every seed object whole, on a phone as on a desktop":
+    # Bug this guards: opening stood 19 units out on every screen, and upright phone cut
+    #   ground's disc off both sides, point `a` with it.
+    #   Six frames, upright phones through wide desktop; rim sampled as picking samples it.
+    var scene = initScene()
+    constructSeeds(scene)
+    for (width, height) in [
+      (393, 852), (360, 780), (768, 1024), (1200, 800), (1920, 1080), (852, 393)
+    ]:
+      let
+        camera = initCameraDefault(width, height)
+        view_projection = initMatrixViewProjection(camera, float(width)/float(height))
+      # Frame wider than tall keeps 19 units it opened at; narrower one stands eye out.
+      if width > height: check camera.distance =~ 19.0
+      else: check camera.distance > 19.0
+      proc isInFrame(at: Position): bool =
+        let seen = projectToScreen(view_projection, width, height, at)
+        seen.isInFront and seen.x in 0.0 .. float(width) and seen.y in 0.0 .. float(height)
+      for handle, one in scene.pairs:
+        let placed = placeObject(one.geometry, one.anchorOverride)
+        case placed.kind
+        of Case.PointAt:
+          check isInFrame(placed.at)
+        of Case.PlaneOn:
+          let
+            centre = toMultivector(placed.at)
+            arm_first = wedge(EXTENT_PLANE_F, toMultivector(placed.axes.axis_first))
+            arm_second = wedge(EXTENT_PLANE_F, toMultivector(placed.axes.axis_second))
+          for i in 0 ..< SEGMENTS_CIRCLE_HORIZON:
+            let turn = (2.0*PI*float(i))/float(SEGMENTS_CIRCLE_HORIZON)
+            check isInFrame(pointFrom(add(centre,
+              add(wedge(cos(turn), arm_first), wedge(sin(turn), arm_second)))))
+        else: discard
 
 
   test "the camera still derives a frame and a transform a thousand kilometres out":
@@ -632,7 +667,7 @@ suite "Camera":
       ScreenPosition(x: 720.0, y: 450.0),
     ]:
       for factor in [0.5, 2.0]:
-        var camera = initCameraDefault()
+        var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
         let anchor = pointOnRay(camera, WIDTH_ZOOM, HEIGHT_ZOOM, cursor)
         let before = projectToScreen(
           camera.initMatrixViewProjection(float(WIDTH_ZOOM)/float(HEIGHT_ZOOM)),
@@ -648,15 +683,15 @@ suite "Camera":
         check abs(after.y - before.y) <= 0.5
         check camera.distance =~ 19.0*factor
         # Angles are what keep anchor on its own ray; zoom must not turn.
-        check camera.azimuth =~ initCameraDefault().azimuth
-        check camera.elevation =~ initCameraDefault().elevation
+        check camera.azimuth =~ initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED).azimuth
+        check camera.elevation =~ initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED).elevation
 
 
   test "zooming in and back out returns the camera exactly where it stood":
     # Wheel notch each way has to be round trip, or reader who overshoots and corrects.
     #   ends up somewhere they never chose -- and aimed zoom moves pivot as well as
     #   distance, so there is more to come back to than there used to be.
-    var camera = initCameraDefault()
+    var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     let opening = camera
     let anchor = pointOnRay(camera, 1440, 900, ScreenPosition(x: 300.0, y: 640.0))
     camera.dollyToward(0.5, anchor)

@@ -476,7 +476,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       #   could not reach it and nothing could check it, so camera half of preset
       #   was untested on either side.
       var scene = initScene()
-      var camera = initCameraDefault()
+      var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
       # Bearing is left alone by preset, so it has to survive it.
       camera = camera.placed(stanceAround(camera.pivot, 19.0, Direction(x: 1, y: 3, z: 1)))
       let bearing = camera.azimuth
@@ -493,6 +493,6 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
         distanceFitting(RADIUS_ORRERY, camera, 1440, 900, INSET_ORRERY_SHOWN)
       # Narrower window has to stand further back, since fit is bounded by whichever.
       #   of two axes runs out first.
-      var camera_narrow = initCameraDefault()
+      var camera_narrow = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
       showOrrery(scene, camera_narrow, 640, 900)
       check camera_narrow.distance > camera.distance

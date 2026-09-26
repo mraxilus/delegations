@@ -467,10 +467,11 @@ proc placeSeeds(now: float) =
   for handle in 0 ..< SCENE.len: stampBorn(handle, SCENE.bornAt(handle))
 
 
-proc nimInit(now: cfloat) {.exportc.} =
+proc nimInit(now: cfloat; width, height: cint) {.exportc.} =
   ## Build default interactive scene and place camera at default orbit desktop opens on.
+  ##   `width` x `height` is canvas's frame, which opening fits seed scene across.
   placeSeeds(float(now))
-  CAMERA = initCameraDefault()
+  CAMERA = initCameraDefault(int(width), int(height))
   SELECTION.clear()
   HISTORY.initHistory(SCENE, CAMERA)
 
@@ -1563,8 +1564,9 @@ proc nimKeyBound(code: cstring): bool {.exportc.} =
   keyFor($code).isSome
 
 
-proc nimKeyDown(code: cstring): cint {.exportc.} =
+proc nimKeyDown(code: cstring; width, height: cint): cint {.exportc.} =
   ## Take one key press; report handle caller should select, or `SLOT_NONE`.
+  ##   `width` x `height` is canvas's frame, which `home` fits opening to.
   ##   Holds it for `nimDriveHeld`, and carries out whatever it does at press.
   ##   One entry point for both kinds of binding, so browser scripts carries no opinion about
   ##   which keys move view.
@@ -1578,7 +1580,7 @@ proc nimKeyDown(code: cstring): cint {.exportc.} =
     # Abandon tween: key moving camera is camera move like any other.
     TWEEN_CAMERA.abandon()
     return SLOT_NONE
-  let handle = applyAction(INTERACTION, CAMERA, SCENE, action.get)
+  let handle = applyAction(INTERACTION, CAMERA, SCENE, action.get, int(width), int(height))
   # Let go of goal standing offer holds, so next frame aims afresh.
   #   Framing is standing offer's job (`framing.offerAim`).
   if action.get == KeyAction.FrameSelection: TWEEN_CAMERA.release()

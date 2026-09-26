@@ -523,8 +523,7 @@ before anything is compiled: `3.2.30`, zlib licence. Neither library is in `SYST
 **The pin is a release tag, and the commit that the tag resolves to is what binds the bytes.**
 `release-` prefixed to `VERSION_SDL3` is the ref that fetches. `COMMIT_SDL3`, which is
 `f5e5f6588921eed3d7d048ce43d9eb1ff0da0ffc`, is what has to arrive, read through `checkCommit`
-(repository issue 126). A moved tag fetches other sources while `pkg-config` still answers
-`3.2.30`.
+(repository issue 126). A moved tag fetches other sources while `pkg-config` still answers `3.2.30`.
 
 It is held on the warm tree too, and before cmake. The tag stays because `--depth 1 --branch`
 needs a ref. That is also why a shallow clone is safe here, and not for Dear ImGui, whose pin
@@ -534,10 +533,9 @@ sits behind a branch head.
 (repository issue 90). 3.2.30 is the newest of a series still maintained (repository issue 111).
 
 **The build dependencies of SDL3 itself are declared too.** `libxext-dev` arrives under nothing
-else, and without it cmake reports `SDL_X11 (Wanted: ON): OFF` and exits 1. The cost of the
-prefix is `-rpath`, derived from the checkout through `getCurrentDir()`, because a committed
-`/opt/...` builds on one machine. Rejected: `/usr/local`, which needs a root that CI is not
-granted.
+else, and without it cmake reports `SDL_X11 (Wanted: ON): OFF` and exits 1. The cost of the prefix
+is `-rpath`, derived from the checkout through `getCurrentDir()`, because a committed `/opt/...`
+builds on one machine. Rejected: `/usr/local`, which needs a root that CI is not granted.
 
 **The renderer owns the OpenGL names, and draws the records of `mesh` through them, one program
 for each record kind.** Each program has a vertex shader that widens compact records over static
@@ -571,17 +569,15 @@ sees that, because the verdict asks what the menu *offered*, so such a change en
 written.** It walks `orrery.ScaleOrrery` and labels each button with `objectsOf`, as the page
 builds its own from `nimDemoScales`. A size added to `orrery` then arrives in both.
 
-There are two deliberate differences. The menu of the desktop carries `scene file` and
-`image file` fields, because a desktop build writes to paths. The menu hangs from its own
-button, and not from the pointer. A menu that lands in a different place each time is one that
-the reader must find twice. `--drive-menu` opens it with no pointer, through the `is_forced` of
-`guiMenuBegin`.
+There are two deliberate differences. The menu of the desktop carries `scene file` and `image file`
+fields, because a desktop build writes to paths. The menu hangs from its own button, and not from
+the pointer. A menu that lands in a different place each time is one that the reader must find
+twice. `--drive-menu` opens it with no pointer, through the `is_forced` of `guiMenuBegin`.
 
-**A long list is bounded, rather than left to run past the window.** It hugs its own content
-until the window runs out, and scrolls inside that bound after. That is
-`ImGuiChildFlags_AutoResizeY` under `SetNextWindowSizeConstraints`, with the heading outside
-that region so it cannot move. Rejected: a fixed height with a threshold, which put a
-five-object scene in a box of blank.
+**A long list is bounded, rather than left to run past the window.** It hugs its own content until
+the window runs out, and scrolls inside that bound after. That is `ImGuiChildFlags_AutoResizeY`
+under `SetNextWindowSizeConstraints`, with the heading outside that region so it cannot move.
+Rejected: a fixed height with a threshold, which put a five-object scene in a box of blank.
 
 **Toggles are pills on both front-ends**, and `guiButtonToggle` carries fill, border and text
 colour together. The words of the wheel are taught in the drag tab of help, read from `wordOf`
@@ -783,11 +779,10 @@ largest carver of a frame is the `LINES_GRID_MAX` chords of one lattice family. 
 the storyboard turns the pair over in its own `renderAt`. Without that, captured sub-frames stack
 scratch until the fifth one overflows.
 
-**The undo timeline is the largest reservation that the binary makes.** A `Scene` at 5040
-handles is 1.15 MiB as a C struct, which `sizeof` reports as 1,204,616 bytes on the release
-compiler. A `Step` is a `Scene` beside a `Camera` of twelve floats, eight of them the motor, and
-`CAPACITY_HISTORY` is 32 of them. They reserve 36.8 MiB, which is 38,549,528 bytes, against 6.2 MiB
-for both mesh sets.
+**The undo timeline is the largest reservation that the binary makes.** A `Scene` at 5040 handles is
+1.15 MiB as a C struct, which `sizeof` reports as 1,204,616 bytes on the release compiler. A `Step`
+is a `Scene` beside a `Camera` of twelve floats, eight of them the motor, and `CAPACITY_HISTORY` is
+32 of them. They reserve 36.8 MiB, which is 38,549,528 bytes, against 6.2 MiB for both mesh sets.
 
 The placing side of every handle is held beside them on both front-ends, so the local scale may be
 read without placing twice. It is 128 bytes for each of 5040 handles, which is 645,120 bytes.
@@ -813,8 +808,7 @@ without stamps.
 ## Colour palette
 
 Five hues are assignable — `Rose, Copper, Olive, Jade, Cobalt` — beside `Backdrop`, `AxisX/Y/Z`,
-`Grid`, `Guide`, `Outline` and `Invalid`. One `Ink` enum holds them all
-(`mesh.lut_ink_to_rgba`).
+`Grid`, `Guide`, `Outline` and `Invalid`. One `Ink` enum holds them all (`mesh.lut_ink_to_rgba`).
 
 **`Invalid` is a reserved magenta**, so a reader who sees it knows that an object is wrong. The
 drag band wears it over a pair that makes nothing (see Interaction model), and nothing else does.
@@ -827,15 +821,13 @@ deuteranopia. `Cobalt` is therefore derived lighter and bluer (`#5b90c7`), which
 to 14.4.
 
 **Do not fill the rest of the arc back up to eight.** A set of seven hues put `Olive` and a new
-yellow-green at CVD ΔE 0.4, and two blues at normal-vision ΔE 5.6. The axis hues flank the
-reserved arc on both sides, and leave one warm arc and one cool arc, 162° in total. Five hues are
-what fits.
+yellow-green at CVD ΔE 0.4, and two blues at normal-vision ΔE 5.6. The axis hues flank the reserved
+arc on both sides, and leave one warm arc and one cool arc, 162° in total. Five hues are what fits.
 
-**A structural slot is never offered as the colour of an object.** `mesh` names the boundary
-once — `INK_CATEGORICAL_FIRST`, `COUNT_INK_CATEGORICAL`, `inkCategorical`, `categoricalIndex` —
-and both pickers and `inkCycled` derive from it. The structural slots are declared first and the
-categorical run last, so the run is one contiguous block. A `static: doAssert` on the count holds
-that.
+**A structural slot is never offered as the colour of an object.** `mesh` names the boundary once —
+`INK_CATEGORICAL_FIRST`, `COUNT_INK_CATEGORICAL`, `inkCategorical`, `categoricalIndex` — and both
+pickers and `inkCycled` derive from it. The structural slots are declared first and the categorical
+run last, so the run is one contiguous block. A `static: doAssert` on the count holds that.
 
 The floors below were derived under the `check_palette` of the prototype, which measured them on
 every run of that tree. Nothing in this repository measures them again, so a hue moved here is a
@@ -1059,7 +1051,18 @@ occlusion error at the far ends is assumed to be tolerable, and is not measured.
 ## Camera
 
 `camera.nim` holds an orbit camera. The opening placement is `initCameraDefault`, which both entry
-points and `home` read. Its eye stands at (10, 15, 7), 19 units off the pivot at (0, 0, 1).
+points and `home` read with the frame that they draw. Its eye stands along (10, 15, 6) from the
+pivot at (0, 0, 1). A frame at least as wide as tall puts it at (10, 15, 7), 19 units out.
+
+**A narrow frame opens farther out.** The field of view is vertical, so a frame narrower than tall
+shows less across. The eye stands out along the same line until a sphere of `RADIUS_OPENING`, 8.6
+about the pivot, spans `FRACTION_OPENING`, 0.92, of the width. The rim of the ground reaches 8.53
+of it, and the points stand within 5.6. An upright phone of 393 by 852 px opens 49.7 units out,
+and 768 by 1024 px opens 31.3 out. Height never decides, because the seed scene is flat and seen
+from above, and fits at 19 units on every frame tried.
+
+The frame is read at open and on `home`, and never between. Rejected: one farther eye for every
+screen, which leaves the scene a quarter of the height of a desktop window.
 
 **The stance is one rigid motion and one depth.** `Camera.motor` carries a reference stance to where
 the camera stands, and it holds where the eye is and which way it faces together. `depth_pivot` says
@@ -1229,6 +1232,8 @@ speed of flight shows only without one, as a multiple of `SPEED_LIGHT` (`interac
 - `norm(eye − pivot)` equals the held distance after a floored dolly;
 - a typed motor settles on the rigid motion it names, with the frame orthonormal after any typed
   slide, and a weightless one refused;
+- every seed object stands inside the opening frame, on six frames from upright phones to wide
+  desktops. A frame wider than tall keeps 19 units;
 - the far bound reaches the scene's reach that its caller passes, however close the orbit is.
 
 Verified by driven checks:
@@ -2078,11 +2083,10 @@ Once a selection exists, a tap (`TAP_MAX_MS` 350) toggles another in or out, and
 space clears. `nimClearHover` runs once the last finger lifts, or the last reading sits stale
 forever. `SELECTION` in Nim is the sole source of truth, and the browser keeps a render snapshot.
 
-**Selection menu.** It is one row on both builds, and follows its anchor in every frame. `apply`
-is leftmost and never moves, and opens a picker to its right through a `max-width` transition,
-because `width: auto` cannot animate. `edit` is shown for exactly one selected. `hide` and
-`delete` act on every selected handle, and `✕` clears. `apply` is hidden for three or more
-selected.
+**Selection menu.** It is one row on both builds, and follows its anchor in every frame. `apply` is
+leftmost and never moves, and opens a picker to its right through a `max-width` transition, because
+`width: auto` cannot animate. `edit` is shown for exactly one selected. `hide` and `delete` act on
+every selected handle, and `✕` clears. `apply` is hidden for three or more selected.
 
 It is **shown by the gestures that pick, and hidden by the ones that build**. Every construction
 leaves its result selected, and a menu over each new object would sit in the way of the next drag.
@@ -2243,8 +2247,7 @@ three-point ground seed centres on the centroid. Everything else falls back to t
 
 The anchor is computed at construction and stored (`anchor_overrides`, a rendering hint that save
 and load exclude). Many operand sets produce an identical plane `Multivector`. All the anchor
-arithmetic is RGA-native: it sums unit-weight points and reads `position`, which divides by
-weight.
+arithmetic is RGA-native: it sums unit-weight points and reads `position`, which divides by weight.
 
 *Checked.* Verified by `suites.nim`: the anchor of each special case. Assumed: that no other
 operation wants one, because nobody has asked for one.
@@ -2294,11 +2297,10 @@ beat, or a full scene would take minutes.
 Every arrival that a reader did not build replays: a file, the demo, and the opening scene. One
 rule does it in both loaders.
 
-**Every version ever written is still readable.** `VERSION_SCENE_LEAST` is 1, and should stay 1.
-To read an old version costs a mapping func and a suite case, and to refuse one costs somebody
-their scene. Reading is written once against `VERSION_SCENE`. The difference of each past version
-lives in one `upgradedFrom<n>`, and `objectUpgraded` walks an `ObjectSaved` up the chain one step
-at a time.
+**Every version ever written is still readable.** `VERSION_SCENE_LEAST` is 1, and should stay 1. To
+read an old version costs a mapping func and a suite case, and to refuse one costs somebody their
+scene. Reading is written once against `VERSION_SCENE`. The difference of each past version lives in
+one `upgradedFrom<n>`, and `objectUpgraded` walks an `ObjectSaved` up the chain one step at a time.
 
 Version 3 costs sizes, with `upgradedFrom3` filling `RADIUS_OBJECT_DEFAULT`. The chain refuses a
 radius that is zero, negative or NaN, as it refuses an unknown palette slot. Version 1 costs
@@ -2367,10 +2369,9 @@ normal of Miranda has z = 0.155, and that of Triton has z = −0.646, a ring run
 horizon plane is `att(ecliptic) ∧ att(earth ∧ luna)`, and it exists only because the ring of Luna
 leaves the ecliptic.
 
-**Stated simplifications.** Planets ring Sol in the ecliptic itself, with the inclinations
-dropped, of which Mercury's 7° is the largest. Earth in the spanned plane is what the horizon
-block turns on. The place of a body on its ring is the golden angle, and not a date. Neighbour
-systems lie flat.
+**Stated simplifications.** Planets ring Sol in the ecliptic itself, with the inclinations dropped,
+of which Mercury's 7° is the largest. Earth in the spanned plane is what the horizon block turns on.
+The place of a body on its ring is the golden angle, and not a date. Neighbour systems lie flat.
 
 **Two catalogues ship, as data alone, and both are generated.** `neighbourhood.nim` is a snapshot
 of the NASA Exoplanet Archive, taken 2026-08-31 from its TAP service (`select hostname, pl_name,
@@ -2807,8 +2808,7 @@ layout compiles as a `func`. The mark is on all 130-odd bindings in `gui`, `open
 `image` and the `importjs` lines of the bridge. Under it, 51 funcs failed to compile and went back
 to `proc`. A `func` in this tree means the compiler checked that it reaches no effect.
 
-**Deliberately left as they are**, each against a rule that the reader might expect to see
-applied:
+**Deliberately left as they are**, each against a rule that the reader might expect to see applied:
 
 - the binding names in `opengl.nim` and `sdl3.nim` keep the own verbs of the foreign API. A reader
   greps the SDL and GL references by those names, and the bare-noun rule of V.3 is for this
