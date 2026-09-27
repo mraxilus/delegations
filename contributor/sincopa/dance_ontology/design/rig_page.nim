@@ -13,6 +13,8 @@
 ##   Faces are inlined by `design/faces`, which also turns Commit Mono's
 ##     ligatures on at root.  Article X.8: presentation target ships faces it
 ##     draws with, never naming one reader may lack.
+##   Recording's stamp is left out (`unstamped`): it says what physics gave recording, and
+##     page that carried it would change on every change to physics, where page shows none.
 ##
 ##   Usage: rig_page <dir>   reads design/rig.json, <dir>/rig_view.js and
 ##                           <dir>/review.html, writes <dir>/rig.html
@@ -265,6 +267,13 @@ proc cellsBody(review: string; data: JsonNode): string =
   result.add "</section></main>"
 
 
+func unstamped*(text: string): string =
+  ## Recording as page folds it in: its first field, stamp, left out.
+  const FIRST = "{\"stamp\":"
+  if not text.startsWith(FIRST): return text
+  "{" & text[text.find('\n') + 1 .. ^1]
+
+
 when isMainModule:
   let
     dir = if paramCount() >= 1: paramStr(1) else: "."
@@ -279,7 +288,7 @@ when isMainModule:
     quit(&"Viewer page has no reference to lay beside; run `pages` first: got `{review}`.", 1)
   let
     reviewHtml = readFile(review)
-    dataText = readFile(data).strip()
+    dataText = readFile(data).strip().unstamped
     html = document(TITLE,
                     sheetOf(reviewHtml) & SHEET & HEAD_BODY &
                     cellsBody(reviewHtml, parseJson(dataText)) &

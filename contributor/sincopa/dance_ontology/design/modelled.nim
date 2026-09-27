@@ -18,14 +18,20 @@
 ##     raise them over dancer who walks under, which follows manner, not physics.
 ##   Card sim has not been asked about is absent, and gets no tag: unasked reads as
 ##     unasked rather than as disagreement.
+##   Answers are kept with stamp of physics, questions and this verb (`design/stamps`), and
+##     verb whose stamp is unchanged asks nothing again.
 
 {.experimental: "strictFuncs".}
 
-import std/[cpuinfo, json, strformat, tables, typedthreads]
+import std/[cpuinfo, json, os, sequtils, strformat, tables, typedthreads]
 
 import ../sim/[body, hold, rig, walk]
 import ../src/dance_ontology/rotation
-import ./[asks, parts]
+import ./[asks, parts, stamps]
+
+
+const KEPT_MODELLED* = currentSourcePath().parentDir / "modelled.json"
+  ## Where answers are kept, with their stamp.
 
 
 const CROWN = Band.Crown
@@ -33,7 +39,7 @@ const CROWN = Band.Crown
   ## and `ABOVE_ONE`/`ABOVE_OTHER` for singles, so no card asks about any other band.
 
 
-type Question = object ## One card's question, as data, so threads may share it.
+type Question* = object ## One card's question, as data, so threads may share it.
   key: string
   links: seq[Link]
   away: bool
@@ -61,7 +67,7 @@ func moving(key: string; links: seq[Link]; away: bool; manner: Manner;
   Question(key: key, links: links, away: away, still: false, turns: way,
            who: turner, head: walks)
 
-func questions(): seq[Question] =
+func questions*(): seq[Question] =
   ## Every card sim can be asked about, keyed as page keys its own pictures, in
   ## page's own order.
   # Every still, as `asks` lists them: wound to its facing and asked whether
@@ -145,9 +151,17 @@ proc answers(): OrderedTable[string, bool] =
     result[q.key] = told[i]
 
 
+proc modelledStamp*(): string = stampOf(currentSourcePath(), questions().mapIt($it))
+  ## Stamp answers carry: physics, this verb, and every question.
+
+
 when isMainModule:
+  let stamp = modelledStamp()
+  if fileExists(KEPT_MODELLED) and parseFile(KEPT_MODELLED){"stamp"}.getStr == stamp:
+    echo "design/modelled.json is up to date: ", stamp
+    quit(0)
   var said = newJObject()
   for id, got in answers():
     said[id] = %got
-  writeFile("design/modelled.json", pretty(said) & "\n")
+  writeFile(KEPT_MODELLED, pretty(%*{"stamp": stamp, "answers": said}) & "\n")
   echo "wrote design/modelled.json: ", said.len, " answers"
