@@ -38,14 +38,14 @@ suite "what each card asks of sim":
       check byKey["st_" & tag & "_0_1"].turns == -windSense(manner) * 0.25
 
 
-suite "each hold rests at facing named among eight":
+suite "each hold rests at named facing":
 
   test "each chain rests where its connections run parallel, and alternates from there":
-    ## Hand to hand runs parallel Face-to-face, and crossed pair Pillion (rule 31).
+    ## Hand to hand runs parallel Face-to-face, and crossed pair Face-to-back (rule 31).
     ##   Chain steps by half turns, so facing is rest at whole turns and other
     ##     of two at halves.
-    for (holds, rest, other) in [(HAND_TO_HAND, Facing.FaceToFace, Facing.LeadBehind),
-                                 (PAIRED, Facing.LeadBehind, Facing.FaceToFace)]:
+    for (holds, rest, other) in [(HAND_TO_HAND, Facing.FaceToFace, Facing.FaceToBack),
+                                 (PAIRED, Facing.FaceToBack, Facing.FaceToFace)]:
       check restOf(holds) == rest
       for wind in STEPS:
         let whole = abs(wind - round(wind)) < 1e-9
@@ -62,7 +62,7 @@ suite "each hold rests at facing named among eight":
   test "sim is asked no rest it cannot stand":
     ## Sim stands couple Face-to-face or follow turned half, and no other rest.
     for rest in Facing:
-      if rest in {Facing.FaceToFace, Facing.LeadBehind}:
+      if rest in {Facing.FaceToFace, Facing.FaceToBack}:
         discard awayFor(rest)
       else:
         expect Defect: discard awayFor(rest)

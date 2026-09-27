@@ -66,70 +66,72 @@ and what stops it is one named thing. That thing is decided once in `rigid.stopp
 every sweep, still and page alike (Article II.1). Verified by `trigid.nim`: the turn that a couple
 are said to reach is the turn that some distance carries, and every stop carries its name.
 
-**The model holds the eight facings that the glossary agrees.** `rotation.Facing` names them, and
-`facing` reads one off where each dancer sees the other: ahead, right, behind or left. That makes
-sixteen states. A name goes to each state where one dancer sees the other ahead, and to
-Back-to-back. The case of a name says which dancer it places: `Pillion` stands the Lead behind, and
-`pillion` stands the Follow there.
+**The model names all sixteen facings, from the side each dancer turns to the other.**
+`rotation.Facing` holds sixteen states, and `facing` reads one off where each dancer sees the
+other: ahead, right, behind or left. That is the side each turns to the other: face, starboard,
+back or port. A name gives the side of the Lead, then the side of the Follow. So a quarter turn by
+the Follow to their right is `Face-to-port`. The Architect ruled so (#289).
+
+**Port and starboard name the sides of a body, so a facing never reads as a hold.** Left and right
+name hands, as in the hold `Right-to-left`. Side by side, with the Follow at the right of the Lead,
+would take that name too, so it is `Starboard-to-port`. Rejected: Pillion and Sidecar kept as
+names for groups of states. A group word alone does not say which state, and the glossary gives
+each state one name.
 
 **A facing needs the turn of each dancer, and not twist alone.** A dancer who turns on the spot
 changes what they see, and nothing that the other sees. Twist is the Follow's turn less the Lead's,
-so it is the same for Face-to-face and Back-to-back. That is why the glossary counts three bits.
+so it is the same for Face-to-face and Back-to-back. That is why a facing takes four bits.
 
-**Sidecar is what one quarter turn on the spot makes from Face-to-face.** The Architect ruled so.
-One dancer looks at a shoulder of the other, at right angles to them. The dancer who turned shows
-their shoulder. So a quarter turn by the Follow to their right is `Sidecar left`, and a quarter turn
-by the Lead to their left is `sidecar Right`.
+Verified by `suites/trotation.nim`, suite "facings". The law writes out the table of #289, and
+holds each state to the name in it. Each name gives the side of the Lead, then the side of the
+Follow, in the words of the glossary. Each law failed on a break made on purpose. The breaks
+swapped starboard and port, named the Follow first, and set the side of the Follow in capitals.
+One more listed the sides of the glossary in another order.
 
-Verified by `suites/trotation.nim`, suite "facings". Each law failed on a break made on purpose.
-The breaks were two names swapped, a name in the wrong case, and a name given to a state without
-one. The last two were a turn counted the wrong way, and a word that is not in the glossary.
-
-**The drawings hold all eight facings, each read back through the model.** `ORIENTATIONS` in
+**The drawings hold all sixteen facings, each read back through the model.** `ORIENTATIONS` in
 `parts.nim` finds, in the model, the turns on the spot that reach each facing from Face-to-face.
 `facingOf` reads a drawn pose back as a facing, from where each dancer sees the other. The build
-stops where a drawn pose reads as a facing other than its name. The single-hand page names the
-facing of each quarter it draws, read off the drawn pose.
+stops where a drawn pose reads as a facing other than its name. The frame page gives each side of
+the Lead a row: face, starboard, back, then port. The single-hand page names the facing of each
+quarter it draws, read off the drawn pose.
 
-Verified by `suites/tmarks.nim`, suite "the eight facings, drawn". Each law failed on a break made
-on purpose. The breaks dropped the Sidecar row, and set a grid header in capitals. The other two
-gave a turn the wrong sign, and swapped the names of two quarters.
+Verified by `suites/tmarks.nim`, suite "the sixteen facings, drawn". The law on the rows failed
+when the rows were laid out by the side of the Follow.
 
 The law on the single-hand page reads each name in the section and the place of its quarter. The
 manners share names, so a name found anywhere on the page would stand in for one that is missing
 or swapped.
 
-**The rests and the chain name their facing among the eight.** A hold rests where its two
-connections run parallel and cross nothing (rule 31). `parts.restOf` names that facing, read off
-the pose through the model: Face-to-face for hand to hand, and `Pillion` for the crossed pair.
-`parts.facingAt` names the facing of each step of the chain in the same way. The review page and
-the hand-to-hand page take each name from there, and write none by hand. Each card of the review
-page carries its rest as a `Facing`.
+**The rests and the chain name their facing.** A hold rests where its two connections run parallel
+and cross nothing (rule 31). `parts.restOf` names that facing, read off the pose through the model:
+Face-to-face for hand to hand, and Face-to-back for the crossed pair. `parts.facingAt` names the
+facing of each step of the chain in the same way. The review page and the hand-to-hand page take
+each name from there, and the rig page reads its headings from the review page. Each card of the
+review page carries its rest as a `Facing`.
 
 **The sim reads its own facing, and `sim/words.nim` names it.** The sim imports nothing from the
 model, so it cannot be told a facing. `body.quartersTo` reads where each body sees the other, in
-quarter turns clockwise from its own front. `words.FACINGS` names each state, as the glossary
-does. The report names each rest and each rung of the chain through that table, and prints the
-table with the rest of the translation.
+quarter turns clockwise from its own front. `words.FACINGS` names each of the sixteen states from
+its own words for the four sides. The report names each rest and each rung of the chain through
+that table, and prints the table with the rest of the translation.
 
-**The sim rests a couple at two of the eight.** It stands them Face-to-face, or with the follow
-turned half, which is `Pillion`. Where the hands rest is keyed to twist alone (`up`), and twist
+**The sim rests a couple at two of the sixteen.** It stands them Face-to-face, or with the follow
+turned half, which is Face-to-back. Where the hands rest is keyed to twist alone (`up`), and twist
 does not tell Back-to-back from Face-to-face. So `asks.awayFor` refuses every other rest, and no
-card asks one. Where the hands rest at Sidecar is not ruled.
+card asks one. Where the hands rest when a dancer turns a side to the other is not ruled.
 
 Verified by `suites/twords.nim`. In each of the sixteen states on a quarter, the name the sim
-gives is the name the model gives, or neither gives one. Verified by `suites/tasks.nim`: each
-chain rests where rule 31 says, and the sim stands each card at the rest that the card names.
-Verified by `suites/tglossary.nim`: each rung of the report stands at the facing that the model
-gives its turn. Verified by `suites/tmarks.nim`: the two pages print the names that the model
-gives.
+gives is the name the model gives. Verified by `suites/tasks.nim`: each chain rests where rule 31
+says, and the sim stands each card at the rest that the card names. Verified by
+`suites/tglossary.nim`: each rung of the report stands at the facing that the model gives its
+turn. Verified by `suites/tmarks.nim`: the two pages print the names that the model gives.
 
-**The report names no facing by a word that the glossary rejects.** The entry for Pillion lists
-`pillion lead` under _Avoid_. The report gave the rest of the crossed pair that name, and every
-page named it `Pillion`. No law read the facings of the report. `suites/tglossary.nim` reads
-the whole report for each word that the entries for Pillion and Sidecar reject. The entries for
-Face-to-face and Back-to-back are left out, because the report says `facing` and `apart` in their
-own sense.
+**No page and no report names a facing by a name that the glossary replaced.** The entry for
+Facing rejects Pillion and Sidecar. The report gave the rest of the crossed pair the name
+`pillion lead`, and no law read the facings of the report. `suites/tglossary.nim` reads the whole
+report, and each string that a page shows, for each capitalised word that the entry rejects. Its
+lower-case words, such as `front`, are left out, because a page says them in their own sense. The
+law failed when the label of one hold said `Pillion`, and when the entry dropped the names.
 
 The agreed words disagree with the code in thirteen places, recorded rather than acted on. From the
 hand-to-hand half:
@@ -137,7 +139,7 @@ hand-to-hand half:
 - `frame.position` means the opposite of `Frame position`. It strips `over` and returns the frame
   hold said aloud.
 - `Frame` and `rotation.Posture` split across the frame state rather than along it.
-- `isFacing` returns the parity of twist, where facing has eight values, as `Facing` holds it.
+- `isFacing` returns the parity of twist, where facing has sixteen values, as `Facing` holds them.
 - Twist is counted in quarters, where `HalfTurns` is half turns.
 - `Compound` is `Compound move`.
 - The `route` and `wind` of the drawing chain are `Transition` and `Twist`.
@@ -179,9 +181,9 @@ rung correctly, so one chain had two namings and one of them was wrong. Verified
 before the fix, and the words of the report are now read rather than assumed (Article IX.5).
 
 That law reads the words of the report, and never its numbers. Nothing in the audit runs the
-sweeps again. One run of them takes about nineteen minutes, and a check that slow is a check that
-gets skipped (Article IX.8). So the report can hold a figure that the code no longer writes, and
-only a delegate who runs the verb will see it.
+sweeps again, and the numbers come from readings kept in `sim/verdicts.json` (Kept answers). So
+the report can hold a figure that the physics no longer gives, and only a delegate who runs the
+verb will see it.
 
 **The table that the report prints was a stale summary, in two rows.** The report opens by printing
 the translation, so a reader knows what each phrase means. That printed table is written out by
@@ -206,9 +208,9 @@ carry arms that are not open. `L-l` high and `R-r` high read `wrap high (led)`, 
 pair reads `lock` on the arms of the Follow.
 
 A pair holds four arms, and they disagree, which is what breaks the equivalence rather than a
-threshold set a little wrong. The same-name pair rests Pillion, so the Lead reaches forward while
-the Follow reaches behind their own back. One moment of it reads `open`, `lock low (led)`, `open`,
-`lock low (led)`.
+threshold set a little wrong. The same-name pair rests Face-to-back, so the Lead reaches forward
+while the Follow reaches behind their own back. One moment of it reads `open`, `lock low (led)`,
+`open`, `lock low (led)`.
 
 The ruling also overrides an earlier choice of words. `neutral` sat on the avoid line of Open, and
 it is now half of the agreed term. Verified by `suites/tglossary.nim`, which reads the ruling from
@@ -865,7 +867,7 @@ draws in its own ink when opened alone, as the app's figures in `doc/frames/` ar
 
 **The shape of a mark says whose hand it is.** The lead's hands are squares, and the follow's are
 circles. The mark carries this itself, so it holds at any size. Where a hand sits on the rim follows
-from the way its dancer faces. So the eight facings are distinct without a new mark.
+from the way its dancer faces. So the sixteen facings are distinct without a new mark.
 
 **A level is a fill on both ends of a connection.** Hollow is no level, solid is low, a dot at the
 centre is high, and hatched is above. A crossed hold keeps its drawn break as well, because the
@@ -1149,9 +1151,9 @@ Asked over the crown, the hands are held to the torso band while the couple face
 are held to the crown band from a quarter turn away, and blended between (`up`, `bandNow`,
 `height`).
 
-The Architect ruled on A9. That is the same-name chain wound half a turn from its `Pillion` rest to
-face to face, with the hands still over the heads. It was modelled but unnatural. The relaxed
-position facing is hands at mid torso. Pillion or back to back are where they have to be above.
+The Architect ruled on A9. That is the same-name chain wound half a turn from its Face-to-back rest
+to face to face, with the hands still over the heads. It was modelled but unnatural. The relaxed
+position facing is hands at mid torso. Face-to-back or Back-to-back are where they have to be above.
 Facing, the arms naturally come down, and the swan may be reached only so, with one connection
 straightening out as the arms come down.
 
@@ -1170,7 +1172,7 @@ arms press the hands up against the forty newtons of the lift. The same-name cha
 face to face sat at 1.37 to 1.39 m, against 1.35.
 
 Asked at a lower band, the rise from where the hands settled over the first quarter turn of wind
-stands as it was. It stands whole from the rest for a hold that rests `Pillion`.
+stands as it was. It stands whole from the rest for a hold that rests Face-to-back.
 
 Verified by `trigid.nim`. `up` is nought face to face, and one from a quarter turn away, at every
 wind of a turn and a half. The cross-name chain at rest and the same-name chain wound to face to
@@ -1392,8 +1394,9 @@ twist or his wrist. Each disagreement is printed, and is the Architect's to rule
 asks. It writes `sim/verdicts.md` in the words of the sheet, through one visible translation table,
 wrapped at 100 columns. The chain rungs there are wound to, as stills are.
 
-No test compares the committed record with the model. So it is current as of its last run, and stale
-until it is run again. It is run again in the same delivery as any change to the model.
+No test compares the kept readings with the physics. So the report is current as of its last run,
+and stale until it is run again. It is run again in the same delivery as any change to the model.
+A law holds the report to the readings that it renders from (Kept answers).
 
 **Known and not mended: the crossing reader is a knife edge where two arms lie along each other.**
 `read.crossings` counts where two connections cross in plan, by a segment intersection. Two poses
@@ -1672,6 +1675,23 @@ A change to comments alone gives the same answers and a new stamp. Two comments 
 last 40 commits to `sim/*.nim` on 2026-09-24, two changed comments alone. So a stamp that skips
 comments would rarely save a run.
 
+**The report keeps its readings, and renders its words from them.** `sim/readings.nim` reads
+each sweep and each rung that the report asks for into plain numbers. It keeps them in
+`sim/verdicts.json`, with a stamp of the physics. The stamp leaves out the files that only say
+words or ask the questions of the laws (`LEAVING`). The report renders its words from the
+readings, and it asks for a reading by rendering. So the list of what it asks is written once.
+
+A change to words alone renders the report again in 1.4 s, compile included. A change to the
+physics reads every sweep again, on every core. That took 409 s on four cores, where one core took
+1973 to 2059 s, on 2026-09-26. The report from the readings is the same, byte for byte, as the
+report the sweeps wrote directly. Each worker writes plain values into a place allotted before any
+thread starts, as `answers` does.
+
+Verified by `suites/twords.nim`: the report is what its kept readings render. The law failed on
+three breaks made on purpose. One changed a word of the renderer, one deleted a reading, and one
+changed a number that the report prints. The law does not read the stamp, so readings of older
+physics still render the report they gave.
+
 **The replay is exact on the runner too.** Its law passed there on `5975d93`, on 2026-09-24, so the
 runner walks every kept sweep and both drawn walks to the numbers this container kept.
 
@@ -1682,6 +1702,12 @@ runner walks every kept sweep and both drawn walks to the numbers this container
 `tsuites.nim` imports every other suite from `tests/suites/`, and each of them runs at import under
 its own suite name. `trigid.nim` and `tread.nim` add `-d:danger`, because the sweeps are the slow
 part and `doAssert` survives it.
+
+**`tread.nim` settles its thirty couples on every core at once.** Each worker builds and settles
+its own couple, and gives back the arm poses alone. The law reads them on one thread, as before.
+Its run took 8.1 s with the couples settled one after another, and takes 2.3 s, on four cores on
+2026-09-26. It prints the same lines. It failed on three breaks made on purpose: the reader of the
+arm over turned round, one connection given back twice, and no couple settled.
 
 **The suites that need no engine and no browser compile once.** Each binary compiled the standard
 library and its own imports again. Sixteen of them compiled for 31.4 s and ran for 0.8 s, and all
@@ -1738,9 +1764,9 @@ reddens a law.
   sharing its cores. Unmeasured alone.
 - `tools/build.nim rig`: 523 s wall, on the same day, sharing cores with the suite. Unmeasured
   alone.
-- `tools/build.nim verdicts`: 1079 s wall, on the same day, sharing cores with two other recordings.
-  It took 50.2 s on 2026-09-10 with the pose search that preceded the engine. That is a pair across
-  two models, and not an optimisation.
+- `tools/build.nim verdicts`: 1973 to 2059 s wall on one core, over four runs on 2026-09-26. With
+  its readings read on four cores: 409 s, the same day. With its readings kept: 1.4 s after a
+  change to words, compile included.
 - `tools/build.nim pages`, every page with faces from the shared store: 26 s wall, same day.
 - `tools/build.nim engine`: 24 s cold, and at once where the archive stands.
 - Whole-cloth port parity, driven under Chromium with fonts stubbed and `requestAnimationFrame`

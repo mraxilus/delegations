@@ -35,13 +35,13 @@ func facingOf*(pose: Pose): Option[Facing] =
   ## Name facing drawn pose stands in, read off where each dancer sees other.
   ##   `relative` holds follow's place and facing against lead.  Follow sees
   ##     lead back across that axis: half turn round, less follow's own facing.
-  ##   None between quarters, and none where glossary names no state.
+  ##   None between quarters, where dancer sees other at no one side.
   let
     r = relative(pose)
     lead = onQuarter(r.axis)
     follow = onQuarter(r.axis + 180.0 - r.facing)
   if lead.isNone or follow.isNone: none(Facing)
-  else: facing([Seen(lead.get), Seen(follow.get)])
+  else: some(facing([Seen(lead.get), Seen(follow.get)]))
 
 
 func turnedFacing*(lead_turn, follow_turn: float): Option[Facing] =
@@ -57,16 +57,15 @@ const ORIENTATIONS*: array[Facing, tuple[name: string; lead_turn, follow_turn: f
       for lead in [0, 1, -1, 2]:
         for follow in [0, 1, -1, 2]:
           let named = facing(seenAfter([lead, follow]))
-          if ord(lead != 0) + ord(follow != 0) == movers and named.isSome and
-              found[named.get].isNone:
-            found[named.get] = some((lead, follow))
+          if ord(lead != 0) + ord(follow != 0) == movers and found[named].isNone:
+            found[named] = some((lead, follow))
     var each: array[Facing, tuple[name: string; lead_turn, follow_turn: float]]
     for named in Facing:
       doAssert found[named].isSome, &"No turn on the spot reaches `{named.name}`."
       each[named] = (named.name, 90.0 * float(found[named].get.lead),
                      90.0 * float(found[named].get.follow))
     each
-  ## Eight ways couple can face, each reached by fewest dancers turning on spot.
+  ## Sixteen ways couple can face, each reached by fewest dancers turning on spot.
   ##   Derived from model's facings (`rotation.Facing`), not listed: quarter
   ##     turn is 90 degrees, clockwise, as drawing counts its bearings.
 
@@ -81,9 +80,9 @@ const SETTLINGS* = [
   (level: some Level.High, way: some Way.Lock, follow_turn: 0.0,
    caption: "<em>high</em> lock<br>Face-to-face"),
   (level: some Level.Low, way: some Way.Wrap, follow_turn: 180.0,
-   caption: "<em>low</em> wrap<br>Pillion"),
+   caption: "<em>low</em> wrap<br>" & Facing.FaceToBack.name),
   (level: some Level.High, way: some Way.Wrap, follow_turn: 180.0,
-   caption: "<em>high</em> wrap<br>Pillion"),
+   caption: "<em>high</em> wrap<br>" & Facing.FaceToBack.name),
 ] ## Each settling drawn in orientation that admits it, because most do
   ## not: lock or wrap only exists where line really goes round.
 
@@ -170,7 +169,7 @@ func frameParts*(): Parts =
                            [some Level.High, some Level.Low],
                            over = some Arm.L)
 
-  # Eight orientations, twice: with nothing held, where only colours
+  # Sixteen orientations, twice: with nothing held, where only colours
   # and chevrons can say it, and holding, where line is there too.  Each
   # drawn pose must read back as facing it is named for.
   var seen: HashSet[string]
@@ -646,7 +645,7 @@ func phaseOf*(holds: Holds): float =
   ##     already thing that measures that.
   ##   Two candidates and no more, because chain steps by half turns:
   ##     hand to hand runs parallel with partners Face-to-face,
-  ##     crossed pair Pillion, and those are
+  ##     crossed pair Face-to-back, and those are
   ##     same chain read half turn apart.
   for phase in [0.0, 0.5]:
     let put = settled(posedAt(0.0, phase), holds, ABOVE_BOTH, default(Ways))
@@ -662,10 +661,10 @@ func facingAt*(holds: Holds; wind: float): Option[Facing] =
 
 
 func restOf*(holds: Holds): Facing =
-  ## Name facing hold rests at, among eight (rule 31).
+  ## Name facing hold rests at (rule 31).
   ##   Hold rests where its two connections run parallel and cross nothing,
-  ##     which `phaseOf` measures: Face-to-face for hand to hand, Pillion for
-  ##     crossed pair.  Hold with fewer than two connections has no such state,
+  ##     which `phaseOf` measures: Face-to-face for hand to hand, Face-to-back
+  ##     for crossed pair.  Hold with fewer than two connections has no such state,
   ##     and rests Face-to-face.
   if holds.countIt(it.isSome) < 2: Facing.FaceToFace
   else: facingAt(holds, 0.0).get
@@ -701,7 +700,7 @@ func chainFor*(holds: Holds): seq[Position] =
     # Which way partners face is pose's business and follows from
     # wind, so page says rule of it once in prose rather than
     # every caption saying it over: Face-to-face at whole number of
-    # turns, Pillion at half.  It is also whole of offset
+    # turns, Face-to-back at half.  It is also whole of offset
     # between this hold and its dual (rule 31).
     result.add (wind,
       # Middle of chain is glossary's **neutral**, and it alone says
@@ -764,7 +763,7 @@ func windSense*(manner: Manner): float =
 const PAIRED*: Holds = [some Arm.L, some Arm.R]
   ## Same-name chain: lead's left to follow's left, right to right.  Index is
   ## lead's arm and value is follow's it joins, as `HAND_TO_HAND` is read.
-  ##   Rests Pillion rather than Face-to-face, since Face-to-face its two
+  ##   Rests Face-to-back rather than Face-to-face, since Face-to-face its two
   ##     connections lie through each other (rule 31).
 
 

@@ -978,9 +978,11 @@ func driveHeld*(
 
 
 func applyAction*(
-  interaction: var Interaction, camera: var Camera, scene: Scene, action: KeyAction
+  interaction: var Interaction; camera: var Camera; scene: Scene; action: KeyAction;
+  width, height: int
 ): Option[int] =
   ## Carry out one keyboard action, and report which object caller should select.
+  ##   `width` x `height` is frame drawn now, which `ViewHome` fits opening to.
   ##   Moves camera and focus, both its own state; does not touch selection, which each
   ##   render path owns differently.
   ##     Reporting handle leaves caller to read shift state and decide between replacing
@@ -1005,7 +1007,8 @@ func applyAction*(
   of KeyAction.ViewHome:
     # Return to placement both builds open at, so "home" means same as starting again.
     #   Stance alone: lens is reader's setting, as history's step keeps it.
-    camera = camera.placed(initCameraDefault().stanceOf)
+    #   Fitted to frame as it stands now, as opening was to frame it opened on.
+    camera = camera.placed(initCameraDefault(width, height).stanceOf)
   none(int)
 
 

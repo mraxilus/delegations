@@ -49,7 +49,7 @@ document.addEventListener('keydown', (e) => {
     //   `keyup` below; key that acts does so on this press.
     if (nimKeyBound(e.code)) {
       e.preventDefault(); // Arrows would otherwise scroll page under canvas.
-      const handle = nimKeyDown(e.code);
+      const handle = nimKeyDown(e.code, canvas.clientWidth, canvas.clientHeight);
       if (handle >= 0) {
         // Shift adds rather than replaces, exactly as shift-click does -- one thing.
         //   shift state means that shared binding table cannot answer alone.

@@ -7,13 +7,11 @@ it is agreed.
 ## Language
 
 **Lead**:
-The dancer whose hands are named first, written capitalised. A state named for the Lead is
-written capitalised too, such as `Pillion`.
+The dancer whose hands and side are named first, written capitalised.
 _Avoid_: leader, man, he, him, his
 
 **Follow**:
-The dancer whose hands are named second, written in lower case. A state named for the Follow is
-written in lower case too, such as `pillion`.
+The dancer whose hands and side are named second, written in lower case.
 _Avoid_: follower, woman, she, her, hers
 
 **Connection**:
@@ -36,11 +34,20 @@ under.
 _Avoid_: orientation, manner, posture
 
 **Facing**:
-Which way the two dancers are turned with respect to one another, and on which side of the
-other each one stands. Four names cover eight states: Face-to-face, Back-to-back, Pillion and
-Sidecar. Eight states need three bits, so a twist parity alone cannot say which of them a frame
-is in.
-_Avoid_: orientation, direction, front
+Which side each dancer turns to the other: face, starboard, back or port. It is named by the side
+of the Lead and then the side of the Follow, such as `Face-to-port`, so sixteen names cover sixteen
+states.
+_Avoid_: orientation, direction, front, Pillion, Sidecar
+
+**Port**:
+The left side of a dancer, when it is turned to the other. It names a side of a body, and never a
+hand.
+_Avoid_: left side, left shoulder
+
+**Starboard**:
+The right side of a dancer, when it is turned to the other. It names a side of a body, and never
+a hand.
+_Avoid_: right side, right shoulder
 
 **Face-to-face**:
 The facing where each dancer looks at the other.
@@ -49,18 +56,6 @@ _Avoid_: facing, front-to-front, opposed, closed
 **Back-to-back**:
 The facing where each dancer has their back to the other.
 _Avoid_: reversed, apart, turned away, back to front
-
-**Pillion**:
-The facing where both dancers face one way with one behind the other, who looks at their back.
-The case names the dancer behind: `Pillion` is the Lead there, and `pillion` is the Follow.
-_Avoid_: pillion lead, pillion follow, face-to-back, same way, lead behind
-
-**Sidecar**:
-The facing where one dancer looks at a shoulder of the other, at right angles to them. One quarter
-turn on the spot from Face-to-face makes it. The case names the dancer at the shoulder, and the
-side names whose shoulder it is. So `Sidecar left` puts the Lead at the left shoulder of the
-Follow, and `sidecar Right` puts the Follow at the Right shoulder of the Lead.
-_Avoid_: side by side, beside, alongside, shoulder to shoulder
 
 **Frame state**:
 One specific unique instance of a frame hold and a frame position, grip aside.

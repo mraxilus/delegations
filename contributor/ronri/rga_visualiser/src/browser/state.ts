@@ -10,7 +10,9 @@
 /* reflect and drive it.                                                  */
 /* ---------------------------------------------------------------------- */
 
-nimInit(performance.now() / 1000);
+// Layout size, not drawing buffer: `resize` has not sized buffer yet, and opening fits frame's
+//   shape alone.
+nimInit(performance.now() / 1000, canvas.clientWidth, canvas.clientHeight);
 let is_axes_shown = true, is_grid_shown = true;
 
 function now() { return performance.now() / 1000; }
