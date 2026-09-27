@@ -43,7 +43,8 @@ use the mechanism is cargo cult.
    Definitions that need exactly the same things may share one line.
 6. A library of several modules presents one umbrella module, which re-exports its surface.
    Export only what a caller needs, and reach an internal of a sibling deliberately, never by
-   a wider export. **Façade gate.** Where the surface is symbolic or generated, the umbrella
+   a wider export. The internal says so, and names the sibling that reaches it. **Façade
+   gate.** Where the surface is symbolic or generated, the umbrella
    is a façade of documented one-line forwarders. It is the API reference that is also
    source, and the source of truth for the public names.
 7. A comment states the decision and its cost, and never the path to it. A superseded design,
@@ -418,20 +419,30 @@ suite "Chapter 2":
 ## Article X: Form of the source
 
 1. Two-space indent. No tabs. Lines of at most 100 characters, counted in characters and not
-   in bytes.
-2. A section banner is a distinct comment form in Title Case (`#[ Basis Conversion ]#`, or
-   the equivalent of the language), at most two tiers deep. Spacing marks the tier. A
-   first-tier banner takes three blank lines before it, and a second-tier banner takes two.
-   Either one takes one blank line after it. Two blank lines separate substantial top-level
-   definitions, and one blank line separates façade siblings.
-3. A multi-line declarative call or constructor takes one argument to a line, with a trailing
-   separator and named arguments. That holds for a code-generating construct as well.
-4. Guard clauses (`continue`, `return`) keep the success path prominent, and the nesting at
-   most three deep. Sixty lines is a review signal, and not a forced split. Keep a unified
-   derivation intact where a split would hide the shape of the data, and say so in a comment.
-5. Group related constants and bindings under one keyword. Destructure related values
-   together. Consolidate the imports: the standard library grouped and alphabetised, then the
-   local modules in dependency order.
+   in bytes. Where a formatter would destroy a hand-shaped block, fence the block with the
+   marker that the formatter reads.
+2. A section banner is a distinct comment form, at most two tiers deep, and its syntax marks
+   the tier. Its title is an English noun phrase in Title Case, qualifier then head, singular
+   for one member and plural for several. A first-tier banner takes three blank lines before
+   it, and a second-tier banner takes two. Either one takes one blank line after it, but a
+   second-tier banner that follows its parent at once keeps its own two. Undocumented one-line
+   helpers of one group stack with no blank line, and documented one-line definitions take
+   one. Siblings inside a second-tier section also take one, and every other definition takes
+   two.
+3. A call stays on its own line where it fits, and otherwise takes one argument to a line. A
+   signature may first wrap its parameters onto one line of their own. Otherwise it takes one
+   parameter, or one group of a shared type, to a line. One item to a line takes a trailing
+   separator. A declarative call names its arguments, and so do a code-generating call and a
+   constructor. A positional call stays positional.
+4. Guard clauses (`continue`, `break`, `return`) keep the success path prominent. Nest one
+   loop for each axis of the data, and make a condition inside it a guard where it can be.
+   Past four levels, split the routine or say why in a comment. Sixty lines is a review
+   signal, and not a forced split. Keep a unified derivation intact where a split would hide
+   the shape of the data, and say so in a comment.
+5. Group related constants and bindings under one keyword, dependent bindings included.
+   Destructure where one expression yields the values together, or where a parallel pair fits
+   one line. Otherwise group them under one keyword. Consolidate the imports: the standard
+   library grouped and alphabetised, then the local modules, also alphabetised.
 6. Module anatomy runs in one order. It is header docs, active design notes and TODOs,
    compiler directives, conditional instrumentation, external imports, local imports,
    re-exports, then the body in conceptual reading order.

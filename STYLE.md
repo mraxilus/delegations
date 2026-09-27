@@ -126,28 +126,66 @@ Escalate only on need.
 
 ## 5. Signatures, imports, calls
 
-- Write bracket imports, grouped and consolidated: `import std/[bitops, options]`, then
-  `import ./[algebra {.all.}, helpers]`. Use `{.all.}` only for deliberate access to
-  internals, from a sibling or a test.
+- Write bracket imports, grouped and consolidated, each group alphabetised:
+  `import std/[bitops, options]`, one blank line, then `import ./[algebra {.all.}, helpers]`.
+  A single module takes no bracket (`import std/math`). Use `{.all.}` only for deliberate
+  access to internals, from a sibling or a test. A private symbol that a sibling reaches that
+  way carries `{.used.}`, and a comment that names the sibling:
+
+  ```nim
+  func `and`(a, b: BasisFlags): BasisFlags {.borrow, compileTime, used.} # Used in cayleys.nim.
+  ```
+
 - Put commas between parameters while every type appears once (`m: Multivector, b: Basis`).
   Escalate to semicolons between groups only where one group holds several parameters of one
-  type (`a, b: X; c: Y`). A formatter that promotes every comma to a semicolon is wrong here,
-  so configure it or ignore it. Put the return type and the pragmas on the closing line of a
-  multi-line signature:
+  type (`a, b: X; c: Y`). The rule holds on one line and across several. A formatter that
+  promotes every comma to a semicolon is wrong here, so configure it or ignore it.
+- A signature that does not fit on its line wraps its parameters onto one line of their own.
+  Where that line does not fit either, put one parameter, or one group of a shared type, on
+  each line, each with a trailing separator. Put the return type and the pragmas on the
+  closing line:
 
   ```nim
   func filterFactors(
-    cayley: Cayley1D; factors, exclusions: seq[Basis]; as_exclusions = false
-  ): Cayley1D {.compileTime.} =
+    cayley: var Cayley1D, factors: seq[Basis], as_exclusions = false
+  ) {.compileTime.} =
+
+  func constructProductsTransitional(
+    complement, dual: Cayley1D;
+    wedges: Spatial[Cayley2D];
+    chirality: Chirality;
+    space: Space;
+  ): array[Order, Cayley2D] {.compileTime.} =
+  ```
+
+- A call that does not fit on its line puts one argument on each line, with a trailing comma.
+  It never wraps its arguments onto one line of their own. A generator call and a constructor
+  name their arguments, and a positional call stays positional:
+
+  ```nim
+  CAYLEY_EXPAND_BULK_RIGHT* = constructProductInterior(
+    CAYLEYS_DUAL.base.right,
+    CAYLEYS_WEDGE.base,
+    Chirality.Right,
+  )
   ```
 
 - Use the implicit `result` for a structured accumulation. Use a bare final expression for a
-  simple computed value. Use an explicit `return` mostly for a guard exit. Never end with
+  simple computed value. Use an explicit `return` only for an early exit. Never end with
   `return result`.
-- Bind a `case` or `if` expression that produces a value to a `let`.
-- Use UFCS for a unary semantic chain (`b.toDigits.toFlags`), and backticks for an operator
-  definition. Use a raw string (`r"\"`) and a backtick-quoted call (`` m.`∧ ☆`n ``) where the
-  tokeniser demands one.
+- Bind a `case` or `if` expression that produces a value to a `let`, or to a `const` where
+  the value is known at compile time.
+- Use UFCS where the first argument is plainly the subject: a query, an accessor, or a
+  `to<Target>` conversion, chained where it reads (`b.toDigits.toFlags`). An `init…` call may
+  take its subject the same way (`b.initElement(1)`). Use a prefix call for `construct…`,
+  `define…` and `emit…`, for a type conversion (`Grade(x)`, never `x.Grade`), and wherever no
+  argument plainly dominates. Use backticks for an operator definition. Use a raw string
+  (`r"\"`) and a backtick-quoted call (`` m.`∧ ☆`n ``) where the tokeniser demands one.
+- A first-tier banner is `#[ Title Case ]#`, and a second-tier banner is `#[[ Title Case ]]#`.
+  Each one stands alone on its line, and is never indented.
+- The formatter is nimpretty. Where it would destroy a hand-shaped block, fence the block with
+  `#!nimpretty off` and `#!nimpretty on`. It reads no other marker, so `# fmt: off` does
+  nothing. It leaves the indent of a multi-line call alone, so the fence is rarely needed.
 - Put `*` on every intentional export, and on nothing else. The umbrella module re-exports
   the coherent surface (`import ./pga/[...]`, then `export ...`).
 - Membership in a hot path is two comparisons (`slot >= 0 and slot < N`). Do not write
