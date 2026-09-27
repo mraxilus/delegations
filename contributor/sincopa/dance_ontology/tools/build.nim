@@ -15,8 +15,10 @@
 ##   | assets   | fetch faces pages embed from repository store into build/fonts        |
 ##   | pins     | rewrite design/review-pins.json from page just built: run when        |
 ##   |          | Architect rules on cards, never to quiet check that says one moved    |
-##   | modelled | rewrite design/modelled.json: which reference cards sim reaches       |
-##   | rig      | rewrite design/rig.json: sweeps rig viewer plays, and every still      |
+##   | modelled | rewrite design/modelled.json: which reference cards sim reaches,      |
+##   |          | stamped, and only where stamp changed                                 |
+##   | rig      | rewrite design/rig.json: sweeps rig viewer plays, and every still,    |
+##   |          | stamped, and only where stamp changed                                 |
 ##   | turns    | rewrite design/turns.json: sweeps whole-cloth page plays              |
 ##   | verdicts | instrument run, not build: answers land in sim/verdicts.md            |
 ##   | answers  | rewrite sim/answers.json: where couple stand for rig's laws, stamped  |
@@ -280,6 +282,7 @@ proc modelled() =
   ##   Second step, as `pins` is, and for like reason: tag saying model agrees
   ##     is claim, and it is added deliberately rather than refreshed by build
   ##     into agreeing with whatever model happens to say today.
+  ##   Verb asks nothing again where its stamp is unchanged (`design/stamps`).
   nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "design/modelled.nim"])
 
 
@@ -289,6 +292,7 @@ proc rig() =
   ##   Own verb, as `modelled` is, and for like reason: recording costs eight
   ##     stance searches over every distance couple may stand at, and every
   ##     `pages` run would pay for it.  Page folds in whatever was last recorded.
+  ##   Verb records nothing again where its stamp is unchanged (`design/stamps`).
   nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "design/rig.nim"])
 
 

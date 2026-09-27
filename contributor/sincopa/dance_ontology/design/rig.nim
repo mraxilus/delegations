@@ -16,14 +16,22 @@
 ##     wound to its facing as `walk.stood` winds it, so viewer can lay sim's
 ##     answer beside each cell.
 ##
+##   Recording is kept with stamp of physics, jobs and this verb (`design/stamps`), and verb
+##     whose stamp is unchanged records nothing again.  Page leaves stamp out, so page changes
+##     only where recording does.
+##
 ##   Usage: rig          writes design/rig.json
 
 {.experimental: "strictFuncs".}
 
-import std/[cpuinfo, math, os, strformat, strutils, typedthreads]
+import std/[cpuinfo, json, math, os, sequtils, strformat, strutils, typedthreads]
 
 import ../sim/[body, hold, rig, seen]
-import ./asks
+import ./[asks, stamps]
+
+
+const KEPT_RIG* = currentSourcePath().parentDir / "rig.json"
+  ## Where recording is kept, with its stamp.
 
 
 type Cut = tuple[name: string, arms: seq[(Arm, Arm)], away: bool, band: Band]
@@ -165,12 +173,12 @@ proc bodyOfSweep(sh: Shown; key = ""): string =
   "{" & bits.join(",\n") & "}"
 
 
-type Job = object ## One recording: sweep by its place in `SHOWN`, or still by its ask.
+type Job* = object ## One recording: sweep by its place in `SHOWN`, or still by its ask.
   cut: int
   ask: StillAsk
   still: bool
 
-func jobs(): seq[Job] =
+func jobs*(): seq[Job] =
   ## Every recording, sweeps first then every still card in page's own order.
   for i in 0 ..< SHOWN.len: result.add Job(cut: i, still: false)
   for a in stillAsks(): result.add Job(ask: a, still: true)
@@ -207,7 +215,17 @@ proc work(slice: tuple[first, every: int]) {.thread.} =
       i += slice.every
 
 
+proc rigStamp*(): string =
+  ## Stamp recording carries: physics, this verb, and every job.
+  ##   Sweep job names only its place in `SHOWN`, and `SHOWN` is in this verb's source.
+  stampOf(currentSourcePath(), jobs().mapIt($it))
+
+
 when isMainModule:
+  let stamp = rigStamp()
+  if fileExists(KEPT_RIG) and readFile(KEPT_RIG).parseJson{"stamp"}.getStr == stamp:
+    echo "design/rig.json is up to date: ", stamp
+    quit(0)
   # Recorded on every core at once: sweeps and stills each build their own
   # worlds and share nothing but their two slots.
   let count = jobs().len
@@ -226,6 +244,7 @@ when isMainModule:
     cuts = bodies[0 ..< SHOWN.len]
     stills = bodies[SHOWN.len ..< count]
   var head: seq[string]
+  head.add "\"stamp\":\"" & stamp & "\""
   head.add "\"upper\":" & num(HUMAN.upper)
   head.add "\"fore\":" & num(HUMAN.fore)
   head.add "\"hand\":" & num(HUMAN.hand)
@@ -233,6 +252,5 @@ when isMainModule:
   head.add "\"marks\":[\"trunk\",\"upper\",\"fore\",\"palm\",\"girdle\"]"
   head.add "\"sweeps\":[\n" & cuts.join(",\n") & "]"
   head.add "\"stills\":[\n" & stills.join(",\n") & "]"
-  let path = "design" / "rig.json"
-  writeFile(path, "{" & head.join(",\n") & "}\n")
-  echo "wrote ", path
+  writeFile(KEPT_RIG, "{" & head.join(",\n") & "}\n")
+  echo "wrote design/rig.json"

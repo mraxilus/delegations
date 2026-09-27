@@ -45,7 +45,7 @@ const pinned = block:
 
 const modelled = block:
   var said: Table[string, bool]
-  for pair in MODELLED.parseJson.pairs:
+  for pair in MODELLED.parseJson["answers"].pairs:
     said[pair.key] = pair.val.getBool
   said
 

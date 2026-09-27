@@ -1692,6 +1692,23 @@ three breaks made on purpose. One changed a word of the renderer, one deleted a 
 changed a number that the report prints. The law does not read the stamp, so readings of older
 physics still render the report they gave.
 
+**The two recordings that pages read are kept with a stamp too.** `design/modelled.json` and
+`design/rig.json` each carry one (`design/stamps.nim`). It is a digest of the physics of the
+readings of the report, and of the source of the verb. A verb whose stamp is the same records
+nothing again. From no recording, `modelled` took 659 s and `rig` 539 s on four cores, compile
+included, on 2026-09-26. With the stamp the same, each took 0.25 s, or 2.4 s where it compiled
+first.
+
+Each question that the verb asks goes into the stamp as text, and not the source of
+`design/asks.nim`. So a change to how the questions are listed that asks the same questions records
+nothing again. The rig page leaves the stamp out, so the page changes only where the recording does.
+
+A law fails when a recording carries a stamp other than the one that the tree gives. Without it, a
+page could show the answers of other physics as those of this tree. Verified by `suites/tasks.nim`.
+Each law failed on a stamp changed in its file, a comment in `sim/vec.nim`, and a comment in its
+verb. Both failed when one question was asked over another crown, and the law of the page failed
+when the page kept the stamp. A comment in `sim/words.nim` failed none of the three.
+
 **The replay is exact on the runner too.** Its law passed there on `5975d93`, on 2026-09-24, so the
 runner walks every kept sweep and both drawn walks to the numbers this container kept.
 
