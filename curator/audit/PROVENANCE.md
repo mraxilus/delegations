@@ -212,8 +212,11 @@ whitespace-free token, with the indent of the line, already overruns. That token
 break at, prose always does, and minified markup is one run far past the bound.
 
 Lines split on LF only, so a CR survives. Nim banners need two blank lines before and one
-after. The tiers are unmarked in syntax, so the second-tier minimum is demanded of every
-banner.
+after. The syntax marks the tier: `#[ Title ]#` is the first tier, and `#[[ Title ]]#` is the
+second. Where a second-tier banner follows its parent at once, the child's own check governs
+the space between them. The first tier takes three blank lines before it (X.2), but the check
+demands two of every banner. A check of three would redden the contributor banners that are
+still spaced at two, so it waits on their fixes (CURATOR.md, duty 3).
 
 - Rejected: an exemption for URLs by pattern, which guesses at intent. Rejected: an exemption
   for any single-token line, which admits machine output of any length. Rejected:

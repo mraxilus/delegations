@@ -47,6 +47,19 @@ suite "Article X":
       @["Banner lacks exactly one blank line after it."]  # two after
     check messages("nim.cfg", "#[ Section ]#\n", Kind.Cfg).len == 0  # Nim only
 
+  test "X.2 banner tiers":
+    let nested = "x = 1\n\n\n\n#[ Parent ]#\n\n\n#[[ Child ]]#\n\ny = 2\n"
+    check messages("a.nim", nested, Kind.Nim).len == 0  # child follows parent at once
+    check messages("a.nim", "x = 1\n\n\n#[[ Child ]]#\n\ny = 2\n", Kind.Nim).len == 0  # two before
+    check messages("a.nim", "x = 1\n\n#[[ Child ]]#\n\ny = 2\n", Kind.Nim) ==
+      @["Banner lacks two blank lines before it."]  # second tier checked too
+    check messages("a.nim", "x = 1\n\n\n#[[ Child ]]#\n\n\ny = 2\n", Kind.Nim) ==
+      @["Banner lacks exactly one blank line after it."]  # two after, no child
+    check messages("a.nim", "x = 1\n\n\n\n#[ Parent ]#\n\n#[[ Child ]]#\n\ny = 2\n", Kind.Nim) ==
+      @["Banner lacks two blank lines before it."]  # child keeps its own two
+    check messages("a.nim", "x = 1\n\n\n#[ A ]#\n\n\n#[ B ]#\n\ny = 2\n", Kind.Nim) ==
+      @["Banner lacks exactly one blank line after it."]  # only second tier defers
+
 
 suite "Article VIII":
   test "VIII.5 whitespace and endings":
