@@ -27,16 +27,15 @@ const
     ##     collects, so section is where it is caught.
     ##   200 rather than 150: measured then, 150 flagged three sections of three projects and
     ##     200 flagged one, and both flagged same narration.
-  RECORD_LINES* = 3000
+  RECORD_LINES* = 5000
     ## Lines record may hold before prune to log is asked.
-    ##   Was 2,000 while records were written in ordinary English. Simplified Technical English
-    ##     (Article VI.8) costs about 20% more lines, measured over five records, since one long
-    ##     sentence becomes two short ones.
-    ##   2,500 scaled old number by that cost and kept old headroom, which was none: largest
-    ##     record stood at ceiling before and after. Two merges spent 17 lines of margin inside
-    ##     one day, and next sentence anybody wrote reddened `main`. Backstop that fires on
-    ##     ordinary work reports growth rather than narration, so this one carries 20% clear.
-    ##   `SECTION_LINES` is instrument that reads narration. This is only backstop.
+    ##   `SECTION_LINES` is instrument that reads narration. This is only backstop, and
+    ##     backstop that fires on ordinary work reports growth rather than narration.
+    ##   5,000 is Architect's choice. At 3,000, largest record (`rga_visualiser`) stood exactly
+    ##     at ceiling, so every addition there had to prune first; 5,000 leaves it two fifths
+    ##     clear.
+    ##   Cost: whole-file prune is asked later, so long record may grow further before anyone
+    ##     prunes it; section ceiling still catches narration inside it.
   OPEN_QUESTIONS* = "## Open questions"
     ## Heading of section that must come last; matched without case.
   PRUNED* = "Pruned"
