@@ -1,6 +1,7 @@
 ## Replicate Article XI.1: Conventional Commits with stable scope.
 
 import std/[options, sequtils, strutils, unittest]
+from std/unicode import runeLen
 import ../../src/commits
 
 
@@ -20,6 +21,17 @@ suite "Article XI":
       "feat(alpha): ", "wip(alpha): add thing", "feat(a/b): add thing", "(alpha): add thing",
     ]:  # 11 cases
       check parseSubject(subject).isNone  # type(scope): lowercase summary, no period
+
+  test "XI.1 subject at most one source line wide":
+    let at_limit = "feat(alpha): " & "a".repeat(SUBJECT_MAX - 13)
+    check at_limit.runeLen == SUBJECT_MAX  # fixture sits on limit
+    check checkCommits("contributor/ronri/alpha/work", [at_limit]).len == 0  # at limit
+    check checkCommits("contributor/ronri/alpha/work", [at_limit & "a"]).mapIt(it.message) ==
+      @["Commit subject exceeds 100 characters; got `101`."]  # one over
+    let wide = "feat(alpha): a" & "∧".repeat(SUBJECT_MAX - 14)
+    check checkCommits("contributor/ronri/alpha/work", [wide]).len == 0  # runes, not bytes
+    check checkCommits("claude/setup", ["x".repeat(SUBJECT_MAX + 1)]).len ==
+      2  # width checked beside grammar
 
   test "XI.1 scope must match project on contributor and curator project branches":
     check checkCommits("contributor/ronri/alpha/work", ["feat(alpha): add", "test(alpha): c"])

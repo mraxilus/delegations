@@ -490,6 +490,12 @@ scope of each project. A branch outside the grammar still gets format checking. 
 mood is unverified. Verified by `suites/tcommits.nim`: every type with several scopes, the breaking
 marker, rejected forms, and scope enforcement on both project branch forms.
 
+**A subject is at most `SUBJECT_MAX` runes, which is `LINE_MAX`, the limit of a line of source
+(XI.1).** Branch commits carry no ` (#N)` from a squash merge, so the check counts the subject as
+the delegate wrote it. Cost: subjects on `main` from before the cap run to 136 runes. They stay,
+because the check reads one branch. Verified by `suites/tcommits.nim`: a subject at the limit, one
+over it, and a subject counted in runes and not in bytes.
+
 **The regression rule is enforced, and not hoped for.** `check-commits` reads the subjects
 newest first. It demands that the commit immediately before every `fix` is a `test` of the same
 scope, one test to one fix, with nothing between them. So the priority of the Architect,

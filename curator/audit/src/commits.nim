@@ -4,6 +4,8 @@
 ##   root branch accepts any valid scope, because rules propagation commits carry each
 ##   project's scope.
 ##   Merge commits are excluded upstream (`git log --no-merges`); reverts use type `revert`.
+##   Subject is at most `SUBJECT_MAX` runes, same limit as line of source (XI.1). Branch
+##     commits carry no ` (#N)` of squash merge, so check counts subject as author wrote it.
 ##   Regression rule is enforced here, not hoped for (CONTRIBUTOR.md, Tests are paramount):
 ##     commit immediately before every `fix` is `test` of same scope, one test to one fix with
 ##     nothing between them, since mistake earns test that fails before fix and passes after,
@@ -18,11 +20,14 @@
 ##   Cost: fix of mistake whose test already sits on `main` still needs test here, or another
 ##     type; check reads one branch, never whole history.
 ##   Cost: `!` breaking marker accepted after scope; body and footers pass unchecked.
+##   Cost: subjects on `main` from before cap run to 136 runes; check reads one branch, so
+##     history stays.
 
 {.experimental: "strictFuncs".}
 
 import std/[options, strutils]
-import ./[findings, domains]
+from std/unicode import runeLen
+import ./[domains, findings, form]
 
 
 type Subject* = object
@@ -32,10 +37,13 @@ type Subject* = object
   summary*: string  ## Lowercase imperative summary without final period.
 
 
-const TYPES* = [
-  "build", "chore", "ci", "docs", "feat", "fix", "perf", "refactor", "revert", "style", "test",
-]
-  ## Commit types accepted, alphabetical.
+const
+  TYPES* = [
+    "build", "chore", "ci", "docs", "feat", "fix", "perf", "refactor", "revert", "style", "test",
+  ]
+    ## Commit types accepted, alphabetical.
+  SUBJECT_MAX* = LINE_MAX
+    ## Widest commit subject allowed, in runes: same limit as line of source (Article XI.1).
 
 
 func parseSubject*(subject: string): Option[Subject] =
@@ -90,4 +98,9 @@ func checkCommits*(branch: string, subjects: openArray[string]): seq[Finding] =
     elif expected.isSome and parsed.get.scope != expected.get:
       result.add finding(
         "", 0, "Commit scope must be `" & expected.get & "`; got `" & s & "`."
+      )
+    if s.runeLen > SUBJECT_MAX:
+      result.add finding(
+        "", 0,
+        "Commit subject exceeds " & $SUBJECT_MAX & " characters; got `" & $s.runeLen & "`.",
       )
