@@ -476,12 +476,18 @@ if product.is_degenerate: continue
 
 1. Conventional Commits with a stable scope: `type(scope): lowercase imperative summary`, no
    trailing period, one intention to a commit. A refactor, a doc, a fix and a feature are
-   never mixed in silence.
+   never mixed in silence. In a repository of several projects, the scope is the project. In
+   a repository of one project, the scope names the module or subsystem that changed. A
+   subject is at most 100 characters, the same limit as a line of source.
 2. The history is part of the document. A reader replays the intellectual development of the
-   project from the log.
+   project from the log. A step that prepares for the next change is its own commit, named
+   for what it prepares. A reversal is its own commit, and names what it undoes.
 3. Vendored source stays in the working tree, and never in the repository. The provenance
    file records its origin, its commit and its licence, and honours the notice terms of that
    licence.
+4. A commit body carries the reason, the mechanism or the open state that the subject cannot
+   say. Where the subject is enough, the commit has no body. A body is in sentence case, with
+   one sentence to a line.
 
 ```text
 feat(pga): add preliminary conformal support

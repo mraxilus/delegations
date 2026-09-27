@@ -96,7 +96,9 @@ Escalate only on need.
 - Write `{x=}` in a message where the value alone would not say which binding it is
   (`{digits=}`).
 - Put an expensive check under `when compileOption("assertions"):`. Put the profiler import
-  under `when compileOption("profiler"): import std/nimprof`, in an entry module.
+  under `when compileOption("profiler"): import std/nimprof` in every entry module, library
+  umbrella and test entry alike, right after the pragmas. Then `--profiler:on` works with no
+  edit.
 - Use `when` for a configuration branch and a typedesc branch
   (`let g = when G is Grade: b.grade else: b.gradeAnti`). Never take a runtime branch on a
   distinction that is known statically.
