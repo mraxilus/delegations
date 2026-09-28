@@ -194,6 +194,15 @@ which is the entry of the tick itself, where asks are `ceil(ticks/5)`. It does n
 run, and 137 on the next, from identical code. Verified by a break on purpose: four axis presses in
 the window.
 
+**The tick check of the diagnostics tree counts the writes that repeat a row's text.** `writeText`
+exists to skip those writes, so a correct tick makes none, whatever the load. The check wants none,
+wants the same row elements after the ticks as before, and wants one write at least. Verified by a
+break on purpose: a `writeText` that writes on every call fails, with 153 of 210 writes repeated.
+
+**The same check does not bound how many rows move in one tick.** That counts the timing figures
+that changed in 200 ms, which moves with load and with what the page does. A bound of 20 on it read
+21 once, from code equal to `main` (repository issue 304).
+
 **Waits are conditions that the page reports, and not spans of clock.** Camera ease and settling
 after a click are `waitForFunction` over what the page says: `settleCamera`, `settleCount`,
 `settleSelection`, `settleDrawer`, `settleHelp`, `settleBranch` and `settleReading`. Pacing inside a
