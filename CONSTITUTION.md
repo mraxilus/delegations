@@ -253,6 +253,13 @@ for slot in 0 ..< scene.bound:  # bound, never ITEMS_MAX
    `Grade.high`), and never write a bare index. Where the landmark depends on the
    configuration, the alias resolves it, so that no caller branches.
 
+9. A name joined from one-letter symbols is an abbreviation too: `dx` is `delta_x`, and `aa` is
+   `first_squared`. An acronym stays only where a junior programmer knows it: SVG, HTML, CSS,
+   JSON, JS, URL, ID and DoF stay, and FNV does not. A path is a name, and follows this article:
+   `dependencies/`, `binaries/`, `simulation/`, and a test file is `test_<name>.nim`.
+10. A binding inside the block where a module runs as a program is a local of that block, and
+    takes the local case. A global never shares its word with a type (`DRAWING_SHOWN` beside
+    `Drawing`), because a host that compares names without case reads the two as one.
 ```nim
 BasisDigits                 # type
 constructMetricExomorphism  # callable

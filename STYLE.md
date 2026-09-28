@@ -11,6 +11,9 @@ wins. `EXAMPLES.md` holds longer worked examples, which both documents point int
 Map the callable ladder of the constitution onto `func → proc → iterator → template → macro`,
 and its binding ladder onto `const → let → var`. Escalate only on need.
 
+- `when isMainModule:` is the block that V.10 names, so its bindings are locals. Nim compares
+  an identifier by its first letter exactly, and the rest without case or underscore. So
+  `DRAWING` and `Drawing` are one name, and V.10 keeps them apart with a qualifier.
 - `func` is the default for a deterministic transformation of a value.
 - `proc` only for an effect beyond its parameters, or for randomness. A `func` may take a
   `var` parameter, because `strictFuncs` does not count a write to it as a side effect.
@@ -219,10 +222,12 @@ and its binding ladder onto `const → let → var`. Escalate only on need.
   include "../suites.nim"
   ```
 
-- A project with one configuration and many suite modules keeps them in `tests/suites/`. One
-  stub imports each of them, so the compiler reads the standard library once and not once for
-  each suite. That stub leaves out `-d:nimUnittestAbortOnError:on`, so that every failure
-  shows in one run. `curator/audit/tests/tsuites.nim` is the worked example.
+- A test file is `tests/test_<name>.nim` (V.9), and koch runs testament over those files. A
+  project with one configuration and many suite modules keeps them as
+  `tests/suites/test_<module>.nim`, one for each module. One stub imports each of them, so the
+  compiler reads the standard library once and not once for each suite. That stub leaves out
+  `-d:nimUnittestAbortOnError:on`, so that every failure shows in one run.
+  `curator/audit/tests/test_suites.nim` is the worked example.
 
 - Use `std/unittest` suites and `check`, with `randomize(0)`, and a preallocated sample pool
   that `lent` iterators serve:
