@@ -89,11 +89,17 @@ suite "Scene":
 
 
   test "unary operations ignore their second operand":
+    const OPERATIONS_UNARY_FLOOR = 13
+      ## Bound below how many operations law runs over: all thirteen unary ones catalogue holds.
+      ##   Guard that lets fewer through leaves law held over part of catalogue only.
+    var passed = 0
     for operation in Operation:
       if lut_arity_by_operation[operation] != Arity.One: continue
+      inc passed
       for i in 0 ..< SAMPLES:
         let (m, n, o) = (POINTS[i], LINES[i], PLANES[i])
         check applyOperation(operation, m, n) =~ applyOperation(operation, m, o)
+    check passed >= OPERATIONS_UNARY_FLOOR
 
 
   test "every operation names itself and is offered once":
