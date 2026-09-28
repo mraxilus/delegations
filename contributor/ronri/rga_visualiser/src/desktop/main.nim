@@ -293,20 +293,22 @@ var TIMINGS_FRAME_MILLISECONDS: array[FRAMES_TIMING_MAX, float32]
 # Scene revision camera's reach was last measured at, and reach itself; none before first.
 #   Reach is one placement per object, so it is measured on edit rather than per frame, and
 #   passed to each extent rather than kept in camera: `home` replaces camera value.
-var REVISION_REACH = none(int)
-var REACH_SCENE = 0.0
+var
+  REVISION_REACH = none(int)
+  REACH_SCENE = 0.0
 # Placing side for every live handle, held as browser holds it; see `bridge.ensurePlacement`.
 #   Filled on edit alone, beside `REACH_SCENE`, and read once per frame by `reachNearOf`.
 #   `assembleMeshes` still places as it emits: this holds no vertices and replaces no walk.
 #   Costs `OBJECTS_MAX` placements of fixed reservation, counted by `BYTES_MEMORY_TOTAL`.
-var PLACEMENTS: array[OBJECTS_MAX, Placement]
-var ORIGIN_RECORDS = Position(x: 0.0, y: 0.0, z: 0.0)
-  ## Point every record is stored from; see `camera.originHeld` and `mesh.clearMeshes`.
-  ##   One value for both mesh sets, because one transform draws them.
-var REACH_NEAR = 0.0
-  ## Reach to nearest drawn object ahead of eye; see `camera.scaleLocal`.
-  ##   Moves with camera as well as with scene, so it is read once for each frame rather
-  ##   than on edit.
+var
+  PLACEMENTS: array[OBJECTS_MAX, Placement]
+  ORIGIN_RECORDS = Position(x: 0.0, y: 0.0, z: 0.0)
+    ## Point every record is stored from; see `camera.originHeld` and `mesh.clearMeshes`.
+    ##   One value for both mesh sets, because one transform draws them.
+  REACH_NEAR = 0.0
+    ## Reach to nearest drawn object ahead of eye; see `camera.scaleLocal`.
+    ##   Moves with camera as well as with scene, so it is read once for each frame rather
+    ##   than on edit.
 
 
 
@@ -433,8 +435,9 @@ proc faceAt(name_environment, face: string): string =
   ##   open must not reach it (repository issue 93).
   ##   Says which face and what to install, since finding naming neither is one nobody acts
   ##   on.
-  let named = getEnv(name_environment)
-  let path = if named.len > 0: named else: getAppDir() / DIR_FACES / face
+  let
+    named = getEnv(name_environment)
+    path = if named.len > 0: named else: getAppDir() / DIR_FACES / face
   if fileExists(path): return path
   echo &"No face at `{path}`; set `{name_environment}`, or run `tools/build.nim assets`."
   ""
@@ -500,15 +503,17 @@ proc assembleMeshes(
   for handle, one in scene.pairs:
     if not one.isVisible or not isHorizonPlane(one.geometry) or handle in panel.selection:
       continue
-    let progress = animationProgress(now, one.born)
-    let tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
+    let
+      progress = animationProgress(now, one.born)
+      tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
     discard MESHES.addObject(scratch[0], one.geometry, tint, scale, progress, one.anchorOverride)
 
   for handle, one in scene.pairs:
     if not one.isVisible or isHorizonPlane(one.geometry) or handle in panel.selection:
       continue
-    let progress = animationProgress(now, one.born)
-    let tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
+    let
+      progress = animationProgress(now, one.born)
+      tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
     discard MESHES.addObject(
       scratch[0], one.geometry, tint, scale, progress, one.anchorOverride, bounds = bounds,
       radius = one.radius,
@@ -545,9 +550,10 @@ proc assembleMeshes(
   for position in 0 ..< panel.selection.len:
     let handle = panel.selection.at(position)
     if not scene.isAlive(handle) or not scene[handle].isVisible: continue
-    let one = scene[handle]
-    let progress = animationProgress(now, one.born)
-    let tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
+    let
+      one = scene[handle]
+      progress = animationProgress(now, one.born)
+      tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
     discard MESHES.addObject(
       scratch[0], one.geometry, tint, scale, progress, one.anchorOverride, bounds = bounds,
       radius = one.radius,
@@ -1571,8 +1577,9 @@ proc positionOverSky(
   let scale = camera.drawExtentFor(height, REACH_SCENE)
   for y in countup(STEP_SCAN, height - STEP_SCAN, STEP_SCAN):
     for x in countup(STEP_SCAN, width - STEP_SCAN, STEP_SCAN):
-      let at = ScreenPosition(x: float(x), y: float(y))
-      let handle = pickNearest(scene, camera, scale, view_projection, width, height, at)
+      let
+        at = ScreenPosition(x: float(x), y: float(y))
+        handle = pickNearest(scene, camera, scale, view_projection, width, height, at)
       if handle.isSome and scene.geometryOf(handle.get).isHorizonPlane: return some(at)
 
 
@@ -2106,8 +2113,9 @@ func fillSceneForBenchmark(scene: var Scene, now: float) =
   ##   `--timings` then measures heaviest load this scene reaches.
   ##   Positions walk helix, so no two are collinear and every join is well formed.
   ##   Own point buffer backs each join: earlier handles may hold demo's seeds.
-  var points: array[OBJECTS_MAX, Multivector]
-  var index = 0
+  var
+    points: array[OBJECTS_MAX, Multivector]
+    index = 0
   while not scene.isFull:
     let angle = float(index) * 0.7
     points[index] = toMultivector(

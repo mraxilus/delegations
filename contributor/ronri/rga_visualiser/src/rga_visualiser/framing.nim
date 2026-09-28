@@ -27,7 +27,7 @@
 import std/[math, options]
 
 import pga
-import ./[boundary, camera, tessellate, picking, scene, selection]
+import ./[boundary, camera, picking, scene, selection, tessellate]
 
 
 
@@ -251,20 +251,22 @@ func holdHorizon*(camera: var Camera; aim: CameraAim; width, height: int) =
   #   Parallel pair names no axis. Every axis square to sight turns it same way off,
   #   so camera's own across stands in: sight straight down onto ecliptic, its circle's
   #   normal, has whole bound to turn through, and nothing clamps it off pole.
-  let (sight, demanded) = (toMultivector(forward), toMultivector(toward))
-  let pencil = sight ∧ demanded
-  let axis = directionNormalHorizon(pencil).get(camera.frame.axis_right)
-  let cosine = innerOf(sight, demanded)
+  let
+    (sight, demanded) = (toMultivector(forward), toMultivector(toward))
+    pencil = sight ∧ demanded
+    axis = directionNormalHorizon(pencil).get(camera.frame.axis_right)
+    cosine = innerOf(sight, demanded)
   # Angle off inner product and pencil's bulk norm, which is its sine: `arccos` alone
   #   reads 2e-8 radians off parallel pair, twenty times `SLACK_FRAMED`.
-  let angle_now = arctan2(( |∙ pencil)[Basis.scalar], cosine)
-  let angle_held =
-    if aim.heading.isSome: half
-    # Circle's plane is what sight must come near, so target is quarter turn off normal,
-    #   on whichever side sight already stands.
-    else: (
-      if cosine >= 0.0: 0.5*PI - half else: 0.5*PI + half
-    )
+  let
+    angle_now = arctan2(( |∙ pencil)[Basis.scalar], cosine)
+    angle_held =
+      if aim.heading.isSome: half
+      # Circle's plane is what sight must come near, so target is quarter turn off normal,
+      #   on whichever side sight already stands.
+      else: (
+        if cosine >= 0.0: 0.5*PI - half else: 0.5*PI + half
+      )
   # Positive turn about sight crossed with what is demanded carries sight toward it, so
   #   overshoot is what is given back.
   camera.turnAboutEye(axis, angle_now - angle_held)
@@ -294,9 +296,10 @@ func holdFramed*(camera: var Camera; aim: CameraAim; width, height: int) =
     return
   let back = stepOutTo(camera.eye, centre, -camera.frame.forward, reach)
   camera.slideBy(wedge(back, toMultivector(-camera.frame.forward)))
-  let middle = if aim.centroid.isSome: aim.centroid.get else: centre
-  let (eye, frame) = camera.sight
-  let depth = depthAlong(eye, frame.forward, middle)
+  let
+    middle = if aim.centroid.isSome: aim.centroid.get else: centre
+    (eye, frame) = camera.sight
+    depth = depthAlong(eye, frame.forward, middle)
   if depth > 0.0: camera.repivotToDepth(depth)
 
 
@@ -370,8 +373,9 @@ func stanceApproaching*(
   ##   None where object is not ahead of eye, leaving caller `stanceFor`. Centring one
   ##   behind reader would slide camera back past it rather than turn, which is jump
   ##   nobody asked for; frame rule turns nothing and handles it by its own bound.
-  let (eye, frame) = camera.sight
-  let reach_now = distanceBetween(toMultivector(centre), toMultivector(eye))
+  let
+    (eye, frame) = camera.sight
+    reach_now = distanceBetween(toMultivector(centre), toMultivector(eye))
   if depthAlong(eye, frame.forward, centre) <= 1.0e-6: return
   var depth_end = min(reach_now, camera.distance)
   case shaped
@@ -413,8 +417,9 @@ func offerAim*(
   ##     ever, since group has to fit, which one object's reach cannot promise.
   # Take caller's extent, not second derivation.
   #   Building another here ran `algebraFilled` and `camera.frame`'s joins twice per frame.
-  let aim = aimFor(scene, picked, staged, scale)
-  let pick = pointer
+  let
+    aim = aimFor(scene, picked, staged, scale)
+    pick = pointer
   pointer = none(PointerPick)
   if aim.isNone:
     tween.release()
@@ -472,9 +477,10 @@ func offerAimAt*(
   ##   Empty scene and selection are never read: `previewStaging` names no operands, so
   ##   `watched` yields one object and stops. Empty scene's reach is zero.
   ##     Cost is one zeroed `Scene` per capture, storyboard's rather than frame loop's.
-  var alone: Scene
-  var pointer = none(PointerPick)
-  var held = camera
+  var
+    alone: Scene
+    pointer = none(PointerPick)
+    held = camera
   offerAim(
     tween, held, alone, Selection(), some(previewStaging(m, RADIUS_OBJECT_DEFAULT)),
     camera.drawExtentFor(height, 0.0), width, height, now, duration, pointer,

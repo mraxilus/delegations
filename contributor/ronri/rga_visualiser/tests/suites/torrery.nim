@@ -77,12 +77,14 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       for scale in SCALES_HELD:
         var scene = initScene()
         constructOrrery(scene, scale)
-        var tally: array[Kind, int]
-        var at_horizon: array[Kind, int]
+        var
+          tally: array[Kind, int]
+          at_horizon: array[Kind, int]
         for handle in 0 ..< scene.bound:
           if not scene.isAlive(handle): continue
-          let geometry = scene.geometryOf(handle)
-          let kind = kindOf(geometry)
+          let
+            geometry = scene.geometryOf(handle)
+            kind = kindOf(geometry)
           if kind.isNone: continue
           inc tally[kind.get]
           if isHorizon(geometry): inc at_horizon[kind.get]
@@ -125,13 +127,15 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       let scale = SCALES_HELD[^1]
       var scene = initScene()
       constructOrrery(scene, scale)
-      let placed = placesOf(scene)
-      let sol = placed[SOL[0].name]
-      let obliquity = degToRad(23.4392911)
-      var worst = 0.0
-      var worst_name = ""
-      var worst_turn = 0.0
-      var seen = 0
+      let
+        placed = placesOf(scene)
+        sol = placed[SOL[0].name]
+        obliquity = degToRad(23.4392911)
+      var
+        worst = 0.0
+        worst_name = ""
+        worst_turn = 0.0
+        seen = 0
       # Catalogue carries more stars than scene has room for, so what is checked is.
       #   every star that *was* placed -- and, below, that ones placed are nearest.
       for star in STARS:
@@ -197,9 +201,10 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       #   generated, so what is worth asserting is that generator's own claims survive:
       #   bound it queried to, order fill relies on, no star listed twice, and
       #   every planet range landing inside `neighbourhood.PLANETS` exactly once.
-      var names = initHashSet[string]()
-      var carried, planets_claimed = 0
-      var covered = newSeq[int](len(PLANETS))
+      var
+        names = initHashSet[string]()
+        carried, planets_claimed = 0
+        covered = newSeq[int](len(PLANETS))
       for star in STARS:
         check star.name notin names
         names.incl(star.name)
@@ -225,8 +230,9 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       #   copies `Multivector` -- case stopped finishing at all.
       var scene = initScene()
       constructOrrery(scene)
-      var planes: seq[Multivector]
-      var lines: seq[Multivector]
+      var
+        planes: seq[Multivector]
+        lines: seq[Multivector]
       for handle in 0 ..< scene.bound:
         if not scene.isAlive(handle): continue
         let geometry = scene.geometryOf(handle)
@@ -235,8 +241,9 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
         of Kind.Plane: planes.add(unitize(geometry))
         of Kind.Line: lines.add(geometry)
         of Kind.Point: discard
-      var worst = 0
-      var worst_label = ""
+      var
+        worst = 0
+        worst_label = ""
       for handle in 0 ..< scene.bound:
         if not scene.isAlive(handle): continue
         let point = scene.geometryOf(handle)
@@ -287,8 +294,9 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       #   ruled on, which is what makes ecliptic ground.
       var scene = initScene()
       constructOrrery(scene)
-      let placed = placesOf(scene)
-      let sol = placed["sol"]
+      let
+        placed = placesOf(scene)
+        sol = placed["sol"]
       for body in SOL:
         if body.role != Role.Planet: continue
         check isClose(norm(placed[body.name] - sol), body.distance)
@@ -380,8 +388,9 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       var bodies: array[Role, int]
       for handle in 0 ..< scene.bound:
         if not scene.isAlive(handle): continue
-        let label = toText(scene.labelAt(handle))
-        let role = roles.getOrDefault(label, Role.Derived)
+        let
+          label = toText(scene.labelAt(handle))
+          role = roles.getOrDefault(label, Role.Derived)
         check scene.inkAt(handle) == lut_role_to_ink[role]
         inc bodies[role]
       for role in [Role.Sun, Role.Planet, Role.Moon, Role.Derived]:
@@ -398,8 +407,9 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       for moon in MOONS: roles[moon.name] = Role.Moon
       for star in STARS: roles[star.name] = Role.Sun
       for planet in PLANETS: roles[planet.name] = Role.Planet
-      var suns, planets: seq[Multivector] = @[]
-      var lines: seq[string] = @[]
+      var
+        suns, planets: seq[Multivector] = @[]
+        lines: seq[string] = @[]
       for handle in 0 ..< scene.bound:
         if not scene.isAlive(handle): continue
         let
@@ -477,8 +487,9 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       #   `--demo` both call it. It used to live inline in bridge, where desktop
       #   could not reach it and nothing could check it, so camera half of preset
       #   was untested on either side.
-      var scene = initScene()
-      var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
+      var
+        scene = initScene()
+        camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
       # Bearing is left alone by preset, so it has to survive it.
       camera = camera.placed(stanceAround(camera.pivot, 19.0, Direction(x: 1, y: 3, z: 1)))
       let bearing = camera.azimuth

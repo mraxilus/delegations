@@ -53,8 +53,9 @@ suite "Motors":
     # Slide's bivector antisquares to zero, so series stops at two terms and `exp` is
     #   exact there. Same expression as turn: no branch, so no branch to get wrong.
     for i in 0 ..< COUNT_GENERAL:
-      let offset = PLACES[i]
-      let slide = exp((-0.5*offset.x).e23 + (-0.5*offset.y).e31 + (-0.5*offset.z).e12)
+      let
+        offset = PLACES[i]
+        slide = exp((-0.5*offset.x).e23 + (-0.5*offset.y).e31 + (-0.5*offset.z).e12)
       check slide[Basis.scalar] =~ 0.0
       for basis in [Basis.E41, Basis.E42, Basis.E43]: check slide[basis] =~ 0.0
       check slide[Basis.E1234] =~ 1.0
@@ -77,9 +78,10 @@ suite "Motors":
         else: -PI + TAU*float(i)/float(SAMPLES)
       let turn = turnAbout(LINES[i], 0.5*radians)
       check turn.isSome
-      let offset = PLACES[i]
-      let slide = exp((-0.5*offset.x).e23 + (-0.5*offset.y).e31 + (-0.5*offset.z).e12)
-      let screw = wedgeDotAnti(turn.get, slide)
+      let
+        offset = PLACES[i]
+        slide = exp((-0.5*offset.x).e23 + (-0.5*offset.y).e31 + (-0.5*offset.z).e12)
+        screw = wedgeDotAnti(turn.get, slide)
       check normWeight(screw)[Basis.scalarAnti] =~ 1.0
       check exp(log(screw)) =~ screw
 
@@ -117,7 +119,8 @@ suite "Motors":
     # `m.carried(a).carried(b)` is `m.carried(b ⟇ a)`: inner motor runs first.
     #   Order is worth pinning because both spellings compile and one is silently wrong.
     for i in 0 ..< COUNT_GENERAL:
-      let first = turnAbout(LINES[i], 0.4 + 0.1*float(i)).get
-      let second = turnAbout(LINES[(i + 1) mod COUNT_GENERAL], -0.9).get
+      let
+        first = turnAbout(LINES[i], 0.4 + 0.1*float(i)).get
+        second = turnAbout(LINES[(i + 1) mod COUNT_GENERAL], -0.9).get
       for m in [POINTS[i], LINES[i], PLANES[i]]:
         check m.carried(first).carried(second) =~ m.carried(wedgeDotAnti(second, first))

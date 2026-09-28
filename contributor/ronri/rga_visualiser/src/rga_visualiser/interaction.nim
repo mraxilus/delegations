@@ -31,7 +31,7 @@ import std/[math, options, strformat]
 
 # `pga` arrives through `projections`, which stands in for four it has withdrawn.
 import ./projections
-import ./[boundary, camera, format, tessellate, picking, scene, wording]
+import ./[boundary, camera, format, picking, scene, tessellate, wording]
 
 
 
@@ -743,8 +743,9 @@ proc dollyAt*(
       # Separation follows anchor's own depth, so frustum's scale tracks flight.
       #   Crossing as well as standing object: free flight has no orbit for pivot to
       #   anchor, so depth here is scale and nothing else.
-      let (eye, frame) = camera.sight
-      let depth = depthAlong(eye, frame.forward, anchor.get.at)
+      let
+        (eye, frame) = camera.sight
+        depth = depthAlong(eye, frame.forward, anchor.get.at)
       if depth > 0.0: camera.repivotToDepth(depth)
       return
     # Nothing under pointer: same ray carries eye, at camera's own scale, and separation
@@ -765,8 +766,9 @@ proc dollyAt*(
   camera.dollyToward(factor, anchor.get.at)
   if anchor.get.is_standing:
     # Depth from eye where it now stands, along sight direction zoom left unchanged.
-    let (eye, frame) = camera.sight
-    let depth = depthAlong(eye, frame.forward, anchor.get.at)
+    let
+      (eye, frame) = camera.sight
+      depth = depthAlong(eye, frame.forward, anchor.get.at)
     if depth > 0.0: camera.repivotToDepth(depth)
 
 

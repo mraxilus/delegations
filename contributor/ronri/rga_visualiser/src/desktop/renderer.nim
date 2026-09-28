@@ -1063,11 +1063,12 @@ proc drawMeshes*(
   ##     Nothing unselected is left to reject against, so selected object shows through
   ##     whatever stands before it; selected objects still reject one another by depth.
   # Matrix as float32 once, and eye about records' own origin; see `mesh.clearMeshes`.
-  let flat = view_projection.flattened
-  let eye = (
-    x: scale.eye.x - meshes.origin.x, y: scale.eye.y - meshes.origin.y,
-    z: scale.eye.z - meshes.origin.z,
-  )
+  let
+    flat = view_projection.flattened
+    eye = (
+      x: scale.eye.x - meshes.origin.x, y: scale.eye.y - meshes.origin.y,
+      z: scale.eye.z - meshes.origin.z,
+    )
   gl.useProgram(renderer.program_ribbon)
   gl.uniformMatrix4fv(
     renderer.location_ribbon_view_projection, 1, gl.FALSE, unsafeAddr flat[0]

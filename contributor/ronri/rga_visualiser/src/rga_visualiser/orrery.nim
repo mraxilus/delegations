@@ -331,8 +331,9 @@ func spanOfNormal(normal: Direction): (Direction, Direction) =
   ##   First lies along plane's ascending node on ecliptic, where plane climbs through
   ##   ground; second is normal turned onto it, so pair is right-handed about normal.
   ##   Plane lying flat has no node, and takes x axis.
-  let node = normalize(cross(Direction(x: 0, y: 0, z: 1), normal))
-  let first = node.get(Direction(x: 1, y: 0, z: 0))
+  let
+    node = normalize(cross(Direction(x: 0, y: 0, z: 1), normal))
+    first = node.get(Direction(x: 1, y: 0, z: 0))
   (first, cross(normal, first))
 
 
@@ -571,17 +572,19 @@ func constructSol(
     place_sol = sunOf(SYSTEM_SOL)
     (along, across) = spanOf(SYSTEM_SOL)
     sol = toMultivector(place_sol)
-  var placed: array[len(SOL), Multivector]
-  var places: array[len(SOL), Position]
+  var
+    placed: array[len(SOL), Multivector]
+    places: array[len(SOL), Position]
   for index, body in SOL:
     # Step phases by golden angle, so no two planets line up from opening camera.
     #   Earth's line then passes through none.
-    let angle = SYSTEM_SOL.spin + 2.4*float(index)
-    let place =
-      case body.role
-      of Role.Sun: place_sol
-      of Role.Planet: ringed(place_sol, along, across, body.distance, angle)
-      of Role.Moon, Role.Derived: place_sol # `SOL` holds sun and planets; see its check.
+    let
+      angle = SYSTEM_SOL.spin + 2.4*float(index)
+      place =
+        case body.role
+        of Role.Sun: place_sol
+        of Role.Planet: ringed(place_sol, along, across, body.distance, angle)
+        of Role.Moon, Role.Derived: place_sol # `SOL` holds sun and planets; see its check.
     places[index] = place
     placed[index] = toMultivector(place)
     scene.addObject(
@@ -594,9 +597,10 @@ func constructSol(
   #   node, where its direction from its planet would lie in ecliptic.
   var placement_moons: array[len(MOONS), Multivector]
   for index, moon in MOONS:
-    let (node, across_moon) = spanOfNormal(normalOfMoon(moon))
-    let place = ringed(places[moon.parent], node, across_moon, radiusOfMoon(moon),
-      SYSTEM_SOL.spin + 2.4*float(index))
+    let
+      (node, across_moon) = spanOfNormal(normalOfMoon(moon))
+      place = ringed(places[moon.parent], node, across_moon, radiusOfMoon(moon),
+        SYSTEM_SOL.spin + 2.4*float(index))
     placement_moons[index] = toMultivector(place)
     scene.addObject(
       placement_moons[index], moon.name, lut_role_to_ink[Role.Moon], now,

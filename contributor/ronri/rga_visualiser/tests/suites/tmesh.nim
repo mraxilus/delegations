@@ -373,8 +373,9 @@ suite "Mesh":
 
       MESHES.clearMeshes
       discard MESHES.addObject(SCRATCH, line, Ink.Jade.colour, SCALE_TEST)
-      let (_, far_first) = ribbonEnds(MESHES, 0)
-      let (_, far_second) = ribbonEnds(MESHES, 1)
+      let
+        (_, far_first) = ribbonEnds(MESHES, 0)
+        (_, far_second) = ribbonEnds(MESHES, 1)
       proc headOf(index: int): Position =
         let record = MESHES.ribbons.records[index]
         Position(x: float(record.head_x), y: float(record.head_y), z: float(record.head_z))
@@ -403,8 +404,9 @@ suite "Mesh":
       tangent = 0.443
     # Ray half way down view meets plane 1.2e-5 ahead, under near plane at 1/400 of 0.13:
     #   band fan's near cut lost, and ray finds.
-    let down = rayThroughView(0.0, -0.5, right, up, forward, tangent, 1.0)
-    let hit = hitDiscAlong(record, eye, down)
+    let
+      down = rayThroughView(0.0, -0.5, right, up, forward, tangent, 1.0)
+      hit = hitDiscAlong(record, eye, down)
     check hit.isSome
     check isNear(hit.get, height/(0.5*tangent))
     check hit.get < 0.13*FACTOR_CLIP_NEAR
@@ -788,11 +790,12 @@ suite "Mesh":
     MESHES.clearMeshes
     var built = 0
     for i in 0 ..< OBJECTS_MAX:
-      let angle = 0.7*float(i)
-      let plane =
-        toMultivector(Position(x: 6.0*cos(angle), y: 6.0*sin(angle), z: 0.15*float(i))) ∧
-        toMultivector(Position(x: 6.0*cos(angle + 0.4), y: 1.0, z: 2.0 + 0.1*float(i))) ∧
-        toMultivector(Position(x: 1.0, y: 6.0*sin(angle + 0.9), z: -1.0))
+      let
+        angle = 0.7*float(i)
+        plane =
+          toMultivector(Position(x: 6.0*cos(angle), y: 6.0*sin(angle), z: 0.15*float(i))) ∧
+          toMultivector(Position(x: 6.0*cos(angle + 0.4), y: 1.0, z: 2.0 + 0.1*float(i))) ∧
+          toMultivector(Position(x: 1.0, y: 6.0*sin(angle + 0.9), z: -1.0))
       if MESHES.addObject(SCRATCH, plane, Ink.Olive.colour, SCALE_TEST) == Outcome.Finite:
         inc built
     check built == OBJECTS_MAX
@@ -1105,8 +1108,9 @@ suite "Mesh":
     MESHES.addLattice(SCRATCH, scale_near.extentFurniture, scale_near, 1.0.e321)
     check MESHES.ribbons.count == 0
     # Picked visible plane alone is ruled: point, and plane hidden, draw no lattice.
-    var scene = initScene()
-    var picked: Selection
+    var
+      scene = initScene()
+      picked: Selection
     picked.toggle(scene.addObject(toMultivector(through), "p", Ink.Rose))
     picked.toggle(scene.addObject(plane, "shown", Ink.Rose))
     let hidden = scene.addObject(groundPlane(), "hidden", Ink.Rose)

@@ -1238,8 +1238,9 @@ proc nimSetCameraMotorAt(basis: cint, value: cfloat): bool {.exportc.} =
 
 proc readingText(write: proc(line: var openArray[char], cursor: var int)): cstring =
   ## Run one reading's appender into fresh line, and hand back text it wrote.
-  var line: array[32, char]
-  var cursor = 0
+  var
+    line: array[32, char]
+    cursor = 0
   write(line, cursor)
   finishChars(line, cursor)
   cstring(toText(line))
@@ -2050,8 +2051,9 @@ proc nimSelectionPulse(
   ##   Mirrors `visualiser.drawSelectionMarker`.
   if not SCENE.isAlive(int(handle)): return
   ensureViewOverlay(int(width), int(height))
-  let travel = CLOCK_PULSE.travelAt(int(handle))
-  let at = int(handle) ## Handle as scene indexes it, read once for every reader below.
+  let
+    travel = CLOCK_PULSE.travelAt(int(handle))
+    at = int(handle) ## Handle as scene indexes it, read once for every reader below.
   var held = (ref Marker)(nil)
   if MARKER_SHAPED.isSome:
     let stored = MARKER_SHAPED.get
@@ -2145,11 +2147,12 @@ proc nimSceneAddRaw(
   if carried.isNone: return SLOT_NONE
   # Take how many scene holds as this object's position in file.
   #   Scene was cleared before first of these.
-  let born = bornReplaying(SCENE.len, int(count_total), float(now))
-  let handle = SCENE.addObject(
-    carried.get.geometry, carried.get.label, Ink(carried.get.ink_ordinal), born,
-    radius = carried.get.radius,
-  )
+  let
+    born = bornReplaying(SCENE.len, int(count_total), float(now))
+    handle = SCENE.addObject(
+      carried.get.geometry, carried.get.label, Ink(carried.get.ink_ordinal), born,
+      radius = carried.get.radius,
+    )
   SCENE.setVisible(handle, carried.get.is_visible)
   # Stamp rather than leave alone: handle could hold stale reading from earlier occupant.
   stampBorn(handle, born)
@@ -2385,14 +2388,15 @@ proc nimBuildFrame(
   #   Everything `drawExtentFor` reads, and two toggles: frame whose settings match is
   #   drawing same vertices and may keep them.
   #   Compared exactly: question is "did anything move at all".
-  let settings_furniture = settingsFurnitureFor(
-    CAMERA, int(height_pixels), REACH_SCENE, is_axes_shown, is_grid_shown, SCENE.revision,
-    SELECTION.revision,
-  )
-  let is_furniture_held =
-    SETTINGS_FURNITURE_HELD.isSome and SETTINGS_FURNITURE_HELD.get == settings_furniture
-  let ms_after_camera = performanceNow()
-  let ms_before_furniture = ms_after_camera
+  let
+    settings_furniture = settingsFurnitureFor(
+      CAMERA, int(height_pixels), REACH_SCENE, is_axes_shown, is_grid_shown, SCENE.revision,
+      SELECTION.revision,
+    )
+    is_furniture_held =
+      SETTINGS_FURNITURE_HELD.isSome and SETTINGS_FURNITURE_HELD.get == settings_furniture
+    ms_after_camera = performanceNow()
+    ms_before_furniture = ms_after_camera
   var
     ms_grid = 0.0
     ms_axes = 0.0
@@ -2436,8 +2440,9 @@ proc nimBuildFrame(
 
   # Declare tally out here because frame reports it either way.
   #   On held frame times are zero and counts are last frame's, still what scene holds.
-  var cost: SceneCost
-  var ms_after_scene = ms_after_furniture
+  var
+    cost: SceneCost
+    ms_after_scene = ms_after_furniture
   if is_scene_held:
     cost.count_points = COUNTS_SCENE.count_points
     cost.count_lines = COUNTS_SCENE.count_lines
@@ -2546,8 +2551,9 @@ proc nimBuildFrame(
 
   # Flatten into locals rather than in constructor.
   #   Pack phase then has start and end clock can bracket.
-  let ms_after_matrix = performanceNow()
-  let ms_before_flatten = ms_after_matrix
+  let
+    ms_after_matrix = performanceNow()
+    ms_before_flatten = ms_after_matrix
   # Hold flatten with tessellation.
   #   Records did not change, so flat buffers already hold exactly what rerun would
   #   write; browser scripts skips uploads on same flag.

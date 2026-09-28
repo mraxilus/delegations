@@ -36,7 +36,7 @@
 import std/[math, options]
 
 import pga
-import ./[boundary, camera, euclid, tessellate, scene]
+import ./[boundary, camera, euclid, scene, tessellate]
 
 
 
@@ -350,8 +350,9 @@ func rayPlaneHit(
   ##     every pixel of its disc.
   ##     `position` divides by signed weight and `toMultivector` restates answer at
   ##     weight one.
-  let met = wedgeAnti(ray, plane)
-  let where = position(met)
+  let
+    met = wedgeAnti(ray, plane)
+    where = position(met)
   if where.isNone: return
   let hit = toMultivector(where.get)
 
@@ -507,13 +508,15 @@ proc pickWalk(
       #   Neither builds anything per point; see `depthAlongSight`.
       let depth = depthAlongSight(view_projection, place.at)
       if depth <= 1.0e-6: continue # Behind eye; `isInFront`'s test.
-      let distance = pixelsFromCursor(view_projection, width, height, place.at, cursor)
-      let radius_drawn = radiusPixelsAtDepth(scene.radiusAt(handle), depth, scale.scale)
-      let radius_pick = max(RADIUS_PICK_POINT, radius_drawn)
+      let
+        distance = pixelsFromCursor(view_projection, width, height, place.at, cursor)
+        radius_drawn = radiusPixelsAtDepth(scene.radiusAt(handle), depth, scale.scale)
+        radius_pick = max(RADIUS_PICK_POINT, radius_drawn)
       if distance > max(RADIUS_CROWD_TOUCH, radius_pick): continue
       # Project only what is within reach, which is few; see `pixelsFromCursor`.
-      let at = projectToScreen(view_projection, width, height, place.at)
-      let is_under = distance <= radius_drawn
+      let
+        at = projectToScreen(view_projection, width, height, place.at)
+        is_under = distance <= radius_drawn
       if is_under: hiders.add(Hider(depth: depth, x: at.x, y: at.y, radius: radius_drawn))
       # Behind body wider than fingertip: neither winner nor rival.
       if hiders_known.coverOf(depth, at) >= RADIUS_PICK_POINT: continue
@@ -550,11 +553,12 @@ proc pickWalk(
         distance_nearest = Inf
         previous = none(ScreenPosition)
       for i in 0 .. SEGMENTS_CIRCLE_HORIZON:
-        let entry = UNIT_CIRCLE_RIM[i mod SEGMENTS_CIRCLE_HORIZON]
-        let here = projectToScreen(
-          view_projection, width, height,
-          onCircleAt(scale.eye, arm_first, arm_second, entry.cos_angle, entry.sin_angle),
-        )
+        let
+          entry = UNIT_CIRCLE_RIM[i mod SEGMENTS_CIRCLE_HORIZON]
+          here = projectToScreen(
+            view_projection, width, height,
+            onCircleAt(scale.eye, arm_first, arm_second, entry.cos_angle, entry.sin_angle),
+          )
         if here.isInFront and previous.isSome:
           distance_nearest = min(
             distance_nearest, distanceToSegment(cursor, previous.get, here)
@@ -869,12 +873,13 @@ func isRingWithinFrame(
     arm_first = wedge(radius, toMultivector(axis_first))
     arm_second = wedge(radius, toMultivector(axis_second))
   for i in 0 ..< SEGMENTS_CIRCLE_HORIZON:
-    let turn = (2.0*PI*float(i))/float(SEGMENTS_CIRCLE_HORIZON)
-    let here = projectToScreen(
-      view_projection, width, height,
-      pointFrom(add(centre_point,
-        add(wedge(cos(turn), arm_first), wedge(sin(turn), arm_second)))),
-    )
+    let
+      turn = (2.0*PI*float(i))/float(SEGMENTS_CIRCLE_HORIZON)
+      here = projectToScreen(
+        view_projection, width, height,
+        pointFrom(add(centre_point,
+          add(wedge(cos(turn), arm_first), wedge(sin(turn), arm_second)))),
+      )
     if not isWithinFrame(here, width, height, INSET_RIM_SHOWN): return false
   true
 

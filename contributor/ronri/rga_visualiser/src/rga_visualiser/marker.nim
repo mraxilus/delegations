@@ -39,7 +39,7 @@
 import std/[math, options, strformat]
 
 import pga
-import ./[boundary, camera, tessellate, picking]
+import ./[boundary, camera, picking, tessellate]
 
 
 
@@ -863,8 +863,9 @@ func awayFromScreen*(point, first, second: ScreenPosition): float =
   ##   projects to straight screen line.
   ##   Never distance between two rails' drawn endpoints: `fractionLeavingView` cuts each
   ##   at own fraction, so those measure nothing.
-  let (dx, dy) = (second.x - first.x, second.y - first.y)
-  let length = hypot(dx, dy)
+  let
+    (dx, dy) = (second.x - first.x, second.y - first.y)
+    length = hypot(dx, dy)
   if length <= 0.0: return hypot(point.x - first.x, point.y - first.y)
   abs((point.x - first.x)*dy - (point.y - first.y)*dx)/length
 
@@ -1150,8 +1151,9 @@ proc markerLoop(
     axes = frame(geometry)
   if anchor.isNone or axes.isNone: return
 
-  let radius_loop = progress*radiusMarkerLoop(anchor.get, scale, placement, height, clearance)
-  let positions = positionsMarkerLoop(anchor.get, axes.get, radius_loop)
+  let
+    radius_loop = progress*radiusMarkerLoop(anchor.get, scale, placement, height, clearance)
+    positions = positionsMarkerLoop(anchor.get, axes.get, radius_loop)
   var
     ring: array[SEGMENTS_MARKER_LOOP, ScreenPosition]
     are_in_front: array[SEGMENTS_MARKER_LOOP, bool]

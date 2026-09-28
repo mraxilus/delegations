@@ -247,8 +247,9 @@ const
     ##   `const`, so `help.nim` can build catalogue tab from it at compile time.
     var lut: array[Operation, tuple[symbols, name: string]]
     for operation in Operation:
-      let full = lut_operation_to_notation[operation]
-      let cutoff = full.find("  ")
+      let
+        full = lut_operation_to_notation[operation]
+        cutoff = full.find("  ")
       lut[operation] =
         if cutoff >= 0: (symbols: full[0 ..< cutoff], name: full[cutoff + 2 .. ^1].strip())
         else: (symbols: full, name: "")
@@ -337,11 +338,12 @@ func notationSubstituted*(operation: Operation; name_first, name_second: string)
     OPERAND_SECOND = "𝐧"
   var tokens = notationSymbolic(operation).split(' ')
   for i in 0 ..< tokens.len:
-    let token = tokens[i]
-    let (placeholder, name) =
-      if OPERAND_FIRST in token: (OPERAND_FIRST, name_first)
-      elif OPERAND_SECOND in token: (OPERAND_SECOND, name_second)
-      else: continue
+    let
+      token = tokens[i]
+      (placeholder, name) =
+        if OPERAND_FIRST in token: (OPERAND_FIRST, name_first)
+        elif OPERAND_SECOND in token: (OPERAND_SECOND, name_second)
+        else: continue
     let
       at = token.find(placeholder)
       before = token[0 ..< at]

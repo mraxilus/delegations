@@ -353,8 +353,9 @@ suite "Scene":
       discard scene.addObject(POINTS[i], "p" & $i, inkCycled(i))
     scene.removeObject(4)
     scene.removeObject(1)
-    let handle_first = scene.addObject(POINTS[6], "seventh", Ink.Rose)  # lands in handle 1
-    let handle_second = scene.addObject(POINTS[7], "eighth", Ink.Rose)  # lands in handle 4
+    let
+      handle_first = scene.addObject(POINTS[6], "seventh", Ink.Rose)  # lands in handle 1
+      handle_second = scene.addObject(POINTS[7], "eighth", Ink.Rose)  # lands in handle 4
     check handle_first == 1
     check handle_second == 4
 
@@ -715,8 +716,9 @@ suite "Scene":
       #   format is browser scripts, which hands `DataView` explicit `true` at every call and
       #   cannot be asked what desktop felt like doing. Pinning layout here is what
       #   keeps two from drifting apart on host that is not little-endian.
-      var scene = initScene()
-      var geometry: Multivector
+      var
+        scene = initScene()
+        geometry: Multivector
       geometry[Basis.low] = 2.0 # 0x4000000000000000, whose bytes are unambiguous either way
       discard scene.addObject(geometry, "e", Ink.Rose)
       let path = getTempDir() / "visualiser_suite_scene_endian.rgascene"
@@ -740,8 +742,9 @@ suite "Scene":
 
 
     test "empty scene round-trips":
-      let original = initScene()
-      let path = getTempDir() / "visualiser_suite_scene_empty.rgascene"
+      let
+        original = initScene()
+        path = getTempDir() / "visualiser_suite_scene_empty.rgascene"
       check saveScene(original, path).contains("Saved 0")
       defer: removeFile(path)
 
@@ -782,8 +785,9 @@ suite "Scene":
       ##   its own writing spelled backwards. Ink is taken as raw ordinal for same
       ##   reason -- old file's ordinals name enum that is gone.
       result = MAGIC_SCENE & char(version) & char(ord(Basis.high) + 1)
-      var count = uint32(len(saved))
-      var count_bytes = newString(4)
+      var
+        count = uint32(len(saved))
+        count_bytes = newString(4)
       littleEndian32(addr count_bytes[0], addr count)
       result &= count_bytes
       for (ordinal, is_visible, label, geometry) in saved:

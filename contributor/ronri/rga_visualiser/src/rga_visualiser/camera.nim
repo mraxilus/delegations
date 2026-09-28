@@ -281,8 +281,9 @@ func initMatrixProjection*(degrees_field_of_view, aspect, distance_near: float):
 func initMatrixView*(eye: Position, frame: FrameCamera): Matrix4 =
   ## Construct transform carrying world into camera's own frame.
   ##   Rows hold camera axes, so transform is inverse of camera's stance.
-  let (right, up, forward) = (frame.axis_right, frame.axis_up, frame.forward)
-  let offset = eye - Position(x: 0, y: 0, z: 0)
+  let
+    (right, up, forward) = (frame.axis_right, frame.axis_up, frame.forward)
+    offset = eye - Position(x: 0, y: 0, z: 0)
   result.elements = [
     right.x, up.x, -forward.x, 0.0,
     right.y, up.y, -forward.y, 0.0,
@@ -324,10 +325,11 @@ func motorFacing*(eye, pivot: Position): Motor =
     rise = innerOf(heading, toMultivector(UP_WORLD))
     slid = motorSliding(subtract(toMultivector(eye), origin))
   # Reference forward yaws to bearing `atan2(-across, ahead)`, and pitches up by `rise`.
-  let turn_yaw = turnAbout(origin ∧ toMultivector(UP_WORLD), arctan2(-across, ahead))
-  let turn_pitch = turnAbout(
-    origin ∧ toMultivector(RIGHT_REFERENCE), arctan2(rise, sqrt(ahead*ahead + across*across))
-  )
+  let
+    turn_yaw = turnAbout(origin ∧ toMultivector(UP_WORLD), arctan2(-across, ahead))
+    turn_pitch = turnAbout(
+      origin ∧ toMultivector(RIGHT_REFERENCE), arctan2(rise, sqrt(ahead*ahead + across*across))
+    )
   # Fall back to slide alone where either axis carries no direction.
   #   Cannot happen: axis is join of point with direction, and `turnAbout` refuses only
   #   line with none.
@@ -404,8 +406,9 @@ func distanceFar*(camera: Camera, reach_scene: float): float =
   ##     Caller's rather than camera's: every path replacing camera value dropped field
   ##     stamped on it, and far clip then cut scene away.
   ##   Ratio to near is unbounded; `depthOf` is what makes that affordable.
-  let eye = camera.eye
-  let away = sqrt(eye.x*eye.x + eye.y*eye.y + eye.z*eye.z)
+  let
+    eye = camera.eye
+    away = sqrt(eye.x*eye.x + eye.y*eye.y + eye.z*eye.z)
   max(camera.scaleLocal*FACTOR_CLIP_FAR, away + reach_scene*MARGIN_REACH_FAR)
 
 
@@ -497,8 +500,9 @@ func sight*(camera: Camera): (Position, FrameCamera) =
   ## Read eye and frame together, off one lift of motor and one antireverse.
   ##   Caller wanting both reads this rather than `eye` and `frame`, which lift motor and
   ##   take its antireverse once each. Per event on finger's and mouse's turn.
-  let motion = toMultivector(camera.motor)
-  let motion_reversed = ~∘ motion
+  let
+    motion = toMultivector(camera.motor)
+    motion_reversed = ~∘ motion
   (eyeCarried(motion, motion_reversed), frameCarried(motion, motion_reversed))
 
 
@@ -506,11 +510,12 @@ func pivot*(camera: Camera): Position =
   ## Place point orbit turns about, on sight line at `distance` from eye.
   ##   Derived where it was stored before, so dolly cannot leave it stale.
   ##   Carries eye and forward alone: other two axes do not place it.
-  let motion = toMultivector(camera.motor)
-  let motion_reversed = ~∘ motion
-  let (eye, forward) = (
-    eyeCarried(motion, motion_reversed), borne(motion, motion_reversed, FORWARD_REFERENCE)
-  )
+  let
+    motion = toMultivector(camera.motor)
+    motion_reversed = ~∘ motion
+    (eye, forward) = (
+      eyeCarried(motion, motion_reversed), borne(motion, motion_reversed, FORWARD_REFERENCE)
+    )
   Position(
     x: eye.x + camera.depth_pivot*forward.x,
     y: eye.y + camera.depth_pivot*forward.y,
@@ -529,8 +534,9 @@ func depthAlong*(eye: Position; forward: Direction; place: Position): float =
 func azimuthElevationFor(heading: Direction): (float, float) =
   ## Read orbit angles of unit `heading`: bearing about world up, and rise above horizon.
   ##   Readings alone, for panel; nothing names stance by them.
-  let elevation = arcsin(clamp(-heading.z, -1.0, 1.0))
-  let azimuth = arctan2(-heading.y, -heading.x)
+  let
+    elevation = arcsin(clamp(-heading.z, -1.0, 1.0))
+    azimuth = arctan2(-heading.y, -heading.x)
   (azimuth, elevation)
 
 
@@ -561,8 +567,9 @@ func turnedAboutPivot(camera: Camera; pivot: Position; along: Direction, radians
   ##   orbit rather than look.
   ##   Composed on left, so angle is read in world rather than in reference stance.
   ##   Pivot comes from caller, which has read it off this same stance with frame it needs.
-  let axis = toMultivector(pivot) ∧ toMultivector(along)
-  let turn = turnAbout(axis, radians)
+  let
+    axis = toMultivector(pivot) ∧ toMultivector(along)
+    turn = turnAbout(axis, radians)
   if turn.isNone: return camera.motor
   motorOf(wedgeDotAnti(turn.get, toMultivector(camera.motor)))
 
@@ -664,8 +671,9 @@ func turnedAboutEye(camera: Camera; along: Direction, radians: float): Motor =
   ##   Composed on left, so angle is read in world rather than in reference stance.
   ##   Falls back to stance standing where direction is weightless, which carried axis
   ##   never is.
-  let axis = toMultivector(camera.eye) ∧ toMultivector(along)
-  let turn = turnAbout(axis, radians)
+  let
+    axis = toMultivector(camera.eye) ∧ toMultivector(along)
+    turn = turnAbout(axis, radians)
   if turn.isNone: return camera.motor
   motorOf(wedgeDotAnti(turn.get, toMultivector(camera.motor)))
 
@@ -1031,9 +1039,10 @@ func viewBoundsFor*(camera: Camera; scale: DrawExtent; aspect, reach_scene: floa
   ##   so smallest disc straddling edge is still emitted whatever GPU does with centre
   ##   just outside; point's own radius is added per point by `isPointInView`.
   ##   `aspect` is framebuffer's width over height, which `drawExtentFor` never needs.
-  let eye = camera.eye
-  let frame = camera.frame
-  let margin = (0.5*float(DIAMETER_POINT_LEAST) + 1.0)*scale.scale.radiansPerPixel
+  let
+    eye = camera.eye
+    frame = camera.frame
+    margin = (0.5*float(DIAMETER_POINT_LEAST) + 1.0)*scale.scale.radiansPerPixel
   ViewBounds(
     eye: eye,
     forward: frame.forward,

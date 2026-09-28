@@ -24,7 +24,7 @@
 import std/strformat
 
 import pga
-import ./[boundary, tessellate, scene]
+import ./[boundary, scene, tessellate]
 
 
 

@@ -35,8 +35,9 @@ when not defined(js):
 
     test "chunk lengths and checksums agree end to end":
       const (WIDTH, HEIGHT) = (16, 9)
-      var pixels = newSeq[uint8](WIDTH*HEIGHT*3)
-      var test_arena = initArena(buffer_arena)
+      var
+        pixels = newSeq[uint8](WIDTH*HEIGHT*3)
+        test_arena = initArena(buffer_arena)
       let path = getTempDir() / "visualiser_suite_chunks.png"
       writePng(test_arena, path, WIDTH, HEIGHT, pixels)
       defer: removeFile(path)
@@ -61,8 +62,9 @@ when not defined(js):
 
     test "written file carries the size and frame count it was given":
       const (WIDTH, HEIGHT) = (12, 8)
-      var frames = newSeq[uint8](3*WIDTH*HEIGHT*3)
-      var test_arena = initArena(buffer_arena)
+      var
+        frames = newSeq[uint8](3*WIDTH*HEIGHT*3)
+        test_arena = initArena(buffer_arena)
       let path = getTempDir() / "visualiser_suite.gif"
       writeGif(test_arena, path, WIDTH, HEIGHT, frames, 3, 8)
       defer: removeFile(path)

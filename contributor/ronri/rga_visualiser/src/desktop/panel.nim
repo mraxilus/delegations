@@ -534,8 +534,9 @@ proc layoutObjectButtons(
     if not row.is_open:
       beginSession(panel, scene, row.handle)
     else:
-      let session = panel.session.get
-      let geometry = session.geometry
+      let
+        session = panel.session.get
+        geometry = session.geometry
       if row.isPending:
         let handle_added = scene.addObject(
           geometry, toText(session.label), Ink(session.index_ink), now,
@@ -823,8 +824,9 @@ proc layoutApply*(
 
   adoptSelectionAsOperands(panel, handles, count)
 
-  let arity_wanted = Arity(panel.index_arity)
-  let (notations, operations, count_offered) = offerOperationsOfArity(arity_wanted)
+  let
+    arity_wanted = Arity(panel.index_arity)
+    (notations, operations, count_offered) = offerOperationsOfArity(arity_wanted)
 
   # Offer arity as segmented control rather than dropdown.
   #   Exactly two choices, both worth seeing, one click to switch; matches browser's
@@ -842,8 +844,9 @@ proc layoutApply*(
       # Land on whatever was last applied at arity switched to, rather than head of list.
       #   Filtered list is indexed per arity.
       panel.index_operation = 0
-      let (_, offered, count) = offerOperationsOfArity(arity)
-      let wanted = panel.operations.lastOf(arity)
+      let
+        (_, offered, count) = offerOperationsOfArity(arity)
+        wanted = panel.operations.lastOf(arity)
       for position in 0 ..< count:
         if offered[position] == wanted:
           panel.index_operation = cint(position)
@@ -909,8 +912,9 @@ proc layoutView*(panel: var Panel, camera: var Camera, speed: float) =
   gui.tooltip(wordingText(TipViewMotor))
   # Changed coefficient alone is written into live motor: fields hold `cfloat`, and
   #   writing all sixteen back would round fifteen nobody touched.
-  var typed = toMultivector(camera.motor)
-  var staged: array[Basis, cfloat]
+  var
+    typed = toMultivector(camera.motor)
+    staged: array[Basis, cfloat]
   for b in Basis: staged[b] = cfloat(typed[b])
   let changed = layoutCoefficientGrid(staged)
   if changed.isSome:
@@ -1264,9 +1268,10 @@ proc layoutSelectionMenu*(
     ]
   # Hang pointer-placed menu from its top-left corner, anchored one from bottom middle.
   #   Anchored menu stands above object; pointer-placed one beside pointer.
-  let is_by_pointer = panel.offset_menu_selection.isSome or panel.corner_menu_pointer.isSome
-  let (pivot_x, pivot_y) = if is_by_pointer: (0.0'f32, 0.0'f32) else: (0.5'f32, 1.0'f32)
-  let count = panel.selection.len
+  let
+    is_by_pointer = panel.offset_menu_selection.isSome or panel.corner_menu_pointer.isSome
+    (pivot_x, pivot_y) = if is_by_pointer: (0.0'f32, 0.0'f32) else: (0.5'f32, 1.0'f32)
+    count = panel.selection.len
   var is_line_started = false # Whether anything is on row yet; first button placed then
     # does not ask for `sameLine` with nothing to continue.
   if gui.windowBeginPinned(

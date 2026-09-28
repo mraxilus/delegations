@@ -11,8 +11,9 @@ when not defined(js):
   suite "Arena Swap":
     # Two blocks big enough to tell apart by what is written into them, and small enough.
     #   that filling one is test rather than wait.
-    var backing_first: array[512, byte]
-    var backing_second: array[512, byte]
+    var
+      backing_first: array[512, byte]
+      backing_second: array[512, byte]
 
     test "a frame carves from one block while the other holds the frame before it":
       # Pair's whole promise: what this frame writes is still readable next frame.

@@ -148,8 +148,9 @@ const lut_help_entries* = block:
   ##   once in order, so split path renders as two tabs of same name.
   ##   Every cell is `wording`'s key, or composed by `wording`'s func from one; row whose
   ##   action names button or key composes it, so button's name is `interaction`'s alone.
-  var lut: array[41 + COUNT_OPERATION, HelpEntry]
-  var count = 0
+  var
+    lut: array[41 + COUNT_OPERATION, HelpEntry]
+    count = 0
   proc add(path: HelpPath; action: string; outcome: Wording; is_touch = false) =
     lut[count] = HelpEntry(
       path: path,
@@ -284,8 +285,9 @@ func countOf*(path: HelpPath): int =
 
 static:
   # Check two properties front-ends rely on and neither can check for itself.
-  var seen: set[HelpPath]
-  var path_last = none(HelpPath)
+  var
+    seen: set[HelpPath]
+    path_last = none(HelpPath)
   for entry in lut_help_entries:
     if path_last != some(entry.path):
       doAssert entry.path notin seen,
