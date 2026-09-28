@@ -1065,7 +1065,7 @@ crossed between them.
 Verified by `trigid.nim`. A free couple at rest hang every arm near plumb, elbow near straight, and
 untwisted. No arm is within its own thickness of the other's. Red first.
 
-The shoulder spring of a free arm is five hertz (`HANG_HZ`, assumed). It stands in for the weight
+The shoulder spring of a free arm is five hertz (`HANG_HERTZ`, assumed). It stands in for the weight
 that holds a hanging arm plumb. That is about seventeen newton metres per radian, for five kilograms
 of arm at a third of a metre.
 
@@ -1116,8 +1116,8 @@ two hinges in series are the universal joint that the engine has no one joint fo
 
 Each swing has its clinical range: 25 degrees fore and aft, and 40 up and 10 down, from Kapandji
 (`Rig.collar`). The eases are 10 and 5 to 10, and they are assumed. It is sprung to where tape puts
-the shoulder at 4.5 hertz (`COLLAR_HZ`), which is about twenty newton metres per radian. The pull of
-one arm then rolls a shoulder half way to its ease, and costs from there. That is assumed. It is
+the shoulder at 4.5 hertz (`COLLAR_HERTZ`), which is about twenty newton metres per radian. The pull
+of one arm then rolls a shoulder half way to its ease, and costs from there. That is assumed. It is
 turned back inside its ease at 40 newton metres per radian (`COLLAR_LEAN`), which is also assumed.
 
 A girdle was a weld on a linear spring with a rope at five centimetres, which is a scapula hanging
@@ -1320,8 +1320,8 @@ is one question whichever section draws it, A16 being C5 and A17 C3, red first.
 
 The questions are answered on every core at once. Each worker lists the questions for itself and
 builds its own worlds. The engine keeps its worlds in one table that it neither locks nor guards, so
-to make and destroy them is locked in `sim/rigid` (`worlds`). Unlocked, two threads took one slot
-for two worlds, and the verb died of an illegal instruction inside the engine every other run.
+to make and destroy them is locked in `sim/rigid` (`LOCK_WORLDS`). Unlocked, two threads took one
+slot for two worlds, and the verb died of an illegal instruction inside the engine every other run.
 
 Every cell of the reference carries the tag of the sim beside that of the Architect. It reads *not
 modelled* where the sim reaches no pose. It reads *unconfirmed* where the sim reaches one that the
@@ -1808,6 +1808,35 @@ Declared unmet, so the Style row above stays true (Article VIII.1):
 - VII.1: readings of emitted code exist for the whole-cloth port only. The validator and the viewer
   were written before the rule, and their binding shapes are unread. Cost: a copy in a hot path may
   hide there.
+
+## Form of the source
+
+**The source follows the charter of #257, rule by rule.** Every global is in SCREAMING_SNAKE_CASE,
+and each mutable one says why it is global. Every conversion is a prefix call, no name coins an
+abbreviation, and every routine has a doc. Each module declares its types in one section, before its
+routines. Verified by the audit of #302, which counted 397 sites against 16 rules. A script for
+each rule found every site of it.
+
+The Architect ruled on three points. `Vec`, `Pos` and `Quat` are jargon, and the engine binding
+keeps the names of its C library. A lookup table at module level is in SCREAMING_SNAKE_CASE, as V.1
+says, and not in the lower case of the example in STYLE §3. The x and y of a named point, such as
+`px`, stay as in an equation.
+
+**A global named after its own type is that type, in Nim.** Nim compares two names by the first
+letter exactly, and by the rest with no case and no underscore. So `DRAWING` is `Drawing`, and each
+such global takes a qualifier, such as `DRAWING_SHOWN`. The compiler says so as a redefinition.
+
+**The change leaves behaviour as it was, and that is measured.** `nimsuggest` found each use of each
+renamed name at its exact place, and the compiler found the rest. After the renames, each script
+that a browser runs maps back to the build of `main`, symbol by symbol. After every rule, Chromium
+loaded each page that runs a script, old and new. Each gave the same DOM after each click, and each
+of 60 canvases the same pixels. Each page built natively is the same, byte for byte, and each kept
+answer, reading and recording came back the same number.
+
+**A rename in `sim/` computes every kept file again.** Each stamp is a digest of source text, so a
+change of names alone reads the physics again. On 2026-09-28, on four cores, the answers took 216 s,
+the report 636 s, the modelled cards 1030 s and the rig 842 s. That is the cost of a stamp
+that reads text and not the program, and it is accepted. Renames of the sim are rare.
 
 ## Toolchain
 
