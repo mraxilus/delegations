@@ -6,7 +6,7 @@
 | Author  | Claude |
 | Date    | 2026-09-06 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
-| Rules   | a1cbabc2e16bdb4a |
+| Rules   | a5859e6fb0d93754 |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
 
 Origin: a curator project, from the brief of the Architect. It is domain-neutral, so that
@@ -30,7 +30,7 @@ Here is a trap, and it is why the poison test reads as it does. `compiles(Step(M
 is **true**, but `let s = Step(MODULUS)` fails to build, because the conversion is invalid.
 So `compiles` cannot hold the poison for a constant at the bound. The test uses the literal
 16, which `compiles` rejects, and it pins the false positive as a check of its own. That
-check fails once the compiler agrees with its own build. Verified by `tprobe.nim` on Nim
+check fails once the compiler agrees with its own build. Verified by `test_probe.nim` on Nim
 2.2.12.
 
 ## Operations
@@ -38,7 +38,7 @@ check fails once the compiler agrees with its own build. Verified by `tprobe.nim
 **Advance is `⊕` with the alias `advance`, and inversion and identity are named.** `𝟎` is a
 Unicode identifier on purpose. It exercises rune-counted line width and the prose scanner,
 rather than notation from an authority. Article III.1 asks for canonical notation where a
-domain has one, and a probe has none. Verified by `tprobe.nim`, exhaustively over every pair
+domain has one, and a probe has none. Verified by `test_probe.nim`, exhaustively over every pair
 and triple in both ring sizes: commutativity, associativity, identity, inverse, involution,
 and positions inside the ring.
 
@@ -46,7 +46,7 @@ and positions inside the ring.
 
 **One testament stub with a matrix header**, with suites named after the subject of the
 header table, because no external authority exists. The matrix runs every test in each ring
-size. Verified by `tprobe.nim`, and `nim r koch test curator/probe` lists each row.
+size. Verified by `test_probe.nim`, and `nim r koch test curator/probe` lists each row.
 
 ## Toolchain
 
