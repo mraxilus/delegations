@@ -304,7 +304,7 @@ open, and it is the last section. A rules audit that binds nothing writes nothin
 sections it binds.
 
 No section is headed by a date. Where the file starts to read as a diary of what happened,
-prune it until it reads as a description of what is. A record over 3,000 lines is a finding,
+prune it until it reads as a description of what is. A record over 5,000 lines is a finding,
 and so is one `##` section over 200. The remedy is that same prune, or a split of the section
 into the two subjects it grew into. Git keeps what came out, and the `Pruned` row says where.
 
