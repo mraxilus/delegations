@@ -23,6 +23,8 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[os, strutils, unicode]
 
 import ../tools/title

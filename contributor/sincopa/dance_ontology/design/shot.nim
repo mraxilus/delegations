@@ -18,6 +18,8 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[asyncjs, jsffi]
 
 

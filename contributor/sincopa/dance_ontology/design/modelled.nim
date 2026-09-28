@@ -23,6 +23,8 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[cpuinfo, json, os, sequtils, strformat, tables, typedthreads]
 
 import ../sim/[body, hold, rig, walk]

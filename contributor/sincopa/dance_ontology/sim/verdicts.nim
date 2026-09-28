@@ -12,6 +12,8 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[math, options, sets, strformat, strutils, tables, wordwrap]
 
 import ./[body, hold, readings, rig, rigid, walk, words]

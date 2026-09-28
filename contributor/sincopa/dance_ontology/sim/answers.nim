@@ -25,6 +25,8 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[algorithm, atomics, cpuinfo, json, os, strutils, tables, typedthreads]
 
 import ./[body, hold, rig, walk]

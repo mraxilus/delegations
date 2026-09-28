@@ -21,6 +21,8 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[json, os, strformat, strutils, tables]
 
 import ./[faces, page]

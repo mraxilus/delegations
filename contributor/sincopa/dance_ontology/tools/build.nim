@@ -39,6 +39,8 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[os, osproc, strutils]
 
 import ../design/faces

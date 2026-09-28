@@ -19,6 +19,8 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[options, os, strutils]
 
 import ../src/dance_ontology

@@ -17,6 +17,8 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[os, strformat, tables, unicode]
 
 import ./[checks, frame_page, hands_page, parts, review_page, sign_page,

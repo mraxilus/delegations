@@ -29,6 +29,8 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[json, math, options, strutils]
 
 import ../sim/[body, hold, limb, read, rig, vec, walk, words]
