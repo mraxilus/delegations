@@ -1827,11 +1827,12 @@ letter exactly, and by the rest with no case and no underscore. So `DRAWING` is 
 such global takes a qualifier, such as `DRAWING_SHOWN`. The compiler says so as a redefinition.
 
 **The change leaves behaviour as it was, and that is measured.** `nimsuggest` found each use of each
-renamed name at its exact place, and the compiler found the rest. After the renames, each script
-that a browser runs maps back to the build of `main`, symbol by symbol. After every rule, Chromium
-loaded each page that runs a script, old and new. Each gave the same DOM after each click, and each
-of 60 canvases the same pixels. Each page built natively is the same, byte for byte, and each kept
-answer, reading and recording came back the same number.
+renamed name at its exact place, and a pass over format strings and the compiler found the rest.
+After the renames, each script that a browser runs maps back to the build of `main`, symbol by
+symbol. With every rule applied, Chromium loaded each page that runs a script, old and new. Each
+gave the same DOM after each click, and each of 60 canvases the same pixels. Each page built
+natively is the same, byte for byte, and each kept answer, reading and recording came back the same
+number.
 
 **A rename in `sim/` computes every kept file again.** Each stamp is a digest of source text, so a
 change of names alone reads the physics again. On 2026-09-28, on four cores, the answers took 216 s,
