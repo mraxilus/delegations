@@ -238,12 +238,12 @@ for slot in 0 ..< scene.bound:  # bound, never ITEMS_MAX
    `is…` in camel case (`isMixed`), the callable twin of `is_`.
 5. A lookup table is `lut_<value>_by_<key>`, so that it reads as the access it does:
    `lut_grade_by_basis[b]` is the grade of `b`.
-6. Use a single letter only where an equation or a tiny index scope gives it meaning (`m`,
-   `n`, `a`, `b`, `i`). Use a descriptive name at a representation boundary, and across a
-   derivation of several stages. Coin no abbreviation (`ctx`, `tmp`, `buf`, `cfg`). Only a
-   closed list of jargon is exempt: `lut`, `min`, `max`, `src`, `prev`, `curr`, and the
-   symbols of the source (`mu`, `sigma`). The Architect alone adds to that list. A plural
-   holds a collection, and its singular holds one member (`for term in terms`).
+6. Use a single letter only where an equation or a tiny index scope gives it meaning (`m`, `n`,
+   `a`, `b`, `i`). Use a descriptive name at a representation boundary, and across a derivation
+   of several stages. Coin no abbreviation (`ctx`, `tmp`, `buf`, `cfg`). Only a closed list of
+   jargon, which the Architect alone extends, is exempt: `lut`, `min`, `max`, `src`, `prev`,
+   `curr`, and `len` as a local. The symbols of the source (`mu`, `sigma`) are exempt too. A
+   plural holds a collection, and its singular holds one member (`for term in terms`).
 7. Name each distinction, then choose its form by what the code does with it. An axis that
    code selects between at compile time is a closed enum (`Chirality`). A pair that several
    types carry is a small generic wrapper, named by its axis (`Chiral[T]`, `Spatial[T]`).
@@ -441,10 +441,11 @@ suite "Chapter 2":
    Past four levels, split the routine or say why in a comment. Sixty lines is a review
    signal, and not a forced split. Keep a unified derivation intact where a split would hide
    the shape of the data, and say so in a comment.
-5. Group related constants and bindings under one keyword, dependent bindings included.
-   Destructure where one expression yields the values together, or where a parallel pair fits
-   one line. Otherwise group them under one keyword. Consolidate the imports: the standard
-   library grouped and alphabetised, then the local modules, also alphabetised.
+5. Group related constants and bindings under one keyword, dependent bindings included. Two or more
+   consecutive single bindings always share one keyword. Destructure where one expression yields
+   the values together, or where a parallel pair fits one line. Otherwise group them under one
+   keyword. Consolidate the imports: the standard library grouped and alphabetised, then the local
+   modules, also alphabetised.
 6. Module anatomy runs in one order. It is header docs, active design notes and TODOs,
    compiler directives, conditional instrumentation, external imports, local imports,
    re-exports, then the body in conceptual reading order. The body puts its types before any
