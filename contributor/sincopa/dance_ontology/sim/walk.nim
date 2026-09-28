@@ -71,6 +71,12 @@ type
     ## (`Inf` running free), and furthest any point of held arm moved between
     ## two moments.
 
+  Stood* = object ## Where couple stand for one still, and how it sits.
+    holds*: bool
+    apart*: float  ## Distance chosen, metres axis to axis.
+    turns*: float  ## Way couple were wound there, signed: their own where still
+                   ## fixes neither.
+    strain*: Strain ## How near pose there is to any end.
 
 iterator stands*(rig: Rig): float =
   ## Every distance couple may stand at, from clear of each other outward.
@@ -163,12 +169,6 @@ proc stood*(rig: Rig; band: Band; links: seq[Link]; turns: float;
   result.c.advance(SETTLE)
   result.holds = result.c.gives == Stop.None
 
-type Stood* = object ## Where couple stand for one still, and how it sits.
-  holds*: bool
-  apart*: float  ## Distance chosen, metres axis to axis.
-  turns*: float  ## Way couple were wound there, signed: their own where still
-                 ## fixes neither.
-  strain*: Strain ## How near pose there is to any end.
 
 proc standsAt(rig: Rig; band: Band; links: seq[Link]; turns: float;
               away: bool; head: Body; apart: float): Stood =

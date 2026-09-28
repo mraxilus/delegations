@@ -87,6 +87,32 @@ type
     contact*: Option[Contact]   ## Hand resting on follow's body, which stops turn.
     twist*: HalfTurns           ## Follow's rotation less lead's, in half turns.
 
+  QuarterTurns* = int ## Count rotation in quarter turns, grain facing needs.
+
+  Seen* {.pure.} = enum ## Name where dancer sees other, from their own front.
+    ## Quarter turns clockwise, so turning on spot steps through them in order.
+    Ahead, Right, Behind, Left
+
+  Facing* {.pure.} = enum ## Name sixteen states two dancers stand in to one another.
+    ## One is read off where each sees other (`facing`), which is side each turns
+    ##   to other: face, starboard, back or port.  Name gives Lead's side, then
+    ##   Follow's (`name`), as `GLOSSARY.md` does.
+    ##   Lead's side runs slowest, each in order `Seen` runs, so state is its index.
+    FaceToFace, FaceToStarboard, FaceToBack, FaceToPort,
+    StarboardToFace, StarboardToStarboard, StarboardToBack, StarboardToPort,
+    BackToFace, BackToStarboard, BackToBack, BackToPort,
+    PortToFace, PortToStarboard, PortToBack, PortToPort
+
+  Refusal* {.pure.} = enum ## Say what stops turn that cannot be taken.
+    Hold, ## What joins couple cannot give that much turn away.
+    Arm   ## Arm cannot carry that much, wherever it has wound up.
+
+  Offer* = object ## Hold one turn out of posture, taken or refused.
+    who*: Dancer            ## Dancer who turns; other holds their facing.
+    amount*: HalfTurns      ## Half turns, positive to that dancer's right.
+    to*: Posture            ## Where it lands, or would land if it could.
+    refused*: Option[Refusal] ## Why it cannot be taken, where it cannot.
+
 
 const
   UNBOUNDED_TURNS* = high(HalfTurns)
@@ -157,24 +183,6 @@ func parallelSite*(side: Side; twist: HalfTurns): Site =
 
 
 #[ Facings ]#
-
-type
-  QuarterTurns* = int ## Count rotation in quarter turns, grain facing needs.
-
-  Seen* {.pure.} = enum ## Name where dancer sees other, from their own front.
-    ## Quarter turns clockwise, so turning on spot steps through them in order.
-    Ahead, Right, Behind, Left
-
-  Facing* {.pure.} = enum ## Name sixteen states two dancers stand in to one another.
-    ## One is read off where each sees other (`facing`), which is side each turns
-    ##   to other: face, starboard, back or port.  Name gives Lead's side, then
-    ##   Follow's (`name`), as `GLOSSARY.md` does.
-    ##   Lead's side runs slowest, each in order `Seen` runs, so state is its index.
-    FaceToFace, FaceToStarboard, FaceToBack, FaceToPort,
-    StarboardToFace, StarboardToStarboard, StarboardToBack, StarboardToPort,
-    BackToFace, BackToStarboard, BackToBack, BackToPort,
-    PortToFace, PortToStarboard, PortToBack, PortToPort
-
 
 const SIDES: array[Seen, string] = ["Face", "Starboard", "Back", "Port"]
   ## Glossary's word for side dancer turns to other, by where they see other.
@@ -436,17 +444,6 @@ func postures*(): seq[Posture] =
           stood.twist = twist
           result.add stood
 
-
-type
-  Refusal* {.pure.} = enum ## Say what stops turn that cannot be taken.
-    Hold, ## What joins couple cannot give that much turn away.
-    Arm   ## Arm cannot carry that much, wherever it has wound up.
-
-  Offer* = object ## Hold one turn out of posture, taken or refused.
-    who*: Dancer            ## Dancer who turns; other holds their facing.
-    amount*: HalfTurns      ## Half turns, positive to that dancer's right.
-    to*: Posture            ## Where it lands, or would land if it could.
-    refused*: Option[Refusal] ## Why it cannot be taken, where it cannot.
 
 
 func refusal*(posture: Posture; twist: HalfTurns): Option[Refusal] =

@@ -118,6 +118,19 @@ const
     ## When drawing starts recentring on one frame left in it.
 
 
+type
+  Spoke* = object ## Hold one way out of frame couple are holding.
+    to*: Frame           ## Frame it arrives in.
+    side*: Side          ## Arm that acts, which is ink it is drawn in.
+    lines*: seq[string]  ## Name of move, line by line.
+    is_compound*: bool   ## Whether it is two moves rather than one.
+    back*: Option[Side]  ## Arm that acts coming other way, where they differ.
+    angle*: float        ## Direction it leaves middle, in degrees.
+    radius*: int         ## How far out it puts frame it arrives in.
+    turn*: int           ## Its place in order ways grow and fold.
+
+
+
 func closeStyle*(): string =
   ## Write this drawing's own times onto it, beside ones every drawing has.
   passStyle(CLOSE_TEMPO) & "; --fold-spread: " & $FOLD_SPREAD &
@@ -136,18 +149,6 @@ func closeStyle*(): string =
 
 
 #[ Concepts ]#
-
-type
-  Spoke* = object ## Hold one way out of frame couple are holding.
-    to*: Frame           ## Frame it arrives in.
-    side*: Side          ## Arm that acts, which is ink it is drawn in.
-    lines*: seq[string]  ## Name of move, line by line.
-    is_compound*: bool   ## Whether it is two moves rather than one.
-    back*: Option[Side]  ## Arm that acts coming other way, where they differ.
-    angle*: float        ## Direction it leaves middle, in degrees.
-    radius*: int         ## How far out it puts frame it arrives in.
-    turn*: int           ## Its place in order ways grow and fold.
-
 
 func spokesOf*(here: Frame): seq[Spoke] =
   ## Get every way out of frame, in order they are drawn.

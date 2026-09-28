@@ -40,6 +40,31 @@ const
                            ## stand this far past its end for one step and come back.
 
 
+type
+  Went = object ## One walk walked live, reduced to numbers laws read of it.
+    holds: bool      ## Whether hold stood at rest there.
+    stopped: bool
+    at: float        ## Turns reached when something gave.
+    why: Stop
+    moments: int
+    deepest: float   ## Deepest any link sits in any body, metres; below nought is inside.
+    leap: float      ## Furthest any point of held arm moves between two moments.
+    leapAt: float    ## Turn where it does.
+    peak: float      ## Furthest first connection's arms extend, radians.
+    atEnd: int       ## Arm-moments of first connection at their swing's end.
+
+  Go = tuple[sweep: bool, index: int, positive: bool, apart: float]
+    ## One walk to walk live: way of sweep of `SWEEPS`, or walk of `WALKS` from one
+    ## distance, from `apart`.  Plain numbers, so threads share nothing but this list.
+
+  Seen = tuple[name: string, band: Band, links: seq[Link], w: Went]
+
+  Posed = tuple[key: string, holds: bool, strain: Strain, depth: float, pair: string,
+                     apart, parted: float]
+    ## One still of corpus stood live once, and every measure two laws read of it.
+
+
+
 proc rest(band = Band.Torso; apart = APART): Couple =
   result = build(HUMAN, facing(HUMAN, apart), band, SHAKE)
   result.settle()
@@ -56,17 +81,6 @@ proc answered(): Answers =
     IS_GIVEN_READ = true
   ANSWERS_GIVEN
 
-type Went = object ## One walk walked live, reduced to numbers laws read of it.
-  holds: bool      ## Whether hold stood at rest there.
-  stopped: bool
-  at: float        ## Turns reached when something gave.
-  why: Stop
-  moments: int
-  deepest: float   ## Deepest any link sits in any body, metres; below nought is inside.
-  leap: float      ## Furthest any point of held arm moves between two moments.
-  leapAt: float    ## Turn where it does.
-  peak: float      ## Furthest first connection's arms extend, radians.
-  atEnd: int       ## Arm-moments of first connection at their swing's end.
 
 proc live(key: string; positive: bool): Went
   ## Sweep of `SWEEPS` walked live one way, from distance its kept answer chose.
@@ -565,10 +579,6 @@ func wentOf(w: Walk; links: seq[Link]): Went =
 
 #[ Live Walks, Every Core At Once ]#
 
-type Go = tuple[sweep: bool, index: int, pos: bool, apart: float]
-  ## One walk to walk live: way of sweep of `SWEEPS`, or walk of `WALKS` from one
-  ## distance, from `apart`.  Plain numbers, so threads share nothing but this list.
-
 # Mutable and global: thread takes one argument, so workers write into slots allotted here.
 var
   GOES: seq[Go]        ## Every walk, set before any thread starts.
@@ -589,7 +599,7 @@ proc going(id: int) {.thread.} =
       if g.sweep:
         let q = SWEEPS[g.index]
         let w = walked(HUMAN, q.band, q.links, Body.Two, g.apart, q.most,
-                       (if g.pos: STEP else: -STEP), false, Body.Two)
+                       (if g.positive: STEP else: -STEP), false, Body.Two)
         WENTS[i] = wentOf(w, q.links)
       else:
         let q = WALKS[g.index]
@@ -634,7 +644,7 @@ proc live(key: string; positive: bool): Went =
   for i, q in SWEEPS:
     if q.key == key:
       for k, g in GOES:
-        if g.sweep and g.index == i and g.pos == positive: return WENTS[k]
+        if g.sweep and g.index == i and g.positive == positive: return WENTS[k]
       return Went(holds: false)
   raiseAssert "No sweep asked by that key; got `" & key & "`."
 
@@ -645,7 +655,6 @@ proc replayed(): seq[tuple[q: WalkAsked, kept: Walked, w: Went]] =
     if not g.sweep:
       result.add (WALKS[g.index], WALKS_DRAWN[result.len].kept, WENTS[k])
 
-type Seen = tuple[name: string, band: Band, links: seq[Link], w: Went]
 
 proc corpus(): seq[Seen] =
   ## Two single holds walked one way from where couple choose to stand, which
@@ -792,9 +801,6 @@ proc overlapOf(c: Couple): tuple[depth: float, pair: string] =
       if depth > result.depth:
         result = (depth, &"{a.who} {a.arm} {a.mark} against {b.who} {b.arm} {b.mark}")
 
-type Posed = tuple[key: string, holds: bool, strain: Strain, depth: float, pair: string,
-                   apart, parted: float]
-  ## One still of corpus stood live once, and every measure two laws read of it.
 
 # Mutable: corpus is stood on first law that wants it, then kept for rest.
 var STILLS_POSED: seq[Posed] ## Corpus of stills, stood once.

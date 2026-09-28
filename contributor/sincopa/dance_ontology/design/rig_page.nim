@@ -151,6 +151,16 @@ const TITLE* = "The Rig, Drawn from the Engine"
   ## Page's own name, after work's name: what browser tab and published gallery show.
 
 
+type
+  Cell = object ## One still cell of reference page, as built page holds it.
+    id: string
+    asks: seq[string]  ## Questions it stands for, as `design/asks` keys them.
+    classes: string    ## Its own classes, carrying kept and modelled.
+    art: string        ## Inner markup of its drawing, badges and all.
+    caption: string    ## Its caption, whole.
+
+
+
 func esc(s: string): string =
   s.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"))
 
@@ -168,12 +178,6 @@ func attribute(tag, name: string): string =
   if a < 0: "" else: tag[a ..< b]
 
 
-type Cell = object ## One still cell of reference page, as built page holds it.
-  id: string
-  asks: seq[string]  ## Questions it stands for, as `design/asks` keys them.
-  classes: string    ## Its own classes, carrying kept and modelled.
-  art: string        ## Inner markup of its drawing, badges and all.
-  caption: string    ## Its caption, whole.
 
 func cellsOf(html: string): Table[string, seq[Cell]] =
   ## Every still cell of reference page, by section letter, in page's order.

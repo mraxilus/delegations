@@ -50,6 +50,12 @@ type
     slot: Slot         ## How far round that side it sits.
     sends: Sends       ## Which way round body line goes.
 
+  Holds* = array[Arm, Option[Arm]]
+    ## What each lead hand holds: follow's own side, where one is held.
+  Levels* = array[Arm, Option[Level]]
+    ## Level of each held connection, where one has been said.
+  Ways* = array[Arm, Option[Way]]
+    ## Whether each connection locks or wraps, where that has been said.
 
 func settleOf*(level: Option[Level]; way: Option[Way]): Option[Settle] =
   ## Get what this hold does to its hand and its line, where rules 4 to 6
@@ -82,14 +88,6 @@ const WRAP_MIN* = 170 ## Least degrees line must hug body for lock or
   ##     180 degrees, so any threshold in that last gap picks out same
   ##     set; 170 sits squarely in it, and `checks` asserts gap holds.
 
-
-type
-  Holds* = array[Arm, Option[Arm]]
-    ## What each lead hand holds: follow's own side, where one is held.
-  Levels* = array[Arm, Option[Level]]
-    ## Level of each held connection, where one has been said.
-  Ways* = array[Arm, Option[Way]]
-    ## Whether each connection locks or wraps, where that has been said.
 
 
 func other*(arm: Arm): Arm =

@@ -34,6 +34,10 @@ type
     a, b: Point
     body_a, body_b: Body
 
+  Mark* = tuple ## Something settled reach must not run through.
+    centre: Point
+    clear: float
+
 const WAYS*: array[4, WayRound] = [
   (1.0, 1.0), (1.0, -1.0), (-1.0, 1.0), (-1.0, -1.0),
 ] ## Four ways reach can set off.  Which one whole move uses is
@@ -410,11 +414,6 @@ func straightReach*(a, b: Point): seq[Point] =
 
 
 #[ Settling Past Marks ]#
-
-type Mark* = tuple ## Something settled reach must not run through.
-  centre: Point
-  clear: float
-
 
 func alongAt*(points: seq[Point]; q: Point): float =
   ## How far along line point nearest `q` lies.

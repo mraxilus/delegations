@@ -36,10 +36,17 @@
 
 #[ Phases ]#
 
-type Motion* {.pure.} = enum ## Name what drawing is doing at one instant.
-  Still,    ## Nothing is moving; drawing shows frame couple hold.
-  Leaving,  ## Move is chosen, and drawing is telling whole of it.
-  Arriving  ## Frame reached is held, and its own ways are growing.
+type
+  Motion* {.pure.} = enum ## Name what drawing is doing at one instant.
+    Still,    ## Nothing is moving; drawing shows frame couple hold.
+    Leaving,  ## Move is chosen, and drawing is telling whole of it.
+    Arriving  ## Frame reached is held, and its own ways are growing.
+
+  Tempo* = object ## Say when drawing moves, and for how long.
+    pass_at*: int  ## When mark leaves frame held, from move being asked for.
+    pass*: int     ## How long mark takes to reach frame chosen.
+    settle*: int   ## How long after that before drawing may be replaced.
+    grown*: int    ## How long after *that* before drawing has finished moving.
 
 
 func phase*(motion: Motion): string =
@@ -52,13 +59,6 @@ func phase*(motion: Motion): string =
 
 
 #[ Tempo ]#
-
-type Tempo* = object ## Say when drawing moves, and for how long.
-  pass_at*: int  ## When mark leaves frame held, from move being asked for.
-  pass*: int     ## How long mark takes to reach frame chosen.
-  settle*: int   ## How long after that before drawing may be replaced.
-  grown*: int    ## How long after *that* before drawing has finished moving.
-
 
 func leaveTime*(tempo: Tempo): int = tempo.pass_at + tempo.pass + tempo.settle
   ## Get when page may replace drawing and let state move with it.

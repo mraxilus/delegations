@@ -34,7 +34,13 @@ const KEPT_RIG* = currentSourcePath().parentDir / "rig.json"
   ## Where recording is kept, with its stamp.
 
 
-type Cut = tuple[name: string, arms: seq[(Arm, Arm)], away: bool, band: Band]
+type
+  Cut = tuple[name: string, arms: seq[(Arm, Arm)], away: bool, band: Band]
+
+  Job* = object ## One recording: sweep by its place in `SHOWN`, or still by its ask.
+    cut: int
+    ask: StillAsk
+    still: bool
 
 const SHOWN: seq[Cut] = @[
   ("One hand, same name", @[(Arm.Left, Arm.Left)], false, Band.Crown),
@@ -173,10 +179,6 @@ proc bodyOfSweep(recording: Shown; key = ""): string =
   "{" & bits.join(",\n") & "}"
 
 
-type Job* = object ## One recording: sweep by its place in `SHOWN`, or still by its ask.
-  cut: int
-  ask: StillAsk
-  still: bool
 
 func jobs*(): seq[Job] =
   ## Every recording, sweeps first then every still card in page's own order.

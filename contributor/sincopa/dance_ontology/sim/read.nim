@@ -38,6 +38,10 @@ type
   Arms* = seq[array[2, ArmPose]] ## Every connection's two arms, as `walk.Moment`
                                  ## and `rigid.Pose` both hand them over.
 
+  Tight* = object ## Joint nearest its edge across every held arm.
+    room*: float ## `margin` of that joint: nought at edge, one ease in, negative past.
+    dof*: Dof
+    whose*: Hand
 
 func armOf*(links: seq[Link]; i: int; who: Body): int =
   ## Which end of connection `i` is `who`'s.
@@ -157,10 +161,6 @@ func crossings*(arms: Arms): seq[Crossing] =
       )
 
 
-type Tight* = object ## Joint nearest its edge across every held arm.
-  room*: float ## `margin` of that joint: nought at edge, one ease in, negative past.
-  dof*: Dof
-  whose*: Hand
 
 func tightest*(rig: Rig; stance: array[Body, Stance]; links: seq[Link];
                arms: Arms): Tight =

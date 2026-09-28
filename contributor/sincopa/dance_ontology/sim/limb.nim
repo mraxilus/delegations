@@ -39,6 +39,18 @@ type
     pose*: ArmPose
     stretch*: float ## Shoulder to wrist: over `upper + fore` is out of reach.
 
+  Circle* = object ## Circle elbow can sit on for one grip and hand.
+    ##   Everything `posed` works out that does not depend on swivel, kept
+    ##     so seed can try every swivel round it for price of one.
+    s*, w*: Vec ## Shoulder and wrist.
+    stretch*: float ## Shoulder to wrist.
+    u*: Vec ## Unit, shoulder towards wrist; zero where two coincide.
+    along*, radius*: float ## Circle's centre along `u`, and its radius.
+    down*, side*: Vec ## Its basis: lowest point's direction, and across.
+
+  Swing* = object ## Joints read before twist, and what twist needs.
+    joints*: Joints ## Everything but `twist`, which is nought here.
+    u*, f*: Vec ## Unit: upper arm and forearm, in body's mirrored terms.
 
 const
   REST_DOWN = (0.0, 0.0, -1.0) ## Upper arm hanging: swing's rest.
@@ -51,15 +63,6 @@ const
 func shoulderLocal*(rig: Rig): Vec = (rig.shoulderOut, 0.0, rig.shoulderUp)
   ## Shoulder in body's mirrored terms: always right arm here.
 
-
-type Circle* = object ## Circle elbow can sit on for one grip and hand.
-  ##   Everything `posed` works out that does not depend on swivel, kept
-  ##     so seed can try every swivel round it for price of one.
-  s*, w*: Vec ## Shoulder and wrist.
-  stretch*: float ## Shoulder to wrist.
-  u*: Vec ## Unit, shoulder towards wrist; zero where two coincide.
-  along*, radius*: float ## Circle's centre along `u`, and its radius.
-  down*, side*: Vec ## Its basis: lowest point's direction, and across.
 
 
 func circleOf*(rig: Rig; s, g, h: Vec): Circle =
@@ -130,10 +133,6 @@ func placed*(rig: Rig; stance: Stance; arm: Arm; u: Vec;
   else:
     ArmPose(s: toWorld(axes, s), e: toWorld(axes, e), w: toWorld(axes, w), g: toWorld(axes, g))
 
-
-type Swing* = object ## Joints read before twist, and what twist needs.
-  joints*: Joints ## Everything but `twist`, which is nought here.
-  u*, f*: Vec ## Unit: upper arm and forearm, in body's mirrored terms.
 
 
 func ownTerms*(axes: Axes; arm: Arm; p: Vec): Vec =

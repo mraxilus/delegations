@@ -172,6 +172,11 @@ type
     twist*, bend*, wrist*: array[2, float] ## Each arm's three joints, radians.
     apart*: float ## How far engine has pulled two hands apart, metres.
 
+  Strain* = object ## Where couple's pose is nearest some end, over every arm,
+                        ## both waists and every shoulder girdle.
+    most*: float  ## Nought outside every ease, one at some end, more past it.
+    whose*: Hand  ## Arm it sits at, where it is arm's.
+    what*: string ## Which joint: freedom's name, `waist` or `girdle`.
 
 #[ Doors between project's world and engine's ]#
 
@@ -1306,12 +1311,6 @@ proc gives*(c: Couple): Stop =
 
 
 #[ Reading how near couple's pose is to its ends ]#
-
-type Strain* = object ## Where couple's pose is nearest some end, over every arm,
-                      ## both waists and every shoulder girdle.
-  most*: float  ## Nought outside every ease, one at some end, more past it.
-  whose*: Hand  ## Arm it sits at, where it is arm's.
-  what*: string ## Which joint: freedom's name, `waist` or `girdle`.
 
 proc collarOf*(c: Couple; who: Body; arm: Arm): array[Collar, float] =
   ## What one collarbone's two hinges read, radians, in rig's stated sense:

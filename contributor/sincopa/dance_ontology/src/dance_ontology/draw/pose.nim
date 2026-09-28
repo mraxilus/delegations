@@ -39,6 +39,22 @@ type
     wind*: Winds                  ## How far each arm is carried round.
     ring*: Option[Ring]           ## Orbit ring, where one is happening.
 
+  Anchor* {.pure.} = enum ## Say what picture is framed on.
+    Pair,                      ## Couple's midpoint: they sit in middle.
+    Lead                       ## Lead's own place: they are still point.
+
+  MoveApply* = proc (pose: Pose; scalar: float): Pose {.nimcall, noSideEffect.}
+    ## One animated move, as pose it reaches at `scalar` of its full turn.
+
+  Walk* = tuple ## Move sampled for animation, and its own timing.
+    poses: seq[Pose]
+    times: seq[float] ## How far through move each pose is due, 0 to 1.
+      ## Frames are not evenly spread: what move spends its time on is part
+      ##   of what it says (rule 26).
+
+  About* {.pure.} = enum ## What dancer's turn goes round.
+    Axis,                     ## Their own centre: they turn on spot.
+    Orbit                     ## Their partner: they walk ring round them.
 
 
 #[ Standing and Turning ]#
@@ -66,10 +82,6 @@ func movedPose*(pose: Pose; mid: Point; spin, amount: float): Pose =
   if pose.ring.isSome:
     result.ring = some (moved(pose.ring.get.centre), pose.ring.get.radius)
 
-
-type Anchor* {.pure.} = enum ## Say what picture is framed on.
-  Pair,                      ## Couple's midpoint: they sit in middle.
-  Lead                       ## Lead's own place: they are still point.
 
 
 func canonicalise*(pose: Pose; amount = 1.0; on = Anchor.Pair): Pose =
@@ -149,16 +161,6 @@ func ease*(t: float): float =
   (1 - cos(PI * t)) / 2
 
 
-type MoveApply* = proc (pose: Pose; scalar: float): Pose {.nimcall, noSideEffect.}
-  ## One animated move, as pose it reaches at `scalar` of its full turn.
-
-
-type Walk* = tuple ## Move sampled for animation, and its own timing.
-  poses: seq[Pose]
-  times: seq[float] ## How far through move each pose is due, 0 to 1.
-    ## Frames are not evenly spread: what move spends its time on is part
-    ##   of what it says (rule 26).
-
 
 const
   RE_FRAME_PACE* = 0.4 ## Clock second stage gets beside first.
@@ -224,11 +226,6 @@ func cycle*(move: MoveApply; samples = 14): Walk =
 
 
 #[ Ways of Turning ]#
-
-type About* {.pure.} = enum ## What dancer's turn goes round.
-  Axis,                     ## Their own centre: they turn on spot.
-  Orbit                     ## Their partner: they walk ring round them.
-
 
 func turned*(base: Pose; who: Dancer; about: About; degrees: float): Pose =
   ## Turn one dancer, on their own axis or round their partner.

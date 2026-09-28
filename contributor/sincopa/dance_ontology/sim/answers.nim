@@ -77,6 +77,37 @@ type
   StillAsked* = tuple[key: string, links: seq[Link], turns: float, away, either: bool]
     ## Still over crown, and distance couple stand at for it.
 
+  Way* = object ## One way of sweep, from distance search chose.
+    holds*: bool  ## Whether hold stood at rest from any distance.
+    apart*: float ## Distance chosen, metres axis to axis.
+    stopped*: bool
+    at*: float    ## Turns reached when something gave.
+    why*: Stop
+
+  Ways* = object ## Both ways of one sweep.
+    negative*, positive*: Way
+
+  Walked* = object ## One walk from one distance, in numbers alone.
+    apart*: float
+    holds*: bool ## Whether hold stood at rest there.
+    stopped*: bool
+    at*: float
+
+  Stand* = object ## Where couple stand for one still.
+    holds*: bool
+    apart*: float
+    turns*: float ## Way couple were wound there, signed.
+
+  Answers* = object ## Every search answered, and stamp of what answered it.
+    stamp*: string
+    sweeps*: OrderedTable[string, Ways]
+    walks*: OrderedTable[string, seq[Walked]]
+    reaches*: OrderedTable[string, bool]
+    stills*: OrderedTable[string, Stand]
+
+  Job = enum Sweep, WalkFrom, Reach, Still
+  Task = tuple[job: Job, index, far: int] ## One search, or one walk from one distance.
+
 const
   SWEEPS*: array[6, SweepAsked] = [
     ("shake at torso", Band.Torso, SHAKE, 1.6),
@@ -111,35 +142,6 @@ const
   CORPUS* = 8
     ## First stills of `STILLS`, which every still law reads; rest answer one law each.
 
-
-type
-  Way* = object ## One way of sweep, from distance search chose.
-    holds*: bool  ## Whether hold stood at rest from any distance.
-    apart*: float ## Distance chosen, metres axis to axis.
-    stopped*: bool
-    at*: float    ## Turns reached when something gave.
-    why*: Stop
-
-  Ways* = object ## Both ways of one sweep.
-    negative*, positive*: Way
-
-  Walked* = object ## One walk from one distance, in numbers alone.
-    apart*: float
-    holds*: bool ## Whether hold stood at rest there.
-    stopped*: bool
-    at*: float
-
-  Stand* = object ## Where couple stand for one still.
-    holds*: bool
-    apart*: float
-    turns*: float ## Way couple were wound there, signed.
-
-  Answers* = object ## Every search answered, and stamp of what answered it.
-    stamp*: string
-    sweeps*: OrderedTable[string, Ways]
-    walks*: OrderedTable[string, seq[Walked]]
-    reaches*: OrderedTable[string, bool]
-    stills*: OrderedTable[string, Stand]
 
 
 #[ Stamp ]#
@@ -218,9 +220,6 @@ func wayOf(w: Walk): Way =
   ## Strip walk to numbers laws read.
   Way(holds: w.restHolds, apart: w.apart, stopped: w.stopped, at: w.at, why: w.why)
 
-type
-  Job = enum Sweep, WalkFrom, Reach, Still
-  Task = tuple[job: Job, index, far: int] ## One search, or one walk from one distance.
 
 # Mutable and global: thread takes one argument, so workers read tasks and write answers
 # into slots allotted here before any thread starts.

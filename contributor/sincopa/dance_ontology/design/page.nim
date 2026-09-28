@@ -151,6 +151,12 @@ code { font: 0.88em var(--mono); background: var(--wash); padding: 0.1em 0.35em;
     ## custom properties, this defines them.
 
 
+type
+  Swatch* {.pure.} = enum ## Five ways key draws pair of hands.
+    Free, Unsaid, Low, High, Above
+
+
+
 func document*(title, page_body: string): string =
   ## Wrap one page: shared style sheet, then whatever page is about.
   ##   Title is what browser tab and published gallery both show, so
@@ -173,9 +179,6 @@ func filled*(template_body: string;
   doAssert leftover < 0,
     &"A hole is unfilled; got `{result[leftover .. min(leftover + 40, result.high)]}`."
 
-
-type Swatch* {.pure.} = enum ## Five ways key draws pair of hands.
-  Free, Unsaid, Low, High, Above
 
 
 func swatch*(kind: Swatch): string =

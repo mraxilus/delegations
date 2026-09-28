@@ -53,6 +53,20 @@ type
     source*, destination*: string ## Workbook names of row and column.
     text*: string                 ## Helpers that cell names, in cell's words.
 
+  FindingKind* {.pure.} = enum ## Name way workbook and model relate.
+    StateDeferred,    ## State that rests hand on body, outside this model.
+    FrameAbsent,      ## Frame that model derives and workbook has no row for.
+    EdgeAbsent,       ## Single primitive between two checkable states, cell empty.
+    ReverseAbsent,    ## Filled cell whose mirror cell is empty, though moves reverse.
+    EdgeCompound,     ## Cell naming sequence, so route rather than move.
+    HelperDiffers,    ## Cell naming primitive other than derived one.
+    EdgeUnsupported   ## Filled cell that model gives no single primitive for.
+
+  Finding* = object ## Hold one thing audit has to say about workbook.
+    kind*: FindingKind
+    subject*: string ## Frame, state or pair of states finding concerns.
+    detail*: string  ## What model says, in ontology's vocabulary.
+
 
 const WORKBOOK_STATES*: array[9, string] = [
   "closed",
@@ -213,22 +227,6 @@ func countDeferredCells*(): int =
 
 
 #[ Audit ]#
-
-type
-  FindingKind* {.pure.} = enum ## Name way workbook and model relate.
-    StateDeferred,    ## State that rests hand on body, outside this model.
-    FrameAbsent,      ## Frame that model derives and workbook has no row for.
-    EdgeAbsent,       ## Single primitive between two checkable states, cell empty.
-    ReverseAbsent,    ## Filled cell whose mirror cell is empty, though moves reverse.
-    EdgeCompound,     ## Cell naming sequence, so route rather than move.
-    HelperDiffers,    ## Cell naming primitive other than derived one.
-    EdgeUnsupported   ## Filled cell that model gives no single primitive for.
-
-  Finding* = object ## Hold one thing audit has to say about workbook.
-    kind*: FindingKind
-    subject*: string ## Frame, state or pair of states finding concerns.
-    detail*: string  ## What model says, in ontology's vocabulary.
-
 
 func auditStates(): seq[Finding] =
   ## Report states held back for want of place on body.

@@ -48,6 +48,15 @@ type
     hold*: array[Side, Option[Site]] ## Hand each lead hand holds, where it holds one.
     over*: Option[Side]              ## Lead arm lying over other, where they overlap.
 
+  # At most one of two hands is ever filled, and which one is whole of what
+  # drawing needs to know to ink word: model's own two types are what keep
+  # dancers' hands apart, so they are what this hands back rather than one
+  # side and flag beside it.
+  Named* = tuple ## One stretch of name, and hand it names.
+    text: string         ## Letters, as they were written.
+    lead: Option[Side]   ## Lead's hand, where this stretch names one.
+    follow: Option[Site] ## Follow's hand, where this stretch names one.
+
 
 const SITE_OPTIONS = [
   none(Site),
@@ -224,15 +233,6 @@ func briefName*(side: Side): string = leadName(side)[0 .. 0]
 func briefName*(site: Site): string = followName(site)[0 .. 0]
   ## Abbreviate hand of follow to one letter that says which.
 
-
-# At most one of two hands is ever filled, and which one is whole of what
-# drawing needs to know to ink word: model's own two types are what keep
-# dancers' hands apart, so they are what this hands back rather than one
-# side and flag beside it.
-type Named* = tuple ## One stretch of name, and hand it names.
-  text: string         ## Letters, as they were written.
-  lead: Option[Side]   ## Lead's hand, where this stretch names one.
-  follow: Option[Site] ## Follow's hand, where this stretch names one.
 
 
 func named*(said: string): seq[Named] =

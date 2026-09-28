@@ -20,9 +20,18 @@ from ../src/dance_ontology/rotation import Facing, Seen, facing, seenAfter, name
 export Facing, name
 
 
-type Parts* = OrderedTable[string, string]
-  ## Every placed figure, in order it was built.
+type
+  Parts* = OrderedTable[string, string]
+    ## Every placed figure, in order it was built.
 
+  Family* {.pure.} = enum ## Which round of positions one manner of turn walks.
+    FollowFacing,         ## Follow comes round where they stand.
+    PairSwung             ## Axis swings and follow's facing with it.
+  Manner* {.pure.} = enum ## Four manners of turn couple can take.
+    FollowAxis, LeadAxis, FollowOrbit, LeadOrbit
+
+  Position* = tuple[wind: float, name, note: string]
+    ## One place on chain: how far it is wound, and how page says so.
 
 func onQuarter(degrees: float): Option[int] =
   ## Get bearing as whole quarters clockwise, none where it falls between.
@@ -368,12 +377,6 @@ const
   QUARTERS_ROUND* = 4        ## Quarter turns in round, and so positions.
   QUARTER* = 90.0            ## Degrees in one of them.
 
-type
-  Family* {.pure.} = enum ## Which round of positions one manner of turn walks.
-    FollowFacing,         ## Follow comes round where they stand.
-    PairSwung             ## Axis swings and follow's facing with it.
-  Manner* {.pure.} = enum ## Four manners of turn couple can take.
-    FollowAxis, LeadAxis, FollowOrbit, LeadOrbit
 
 const MANNERS*: array[Manner, tuple[
     tag, title, blurb: string; who: Dancer; about: About]] = [
@@ -616,8 +619,6 @@ const STEPS* = [-1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5]
   ##     half turn of offset rule 31 names, and that is measured rather
   ##     than written down here.
 
-type Position* = tuple[wind: float, name, note: string]
-  ## One place on chain: how far it is wound, and how page says so.
 
 
 func windTwist*(wind: float): Twists =
