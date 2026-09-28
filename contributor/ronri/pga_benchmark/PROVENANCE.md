@@ -4,7 +4,7 @@
 |---------|-------|
 | Harness | Claude Code |
 | Author  | Claude Fable 5.1 |
-| Date    | 2026-09-26 |
+| Date    | 2026-09-28 |
 | Style   | CONSTITUTION.md and STYLE.md, followed. |
 | Rules   | be54792c5171ff9d |
 | Review  | **Unreviewed.** Nothing here has been read line by line by a human. |
@@ -243,17 +243,17 @@ on the same operation. That law reads every measurand of the build's own nimcach
 
 **What it found.** Every primitive product spends what the algebra demands, and the
 operations built on top of them do not. At four dimensions the library stands at the bound
-on multiplies for 97 of the 107 operations that carry one. The attitude and the two supports
-are what stand above it. At five dimensions it stands at the bound for 92 of 126. The
-attitude, the carrier, the cocarrier, the centre, the container, the partner and the four
-projections stand above it.
+on multiplies for 101 of the 107 operations that carry one. The two supports are what stand
+above it. At five dimensions it stands at the bound for 112 of 126. The cocarrier, the
+centre and the four projections stand above it.
 
-The carrier reads as the attitude does. It wedges against a constant that carries one unit
-component, so the algebra demands no multiply at all, and the library spends 243. The
-partner spends 1004 multiplies against its chain's 518.
+The attitude and the carrier are generated from a Cayley table, so each spends no multiply,
+as the algebra demands. The container and the partner read the carrier, so they now spend
+their chains' 243 and 518. The cocarrier still wedges against a constant that carries one
+unit component. So it spends 243 multiplies where the algebra demands none.
 
-On bytes moved the library stands at the bound for 51 of 107 operations at four dimensions,
-and for 67 of 126 at five. Those are the operations that one generated function serves,
+On bytes moved the library stands at the bound for 55 of 107 operations at four dimensions,
+and for 77 of 126 at five. Those are the operations that one generated function serves,
 since that function writes every slot and fills nothing. An operation that the library
 composes from several functions still fills its intermediates, and stands above the bound.
 
@@ -262,10 +262,10 @@ bound's 384 bytes. The bulk norm spends the bound's 8 multiplies, and moves 640 
 against the bound's 136.
 
 At four dimensions 65 operations carry a library function, a bound and a reference. Over
-those, reaching the bound closes 61 per cent of the byte distance to the reference. It
-closes 27 per cent of the multiply distance. At five dimensions 84 operations carry all
-three, and reaching the bound closes 84 per cent and 51 per cent. Without the composed
-operations, the byte shares are 52 and 38 per cent. Those shares rest on one population, so
+those, reaching the bound closes 58 per cent of the byte distance to the reference. It
+closes 18 per cent of the multiply distance. At five dimensions 84 operations carry all
+three, and reaching the bound closes 83 per cent and 23 per cent. Without the composed
+operations, the byte shares are 42 and 23 per cent. Those shares rest on one population, so
 the figures compare.
 
 Cost: the multivector lower bound is derived, and never measured (Article VIII.1). It bounds
@@ -324,14 +324,18 @@ got `81`, baseline `80`.
 **The PGA library is a pinned dependency, and never a copy.** It lives in [replications],
 which carries no nimble file and holds the library three directories inside it. So the
 requirement in `pga_benchmark.nimble` names the repository by URL and commit. `atlas.lock`
-records the resolved commit `6a91c3f00abbf0c2e8584d5459c3b2da9f4df8e3`, and `nim.cfg` names
+records the resolved commit `bd6b23c590d7e1da91a1ea288a1a4b94dedbf315`, and `nim.cfg` names
 the subdirectory that Atlas restores it to.
 
-That commit is the head of the library on 2026-09-24, as the standing instruction of the
-Architect asks. It wraps one operator definition in `expandMacros`, so every build of this
-project prints the expansion of `∙`. The driver and the suites do not read that output.
-Both projects are under the Prosperity Public License 3.0.0. Rejected: a copy of the library
-in this tree, which Article XI.3 forbids.
+That commit is the head of the library on 2026-09-28, as the standing instruction of the
+Architect asks. Both projects are under the Prosperity Public License 3.0.0. Rejected: a copy
+of the library in this tree, which Article XI.3 forbids.
+
+**The pin never held `181c8d8`.** There `merge` added a term without its negation when
+`as_negated` was set, so `e12 ⟑ e12` gave +1. That flipped 60 of the 384 terms of the
+geometric product at 4D. Suite `Chapter 3` failed on it, through the motor product against
+its reference, and the suites of the library passed. `16dbc17` fixes it, and the pin follows
+from there.
 
 **The bump from `0bc4655` moved the pin over two library changes that this project had to
 follow.** The library made the grade table private and read it from a generic `{}`. The umbrella
@@ -360,90 +364,89 @@ attribution rather than licence.
 
 ## Figures
 
-Every figure below was taken on 2026-09-24, in the container of that session: `linux amd64, 4
-cores`, a shared cloud machine. It ran on the pinned compiler and on library `6a91c3f`, with
+Every figure below that names no other commit was taken on 2026-09-28, in the container of
+that session: `linux amd64, 4 cores`, a shared cloud machine. It ran on the pinned compiler
+and on library `bd6b23c`, with
 `-d:release`. Runtime measurements are medians over 40 rounds of 1024 objects, from
 `nim r tools/build.nim bench`, in nanoseconds for each object. Static measurements are from
 `nim r tools/build.nim inspect`, and are exact for this compiler commit, with loop trips
 weighted.
 
 **The reference side is the drift control.** The bump of the pin does not touch the
-reference, because the reference is the code of this project. The baselines of 2026-09-22
-and 2026-09-24 are the pair. Over it the reference medians moved by ×0.87 at rga4d and by
-×0.94 at cga5d. So the machine gave back more than it did two days before.
+reference, because the reference is the code of this project. The baselines of 2026-09-24
+and 2026-09-28 are the pair. Over it the reference medians moved by ×0.94 at rga4d and by
+×0.73 at cga5d. So the machine gave back more than it did four days before.
 
-Over the same pair the library medians moved by ×0.52 and ×1.04. Read the two sides
+Over the same pair the library medians moved by ×0.83 and ×0.59. Read the two sides
 together, and never one alone. The interleaved pair below is the figure that the bump
 itself moved.
 
 | Gap (rga4d) | Library ns | Reference ns | Mul | Div | Bytes moved | Checks |
 |---|---|---|---|---|---|---|
-| `wedge_point_point` (`∧`) | 31.1 | 3.6 | 81 / 12 | 0 / 0 | 384 / 112 | 0 / 0 |
-| `wedge_dot_anti_motor_motor` (`⟇`) | 77.4 | 18.4 | 192 / 48 | 0 / 0 | 384 / 256 | 0 / 0 |
-| `transform_point_motor` (three products) | 160.0 | 8.6 | – / 25 | – / 0 | – / 192 | – / 8 |
-| `norm_bulk_point` (`\|∙`) | 11.6 | 1.8 | 8 / 3 | 0 / 0 | 640 / 40 | 1 / 1 |
-| `norm_bulk_squared_point` (`\|∙²`) | 6.4 | 0.9 | 8 / 3 | 0 / 0 | 256 / 40 | 0 / 0 |
-| `unitize_point` (`^`) | 14.6 | 1.3 | 24 / 3 | 1 / 1 | 896 / 128 | 2 / 0 |
-| `support_line` (`∩`) | 87.1 | 2.3 | 162 / 9 | 0 / 0 | 1280 / 112 | 3 / 1 |
-| `attitude_point` (`⊖`) | 32.2 | 0.6 | 81 / 0 | 0 / 0 | 768 / 40 | 1 / 0 |
-| `project_orthogonal_point_plane` | 54.9 | 5.4 | 135 / 14 | 0 / 0 | 1152 / 128 | 2 / 0 |
+| `wedge_point_point` (`∧`) | 24.4 | 3.4 | 81 / 12 | 0 / 0 | 384 / 112 | 0 / 0 |
+| `wedge_dot_anti_motor_motor` (`⟇`) | 50.6 | 13.8 | 192 / 48 | 0 / 0 | 384 / 256 | 0 / 0 |
+| `transform_point_motor` (three products) | 138.6 | 6.9 | – / 25 | – / 0 | – / 192 | – / 8 |
+| `norm_bulk_point` (`\|∙`) | 11.7 | 1.8 | 8 / 3 | 0 / 0 | 640 / 40 | 1 / 1 |
+| `norm_bulk_squared_point` (`\|∙²`) | 4.3 | 0.7 | 8 / 3 | 0 / 0 | 256 / 40 | 0 / 0 |
+| `unitize_point` (`^`) | 5.2 | 1.2 | 24 / 3 | 1 / 1 | 512 / 128 | 1 / 0 |
+| `support_line` (`∩`) | 56.3 | 2.1 | 162 / 9 | 0 / 0 | 1280 / 112 | 3 / 1 |
+| `attitude_point` (`⊖`) | 4.2 | 0.5 | 0 / 0 | 0 / 0 | 256 / 40 | 0 / 0 |
+| `project_orthogonal_point_plane` | 46.1 | 4.4 | 135 / 14 | 0 / 0 | 1152 / 128 | 2 / 0 |
 
 | Gap (cga5d) | Library ns | Reference ns | Mul | Div | Bytes moved | Checks |
 |---|---|---|---|---|---|---|
-| `wedge_round_point_round_point` (`∧`) | 99.3 | 5.4 | 243 / 20 | 0 / 0 | 768 / 160 | 0 / 0 |
-| `center_dipole` (`⊙`) | 209.4 | 4.0 | 486 / 16 | 0 / 0 | 3584 / 160 | 4 / 1 |
-| `partner_circle` (`⊛`) | 484.4 | 5.8 | 1004 / 29 | 0 / 0 | 32768 / 320 | 273 / 2 |
-| `carrier_sphere` (`■`) | 97.1 | 0.5 | 243 / 0 | 0 / 0 | 1536 / 48 | 1 / 0 |
+| `wedge_round_point_round_point` (`∧`) | 58.0 | 4.4 | 243 / 20 | 0 / 0 | 768 / 160 | 0 / 0 |
+| `center_dipole` (`⊙`) | 100.2 | 2.4 | 486 / 16 | 0 / 0 | 3584 / 160 | 4 / 1 |
+| `partner_circle` (`⊛`) | 137.4 | 3.4 | 518 / 29 | 0 / 0 | 30720 / 320 | 271 / 2 |
+| `carrier_sphere` (`⊟`) | 6.1 | 0.4 | 0 / 0 | 0 / 0 | 512 / 48 | 0 / 0 |
 
 **What the bump moved in the counts, over the functions that both commits hold.** The pair
-is the static baseline of `9f9019b` against the static baseline of `6a91c3f`, 123 functions
+is the static baseline of `6a91c3f` against the static baseline of `bd6b23c`, 123 functions
 at rga4d and 141 at cga5d.
 
 | Count (common functions) | rga4d | cga5d |
 |---|---|---|
-| Zero fills | 116 → 74 | 364 → 308 |
-| Bytes moved | 36464 → 30832 | 115280 → 100432 |
-| Error-flag checks | 173 → 141 | 683 → 619 |
-| Calls | 175 → 143 | 747 → 683 |
-| Lines of C | 2995 → 3165 | 8232 → 8594 |
-| Multiplies | 2204 → 2204 | 9173 → 9173 |
+| Zero fills | 74 → 72 | 308 → 294 |
+| Bytes moved | 30832 → 30064 | 100432 → 93776 |
+| Error-flag checks | 141 → 139 | 619 → 612 |
+| Calls | 143 → 141 | 683 → 676 |
+| Lines of C | 3165 → 3163 | 8594 → 8503 |
+| Multiplies | 2204 → 2123 | 9173 → 7958 |
 | Divisions | 6 → 6 | 2 → 2 |
-| Inline functions | 108 → 117 | 120 → 134 |
+| Inline functions | 117 → 115 | 134 → 130 |
 
-Every generated operator now writes every slot, zeros included, and refuses its zero fill,
-so it moves what the bound moves. Its lines rise for the same reason. The arithmetic does not
-move. The norms, the unitizes and the composed operators are now inline, so their calls and
-checks fold into the caller.
+The attitude and the carrier are now generated, so they spend no multiply. The container
+and the partner read the carrier, so they lose half of theirs. The unitizes read the squared
+norm, and make one call where they made two. The composed operators are no longer inline.
+`∪` builds its constant `𝐞̄ₙ` with a `let`, so at runtime it calls `initElement` and moves
+512 more bytes. A `const`, as `∩` already uses, would fold that constant at build time.
 
-**What the bump moved in time.** The pristine bench of `9f9019b` and the patched bench of
-`6a91c3f` ran alternately, nine times each, and each measurand compares on medians. Noise
+**What the bump moved in time.** The pristine bench of `6a91c3f` and the patched bench of
+`bd6b23c` ran alternately, nine times each, and each measurand compares on medians. Noise
 puts one measurand between ×0.92 and ×1.08, and a median over a whole run between ×0.98 and
-×1.01.
+×1.01. A measurand under 15 ns can move further. The patched library passes its own suites,
+33 at rga4d and 28 at cga5d.
 
-Two variants of `6a91c3f` separate the causes. The first takes `{.inline.}` off the composed
-operators (`∩ ∪ ⊟ ⊞ ⊙ ⊡ ⊛ ⊖`). The second also gives the unary generated operators back their
-fill. Every variant passes the suites of the library, 33 at rga4d and 24 at cga5d.
+| Measurand | rga4d | cga5d |
+|---|---|---|
+| Median over touched measurands | ×0.35 | ×0.57 |
+| `attitude` (`⊖`) | ×0.11, 29.8 → 3.4 ns | ×0.11, 76.9 → 8.6 ns |
+| `carrier` (`⊟`) | | ×0.10, 79.5 → 8.1 ns |
+| `container` (`⊡`) | | ×0.53 |
+| `partner` (`⊛`) | | ×0.58 |
+| `carrier_co` (`⊞`) | | ×0.58 |
+| `center` (`⊙`) | | ×0.87 |
+| `unitize` (`^`, `^∘`) | ×0.32 | ×0.65 |
+| `normalize_bulk` (`^∙`) | ×1.19, 9.4 → 11.3 ns | ×0.78 |
+| `support_anti` (`∪`) | ×1.23, 54.5 → 67.2 ns | |
+| Measurands slower than ×1.08 | 13 of 111 | 1 of 131 |
 
-| Measurand | `6a91c3f` | Composed not inline | And unary fill |
-|---|---|---|---|
-| rga4d, median over touched | ×0.61 | ×0.61 | ×0.81 |
-| rga4d `bulk` (`∙`) | ×0.25 | ×0.25 | ×1.00 |
-| rga4d `norm` (`\|`) | ×0.24 | ×0.25 | ×0.24 |
-| rga4d `attitude` (`⊖`) | ×1.47 | ×1.00 | ×1.01 |
-| rga4d `support` (`∩`) | ×1.23 | ×0.84 | ×0.84 |
-| rga4d `contract_bulk` (`∨★`) | ×1.33 | ×1.32 | ×1.31 |
-| cga5d, median over touched | ×0.99 | ×0.98 | ×0.99 |
-| cga5d `carrier_co` (`⊞`) | ×1.72 | ×1.01 | ×1.00 |
-| cga5d `container` (`⊡`) | ×1.37 | ×1.07 | ×1.05 |
-| cga5d `bulk` (`∙`) | ×1.30 | ×1.39 | ×1.06 |
-| cga5d `norm` (`\|`) | ×0.56 | ×0.60 | ×0.57 |
-| Measurands slower than ×1.08, rga4d / cga5d | 8 / 51 | 2 / 27 | 1 / 14 |
-
-So `{.inline.}` on the composed operators is what makes the attitude, the supports, the
-carriers, the centre, the container and the partner slower. At cga5d the unary part
-extractions (`∙ ∘ ■ □`) lose ×1.1 to ×1.4 once they write every slot, where the same change
-wins ×0.25 at rga4d. A third variant adds the attitude as a map of moves and signs to the
-first. There the attitude runs at ×0.13 of `9f9019b` at rga4d, and at ×0.20 at cga5d.
+The attitude and the carrier now run as maps of moves and signs. The cocarrier, the centre,
+the container and the partner are no longer inline. At `6a91c3f` that pragma made the
+composed operators slower, the cocarrier by ×1.72 and the attitude by ×1.47. `∪` is slower
+because of its runtime constant. `^∙` is slower at rga4d although its counts fell, and the
+cause is not yet pinned down. The other slower measurands run under 14 ns, and their code did
+not change, so they read as noise.
 
 The emitted C of the library at 4D:
 
@@ -452,11 +455,13 @@ The emitted C of the library at 4D:
 - `|∙²` is 16 lines and 8 multiplies, inline, with no zero fill and 256 bytes moved. Its
   unsquared partner `|∙` is 29 lines, inline, with two zero fills and 640 bytes, because it
   takes a square root through a call;
-- `^∘` (unitize) spends 24 multiplies and 1 division over 88 lines, with 2 branches left,
+- `^∘` (unitize) spends 24 multiplies and 1 division over 75 lines, with 1 branch left,
   where the reference takes one reciprocal and 8 multiplies;
-- `⊛` at cga5d is the widest function in the tree. It spends 2736 lines, 1004 multiplies,
-  112 zero fills, 273 branches and 32768 bytes moved. Its reference spends 29 multiplies;
-- 117 of 123 library functions at rga4d are inline.
+- `⊖` (attitude) is 16 lines, inline, with no multiply, no zero fill and 256 bytes moved,
+  which is its bound;
+- `⊛` at cga5d is the widest function in the tree. It spends 2710 lines, 518 multiplies,
+  108 zero fills, 271 branches and 30720 bytes moved. Its reference spends 29 multiplies;
+- 115 of 124 library functions at rga4d are inline.
 
 Allocation is zero on every measurand, in both implementations, with the gauge live.
 
@@ -464,13 +469,13 @@ Scaling comes from `nim r tools/build.nim sweep`, rigid metric, general measuran
 six dimensions, `∧` is 2.9, 7.8, 55.0, 73.4, 203.4 ns. `⟑` is 3.8, 14.2, 106.6, 177.1, 1383.4
 ns, and `norm` is 4.1, 7.8, 60.2, 50.5, 92.8 ns. The 4D column of the sweep ran hot against
 the bench, so the shape is the figure, and not the values. These numbers are from library
-`0bc4655` on 2026-09-13. Nobody swept the library again at `6a91c3f`, because the sweep runs
+`0bc4655` on 2026-09-13. Nobody swept the library again at `bd6b23c`, because the sweep runs
 by hand, so read them as the shape alone.
 
 Error checks under `--panics:on` were measured at library `0bc4655` by a compile of the bench
 entry with `--compileOnly`, and a count in its C. `∧` at 4D fell from 178 branches and 1090
-lines to 0 and 551. That figure is now mostly spent. At `6a91c3f` the default build emits no
-branch in `∧`. It emits 141 branches over the whole of rga4d, where it emitted 4388.
+lines to 0 and 551. That figure is now mostly spent. At `bd6b23c` the default build emits no
+branch in `∧`. It emits 139 branches over the whole of rga4d, where it emitted 4388.
 
 The
 switch still makes defects fatal, so whether the users of the library may take it is the call
@@ -492,9 +497,8 @@ hand-written function, such as a norm, writes no zero. The Architect decided thi
 library is about PGA and not about micro-optimisation.
 
 Each function that a Cayley table can express moves to generation, and so gets its zeros
-unrolled at no cost. At the pin `6a91c3f` the library already works this way. Head `181c8d8`
-zeroes the norms with loops, against the decision. The cost that stays is what the
-hand-written norms pay.
+unrolled at no cost. At the pin `bd6b23c` the library works this way, and its attitude and
+carrier are generated. The cost that stays is what the hand-written norms pay.
 
 The cost was measured at library `181c8d8`, with the sign of `merge` fixed, on 2026-09-25.
 Each function was called through a volatile procedure pointer, so its body compiled alone and
@@ -514,10 +518,10 @@ write the zeros first. The cell is the lower of the two passes:
 | `|` | 4.0 / 3.7 | 5.9 / 5.6 | 24 / 15 | 58 / 46 | 31 / 22 | 86 / 74 | 163 / 150 |
 
 The fill loses from four dimensions up, where a result holds 128 bytes or more. There gcc
-emits the fill as `rep stos` under its generic tuning for x86-64. One change writes no zero,
-so it fits the decision. `^∙` and `^∘` can take the root of `|∙²` or `|∘²`, and not build the
-norm. They then run at ×0.55 to ×0.93 in all seven algebras. Issue #285 proposes a rule for
-Article VII from these measurements.
+emits the fill as `rep stos` under its generic tuning for x86-64. At the pin `^∙` and `^∘`
+take the root of `|∙²` or `|∘²`, and do not build the norm. Alone at `181c8d8`, that change
+ran at ×0.55 to ×0.93 in all seven algebras. Issue #285 proposes a rule for Article VII from
+these measurements.
 
 ## Known limitations
 
@@ -534,9 +538,9 @@ Article VII from these measurements.
 - The bench writes each result into a local array that it fills with zeros once. So the
   compiler sees that memory, and deletes each store of zero that repeats the fill. A result
   with many zero elements then reads faster in the bench than it runs elsewhere. The bias
-  touches the figures above that compare fills, among them the ×1.1 to ×1.4 at cga5d and the
-  ×1.33 of `contract_bulk`. Timed alone at `181c8d8`, those functions do not lose when they
-  write every element.
+  touches every figure that compares a fill with written zeros, among them two open
+  questions below. Timed alone at `181c8d8`, those functions do not lose when they write
+  every element.
 
 ## Open questions
 
@@ -553,11 +557,13 @@ Article VII from these measurements.
   counts and absolute verdicts only.
 - Why the write-once unitize shapes run three times slower than the in-place one under
   `-d:release`, in the reciprocal experiment above.
-- Why the unary part extractions at cga5d lose ×1.1 to ×1.4 when they write every slot, where
-  the same change wins ×0.25 at rga4d. The byte model says they move less, so the cause is
-  outside it.
+- Why the unary part extractions at cga5d lost ×1.1 to ×1.4 at `6a91c3f`. There they began
+  to write every slot, and the same change won ×0.25 at rga4d. The byte model says they move
+  less, so the cause is outside it.
 - Why `contract_bulk` (`∨★`) at rga4d runs ×1.33 slower once it writes every slot, while every
   other generated product holds or wins.
+- Why `^∙` at rga4d runs ×1.19 slower at `bd6b23c` than at `6a91c3f`, where `^∘` runs at
+  ×0.32. Both now read the squared norm, and the counts of both fell alike.
 
 [replications]: https://gitlab.com/mraxilus/replications
 [terathon]: https://github.com/EricLengyel/Terathon-Math-Library
