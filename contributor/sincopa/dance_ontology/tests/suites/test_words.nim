@@ -1,5 +1,5 @@
 ## Hold table report shows to words report can say.
-##   `sim/words` is one translation table, and `sim/verdicts.md` opens by
+##   `simulation/words` is one translation table, and `simulation/verdicts.md` opens by
 ##     printing it, so reader knows what each phrase means.  Printed table is
 ##     written out by hand, and it is derived view of `said` (Article I.4).
 ##   Nothing read it back, so it went stale: `said` grew `elbow forward` and
@@ -13,18 +13,18 @@
 import std/[algorithm, options, os, strformat, strutils, unittest]
 
 import std/[json, jsonutils]
-import ../../sim/[body, read, readings, rig, verdicts, words]
+import ../../simulation/[body, read, readings, rig, verdicts, words]
 from ../../src/dance_ontology/rotation import Dancer, facing, name, seenAfter
 
 
-const REPORT = currentSourcePath().parentDir.parentDir.parentDir / "sim" / "verdicts.md"
-  ## Report sim writes, which opens by printing its translation table.
+const REPORT = currentSourcePath().parentDir.parentDir.parentDir / "simulation" / "verdicts.md"
+  ## Report simulation writes, which opens by printing its translation table.
 
 
 func turnedOn(by_lead, by_follow: int; lap = 0.0): array[Body, Stance] =
   ## Stand two face to face, then turn each on spot this many quarters to own
   ## right, as model counts, and follow `lap` whole turns more.
-  ##   Sim turns anticlockwise seen from above, so turn to right is negative.
+  ##   Simulation turns anticlockwise seen from above, so turn to right is negative.
   turned(turned(facing(HUMAN, 1.0), Body.One, -float(by_lead) / 4.0),
          Body.Two, -float(by_follow) / 4.0 + lap)
 
@@ -51,7 +51,7 @@ func shown(report: string): seq[string] =
   var inside = false
   for line in report.splitLines:
     let bare = line.strip
-    if bare.startsWith("| the sim says |"):
+    if bare.startsWith("| the simulation says |"):
       inside = true
       continue
     if not inside: continue
@@ -83,7 +83,7 @@ suite "the report shows every word it says":
     check "wrap" in terms
     check "lock" in terms
 
-  test "every phrase the sim says is named by the table":
+  test "every phrase the simulation says is named by the table":
     for phrase in phrases():
       let left = residue(phrase, terms)
       if left.len > 0:
@@ -91,7 +91,7 @@ suite "the report shows every word it says":
         fail()
 
 
-suite "the sim names each facing as the model does":
+suite "the simulation names each facing as the model does":
   ## `words.FACINGS` names state two stand in from where each body sees other,
   ##   and `rotation.facing` names it from each dancer's turn on spot.  Neither
   ##   reads other, so agreement here is evidence and not echo.
@@ -110,7 +110,7 @@ suite "the sim names each facing as the model does":
 
 
 suite "the report renders from its kept readings":
-  ## Report is words over readings kept in `sim/verdicts.json` (`sim/readings`).
+  ## Report is words over readings kept in `simulation/verdicts.json` (`simulation/readings`).
   ##   Law renders report from those readings and demands written one, byte for
   ##   byte, so words changed and not rendered again cannot pass.  Stamp is not
   ##   read here: readings of older physics still render report they gave.

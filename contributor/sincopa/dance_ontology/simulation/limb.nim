@@ -24,7 +24,7 @@
 
 import std/math
 
-import ./[body, rig, vec]
+import ./[body, rig, vector]
 
 
 type

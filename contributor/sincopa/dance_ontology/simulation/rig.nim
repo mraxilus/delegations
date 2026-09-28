@@ -1,4 +1,4 @@
-## Every measurement sim is built from, each with where it came from.
+## Every measurement simulation is built from, each with where it came from.
 ##
 ##   Rig is tape's numbers: rounds of torso, neck and head,
 ##     lengths of arm's three links, and how far each joint will go before
@@ -50,7 +50,7 @@ type
 
   Band* {.pure.} = enum ## Where pair of joined hands is carried.
     ##   Named for body part, not for word of dance: which of
-    ##     these is "low" is put on outside sim.
+    ##     these is "low" is put on outside simulation.
     Torso, ## About chest, below shoulder line.
     Neck,  ## About neck, between shoulders and chin.
     Crown  ## Over head, clear of it.
@@ -100,7 +100,7 @@ const
     ## five is how far arm goes across with arm hanging, and what stops it there
     ## is belly; raised, arm passes in front of chest to about hundred and
     ## thirty, and what stops it then is chest.  Either way limit is trunk, which
-    ## sim collides already.  Reading is arcsin and cannot pass ninety, so at
+    ## simulation collides already.  Reading is arcsin and cannot pass ninety, so at
     ## this figure cap never binds and body does stopping -- as in life.
     ##   Measured: every chain jammed on old cap with arm raised.  Freed, chains
     ##     go from 18 to 47 of 56 questions and reference from 193 to 223 of 231,

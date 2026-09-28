@@ -3,7 +3,7 @@
 ##   Where held arm lies on its own body -- across front or behind
 ##     back, at chest or neck, pressing or merely carried there --
 ##     and where two connections cross in plan and which is higher.
-##     Dance's words for these are put on outside sim.
+##     Dance's words for these are put on outside simulation.
 ##   Read off poses alone.  Solver this once read from is gone; what
 ##     answers now is `rigid`, and it hands over same four points per
 ##     arm, so nothing here needed to know which answered.
@@ -12,7 +12,7 @@
 
 import std/[math, options]
 
-import ./[body, contact, hold, limb, rig, vec]
+import ./[body, contact, hold, limb, rig, vector]
 
 
 type

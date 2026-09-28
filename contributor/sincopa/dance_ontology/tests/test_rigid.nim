@@ -13,10 +13,10 @@ cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on -d:danger $opti
 ##     every other law may ask engine rather than measure pose again.
 ##     Law itself was wrong first time it ran, and rig was right: `angleBetween` takes
 ##     units, and raw vectors gave it constant eighty-nine degrees whatever pose was.
-##   Where couple stand is read from `sim/answers.json` (`sim/answers.nim`), not searched
-##     for here.  Suite took 545 s under testament, and its twenty laws that search for
+##   Where couple stand is read from `simulation/answers.json` (`simulation/answers.nim`), not
+##     searched for here.  Suite took 545 s under testament, and its twenty laws that search for
 ##     nothing took 22.8 s, each run alone, measured 2026-09-24 on four cores; answers
-##     change only when sim does.  Every pose and walk law holds is still stood or walked
+##     change only when simulation does.  Every pose and walk law holds is still stood or walked
 ##     live, at answered distance and with current code.  Answers are held to tree by their
 ##     stamp, and by walking them again (suite "answers").
 
@@ -27,7 +27,7 @@ when compileOption("profiler"): import std/nimprof
 import std/[atomics, cpuinfo, math, os, random, strformat, strutils, tables, typedthreads,
           unittest]
 
-import ../sim/[answers, body, hold, limb, read, rig, rigid, vec, walk]
+import ../simulation/[answers, body, hold, limb, read, rig, rigid, vector, walk]
 
 
 const
@@ -75,7 +75,7 @@ var
   IS_GIVEN_READ = false
 
 proc answered(): Answers =
-  ## Every search's answer as kept (`sim/answers.json`), read once.
+  ## Every search's answer as kept (`simulation/answers.json`), read once.
   if not IS_GIVEN_READ:
     ANSWERS_GIVEN = kept()
     IS_GIVEN_READ = true
@@ -210,7 +210,7 @@ suite "two dancers in rigid body engine":
     ##   fix was for: one build carries one step more from one distance than
     ##   another build does, and neither is wrong.
     ##   Both sides are kept answers: search's choice, and walk from every distance
-    ##     (`sim/answers.nim`), each answered by sim at stamp suite "answers" holds.
+    ##     (`simulation/answers.nim`), each answered by simulation at stamp suite "answers" holds.
     let sweep = answered().sweepOf("shake at torso")
     for (chose, every) in [(sweep.negative, "shake at torso, negative"),
                            (sweep.positive, "shake at torso, positive")]:
@@ -539,7 +539,7 @@ func deepestOf(w: Walk; links: seq[Link]): float =
 func leapIn(w: Walk; links: seq[Link]): tuple[most, at: float] =
   ## Furthest any point of any held arm moves between two moments, and where.
   ##   Worked out here rather than borrowed from `walk.leapOf`, so law does not
-  ##     check sim against itself.
+  ##     check simulation against itself.
   # One loop for each axis of data: moment, link, end, joint.
   # Split would hide its shape.
   for j in 1 ..< w.moments.len:
@@ -646,7 +646,7 @@ proc walkEveryWay() =
   joinThreads(workers)
 
 proc live(key: string; positive: bool): Went =
-  ## Walk is sim's own, on this build: only where couple stand comes from
+  ## Walk is simulation's own, on this build: only where couple stand comes from
   ##   answers.  `walked` builds its own world, so it walks exactly what search
   ##   walked from that distance.
   ##   Way whose search found no distance to stand at is not walked, and reads
@@ -1030,13 +1030,13 @@ suite "every still stands at ease":
 #[ Answers ]#
 
 suite "answers":
-  ## Laws above read where couple stand from `sim/answers.json`, and search for
+  ## Laws above read where couple stand from `simulation/answers.json`, and search for
   ## nothing.  These hold that file to tree: every question laws ask is answered
-  ## there, by sim as it is now.
+  ## there, by simulation as it is now.
 
-  test "answers carry stamp of sim that gave them":
-    ## Stamp is digest of every `sim/*.nim` and engine's pinned commit
-    ## (`answers.stamp`).  Sim changed and not answered again reads other stamp
+  test "answers carry stamp of simulation that gave them":
+    ## Stamp is digest of every `simulation/*.nim` and engine's pinned commit
+    ## (`answers.stamp`).  Simulation changed and not answered again reads other stamp
     ## here, and fails until `nim r tools/build.nim answers` is run.
     check engineCommit(readFile(HERE / "tools" / "build.nim")).len == 40
     check answered().stamp == stamp()
@@ -1064,11 +1064,11 @@ suite "answers":
       let where = a.stillOf(q.key)
       if where.holds: check where.apart in fars
 
-  test "kept answers are what sim answers now":
+  test "kept answers are what simulation answers now":
     ## Walk from kept distance is search's own walk from there (`live`), so it
     ## has to hold, carry and stop as kept one did, number for number.  And two
     ## walks from single distances, drawn by stamp, are walked again.  Stamp
-    ## says sim has not changed; this says answers came from it.
+    ## says simulation has not changed; this says answers came from it.
     let a = answered()
     for q in SWEEPS:
       let sweep = a.sweepOf(q.key)

@@ -10,7 +10,7 @@
 ##   One list of entries: every still of reference first, in page's order, then
 ##     every sweep.  Stage shows one; every still is also drawn small beside its
 ##     own cell of reference, and clicking cell puts it on stage.  Architect: lay
-##     reference and sim side by side, with next and previous.
+##     reference and simulation side by side, with next and previous.
 ##   Data is read in place through `jsffi`, never copied into Nim values: every
 ##     copy on JS backend is deep (STYLE.md), and this is read sixty times per
 ##     second.
@@ -25,17 +25,17 @@ import ./drawn
 
 
 const VERDICTS* = [
-  "Holds. The sim wound the couple here from rest, lifted their joined hands, and let the " &
+  "Holds. The simulation wound the couple here from rest, lifted their joined hands, and let the " &
     "pose settle.",
   "No pose holds, at any distance the couple can stand.",
   "Nothing stops the turn inside the range this sweep tried.",
 ]
   ## Every whole sentence viewer shows as its verdict, in one table.
   ##   Page is built in browser, so no page on disk carries these sentences and
-  ##     `tmarks` cannot read them.  Table is what `tsaid` counts instead, which
+  ##     `test_marks` cannot read them.  Table is what `test_said` counts instead, which
   ##     holds them to same two rules as prose written into markup (Article VI.8).
   ##   Fourth verdict is not whole sentence: it opens `Stops at <b>N</b> turns:`
-  ##     and closes with reason recorded by sim, so it is built at reading time
+  ##     and closes with reason recorded by simulation, so it is built at reading time
   ##     and counted by nothing.
 
 

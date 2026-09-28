@@ -1,16 +1,16 @@
-# The body sim
+# The body simulation
 
 Two bodies and their arms in a rigid body engine, and nothing else. This directory shares no code
 with the ontology. It has its own `Arm` and `Body`, its own vector type, and it imports nothing
 from `../src`. The notation is a shorthand for two people with arms of a given length, and a
-shorthand cannot check itself. The sim is what the notation is a shorthand for. It is kept apart so
-that what it says is evidence, and not an echo.
+shorthand cannot check itself. The simulation is what the notation is a shorthand for. It is kept
+apart so that what it says is evidence, and not an echo.
 
 It is not kept apart in its words. It uses the agreed words of the project where one fits, and
 `GLOSSARY.md` holds the four that are its own: rig, pose, strain and block. It is a witness because
-it imports no code and is told no answer. Where the sim measures what the ontology states, the
-translation is evidence and not identity. So `words.nim` holds that translation in one table, and
-`verdicts.nim` uses it.
+it imports no code and is told no answer. Where the simulation measures what the ontology states,
+the translation is evidence and not identity. So `words.nim` holds that translation in one table,
+and `verdicts.nim` uses it.
 
 ## What it is
 
@@ -29,8 +29,8 @@ engine, Joints that give, Walk and lift, and Stance and strain.
 
 ## What it answers
 
-- **How far a hold turns, and what stops it.** The sim turns the hold until something gives, so the
-  answer moves when the rig moves. No number is set by hand.
+- **How far a hold turns, and what stops it.** The simulation turns the hold until something gives,
+  so the answer moves when the rig moves. No number is set by hand.
 - **The pose at each moment of a turn.** It gives each joint, where the hands are, and which way
   each arm lies on its own body.
 - **Which of two crossing arms is over.** It reads this from the drawn arms and does not assume it.
@@ -39,7 +39,7 @@ engine, Joints that give, Walk and lift, and Stance and strain.
   names that facing among the sixteen.
 
 `verdicts.md` is the record of what it answered. It prints each claim of the floor beside what the
-sim said, and nothing is tuned to make them agree.
+simulation said, and nothing is tuned to make them agree.
 
 ## What it does not model
 
@@ -50,7 +50,7 @@ joint.
 ## Reading it
 
 ```
-vec.nim      points, directions, and the two contact tests
+vector.nim   points, directions, and the two contact tests
 rig.nim      every measurement, with its source
 body.nim     two bodies standing and facing; where the shoulders are
 limb.nim     one arm: forward kinematics, inverse kinematics, joint readings
@@ -65,14 +65,14 @@ seen.nim     one sweep recorded whole -- every capsule, every joint -- for
              the rig viewer to draw
 read.nim     what a pose says about itself, still in body words: crossings,
              lying, the tightest joint
-words.nim    what the sim reads, said in the agreed words, in one table
-readings.nim what the report reads off the sim, as plain numbers, on every core
-verdicts.nim the sim run as an instrument against the ontology's sheet
+words.nim    what the simulation reads, said in the agreed words, in one table
+readings.nim what the report reads off the simulation, as plain numbers, on every core
+verdicts.nim the simulation run as an instrument against the ontology's sheet
 verdicts.json the readings it renders from, kept with a stamp of the physics
 verdicts.md  what it said, translated once and generated, not edited
-../tests/trigid.nim  the rig held to tape, geometry and the Architect's floor
-../tests/suites/tlimb.nim  the tape's numbers and one arm's kinematics
-../tests/tread.nim   crossings read off the drawn arms, not assumed
+../tests/test_rigid.nim  the rig held to tape, geometry and the Architect's floor
+../tests/suites/test_limb.nim  the tape's numbers and one arm's kinematics
+../tests/test_read.nim   crossings read off the drawn arms, not assumed
 ../design/rig_view.nim  the rig viewer, compiled to JS: every capsule the
              engine collides, and every joint beside its range
 ```
@@ -91,7 +91,7 @@ nim r tools/build.nim verdicts    # rewrite verdicts.md: seconds for words, minu
 Run the laws before `nim r tools/build.nim pages`. A page that draws a model which has stopped
 holding is worse than no page.
 
-The search for where to stand costs the most time. The sim walks the turn again from many
+The search for where to stand costs the most time. The simulation walks the turn again from many
 distances, two centimetres apart. A card that asks whether a turn is reached stops at the first
 distance that reaches it. So an easy card costs one sweep, and only a card that nothing reaches pays
 for the whole search.

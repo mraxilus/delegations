@@ -1,4 +1,4 @@
-## What each still card of reference asks of body sim: which hands are joined, how
+## What each still card of reference asks of body simulation: which hands are joined, how
 ## far couple are turned from rest, and whose crown joined hands are carried over.
 ##
 ##   One list, read by `design/modelled` (which answers each) and by `design/rig`
@@ -11,7 +11,7 @@
 
 import std/[options, strformat]
 
-import ../sim/[body, hold]
+import ../simulation/[body, hold]
 import ../src/dance_ontology/diagram
 import ../src/dance_ontology/draw/terms
 import ../src/dance_ontology/frame
@@ -19,7 +19,7 @@ from ../src/dance_ontology/rotation import HalfTurns
 import ./parts
 
 
-type StillAsk* = object ## One still card, as sim is asked it.
+type StillAsk* = object ## One still card, as simulation is asked it.
   key*: string    ## Question's key, as page keys its own pictures.
   links*: seq[Link]
   turns*: float   ## Facing, in turns from where hold rests.
@@ -39,7 +39,7 @@ func otherThan*(who: Body): Body =
   if ord(who) == ord(Body.One): Body.Two else: Body.One
 
 func armOf*(a: terms.Arm): body.Arm =
-  ## Translate drawing's arm into sim's.
+  ## Translate drawing's arm into simulation's.
   if ord(a) == ord(terms.Arm.L): body.Arm.Left else: body.Arm.Right
 
 func linksOf*(holds: Holds): seq[Link] =
@@ -59,8 +59,8 @@ func holdsOf*(target: Frame): Holds =
       result[lead] = some follow
 
 func asked*(wind: float): float = -wind
-  ## Page's turn as sim's.  Page counts clockwise seen from above
-  ## (`rotation.wayOf`, "how drawings see couple"); sim counts anticlockwise
+  ## Page's turn as simulation's.  Page counts clockwise seen from above
+  ## (`rotation.wayOf`, "how drawings see couple"); simulation counts anticlockwise
   ## (`body.turned`).  Every wind is flipped here, in one place, before it is
   ## asked: flipped for chains alone, A16 was stood in C3's pose and A17 in
   ## C5's, mirror of what each card draws, and every single-hand card likewise.
@@ -70,16 +70,16 @@ func restOf*(target: Frame): Facing = restOf(holdsOf(target))
   ## `parts.restOf`, and never written down.
 
 func awayFor*(rest: Facing): bool =
-  ## Say rest as sim is told it: Face-to-face, or follow turned half, which is
-  ## Face-to-back and which sim calls `away`.
-  ##   Sim stands couple at no other rest, and no card asks one.
+  ## Say rest as simulation is told it: Face-to-face, or follow turned half, which is
+  ## Face-to-back and which simulation calls `away`.
+  ##   Simulation stands couple at no other rest, and no card asks one.
   case rest
   of Facing.FaceToFace: false
   of Facing.FaceToBack: true
-  else: raise newException(Defect, &"Sim rests couple at no `{rest.name}`.")
+  else: raise newException(Defect, &"Simulation rests couple at no `{rest.name}`.")
 
 func away*(a: StillAsk): bool = awayFor(a.rest)
-  ## Say card's rest as sim is told it.
+  ## Say card's rest as simulation is told it.
 
 
 func stillAsks*(): seq[StillAsk] =

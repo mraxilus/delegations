@@ -3,7 +3,7 @@
 ##   This module is authority workbench replicates: README quotes each
 ##     entry, and checks cite by number.
 ##     README's quotations are held to this word for word by
-##       `tests/suites/treadme.nim`, so that copy cannot drift.  Checks' printed
+##       `tests/suites/test_readme.nim`, so that copy cannot drift.  Checks' printed
 ##       lines are not: they are worded for what was measured, not for
 ##       rule's own phrasing, and rewording them to quote this ledger
 ##       would change what every build prints.
@@ -16,7 +16,7 @@
 ##     true; checkers in `checks.nim` verify standing ones on every
 ##     build -- twenty-nine lines for forty-one rules, superseded six
 ##     living here with their corrections, sheet's five (36 to 40)
-##     checked by nothing here -- sim reports in their words, which is
+##     checked by nothing here -- simulation reports in their words, which is
 ##     not check -- and rule 41 checked by nothing.
 ##   What these checks verify is that drawing follows rule as written,
 ##     never that couple can dance it.  Workbench is mock-up.  Only
@@ -432,7 +432,7 @@ const RULES* = [
   ##     back up to its own shoulder, hammerlock -- so settle
   ##     table's `(Own, Back)` stands.  Entry note is transition
   ##     fact, first ledger has that is about safety rather than
-  ##     shape; `sim/verdicts.md` records what jointed-arm sim makes of
+  ##     shape; `simulation/verdicts.md` records what jointed-arm simulation makes of
   ##     low lock: hand led behind back at whole turn,
   ##     block just past it.
   ##   Rule 38's under-or-over *other* arm is mark no drawing here
@@ -447,12 +447,12 @@ const RULES* = [
   ##     and settles only follow, which covers sheet's validated
   ##     rows but not its enumeration; widening it is restructure, noted
   ##     in `PROVENANCE.md`'s open questions rather than done quietly here.
-  ##   Rule 40 is sheet's one filled rotation row, and sim asks it
-  ##     independently (`sim/verdicts.md`): from Left to left held low,
-  ##     jointed-arm sim reads lock way as row does -- hand led
+  ##   Rule 40 is sheet's one filled rotation row, and simulation asks it
+  ##     independently (`simulation/verdicts.md`): from Left to left held low,
+  ##     jointed-arm simulation reads lock way as row does -- hand led
   ##     behind back, whole turn reached -- and blocks wrap way
   ##     at three tenths of turn, at lead's shoulder twist, short of
-  ##     row's half.  One place row and sim differ, recorded;
+  ##     row's half.  One place row and simulation differ, recorded;
   ##     neither was told other's answer.
   ##   Rule 41 answers rule 7: its second sentence, that lock or wrap
   ##     means nothing unless line goes round body, holds for every

@@ -26,15 +26,15 @@ const PINS = staticRead("review-pins.json")
   ## What every ruled card's drawing was when it was ruled on.
 
 const MODELLED = staticRead("modelled.json")
-  ## Which cards body sim reaches, written by `design/modelled`.
+  ## Which cards body simulation reaches, written by `design/modelled`.
   ##   Second tag each cell carries.  `kept` is Architect's, by eye on floor;
-  ##     `modelled` is sim's answer confirmed by Architect against their own body,
-  ##     and goal is both at hundred per cent.  Sim reaching card is not enough:
-  ##     Architect, on seeing sim's stills laid beside reference: many static
+  ##     `modelled` is simulation's answer confirmed by Architect against their own body,
+  ##     and goal is both at hundred per cent.  Simulation reaching card is not enough:
+  ##     Architect, on seeing simulation's stills laid beside reference: many static
   ##     states are wrong; mark everything unmodelled until confirmed.  So card
-  ##     sim reaches reads *unconfirmed* until its name is in `CONFIRMED`, and
+  ##     simulation reaches reads *unconfirmed* until its name is in `CONFIRMED`, and
   ##     only then *modelled*.
-  ##   Card sim has not been asked about is absent, and gets no tag: unasked
+  ##   Card simulation has not been asked about is absent, and gets no tag: unasked
   ##     reads as unasked rather than as disagreement.
 
 const LUT_PIN_BY_CARD = block:
@@ -72,9 +72,9 @@ const
   DROPPED: seq[string] = @[]
     ## Ids Architect has ruled out.
   CONFIRMED: seq[string] = @[]
-    ## Ids whose sim still Architect has confirmed against their own body, on
+    ## Ids whose simulation still Architect has confirmed against their own body, on
     ## viewer page that lays each beside its cell.  Added as they are confirmed,
-    ## none yet.  Confirmation is of one still; when sim's still of confirmed
+    ## none yet.  Confirmation is of one still; when simulation's still of confirmed
     ## cell moves, its name comes out of here until it is confirmed again.
   FLAWED = initTable[string, string]()
     ## Position is right, drawing is not: kept, with what to mend.
@@ -146,7 +146,7 @@ func sheetOf(P: Parts): string =
                asks: seq[string] = @[]): string =
     ## Stack several drawings in one cell, one shown at time, with button
     ## apiece.
-    ##   Each step carries sim's own tag, not cell.  Cell that folds six edges
+    ##   Each step carries simulation's own tag, not cell.  Cell that folds six edges
     ##     together and is marked by worst of them paints five reachable edges
     ##     red for sake of sixth, and reader asking why easy one is refused is
     ##     reading tag that was never about it.
@@ -187,18 +187,18 @@ func sheetOf(P: Parts): string =
               elif kept: """<em class="tag keep">kept</em>"""
               elif dropped: """<em class="tag drop">drop</em>"""
               else: ""
-      # Sim's own tag, drawn outlined where Architect's is solid, so ruling by
+      # Simulation's own tag, drawn outlined where Architect's is solid, so ruling by
       # eye and reading by engine are never taken for one another.  It sits in
       # other corner, and outside drawing, so no pin moves by its being here.
       # Cell folding several pictures together stands for several questions, and
-      # is reached only where sim reaches every one of them.  Card nothing has
+      # is reached only where simulation reaches every one of them.  Card nothing has
       # been asked about carries no tag at all.
       put = if asks.len > 0: asks else: @[id]
       known = put.filterIt(it in LUT_MODELLED_BY_CARD)
       reached = known.len > 0 and known.allIt(LUT_MODELLED_BY_CARD[it])
       # Cell's own colour says how far it has got: green only where it is kept,
-      # wholly reached and confirmed; amber where sim reaches all or part of it
-      # and Architect has not yet confirmed; red where sim reaches none of it.
+      # wholly reached and confirmed; amber where simulation reaches all or part of it
+      # and Architect has not yet confirmed; red where simulation reaches none of it.
       # Badges keep saying which of two tags each is.
       stand = if known.len == 0: ""
               elif reached and id in CONFIRMED: " met"
@@ -208,7 +208,7 @@ func sheetOf(P: Parts): string =
              elif not reached: """<em class="tag nomodel">not modelled</em>"""
              elif id in CONFIRMED: """<em class="tag model">modelled</em>"""
              else: """<em class="tag unsure">unconfirmed</em>"""
-    # Questions cell stands for are written on it, so viewer page laying sim
+    # Questions cell stands for are written on it, so viewer page laying simulation
     # beside each cell can find its still by question and not by cell's name.
     # Verdict was given on pictures, so picture that moved under one carries
     # approval it was never given.  Card holds itself to what it was drawn
@@ -597,7 +597,7 @@ func sheetOf(P: Parts): string =
     border-radius: 2px; font-style: normal; }
   .tag.keep { background: var(--keep); color: var(--card); }
   .tag.drop { background: var(--drop); color: var(--card); }
-  /* Cell is green only where Architect kept it *and* sim reaches all of it.
+  /* Cell is green only where Architect kept it *and* simulation reaches all of it.
      Kept alone coloured nothing: it was page's one colour and said nothing of
      second tag, so page read finished wherever verdict was given. */
   .pic.part { border-color: var(--mend); background: var(--mend-wash); }
@@ -637,10 +637,11 @@ func sheetOf(P: Parts): string =
   pose, a level for each arm, and a twist that is not a count of half turns.</p>
   <p class="how"><b>Every cell carries two tags.</b> <i>Kept</i> is the ruling of the Architect
   on the drawing, by eye on the floor.</p>
-   <p class="how">The other tag is the body sim's. It reads <i>not modelled</i>
-  where the sim reaches no pose. It reads <i>unconfirmed</i> where the sim reaches one that the
-  Architect has not yet held against their own body on the viewer. It reads <i>modelled</i>
-  once they have. A pose the sim reaches is a claim, and never a verdict.</p>
+   <p class="how">The other tag is the body simulation's. It reads <i>not modelled</i>
+  where the simulation reaches no pose. It reads <i>unconfirmed</i> where the simulation
+  reaches one that the Architect has not yet held against their own body on the viewer. It
+  reads <i>modelled</i> once they have. A pose the simulation reaches is a claim, and never a
+  verdict.</p>
   """ & body & "</div>"
 
   # Counted off page itself rather than tallied while building it, so
@@ -652,7 +653,7 @@ func sheetOf(P: Parts): string =
       &"""&middot; <b>{FLAWED.len}</b> marked for a mend &middot; """ &
       &"""<b>{seen - KEPT.len - DROPPED.len}</b> still to rule on, of {seen}. """ &
       &"""Against the model: <b>{CONFIRMED.len}</b> confirmed by the Architect, """ &
-      &"""<b>{unsure}</b> reached by the sim and not yet confirmed."""
+      &"""<b>{unsure}</b> reached by the simulation and not yet confirmed."""
   sheet.replace("{{tally}}", tally)
 
 

@@ -3,7 +3,7 @@
 ##   Not C of this project's own, and so argues for nothing under CONTRIBUTOR.md's
 ##     gated-language rule: engine's own headers are C and every line here is Nim.
 ##     Source is cloned at pinned commit by `tools/build.nim engine`, never vendored
-##     (Article XI.3), and archived into `bin/libbox3d.a` which this links.
+##     (Article XI.3), and archived into `binaries/libbox3d.a` which this links.
 ##   Why engine at all: pose search this project had proposed poses and checked
 ##     them, with no notion of motion between two of them, so arms could not slide
 ##     along one another as couple's do. It wound chain to one crossing and no
@@ -23,8 +23,8 @@ import std/os
 const
   HERE = currentSourcePath().parentDir.parentDir
     ## Project directory, which every path below is relative to.
-  LIB = HERE / "bin" / "libbox3d.a"
-  INCLUDE = HERE / "deps" / "box3d" / "include"
+  LIB = HERE / "binaries" / "libbox3d.a"
+  INCLUDE = HERE / "dependencies" / "box3d" / "include"
 
 static:
   # Verb is cheap where library already stands, so this costs one process, not build.

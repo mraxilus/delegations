@@ -5,15 +5,15 @@
 ##     its own is plan position and facing.  Facing accumulates: two
 ##     whole turns are not no turns to anyone counting them, and couple's
 ##     twist is read off difference.
-##   Sim has its own `Arm` and `Body` on purpose: ontology next door
+##   Simulation has its own `Arm` and `Body` on purpose: ontology next door
 ##     has enums near these in meaning and this directory shares nothing with
-##     it, so that what sim says is evidence rather than echo.
+##     it, so that what simulation says is evidence rather than echo.
 
 {.experimental: "strictFuncs".}
 
 import std/[math, options]
 
-import ./[rig, vec]
+import ./[rig, vector]
 
 
 type

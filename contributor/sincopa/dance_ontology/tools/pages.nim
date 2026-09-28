@@ -1,6 +1,6 @@
 ## Copy page shell into build: `pages <build>` copies `pages/app/index.html` to
 ##   `<build>/app/`, where build driver compiles that page's script beside it.
-##   Body sim's own shell went with its live solver: engine that answers it now is C, which
+##   Body simulation's own shell went with its live solver: engine that answers it now is C, which
 ##     no browser runs, so that page is rebuilt as player of sweeps run here.
 ##   Shells were Nim string constants while repository read no markup kind; `Html` and `Svg`
 ##     are registered now, so pages are committed files and this copies them.
@@ -21,7 +21,7 @@ const PAGES = "pages"
 
 proc copyShells(build: string) =
   ## Copy every committed page shell under `build`, creating directories.
-  ##   One today: body sim's shell went with its live solver, as header says.
+  ##   One today: body simulation's shell went with its live solver, as header says.
   for directory in ["app"]:
     createDir(build / directory)
     copyFile(PAGES / directory / "index.html", build / directory / "index.html")

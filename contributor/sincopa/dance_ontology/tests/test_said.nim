@@ -5,7 +5,7 @@ cmd: "nim $target --hints:off -d:testing -d:nodejs -d:nimUnittestAbortOnError:on
 """
 ## Hold prose browser writes to same two rules as prose written into markup.
 ##   Reference and rig viewer build their pages in browser, so no page on disk
-##     carries their sentences and `tmarks` cannot read them.  Gap was recorded
+##     carries their sentences and `test_marks` cannot read them.  Gap was recorded
 ##     rather than closed, and Reference held nine sentences and two paragraphs
 ##     past bounds when this first ran.
 ##   Two shapes, because two pages are built two ways.  Reference builds markup

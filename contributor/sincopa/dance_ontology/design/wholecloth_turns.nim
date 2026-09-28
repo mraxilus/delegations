@@ -1,9 +1,9 @@
-## Animate whole-cloth page's turns panel from body sim's sweeps.
+## Animate whole-cloth page's turns panel from body simulation's sweeps.
 ##
 ##   Port of script hand-written inside `wholecloth.html`, kept byte for byte in
 ##     what it draws: page's markup is now hosted in Nim (`wholecloth_page`), so
 ##     its one program is too, compiled with `nim js` and spliced back in by
-##     `wholecloth`.  Page only draws; every pose is one sim found natively.
+##     `wholecloth`.  Page only draws; every pose is one simulation found natively.
 ##   Data stays where it is: `TURNS` (800 KB, spliced in before this script as
 ##     global) is read in place as `JsObject` through `std/jsffi`, never copied
 ##     into Nim objects, since every copy on JS backend is deep (STYLE.md §7).
@@ -117,7 +117,7 @@ type
     facing: float
 
   Connection = object
-    ## Define one rope at one moment: four joints each side, and sim's words.
+    ## Define one rope at one moment: four joints each side, and simulation's words.
     lead, follow: array[4, Vec3]
     lead_says, follow_says: cstring
     cross: JsObject         ## Crossings from data, `undefined` where none; read in place.
@@ -187,7 +187,7 @@ const
 #[ Data ]#
 
 func turns(): JsObject {.importjs: "TURNS@".}
-  ## Read sim's sweeps, global spliced in before this script.
+  ## Read simulation's sweeps, global spliced in before this script.
   ##   Bare `@` with no arguments makes pattern emit name, not call.
   ##   Pure: data never changes after load, so `func` may read it.
 
@@ -550,7 +550,7 @@ let
   STAGE_ELEMENT = document.getElementById("stage")
     ## Drawing of hold at `TURN_DRAWN`, from above and from side.
   READOUT_ELEMENT = document.getElementById("readout")
-    ## Words beside stage: hold, turn, sim's verdicts, blocks.
+    ## Words beside stage: hold, turn, simulation's verdicts, blocks.
   STRIP_ELEMENT = document.getElementById("strip")
     ## Row of small figures, every half turn and both blocks.
   SLIDER_ELEMENT = InputElement(document.getElementById("turn"))
@@ -651,7 +651,7 @@ proc renderStrip() =
       swap(shown[j - 1], shown[j])
       dec j
 
-  # One figure per turn: crossed out beyond blocks, else scene with sim's words.
+  # One figure per turn: crossed out beyond blocks, else scene with simulation's words.
   var html: cstring = ""
   for i in 0 ..< count:
     let

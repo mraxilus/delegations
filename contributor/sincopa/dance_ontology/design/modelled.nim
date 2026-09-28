@@ -1,9 +1,9 @@
-## Ask body sim about every card reference draws, and write down which it agrees with.
+## Ask body simulation about every card reference draws, and write down which it agrees with.
 ##
 ##   Reference page carries two tags on each cell.  `kept` is Architect's, given by eye
-##     on floor.  `modelled` is this one: whether sim reaches what card draws.  Goal is
+##     on floor.  `modelled` is this one: whether simulation reaches what card draws.  Goal is
 ##     both at hundred per cent, and gap between them is work left.
-##   Written here rather than on page because asking sim costs minutes and page is
+##   Written here rather than on page because asking simulation costs minutes and page is
 ##     markup.  Same arrangement `design/turns` uses, and same reason.
 ##   Tag must not touch pins.  `review_page.drawingOf` cuts cards back out of built page
 ##     by collecting their `svg` elements alone, so badge outside drawing changes no pin
@@ -14,9 +14,9 @@
 ##   Four manners are two motions.  Orbit about couple's centre is change of world
 ##     frame and moves neither dancer with respect to other, so manner that orbits is
 ##     physically turn of *other* dancer, other way about.  Architect's reading, and it
-##     is what `sim/rigid` is asked.  What survives is whose crown hands are over: couple
+##     is what `simulation/rigid` is asked.  What survives is whose crown hands are over: couple
 ##     raise them over dancer who walks under, which follows manner, not physics.
-##   Card sim has not been asked about is absent, and gets no tag: unasked reads as
+##   Card simulation has not been asked about is absent, and gets no tag: unasked reads as
 ##     unasked rather than as disagreement.
 ##   Answers are kept with stamp of physics, questions and this verb (`design/stamps`), and
 ##     verb whose stamp is unchanged asks nothing again.
@@ -27,7 +27,7 @@ when compileOption("profiler"): import std/nimprof
 
 import std/[cpuinfo, json, os, sequtils, strformat, tables, typedthreads]
 
-import ../sim/[body, hold, rig, walk]
+import ../simulation/[body, hold, rig, walk]
 import ../src/dance_ontology/rotation
 import ./[asks, parts, stamps]
 
@@ -54,7 +54,7 @@ type Question* = object ## One card's question, as data, so threads may share it
 func moving(key: string; links: seq[Link]; away: bool; manner: Manner;
             turns: float): Question =
   ## Whether this hold carries this far under this manner, `turns` being already
-  ## in sim's own sense (`asks.asked`).
+  ## in simulation's own sense (`asks.asked`).
   ##   Couple stand for turn they are about to take, so question goes straight to
   ##     `walk.reaches`, which asks it of every distance couple may stand at and
   ##     answers at first that carries it.  Sweeping once and reading several
@@ -70,7 +70,7 @@ func moving(key: string; links: seq[Link]; away: bool; manner: Manner;
   Question(key: key, links: links, away: away, still: false, turns: way, who: turner, head: walks)
 
 func questions*(): seq[Question] =
-  ## Every card sim can be asked about, keyed as page keys its own pictures, in
+  ## Every card simulation can be asked about, keyed as page keys its own pictures, in
   ## page's own order.
   # Every still, as `asks` lists them: wound to its facing and asked whether
   # pose holds there.

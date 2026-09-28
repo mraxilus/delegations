@@ -1,11 +1,11 @@
-## Read what report says off sim once, on every core, and keep it with stamp of physics.
+## Read what report says off simulation once, on every core, and keep it with stamp of physics.
 ##
 ##   Report (`verdicts`) is words over numbers.  Numbers take sweeps and stills that
 ##     walk turn through engine from every distance couple may stand at: 33 minutes on one
 ##     core, measured 2026-09-26, where words take none.  So numbers are read here into
-##     plain readings and kept in `sim/verdicts.json`, and report renders words from
+##     plain readings and kept in `simulation/verdicts.json`, and report renders words from
 ##     them.  Change to words alone renders again in seconds.
-##   Readings are held to physics by stamp: digest of every `sim/*.nim` but those that
+##   Readings are held to physics by stamp: digest of every `simulation/*.nim` but those that
 ##     only say words or ask laws' questions (`LEAVING`), and engine's pinned commit.
 ##     Other stamp reads nothing kept, and everything is read again.
 ##   Readings are plain values, with no string and no sequence in them, so each worker
@@ -23,7 +23,7 @@ import ./[answers, body, hold, read, rig, rigid, walk]
 
 
 const
-  KEPT_READINGS* = HERE / "sim" / "verdicts.json"
+  KEPT_READINGS* = HERE / "simulation" / "verdicts.json"
     ## Where readings are kept, beside report they render.
   LEAVING* = ["verdicts.nim", "words.nim", "answers.nim"]
     ## Files stamp leaves out: report's words, words themselves, and laws' questions.

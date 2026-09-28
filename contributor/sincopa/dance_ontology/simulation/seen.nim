@@ -17,7 +17,7 @@
 
 import std/math
 
-import ./[body, hold, limb, rig, rigid, vec, walk]
+import ./[body, hold, limb, rig, rigid, vector, walk]
 
 
 type

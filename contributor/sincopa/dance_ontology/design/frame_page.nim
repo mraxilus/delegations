@@ -131,10 +131,10 @@ const BODY = """
 
   <div class="plate">
     <h3>A settled hand is in one of six places</h3>
-    <p><b>This chart asks the sim nothing, and it solves nothing.</b> A hand at rest sits where
-      the arm hangs. It may also sit round toward the front of that dancer, or round toward their
-      back. That gives three places on each side of the body. The hand's own side, the level of
-      the hold, and its lock or wrap decide which place it takes.</p>
+    <p><b>This chart asks the simulation nothing, and it solves nothing.</b> A hand at rest sits
+      where the arm hangs. It may also sit round toward the front of that dancer, or round toward
+      their back. That gives three places on each side of the body. The hand's own side, the level
+      of the hold, and its lock or wrap decide which place it takes.</p>
     <p>Each place is measured from the way that dancer faces, and never from the page. That is
     what <em>front</em> and <em>back</em> name. The chart is drawn on a body turned off the
     vertical, so you can see that rather than take it on trust.</p>

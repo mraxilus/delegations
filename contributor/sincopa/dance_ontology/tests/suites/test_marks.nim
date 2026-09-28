@@ -78,7 +78,7 @@ suite "every page this project publishes":
 
   test "committed markup says its prose plainly too":
     ## Whole-cloth mock-up is hand-authored file rather than page workbench renders, so its
-    ## prose is held here.  Reference page's own markup is held by `treview.nim`, beside
+    ## prose is held here.  Reference page's own markup is held by `test_review.nim`, beside
     ## build that fills it.
     let markup = readFile("mockups" / "wholecloth.html")
     check markup.prose.len > 0

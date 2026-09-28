@@ -1,4 +1,4 @@
-## What reference's cards ask of body sim, held to being one question wherever one
+## What reference's cards ask of body simulation, held to being one question wherever one
 ## picture is drawn.
 
 {.experimental: "strictFuncs".}
@@ -7,18 +7,18 @@ import std/[json, math, options, strutils, tables, unittest]
 
 import ../../design/[asks, modelled, parts, rig_page]
 from ../../design/rig as recording import KEPT_RIG, rigStamp
-import ../../sim/[rig, words]
-from ../../sim/rigid import restStance
+import ../../simulation/[rig, words]
+from ../../simulation/rigid import restStance
 import ../../src/dance_ontology/rotation
 
 
-suite "what each card asks of sim":
+suite "what each card asks of simulation":
   var byKey = initTable[string, StillAsk]()
   for a in stillAsks(): byKey[a.key] = a
 
   test "one picture is one question, whichever section draws it":
     ## Standard diagram's A16 is hand to hand wound half turn clockwise, which
-    ## is chain's C5, and A17 is C3.  Asked with opposite signs, sim stood A16 in
+    ## is chain's C5, and A17 is C3.  Asked with opposite signs, simulation stood A16 in
     ## C3's pose and A17 in C5's, mirror of what each card draws.
     for (frame, chain) in [("A16", "C5"), ("A17", "C3")]:
       let (a, c) = (byKey[frame], byKey[chain])
@@ -27,8 +27,8 @@ suite "what each card asks of sim":
       check a.head == c.head
       check a.turns == c.turns
 
-  test "page counts clockwise seen from above, and sim anticlockwise":
-    ## Chain's C5 is wound half turn clockwise, and sim turns anticlockwise for
+  test "page counts clockwise seen from above, and simulation anticlockwise":
+    ## Chain's C5 is wound half turn clockwise, and simulation turns anticlockwise for
     ## positive turns, so C5 is asked negative, and every single-hand card is
     ## asked against its manner's own sense.
     check byKey["C5"].turns == -0.5
@@ -52,16 +52,16 @@ suite "each hold rests at named facing":
         let whole = abs(wind - round(wind)) < 1e-9
         check facingAt(holds, wind) == some(if whole: rest else: other)
 
-  test "sim is told each card's rest where it stands couple":
-    ## Card names its rest from model (`parts.restOf`), and sim is told only
-    ##   `away`.  Stance sim then stands couple in, read by sim's own words, is
+  test "simulation is told each card's rest where it stands couple":
+    ## Card names its rest from model (`parts.restOf`), and simulation is told only
+    ##   `away`.  Stance simulation then stands couple in, read by simulation's own words, is
     ##   what card named.  Distance puts no one at other side of other.
     for a in stillAsks():
       checkpoint a.key
       check facingName(restStance(HUMAN, 1.0, a.away)) == some(a.rest.name)
 
-  test "sim is asked no rest it cannot stand":
-    ## Sim stands couple Face-to-face or follow turned half, and no other rest.
+  test "simulation is asked no rest it cannot stand":
+    ## Simulation stands couple Face-to-face or follow turned half, and no other rest.
     for rest in Facing:
       if rest in {Facing.FaceToFace, Facing.FaceToBack}:
         discard awayFor(rest)

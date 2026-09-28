@@ -1,6 +1,6 @@
 ## Points and directions in space, and few things done with them.
 ##
-##   Three numbers and no more.  Sim's whole geometry is capsules against
+##   Three numbers and no more.  Simulation's whole geometry is capsules against
 ##     cylinders and against each other, which needs distances, projections
 ##     and one rotation, and nothing here knows what body is.
 ##   Helpers solver runs in its loop are spelt out in scalars.  On

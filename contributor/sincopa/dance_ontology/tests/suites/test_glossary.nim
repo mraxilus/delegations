@@ -23,8 +23,8 @@ from ../../src/dance_ontology/rotation import nil
 const
   GLOSSARY = currentSourcePath().parentDir.parentDir.parentDir / "GLOSSARY.md"
     ## Vocabulary this project agreed, beside its code.
-  REPORT = currentSourcePath().parentDir.parentDir.parentDir / "sim" / "verdicts.md"
-    ## Report sim writes, which is what reader of sim reads.
+  REPORT = currentSourcePath().parentDir.parentDir.parentDir / "simulation" / "verdicts.md"
+    ## Report simulation writes, which is what reader of simulation reads.
   RUNG_AT = {50: "cross", 100: "diamond", 150: "swan"}.toTable
     ## Glossary's word for each rung of chain, by turns in hundredths.
     ##   Hundredths because report prints turns to two places, and key must
@@ -42,9 +42,9 @@ const
     ##   `front`, are common words page and report say in own sense.
   DANCER_TERMS = ["Lead", "Follow"]
     ## Entries naming dancer, whose rejected words no page may say at all.
-  SAID_IN = ["design", "app", "sim"]
+  SAID_IN = ["design", "app", "simulation"]
     ## Directories whose string literals reach reader: page written into markup,
-    ##   element set by browser, or row of `sim/verdicts.md`.
+    ##   element set by browser, or row of `simulation/verdicts.md`.
   DOCUMENTS = ["mockups" / "wholecloth.html", "pages" / "review" / "review.html"]
     ## Pages this project writes by hand rather than from Nim.
   HOLDS = [HAND_TO_HAND, [some Arm.L, some Arm.R]]
@@ -207,7 +207,7 @@ suite "pages speak of the lead and the follow":
 
   test "no string a page shows names a facing by name glossary replaced":
     ## Glossary replaced Pillion and Sidecar (issue #289), and they stood on
-    ##   six pages.  `sim/rigid.nim` quotes Architect's own word in comment,
+    ##   six pages.  `simulation/rigid.nim` quotes Architect's own word in comment,
     ##     which no page shows.
     let names = source.replaced(FACING_TERM)
     check names.len > 0
@@ -235,10 +235,10 @@ suite "pages speak of the lead and the follow":
 
 
 suite "the report speaks glossary":
-  ## Chain table of `sim/verdicts.md` names every rung.  It said `X`, which
+  ## Chain table of `simulation/verdicts.md` names every rung.  It said `X`, which
   ##   entry **Cross** rejects, while `design/parts` named same rung right: one
   ##   chain, two namings, one of them wrong.
-  ##   Report is what reader of sim reads, so law reads written bytes back
+  ##   Report is what reader of simulation reads, so law reads written bytes back
   ##     rather than function that wrote them (Article IX.5).
   let
     source = readFile(GLOSSARY)
@@ -266,9 +266,9 @@ suite "the report speaks glossary":
       check said.toLowerAscii.says(RUNG_AT[wound])
 
   test "every rung of report stands at facing model gives its turn":
-    ## Report reads facing off stance sim winds couple to (`words.facingName`),
+    ## Report reads facing off stance simulation winds couple to (`words.facingName`),
     ##   and model reads it off turn each dancer takes on spot (`rotation.facing`).
-    ##   Chain rests Face-to-face and sim turns follow, anticlockwise positive,
+    ##   Chain rests Face-to-face and simulation turns follow, anticlockwise positive,
     ##     where model counts quarters to dancer's right.
     for (wound, _, said) in rungs:
       let

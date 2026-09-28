@@ -5,8 +5,8 @@
 ##     `design/rig`, and viewer compiled from `design/rig_view` by `nim js`.
 ##     Page is published as single file, so nothing may be left to fetch.
 ##   Page is laid out as reference page is, section by section and cell by
-##     cell, with sim's own still of each cell drawn beside reference's drawing
-##     of it.  Architect: lay reference and sim side by side so each cell can be
+##     cell, with simulation's own still of each cell drawn beside reference's drawing
+##     of it.  Architect: lay reference and simulation side by side so each cell can be
 ##     compared with what it looks like in model.  Cells are cut from built
 ##     reference page itself rather than drawn again, so what is compared is
 ##     what was ruled on, badge for badge.
@@ -31,7 +31,7 @@ import ./[faces, page]
 const HEAD_BODY = """
 <main class="rigview">
   <header>
-    <p class="kicker">Body sim</p>
+    <p class="kicker">Body simulation</p>
     <h1>The rig, drawn from the engine</h1>
     <p class="lede">The stage draws every capsule the engine tests for contact, and
       nothing more. Each capsule runs between the two points the engine reports, at
@@ -42,8 +42,8 @@ const HEAD_BODY = """
       cannot show it, because a torso is the same front and back, and a head is a
       sphere. Drag the stage to turn the view. Scroll to zoom.</p>
     <p class="lede">Below the stage, each still cell of the reference page appears in
-      that page's order, with the sim's still beside the drawing. For each cell the sim
-      winds the couple into that facing, lifts their joined hands, and then lets the
+      that page's order, with the simulation's still beside the drawing. For each cell the
+      simulation winds the couple into that facing, lifts their joined hands, and then lets the
       pose settle. It keeps the distance between the dancers where the pose carries the
       least strain. Click a cell to put it on the stage, and the arrow buttons or the
       arrow keys step from one cell to the next. One list holds the stills first and
@@ -137,7 +137,7 @@ const SHEET = """<style>
 .cells .lede { font: 0.88rem/1.5 var(--sans); }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem;
   align-items: start; }
-.pair .sim { min-width: 0; }
+.pair .simulation { min-width: 0; }
 .thumb { display: block; width: 100%; aspect-ratio: 1 / 1; cursor: pointer;
   background: var(--paper); border-radius: 3px; }
 .held { margin: .2rem 0 0; font: .6rem/1.3 var(--mono); color: var(--dim); }
@@ -231,7 +231,7 @@ func sheetOf(html: string): string =
 
 
 proc cellsBody(review: string; data: JsonNode): string =
-  ## Lay every still cell out as reference page does, sim's still beside it.
+  ## Lay every still cell out as reference page does, simulation's still beside it.
   var
     entryOf: Table[string, int]
     held: Table[string, string]
@@ -255,7 +255,7 @@ proc cellsBody(review: string; data: JsonNode): string =
       quit(&"Reference page has no section `{letter}`; run `pages` first.", 1)
     titles.add (letter, review[start ..< review.find("</h2>", start)])
   result.add """<section class="cells"><p class="lede">Every cell here comes from the
-    reference page, with the same badges, and the sim's still stands beside it. Where
+    reference page, with the same badges, and the simulation's still stands beside it. Where
     one cell asks more than one question, the badge shows the first. The picker above
     reaches every cell.</p>"""
   for (letter, title) in titles:
@@ -266,12 +266,12 @@ proc cellsBody(review: string; data: JsonNode): string =
         if key in entryOf: entries.add $entryOf[key]
       result.add &"""<figure class="{cell.classes}" data-id="{cell.id}" """ &
         &"""data-entries="{entries.join(" ")}"><div class="pair">""" &
-        &"""<div class="art">{cell.art}</div><div class="sim">"""
+        &"""<div class="art">{cell.art}</div><div class="simulation">"""
       if entries.len > 0:
         result.add &"""<canvas class="thumb" data-entry="{entries[0]}"></canvas>""" &
           &"""<p class="held">{esc(held[cell.asks[0]])}</p>"""
       else:
-        result.add """<p class="held">not asked of sim</p>"""
+        result.add """<p class="held">not asked of simulation</p>"""
       result.add &"""</div></div>{cell.caption}</figure>"""
     result.add "</div>"
   result.add "</section></main>"

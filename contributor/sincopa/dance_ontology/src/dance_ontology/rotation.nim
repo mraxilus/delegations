@@ -128,18 +128,18 @@ const
   CAPACITY_CONTACT* = 0 ## Hold nothing while hand rests on partner's body.
   CAPACITY_WRAP_LOW* = 1
     ## Hold half turn while arm is wrapped low.  Measured, not derived.
-    ##   Earlier body sim claimed to derive this and did not: it priced wound
+    ##   Earlier body simulation claimed to derive this and did not: it priced wound
     ##     half turn at half of torso's girth by assumption, so arithmetic
-    ##     only returned measurement it was fitted to.  Jointed-arm sim,
+    ##     only returned measurement it was fitted to.  Jointed-arm simulation,
     ##     which turns body and lets arms take most comfortable pose that
     ##     holds, finds hand to hand's low wrap blocking just past half (0.56
     ##     turns) and Left to left's short of it (0.30), at shoulder's twist
-    ##     (`sim/verdicts.md`) -- independent witness, not derivation, and it
+    ##     (`simulation/verdicts.md`) -- independent witness, not derivation, and it
     ##     agrees on one and not other; constant stays dance's measurement.
   CAPACITY_ARM* = 2
     ## Hold full turn while arm is anywhere else.  Measured for low lock;
     ## assumed for two high ones, which is next thing to dance.
-    ##   Jointed-arm sim (`sim/verdicts.md`) finds Left to left's low lock
+    ##   Jointed-arm simulation (`simulation/verdicts.md`) finds Left to left's low lock
     ##     reaching whole turn, led, and blocking just past it (1.12), hand
     ##     to hand's blocking short of it (0.87); at neck it finds turn and
     ##     more one way and under half other way, elbows already folded to
@@ -149,10 +149,10 @@ const
   ABOVE_BLOCKS* = false
     ## Whether arm over head blocks turn.  It does in some cases and nobody
     ## has said which, so model turns freely there.
-    ##   No longer on no authority for single connection: jointed-arm sim
+    ##   No longer on no authority for single connection: jointed-arm simulation
     ##     finds hand held over follow's head turns with her, and holds
-    ##     through two-and-a-half turns either way (`sim/verdicts.md`).  Two
-    ##     connections above are another matter -- sim finds parallel pair
+    ##     through two-and-a-half turns either way (`simulation/verdicts.md`).  Two
+    ##     connections above are another matter -- simulation finds parallel pair
     ##     free one way and blocked at whole turn other way, crossed pair at
     ##     three quarters -- and rule 13's swan is their asserted ceiling, so
     ##     flag stays flag.

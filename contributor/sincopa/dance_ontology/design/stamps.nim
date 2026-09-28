@@ -1,10 +1,10 @@
-## Stamp each recording with what gave it: physics of sim, questions asked of it, and verb
+## Stamp each recording with what gave it: physics of simulation, questions asked of it, and verb
 ## that asked them.
 ##
 ##   `design/modelled.json` and `design/rig.json` are recorded by verbs of their own, which take
 ##     minutes each, and pages read what was last recorded.  So recording carries stamp, and
 ##     verb whose stamp is unchanged records nothing again.  Law refuses recording whose stamp
-##     is not what tree would give (`tests/suites/tasks.nim`).
+##     is not what tree would give (`tests/suites/test_asks.nim`).
 ##   Stamp is digest of three things.  Physics is `readings.physics`, which leaves out files
 ##     that only say words.  Questions are each question as text, in order asked, so card added
 ##     or moved is question changed.  Verb is its own source, so way it records is in stamp too.
@@ -13,7 +13,7 @@
 
 import std/strutils
 
-import ../sim/readings
+import ../simulation/readings
 
 
 const

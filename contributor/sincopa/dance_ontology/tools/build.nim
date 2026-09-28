@@ -15,18 +15,20 @@
 ##   | assets   | fetch faces pages embed from repository store into build/fonts        |
 ##   | pins     | rewrite design/review-pins.json from page just built: run when        |
 ##   |          | Architect rules on cards, never to quiet check that says one moved    |
-##   | modelled | rewrite design/modelled.json: which reference cards sim reaches,      |
-##   |          | stamped, and only where stamp changed                                 |
+##   | modelled | rewrite design/modelled.json: which reference cards simulation        |
+##   |          | reaches, stamped, and only where stamp changed                        |
 ##   | rig      | rewrite design/rig.json: sweeps rig viewer plays, and every still,    |
 ##   |          | stamped, and only where stamp changed                                 |
 ##   | turns    | rewrite design/turns.json: sweeps whole-cloth page plays              |
-##   | verdicts | instrument run, not build: answers land in sim/verdicts.md            |
-##   | answers  | rewrite sim/answers.json: where couple stand for rig's laws, stamped  |
+##   | verdicts | instrument run, not build: answers land in simulation/verdicts.md     |
+##   | answers  | rewrite simulation/answers.json: where couple stand for rig's laws,   |
+##   |          | stamped                                                               |
 ##   | shot     | screenshot helper, for node and Playwright                            |
-##   | clean    | remove bin, build, nimcache, testresults and testament binaries       |
+##   | clean    | remove binaries, build, nimcache, testresults and testament binaries  |
 ##   |----------|-----------------------------------------------------------------------|
-##   Tool binaries land in `bin/`, pages under `build/`; root `.gitignore` covers both at
-##     any depth. Exit: 0 done, 1 command failed, 2 usage error.
+##   Tool binaries land in `binaries/`, which project's `.gitignore` covers; pages land under
+##     `build/`, which root `.gitignore` covers at any depth.
+##   Exit: 0 done, 1 command failed, 2 usage error.
 ##
 ##   Faces are fetched by repository's shared store rather than by this driver, since two
 ##     projects pinned four of same files byte for byte before it existed (repository issue
@@ -50,7 +52,7 @@ import ../design/review_page
 const
   BUILD = "build"
     ## Directory every page, picture and script lands in.
-  BIN = "bin"
+  BIN = "binaries"
     ## Directory tool binaries land in.
   DANGER = @["-d:danger", "--hints:off"]
     ## Options of runs whose speed is point, i.e. sweeps.
@@ -98,12 +100,12 @@ const
   ]
     ## Source clones no package manager carries, each pinned by its commit, which is what
     ##   stands where checksum stands for fetched file (CONTRIBUTOR.md, "System
-    ##   dependencies"). Never vendored: `deps/` is ignored at repository root, and
-    ##   `engine` clones there.
-  DIRECTORY_DEPENDENCIES = "deps"
+    ##   dependencies"). Never vendored: project's `.gitignore` ignores `dependencies/`,
+    ##   and `engine` clones there.
+  DIRECTORY_DEPENDENCIES = "dependencies"
     ## Directory source clones land in. Never committed, as Atlas checkouts are not.
   ENGINE_LIB = BIN / "libbox3d.a"
-    ## Engine archived into one library, which `sim/engine.nim` links.
+    ## Engine archived into one library, which `simulation/engine.nim` links.
 
 
 proc run(program: string; arguments: openArray[string]) =
@@ -122,7 +124,7 @@ proc nim(arguments: openArray[string]) =
   run("nim", arguments)
 
 proc compileRun(arguments: openArray[string]) =
-  ## Compile and run program with args, quietly, binary into `bin/`.
+  ## Compile and run program with args, quietly, binary into `binaries/`.
   nim(@["c", "-r"] & QUIET & @["--outdir:" & BIN] & @arguments)
 
 
@@ -281,7 +283,7 @@ proc pins() =
 
 
 proc modelled() =
-  ## Rewrite `design/modelled.json`: which cards sim reaches.
+  ## Rewrite `design/modelled.json`: which cards simulation reaches.
   ##   Second step, as `pins` is, and for like reason: tag saying model agrees
   ##     is claim, and it is added deliberately rather than refreshed by build
   ##     into agreeing with whatever model happens to say today.
@@ -300,18 +302,18 @@ proc rig() =
 
 
 proc verdicts() =
-  ## Rewrite `sim/verdicts.md` from model; instrument run, not build.
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "sim/verdicts.nim"])
+  ## Rewrite `simulation/verdicts.md` from model; instrument run, not build.
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "simulation/verdicts.nim"])
 
 
 proc answers() =
-  ## Rewrite `sim/answers.json`: every search rig's laws read, and stamp of sim that
+  ## Rewrite `simulation/answers.json`: every search rig's laws read, and stamp of simulation that
   ## answered them.
   ##   Own verb, as `rig` is, and for like reason: searches cost minutes, and suite
   ##     that read them from here would otherwise pay for them on every run.  Run
-  ##     whenever any `sim/*.nim` changes, since law refuses answers whose stamp is
+  ##     whenever any `simulation/*.nim` changes, since law refuses answers whose stamp is
   ##     not that of tree.
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "sim/answers.nim"])
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "simulation/answers.nim"])
 
 
 func helpers(): seq[string] =
@@ -344,7 +346,7 @@ proc system() =
 
 proc clean() =
   ## Remove build products, caches and testament binaries.
-  # `deps/` survives clean, as Atlas checkouts do: it is fetched source, not product.
+  # `dependencies/` survives clean, as Atlas checkouts do: it is fetched source, not product.
   for directory in [BIN, BUILD, "nimcache", "testresults"]: removeDir(directory)
   for path in walkFiles("tests" / "*"):
     if not path.endsWith(".nim"): removeFile(path)

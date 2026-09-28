@@ -17,7 +17,7 @@ when compileOption("profiler"): import std/nimprof
 
 import std/[math, unittest]
 
-import ../sim/engine
+import ../simulation/engine
 
 
 proc world(): WorldId =

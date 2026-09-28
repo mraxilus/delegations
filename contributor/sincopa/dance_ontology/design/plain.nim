@@ -67,7 +67,7 @@ func prose*(markup: string): seq[string] =
       if opens < 0 or opens + 1 + kind.len >= body.len: break
       # Element of another kind whose name starts same way, such as `path` or `line`.  Step
       #   over its opening tag alone: closing tag reader would find is next paragraph's, so
-      #   jumping there skipped every paragraph that stands behind drawing (`tplain.nim`).
+      #   jumping there skipped every paragraph that stands behind drawing (`test_plain.nim`).
       if body[opens + 1 + kind.len] notin {' ', '>'}:
         at = opens + 1
         continue
@@ -149,7 +149,7 @@ func markdownProse*(document: string): seq[string] =
   ##     carries it.
   ##   Rule is copied rather than imported.  Suite compiled against curator's own check would
   ##     break whenever curator changed that check, which duty 3 forbids curator to do to
-  ##     project.  Cost is two copies to keep agreeing, and `tplain.nim` pins this one.
+  ##     project.  Cost is two copies to keep agreeing, and `test_plain.nim` pins this one.
   var
     carried: seq[string]
     fenced = false

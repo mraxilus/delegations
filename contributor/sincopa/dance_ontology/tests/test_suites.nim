@@ -13,16 +13,16 @@ cmd: "nim c --hints:off -d:testing $options $file"
 ##   Debug build, since compile is most of cold run and runner keeps no cache.  Cold, on
 ##     four cores on 2026-09-24, debug took 14.1 s to 16.4 s and `-d:release` 20.8 s.
 ##     Release keeps `doAssert`, `assert`, bounds and overflow checks too, so this choice
-##     is about time alone.  `tasks` and `tlimb` were `-d:danger`, which drops bounds,
+##     is about time alone.  `test_asks` and `test_limb` were `-d:danger`, which drops bounds,
 ##     overflow and `assert`; built here they keep all three.
-##   Suites that link engine's C archive (`tengine`, `tread`, `trigid`) cannot share this
-##     binary, and `tsaid` is compiled to JavaScript, so those stay binaries of their own.
+##   Suites that link engine's C archive (`test_engine`, `test_read`, `test_rigid`) cannot share
+##     this binary, and `test_said` is compiled to JavaScript, so those stay binaries of their own.
 
 {.experimental: "strictFuncs".}
 
 when compileOption("profiler"): import std/nimprof
 
 import
-  ./suites/[tasks, taxle, tdiagram, tdrawn, tfaces, tframe, tglossary, tlimb, tmap,
-            tmarks, tplain, treadme, treview, trotation, troute, tspokes, ttransition,
-            twords, tworkbook]
+  ./suites/[test_asks, test_axle, test_diagram, test_drawn, test_faces, test_frame, test_glossary,
+            test_limb, test_map, test_marks, test_plain, test_readme, test_review, test_rotation,
+            test_route, test_spokes, test_transition, test_words, test_workbook]

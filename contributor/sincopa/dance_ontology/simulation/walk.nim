@@ -15,7 +15,7 @@
 
 {.experimental: "strictFuncs".}
 
-import ./[body, hold, limb, rig, rigid, vec]
+import ./[body, hold, limb, rig, rigid, vector]
 
 
 const
@@ -183,7 +183,7 @@ proc standing*(rig: Rig; band: Band; links: seq[Link]; turns: float;
   ## Where couple stand for this still: distance whose pose holds nearest to
   ## ease, of every distance couple may stand at.
   ##   Still card claims position exists; moving one claims couple can carry to
-  ##     it under one manner.  They are not same question, and `sim/verdicts`
+  ##     it under one manner.  They are not same question, and `simulation/verdicts`
   ##     keeps them apart.  Still is wound there all same, as `stood` says why:
   ##     what is asked once there is whether it holds standing, not whether
   ##     that way in was one card meant.

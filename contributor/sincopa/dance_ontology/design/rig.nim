@@ -13,7 +13,7 @@
 ##     that and says exactly as much.
 ##
 ##   Every still card of reference is recorded beside sweeps, one moment each,
-##     wound to its facing as `walk.stood` winds it, so viewer can lay sim's
+##     wound to its facing as `walk.stood` winds it, so viewer can lay simulation's
 ##     answer beside each cell.
 ##
 ##   Recording is kept with stamp of physics, jobs and this verb (`design/stamps`), and verb
@@ -28,7 +28,7 @@ when compileOption("profiler"): import std/nimprof
 
 import std/[cpuinfo, json, math, os, sequtils, strformat, strutils, typedthreads]
 
-import ../sim/[body, hold, rig, seen]
+import ../simulation/[body, hold, rig, seen]
 import ./[asks, stamps]
 
 
@@ -247,7 +247,7 @@ when isMainModule:
   joinThreads(workers)
   for n in NOTES: echo n
   # Every still card, wound to its facing from distance that sits easiest.
-  #   Recorded whole, one moment each, so viewer can lay sim's answer beside
+  #   Recorded whole, one moment each, so viewer can lay simulation's answer beside
   #   each cell of reference; card no distance holds is recorded with no moment.
   let
     cuts = RECORDING_TEXTS[0 ..< SHOWN.len]

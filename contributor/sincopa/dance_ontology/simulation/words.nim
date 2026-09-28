@@ -1,6 +1,6 @@
-## Translate what sim reads into words dance agreed.
+## Translate what simulation reads into words dance agreed.
 ##
-##   Sim names what it measures for body: torso band, fore aspect, elbow
+##   Simulation names what it measures for body: torso band, fore aspect, elbow
 ##     forward.  Dance names same readings low, wrap and elbow forward.  This
 ##     module is only place where one becomes other.
 ##   Report (`verdicts`) and page data (`turns`) both once carried own copy of
@@ -8,15 +8,15 @@
 ##     copies drifted: report named elbow folded forward and page did not, so
 ##     one pose carried two answers, and reader comparing page against report
 ##     met disagreement that neither file admitted.
-##     Cost of one table: module sits under `sim`, which otherwise puts no
+##     Cost of one table: module sits under `simulation`, which otherwise puts no
 ##       word of dance on anything it measures.  Accepted -- translation is
 ##       still visible, in one file that names itself, and evidence is that
 ##       both readers quote same table rather than that each writes one.
-##   Words are `GLOSSARY.md`'s, and `tests/suites/tglossary` holds every string here
+##   Words are `GLOSSARY.md`'s, and `tests/suites/test_glossary` holds every string here
 ##     to it.
 ##
 ##   |---------------------------|------------------|
-##   | Sim reads                 | Dance says       |
+##   | Simulation reads                 | Dance says       |
 ##   |---------------------------|------------------|
 ##   | Band.Torso                | low              |
 ##   | Band.Neck                 | high             |

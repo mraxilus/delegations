@@ -1,8 +1,8 @@
-## Ask body sim for every hold turning, and write it down for whole-cloth page.
+## Ask body simulation for every hold turning, and write it down for whole-cloth page.
 ##
 ##   Whole-cloth page animates hold turning, and only honest way to animate two
 ##     bodies and their arms is to ask thing that models them.  Engine is C and
-##     page is script in browser, so this program runs sim natively and writes
+##     page is script in browser, so this program runs simulation natively and writes
 ##     every moment of every sweep as data; page only draws.  Nothing about
 ##     physics is guessed on page: where each joint is, which way arm lies, and
 ##     where turn runs out are all read from here.
@@ -10,8 +10,8 @@
 ##     and folded into page by `pages`.  Couple stand for turn, so each sweep
 ##     searches every distance they may stand at, and eighteen of them cost more
 ##     than every `pages` run should pay.
-##   Words (wrap, lock, low, high) are put on by `sim/words`, which `verdicts`
-##     reads too.  Not because sim speaks other language -- it reuses agreed
+##   Words (wrap, lock, low, high) are put on by `simulation/words`, which `verdicts`
+##     reads too.  Not because simulation speaks other language -- it reuses agreed
 ##     words -- but because here it measures what ontology asserts, and
 ##     translation kept visible is evidence where assumed identity is echo.
 ##     Table was once written out here and again in `verdicts`, to keep it
@@ -33,7 +33,7 @@ when compileOption("profiler"): import std/nimprof
 
 import std/[json, math, options, strutils]
 
-import ../sim/[body, hold, limb, read, rig, vec, walk, words]
+import ../simulation/[body, hold, limb, read, rig, vector, walk, words]
 
 
 const

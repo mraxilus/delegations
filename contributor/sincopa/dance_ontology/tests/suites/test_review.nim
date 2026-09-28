@@ -50,7 +50,7 @@ suite "the review page":
     let page = renderReview()
     check page.len > 0
     check "{{" notin page  # `renderReview` asserts it too; said here as law
-    # Prose follows Simplified Technical English (Article VI.8), counted as `tmarks.nim`
+    # Prose follows Simplified Technical English (Article VI.8), counted as `test_marks.nim`
     # counts it on every other page: sentence's words, and paragraph's sentences.
     for said in page.longSentences:
       checkpoint "sentence over " & $WORDS & " words: " & said

@@ -84,7 +84,7 @@ suite "faces":
     ## Build dresses every page under `build/`, and not only pages this run wrote,
     ## so page left there by earlier run is dressed again.  Law is that second
     ## dressing gives same page, and it was claimed here without ever dressing
-    ## twice: `build/sim/artifact.html` grew 223 kB on every `pages` run, from
+    ## twice: `build/simulation/artifact.html` grew 223 kB on every `pages` run, from
     ## 10.9 MB toward limit published page has to stay under.
     for page in [DOCUMENT, FRAGMENT]:
       let

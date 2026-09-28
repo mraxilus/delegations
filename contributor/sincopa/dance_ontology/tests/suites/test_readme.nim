@@ -1,7 +1,7 @@
 ## Hold READMEs this project writes to two countable rules its pages are held to.
 ##   Article VI.8 binds every Markdown file (`CONTRIBUTOR.md`, Boundaries).  Repository's
 ##     `english` check reads three records at project's root and nothing nested below it, so
-##     READMEs under `sim/` and `design/` were read by nothing: 192 findings stood in them,
+##     READMEs under `simulation/` and `design/` were read by nothing: 192 findings stood in them,
 ##     issue #239.
 ##   Held file by file as each is written again, so `WRITTEN` grows and never shrinks.
 ##   Words outside approved dictionary are not counted here, as they are not on pages: they
@@ -18,7 +18,7 @@ import ../../design/[plain, rules]
 
 
 const
-  WRITTEN = ["sim/README.md", "design/README.md"]
+  WRITTEN = ["simulation/README.md", "design/README.md"]
     ## READMEs held so far.
   RULED = "design/README.md"
     ## README quoting ledger, one `### Rule N` heading per rule.

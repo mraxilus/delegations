@@ -14,7 +14,7 @@
 ##       it can show turn and refuse it in same breath.
 ##   Nothing places this drawing yet.  App's Dance view is graph-first
 ##     and rotation exploration moved to design workbench, so
-##     axle waits for page that stands postures in links.  `taxle`
+##     axle waits for page that stands postures in links.  `test_axle`
 ##     holds its laws green in meantime, so wait cannot rot.
 
 {.experimental: "strictFuncs".}

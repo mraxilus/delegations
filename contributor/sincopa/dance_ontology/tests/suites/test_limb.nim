@@ -9,7 +9,7 @@
 
 import std/[math, random, unittest]
 
-import ../../sim/[body, contact, limb, rig, vec]
+import ../../simulation/[body, contact, limb, rig, vector]
 
 
 const

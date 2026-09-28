@@ -4,7 +4,7 @@
 ##     of them, so arms could never slide along one another and chain wound to one
 ##     crossing and stopped.  Here arms are bodies with mass, on joints with ends, and
 ##     turn is motion: sliding is what engine does rather than what it cannot say.
-##   Engine stands Y up and project stands Z up.  `sim/engine` holds no translation on
+##   Engine stands Y up and project stands Z up.  `simulation/engine` holds no translation on
 ##     purpose, so this module is that one place.  `asEngine` and `asWorld` are only
 ##     two doors between them and both are rotations, never swaps of two axes: swap
 ##     mirrors world, and mirrored swan is other-handed swan.
@@ -13,7 +13,7 @@
 ##     z; revolute joint hinges about frame A's local z.  So every link is built with
 ##     its own length along its local z, which puts humeral rotation onto shoulder's
 ##     twist by construction.
-##   What each joint may do comes from `sim/rig`, which is tape and clinical tables.
+##   What each joint may do comes from `simulation/rig`, which is tape and clinical tables.
 ##     Engine holds elbow's hinge and wrist's cone exactly.  Shoulder's swing it
 ##     cannot: rig gives extension and adduction as two ranges of their own, engine
 ##     offers one cone about rest.  Cone is left off rather than invented, and swing is
@@ -32,7 +32,7 @@
 
 import std/[locks, math]
 
-import ./[body, hold, limb, rig, vec]
+import ./[body, hold, limb, rig, vector]
 from ./engine as eng import nil
 
 
@@ -65,7 +65,7 @@ const
                       ## that should push arm back never gets one step to act in.
   CONTACT = 0.125 * HERTZ * float(SUBSTEPS) ## Hertz overlap is pushed apart at:
                       ## engine's own cap, eighth of its substep rate.  Its default
-                      ## of thirty is softer than sim's own forces, and arms were
+                      ## of thirty is softer than simulation's own forces, and arms were
                       ## crushed through bodies with hands still joined -- forearm
                       ## 45 mm inside its own trunk, then popping out.  Architect:
                       ## arms "get crushed and phase through".  Measured over
@@ -134,7 +134,7 @@ type
     shoulder, elbow, wrist: eng.JointId
 
   Figure = object ## One dancer: trunk that is turned, and two arms that follow.
-    trunk: eng.BodyId ## Hips: kinematic, turned by sim, never pushed.
+    trunk: eng.BodyId ## Hips: kinematic, turned by simulation, never pushed.
     chest: eng.BodyId ## What shoulders hang from: dynamic, yaws on hips.
     waist: eng.JointId ## Hinge between them, about trunk's up.
     arm: array[Arm, ArmRig]
@@ -339,7 +339,7 @@ proc capsule(c: var Couple; b: eng.BodyId; who: Body; arm: Arm; mark: Mark;
   # Everything meets everything, arms of two dancers included.  Letting lead's
   # arms pass through follow's was tried, on Architect's point that lead gets lead's
   # own arm out of way, and it reached swan -- by letting arms occupy same place,
-  # which no couple does.  Architect: it made sim worse.  Reverted.  Point stands
+  # which no couple does.  Architect: it made simulation worse.  Reverted.  Point stands
   # and wants real answer: lead who *moves* lead's arm, not one whose arm is absent.
   shape_definition.filter.maskBits = EVERY
   discard eng.createCapsule(b, addr shape_definition, addr capsule)

@@ -1,24 +1,24 @@
 ## Answer once every search rig's laws ask, and keep answers with stamp of what gave them.
 ##
-##   Laws of `tests/trigid.nim` ask where couple stand.  For sweep that is distance each way
+##   Laws of `tests/test_rigid.nim` ask where couple stand.  For sweep that is distance each way
 ##     carries furthest, for still distance nearest ease, and for `reaches` whether any
 ##     distance carries at all.  Each is search over every distance couple may stand at,
-##     and answer changes only when sim does.  Suite took 545 s under testament, and its
+##     and answer changes only when simulation does.  Suite took 545 s under testament, and its
 ##     twenty laws that search for nothing took 22.8 s, each run alone: measured
 ##     2026-09-24 on four cores.
-##   So they are answered here, by `tools/build.nim answers`, into `sim/answers.json`, and
+##   So they are answered here, by `tools/build.nim answers`, into `simulation/answers.json`, and
 ##     laws read answers.  Law still stands or walks couple live, at answered distance and
-##     with current code, so every pose law holds is sim's own on every run.  Only where to
+##     with current code, so every pose law holds is simulation's own on every run.  Only where to
 ##     stand is kept.
-##   Kept answers are held to tree two ways.  Stamp is digest of every `sim/*.nim` and
-##     engine's pinned commit, and law fails where answers carry any other: sim changed and
+##   Kept answers are held to tree two ways.  Stamp is digest of every `simulation/*.nim` and
+##     engine's pinned commit, and law fails where answers carry any other: simulation changed and
 ##     not answered again cannot pass.  And law walks kept answers again, live, and asks
 ##     same numbers of them: that is what catches compiler that answers otherwise.
 ##     Nim's version is not stamped.  Verbs of `tools/build.nim` run whichever `nim` is on
 ##     path and suite runs one koch pins, so stamp carrying it would agree on no machine
 ##     where they differ.  Answers from 2.2.4 walked same under 2.2.12, number for number,
 ##     measured 2026-09-24.
-##   Cost: change to any `sim/*.nim`, words included, asks for answering again, which takes
+##   Cost: change to any `simulation/*.nim`, words included, asks for answering again, which takes
 ##     minutes.  Accepted -- digest of every file is one rule, where list of which files move
 ##     answers would be second thing to keep true.
 ##   Questions live here, not in suite, so asked and answered are one list.
@@ -35,7 +35,7 @@ import ./[body, hold, rig, walk]
 const
   HERE* = currentSourcePath().parentDir.parentDir
     ## Project directory, which every path below is relative to.
-  KEPT* = HERE / "sim" / "answers.json"
+  KEPT* = HERE / "simulation" / "answers.json"
     ## Where answers are kept.
   FNV_OFFSET = 0xcbf29ce484222325'u64
   FNV_PRIME = 0x100000001b3'u64
@@ -170,10 +170,10 @@ func engineCommit*(build: string): string =
     opens = build.find('"', shut + 1)
 
 proc stamp*(directory = HERE; leaving: openArray[string] = []): string =
-  ## Digest of what answers depend on: every `sim/*.nim` by name, in name order, and
+  ## Digest of what answers depend on: every `simulation/*.nim` by name, in name order, and
   ## engine's pinned commit.  `leaving` names files it passes over.
   var files: seq[string]
-  for f in walkFiles(directory / "sim" / "*.nim"):
+  for f in walkFiles(directory / "simulation" / "*.nim"):
     if f.extractFilename notin leaving: files.add f
   files.sort
   var h = FNV_OFFSET
