@@ -293,57 +293,67 @@ var TIMINGS_FRAME_MILLISECONDS: array[FRAMES_TIMING_MAX, float32]
 # Scene revision camera's reach was last measured at, and reach itself; none before first.
 #   Reach is one placement per object, so it is measured on edit rather than per frame, and
 #   passed to each extent rather than kept in camera: `home` replaces camera value.
-var REVISION_REACH = none(int)
-var REACH_SCENE = 0.0
+var
+  REVISION_REACH = none(int)
+  REACH_SCENE = 0.0
 # Placing side for every live handle, held as browser holds it; see `bridge.ensurePlacement`.
 #   Filled on edit alone, beside `REACH_SCENE`, and read once per frame by `reachNearOf`.
 #   `assembleMeshes` still places as it emits: this holds no vertices and replaces no walk.
 #   Costs `OBJECTS_MAX` placements of fixed reservation, counted by `BYTES_MEMORY_TOTAL`.
-var PLACEMENTS: array[OBJECTS_MAX, Placement]
-var ORIGIN_RECORDS = Position(x: 0.0, y: 0.0, z: 0.0)
-  ## Point every record is stored from; see `camera.originHeld` and `mesh.clearMeshes`.
-  ##   One value for both mesh sets, because one transform draws them.
-var REACH_NEAR = 0.0
-  ## Reach to nearest drawn object ahead of eye; see `camera.scaleLocal`.
-  ##   Moves with camera as well as with scene, so it is read once for each frame rather
-  ##   than on edit.
+var
+  PLACEMENTS: array[OBJECTS_MAX, Placement]
+  ORIGIN_RECORDS = Position(x: 0.0, y: 0.0, z: 0.0)
+    ## Point every record is stored from; see `camera.originHeld` and `mesh.clearMeshes`.
+    ##   One value for both mesh sets, because one transform draws them.
+  REACH_NEAR = 0.0
+    ## Reach to nearest drawn object ahead of eye; see `camera.scaleLocal`.
+    ##   Moves with camera as well as with scene, so it is read once for each frame rather
+    ##   than on edit.
 
 
 
 #[ Command Line ]#
 
-type Options = object ## Define what command line asked of this run.
-  path_screenshot: string ## Where one-shot export is written; empty for none.
-  path_storyboard: string ## Directory scripted construction is written to; empty for none.
-  path_load_scene: string ## Scene file to open instead of built-in demo; empty for none.
-  count_frames: int ## Frames to draw before quitting; 0 to run until closed.
-  is_hidden: bool ## Whether window is left unmapped.
-  is_timed: bool ## Whether to record and report per-frame timing statistics.
-  is_novsync: bool ## Whether to disable vsync from startup, for uncapped timing runs.
-  is_filled: bool ## Whether to top scene up to capacity with synthetic objects.
-    ## For timing heaviest tessellation and draw load.
-  scale_demo: Option[ScaleOrrery] ## Which size of orrery preset to open on, if any.
-    ## Instead of storyboard's seeds, through same `orrery.showOrrery` browser's demo
-    ## buttons load.
-    ## `Option`, not `bool` and size: "no demo" and "demo at default size" differ, and
-    ## sentinel size would put absence inside value's range.
-  is_tabs_listed: bool ## Whether to print help's tab names and quit, drawing nothing.
-    ## Build driver reads them, so list of tabs has one home; see `help.HelpPath`.
-  is_drag_driven: bool ## Whether to script construction drag through event queue.
-    ## Headless run then shows drag mid-gesture; see `driveDrag`.
-  is_key_driven: bool ## Whether to script run of view keys through event queue.
-    ## Headless run then shows they reach view; see `driveKeys`.
-  is_select_driven: bool ## Whether to script clicks picking one, two and three objects.
-    ## Headless run then shows floating selection menu at each; see `driveSelect`.
-  is_undo_driven: bool ## Whether to script construction, orbit away and undo.
-    ## Headless run then shows where undo leaves view; see `driveUndo`.
-  is_sky_driven: bool ## Whether to script drag and click on bare sky.
-    ## Headless run then shows press on it still reaches camera; see `driveSky`.
-  is_menu_driven: bool ## Whether to open top menu at startup, with no click.
-    ## Headless run has no pointer to press `☰` with, exactly as it has none for help's
-    ## tabs; verdict then reads what menu laid out.
-  path_help_driven: Option[HelpPath] ## Which help tab to open at startup, if any.
-    ## Headless run cannot click tab strip, so `--drive-help:<tab>` names one.
+type
+  Options = object ## Define what command line asked of this run.
+    path_screenshot: string ## Where one-shot export is written; empty for none.
+    path_storyboard: string ## Directory scripted construction is written to; empty for none.
+    path_load_scene: string ## Scene file to open instead of built-in demo; empty for none.
+    count_frames: int ## Frames to draw before quitting; 0 to run until closed.
+    is_hidden: bool ## Whether window is left unmapped.
+    is_timed: bool ## Whether to record and report per-frame timing statistics.
+    is_novsync: bool ## Whether to disable vsync from startup, for uncapped timing runs.
+    is_filled: bool ## Whether to top scene up to capacity with synthetic objects.
+      ## For timing heaviest tessellation and draw load.
+    scale_demo: Option[ScaleOrrery] ## Which size of orrery preset to open on, if any.
+      ## Instead of storyboard's seeds, through same `orrery.showOrrery` browser's demo
+      ## buttons load.
+      ## `Option`, not `bool` and size: "no demo" and "demo at default size" differ, and
+      ## sentinel size would put absence inside value's range.
+    is_tabs_listed: bool ## Whether to print help's tab names and quit, drawing nothing.
+      ## Build driver reads them, so list of tabs has one home; see `help.HelpPath`.
+    is_drag_driven: bool ## Whether to script construction drag through event queue.
+      ## Headless run then shows drag mid-gesture; see `driveDrag`.
+    is_key_driven: bool ## Whether to script run of view keys through event queue.
+      ## Headless run then shows they reach view; see `driveKeys`.
+    is_select_driven: bool ## Whether to script clicks picking one, two and three objects.
+      ## Headless run then shows floating selection menu at each; see `driveSelect`.
+    is_undo_driven: bool ## Whether to script construction, orbit away and undo.
+      ## Headless run then shows where undo leaves view; see `driveUndo`.
+    is_sky_driven: bool ## Whether to script drag and click on bare sky.
+      ## Headless run then shows press on it still reaches camera; see `driveSky`.
+    is_menu_driven: bool ## Whether to open top menu at startup, with no click.
+      ## Headless run has no pointer to press `☰` with, exactly as it has none for help's
+      ## tabs; verdict then reads what menu laid out.
+    path_help_driven: Option[HelpPath] ## Which help tab to open at startup, if any.
+      ## Headless run cannot click tab strip, so `--drive-help:<tab>` names one.
+
+  KeyStep = object ## Define one frame of scripted keyboard run; see `KEYS_DRIVEN`.
+    ## Frame carrying no key is point of `Option`.
+    ##   Held key moves camera on frames between press and release, and script sending
+    ##   event every frame could never leave it held.
+    pressed: Option[tuple[scancode: Scancode; keycode: uint32]]
+    is_down: bool ## Whether this step presses key or lets go of it.
 
 
 func demoScaleOf(value: string): Option[ScaleOrrery] =
@@ -433,8 +443,9 @@ proc faceAt(name_environment, face: string): string =
   ##   open must not reach it (repository issue 93).
   ##   Says which face and what to install, since finding naming neither is one nobody acts
   ##   on.
-  let named = getEnv(name_environment)
-  let path = if named.len > 0: named else: getAppDir() / DIR_FACES / face
+  let
+    named = getEnv(name_environment)
+    path = if named.len > 0: named else: getAppDir() / DIR_FACES / face
   if fileExists(path): return path
   echo &"No face at `{path}`; set `{name_environment}`, or run `tools/build.nim assets`."
   ""
@@ -500,15 +511,17 @@ proc assembleMeshes(
   for handle, one in scene.pairs:
     if not one.isVisible or not isHorizonPlane(one.geometry) or handle in panel.selection:
       continue
-    let progress = animationProgress(now, one.born)
-    let tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
+    let
+      progress = animationProgress(now, one.born)
+      tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
     discard MESHES.addObject(scratch[0], one.geometry, tint, scale, progress, one.anchorOverride)
 
   for handle, one in scene.pairs:
     if not one.isVisible or isHorizonPlane(one.geometry) or handle in panel.selection:
       continue
-    let progress = animationProgress(now, one.born)
-    let tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
+    let
+      progress = animationProgress(now, one.born)
+      tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
     discard MESHES.addObject(
       scratch[0], one.geometry, tint, scale, progress, one.anchorOverride, bounds = bounds,
       radius = one.radius,
@@ -545,9 +558,10 @@ proc assembleMeshes(
   for position in 0 ..< panel.selection.len:
     let handle = panel.selection.at(position)
     if not scene.isAlive(handle) or not scene[handle].isVisible: continue
-    let one = scene[handle]
-    let progress = animationProgress(now, one.born)
-    let tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
+    let
+      one = scene[handle]
+      progress = animationProgress(now, one.born)
+      tint = if are_dimmed[handle]: muted(one.ink.colour) else: one.ink.colour
     discard MESHES.addObject(
       scratch[0], one.geometry, tint, scale, progress, one.anchorOverride, bounds = bounds,
       radius = one.radius,
@@ -1344,14 +1358,6 @@ proc driveDrag(
     sdl3.pushEvent(addr press)
 
 
-type KeyStep = object ## Define one frame of scripted keyboard run; see `lut_keys_driven`.
-  ## Frame carrying no key is point of `Option`.
-  ##   Held key moves camera on frames between press and release, and script sending
-  ##   event every frame could never leave it held.
-  pressed: Option[tuple[scancode: Scancode; keycode: uint32]]
-  is_down: bool ## Whether this step presses key or lets go of it.
-
-
 func stepKey(scancode: Scancode, keycode: uint32, is_down = true): KeyStep =
   ## Name one scripted press or release.
   KeyStep(pressed: some((scancode: scancode, keycode: keycode)), is_down: is_down)
@@ -1368,7 +1374,7 @@ const
     ## Name SDL's keycodes for three non-ASCII keys script sends.
     ##   See `driveKeys` on why synthesised event needs one.
 
-const lut_keys_driven = [
+const KEYS_DRIVEN = [
   # Walk focus on twice and select what it lands on.
   stepKey(Scancode.BracketRight, uint32(ord(']'))),
   stepKey(Scancode.BracketRight, uint32(ord(']')), is_down = false),
@@ -1409,12 +1415,10 @@ proc driveKeys(count_drawn: int) =
   ##   Posted to queue rather than handed to `handleEvent`, for reason `driveDrag` gives.
   const FRAME_FIRST = 3 # Past startup, so first frame's layout has settled.
   let step = count_drawn - FRAME_FIRST
-  if step notin 0 ..< len(lut_keys_driven): return
-  let scripted = lut_keys_driven[step]
+  if step notin 0 ..< len(KEYS_DRIVEN): return
+  let scripted = KEYS_DRIVEN[step]
   if scripted.pressed.isNone: return
-  var event = Event(
-    kind: uint32(if scripted.is_down: EventKind.KeyDown else: EventKind.KeyUp)
-  )
+  var event = Event(kind: uint32(if scripted.is_down: EventKind.KeyDown else: EventKind.KeyUp))
   event.key.scancode = uint32(scripted.pressed.get.scancode)
   # Fill keycode, which Dear ImGui's backend reads rather than scancode.
   #   Event without one is invisible to it, and Tab above is aimed at exactly that.
@@ -1444,13 +1448,13 @@ proc driveSelect(
   const
     FRAME_FIRST = 2 # Past startup, so first frame's layout has settled.
     STEPS_CLICK = 6 # Three clicks, each frame to reach and frame to press.
-    lut_step_to_handle = [0, 0, 1, 1, 2, 2, 2, 2, 0, 0]
+    lut_handle_by_step = [0, 0, 1, 1, 2, 2, 2, 2, 0, 0]
       ## Name which object each step aims at.
       ##   Three clicks on 0, 1 and 2, then drag from 2 (one menu follows) onto 0.
   let step = count_drawn - FRAME_FIRST
-  if step notin 0 ..< len(lut_step_to_handle): return
+  if step notin 0 ..< len(lut_handle_by_step): return
   let
-    handle = lut_step_to_handle[step]
+    handle = lut_handle_by_step[step]
     is_acting = (step mod 2) == 1
   if not scene.isAlive(handle): return
   let anchor = anchorFor(scene[handle].geometry, scene[handle].anchorOverride, scale)
@@ -1486,7 +1490,7 @@ proc driveSelect(
     sdl3.pushEvent(addr release)
 
 
-const lut_keys_undo_driven = [
+const KEYS_UNDO_DRIVEN = [
   (Scancode.Right, uint32(1073741903), 0'u16, true), # SDLK_RIGHT, no modifier: orbit.
   (Scancode.Right, uint32(1073741903), 0'u16, false),
   (Scancode.Up, uint32(1073741906), 0'u16, true), # SDLK_UP: rise.
@@ -1514,12 +1518,12 @@ proc driveUndo(
   const
     FRAME_FIRST = 2 # Past startup, so first frame's layout has settled.
     STEPS_DRAG = 4 # Reach source, press, reach target, release.
-    lut_step_to_handle = [0, 0, 1, 1]
+    lut_handle_by_step = [0, 0, 1, 1]
   let step = count_drawn - FRAME_FIRST
   if step < 0: return
 
   if step < STEPS_DRAG:
-    let handle = lut_step_to_handle[step]
+    let handle = lut_handle_by_step[step]
     if not scene.isAlive(handle): return
     let anchor = anchorFor(scene[handle].geometry, scene[handle].anchorOverride, scale)
     if anchor.isNone: return
@@ -1549,11 +1553,9 @@ proc driveUndo(
   #   Construction is then committed and its camera aim armed before orbit that overrides
   #   it starts.
   let index = step - STEPS_DRAG - 1
-  if index notin 0 ..< len(lut_keys_undo_driven): return
-  let (scancode, keycode, modifiers, is_down) = lut_keys_undo_driven[index]
-  var event = Event(
-    kind: uint32(if is_down: EventKind.KeyDown else: EventKind.KeyUp)
-  )
+  if index notin 0 ..< len(KEYS_UNDO_DRIVEN): return
+  let (scancode, keycode, modifiers, is_down) = KEYS_UNDO_DRIVEN[index]
+  var event = Event(kind: uint32(if is_down: EventKind.KeyDown else: EventKind.KeyUp))
   event.key.scancode = uint32(scancode)
   event.key.keycode = keycode
   event.key.is_down = is_down
@@ -1571,8 +1573,9 @@ proc positionOverSky(
   let scale = camera.drawExtentFor(height, REACH_SCENE)
   for y in countup(STEP_SCAN, height - STEP_SCAN, STEP_SCAN):
     for x in countup(STEP_SCAN, width - STEP_SCAN, STEP_SCAN):
-      let at = ScreenPosition(x: float(x), y: float(y))
-      let handle = pickNearest(scene, camera, scale, view_projection, width, height, at)
+      let
+        at = ScreenPosition(x: float(x), y: float(y))
+        handle = pickNearest(scene, camera, scale, view_projection, width, height, at)
       if handle.isSome and scene.geometryOf(handle.get).isHorizonPlane: return some(at)
 
 
@@ -1594,10 +1597,10 @@ proc driveSky(
   #   No sky in opening scene, so scan would find nothing and drive would silently do
   #   nothing.
   if count_drawn == FRAME_FIRST - 1:
-    var has_sky = false
+    var found_sky = false
     for handle in 0 ..< scene.bound:
-      if scene.isAlive(handle) and scene.geometryOf(handle).isHorizonPlane: has_sky = true
-    if not has_sky:
+      if scene.isAlive(handle) and scene.geometryOf(handle).isHorizonPlane: found_sky = true
+    if not found_sky:
       discard scene.addObject(
         toMultivector(Direction(x: 1, y: 0, z: 0)) ∧
           toMultivector(Direction(x: 0, y: 1, z: 0)) ∧
@@ -2061,7 +2064,7 @@ proc runStoryboard(
     var are_operative: array[OBJECTS_MAX, bool]
     are_operative[step.index_first] = true
     are_operative[count_seeds + index] = true
-    if lut_operation_to_arity[step.operation] == Arity.Two:
+    if lut_arity_by_operation[step.operation] == Arity.Two:
       are_operative[step.index_second] = true
     for handle, _ in scene.pairs:
       are_dimmed[handle] =
@@ -2106,8 +2109,9 @@ func fillSceneForBenchmark(scene: var Scene, now: float) =
   ##   `--timings` then measures heaviest load this scene reaches.
   ##   Positions walk helix, so no two are collinear and every join is well formed.
   ##   Own point buffer backs each join: earlier handles may hold demo's seeds.
-  var points: array[OBJECTS_MAX, Multivector]
-  var index = 0
+  var
+    points: array[OBJECTS_MAX, Multivector]
+    index = 0
   while not scene.isFull:
     let angle = float(index) * 0.7
     points[index] = toMultivector(
@@ -2197,7 +2201,7 @@ proc main() =
     camera = initCameraDefault(PIXELS_WIDTH, PIXELS_HEIGHT)
     panel = initPanel(
       if len(options.path_screenshot) > 0: options.path_screenshot
-      else: PATH_EXPORT_DEFAULT
+      else: PATH_EXPORT_DEFAULT,
     )
   panel.is_vsync_enabled = not options.is_novsync
   # Open help panel where command line asked for tab in it.

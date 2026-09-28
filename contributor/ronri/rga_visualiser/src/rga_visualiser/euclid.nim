@@ -42,6 +42,10 @@ type
     axis_first*, axis_second*: Direction
     normal*: Direction ## Unit direction perpendicular to plane; same as `directionNormal(m)`.
 
+  RingAngle* = tuple[cos_angle, sin_angle: float]
+    ## Define one entry of fixed ring of angles: cosine and sine caller weights two arms by.
+    ##   See `onCircleAt`.
+
 
 # Forbid exact comparison, as every coordinate below is accumulated float.
 func `==`*(p, q: Position): bool {.error:
@@ -115,11 +119,6 @@ func normalize*(d: Direction): Option[Direction] =
   let magnitude = d.norm
   if magnitude <= TOLERANCE_ABS: return
   some(Direction(x: d.x/magnitude, y: d.y/magnitude, z: d.z/magnitude))
-
-
-type RingAngle* = tuple[cos_angle, sin_angle: float]
-  ## Define one entry of fixed ring of angles: cosine and sine caller weights two arms by.
-  ##   See `onCircleAt`.
 
 
 func unitRing*[N: static int](segments: int): array[N, RingAngle] =

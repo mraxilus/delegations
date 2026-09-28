@@ -12,6 +12,8 @@
 ## Planet whose semi-major axis archive lacks is stored as `0.0`, not guess.
 ##   `orrery` places it by order among siblings instead; 49 such.
 
+{.experimental: "strictFuncs".}
+
 type
   Neighbour* = object ## Define one real star known to carry planets.
     name*: string ## What archive calls it.
