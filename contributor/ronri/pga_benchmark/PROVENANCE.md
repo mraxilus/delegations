@@ -424,8 +424,9 @@ norm, and make one call where they made two. The composed operators are no longe
 **What the bump moved in time.** The pristine bench of `6a91c3f` and the patched bench of
 `bd6b23c` ran alternately, nine times each, and each measurand compares on medians. Noise
 puts one measurand between ×0.92 and ×1.08, and a median over a whole run between ×0.98 and
-×1.01. A measurand under 15 ns can move further. The patched library passes its own suites,
-33 at rga4d and 28 at cga5d.
+×1.01. A measurand under 15 ns can move further. In runs whose patch changes no count,
+`normalize_bulk` at rga4d moves between ×0.81 and ×1.20. The patched library passes its own
+suites, 33 at rga4d and 28 at cga5d.
 
 | Measurand | rga4d | cga5d |
 |---|---|---|
@@ -444,9 +445,12 @@ puts one measurand between ×0.92 and ×1.08, and a median over a whole run betw
 The attitude and the carrier now run as maps of moves and signs. The cocarrier, the centre,
 the container and the partner are no longer inline. At `6a91c3f` that pragma made the
 composed operators slower, the cocarrier by ×1.72 and the attitude by ×1.47. `∪` is slower
-because of its runtime constant. `^∙` is slower at rga4d although its counts fell, and the
-cause is not yet pinned down. The other slower measurands run under 14 ns, and their code did
-not change, so they read as noise.
+because of its runtime constant.
+
+The other slower measurands run under 14 ns, and their counts did not grow, so they read as
+noise. `^∙` at rga4d is one of them. Over eleven runs whose patch changes no count, the
+pristine bench of `bd6b23c` alone timed it between 9.1 and 11.4 ns. That range holds the
+9.4 ns of `6a91c3f`.
 
 The emitted C of the library at 4D:
 
@@ -562,8 +566,6 @@ these measurements.
   less, so the cause is outside it.
 - Why `contract_bulk` (`∨★`) at rga4d runs ×1.33 slower once it writes every slot, while every
   other generated product holds or wins.
-- Why `^∙` at rga4d runs ×1.19 slower at `bd6b23c` than at `6a91c3f`, where `^∘` runs at
-  ×0.32. Both now read the squared norm, and the counts of both fell alike.
 
 [replications]: https://gitlab.com/mraxilus/replications
 [terathon]: https://github.com/EricLengyel/Terathon-Math-Library
