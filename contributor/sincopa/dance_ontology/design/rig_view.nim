@@ -307,8 +307,8 @@ proc framingOf(e: JsObject): Framing =
   ## grid is still drawn at nought and comes into view on zooming out.
   for d in 0 .. 2:
     result.mid[d] = (lower[d] + upper[d]) / 2.0
-  let spread = max(max(upper[0] - lower[0], upper[1] - lower[1]), upper[2] - lower[2])
-  result.reach = spread / 2.0 + 0.15
+  result.reach =
+    max(max(upper[0] - lower[0], upper[1] - lower[1]), upper[2] - lower[2]) / 2.0 + 0.15
 
 proc fit() =
   ## Frame camera to entry chosen, where it has any moment.
