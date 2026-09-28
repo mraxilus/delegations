@@ -957,8 +957,8 @@ crown starts one radius of a limb over the head, so a hand carried there clears 
 
 Rejected: to import anything from `src/`, because a shorthand cannot check itself, and the
 simulation is what a shorthand is for. Not rejected, and reversed since: to share vocabulary.
-Verified by `test_limb.nim`: the tape and the forward kinematics of one arm over seeded random arms,
-and the contact test against a sampled truth.
+Verified by `suites/test_limb.nim`: the tape and the forward kinematics of one arm over seeded
+random arms, and the contact test against a sampled truth.
 
 ## Rigid body engine
 
