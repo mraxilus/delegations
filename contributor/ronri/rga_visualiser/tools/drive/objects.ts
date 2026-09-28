@@ -536,6 +536,12 @@ export async function driveReconcile(page: Page): Promise<void> {
  *  that work lands in what is left of frame rather than in tick's own row -- so tick that
  *  looked like few milliseconds of script was closer to twice that of frame, several times
  *  second, which is what reader saw as stutter.
+ *  Counts writes that set text row already holds, and wants none: `writeText` exists to skip
+ *  them, and correct tick makes none whatever machine's load.
+ *    Not bounded by how many rows moved: that counts timing figures changed in 200 ms, which
+ *    moves with load and with what page was doing.
+ *  Wants same row elements after ticks as before, so tick that rebuilt tree cannot pass by
+ *  writing into fresh nodes; and wants some write, so tick that wrote nothing cannot pass.
  */
 export async function driveTickWrites(page: Page): Promise<void> {
   const written = await page.evaluate(async () => {
@@ -547,12 +553,20 @@ export async function driveTickWrites(page: Page): Promise<void> {
     }
     await wait(400);
 
+    const rows_before = new Map(
+      Array.from(document.querySelectorAll('[id^="diagnostic-"]'), (row) => [row.id, row]),
+    );
     const descriptor = Object.getOwnPropertyDescriptor(Node.prototype, 'textContent');
     let writes = 0;
+    let repeated = 0;
+    let is_ticking = false;
     Object.defineProperty(Node.prototype, 'textContent', {
       ...descriptor,
       set(value: string) {
-        writes += 1;
+        if (is_ticking) {
+          writes += 1;
+          if (descriptor?.get?.call(this) === value) repeated += 1;
+        }
         descriptor?.set?.call(this, value);
       },
     });
@@ -560,25 +574,33 @@ export async function driveTickWrites(page: Page): Promise<void> {
     const original = scope.refreshDiagnostics;
     const per_tick: number[] = [];
     scope.refreshDiagnostics = function (): void {
-      writes = 0;
+      const writes_before = writes;
+      is_ticking = true;
       original();
-      per_tick.push(writes);
+      is_ticking = false;
+      per_tick.push(writes - writes_before);
     };
     await wait(1600);
     scope.refreshDiagnostics = original;
     if (descriptor !== undefined) {
       Object.defineProperty(Node.prototype, 'textContent', descriptor);
     }
+    let kept = 0;
+    for (const [id, row] of rows_before) {
+      if (document.getElementById(id) === row) kept += 1;
+    }
     return {
-      ticks: per_tick.length, worst: Math.max(0, ...per_tick),
-      rows: document.querySelectorAll('[id^="diagnostic-"]').length,
+      ticks: per_tick.length, worst: Math.max(0, ...per_tick), writes, repeated,
+      rows: rows_before.size, kept,
     };
   });
   report(
     'the diagnostics tick writes only the rows that moved',
-    written.ticks > 2 && written.worst > 0 && written.worst <= 20,
-    `${written.worst} text writes at worst over ${written.ticks} ticks, ` +
-      `${written.rows} rows on the tree`,
+    written.ticks > 2 && written.writes > 0 && written.repeated === 0 &&
+      written.kept === written.rows,
+    `${written.repeated} of ${written.writes} text writes over ${written.ticks} ticks set text ` +
+      `a row already held, ${written.worst} at most in one tick; ` +
+      `${written.kept} of ${written.rows} rows kept`,
   );
 }
 
