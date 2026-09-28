@@ -1,5 +1,7 @@
 ## Replicate Article VIII.6 and provenance guide: header table and rules stamp.
 
+{.experimental: "strictFuncs".}
+
 import std/[sequtils, sets, strutils, tables, unittest]
 import ../../src/[provenance]
 import ./fixtures
@@ -35,8 +37,9 @@ suite "Article VIII":
     check "`0000000000000000`" in stale[0].message  # expected stamp named
 
   test "VIII.6 Rules row is rewritten in place, padding and neighbours kept":
-    let old = provenanceText("deadbeefdeadbeef")
-    let written = old.withRulesRow("0123456789abcdef")
+    let
+      old = provenanceText("deadbeefdeadbeef")
+      written = old.withRulesRow("0123456789abcdef")
     check written.headerFields["Rules"] == "0123456789abcdef"  # row carries new stamp
     check written.replace("0123456789abcdef", "deadbeefdeadbeef") == old  # nothing else moved
     check written.withRulesRow("0123456789abcdef") == written  # idempotent

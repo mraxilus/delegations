@@ -1,5 +1,7 @@
 ## Replicate Article XI.1: Conventional Commits with stable scope.
 
+{.experimental: "strictFuncs".}
+
 import std/[options, sequtils, strutils, unittest]
 from std/unicode import runeLen
 import ../../src/commits

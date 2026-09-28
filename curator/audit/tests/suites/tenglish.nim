@@ -1,5 +1,7 @@
 ## Replicate Article VI.8: governed prose is Simplified Technical English.
 
+{.experimental: "strictFuncs".}
+
 import std/[sequtils, strutils, unittest]
 import ../../src/english
 
@@ -22,8 +24,9 @@ suite "Article VI.8":
     check "Run `nim r\nkoch check` now.".blocks[0].text == "Run name now."  # span over line end
 
   test "list item and run of plain lines are separate blocks":
-    let document = "# H\n\nOne line.\nSame block.\n\n- First item.\n- Second item.\n"
-    let found = document.blocks
+    let
+      document = "# H\n\nOne line.\nSame block.\n\n- First item.\n- Second item.\n"
+      found = document.blocks
     check found.len == 3
     check found[0].text == "One line. Same block."
     check found.mapIt(it.line) == @[3, 6, 7]

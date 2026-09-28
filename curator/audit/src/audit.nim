@@ -12,11 +12,14 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"):
+  import std/nimprof
+
 import std/[options, os, sequtils, sets, strutils]
 import ./[
-  findings, kinds, prose, form, justification, checker, layout, provenance, glossary,
-  dependencies, toolchain, plan, workflows, record, prompts, duplicates, tree, domains, faces,
-  english,
+  checker, dependencies, domains, duplicates, english, faces, findings, form, glossary,
+  justification, kinds, layout, plan, prompts, prose, provenance, record, toolchain, tree,
+  workflows,
 ]
 
 export layout.Tree, layout.Entry, layout.projectDirs
@@ -38,8 +41,8 @@ proc writeRulesRows*(root: string, tree: Tree): seq[string] =
   ##   Record is read from tree, as checks read it, and written back only when row moves, so
   ##   diff is that row alone and duty 1's hand step is one verb.
   let stamp_now = tree.rulesStamp
-  for dir in tree.projectDirs:
-    let path = dir & "/PROVENANCE.md"
+  for directory in tree.projectDirs:
+    let path = directory & "/PROVENANCE.md"
     for e in tree:
       if e.path != path: continue
       let written = e.content.withRulesRow(stamp_now)
@@ -54,8 +57,8 @@ proc prunedFindings*(root: string, tree: Tree): seq[Finding] =
   ##   existence of commit is git's; koch runs both under `check-files` and `check`.
   ##   Needs full log: shallow clone reports true row as missing, so `check-files` job fetches
   ##   depth 0.
-  for dir in tree.projectDirs:
-    let path = dir & "/PROVENANCE.md"
+  for directory in tree.projectDirs:
+    let path = directory & "/PROVENANCE.md"
     for e in tree:
       if e.path != path: continue
       let named = e.content.prunedOf
@@ -68,29 +71,30 @@ proc prunedFindings*(root: string, tree: Tree): seq[Finding] =
         )
 
 
-func isContributorCode(path: string, dirs: openArray[string]): bool =
+func isContributorCode(path: string, directories: openArray[string]): bool =
   ## Decide whether path is contributor's own code: inside contributor project, and not one of
   ##   its records, which curator may write too.
-  for dir in dirs:
-    if dir.startsWith(CONTRIBUTOR & "/") and path.startsWith(dir & "/"):
-      return path[dir.len + 1 .. ^1] notin PROJECT_FILES
+  for directory in directories:
+    if directory.startsWith(CONTRIBUTOR & "/") and path.startsWith(directory & "/"):
+      return path[directory.len + 1 .. ^1] notin PROJECT_FILES
 
 
-proc lockFindings(tree: Tree, dirs: openArray[string]): seq[Finding] =
+proc lockFindings(tree: Tree, directories: openArray[string]): seq[Finding] =
   ## Compare each project's stored nimble copy against committed one.
   ##   Tree is read here rather than in `layout.nim` so layout rules stay pure text over
   ##   paths; reading lock needs JSON, which Nim marks effectful.
-  for dir in dirs:
-    let nimble_path = dir.nimblePath
-    let lock_path = dir & "/" & LOCK_FILE
+  for directory in directories:
+    let
+      nimble_path = directory.nimblePath
+      lock_path = directory & "/" & LOCK_FILE
     var nimble, lock: string
-    var has_lock = false
+    var found_lock = false
     for e in tree:
       if e.path == nimble_path: nimble = e.content
       elif e.path == lock_path:
         lock = e.content
-        has_lock = true
-    if has_lock: result.add checkLockNimble(nimble_path, lock_path, lock, nimble)
+        found_lock = true
+    if found_lock: result.add checkLockNimble(nimble_path, lock_path, lock, nimble)
 
 
 proc auditTree*(tree: Tree): seq[Finding] =
@@ -129,9 +133,10 @@ proc auditTree*(tree: Tree): seq[Finding] =
       if e.kind.isSome and not e.path.isContributorCode(tree.projectDirs):
         result.add checkMentions(e.path, e.content, verbs)
 
-  let stamp_now = tree.rulesStamp
-  let dirs = tree.projectDirs
-  result.add tree.lockFindings(dirs)
+  let
+    stamp_now = tree.rulesStamp
+    directories = tree.projectDirs
+  result.add tree.lockFindings(directories)
   var paths = initHashSet[string]()
   for e in tree: paths.incl e.path
   var documents: seq[(string, string)]
@@ -155,10 +160,10 @@ proc auditTree*(tree: Tree): seq[Finding] =
     #   would report itself; it holds no presentation target of its own to check.
     if not e.path.startsWith(DRIVER_DIR & "/"):
       result.add checkFaces(e.path, e.content)
-    for dir in dirs:
-      if e.path == dir & "/PROVENANCE.md":
+    for directory in directories:
+      if e.path == directory & "/PROVENANCE.md":
         result.add checkProvenance(e.path, e.content, stamp_now)
-        result.add checkCitations(e.path, e.content, dir & "/" & TESTS_DIR & "/", paths)
+        result.add checkCitations(e.path, e.content, directory & "/" & TESTS_DIR & "/", paths)
         result.add checkRecord(e.path, e.content)
-      if e.path == dir & "/GLOSSARY.md": result.add checkGlossary(e.path, e.content)
+      if e.path == directory & "/GLOSSARY.md": result.add checkGlossary(e.path, e.content)
   result.add checkDuplicates(documents)

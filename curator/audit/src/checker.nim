@@ -151,8 +151,9 @@ func between(line, opening, closing: string): string =
   ## Read text between first opening and next closing mark; empty when either is absent.
   let start = line.find(opening)
   if start < 0: return ""
-  let rest = line[start + opening.len .. ^1]
-  let stop = rest.find(closing)
+  let
+    rest = line[start + opening.len .. ^1]
+    stop = rest.find(closing)
   if stop < 0: "" else: rest[0 ..< stop]
 
 

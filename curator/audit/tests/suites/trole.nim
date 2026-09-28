@@ -1,5 +1,7 @@
 ## Replicate role rule of CONTRIBUTOR.md, Say which role you are, over pull request bodies.
 
+{.experimental: "strictFuncs".}
+
 import std/[strutils, unicode, unittest]
 import ../../src/role
 

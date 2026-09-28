@@ -1,5 +1,7 @@
 ## Replicate shared store of `assets.nim` header, i.e. one declaration, keyed by digest.
 
+{.experimental: "strictFuncs".}
+
 import std/[os, strutils, unittest]
 import ../../src/assets
 from ../../src/compilers import CACHE_DIR

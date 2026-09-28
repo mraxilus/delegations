@@ -1,6 +1,8 @@
 ## Replicate git enumeration of `tree.nim` header: real repository, real git, paths read back.
 
-import std/[os, options, sequtils, strutils, unittest]
+{.experimental: "strictFuncs".}
+
+import std/[options, os, sequtils, strutils, unittest]
 import ../../src/tree
 import ./fixtures
 

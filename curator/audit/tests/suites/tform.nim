@@ -1,5 +1,7 @@
 ## Replicate Article X.1, X.2 and VIII.5: form of source.
 
+{.experimental: "strictFuncs".}
+
 import std/[sequtils, strutils, unittest]
 import ../../src/[kinds, form]
 
@@ -19,8 +21,9 @@ suite "Article X":
     check messages("LICENSE.md", "x".repeat(400) & "\n", Kind.Markdown).len == 0  # exempt
 
   test "X.1 line over limit passes only when breaking cannot fix it":
-    let url = "https://fonts.googleapis.com/css2?family=" & "x".repeat(150)
-    let link = "<link rel=\"stylesheet\" href=\"" & url & "\">"
+    let
+      url = "https://fonts.googleapis.com/css2?family=" & "x".repeat(150)
+      link = "<link rel=\"stylesheet\" href=\"" & url & "\">"
     check link.len > LINE_MAX and link.isUnbreakable  # one token, rest fits without it
     check messages("pages/x.html", link & "\n", Kind.Html).len == 0  # URL has no whitespace
     check messages("pages/x.html", "<p>" & "word ".repeat(40) & "</p>\n", Kind.Html) ==

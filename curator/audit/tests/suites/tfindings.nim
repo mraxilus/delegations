@@ -1,6 +1,8 @@
 ## Replicate finding record of `findings.nim` header: its order, and how it renders.
 ##   Every check reports through these two, so they are held here, not only through checks.
 
+{.experimental: "strictFuncs".}
+
 import std/[algorithm, unittest]
 import ../../src/findings
 

@@ -45,7 +45,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[os, osproc]
-import ./[findings, compilers]
+import ./[compilers, findings]
 
 
 const

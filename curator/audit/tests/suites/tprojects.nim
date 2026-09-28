@@ -1,5 +1,7 @@
 ## Replicate Article IX.6 for project runner: real testament, real exit codes.
 
+{.experimental: "strictFuncs".}
+
 import std/[os, strutils, tempfiles, unittest]
 import ../../src/projects
 import ./fixtures
@@ -34,9 +36,10 @@ suite "Article IX":
     root.writeInto("contributor/ronri/pass/tests/tok.nim", HEADER & "doAssert 1 == 1\n")
     root.writeInto("contributor/ronri/fail/tests/tbad.nim", HEADER & "doAssert 1 == 2\n")
     # Empty `bin` names compiler on PATH, which is what CI already installs per job.
-    let pass = Target(dir: "contributor/ronri/pass")
-    let fail = Target(dir: "contributor/ronri/fail")
-    let found = runTests(root, [pass, fail])
+    let
+      pass = Target(directory: "contributor/ronri/pass")
+      fail = Target(directory: "contributor/ronri/fail")
+      found = runTests(root, [pass, fail])
     check found.len == 1  # one finding: passing project clean
     check found[0].path == "contributor/ronri/fail/tests"  # failing named
     check found[0].message.endsWith("got exit `1`.")  # testament exits 1 on failure

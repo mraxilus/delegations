@@ -1,5 +1,7 @@
 ## Replicate scope rules of `scope.nim` header and CONTRIBUTOR.md boundaries.
 
+{.experimental: "strictFuncs".}
+
 import std/[sequtils, strutils, unittest]
 import ../../src/[domains, scope]
 
@@ -17,8 +19,9 @@ suite "Scope":
 
   test "contributor branch confined to project prefix":
     for d in DOMAINS:  # 5 domains, exhaustive
-      let prefix = "contributor/" & d.folder & "/alpha/"
-      let inside = @[prefix & "x.nim", prefix & "tests/t.nim"]
+      let
+        prefix = "contributor/" & d.folder & "/alpha/"
+        inside = @[prefix & "x.nim", prefix & "tests/t.nim"]
       check checkScope("contributor/" & d.folder & "/alpha/work", inside).len == 0  # inside
       let found = checkScope("contributor/" & d.folder & "/alpha/work", inside & OUTSIDE)
       check found.mapIt(it.path) == OUTSIDE  # each outside path named
@@ -74,8 +77,9 @@ suite "Scope":
     ).len == 0
 
   test "content-preserving move is exempt for curator root alone":
-    let alpha = CONTRIBUTOR & "/ronri/alpha/src/alpha.nim"
-    let beta = CONTRIBUTOR & "/ronri/alpha/src/beta.nim"
+    let
+      alpha = CONTRIBUTOR & "/ronri/alpha/src/alpha.nim"
+      beta = CONTRIBUTOR & "/ronri/alpha/src/beta.nim"
     check checkScope("curator/rules", [alpha]).len == 1  # edit to contributor code is finding
     check checkScope("curator/rules", [alpha], [alpha]).len == 0  # same path moved is not
     check checkScope("curator/rules", [alpha, beta], [alpha]).mapIt(it.path) ==

@@ -1,5 +1,7 @@
 ## Replicate scoped test selection of `plan.nim` header and CURATOR.md checks reference.
 
+{.experimental: "strictFuncs".}
+
 import std/[json, os, sequtils, unittest]
 import ../../src/[plan, projects]
 import ./fixtures
@@ -23,8 +25,8 @@ suite "Plan":
     check testSet(DIRS, [ALPHA_DIR & "/README.md"]).len == 0  # README runs nothing either
     # Nested README is code: only project's own three records describe project.
     check testSet(DIRS, [ALPHA_DIR & "/design/README.md"]) == @[ALPHA_DIR]
-    for dir in DIRS:
-      check testSet(DIRS, [dir & "/PROVENANCE.md", dir & "/GLOSSARY.md"]).len == 0
+    for directory in DIRS:
+      check testSet(DIRS, [directory & "/PROVENANCE.md", directory & "/GLOSSARY.md"]).len == 0
     # Record beside code still selects, since code changed.
     check testSet(DIRS, [ALPHA_DIR & "/PROVENANCE.md", ALPHA_DIR & "/src/a.nim"]) ==
       @[ALPHA_DIR]
@@ -77,11 +79,12 @@ suite "Plan":
 
   test "driven set filters what plan already selected, so it inherits every scoping":
     const DRIVER = ALPHA_DIR & "/tools/build.nim"
-    let tree = goodTree().with(entry(DRIVER,
-      "case paramStr(1)\n" & "of \"drive\": drive()\n" & "else:\n"))
-    let selected = tree.drivenOnly(tree.jobs([ALPHA_DIR & "/src/alpha.nim"]))
+    let
+      tree = goodTree().with(entry(DRIVER,
+        "case paramStr(1)\n" & "of \"drive\": drive()\n" & "else:\n"))
+      selected = tree.drivenOnly(tree.jobs([ALPHA_DIR & "/src/alpha.nim"]))
     check selected.len == 1
-    check selected[0].dir == ALPHA_DIR
+    check selected[0].directory == ALPHA_DIR
     check selected[0].pin == PIN  # drive job installs project's own pin, as `test` does
     # Change to project carrying no driven verb selects that project and drives nothing.
     check tree.drivenOnly(tree.jobs([AUDIT_DIR & "/tests/taudit.nim"])).len == 0  # filters
@@ -100,10 +103,11 @@ suite "Plan":
     check testSet(DIRS, newSeq[string]()).len == 0  # empty change
 
   test "jobs carry each project's own pin, and skip project pinning none":
-    let tree = goodTree()
-    let selected = tree.jobs([ALPHA_DIR & "/src/alpha.nim"])
+    let
+      tree = goodTree()
+      selected = tree.jobs([ALPHA_DIR & "/src/alpha.nim"])
     check selected.len == 1
-    check selected[0].dir == ALPHA_DIR
+    check selected[0].directory == ALPHA_DIR
     check selected[0].pin == PIN
     check tree.allJobs.len == DIRS.len  # `--all` names every project
     let unpinned = tree.replaced(
@@ -141,9 +145,9 @@ suite "Plan":
     check goodTree().jobs(newSeq[string]()).render == "[]"  # empty plan skips matrix
 
     # Non-ASCII domain folder survives JSON, since matrix reads path back verbatim.
-    let built = @[Job(dir: "p", pin: COMMIT)]
+    let built = @[Job(directory: "p", pin: COMMIT)]
     check parseJson(built.render)[0]["kind"].getStr == "commit"  # built from source
 
-    let accented = @[Job(dir: "contributor/síncopa/dance_ontology", pin: "2.2.6")]
+    let accented = @[Job(directory: "contributor/síncopa/dance_ontology", pin: "2.2.6")]
     check parseJson(accented.render)[0]["dir"].getStr ==
       "contributor/síncopa/dance_ontology"

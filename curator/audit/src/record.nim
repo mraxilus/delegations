@@ -118,8 +118,9 @@ func checkSections*(path, source: string): seq[Finding] =
   for i, line in lines:
     if line.startsWith("## "): opened.add i
   for k, start in opened:
-    let stop = if k + 1 < opened.len: opened[k + 1] else: body
-    let count = stop - start - 1
+    let
+      stop = if k + 1 < opened.len: opened[k + 1] else: body
+      count = stop - start - 1
     if count > SECTION_LINES:
       result.add finding(
         path, start + 1,

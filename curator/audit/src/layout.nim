@@ -26,7 +26,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, options, os, sequtils, strutils, tables]
-import ./[findings, domains, kinds, markdown, dependencies, toolchain]
+import ./[dependencies, domains, findings, kinds, markdown, toolchain]
 
 
 type
@@ -61,14 +61,14 @@ const
     ## Registry named in finding for unregistered kind.
 
 
-func projectName*(dir: string): string =
+func projectName*(directory: string): string =
   ## Read project folder name, i.e. last segment of project directory.
-  dir.split('/')[^1]
+  directory.split('/')[^1]
 
 
-func nimblePath*(dir: string): string =
+func nimblePath*(directory: string): string =
   ## Read path of project's nimble file, which is named after its folder.
-  dir & "/" & dir.projectName & NIMBLE_EXT
+  directory & "/" & directory.projectName & NIMBLE_EXT
 
 
 func dirOf(path: string): string =
@@ -90,8 +90,8 @@ func projectDir*(parts: seq[string]): string =
 func projectDirs*(tree: Tree): seq[string] =
   ## Collect project directories present, sorted.
   for e in tree:
-    let dir = e.path.split('/').projectDir
-    if dir.len > 0 and dir notin result: result.add dir
+    let directory = e.path.split('/').projectDir
+    if directory.len > 0 and directory notin result: result.add directory
   result.sort
 
 
@@ -116,9 +116,9 @@ func checkProjectName(path, name: string): seq[Finding] =
 
 func checkPage(path: string, parts: seq[string]): seq[Finding] =
   ## Report page outside project's page directories.
-  let dir = parts.projectDir
-  for page_dir in PAGE_DIRS:
-    if dir.len > 0 and path.startsWith(dir & "/" & page_dir & "/"): return
+  let directory = parts.projectDir
+  for page_directory in PAGE_DIRS:
+    if directory.len > 0 and path.startsWith(directory & "/" & page_directory & "/"): return
   result.add finding(
     path, 0,
     "Page outside `" & PAGE_DIRS.join("/` or `") & "/`; generated markup belongs under " &
@@ -161,29 +161,30 @@ func checkEntry(e: Entry): seq[Finding] =
   result.add finding(e.path, 0, "Root directory outside layout; got `" & head & "`.")
 
 
-func checkProject(tree: Tree, paths: Table[string, int], dir: string): seq[Finding] =
+func checkProject(tree: Tree, paths: Table[string, int], directory: string): seq[Finding] =
   ## Report missing project files, missing tests, nimble file faults, missing lock.
   for file in PROJECT_FILES:
-    let path = dir & "/" & file
+    let path = directory & "/" & file
     if path notin paths: result.add finding(path, 0, "Project file missing.")
-  let tests_prefix = dir & "/" & TESTS_DIR & "/"
+  let tests_prefix = directory & "/" & TESTS_DIR & "/"
   if not tree.anyIt(it.path.startsWith(tests_prefix)):
     result.add finding(
-      dir & "/" & TESTS_DIR, 0, "Project tests missing; add at least one file under `tests/`."
+      directory & "/" & TESTS_DIR, 0, "Project tests missing; add at least one file under `tests/`."
     )
 
   # Demand exactly one nimble file, named after project, and lock when it requires packages.
-  let nimble = dir.nimblePath
+  let nimble = directory.nimblePath
   if nimble notin paths: result.add finding(nimble, 0, "Project nimble file missing.")
   for e in tree:
-    if e.path.dirOf == dir and e.path.endsWith(NIMBLE_EXT) and e.path != nimble:
+    if e.path.dirOf == directory and e.path.endsWith(NIMBLE_EXT) and e.path != nimble:
       result.add finding(
         e.path, 0, "Nimble file not named after project; expected `" & nimble & "`."
       )
   if nimble in paths:
     result.add checkPin(nimble, tree[paths[nimble]].content)
-    let required = tree[paths[nimble]].content.requirements
-    let lock = dir & "/" & LOCK_FILE
+    let
+      required = tree[paths[nimble]].content.requirements
+      lock = directory & "/" & LOCK_FILE
     if required.len > 0 and lock notin paths:
       result.add finding(
         lock, 0,
@@ -231,6 +232,6 @@ func checkLayout*(tree: Tree): seq[Finding] =
   ## Report every layout violation in tree.
   let paths = tree.index
   for e in tree: result.add e.checkEntry
-  for dir in tree.projectDirs: result.add checkProject(tree, paths, dir)
+  for directory in tree.projectDirs: result.add checkProject(tree, paths, directory)
   result.add checkRootViews(tree, paths)
   result.add checkDomainViews(tree, paths)

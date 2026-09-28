@@ -1,5 +1,7 @@
 ## Replicate domain table and branch grammar of `domains.nim` header, and CONTRIBUTOR.md.
 
+{.experimental: "strictFuncs".}
+
 import std/[options, sequtils, unittest]
 import ../../src/domains
 import ./fixtures
@@ -20,8 +22,9 @@ suite "Branch grammar":
     for d in DOMAINS:  # 5 domains, exhaustive
       for project in ["alpha", "a1", "two_words"]:
         for tail in ["init", "0-fix", "add_parser"]:
-          let branch = "contributor/" & d.folder & "/" & project & "/" & tail
-          let parsed = branch.parseBranch
+          let
+            branch = "contributor/" & d.folder & "/" & project & "/" & tail
+            parsed = branch.parseBranch
           check parsed.isSome and parsed.get.role == Role.Contributor  # four segments
           check parsed.get.prefix == "contributor/" & d.folder & "/" & project & "/"  # prefix
           check parsed.get.scope == project  # scope is project

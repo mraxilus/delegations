@@ -5,6 +5,8 @@
 ##   Cost: `goodTree` repeats layout rules as data; when layout grows, fixture grows with it,
 ##     and `taudit` proves they still agree.
 
+{.experimental: "strictFuncs".}
+
 import std/[json, os, osproc, strutils, tempfiles]
 import ../../src/[domains, kinds, markdown, layout, provenance, dependencies]
 
@@ -64,14 +66,14 @@ func readmeText*(): string =
   for d in DOMAINS: result.add "| " & d.folder & " | " & d.name & " | " & d.theme & " |\n"
 
 
-func projectEntries*(dir: string, stamp: string): seq[Entry] =
+func projectEntries*(directory: string, stamp: string): seq[Entry] =
   ## Build entries of one complete project directory.
   @[
-    entry(dir & "/README.md", "# Project\n\nPurpose.\n"),
-    entry(dir & "/PROVENANCE.md", provenanceText(stamp)),
-    entry(dir & "/GLOSSARY.md", GLOSSARY_TEXT),
-    entry(dir & "/" & dir.projectName & NIMBLE_EXT, NIMBLE_TEXT),
-    entry(dir & "/tests/tall.nim", "## Test everything.\n\ndiscard\n"),
+    entry(directory & "/README.md", "# Project\n\nPurpose.\n"),
+    entry(directory & "/PROVENANCE.md", provenanceText(stamp)),
+    entry(directory & "/GLOSSARY.md", GLOSSARY_TEXT),
+    entry(directory & "/" & directory.projectName & NIMBLE_EXT, NIMBLE_TEXT),
+    entry(directory & "/tests/tall.nim", "## Test everything.\n\ndiscard\n"),
   ]
 
 

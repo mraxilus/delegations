@@ -39,9 +39,10 @@ func checkGlossary*(path, source: string): seq[Finding] =
   let lines = source.splitLines
   for i, line in lines:
     if not line.isTermLine: continue
-    let next = if i + 1 < lines.len: lines[i + 1] else: ""
-    let is_defined = next.strip.len > 0 and not next.startsWith("#") and
-      not next.isTermLine and not next.startsWith("_Avoid_")
+    let
+      next = if i + 1 < lines.len: lines[i + 1] else: ""
+      is_defined = next.strip.len > 0 and not next.startsWith("#") and
+        not next.isTermLine and not next.startsWith("_Avoid_")
     if not is_defined:
       result.add finding(
         path, i + 1, "Term lacks definition on next line; got `" & line[2 ..< line.len - 3] & "`."
@@ -71,8 +72,9 @@ func peopleWordsIn*(line: string): seq[string] =
       continue
     var j = i
     while j < text.len and text[j].isWordChar: inc j
-    let word = text[i ..< j]
-    let bare = word.toLowerAscii.strip(leading = false, chars = {'s'})
+    let
+      word = text[i ..< j]
+      bare = word.toLowerAscii.strip(leading = false, chars = {'s'})
     if bare in PEOPLE_WORDS or word.toLowerAscii in PEOPLE_WORDS: result.add word
     i = j
 

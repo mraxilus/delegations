@@ -1,5 +1,7 @@
 ## Replicate gated-language rule of `justification.nim` header and CONTRIBUTOR.md Language.
 
+{.experimental: "strictFuncs".}
+
 import std/unittest
 import ../../src/[kinds, comments, justification]
 

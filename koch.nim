@@ -179,7 +179,7 @@ proc scopedDirsOf(options: Options, tree: Tree): seq[string] =
   ##   `--recent` scopes to window rather than to base commit, exactly as `list-projects` does
   ##   on schedule; `--all` drops scoping.
   if options.project.len > 0: @[options.project.strip(chars = {'/'})]
-  elif options.is_recent: recentFor(options.root, tree, RECENT_DAYS).mapIt(it.dir)
+  elif options.is_recent: recentFor(options.root, tree, RECENT_DAYS).mapIt(it.directory)
   elif options.is_all: tree.projectDirs
   else: testSet(tree.projectDirs, changedPaths(options.root, options.baseOrDefault))
 

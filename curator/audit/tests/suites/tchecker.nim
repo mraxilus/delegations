@@ -2,6 +2,8 @@
 ##   Each fixture is one fault written down: dead routine, module without suite, verb set
 ##   drifting, and usage text leaving out option parser takes.
 
+{.experimental: "strictFuncs".}
+
 import std/[strutils, unittest]
 import ../../src/[markdown, checker]
 
@@ -85,9 +87,10 @@ when isMainModule:
     check dispatchVerbs("", DRIVER_CASE).len == 0  # project carrying no driver at all
 
   test "usage text and checks table must name what dispatch names":
-    let usage = "Usage: koch <verb>\n\nVerbs:\n  ci    every check\n  tree  files\n\nOptions:\n"
-    let table = "## Checks reference\n\n| Command | Reads |\n|---|---|\n| `ci` | x |\n" &
-      "| `tree` | y |\n"
+    let
+      usage = "Usage: koch <verb>\n\nVerbs:\n  ci    every check\n  tree  files\n\nOptions:\n"
+      table = "## Checks reference\n\n| Command | Reads |\n|---|---|\n| `ci` | x |\n" &
+        "| `tree` | y |\n"
     check (KOCH & usage).usageVerbs == @["ci", "tree"]  # first word of each indented line
     check checkVerbs(KOCH & usage, table).len == 0  # three statements, one set
     let short = "Usage: koch <verb>\n\nVerbs:\n  ci    every check\n\nOptions:\n"

@@ -32,7 +32,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, strutils]
-import ./[findings, markdown, domains, layout]
+import ./[domains, findings, layout, markdown]
 
 
 const
@@ -235,10 +235,10 @@ func isGoverned*(path: string): bool =
   if parts[^1] == README_FILE:
     if parts.len == 2 and parts[0] in ROOTS: return true
     if parts.len == 3 and parts[0] == CONTRIBUTOR and parts[1].findDomain.isSome: return true
-  let dir = parts.projectDir
-  if dir.len == 0: return false
+  let directory = parts.projectDir
+  if directory.len == 0: return false
   for file in PROJECT_FILES:
-    if path == dir & "/" & file: return true
+    if path == directory & "/" & file: return true
   false
 
 

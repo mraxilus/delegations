@@ -101,10 +101,10 @@ func binOf*(root, pin: string): string =
   root / pin / "bin"
 
 
-func missing*(dir, pin, bin: string): seq[Finding] =
+func missing*(directory, pin, bin: string): seq[Finding] =
   ## Report pin no compiler serves, naming cache koch tried, so remedy is visible.
   @[finding(
-    dir, 0,
+    directory, 0,
     "No compiler serves project pin, and fetching one failed; install it under `" & bin &
       "`, or make network reachable, then run again; got `" & pin & "`.",
   )]
@@ -120,17 +120,17 @@ proc digestOf*(path: string): string =
   pinnedDigest(written)
 
 
-proc fetchRelease(version, platform, dir: string): bool =
+proc fetchRelease(version, platform, directory: string): bool =
   ## Download published tarball, check it against digest published beside it, and unpack it
-  ## as `dir`; false when any step fails.
-  ##   Tarball holds one top folder, `nim-<version>`, which becomes `dir` itself so every
+  ## as `directory`; false when any step fails.
+  ##   Tarball holds one top folder, `nim-<version>`, which becomes `directory` itself so every
   ##   pin has same shape whether fetched or built.
   ##   Digest is fetched from same host over same TLS as tarball, so what it defends against
   ##   is truncated, mirrored or swapped file, never nim-lang.org itself. That is weaker than
   ##   signature and is what is published: no `.asc` exists for these tarballs, checked
   ##   rather than assumed. Repository pins every other fetch it makes; this is that pin for
   ##   one that had none, and its limit is stated instead of overclaimed.
-  let work = dir & ".fetching"
+  let work = directory & ".fetching"
   removeDir(work)
   createDir(work)
   defer: removeDir(work)
@@ -149,27 +149,27 @@ proc fetchRelease(version, platform, dir: string): bool =
   if runIn(work, "tar", ["xf", archive]) != 0: return false
   let unpacked = work / ("nim-" & version)
   if not dirExists(unpacked): return false
-  moveDir(unpacked, dir)
+  moveDir(unpacked, directory)
   true
 
 
-proc buildSource(pin, dir: string): bool =
-  ## Clone Nim, check pin out and build it, then move finished tree to `dir`.
+proc buildSource(pin, directory: string): bool =
+  ## Clone Nim, check pin out and build it, then move finished tree to `directory`.
   ##   Same recipe `check.yml` runs for commit pin, so it is proven rather than new.
   ##   Version pin arrives here only where no tarball is published, and its tag is `v<x>`.
-  ##   Build happens beside `dir` and moves in once done, as fetch does: half-built tree
+  ##   Build happens beside `directory` and moves in once done, as fetch does: half-built tree
   ##   carries `bin/nim` of bootstrap stage, which answers `--version` with another commit
   ##   entirely, so second koch reading it mid-build would take it for finished toolchain
   ##   (measured 2026-09-06, probing bootstrap binary five minutes before boot completed).
-  let work = dir & ".building"
+  let work = directory & ".building"
   removeDir(work)
-  removeDir(dir)
+  removeDir(directory)
   let reference = if pin.isCommit: pin else: "v" & pin
   if runIn(".", "git", ["clone", "--filter=blob:none", "--quiet", SOURCE, work]) != 0:
     return false
   if runIn(work, "git", ["checkout", "--quiet", reference]) != 0: return false
   if runIn(work, "sh", ["build_all.sh"]) != 0: return false
-  moveDir(work, dir)
+  moveDir(work, directory)
   true
 
 
@@ -181,15 +181,15 @@ proc resolve*(pin: string, running: Compiler, root: string): Option[string] =
   if pin.serves(running): return some("")
   let bin = binOf(root, pin)
   if pin.serves(compilerAt(bin / NIM)): return some(bin)
-  let dir = root / pin
+  let directory = root / pin
   createDir(root)
   echo "== fetching Nim " & pin
   let platform = platformOf(hostOS, hostCPU)
   let is_built =
-    if pin.isBuilt(platform): buildSource(pin, dir)
-    else: fetchRelease(pin, platform, dir)
+    if pin.isBuilt(platform): buildSource(pin, directory)
+    else: fetchRelease(pin, platform, directory)
 
   # Fetched compiler is asked what it is: wrong tarball or half-built tree is not toolchain.
   if is_built and pin.serves(compilerAt(bin / NIM)): return some(bin)
-  removeDir(dir)
+  removeDir(directory)
   none(string)

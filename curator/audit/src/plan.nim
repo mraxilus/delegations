@@ -26,7 +26,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[algorithm, json, options, os, strutils, tables]
-import ./[findings, checker, layout, toolchain, compilers, dependencies, projects, tree]
+import ./[checker, compilers, dependencies, findings, layout, projects, toolchain, tree]
 
 
 const
@@ -42,7 +42,7 @@ const
 
 type Job* = object
   ## Define one project to compile, with compiler it pins.
-  dir*: string  ## Project directory, repository-relative.
+  directory*: string  ## Project directory, repository-relative.
   pin*: string  ## Exact Nim version, or commit, from project's nimble file.
 
 
@@ -56,69 +56,70 @@ func isChecker*(path: string): bool =
   path in CHECKER_FILES or path.startsWith(CHECKER_DIR & "/")
 
 
-func isCode(dir, path: string): bool =
+func isCode(directory, path: string): bool =
   ## Decide whether changed path is code of project, i.e. inside it and not its record.
   ##   Records are `PROJECT_FILES`, same three `layout.nim` demands: README, provenance and
   ##   glossary describe project and run nothing, so changing one compiles nothing.
-  if not path.startsWith(dir & "/"): return false
-  path[dir.len + 1 .. ^1] notin PROJECT_FILES
+  if not path.startsWith(directory & "/"): return false
+  path[directory.len + 1 .. ^1] notin PROJECT_FILES
 
 
-func testSet*(dirs, paths: openArray[string]): seq[string] =
+func testSet*(directories, paths: openArray[string]): seq[string] =
   ## Select projects one change asks to compile, sorted: each whose code changed, and
   ##   driver's project when driver's root files did, since its suites read them.
-  for dir in dirs:
+  for directory in directories:
     for path in paths:
-      if isCode(dir, path) or (dir == DRIVER_DIR and path in CHECKER_FILES):
-        result.add dir
+      if isCode(directory, path) or (directory == DRIVER_DIR and path in CHECKER_FILES):
+        result.add directory
         break
   result.sort
 
 
-func holds(tree: Tree, dir, name: string): bool =
+func holds(tree: Tree, directory, name: string): bool =
   ## Decide whether project directory holds file of that name.
-  let path = dir & "/" & name
+  let path = directory & "/" & name
   for e in tree:
     if e.path == path: return true
 
 
-func nodeDirs*(tree: Tree, dirs: openArray[string]): seq[string] =
+func nodeDirs*(tree: Tree, directories: openArray[string]): seq[string] =
   ## Select projects type-checker reaches, i.e. those carrying node manifest and its lock.
   ##   Derived from tree rather than listed anywhere: project gains type check by carrying
   ##   manifest, and `check.yml` names no project, as it names none for compiler matrix.
   ##   Lock is demanded beside manifest, since `npm ci` needs one and unpinned tools would
   ##   be only thing here nothing pins.
-  for dir in dirs:
-    if tree.holds(dir, NODE_MANIFEST) and tree.holds(dir, NODE_LOCK): result.add dir
+  for directory in directories:
+    if tree.holds(directory, NODE_MANIFEST) and tree.holds(directory, NODE_LOCK):
+      result.add directory
 
 
-func driverOf(tree: Tree, dir: string): string =
+func driverOf(tree: Tree, directory: string): string =
   ## Read project's build driver from tree; empty when project carries none.
-  let path = dir & "/" & DRIVER_FILE
+  let path = directory & "/" & DRIVER_FILE
   for e in tree:
     if e.path == path: return e.content
   ""
 
 
-func verbDirs*(tree: Tree, dirs: openArray[string], verb: string): seq[string] =
+func verbDirs*(tree: Tree, directories: openArray[string], verb: string): seq[string] =
   ## Select projects whose build driver dispatches that verb.
   ##   Derived from driver rather than listed anywhere, same reasoning as `nodeDirs`: project
   ##   gains driven checks by carrying verb, and `check.yml` names no project. Driver is read
   ##   by same parser `checker.nim` reads koch's own dispatch with, since both hold one shape.
-  for dir in dirs:
-    if verb in tree.driverOf(dir).dispatchVerbs(DRIVER_CASE): result.add dir
+  for directory in directories:
+    if verb in tree.driverOf(directory).dispatchVerbs(DRIVER_CASE): result.add directory
 
 
-proc systemPackages*(root: string, tree: Tree, dirs: openArray[string]): seq[string] =
+proc systemPackages*(root: string, tree: Tree, directories: openArray[string]): seq[string] =
   ## Read system packages every selected project declares, sorted.
   ##   Sorted so output is stable between runs: caller pipes it into installer, and list
   ##   reordering itself would read as change where nothing changed.
   var targets: seq[Target]
-  for dir in tree.verbDirs(dirs, SYSTEM_VERB): targets.add Target(dir: dir)
+  for directory in tree.verbDirs(directories, SYSTEM_VERB): targets.add Target(directory: directory)
   systemOf(root, targets).sorted
 
 
-proc repositorySystem*(root: string, tree: Tree, dirs: openArray[string]): seq[string] =
+proc repositorySystem*(root: string, tree: Tree, directories: openArray[string]): seq[string] =
   ## Read what whole machine needs: koch's own packages, plus every named project's, sorted.
   ##   Answer to "what must be installed before any of this runs" is one command rather than
   ##   prose somewhere, which is what rule koch enforces asks of every project, koch included.
@@ -126,12 +127,12 @@ proc repositorySystem*(root: string, tree: Tree, dirs: openArray[string]): seq[s
   ##   naming one project gets that project's alone and is served by `systemPackages`.
   var names: seq[string]
   for (package, _) in KOCH_SYSTEM: names.add package
-  for package in systemPackages(root, tree, dirs):
+  for package in systemPackages(root, tree, directories):
     if package notin names: names.add package
   names.sorted
 
 
-proc typeJobs*(root: string, tree: Tree, dirs: openArray[string]): seq[Finding] =
+proc typeJobs*(root: string, tree: Tree, directories: openArray[string]): seq[Finding] =
   ## Restore node tools and type-check every project carrying them.
   ##   No pin is resolved and no toolchain fetched: `tools/build.nim` compiles no project
   ##   code, deriving declarations by reading source as text, so project's own pin buys
@@ -142,32 +143,32 @@ proc typeJobs*(root: string, tree: Tree, dirs: openArray[string]): seq[Finding] 
   ##   Restore failing short-circuits, since type check without installed tools fails again
   ##   for second reason and reports neither clearly.
   var targets: seq[Target]
-  for dir in tree.nodeDirs(dirs): targets.add Target(dir: dir)
+  for directory in tree.nodeDirs(directories): targets.add Target(directory: directory)
   if targets.len == 0: return
   for target in targets: result.add restoreNode(root, target)
   if result.len > 0: return
   result.add runTypes(root, targets)
 
 
-func nimbleOf(tree: Tree, dir: string): string =
+func nimbleOf(tree: Tree, directory: string): string =
   ## Read project's nimble text from tree; empty when file is absent.
-  let path = dir.nimblePath
+  let path = directory.nimblePath
   for e in tree:
     if e.path == path: return e.content
   ""
 
 
-func pinOf*(tree: Tree, dir: string): Option[string] =
+func pinOf*(tree: Tree, directory: string): Option[string] =
   ## Read exact Nim pin project declares; `none` when nimble file or pin is absent.
-  tree.nimbleOf(dir).nimPin
+  tree.nimbleOf(directory).nimPin
 
 
-func jobsFor*(tree: Tree, dirs: openArray[string]): seq[Job] =
+func jobsFor*(tree: Tree, directories: openArray[string]): seq[Job] =
   ## Build one job per directory, carrying its pin; unpinned project is skipped, since
   ##   `layout.nim` already reports it and matrix cannot install version nobody named.
-  for dir in dirs:
-    let pin = tree.pinOf(dir)
-    if pin.isSome: result.add Job(dir: dir, pin: pin.get)
+  for directory in directories:
+    let pin = tree.pinOf(directory)
+    if pin.isSome: result.add Job(directory: directory, pin: pin.get)
 
 
 func jobs*(tree: Tree, paths: openArray[string]): seq[Job] =
@@ -193,7 +194,7 @@ proc recentFor*(root: string, tree: Tree, days: int): seq[Job] =
 proc render*(jobs: openArray[Job]): string =
   ## Render jobs as JSON array of matrix entries, escaping through `std/json`.
   var node = newJArray()
-  for job in jobs: node.add %*{"dir": job.dir, "nim": job.pin, "kind": job.kind}
+  for job in jobs: node.add %*{"dir": job.directory, "nim": job.pin, "kind": job.kind}
   $node
 
 
@@ -206,14 +207,15 @@ proc targetsFor(jobs: openArray[Job]): (seq[Target], seq[Finding]) =
   ##   testing what CI will run.
   ##   Resolution happens once per distinct pin, since projects commonly share one.
   if jobs.len == 0: return
-  let running = runningCompiler()
-  let cache = cacheRoot(getEnv(CACHE_KEY))
+  let
+    running = runningCompiler()
+    cache = cacheRoot(getEnv(CACHE_KEY))
   var bins = initTable[string, Option[string]]()
   for job in jobs:
     if job.pin notin bins: bins[job.pin] = resolve(job.pin, running, cache)
     let bin = bins[job.pin]
-    if bin.isNone: result[1].add missing(job.dir, job.pin, binOf(cache, job.pin))
-    else: result[0].add Target(dir: job.dir, bin: bin.get)
+    if bin.isNone: result[1].add missing(job.directory, job.pin, binOf(cache, job.pin))
+    else: result[0].add Target(directory: job.directory, bin: bin.get)
 
 
 proc restoreJobs*(root: string, jobs: openArray[Job]): seq[Finding] =
@@ -235,11 +237,11 @@ func drivenOnly*(tree: Tree, jobs: openArray[Job]): seq[Job] =
   ## Keep planned jobs of projects carrying driven checks.
   ##   Filter over what `list-projects` already selected rather than second selection of its
   ##   own, so driven set inherits scoping, `--all` and `--recent` without restating any of it.
-  var dirs: seq[string]
-  for job in jobs: dirs.add job.dir
-  let driven = tree.verbDirs(dirs, DRIVEN_VERB)
+  var directories: seq[string]
+  for job in jobs: directories.add job.directory
+  let driven = tree.verbDirs(directories, DRIVEN_VERB)
   for job in jobs:
-    if job.dir in driven: result.add job
+    if job.directory in driven: result.add job
 
 
 proc drivenJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
@@ -257,7 +259,7 @@ proc drivenJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
   result = found
   result.add restoreAll(root, targets)
   for target in targets:
-    if tree.nodeDirs([target.dir]).len > 0: result.add restoreNode(root, target)
+    if tree.nodeDirs([target.directory]).len > 0: result.add restoreNode(root, target)
   if result.len > 0: return
   result.add runDriven(root, targets)
 
@@ -276,10 +278,10 @@ proc ciJobs*(root: string, tree: Tree, jobs: openArray[Job]): seq[Finding] =
   var driven: seq[Target]
   for job in tree.drivenOnly(jobs):
     for target in targets:
-      if target.dir == job.dir: driven.add target
+      if target.directory == job.directory: driven.add target
   if driven.len == 0 or found.len > 0 or restored.len > 0: return
   var node_found: seq[Finding]
   for target in driven:
-    if tree.nodeDirs([target.dir]).len > 0: node_found.add restoreNode(root, target)
+    if tree.nodeDirs([target.directory]).len > 0: node_found.add restoreNode(root, target)
   result.add node_found
   if node_found.len == 0: result.add runDriven(root, driven)

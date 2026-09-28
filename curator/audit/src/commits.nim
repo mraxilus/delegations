@@ -48,17 +48,20 @@ const
 
 func parseSubject*(subject: string): Option[Subject] =
   ## Parse `type(scope)!?: summary`; `none` when any part breaks grammar.
-  let open = subject.find('(')
-  let close = subject.find(')')
+  let
+    open = subject.find('(')
+    close = subject.find(')')
   if open <= 0 or close < open: return none(Subject)
-  let kind = subject[0 ..< open]
-  let scope = subject[open + 1 ..< close]
+  let
+    kind = subject[0 ..< open]
+    scope = subject[open + 1 ..< close]
   var rest = subject[close + 1 .. ^1]
   if rest.startsWith("!"): rest = rest[1 .. ^1]
   if not rest.startsWith(": "): return none(Subject)
-  let summary = rest[2 .. ^1]
-  let is_summary = summary.len > 0 and summary[0] in {'a'..'z', '0'..'9'} and
-    not summary.endsWith(".")
+  let
+    summary = rest[2 .. ^1]
+    is_summary = summary.len > 0 and summary[0] in {'a'..'z', '0'..'9'} and
+      not summary.endsWith(".")
   if kind notin TYPES or not (scope == CURATOR or scope.isProjectName) or not is_summary:
     return none(Subject)
   some(Subject(kind: kind, scope: scope, summary: summary))
@@ -76,9 +79,10 @@ func checkCommits*(branch: string, subjects: openArray[string]): seq[Finding] =
   for i in countdown(subjects.high, 0):
     let parsed = subjects[i].parseSubject
     if parsed.isNone or parsed.get.kind != "fix": continue
-    let before = if i < subjects.high: subjects[i + 1].parseSubject else: none(Subject)
-    let is_paired = before.isSome and before.get.kind == "test" and
-      before.get.scope == parsed.get.scope
+    let
+      before = if i < subjects.high: subjects[i + 1].parseSubject else: none(Subject)
+      is_paired = before.isSome and before.get.kind == "test" and
+        before.get.scope == parsed.get.scope
     if not is_paired:
       result.add finding(
         "", 0,

@@ -1,5 +1,7 @@
 ## Replicate staleness rule of `base.nim` header and CURATOR.md settings section.
 
+{.experimental: "strictFuncs".}
+
 import std/[strutils, unittest]
 import ../../src/[base, plan, provenance]
 

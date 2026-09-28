@@ -85,7 +85,7 @@ where one fills while the other is read.
 
 **An allow-list of kinds is the registry, and an unregistered kind is a finding.** `kinds.nim`
 maps a basename or an extension to a comment syntax, and to whether prose is checked. Its
-header table is a derived view of `lut_kind_rule`. Nimble files and NimScript read as Nim, and
+header table is a derived view of `LUT_RULE_BY_KIND`. Nimble files and NimScript read as Nim, and
 cfg files as hash comments. `atlas.config` and `atlas.lock` read as JSON, by basename. Markdown
 is prose rather than comment, so articles pass while the form rules still apply.
 

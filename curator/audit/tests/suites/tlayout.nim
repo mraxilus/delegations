@@ -1,5 +1,7 @@
 ## Replicate layout rules of `layout.nim` header, CURATOR.md and CONTRIBUTOR.md.
 
+{.experimental: "strictFuncs".}
+
 import std/[sequtils, strutils, unittest]
 import ../../src/[domains, layout, dependencies]
 import ./fixtures
@@ -18,11 +20,11 @@ func messages(tree: Tree): seq[string] =
 suite "Layout":
   test "good tree passes and lists projects under both roots":
     check goodTree().checkLayout.len == 0  # fixture is smallest passing tree
-    check goodTree().projectDirs == @[ALPHA_DIR, AUDIT_DIR]  # sorted project dirs
+    check goodTree().projectDirs == @[ALPHA_DIR, AUDIT_DIR]  # sorted project directories
 
   test "root holds only listed entries":
     check (goodTree() & @[entry("NOTES.md", "x\n")]).paths == @["NOTES.md"]  # root file
-    check (goodTree() & @[entry("tools/x.nim", "x\n")]).paths == @["tools/x.nim"]  # root dir
+    check (goodTree() & @[entry("tools/x.nim", "x\n")]).paths == @["tools/x.nim"]  # root directory
 
   test "root folders and domain folders hold README.md and folders only":
     check (goodTree() & @[entry("curator/stray.nim", "x\n")]).messages ==
@@ -43,17 +45,18 @@ suite "Layout":
     check found[0].message.endsWith("got `data.csv`.")  # IV.4 echo value
 
   test "project folder names follow grammar under both roots":
-    for dir in ["contributor/ronri/Beta", "curator/Beta"]:  # both roots
-      let found = (goodTree() & projectEntries(dir, "x")).checkLayout
+    for directory in ["contributor/ronri/Beta", "curator/Beta"]:  # both roots
+      let found = (goodTree() & projectEntries(directory, "x")).checkLayout
       check found.len == 5 and found.allIt("`Beta`" in it.message)  # every file flagged
 
   test "project shape is complete under both roots":
-    for dir in [ALPHA_DIR, AUDIT_DIR]:  # both roots, exhaustive
+    for directory in [ALPHA_DIR, AUDIT_DIR]:  # both roots, exhaustive
       for file in PROJECT_FILES:  # 3 files
-        let path = dir & "/" & file
+        let path = directory & "/" & file
         check goodTree().without(path).paths == @[path]  # each missing file is one finding
-      check goodTree().without(dir & "/tests/tall.nim").paths == @[dir & "/tests"]  # tests
-      let nimble = dir & "/" & dir.projectName & NIMBLE_EXT
+      check goodTree().without(directory & "/tests/tall.nim").paths ==
+        @[directory & "/tests"]  # tests
+      let nimble = directory & "/" & directory.projectName & NIMBLE_EXT
       check goodTree().without(nimble).paths == @[nimble]  # nimble file required
 
   test "project may nest source directories to any depth":
@@ -70,8 +73,9 @@ suite "Layout":
     let other = ALPHA_DIR & "/other.nimble"
     check (goodTree() & @[entry(other, NIMBLE_TEXT)]).messages ==
       @["Nimble file not named after project; expected `" & ALPHA_DIR & "/alpha.nimble`."]  # one
-    let nimble = ALPHA_DIR & "/alpha.nimble"
-    let requiring = goodTree().replaced(nimble, NIMBLE_TEXT & "requires \"malebolgia\"\n")
+    let
+      nimble = ALPHA_DIR & "/alpha.nimble"
+      requiring = goodTree().replaced(nimble, NIMBLE_TEXT & "requires \"malebolgia\"\n")
     check requiring.paths == @[ALPHA_DIR & "/atlas.lock"]  # lock demanded
     check requiring.messages[0].endsWith("got `malebolgia`.")  # package named
     check (requiring & @[entry(ALPHA_DIR & "/atlas.lock", "{}\n")]).checkLayout.len == 0  # ok
@@ -81,10 +85,10 @@ suite "Layout":
     check goodTree().without("GLOSSARY.md").messages == @["Top-level glossary missing."]  # named
 
   test "committed pages live in page directories only":
-    for page_dir in PAGE_DIRS:  # 2 directories, exhaustive
+    for page_directory in PAGE_DIRS:  # 2 directories, exhaustive
       let inside = goodTree() & @[
-        entry(ALPHA_DIR & "/" & page_dir & "/index.html", "<!doctype html>\n<p>x</p>\n"),
-        entry(AUDIT_DIR & "/" & page_dir & "/deep/frame.svg", "<svg></svg>\n"),
+        entry(ALPHA_DIR & "/" & page_directory & "/index.html", "<!doctype html>\n<p>x</p>\n"),
+        entry(AUDIT_DIR & "/" & page_directory & "/deep/frame.svg", "<svg></svg>\n"),
       ]
       check inside.checkLayout.len == 0  # page in its place, at any depth
     let stray = goodTree() & @[entry(ALPHA_DIR & "/design/stray.html", "<p>x</p>\n")]

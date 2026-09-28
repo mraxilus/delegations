@@ -33,7 +33,7 @@
 {.experimental: "strictFuncs".}
 
 import std/[options, osproc, strutils]
-import ./[findings, dependencies]
+import ./[dependencies, findings]
 
 
 const
@@ -55,6 +55,11 @@ const
     ## Characters commit pin is built from; lowercase hex only.
   COMMIT_LEN* = 40
     ## Length of full git commit, which is what pin carries.
+
+type Compiler* = object
+  ## Define what `nim --version` says about compiler on PATH.
+  version*: string  ## Dotted release version it names.
+  commit*: string   ## Git hash it reports; empty when it reports none.
 
 
 func isVersion*(s: string): bool =
@@ -135,12 +140,6 @@ func checkDriver*(path, workflow, pin: string): seq[Finding] =
       "Driver version must equal `" & DRIVER_DIR & "` pin `" & pin & "`; got `" & stated.get &
         "`.",
     )
-
-
-type Compiler* = object
-  ## Define what `nim --version` says about compiler on PATH.
-  version*: string  ## Dotted release version it names.
-  commit*: string   ## Git hash it reports; empty when it reports none.
 
 
 func serves*(pin: string, compiler: Compiler): bool =
