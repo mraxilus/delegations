@@ -770,7 +770,8 @@ proc versionSdl3(): string =
   let
     path_config = getCurrentDir() / DIR_SDL3_PREFIX / "lib" / "pkgconfig"
     (written, code) = execCmdEx(
-      "PKG_CONFIG_PATH=" & quoteShell(path_config) & ":$PKG_CONFIG_PATH pkg-config --modversion sdl3"
+      "PKG_CONFIG_PATH=" & quoteShell(path_config) &
+        ":$PKG_CONFIG_PATH pkg-config --modversion sdl3",
     )
   if code != 0: "" else: written.strip
 
