@@ -186,14 +186,14 @@ proc twistBy*(b: BodyId; torque: Vec; wake: bool) {.importc: "b3Body_ApplyTorque
 {.pop.}
 
 const
-  Static* = 0.cint   ## No mass, no motion, moved by hand alone.
-  Kinematic* = 1.cint ## No mass, motion set by caller; what turns dancer.
-  Dynamic* = 2.cint  ## Mass from its shapes, motion from forces; what arms are.
+  Static* = cint(0)    ## No mass, no motion, moved by hand alone.
+  Kinematic* = cint(1) ## No mass, motion set by caller; what turns dancer.
+  Dynamic* = cint(2)   ## Mass from its shapes, motion from forces; what arms are.
   IDENTITY* = Quat(v: Vec(x: 0, y: 0, z: 0), s: 1.0)
 
 func vec*(x, y, z: float): Vec =
-  Vec(x: x.cfloat, y: y.cfloat, z: z.cfloat)
+  Vec(x: cfloat(x), y: cfloat(y), z: cfloat(z))
 
 func at*(p: Pos): tuple[x, y, z: float] =
   ## Read place as plain numbers, which is what everything above this works in.
-  (p.x.float, p.y.float, p.z.float)
+  (float(p.x), float(p.y), float(p.z))

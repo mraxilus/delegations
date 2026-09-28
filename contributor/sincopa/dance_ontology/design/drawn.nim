@@ -66,12 +66,12 @@ func drawOrder*(caps: openArray[tuple[a, z: Spot]]; az, el: float;
   for i, c in caps:
     let
       long = sqrt((c.z.x - c.a.x) ^ 2 + (c.z.y - c.a.y) ^ 2 + (c.z.z - c.a.z) ^ 2)
-      n = max(1, ceil(long / DAB).int)
+      n = max(1, int(ceil(long / DAB)))
     for k in 0 ..< n:
       let
-        a = along(c.a, c.z, k.float / n.float)
-        z = along(c.a, c.z, (k + 1).float / n.float)
-        mid = along(c.a, c.z, (k.float + 0.5) / n.float)
+        a = along(c.a, c.z, float(k) / float(n))
+        z = along(c.a, c.z, float(k + 1) / float(n))
+        mid = along(c.a, c.z, (float(k) + 0.5) / float(n))
       keyed.add (seen(mid, az, el, f).d, (cap: i, a: a, z: z))
   keyed.sort(proc (p, q: (float, Piece)): int = cmp(p[0], q[0]))
   for k in keyed: result.add k[1]
@@ -104,7 +104,7 @@ func mixHex*(dark, light: string; t: float): string =
   var parts: seq[string]
   for k in 0 .. 2:
     let
-      a = parseHexInt(dark[1 + 2 * k .. 2 + 2 * k]).float
-      b = parseHexInt(light[1 + 2 * k .. 2 + 2 * k]).float
-    parts.add $round(a + (b - a) * t).int
+      a = float(parseHexInt(dark[1 + 2 * k .. 2 + 2 * k]))
+      b = float(parseHexInt(light[1 + 2 * k .. 2 + 2 * k]))
+    parts.add $int(round(a + (b - a) * t))
   "rgb(" & parts.join(", ") & ")"

@@ -66,9 +66,12 @@ func lyingOn*(rig: Rig; band: Band; links: seq[Link]; stance: array[Body, Stance
     aspect = Aspect.Fore
   else:
     return none(Lying)
-  some(Lying(aspect: aspect, band: band,
-             pressing: pressing(rig, st, (pose.e, pose.w, pose.g)),
-             elbowFore: e.y > 0.0))
+  some(Lying(
+    aspect: aspect,
+    band: band,
+    pressing: pressing(rig, st, (pose.e, pose.w, pose.g)),
+    elbowFore: e.y > 0.0,
+  ))
 
 
 func polyline*(arms: Arms; i: int): array[7, Vec] =
@@ -145,10 +148,13 @@ func crossings*(arms: Arms): seq[Crossing] =
       let
         zp = a.z + (b.z - a.z) * t
         zq = c.z + (d.z - c.z) * u
-      result.add Crossing(at: (a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, zp),
-                          along: i.float + t, across: j.float + u,
-                          over: (if zp >= zq: 0 else: 1),
-                          sense: (if den > 0.0: 1 else: -1))
+      result.add Crossing(
+        at: (a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, zp),
+        along: float(i) + t,
+        across: float(j) + u,
+        over: (if zp >= zq: 0 else: 1),
+        sense: (if den > 0.0: 1 else: -1),
+      )
 
 
 type Tight* = object ## Joint nearest its edge across every held arm.

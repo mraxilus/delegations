@@ -25,8 +25,8 @@ func turnedOn(by_lead, by_follow: int; lap = 0.0): array[Body, Stance] =
   ## Stand two face to face, then turn each on spot this many quarters to own
   ## right, as model counts, and follow `lap` whole turns more.
   ##   Sim turns anticlockwise seen from above, so turn to right is negative.
-  turned(turned(facing(HUMAN, 1.0), Body.One, -by_lead.float / 4.0),
-         Body.Two, -by_follow.float / 4.0 + lap)
+  turned(turned(facing(HUMAN, 1.0), Body.One, -float(by_lead) / 4.0),
+         Body.Two, -float(by_follow) / 4.0 + lap)
 
 
 iterator phrases(): string =
@@ -41,8 +41,8 @@ iterator phrases(): string =
     for aspect in Aspect:
       for pressing in [false, true]:
         for elbow_fore in [false, true]:
-          yield said(some(Lying(aspect: aspect, band: band, pressing: pressing,
-                                elbowFore: elbow_fore)), band)
+          let lying = Lying(aspect: aspect, band: band, pressing: pressing, elbowFore: elbow_fore)
+          yield said(some(lying), band)
 
 
 func shown(report: string): seq[string] =

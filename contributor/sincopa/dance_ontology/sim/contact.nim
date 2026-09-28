@@ -43,8 +43,11 @@ func shapeOf*(rig: Rig; st: Stance): BodyShape =
   result.ax = axesOf(st)
   for part in Part:
     result.parts[part] = PartShape(
-      hb: halfBreadth(rig, part), q: rig.flat[part],
-      z0: bottom(rig, part) - rig.limb, z1: rig.top[part] + rig.limb)
+      hb: halfBreadth(rig, part),
+      q: rig.flat[part],
+      z0: bottom(rig, part) - rig.limb,
+      z1: rig.top[part] + rig.limb,
+    )
 
 
 func partGap*(ax: Axes; p: PartShape; a, b: Vec): float =
@@ -78,9 +81,13 @@ func partGap*(ax: Axes; p: PartShape; a, b: Vec): float =
 
 func partGap*(rig: Rig; ax: Axes; part: Part; a, b: Vec): float =
   ## Same, with part's shape worked out here.
-  partGap(ax, PartShape(hb: halfBreadth(rig, part), q: rig.flat[part],
-                        z0: bottom(rig, part) - rig.limb,
-                        z1: rig.top[part] + rig.limb), a, b)
+  let shape = PartShape(
+    hb: halfBreadth(rig, part),
+    q: rig.flat[part],
+    z0: bottom(rig, part) - rig.limb,
+    z1: rig.top[part] + rig.limb,
+  )
+  partGap(ax, shape, a, b)
 
 
 func bodyGap*(rig: Rig; sh: BodyShape; a, b: Vec; own: bool): Touch =

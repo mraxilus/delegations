@@ -116,20 +116,26 @@ const HUMAN* = Rig(
   flat: [0.75, 1.0, 1.0],
   top: [1.36, 1.50, 1.69],
   hip: 0.80,
-  shoulderOut: 0.18, shoulderUp: 1.40,
-  upper: 0.31, fore: 0.25, hand: 0.08,
+  shoulderOut: 0.18,
+  shoulderUp: 1.40,
+  upper: 0.31,
+  fore: 0.25,
+  hand: 0.08,
   limb: 0.045,
   range: [
     Range(lo: deg(-90), hi: deg(45), easeLo: 0.0, easeHi: deg(20), neutral: 0.0),
     Range(lo: deg(-90), hi: ACROSS_HI, easeLo: 0.0, easeHi: deg(20), neutral: 0.0),
     Range(lo: deg(-90), hi: deg(105), easeLo: deg(25), easeHi: deg(25), neutral: 0.0),
     Range(lo: 0.0, hi: deg(140), easeLo: 0.0, easeHi: deg(35), neutral: deg(30)),
-    Range(lo: 0.0, hi: WRIST_HI, easeLo: 0.0, easeHi: deg(20), neutral: 0.0)],
+    Range(lo: 0.0, hi: WRIST_HI, easeLo: 0.0, easeHi: deg(20), neutral: 0.0),
+  ],
   waist: Range(lo: deg(-40), hi: deg(40), easeLo: deg(15), easeHi: deg(15), neutral: 0.0),
   collar: [
     Range(lo: deg(-25), hi: deg(25), easeLo: deg(10), easeHi: deg(10), neutral: 0.0),
-    Range(lo: deg(-10), hi: deg(40), easeLo: deg(5), easeHi: deg(10), neutral: 0.0)],
-  band: [(1.00, 1.35), (1.40, 1.50), (1.735, 2.00)])
+    Range(lo: deg(-10), hi: deg(40), easeLo: deg(5), easeHi: deg(10), neutral: 0.0),
+  ],
+  band: [(1.00, 1.35), (1.40, 1.50), (1.735, 2.00)],
+)
   ## Average adult.  Crown band starts limb's radius over head
   ## so hand carried there clears it by construction.
   ##   Waist is thoracic rotation, forty degrees each way, clinical; its ease is

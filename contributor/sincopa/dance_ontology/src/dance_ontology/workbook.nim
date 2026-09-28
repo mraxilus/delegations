@@ -75,41 +75,38 @@ const CELLS*: array[27, Cell] = [
   Cell(source: "half-closed", destination: "Right to left", text: "slide"),
   Cell(source: "Left to left", destination: "half-closed", text: "place, collect"),
   Cell(source: "Left to left", destination: "Right to left", text: "pass"),
-  Cell(source: "Left to left", destination: "Left-to-left over Right-to-right",
-    text: "collect"),
-  Cell(source: "Left to left", destination: "Right-to-right over Left-to-left",
-    text: "collect"),
+  Cell(source: "Left to left", destination: "Left-to-left over Right-to-right", text: "collect"),
+  Cell(source: "Left to left", destination: "Right-to-right over Left-to-left", text: "collect"),
   Cell(source: "Left to right", destination: "closed", text: "collect"),
   Cell(source: "Left to right", destination: "Right to right", text: "pass"),
-  Cell(source: "Left to right", destination: "Left-to-right and Right-to-left",
-    text: "collect"),
+  Cell(source: "Left to right", destination: "Left-to-right and Right-to-left", text: "collect"),
   Cell(source: "Right to left", destination: "Left to left", text: "pass"),
-  Cell(source: "Right to left", destination: "Left-to-right and Right-to-left",
-    text: "collect"),
+  Cell(source: "Right to left", destination: "Left-to-right and Right-to-left", text: "collect"),
   Cell(source: "Right to right", destination: "Left to right", text: "pass"),
-  Cell(source: "Right to right", destination: "Left-to-left over Right-to-right",
-    text: "collect"),
-  Cell(source: "Right to right", destination: "Right-to-right over Left-to-left",
-    text: "collect"),
-  Cell(source: "Left-to-left over Right-to-right", destination: "half-closed",
-    text: "place, drop, collect"),
-  Cell(source: "Left-to-left over Right-to-right", destination: "Left to left",
-    text: "drop"),
-  Cell(source: "Left-to-left over Right-to-right", destination: "Right to right",
-    text: "drop"),
-  Cell(source: "Left-to-left over Right-to-right",
-    destination: "Right-to-right over Left-to-left", text: "cut"),
+  Cell(source: "Right to right", destination: "Left-to-left over Right-to-right", text: "collect"),
+  Cell(source: "Right to right", destination: "Right-to-right over Left-to-left", text: "collect"),
+  Cell(
+    source: "Left-to-left over Right-to-right",
+    destination: "half-closed",
+    text: "place, drop, collect",
+  ),
+  Cell(source: "Left-to-left over Right-to-right", destination: "Left to left", text: "drop"),
+  Cell(source: "Left-to-left over Right-to-right", destination: "Right to right", text: "drop"),
+  Cell(
+    source: "Left-to-left over Right-to-right",
+    destination: "Right-to-right over Left-to-left",
+    text: "cut",
+  ),
   Cell(source: "Left-to-right and Right-to-left", destination: "closed", text: "slide"),
-  Cell(source: "Left-to-right and Right-to-left", destination: "Left to right",
-    text: "drop"),
-  Cell(source: "Left-to-right and Right-to-left", destination: "Right to left",
-    text: "drop"),
-  Cell(source: "Right-to-right over Left-to-left", destination: "Left to left",
-    text: "drop"),
-  Cell(source: "Right-to-right over Left-to-left", destination: "Right to right",
-    text: "drop"),
-  Cell(source: "Right-to-right over Left-to-left",
-    destination: "Left-to-left over Right-to-right", text: "cut"),
+  Cell(source: "Left-to-right and Right-to-left", destination: "Left to right", text: "drop"),
+  Cell(source: "Left-to-right and Right-to-left", destination: "Right to left", text: "drop"),
+  Cell(source: "Right-to-right over Left-to-left", destination: "Left to left", text: "drop"),
+  Cell(source: "Right-to-right over Left-to-left", destination: "Right to right", text: "drop"),
+  Cell(
+    source: "Right-to-right over Left-to-left",
+    destination: "Left-to-left over Right-to-right",
+    text: "cut",
+  ),
 ] ## Hold every filled cell of `base` sheet, read row by row.
 
 
@@ -335,11 +332,12 @@ func auditEdges(): seq[Finding] =
         reversed = cellText(destination_name, source_name)
         derived =
           if helper.isSome:
-            manner(helper.get) & ": " & phrase(source, Move(
+            let move = Move(
               helper: helper.get,
               side: actingSide(source, destination),
               to: destination,
-            ))
+            )
+            manner(helper.get) & ": " & phrase(source, move)
           else:
             ($named.get).toLowerAscii & ": " & compoundPhrase(source, destination)
       if reversed.isSome:

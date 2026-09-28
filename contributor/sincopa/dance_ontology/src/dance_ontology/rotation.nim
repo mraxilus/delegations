@@ -331,12 +331,7 @@ func around*(blocker: Blocker; level: Level): Option[BodySite] =
 func rest*(target: Frame): Posture =
   ## Get posture of frame that has not turned, which is where hand-to-hand
   ## ontology lives.
-  Posture(
-    frame: target,
-    level: [Level.Low, Level.Low],
-    contact: none(Contact),
-    twist: 0,
-  )
+  Posture(frame: target, level: [Level.Low, Level.Low], contact: none(Contact), twist: 0)
 
 
 func rests*(posture: Posture; side: Side; where: BodySite): Posture =
@@ -426,8 +421,12 @@ func postures*(): seq[Posture] =
   for target in FRAMES:
     for left in Level:
       for right in Level:
-        let held = normalised(Posture(frame: target, level: [left, right],
-          contact: none(Contact), twist: 0))
+        let held = normalised(Posture(
+          frame: target,
+          level: [left, right],
+          contact: none(Contact),
+          twist: 0,
+        ))
         if held.level != [left, right]:
           continue
         for twist in -MOST_TURN .. MOST_TURN:
@@ -489,8 +488,7 @@ func turnsOf*(posture: Posture): seq[Offer] =
           reached = posture.stored(motion)
         var landing = posture
         landing.twist = reached
-        result.add Offer(who: who, amount: amount, to: landing,
-          refused: posture.refusal(reached))
+        result.add Offer(who: who, amount: amount, to: landing, refused: posture.refusal(reached))
 
 
 

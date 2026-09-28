@@ -92,7 +92,7 @@ type
     neg, pos: float                       ## Turns reached each way, at most `MOST`.
     why_neg, why_pos: cstring             ## What refused, each way.
     is_stopped_neg, is_stopped_pos: bool  ## Blocked within `MOST`, not merely ended.
-    does_rest_hold: bool                  ## Whether rest pose exists at all.
+    found_rest: bool                  ## Whether rest pose exists at all.
 
   Sweep = object
     ## Define one sweep as page reads it: limits, and moments as reference into `TURNS`.
@@ -202,7 +202,7 @@ func readSweep(sweep: var Sweep, hold: Hold, level: Level) =
   sweep.limits.why_pos = sw.why.to(cstring)
   sweep.limits.is_stopped_neg = sw.stoppedNeg.to(bool) and neg < MOST
   sweep.limits.is_stopped_pos = sw.stoppedPos.to(bool) and pos < MOST
-  sweep.limits.does_rest_hold = sw.restHolds.to(bool)
+  sweep.limits.found_rest = sw.restHolds.to(bool)
   sweep.frames = sw.frames
 
 
@@ -564,12 +564,12 @@ proc renderStage() =
   ##   Hot path: once per animated frame.  Constant: one scene refilled in place.
   ##     Allocates markup strings only; browser's parse of stage and readout dominates.
   template limits: untyped = lut_hold_sweep[hold][level].limits
-  let has_scene = sceneOf(scene, lut_hold_sweep[hold][level].frames, turn)
-  stage.innerHTML = if has_scene: sceneSvg(hold, level, scene) else: ""
+  let found_scene = sceneOf(scene, lut_hold_sweep[hold][level].frames, turn)
+  stage.innerHTML = if found_scene: sceneSvg(hold, level, scene) else: ""
   slider.value = jsStr(turn)
   let head = "<b>" & HOLDS[hold].name & "</b> · " & LEVEL_NAMES[level] & " · @ " &
     turnNum(turn) & " from " & HOLDS[hold].from_rest
-  if not has_scene or not limits.does_rest_hold:
+  if not found_scene or not limits.found_rest:
     readout.innerHTML = head & "<br>no pose holds at the rest"
     return
 
@@ -644,7 +644,7 @@ proc renderStrip() =
       t = shown[i]
       is_half = abs(t * 2.0 - floor(t * 2.0 + 0.5)) < 1e-6
     if t < -sweep.limits.neg - 1e-6 or t > sweep.limits.pos + 1e-6 or
-        not sweep.limits.does_rest_hold:
+        not sweep.limits.found_rest:
       html.add "<figure class=\"mini blocked\" data-t=\"" & jsStr(t) &
         "\"><div class=\"x\">&#10005;</div><figcaption><b>@ " & turnWord(t) &
         "</b><br><span class=\"say\">blocked — " &

@@ -45,7 +45,7 @@ suite "the engine this project turns couples with":
     var def = defaultWorld()
     def.enableSleep = false
     let w = createWorld(addr def)
-    let g = abs(def.gravity.y.float)
+    let g = abs(float(def.gravity.y))
     check g > 9.0     # Engine's own, not this project's; only its order matters.
     var bd = defaultBody()
     bd.kind = Dynamic
@@ -55,7 +55,7 @@ suite "the engine this project turns couples with":
     var cap = Capsule(center1: vec(0, -0.1, 0), center2: vec(0, 0.1, 0), radius: 0.05)
     discard createCapsule(body, addr sd, addr cap)
     for i in 1 .. 240:
-      step(w, (1.0 / 240.0).cfloat, 8)
+      step(w, cfloat(1.0 / 240.0), 8)
     let fell = 10.0 - positionOf(body).at.y
     # Half g t squared, with one second walked.
     check abs(fell - 0.5 * g) < 0.05
@@ -69,7 +69,7 @@ suite "the engine this project turns couples with":
     let b = capsule(w, 0.01)
     check abs(positionOf(b).at.x - positionOf(a).at.x) < 0.03
     for i in 1 .. 240:
-      step(w, (1.0 / 240.0).cfloat, 8)
+      step(w, cfloat(1.0 / 240.0), 8)
     let apart = abs(positionOf(b).at.x - positionOf(a).at.x)
     checkpoint("centres ended " & $apart & " m apart")
     # Two radii is where they touch; anything less is one standing inside other.
@@ -93,7 +93,7 @@ suite "the engine this project turns couples with":
     var around: seq[BodyId]
     for i in 0 ..< AROUND:
       # Ring of thin capsules, each poking into big one from its own side.
-      let angle = 2.0 * PI * i.float / AROUND.float
+      let angle = 2.0 * PI * float(i) / float(AROUND)
       var od = defaultBody()
       od.kind = Dynamic
       od.position = Pos(x: 0.22 * cos(angle), y: 0.0, z: 0.22 * sin(angle))
@@ -101,11 +101,11 @@ suite "the engine this project turns couples with":
       var thin = Capsule(center1: vec(0, -0.02, 0), center2: vec(0, 0.02, 0), radius: 0.02)
       discard createCapsule(b, addr sd, addr thin)
       around.add b
-    step(w, (1.0 / 240.0).cfloat, 8)
+    step(w, cfloat(1.0 / 240.0), 8)
     let room = touchRoom(centre)
     check room >= AROUND
-    var seen = newSeq[Touch](max(1, room.int))
-    let n = touches(centre, addr seen[0], seen.len.cint)
+    var seen = newSeq[Touch](max(1, int(room)))
+    let n = touches(centre, addr seen[0], cint(seen.len))
     checkpoint("room " & $room & ", contacts reported " & $n)
     check n == AROUND
     var eight: array[8, Touch]

@@ -44,8 +44,7 @@ func linksOf*(holds: Holds): seq[Link] =
   ## Read `parts`'s hold table: index is lead's arm, value is follow's it joins.
   for lead, follow in holds.pairs:
     if follow.isSome:
-      result.add Link(ends: [(Body.One, armOf(terms.Arm(lead))),
-                             (Body.Two, armOf(follow.get))])
+      result.add Link(ends: [(Body.One, armOf(terms.Arm(lead))), (Body.Two, armOf(follow.get))])
 
 func holdsOf*(target: Frame): Holds =
   ## Which hands this frame joins, in `parts`'s own terms.
@@ -96,32 +95,49 @@ func stillAsks*(): seq[StillAsk] =
   #     way couple took it.  Same reading page makes when it decides whether to
   #     draw frame turned other way at all (A17).
   func amountFor(target: Frame; twist: int): float =
-    if turnedFacing(0.0, 180.0 * twist.float) == some(restOf(target)): 0.0 else: 0.5
+    if turnedFacing(0.0, 180.0 * float(twist)) == some(restOf(target)): 0.0 else: 0.5
   func eitherWay(target: Frame): bool =
     renderFrame(target, HalfTurns(1)) == renderFrame(target, HalfTurns(-1))
   for i, target in FRAMES:
     for twist in [0, 1]:
       let amount = amountFor(target, twist)
-      result.add StillAsk(key: &"A{i * 2 + twist + 1}", links: linksOf(holdsOf(target)),
-                          turns: asked(amount), rest: restOf(target),
-                          head: Body.Two, either: amount != 0.0 and eitherWay(target))
+      result.add StillAsk(
+        key: &"A{i * 2 + twist + 1}",
+        links: linksOf(holdsOf(target)),
+        turns: asked(amount),
+        rest: restOf(target),
+        head: Body.Two,
+        either: amount != 0.0 and eitherWay(target),
+      )
   block:
     let target = FRAMES[^1]
-    result.add StillAsk(key: "A17", links: linksOf(holdsOf(target)),
-                        turns: asked(-amountFor(target, 1)),
-                        rest: restOf(target), head: Body.Two)
+    result.add StillAsk(
+      key: "A17",
+      links: linksOf(holdsOf(target)),
+      turns: asked(-amountFor(target, 1)),
+      rest: restOf(target),
+      head: Body.Two,
+    )
   # `B`: four single-hand holds, four manners, four quarters.  Hands go over
   # crown of dancer who walks under, which follows manner.
   for c, single in SINGLES:
     for manner in Manner:
       let sense = windSense(manner)
       for q in 0 ..< QUARTERS_ROUND:
-        result.add StillAsk(key: &"st_{MANNERS[manner].tag}_{c}_{q}",
-                            links: linksOf(single.holds),
-                            turns: asked(sense * q.float / QUARTERS_ROUND.float),
-                            rest: restOf(single.holds), head: bodyOf(MANNERS[manner].who))
+        result.add StillAsk(
+          key: &"st_{MANNERS[manner].tag}_{c}_{q}",
+          links: linksOf(single.holds),
+          turns: asked(sense * float(q) / float(QUARTERS_ROUND)),
+          rest: restOf(single.holds),
+          head: bodyOf(MANNERS[manner].who),
+        )
   # `C` and `D`: two chains, seven positions each, half turn apart.
   for (tag, arms) in [("C", HAND_TO_HAND), ("D", PAIRED)]:
     for i, w in STEPS:
-      result.add StillAsk(key: tag & $(i + 1), links: linksOf(arms), turns: asked(w),
-                          rest: restOf(arms), head: Body.Two)
+      result.add StillAsk(
+        key: tag & $(i + 1),
+        links: linksOf(arms),
+        turns: asked(w),
+        rest: restOf(arms),
+        head: Body.Two,
+      )

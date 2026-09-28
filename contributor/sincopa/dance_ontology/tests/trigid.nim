@@ -545,9 +545,18 @@ func wentOf(w: Walk; links: seq[Link]): Went =
   let
     (most, at) = leapIn(w, links)
     (peak, atEnd) = extensionOf(w, links)
-  Went(holds: w.restHolds, stopped: w.stopped, at: w.at, why: w.why,
-       moments: w.moments.len, deepest: deepestOf(w, links), leap: most, leapAt: at,
-       peak: peak, atEnd: atEnd)
+  Went(
+    holds: w.restHolds,
+    stopped: w.stopped,
+    at: w.at,
+    why: w.why,
+    moments: w.moments.len,
+    deepest: deepestOf(w, links),
+    leap: most,
+    leapAt: at,
+    peak: peak,
+    atEnd: atEnd,
+  )
 
 
 #[ Live Walks, Every Core At Once ]#

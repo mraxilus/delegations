@@ -141,7 +141,7 @@ suite "nothing passes through anybody":
         got = axisNear(a, b, z0, z1).d
       var truth = Inf
       for i in 0 .. 400:
-        let p = a + (b - a) * (i.float / 400.0)
+        let p = a + (b - a) * (float(i) / 400.0)
         if p.z >= z0 and p.z <= z1:
           truth = min(truth, sqrt(p.x * p.x + p.y * p.y))
       if truth == Inf:

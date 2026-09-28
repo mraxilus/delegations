@@ -158,18 +158,13 @@ func spokesOf*(here: Frame): seq[Spoke] =
     for move in moves(here):
       if move.helper != helper:
         continue
-      kin.add Spoke(
-        to: move.to,
-        side: move.side,
-        lines: label(here, move),
-        is_compound: false,
-      )
+      kin.add Spoke(to: move.to, side: move.side, lines: label(here, move), is_compound: false)
     # Crowded fan reaches further out, so that its spokes end up as far apart
     # as pair of them would be.
     let base = if helper == Helper.Collect: UP else: DOWN
     for index, spoke in kin:
       var placed = spoke
-      placed.angle = base + (index.float - (kin.len - 1).float / 2) * SPOKE_STEP
+      placed.angle = base + (float(index) - float(kin.len - 1) / 2) * SPOKE_STEP
       placed.radius = SPOKE_RADIUS + (kin.len - 1) * 30
       result.add placed
 
@@ -190,7 +185,7 @@ func spokesOf*(here: Frame): seq[Spoke] =
     )
   for index, spoke in named:
     var placed = spoke
-    placed.angle = ASIDE + (index.float - (named.len - 1).float / 2) * SPOKE_STEP
+    placed.angle = ASIDE + (float(index) - float(named.len - 1) / 2) * SPOKE_STEP
     placed.radius = SPOKE_RADIUS + (named.len - 1) * 30
     result.add placed
 
@@ -201,8 +196,8 @@ func spokesOf*(here: Frame): seq[Spoke] =
 func endOf*(spoke: Spoke): (int, int) =
   ## Get where spoke puts frame it arrives in.
   let radians = spoke.angle * PI / 180
-  (CENTRE_X + int(round(cos(radians) * spoke.radius.float)),
-    CENTRE_Y + int(round(sin(radians) * spoke.radius.float)))
+  (CENTRE_X + int(round(cos(radians) * float(spoke.radius))),
+    CENTRE_Y + int(round(sin(radians) * float(spoke.radius))))
 
 
 func labelAt*(spoke: Spoke): (int, int) =

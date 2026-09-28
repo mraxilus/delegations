@@ -664,8 +664,7 @@ func renderMatrix(): string =
         row.add cell("self" & edge, "var(--rule-strong)", source.describe,
           tag("span", "class=\"tile here\"", ""))
       elif helper.isSome:
-        let move = Move(helper: helper.get, to: target,
-          side: actingSide(source, target))
+        let move = Move(helper: helper.get, to: target, side: actingSide(source, target))
         row.add cell("one" & edge, toneOf(move.side), phrase(source, move),
           tag("span", "class=\"tile one\"", HELPER_GLYPHS[move.helper]))
       elif named.isSome:

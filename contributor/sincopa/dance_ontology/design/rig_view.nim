@@ -167,7 +167,7 @@ proc paintOn(cv: JsObject; e: JsObject; at: int; az, el, zoom: float;
     let
       i = piece.cap
       tag = e.tag[i]
-      mark = num(tag[2]).int
+      mark = int(num(tag[2]))
       (a, z) = (piece.a, piece.z)
       pa = seen(a, az, el, f)
       pz = seen(z, az, el, f)
@@ -178,7 +178,7 @@ proc paintOn(cv: JsObject; e: JsObject; at: int; az, el, zoom: float;
       # facing's image on screen, through piece's middle.
       let
         axis: Seen = (x: pz.x - pa.x, y: pz.y - pa.y, d: 0.0)
-        fore = lightAcross(facing[num(tag[0]).int], axis)
+        fore = lightAcross(facing[int(num(tag[0]))], axis)
         across = sqrt(fore.x * fore.x + fore.y * fore.y)
         (mx, my) = (cx + (pa.x + pz.x) / 2.0 * scale, cy + (pa.y + pz.y) / 2.0 * scale)
       if across < 0.02:
@@ -191,7 +191,7 @@ proc paintOn(cv: JsObject; e: JsObject; at: int; az, el, zoom: float;
           discard grad.addColorStop(stop, cstring(mixHex(shade, lit, litAt(fore, s))))
         ink = grad
     else:
-      ink = inkOf(num(tag[1]).int, num(tag[0]).int).toJs
+      ink = inkOf(int(num(tag[1])), int(num(tag[0]))).toJs
     case drawnAs(a, z)
     of Drawn.Stroke:
       ctx.lineWidth = (2.0 * r * scale).toJs
@@ -229,8 +229,8 @@ proc readout() =
     let js = sw.j[frame]
     for a in 0 ..< count(sw.arm):
       let
-        who = num(sw.arm[a][0]).int
-        side = num(sw.arm[a][1]).int
+        who = int(num(sw.arm[a][0]))
+        side = int(num(sw.arm[a][1]))
       # Label, not heading: heading would take serif face (Article X.8).
       html = html & cstring"<div class='arm'><p class='who'><i style='background:" &
         inkOf(side, who) & cstring"'></i>" & WHOSE[who] & cstring" " &
@@ -357,7 +357,7 @@ proc choose(i: int) =
   pick = ((i mod count(entries)) + count(entries)) mod count(entries)
   frame = 0
   fit()
-  canvasOf("pick").value = toFixed(pick.float, 0).toJs
+  canvasOf("pick").value = toFixed(float(pick), 0).toJs
   canvasOf("scrub").max = (max(0, moments() - 1)).toJs
   document.getElementById("transport").toJs.hidden = (moments() <= 1).toJs
   reference()
@@ -389,7 +389,7 @@ proc start() =
     let e = entry(i)
     let name = (if isStill(e): cardOf[i] & cstring" · " & text(e.key)
                 else: text(e.hold) & cstring" · " & text(e.band))
-    opts = opts & cstring"<option value='" & toFixed(i.float, 0) &
+    opts = opts & cstring"<option value='" & toFixed(float(i), 0) &
       cstring"'>" & name & cstring"</option>"
   document.getElementById("pick").innerHTML = opts
 
@@ -412,7 +412,7 @@ proc start() =
   document.getElementById("scrub").addEventListener("input", proc (e: Event) =
     playing = false
     document.getElementById("play").innerHTML = cstring"Play"
-    frame = num(canvasOf("scrub").value).int
+    frame = int(num(canvasOf("scrub").value))
     show())
 
   let cv = canvasOf("view")

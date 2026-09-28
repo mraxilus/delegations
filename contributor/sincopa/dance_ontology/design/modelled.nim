@@ -64,8 +64,7 @@ func moving(key: string; links: seq[Link]; away: bool; manner: Manner;
     # Orbit is other dancer turned other way about, so its sense is flipped.
     flip = ord(MANNERS[manner].about) != ord(About.Axis)
     way = (if flip: -turns else: turns)
-  Question(key: key, links: links, away: away, still: false, turns: way,
-           who: turner, head: walks)
+  Question(key: key, links: links, away: away, still: false, turns: way, who: turner, head: walks)
 
 func questions*(): seq[Question] =
   ## Every card sim can be asked about, keyed as page keys its own pictures, in
@@ -73,8 +72,16 @@ func questions*(): seq[Question] =
   # Every still, as `asks` lists them: wound to its facing and asked whether
   # pose holds there.
   for a in stillAsks():
-    result.add Question(key: a.key, links: a.links, away: a.away, still: true,
-                        turns: a.turns, either: a.either, who: Body.Two, head: a.head)
+    result.add Question(
+      key: a.key,
+      links: a.links,
+      away: a.away,
+      still: true,
+      turns: a.turns,
+      either: a.either,
+      who: Body.Two,
+      head: a.head,
+    )
 
   # `B` and `E`: four single-hand holds, four manners, four quarters, moving.
   for c, single in SINGLES:
@@ -86,7 +93,7 @@ func questions*(): seq[Question] =
       for q in 0 ..< QUARTERS_ROUND:
         result.add moving(&"tr_{tag}_{c}_{q}_{(q + 1) mod QUARTERS_ROUND}", links,
                           awayFor(restOf(single.holds)), manner,
-                          asked(sense * (q + 1).float / QUARTERS_ROUND.float))
+                          asked(sense * float(q + 1) / float(QUARTERS_ROUND)))
       result.add moving(&"rd_{tag}_{c}", links, awayFor(restOf(single.holds)), manner,
                         asked(sense))
 

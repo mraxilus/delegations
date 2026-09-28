@@ -219,8 +219,7 @@ suite "the drawing":
     for here in FRAMES:
       let picture = renderMap(some(here))
       for move in moves(here):
-        let naming = label(here, Move(helper: move.helper, side: move.side,
-          to: move.to))
+        let naming = label(here, Move(helper: move.helper, side: move.side, to: move.to))
         for line in naming:
           check picture.spoken.contains(">" & line & "<")
       # And drop names hand it lets go of, as collect names hand it

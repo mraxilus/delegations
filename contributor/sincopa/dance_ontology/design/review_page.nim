@@ -279,7 +279,7 @@ func sheetOf(P: Parts): string =
     ## Say which facing this picture draws, and what it is turned from.
     ##   Standard diagram turns follow alone, by half turns (`twist`).
     let
-      drawn = turnedFacing(0.0, 180.0 * twist.float).get.name
+      drawn = turnedFacing(0.0, 180.0 * float(twist)).get.name
       rest = restOf(target).name
     if drawn == rest: &"{drawn}, at rest"
     elif way.len > 0: &"{drawn}, half a turn {way} from {rest}"

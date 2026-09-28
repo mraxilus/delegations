@@ -45,8 +45,7 @@ func axesOf*(st: Stance): Axes =
   let
     c = cos(st.facing)
     s = sin(st.facing)
-  Axes(origin: (st.centre.x, st.centre.y, 0.0),
-       right: (s, -c, 0.0), fore: (c, s, 0.0))
+  Axes(origin: (st.centre.x, st.centre.y, 0.0), right: (s, -c, 0.0), fore: (c, s, 0.0))
 
 func toBody*(ax: Axes; p: Vec): Vec =
   ## World point in body's own terms: x to its right, y forward, z up.

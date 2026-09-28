@@ -251,8 +251,12 @@ proc working(id: int) {.thread.} =
         let q = WALKS[t.index]
         let w = walked(HUMAN, q.band, q.links, Body.Two, fars[t.far], q.most, q.step,
                        false, Body.Two)
-        walkeds[t.index][t.far] = Walked(apart: fars[t.far], holds: w.restHolds,
-                                         stopped: w.stopped, at: w.at)
+        walkeds[t.index][t.far] = Walked(
+          apart: fars[t.far],
+          holds: w.restHolds,
+          stopped: w.stopped,
+          at: w.at,
+        )
       of Reach:
         let q = REACHES[t.index]
         reached[t.index] = reaches(HUMAN, q.band, q.links, q.turns, q.away)

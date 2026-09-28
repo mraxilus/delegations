@@ -120,8 +120,15 @@ proc shown*(rig: Rig; band: Band; links: seq[Link]; name: string;
     sw = swept(rig, band, links, who = who, most = MOST, step = step,
                away = away, head = head)
     best = (if step >= 0.0: sw.pos else: sw.neg)
-  result = Shown(hold: name, band: band, apart: best.apart, turns: best.at,
-                 stopped: best.stopped, why: best.why, whose: best.whose)
+  result = Shown(
+    hold: name,
+    band: band,
+    apart: best.apart,
+    turns: best.at,
+    stopped: best.stopped,
+    why: best.why,
+    whose: best.whose,
+  )
   if not best.restHolds:
     return
   var c = build(rig, restStance(rig, best.apart, away), band, links, head, away)

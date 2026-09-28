@@ -136,7 +136,7 @@ proc readSweep*(a: SweepAsk): SweepRead =
   result.neg = wayOf(sw.neg)
   result.pos = wayOf(sw.pos)
   for i, h in HALVES:
-    let m = momentAt(sw, h.float / 2.0)
+    let m = momentAt(sw, float(h) / 2.0)
     if m.isSome: result.glances[i] = glanceOf(a.band, links, m.get)
 
 proc readRung*(a: RungAsk): RungRead =
@@ -148,9 +148,12 @@ proc readRung*(a: RungAsk): RungRead =
     if holds:
       var arms: Arms
       for i in 0 ..< links.len: arms.add c.poseOf(i).arms
-      result = RungRead(found: true, apart: apart,
-                        strain: tightest(HUMAN, c.stance, links, arms).strain,
-                        crossed: crossings(arms).len)
+      result = RungRead(
+        found: true,
+        apart: apart,
+        strain: tightest(HUMAN, c.stance, links, arms).strain,
+        crossed: crossings(arms).len,
+      )
     c.free()
     if result.found: return
 

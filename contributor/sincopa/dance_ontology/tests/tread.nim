@@ -103,7 +103,7 @@ suite "two hands":
         inc seen
         let
           k = int(x.along)
-          on = p[k] + (p[k + 1] - p[k]) * (x.along - k.float)
+          on = p[k] + (p[k + 1] - p[k]) * (x.along - float(k))
           other = nearestOn(q, x.at)
         check abs(x.at.x - on.x) < 1e-9 and abs(x.at.y - on.y) < 1e-9
         check other.off < 1e-9

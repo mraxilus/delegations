@@ -291,7 +291,7 @@ func turnWalk*(base: Pose; who: Dancer; about: About; degrees: float;
     if settled_home.place == landed.place and
         settled_home.facing == landed.facing:
       result.poses[^1] = settled_home
-      return result
+      return
     # Beat on landing first: same pose twice, which is one still.
     result.poses.add result.poses[^1]
     result.times.add ARRIVAL_HOLD

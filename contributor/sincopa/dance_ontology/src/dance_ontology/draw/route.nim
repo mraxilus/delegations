@@ -476,7 +476,7 @@ func bendsIn*(pts: seq[Point]): int =
     if corner == 0:
       continue
     if way == 0:
-      way = sgn(corner).float
+      way = float(sgn(corner))
     if sgn(corner).float == way:
       turned += abs(corner)
       against = 0.0

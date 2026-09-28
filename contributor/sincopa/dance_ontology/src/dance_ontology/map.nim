@@ -218,14 +218,14 @@ func stack*(x, y: int; lines: seq[string]; style, plate_class: string): string =
     result.add text(x, top + LINE_HEIGHT * (index + 1) - 1, line, style)
 
 
-func waking(is_standing, was_standing, is_moving: bool): string =
+func waking(is_standing, is_standing_prev, is_moving: bool): string =
   ## Say how something's standing is changing while mark is on its way.
   ##   Map is drawn as frame being reached will have it, and whatever
   ##     that changes is faded from how frame being left had it.  What is
   ##     left when mark lands is then already drawing for where it
   ##     landed, so page can replace one with other and nothing
   ##     moves.
-  if not is_moving or is_standing == was_standing: ""
+  if not is_moving or is_standing == is_standing_prev: ""
   elif is_standing: " waking"
   else: " dozing"
 
@@ -401,12 +401,12 @@ func edge(a, b: Frame; side: Side; standing, was, taken: Option[Frame];
     (ax, ay) = centreOf(a)
     (bx, by) = centreOf(b)
     is_lit = standing == some(a) or standing == some(b)
-    was_lit = was == some(a) or was == some(b)
+    is_lit_prev = was == some(a) or was == some(b)
     # Line mark is travelling along, while it is travelling along it.
     is_taken = (was == some(a) and taken == some(b)) or
       (was == some(b) and taken == some(a))
     marks = (if is_lit: " lit" else: "") & (if is_taken: " taking" else: "") &
-      waking(is_lit, was_lit, was.isSome)
+      waking(is_lit, is_lit_prev, was.isSome)
   # Two ends, asked for two different reasons, and since tower was turned up
   # right way they are no longer same end: what line is *called* is
   # read from frame holding less, and where name is *written* is
@@ -486,8 +486,8 @@ func arc(a, b: Frame; name: string; standing, was: Option[Frame];
     mx = (ax + bx) div 2
     dip = ARC_DIP + (abs(ax - bx) div 5)
     is_lit = standing == some(a) or standing == some(b)
-    was_lit = was == some(a) or was == some(b)
-    lit = (if is_lit: " lit" else: "") & waking(is_lit, was_lit, was.isSome)
+    is_lit_prev = was == some(a) or was == some(b)
+    lit = (if is_lit: " lit" else: "") & waking(is_lit, is_lit_prev, was.isSome)
   # Drawn as two halves, each in ink of arm that acts as you travel into
   # it.  Ordinary line has one ink because same arm acts whichever way it
   # is read; compound has two because it hands follow's hand from one of
@@ -571,12 +571,12 @@ func node(target: Frame; standing, was: Option[Frame]): string =
   let
     (cx, cy) = centreOf(target)
     (is_here, is_reachable, is_compound) = standingOf(target, standing)
-    (was_here, was_reachable, was_compound) = standingOf(target, was)
+    (is_here_prev, is_reachable_prev, is_compound_prev) = standingOf(target, was)
     within = is_here or is_reachable or is_compound
   nodeAt(target, cx, cy, NODE_WIDTH,
     (if is_here: "here " else: "") & (if is_reachable: "reachable " else: "") &
     (if is_compound: "two" else: "") &
-    waking(within, was_here or was_reachable or was_compound, was.isSome))
+    waking(within, is_here_prev or is_reachable_prev or is_compound_prev, was.isSome))
 
 
 

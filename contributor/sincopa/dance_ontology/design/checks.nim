@@ -533,8 +533,8 @@ proc checkSingleTurns*(built: Parts) =
     if key.startsWith("tr_") and not key.endsWith("_still"): inc moving
     if key.startsWith("rd_") and not key.endsWith("_still"): inc walked_whole
   let
-    want = (Manner.high.int + 1) * SINGLES.len * QUARTERS_ROUND
-    whole = (Manner.high.int + 1) * SINGLES.len
+    want = (int(Manner.high) + 1) * SINGLES.len * QUARTERS_ROUND
+    whole = (int(Manner.high) + 1) * SINGLES.len
   doAssert statics == want,
     &"A position went undrawn; got `{statics}` of `{want}`."
   doAssert moving == want,

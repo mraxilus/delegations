@@ -121,8 +121,12 @@ func placed*(rig: Rig; st: Stance; arm: Arm; u: Vec;
     g = w + h * rig.hand
     ax = axesOf(st)
   if arm == Arm.Left:
-    ArmPose(s: toWorld(ax, mirrored(s)), e: toWorld(ax, mirrored(e)),
-            w: toWorld(ax, mirrored(w)), g: toWorld(ax, mirrored(g)))
+    ArmPose(
+      s: toWorld(ax, mirrored(s)),
+      e: toWorld(ax, mirrored(e)),
+      w: toWorld(ax, mirrored(w)),
+      g: toWorld(ax, mirrored(g)),
+    )
   else:
     ArmPose(s: toWorld(ax, s), e: toWorld(ax, e), w: toWorld(ax, w), g: toWorld(ax, g))
 
