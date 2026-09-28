@@ -251,11 +251,12 @@ suite "Lower bound":
     check conformal.scalarFormTerms == 32 and rigid.scalarFormTerms == 8  # every blade
     check lowerBoundOf(Shape.Geometric, conformal, 2).multiplies == 1024  # four states throughout
 
-  test "bulk and weight split needs degenerate vector, so conformal carries no such bound":
+  test "conformal dual is signed permutation, so dual product keeps every cell of wedge":
     let conformal = Metric(dimensions: 5, is_conformal: true)
     for shape in [Shape.ContractBulk, Shape.ContractWeight, Shape.ExpandBulk,
                   Shape.ExpandWeight]:
-      check not lowerBoundOf(shape, conformal, 2).is_derived  # rule says nothing here
+      check lowerBoundOf(shape, conformal, 2).multiplies == 243  # every blade has image
+      check lowerBoundOf(shape, conformal, 2).is_derived  # rule holds here too
 
   test "chain sums its steps, and step with no rule adds nothing":
     let rigid = Metric(dimensions: 4, is_conformal: false)
@@ -265,8 +266,8 @@ suite "Lower bound":
     check b.multiplies == 54 + 81  # dual product, then full product
     check b.is_composed and b.is_derived  # record marks estimate as estimate
     check b.bytesMoved == 128 * 3  # two read, one written, no intermediate
-    # Dual product carries no rule under conformal metric, so only full product counts.
-    check lowerBoundOfChain(projection, conformal, 2).multiplies == 243  # wiki:Expansions
+    # Conformal dual product keeps every cell of wedge, so chain is two full products.
+    check lowerBoundOfChain(projection, conformal, 2).multiplies == 486  # wiki:Expansions
     check lowerBoundOfChain([Shape.Unknown], rigid, 1).is_derived == false  # no step, no claim
 
   test "bound moves operands read once and result written once":
