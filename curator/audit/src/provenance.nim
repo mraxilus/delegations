@@ -29,7 +29,7 @@ import ./[findings, markdown]
 
 
 const
-  RULES* = ["CONSTITUTION.md", "STYLE.md", "CONTRIBUTOR.md"]
+  RULES* = ["CONSTITUTION.md", "STYLE.md", "CONTRIBUTOR.md", "EXAMPLES.md"]
     ## Documents stamp covers, in digest order; CURATOR.md is excluded as curator-only.
   FIELDS* = ["Harness", "Author", "Date", "Style", "Rules", "Review"]
     ## Header rows every PROVENANCE.md carries.

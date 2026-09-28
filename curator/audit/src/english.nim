@@ -45,6 +45,7 @@ const
     "CONSTITUTION.md",
     "CONTRIBUTOR.md",
     "CURATOR.md",
+    "EXAMPLES.md",
     "GLOSSARY.md",
     "GUIDE.md",
     "README.md",

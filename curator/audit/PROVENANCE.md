@@ -280,9 +280,9 @@ citation that points at nothing.
 
 ## Provenance stamp
 
-**FNV-1a 64-bit over CONSTITUTION.md, STYLE.md and CONTRIBUTOR.md**, with CR stripped, NUL
-between files, and 16 lowercase hex digits. CURATOR.md is excluded, so a curator-only edit
-touches no project.
+**FNV-1a 64-bit over CONSTITUTION.md, STYLE.md, CONTRIBUTOR.md and EXAMPLES.md**, with CR
+stripped, NUL between files, and 16 lowercase hex digits. CURATOR.md is excluded, so a
+curator-only edit touches no project.
 
 - Rejected: `std/sha1`, deprecated in Nim 2, which warns on every build. Rejected: the
   `checksums` package, a nimble install in CI for one digest. Rejected: `std/hashes`, unstable

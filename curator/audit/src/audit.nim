@@ -1,4 +1,4 @@
-## Audit repository against CONSTITUTION.md, STYLE.md and CONTRIBUTOR.md; library umbrella.
+## Audit repository against charter and CONTRIBUTOR.md; library umbrella.
 ##   Command line lives in root `koch.nim`, as Nim's own koch drives its repository; this
 ##   module composes static checks so koch holds dispatch only.
 ##   Module order is read from each module's own `import` line, never restated here: copy of

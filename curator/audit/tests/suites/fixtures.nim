@@ -39,6 +39,7 @@ const
     ## Minimal Atlas lock naming one checkout directory.
   RULES_TEXT* = [
     "# Constitution\n\nRules.\n", "# Style\n\nSpelling.\n", "# Contributor\n\nDuties.\n",
+    "# Examples\n\nCases.\n",
   ]
     ## Contents of rules documents in fixture tree, in `RULES` order.
   ALPHA_DIR* = CONTRIBUTOR & "/ronri/alpha"
