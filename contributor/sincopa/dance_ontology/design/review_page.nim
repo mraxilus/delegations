@@ -80,6 +80,7 @@ const
     ## Position is right, drawing is not: kept, with what to mend.
 
 func esc(s: string): string =
+  ## Escape text for markup: ampersand and angle brackets.
   s.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"))
 
 const

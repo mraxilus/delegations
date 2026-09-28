@@ -58,6 +58,7 @@ type
 
 
 func degrees*(r: float): float = r * 180.0 / PI
+  ## Convert radians to degrees.
 
 
 proc acheOf(c: Couple; who: Body; arm: Arm): Ache =

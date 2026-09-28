@@ -187,10 +187,12 @@ func asWorld(v: eng.Vec): Vec = (float(v.x), -float(v.z), float(v.y))
   ## And back.
 
 func asWorld(p: eng.Pos): Vec =
+  ## Read engine's place in project's terms.
   let (x, y, z) = eng.at(p)
   (x, -z, y)
 
 func asPlace(p: Vec): eng.Pos = eng.Pos(x: p.x, y: p.z, z: -p.y)
+  ## Write project's point as engine's place.
 
 
 #[ Turns, as engine keeps them ]#
@@ -661,6 +663,7 @@ proc chestStance*(c: Couple; who: Body): Stance =
   result.facing += float(eng.angleOf(c.who[who].waist))
 
 proc chestStances*(c: Couple): array[Body, Stance] =
+  ## Give stance of each dancer's chest, which waist turns off hips.
   for who in Body: result[who] = c.chestStance(who)
 
 proc free*(c: Couple) =

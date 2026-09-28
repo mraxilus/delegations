@@ -148,6 +148,7 @@ type
     manifolds* {.importc.}: ptr Manifold ## Engine's own, valid until next step.
     manifoldCount* {.importc.}: cint
 
+# Engine's entry points, each bound on one line to its C name.
 proc defaultWorld*(): WorldDef {.importc: "b3DefaultWorldDef".}
 proc defaultBody*(): BodyDef {.importc: "b3DefaultBodyDef".}
 proc defaultShape*(): ShapeDef {.importc: "b3DefaultShapeDef".}
@@ -156,6 +157,7 @@ proc createWorld*(def: ptr WorldDef): WorldId {.importc: "b3CreateWorld".}
 proc createBody*(w: WorldId; def: ptr BodyDef): BodyId {.importc: "b3CreateBody".}
 proc createCapsule*(b: BodyId; def: ptr ShapeDef;
                     cap: ptr Capsule): ShapeId {.importc: "b3CreateCapsuleShape".}
+  ## Hang capsule on body; engine copies both definitions.
 proc createBall*(w: WorldId; def: ptr BallDef): JointId {.importc: "b3CreateSphericalJoint".}
 proc step*(w: WorldId; seconds: cfloat; substeps: cint) {.importc: "b3World_Step".}
 proc positionOf*(b: BodyId): Pos {.importc: "b3Body_GetPosition".}
@@ -178,6 +180,7 @@ proc touchRoom*(b: BodyId): cint {.importc: "b3Body_GetContactCapacity".}
   ## How many contacts body may have now: room `touches` needs to report all.
 proc touches*(b: BodyId; into: ptr Touch;
               room: cint): cint {.importc: "b3Body_GetContactData".}
+  ## Copy up to `room` of body's contacts into `into`, and count them.
 proc partedBy*(j: JointId): cfloat {.importc: "b3Joint_GetLinearSeparation".}
 proc coneAngleOf*(j: JointId): cfloat {.importc: "b3SphericalJoint_GetConeAngle".}
 proc twistAngleOf*(j: JointId): cfloat {.importc: "b3SphericalJoint_GetTwistAngle".}
@@ -192,6 +195,7 @@ const
   IDENTITY* = Quat(v: Vec(x: 0, y: 0, z: 0), s: 1.0)
 
 func vec*(x, y, z: float): Vec =
+  ## Build engine's vector from plain numbers.
   Vec(x: cfloat(x), y: cfloat(y), z: cfloat(z))
 
 func at*(p: Pos): tuple[x, y, z: float] =

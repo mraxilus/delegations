@@ -47,11 +47,13 @@ func armsOf(hold: string): seq[(Arm, Arm)] =
     result.add (a, b)
 
 func sameName(hold: string): bool =
+  ## Decide whether hold joins each arm to arm of same name.
   for (a, b) in armsOf(hold):
     if a != b: return false
   true
 
 func linksOf(hold: string): seq[Link] =
+  ## List hold's connections, lead's arm to follow's.
   for (a, b) in armsOf(hold):
     result.add Link(ends: [(Body.One, a), (Body.Two, b)])
 
@@ -61,9 +63,11 @@ func restsAway(hold: string): bool =
 
 
 func toMillimetres(p: Vec): JsonNode =
+  ## Write point in whole millimetres.
   %*[int(round(p.x * 1000.0)), int(round(p.y * 1000.0)), int(round(p.z * 1000.0))]
 
 func frame(m: Moment; band: Band; links: seq[Link]): JsonNode =
+  ## Record one moment as page draws it: arms, words and crossings.
   let tight = tightest(HUMAN, m.stance, links, m.arms)
   result = %*{
     "t": round(m.at * 1000.0) / 1000.0,
@@ -119,6 +123,7 @@ func went(w: Walk): float =
   else: 0.0
 
 proc sweepJson(hold, word: string; band: Band): JsonNode =
+  ## Sweep one hold at one band, and record every moment and where each way ran out.
   let
     links = linksOf(hold)
     sweep = swept(HUMAN, band, links, most = MOST, away = restsAway(hold))
@@ -141,6 +146,7 @@ proc sweepJson(hold, word: string; band: Band): JsonNode =
 
 
 proc bridge(): JsonNode =
+  ## Record every sweep whole-cloth page plays, with sizes of rig it draws them at.
   result = %*{
     "step": STEP,
     "most": MOST,

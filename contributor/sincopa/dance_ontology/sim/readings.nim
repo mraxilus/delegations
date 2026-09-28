@@ -124,6 +124,7 @@ func glanceOf(band: Band; links: seq[Link]; mo: Moment): Glance =
     inc result.crossed
 
 func wayOf(w: Walk): WayRead =
+  ## Read one way of sweep as report reads it.
   WayRead(stopped: w.stopped, at: w.at, apart: w.apart, why: w.why, whose: w.whose)
 
 proc readSweep*(a: SweepAsk): SweepRead =

@@ -35,9 +35,11 @@ func bodyOf*(who: terms.Dancer): Body =
   if ord(who) == ord(terms.Dancer.Lead): Body.One else: Body.Two
 
 func otherThan*(who: Body): Body =
+  ## Name other dancer of two.
   if ord(who) == ord(Body.One): Body.Two else: Body.One
 
 func armOf*(a: terms.Arm): body.Arm =
+  ## Translate drawing's arm into sim's.
   if ord(a) == ord(terms.Arm.L): body.Arm.Left else: body.Arm.Right
 
 func linksOf*(holds: Holds): seq[Link] =
@@ -95,8 +97,10 @@ func stillAsks*(): seq[StillAsk] =
   #     way couple took it.  Same reading page makes when it decides whether to
   #     draw frame turned other way at all (A17).
   func amountFor(target: Frame; twist: int): float =
+    ## Say how far frame winds from its rest to facing `twist` draws: nought or half turn.
     if turnedFacing(0.0, 180.0 * float(twist)) == some(restOf(target)): 0.0 else: 0.5
   func eitherWay(target: Frame): bool =
+    ## Decide whether frame draws same picture wound either way about.
     renderFrame(target, HalfTurns(1)) == renderFrame(target, HalfTurns(-1))
   for i, target in FRAMES:
     for twist in [0, 1]:

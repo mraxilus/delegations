@@ -92,6 +92,7 @@ type
 
 
 func toRadians(d: float): float = d * PI / 180.0
+  ## Convert degrees to radians.
 
 const
   ACROSS_UPPER = toRadians(130)

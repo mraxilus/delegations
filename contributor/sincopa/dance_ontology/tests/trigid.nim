@@ -66,6 +66,7 @@ type
 
 
 proc rest(band = Band.Torso; apart = APART): Couple =
+  ## Build couple at rest at `band`, `apart` metres apart, and settle it.
   result = build(HUMAN, facing(HUMAN, apart), band, SHAKE)
   result.settle()
 
@@ -446,6 +447,7 @@ suite "couple stand for sweep":
                              (0.44, Inf, 0.077), (0.46, Inf, 0.084)]
 
   func standAt(walks: openArray[Carry]): float = walks[chosen(walks)].apart
+    ## Read distance kept walks chose.
 
   test "stance chosen is same seen in mirror and built by another compiler":
     ## Red: five millimetres broke tie between 0.44 and 0.48 for R-r, leaps 135
@@ -780,6 +782,7 @@ proc overlapOf(c: Couple): tuple[depth: float, pair: string] =
   ##     own links, girdle and upper arm it hangs from, trunk and girdles of one
   ##     dancer, and two joined palms.
   proc skipped(a, b: Shape): bool =
+    ## Decide whether pair of shapes may overlap: one body, or one arm's own links.
     if a.body == b.body: return true
     if a.who == b.who:
       let limbs = {Mark.Upper, Mark.Fore, Mark.Palm}

@@ -72,6 +72,7 @@ func rest*(wind: Winds = default(Winds)): Pose =
 func movedPose*(pose: Pose; mid: Point; spin, amount: float): Pose =
   ## Turn whole pose about `mid`, then pull it `amount` of way home.
   func moved(p: Point): Point =
+    ## Turn point about `mid` by `spin`, then pull it `amount` of way home.
     let q = turn(p, mid, spin)
     (q.x - amount * mid.x, q.y - amount * mid.y)
 
@@ -272,6 +273,7 @@ func turnWalk*(base: Pose; who: Dancer; about: About; degrees: float;
   ##     and wind is what drawing measures for itself (rule 28).
   ##     Only turn of nothing at all is skipped.
   func legs(from_pose: Pose; by: float): Walk =
+    ## Walk pose `by` turns: turn as room sees it, then picture re-framed.
     let landed = turned(from_pose, who, about, by)
     if abs(by) < 1e-9:
       return (@[from_pose], @[0.0])
@@ -319,15 +321,19 @@ func turnWalk*(base: Pose; who: Dancer; about: About; degrees: float;
 
 
 func moveLeadAxis(pose: Pose; scalar: float): Pose =
+  ## Turn lead on own axis by `scalar` quarter turns.
   spinAbout(pose, Dancer.Lead, 90 * scalar)
 
 func moveFollowOrbits(pose: Pose; scalar: float): Pose =
+  ## Orbit follow round lead by `scalar` quarter turns.
   orbit(pose, Dancer.Follow, 90 * scalar, locked = true)
 
 func moveLeadOrbits(pose: Pose; scalar: float): Pose =
+  ## Orbit lead round follow by `scalar` quarter turns.
   orbit(pose, Dancer.Lead, 90 * scalar, locked = true)
 
 func moveCouple(pose: Pose; scalar: float): Pose =
+  ## Turn couple together by `scalar` quarter turns.
   couple(pose, 90 * scalar)
 
 const MOVES*: array[4, tuple[name: string, apply: MoveApply]] = [

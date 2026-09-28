@@ -18,15 +18,18 @@ import std/math
 type Vec* = tuple[x, y, z: float] ## Point or direction, in metres.
 
 
+# Arithmetic of vectors, one operation to line.
 func `+`*(a, b: Vec): Vec = (a.x + b.x, a.y + b.y, a.z + b.z)
 func `-`*(a, b: Vec): Vec = (a.x - b.x, a.y - b.y, a.z - b.z)
 func `-`*(a: Vec): Vec = (-a.x, -a.y, -a.z)
 func `*`*(a: Vec; k: float): Vec = (a.x * k, a.y * k, a.z * k)
 func dot*(a, b: Vec): float = a.x * b.x + a.y * b.y + a.z * b.z
 func cross*(a, b: Vec): Vec =
+  ## Multiply vectors across, i.e. `a × b`.
   (a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x)
 func norm*(a: Vec): float = sqrt(a.x * a.x + a.y * a.y + a.z * a.z)
 func distance*(a, b: Vec): float =
+  ## Measure straight distance between two points.
   let
     dx = a.x - b.x
     dy = a.y - b.y

@@ -50,6 +50,7 @@ func drawnAs*(a, z: Spot): Drawn =
   if a == z: Drawn.Disc else: Drawn.Stroke
 
 func along(a, z: Spot; t: float): Spot =
+  ## Find point fraction `t` of way from `a` to `z`.
   (a.x + (z.x - a.x) * t, a.y + (z.y - a.y) * t, a.z + (z.z - a.z) * t)
 
 func drawOrder*(capsules: openArray[tuple[a, z: Spot]]; azimuth, elevation: float;

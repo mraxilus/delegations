@@ -90,3 +90,4 @@ func quartersTo*(stance: array[Body, Stance]; who: Body): Option[int] =
   else: none(int)
 
 func lifted*(p: Vec; dz: float): Vec = (p.x, p.y, p.z + dz)
+  ## Raise point by `dz`.

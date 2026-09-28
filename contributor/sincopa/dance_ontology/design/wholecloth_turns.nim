@@ -352,6 +352,7 @@ func sideBodies(scene: Scene): cstring =
   result = ""
   let rig = turns().rig
   for who in Dancer:
+    # Alias into storage, never copy.
     template b: untyped = scene.bodies[who]
     let
       c = cos(b.facing)
@@ -436,6 +437,7 @@ func sceneSvg(hold: Hold, level: Level, scene: Scene): cstring =
 
   # Bodies from above.
   for who in Dancer:
+    # Alias into storage, never copy.
     template b: untyped = scene.bodies[who]
     result.add bodySvg(page(b.centre[0], b.centre[1]), facingVec(b.facing))
 
@@ -445,6 +447,7 @@ func sceneSvg(hold: Hold, level: Level, scene: Scene): cstring =
   #   `&` and `add`, and one two-element array per projected point; no Nim object copies
   #   (read in emitted JS: parameters and `template` aliases pass by reference).
   for i in 0 ..< scene.cn_count:
+    # Alias into storage, never copy.
     template c: untyped = scene.cn[i]
     let
       deep = INKS[HOLDS[hold].ropes[i].lead] & "-deep"
@@ -485,6 +488,7 @@ func sceneSvg(hold: Hold, level: Level, scene: Scene): cstring =
   # Same moment from side, looking along couple's line, lead on left.
   result.add "<g class=\"side\">" & sideBodies(scene)
   for i in 0 ..< scene.cn_count:
+    # Alias into storage, never copy.
     template c: untyped = scene.cn[i]
     let
       deep = INKS[HOLDS[hold].ropes[i].lead] & "-deep"
@@ -566,6 +570,7 @@ proc renderStage() =
   ##   Hot path: once per animated frame.  Constant: one scene refilled in place.
   ##     Allocates markup strings only; browser's parse of stage and readout dominates.
   template sweep: untyped = LUT_SWEEP_BY_HOLD[HOLD_SHOWN][LEVEL_SHOWN]
+  # Alias into storage, never copy.
   template limits: untyped = sweep.limits
   let found_scene = sceneOf(SCENE_STORAGE, sweep.frames, TURN_DRAWN)
   STAGE_ELEMENT.innerHTML =
@@ -583,7 +588,9 @@ proc renderStage() =
     is_at_positive = TURN_DRAWN >= limits.positive - 1e-6 and limits.is_stopped_positive
   var lines: cstring = ""
   for i in 0 ..< SCENE_STORAGE.cn_count:
+    # Alias into storage, never copy.
     template c: untyped = SCENE_STORAGE.cn[i]
+    # Alias into storage, never copy.
     template rope: untyped = HOLDS[HOLD_SHOWN].ropes[i]
     let name =
       if HOLDS[HOLD_SHOWN].is_pair: ARM_WORDS[rope.lead] & " to " & INKS[rope.follow] & ": "
@@ -713,6 +720,7 @@ proc tick(now: float) =
   let dt = min(0.05, (now - NOW_PREV) / 1000.0)
   NOW_PREV = now
   if IS_PLAYING:
+    # Alias into storage, never copy.
     template limits: untyped = LUT_SWEEP_BY_HOLD[HOLD_SHOWN][LEVEL_SHOWN].limits
     TURN_DRAWN += DIRECTION_PLAY * dt * 0.35
     if TURN_DRAWN >= limits.positive:

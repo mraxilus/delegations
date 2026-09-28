@@ -271,6 +271,7 @@ func named*(said: string): seq[Named] =
     ("", none(Side), none(Site))
 
   func flush(text: string): seq[Named] =
+    ## Close word run so far as one stretch that names no hand.
     if text.len > 0: @[(text, none(Side), none(Site))] else: @[]
 
   for character in said & " ":

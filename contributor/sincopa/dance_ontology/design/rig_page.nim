@@ -162,6 +162,7 @@ type
 
 
 func esc(s: string): string =
+  ## Escape text for markup: ampersand and angle brackets.
   s.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"))
 
 func between(s, opener, closer: string; start: int): tuple[at, stop: int] =

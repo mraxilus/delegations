@@ -712,6 +712,7 @@ func animatedPoses*(classes: string; holds: Holds; walk: seq[Pose];
   #     animated alongside it: group can hold two elements where
   #     `paired` reopens one.
   func carried(mark: string; points: seq[Point]): string =
+    ## Carry mark along points, looped over whole cycle.
     let places = points.mapIt(xy(it))
     "<g>" &
       """<animateTransform attributeName="transform" type="translate"""" &

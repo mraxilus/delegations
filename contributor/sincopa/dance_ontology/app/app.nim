@@ -751,6 +751,7 @@ proc arrive(target: Frame) =
     return
 
 
+# Forward: `dance` and `leadOn` call each other.
 proc dance(key: string)
 
 

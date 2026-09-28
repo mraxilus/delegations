@@ -77,6 +77,7 @@ func figure(x: float): string =
   if result.endsWith('.'): result.setLen(result.len - 1)
 
 func jsonArray(xs: seq[float]): string =
+  ## Write figures as JSON array, each to `PLACE` decimal places.
   var bits: seq[string]
   for x in xs: bits.add figure(x)
   "[" & bits.join(",") & "]"
@@ -125,6 +126,7 @@ func looking(s: Still): seq[float] =
                 s.faces[who].fore.x, s.faces[who].fore.y]
 
 func gripped(s: Still): seq[float] =
+  ## List every grip's three coordinates, one grip after another.
   for g in s.grips: result.add [g.x, g.y, g.z]
 
 

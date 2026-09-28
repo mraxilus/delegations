@@ -37,9 +37,11 @@ const VERDICTS* = [
   ##     and counted by nothing.
 
 
+# Browser's own calls, one line each.
 func rig(): JsObject {.importjs: "RIG@".}
 func contextOf(id: cstring): JsObject {.importjs:
   "document.getElementById(#).getContext('2d')".}
+  ## Get drawing context of canvas named `id`.
 func canvasOf(id: cstring): JsObject {.importjs: "document.getElementById(#)".}
 func contextOf(canvas: JsObject): JsObject {.importjs: "(#).getContext('2d')".}
 func toFixed(x: float; places: int): cstring {.importjs: "(#).toFixed(#)".}
@@ -93,6 +95,7 @@ var
   LUT_CELL_BY_ENTRY: seq[Element]  ## And cell itself, or nil.
 
 
+# Entries of recording, read as viewer reads them.
 proc entry(i: int): JsObject = ENTRIES_ALL[i]
 proc sweep(): JsObject = entry(PICK)
 proc momentsOf(e: JsObject): int = (if has(e, "at"): count(e.at) else: 0)
@@ -220,6 +223,7 @@ proc paintOn(canvas: JsObject; e: JsObject; at: int; azimuth, elevation, zoom: f
 
 
 proc paint() =
+  ## Draw entry chosen, at moment shown, on stage.
   paintOn(canvasOf("view"), sweep(), MOMENT_SHOWN, AZIMUTH, ELEVATION, ZOOM, FRAMING_SHOWN)
 
 
@@ -258,6 +262,7 @@ proc readout() =
 
 
 proc caption() =
+  ## Say what entry shows: its turns and distance, or what stopped it.
   let sweep_shown = sweep()
   if isStill(sweep_shown):
     document.getElementById("where").innerHTML =
@@ -304,6 +309,7 @@ proc framingOf(e: JsObject): Framing =
   result.reach = spread / 2.0 + 0.15
 
 proc fit() =
+  ## Frame camera to entry chosen, where it has any moment.
   if moments() > 0:
     FRAMING_SHOWN = framingOf(sweep())
 
@@ -325,6 +331,7 @@ proc reference() =
     cstring"<div class='art'>" & art.innerHTML & cstring"</div>" & caption.outerHTML
 
 proc show() =
+  ## Redraw stage, readout and caption, and move scrub bar to moment shown.
   paint()
   readout()
   caption()
@@ -333,6 +340,7 @@ proc show() =
 
 
 proc size() =
+  ## Match canvas to its box at twice its pixels, then redraw.
   let canvas = canvasOf("view")
   canvas.width = (toFloat(canvas.clientWidth) * 2.0).toJs
   canvas.height = (toFloat(canvas.clientHeight) * 2.0).toJs
@@ -354,11 +362,13 @@ proc thumbs() =
 
 
 proc tick() =
+  ## Step to next moment while playing, and redraw.
   if IS_PLAYING and moments() > 1:
     MOMENT_SHOWN = (MOMENT_SHOWN + 1) mod moments()
     show()
 
 proc choose(i: int) =
+  ## Choose entry `i`, wrapped round, from its first moment.
   PICK = ((i mod count(ENTRIES_ALL)) + count(ENTRIES_ALL)) mod count(ENTRIES_ALL)
   MOMENT_SHOWN = 0
   fit()
@@ -370,6 +380,7 @@ proc choose(i: int) =
 
 
 proc start() =
+  ## Read recording, tie each entry to its reference cell, and draw first.
   ENTRIES_ALL = joined(rig().stills, rig().sweeps)
   # Which cell of reference each entry belongs to, read off page itself.
   for i in 0 ..< count(ENTRIES_ALL):

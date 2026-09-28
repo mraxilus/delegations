@@ -123,6 +123,7 @@ suite "two hands":
     func armsOf(p, q: array[7, Vec]): Arms =
       ## Two connections from their seven points each, grip in middle.
       func pose(s, e, w, g: Vec): ArmPose = ArmPose(s: s, e: e, w: w, g: g)
+        ## Build arm pose from its four joints.
       @[[pose(p[0], p[1], p[2], p[3]), pose(p[6], p[5], p[4], p[3])],
         [pose(q[0], q[1], q[2], q[3]), pose(q[6], q[5], q[4], q[3])]]
     let
