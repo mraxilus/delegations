@@ -475,13 +475,12 @@ back cell for cell at `cga3d`, `rga4d`, `cga4d` and `cga5d`, 136 tables in all. 
 compound products `∩ ∪ ⊞ ⊙ ⊡` are then one generated table each. The draft is in the hands of
 the Architect, and no pin holds it.
 
-The draft also derives all four dual products from the transwedge, whose dual is free of the
-wedge orientation. The antiwedge outside gives `∨★` with the bulk dual and `∨☆` with the
-weight dual, and the wedge outside gives `∧☆` and `∧★`. Each table equals its map form cell
-for cell at five algebras, `rga3d` to `cga5d`, and no emitted count changes. The left
-chirality is redundant: at the same algebras it gives the same dot, geometric and dual
-products as the right. The two added families cost 6D compile time, 6.91 s against 6.17 s
-for `bd6b23c`, ×1.12 over five alternating rounds. The dropped left chirality gives ×0.85.
+Three tables stay hard coded in the draft: the metric, the exterior product of bases and
+the complement. Every anti-variant is `constructAnti` of its base, the antiproduct included.
+The four dual products are one dual fed into a wedge or antiwedge. The dot is the scalar part
+of the bulk contraction, and the transwedge keeps one family, for ⟑ alone. Every table is
+unchanged at five algebras, and a suite holds the order gr 𝐚 identity. The 6D front end
+builds in 4.56 s against 6.62 s for `bd6b23c`, ×0.69 over five alternating rounds.
 
 The pristine bench of `bd6b23c` and the bench of the draft ran alternately, nine times each,
 on this container on 2026-09-28. The library suites pass, 33 at rga4d and 28 at cga5d, and
