@@ -39,14 +39,27 @@ import std/strformat
 
 #[ Type Definitions ]#
 
-type Arena* = object ## Define fixed block of bytes and how much of it is in use.
-  buffer: ptr UncheckedArray[byte]
-  capacity: int
-  used: int
-  peak_used: int ## Highest `used` has ever reached; never falls back on `reset`.
-    ## Lets live display show what arena's activity looks like.
-    ##   `used` alone reads near zero wherever sampled, since carving and reset both
-    ##   happen within one frame.
+type
+  Arena* = object ## Define fixed block of bytes and how much of it is in use.
+    buffer: ptr UncheckedArray[byte]
+    capacity: int
+    used: int
+    peak_used: int ## Highest `used` has ever reached; never falls back on `reset`.
+      ## Lets live display show what arena's activity looks like.
+      ##   `used` alone reads near zero wherever sampled, since carving and reset both
+      ##   happen within one frame.
+
+  ArenaSwap* = object ## Define two frame arenas and which of them this frame is writing.
+    ## Two-frame lifetime.
+    ##   What frame carves stays readable through next frame as `previous`, reclaimed only
+    ##   when its block comes round again.
+    ##   Frame can read what one before it worked out without copying or keeping it alive
+    ##   forever.
+    ## `swap` moves write cursor to other block and resets it, so frame always begins with
+    ## arena holding nothing.
+    ##   Reclaiming on way in leaves block written last frame intact until needed again.
+    arenas: array[2, Arena]
+    index_current: int ## Which of `arenas` this frame carves from; other is last frame's.
 
 
 
@@ -87,19 +100,6 @@ func push*[T](arena: var Arena, count: int): ptr UncheckedArray[T] =
 
 
 #[ Frame Swap Pair ]#
-
-type ArenaSwap* = object ## Define two frame arenas and which of them this frame is writing.
-  ## Two-frame lifetime.
-  ##   What frame carves stays readable through next frame as `previous`, reclaimed only
-  ##   when its block comes round again.
-  ##   Frame can read what one before it worked out without copying or keeping it alive
-  ##   forever.
-  ## `swap` moves write cursor to other block and resets it, so frame always begins with
-  ## arena holding nothing.
-  ##   Reclaiming on way in leaves block written last frame intact until needed again.
-  arenas: array[2, Arena]
-  index_current: int ## Which of `arenas` this frame carves from; other is last frame's.
-
 
 func initArenaSwap*(backing_first, backing_second: var openArray[byte]): ArenaSwap =
   ## Wrap two caller-owned blocks as swap pair, first of them current.

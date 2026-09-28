@@ -122,7 +122,7 @@ type Wording* = enum
 
 #[ Catalogue ]#
 
-const lut_wording_to_text: array[Wording, cstring] = [
+const lut_text_by_wording: array[Wording, cstring] = [
   # Object row, and edit session it opens.
   TipRowSelect: "Add this object to the selection, or drop it; the 3D view rings each one.",
   TipRowCommit: "Commit these values to the scene.",
@@ -393,14 +393,14 @@ const lut_wording_to_text: array[Wording, cstring] = [
 
 func wordingText*(key: Wording): cstring =
   ## Report words `key` stands for.
-  ##   Named for what it returns, as `lut_ink_to_name` and `nimBasisName` are. `wordingOf`
+  ##   Named for what it returns, as `lut_name_by_ink` and `nimBasisName` are. `wordingOf`
   ##   named key twice over, since key *is* wording.
   ##   Total by construction: table is indexed by enum and compiler refuses gap, so there is
   ##   no miss and no fallback for one.
   ##   `cstring` rather than `string`: tooltip is asked for once per control per frame, and
   ##   returning `string` would copy static text on every one of them. Const `cstring` points
   ##   at bytes already in binary and costs nothing to hand over.
-  lut_wording_to_text[key]
+  lut_text_by_wording[key]
 
 
 func demoWording*(objects: int, is_default: bool): string =
@@ -451,7 +451,7 @@ func hasWords*(key: Wording): bool =
   ## Report whether `key` carries words worth showing.
   ##   For suite, which holds every key to it: empty entry would draw empty tooltip, which is
   ##   worse than none at all.
-  len(strip($lut_wording_to_text[key])) > 0
+  len(strip($lut_text_by_wording[key])) > 0
 
 
 

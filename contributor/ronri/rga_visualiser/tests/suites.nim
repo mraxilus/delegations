@@ -20,6 +20,7 @@
 ##   test same draws, and order is order suites ran in as one file.
 ##   Each module also runs alone, e.g. `nim r -d:testing tests/suites/tmotors.nim`.
 
+{.experimental: "strictFuncs".}
 {.warning[UnusedImport]: off.}  # suite modules run for effect and export nothing
 
 when compileOption("profiler"):

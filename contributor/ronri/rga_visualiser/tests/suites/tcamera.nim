@@ -1,5 +1,7 @@
 ## Run `Camera` suite: one module of shared suite, which `../suites.nim` imports in order.
 
+{.experimental: "strictFuncs".}
+
 import ./fixtures
 
 
@@ -133,8 +135,9 @@ suite "Camera":
 
   test "looking turns sight about the camera's own axes, and leaves the eye standing":
     # Free flight's whole claim: orientation moves and placement does not.
-    let start = cameraAround(Position(x: 2.0, y: -1.0, z: 0.5), 19.0, Direction(x: 10, y: 3, z: 0))
-    let (eye_start, axes_start) = (start.eye, start.frame)
+    let
+      start = cameraAround(Position(x: 2.0, y: -1.0, z: 0.5), 19.0, Direction(x: 10, y: 3, z: 0))
+      (eye_start, axes_start) = (start.eye, start.frame)
     # Yaw at level horizon turns azimuth by exactly what was asked, since camera's own up
     #   is world up there.
     var turned = start
@@ -159,8 +162,9 @@ suite "Camera":
 
   test "a look and an orbit both pass the pole that the panel's own field stops short of":
     # What rotor buys: neither verb has clamp, because neither rebuilds from angles.
-    var flown = cameraAround(ORIGIN, 19.0, Direction(x: 1, y: 0, z: 0))
-    var orbited = flown
+    var
+      flown = cameraAround(ORIGIN, 19.0, Direction(x: 1, y: 0, z: 0))
+      orbited = flown
     for _ in 1 .. 8:
       flown.look(0.0, 0.25)
       orbited.orbit(0.0, 0.25)
@@ -177,14 +181,16 @@ suite "Camera":
     #   would reverse gesture moment reader selected something.
     let start = cameraAround(ORIGIN, 19.0, Direction(x: 1, y: 0, z: 0))
     for step in [0.2, -0.2]:
-      var looked = start
-      var orbited = start
+      var
+        looked = start
+        orbited = start
       looked.look(step, 0.0)
       orbited.orbit(step, 0.0)
       check dot(looked.frame.forward, orbited.frame.forward) > 0.0
       check dot(looked.frame.axis_right, orbited.frame.axis_right) > 0.0
-      var raised = start
-      var risen = start
+      var
+        raised = start
+        risen = start
       raised.look(0.0, step)
       risen.orbit(0.0, step)
       check raised.elevation =~ risen.elevation
@@ -241,8 +247,9 @@ suite "Camera":
     const CAP = 12.0
     check distanceTravelled(0.0, 0.0, CAP) =~ 0.0
     for span in [0.5, 1.0, 4.0]:
-      var walked = 0.0
-      var age = 0.0
+      var
+        walked = 0.0
+        age = 0.0
       # Same span in 120 frames must equal same span in one.
       for _ in 1 .. 120:
         walked += distanceTravelled(age, age + span/120.0, CAP)
@@ -355,17 +362,19 @@ suite "Camera":
 
   test "a point is culled only where the frustum, sprite margin included, does not reach":
     # Bounds are camera's own frame; what is checked is test against them.
-    let camera = cameraAround(Position(x: 1, y: 2, z: 3), 10.0, Direction(x: 12, y: 5, z: 4))
-    let scale = camera.drawExtentFor(900, 0.0)
-    let bounds = camera.viewBoundsFor(scale, 16.0/9.0, 0.0)
+    let
+      camera = cameraAround(Position(x: 1, y: 2, z: 3), 10.0, Direction(x: 12, y: 5, z: 4))
+      scale = camera.drawExtentFor(900, 0.0)
+      bounds = camera.viewBoundsFor(scale, 16.0/9.0, 0.0)
     const RADIUS = RADIUS_OBJECT_DEFAULT
     check isPointInView(placeObject(toMultivector(camera.pivot)), RADIUS, bounds)
     check not isPointInView(
       placeObject(toMultivector(bounds.eye - 1.0*bounds.forward)), RADIUS, bounds
     )
     # Sideways at pivot's depth: just inside half-width stays, just outside goes.
-    let reach_across = camera.distance*bounds.bound_width
-    let reach_above = camera.distance*bounds.bound_height
+    let
+      reach_across = camera.distance*bounds.bound_width
+      reach_above = camera.distance*bounds.bound_height
     check isPointInView(
       placeObject(toMultivector(camera.pivot + (0.9*reach_across)*bounds.right)), RADIUS,
       bounds,
@@ -418,8 +427,9 @@ suite "Camera":
 
   test "frame is orthonormal and perpendicular to sight axis":
     for i in 0 ..< SAMPLES:
-      let camera = cameraAround(PLACES[i], 2.0 + rand(20.0), randOutTo())
-      let axes = camera.frame
+      let
+        camera = cameraAround(PLACES[i], 2.0 + rand(20.0), randOutTo())
+        axes = camera.frame
       check norm(axes.axis_right) =~ 1.0
       check norm(axes.axis_up) =~ 1.0
       check norm(axes.forward) =~ 1.0
@@ -439,11 +449,12 @@ suite "Camera":
 
 
   test "view transform carries eye to origin and pivot down its own negative z":
-    let camera = cameraAround(Position(x: 1, y: -2, z: 0.5), 9.0, Direction(x: 12, y: 10, z: 5))
-    let view = initMatrixView(camera.eye, camera.frame)
-    let (at_eye, at_pivot) = (
-      transform(view, camera.eye, 1.0), transform(view, camera.pivot, 1.0)
-    )
+    let
+      camera = cameraAround(Position(x: 1, y: -2, z: 0.5), 9.0, Direction(x: 12, y: 10, z: 5))
+      view = initMatrixView(camera.eye, camera.frame)
+      (at_eye, at_pivot) = (
+        transform(view, camera.eye, 1.0), transform(view, camera.pivot, 1.0)
+      )
     check isNear(at_eye[0], 0) and isNear(at_eye[1], 0) and isNear(at_eye[2], 0)
     check isNear(at_pivot[0], 0) and isNear(at_pivot[1], 0)
     check isNear(at_pivot[2], -camera.distance)
@@ -451,14 +462,16 @@ suite "Camera":
 
   test "projection carries near plane to -1 and every depth beyond it under far plane":
     const NEAR = 0.25
-    let projection = initMatrixProjection(45.0, 1.6, NEAR)
-    let at_near = transform(projection, Position(x: 0, y: 0, z: -NEAR), 1.0)
+    let
+      projection = initMatrixProjection(45.0, 1.6, NEAR)
+      at_near = transform(projection, Position(x: 0, y: 0, z: -NEAR), 1.0)
     check isNear(at_near[3], NEAR) and isNear(at_near[2]/at_near[3], -1.0)
     # No far plane: depth climbs toward `1 - SLACK_CLIP_FAR` and never reaches it.
     var below = -1.0
     for depth in [1.0, 60.0, 1.0e3, 1.0e6, 1.0e9, 1.0e12]:
-      let clipped = transform(projection, Position(x: 0, y: 0, z: -depth), 1.0)
-      let mapped = clipped[2]/clipped[3]
+      let
+        clipped = transform(projection, Position(x: 0, y: 0, z: -depth), 1.0)
+        mapped = clipped[2]/clipped[3]
       check mapped > below and mapped < 1.0 - 0.5*SLACK_CLIP_FAR
       below = mapped
 
@@ -493,8 +506,9 @@ suite "Camera":
 
   test "whole transform carries pivot to centre of view":
     for i in 0 ..< SAMPLES:
-      let camera = cameraAround(PLACES[i], 11.0, randOutTo())
-      let clipped = transform(camera.initMatrixViewProjection(1.6), camera.pivot, 1.0)
+      let
+        camera = cameraAround(PLACES[i], 11.0, randOutTo())
+        clipped = transform(camera.initMatrixViewProjection(1.6), camera.pivot, 1.0)
       check clipped[3] > 0
       check isNear(clipped[0]/clipped[3], 0)
       check isNear(clipped[1]/clipped[3], 0)
@@ -505,13 +519,14 @@ suite "Camera":
     #   built about same point, so position about origin lands where world transform puts
     #   world position: storing relative to pivot is invisible on screen.
     for i in 0 ..< SAMPLES:
-      let camera = cameraAround(PLACES[i], 3.0, randOutTo())
-      let place = camera.pivot +
-        Direction(x: rand(-1.0 .. 1.0), y: rand(-1.0 .. 1.0), z: rand(-1.0 .. 1.0))
-      let about_world = transform(camera.initMatrixViewProjection(1.6), place, 1.0)
-      let about_pivot = transform(
-        camera.initMatrixViewProjection(1.6, camera.pivot), ORIGIN + (place - camera.pivot), 1.0
-      )
+      let
+        camera = cameraAround(PLACES[i], 3.0, randOutTo())
+        place = camera.pivot +
+          Direction(x: rand(-1.0 .. 1.0), y: rand(-1.0 .. 1.0), z: rand(-1.0 .. 1.0))
+        about_world = transform(camera.initMatrixViewProjection(1.6), place, 1.0)
+        about_pivot = transform(
+          camera.initMatrixViewProjection(1.6, camera.pivot), ORIGIN + (place - camera.pivot), 1.0
+        )
       for k in 0 .. 3:
         check abs(about_world[k] - about_pivot[k]) <= 1.0e-9*max(1.0, abs(about_world[k]))
     # Far out is where it matters: pivot million units off and moon thousandth of unit from.
@@ -519,24 +534,26 @@ suite "Camera":
     #   moon's whole offset is lost; float32 about pivot carries what close-up needs, and
     #   double matrix keeps translation column of world transform, which picking reads,
     #   exact too.
-    let far = cameraAround(
-      Position(x: 1.0e6, y: -2.0e6, z: 3.0e5), 0.004, Direction(x: 16, y: 5, z: 7)
-    )
-    let moon = far.pivot + Direction(x: 0.001, y: 0.0, z: 0.0)
-    let stored_world = Position(
-      x: float(float32(moon.x)), y: float(float32(moon.y)), z: float(float32(moon.z)),
-    )
-    let stored_pivot = Position(
-      x: float(float32(moon.x - far.pivot.x)), y: float(float32(moon.y - far.pivot.y)),
-      z: float(float32(moon.z - far.pivot.z)),
-    )
+    let
+      far = cameraAround(
+        Position(x: 1.0e6, y: -2.0e6, z: 3.0e5), 0.004, Direction(x: 16, y: 5, z: 7)
+      )
+      moon = far.pivot + Direction(x: 0.001, y: 0.0, z: 0.0)
+      stored_world = Position(
+        x: float(float32(moon.x)), y: float(float32(moon.y)), z: float(float32(moon.z)),
+      )
+      stored_pivot = Position(
+        x: float(float32(moon.x - far.pivot.x)), y: float(float32(moon.y - far.pivot.y)),
+        z: float(float32(moon.z - far.pivot.z)),
+      )
     # C backend alone: JS backend keeps `float32` as double, and page's typed arrays round
     #   outside suite's reach.
     when not defined(js):
       check norm(stored_world - moon) > 0.5e-3
       check norm((far.pivot + (stored_pivot - ORIGIN)) - moon) < 1.0e-9
-    let seen_world = transform(far.initMatrixViewProjection(1.6), moon, 1.0)
-    let seen_pivot = transform(far.initMatrixViewProjection(1.6, far.pivot), stored_pivot, 1.0)
+    let
+      seen_world = transform(far.initMatrixViewProjection(1.6), moon, 1.0)
+      seen_pivot = transform(far.initMatrixViewProjection(1.6, far.pivot), stored_pivot, 1.0)
     for k in 0 .. 1:
       check abs(seen_world[k]/seen_world[3] - seen_pivot[k]/seen_pivot[3]) < 1.0e-6
 
@@ -668,11 +685,12 @@ suite "Camera":
     ]:
       for factor in [0.5, 2.0]:
         var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
-        let anchor = pointOnRay(camera, WIDTH_ZOOM, HEIGHT_ZOOM, cursor)
-        let before = projectToScreen(
-          camera.initMatrixViewProjection(float(WIDTH_ZOOM)/float(HEIGHT_ZOOM)),
-          WIDTH_ZOOM, HEIGHT_ZOOM, anchor,
-        )
+        let
+          anchor = pointOnRay(camera, WIDTH_ZOOM, HEIGHT_ZOOM, cursor)
+          before = projectToScreen(
+            camera.initMatrixViewProjection(float(WIDTH_ZOOM)/float(HEIGHT_ZOOM)),
+            WIDTH_ZOOM, HEIGHT_ZOOM, anchor,
+          )
         camera.dollyToward(factor, anchor)
         let after = projectToScreen(
           camera.initMatrixViewProjection(float(WIDTH_ZOOM)/float(HEIGHT_ZOOM)),
@@ -692,8 +710,9 @@ suite "Camera":
     #   ends up somewhere they never chose -- and aimed zoom moves pivot as well as
     #   distance, so there is more to come back to than there used to be.
     var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
-    let opening = camera
-    let anchor = pointOnRay(camera, 1440, 900, ScreenPosition(x: 300.0, y: 640.0))
+    let
+      opening = camera
+      anchor = pointOnRay(camera, 1440, 900, ScreenPosition(x: 300.0, y: 640.0))
     camera.dollyToward(0.5, anchor)
     check not (camera.pivot =~ opening.pivot) # It really did move view, not just in.
     camera.dollyToward(2.0, anchor)
@@ -724,8 +743,9 @@ suite "Camera":
     const (WIDE, TALL) = (1440, 900)
     let cursor = ScreenPosition(x: 260.0, y: 720.0)
     var camera = cameraAround(ORIGIN, 12.0, Direction(x: 11, y: 6, z: 4))
-    let (eye_start, axes_start) = (camera.eye, camera.frame)
-    let heading = headingThrough(camera, axes_start, WIDE, TALL, cursor)
+    let
+      (eye_start, axes_start) = (camera.eye, camera.frame)
+      heading = headingThrough(camera, axes_start, WIDE, TALL, cursor)
     var interaction = Interaction(is_enabled: true)
     interaction.updateCursor(cursor.x, cursor.y)
     interaction.dollyAtCursor(
@@ -804,8 +824,9 @@ suite "Camera":
     check abs(camera.distance - 10.0) < 1.0e-6
     check camera.eye =~ (planet + 0.5*(eye_before - planet))
     # Over empty sky nothing answers: distance scales alone.
-    var level = cameraAround(ORIGIN, 12.0, Direction(x: 18, y: 10, z: 1))
-    var interaction = Interaction(is_enabled: true)
+    var
+      level = cameraAround(ORIGIN, 12.0, Direction(x: 18, y: 10, z: 1))
+      interaction = Interaction(is_enabled: true)
     interaction.updateCursor(720.0, 200.0)
     dollyAt(
       level, initScene(), 0.5, level.drawExtentFor(TALL, 0.0),
@@ -855,8 +876,9 @@ suite "Camera":
 
     # Cursor little off it finds nothing: no ground below it and no level through pivot.
     #   Lower in frame and toward horizon alike.
-    let camera_raised = camera.placed(camera.stanceRepivoted(Position(x: 0.0, y: 0.0, z: 5.0)))
-    let elsewhere = ScreenPosition(x: on_screen.x + 200.0, y: on_screen.y + 400.0)
+    let
+      camera_raised = camera.placed(camera.stanceRepivoted(Position(x: 0.0, y: 0.0, z: 5.0)))
+      elsewhere = ScreenPosition(x: on_screen.x + 200.0, y: on_screen.y + 400.0)
     for cursor in [elsewhere, ScreenPosition(x: on_screen.x + 200.0, y: on_screen.y + 60.0)]:
       check anchorZoomAt(
         scene, camera_raised, camera_raised.drawExtentFor(TALL, 0.0),
@@ -1095,8 +1117,9 @@ suite "Camera":
       # One slide coefficient pushed off: turn stands, and frame stays orthonormal.
       var pushed = motor
       pushed[Basis.E23] = pushed[Basis.E23] + 1.5
-      let moved = held.placedAtMotor(motorRigid(pushed).get)
-      let axes = moved.frame
+      let
+        moved = held.placedAtMotor(motorRigid(pushed).get)
+        axes = moved.frame
       check moved.frame.forward =~ held.frame.forward
       check abs(dot(axes.forward, axes.axis_up)) < TOLERANCE_TEST
       check abs(dot(axes.forward, axes.axis_right)) < TOLERANCE_TEST

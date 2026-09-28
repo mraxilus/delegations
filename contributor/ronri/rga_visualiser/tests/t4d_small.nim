@@ -13,4 +13,7 @@ matrix: "-d:visualiser.objects_max=12 -d:visualiser.label_max=12 -d:visualiser.h
 ##   truncation happens for real.
 ## Backend is C, matching desktop entry point.
 ##   What varies is capacity, not render path; see `t4d_browser.nim` for other axis.
+
+{.experimental: "strictFuncs".}
+
 include "./suites.nim"

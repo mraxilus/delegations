@@ -228,8 +228,9 @@ const
 
 proc run(command: string, args: openArray[string]) =
   ## Run command with args from project directory; raise on non-zero exit.
-  let process = startProcess(command, args = args, options = {poUsePath, poParentStreams})
-  let code = process.waitForExit
+  let
+    process = startProcess(command, args = args, options = {poUsePath, poParentStreams})
+    code = process.waitForExit
   process.close
   if code != 0:
     raise newException(OSError, command & " failed; got exit `" & $code & "`.")
@@ -270,8 +271,9 @@ func declarationOf(signature: string): string =
   ## Render one TypeScript declaration from one Nim signature; empty where unparsable.
   let opened = signature.find('(')
   if opened < 0: return ""
-  let name = signature[0 ..< opened].split(' ')[^1].strip
-  let closed = signature.rfind(')')
+  let
+    name = signature[0 ..< opened].split(' ')[^1].strip
+    closed = signature.rfind(')')
   if closed < opened: return ""
 
   # Nim lets one group carry several types (`a, b: int, c: float`) and lets several names
@@ -287,17 +289,19 @@ func declarationOf(signature: string): string =
       waiting.add fragment[0 ..< stated_at].strip
       # Default value belongs to declaration, never to type; parameter carrying one is
       #   optional on page, which is what `?` says.
-      let stated = fragment[stated_at + 1 .. ^1]
-      let defaulted = stated.find('=')
-      let is_optional = defaulted >= 0
-      let rendered_type =
-        (if is_optional: stated[0 ..< defaulted] else: stated).typeScriptOf
+      let
+        stated = fragment[stated_at + 1 .. ^1]
+        defaulted = stated.find('=')
+        is_optional = defaulted >= 0
+        rendered_type =
+          (if is_optional: stated[0 ..< defaulted] else: stated).typeScriptOf
       for name in waiting:
         rendered.add name & (if is_optional: "?: " else: ": ") & rendered_type
       waiting.setLen 0
 
-  let tail = signature[closed + 1 .. ^1].strip
-  let returned = if tail.startsWith(":"): tail[1 .. ^1].typeScriptOf else: "void"
+  let
+    tail = signature[closed + 1 .. ^1].strip
+    returned = if tail.startsWith(":"): tail[1 .. ^1].typeScriptOf else: "void"
   "declare function " & name & "(" & rendered.join(", ") & "): " & returned & ";"
 
 
@@ -305,22 +309,31 @@ func recordOf(lines: openArray[string], name: string): string =
   ## Render TypeScript interface from Nim object type of `name`; empty where absent.
   ##   Read from bridge rather than kept beside it, so record crossing boundary has one
   ##   home and no second copy can drift from it (Article I.4).
-  var start = -1
+  ##   Found as `type` of its own or as member of `type` section; bridge holds every type
+  ##   in one section (Article X.6).
+  var
+    start = -1
+    indent_declared = 0
   for i, line in lines:
-    if line.startsWith("type " & name & " = object") or
-        line.startsWith("type " & name & "* = object"):
+    let
+      indent = line.len - line.strip(trailing = false).len
+      declared = if line.startsWith("type "): line["type ".len .. ^1] else: line[indent .. ^1]
+    if declared.startsWith(name & " = object") or declared.startsWith(name & "* = object"):
       start = i
+      indent_declared = if line.startsWith("type "): 0 else: indent
       break
   if start < 0: return ""
 
   var fields: seq[string]
   for i in start + 1 ..< lines.len:
     let line = lines[i]
-    if line.len > 0 and line[0] notin {' ', '\t'}: break
+    if line.strip.len > 0 and line.len - line.strip(trailing = false).len <= indent_declared:
+      break
     let bare = line.strip
     if bare.len == 0 or bare.startsWith("##"): continue
-    let stated = bare.split("##")[0].strip
-    let split_at = stated.find(':')
+    let
+      stated = bare.split("##")[0].strip
+      split_at = stated.find(':')
     if split_at < 0: continue
     let rendered_type = stated[split_at + 1 .. ^1].typeScriptOf
     for field in stated[0 ..< split_at].split(','):
@@ -401,8 +414,9 @@ proc isLiteralShown(line, call: string): bool =
   var rest = line[opened + call.len .. ^1].strip
   if rest.startsWith("cstring"): rest = rest[7 .. ^1].strip
   if not (rest.startsWith("\"") or rest.startsWith("'")): return false
-  let quoted = rest[1 .. ^1]
-  let closed = quoted.find(rest[0])
+  let
+    quoted = rest[1 .. ^1]
+    closed = quoted.find(rest[0])
   if closed < 0: return false
   let text = quoted[0 ..< closed]
   text.len > 0 and not text.startsWith("##")
@@ -564,10 +578,12 @@ proc assets() =
   ##   Face already identical to its store entry is left alone, so verb stays idempotent and
   ##   second run copies nothing.
   createDir DIR_FONTS
-  let names = @FACES & @FACES_DESKTOP
-  let paths = facesFromStore(names)
-  var manifest: seq[string]
-  var copied = 0
+  let
+    names = @FACES & @FACES_DESKTOP
+    paths = facesFromStore(names)
+  var
+    manifest: seq[string]
+    copied = 0
   for i, face in names:
     let (source, destination) = (paths[i], DIR_FONTS / face)
     manifest.add face & " " & source
@@ -751,10 +767,12 @@ proc versionSdl3(): string =
   ##   Prefix leads search path so build this drove wins over one machine happens to carry.
   ##   Machine already carrying pinned version is served by it, which is what keeps `sdl3`
   ##   from rebuilding what contributor installed.
-  let path_config = getCurrentDir() / DIR_SDL3_PREFIX / "lib" / "pkgconfig"
-  let (written, code) = execCmdEx(
-    "PKG_CONFIG_PATH=" & quoteShell(path_config) & ":$PKG_CONFIG_PATH pkg-config --modversion sdl3"
-  )
+  let
+    path_config = getCurrentDir() / DIR_SDL3_PREFIX / "lib" / "pkgconfig"
+    (written, code) = execCmdEx(
+      "PKG_CONFIG_PATH=" & quoteShell(path_config) &
+        ":$PKG_CONFIG_PATH pkg-config --modversion sdl3",
+    )
   if code != 0: "" else: written.strip
 
 
@@ -858,17 +876,19 @@ proc reported(args: openArray[string]): bool =
   ## Run desktop binary with args, streaming what it says; report whether it passed.
   ##   Does not raise on failure, unlike `run`: caller drives every scripted run and reports
   ##   all of them, and first failure must not hide rest.
-  let (command, arguments) = under(args)
-  let process = startProcess(command, args = arguments, options = {poUsePath, poParentStreams})
-  let code = process.waitForExit
+  let
+    (command, arguments) = under(args)
+    process = startProcess(command, args = arguments, options = {poUsePath, poParentStreams})
+    code = process.waitForExit
   process.close
   code == 0
 
 
 proc tabsHelp(): seq[string] =
   ## Ask binary which help tabs it has, one per line.
-  let (command, arguments) = under(["--help-tabs"])
-  let (written, code) = execCmdEx(command & " " & arguments.quoteShellCommand)
+  let
+    (command, arguments) = under(["--help-tabs"])
+    (written, code) = execCmdEx(command & " " & arguments.quoteShellCommand)
   if code != 0:
     raise newException(OSError, "Cannot read help tabs; got exit `" & $code & "`.")
   for line in written.splitLines:

@@ -219,6 +219,10 @@ const
   SEGMENTS_CIRCLE_HORIZON* = 96
     ## Set segment count in horizon line's great circle, or finite plane's rim.
     ##   Dense enough to read as circular.
+  POINTS_SCRATCH_MAX* = SEGMENTS_CIRCLE_HORIZON + 1
+    ## Bound places tessellation step may assemble before emitting them.
+    ##   Horizon line's great circle is largest, one extra boundary so closing segment ends
+    ##   on place stepped at angle loop would have used.
   LATITUDES_HORIZON* = 12
   LONGITUDES_HORIZON* = 24
     ## Set band counts in horizon plane's whole-sky dome.
@@ -299,7 +303,7 @@ type
     ##     as shade of teal, blue, violet or magenta; reserving magenta for `Invalid`
     ##     cost three more.
     ##     Adding hues back was measured and reproduced sixteen-slot failure; see
-    ##     `lut_ink_to_rgba`.
+    ##     `lut_rgba_by_ink`.
     Rose, Copper, Olive, Jade, Cobalt,
 
   Outcome* {.pure.} = enum ## Define what became of object once drawn.
@@ -465,6 +469,26 @@ type
       ## and turns ribbon inside out.
     depth_log*: float ## Scale depth's logarithm maps by; see `camera.depthOf`.
 
+  RibbonPiece* = object
+    ## Define one ribbon segment, fully resolved: where it runs, and colour of each end.
+    ##   Record algebra hands picture.
+    ##     Assembling whole family into these first and emitting after makes seam line in
+    ##     code rather than claim in comment, which lets panel say what each side cost.
+    ##   Everything here is Euclidean.
+    tail*, head*: Position
+    tint_tail*, tint_head*: Rgba
+
+  DrawScratch* = object
+    ## Define working space tessellation step assembles into before it emits anything.
+    ##   One object rather than buffer per shape, so caller supplies scratch once.
+    ##     Desktop carves this from frame arena and browser holds one; neither allocates
+    ##     per frame, and suite's copy is same shape.
+    ##   Both members are written and read within single step, so they carry nothing
+    ##   between callers and need no clearing.
+    ribbons*: array[LINES_GRID_MAX, RibbonPiece] ## One piece per lattice line or axis chord.
+      ## Sized for larger grid family.
+    places*: array[POINTS_SCRATCH_MAX, Position]
+
 
 
 #[ Camera-Relative Scale ]#
@@ -627,7 +651,7 @@ func axisTinted(base: Rgba): Rgba =
   )
 
 
-const lut_ink_to_rgba: array[Ink, Rgba] = [
+const lut_rgba_by_ink: array[Ink, Rgba] = [
   Ink.Backdrop: Rgba(red: 0.063, green: 0.075, blue: 0.102, alpha: 1.0),
   # Soften standard convention at full strength through `axisTinted`.
   #   Hue says which axis; softening keeps it from saying drawn object.
@@ -683,7 +707,7 @@ func categoricalIndex*(ink: Ink): int = ord(ink) - ord(INK_CATEGORICAL_FIRST)
   ## Read palette slot's position within categorical run. Negative for structural slot.
 
 
-let lut_ink_to_name* = block:
+let lut_name_by_ink* = block:
   ## Name each palette slot, for offering them in picker.
   ##   Bound as `let` rather than `const`, since picker needs address of first entry.
   var lut: array[Ink, cstring]
@@ -691,7 +715,7 @@ let lut_ink_to_name* = block:
   lut
 
 
-func colour*(ink: Ink): lent Rgba = lut_ink_to_rgba[ink]
+func colour*(ink: Ink): lent Rgba = lut_rgba_by_ink[ink]
   ## Read colour of palette slot.
   ##   Borrowed, not returned by value: JS backend deep-copied entry per call, once per
   ##   object per frame (Art. VII.1).
@@ -815,34 +839,6 @@ func blend(first, second: Rgba; fraction: float): Rgba =
     blue: float32(a*float(first.blue) + b*float(second.blue)),
     alpha: float32(a*float(first.alpha) + b*float(second.alpha)),
   )
-
-
-const POINTS_SCRATCH_MAX* = SEGMENTS_CIRCLE_HORIZON + 1
-  ## Bound places tessellation step may assemble before emitting them.
-  ##   Horizon line's great circle is largest, one extra boundary so closing segment ends
-  ##   on place stepped at angle loop would have used.
-
-
-type RibbonPiece* = object
-  ## Define one ribbon segment, fully resolved: where it runs, and colour of each end.
-  ##   Record algebra hands picture.
-  ##     Assembling whole family into these first and emitting after makes seam line in
-  ##     code rather than claim in comment, which lets panel say what each side cost.
-  ##   Everything here is Euclidean.
-  tail*, head*: Position
-  tint_tail*, tint_head*: Rgba
-
-
-type DrawScratch* = object
-  ## Define working space tessellation step assembles into before it emits anything.
-  ##   One object rather than buffer per shape, so caller supplies scratch once.
-  ##     Desktop carves this from frame arena and browser holds one; neither allocates
-  ##     per frame, and suite's copy is same shape.
-  ##   Both members are written and read within single step, so they carry nothing
-  ##   between callers and need no clearing.
-  ribbons*: array[LINES_GRID_MAX, RibbonPiece] ## One piece per lattice line or axis chord.
-    ## Sized for larger grid family.
-  places*: array[POINTS_SCRATCH_MAX, Position]
 
 
 func directionAcross*(tail, head, eye: Position): Option[Direction] =
@@ -1128,7 +1124,9 @@ func viewBoxOfDisc*(
       z: float(record.centre_z) - eye.z,
     )
     radius = norm(Direction(
-      x: float(record.arm_first_x), y: float(record.arm_first_y), z: float(record.arm_first_z)
+      x: float(record.arm_first_x),
+      y: float(record.arm_first_y),
+      z: float(record.arm_first_z),
     ))
     across = dot(to_centre, axis_right)
     up = dot(to_centre, axis_up)
@@ -1195,7 +1193,9 @@ func hitDiscAlong*(record: DiscRecord; eye: Position; ray: Direction): Option[fl
   ##   Same meet `picking.rayPlaneHit` reads through algebra, so pixel and pick agree.
   let
     arm_first = Direction(
-      x: float(record.arm_first_x), y: float(record.arm_first_y), z: float(record.arm_first_z)
+      x: float(record.arm_first_x),
+      y: float(record.arm_first_y),
+      z: float(record.arm_first_z),
     )
     arm_second = Direction(
       x: float(record.arm_second_x), y: float(record.arm_second_y),
@@ -1213,7 +1213,9 @@ func hitDiscAlong*(record: DiscRecord; eye: Position; ray: Direction): Option[fl
   if depth <= 0.0: return
   let
     hit = Direction(
-      x: depth*ray.x - to_centre.x, y: depth*ray.y - to_centre.y, z: depth*ray.z - to_centre.z
+      x: depth*ray.x - to_centre.x,
+      y: depth*ray.y - to_centre.y,
+      z: depth*ray.z - to_centre.z,
     )
     first = dot(hit, arm_first)/dot(arm_first, arm_first)
     second = dot(hit, arm_second)/dot(arm_second, arm_second)

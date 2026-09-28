@@ -1,5 +1,7 @@
 ## Run `Objects` suite: one module of shared suite, which `../suites.nim` imports in order.
 
+{.experimental: "strictFuncs".}
+
 import ./fixtures
 
 
@@ -34,8 +36,9 @@ suite "Objects":
   test "the inner product of two directions is their classical dot product":
     # `innerOf` is how camera reads sides and cosines; classical form is reference.
     for i in 0 ..< SAMPLES:
-      let (p, q) = (PLACES[i], PLACES[(i + 1) mod SAMPLES])
-      let (d, e) = (Direction(x: p.x, y: p.y, z: p.z), Direction(x: q.x, y: q.y, z: q.z))
+      let
+        (p, q) = (PLACES[i], PLACES[(i + 1) mod SAMPLES])
+        (d, e) = (Direction(x: p.x, y: p.y, z: p.z), Direction(x: q.x, y: q.y, z: q.z))
       check innerOf(toMultivector(d), toMultivector(e)) =~ d.x*e.x + d.y*e.y + d.z*e.z
 
 

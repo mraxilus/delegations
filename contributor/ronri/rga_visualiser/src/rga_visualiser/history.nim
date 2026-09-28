@@ -167,7 +167,7 @@ func redo*(history: var History, scene: var Scene, camera: var Camera): bool
 
 
 func undo*(
-  history: var History; scene: var Scene; camera: var Camera; picked: var Selection
+  history: var History, scene: var Scene, camera: var Camera, picked: var Selection
 ): bool {.discardable.} =
   ## Undo, keeping every pick that still names object it named.
   ##   Entry left is live scene as it stood, so it says what each pick named.
@@ -177,7 +177,7 @@ func undo*(
 
 
 func redo*(
-  history: var History; scene: var Scene; camera: var Camera; picked: var Selection
+  history: var History, scene: var Scene, camera: var Camera, picked: var Selection
 ): bool {.discardable.} =
   ## Redo, keeping every pick that still names object it named; see `undo`.
   let left = history.handleOf(history.cursor)

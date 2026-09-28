@@ -5,4 +5,7 @@ cmd: "nim c --hints:on -d:testing -d:nimUnittestAbortOnError:on $options $file"
 ## Run shared suite at shipped capacities, on C backend desktop entry point uses.
 ##
 ## Algebra comes from `nim.cfg`: four dimensions, rigid metric, shared by every target.
+
+{.experimental: "strictFuncs".}
+
 include "./suites.nim"

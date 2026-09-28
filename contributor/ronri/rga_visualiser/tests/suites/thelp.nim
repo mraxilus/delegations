@@ -1,5 +1,7 @@
 ## Run `Help` suite: one module of shared suite, which `../suites.nim` imports in order.
 
+{.experimental: "strictFuncs".}
+
 import ./fixtures
 
 
@@ -9,7 +11,7 @@ suite "Help":
     #   both front-ends size tab from, so summing it is summing what is actually drawn.
     var total = 0
     for path in HelpPath: total += countOf(path)
-    check total == len(lut_help_entries)
+    check total == len(HELP_ENTRIES)
 
 
   test "no tab holds more than fits the smallest screen this help supports":
@@ -33,7 +35,7 @@ suite "Help":
     #   case is here to say that if anyone ever transcribes it, drift fails build.
     for operation in Operation:
       var is_listed = false
-      for entry in lut_help_entries:
+      for entry in HELP_ENTRIES:
         if entry.path == HelpPath.Operations and entry.action == notationSymbolic(operation):
           check entry.outcome == notationNamed(operation)
           is_listed = true
@@ -61,7 +63,7 @@ suite "Help":
     #   went looking for it and found nothing.
     let text = block:
       var joined = ""
-      for entry in lut_help_entries: joined &= entry.action & " " & entry.outcome & " "
+      for entry in HELP_ENTRIES: joined &= entry.action & " " & entry.outcome & " "
       joined
     for key in Key:
       check nameOf(key) in text
@@ -79,7 +81,7 @@ suite "Help":
     var
       seen: set[HelpPath]
       path_last = none(HelpPath)
-    for entry in lut_help_entries:
+    for entry in HELP_ENTRIES:
       if path_last == some(entry.path): continue
       check entry.path notin seen
       seen.incl(entry.path)
@@ -87,7 +89,7 @@ suite "Help":
 
 
   test "every action and outcome is written, so no row draws as a blank line":
-    for entry in lut_help_entries:
+    for entry in HELP_ENTRIES:
       check len(entry.action) > 0
       check len(entry.outcome) > 0
 
@@ -96,7 +98,7 @@ suite "Help":
     # Row whose action is button is read from that button's key, so button renamed is
     #   renamed in its row; row written out again would have been copy that drifted.
     var actions: seq[string]
-    for entry in lut_help_entries:
+    for entry in HELP_ENTRIES:
       if entry.path == HelpPath.Menu: actions.add(entry.action)
     check actions == [
       $wordingText(NamePickApply), $wordingText(NamePickEdit), $wordingText(NamePickHide),
