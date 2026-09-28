@@ -410,10 +410,10 @@ proc layoutCoefficientGrid(staged: var array[Basis, cfloat]): Option[Basis] =
       gui.widthPush(width_cell)
       # Let name recede and number read, as browser's `--ink-faint` label does.
       gui.textTinted(
-        cstring(lut_name_by_basis[b]), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue
+        cstring(LUT_NAME_BY_BASIS[b]), INK_LABEL.red, INK_LABEL.green, INK_LABEL.blue
       )
       if gui.dragFloat(
-        cstring("##" & lut_name_by_basis[b]), addr staged[b], SPEED_DRAG, 0.0, 0.0
+        cstring("##" & LUT_NAME_BY_BASIS[b]), addr staged[b], SPEED_DRAG, 0.0, 0.0
       ):
         result = some(b)
       gui.widthPop()
@@ -454,7 +454,7 @@ proc layoutSessionFields(panel: var Panel, is_pending: bool) =
   fieldLabel(wordingText(NameRowInk))
   if gui.combo(
     "##colour", addr index_categorical,
-    addr lut_name_by_ink[INK_CATEGORICAL_FIRST], cint(COUNT_INK_CATEGORICAL),
+    addr LUT_NAME_BY_INK[INK_CATEGORICAL_FIRST], cint(COUNT_INK_CATEGORICAL),
   ):
     panel.session.get.index_ink = cint(ord(inkCategorical(int(index_categorical))))
   # Size reads for point alone; line and plane take theirs from camera and horizon.
@@ -716,7 +716,7 @@ func offerOperationsOfArity*(
   ##   `cstring`s point into this build's storage rather than `const` table: combo keeps
   ##   address of first entry while list is open.
   for operation in Operation:
-    if lut_arity_by_operation[operation] != arity: continue
+    if LUT_ARITY_BY_OPERATION[operation] != arity: continue
     result[0][result[2]] = cstring(notationSymbolic(operation))
     result[1][result[2]] = operation
     inc result[2]

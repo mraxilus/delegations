@@ -94,7 +94,7 @@ suite "Scene":
       ##   Guard that lets fewer through leaves law held over part of catalogue only.
     var passed = 0
     for operation in Operation:
-      if lut_arity_by_operation[operation] != Arity.One: continue
+      if LUT_ARITY_BY_OPERATION[operation] != Arity.One: continue
       inc passed
       for i in 0 ..< SAMPLES:
         let (m, n, o) = (POINTS[i], LINES[i], PLANES[i])
@@ -105,7 +105,7 @@ suite "Scene":
   test "every operation names itself and is offered once":
     var seen: array[Operation, int]
     for operation in Operation:
-      check len(lut_notation_by_operation[operation]) > 0
+      check len(LUT_NOTATION_BY_OPERATION[operation]) > 0
       inc seen[operation]
     for operation in Operation:
       check seen[operation] == 1
@@ -339,7 +339,7 @@ suite "Scene":
     #   Never trusted to table transcribed by hand.
     for b in Basis:
       let named = ($initElement(b, 1.0)).strip()
-      check lut_name_by_basis[b] == named
+      check LUT_NAME_BY_BASIS[b] == named
     for i in 0 ..< SAMPLES:
       check kindText(POINTS[i]) == "point"
       check kindText(LINES[i]) == "line"
