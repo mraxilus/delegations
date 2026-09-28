@@ -10,6 +10,8 @@
 ##     `>` quotation carries no prose, so bounds skip it; its fidelity is held instead, to
 ##     ledger in `rules.nim`, which holds each rule as it arrived.
 
+{.experimental: "strictFuncs".}
+
 import std/[os, sequtils, strutils, unittest]
 
 import ../../design/[plain, rules]

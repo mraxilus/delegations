@@ -11,6 +11,8 @@
 ##   Every hold walks same chain (rule 31), so claim is made over both holds
 ##     workbench draws, never over one example (Article IX.2).
 
+{.experimental: "strictFuncs".}
+
 import std/[math, options, os, strutils, tables, unittest]
 
 import ../../design/parts

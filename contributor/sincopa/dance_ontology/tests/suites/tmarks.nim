@@ -1,5 +1,7 @@
 ## Drive mark workbench's build under testament: every gate, every page written and read back.
 
+{.experimental: "strictFuncs".}
+
 import std/[options, os, strutils, unittest]
 
 import ../../design/marks

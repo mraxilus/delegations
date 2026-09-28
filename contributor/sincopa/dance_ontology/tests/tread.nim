@@ -12,6 +12,8 @@ cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on -d:danger $opti
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[atomics, cpuinfo, math, random, strformat, tables, typedthreads, unittest]
 
 import ../sim/[body, hold, limb, read, rig, rigid, vec]

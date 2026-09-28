@@ -18,6 +18,10 @@ cmd: "nim c --hints:off -d:testing $options $file"
 ##   Suites that link engine's C archive (`tengine`, `tread`, `trigid`) cannot share this
 ##     binary, and `tsaid` is compiled to JavaScript, so those stay binaries of their own.
 
+{.experimental: "strictFuncs".}
+
+when compileOption("profiler"): import std/nimprof
+
 import
   ./suites/[tasks, taxle, tdiagram, tdrawn, tfaces, tframe, tglossary, tlimb, tmap,
             tmarks, tplain, treadme, treview, trotation, troute, tspokes, ttransition,

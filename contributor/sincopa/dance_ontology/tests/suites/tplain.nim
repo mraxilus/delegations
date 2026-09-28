@@ -9,6 +9,8 @@
 ##   So bound is held here on markup written for test, where count is known, rather than only
 ##     on pages, where nothing says how many blocks there should be.
 
+{.experimental: "strictFuncs".}
+
 import std/[strutils, unittest]
 
 import ../../design/plain

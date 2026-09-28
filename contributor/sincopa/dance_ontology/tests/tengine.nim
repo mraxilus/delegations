@@ -13,6 +13,8 @@ cmd: "nim c --hints:off -d:testing -d:nimUnittestAbortOnError:on $options $file"
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[math, unittest]
 
 import ../sim/engine

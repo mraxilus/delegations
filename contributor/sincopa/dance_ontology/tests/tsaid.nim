@@ -16,6 +16,10 @@ cmd: "nim $target --hints:off -d:testing -d:nodejs -d:nimUnittestAbortOnError:on
 ##   Neither needs browser: nothing called here touches document.
 ##   Runs on JS target alone, because both pages import `std/dom`.
 
+{.experimental: "strictFuncs".}
+
+when compileOption("profiler"): import std/nimprof
+
 import std/[options, unittest]
 
 import ../design/plain

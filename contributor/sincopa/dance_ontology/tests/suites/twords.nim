@@ -8,6 +8,8 @@
 ##     names, and demands nothing is left over.  Residue is word reader meets
 ##     with no entry to read it by.
 
+{.experimental: "strictFuncs".}
+
 import std/[algorithm, options, os, strformat, strutils, unittest]
 
 import std/[json, jsonutils]
