@@ -805,7 +805,7 @@ without stamps.
 ## Colour palette
 
 Five hues are assignable — `Rose, Copper, Olive, Jade, Cobalt` — beside `Backdrop`, `AxisX/Y/Z`,
-`Grid`, `Guide`, `Outline` and `Invalid`. One `Ink` enum holds them all (`mesh.lut_rgba_by_ink`).
+`Grid`, `Guide`, `Outline` and `Invalid`. One `Ink` enum holds them all (`mesh.LUT_RGBA_BY_INK`).
 
 **`Invalid` is a reserved magenta**, so a reader who sees it knows that an object is wrong. The
 drag band wears it over a pair that makes nothing (see Interaction model), and nothing else does.
@@ -2416,7 +2416,7 @@ on the reader's own bearing, `RISE_ORRERY_SHOWN` 1.4 over its run, about 54 degr
 opening's 18 degrees every ring collapses to a line. It is not the nearest neighbour: Proxima
 stands nine thousand opening radii out, and a frame that held it shows one dot.
 
-**Colour says what a thing is, and not which system it belongs to.** `lut_ink_by_role` maps a
+**Colour says what a thing is, and not which system it belongs to.** `LUT_INK_BY_ROLE` maps a
 `Role` to an `Ink`: four kinds of body on four handles, and everything derived on the fifth,
 `Olive`, the darkest.
 
@@ -2442,7 +2442,7 @@ table is checked against its source by any tool.**
 
 ## Operation notation
 
-**One table, `scene.lut_notation_by_operation`, is read by both builds.** Each entry is the bold
+**One table, `scene.LUT_NOTATION_BY_OPERATION`, is read by both builds.** Each entry is the bold
 notation of Lengyel, two spaces, then the English name (`𝐦⊖  attitude`). `notationSymbolic` and
 `notationNamed` are its two halves.
 
@@ -2478,7 +2478,7 @@ re-checks that every glyph is in the atlas.
 ## Naming and number formatting
 
 Basis elements are named exactly as the `$` of the library names them: `𝟏`, `𝟙`, and a bold `𝐞`
-with subscript digits. `lut_name_by_basis` **derives** them from the enum, and a suite case holds
+with subscript digits. `LUT_NAME_BY_BASIS` **derives** them from the enum, and a suite case holds
 each entry equal to what the library prints.
 
 Magnitudes read to **four significant digits** (`DIGITS_SIGNIFICANT`). The desktop uses

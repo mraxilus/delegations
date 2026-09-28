@@ -303,7 +303,7 @@ type
     ##     as shade of teal, blue, violet or magenta; reserving magenta for `Invalid`
     ##     cost three more.
     ##     Adding hues back was measured and reproduced sixteen-slot failure; see
-    ##     `lut_rgba_by_ink`.
+    ##     `LUT_RGBA_BY_INK`.
     Rose, Copper, Olive, Jade, Cobalt,
 
   Outcome* {.pure.} = enum ## Define what became of object once drawn.
@@ -651,7 +651,7 @@ func axisTinted(base: Rgba): Rgba =
   )
 
 
-const lut_rgba_by_ink: array[Ink, Rgba] = [
+const LUT_RGBA_BY_INK: array[Ink, Rgba] = [
   Ink.Backdrop: Rgba(red: 0.063, green: 0.075, blue: 0.102, alpha: 1.0),
   # Soften standard convention at full strength through `axisTinted`.
   #   Hue says which axis; softening keeps it from saying drawn object.
@@ -707,7 +707,7 @@ func categoricalIndex*(ink: Ink): int = ord(ink) - ord(INK_CATEGORICAL_FIRST)
   ## Read palette slot's position within categorical run. Negative for structural slot.
 
 
-let lut_name_by_ink* = block:
+let LUT_NAME_BY_INK* = block:
   ## Name each palette slot, for offering them in picker.
   ##   Bound as `let` rather than `const`, since picker needs address of first entry.
   var lut: array[Ink, cstring]
@@ -715,7 +715,7 @@ let lut_name_by_ink* = block:
   lut
 
 
-func colour*(ink: Ink): lent Rgba = lut_rgba_by_ink[ink]
+func colour*(ink: Ink): lent Rgba = LUT_RGBA_BY_INK[ink]
   ## Read colour of palette slot.
   ##   Borrowed, not returned by value: JS backend deep-copied entry per call, once per
   ##   object per frame (Art. VII.1).
