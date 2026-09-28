@@ -2,6 +2,8 @@
 ##   Drawn once from seeded generator, before any suite runs, so failure reproduces from
 ##   test name alone; see `../suites.nim` for why suites are modules of their own.
 
+{.experimental: "strictFuncs".}
+
 import std/[
   math, options, os, random, sets, strformat, strutils, tables, unicode, unittest,
 ]
@@ -68,6 +70,7 @@ func cameraAround*(pivot: Position; distance: float; out_to: Direction): Camera 
 
 
 proc randPosition*(): Position =
+  ## Draw position from cube reaching `EXTENT_SAMPLE` out from origin along every axis.
   Position(
     x: rand(-EXTENT_SAMPLE .. EXTENT_SAMPLE),
     y: rand(-EXTENT_SAMPLE .. EXTENT_SAMPLE),

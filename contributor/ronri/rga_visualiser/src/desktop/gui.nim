@@ -146,6 +146,7 @@ proc childBeginBounded*(name: cstring; width, height_max: cfloat): bool
 
 
 proc childEnd*() {.importc: "guiChildEnd", sideEffect.}
+  ## Close region `childBegin` or `childBeginBounded` opened.
 
 
 proc menuBegin*(label, id: cstring; width: cfloat; is_forced: bool): bool
@@ -246,11 +247,11 @@ proc separatorText*(label: cstring) {.importc: "guiSeparatorText", sideEffect.}
   ## Draw horizontal rule carrying `label`.
 
 proc sameLine*() {.importc: "guiSameLine", sideEffect.}
+  ## Continue current line rather than starting next.
 
 
 proc sameLineGap*(spacing: cfloat) {.importc: "guiSameLineGap", sideEffect.}
   ## Continue line with spacing given, for row cut into groups.
-  ## Continue current line rather than starting next.
 
 proc sameLineAt*(offset: cfloat) {.importc: "guiSameLineAt", sideEffect.}
   ## Continue current line at fixed distance from its start.

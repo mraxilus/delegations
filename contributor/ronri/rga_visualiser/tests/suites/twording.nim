@@ -1,5 +1,7 @@
 ## Run `Wording` suite: one module of shared suite, which `../suites.nim` imports in order.
 
+{.experimental: "strictFuncs".}
+
 import ./fixtures
 
 
@@ -108,8 +110,9 @@ suite "Wording":
 
 
   test "the view's readings write degrees and multiples of light, as both builds show them":
-    var line: array[32, char]
-    var cursor = 0
+    var
+      line: array[32, char]
+      cursor = 0
     appendDegrees(line, cursor, PI/3.0)
     finishChars(line, cursor)
     check toText(line) == "60°"

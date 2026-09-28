@@ -1,5 +1,7 @@
 ## Run `Selection` suite: one module of shared suite, which `../suites.nim` imports in order.
 
+{.experimental: "strictFuncs".}
+
 import ./fixtures
 
 
@@ -16,8 +18,9 @@ suite "Selection":
     #   seconds rather than by step frame. Driven on browser too: 3 s of clock
     #   moved head 178.3 px at 36 fps, 179.0 at 60 and 179.6 at 144, against 180.
     proc travelAfter(seconds_total: float, frames: int, lap: float): float =
-      var clock: PulseClock
-      var seconds = 0.0
+      var
+        clock: PulseClock
+        seconds = 0.0
       clock.tick(seconds)
       for _ in 0 ..< frames:
         seconds += seconds_total/float(frames)
@@ -68,8 +71,9 @@ suite "Selection":
     var carried: PulseClock
     carried.tick(0.0)
     for frame in 1 .. 600:
-      let seconds = float(frame)/60.0
-      let step = carried.secondsStep(seconds)
+      let
+        seconds = float(frame)/60.0
+        step = carried.secondsStep(seconds)
       carried.tick(seconds)
       carried.advance(0, 120.0, step)
       check carried.travelAt(0) < 120.0
@@ -157,8 +161,9 @@ suite "Selection":
 
   test "every change to a selection advances its revision, and nothing else does":
     var selection: Selection
-    let scene = initScene()
-    let revision_fresh = selection.revision
+    let
+      scene = initScene()
+      revision_fresh = selection.revision
     selection.clear() # Empty already: nothing changed.
     check selection.revision == revision_fresh
     selection.toggle(3)

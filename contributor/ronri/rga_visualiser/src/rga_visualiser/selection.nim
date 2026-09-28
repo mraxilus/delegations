@@ -22,10 +22,39 @@ import ./[marker, scene]
 
 #[ Type Definitions ]#
 
-type Selection* = object ## Define handles picked, in order they were picked.
-  handles: array[OBJECTS_MAX, int] ## Picked handles, oldest pick first; first `count` are live.
-  count: int ## Handles picked so far, <= OBJECTS_MAX.
-  count_changes: int ## How many times membership or order has changed; see `revision`.
+type
+  Selection* = object ## Define handles picked, in order they were picked.
+    handles: array[OBJECTS_MAX, int] ## Picked handles, oldest pick first; first `count` are live.
+    count: int ## Handles picked so far, <= OBJECTS_MAX.
+    count_changes: int ## How many times membership or order has changed; see `revision`.
+
+  PulseClock* = object ## Define each selected object's orientation pulse between frames.
+    ## Travel in screen pixels per handle, integrated and reduced, not position computed from
+    ## clock. Two faults decided this; second is why units are pixels, not fraction.
+    ##   Phase read off time meant `frac(now·speed ÷ around)`, and outline's length changes
+    ##   whenever camera moves: after few laps one-percent change in length throws answer
+    ##   most of lap and comet teleports.
+    ##   Carrying phase across frames fixed that, but phase is *fraction of outline measured
+    ##   this frame*, turned back into position by current length from current first point;
+    ##   for line both are viewport-clip artefacts, so head still slid under camera.
+    ##   Carried now is distance travelled from outline's anchor, in pixels, advanced by
+    ##   `speed·seconds` with no camera quantity in advance, so fixed screen pace is true by
+    ##   construction.
+    ## Travel is reduced into current lap every frame, load-bearing.
+    ##   Unbounded travel read as `travelled mod lap` amplifies one-percent change in lap by
+    ##   laps accumulated, first fault in new units.
+    ##   Reduced each frame amplification is exactly one; only discontinuity left is lap
+    ##   arriving up to one frame's shrink early.
+    ## Plain fixed array, like `Scene` and `MeshSet`, not arena allocation.
+    ##   One float per handle with compile-time bound and program-long lifetime needs no arena
+    ##   (see `arena.nim` header).
+    ##   Not double buffered either: update reads and writes one handle and consults no
+    ##   neighbour. `arena.nim` is desktop-only in any case.
+    ## Here rather than `marker.nim` because indexed by *handle*, over exactly selected set,
+    ## which is view of scene this module already is.
+    travels: array[OBJECTS_MAX, float] ## Each handle's travel along its marker's outline.
+      ## In screen pixels from outline's anchor, always reduced below one lap.
+    seconds_last: Option[float] ## Clock reading `tick` last saw, for step between frames.
 
 
 
@@ -153,35 +182,6 @@ const SECONDS_STEP_PULSE_MAX* = 0.1
   ##   Six frames at sixty per second: long enough that no honestly slow frame is clipped,
   ##   short enough that tab returning from background does not hand comet whole minute
   ##   of travel in one step.
-
-
-type PulseClock* = object ## Define each selected object's orientation pulse between frames.
-  ## Travel in screen pixels per handle, integrated and reduced, not position computed from
-  ## clock. Two faults decided this; second is why units are pixels, not fraction.
-  ##   Phase read off time meant `frac(now·speed ÷ around)`, and outline's length changes
-  ##   whenever camera moves: after few laps one-percent change in length throws answer
-  ##   most of lap and comet teleports.
-  ##   Carrying phase across frames fixed that, but phase is *fraction of outline measured
-  ##   this frame*, turned back into position by current length from current first point;
-  ##   for line both are viewport-clip artefacts, so head still slid under camera.
-  ##   Carried now is distance travelled from outline's anchor, in pixels, advanced by
-  ##   `speed·seconds` with no camera quantity in advance, so fixed screen pace is true by
-  ##   construction.
-  ## Travel is reduced into current lap every frame, load-bearing.
-  ##   Unbounded travel read as `travelled mod lap` amplifies one-percent change in lap by
-  ##   laps accumulated, first fault in new units.
-  ##   Reduced each frame amplification is exactly one; only discontinuity left is lap
-  ##   arriving up to one frame's shrink early.
-  ## Plain fixed array, like `Scene` and `MeshSet`, not arena allocation.
-  ##   One float per handle with compile-time bound and program-long lifetime needs no arena
-  ##   (see `arena.nim` header).
-  ##   Not double buffered either: update reads and writes one handle and consults no
-  ##   neighbour. `arena.nim` is desktop-only in any case.
-  ## Here rather than `marker.nim` because indexed by *handle*, over exactly selected set,
-  ## which is view of scene this module already is.
-  travels: array[OBJECTS_MAX, float] ## Each handle's travel along its marker's outline.
-    ## In screen pixels from outline's anchor, always reduced below one lap.
-  seconds_last: Option[float] ## Clock reading `tick` last saw, for step between frames.
 
 
 func tick*(clock: var PulseClock, now: float) =

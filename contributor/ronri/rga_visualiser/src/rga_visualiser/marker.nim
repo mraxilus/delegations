@@ -39,7 +39,7 @@
 import std/[math, options, strformat]
 
 import pga
-import ./[boundary, camera, tessellate, picking]
+import ./[boundary, camera, picking, tessellate]
 
 
 
@@ -322,6 +322,17 @@ type
         ## Screen space throughout: sky has no place in scene to surround, so marker
         ## surrounds view. Always closed.
 
+  PulseTrack* = object ## Define where pulse's travel is measured from along outline.
+    ## Also how far it may run either way before it laps.
+    ## `origin` names view-independent feature of object (line's support, circle's angle
+    ## zero) rather than whichever point was emitted first.
+    ##   Outline's first point is cut: rail's is where it crosses window edge, cut ring's
+    ##   wherever eye plane sliced it.
+    ##   Measuring from cut lets camera decide where comet is, fault this type removes.
+    origin*: int ## Index of point travel is measured from.
+    behind*: float ## Outline available before that point, in pixels.
+    ahead*: float ## Outline available after it, in pixels.
+
 
 
 #[ Orientation Pulse ]#
@@ -339,18 +350,6 @@ func lengthOfOutline*(
   for i in 0 ..< last:
     let after = points[(i + 1) mod count]
     result += hypot(after.x - points[i].x, after.y - points[i].y)
-
-
-type PulseTrack* = object ## Define where pulse's travel is measured from along outline.
-  ## Also how far it may run either way before it laps.
-  ## `origin` names view-independent feature of object (line's support, circle's angle
-  ## zero) rather than whichever point was emitted first.
-  ##   Outline's first point is cut: rail's is where it crosses window edge, cut ring's
-  ##   wherever eye plane sliced it.
-  ##   Measuring from cut lets camera decide where comet is, fault this type removes.
-  origin*: int ## Index of point travel is measured from.
-  behind*: float ## Outline available before that point, in pixels.
-  ahead*: float ## Outline available after it, in pixels.
 
 
 func lap*(track: PulseTrack): float = track.behind + track.ahead
@@ -632,9 +631,7 @@ func clearanceTouch*(swell: float, is_touch: bool): float =
 func placeLabelAbove(marker: var Marker, x, top: float) =
   ## Place name label centred `GAP_MARKER` and half its height above outline's top at `x`.
   marker.has_label = true
-  marker.label_at = ScreenPosition(
-    x: x, y: top - GAP_MARKER - 0.5*HEIGHT_MARKER_LABEL, depth: 1.0
-  )
+  marker.label_at = ScreenPosition(x: x, y: top - GAP_MARKER - 0.5*HEIGHT_MARKER_LABEL, depth: 1.0)
 
 
 func clearanceBeside*(away_x, away_y, half_width: float): float =
@@ -863,8 +860,9 @@ func awayFromScreen*(point, first, second: ScreenPosition): float =
   ##   projects to straight screen line.
   ##   Never distance between two rails' drawn endpoints: `fractionLeavingView` cuts each
   ##   at own fraction, so those measure nothing.
-  let (dx, dy) = (second.x - first.x, second.y - first.y)
-  let length = hypot(dx, dy)
+  let
+    (dx, dy) = (second.x - first.x, second.y - first.y)
+    length = hypot(dx, dy)
   if length <= 0.0: return hypot(point.x - first.x, point.y - first.y)
   abs((point.x - first.x)*dy - (point.y - first.y)*dx)/length
 
@@ -1150,8 +1148,9 @@ proc markerLoop(
     axes = frame(geometry)
   if anchor.isNone or axes.isNone: return
 
-  let radius_loop = progress*radiusMarkerLoop(anchor.get, scale, placement, height, clearance)
-  let positions = positionsMarkerLoop(anchor.get, axes.get, radius_loop)
+  let
+    radius_loop = progress*radiusMarkerLoop(anchor.get, scale, placement, height, clearance)
+    positions = positionsMarkerLoop(anchor.get, axes.get, radius_loop)
   var
     ring: array[SEGMENTS_MARKER_LOOP, ScreenPosition]
     are_in_front: array[SEGMENTS_MARKER_LOOP, bool]
