@@ -135,7 +135,8 @@ defineOperator(symbols = "∧", docs = "...", cayley = CAYLEYS_WEDGE.base)
 2. Every symbolic operator has exactly one named alias: a verb for an operation, and the bare
    domain noun for a property. The alias forwards, and never reimplements. Symbols are for
    equations, and names are for callers. A second common name for the operation goes in the
-   doc, and never in a second alias.
+   doc, and never in a second alias. A second symbol is allowed only where the readers of the
+   host language expect it, as `*` for scaling by a scalar.
 3. Where the authority lacks a glyph, coin one systematically and register it in the operator
    table of the header. Where coined glyphs name related concepts, the glyphs show the
    relation, so a reader who knows one member of a family reads the others. A compound
@@ -263,11 +264,12 @@ CAYLEYS_WEDGE               # module constant
 
 ## Article VI: Documentation is an outline
 
-1. Every declaration gets a doc comment, public or not. It is imperative and opens with a
-   verb, and a type opens with "Define …". It holds one summary line that ends in a period,
-   and it cites formal notation inline with `i.e.`. Where you cannot write honest text yet,
-   write `## TODO: Document.`, and never leave the slot empty. A generator carries its docs
-   through a required parameter of the emitting helper, so that an undocumented emission
+1. Every declaration gets a doc comment, public or not. The one exception is a one-line mechanical
+   delegation (a borrow, a forward) that stands in a stack under one group comment. A doc is
+   imperative and opens with a verb, and a type opens with "Define …". It holds one summary line
+   that ends in a period, and it cites formal notation inline with `i.e.`. Where you cannot write
+   honest text yet, write `## TODO: Document.`, and never leave the slot empty. A generator carries
+   its docs through a required parameter of the emitting helper, so that an undocumented emission
    cannot compile.
 2. Elaboration is a hanging outline. Each deeper nuance is indented two more spaces under its
    parent, with one claim to a line. Docs render as a tree of claims, and not as a paragraph.
@@ -328,7 +330,7 @@ func multiplyExterior(a, b: BasisSigned): ... =
 ```nim
 template r: untyped = records[i]  # alias; `let r = records[i]` deep-copies on JS backend
 
-func colour*(ink: Ink): lent Rgba = lut_ink_to_rgba[ink]
+func colour*(ink: Ink): lent Rgba = LUT_RGBA_BY_INK[ink]
   ## Read ink's display colour.
   ##   `lent` saves copy only when read inline; `let c = ink.colour` copies again (read
   ##   in emitted JS).
@@ -424,10 +426,11 @@ suite "Chapter 2":
    the tier. Its title is an English noun phrase in Title Case, qualifier then head, singular
    for one member and plural for several. A first-tier banner takes three blank lines before
    it, and a second-tier banner takes two. Either one takes one blank line after it, but a
-   second-tier banner that follows its parent at once keeps its own two. Undocumented one-line
-   helpers of one group stack with no blank line, and documented one-line definitions take
-   one. Siblings inside a second-tier section also take one, and every other definition takes
-   two.
+   second-tier banner that follows its parent at once keeps its own two.
+   - Undocumented one-line helpers of one group stack with no blank line.
+   - Documented one-line definitions take one, and so do siblings inside a second-tier section
+     and a declaration block (`type`, `const`) that follows another.
+   - Every other definition takes two.
 3. A call stays on its own line where it fits, and otherwise takes one argument to a line. A
    signature may first wrap its parameters onto one line of their own. Otherwise it takes one
    parameter, or one group of a shared type, to a line. One item to a line takes a trailing
@@ -444,7 +447,9 @@ suite "Chapter 2":
    library grouped and alphabetised, then the local modules, also alphabetised.
 6. Module anatomy runs in one order. It is header docs, active design notes and TODOs,
    compiler directives, conditional instrumentation, external imports, local imports,
-   re-exports, then the body in conceptual reading order.
+   re-exports, then the body in conceptual reading order. The body puts its types before any
+   routine, consolidated into as few sections as the concepts allow. A reader then sees every
+   data structure at a glance before the first routine.
 7. Match the density to the role of the file. A semantic module takes rich docs, banners and
    staged derivations. A façade takes grouped one-line declarations, each one documented. A
    generator takes its semantic data first and its thin lowering last. A replication test
@@ -475,7 +480,8 @@ if product.is_degenerate: continue
    trailing period, one intention to a commit. A refactor, a doc, a fix and a feature are
    never mixed in silence. In a repository of several projects, the scope is the project. In
    a repository of one project, the scope names the module or subsystem that changed. A
-   subject is at most 100 characters, the same limit as a line of source.
+   change outside every project takes the scope of the role that owns it. A subject is at most
+   100 characters, the same limit as a line of source.
 2. The history is part of the document. A reader replays the intellectual development of the
    project from the log. A step that prepares for the next change is its own commit, named
    for what it prepares. A reversal is its own commit, and names what it undoes.

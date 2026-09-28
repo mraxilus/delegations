@@ -14,21 +14,20 @@ Escalate only on need.
 - `func` is the default for a deterministic transformation of a value.
 - `proc` only for an effect beyond its parameters, or for randomness. A `func` may take a
   `var` parameter, because `strictFuncs` does not count a write to it as a side effect.
-- Where both mutable and immutable access matter, define an overload pair. Raw access into
-  storage is a `template` pair. An accessor that does work is a `func` pair, because a `func`
-  may take a `var` parameter:
+- Where both mutable and immutable access matter, define an overload pair of `func`s, because
+  a `func` may take a `var` parameter. Raw access into storage becomes a `template` pair only
+  where the project measured the cost of the call and recorded it:
 
   ```nim
-  template `[]`*(m: var Multivector, b: Basis): var float = m.elements[b]
-  template `[]`*(m: Multivector, b: Basis): float = m.elements[b]
+  func `[]`*(m: var Multivector, b: Basis): var float = m.elements[b]
+  func `[]`*(m: Multivector, b: Basis): float = m.elements[b]
   ```
 
 - `iterator` only where lazy enumeration is the concept you expose. Yield `lent` from a
   stored pool, so that the walk never copies.
 - `template` only for a zero-cost substitution that a function cannot express, or where the
-  measured cost of a call is too high. That covers operand reversal, a typedesc alias and raw
-  access into storage. It also covers an alias to an element inside a loop, where a `let`
-  would copy (§7):
+  measured cost of a call is too high. That covers operand reversal and a typedesc alias. It
+  also covers an alias to an element inside a loop, where a `let` would copy (§7):
 
   ```nim
   template `+`*(m: Multivector, s: float): Multivector =
@@ -52,8 +51,8 @@ Escalate only on need.
 
 ## 2. Pragma discipline
 
-- `{.experimental: "strictFuncs".}`: this exact form, before the imports, in every production
-  module. Never as a pushed ordinary pragma.
+- `{.experimental: "strictFuncs".}`: this exact form, before the imports, in every module, a
+  test suite included. Never as a pushed ordinary pragma.
 - `{.experimental: "codeReordering".}`: the mechanism that lets Nim follow the reading order
   of Article I.1. Use it wherever that order puts a use before its definition.
 - `{.compileTime.}`: applied the same way across a whole compile-time family. Never rely on
