@@ -14,6 +14,22 @@ that same table, so the page and this report cannot give one pose two answers:
 | the hands over the crown | above |
 | the arm carried there but not pressing the body | led |
 | the elbow in front of the body, on an arm behind the back | elbow forward |
+| the lead has the follow ahead, the follow has the lead ahead | Face-to-face |
+| the lead has the follow ahead, the follow has the lead at right | Face-to-starboard |
+| the lead has the follow ahead, the follow has the lead behind | Face-to-back |
+| the lead has the follow ahead, the follow has the lead at left | Face-to-port |
+| the lead has the follow at right, the follow has the lead ahead | Starboard-to-face |
+| the lead has the follow at right, the follow has the lead at right | Starboard-to-starboard |
+| the lead has the follow at right, the follow has the lead behind | Starboard-to-back |
+| the lead has the follow at right, the follow has the lead at left | Starboard-to-port |
+| the lead has the follow behind, the follow has the lead ahead | Back-to-face |
+| the lead has the follow behind, the follow has the lead at right | Back-to-starboard |
+| the lead has the follow behind, the follow has the lead behind | Back-to-back |
+| the lead has the follow behind, the follow has the lead at left | Back-to-port |
+| the lead has the follow at left, the follow has the lead ahead | Port-to-face |
+| the lead has the follow at left, the follow has the lead at right | Port-to-starboard |
+| the lead has the follow at left, the follow has the lead behind | Port-to-back |
+| the lead has the follow at left, the follow has the lead at left | Port-to-port |
 
 Read with the model's limits in mind: the shoulder girdle is rigid, so a reach a dancer gets by
 rolling a shoulder forward is refused here; the trunk twists at the waist and does not bend; a torso
@@ -42,7 +58,7 @@ to what a dancer will do without pain.
 
 ## One hand held, the follow turned
 
-Counted from face-to-face, in turns, anticlockwise seen from above positive.  Each row is the pose
+Counted from Face-to-face, in turns, anticlockwise seen from above positive.  Each row is the pose
 the arms carry to that turn; *strain* is how far into the last stretch before a joint's edge the
 worst joint is (1 is the edge).
 
@@ -262,7 +278,7 @@ positive; for L-r the wrap way is negative and the lock way positive.
 
 ## Both hands held
 
-L-r.R-l rests face-to-face; L-l.R-r rests pillion lead (face-to-face its two connections lie through
+L-r.R-l rests Face-to-face; L-l.R-r rests Face-to-back (Face-to-face its two connections lie through
 each other), and its turns count from there.
 
 ### L-r.R-l, low
@@ -314,7 +330,7 @@ Blocks: -1.06, 0.38 m apart: lead's wrist; +1.34, 0.44 m apart: follow's shoulde
 | +1 1/2 | blocked | | | |
 | +2 | blocked | | | |
 
-### L-l.R-r, from pillion lead, low
+### L-l.R-r, from Face-to-back, low
 
 Blocks: -0.94, 0.42 m apart: arm through arm; +0.94, 0.42 m apart: arm through arm.
 
@@ -330,7 +346,7 @@ Blocks: -0.94, 0.42 m apart: arm through arm; +0.94, 0.42 m apart: arm through a
 | +1 1/2 | blocked | | | |
 | +2 | blocked | | | |
 
-### L-l.R-r, from pillion lead, high
+### L-l.R-r, from Face-to-back, high
 
 Blocks: -0.02, 0.42 m apart: follow's wrist; +0.70, 0.80 m apart: arm through arm.
 
@@ -346,7 +362,7 @@ Blocks: -0.02, 0.42 m apart: follow's wrist; +0.70, 0.80 m apart: arm through ar
 | +1 1/2 | blocked | | | |
 | +2 | blocked | | | |
 
-### L-l.R-r, from pillion lead, above
+### L-l.R-r, from Face-to-back, above
 
 Blocks: -1.22, 0.46 m apart: arm through arm; +1.20, 0.42 m apart: follow's shoulder, twist.
 
@@ -370,17 +386,17 @@ a winding of the arms, which no facing says, so the couple are turned to it with
 and then left to stand.  Asked from every distance the couple may stand at, and shown from first
 that holds.
 
-| level | rung | holds | strain | crossings | standing |
-|---|---|---|---|---|---|
-| low | cross (0.50) | yes | 1.00 (at edge) | 0 | 0.74 m |
-| low | diamond (1.00) | no | | | no pose holds |
-| low | swan (1.50) | no | | | no pose holds |
-| high | cross (0.50) | yes | 1.00 (at edge) | 0 | 0.36 m |
-| high | diamond (1.00) | no | | | no pose holds |
-| high | swan (1.50) | no | | | no pose holds |
-| above | cross (0.50) | yes | 0.00 | 1 | 0.36 m |
-| above | diamond (1.00) | no | | | no pose holds |
-| above | swan (1.50) | no | | | no pose holds |
+| level | rung | facing | holds | strain | crossings | standing |
+|---|---|---|---|---|---|---|
+| low | cross (0.50) | Face-to-back | yes | 1.00 (at edge) | 0 | 0.74 m |
+| low | diamond (1.00) | Face-to-face | no | | | no pose holds |
+| low | swan (1.50) | Face-to-back | no | | | no pose holds |
+| high | cross (0.50) | Face-to-back | yes | 1.00 (at edge) | 0 | 0.36 m |
+| high | diamond (1.00) | Face-to-face | no | | | no pose holds |
+| high | swan (1.50) | Face-to-back | no | | | no pose holds |
+| above | cross (0.50) | Face-to-back | yes | 0.00 | 1 | 0.36 m |
+| above | diamond (1.00) | Face-to-face | no | | | no pose holds |
+| above | swan (1.50) | Face-to-back | no | | | no pose holds |
 
 ## The states the whole-cloth page draws
 

@@ -10,7 +10,9 @@
 /* reflect and drive it.                                                  */
 /* ---------------------------------------------------------------------- */
 
-nimInit(performance.now() / 1000);
+// Layout size, not drawing buffer: `resize` has not sized buffer yet, and opening fits frame's
+//   shape alone.
+nimInit(performance.now() / 1000, canvas.clientWidth, canvas.clientHeight);
 let is_axes_shown = true, is_grid_shown = true;
 
 function now() { return performance.now() / 1000; }
@@ -96,7 +98,8 @@ function pickOnClick(handle: number, button: number, is_shifted: boolean) {
 function adoptConstructionSelection() {
   // Pick up outcome every construction path already decided.
   //   Each picked its own new object (see nimAddObject/nimApplyOperation/nimEndDrag's own
-  //   doc comments), or cleared selection (nimLoadDemo/nimUndo/nimRedo on success).
+  //   doc comments), cleared selection (nimLoadDemo), or kept what still names its object
+  //   (nimUndo/nimRedo on success).
   refreshSelectionSnapshot();
   hideSelectionMenu(); // Construction action never itself opens selection menu --
     // matches today's behaviour (add/apply/drag never popped tap-menu either).

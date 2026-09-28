@@ -49,7 +49,7 @@ const
     ## bodies were solid it carried 1.04, arm through torso.
   CHAIN* = @[Link(ends: [(Body.One, Arm.Left), (Body.Two, Arm.Left)]),
              Link(ends: [(Body.One, Arm.Right), (Body.Two, Arm.Right)])]
-    ## Same-name chain, built pillion: hold that stops from every distance at
+    ## Same-name chain, built Face-to-back: hold that stops from every distance at
     ## torso height.  Turn no distance carries has to be asked of hold that has one.
   BEYOND* = 1.2 ## Turn no distance carries that chain; best of them is 0.92, measured
                 ## 2026-09-13 with shoulder girdles giving, against 0.42 before them.
@@ -101,7 +101,7 @@ const
     ("cross-name at +0.5", WOUND, 0.5, false, false),
     ("same-name at rest", CHAIN, 0.0, true, false),
     ("same-name at half, either way", CHAIN, -0.5, true, true),
-    ("free, pillion", FREE, 0.5, false, false),
+    ("free, Face-to-back", FREE, 0.5, false, false),
     ("left to left at quarter", ONE_L, 0.25, false, false),
     ("left to left at half", ONE_L, 0.5, false, false),
     ("same-name at half", CHAIN, -0.5, true, false),
@@ -165,11 +165,12 @@ func engineCommit*(build: string): string =
     if quoted.len == 40 and quoted.allCharsInSet(HexDigits): return quoted
     opens = build.find('"', shut + 1)
 
-proc stamp*(dir = HERE): string =
+proc stamp*(dir = HERE; leaving: openArray[string] = []): string =
   ## Digest of what answers depend on: every `sim/*.nim` by name, in name order, and
-  ## engine's pinned commit.
+  ## engine's pinned commit.  `leaving` names files it passes over.
   var files: seq[string]
-  for f in walkFiles(dir / "sim" / "*.nim"): files.add f
+  for f in walkFiles(dir / "sim" / "*.nim"):
+    if f.extractFilename notin leaving: files.add f
   files.sort
   var h = FNV_OFFSET
   for f in files:

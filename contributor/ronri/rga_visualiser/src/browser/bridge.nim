@@ -200,7 +200,7 @@ var
   SETTINGS_FURNITURE_HELD = none(SettingsFurniture) ## What furniture standing in
     ## `MESHES_FURNITURE` was built from, or none before first build.
     ## See `FrameData.is_furniture_held`.
-  COUNT_GRID_SEGMENTS = 0 ## How many ribbon segments ground grid alone was last built
+  COUNT_GRID_SEGMENTS = 0 ## How many ribbon segments picked planes' lattices were last built
     ## from, axes' fixed share excluded.
     ## Kept beside furniture rather than recounted: held frame draws grid it had and
     ## should report that grid's count rather than zero.
@@ -308,9 +308,10 @@ var
   FLAT_ANCHOR = initFlatFloats(3)
   FLAT_TINT = initFlatFloats(3)
   FLAT_COMET = initFlatFloats(2*POINTS_MARKER_PULSE)
-  FLAT_GRID = initFlatFloats(2)
+  FLAT_RULER = initFlatFloats(2)
   FLAT_PIVOT = initFlatFloats(3)
   FLAT_EYE = initFlatFloats(3)
+  FLAT_MOTOR = initFlatFloats(ord(Basis.high) + 1)
   FLAT_LABEL = initFlatFloats(6)
   FLAT_LABEL_HELD = initFlatFloats(2)
   FLAT_ANCHOR_WORLD = initFlatFloats(3)
@@ -466,10 +467,11 @@ proc placeSeeds(now: float) =
   for handle in 0 ..< SCENE.len: stampBorn(handle, SCENE.bornAt(handle))
 
 
-proc nimInit(now: cfloat) {.exportc.} =
+proc nimInit(now: cfloat; width, height: cint) {.exportc.} =
   ## Build default interactive scene and place camera at default orbit desktop opens on.
+  ##   `width` x `height` is canvas's frame, which opening fits seed scene across.
   placeSeeds(float(now))
-  CAMERA = initCameraDefault()
+  CAMERA = initCameraDefault(int(width), int(height))
   SELECTION.clear()
   HISTORY.initHistory(SCENE, CAMERA)
 
@@ -978,6 +980,11 @@ proc nimShadeAmbient(): cfloat {.exportc.} = cfloat(FRACTION_AMBIENT_SHADE)
   ## Report lit point's night-side brightness, for point fragment shader's uniform.
 
 
+proc nimFactorGuard(): cfloat {.exportc.} = cfloat(FACTOR_GUARD)
+  ## Report how many half-views wide ribbon's guard pyramid is, for ribbon vertex shader's
+  ##   uniform; see `mesh.FACTOR_GUARD`.
+
+
 proc nimRampTree(): seq[float32] {.exportc.} =
   ## Report diagnostics tree's colour ramp, six floats per step.
   ##   Row's label rgb then value rgb, `STEPS_RAMP_TREE` steps from sliver of frame to
@@ -1046,8 +1053,8 @@ proc ensurePlacement() =
         SCENE.geometryOf(handle), SCENE.anchorOverrideAt(handle),
       )
   # Scene's reach moves with same edits, so far clip follows; see `camera.distanceFar`.
-  #   Held here and stamped onto camera at each derivation point, never kept in camera:
-  #   `home` and every path replacing camera value would drop it.
+  #   Held here and passed to each extent, never kept in camera: `home` and every path
+  #   replacing camera value would drop it.
   REACH_SCENE = reachOf(PLACEMENTS, SCENE)
   REVISION_PLACEMENT = some(SCENE.revision)
 
@@ -1061,15 +1068,14 @@ proc ensureViewOverlay(width, height: int) =
   ##     which is what key holds.
   ##   Callers read globals rather than copies: returning pair deep-copies `DrawExtent`
   ##   full of multivectors per call on JS backend, cache hit or not.
-  CAMERA.reach_scene = REACH_SCENE # Stamped as frame build does; see `ensurePlacement`.
   CAMERA.reach_near = REACH_NEAR
   let settings: SettingsOverlay = (
     CAMERA.motor, CAMERA.distance, CAMERA.degrees_field_of_view, CAMERA.reach_near,
-    CAMERA.reach_scene, width, height,
+    REACH_SCENE, width, height,
   )
   if SETTINGS_OVERLAY_HELD.isNone or SETTINGS_OVERLAY_HELD.get != settings:
     SETTINGS_OVERLAY_HELD = some(settings)
-    SCALE_OVERLAY = CAMERA.drawExtentFor(height)
+    SCALE_OVERLAY = CAMERA.drawExtentFor(height, REACH_SCENE)
     VIEW_PROJECTION_OVERLAY = CAMERA.initMatrixViewProjection(float(width)/float(height))
 
 
@@ -1095,6 +1101,14 @@ proc nimCameraTurnAt(
     ScreenPosition(x: float(after_x), y: float(after_y)), int(width), int(height),
     SELECTION.len > 0, reach_selection,
   )
+
+
+proc nimCameraOrbit(turn, rise: cfloat) {.exportc.} =
+  ## Turn eye about pivot by `turn` and `rise` radians, about camera's own axes.
+  ##   Motion outright, not drag's rule, which looks where nothing is picked; see
+  ##   `camera.orbit`. For checks that move view and ask what it rebuilt.
+  TWEEN_CAMERA.abandon()
+  camera.orbit(CAMERA, float(turn), float(rise))
 
 
 proc nimCameraRoll(radians: cfloat) {.exportc.} =
@@ -1199,17 +1213,64 @@ proc nimCameraEye(): FlatBuffer {.exportc.} =
   FLAT_EYE.fill3(cfloat(eye.x), cfloat(eye.y), cfloat(eye.z))
 
 
-proc nimSetCameraAzimuth(v: cfloat) {.exportc.} =
-  ## Rewrite angle about world up, in radians.
-  TWEEN_CAMERA.halt()
-  CAMERA = CAMERA.placedAtAzimuth(float(v))
+proc nimCameraMotor(): FlatBuffer {.exportc.} =
+  ## Report camera's motor as every basis coefficient in basis order, over `FLAT_MOTOR`.
+  ##   Whole multivector, odd grades and all, since view shows it in grid objects use.
+  let m = toMultivector(CAMERA.motor)
+  for b in Basis: FLAT_MOTOR[ord(b)] = cfloat(m[b])
+  FLAT_MOTOR.used = ord(Basis.high) + 1
+  FLAT_MOTOR.view
 
 
-proc nimSetCameraElevation(v: cfloat) {.exportc.} =
-  ## Rewrite angle above horizontal plane, in radians.
-  ##   Clamped to bound `panel.layoutView`'s drag widget uses.
+proc nimSetCameraMotorAt(basis: cint, value: cfloat): bool {.exportc.} =
+  ## Rewrite one coefficient of camera's motor, settling it on motion it then names.
+  ##   One coefficient into live motor, not all sixteen from fields: field shows four
+  ##   digits, and writing all back would round fifteen nobody touched.
+  ##   Reports whether coefficients name motion; where not, camera stands.
+  var typed = toMultivector(CAMERA.motor)
+  typed[Basis(basis)] = float(value)
+  let settled = motorRigid(typed)
+  if settled.isNone: return false
   TWEEN_CAMERA.halt()
-  CAMERA = CAMERA.placedAtElevation(float(v))
+  CAMERA = CAMERA.placedAtMotor(settled.get)
+  true
+
+
+proc readingText(write: proc(line: var openArray[char], cursor: var int)): cstring =
+  ## Run one reading's appender into fresh line, and hand back text it wrote.
+  var line: array[32, char]
+  var cursor = 0
+  write(line, cursor)
+  finishChars(line, cursor)
+  cstring(toText(line))
+
+
+proc nimCameraAzimuthReading(): cstring {.exportc.} =
+  ## Report angle about world up, in degrees with its unit, as view section reads it.
+  readingText(proc(line: var openArray[char], cursor: var int) =
+    appendDegrees(line, cursor, CAMERA.azimuth))
+
+
+proc nimCameraElevationReading(): cstring {.exportc.} =
+  ## Report angle above level, in degrees with its unit, as view section reads it.
+  readingText(proc(line: var openArray[char], cursor: var int) =
+    appendDegrees(line, cursor, CAMERA.elevation))
+
+
+proc nimCameraSpeedReading(): cstring {.exportc.} =
+  ## Report free flight's speed right now, as multiple of speed of light with its unit.
+  readingText(proc(line: var openArray[char], cursor: var int) =
+    appendSpeedLight(line, cursor, INTERACTION.speedFlying(CAMERA)/SPEED_LIGHT))
+
+
+proc nimPlaceCamera(eye_x, eye_y, eye_z, pivot_x, pivot_y, pivot_z: cfloat) {.exportc.} =
+  ## Stand camera at eye, facing pivot, level; lens untouched. See `camera.stanceFacing`.
+  ##   One place names stance whole, since angles name none and pivot alone names half.
+  TWEEN_CAMERA.halt()
+  CAMERA = CAMERA.placed(stanceFacing(
+    Position(x: float(eye_x), y: float(eye_y), z: float(eye_z)),
+    Position(x: float(pivot_x), y: float(pivot_y), z: float(pivot_z)),
+  ))
 
 
 proc nimSetCameraDistance(v: cfloat) {.exportc.} =
@@ -1221,19 +1282,6 @@ proc nimSetCameraDistance(v: cfloat) {.exportc.} =
 
 proc nimSetCameraFov(v: cfloat) {.exportc.} = CAMERA.degrees_field_of_view = float(v)
   ## Rewrite vertical field of view, in degrees.
-
-proc nimSetCameraPivot(x, y, z: cfloat) {.exportc.} =
-  ## Rewrite point camera orbits around.
-  TWEEN_CAMERA.halt()
-  CAMERA = CAMERA.placedAtPivot(Position(x: float(x), y: float(y), z: float(z)))
-
-
-proc nimCameraLimits(): seq[float32] {.exportc.} =
-  ## Report bounds camera placement is held to, for caller offering numeric input.
-  ##   Elevation either side of horizon, and one floor orbit distance has.
-  ##   No third entry: nothing bounds how far out camera may orbit; see
-  ##   `camera.DISTANCE_LIMIT_NEAR`.
-  @[cfloat(ELEVATION_LIMIT), cfloat(DISTANCE_LIMIT_NEAR)]
 
 
 
@@ -1350,22 +1398,18 @@ proc nimAnimationMilliseconds(): cint {.exportc.} = cint(ANIMATION_MILLISECONDS)
 proc nimUndo(): bool {.exportc.} =
   ## Move scene back one step on its edit timeline; report whether there was earlier step.
   ##   Puts view back where that step was made from.
-  ##   Clears selection on success, since restored snapshot's handle numbers may not match.
-  ##   Halts standing camera tween too, or aim it carried drags view off placement just
-  ##   restored; same pairing `panel.stepHistory` makes.
-  result = HISTORY.undo(SCENE, CAMERA)
-  if result:
-    SELECTION.clear()
-    TWEEN_CAMERA.halt()
+  ##   Keeps every pick that still names its object, and tween adopts next aim as
+  ##   delivered, or aim it carried drags view off placement just restored; same pairing
+  ##   `panel.stepHistory` makes.
+  result = HISTORY.undo(SCENE, CAMERA, SELECTION)
+  if result: TWEEN_CAMERA.adoptNext()
 
 
 proc nimRedo(): bool {.exportc.} =
   ## Move scene forward one step on its edit timeline; report whether there was later step.
-  ##   View and all; clears selection and halts tween as `nimUndo` does.
-  result = HISTORY.redo(SCENE, CAMERA)
-  if result:
-    SELECTION.clear()
-    TWEEN_CAMERA.halt()
+  ##   View and all; keeps selection and adopts next aim as `nimUndo` does.
+  result = HISTORY.redo(SCENE, CAMERA, SELECTION)
+  if result: TWEEN_CAMERA.adoptNext()
 
 
 proc nimCanUndo(): bool {.exportc.} =
@@ -1525,8 +1569,9 @@ proc nimKeyBound(code: cstring): bool {.exportc.} =
   keyFor($code).isSome
 
 
-proc nimKeyDown(code: cstring): cint {.exportc.} =
+proc nimKeyDown(code: cstring; width, height: cint): cint {.exportc.} =
   ## Take one key press; report handle caller should select, or `SLOT_NONE`.
+  ##   `width` x `height` is canvas's frame, which `home` fits opening to.
   ##   Holds it for `nimDriveHeld`, and carries out whatever it does at press.
   ##   One entry point for both kinds of binding, so browser scripts carries no opinion about
   ##   which keys move view.
@@ -1540,7 +1585,7 @@ proc nimKeyDown(code: cstring): cint {.exportc.} =
     # Abandon tween: key moving camera is camera move like any other.
     TWEEN_CAMERA.abandon()
     return SLOT_NONE
-  let handle = applyAction(INTERACTION, CAMERA, SCENE, action.get)
+  let handle = applyAction(INTERACTION, CAMERA, SCENE, action.get, int(width), int(height))
   # Let go of goal standing offer holds, so next frame aims afresh.
   #   Framing is standing offer's job (`framing.offerAim`).
   if action.get == KeyAction.FrameSelection: TWEEN_CAMERA.release()
@@ -1784,31 +1829,20 @@ proc nimEndDrag(now: cfloat): DragResult {.exportc.} =
   )
 
 
-proc nimGridMetrics(width, height: cint): FlatBuffer {.exportc.} =
-  ## Report `[size_cell, world_per_pixel]` for ground grid as drawn right now.
-  ##   View over `FLAT_GRID`, refilled per frame.
-  ##   Cell's size in world units, and how much world one screen pixel spans at height
-  ##   grid is laid at.
-  ##   `[0, 0]` where no ground is drawn (eye above fog's reach), read as "no scale to
-  ##   show".
-  ##   Exported as `nimRenderLineWidths` is: number reader is shown has to be number grid
-  ##   was built with; both from `mesh.sizeCellGridAt`, which `addGrid` reads.
-  ##   Through `ensureViewOverlay`, so extent is overlay's own, built at CSS height.
-  ##     Scale bar is drawn in pixels pointer works in; see browser scripts.
+proc nimRuler(width, height: cint): FlatBuffer {.exportc.} =
+  ## Report `[span, pixels]` of scale bar right now; see `camera.rulerFor`.
+  ##   View over `FLAT_RULER`, refilled per call. `[0, 0]` where nothing is measured.
+  ##   Through `ensureViewOverlay`, so extent is overlay's own, built at CSS height:
+  ##   bar is drawn in pixels pointer works in; see browser scripts.
   ensureViewOverlay(int(width), int(height))
-  template scale: DrawExtent = SCALE_OVERLAY
-  let size_cell = sizeCellGridAt(scale.extentFurniture, scale)
-  if size_cell.isNone: return FLAT_GRID.fill2(0.0'f32, 0.0'f32)
-  # Measure at ground point below eye, where reported cell is laid.
-  #   Pixel spans more world further away.
-  let below = position(wedgeAnti(
-    wedge(scale.eye_point, toMultivector(Direction(x: 0, y: 0, z: -1))), groundPlane()
-  ))
-  # Pass place straight through, since `Position` bound to `let` is `nimCopy` per frame.
-  #   Read in emitted JS.
-  let world_per_pixel =
-    if below.isSome: worldPerPixelAt(below.get, scale) else: worldPerPixelAt(scale.eye, scale)
-  FLAT_GRID.fill2(float32(size_cell.get), float32(world_per_pixel))
+  let (span, pixels) = CAMERA.rulerFor(SCALE_OVERLAY)
+  FLAT_RULER.fill2(float32(span), float32(pixels))
+
+
+proc nimRulerReading(span: cfloat): cstring {.exportc.} =
+  ## Report what scale bar claims, as its label reads; see `wording.appendRuler`.
+  readingText(proc(line: var openArray[char], cursor: var int) =
+    appendRuler(line, cursor, float(span)))
 
 
 proc nimAnchorScreen(handle, width, height: cint): FlatBuffer {.exportc.} =
@@ -2141,7 +2175,7 @@ type FrameData = object
     ## Walked in sequence so two veils blend in order scene emitted them; see
     ## `mesh.VeilRuns`.
   view_projection: seq[float32]
-  furn_ribbon_verts: FlatBuffer ## Ground grid and world axes alone, drawn first.
+  furn_ribbon_verts: FlatBuffer ## Lattices and world axes alone, drawn first.
     ## Built at own thinner width (`mesh.WIDTH_LINE_FURNITURE`), since ribbon carries
     ## width as geometry.
     ## Empty where `is_furniture_held`, meaning "furniture you already have".
@@ -2195,10 +2229,10 @@ type FrameData = object
     ##   Carried on `timings.FrameRecord`.
   ms_grid, ms_axes: float32
     ## Record what two halves of scenery cost, inside `ms_furniture`.
-    ##   Axes are three lines however far camera stands; grid is however many ground reach
-    ##   asks for.
+    ##   Axes are three lines however far camera stands; lattices are however many lines
+    ##   selected planes ask for.
   count_grid_segments: int
-    ## Count ribbon records ground grid is drawn from, one per lattice line.
+    ## Count ribbon records lattices are drawn from, one per lattice line.
     ##   Bounded per family by `mesh.LINES_GRID_MAX`.
     ##   Axes excluded, so budgeted number matches its budget.
   ms_points, ms_lines, ms_planes, ms_sky, ms_preview, ms_selected: float32
@@ -2329,7 +2363,6 @@ proc nimBuildFrame(
   #   device-pixel-ratio multiple.
   # Place first, so scene's reach is this frame's before extent reads far clip.
   ensurePlacement()
-  CAMERA.reach_scene = REACH_SCENE
   # Read local scale once for this frame, before extent reads clip planes off it.
   #   Walks every placement, so here rather than in `ensureViewOverlay`; see `REACH_NEAR`.
   REACH_NEAR = reachNearOf(PLACEMENTS, SCENE, CAMERA.eye, CAMERA.frame.forward)
@@ -2337,9 +2370,9 @@ proc nimBuildFrame(
   # Decide records' origin after scale, since bound is read off near clip.
   #   Both holds carry motor, so frame moving this origin rebuilds both anyway.
   ORIGIN_RECORDS = CAMERA.originHeld(ORIGIN_RECORDS)
-  let scale = CAMERA.drawExtentFor(int(height_pixels))
+  let scale = CAMERA.drawExtentFor(int(height_pixels), REACH_SCENE)
   # Derive frustum once, for cull of every point below; see `isPointInView`.
-  let bounds = CAMERA.viewBoundsFor(scale, float(aspect))
+  let bounds = CAMERA.viewBoundsFor(scale, float(aspect), REACH_SCENE)
   # Recover width of centred box from aspect, since this build is handed that.
   let preview = staged()
   TWEEN_CAMERA.offerAim(
@@ -2352,8 +2385,10 @@ proc nimBuildFrame(
   #   Everything `drawExtentFor` reads, and two toggles: frame whose settings match is
   #   drawing same vertices and may keep them.
   #   Compared exactly: question is "did anything move at all".
-  let settings_furniture =
-    settingsFurnitureFor(CAMERA, int(height_pixels), is_axes_shown, is_grid_shown)
+  let settings_furniture = settingsFurnitureFor(
+    CAMERA, int(height_pixels), REACH_SCENE, is_axes_shown, is_grid_shown, SCENE.revision,
+    SELECTION.revision,
+  )
   let is_furniture_held =
     SETTINGS_FURNITURE_HELD.isSome and SETTINGS_FURNITURE_HELD.get == settings_furniture
   let ms_after_camera = performanceNow()
@@ -2364,11 +2399,12 @@ proc nimBuildFrame(
   if not is_furniture_held:
     SETTINGS_FURNITURE_HELD = some(settings_furniture)
     clearMeshes(MESHES_FURNITURE, ORIGIN_RECORDS)
-    # Clock grid and axes apart: axes are three lines, grid is however many ground reaches.
+    # Clock lattice and axes apart: axes are three lines, lattice is however many fog
+    #   reaches on each plane picked.
     let ms_before_grid = performanceNow()
     if is_grid_shown:
-      addGrid(MESHES_FURNITURE, SCRATCH, scale.extentFurniture, scale)
-    # Count between two, so figure is grid's own; see `mesh.addSegmentAcross`.
+      addLatticesPicked(MESHES_FURNITURE, SCRATCH, scale, SCENE, SELECTION)
+    # Count between two, so figure is lattice's own; see `mesh.addSegmentAcross`.
     COUNT_GRID_SEGMENTS = MESHES_FURNITURE.ribbons.count
     let ms_before_axes = performanceNow()
     if is_axes_shown:

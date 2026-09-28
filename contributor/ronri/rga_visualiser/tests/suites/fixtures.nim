@@ -41,9 +41,30 @@ const
     ## Widen tolerance for values that passed through 32-bit storage.
     ##   Matrices and vertices are single precision, as that is what GPU consumes,
     ##   so comparing them against double-precision geometry at full tolerance is wrong.
+  WIDTH_OPENED* = 1200
+  HEIGHT_OPENED* = 800
+    ## Frame most suites open camera on: wide enough that opening stands its least, 19 units.
 
 
 let ORIGIN* = Position(x: 0, y: 0, z: 0)
+
+
+func stanceAround*(pivot: Position; distance: float; out_to: Direction): CameraStance =
+  ## Build stance facing `pivot` from `distance` away, along `out_to` from pivot to eye.
+  ##   What case names: where view looks, how far off, and from which side. Level, as
+  ##   `camera.stanceFacing` is; `out_to` need not be unit.
+  stanceFacing(pivot + (distance/norm(out_to))*out_to, pivot)
+
+
+proc randOutTo*(): Direction =
+  ## Draw direction from pivot out to eye, from every side, never too short to name one.
+  while result.norm < 0.1:
+    result = Direction(x: rand(-1.0 .. 1.0), y: rand(-1.0 .. 1.0), z: rand(-1.0 .. 1.0))
+
+
+func cameraAround*(pivot: Position; distance: float; out_to: Direction): Camera =
+  ## Build camera at `stanceAround`, through 45 degree lens.
+  initCamera(eye = pivot + (distance/norm(out_to))*out_to, pivot = pivot)
 
 
 proc randPosition*(): Position =
@@ -126,6 +147,15 @@ func `=~`*(p, q: Position): bool =
 func `=~`*(d, e: Direction): bool =
   ## Compare approximate equality between directions.
   d.x =~ e.x and d.y =~ e.y and d.z =~ e.z
+
+
+func `=~`*(a, b: CameraStance): bool =
+  ## Compare approximate equality between stances, coefficient by coefficient.
+  ##   Pivot is read off sight, so stance slid onto pivot it stands at moves by rounding.
+  let (m, n) = (a.motor, b.motor)
+  m.turn_x =~ n.turn_x and m.turn_y =~ n.turn_y and m.turn_z =~ n.turn_z and
+    m.slide_x =~ n.slide_x and m.slide_y =~ n.slide_y and m.slide_z =~ n.slide_z and
+    m.scalar =~ n.scalar and m.antiscalar =~ n.antiscalar and a.distance =~ b.distance
 
 
 func isNear*(a, b: float): bool =

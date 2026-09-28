@@ -21,7 +21,7 @@
 ##   Two rests, both page's own choice: cross-name holds rest face to face, and
 ##     same-name holds are also built face to face so turns count as sheet
 ##     counts.  Same-name *pair* is exception: face to face its two connections
-##     lie through each other, so it is built Pillion -- collected there, as
+##     lie through each other, so it is built Face-to-back -- collected there, as
 ##     couple would -- and its turns count from it.
 ##   Two ways of one sweep stand where each of them wants, so frame at nought
 ##     turns is reached from two stances and page shows step between them.  That
@@ -56,7 +56,7 @@ func linksOf(hold: string): seq[Link] =
     result.add Link(ends: [(Body.One, a), (Body.Two, b)])
 
 func restsAway(hold: string): bool =
-  ## Same-name pair is built Pillion; every other hold Face-to-face.
+  ## Same-name pair is built Face-to-back; every other hold Face-to-face.
   hold.contains('.') and sameName(hold)
 
 

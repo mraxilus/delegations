@@ -79,8 +79,8 @@ function renderFrame(now_seconds: number) {
   recordPhaseTime('hover', data.ms_hover_pick);
   recordPhaseTime('furniture', data.ms_furniture);
   // Scenery's own two halves, which bridge has clocked apart since grid's.
-  //   segment budget went in: axes are three lines at any distance, grid however
-  //   many ground reach asks for, and only split says which of them moved.
+  //   segment budget went in: axes are three lines at any distance, lattices however
+  //   many lines selected planes ask for, and only split says which of them moved.
   recordPhaseTime('grid', data.ms_grid);
   recordPhaseTime('axes', data.ms_axes);
   recordPhaseTime('scene', data.ms_scene);
@@ -126,6 +126,11 @@ function renderFrame(now_seconds: number) {
   gl.uniform1f(ribbon_uniforms.fog_full, data.fog_radius_full);
   gl.uniform1f(ribbon_uniforms.fog_gone, data.fog_radius_gone);
   gl.uniform1f(ribbon_uniforms.depth_log, data.camera_depth_log);
+  // Camera's own axes and guard's width, which ribbon is cut to; see `mesh.FACTOR_GUARD`.
+  gl.uniform3f(ribbon_uniforms.right,
+    data.camera_right_x, data.camera_right_y, data.camera_right_z);
+  gl.uniform3f(ribbon_uniforms.up, data.camera_up_x, data.camera_up_y, data.camera_up_z);
+  gl.uniform1f(ribbon_uniforms.factor_guard, FACTOR_GUARD);
 
   // World furniture first, with normal depth test/write.
   //   One record segment now -- kept rather than re-uploaded where bridge says furniture is
@@ -160,6 +165,9 @@ function renderFrame(now_seconds: number) {
   gl.uniform1f(ring_uniforms.tangent, data.camera_tangent_half_view);
   gl.uniform1f(ring_uniforms.height, data.camera_height_pixels);
   gl.uniform1f(ring_uniforms.depth_log, data.camera_depth_log);
+  gl.uniform3f(ring_uniforms.right, data.camera_right_x, data.camera_right_y, data.camera_right_z);
+  gl.uniform3f(ring_uniforms.up, data.camera_up_x, data.camera_up_y, data.camera_up_z);
+  gl.uniform1f(ring_uniforms.factor_guard, FACTOR_GUARD);
   if (!data.is_scene_held) count_ring_held = uploadBuffer(data.ring_records, vbo.ring, 14);
   const count_ring = count_ring_held;
   drawRings(count_ring, data.ring_over, false);

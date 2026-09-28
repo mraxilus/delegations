@@ -211,7 +211,7 @@ const
   CAPACITY_ARENA_SWAP* {.define: "visualiser.capacity_arena_swap".} = 256*1024
     ## Set each half of frame swap pair.
     ##   Two blocks: pair's promise is that last frame's bytes are still there to read.
-    ##   Sized from loops that carve it: largest is ground grid's, bounded by
+    ##   Sized from loops that carve it: largest is lattice's, bounded by
     ##   `mesh.LINES_GRID_MAX` chords, well under one half; figures in `PROVENANCE.md`.
   FRAMES_DRIVEN* {.define: "visualiser.frames_driven".} = 400
     ## Draw this many frames for scripted run given no `--frames` of its own.
@@ -249,7 +249,7 @@ var
   SETTINGS_FURNITURE_HELD = none(SettingsFurniture)
     ## Hold what `MESHES_FURNITURE` stands for, or none before first frame.
     ##   Still camera then keeps grid it has rather than rebuilding it every frame.
-  MESHES_FURNITURE: MeshSet ## Ground grid and world axes alone, drawn in own pass first.
+  MESHES_FURNITURE: MeshSet ## Lattices and world axes alone, drawn in own pass first.
     ## Every object's translucent veil then blends over reference marks.
     ## Thinner width (`mesh.WIDTH_LINE_FURNITURE`) is geometry, not draw setting; this
     ## ordering needs pass.
@@ -292,7 +292,7 @@ var GIF_FRAMES =
 var TIMINGS_FRAME_MILLISECONDS: array[FRAMES_TIMING_MAX, float32]
 # Scene revision camera's reach was last measured at, and reach itself; none before first.
 #   Reach is one placement per object, so it is measured on edit rather than per frame, and
-#   stamped onto camera each frame rather than kept in it: `home` replaces camera value.
+#   passed to each extent rather than kept in camera: `home` replaces camera value.
 var REVISION_REACH = none(int)
 var REACH_SCENE = 0.0
 # Placing side for every live handle, held as browser holds it; see `bridge.ensurePlacement`.
@@ -477,16 +477,19 @@ proc assembleMeshes(
   #   frame.
   let scratch = ARENA_SWAP.current.push[:DrawScratch](1)
   # Derive frustum once, for cull of every point below; see `tessellate.isPointInView`.
-  let bounds = some(camera.viewBoundsFor(scale, float(width)/float(max(height, 1))))
+  let bounds = some(
+    camera.viewBoundsFor(scale, float(width)/float(max(height, 1)), REACH_SCENE)
+  )
   # Hold furniture on unchanged frames, by same rule and tuple as browser.
   let settings_furniture = settingsFurnitureFor(
-    camera, height, panel.is_axes_shown, panel.is_grid_shown,
+    camera, height, REACH_SCENE, panel.is_axes_shown, panel.is_grid_shown, scene.revision,
+    panel.selection.revision,
   )
   if SETTINGS_FURNITURE_HELD.isNone or SETTINGS_FURNITURE_HELD.get != settings_furniture:
     SETTINGS_FURNITURE_HELD = some(settings_furniture)
     MESHES_FURNITURE.clearMeshes(ORIGIN_RECORDS)
     if panel.is_grid_shown:
-      MESHES_FURNITURE.addGrid(scratch[0], scale.extentFurniture, scale)
+      MESHES_FURNITURE.addLatticesPicked(scratch[0], scale, scene, panel.selection)
     if panel.is_axes_shown:
       MESHES_FURNITURE.addAxes(scratch[0], scale.extentFurniture, scale)
 
@@ -752,6 +755,45 @@ proc drawChoiceMenu(interaction: Interaction, scene: Scene) =
     )
 
 
+const
+  # Take page's scale bar: `--ink-faint` bracket and `--ink-muted` label, in its corner.
+  #   Check siblings when changing one: `shell.html`'s `.ruler` block and `:root`.
+  TONE_RULER_BAR = (red: 0.357'f32, green: 0.400'f32, blue: 0.451'f32)
+  TONE_RULER_LABEL = (red: 0.545'f32, green: 0.588'f32, blue: 0.639'f32)
+  MARGIN_RULER = 14.0'f32
+    ## Stand bar this far in from view's left and bottom edges, in pixels, as page does.
+  HEIGHT_RULER_BAR = 5.0'f32
+    ## Rise bar's end ticks this far, in pixels.
+  HEIGHT_RULER_LABEL = 14.0'f32
+    ## Leave this much of corner for bar's label under it, in pixels, gap included.
+
+
+proc drawRuler(camera: Camera; scale: DrawExtent; height: int) =
+  ## Draw scale bar in view's lower left corner: length of world at its true screen length.
+  ##   Same span and label page shows, both read from `camera.rulerFor`, so two front-ends
+  ##   claim one length for one view. Nothing where nothing is measured.
+  ##   Bracket rather than filled block, as page's: ticks are where measurement starts and
+  ##   stops. Label under it, centred on it.
+  let (span, pixels) = camera.rulerFor(scale)
+  if span <= 0.0: return
+  let
+    x_start = MARGIN_RULER
+    x_end = MARGIN_RULER + cfloat(pixels)
+    y_label = cfloat(height) - MARGIN_RULER - 0.5*HEIGHT_RULER_LABEL
+    y_bar = cfloat(height) - MARGIN_RULER - HEIGHT_RULER_LABEL
+    ink = TONE_RULER_BAR
+  gui.overlayLine(x_start, y_bar, x_end, y_bar, ink.red, ink.green, ink.blue, 1.0, 1.0)
+  for x in [x_start, x_end]:
+    gui.overlayLine(
+      x, y_bar, x, y_bar - HEIGHT_RULER_BAR, ink.red, ink.green, ink.blue, 1.0, 1.0,
+    )
+  var line: array[32, char]
+  gui.overlayText(
+    0.5*(x_start + x_end), y_label, TONE_RULER_LABEL.red, TONE_RULER_LABEL.green,
+    TONE_RULER_LABEL.blue, 1.0, buildChars(line, appendRuler(line, cursor, span)),
+  )
+
+
 proc drawInteractionOverlay(
   interaction: Interaction; scene: Scene; camera: Camera; view_projection: Matrix4;
   width, height: int; scale: DrawExtent
@@ -866,7 +908,7 @@ proc renderFrame(
     #   either button greys out where its side of timeline is empty.
     if not stepHistory(panel, scene, camera, HISTORY, is_undo):
       panel.say(stepMessage(is_undo), now)
-  layoutPanel(panel, scene, camera, HISTORY, now)
+  layoutPanel(panel, scene, camera, HISTORY, interaction.speedFlying(camera), now)
   # Row of constant controls floats over scene beside panel, as browser's chip row does.
   layoutChipRow(panel, scene, camera, HISTORY, now)
   layoutHelp(panel, path_help)
@@ -886,14 +928,13 @@ proc renderFrame(
           scene.geometryOf(handle), scene.anchorOverrideAt(handle),
         )
     REVISION_REACH = some(scene.revision)
-  camera.reach_scene = REACH_SCENE
   # Read local scale once for this frame, before extent reads clip planes off it.
   REACH_NEAR = reachNearOf(PLACEMENTS, scene, camera.eye, camera.frame.forward)
   camera.reach_near = REACH_NEAR
   # Decide records' origin after scale, since bound is read off near clip.
   ORIGIN_RECORDS = camera.originHeld(ORIGIN_RECORDS)
 
-  let scale = camera.drawExtentFor(int(height))
+  let scale = camera.drawExtentFor(int(height), REACH_SCENE)
   offerCameraAim(
     panel, scene, camera, scale, now, int(width), int(height), interaction.isMovingCamera
   )
@@ -932,6 +973,8 @@ proc renderFrame(
   drawInteractionOverlay(
     interaction, scene, camera, view_projection, int(width), int(height), scale
   )
+  # Bar belongs to reader's view, and not to frame storyboard captures.
+  if interaction.is_enabled: drawRuler(camera, scale, int(height))
 
   gui.frameEnd()
   (int(width), int(height))
@@ -1083,7 +1126,9 @@ proc handleEvent(
         interaction.holdKey(key.get)
         let action = actionFor(key.get)
         if action.isSome:
-          let index_selected = interaction.applyAction(camera, scene, action.get)
+          let index_selected = interaction.applyAction(
+            camera, scene, action.get, width_frame, height_frame
+          )
           if index_selected.isSome:
             # Add rather than replace under shift, as shift-click does.
             if is_shifted: panel.selection.toggle(index_selected.get)
@@ -1183,7 +1228,7 @@ proc handleEvent(
     #   Frame's size is passed because sight ray needs it before frame reports it again.
     interaction.dollyAtCursor(
       camera, scene, pow(FACTOR_DOLLY, -float(event.wheel.y)),
-      camera.drawExtentFor(height_frame),
+      camera.drawExtentFor(height_frame, REACH_SCENE),
       camera.initMatrixViewProjection(float(width_frame)/float(height_frame)),
       width_frame, height_frame, panel.selection.len > 0,
     )
@@ -1523,7 +1568,7 @@ proc positionOverSky(
   ##   Scanned rather than hard-coded: which patch is bare sky depends on scene and camera,
   ##   and fixed pixel would quietly start testing something else.
   const STEP_SCAN = 40
-  let scale = camera.drawExtentFor(height)
+  let scale = camera.drawExtentFor(height, REACH_SCENE)
   for y in countup(STEP_SCAN, height - STEP_SCAN, STEP_SCAN):
     for x in countup(STEP_SCAN, width - STEP_SCAN, STEP_SCAN):
       let at = ScreenPosition(x: float(x), y: float(y))
@@ -1829,7 +1874,7 @@ proc runInteractive(
     if options.is_sky_driven:
       driveSky(scene, camera, PIXELS_WIDTH, PIXELS_HEIGHT, count_drawn, now)
     if options.is_drag_driven or options.is_select_driven or options.is_undo_driven:
-      let scale_driven = camera.drawExtentFor(PIXELS_HEIGHT)
+      let scale_driven = camera.drawExtentFor(PIXELS_HEIGHT, REACH_SCENE)
       if options.is_drag_driven:
         driveDrag(
           scene, interaction, camera, PIXELS_WIDTH, PIXELS_HEIGHT, count_drawn,
@@ -2005,9 +2050,7 @@ proc runStoryboard(
   #   step creating it and one after, and grays out once two steps have passed.
   #   Only step's real operands count: unary operation's second index is placeholder (see
   #   `Step.index_second`).
-  let
-    azimuth_default = camera.azimuth
-    elevation_default = camera.elevation
+  let heading_default = camera.frame.forward
   # Hold which handles this step and one before read or wrote, as flags per handle.
   #   Same fixed-capacity kind `are_dimmed` has, so loop allocates nothing.
   var are_operative_previous: array[OBJECTS_MAX, bool]
@@ -2026,12 +2069,12 @@ proc runStoryboard(
     are_operative_previous = are_operative
 
     # Aim capture at horizon object, then restore default after.
-    #   Finite object is anchored where fixed demo angle frames it; horizon object stands
+    #   Finite object is anchored where default heading frames it; horizon object stands
     #   wherever construction landed it.
     #   Representative point for line's great circle, since aiming along normal puts ring
     #   at frame's edge; plane at horizon needs no aiming; lens stays default.
-    camera = camera.placed(stanceTurntable(
-      camera.pivot, camera.distance, azimuth_default, elevation_default
+    camera = camera.placed(stanceFacing(
+      camera.pivot + (-camera.distance)*heading_default, camera.pivot
     ))
     # Settle instantly, not eased: captured frame must never show half-finished pan.
     #   Same `framing` rule interactive path uses.
@@ -2151,7 +2194,7 @@ proc main() =
   let renderer = initRenderer()
   var
     scene = initScene()
-    camera = initCameraDefault()
+    camera = initCameraDefault(PIXELS_WIDTH, PIXELS_HEIGHT)
     panel = initPanel(
       if len(options.path_screenshot) > 0: options.path_screenshot
       else: PATH_EXPORT_DEFAULT

@@ -92,6 +92,13 @@ func centroidFolded*(centroid: Multivector, place: Multivector): Multivector =
   add(centroid, place)
 
 
+func innerOf*(m, n: Multivector): float =
+  ## Read scalar of inner product between bulks, `𝐦 ∙ 𝐧`.
+  ##   For two weightless points, i.e. directions, their lengths times cosine of angle between
+  ##   them: sign says which side of each other they stand, and unit pair reads cosine alone.
+  (m ∙ n)[Basis.scalar]
+
+
 func distanceBetween*(p, q: Multivector): float =
   ## Measure distance between two unit-weight points.
   ##   Weight norm of joining line, i.e. `‖p ∧ q‖∘`, read from norm's `scalarAnti` handle.
@@ -101,7 +108,6 @@ func distanceBetween*(p, q: Multivector): float =
 
 func levelPlaneThrough*(point: Multivector): Multivector =
   ## Build horizontal plane through `point`, oriented so `depthAgainst` reads up as positive.
-  ##   Level reader works at when camera pivots `point`.
   ##   Joined y-then-x: x∧y join reads point one unit above at -1, y∧x at +1, and height
   ##   is what every caller means. Unitized for `depthAgainst`'s contract.
   ##   Axes written as algebra's own weightless points, `e2` then `e1`, not lifted from
@@ -110,7 +116,7 @@ func levelPlaneThrough*(point: Multivector): Multivector =
 
 
 func groundPlane*(): Multivector =
-  ## Build ground, `z = 0`, oriented up-positive.
+  ## Build plane `z = 0`, oriented up-positive.
   ##   `levelPlaneThrough` at origin: one construction, two heights, so two spellings
   ##   cannot drift. Origin is unit-weight point with no bulk, `e4`.
   levelPlaneThrough(1.0.e4)

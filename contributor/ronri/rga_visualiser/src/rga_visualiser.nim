@@ -13,7 +13,7 @@
 ##   [euclid, objects] -> boundary
 ##   euclid -> mesh
 ##   [boundary, mesh, projections, timings] -> tessellate
-##   [boundary, motors, tessellate] -> camera
+##   [boundary, motors, projections, tessellate] -> camera
 ##   [boundary, format, projections, tessellate] -> scene
 ##   [camera, scene] -> history
 ##   [boundary, camera, euclid, neighbourhood, objects, scene, starfield, tessellate]

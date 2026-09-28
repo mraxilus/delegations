@@ -843,52 +843,31 @@ function drawExceedance() {
   }
 }
 
-// Scale bar's own reading, as map carries one: span of ground drawn at its true.
-//   screen length, with distance it covers written under it, and **ground grid's
-//   own cell size beside that** -- which is what makes ruled ground measurable rather
-//   than decorative. Span is chosen 1-2-5 by decade to land near
-//   `PIXELS_RULER_WANTED`, way every map scale is stepped: bar tied rigidly to one
-//   cell runs off screen when camera is close and shrinks to nothing when it is
-//   far, because cell steps by decades while projection does not.
-//   Cell comes from `nimGridMetrics`, which reads same `mesh.sizeCellGridAt`
-//   grid is laid with; nothing here re-derives cell size of its own.
+// Scale bar's own reading, as map carries one: span of world at its true screen length,
+//   with distance it covers written under it. Main instrument now that no ground is ruled:
+//   one length and its label, both from bridge.
+//   Span and pixels come from `nimRuler`, which reads `camera.rulerFor`, and label from
+//   `nimRulerReading`; nothing here re-derives either, so window draws same bar.
 const ruler = elementIfPresent('ruler');
 const ruler_bar = elementById('ruler-bar');
 const ruler_label = elementById('ruler-label');
-const PIXELS_RULER_WANTED = 130;
-const STEPS_RULER = [1, 2, 5];
-// Reading bar was last laid out for, so still ground formats and writes nothing.
+// Reading bar was last laid out for, so still view formats and writes nothing.
 //   Both `NaN` before first tick: equal to nothing, so first comparison always writes.
-let cell_ruler_written = NaN;
-let scale_ruler_written = NaN;
+let span_ruler_written = NaN;
+let pixels_ruler_written = NaN;
 function refreshRuler() {
   if (ruler === null) return;
   // Observer's size, not canvas's own; see `sizeObserved`.
-  const metrics = nimGridMetrics(size_canvas.width, size_canvas.height);
-  const size_cell = flatAt(metrics, 0), world_per_pixel = flatAt(metrics, 1);
-  if (size_cell === cell_ruler_written && world_per_pixel === scale_ruler_written) return;
-  cell_ruler_written = size_cell;
-  scale_ruler_written = world_per_pixel;
-  // No ground drawn -- eye above fog's own reach -- so there is nothing to measure.
-  if (!(size_cell > 0) || !(world_per_pixel > 0)) { ruler.hidden = true; return; }
-  const world_wanted = PIXELS_RULER_WANTED * world_per_pixel;
-  const decade = Math.pow(10, Math.floor(Math.log10(world_wanted)));
-  let span = decade;
-  for (const step of STEPS_RULER) {
-    // Largest 1-2-5 step still at or under target: bar that overshoots crowds.
-    //   corner it sits in, while one that undershoots is only harder to read against.
-    if (step * decade <= world_wanted) span = step * decade;
-  }
+  const metrics = nimRuler(size_canvas.width, size_canvas.height);
+  const span = flatAt(metrics, 0), pixels = flatAt(metrics, 1);
+  if (span === span_ruler_written && pixels === pixels_ruler_written) return;
+  span_ruler_written = span;
+  pixels_ruler_written = pixels;
+  // Nothing measured, so there is nothing to claim.
+  if (!(span > 0) || !(pixels > 0)) { ruler.hidden = true; return; }
   ruler.hidden = false;
-  ruler_bar.style.width = (span / world_per_pixel).toFixed(1) + 'px';
-  // Thousands separated with thin space rather than comma: comma reads as decimal.
-  //   point to much of world, and these numbers are what bar is claiming.
-  const written = (value: number) => (value >= 1000
-    ? value.toLocaleString('en-US').replace(/,/g, '\u2009')
-    : String(Number(value.toPrecision(3))));
-  ruler_label.textContent = span === size_cell
-    ? written(span) + ' units, one grid cell'
-    : written(span) + ' units \u00b7 grid ' + written(size_cell);
+  ruler_bar.style.width = pixels.toFixed(1) + 'px';
+  ruler_label.textContent = nimRulerReading(span);
 }
 
 // **Write only where value moved.** Every one of these is text node or inline.

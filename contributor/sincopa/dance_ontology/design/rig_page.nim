@@ -13,6 +13,8 @@
 ##   Faces are inlined by `design/faces`, which also turns Commit Mono's
 ##     ligatures on at root.  Article X.8: presentation target ships faces it
 ##     draws with, never naming one reader may lack.
+##   Recording's stamp is left out (`unstamped`): it says what physics gave recording, and
+##     page that carried it would change on every change to physics, where page shows none.
 ##
 ##   Usage: rig_page <dir>   reads design/rig.json, <dir>/rig_view.js and
 ##                           <dir>/review.html, writes <dir>/rig.html
@@ -231,16 +233,23 @@ proc cellsBody(review: string; data: JsonNode): string =
                    &"holds, {apart:.2f} m apart"
                  else: "no pose holds at any distance")
   let cells = cellsOf(review)
-  const TITLES = [("A", "The standard diagram"),
-                  ("B", "Single-hand turn positions"),
-                  ("C", "The cross-name chain, Face-to-face at rest"),
-                  ("D", "The same-name chain, Pillion at rest")]
+  # Each heading is read off reference page, which names each chain's rest
+  # through model, so two pages cannot name one section two ways.
+  var titles: seq[tuple[letter, title: string]]
+  for letter in ["A", "B", "C", "D"]:
+    let
+      head = &"<h2>{letter} &middot; "
+      opens = review.find(head)
+      start = opens + head.len
+    if opens < 0:
+      quit(&"Reference page has no section `{letter}`; run `pages` first.", 1)
+    titles.add (letter, review[start ..< review.find("</h2>", start)])
   result.add """<section class="cells"><p class="lede">Every cell here comes from the
     reference page, with the same badges, and the sim's still stands beside it. Where
     one cell asks more than one question, the badge shows the first. The picker above
     reaches every cell.</p>"""
-  for (letter, title) in TITLES:
-    result.add &"<h2>{letter} &middot; {esc(title)}</h2><div class=\"grid wide\">"
+  for (letter, title) in titles:
+    result.add &"<h2>{letter} &middot; {title}</h2><div class=\"grid wide\">"
     for cell in cells.getOrDefault(letter):
       var entries: seq[string]
       for key in cell.asks:
@@ -258,6 +267,13 @@ proc cellsBody(review: string; data: JsonNode): string =
   result.add "</section></main>"
 
 
+func unstamped*(text: string): string =
+  ## Recording as page folds it in: its first field, stamp, left out.
+  const FIRST = "{\"stamp\":"
+  if not text.startsWith(FIRST): return text
+  "{" & text[text.find('\n') + 1 .. ^1]
+
+
 when isMainModule:
   let
     dir = if paramCount() >= 1: paramStr(1) else: "."
@@ -272,7 +288,7 @@ when isMainModule:
     quit(&"Viewer page has no reference to lay beside; run `pages` first: got `{review}`.", 1)
   let
     reviewHtml = readFile(review)
-    dataText = readFile(data).strip()
+    dataText = readFile(data).strip().unstamped
     html = document(TITLE,
                     sheetOf(reviewHtml) & SHEET & HEAD_BODY &
                     cellsBody(reviewHtml, parseJson(dataText)) &

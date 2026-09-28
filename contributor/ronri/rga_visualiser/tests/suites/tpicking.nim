@@ -13,19 +13,15 @@ suite "Picking":
 
   proc cameraFacingOrigin(distance = 10.0): Camera =
     ## Build camera looking at world origin, so pivot is known to project to screen centre.
-    initCamera(
-      pivot = Position(x: 0, y: 0, z: 0), distance = distance, azimuth = 0.0, elevation = 0.0
-    )
+    cameraAround(Position(x: 0, y: 0, z: 0), distance, Direction(x: 1, y: 0, z: 0))
 
   test "a zoom anchors on what is under the cursor only near the depth being looked at":
     # Camera tilted down at origin from ten units.
-    #   Point on sight line below ground at one and half orbit distances is anchor; point
-    #   eight off is passed over, and ground under cursor -- origin itself -- answers instead.
-    let camera = initCamera(
-      pivot = Position(x: 0, y: 0, z: 0), distance = 10.0, azimuth = 0.0, elevation = 0.3
-    )
+    #   Point on sight line at one and half orbit distances is anchor; point eight off is
+    #   passed over, and nothing else answers: world has no ground to fall back on.
+    let camera = cameraAround(Position(x: 0, y: 0, z: 0), 10.0, Direction(x: 10, y: 0, z: 3))
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
-    let scale = camera.drawExtentFor(HEIGHT_PICK)
+    let scale = camera.drawExtentFor(HEIGHT_PICK, 0.0)
     let eye = camera.eye
     var near = initScene()
     near.addObject(toMultivector(Position(x: -0.5*eye.x, y: 0, z: -0.5*eye.z)), "p", Ink.Rose)
@@ -38,8 +34,7 @@ suite "Picking":
     let anchor_far = anchorZoomAt(
       far, camera, scale, view_projection, WIDTH_PICK, HEIGHT_PICK, CENTRE,
     )
-    check anchor_far.isSome and abs(anchor_far.get.at.x) < 1.0e-6 and
-      abs(anchor_far.get.at.z) < 1.0e-6
+    check anchor_far.isNone
 
   test "a point drawn wide is picked anywhere on its disc, over the plane behind it":
     # Pick radius follows drawn disc: Sol seen from two of its own radii away spans about.
@@ -55,12 +50,11 @@ suite "Picking":
       for handle in 0 ..< scene.bound:
         if scene.isAlive(handle) and toText(scene.labelAt(handle)) == "sol": handle_sol = handle
       check handle_sol >= 0
-      let camera = initCamera(
-        pivot = Position(x: 0, y: 0, z: 0), distance = 2.0*scene.radiusAt(handle_sol),
-        azimuth = 0.9, elevation = 0.4,
+      let camera = cameraAround(
+        ORIGIN, 2.0*scene.radiusAt(handle_sol), Direction(x: 12, y: 15, z: 8)
       )
       let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
-      let scale = camera.drawExtentFor(HEIGHT_PICK)
+      let scale = camera.drawExtentFor(HEIGHT_PICK, 0.0)
       let pixels_sol =
         radiusPixelsAt(scene.radiusAt(handle_sol), Position(x: 0, y: 0, z: 0), scale.scale)
       check pixels_sol > 300.0
@@ -81,11 +75,9 @@ suite "Picking":
     # Disc hides what is behind it: star whose centre is nearer cursor than planet's.
     #   won on distance although planet's disc covered it, and tap meant for planet
     #   selected star through it. Moon in front of same disc is still picked.
-    let camera = initCamera(
-      pivot = Position(x: 0, y: 0, z: 0), distance = 2.0, azimuth = 0.0, elevation = 0.5
-    )
+    let camera = cameraAround(Position(x: 0, y: 0, z: 0), 2.0, Direction(x: 9, y: 0, z: 5))
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
-    let scale = camera.drawExtentFor(HEIGHT_PICK)
+    let scale = camera.drawExtentFor(HEIGHT_PICK, 0.0)
     let frame_camera = camera.frame
     let planet = Position(x: 0, y: 0, z: 0)
     check radiusPixelsAt(0.3, planet, scale.scale) > 60.0
@@ -168,11 +160,9 @@ suite "Picking":
     # What touch refuses to drag from; see `interaction.canConstructByTouch`.
     #   Rank decides first, so plane under point is no rival to it.
     #   Tilted, so ground plane is seen face on rather than edge on.
-    let camera = initCamera(
-      pivot = Position(x: 0, y: 0, z: 0), distance = 10.0, azimuth = 0.0, elevation = 0.5
-    )
+    let camera = cameraAround(Position(x: 0, y: 0, z: 0), 10.0, Direction(x: 9, y: 0, z: 5))
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
-    let scale = camera.drawExtentFor(HEIGHT_PICK)
+    let scale = camera.drawExtentFor(HEIGHT_PICK, 0.0)
     var alone = initScene()
     alone.addObject(toMultivector(Position(x: 0, y: 0, z: 0)), "p", Ink.Rose)
     alone.addObject(groundPlane(), "ground", Ink.Grid)
@@ -237,7 +227,7 @@ suite "Picking":
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, CENTRE
     ) == some(0)
 
@@ -249,7 +239,7 @@ suite "Picking":
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     let corner = ScreenPosition(x: 5.0, y: 5.0, depth: 0.0)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, corner
     ).isNone
 
@@ -261,7 +251,7 @@ suite "Picking":
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, CENTRE
     ).isNone
 
@@ -274,7 +264,7 @@ suite "Picking":
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, CENTRE
     ) == some(0)
 
@@ -299,7 +289,7 @@ suite "Picking":
     check isHorizon(star)
 
     # Where star is actually drawn, asked of same proc drawing asks.
-    let place = anchorFor(star, camera.drawExtentFor(HEIGHT_PICK))
+    let place = anchorFor(star, camera.drawExtentFor(HEIGHT_PICK, 0.0))
     check place.isSome
     let screen = projectToScreen(view_projection, WIDTH_PICK, HEIGHT_PICK, place.get)
     check screen.isInFront
@@ -310,7 +300,7 @@ suite "Picking":
     var scene_line = initScene()
     scene_line.addObject(line, "L", Ink.Jade)
     check pickNearest(
-      scene_line, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene_line, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, at
     ) ==
       some(0)
@@ -320,7 +310,7 @@ suite "Picking":
     scene.addObject(line, "L", Ink.Jade)
     scene.addObject(star, "att", Ink.Cobalt)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, at
     ) == some(1)
 
@@ -335,11 +325,11 @@ suite "Picking":
     let near = ScreenPosition(x: CENTRE.x + RADIUS_PICK_POINT - 1.0, y: CENTRE.y, depth: 0.0)
     let far = ScreenPosition(x: CENTRE.x + RADIUS_PICK_POINT + 1.0, y: CENTRE.y, depth: 0.0)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, near
     ) == some(0)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, far
     ).isNone
 
@@ -354,11 +344,11 @@ suite "Picking":
     let near = ScreenPosition(x: CENTRE.x + RADIUS_PICK_LINE - 1.0, y: CENTRE.y, depth: 0.0)
     let far = ScreenPosition(x: CENTRE.x + RADIUS_PICK_LINE + 1.0, y: CENTRE.y, depth: 0.0)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, near
     ) == some(0)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, far
     ).isNone
 
@@ -372,7 +362,7 @@ suite "Picking":
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, CENTRE
     ) == some(1)
 
@@ -391,7 +381,7 @@ suite "Picking":
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, CENTRE
     ) == some(1)
 
@@ -408,7 +398,7 @@ suite "Picking":
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, CENTRE
     ) == some(1)
 
@@ -429,7 +419,7 @@ suite "Picking":
     let camera = cameraFacingOrigin(distance = 30.0)
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, CENTRE
     ) == some(0)
     for (label, cx, cy) in [
@@ -438,7 +428,7 @@ suite "Picking":
     ]:
       let cursor = ScreenPosition(x: cx, y: cy, depth: 0.0)
       check pickNearest(
-        scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+        scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
         WIDTH_PICK, HEIGHT_PICK, cursor
       ).isNone
 
@@ -448,13 +438,12 @@ suite "Picking":
     #   bounding disc projects onto cursor phase must let through -- sampled over
     #   fixed grid of directions, from cameras facing and oblique to disc.
     let centre = Position(x: 1.5, y: -2.0, z: 0.5)
-    for (azimuth, elevation) in [(0.0, 0.0), (0.9, 0.4), (2.4, -0.7)]:
-      let camera = initCamera(
-        pivot = Position(x: 0, y: 0, z: 0), distance = 30.0, azimuth = azimuth,
-        elevation = elevation,
-      )
+    for out_to in [
+      Direction(x: 1, y: 0, z: 0), Direction(x: 6, y: 8, z: 4), Direction(x: -6, y: 5, z: -6),
+    ]:
+      let camera = cameraAround(ORIGIN, 30.0, out_to)
       let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
-      let tangent = camera.drawExtentFor(HEIGHT_PICK).tangent_half_view
+      let tangent = camera.drawExtentFor(HEIGHT_PICK, 0.0).tangent_half_view
       for i in 0 ..< 24:
         for j in 0 .. 12:
           let (theta, phi) = (float(i)*TAU/24.0, float(j)*PI/12.0)
@@ -500,7 +489,7 @@ suite "Picking":
       let camera = cameraFacingOrigin()
       let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
       check pickNearest(
-        scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+        scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
         WIDTH_PICK, HEIGHT_PICK, CENTRE,
       ) == some(0)
 
@@ -524,6 +513,6 @@ suite "Picking":
     let camera = cameraFacingOrigin()
     let view_projection = camera.initMatrixViewProjection(WIDTH_PICK/HEIGHT_PICK)
     check pickNearest(
-      scene, camera, camera.drawExtentFor(HEIGHT_PICK), view_projection,
+      scene, camera, camera.drawExtentFor(HEIGHT_PICK, 0.0), view_projection,
       WIDTH_PICK, HEIGHT_PICK, CENTRE
     ) == some(1)

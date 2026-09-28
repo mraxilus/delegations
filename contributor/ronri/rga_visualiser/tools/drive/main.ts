@@ -26,7 +26,8 @@ import {
   drivePointerPick,
 } from './framing';
 import {
-  driveFrameLabelCorner, driveLabelGlide, driveLabelHeldInView, driveLabelWorn,
+  driveFrameLabelCorner, driveLabelFirstFrame, driveLabelGlide, driveLabelHeldInView,
+  driveLabelWorn,
 } from './label';
 import { driveChipRowFits, driveHelp, driveHoverDuringGesture } from './chrome';
 import { driveTypeDrawn, driveTypeLigatures, driveTypeRoles } from './type';
@@ -65,6 +66,7 @@ import { driveGround } from './ground';
 import { driveBlankRefused } from './canvas';
 import { driveFrameWork } from './frame';
 import { driveHostSave } from './host';
+import { driveViewSection } from './view';
 
 /** Viewport every check below is written against. */
 const SIZE_VIEW = { width: 1200, height: 900 };
@@ -165,6 +167,7 @@ async function main(): Promise<void> {
   await driveGroupTurnedAtOnce(page, cdp);
   await driveUndo(page);
   await driveReachable(page);
+  await driveViewSection(page);
 
   await driveHoverDuringGesture(page, SIZE_VIEW.width, SIZE_VIEW.height);
   await driveHelp(page, SIZE_VIEW.width, SIZE_VIEW.height);
@@ -220,6 +223,7 @@ async function main(): Promise<void> {
   await driveDiscUnderfoot(page);
   await driveLineCrossing(page, SIZE_VIEW.width, SIZE_VIEW.height);
   await driveLabelHeldInView(page);
+  await driveLabelFirstFrame(page);
   await driveFrameLabelCorner(page);
   await driveZoomLoaded(page);
   await driveTimelineCost(page, objects_largest);

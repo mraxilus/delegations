@@ -4,7 +4,9 @@
 //   Suites reach `applyOperation`, never gesture that calls it.
 
 import type { CDPSession, Page } from '@playwright/test';
-import { readCamera, settleCamera, slideOf, spanOf, spanPivot } from './camera';
+import {
+  placeCamera, readCamera, readPlaced, settleCamera, slideOf, spanOf, spanPivot,
+} from './camera';
 import { waitFrames } from './frame';
 import { report } from './report';
 import { clearTheGlass } from './gestures';
@@ -102,6 +104,7 @@ export async function driveCrowd(page: Page, cdp: CDPSession): Promise<void> {
 
   const count_before = await page.evaluate(() => nimSceneCount());
   const azimuth_before = await page.evaluate(() => nimCameraAzimuth());
+  const placed_before = await readPlaced(page);
   const from = await pixelOf(page, first);
   const onto = await pixelOf(page, second);
   if (from !== null && onto !== null) {
@@ -133,10 +136,8 @@ export async function driveCrowd(page: Page, cdp: CDPSession): Promise<void> {
   //   `Home`, which keeps azimuth, and at this one line's anchor lands over point.
   await settleCamera(page);
   await page.evaluate(() => nimSelectClear());
-  await page.evaluate(([one, azimuth]) => {
-    nimRemoveObject(one as number);
-    nimSetCameraAzimuth(azimuth as number);
-  }, [rival, azimuth_before]);
+  await page.evaluate((one) => nimRemoveObject(one), rival);
+  await placeCamera(page, placed_before);
   await settleCamera(page);
 }
 
@@ -236,10 +237,8 @@ export async function driveBackdropPlane(
     const wait = (milliseconds: number): Promise<void> =>
       new Promise((done) => setTimeout(done, milliseconds));
     const ground = nimSceneHandles().find((one) => nimObjectLabel(one) === 'ground') ?? -1;
-    nimSetCameraPivot(0, 0, 0);
-    nimSetCameraDistance(1.5);
-    nimSetCameraAzimuth(0.9);
-    nimSetCameraElevation(0.9);
+    // 1.5 units off origin and steeply above it, on its far side from opening view.
+    nimPlaceCamera(0.58, 0.73, 1.17, 0, 0, 0);
     await wait(300);
     // Off middle, where opening scene's origin point stands; disc spans whole frame.
     const canvas = document.getElementById('gl') as HTMLCanvasElement;

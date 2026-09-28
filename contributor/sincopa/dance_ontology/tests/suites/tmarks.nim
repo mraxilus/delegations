@@ -1,8 +1,9 @@
 ## Drive mark workbench's build under testament: every gate, every page written and read back.
 
-import std/[os, strutils, unittest]
+import std/[options, os, strutils, unittest]
 
 import ../../design/marks
+import ../../design/parts
 import ../../design/plain
 import ../../design/rig_page
 import ../../tools/title
@@ -85,3 +86,78 @@ suite "every page this project publishes":
     for said in markup.longParagraphs:
       checkpoint "paragraph over " & $SENTENCES & " sentences, opening: " & said
       fail()
+
+
+suite "the sixteen facings, drawn":
+  # Glossary agrees sixteen facings, and model holds them (`rotation.Facing`).  Pages draw
+  # them from model, so every name below comes from model, never from page it checks.
+  test "the frame page draws each facing once, under its own name":
+    let page = readFile(OUT / "frames.html")
+    for named in Facing:
+      check page.count("<figcaption>" & named.name & "</figcaption>") == 1
+      # Name capitalises lead's side alone, so no header that capitalises names one.
+      check page.count("<th>" & named.name) == 0
+
+  test "the frame page gives each side of the lead a row, in the glossary's order":
+    # Name gives lead's side first, so row for each side reads down page as names do.
+    let page = readFile(OUT / "frames.html")
+    var at = page.find("<h3>At rest, no ring</h3>")
+    check at >= 0
+    if at >= 0:
+      for side in ["Face", "Starboard", "Back", "Port"]:
+        at = page.find("<div class=\"row\">", at)
+        let shuts = page.find("</div>", at)
+        var captions: seq[string]
+        var c = page.find("<figcaption>", at)
+        while c >= 0 and c < shuts:
+          let start = c + "<figcaption>".len
+          captions.add page[start ..< page.find("</figcaption>", start)]
+          c = page.find("<figcaption>", start)
+        check captions.len == 4
+        for caption in captions:
+          check caption.startsWith(side & "-to-")
+        at = shuts
+
+  test "each drawn facing reads back as the facing it is named for":
+    for named, o in ORIENTATIONS:
+      check turnedFacing(o.lead_turn, o.follow_turn) == some(named)
+
+  test "every quarter the single-hand page draws names its facing, in its own place":
+    # Read within each manner's section, in order: manners share names, so name found
+    # anywhere on page would stand in for one missing or swapped.
+    let page = readFile(OUT / "turns-single.html")
+    for manner in Manner:
+      let opens = page.find("<h2>" & MANNERS[manner].title & "</h2>")
+      check opens >= 0
+      if opens < 0: continue
+      let section = page[opens ..< page.find("</section>", opens)]
+      var want, got: seq[string]
+      for _ in SINGLES:
+        for quarter in 1 ..< QUARTERS_ROUND:
+          let named = facingOf(quarterPose(manner, quarter))
+          check named.isSome
+          want.add (if named.isSome: named.get.name else: "")
+      var at = section.find(" turn<br>")
+      while at >= 0:
+        let start = at + " turn<br>".len
+        got.add section[start ..< section.find("</figcaption>", start)]
+        at = section.find(" turn<br>", start)
+      check got == want
+
+
+suite "the rests and the chains, named by model":
+  ## Each page names chain's rest and facings through `parts.restOf` and
+  ##   `parts.facingAt`, and law reads written page back (Article IX.5).
+
+  test "the review page heads each chain with the facing it rests at":
+    let page = readFile(OUT / "review.html")
+    check page.contains("<h2>C &middot; The cross-name chain, " &
+                        restOf(HAND_TO_HAND).name & " at rest</h2>")
+    check page.contains("<h2>D &middot; The same-name chain, " &
+                        restOf(PAIRED).name & " at rest</h2>")
+
+  test "the hand-to-hand page names each facing its chain stands at":
+    let page = readFile(OUT / "turns-hands.html")
+    check page.contains("<b>" & facingAt(HAND_TO_HAND, 1.0).get.name &
+                        "</b> at a whole number of turns")
+    check page.contains("<b>" & facingAt(HAND_TO_HAND, 0.5).get.name & "</b> at a half")

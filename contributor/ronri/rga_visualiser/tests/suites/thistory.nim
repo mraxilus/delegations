@@ -27,7 +27,7 @@ suite "History":
     #   rewrite it. Stepping is aiming camera, so it owes that too.
     #   Field of view is only lens field, and reader reaches it from both front-ends.
     var scene = initScene()
-    var camera = initCameraDefault()
+    var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     var history: History
     camera.degrees_field_of_view = 90.0
     history.initHistory(scene, camera)
@@ -40,11 +40,50 @@ suite "History":
     check history.redo(scene, camera)
     check camera.degrees_field_of_view =~ 30.0
     # Stance itself still crosses, which is what stepping is for.
-    check camera.pivot =~ initCameraDefault().pivot
+    check camera.pivot =~ initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED).pivot
+
+  test "a step either way keeps each pick that still names the object it named":
+    # Frame rule binds only while something is picked, so step must not drop picks it
+    #   need not. Handle alone is no name: freed handle is refilled by next add.
+    var scene = initScene()
+    var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
+    var history: History
+    let (a, b) = (scene.addObject(POINTS[0], "a", Ink.Cobalt), scene.addObject(POINTS[1], "b",
+      Ink.Rose))
+    history.initHistory(scene, camera)
+    let c = scene.addObject(POINTS[2], "c", Ink.Olive)
+    history.record(scene, camera)
+    var picked: Selection
+    picked.toggle(b)
+    picked.toggle(c)
+    picked.toggle(a)
+    # Undo takes `c` away and keeps rest, in order picked.
+    check history.undo(scene, camera, picked)
+    check picked.len == 2
+    check picked.at(0) == b and picked.at(1) == a
+    # Redo brings `c` back, but reader had let it go: nothing re-picks it.
+    check history.redo(scene, camera, picked)
+    check picked.len == 2
+    # Remove `a`, add `d` into its freed handle, and pick `d` alone.
+    scene.removeObject(a)
+    history.record(scene, camera)
+    let d = scene.addObject(POINTS[3], "d", Ink.Cobalt)
+    history.record(scene, camera)
+    check d == a
+    picked.clear()
+    picked.toggle(d)
+    # Undo empties that handle; second undo refills it with `a`, which is not `d`.
+    check history.undo(scene, camera, picked)
+    check picked.len == 0
+    picked.toggle(d)
+    check history.undo(scene, camera, picked)
+    check scene.isAlive(d)
+    check picked.len == 0
+
 
   test "undo and redo retrace every recorded state exactly, and canUndo/canRedo agree":
     var scene = initScene()
-    var camera = initCameraDefault()
+    var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     var history: History
     history.initHistory(scene, camera)
     var snapshots = @[scene] # Index 0 is seeded initial state.
@@ -79,7 +118,7 @@ suite "History":
 
   test "recording past capacity drops the oldest entry instead of growing":
     var scene = initScene()
-    var camera = initCameraDefault()
+    var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     var history: History
     history.initHistory(scene, camera)
     var snapshots = @[scene]
@@ -114,7 +153,7 @@ suite "History":
 
   test "a fresh record after undo truncates the redo-able future":
     var scene = initScene()
-    var camera = initCameraDefault()
+    var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     var history: History
     history.initHistory(scene, camera)
     scene.addObject(POINTS[0], "a", Ink.Rose)
@@ -149,29 +188,24 @@ suite "History":
       check taken.distance =~ wanted.distance
 
     var scene = initScene()
-    var camera = initCameraDefault()
+    var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     var history: History
     history.initHistory(scene, camera)
 
     # Two edits, each made from its own distinctly different viewpoint.
-    camera = camera.placedAtAzimuth(0.25)
-    camera = camera.placedAtDistance(11.0)
+    camera = camera.placed(stanceAround(camera.pivot, 11.0, Direction(x: 9, y: 2, z: 3)))
     scene.addObject(POINTS[0], "a", Ink.Rose)
     history.record(scene, camera)
     let camera_a = camera
 
-    camera = camera.placedAtAzimuth(1.75)
-    camera = camera.placedAtDistance(29.0)
-    camera = camera.placedAtElevation(-0.4)
+    camera = camera.placed(stanceAround(camera.pivot, 29.0, Direction(x: -1, y: 5, z: -2)))
     scene.addObject(POINTS[1], "b", Ink.Rose)
     history.record(scene, camera)
     let camera_b = camera
 
     # Orbiting after fact records nothing of its own, so step ignores wherever.
     #   camera has drifted to since.
-    camera = camera.placedAtAzimuth(-2.5)
-    camera = camera.placedAtDistance(3.0)
-    camera = camera.placedAtElevation(1.1)
+    camera = camera.placed(stanceAround(camera.pivot, 3.0, Direction(x: -4, y: -3, z: 9)))
 
     # Undoing `b` takes scene back to one object and view back to where `b` was.
     #   built -- `b` is what vanishes, so `b`'s own view is one to watch it from.
@@ -189,14 +223,14 @@ suite "History":
     check history.undo(scene, camera)
     checkAimedLike(camera, camera_a)
     check scene.len == 0
-    check not (camera.azimuth =~ initCameraDefault().azimuth)
+    check not (camera.azimuth =~ initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED).azimuth)
 
 
   test "undo and redo each advance the revision past every one the timeline has seen":
     # Front-end holds meshes and placements on revision; step that landed on.
     #   number it had already drawn showed nothing until camera moved.
     var scene = initScene()
-    var camera = initCameraDefault()
+    var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     var history: History
     history.initHistory(scene, camera)
     var seen = @[scene.revision]

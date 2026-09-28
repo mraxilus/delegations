@@ -13,6 +13,40 @@ declare global {
   }
 }
 
+/** Eye and pivot one placement names; see bridge's `nimPlaceCamera`. */
+export interface Placed {
+  eye: number[];
+  pivot: number[];
+}
+
+/** Name direction from pivot out to eye: `bearing` round world up, `rise` over unit run. */
+export function outToward(bearing: number, rise: number): number[] {
+  return [Math.cos(bearing), Math.sin(bearing), rise];
+}
+
+/** Place eye `distance` from `pivot`, along `out_to` from pivot to eye. */
+export function eyeAround(pivot: number[], distance: number, out_to: number[]): number[] {
+  const length = Math.hypot(...out_to);
+  return pivot.map((one, i) => one + (distance / length) * (out_to[i] ?? 0));
+}
+
+/** Read where camera stands as eye and pivot, so check can put it back. */
+export async function readPlaced(page: Page): Promise<Placed> {
+  return page.evaluate(() => ({
+    eye: Array.from(nimCameraEye()), pivot: Array.from(nimCameraPivot()),
+  }));
+}
+
+/** Stand camera at eye, facing pivot, level; lens untouched. */
+export async function placeCamera(page: Page, placed: Placed): Promise<void> {
+  await page.evaluate((given) => {
+    nimPlaceCamera(
+      given.eye[0] ?? 0, given.eye[1] ?? 0, given.eye[2] ?? 0,
+      given.pivot[0] ?? 0, given.pivot[1] ?? 0, given.pivot[2] ?? 0,
+    );
+  }, placed);
+}
+
 /** Where camera stands, as bridge reports it. */
 export interface Stance {
   distance: number;

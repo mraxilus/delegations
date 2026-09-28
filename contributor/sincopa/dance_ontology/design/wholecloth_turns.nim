@@ -160,7 +160,7 @@ const
     Hold.LlRr: holdSpec(
       "L-l.R-r",
       "Left to left · Right to right",
-      "Pillion",
+      "Face-to-back",
       [(Arm.Left, Arm.Left), (Arm.Right, Arm.Right)],
       0.0,
     ),

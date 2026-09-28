@@ -146,6 +146,9 @@ function appendMarkerPulse(
 //   here, where its face is, and pushed by `nimLabelClearance` so its own box clears
 //   line at any angle; see `marker.Marker.is_label_beside`. Every label is then held
 //   wholly inside canvas by `nimLabelInView`, with same measured text.
+//   Measured on layer: `<text>` staged fresh, or recycled after frame without it, stands
+//   off document, where text has no length and hold would keep centre alone inside view.
+//   `replaceChildren` sets its order after.
 function appendLabel(handle: number) {
   const width = canvas.clientWidth, height = canvas.clientHeight;
   const at = nimSelectionLabelAt(handle, width, height);
@@ -157,6 +160,7 @@ function appendLabel(handle: number) {
     'stroke-linejoin': 'round', 'paint-order': 'stroke',
   });
   element.textContent = nimObjectLabel(handle);
+  if (!element.isConnected) svg_overlay.appendChild(element);
   const half = (element as SVGTextElement).getComputedTextLength() / 2;
   let x = flatAt(at, 0), y = flatAt(at, 1);
   if (flatAt(at, 3) > 0.5) {

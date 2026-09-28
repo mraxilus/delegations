@@ -321,7 +321,7 @@
      44px minimum, which is touch-pivot size Apple's guidelines ask for and comfortably
      over 24px WCAG 2.5.8 requires -- control reader reaches for when they are
      already lost is last one to make them aim. */
-  /* ---- Scale bar: what one cell of ground grid measures ----     */
+  /* ---- Scale bar: length of world at its true screen length ---- */
   .ruler {
     position: fixed;
     left: max(14px, env(safe-area-inset-left));
@@ -839,6 +839,15 @@
     outline-offset: -1px;
   }
   input[type="number"] { font-variant-numeric: tabular-nums; }
+  /* Reading: value read off state where field would stand, and never typed. */
+  output.reading {
+    display: block;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-muted);
+    padding: 8px 0;
+  }
   select { appearance: none; }
 
   .button {
@@ -945,6 +954,9 @@
   .coefficient-grid input { padding: 5px 5px; font-size: 10.5px; }
   .coefficient-grade-row { display: flex; flex-wrap: wrap; gap: 5px; }
   .coefficient-grade-row .field { flex: 1 1 56px; min-width: 56px; }
+  /* Grade of six as two rows of three: six cells in one line left each 46px of text, and
+     a four-digit coefficient with its sign and point takes 57px in the mono face. */
+  .coefficient-grade-row:has(> .field:nth-child(6)) > .field { flex-basis: 30%; }
   .swatch { width: 10px; height: 10px; border-radius: 50%; flex: none; }
 
   /* ---- Diagnostics ---- */
@@ -1418,12 +1430,13 @@
                 ><span><span class="chev">&#9654;</span>scenery</span
                 ><b id="diagnostic-furniture">&mdash;</b></button>
               <!-- Two halves are not same size of thing: axes are three lines
-                   however far camera stands, while grid is however many ground
-                   reach asks for -- so scenery figure that rose could not say which of
-                   them rose. Grid carries its record count -- one per lattice line
-                   -- since its cost *is* that count, bounded by `LINES_GRID_MAX`. -->
+                   however far camera stands, while lattices are however many lines
+                   fog reaches on each plane picked -- so scenery figure that rose could
+                   not say which of them rose. Lattices carry their record count -- one
+                   per line -- since their cost *is* that count, bounded by
+                   `LINES_GRID_MAX` for each family. -->
               <div class="diagnostic-children">
-                <div class="diagnostic-line"><span>ground grid<span
+                <div class="diagnostic-line"><span>plane lattices<span
                   class="diagnostic-tally"></span></span
                   ><b id="diagnostic-grid">&mdash;</b></div>
                 <div class="diagnostic-line"><span>world axes</span
@@ -1557,32 +1570,32 @@
         type="button"
       ><span class="chev">&#9654;</span><span>@WORD:NameHeadView@</span></button>
       <div class="section-body">
-        <div class="field-row">
-          <div class="field">
-            <label>@WORD:NameViewAzimuth@</label>
-            <input type="number" id="cam-azimuth" step="0.05">
-          </div>
-          <div class="field">
-            <label>@WORD:NameViewElevation@</label>
-            <input type="number" id="cam-elevation" step="0.05">
-          </div>
+        <div class="field">
+          <label id="cam-motor-name">@WORD:NameViewMotor@</label>
+          <div class="coefficient-grid" id="cam-motor"></div>
         </div>
         <div class="field-row">
           <div class="field">
+            <label>@WORD:NameViewAzimuth@</label>
+            <output class="reading" id="cam-azimuth"></output>
+          </div>
+          <div class="field">
+            <label>@WORD:NameViewElevation@</label>
+            <output class="reading" id="cam-elevation"></output>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field" id="cam-distance-field">
             <label>@WORD:NameViewDistance@</label>
             <input type="number" id="cam-distance" step="0.1">
+          </div>
+          <div class="field" id="cam-speed-field">
+            <label>@WORD:NameViewSpeed@</label>
+            <output class="reading" id="cam-speed"></output>
           </div>
           <div class="field">
             <label>@WORD:NameViewLens@</label>
             <input type="number" id="cam-fov" step="1">
-          </div>
-        </div>
-        <div class="field">
-          <label>@WORD:NameViewPivot@</label>
-          <div class="field-row">
-            <input type="number" id="cam-pivot-x" step="0.1">
-            <input type="number" id="cam-pivot-y" step="0.1">
-            <input type="number" id="cam-pivot-z" step="0.1">
           </div>
         </div>
       </div>

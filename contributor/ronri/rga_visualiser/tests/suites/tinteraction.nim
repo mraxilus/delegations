@@ -89,11 +89,11 @@ suite "Interaction":
     var floor = initScene()
     floor.addObject(groundPlane(), "ground", Ink.Grid)
     for (distance, is_backdrop) in [(0.5, true), (40.0, false)]:
-      let close = initCamera(pivot = ORIGIN, distance = distance, azimuth = 0.9, elevation = 0.9)
+      let close = cameraAround(ORIGIN, distance, Direction(x: 4, y: 5, z: 8))
       var over = Interaction(is_enabled: true)
       over.updateCursor(400.0, 300.0)
       over.updateHover(
-        floor, close, close.drawExtentFor(600), close.initMatrixViewProjection(800.0/600.0),
+        floor, close, close.drawExtentFor(600, 0.0), close.initMatrixViewProjection(800.0/600.0),
         800, 600,
       )
       check over.index_hover == some(0)
@@ -971,7 +971,7 @@ suite "Interaction":
     #   to that plane. W and space rise over what is picked, S and control fall, and
     #   sideways keys swing round it.
     var interaction = Interaction(is_enabled: true)
-    let opening = initCamera(pivot = ORIGIN, distance = 20.0, azimuth = 0.4, elevation = 0.3)
+    let opening = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 4))
     var risen = opening
     interaction.holdKey(Key.W)
     interaction.driveHeld(risen, 1.0, has_selection = true)
@@ -1009,9 +1009,7 @@ suite "Interaction":
   test "a left drag looks with nothing picked, and orbits with something picked":
     # Both front-ends called `orbit` outright, so free flight's own `look` never reached
     #   drag at all: eye swung round pivot where reader meant to turn in place.
-    let opening = initCamera(
-      pivot = ORIGIN, distance = 20.0, azimuth = 0.4, elevation = 0.3
-    )
+    let opening = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 4))
     # Nothing picked: eye stands exactly, and sight turns by what was asked for.
     var flying = opening
     flying.turnAcross(0.25, 0.1, has_selection = false)
@@ -1036,15 +1034,19 @@ suite "Interaction":
     #   That is geometry rather than mistake, and touch asks for none of it: finger
     #   wanders in curves, and has no roll key beside it.
     const LOOP = [(0.3, 0.0), (0.0, 0.3), (-0.3, 0.0), (0.0, -0.3)]
+    # Stance these figures are read at: 19 units off pivot one unit above origin, 24 degrees up.
+    let stance = cameraAround(
+      Position(x: 0, y: 0, z: 1), 19.0, Direction(x: 0.4543, y: 0.792, z: 0.4078)
+    )
     for picked in [false, true]:
       # One loop leaves solid angle it encloses, which is what says this is geometry.
-      var once = initCameraDefault()
+      var once = stance
       for (turn, rise) in LOOP: once.turnAcross(turn, rise, has_selection = picked)
       check once.rollHeld.isSome
-      let enclosed = 0.3*0.3*cos(initCameraDefault().elevation)
+      let enclosed = 0.3*0.3*cos(stance.elevation)
       check abs(once.rollHeld.get - enclosed) < 0.02*enclosed
       # Four of them leave four times as much: 0.324 radians, 18.6 degrees of tilt.
-      var carried = initCameraDefault()
+      var carried = stance
       for round in 1 .. 4:
         for (turn, rise) in LOOP:
           carried.turnAcross(turn, rise, has_selection = picked)
@@ -1058,7 +1060,7 @@ suite "Interaction":
     ]
     for picked in [false, true]:
       for set_roll in [0.0, 0.5]:
-        var opening = initCameraDefault()
+        var opening = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
         opening.roll(set_roll)
         var held = opening
         for round in 1 .. 4:
@@ -1080,10 +1082,10 @@ suite "Interaction":
       # Place point finger holds under pixel.
       pointHeld(camera.eye, camera.pivot, camera.headingThrough(camera.frame, WIDE, TALL, at),
         radius)
-    var rolled = initCameraDefault()
+    var rolled = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     rolled.roll(0.5)
-    let steep = initCamera(pivot = ORIGIN, distance = 19.0, azimuth = 1.05, elevation = -0.7)
-    for opening in [initCameraDefault(), rolled, steep]:
+    let steep = cameraAround(ORIGIN, 19.0, Direction(x: 12, y: 21, z: -20))
+    for opening in [initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED), rolled, steep]:
       # Single point, held by least sphere; and wide selection, held by its own reach.
       for reach_selection in [0.0, 6.0]:
         let radius = opening.radiusHeld(WIDE, TALL, reach_selection)
@@ -1119,19 +1121,20 @@ suite "Interaction":
           check back.eye =~ opening.eye
           check back.frame.axis_up =~ opening.frame.axis_up
     # Least sphere spans third of short side on screen; eye stays outside every one.
-    let least = initCameraDefault().radiusHeld(WIDE, TALL, 0.0)
+    let opened = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
+    let least = opened.radiusHeld(WIDE, TALL, 0.0)
     let rim = projectToScreen(
-      initCameraDefault().initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL,
-      initCameraDefault().pivot + least*initCameraDefault().frame.axis_right,
+      opened.initMatrixViewProjection(float(WIDE)/float(TALL)), WIDE, TALL,
+      opened.pivot + least*opened.frame.axis_right,
     )
     check abs((rim.x - float(WIDE)/2.0) - float(WIDE)/3.0) < 1.0
-    check initCameraDefault().radiusHeld(WIDE, TALL, 100.0) < initCameraDefault().distance
+    check opened.radiusHeld(WIDE, TALL, 100.0) < opened.distance
     # Finger off sphere still turns view, with pivot standing.
-    var outside = initCameraDefault()
+    var outside = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     outside.turnFollowing(ScreenPosition(x: 20.0, y: 100.0), ScreenPosition(x: 60.0, y: 140.0),
       WIDE, TALL, has_selection = true)
-    check not (outside.eye =~ initCameraDefault().eye)
-    check outside.pivot =~ initCameraDefault().pivot
+    check not (outside.eye =~ initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED).eye)
+    check outside.pivot =~ initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED).pivot
 
 
   test "a finger's free aim keeps what it took hold of under it, pixel for pixel":
@@ -1142,10 +1145,10 @@ suite "Interaction":
       # Read unit sight through pixel.
       let heading = camera.headingThrough(camera.frame, WIDE, TALL, at)
       (1.0/norm(heading))*heading
-    var rolled = initCameraDefault()
+    var rolled = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     rolled.roll(0.5)
-    let steep = initCamera(pivot = ORIGIN, distance = 19.0, azimuth = 1.05, elevation = -0.7)
-    for opening in [initCameraDefault(), rolled, steep]:
+    let steep = cameraAround(ORIGIN, 19.0, Direction(x: 12, y: 21, z: -20))
+    for opening in [initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED), rolled, steep]:
       for (start, finish) in [
         (ScreenPosition(x: 195.0, y: 422.0), ScreenPosition(x: 300.0, y: 422.0)),
         (ScreenPosition(x: 100.0, y: 200.0), ScreenPosition(x: 160.0, y: 700.0)),
@@ -1194,7 +1197,7 @@ suite "Interaction":
         swung = camera.dragged(true, across, down)
         now_at = projectToScreen(swung.initMatrixViewProjection(aspect), WIDE, TALL, near_side)
       (now_at.x - was.x, now_at.y - was.y)
-    let opening = initCameraDefault()
+    let opening = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     # Orbit climbs past straight down in drags down from middle, and near side follows
     #   finger on both sides.
     var over = opening
@@ -1214,8 +1217,9 @@ suite "Interaction":
     check under.frame.axis_right =~ opening.frame.axis_right
     check under.eye =~ opening.eye
     # Sight exactly along world up names no level across, and camera's own stands in.
-    var pole = opening
-    pole.orbitCarrying(held = UP_WORLD, under = opening.eye - opening.pivot)
+    let pole = initCamera(
+      eye = opening.pivot + Direction(x: 0, y: 0, z: opening.distance), pivot = opening.pivot
+    )
     check abs(dot(pole.frame.forward, UP_WORLD)) =~ 1.0
     let past = pole.dragged(true, 0.0, 60.0)
     check abs(dot(past.frame.forward, UP_WORLD)) < 1.0 - 1.0e-3
@@ -1232,7 +1236,7 @@ suite "Interaction":
     #   Twist sent its screen angle through unturned, and picture rolled against
     #   fingers.
     const (WIDE, TALL) = (1200, 900)
-    var camera = initCameraDefault()
+    var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     let above = camera.pivot + 3.0*camera.frame.axis_up
     proc seenAt(c: Camera): float =
       projectToScreen(
@@ -1245,25 +1249,27 @@ suite "Interaction":
     #   anticlockwise, and pointer negates its clockwise screen angle to match.
     check seenAt(camera) < before
     # Eye and sight are untouched by it, which is what makes roll sixth freedom.
-    check camera.eye =~ initCameraDefault().eye
-    check camera.frame.forward =~ initCameraDefault().frame.forward
+    check camera.eye =~ initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED).eye
+    check camera.frame.forward =~ initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED).frame.forward
 
 
   test "held keys compose, and letting one go leaves the other running":
     var
       interaction = Interaction(is_enabled: true)
-      camera = initCamera(pivot = ORIGIN, distance = 20.0, azimuth = 0.4, elevation = 0.3)
+      camera = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 4))
+    # With selection W and space both rise over pivot, so held together they rise twice
+    #   as fast, and pivot stands. Tenth of second keeps both well short of overhead.
+    let (pivot, elevation) = (camera.pivot, camera.elevation)
     interaction.holdKey(Key.W)
     interaction.holdKey(Key.Space)
-    interaction.driveHeld(camera, 1.0, has_selection = true)
-    let both = camera.pivot
-    check both.z > 0.0
-    check norm(Direction(x: both.x, y: both.y, z: 0)) > 0.0
+    interaction.driveHeld(camera, 0.1, has_selection = true)
+    check camera.elevation =~ elevation + 2.0*0.1*RISE_SECOND
+    check camera.pivot =~ pivot
 
     interaction.releaseKey(Key.Space)
-    interaction.driveHeld(camera, 1.0, has_selection = true)
-    check camera.pivot.z =~ both.z # Lift stopped exactly when its key was let go of.
-    check norm(camera.pivot - both) > 0.0 # Slide did not.
+    interaction.driveHeld(camera, 0.1, has_selection = true)
+    check camera.elevation =~ elevation + 3.0*0.1*RISE_SECOND # W still rises alone.
+    check camera.pivot =~ pivot
 
 
   test "with no selection a held key flies along the camera's own axes":
@@ -1272,7 +1278,7 @@ suite "Interaction":
     var interaction = Interaction(
       is_enabled: true, depth_pointer: some(20.0)
     )
-    var camera = initCamera(ORIGIN, 20.0, 0.4, 0.9)
+    var camera = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 16))
     camera.roll(0.7)
     let (eye_start, axes_start) = (camera.eye, camera.frame)
     interaction.holdKey(Key.W)
@@ -1289,11 +1295,11 @@ suite "Interaction":
     #   one four-hundredth of separation, and separation kept would hold that of stance
     #   camera set off from.
     check camera.distance =~ 20.0 - norm(step)
-    check camera.pivot =~ initCamera(ORIGIN, 20.0, 0.4, 0.9).pivot
+    check camera.pivot =~ cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 16)).pivot
     check camera.distanceNear =~ camera.distance*FACTOR_CLIP_NEAR
 
     # Strafe carries pivot along instead: what stands ahead keeps its depth.
-    var strafed = initCamera(ORIGIN, 20.0, 0.4, 0.9)
+    var strafed = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 16))
     interaction.releaseKey(Key.W)
     interaction.holdKey(Key.D)
     interaction.driveHeld(strafed, 1.0, has_selection = false)
@@ -1302,7 +1308,7 @@ suite "Interaction":
     interaction.holdKey(Key.W)
 
     # Space rises along camera's own up, which roll has tipped off world up.
-    var lifted = initCamera(ORIGIN, 20.0, 0.4, 0.9)
+    var lifted = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 16))
     lifted.roll(0.7)
     let axes_lifted = lifted.frame
     interaction.releaseKey(Key.W)
@@ -1317,7 +1323,7 @@ suite "Interaction":
     #   is still climbing. What reads as spaceship rather than as constant rate.
     var interaction = Interaction(is_enabled: true, depth_pointer: some(20.0))
     interaction.holdKey(Key.W)
-    var camera = initCamera(ORIGIN, 20.0, 0.0, 0.0)
+    var camera = cameraAround(ORIGIN, 20.0, Direction(x: 1, y: 0, z: 0))
     let eye_start = camera.eye
     interaction.driveHeld(camera, 0.5, has_selection = false)
     let first = norm(camera.eye - eye_start)
@@ -1330,7 +1336,7 @@ suite "Interaction":
     # Pointer over something near caps speed low, which is what close work needs.
     var near_work = Interaction(is_enabled: true, depth_pointer: some(0.002))
     near_work.holdKey(Key.W)
-    var close = initCamera(ORIGIN, 0.002, 0.0, 0.0)
+    var close = cameraAround(ORIGIN, 0.002, Direction(x: 1, y: 0, z: 0))
     let eye_close = close.eye
     near_work.driveHeld(close, 1.0, has_selection = false)
     check norm(close.eye - eye_close) =~ distanceTravelled(
@@ -1346,11 +1352,11 @@ suite "Interaction":
     #   with selection as without one.
     var interaction = Interaction(is_enabled: true)
     interaction.holdKey(Key.E)
-    var flying = initCamera(ORIGIN, 20.0, 0.4, 0.3)
+    var flying = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 4))
     var held = flying
     interaction.driveHeld(flying, 0.5, has_selection = false)
     interaction.driveHeld(held, 0.5, has_selection = true)
-    let upright = initCamera(ORIGIN, 20.0, 0.4, 0.3)
+    let upright = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 4))
     # Both rolled, by exactly as much, and neither turned sight or moved eye.
     check flying.frame.axis_up =~ held.frame.axis_up
     check abs(dot(flying.frame.axis_up, upright.frame.axis_right)) > TOLERANCE_TEST
@@ -1364,7 +1370,7 @@ suite "Interaction":
     # Arrows turn in place with no selection, and orbit about pivot with one.
     interaction.releaseKeysAll()
     interaction.holdKey(Key.Left)
-    var turning = initCamera(ORIGIN, 20.0, 0.4, 0.3)
+    var turning = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 4))
     var orbiting = turning
     let eye_start = turning.eye
     interaction.driveHeld(turning, 0.5, has_selection = false)
@@ -1380,8 +1386,8 @@ suite "Interaction":
     var interaction = Interaction(is_enabled: true)
     interaction.holdKey(Key.W)
     var
-      once = initCamera(ORIGIN, 20.0, 0.0, 0.3)
-      twice = initCamera(ORIGIN, 20.0, 0.0, 0.3)
+      once = cameraAround(ORIGIN, 20.0, Direction(x: 10, y: 0, z: 3))
+      twice = cameraAround(ORIGIN, 20.0, Direction(x: 10, y: 0, z: 3))
     interaction.driveHeld(once, 0.5, has_selection = true)
     interaction.driveHeld(twice, 1.0, has_selection = true)
     check norm(twice.pivot - ORIGIN) =~ 2.0*norm(once.pivot - ORIGIN)
@@ -1391,8 +1397,8 @@ suite "Interaction":
     interaction.releaseKey(Key.W)
     interaction.holdKey(Key.Minus)
     var
-      halves = initCamera(ORIGIN, 20.0, 0.0, 0.3)
-      whole = initCamera(ORIGIN, 20.0, 0.0, 0.3)
+      halves = cameraAround(ORIGIN, 20.0, Direction(x: 10, y: 0, z: 3))
+      whole = cameraAround(ORIGIN, 20.0, Direction(x: 10, y: 0, z: 3))
     interaction.driveHeld(halves, 0.5, has_selection = true)
     interaction.driveHeld(halves, 0.5, has_selection = true)
     interaction.driveHeld(whole, 1.0, has_selection = true)
@@ -1404,13 +1410,13 @@ suite "Interaction":
     var interaction = Interaction(is_enabled: true)
     interaction.holdKey(Key.W)
     var
-      plain = initCamera(ORIGIN, 20.0, 0.4, 0.3)
-      hastened = initCamera(ORIGIN, 20.0, 0.4, 0.3)
+      plain = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 4))
+      hastened = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 4))
     interaction.driveHeld(plain, 0.25, has_selection = true)
     interaction.holdKey(Key.Shift)
     interaction.driveHeld(hastened, 0.25, has_selection = true)
     # W orbits with selection, so read swing of sight rather than step of pivot.
-    let upright = initCamera(ORIGIN, 20.0, 0.4, 0.3).frame.forward
+    let upright = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 4)).frame.forward
     let risen = arccos(clamp(dot(plain.frame.forward, upright), -1.0, 1.0))
     let risen_fast = arccos(clamp(dot(hastened.frame.forward, upright), -1.0, 1.0))
     check risen_fast =~ FACTOR_HASTE*risen
@@ -1418,8 +1424,8 @@ suite "Interaction":
     check hastened.elevation > plain.elevation
 
     var
-      turned = initCamera(ORIGIN, 20.0, 0.4, 0.3)
-      turned_fast = initCamera(ORIGIN, 20.0, 0.4, 0.3)
+      turned = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 4))
+      turned_fast = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 4))
     interaction.releaseKeysAll()
     interaction.holdKey(Key.Left)
     interaction.driveHeld(turned, 0.25, has_selection = true)
@@ -1428,7 +1434,7 @@ suite "Interaction":
     # Read swing of sight itself, not azimuth: orbit turns about camera's own up, which
     #   is not world up once elevation is off level, so azimuth is no longer linear in it.
     #   Frame is orthonormal, so sight sweeps exactly angle asked for.
-    let forward_start = initCamera(ORIGIN, 20.0, 0.4, 0.3).frame.forward
+    let forward_start = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 4)).frame.forward
     let swung = arccos(clamp(dot(turned.frame.forward, forward_start), -1.0, 1.0))
     let swung_fast = arccos(clamp(dot(turned_fast.frame.forward, forward_start), -1.0, 1.0))
     check swung_fast =~ FACTOR_HASTE*swung
@@ -1439,7 +1445,7 @@ suite "Interaction":
     #   forever with no press able to stop it.
     var
       interaction = Interaction(is_enabled: true)
-      camera = initCamera(pivot = ORIGIN, distance = 20.0, azimuth = 0.4, elevation = 0.3)
+      camera = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 4))
     interaction.holdKey(Key.W)
     interaction.holdKey(Key.Shift)
     check interaction.keys_held.len == 2
@@ -1455,21 +1461,28 @@ suite "Interaction":
     scene.addObject(GENERAL_POINTS[0], "a", Ink.Rose)
     var
       interaction = Interaction(is_enabled: true)
-      camera = initCameraDefault()
+      camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     let opening = camera
 
     # Home returns to placement both builds open at, from wherever reader has gone.
+    #   Stance alone: lens reader set stays theirs.
     camera.travel(3.0, 2.0, 1.0)
     camera.orbit(0.5, 0.2)
-    discard interaction.applyAction(camera, scene, KeyAction.ViewHome)
+    camera.degrees_field_of_view = 70.0
+    discard interaction.applyAction(
+      camera, scene, KeyAction.ViewHome, WIDTH_OPENED, HEIGHT_OPENED
+    )
     check camera.pivot =~ opening.pivot
     check camera.distance =~ opening.distance
     check camera.azimuth =~ opening.azimuth
     check camera.elevation =~ opening.elevation
+    check camera.degrees_field_of_view =~ 70.0
 
     # Framing is standing offer's own job, so key itself moves nothing: each front.
     #   end releases its tween's goal and `framing.offerAim` aims afresh next frame.
-    check interaction.applyAction(camera, scene, KeyAction.FrameSelection).isNone
+    check interaction.applyAction(
+      camera, scene, KeyAction.FrameSelection, WIDTH_OPENED, HEIGHT_OPENED
+    ).isNone
     check camera.pivot =~ opening.pivot
     check camera.distance =~ opening.distance
 
@@ -1484,20 +1497,28 @@ suite "Interaction":
     scene.addObject(GENERAL_POINTS[0], "a", Ink.Rose)
     scene.addObject(GENERAL_POINTS[1], "b", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
-    var camera = initCameraDefault()
+    var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
     # Pressing enter before stepping anywhere is no-op, not select of handle zero.
-    check interaction.applyAction(camera, scene, KeyAction.SelectFocused).isNone
-    discard interaction.applyAction(camera, scene, KeyAction.FocusNext)
+    check interaction.applyAction(
+      camera, scene, KeyAction.SelectFocused, WIDTH_OPENED, HEIGHT_OPENED
+    ).isNone
+    discard interaction.applyAction(
+      camera, scene, KeyAction.FocusNext, WIDTH_OPENED, HEIGHT_OPENED
+    )
     check interaction.index_focus == some(0)
-    check interaction.applyAction(camera, scene, KeyAction.SelectFocused) == some(0)
+    check interaction.applyAction(
+      camera, scene, KeyAction.SelectFocused, WIDTH_OPENED, HEIGHT_OPENED
+    ) == some(0)
 
 
   test "a focus whose object is removed is dropped rather than left pointing at freed storage":
     var scene = initScene()
     scene.addObject(GENERAL_POINTS[0], "a", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
-    var camera = initCameraDefault()
-    discard interaction.applyAction(camera, scene, KeyAction.FocusNext)
+    var camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
+    discard interaction.applyAction(
+      camera, scene, KeyAction.FocusNext, WIDTH_OPENED, HEIGHT_OPENED
+    )
     check interaction.index_focus == some(0)
     scene.removeObject(0)
     interaction.pruneFocus(scene)
@@ -1513,11 +1534,11 @@ suite "Interaction":
     scene.addObject(toMultivector(pivot), "p", Ink.Rose)
     var
       interaction = Interaction(is_enabled: true)
-      camera = initCamera(pivot = pivot, distance = 10.0, azimuth = 0.0, elevation = 0.0)
+      camera = cameraAround(pivot, 10.0, Direction(x: 1, y: 0, z: 0))
     let view_projection = camera.initMatrixViewProjection(800.0/600.0)
     proc hovering(interaction: var Interaction): Option[int] =
       interaction.updateHover(
-        scene, camera, camera.drawExtentFor(600), view_projection, 800, 600,
+        scene, camera, camera.drawExtentFor(600, 0.0), view_projection, 800, 600,
       )
       interaction.index_hover
     interaction.updateCursor(400.0, 300.0) # Straight at object.
@@ -1551,12 +1572,14 @@ suite "Interaction":
     scene.addObject(toMultivector(pivot), "p", Ink.Rose)
     scene.addObject(GENERAL_POINTS[5], "far", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
-    var camera = initCamera(pivot = pivot, distance = 10.0, azimuth = 0.0, elevation = 0.0)
-    discard interaction.applyAction(camera, scene, KeyAction.FocusNext)
+    var camera = cameraAround(pivot, 10.0, Direction(x: 1, y: 0, z: 0))
+    discard interaction.applyAction(
+      camera, scene, KeyAction.FocusNext, WIDTH_OPENED, HEIGHT_OPENED
+    )
     check interaction.index_focus == some(0)
     interaction.updateCursor(799.0, 1.0) # Corner, away from everything.
     interaction.updateHover(
-      scene, camera, camera.drawExtentFor(600),
+      scene, camera, camera.drawExtentFor(600, 0.0),
       camera.initMatrixViewProjection(800.0/600.0), 800, 600,
     )
     check interaction.index_hover != interaction.index_focus
@@ -1651,10 +1674,10 @@ suite "Interaction":
     var scene = initScene()
     scene.addObject(POINTS[0], "a", Ink.Rose)
     var interaction = Interaction(is_enabled: false)
-    let camera = initCamera(pivot = PLACES[0], distance = 10.0, azimuth = 0.0, elevation = 0.0)
+    let camera = cameraAround(PLACES[0], 10.0, Direction(x: 1, y: 0, z: 0))
     interaction.updateCursor(400.0, 300.0)
     interaction.updateHover(
-      scene, camera, camera.drawExtentFor(600),
+      scene, camera, camera.drawExtentFor(600, 0.0),
       camera.initMatrixViewProjection(800.0/600.0), 800, 600,
     )
     check interaction.index_hover.isNone
@@ -1665,10 +1688,10 @@ suite "Interaction":
     let pivot = Position(x: 0, y: 0, z: 0)
     scene.addObject(toMultivector(pivot), "p", Ink.Rose)
     var interaction = Interaction(is_enabled: true)
-    let camera = initCamera(pivot = pivot, distance = 10.0, azimuth = 0.0, elevation = 0.0)
+    let camera = cameraAround(pivot, 10.0, Direction(x: 1, y: 0, z: 0))
     interaction.updateCursor(400.0, 300.0)
     interaction.updateHover(
-      scene, camera, camera.drawExtentFor(600),
+      scene, camera, camera.drawExtentFor(600, 0.0),
       camera.initMatrixViewProjection(800.0/600.0), 800, 600,
     )
     check interaction.index_hover == some(0)
@@ -1792,3 +1815,16 @@ suite "Interaction":
     interaction.cancelHold()
     check swellHold(interaction, 1000.0 + SECONDS_SWELL_GROW) =~ 0.0
     check not isHoldSpent(interaction, 1000.0 + 10.0)
+
+
+  test "the panel's speed is the one flight steps by, and none while nothing is held":
+    var interaction = Interaction(is_enabled: true)
+    let camera = initCameraDefault(WIDTH_OPENED, HEIGHT_OPENED)
+    check interaction.speedFlying(camera) == 0.0
+    interaction.keys_held = {Key.W}
+    interaction.seconds_travelling = SECONDS_SPEED_RISE
+    let cap = capTravelling(interaction.depth_pointer, camera.distance, 1.0)
+    check interaction.speedFlying(camera) =~ speedTravelling(SECONDS_SPEED_RISE, cap)
+    # Shift is one multiplier on every rate, speed included.
+    interaction.keys_held = {Key.W, Key.Shift}
+    check interaction.speedFlying(camera) =~ FACTOR_HASTE*speedTravelling(SECONDS_SPEED_RISE, cap)

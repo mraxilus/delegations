@@ -65,6 +65,19 @@ suite "Mesh":
     corners[0].x != corners[1].x or corners[0].y != corners[1].y or
       corners[0].z != corners[1].z
 
+  proc isInsideGuard(place: Position; scale: DrawExtent = SCALE_TEST): bool =
+    ## Say whether `place` stands inside guard pyramid ribbons are cut to.
+    ##   See `mesh.FACTOR_GUARD`; four planes through eye, kept side positive.
+    let
+      slope = FACTOR_GUARD*scale.tangentHalfView
+      offset = place - scale.eye
+    for normal in [
+      slope*scale.forward + -scale.axisRight, slope*scale.forward + scale.axisRight,
+      slope*scale.forward + -scale.axisUp, slope*scale.forward + scale.axisUp,
+    ]:
+      if dot(offset, normal) < 0.0: return false
+    true
+
   proc ringEnds(meshes: MeshSet; index, segment: int): (Position, Position) =
     ## Recover segment `segment`-th piece of `index`-th ring was built around.
     ##   By `ribbonEnds`'s own midpoint argument, through `expandRingVertex`, reference of
@@ -207,11 +220,11 @@ suite "Mesh":
     #   plane through eye containing line. That plane projects to single
     #   screen line, which is what lets far ends sit well off line in world
     #   space -- displaced along view ray -- without drawing showing it.
-    let camera = initCamera(Position(x: 0, y: 0, z: 1), 19.0, 1.05, 0.42)
+    let camera = cameraAround(Position(x: 0, y: 0, z: 1), 19.0, Direction(x: 8, y: 14, z: 7))
     let
       eye = camera.eye
       frame_camera = camera.frame
-      radius = radiusHorizonFor(camera.distanceFar)
+      radius = radiusHorizonFor(camera.distanceFar(0.0))
     proc screen(p: Position): (float, float) =
       let v = p - eye
       (dot(v, frame_camera.axis_right)/dot(v, frame_camera.forward),
@@ -287,6 +300,63 @@ suite "Mesh":
     check norm(far_drawn - crossing) <= worldPerPixelAt(far_drawn, toScale(SCALE_CLOSE))
 
 
+  test "a ribbon is cut to the guard pyramid just where the algebra's planes cut it":
+    # Ribbon crossing near plane close by eye projected its cut end million pixels off screen,
+    #   and GPU's interpolation over so stretched quad ran colour off ink, depth 55% too near.
+    #   Reference cuts to pyramid through eye, `FACTOR_GUARD` half-views wide; each drawn end
+    #   is held here to meet of segment with plane, `clipToEyeSide` chained over near plane
+    #   and four guard planes. 400 segments, long enough to leave pyramid on every side.
+    let
+      scale = toScale(SCALE_TEST)
+      slope = FACTOR_GUARD*scale.tangentHalfView
+      eye = toMultivector(scale.eye)
+      planes = [
+        planeThrough(
+          add(eye, wedge(scale.depthNear, toMultivector(scale.forward))),
+          toMultivector(scale.forward),
+        ),
+        planeThrough(eye, toMultivector(slope*scale.forward + -scale.axis_right)),
+        planeThrough(eye, toMultivector(slope*scale.forward + scale.axis_right)),
+        planeThrough(eye, toMultivector(slope*scale.forward + -scale.axis_up)),
+        planeThrough(eye, toMultivector(slope*scale.forward + scale.axis_up)),
+      ]
+    var seed = 29.0
+    proc pseudo(): float =
+      seed = (seed*97.31 + 33.77) mod 41.0
+      (seed - 20.5)/20.5
+    var (count_cut, count_gone) = (0, 0)
+    for trial in 0 ..< 400:
+      MESHES.clearMeshes
+      MESHES.addSegment(
+        scale.eye + Direction(x: 40.0*pseudo(), y: 40.0*pseudo(), z: 40.0*pseudo()),
+        scale.eye + Direction(x: 40.0*pseudo(), y: 40.0*pseudo(), z: 40.0*pseudo()),
+        Ink.Jade.colour, WIDTH_LINE_OBJECT,
+      )
+      # Ends as record stores them, so both sides start from same float32 places.
+      let record = MESHES.ribbons.records[0]
+      var kept = some((
+        Position(x: float(record.tail_x), y: float(record.tail_y), z: float(record.tail_z)),
+        Position(x: float(record.head_x), y: float(record.head_y), z: float(record.head_z)),
+      ))
+      let whole = kept.get
+      for plane in planes:
+        if kept.isNone: break
+        kept = clipToEyeSide(kept.get[0], kept.get[1], plane)
+      let corners = expandRibbon(record, scale)
+      if kept.isNone:
+        inc count_gone
+        check not isRibbonDrawn(corners)
+        continue
+      check isRibbonDrawn(corners)
+      let (tail_drawn, head_drawn) = ribbonEnds(MESHES, 0)
+      if norm(kept.get[0] - whole[0]) + norm(kept.get[1] - whole[1]) > 0.0: inc count_cut
+      for (drawn, wanted) in [(tail_drawn, kept.get[0]), (head_drawn, kept.get[1])]:
+        check norm(drawn - wanted) <= TOLERANCE_SINGLE*max(1.0, norm(wanted - scale.eye))
+    # Sample reaches each case it claims to.
+    check count_cut > 20
+    check count_gone > 20
+
+
   test "line's own far end coincides exactly with where its attitude is drawn":
     # Property "lines look cut off" feedback chased: line and its own.
     #   attitude are two different objects (finite segment and horizon point)
@@ -303,13 +373,21 @@ suite "Mesh":
       discard MESHES.addObject(SCRATCH, line, Ink.Jade.colour, SCALE_TEST)
       let (_, far_first) = ribbonEnds(MESHES, 0)
       let (_, far_second) = ribbonEnds(MESHES, 1)
+      proc headOf(index: int): Position =
+        let record = MESHES.ribbons.records[index]
+        Position(x: float(record.head_x), y: float(record.head_y), z: float(record.head_z))
       # Whichever half runs toward star has to land on it -- but only where star.
       #   itself stands in front of near plane. Ribbon is clipped there (see
       #   `mesh.addSegment`), so star behind camera is met by half that stops at
       #   near plane instead. Nothing is visible there either way; what would be
       #   real defect is gap between two *on screen*, which this still catches.
+      #   Record's own far end is held to star wherever star stands in front; drawn end
+      #   wherever star stands inside guard pyramid too, since past it drawing is cut
+      #   (`mesh.FACTOR_GUARD`) eight half-views off screen.
       if dot(star - SCALE_TEST.eye, SCALE_TEST.forward) >= SCALE_TEST.depthNear:
-        check isNear(far_first, star) or isNear(far_second, star)
+        check isNear(headOf(0), star) or isNear(headOf(1), star)
+        if isInsideGuard(star):
+          check isNear(far_first, star) or isNear(far_second, star)
 
 
   test "disc is hit under a grazing eye nearer than the near plane, and boxed by its sphere":
@@ -432,19 +510,34 @@ suite "Mesh":
       #   piece was built around; `ringEnds` recovers it.
       #   Every segment of one record is walked, which is what makes record's
       #   fourteen floats provably same circle ninety-six ribbons drew.
+      #   Segment is read off record itself (`ribbonOfRing`), which guard never touches;
+      #   drawn piece of it, where guard keeps any, through `ringEnds`.
       for i in 0 ..< SEGMENTS_RING:
-        let (tail, head) = ringEnds(MESHES, 0, i)
+        let
+          piece = ribbonOfRing(MESHES.rings.records[0], i)
+          tail = Position(x: float(piece.tail_x), y: float(piece.tail_y), z: float(piece.tail_z))
+          head = Position(x: float(piece.head_x), y: float(piece.head_y), z: float(piece.head_z))
         for place in [tail, head]:
           check isNear(dot(place - anchor.get, normal.get), 0)
           check isNear(norm(place - anchor.get), EXTENT_PLANE_F)
+        let corners = expandRingVertex(MESHES.rings.records[0], i, toScale(SCALE_TEST))
+        # Segment drawn as nothing stands wholly behind near plane or outside guard.
+        if not isRibbonDrawn(corners):
+          check max(dot(tail - SCALE_TEST.eye, SCALE_TEST.forward),
+            dot(head - SCALE_TEST.eye, SCALE_TEST.forward)) < SCALE_TEST.depthNear or
+            not (isInsideGuard(tail) or isInsideGuard(head))
+          continue
+        # Drawn piece lies on that segment's own line, on plane.
+        let (tail_drawn, head_drawn) = ringEnds(MESHES, 0, i)
+        for place in [tail_drawn, head_drawn]:
+          check isNear(dot(place - anchor.get, normal.get), 0)
         # And every corner stays within that half width of plane, so bulge is.
         #   fraction of pixel on screen rather than anything reader could see.
         let bound = 0.5*float(WIDTH_LINE_OBJECT)*
           max(worldPerPixelAt(tail, SCALE_TEST), worldPerPixelAt(head, SCALE_TEST))
         for j in 0 ..< VERTICES_RIBBON:
-          let corner = expandRingVertex(MESHES.rings.records[0], i, toScale(SCALE_TEST))[j]
-          check isNear(float(corner.alpha), Ink.Olive.colour.alpha)
-          check abs(dot(corner.toPosition - anchor.get, normal.get)) <= bound + 1e-5
+          check isNear(float(corners[j].alpha), Ink.Olive.colour.alpha)
+          check abs(dot(corners[j].toPosition - anchor.get, normal.get)) <= bound + 1e-5
 
 
   test "the ring's static corners are the circle's own angles, in the ribbon's winding":
@@ -561,6 +654,7 @@ suite "Mesh":
 
 
   test "horizon line becomes a great circle around eye, perpendicular to its normal":
+    var count_showable = 0
     for plane in PLANES:
       MESHES.clearMeshes
       let attitude = ⊖ plane
@@ -587,7 +681,21 @@ suite "Mesh":
       #   corner stands half line width off that segment, so it is neither exactly on
       #   circle's own radius nor exactly in its plane. See plane rim above.
       var count_at_radius = 0
+      # Whether any end stands in front and inside guard pyramid, which is where ring
+      #   must show; past guard, drawing is cut (`mesh.FACTOR_GUARD`) off screen.
+      var is_showable = false
       for i in 0 ..< SEGMENTS_RING:
+        let piece = ribbonOfRing(MESHES.rings.records[0], i)
+        for place in [
+          Position(x: float(piece.tail_x), y: float(piece.tail_y), z: float(piece.tail_z)),
+          Position(x: float(piece.head_x), y: float(piece.head_y), z: float(piece.head_z)),
+        ]:
+          let offset = place - SCALE_TEST.eye
+          # Record's own segment is on circle exactly, drawn or not.
+          check isNear(dot(offset, normal_from_plane.get), 0)
+          check isNear(norm(offset), SCALE_TEST.radiusHorizon)
+          if dot(offset, SCALE_TEST.forward) > SCALE_TEST.depthNear and isInsideGuard(place):
+            is_showable = true
         # Skip what shader will not draw; coincident corners are its refusal.
         let corners = expandRingVertex(MESHES.rings.records[0], i, toScale(SCALE_TEST))
         if not isRibbonDrawn(corners): continue
@@ -602,10 +710,15 @@ suite "Mesh":
           #   chord -- never past it.
           check norm(offset) <= SCALE_TEST.radiusHorizon*(1.0 + 1e-5)
           if isNear(norm(offset), SCALE_TEST.radiusHorizon): inc count_at_radius
-      check count_at_radius > 0
-      # Half-behind claim, held rather than assumed: some of ring is drawn, and.
-      #   well under all of it.
-      check count_drawn in 1 ..< SEGMENTS_RING
+      # Half-behind claim, held rather than assumed: some of ring is drawn wherever some
+      #   stands in view, and well under all of it.
+      check count_drawn < SEGMENTS_RING
+      if is_showable:
+        inc count_showable
+        check count_drawn >= 1
+        check count_at_radius > 0
+    # Sample reaches circles in view, so claims above are exercised, not skipped.
+    check count_showable * 2 >= PLANES.len
 
 
   test "horizon plane becomes a dome over the whole sky around eye":
@@ -716,7 +829,7 @@ suite "Mesh":
   test "world furniture stays inside the fog it is drawn in":
     MESHES.clearMeshes
     MESHES.addAxes(SCRATCH, SCALE_FOG.extentFurniture, SCALE_FOG)
-    MESHES.addGrid(SCRATCH, SCALE_FOG.extentFurniture, SCALE_FOG)
+    MESHES.addLattice(SCRATCH, SCALE_FOG.extentFurniture, SCALE_FOG, groundPlane())
     check 6*MESHES.ribbons.count > 0
     let fog = fogFurnitureFor(SCALE_FOG.extentFurniture)
     for i in 0 ..< MESHES.ribbons.count:
@@ -734,7 +847,7 @@ suite "Mesh":
     #   since either alone passes under old behaviour.
     let scale_afar = scaleFurnitureAt(Position(x: 1000, y: -700, z: 6), 300.0)
     MESHES.clearMeshes
-    MESHES.addGrid(SCRATCH, scale_afar.extentFurniture, scale_afar)
+    MESHES.addLattice(SCRATCH, scale_afar.extentFurniture, scale_afar, groundPlane())
     check 6*MESHES.ribbons.count > 0
     let fog = fogFurnitureFor(scale_afar.extentFurniture)
     for i in 0 ..< MESHES.ribbons.count:
@@ -745,13 +858,13 @@ suite "Mesh":
         check norm(vertex.toPosition - ORIGIN) > fog.radius_gone
 
 
-  test "ground grid holds full alpha near the camera and fades to nothing at its reach":
+  test "a lattice holds full alpha near the camera and fades to nothing at its reach":
     # Fade runs per fragment in shaders now, so what records carry is.
     #   grid's own full tint with fog *flag* set, and drawn alpha is that tint
     #   times `alphaGridFade` -- reference both fragment shaders are held to --
     #   evaluated here at each corner's own distance from eye, exactly as they do.
     MESHES.clearMeshes
-    MESHES.addGrid(SCRATCH, SCALE_FOG.extentFurniture, SCALE_FOG)
+    MESHES.addLattice(SCRATCH, SCALE_FOG.extentFurniture, SCALE_FOG, groundPlane())
     let fog = fogFurnitureFor(SCALE_FOG.extentFurniture)
     var
       alpha_near_min = 1.0
@@ -855,7 +968,7 @@ suite "Mesh":
         #   through origin that coincides with world axis.
         lines = 4*int(floor(radius/SIZE_CELL_GRID))
       MESHES.clearMeshes
-      MESHES.addGrid(SCRATCH, extent, scale_above)
+      MESHES.addLattice(SCRATCH, extent, scale_above, groundPlane())
       # One record per lattice line, since fog fade moved to fragment shader.
       check MESHES.ribbons.count == lines
       for i in 0 ..< MESHES.ribbons.count:
@@ -900,12 +1013,12 @@ suite "Mesh":
     ]:
       let scale_afar = scaleFurnitureAt(Position(x: 0, y: 0, z: height), extent)
       MESHES.clearMeshes
-      MESHES.addGrid(SCRATCH, extent, scale_afar)
+      MESHES.addLattice(SCRATCH, extent, scale_afar, groundPlane())
       check MESHES.ribbons.count <= 2*LINES_GRID_MAX
       check MESHES.ribbons.count > 0
 
 
-  test "a camera dollied far out still has ground under it, at a coarser cell":
+  test "a camera dollied far out still has lattice under it, at a coarser cell":
     # Fault: fog's reach was capped at `CELLS_GRID_HALF_MAX` cells, so past 1,200.
     #   units ground stopped reaching what camera was looking at, and past twice
     #   that there was nothing drawn at all -- black void, axes included. Bound now
@@ -933,7 +1046,7 @@ suite "Mesh":
     for (extent, height) in [(1.0e4, 5.0e2), (1.0e6, 5.0e4), (1.0e9, 5.0e7)]:
       let scale_afar = scaleFurnitureAt(Position(x: 0, y: 0, z: height), extent)
       MESHES.clearMeshes
-      MESHES.addGrid(SCRATCH, extent, scale_afar)
+      MESHES.addLattice(SCRATCH, extent, scale_afar, groundPlane())
       check MESHES.ribbons.count > 0
       check MESHES.ribbons.count <= RIBBONS_MAX
       # Laid on world multiples of cell this reach asked for, so lattice is still.
@@ -954,6 +1067,55 @@ suite "Mesh":
           #   lattice line, which in world units grows with distance it is drawn at.
           #   Measured at 0.005 of cell across all three reaches.
           check min(off_x, off_y) <= 0.02*size_cell
+
+
+  test "a picked plane is ruled on itself, in its own frame, and nothing else is":
+    # World rules no ground: lattice lies on plane picked, so tilted plane's lines lie in
+    #   it, stepped by cell from its anchor along its own two axes.
+    let
+      normal = normalize(Direction(x: 1.0, y: 2.0, z: 2.0)).get
+      through = Position(x: 2.0, y: -1.0, z: 3.0)
+      plane = planeThrough(toMultivector(through), toMultivector(normal))
+      scale_near = scaleFurnitureAt(through + 3.0*normal, 300.0)
+    MESHES.clearMeshes
+    MESHES.addLattice(SCRATCH, scale_near.extentFurniture, scale_near, plane)
+    check MESHES.ribbons.count > 0
+    let
+      anchor = positionAnchor(plane).get
+      axes = frame(plane).get
+      fog = fogFurnitureFor(scale_near.extentFurniture)
+      height = abs(depthAgainst(plane, toMultivector(scale_near.eye)))
+      size_cell = sizeCellGridFor(sqrt(fog.radius_gone*fog.radius_gone - height*height))
+    for i in 0 ..< MESHES.ribbons.count:
+      let record = MESHES.ribbons.records[i]
+      for at in [
+        Position(x: record.tail_x, y: record.tail_y, z: record.tail_z),
+        Position(x: record.head_x, y: record.head_y, z: record.head_z),
+      ]:
+        check abs(depthAgainst(plane, toMultivector(at))) < 1.0e-3
+        # One of two plane coordinates sits on multiple of cell: line's own step.
+        let
+          first = dot(at - anchor, axes.axis_first)/size_cell
+          second = dot(at - anchor, axes.axis_second)/size_cell
+        check min(abs(first - round(first)), abs(second - round(second))) < 1.0e-3
+    # Plane in horizon has no finite point to rule about.
+    MESHES.clearMeshes
+    MESHES.addLattice(SCRATCH, scale_near.extentFurniture, scale_near, 1.0.e321)
+    check MESHES.ribbons.count == 0
+    # Picked visible plane alone is ruled: point, and plane hidden, draw no lattice.
+    var scene = initScene()
+    var picked: Selection
+    picked.toggle(scene.addObject(toMultivector(through), "p", Ink.Rose))
+    picked.toggle(scene.addObject(plane, "shown", Ink.Rose))
+    let hidden = scene.addObject(groundPlane(), "hidden", Ink.Rose)
+    scene.setVisible(hidden, false)
+    picked.toggle(hidden)
+    MESHES.clearMeshes
+    MESHES.addLatticesPicked(SCRATCH, scale_near, scene, picked)
+    let count_picked = MESHES.ribbons.count
+    MESHES.clearMeshes
+    MESHES.addLattice(SCRATCH, scale_near.extentFurniture, scale_near, plane)
+    check count_picked == MESHES.ribbons.count
 
 
   test "the axes fog too: the one the camera stands by is drawn, the far ones are not":

@@ -6,7 +6,7 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[options, unittest]
+import std/[options, os, sequtils, strutils, unittest]
 
 import ../../src/dance_ontology/frame
 import ../../src/dance_ontology/rotation
@@ -244,3 +244,73 @@ suite "what there is":
     for offer in turnsOf(low):
       if abs(offer.to.twist) == 3:
         check offer.refused == some(Refusal.Hold)
+
+
+const RULED: array[Seen, array[Seen, string]] = [
+  ["Face-to-face", "Face-to-starboard", "Face-to-back", "Face-to-port"],
+  ["Starboard-to-face", "Starboard-to-starboard", "Starboard-to-back", "Starboard-to-port"],
+  ["Back-to-face", "Back-to-starboard", "Back-to-back", "Back-to-port"],
+  ["Port-to-face", "Port-to-starboard", "Port-to-back", "Port-to-port"]]
+  ## Architect's table of sixteen names (issue #289): row is where Lead sees
+  ## Follow, column where Follow sees Lead.  Written out, not built, so law
+  ## holds model to ruling rather than to itself.
+
+
+proc glossarySides(): seq[string] =
+  ## Sides glossary's entry `Facing` lists, in its own words and order.
+  let
+    said = readFile(currentSourcePath().parentDir.parentDir.parentDir /
+                    "GLOSSARY.md").replace('\n', ' ')
+    entry = said.find("**Facing**:")
+    opens = said.find(':', said.find("to the other", entry)) + 1
+  for word in said[opens ..< said.find('.', opens)].replace(" or ", ", ").split(','):
+    result.add word.strip
+
+
+suite "facings":
+  test "each of the sixteen states carries the name the Architect ruled":
+    for lead in Seen:
+      for follow in Seen:
+        check facing([lead, follow]).name == RULED[lead][follow]
+
+  test "no two states share a name":
+    var names: seq[string]
+    for named in Facing:
+      check named.name notin names
+      names.add named.name
+    check names.len == 16
+
+  test "each name gives the Lead's side, then the Follow's, in the glossary's words":
+    # Glossary lists sides in order each is met turning on spot to right:
+    # face, starboard, back, port.
+    let words = glossarySides()
+    check words == @["face", "starboard", "back", "port"]
+    for named in Facing:
+      let
+        seen = named.sides
+        halves = named.name.split("-to-")
+      check halves.len == 2
+      check halves[0] == words[ord(seen[Dancer.Lead])].capitalizeAscii
+      check halves[1] == words[ord(seen[Dancer.Follow])]
+      check facing(seen) == named
+
+  test "a dancer who turns on the spot shows the side the name gives":
+    # Quarter to one's right puts what was ahead at one's left: port.
+    for who in Dancer:
+      for (way, side) in [(1, Seen.Left), (-1, Seen.Right), (2, Seen.Behind)]:
+        var turned: array[Dancer, QuarterTurns]
+        turned[who] = way
+        let seen = facing(seenAfter(turned)).sides
+        check seen[who] == side
+        check seen[if who == Dancer.Lead: Dancer.Follow else: Dancer.Lead] == Seen.Ahead
+    # Ruling's own examples (issue #289).
+    check facing(seenAfter([0, 2])).name == "Face-to-back"   # Lead behind Follow.
+    check facing(seenAfter([0, 1])).name == "Face-to-port"   # Lead at Follow's left.
+    check facing(seenAfter([-1, 1])).name == "Starboard-to-port"  # Side by side, one way.
+    check facing(seenAfter([2, 1])).name == "Back-to-port"   # Lead's back at Follow's left.
+
+  test "twist cannot tell Face-to-face from Back-to-back, so a facing needs both turns":
+    # Twist is follow's turn less lead's: same for both states below.
+    let (face, back) = ([0, 0], [2, 2])
+    check face[1] - face[0] == back[1] - back[0]
+    check facing(seenAfter(face)) != facing(seenAfter(back))

@@ -28,17 +28,35 @@
 ##   | elbow fore, aspect aft    | , elbow forward  |
 ##   | Body.One                  | lead's           |
 ##   | Body.Two                  | follow's         |
+##   | quarters each sees other  | facing           |
 ##   |---------------------------|------------------|
 
 {.experimental: "strictFuncs".}
 
-import std/options
+import std/[options, strutils]
 
 import ./[body, hold, read, rig, walk]
 
 
 const BANDS* = [("low", Band.Torso), ("high", Band.Neck), ("above", Band.Crown)]
   ## Name each band, in order report and page tabulate them.
+
+const SIDES = ["Face", "Starboard", "Back", "Port"]
+  ## Name side each dancer turns to other, by quarters clockwise from own front
+  ## at which they see other (`body.quartersTo`).
+  ##   Port and starboard name sides of body, so facing never reads as hold.
+
+const FACINGS* =
+  block:
+    var each: array[16, ((int, int), string)]
+    for by_lead in 0 .. 3:
+      for by_follow in 0 .. 3:
+        each[by_lead * 4 + by_follow] = ((by_lead, by_follow),
+          SIDES[by_lead] & "-to-" & SIDES[by_follow].toLowerAscii)
+    each
+  ## Name each state two stand in to one another: where lead sees follow, then
+  ## where follow sees lead.  Name gives lead's side, then follow's, as
+  ## glossary does, such as `Face-to-port`.
 
 
 func bandName*(band: Band): string =
@@ -47,6 +65,17 @@ func bandName*(band: Band): string =
     if which == band:
       return word
   raise newException(Defect, "No word names band; got `" & $band & "`.")
+
+
+func facingName*(st: array[Body, Stance]): Option[string] =
+  ## Name state two stand in to one another, as dance names it (`FACINGS`).
+  ##   None between quarters, where body sees other at no one side.
+  let (lead, follow) = (quartersTo(st, Body.One), quartersTo(st, Body.Two))
+  if lead.isSome and follow.isSome:
+    for (seen, name) in FACINGS:
+      if seen == (lead.get, follow.get):
+        return some(name)
+  none(string)
 
 
 func whose*(h: Hand): string =

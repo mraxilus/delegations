@@ -704,7 +704,7 @@ proc updateHover*(
       # Depth along sight, not distance: speed curve travels forward, and that is what
       #   forward has to cross.
       if found.isSome:
-        interaction.depth_pointer = some(dot(found.get - scale.eye, scale.forward))
+        interaction.depth_pointer = some(depthAlong(scale.eye, scale.forward, found.get))
   else:
     interaction.index_hover = none(int)
     interaction.count_hover_rivals = 0
@@ -730,25 +730,28 @@ proc dollyAt*(
   ##     Free flight travels pointer's own ray, always. Object under pointer is what eye
   ##     comes in to, floored at that object's drawn radius; ray itself carries eye where
   ##     nothing stands there.
-  ##     Selection keeps turntable's dolly, which stage carrying frame rule replaces.
+  ##     Selection keeps turntable's dolly, toward object under pointer where one
+  ##     stands there, and about middle of frame where none does.
   # Take caller's extent and matrix, not fresh derivations per notch; see
   #   `picking.anchorZoomAt`.
+  let anchor = anchorZoomAt(
+    scene, camera, scale, view_projection, width, height, cursor, placed,
+  )
   if not has_selection:
-    let standing = anchorStandingAt(
-      scene, camera, scale, view_projection, width, height, cursor, placed,
-    )
-    if standing.isSome:
-      camera.travelToward(factor, standing.get.at, standing.get.floor_reach)
+    if anchor.isSome:
+      camera.travelToward(factor, anchor.get.at, anchor.get.floor_reach)
       # Separation follows anchor's own depth, so frustum's scale tracks flight.
       #   Crossing as well as standing object: free flight has no orbit for pivot to
       #   anchor, so depth here is scale and nothing else.
-      let depth = dot(standing.get.at - camera.eye, camera.frame.forward)
+      let (eye, frame) = camera.sight
+      let depth = depthAlong(eye, frame.forward, anchor.get.at)
       if depth > 0.0: camera.repivotToDepth(depth)
       return
     # Nothing under pointer: same ray carries eye, at camera's own scale, and separation
     #   scales with it exactly as `dolly` scales it.
     let heading = headingThrough(camera, camera.frame, width, height, cursor)
-    let reach = norm(heading)
+    # Length of heading is bulk norm of weightless point it lifts to.
+    let reach = ( |∙ toMultivector(heading))[Basis.scalar]
     if reach <= 0.0: return
     let settled = distanceHeld(camera.distance*factor)
     camera.travelAlong(
@@ -756,17 +759,14 @@ proc dollyAt*(
     )
     camera.repivotToDepth(settled)
     return
-  let anchor = anchorZoomAt(
-    scene, camera, scale, view_projection, width, height, cursor, placed,
-  )
   if anchor.isNone:
     camera.dolly(factor)
     return
   camera.dollyToward(factor, anchor.get.at)
   if anchor.get.is_standing:
     # Depth from eye where it now stands, along sight direction zoom left unchanged.
-    let eye = camera.eye
-    let depth = dot(anchor.get.at - eye, camera.frame.forward)
+    let (eye, frame) = camera.sight
+    let depth = depthAlong(eye, frame.forward, anchor.get.at)
     if depth > 0.0: camera.repivotToDepth(depth)
 
 
@@ -792,8 +792,8 @@ proc dollyAtCursor*(
 ) =
   ## Zoom camera by `factor`, toward whatever cursor is over.
   ##   One statement of what wheel notch does, so both front-ends and pinch zoom same way.
-  ##   `picking.anchorZoomAt` decides what "over" means: object under cursor, ground under
-  ##   it, or level pivot sits on, in that order.
+  ##   `picking.anchorZoomAt` decides what "over" means: object under cursor, and nothing
+  ##   else.
   ##   Falls back to plain `dolly` where none answers, cursor on empty sky above horizon.
   ##   Where anchor is point or line, pivot then follows its depth along sight line; see
   ##   `camera.repivotToDepth` and `picking.AnchorZoom`.
@@ -898,6 +898,17 @@ func releaseKeysAll*(interaction: var Interaction) =
   interaction.seconds_travelling = 0.0
 
 
+func speedFlying*(interaction: Interaction, camera: Camera): float =
+  ## Read speed free flight carries camera at right now, in units per second.
+  ##   Panel's reading: same cap and same age `driveHeld` steps by, so figure shown is
+  ##   figure flown. Zero while no travel key is held, since age is.
+  let haste = if Key.Shift in interaction.keys_held: FACTOR_HASTE else: 1.0
+  speedTravelling(
+    interaction.seconds_travelling,
+    capTravelling(interaction.depth_pointer, camera.distance, haste),
+  )
+
+
 func driveHeld*(
   interaction: var Interaction; camera: var Camera; seconds: float; has_selection: bool
 ) =
@@ -967,9 +978,11 @@ func driveHeld*(
 
 
 func applyAction*(
-  interaction: var Interaction, camera: var Camera, scene: Scene, action: KeyAction
+  interaction: var Interaction; camera: var Camera; scene: Scene; action: KeyAction;
+  width, height: int
 ): Option[int] =
   ## Carry out one keyboard action, and report which object caller should select.
+  ##   `width` x `height` is frame drawn now, which `ViewHome` fits opening to.
   ##   Moves camera and focus, both its own state; does not touch selection, which each
   ##   render path owns differently.
   ##     Reporting handle leaves caller to read shift state and decide between replacing
@@ -993,7 +1006,9 @@ func applyAction*(
   of KeyAction.FrameSelection: discard
   of KeyAction.ViewHome:
     # Return to placement both builds open at, so "home" means same as starting again.
-    camera = initCameraDefault()
+    #   Stance alone: lens is reader's setting, as history's step keeps it.
+    #   Fitted to frame as it stands now, as opening was to frame it opened on.
+    camera = camera.placed(initCameraDefault(width, height).stanceOf)
   none(int)
 
 

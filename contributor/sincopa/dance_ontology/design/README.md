@@ -35,7 +35,8 @@ nim r tools/build.nim shot       # builds the helper that screenshots a page
 
 The build does not write a page whose checks fail. Each page is a product of the build, under
 `build/`, and is not committed. The build reads the four JSON files and does not write them. Each
-verb that writes one is run by hand.
+verb that writes one is run by hand. `rig` and `modelled` keep a stamp of the physics with what they
+record, and record nothing again when it is the same.
 
 ## Rules
 

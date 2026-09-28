@@ -3,9 +3,12 @@
 
 {.experimental: "strictFuncs".}
 
-import std/[tables, unittest]
+import std/[json, math, options, strutils, tables, unittest]
 
-import ../../design/[asks, parts]
+import ../../design/[asks, modelled, parts, rig_page]
+from ../../design/rig as recording import KEPT_RIG, rigStamp
+import ../../sim/[rig, words]
+from ../../sim/rigid import restStance
 import ../../src/dance_ontology/rotation
 
 
@@ -20,7 +23,7 @@ suite "what each card asks of sim":
     for (frame, chain) in [("A16", "C5"), ("A17", "C3")]:
       let (a, c) = (byKey[frame], byKey[chain])
       check a.links == c.links
-      check a.away == c.away
+      check a.rest == c.rest
       check a.head == c.head
       check a.turns == c.turns
 
@@ -34,3 +37,55 @@ suite "what each card asks of sim":
     for manner in Manner:
       let tag = MANNERS[manner].tag
       check byKey["st_" & tag & "_0_1"].turns == -windSense(manner) * 0.25
+
+
+suite "each hold rests at named facing":
+
+  test "each chain rests where its connections run parallel, and alternates from there":
+    ## Hand to hand runs parallel Face-to-face, and crossed pair Face-to-back (rule 31).
+    ##   Chain steps by half turns, so facing is rest at whole turns and other
+    ##     of two at halves.
+    for (holds, rest, other) in [(HAND_TO_HAND, Facing.FaceToFace, Facing.FaceToBack),
+                                 (PAIRED, Facing.FaceToBack, Facing.FaceToFace)]:
+      check restOf(holds) == rest
+      for wind in STEPS:
+        let whole = abs(wind - round(wind)) < 1e-9
+        check facingAt(holds, wind) == some(if whole: rest else: other)
+
+  test "sim is told each card's rest where it stands couple":
+    ## Card names its rest from model (`parts.restOf`), and sim is told only
+    ##   `away`.  Stance sim then stands couple in, read by sim's own words, is
+    ##   what card named.  Distance puts no one at other side of other.
+    for a in stillAsks():
+      checkpoint a.key
+      check facingName(restStance(HUMAN, 1.0, a.away)) == some(a.rest.name)
+
+  test "sim is asked no rest it cannot stand":
+    ## Sim stands couple Face-to-face or follow turned half, and no other rest.
+    for rest in Facing:
+      if rest in {Facing.FaceToFace, Facing.FaceToBack}:
+        discard awayFor(rest)
+      else:
+        expect Defect: discard awayFor(rest)
+
+
+suite "each recording is of tree it is kept in":
+  ## Verb whose stamp is unchanged records nothing again (`design/stamps`), so recording kept
+  ##   with other stamp is of other physics, other questions or other verb.  Page would show it
+  ##   as this tree's answer.
+
+  test "answers the reference page tags carry the stamp the tree gives":
+    check parseFile(KEPT_MODELLED)["stamp"].getStr == modelledStamp()
+
+  test "recording the rig page plays carries the stamp the tree gives":
+    check parseFile(KEPT_RIG)["stamp"].getStr == rigStamp()
+
+  test "rig page folds in the recording without its stamp, and nothing else left out":
+    ## Stamp changes with any change to physics, where page shows none.
+    let
+      text = readFile(KEPT_RIG).strip()
+      folded = parseJson(text.unstamped)
+    var kept = parseJson(text)
+    kept.delete("stamp")
+    check not folded.hasKey("stamp")
+    check folded == kept

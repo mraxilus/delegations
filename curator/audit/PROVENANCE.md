@@ -308,14 +308,15 @@ that the guide states.** No heading carries a date. `## Open questions` is the l
 section. No heading text appears twice. No title is underlined, because every reader here sees
 `#` lines, and an underlined title is invisible to all of them.
 
-**A provenance file over `RECORD_LINES`, 3,000, is a finding.** Its remedy is the prune that
+**A provenance file over `RECORD_LINES`, 5,000, is a finding.** Its remedy is the prune that
 the guide asks for. The ceiling is a backstop, and `SECTION_LINES` is the instrument that reads
-narration. Simplified Technical English costs about a fifth more lines than ordinary English,
-measured over the provenance files of the repository. So 2,000 lines of ordinary English scale to
-2,500, and 3,000 adds a fifth of headroom above that.
+narration. The Architect chose 5,000. At 3,000, the largest record, that of `rga_visualiser`,
+stood exactly at the ceiling, so every addition there had to prune first. At 5,000, that record
+stands two fifths clear.
 
-- Rejected: 2,500 with no headroom. A backstop that fires on ordinary work reports growth, and
-  not narration.
+- Cost: a long record can grow further before a prune is asked. The section ceiling still
+  catches narration inside it.
+- Rejected: 3,000. A backstop that fires on ordinary work reports growth, and not narration.
 
 **A `##` section over `SECTION_LINES`, 200, is the same finding, on the unit where narration
 collects.** The whole-file ceiling is crude. It punishes a wide project and lets a narrow one

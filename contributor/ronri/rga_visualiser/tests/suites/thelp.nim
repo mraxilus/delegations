@@ -68,7 +68,8 @@ suite "Help":
     # Every motion and action is *described* by some row; rows group them by job, so.
     #   this asks for words reader would look for rather than enum's own name.
     for phrase in [
-      "slide the view", "lower or raise", "orbit", "further out", "faster",
+      "slide the view", "raise or lower", "orbit", "further out", "faster", "roll",
+      "twist",
       "previous or next object", "select", "back into view", "back where it started",
     ]:
       check phrase in text

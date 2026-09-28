@@ -76,9 +76,9 @@ const
     ##   Room for halo's stroke, `WIDTH_MARKER_LABEL_HALO`, and one pixel of air.
   MARGIN_LABEL_FOOT* = 40.0
     ## Stand frame's label's box this far above view's bottom edge, in pixels.
-    ##   Page's scale bar sits in that corner, 14 in from edge and 19 tall, so its top is 33
-    ##   up; `GAP_MARKER` of air over it. Desktop draws no bar and wears same lift, so two
-    ##   front-ends put one label in one place.
+    ##   Scale bar sits in that corner, 14 in from edge and 19 tall, so its top is 33 up;
+    ##   `GAP_MARKER` of air over it. Both front-ends draw that bar there, so both put one
+    ##   label in one place.
   MARGIN_LABEL_HORIZON* = 12.0
     ## Stand horizon line's and horizon plane's labels this far in from view's edge, in
     ##   pixels, beyond push `clearanceBeside` gives off their anchor. Name flush against

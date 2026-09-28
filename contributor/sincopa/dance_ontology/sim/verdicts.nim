@@ -4,24 +4,28 @@
 ##     `sim/verdicts.md`.  Everything here is asked of `walk`, which stands couple
 ##     for turn they are about to take and walks them until something gives;
 ##     report only translates, once, and shows its translation table first.
+##   Report renders from readings (`readings`), kept with stamp of physics in
+##     `sim/verdicts.json`: words alone render in seconds, and physics changed is
+##     read again on every core.
 ##   Solver this once asked is gone.  What is asked has not changed; what answers
 ##     has, and figures in report are whatever it answers today.
 
 {.experimental: "strictFuncs".}
 
-import std/[math, options, strformat, strutils, tables, wordwrap]
+import std/[math, options, sets, strformat, strutils, tables, wordwrap]
 
-import ./[body, hold, read, rig, rigid, vec, walk, words]
+import ./[body, hold, readings, rig, rigid, walk, words]
 
 
 const
-  HALVES = [-4, -3, -2, -1, 0, 1, 2, 3, 4] ## Turns asked, in half turns.
   RUNGS = [(0.5, "cross"), (1.0, "diamond"), (1.5, "swan")]
     ## Name each rung of chain, in glossary's own words.
     ##   Once said `X`, which sits on avoid line of **Cross**, while
     ##     `design/parts` named same rung right: two namings of one chain, and
     ##     only one of them correct.  `tests/suites/tglossary` now reads both.
   WIDTH = 100 ## Columns report's prose wraps at.
+  SEEN = ["ahead", "at right", "behind", "at left"]
+    ## Say where one has other, by quarters clockwise (`body.quartersTo`).
 
 
 func oneLink(a, b: Arm): seq[Link] =
@@ -47,51 +51,63 @@ func half(h: int): string =
   let a = abs(h)
   sign & (if a mod 2 == 0: $(a div 2) else: (if a > 1: $(a div 2) & " 1/2" else: "1/2"))
 
-func strainWord(t: Tight): string =
+func strainWord(strain: float): string =
   ## Render strain with its nearness to edge.
-  let s = formatFloat(t.strain, ffDecimal, 2)
-  if t.strain >= 1.0: s & " (at edge)" elif t.strain >= 0.7: s & " (near it)" else: s
+  let s = formatFloat(strain, ffDecimal, 2)
+  if strain >= 1.0: s & " (at edge)" elif strain >= 0.7: s & " (near it)" else: s
 
-func blockLine(w: Walk; sign: string; apart = true): string =
+func whyOf(w: WayRead): string =
+  ## Say what refuses, as `words.why` says it of walk.
+  why(Walk(stopped: w.stopped, at: w.at, why: w.why, whose: w.whose))
+
+func blockLine(w: WayRead; sign: string; apart = true): string =
   ## Say where sweep blocks one way and why, and how far apart couple stood for it.
   ##   Kept short: two of these sit in one table row under audit's hundred columns.
   ##   Stance is dropped where row names it, since repeating it there says nothing.
   let stood = if apart: &", {turns(w.apart)} m apart" else: ""
   if not w.stopped:
     return &"{sign}: free to {turns(MOST)} turns{stood}"
-  &"{sign}{turns(w.at)}{stood}: {why(w)}"
+  &"{sign}{turns(w.at)}{stood}: {whyOf(w)}"
 
-func blocks(sw: Swept): string =
+func blocks(sw: SweepRead): string =
   ## Say both blocks of sweep as one wrapped paragraph.
   prose(&"Blocks: {blockLine(sw.neg, \"-\")}; {blockLine(sw.pos, \"+\")}.")
 
+func restName(away: bool): string =
+  ## Name facing couple rest at, read off stance sim stands them in.
+  ##   Distance puts no one at other side of other, so any distance names it.
+  facingName(restStance(HUMAN, 1.0, away)).get
 
-#[ Sweeps, Once ]#
 
-var sweeps: Table[string, Swept] ## Every sweep asked for, by what it is of.
+#[ Readings, asked for by rendering ]#
 
-func keyOf(band: Band; links: seq[Link]; who: Body; away: bool; apart: float): string =
-  result = &"{ord(who)}|{ord(band)}|{away}|{apart}"
-  for link in links:
-    result.add &"|{ord(link.ends[0].arm)}{ord(link.ends[1].arm)}"
+var
+  kept*: Readings ## Readings report renders from.
+  wanted: seq[SweepAsk] ## Sweeps render asked for and `kept` lacks, in order asked.
+  wantedRungs: seq[RungAsk]
+  used: HashSet[string] ## Keys render read, so file keeps nothing no render reads.
 
 proc sweepOf(band: Band; links: seq[Link]; who = Body.Two; away = false;
-             apart = 0.0): Swept =
-  ## Read sweep of hold: from where it was asked before, else swept now.
-  let key = keyOf(band, links, who, away, apart)
-  if key notin sweeps:
-    sweeps[key] = swept(HUMAN, band, links, who = who, most = MOST, away = away,
-                        apart = apart)
-  sweeps[key]
+             apart = 0.0): SweepRead =
+  ## Kept reading of sweep; lacking it, ask for it and render blank for now.
+  let
+    ask = askOf(band, links, who, away, apart)
+    key = keyOf(ask)
+  used.incl key
+  if key in kept.sweeps: return kept.sweeps[key]
+  if ask notin wanted: wanted.add ask
 
-func momentAt(sw: Swept; t: float): Option[Moment] =
-  ## Moment nearest `t` turns, from whichever way reaches it; none where neither does.
-  let way = (if t < 0.0: sw.neg else: sw.pos)
-  var best: Option[Moment]
-  for m in way.moments:
-    if abs(m.at - t) < 0.011 and (best.isNone or abs(m.at - t) < abs(best.get.at - t)):
-      best = some m
-  best
+proc rungOf(band: Band; turn: float): RungRead =
+  ## Kept reading of rung; lacking it, ask for it and render blank for now.
+  let
+    ask = RungAsk(band: band, turn: turn)
+    key = keyOf(ask)
+  used.incl key
+  if key in kept.rungs: return kept.rungs[key]
+  if ask notin wantedRungs: wantedRungs.add ask
+
+func glanceAt(sw: SweepRead; t: float): Glance = sw.glances[int(round(t * 2.0)) + 4]
+  ## Moment report reads at `t` turns, which is half turn from -2 to 2.
 
 
 #[ Sections ]#
@@ -134,7 +150,7 @@ proc rigTable(): string =
 proc singleHolds(): string =
   ## Tabulate every one-hand hold at every band, follow turned.
   result.add "## One hand held, the follow turned\n\n"
-  result.add prose("Counted from face-to-face, in turns, anticlockwise seen from above " &
+  result.add prose(&"Counted from {restName(false)}, in turns, anticlockwise seen from above " &
     "positive.  Each row is the pose the arms carry to that turn; *strain* is how far " &
     "into the last stretch before a joint's edge the worst joint is (1 is the edge).")
   for (a, b, name) in [(Arm.Left, Arm.Left, "L-l"), (Arm.Right, Arm.Right, "R-r"),
@@ -149,20 +165,13 @@ proc singleHolds(): string =
       result.add blocks(sw)
       result.add "| turn | follow's arm | lead's arm | strain | hands at |\n" &
         "|---|---|---|---|---|\n"
-      for h in HALVES:
-        let t = h.float / 2.0
-        let m = momentAt(sw, t)
-        if m.isNone:
+      for i, h in HALVES:
+        let g = sw.glances[i]
+        if not g.got:
           result.add &"| {half(h)} | blocked | | | |\n"
           continue
-        let
-          mo = m.get
-          tight = tightest(HUMAN, mo.stance, links, mo.arms)
-          g = mo.arms[0][0].g
-        result.add &"| {half(h)} | " &
-          &"{said(lyingOn(HUMAN, band, links, mo.stance, mo.arms, 0, Body.Two), band)} | " &
-          &"{said(lyingOn(HUMAN, band, links, mo.stance, mo.arms, 0, Body.One), band)} | " &
-          &"{strainWord(tight)} | {turns(g.z)} m |\n"
+        result.add &"| {half(h)} | {said(g.lies[0][Body.Two], band)} | " &
+          &"{said(g.lies[0][Body.One], band)} | {strainWord(g.strain)} | {turns(g.handZ)} m |\n"
       result.add "\n"
 
 
@@ -170,7 +179,7 @@ proc floorClaim(): string =
   ## Tabulate floor's claim beside sim's answer.
   result.add "## The floor's claim\n\n"
   result.add prose("The floor: *everything gets a full turn before it blocks, except a low " &
-    "wrap, which gets half.*  L-l and L-r, turning the follow, from Face-to-face.  For L-l " &
+    &"wrap, which gets half.*  L-l and L-r, turning the follow, from {restName(false)}.  For L-l " &
     "the lock way is negative and the wrap way positive; for L-r the wrap way is negative " &
     "and the lock way positive.")
   result.add "| hold | level | way | floor says | sim says | the sim names |\n" &
@@ -185,7 +194,7 @@ proc floorClaim(): string =
                     elif band == Band.Torso and way == "wrap way": "half a turn"
                     else: "a whole turn"
         let says = if w.stopped: &"blocks at {turns(w.at)}" else: "no block"
-        let names = if w.stopped: why(w) else: ""
+        let names = if w.stopped: whyOf(w) else: ""
         result.add &"| {name} | {word} | {way} | {floor} | {says} | {names} |\n"
   result.add "\n"
 
@@ -193,13 +202,13 @@ proc floorClaim(): string =
 proc pairHolds(): string =
   ## Tabulate both two-hand holds at every band, follow turned.
   result.add "## Both hands held\n\n"
-  result.add prose("L-r.R-l rests face-to-face; L-l.R-r rests pillion lead " &
-    "(face-to-face its two connections lie through each other), and its turns count " &
+  result.add prose(&"L-r.R-l rests {restName(false)}; L-l.R-r rests {restName(true)} " &
+    &"({restName(false)} its two connections lie through each other), and its turns count " &
     "from there.")
   for (links, away, name) in [
       (twoLinks(Arm.Left, Arm.Right, Arm.Right, Arm.Left), false, "L-r.R-l"),
       (twoLinks(Arm.Left, Arm.Left, Arm.Right, Arm.Right), true,
-       "L-l.R-r, from pillion lead")]:
+       "L-l.R-r, from " & restName(true))]:
     for (word, band) in BANDS:
       let sw = sweepOf(band, links, away = away)
       result.add &"### {name}, {word}\n\n"
@@ -209,24 +218,18 @@ proc pairHolds(): string =
       result.add blocks(sw)
       result.add "| turn | follow's first arm | follow's second arm | crossings | strain |\n" &
         "|---|---|---|---|---|\n"
-      for h in HALVES:
-        let t = h.float / 2.0
-        let m = momentAt(sw, t)
-        if m.isNone:
+      for i, h in HALVES:
+        let g = sw.glances[i]
+        if not g.got:
           result.add &"| {half(h)} | blocked | | | |\n"
           continue
-        let
-          mo = m.get
-          tight = tightest(HUMAN, mo.stance, links, mo.arms)
         var cross = ""
-        for c in crossings(mo.arms):
+        for c in 0 ..< min(g.crossed, g.over.len):
           cross.add (if cross.len > 0: ", " else: "") &
-            (if c.over == 0: "first over" else: "second over")
+            (if g.over[c] == 0: "first over" else: "second over")
         if cross.len == 0: cross = "none"
-        result.add &"| {half(h)} | " &
-          &"{said(lyingOn(HUMAN, band, links, mo.stance, mo.arms, 0, Body.Two), band)} | " &
-          &"{said(lyingOn(HUMAN, band, links, mo.stance, mo.arms, 1, Body.Two), band)} | " &
-          &"{cross} | {strainWord(tight)} |\n"
+        result.add &"| {half(h)} | {said(g.lies[0][Body.Two], band)} | " &
+          &"{said(g.lies[1][Body.Two], band)} | {cross} | {strainWord(g.strain)} |\n"
       result.add "\n"
 
 
@@ -238,41 +241,29 @@ proc chain(): string =
     "above say.  Wound, not built there: a rung is a winding of the arms, which no facing " &
     "says, so the couple are turned to it with the hands lifted and then left to stand.  " &
     "Asked from every distance the couple may stand at, and shown from first that holds.")
-  result.add "| level | rung | holds | strain | crossings | standing |\n" &
-    "|---|---|---|---|---|---|\n"
-  let links = twoLinks(Arm.Left, Arm.Right, Arm.Right, Arm.Left)
+  result.add "| level | rung | facing | holds | strain | crossings | standing |\n" &
+    "|---|---|---|---|---|---|---|\n"
   for (word, band) in BANDS:
     for (turn, rung) in RUNGS:
-      var found = false
-      for apart in stands(HUMAN):
-        let (holds, c) = stood(HUMAN, band, links, turn, false, Body.Two, apart)
-        var arms: Arms
-        for i in 0 ..< links.len:
-          arms.add c.poseOf(i).arms
-        if holds:
-          let tight = tightest(HUMAN, c.stance, links, arms)
-          result.add &"| {word} | {rung} ({turns(turn)}) | yes | {strainWord(tight)} | " &
-            &"{crossings(arms).len} | {turns(apart)} m |\n"
-          found = true
-        c.free()
-        if found: break
-      if not found:
-        result.add &"| {word} | {rung} ({turns(turn)}) | no | | | no pose holds |\n"
+      # Read off stance rung winds couple to, whether pose holds there or not.
+      let
+        facing = facingName(turned(restStance(HUMAN, 1.0), Body.Two, turn)).get
+        r = rungOf(band, turn)
+      if r.found:
+        result.add &"| {word} | {rung} ({turns(turn)}) | {facing} | yes | " &
+          &"{strainWord(r.strain)} | {r.crossed} | {turns(r.apart)} m |\n"
+      else:
+        result.add &"| {word} | {rung} ({turns(turn)}) | {facing} | no | | | no pose holds |\n"
   result.add "\n"
 
 
 proc drawnRow(drawn: string; links: seq[Link]; who: Body; turn: float; band: Band): string =
   ## Tabulate one state whole-cloth page draws, asked of sim.
-  let m = momentAt(sweepOf(band, links, who = who), turn)
-  if m.isNone:
+  let g = glanceAt(sweepOf(band, links, who = who), turn)
+  if not g.got:
     return &"| {drawn} | {turns(turn)} | blocked before it | | | |\n"
-  let
-    mo = m.get
-    tight = tightest(HUMAN, mo.stance, links, mo.arms)
-  &"| {drawn} | {turns(turn)} | yes | " &
-    &"{said(lyingOn(HUMAN, band, links, mo.stance, mo.arms, 0, Body.Two), band)} | " &
-    &"{said(lyingOn(HUMAN, band, links, mo.stance, mo.arms, 0, Body.One), band)} | " &
-    &"{strainWord(tight)} |\n"
+  &"| {drawn} | {turns(turn)} | yes | {said(g.lies[0][Body.Two], band)} | " &
+    &"{said(g.lies[0][Body.One], band)} | {strainWord(g.strain)} |\n"
 
 
 proc drawnStates(): string =
@@ -334,7 +325,11 @@ proc report(): string =
   result.add "| the hands in the neck band | high |\n"
   result.add "| the hands over the crown | above |\n"
   result.add "| the arm carried there but not pressing the body | led |\n"
-  result.add "| the elbow in front of the body, on an arm behind the back | elbow forward |\n\n"
+  result.add "| the elbow in front of the body, on an arm behind the back | elbow forward |\n"
+  for (seen, name) in FACINGS:
+    result.add &"| the lead has the follow {SEEN[seen[0]]}, the follow has the lead " &
+      &"{SEEN[seen[1]]} | {name} |\n"
+  result.add "\n"
   result.add prose("Read with the model's limits in mind: the shoulder girdle is rigid, so " &
     "a reach a dancer gets by rolling a shoulder forward is refused here; the trunk twists " &
     "at the waist and does not bend; a torso is a stadium of its round; and the couple " &
@@ -350,6 +345,35 @@ proc report(): string =
   result.add standing()
 
 
+proc render*(): string =
+  ## Write whole report from `kept`.  Reading it lacks is asked for (`lacking`), and
+  ## rendered blank.
+  wanted.setLen 0
+  wantedRungs.setLen 0
+  used.clear
+  report().strip(leading = false) & "\n"
+
+proc lacking*(): int = wanted.len + wantedRungs.len
+  ## How many readings last render lacked.
+
+
 when isMainModule:
-  writeFile("sim/verdicts.md", report().strip(leading = false) & "\n")
+  kept = keptReadings()
+  var text = render()
+  if lacking() > 0:
+    echo "reading ", wanted.len, " sweeps and ", wantedRungs.len, " rungs"
+    let got = readAll(wanted, wantedRungs)
+    kept.stamp = physics()
+    for i, a in wanted: kept.sweeps[keyOf(a)] = got.sweeps[i]
+    for i, a in wantedRungs: kept.rungs[keyOf(a)] = got.rungs[i]
+    text = render()
+    doAssert lacking() == 0, "Report still lacks readings once all are read."
+  # Keep only what report reads, so file holds no reading nothing renders.
+  var keeping = Readings(stamp: kept.stamp)
+  for k, v in kept.sweeps:
+    if k in used: keeping.sweeps[k] = v
+  for k, v in kept.rungs:
+    if k in used: keeping.rungs[k] = v
+  keep(keeping)
+  writeFile("sim/verdicts.md", text)
   echo "wrote sim/verdicts.md"
