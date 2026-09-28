@@ -144,7 +144,7 @@ func anchorFor*(
 
 
 
-#[ Segments and Circles ]#
+#[ Great Circle ]#
 
 func addGreatCircle(
   meshes: var MeshSet; center: Position; axis_first, axis_second: Direction;

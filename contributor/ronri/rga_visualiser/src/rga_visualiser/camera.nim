@@ -662,6 +662,7 @@ func repivotToDepth*(camera: var Camera, depth: float) =
   camera.depth_pivot = distanceHeld(depth)
 
 
+
 #[ Camera Flight ]#
 
 func turnedAboutEye(camera: Camera; along: Direction, radians: float): Motor =
