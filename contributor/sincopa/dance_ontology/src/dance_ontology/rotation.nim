@@ -426,6 +426,8 @@ func postures*(): seq[Posture] =
   ## rotation views are built on it as frame views are built on that.  Hand
   ## resting on body is left out: it gives whole turn away, so it adds no
   ## posture that turning can reach.
+  # One loop for each axis of data: frame, left level, right level, twist.
+  # Split would hide its shape.
   for target in FRAMES:
     for left in Level:
       for right in Level:

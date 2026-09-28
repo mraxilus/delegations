@@ -521,6 +521,8 @@ func deepestOf(w: Walk; links: seq[Link]): float =
   ##   Read against trunk capsules where engine has them, with distance worked
   ##     out here and not engine's manifolds.  Arm hangs from its own girdle and
   ##     overlaps it by construction, so that one pair is left out.
+  # One loop for each axis of data: moment, link, end, capsule, dancer, trunk capsule.
+  # Split would hide its shape.
   for m in w.moments:
     for i in 0 ..< links.len:
       for k in 0 .. 1:
@@ -538,6 +540,8 @@ func leapIn(w: Walk; links: seq[Link]): tuple[most, at: float] =
   ## Furthest any point of any held arm moves between two moments, and where.
   ##   Worked out here rather than borrowed from `walk.leapOf`, so law does not
   ##     check sim against itself.
+  # One loop for each axis of data: moment, link, end, joint.
+  # Split would hide its shape.
   for j in 1 ..< w.moments.len:
     for i in 0 ..< links.len:
       for k in 0 .. 1:

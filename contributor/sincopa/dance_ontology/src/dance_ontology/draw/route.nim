@@ -676,6 +676,8 @@ func letGo*(a, b: Point; marks: seq[Mark]; side: float): seq[Point] =
     var band: seq[Point]
     for step in 0 .. BAND_STEPS:
       band.add placed(span * float(step) / float(BAND_STEPS), 0.0)
+    # One loop for each axis of data: pass, point of band, shove, mark.
+    # Split would hide its shape.
     for pass_no in 1 .. BAND_PASSES:
       for i in 1 ..< band.high:
         let

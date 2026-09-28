@@ -143,6 +143,8 @@ proc checkFrame*() =
     ends_off = 0.0
   const held_sets: array[3, Holds] = [
     [some Arm.L, none Arm], [some Arm.R, none Arm], [some Arm.L, some Arm.R]]
+  # One loop for each axis of data: hold set, turn of lead, turn of follow, arm, point, dancer.
+  # Split would hide its shape.
   for holds in held_sets:
     for lead_turn in [0.0, 90.0, 180.0]:
       for follow_turn in [0.0, 90.0, 180.0]:
@@ -204,6 +206,8 @@ proc checkRules*() =
   # Version of this that looked only at sampled frames let line
   # through middle of dancer, twice.
   var swept = Inf
+  # One loop for each axis of data: move, run, point along run, dancer, drawn segment, sample.
+  # Split would hide its shape.
   for m in MOVES:
     let
       poses = cycle(m.apply).poses.mapIt(
@@ -718,6 +722,8 @@ proc checkSingleTurns*(built: Parts) =
     kept = 0
     curved = 0
     crest_in = Inf
+  # One loop for each axis of data: manner, hold, arm, quarter, then guards on which reach bends.
+  # Split would hide its shape.
   for manner in Manner:
     for single in SINGLES:
       for arm in Arm:
@@ -1330,6 +1336,8 @@ proc checkHandTurns*(built: Parts) =
 
   const WRITTEN = 0.15 ## Slack markup's own one decimal leaves in sum.
   var gaps = 0
+  # One loop for each axis of data: manner, edge of chain, frame, arm, end, mark, piece.
+  # Split would hide its shape.
   for manner in Manner:
     let w = MANNERS[manner]
     for edge in 0 ..< CHAIN.len - 1:

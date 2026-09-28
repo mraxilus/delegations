@@ -1176,6 +1176,8 @@ proc deepest(c: Couple; i: int): tuple[depth: float, met: Stop, k: int] =
       for l in Limb:
         mine.add (c.who[who].arm[arm].link[l], k)
       mine.add (c.who[who].arm[arm].girdle, k)
+  # One loop for each axis of data: own link, contact, dancer, arm.
+  # Split would hide its shape.
   for (me, k) in mine:
     # Room for every contact body has: asked with room for eight, forearm
     # touching nine things had its deepest dropped unseen, and two forearms
