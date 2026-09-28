@@ -3,6 +3,8 @@
 ##   decides what ran. Library sources are read at compile time from Atlas checkout, so
 ##   catalogue is held to what library exports rather than to what this project remembers.
 
+{.experimental: "strictFuncs".}
+
 import std/[algorithm, compilesettings, json, macros, options, sequtils, strutils, tables, unittest]
 from std/unicode import runeLen
 
@@ -32,14 +34,16 @@ macro expressionsCompile(measurands: static seq[Measurand]): untyped =
   result = newStmtList()
   let (m, n) = (ident"m", ident"n")  # plain idents, so expression's own `m` and `n` bind
   for p in measurands:
-    let expression = parseExpr(p.expression)
-    let kind_m = if p.operands[0] == Kind.Scalar: ident"float" else: ident"Multivector"
-    let kind_n = if p.operands[1] == Kind.Scalar: ident"float" else: ident"Multivector"
-    let id = newLit(p.id)
+    let
+      expression = parseExpr(p.expression)
+      kind_m = if p.operands[0] == Kind.Scalar: ident"float" else: ident"Multivector"
+      kind_n = if p.operands[1] == Kind.Scalar: ident"float" else: ident"Multivector"
+      id = newLit(p.id)
     result.add quote do:
       block:
-        var `m` {.used.}: `kind_m`
-        var `n` {.used.}: `kind_n`
+        var
+          `m` {.used.}: `kind_m`
+          `n` {.used.}: `kind_n`
         check compiles(`expression`)  # expression of `id` parses and resolves against library
         check `id`.len > 0  # id names gap
 
@@ -54,25 +58,27 @@ macro checkReferences(measurands: static seq[Measurand]; chapter: static string)
   for p in measurands:
     if p.reference.len == 0: continue
     if (chapter == "2") != p.cite.startsWith("2."): continue
-    let expression = parseExpr(p.expression)
-    let reference = parseExpr(p.reference)
-    let library_m = parseExpr(libraryPoolName(p.operands[0], p.grade))
-    let library_n = parseExpr(libraryPoolName(p.operands[1], p.grade))
-    let reference_m = parseExpr(referencePoolName(p.operands[0]))
-    let reference_n = parseExpr(referencePoolName(p.operands[1]))
-    let name = newLit(p.id & "  # " & p.cite)
+    let
+      expression = parseExpr(p.expression)
+      reference = parseExpr(p.reference)
+      library_m = parseExpr(libraryPoolName(p.operands[0], p.grade))
+      library_n = parseExpr(libraryPoolName(p.operands[1], p.grade))
+      reference_m = parseExpr(referencePoolName(p.operands[0]))
+      reference_n = parseExpr(referencePoolName(p.operands[1]))
+      name = newLit(p.id & "  # " & p.cite)
     result.add quote do:
       test `name`:
         for i in 0 ..< OBJECTS:
-          let j = (i * 7 + 3) mod OBJECTS
-          let expected = block:
-            let `m` {.used.} = `reference_m`[i]
-            let `n` {.used.} = `reference_n`[j]
-            widen(`reference`)
-          let got = block:
-            let `m` {.used.} = `library_m`[i]
-            let `n` {.used.} = `library_n`[j]
-            `expression`
+          let
+            j = (i * 7 + 3) mod OBJECTS
+            expected = block:
+              let `m` {.used.} = `reference_m`[i]
+              let `n` {.used.} = `reference_n`[j]
+              widen(`reference`)
+            got = block:
+              let `m` {.used.} = `library_m`[i]
+              let `n` {.used.} = `library_n`[j]
+              `expression`
           check got =~ expected  # library on images equals reference embedded
   if result.len == 0: result.add newNimNode(nnkDiscardStmt).add(newEmptyNode())
 
@@ -159,8 +165,9 @@ suite "Catalogue":
       check line in SOURCE_OPERATORS  # one-line template, target's function is what C holds
 
   test "aliases match every name library's umbrella exports":
-    let exported = aliasesIn(SOURCE_UMBRELLA, IS_CONFORMAL)
-    let catalogued = (aliasesOf(CATALOGUE) & aliasesOf(MISSING)).deduplicate
+    let
+      exported = aliasesIn(SOURCE_UMBRELLA, IS_CONFORMAL)
+      catalogued = (aliasesOf(CATALOGUE) & aliasesOf(MISSING)).deduplicate
     check catalogued.sorted == exported.sorted  # missing ones counted as gaps, not forgotten
 
 
@@ -224,14 +231,16 @@ suite "Lower bound":
     check lowerBoundOf(Shape.ConstantProduct, m, 1).multiplies == 0  # constant carries unit part
 
   test "unitize bound is norm, one reciprocal and one scale of each slot":
-    let m = Metric(dimensions: 4, is_conformal: false)
-    let b = lowerBoundOf(Shape.Unitize, m, 1)
+    let
+      m = Metric(dimensions: 4, is_conformal: false)
+      b = lowerBoundOf(Shape.Unitize, m, 1)
     check b.multiplies == 8 + 16  # squared norm, then every slot
     check b.divides == 1 and b.roots == 1  # one reciprocal over one root
 
   test "compound product folds its maps into one table, and bound counts that table":
-    let rigid = Metric(dimensions: 4, is_conformal: false)
-    let conformal = Metric(dimensions: 5, is_conformal: true)
+    let
+      rigid = Metric(dimensions: 4, is_conformal: false)
+      conformal = Metric(dimensions: 5, is_conformal: true)
     check lowerBoundOf(Shape.Support, rigid, 1).multiplies == 54  # wiki:Support
     check lowerBoundOf(Shape.SupportAnti, rigid, 1).multiplies == 54  # wiki:Support
     check lowerBoundOf(Shape.Center, conformal, 1).multiplies == 162  # wiki:Conformal
@@ -244,8 +253,9 @@ suite "Lower bound":
     check lowerBoundOfChain(partner, conformal, 1).is_composed  # sum of steps stays estimate
 
   test "conformal metric is not singular, so every blade carries image":
-    let rigid = Metric(dimensions: 4, is_conformal: false)
-    let conformal = Metric(dimensions: 5, is_conformal: true)
+    let
+      rigid = Metric(dimensions: 4, is_conformal: false)
+      conformal = Metric(dimensions: 5, is_conformal: true)
     check rigid.isNull(3) and not rigid.isNull(0)  # last vector of rigid squares to zero
     check not conformal.isNull(4)  # conformal pairs last two off diagonal
     check conformal.scalarFormTerms == 32 and rigid.scalarFormTerms == 8  # every blade
@@ -259,10 +269,11 @@ suite "Lower bound":
       check lowerBoundOf(shape, conformal, 2).is_derived  # rule holds here too
 
   test "chain sums its steps, and step with no rule adds nothing":
-    let rigid = Metric(dimensions: 4, is_conformal: false)
-    let conformal = Metric(dimensions: 5, is_conformal: true)
-    let projection = @[Shape.ExpandWeight, Shape.Wedge]
-    let b = lowerBoundOfChain(projection, rigid, 2)
+    let
+      rigid = Metric(dimensions: 4, is_conformal: false)
+      conformal = Metric(dimensions: 5, is_conformal: true)
+      projection = @[Shape.ExpandWeight, Shape.Wedge]
+      b = lowerBoundOfChain(projection, rigid, 2)
     check b.multiplies == 54 + 81  # dual product, then full product
     check b.is_composed and b.is_derived  # record marks estimate as estimate
     check b.bytesMoved == 128 * 3  # two read, one written, no intermediate
@@ -326,8 +337,8 @@ suite "Inspector":
       "\tBeforeRet_: ;",
       "}",
       "",
-      "static N_INLINE(NF, dot_u0__referenceZrigid3)(tyObject_Vec3__h* a_p0, " &
-        "tyObject_Vec3__h* b_p1) {",
+      "static N_INLINE(NF, dot_u0__referenceZrigid3)(tyObject_Vector3__h* a_p0, " &
+        "tyObject_Vector3__h* b_p1) {",
       "\tNF result;",
       "result = ((((NF) (*a_p0).x) * ((NF) (*b_p1).x)) + (((NF) (*a_p0).y) * ((NF) (*b_p1).y)));",
       "\treturn result;",
@@ -345,7 +356,7 @@ suite "Inspector":
     check c.multiplies == 2 and c.adds == 1 and c.subs == 1 and c.divides == 0  # as spelled
     check c.zero_fills == 1 and c.intermediates == 1 and c.checks == 2  # fills, locals, branches
     check c.calls == 1  # norm call counted, accessor read not
-    check functions[1].symbol == "dot" and functions[1].params == @["Vec3", "Vec3"]
+    check functions[1].symbol == "dot" and functions[1].params == @["Vector3", "Vector3"]
     check functions[1].result_stem == "float" and functions[1].is_inline  # via return type
     check count(functions[1].body).multiplies == 2  # inline body counted alike
     check functions[0].key == "∧(Multivector,Multivector)"  # key spells stems
@@ -409,8 +420,9 @@ suite "Inspector":
       "(*x_p0) = (((NF) (*x_p0)) * ((NF) 0.5));",
       "}",
     ].join("\n") & "\n"
-    let functions = functionsIn(LOOP)
-    let c = count(functions[0].body)
+    let
+      functions = functionsIn(LOOP)
+      c = count(functions[0].body)
     check c.multiplies == 16 + 1  # 16-trip loop counts its term sixteen times; unknown bound once
     check c.adds == 16  # every term inside loop is weighted
     check c.subs == 4 * 4  # nested loops multiply: `<= 3` from 0 is four trips, `< 4` four
@@ -464,7 +476,9 @@ N_NIMCALL(void, inner__u0__m)(tyObject_Multivector__h* m_p0, tyObject_Multivecto
 
   test "movement models bytes from stems and counts":
     let f = CFunction(
-      symbol: "∧", params: @["Multivector", "Multivector"], result_stem: "Multivector"
+      symbol: "∧",
+      params: @["Multivector", "Multivector"],
+      result_stem: "Multivector",
     )
     let m = movement(f, Counts(zero_fills: 1, intermediates: 2, copies: 1), 128)
     check m.bytes_read == 256 and m.bytes_written == 128  # two in, one out
@@ -555,8 +569,9 @@ suite "Guard":
     result[key] = f
 
   test "equal documents pass with nothing to say":
-    let same = one(KEY, node(81, 178, 1, 512))
-    let v = compare(doc(same), doc(same), PATH)
+    let
+      same = one(KEY, node(81, 178, 1, 512))
+      v = compare(doc(same), doc(same), PATH)
     check v.findings.len == 0 and v.improvements.len == 0  # gate silent
 
   test "grown count is one finding naming function, metric and both values":
@@ -584,8 +599,9 @@ suite "Guard":
     check after.findings.len == 1 and "absent from baseline" in after.findings[0].message  # new
 
   test "documents of another build are not compared":
-    let same = one(KEY, node(81, 178, 1, 512))
-    let flags = compare(doc(same), doc(same, flags = "-d:danger"), PATH)
+    let
+      same = one(KEY, node(81, 178, 1, 512))
+      flags = compare(doc(same), doc(same, flags = "-d:danger"), PATH)
     check flags.findings.len == 1 and "`flags`" in flags.findings[0].message  # build differs
     let dims = compare(doc(same), doc(same, dimensions = 5), PATH)
     check dims.findings.len == 1 and "`dimensions`" in dims.findings[0].message  # algebra differs
@@ -596,7 +612,7 @@ suite "Guard":
 suite "Gaps":
   const KEY_WEDGE = "∧(Multivector,Multivector)"
 
-  func fn(
+  func functionNode(
     symbol, module: string; is_inline: bool; multiplies, checks, zero_fills, bytes: int
   ): JsonNode =
     ## Shape one inspected function.
@@ -614,10 +630,10 @@ suite "Gaps":
       %*{"date": "2026-09-13", "machine": "m", "nim": "n", "pga": "p", "flags": "f"},
     )
     var functions = newJObject()
-    functions[KEY_WEDGE] = fn("∧", "pga/operators", false, 81, 178, 1, 512)
-    functions["wedge(Point,Point)"] = fn("wedge", "reference/rigid3", true, 12, 0, 0, 112)
-    functions["~(Multivector)"] = fn("~", "pga/operators", false, 0, 0, 1, 384)
-    functions["[](Multivector,Basis)"] = fn("[]", "pga/multivectors", true, 0, 0, 0, 136)
+    functions[KEY_WEDGE] = functionNode("∧", "pga/operators", false, 81, 178, 1, 512)
+    functions["wedge(Point,Point)"] = functionNode("wedge", "reference/rigid3", true, 12, 0, 0, 112)
+    functions["~(Multivector)"] = functionNode("~", "pga/operators", false, 0, 0, 1, 384)
+    functions["[](Multivector,Basis)"] = functionNode("[]", "pga/multivectors", true, 0, 0, 0, 136)
     result["functions"] = functions
     result["measurands"] = %*{
       "wedge": {"symbol": "∧", "library": KEY_WEDGE, "reference": ""},
@@ -680,8 +696,9 @@ suite "Gaps":
     check "time" notin by["wedge_point_point"].over_on  # no bench, no time verdict
 
   test "docket keeps identifiers across reorder and allots next to new key":
-    var gaps = gapsOf(ALGEBRAS[0])
-    var docket = docketOf(nil)
+    var
+      gaps = gapsOf(ALGEBRAS[0])
+      docket = docketOf(nil)
     gaps.assign(docket)
     check gaps[0].id == "G001" and gaps[3].id == "G004" and docket.next == 5  # in order
     gaps.reverse
@@ -693,8 +710,9 @@ suite "Gaps":
     check gaps[^1].id == "G005" and again.next == 6  # next number, never one reused
 
   test "causes are decided by rule with evidence":
-    let gaps = gapsOf(ALGEBRAS[0])
-    let checks = decidedOf(Rule.Checks, ALGEBRAS, gaps)
+    let
+      gaps = gapsOf(ALGEBRAS[0])
+      checks = decidedOf(Rule.Checks, ALGEBRAS, gaps)
     check checks.status == Status.Over and "1 of 3 library functions" in checks.evidence  # ∧
     check "`" & KEY_WEDGE & "` with 178" in checks.evidence  # most
     check decidedOf(Rule.Inline, ALGEBRAS, gaps).evidence ==
@@ -742,8 +760,9 @@ suite "Driver":
 
   func taught(source: string): seq[string] =
     ## Read verbs usage string teaches, between its angle brackets.
-    let open = source.find("\"<")
-    let close = source.find(">", open)
+    let
+      open = source.find("\"<")
+      close = source.find(">", open)
     source[open + 2 ..< close].split('|')
 
   func tabled(source: string): seq[string] =

@@ -194,8 +194,9 @@ func imageOf(m: Metric; shape: Shape; s: Blade): Option[Blade] =
     if t.isNone or not wedges(m.origin, t.get): return none(Blade)
     some(m.origin or t.get)
   of Shape.SupportAnti: # 𝐞̄ₙ ∨ s★
-    let t = m.dualBlade(s, as_weight = false)
-    let horizon = m.fullBlade xor m.origin
+    let
+      t = m.dualBlade(s, as_weight = false)
+      horizon = m.fullBlade xor m.origin
     if t.isNone or not m.wedgesAnti(horizon, t.get): return none(Blade)
     some(horizon and t.get)
   of Shape.Center: # s☆ ∧ 𝐞∞
@@ -222,11 +223,12 @@ func compoundTerms*(m: Metric; shape: Shape): int =
     let image = m.imageOf(shape, Blade(raw))
     if image.isNone: continue
     for other in 0 ..< m.slots:
-      let a = Blade(other)
-      let survives = case shape
-        of Shape.Support, Shape.Center, Shape.JoinCarrier: m.wedgesAnti(a, image.get)
-        of Shape.SupportAnti, Shape.Container: wedges(a, image.get)
-        else: false
+      let
+        a = Blade(other)
+        survives = case shape
+          of Shape.Support, Shape.Center, Shape.JoinCarrier: m.wedgesAnti(a, image.get)
+          of Shape.SupportAnti, Shape.Container: wedges(a, image.get)
+          else: false
       if survives: inc result
 
 
@@ -237,8 +239,9 @@ func dualProductTerms*(m: Metric; as_weight, as_expand: bool): int =
   ##   dimensions less grade of `n` counts; wedge needs it contained in `n` instead, which
   ##   two raised to grade of `n` counts.
   for raw in 0 ..< m.slots:
-    let n = Blade(raw)
-    let carries_null = not m.hasImage(n)
+    let
+      n = Blade(raw)
+      carries_null = not m.hasImage(n)
     if carries_null != as_weight: continue
     let grade = n.popcount
     result += 1 shl (if as_expand: grade else: m.dimensions - grade)
@@ -297,8 +300,9 @@ func lowerBoundOf*(shape: Shape; m: Metric; arity: range[1 .. 2]): LowerBound =
       result.multiplies = m.wedgeTerms
       result.adds = m.wedgeTerms - m.slots
     else:
-      let as_weight = shape in {Shape.ContractWeight, Shape.ExpandWeight}
-      let as_expand = shape in {Shape.ExpandBulk, Shape.ExpandWeight}
+      let
+        as_weight = shape in {Shape.ContractWeight, Shape.ExpandWeight}
+        as_expand = shape in {Shape.ExpandBulk, Shape.ExpandWeight}
       result.multiplies = m.dualProductTerms(as_weight, as_expand)
       result.adds = max(0, result.multiplies - m.slots)
   of Shape.Support, Shape.SupportAnti, Shape.Center, Shape.Container, Shape.JoinCarrier:

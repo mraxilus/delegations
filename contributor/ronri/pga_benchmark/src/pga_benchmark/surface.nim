@@ -16,15 +16,14 @@
 import std/strutils
 
 
-type Gate {.pure.} = enum
-  ## Define which algebras block of source applies to.
-  Any, Rigid, Conformal
-
-
-type Frame = object
-  ## Define one open `when` block: its indent and which algebra it admits.
-  indent: int
-  gate: Gate
+type
+  Gate {.pure.} = enum
+    ## Define which algebras block of source applies to.
+    Any, Rigid, Conformal
+  Frame = object
+    ## Define one open `when` block: its indent and which algebra it admits.
+    indent: int
+    gate: Gate
 
 
 func indentOf(line: string): int =
@@ -63,8 +62,9 @@ func between(s, opening, closing: string): string =
   ## Read text between first `opening` and next `closing`; empty where either is absent.
   let start = s.find(opening)
   if start < 0: return ""
-  let after = start + opening.len
-  let stop = s.find(closing, after)
+  let
+    after = start + opening.len
+    stop = s.find(closing, after)
   if stop < 0: return ""
   s[after ..< stop]
 

@@ -1627,12 +1627,12 @@
         "bytes_moved": 144
       }
     },
-    "dot(Vec3,Vec3)": {
+    "dot(Vector3,Vector3)": {
       "symbol": "dot",
       "module": "reference/rigid3",
       "params": [
-        "Vec3",
-        "Vec3"
+        "Vector3",
+        "Vector3"
       ],
       "returns": "float",
       "inline": true,
@@ -2067,14 +2067,14 @@
         "bytes_moved": 256
       }
     },
-    "+(Vec3,Vec3)": {
+    "+(Vector3,Vector3)": {
       "symbol": "+",
       "module": "reference/rigid3",
       "params": [
-        "Vec3",
-        "Vec3"
+        "Vector3",
+        "Vector3"
       ],
-      "returns": "Vec3",
+      "returns": "Vector3",
       "inline": true,
       "own": {
         "multiplies": 0,
@@ -2111,14 +2111,14 @@
         "bytes_moved": 72
       }
     },
-    "cross(Vec3,Vec3)": {
+    "cross(Vector3,Vector3)": {
       "symbol": "cross",
       "module": "reference/rigid3",
       "params": [
-        "Vec3",
-        "Vec3"
+        "Vector3",
+        "Vector3"
       ],
-      "returns": "Vec3",
+      "returns": "Vector3",
       "inline": true,
       "own": {
         "multiplies": 6,
@@ -2155,14 +2155,14 @@
         "bytes_moved": 72
       }
     },
-    "*(Vec3,float)": {
+    "*(Vector3,float)": {
       "symbol": "*",
       "module": "reference/rigid3",
       "params": [
-        "Vec3",
+        "Vector3",
         "float"
       ],
-      "returns": "Vec3",
+      "returns": "Vector3",
       "inline": true,
       "own": {
         "multiplies": 3,
@@ -2199,14 +2199,14 @@
         "bytes_moved": 56
       }
     },
-    "-(Vec3,Vec3)": {
+    "-(Vector3,Vector3)": {
       "symbol": "-",
       "module": "reference/rigid3",
       "params": [
-        "Vec3",
-        "Vec3"
+        "Vector3",
+        "Vector3"
       ],
-      "returns": "Vec3",
+      "returns": "Vector3",
       "inline": true,
       "own": {
         "multiplies": 0,
@@ -2287,15 +2287,15 @@
         "bytes_moved": 192
       }
     },
-    "rotate(Vec3,Vec3,float)": {
+    "rotate(Vector3,Vector3,float)": {
       "symbol": "rotate",
       "module": "reference/rigid3",
       "params": [
-        "Vec3",
-        "Vec3",
+        "Vector3",
+        "Vector3",
         "float"
       ],
-      "returns": "Vec3",
+      "returns": "Vector3",
       "inline": true,
       "own": {
         "multiplies": 0,
@@ -2338,7 +2338,7 @@
       "params": [
         "Motor"
       ],
-      "returns": "Vec3",
+      "returns": "Vector3",
       "inline": true,
       "own": {
         "multiplies": 0,
@@ -2767,13 +2767,13 @@
         "bytes_moved": 112
       }
     },
-    "-(Vec3)": {
+    "-(Vector3)": {
       "symbol": "-",
       "module": "reference/rigid3",
       "params": [
-        "Vec3"
+        "Vector3"
       ],
-      "returns": "Vec3",
+      "returns": "Vector3",
       "inline": true,
       "own": {
         "multiplies": 0,
@@ -4917,11 +4917,11 @@
         "bytes_moved": 8
       }
     },
-    "translator(Vec3)": {
+    "translator(Vector3)": {
       "symbol": "translator",
       "module": "reference/rigid3",
       "params": [
-        "Vec3"
+        "Vector3"
       ],
       "returns": "Motor",
       "inline": true,
@@ -4960,11 +4960,11 @@
         "bytes_moved": 216
       }
     },
-    "rotor(Vec3,float)": {
+    "rotor(Vector3,float)": {
       "symbol": "rotor",
       "module": "reference/rigid3",
       "params": [
-        "Vec3",
+        "Vector3",
         "float"
       ],
       "returns": "Motor",

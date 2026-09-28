@@ -35,7 +35,7 @@ export scalars
 
 
 type
-  Vec3* = object
+  Vector3* = object
     ## Define three components named as vector; direction, moment or normal.
     x*, y*, z*: float
   RoundPoint* = object
@@ -46,7 +46,7 @@ type
     x*, y*, z*, w*: float
   Dipole* = object
     ## Define dipole 𝐝 with carrier direction v, carrier moment m and flat part p; grade 2.
-    v*, m*: Vec3
+    v*, m*: Vector3
     p*: FlatPoint
   FlatPlane* = object
     ## Define flat plane 𝐠 with normal x y z and position w; grade 4, contains e₅.
@@ -57,10 +57,10 @@ type
   Circle* = object
     ## Define circle 𝐜 with carrier plane g, flat direction v and flat moment m; grade 3.
     g*: CarrierPlane
-    v*, m*: Vec3
+    v*, m*: Vector3
   FlatLine* = object
     ## Define flat line 𝐥 with direction v and moment m; grade 3, contains e₅.
-    v*, m*: Vec3
+    v*, m*: Vector3
   Sphere* = object
     ## Define sphere 𝐬 with carrier weight u, flat normal x y z and position w; grade 4.
     u*, x*, y*, z*, w*: float
@@ -69,17 +69,17 @@ type
 
 #[ Vector Helpers ]#
 
-func dot*(a, b: Vec3): float {.inline.} =
+func dot*(a, b: Vector3): float {.inline.} =
   ## Dot product, i.e. 𝐚 ∙ 𝐛; 3 mul, 2 add.
   a.x * b.x + a.y * b.y + a.z * b.z
 
-template zero3(): Vec3 =
-  ## Spell zero vector by components; `Vec3()` costs zero fill and hook calls here.
-  Vec3(x: 0.0, y: 0.0, z: 0.0)
+template zero3(): Vector3 =
+  ## Spell zero vector by components; `Vector3()` costs zero fill and hook calls here.
+  Vector3(x: 0.0, y: 0.0, z: 0.0)
 
-template read3(v: Vec3): Vec3 =
+template read3(v: Vector3): Vector3 =
   ## Spell copy of vector by components; whole-object copy costs `=dup` hook call here.
-  Vec3(x: v.x, y: v.y, z: v.z)
+  Vector3(x: v.x, y: v.y, z: v.z)
 
 template zeroFlatPoint(): FlatPoint =
   ## Spell zero flat point by components.
@@ -90,13 +90,13 @@ template zeroCarrier(): CarrierPlane =
   CarrierPlane(x: 0.0, y: 0.0, z: 0.0, w: 0.0)
 
 
-func `-`*(a: Vec3): Vec3 {.inline.} =
+func `-`*(a: Vector3): Vector3 {.inline.} =
   ## Negated vector; 0 mul.
-  Vec3(x: -a.x, y: -a.y, z: -a.z)
+  Vector3(x: -a.x, y: -a.y, z: -a.z)
 
-func `*`*(a: Vec3; s: float): Vec3 {.inline.} =
+func `*`*(a: Vector3; s: float): Vector3 {.inline.} =
   ## Vector scaled; 3 mul.
-  Vec3(x: a.x * s, y: a.y * s, z: a.z * s)
+  Vector3(x: a.x * s, y: a.y * s, z: a.z * s)
 
 
 
@@ -105,8 +105,8 @@ func `*`*(a: Vec3; s: float): Vec3 {.inline.} =
 func wedge*(a, b: RoundPoint): Dipole {.inline.} =
   ## Join round points into dipole, i.e. 𝐚 ∧ 𝐛; 20 mul, 10 sub.
   Dipole(
-    v: Vec3(x: a.w * b.x - a.x * b.w, y: a.w * b.y - a.y * b.w, z: a.w * b.z - a.z * b.w),
-    m: Vec3(x: a.y * b.z - a.z * b.y, y: a.z * b.x - a.x * b.z, z: a.x * b.y - a.y * b.x),
+    v: Vector3(x: a.w * b.x - a.x * b.w, y: a.w * b.y - a.y * b.w, z: a.w * b.z - a.z * b.w),
+    m: Vector3(x: a.y * b.z - a.z * b.y, y: a.z * b.x - a.x * b.z, z: a.x * b.y - a.y * b.x),
     p: FlatPoint(
       x: a.x * b.u - a.u * b.x, y: a.y * b.u - a.u * b.y, z: a.z * b.u - a.u * b.z,
       w: a.w * b.u - a.u * b.w,
@@ -122,12 +122,12 @@ func wedge*(d: Dipole; a: RoundPoint): Circle {.inline.} =
       z: d.v.x * a.y - d.v.y * a.x + d.m.z * a.w,
       w: -d.m.x * a.x - d.m.y * a.y - d.m.z * a.z,
     ),
-    v: Vec3(
+    v: Vector3(
       x: d.p.x * a.w - d.p.w * a.x + d.v.x * a.u,
       y: d.p.y * a.w - d.p.w * a.y + d.v.y * a.u,
       z: d.p.z * a.w - d.p.w * a.z + d.v.z * a.u,
     ),
-    m: Vec3(
+    m: Vector3(
       x: d.p.z * a.y - d.p.y * a.z + d.m.x * a.u,
       y: d.p.x * a.z - d.p.z * a.x + d.m.y * a.u,
       z: d.p.y * a.x - d.p.x * a.y + d.m.z * a.u,
@@ -180,19 +180,19 @@ func wedgeAnti*(s, t: Sphere): Circle {.inline.} =
       x: s.u * t.x - s.x * t.u, y: s.u * t.y - s.y * t.u, z: s.u * t.z - s.z * t.u,
       w: s.u * t.w - s.w * t.u,
     ),
-    v: Vec3(x: s.z * t.y - s.y * t.z, y: s.x * t.z - s.z * t.x, z: s.y * t.x - s.x * t.y),
-    m: Vec3(x: s.x * t.w - s.w * t.x, y: s.y * t.w - s.w * t.y, z: s.z * t.w - s.w * t.z),
+    v: Vector3(x: s.z * t.y - s.y * t.z, y: s.x * t.z - s.z * t.x, z: s.y * t.x - s.x * t.y),
+    m: Vector3(x: s.x * t.w - s.w * t.x, y: s.y * t.w - s.w * t.y, z: s.z * t.w - s.w * t.z),
   )
 
 func wedgeAnti*(s: Sphere; c: Circle): Dipole {.inline.} =
   ## Meet sphere and circle in dipole, i.e. 𝐬 ∨ 𝐜; 30 mul, 20 add.
   Dipole(
-    v: Vec3(
+    v: Vector3(
       x: s.y * c.g.z - s.z * c.g.y + s.u * c.v.x,
       y: s.z * c.g.x - s.x * c.g.z + s.u * c.v.y,
       z: s.x * c.g.y - s.y * c.g.x + s.u * c.v.z,
     ),
-    m: Vec3(
+    m: Vector3(
       x: s.w * c.g.x - s.x * c.g.w + s.u * c.m.x,
       y: s.w * c.g.y - s.y * c.g.w + s.u * c.m.y,
       z: s.w * c.g.z - s.z * c.g.w + s.u * c.m.z,
@@ -254,13 +254,13 @@ func dot*(a, b: RoundPoint): float {.inline.} =
 
 func dot*(d, f: Dipole): float {.inline.} =
   ## Inner product of dipoles, i.e. 𝐝 ∙ 𝐟; 10 mul, 9 add.
-  dot(d.v, Vec3(x: f.p.x, y: f.p.y, z: f.p.z)) + dot(d.m, f.m) +
-    dot(Vec3(x: d.p.x, y: d.p.y, z: d.p.z), f.v) - d.p.w * f.p.w
+  dot(d.v, Vector3(x: f.p.x, y: f.p.y, z: f.p.z)) + dot(d.m, f.m) +
+    dot(Vector3(x: d.p.x, y: d.p.y, z: d.p.z), f.v) - d.p.w * f.p.w
 
 func dot*(c, o: Circle): float {.inline.} =
   ## Inner product of circles, i.e. 𝐜 ∙ 𝐨; 10 mul, 9 add.
-  c.g.w * o.g.w - dot(Vec3(x: c.g.x, y: c.g.y, z: c.g.z), o.m) -
-    dot(c.m, Vec3(x: o.g.x, y: o.g.y, z: o.g.z)) - dot(c.v, o.v)
+  c.g.w * o.g.w - dot(Vector3(x: c.g.x, y: c.g.y, z: c.g.z), o.m) -
+    dot(c.m, Vector3(x: o.g.x, y: o.g.y, z: o.g.z)) - dot(c.v, o.v)
 
 func dot*(s, t: Sphere): float {.inline.} =
   ## Inner product of spheres, i.e. 𝐬 ∙ 𝐭; 5 mul, 4 add.
@@ -284,7 +284,7 @@ func dotAnti*(s, t: Sphere): Antiscalar {.inline.} =
 
 
 
-#[ Complements, Reverses, Duals ]#
+#[ Complements ]#
 
 func complementRight*(a: RoundPoint): Sphere {.inline.} =
   ## Right complement 𝐚̅, same components read as sphere; 0 mul.
@@ -318,6 +318,10 @@ func complementLeft*(c: Circle): Dipole {.inline.} =
   ## Left complement 𝐜̲, equal to right one for grade 3; 0 mul.
   complementRight(c)
 
+
+
+#[ Reverses ]#
+
 func reverse*(a: RoundPoint): RoundPoint {.inline.} =
   ## Reverse 𝐚̃, identity on grade 1; 0 mul.
   a
@@ -350,6 +354,10 @@ func reverseAnti*(s: Sphere): Sphere {.inline.} =
   ## Antireverse 𝐬̰, identity on antigrade 1; 0 mul.
   s
 
+
+
+#[ Duals ]#
+
 func dualBulk*(a: RoundPoint): Sphere {.inline.} =
   ## Dual 𝐚★; 0 mul.
   Sphere(u: -a.w, x: a.x, y: a.y, z: a.z, w: -a.u)
@@ -361,21 +369,21 @@ func dualWeight*(a: RoundPoint): Sphere {.inline.} =
 func dualBulk*(d: Dipole): Circle {.inline.} =
   ## Dual 𝐝★; 0 mul.
   Circle(g: CarrierPlane(x: -d.v.x, y: -d.v.y, z: -d.v.z, w: d.p.w), v: -d.m,
-    m: Vec3(x: -d.p.x, y: -d.p.y, z: -d.p.z))
+    m: Vector3(x: -d.p.x, y: -d.p.y, z: -d.p.z))
 
 func dualWeight*(d: Dipole): Circle {.inline.} =
   ## Antidual 𝐝☆; 0 mul.
   Circle(g: CarrierPlane(x: d.v.x, y: d.v.y, z: d.v.z, w: -d.p.w), v: read3(d.m),
-    m: Vec3(x: d.p.x, y: d.p.y, z: d.p.z))
+    m: Vector3(x: d.p.x, y: d.p.y, z: d.p.z))
 
 func dualBulk*(c: Circle): Dipole {.inline.} =
   ## Dual 𝐜★; 0 mul.
-  Dipole(v: Vec3(x: c.g.x, y: c.g.y, z: c.g.z), m: read3(c.v),
+  Dipole(v: Vector3(x: c.g.x, y: c.g.y, z: c.g.z), m: read3(c.v),
     p: FlatPoint(x: c.m.x, y: c.m.y, z: c.m.z, w: -c.g.w))
 
 func dualWeight*(c: Circle): Dipole {.inline.} =
   ## Antidual 𝐜☆; 0 mul.
-  Dipole(v: Vec3(x: -c.g.x, y: -c.g.y, z: -c.g.z), m: -c.v,
+  Dipole(v: Vector3(x: -c.g.x, y: -c.g.y, z: -c.g.z), m: -c.v,
     p: FlatPoint(x: -c.m.x, y: -c.m.y, z: -c.m.z, w: c.g.w))
 
 func dualBulk*(s: Sphere): RoundPoint {.inline.} =
@@ -456,7 +464,7 @@ func weightFlat*(s: Sphere): Sphere {.inline.} =
 
 
 
-#[ Attitude, Carriers ]#
+#[ Attitudes ]#
 
 func attitude*(a: RoundPoint): float {.inline.} =
   ## Attitude of round point, i.e. 𝐚 ∨ 𝐞̅₄, its weight as scalar; 0 mul.
@@ -468,13 +476,17 @@ func attitude*(d: Dipole): RoundPoint {.inline.} =
 
 func attitude*(c: Circle): Dipole {.inline.} =
   ## Attitude of circle, i.e. carrier normal and flat direction as dipole; 0 mul.
-  Dipole(v: zero3, m: Vec3(x: c.g.x, y: c.g.y, z: c.g.z),
+  Dipole(v: zero3, m: Vector3(x: c.g.x, y: c.g.y, z: c.g.z),
     p: FlatPoint(x: c.v.x, y: c.v.y, z: c.v.z, w: 0.0))
 
 func attitude*(s: Sphere): Circle {.inline.} =
   ## Attitude of sphere, i.e. carrier weight and flat normal as circle; 0 mul.
   Circle(g: CarrierPlane(x: 0.0, y: 0.0, z: 0.0, w: s.u), v: zero3,
-    m: Vec3(x: s.x, y: s.y, z: s.z))
+    m: Vector3(x: s.x, y: s.y, z: s.z))
+
+
+
+#[ Carriers ]#
 
 func carrier*(a: RoundPoint): FlatPoint {.inline.} =
   ## Carrier 𝐚 ∧ 𝐞₅, i.e. flat point at same position; 0 mul.
@@ -502,7 +514,7 @@ func carrierCo*(d: Dipole): FlatPlane {.inline.} =
 
 func carrierCo*(c: Circle): FlatLine {.inline.} =
   ## Cocarrier 𝐜☆ ∧ 𝐞₅, i.e. flat line through circle's center normal to it; 0 mul.
-  FlatLine(v: Vec3(x: -c.g.x, y: -c.g.y, z: -c.g.z), m: -c.v)
+  FlatLine(v: Vector3(x: -c.g.x, y: -c.g.y, z: -c.g.z), m: -c.v)
 
 func carrierCo*(s: Sphere): FlatPoint {.inline.} =
   ## Cocarrier 𝐬☆ ∧ 𝐞₅, i.e. flat point at sphere's center; 0 mul.
@@ -510,7 +522,7 @@ func carrierCo*(s: Sphere): FlatPoint {.inline.} =
 
 
 
-#[ Centers, Containers, Partners ]#
+#[ Centers ]#
 
 func center*(a: RoundPoint): RoundPoint {.inline.} =
   ## Center 𝐚⊞ ∨ 𝐚, i.e. same point scaled by its weight; 5 mul.
@@ -543,6 +555,10 @@ func center*(s: Sphere): RoundPoint {.inline.} =
     u: s.x * s.x + s.y * s.y + s.z * s.z - s.w * s.u,
   )
 
+
+
+#[ Containers ]#
+
 func container*(a: RoundPoint): Sphere {.inline.} =
   ## Container 𝐚 ∧ (𝐚⊟)☆, i.e. smallest sphere holding round point; 8 mul, 3 add.
   Sphere(
@@ -574,6 +590,10 @@ func container*(s: Sphere): Sphere {.inline.} =
   ## Container of sphere, i.e. itself scaled by its weight; 5 mul.
   Sphere(u: s.u * s.u, x: s.x * s.u, y: s.y * s.u, z: s.z * s.u, w: s.w * s.u)
 
+
+
+#[ Partners ]#
+
 func partner*(a: RoundPoint): RoundPoint {.inline.} =
   ## Partner, i.e. same point with squared radius negated; 10 mul, 4 add.
   let w2 = a.w * a.w
@@ -584,8 +604,9 @@ func partner*(a: RoundPoint): RoundPoint {.inline.} =
 
 func partner*(d: Dipole): Dipole {.inline.} =
   ## Partner of dipole; 30 mul, 17 add.
-  let v2 = dot(d.v, d.v)
-  let f = d.p.w * d.p.w - dot(d.m, d.m) - d.v.x * d.p.x - d.v.y * d.p.y - d.v.z * d.p.z
+  let
+    v2 = dot(d.v, d.v)
+    f = d.p.w * d.p.w - dot(d.m, d.m) - d.v.x * d.p.x - d.v.y * d.p.y - d.v.z * d.p.z
   Dipole(
     v: d.v * v2,
     m: d.m * v2,
@@ -601,12 +622,13 @@ func partner*(c: Circle): Circle {.inline.} =
   ## Partner of circle; 30 mul, 17 add.
   ##   Symmetric with dipole's partner: f = gʷ² − 𝐯 ∙ 𝐯 − 𝐠 ∙ 𝐦; Terathon's header spells
   ##   its v-term with mixed signs, and library's own form is what suite holds this to.
-  let g2 = c.g.x * c.g.x + c.g.y * c.g.y + c.g.z * c.g.z
-  let f = c.g.w * c.g.w - dot(c.v, c.v) - c.g.x * c.m.x - c.g.y * c.m.y - c.g.z * c.m.z
+  let
+    g2 = c.g.x * c.g.x + c.g.y * c.g.y + c.g.z * c.g.z
+    f = c.g.w * c.g.w - dot(c.v, c.v) - c.g.x * c.m.x - c.g.y * c.m.y - c.g.z * c.m.z
   Circle(
     g: CarrierPlane(x: c.g.x * g2, y: c.g.y * g2, z: c.g.z * g2, w: c.g.w * g2),
     v: c.v * g2,
-    m: Vec3(
+    m: Vector3(
       x: (c.v.y * c.g.z - c.v.z * c.g.y) * c.g.w + c.g.x * f,
       y: (c.v.z * c.g.x - c.v.x * c.g.z) * c.g.w + c.g.y * f,
       z: (c.v.x * c.g.y - c.v.y * c.g.x) * c.g.w + c.g.z * f,

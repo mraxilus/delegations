@@ -74,8 +74,9 @@ proc main(): int =
   echo "algebra ", ALGEBRA_NAME, " objects ", OBJECTS, " rounds ", ROUNDS, " allocation gauge ",
     (if isAllocationMeasured(): "live" else: "off")
   for index, measurand in CATALOGUE:
-    let l = MEASUREMENTS[Implementation.Library][index]
-    let r = MEASUREMENTS[Implementation.Reference][index]
+    let
+      l = MEASUREMENTS[Implementation.Library][index]
+      r = MEASUREMENTS[Implementation.Reference][index]
     var line = measurand.id.alignLeft(34) & formatFloat(l.ns_median, ffDecimal, 2).align(9) & " ns"
     if r.is_measured:
       line.add "  reference " & formatFloat(r.ns_median, ffDecimal, 2).align(8) & " ns"

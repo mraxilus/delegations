@@ -557,8 +557,9 @@ func shapeNameOf*(p: Measurand): string =
   ##   partner outruns width record allows. `stepsOf` carries chain itself.
   let parts = p.chainOf
   if parts.len == 0: return $p.shapeOf
-  var steps: seq[string]
-  var counts: seq[int]
+  var
+    steps: seq[string]
+    counts: seq[int]
   for part in parts:
     let at = steps.find($part)
     if at < 0:

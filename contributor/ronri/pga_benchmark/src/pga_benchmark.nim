@@ -3,12 +3,20 @@
 ##   that imports it takes its algebra from `-d:pga.dimensions` and `-d:pga.is_conformal`,
 ##   so one source serves every configuration and stubs pick which.
 ##
-##   Bootstrap order:
-##     [pga] -> kinds -> catalogue
-##     [pga] -> reference/scalars -> reference/{rigid3, conformal3} -> widening -> pools
-##     catalogue, pools -> pga_benchmark (this umbrella)
-##     catalogue, pools -> measurements -> bench (entry point, tool side, with report)
-##     surface (pure, reads library source; test side)
+##   Bootstrap order, `[needs] -> target`, one line for each target:
+##     [] -> bound, inspector, surface, reference/scalars
+##     [pga] -> kinds
+##     [pga, bound, kinds] -> catalogue
+##     [reference/scalars] -> reference/rigid3, reference/conformal3
+##     [pga, reference/scalars, reference/rigid3 or reference/conformal3 by algebra] -> widening
+##     [pga, kinds, widening] -> pools
+##     [catalogue, kinds, pools, surface, widening] -> pga_benchmark (this umbrella)
+##     [pga, catalogue, kinds, pools, widening] -> measurements
+##     [inspector, reference/rigid3, reference/conformal3] -> model
+##     [inspector, model] -> report
+##     [report] -> gaps, guard
+##     [pga, bound, catalogue, inspector, kinds, report] -> inspect
+##     [pga, catalogue, kinds, measurements, pools, report] -> bench (entry point, tool side)
 ##
 ##   Umbrella exports what suites and instruments share; `measurements`, `report` and `bench`
 ##     stay behind it, since they carry measurement arrays and JSON and belong to tool side.
@@ -17,6 +25,8 @@
 ##     drift and measure against forms already proven equal.
 
 {.experimental: "strictFuncs".}
+
+when compileOption("profiler"): import std/nimprof
 
 import pga
 

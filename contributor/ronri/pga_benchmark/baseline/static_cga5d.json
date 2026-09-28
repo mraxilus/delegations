@@ -2150,12 +2150,12 @@
         "bytes_moved": 88
       }
     },
-    "dot(Vec3,Vec3)": {
+    "dot(Vector3,Vector3)": {
       "symbol": "dot",
       "module": "reference/conformal3",
       "params": [
-        "Vec3",
-        "Vec3"
+        "Vector3",
+        "Vector3"
       ],
       "returns": "float",
       "inline": true,
@@ -3190,13 +3190,13 @@
         "bytes_moved": 120
       }
     },
-    "-(Vec3)": {
+    "-(Vector3)": {
       "symbol": "-",
       "module": "reference/conformal3",
       "params": [
-        "Vec3"
+        "Vector3"
       ],
-      "returns": "Vec3",
+      "returns": "Vector3",
       "inline": true,
       "own": {
         "multiplies": 0,
@@ -3878,14 +3878,14 @@
         "bytes_moved": 160
       }
     },
-    "*(Vec3,float)": {
+    "*(Vector3,float)": {
       "symbol": "*",
       "module": "reference/conformal3",
       "params": [
-        "Vec3",
+        "Vector3",
         "float"
       ],
-      "returns": "Vec3",
+      "returns": "Vector3",
       "inline": true,
       "own": {
         "multiplies": 3,

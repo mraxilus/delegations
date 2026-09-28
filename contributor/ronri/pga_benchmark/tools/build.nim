@@ -74,8 +74,9 @@ const
 
 proc run(command: string; args: openArray[string]) =
   ## Run command with args from project directory; raise on non-zero exit.
-  let process = startProcess(command, args = args, options = {poUsePath, poParentStreams})
-  let code = process.waitForExit
+  let
+    process = startProcess(command, args = args, options = {poUsePath, poParentStreams})
+    code = process.waitForExit
   process.close
   if code != 0:
     raise newException(OSError, command & " failed; got exit `" & $code & "`.")
@@ -129,8 +130,9 @@ proc readDocument(path: string): JsonNode =
 
 proc inspect() =
   ## Compile bench entry per algebra to C only, then read its cache into document.
-  let nim = nimCommit()
-  let pga = pgaCommit()
+  let
+    nim = nimCommit()
+    pga = pgaCommit()
   createDir BUILD
   for (name, dimensions, is_conformal) in CONFIGS:
     let cache = BUILD / "cache_" & name
@@ -164,8 +166,9 @@ proc merged(plain, instrumented: JsonNode): JsonNode =
 proc bench() =
   ## Compile and run bench per algebra, plain for timings and instrumented for allocations,
   ## and record merged measurements into `baseline/`.
-  let nim = nimCommit()
-  let pga = pgaCommit()
+  let
+    nim = nimCommit()
+    pga = pgaCommit()
   createDir BUILD
   createDir BASELINE
   for (name, dimensions, is_conformal) in CONFIGS:
@@ -178,8 +181,9 @@ proc bench() =
       pga, ["-d:nimAllocStats"],
     )
     run(instrumented, [instrumented & ".json"])
-    let doc = merged(readDocument(plain & ".json"), readDocument(instrumented & ".json"))
-    let recorded = BASELINE / "runtime_" & name & ".json"
+    let
+      doc = merged(readDocument(plain & ".json"), readDocument(instrumented & ".json"))
+      recorded = BASELINE / "runtime_" & name & ".json"
     writeFile(recorded, pretty(doc) & "\n")
     echo "Recorded ", recorded
 
@@ -196,8 +200,9 @@ proc baseline() =
 proc guarded(): seq[Finding] =
   ## Compare last inspect of every algebra against its baseline; print improvements.
   for (name, _, _) in CONFIGS:
-    let path = BASELINE / "static_" & name & ".json"
-    let fresh = BUILD / "static_" & name & ".json"
+    let
+      path = BASELINE / "static_" & name & ".json"
+      fresh = BUILD / "static_" & name & ".json"
     if not fileExists(path):
       result.add Finding(path: path, message: "No baseline recorded; run `baseline`.")
       continue
@@ -234,9 +239,10 @@ proc algebras(): seq[Algebra] =
 
 proc generated(): (string, string) =
   ## Generate list and docket text from committed documents.
-  let docket =
-    if fileExists(PATH_DOCKET): docketOf(readDocument(PATH_DOCKET)) else: docketOf(nil)
-  let (text, grown) = generate(algebras(), docket)
+  let
+    docket =
+      if fileExists(PATH_DOCKET): docketOf(readDocument(PATH_DOCKET)) else: docketOf(nil)
+    (text, grown) = generate(algebras(), docket)
   (text, pretty(grown.toJson) & "\n")
 
 
@@ -258,20 +264,23 @@ proc drive() =
     findings.add Finding(path: PATH_GAPS, message: "List differs from regeneration; run `gaps`.")
   if not fileExists(PATH_DOCKET) or readFile(PATH_DOCKET) != docket:
     findings.add Finding(
-      path: PATH_DOCKET, message: "Docket differs from regeneration; run `gaps`."
+      path: PATH_DOCKET,
+      message: "Docket differs from regeneration; run `gaps`.",
     )
   report(findings)
 
 
 proc sweep() =
   ## Time general measurands at every swept dimension, rigid metric, and print medians.
-  let nim = nimCommit()
-  let pga = pgaCommit()
+  let
+    nim = nimCommit()
+    pga = pgaCommit()
   createDir BUILD
   var docs: seq[JsonNode]
   for dimensions in SWEEP:
-    let name = "sweep_" & $dimensions & "d"
-    let binary = BUILD / name
+    let
+      name = "sweep_" & $dimensions & "d"
+      binary = BUILD / name
     compile(ENTRY_BENCH, binary, BUILD / "cache_" & name, dimensions, false, nim, pga)
     run(binary, [binary & ".json"])
     docs.add readDocument(binary & ".json")
@@ -284,7 +293,7 @@ proc sweep() =
       let measurement = doc{"measurands", id, "library"}
       line.add(
         if measurement.isNil or measurement.kind != JObject: "–".align(10)
-        else: formatFloat(measurement{"ns_median"}.getFloat, ffDecimal, 1).align(10)
+        else: formatFloat(measurement{"ns_median"}.getFloat, ffDecimal, 1).align(10),
       )
     echo line
 
@@ -352,8 +361,9 @@ proc showFunction(symbol, algebra: string) =
   for (name, dimensions, is_conformal) in CONFIGS:
     if name != algebra: continue
     found = true
-    let nim = nimCommit()
-    let pga = pgaCommit()
+    let
+      nim = nimCommit()
+      pga = pgaCommit()
     createDir BUILD
     let cache = BUILD / "cache_show_" & name
     compile(ENTRY_BENCH, BUILD / "show_" & name, cache, dimensions, is_conformal, nim, pga)
@@ -362,8 +372,9 @@ proc showFunction(symbol, algebra: string) =
     for f in inspectCache(cache):
       if f.symbol != symbol: continue
       inc seen
-      let c = f.body.count
-      let m = movement(f, c, size)
+      let
+        c = f.body.count
+        m = movement(f, c, size)
       echo ""
       echo "── ", f.symbol, "(", f.params.join(","), ") → ", f.result_stem,
         "   ", algebra, ", ", size, "-byte multivector"

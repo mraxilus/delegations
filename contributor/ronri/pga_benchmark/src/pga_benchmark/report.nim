@@ -93,8 +93,9 @@ func moduleTail*(module: string): string =
   ## Read last two segments of mangled module path, `pga/operators` out of
   ## `OOZdepsZ...ZpgaZoperators`, since whole path spells checkout and outruns line width.
   ##   Compiler spells `/` as `Z` and `_` as `95`; only those two are undone.
-  let parts = module.split('Z')
-  let tail = if parts.len >= 2: parts[^2 .. ^1] else: parts
+  let
+    parts = module.split('Z')
+    tail = if parts.len >= 2: parts[^2 .. ^1] else: parts
   tail.join("/").replace("95", "_")
 
 

@@ -47,8 +47,9 @@ func keyed(functions: seq[CFunction]): seq[(string, CFunction)] =
   ## Key kept functions, numbering those sharing stems by overload index so key holds
   ## whatever order compiler emits them in: lowest index keeps bare key, others append
   ## `#u<n>`. `{}` over grade and antigrade, and `[]` read beside its `var` twin, collide.
-  var groups: Table[string, seq[CFunction]]
-  var order: seq[string]
+  var
+    groups: Table[string, seq[CFunction]]
+    order: seq[string]
   for f in functions:
     if not f.isKept: continue
     if f.key notin groups: order.add f.key
@@ -84,8 +85,9 @@ func libraryKey(p: Measurand): string =
 
 func referenceKey(p: Measurand): string =
   ## Key of reference function measurand names, operands read off argument names.
-  let open = p.reference.find('(')
-  let close = p.reference.rfind(')')
+  let
+    open = p.reference.find('(')
+    close = p.reference.rfind(')')
   if open < 0 or close < open: return ""
   var stems: seq[string]
   for arg in p.reference[open + 1 ..< close].split(','):
@@ -135,8 +137,9 @@ proc main(): int =
   if paramCount() != 5:
     stderr.write "Usage: inspect <cache> <output.json> <nim> <pga> <flags>\n"
     return 2
-  let functions = inspectCache(paramStr(1))
-  let total = totals(functions)
+  let
+    functions = inspectCache(paramStr(1))
+    total = totals(functions)
   var taken = takenNow()
   taken["nim"] = %paramStr(3)
   taken["pga"] = %paramStr(4)
@@ -144,8 +147,9 @@ proc main(): int =
   var doc = document(
     "static", algebraNode(ALGEBRA_NAME, DIMENSIONS, IS_CONFORMAL, SIZE_MULTIVECTOR), taken
   )
-  var kept = newJObject()
-  var count = 0
+  var
+    kept = newJObject()
+    count = 0
   for (key, f) in functions.keyed:
     kept[key] = functionNode(f, count(f.body), total[f.name], SIZE_MULTIVECTOR)
     inc count

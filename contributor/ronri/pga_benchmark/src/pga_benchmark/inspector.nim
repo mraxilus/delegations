@@ -119,10 +119,10 @@ func demangle*(name: string): string =
   else: head
 
 
-func stemOf(param: string): string =
+func stemOf(parameter: string): string =
   ## Read type stem of one C parameter or return type, e.g. `Point` from
   ## `tyObject_Point__hash* p_p0`, `float` from `NF`, `Basis` from `tyEnum_Basis__hash`.
-  let text = param.strip
+  let text = parameter.strip
   for prefix in ["tyObject_", "tyEnum_", "tyDistinct_", "tyTuple_"]:
     if text.startsWith(prefix):
       let start = prefix.len
@@ -162,33 +162,39 @@ func functionsIn*(source: string): seq[CFunction] =
   ##   Definition opens on line `N_NIMCALL(<type>, <name>)(<params>) {` or
   ##   `static N_INLINE(<type>, <name>)(<params>) {`; declarations end in `;` and are
   ##   skipped. Body runs to brace closing that line's.
-  var pos = 0
-  while pos < source.len:
-    let line_end = source.find('\n', pos)
-    let stop = if line_end < 0: source.len else: line_end
-    let line = source[pos ..< stop]
-    pos = stop + 1
-    let is_inline = line.startsWith("static N_INLINE(")
-    let is_call = line.startsWith("N_NIMCALL(") or line.startsWith("N_LIB_PRIVATE N_NIMCALL(")
+  var position = 0
+  while position < source.len:
+    let
+      line_end = source.find('\n', position)
+      stop = if line_end < 0: source.len else: line_end
+      line = source[position ..< stop]
+    position = stop + 1
+    let
+      is_inline = line.startsWith("static N_INLINE(")
+      is_call = line.startsWith("N_NIMCALL(") or line.startsWith("N_LIB_PRIVATE N_NIMCALL(")
     if not (is_inline or is_call) or not line.endsWith("{"): continue
-    let open_paren = line.find('(')
-    let comma = line.find(',', open_paren)
-    let close_name = line.find(')', comma)
+    let
+      open_paren = line.find('(')
+      comma = line.find(',', open_paren)
+      close_name = line.find(')', comma)
     if comma < 0 or close_name < 0: continue
-    let name = line[comma + 1 ..< close_name].strip
-    let returns = line[open_paren + 1 ..< comma].stemOf
-    let params_start = line.find('(', close_name)
-    let params_stop = line.rfind(')')
+    let
+      name = line[comma + 1 ..< close_name].strip
+      returns = line[open_paren + 1 ..< comma].stemOf
+      params_start = line.find('(', close_name)
+      params_stop = line.rfind(')')
     if params_start < 0 or params_stop <= params_start: continue
-    var params: seq[string]
-    var result_stem = returns
-    for param in line[params_start + 1 ..< params_stop].split(','):
-      let stem = param.stemOf
+    var
+      params: seq[string]
+      result_stem = returns
+    for parameter in line[params_start + 1 ..< params_stop].split(','):
+      let stem = parameter.stemOf
       if stem.len == 0: continue
-      if param.strip.endsWith(" Result"): result_stem = stem
+      if parameter.strip.endsWith(" Result"): result_stem = stem
       else: params.add stem
-    var depth = 1
-    var i = pos
+    var
+      depth = 1
+      i = position
     while i < source.len and depth > 0:
       if source[i] == '{': inc depth
       elif source[i] == '}': dec depth
@@ -201,9 +207,9 @@ func functionsIn*(source: string): seq[CFunction] =
       params: params,
       result_stem: result_stem,
       is_inline: is_inline,
-      body: source[pos ..< i],
+      body: source[position ..< i],
     )
-    pos = i
+    position = i
 
 
 func plainSites(body: string): seq[string] =
@@ -324,49 +330,55 @@ func `*`(c: Counts; trips: int): Counts =
 func weighted(body, context: string): Counts =
   ## Count spent terms with every loop's body weighted by its trips, nested loops
   ## multiplying; text outside loops counts once.
-  var pos = 0
-  var outside = ""
+  var
+    position = 0
+    outside = ""
   while true:
-    let at = body.find(LOOP_OPEN, pos)
+    let at = body.find(LOOP_OPEN, position)
     if at < 0:
-      outside.add body[pos ..< body.len]
+      outside.add body[position ..< body.len]
       break
-    outside.add body[pos ..< at]
-    var i = at + LOOP_OPEN.len
-    var depth = 1
+    outside.add body[position ..< at]
+    var
+      i = at + LOOP_OPEN.len
+      depth = 1
     while i < body.len and depth > 0:
       if body[i] == '{': inc depth
       elif body[i] == '}': dec depth
       inc i
-    let inner = body[at + LOOP_OPEN.len ..< max(at + LOOP_OPEN.len, i - 1)]
-    let before = context & body[0 ..< at]
+    let
+      inner = body[at + LOOP_OPEN.len ..< max(at + LOOP_OPEN.len, i - 1)]
+      before = context & body[0 ..< at]
     result = result + weighted(inner, before) * tripsOf(inner, before)
-    pos = i
+    position = i
   result = result + plain(outside)
 
 
 func weightedSites(body, context: string): seq[string] =
   ## Read call sites with every loop's body repeated by its trips, so callees fold once
   ## per trip; sites outside loops once.
-  var pos = 0
-  var outside = ""
+  var
+    position = 0
+    outside = ""
   while true:
-    let at = body.find(LOOP_OPEN, pos)
+    let at = body.find(LOOP_OPEN, position)
     if at < 0:
-      outside.add body[pos ..< body.len]
+      outside.add body[position ..< body.len]
       break
-    outside.add body[pos ..< at]
-    var i = at + LOOP_OPEN.len
-    var depth = 1
+    outside.add body[position ..< at]
+    var
+      i = at + LOOP_OPEN.len
+      depth = 1
     while i < body.len and depth > 0:
       if body[i] == '{': inc depth
       elif body[i] == '}': dec depth
       inc i
-    let inner = body[at + LOOP_OPEN.len ..< max(at + LOOP_OPEN.len, i - 1)]
-    let before = context & body[0 ..< at]
-    let sites = weightedSites(inner, before)
+    let
+      inner = body[at + LOOP_OPEN.len ..< max(at + LOOP_OPEN.len, i - 1)]
+      before = context & body[0 ..< at]
+      sites = weightedSites(inner, before)
     for _ in 1 .. tripsOf(inner, before): result.add sites
-    pos = i
+    position = i
   result.add plainSites(outside)
 
 
@@ -393,7 +405,7 @@ func key*(f: CFunction): string =
 
 
 func totalOf(
-  name: string; own: Table[string, Counts]; sites: Table[string, seq[string]]; depth: int
+  name: string, own: Table[string, Counts], sites: Table[string, seq[string]], depth: int
 ): Counts =
   ## Count one function with its callees folded in, per call site, recursion bounded.
   ##   Callee absent from reading (runtime, accessors) adds nothing.
@@ -433,13 +445,13 @@ func totals*(functions: seq[CFunction]; roots: openArray[string]): Table[string,
 
 #[ Cache ]#
 
-proc inspectCache*(dir: string): seq[CFunction] =
+proc inspectCache*(directory: string): seq[CFunction] =
   ## Read every function of every C file in nimcache directory, first definition kept.
   ##   Inline functions are emitted once per module using them; duplicates share body.
   ##   Files are read in path order, so numbering of colliding keys is same on every
   ##   file system.
   var paths: seq[string]
-  for path in walkDirRec(dir):
+  for path in walkDirRec(directory):
     if path.endsWith(".c"): paths.add path
   paths.sort
   var seen: Table[string, bool]

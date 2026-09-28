@@ -104,14 +104,14 @@ when IS_RIGID and DIMENSIONS == 4:
     ## Draw point with Gaussian position and weight near one.
     Point(x: gauss(0.0, 1.0), y: gauss(0.0, 1.0), z: gauss(0.0, 1.0), w: gauss(1.0, 0.25))
 
-  proc randUnitAxis(): Vec3 =
+  proc randUnitAxis(): Vector3 =
     ## Draw unit vector, Gaussian direction normalized.
-    let v = Vec3(x: gauss(0.0, 1.0), y: gauss(0.0, 1.0), z: gauss(0.0, 1.0))
+    let v = Vector3(x: gauss(0.0, 1.0), y: gauss(0.0, 1.0), z: gauss(0.0, 1.0))
     v * (1.0 / sqrt(dot(v, v)))
 
   proc randMotor(): Motor =
     ## Draw unit motor: translation by Gaussian vector after rotation by Gaussian angle.
-    let t = Vec3(x: gauss(0.0, 1.0), y: gauss(0.0, 1.0), z: gauss(0.0, 1.0))
+    let t = Vector3(x: gauss(0.0, 1.0), y: gauss(0.0, 1.0), z: gauss(0.0, 1.0))
     wedgeDotAnti(translator(t), rotor(randUnitAxis(), gauss(0.0, 1.5)))
 
 

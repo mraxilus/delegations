@@ -55,9 +55,10 @@ func allocationsOf*(stats: AllocStats): int =
   ##   `AllocStats` exports its fields to nobody and only `-` and default `$`, so count is
   ##   read back from its rendering, `(allocCount: N, deallocCount: M)`; tool it, after
   ##   timing, never on hot path.
-  let text = $stats
-  let start = text.find("allocCount: ") + "allocCount: ".len
-  let stop = text.find(',', start)
+  let
+    text = $stats
+    start = text.find("allocCount: ") + "allocCount: ".len
+    stop = text.find(',', start)
   parseInt(text[start ..< stop])
 
 
@@ -106,9 +107,10 @@ func summarise*(rounds: openArray[int64]; objects: int): tuple[median, minimum: 
   ## Read median and minimum nanoseconds per object over rounds.
   var sorted = @rounds
   sorted.sort
-  let mid = sorted.len div 2
-  let median = if sorted.len mod 2 == 1: float(sorted[mid])
-    else: (float(sorted[mid - 1]) + float(sorted[mid])) / 2.0
+  let
+    mid = sorted.len div 2
+    median = if sorted.len mod 2 == 1: float(sorted[mid])
+      else: (float(sorted[mid - 1]) + float(sorted[mid])) / 2.0
   (median: median / float(objects), minimum: float(sorted[0]) / float(objects))
 
 
@@ -121,7 +123,7 @@ template timeRounds(rounds: var array[ROUNDS, int64]; loop: untyped) =
 
 
 macro emitMeasurand(
-  index: static int; it: static Implementation; measurand: static Measurand
+  index: static int, it: static Implementation, measurand: static Measurand
 ): untyped =
   ## Emit timed run of one measurand in one implementation into `MEASUREMENTS[it][index]`.
   let expression = if it == Implementation.Library: measurand.expression else: measurand.reference
@@ -129,24 +131,26 @@ macro emitMeasurand(
     let it_lit = newCall(ident"Implementation", newLit(ord(it)))
     return quote do:
       MEASUREMENTS[`it_lit`][`index`] = Measurement(is_measured: false)
-  let body = parseExpr(expression)
-  let (m, n) = (ident"m", ident"n")  # plain idents, so expression binds them
-  let it_lit = newCall(ident"Implementation", newLit(ord(it)))
-  let pool_m = parseExpr(
-    if it == Implementation.Library: libraryPoolName(measurand.operands[0], measurand.grade)
-    else: referencePoolName(measurand.operands[0])
-  )
-  let pool_n = parseExpr(
-    if it == Implementation.Library: libraryPoolName(measurand.operands[1], measurand.grade)
-    else: referencePoolName(measurand.operands[1])
-  )
+  let
+    body = parseExpr(expression)
+    (m, n) = (ident"m", ident"n")  # plain idents, so expression binds them
+    it_lit = newCall(ident"Implementation", newLit(ord(it)))
+    pool_m = parseExpr(
+      if it == Implementation.Library: libraryPoolName(measurand.operands[0], measurand.grade)
+      else: referencePoolName(measurand.operands[0]),
+    )
+    pool_n = parseExpr(
+      if it == Implementation.Library: libraryPoolName(measurand.operands[1], measurand.grade)
+      else: referencePoolName(measurand.operands[1]),
+    )
   quote do:
     block:
-      var results: array[OBJECTS, typeof(block:
-        let `m` {.used.} = `pool_m`[0]
-        let `n` {.used.} = `pool_n`[0]
-        `body`)]
-      var rounds: array[ROUNDS, int64]
+      var
+        results: array[OBJECTS, typeof(block:
+          let `m` {.used.} = `pool_m`[0]
+          let `n` {.used.} = `pool_n`[0]
+          `body`)]
+        rounds: array[ROUNDS, int64]
       let stats_before = getAllocStats()
       timeRounds(rounds):
         for i in 0 ..< OBJECTS:

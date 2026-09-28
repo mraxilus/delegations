@@ -60,24 +60,27 @@ func compare*(baseline, current: JsonNode; path: string): Verdict =
       result.findings.add Finding(path: path, message: party & " document unusable; " & why)
   if result.findings.len > 0: return
   for field in HEADER_CONFIG:
-    let before = text(baseline, "algebra", field)
-    let after = text(current, "algebra", field)
+    let
+      before = text(baseline, "algebra", field)
+      after = text(current, "algebra", field)
     if before != after:
       result.findings.add Finding(
         path: path,
         message: "Algebra `" & field & "` differs; got `" & after & "`, baseline `" & before & "`.",
       )
   for field in HEADER_TAKEN:
-    let before = text(baseline, "taken", field)
-    let after = text(current, "taken", field)
+    let
+      before = text(baseline, "taken", field)
+      after = text(current, "taken", field)
     if before != after:
       result.findings.add Finding(
         path: path,
         message: "Build `" & field & "` differs; got `" & after & "`, baseline `" & before & "`.",
       )
   if result.findings.len > 0: return
-  let before = baseline{"functions"}
-  let after = current{"functions"}
+  let
+    before = baseline{"functions"}
+    after = current{"functions"}
   if before.isNil or after.isNil:
     result.findings.add Finding(path: path, message: "Document holds no functions; got none.")
     return
@@ -87,7 +90,8 @@ func compare*(baseline, current: JsonNode; path: string): Verdict =
   for key, node in after.pairs:
     if not before.hasKey(key):
       result.findings.add Finding(
-        path: path, message: "Function absent from baseline; got `" & key & "`."
+        path: path,
+        message: "Function absent from baseline; got `" & key & "`.",
       )
       continue
     var metrics: seq[(string, int, int)]
@@ -113,8 +117,9 @@ func compare*(baseline, current: JsonNode; path: string): Verdict =
             $was & "`."
         )
   # Bounds are derived, so they never drift: any move means derivation itself changed.
-  let bounds_before = baseline{"measurands"}
-  let bounds_after = current{"measurands"}
+  let
+    bounds_before = baseline{"measurands"}
+    bounds_after = current{"measurands"}
   if not bounds_before.isNil and not bounds_after.isNil:
     for id, node in bounds_before.pairs:
       let was = node{"bound"}
@@ -126,8 +131,9 @@ func compare*(baseline, current: JsonNode; path: string): Verdict =
         )
         continue
       for metric in BOUNDED:
-        let a = was{metric}.getInt
-        let b = now{metric}.getInt
+        let
+          a = was{metric}.getInt
+          b = now{metric}.getInt
         if a != b:
           result.findings.add Finding(
             path: path,

@@ -47,7 +47,7 @@ func sizeOfStem*(stem: string; size_multivector: int): int =
   of "FlatLine": sizeof(conformal3.FlatLine)
   of "FlatPlane": sizeof(conformal3.FlatPlane)
   of "CarrierPlane": sizeof(conformal3.CarrierPlane)
-  of "Vec3": sizeof(rigid3.Vec3)
+  of "Vector3": sizeof(rigid3.Vector3)
   else: 0
 
 
