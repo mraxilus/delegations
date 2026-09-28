@@ -100,7 +100,8 @@ func keyOf*(a: RungAsk): string = $ord(a.band) & "|" & $a.turn
   ## Name rung by band and turn.
 
 
-#[ Reading one ]#
+
+#[ Single Reading ]#
 
 func momentAt*(sweep: Swept; t: float): Option[Moment] =
   ## Moment nearest `t` turns, from whichever way reaches it; none where neither does.
@@ -159,7 +160,8 @@ proc readRung*(a: RungAsk): RungRead =
     if result.found: return
 
 
-#[ Reading all, every core at once ]#
+
+#[ Parallel Reading ]#
 
 # Mutable and global: thread takes one argument, so workers read asks and write readings
 # into slots allotted here before any thread starts.
@@ -193,7 +195,8 @@ proc readAll*(sweeps: seq[SweepAsk]; rungs: seq[RungAsk]): tuple[sweeps: seq[Swe
   (SWEEP_READS, RUNG_READS)
 
 
-#[ Keeping ]#
+
+#[ Kept Readings ]#
 
 proc physics*(directory = HERE): string = stamp(directory, LEAVING)
   ## Stamp of what readings depend on.

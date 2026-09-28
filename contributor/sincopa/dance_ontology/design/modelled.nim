@@ -48,6 +48,7 @@ type Question* = object ## One card's question, as data, so threads may share it
   either: bool   ## Still that fixes no way about: wound either way.
   who, head: Body ## Who turns, and whose crown hands go over, for moving card.
 
+
 func moving(key: string; links: seq[Link]; away: bool; manner: Manner;
             turns: float): Question =
   ## Whether this hold carries this far under this manner, `turns` being already

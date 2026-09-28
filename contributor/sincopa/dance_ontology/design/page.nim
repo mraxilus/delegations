@@ -156,7 +156,6 @@ type
     Free, Unsaid, Low, High, Above
 
 
-
 func document*(title, page_body: string): string =
   ## Wrap one page: shared style sheet, then whatever page is about.
   ##   Title is what browser tab and published gallery both show, so
@@ -178,7 +177,6 @@ func filled*(template_body: string;
   let leftover = result.find('{')
   doAssert leftover < 0,
     &"A hole is unfilled; got `{result[leftover .. min(leftover + 40, result.high)]}`."
-
 
 
 func swatch*(kind: Swatch): string =

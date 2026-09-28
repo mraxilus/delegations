@@ -49,7 +49,8 @@ func nearestOn(line: array[7, Vec]; p: Vec): tuple[off, z: float] =
       result = (off, a.z + (b.z - a.z) * u)
 
 
-#[ Settled couples, every core at once ]#
+
+#[ Parallel Settling ]#
 
 # Mutable and global: thread takes one argument, so workers write into slots allotted here.
 var

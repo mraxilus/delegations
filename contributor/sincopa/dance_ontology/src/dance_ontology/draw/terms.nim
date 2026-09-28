@@ -57,6 +57,7 @@ type
   Ways* = array[Arm, Option[Way]]
     ## Whether each connection locks or wraps, where that has been said.
 
+
 func settleOf*(level: Option[Level]; way: Option[Way]): Option[Settle] =
   ## Get what this hold does to its hand and its line, where rules 4 to 6
   ## say anything.
@@ -87,7 +88,6 @@ const WRAP_MIN* = 170 ## Least degrees line must hug body for lock or
   ##   Arcs this geometry produces are quantised at 0, 51, 90, 141 and
   ##     180 degrees, so any threshold in that last gap picks out same
   ##     set; 170 sits squarely in it, and `checks` asserts gap holds.
-
 
 
 func other*(arm: Arm): Arm =

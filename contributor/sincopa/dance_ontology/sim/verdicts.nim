@@ -80,7 +80,8 @@ func restName(away: bool): string =
   facingName(restStance(HUMAN, 1.0, away)).get
 
 
-#[ Readings, asked for by rendering ]#
+
+#[ Rendered Readings ]#
 
 # Mutable: render reads kept readings and gathers asks it lacks, and report renders
 # through many routines, so each would carry them otherwise.
@@ -111,6 +112,7 @@ proc rungOf(band: Band; turn: float): RungRead =
 
 func glanceAt(sweep: SweepRead; t: float): Glance = sweep.glances[int(round(t * 2.0)) + 4]
   ## Moment report reads at `t` turns, which is half turn from -2 to 2.
+
 
 
 #[ Sections ]#

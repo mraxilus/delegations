@@ -236,7 +236,7 @@ func border*(pose: Pose; who: Dancer): string =
 
 
 
-#[ Hands and Furniture ]#
+#[ Hands And Furniture ]#
 
 func fillOf*(level: Option[Level]; arm: Arm; deep = false): string =
   ## Get fill that level draws as -- only place level becomes fill,

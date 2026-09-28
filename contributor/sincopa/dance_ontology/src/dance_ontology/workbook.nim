@@ -125,7 +125,7 @@ const CELLS*: array[27, Cell] = [
 
 
 
-#[ Reading Workbook ]#
+#[ Workbook Reading ]#
 
 const DEFERRED_STATES* = ["closed", "half-closed"]
   ## Name states that rest lead hand on follow's body.

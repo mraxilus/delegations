@@ -186,7 +186,7 @@ proc checkFrame*() =
 
 
 
-#[ Rules, Measured ]#
+#[ Measured Rules ]#
 
 proc checkRules*() =
   ## Verify every rule as it was given, and say so, one line per rule.

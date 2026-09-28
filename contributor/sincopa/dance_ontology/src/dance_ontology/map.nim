@@ -75,7 +75,6 @@ type
   Box* = tuple[x, y, w, h: int] ## Room something takes up in drawing.
 
 
-
 func rowOf(target: Frame): int = target.countHolds
   ## Get row that frame is drawn in.
 
@@ -233,7 +232,6 @@ func waking(is_standing, is_standing_prev, is_moving: bool): string =
   if not is_moving or is_standing == is_standing_prev: ""
   elif is_standing: " waking"
   else: " dozing"
-
 
 
 func overlaps*(a, b: Box): bool =

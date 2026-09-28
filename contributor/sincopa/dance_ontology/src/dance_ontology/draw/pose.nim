@@ -57,7 +57,8 @@ type
     Orbit                     ## Their partner: they walk ring round them.
 
 
-#[ Standing and Turning ]#
+
+#[ Standing And Turning ]#
 
 func rest*(wind: Winds = default(Winds)): Pose =
   ## Get pose every picture is measured from: lead facing up page.
@@ -82,7 +83,6 @@ func movedPose*(pose: Pose; mid: Point; spin, amount: float): Pose =
     result.facing[who] = pose.facing[who] + spin
   if pose.ring.isSome:
     result.ring = some (moved(pose.ring.get.centre), pose.ring.get.radius)
-
 
 
 func canonicalise*(pose: Pose; amount = 1.0; on = Anchor.Pair): Pose =
@@ -155,12 +155,11 @@ func relative*(pose: Pose): tuple[axis, facing: float] =
 
 
 
-#[ Moving on One Clock ]#
+#[ Moves On One Clock ]#
 
 func ease*(t: float): float =
   ## Slow both ends, so two stages read as stages rather than as blur.
   (1 - cos(PI * t)) / 2
-
 
 
 const
@@ -226,7 +225,7 @@ func cycle*(move: MoveApply; samples = 14): Walk =
 
 
 
-#[ Ways of Turning ]#
+#[ Ways Of Turning ]#
 
 func turned*(base: Pose; who: Dancer; about: About; degrees: float): Pose =
   ## Turn one dancer, on their own axis or round their partner.

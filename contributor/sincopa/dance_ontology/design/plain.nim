@@ -105,6 +105,7 @@ func longParagraphs*(markup: string): seq[string] =
     if said.len > SENTENCES: result.add said[0]
 
 
+
 #[ Markdown ]#
 
 func closes(word: string): bool =

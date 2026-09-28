@@ -78,6 +78,7 @@ type
                    ## fixes neither.
     strain*: Strain ## How near pose there is to any end.
 
+
 iterator stands*(rig: Rig): float =
   ## Every distance couple may stand at, from clear of each other outward.
   ##   Only thing fixed about where couple stand is that they are not inside each

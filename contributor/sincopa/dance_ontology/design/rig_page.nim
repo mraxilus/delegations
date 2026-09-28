@@ -160,7 +160,6 @@ type
     caption: string    ## Its caption, whole.
 
 
-
 func esc(s: string): string =
   ## Escape text for markup: ampersand and angle brackets.
   s.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"))
@@ -177,7 +176,6 @@ func attribute(tag, name: string): string =
   ## One attribute's value off one opening tag.
   let (a, b) = between(tag, name & "=\"", "\"", 0)
   if a < 0: "" else: tag[a ..< b]
-
 
 
 func cellsOf(html: string): Table[string, seq[Cell]] =

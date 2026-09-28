@@ -64,7 +64,6 @@ func shoulderLocal*(rig: Rig): Vec = (rig.shoulderOut, 0.0, rig.shoulderUp)
   ## Shoulder in body's mirrored terms: always right arm here.
 
 
-
 func circleOf*(rig: Rig; s, g, h: Vec): Circle =
   ## Elbow's circle for arm from shoulder `s` to grip `g` with
   ## hand pointing along unit `h`.
@@ -132,7 +131,6 @@ func placed*(rig: Rig; stance: Stance; arm: Arm; u: Vec;
     )
   else:
     ArmPose(s: toWorld(axes, s), e: toWorld(axes, e), w: toWorld(axes, w), g: toWorld(axes, g))
-
 
 
 func ownTerms*(axes: Axes; arm: Arm; p: Vec): Vec =

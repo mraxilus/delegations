@@ -33,6 +33,7 @@ type
   Position* = tuple[wind: float, name, note: string]
     ## One place on chain: how far it is wound, and how page says so.
 
+
 func onQuarter(degrees: float): Option[int] =
   ## Get bearing as whole quarters clockwise, none where it falls between.
   let quarters = floorMod(degrees, 360.0) / 90.0
@@ -619,7 +620,6 @@ const STEPS* = [-1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5]
   ##     and another is only which facing sits at nothing wound, which is
   ##     half turn of offset rule 31 names, and that is measured rather
   ##     than written down here.
-
 
 
 func windTwist*(wind: float): Twists =

@@ -182,6 +182,7 @@ proc stamp*(directory = HERE; leaving: openArray[string] = []): string =
   h.toHex(16).toLowerAscii
 
 
+
 #[ Reading ]#
 
 proc kept*(path = KEPT): Answers =
@@ -214,7 +215,8 @@ proc stillOf*(a: Answers; key: string): Stand =
   a.stills[key]
 
 
-#[ Answering, Every Core At Once ]#
+
+#[ Parallel Answers ]#
 
 func wayOf(w: Walk): Way =
   ## Strip walk to numbers laws read.

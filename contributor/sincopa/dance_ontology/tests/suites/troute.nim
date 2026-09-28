@@ -153,6 +153,7 @@ suite "crossings found":
         check met[i - 1].x < met[i].x  # rule 27
 
 
+
 #[ Drawn Length ]#
 
 const

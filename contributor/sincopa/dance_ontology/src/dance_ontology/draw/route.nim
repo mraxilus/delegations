@@ -216,7 +216,7 @@ const
 
 
 
-#[ Taut Around Bodies ]#
+#[ Taut Routes ]#
 
 func segHits*(p, q: Point; body: Body): bool =
   ## Test whether this straight stretch passes inside body's outline.
@@ -324,7 +324,7 @@ func resample*(points: seq[Point]; count: int): seq[Point] =
 
 
 
-#[ Which Way Round ]#
+#[ Rim Directions ]#
 
 func frontOf*(hand: Point; body: Body): Option[float] =
   ## Get way round rim, from this hand, that heads for its own
@@ -744,7 +744,7 @@ const SIDES* = [0.0, 1.0, -1.0]
 
 
 
-#[ Winding and Crossings ]#
+#[ Winding And Crossings ]#
 
 func wound*(a, b: Point; across: Point; phi_a, sweep: float;
     radius = BODY_R; share = 1.0): seq[Point] =

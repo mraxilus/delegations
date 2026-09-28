@@ -73,7 +73,7 @@ const OVER_OPTIONS = [
 
 
 
-#[ Geometry Facing Partners ]#
+#[ Partner Geometry ]#
 
 func parallelSite*(side: Side): Site =
   ## Get follow hand this lead hand reaches without crossing midline.
@@ -232,7 +232,6 @@ func briefName*(side: Side): string = leadName(side)[0 .. 0]
 
 func briefName*(site: Site): string = followName(site)[0 .. 0]
   ## Abbreviate hand of follow to one letter that says which.
-
 
 
 func named*(said: string): seq[Named] =

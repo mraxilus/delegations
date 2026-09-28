@@ -395,7 +395,7 @@ func turn*(posture: Posture; motion: Turn): Option[Posture] =
 
 
 
-#[ What There Is ]#
+#[ Posture Inventory ]#
 
 const
   MOST_TURN* = 3
@@ -443,7 +443,6 @@ func postures*(): seq[Posture] =
           var stood = held
           stood.twist = twist
           result.add stood
-
 
 
 func refusal*(posture: Posture; twist: HalfTurns): Option[Refusal] =

@@ -181,7 +181,6 @@ proc bodyOfSweep(recording: Shown; key = ""): string =
   "{" & bits.join(",\n") & "}"
 
 
-
 func jobs*(): seq[Job] =
   ## Every recording, sweeps first then every still card in page's own order.
   for i in 0 ..< SHOWN.len: result.add Job(cut: i, still: false)

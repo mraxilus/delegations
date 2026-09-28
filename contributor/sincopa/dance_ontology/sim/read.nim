@@ -43,6 +43,7 @@ type
     dof*: Dof
     whose*: Hand
 
+
 func armOf*(links: seq[Link]; i: int; who: Body): int =
   ## Which end of connection `i` is `who`'s.
   if links[i].ends[0].body == who: 0 else: 1
@@ -159,7 +160,6 @@ func crossings*(arms: Arms): seq[Crossing] =
         over: (if zp >= zq: 0 else: 1),
         sense: (if den > 0.0: 1 else: -1),
       )
-
 
 
 func tightest*(rig: Rig; stance: array[Body, Stance]; links: seq[Link];

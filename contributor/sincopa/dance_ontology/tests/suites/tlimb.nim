@@ -58,6 +58,7 @@ suite "the rig":
     check abs(l1.z - HUMAN.shoulderUp) < 1e-9
 
 
+
 #[ One Arm ]#
 
 suite "one arm, forward and back":
@@ -125,6 +126,7 @@ suite "one arm, forward and back":
     let e = HUMAN.range[Dof.Bend]
     check margin(e, 0.0) > 1.0   # stop leant on costs nothing
     check margin(e, -0.1) < 0.0  # past stop refuses
+
 
 
 #[ Contacts ]#

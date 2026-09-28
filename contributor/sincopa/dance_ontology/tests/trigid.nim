@@ -64,7 +64,6 @@ type
     ## One still of corpus stood live once, and every measure two laws read of it.
 
 
-
 proc rest(band = Band.Torso; apart = APART): Couple =
   ## Build couple at rest at `band`, `apart` metres apart, and settle it.
   result = build(HUMAN, facing(HUMAN, apart), band, SHAKE)
@@ -408,7 +407,8 @@ suite "two dancers in rigid body engine":
       check atEnd == 0
 
 
-#[ Couple Stand For Sweep ]#
+
+#[ Sweep Stances ]#
 
 suite "couple stand for sweep":
   ## Where couple stand for sweep is chosen from every distance walked, by what
@@ -465,7 +465,8 @@ suite "couple stand for sweep":
     check LL_ABOVE[chosen(LL_ABOVE)].leap * 2.0 <= LL_ABOVE[0].leap
 
 
-#[ Arms Move As Arms Do ]#
+
+#[ Arm Motion ]#
 
 const
   LEAP = 2.0 * PI * STEP * (HUMAN.shoulderOut + reach(HUMAN)) + 0.08
@@ -580,7 +581,8 @@ func wentOf(w: Walk; links: seq[Link]): Went =
   )
 
 
-#[ Live Walks, Every Core At Once ]#
+
+#[ Parallel Live Walks ]#
 
 # Mutable and global: thread takes one argument, so workers write into slots allotted here.
 var
@@ -765,7 +767,8 @@ suite "arms move as arms do":
       check w.leap < LEAP
 
 
-#[ Every Still Stands At Ease ]#
+
+#[ Stills At Ease ]#
 
 const
   SLOP = 0.005 ## Engine's own linear slop, metres: overlap it never resolves.
@@ -1017,6 +1020,7 @@ suite "every still stands at ease":
         got[run] = (if holds: c.strainOf.most else: -1.0)
         c.free()
       check got[0] == got[1]
+
 
 
 #[ Answers ]#

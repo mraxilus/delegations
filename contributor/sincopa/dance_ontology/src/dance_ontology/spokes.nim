@@ -130,7 +130,6 @@ type
     turn*: int           ## Its place in order ways grow and fold.
 
 
-
 func closeStyle*(): string =
   ## Write this drawing's own times onto it, beside ones every drawing has.
   passStyle(CLOSE_TEMPO) & "; --fold-spread: " & $FOLD_SPREAD &
@@ -235,7 +234,7 @@ func naming(x, y: int; lines: seq[string]; colour: string): string =
 
 
 
-#[ Space and Window ]#
+#[ Space And Window ]#
 
 func extentOf(here: Frame): (int, int, int, int) =
   ## Get box one frame's drawing needs, and no more.

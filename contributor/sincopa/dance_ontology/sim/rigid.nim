@@ -178,7 +178,9 @@ type
     whose*: Hand  ## Arm it sits at, where it is arm's.
     what*: string ## Which joint: freedom's name, `waist` or `girdle`.
 
-#[ Doors between project's world and engine's ]#
+
+
+#[ Engine Doors ]#
 
 func asEngine(p: Vec): eng.Vec = eng.vec(p.x, p.z, -p.y)
   ## Project's Z up into engine's Y up.  Rotation, so handedness survives.
@@ -195,7 +197,8 @@ func asPlace(p: Vec): eng.Pos = eng.Pos(x: p.x, y: p.z, z: -p.y)
   ## Write project's point as engine's place.
 
 
-#[ Turns, as engine keeps them ]#
+
+#[ Engine Turns ]#
 
 func qOf(x, y, z: eng.Vec): eng.Quat =
   ## Turn whose frame these three units are, given in parent's terms.
@@ -223,7 +226,8 @@ func qMul(a, b: eng.Quat): eng.Quat =
   )
 
 
-#[ Building couple ]#
+
+#[ Couple Construction ]#
 
 func stadium(rig: Rig; part: Part): tuple[r, spread: float] =
   ## Radius of section's round ends, and how far apart their two centres sit.
@@ -672,7 +676,8 @@ proc free*(c: Couple) =
     eng.destroyWorld(c.world)
 
 
-#[ Turning, and reading what came of it ]#
+
+#[ Turn Readings ]#
 
 const
   LIFT = 400.0 ## Newtons per metre couple carry joined hands toward their band by.
@@ -1315,7 +1320,8 @@ proc gives*(c: Couple): Stop =
   Stop.None
 
 
-#[ Reading how near couple's pose is to its ends ]#
+
+#[ Pose Strain ]#
 
 proc collarOf*(c: Couple; who: Body; arm: Arm): array[Collar, float] =
   ## What one collarbone's two hinges read, radians, in rig's stated sense:
