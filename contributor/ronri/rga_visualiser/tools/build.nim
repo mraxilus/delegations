@@ -309,18 +309,26 @@ func recordOf(lines: openArray[string], name: string): string =
   ## Render TypeScript interface from Nim object type of `name`; empty where absent.
   ##   Read from bridge rather than kept beside it, so record crossing boundary has one
   ##   home and no second copy can drift from it (Article I.4).
-  var start = -1
+  ##   Found as `type` of its own or as member of `type` section; bridge holds every type
+  ##   in one section (Article X.6).
+  var
+    start = -1
+    indent_declared = 0
   for i, line in lines:
-    if line.startsWith("type " & name & " = object") or
-        line.startsWith("type " & name & "* = object"):
+    let
+      indent = line.len - line.strip(trailing = false).len
+      declared = if line.startsWith("type "): line["type ".len .. ^1] else: line[indent .. ^1]
+    if declared.startsWith(name & " = object") or declared.startsWith(name & "* = object"):
       start = i
+      indent_declared = if line.startsWith("type "): 0 else: indent
       break
   if start < 0: return ""
 
   var fields: seq[string]
   for i in start + 1 ..< lines.len:
     let line = lines[i]
-    if line.len > 0 and line[0] notin {' ', '\t'}: break
+    if line.strip.len > 0 and line.len - line.strip(trailing = false).len <= indent_declared:
+      break
     let bare = line.strip
     if bare.len == 0 or bare.startsWith("##"): continue
     let

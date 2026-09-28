@@ -47,6 +47,47 @@ type
     plane_near*: Multivector ## Same plane pushed `depth_near` forward.
       ## Near clip as algebra states it, for `clipToEyeSide`'s meet.
 
+  Case* {.pure.} = enum ## Define which drawable algebra found, and its placement.
+    Nothing ## No drawable geometry at all; nothing is emitted.
+    PointAt ## Point standing somewhere in finite world.
+    PointToward ## Horizon point: direction, drawn as star on sky.
+    LineThrough ## Line through support, running along attitude.
+    LineAcross ## Horizon line: pencil of directions its two axes span.
+    PlaneOn ## Plane anchored somewhere, disc spanned by two arms.
+    PlaneEverywhere ## Horizon plane: whole sky, carrying no orientation.
+
+  Placement* = object ## Define everything *algebra* says about one object, and nothing else.
+    ## Camera is not in it, and that is whole point.
+    ##   Every reader here (`position`, `positionAnchor`, `direction`, `directionHorizon`,
+    ##   `frame`, `spanPerpendicular`) is pure function of multivector, so this stays true
+    ##   while camera orbits.
+    ##   Caller that can say when object last changed places it once and emits every
+    ##   frame; `bridge` is that caller.
+    ##     Placing was most of moving frame's scene phase, recomputed per orbit frame for
+    ##     objects nobody touched.
+    ## Flat rather than variant object.
+    ##   Copied per handle into `array[OBJECTS_MAX, Placement]`, and case object's tag would buy
+    ##   nothing but narrower read. Which fields carry meaning is `kind`'s to say.
+    kind*: Case
+    at*: Position ## Where it stands: point's place, line's support, plane's disc centre.
+      ## Meaningless for two horizon kinds and `Nothing`.
+    toward*: Direction ## Direction it names: horizon point's heading, line's attitude.
+      ## Meaningless for either plane kind and `Nothing`.
+    axes*: FramePlane ## Two arms disc or great circle is spanned by, and their normal.
+      ## Carried by `PlaneOn` and `LineAcross` only.
+
+  ViewBounds* = object ## Define frustum points are tested against before emitting.
+    ## Everything `isPointInView` reads, derived once per frame by `camera.viewBoundsFor`.
+    ##   Scalars and directions alone, so test allocates nothing per point (Art. VII.1).
+    eye*: Position ## Where depth is measured from.
+    forward*: Direction ## Sight axis, depth is measured along.
+    right*: Direction ## View's +x, unit.
+    up*: Direction ## View's +y, unit.
+    depth_near*: float ## Nearest depth drawn; nearer is clipped by GPU as well.
+    depth_far*: float ## Furthest depth drawn; further is clipped by GPU as well.
+    bound_width*: float ## Half-width of view per unit of depth, sprite margin included.
+    bound_height*: float ## Half-height of view per unit of depth, sprite margin included.
+
 
 # Read through to Euclidean half, so caller writes `scale.eye`, not `scale.scale.eye`.
 #   Split is about which module may *name* multivector.
@@ -387,49 +428,6 @@ proc addLattice*(
 
 
 #[ Object Tessellation ]#
-
-type
-  Case* {.pure.} = enum ## Define which drawable algebra found, and its placement.
-    Nothing ## No drawable geometry at all; nothing is emitted.
-    PointAt ## Point standing somewhere in finite world.
-    PointToward ## Horizon point: direction, drawn as star on sky.
-    LineThrough ## Line through support, running along attitude.
-    LineAcross ## Horizon line: pencil of directions its two axes span.
-    PlaneOn ## Plane anchored somewhere, disc spanned by two arms.
-    PlaneEverywhere ## Horizon plane: whole sky, carrying no orientation.
-
-  Placement* = object ## Define everything *algebra* says about one object, and nothing else.
-    ## Camera is not in it, and that is whole point.
-    ##   Every reader here (`position`, `positionAnchor`, `direction`, `directionHorizon`,
-    ##   `frame`, `spanPerpendicular`) is pure function of multivector, so this stays true
-    ##   while camera orbits.
-    ##   Caller that can say when object last changed places it once and emits every
-    ##   frame; `bridge` is that caller.
-    ##     Placing was most of moving frame's scene phase, recomputed per orbit frame for
-    ##     objects nobody touched.
-    ## Flat rather than variant object.
-    ##   Copied per handle into `array[OBJECTS_MAX, Placement]`, and case object's tag would buy
-    ##   nothing but narrower read. Which fields carry meaning is `kind`'s to say.
-    kind*: Case
-    at*: Position ## Where it stands: point's place, line's support, plane's disc centre.
-      ## Meaningless for two horizon kinds and `Nothing`.
-    toward*: Direction ## Direction it names: horizon point's heading, line's attitude.
-      ## Meaningless for either plane kind and `Nothing`.
-    axes*: FramePlane ## Two arms disc or great circle is spanned by, and their normal.
-      ## Carried by `PlaneOn` and `LineAcross` only.
-
-  ViewBounds* = object ## Define frustum points are tested against before emitting.
-    ## Everything `isPointInView` reads, derived once per frame by `camera.viewBoundsFor`.
-    ##   Scalars and directions alone, so test allocates nothing per point (Art. VII.1).
-    eye*: Position ## Where depth is measured from.
-    forward*: Direction ## Sight axis, depth is measured along.
-    right*: Direction ## View's +x, unit.
-    up*: Direction ## View's +y, unit.
-    depth_near*: float ## Nearest depth drawn; nearer is clipped by GPU as well.
-    depth_far*: float ## Furthest depth drawn; further is clipped by GPU as well.
-    bound_width*: float ## Half-width of view per unit of depth, sprite margin included.
-    bound_height*: float ## Half-height of view per unit of depth, sprite margin included.
-
 
 proc placeObject*(
   geometry: Multivector, anchor_override: Option[Position] = none(Position)

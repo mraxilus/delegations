@@ -41,6 +41,34 @@ export euclid, objects
 
 
 
+#[ Type Definitions ]#
+
+type
+  Motor* = object ## Define rigid motion by its eight coefficients of even grade.
+    ## Turn about line and slide along that same line, held as one value; see `motors.nim`
+    ## for algebra that builds and composes one.
+    ## Eight named floats rather than `Multivector` field.
+    ##   `Camera` holds one and crosses 55 by-value parameters, and JS backend deep-copies
+    ##   every one of them through `nimCopy` (Article VII.1). Eight floats in one object cost
+    ##   what `Position`'s three cost; nested `Multivector` costs sixteen more and one object
+    ##   deeper.
+    ##   Lifted through `toMultivector` where algebra is applied, which is once for each frame
+    ##   rather than once for each object: `picking.pickWalk` derives eye and frame before its
+    ##   walk, and `camera.drawExtentFor` hands every reader one extent.
+    ##   Same trade `mesh.directionAcross` makes, where join per segment became cross product.
+    turn_x*, turn_y*, turn_z*: float
+      ## Hold line direction, which is half that turns (`E41`, `E42`, `E43`).
+    slide_x*, slide_y*, slide_z*: float
+      ## Hold line moment, which is half that slides (`E23`, `E31`, `E12`).
+    scalar*: float
+      ## Hold dual part that pitch of screw writes (`S`).
+    antiscalar*: float = 1.0
+      ## Hold weight, which is 1 where motion is none (`E1234`).
+      ## Default of 1 rather than 0, so zeroed `Camera` carries motion that moves nothing.
+      ##   Zeroed motor would carry no weight at all, which names no motion.
+
+
+
 #[ Multivector Conversion ]#
 
 func toMultivector*(p: Position): Multivector =
@@ -57,30 +85,6 @@ func toMultivector*(d: Direction): Multivector =
   result[Basis.E1] = d.x
   result[Basis.E2] = d.y
   result[Basis.E3] = d.z
-
-
-type Motor* = object ## Define rigid motion by its eight coefficients of even grade.
-  ## Turn about line and slide along that same line, held as one value; see `motors.nim`
-  ## for algebra that builds and composes one.
-  ## Eight named floats rather than `Multivector` field.
-  ##   `Camera` holds one and crosses 55 by-value parameters, and JS backend deep-copies
-  ##   every one of them through `nimCopy` (Article VII.1). Eight floats in one object cost
-  ##   what `Position`'s three cost; nested `Multivector` costs sixteen more and one object
-  ##   deeper.
-  ##   Lifted through `toMultivector` where algebra is applied, which is once for each frame
-  ##   rather than once for each object: `picking.pickWalk` derives eye and frame before its
-  ##   walk, and `camera.drawExtentFor` hands every reader one extent.
-  ##   Same trade `mesh.directionAcross` makes, where join per segment became cross product.
-  turn_x*, turn_y*, turn_z*: float
-    ## Hold line direction, which is half that turns (`E41`, `E42`, `E43`).
-  slide_x*, slide_y*, slide_z*: float
-    ## Hold line moment, which is half that slides (`E23`, `E31`, `E12`).
-  scalar*: float
-    ## Hold dual part that pitch of screw writes (`S`).
-  antiscalar*: float = 1.0
-    ## Hold weight, which is 1 where motion is none (`E1234`).
-    ## Default of 1 rather than 0, so zeroed `Camera` carries motion that moves nothing.
-    ##   Zeroed motor would carry no weight at all, which names no motion.
 
 
 func toMultivector*(motor: Motor): Multivector =

@@ -46,12 +46,6 @@ var SCRATCH: DrawScratch
   ##   carves typed slices, neither possible on JS backend.
   ##   Sized by `LINES_GRID_MAX`, most one-piece chords grid family can lay.
 
-proc performanceNow(): float {.importjs: "performance.now()", sideEffect.}
-  ## Read page's monotonic clock, in milliseconds.
-  ##   Bridge's one piece of interop beyond exports: per-phase draw timings bracket work
-  ##   inside one call, which single caller-supplied reading cannot.
-  ##   Confined to timing; no rule may read it.
-
 
 type
   FlatBuffer = ref object of RootObj
@@ -70,6 +64,172 @@ type
     values: FlatBuffer
     used: int
 
+  # Read `SettingsFurniture` from `camera`, shared with desktop's hold.
+  SettingsOverlay = tuple
+    ## Define everything overlay's shared draw extent and view-projection depend on.
+    ##   Camera's whole placement and viewport asked about.
+    ##   Keyed on what camera holds, as `SettingsFurniture` is, and never on read-outs.
+    ##     `nimAnchorScreen` runs this for every overlay call, so key built from pivot and
+    ##     both angles cost more than derivation it skips: 488 us against 8 us repaired.
+    motor: Motor
+    distance, degrees_field_of_view, reach_near, reach_scene: float
+    width, height: int
+
+  ShapedMarker = tuple
+    ## Define one shaped marker beside everything it was shaped from; see `MARKER_SHAPED`.
+    handle: int
+    width, height: int
+    progress: float
+    is_touch: bool
+    swell: float
+    travel: float
+    settings: SettingsOverlay
+    marker: ref Marker ## Boxed, and box is point.
+      ##   `Marker` is wide variant object (two pulse runs, loop, both bands), and JS backend
+      ##   deep-copies every value assignment through `nimCopy`.
+      ##   Stored by value, memo's store-and-read copies marker twice and costs as much as
+      ##   shaping it replaces; behind ref, one copy at store, none at read.
+
+  SettingsScene = tuple
+    ## Define everything scene's own meshes are built from.
+    ##   `SettingsFurniture`'s rule, one layer out: two frames agreeing here draw same scene
+    ##   records, so second may keep first's.
+    ##   Furniture tuple is carried whole, since it names camera, framebuffer height and
+    ##   field of view: everything `drawExtentFor` reads.
+    ##     It also names two furniture toggles scene does not read; over-approximation
+    ##     costing one rebuilt frame when reader switches grid off.
+    ##   `aspect` is here because view-projection matrix reads it and furniture does not.
+    ##   `revision` is scene's own; see `scene.revision`.
+    ##   Two things are guards instead; see `nimBuildFrame`.
+    ##     Preview or drag preview standing (moves with pointer), appear animation running.
+    furniture: SettingsFurniture
+    aspect: float
+    revision: int
+    revision_selection: int ## `selection.revision`, never selection itself.
+      ## Comparing and copying `OBJECTS_MAX` ints per frame is capacity-scaled work for scene
+      ## of five.
+    is_culling: bool ## Whether points outside view are skipped; see `IS_CULLING`.
+
+  OperationResult = object ## Define what applying catalogue operation produced.
+    created_handle: cint ## Handle derived object was added at.
+    message: cstring ## Outcome, for display as desktop panel's status line.
+    kind_word: cstring ## What derived object turned out to be.
+
+  DragResult = object ## Define what ending drag produced.
+    created_handle: cint ## Handle added, or `SLOT_NONE` where nothing was.
+      ## Over empty space, on own source, on pair making nothing, or on `more…`.
+    message: cstring ## Outcome, for display as desktop panel's status line.
+    is_more: bool ## Whether release chose `more…`.
+      ## Builds nothing and leaves both operands selected for apply section.
+    clicked_handle: cint ## Object press that never became drag came down on.
+      ## `SLOT_NONE` for every actual drag.
+      ## Caller selects it, alone or added where shift is held.
+
+  FrameData = object
+    ## Define one frame's vertex data plus transform it is drawn through.
+    ##   Everything caller needs to issue this frame's `gl.drawArrays` calls.
+    ribbon_verts, point_verts: FlatBuffer
+    ring_records: FlatBuffer ## Fourteen floats per ring, `mesh.RingRecord`'s field order.
+      ## One record per rim, where ribbon records per segment were most of all ribbon
+      ## traffic; figures in `PROVENANCE.md`.
+    disc_records: FlatBuffer ## Thirteen floats per disc, `mesh.DiscRecord`'s field order.
+      ## For instanced fan draw.
+    dome_records: FlatBuffer ## Eight floats per dome, `mesh.DomeRecord`'s field order.
+      ## For instanced sphere draw.
+    veil_runs: FlatBuffer ## Translucent pass's draw order, three floats per run.
+      ## Kind (`mesh.VeilKind` ordinal), first record, count.
+      ## Walked in sequence so two veils blend in order scene emitted them; see
+      ## `mesh.VeilRuns`.
+    view_projection: seq[float32]
+    furn_ribbon_verts: FlatBuffer ## Lattices and world axes alone, drawn first.
+      ## Built at own thinner width (`mesh.WIDTH_LINE_FURNITURE`), since ribbon carries
+      ## width as geometry.
+      ## Empty where `is_furniture_held`, meaning "furniture you already have".
+    is_scene_held: bool ## Whether scene records are unchanged from last frame.
+      ## Every buffer below then already holds what it should and none needs re-uploading.
+      ## See `SettingsScene` for what has to match and three states refusing hold.
+    is_furniture_held: bool ## Whether furniture is unchanged from last frame.
+      ## Caller then keeps buffer it uploaded rather than reading empty `furn_ribbon_verts`
+      ## as empty world.
+      ## Furniture is function of camera alone, and camera is still for most frames of
+      ## ordinary session.
+      ##   Furniture is moving frame's largest phase on JS backend (diagnostics scenery row
+      ##   is live figure), so still frame skipping it does most of frame less work.
+    ms_build, ms_furniture, ms_scene, ms_flatten: float32
+      ## Record what this frame's assembly cost, in milliseconds.
+      ##   Whole of `nimBuildFrame`, and its three phases: furniture, scene's objects (preview
+      ##   and preview included), and flatten of every mesh into arrays above.
+      ##   Phases bridge cannot see (GL upload, SVG overlay) are timed by browser scripts.
+      ##   Held furniture frame reports near-zero furniture.
+    camera_eye_x, camera_eye_y, camera_eye_z: float32
+    camera_forward_x, camera_forward_y, camera_forward_z: float32
+    camera_depth_near, camera_tangent_half_view, camera_height_pixels: float32
+      ## Carry what ribbon vertex shader needs of camera.
+      ##   Exactly `mesh.DrawScale`'s same-named fields.
+      ##   Widening, near clip and screen-constant width run on GPU.
+    camera_depth_log: float32
+      ## Carry scale every shader maps depth's logarithm by; see `camera.depthOf`.
+    camera_right_x, camera_right_y, camera_right_z: float32
+    camera_up_x, camera_up_y, camera_up_z: float32
+      ## Carry camera's screen axes, point vertex shader spans each disc across.
+      ##   `mesh.DrawScale.axis_right` and `axis_up`.
+    fog_radius_full, fog_radius_gone: float32
+      ## Carry furniture fog's two radii, for ribbon fragment shader's fade of fogged records.
+      ##   `mesh.fogFurnitureFor`'s answer for this frame's reach.
+    ms_camera, ms_matrix, ms_unaccounted: float32
+      ## Record three spans of `nimBuildFrame` that belong to no row.
+      ##   `ms_camera` is prologue: focus pruning, tween, `DrawExtent`, `framing.offerAim`.
+      ##   `ms_matrix` is view-projection build.
+      ##   `ms_unaccounted` is whatever phases fail to cover, shown rather than inferred:
+      ##   breakdown whose parts do not sum is worse than coarse one.
+    ms_placing, ms_emitting: float32
+      ## Cut same milliseconds second way, not stage of its own.
+      ##   How frame divided between working out where geometry goes and turning places into
+      ##   vertices, which is question this project exists to ask.
+      ##   `ms_emitting` is pure by construction: reached through `mesh`, which imports
+      ##   `euclid` alone.
+      ##   `ms_placing` carries little Euclidean arithmetic inside its loops; see `timings`.
+    ms_hover_pick: float32
+      ## Record what picking under cursor cost, measured between frames, reported by one after.
+      ##   `updateHover` runs from event handlers, so no bracket inside this proc sees it.
+      ##   Carried on `timings.FrameRecord`.
+    ms_grid, ms_axes: float32
+      ## Record what two halves of scenery cost, inside `ms_furniture`.
+      ##   Axes are three lines however far camera stands; lattices are however many lines
+      ##   selected planes ask for.
+    count_grid_segments: int
+      ## Count ribbon records lattices are drawn from, one per lattice line.
+      ##   Bounded per family by `mesh.LINES_GRID_MAX`.
+      ##   Axes excluded, so budgeted number matches its budget.
+    ms_points, ms_lines, ms_planes, ms_sky, ms_preview, ms_selected: float32
+      ## Record what each kind of scene object cost inside `ms_scene`, with counts below.
+      ##   Kinds differ by order of magnitude: point is single vertex, plane places rim of
+      ##   `mesh.SEGMENTS_CIRCLE_HORIZON` segments.
+      ##   `sky` is horizon planes drawn first; `preview` is staged edit and drag preview
+      ##   together; `selected` is overlay tail, drawn again over cleared depth.
+      ##   Timed by clock read once per object: mark from end of one is start of next.
+      ##     Clock's own overhead lands inside `ms_scene`; figures in `PROVENANCE.md`.
+    count_points, count_lines, count_planes, count_sky, count_preview, count_selected: int
+      ## Count objects of each kind times above are for.
+      ##   Reader can divide: "is one expensive, or are there many?".
+    count_points_culled: int ## Count points skipped for lying outside view.
+      ## Beside `count_points`, so panel can say drawn of standing; see `isPointInView`.
+    ribbon_over, ring_over, point_over, veil_run_over: int ## How much of each stream's end
+      ## is overlay run, drawn after rest over cleared depth.
+      ## Count of tail rather than index it starts at, so glue subtracts nothing; see
+      ## `mesh.Mesh.index_overlay` and `renderer.drawRun`.
+      ## Vertices for points, records for ribbons and rings, whole runs for veils.
+
+  SceneCost = object
+    ## Define tally of what each kind of scene object cost this frame, and how many there were.
+    ##   One clock read per object: mark closing one object opens next.
+    ##   Preview and overlay tail are kinds of their own because neither is scene object
+    ##   reader counted.
+    ms_points, ms_lines, ms_planes, ms_sky, ms_preview, ms_selected: float
+    count_points, count_lines, count_planes, count_sky, count_preview, count_selected: int
+    count_points_culled: int ## Count points skipped for lying outside view; see `chargeCulled`.
+    mark: float ## When object now being drawn started, on `performanceNow`'s clock.
+
 # Mark every binding `sideEffect`.
 #   Compiler assumes imported body is pure, so `func` calling one would compile; marked,
 #   only `proc` may reach effects, which is what makes `func` mean anything here.
@@ -83,6 +243,12 @@ proc prefix(buffer: FlatBuffer, count: int): FlatBuffer {.importjs: "#.subarray(
   ## Report first `count` entries as view.
   ##   No copy, and `instanceof Float32Array` still holds, so browser scripts uploads it with
   ##   nothing in between.
+
+proc performanceNow(): float {.importjs: "performance.now()", sideEffect.}
+  ## Read page's monotonic clock, in milliseconds.
+  ##   Bridge's one piece of interop beyond exports: per-phase draw timings bracket work
+  ##   inside one call, which single caller-supplied reading cannot.
+  ##   Confined to timing; no rule may read it.
 
 proc initFlatFloats(capacity: int): FlatFloats =
   ## Reserve flat buffer of `capacity` floats, empty.
@@ -133,56 +299,6 @@ template fill6(flat: var FlatFloats, a, b, c, d, e, f: float32): FlatBuffer =
 
 
 #[ Panel State ]#
-
-# Read `SettingsFurniture` from `camera`, shared with desktop's hold.
-
-
-type SettingsOverlay = tuple
-  ## Define everything overlay's shared draw extent and view-projection depend on.
-  ##   Camera's whole placement and viewport asked about.
-  ##   Keyed on what camera holds, as `SettingsFurniture` is, and never on read-outs.
-  ##     `nimAnchorScreen` runs this for every overlay call, so key built from pivot and
-  ##     both angles cost more than derivation it skips: 488 us against 8 us repaired.
-  motor: Motor
-  distance, degrees_field_of_view, reach_near, reach_scene: float
-  width, height: int
-
-type ShapedMarker = tuple
-  ## Define one shaped marker beside everything it was shaped from; see `MARKER_SHAPED`.
-  handle: int
-  width, height: int
-  progress: float
-  is_touch: bool
-  swell: float
-  travel: float
-  settings: SettingsOverlay
-  marker: ref Marker ## Boxed, and box is point.
-    ##   `Marker` is wide variant object (two pulse runs, loop, both bands), and JS backend
-    ##   deep-copies every value assignment through `nimCopy`.
-    ##   Stored by value, memo's store-and-read copies marker twice and costs as much as
-    ##   shaping it replaces; behind ref, one copy at store, none at read.
-
-
-type SettingsScene = tuple
-  ## Define everything scene's own meshes are built from.
-  ##   `SettingsFurniture`'s rule, one layer out: two frames agreeing here draw same scene
-  ##   records, so second may keep first's.
-  ##   Furniture tuple is carried whole, since it names camera, framebuffer height and
-  ##   field of view: everything `drawExtentFor` reads.
-  ##     It also names two furniture toggles scene does not read; over-approximation
-  ##     costing one rebuilt frame when reader switches grid off.
-  ##   `aspect` is here because view-projection matrix reads it and furniture does not.
-  ##   `revision` is scene's own; see `scene.revision`.
-  ##   Two things are guards instead; see `nimBuildFrame`.
-  ##     Preview or drag preview standing (moves with pointer), appear animation running.
-  furniture: SettingsFurniture
-  aspect: float
-  revision: int
-  revision_selection: int ## `selection.revision`, never selection itself.
-    ## Comparing and copying `OBJECTS_MAX` ints per frame is capacity-scaled work for scene
-    ## of five.
-  is_culling: bool ## Whether points outside view are skipped; see `IS_CULLING`.
-
 
 var
   SCENE: Scene
@@ -656,12 +772,6 @@ proc nimCommitObject(
   SCENE.setInk(index, Ink(ink_ordinal))
   SCENE.setRadius(index, float(radius))
   HISTORY.record(SCENE, CAMERA)
-
-
-type OperationResult = object ## Define what applying catalogue operation produced.
-  created_handle: cint ## Handle derived object was added at.
-  message: cstring ## Outcome, for display as desktop panel's status line.
-  kind_word: cstring ## What derived object turned out to be.
 
 
 proc nimApplyOperation(
@@ -1778,17 +1888,6 @@ proc nimDragMenuHighlighted(): cint {.exportc.} =
   if choice.isNone: SLOT_NONE else: cint(ord(choice.get))
 
 
-type DragResult = object ## Define what ending drag produced.
-  created_handle: cint ## Handle added, or `SLOT_NONE` where nothing was.
-    ## Over empty space, on own source, on pair making nothing, or on `more…`.
-  message: cstring ## Outcome, for display as desktop panel's status line.
-  is_more: bool ## Whether release chose `more…`.
-    ## Builds nothing and leaves both operands selected for apply section.
-  clicked_handle: cint ## Object press that never became drag came down on.
-    ## `SLOT_NONE` for every actual drag.
-    ## Caller selects it, alone or added where shift is held.
-
-
 proc nimEndDrag(now: cfloat): DragResult {.exportc.} =
   ## End drag in progress, applying whatever release resolved to.
   ##   Straight into `interaction.endDrag` for everything it reports, adding only this
@@ -2161,113 +2260,6 @@ proc nimSceneAddRaw(
 
 
 #[ Frame Assembly ]#
-
-type FrameData = object
-  ## Define one frame's vertex data plus transform it is drawn through.
-  ##   Everything caller needs to issue this frame's `gl.drawArrays` calls.
-  ribbon_verts, point_verts: FlatBuffer
-  ring_records: FlatBuffer ## Fourteen floats per ring, `mesh.RingRecord`'s field order.
-    ## One record per rim, where ribbon records per segment were most of all ribbon
-    ## traffic; figures in `PROVENANCE.md`.
-  disc_records: FlatBuffer ## Thirteen floats per disc, `mesh.DiscRecord`'s field order.
-    ## For instanced fan draw.
-  dome_records: FlatBuffer ## Eight floats per dome, `mesh.DomeRecord`'s field order.
-    ## For instanced sphere draw.
-  veil_runs: FlatBuffer ## Translucent pass's draw order, three floats per run.
-    ## Kind (`mesh.VeilKind` ordinal), first record, count.
-    ## Walked in sequence so two veils blend in order scene emitted them; see
-    ## `mesh.VeilRuns`.
-  view_projection: seq[float32]
-  furn_ribbon_verts: FlatBuffer ## Lattices and world axes alone, drawn first.
-    ## Built at own thinner width (`mesh.WIDTH_LINE_FURNITURE`), since ribbon carries
-    ## width as geometry.
-    ## Empty where `is_furniture_held`, meaning "furniture you already have".
-  is_scene_held: bool ## Whether scene records are unchanged from last frame.
-    ## Every buffer below then already holds what it should and none needs re-uploading.
-    ## See `SettingsScene` for what has to match and three states refusing hold.
-  is_furniture_held: bool ## Whether furniture is unchanged from last frame.
-    ## Caller then keeps buffer it uploaded rather than reading empty `furn_ribbon_verts`
-    ## as empty world.
-    ## Furniture is function of camera alone, and camera is still for most frames of
-    ## ordinary session.
-    ##   Furniture is moving frame's largest phase on JS backend (diagnostics scenery row
-    ##   is live figure), so still frame skipping it does most of frame less work.
-  ms_build, ms_furniture, ms_scene, ms_flatten: float32
-    ## Record what this frame's assembly cost, in milliseconds.
-    ##   Whole of `nimBuildFrame`, and its three phases: furniture, scene's objects (preview
-    ##   and preview included), and flatten of every mesh into arrays above.
-    ##   Phases bridge cannot see (GL upload, SVG overlay) are timed by browser scripts.
-    ##   Held furniture frame reports near-zero furniture.
-  camera_eye_x, camera_eye_y, camera_eye_z: float32
-  camera_forward_x, camera_forward_y, camera_forward_z: float32
-  camera_depth_near, camera_tangent_half_view, camera_height_pixels: float32
-    ## Carry what ribbon vertex shader needs of camera.
-    ##   Exactly `mesh.DrawScale`'s same-named fields.
-    ##   Widening, near clip and screen-constant width run on GPU.
-  camera_depth_log: float32
-    ## Carry scale every shader maps depth's logarithm by; see `camera.depthOf`.
-  camera_right_x, camera_right_y, camera_right_z: float32
-  camera_up_x, camera_up_y, camera_up_z: float32
-    ## Carry camera's screen axes, point vertex shader spans each disc across.
-    ##   `mesh.DrawScale.axis_right` and `axis_up`.
-  fog_radius_full, fog_radius_gone: float32
-    ## Carry furniture fog's two radii, for ribbon fragment shader's fade of fogged records.
-    ##   `mesh.fogFurnitureFor`'s answer for this frame's reach.
-  ms_camera, ms_matrix, ms_unaccounted: float32
-    ## Record three spans of `nimBuildFrame` that belong to no row.
-    ##   `ms_camera` is prologue: focus pruning, tween, `DrawExtent`, `framing.offerAim`.
-    ##   `ms_matrix` is view-projection build.
-    ##   `ms_unaccounted` is whatever phases fail to cover, shown rather than inferred:
-    ##   breakdown whose parts do not sum is worse than coarse one.
-  ms_placing, ms_emitting: float32
-    ## Cut same milliseconds second way, not stage of its own.
-    ##   How frame divided between working out where geometry goes and turning places into
-    ##   vertices, which is question this project exists to ask.
-    ##   `ms_emitting` is pure by construction: reached through `mesh`, which imports
-    ##   `euclid` alone.
-    ##   `ms_placing` carries little Euclidean arithmetic inside its loops; see `timings`.
-  ms_hover_pick: float32
-    ## Record what picking under cursor cost, measured between frames, reported by one after.
-    ##   `updateHover` runs from event handlers, so no bracket inside this proc sees it.
-    ##   Carried on `timings.FrameRecord`.
-  ms_grid, ms_axes: float32
-    ## Record what two halves of scenery cost, inside `ms_furniture`.
-    ##   Axes are three lines however far camera stands; lattices are however many lines
-    ##   selected planes ask for.
-  count_grid_segments: int
-    ## Count ribbon records lattices are drawn from, one per lattice line.
-    ##   Bounded per family by `mesh.LINES_GRID_MAX`.
-    ##   Axes excluded, so budgeted number matches its budget.
-  ms_points, ms_lines, ms_planes, ms_sky, ms_preview, ms_selected: float32
-    ## Record what each kind of scene object cost inside `ms_scene`, with counts below.
-    ##   Kinds differ by order of magnitude: point is single vertex, plane places rim of
-    ##   `mesh.SEGMENTS_CIRCLE_HORIZON` segments.
-    ##   `sky` is horizon planes drawn first; `preview` is staged edit and drag preview
-    ##   together; `selected` is overlay tail, drawn again over cleared depth.
-    ##   Timed by clock read once per object: mark from end of one is start of next.
-    ##     Clock's own overhead lands inside `ms_scene`; figures in `PROVENANCE.md`.
-  count_points, count_lines, count_planes, count_sky, count_preview, count_selected: int
-    ## Count objects of each kind times above are for.
-    ##   Reader can divide: "is one expensive, or are there many?".
-  count_points_culled: int ## Count points skipped for lying outside view.
-    ## Beside `count_points`, so panel can say drawn of standing; see `isPointInView`.
-  ribbon_over, ring_over, point_over, veil_run_over: int ## How much of each stream's end
-    ## is overlay run, drawn after rest over cleared depth.
-    ## Count of tail rather than index it starts at, so glue subtracts nothing; see
-    ## `mesh.Mesh.index_overlay` and `renderer.drawRun`.
-    ## Vertices for points, records for ribbons and rings, whole runs for veils.
-
-
-type SceneCost = object
-  ## Define tally of what each kind of scene object cost this frame, and how many there were.
-  ##   One clock read per object: mark closing one object opens next.
-  ##   Preview and overlay tail are kinds of their own because neither is scene object
-  ##   reader counted.
-  ms_points, ms_lines, ms_planes, ms_sky, ms_preview, ms_selected: float
-  count_points, count_lines, count_planes, count_sky, count_preview, count_selected: int
-  count_points_culled: int ## Count points skipped for lying outside view; see `chargeCulled`.
-  mark: float ## When object now being drawn started, on `performanceNow`'s clock.
-
 
 var COUNTS_SCENE: SceneCost ## What scene meshes standing in `MESHES` are made of.
   ## Only counts are read back, on held frame; times belong to frame that did work.

@@ -314,38 +314,46 @@ var
 
 #[ Command Line ]#
 
-type Options = object ## Define what command line asked of this run.
-  path_screenshot: string ## Where one-shot export is written; empty for none.
-  path_storyboard: string ## Directory scripted construction is written to; empty for none.
-  path_load_scene: string ## Scene file to open instead of built-in demo; empty for none.
-  count_frames: int ## Frames to draw before quitting; 0 to run until closed.
-  is_hidden: bool ## Whether window is left unmapped.
-  is_timed: bool ## Whether to record and report per-frame timing statistics.
-  is_novsync: bool ## Whether to disable vsync from startup, for uncapped timing runs.
-  is_filled: bool ## Whether to top scene up to capacity with synthetic objects.
-    ## For timing heaviest tessellation and draw load.
-  scale_demo: Option[ScaleOrrery] ## Which size of orrery preset to open on, if any.
-    ## Instead of storyboard's seeds, through same `orrery.showOrrery` browser's demo
-    ## buttons load.
-    ## `Option`, not `bool` and size: "no demo" and "demo at default size" differ, and
-    ## sentinel size would put absence inside value's range.
-  is_tabs_listed: bool ## Whether to print help's tab names and quit, drawing nothing.
-    ## Build driver reads them, so list of tabs has one home; see `help.HelpPath`.
-  is_drag_driven: bool ## Whether to script construction drag through event queue.
-    ## Headless run then shows drag mid-gesture; see `driveDrag`.
-  is_key_driven: bool ## Whether to script run of view keys through event queue.
-    ## Headless run then shows they reach view; see `driveKeys`.
-  is_select_driven: bool ## Whether to script clicks picking one, two and three objects.
-    ## Headless run then shows floating selection menu at each; see `driveSelect`.
-  is_undo_driven: bool ## Whether to script construction, orbit away and undo.
-    ## Headless run then shows where undo leaves view; see `driveUndo`.
-  is_sky_driven: bool ## Whether to script drag and click on bare sky.
-    ## Headless run then shows press on it still reaches camera; see `driveSky`.
-  is_menu_driven: bool ## Whether to open top menu at startup, with no click.
-    ## Headless run has no pointer to press `☰` with, exactly as it has none for help's
-    ## tabs; verdict then reads what menu laid out.
-  path_help_driven: Option[HelpPath] ## Which help tab to open at startup, if any.
-    ## Headless run cannot click tab strip, so `--drive-help:<tab>` names one.
+type
+  Options = object ## Define what command line asked of this run.
+    path_screenshot: string ## Where one-shot export is written; empty for none.
+    path_storyboard: string ## Directory scripted construction is written to; empty for none.
+    path_load_scene: string ## Scene file to open instead of built-in demo; empty for none.
+    count_frames: int ## Frames to draw before quitting; 0 to run until closed.
+    is_hidden: bool ## Whether window is left unmapped.
+    is_timed: bool ## Whether to record and report per-frame timing statistics.
+    is_novsync: bool ## Whether to disable vsync from startup, for uncapped timing runs.
+    is_filled: bool ## Whether to top scene up to capacity with synthetic objects.
+      ## For timing heaviest tessellation and draw load.
+    scale_demo: Option[ScaleOrrery] ## Which size of orrery preset to open on, if any.
+      ## Instead of storyboard's seeds, through same `orrery.showOrrery` browser's demo
+      ## buttons load.
+      ## `Option`, not `bool` and size: "no demo" and "demo at default size" differ, and
+      ## sentinel size would put absence inside value's range.
+    is_tabs_listed: bool ## Whether to print help's tab names and quit, drawing nothing.
+      ## Build driver reads them, so list of tabs has one home; see `help.HelpPath`.
+    is_drag_driven: bool ## Whether to script construction drag through event queue.
+      ## Headless run then shows drag mid-gesture; see `driveDrag`.
+    is_key_driven: bool ## Whether to script run of view keys through event queue.
+      ## Headless run then shows they reach view; see `driveKeys`.
+    is_select_driven: bool ## Whether to script clicks picking one, two and three objects.
+      ## Headless run then shows floating selection menu at each; see `driveSelect`.
+    is_undo_driven: bool ## Whether to script construction, orbit away and undo.
+      ## Headless run then shows where undo leaves view; see `driveUndo`.
+    is_sky_driven: bool ## Whether to script drag and click on bare sky.
+      ## Headless run then shows press on it still reaches camera; see `driveSky`.
+    is_menu_driven: bool ## Whether to open top menu at startup, with no click.
+      ## Headless run has no pointer to press `☰` with, exactly as it has none for help's
+      ## tabs; verdict then reads what menu laid out.
+    path_help_driven: Option[HelpPath] ## Which help tab to open at startup, if any.
+      ## Headless run cannot click tab strip, so `--drive-help:<tab>` names one.
+
+  KeyStep = object ## Define one frame of scripted keyboard run; see `KEYS_DRIVEN`.
+    ## Frame carrying no key is point of `Option`.
+    ##   Held key moves camera on frames between press and release, and script sending
+    ##   event every frame could never leave it held.
+    pressed: Option[tuple[scancode: Scancode; keycode: uint32]]
+    is_down: bool ## Whether this step presses key or lets go of it.
 
 
 func demoScaleOf(value: string): Option[ScaleOrrery] =
@@ -1348,14 +1356,6 @@ proc driveDrag(
     var press = Event(kind: uint32(EventKind.MouseButtonDown))
     press.button.button = uint8(MouseButton.Right)
     sdl3.pushEvent(addr press)
-
-
-type KeyStep = object ## Define one frame of scripted keyboard run; see `KEYS_DRIVEN`.
-  ## Frame carrying no key is point of `Option`.
-  ##   Held key moves camera on frames between press and release, and script sending
-  ##   event every frame could never leave it held.
-  pressed: Option[tuple[scancode: Scancode; keycode: uint32]]
-  is_down: bool ## Whether this step presses key or lets go of it.
 
 
 func stepKey(scancode: Scancode, keycode: uint32, is_down = true): KeyStep =

@@ -241,6 +241,116 @@ type
     axis_up*: Direction ## Unit direction of view's +y.
     forward*: Direction ## Unit direction eye looks along.
 
+  SettingsFurniture* = tuple
+    ## Define everything picked planes' lattices and world axes are built from.
+    ##   `drawExtentFor` derives every field furniture reads from exactly these, so two
+    ##   frames agreeing here draw same furniture, vertex for vertex: what lets front-end
+    ##   keep last frame's meshes.
+    ##     Field added to `Camera` that `drawExtentFor` reads must be added here too, or
+    ##     frame holds furniture no longer matching view.
+    ##   Here rather than in each front-end: two private copies would be drift sibling rule
+    ##   warns about.
+    ##   Keyed on what camera *holds*, and never on what it reads out.
+    ##     Motor and depth are stance itself, so two frames agreeing on them agree on eye,
+    ##     every axis, pivot and both angles, which is stronger than keying on those.
+    ##     Reading pivot and both angles out to key on them costs eighteen sandwiches, and
+    ##     hold exists to save less work than that; see `drivePinAnchor`.
+    ##   Lattice lies on planes picked, so what scene holds and what is picked key it too:
+    ##   two revision counters, which move on every edit and every pick.
+    motor: Motor
+    distance, degrees_field_of_view, reach_near, reach_scene: float
+    height_pixels: int
+    is_axes_shown, is_grid_shown: bool
+    revision_scene, revision_selection: int
+
+  SphereWorld* = object ## Define bound of world points by centre and radius.
+    ## What selection means to camera framing it: everything finite it was asked to show
+    ## sits inside, so distance fitting sphere fits every one.
+    centre*: Position ## Point orbit should turn about.
+    radius*: float ## How far furthest object stands from `centre`. Zero for one point.
+
+  CameraAim* = object ## Define what camera has been asked to bring into view.
+    ## Not stance: *requirement*, derived from geometry alone and nothing about where
+    ## camera stands.
+    ##   Lets caller re-offer same selection every frame and have it recognised as same
+    ##   request; see `CameraTween.goal`.
+    ## Two halves are reached differently.
+    ##   Finite object is somewhere, so camera moves pivot onto it and pulls back until
+    ##   several fit.
+    ##   Horizon object is only direction, drawn fixed to eye, so camera turns to face
+    ##   along it and leaves pivot and distance alone.
+    sphere*: Option[SphereWorld] ## Finite objects to frame, or none where there are none.
+    is_bound_by_fitted*: bool ## Whether `sphere` is over objects that have to *fit* alone.
+      ## Point and finite plane are drawn at size camera does not set, so each fits
+      ## inside centred box; line is drawn out to horizon and has only to cross it.
+      ## Whatever has to fit is what camera centres and sizes on; otherwise line whose
+      ## support stands hundred units away drags view off point beside it.
+      ## Where nothing has to fit (lines alone) sphere falls back to their support points.
+    heading*: Option[Direction] ## Direction of horizon points to face, or none.
+      ## Merged where several were asked for: sum of unit directions is nearest thing to
+      ## one facing two stars.
+      ## Binds two degrees of freedom: star has to be on screen, so sight has to come
+      ## within centred box's own half-angle of it.
+    normal_crossing*: Option[Direction] ## Normal of horizon lines' great circle, or none.
+      ## Horizon line is drawn as whole great circle, and seeing it means that circle
+      ## crossing frame, which binds one degree of freedom rather than two.
+      ##   Circle crosses centred box exactly where sight stands within that box's
+      ## half-angle of that circle's own plane; see `framing.holdHorizon`.
+      ## Merged as headings are, and kept apart from them: point is stricter, so where
+      ## both were asked for point is what binds.
+    centroid_sum*: Option[Multivector] ## Middle of same finite objects `sphere` is over.
+      ## Carried as sum algebra makes it out of, rather than as place.
+      ##   Sum's weight is how many places it is middle of, and `centroid` reads mean
+      ##   straight out: division reading point out *is* averaging.
+      ##   Rebuilt from nothing on every `aimFor`, so it never accumulates across frames;
+      ##   restart is what makes aim compare equal to itself.
+      ## What orbit turns about once selection stands.
+      ##   Sphere's centre is wherever holding everything put it; this is middle of what
+      ##   was picked, point reader means.
+      ## Over same objects as `sphere`, for reason `is_bound_by_fitted` gives. None where
+      ## no finite objects.
+
+  CameraStance* = object ## Define where camera stands: everything ease moves.
+    ## Lens is not here: field of view is reader's setting, and nothing aiming camera may
+    ## rewrite it.
+    ## Same pair `Camera` holds, so stance crossing ease loses nothing it carried.
+    ##   Four turntable numbers carry no roll: rolling and then framing snapped view upright.
+    ##   `stanceFacing` builds one from eye and pivot.
+    motor*: Motor ## Rigid motion carrying reference stance to this one.
+    distance*: float ## Separation of eye from pivot.
+
+  CameraTween* = object ## Define ease carrying camera from where it was toward its goal.
+    ## Eased over `duration`, so camera jumping to freshly built object is followed
+    ## rather than teleported after. Empty until something aims it.
+    ##   Repivoting captures wherever tween had reached as new start (see `aimAt`),
+    ##   which lets goal moving every frame (staged geometry of open edit session) read
+    ##   as one chase.
+    goal*: Option[CameraAim] ## What camera is watching, or has settled on.
+      ## None only while nothing is aimed at all.
+      ## *Requirement*, not stance: derived from selected geometry alone, so re-offer
+      ## compares equal every frame.
+      ##   Ignore rule in `aimAt` and standing-offer rule in `abandon` both rest on it;
+      ##   where ease ends is kept separately below.
+    destination*: CameraStance ## Where ease ends.
+      ## Goal resolved against camera as it stood when goal was armed; see
+      ## `framing.stanceFor` and `framing.offerAim`.
+      ## Meaningless while `goal` is none; set beside it and never alone.
+    is_arrived*: bool ## Whether `destination` has been reached.
+      ## Set once ease runs out, stopping `advance` writing camera from then on.
+      ##   Caller offering same goal every frame must not keep holding camera there, or
+      ##   user's own orbit, pan and dolly are overridden.
+      ## `goal` is kept rather than cleared, so same offer is recognised as delivered
+      ## instead of re-arming ease.
+    started*: float ## Clock reading `goal` was last set or repivoted at.
+    duration*: float ## Seconds ease takes, end to end.
+    stance_from*: CameraStance ## Where current ease began.
+    progress_last*: float ## Eased progress `advance` last carried camera to.
+      ## What next step is measured from once reader holds camera; see `is_yielded`.
+    is_yielded*: bool ## Whether reader has taken camera mid-ease; see `abandon`.
+      ## Ease then carries pivot alone, by each frame's own share of its path, and way
+      ## round and distance stay reader's.
+    is_adopting*: bool ## Whether next offer takes its aim as delivered; see `adoptNext`.
+
 
 
 #[ Matrix Arithmetic ]#
@@ -951,29 +1061,6 @@ func distanceTravelled*(seconds_before, seconds_after, cap: float): float =
 
 #[ Camera Frame ]#
 
-type SettingsFurniture* = tuple
-  ## Define everything picked planes' lattices and world axes are built from.
-  ##   `drawExtentFor` derives every field furniture reads from exactly these, so two
-  ##   frames agreeing here draw same furniture, vertex for vertex: what lets front-end
-  ##   keep last frame's meshes.
-  ##     Field added to `Camera` that `drawExtentFor` reads must be added here too, or
-  ##     frame holds furniture no longer matching view.
-  ##   Here rather than in each front-end: two private copies would be drift sibling rule
-  ##   warns about.
-  ##   Keyed on what camera *holds*, and never on what it reads out.
-  ##     Motor and depth are stance itself, so two frames agreeing on them agree on eye,
-  ##     every axis, pivot and both angles, which is stronger than keying on those.
-  ##     Reading pivot and both angles out to key on them costs eighteen sandwiches, and
-  ##     hold exists to save less work than that; see `drivePinAnchor`.
-  ##   Lattice lies on planes picked, so what scene holds and what is picked key it too:
-  ##   two revision counters, which move on every edit and every pick.
-  motor: Motor
-  distance, degrees_field_of_view, reach_near, reach_scene: float
-  height_pixels: int
-  is_axes_shown, is_grid_shown: bool
-  revision_scene, revision_selection: int
-
-
 func settingsFurnitureFor*(
   camera: Camera; height_pixels: int; reach_scene: float; is_axes_shown, is_grid_shown: bool;
   revision_scene, revision_selection: int
@@ -1073,96 +1160,6 @@ func initMatrixViewProjection*(
 
 
 #[ Aiming And Easing ]#
-
-type
-  SphereWorld* = object ## Define bound of world points by centre and radius.
-    ## What selection means to camera framing it: everything finite it was asked to show
-    ## sits inside, so distance fitting sphere fits every one.
-    centre*: Position ## Point orbit should turn about.
-    radius*: float ## How far furthest object stands from `centre`. Zero for one point.
-
-  CameraAim* = object ## Define what camera has been asked to bring into view.
-    ## Not stance: *requirement*, derived from geometry alone and nothing about where
-    ## camera stands.
-    ##   Lets caller re-offer same selection every frame and have it recognised as same
-    ##   request; see `CameraTween.goal`.
-    ## Two halves are reached differently.
-    ##   Finite object is somewhere, so camera moves pivot onto it and pulls back until
-    ##   several fit.
-    ##   Horizon object is only direction, drawn fixed to eye, so camera turns to face
-    ##   along it and leaves pivot and distance alone.
-    sphere*: Option[SphereWorld] ## Finite objects to frame, or none where there are none.
-    is_bound_by_fitted*: bool ## Whether `sphere` is over objects that have to *fit* alone.
-      ## Point and finite plane are drawn at size camera does not set, so each fits
-      ## inside centred box; line is drawn out to horizon and has only to cross it.
-      ## Whatever has to fit is what camera centres and sizes on; otherwise line whose
-      ## support stands hundred units away drags view off point beside it.
-      ## Where nothing has to fit (lines alone) sphere falls back to their support points.
-    heading*: Option[Direction] ## Direction of horizon points to face, or none.
-      ## Merged where several were asked for: sum of unit directions is nearest thing to
-      ## one facing two stars.
-      ## Binds two degrees of freedom: star has to be on screen, so sight has to come
-      ## within centred box's own half-angle of it.
-    normal_crossing*: Option[Direction] ## Normal of horizon lines' great circle, or none.
-      ## Horizon line is drawn as whole great circle, and seeing it means that circle
-      ## crossing frame, which binds one degree of freedom rather than two.
-      ##   Circle crosses centred box exactly where sight stands within that box's
-      ## half-angle of that circle's own plane; see `framing.holdHorizon`.
-      ## Merged as headings are, and kept apart from them: point is stricter, so where
-      ## both were asked for point is what binds.
-    centroid_sum*: Option[Multivector] ## Middle of same finite objects `sphere` is over.
-      ## Carried as sum algebra makes it out of, rather than as place.
-      ##   Sum's weight is how many places it is middle of, and `centroid` reads mean
-      ##   straight out: division reading point out *is* averaging.
-      ##   Rebuilt from nothing on every `aimFor`, so it never accumulates across frames;
-      ##   restart is what makes aim compare equal to itself.
-      ## What orbit turns about once selection stands.
-      ##   Sphere's centre is wherever holding everything put it; this is middle of what
-      ##   was picked, point reader means.
-      ## Over same objects as `sphere`, for reason `is_bound_by_fitted` gives. None where
-      ## no finite objects.
-
-  CameraStance* = object ## Define where camera stands: everything ease moves.
-    ## Lens is not here: field of view is reader's setting, and nothing aiming camera may
-    ## rewrite it.
-    ## Same pair `Camera` holds, so stance crossing ease loses nothing it carried.
-    ##   Four turntable numbers carry no roll: rolling and then framing snapped view upright.
-    ##   `stanceFacing` builds one from eye and pivot.
-    motor*: Motor ## Rigid motion carrying reference stance to this one.
-    distance*: float ## Separation of eye from pivot.
-
-  CameraTween* = object ## Define ease carrying camera from where it was toward its goal.
-    ## Eased over `duration`, so camera jumping to freshly built object is followed
-    ## rather than teleported after. Empty until something aims it.
-    ##   Repivoting captures wherever tween had reached as new start (see `aimAt`),
-    ##   which lets goal moving every frame (staged geometry of open edit session) read
-    ##   as one chase.
-    goal*: Option[CameraAim] ## What camera is watching, or has settled on.
-      ## None only while nothing is aimed at all.
-      ## *Requirement*, not stance: derived from selected geometry alone, so re-offer
-      ## compares equal every frame.
-      ##   Ignore rule in `aimAt` and standing-offer rule in `abandon` both rest on it;
-      ##   where ease ends is kept separately below.
-    destination*: CameraStance ## Where ease ends.
-      ## Goal resolved against camera as it stood when goal was armed; see
-      ## `framing.stanceFor` and `framing.offerAim`.
-      ## Meaningless while `goal` is none; set beside it and never alone.
-    is_arrived*: bool ## Whether `destination` has been reached.
-      ## Set once ease runs out, stopping `advance` writing camera from then on.
-      ##   Caller offering same goal every frame must not keep holding camera there, or
-      ##   user's own orbit, pan and dolly are overridden.
-      ## `goal` is kept rather than cleared, so same offer is recognised as delivered
-      ## instead of re-arming ease.
-    started*: float ## Clock reading `goal` was last set or repivoted at.
-    duration*: float ## Seconds ease takes, end to end.
-    stance_from*: CameraStance ## Where current ease began.
-    progress_last*: float ## Eased progress `advance` last carried camera to.
-      ## What next step is measured from once reader holds camera; see `is_yielded`.
-    is_yielded*: bool ## Whether reader has taken camera mid-ease; see `abandon`.
-      ## Ease then carries pivot alone, by each frame's own share of its path, and way
-      ## round and distance stay reader's.
-    is_adopting*: bool ## Whether next offer takes its aim as delivered; see `adoptNext`.
-
 
 func `==`*(a, b: SphereWorld): bool =
   ## Compare two bounds exactly; see `CameraAim`'s `==` for why exactly.

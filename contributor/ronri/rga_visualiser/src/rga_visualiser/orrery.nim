@@ -89,6 +89,16 @@ type
     rise*: float ## How far it stands above or below centre's level, in radians.
     spin*: float ## Where first planet stands on its ring, in radians.
 
+  ScaleOrrery* {.pure.} = enum
+    ## Name how deep into catalogue one build of arrangement reaches.
+    ##   Three sizes of same scene, not three scenes: Sol entire, then real stars outward,
+    ##   then four objects in horizon, truncated at different depth.
+    ##   They exist to be *benchmarked against each other*, so cost of change reads as
+    ##   slope.
+    Nearest       ## Sol entire, and about dozen of its nearest real neighbours.
+    Neighbourhood ## Default everywhere: scene worth looking at, quick to build.
+    Catalogue     ## Load case, two handles short of pool.
+
 
 
 #[ Layout ]#
@@ -493,17 +503,6 @@ const OBJECTS_SOL* = len(SOL) + len(MOONS) + 3
   ## Count scene objects Sol comes to.
   ##   Star and planets, moons, ecliptic, and two lines that are only finite lines in
   ##   whole arrangement.
-
-
-type ScaleOrrery* {.pure.} = enum
-  ## Name how deep into catalogue one build of arrangement reaches.
-  ##   Three sizes of same scene, not three scenes: Sol entire, then real stars outward,
-  ##   then four objects in horizon, truncated at different depth.
-  ##   They exist to be *benchmarked against each other*, so cost of change reads as
-  ##   slope.
-  Nearest       ## Sol entire, and about dozen of its nearest real neighbours.
-  Neighbourhood ## Default everywhere: scene worth looking at, quick to build.
-  Catalogue     ## Load case, two handles short of pool.
 
 
 func objectsOf*(scale: ScaleOrrery): int =

@@ -69,6 +69,27 @@ static:
 
 
 
+#[ Type Definitions ]#
+
+type
+  LzwDict = object ## Define map from (prefix code, next byte) to code.
+    ## Fixed open-addressed table rather than heap-backed `Table`.
+    ##   Capacity is `CODE_MAX` at format's limit, known at compile time, so nothing grows.
+    keys_prefix: array[CAPACITY_DICT, int]
+    keys_byte: array[CAPACITY_DICT, uint8]
+    values: array[CAPACITY_DICT, int]
+    are_used: array[CAPACITY_DICT, bool]
+
+  BitWriter = object ## Define packer of variable-width codes into caller-owned storage.
+    ## Least significant bit first, tracking only how much is in use.
+    buffer: ptr UncheckedArray[uint8]
+    capacity: int
+    count: int
+    pending: uint32
+    count_pending: int
+
+
+
 #[ Colour Quantization ]#
 
 func levelToByte(level: int): uint8 =
@@ -110,15 +131,6 @@ func globalColorTable(): array[COUNT_TABLE*3, uint8] =
 
 #[ LZW Dictionary ]#
 
-type LzwDict = object ## Define map from (prefix code, next byte) to code.
-  ## Fixed open-addressed table rather than heap-backed `Table`.
-  ##   Capacity is `CODE_MAX` at format's limit, known at compile time, so nothing grows.
-  keys_prefix: array[CAPACITY_DICT, int]
-  keys_byte: array[CAPACITY_DICT, uint8]
-  values: array[CAPACITY_DICT, int]
-  are_used: array[CAPACITY_DICT, bool]
-
-
 func hashKey(prefix: int, value: uint8): int =
   ## Spread (prefix, value) pairs over table.
   ##   Multiplier is Knuth's constant for multiplicative hashing, folded through `uint64`
@@ -154,15 +166,6 @@ func insert(dict: var LzwDict, prefix: int, value: uint8, code: int) =
 
 
 #[ LZW Compression ]#
-
-type BitWriter = object ## Define packer of variable-width codes into caller-owned storage.
-  ## Least significant bit first, tracking only how much is in use.
-  buffer: ptr UncheckedArray[uint8]
-  capacity: int
-  count: int
-  pending: uint32
-  count_pending: int
-
 
 proc packCode(writer: var BitWriter; code, width: int) =
   ## Append `code`, `width` bits wide, as GIF's LZW packs them.

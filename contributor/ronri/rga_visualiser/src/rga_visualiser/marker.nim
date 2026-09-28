@@ -322,6 +322,17 @@ type
         ## Screen space throughout: sky has no place in scene to surround, so marker
         ## surrounds view. Always closed.
 
+  PulseTrack* = object ## Define where pulse's travel is measured from along outline.
+    ## Also how far it may run either way before it laps.
+    ## `origin` names view-independent feature of object (line's support, circle's angle
+    ## zero) rather than whichever point was emitted first.
+    ##   Outline's first point is cut: rail's is where it crosses window edge, cut ring's
+    ##   wherever eye plane sliced it.
+    ##   Measuring from cut lets camera decide where comet is, fault this type removes.
+    origin*: int ## Index of point travel is measured from.
+    behind*: float ## Outline available before that point, in pixels.
+    ahead*: float ## Outline available after it, in pixels.
+
 
 
 #[ Orientation Pulse ]#
@@ -339,18 +350,6 @@ func lengthOfOutline*(
   for i in 0 ..< last:
     let after = points[(i + 1) mod count]
     result += hypot(after.x - points[i].x, after.y - points[i].y)
-
-
-type PulseTrack* = object ## Define where pulse's travel is measured from along outline.
-  ## Also how far it may run either way before it laps.
-  ## `origin` names view-independent feature of object (line's support, circle's angle
-  ## zero) rather than whichever point was emitted first.
-  ##   Outline's first point is cut: rail's is where it crosses window edge, cut ring's
-  ##   wherever eye plane sliced it.
-  ##   Measuring from cut lets camera decide where comet is, fault this type removes.
-  origin*: int ## Index of point travel is measured from.
-  behind*: float ## Outline available before that point, in pixels.
-  ahead*: float ## Outline available after it, in pixels.
 
 
 func lap*(track: PulseTrack): float = track.behind + track.ahead

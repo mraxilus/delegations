@@ -322,16 +322,39 @@ type
       ## due every frame over pivot.
       ## Cleared moment hover reports anything else.
 
+  PointerButton* {.pure.} = enum ## Define physical mouse button, however numbered.
+    ## SDL counts 1/2/3 and DOM 0/1/2 for left/middle/right.
+    ##   Each render path translates into this and asks `armingOf`, so which button does what
+    ##   is stated once.
+    Left, Middle, Right
+
+  ReleaseEffect* {.pure.} = enum ## Define what letting go right now would do.
+    ## Three outcomes, not two.
+    ##   Release that quietly does nothing and one that refuses want opposite feedback, and
+    ##   once menu is open both are reachable over same pair.
+    Nothing, ## End gesture and build nothing, with nothing to warn about.
+      ## Over empty space, over drag's own source, or back at open menu's centre.
+    Refused, ## Reach pair that makes nothing drawable, and say so.
+    Builds, ## Add object; or, for `More`, hand pair to apply picker.
+      ## Picker takes very hue wheel has been showing.
+
+  DragOutcome* = object ## Define everything released drag did, for caller to act on.
+    message*: string ## What to say happened, whether or not anything was built.
+    index_created*: Option[int] ## Object added, where one was.
+      ## None for refusal, for release choosing nothing, and for `More`.
+    choice*: Option[DragChoice] ## What release resolved to.
+      ## So caller recognises `More`, otherwise indistinguishable from refusal.
+    operands*: Option[tuple[source, destination: int]] ## Two objects, where both were alive
+      ## and distinct.
+      ## What `More` hands to apply section; drag's state is cleared by time caller reads
+      ## this.
+    index_clicked*: Option[int] ## Object press that never became drag came down on, for
+      ## caller to select.
+      ## None for every actual drag.
+
 
 
 #[ Operation Vocabulary ]#
-
-type PointerButton* {.pure.} = enum ## Define physical mouse button, however numbered.
-  ## SDL counts 1/2/3 and DOM 0/1/2 for left/middle/right.
-  ##   Each render path translates into this and asks `armingOf`, so which button does what
-  ##   is stated once.
-  Left, Middle, Right
-
 
 func motionFor*(key: Key): Option[Motion] =
   ## Say which way one key keeps moving view while held, or none where it moves nothing.
@@ -590,17 +613,6 @@ func choosing*(interaction: Interaction): Option[DragChoice] =
   ##   shapes and object `endDrag` commits are never three opinions.
   if interaction.menu.isNone: return none(DragChoice)
   choiceAt(interaction.menu.get, interaction.cursor)
-
-
-type ReleaseEffect* {.pure.} = enum ## Define what letting go right now would do.
-  ## Three outcomes, not two.
-  ##   Release that quietly does nothing and one that refuses want opposite feedback, and
-  ##   once menu is open both are reachable over same pair.
-  Nothing, ## End gesture and build nothing, with nothing to warn about.
-    ## Over empty space, over drag's own source, or back at open menu's centre.
-  Refused, ## Reach pair that makes nothing drawable, and say so.
-  Builds, ## Add object; or, for `More`, hand pair to apply picker.
-    ## Picker takes very hue wheel has been showing.
 
 
 func effectOf*(interaction: Interaction): ReleaseEffect =
@@ -1311,21 +1323,6 @@ func updateDrag*(
         drag.get.toOperation, interaction.index_source, over.get
       )
     else: none(Preview)
-
-
-type DragOutcome* = object ## Define everything released drag did, for caller to act on.
-  message*: string ## What to say happened, whether or not anything was built.
-  index_created*: Option[int] ## Object added, where one was.
-    ## None for refusal, for release choosing nothing, and for `More`.
-  choice*: Option[DragChoice] ## What release resolved to.
-    ## So caller recognises `More`, otherwise indistinguishable from refusal.
-  operands*: Option[tuple[source, destination: int]] ## Two objects, where both were alive
-    ## and distinct.
-    ## What `More` hands to apply section; drag's state is cleared by time caller reads
-    ## this.
-  index_clicked*: Option[int] ## Object press that never became drag came down on, for
-    ## caller to select.
-    ## None for every actual drag.
 
 
 func commitChoice*(

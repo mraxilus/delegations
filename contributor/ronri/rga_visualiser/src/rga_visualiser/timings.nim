@@ -30,17 +30,17 @@ else:
 
 #[ Type Definitions ]#
 
-type Side* {.pure.} = enum ## Define which side of boundary stretch of work sat on.
-  Placing, ## Working out where geometry is: algebra, and little that rides along.
-  Emitting ## Turning places into vertices: `mesh`, which cannot reach algebra.
+type
+  Side* {.pure.} = enum ## Define which side of boundary stretch of work sat on.
+    Placing, ## Working out where geometry is: algebra, and little that rides along.
+    Emitting ## Turning places into vertices: `mesh`, which cannot reach algebra.
 
-
-type FrameRecord* = object
-  ## Define what frame measured that *next* frame reports.
-  ##   Only for work outside frame's own build.
-  ##   On browser, hover picking runs from event handlers, so no bracket inside
-  ##   `nimBuildFrame` sees it; measured where it happens.
-  ms_hover_pick*: float ## What picking under cursor cost since last frame.
+  FrameRecord* = object
+    ## Define what frame measured that *next* frame reports.
+    ##   Only for work outside frame's own build.
+    ##   On browser, hover picking runs from event handlers, so no bracket inside
+    ##   `nimBuildFrame` sees it; measured where it happens.
+    ms_hover_pick*: float ## What picking under cursor cost since last frame.
 
 
 

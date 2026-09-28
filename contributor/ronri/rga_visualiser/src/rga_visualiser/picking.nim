@@ -63,6 +63,9 @@ const
     ##   could have meant something else, and finger lands whole fingertip wide of where
     ##   reader aimed. At pick reach alone, star field still turned orbits into drags.
     ##   Rivals are counted here; what is picked stays at pick reach. See `PickReport`.
+  HIDERS_MAX = 8
+    ## Bound how many drawn discs under cursor one pick keeps, nearest first found.
+    ##   Discs stacked under one pixel are planet and its moons at most; ninth is dropped.
 
 
 
@@ -89,9 +92,48 @@ const
 
 #[ Type Definitions ]#
 
-type ScreenPosition* = object ## Define projected position, in window pixels, y downward.
-  x*, y*: float ## Pixel coordinates.
-  depth*: float ## View-space depth; positive and smaller is nearer eye.
+type
+  ScreenPosition* = object ## Define projected position, in window pixels, y downward.
+    x*, y*: float ## Pixel coordinates.
+    depth*: float ## View-space depth; positive and smaller is nearer eye.
+
+  PickReport* = object ## Define what one pick found under cursor.
+    handle*: Option[int] ## Nearest object of winning rank; none where nothing is in reach.
+    count_rivals*: int ## How many objects of winner's rank or better stood within
+      ## `RADIUS_CROWD_TOUCH`, winner included; zero where nothing was picked.
+      ## One where pick is unambiguous. Touch has no hover ring to say which of several
+      ## finger is over, so its drag refuses to start above one; see
+      ## `interaction.beginDrag`.
+      ## Winner's rank or better: point beside picked line is rival, since finger may have
+      ## meant it; plane under picked point is not, since rank already decides.
+      ## Point hidden behind drawn disc is not either; see `pickAt`.
+
+  Hider = object ## Define one drawn disc cursor lies inside, as seen on screen.
+    depth: float ## Along sight axis, from eye.
+    x, y, radius: float ## Centre and radius in pixels.
+
+  Hiders = object ## Define drawn discs under cursor, in fixed storage.
+    ##   Fixed array rather than sequence: pick runs per pointer event, and sequence per
+    ##   event was allocation per event.
+    discs: array[HIDERS_MAX, Hider]
+    count: int
+
+  PickWalk = object ## Define what one walk of scene under cursor found.
+    report: PickReport ## Winner and its rivals, less whatever `hiders` given hid.
+    depth_best: float ## Winner's depth along sight axis; `Inf` where nothing won.
+    hiders: Hiders ## Drawn discs cursor lay inside, gathered as walk went.
+
+  AnchorZoom* = object ## Define what zoom holds still, and whether it stands somewhere.
+    at*: Position ## World point that keeps its pixel through zoom.
+    floor_reach*: float ## Drawn radius of object anchor stands on; zero for crossing.
+      ## How near free flight's wheel may come, so it stops at surface rather than carrying
+      ## eye through it; see `camera.travelToward`.
+    is_standing*: bool ## Whether `at` is where point or line stands, not crossing of ray.
+      ## What stands somewhere is what reader looks at, so turntable's pivot follows its
+      ## depth (`camera.repivotToDepth`). Plane is crossing, met where ray happens to fall:
+      ## its depth under cursor is not its depth at middle of frame, and pivot lifted to it
+      ## stood off plane being zoomed onto. It is followed by map rule alone, pivot sliding
+      ## toward `at`; see `camera.dollyToward`.
 
 
 func towards*(start, finish: ScreenPosition; fraction: float): ScreenPosition =
@@ -366,40 +408,6 @@ func rayPlaneHit(
 
 
 #[ Object Hit Testing ]#
-
-type PickReport* = object ## Define what one pick found under cursor.
-  handle*: Option[int] ## Nearest object of winning rank; none where nothing is in reach.
-  count_rivals*: int ## How many objects of winner's rank or better stood within
-    ## `RADIUS_CROWD_TOUCH`, winner included; zero where nothing was picked.
-    ## One where pick is unambiguous. Touch has no hover ring to say which of several
-    ## finger is over, so its drag refuses to start above one; see
-    ## `interaction.beginDrag`.
-    ## Winner's rank or better: point beside picked line is rival, since finger may have
-    ## meant it; plane under picked point is not, since rank already decides.
-    ## Point hidden behind drawn disc is not either; see `pickAt`.
-
-
-const HIDERS_MAX = 8
-  ## Bound how many drawn discs under cursor one pick keeps, nearest first found.
-  ##   Discs stacked under one pixel are planet and its moons at most; ninth is dropped.
-
-
-type
-  Hider = object ## Define one drawn disc cursor lies inside, as seen on screen.
-    depth: float ## Along sight axis, from eye.
-    x, y, radius: float ## Centre and radius in pixels.
-
-  Hiders = object ## Define drawn discs under cursor, in fixed storage.
-    ##   Fixed array rather than sequence: pick runs per pointer event, and sequence per
-    ##   event was allocation per event.
-    discs: array[HIDERS_MAX, Hider]
-    count: int
-
-  PickWalk = object ## Define what one walk of scene under cursor found.
-    report: PickReport ## Winner and its rivals, less whatever `hiders` given hid.
-    depth_best: float ## Winner's depth along sight axis; `Inf` where nothing won.
-    hiders: Hiders ## Drawn discs cursor lay inside, gathered as walk went.
-
 
 func widest(hiders: Hiders): float =
   ## Measure widest disc under cursor, in pixels; 0 where there is none.
@@ -711,19 +719,6 @@ func isAnchorNear(anchor: Position, camera: Camera, scale: DrawExtent): bool =
   ## Report whether anchor's depth is within `FACTOR_ANCHOR_DEPTH` of orbit distance.
   let depth = depthAlong(scale.eye, scale.forward, anchor)
   depth >= camera.distance/FACTOR_ANCHOR_DEPTH and depth <= camera.distance*FACTOR_ANCHOR_DEPTH
-
-
-type AnchorZoom* = object ## Define what zoom holds still, and whether it stands somewhere.
-  at*: Position ## World point that keeps its pixel through zoom.
-  floor_reach*: float ## Drawn radius of object anchor stands on; zero for crossing.
-    ## How near free flight's wheel may come, so it stops at surface rather than carrying
-    ## eye through it; see `camera.travelToward`.
-  is_standing*: bool ## Whether `at` is where point or line stands, not crossing of ray.
-    ## What stands somewhere is what reader looks at, so turntable's pivot follows its
-    ## depth (`camera.repivotToDepth`). Plane is crossing, met where ray happens to fall:
-    ## its depth under cursor is not its depth at middle of frame, and pivot lifted to it
-    ## stood off plane being zoomed onto. It is followed by map rule alone, pivot sliding
-    ## toward `at`; see `camera.dollyToward`.
 
 
 func positionUnderPointerOn*(

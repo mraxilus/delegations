@@ -150,6 +150,41 @@ type
     ExpandBulk, ExpandWeight, ContractBulk, ContractWeight,
     ProjectCentral, ProjectOrthogonal,
 
+  Preview* = object ## Define what applying operation would build, ready to draw and frame.
+    ## One statement of uncommitted construction, shared by every path offering one.
+    ##   Drag's rubber-band answer and both apply pickers.
+    geometry*: Multivector ## What operation makes of its operands.
+    anchor*: Option[Position] ## Where plane's disc should centre, from `creationAnchor`.
+      ## None for every other kind.
+      ## Carried so previewed plane is drawn exactly where commit will put it.
+    operands*: Option[(int, int)] ## Handles this was derived from.
+      ## For camera framing preview to keep in view beside it.
+      ## None where there are none to name: staged edit replaces very object it would be
+      ## framed against.
+    radius*: float ## Drawn radius preview takes, where it is point; see `radiusAt`.
+      ## Staged session's own, so editing moon previews moon-sized; derived preview takes
+      ## `RADIUS_OBJECT_DEFAULT`, what commit gives it.
+
+  ObjectSaved* = object
+    ## Define one object exactly as scene file holds it, at whatever version wrote file.
+    ##   Kind reading works in, and thing `upgradedFrom<n>` carries between versions.
+    ##   Distinct from `Object`: value read off bytes that may not describe anything this
+    ##   build can make yet.
+    ink_ordinal*: int ## Palette slot, as writing version's `Ink` numbered it.
+    is_visible*: bool ## Whether object was hidden when saved.
+    label*: string ## Display label, decoded from file's UTF-8 bytes.
+    geometry*: Multivector ## Object itself, one coefficient per basis term.
+    radius*: float ## Drawn radius, in world units; `RADIUS_OBJECT_DEFAULT` before version 4.
+
+  OperationMemory* = object ## Define memory of operation last applied, one per arity.
+    ## Picker opens on what reader last reached for.
+    ##   Reader applying five wedges in row picks operation once.
+    ## Per arity because two pickers offer disjoint lists.
+    ## Plain value type with no refs, like `Selection`, so GUI holds one by value.
+    unary: Operation
+    binary: Operation
+    is_started: bool ## Whether two above have been set; false leaves defaults below.
+
 
 
 #[ Operation Catalogue ]#
@@ -817,22 +852,6 @@ func anchorOverrideAt*(scene: Scene, handle: int): Option[Position] =
 
 #[ Previewing Construction ]#
 
-type Preview* = object ## Define what applying operation would build, ready to draw and frame.
-  ## One statement of uncommitted construction, shared by every path offering one.
-  ##   Drag's rubber-band answer and both apply pickers.
-  geometry*: Multivector ## What operation makes of its operands.
-  anchor*: Option[Position] ## Where plane's disc should centre, from `creationAnchor`.
-    ## None for every other kind.
-    ## Carried so previewed plane is drawn exactly where commit will put it.
-  operands*: Option[(int, int)] ## Handles this was derived from.
-    ## For camera framing preview to keep in view beside it.
-    ## None where there are none to name: staged edit replaces very object it would be
-    ## framed against.
-  radius*: float ## Drawn radius preview takes, where it is point; see `radiusAt`.
-    ## Staged session's own, so editing moon previews moon-sized; derived preview takes
-    ## `RADIUS_OBJECT_DEFAULT`, what commit gives it.
-
-
 func previewApplying*(
   scene: Scene; operation: Operation; first, second: int
 ): Option[Preview] =
@@ -1092,18 +1111,6 @@ func hasShine*(version: uint8): bool =
   ##   Reader skips it: no build reads it into anything since version 7.
   ##   Asked as `hasRadius` is; see `nimSceneHasShine`.
   version >= VERSION_SCENE_SHINE and version <= VERSION_SCENE_SHINE_LAST
-
-
-type ObjectSaved* = object
-  ## Define one object exactly as scene file holds it, at whatever version wrote file.
-  ##   Kind reading works in, and thing `upgradedFrom<n>` carries between versions.
-  ##   Distinct from `Object`: value read off bytes that may not describe anything this
-  ##   build can make yet.
-  ink_ordinal*: int ## Palette slot, as writing version's `Ink` numbered it.
-  is_visible*: bool ## Whether object was hidden when saved.
-  label*: string ## Display label, decoded from file's UTF-8 bytes.
-  geometry*: Multivector ## Object itself, one coefficient per basis term.
-  radius*: float ## Drawn radius, in world units; `RADIUS_OBJECT_DEFAULT` before version 4.
 
 
 const ORDINAL_INK_ALGEBRA_V5 = 7
@@ -1396,16 +1403,6 @@ when not defined(js):
     staging.index_ink = int(count)
     scene = staging
     &"Loaded {count} object(s) from `{path}`."
-
-
-type OperationMemory* = object ## Define memory of operation last applied, one per arity.
-  ## Picker opens on what reader last reached for.
-  ##   Reader applying five wedges in row picks operation once.
-  ## Per arity because two pickers offer disjoint lists.
-  ## Plain value type with no refs, like `Selection`, so GUI holds one by value.
-  unary: Operation
-  binary: Operation
-  is_started: bool ## Whether two above have been set; false leaves defaults below.
 
 
 const

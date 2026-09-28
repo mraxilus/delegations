@@ -219,6 +219,10 @@ const
   SEGMENTS_CIRCLE_HORIZON* = 96
     ## Set segment count in horizon line's great circle, or finite plane's rim.
     ##   Dense enough to read as circular.
+  POINTS_SCRATCH_MAX* = SEGMENTS_CIRCLE_HORIZON + 1
+    ## Bound places tessellation step may assemble before emitting them.
+    ##   Horizon line's great circle is largest, one extra boundary so closing segment ends
+    ##   on place stepped at angle loop would have used.
   LATITUDES_HORIZON* = 12
   LONGITUDES_HORIZON* = 24
     ## Set band counts in horizon plane's whole-sky dome.
@@ -464,6 +468,26 @@ type
       ## Nothing nearer is drawn, and without clamp segment past eye reads negative depth
       ## and turns ribbon inside out.
     depth_log*: float ## Scale depth's logarithm maps by; see `camera.depthOf`.
+
+  RibbonPiece* = object
+    ## Define one ribbon segment, fully resolved: where it runs, and colour of each end.
+    ##   Record algebra hands picture.
+    ##     Assembling whole family into these first and emitting after makes seam line in
+    ##     code rather than claim in comment, which lets panel say what each side cost.
+    ##   Everything here is Euclidean.
+    tail*, head*: Position
+    tint_tail*, tint_head*: Rgba
+
+  DrawScratch* = object
+    ## Define working space tessellation step assembles into before it emits anything.
+    ##   One object rather than buffer per shape, so caller supplies scratch once.
+    ##     Desktop carves this from frame arena and browser holds one; neither allocates
+    ##     per frame, and suite's copy is same shape.
+    ##   Both members are written and read within single step, so they carry nothing
+    ##   between callers and need no clearing.
+    ribbons*: array[LINES_GRID_MAX, RibbonPiece] ## One piece per lattice line or axis chord.
+      ## Sized for larger grid family.
+    places*: array[POINTS_SCRATCH_MAX, Position]
 
 
 
@@ -815,34 +839,6 @@ func blend(first, second: Rgba; fraction: float): Rgba =
     blue: float32(a*float(first.blue) + b*float(second.blue)),
     alpha: float32(a*float(first.alpha) + b*float(second.alpha)),
   )
-
-
-const POINTS_SCRATCH_MAX* = SEGMENTS_CIRCLE_HORIZON + 1
-  ## Bound places tessellation step may assemble before emitting them.
-  ##   Horizon line's great circle is largest, one extra boundary so closing segment ends
-  ##   on place stepped at angle loop would have used.
-
-
-type RibbonPiece* = object
-  ## Define one ribbon segment, fully resolved: where it runs, and colour of each end.
-  ##   Record algebra hands picture.
-  ##     Assembling whole family into these first and emitting after makes seam line in
-  ##     code rather than claim in comment, which lets panel say what each side cost.
-  ##   Everything here is Euclidean.
-  tail*, head*: Position
-  tint_tail*, tint_head*: Rgba
-
-
-type DrawScratch* = object
-  ## Define working space tessellation step assembles into before it emits anything.
-  ##   One object rather than buffer per shape, so caller supplies scratch once.
-  ##     Desktop carves this from frame arena and browser holds one; neither allocates
-  ##     per frame, and suite's copy is same shape.
-  ##   Both members are written and read within single step, so they carry nothing
-  ##   between callers and need no clearing.
-  ribbons*: array[LINES_GRID_MAX, RibbonPiece] ## One piece per lattice line or axis chord.
-    ## Sized for larger grid family.
-  places*: array[POINTS_SCRATCH_MAX, Position]
 
 
 func directionAcross*(tail, head, eye: Position): Option[Direction] =

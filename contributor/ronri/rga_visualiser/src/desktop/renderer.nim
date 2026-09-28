@@ -567,6 +567,9 @@ type
     buffer_ring_corners: gl.Uint
     buffer_ring_records: gl.Uint
 
+  AttributeView = tuple[index: gl.Uint, floats: gl.Int, offset: int]
+    ## Define one attribute's window onto record, i.e. attribute, float count and first float.
+
 
 
 #[ Program Construction ]#
@@ -610,9 +613,6 @@ proc linkProgram(source_vertex, source_fragment: string): gl.Uint =
 
 
 #[ Renderer Lifetime ]#
-
-type AttributeView = tuple[index: gl.Uint, floats: gl.Int, offset: int]
-  ## Define one attribute's window onto record, i.e. attribute, float count and first float.
 
 const
   VIEWS_POINT = [
