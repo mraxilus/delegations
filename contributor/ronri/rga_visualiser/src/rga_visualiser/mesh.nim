@@ -1128,7 +1128,9 @@ func viewBoxOfDisc*(
       z: float(record.centre_z) - eye.z,
     )
     radius = norm(Direction(
-      x: float(record.arm_first_x), y: float(record.arm_first_y), z: float(record.arm_first_z)
+      x: float(record.arm_first_x),
+      y: float(record.arm_first_y),
+      z: float(record.arm_first_z),
     ))
     across = dot(to_centre, axis_right)
     up = dot(to_centre, axis_up)
@@ -1195,7 +1197,9 @@ func hitDiscAlong*(record: DiscRecord; eye: Position; ray: Direction): Option[fl
   ##   Same meet `picking.rayPlaneHit` reads through algebra, so pixel and pick agree.
   let
     arm_first = Direction(
-      x: float(record.arm_first_x), y: float(record.arm_first_y), z: float(record.arm_first_z)
+      x: float(record.arm_first_x),
+      y: float(record.arm_first_y),
+      z: float(record.arm_first_z),
     )
     arm_second = Direction(
       x: float(record.arm_second_x), y: float(record.arm_second_y),
@@ -1213,7 +1217,9 @@ func hitDiscAlong*(record: DiscRecord; eye: Position; ray: Direction): Option[fl
   if depth <= 0.0: return
   let
     hit = Direction(
-      x: depth*ray.x - to_centre.x, y: depth*ray.y - to_centre.y, z: depth*ray.z - to_centre.z
+      x: depth*ray.x - to_centre.x,
+      y: depth*ray.y - to_centre.y,
+      z: depth*ray.z - to_centre.z,
     )
     first = dot(hit, arm_first)/dot(arm_first, arm_first)
     second = dot(hit, arm_second)/dot(arm_second, arm_second)

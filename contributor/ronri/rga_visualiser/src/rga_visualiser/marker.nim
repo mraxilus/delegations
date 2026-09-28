@@ -632,9 +632,7 @@ func clearanceTouch*(swell: float, is_touch: bool): float =
 func placeLabelAbove(marker: var Marker, x, top: float) =
   ## Place name label centred `GAP_MARKER` and half its height above outline's top at `x`.
   marker.has_label = true
-  marker.label_at = ScreenPosition(
-    x: x, y: top - GAP_MARKER - 0.5*HEIGHT_MARKER_LABEL, depth: 1.0
-  )
+  marker.label_at = ScreenPosition(x: x, y: top - GAP_MARKER - 0.5*HEIGHT_MARKER_LABEL, depth: 1.0)
 
 
 func clearanceBeside*(away_x, away_y, half_width: float): float =

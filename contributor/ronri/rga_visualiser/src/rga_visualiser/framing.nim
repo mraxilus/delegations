@@ -350,7 +350,7 @@ func stanceFor*(aim: CameraAim; camera: Camera; width, height: int): CameraStanc
 
 
 func stanceApproaching*(
-  shaped: Kind; radius: float; centre: Position; camera: Camera; scale: DrawExtent
+  shaped: Kind, radius: float, centre: Position, camera: Camera, scale: DrawExtent
 ): Option[CameraStance] =
   ## Resolve where camera ends after pointer pick: object centred, and come in to.
   ##   Pivot goes onto object's own anchor, so it sits at middle of frame and orbit turns
@@ -491,8 +491,7 @@ func offerAimAt*(
 #[ Furniture Picked ]#
 
 proc addLatticesPicked*(
-  meshes: var MeshSet; scratch: var DrawScratch; scale: DrawExtent; scene: Scene;
-  picked: Selection
+  meshes: var MeshSet, scratch: var DrawScratch, scale: DrawExtent, scene: Scene, picked: Selection
 ) =
   ## Rule lattice on every visible finite plane picked; see `tessellate.addLattice`.
   ##   One loop both front-ends' furniture runs, so which plane is ruled is decided once.

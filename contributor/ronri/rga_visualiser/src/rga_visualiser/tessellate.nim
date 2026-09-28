@@ -340,8 +340,11 @@ proc addGridFamily*(
 
 
 proc addLattice*(
-  meshes: var MeshSet; scratch: var DrawScratch; extent: float; scale: DrawExtent;
-  plane: Multivector
+  meshes: var MeshSet,
+  scratch: var DrawScratch,
+  extent: float,
+  scale: DrawExtent,
+  plane: Multivector,
 ) =
   ## Append lattice on `plane`, so distance and direction on it stay judgeable.
   ##   For each selected plane; world itself carries no ground, since its origin is Sol
@@ -632,4 +635,4 @@ proc addObject*(
   discard scratch
   var placed = placeObject(geometry, anchor_override)
   if bounds.isSome and not isPointInView(placed, radius, bounds.get): return Outcome.Empty
-  meshes.emitObject(placed, tint, scale, progress, radius)
+  emitObject(meshes, placed, tint, scale, progress, radius)

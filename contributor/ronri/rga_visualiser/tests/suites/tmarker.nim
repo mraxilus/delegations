@@ -350,7 +350,7 @@ suite "Marker":
         marker.points_band[side][marker.counts_band[side] - 1],
       )
       for at in [first, last]:
-        check min(min(at.x, WIDTH_MARK.float - at.x), min(at.y, HEIGHT_MARK.float - at.y)) =~ 0.0
+        check min(min(at.x, float(WIDTH_MARK) - at.x), min(at.y, float(HEIGHT_MARK) - at.y)) =~ 0.0
 
 
   test "a horizon line's bands lap in what the view can show, so its comet is seen":
@@ -366,7 +366,7 @@ suite "Marker":
     #   very same rule. Window's own diagonal is scale both are measuring.
     check bands.lap > 0.0
     check bands.lap < 4.0*rails.lap
-    check bands.lap < hypot(WIDTH_MARK.float, HEIGHT_MARK.float)*2.0
+    check bands.lap < hypot(float(WIDTH_MARK), float(HEIGHT_MARK))*2.0
     # Both bands pulse, and in step: one of pair lit and other not reads as.
     #   marker having broken rather than as direction.
     check bands.count_run_pulse == 2

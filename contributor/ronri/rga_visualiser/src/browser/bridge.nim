@@ -2475,8 +2475,12 @@ proc nimBuildFrame(
         #   per frame.
         if PLACEMENTS[handle].kind == Case.PlaneEverywhere:
           let progress = animationProgress(float(now), BORNS[handle])
-          discard MESHES.emitObject(
-            PLACEMENTS[handle], SCENE.inkAt(handle).colour, scale, progress,
+          discard emitObject(
+            MESHES,
+            PLACEMENTS[handle],
+            SCENE.inkAt(handle).colour,
+            scale,
+            progress,
           )
           cost.chargeTally(
             PLACEMENTS[handle].kind, is_sky = true, is_preview = false, is_selected = false,
@@ -2491,8 +2495,13 @@ proc nimBuildFrame(
             cost.chargeCulled()
             continue
           let progress = animationProgress(float(now), BORNS[handle])
-          discard MESHES.emitObject(
-            PLACEMENTS[handle], SCENE.inkAt(handle).colour, scale, progress, SCENE.radiusAt(handle),
+          discard emitObject(
+            MESHES,
+            PLACEMENTS[handle],
+            SCENE.inkAt(handle).colour,
+            scale,
+            progress,
+            SCENE.radiusAt(handle),
           )
           cost.chargeTally(
             PLACEMENTS[handle].kind, is_sky = false, is_preview = false, is_selected = false,
@@ -2505,8 +2514,12 @@ proc nimBuildFrame(
     if preview.isSome:
       # Place here rather than cache: preview is not handle and moves with pointer.
       var placement_staged = placeObject(preview.get.geometry, preview.get.anchor)
-      discard MESHES.emitObject(
-        placement_staged, INK_PREVIEW.colour.muted(), scale, radius = preview.get.radius
+      discard emitObject(
+        MESHES,
+        placement_staged,
+        INK_PREVIEW.colour.muted(),
+        scale,
+        radius = preview.get.radius,
       )
       cost.chargeTally(
         placement_staged.kind, is_sky = false, is_preview = true, is_selected = false
@@ -2519,7 +2532,7 @@ proc nimBuildFrame(
       var placement_derived = placeObject(
         INTERACTION.preview.get.geometry, INTERACTION.preview.get.anchor,
       )
-      discard MESHES.emitObject(placement_derived, INK_PREVIEW.colour.muted(), scale)
+      discard emitObject(MESHES, placement_derived, INK_PREVIEW.colour.muted(), scale)
       cost.chargeTally(
         placement_derived.kind, is_sky = false, is_preview = true, is_selected = false
       )
@@ -2535,8 +2548,13 @@ proc nimBuildFrame(
         cost.chargeCulled()
         continue
       let progress = animationProgress(float(now), BORNS[handle])
-      discard MESHES.emitObject(
-        PLACEMENTS[handle], SCENE.inkAt(handle).colour, scale, progress, SCENE.radiusAt(handle),
+      discard emitObject(
+        MESHES,
+        PLACEMENTS[handle],
+        SCENE.inkAt(handle).colour,
+        scale,
+        progress,
+        SCENE.radiusAt(handle),
       )
       cost.chargeTally(
         PLACEMENTS[handle].kind, is_sky = false, is_preview = false, is_selected = true
@@ -2583,15 +2601,18 @@ proc nimBuildFrame(
     camera_eye_x: float32(scale.eye.x - MESHES.origin.x),
     camera_eye_y: float32(scale.eye.y - MESHES.origin.y),
     camera_eye_z: float32(scale.eye.z - MESHES.origin.z),
-    camera_forward_x: float32(scale.forward.x), camera_forward_y: float32(scale.forward.y),
+    camera_forward_x: float32(scale.forward.x),
+    camera_forward_y: float32(scale.forward.y),
     camera_forward_z: float32(scale.forward.z),
     camera_depth_near: float32(scale.depthNear),
     camera_depth_log: float32(scale.depthLog),
     camera_tangent_half_view: float32(scale.tangentHalfView),
     camera_height_pixels: float32(scale.heightPixels),
-    camera_right_x: float32(scale.axisRight.x), camera_right_y: float32(scale.axisRight.y),
+    camera_right_x: float32(scale.axisRight.x),
+    camera_right_y: float32(scale.axisRight.y),
     camera_right_z: float32(scale.axisRight.z),
-    camera_up_x: float32(scale.axisUp.x), camera_up_y: float32(scale.axisUp.y),
+    camera_up_x: float32(scale.axisUp.x),
+    camera_up_y: float32(scale.axisUp.y),
     camera_up_z: float32(scale.axisUp.z),
     fog_radius_full: float32(fogFurnitureFor(scale.extentFurniture).radius_full),
     fog_radius_gone: float32(fogFurnitureFor(scale.extentFurniture).radius_gone),
@@ -2622,10 +2643,12 @@ proc nimBuildFrame(
     # Report what named phases still do not cover.
     #   Never negative: clock going backwards is coarsened timer, not phase running for
     #   less than nothing.
-    ms_unaccounted: float32(max(0.0,
+    ms_unaccounted: float32(max(
+      0.0,
       (ms_done - ms_entered) - (ms_after_camera - ms_entered) -
-      (ms_after_furniture - ms_before_furniture) - (ms_after_scene - ms_after_furniture) -
-      (ms_after_matrix - ms_after_scene) - (ms_done - ms_before_flatten))),
+        (ms_after_furniture - ms_before_furniture) - (ms_after_scene - ms_after_furniture) -
+        (ms_after_matrix - ms_after_scene) - (ms_done - ms_before_flatten),
+    )),
     ms_placing: float32(spentOn(Side.Placing)),
     ms_emitting: float32(spentOn(Side.Emitting)),
     ms_hover_pick: float32(recordLastFrame().ms_hover_pick),

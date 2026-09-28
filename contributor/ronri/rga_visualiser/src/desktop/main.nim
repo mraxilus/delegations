@@ -1418,9 +1418,7 @@ proc driveKeys(count_drawn: int) =
   if step notin 0 ..< len(lut_keys_driven): return
   let scripted = lut_keys_driven[step]
   if scripted.pressed.isNone: return
-  var event = Event(
-    kind: uint32(if scripted.is_down: EventKind.KeyDown else: EventKind.KeyUp)
-  )
+  var event = Event(kind: uint32(if scripted.is_down: EventKind.KeyDown else: EventKind.KeyUp))
   event.key.scancode = uint32(scripted.pressed.get.scancode)
   # Fill keycode, which Dear ImGui's backend reads rather than scancode.
   #   Event without one is invisible to it, and Tab above is aimed at exactly that.
@@ -1557,9 +1555,7 @@ proc driveUndo(
   let index = step - STEPS_DRAG - 1
   if index notin 0 ..< len(lut_keys_undo_driven): return
   let (scancode, keycode, modifiers, is_down) = lut_keys_undo_driven[index]
-  var event = Event(
-    kind: uint32(if is_down: EventKind.KeyDown else: EventKind.KeyUp)
-  )
+  var event = Event(kind: uint32(if is_down: EventKind.KeyDown else: EventKind.KeyUp))
   event.key.scancode = uint32(scancode)
   event.key.keycode = keycode
   event.key.is_down = is_down
@@ -2205,7 +2201,7 @@ proc main() =
     camera = initCameraDefault(PIXELS_WIDTH, PIXELS_HEIGHT)
     panel = initPanel(
       if len(options.path_screenshot) > 0: options.path_screenshot
-      else: PATH_EXPORT_DEFAULT
+      else: PATH_EXPORT_DEFAULT,
     )
   panel.is_vsync_enabled = not options.is_novsync
   # Open help panel where command line asked for tab in it.

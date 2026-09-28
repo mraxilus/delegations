@@ -912,7 +912,7 @@ func speedFlying*(interaction: Interaction, camera: Camera): float =
 
 
 func driveHeld*(
-  interaction: var Interaction; camera: var Camera; seconds: float; has_selection: bool
+  interaction: var Interaction, camera: var Camera, seconds: float, has_selection: bool
 ) =
   ## Move camera by every key currently held, for one frame of `seconds`.
   ##   Called once per frame by both render paths rather than at each key event.

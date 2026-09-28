@@ -472,7 +472,7 @@ proc layoutSessionFields(panel: var Panel, is_pending: bool) =
   gui.sameLine()
   gui.helpMarker(
     if is_pending: wordingText(NoteCoefficientsNew)
-    else: wordingText(NoteCoefficientsEdit)
+    else: wordingText(NoteCoefficientsEdit),
   )
   discard layoutCoefficientGrid(panel.session.get.coefficients)
 

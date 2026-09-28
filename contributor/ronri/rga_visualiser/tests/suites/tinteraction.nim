@@ -1225,7 +1225,8 @@ suite "Interaction":
     check under.eye =~ opening.eye
     # Sight exactly along world up names no level across, and camera's own stands in.
     let pole = initCamera(
-      eye = opening.pivot + Direction(x: 0, y: 0, z: opening.distance), pivot = opening.pivot
+      eye = opening.pivot + Direction(x: 0, y: 0, z: opening.distance),
+      pivot = opening.pivot,
     )
     check abs(dot(pole.frame.forward, UP_WORLD)) =~ 1.0
     let past = pole.dragged(true, 0.0, 60.0)
@@ -1282,9 +1283,7 @@ suite "Interaction":
   test "with no selection a held key flies along the camera's own axes":
     # Fly reading of movement key rather than map one: forward dives where sight dives,
     #   and up is camera's own up, so rolled camera rises toward its own ceiling.
-    var interaction = Interaction(
-      is_enabled: true, depth_pointer: some(20.0)
-    )
+    var interaction = Interaction(is_enabled: true, depth_pointer: some(20.0))
     var camera = cameraAround(ORIGIN, 20.0, Direction(x: 12, y: 5, z: 16))
     camera.roll(0.7)
     let (eye_start, axes_start) = (camera.eye, camera.frame)

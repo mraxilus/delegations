@@ -863,9 +863,7 @@ func previewStaging*(geometry: Multivector, radius: float): Preview =
   ##   and object it would be framed against is one it replaces; see `Preview`.
   ##   Radius is staged one, or preview of moon under edit was drawn at default and read as
   ##   grey disc three times its size.
-  Preview(
-    geometry: geometry, anchor: none(Position), operands: none((int, int)), radius: radius
-  )
+  Preview(geometry: geometry, anchor: none(Position), operands: none((int, int)), radius: radius)
 
 
 func setInk*(scene: var Scene, handle: int, ink: Ink) =

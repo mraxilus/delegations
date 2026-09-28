@@ -901,7 +901,10 @@ suite "Mesh":
           at = tail + t*(head - tail)
           radius = norm(at - SCALE_FOG.eye)
           alpha_drawn = float(record.tail_alpha)*alphaGridFade(
-            radius, fog.radius_full, fog.radius_gone)
+            radius,
+            fog.radius_full,
+            fog.radius_gone,
+          )
         if radius <= fog.radius_full:
           alpha_near_min = min(alpha_near_min, alpha_drawn)
           inc count_near

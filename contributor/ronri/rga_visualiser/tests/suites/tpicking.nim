@@ -69,7 +69,9 @@ suite "Picking":
         ) == some(handle_sol)
       # Well past disc, Sol is no longer answer.
       let outside = ScreenPosition(
-        x: CENTRE.x + pixels_sol + RADIUS_PICK_POINT + 1.0, y: CENTRE.y, depth: 0.0
+        x: CENTRE.x + pixels_sol + RADIUS_PICK_POINT + 1.0,
+        y: CENTRE.y,
+        depth: 0.0,
       )
       check pickNearest(
         scene, camera, scale, view_projection, WIDTH_PICK, HEIGHT_PICK, outside
