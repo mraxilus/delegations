@@ -213,10 +213,19 @@ A product against the dual of its second operand spends what the grade of that o
 allows. A permutation and a product against a one-component constant spend nothing. The
 carrier, the cocarrier and the attitude each take that last form, and so spend nothing.
 
-The library composes some operations from several operators. A norm reads two slots. A
-support wedges against a constant and then takes a full product. The four projections take a
-dual product and then a full product. Such an operation carries a chain of shapes, and its
-bound sums what each step demands. A step that carries no rule adds nothing to that sum.
+A support, an antisupport, a centre and a container each apply maps to the operand and then
+take one product. A map is a signed read, so the product against the mapped operand is one
+table, and the cells of that table are the bound. The supports count 54 at four dimensions,
+and the centre and the container count 162 at five. Those counts rest on the same assumption
+as the primitives, that no slot shares a subexpression with another.
+
+The library composes some other operations from several operators. A norm reads two slots.
+The four projections take a dual product and then a full product. The partner is cubic in
+its operand, so it stays a chain of two folded tables. Those are the container of a dual,
+then an antiwedge against the carrier.
+
+Such an operation carries a chain of shapes, and its bound sums what each step demands. A
+step that carries no rule adds nothing to that sum.
 
 A chain bound is an estimate of that chain, and never a proved minimum. A special routine
 can share work between steps, or reach the same answer by a shorter route, so the true
@@ -238,19 +247,22 @@ unitize.
 The conformal metric is held to 1024 and to 32, and to carrying no bound for the four dual
 products. A chain of an expansion and an exterior product is held to their
 sum. It is also held to dropping the expansion where the metric carries no rule for it.
+
+The supports are held to 54 at four dimensions, and the centre and the container to 162 at
+five. The partner chain is held to 324, and to its mark as an estimate.
 Suite `Inspector` holds the soundness law. No lower bound outruns what the library spends
 on the same operation. That law reads every measurand of the build's own nimcache.
 
 **What it found.** Every primitive product spends what the algebra demands, and the
 operations built on top of them do not. At four dimensions the library stands at the bound
 on multiplies for 101 of the 107 operations that carry one. The two supports are what stand
-above it. At five dimensions it stands at the bound for 112 of 126. The cocarrier, the
-centre and the four projections stand above it.
+above it, at 162 against 54. At five dimensions it stands at the bound for 102 of 126. The
+cocarrier, the centre, the container, the partner and the four projections stand above it.
 
 The attitude and the carrier are generated from a Cayley table, so each spends no multiply,
-as the algebra demands. The container and the partner read the carrier, so they now spend
-their chains' 243 and 518. The cocarrier still wedges against a constant that carries one
-unit component. So it spends 243 multiplies where the algebra demands none.
+as the algebra demands. The centre spends 486 against 162, the container 243 against 162,
+and the partner 518 against 324. The cocarrier still wedges against a constant that carries
+one unit component. So it spends 243 multiplies where the algebra demands none.
 
 On bytes moved the library stands at the bound for 55 of 107 operations at four dimensions,
 and for 77 of 126 at five. Those are the operations that one generated function serves,
@@ -263,9 +275,9 @@ against the bound's 136.
 
 At four dimensions 65 operations carry a library function, a bound and a reference. Over
 those, reaching the bound closes 58 per cent of the byte distance to the reference. It
-closes 18 per cent of the multiply distance. At five dimensions 84 operations carry all
-three, and reaching the bound closes 83 per cent and 23 per cent. Without the composed
-operations, the byte shares are 42 and 23 per cent. Those shares rest on one population, so
+closes 24 per cent of the multiply distance. At five dimensions 84 operations carry all
+three, and reaching the bound closes 83 per cent and 39 per cent. Without the composed
+operations, the byte shares are 55 and 49 per cent. Those shares rest on one population, so
 the figures compare.
 
 Cost: the multivector lower bound is derived, and never measured (Article VIII.1). It bounds
@@ -452,6 +464,34 @@ noise. `^∙` at rga4d is one of them. Over eleven runs whose patch changes no c
 pristine bench of `bd6b23c` alone timed it between 9.1 and 11.4 ns. That range holds the
 9.4 ns of `6a91c3f`.
 
+**A candidate library, measured.** A draft of `cayleys.nim` on `bd6b23c` makes each
+`Cayley1D` cell a `seq`, and adds three map operations in place of five special cases. They
+are `applyConstant`, `applyMap` and `constructAnti`. Every table the library holds comes
+back cell for cell at `cga3d`, `rga4d`, `cga4d` and `cga5d`, 136 tables in all. The five
+compound products `∩ ∪ ⊞ ⊙ ⊡` are then one generated table each. The draft is in the hands of
+the Architect, and no pin holds it.
+
+The pristine bench of `bd6b23c` and the bench of the draft ran alternately, nine times each,
+on this container on 2026-09-28. The library suites pass, 33 at rga4d and 28 at cga5d, and
+this project's suites pass, 105 and 118. The 6D front end builds in 6.37 s against 6.11 s,
+×1.04 over five rounds whose spreads overlap.
+
+| Measurand | Multiplies | Bytes moved | Time |
+|---|---|---|---|
+| `∩` support, rga4d | 162 → 54 | 1 280 → 256 | 56 → 12 ns, ×0.22 |
+| `∪` antisupport, rga4d | 162 → 54 | 1 792 → 256 | 68 → 12 ns, ×0.18 |
+| `⊞` cocarrier, cga5d | 243 → 0 | 2 048 → 512 | 44 → 8 ns, ×0.18 |
+| `⊙` centre, cga5d | 486 → 162 | 3 584 → 512 | 115 → 38 ns, ×0.33 |
+| `⊡` container, cga5d | 243 → 162 | 2 560 → 512 | 68 → 40 ns, ×0.59 |
+| `⊛` partner, cga5d | 518 → 437 | 30 720 → 28 672 | 170 → 128 ns, ×0.75 |
+
+Against the bounds above, the draft stands at the multiply bound for 107 of 107 operations
+at four dimensions. At five it stands there for 117 of 126. The nine left are the four
+projections, whose conformal contraction step carries no rule, and the partner, which still
+scans its grade. On bytes it stands at the bound for 61 of 107 and 92 of 126. Above the byte
+bound remain the scalar-valued products, the norms and the unitizes, which each hand back a
+whole multivector. The chains with intermediates and the two hand-written sums remain too.
+
 The emitted C of the library at 4D:
 
 - `∧` is one inline function of 16 lines, 81 multiplies, no zero fill, no error-flag branch
@@ -566,6 +606,12 @@ these measurements.
   less, so the cause is outside it.
 - Why `contract_bulk` (`∨★`) at rga4d runs ×1.33 slower once it writes every slot, while every
   other generated product holds or wins.
+- Whether the sign of the partner folds into its first table by the grade of each term.
+  That is exact under the homogeneity the partner already asserts. It would take the partner
+  from 437 multiplies and 104 fills to its chain bound of 324. Unmeasured.
+- Whether a product whose terms all land in one slot should return a `float` from the
+  emitter. At four dimensions 26 measurands stand above the byte bound for that reason
+  alone.
 
 [replications]: https://gitlab.com/mraxilus/replications
 [terathon]: https://github.com/EricLengyel/Terathon-Math-Library
