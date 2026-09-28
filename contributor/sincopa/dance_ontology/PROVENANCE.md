@@ -793,11 +793,11 @@ bulge goes and how far out it must reach. The line over it is one quadratic curv
 clears every mark. A curve of that kind turns one way only, so the route still bends once, with no
 corner in it. Verified by `checkSingleTurns`, which checks the corner of the stored line.
 
-**A reach is drawn as curves through its sampled points (rule 35).** A reach is held as `ROUTE_N`
-points, so that it can move from one shape to the next. Drawn with straight pieces, a swan turns
-back inside a few points and shows its facets. So `route.smoothed` makes each sampled point a
-control point and draws through the midpoints between them. The ends stay on their hands, and the
-checks measure the lengths they measured before. Verified by `checkHandTurns`.
+**A reach is drawn as curves through its sampled points (rule 35).** A reach is held as
+`ROUTE_COUNT` points, so that it can move from one shape to the next. Drawn with straight pieces, a
+swan turns back inside a few points and shows its facets. So `route.smoothed` makes each sampled
+point a control point and draws through the midpoints between them. The ends stay on their hands,
+and the checks measure the lengths they measured before. Verified by `checkHandTurns`.
 
 **How wide the swan swings is set by eye, and not by a check (rules 33 to 35).** `SWAN_SWING` in
 `route.nim` holds it. Rule 34 took back the width that rule 33 asked for, and rule 35 set it again.
@@ -879,10 +879,10 @@ break still shows at node size. A hand that nobody holds fades to half strength 
 The free frame is four free hands, and to grey them would hide the one thing that shows orientation.
 
 **A body is a plain circle, with a small chevron at its centre for its facing.** The centre is the
-one part of a dancer that nothing else uses. `outlineR` in `body.nim` is the one function for the
-edge, so the routing and the drawing agree on it. The rim says only that a body is there. It is one
-quiet stroke, broken round each hand by `HAND_GAP`, and it carries no colour of a side. Verified by
-`checkFrame`.
+one part of a dancer that nothing else uses. `outlineRadius` in `body.nim` is the one function for
+the edge, so the routing and the drawing agree on it. The rim says only that a body is there. It is
+one quiet stroke, broken round each hand by `HAND_GAP`, and it carries no colour of a side. Verified
+by `checkFrame`.
 
 **The rim shows no progress.** The connection shows the wrap already, so a ring that filled in the
 colour of an arm would say the same thing twice. One sign is enough.
@@ -1110,9 +1110,9 @@ and 1.40 up, which is nine centimetres outside every capsule of its own torso. W
 give, the arms read as dislocated on the viewer.
 
 Each shoulder is its own body. It is a capsule of radius 0.06 from the side of the neck out to the
-joint, which is deltoid and trapezius. `GIRDLE_R` is an estimate, and not tape.
+joint, which is deltoid and trapezius. `GIRDLE_RADIUS` is an estimate, and not tape.
 
-It hangs on a collarbone, which is a body of its own at the side of the neck (`COLLAR_R`). That
+It hangs on a collarbone, which is a body of its own at the side of the neck (`COLLAR_RADIUS`). That
 gives it half a kilogram, a fifth of the girdle's. At a fiftieth, the solver let both girdles leave
 their hinges by half a metre standing still.
 
@@ -1365,9 +1365,9 @@ painted an arm hanging from a shoulder over the torso all the way down. Its lowe
 through the silhouette of the torso from near overhead, which is A5, the report of the Architect,
 2026-09-18.
 
-Hue is side, and shade is whose. Each body is lit from its own front (`litAt`, `mixHex`). The side
-toward where the dancer faces is light, and the other side is dark. A body that faces the eye is
-light all over.
+Hue is side, and shade is whose. Each body is lit from its own front (`litAt`, `mixColours`). The
+side toward where the dancer faces is light, and the other side is dark. A body that faces the eye
+is light all over.
 
 The gradient runs square to each piece (`lightAcross`). Run along the facing as it fell, a torso
 showed bands where the light end of one piece met the dark end of the next. So facing is read from
@@ -1825,32 +1825,52 @@ Declared unmet, so the Style row above stays true (Article VIII.1):
 ## Form of the source
 
 **The source follows the charter of #257, rule by rule.** Every global is in SCREAMING_SNAKE_CASE,
-and each mutable one says why it is global. Every conversion is a prefix call, no name coins an
-abbreviation, and every routine has a doc. Each module declares its types in one section, before its
-routines. Verified by the audit of #302, which counted 397 sites against 16 rules. A script for
-each rule found every site of it.
+and each mutable one says why it is global. Every conversion is a prefix call, and every routine has
+a doc. Each module declares its types in one section, before its routines. Verified by the audit of
+#302, which counted 397 sites against 16 rules. A script for each rule found every site of it.
 
-The Architect ruled on three points. `Vec`, `Pos` and `Quat` are jargon, and the engine binding
-keeps the names of its C library. A lookup table at module level is in SCREAMING_SNAKE_CASE, as V.1
-says, and not in the lower case of the example in STYLE §3. The x and y of a named point, such as
-`px`, stay as in an equation.
+**No name is an abbreviation.** The Architect ruled so on #305, past the closed list of V.6.
+`Vector`, `Position` and `Quaternion` are in full, and so is each name of the engine binding. The C
+name stays in its pragma, as in `vector* {.importc: "v".}`. A name that joins one-letter symbols is
+spelled out, as `delta_x` for `dx`. An acronym stays only where a junior programmer knows it: SVG,
+HTML, CSS, JSON, JS, URL, ID and DoF stay, and FNV does not.
+
+**A path is a name too.** The simulation is in `simulation/`, and the build folders are
+`dependencies/` and `binaries/`. The root ignore file knows only the short names, so the
+`.gitignore` of this project ignores the long ones. Each test file is `test_<name>.nim`. That is a
+full word, and it still matches the `tests/t*.nim` that the runner and the root ignore file read.
+
+**A one-letter name follows V.6.** A field, an enum value, a parameter and a local that stand for a
+word take the word. A symbol of a formula and the index of a short loop stay, such as `a`, `b`, `t`
+and `i`. `Arm.Left` and `Arm.Right` keep the letters `L` and `R` as their text, because markup
+builds keys from them.
+
+The Architect ruled on the case of a lookup table too. At module level it is in
+SCREAMING_SNAKE_CASE, as V.1 says, and not in the lower case of the example in STYLE §3.
 
 **A global named after its own type is that type, in Nim.** Nim compares two names by the first
 letter exactly, and by the rest with no case and no underscore. So `DRAWING` is `Drawing`, and each
 such global takes a qualifier, such as `DRAWING_SHOWN`. The compiler says so as a redefinition.
 
-**The change leaves behaviour as it was, and that is measured.** `nimsuggest` found each use of each
-renamed name at its exact place, and a pass over format strings and the compiler found the rest.
-After the renames, each script that a browser runs maps back to the build of `main`, symbol by
-symbol. With every rule applied, Chromium loaded each page that runs a script, old and new. Each
-gave the same DOM after each click, and each of 60 canvases the same pixels. Each page built
-natively is the same, byte for byte, and each kept answer, reading and recording came back the same
-number.
+**The compiler checks each rename, and each gap of `nimsuggest` has a check of its own.**
+`nimsuggest` gives most uses at their exact place. It gives a use inside a format string at the
+start of the string, and an enum value after its type one column early. It gives a dynamic field of
+a browser object as a use of the local with that name, and it misses some fields in constructors.
+So a pass scoped to each declaration renamed format strings, and no new name of a local went after
+a dot. Each compile error that named an old name then took the new name for that scope.
+
+**The change leaves behaviour as it was, and that is measured.** Each page built natively is the
+same, byte for byte, except where its prose says "simulation" for "sim". Chromium loaded each page
+that runs a script, from the build of `main` and from this tree. The app gave the same DOM after
+each click, and each of the 60 canvases of the rig page gave the same pixels. The whole-cloth page
+gave the same stage, readout and strip at 72 fixed states: six holds, three levels and four turns.
+Each kept answer, reading, card, recording and turn came back the same number, in the same order.
 
 **A rename in `simulation/` computes every kept file again.** Each stamp is a digest of source text,
 so a change of names alone reads the physics again. On 2026-09-28, on four cores, the answers took
-216 s, the report 636 s, the modelled cards 1030 s and the rig 842 s. That is the cost of a stamp
-that reads text and not the program, and it is accepted. Renames of the simulation are rare.
+151 s and the report 433 s. The modelled cards took 721 s, the rig 564 s and the whole-cloth turns
+1,170 s. That is the cost of a stamp that reads text and not the program, and it is accepted.
+Renames of the simulation are rare.
 
 ## Toolchain
 
@@ -1860,9 +1880,9 @@ onward crashed the compiler itself on six of the suites, with
 `field 'floatVal' is not accessible for type 'TFullReg' using 'kind = rkInt'`. That was recorded as
 an upper bound that nobody had explained.
 
-The cause was one line here, and not a fault of the release. `polylineLen` in `draw/route.nim` read
-its float `result` with `+=` before anything assigned it. From 2.2.8 the virtual machine hands such
-a result an int register, and then reads `floatVal` off it.
+The cause was one line here, and not a fault of the release. `polylineLength` in `draw/route.nim`
+read its float `result` with `+=` before anything assigned it. From 2.2.8 the virtual machine hands
+such a result an int register, and then reads `floatVal` off it.
 
 It bites only at compile time, and only where the function is reached in the VM. That is
 `const SCENES = buildScenes()` in `draw/scene.nim`. So exactly the six suites that import the
