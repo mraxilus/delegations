@@ -91,7 +91,7 @@ Escalate only on need.
   result:
 
   ```nim
-  const lut_grade_by_basis = block:
+  const LUT_GRADE_BY_BASIS = block:
     var lut: array[Basis, Grade]
     for b in Basis: lut[b] = Grade(b.toFlags.countSetBits)
     lut
