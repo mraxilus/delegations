@@ -238,6 +238,10 @@ suite "Lower bound":
     check lowerBoundOf(Shape.Container, conformal, 1).multiplies == 162  # wiki:Conformal
     check not lowerBoundOf(Shape.Support, rigid, 1).is_composed  # one table, not step sum
     check lowerBoundOf(Shape.Support, rigid, 1).bytesMoved == 256  # operand read, result written
+    check lowerBoundOf(Shape.JoinCarrier, conformal, 2).multiplies == 162  # wiki:Conformal
+    let partner = [Shape.Permutation, Shape.Container, Shape.JoinCarrier]
+    check lowerBoundOfChain(partner, conformal, 1).multiplies == 324  # two folded tables
+    check lowerBoundOfChain(partner, conformal, 1).is_composed  # sum of steps stays estimate
 
   test "conformal metric is not singular, so every blade carries image":
     let rigid = Metric(dimensions: 4, is_conformal: false)
