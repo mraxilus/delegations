@@ -48,6 +48,15 @@ type
     hold*: array[Side, Option[Site]] ## Hand each lead hand holds, where it holds one.
     over*: Option[Side]              ## Lead arm lying over other, where they overlap.
 
+  # At most one of two hands is ever filled, and which one is whole of what
+  # drawing needs to know to ink word: model's own two types are what keep
+  # dancers' hands apart, so they are what this hands back rather than one
+  # side and flag beside it.
+  Named* = tuple ## One stretch of name, and hand it names.
+    text: string         ## Letters, as they were written.
+    lead: Option[Side]   ## Lead's hand, where this stretch names one.
+    follow: Option[Site] ## Follow's hand, where this stretch names one.
+
 
 const SITE_OPTIONS = [
   none(Site),
@@ -64,7 +73,7 @@ const OVER_OPTIONS = [
 
 
 
-#[ Geometry Facing Partners ]#
+#[ Partner Geometry ]#
 
 func parallelSite*(side: Side): Site =
   ## Get follow hand this lead hand reaches without crossing midline.
@@ -225,16 +234,6 @@ func briefName*(site: Site): string = followName(site)[0 .. 0]
   ## Abbreviate hand of follow to one letter that says which.
 
 
-# At most one of two hands is ever filled, and which one is whole of what
-# drawing needs to know to ink word: model's own two types are what keep
-# dancers' hands apart, so they are what this hands back rather than one
-# side and flag beside it.
-type Named* = tuple ## One stretch of name, and hand it names.
-  text: string         ## Letters, as they were written.
-  lead: Option[Side]   ## Lead's hand, where this stretch names one.
-  follow: Option[Site] ## Follow's hand, where this stretch names one.
-
-
 func named*(said: string): seq[Named] =
   ## Break name into stretches, marking each word that names hand.
   ##
@@ -271,6 +270,7 @@ func named*(said: string): seq[Named] =
     ("", none(Side), none(Site))
 
   func flush(text: string): seq[Named] =
+    ## Close word run so far as one stretch that names no hand.
     if text.len > 0: @[(text, none(Side), none(Site))] else: @[]
 
   for character in said & " ":
@@ -308,8 +308,9 @@ func describe*(frame: Frame): string =
     let side = if frame.hold[Side.Left].isSome: Side.Left else: Side.Right
     describeConnection(side, frame.hold[side].get, " to ")
   else:
-    let first = if frame.over.isSome: frame.over.get else: Side.Left
-    let joiner = if frame.over.isSome: " over " else: " and "
+    let
+      first = if frame.over.isSome: frame.over.get else: Side.Left
+      joiner = if frame.over.isSome: " over " else: " and "
     describeConnection(first, frame.hold[first].get) & joiner &
       describeConnection(other(first), frame.hold[other(first)].get)
 
@@ -336,8 +337,9 @@ func brief*(frame: Frame): string =
     let side = if frame.hold[Side.Left].isSome: Side.Left else: Side.Right
     briefName(side) & " to " & briefName(frame.hold[side].get)
   else:
-    let first = if frame.over.isSome: frame.over.get else: Side.Left
-    let joiner = if frame.over.isSome: " over " else: " and "
+    let
+      first = if frame.over.isSome: frame.over.get else: Side.Left
+      joiner = if frame.over.isSome: " over " else: " and "
     briefName(first) & "-to-" & briefName(frame.hold[first].get) & joiner &
       briefName(other(first)) & "-to-" & briefName(frame.hold[other(first)].get)
 

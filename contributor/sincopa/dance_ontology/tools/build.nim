@@ -15,18 +15,20 @@
 ##   | assets   | fetch faces pages embed from repository store into build/fonts        |
 ##   | pins     | rewrite design/review-pins.json from page just built: run when        |
 ##   |          | Architect rules on cards, never to quiet check that says one moved    |
-##   | modelled | rewrite design/modelled.json: which reference cards sim reaches,      |
-##   |          | stamped, and only where stamp changed                                 |
+##   | modelled | rewrite design/modelled.json: which reference cards simulation        |
+##   |          | reaches, stamped, and only where stamp changed                        |
 ##   | rig      | rewrite design/rig.json: sweeps rig viewer plays, and every still,    |
 ##   |          | stamped, and only where stamp changed                                 |
 ##   | turns    | rewrite design/turns.json: sweeps whole-cloth page plays              |
-##   | verdicts | instrument run, not build: answers land in sim/verdicts.md            |
-##   | answers  | rewrite sim/answers.json: where couple stand for rig's laws, stamped  |
+##   | verdicts | instrument run, not build: answers land in simulation/verdicts.md     |
+##   | answers  | rewrite simulation/answers.json: where couple stand for rig's laws,   |
+##   |          | stamped                                                               |
 ##   | shot     | screenshot helper, for node and Playwright                            |
-##   | clean    | remove bin, build, nimcache, testresults and testament binaries       |
+##   | clean    | remove binaries, build, nimcache, testresults and testament binaries  |
 ##   |----------|-----------------------------------------------------------------------|
-##   Tool binaries land in `bin/`, pages under `build/`; root `.gitignore` covers both at
-##     any depth. Exit: 0 done, 1 command failed, 2 usage error.
+##   Tool binaries land in `binaries/`, which project's `.gitignore` covers; pages land under
+##     `build/`, which root `.gitignore` covers at any depth.
+##   Exit: 0 done, 1 command failed, 2 usage error.
 ##
 ##   Faces are fetched by repository's shared store rather than by this driver, since two
 ##     projects pinned four of same files byte for byte before it existed (repository issue
@@ -39,6 +41,8 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[os, osproc, strutils]
 
 import ../design/faces
@@ -48,7 +52,7 @@ import ../design/review_page
 const
   BUILD = "build"
     ## Directory every page, picture and script lands in.
-  BIN = "bin"
+  BINARIES = "binaries"
     ## Directory tool binaries land in.
   DANGER = @["-d:danger", "--hints:off"]
     ## Options of runs whose speed is point, i.e. sweeps.
@@ -56,7 +60,7 @@ const
     ## Options of browser scripts shipped with pages.
   QUIET = @["--hints:off"]
     ## Options of runs whose output is their product.
-  DIR_FONTS = BUILD / "fonts"
+  DIRECTORY_FONTS = BUILD / "fonts"
     ## Directory faces land in.  Never committed: fonts are unregistered kind, so
     ##   lock is committed and checkout is not, as Atlas does for packages.
   USAGE = "Usage: nim r tools/build.nim " &
@@ -96,31 +100,32 @@ const
   ]
     ## Source clones no package manager carries, each pinned by its commit, which is what
     ##   stands where checksum stands for fetched file (CONTRIBUTOR.md, "System
-    ##   dependencies"). Never vendored: `deps/` is ignored at repository root, and
-    ##   `engine` clones there.
-  DIR_DEPS = "deps"
+    ##   dependencies"). Never vendored: project's `.gitignore` ignores `dependencies/`,
+    ##   and `engine` clones there.
+  DIRECTORY_DEPENDENCIES = "dependencies"
     ## Directory source clones land in. Never committed, as Atlas checkouts are not.
-  ENGINE_LIB = BIN / "libbox3d.a"
-    ## Engine archived into one library, which `sim/engine.nim` links.
+  ENGINE_LIBRARY = BINARIES / "libbox3d.a"
+    ## Engine archived into one library, which `simulation/engine.nim` links.
 
 
-proc run(program: string; args: openArray[string]) =
+proc run(program: string; arguments: openArray[string]) =
   ## Run program with args from project directory; raise on non-zero exit.
   ##   Named rather than shelled through string, so no argument needs quoting and no
   ##     path with space in it can split.
-  let process = startProcess(program, args = args, options = {poUsePath, poParentStreams})
-  let code = process.waitForExit
+  let
+    process = startProcess(program, args = arguments, options = {poUsePath, poParentStreams})
+    code = process.waitForExit
   process.close
   if code != 0:
     raise newException(OSError, program & " failed; got exit `" & $code & "`.")
 
-proc nim(args: openArray[string]) =
+proc nim(arguments: openArray[string]) =
   ## Run compiler with args from project directory; raise on non-zero exit.
-  run("nim", args)
+  run("nim", arguments)
 
-proc compileRun(args: openArray[string]) =
-  ## Compile and run program with args, quietly, binary into `bin/`.
-  nim(@["c", "-r"] & QUIET & @["--outdir:" & BIN] & @args)
+proc compileRun(arguments: openArray[string]) =
+  ## Compile and run program with args, quietly, binary into `binaries/`.
+  nim(@["c", "-r"] & QUIET & @["--outdir:" & BINARIES] & @arguments)
 
 
 
@@ -146,7 +151,7 @@ proc assets() =
   ##     and neither writes what other holds.
   ##   Store keys entries by digest, so name is restored here: rest of build reads faces
   ##     by name, and page embedding one wants to say which it embedded.
-  createDir(DIR_FONTS)
+  createDir(DIRECTORY_FONTS)
   var wanted: seq[string]
   for (file, _, _, _) in FACES:
     wanted.add file
@@ -164,8 +169,8 @@ proc assets() =
       "Store answered with `" & $paths.len & "` paths for `" & $wanted.len &
         "` faces asked for, so which is which cannot be told; got:\n" & written)
   for i, file in wanted:
-    copyFile(paths[i], DIR_FONTS / file)
-  echo "Faces in ", DIR_FONTS, ": ", wanted.len, ", every one from repository store."
+    copyFile(paths[i], DIRECTORY_FONTS / file)
+  echo "Faces in ", DIRECTORY_FONTS, ": ", wanted.len, ", every one from repository store."
 
 
 proc engine() =
@@ -180,9 +185,9 @@ proc engine() =
   ##     clone costs nothing and reaches any commit without ref to fetch. Pin is therefore
   ##     commit alone, with no tag beside it, and that is measurement rather than taste.
   for (name, url, commit, _, _) in SOURCES:
-    let into = DIR_DEPS / name
+    let into = DIRECTORY_DEPENDENCIES / name
     if not dirExists(into):
-      createDir(DIR_DEPS)
+      createDir(DIRECTORY_DEPENDENCIES)
       run("git", ["clone", "--quiet", url, into])
       run("git", ["-C", into, "checkout", "--quiet", commit])
     let (written, code) = execCmdEx("git -C " & quoteShell(into) & " rev-parse HEAD")
@@ -193,23 +198,23 @@ proc engine() =
     if got != commit:
       raise newException(OSError,
         "Clone of `" & name & "` stands at `" & got & "`, not pinned `" & commit & "`.")
-  if fileExists(ENGINE_LIB):
-    echo "Engine already archived: ", ENGINE_LIB
+  if fileExists(ENGINE_LIBRARY):
+    echo "Engine already archived: ", ENGINE_LIBRARY
     return
-  createDir(BIN)
-  let src = DIR_DEPS / "box3d" / "src"
+  createDir(BINARIES)
+  let src = DIRECTORY_DEPENDENCIES / "box3d" / "src"
   var objects: seq[string]
   for path in walkFiles(src / "*.c"):
-    let obj = BIN / path.extractFilename.changeFileExt("o")
-    run("cc", ["-O2", "-std=c17", "-I" & DIR_DEPS / "box3d" / "include", "-I" & src,
-               "-c", path, "-o", obj])
-    objects.add obj
+    let object_file = BINARIES / path.extractFilename.changeFileExt("o")
+    run("cc", ["-O2", "-std=c17", "-I" & DIRECTORY_DEPENDENCIES / "box3d" / "include", "-I" & src,
+               "-c", path, "-o", object_file])
+    objects.add object_file
   if objects.len == 0:
     raise newException(OSError, "Engine's source holds no `.c` file; got `" & src & "`.")
-  run("ar", @["rcs", ENGINE_LIB] & objects)
-  for obj in objects:
-    removeFile(obj)
-  echo "Engine archived: ", ENGINE_LIB, ", from ", objects.len, " files."
+  run("ar", @["rcs", ENGINE_LIBRARY] & objects)
+  for object_file in objects:
+    removeFile(object_file)
+  echo "Engine archived: ", ENGINE_LIBRARY, ", from ", objects.len, " files."
 
 
 proc dress() =
@@ -240,14 +245,14 @@ proc turnsJs() =
 
 proc turns() =
   ## Rewrite `design/turns.json`: every hold turning, for whole-cloth page.
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "design/turns.nim"])
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/turns.nim"])
 
 proc pages() =
   ## Write every page, picture and script under `build/`.
   ##   Faces first: every page embeds them, and check that wants verb run by hand
   ##     first is check runner will not run.
   assets()
-  for dir in ["app", "review", "design"]: createDir(BUILD / dir)
+  for directory in ["app", "review", "design"]: createDir(BUILD / directory)
   compileRun(["tools/pages.nim", BUILD])
   nim(@["js"] & RELEASE & @["-o:" & BUILD / "app" / "app.js", "app/app.nim"])
   compileRun(["tools/bundle.nim", BUILD / "app", "app"])
@@ -278,12 +283,12 @@ proc pins() =
 
 
 proc modelled() =
-  ## Rewrite `design/modelled.json`: which cards sim reaches.
+  ## Rewrite `design/modelled.json`: which cards simulation reaches.
   ##   Second step, as `pins` is, and for like reason: tag saying model agrees
   ##     is claim, and it is added deliberately rather than refreshed by build
   ##     into agreeing with whatever model happens to say today.
   ##   Verb asks nothing again where its stamp is unchanged (`design/stamps`).
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "design/modelled.nim"])
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/modelled.nim"])
 
 
 proc rig() =
@@ -293,22 +298,22 @@ proc rig() =
   ##     stance searches over every distance couple may stand at, and every
   ##     `pages` run would pay for it.  Page folds in whatever was last recorded.
   ##   Verb records nothing again where its stamp is unchanged (`design/stamps`).
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "design/rig.nim"])
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "design/rig.nim"])
 
 
 proc verdicts() =
-  ## Rewrite `sim/verdicts.md` from model; instrument run, not build.
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "sim/verdicts.nim"])
+  ## Rewrite `simulation/verdicts.md` from model; instrument run, not build.
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "simulation/verdicts.nim"])
 
 
 proc answers() =
-  ## Rewrite `sim/answers.json`: every search rig's laws read, and stamp of sim that
+  ## Rewrite `simulation/answers.json`: every search rig's laws read, and stamp of simulation that
   ## answered them.
   ##   Own verb, as `rig` is, and for like reason: searches cost minutes, and suite
   ##     that read them from here would otherwise pay for them on every run.  Run
-  ##     whenever any `sim/*.nim` changes, since law refuses answers whose stamp is
+  ##     whenever any `simulation/*.nim` changes, since law refuses answers whose stamp is
   ##     not that of tree.
-  nim(@["c", "-r"] & DANGER & @["--outdir:" & BIN, "sim/answers.nim"])
+  nim(@["c", "-r"] & DANGER & @["--outdir:" & BINARIES, "simulation/answers.nim"])
 
 
 func helpers(): seq[string] =
@@ -341,8 +346,8 @@ proc system() =
 
 proc clean() =
   ## Remove build products, caches and testament binaries.
-  # `deps/` survives clean, as Atlas checkouts do: it is fetched source, not product.
-  for dir in [BIN, BUILD, "nimcache", "testresults"]: removeDir(dir)
+  # `dependencies/` survives clean, as Atlas checkouts do: it is fetched source, not product.
+  for directory in [BINARIES, BUILD, "nimcache", "testresults"]: removeDir(directory)
   for path in walkFiles("tests" / "*"):
     if not path.endsWith(".nim"): removeFile(path)
 

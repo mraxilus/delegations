@@ -13,7 +13,7 @@
 ##     that and says exactly as much.
 ##
 ##   Every still card of reference is recorded beside sweeps, one moment each,
-##     wound to its facing as `walk.stood` winds it, so viewer can lay sim's
+##     wound to its facing as `walk.stood` winds it, so viewer can lay simulation's
 ##     answer beside each cell.
 ##
 ##   Recording is kept with stamp of physics, jobs and this verb (`design/stamps`), and verb
@@ -24,9 +24,11 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[cpuinfo, json, math, os, sequtils, strformat, strutils, typedthreads]
 
-import ../sim/[body, hold, rig, seen]
+import ../simulation/[body, hold, rig, seen]
 import ./[asks, stamps]
 
 
@@ -34,7 +36,13 @@ const KEPT_RIG* = currentSourcePath().parentDir / "rig.json"
   ## Where recording is kept, with its stamp.
 
 
-type Cut = tuple[name: string, arms: seq[(Arm, Arm)], away: bool, band: Band]
+type
+  Cut = tuple[name: string, arms: seq[(Arm, Arm)], away: bool, band: Band]
+
+  Job* = object ## One recording: sweep by its place in `SHOWN`, or still by its ask.
+    cut: int
+    ask: StillAsk
+    still: bool
 
 const SHOWN: seq[Cut] = @[
   ("One hand, same name", @[(Arm.Left, Arm.Left)], false, Band.Crown),
@@ -60,22 +68,23 @@ const
   BANDS = ["torso", "neck", "above"]
 
 
-func num(x: float): string =
+func figure(value: float): string =
   ## Shortest text that still says figure to `PLACE`, with no trailing nought.
   ##   Nought is written `0` rather than `0.0000`: file holds tens of thousands
   ##     of them and page reads both same way.
-  if x == 0.0 or abs(x) < 0.5 / (10.0 ^ PLACE):
+  if value == 0.0 or abs(value) < 0.5 / (10.0 ^ PLACE):
     return "0"
-  result = formatFloat(x, ffDecimal, PLACE)
+  result = formatFloat(value, ffDecimal, PLACE)
   result = result.strip(leading = false, chars = {'0'})
   if result.endsWith('.'): result.setLen(result.len - 1)
 
-func arr(xs: seq[float]): string =
+func jsonArray(values: seq[float]): string =
+  ## Write figures as JSON array, each to `PLACE` decimal places.
   var bits: seq[string]
-  for x in xs: bits.add num(x)
+  for value in values: bits.add figure(value)
   "[" & bits.join(",") & "]"
 
-func wrapped(s: string; width = 96): string =
+func wrapped(text: string; width = 96): string =
   ## Whole field is wrapped, name and all: wrapped after its name, first line
   ## ran to 102 once shoulders were capsules too.
   ## Break long run of figures across lines after commas.  Charter holds every
@@ -89,11 +98,11 @@ func wrapped(s: string; width = 96): string =
   var
     line = 0
     i = 0
-  while i < s.len:
+  while i < text.len:
     var j = i
-    while j < s.len and s[j] != ',': j += 1
-    if j < s.len: j += 1
-    let piece = s[i ..< j]
+    while j < text.len and text[j] != ',': j += 1
+    if j < text.len: j += 1
+    let piece = text[i ..< j]
     if line > 0 and line + piece.len > width:
       result.add '\n'
       line = 0
@@ -102,90 +111,87 @@ func wrapped(s: string; width = 96): string =
     i = j
 
 
-func flat(s: Still): seq[float] =
+func flat(moment: Still): seq[float] =
   ## Every capsule's two ends, one after another.
-  for b in s.bars:
-    result.add [b.a.x, b.a.y, b.a.z, b.z.x, b.z.y, b.z.z]
+  for bar in moment.bars:
+    result.add [bar.a.x, bar.a.y, bar.a.z, bar.z.x, bar.z.y, bar.z.z]
 
-func angles(s: Still): seq[float] =
+func angles(moment: Still): seq[float] =
   ## Every arm's five joints, one arm after another.
-  for a in s.arms:
-    for d in Dof: result.add a.read[d]
+  for arm in moment.arms:
+    for dof in Dof: result.add arm.read[dof]
 
-func looking(s: Still): seq[float] =
+func looking(moment: Still): seq[float] =
   ## Each dancer's axis and which way they look, one after other.
   for who in Body:
-    result.add [s.faces[who].at.x, s.faces[who].at.y,
-                s.faces[who].fore.x, s.faces[who].fore.y]
+    result.add [moment.faces[who].at.x, moment.faces[who].at.y,
+                moment.faces[who].fore.x, moment.faces[who].fore.y]
 
-func gripped(s: Still): seq[float] =
-  for g in s.grips: result.add [g.x, g.y, g.z]
+func gripped(moment: Still): seq[float] =
+  ## List every grip's three coordinates, one grip after another.
+  for grip in moment.grips: result.add [grip.x, grip.y, grip.z]
 
 
-proc bodyOfSweep(sh: Shown; key = ""): string =
+proc bodyOfSweep(recording: Shown; key = ""): string =
   ## One sweep as page reads it, or one still, keyed by question it answers.
   var bits: seq[string]
   if key.len > 0:
     bits.add &"\"key\":\"{key}\""
-  bits.add &"\"hold\":\"{sh.hold}\""
-  bits.add &"\"band\":\"{BANDS[ord(sh.band)]}\""
-  bits.add &"\"apart\":{num(sh.apart)}"
-  bits.add &"\"turns\":{num(sh.turns)}"
-  bits.add &"\"stopped\":" & (if sh.stopped: "true" else: "false")
-  bits.add &"\"why\":\"{sh.why}\""
-  bits.add "\"says\":\"" & (if key.len > 0 and sh.stills.len == 0:
+  bits.add &"\"hold\":\"{recording.hold}\""
+  bits.add &"\"band\":\"{BANDS[ord(recording.band)]}\""
+  bits.add &"\"apart\":{figure(recording.apart)}"
+  bits.add &"\"turns\":{figure(recording.turns)}"
+  bits.add &"\"stopped\":" & (if recording.stopped: "true" else: "false")
+  bits.add &"\"why\":\"{recording.why}\""
+  bits.add "\"says\":\"" & (if key.len > 0 and recording.stills.len == 0:
                              "no pose holds at any distance"
-                           else: sh.why.says) & "\""
-  bits.add &"\"whose\":[{ord(sh.whose.body)},{ord(sh.whose.arm)}]"
-  if sh.stills.len == 0:
+                           else: recording.why.says) & "\""
+  bits.add &"\"whose\":[{ord(recording.whose.body)},{ord(recording.whose.arm)}]"
+  if recording.stills.len == 0:
     bits.add "\"stills\":[]"
     return "{" & bits.join(",\n") & "}"
-  let first = sh.stills[0]
-  var tag, rad: seq[string]
-  for b in first.bars:
-    tag.add &"[{ord(b.who)},{ord(b.arm)},{ord(b.mark)}]"
-    rad.add num(b.r)
+  let first = recording.stills[0]
+  var tag, radii: seq[string]
+  for bar in first.bars:
+    tag.add &"[{ord(bar.who)},{ord(bar.arm)},{ord(bar.mark)}]"
+    radii.add figure(bar.radius)
   bits.add wrapped("\"tag\":[" & tag.join(",") & "]")
-  bits.add wrapped("\"rad\":[" & rad.join(",") & "]")
-  var owner, lo, hi: seq[string]
-  for a in first.arms:
-    owner.add &"[{ord(a.who)},{ord(a.arm)}]"
-    for d in Dof:
-      lo.add num(a.lo[d])
-      hi.add num(a.hi[d])
+  bits.add wrapped("\"radii\":[" & radii.join(",") & "]")
+  var owner, lower, upper: seq[string]
+  for arm in first.arms:
+    owner.add &"[{ord(arm.who)},{ord(arm.arm)}]"
+    for dof in Dof:
+      lower.add figure(arm.lower[dof])
+      upper.add figure(arm.upper[dof])
   bits.add wrapped("\"arm\":[" & owner.join(",") & "]")
-  bits.add wrapped("\"lo\":[" & lo.join(",") & "]")
-  bits.add wrapped("\"hi\":[" & hi.join(",") & "]")
-  var at, pts, angs, grp, apart, look: seq[string]
-  for s in sh.stills:
-    at.add num(s.at)
-    look.add arr(s.looking)
-    pts.add arr(s.flat)
-    angs.add arr(s.angles)
-    grp.add arr(s.gripped)
-    apart.add arr(s.apart)
+  bits.add wrapped("\"lower\":[" & lower.join(",") & "]")
+  bits.add wrapped("\"upper\":[" & upper.join(",") & "]")
+  var at, points, angles, grips, apart, look: seq[string]
+  for moment in recording.stills:
+    at.add figure(moment.at)
+    look.add jsonArray(moment.looking)
+    points.add jsonArray(moment.flat)
+    angles.add jsonArray(moment.angles)
+    grips.add jsonArray(moment.gripped)
+    apart.add jsonArray(moment.apart)
   bits.add wrapped("\"at\":[" & at.join(",") & "]")
-  bits.add wrapped("\"p\":[" & pts.join(",") & "]")
-  bits.add wrapped("\"j\":[" & angs.join(",") & "]")
-  bits.add wrapped("\"g\":[" & grp.join(",") & "]")
-  bits.add wrapped("\"d\":[" & apart.join(",") & "]")
-  bits.add wrapped("\"f\":[" & look.join(",") & "]")
+  bits.add wrapped("\"points\":[" & points.join(",") & "]")
+  bits.add wrapped("\"angles\":[" & angles.join(",") & "]")
+  bits.add wrapped("\"grips\":[" & grips.join(",") & "]")
+  bits.add wrapped("\"gaps\":[" & apart.join(",") & "]")
+  bits.add wrapped("\"faces\":[" & look.join(",") & "]")
   "{" & bits.join(",\n") & "}"
 
-
-type Job* = object ## One recording: sweep by its place in `SHOWN`, or still by its ask.
-  cut: int
-  ask: StillAsk
-  still: bool
 
 func jobs*(): seq[Job] =
   ## Every recording, sweeps first then every still card in page's own order.
   for i in 0 ..< SHOWN.len: result.add Job(cut: i, still: false)
-  for a in stillAsks(): result.add Job(ask: a, still: true)
+  for ask in stillAsks(): result.add Job(ask: ask, still: true)
 
+# Mutable and global: thread takes one argument, so workers write into slots allotted here.
 var
-  bodies: seq[string] ## Each recording's text, written by whichever worker did it.
-  notes: seq[string]  ## And one line saying what it found.
+  RECORDING_TEXTS: seq[string] ## Each recording's text, written by whichever worker did it.
+  NOTES: seq[string]  ## And one line saying what it found.
 
 proc work(slice: tuple[first, every: int]) {.thread.} =
   ## Record every `every`th job from `first` on.  Each worker lists jobs for
@@ -195,23 +201,26 @@ proc work(slice: tuple[first, every: int]) {.thread.} =
     let all = jobs()
     var i = slice.first
     while i < all.len:
-      let j = all[i]
-      if j.still:
-        let a = j.ask
-        let sh = still(HUMAN, Band.Crown, a.links, a.key, a.turns, away = a.away,
-                       head = a.head, either = a.either)
-        notes[i] = (if sh.stills.len > 0: &"{a.key}: {sh.turns:+.2f} turns, stood {sh.apart:.2f}"
-                    else: &"{a.key}: {a.turns:+.2f} turns, no pose holds")
-        bodies[i] = bodyOfSweep(sh, a.key)
+      let job = all[i]
+      if job.still:
+        let
+          ask = job.ask
+          recording = still(HUMAN, Band.Crown, ask.links, ask.key, ask.turns, away = ask.away,
+                     head = ask.head, either = ask.either)
+        NOTES[i] =
+          if recording.stills.len > 0:
+            &"{ask.key}: {recording.turns:+.2f} turns, stood {recording.apart:.2f}"
+          else: &"{ask.key}: {ask.turns:+.2f} turns, no pose holds"
+        RECORDING_TEXTS[i] = bodyOfSweep(recording, ask.key)
       else:
-        let cut = SHOWN[j.cut]
+        let cut = SHOWN[job.cut]
         var links: seq[Link] = @[]
-        for (a, b) in cut.arms:
-          links.add Link(ends: [(Body.One, a), (Body.Two, b)])
-        let sh = shown(HUMAN, cut.band, links, cut.name, away = cut.away)
-        notes[i] = &"{cut.name}, {BANDS[ord(cut.band)]}: stood {sh.apart:.2f}, " &
-                   &"{sh.stills.len} moments, {sh.turns:.2f} {sh.why}"
-        bodies[i] = bodyOfSweep(sh)
+        for (lead_arm, follow_arm) in cut.arms:
+          links.add Link(ends: [(Body.One, lead_arm), (Body.Two, follow_arm)])
+        let recording = shown(HUMAN, cut.band, links, cut.name, away = cut.away)
+        NOTES[i] = &"{cut.name}, {BANDS[ord(cut.band)]}: stood {recording.apart:.2f}, " &
+                   &"{recording.stills.len} moments, {recording.turns:.2f} {recording.why}"
+        RECORDING_TEXTS[i] = bodyOfSweep(recording)
       i += slice.every
 
 
@@ -229,25 +238,25 @@ when isMainModule:
   # Recorded on every core at once: sweeps and stills each build their own
   # worlds and share nothing but their two slots.
   let count = jobs().len
-  bodies = newSeq[string](count)
-  notes = newSeq[string](count)
+  RECORDING_TEXTS = newSeq[string](count)
+  NOTES = newSeq[string](count)
   let cores = max(1, countProcessors())
   var workers = newSeq[Thread[tuple[first, every: int]]](cores)
-  for w in 0 ..< cores:
-    createThread(workers[w], work, (w, cores))
+  for worker in 0 ..< cores:
+    createThread(workers[worker], work, (worker, cores))
   joinThreads(workers)
-  for n in notes: echo n
+  for note in NOTES: echo note
   # Every still card, wound to its facing from distance that sits easiest.
-  #   Recorded whole, one moment each, so viewer can lay sim's answer beside
+  #   Recorded whole, one moment each, so viewer can lay simulation's answer beside
   #   each cell of reference; card no distance holds is recorded with no moment.
   let
-    cuts = bodies[0 ..< SHOWN.len]
-    stills = bodies[SHOWN.len ..< count]
+    cuts = RECORDING_TEXTS[0 ..< SHOWN.len]
+    stills = RECORDING_TEXTS[SHOWN.len ..< count]
   var head: seq[string]
   head.add "\"stamp\":\"" & stamp & "\""
-  head.add "\"upper\":" & num(HUMAN.upper)
-  head.add "\"fore\":" & num(HUMAN.fore)
-  head.add "\"hand\":" & num(HUMAN.hand)
+  head.add "\"upper\":" & figure(HUMAN.upper)
+  head.add "\"fore\":" & figure(HUMAN.fore)
+  head.add "\"hand\":" & figure(HUMAN.hand)
   head.add "\"dofs\":[\"extend\",\"across\",\"twist\",\"bend\",\"wrist\"]"
   head.add "\"marks\":[\"trunk\",\"upper\",\"fore\",\"palm\",\"girdle\"]"
   head.add "\"sweeps\":[\n" & cuts.join(",\n") & "]"

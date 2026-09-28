@@ -207,7 +207,7 @@ The mark at the centre of a dancer that says which way they face.
 _Avoid_: arrow, nose, pointer, tick
 
 **Rig**:
-Every measurement that the sim stands on: rounds, heights, arm lengths, joint ranges and
+Every measurement that the simulation stands on: rounds, heights, arm lengths, joint ranges and
 hand bands, each one with its source.
 _Avoid_: body model, skeleton, anthropometry
 

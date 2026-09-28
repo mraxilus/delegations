@@ -32,6 +32,8 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 ## Draw rotation axis as one line, with couple's postures along it.
 import ./dance_ontology/axle
 ## Draw one frame from above, for every place that shows one.

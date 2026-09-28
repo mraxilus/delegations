@@ -16,36 +16,36 @@ type Point* = tuple ## Position on page, in SVG's own axes.
   x, y: float
 
 
-func n*(v: float): string =
+func numeral*(value: float): string =
   ## Write one decimal and no negative zero, i.e. `-0.04` comes out as `0`.
   ##   Two poses that are same pose must emit same markup, not `0`
   ##     against `-0`.
-  let written = formatFloat(v, ffDecimal, 1)
+  let written = formatFloat(value, ffDecimal, 1)
   if written in ["0.0", "-0.0"]:
     return "0"
   written.strip(leading = false, chars = {'0'})
          .strip(leading = false, chars = {'.'})
 
-func n*(v: int): string = $v
+func numeral*(value: int): string = $value
   ## Write whole number as itself; only floats carry decimal machinery.
 
 
-func xy*(p: Point): string = n(p.x) & " " & n(p.y)
+func coordinates*(point: Point): string = numeral(point.x) & " " & numeral(point.y)
   ## Write point as SVG path data expects it.
 
 
-func polar*(cx, cy, radius, degrees: float): Point =
+func polar*(centre_x, centre_y, radius, degrees: float): Point =
   ## Get point at bearing, measured clockwise from straight up page.
-  let rad = degToRad(degrees)
-  (cx + radius * sin(rad), cy - radius * cos(rad))
+  let radians = degToRad(degrees)
+  (centre_x + radius * sin(radians), centre_y - radius * cos(radians))
 
 
-func bearing*(dx, dy: float): float =
+func bearing*(delta_x, delta_y: float): float =
   ## Get bearing of vector, in same clockwise-from-up convention.
-  radToDeg(arctan2(dx, -dy))
+  radToDeg(arctan2(delta_x, -delta_y))
 
 
-func dist*(a, b: Point): float =
+func distance*(a, b: Point): float =
   ## Get straight distance between two points.
   sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y))
 
@@ -63,14 +63,14 @@ func continuous*(angles: seq[float]): seq[float] =
   ##     Anything interpolating between two frames reads that step as most of
   ##       one turn backwards, and draws body spinning wrong way.
   result = @[wrap180(angles[0])]
-  for a in angles[1 .. ^1]:
-    result.add result[^1] + wrap180(a - result[^1])
+  for angle in angles[1 .. ^1]:
+    result.add result[^1] + wrap180(angle - result[^1])
 
 
 func turn*(point, about: Point; degrees: float): Point =
   ## Rotate point about another, clockwise on page.
   let
-    rad = degToRad(degrees)
-    (dx, dy) = (point.x - about.x, point.y - about.y)
-  (about.x + dx * cos(rad) - dy * sin(rad),
-   about.y + dx * sin(rad) + dy * cos(rad))
+    radians = degToRad(degrees)
+    (delta_x, delta_y) = (point.x - about.x, point.y - about.y)
+  (about.x + delta_x * cos(radians) - delta_y * sin(radians),
+   about.y + delta_x * sin(radians) + delta_y * cos(radians))

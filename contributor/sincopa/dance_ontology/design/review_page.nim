@@ -26,24 +26,24 @@ const PINS = staticRead("review-pins.json")
   ## What every ruled card's drawing was when it was ruled on.
 
 const MODELLED = staticRead("modelled.json")
-  ## Which cards body sim reaches, written by `design/modelled`.
+  ## Which cards body simulation reaches, written by `design/modelled`.
   ##   Second tag each cell carries.  `kept` is Architect's, by eye on floor;
-  ##     `modelled` is sim's answer confirmed by Architect against their own body,
-  ##     and goal is both at hundred per cent.  Sim reaching card is not enough:
-  ##     Architect, on seeing sim's stills laid beside reference: many static
+  ##     `modelled` is simulation's answer confirmed by Architect against their own body,
+  ##     and goal is both at hundred per cent.  Simulation reaching card is not enough:
+  ##     Architect, on seeing simulation's stills laid beside reference: many static
   ##     states are wrong; mark everything unmodelled until confirmed.  So card
-  ##     sim reaches reads *unconfirmed* until its name is in `CONFIRMED`, and
+  ##     simulation reaches reads *unconfirmed* until its name is in `CONFIRMED`, and
   ##     only then *modelled*.
-  ##   Card sim has not been asked about is absent, and gets no tag: unasked
+  ##   Card simulation has not been asked about is absent, and gets no tag: unasked
   ##     reads as unasked rather than as disagreement.
 
-const pinned = block:
+const LUT_PIN_BY_CARD = block:
   var held: Table[string, string]
   for pair in PINS.parseJson.pairs:
     held[pair.key] = pair.val.getStr
   held
 
-const modelled = block:
+const LUT_MODELLED_BY_CARD = block:
   var said: Table[string, bool]
   for pair in MODELLED.parseJson["answers"].pairs:
     said[pair.key] = pair.val.getBool
@@ -72,15 +72,16 @@ const
   DROPPED: seq[string] = @[]
     ## Ids Architect has ruled out.
   CONFIRMED: seq[string] = @[]
-    ## Ids whose sim still Architect has confirmed against their own body, on
+    ## Ids whose simulation still Architect has confirmed against their own body, on
     ## viewer page that lays each beside its cell.  Added as they are confirmed,
-    ## none yet.  Confirmation is of one still; when sim's still of confirmed
+    ## none yet.  Confirmation is of one still; when simulation's still of confirmed
     ## cell moves, its name comes out of here until it is confirmed again.
   FLAWED = initTable[string, string]()
     ## Position is right, drawing is not: kept, with what to mend.
 
-func esc(s: string): string =
-  s.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"))
+func escaped(text: string): string =
+  ## Escape text for markup: ampersand and angle brackets.
+  text.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"))
 
 const
   MANNER_SAID = {"fa": "follow turns", "la": "lead turns",
@@ -119,10 +120,10 @@ proc checkReview*() =
   ##   Verdict without pin is verdict nothing guards, which is how ruled
   ##     card came to move under one in first place.
   for id in KEPT:
-    doAssert id in pinned,
+    doAssert id in LUT_PIN_BY_CARD,
       &"A kept card carries no pin; run `tools/build.nim pins`: got `{id}`."
   for id in DROPPED:
-    doAssert id in pinned,
+    doAssert id in LUT_PIN_BY_CARD,
       &"A dropped card carries no pin; run `tools/build.nim pins`: got `{id}`."
 
 
@@ -138,14 +139,14 @@ func reviewParts*(single, hand: Parts): Parts =
     result[key] = svg
 
 
-func sheetOf(P: Parts): string =
+func sheetOf(parts: Parts): string =
   ## Build page, holding every card already ruled on to its own pin.
 
   func stepped(id: string; steps: seq[tuple[pick, note, svg: string]];
                asks: seq[string] = @[]): string =
     ## Stack several drawings in one cell, one shown at time, with button
     ## apiece.
-    ##   Each step carries sim's own tag, not cell.  Cell that folds six edges
+    ##   Each step carries simulation's own tag, not cell.  Cell that folds six edges
     ##     together and is marked by worst of them paints five reachable edges
     ##     red for sake of sixth, and reader asking why easy one is refused is
     ##     reading tag that was never about it.
@@ -161,13 +162,14 @@ func sheetOf(P: Parts): string =
       let at = &"{id}-{i + 1}"
       picks.add &"""<input type="radio" name="{id}" id="{at}""" &
         (if i == 0: "\" checked>" else: "\">")
-      let says = if i >= asks.len or asks[i] notin modelled: ""
-                 elif not modelled[asks[i]]: """<em class="tag nomodel">not modelled</em>"""
+      let says = if i >= asks.len or asks[i] notin LUT_MODELLED_BY_CARD: ""
+                 elif not LUT_MODELLED_BY_CARD[asks[i]]:
+                   """<em class="tag nomodel">not modelled</em>"""
                  elif id in CONFIRMED: """<em class="tag model">modelled</em>"""
                  else: """<em class="tag unsure">unconfirmed</em>"""
       frames.add &"""<div>{unpinned(step.svg)}{says}""" &
-        &"""<span class="step">{esc(step.note)}</span></div>"""
-      buttons.add &"""<label for="{at}">{esc(step.pick)}</label>"""
+        &"""<span class="step">{escaped(step.note)}</span></div>"""
+      buttons.add &"""<label for="{at}">{escaped(step.pick)}</label>"""
     &"""{picks}<div class="frames">{frames}</div>""" &
       &"""<div class="picks">{buttons}</div>"""
 
@@ -185,28 +187,28 @@ func sheetOf(P: Parts): string =
               elif kept: """<em class="tag keep">kept</em>"""
               elif dropped: """<em class="tag drop">drop</em>"""
               else: ""
-      # Sim's own tag, drawn outlined where Architect's is solid, so ruling by
+      # Simulation's own tag, drawn outlined where Architect's is solid, so ruling by
       # eye and reading by engine are never taken for one another.  It sits in
       # other corner, and outside drawing, so no pin moves by its being here.
       # Cell folding several pictures together stands for several questions, and
-      # is reached only where sim reaches every one of them.  Card nothing has
+      # is reached only where simulation reaches every one of them.  Card nothing has
       # been asked about carries no tag at all.
       put = if asks.len > 0: asks else: @[id]
-      known = put.filterIt(it in modelled)
-      reached = known.len > 0 and known.allIt(modelled[it])
+      known = put.filterIt(it in LUT_MODELLED_BY_CARD)
+      reached = known.len > 0 and known.allIt(LUT_MODELLED_BY_CARD[it])
       # Cell's own colour says how far it has got: green only where it is kept,
-      # wholly reached and confirmed; amber where sim reaches all or part of it
-      # and Architect has not yet confirmed; red where sim reaches none of it.
+      # wholly reached and confirmed; amber where simulation reaches all or part of it
+      # and Architect has not yet confirmed; red where simulation reaches none of it.
       # Badges keep saying which of two tags each is.
       stand = if known.len == 0: ""
               elif reached and id in CONFIRMED: " met"
-              elif reached or known.anyIt(modelled[it]): " part"
+              elif reached or known.anyIt(LUT_MODELLED_BY_CARD[it]): " part"
               else: " unmet"
       says = if switching or known.len == 0: ""
              elif not reached: """<em class="tag nomodel">not modelled</em>"""
              elif id in CONFIRMED: """<em class="tag model">modelled</em>"""
              else: """<em class="tag unsure">unconfirmed</em>"""
-    # Questions cell stands for are written on it, so viewer page laying sim
+    # Questions cell stands for are written on it, so viewer page laying simulation
     # beside each cell can find its still by question and not by cell's name.
     # Verdict was given on pictures, so picture that moved under one carries
     # approval it was never given.  Card holds itself to what it was drawn
@@ -214,14 +216,14 @@ func sheetOf(P: Parts): string =
     # stops here rather than shipping.  Cell holding several drawings is
     # held to all of them, since verdict on it is verdict on all.
     if kept or dropped:
-      doAssert $hash(drawings.join("")) == pinned.getOrDefault(id),
+      doAssert $hash(drawings.join("")) == LUT_PIN_BY_CARD.getOrDefault(id),
         &"A card already ruled on has been re-drawn: `{id}`.  Either the " &
           "mend is too wide, or that verdict has to go back."
     &"""<figure class="pic{mark}{stand}" data-asks="{put.join(" ")}"><div class="art""" &
     (if switching: " steps" else: "") & &"""">{art}{badge}{says}</div>""" &
-    &"""<figcaption><code>{esc(id)}</code><b>{esc(label)}</b>""" &
-    (if note.len > 0: &"""<span>{esc(note)}</span>""" else: "") &
-    (if flawed: &"""<span class="fix">{esc(FLAWED[id])}</span>""" else: "") &
+    &"""<figcaption><code>{escaped(id)}</code><b>{escaped(label)}</b>""" &
+    (if note.len > 0: &"""<span>{escaped(note)}</span>""" else: "") &
+    (if flawed: &"""<span class="fix">{escaped(FLAWED[id])}</span>""" else: "") &
     "</figcaption></figure>"
 
   func card(id, label, note, svg: string; asks: seq[string] = @[]): string =
@@ -261,11 +263,11 @@ func sheetOf(P: Parts): string =
   picture.</p><div class="grid">"""
   func armFor(side: Side): Arm =
     ## Say which drawn arm this side of lead is.
-    if side == Side.Left: Arm.L else: Arm.R
+    if side == Side.Left: Arm.Left else: Arm.Right
 
   func armFor(site: Site): Arm =
     ## Same for hand of follow.
-    if site == Site.LeftHand: Arm.L else: Arm.R
+    if site == Site.LeftHand: Arm.Left else: Arm.Right
 
   func restOf(target: Frame): Facing =
     ## Name facing this frame rests at, by `parts.restOf`, never written down.
@@ -279,7 +281,7 @@ func sheetOf(P: Parts): string =
     ## Say which facing this picture draws, and what it is turned from.
     ##   Standard diagram turns follow alone, by half turns (`twist`).
     let
-      drawn = turnedFacing(0.0, 180.0 * twist.float).get.name
+      drawn = turnedFacing(0.0, 180.0 * float(twist)).get.name
       rest = restOf(target).name
     if drawn == rest: &"{drawn}, at rest"
     elif way.len > 0: &"{drawn}, half a turn {way} from {rest}"
@@ -309,7 +311,7 @@ func sheetOf(P: Parts): string =
   body.add "</div></section>"
 
   # `B`. Single-hand turns: what animated page walks through.
-  let st = P
+  let stills = parts
   body.add """<section id="single"><h2>B &middot; Single-hand turn positions</h2>
   <p class="lede">These are the positions that the single-hand turns page walks between. Two
   manners of one family stand at the same four positions, and manners of two families meet
@@ -317,30 +319,31 @@ func sheetOf(P: Parts): string =
   the quarters that land on it. Two manners are axis turns, one of the follow and one of the
   lead. Two are orbits, the follow round the lead and the lead round the follow. A quarter
   says how far round that manner has gone.</p>"""
-  var n = 0
-  for c in 0 ..< SINGLES.len:
-    body.add &"""<h3>{esc(SINGLES[c].name)}</h3><div class="grid wide">"""
-    var seen = initTable[string, string]()   # svg -> id already given it
-    var order: seq[string]
-    var whose = initTable[string, seq[string]]()
-    var asked = initTable[string, seq[string]]()  # svg -> questions it stands for
+  var b_count = 0
+  for connection in 0 ..< SINGLES.len:
+    body.add &"""<h3>{escaped(SINGLES[connection].name)}</h3><div class="grid wide">"""
+    var
+      seen = initTable[string, string]()   # svg -> id already given it
+      order: seq[string]
+      whose = initTable[string, seq[string]]()
+      asked = initTable[string, seq[string]]()  # svg -> questions it stands for
     for manner in Manner:
-      for q in 0 ..< QUARTERS_ROUND:
-        let key = &"st_{MANNERS[manner].tag}_{c}_{q}"
-        if key notin st: continue
-        let svg = st[key]
+      for quarter in 0 ..< QUARTERS_ROUND:
+        let key = &"st_{MANNERS[manner].tag}_{connection}_{quarter}"
+        if key notin stills: continue
+        let svg = stills[key]
         if svg notin seen:
-          inc n
-          seen[svg] = &"B{n}"
+          inc b_count
+          seen[svg] = &"B{b_count}"
           order.add svg
-        whose.mgetOrPut(svg, @[]).add said(MANNERS[manner].tag, q)
-        asked.mgetOrPut(svg, @[]).add &"st_{MANNERS[manner].tag}_{c}_{q}"
+        whose.mgetOrPut(svg, @[]).add said(MANNERS[manner].tag, quarter)
+        asked.mgetOrPut(svg, @[]).add &"st_{MANNERS[manner].tag}_{connection}_{quarter}"
     for svg in order:
       # Where every manner lands on one picture, say so once rather than four times.
       let who = if whose[svg].len == MANNERS.len and
                    QUARTER_SAID[0] in whose[svg][0]: "every manner, before it starts"
                 else: whose[svg].join(" \u00B7 ")
-      body.add card(seen[svg], SINGLES[c].name, who, svg, asks = asked[svg])
+      body.add card(seen[svg], SINGLES[connection].name, who, svg, asks = asked[svg])
     body.add "</div>"
   body.add "</section>"
 
@@ -356,8 +359,8 @@ func sheetOf(P: Parts): string =
 
 
   # `C`. Chain two-hand page walks.
-  let hh = P
-  const PAIRED: Holds = [some Arm.L, some Arm.R]
+  let chains = parts
+  const PAIRED: Holds = [some Arm.Left, some Arm.Right]
   let
     dualPhase = phaseOf(PAIRED)
     dualChain = chainFor(PAIRED)
@@ -390,16 +393,17 @@ func sheetOf(P: Parts): string =
 
 
   # `D`. Dual chain: same hold, follow starting away.
-  let  # `p` for paired, which is this section's hold.
-    pRest = restOf(PAIRED).name
-    pWhole = facingAt(PAIRED, 1.0).get.name
-    pHalf = facingAt(PAIRED, 0.5).get.name
-  body.add &"""<section id="paired"><h2>D &middot; The same-name chain, {pRest} at rest</h2>
+  let  # Paired hold is this section's hold.
+    paired_rest = restOf(PAIRED).name
+    paired_whole = facingAt(PAIRED, 1.0).get.name
+    paired_half = facingAt(PAIRED, 0.5).get.name
+  body.add &"""<section id="paired"><h2>D &middot; The same-name chain, {paired_rest} at rest</h2>
   <p class="lede">This hold joins the left of the lead to the left of the follow, and right to
   right. It walks the chain of section C, read half a turn along. So it runs parallel
-  <b>{pRest}</b> rather than {handRest}, and its phase measures {dualPhase} where the phase of
-  the other chain measures {HAND_PHASE}. Its facing alternates the other way about: {pWhole} at the
-  whole turns, and {pHalf} at the halves. No page in this project walks this
+  <b>{paired_rest}</b> rather than {handRest}, and its phase measures {dualPhase} where the phase of
+  the other chain measures {HAND_PHASE}. """ &
+    &"""Its facing alternates the other way about: {paired_whole} at the
+  whole turns, and {paired_half} at the halves. No page in this project walks this
   chain.</p><div class="grid wide">"""
   for i, position in dualChain:
     body.add card(&"D{i + 1}", position.name,
@@ -428,31 +432,31 @@ func sheetOf(P: Parts): string =
   22 holds it off, and every still in section B is right because of it. <b>In a walk the same
   rule makes the motion catch</b>: the reach steps round a chevron as it passes, then snaps
   back. The stills stand as they are drawn, and the mend belongs to the walk.</p>"""
-  var m = 0
-  for c in 0 ..< SINGLES.len:
-    body.add &"""<h3>{esc(SINGLES[c].name)}</h3><div class="grid wide">"""
+  var e_count = 0
+  for connection in 0 ..< SINGLES.len:
+    body.add &"""<h3>{escaped(SINGLES[connection].name)}</h3><div class="grid wide">"""
     for manner in Manner:
       let
         tag = MANNERS[manner].tag
         said = &"{MANNER_SAID[tag]} {QUARTER_WAY}"
-      if &"rd_{tag}_{c}" in st:
-        inc m
-        body.add card(&"E{m}", said, "the whole round, four quarters in one",
-                      st[&"rd_{tag}_{c}"], asks = @[&"rd_{tag}_{c}"])
+      if &"rd_{tag}_{connection}" in stills:
+        inc e_count
+        body.add card(&"E{e_count}", said, "the whole round, four quarters in one",
+                      stills[&"rd_{tag}_{connection}"], asks = @[&"rd_{tag}_{connection}"])
       var
         steps: seq[tuple[pick, note, svg: string]]
         asksE: seq[string]
-      for q in 0 ..< QUARTERS_ROUND:
-        let key = &"tr_{tag}_{c}_{q}_{(q + 1) mod QUARTERS_ROUND}"
-        if key notin st: continue
+      for quarter in 0 ..< QUARTERS_ROUND:
+        let key = &"tr_{tag}_{connection}_{quarter}_{(quarter + 1) mod QUARTERS_ROUND}"
+        if key notin stills: continue
         asksE.add key
-        steps.add ($(q + 1),
-          &"quarter {q + 1} of 4: from {QUARTER_FROM[q]} to " &
-            &"{QUARTER_FROM[(q + 1) mod QUARTERS_ROUND]}",
-          st[key])
+        steps.add ($(quarter + 1),
+          &"quarter {quarter + 1} of 4: from {QUARTER_FROM[quarter]} to " &
+            &"{QUARTER_FROM[(quarter + 1) mod QUARTERS_ROUND]}",
+          stills[key])
       if steps.len > 0:
-        inc m
-        body.add card(&"E{m}", said, "one quarter at a time", steps,
+        inc e_count
+        body.add card(&"E{e_count}", said, "one quarter at a time", steps,
                       asks = asksE)
     body.add "</div>"
   body.add "</section>"
@@ -477,60 +481,60 @@ func sheetOf(P: Parts): string =
   round</b>: a positive turn by the lead unwinds what a positive turn by the follow winds. So
   each manner turns the way that carries the pair along the chain, and every caption names that
   way, measured on the build.</p><div class="grid wide">"""
-  var k = 0
+  var f_count = 0
   for manner in Manner:
     let
       tag = MANNERS[manner].tag
       said = &"{MANNER_SAID[tag]} {chainWay(manner)}"
-    if &"hc_{tag}" in hh:
-      inc k
-      body.add card(&"F{k}", said,
+    if &"hc_{tag}" in chains:
+      inc f_count
+      body.add card(&"F{f_count}", said,
                     &"the whole chain, {CHAIN.len - 1} halves out and back",
-                    hh[&"hc_{tag}"], asks = @[&"hc_{tag}"])
+                    chains[&"hc_{tag}"], asks = @[&"hc_{tag}"])
     var
       steps: seq[tuple[pick, note, svg: string]]
       asksF: seq[string]
     for i in 0 ..< CHAIN.len - 1:
       let key = &"hw_{tag}_{i}"
-      if key notin hh: continue
+      if key notin chains: continue
       asksF.add key
-      steps.add ($(i + 1), CHAIN[i].name & " to " & CHAIN[i + 1].name, hh[key])
+      steps.add ($(i + 1), CHAIN[i].name & " to " & CHAIN[i + 1].name, chains[key])
     if steps.len > 0:
-      inc k
-      body.add card(&"F{k}", said, "one edge at a time", steps, asks = asksF)
+      inc f_count
+      body.add card(&"F{f_count}", said, "one edge at a time", steps, asks = asksF)
   body.add "</div></section>"
 
   # `G`. Every edge of paired chain animated, as `F` does for section C.
   body.add &"""<section id="paired-moving">
-  <h2>G &middot; Hand-to-hand chain, {pRest}, moving</h2>
+  <h2>G &middot; Hand-to-hand chain, {paired_rest}, moving</h2>
   <p class="lede">Every edge of the same-name chain of section D, walked by every manner of
   turn. Each manner takes the same two cells that section F uses, and the way each manner walks
-  is read the same. This chain rests <b>{pRest}</b> rather than {handRest}, because {handRest}
+  is read the same. This chain rests <b>{paired_rest}</b> rather than {handRest}, because {handRest}
   its two connections lie through each other (rule 31). Its phase measures
   {dualPhase}, where the phase of the cross-name chain measures {HAND_PHASE}.</p>
   <div class="grid wide">"""
-  var g = 0
+  var g_count = 0
   for manner in Manner:
     let
       tag = MANNERS[manner].tag
       said = &"{MANNER_SAID[tag]} {chainWay(manner)}"
-    if &"pc_{tag}" in hh:
-      inc g
-      body.add card(&"G{g}", said,
+    if &"pc_{tag}" in chains:
+      inc g_count
+      body.add card(&"G{g_count}", said,
                     &"the whole chain, {dualChain.len - 1} halves out and back",
-                    hh[&"pc_{tag}"], asks = @[&"pc_{tag}"])
+                    chains[&"pc_{tag}"], asks = @[&"pc_{tag}"])
     var
       steps: seq[tuple[pick, note, svg: string]]
       asksG: seq[string]
     for i in 0 ..< dualChain.len - 1:
       let key = &"pw_{tag}_{i}"
-      if key notin hh: continue
+      if key notin chains: continue
       asksG.add key
       steps.add ($(i + 1),
-                 dualChain[i].name & " to " & dualChain[i + 1].name, hh[key])
+                 dualChain[i].name & " to " & dualChain[i + 1].name, chains[key])
     if steps.len > 0:
-      inc g
-      body.add card(&"G{g}", said, "one edge at a time", steps, asks = asksG)
+      inc g_count
+      body.add card(&"G{g_count}", said, "one edge at a time", steps, asks = asksG)
   body.add "</div></section>"
 
   const SWITCHING = block:
@@ -594,7 +598,7 @@ func sheetOf(P: Parts): string =
     border-radius: 2px; font-style: normal; }
   .tag.keep { background: var(--keep); color: var(--card); }
   .tag.drop { background: var(--drop); color: var(--card); }
-  /* Cell is green only where Architect kept it *and* sim reaches all of it.
+  /* Cell is green only where Architect kept it *and* simulation reaches all of it.
      Kept alone coloured nothing: it was page's one colour and said nothing of
      second tag, so page read finished wherever verdict was given. */
   .pic.part { border-color: var(--mend); background: var(--mend-wash); }
@@ -634,10 +638,11 @@ func sheetOf(P: Parts): string =
   pose, a level for each arm, and a twist that is not a count of half turns.</p>
   <p class="how"><b>Every cell carries two tags.</b> <i>Kept</i> is the ruling of the Architect
   on the drawing, by eye on the floor.</p>
-   <p class="how">The other tag is the body sim's. It reads <i>not modelled</i>
-  where the sim reaches no pose. It reads <i>unconfirmed</i> where the sim reaches one that the
-  Architect has not yet held against their own body on the viewer. It reads <i>modelled</i>
-  once they have. A pose the sim reaches is a claim, and never a verdict.</p>
+   <p class="how">The other tag is the body simulation's. It reads <i>not modelled</i>
+  where the simulation reaches no pose. It reads <i>unconfirmed</i> where the simulation
+  reaches one that the Architect has not yet held against their own body on the viewer. It
+  reads <i>modelled</i> once they have. A pose the simulation reaches is a claim, and never a
+  verdict.</p>
   """ & body & "</div>"
 
   # Counted off page itself rather than tallied while building it, so
@@ -649,13 +654,13 @@ func sheetOf(P: Parts): string =
       &"""&middot; <b>{FLAWED.len}</b> marked for a mend &middot; """ &
       &"""<b>{seen - KEPT.len - DROPPED.len}</b> still to rule on, of {seen}. """ &
       &"""Against the model: <b>{CONFIRMED.len}</b> confirmed by the Architect, """ &
-      &"""<b>{unsure}</b> reached by the sim and not yet confirmed."""
+      &"""<b>{unsure}</b> reached by the simulation and not yet confirmed."""
   sheet.replace("{{tally}}", tally)
 
 
-func render*(P: Parts): string =
+func render*(parts: Parts): string =
   ## Lay page out under its own title.
-  document("Frame Positions, Drawn", sheetOf(P))
+  document("Frame Positions, Drawn", sheetOf(parts))
 
 
 func drawingOf(html, id: string): string =

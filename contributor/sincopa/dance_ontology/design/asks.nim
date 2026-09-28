@@ -1,4 +1,4 @@
-## What each still card of reference asks of body sim: which hands are joined, how
+## What each still card of reference asks of body simulation: which hands are joined, how
 ## far couple are turned from rest, and whose crown joined hands are carried over.
 ##
 ##   One list, read by `design/modelled` (which answers each) and by `design/rig`
@@ -11,7 +11,7 @@
 
 import std/[options, strformat]
 
-import ../sim/[body, hold]
+import ../simulation/[body, hold]
 import ../src/dance_ontology/diagram
 import ../src/dance_ontology/draw/terms
 import ../src/dance_ontology/frame
@@ -19,7 +19,7 @@ from ../src/dance_ontology/rotation import HalfTurns
 import ./parts
 
 
-type StillAsk* = object ## One still card, as sim is asked it.
+type StillAsk* = object ## One still card, as simulation is asked it.
   key*: string    ## Question's key, as page keys its own pictures.
   links*: seq[Link]
   turns*: float   ## Facing, in turns from where hold rests.
@@ -35,31 +35,32 @@ func bodyOf*(who: terms.Dancer): Body =
   if ord(who) == ord(terms.Dancer.Lead): Body.One else: Body.Two
 
 func otherThan*(who: Body): Body =
+  ## Name other dancer of two.
   if ord(who) == ord(Body.One): Body.Two else: Body.One
 
-func armOf*(a: terms.Arm): body.Arm =
-  if ord(a) == ord(terms.Arm.L): body.Arm.Left else: body.Arm.Right
+func armOf*(arm: terms.Arm): body.Arm =
+  ## Translate drawing's arm into simulation's.
+  if ord(arm) == ord(terms.Arm.Left): body.Arm.Left else: body.Arm.Right
 
 func linksOf*(holds: Holds): seq[Link] =
   ## Read `parts`'s hold table: index is lead's arm, value is follow's it joins.
   for lead, follow in holds.pairs:
     if follow.isSome:
-      result.add Link(ends: [(Body.One, armOf(terms.Arm(lead))),
-                             (Body.Two, armOf(follow.get))])
+      result.add Link(ends: [(Body.One, armOf(terms.Arm(lead))), (Body.Two, armOf(follow.get))])
 
 func holdsOf*(target: Frame): Holds =
   ## Which hands this frame joins, in `parts`'s own terms.
   for side in Side:
     if target.hold[side].isSome:
       let
-        lead = (if ord(side) == ord(Side.Left): terms.Arm.L else: terms.Arm.R)
-        follow = (if ord(target.hold[side].get) == ord(Site.LeftHand): terms.Arm.L
-                  else: terms.Arm.R)
+        lead = (if ord(side) == ord(Side.Left): terms.Arm.Left else: terms.Arm.Right)
+        follow = (if ord(target.hold[side].get) == ord(Site.LeftHand): terms.Arm.Left
+                  else: terms.Arm.Right)
       result[lead] = some follow
 
 func asked*(wind: float): float = -wind
-  ## Page's turn as sim's.  Page counts clockwise seen from above
-  ## (`rotation.wayOf`, "how drawings see couple"); sim counts anticlockwise
+  ## Page's turn as simulation's.  Page counts clockwise seen from above
+  ## (`rotation.wayOf`, "how drawings see couple"); simulation counts anticlockwise
   ## (`body.turned`).  Every wind is flipped here, in one place, before it is
   ## asked: flipped for chains alone, A16 was stood in C3's pose and A17 in
   ## C5's, mirror of what each card draws, and every single-hand card likewise.
@@ -69,16 +70,16 @@ func restOf*(target: Frame): Facing = restOf(holdsOf(target))
   ## `parts.restOf`, and never written down.
 
 func awayFor*(rest: Facing): bool =
-  ## Say rest as sim is told it: Face-to-face, or follow turned half, which is
-  ## Face-to-back and which sim calls `away`.
-  ##   Sim stands couple at no other rest, and no card asks one.
+  ## Say rest as simulation is told it: Face-to-face, or follow turned half, which is
+  ## Face-to-back and which simulation calls `away`.
+  ##   Simulation stands couple at no other rest, and no card asks one.
   case rest
   of Facing.FaceToFace: false
   of Facing.FaceToBack: true
-  else: raise newException(Defect, &"Sim rests couple at no `{rest.name}`.")
+  else: raise newException(Defect, &"Simulation rests couple at no `{rest.name}`.")
 
-func away*(a: StillAsk): bool = awayFor(a.rest)
-  ## Say card's rest as sim is told it.
+func away*(ask: StillAsk): bool = awayFor(ask.rest)
+  ## Say card's rest as simulation is told it.
 
 
 func stillAsks*(): seq[StillAsk] =
@@ -96,32 +97,51 @@ func stillAsks*(): seq[StillAsk] =
   #     way couple took it.  Same reading page makes when it decides whether to
   #     draw frame turned other way at all (A17).
   func amountFor(target: Frame; twist: int): float =
-    if turnedFacing(0.0, 180.0 * twist.float) == some(restOf(target)): 0.0 else: 0.5
+    ## Say how far frame winds from its rest to facing `twist` draws: nought or half turn.
+    if turnedFacing(0.0, 180.0 * float(twist)) == some(restOf(target)): 0.0 else: 0.5
   func eitherWay(target: Frame): bool =
+    ## Decide whether frame draws same picture wound either way about.
     renderFrame(target, HalfTurns(1)) == renderFrame(target, HalfTurns(-1))
   for i, target in FRAMES:
     for twist in [0, 1]:
       let amount = amountFor(target, twist)
-      result.add StillAsk(key: &"A{i * 2 + twist + 1}", links: linksOf(holdsOf(target)),
-                          turns: asked(amount), rest: restOf(target),
-                          head: Body.Two, either: amount != 0.0 and eitherWay(target))
+      result.add StillAsk(
+        key: &"A{i * 2 + twist + 1}",
+        links: linksOf(holdsOf(target)),
+        turns: asked(amount),
+        rest: restOf(target),
+        head: Body.Two,
+        either: amount != 0.0 and eitherWay(target),
+      )
   block:
     let target = FRAMES[^1]
-    result.add StillAsk(key: "A17", links: linksOf(holdsOf(target)),
-                        turns: asked(-amountFor(target, 1)),
-                        rest: restOf(target), head: Body.Two)
+    result.add StillAsk(
+      key: "A17",
+      links: linksOf(holdsOf(target)),
+      turns: asked(-amountFor(target, 1)),
+      rest: restOf(target),
+      head: Body.Two,
+    )
   # `B`: four single-hand holds, four manners, four quarters.  Hands go over
   # crown of dancer who walks under, which follows manner.
-  for c, single in SINGLES:
+  for single_index, single in SINGLES:
     for manner in Manner:
       let sense = windSense(manner)
-      for q in 0 ..< QUARTERS_ROUND:
-        result.add StillAsk(key: &"st_{MANNERS[manner].tag}_{c}_{q}",
-                            links: linksOf(single.holds),
-                            turns: asked(sense * q.float / QUARTERS_ROUND.float),
-                            rest: restOf(single.holds), head: bodyOf(MANNERS[manner].who))
+      for quarter in 0 ..< QUARTERS_ROUND:
+        result.add StillAsk(
+          key: &"st_{MANNERS[manner].tag}_{single_index}_{quarter}",
+          links: linksOf(single.holds),
+          turns: asked(sense * float(quarter) / float(QUARTERS_ROUND)),
+          rest: restOf(single.holds),
+          head: bodyOf(MANNERS[manner].who),
+        )
   # `C` and `D`: two chains, seven positions each, half turn apart.
   for (tag, arms) in [("C", HAND_TO_HAND), ("D", PAIRED)]:
-    for i, w in STEPS:
-      result.add StillAsk(key: tag & $(i + 1), links: linksOf(arms), turns: asked(w),
-                          rest: restOf(arms), head: Body.Two)
+    for i, wind in STEPS:
+      result.add StillAsk(
+        key: tag & $(i + 1),
+        links: linksOf(arms),
+        turns: asked(wind),
+        rest: restOf(arms),
+        head: Body.Two,
+      )

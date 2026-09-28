@@ -16,9 +16,9 @@ confirmed. `CONFIRMED` in `review_page.nim` holds none yet.
   between two of them. The first is for one hand, and the second is for two.
 - `review.html` lays out each frame position the project draws, card by card, for the Architect to
   rule on.
-- `rig.html` plays the sweeps and stills that the body sim recorded.
+- `rig.html` plays the sweeps and stills that the body simulation recorded.
 - `wholecloth.html` is drawn by hand, in `../mockups/wholecloth.html`. Its turns panel draws what
-  the body sim found.
+  the body simulation found.
 
 `../README.md` gives the address where each page is published.
 
@@ -26,9 +26,9 @@ confirmed. `CONFIRMED` in `review_page.nim` holds none yet.
 
 ```
 nim r tools/build.nim pages      # checks every standing rule, then writes every page
-nim r tools/build.nim turns      # asks the sim for every hold turning: turns.json
+nim r tools/build.nim turns      # asks the simulation for every hold turning: turns.json
 nim r tools/build.nim rig        # records the sweeps the viewer plays: rig.json
-nim r tools/build.nim modelled   # records which cards the sim reaches: modelled.json
+nim r tools/build.nim modelled   # records which cards the simulation reaches: modelled.json
 nim r tools/build.nim pins       # records what each ruled card is drawn as: review-pins.json
 nim r tools/build.nim shot       # builds the helper that screenshots a page
 ```
@@ -41,9 +41,10 @@ record, and record nothing again when it is the same.
 ## Rules
 
 Each rule the drawing was given is quoted here, in the words it arrived in. Each quotation is a copy
-of its entry in `rules.nim`, and `../tests/suites/treadme.nim` holds the two copies the same. Under
-each is the check in `checks.nim` that holds the drawing to it. Where there is none, it says so, or
-names the rule that replaces it. A replaced rule stays in the list, so its number does not move.
+of its entry in `rules.nim`, and `../tests/suites/test_readme.nim` holds the two copies the same.
+Under each is the check in `checks.nim` that holds the drawing to it. Where there is none, it says
+so, or names the rule that replaces it. A replaced rule stays in the list, so its number does not
+move.
 
 ### Rule 1
 
@@ -306,7 +307,8 @@ Held by `checkHandTurns`.
 > above: connection held above head. high: connection held above shoulder level (about neck). low:
 > connection held below shoulder level (about torso)
 
-The workbench does not check it. The sim reports levels in its words, through `../sim/words.nim`.
+The workbench does not check it. The simulation reports levels in its words, through
+`../simulation/words.nim`.
 
 ### Rule 37
 
@@ -314,15 +316,15 @@ The workbench does not check it. The sim reports levels in its words, through `.
 > same arm. To get into low lock, the form must enter from a low position only due to
 > physical/safety limitations
 
-The workbench does not check it. The sim reports a hand behind its own back as a lock.
+The workbench does not check it. The simulation reports a hand behind its own back as a lock.
 
 ### Rule 38
 
 > wrap: where a lead/follow's arm is crossed around the front of their body under (low) or over
 > (high) their other arm
 
-The workbench does not check it. It does not draw the crossing with the other arm yet. The sim
-reports a hand across the front of its own body as a wrap.
+The workbench does not check it. It does not draw the crossing with the other arm yet. The
+simulation reports a hand across the front of its own body as a wrap.
 
 ### Rule 39
 
@@ -336,8 +338,8 @@ arm.
 
 > half-closed, Left to left held low: wrap at left@0.5, lock at right@1
 
-The workbench does not check it. `../sim/verdicts.md` gives what the sim finds for Left to left held
-low, turned from face to face.
+The workbench does not check it. `../simulation/verdicts.md` gives what the simulation finds for
+Left to left held low, turned from face to face.
 
 ### Rule 41
 
@@ -378,14 +380,14 @@ design/
   marks.nim              builds the five pages above
   plain.nim              reads prose, and holds it to the two countable rules
   faces.nim              the faces each page embeds
-  asks.nim               what each reference card asks of the body sim
-  modelled.nim           which cards the sim reaches: modelled.json
-  turns.nim              every hold turning, asked of the sim: turns.json
+  asks.nim               what each reference card asks of the body simulation
+  modelled.nim           which cards the simulation reaches: modelled.json
+  turns.nim              every hold turning, asked of the simulation: turns.json
   rig.nim                the sweeps and stills the viewer plays: rig.json
   rig_page.nim           rig.html
   rig_view.nim           the viewer, which draws what the engine collides
   drawn.nim              where each point of the world lands on the viewer's canvas
-  wholecloth.nim         splices the data of the sim into wholecloth.html
+  wholecloth.nim         splices the data of the simulation into wholecloth.html
   wholecloth_turns.nim   the turns panel of wholecloth.html
   shot.nim               a screenshot of one page, light and dark
 ```

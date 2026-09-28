@@ -209,11 +209,7 @@ func moves*(source: Frame): seq[Move] =
     let helper = classify(source, destination)
     if helper.isNone:
       continue
-    result.add Move(
-      helper: helper.get,
-      side: actingSide(source, destination),
-      to: destination,
-    )
+    result.add Move(helper: helper.get, side: actingSide(source, destination), to: destination)
   result.sort(compare)
 
 
@@ -374,6 +370,6 @@ func route*(source, destination: Frame): seq[Move] =
         while step != home:
           result.insert(arrival[step], 0)
           step = origin[step]
-        return result
+        return
       queue.add next
   @[]

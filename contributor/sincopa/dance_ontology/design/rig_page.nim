@@ -5,8 +5,8 @@
 ##     `design/rig`, and viewer compiled from `design/rig_view` by `nim js`.
 ##     Page is published as single file, so nothing may be left to fetch.
 ##   Page is laid out as reference page is, section by section and cell by
-##     cell, with sim's own still of each cell drawn beside reference's drawing
-##     of it.  Architect: lay reference and sim side by side so each cell can be
+##     cell, with simulation's own still of each cell drawn beside reference's drawing
+##     of it.  Architect: lay reference and simulation side by side so each cell can be
 ##     compared with what it looks like in model.  Cells are cut from built
 ##     reference page itself rather than drawn again, so what is compared is
 ##     what was ruled on, badge for badge.
@@ -21,6 +21,8 @@
 
 {.experimental: "strictFuncs".}
 
+when compileOption("profiler"): import std/nimprof
+
 import std/[json, os, strformat, strutils, tables]
 
 import ./[faces, page]
@@ -29,7 +31,7 @@ import ./[faces, page]
 const HEAD_BODY = """
 <main class="rigview">
   <header>
-    <p class="kicker">Body sim</p>
+    <p class="kicker">Body simulation</p>
     <h1>The rig, drawn from the engine</h1>
     <p class="lede">The stage draws every capsule the engine tests for contact, and
       nothing more. Each capsule runs between the two points the engine reports, at
@@ -40,8 +42,8 @@ const HEAD_BODY = """
       cannot show it, because a torso is the same front and back, and a head is a
       sphere. Drag the stage to turn the view. Scroll to zoom.</p>
     <p class="lede">Below the stage, each still cell of the reference page appears in
-      that page's order, with the sim's still beside the drawing. For each cell the sim
-      winds the couple into that facing, lifts their joined hands, and then lets the
+      that page's order, with the simulation's still beside the drawing. For each cell the
+      simulation winds the couple into that facing, lifts their joined hands, and then lets the
       pose settle. It keeps the distance between the dancers where the pose carries the
       least strain. Click a cell to put it on the stage, and the arrow buttons or the
       arrow keys step from one cell to the next. One list holds the stills first and
@@ -135,7 +137,7 @@ const SHEET = """<style>
 .cells .lede { font: 0.88rem/1.5 var(--sans); }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem;
   align-items: start; }
-.pair .sim { min-width: 0; }
+.pair .simulation { min-width: 0; }
 .thumb { display: block; width: 100%; aspect-ratio: 1 / 1; cursor: pointer;
   background: var(--paper); border-radius: 3px; }
 .held { margin: .2rem 0 0; font: .6rem/1.3 var(--mono); color: var(--dim); }
@@ -151,80 +153,88 @@ const TITLE* = "The Rig, Drawn from the Engine"
   ## Page's own name, after work's name: what browser tab and published gallery show.
 
 
-func esc(s: string): string =
-  s.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"))
+type
+  Cell = object ## One still cell of reference page, as built page holds it.
+    id: string
+    asks: seq[string]  ## Questions it stands for, as `design/asks` keys them.
+    classes: string    ## Its own classes, carrying kept and modelled.
+    art: string        ## Inner markup of its drawing, badges and all.
+    caption: string    ## Its caption, whole.
 
-func between(s, opener, closer: string; start: int): tuple[at, stop: int] =
+
+func escaped(text: string): string =
+  ## Escape text for markup: ampersand and angle brackets.
+  text.multiReplace(("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"))
+
+func between(text, opener, closer: string; start: int): tuple[at, stop: int] =
   ## Where text between one opener and closer after it lies; `at` is -1 if none.
-  let a = s.find(opener, start)
-  if a < 0: return (-1, -1)
-  let b = s.find(closer, a + opener.len)
-  if b < 0: return (-1, -1)
-  (a + opener.len, b)
+  let opener_at = text.find(opener, start)
+  if opener_at < 0: return (-1, -1)
+  let closer_at = text.find(closer, opener_at + opener.len)
+  if closer_at < 0: return (-1, -1)
+  (opener_at + opener.len, closer_at)
 
 func attribute(tag, name: string): string =
   ## One attribute's value off one opening tag.
-  let (a, b) = between(tag, name & "=\"", "\"", 0)
-  if a < 0: "" else: tag[a ..< b]
+  let (start, stop) = between(tag, name & "=\"", "\"", 0)
+  if start < 0: "" else: tag[start ..< stop]
 
-
-type Cell = object ## One still cell of reference page, as built page holds it.
-  id: string
-  asks: seq[string]  ## Questions it stands for, as `design/asks` keys them.
-  classes: string    ## Its own classes, carrying kept and modelled.
-  art: string        ## Inner markup of its drawing, badges and all.
-  caption: string    ## Its caption, whole.
 
 func cellsOf(html: string): Table[string, seq[Cell]] =
   ## Every still cell of reference page, by section letter, in page's order.
   ##   Cells are cut from built page, since drawing there is what was ruled on.
-  var section = ""
-  var at = 0
+  var
+    section = ""
+    at = 0
   while true:
-    let h2 = html.find("<h2>", at)
-    let fig = html.find("<figure class=\"pic", at)
-    if fig < 0: break
-    if h2 >= 0 and h2 < fig:
-      section = $html[h2 + 4]
-      at = h2 + 4
+    let
+      heading_start = html.find("<h2>", at)
+      figure_start = html.find("<figure class=\"pic", at)
+    if figure_start < 0: break
+    if heading_start >= 0 and heading_start < figure_start:
+      section = $html[heading_start + 4]
+      at = heading_start + 4
       continue
-    let shut = html.find("</figure>", fig)
-    doAssert shut > fig, "A cell on reference page never closes."
-    let whole = html[fig ..< shut + "</figure>".len]
+    let shut = html.find("</figure>", figure_start)
+    doAssert shut > figure_start, "A cell on reference page never closes."
+    let whole = html[figure_start ..< shut + "</figure>".len]
     at = shut + 1
     if section notin ["A", "B", "C", "D"]: continue
-    let tagEnd = whole.find('>')
-    let opening = whole[0 .. tagEnd]
+    let
+      tagEnd = whole.find('>')
+      opening = whole[0 .. tagEnd]
     var cell = Cell(classes: attribute(opening, "class"))
     let asks = attribute(opening, "data-asks")
     if asks.len > 0: cell.asks = asks.split(' ')
-    let (a, b) = between(whole, "<code>", "</code>", 0)
-    doAssert a > 0, "A cell on reference page carries no identifier."
-    cell.id = whole[a ..< b]
+    let (id_start, id_stop) = between(whole, "<code>", "</code>", 0)
+    doAssert id_start > 0, "A cell on reference page carries no identifier."
+    cell.id = whole[id_start ..< id_stop]
     let art = whole.find("<div class=\"art")
     doAssert art >= 0, &"A cell carries no drawing; got `{cell.id}`."
-    let artOpen = whole.find('>', art) + 1
-    let artShut = whole.find("</div>", artOpen)
+    let
+      artOpen = whole.find('>', art) + 1
+      artShut = whole.find("</div>", artOpen)
     cell.art = whole[artOpen ..< artShut]
-    let (c, d) = between(whole, "<figcaption>", "</figcaption>", 0)
-    cell.caption = "<figcaption>" & whole[c ..< d] & "</figcaption>"
+    let (caption_start, caption_stop) = between(whole, "<figcaption>", "</figcaption>", 0)
+    cell.caption = "<figcaption>" & whole[caption_start ..< caption_stop] & "</figcaption>"
     result.mgetOrPut(section, @[]).add cell
 
 func sheetOf(html: string): string =
   ## Reference page's own style, so its cells look here as they do there.
   var at = 0
   while true:
-    let (a, b) = between(html, "<style>", "</style>", at)
-    doAssert a >= 0, "Reference page carries no style block for its cells."
-    let sheet = html[a ..< b]
+    let (start, stop) = between(html, "<style>", "</style>", at)
+    doAssert start >= 0, "Reference page carries no style block for its cells."
+    let sheet = html[start ..< stop]
     if ".pic {" in sheet: return "<style>" & sheet & "</style>"
-    at = b
+    at = stop
 
 
 proc cellsBody(review: string; data: JsonNode): string =
-  ## Lay every still cell out as reference page does, sim's still beside it.
-  var entryOf: Table[string, int]
-  var held: Table[string, string]
+  ## Lay every still cell out as reference page does, simulation's still beside it.
+  var
+    entryOf: Table[string, int]
+    held: Table[string, string]
   for i, still in data["stills"].getElems:
     let key = still["key"].getStr
     entryOf[key] = i
@@ -245,7 +255,7 @@ proc cellsBody(review: string; data: JsonNode): string =
       quit(&"Reference page has no section `{letter}`; run `pages` first.", 1)
     titles.add (letter, review[start ..< review.find("</h2>", start)])
   result.add """<section class="cells"><p class="lede">Every cell here comes from the
-    reference page, with the same badges, and the sim's still stands beside it. Where
+    reference page, with the same badges, and the simulation's still stands beside it. Where
     one cell asks more than one question, the badge shows the first. The picker above
     reaches every cell.</p>"""
   for (letter, title) in titles:
@@ -256,12 +266,12 @@ proc cellsBody(review: string; data: JsonNode): string =
         if key in entryOf: entries.add $entryOf[key]
       result.add &"""<figure class="{cell.classes}" data-id="{cell.id}" """ &
         &"""data-entries="{entries.join(" ")}"><div class="pair">""" &
-        &"""<div class="art">{cell.art}</div><div class="sim">"""
+        &"""<div class="art">{cell.art}</div><div class="simulation">"""
       if entries.len > 0:
         result.add &"""<canvas class="thumb" data-entry="{entries[0]}"></canvas>""" &
-          &"""<p class="held">{esc(held[cell.asks[0]])}</p>"""
+          &"""<p class="held">{escaped(held[cell.asks[0]])}</p>"""
       else:
-        result.add """<p class="held">not asked of sim</p>"""
+        result.add """<p class="held">not asked of simulation</p>"""
       result.add &"""</div></div>{cell.caption}</figure>"""
     result.add "</div>"
   result.add "</section></main>"
@@ -276,10 +286,10 @@ func unstamped*(text: string): string =
 
 when isMainModule:
   let
-    dir = if paramCount() >= 1: paramStr(1) else: "."
+    directory = if paramCount() >= 1: paramStr(1) else: "."
     data = "design" / "rig.json"
-    view = dir / "rig_view.js"
-    review = dir / "review.html"
+    view = directory / "rig_view.js"
+    review = directory / "review.html"
   if not fileExists(data):
     quit(&"Viewer page has no sweeps; run `nim r tools/build.nim rig`: got `{data}`.", 1)
   if not fileExists(view):
@@ -294,5 +304,5 @@ when isMainModule:
                     cellsBody(reviewHtml, parseJson(dataText)) &
                     "<script>var RIG = " & dataText & ";</script>\n" &
                     "<script>" & readFile(view) & "</script>\n")
-  writeFile(dir / "rig.html", withFaces(html))
-  echo "wrote ", dir / "rig.html"
+  writeFile(directory / "rig.html", withFaces(html))
+  echo "wrote ", directory / "rig.html"

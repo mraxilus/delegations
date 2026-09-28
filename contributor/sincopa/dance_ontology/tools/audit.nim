@@ -8,10 +8,12 @@
 ##       derives, so frame it has no row for and move it has no cell for are carried
 ##       under `*` mark instead of name.
 ##     Cost of comparing by eye: nothing here fails when two drift;
-##       agreement is enforced by `tests/suites/tworkbook.nim`, and this only makes it
+##       agreement is enforced by `tests/suites/test_workbook.nim`, and this only makes it
 ##       readable.
 
 {.experimental: "strictFuncs".}
+
+when compileOption("profiler"): import std/nimprof
 
 import std/[options, strutils]
 
@@ -34,16 +36,18 @@ proc printMatrix() =
   for source in FRAMES:
     echo "  from ", source.describe, "  [", source.key, "]"
     for move in moves(source):
-      let cell = cellText(workbookName(source).get(""), workbookName(move.to).get(""))
-      let mark = if cell.isSome: "  " else: "* "
+      let
+        cell = cellText(workbookName(source).get(""), workbookName(move.to).get(""))
+        mark = if cell.isSome: "  " else: "* "
       echo "    ", mark, move.helper.name.alignLeft(9),
         move.to.describe.alignLeft(36), phrase(source, move)
     for target in FRAMES:
       let named = compound(source, target)
       if named.isNone:
         continue
-      let cell = cellText(workbookName(source).get(""), workbookName(target).get(""))
-      let mark = if cell.isSome: "  " else: "* "
+      let
+        cell = cellText(workbookName(source).get(""), workbookName(target).get(""))
+        mark = if cell.isSome: "  " else: "* "
       echo "    ", mark, ($named.get).toLowerAscii.alignLeft(9),
         target.describe.alignLeft(36), compoundPhrase(source, target)
 

@@ -8,7 +8,7 @@
 ##     `WORK` titles page project stands behind, which is validator.
 ##     `MOCKUP` titles exploration or instrument kept for reference, which is every other
 ##       page (`CONTRIBUTOR.md` draws same line between `pages/` and `mockups/`).
-##       Body sim's page stood behind until it went with solver it drove; viewer that
+##       Body simulation's page stood behind until it went with solver it drove; viewer that
 ##       replaced it plays sweeps recorded here and is titled as instrument it is.
 ##   Mockup form is derived from `WORK`, never written out again, so name of work is spelt
 ##     once in whole project (Article II.1).
