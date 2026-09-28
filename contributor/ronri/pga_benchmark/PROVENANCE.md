@@ -473,16 +473,15 @@ pristine bench of `bd6b23c` alone timed it between 9.1 and 11.4 ns. That range h
 five special cases. Every table comes back cell for cell at four algebras, 136 tables, and
 `∩ ∪ ⊞ ⊙ ⊡` are one generated table each. No pin holds the draft.
 
-Three tables stay hard coded in the draft: the metric, the exterior product of bases and
-the complement. Every anti-variant is `constructAnti` of its base, the antiproduct included.
-The four dual products are one dual fed into a wedge or antiwedge. The dot is the scalar part
-of the bulk contraction, and the transwedge keeps one family, for ⟑ alone. Every table is
-unchanged at five algebras, and a suite holds the order gr 𝐚 identity. The 6D front end
-builds in 4.56 s against 6.62 s for `bd6b23c`, ×0.69 over five alternating rounds.
+The draft hard codes three tables: the metric, the wedge and the complement. Every
+anti-variant is `constructAnti` of its base, the antiproduct included. The four dual products
+are one dual fed into a wedge or antiwedge. The dot is the scalar part of the bulk
+contraction, and the transwedge keeps one family, for ⟑ alone. Every table is unchanged at
+five algebras, and a suite holds the order gr 𝐚 identity. At 6D the front end builds in
+4.56 s against 6.62 s, ×0.69 over five rounds, and peaks at 161 MB against 288 MB.
 
 Grade restriction lives in the emission, by decision of the Architect: a typed operand names
-its slots, and the tables stay whole. The front end peaks at 161 MB against 288 MB at 6D. A
-restricted copy of one 2D table costs 0.9 MB there, so a table for each typed pair would not scale.
+its slots, and the tables stay whole. One restricted copy of a 2D table costs 0.9 MB at 6D.
 
 The pristine bench of `bd6b23c` and the bench of the draft ran alternately, nine times each,
 on this container on 2026-09-28. The library suites pass, 33 at rga4d and 28 at cga5d, and
