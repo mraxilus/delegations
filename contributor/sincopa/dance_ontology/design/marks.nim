@@ -76,8 +76,9 @@ const PAGES* = [
 
 proc buildPage*(i: int; directory_out: string) =
   ## Check page `i` of `PAGES`, then write it into `directory_out`.
-  let page = PAGES[i]
-  let built = page.parts_of()
+  let
+    page = PAGES[i]
+    built = page.parts_of()
   echo &"{page.name}: {built.len} pieces"
   page.check(built)
   let

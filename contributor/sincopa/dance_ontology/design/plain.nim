@@ -37,8 +37,9 @@ func cut(markup, opens, shuts: string): string =
 
 func plain(markup: string): string =
   ## Text of markup: tags out, entities said as what they stand for.
-  var out_text = newStringOfCap(markup.len)
-  var inside = false
+  var
+    out_text = newStringOfCap(markup.len)
+    inside = false
   for ch in markup:
     case ch
     of '<': inside = true
@@ -70,8 +71,9 @@ func prose*(markup: string): seq[string] =
       if body[opens + 1 + kind.len] notin {' ', '>'}:
         at = opens + 1
         continue
-      let head = body.find('>', opens)
-      let shuts = body.find("</" & kind & ">", head)
+      let
+        head = body.find('>', opens)
+        shuts = body.find("</" & kind & ">", head)
       if head < 0 or shuts < 0: break
       at = shuts + 1
       let said = body[head + 1 ..< shuts].plain.splitWhitespace.join(" ")
@@ -127,8 +129,9 @@ func markerLen(line: string): int =
 func gathered(fragments: openArray[string]): string =
   ## Lines of one block as one text, each backticked span one word, since reader takes
   ## `nim r koch check` as one name.
-  var inSpan = false
-  var text = ""
+  var
+    inSpan = false
+    text = ""
   for c in fragments.join(" "):
     if c == '`':
       if not inSpan: text.add "name"
@@ -146,16 +149,19 @@ func markdownProse*(document: string): seq[string] =
   ##   Rule is copied rather than imported.  Suite compiled against curator's own check would
   ##     break whenever curator changed that check, which duty 3 forbids curator to do to
   ##     project.  Cost is two copies to keep agreeing, and `tplain.nim` pins this one.
-  var carried: seq[string]
-  var fenced = false
+  var
+    carried: seq[string]
+    fenced = false
   for raw in document.splitLines:
-    let line = raw.strip.multiReplace(("<!--", " "), ("-->", " ")).strip
-    let fence = raw.strip.startsWith("```")
+    let
+      line = raw.strip.multiReplace(("<!--", " "), ("-->", " ")).strip
+      fence = raw.strip.startsWith("```")
     if fence: fenced = not fenced
-    let carries = not fence and not fenced and line.len > 0 and
-                  not line.startsWith("|") and not line.startsWith("#") and
-                  not line.startsWith("---") and not line.startsWith(">")
-    let marker = (if carries: line.markerLen else: 0)
+    let
+      carries = not fence and not fenced and line.len > 0 and
+                not line.startsWith("|") and not line.startsWith("#") and
+                not line.startsWith("---") and not line.startsWith(">")
+      marker = (if carries: line.markerLen else: 0)
     if carried.len > 0 and (not carries or marker > 0):
       result.add carried.gathered
       carried = @[]

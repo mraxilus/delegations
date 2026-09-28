@@ -16,8 +16,9 @@ suite "the axle":
     # Placed by twist itself rather than by index, so distance
     # between two postures on drawing is size of turn between
     # them, wherever it is taken.
-    let stood = FRAMES[1].rest
-    let places = standing(stood)
+    let
+      stood = FRAMES[1].rest
+      places = standing(stood)
     check places.len > 1
     var gap = 0
     for i in 1 ..< places.len:

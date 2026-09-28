@@ -205,8 +205,9 @@ proc keptReadings*(path = KEPT_READINGS): Readings =
 
 proc keep*(r: Readings; path = KEPT_READINGS) =
   ## Write readings, sorted by key so file changes only where readings do.
-  var sorted = Readings(stamp: r.stamp)
-  var keys = toSeq(r.sweeps.keys)
+  var
+    sorted = Readings(stamp: r.stamp)
+    keys = toSeq(r.sweeps.keys)
   keys.sort
   for k in keys: sorted.sweeps[k] = r.sweeps[k]
   keys = toSeq(r.rungs.keys)

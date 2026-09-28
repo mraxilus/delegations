@@ -200,9 +200,10 @@ proc work(slice: tuple[first, every: int]) {.thread.} =
     while i < all.len:
       let j = all[i]
       if j.still:
-        let a = j.ask
-        let recording = still(HUMAN, Band.Crown, a.links, a.key, a.turns, away = a.away,
-                       head = a.head, either = a.either)
+        let
+          a = j.ask
+          recording = still(HUMAN, Band.Crown, a.links, a.key, a.turns, away = a.away,
+                     head = a.head, either = a.either)
         NOTES[i] =
           if recording.stills.len > 0:
             &"{a.key}: {recording.turns:+.2f} turns, stood {recording.apart:.2f}"

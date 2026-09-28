@@ -132,8 +132,9 @@ func slotChart*(arm = Arm.L): string =
   ##     page, and body facing up hides difference (rule 3).
   # Its own box rather than square every other figure uses: labels
   # are wide and body is small, so square would draw it tiny.
-  var bits = @["""<svg viewBox="-80 -46 160 92" width="248" height="143">"""]
-  var chart = rest()
+  var
+    bits = @["""<svg viewBox="-80 -46 160 92" width="248" height="143">"""]
+    chart = rest()
   chart.place[Dancer.Lead] = (0.0, 0.0)
   chart.facing[Dancer.Lead] = CHART_FACING
   bits.add border(chart, Dancer.Lead)

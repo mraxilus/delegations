@@ -101,8 +101,9 @@ proc withFaces*(raw: string; directory = DIRECTORY_FONTS): string =
   const
     SHUT = "</head>"
     TITLE = "</title>"
-  let html = withoutFaces(raw)
-  let shuts = html.find(SHUT)
+  let
+    html = withoutFaces(raw)
+    shuts = html.find(SHUT)
   if shuts >= 0:
     return html[0 ..< shuts] & faceStyle(directory) & "\n" & html[shuts .. ^1]
   let titled = html.find(TITLE)

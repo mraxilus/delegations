@@ -1081,8 +1081,9 @@ func splitAt*(runs: seq[Run]; mid: Point): tuple[near, far: seq[Run]] =
       let d = distance(q, mid)
       if d < best.d:
         best = (d, i, j)
-  var near = runs[0 ..< best.i] & @[runs[best.i][0 .. best.j]]
-  var far = @[runs[best.i][best.j .. ^1]] & runs[best.i + 1 .. ^1]
+  var
+    near = runs[0 ..< best.i] & @[runs[best.i][0 .. best.j]]
+    far = @[runs[best.i][best.j .. ^1]] & runs[best.i + 1 .. ^1]
   for run in near:
     if run.len > 1:
       result.near.add run

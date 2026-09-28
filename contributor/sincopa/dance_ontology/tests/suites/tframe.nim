@@ -117,8 +117,9 @@ suite "naming":
     check fromKey("lrR").get.describe == "Right-to-right over Left-to-left"
 
   test "the two crossing orders are one position and two frames":
-    let over_left = fromKey("lrL").get
-    let over_right = fromKey("lrR").get
+    let
+      over_left = fromKey("lrL").get
+      over_right = fromKey("lrR").get
     check over_left != over_right
     check over_left.position == over_right.position
     check over_left.position == "Left-to-left and Right-to-right"

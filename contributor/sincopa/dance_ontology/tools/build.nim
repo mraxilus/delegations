@@ -108,8 +108,9 @@ proc run(program: string; arguments: openArray[string]) =
   ## Run program with args from project directory; raise on non-zero exit.
   ##   Named rather than shelled through string, so no argument needs quoting and no
   ##     path with space in it can split.
-  let process = startProcess(program, args = arguments, options = {poUsePath, poParentStreams})
-  let code = process.waitForExit
+  let
+    process = startProcess(program, args = arguments, options = {poUsePath, poParentStreams})
+    code = process.waitForExit
   process.close
   if code != 0:
     raise newException(OSError, program & " failed; got exit `" & $code & "`.")

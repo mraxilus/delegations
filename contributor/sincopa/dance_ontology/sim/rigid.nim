@@ -498,8 +498,9 @@ proc armOf(c: var Couple; who: Body; arm: Arm; group: cint): ArmRig =
   link_definition.gravityScale = 0.0
   link_definition.enableSleep = false
   result.collar = eng.createBody(c.world, addr link_definition)
-  var bone = eng.Capsule(center1: eng.vec(0, 0, 0), center2: asEngine(-inner), radius: COLLAR_R)
-  var shape_definition = eng.defaultShape()
+  var
+    bone = eng.Capsule(center1: eng.vec(0, 0, 0), center2: asEngine(-inner), radius: COLLAR_R)
+    shape_definition = eng.defaultShape()
   shape_definition.density = cfloat(DENSITY)
   shape_definition.filter.groupIndex = 0
   shape_definition.filter.categoryBits = 0'u64
@@ -1271,15 +1272,16 @@ proc stoppedBy*(c: Couple; i: int): tuple[why: Stop, k: int] =
 proc stopOf*(c: Couple; i: int): Stop = stoppedBy(c, i).why
   ## What stops this connection here, if anything does.
 
-const FACING* = 0.05 ## Of way up (`up`), within which couple count as facing and
-                     ## hands are asked into torso band: wound whole turn, couple
-                     ## come back within float of face to face, not to it.
-const OVER* = 0.05 ## Metres joined hand may sit over torso band's top facing: wound
-                   ## arms press hands up against lift's forty newtons, and same-name
-                   ## chain come round to face to face sat at 1.37 to 1.39 m against
-                   ## 1.35, mid torso by any reading and hold at no other height.
-const SAG* = 0.03 ## Metres joined hand may sit under its band's edge, once
-  ## risen, lift being spring against comfort and not wall.
+const
+  FACING* = 0.05 ## Of way up (`up`), within which couple count as facing and
+                 ## hands are asked into torso band: wound whole turn, couple
+                 ## come back within float of face to face, not to it.
+  OVER* = 0.05   ## Metres joined hand may sit over torso band's top facing: wound
+                 ## arms press hands up against lift's forty newtons, and same-name
+                 ## chain come round to face to face sat at 1.37 to 1.39 m against
+                 ## 1.35, mid torso by any reading and hold at no other height.
+  SAG* = 0.03    ## Metres joined hand may sit under its band's edge, once
+                 ## risen, lift being spring against comfort and not wall.
 
 proc gives*(c: Couple): Stop =
   ## What stops couple's pose here, if anything does: first connection that

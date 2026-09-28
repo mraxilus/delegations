@@ -249,8 +249,9 @@ func renderMoves(source: Frame): string =
   ##   It is grouped and counted apart from moves so that page never
   ##     says two things are one.
   let available = moves(source)
-  var rows = ""
-  var previous = ""
+  var
+    rows = ""
+    previous = ""
   for move in available:
     let helper = $move.helper
     if helper != previous:
@@ -296,8 +297,9 @@ func renderElsewhere(source: Frame): string =
   ##       it.
   ##     Route always knew which two; it was throwing answer away and
   ##       printing only its shape.
-  var rows = ""
-  var count = 0
+  var
+    rows = ""
+    count = 0
   for target in FRAMES:
     if target == source or classify(source, target).isSome or
         compound(source, target).isSome:
@@ -502,8 +504,9 @@ func renderGallery(narrowing: Filter): string =
   ##   Showing both means vocabulary can be read off drawing rather
   ##     than trusted, which is same reason review page carries
   ##     pictures too.
-  var cards = ""
-  var shown = 0
+  var
+    cards = ""
+    shown = 0
   for target in FRAMES:
     if not narrowing.admits(target):
       continue
@@ -724,12 +727,13 @@ proc paintStage() =
 
 proc render() =
   ## Draw whole page from session state.
-  let body =
-    case VIEW_SHOWN
-    of View.Dance: renderDance(CURRENT, DRAWING_SHOWN, MOTION_NOW, FRAME_TAKEN, HISTORY)
-    of View.Atlas: renderGallery(FILTER_APPLIED)
-    of View.Matrix: renderMatrix()
-  let held = holding()
+  let
+    body =
+      case VIEW_SHOWN
+      of View.Dance: renderDance(CURRENT, DRAWING_SHOWN, MOTION_NOW, FRAME_TAKEN, HISTORY)
+      of View.Atlas: renderGallery(FILTER_APPLIED)
+      of View.Matrix: renderMatrix()
+    held = holding()
   document.getElementById("app").innerHTML = cstring(renderControls(VIEW_SHOWN) & body)
   standAgain(held)
   centreOnHeld()
@@ -870,8 +874,9 @@ proc handle(event: Event) =
   let node = event.target.closest("button")
   if node == nil:
     return
-  let action = $node.getAttribute("data-action")
-  let value = $node.getAttribute("data-value")
+  let
+    action = $node.getAttribute("data-action")
+    value = $node.getAttribute("data-value")
   case action
   of "move":
     dance(value)

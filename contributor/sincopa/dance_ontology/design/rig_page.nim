@@ -182,11 +182,13 @@ func attribute(tag, name: string): string =
 func cellsOf(html: string): Table[string, seq[Cell]] =
   ## Every still cell of reference page, by section letter, in page's order.
   ##   Cells are cut from built page, since drawing there is what was ruled on.
-  var section = ""
-  var at = 0
+  var
+    section = ""
+    at = 0
   while true:
-    let h2 = html.find("<h2>", at)
-    let fig = html.find("<figure class=\"pic", at)
+    let
+      h2 = html.find("<h2>", at)
+      fig = html.find("<figure class=\"pic", at)
     if fig < 0: break
     if h2 >= 0 and h2 < fig:
       section = $html[h2 + 4]
@@ -197,8 +199,9 @@ func cellsOf(html: string): Table[string, seq[Cell]] =
     let whole = html[fig ..< shut + "</figure>".len]
     at = shut + 1
     if section notin ["A", "B", "C", "D"]: continue
-    let tagEnd = whole.find('>')
-    let opening = whole[0 .. tagEnd]
+    let
+      tagEnd = whole.find('>')
+      opening = whole[0 .. tagEnd]
     var cell = Cell(classes: attribute(opening, "class"))
     let asks = attribute(opening, "data-asks")
     if asks.len > 0: cell.asks = asks.split(' ')
@@ -207,8 +210,9 @@ func cellsOf(html: string): Table[string, seq[Cell]] =
     cell.id = whole[a ..< b]
     let art = whole.find("<div class=\"art")
     doAssert art >= 0, &"A cell carries no drawing; got `{cell.id}`."
-    let artOpen = whole.find('>', art) + 1
-    let artShut = whole.find("</div>", artOpen)
+    let
+      artOpen = whole.find('>', art) + 1
+      artShut = whole.find("</div>", artOpen)
     cell.art = whole[artOpen ..< artShut]
     let (c, d) = between(whole, "<figcaption>", "</figcaption>", 0)
     cell.caption = "<figcaption>" & whole[c ..< d] & "</figcaption>"
@@ -227,8 +231,9 @@ func sheetOf(html: string): string =
 
 proc cellsBody(review: string; data: JsonNode): string =
   ## Lay every still cell out as reference page does, sim's still beside it.
-  var entryOf: Table[string, int]
-  var held: Table[string, string]
+  var
+    entryOf: Table[string, int]
+    held: Table[string, string]
   for i, still in data["stills"].getElems:
     let key = still["key"].getStr
     entryOf[key] = i

@@ -255,14 +255,14 @@ func sign*(slots: seq[Row]; lean = Lean.Cw; arms = BOTH_UNSAID;
     ending = none(Ending); scale = 1.2; packed = true): string =
   ## Draw one turn sign: quarter turns up from foot, arms across, one
   ## height for every sign.
-  let rows =
-    if ending == some(Ending.EllipsisEnd): @[Row.Ellipsis] & slots
-    elif ending == some(Ending.RepeatEnd): @[Row.Repeat] & slots
-    elif ending == some(Ending.Spill):
-      # Pip cut by missing lid repeats whoever top quarter is.
-      @[slots[0]] & slots
-    else: slots
   let
+    rows =
+      if ending == some(Ending.EllipsisEnd): @[Row.Ellipsis] & slots
+      elif ending == some(Ending.RepeatEnd): @[Row.Repeat] & slots
+      elif ending == some(Ending.Spill):
+        # Pip cut by missing lid repeats whoever top quarter is.
+        @[slots[0]] & slots
+      else: slots
     (markup, box) = signBody(
       rows,
       lean,

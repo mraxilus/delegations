@@ -308,8 +308,9 @@ func describe*(frame: Frame): string =
     let side = if frame.hold[Side.Left].isSome: Side.Left else: Side.Right
     describeConnection(side, frame.hold[side].get, " to ")
   else:
-    let first = if frame.over.isSome: frame.over.get else: Side.Left
-    let joiner = if frame.over.isSome: " over " else: " and "
+    let
+      first = if frame.over.isSome: frame.over.get else: Side.Left
+      joiner = if frame.over.isSome: " over " else: " and "
     describeConnection(first, frame.hold[first].get) & joiner &
       describeConnection(other(first), frame.hold[other(first)].get)
 
@@ -336,8 +337,9 @@ func brief*(frame: Frame): string =
     let side = if frame.hold[Side.Left].isSome: Side.Left else: Side.Right
     briefName(side) & " to " & briefName(frame.hold[side].get)
   else:
-    let first = if frame.over.isSome: frame.over.get else: Side.Left
-    let joiner = if frame.over.isSome: " over " else: " and "
+    let
+      first = if frame.over.isSome: frame.over.get else: Side.Left
+      joiner = if frame.over.isSome: " over " else: " and "
     briefName(first) & "-to-" & briefName(frame.hold[first].get) & joiner &
       briefName(other(first)) & "-to-" & briefName(frame.hold[other(first)].get)
 

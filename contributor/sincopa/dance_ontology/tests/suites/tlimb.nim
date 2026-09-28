@@ -49,9 +49,10 @@ suite "the rig":
     check abs(touching(HUMAN) - 2.0 * halfDepth(HUMAN, Part.Torso)) < 1e-9
 
   test "a hand is a quarter turn off the way its body faces":
-    let stance = facing(HUMAN, APART)
-    let l1 = shoulder(HUMAN, stance[Body.One], LEFT)
-    let l2 = shoulder(HUMAN, stance[Body.Two], LEFT)
+    let
+      stance = facing(HUMAN, APART)
+      l1 = shoulder(HUMAN, stance[Body.One], LEFT)
+      l2 = shoulder(HUMAN, stance[Body.Two], LEFT)
     check abs(l1.x + HUMAN.shoulderOut) < 1e-9 and abs(l1.y) < 1e-9
     check abs(l2.x - HUMAN.shoulderOut) < 1e-9 and abs(l2.y - APART) < 1e-9
     check abs(l1.z - HUMAN.shoulderUp) < 1e-9
@@ -153,6 +154,7 @@ suite "nothing passes through anybody":
         check got >= truth - 0.003
 
   test "over the crown there is nothing to hit":
-    let stance = facing(HUMAN, APART)[Body.Two]
-    let top = HUMAN.top[Part.Head] + HUMAN.limb + 0.001
+    let
+      stance = facing(HUMAN, APART)[Body.Two]
+      top = HUMAN.top[Part.Head] + HUMAN.limb + 0.001
     check bodyGap(HUMAN, stance, (0.0, 0.0, top), (0.0, 0.8, top), own = false).gap == Inf

@@ -43,8 +43,9 @@ suite "the picture":
     # put frames side by side and read one against another.
     var boxes: seq[string] = @[]
     for target in FRAMES:
-      let picture = renderFrame(target)
-      let start = picture.find("viewBox=\"")
+      let
+        picture = renderFrame(target)
+        start = picture.find("viewBox=\"")
       check start >= 0
       let box = picture[start .. picture.find('"', start + 9)]
       if box notin boxes:

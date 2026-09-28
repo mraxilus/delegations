@@ -245,13 +245,15 @@ proc working(id: int) {.thread.} =
       let t = TASKS[i]
       case t.job
       of Sweep:
-        let q = SWEEPS[t.index]
-        let sweep = swept(HUMAN, q.band, q.links, most = q.most)
+        let
+          q = SWEEPS[t.index]
+          sweep = swept(HUMAN, q.band, q.links, most = q.most)
         SWEPTS[t.index] = Ways(negative: wayOf(sweep.negative), positive: wayOf(sweep.positive))
       of WalkFrom:
-        let q = WALKS[t.index]
-        let w = walked(HUMAN, q.band, q.links, Body.Two, FARS[t.far], q.most, q.step,
-                       false, Body.Two)
+        let
+          q = WALKS[t.index]
+          w = walked(HUMAN, q.band, q.links, Body.Two, FARS[t.far], q.most, q.step,
+                     false, Body.Two)
         WALKEDS[t.index][t.far] = Walked(
           apart: FARS[t.far],
           holds: w.restHolds,
@@ -262,8 +264,9 @@ proc working(id: int) {.thread.} =
         let q = REACHES[t.index]
         REACHED[t.index] = reaches(HUMAN, q.band, q.links, q.turns, q.away)
       of Still:
-        let q = STILLS[t.index]
-        let got = standing(HUMAN, Band.Crown, q.links, q.turns, q.away, Body.Two, q.either)
+        let
+          q = STILLS[t.index]
+          got = standing(HUMAN, Band.Crown, q.links, q.turns, q.away, Body.Two, q.either)
         STOODS[t.index] = Stand(holds: got.holds, apart: got.apart, turns: got.turns)
 
 proc answer*(): Answers =

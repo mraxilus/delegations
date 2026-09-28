@@ -47,8 +47,9 @@ func turns(x: float): string = formatFloat(x, ffDecimal, 2)
 
 func half(h: int): string =
   ## Render count of half turns as signed turns, e.g. `+1 1/2`.
-  let sign = if h < 0: "-" elif h > 0: "+" else: ""
-  let a = abs(h)
+  let
+    sign = if h < 0: "-" elif h > 0: "+" else: ""
+    a = abs(h)
   sign & (if a mod 2 == 0: $(a div 2) else: (if a > 1: $(a div 2) & " 1/2" else: "1/2"))
 
 func strainWord(strain: float): string =
@@ -191,12 +192,13 @@ proc floorClaim(): string =
     for (word, band) in BANDS:
       let sweep = sweepOf(band, oneLink(a, b))
       for (way, sign) in [("lock way", lockSign), ("wrap way", -lockSign)]:
-        let w = if sign < 0: sweep.negative else: sweep.positive
-        let floor = if band == Band.Crown: "no block"
-                    elif band == Band.Torso and way == "wrap way": "half a turn"
-                    else: "a whole turn"
-        let says = if w.stopped: &"blocks at {turns(w.at)}" else: "no block"
-        let names = if w.stopped: whyOf(w) else: ""
+        let
+          w = if sign < 0: sweep.negative else: sweep.positive
+          floor = if band == Band.Crown: "no block"
+                  elif band == Band.Torso and way == "wrap way": "half a turn"
+                  else: "a whole turn"
+          says = if w.stopped: &"blocks at {turns(w.at)}" else: "no block"
+          names = if w.stopped: whyOf(w) else: ""
         result.add &"| {name} | {word} | {way} | {floor} | {says} | {names} |\n"
   result.add "\n"
 
@@ -299,8 +301,9 @@ proc standing(): string =
     "what the block does when the couple are made to step in or out.  The row above them is " &
     "where they stand when left to choose.")
   result.add "| apart | lock way | wrap way |\n|---|---|---|\n"
-  let links = oneLink(Arm.Left, Arm.Left)
-  let chosen = sweepOf(Band.Torso, links)
+  let
+    links = oneLink(Arm.Left, Arm.Left)
+    chosen = sweepOf(Band.Torso, links)
   result.add &"| chosen | {blockLine(chosen.negative, \"-\")} | " &
     &"{blockLine(chosen.positive, \"+\")} |\n"
   for apart in [0.36, 0.50, 0.70]:

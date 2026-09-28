@@ -19,8 +19,9 @@ suite "the relation":
   test "every primitive reverses, so the relation is symmetric":
     for source in FRAMES:
       for destination in FRAMES:
-        let forward = classify(source, destination)
-        let backward = classify(destination, source)
+        let
+          forward = classify(source, destination)
+          backward = classify(destination, source)
         check forward.isSome == backward.isSome  # law `transition.nim`'s header states
         if forward.isSome:
           check backward.get == forward.get.inverse
@@ -57,8 +58,9 @@ suite "the primitives":
     # That move is trace, and there is nothing between follow's hands to
     # trace along. It becomes move when arms and body are places to hold.
     for side in Side:
-      var source = Frame()
-      var destination = Frame()
+      var
+        source = Frame()
+        destination = Frame()
       source.hold[side] = some(Site.LeftHand)
       destination.hold[side] = some(Site.RightHand)
       check classify(source, destination).isNone
@@ -112,8 +114,9 @@ suite "the compounds":
           check source.hold[side] == destination.hold[other(side)]
 
   test "the two crossing orders are two moves apart, and only by a cut":
-    let over_left = fromKey("lrL").get
-    let over_right = fromKey("lrR").get
+    let
+      over_left = fromKey("lrL").get
+      over_right = fromKey("lrR").get
     check compound(over_left, over_right) == some(Compound.Cut)
     check route(over_left, over_right).len == 2
     # Frame in between is whichever hand stays held while other re-takes.
@@ -274,8 +277,9 @@ suite "routes":
 
 suite "the vocabulary":
   test "no two moves share a mark, a name or a change":
-    var marks: seq[char] = @[]
-    var names, changes: seq[string] = @[]
+    var
+      marks: seq[char] = @[]
+      names, changes: seq[string] = @[]
     for helper in Helper:
       check HELPER_MARKS[helper] notin marks
       check helper.name notin names

@@ -33,8 +33,9 @@ proc capsule(w: WorldId; x: float): BodyId =
   body_definition.kind = BODY_DYNAMIC
   body_definition.position = Pos(x: x, y: 0.0, z: 0.0)
   result = createBody(w, addr body_definition)
-  var shape_definition = defaultShape()
-  var capsule = Capsule(center1: vec(0, -0.15, 0), center2: vec(0, 0.15, 0), radius: 0.045)
+  var
+    shape_definition = defaultShape()
+    capsule = Capsule(center1: vec(0, -0.15, 0), center2: vec(0, 0.15, 0), radius: 0.045)
   discard createCapsule(result, addr shape_definition, addr capsule)
 
 
@@ -44,15 +45,17 @@ suite "the engine this project turns couples with":
     ##   rather than failing to link.
     var definition = defaultWorld()
     definition.enableSleep = false
-    let w = createWorld(addr definition)
-    let g = abs(float(definition.gravity.y))
+    let
+      w = createWorld(addr definition)
+      g = abs(float(definition.gravity.y))
     check g > 9.0     # Engine's own, not this project's; only its order matters.
     var body_definition = defaultBody()
     body_definition.kind = BODY_DYNAMIC
     body_definition.position = Pos(x: 0.0, y: 10.0, z: 0.0)
     let body = createBody(w, addr body_definition)
-    var shape_definition = defaultShape()
-    var capsule = Capsule(center1: vec(0, -0.1, 0), center2: vec(0, 0.1, 0), radius: 0.05)
+    var
+      shape_definition = defaultShape()
+      capsule = Capsule(center1: vec(0, -0.1, 0), center2: vec(0, 0.1, 0), radius: 0.05)
     discard createCapsule(body, addr shape_definition, addr capsule)
     for i in 1 .. 240:
       step(w, cfloat(1.0 / 240.0), 8)
@@ -64,9 +67,10 @@ suite "the engine this project turns couples with":
     ## Reason engine is here at all.  Two capsules are started deep inside each other
     ##   and must part: arms of this project are capsules of this thickness, and pose
     ##   search that came before let them lie through one another unremarked.
-    let w = world()
-    let a = capsule(w, -0.01)
-    let b = capsule(w, 0.01)
+    let
+      w = world()
+      a = capsule(w, -0.01)
+      b = capsule(w, 0.01)
     check abs(positionOf(b).at.x - positionOf(a).at.x) < 0.03
     for i in 1 .. 240:
       step(w, cfloat(1.0 / 240.0), 8)
@@ -86,8 +90,9 @@ suite "the engine this project turns couples with":
     body_definition.kind = BODY_DYNAMIC
     body_definition.position = Pos(x: 0.0, y: 0.0, z: 0.0)
     let centre = createBody(w, addr body_definition)
-    var shape_definition = defaultShape()
-    var big = Capsule(center1: vec(0, -0.3, 0), center2: vec(0, 0.3, 0), radius: 0.2)
+    var
+      shape_definition = defaultShape()
+      big = Capsule(center1: vec(0, -0.3, 0), center2: vec(0, 0.3, 0), radius: 0.2)
     discard createCapsule(centre, addr shape_definition, addr big)
     const AROUND = 10
     var around: seq[BodyId]

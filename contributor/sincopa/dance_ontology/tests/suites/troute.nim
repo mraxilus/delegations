@@ -97,8 +97,9 @@ suite "reach breaks":
     check cutGap(LINE_SAMPLED, beside) == @[LINE_SAMPLED]
 
   test "a reach that is crossed is broken where it is crossed":
-    let across = @[(x: 30.0, y: -20.0), (x: 30.0, y: 20.0)]
-    let runs = cutGap(LINE_SAMPLED, across)
+    let
+      across = @[(x: 30.0, y: -20.0), (x: 30.0, y: 20.0)]
+      runs = cutGap(LINE_SAMPLED, across)
     check runs.len == 2
     check runs[0][0] == LINE_SAMPLED[0]
     check runs[^1][^1] == LINE_SAMPLED[^1]

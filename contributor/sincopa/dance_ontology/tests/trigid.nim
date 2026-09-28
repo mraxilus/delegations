@@ -489,8 +489,9 @@ func between(a, b, c, d: Vec): float =
     uw = dot(u, w)
     vw = dot(v, w)
     den = uu * vv - uv * uv
-  var s = 0.0
-  var t = 0.0
+  var
+    s = 0.0
+    t = 0.0
   if den > 1e-12:
     s = clamp((uv * vw - vv * uw) / den, 0.0, 1.0)
   t = (uv * s + vw) / max(vv, 1e-12)
@@ -597,14 +598,16 @@ proc going(id: int) {.thread.} =
       if i >= GOES.len: return
       let g = GOES[i]
       if g.sweep:
-        let q = SWEEPS[g.index]
-        let w = walked(HUMAN, q.band, q.links, Body.Two, g.apart, q.most,
-                       (if g.positive: STEP else: -STEP), false, Body.Two)
+        let
+          q = SWEEPS[g.index]
+          w = walked(HUMAN, q.band, q.links, Body.Two, g.apart, q.most,
+                     (if g.positive: STEP else: -STEP), false, Body.Two)
         WENTS[i] = wentOf(w, q.links)
       else:
-        let q = WALKS[g.index]
-        let w = walked(HUMAN, q.band, q.links, Body.Two, g.apart, q.most, q.step,
-                       false, Body.Two)
+        let
+          q = WALKS[g.index]
+          w = walked(HUMAN, q.band, q.links, Body.Two, g.apart, q.most, q.step,
+                     false, Body.Two)
         WENTS[i] = wentOf(w, q.links)
 
 proc walkEveryWay() =

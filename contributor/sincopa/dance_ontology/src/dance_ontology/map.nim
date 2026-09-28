@@ -628,10 +628,11 @@ func renderMap*(here: Option[Frame]; motion = Motion.Still;
   # Names are *placed* in other order.  Curves are placed first because
   # each has only one place it can be named, and every name after has to
   # keep clear of ones already put down.
-  var used = frameBoxes()
-  var ink, names = ""
-  var curve_ink, curve_names = ""
-  var drawn: seq[string] = @[]
+  var
+    used = frameBoxes()
+    ink, names = ""
+    curve_ink, curve_names = ""
+    drawn: seq[string] = @[]
   for source in FRAMES:
     for target in FRAMES:
       let helper = compound(source, target)

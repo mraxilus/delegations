@@ -545,9 +545,10 @@ proc checkSingleTurns*(built: Parts) =
   doAssert walked_whole == whole,
     &"A round went unwalked whole; got `{walked_whole}` of `{whole}`."
   for manner in Manner:
-    let w = MANNERS[manner]
-    let walk = turnWalk(quarterPose(manner, 0), w.who, w.about, QUARTER,
-                        on = Anchor.Lead, steps = QUARTERS_ROUND, back = false)
+    let
+      w = MANNERS[manner]
+      walk = turnWalk(quarterPose(manner, 0), w.who, w.about, QUARTER,
+                      on = Anchor.Lead, steps = QUARTERS_ROUND, back = false)
     doAssert placeOf(walk.poses[^1]) == placeOf(walk.poses[0]),
       &"A whole round did not close where it set off; got {manner}."
   for manner in Manner:
@@ -712,7 +713,6 @@ proc checkSingleTurns*(built: Parts) =
     turns: array[4, int]
     bought = 0.0
     sharpest = 0.0
-  var
     daylight = Inf
     fouled = 0.0
     kept = 0
@@ -730,7 +730,7 @@ proc checkSingleTurns*(built: Parts) =
             p = handsOf(put)
             (a, b) = (p[Dancer.Lead][arm], p[Dancer.Follow][single.holds[arm].get])
             marks = clearingMarks(put, a, b)
-          let settled_reach = clearedReach(a, b, marks)
+            settled_reach = clearedReach(a, b, marks)
           turns[min(bendsIn(settled_reach), turns.high)] += 1
           sharpest = max(sharpest, sharpestIn(settled_reach))
           let crest = crestOf(settled_reach)

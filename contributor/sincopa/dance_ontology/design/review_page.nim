@@ -321,10 +321,11 @@ func sheetOf(P: Parts): string =
   var n = 0
   for c in 0 ..< SINGLES.len:
     body.add &"""<h3>{esc(SINGLES[c].name)}</h3><div class="grid wide">"""
-    var seen = initTable[string, string]()   # svg -> id already given it
-    var order: seq[string]
-    var whose = initTable[string, seq[string]]()
-    var asked = initTable[string, seq[string]]()  # svg -> questions it stands for
+    var
+      seen = initTable[string, string]()   # svg -> id already given it
+      order: seq[string]
+      whose = initTable[string, seq[string]]()
+      asked = initTable[string, seq[string]]()  # svg -> questions it stands for
     for manner in Manner:
       for q in 0 ..< QUARTERS_ROUND:
         let key = &"st_{MANNERS[manner].tag}_{c}_{q}"

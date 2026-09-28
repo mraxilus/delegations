@@ -140,8 +140,9 @@ suite "two hands":
       let exact = crossings(armsOf(p, other)).len
       var counts: CountTable[int]
       for trial in 0 ..< 1000:
-        var pp = p
-        var oo = other
+        var
+          pp = p
+          oo = other
         for i in 0 .. 6:
           pp[i] = (pp[i].x + random.rand(-1e-13 .. 1e-13), pp[i].y + random.rand(-1e-13 .. 1e-13),
                    pp[i].z)

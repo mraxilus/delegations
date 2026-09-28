@@ -32,8 +32,9 @@ suite "the spokes":
 
   test "no two spokes of a frame arrive in the same place":
     for here in FRAMES:
-      var seen: seq[Frame] = @[]
-      var places: seq[(int, int)] = @[]
+      var
+        seen: seq[Frame] = @[]
+        places: seq[(int, int)] = @[]
       for spoke in spokesOf(here):
         check spoke.to notin seen
         check endOf(spoke) notin places
@@ -137,8 +138,9 @@ suite "the moving":
     # drawing hands over numbers and takes back unit to multiply them
     # by, and everything it is made of is multiple of that one unit.
     for here in FRAMES:
-      let picture = renderSpokes(here)
-      let (_, _, w, h) = windowOf(here)
+      let
+        picture = renderSpokes(here)
+        (_, _, w, h) = windowOf(here)
       check picture.contains("--w: " & $w & "; --h: " & $h & ";")
       check not picture.contains("--w: " & $w & "px")
       check picture.contains("--bw: " & $SPOKES_BOX[2] & "; --bh: " &
@@ -247,9 +249,10 @@ suite "the drawing":
     for here in FRAMES:
       let picture = renderSpokes(here)
       for target in FRAMES:
-        let drawn = picture.contains("data-frame=\"" & target.key & "\"")
-        let reachable = target == here or classify(here, target).isSome or
-          compound(here, target).isSome
+        let
+          drawn = picture.contains("data-frame=\"" & target.key & "\"")
+          reachable = target == here or classify(here, target).isSome or
+            compound(here, target).isSome
         check drawn == reachable
 
   test "the frame held is the one in the middle":

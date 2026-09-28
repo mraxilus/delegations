@@ -285,8 +285,9 @@ proc caption() =
 proc framingOf(e: JsObject): Framing =
   ## Frame one entry to what it holds, over every moment of it, so view does
   ## not jump as couple turn and nothing wanders off edge part way through.
-  var lower = [1e9, 1e9, 1e9]
-  var upper = [-1e9, -1e9, -1e9]
+  var
+    lower = [1e9, 1e9, 1e9]
+    upper = [-1e9, -1e9, -1e9]
   for t in 0 ..< momentsOf(e):
     let row = e.p[t]
     for k in 0 ..< count(row) div 3:
@@ -390,9 +391,10 @@ proc start() =
   # Picker, stills by cell and question, sweeps by hold and band.
   var option_list = cstring""
   for i in 0 ..< count(ENTRIES_ALL):
-    let e = entry(i)
-    let name = (if isStill(e): LUT_CARD_BY_ENTRY[i] & cstring" · " & text(e.key)
-                else: text(e.hold) & cstring" · " & text(e.band))
+    let
+      e = entry(i)
+      name = (if isStill(e): LUT_CARD_BY_ENTRY[i] & cstring" · " & text(e.key)
+              else: text(e.hold) & cstring" · " & text(e.band))
     option_list = option_list & cstring"<option value='" & toFixed(float(i), 0) &
       cstring"'>" & name & cstring"</option>"
   document.getElementById("pick").innerHTML = option_list

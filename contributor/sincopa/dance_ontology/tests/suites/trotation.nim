@@ -32,8 +32,9 @@ suite "twist":
     check hand_to_hand.turn(rotates(Dancer.Lead, 3)).isNone
 
   test "turning is reversible inside the capacity":
-    let pair = fromKey("rl.").get.rest
-    let turned = pair.turn(rotates(Dancer.Follow, 1))
+    let
+      pair = fromKey("rl.").get.rest
+      turned = pair.turn(rotates(Dancer.Follow, 1))
     check turned.isSome
     check turned.get.turn(rotates(Dancer.Follow, -1)) == some(pair)
 
@@ -127,8 +128,9 @@ suite "what the arm can carry":
       for side in Side:
         if target.hold[side].isSome:
           continue
-        var lowered = target.rest
-        var raised = target.rest
+        var
+          lowered = target.rest
+          raised = target.rest
         raised.level[side] = Level.High
         for twist in -4 .. 4:
           check lowered.holds(twist) == raised.holds(twist)

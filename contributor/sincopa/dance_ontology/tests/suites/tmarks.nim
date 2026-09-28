@@ -109,8 +109,9 @@ suite "the sixteen facings, drawn":
       for side in ["Face", "Starboard", "Back", "Port"]:
         at = page.find("<div class=\"row\">", at)
         let shuts = page.find("</div>", at)
-        var captions: seq[string]
-        var c = page.find("<figcaption>", at)
+        var
+          captions: seq[string]
+          c = page.find("<figcaption>", at)
         while c >= 0 and c < shuts:
           let start = c + "<figcaption>".len
           captions.add page[start ..< page.find("</figcaption>", start)]

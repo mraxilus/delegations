@@ -63,8 +63,9 @@ suite "capsule on canvas":
     ## piece's gradient was centred on its own middle, and where facing's image
     ## ran along piece, one piece's light end met next piece's dark end.
     ## Facing is taken across piece alone, its part along piece dropped.
-    let along: Seen = (x: 0.0, y: 1.0, d: 0.0)
-    let across = lightAcross((x: 0.6, y: 0.8, d: 0.0), along)
+    let
+      along: Seen = (x: 0.0, y: 1.0, d: 0.0)
+      across = lightAcross((x: 0.6, y: 0.8, d: 0.0), along)
     check abs(across.x - 0.6) < 1e-9
     check abs(across.y) < 1e-9
     let whole = lightAcross((x: 0.6, y: 0.8, d: 0.0), (x: 0.0, y: 0.0, d: 0.0))

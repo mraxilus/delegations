@@ -271,7 +271,7 @@ func inkTerms(page: string): string =
     let
       inner = start + opens.len
       stop = result.find(shuts, inner)
-    let said = inked(result[inner ..< stop], escaping = false)
+      said = inked(result[inner ..< stop], escaping = false)
     result = result[0 ..< inner] & said & result[stop .. ^1]
     at = inner + said.len + shuts.len
 

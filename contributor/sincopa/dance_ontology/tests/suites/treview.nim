@@ -35,8 +35,9 @@ func suitesOf(stub: string): seq[string] =
   for statement in stub.importsOf:
     var at = statement.find("./")
     while at >= 0:
-      let open = statement.find("/[", at)
-      let shut = statement.find(']', at)
+      let
+        open = statement.find("/[", at)
+        shut = statement.find(']', at)
       if statement[at - 1] != '.' and open > at and shut > open and
           statement[at + 2 ..< open].allCharsInSet(IdentChars):
         for name in statement[open + 2 ..< shut].split(','):

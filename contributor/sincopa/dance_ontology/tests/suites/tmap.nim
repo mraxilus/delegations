@@ -28,8 +28,9 @@ func spoken(picture: string): string =
 
 func attribute(chunk, name: string): int =
   ## Read one number out of drawn element, for measuring what was drawn.
-  let key = name & "=\""
-  let at = chunk.find(key)
+  let
+    key = name & "=\""
+    at = chunk.find(key)
   if at < 0:
     return 0
   let rest = chunk[at + key.len .. ^1]

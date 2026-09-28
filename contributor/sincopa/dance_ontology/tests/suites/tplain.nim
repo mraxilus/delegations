@@ -47,14 +47,16 @@ suite "prose off markup":
     check markup.prose == @["Paragraph.", "Item."]
 
   test "sentence at the bound holds, and one word past it fails":
-    let ok = "<p>" & "word ".repeat(WORDS - 1) & "end.</p>"
-    let over = "<p>" & "word ".repeat(WORDS) & "end.</p>"
+    let
+      ok = "<p>" & "word ".repeat(WORDS - 1) & "end.</p>"
+      over = "<p>" & "word ".repeat(WORDS) & "end.</p>"
     check ok.longSentences.len == 0
     check over.longSentences.len == 1
 
   test "paragraph at the bound holds, and one sentence past it fails":
-    let ok = "<p>" & "Sentence. ".repeat(SENTENCES) & "</p>"
-    let over = "<p>" & "Sentence. ".repeat(SENTENCES + 1) & "</p>"
+    let
+      ok = "<p>" & "Sentence. ".repeat(SENTENCES) & "</p>"
+      over = "<p>" & "Sentence. ".repeat(SENTENCES + 1) & "</p>"
     check ok.longParagraphs.len == 0
     check over.longParagraphs.len == 1
 
