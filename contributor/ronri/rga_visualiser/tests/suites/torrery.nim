@@ -376,7 +376,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
       constructOrrery(scene)
       for role in Role.Sun .. Role.Derived:
         for other in Role.Sun .. Role.Derived:
-          if role != other: check lut_ink_by_role[role] != lut_ink_by_role[other]
+          if role != other: check LUT_INK_BY_ROLE[role] != LUT_INK_BY_ROLE[other]
       # Roles come from tables that placed objects -- `SOL` for our own system and.
       #   `NEIGHBOURS`/`PLANETS` for real ones -- rather than from second set of name
       #   rules that could drift from them.
@@ -391,7 +391,7 @@ when OBJECTS_MAX >= objectsOf(SCALE_ORRERY_DEFAULT):
         let
           label = toText(scene.labelAt(handle))
           role = roles.getOrDefault(label, Role.Derived)
-        check scene.inkAt(handle) == lut_ink_by_role[role]
+        check scene.inkAt(handle) == LUT_INK_BY_ROLE[role]
         inc bodies[role]
       for role in [Role.Sun, Role.Planet, Role.Moon, Role.Derived]:
         check bodies[role] > 0

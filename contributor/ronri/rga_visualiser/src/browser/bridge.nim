@@ -924,13 +924,13 @@ proc nimOperationNotation(index: cint): cstring {.exportc.} =
 proc nimOperationArity(index: cint): cint {.exportc.} =
   ## Report 0 for operation reading one operand, 1 for one reading two.
   ##   Matches `panel.layoutOperation`'s disabling of second operand picker.
-  cint(lut_arity_by_operation[Operation(index)])
+  cint(LUT_ARITY_BY_OPERATION[Operation(index)])
 
 
 proc nimBasisCount(): cint {.exportc.} = cint(ord(Basis.high) + 1)
   ## Report how many basis coefficients multivector carries in this build's dimension.
 
-proc nimBasisName(index: cint): cstring {.exportc.} = cstring(lut_name_by_basis[Basis(index)])
+proc nimBasisName(index: cint): cstring {.exportc.} = cstring(LUT_NAME_BY_BASIS[Basis(index)])
   ## Report Nth basis element's name.
 
 proc nimBasisGrade(index: cint): cint {.exportc.} = cint(ord(Basis(index).grade))
@@ -944,7 +944,7 @@ proc nimInkChoosableSlots(): seq[int] {.exportc.} =
   for index in 0 ..< COUNT_INK_CATEGORICAL: result.add(ord(inkCategorical(index)))
 
 
-proc nimInkName(index: cint): cstring {.exportc.} = lut_name_by_ink[Ink(index)]
+proc nimInkName(index: cint): cstring {.exportc.} = LUT_NAME_BY_INK[Ink(index)]
   ## Report Nth palette entry's name.
 
 

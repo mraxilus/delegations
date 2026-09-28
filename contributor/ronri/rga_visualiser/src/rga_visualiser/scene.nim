@@ -189,7 +189,7 @@ type
 
 #[ Operation Catalogue ]#
 
-const lut_arity_by_operation*: array[Operation, Arity] = [
+const LUT_ARITY_BY_OPERATION*: array[Operation, Arity] = [
   Operation.Attitude: Arity.One,
   Operation.Support: Arity.One,
   Operation.SupportAnti: Arity.One,
@@ -220,7 +220,7 @@ const lut_arity_by_operation*: array[Operation, Arity] = [
 ] ## Map operation to number of operands it consumes.
 
 
-const lut_notation_by_operation* = [
+const LUT_NOTATION_BY_OPERATION* = [
   Operation.Attitude: "𝐦⊖  attitude",
   Operation.Support: "𝐦∩  support",
   Operation.SupportAnti: "𝐦∪  antisupport",
@@ -262,12 +262,12 @@ const lut_notation_by_operation* = [
   ##     program runs; addresses derive from text, never text from addresses.
 
 
-let lut_notation_cstring_by_operation* = block:
+let LUT_NOTATION_CSTRING_BY_OPERATION* = block:
   ## Map operation to same entries as `cstring`, what picker offers.
   ##   Dear ImGui takes address of first and reads them for life of combo.
   ##   Built from table above rather than written beside it.
   var lut: array[Operation, cstring]
-  for operation in Operation: lut[operation] = cstring(lut_notation_by_operation[operation])
+  for operation in Operation: lut[operation] = cstring(LUT_NOTATION_BY_OPERATION[operation])
   lut
 
 
@@ -275,7 +275,7 @@ const
   COUNT_OPERATION* = ord(Operation.high) + 1
     ## Count operations, for handing whole catalogue to picker.
 
-  lut_operation_split* = block:
+  LUT_SPLIT_BY_OPERATION* = block:
     ## Map operation to its two halves: symbols it is written with, and English name after.
     ##   One split, at one place, i.e. double space between them, so no caller cuts at
     ##   second place that drifts.
@@ -283,7 +283,7 @@ const
     var lut: array[Operation, tuple[symbols, name: string]]
     for operation in Operation:
       let
-        full = lut_notation_by_operation[operation]
+        full = LUT_NOTATION_BY_OPERATION[operation]
         cutoff = full.find("  ")
       lut[operation] =
         if cutoff >= 0: (symbols: full[0 ..< cutoff], name: full[cutoff + 2 .. ^1].strip())
@@ -296,14 +296,14 @@ func notationSymbolic*(operation: Operation): string =
   ##   `𝐦 ∧ 𝐧`, not `𝐦 ∧ 𝐧  wedge (join)`.
   ##   What picker offers on both front-ends: full entry is several times wider, and
   ##   pushes selection menu's popover past what hand can reach on phone.
-  lut_operation_split[operation].symbols
+  LUT_SPLIT_BY_OPERATION[operation].symbols
 
 
 func notationNamed*(operation: Operation): string =
   ## Report English name operation is offered under, other half of `notationSymbolic`.
   ##   `wedge (join)`, not `𝐦 ∧ 𝐧`.
   ##   What help's catalogue tab reads, so tab says exactly what every picker offers.
-  lut_operation_split[operation].name
+  LUT_SPLIT_BY_OPERATION[operation].name
 
 
 const
@@ -461,7 +461,7 @@ func creationAnchor*(operation: Operation; m, n, derived: Multivector): Option[P
 
 #[ Multivector Formatting ]#
 
-const lut_name_by_basis* = block:
+const LUT_NAME_BY_BASIS* = block:
   ## Name each basis element as library's `$` names it.
   ##   `𝟏` for scalar, `𝟙` for antiscalar, bold `𝐞` carrying subscript digits for rest.
   ##   Exported so both GUIs label coefficient with its basis element, reading same as
@@ -514,11 +514,11 @@ func formatMultivector*(m: Multivector, storage: var openArray[char], cursor: va
     elif wrote_any: appendChars(storage, cursor, " + ")
     appendMagnitude(storage, cursor, abs(m[b]))
     appendChars(storage, cursor, " ")
-    appendChars(storage, cursor, lut_name_by_basis[b])
+    appendChars(storage, cursor, LUT_NAME_BY_BASIS[b])
     wrote_any = true
   if not wrote_any:
     appendChars(storage, cursor, "0 ")
-    appendChars(storage, cursor, lut_name_by_basis[Basis.scalar])
+    appendChars(storage, cursor, LUT_NAME_BY_BASIS[Basis.scalar])
 
 
 const WIDTH_KIND_WORD* = 32
@@ -1430,5 +1430,5 @@ func remember*(memory: var OperationMemory, operation: Operation) =
     memory.unary = OPERATION_FIRST_UNARY
     memory.binary = OPERATION_FIRST_BINARY
     memory.is_started = true
-  if lut_arity_by_operation[operation] == Arity.One: memory.unary = operation
+  if LUT_ARITY_BY_OPERATION[operation] == Arity.One: memory.unary = operation
   else: memory.binary = operation
