@@ -229,6 +229,16 @@ suite "Lower bound":
     check b.multiplies == 8 + 16  # squared norm, then every slot
     check b.divides == 1 and b.roots == 1  # one reciprocal over one root
 
+  test "compound product folds its maps into one table, and bound counts that table":
+    let rigid = Metric(dimensions: 4, is_conformal: false)
+    let conformal = Metric(dimensions: 5, is_conformal: true)
+    check lowerBoundOf(Shape.Support, rigid, 1).multiplies == 54  # wiki:Support
+    check lowerBoundOf(Shape.SupportAnti, rigid, 1).multiplies == 54  # wiki:Support
+    check lowerBoundOf(Shape.Center, conformal, 1).multiplies == 162  # wiki:Conformal
+    check lowerBoundOf(Shape.Container, conformal, 1).multiplies == 162  # wiki:Conformal
+    check not lowerBoundOf(Shape.Support, rigid, 1).is_composed  # one table, not step sum
+    check lowerBoundOf(Shape.Support, rigid, 1).bytesMoved == 256  # operand read, result written
+
   test "conformal metric is not singular, so every blade carries image":
     let rigid = Metric(dimensions: 4, is_conformal: false)
     let conformal = Metric(dimensions: 5, is_conformal: true)
