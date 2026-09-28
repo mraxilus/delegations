@@ -77,6 +77,9 @@ type
     Container
       ## Wedge of operand with weight dual of its carrier, i.e. `m ∧ (m ∧ 𝐞∞)☆`, counted
       ##   from one folded table.
+    JoinCarrier
+      ## Antiwedge of one operand with carrier of other, i.e. `t ∨ (m ∧ 𝐞∞)`, counted from
+      ##   one folded table; second step of partner.
   LowerBound* = object
     ## Define multivector lower bound of one operation, i.e. what algebra demands.
     is_derived*: bool
@@ -202,6 +205,9 @@ func imageOf(m: Metric; shape: Shape; s: Blade): Option[Blade] =
   of Shape.Container: # (s ∧ 𝐞∞)☆
     if not wedges(s, m.infinity): return none(Blade)
     m.dualBlade(s or m.infinity, as_weight = true)
+  of Shape.JoinCarrier: # s ∧ 𝐞∞
+    if not wedges(s, m.infinity): return none(Blade)
+    some(s or m.infinity)
   else:
     none(Blade)
 
@@ -218,7 +224,7 @@ func compoundTerms*(m: Metric; shape: Shape): int =
     for other in 0 ..< m.slots:
       let a = Blade(other)
       let survives = case shape
-        of Shape.Support, Shape.Center: m.wedgesAnti(a, image.get)
+        of Shape.Support, Shape.Center, Shape.JoinCarrier: m.wedgesAnti(a, image.get)
         of Shape.SupportAnti, Shape.Container: wedges(a, image.get)
         else: false
       if survives: inc result
@@ -293,7 +299,7 @@ func lowerBoundOf*(shape: Shape; m: Metric; arity: range[1 .. 2]): LowerBound =
       let as_expand = shape in {Shape.ExpandBulk, Shape.ExpandWeight}
       result.multiplies = m.dualProductTerms(as_weight, as_expand)
       result.adds = max(0, result.multiplies - m.slots)
-  of Shape.Support, Shape.SupportAnti, Shape.Center, Shape.Container:
+  of Shape.Support, Shape.SupportAnti, Shape.Center, Shape.Container, Shape.JoinCarrier:
     # Maps of definition fold into one table read against operand twice; count its cells.
     result.multiplies = m.compoundTerms(shape)
     result.adds = max(0, result.multiplies - m.slots)

@@ -504,9 +504,9 @@ const CHAINS* = [
   # Norm reads two slots, each one root over bilinear form, i.e. `‖m‖∙` then `‖m‖∘`.
   ("(| m)", @[Shape.Norm, Shape.Norm]),
   # Support, center and container fold their maps into one table (`Shape.Support` and
-  #   siblings), so only partner, cubic in its operand, stays chain.
-  ("(⊛ m)", @[Shape.Permutation, Shape.ConstantProduct, Shape.Permutation, Shape.Wedge,
-              Shape.ConstantProduct, Shape.Wedge, Shape.Scale]),
+  #   siblings). Partner is cubic, so it stays chain: container of weight dual, then antiwedge
+  #   against carrier, i.e. `(m☆)⊡ ∨ m⊟`, each step one folded table.
+  ("(⊛ m)", @[Shape.Permutation, Shape.Container, Shape.JoinCarrier]),
   # Projection takes dual product, then full product, i.e. `n ∨ (m ∧☆ n)`.
   ("projectCentral(m, n)", @[Shape.ExpandBulk, Shape.Wedge]),
   ("projectCentralAnti(m, n)", @[Shape.ContractBulk, Shape.Wedge]),

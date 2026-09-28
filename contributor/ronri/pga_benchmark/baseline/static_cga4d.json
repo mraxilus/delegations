@@ -3206,19 +3206,15 @@
       "reference": "",
       "cite": "wiki:Partner",
       "bound": {
-        "shape": "2 Permutation + 2 ConstantProduct + 2 Wedge + Scale",
+        "shape": "Permutation + Container + JoinCarrier",
         "is_composed": true,
         "steps": [
           "Permutation",
-          "ConstantProduct",
-          "Permutation",
-          "Wedge",
-          "ConstantProduct",
-          "Wedge",
-          "Scale"
+          "Container",
+          "JoinCarrier"
         ],
-        "multiplies": 178,
-        "adds": 130,
+        "multiplies": 108,
+        "adds": 76,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 256

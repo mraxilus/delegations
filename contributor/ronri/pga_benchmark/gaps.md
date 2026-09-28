@@ -417,7 +417,7 @@ Gaps: 131. Over 105, met 26, unmeasured 0.
 | `⊞` | ConstantProduct | 0 | 0 | 0 | 512 | 243/2048 |
 | `⊙` | Center | 162 | 0 | 0 | 512 | 486/3584 |
 | `⊡` | Container | 162 | 0 | 0 | 512 | 243/2560 |
-| `⊛` | 2 Permutation + 2 ConstantProduct + 2 Wedge + Scale | 518 | 0 | 0 | 512 | 518/30720 |
+| `⊛` | Permutation + Container + JoinCarrier | 324 | 0 | 0 | 512 | 518/30720 |
 
 ## rga3d
 
@@ -617,4 +617,4 @@ Gaps: 47. Over 21, met 26, unmeasured 0.
 | `⊞` | ConstantProduct | 0 | 0 | 0 | 256 | 81/1024 |
 | `⊙` | Center | 54 | 0 | 0 | 256 | 162/1792 |
 | `⊡` | Container | 54 | 0 | 0 | 256 | 81/1280 |
-| `⊛` | 2 Permutation + 2 ConstantProduct + 2 Wedge + Scale | 178 | 0 | 0 | 256 | 178/9216 |
+| `⊛` | Permutation + Container + JoinCarrier | 108 | 0 | 0 | 256 | 178/9216 |

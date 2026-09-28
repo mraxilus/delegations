@@ -6969,19 +6969,15 @@
       "reference": "",
       "cite": "wiki:Partner",
       "bound": {
-        "shape": "2 Permutation + 2 ConstantProduct + 2 Wedge + Scale",
+        "shape": "Permutation + Container + JoinCarrier",
         "is_composed": true,
         "steps": [
           "Permutation",
-          "ConstantProduct",
-          "Permutation",
-          "Wedge",
-          "ConstantProduct",
-          "Wedge",
-          "Scale"
+          "Container",
+          "JoinCarrier"
         ],
-        "multiplies": 518,
-        "adds": 422,
+        "multiplies": 324,
+        "adds": 260,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 512
@@ -7661,19 +7657,15 @@
       "reference": "partner(RoundPoint)",
       "cite": "wiki:Partner",
       "bound": {
-        "shape": "2 Permutation + 2 ConstantProduct + 2 Wedge + Scale",
+        "shape": "Permutation + Container + JoinCarrier",
         "is_composed": true,
         "steps": [
           "Permutation",
-          "ConstantProduct",
-          "Permutation",
-          "Wedge",
-          "ConstantProduct",
-          "Wedge",
-          "Scale"
+          "Container",
+          "JoinCarrier"
         ],
-        "multiplies": 518,
-        "adds": 422,
+        "multiplies": 324,
+        "adds": 260,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 512
@@ -7973,19 +7965,15 @@
       "reference": "partner(Dipole)",
       "cite": "wiki:Partner",
       "bound": {
-        "shape": "2 Permutation + 2 ConstantProduct + 2 Wedge + Scale",
+        "shape": "Permutation + Container + JoinCarrier",
         "is_composed": true,
         "steps": [
           "Permutation",
-          "ConstantProduct",
-          "Permutation",
-          "Wedge",
-          "ConstantProduct",
-          "Wedge",
-          "Scale"
+          "Container",
+          "JoinCarrier"
         ],
-        "multiplies": 518,
-        "adds": 422,
+        "multiplies": 324,
+        "adds": 260,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 512
@@ -8285,19 +8273,15 @@
       "reference": "partner(Circle)",
       "cite": "wiki:Partner",
       "bound": {
-        "shape": "2 Permutation + 2 ConstantProduct + 2 Wedge + Scale",
+        "shape": "Permutation + Container + JoinCarrier",
         "is_composed": true,
         "steps": [
           "Permutation",
-          "ConstantProduct",
-          "Permutation",
-          "Wedge",
-          "ConstantProduct",
-          "Wedge",
-          "Scale"
+          "Container",
+          "JoinCarrier"
         ],
-        "multiplies": 518,
-        "adds": 422,
+        "multiplies": 324,
+        "adds": 260,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 512
@@ -8597,19 +8581,15 @@
       "reference": "partner(Sphere)",
       "cite": "wiki:Partner",
       "bound": {
-        "shape": "2 Permutation + 2 ConstantProduct + 2 Wedge + Scale",
+        "shape": "Permutation + Container + JoinCarrier",
         "is_composed": true,
         "steps": [
           "Permutation",
-          "ConstantProduct",
-          "Permutation",
-          "Wedge",
-          "ConstantProduct",
-          "Wedge",
-          "Scale"
+          "Container",
+          "JoinCarrier"
         ],
-        "multiplies": 518,
-        "adds": 422,
+        "multiplies": 324,
+        "adds": 260,
         "divides": 0,
         "roots": 0,
         "bytes_moved": 512
