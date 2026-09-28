@@ -280,7 +280,7 @@ citation that points at nothing.
 
 ## Provenance stamp
 
-**FNV-1a 64-bit over CONSTITUTION.md, STYLE.md, CONTRIBUTOR.md and EXAMPLES.md**, with CR
+**FNV-1a 64-bit over CONSTITUTION.md, STYLE.md, CONTRIBUTOR.md, EXAMPLES.md and GUIDE.md**, with CR
 stripped, NUL between files, and 16 lowercase hex digits. CURATOR.md is excluded, so a
 curator-only edit touches no project.
 

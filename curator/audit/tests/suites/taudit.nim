@@ -12,7 +12,7 @@ suite "Audit":
   test "rules stamp derives from tree contents in RULES order":
     check goodTree().rulesStamp == stamp(RULES_TEXT)  # same digest as fixture
     check goodTree().without("STYLE.md").rulesStamp ==
-      stamp([RULES_TEXT[0], "", RULES_TEXT[2], RULES_TEXT[3]])  # missing document digests empty
+      stamp([RULES_TEXT[0], "", RULES_TEXT[2], RULES_TEXT[3], RULES_TEXT[4]])  # missing is empty
 
   test "one change to any rules document goes stale in every project":
     let changed = goodTree().replaced("CONTRIBUTOR.md", RULES_TEXT[2] & "More.\n")
